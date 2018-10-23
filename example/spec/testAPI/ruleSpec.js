@@ -6,7 +6,7 @@ const {
   rulesApi: rulesApiTestUtils,
   getExecutions,
   timeout,
-  LambdaStep,
+  LambdaStep
 } = require('@cumulus/integration-tests');
 
 const {
@@ -21,18 +21,6 @@ const lambdaStep = new LambdaStep();
 const waitPeriodMs = 1000;
 
 const maxWaitForStartedExecutionSecs = 60 * 5;
-
-const ruleName = timestampedName('HelloWorldIntegrationTestRule');
-const helloWorldRule = {
-  name: ruleName,
-  workflow: 'HelloWorldWorkflow',
-  rule: {
-    type: 'onetime'
-  },
-  meta: {
-    triggerRule: ruleName // used to detect that we're looking at the correct execution
-  }
-};
 
 /**
  * Remove params added to the rule when it is saved into dynamo
@@ -59,31 +47,87 @@ function removeRuleAddedParams(rule) {
  *
  * @returns {undefined} - none
  */
-async function waitForTestExecution() {
+async function waitForTestExecution({
+  ruleName,
+  workflowName,
+  stackName,
+  bucket
+}) {
   let timeWaitedSecs = 0;
-  let workflowExecution;
-
   /* eslint-disable no-await-in-loop */
-  while (timeWaitedSecs < maxWaitForStartedExecutionSecs && workflowExecution === undefined) {
+  while (timeWaitedSecs < maxWaitForStartedExecutionSecs) {
     await timeout(waitPeriodMs);
     timeWaitedSecs += (waitPeriodMs / 1000);
-    const executions = await getExecutions(helloWorldRule.workflow, config.stackName, config.bucket);
+    const executions = await getExecutions(workflowName, stackName, bucket);
 
-    for (const execution of executions) {
+    for (let executionCtr = 0; executionCtr < executions.length; executionCtr += 1) {
+      const execution = executions[executionCtr];
       const taskInput = await lambdaStep.getStepInput(execution.executionArn, 'SfSnsReport');
-      if (taskInput && taskInput.meta.triggerRule && taskInput.meta.triggerRule === helloWorldRule.name) {
-        workflowExecution = execution;
-        break;
+      if (taskInput && taskInput.meta.triggerRule && taskInput.meta.triggerRule === ruleName) {
+        return execution;
       }
     }
   }
   /* eslint-disable no-await-in-loop */
-  if (timeWaitedSecs < maxWaitForStartedExecutionSecs) return workflowExecution;
   throw new Error('Never found started workflow.');
 }
 
+fdescribe('When I create a scheduled rule via the Cumulus API', () => {
+  let response;
+  const scheduledRuleName = timestampedName('SchedHelloWorldIntegrationTestRule');
+  const scheduledHelloWorldRule = {
+    name: scheduledRuleName,
+    workflow: 'HelloWorldWorkflow',
+    rule: {
+      type: 'scheduled',
+      value: 'rate(3 minutes)'
+    },
+    meta: {
+      triggerRule: scheduledRuleName // used to detect that we're looking at the correct execution
+    }
+  };
+
+  beforeAll(async () => {
+    // Create a scheduled rule
+    response = await rulesApiTestUtils.postRule({
+      prefix: config.stackName,
+      rule: scheduledHelloWorldRule
+    });
+  });
+
+  describe('the scheduled rule is deleted', () => {
+    beforeAll(async () => {
+      console.log(`deleting rule ${scheduledHelloWorldRule.name}`);
+      await rulesApiTestUtils.deleteRule({
+        prefix: config.stackName,
+        ruleName: scheduledHelloWorldRule.name
+      });
+    });
+
+    it('the rule does not kick off a workflow', () => {
+      expect(() => waitForTestExecution({
+        ruleName: scheduledHelloWorldRule.name,
+        workflowName: scheduledHelloWorldRule.workflow,
+        stackName: config.stackName,
+        bucket: config.bucket
+      })).toThrowError(Error, 'Never found started workflow.');
+    });
+  });
+});
+
 describe('When I create a one-time rule via the Cumulus API', () => {
   let postRuleResponse = '';
+  const oneTimeRuleName = timestampedName('HelloWorldIntegrationTestRule');
+  const helloWorldRule = {
+    name: oneTimeRuleName,
+    workflow: 'HelloWorldWorkflow',
+    rule: {
+      type: 'onetime'
+    },
+    meta: {
+      triggerRule: oneTimeRuleName // used to detect that we're looking at the correct execution
+    }
+  };
 
   beforeAll(async () => {
     // Create a one-time rule
