@@ -30,7 +30,7 @@ const {
   cleanupProviders,
   cleanupCollections,
   LambdaStep,
-  waitForCompletedExecution,
+  waitForCompletedExecution
 } = require('@cumulus/integration-tests');
 
 const {
@@ -180,7 +180,12 @@ describe('Ingesting from PDR', () => {
         console.log(`Wait for execution ${parsePdrExecutionArn}`);
 
         try {
-          expectedParsePdrOutput = loadFileWithUpdatedGranuleIdPathAndCollection(outputPayloadFilename, testDataGranuleId, testDataFolder, collectionId);
+          expectedParsePdrOutput = loadFileWithUpdatedGranuleIdPathAndCollection(
+            outputPayloadFilename,
+            testDataGranuleId,
+            testDataFolder,
+            collectionId
+          );
           expectedParsePdrOutput.granules[0].dataType += testSuffix;
 
           parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrExecutionArn);
