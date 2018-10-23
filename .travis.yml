@@ -5,11 +5,11 @@ language: node_js
 
 stages:
   - name: build cache
-  - name: unit test
+  # - name: unit test
   - name: deploy integration test stack
   - name: integration tests
   - name: redeployment integration tests
-    if: branch = master OR commit_message =~ \[run-redeploy-tests\] OR type != pull_request AND tag =~ ^v\d+
+    if: branch = master OR commit_message =~ \[run-redeploy-tests\] OR (type != pull_request AND tag =~ ^v\d+)
   - name: cleanup integration tests
   - name: deploy
     if: type != pull_request AND tag =~ ^v\d+
