@@ -2,6 +2,8 @@
 
 set +e
 
+echo Running parallel integration tests
+
 TESTS=$(find spec/parallel/ingestGranule -type f -name '*spec.js' -or -name '*Spec.js')
 
 testOutputDir=scripts/test_output
@@ -9,7 +11,7 @@ testOutputDir=scripts/test_output
 rm -r -f $testOutputDir
 mkdir -p $testOutputDir
 
-./node_modules/.bin/parallel -D sh scripts/runtest.sh  $testOutputDir ::: $TESTS
+./node_modules/.bin/parallel sh scripts/runtest.sh  $testOutputDir ::: $TESTS
 
 result=$?
 
