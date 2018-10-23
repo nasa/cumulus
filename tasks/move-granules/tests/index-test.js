@@ -131,25 +131,18 @@ test.serial('should overwrite files', async (t) => {
     name: filename
   }];
 
-  console.log('upload');
-
   await promiseS3Upload({
     Bucket: t.context.stagingBucket,
     Key: sourceKey,
     Body: 'Something'
   });
 
-  console.log('upload complete');
-
   let output = await moveGranules(newPayload);
-  console.log('granules moved');
   await validateOutput(t, output);
   const existingFile = await headObject(
     t.context.publicBucket,
     destKey
   );
-
-  console.log('head object complete');
 
   // re-stage source jpg file with different content
   const content = randomString();
@@ -159,17 +152,12 @@ test.serial('should overwrite files', async (t) => {
     Body: content
   });
 
-  console.log('upload complete');
-
   output = await moveGranules(newPayload);
   const updatedFile = await headObject(
     t.context.publicBucket,
     destKey
   );
-
-  console.log('move granules complete');
   const objects = await s3().listObjects({ Bucket: t.context.publicBucket }).promise();
-  console.log('list objects complete');
   t.is(objects.Contents.length, 1);
 
   const item = objects.Contents[0];
