@@ -190,10 +190,11 @@ describe('When the Sync Granule workflow is configured to keep both files when e
     });
 
     it('captures both files', async () => {
-      const granule = await apiTestUtils.getGranule({
+      const granuleResponse = await apiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       });
+      const granule = JSON.parse(granuleResponse.body);
       expect(granule.files.length).toEqual(3);
     });
   });
@@ -235,10 +236,11 @@ describe('When the Sync Granule workflow is configured to keep both files when e
     });
 
     it('captures all files', async () => {
-      const granule = await apiTestUtils.getGranule({
+      const granuleResponse = await apiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       });
+      const granule = JSON.parse(granuleResponse.body);
       expect(granule.files.length).toEqual(4);
     });
   });
