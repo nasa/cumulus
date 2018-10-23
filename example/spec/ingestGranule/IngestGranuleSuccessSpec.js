@@ -12,7 +12,12 @@ const {
   }
 } = require('@cumulus/api');
 const {
-  aws: { s3, s3ObjectExists, parseS3Uri },
+  aws: {
+    getS3ObjectTagging,
+    s3,
+    s3ObjectExists,
+    parseS3Uri
+  },
   constructCollectionId,
   testUtils: { randomString }
 } = require('@cumulus/common');
@@ -242,7 +247,10 @@ describe('The S3 Ingest Granules workflow', () => {
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
       files = lambdaOutput.payload.granules[0].files;
-      movedTaggings = await Promise.all(lambdaOutput.payload.granules[0].files.map((file) => s3().getObjectTagging(parseS3Uri(file.filename)).promise()));
+      movedTaggings = await Promise.all(lambdaOutput.payload.granules[0].files.map((file) => {
+        const { Bucket, Key } = parseS3Uri(file.filename);
+        return getS3ObjectTagging(Bucket, Key);
+      }));
       existCheck[0] = await s3ObjectExists({ Bucket: files[0].bucket, Key: files[0].filepath });
       existCheck[1] = await s3ObjectExists({ Bucket: files[1].bucket, Key: files[1].filepath });
       existCheck[2] = await s3ObjectExists({ Bucket: files[2].bucket, Key: files[2].filepath });

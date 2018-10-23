@@ -9,6 +9,7 @@ const {
   s3,
   promiseS3Upload,
   headObject,
+  getS3ObjectTagging,
   parseS3Uri
 } = require('@cumulus/common/aws');
 const clonedeep = require('lodash.clonedeep');
@@ -136,10 +137,7 @@ test.serial('should preserve object tags', async (t) => {
 
   const output = await moveGranules(newPayload);
   await Promise.all(output.granules[0].files.map(async (file) => {
-    const actualTags = await s3().getObjectTagging({
-      Bucket: file.bucket,
-      Key: file.filepath
-    }).promise();
+    const actualTags = await getS3ObjectTagging(file.bucket, file.filepath);
     t.deepEqual(
       { file: file.name, tagset },
       { file: file.name, tagset: actualTags.TagSet }
