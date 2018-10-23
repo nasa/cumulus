@@ -23,24 +23,24 @@
 
 const { Collection, Execution, Pdr } = require('@cumulus/api/models');
 const {
-  buildAndExecuteWorkflow,
-  waitForCompletedExecution,
-  LambdaStep,
-  addProviders,
-  cleanupProviders,
   addCollections,
+  addProviders,
+  api: apiTestUtils,
+  buildAndExecuteWorkflow,
+  cleanupProviders,
   cleanupCollections,
-  api: apiTestUtils
+  LambdaStep,
+  waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
 const {
-  loadConfig,
-  updateAndUploadTestDataToBucket,
-  deleteFolder,
-  createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
-  getExecutionUrl
+  createTimestampedTestId,
+  deleteFolder,
+  getExecutionUrl,
+  loadConfig,
+  updateAndUploadTestDataToBucket
 } = require('../helpers/testUtils');
 
 const {
@@ -79,18 +79,26 @@ describe('Ingesting from PDR', () => {
   let parsePdrExecutionArn;
 
   beforeAll(async () => {
-    // delete pdr from old tests
-    await apiTestUtils.deletePdr({
-      prefix: config.stackName,
-      pdr: pdrFilename
-    });
-
     // populate collections, providers and test data
     await Promise.all([
-      updateAndUploadTestDataToBucket(config.bucket, s3data, testDataFolder, [{ old: 'cumulus-test-data/pdrs', new: testDataFolder }, { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` }]),
+      // delete pdr from old tests
+      apiTestUtils.deletePdr({
+        prefix: config.stackName,
+        pdr: pdrFilename
+      }),
+      updateAndUploadTestDataToBucket(
+        config.bucket,
+        s3data,
+        testDataFolder,
+        [
+          { old: 'cumulus-test-data/pdrs', new: testDataFolder },
+          { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` }
+        ]
+      ),
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
+
     // update provider path
     await collectionModel.update(collection, { provider_path: testDataFolder });
   });

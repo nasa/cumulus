@@ -23,6 +23,3 @@ export DEPLOYMENT
 
   yarn redeploy-test
 )
-RESULT="$?"
-
-exit "$RESULT"
