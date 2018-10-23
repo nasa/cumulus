@@ -10,16 +10,18 @@
     "cumulus-api": "./bin/cli.js"
   },
   "scripts": {
-    "test": "ava --serial --fail-fast",
-    "test-coverage": "nyc ava",
+    "test": "ava && ava --serial tests/serial/",
+    "test-coverage": "nyc npm test",
     "build": "webpack",
     "watch": "webpack --progress -w",
     "prepublishOnly": "PRODUCTION=true npm run build"
   },
   "ava": {
-    "files": "tests/**/*.js",
-    "fail-fast": true,
-    "serial": true
+    "files": [
+      "tests/**/*.js",
+      "!tests/serial/**/*.js"
+    ],
+    "fail-fast": true
   },
   "nyc": {
     "exclude": [
