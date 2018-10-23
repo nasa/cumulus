@@ -1,6 +1,8 @@
 'use strict';
 
+const cloneDeep = require('lodash.clonedeep');
 const readline = require('readline');
+
 const aws = require('./aws');
 const log = require('./log');
 const { uuid } = require('./util');
@@ -11,7 +13,7 @@ const MAX_NON_S3_PAYLOAD_SIZE = 10000;
 /**
  * TODO Add docs
  */
-const MessageSource = exports.MessageSource = class {
+class MessageSource {
   constructor(message, context) {
     this.messageData = message;
     this.messages = [];
@@ -35,7 +37,7 @@ const MessageSource = exports.MessageSource = class {
     log.warn('saveState requested but not implemented');
   }
 
-  loadState(taskName) {  // eslint-disable-line no-unused-vars
+  loadState(taskName) { // eslint-disable-line no-unused-vars
     log.warn('loadState requested but not implemented');
   }
 
@@ -59,7 +61,8 @@ const MessageSource = exports.MessageSource = class {
     log.error('Retry requested but not implemented');
     return this.wait();
   }
-};
+}
+exports.MessageSource = MessageSource;
 
 // Used when message size is too big for Lambda messages (32k)
 class StateMachineS3MessageSource extends MessageSource {
@@ -93,8 +96,7 @@ class StateMachineS3MessageSource extends MessageSource {
       log.info('Checking for arn mapping for ', this.context.invokedFunctionArn);
       if (workflowConfig.arns_to_name_mappings) {
         const match = workflowConfig.arns_to_name_mappings.find(({ arn }) =>
-          arn === this.context.invokedFunctionArn
-        );
+          arn === this.context.invokedFunctionArn);
         if (match) {
           log.info('Found configured task name', match.arn, ' -> ', match.name);
           return workflowConfig[match.name];
@@ -227,9 +229,7 @@ class StdinMessageSource extends InlineMessageSource {
     });
     rl.on('close', () => {
       this.stdinMessages = messages;
-      for (const callback of this.callbacks) {
-        callback();
-      }
+      this.callbacks.forEach((callback) => callback());
     });
   }
 
@@ -240,14 +240,16 @@ class StdinMessageSource extends InlineMessageSource {
   }
 
   getMessageScopedJsonImmediate() {
-    for (const value of this.stdinMessages) {
-      if (this.messageData.ingest_meta && this.messageData.ingest_meta.task) {
-        value.ingest_meta = value.ingest_meta || {};
-        value.ingest_meta.task = this.messageData.ingest_meta.task;
-      }
-      return value; // XXX Doesn't this always return the first value? Why use a for loop?
+    if (this.stdinMessages.length === 0) return null;
+
+    const value = cloneDeep(this.stdinMessages[0]);
+
+    if (this.messageData.ingest_meta && this.messageData.ingest_meta.task) {
+      value.ingest_meta = value.ingest_meta || {};
+      value.ingest_meta.task = this.messageData.ingest_meta.task;
     }
-    return null;
+
+    return value;
   }
 
   getMessageScopedJson() {
@@ -282,19 +284,16 @@ exports.messageSources = [
 
 /**
  * Returns an appropriate message source for the given message
- * @param {object} message - The incoming AWS Lambda message
- * @param {object} context - The incoming AWS Lambda context
- * @param {array} maybeSources - Message sources to use for lookup. If null,
- *                               use exports.messageSources)
- * @return A constructed MessageSource instance for the given message
+ * @param {Object} message - The incoming AWS Lambda message
+ * @param {Object} context - The incoming AWS Lambda context
+ * @param {Array} maybeSources - Message sources to use for lookup. If null,
+ *   use exports.messageSources)
+ * @returns {Source} A constructed MessageSource instance for the given message
  */
 exports.forEvent = (message, context, maybeSources) => {
   const sources = maybeSources || exports.messageSources;
-  let Source;
-  for (Source of sources) {
-    if (Source.isSourceFor(message)) {
-      break;
-    }
-  }
+
+  const Source = sources.find((source) => source.isSourceFor(message));
+
   return new Source(message, context);
 };
