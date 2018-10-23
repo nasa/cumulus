@@ -23,5 +23,9 @@ export DEPLOYMENT
     (cd .. && ./bin/prepare)
   fi
 
+  echo Start Parallel tests
+  yarn parallel-tests
+
+  echo Parallel tests complete. Running serial tests.
   yarn test
 )
