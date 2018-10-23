@@ -31,7 +31,7 @@ test.before(async () => {
   process.env.bucket = testBucketName;
 
   await s3().createBucket({ Bucket: testBucketName }).promise();
-  const workflowsListKey = `${process.env.stackName}/workflows/list.json`; // eslint-disable-line max-len
+  const workflowsListKey = `${process.env.stackName}/workflows/list.json`;
   await promiseS3Upload({
     Bucket: testBucketName,
     Key: workflowsListKey,
