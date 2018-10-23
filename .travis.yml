@@ -23,21 +23,13 @@ jobs:
       install: true
       script: ./travis-ci/build-cache.sh
 
-    - name: "eslint and e2e tests"
+    - name: "eslint"
       stage: unit test
-      services:
-        - docker
-      env:
-        - LOCALSTACK_HOST=127.0.0.1
-        - LOCAL_ES_HOST=127.0.0.1
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
         - npm run bootstrap-no-build
-        - ./travis-ci/start-local-services.sh
-      script:
-        - npm run lint
-        - npm run e2e
+      script: npm run lint
     - name: "Unit tests except API"
       stage: unit test
       services:
