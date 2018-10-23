@@ -284,6 +284,9 @@ async function updateCmrFileAccessURLs(cmrFiles, granulesObject, allFiles, distE
     else {
       await promiseS3Upload(params);
     }
+    // clean up old CmrFile after uploading new one
+    const { Bucket, Key } = parseS3Uri(cmrFile.filename);
+    await deleteS3Object(Bucket, Key);
   }));
 }
 
