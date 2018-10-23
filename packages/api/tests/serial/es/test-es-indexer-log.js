@@ -4,11 +4,11 @@ const test = require('ava');
 const fs = require('fs');
 const path = require('path');
 const { randomString } = require('@cumulus/common/test-utils');
-const { deleteAliases } = require('../../lib/testUtils');
-const indexer = require('../../es/indexer');
-const { Search } = require('../../es/search');
-const queries = require('../../es/queries');
-const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
+const { deleteAliases } = require('../../../lib/testUtils');
+const indexer = require('../../../es/indexer');
+const { Search } = require('../../../es/search');
+const queries = require('../../../es/queries');
+const { bootstrapElasticSearch } = require('../../../lambdas/bootstrap');
 
 const esIndex = randomString();
 process.env.ES_INDEX = esIndex;
@@ -26,7 +26,7 @@ test.after.always(async () => {
 
 test.serial('indexing log messages', async (t) => {
   // input log events
-  const inputtxt = fs.readFileSync(path.join(__dirname, '../data/log_events_input.txt'), 'utf8');
+  const inputtxt = fs.readFileSync(path.join(__dirname, '../../data/log_events_input.txt'), 'utf8');
   const event = JSON.parse(JSON.parse(inputtxt.toString()));
   const response = await indexer.indexLog(esClient, event.logEvents);
   t.false(response.errors);
@@ -35,7 +35,7 @@ test.serial('indexing log messages', async (t) => {
   await esClient.indices.refresh();
   // console.log(JSON.stringify(response, null, 2));
   // expected result in elastic search
-  const estxt = fs.readFileSync(path.join(__dirname, '../data/log_events_expected.json'), 'utf8');
+  const estxt = fs.readFileSync(path.join(__dirname, '../../data/log_events_expected.json'), 'utf8');
   const expected = JSON.parse(estxt.toString());
   // records are in elasticsearch
   const records = await esClient.mget({
