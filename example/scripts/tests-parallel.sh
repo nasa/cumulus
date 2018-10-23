@@ -14,11 +14,11 @@ testOutputDir=scripts/test_output
 rm -r -f $testOutputDir
 mkdir -p $testOutputDir
 
-./node_modules/.bin/parallel sh scripts/runtest.sh  $testOutputDir ::: $TESTS
+./node_modules/.bin/parallel sh scripts/run_test.sh  $testOutputDir ::: $TESTS
 
 result=$?
 
-echo parallel tests exited $result
+echo parallel tests complete: $result suite failures
 
 for testFile in $(find $testOutputDir -type f); do
   cat $testFile
