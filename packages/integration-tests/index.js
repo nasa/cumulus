@@ -29,6 +29,7 @@ const rulesApi = require('./api/rules');
 const cmr = require('./cmr.js');
 const lambda = require('./lambda');
 const granule = require('./granule.js');
+const waitForDeployment = require('./lambdas/waitForDeployment');
 
 /**
  * Wait for the defined number of milliseconds
@@ -691,5 +692,6 @@ module.exports = {
   getLambdaAliases: lambda.getLambdaAliases,
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
   waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs,
-  getExecutions
+  getExecutions,
+  waitForDeploymentHandler: waitForDeployment.handler
 };
