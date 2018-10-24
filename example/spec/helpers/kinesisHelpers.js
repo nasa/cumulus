@@ -69,15 +69,19 @@ async function getStreamStatus(StreamName) {
  * Wait for a number of periods for a kinesis stream to become active.
  *
  * @param {string} streamName - name of kinesis stream to wait for
+ * @param {string} initialDelaySecs - 1 time wait period before finding stream.
+                                      Default value 10 seconds.
  * @param {integer} maxRetries - number of retries to attempt before failing.
- *                  default value 8
+ *                               default value 10
  * @returns {string} current stream status: 'ACTIVE'
  * @throws {Error} - Error describing current stream status
  */
-async function waitForActiveStream(streamName, maxRetries = 9){
+async function waitForActiveStream(streamName, initialDelaySecs = 10, maxRetries = 10){
   let streamStatus = 'Anything';
   let stream;
   const displayName = streamName.split('-').pop();
+
+  await timeout(initialDelaySecs * 1000);
 
   return pRetry(
     async () => {
