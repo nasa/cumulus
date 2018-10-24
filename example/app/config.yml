@@ -14,7 +14,7 @@ default:
     awsRegion: us-east-1
     AsyncOperationsTable: '{{stackName}}-AsyncOperationsTable'
     asyncOperationRunnerRole: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-lambda-api-gateway'
-    IngestGranule:
+    IngestAndPublishGranule:
       IngestGranuleOutput:
         granules:
           - files:
@@ -233,10 +233,45 @@ lf:
       name: lf-protected-2
       type: protected
 
+lf-int-test:
+  stackName: lf-int-test
+  stackNameNoDash: lfIntTest
+
+  buckets:
+    internal:
+      name: lf-internal
+      type: internal
+    private:
+      name: lf-private
+      type: private
+    protected:
+      name: lf-protected
+      type: protected
+    public:
+      name: lf-cumulus-public
+      type: public
+    protected-2:
+      name: lf-protected-2
+      type: protected
+
 kk-uat-deployment:
   stackName: kk-test-uat
   stackNameNoDash: KkTestUat
   esHost: https://search-kk-test-uat-es5-bk24w6blilunzp4fc4ma3xwtqu.us-east-1.es.amazonaws.com
+  system_bucket: '{{stackName}}-internal'
+  buckets:
+    internal:
+      name: '{{stackName}}-internal'
+      type: internal
+    private:
+      name: '{{stackName}}-private'
+      type: private
+    protected:
+      name: '{{stackName}}-protected'
+      type: protected
+    public:
+      name: '{{stackName}}-public'
+      type: public
 
 mth-2:
   stackName: mth-2
@@ -403,3 +438,7 @@ mboyd-test:
 mboyd-int:
   stackName: mboyd-int
   stackNameNoDash: mboydInt
+
+pq:
+  stackName: pq
+  stackNameNoDash: pq

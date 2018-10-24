@@ -90,7 +90,6 @@ test.serial('should move files to final location', async (t) => {
 
 test.serial('should move renamed files in staging area to final location', async (t) => {
   const newPayload = buildPayload(t);
-  // eslint-disable-next-line max-len
   const renamedFile = `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705`;
   newPayload.input.push(renamedFile);
   await uploadFiles(newPayload.input, t.context.stagingBucket);
@@ -153,30 +152,23 @@ test.serial('should overwrite files', async (t) => {
     Body: content
   });
 
-  try {
-    output = await moveGranules(newPayload);
-  }
-  catch (err) {
-    t.fail();
-  }
-  finally {
-    const updatedFile = await headObject(
-      t.context.publicBucket,
-      destKey
-    );
-    const objects = await s3().listObjects({ Bucket: t.context.publicBucket }).promise();
-    t.is(objects.Contents.length, 1);
+  output = await moveGranules(newPayload);
+  const updatedFile = await headObject(
+    t.context.publicBucket,
+    destKey
+  );
+  const objects = await s3().listObjects({ Bucket: t.context.publicBucket }).promise();
+  t.is(objects.Contents.length, 1);
 
-    const item = objects.Contents[0];
-    t.is(item.Key, destKey);
+  const item = objects.Contents[0];
+  t.is(item.Key, destKey);
 
-    const existingModified = new Date(existingFile.LastModified).getTime();
-    const itemModified = new Date(item.LastModified).getTime();
-    t.true(itemModified > existingModified);
+  const existingModified = new Date(existingFile.LastModified).getTime();
+  const itemModified = new Date(item.LastModified).getTime();
+  t.true(itemModified > existingModified);
 
-    t.is(updatedFile.ContentLength, content.length);
-    t.true(output.granules[0].files[0].duplicate_found);
-  }
+  t.is(updatedFile.ContentLength, content.length);
+  t.true(output.granules[0].files[0].duplicate_found);
 });
 
 // duplicateHandling has default value 'error' if it's not provided in task configuration and
@@ -205,12 +197,11 @@ async function duplicateHandlingErrorTest(t, duplicateHandling) {
 
     await uploadFiles(newPayload.input, t.context.stagingBucket);
     await moveGranules(newPayloadOrig);
-    t.fail();
+    t.fail('Expected a DuplicateFile error to be thrown');
   }
   catch (err) {
     t.true(err instanceof errors.DuplicateFile);
     t.true(expectedErrorMessages.includes(err.message));
-    t.pass();
   }
 }
 
