@@ -1,3 +1,7 @@
+'use strict';
+
+const isString = require('lodash.isstring');
+
 const aws = require('./aws');
 const log = require('./log');
 
@@ -7,18 +11,17 @@ const log = require('./log');
  * undefined arguments are represented by the literal "undefined"
  * JSON-serializeable objects are returned as their JSON serialization
  * Anything else is represented by "[unloggable]"
- * @param {array} args - The list of arguments to log
- * @return {string} - The args, space-delimited as above
+ * @param {Array} args - The list of arguments to log
+ * @returns {string} - The args, space-delimited as above
  */
 const spaceDelimited = (args) => args.map((arg) => {
-  if (typeof arg === 'undefined') {
-    return 'undefined';
-  }
-  const argStr = (typeof arg === 'string' || arg instanceof String) ? arg : JSON.stringify(arg);
-  if (typeof argStr !== 'string' && !(argStr instanceof String)) { // Happens with functions
+  if (arg === undefined) return 'undefined';
+
+  const argStr = isString(arg) ? arg : JSON.stringify(arg);
+  if (!isString(argStr)) { // Happens with functions
     return '[unloggable]';
   }
-  if ((argStr.startsWith('[') && argStr.endsWith(']')) || argStr.indexOf(' ') === -1) {
+  if ((argStr.startsWith('[') && argStr.endsWith(']')) || !argStr.includes(' ')) {
     return argStr;
   }
   return JSON.stringify(argStr);
@@ -33,7 +36,7 @@ const MAX_RETRIES = 5; // The maximum number of failures to tolerate in sending 
  */
 module.exports = class CloudWatchLogger {
   /**
-   * @param {object} config - An object with two params for CloudWatch: logGroupName
+   * @param {Object} config - An object with two params for CloudWatch: logGroupName
    *                          and logStreamName
    */
   constructor(config) {
@@ -83,8 +86,9 @@ module.exports = class CloudWatchLogger {
 
   /**
    * Gets the sequence token necessary to send logs to CloudWatch
+   *
    * @param {boolean} retried - Internally used to track if the stream needs creation
-   * @return - The next sequence token
+   * @returns {*} The next sequence token
    */
   async getSequenceToken(retried = false) {
     const streams = await aws.cloudwatchlogs().describeLogStreams({
@@ -101,7 +105,8 @@ module.exports = class CloudWatchLogger {
 
   /**
    * Creates the log stream to log to
-   * @return - A promise for the creation
+   *
+   * @returns {Promise} resolves when the log stream has been created
    */
   createLogStream() {
     return aws.cloudwatchlogs().createLogStream({
@@ -131,7 +136,7 @@ module.exports = class CloudWatchLogger {
     catch (err) {
       log.error(err, err.stack);
       if (this.retries < MAX_RETRIES) {
-        this.retries++;
+        this.retries += 1;
         this.token = err.message.split(' is: ')[1];
         log.error(`Retrying log upload (${this.retries})`);
         this.uploadLogs();
