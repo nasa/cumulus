@@ -29,7 +29,7 @@ const {
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix
-} = require('../helpers/testUtils');
+} = require('../../helpers/testUtils');
 
 const {
   createOrUseTestStream,
@@ -41,7 +41,7 @@ const {
   tryCatchExit,
   waitForActiveStream,
   waitForTestSf
-} = require('../helpers/kinesisHelpers');
+} = require('../../helpers/kinesisHelpers');
 
 const testConfig = loadConfig();
 const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestTrigger');
@@ -109,7 +109,7 @@ const expectedSyncGranulesPayload = {
   ]
 };
 
-const ruleDirectory = './spec/kinesisTests/data/rules';
+const ruleDirectory = './spec/parallel/kinesisTests/data/rules';
 const ruleOverride = {
   name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
   collection: {
