@@ -77,7 +77,7 @@ async function getStreamStatus(StreamName) {
  * @throws {Error} - Error describing current stream status
  */
 async function waitForActiveStream(streamName, initialDelaySecs = 10, maxRetries = 10){
-  let streamStatus = 'Anything';
+  let streamStatus = 'UNDEFINED';
   let stream;
   const displayName = streamName.split('-').pop();
 
