@@ -59,7 +59,7 @@ jobs:
 
     - name: "Deploy Integration Test Stack"
       stage: deploy integration test stack
-      if: branch = master OR commit_message =~ \[force-integration-tests\] OR (type = pull_request AND commit_message !~ \[skip-integration-tests\])
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -69,7 +69,7 @@ jobs:
 
     - name: "Run integration tests"
       stage: integration tests
-      if: branch = master OR commit_message =~ \[force-integration-tests\] OR (type = pull_request AND commit_message !~ \[skip-integration-tests\])
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -79,7 +79,7 @@ jobs:
 
     - name: "Run redeployment integration tests"
       stage: redeployment integration tests
-      if: branch = master OR commit_message =~ \[force-integration-tests\] OR (type = pull_request AND commit_message !~ \[skip-integration-tests\])
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -89,7 +89,7 @@ jobs:
 
     - name: "Cleanup integration tests"
       stage: cleanup integration tests
-      if: branch = master OR commit_message =~ \[force-integration-tests\] OR (type = pull_request AND commit_message !~ \[skip-integration-tests\])
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "Deploy to NPM"
