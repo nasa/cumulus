@@ -44,7 +44,6 @@
     "@cumulus/sync-granule": "^1.10.1",
     "@cumulus/test-data": "^1.10.0",
     "@cumulus/test-processing": "^1.10.1",
-    "@cumulus/wait-for-deploy": "^1.10.1",
     "aws-sdk": "^2.227.1",
     "child-process-promise": "^2.2.1",
     "deprecate": "^1.1.0",
