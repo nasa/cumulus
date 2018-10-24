@@ -337,7 +337,7 @@ async function addCollections(stackName, bucketName, dataDirectory, postfix) {
       collection.dataType += postfix;
     }
     const c = new Collection();
-    console.log(`adding collection ${collection.name}___${collection.version}`);
+    console.log(`\nadding collection ${collection.name}___${collection.version}`);
     return c.delete({ name: collection.name, version: collection.version })
       .then(() => c.create(collection));
   }));
