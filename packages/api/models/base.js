@@ -152,7 +152,7 @@ class Manager {
   }
 
   /**
-   * Check if a item exists
+   * Check if an item exists
    *
    * @param {Object} Key - the key to check for
    * @returns {boolean}
