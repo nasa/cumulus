@@ -3,17 +3,17 @@
 const test = require('ava');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const models = require('../../models');
-const bootstrap = require('../../lambdas/bootstrap');
-const pdrEndpoint = require('../../endpoints/pdrs');
-const indexer = require('../../es/indexer');
+const models = require('../../../models');
+const bootstrap = require('../../../lambdas/bootstrap');
+const pdrEndpoint = require('../../../endpoints/pdrs');
+const indexer = require('../../../es/indexer');
 const {
   testEndpoint,
   fakePdrFactory,
   fakeUserFactory
-} = require('../../lib/testUtils');
-const { Search } = require('../../es/search');
-const assertions = require('../../lib/assertions');
+} = require('../../../lib/testUtils');
+const { Search } = require('../../../es/search');
+const assertions = require('../../../lib/assertions');
 
 const pdrS3Key = (stackName, bucket, pdrName) => `${process.env.stackName}/pdrs/${pdrName}`;
 

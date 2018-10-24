@@ -10,16 +10,16 @@ const { randomString } = require('@cumulus/common/test-utils');
 const xml2js = require('xml2js');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 
-const assertions = require('../../lib/assertions');
-const models = require('../../models');
-const bootstrap = require('../../lambdas/bootstrap');
-const handleRequest = require('../../endpoints/granules');
-const indexer = require('../../es/indexer');
+const assertions = require('../../../lib/assertions');
+const models = require('../../../models');
+const bootstrap = require('../../../lambdas/bootstrap');
+const handleRequest = require('../../../endpoints/granules');
+const indexer = require('../../../es/indexer');
 const {
   fakeGranuleFactoryV2,
   fakeUserFactory
-} = require('../../lib/testUtils');
-const { Search } = require('../../es/search');
+} = require('../../../lib/testUtils');
+const { Search } = require('../../../es/search');
 
 const createBucket = (Bucket) => aws.s3().createBucket({ Bucket }).promise();
 
