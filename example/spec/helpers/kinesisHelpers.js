@@ -69,27 +69,32 @@ async function getStreamStatus(StreamName) {
  * Wait for a number of periods for a kinesis stream to become active.
  *
  * @param {string} streamName - name of kinesis stream to wait for
- * @param {integer} maxNumberElapsedPeriods - number of periods to wait for stream
- *                  default value 30; duration of period is 1000ms
+ * @param {integer} maxRetries - number of retries to attempt before failing.
+ *                  default value 8
  * @returns {string} current stream status: 'ACTIVE'
  * @throws {Error} - Error describing current stream status
  */
-async function waitForActiveStream(streamName, maxNumberElapsedPeriods = 60) {
+async function waitForActiveStream(streamName, maxRetries = 9){
   let streamStatus = 'Anything';
-  let elapsedPeriods = 0;
   let stream;
+  const displayName = streamName.split('-').pop();
 
-  /* eslint-disable no-await-in-loop */
-  while (streamStatus !== 'ACTIVE' && elapsedPeriods < maxNumberElapsedPeriods) {
-    await timeout(waitPeriodMs);
-    stream = await kinesis.describeStream({ StreamName: streamName }).promise();
-    streamStatus = stream.StreamDescription.StreamStatus;
-    elapsedPeriods += 1;
-  }
-  /* eslint-enable no-await-in-loop */
-
-  if (streamStatus === 'ACTIVE') return streamStatus;
-  throw new Error(`Stream never became active:  status: ${streamStatus}`);
+  return pRetry(
+    async () => {
+      stream = await kinesis.describeStream({ StreamName: streamName }).promise();
+      streamStatus = stream.StreamDescription.StreamStatus;
+      if (streamStatus === 'ACTIVE') return streamStatus;
+      throw new Error(`Stream never became active:  status: ${streamStatus}: ${streamName}`);
+    },
+    {
+      minTimeout: 3 * 1000,
+      factor: 1.45,
+      retries: maxRetries,
+      onFailedAttempt: (error) => {
+        console.log(`Stream in state ${streamStatus} retrying. ${error.attemptsLeft} remain on ${displayName} at ${new Date().toString()}`);
+      }
+    }
+  );
 }
 
 /**
@@ -318,7 +323,7 @@ async function waitForQueuedRecord(recordIdentifier, queueUrl, maxRetries = 15) 
         return await scanQueueForMessage(queueUrl, recordIdentifier);
       }
       catch (error) {
-        throw new Error('Trigger Retry');
+        throw new Error(`Never found ${recordIdentifier} on Queue`);
       }
     },
     {
@@ -326,7 +331,7 @@ async function waitForQueuedRecord(recordIdentifier, queueUrl, maxRetries = 15) 
       maxTimeout: 60 * 1000,
       retries: maxRetries,
       onFailedAttempt: (error) => {
-        console.log(`No message on Queue, retrying. ${error.attemptsLeft} attempts remain. ${new Date().toLocaleString()}`);
+        console.log(`No message on Queue. ${error.attemptsLeft} retries remain. ${new Date().toLocaleString()}`);
       }
     }
   );
