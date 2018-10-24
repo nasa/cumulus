@@ -48,7 +48,7 @@ const s3data = [
 ];
 
 describe('When the Sync Granule workflow is configured', () => {
-  const testId = createTimestampedTestId(config.stackName, 'SyncGranuleDuplicateHandlingVersion');
+  const testId = createTimestampedTestId(config.stackName, 'SyncGranuleDuplicateHandling');
   const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
 
