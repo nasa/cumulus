@@ -41,11 +41,11 @@ const {
   getExecutionUrl,
   loadConfig,
   updateAndUploadTestDataToBucket
-} = require('../../helpers/testUtils');
+} = require('../helpers/testUtils');
 
 const {
   loadFileWithUpdatedGranuleIdPathAndCollection
-} = require('../../helpers/granuleUtils');
+} = require('../helpers/granuleUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
@@ -171,7 +171,7 @@ describe('Ingesting from PDR', () => {
       let queueGranulesOutput;
       let expectedParsePdrOutput;
 
-      const outputPayloadFilename = './spec/parallel/ingest/resources/ParsePdr.output.json';
+      const outputPayloadFilename = './spec/ingest/resources/ParsePdr.output.json';
       const testDataGranuleId = 'MOD09GQ.A2016358.h13v04.006.2016360104606';
       const collectionId = 'MOD09GQ___006';
 
