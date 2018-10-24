@@ -41,7 +41,7 @@ const s3data = [
 ];
 
 describe('When the Ingest Granules workflow is configured\n', () => {
-  const testId = createTimestampedTestId(config.stackName, 'IngestGranuleDuplicateHandlingVersion');
+  const testId = createTimestampedTestId(config.stackName, 'IngestGranuleDuplicateHandling');
   const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
 
