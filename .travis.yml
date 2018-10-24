@@ -5,7 +5,7 @@ language: node_js
 
 stages:
   - name: build cache
-  # - name: unit test
+  - name: unit test
   - name: deploy integration test stack
   - name: integration tests
   - name: redeployment integration tests
