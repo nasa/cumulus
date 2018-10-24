@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const sinon = require('sinon');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const bootstrap = require('../../../lambdas/bootstrap');
