@@ -52,16 +52,18 @@ class Logger {
       let actualMessageArgs = messageArgs.slice(0, messageArgs.length - 1);
       if (actualMessageArgs.length === 0) actualMessageArgs = [error.message];
 
+      const additionalKeys = {
+        error: {
+          name: error.name,
+          message: error.message
+        }
+      };
+      if (error.stack) additionalKeys.error.stack = error.stack.split('\n');
+
       this._writeLogEvent(
         'error',
         actualMessageArgs,
-        {
-          error: {
-            name: error.name,
-            message: error.message,
-            stack: error.stack.split('\n')
-          }
-        }
+        additionalKeys
       );
     }
     else {
