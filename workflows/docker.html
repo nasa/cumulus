@@ -411,6 +411,19 @@
             
         </li>
     
+        <li class="chapter " data-level="1.6.5" data-path="../lambda_versioning.html">
+            
+                <a href="../lambda_versioning.html">
+            
+                    
+                    Lambda Versioning
+            
+                </a>
+            
+
+            
+        </li>
+    
 
             </ul>
             
@@ -715,7 +728,7 @@
 <pre><code>$ docker-compose run *command*
 </code></pre><p>where <em>commmand</em> is one of</p>
 <ul>
-<li><em>build</em>: Build and tag the image using the Dockerfile </li>
+<li><em>build</em>: Build and tag the image using the Dockerfile</li>
 <li><em>bash</em>: Run the Dockerfile interatively (via a bash shell)</li>
 <li><em>test</em>: Processes data in the directory <em>data/input</em> and saves the output to the <em>data/test-output</em> directory. These directories must exist.</li>
 </ul>
@@ -816,9 +829,9 @@ if __name__ == &quot;__main__&quot;:
     indir = sys.argv[1]
     outdir = sys.argv[2]
     process(indir, outdir)
-</code></pre><p>After setting up logging the code has a for-loop for processing any matching hdf5 in the input directory: </p>
+</code></pre><p>After setting up logging the code has a for-loop for processing any matching hdf5 in the input directory:</p>
 <p>1) convert to NetCDF with a C script
-2) validate the output (in this case just check for existence) 
+2) validate the output (in this case just check for existence)
 3) use &apos;ncatted&apos; to update the resulting file to be CF-compliant
 4) write out metadata generated for this file</p>
 <h2 id="process-testing">Process Testing</h2>
@@ -885,7 +898,7 @@ if __name__ == &quot;__main__&quot;:
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Dockerization","level":"1.3.5.2","depth":3,"next":{"title":"Workflow Configuration How-to's","level":"1.3.6","depth":2,"path":"workflows/workflow-configuration-how-to.md","ref":"workflows/workflow-configuration-how-to.md","articles":[]},"previous":{"title":"Lambda Functions","level":"1.3.5.1","depth":3,"path":"workflows/lambda.md","ref":"workflows/lambda.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"workflows/docker.md","mtime":"2018-09-04T20:52:58.726Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-09-04T20:54:18.037Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Dockerization","level":"1.3.5.2","depth":3,"next":{"title":"Workflow Configuration How-to's","level":"1.3.6","depth":2,"path":"workflows/workflow-configuration-how-to.md","ref":"workflows/workflow-configuration-how-to.md","articles":[]},"previous":{"title":"Lambda Functions","level":"1.3.5.1","depth":3,"path":"workflows/lambda.md","ref":"workflows/lambda.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"workflows/docker.md","mtime":"2018-10-24T21:57:57.465Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-10-24T21:59:10.434Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>

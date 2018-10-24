@@ -409,6 +409,19 @@
             
         </li>
     
+        <li class="chapter " data-level="1.6.5" data-path="../lambda_versioning.html">
+            
+                <a href="../lambda_versioning.html">
+            
+                    
+                    Lambda Versioning
+            
+                </a>
+            
+
+            
+        </li>
+    
 
             </ul>
             
@@ -710,7 +723,7 @@
 <p><code>Choice</code> state definitions include a list of <code>Choice Rule</code>s. Each <code>Choice Rule</code> defines a logical operation which compares an input value against a value using a comparison operator. For available comparision operators, review <a href="https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html" target="_blank">the AWS docs</a>.</p>
 <p>If the comparison evaluates to <code>true</code>, the <code>Next</code> state is followed.</p>
 <h2 id="example">Example</h2>
-<p>In <a href="https://github.com/nasa/cumulus/blob/master/example/workflows.yml" target="_blank">examples/workflow.yml</a> the <code>ParsePdr</code> workflow uses a <code>Choice</code> state, <code>CheckAgainChoice</code>, to terminate the workflow once <code>isFinished: true</code> is returned by the <code>CheckStatus</code> state.</p>
+<p>In <a href="https://github.com/nasa/cumulus/blob/master/example/workflows/sips.yml" target="_blank">examples/workflows/sips.yml</a> the <code>ParsePdr</code> workflow uses a <code>Choice</code> state, <code>CheckAgainChoice</code>, to terminate the workflow once <code>isFinished: true</code> is returned by the <code>CheckStatus</code> state.</p>
 <p>The <code>CheckAgainChoice</code> state definition requires an input object of the following structure:</p>
 <pre><code class="lang-json">{
   <span class="hljs-string">&quot;payload&quot;</span>: {
@@ -730,7 +743,7 @@
 <span class="hljs-attr">          Next:</span> StopStatus
 </code></pre>
 <h2 id="advanced-loops-in-cumulus-workflows">Advanced: Loops in Cumulus Workflows</h2>
-<p>Understanding the complete <code>ParsePdr</code> workflow is not necessary to understanding how <code>Choice</code> states work, but <code>ParsePdr</code> provides an example of how <code>Choice</code> states can be used to create a loop in a Cumulus workflow. </p>
+<p>Understanding the complete <code>ParsePdr</code> workflow is not necessary to understanding how <code>Choice</code> states work, but <code>ParsePdr</code> provides an example of how <code>Choice</code> states can be used to create a loop in a Cumulus workflow.</p>
 <p>In the complete <code>ParsePdr</code> workflow definition, the state <code>QueueGranules</code> is followed by <code>CheckStatus</code>. From <code>CheckStatus</code> a loop starts: Given <code>CheckStatus</code> returns <code>payload.isFinished: false</code>, <code>CheckStatus</code> is followed by <code>CheckAgainChoice</code> is followed by <code>PdrStatusReport</code> is followed by <code>WaitForSomeTime</code>, which returns to <code>CheckStatus</code>. Once <code>CheckStatus</code> returns <code>payload.isFinished: true</code>, <code>CheckAgainChoice</code> proceeds to <code>StopStatus</code>.</p>
 <div style="text-align:center"><img src="../images/sips-parse-pdr.png"></div>
 
@@ -775,7 +788,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Choice States","level":"2.7","depth":1,"previous":{"title":"Error Handling","level":"2.6","depth":1,"path":"data-cookbooks/error-handling.md","ref":"data-cookbooks/error-handling.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"data-cookbooks/choice-states.md","mtime":"2018-09-04T20:52:58.714Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-09-04T20:54:18.037Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Choice States","level":"2.7","depth":1,"previous":{"title":"Error Handling","level":"2.6","depth":1,"path":"data-cookbooks/error-handling.md","ref":"data-cookbooks/error-handling.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"data-cookbooks/choice-states.md","mtime":"2018-10-24T21:57:57.453Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-10-24T21:59:10.434Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>

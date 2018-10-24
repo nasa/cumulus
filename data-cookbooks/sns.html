@@ -411,6 +411,19 @@
             
         </li>
     
+        <li class="chapter " data-level="1.6.5" data-path="../lambda_versioning.html">
+            
+                <a href="../lambda_versioning.html">
+            
+                    
+                    Lambda Versioning
+            
+                </a>
+            
+
+            
+        </li>
+    
 
             </ul>
             
@@ -712,7 +725,7 @@
 <p>Workflows can be configured to send SNS messages containing the Cumulus message throughout the workflow by using the <a href="https://www.npmjs.com/package/@cumulus/sf-sns-report" target="_blank">SF-SNS-Report lambda function</a>.</p>
 <h2 id="pre-deployment-configuration">Pre-Deployment Configuration</h2>
 <h3 id="workflow-configuration">Workflow Configuration</h3>
-<p>The <a href="hello-world.html">Hello World Workflow</a> is configured to send an SNS message when starting the workflow and upon workflow completion. This is configured in <code>workflows.yml</code>.</p>
+<p>The <a href="hello-world.html">Hello World Workflow</a> is configured to send an SNS message when starting the workflow and upon workflow completion. This is configured in <code>workflows/helloworld.yml</code>.</p>
 <pre><code class="lang-yaml"><span class="hljs-attr">HelloWorldWorkflow:</span>
 <span class="hljs-attr">  Comment:</span> <span class="hljs-string">&apos;Returns Hello World&apos;</span>
 <span class="hljs-attr">  StartAt:</span> StartStatus
@@ -753,7 +766,7 @@
 <span class="hljs-attr">      Cause:</span> <span class="hljs-string">&apos;Workflow failed&apos;</span>
 </code></pre>
 <h4 id="sending-an-sns-message-in-an-error-case">Sending an SNS Message in an Error Case</h4>
-<p>To send an SNS message for an error case, you can configure your workflow to catch errors and set the next workflow step on error to a step with the <code>SfSnsReportLambdaFunction</code> lambda function. This is configured in <code>workflows.yml</code>.</p>
+<p>To send an SNS message for an error case, you can configure your workflow to catch errors and set the next workflow step on error to a step with the <code>SfSnsReportLambdaFunction</code> lambda function. This is configured in <code>workflows/sips.yml</code>.</p>
 <pre><code class="lang-yaml"><span class="hljs-attr">DiscoverPdrs:</span>
 <span class="hljs-attr">  CumulusConfig:</span>
 <span class="hljs-attr">    stack:</span> <span class="hljs-string">&apos;{$.meta.stack}&apos;</span>
@@ -770,7 +783,7 @@
 <span class="hljs-attr">  Next:</span> QueuePdrs <span class="hljs-comment"># When no error, go to the next step in the workflow</span>
 </code></pre>
 <h4 id="sending-an-sns-message-to-report-status">Sending an SNS message to report status</h4>
-<p>SNS messages can be sent at anytime during the workflow execution by adding a workflow step to send the message. In the following example, a PDR status report step is configured to report PDR status. This is configured in <code>workflows.yml</code>.</p>
+<p>SNS messages can be sent at anytime during the workflow execution by adding a workflow step to send the message. In the following example, a PDR status report step is configured to report PDR status. This is configured in <code>workflows/sips.yml</code>.</p>
 <pre><code class="lang-yaml"><span class="hljs-attr">PdrStatusReport:</span>
 <span class="hljs-attr">  CumulusConfig:</span>
 <span class="hljs-attr">    cumulus_message:</span>
@@ -851,7 +864,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"SNS Configuration","level":"2.3","depth":1,"next":{"title":"SIPS Workflow","level":"2.4","depth":1,"path":"data-cookbooks/sips-workflow.md","ref":"data-cookbooks/sips-workflow.md","articles":[]},"previous":{"title":"HelloWorldWorkflow","level":"2.2","depth":1,"path":"data-cookbooks/hello-world.md","ref":"data-cookbooks/hello-world.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"data-cookbooks/sns.md","mtime":"2018-09-04T20:52:58.714Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-09-04T20:54:18.037Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"SNS Configuration","level":"2.3","depth":1,"next":{"title":"SIPS Workflow","level":"2.4","depth":1,"path":"data-cookbooks/sips-workflow.md","ref":"data-cookbooks/sips-workflow.md","articles":[]},"previous":{"title":"HelloWorldWorkflow","level":"2.2","depth":1,"path":"data-cookbooks/hello-world.md","ref":"data-cookbooks/hello-world.md","articles":[]},"dir":"ltr"},"config":{"plugins":[],"root":"docs","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Cumulus Documentation","gitbook":"*"},"file":{"path":"data-cookbooks/sns.md","mtime":"2018-10-24T21:57:57.453Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-10-24T21:59:10.434Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>
