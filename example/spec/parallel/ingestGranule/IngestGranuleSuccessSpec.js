@@ -500,12 +500,24 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     describe('executions endpoint', () => {
-      it('returns tasks metadata with name and version', async () => {
+      let executionResponse;
+
+      beforeAll(async () => {
         const executionApiResponse = await apiTestUtils.getExecution({
           prefix: config.stackName,
           arn: workflowExecution.executionArn
         });
-        const executionResponse = JSON.parse(executionApiResponse.body);
+        executionResponse = JSON.parse(executionApiResponse.body);
+      });
+
+      it('returns overall status and timing for the execution', async () => {
+        expect(executionResponse.status).toBeDefined();
+        expect(executionResponse.createdAt).toBeDefined();
+        expect(executionResponse.updatedAt).toBeDefined();
+        expect(executionResponse.duration).toBeDefined();
+      });
+
+      it('returns tasks metadata with name and version', async () => {
         expect(executionResponse.tasks).toBeDefined();
         expect(executionResponse.tasks.length).not.toEqual(0);
         Object.keys(executionResponse.tasks).forEach((step) => {
@@ -553,7 +565,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(difference(allStates, stateNames).length).toBe(0);
       });
 
-      it('returns the inputs and outputs for each executed step', async () => {
+      it('returns the inputs, outputs, and timing information for each executed step', async () => {
         expect(executionStatus.executionHistory).toBeTruthy();
 
         // expected 'not executed' steps
@@ -565,6 +577,8 @@ describe('The S3 Ingest Granules workflow', () => {
         // steps with *EventDetails will have the input/output, and also stepname when state is entered/exited
         const stepNames = [];
         executionStatus.executionHistory.events.forEach((event) => {
+          // expect timing information for each step
+          expect(event.timestamp).toBeDefined();
           const eventKeys = Object.keys(event);
           if (intersection(eventKeys, ['input', 'output']).length === 1) stepNames.push(event.name);
         });
