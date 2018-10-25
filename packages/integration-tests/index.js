@@ -30,16 +30,7 @@ const cmr = require('./cmr.js');
 const lambda = require('./lambda');
 const granule = require('./granule.js');
 const waitForDeployment = require('./lambdas/waitForDeployment');
-
-/**
- * Wait for the defined number of milliseconds
- *
- * @param {number} waitPeriod - number of milliseconds to wait
- * @returns {Promise.<undefined>} - promise resolves after a given time period
- */
-function sleep(waitPeriod) {
-  return new Promise((resolve) => setTimeout(resolve, waitPeriod));
-}
+const sleep = require('./sleep');
 
 /**
  * Wait for an AsyncOperation to reach a given status
