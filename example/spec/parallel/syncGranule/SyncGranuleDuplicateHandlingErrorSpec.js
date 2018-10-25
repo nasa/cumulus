@@ -12,7 +12,7 @@ const {
   api: apiTestUtils
 } = require('@cumulus/integration-tests');
 
-const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
+const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 const {
   loadConfig,
   createTimestampedTestId,
@@ -20,7 +20,7 @@ const {
   createTestSuffix,
   deleteFolder,
   uploadTestDataToBucket
-} = require('../helpers/testUtils');
+} = require('../../helpers/testUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 
@@ -34,7 +34,7 @@ describe('The Sync Granules workflow is configured to handle duplicates as "erro
   const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
 
-  const inputPayloadFilename = './spec/syncGranule/SyncGranuleDuplicateHandling.input.payload.json';
+  const inputPayloadFilename = './spec/parallel/syncGranule/SyncGranuleDuplicateHandling.input.payload.json';
 
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';

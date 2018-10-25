@@ -25,18 +25,18 @@ const {
   createTestSuffix,
   getFilesMetadata,
   uploadTestDataToBucket
-} = require('../helpers/testUtils');
+} = require('../../helpers/testUtils');
 const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
   setupTestGranuleForIngest
-} = require('../helpers/granuleUtils');
+} = require('../../helpers/granuleUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const workflowName = 'SyncGranule';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
-const outputPayloadTemplateFilename = './spec/syncGranule/SyncGranule.output.payload.template.json';
+const outputPayloadTemplateFilename = './spec/parallel/syncGranule/SyncGranule.output.payload.template.json';
 const templatedOutputPayloadFilename = templateFile({
   inputTemplateFilename: outputPayloadTemplateFilename,
   config: config.SyncGranule
@@ -52,7 +52,7 @@ describe('When the Sync Granule workflow is configured to keep both files when e
   const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
 
-  const inputPayloadFilename = './spec/syncGranule/SyncGranule.input.payload.json';
+  const inputPayloadFilename = './spec/parallel/syncGranule/SyncGranule.input.payload.json';
 
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
