@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.10.2] - 2018-10-24
+
 ### Added
 - **CUMULUS-885**
   - Added 'human readable' version identifiers to Lambda Versioning lambda aliases
@@ -43,6 +45,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `cleanUpProviders` combines the above in one function.
   - `@cumulus/integrations-tests/api.js`: `deleteGranule` and `deletePdr` functions to make `DELETE` requests to Cumulus API
   - `rules` API functionality for posting and deleting a rule and listing all rules
+  - `wait-for-deploy` lambda for use in the redeployment tests
 - `@cumulus/ingest/granule.js`: `ingestFile` inserts new `duplicate_found: true` field in the file's record if a duplicate file already exists on S3.
 - `@cumulus/api`: `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
@@ -57,6 +60,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- **CUMULUS-940** - modified `@cumulus/common/aws` `receiveSQSMessages` to take a parameter object instead of positional parameters.  All defaults remain the same, but now access to long polling is available through `options.waitTimeSeconds`.
+- **CUMULUS-948** - Update lambda functions `CNMToCMA` and `CnmResponse` in the `cumulus-data-shared` bucket and point the default stack to them.
 - **CUMULUS-782** - Updated `@cumulus/sync-granule` task and `Granule.ingestFile` in `@cumulus/ingest` to keep both old and new data when a destination file with different checksum already exists and `duplicateHandling` is `version`
 - Updated the config schema in `@cumulus/move-granules` to include the `moveStagedFiles` param.
 - **CUMULUS-778** - Updated config schema and documentation in `@cumulus/sync-granule` to include `duplicateHandling` parameter for specifying how duplicate filenames should be handled
@@ -553,7 +558,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.10.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.10.2...HEAD
+[v1.10.2]: https://github.com/nasa/cumulus/compare/v1.10.0...v1.10.2
 [v1.10.1]: https://github.com/nasa/cumulus/compare/v1.10.0...v1.10.1
 [v1.10.0]: https://github.com/nasa/cumulus/compare/v1.9.1...v1.10.0
 [v1.9.1]: https://github.com/nasa/cumulus/compare/v1.9.0...v1.9.1
