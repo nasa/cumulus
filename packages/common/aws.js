@@ -210,8 +210,10 @@ exports.putS3Object = (params) => {
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 * @returns {Promise} - promise of the object being copied
 **/
-exports.copyS3Object = (params) =>
-  exports.s3().copyObject(params).promise();
+exports.copyS3Object = (params) => {
+  if (!params.TaggingDirective) params.TaggingDirective = 'COPY'; //eslint-disable-line no-param-reassign
+  return exports.s3().copyObject(params).promise();
+};
 
 /**
 * Upload an object to S3 (promise)
