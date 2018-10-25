@@ -70,9 +70,9 @@ const s3data = [
 ];
 
 const isLambdaStatusLogEntry = (logEntry) =>
-  logEntry.message.includes('START')
-  || logEntry.message.includes('END')
-  || logEntry.message.includes('REPORT');
+  logEntry.message.includes('START') ||
+    logEntry.message.includes('END') ||
+    logEntry.message.includes('REPORT');
 
 const isCumulusLogEntry = (logEntry) => !isLambdaStatusLogEntry(logEntry);
 
@@ -87,8 +87,6 @@ describe('The S3 Ingest Granules workflow', () => {
   const newCollectionId = constructCollectionId(collection.name, collection.version);
   const provider = { id: `s3_provider${testSuffix}` };
   let workflowExecution = null;
-  let failingWorkflowExecution = null;
-  let failedExecutionArn;
   let failedExecutionName;
   let inputPayload;
   let expectedSyncGranulePayload;
@@ -163,17 +161,6 @@ describe('The S3 Ingest Granules workflow', () => {
       provider,
       inputPayload
     );
-
-    failingWorkflowExecution = await buildAndExecuteWorkflow(
-      config.stackName,
-      config.bucket,
-      workflowName,
-      collection,
-      provider,
-      {}
-    );
-    failedExecutionArn = failingWorkflowExecution.executionArn.split(':');
-    failedExecutionName = failedExecutionArn.pop();
   });
 
   afterAll(async () => {
@@ -183,9 +170,7 @@ describe('The S3 Ingest Granules workflow', () => {
       collectionModel.delete(collection),
       providerModel.delete(provider),
       executionModel.delete({ arn: workflowExecution.executionArn }),
-      executionModel.delete({ arn: failingWorkflowExecution.executionArn }),
       s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }).promise(),
-      s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` }).promise(),
       apiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
