@@ -7,8 +7,10 @@
     "node": ">=8.10.0"
   },
   "scripts": {
-    "test": "jasmine",
+    "test": "jasmine && npm run parallel-tests",
+    "parallel-tests": "sh scripts/tests-parallel.sh",
     "redeploy-test": "jasmine spec/standalone/redeployment/*.js",
+    "all-tests": "npm run parallel-tests && jasmine && npm run redeploy-test",
     "deploy": "./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/app --profile $AWS_PROFILE",
     "deploy-iam": "./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/iam  --profile $AWS_PROFILE"
   },
@@ -70,6 +72,7 @@
     "moment": "^2.22.2",
     "node-forge": "^0.7.5",
     "p-timeout": "2.0.1",
+    "parallel": "^1.2.0",
     "tempy": "^0.2.1",
     "url-join": "^1.1.0",
     "uuid": "^3.2.1"

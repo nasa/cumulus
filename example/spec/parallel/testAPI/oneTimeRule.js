@@ -12,7 +12,7 @@ const {
 const {
   loadConfig,
   timestampedName
-} = require('../helpers/testUtils');
+} = require('../../helpers/testUtils');
 
 const config = loadConfig();
 
