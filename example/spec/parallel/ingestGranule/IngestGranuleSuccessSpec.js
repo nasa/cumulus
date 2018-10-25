@@ -356,7 +356,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  describe('an SNS message', () => {
+  xdescribe('an SNS message', () => {
     let lambdaOutput;
     const existCheck = [];
 
@@ -580,7 +580,13 @@ describe('The S3 Ingest Granules workflow', () => {
           // expect timing information for each step
           expect(event.timestamp).toBeDefined();
           const eventKeys = Object.keys(event);
-          if (intersection(eventKeys, ['input', 'output']).length === 1) stepNames.push(event.name);
+          if (event.name && intersection(eventKeys, ['input', 'output']).length === 1) {
+            if (event.type === 'TaskStateExited') {
+              const prevEvent = executionStatus.executionHistory.events[event.previousEventId - 1];
+              expect(['LambdaFunctionSucceeded', 'LambdaFunctionFailed']).toContain(prevEvent.type);
+            }
+            stepNames.push(event.name);
+          }
         });
 
         // all the executed steps have *EventDetails
