@@ -26,7 +26,7 @@ class Consume {
     let counter = 0;
     const originalMessageLimit = messageLimit;
     while (!this.endConsume) {
-      const messages = await receiveSQSMessages(this.queueUrl, messageLimit);
+      const messages = await receiveSQSMessages(this.queueUrl, {numOfMessages: messageLimit});
       counter += messages.length;
 
       if (messages.length > 0) {

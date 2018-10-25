@@ -67,7 +67,7 @@ To run all of the tests, including standalone, run `DEPLOYMENT=<name-of-your-dep
 
 To run an individual test file, include a path to the spec file, i.e. `DEPLOYMENT=<name-of-your-deployment> npm test spec/helloWorld/HelloWorldSuccessSpec.js`.
 
-Jasmine supports regular expressions for running tests, so an entire test folder can be run using `DEPLOYMENT=<name-of-your-deployment> jasmine spec/standalone/*`
+Jasmine supports wildcard expressions for running tests, so an entire test folder can be run using `DEPLOYMENT=<name-of-your-deployment> jasmine spec/standalone/*`
 
 ## Adding tests
 
