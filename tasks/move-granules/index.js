@@ -18,7 +18,8 @@ const {
     deleteS3Object,
     parseS3Uri,
     promiseS3Upload,
-    s3ObjectExists
+    s3ObjectExists,
+    s3TagSetToQueryString
   }
 } = require('@cumulus/common');
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
@@ -270,7 +271,7 @@ async function updateCmrFileAccessURLs(cmrFiles, granulesObject, allFiles, distE
     /* eslint-enable no-param-reassign */
     const updatedCmrFile = granule.files.find((f) => f.filename.match(/.*\.cmr\.xml$/));
     // S3 upload only accepts tag query strings, so reduce tags to query string.
-    const tagsQueryString = cmrFile.s3Tags.reduce((acc, tag) => acc.concat(`&${tag.Key}=${tag.Value}`), '').substring(1);
+    const tagsQueryString = s3TagSetToQueryString(cmrFile.s3Tags);
     const params = {
       Bucket: updatedCmrFile.bucket.name,
       Key: updatedCmrFile.filepath,
