@@ -29,6 +29,7 @@ const rulesApi = require('./api/rules');
 const cmr = require('./cmr.js');
 const lambda = require('./lambda');
 const granule = require('./granule.js');
+const waitForDeployment = require('./lambdas/waitForDeployment');
 
 /**
  * Wait for the defined number of milliseconds
@@ -336,7 +337,7 @@ async function addCollections(stackName, bucketName, dataDirectory, postfix) {
       collection.dataType += postfix;
     }
     const c = new Collection();
-    console.log(`adding collection ${collection.name}___${collection.version}`);
+    console.log(`\nadding collection ${collection.name}___${collection.version}`);
     return c.delete({ name: collection.name, version: collection.version })
       .then(() => c.create(collection));
   }));
@@ -691,5 +692,6 @@ module.exports = {
   getLambdaAliases: lambda.getLambdaAliases,
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
   waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs,
-  getExecutions
+  getExecutions,
+  waitForDeploymentHandler: waitForDeployment.handler
 };

@@ -20,7 +20,7 @@ result=$?
 
 echo parallel tests complete: $result suite failures
 
-for testFile in $(find $testOutputDir -type f); do
+for testFile in $testOutputDir/*; do
   cat $testFile
 done
 
