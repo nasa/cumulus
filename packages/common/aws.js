@@ -169,6 +169,16 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
 };
 
 /**
+* Convert S3 TagSet Object to query string
+* e.g. [{ Key: 'tag', Value: 'value }] to 'tag=value'
+*
+* @param {Array<Object>} tagset - S3 TagSet array
+* @returns {string} - tags query string
+*/
+exports.s3TagSetToQueryString = (tagset) => tagset.reduce((acc, tag) => acc.concat(`&${tag.Key}=${tag.Value}`), '').substring(1);
+
+
+/**
  * Delete an object from S3
  *
  * @param {string} bucket - bucket where the object exists
