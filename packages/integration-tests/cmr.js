@@ -5,6 +5,7 @@ const pWaitFor = require('p-wait-for');
 const xml2js = require('xml2js');
 const { s3 } = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
+const sleep = require('./sleep');
 
 /**
  * Sample granule used to update fields and save as a .cmr.xml file
@@ -105,8 +106,8 @@ async function waitForConceptExistsOutcome(cmrLink, expectation, retries = 3, in
         timeout: interval * retries
       }
     );
-
-    console.log(`waitForConceptExistsOutcome() succeeded. conceptExists('${cmrLink}') === ${expectation}`);
+    const shardSettleTimeMs = 1000;
+    await sleep(shardSettleTimeMs);
   }
   catch (err) {
     console.log('waitForConceptExistsOutcome() failed:', err.message);
