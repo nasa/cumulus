@@ -736,16 +736,19 @@ exports.sendSQSMessage = (queueUrl, message) => {
  * can be set and the timeout is also adjustable.
  *
  * @param {string} queueUrl - url of the SQS queue
- * @param {integer} numOfMessages - number of messages to read from the queue
- * @param {integer} timeout - number of seconds it takes for a message to timeout
+ * @param {Object} options - options object
+ * @param {integer} [options.numOfMessages=1] - number of messages to read from the queue
+ * @param {integer} [options.timeout=30] - seconds it takes for a message to timeout
+ * @param {integer} [options.waitTimeSeconds=0] - number of seconds to poll SQS queue (long polling)
  * @returns {Promise.<Array>} an array of messages
  */
-exports.receiveSQSMessages = async (queueUrl, numOfMessages = 1, timeout = 30) => {
+exports.receiveSQSMessages = async (queueUrl, options) => {
   const params = {
     QueueUrl: queueUrl,
     AttributeNames: ['All'],
-    VisibilityTimeout: timeout,
-    MaxNumberOfMessages: numOfMessages
+    VisibilityTimeout: options.timeout || 30,
+    WaitTimeSeconds: options.waitTimeSeconds || 0,
+    MaxNumberOfMessages: options.numOfMessages || 1
   };
 
   const messages = await exports.sqs().receiveMessage(params).promise();
