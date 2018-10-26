@@ -83,14 +83,15 @@ async function waitForTestExecution() {
 }
 
 describe('When I create a one-time rule via the Cumulus API', () => {
-  let postRuleResponse = '';
+  let postRule = '';
 
   beforeAll(async () => {
     // Create a one-time rule
-    postRuleResponse = await rulesApiTestUtils.postRule({
+    const postRuleResponse = await rulesApiTestUtils.postRule({
       prefix: config.stackName,
       rule: helloWorldRule
     });
+    postRule = JSON.parse(postRuleResponse.body);
   });
 
   afterAll(async () => {
@@ -102,13 +103,13 @@ describe('When I create a one-time rule via the Cumulus API', () => {
   });
 
   it('the rule is returned in the post response', () => {
-    const responseCopy = removeRuleAddedParams(postRuleResponse.record);
+    const responseCopy = removeRuleAddedParams(postRule.record);
 
     expect(responseCopy).toEqual(helloWorldRule);
   });
 
   it('the rule is enabled by default', () => {
-    expect(postRuleResponse.record.state).toEqual('ENABLED');
+    expect(postRule.record.state).toEqual('ENABLED');
   });
 
   describe('Upon rule creation', () => {
@@ -126,18 +127,19 @@ describe('When I create a one-time rule via the Cumulus API', () => {
   });
 
   describe('When listing the rules via the API', () => {
-    let listRulesResponse = '';
+    let listRules = '';
 
     beforeAll(async () => {
-      listRulesResponse = await rulesApiTestUtils.listRules({
+      const listRulesResponse = await rulesApiTestUtils.listRules({
         prefix: config.stackName
       });
 
-      console.log(JSON.stringify(listRulesResponse));
+      listRules = JSON.parse(listRulesResponse.body);
+      console.log(JSON.stringify(listRules));
     });
 
     it('the rule is returned with the listed rules', () => {
-      const rule = listRulesResponse.results.find((result) => result.name === helloWorldRule.name);
+      const rule = listRules.results.find((result) => result.name === helloWorldRule.name);
       expect(rule).toBeDefined();
 
       const ruleCopy = removeRuleAddedParams(rule);
@@ -152,7 +154,8 @@ describe('When I create a one-time rule via the Cumulus API', () => {
       updateParams: { newParam: true }
     });
 
-    expect(updatingRuleResponse).not.toBeNull;
-    expect(updatingRuleResponse.newParam).toEqual(true);
+    const updatedRule = JSON.parse(updatingRuleResponse.body);
+    expect(updatedRule).not.toBeNull;
+    expect(updatedRule.newParam).toEqual(true);
   });
 });
