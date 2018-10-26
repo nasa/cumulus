@@ -22,6 +22,11 @@
  */
 
 const { Collection, Execution, Pdr } = require('@cumulus/api/models');
+
+const {
+  aws: { s3, deleteS3Object }
+} = require('@cumulus/common');
+
 const {
   addCollections,
   addProviders,
@@ -50,7 +55,8 @@ const {
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const taskName = 'DiscoverAndQueuePdrs';
-const pdrFilename = 'MOD09GQ_1granule_v3.PDR';
+const origPdrFilename = 'MOD09GQ_1granule_v3.PDR';
+let pdrFilename;
 
 const s3data = [
   '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR',
@@ -62,6 +68,8 @@ describe('Ingesting from PDR', () => {
   const testId = createTimestampedTestId(config.stackName, 'IngestFromPdr');
   const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
+
+  pdrFilename = `${testSuffix.slice(1)}_${origPdrFilename}`;
 
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
@@ -81,11 +89,6 @@ describe('Ingesting from PDR', () => {
   beforeAll(async () => {
     // populate collections, providers and test data
     await Promise.all([
-      // delete pdr from old tests
-      apiTestUtils.deletePdr({
-        prefix: config.stackName,
-        pdr: pdrFilename
-      }),
       updateAndUploadTestDataToBucket(
         config.bucket,
         s3data,
@@ -101,6 +104,15 @@ describe('Ingesting from PDR', () => {
 
     // update provider path
     await collectionModel.update(collection, { provider_path: testDataFolder });
+
+    // Rename the PDR to avoid race conditions
+    await s3().copyObject({
+      Bucket: config.bucket,
+      CopySource: `${config.bucket}/${testDataFolder}/${origPdrFilename}`,
+      Key: `${testDataFolder}/${pdrFilename}`
+    }).promise();
+
+    await deleteS3Object(config.bucket, `${testDataFolder}/${origPdrFilename}`);
   });
 
   afterAll(async () => {
@@ -187,6 +199,7 @@ describe('Ingesting from PDR', () => {
             collectionId
           );
           expectedParsePdrOutput.granules[0].dataType += testSuffix;
+          expectedParsePdrOutput.pdr.name = pdrFilename;
 
           parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrExecutionArn);
 

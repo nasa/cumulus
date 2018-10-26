@@ -125,7 +125,6 @@ describe('The S3 Ingest Granules workflow', () => {
       apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData })
     ]);
 
-    console.log('Starting ingest test');
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
