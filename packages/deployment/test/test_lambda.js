@@ -4,6 +4,7 @@
 'use strict';
 
 const fs = require('fs-extra');
+const nock = require('nock');
 const os = require('os');
 const path = require('path');
 const sinon = require('sinon');
@@ -15,6 +16,24 @@ const { fetchMessageAdapter } = require('../lib/adapter');
 const gitPath = 'nasa/cumulus-message-adapter';
 const zipFixturePath = 'test/fixtures/zipfile-fixture.zip';
 const zipFixtureSize = fs.statSync(zipFixturePath).size;
+
+test.before(() => {
+  nock.disableNetConnect();
+  nock.enableNetConnect('localhost');
+
+  nock('https://api.github.com')
+    .persist()
+    .get('/repos/nasa/cumulus-message-adapter/releases/latest')
+    .reply(
+      200,
+      { tag_name: 'v1.2.3' }
+    );
+
+  nock('https://github.com')
+    .persist()
+    .get('/nasa/cumulus-message-adapter/releases/download/v1.2.3/cumulus-message-adapter.zip')
+    .replyWithFile(200, './test/fixtures/zipfile-fixture.zip');
+});
 
 test.beforeEach(async (t) => {
   t.context.temp = fs.mkdtempSync(`${os.tmpdir()}${path.sep}`);
@@ -59,6 +78,11 @@ test.beforeEach(async (t) => {
 
 test.afterEach.always('cleanup temp directory', async (t) => {
   await fs.remove(t.context.temp);
+});
+
+test.after.always(() => {
+  nock.cleanAll();
+  nock.enableNetConnect();
 });
 
 test.serial('addWorkflowLambdahashes: adds hash values to config.workflowLambdas from config.lambda', (t) => { // eslint-disable-line max-len
