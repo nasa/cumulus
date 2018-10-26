@@ -1,3 +1,6 @@
+
+/* eslint-disable no-console, no-param-reassign */
+
 'use strict';
 
 const fs = require('fs-extra');
@@ -58,7 +61,7 @@ test.afterEach.always('cleanup temp directory', async (t) => {
   await fs.remove(t.context.temp);
 });
 
-test.serial('addWorkflowLambdahashes: adds hash values to config.workflowLambdas from config.lambda', (t) => {
+test.serial('addWorkflowLambdahashes: adds hash values to config.workflowLambdas from config.lambda', (t) => { // eslint-disable-line max-len
   t.context.config.lambdas = { FirstLambda: { hash: 'abcdefg' }, SecondLambda: {} };
   t.context.config.workflowLambdas = { FirstLambda: {}, ThirdLmabda: {} };
   const testLambda = new Lambda(t.context.config);
@@ -131,7 +134,7 @@ test.serial('getLambdaVersionFromPackageFile: returns the expected version', asy
   t.is(expected, actual);
 });
 
-test.serial('getLambdaVersionFromPackageFile: returns null if file has no version id', async (t) => {
+test.serial('getLambdaVersionFromPackageFile: returns null if file has no version id', async (t) => { // eslint-disable-line max-len
   const testLambda = new Lambda(t.context.config);
   sinon.stub(fs, 'readFileSync').returns('{"notreallyajsonpackagefile": "foobar"}');
   sinon.stub(fs, 'existsSync').returns(true);
@@ -182,7 +185,7 @@ test.serial('zipLambda: works for lambda using message adapter', async (t) => {
   );
 });
 
-test.serial('zipLambda: given an invalid zip file generated from a previous run, a new valid lambda file is generated', async (t) => {
+test.serial('zipLambda: given an invalid zip file generated from a previous run, a new valid lambda file is generated', async (t) => { // eslint-disable-line max-len
   t.context.lambda.useMessageAdapter = true;
   const lambdaLocalOrigin = t.context.lambda.local;
   const lambdaRemoteOrigin = t.context.lambda.remote;
@@ -213,7 +216,7 @@ test.serial('zipLambda: given an invalid zip file generated from a previous run,
 });
 
 
-test.serial('zipLambda: for lambda using message adapter, no new file is generated if the task and message adapter are not updated', async (t) => {
+test.serial('zipLambda: for lambda using message adapter, no new file is generated if the task and message adapter are not updated', async (t) => { // eslint-disable-line max-len
   t.context.lambda.useMessageAdapter = true;
 
   // put a lambda zip file there as the result of the previous run
@@ -238,7 +241,8 @@ test.serial('zipLambda: for lambda using message adapter, no new file is generat
   t.is(t.context.lambda.remote, existingLambdaRemote);
 });
 
-test.serial('zipLambda: for lambda using message adapter, a new file is created if the message adapter is updated', async (t) => {
+
+test.serial('zipLambda: for lambda using message adapter, a new file is created if the message adapter is updated', async (t) => { // eslint-disable-line max-len
   t.context.lambda.useMessageAdapter = true;
   const lambdaLocalOrigin = t.context.lambda.local;
   const lambdaRemoteOrigin = t.context.lambda.remote;
