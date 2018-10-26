@@ -566,7 +566,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(difference(allStates, stateNames).length).toBe(0);
       });
 
-      it('returns the inputs, outputs, and timing information for each executed step', async () => {
+      it('returns the inputs, outputs, timing, and status information for each executed step', async () => {
         expect(executionStatus.executionHistory).toBeTruthy();
 
         // expected 'not executed' steps
