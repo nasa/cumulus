@@ -7,9 +7,9 @@ const {
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
   s3,
+  s3GetObjectTagging,
   promiseS3Upload,
   headObject,
-  getS3ObjectTagging,
   parseS3Uri
 } = require('@cumulus/common/aws');
 const clonedeep = require('lodash.clonedeep');
@@ -137,7 +137,7 @@ test.serial('should preserve object tags', async (t) => {
 
   const output = await moveGranules(newPayload);
   await Promise.all(output.granules[0].files.map(async (file) => {
-    const actualTags = await getS3ObjectTagging(file.bucket, file.filepath);
+    const actualTags = await s3GetObjectTagging(file.bucket, file.filepath);
     t.deepEqual(
       { file: file.name, tagset },
       { file: file.name, tagset: actualTags.TagSet }

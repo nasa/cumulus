@@ -209,7 +209,7 @@ exports.s3ObjectExists = (params) =>
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 * @returns {Promise} - promise of the object being put
 **/
-exports.putS3Object = (params) => {
+exports.s3PutObject = (params) => {
   if (!params.ACL) params.ACL = 'private'; //eslint-disable-line no-param-reassign
   return exports.s3().putObject(params).promise();
 };
@@ -220,7 +220,7 @@ exports.putS3Object = (params) => {
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 * @returns {Promise} - promise of the object being copied
 **/
-exports.copyS3Object = (params) => {
+exports.s3CopyObject = (params) => {
   if (!params.TaggingDirective) params.TaggingDirective = 'COPY'; //eslint-disable-line no-param-reassign
   return exports.s3().copyObject(params).promise();
 };
@@ -276,7 +276,7 @@ exports.headObject = (bucket, key) =>
 * @param {string} key - key for object (filepath + filename)
 * @returns {Promise} - returns response from `S3.getObjectTagging` as a promise
 **/
-exports.getS3ObjectTagging = (bucket, key) =>
+exports.s3GetObjectTagging = (bucket, key) =>
   exports.s3().getObjectTagging({ Bucket: bucket, Key: key }).promise();
 
 /**

@@ -13,8 +13,8 @@ const {
 } = require('@cumulus/api');
 const {
   aws: {
-    getS3ObjectTagging,
     s3,
+    s3GetObjectTagging,
     s3ObjectExists,
     parseS3Uri
   },
@@ -272,7 +272,7 @@ describe('The S3 Ingest Granules workflow', () => {
       files = lambdaOutput.payload.granules[0].files;
       movedTaggings = await Promise.all(lambdaOutput.payload.granules[0].files.map((file) => {
         const { Bucket, Key } = parseS3Uri(file.filename);
-        return getS3ObjectTagging(Bucket, Key);
+        return s3GetObjectTagging(Bucket, Key);
       }));
       existCheck[0] = await s3ObjectExists({ Bucket: files[0].bucket, Key: files[0].filepath });
       existCheck[1] = await s3ObjectExists({ Bucket: files[1].bucket, Key: files[1].filepath });
