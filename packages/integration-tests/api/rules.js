@@ -21,7 +21,7 @@ async function callRuleApiFunction(prefix, requestPayload) {
   console.log(`payload: ${payload}`);
 
   try {
-    return JSON.parse(payload.body);
+    return payload;
   }
   catch (error) {
     console.log(`Error parsing JSON response for rule ${payload.httpMethod}: ${payload}`);
