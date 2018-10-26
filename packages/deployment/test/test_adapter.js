@@ -1,3 +1,5 @@
+
+/* eslint-disable no-console, no-param-reassign */
 'use strict';
 
 const os = require('os');
@@ -68,7 +70,7 @@ test('should crash if the version is wrong', async (t) => {
   await t.throws(promise);
 });
 
-test.afterEach.always('final cleanup', async (t) => {
+test.afterEach.always('final cleanup', async(t) => {
   // delete the temp directory
   await fs.remove(t.context.temp);
 });
