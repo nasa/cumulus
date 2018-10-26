@@ -97,7 +97,7 @@ async function conceptExists(cmrLink) {
  * @returns {Promise<undefined>}
  * @throws {TimeoutError} - throws error when timeout is reached
  */
-async function waitForConceptExistsOutcome(cmrLink, expectation, retries = 3, interval = 2000) {
+async function waitForConceptExistsOutcome(cmrLink, expectation, retries = 20, interval = 3000) {
   try {
     await pWaitFor(
       async () => (await conceptExists(cmrLink)) === expectation,
