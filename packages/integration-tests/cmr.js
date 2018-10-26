@@ -90,6 +90,7 @@ async function conceptExists(cmrLink) {
   return response.body.feed.entry.length > 0;
 }
 
+// See https://bugs.earthdata.nasa.gov/browse/CUMULUS-962
 const waitForCmrToBeConsistent = () => sleep(ONE_SECOND);
 
 /**
