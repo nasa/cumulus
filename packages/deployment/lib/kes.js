@@ -218,8 +218,10 @@ class UpdatedKes extends Kes {
    */
   setParentOverrideConfigValues() {
     if (!this.config.parent) return;
+
     const parent = this.config.parent;
-    this.config.override_with_parent.map((value) => {
+
+    this.config.override_with_parent.forEach((value) => {
       this.config[value] = (parent[value] == null) ? this.config[value] : parent[value];
     });
   }
