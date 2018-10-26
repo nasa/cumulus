@@ -284,3 +284,29 @@ test.serial('setParentOverrideConfigValues ignores missing parent configuration'
 
   t.is(expected, actual);
 });
+
+
+test.serial('addLambdaDeadLetterQueues adds dead letter queue to the sqs configuration', (t) => {
+  const kes = t.context.kes;
+  kes.config.lambdas.jobs.namedLambdaDeadLetterQueue = true;
+  kes.config.DLQDefaultTimeout = 60;
+  kes.config.DLQDefaultMessageRetentionPeriod = 5;
+  kes.addLambdaDeadLetterQueues();
+
+  const expected = {
+    MessageRetantionPeriod: 5,
+    visibilityTimeout: 60
+  };
+
+  const actual = kes.config.sqs.jobsDeadLetterQueue;
+  t.deepEqual(expected, actual);
+});
+
+test.serial('addLambdaDeadLetterQueues adds dead letter queue to the sqs configuration', (t) => {
+  const kes = t.context.kes;
+  kes.config.lambdas.jobs.namedLambdaDeadLetterQueue = true;
+  kes.addLambdaDeadLetterQueues();
+  const actual = kes.config.lambdas.jobs.deadletterqueue;
+  const expected = 'jobsDeadLetterQueue';
+  t.is(expected, actual);
+});

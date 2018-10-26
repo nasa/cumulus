@@ -13,6 +13,13 @@ default:
   message_adapter_repo: cumulus-message-adapter
   message_adapter_filename: cumulus-message-adapter.zip
 
+  customCompilation: true
+  injectWorkflowLambdaAliases: true
+
+  DLQDefaultTimeout: 60
+  DLQDefaultMessageRetentionPeriod: 1209600
+  processDefaultDeadLetterQueues: true
+
   nested_templates:
     CumulusApiDefault:
       cfFile: node_modules/@cumulus/deployment/app/cumulus_api.template.yml
@@ -29,9 +36,6 @@ default:
 
   # if not specified the value of the apigateway dist url is used
   # api_distribution_url: https://apigateway-url-to-distribution-app/
-
-  customCompilation: true
-  injectWorkflowLambdaAliases: true
 
   params:
     - name: CmrPassword
@@ -164,6 +168,10 @@ default:
           schedule: rate(1 minute)
           messageLimit: 10
           state: ENABLED
+
+    triggerLambdaFailure:
+      MessageRetantionPeriod: 1209600
+      visibilityTimeout: 60
 
     kinesisFailure:
       visibilityTimeout: 20

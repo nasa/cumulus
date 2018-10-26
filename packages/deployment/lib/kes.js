@@ -208,7 +208,7 @@ class UpdatedKes extends Kes {
   setParentOverrideConfigValues() {
     if (!this.config.parent) return;
     const parent = this.config.parent;
-    this.config.override_with_parent.map((value) => {
+    this.config.override_with_parent.forEach((value) => {
       this.config[value] = (parent[value] == null) ? this.config[value] : parent[value];
     });
   }
@@ -230,6 +230,16 @@ class UpdatedKes extends Kes {
   async superCompileCF() {
     this.setParentOverrideConfigValues();
     const lambda = new this.Lambda(this.config);
+
+    // Process default dead letter queue configs  if this value is set
+    if (this.config.processDefaultDeadLetterQueues) {
+      this.addLambdaDeadLetterQueues();
+    }
+
+    // If the lambdaProcess is set on the subtemplate default configuration
+    // then *build* the lambdas and populate the config object
+    // else only populate the configuration object but do not rebuild
+    // lhe lambda zips
     if (this.config.lambdaProcess) {
       this.config = await lambda.process();
     }
@@ -242,7 +252,6 @@ class UpdatedKes extends Kes {
     // Inject Lambda Alias values into configuration,
     // then update configured workflow lambda references
     // to reference the generated alias values
-
     if (this.config.useWorkflowLambdaVersions === true) {
       if (this.config.oldLambdaInjection === true) {
         lambda.buildAllLambdaConfiguration('workflowLambdas');
@@ -252,6 +261,7 @@ class UpdatedKes extends Kes {
         this.injectWorkflowLambdaAliases();
       }
     }
+
 
     // Update workflowLambdas with generated hash values
     lambda.addWorkflowLambdaHashes();
@@ -285,6 +295,30 @@ class UpdatedKes extends Kes {
     return fsWriteFile(destPath, cf);
   }
 
+
+  /**
+   * Updates lambda/sqs configuration to include an sqs dead letter queue
+   * matching the lambdas's name (e.g. {lambda.name}DeadLetterQueue)
+   */
+  addLambdaDeadLetterQueues() {
+    const lambdas = this.config.lambdas;
+    Object.keys(lambdas).forEach((key) => {
+      const lambda = lambdas[key];
+      if (lambda.namedLambdaDeadLetterQueue) {
+        console.log(`Adding named dead letter queue for ${lambda.name}`);
+        const queueName = `${lambda.name}DeadLetterQueue`;
+        this.addLambdaDeadLetterQueue(queueName);
+        this.config.lambdas[lambda.name].deadletterqueue = queueName;
+      }
+    });
+  }
+
+  addLambdaDeadLetterQueue(queueName) {
+    this.config.sqs[queueName] = {
+      MessageRetantionPeriod: this.config.DLQDefaultMessageRetentionPeriod,
+      visibilityTimeout: this.config.DLQDefaultTimeout
+    };
+  }
 
   /**
    *
