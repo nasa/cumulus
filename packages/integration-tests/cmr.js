@@ -90,6 +90,8 @@ async function conceptExists(cmrLink) {
   return response.body.feed.entry.length > 0;
 }
 
+const waitForCmrToBeConsistent = () => sleep(ONE_SECOND);
+
 /**
  * Checks for granule in CMR until it get the desired outcome or hits
  * the number of retries.
@@ -100,8 +102,6 @@ async function conceptExists(cmrLink) {
  * @throws {TimeoutError} - throws error when timeout is reached
  */
 async function waitForConceptExistsOutcome(cmrLink, expectation) {
-  const waitForCmrToBeConsistent = () => sleep(ONE_SECOND);
-
   try {
     await pWaitFor(
       async () => (await conceptExists(cmrLink)) === expectation,
