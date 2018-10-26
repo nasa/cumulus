@@ -16,12 +16,17 @@ let passOnRetry = false;
  * @returns {undefined} none
  */
 function throwErrorIfConfigured(event) {
-  if (passOnRetry) {
+  if (event.config.passOnRetry && passOnRetry) {
     log.debug('Detected retry');
     passOnRetry = false;
   }
   else if (event.config.fail) {
-    passOnRetry = event.config.passOnRetry;
+    // This if check is to avoid race conditions in the parallel tests
+    // Only set this variable if the test specifically needs it set
+    if (event.config.passOnRetry) {
+      passOnRetry = true;
+    }
+
     throw new Error('Step configured to force fail');
   }
 }
