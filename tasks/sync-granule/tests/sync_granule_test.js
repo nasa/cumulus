@@ -9,12 +9,12 @@ const payloadChecksumFile = require('@cumulus/test-data/payloads/new-message-sch
 const { constructCollectionId } = require('@cumulus/common');
 const {
   checksumS3Objects,
-  getS3ObjectTagging,
   headObject,
   parseS3Uri,
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
   s3,
+  s3GetObjectTagging,
   promiseS3Upload
 } = require('@cumulus/common/aws');
 
@@ -301,7 +301,7 @@ test.serial('download granule from S3 provider', async (t) => {
         Key: `${keypath}/${granuleFileName}`
       })
     );
-    const actualTags = await getS3ObjectTagging(t.context.internalBucketName, `${keypath}/${granuleFileName}`);
+    const actualTags = await s3GetObjectTagging(t.context.internalBucketName, `${keypath}/${granuleFileName}`);
     t.deepEqual(TagSet, actualTags.TagSet);
   }
   finally {

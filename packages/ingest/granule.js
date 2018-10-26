@@ -701,7 +701,7 @@ async function getMetadataBodyAndTags(xmlFilePath) {
   }
   const { Bucket, Key } = aws.parseS3Uri(xmlFilePath);
   const data = await aws.getS3Object(Bucket, Key);
-  const tags = await aws.getS3ObjectTagging(Bucket, Key);
+  const tags = await aws.s3GetObjectTagging(Bucket, Key);
   return {
     Body: data.Body.toString(),
     TagSet: tags.TagSet

@@ -10,11 +10,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-811**
   - Added new S3 functions to `@cumulus/common/aws`:
     - `aws.s3TagSetToQueryString`: converts S3 TagSet array to querystring (for use with upload()).
-    - `aws.putS3Object`: Returns promise of S3 `putObject`, which puts an object on S3
-    - `aws.copyS3Object`: Returns promise of S3 `copyObject`, which copies an object in S3 to a new S3 location
-    - `aws.getS3ObjectTagging`: Returns promise of S3 `getObjectTagging`, which returns an object containing an S3 TagSet.
-  - `@/cumulus/common/aws.putS3Object` defaults to an explicit `ACL` of 'private' if not overridden.
-  - `@/cumulus/common/aws.copyS3Object` defaults to an explicit `TaggingDirective` of 'COPY' if not overridden.
+    - `aws.s3PutObject`: Returns promise of S3 `putObject`, which puts an object on S3
+    - `aws.s3CopyObject`: Returns promise of S3 `copyObject`, which copies an object in S3 to a new S3 location
+    - `aws.s3GetObjectTagging`: Returns promise of S3 `getObjectTagging`, which returns an object containing an S3 TagSet.
+  - `@/cumulus/common/aws.s3PutObject` defaults to an explicit `ACL` of 'private' if not overridden.
+  - `@/cumulus/common/aws.s3CopyObject` defaults to an explicit `TaggingDirective` of 'COPY' if not overridden.
 
 ### Deprecated
 - **CUMULUS-811**

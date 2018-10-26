@@ -168,7 +168,7 @@ class S3 {
   static async copy(source, dstBucket, dstKey, isPublic = false) {
     const s3 = new AWS.S3();
     // eslint-disable-next-line max-len
-    log.warn('@cumulus/ingest/aws/S3.copy is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws.copyS3Object instead.');
+    log.warn('@cumulus/ingest/aws/S3.copy is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws.s3CopyObject instead.');
 
     const params = {
       Bucket: dstBucket,
@@ -208,7 +208,7 @@ class S3 {
 
   static async put(bucket, key, body, acl = 'private', meta = null) {
     // eslint-disable-next-line max-len
-    log.warn('@cumulus/ingest/aws/S3.put is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws.putS3Object instead.');
+    log.warn('@cumulus/ingest/aws/S3.put is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws.s3PutObject instead.');
     const params = {
       Bucket: bucket,
       Key: key,
