@@ -197,7 +197,7 @@ test('returns ARNs for execution and state machine', (t) => {
     t.is(executionStatusCommon.stateMachineArn, executionStatus.execution.stateMachineArn);
     t.is(executionStatusCommon.executionArn, executionStatus.execution.executionArn);
   });
-})
+});
 
 test('returns full message when it is already included in the output', (t) => {
   const event = {
