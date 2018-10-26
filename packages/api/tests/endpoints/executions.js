@@ -32,7 +32,7 @@ test.before(async () => {
 test.after.always(async () => {
   await Promise.all([
     userModel.deleteTable(),
-    executionsModel.deleteTable(),
+    executionsModel.deleteTable()
   ]);
 });
 
@@ -73,7 +73,7 @@ test.only('GET returns a single execution', async (t) => {
     status: 'completed',
     duration: 15.81,
     name: executionName,
-    arn,
+    arn
   };
   await executionsModel.create(execution);
 
@@ -86,10 +86,10 @@ test.only('GET returns a single execution', async (t) => {
   };
 
   return testEndpoint(executionsEndpoint, request, (response) => {
-    const execution = JSON.parse(response.body);
-    t.is(execution.arn, arn);
-    t.is(execution.name, executionName);
-    t.truthy(execution.duration);
-    t.is(execution.status, 'completed');
+    const executionResponse = JSON.parse(response.body);
+    t.is(executionResponse.arn, arn);
+    t.is(executionResponse.name, executionName);
+    t.truthy(executionResponse.duration);
+    t.is(executionResponse.status, 'completed');
   });
 });
