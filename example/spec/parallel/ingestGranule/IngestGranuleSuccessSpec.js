@@ -5,6 +5,7 @@ const urljoin = require('url-join');
 const got = require('got');
 const cloneDeep = require('lodash.clonedeep');
 const difference = require('lodash.difference');
+const includes = require('lodash.includes');
 const intersection = require('lodash.intersection');
 const {
   models: {
@@ -356,7 +357,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  xdescribe('an SNS message', () => {
+  describe('an SNS message', () => {
     let lambdaOutput;
     const existCheck = [];
 
@@ -580,12 +581,14 @@ describe('The S3 Ingest Granules workflow', () => {
           // expect timing information for each step
           expect(event.timestamp).toBeDefined();
           const eventKeys = Object.keys(event);
+          // protect against "undefined": TaskStateEntered has "input" but not "name"
           if (event.name && intersection(eventKeys, ['input', 'output']).length === 1) {
+            // each step should contain status information
             if (event.type === 'TaskStateExited') {
               const prevEvent = executionStatus.executionHistory.events[event.previousEventId - 1];
               expect(['LambdaFunctionSucceeded', 'LambdaFunctionFailed']).toContain(prevEvent.type);
             }
-            stepNames.push(event.name);
+            if (!includes(stepNames, event.name)) stepNames.push(event.name);
           }
         });
 
