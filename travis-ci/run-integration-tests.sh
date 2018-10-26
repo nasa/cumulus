@@ -25,6 +25,3 @@ export DEPLOYMENT
 
   yarn test
 )
-RESULT="$?"
-
-exit "$RESULT"
