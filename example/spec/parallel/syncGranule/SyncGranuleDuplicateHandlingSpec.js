@@ -62,8 +62,6 @@ describe('When the Sync Granule workflow is configured', () => {
 
   const fileStagingDir = 'custom-staging-dir';
 
-  let destFileDir;
-  let existingFileKey;
   let inputPayload;
   let expectedPayload;
   let workflowExecution;
@@ -93,10 +91,6 @@ describe('When the Sync Granule workflow is configured', () => {
       fileStagingDir,
       config.stackName,
       constructCollectionId(collection.name, collection.version)
-    );
-    existingFileKey = path.join(
-      destFileDir,
-      inputPayload.granules[0].files[0].name
     );
   });
 
@@ -286,8 +280,8 @@ describe('When the Sync Granule workflow is configured', () => {
         const { error, cause } = lambdaOutput;
         const errorCause = JSON.parse(cause);
         expect(error).toEqual('DuplicateFile');
-        expect(errorCause.errorMessage).toEqual(
-          `${existingFileKey} already exists in ${config.bucket} bucket`
+        expect(errorCause.errorMessage).toMatch(
+          new RegExp(`.* already exists in ${config.bucket} bucket`)
         );
       });
 
@@ -315,8 +309,8 @@ describe('When the Sync Granule workflow is configured', () => {
         const { error, cause } = lambdaOutput;
         const errorCause = JSON.parse(cause);
         expect(error).toEqual('DuplicateFile');
-        expect(errorCause.errorMessage).toEqual(
-          `${existingFileKey} already exists in ${config.bucket} bucket`
+        expect(errorCause.errorMessage).toMatch(
+          new RegExp(`.* already exists in ${config.bucket} bucket`)
         );
       });
 
