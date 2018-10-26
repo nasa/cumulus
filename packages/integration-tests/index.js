@@ -7,18 +7,21 @@ const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
+
 const {
-  aws: {
-    dynamodb,
-    ecs,
-    s3,
-    sfn
-  },
-  stepFunctions: {
-    describeExecution,
-    getExecutionHistory
-  }
-} = require('@cumulus/common');
+  dynamodb,
+  ecs,
+  s3,
+  sfn
+} = require('@cumulus/common/aws');
+
+const {
+  describeExecution,
+  getExecutionHistory
+} = require('@cumulus/common/step-functions');
+
+const { sleep } = require('@cumulus/common/util');
+
 const {
   models: { Provider, Collection, Rule }
 } = require('@cumulus/api');
@@ -30,7 +33,6 @@ const cmr = require('./cmr.js');
 const lambda = require('./lambda');
 const granule = require('./granule.js');
 const waitForDeployment = require('./lambdas/waitForDeployment');
-const sleep = require('./sleep');
 
 /**
  * Wait for an AsyncOperation to reach a given status
@@ -275,7 +277,6 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
  *
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
- * @returns {*} undefined
  */
 function setProcessEnvironment(stackName, bucketName) {
   process.env.internal = bucketName;
@@ -676,8 +677,6 @@ module.exports = {
   getClusterArn,
   getWorkflowArn,
   rulesList,
-  sleep,
-  timeout: sleep,
   waitForAsyncOperationStatus,
   getLambdaVersions: lambda.getLambdaVersions,
   getLambdaAliases: lambda.getLambdaAliases,
