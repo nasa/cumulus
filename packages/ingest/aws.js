@@ -502,7 +502,7 @@ class KMS {
 class StepFunction {
   static async getExecution(arn, ignoreMissingExecutions = false) {
     // eslint-disable-next-line max-len
-    log.debug('@cumulus/ingest/aws/StepFunction.getExecution is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/step-functions/describeExecution instead.');
+    log.warn('@cumulus/ingest/aws/StepFunction.getExecution is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/step-functions/describeExecution instead.');
 
     try {
       return await describeExecution(arn);
