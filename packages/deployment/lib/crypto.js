@@ -71,7 +71,7 @@ async function crypto(stack, bucket, s3) {
     }).promise();
 
     await s3.headObject({
-      Key: `${key}/public.pub`,
+      Key: `${key}/private.pem`,
       Bucket: bucket
     }).promise();
   }
