@@ -27,14 +27,17 @@ class Consume {
     let remainingMessageLimit = messageLimit;
     const originalMessageLimit = remainingMessageLimit;
 
+    // eslint-disable no-await-in-loop
     while (!this.endConsume) {
-      // eslint-disable-next-line no-await-in-loop
-      const messages = await receiveSQSMessages(this.queueUrl, remainingMessageLimit);
+
+      const messages = await receiveSQSMessages(
+        this.queueUrl,
+        { numOfMessages: messageLimit }
+      );
       counter += messages.length;
 
       if (messages.length > 0) {
         const processes = messages.map((message) => this.processMessage(message, fn));
-        // eslint-disable-next-line no-await-in-loop
         await Promise.all(processes);
       }
 
@@ -47,6 +50,7 @@ class Consume {
       // `receiveSQSMessages`
       remainingMessageLimit -= messages.length;
     }
+    // eslint-enable no-await-in-loop
 
     return counter;
   }
