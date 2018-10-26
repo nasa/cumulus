@@ -38,7 +38,6 @@ const { extractCumulusConfigFromSF, generateTemplates } = require('./message');
 
 const fsWriteFile = util.promisify(fs.writeFile);
 
-
 /**
  * Makes setTimeout return a promise
  *
@@ -129,23 +128,22 @@ class UpdatedKes extends Kes {
           else break;
         }
 
-        const clusters = resources.filter((item) => {
-          if (item.ResourceType === 'AWS::ECS::Cluster') return true;
-          return false;
-        });
+        const clusters = resources
+          .filter((resource) => resource.ResourceType === 'AWS::ECS::Cluster')
+          .map((cluster) => cluster.PhysicalResourceId);
 
         for (let clusterCtr = 0; clusterCtr < clusters.length; clusterCtr += 1) {
           const cluster = clusters[clusterCtr];
           // eslint-disable-next-line no-await-in-loop
-          const tasks = await ecs.listTasks({ cluster: cluster.PhysicalResourceId }).promise();
+          const tasks = await ecs.listTasks({ cluster }).promise();
 
-          for (let taskCtr = 0; taskCtr < tasks.length; taskCtr += 1) {
+          for (let taskCtr = 0; taskCtr < tasks.taskArns.length; taskCtr += 1) {
             const task = tasks.taskArns[taskCtr];
             console.log(`restarting ECS task ${task}`);
             // eslint-disable-next-line no-await-in-loop
             await ecs.stopTask({
               task: task,
-              cluster: cluster.PhysicalResourceId
+              cluster
             }).promise();
             console.log(`ECS task ${task} restarted`);
           }
@@ -164,17 +162,17 @@ class UpdatedKes extends Kes {
    * @returns {string}        - Contents of cfFile templated using Handlebars
    */
   parseCF(cfFile) {
-    Handlebars.registerHelper(
-      'ifEquals',
-      (arg1, arg2, options) =>
-        ((arg1 === arg2) ? options.fn(this) : options.inverse(this))
-    );
+    // Arrow functions cannot be used when registering Handlebars helpers
+    // https://stackoverflow.com/questions/43932566/handlebars-block-expression-do-not-work
 
-    Handlebars.registerHelper(
-      'ifNotEquals',
-      (arg1, arg2, options) =>
-        ((arg1 !== arg2) ? options.fn(this) : options.inverse(this))
-    );
+    /* eslint-disable func-names */
+    Handlebars.registerHelper('ifEquals', function (arg1, arg2, options) {
+      return (arg1 === arg2) ? options.fn(this) : options.inverse(this);
+    });
+    Handlebars.registerHelper('ifNotEquals', function (arg1, arg2, options) {
+      return (arg1 !== arg2) ? options.fn(this) : options.inverse(this);
+    });
+    /* eslint-enable func-names */
 
     return super.parseCF(cfFile);
   }
@@ -218,9 +216,7 @@ class UpdatedKes extends Kes {
    */
   setParentOverrideConfigValues() {
     if (!this.config.parent) return;
-
     const parent = this.config.parent;
-
     this.config.override_with_parent.forEach((value) => {
       this.config[value] = (parent[value] == null) ? this.config[value] : parent[value];
     });
