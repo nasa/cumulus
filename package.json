@@ -7,7 +7,7 @@
     "docs-build": "npm run docs-build-tasks && gitbook build",
     "docs-serve": "npm run docs-build && (cd docs && gitbook serve)",
     "docs-start": "npm run docs-build && (cd docs && gitbook serve)",
-    "lint": "eslint packages/api packages/cmrjs packages/common",
+    "lint": "eslint packages/api packages/cmrjs packages/common packages/ingest",
     "test": "nyc lerna run test --concurrency 2",
     "bootstrap": "lerna bootstrap --npm-client=npm --hoist",
     "ybootstrap": "lerna bootstrap",
