@@ -1,7 +1,7 @@
 'use strict';
 
 const _get = require('lodash.get');
-const { getS3Object } = require('@cumulus/common');
+const { getS3Object } = require('@cumulus/common/aws');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const handle = require('../lib/response').handle;
 
