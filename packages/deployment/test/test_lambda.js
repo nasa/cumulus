@@ -21,6 +21,7 @@ test.before(() => {
   nock('https://api.github.com')
     .persist()
     .get('/repos/nasa/cumulus-message-adapter/releases/latest')
+    .query(true)
     .reply(
       200,
       { tag_name: 'v1.2.3' }
@@ -29,6 +30,7 @@ test.before(() => {
   nock('https://github.com')
     .persist()
     .get('/nasa/cumulus-message-adapter/releases/download/v1.2.3/cumulus-message-adapter.zip')
+    .query(true)
     .replyWithFile(200, './test/fixtures/zipfile-fixture.zip');
 });
 

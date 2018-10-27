@@ -19,6 +19,7 @@ test.before(() => {
 
   nock('https://api.github.com')
     .get('/repos/nasa/cumulus-message-adapter/releases/latest')
+    .query(true)
     .reply(
       200,
       { tag_name: 'v1.2.3' }
@@ -26,6 +27,7 @@ test.before(() => {
 
   nock('https://github.com')
     .get('/nasa/cumulus-message-adapter/releases/download/v1.2.3/cumulus-message-adapter.zip')
+    .query(true)
     .replyWithFile(200, './test/fixtures/zipfile-fixture.zip');
 });
 
@@ -63,6 +65,7 @@ test('fetchMessageAdapter() downloads the latest version of the message adapter'
 test('fetchMessageAdapter() can download a specific version if provided', async (t) => {
   const scope = nock('https://github.com')
     .get('/nasa/cumulus-message-adapter/releases/download/v1.0.0/cumulus-message-adapter.zip')
+    .query(true)
     .replyWithFile(200, './test/fixtures/zipfile-fixture.zip');
 
   await fetchMessageAdapter(
@@ -79,6 +82,7 @@ test('fetchMessageAdapter() can download a specific version if provided', async 
 test('fetchMessageAdapter() throws na exception if the version does not exist', async (t) => {
   nock('https://github.com')
     .get('/nasa/cumulus-message-adapter/releases/download/v999.0.0/cumulus-message-adapter.zip')
+    .query(true)
     .reply(404);
 
   try {
