@@ -3,15 +3,11 @@
 const pRetry = require('p-retry');
 
 const { Kinesis } = require('aws-sdk');
-const {
-  aws: {
-    receiveSQSMessages
-  }
-} = require('@cumulus/common');
+const { receiveSQSMessages } = require('@cumulus/common/aws');
+const { sleep } = require('@cumulus/common/util');
 
 const {
   LambdaStep,
-  timeout,
   getExecutions
 } = require('@cumulus/integration-tests');
 
@@ -81,7 +77,7 @@ async function waitForActiveStream(streamName, initialDelaySecs = 10, maxRetries
   let stream;
   const displayName = streamName.split('-').pop();
 
-  await timeout(initialDelaySecs * 1000);
+  await sleep(initialDelaySecs * 1000);
 
   return pRetry(
     async () => {
@@ -201,7 +197,7 @@ async function getRecords(shardIterator, records = []) {
   const data = await kinesis.getRecords({ ShardIterator: shardIterator }).promise();
   records.push(...data.Records);
   if ((data.NextShardIterator !== null) && (data.MillisBehindLatest > 0)) {
-    await timeout(waitPeriodMs);
+    await sleep(waitPeriodMs);
     return getRecords(data.NextShardIterator, records);
   }
   return records;
@@ -238,7 +234,7 @@ async function waitForTestSf(recordIdentifier, maxWaitTimeSecs, firstStep = 'SfS
 
   /* eslint-disable no-await-in-loop */
   while (timeWaitedSecs < maxWaitTimeSecs && workflowExecution === undefined) {
-    await timeout(waitPeriodMs);
+    await sleep(waitPeriodMs);
     timeWaitedSecs += (waitPeriodMs / 1000);
     const executions = await getExecutions('KinesisTriggerTest', testConfig.stackName, testConfig.bucket, maxExecutionResults);
     // Search all recent executions for target recordIdentifier
