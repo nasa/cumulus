@@ -8,19 +8,16 @@ const chunk = require('lodash.chunk');
 const flatten = require('lodash.flatten');
 const range = require('lodash.range');
 const sample = require('lodash.sample');
-const {
-  aws,
-  testUtils: {
-    randomString
-  }
-} = require('@cumulus/common');
+const aws = require('@cumulus/common/aws');
+const { randomString } = require('@cumulus/common/test-utils');
+const { sleep } = require('@cumulus/common/util');
+
 const { handler } = require('../../lambdas/create-reconciliation-report');
 const models = require('../../models');
 
 const createBucket = (Bucket) => aws.s3().createBucket({ Bucket }).promise();
 const promisifiedBatchWriteItem = (params) => aws.dynamodb().batchWriteItem(params).promise();
 const promisifiedHandler = promisify(handler);
-const promisifiedSetTimeout = promisify(setTimeout);
 
 function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
   const bucketsConfig = {};
@@ -86,7 +83,7 @@ async function fetchCompletedReport(Bucket, stackName) {
     .then(JSON.parse);
 
   if (report.status === 'RUNNING') {
-    return promisifiedSetTimeout(1000)
+    return sleep(1000)
       .then(() => fetchCompletedReport(Bucket, stackName));
   }
 

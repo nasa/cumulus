@@ -2,13 +2,9 @@
 
 const log = require('@cumulus/common/log');
 const aws = require('@cumulus/common/aws');
+const { sleep } = require('@cumulus/common/util');
 const lockPrefix = 'lock';
 
-function delay(t) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, t);
-  });
-}
 
 /**
 * Check Old Locks
@@ -81,7 +77,7 @@ async function proceed(bucket, provider, filename, counter = 0) {
   if (count >= globalConnectionLimit) {
     log.debug({ provider: provider.id }, 'Reached the connection limit, trying again');
     // wait for 5 second and try again
-    await delay(5000);
+    await sleep(5000);
     return proceed(bucket, provider, filename, counter + 1);
   }
 
