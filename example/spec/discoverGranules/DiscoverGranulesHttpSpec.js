@@ -11,7 +11,12 @@ const {
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
 
-const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
+const {
+  loadConfig,
+  createTimestampedTestId,
+  createTestSuffix,
+  isCumulusLogEntry
+} = require('../helpers/testUtils');
 
 const config = loadConfig();
 const testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
@@ -23,6 +28,7 @@ const workflowName = 'DiscoverGranules';
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
 process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
 const executionModel = new Execution();
+
 
 describe('The Discover Granules workflow with http Protocol', () => {
   const providersDir = './data/providers/http/';
@@ -122,100 +128,28 @@ describe('The Discover Granules workflow with http Protocol', () => {
         expect(lambdaOutput.payload.granules.length).toEqual(1);
       });
     });
-  });
-});
 
-describe('The Discover Granules workflow with https Protocol', () => {
-  const providersDir = './data/providers/https/';
-  const collectionsDir = './data/collections/https_testcollection_001/';
-  let httpsWorkflowExecution = null;
+    describe('logs endpoint', () => {
+      it('returns the execution logs', async () => {
+        const logsResponse = await apiTestUtils.getLogs({ prefix: config.stackName });
+        const logs = JSON.parse(logsResponse.body);
+        expect(logs).not.toBe(undefined);
+        expect(logs.results.length).toEqual(10);
+      });
 
-  beforeAll(async () => {
-    const collection = { name: `https_testcollection${testSuffix}`, version: '001' };
-    const provider = { id: `https_provider${testSuffix}` };
+      it('returns logs with sender set', async () => {
+        const getLogsResponse = await apiTestUtils.getLogs({ prefix: config.stackName });
+        const logs = JSON.parse(getLogsResponse.body);
+        const logEntries = logs.results;
+        const cumulusLogEntries = logEntries.filter(isCumulusLogEntry);
 
-    const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/https_provider.json`, 'utf8'));
-    // we actually want https for this test. we will later update provider to use https
-    const providerData = Object.assign(providerJson, provider, {
-      protocol: 'http'
-    });
-
-    // populate collections and providers
-    await Promise.all([
-      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      apiTestUtils.addProviderApi({
-        prefix: config.stackName,
-        provider: providerData
-      })
-    ]);
-
-    // update provider to use https
-    await apiTestUtils.updateProvider({
-      prefix: config.stackName,
-      provider,
-      updateParams: { protocol: 'https' }
-    });
-
-    httpsWorkflowExecution = await buildAndExecuteWorkflow(
-      config.stackName,
-      config.bucket,
-      workflowName,
-      collection,
-      provider
-    );
-  });
-
-  afterAll(async () => {
-    // clean up stack state added by test
-    await Promise.all([
-      cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
-    ]);
-  });
-
-  it('executes successfully', () => {
-    expect(httpsWorkflowExecution.status).toEqual('SUCCEEDED');
-  });
-
-  describe('the DiscoverGranules Lambda', () => {
-    let lambdaInput = null;
-    let lambdaOutput = null;
-
-    beforeAll(async () => {
-      lambdaInput = await lambdaStep.getStepInput(
-        httpsWorkflowExecution.executionArn,
-        'DiscoverGranules'
-      );
-      lambdaOutput = await lambdaStep.getStepOutput(
-        httpsWorkflowExecution.executionArn,
-        'DiscoverGranules'
-      );
-    });
-
-    afterAll(async () => {
-      await Promise.all(lambdaOutput.payload.granules.map(
-        (granule) => apiTestUtils.deleteGranule({
-          prefix: config.stackName,
-          granuleId: granule.granuleId
-        })
-      ));
-    });
-
-    it('has correctly configured provider', () => {
-      expect(lambdaInput.meta.provider.protocol).toEqual('https');
-    });
-
-    it('has expected granules output', () => {
-      expect(lambdaOutput.payload.granules.length).toEqual(3);
-      expect(lambdaOutput.payload.granules[0].granuleId).toEqual('granule-1');
-      expect(lambdaOutput.payload.granules[0].files.length).toEqual(2);
-    });
-  });
-
-  describe('the sf-sns-report task has published a sns message and', () => {
-    it('the execution record is added to DynamoDB', async () => {
-      const record = await executionModel.get({ arn: httpsWorkflowExecution.executionArn });
-      expect(record.status).toEqual('completed');
+        cumulusLogEntries.forEach((logEntry) => {
+          if (!logEntry.sender) {
+            console.log('Expected a sender property:', JSON.stringify(logEntry, null, 2));
+          }
+          expect(logEntry.sender).not.toBe(undefined);
+        });
+      });
     });
   });
 });

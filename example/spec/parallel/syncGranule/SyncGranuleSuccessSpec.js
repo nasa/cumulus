@@ -13,12 +13,11 @@ const { Collection, Execution } = require('@cumulus/api/models');
 const {
   aws: {
     s3,
-    s3ObjectExists
+    s3GetObjectTagging,
+    s3ObjectExists,
+    parseS3Uri
   },
-  constructCollectionId,
-  testUtils: {
-    randomString
-  }
+  constructCollectionId
 } = require('@cumulus/common');
 const {
   loadConfig,
@@ -27,8 +26,7 @@ const {
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
-  deleteFolder,
-  getFilesMetadata
+  deleteFolder
 } = require('../../helpers/testUtils');
 const {
   setupTestGranuleForIngest,
@@ -66,6 +64,7 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
 
   let inputPayload;
   let expectedPayload;
+  let expectedS3TagSet;
   let workflowExecution;
 
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
@@ -86,6 +85,9 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     const newGranuleId = inputPayload.granules[0].granuleId;
+    expectedS3TagSet = [{ Key: 'granuleId', Value: newGranuleId }];
+    await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
+      s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
 
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, newGranuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
@@ -117,15 +119,23 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
     let files;
     let key1;
     let key2;
-    const existCheck = [];
+    let syncedTaggings;
+    let existCheck = [];
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
       files = lambdaOutput.payload.granules[0].files;
       key1 = path.join(files[0].fileStagingDir, files[0].name);
       key2 = path.join(files[1].fileStagingDir, files[1].name);
-      existCheck[0] = await s3ObjectExists({ Bucket: files[0].bucket, Key: key1 });
-      existCheck[1] = await s3ObjectExists({ Bucket: files[1].bucket, Key: key2 });
+
+      existCheck = await Promise.all([
+        s3ObjectExists({ Bucket: files[0].bucket, Key: key1 }),
+        s3ObjectExists({ Bucket: files[1].bucket, Key: key2 })
+      ]);
+      syncedTaggings = await Promise.all(files.map((file) => {
+        const { Bucket, Key } = parseS3Uri(file.filename);
+        return s3GetObjectTagging(Bucket, Key);
+      }));
     });
 
     it('receives payload with file objects updated to include file staging location', () => {
@@ -148,61 +158,18 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
         expect(check).toEqual(true);
       });
     });
+
+    it('preserves S3 tags on provider files', () => {
+      syncedTaggings.forEach((tagging) => {
+        expect(tagging.TagSet).toEqual(expectedS3TagSet);
+      });
+    });
   });
 
   describe('the sf-sns-report task has published a sns message and', () => {
     it('the execution record is added to DynamoDB', async () => {
       const record = await executionModel.get({ arn: workflowExecution.executionArn });
       expect(record.status).toEqual('completed');
-    });
-  });
-
-  describe('and it encounters data with a duplicated filename', () => {
-    let lambdaOutput;
-    let existingfiles;
-    let fileUpdated;
-
-    beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
-      const files = lambdaOutput.payload.granules[0].files;
-      existingfiles = await getFilesMetadata(files);
-
-      // update one of the input files, so that the file has different checksum
-      const content = randomString();
-      const file = inputPayload.granules[0].files[0];
-      fileUpdated = file.name;
-      const updateParams = {
-        Bucket: config.bucket, Key: path.join(file.path, file.name), Body: content
-      };
-
-      await s3().putObject(updateParams).promise();
-      inputPayload.granules[0].files[0].fileSize = content.length;
-
-      workflowExecution = await buildAndExecuteWorkflow(
-        config.stackName, config.bucket, workflowName, collection, provider, inputPayload
-      );
-    });
-
-    it('does not raise a workflow error', () => {
-      expect(workflowExecution.status).toEqual('SUCCEEDED');
-    });
-
-    it('overwrites the existing file with the new data', async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
-      const files = lambdaOutput.payload.granules[0].files;
-      const currentFiles = await getFilesMetadata(files);
-
-      expect(lambdaOutput.payload.granules[0].files[0].duplicate_found).toBe(true);
-
-      expect(currentFiles.length).toBe(existingfiles.length);
-
-      currentFiles.forEach((cf) => {
-        const existingfile = existingfiles.filter((ef) => ef.filename === cf.filename);
-        expect(cf.LastModified).toBeGreaterThan(existingfile[0].LastModified);
-        if (cf.filename.endsWith(fileUpdated)) {
-          expect(cf.fileSize).toBe(inputPayload.granules[0].files[0].fileSize);
-        }
-      });
     });
   });
 });
