@@ -39,7 +39,7 @@ hide_title: true     # So the title of the Doc doesn't show up at the top of the
 
 ### Versioning Docs
 
-We lean heavily on Docusaurus for versioning. Their suggestions and walkthrough can be found [here](https://docusaurus.io/docs/en/versioning). It is worth noting that we would like the Documentation versions to match up directly with release versions. Cumulus versioning is explained in the [Versioning Docs](development/release).
+We lean heavily on Docusaurus for versioning. Their suggestions and walkthrough can be found [here](https://docusaurus.io/docs/en/versioning). It is worth noting that we would like the Documentation versions to match up directly with release versions. Cumulus versioning is explained in the [Versioning Docs](https://github.com/nasa/cumulus/blob/docusaurus-proto/docs/development/release.md).
 
 ## Add a new task
 The tasks list in docs/tasks.md is generated from the list of task package in the task folder. Do not edit the docs/tasks.md file directly.
