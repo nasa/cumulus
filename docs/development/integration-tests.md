@@ -8,9 +8,7 @@ Cumulus has a comprehensive set of integration tests that tests the framework on
 
 ## Running integration tests on Travis CI
 
-Integration tests are run on every Travis CI build. If you want to skip the
-integration tests for a given commit, include `[skip-integration-tests]` in the
-commit message.
+Integration tests are run by default on Travis CI builds for the master branch, a tagged release, and branches with an open PR. If you want to skip the integration tests for a given commit for a PR branch, include `[skip-integration-tests]` in the commit message. To force integration tests to run on a branch that does not have a PR, include `[force-integration-tests]` in the commit message.
 
 Travis CI determines what stack to run the tests against based on the name of
 the branch. It expects that the branch name will be suffixed with a dash

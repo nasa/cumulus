@@ -11,7 +11,7 @@ const {
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
 
-const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../helpers/testUtils');
+const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 
 const config = loadConfig();
 const testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
