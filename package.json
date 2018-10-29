@@ -8,7 +8,6 @@
     "docs-build": "yarn run docs-build-tasks && (cd website && yarn run build)",
     "docs-serve": "yarn run docs-build && (cd website && yarn run start)",
     "docs-start": "yarn run docs-build && (cd website && yarn run start)",
-    "e2e": "ava tests/*.js --serial",
     "lint": "eslint packages/api --ext .js",
     "test": "nyc lerna run test --concurrency 2",
     "bootstrap": "lerna bootstrap --npm-client=npm --hoist",
@@ -31,9 +30,6 @@
   },
   "bin": {
     "build-tasks-doc": "./bin/build-tasks-doc.js"
-  },
-  "ava": {
-    "files": "test"
   },
   "nyc": {
     "exclude": [
