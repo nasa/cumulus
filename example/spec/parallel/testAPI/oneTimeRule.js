@@ -30,7 +30,7 @@ const helloWorldRule = {
     type: 'onetime'
   },
   meta: {
-    triggerRule: ruleName // used to detect that we're looking at the correct execution
+    triggerRule: 'Created' // used to detect that we're looking at the correct execution
   }
 };
 
@@ -57,9 +57,10 @@ function removeRuleAddedParams(rule) {
  * so that we know we are looking at the right execution of the workflow
  * and not one that could have been triggered by something else
  *
+ * @param {string} - string to match triggerRule
  * @returns {undefined} - none
  */
-async function waitForTestExecution() {
+async function waitForTestExecution(executionMatch) {
   let timeWaitedSecs = 0;
   let workflowExecution;
 
@@ -71,7 +72,7 @@ async function waitForTestExecution() {
 
     for (const execution of executions) {
       const taskInput = await lambdaStep.getStepInput(execution.executionArn, 'SfSnsReport');
-      if (taskInput && taskInput.meta.triggerRule && taskInput.meta.triggerRule === helloWorldRule.name) {
+      if (taskInput && taskInput.meta.triggerRule && taskInput.meta.triggerRule === executionMatch) {
         workflowExecution = execution;
         break;
       }
@@ -117,12 +118,38 @@ describe('When I create a one-time rule via the Cumulus API', () => {
 
     beforeAll(async () => {
       console.log(`Waiting for execution of ${helloWorldRule.workflow} triggered by rule`);
-      execution = await waitForTestExecution();
+      execution = await waitForTestExecution('Created');
       console.log(`Execution ARN: ${execution.executionArn}`);
     });
 
     it('a workflow is triggered by the rule', () => {
       expect(execution).toBeDefined();
+    });
+
+    it('the rule can be updated', async () => {
+      const updatingRuleResponse = await rulesApiTestUtils.updateRule({
+        prefix: config.stackName,
+        rule: helloWorldRule,
+        updateParams: {
+          meta: {
+            triggerRule: 'Updated'
+          }
+        }
+      });
+
+      const updatedRule = JSON.parse(updatingRuleResponse.body);
+      console.log('Updated Rule', updatedRule);
+
+      await rulesApiTestUtils.rerunRule({
+        prefix: config.stackName,
+        ruleName: helloWorldRule.name
+      });
+
+      console.log(`Waiting for new execution of ${helloWorldRule.workflow} triggered by rerun of rule`);
+      const updatedExecution = await waitForTestExecution('Updated');
+      const updatedTaskInput = await lambdaStep.getStepInput(updatedExecution.executionArn, 'SfSnsReport');
+      expect(updatedExecution).not.toBeNull();
+      expect(updatedTaskInput.meta.triggerRule).toEqual('Updated');
     });
   });
 
@@ -141,21 +168,11 @@ describe('When I create a one-time rule via the Cumulus API', () => {
     it('the rule is returned with the listed rules', () => {
       const rule = listRules.results.find((result) => result.name === helloWorldRule.name);
       expect(rule).toBeDefined();
+      const updatedOriginal = helloWorldRule;
+      updatedOriginal.meta.triggerRule = 'Updated';
 
       const ruleCopy = removeRuleAddedParams(rule);
-      expect(ruleCopy).toEqual(helloWorldRule);
+      expect(ruleCopy).toEqual(updatedOriginal);
     });
-  });
-
-  it('the rule can be updated', async () => {
-    const updatingRuleResponse = await rulesApiTestUtils.updateRule({
-      prefix: config.stackName,
-      rule: helloWorldRule,
-      updateParams: { newParam: true }
-    });
-
-    const updatedRule = JSON.parse(updatingRuleResponse.body);
-    expect(updatedRule).not.toBeNull;
-    expect(updatedRule.newParam).toEqual(true);
   });
 });
