@@ -203,10 +203,13 @@ describe('When the Ingest Granules workflow is configured\n', () => {
       });
 
       it('captures all files', async () => {
-        const granule = await apiTestUtils.getGranule({
+        const granuleResponse = await apiTestUtils.getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
+
+        const granule = JSON.parse(granuleResponse.body);
+
         expect(granule.files.length).toEqual(6);
       });
     });
