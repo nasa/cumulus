@@ -7,8 +7,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+
 - **CUMULUS-817**
   - Added AWS Dead Letter Queues for lambdas that are scheduled asynchronously/such that failures show up only in cloudwatch logs.
+- **CUMULUS-811**
+  - Added new S3 functions to `@cumulus/common/aws`:
+    - `aws.s3TagSetToQueryString`: converts S3 TagSet array to querystring (for use with upload()).
+    - `aws.s3PutObject`: Returns promise of S3 `putObject`, which puts an object on S3
+    - `aws.s3CopyObject`: Returns promise of S3 `copyObject`, which copies an object in S3 to a new S3 location
+    - `aws.s3GetObjectTagging`: Returns promise of S3 `getObjectTagging`, which returns an object containing an S3 TagSet.
+  - `@/cumulus/common/aws.s3PutObject` defaults to an explicit `ACL` of 'private' if not overridden.
+  - `@/cumulus/common/aws.s3CopyObject` defaults to an explicit `TaggingDirective` of 'COPY' if not overridden.
+
+### Deprecated
+- **CUMULUS-811**
+  - Deprecated `@cumulus/ingest/aws.S3`. Member functions of this class will now
+    log warnings pointing to similar functionality in `@cumulus/common/aws`.
 
 ## [v1.10.2] - 2018-10-24
 

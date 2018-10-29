@@ -13,7 +13,9 @@ const { Collection, Execution } = require('@cumulus/api/models');
 const {
   aws: {
     s3,
-    s3ObjectExists
+    s3GetObjectTagging,
+    s3ObjectExists,
+    parseS3Uri
   },
   constructCollectionId,
   testUtils: {
@@ -66,6 +68,7 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
 
   let inputPayload;
   let expectedPayload;
+  let expectedS3TagSet;
   let workflowExecution;
 
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
@@ -86,6 +89,9 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     const newGranuleId = inputPayload.granules[0].granuleId;
+    expectedS3TagSet = [{ Key: 'granuleId', Value: newGranuleId }];
+    await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
+      s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
 
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, newGranuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
@@ -117,6 +123,7 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
     let files;
     let key1;
     let key2;
+    let syncedTaggings;
     const existCheck = [];
 
     beforeAll(async () => {
@@ -126,6 +133,10 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
       key2 = path.join(files[1].fileStagingDir, files[1].name);
       existCheck[0] = await s3ObjectExists({ Bucket: files[0].bucket, Key: key1 });
       existCheck[1] = await s3ObjectExists({ Bucket: files[1].bucket, Key: key2 });
+      syncedTaggings = await Promise.all(files.map((file) => {
+        const { Bucket, Key } = parseS3Uri(file.filename);
+        return s3GetObjectTagging(Bucket, Key);
+      }));
     });
 
     it('receives payload with file objects updated to include file staging location', () => {
@@ -146,6 +157,12 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
     it('adds files to staging location', () => {
       existCheck.forEach((check) => {
         expect(check).toEqual(true);
+      });
+    });
+
+    it('preserves S3 tags on provider files', () => {
+      syncedTaggings.forEach((tagging) => {
+        expect(tagging.TagSet).toEqual(expectedS3TagSet);
       });
     });
   });
