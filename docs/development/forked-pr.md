@@ -1,3 +1,9 @@
+---
+id: forked-pr
+title: Issuing PR From Forked Repos
+hide_title: true
+---
+
 # Issuing PR From Forked Repos
 
 ## Fork the Repo
