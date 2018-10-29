@@ -26,22 +26,22 @@
       "data_in_dynamodb",
       "ems_reporting"
     ],
-    "Cumulus Development": [
-      "development/forked-pr",
-      "development/integration-tests",
-      "development/quality-and-coverage",
-      "development/release"
-    ],
     "Cumulus Versions": [
       "upgrade/upgrade-readme",
       "upgrade/1.6.0",
       "upgrade/1.7.0",
       "upgrade/1.9.0"
     ],
-    "Operating and Contributing": [
+    "Troubleshooting": [
       "system-documentation/system-documentation",
-      "doc_installation",
-      "adding-a-task"
+    ],
+    "Cumulus Development": [
+      "development/forked-pr",
+      "development/integration-tests",
+      "development/quality-and-coverage",
+      "adding-a-task",
+      "docs-how-to",
+      "development/release"
     ]
   },
   "Data Cookbooks": {
