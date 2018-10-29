@@ -90,7 +90,6 @@ test.serial('should move files to final location', async (t) => {
 
 test.serial('should move renamed files in staging area to final location', async (t) => {
   const newPayload = buildPayload(t);
-  // eslint-disable-next-line max-len
   const renamedFile = `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705`;
   newPayload.input.push(renamedFile);
   await uploadFiles(newPayload.input, t.context.stagingBucket);

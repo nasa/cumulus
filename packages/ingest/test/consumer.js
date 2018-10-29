@@ -3,18 +3,11 @@
 const rewire = require('rewire');
 const sinon = require('sinon');
 const test = require('ava');
+
+const { sleep } = require('@cumulus/common/util');
+
 const consumer = rewire('../consumer');
 const Consume = consumer.Consume;
-
-/**
- * An asynchronous sleep/wait function
- *
- * @param {number} milliseconds - number of milliseconds to sleep
- * @returns {Promise<undefined>} undefined
- */
-async function sleep(milliseconds) {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds));
-}
 
 const timeToReceiveMessages = 10;
 let messageLimit = 3;

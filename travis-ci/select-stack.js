@@ -1,3 +1,5 @@
+/* eslint no-console: "off" */
+
 'use strict';
 
 const git = require('simple-git');
@@ -18,7 +20,7 @@ function determineIntegrationTestStackName(cb) {
     'Jenny Liu': 'jl',
     jennyhliu: 'jl',
     kkelly51: 'kk-uat-deployment',
-    'Lauren Frederick': 'lf',
+    'Lauren Frederick': 'lf-int-test',
     laurenfrederick: 'lf',
     'Mark Boyd': 'mboyd-int',
     Marc: 'mth-2',
@@ -32,6 +34,9 @@ function determineIntegrationTestStackName(cb) {
 
   return git('.').log({ '--max-count': '1' }, (e, r) => {
     const author = r.latest.author_name;
+
+    console.error(`Selecting build stack based on author name: "${author}"`);
+
     if (author && stacks[author]) {
       return cb(stacks[author]);
     }
@@ -39,4 +44,4 @@ function determineIntegrationTestStackName(cb) {
   });
 }
 
-determineIntegrationTestStackName(console.log); // eslint-disable-line no-console
+determineIntegrationTestStackName(console.log);
