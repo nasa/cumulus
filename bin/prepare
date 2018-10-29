@@ -5,6 +5,7 @@ set -e
 # this script will link the packages specified in the npm to the ones in the cumulus repo
 cd example
 mkdir -p .tmp
+rm -rf node_modules
 
 # install non cumulus packages
 cat package.json | jq '.dependencies, .devDependencies | to_entries[] | select(.key | startswith("@cumulus") | not) | .key + "@" + .value' | xargs npm install --no-save
