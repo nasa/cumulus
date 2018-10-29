@@ -23,6 +23,8 @@ const waitPeriodMs = 1000;
 const maxWaitForStartedExecutionSecs = 60 * 5;
 
 const ruleName = timestampedName('HelloWorldIntegrationTestRule');
+const createdCheck = timestampedName('Created');
+const updatedCheck = timestampedName('Updated');
 const helloWorldRule = {
   name: ruleName,
   workflow: 'HelloWorldWorkflow',
@@ -30,7 +32,7 @@ const helloWorldRule = {
     type: 'onetime'
   },
   meta: {
-    triggerRule: 'Created' // used to detect that we're looking at the correct execution
+    triggerRule: createdCheck // used to detect that we're looking at the correct execution
   }
 };
 
@@ -118,7 +120,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
 
     beforeAll(async () => {
       console.log(`Waiting for execution of ${helloWorldRule.workflow} triggered by rule`);
-      execution = await waitForTestExecution('Created');
+      execution = await waitForTestExecution(createdCheck);
       console.log(`Execution ARN: ${execution.executionArn}`);
     });
 
@@ -132,7 +134,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
         rule: helloWorldRule,
         updateParams: {
           meta: {
-            triggerRule: 'Updated'
+            triggerRule: updatedCheck
           }
         }
       });
@@ -146,10 +148,10 @@ describe('When I create a one-time rule via the Cumulus API', () => {
       });
 
       console.log(`Waiting for new execution of ${helloWorldRule.workflow} triggered by rerun of rule`);
-      const updatedExecution = await waitForTestExecution('Updated');
+      const updatedExecution = await waitForTestExecution(updatedCheck);
       const updatedTaskInput = await lambdaStep.getStepInput(updatedExecution.executionArn, 'SfSnsReport');
       expect(updatedExecution).not.toBeNull();
-      expect(updatedTaskInput.meta.triggerRule).toEqual('Updated');
+      expect(updatedTaskInput.meta.triggerRule).toEqual(updatedCheck);
     });
   });
 
@@ -168,7 +170,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
       const rule = listRules.results.find((result) => result.name === helloWorldRule.name);
       expect(rule).toBeDefined();
       const updatedOriginal = helloWorldRule;
-      updatedOriginal.meta.triggerRule = 'Updated';
+      updatedOriginal.meta.triggerRule = updatedCheck;
 
       const ruleCopy = removeRuleAddedParams(rule);
       expect(ruleCopy).toEqual(updatedOriginal);
