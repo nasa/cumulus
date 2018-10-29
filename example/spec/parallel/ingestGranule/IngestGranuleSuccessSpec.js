@@ -487,6 +487,7 @@ describe('The S3 Ingest Granules workflow', () => {
           granuleId: inputPayload.granules[0].granuleId
         });
         const resp = JSON.parse(granuleResponse.body);
+        console.log(JSON.stringify(granuleResponse));
         expect(resp.message).toEqual('Granule not found');
       });
     });
