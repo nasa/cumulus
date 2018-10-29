@@ -86,12 +86,6 @@ describe('When the Sync Granule workflow is configured', () => {
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
-
-    destFileDir = path.join(
-      fileStagingDir,
-      config.stackName,
-      constructCollectionId(collection.name, collection.version)
-    );
   });
 
   afterAll(async () => {
@@ -213,8 +207,6 @@ describe('When the Sync Granule workflow is configured', () => {
       let updatedFileName;
 
       beforeAll(async () => {
-        lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
-
         // update one of the input files, so that the file has different checksum
         const content = randomString();
         const file = inputPayload.granules[0].files[0];
