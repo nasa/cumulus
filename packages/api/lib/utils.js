@@ -3,17 +3,6 @@
 const get = require('lodash.get');
 const isObject = require('lodash.isobject');
 
-/**
- * An asynchronous sleep/wait function
- *
- * @param {number} milliseconds - number of milliseconds to sleep
- * @returns {Promise<undefined>} undefined
- */
-async function sleep(milliseconds) {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds));
-}
-
-
 function errorify(err) {
   return JSON.stringify(err, Object.getOwnPropertyNames(err));
 }
@@ -88,7 +77,6 @@ function getGranuleProductVolume(granuleFiles) {
   return fileSizes.reduce((a, b) => a + b);
 }
 
-module.exports.sleep = sleep;
 module.exports.errorify = errorify;
 module.exports.parseException = parseException;
 module.exports.deconstructCollectionId = deconstructCollectionId;
