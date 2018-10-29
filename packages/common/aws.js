@@ -169,6 +169,16 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
 };
 
 /**
+* Convert S3 TagSet Object to query string
+* e.g. [{ Key: 'tag', Value: 'value }] to 'tag=value'
+*
+* @param {Array<Object>} tagset - S3 TagSet array
+* @returns {string} - tags query string
+*/
+exports.s3TagSetToQueryString = (tagset) => tagset.reduce((acc, tag) => acc.concat(`&${tag.Key}=${tag.Value}`), '').substring(1);
+
+
+/**
  * Delete an object from S3
  *
  * @param {string} bucket - bucket where the object exists
@@ -193,6 +203,34 @@ exports.s3ObjectExists = (params) =>
       throw e;
     });
 
+/**
+* Put an object on S3
+*
+* @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
+* @returns {Promise} - promise of the object being put
+**/
+exports.s3PutObject = (params) => {
+  if (!params.ACL) params.ACL = 'private'; //eslint-disable-line no-param-reassign
+  return exports.s3().putObject(params).promise();
+};
+
+/**
+* Copy an object from one location on S3 to another
+*
+* @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
+* @returns {Promise} - promise of the object being copied
+**/
+exports.s3CopyObject = (params) => {
+  if (!params.TaggingDirective) params.TaggingDirective = 'COPY'; //eslint-disable-line no-param-reassign
+  return exports.s3().copyObject(params).promise();
+};
+
+/**
+* Upload an object to S3 (promise)
+*
+* @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property
+* @returns {Promise} - promise of AWS S3 ManagedUploadObject
+**/
 exports.promiseS3Upload = (params) => {
   const uploadFn = exports.s3().upload.bind(exports.s3());
   return concurrency.toPromise(uploadFn, params);
@@ -230,6 +268,16 @@ exports.downloadS3File = (s3Obj, filepath) => {
 
 exports.headObject = (bucket, key) =>
   exports.s3().headObject({ Bucket: bucket, Key: key }).promise();
+
+/**
+* Get object Tagging from S3
+*
+* @param {string} bucket - name of bucket
+* @param {string} key - key for object (filepath + filename)
+* @returns {Promise} - returns response from `S3.getObjectTagging` as a promise
+**/
+exports.s3GetObjectTagging = (bucket, key) =>
+  exports.s3().getObjectTagging({ Bucket: bucket, Key: key }).promise();
 
 /**
 * Get an object from S3
