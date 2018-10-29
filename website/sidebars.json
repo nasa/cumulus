@@ -33,7 +33,7 @@
       "upgrade/1.9.0"
     ],
     "Troubleshooting": [
-      "system-documentation/system-documentation",
+      "system-documentation/system-documentation"
     ],
     "Cumulus Development": [
       "development/forked-pr",
