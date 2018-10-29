@@ -21,7 +21,7 @@ function determineIntegrationTestStackName(cb) {
     jennyhliu: 'jl',
     kkelly51: 'kk-uat-deployment',
     'Lauren Frederick': 'lf-int-test',
-    laurenfrederick: 'lf',
+    laurenfrederick: 'lf-int-test',
     'Mark Boyd': 'mboyd-int',
     Marc: 'mth-2',
     yjpa7145: 'mth-2',
