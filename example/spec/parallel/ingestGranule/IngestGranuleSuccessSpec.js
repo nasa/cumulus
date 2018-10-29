@@ -13,7 +13,12 @@ const {
   }
 } = require('@cumulus/api');
 const {
-  aws: { s3, s3ObjectExists },
+  aws: {
+    s3,
+    s3GetObjectTagging,
+    s3ObjectExists,
+    parseS3Uri
+  },
   constructCollectionId,
   testUtils: { randomString }
 } = require('@cumulus/common');
@@ -87,6 +92,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let inputPayload;
   let expectedSyncGranulePayload;
   let expectedPayload;
+  let expectedS3TagSet;
   let startTime;
 
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
@@ -123,6 +129,9 @@ describe('The S3 Ingest Granules workflow', () => {
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     const granuleId = inputPayload.granules[0].granuleId;
+    expectedS3TagSet = [{ Key: 'granuleId', Value: granuleId }];
+    await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
+      s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
 
     expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, newCollectionId);
     expectedSyncGranulePayload.granules[0].dataType += testSuffix;
@@ -248,11 +257,16 @@ describe('The S3 Ingest Granules workflow', () => {
   describe('the MoveGranules task', () => {
     let lambdaOutput;
     let files;
+    let movedTaggings;
     const existCheck = [];
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
       files = lambdaOutput.payload.granules[0].files;
+      movedTaggings = await Promise.all(lambdaOutput.payload.granules[0].files.map((file) => {
+        const { Bucket, Key } = parseS3Uri(file.filename);
+        return s3GetObjectTagging(Bucket, Key);
+      }));
       existCheck[0] = await s3ObjectExists({ Bucket: files[0].bucket, Key: files[0].filepath });
       existCheck[1] = await s3ObjectExists({ Bucket: files[1].bucket, Key: files[1].filepath });
       existCheck[2] = await s3ObjectExists({ Bucket: files[2].bucket, Key: files[2].filepath });
@@ -281,6 +295,12 @@ describe('The S3 Ingest Granules workflow', () => {
     it('moves files to the bucket folder based on metadata', () => {
       existCheck.forEach((check) => {
         expect(check).toEqual(true);
+      });
+    });
+
+    it('preserves tags on moved files', () => {
+      movedTaggings.forEach((tagging) => {
+        expect(tagging.TagSet).toEqual(expectedS3TagSet);
       });
     });
 
