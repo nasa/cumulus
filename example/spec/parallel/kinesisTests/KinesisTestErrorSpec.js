@@ -1,10 +1,14 @@
 'use strict';
 
+const fs = require('fs');
+
 const {
   aws: { deleteSQSMessage },
   testUtils: { randomString },
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
+
+const { sleep } = require('@cumulus/common/util');
 
 const {
   addRules,
@@ -25,14 +29,14 @@ const {
   tryCatchExit,
   waitForActiveStream,
   waitForQueuedRecord
-} = require('../helpers/kinesisHelpers');
+} = require('../../helpers/kinesisHelpers');
 
 const {
   loadConfig,
   createTimestampedTestId,
   createTestSuffix,
   createTestDataPath
-} = require('../helpers/testUtils');
+} = require('../../helpers/testUtils');
 
 const testConfig = loadConfig();
 const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestError');
@@ -40,12 +44,13 @@ const testSuffix = createTestSuffix(testId);
 const testDataFolder = createTestDataPath(testId);
 const ruleSuffix = globalReplace(testSuffix, '-', '_');
 
-const record = require('./data/records/L2_HR_PIXC_product_0001-of-4154.json');
+
+const record = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154.json`));
 record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulus-test-data/pdrs', testDataFolder);
 record.provider += testSuffix;
 record.collection += testSuffix;
 
-const ruleDirectory = './spec/kinesisTests/data/rules';
+const ruleDirectory = './spec/parallel/kinesisTests/data/rules';
 const ruleOverride = {
   name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
   collection: {
@@ -94,7 +99,6 @@ describe('The kinesisConsumer receives a bad record.\n', () => {
     ]);
     this.defaultTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 60 * 1000;
-    this.maxNumberElapsedPeriods = jasmine.DEFAULT_TIMEOUT_INTERVAL / 5000;
     await tryCatchExit(cleanUp.bind(this), async () => {
       await createOrUseTestStream(streamName);
       console.log(`\nWaiting for active streams: '${streamName}'.`);
@@ -119,9 +123,10 @@ describe('The kinesisConsumer receives a bad record.\n', () => {
   });
 
   it('Eventually puts the bad record on the failure queue.', async () => {
-    console.log('\nWait for minimum duration of failure process ~3min');
+    console.log('\nWait for minimum duration of failure process ~3.5 min');
+    await sleep(3.5 * 60 * 1000);
     console.log('\nWait for record on:', failureSqsUrl);
-    const queuedRecord = await waitForQueuedRecord(testRecordIdentifier, failureSqsUrl, this.maxNumberElapsedPeriods);
+    const queuedRecord = await waitForQueuedRecord(testRecordIdentifier, failureSqsUrl);
     this.ReceiptHandle = queuedRecord.ReceiptHandle;
     const queuedKinesisEvent = kinesisEventFromSqsMessage(queuedRecord);
     expect(queuedKinesisEvent).toEqual(badRecord);
