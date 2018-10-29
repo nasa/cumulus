@@ -1,9 +1,3 @@
----
-id: quality-and-coverage
-title: Code Coverage and Quality
-hide_title: true
----
-
 # Code Coverage and Quality
 
 ## Code Coverage

@@ -36,12 +36,8 @@
       "system-documentation/system-documentation"
     ],
     "Cumulus Development": [
-      "development/forked-pr",
-      "development/integration-tests",
-      "development/quality-and-coverage",
       "adding-a-task",
-      "docs-how-to",
-      "development/release"
+      "docs-how-to"
     ]
   },
   "Data Cookbooks": {
