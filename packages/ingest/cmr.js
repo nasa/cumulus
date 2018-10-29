@@ -26,7 +26,7 @@ async function publish(cmrFile, creds, bucket, stack) {
     password = await DefaultProvider.decrypt(creds.password, undefined, bucket, stack);
   }
   catch (e) {
-    log.error('Decrypting password failed, using unencrypted password');
+    log.error('Decrypting password failed, using unencrypted password', e);
     password = creds.password;
   }
   const cmr = new CMR(
