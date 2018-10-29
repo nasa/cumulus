@@ -178,7 +178,8 @@ async function generateAndStoreCmrXml(granule, collection, bucket) {
   const params = {
     Bucket: bucket,
     Key: filename,
-    Body: xml
+    Body: xml,
+    Tagging: `granuleId=${granule.granuleId}`
   };
 
   await s3().putObject(params).promise();
