@@ -4,7 +4,6 @@
 [![npm version](https://badge.fury.io/js/%40cumulus%2Fapi.svg)](https://badge.fury.io/js/%40cumulus%2Fapi)
 [![Coverage Status](https://coveralls.io/repos/github/nasa/cumulus/badge.svg?branch=master)](https://coveralls.io/github/nasa/cumulus?branch=master)
 
-
 ## 📖 Documentation:
 
 - Documentation for the latest [released version](https://nasa.github.io/cumulus).
