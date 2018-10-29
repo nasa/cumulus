@@ -1,7 +1,7 @@
 version: '3'
 services:
   ftp:
-    image: cumuluss/vsftpd:1
+    image: cumuluss/vsftpd:2
     ports:
       - "127.0.0.1:21:21"
       - "127.0.0.1:4559-4564:4559-4564"
@@ -10,6 +10,7 @@ services:
     environment:
       - FTP_USER=testuser
       - FTP_PASSWORD=testpass
+      - FTP_PASV_ADDRESS=127.0.0.1
   http:
     image: httpd:alpine
     ports:
