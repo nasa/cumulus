@@ -134,7 +134,6 @@ const s3Mock = (_, key) =>
 executionStatusEndpoint.__set__('StepFunction', stepFunctionMock);
 executionStatusEndpoint.__set__('getS3Object', s3Mock);
 
-
 let authHeaders;
 let userModel;
 test.before(async () => {
@@ -180,6 +179,21 @@ test('CUMULUS-912 GET with an unauthorized user returns an unauthorized response
 
   return testEndpoint(executionStatusEndpoint, request, (response) => {
     assertions.isUnauthorizedUserResponse(t, response);
+  });
+});
+
+test('returns ARNs for execution and state machine', (t) => {
+  const event = {
+    pathParameters: {
+      arn: 'hasFullMessage'
+    },
+    headers: authHeaders
+  };
+
+  return testEndpoint(executionStatusEndpoint, event, (response) => {
+    const executionStatus = JSON.parse(response.body);
+    t.is(executionStatusCommon.stateMachineArn, executionStatus.execution.stateMachineArn);
+    t.is(executionStatusCommon.executionArn, executionStatus.execution.executionArn);
   });
 });
 
