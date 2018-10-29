@@ -8,6 +8,8 @@ const {
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
 
+const { sleep } = require('@cumulus/common/util');
+
 const {
   addRules,
   deleteRules,
@@ -15,8 +17,7 @@ const {
   cleanupProviders,
   addCollections,
   cleanupCollections,
-  rulesList,
-  sleep
+  rulesList
 } = require('@cumulus/integration-tests');
 
 const {
