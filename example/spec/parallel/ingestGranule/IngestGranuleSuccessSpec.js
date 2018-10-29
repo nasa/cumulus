@@ -69,13 +69,6 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
 ];
 
-const isLambdaStatusLogEntry = (logEntry) =>
-  logEntry.message.includes('START') ||
-  logEntry.message.includes('END') ||
-  logEntry.message.includes('REPORT');
-
-const isCumulusLogEntry = (logEntry) => !isLambdaStatusLogEntry(logEntry);
-
 describe('The S3 Ingest Granules workflow', () => {
   const testId = createTimestampedTestId(config.stackName, 'IngestGranuleSuccess');
   const testSuffix = createTestSuffix(testId);
@@ -576,27 +569,6 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     describe('logs endpoint', () => {
-      it('returns the execution logs', async () => {
-        const logsResponse = await apiTestUtils.getLogs({ prefix: config.stackName });
-        const logs = JSON.parse(logsResponse.body);
-        expect(logs).not.toBe(undefined);
-        expect(logs.results.length).toEqual(10);
-      });
-
-      it('returns logs with sender set', async () => {
-        const getLogsResponse = await apiTestUtils.getLogs({ prefix: config.stackName });
-        const logs = JSON.parse(getLogsResponse.body);
-        const logEntries = logs.results;
-        const cumulusLogEntries = logEntries.filter(isCumulusLogEntry);
-
-        cumulusLogEntries.forEach((logEntry) => {
-          if (!logEntry.sender) {
-            console.log('Expected a sender property:', JSON.stringify(logEntry, null, 2));
-          }
-          expect(logEntry.sender).not.toBe(undefined);
-        });
-      });
-
       it('returns logs with a specific execution name', async () => {
         const executionARNTokens = workflowExecution.executionArn.split(':');
         const logsExecutionName = executionARNTokens[executionARNTokens.length - 1];
