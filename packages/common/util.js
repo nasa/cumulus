@@ -5,6 +5,16 @@ const path = require('path');
 const os = require('os');
 
 /**
+ * Wait for the defined number of milliseconds
+ *
+ * @param {number} waitPeriodMs - number of milliseconds to wait
+ * @returns {Promise.<undefined>} - promise resolves after a given time period
+ */
+exports.sleep = (waitPeriodMs) =>
+  (new Promise((resolve) =>
+    setTimeout(resolve, waitPeriodMs)));
+
+/**
  * Synchronously makes a temporary directory, smoothing over the differences between
  * mkdtempSync in node.js for various platforms and versions
  *
