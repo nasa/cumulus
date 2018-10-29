@@ -24,29 +24,20 @@
 
 'use strict';
 
-
 const zipObject = require('lodash.zipobject');
 const { Kes, utils } = require('kes');
 const fs = require('fs-extra');
 const Handlebars = require('handlebars');
-
 const path = require('path');
 const util = require('util');
+const { sleep } = require('@cumulus/common/util');
+
 const Lambda = require('./lambda');
 const { crypto } = require('./crypto');
 const { fetchMessageAdapter } = require('./adapter');
 const { extractCumulusConfigFromSF, generateTemplates } = require('./message');
 
 const fsWriteFile = util.promisify(fs.writeFile);
-
-
-/**
- * Makes setTimeout return a promise
- *
- * @param {integer} ms - number of milliseconds
- * @returns {Promise} the arguments passed after the timeout
- */
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * A subclass of Kes class that overrides opsStack method.
@@ -97,7 +88,7 @@ class UpdatedKes extends Kes {
             `Redeploying ${restApiId} was throttled. `
             + `Another attempt will be made in ${waitTime} seconds`
           );
-          await delay(waitTime * 1000);
+          await sleep(waitTime * 1000);
           return this.redeployApiGateWay(name, restApiId, stageName);
         }
         throw e;

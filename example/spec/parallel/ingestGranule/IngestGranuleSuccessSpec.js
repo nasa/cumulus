@@ -454,7 +454,7 @@ describe('The S3 Ingest Granules workflow', () => {
         });
 
         // Check that the granule was removed
-        await waitForConceptExistsOutcome(cmrLink, false, 10, 4000);
+        await waitForConceptExistsOutcome(cmrLink, false);
         const doesExist = await conceptExists(cmrLink);
         expect(doesExist).toEqual(false);
       });
@@ -470,7 +470,7 @@ describe('The S3 Ingest Granules workflow', () => {
           workflow: 'PublishGranule'
         });
 
-        await waitForConceptExistsOutcome(cmrLink, true, 10, 30000);
+        await waitForConceptExistsOutcome(cmrLink, true);
         const doesExist = await conceptExists(cmrLink);
         expect(doesExist).toEqual(true);
       });
