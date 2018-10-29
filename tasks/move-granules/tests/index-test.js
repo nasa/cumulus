@@ -7,6 +7,7 @@ const {
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
   s3,
+  s3GetObjectTagging,
   promiseS3Upload,
   headObject,
   parseS3Uri
@@ -28,6 +29,14 @@ async function uploadFiles(files, bucket) {
   })));
 }
 
+async function updateFileTags(files, bucket, TagSet) {
+  await Promise.all(files.map((file) => s3().putObjectTagging({
+    Bucket: bucket,
+    Key: parseS3Uri(file).Key,
+    Tagging: { TagSet }
+  }).promise()));
+}
+
 function buildPayload(t) {
   const newPayload = JSON.parse(JSON.stringify(payload));
 
@@ -47,7 +56,7 @@ function buildPayload(t) {
   return newPayload;
 }
 
-function getExpectedOuputFileNames(t) {
+function getExpectedOutputFileNames(t) {
   return [
     `s3://${t.context.protectedBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf`,
     `s3://${t.context.publicBucket}/jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg`,
@@ -107,13 +116,33 @@ test.serial('should move renamed files in staging area to final location', async
 
 test.serial('should update filenames with metadata fields', async (t) => {
   const newPayload = buildPayload(t);
-  const expectedFilenames = getExpectedOuputFileNames(t);
+  const expectedFilenames = getExpectedOutputFileNames(t);
 
   await uploadFiles(newPayload.input, t.context.stagingBucket);
 
   const output = await moveGranules(newPayload);
   const outputFilenames = output.granules[0].files.map((f) => f.filename);
   t.deepEqual(expectedFilenames, outputFilenames);
+});
+
+test.serial('should preserve object tags', async (t) => {
+  const newPayload = buildPayload(t);
+  const tagset = [
+    { Key: 'fakeTag', Value: 'test-tag' },
+    { Key: 'granId', Value: newPayload.config.input_granules[0].granuleId }
+  ];
+
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  await updateFileTags(newPayload.input, t.context.stagingBucket, tagset);
+
+  const output = await moveGranules(newPayload);
+  await Promise.all(output.granules[0].files.map(async (file) => {
+    const actualTags = await s3GetObjectTagging(file.bucket, file.filepath);
+    t.deepEqual(
+      { file: file.name, tagset },
+      { file: file.name, tagset: actualTags.TagSet }
+    );
+  }));
 });
 
 test.serial('should overwrite files', async (t) => {
@@ -220,7 +249,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   // payload could be modified
   const newPayloadOrig = clonedeep(newPayload);
 
-  const expectedFilenames = getExpectedOuputFileNames(t);
+  const expectedFilenames = getExpectedOutputFileNames(t);
 
   await uploadFiles(newPayload.input, t.context.stagingBucket);
   let output = await moveGranules(newPayload);
@@ -302,7 +331,7 @@ test.serial('when duplicateHandling is "skip", does not overwrite or create new'
   // payload could be modified
   const newPayloadOrig = clonedeep(newPayload);
 
-  const expectedFilenames = getExpectedOuputFileNames(t);
+  const expectedFilenames = getExpectedOutputFileNames(t);
 
   await uploadFiles(newPayload.input, t.context.stagingBucket);
   let output = await moveGranules(newPayload);
