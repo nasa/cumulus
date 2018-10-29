@@ -5,9 +5,9 @@ const cloneDeep = require('lodash.clonedeep');
 const {
   rulesApi: rulesApiTestUtils,
   getExecutions,
-  timeout,
-  LambdaStep,
+  LambdaStep
 } = require('@cumulus/integration-tests');
+const { sleep } = require('@cumulus/common/util');
 
 const {
   loadConfig,
@@ -66,7 +66,7 @@ async function waitForTestExecution(executionMatch) {
 
   /* eslint-disable no-await-in-loop */
   while (timeWaitedSecs < maxWaitForStartedExecutionSecs && workflowExecution === undefined) {
-    await timeout(waitPeriodMs);
+    await sleep(waitPeriodMs);
     timeWaitedSecs += (waitPeriodMs / 1000);
     const executions = await getExecutions(helloWorldRule.workflow, config.stackName, config.bucket);
 
