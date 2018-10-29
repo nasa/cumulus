@@ -470,16 +470,20 @@ describe('The S3 Ingest Granules workflow', () => {
 
       it('can delete the ingested granule from the API', async () => {
         // pre-delete: Remove the granule from CMR
-        await apiTestUtils.removeFromCMR({
+        const removeFromCmrResponse = await apiTestUtils.removeFromCMR({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
 
+        console.log(`remove from cmr response: ${removeFromCmrResponse}`);
+
         // Delete the granule
-        await apiTestUtils.deleteGranule({
+        const deleteResponse = await apiTestUtils.deleteGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
+
+        console.log(`delete granule response: ${deleteResponse}`);
 
         // Verify deletion
         const granuleResponse = await apiTestUtils.getGranule({
