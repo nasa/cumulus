@@ -5,6 +5,7 @@ const urljoin = require('url-join');
 const got = require('got');
 const cloneDeep = require('lodash.clonedeep');
 const difference = require('lodash.difference');
+const includes = require('lodash.includes');
 const intersection = require('lodash.intersection');
 const {
   models: {
@@ -36,14 +37,14 @@ const {
   createTestDataPath,
   createTestSuffix,
   getFilesMetadata
-} = require('../helpers/testUtils');
+} = require('../../helpers/testUtils');
 
 const {
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleIdPathAndCollection
-} = require('../helpers/granuleUtils');
+} = require('../../helpers/granuleUtils');
 
-const { getConfigObject } = require('../helpers/configUtils');
+const { getConfigObject } = require('../../helpers/configUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
@@ -54,12 +55,12 @@ const workflowConfigFile = './workflows/sips.yml';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
 const templatedSyncGranuleFilename = templateFile({
-  inputTemplateFilename: './spec/ingestGranule/SyncGranule.output.payload.template.json',
+  inputTemplateFilename: './spec/parallel/ingestGranule/SyncGranule.output.payload.template.json',
   config: config[workflowName].SyncGranuleOutput
 });
 
 const templatedOutputPayloadFilename = templateFile({
-  inputTemplateFilename: './spec/ingestGranule/IngestGranule.output.payload.template.json',
+  inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.output.payload.template.json',
   config: config[workflowName].IngestGranuleOutput
 });
 
@@ -70,9 +71,9 @@ const s3data = [
 ];
 
 const isLambdaStatusLogEntry = (logEntry) =>
-  logEntry.message.includes('START')
-  || logEntry.message.includes('END')
-  || logEntry.message.includes('REPORT');
+  logEntry.message.includes('START') ||
+  logEntry.message.includes('END') ||
+  logEntry.message.includes('REPORT');
 
 const isCumulusLogEntry = (logEntry) => !isLambdaStatusLogEntry(logEntry);
 
@@ -80,7 +81,7 @@ describe('The S3 Ingest Granules workflow', () => {
   const testId = createTimestampedTestId(config.stackName, 'IngestGranuleSuccess');
   const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
-  const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
+  const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
@@ -455,7 +456,7 @@ describe('The S3 Ingest Granules workflow', () => {
         });
 
         // Check that the granule was removed
-        await waitForConceptExistsOutcome(cmrLink, false, 10, 4000);
+        await waitForConceptExistsOutcome(cmrLink, false);
         const doesExist = await conceptExists(cmrLink);
         expect(doesExist).toEqual(false);
       });
@@ -471,7 +472,7 @@ describe('The S3 Ingest Granules workflow', () => {
           workflow: 'PublishGranule'
         });
 
-        await waitForConceptExistsOutcome(cmrLink, true, 10, 30000);
+        await waitForConceptExistsOutcome(cmrLink, true);
         const doesExist = await conceptExists(cmrLink);
         expect(doesExist).toEqual(true);
       });
@@ -500,12 +501,24 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     describe('executions endpoint', () => {
-      it('returns tasks metadata with name and version', async () => {
+      let executionResponse;
+
+      beforeAll(async () => {
         const executionApiResponse = await apiTestUtils.getExecution({
           prefix: config.stackName,
           arn: workflowExecution.executionArn
         });
-        const executionResponse = JSON.parse(executionApiResponse.body);
+        executionResponse = JSON.parse(executionApiResponse.body);
+      });
+
+      it('returns overall status and timing for the execution', async () => {
+        expect(executionResponse.status).toBeDefined();
+        expect(executionResponse.createdAt).toBeDefined();
+        expect(executionResponse.updatedAt).toBeDefined();
+        expect(executionResponse.duration).toBeDefined();
+      });
+
+      it('returns tasks metadata with name and version', async () => {
         expect(executionResponse.tasks).toBeDefined();
         expect(executionResponse.tasks.length).not.toEqual(0);
         Object.keys(executionResponse.tasks).forEach((step) => {
@@ -553,7 +566,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(difference(allStates, stateNames).length).toBe(0);
       });
 
-      it('returns the inputs and outputs for each executed step', async () => {
+      it('returns the inputs, outputs, timing, and status information for each executed step', async () => {
         expect(executionStatus.executionHistory).toBeTruthy();
 
         // expected 'not executed' steps
@@ -565,8 +578,18 @@ describe('The S3 Ingest Granules workflow', () => {
         // steps with *EventDetails will have the input/output, and also stepname when state is entered/exited
         const stepNames = [];
         executionStatus.executionHistory.events.forEach((event) => {
+          // expect timing information for each step
+          expect(event.timestamp).toBeDefined();
           const eventKeys = Object.keys(event);
-          if (intersection(eventKeys, ['input', 'output']).length === 1) stepNames.push(event.name);
+          // protect against "undefined": TaskStateEntered has "input" but not "name"
+          if (event.name && intersection(eventKeys, ['input', 'output']).length === 1) {
+            // each step should contain status information
+            if (event.type === 'TaskStateExited') {
+              const prevEvent = executionStatus.executionHistory.events[event.previousEventId - 1];
+              expect(['LambdaFunctionSucceeded', 'LambdaFunctionFailed']).toContain(prevEvent.type);
+            }
+            if (!includes(stepNames, event.name)) stepNames.push(event.name);
+          }
         });
 
         // all the executed steps have *EventDetails

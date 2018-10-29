@@ -24,8 +24,8 @@ const {
   createTestDataPath,
   createTestSuffix,
   getFilesMetadata
-} = require('../helpers/testUtils');
-const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
+} = require('../../helpers/testUtils');
+const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
@@ -44,7 +44,7 @@ describe('When the Ingest Granules workflow is configured to keep both files whe
   const testId = createTimestampedTestId(config.stackName, 'IngestGranuleDuplicateHandlingVersion');
   const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
-  const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
+  const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };

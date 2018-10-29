@@ -45,7 +45,6 @@
   },
   "devDependencies": {
     "ava": "^0.25.0",
-    "delay": "^2.0.0",
     "lodash.isequal": "^4.5.0",
     "lodash.some": "^4.6.0",
     "moment": "^2.22.1",

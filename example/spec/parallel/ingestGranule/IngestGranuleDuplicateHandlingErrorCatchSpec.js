@@ -21,8 +21,8 @@ const {
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix
-} = require('../helpers/testUtils');
-const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
+} = require('../../helpers/testUtils');
+const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
@@ -40,7 +40,7 @@ describe('When the Ingest Granules workflow is configured to handle duplicates a
   const testId = createTimestampedTestId(config.stackName, 'IngestGranuleDuplicateHandlingErrorCatch');
   const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
-  const inputPayloadFilename = './spec/ingestGranule/IngestGranule.input.payload.json';
+  const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
