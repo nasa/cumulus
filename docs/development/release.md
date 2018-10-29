@@ -1,10 +1,10 @@
 ---
 id: release
-title: Versioning and Release
+title: Versioning and Releases
 hide_title: true
 ---
 
-# Versioning and Release
+# Versioning and Releases
 
 ## Versioning
 
