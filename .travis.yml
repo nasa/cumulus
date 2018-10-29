@@ -8,7 +8,7 @@ stages:
   - name: unit test and stack deployment
   - name: integration tests
   - name: redeployment integration tests
-    if: branch = master OR commit_message =~ \[run-redeploy-tests\] OR (type != pull_request AND tag =~ ^v\d+)
+    if: branch = master
   - name: cleanup integration tests
   - name: deploy
     if: type != pull_request AND tag =~ ^v\d+
@@ -104,7 +104,6 @@ jobs:
 
     - name: "Run integration tests against deployed packages"
       stage: deployment test
-      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install: true
       script: ./travis-ci/run-integration-tests.sh
       env:
