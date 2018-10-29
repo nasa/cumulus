@@ -21,8 +21,9 @@ function throwErrorIfConfigured(event) {
     passOnRetry = false;
   }
   else if (event.config.fail) {
-    // This if check is to avoid race conditions in the parallel tests
-    // Only set this variable if the test specifically needs it set
+    // This if check is to avoid race conditions in the parallel tests,
+    // since passOnRetry is set globally across instances of the lambda
+    // Only set this variable if it specifically configured
     if (event.config.passOnRetry) {
       passOnRetry = true;
     }
