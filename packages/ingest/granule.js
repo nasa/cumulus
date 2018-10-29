@@ -551,6 +551,7 @@ class Granule {
         await aws.deleteS3Object(bucket, stagedFileKey);
       }
       else {
+        log.debug(`Renaming file to ${destinationKey}`);
         await exports.renameS3FileWithTimestamp(bucket, destinationKey);
         await exports.moveGranuleFile(
           { Bucket: bucket, Key: stagedFileKey }, { Bucket: bucket, Key: destinationKey }
