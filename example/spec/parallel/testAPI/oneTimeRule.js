@@ -162,7 +162,6 @@ describe('When I create a one-time rule via the Cumulus API', () => {
       });
 
       listRules = JSON.parse(listRulesResponse.body);
-      console.log(JSON.stringify(listRules));
     });
 
     it('the rule is returned with the listed rules', () => {
