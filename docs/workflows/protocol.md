@@ -6,7 +6,7 @@ hide_title: true
 
 # Configuration and Message Use Diagram
 
-<img src="../assets/cumulus_configuration_and_message_schema_diagram.png">
+![](assets/cumulus_configuration_and_message_schema_diagram.png)
 
 * **Configuration** - The Cumulus workflow configuration defines everything needed to describe an instance of Cumulus.
 * **Scheduler** - This starts ingest of a collection on configured intervals.

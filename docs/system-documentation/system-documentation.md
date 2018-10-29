@@ -30,7 +30,7 @@ Visual representations of executed workflows can be found in the Cumulus dashboa
 
 If a workflow errors, the error will be handled according to the [error handling configuration](data-cookbooks/error-handling.md). The task that fails will have the `exception` field populated in the output, giving information about the error. Further information can be found in the CloudWatch logs for the task.
 
-<img src="../assets/workflow-fail.png">
+![](assets/workflow-fail.png)
 
 ### Workflow Did Not Start
 
