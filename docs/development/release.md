@@ -48,9 +48,9 @@ yarn run version ${release_version}
 git add .
 ```
 
-Where `${release_version}` corresponds to the vresion tag `v1.2.3`, for example.
+Where `${release_version}` corresponds to the version tag `v1.2.3`, for example.
 
-**Note:** More information on versioning can be found in the [Docusaurus documentation](https://docusaurus.io/docs/en/versioning) and in [Cumulus docs: How To's](docs/docs-how-to.md).
+**Note:** More information on versioning can be found in the [Docusaurus documentation](https://docusaurus.io/docs/en/versioning) and in [Cumulus docs: How To's](../docs-how-to.md).
 
 ### 6. Create a pull request against the master branch
 
