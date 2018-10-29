@@ -86,7 +86,7 @@ describe('The S3 Ingest Granules workflow', () => {
   const newCollectionId = constructCollectionId(collection.name, collection.version);
   const provider = { id: `s3_provider${testSuffix}` };
   let workflowExecution = null;
-  let failingWorkflowExecution = null;
+  let failingWorkflowExecution;
   let failedExecutionArn;
   let failedExecutionName;
   let inputPayload;
