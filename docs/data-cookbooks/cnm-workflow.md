@@ -484,7 +484,7 @@ In case of either success *or* failure, `CnmResponse` will then pass the results
 
 Following the successful execution of this workflow, you should expect to see the workflow complete successfully on the dashboard:
 
-![](../assets/cnm_success_example.png)
+![](assets/cnm_success_example.png)
 
 ### Check the test granule has been delivered to S3 staging
 
@@ -581,7 +581,7 @@ The Kinesis error handling system - the `kinesisFallback` SNS topic, `kinesisCon
 
 
 
-![](../assets/Kinesis-Error-Processing.png)
+![](assets/Kinesis-Error-Processing.png)
 
 To examine records that were unable to be processed at any step you need to go look at the dead letter queue `{{stackname}}-kinesisFailure`.
 Check the [Simple Queue Service (SQS) console](https://console.aws.amazon.com/sqs/home). Select your queue, and under the `Queue Actions` tab, you can choose `View/Delete Messages`. `Start polling` for messages and you will see records that failed to process through the `kinesisConsumer`.
