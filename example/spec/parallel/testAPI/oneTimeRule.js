@@ -5,14 +5,14 @@ const cloneDeep = require('lodash.clonedeep');
 const {
   rulesApi: rulesApiTestUtils,
   getExecutions,
-  timeout,
-  LambdaStep,
+  LambdaStep
 } = require('@cumulus/integration-tests');
+const { sleep } = require('@cumulus/common/util');
 
 const {
   loadConfig,
   timestampedName
-} = require('../helpers/testUtils');
+} = require('../../helpers/testUtils');
 
 const config = loadConfig();
 
@@ -23,6 +23,8 @@ const waitPeriodMs = 1000;
 const maxWaitForStartedExecutionSecs = 60 * 5;
 
 const ruleName = timestampedName('HelloWorldIntegrationTestRule');
+const createdCheck = timestampedName('Created');
+const updatedCheck = timestampedName('Updated');
 const helloWorldRule = {
   name: ruleName,
   workflow: 'HelloWorldWorkflow',
@@ -30,7 +32,7 @@ const helloWorldRule = {
     type: 'onetime'
   },
   meta: {
-    triggerRule: ruleName // used to detect that we're looking at the correct execution
+    triggerRule: createdCheck // used to detect that we're looking at the correct execution
   }
 };
 
@@ -57,21 +59,22 @@ function removeRuleAddedParams(rule) {
  * so that we know we are looking at the right execution of the workflow
  * and not one that could have been triggered by something else
  *
+ * @param {string} - string to match triggerRule
  * @returns {undefined} - none
  */
-async function waitForTestExecution() {
+async function waitForTestExecution(executionMatch) {
   let timeWaitedSecs = 0;
   let workflowExecution;
 
   /* eslint-disable no-await-in-loop */
   while (timeWaitedSecs < maxWaitForStartedExecutionSecs && workflowExecution === undefined) {
-    await timeout(waitPeriodMs);
+    await sleep(waitPeriodMs);
     timeWaitedSecs += (waitPeriodMs / 1000);
     const executions = await getExecutions(helloWorldRule.workflow, config.stackName, config.bucket);
 
     for (const execution of executions) {
       const taskInput = await lambdaStep.getStepInput(execution.executionArn, 'SfSnsReport');
-      if (taskInput && taskInput.meta.triggerRule && taskInput.meta.triggerRule === helloWorldRule.name) {
+      if (taskInput && taskInput.meta.triggerRule && taskInput.meta.triggerRule === executionMatch) {
         workflowExecution = execution;
         break;
       }
@@ -83,14 +86,15 @@ async function waitForTestExecution() {
 }
 
 describe('When I create a one-time rule via the Cumulus API', () => {
-  let postRuleResponse = '';
+  let postRule = '';
 
   beforeAll(async () => {
     // Create a one-time rule
-    postRuleResponse = await rulesApiTestUtils.postRule({
+    const postRuleResponse = await rulesApiTestUtils.postRule({
       prefix: config.stackName,
       rule: helloWorldRule
     });
+    postRule = JSON.parse(postRuleResponse.body);
   });
 
   afterAll(async () => {
@@ -102,13 +106,13 @@ describe('When I create a one-time rule via the Cumulus API', () => {
   });
 
   it('the rule is returned in the post response', () => {
-    const responseCopy = removeRuleAddedParams(postRuleResponse.record);
+    const responseCopy = removeRuleAddedParams(postRule.record);
 
     expect(responseCopy).toEqual(helloWorldRule);
   });
 
   it('the rule is enabled by default', () => {
-    expect(postRuleResponse.record.state).toEqual('ENABLED');
+    expect(postRule.record.state).toEqual('ENABLED');
   });
 
   describe('Upon rule creation', () => {
@@ -116,32 +120,60 @@ describe('When I create a one-time rule via the Cumulus API', () => {
 
     beforeAll(async () => {
       console.log(`Waiting for execution of ${helloWorldRule.workflow} triggered by rule`);
-      execution = await waitForTestExecution();
+      execution = await waitForTestExecution(createdCheck);
       console.log(`Execution ARN: ${execution.executionArn}`);
     });
 
     it('a workflow is triggered by the rule', () => {
       expect(execution).toBeDefined();
     });
+
+    it('the rule can be updated', async () => {
+      const updatingRuleResponse = await rulesApiTestUtils.updateRule({
+        prefix: config.stackName,
+        rule: helloWorldRule,
+        updateParams: {
+          meta: {
+            triggerRule: updatedCheck
+          }
+        }
+      });
+
+      const updatedRule = JSON.parse(updatingRuleResponse.body);
+      console.log('Updated Rule', updatedRule);
+
+      await rulesApiTestUtils.rerunRule({
+        prefix: config.stackName,
+        ruleName: helloWorldRule.name
+      });
+
+      console.log(`Waiting for new execution of ${helloWorldRule.workflow} triggered by rerun of rule`);
+      const updatedExecution = await waitForTestExecution(updatedCheck);
+      const updatedTaskInput = await lambdaStep.getStepInput(updatedExecution.executionArn, 'SfSnsReport');
+      expect(updatedExecution).not.toBeNull();
+      expect(updatedTaskInput.meta.triggerRule).toEqual(updatedCheck);
+    });
   });
 
   describe('When listing the rules via the API', () => {
-    let listRulesResponse = '';
+    let listRules = '';
 
     beforeAll(async () => {
-      listRulesResponse = await rulesApiTestUtils.listRules({
+      const listRulesResponse = await rulesApiTestUtils.listRules({
         prefix: config.stackName
       });
 
-      console.log(JSON.stringify(listRulesResponse));
+      listRules = JSON.parse(listRulesResponse.body);
     });
 
     it('the rule is returned with the listed rules', () => {
-      const rule = listRulesResponse.results.find((result) => result.name === helloWorldRule.name);
+      const rule = listRules.results.find((result) => result.name === helloWorldRule.name);
       expect(rule).toBeDefined();
+      const updatedOriginal = helloWorldRule;
+      updatedOriginal.meta.triggerRule = updatedCheck;
 
       const ruleCopy = removeRuleAddedParams(rule);
-      expect(ruleCopy).toEqual(helloWorldRule);
+      expect(ruleCopy).toEqual(updatedOriginal);
     });
   });
 });

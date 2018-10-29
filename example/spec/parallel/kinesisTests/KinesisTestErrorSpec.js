@@ -8,6 +8,8 @@ const {
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
 
+const { sleep } = require('@cumulus/common/util');
+
 const {
   addRules,
   deleteRules,
@@ -15,8 +17,7 @@ const {
   cleanupProviders,
   addCollections,
   cleanupCollections,
-  rulesList,
-  sleep
+  rulesList
 } = require('@cumulus/integration-tests');
 
 const {
@@ -28,14 +29,14 @@ const {
   tryCatchExit,
   waitForActiveStream,
   waitForQueuedRecord
-} = require('../helpers/kinesisHelpers');
+} = require('../../helpers/kinesisHelpers');
 
 const {
   loadConfig,
   createTimestampedTestId,
   createTestSuffix,
   createTestDataPath
-} = require('../helpers/testUtils');
+} = require('../../helpers/testUtils');
 
 const testConfig = loadConfig();
 const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestError');
@@ -49,7 +50,7 @@ record.product.files[0].uri = globalReplace(record.product.files[0].uri, 'cumulu
 record.provider += testSuffix;
 record.collection += testSuffix;
 
-const ruleDirectory = './spec/kinesisTests/data/rules';
+const ruleDirectory = './spec/parallel/kinesisTests/data/rules';
 const ruleOverride = {
   name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
   collection: {
