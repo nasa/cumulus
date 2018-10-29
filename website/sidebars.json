@@ -26,6 +26,12 @@
       "data_in_dynamodb",
       "ems_reporting"
     ],
+    "Cumulus Development": [
+      "development/forked-pr",
+      "development/integration-tests",
+      "development/quality-and-coverage",
+      "development/release"
+    ],
     "Cumulus Versions": [
       "upgrade/upgrade-readme",
       "upgrade/1.6.0",

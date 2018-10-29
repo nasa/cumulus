@@ -1,3 +1,9 @@
+---
+id: release
+title: Versioning and Release
+hide_title: true
+---
+
 # Versioning and Release
 
 ## Versioning

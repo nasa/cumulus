@@ -1,3 +1,9 @@
+---
+id: integration-tests
+title: Integration Tests
+hide_title: true
+---
+
 # Integration Tests
 Cumulus has a comprehensive set of integration tests that tests the framework on an active AWS account. As long as you have an AWS account with valid credentials you can run the tests as described below:
 
