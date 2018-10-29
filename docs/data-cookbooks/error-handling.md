@@ -86,7 +86,7 @@ KinesisTriggerTest:
 
 The above results in a workflow which is visualized in the diagram below:
 
-![Kinesis Workflow](../assets/kinesis-workflow.png)
+![Kinesis Workflow](assets/kinesis-workflow.png)
 
 ## Summary
 
