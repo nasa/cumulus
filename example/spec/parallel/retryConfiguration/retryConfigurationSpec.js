@@ -24,75 +24,87 @@ function getRetryIntervals(executions) {
   return retryIntervals;
 }
 
-describe('When a task is configured to retry', () => {
-  let workflowExecution = null;
+describe('When a task is configured', () => {
+  let retryPassWorkflowExecution = null;
+  let noRetryWorkflowExecution = null;
+  let retryFailWorkflowExecution = null;
+
+  let retryPassLambdaExecutions = null;
+  let retryFailLambdaExecutions = null;
+
   process.env.ExecutionsTable = `${awsConfig.stackName}-ExecutionsTable`;
-  let lambdaExecutions = null;
 
   beforeAll(async () => {
-    workflowExecution = await buildAndExecuteWorkflow(
+    const retryPassPromise = buildAndExecuteWorkflow(
       awsConfig.stackName,
       awsConfig.bucket,
       'RetryPassWorkflow'
     );
 
-    lambdaExecutions = await lambdaStep.getStepExecutions(workflowExecution.executionArn, 'HelloWorld');
-  });
-
-  describe('and it fails', () => {
-    it('Cumulus retries it', () => {
-      expect(lambdaExecutions.length).toBeGreaterThan(1);
-    });
-  });
-
-  describe('and it succeeds', () => {
-    it('Cumulus continues the workflow', () => {
-      expect(workflowExecution.status).toEqual('SUCCEEDED');
-    });
-  });
-});
-
-describe('When a task is not configured to retry', () => {
-  let workflowExecution = null;
-
-  beforeAll(async () => {
-    workflowExecution = await buildAndExecuteWorkflow(
+    const noRetryPromise = buildAndExecuteWorkflow(
       awsConfig.stackName,
       awsConfig.bucket,
       'HelloWorldFailWorkflow'
     );
-  });
 
-  it('Cumulus fails the workflow', () => {
-    expect(workflowExecution.status).toEqual('FAILED');
-  });
-});
-
-describe('When a task is configured to retry', () => {
-  let workflowExecution = null;
-  let lambdaExecutions = null;
-  let retryIntervals = [];
-
-  beforeAll(async () => {
-    workflowExecution = await buildAndExecuteWorkflow(
+    const retryFailPromise = buildAndExecuteWorkflow(
       awsConfig.stackName,
       awsConfig.bucket,
       'RetryFailWorkflow'
     );
 
-    lambdaExecutions = await lambdaStep.getStepExecutions(workflowExecution.executionArn, 'HelloWorld');
-    retryIntervals = getRetryIntervals(lambdaExecutions);
+    const executions = await Promise.all([
+      retryPassPromise,
+      noRetryPromise,
+      retryFailPromise
+    ]);
+
+    retryPassWorkflowExecution = executions[0];
+    noRetryWorkflowExecution = executions[1];
+    retryFailWorkflowExecution = executions[2];
+
+    const retryPassLambdaExecutionsPromise = lambdaStep.getStepExecutions(retryPassWorkflowExecution.executionArn, 'HelloWorld');
+    const retryFailLambdaExecutionsPromise = lambdaStep.getStepExecutions(retryFailWorkflowExecution.executionArn, 'HelloWorld');
+
+    const lambdaExecutions = await Promise.all([
+      retryPassLambdaExecutionsPromise,
+      retryFailLambdaExecutionsPromise
+    ]);
+
+    retryPassLambdaExecutions = lambdaExecutions[0];
+    retryFailLambdaExecutions = lambdaExecutions[1];
+  });
+
+  describe('to retry', () => {
+    describe('and it fails', () => {
+      it('Cumulus retries it', () => {
+        expect(retryPassLambdaExecutions.length).toBeGreaterThan(1);
+      });
+    });
+
+    describe('and it succeeds', () => {
+      it('Cumulus continues the workflow', () => {
+        expect(retryPassWorkflowExecution.status).toEqual('SUCCEEDED');
+      });
+    });
+  });
+
+  describe('not to retry', () => {
+    it('Cumulus fails the workflow', () => {
+      expect(noRetryWorkflowExecution.status).toEqual('FAILED');
+    });
   });
 
   describe('a specific number of times', () => {
     it('and it fails that number of times, Cumulus stops retrying it and fails the workflow', () => {
-      expect(workflowExecution.status).toEqual('FAILED');
-      expect(lambdaExecutions.length).toEqual(4);
+      expect(retryFailWorkflowExecution.status).toEqual('FAILED');
+      expect(retryFailLambdaExecutions.length).toEqual(4);
     });
   });
 
   describe('with a backoff', () => {
     it('and it fails, Cumulus retries it with the configured backoff time', () => {
+      const retryIntervals = getRetryIntervals(retryFailLambdaExecutions);
       expect(retryIntervals).toEqual([2, 4, 8]);
     });
   });
