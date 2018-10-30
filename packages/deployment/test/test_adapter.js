@@ -1,14 +1,35 @@
-
-/* eslint-disable no-console, no-param-reassign */
 'use strict';
 
 const os = require('os');
 const fs = require('fs-extra');
+const nock = require('nock');
 const path = require('path');
 const test = require('ava');
+const { promisify } = require('util');
+
 const { fetchMessageAdapter } = require('../lib/adapter');
 
+const pStat = promisify(fs.stat);
+
 const gitPath = 'nasa/cumulus-message-adapter';
+
+test.before(() => {
+  nock.disableNetConnect();
+  nock.enableNetConnect('localhost');
+
+  nock('https://api.github.com')
+    .get('/repos/nasa/cumulus-message-adapter/releases/latest')
+    .query(true)
+    .reply(
+      200,
+      { tag_name: 'v1.2.3' }
+    );
+
+  nock('https://github.com')
+    .get('/nasa/cumulus-message-adapter/releases/download/v1.2.3/cumulus-message-adapter.zip')
+    .query(true)
+    .replyWithFile(200, './test/fixtures/zipfile-fixture.zip');
+});
 
 test.beforeEach((t) => {
   t.context.temp = fs.mkdtempSync(`${os.tmpdir()}${path.sep}`);
@@ -16,8 +37,16 @@ test.beforeEach((t) => {
   t.context.dest = path.join(t.context.temp, 'adapter');
 });
 
-test('downloaded latest version of the message adapter', async (t) => {
-  // create temp directory
+test.afterEach.always('final cleanup', async (t) => {
+  await fs.remove(t.context.temp);
+});
+
+test.after.always(() => {
+  nock.cleanAll();
+  nock.enableNetConnect();
+});
+
+test('fetchMessageAdapter() downloads the latest version of the message adapter', async (t) => {
   const unzipped = await fetchMessageAdapter(
     null,
     gitPath,
@@ -26,51 +55,48 @@ test('downloaded latest version of the message adapter', async (t) => {
     t.context.dest
   );
 
-  // confirm the zip file exist
-  const dirExists = fs.statSync(unzipped);
-  t.truthy(dirExists);
+  t.truthy(await pStat(unzipped));
+
   t.is(unzipped, t.context.dest);
 
-  // confirm the extracted folder exists
   t.true(await fs.pathExists(t.context.src));
 });
 
-test('should download specific version if provided', async (t) => {
-  const version = 'v1.0.0';
-  // create temp directory
-  const unzipped = await fetchMessageAdapter(
-    version,
+test('fetchMessageAdapter() can download a specific version if provided', async (t) => {
+  const scope = nock('https://github.com')
+    .get('/nasa/cumulus-message-adapter/releases/download/v1.0.0/cumulus-message-adapter.zip')
+    .query(true)
+    .replyWithFile(200, './test/fixtures/zipfile-fixture.zip');
+
+  await fetchMessageAdapter(
+    'v1.0.0',
     gitPath,
     'cumulus-message-adapter.zip',
     t.context.src,
     t.context.dest
   );
-  // confirm the zip file exist
-  const dirExists = fs.statSync(unzipped);
-  t.truthy(dirExists);
-  t.is(unzipped, t.context.dest);
 
-  // confirm version number
-  const versionFile = path.join(t.context.dest, 'message_adapter/version.py');
-  const versionString = fs.readFileSync(versionFile).toString();
-  const rTest = /v[\d]\.[\d]\.[\d]/;
-  t.true(rTest.test(versionString));
+  t.true(scope.isDone());
 });
 
-test('should crash if the version is wrong', async (t) => {
-  const version = 'v450.0.0';
-  // create temp directory
-  const promise = fetchMessageAdapter(
-    version,
-    gitPath,
-    'cumulus-message-adapter.zip',
-    t.context.src,
-    t.context.dest
-  );
-  await t.throws(promise);
-});
+test('fetchMessageAdapter() throws na exception if the version does not exist', async (t) => {
+  nock('https://github.com')
+    .get('/nasa/cumulus-message-adapter/releases/download/v999.0.0/cumulus-message-adapter.zip')
+    .query(true)
+    .reply(404);
 
-test.afterEach.always('final cleanup', async(t) => {
-  // delete the temp directory
-  await fs.remove(t.context.temp);
+  try {
+    await fetchMessageAdapter(
+      'v999.0.0',
+      gitPath,
+      'cumulus-message-adapter.zip',
+      t.context.src,
+      t.context.dest
+    );
+
+    t.fail('Expected an exception to be thrown');
+  }
+  catch (err) {
+    t.pass();
+  }
 });
