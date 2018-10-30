@@ -150,10 +150,10 @@ class UpdatedKes extends Kes {
    * @returns {string}        - Contents of cfFile templated using Handlebars
    */
   parseCF(cfFile) {
-    Handlebars.registerHelper('ifEquals', function (arg1, arg2, options) {
+    Handlebars.registerHelper('ifEquals', function ifEquals(arg1, arg2, options) {
       return (arg1 === arg2) ? options.fn(this) : options.inverse(this);
     });
-    Handlebars.registerHelper('ifNotEquals', function (arg1, arg2, options) {
+    Handlebars.registerHelper('ifNotEquals', function ifNotEquals(arg1, arg2, options) {
       return (arg1 !== arg2) ? options.fn(this) : options.inverse(this);
     });
     return super.parseCF(cfFile);
