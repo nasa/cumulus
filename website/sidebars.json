@@ -24,8 +24,9 @@
     ],
     "Additional Features": [
       "data_in_dynamodb",
+      "features/dead_letter_queues",
       "ems_reporting",
-      "features/dead_letter_queues"
+      "lambda_versioning"
     ],
     "Cumulus Versions": [
       "upgrade/upgrade-readme",
