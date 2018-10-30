@@ -23,6 +23,7 @@
   * [DynamoDB Backup and Restore](data_in_dynamodb.md#backup-and-restore-with-aws)
   * [DynamoDB Auto Scaling](data_in_dynamodb.md#dynamodb-auto-scaling)
   * [EMS Reporting](ems_reporting.md)
+  * [Lambda Dead Letter Queue](features/lambda_dead_letter_queue.md)
   * [Lambda Versioning](lambda_versioning.md)
 * [Changelog](https://github.com/nasa/cumulus/blob/master/CHANGELOG.md)
 * [Upgrade Instructions](upgrade/README.md)
