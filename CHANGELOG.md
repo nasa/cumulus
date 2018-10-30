@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **CUMULUS-956**
+  - Migrated developer documentation and data-cookbooks to Docusaurus
+    - supports versioning of documentation
+  - Added `docs/docs-how-to.md` to outline how to do things like add new docs or locally install for testing.
+  - Deployment/CI scripts have been updated to work with the new format
 - **CUMULUS-811**
   - Added new S3 functions to `@cumulus/common/aws`:
     - `aws.s3TagSetToQueryString`: converts S3 TagSet array to querystring (for use with upload()).

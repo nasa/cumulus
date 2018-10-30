@@ -1,5 +1,10 @@
-# Workflows
+---
+id: workflows-readme
+title: Workflows
+hide_title: true
+---
 
+# Workflows
 Workflows are comprised of one or more AWS Lambda Functions and ECS Activities to discover, ingest, process, manage and archive data.
 
 Provider data ingest and GIBS have a set of common needs in getting data from a source system and into the cloud where they can be distributed to end users. These common needs are:
@@ -49,7 +54,7 @@ The Ingest Workflow Architecture is defined by two entity types, [Workflows](#wo
 
 Workflows and tasks are configured via a [JSON configuration file](#collection-configuration-file). A scheduler initiates workflows as configured by that JSON file.
 
-<img src="../images/ingest_diagram.png">
+![](assets/ingest_diagram.png)
 
 See the [Example GIBS Ingest Architecture](#example-gibs-ingest-architecture) showing how workflows and tasks are used to define the GIBS Ingest Architecture.
 
@@ -103,7 +108,7 @@ For more details on Task Messages and Configuration, visit [Cumulus Configuratio
 
 ### Ingest Deploy
 
-To view deployment documentation, please see [Deployment of Cumulus Documentation](deployment.md).
+To view deployment documentation, please see [Deployment of Cumulus Documentation](deployment/README.md).
 
 ## Risks, Tradeoffs, and Benefits
 
@@ -186,11 +191,11 @@ This shows the GIBS Ingest Architecture as an example of the use of the Ingest W
 
 #### GIBS Ingest Workflows
 
-<img src="../images/ingest_diagram_gibs.png">
+![](assets/ingest_diagram_gibs.png)
 
 #### GIBS Ingest Granules Workflow
 
 This shows a visualization of an execution of the ingets granules workflow in step functions. The steps highlighted in green are the ones that executed and completed successfully.
 
-<img src="../images/gibs_ingest_granules_workflow.png">
+![](assets/gibs_ingest_granules_workflow.png)
 
