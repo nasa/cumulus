@@ -166,7 +166,7 @@ test.serial('should overwrite files', async (t) => {
     Body: 'Something'
   };
 
-  console.log(`start s3 upload. params: ${JSON.stringify(uploadParams)}`);
+  console.log(`CUMULUS-970 debugging: start s3 upload. params: ${JSON.stringify(uploadParams)}`);
 
   await promiseS3Upload({
     Bucket: t.context.stagingBucket,
@@ -174,22 +174,22 @@ test.serial('should overwrite files', async (t) => {
     Body: 'Something'
   });
 
-  console.log(`start move granules. params: ${JSON.stringify(newPayload)}`);
+  console.log(`CUMULUS-970 debugging: start move granules. params: ${JSON.stringify(newPayload)}`);
 
   let output = await moveGranules(newPayload);
 
-  console.log('move granules complete');
+  console.log('CUMULUS-970 debugging: move granules complete');
 
   await validateOutput(t, output);
 
-  console.log('head object');
+  console.log(`CUMULUS-970 debugging: head object destKey ${destKey}`);
 
   const existingFile = await headObject(
     t.context.publicBucket,
     destKey
   );
 
-  console.log('headobject complete');
+  console.log('CUMULUS-970 debugging: headobject complete');
 
   // re-stage source jpg file with different content
   const content = randomString();
@@ -200,7 +200,7 @@ test.serial('should overwrite files', async (t) => {
     Body: content
   };
 
-  console.log(`start s3 upload. params: ${JSON.stringify(uploadParams2)}`);
+  console.log(`CUMULUS-970 debugging: start s3 upload. params: ${JSON.stringify(uploadParams2)}`);
 
   await promiseS3Upload({
     Bucket: t.context.stagingBucket,
@@ -208,22 +208,22 @@ test.serial('should overwrite files', async (t) => {
     Body: content
   });
 
-  console.log(`start move granules. params: ${JSON.stringify(newPayload)}`);
+  console.log(`CUMULUS-970 debugging: start move granules. params: ${JSON.stringify(newPayload)}`);
 
   output = await moveGranules(newPayload);
 
-  console.log('move granules complete');
+  console.log('CUMULUS-970 debugging:  move granules complete');
 
   const updatedFile = await headObject(
     t.context.publicBucket,
     destKey
   );
 
-  console.log(`start list. params: ${JSON.stringify({ Bucket: t.context.publicBucket })}`);
+  console.log(`CUMULUS-970 debugging: start list objects. params: ${JSON.stringify({ Bucket: t.context.publicBucket })}`);
 
   const objects = await s3().listObjects({ Bucket: t.context.publicBucket }).promise();
 
-  console.log('list objects complete');
+  console.log('CUMULUS-970 debugging: list objects complete');
 
   t.is(objects.Contents.length, 1);
 
