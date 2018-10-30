@@ -122,20 +122,17 @@ const stepFunctionMock = {
     })
 };
 
-const s3Mock = {
-  get: (_, key) =>
-    new Promise((resolve) => {
-      const fullMessage = key === 'events/lambdaEventUUID' ? lambdaCompleteOutput : fullMessageOutput;
-      const s3Result = {
-        Body: Buffer.from(JSON.stringify(fullMessage))
-      };
-      resolve(s3Result);
-    })
-};
+const s3Mock = (_, key) =>
+  new Promise((resolve) => {
+    const fullMessage = key === 'events/lambdaEventUUID' ? lambdaCompleteOutput : fullMessageOutput;
+    const s3Result = {
+      Body: Buffer.from(JSON.stringify(fullMessage))
+    };
+    resolve(s3Result);
+  });
 
 executionStatusEndpoint.__set__('StepFunction', stepFunctionMock);
-executionStatusEndpoint.__set__('S3', s3Mock);
-
+executionStatusEndpoint.__set__('getS3Object', s3Mock);
 
 let authHeaders;
 let userModel;
@@ -182,6 +179,21 @@ test('CUMULUS-912 GET with an unauthorized user returns an unauthorized response
 
   return testEndpoint(executionStatusEndpoint, request, (response) => {
     assertions.isUnauthorizedUserResponse(t, response);
+  });
+});
+
+test('returns ARNs for execution and state machine', (t) => {
+  const event = {
+    pathParameters: {
+      arn: 'hasFullMessage'
+    },
+    headers: authHeaders
+  };
+
+  return testEndpoint(executionStatusEndpoint, event, (response) => {
+    const executionStatus = JSON.parse(response.body);
+    t.is(executionStatusCommon.stateMachineArn, executionStatus.execution.stateMachineArn);
+    t.is(executionStatusCommon.executionArn, executionStatus.execution.executionArn);
   });
 });
 

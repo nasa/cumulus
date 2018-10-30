@@ -4,7 +4,8 @@
  */
 
 const forge = require('node-forge');
-const { S3, KMS } = require('./aws');
+const { s3 } = require('@cumulus/common/aws');
+const { KMS } = require('./aws');
 
 /**
  * Provides encryption and decryption methods using a keypair stored in S3
@@ -26,7 +27,9 @@ class S3KeyPairProvider {
     const pki = forge.pki;
     const b = bucket || process.env.internal;
     const s = stack || process.env.stackName;
-    const pub = await S3.get(b, `${s}/crypto/${keyId}`);
+    const pub = await s3().getObject({
+      Bucket: b, Key: `${s}/crypto/${keyId}`
+    }).promise();
 
     const publicKey = pki.publicKeyFromPem(pub.Body.toString());
     return forge.util.encode64(publicKey.encrypt(str));
@@ -47,7 +50,9 @@ class S3KeyPairProvider {
     const pki = forge.pki;
     const b = bucket || process.env.internal;
     const s = stack || process.env.stackName;
-    const priv = await S3.get(b, `${s}/crypto/${keyId}`);
+    const priv = await s3().getObject({
+      Bucket: b, Key: `${s}/crypto/${keyId}`
+    }).promise();
 
     const decoded = forge.util.decode64(str);
     const privateKey = pki.privateKeyFromPem(priv.Body.toString());
