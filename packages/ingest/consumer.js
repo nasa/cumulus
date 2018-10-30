@@ -27,9 +27,8 @@ class Consume {
     let remainingMessageLimit = messageLimit;
     const originalMessageLimit = remainingMessageLimit;
 
-    // eslint-disable no-await-in-loop
+    /* eslint-disable no-await-in-loop */
     while (!this.endConsume) {
-
       const messages = await receiveSQSMessages(
         this.queueUrl,
         { numOfMessages: messageLimit }
@@ -50,7 +49,7 @@ class Consume {
       // `receiveSQSMessages`
       remainingMessageLimit -= messages.length;
     }
-    // eslint-enable no-await-in-loop
+    /* eslint-enable no-await-in-loop */
 
     return counter;
   }
