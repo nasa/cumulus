@@ -42,6 +42,7 @@ jobs:
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
       script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api
+
     - name: "API unit tests"
       stage: unit test and stack deployment
       services:
@@ -97,6 +98,7 @@ jobs:
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/deploy-to-npm.sh
+
     - name: "Deploy to Github Pages"
       stage: deploy
       install: npm install
