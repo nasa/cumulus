@@ -1,4 +1,3 @@
-/* eslint-disable no-console, no-await-in-loop, no-restricted-syntax */
 /**
  * This module overrides the Kes Class and the Lambda class of Kes
  * to support specific needs of the Cumulus Deployment.
@@ -113,6 +112,7 @@ class UpdatedKes extends Kes {
         let resources = [];
         const params = { StackName: config.stackName };
         while (true) { // eslint-disable-line no-constant-condition
+          // eslint-disable-next-line no-await-in-loop
           const data = await this.cf.listStackResources(params).promise();
           resources = resources.concat(data.StackResourceSummaries);
           if (data.NextToken) params.NextToken = data.NextToken;
@@ -120,18 +120,22 @@ class UpdatedKes extends Kes {
           else break;
         }
 
-        const clusters = resources.filter((item) => {
-          if (item.ResourceType === 'AWS::ECS::Cluster') return true;
-          return false;
-        });
+        const clusters = resources
+          .filter((resource) => resource.ResourceType === 'AWS::ECS::Cluster')
+          .map((cluster) => cluster.PhysicalResourceId);
 
-        for (const cluster of clusters) {
-          const tasks = await ecs.listTasks({ cluster: cluster.PhysicalResourceId }).promise();
-          for (const task of tasks.taskArns) {
+        for (let clusterCtr = 0; clusterCtr < clusters.length; clusterCtr += 1) {
+          const cluster = clusters[clusterCtr];
+          // eslint-disable-next-line no-await-in-loop
+          const tasks = await ecs.listTasks({ cluster }).promise();
+
+          for (let taskCtr = 0; taskCtr < tasks.taskArns.length; taskCtr += 1) {
+            const task = tasks.taskArns[taskCtr];
             console.log(`restarting ECS task ${task}`);
+            // eslint-disable-next-line no-await-in-loop
             await ecs.stopTask({
               task: task,
-              cluster: cluster.PhysicalResourceId
+              cluster
             }).promise();
             console.log(`ECS task ${task} restarted`);
           }
@@ -150,12 +154,16 @@ class UpdatedKes extends Kes {
    * @returns {string}        - Contents of cfFile templated using Handlebars
    */
   parseCF(cfFile) {
+    // Arrow functions cannot be used when registering Handlebars helpers
+    // https://stackoverflow.com/questions/43932566/handlebars-block-expression-do-not-work
+
     Handlebars.registerHelper('ifEquals', function ifEquals(arg1, arg2, options) {
       return (arg1 === arg2) ? options.fn(this) : options.inverse(this);
     });
     Handlebars.registerHelper('ifNotEquals', function ifNotEquals(arg1, arg2, options) {
       return (arg1 !== arg2) ? options.fn(this) : options.inverse(this);
     });
+
     return super.parseCF(cfFile);
   }
 
