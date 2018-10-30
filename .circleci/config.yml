@@ -58,5 +58,4 @@ jobs:
               cd packages/api
               ./node_modules/.bin/ava --serial
               cd ../..
-              yarn e2e
             fi
