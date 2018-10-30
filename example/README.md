@@ -17,7 +17,7 @@ These tests run against AWS, so a Cumulus deployment is needed. Set up the deplo
 
 Your default AWS credentials should be the same credentials used for the deployment.
 
-You should deploy your own stack on AWS and use that for testing. To configure and deploy your stack, add a new deployment to `app/config.yml` and `iam/config.yml` files and deploy them.
+You should deploy your own stack on AWS and use that for testing. To configure and deploy your stack, add a new deployment to `app/config.yml` and `iam/config.yml` files and deploy them. You will also need to copy `app/.env.sample` to `app/.env` and provide your configuration.
 
 Use the name of your deployment to run the tests by setting the `DEPLOYMENT` environment variable. For example:
 
@@ -53,11 +53,21 @@ Test data comes from the @cumulus/test-data package and is uploaded to S3 during
 
 Tests are written and run with [jasmine](https://jasmine.github.io/setup/nodejs.html).
 
-To run all of the tests, run `DEPLOYMENT=<name-of-your-deployment> npm test` in the top level of the repository.
+Tests are separated into standalone and parallel folders. The `standalone` folder is for tests that cannot be run in parallel with any other tests and should be run in a separate job, for example, the redeployment tests that are only run by Travis on master.
+
+The `parallel` folder holds tests that can be run in parallel.
+
+All other tests in the spec folder will be run in serial.
+
+To run all tests outside of standalone, run `DEPLOYMENT=<name-of-your-deployment> npm test` in this directory. The parallel tests will be run in parallel locally and on CI.
+
+To run all of the tests, including standalone, run `DEPLOYMENT=<name-of-your-deployment> npm run all-tests` in this directory.
 
 ### Run tests for an individual test file
 
 To run an individual test file, include a path to the spec file, i.e. `DEPLOYMENT=<name-of-your-deployment> npm test spec/helloWorld/HelloWorldSuccessSpec.js`.
+
+Jasmine supports wildcard expressions for running tests, so an entire test folder can be run using `DEPLOYMENT=<name-of-your-deployment> jasmine spec/standalone/*`
 
 ## Adding tests
 
@@ -67,9 +77,13 @@ Workflow tests are located in the `/spec/<workflow-name>` folder. Any tests and 
 
 ### Adding a new test workflow
 
-The workflow should be configured as it would be for a normal Cumulus deployment in `workflows.yml`. It must be deployed to the current deployment if testing locally.
+The workflow should be configured as it would be for a normal Cumulus deployment in a workflows yaml file. It must be deployed to the current deployment if testing locally.
+
+The workflows yaml files are located in the `/workflows/` folder and are split up to make the workflows easier to find and understand. When adding a new file, make sure to update the `app/config.yml` `stepFunctions` field.
 
 A new folder should be added in the `/spec` folder for the workflow and the tests should go into that folder with the input JSON files.
+
+Ideally the test can run in parallel with other tests and should be put in the `parallel` folder. If it cannot be, it should go in the `spec` folder. Only if the test should be run outside of the test suite should it go in the `standalone` folder.
 
 ## Using your AWS CF stack in Travis CI
 
@@ -80,6 +94,7 @@ your stack name [here](../travis-ci/select-stack.js).
 
 ### Redeployment During Tests
 
-There are tests for redeploying the Cumulus stack while a workflow is running (see `spec/redeployment`). This is acheived by backing up with the `workflows.yml` file, updating it, and redeploying the stack. When redeploy tests are complete, the original `workflows.yml` is restored, the backup file is deleted, and the stack is redeployed, restoring it to its original state.
+There are tests for redeploying the Cumulus stack while a workflow is running (see `spec/standalone/redeployment`). This is acheived by backing up with the `workflows.yml` file, updating it, and redeploying the stack. When redeploy tests are complete, the original `workflows.yml` is restored, the backup file is deleted, and the stack is redeployed, restoring it to its original state.
 
 Please note that the stack will be redeployed multiple times when running tests and any errors during redeployment can result in errors in later tests. The deployment output is printed to the console.
+

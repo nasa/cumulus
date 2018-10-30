@@ -5,7 +5,7 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs-extra');
 const { RemoteResourceError } = require('@cumulus/common/errors');
-const { cloneDeep } = require('lodash');
+const cloneDeep = require('lodash.clonedeep');
 
 const { discoverPdrs } = require('../index');
 const input = require('./fixtures/input.json');

@@ -7,10 +7,8 @@ const {
 
 const { User } = require('../../models');
 const { fakeUserFactory } = require('../../lib/testUtils');
-const {
-  buildLambdaProxyResponse,
-  getAuthorizationFailureResponse
-} = require('../../lib/response');
+const { getAuthorizationFailureResponse } = require('../../lib/response');
+const { InternalServerError } = require('../../lib/responses');
 
 let usersTableName;
 let userModel;
@@ -37,128 +35,6 @@ test.afterEach(async (t) => {
 
 test.after.always(async (_t) => {
   await userModel.deleteTable();
-});
-
-test('buildLambdaProxyResponse sets a default status code of 200', (t) => {
-  const response = buildLambdaProxyResponse();
-
-  t.is(response.statusCode, 200);
-});
-
-test('buildLambdaProxyResponse sets the correct statusCode when specified', (t) => {
-  const response = buildLambdaProxyResponse({ statusCode: 123 });
-
-  t.is(response.statusCode, 123);
-});
-
-test('buildLambdaProxyResponse sets the Strict-Transport-Security header to max-age=31536000', (t) => {
-  const response = buildLambdaProxyResponse();
-
-  t.is(response.headers['Strict-Transport-Security'], 'max-age=31536000');
-});
-
-test('buildLambdaProxyResponse does not allow the Strict-Transport-Security header to be overwritten', (t) => {
-  const response = buildLambdaProxyResponse({
-    headers: {
-      'Strict-Transport-Security': 'woohoo'
-    }
-  });
-
-  t.is(response.headers['Strict-Transport-Security'], 'max-age=31536000');
-});
-
-test('buildLambdaProxyResponse sets the Access-Control-Allow-Origin header to *', (t) => {
-  const response = buildLambdaProxyResponse();
-
-  t.is(response.headers['Access-Control-Allow-Origin'], '*');
-});
-
-test('buildLambdaProxyResponse does not allow the Access-Control-Allow-Origin header to be overwritten', (t) => {
-  const response = buildLambdaProxyResponse({
-    headers: {
-      'Access-Control-Allow-Origin': 'woohoo'
-    }
-  });
-
-  t.is(response.headers['Access-Control-Allow-Origin'], '*');
-});
-
-test('buildLambdaProxyResponse sets headers provided as arguments', (t) => {
-  const response = buildLambdaProxyResponse({
-    headers: {
-      username: 'scrosby'
-    }
-  });
-
-  t.is(response.headers.username, 'scrosby');
-});
-
-test('buildLambdaProxyResponse sets the Content-Type header when the JSON flag is true and a Content-Type header is not specified', (t) => {
-  const response = buildLambdaProxyResponse({
-    body: {},
-    json: true
-  });
-
-  t.is(response.headers['Content-Type'], 'application/json');
-});
-
-test('buildLambdaProxyResponse does not set the Content-Type header when the JSON flag is true and a Content-Type header is specified', (t) => {
-  const response = buildLambdaProxyResponse({
-    body: {},
-    headers: {
-      'Content-Type': 'custom-content-type'
-    },
-    json: true
-  });
-
-  t.is(response.headers['Content-Type'], 'custom-content-type');
-});
-
-test('buildLambdaProxyResponse does not set the Content-Type header when the JSON flag is true and a Content-Type header with different capitalization is specified', (t) => {
-  const response = buildLambdaProxyResponse({
-    body: {},
-    headers: {
-      'content-type': 'custom-content-type'
-    },
-    json: true
-  });
-
-  t.false(Object.keys(response.headers).includes('Content-Type'));
-});
-
-test('buildLambdaProxyResponse converts the body argument to JSON when the JSON flag is true and the body argument is an array', (t) => {
-  const response = buildLambdaProxyResponse({
-    body: [1, 2, 3],
-    json: true
-  });
-
-  let parsedResponseBody;
-  t.notThrows(() => {
-    parsedResponseBody = JSON.parse(response.body);
-  });
-  t.deepEqual(parsedResponseBody, [1, 2, 3]);
-});
-
-test('buildLambdaProxyResponse converts the body argument to JSON when the JSON flag is true and the body argument is an object', (t) => {
-  const response = buildLambdaProxyResponse({
-    body: { a: 1, b: 2, c: 3 },
-    json: true
-  });
-
-  let parsedResponseBody;
-  t.notThrows(() => {
-    parsedResponseBody = JSON.parse(response.body);
-  });
-  t.deepEqual(parsedResponseBody, { a: 1, b: 2, c: 3 });
-});
-
-test('buildLambdaProxyResponse throws a TypeError when the JSON flag is true and the body argument is a string', (t) => {
-  const params = { body: 'some string', json: true };
-  t.throws(
-    () => buildLambdaProxyResponse(params),
-    TypeError,
-    'body must be an object or array when json is true'
-  );
 });
 
 test('getAuthorizationFailureResponse returns null if authorization succeeds', async (t) => {
@@ -233,13 +109,12 @@ test('getAuthorizationFailureResponse returns an appropriate response when a tok
   const response = await getAuthorizationFailureResponse({ request, usersTable: usersTableName });
 
   t.truthy(response);
-  t.is(response.statusCode, 401);
+  t.is(response.statusCode, 403);
+
   t.is(response.headers['Content-Type'], 'application/json');
-  t.true(response.headers['WWW-Authenticate'].includes('error="invalid_token"'));
-  t.true(response.headers['WWW-Authenticate'].includes('error_description="Invalid Authorization token"'));
 
   const parsedResponseBody = JSON.parse(response.body);
-  t.is(parsedResponseBody.message, 'Invalid Authorization token');
+  t.is(parsedResponseBody.message, 'User not authorized');
 });
 
 test('getAuthorizationFailureResponse returns an appropriate response when the token has expired', async (t) => {
@@ -259,11 +134,37 @@ test('getAuthorizationFailureResponse returns an appropriate response when the t
   const response = await getAuthorizationFailureResponse({ request, usersTable: usersTableName });
 
   t.truthy(response);
-  t.is(response.statusCode, 401);
+  t.is(response.statusCode, 403);
+
   t.is(response.headers['Content-Type'], 'application/json');
-  t.true(response.headers['WWW-Authenticate'].includes('error="invalid_token"'));
-  t.true(response.headers['WWW-Authenticate'].includes('error_description="The access token expired"'));
 
   const parsedResponseBody = JSON.parse(response.body);
-  t.is(parsedResponseBody.message, 'The access token expired');
+  t.is(parsedResponseBody.message, 'Access token has expired');
+});
+
+test('getAuthorizationFailureResponse returns an appropriate response if the user does not have an expiration', async (t) => {
+  const {
+    userName,
+    password
+  } = await userModel.create(fakeUserFactory());
+  await userModel.update({ userName }, {}, ['expires']);
+
+  t.context.usersToDelete.push(userName);
+
+  const request = {
+    headers: {
+      Authorization: `Bearer ${password}`
+    }
+  };
+
+  const response = await getAuthorizationFailureResponse({ request, usersTable: usersTableName });
+
+  t.truthy(response);
+  t.true(response instanceof InternalServerError);
+  t.is(response.statusCode, 500);
+
+  t.is(response.headers['Content-Type'], 'application/json');
+
+  const parsedResponseBody = JSON.parse(response.body);
+  t.is(parsedResponseBody.message, 'Internal Server Error');
 });

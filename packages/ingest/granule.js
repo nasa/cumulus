@@ -4,16 +4,22 @@ const crypto = require('crypto');
 const deprecate = require('depd')('my-module');
 const fs = require('fs-extra');
 const cloneDeep = require('lodash.clonedeep');
+const flatten = require('lodash.flatten');
 const groupBy = require('lodash.groupby');
 const identity = require('lodash.identity');
+const moment = require('moment');
 const omit = require('lodash.omit');
 const os = require('os');
 const path = require('path');
 const urljoin = require('url-join');
+const uuidv4 = require('uuid/v4');
 const encodeurl = require('encodeurl');
 const cksum = require('cksum');
 const xml2js = require('xml2js');
-const { aws, log } = require('@cumulus/common');
+const { promisify } = require('util');
+const {
+  aws, CollectionConfigStore, constructCollectionId, log
+} = require('@cumulus/common');
 const errors = require('@cumulus/common/errors');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const { sftpMixin } = require('./sftp');
@@ -22,8 +28,6 @@ const { httpMixin } = require('./http');
 const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
 const { publish } = require('./cmr');
-const { CollectionConfigStore, constructCollectionId } = require('@cumulus/common');
-const { promisify } = require('util');
 
 /**
 * The abstract Discover class
@@ -124,7 +128,7 @@ class Discover {
     // going to ignore it.
     const newFiles = (await Promise.all(discoveredFiles.map((discoveredFile) =>
       aws.s3ObjectExists({ Bucket: discoveredFile.bucket, Key: discoveredFile.name })
-        .then((exists) => (exists ? null : discoveredFile)))))
+        .then((s3ObjAlreadyExists) => (s3ObjAlreadyExists ? null : discoveredFile)))))
       .filter(identity);
 
     // Group the files by granuleId
@@ -167,7 +171,7 @@ class Granule {
     provider,
     fileStagingDir = 'file-staging',
     forceDownload = false,
-    duplicateHandling = 'replace'
+    duplicateHandling = 'error'
   ) {
     if (this.constructor === Granule) {
       throw new TypeError('Can not construct abstract class.');
@@ -184,7 +188,9 @@ class Granule {
     this.checksumFiles = {};
 
     this.forceDownload = forceDownload;
-    this.fileStagingDir = fileStagingDir;
+
+    if (fileStagingDir && fileStagingDir[0] === '/') this.fileStagingDir = fileStagingDir.substr(1);
+    else this.fileStagingDir = fileStagingDir;
 
     this.duplicateHandling = duplicateHandling;
   }
@@ -231,7 +237,7 @@ class Granule {
       .map((f) => this.ingestFile(f, bucket, this.duplicateHandling));
 
     log.debug('awaiting all download.Files');
-    const files = await Promise.all(downloadFiles);
+    const files = flatten(await Promise.all(downloadFiles));
     log.debug('finished ingest()');
     return {
       granuleId: granule.granuleId,
@@ -359,14 +365,15 @@ class Granule {
    * @param {string} bucket - s3 bucket name of the file
    * @param {string} key - s3 key of the file
    * @param {Object} [options={}] - options for the this._hash method
-   * @returns {undefined} - no return value, but throws an error if the
-   *   checksum is invalid
+   * @returns {Array<string>} returns array where first item is the checksum algorithm,
+   * and the second item is the value of the checksum.
+   * Throws an error if the checksum is invalid.
    * @memberof Granule
    */
   async validateChecksum(file, bucket, key, options = {}) {
     const [type, value] = await this.getChecksumFromFile(file);
 
-    if (!type || !value) return;
+    if (!type || !value) return [null, null];
 
     const sum = await aws.checksumS3Objects(type, bucket, key, options);
 
@@ -374,6 +381,7 @@ class Granule {
       const message = `Invalid checksum for ${file.name} with type ${file.checksumType} and value ${file.checksumValue}`; // eslint-disable-line max-len
       throw new errors.InvalidChecksum(message);
     }
+    return [type, value];
   }
 
   /**
@@ -438,7 +446,7 @@ class Granule {
     if (file.checksumType && file.checksumValue) {
       return [file.checksumType, file.checksumValue];
     }
-    else if (this.checksumFiles[file.name]) {
+    if (this.checksumFiles[file.name]) {
       const checksumInfo = this.checksumFiles[file.name];
 
       const checksumRemotePath = path.join(checksumInfo.path, checksumInfo.name);
@@ -471,46 +479,102 @@ class Granule {
    * @param {Object} file - file to download
    * @param {string} bucket - bucket to put file in
    * @param {string} duplicateHandling - how to handle duplicate files
-   * value can be `skip` to skip duplicates,
-   * or 'version' to create a new version of the file in s3
-   * @returns {Promise<Object>} returns promise that resolves to a file object
+   * value can be
+   * 'error' to throw an error,
+   * 'replace' to replace the duplicate,
+   * 'skip' to skip duplicate,
+   * 'version' to keep both files if they have different checksums
+   * @returns {Array<Object>} returns the staged file and the renamed existing duplicates if any
    */
   async ingestFile(file, bucket, duplicateHandling) {
     // Check if the file exists
-    const exists = await aws.s3ObjectExists({
+    const destinationKey = path.join(this.fileStagingDir, file.name);
+
+    const s3ObjAlreadyExists = await aws.s3ObjectExists({
       Bucket: bucket,
-      Key: path.join(this.fileStagingDir, file.name)
+      Key: destinationKey
     });
 
-    // Exit early if we can
-    if (exists && duplicateHandling === 'skip') return file;
+    // the staged file expected
+    const stagedFile = Object.assign(file,
+      {
+        filename: aws.buildS3Uri(bucket, destinationKey),
+        fileStagingDir: this.fileStagingDir,
+        url_path: this.getUrlPath(file),
+        bucket
+      });
+    if (s3ObjAlreadyExists) stagedFile.duplicate_found = true;
 
-    // Enable bucket versioning
-    if (duplicateHandling === 'version') this.enableBucketVersioning(file.bucket);
+    log.debug(`file ${destinationKey} exists in ${bucket}: ${s3ObjAlreadyExists}`);
+    // Have to throw DuplicateFile and not WorkflowError, because the latter
+    // is not treated as a failure by the message adapter.
+    if (s3ObjAlreadyExists && duplicateHandling === 'error') {
+      throw new errors.DuplicateFile(`${destinationKey} already exists in ${bucket} bucket`);
+    }
+
+    // Exit early if we can
+    if (s3ObjAlreadyExists && duplicateHandling === 'skip') {
+      return [Object.assign(stagedFile,
+        { fileSize: (await aws.headObject(bucket, destinationKey)).ContentLength })];
+    }
 
     // Either the file does not exist yet, or it does but
     // we are replacing it with a more recent one or
-    // adding another version of it to the bucket
+    // renaming the existing file
 
     const fileRemotePath = path.join(file.path, file.name);
 
-    // s3 file staging location
-    let fullKey = path.join(this.fileStagingDir, file.name);
-    if (fullKey[0] === '/') fullKey = fullKey.substr(1);
+    // if the file already exists, and duplicateHandling is 'version',
+    // we download file to a different name first
+    const stagedFileKey = (s3ObjAlreadyExists && duplicateHandling === 'version')
+      ? `${destinationKey}.${uuidv4()}` : destinationKey;
 
     // stream the source file to s3
-    log.debug(`await sync file to s3 ${fileRemotePath}, ${bucket}, ${fullKey}`);
-    const filename = await this.sync(fileRemotePath, bucket, fullKey);
+    log.debug(`await sync file to s3 ${fileRemotePath}, ${bucket}, ${stagedFileKey}`);
+    await this.sync(fileRemotePath, bucket, stagedFileKey);
 
     // Validate the checksum
-    log.debug(`await validateChecksum ${JSON.stringify(file)}, ${bucket}, ${fullKey}`);
-    await this.validateChecksum(file, bucket, fullKey);
+    log.debug(`await validateChecksum ${JSON.stringify(file)}, ${bucket}, ${stagedFileKey}`);
+    const [checksumType, checksumValue] = await this.validateChecksum(file, bucket, stagedFileKey);
 
-    return Object.assign(file, {
-      filename,
-      fileStagingDir: this.fileStagingDir,
-      url_path: this.getUrlPath(file),
-      bucket
+    // compare the checksum of the existing file and new file, and handle them accordingly
+    if (s3ObjAlreadyExists && duplicateHandling === 'version') {
+      const existingFileSum = await
+      aws.checksumS3Objects(checksumType || 'CKSUM', bucket, destinationKey);
+
+      const stagedFileSum = checksumValue
+      || await aws.checksumS3Objects('CKSUM', bucket, stagedFileKey);
+
+      // if the checksum of the existing file is the same as the new one, keep the existing file,
+      // else rename the existing file, and both files are part of the granule.
+      if (existingFileSum === stagedFileSum) {
+        await aws.deleteS3Object(bucket, stagedFileKey);
+      }
+      else {
+        log.debug(`Renaming file to ${destinationKey}`);
+        await exports.renameS3FileWithTimestamp(bucket, destinationKey);
+        await exports.moveGranuleFile(
+          { Bucket: bucket, Key: stagedFileKey }, { Bucket: bucket, Key: destinationKey }
+        );
+      }
+    }
+
+    const renamedFiles = (duplicateHandling === 'version')
+      ? await exports.getRenamedS3File(bucket, destinationKey) : [];
+
+    // return all files, the renamed files don't have the same properties(name, fileSize, checksum)
+    // from input file
+    return renamedFiles.concat({ Bucket: bucket, Key: destinationKey }).map((f) => {
+      if (f.Key === destinationKey) return stagedFile;
+      return {
+        name: path.basename(f.Key),
+        path: file.path,
+        filename: aws.buildS3Uri(f.Bucket, f.Key),
+        fileSize: f.fileSize,
+        fileStagingDir: this.fileStagingDir,
+        url_path: this.getUrlPath(file),
+        bucket
+      };
     });
   }
 }
@@ -608,7 +672,7 @@ function selector(type, protocol) {
 function getGranuleId(uri, regex) {
   const match = path.basename(uri).match(regex);
   if (match) return match[1];
-  throw new Error(`Could not determine granule id of ${filename} using ${regex}`);
+  throw new Error(`Could not determine granule id of ${uri} using ${regex}`);
 }
 
 /**
@@ -621,12 +685,28 @@ async function getMetadata(xmlFilePath) {
   if (!xmlFilePath) {
     throw new errors.XmlMetaFileNotFound('XML Metadata file not provided');
   }
-
-  // GET the metadata text
-  // Currently, only supports files that are stored on S3
-  const parts = xmlFilePath.match(/^s3:\/\/(.+?)\/(.+)$/);
-  const obj = await aws.getS3Object(parts[1], parts[2]);
+  const { Bucket, Key } = aws.parseS3Uri(xmlFilePath);
+  const obj = await aws.getS3Object(Bucket, Key);
   return obj.Body.toString();
+}
+
+/**
+ * Gets body and tags of s3 metadata xml file
+ *
+ * @param {string} xmlFilePath - S3 URI to the xml metadata document
+ * @returns {Object} - object containing Body and TagSet for S3 Object
+ */
+async function getMetadataBodyAndTags(xmlFilePath) {
+  if (!xmlFilePath) {
+    throw new errors.XmlMetaFileNotFound('XML Metadata file not provided');
+  }
+  const { Bucket, Key } = aws.parseS3Uri(xmlFilePath);
+  const data = await aws.getS3Object(Bucket, Key);
+  const tags = await aws.s3GetObjectTagging(Bucket, Key);
+  return {
+    Body: data.Body.toString(),
+    TagSet: tags.TagSet
+  };
 }
 
 /**
@@ -651,21 +731,22 @@ async function getCmrFiles(input, granuleIdExtraction) {
   const files = [];
   const expectedFormat = /.*\.cmr\.xml$/;
 
-  for (const filename of input) {
+  await Promise.all(input.map(async (filename) => {
     if (filename && filename.match(expectedFormat)) {
-      const metadata = await getMetadata(filename);
-      const metadataObject = await parseXmlString(metadata);
+      const metaResponse = await getMetadataBodyAndTags(filename);
+      const metadataObject = await parseXmlString(metaResponse.Body);
 
       const cmrFileObject = {
         filename,
-        metadata,
+        metadata: metaResponse.Body,
         metadataObject,
-        granuleId: getGranuleId(filename, granuleIdExtraction)
+        granuleId: getGranuleId(filename, granuleIdExtraction),
+        s3Tags: metaResponse.TagSet
       };
 
       files.push(cmrFileObject);
     }
-  }
+  }));
 
   return files;
 }
@@ -848,15 +929,17 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
       };
 
       log.debug('moveGranuleFiles', source, target);
-      return moveGranuleFile(source, target).then(() => { /* eslint-disable no-param-reassign */
+      return moveGranuleFile(source, target).then(() => {
         // update the granule file location in source file
+        /* eslint-disable no-param-reassign */
         file.bucket = target.Bucket;
         file.filepath = target.Key;
         file.filename = aws.buildS3Uri(file.bucket, file.filepath);
+        /* eslint-enable no-param-reassign */
       });
     }
     // else set filepath as well so it won't be null
-    file.filepath = parsed.Key;
+    file.filepath = parsed.Key; /* eslint-disable-line no-param-reassign */
     return Promise.resolve();
   });
 
@@ -867,10 +950,58 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
   if (xmlFile.length === 1) {
     return updateMetadata(granuleId, xmlFile[0], sourceFiles, distEndpoint, published);
   }
-  else if (xmlFile.length > 1) {
+  if (xmlFile.length > 1) {
     log.error('more than one .cmr.xml found');
   }
   return Promise.resolve();
+}
+
+/**
+  * rename s3 file with timestamp
+  *
+  * @param {string} bucket - bucket of the file
+  * @param {string} key - s3 key of the file
+  * @returns {Promise} promise that resolves when file is renamed
+  */
+async function renameS3FileWithTimestamp(bucket, key) {
+  const formatString = 'YYYYMMDDTHHmmssSSS';
+  const timestamp = (await aws.headObject(bucket, key)).LastModified;
+  let renamedKey = `${key}.v${moment.utc(timestamp).format(formatString)}`;
+
+  // if the renamed file already exists, get a new name
+  // eslint-disable-next-line no-await-in-loop
+  while (await aws.s3ObjectExists({ Bucket: bucket, Key: renamedKey })) {
+    renamedKey = `${key}.v${moment.utc(timestamp).add(1, 'milliseconds').format(formatString)}`;
+  }
+
+  log.debug(`renameS3FileWithTimestamp renaming ${bucket} ${key} to ${renamedKey}`);
+  return exports.moveGranuleFile(
+    { Bucket: bucket, Key: key }, { Bucket: bucket, Key: renamedKey }
+  );
+}
+
+/**
+  * get all renamed s3 files for a given bucket and key
+  *
+  * @param {string} bucket - bucket of the file
+  * @param {string} key - s3 key of the file
+  * @returns {Array<Object>} returns renamed files
+  */
+async function getRenamedS3File(bucket, key) {
+  const s3list = await aws.listS3ObjectsV2({ Bucket: bucket, Prefix: `${key}.v` });
+  return s3list.map((c) => ({ Bucket: bucket, Key: c.Key, fileSize: c.Size }));
+}
+
+/**
+ * check to see if the file has the suffix with timestamp '.vYYYYMMDDTHHmmssSSS'
+ *
+ * @param {string} filename - name of the file
+ * @returns {boolean} whether the file is renamed
+ */
+function isFileRenamed(filename) {
+  // eslint-disable-next-line max-len
+  const suffixRegex = '\\.v[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])T(2[0-3]|[01][0-9])[0-5][0-9][0-5][0-9][0-9]{3}$';
+  return (filename.match(suffixRegex) !== null);
 }
 
 module.exports.selector = selector;
@@ -887,6 +1018,9 @@ module.exports.SftpGranule = SftpGranule;
 module.exports.getGranuleId = getGranuleId;
 module.exports.getCmrFiles = getCmrFiles;
 module.exports.getMetadata = getMetadata;
+module.exports.getRenamedS3File = getRenamedS3File;
 module.exports.copyGranuleFile = copyGranuleFile;
+module.exports.isFileRenamed = isFileRenamed;
 module.exports.moveGranuleFile = moveGranuleFile;
 module.exports.moveGranuleFiles = moveGranuleFiles;
+module.exports.renameS3FileWithTimestamp = renameS3FileWithTimestamp;

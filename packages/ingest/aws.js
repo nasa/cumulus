@@ -1,6 +1,5 @@
 'use strict';
 
-const _get = require('lodash.get');
 const url = require('url');
 const aws = require('@cumulus/common/aws');
 const AWS = require('aws-sdk');
@@ -8,6 +7,7 @@ const moment = require('moment');
 const log = require('@cumulus/common/log');
 const errors = require('@cumulus/common/errors');
 const { inTestMode } = require('@cumulus/common/test-utils');
+const { describeExecution } = require('@cumulus/common/step-functions');
 
 /**
  * getEndpoint returns proper AWS arguments for various
@@ -152,6 +152,8 @@ class Events {
 
 class S3 {
   static parseS3Uri(uri) {
+    // eslint-disable-next-line max-len
+    log.warn('@cumulus/ingest/aws/S3.parseUri is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws.parseS3Uri instead.');
     const parsed = url.parse(uri);
     if (parsed.protocol !== 's3:') {
       throw new Error('uri must be a S3 uri, e.g. s3://bucketname');
@@ -165,6 +167,8 @@ class S3 {
 
   static async copy(source, dstBucket, dstKey, isPublic = false) {
     const s3 = new AWS.S3();
+    // eslint-disable-next-line max-len
+    log.warn('@cumulus/ingest/aws/S3.copy is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws.s3CopyObject instead.');
 
     const params = {
       Bucket: dstBucket,
@@ -178,6 +182,8 @@ class S3 {
 
   static async list(bucket, prefix) {
     const s3 = new AWS.S3();
+    // eslint-disable-next-line max-len
+    log.warn('@cumulus/ingest/aws/S3.list is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws.listS3ObjectsV2 instead.');
 
     const params = {
       Bucket: bucket,
@@ -188,6 +194,8 @@ class S3 {
   }
 
   static async delete(bucket, key) {
+    // eslint-disable-next-line max-len
+    log.warn('@cumulus/ingest/aws/S3.delete is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws.deleteS3Object instead.');
     const s3 = new AWS.S3();
 
     const params = {
@@ -199,6 +207,8 @@ class S3 {
   }
 
   static async put(bucket, key, body, acl = 'private', meta = null) {
+    // eslint-disable-next-line max-len
+    log.warn('@cumulus/ingest/aws/S3.put is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws.s3PutObject instead.');
     const params = {
       Bucket: bucket,
       Key: key,
@@ -214,6 +224,8 @@ class S3 {
   }
 
   static async get(bucket, key) {
+    // eslint-disable-next-line max-len
+    log.warn('@cumulus/ingest/aws/S3.get is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws.getS3Object instead.');
     const params = {
       Bucket: bucket,
       Key: key
@@ -223,6 +235,8 @@ class S3 {
   }
 
   static async upload(bucket, key, body, acl = 'private') {
+    // eslint-disable-next-line max-len
+    log.warn('@cumulus/ingest/aws/S3.upload is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws.promiseS3Upload instead.');
     const s3 = new AWS.S3();
 
     const params = {
@@ -245,6 +259,8 @@ class S3 {
    */
 
   static async fileExists(bucket, key) {
+    // eslint-disable-next-line max-len
+    log.warn('@cumulus/ingest/aws/S3.fileExists is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws/fileExists() instead.');
     const s3 = new AWS.S3();
     try {
       const r = await s3.headObject({ Key: key, Bucket: bucket }).promise();
@@ -485,24 +501,22 @@ class KMS {
 
 class StepFunction {
   static async getExecution(arn, ignoreMissingExecutions = false) {
-    const stepfunctions = new AWS.StepFunctions();
-
-    const params = {
-      executionArn: arn
-    };
+    // eslint-disable-next-line max-len
+    log.warn('@cumulus/ingest/aws/StepFunction.getExecution is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/step-functions/describeExecution instead.');
 
     try {
-      const r = await stepfunctions.describeExecution(params).promise();
-      return r;
+      return await describeExecution(arn);
     }
-    catch (e) {
-      if (ignoreMissingExecutions && e.message && e.message.includes('Execution Does Not Exist')) {
+    catch (err) {
+      if (ignoreMissingExecutions
+        && err.message
+        && err.message.includes('Execution Does Not Exist')) {
         return {
           executionArn: arn,
           status: 'NOT_FOUND'
         };
       }
-      throw e;
+      throw err;
     }
   }
 

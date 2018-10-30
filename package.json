@@ -4,10 +4,10 @@
   "description": "Cumulus Framework for ingesting and processing NASA Earth data streams",
   "scripts": {
     "docs-build-tasks": "./bin/build-tasks-doc.js",
-    "docs-build": "npm run docs-build-tasks && gitbook build",
-    "docs-serve": "npm run docs-build && (cd docs && gitbook serve)",
-    "docs-start": "npm run docs-build && (cd docs && gitbook serve)",
-    "e2e": "ava tests/*.js --serial",
+    "docs-install": "(cd website && yarn)",
+    "docs-build": "yarn run docs-build-tasks && (cd website && yarn run build)",
+    "docs-serve": "yarn run docs-build && (cd website && yarn run start)",
+    "docs-start": "yarn run docs-build && (cd website && yarn run start)",
     "lint": "eslint packages/api --ext .js",
     "test": "nyc lerna run test --concurrency 2",
     "bootstrap": "lerna bootstrap --npm-client=npm --hoist",
@@ -31,9 +31,6 @@
   "bin": {
     "build-tasks-doc": "./bin/build-tasks-doc.js"
   },
-  "ava": {
-    "files": "test"
-  },
   "nyc": {
     "exclude": [
       "**/tests",
@@ -55,11 +52,11 @@
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-plugin-eslint-comments": "^3.0.1",
     "eslint-plugin-import": "^2.9.0",
-    "eslint-plugin-jsdoc": "^3.5.0",
+    "eslint-plugin-jsdoc": "^3.7.1",
+    "eslint-plugin-lodash": "^2.7.0",
     "eslint-plugin-node": "^7.0.1",
     "eslint-plugin-unicorn": "^4.0.3",
     "eslint": "^5.5.0",
-    "gitbook-cli": "^2.3.2",
     "lerna": "^2.9.0",
     "nyc": "^11.6.0",
     "simple-git": "^1.96.0"

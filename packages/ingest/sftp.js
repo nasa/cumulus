@@ -3,12 +3,13 @@
 const { Client } = require('ssh2');
 const { PassThrough } = require('stream');
 const { join } = require('path');
-const { log, aws: { buildS3Uri, promiseS3Upload } } = require('@cumulus/common');
+const { log, aws: { s3, buildS3Uri, promiseS3Upload } } = require('@cumulus/common');
+const get = require('lodash.get');
+const omit = require('lodash.omit');
+
+const { KMS } = require('./aws');
 const Crypto = require('./crypto').DefaultProvider;
 const recursion = require('./recursion');
-const { omit } = require('lodash');
-const get = require('lodash.get');
-const { S3, KMS } = require('./aws');
 
 module.exports.sftpMixin = (superclass) => class extends superclass {
   constructor(...args) {
@@ -46,7 +47,9 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
       const stackName = process.env.stackName;
       // we are assuming that the specified private key is in the S3 crypto directory
       log.debug(`Reading Key: ${this.options.privateKey} bucket:${bucket},stack:${stackName}`);
-      const priv = await S3.get(bucket, `${stackName}/crypto/${this.options.privateKey}`);
+      const priv = await s3().getObject({
+        Bucket: bucket, Key: `${stackName}/crypto/${this.options.privateKey}`
+      }).promise();
 
       if (this.options.cmKeyId) {
         // we are using AWS KMS and the privateKey is encrypted
@@ -194,7 +197,7 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
 
     const params = { Bucket: bucket, Key: key, Body: pass };
     const result = await promiseS3Upload(params);
-    log.info('Uploading to s3 is complete', result);
+    log.info('Uploading to s3 is complete(sftp)', result);
     return s3uri;
   }
 };

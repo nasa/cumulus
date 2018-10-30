@@ -61,7 +61,7 @@ function fakeFilesFactory(bucket) {
 }
 
 /**
- * creates fake granule records
+ * Returns a fake Granule record
  *
  * @param {string} status - granule status (default to completed)
  * @returns {Object} fake granule object
@@ -79,6 +79,19 @@ function fakeGranuleFactory(status = 'completed') {
     cmrLink: 'example.com',
     productVolume: 100
   };
+}
+
+/**
+ * Returns a fake Granule record
+ *
+ * @param {Object} options - properties to set on the granule
+ * @returns {Object} fake granule object
+ */
+function fakeGranuleFactoryV2(options = {}) {
+  return Object.assign(
+    fakeGranuleFactory(),
+    options
+  );
 }
 
 /**
@@ -137,7 +150,7 @@ function fakeExecutionFactory(status = 'completed', type = 'fakeWorkflow') {
 }
 
 /**
- * Add a user that can be authenticated against
+ * Build a user that can be authenticated against
  *
  * @param {Object} params - params
  * @param {string} params.userName - a username
@@ -165,30 +178,55 @@ function fakeUserFactory(params = {}) {
 /**
  * creates fake collection records
  *
- * @returns {Object} fake pdr object
+ * @param {Object} options - properties to set on the collection
+ * @returns {Object} fake collection object
  */
-function fakeCollectionFactory() {
-  return {
-    name: randomString(),
-    dataType: randomString(),
-    version: '0.0.0',
-    provider_path: '/',
-    duplicateHandling: 'replace',
-    granuleId: '^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$',
-    granuleIdExtraction: '(MOD09GQ\\.(.*))\\.hdf',
-    sampleFileName: 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
-    files: []
-  };
+function fakeCollectionFactory(options = {}) {
+  return Object.assign(
+    {
+      name: randomString(),
+      dataType: randomString(),
+      version: '0.0.0',
+      provider_path: '/',
+      duplicateHandling: 'replace',
+      granuleId: '^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$',
+      granuleIdExtraction: '(MOD09GQ\\.(.*))\\.hdf',
+      sampleFileName: 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
+      files: []
+    },
+    options
+  );
+}
+
+/**
+ * creates fake provider records
+ *
+ * @param {Object} options - properties to set on the provider
+ * @returns {Object} fake provider object
+ */
+function fakeProviderFactory(options = {}) {
+  return Object.assign(
+    {
+      id: randomString(),
+      globalConnectionLimit: 1,
+      protocol: 'http',
+      host: randomString(),
+      port: 80
+    },
+    options
+  );
 }
 
 module.exports = {
   testEndpoint,
   fakeGranuleFactory,
+  fakeGranuleFactoryV2,
   fakePdrFactory,
   fakeCollectionFactory,
   fakeExecutionFactory,
   fakeRuleFactory,
   fakeFilesFactory,
   fakeUserFactory,
+  fakeProviderFactory,
   deleteAliases
 };

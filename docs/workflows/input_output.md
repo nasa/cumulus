@@ -1,3 +1,9 @@
+---
+id: input_output
+title: Workflows Input & Output
+hide_title: true
+---
+
 # Ingest Inputs and Return Values
 
 ## General Structure
@@ -17,7 +23,7 @@ A task's Lambda function can be configured to include a Cumulus Message Adapter 
       useMessageAdapter: true
 
 Input to the task application code is a json object with keys:
-* `input`: By default, the incoming payload is the payload output from the previous task, or it can be a portion of the payload as configured for the task in `workflow.yml`.
+* `input`: By default, the incoming payload is the payload output from the previous task, or it can be a portion of the payload as configured for the task in the corresponding `.yml` file in the `workflows` directory.
 * `config`: Task-specific configuration object with URL templates resolved.
 
 Output from the task application code is returned in and placed in the `payload` key by default, but the `config` key can also be used to return just a portion of the task output.

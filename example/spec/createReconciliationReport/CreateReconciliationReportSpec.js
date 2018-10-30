@@ -18,6 +18,8 @@ const { loadConfig } = require('../helpers/testUtils');
 const reportsPrefix = (stackName) => `${stackName}/reconciliation-reports/`;
 const filesTableName = (stackName) => `${stackName}-FilesTable`;
 
+const config = loadConfig();
+
 async function findProtectedBucket(systemBucket, stackName) {
   const bucketConfigs = await s3().getObject({
     Bucket: systemBucket,
@@ -53,15 +55,12 @@ async function deleteReconciliationReports(systemBucket, stackName) {
 }
 
 describe('When there are granule differences and granule reconciliation is run', () => {
-  let config;
   let report;
   let extraS3Object;
   let extraDynamoDbItem;
   let protectedBucket;
 
   beforeAll(async () => {
-    config = loadConfig();
-
     // Remove any pre-existing reconciliation reports
     await deleteReconciliationReports(config.bucket, config.stackName);
 

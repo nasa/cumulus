@@ -3,10 +3,30 @@
 const deprecate = require('depd')('@cumulus/api/Manager');
 const Ajv = require('ajv');
 const cloneDeep = require('lodash.clonedeep');
-const omit = require('lodash.omit');
 const aws = require('@cumulus/common/aws');
+const pWaitFor = require('p-wait-for');
+const { inTestMode } = require('@cumulus/common/test-utils');
 const { errorify } = require('../lib/utils');
 const { RecordDoesNotExist } = require('../lib/errors');
+
+async function enableStream(tableName) {
+  const params = {
+    TableName: tableName,
+    StreamSpecification: {
+      StreamEnabled: true,
+      StreamViewType: 'NEW_AND_OLD_IMAGES'
+    }
+  };
+
+  await aws.dynamodb().updateTable(params).promise();
+
+  await pWaitFor(
+    async () =>
+      aws.dynamodb().describeTable({ TableName: tableName }).promise()
+        .then((response) => response.TableStatus !== 'UPDATING'),
+    { interval: 5 * 1000 }
+  );
+}
 
 async function createTable(tableName, hash, range = null) {
   const params = {
@@ -22,10 +42,6 @@ async function createTable(tableName, hash, range = null) {
     ProvisionedThroughput: {
       ReadCapacityUnits: 5,
       WriteCapacityUnits: 5
-    },
-    StreamSpecification: {
-      StreamEnabled: true,
-      StreamViewType: 'NEW_AND_OLD_IMAGES'
     }
   };
 
@@ -43,6 +59,9 @@ async function createTable(tableName, hash, range = null) {
 
   const output = await aws.dynamodb().createTable(params).promise();
   await aws.dynamodb().waitFor('tableExists', { TableName: tableName }).promise();
+
+  if (!inTestMode()) await enableStream(tableName);
+
   return output;
 }
 
@@ -69,10 +88,9 @@ class Manager {
       const validate = ajv.compile(schema);
       const valid = validate(item);
       if (!valid) {
-        const err = {
-          message: 'The record has validation errors',
-          detail: validate.errors
-        };
+        const err = new Error('The record has validation errors');
+        err.name = 'SchemaValidationError';
+        err.detail = validate.errors;
         throw err;
       }
     }
@@ -101,19 +119,16 @@ class Manager {
    *   properties, which specify the sort key of the DynamoDB table.
    * @param {Object} params.schema - the JSON schema to validate the records
    *   against.  Defaults to {}.
-   * @returns {Object} an instance of a Manager object
    */
   constructor(params) {
     // Make sure all required parameters are present
-    const requiredParameters = ['tableName', 'tableHash'];
-    requiredParameters.forEach((requiredParameter) => {
-      if (!params[requiredParameter]) throw new TypeError(`${requiredParameter} is required`);
-    });
+    if (!params.tableName) throw new TypeError('params.tableName is required');
+    if (!params.tableHash) throw new TypeError('params.tableHash is required');
 
     this.tableName = params.tableName;
     this.tableHash = params.tableHash;
     this.tableRange = params.tableRange;
-    this.schema = params.schema || {};
+    this.schema = params.schema;
     this.dynamodbDocClient = aws.dynamodbDocClient({ convertEmptyValues: true });
     this.removeAdditional = false;
   }
@@ -137,6 +152,15 @@ class Manager {
   }
 
   /**
+   * Enable DynamoDB streams on the table
+   *
+   * @returns {Promise} resolves when streams are enabled
+   */
+  enableStream() {
+    return enableStream(this.tableName);
+  }
+
+  /**
    * Gets the item if found. If the record does not exist
    * the function throws RecordDoesNotExist error
    *
@@ -150,11 +174,11 @@ class Manager {
     };
 
     try {
-      const r = await this.dynamodbDocClient.get(params).promise();
-      if (!r.Item) {
+      const getResponse = await this.dynamodbDocClient.get(params).promise();
+      if (!getResponse.Item) {
         throw new RecordDoesNotExist();
       }
-      return r.Item;
+      return getResponse.Item;
     }
     catch (e) {
       throw new RecordDoesNotExist(
@@ -303,40 +327,42 @@ class Manager {
     return this.dynamodbDocClient.delete(params).promise();
   }
 
-  async update(key, _item, keysToDelete = []) {
-    let item = _item;
-    const params = {
-      TableName: this.tableName,
-      Key: key,
-      ReturnValues: 'ALL_NEW'
-    };
+  async update(itemKeys, updates = {}, fieldsToDelete = []) {
+    const actualUpdates = cloneDeep(updates);
 
-    // remove the keysToDelete from item if there
-    item = omit(item, keysToDelete);
-    item.updatedAt = Date.now();
+    // Make sure that we don't update the key fields
+    const itemKeyNames = Object.keys(itemKeys);
+    itemKeyNames.forEach((property) => delete actualUpdates[property]);
 
-    // remove the key is not included in the item
-    item = omit(item, Object.keys(key));
+    // Make sure that we don't try to update a field that's being deleted
+    fieldsToDelete.forEach((property) => delete actualUpdates[property]);
 
+    // Set the "updatedAt" time
+    actualUpdates.updatedAt = Date.now();
+
+    // Build the actual update request
     const attributeUpdates = {};
-
-    // build the update attributes
-    Object.keys(item).forEach((k) => {
-      attributeUpdates[k] = {
+    Object.keys(actualUpdates).forEach((property) => {
+      attributeUpdates[property] = {
         Action: 'PUT',
-        Value: item[k]
+        Value: actualUpdates[property]
       };
     });
 
-    // add keys to be removed
-    keysToDelete.forEach((k) => {
-      attributeUpdates[k] = { Action: 'DELETE' };
+    // Add keys to be removed
+    fieldsToDelete.forEach((property) => {
+      attributeUpdates[property] = { Action: 'DELETE' };
     });
 
-    params.AttributeUpdates = attributeUpdates;
+    // Perform the update
+    const updateResponse = await this.dynamodbDocClient.update({
+      TableName: this.tableName,
+      Key: itemKeys,
+      ReturnValues: 'ALL_NEW',
+      AttributeUpdates: attributeUpdates
+    }).promise();
 
-    const response = await this.dynamodbDocClient.update(params).promise();
-    return response.Attributes;
+    return updateResponse.Attributes;
   }
 
   /**

@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api",
-  "version": "1.10.1",
+  "version": "1.10.2",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
@@ -10,15 +10,18 @@
     "cumulus-api": "./bin/cli.js"
   },
   "scripts": {
-    "test": "ava --serial --fail-fast",
-    "test-coverage": "nyc ava",
+    "test": "ava && ava --serial tests/serial/",
+    "test-coverage": "nyc npm test",
     "build": "webpack",
     "watch": "webpack --progress -w",
     "prepublishOnly": "PRODUCTION=true npm run build"
   },
   "ava": {
-    "files": "tests/**/*.js",
-    "serial": true
+    "files": [
+      "tests/**/*.js",
+      "!tests/serial/**/*.js"
+    ],
+    "fail-fast": true
   },
   "nyc": {
     "exclude": [
@@ -34,9 +37,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmrjs": "^1.10.0",
-    "@cumulus/common": "^1.10.0",
-    "@cumulus/ingest": "^1.10.0",
+    "@cumulus/cmrjs": "^1.10.2",
+    "@cumulus/common": "^1.10.2",
+    "@cumulus/ingest": "^1.10.2",
     "@cumulus/pvl": "^1.10.0",
     "@mapbox/dyno": "^1.4.1",
     "ajv": "^5.2.2",
@@ -59,13 +62,21 @@
     "lodash.drop": "^4.1.1",
     "lodash.get": "^4.4.2",
     "lodash.has": "^4.5.2",
+    "lodash.iserror": "^3.1.1",
+    "lodash.isfunction": "^3.0.9",
+    "lodash.isnumber": "^3.0.3",
+    "lodash.isobject": "^3.0.2",
+    "lodash.isstring": "^4.0.1",
     "lodash.merge": "^4.5.0",
     "lodash.omit": "^4.5.0",
+    "lodash.pick": "^4.4.0",
     "lodash.sortby": "^4.7.0",
     "lodash.uniqby": "^4.7.0",
     "moment": "^2.22.1",
     "node-forge": "^0.7.1",
     "p-limit": "^1.2.0",
+    "p-retry": "^2.0.0",
+    "p-wait-for": "https://github.com/yjpa7145/p-wait-for.git#StopChecksAfterTimeout",
     "querystring": "^0.2.0",
     "split2": "^2.2.0",
     "uuid": "^3.2.1"
@@ -76,7 +87,9 @@
     "lodash.flatten": "^4.4.0",
     "lodash.range": "^3.2.0",
     "lodash.sample": "4.2.1",
+    "nock": "^10.0.0",
     "nyc": "^11.6.0",
+    "rewire": "^4.0.1",
     "sinon": "^4.5.0",
     "webpack": "~4.5.0",
     "webpack-cli": "~2.0.14",

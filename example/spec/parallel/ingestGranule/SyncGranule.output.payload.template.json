@@ -1,0 +1,36 @@
+{
+  "process": "modis",
+  "granules": [
+    {
+      "granuleId": "replace-me-granuleId",
+      "dataType": "MOD09GQ",
+      "version": "006",
+      "files": [
+        {
+          "name": "replace-me-granuleId.hdf",
+          "bucket": "",
+          "filename": "",
+          "fileSize": 17865615,
+          "path": "replace-me-path",
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
+        },
+        {
+          "name": "replace-me-granuleId.hdf.met",
+          "bucket": "",
+          "filename": "",
+          "fileSize": 44118,
+          "path": "replace-me-path",
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
+        },
+        {
+          "name": "replace-me-granuleId_ndvi.jpg",
+          "bucket": "",
+          "filename": "",
+          "fileSize": 44118,
+          "path": "replace-me-path",
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
+        }
+      ]
+    }
+  ]
+}

@@ -1,10 +1,13 @@
 'use strict';
 
-exports.log = require('./log');
 exports.aws = require('./aws');
 exports.cliUtils = require('./cli-utils');
-exports.constructCollectionId = require('./collection-config-store').constructCollectionId;
+exports.CloudFormationGateway = require('./CloudFormationGateway');
 exports.CollectionConfigStore = require('./collection-config-store').CollectionConfigStore;
-exports.testUtils = require('./test-utils');
-exports.FakeEarthdataLoginServer = require('./fake-earthdata-login-server');
+exports.constructCollectionId = require('./collection-config-store').constructCollectionId;
+exports.http = require('./http');
+exports.log = require('./log');
+exports.stepFunctions = require('./step-functions');
 exports.stringUtils = require('./string');
+exports.testUtils = require('./test-utils');
+exports.util = require('./util');

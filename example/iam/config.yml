@@ -40,6 +40,9 @@ cumulus-from-source:
 cumulus-from-pr:
   prefix: test-pr-integration # used by the PR
 
+cumulus-nightly:
+  prefix: nightly # used by the nightly cron job
+
 mhs2:
   prefix: mhs2
 
@@ -93,6 +96,27 @@ lf:
       name: lf-protected-2
       type: protected
 
+lf-int-test:
+  prefix: lf-int-test
+  stackName: lf-int-test-iam
+
+  buckets:
+    internal:
+      name: lf-internal
+      type: internal
+    private:
+      name: lf-private
+      type: private
+    protected:
+      name: lf-protected
+      type: protected
+    public:
+      name: lf-cumulus-public
+      type: public
+    protected-2:
+      name: lf-protected-2
+      type: protected
+
 jl:
   prefix: jl-test-integration
   buckets:
@@ -112,9 +136,23 @@ jl:
       name: rvl-internal
       type: shared
 
-kk-deploy-uat:
+kk-uat-deployment:
   prefix: kk-test-uat
   stackName: kk-test-uat-iam
+  system_bucket: '{{prefix}}-internal'
+  buckets:
+    internal:
+      name: '{{prefix}}-internal'
+      type: internal
+    private:
+      name: '{{prefix}}-private'
+      type: private
+    protected:
+      name: '{{prefix}}-protected'
+      type: protected
+    public:
+      name: '{{prefix}}-public'
+      type: public
 
 mth-2:
   prefix: mth-2
@@ -155,11 +193,23 @@ cum-test:
     protected-2:
       name: '{{PREFIX}}-protected-2'
       type: protected
-  
   system_bucket: '{{PREFIX}}-internal'
 
 mvd:
   prefix: mvd
+  buckets:
+    internal:
+      name: '{{prefix}}-internal'
+      type: internal
+  system_bucket: '{{prefix}}-internal'
+
+mvd-dev:
+  prefix: mvd-dev
+  buckets:
+    internal:
+      name: 'mvd-internal'
+      type: internal
+  system_bucket: 'mvd-internal'
 
 jc:
   prefix: jc
@@ -167,5 +217,22 @@ jc:
 mhs:
   prefix: mhs
 
+mhs3:
+  prefix: mhs3
+
 jk:
   prefix: jk
+
+jk2:
+  prefix: jk2
+
+mboyd-test:
+  prefix: mboyd-test
+  stackName: mboyd-test-iam
+
+mboyd-int:
+  prefix: mboyd-int
+  stackName: mboyd-int-iam
+
+pq:
+  prefix: pq
