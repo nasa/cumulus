@@ -35,7 +35,7 @@ hide_title: true     # So the title of the Doc doesn't show up at the top of the
 ---
 ```
 
-**Note:** To have the new page show up in a sidebar the designated `id` must be added to a sidebar in the `website/sidebars.js` file. Docusaurus has an in depth explanation of sidebars [here](https://docusaurus.io/docs/en/navigation).
+**Note:** To have the new page show up in a sidebar the designated `id` must be added to a sidebar in the `website/sidebars.json` file. Docusaurus has an in depth explanation of sidebars [here](https://docusaurus.io/docs/en/navigation).
 
 ### Versioning Docs
 
