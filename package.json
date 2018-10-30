@@ -4,10 +4,11 @@
   "description": "Cumulus Framework for ingesting and processing NASA Earth data streams",
   "scripts": {
     "docs-build-tasks": "./bin/build-tasks-doc.js",
-    "docs-build": "npm run docs-build-tasks && gitbook build",
-    "docs-serve": "npm run docs-build && (cd docs && gitbook serve)",
-    "docs-start": "npm run docs-build && (cd docs && gitbook serve)",
-    "lint": "eslint packages/api packages/cmrjs packages/common packages/deployment",
+    "docs-install": "(cd website && yarn)",
+    "docs-build": "yarn run docs-build-tasks && (cd website && yarn run build)",
+    "docs-serve": "yarn run docs-build && (cd website && yarn run start)",
+    "docs-start": "yarn run docs-build && (cd website && yarn run start)",
+    "lint": "eslint packages/api --ext .js",
     "test": "nyc lerna run test --concurrency 2",
     "bootstrap": "lerna bootstrap --npm-client=npm --hoist",
     "ybootstrap": "lerna bootstrap",
@@ -56,7 +57,6 @@
     "eslint-plugin-node": "^7.0.1",
     "eslint-plugin-unicorn": "^4.0.3",
     "eslint": "^5.5.0",
-    "gitbook-cli": "^2.3.2",
     "lerna": "^2.9.0",
     "nyc": "^11.6.0",
     "simple-git": "^1.96.0"

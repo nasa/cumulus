@@ -1,4 +1,10 @@
-# SNS Notifications in Workflows
+---
+id: sns
+title: SNS Notification in Workflows
+hide_title: true
+---
+
+# SNS Notification in Workflows
 
 On deployment, an sftracker (Step function tracker) [SNS](https://aws.amazon.com/sns) topic is created and used for messages related to the workflow.
 
@@ -8,7 +14,7 @@ Workflows can be configured to send SNS messages containing the Cumulus message 
 
 ### Workflow Configuration
 
-The [Hello World Workflow](./hello-world.md) is configured to send an SNS message when starting the workflow and upon workflow completion. This is configured in `workflows/helloworld.yml`.
+The [Hello World Workflow](data-cookbooks/hello-world.md) is configured to send an SNS message when starting the workflow and upon workflow completion. This is configured in `workflows/helloworld.yml`.
 
 ```yaml
 HelloWorldWorkflow:
