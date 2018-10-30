@@ -1,5 +1,28 @@
 'use strict';
 
+// Async Operation record definition
+module.exports.asyncOperation = {
+  title: 'AsyncOperation Object',
+  description: 'Cumulus API AsyncOperation Table schema',
+  type: 'object',
+  required: ['createdAt', 'id', 'status', 'updatedAt'],
+  additionalProperties: false,
+  properties: {
+    createdAt: { type: 'integer' },
+    id: { type: 'string' },
+    output: {
+      description: 'The result of the operation, stored as JSON',
+      type: 'string'
+    },
+    status: {
+      type: 'string',
+      enum: ['RUNNING', 'SUCCEEDED', 'RUNNER_FAILED', 'TASK_FAILED']
+    },
+    taskArn: { type: 'string' },
+    updatedAt: { type: 'integer' }
+  }
+};
+
 // Collection Record Definition
 module.exports.collection = {
   title: 'Collection Object',
@@ -42,8 +65,8 @@ module.exports.collection = {
       title: 'Duplicate Granule Handling',
       description: 'How to handle duplicate granules',
       type: 'string',
-      enum: ['skip', 'replace', 'version'],
-      default: 'replace'
+      enum: ['error', 'skip', 'replace', 'version'],
+      default: 'error'
     },
     granuleId: {
       title: 'GranuleId Validation Regex',

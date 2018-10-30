@@ -1,11 +1,10 @@
 'use strict';
 
-const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
-const aws = require('@cumulus/common/aws');
+const { describeExecution } = require('@cumulus/common/step-functions');
 const { IncompleteError } = require('@cumulus/common/errors');
+const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const log = require('@cumulus/common/log');
-const { justLocalRun } = require('@cumulus/common/local-helpers');
-const pLimit = require('p-limit');
+const pMap = require('p-map');
 
 // The default number of times to re-check for completion
 const defaultRetryLimit = 30;
@@ -89,17 +88,14 @@ function logStatus(output) {
  * @returns {Object} - a description of the results of this task execution
  */
 function buildOutput(event, groupedExecutions) {
-  // eslint-disable-next-line require-jsdoc
   const getExecutionArn = (execution) => execution.executionArn;
 
-  // eslint-disable-next-line require-jsdoc
   const parseFailedExecution = (execution) => {
     let reason = 'Workflow Failed';
     if (execution.output) reason = JSON.parse(execution.output).exception;
     return { arn: execution.executionArn, reason };
   };
 
-  // eslint-disable-next-line require-jsdoc
   const parseAbortedExecution = (execution) => {
     let reason = 'Workflow Aborted';
     if (execution.output) reason = JSON.parse(execution.output).exception;
@@ -138,7 +134,7 @@ function buildOutput(event, groupedExecutions) {
  * @returns {Promise.<Object>} - an object describing the status of the exection
  */
 function describeExecutionStatus(executionArn) {
-  return aws.sfn().describeExecution({ executionArn }).promise()
+  return describeExecution(executionArn)
     .catch((e) => {
       if (e.code === 'ExecutionDoesNotExist') {
         return { executionArn: executionArn, status: 'RUNNING' };
@@ -157,13 +153,13 @@ function describeExecutionStatus(executionArn) {
  */
 async function checkPdrStatuses(event) {
   const runningExecutionArns = event.input.running || [];
-  const concurrencyLimit = process.env.CONCURRENCY || 10;
-  const limit = pLimit(concurrencyLimit);
+  const concurrency = Number(process.env.CONCURRENCY || 10);
 
-  const promisedExecutionDescriptions = runningExecutionArns.map((executionArn) =>
-    limit(() => describeExecutionStatus(executionArn)));
-
-  return Promise.all(promisedExecutionDescriptions)
+  return pMap(
+    runningExecutionArns,
+    describeExecutionStatus,
+    { concurrency }
+  )
     .then(groupExecutionsByStatus)
     .then((groupedExecutions) => {
       const counter = getCounterFromEvent(event) + 1;
@@ -194,9 +190,3 @@ function handler(event, context, callback) {
   cumulusMessageAdapter.runCumulusTask(checkPdrStatuses, event, context, callback);
 }
 exports.handler = handler;
-
-// use node index.js local to invoke this
-justLocalRun(() => {
-  const payload = require('@cumulus/test-data/cumulus_messages/pdr-status-check.json'); // eslint-disable-line global-require, max-len
-  handler(payload, {}, (e, r) => console.log(e, r));
-});

@@ -8,7 +8,8 @@ const {
   ValidationError,
   updateToken,
   getUrl,
-  xmlParseOptions
+  xmlParseOptions,
+  getHost
 } = require('./utils');
 
 
@@ -60,8 +61,8 @@ async function searchConcept(type, searchParams, existingResults) {
   const _existingResults = existingResults.concat(str.results.references.reference || []);
 
   const servedSoFar = (
-    ((qs.page_num - 1) * qs.page_size) +
-    (str.results.references ? str.results.references.reference.length : 0)
+    ((qs.page_num - 1) * qs.page_size)
+      + (str.results.references ? str.results.references.reference.length : 0)
   );
   const isThereAnotherPage = str.results.hits > servedSoFar;
   if (isThereAnotherPage && servedSoFar < limit) {
@@ -173,10 +174,8 @@ async function deleteConcept(type, identifier, provider, token) {
 
   let errorMessage;
   if (result.statusCode !== 200) {
-    // eslint-disable-next-line max-len
     errorMessage = `Failed to delete, statusCode: ${result.statusCode}, statusMessage: ${result.statusMessage}`;
     if (xmlObject.errors) {
-      // eslint-disable-next-line max-len
       errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(xmlObject.errors.error)}`;
     }
     log.info(errorMessage);
@@ -273,6 +272,7 @@ class CMR {
     const token = await this.getToken();
     return ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, token);
   }
+
   /**
    * Adds a granule record to the CMR
    *
@@ -334,5 +334,6 @@ module.exports = {
   ValidationError,
   CMR,
   getMetadata,
-  getFullMetadata
+  getFullMetadata,
+  getHost
 };

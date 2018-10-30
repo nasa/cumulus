@@ -1,3 +1,9 @@
+---
+id: choice-states
+title: Choice States
+hide_title: true
+---
+
 # Choice States
 
 Cumulus supports AWS Step Function [`Choice`](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html) states. A `Choice` state enables branching logic in Cumulus workflows.
@@ -8,7 +14,7 @@ If the comparison evaluates to `true`, the `Next` state is followed.
 
 ## Example
 
-In [examples/workflow.yml](https://github.com/nasa/cumulus/blob/master/example/workflows.yml) the `ParsePdr` workflow uses a `Choice` state, `CheckAgainChoice`, to terminate the workflow once `isFinished: true` is returned by the `CheckStatus` state.
+In [examples/workflows/sips.yml](https://github.com/nasa/cumulus/blob/master/example/workflows/sips.yml) the `ParsePdr` workflow uses a `Choice` state, `CheckAgainChoice`, to terminate the workflow once `isFinished: true` is returned by the `CheckStatus` state.
 
 The `CheckAgainChoice` state definition requires an input object of the following structure:
 
@@ -36,11 +42,11 @@ Given the above input to the `CheckAgainChoice` state, the workflow would transi
 
 ## Advanced: Loops in Cumulus Workflows
 
-Understanding the complete `ParsePdr` workflow is not necessary to understanding how `Choice` states work, but `ParsePdr` provides an example of how `Choice` states can be used to create a loop in a Cumulus workflow. 
+Understanding the complete `ParsePdr` workflow is not necessary to understanding how `Choice` states work, but `ParsePdr` provides an example of how `Choice` states can be used to create a loop in a Cumulus workflow.
 
 In the complete `ParsePdr` workflow definition, the state `QueueGranules` is followed by `CheckStatus`. From `CheckStatus` a loop starts: Given `CheckStatus` returns `payload.isFinished: false`, `CheckStatus` is followed by `CheckAgainChoice` is followed by `PdrStatusReport` is followed by `WaitForSomeTime`, which returns to `CheckStatus`. Once `CheckStatus` returns `payload.isFinished: true`, `CheckAgainChoice` proceeds to `StopStatus`.
 
-<div style="text-align:center"><img src ="../images/sips-parse-pdr.png" /></div>
+![](assets/sips-parse-pdr.png)
 
 ## Further documentation
 

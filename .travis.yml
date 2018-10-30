@@ -5,8 +5,11 @@ language: node_js
 
 stages:
   - name: build cache
-  - name: unit test
-  - name: integration test
+  - name: unit test and stack deployment
+  - name: integration tests
+  - name: redeployment integration tests
+    if: (type != pull_request AND branch = master) OR commit_message =~ \[run-redeploy-tests\] OR (type != pull_request AND tag =~ ^v\d+)
+  - name: cleanup integration tests
   - name: deploy
     if: type != pull_request AND tag =~ ^v\d+
   - name: deployment test
@@ -19,16 +22,15 @@ jobs:
       install: true
       script: ./travis-ci/build-cache.sh
 
-
     - name: "eslint"
-      stage: unit test
+      stage: unit test and stack deployment
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
         - npm run bootstrap-no-build
-      script: ./node_modules/.bin/eslint packages/api --ext .js
+      script: npm run lint
     - name: "Unit tests except API"
-      stage: unit test
+      stage: unit test and stack deployment
       services:
         - docker
       env:
@@ -40,8 +42,9 @@ jobs:
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
       script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api
+
     - name: "API unit tests"
-      stage: unit test
+      stage: unit test and stack deployment
       services:
         - docker
       env:
@@ -53,30 +56,40 @@ jobs:
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
       script: ./travis-ci/run-api-unit-tests.sh
-    - name: "e2e tests"
-      stage: unit test
-      services:
-        - docker
-      env:
-        - LOCALSTACK_HOST=127.0.0.1
-        - LOCAL_ES_HOST=127.0.0.1
+    - name: "Deploy Integration Test Stack"
+      stage: unit test and stack deployment
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
         - npm run bootstrap-no-build
-        - ./travis-ci/start-local-services.sh
-      script: npm run e2e
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
-
-    - name: "Integration tests"
-      stage: integration test
-      if: commit_message !~ \[skip-integration-tests\]
+    - name: "Run integration tests"
+      stage: integration tests
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
         - npm run bootstrap-no-build
-      script: ./travis-ci/run-integration-tests.sh
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
+    - name: "Run redeployment integration tests"
+      stage: redeployment integration tests
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
+      install:
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-redeployment-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+
+    - name: "Cleanup integration tests"
+      stage: cleanup integration tests
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "Deploy to NPM"
       stage: deploy
@@ -85,6 +98,7 @@ jobs:
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/deploy-to-npm.sh
+
     - name: "Deploy to Github Pages"
       stage: deploy
       install: npm install
@@ -92,7 +106,6 @@ jobs:
 
     - name: "Run integration tests against deployed packages"
       stage: deployment test
-      if: commit_message !~ \[skip-integration-tests\]
       install: true
       script: ./travis-ci/run-integration-tests.sh
       env:

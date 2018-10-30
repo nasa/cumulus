@@ -1,7 +1,8 @@
 'use strict';
 
 const test = require('ava');
-const { range } = require('lodash');
+const range = require('lodash.range');
+
 const {
   dynamodb,
   DynamoDbScanQueue
@@ -32,7 +33,7 @@ test.beforeEach(async (t) => {
 
 test.afterEach.always((t) => dynamodb().deleteTable({ TableName: t.context.tableName }).promise());
 
-test.serial('DynamoDbScanQueue.peek() returns the next item but does not remove it from the queue', async (t) => { // eslint-disable-line max-len
+test.serial('DynamoDbScanQueue.peek() returns the next item but does not remove it from the queue', async (t) => {
   const bucket = randomString();
   const key = randomString();
 
@@ -50,7 +51,7 @@ test.serial('DynamoDbScanQueue.peek() returns the next item but does not remove 
   t.is((await queue.peek()).bucket.S, bucket);
 });
 
-test.serial('DynamoDbScanQueue.shift() returns the next object and removes it from the queue', async (t) => { // eslint-disable-line max-len
+test.serial('DynamoDbScanQueue.shift() returns the next object and removes it from the queue', async (t) => {
   const bucket = randomString();
   const key = randomString();
 

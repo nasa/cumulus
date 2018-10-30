@@ -1,7 +1,8 @@
 'use strict';
 
 const test = require('ava');
-const { range } = require('lodash');
+const range = require('lodash.range');
+
 const {
   recursivelyDeleteS3Bucket,
   s3,
@@ -16,7 +17,7 @@ test.beforeEach((t) => {
 
 test.afterEach.always((t) => recursivelyDeleteS3Bucket(t.context.bucketName));
 
-test.serial('S3ListObjectsV2Queue.peek() returns the next object but does not remove it from the queue', async (t) => { // eslint-disable-line max-len
+test.serial('S3ListObjectsV2Queue.peek() returns the next object but does not remove it from the queue', async (t) => {
   const key = randomString();
   await s3().putObject({ Bucket: t.context.bucketName, Key: key, Body: 'body' }).promise();
 
@@ -26,7 +27,7 @@ test.serial('S3ListObjectsV2Queue.peek() returns the next object but does not re
   t.is((await queue.peek()).Key, key);
 });
 
-test.serial('S3ListObjectsV2Queue.shift() returns the next object and removes it from the queue', async (t) => { // eslint-disable-line max-len
+test.serial('S3ListObjectsV2Queue.shift() returns the next object and removes it from the queue', async (t) => {
   const key = randomString();
   await s3().putObject({ Bucket: t.context.bucketName, Key: key, Body: 'body' }).promise();
 

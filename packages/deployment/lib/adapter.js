@@ -1,9 +1,8 @@
-/* eslint-disable no-console, no-param-reassign */
-
 'use strict';
 
 const fs = require('fs-extra');
-const request = require('request');
+const { http } = require('@cumulus/common');
+const got = require('got');
 const extract = require('extract-zip');
 
 /**
@@ -11,32 +10,20 @@ const extract = require('extract-zip');
  *
  * @param {string} fileUrl - URL file location
  * @param {string} localFilename - Where to store file locally
- * @returns {Promise} - resolves `undefined` when download is completed
+ * @returns {Promise} resolves when the download is completed
  */
 function downloadZipfile(fileUrl, localFilename) {
-  const file = fs.createWriteStream(localFilename);
-  const options = {
-    uri: fileUrl,
-    headers: {
-      Accept: 'application/octet-stream',
-      'Content-Type': 'application/zip',
-      'Content-Transfer-Encoding': 'binary'
+  return http.download(
+    fileUrl,
+    localFilename,
+    {
+      headers: {
+        Accept: 'application/octet-stream',
+        'Content-Type': 'application/zip',
+        'Content-Transfer-Encoding': 'binary'
+      }
     }
-  };
-
-  return new Promise((resolve, reject) => {
-    request(options, (err, response) => {
-      if (err) reject(err);
-      if (response.statusCode !== 200) reject(new Error(`${response.statusMessage}: ${fileUrl}`));
-    })
-      .pipe(file);
-
-    file.on('finish', () => {
-      console.log(`Completed download of ${fileUrl} to ${localFilename}`);
-      resolve();
-    })
-      .on('error', reject);
-  });
+  );
 }
 
 /**
@@ -64,25 +51,22 @@ function extractZipFile(filename, dst) {
  * @param {string} gitPath - path to the cumulus message adapter repo
  * @returns {Promise.<string>} Promise resolution is string of latest github release, e.g. 'v0.0.1'
  */
-function fetchLatestMessageAdapterRelease(gitPath) {
-  const url = process.env.GITHUB_TOKEN ?
-    `https://api.github.com/repos/${gitPath}/releases/latest?access_token=${process.env.GITHUB_TOKEN}` :
-    `https://api.github.com/repos/${gitPath}/releases/latest`;
+async function fetchLatestMessageAdapterRelease(gitPath) {
+  const url = process.env.GITHUB_TOKEN
+    ? `https://api.github.com/repos/${gitPath}/releases/latest?access_token=${process.env.GITHUB_TOKEN}`
+    : `https://api.github.com/repos/${gitPath}/releases/latest`;
 
-  const options = {
+  const response = await got(
     url,
-    headers: {
-      Accept: 'application/json',
-      'User-Agent': '@cumulus/deployment' // Required by Github API
+    {
+      json: true,
+      headers: {
+        'User-Agent': '@cumulus/deployment' // Required by Github API
+      }
     }
-  };
+  );
 
-  return new Promise((resolve, reject) => {
-    request(options, (err, response, body) => {
-      if (err) reject(err);
-      resolve(JSON.parse(body).tag_name);
-    });
-  });
+  return response.body.tag_name;
 }
 
 /**
@@ -109,9 +93,9 @@ function messageAdapterVersion(version, gitPath) {
  */
 function messageAdapterUrl(version, gitPath, filename) {
   return messageAdapterVersion(version, gitPath)
-    .then((ver) => (process.env.GITHUB_TOKEN ?
-      `https://github.com/${gitPath}/releases/download/${ver}/${filename}?access_token=${process.env.GITHUB_TOKEN}` :
-      `https://github.com/${gitPath}/releases/download/${ver}/${filename}`));
+    .then((ver) => (process.env.GITHUB_TOKEN
+      ? `https://github.com/${gitPath}/releases/download/${ver}/${filename}?access_token=${process.env.GITHUB_TOKEN}`
+      : `https://github.com/${gitPath}/releases/download/${ver}/${filename}`));
 }
 
 /**

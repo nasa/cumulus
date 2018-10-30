@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/queue-granules",
-  "version": "1.10.0",
+  "version": "1.10.2",
   "description": "Add discovered granules to the queue",
   "main": "index.js",
   "directories": {
@@ -35,15 +35,14 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.10.0",
+    "@cumulus/common": "^1.10.2",
     "@cumulus/cumulus-message-adapter-js": "^1.0.4",
-    "@cumulus/ingest": "^1.10.0",
+    "@cumulus/ingest": "^1.10.2",
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {
     "@mapbox/mock-aws-sdk-js": "0.0.5",
     "ava": "^0.25.0",
-    "lodash": "^4.17.5",
     "nyc": "^11.6.0",
     "webpack": "~4.5.0",
     "webpack-cli": "~2.0.14"

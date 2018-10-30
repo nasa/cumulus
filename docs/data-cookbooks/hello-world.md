@@ -1,3 +1,9 @@
+---
+id: hello-world
+title: HelloWorld Workflow
+hide_title: true
+---
+
 # HelloWorld Workflow
 
 Example task meant to be a sanity check/introduction to the Cumulus workflows.
@@ -6,7 +12,7 @@ Example task meant to be a sanity check/introduction to the Cumulus workflows.
 
 ### Workflow Configuration
 
-The [workflow definition](../workflows/README.md) can be found in `cumulus/example/workflows.yml` under `HelloWorldWorkflow:`
+The [workflow definition](workflows/README.md) can be found in `cumulus/example/workflows/helloworld.yml` under `HelloWorldWorkflow:`
 
 ```yaml
 HelloWorldWorkflow:
@@ -53,7 +59,7 @@ Workflow **error-handling** can be configured as discussed in the [Error-Handlin
 
 ### Task Configuration
 
-The HelloWorld [task itself](../workflows/developing-workflow-tasks.md) is defined in `cumulus/example/lambdas.yml` under `HelloWorld:`
+The HelloWorld [task itself](workflows/developing-workflow-tasks.md) is defined in `cumulus/example/lambdas.yml` under `HelloWorld:`
 
 ```yaml
 HelloWorld:
@@ -86,7 +92,7 @@ Our goal here is to create a rule through the Cumulus dashboard that will define
 }
 ```
 
-![](../images/hello_world_workflow.png)
+![](assets/hello_world_workflow.png)
 *Executed workflow as seen in AWS Console*
 
 ### Output/Results

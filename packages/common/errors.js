@@ -22,7 +22,9 @@ const WorkflowError = createErrorType('WorkflowError');
 
 /**
  * Returns true if the error is a resource error.
- * This is used because for some reason instanceof WorkflowError is not working when deployed.
+ *
+ * @param {Error} error
+ * @returns {boolean}
  */
 const isWorkflowError = (error) => error.name.includes('WorkflowError');
 
@@ -76,7 +78,8 @@ module.exports = {
   // if a checksum doesn't match
   InvalidChecksum: createErrorType('InvalidChecksum'),
 
+  DuplicateFile: createErrorType('DuplicateFile'),
+
   // is raised if the PDR file doesn't match the collection
   MismatchPdrCollection: createErrorType('MismatchPdrCollection')
 };
-

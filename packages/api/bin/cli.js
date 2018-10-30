@@ -23,7 +23,7 @@ program
   .option('--host <host>', 'AWS Elasticsearch host', null)
   .option('-s, --source-index <sourceIndex>', 'Index to reindex', null)
   .option('-d, --dest-index <destIndex>',
-    'Name of the destination index, should not be an existing index. Will default to an index named with today\'s date', // eslint-disable-line max-len
+    'Name of the destination index, should not be an existing index. Will default to an index named with today\'s date',
     null)
   .action((cmd) => {
     const missingOptions = cliUtils.findMissingOptions(cmd, ['host']);
@@ -63,7 +63,7 @@ program
   .option('-a, --index-alias <indexAlias>', 'AWS Elasticsearch index alias', 'cumulus-alias')
   .option('--host <host>', 'AWS Elasticsearch host', null)
   .option('-s, --source-index <sourceIndex>', 'Index to switch from and no longer used', null)
-  .option('-d, --dest-index <destIndex>', 'Index to be aliased and used as the elasticsearch index for Cumulus', null) // eslint-disable-line max-len
+  .option('-d, --dest-index <destIndex>', 'Index to be aliased and used as the elasticsearch index for Cumulus', null)
   .parse(process.argv)
   .action((cmd) => {
     const missingOptions = cliUtils.findMissingOptions(cmd, ['host']);
