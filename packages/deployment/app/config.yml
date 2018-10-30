@@ -17,7 +17,7 @@ default:
   injectWorkflowLambdaAliases: true
 
   DLQDefaultTimeout: 60
-  DLQDefaultMessageRetentionPeriod: 1209600
+  DLQDefaultMessageRetentionPeriod: 1209600 ## 14 days, the maximum currently allowed for SQS
   processDefaultDeadLetterQueues: true
 
   nested_templates:
