@@ -99,7 +99,7 @@ default:
     desiredInstances: 0
     tasks:
       AsyncOperation:
-        image: cumuluss/async-operation:23
+        image: cumuluss/async-operation:24
         cpu: 400
         memory: 700
         count: 1

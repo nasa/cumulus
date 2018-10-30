@@ -75,13 +75,6 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
 ];
 
-const isLambdaStatusLogEntry = (logEntry) =>
-  logEntry.message.includes('START') ||
-  logEntry.message.includes('END') ||
-  logEntry.message.includes('REPORT');
-
-const isCumulusLogEntry = (logEntry) => !isLambdaStatusLogEntry(logEntry);
-
 describe('The S3 Ingest Granules workflow', () => {
   const testId = createTimestampedTestId(config.stackName, 'IngestGranuleSuccess');
   const testSuffix = createTestSuffix(testId);
@@ -93,7 +86,7 @@ describe('The S3 Ingest Granules workflow', () => {
   const newCollectionId = constructCollectionId(collection.name, collection.version);
   const provider = { id: `s3_provider${testSuffix}` };
   let workflowExecution = null;
-  let failingWorkflowExecution = null;
+  let failingWorkflowExecution;
   let failedExecutionArn;
   let failedExecutionName;
   let inputPayload;
@@ -132,7 +125,6 @@ describe('The S3 Ingest Granules workflow', () => {
       apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData })
     ]);
 
-    console.log('Starting ingest test');
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
@@ -499,16 +491,20 @@ describe('The S3 Ingest Granules workflow', () => {
 
       it('can delete the ingested granule from the API', async () => {
         // pre-delete: Remove the granule from CMR
-        await apiTestUtils.removeFromCMR({
+        const removeFromCmrResponse = await apiTestUtils.removeFromCMR({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
 
+        console.log(`remove from cmr response: ${removeFromCmrResponse}`);
+
         // Delete the granule
-        await apiTestUtils.deleteGranule({
+        const deleteResponse = await apiTestUtils.deleteGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
+
+        console.log(`delete granule response: ${deleteResponse}`);
 
         // Verify deletion
         const granuleResponse = await apiTestUtils.getGranule({
@@ -516,6 +512,7 @@ describe('The S3 Ingest Granules workflow', () => {
           granuleId: inputPayload.granules[0].granuleId
         });
         const resp = JSON.parse(granuleResponse.body);
+        console.log(JSON.stringify(granuleResponse));
         expect(resp.message).toEqual('Granule not found');
       });
     });
@@ -620,27 +617,6 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     describe('logs endpoint', () => {
-      it('returns the execution logs', async () => {
-        const logsResponse = await apiTestUtils.getLogs({ prefix: config.stackName });
-        const logs = JSON.parse(logsResponse.body);
-        expect(logs).not.toBe(undefined);
-        expect(logs.results.length).toEqual(10);
-      });
-
-      it('returns logs with sender set', async () => {
-        const getLogsResponse = await apiTestUtils.getLogs({ prefix: config.stackName });
-        const logs = JSON.parse(getLogsResponse.body);
-        const logEntries = logs.results;
-        const cumulusLogEntries = logEntries.filter(isCumulusLogEntry);
-
-        cumulusLogEntries.forEach((logEntry) => {
-          if (!logEntry.sender) {
-            console.log('Expected a sender property:', JSON.stringify(logEntry, null, 2));
-          }
-          expect(logEntry.sender).not.toBe(undefined);
-        });
-      });
-
       it('returns logs with a specific execution name', async () => {
         const executionARNTokens = workflowExecution.executionArn.split(':');
         const logsExecutionName = executionARNTokens[executionARNTokens.length - 1];
