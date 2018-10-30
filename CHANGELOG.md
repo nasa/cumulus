@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **CUMULUS-956**
+  - Migrated developer documentation and data-cookbooks to Docusaurus
+    - supports versioning of documentation
+  - Added `docs/docs-how-to.md` to outline how to do things like add new docs or locally install for testing.
+  - Deployment/CI scripts have been updated to work with the new format
 - **CUMULUS-811**
   - Added new S3 functions to `@cumulus/common/aws`:
     - `aws.s3TagSetToQueryString`: converts S3 TagSet array to querystring (for use with upload()).
@@ -24,6 +29,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [v1.10.2] - 2018-10-24
 
 ### Added
+- **CUMULUS-965**
+  - Added a `@cumulus/logger` package
 - **CUMULUS-885**
   - Added 'human readable' version identifiers to Lambda Versioning lambda aliases
 - **CUMULUS-705**
@@ -38,7 +45,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Adds an AsyncOperation ECS task to the `@cumulus/api` package, which will
     fetch an Lambda function, run it in ECS, and then store the result to the
     AsyncOperations table in DynamoDB.
-- **CUMULUS-851** Added workflow lambda versioning feature to allow in-flight workflows to use lambda versions that were in place when a workflow was initiated
+- **CUMULUS-851** - Added workflow lambda versioning feature to allow in-flight workflows to use lambda versions that were in place when a workflow was initiated
     - Updated Kes custom code to remove logic that used the CMA file key to determine template compilation logic.  Instead, utilize a `customCompilation` template configuration flag to indicate a template should use Cumulus's kes customized methods instead of 'core'.
 	- Added `useWorkflowLambdaVersions` configuration option to enable the lambdaVersioning feature set.   **This option is set to true by default** and should be set to false to disable the feature.
 	- Added uniqueIdentifier configuration key to S3 sourced lambdas to optionally support S3 lambda resource versioning within this scheme. This key must be unique for each modified version of the lambda package and must be updated in configuration each time the source changes.
