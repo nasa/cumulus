@@ -1,4 +1,3 @@
-/* eslint-disable no-console, no-await-in-loop, no-restricted-syntax */
 /**
  * This module overrides the Kes Class and the Lambda class of Kes
  * to support specific needs of the Cumulus Deployment.
@@ -24,29 +23,20 @@
 
 'use strict';
 
-
 const zipObject = require('lodash.zipobject');
 const { Kes, utils } = require('kes');
 const fs = require('fs-extra');
 const Handlebars = require('handlebars');
-
 const path = require('path');
 const util = require('util');
+const { sleep } = require('@cumulus/common/util');
+
 const Lambda = require('./lambda');
 const { crypto } = require('./crypto');
 const { fetchMessageAdapter } = require('./adapter');
 const { extractCumulusConfigFromSF, generateTemplates } = require('./message');
 
 const fsWriteFile = util.promisify(fs.writeFile);
-
-
-/**
- * Makes setTimeout return a promise
- *
- * @param {integer} ms - number of milliseconds
- * @returns {Promise} the arguments passed after the timeout
- */
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * A subclass of Kes class that overrides opsStack method.
@@ -97,7 +87,7 @@ class UpdatedKes extends Kes {
             `Redeploying ${restApiId} was throttled. `
             + `Another attempt will be made in ${waitTime} seconds`
           );
-          await delay(waitTime * 1000);
+          await sleep(waitTime * 1000);
           return this.redeployApiGateWay(name, restApiId, stageName);
         }
         throw e;
@@ -122,6 +112,7 @@ class UpdatedKes extends Kes {
         let resources = [];
         const params = { StackName: config.stackName };
         while (true) { // eslint-disable-line no-constant-condition
+          // eslint-disable-next-line no-await-in-loop
           const data = await this.cf.listStackResources(params).promise();
           resources = resources.concat(data.StackResourceSummaries);
           if (data.NextToken) params.NextToken = data.NextToken;
@@ -129,18 +120,22 @@ class UpdatedKes extends Kes {
           else break;
         }
 
-        const clusters = resources.filter((item) => {
-          if (item.ResourceType === 'AWS::ECS::Cluster') return true;
-          return false;
-        });
+        const clusters = resources
+          .filter((resource) => resource.ResourceType === 'AWS::ECS::Cluster')
+          .map((cluster) => cluster.PhysicalResourceId);
 
-        for (const cluster of clusters) {
-          const tasks = await ecs.listTasks({ cluster: cluster.PhysicalResourceId }).promise();
-          for (const task of tasks.taskArns) {
+        for (let clusterCtr = 0; clusterCtr < clusters.length; clusterCtr += 1) {
+          const cluster = clusters[clusterCtr];
+          // eslint-disable-next-line no-await-in-loop
+          const tasks = await ecs.listTasks({ cluster }).promise();
+
+          for (let taskCtr = 0; taskCtr < tasks.taskArns.length; taskCtr += 1) {
+            const task = tasks.taskArns[taskCtr];
             console.log(`restarting ECS task ${task}`);
+            // eslint-disable-next-line no-await-in-loop
             await ecs.stopTask({
               task: task,
-              cluster: cluster.PhysicalResourceId
+              cluster
             }).promise();
             console.log(`ECS task ${task} restarted`);
           }
@@ -159,12 +154,18 @@ class UpdatedKes extends Kes {
    * @returns {string}        - Contents of cfFile templated using Handlebars
    */
   parseCF(cfFile) {
+    // Arrow functions cannot be used when registering Handlebars helpers
+    // https://stackoverflow.com/questions/43932566/handlebars-block-expression-do-not-work
+
+    /* eslint-disable func-names */
     Handlebars.registerHelper('ifEquals', function (arg1, arg2, options) {
       return (arg1 === arg2) ? options.fn(this) : options.inverse(this);
     });
     Handlebars.registerHelper('ifNotEquals', function (arg1, arg2, options) {
       return (arg1 !== arg2) ? options.fn(this) : options.inverse(this);
     });
+    /* eslint-enable func-names */
+
     return super.parseCF(cfFile);
   }
 
@@ -208,7 +209,7 @@ class UpdatedKes extends Kes {
   setParentOverrideConfigValues() {
     if (!this.config.parent) return;
     const parent = this.config.parent;
-    this.config.override_with_parent.map((value) => {
+    this.config.override_with_parent.forEach((value) => {
       this.config[value] = (parent[value] == null) ? this.config[value] : parent[value];
     });
   }
