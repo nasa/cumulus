@@ -290,6 +290,7 @@ class UpdatedKes extends Kes {
   /**
    * Updates lambda/sqs configuration to include an sqs dead letter queue
    * matching the lambdas's name (e.g. {lambda.name}DeadLetterQueue)
+   * @returns {void} Returns nothing.
    */
   addLambdaDeadLetterQueues() {
     const lambdas = this.config.lambdas;
@@ -298,17 +299,13 @@ class UpdatedKes extends Kes {
       if (lambda.namedLambdaDeadLetterQueue) {
         console.log(`Adding named dead letter queue for ${lambda.name}`);
         const queueName = `${lambda.name}DeadLetterQueue`;
-        this.addLambdaDeadLetterQueue(queueName);
+        this.config.sqs[queueName] = {
+          MessageRetantionPeriod: this.config.DLQDefaultMessageRetentionPeriod,
+          visibilityTimeout: this.config.DLQDefaultTimeout
+        };
         this.config.lambdas[lambda.name].deadletterqueue = queueName;
       }
     });
-  }
-
-  addLambdaDeadLetterQueue(queueName) {
-    this.config.sqs[queueName] = {
-      MessageRetantionPeriod: this.config.DLQDefaultMessageRetentionPeriod,
-      visibilityTimeout: this.config.DLQDefaultTimeout
-    };
   }
 
   /**
