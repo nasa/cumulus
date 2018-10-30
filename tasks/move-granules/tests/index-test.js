@@ -168,11 +168,7 @@ test.serial('should overwrite files', async (t) => {
 
   console.log(`CUMULUS-970 debugging: start s3 upload. params: ${JSON.stringify(uploadParams)}`);
 
-  await promiseS3Upload({
-    Bucket: t.context.stagingBucket,
-    Key: sourceKey,
-    Body: 'Something'
-  });
+  await promiseS3Upload(uploadParams);
 
   console.log(`CUMULUS-970 debugging: start move granules. params: ${JSON.stringify(newPayload)}`);
 
@@ -194,13 +190,9 @@ test.serial('should overwrite files', async (t) => {
   // re-stage source jpg file with different content
   const content = randomString();
 
-  const uploadParams2 = {
-    Bucket: t.context.stagingBucket,
-    Key: sourceKey,
-    Body: content
-  };
+  uploadParams.Body = content;
 
-  console.log(`CUMULUS-970 debugging: start s3 upload. params: ${JSON.stringify(uploadParams2)}`);
+  console.log(`CUMULUS-970 debugging: start s3 upload. params: ${JSON.stringify(uploadParams)}`);
 
   await promiseS3Upload({
     Bucket: t.context.stagingBucket,
