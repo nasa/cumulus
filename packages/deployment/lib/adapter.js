@@ -1,5 +1,3 @@
-/* eslint no-console: "off" */
-
 'use strict';
 
 const fs = require('fs-extra');
