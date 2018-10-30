@@ -1,8 +1,9 @@
 'use strict';
 
-const delay = require('delay');
 const pRetry = require('p-retry');
 const uuidv4 = require('uuid/v4');
+
+const { sleep } = require('./util');
 
 const {
   isThrottlingException,
@@ -117,7 +118,7 @@ exports.waitForExecutionToExist = async (executionArn, options = {}) => {
   /* eslint-disable no-await-in-loop */
   do {
     if (await exports.executionExists(executionArn)) return;
-    await delay(intervalInMs);
+    await sleep(intervalInMs);
   } while (Date.now() < failAfter);
   /* eslint-enable no-await-in-loop */
 
