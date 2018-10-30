@@ -1,3 +1,10 @@
+---
+id: version-v1.10.1-doc_installation
+title: Cumulus Docs Installation
+hide_title: true
+original_id: doc_installation
+---
+
 # Cumulus Docs
 
 # Local Setup
