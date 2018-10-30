@@ -1,4 +1,3 @@
-/* eslint-disable no-console, no-param-reassign */
 'use strict';
 
 const forge = require('node-forge');
