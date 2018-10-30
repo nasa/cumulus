@@ -1,9 +1,9 @@
-/* eslint-disable no-console, no-param-reassign */
-
 'use strict';
 
-const omit = require('lodash.omit');
 const get = require('lodash.get');
+const isObject = require('lodash.isobject');
+const isString = require('lodash.isstring');
+const omit = require('lodash.omit');
 
 /**
  * Because both kes and message adapter use Mustache for templating,
@@ -14,23 +14,24 @@ const get = require('lodash.get');
  * @returns {Object} updated CumulusConfig
  */
 function fixCumulusMessageSyntax(cumulusConfig) {
+  if (!cumulusConfig) return {};
+
   const test = new RegExp('^([\\{]{1}|[\\[]{1})(\\$.*)([\\]]{1}|[\\}]{1})$');
-  if (cumulusConfig) {
-    Object.keys(cumulusConfig).forEach((n) => {
-      if (typeof cumulusConfig[n] === 'object') {
-        cumulusConfig[n] = fixCumulusMessageSyntax(cumulusConfig[n]);
+
+  Object.keys(cumulusConfig).forEach((n) => {
+    if (isObject(cumulusConfig[n])) {
+      // eslint-disable-next-line no-param-reassign
+      cumulusConfig[n] = fixCumulusMessageSyntax(cumulusConfig[n]);
+    }
+    else if (isString(cumulusConfig[n])) {
+      const match = cumulusConfig[n].match(test);
+      if (match) {
+        // eslint-disable-next-line no-param-reassign
+        cumulusConfig[n] = `{${match[0]}}`;
       }
-      else if (typeof cumulusConfig[n] === 'string') {
-        const match = cumulusConfig[n].match(test);
-        if (match) {
-          cumulusConfig[n] = `{${match[0]}}`;
-        }
-      }
-    });
-  }
-  else {
-    cumulusConfig = {};
-  }
+    }
+  });
+
   return cumulusConfig;
 }
 
@@ -57,9 +58,11 @@ function extractCumulusConfigFromSF(config) {
       workflowConfigs[name][n] = fixCumulusMessageSyntax(sf.States[n].CumulusConfig);
       sf.States[n] = omit(sf.States[n], ['CumulusConfig']);
     });
+    // eslint-disable-next-line no-param-reassign
     config.stepFunctions[name] = sf;
   });
 
+  // eslint-disable-next-line no-param-reassign
   config.workflowConfigs = workflowConfigs;
   return config;
 }
@@ -175,10 +178,11 @@ async function generateTemplates(config, outputs, uploader) {
     // uploads the generated templates to S3
     const workflows = [];
     console.log('Uploading Cumulus Message Templates for each Workflow ...');
-    for (const t of templates) {
+    for (let ctr = 0; ctr < templates.length; ctr += 1) {
+      const t = templates[ctr];
       const name = t.meta.workflow_name;
       const key = `${stack}/workflows/${name}.json`;
-      await uploader(bucket, key, JSON.stringify(t));
+      await uploader(bucket, key, JSON.stringify(t)); // eslint-disable-line no-await-in-loop
       workflows.push({
         name,
         template: `s3://${bucket}/${key}`,
