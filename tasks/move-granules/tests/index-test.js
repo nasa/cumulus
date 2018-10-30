@@ -160,33 +160,63 @@ test.serial('should overwrite files', async (t) => {
     name: filename
   }];
 
-  await promiseS3Upload({
+  const uploadParams = {
     Bucket: t.context.stagingBucket,
     Key: sourceKey,
     Body: 'Something'
-  });
+  };
+
+  console.log(`CUMULUS-970 debugging: start s3 upload. params: ${JSON.stringify(uploadParams)}`);
+
+  await promiseS3Upload(uploadParams);
+
+  console.log(`CUMULUS-970 debugging: start move granules. params: ${JSON.stringify(newPayload)}`);
 
   let output = await moveGranules(newPayload);
+
+  console.log('CUMULUS-970 debugging: move granules complete');
+
   await validateOutput(t, output);
+
+  console.log(`CUMULUS-970 debugging: head object destKey ${destKey}`);
+
   const existingFile = await headObject(
     t.context.publicBucket,
     destKey
   );
 
+  console.log('CUMULUS-970 debugging: headobject complete');
+
   // re-stage source jpg file with different content
   const content = randomString();
+
+  uploadParams.Body = content;
+
+  console.log(`CUMULUS-970 debugging: start s3 upload. params: ${JSON.stringify(uploadParams)}`);
+
   await promiseS3Upload({
     Bucket: t.context.stagingBucket,
     Key: sourceKey,
     Body: content
   });
 
+  console.log(`CUMULUS-970 debugging: start move granules. params: ${JSON.stringify(newPayload)}`);
+
   output = await moveGranules(newPayload);
+
+  console.log('CUMULUS-970 debugging:  move granules complete');
+
   const updatedFile = await headObject(
     t.context.publicBucket,
     destKey
   );
+
+  console.log(`CUMULUS-970 debugging: start list objects. params: ${JSON.stringify({ Bucket: t.context.publicBucket })}`);
+
   const objects = await s3().listObjects({ Bucket: t.context.publicBucket }).promise();
+
+  console.log('CUMULUS-970 debugging: list objects complete');
+
   t.is(objects.Contents.length, 1);
 
   const item = objects.Contents[0];
