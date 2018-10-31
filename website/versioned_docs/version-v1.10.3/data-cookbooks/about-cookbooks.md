@@ -1,5 +1,5 @@
 ---
-id: version-1.10.3-about-cookbooks
+id: version-v1.10.3-about-cookbooks
 title: About Cookbooks
 hide_title: true
 original_id: about-cookbooks

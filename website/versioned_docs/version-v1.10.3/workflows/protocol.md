@@ -1,5 +1,5 @@
 ---
-id: version-1.10.3-protocol
+id: version-v1.10.3-protocol
 title: Workflow Protocol
 hide_title: true
 original_id: protocol

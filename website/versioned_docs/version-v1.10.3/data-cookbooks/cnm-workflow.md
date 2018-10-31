@@ -1,5 +1,5 @@
 ---
-id: version-1.10.3-cnm-workflow
+id: version-v1.10.3-cnm-workflow
 title: CNM Workflow
 hide_title: true
 original_id: cnm-workflow

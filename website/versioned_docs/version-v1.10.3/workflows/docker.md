@@ -1,5 +1,5 @@
 ---
-id: version-1.10.3-docker
+id: version-v1.10.3-docker
 title: Dockerizing Data Processing
 hide_title: true
 original_id: docker

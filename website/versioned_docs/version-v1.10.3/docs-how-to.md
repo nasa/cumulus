@@ -1,5 +1,5 @@
 ---
-id: version-1.10.3-docs-how-to
+id: version-v1.10.3-docs-how-to
 title: Cumulus Documentation: How To's
 hide_title: true
 original_id: docs-how-to
