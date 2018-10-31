@@ -4,39 +4,49 @@ const fs = require('fs-extra');
 const { get, set, forEach } = require('lodash');
 const path = require('path');
 
-workingDir = process.env.PWD;
+const workingDir = process.env.PWD;
 const siteConfigPathNoExt = path.join(
   workingDir,
   'website',
   'siteConfig'
 );
-
-// require is relative to where the js file exists
 const siteConfig = require(siteConfigPathNoExt);
+const siteConfigPath = [siteConfigPathNoExt, 'js'].join('.');
 
-function replaceDocSearchApiKey() {
-  const envStrings = {
-    apiKey: 'DOCSEARCH_API_KEY',
-    indexName: 'DOCSEARCH_INDEX_NAME'
+
+/**
+ * Replace DocSearch keys in siteConfig
+ *
+ * @param {string} apiKey - value to insert into algolia.apiKey
+ * @param {string} indexName - value to insert into algolia.indexName
+ * @returns {undefined}
+ */
+function replaceSiteConfigAlgoliaValues(apiKey, indexName) {
+  const envStrings = { apiKey, indexName };
+
+  const replaceValues = {
+    apiKey: get(process.env, envStrings.apiKey),
+    indexName: get(process.env, envStrings.indexName)
   };
-
-  const apiKey = get(process.env, envStrings.apiKey);
-  const indexName = get(process.env, envStrings.indexName);
-
-  const replaceValues = { apiKey, indexName };
     
 
   forEach(replaceValues, (value, key) => {
     if (value) {
-      set(siteConfig.algolia, key, value);
+      set(siteConfig, `algolia.${key}`, value);
     } else {
+      process.exitCode = 1;
       throw new Error(`${get(envStrings, key)} must be set.`);
     }
   });
 }
 
+
+/**
+ * Writes siteConfig.js to the website directory
+ *
+ * @returns {undefined}
+ */
 function writeSiteConfig() {
-  const siteConfigPath = [siteConfigPathNoExt, 'js'].join('.');
   fs.writeFile(
     siteConfigPath,
     JSON.stringify(siteConfig),
@@ -45,5 +55,6 @@ function writeSiteConfig() {
   console.log(`Wrote DocSearch apiKey and indexName into ${siteConfigPath}`);
 }
 
-replaceDocSearchApiKey();
+
+replaceSiteConfigAlgoliaValues('DOCSEARCH_API_KEY', 'DOCSEARCH_INDEX_NAME');
 writeSiteConfig();
