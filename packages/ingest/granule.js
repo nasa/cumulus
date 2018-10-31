@@ -378,7 +378,7 @@ class Granule {
     const sum = await aws.checksumS3Objects(type, bucket, key, options);
 
     if (value !== sum) {
-      const message = `Invalid checksum for ${file.name} with type ${file.checksumType} and value ${file.checksumValue}`; // eslint-disable-line max-len
+      const message = `Invalid checksum for ${file.name} with type ${file.checksumType} and value ${file.checksumValue}`;
       throw new errors.InvalidChecksum(message);
     }
     return [type, value];
@@ -551,6 +551,7 @@ class Granule {
         await aws.deleteS3Object(bucket, stagedFileKey);
       }
       else {
+        log.debug(`Renaming file to ${destinationKey}`);
         await exports.renameS3FileWithTimestamp(bucket, destinationKey);
         await exports.moveGranuleFile(
           { Bucket: bucket, Key: stagedFileKey }, { Bucket: bucket, Key: destinationKey }
@@ -684,12 +685,28 @@ async function getMetadata(xmlFilePath) {
   if (!xmlFilePath) {
     throw new errors.XmlMetaFileNotFound('XML Metadata file not provided');
   }
-
-  // GET the metadata text
-  // Currently, only supports files that are stored on S3
-  const parts = xmlFilePath.match(/^s3:\/\/(.+?)\/(.+)$/);
-  const obj = await aws.getS3Object(parts[1], parts[2]);
+  const { Bucket, Key } = aws.parseS3Uri(xmlFilePath);
+  const obj = await aws.getS3Object(Bucket, Key);
   return obj.Body.toString();
+}
+
+/**
+ * Gets body and tags of s3 metadata xml file
+ *
+ * @param {string} xmlFilePath - S3 URI to the xml metadata document
+ * @returns {Object} - object containing Body and TagSet for S3 Object
+ */
+async function getMetadataBodyAndTags(xmlFilePath) {
+  if (!xmlFilePath) {
+    throw new errors.XmlMetaFileNotFound('XML Metadata file not provided');
+  }
+  const { Bucket, Key } = aws.parseS3Uri(xmlFilePath);
+  const data = await aws.getS3Object(Bucket, Key);
+  const tags = await aws.s3GetObjectTagging(Bucket, Key);
+  return {
+    Body: data.Body.toString(),
+    TagSet: tags.TagSet
+  };
 }
 
 /**
@@ -714,21 +731,22 @@ async function getCmrFiles(input, granuleIdExtraction) {
   const files = [];
   const expectedFormat = /.*\.cmr\.xml$/;
 
-  for (const filename of input) {
+  await Promise.all(input.map(async (filename) => {
     if (filename && filename.match(expectedFormat)) {
-      const metadata = await getMetadata(filename);
-      const metadataObject = await parseXmlString(metadata);
+      const metaResponse = await getMetadataBodyAndTags(filename);
+      const metadataObject = await parseXmlString(metaResponse.Body);
 
       const cmrFileObject = {
         filename,
-        metadata,
+        metadata: metaResponse.Body,
         metadataObject,
-        granuleId: getGranuleId(filename, granuleIdExtraction)
+        granuleId: getGranuleId(filename, granuleIdExtraction),
+        s3Tags: metaResponse.TagSet
       };
 
       files.push(cmrFileObject);
     }
-  }
+  }));
 
   return files;
 }
@@ -854,7 +872,7 @@ function copyGranuleFile(source, target, options) {
 
   return aws.s3().copyObject(params).promise()
     .catch((err) => {
-      log.error(`Failed to copy s3://${CopySource} to s3://${target.Bucket}/${target.Key}: ${err.message}`); // eslint-disable-line max-len
+      log.error(`Failed to copy s3://${CopySource} to s3://${target.Bucket}/${target.Key}: ${err.message}`);
       throw err;
     });
 }
@@ -981,7 +999,6 @@ async function getRenamedS3File(bucket, key) {
  * @returns {boolean} whether the file is renamed
  */
 function isFileRenamed(filename) {
-  // eslint-disable-next-line max-len
   const suffixRegex = '\\.v[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])T(2[0-3]|[01][0-9])[0-5][0-9][0-5][0-9][0-9]{3}$';
   return (filename.match(suffixRegex) !== null);
 }

@@ -46,6 +46,17 @@ while ! curl --connect-timeout 5 -sS http://127.0.0.1:9200/_cluster/health | gre
 done
 echo 'Elasticsearch status is green'
 
+# Update Elasticsearch config to stop complaining about running out of disk space
+curl -XPUT "http://127.0.0.1:9200/_cluster/settings" -d '
+{
+  "persistent": {
+    "cluster.routing.allocation.disk.threshold_enabled": true,
+    "cluster.routing.allocation.disk.watermark.low": "1g",
+    "cluster.routing.allocation.disk.watermark.high": "500m",
+    "cluster.info.update.interval": "5m"
+  }
+}'
+
 # Lambda seems to be the last service that's started up by Localstack
 while ! nc -z 127.0.0.1 4574; do
   echo 'Waiting for Localstack Lambda service to start'

@@ -1,16 +1,16 @@
 {
   "name": "@cumulus/deployment",
-  "version": "1.10.1",
+  "version": "1.10.2",
   "description": "Deployment templates for cumulus",
   "scripts": {
     "test": "ava",
-    "test-coverage": "nyc ava",
+    "test-coverage": "nyc npm test",
     "build": "babel lib -d app",
     "watch": "babel lib -d app -w",
     "prepublishOnly": "npm run build"
   },
   "ava": {
-    "color": false
+    "files": "test"
   },
   "engines": {
     "node": ">=8.10.0"
@@ -39,7 +39,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.10.0",
+    "@cumulus/common": "^1.10.2",
     "aws-sdk": "^2.238.1",
     "extract-zip": "^1.6.6",
     "fs-extra": "^5.0.0",
@@ -47,6 +47,8 @@
     "handlebars": "^4.0.11",
     "kes": "~2.2.2",
     "lodash.get": "^4.4.2",
+    "lodash.isobject": "^3.0.2",
+    "lodash.isstring": "^4.0.1",
     "lodash.omit": "^4.5.0",
     "lodash.zipobject": "^4.1.3",
     "node-forge": "^0.7.1",
@@ -54,12 +56,14 @@
     "yauzl": "^2.10.0"
   },
   "devDependencies": {
+    "@cumulus/common": "^1.10.1",
     "ava": "^0.25.0",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^6.2.4",
     "babel-polyfill": "^6.23.0",
     "babel-preset-es2017": "^6.24.1",
+    "nock": "10.0.1",
     "nyc": "^11.6.0",
     "sinon": "^4.5.0"
   }
