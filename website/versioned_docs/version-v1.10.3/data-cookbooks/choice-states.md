@@ -1,5 +1,5 @@
 ---
-id: version-1.10.3-choice-states
+id: version-v1.10.3-choice-states
 title: Choice States
 hide_title: true
 original_id: choice-states

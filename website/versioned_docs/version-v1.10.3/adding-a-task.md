@@ -1,5 +1,5 @@
 ---
-id: version-1.10.3-adding-a-task
+id: version-v1.10.3-adding-a-task
 title: Contributing a Task
 hide_title: true
 original_id: adding-a-task

@@ -1,5 +1,5 @@
 ---
-id: version-1.10.3-iam_roles
+id: version-v1.10.3-iam_roles
 title: Cumulus IAM Roles
 hide_title: true
 original_id: iam_roles

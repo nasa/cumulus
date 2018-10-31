@@ -1,5 +1,5 @@
 ---
-id: version-1.10.3-hello-world
+id: version-v1.10.3-hello-world
 title: HelloWorld Workflow
 hide_title: true
 original_id: hello-world

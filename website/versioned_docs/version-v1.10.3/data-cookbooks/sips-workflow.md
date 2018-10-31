@@ -1,5 +1,5 @@
 ---
-id: version-1.10.3-sips-workflow
+id: version-v1.10.3-sips-workflow
 title: Science Investigator-led Processing Systems (SIPS)
 hide_title: true
 original_id: sips-workflow

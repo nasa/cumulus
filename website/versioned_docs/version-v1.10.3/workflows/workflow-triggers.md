@@ -1,5 +1,5 @@
 ---
-id: version-1.10.3-workflow-triggers
+id: version-v1.10.3-workflow-triggers
 title: Workflow Triggers
 hide_title: true
 original_id: workflow-triggers

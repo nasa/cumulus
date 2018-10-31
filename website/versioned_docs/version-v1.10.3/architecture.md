@@ -1,5 +1,5 @@
 ---
-id: version-1.10.3-architecture
+id: version-v1.10.3-architecture
 title: Cumulus Architecture
 hide_title: true
 original_id: architecture
