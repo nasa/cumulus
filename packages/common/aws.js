@@ -4,15 +4,17 @@ const AWS = require('aws-sdk');
 const cksum = require('cksum');
 const crypto = require('crypto');
 const fs = require('fs');
+const isObject = require('lodash.isobject');
+const isString = require('lodash.isstring');
 const path = require('path');
 const pMap = require('p-map');
 const pump = require('pump');
 const url = require('url');
 
-const concurrency = require('./concurrency');
 const log = require('./log');
 const string = require('./string');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
+const { noop } = require('./util');
 
 /**
  * Join strings into an S3 key without a leading slash or double slashes
@@ -42,7 +44,7 @@ exports.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
 AWS.config.update({ region: exports.region });
 
 // Workaround upload hangs. See: https://github.com/andrewrk/node-s3-client/issues/74'
-AWS.util.update(AWS.S3.prototype, { addExpect100Continue: function addExpect100Continue() {} });
+AWS.util.update(AWS.S3.prototype, { addExpect100Continue: noop });
 AWS.config.setPromisesDependency(Promise);
 
 
@@ -131,11 +133,12 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
     }
 
     let arns = null;
-    for (const prop of Object.keys(data)) {
+    Object.keys(data).forEach((prop) => {
       if (prop.endsWith('Arns')) {
         arns = data[prop];
       }
-    }
+    });
+
     if (!arns) {
       callback(`Could not find an 'Arn' property in response from ${fn}`, data);
       return;
@@ -144,12 +147,14 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
     const prefixRe = new RegExp(`^${prefix}-[A-Z0-9]`);
     const baseNameOnly = `-${baseName}-`;
     let matchingArn = null;
-    for (const arn of arns) {
+
+    arns.forEach((arn) => {
       const name = arn.split('/').pop();
-      if (name.match(prefixRe) && name.indexOf(baseNameOnly) !== -1) {
+      if (name.match(prefixRe) && name.includes(baseNameOnly)) {
         matchingArn = arn;
       }
-    }
+    });
+
     if (matchingArn) {
       callback(null, matchingArn);
     }
@@ -162,6 +167,16 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
     }
   });
 };
+
+/**
+* Convert S3 TagSet Object to query string
+* e.g. [{ Key: 'tag', Value: 'value }] to 'tag=value'
+*
+* @param {Array<Object>} tagset - S3 TagSet array
+* @returns {string} - tags query string
+*/
+exports.s3TagSetToQueryString = (tagset) => tagset.reduce((acc, tag) => acc.concat(`&${tag.Key}=${tag.Value}`), '').substring(1);
+
 
 /**
  * Delete an object from S3
@@ -187,6 +202,28 @@ exports.s3ObjectExists = (params) =>
       if (e.code === 'NotFound') return false;
       throw e;
     });
+
+/**
+* Put an object on S3
+*
+* @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
+* @returns {Promise} - promise of the object being put
+**/
+exports.s3PutObject = (params) => {
+  if (!params.ACL) params.ACL = 'private'; //eslint-disable-line no-param-reassign
+  return exports.s3().putObject(params).promise();
+};
+
+/**
+* Copy an object from one location on S3 to another
+*
+* @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
+* @returns {Promise} - promise of the object being copied
+**/
+exports.s3CopyObject = (params) => {
+  if (!params.TaggingDirective) params.TaggingDirective = 'COPY'; //eslint-disable-line no-param-reassign
+  return exports.s3().copyObject(params).promise();
+};
 
 /**
  * Upload data to S3
@@ -230,6 +267,16 @@ exports.downloadS3File = (s3Obj, filepath) => {
 
 exports.headObject = (bucket, key) =>
   exports.s3().headObject({ Bucket: bucket, Key: key }).promise();
+
+/**
+* Get object Tagging from S3
+*
+* @param {string} bucket - name of bucket
+* @param {string} key - key for object (filepath + filename)
+* @returns {Promise} - returns response from `S3.getObjectTagging` as a promise
+**/
+exports.s3GetObjectTagging = (bucket, key) =>
+  exports.s3().getObjectTagging({ Bucket: bucket, Key: key }).promise();
 
 /**
 * Get an object from S3
@@ -285,7 +332,8 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
         .createReadStream()
         .pipe(file)
         .on('finish', () => {
-          log.info(`Progress: [${i++} of ${n}] s3://${s3Obj.Bucket}/${s3Obj.Key} -> ${filename}`);
+          log.info(`Progress: [${i} of ${n}] s3://${s3Obj.Bucket}/${s3Obj.Key} -> ${filename}`);
+          i += 1;
           return resolve(s3Obj.Key);
         })
         .on('error', reject);
@@ -299,7 +347,8 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
  * Delete files from S3
  *
  * @param {Array} s3Objs - An array of objects containing keys 'Bucket' and 'Key'
- * @returns {Promise} A promise that resolves to an Array of the data returned from the deletion operations
+ * @returns {Promise} A promise that resolves to an Array of the data returned
+ *   from the deletion operations
  */
 exports.deleteS3Files = (s3Objs) => {
   log.info(`Starting deletion of ${s3Objs.length} object(s)`);
@@ -335,12 +384,12 @@ exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
   }
   const promiseUpload = (filenameOrInfo) => {
     let fileInfo = filenameOrInfo;
-    if (typeof fileInfo === 'string') {
+    if (isString(fileInfo)) {
       const filename = fileInfo;
       fileInfo = {
-        key: (typeof keyPath === 'string') ?
-          path.join(keyPath, path.basename(filename)) :
-          keyPath(filename),
+        key: isString(keyPath)
+          ? path.join(keyPath, path.basename(filename))
+          : keyPath(filename),
         filename: filename
       };
     }
@@ -351,7 +400,8 @@ exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
     const opts = Object.assign({ Bucket: bucket, Key: key, Body: body }, s3opts);
     return exports.promiseS3Upload(opts)
       .then(() => {
-        log.info(`Progress: [${++i} of ${n}] ${filename} -> s3://${bucket}/${key}`);
+        i += 1;
+        log.info(`Progress: [${i} of ${n}] ${filename} -> s3://${bucket}/${key}`);
         return { key: key, bucket: bucket };
       });
   };
@@ -425,14 +475,14 @@ async function listS3ObjectsV2(params) {
 
   // Keep listing more objects from S3 until we have all of them
   while (listObjectsResponse.IsTruncated) {
-    listObjectsResponse = await exports.s3().listObjectsV2( // eslint-disable-line no-await-in-loop, function-paren-newline, max-len
+    listObjectsResponse = await exports.s3().listObjectsV2( // eslint-disable-line no-await-in-loop, max-len
       // Update the params with a Continuation Token
       Object.assign(
         {},
         params,
         { ContinuationToken: listObjectsResponse.NextContinuationToken }
       )
-    ).promise(); //eslint-disable-line function-paren-newline
+    ).promise();
     discoveredObjects = discoveredObjects.concat(listObjectsResponse.Contents);
   }
 
@@ -566,11 +616,6 @@ class DynamoDbScanQueue {
 }
 exports.DynamoDbScanQueue = DynamoDbScanQueue;
 
-exports.syncUrl = async (uri, bucket, destKey) => {
-  const response = await concurrency.promiseUrl(uri);
-  await exports.promiseS3Upload({ Bucket: bucket, Key: destKey, Body: response });
-};
-
 exports.getQueueUrl = (sourceArn, queueName) => {
   const arnParts = sourceArn.split(':');
   return `https://sqs.${arnParts[3]}.amazonaws.com/${arnParts[4]}/${queueName}`;
@@ -613,7 +658,7 @@ exports.buildS3Uri = (bucket, key) => `s3://${bucket}/${key.replace(/^\/+/, '')}
  * @param {string} fields - The fields to be injected into an execution name
  * @param {string} delimiter - An optional delimiter string to replace, pass null to make
  *   no replacements
- * @return - A string that's safe to use as a StepFunctions execution name
+ * @returns {string} A string that's safe to use as a StepFunctions execution name
  */
 exports.toSfnExecutionName = (fields, delimiter = '__') => {
   let sfnUnsafeChars = '[^\\w-=+_.]';
@@ -633,10 +678,9 @@ exports.toSfnExecutionName = (fields, delimiter = '__') => {
  *            execution names
  *
  * @param {string} str - The string to make stepfunction safe
- * @param {string} delimiter - An optional delimiter string to replace, pass null to make
+ * @param {string} [delimiter='__'] - An optional delimiter string to replace, pass null to make
  *   no replacements
- * @param {string} sfnDelimiter - The string to replace delimiter with
- * @return - An array of the original fields
+ * @returns {Array} An array of the original fields
  */
 exports.fromSfnExecutionName = (str, delimiter = '__') =>
   str.split(delimiter)
@@ -681,8 +725,8 @@ exports.createQueue = createQueue;
 **/
 exports.sendSQSMessage = (queueUrl, message) => {
   let messageBody;
-  if (typeof message === 'string') messageBody = message;
-  else if (typeof message === 'object') messageBody = JSON.stringify(message);
+  if (isString(message)) messageBody = message;
+  else if (isObject(message)) messageBody = JSON.stringify(message);
   else throw new Error('body type is not accepted');
 
   return exports.sqs().sendMessage({
@@ -696,16 +740,19 @@ exports.sendSQSMessage = (queueUrl, message) => {
  * can be set and the timeout is also adjustable.
  *
  * @param {string} queueUrl - url of the SQS queue
- * @param {integer} numOfMessages - number of messages to read from the queue
- * @param {integer} timeout - number of seconds it takes for a message to timeout
+ * @param {Object} options - options object
+ * @param {integer} [options.numOfMessages=1] - number of messages to read from the queue
+ * @param {integer} [options.timeout=30] - seconds it takes for a message to timeout
+ * @param {integer} [options.waitTimeSeconds=0] - number of seconds to poll SQS queue (long polling)
  * @returns {Promise.<Array>} an array of messages
  */
-exports.receiveSQSMessages = async (queueUrl, numOfMessages = 1, timeout = 30) => {
+exports.receiveSQSMessages = async (queueUrl, options) => {
   const params = {
     QueueUrl: queueUrl,
     AttributeNames: ['All'],
-    VisibilityTimeout: timeout,
-    MaxNumberOfMessages: numOfMessages
+    VisibilityTimeout: options.timeout || 30,
+    WaitTimeSeconds: options.waitTimeSeconds || 0,
+    MaxNumberOfMessages: options.numOfMessages || 1
   };
 
   const messages = await exports.sqs().receiveMessage(params).promise();
@@ -757,12 +804,9 @@ exports.getExecutionArn = (stateMachineArn, executionName) => {
 *
 * @param {string} granuleId - the granule id
 * @param {string} stack - the deployment stackname
-* @param {string} bucket - the deployment bucket name
 * @returns {string} - s3 path
 **/
-exports.getGranuleS3Params = (granuleId, stack, bucket) => {
-  return `${stack}/granules_ingested/${granuleId}`;
-};
+exports.getGranuleS3Params = (granuleId, stack) => `${stack}/granules_ingested/${granuleId}`;
 
 /**
 * Set the status of a granule

@@ -1,5 +1,3 @@
-/* eslint-disable no-console, no-param-reassign */
-
 'use strict';
 
 const fs = require('fs-extra');
@@ -38,7 +36,8 @@ class UpdatedLambda extends Lambda {
    * in the config object for a template that runs following a nested template
    * that has already run the superclass 'process' method.
    *
-   * @param {string) configKey - the configuration key with a lambda configuration object to be modified
+   * @param {string} configKey - the configuration key with a lambda
+   *   configuration object to be modified
    * @returns {void} returns nothing
    */
   buildAllLambdaConfiguration(configKey) {
@@ -113,6 +112,27 @@ class UpdatedLambda extends Lambda {
     return lambda;
   }
 
+  getLambdaVersionFromPackageFile(sourceDir) {
+    let packageJson = '{}';
+    const JsonFilePath = `${sourceDir}/../package.json`;
+
+    try {
+      if (fs.existsSync(JsonFilePath)) {
+        packageJson = fs.readFileSync(`${JsonFilePath}`);
+      }
+    }
+    catch (e) {
+      console.log(`Error reading package.json from ${JsonFilePath}`);
+      throw (e);
+    }
+    const packageData = JSON.parse(packageJson);
+
+    if (!packageData || !packageData.version) {
+      return null;
+    }
+    return packageData.version;
+  }
+
   /**
    * Overrides the default method to allow returning
    * the lambda function after s3 paths were built
@@ -122,11 +142,11 @@ class UpdatedLambda extends Lambda {
    * If a s3Source is used and a uniqueIdentifier is specified
    * add that value in place of a calculated hash
    *
-   * @param {Object} lambda - the Lambda object
+   * @param {Object} lambdaArg - the Lambda object
    * @returns {Object} the updated lambda object
    */
-  buildS3Path(lambda) {
-    lambda = super.buildS3Path(lambda);
+  buildS3Path(lambdaArg) {
+    const lambda = super.buildS3Path(lambdaArg);
 
     if (lambda.s3Source && lambda.s3Source.uniqueIdentifier) {
       const uniqueIdentifier = lambda.s3Source.uniqueIdentifier;
@@ -134,6 +154,11 @@ class UpdatedLambda extends Lambda {
         throw new Error(`Invalid uniqueIdentifier ${uniqueIdentifier} provided for lambda`);
       }
       lambda.hash = uniqueIdentifier;
+      lambda.humanReadableIdentifier = uniqueIdentifier;
+    }
+    else {
+      const lambdaVersion = this.getLambdaVersionFromPackageFile(lambda.source);
+      lambda.humanReadableIdentifier = lambdaVersion || lambda.hash;
     }
 
     // adding the hash of the message adapter zip file as part of lambda zip file

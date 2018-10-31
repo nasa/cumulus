@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api",
-  "version": "1.10.1",
+  "version": "1.10.3",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
@@ -10,16 +10,18 @@
     "cumulus-api": "./bin/cli.js"
   },
   "scripts": {
-    "test": "ava --serial --fail-fast",
-    "test-coverage": "nyc ava",
+    "test": "ava && ava --serial tests/serial/",
+    "test-coverage": "nyc npm test",
     "build": "webpack",
     "watch": "webpack --progress -w",
     "prepublishOnly": "PRODUCTION=true npm run build"
   },
   "ava": {
-    "files": "tests/**/*.js",
-    "fail-fast": true,
-    "serial": true
+    "files": [
+      "tests/**/*.js",
+      "!tests/serial/**/*.js"
+    ],
+    "fail-fast": true
   },
   "nyc": {
     "exclude": [
@@ -35,9 +37,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmrjs": "^1.10.0",
-    "@cumulus/common": "^1.10.0",
-    "@cumulus/ingest": "^1.10.0",
+    "@cumulus/cmrjs": "^1.10.3",
+    "@cumulus/common": "^1.10.3",
+    "@cumulus/ingest": "^1.10.3",
     "@cumulus/pvl": "^1.10.0",
     "@mapbox/dyno": "^1.4.1",
     "ajv": "^5.2.2",
@@ -75,6 +77,7 @@
     "p-limit": "^1.2.0",
     "p-map": "^1.2.0",
     "p-retry": "^2.0.0",
+    "p-wait-for": "https://github.com/yjpa7145/p-wait-for.git#StopChecksAfterTimeout",
     "querystring": "^0.2.0",
     "split2": "^2.2.0",
     "uuid": "^3.2.1"
@@ -88,8 +91,8 @@
     "nyc": "^11.6.0",
     "rewire": "^4.0.1",
     "sinon": "^4.5.0",
-    "webpack-cli": "~2.0.14",
     "webpack": "~4.5.0",
+    "webpack-cli": "~2.0.14",
     "xml2js": "^0.4.19"
   }
 }

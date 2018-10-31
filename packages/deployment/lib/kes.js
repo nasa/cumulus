@@ -1,4 +1,3 @@
-/* eslint-disable no-console, no-await-in-loop, no-restricted-syntax */
 /**
  * This module overrides the Kes Class and the Lambda class of Kes
  * to support specific needs of the Cumulus Deployment.
@@ -24,29 +23,20 @@
 
 'use strict';
 
-
 const zipObject = require('lodash.zipobject');
 const { Kes, utils } = require('kes');
 const fs = require('fs-extra');
 const Handlebars = require('handlebars');
-
 const path = require('path');
 const util = require('util');
+const { sleep } = require('@cumulus/common/util');
+
 const Lambda = require('./lambda');
 const { crypto } = require('./crypto');
 const { fetchMessageAdapter } = require('./adapter');
 const { extractCumulusConfigFromSF, generateTemplates } = require('./message');
 
 const fsWriteFile = util.promisify(fs.writeFile);
-
-
-/**
- * Makes setTimeout return a promise
- *
- * @param {integer} ms - number of milliseconds
- * @returns {Promise} the arguments passed after the timeout
- */
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * A subclass of Kes class that overrides opsStack method.
@@ -97,7 +87,7 @@ class UpdatedKes extends Kes {
             `Redeploying ${restApiId} was throttled. `
             + `Another attempt will be made in ${waitTime} seconds`
           );
-          await delay(waitTime * 1000);
+          await sleep(waitTime * 1000);
           return this.redeployApiGateWay(name, restApiId, stageName);
         }
         throw e;
@@ -122,6 +112,7 @@ class UpdatedKes extends Kes {
         let resources = [];
         const params = { StackName: config.stackName };
         while (true) { // eslint-disable-line no-constant-condition
+          // eslint-disable-next-line no-await-in-loop
           const data = await this.cf.listStackResources(params).promise();
           resources = resources.concat(data.StackResourceSummaries);
           if (data.NextToken) params.NextToken = data.NextToken;
@@ -129,18 +120,22 @@ class UpdatedKes extends Kes {
           else break;
         }
 
-        const clusters = resources.filter((item) => {
-          if (item.ResourceType === 'AWS::ECS::Cluster') return true;
-          return false;
-        });
+        const clusters = resources
+          .filter((resource) => resource.ResourceType === 'AWS::ECS::Cluster')
+          .map((cluster) => cluster.PhysicalResourceId);
 
-        for (const cluster of clusters) {
-          const tasks = await ecs.listTasks({ cluster: cluster.PhysicalResourceId }).promise();
-          for (const task of tasks.taskArns) {
+        for (let clusterCtr = 0; clusterCtr < clusters.length; clusterCtr += 1) {
+          const cluster = clusters[clusterCtr];
+          // eslint-disable-next-line no-await-in-loop
+          const tasks = await ecs.listTasks({ cluster }).promise();
+
+          for (let taskCtr = 0; taskCtr < tasks.taskArns.length; taskCtr += 1) {
+            const task = tasks.taskArns[taskCtr];
             console.log(`restarting ECS task ${task}`);
+            // eslint-disable-next-line no-await-in-loop
             await ecs.stopTask({
               task: task,
-              cluster: cluster.PhysicalResourceId
+              cluster
             }).promise();
             console.log(`ECS task ${task} restarted`);
           }
@@ -159,12 +154,16 @@ class UpdatedKes extends Kes {
    * @returns {string}        - Contents of cfFile templated using Handlebars
    */
   parseCF(cfFile) {
-    Handlebars.registerHelper('ifEquals', function (arg1, arg2, options) {
+    // Arrow functions cannot be used when registering Handlebars helpers
+    // https://stackoverflow.com/questions/43932566/handlebars-block-expression-do-not-work
+
+    Handlebars.registerHelper('ifEquals', function ifEquals(arg1, arg2, options) {
       return (arg1 === arg2) ? options.fn(this) : options.inverse(this);
     });
-    Handlebars.registerHelper('ifNotEquals', function (arg1, arg2, options) {
+    Handlebars.registerHelper('ifNotEquals', function ifNotEquals(arg1, arg2, options) {
       return (arg1 !== arg2) ? options.fn(this) : options.inverse(this);
     });
+
     return super.parseCF(cfFile);
   }
 
@@ -200,6 +199,19 @@ class UpdatedKes extends Kes {
     });
   }
 
+
+  /**
+   * setParentConfigvalues - Overrides nested stack template with parent values
+   * defined in the override_with_parent config key
+   */
+  setParentOverrideConfigValues() {
+    if (!this.config.parent) return;
+    const parent = this.config.parent;
+    this.config.override_with_parent.forEach((value) => {
+      this.config[value] = (parent[value] == null) ? this.config[value] : parent[value];
+    });
+  }
+
   /**
    * Modified version of Kes superclass compileCF method
    *
@@ -215,7 +227,18 @@ class UpdatedKes extends Kes {
    * @returns {Promise} returns the promise of an AWS response object
    */
   async superCompileCF() {
+    this.setParentOverrideConfigValues();
     const lambda = new this.Lambda(this.config);
+
+    // Process default dead letter queue configs  if this value is set
+    if (this.config.processDefaultDeadLetterQueues) {
+      this.addLambdaDeadLetterQueues();
+    }
+
+    // If the lambdaProcess is set on the subtemplate default configuration
+    // then *build* the lambdas and populate the config object
+    // else only populate the configuration object but do not rebuild
+    // lhe lambda zips
     if (this.config.lambdaProcess) {
       this.config = await lambda.process();
     }
@@ -237,6 +260,7 @@ class UpdatedKes extends Kes {
         this.injectWorkflowLambdaAliases();
       }
     }
+
 
     // Update workflowLambdas with generated hash values
     lambda.addWorkflowLambdaHashes();
@@ -272,6 +296,27 @@ class UpdatedKes extends Kes {
 
 
   /**
+   * Updates lambda/sqs configuration to include an sqs dead letter queue
+   * matching the lambdas's name (e.g. {lambda.name}DeadLetterQueue)
+   * @returns {void} Returns nothing.
+   */
+  addLambdaDeadLetterQueues() {
+    const lambdas = this.config.lambdas;
+    Object.keys(lambdas).forEach((key) => {
+      const lambda = lambdas[key];
+      if (lambda.namedLambdaDeadLetterQueue) {
+        console.log(`Adding named dead letter queue for ${lambda.name}`);
+        const queueName = `${lambda.name}DeadLetterQueue`;
+        this.config.sqs[queueName] = {
+          MessageRetantionPeriod: this.config.DLQDefaultMessageRetentionPeriod,
+          visibilityTimeout: this.config.DLQDefaultTimeout
+        };
+        this.config.lambdas[lambda.name].deadletterqueue = queueName;
+      }
+    });
+  }
+
+  /**
    *
    * @param {Object} lambda - AWS lambda object
    * @param {Object} config - AWS listAliases configuration object.
@@ -304,15 +349,16 @@ class UpdatedKes extends Kes {
    * number of most recent lambda alias names to retain in the 'Old Lambda Resources' section of
    * the LambdaVersion template, avoiding duplicates of items in the Current Lambda section.
    *
-   * @returns {Promise.string[]} returns the promise of a list of alias names
+   * @returns {Promise.string[]} returns the promise of a list of alias metadata
+   *          objects: keys (Name, humanReadableIdentifier)
    **/
-  async getRetainedLambdaAliasNames() {
+  async getRetainedLambdaAliasMetadata() {
     const awsLambda = new this.AWS.Lambda();
     const cumulusAliasDescription = 'Cumulus AutoGenerated Alias';
     const configLambdas = this.config.workflowLambdas;
     const numberOfRetainedLambdas = this.config.maxNumberOfRetainedLambdas;
 
-    let oldLambdaNames = [];
+    let aliasMetadataObjects = [];
 
     const lambdaNames = Object.keys(configLambdas);
     const aliasListsPromises = lambdaNames.map(async (lambdaName) => {
@@ -336,24 +382,43 @@ class UpdatedKes extends Kes {
       if (cumulusAliases.length === 0) return;
 
       cumulusAliases.sort((a, b) => b.FunctionVersion - a.FunctionVersion);
-      let oldAliases = cumulusAliases.filter(
+      const oldAliases = cumulusAliases.filter(
         (alias) => this.parseAliasName(alias.Name).hash !== configLambdas[lambdaName].hash
       );
+      const oldAliasMetadataObjects = oldAliases.map((alias) => (
+        {
+          name: alias.Name,
+          humanReadableIdentifier: this.getHumanReadableIdentifier(alias.Description)
+        }
+      )).slice(0, numberOfRetainedLambdas);
 
-      oldAliases = oldAliases.map((alias) => alias.Name).slice(0, numberOfRetainedLambdas);
-      if (oldAliases.length > 0) {
+      if (oldAliasMetadataObjects.length > 0) {
         console.log(
-          `Adding the following 'old' versions to LambdaVersions: ${JSON.stringify(oldAliases)}`
+          'Adding the following "old" versions to LambdaVersions:',
+          `${JSON.stringify(oldAliasMetadataObjects.map((obj) => obj.name))}`
         );
       }
-
-      oldLambdaNames = oldLambdaNames.concat(oldAliases);
+      aliasMetadataObjects = aliasMetadataObjects.concat(oldAliasMetadataObjects);
     });
-    return oldLambdaNames;
+    return aliasMetadataObjects;
+  }
+
+
+  /**
+   * Parses a passed in alias description field for a version string,
+   * (e.g. `Cumulus Autogenerated Alias |version`)
+   *
+   * @param {string} description lambda alias description
+   * @returns {string} Returns the human readable version or '' if no match is found
+   */
+  getHumanReadableIdentifier(description) {
+    const descriptionMatch = description.match(/.*\|(.*)$/);
+    if (!descriptionMatch) return '';
+    return descriptionMatch[1] || '';
   }
 
   /**
-   * Parses Alias name properties into a results object
+   * Parses  Alias name properties into a results object
    *
    * @param {string} name - Cumulus created CF Lambda::Alias name parameter
    *                        in format Name-Hash,
@@ -369,7 +434,7 @@ class UpdatedKes extends Kes {
   }
 
   /**
-   * Uses getRetainedLambdaAliasNames to generate a list of lambda
+   * Uses getRetainedLambdaAliasMetadata to generate a list of lambda
    * aliases to save, then parses each name/hash pair to generate  CF template
    * configuration name: [hashes] and injects that into the oldLambdas config
    * key
@@ -377,18 +442,24 @@ class UpdatedKes extends Kes {
    * @returns {Promise.void} Returns nothing.
    */
   async injectOldWorkflowLambdaAliases() {
-    const oldLambdaNames = await this.getRetainedLambdaAliasNames();
+    const oldLambdaMetadataObjects = await this.getRetainedLambdaAliasMetadata();
     const oldLambdas = {};
 
-    oldLambdaNames.forEach((name) => {
-      const matchObject = this.parseAliasName(name);
+    oldLambdaMetadataObjects.forEach((obj) => {
+      const matchObject = this.parseAliasName(obj.name);
       if (matchObject.hash) {
-        if (!oldLambdas[matchObject.name]) oldLambdas[matchObject.name] = { hashes: [] };
-        oldLambdas[matchObject.name].hashes.push(matchObject.hash);
+        if (!oldLambdas[matchObject.name]) oldLambdas[matchObject.name] = { lambdaRefs: [] };
+        oldLambdas[matchObject.name].lambdaRefs.push(
+          {
+            hash: matchObject.hash,
+            humanReadableIdentifier: obj.humanReadableIdentifier
+          }
+        );
       }
     });
     this.config.oldLambdas = oldLambdas;
   }
+
 
   /**
    * Updates all this.config.stepFunctions state objects of type Task with

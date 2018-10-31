@@ -5,6 +5,11 @@ const pWaitFor = require('p-wait-for');
 const xml2js = require('xml2js');
 const { s3 } = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
+const { sleep } = require('@cumulus/common/util');
+
+const ONE_SECOND = 1000;
+const THREE_SECONDS = 3000;
+const ONE_MINUTE = 60000;
 
 /**
  * Sample granule used to update fields and save as a .cmr.xml file
@@ -78,16 +83,15 @@ const sampleGranule = {
  * @returns {boolean} true if the concept exists in CMR, false if not
  */
 async function conceptExists(cmrLink) {
-  const response = await got.get(cmrLink);
+  const response = await got.get(cmrLink, { json: true });
 
-  if (response.statusCode !== 200) {
-    return false;
-  }
+  if (response.statusCode !== 200) return false;
 
-  const body = JSON.parse(response.body);
-
-  return body.feed.entry.length > 0;
+  return response.body.feed.entry.length > 0;
 }
+
+// See https://bugs.earthdata.nasa.gov/browse/CUMULUS-962
+const waitForCmrToBeConsistent = () => sleep(ONE_SECOND);
 
 /**
  * Checks for granule in CMR until it get the desired outcome or hits
@@ -95,25 +99,20 @@ async function conceptExists(cmrLink) {
  *
  * @param {string} cmrLink - url for granule in CMR
  * @param {boolean} expectation - whether concept should exist (true) or not (false)
- * @param {string} [retries=3] - number of remaining tries
- * @param {number} [interval=2000] - time (in ms) to wait between tries
  * @returns {Promise<undefined>}
  * @throws {TimeoutError} - throws error when timeout is reached
  */
-async function waitForConceptExistsOutcome(cmrLink, expectation, retries = 3, interval = 2000) {
+async function waitForConceptExistsOutcome(cmrLink, expectation) {
   try {
     await pWaitFor(
       async () => (await conceptExists(cmrLink)) === expectation,
-      {
-        interval,
-        timeout: interval * retries
-      }
+      { interval: THREE_SECONDS, timeout: ONE_MINUTE }
     );
 
-    console.log(`waitForConceptExistsOutcome() succeeded. conceptExists('${cmrLink}') === ${expectation}`);
+    await waitForCmrToBeConsistent();
   }
   catch (err) {
-    console.log('waitForConceptExistsOutcome() failed:', err.message);
+    console.error('waitForConceptExistsOutcome() failed:', err);
     throw err;
   }
 }
@@ -179,7 +178,8 @@ async function generateAndStoreCmrXml(granule, collection, bucket) {
   const params = {
     Bucket: bucket,
     Key: filename,
-    Body: xml
+    Body: xml,
+    Tagging: `granuleId=${granule.granuleId}`
   };
 
   await s3().putObject(params).promise();
