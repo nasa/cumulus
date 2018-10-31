@@ -7,15 +7,17 @@ const os = require('os');
 const path = require('path');
 
 /**
- * the base class mixin used by all the protocol sub-classes
+ * The base class mixin used by all the protocol sub-classes
  * such as http/https/ftp/sftp/s3, etc.
  *
  * The base class mixin defines the methods that has to be implemented
  * by other mixins. It also provides a unified upload method
  * to S3
+ *
+ * @param {*} superclass
+ * @returns {*}
  */
 module.exports.baseProtocol = (superclass) => class extends superclass {
-
   /**
    * Create a temporary directory
    *
@@ -28,8 +30,6 @@ module.exports.baseProtocol = (superclass) => class extends superclass {
 
   /**
    * List files of a given path
-   *
-   * @returns {Array.<Object>} returns the list of files
    */
   list() {
     throw new TypeError('method not implemented');
@@ -37,8 +37,6 @@ module.exports.baseProtocol = (superclass) => class extends superclass {
 
   /**
    * Download the remote file to a given s3 location
-   *
-   * @returns {*} undefined
    */
   sync() {
     throw new TypeError('method not implemented');
@@ -79,7 +77,6 @@ module.exports.baseProtocol = (superclass) => class extends superclass {
    *
    * @param {string} remotePath - the full path to the remote file to be fetched
    * @param {string} localPath - the full local destination file path
-   * @returns {Promise.<string>} - the path that the file was saved to
    */
   download(remotePath, localPath) { // eslint-disable-line no-unused-vars
     throw new TypeError('method not implemented');
@@ -87,8 +84,6 @@ module.exports.baseProtocol = (superclass) => class extends superclass {
 
   /**
    * Write data to the server
-   *
-   * @returns {*} undefined
    */
   write() {
     throw new TypeError('method not implemented');

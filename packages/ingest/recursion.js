@@ -10,10 +10,10 @@ const log = require('@cumulus/common/log');
  *
  * @param {function} fn The promisified function for listing a directory
  * @param {string} originalPath the full path to use for recursively listing the directory
- * @param {string} currentPath=null the current directory to list recursively
- * @param {number} position=0 current position in the recursive tree
+ * @param {string} [currentPath=null] the current directory to list recursively
+ * @param {number} [position=0] current position in the recursive tree
  * @returns {Promise} the promise of an object that has the path is the key and
- *                    list of files as values
+ *   list of files as values
  */
 async function recursion(fn, originalPath, currentPath = null, position = 0) {
   // build the recursion path object
@@ -33,7 +33,9 @@ async function recursion(fn, originalPath, currentPath = null, position = 0) {
   const list = await fn(path);
 
   // loop try what is returned
-  for (const item of list) {
+  for (let ctr = 0; ctr < list.length; ctr += 1) {
+    const item = list[ctr];
+
     let regexPath;
     let textPath;
     let newPath;
@@ -68,7 +70,7 @@ async function recursion(fn, originalPath, currentPath = null, position = 0) {
         continue; // eslint-disable-line no-continue
       }
 
-      //console.log(newPath);
+      // eslint-disable-next-line no-await-in-loop
       const tmp = await recursion(fn, originalPath, newPath, position + 1);
       files = files.concat(tmp);
 
