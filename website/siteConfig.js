@@ -44,10 +44,11 @@ const siteConfig = {
     { doc: 'team', label: 'Team' },
     { search: true }
   ],
-
+ 
+  /* these values are replaced by the docs-inject-envs script */
   algolia: {
-    apiKey: 'f7e0be879553661f9043322d119069c8',
-    indexName: 'nasa_cumulus'
+    apiKey: '${DOCSEARCH_API_KEY}',
+    indexName: '${DOCSEARCH_NAME_INDEX}'
   },
 
   /* Colors for website */
