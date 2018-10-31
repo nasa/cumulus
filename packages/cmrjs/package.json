@@ -40,6 +40,6 @@
   "devDependencies": {
     "ava": "^0.25.0",
     "nyc": "^11.6.0",
-    "sinon": "^4.5.0"
+    "sinon": "^7.1.1"
   }
 }
