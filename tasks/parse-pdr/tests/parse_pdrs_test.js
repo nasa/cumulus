@@ -300,7 +300,6 @@ test.serial('Parse a PDR without a granuleIdFilter in the config', async (t) => 
   t.is(output.granulesCount, 2);
   t.is(output.filesCount, 2);
   t.is(output.totalSize, 3952643);
-
 });
 
 test.serial('Empty FILE_ID valule in PDR, parse-pdr throws error', async (t) => {

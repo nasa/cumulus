@@ -23,7 +23,7 @@ async function deleteBucket(bucket) {
 }
 
 test.beforeEach((t) => {
-  t.context.bucket = randomString(); // eslint-disable-line no-param-reassign
+  t.context.bucket = randomString();
 
   //update cmr file path
   const match = /^s3\:\/\/(.*)\/(.*)$/;

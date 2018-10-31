@@ -274,12 +274,23 @@ test.serial('A valid reconciliation report is generated when there are extra Dyn
     granuleId: randomString()
   }));
 
-  const extraDbFile1 = { bucket: sample(dataBuckets), key: randomString(), granuleId: randomString() };
-  const extraDbFile2 = { bucket: sample(dataBuckets), key: randomString(), granuleId: randomString() };
+  const extraDbFile1 = {
+    bucket: sample(dataBuckets),
+    key: randomString(),
+    granuleId: randomString()
+  };
+  const extraDbFile2 = {
+    bucket: sample(dataBuckets),
+    key: randomString(),
+    granuleId: randomString()
+  };
 
   // Store the files to S3 and DynamoDB
   await storeFilesToS3(matchingFiles);
-  await storeFilesToDynamoDb(t.context.filesTableName, matchingFiles.concat([extraDbFile1, extraDbFile2]));
+  await storeFilesToDynamoDb(
+    t.context.filesTableName,
+    matchingFiles.concat([extraDbFile1, extraDbFile2])
+  );
 
   const event = {
     dataBuckets,
@@ -331,12 +342,23 @@ test.serial('A valid reconciliation report is generated when there are both extr
 
   const extraS3File1 = { bucket: sample(dataBuckets), key: randomString() };
   const extraS3File2 = { bucket: sample(dataBuckets), key: randomString() };
-  const extraDbFile1 = { bucket: sample(dataBuckets), key: randomString(), granuleId: randomString() };
-  const extraDbFile2 = { bucket: sample(dataBuckets), key: randomString(), granuleId: randomString() };
+  const extraDbFile1 = {
+    bucket: sample(dataBuckets),
+    key: randomString(),
+    granuleId: randomString()
+  };
+  const extraDbFile2 = {
+    bucket: sample(dataBuckets),
+    key: randomString(),
+    granuleId: randomString()
+  };
 
   // Store the files to S3 and DynamoDB
   await storeFilesToS3(matchingFiles.concat([extraS3File1, extraS3File2]));
-  await storeFilesToDynamoDb(t.context.filesTableName, matchingFiles.concat([extraDbFile1, extraDbFile2]));
+  await storeFilesToDynamoDb(
+    t.context.filesTableName,
+    matchingFiles.concat([extraDbFile1, extraDbFile2])
+  );
 
   const event = {
     dataBuckets,
