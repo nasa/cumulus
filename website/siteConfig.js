@@ -44,8 +44,8 @@ const siteConfig = {
     { doc: 'team', label: 'Team' },
     { search: true }
   ],
- 
-  /* these values are replaced by the docs-inject-envs script */
+
+  /* algolia values are injected via the inject-vars-docs-config script */
   algolia: {
     apiKey: '${DOCSEARCH_API_KEY}',
     indexName: '${DOCSEARCH_NAME_INDEX}'
