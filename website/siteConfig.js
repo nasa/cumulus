@@ -45,6 +45,11 @@ const siteConfig = {
     { search: true }
   ],
 
+  algolia: {
+    apiKey: 'f7e0be879553661f9043322d119069c8',
+    indexName: 'nasa_cumulus'
+  },
+
   /* Colors for website */
   colors: {
     primaryColor: '#2276AC',
