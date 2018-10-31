@@ -3,6 +3,7 @@
 set -e
 
 (
+  set -e
   cd packages/api
-  ./node_modules/.bin/nyc ./node_modules/.bin/ava
+  npm run test-coverage
 )

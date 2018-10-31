@@ -52,8 +52,10 @@ async function enqueueParsePdrMessage(
   if (parentExecutionArn) message.cumulus_meta.parentExecutionArn = parentExecutionArn;
 
   message.cumulus_meta.execution_name = uuidv4();
-  const arn =
-    getExecutionArn(message.cumulus_meta.state_machine, message.cumulus_meta.execution_name);
+  const arn = getExecutionArn(
+    message.cumulus_meta.state_machine,
+    message.cumulus_meta.execution_name
+  );
   await sendSQSMessage(queueUrl, message);
   return arn;
 }
@@ -100,8 +102,10 @@ async function enqueueGranuleIngestMessage(
   if (parentExecutionArn) message.cumulus_meta.parentExecutionArn = parentExecutionArn;
 
   message.cumulus_meta.execution_name = uuidv4();
-  const arn =
-    getExecutionArn(message.cumulus_meta.state_machine, message.cumulus_meta.execution_name);
+  const arn = getExecutionArn(
+    message.cumulus_meta.state_machine,
+    message.cumulus_meta.execution_name
+  );
   await sendSQSMessage(queueUrl, message);
   return arn;
 }
