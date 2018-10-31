@@ -1,15 +1,16 @@
 version: '3'
 services:
   ftp:
-    image: panubo/vsftpd
+    image: cumuluss/vsftpd:2
     ports:
       - "127.0.0.1:21:21"
-      - "127.0.0.1:4559-4562:4559-4562"
+      - "127.0.0.1:4559-4564:4559-4564"
     volumes:
       - ../packages/test-data:/srv:ro
     environment:
       - FTP_USER=testuser
       - FTP_PASSWORD=testpass
+      - FTP_PASV_ADDRESS=127.0.0.1
   http:
     image: httpd:alpine
     ports:

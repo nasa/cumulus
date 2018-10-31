@@ -14,6 +14,7 @@ const {
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
   s3,
+  s3GetObjectTagging,
   promiseS3Upload
 } = require('@cumulus/common/aws');
 
@@ -267,11 +268,18 @@ test.serial('download granule from S3 provider', async (t) => {
   await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
 
   try {
+    const TagSet = [{ Key: 'granuleId', Value: 'test-granuleId' }];
     // Stage the file that's going to be downloaded
     await s3().putObject({
       Bucket: t.context.event.config.provider.host,
       Key: `${granuleFilePath}/${granuleFileName}`,
       Body: fs.createReadStream(`../../packages/test-data/granules/${granuleFileName}`)
+    }).promise();
+    // add tags to test preservation
+    await s3().putObjectTagging({
+      Bucket: t.context.event.config.provider.host,
+      Key: `${granuleFilePath}/${granuleFileName}`,
+      Tagging: { TagSet }
     }).promise();
 
     const output = await syncGranule(t.context.event);
@@ -293,6 +301,8 @@ test.serial('download granule from S3 provider', async (t) => {
         Key: `${keypath}/${granuleFileName}`
       })
     );
+    const actualTags = await s3GetObjectTagging(t.context.internalBucketName, `${keypath}/${granuleFileName}`);
+    t.deepEqual(TagSet, actualTags.TagSet);
   }
   finally {
     // Clean up

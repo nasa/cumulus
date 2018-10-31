@@ -4,8 +4,29 @@ const deprecate = require('depd')('@cumulus/api/Manager');
 const Ajv = require('ajv');
 const cloneDeep = require('lodash.clonedeep');
 const aws = require('@cumulus/common/aws');
+const pWaitFor = require('p-wait-for');
+const { inTestMode } = require('@cumulus/common/test-utils');
 const { errorify } = require('../lib/utils');
 const { RecordDoesNotExist } = require('../lib/errors');
+
+async function enableStream(tableName) {
+  const params = {
+    TableName: tableName,
+    StreamSpecification: {
+      StreamEnabled: true,
+      StreamViewType: 'NEW_AND_OLD_IMAGES'
+    }
+  };
+
+  await aws.dynamodb().updateTable(params).promise();
+
+  await pWaitFor(
+    async () =>
+      aws.dynamodb().describeTable({ TableName: tableName }).promise()
+        .then((response) => response.TableStatus !== 'UPDATING'),
+    { interval: 5 * 1000 }
+  );
+}
 
 async function createTable(tableName, hash, range = null) {
   const params = {
@@ -21,10 +42,6 @@ async function createTable(tableName, hash, range = null) {
     ProvisionedThroughput: {
       ReadCapacityUnits: 5,
       WriteCapacityUnits: 5
-    },
-    StreamSpecification: {
-      StreamEnabled: true,
-      StreamViewType: 'NEW_AND_OLD_IMAGES'
     }
   };
 
@@ -42,6 +59,9 @@ async function createTable(tableName, hash, range = null) {
 
   const output = await aws.dynamodb().createTable(params).promise();
   await aws.dynamodb().waitFor('tableExists', { TableName: tableName }).promise();
+
+  if (!inTestMode()) await enableStream(tableName);
+
   return output;
 }
 
@@ -129,6 +149,15 @@ class Manager {
    */
   deleteTable() {
     return deleteTable(this.tableName);
+  }
+
+  /**
+   * Enable DynamoDB streams on the table
+   *
+   * @returns {Promise} resolves when streams are enabled
+   */
+  enableStream() {
+    return enableStream(this.tableName);
   }
 
   /**

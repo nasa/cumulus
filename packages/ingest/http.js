@@ -30,7 +30,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     return new Promise((resolve, reject) => {
       c.on('fetchcomplete', (queueItem, responseBuffer) => {
         const lines = responseBuffer.toString().trim().split('\n');
-        for (const line of lines) {
+        lines.forEach((line) => {
           const split = line.trim().split(pattern);
           if (split.length === 3) {
           // Some providers provide files with one number after the dot (".") ex (tmtdayacz8110_5.6)
@@ -42,7 +42,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
               });
             }
           }
-        }
+        });
 
         return resolve(files);
       });

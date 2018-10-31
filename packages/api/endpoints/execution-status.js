@@ -1,7 +1,8 @@
 'use strict';
 
 const _get = require('lodash.get');
-const { S3, StepFunction } = require('@cumulus/ingest/aws');
+const { getS3Object } = require('@cumulus/common/aws');
+const { StepFunction } = require('@cumulus/ingest/aws');
 const handle = require('../lib/response').handle;
 
 /**
@@ -12,7 +13,7 @@ const handle = require('../lib/response').handle;
  */
 async function fetchRemote(eventMessage) {
   if (eventMessage.replace) {
-    const file = await S3.get(eventMessage.replace.Bucket, eventMessage.replace.Key);
+    const file = await getS3Object(eventMessage.replace.Bucket, eventMessage.replace.Key);
     return file.Body.toString();
   }
 

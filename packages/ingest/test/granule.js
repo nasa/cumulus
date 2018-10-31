@@ -200,7 +200,7 @@ test('addBucketToFile adds the correct bucket when a config is found', (t) => {
   t.is(updatedFile.bucket, 'right-bucket');
 });
 
-test('addUrlPathToFile adds an emptry string as the url_path if no config matches and no collection url_path is configured', (t) => { // eslint-disable-line max-len
+test('addUrlPathToFile adds an emptry string as the url_path if no config matches and no collection url_path is configured', (t) => {
   const collectionConfig = {
     files: []
   };
@@ -213,7 +213,7 @@ test('addUrlPathToFile adds an emptry string as the url_path if no config matche
   t.is(updatedFile.url_path, '');
 });
 
-test("addUrlPathToFile adds the collection config's url_path as the url_path if no config matches and a collection url_path is configured", (t) => { // eslint-disable-line max-len
+test("addUrlPathToFile adds the collection config's url_path as the url_path if no config matches and a collection url_path is configured", (t) => {
   const collectionConfig = {
     url_path: '/collection/url/path',
     files: []
@@ -227,7 +227,7 @@ test("addUrlPathToFile adds the collection config's url_path as the url_path if 
   t.is(updatedFile.url_path, collectionConfig.url_path);
 });
 
-test("addUrlPathToFile adds the matching collection file config's url_path as the url_path", (t) => { // eslint-disable-line max-len
+test("addUrlPathToFile adds the matching collection file config's url_path as the url_path", (t) => {
   const rightCollectionFileConfig = { regex: '^right-.*', url_path: '/right' };
   const wrongCollectionFileConfig = { regex: '^wrong-.*', url_path: '/wrong' };
   const collectionConfig = {

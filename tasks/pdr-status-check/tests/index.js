@@ -3,15 +3,16 @@
 const isEqual = require('lodash.isequal');
 const some = require('lodash.some');
 const test = require('ava');
-const delay = require('delay');
 const moment = require('moment');
 const aws = require('@cumulus/common/aws');
-const { checkPdrStatuses } = require('..');
 const {
   randomString,
   validateInput,
   validateOutput
 } = require('@cumulus/common/test-utils');
+const { sleep } = require('@cumulus/common/util');
+
+const { checkPdrStatuses } = require('..');
 
 test('valid output when no running executions', async (t) => {
   const event = {
@@ -159,7 +160,7 @@ test.serial('test concurrency limit setting on sfn api calls', async (t) => {
   try {
     sfn.describeExecution = ({ executionArn }) => ({
       promise: () =>
-        delay(100)
+        sleep(100)
           .then(() => ({ executionArn, status: 'SUCCEEDED' }))
     });
 
