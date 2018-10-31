@@ -378,7 +378,7 @@ class Granule {
     const sum = await aws.checksumS3Objects(type, bucket, key, options);
 
     if (value !== sum) {
-      const message = `Invalid checksum for ${file.name} with type ${file.checksumType} and value ${file.checksumValue}`; // eslint-disable-line max-len
+      const message = `Invalid checksum for ${file.name} with type ${file.checksumType} and value ${file.checksumValue}`;
       throw new errors.InvalidChecksum(message);
     }
     return [type, value];
@@ -872,7 +872,7 @@ function copyGranuleFile(source, target, options) {
 
   return aws.s3().copyObject(params).promise()
     .catch((err) => {
-      log.error(`Failed to copy s3://${CopySource} to s3://${target.Bucket}/${target.Key}: ${err.message}`); // eslint-disable-line max-len
+      log.error(`Failed to copy s3://${CopySource} to s3://${target.Bucket}/${target.Key}: ${err.message}`);
       throw err;
     });
 }
@@ -999,7 +999,6 @@ async function getRenamedS3File(bucket, key) {
  * @returns {boolean} whether the file is renamed
  */
 function isFileRenamed(filename) {
-  // eslint-disable-next-line max-len
   const suffixRegex = '\\.v[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])T(2[0-3]|[01][0-9])[0-5][0-9][0-5][0-9][0-9]{3}$';
   return (filename.match(suffixRegex) !== null);
 }
