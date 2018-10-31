@@ -1,11 +1,11 @@
 'use strict';
 
 const test = require('ava');
-const queue = require('../queue');
 const {
   createQueue, sqs, s3, recursivelyDeleteS3Bucket
 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
+const queue = require('../queue');
 
 test.beforeEach(async (t) => {
   t.context.templateBucket = randomString();
