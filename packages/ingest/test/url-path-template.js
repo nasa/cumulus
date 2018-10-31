@@ -49,7 +49,6 @@ test('test basic usage', (t) => {
 
 test('url path has metadata fields', async (t) => {
   const metadataObject = await getMetadata(modisXmlFile);
-  // eslint-disable-next-line max-len
   const urlPath = '{cmrMetadata.Granule.Collection.ShortName}.{cmrMetadata.Granule.Collection.VersionId}';
   const result = urlPathTemplate(urlPath, { cmrMetadata: metadataObject });
   t.is(result, 'MOD09GQ.006');
