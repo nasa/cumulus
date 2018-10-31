@@ -1,10 +1,7 @@
 'use strict';
 
 const compact = require('lodash.compact');
-const http = require('follow-redirects').http;
-const https = require('follow-redirects').https;
 const pLimit = require('p-limit');
-const url = require('url');
 
 const log = require('./log');
 const { ResourcesLockedError } = require('./errors');
@@ -69,27 +66,6 @@ const toPromise = (fn, ...args) =>
 */
 const unless = (condition, fn, ...args) =>
   Promise.resolve((condition(...args) ? null : fn(...args)));
-
-const promiseUrl = (urlstr) =>
-  new Promise((resolve, reject) => {
-    const client = urlstr.startsWith('https') ? https : http;
-    const urlopts = url.parse(urlstr);
-    const options = {
-      hostname: urlopts.hostname,
-      port: urlopts.port,
-      path: urlopts.path,
-      auth: urlopts.auth,
-      headers: { 'User-Agent': 'Cumulus-GIBS' }
-    };
-    return client.get(options, (response) => {
-      if (response.statusCode >= 300) {
-        reject(new Error(`HTTP Error ${response.statusCode}`));
-      }
-      else {
-        resolve(response);
-      }
-    }).on('error', reject);
-  });
 
 class Semaphore {
   constructor(docClient, tableName) {
@@ -218,11 +194,10 @@ class Mutex {
 }
 
 module.exports = {
-  Mutex: Mutex,
-  Semaphore: Semaphore,
-  limit: limit,
-  mapTolerant: mapTolerant,
-  promiseUrl: promiseUrl,
-  toPromise: toPromise,
-  unless: unless
+  limit,
+  mapTolerant,
+  Mutex,
+  Semaphore,
+  toPromise,
+  unless
 };
