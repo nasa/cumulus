@@ -83,10 +83,6 @@ Run the test commands next
     $ export LOCALSTACK_HOST=localhost
     $ yarn test
 
-Run end to end tests with
-
-    $ yarn e2e
-
 ### Integration Tests
 
 For more information please [read this](docs/development/integration-tests.md).

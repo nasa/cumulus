@@ -6,7 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.10.3] - 2018-10-31
+
 ### Added
+- **CUMULUS-817**
+  - Added AWS Dead Letter Queues for lambdas that are scheduled asynchronously/such that failures show up only in cloudwatch logs.
 - **CUMULUS-956**
   - Migrated developer documentation and data-cookbooks to Docusaurus
     - supports versioning of documentation
@@ -580,8 +584,9 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.10.2...HEAD
-[v1.10.2]: https://github.com/nasa/cumulus/compare/v1.10.0...v1.10.2
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.10.3...HEAD
+[v1.10.3]: https://github.com/nasa/cumulus/compare/v1.10.2...v1.10.3
+[v1.10.2]: https://github.com/nasa/cumulus/compare/v1.10.1...v1.10.2
 [v1.10.1]: https://github.com/nasa/cumulus/compare/v1.10.0...v1.10.1
 [v1.10.0]: https://github.com/nasa/cumulus/compare/v1.9.1...v1.10.0
 [v1.9.1]: https://github.com/nasa/cumulus/compare/v1.9.0...v1.9.1
