@@ -6,10 +6,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- **CUMULUS-965**
+  - Add a `@cumulus/util/deprecate()` function to mark a piece of code as
+    deprecated
+
+### Deprecated
+- **CUMULUS-965**
+  - Deprecated `@cumulus/common/concurrency.toPromise()` in favor of
+    [util.promisify()](https://nodejs.org/docs/v8.11.1/api/util.html#util_util_promisify_original)
+  - Deprecated `@cumulus/common/concurrency.promiseUrl()` in favor of
+    [got](https://www.npmjs.com/package/got)
+
 ## [v1.10.3] - 2018-10-31
 
 ### Added
-
 - **CUMULUS-817**
   - Added AWS Dead Letter Queues for lambdas that are scheduled asynchronously/such that failures show up only in cloudwatch logs.
 - **CUMULUS-956**

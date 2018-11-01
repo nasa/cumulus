@@ -1,10 +1,14 @@
 'use strict';
 
 const compact = require('lodash.compact');
+const http = require('follow-redirects').http;
+const https = require('follow-redirects').https;
+const url = require('url');
 const pLimit = require('p-limit');
 
 const log = require('./log');
 const { ResourcesLockedError } = require('./errors');
+const { deprecate } = require('./util');
 
 /**
  * Wrap a function to limit how many instances can be run in parallel
@@ -51,9 +55,16 @@ const mapTolerant = (arr, fn) => {
  * @returns {Promise} the result of invoking `fn`
  * @deprecated Use util.promisify() instead
  */
-const toPromise = (fn, ...args) =>
-  new Promise((resolve, reject) =>
+const toPromise = (fn, ...args) => {
+  deprecate(
+    '@cumulus/common/concurrency.toPromise()',
+    '1.10.3',
+    'util.promisify'
+  );
+
+  return new Promise((resolve, reject) =>
     fn(...args, (err, data) => (err ? reject(err) : resolve(data))));
+};
 
 /**
  * Returns a promise that resolves to the result of calling the given function if
@@ -66,6 +77,30 @@ const toPromise = (fn, ...args) =>
 */
 const unless = (condition, fn, ...args) =>
   Promise.resolve((condition(...args) ? null : fn(...args)));
+
+const promiseUrl = (urlstr) => {
+  deprecate('@cumulus/common/concurrency.promiseUrl()', '1.10.3', 'got');
+
+  return new Promise((resolve, reject) => {
+    const client = urlstr.startsWith('https') ? https : http;
+    const urlopts = url.parse(urlstr);
+    const options = {
+      hostname: urlopts.hostname,
+      port: urlopts.port,
+      path: urlopts.path,
+      auth: urlopts.auth,
+      headers: { 'User-Agent': 'Cumulus-GIBS' }
+    };
+    return client.get(options, (response) => {
+      if (response.statusCode >= 300) {
+        reject(new Error(`HTTP Error ${response.statusCode}`));
+      }
+      else {
+        resolve(response);
+      }
+    }).on('error', reject);
+  });
+};
 
 class Semaphore {
   constructor(docClient, tableName) {
@@ -196,6 +231,7 @@ class Mutex {
 module.exports = {
   limit,
   mapTolerant,
+  promiseUrl,
   Mutex,
   Semaphore,
   toPromise,

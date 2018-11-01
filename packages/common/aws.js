@@ -14,7 +14,8 @@ const url = require('url');
 const log = require('./log');
 const string = require('./string');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
-const { noop } = require('./util');
+const concurrency = require('./concurrency');
+const { deprecate, noop } = require('./util');
 
 /**
  * Join strings into an S3 key without a leading slash or double slashes
@@ -615,6 +616,13 @@ class DynamoDbScanQueue {
   }
 }
 exports.DynamoDbScanQueue = DynamoDbScanQueue;
+
+exports.syncUrl = async (uri, bucket, destKey) => {
+  deprecate('@cumulus/common/aws.syncUrl()', '1.10.3');
+
+  const response = await concurrency.promiseUrl(uri);
+  await exports.promiseS3Upload({ Bucket: bucket, Key: destKey, Body: response });
+};
 
 exports.getQueueUrl = (sourceArn, queueName) => {
   const arnParts = sourceArn.split(':');
