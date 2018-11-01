@@ -1,11 +1,8 @@
 'use strict';
 
-const fs = require('fs-extra');
 const path = require('path');
 const test = require('ava');
 const errors = require('@cumulus/common/errors');
-const payload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
-const payloadChecksumFile = require('@cumulus/test-data/payloads/new-message-schema/ingest-checksumfile.json');
 const { constructCollectionId } = require('@cumulus/common');
 const {
   checksumS3Objects,
@@ -17,6 +14,7 @@ const {
   s3GetObjectTagging,
   promiseS3Upload
 } = require('@cumulus/common/aws');
+const { loadJSONTestData, testDataStream } = require('@cumulus/test-data');
 
 const cloneDeep = require('lodash.clonedeep');
 const {
@@ -30,7 +28,7 @@ const { syncGranule } = require('..');
 // prepare the s3 event and data
 async function prepareS3DownloadEvent(t) {
   const granuleFilePath = randomString();
-  const granuleFileName = payload.input.granules[0].files[0].name;
+  const granuleFileName = t.context.event.input.granules[0].files[0].name;
 
   t.context.event.config.provider = {
     id: 'MODAPS',
@@ -51,7 +49,7 @@ async function prepareS3DownloadEvent(t) {
   await s3().putObject({
     Bucket: t.context.event.config.provider.host,
     Key: key,
-    Body: fs.createReadStream(`../../packages/test-data/granules/${granuleFileName}`)
+    Body: testDataStream(`granules/${granuleFileName}`)
   }).promise();
 }
 
@@ -67,7 +65,9 @@ test.beforeEach(async (t) => {
     s3().createBucket({ Bucket: t.context.protectedBucketName }).promise()
   ]);
 
-  const collection = payload.config.collection;
+  t.context.event = await loadJSONTestData('payloads/new-message-schema/ingest.json');
+
+  const collection = t.context.event.config.collection;
   // save collection in internal/stackName/collections/collectionId
   const key = `${process.env.stackName}/collections/${collection.dataType}___${parseInt(collection.version, 10)}.json`;
   await promiseS3Upload({
@@ -76,8 +76,6 @@ test.beforeEach(async (t) => {
     Body: JSON.stringify(collection),
     ACL: 'public-read'
   });
-
-  t.context.event = cloneDeep(payload);
 
   t.context.event.config.downloadBucket = t.context.internalBucketName;
   t.context.event.config.buckets.internal = {
@@ -252,7 +250,7 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
 
 test.serial('download granule from S3 provider', async (t) => {
   const granuleFilePath = randomString();
-  const granuleFileName = payload.input.granules[0].files[0].name;
+  const granuleFileName = t.context.event.input.granules[0].files[0].name;
 
   t.context.event.config.provider = {
     id: 'MODAPS',
@@ -273,7 +271,7 @@ test.serial('download granule from S3 provider', async (t) => {
     await s3().putObject({
       Bucket: t.context.event.config.provider.host,
       Key: `${granuleFilePath}/${granuleFileName}`,
-      Body: fs.createReadStream(`../../packages/test-data/granules/${granuleFileName}`)
+      Body: testDataStream(`granules/${granuleFileName}`)
     }).promise();
     // add tags to test preservation
     await s3().putObjectTagging({
@@ -311,7 +309,7 @@ test.serial('download granule from S3 provider', async (t) => {
 });
 
 test.serial('download granule with checksum in file from an HTTP endpoint', async (t) => {
-  const event = cloneDeep(payloadChecksumFile);
+  const event = await loadJSONTestData('payloads/new-message-schema/ingest-checksumfile.json');
 
   event.config.downloadBucket = t.context.internalBucketName;
   event.config.buckets.internal = {
@@ -465,7 +463,7 @@ test.serial('attempt to download file from non-existent path - throw error', asy
 
 async function duplicateHandlingErrorTest(t) {
   await prepareS3DownloadEvent(t);
-  const granuleFileName = payload.input.granules[0].files[0].name;
+  const granuleFileName = t.context.event.input.granules[0].files[0].name;
 
   try {
     const output = await syncGranule(t.context.event);
@@ -475,7 +473,7 @@ async function duplicateHandlingErrorTest(t) {
     t.fail();
   }
   catch (err) {
-    const collection = payload.config.collection;
+    const collection = t.context.event.config.collection;
     const collectionId = constructCollectionId(collection.name, collection.version);
     const granuleFileKey = path.join(
       t.context.event.config.fileStagingDir,
@@ -552,7 +550,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   // duplicateHandling is taken from task config or collection config
   t.context.event.config.duplicateHandling = 'version';
 
-  const granuleFileName = payload.input.granules[0].files[0].name;
+  const granuleFileName = t.context.event.input.granules[0].files[0].name;
   const granuleFilePath = t.context.event.input.granules[0].files[0].path;
 
   const key = `${granuleFilePath}/${granuleFileName}`;
@@ -639,7 +637,7 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
   // duplicateHandling is taken from task config or collection config
   t.context.event.config.duplicateHandling = 'skip';
 
-  const granuleFileName = payload.input.granules[0].files[0].name;
+  const granuleFileName = t.context.event.input.granules[0].files[0].name;
   const granuleFilePath = t.context.event.input.granules[0].files[0].path;
 
   const key = `${granuleFilePath}/${granuleFileName}`;
@@ -691,7 +689,7 @@ test.serial('when duplicateHandling is "replace", do overwrite files', async (t)
   // duplicateHandling is taken from task config or collection config
   t.context.event.config.duplicateHandling = 'replace';
 
-  const granuleFileName = payload.input.granules[0].files[0].name;
+  const granuleFileName = t.context.event.input.granules[0].files[0].name;
   const granuleFilePath = t.context.event.input.granules[0].files[0].path;
 
   const key = `${granuleFilePath}/${granuleFileName}`;

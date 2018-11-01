@@ -1,7 +1,6 @@
 'use strict';
 
 const errors = require('@cumulus/common/errors');
-const fs = require('fs-extra');
 const test = require('ava');
 
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
@@ -13,6 +12,8 @@ const {
   validateInput,
   validateOutput
 } = require('@cumulus/common/test-utils');
+
+const { testDataStream } = require('@cumulus/test-data');
 
 const { parsePdr } = require('..');
 
@@ -219,7 +220,7 @@ test.serial('Parse a PDR from an S3 provider', async (t) => {
     await s3().putObject({
       Bucket: t.context.payload.config.provider.host,
       Key: `${t.context.payload.input.pdr.path}/${t.context.payload.input.pdr.name}`,
-      Body: fs.createReadStream('../../packages/test-data/pdrs/MOD09GQ.PDR')
+      Body: testDataStream('pdrs/MOD09GQ.PDR')
     }).promise();
 
     const output = await parsePdr(t.context.payload);
@@ -319,7 +320,7 @@ test.serial('Empty FILE_ID valule in PDR, parse-pdr throws error', async (t) => 
     await s3().putObject({
       Bucket: t.context.payload.config.provider.host,
       Key: `${t.context.payload.input.pdr.path}/${t.context.payload.input.pdr.name}`,
-      Body: fs.createReadStream('../../packages/test-data/pdrs/MOD09GQ-without-file-id-value.PDR')
+      Body: testDataStream('pdrs/MOD09GQ-without-file-id-value.PDR')
     }).promise();
 
     await t.throws(parsePdr(t.context.payload), "Failed to parse value ('') of FILE_ID", 'Value corresponding to FILE_ID key in the PDR is empty');
@@ -349,7 +350,7 @@ test.serial('Missing FILE_ID in PDR, parse-pdr throws error', async (t) => {
     await s3().putObject({
       Bucket: t.context.payload.config.provider.host,
       Key: `${t.context.payload.input.pdr.path}/${t.context.payload.input.pdr.name}`,
-      Body: fs.createReadStream('../../packages/test-data/pdrs/MOD09GQ-without-file-id.PDR')
+      Body: testDataStream('pdrs/MOD09GQ-without-file-id.PDR')
     }).promise();
 
     await t.throws(parsePdr(t.context.payload), 'FILE_ID', 'FILE_ID Key is not present in the supplied PDR');

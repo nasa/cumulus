@@ -5,7 +5,6 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs-extra');
 const { RemoteResourceError } = require('@cumulus/common/errors');
-const cloneDeep = require('lodash.clonedeep');
 
 const { discoverPdrs } = require('..');
 
@@ -15,10 +14,16 @@ const {
   validateConfig,
   validateOutput
 } = require('@cumulus/common/test-utils');
-const input = require('./fixtures/input.json');
+
+test.beforeEach(async (t) => {
+  const inputPath = path.join(__dirname, 'fixtures', 'input.json');
+  const rawInput = await fs.readFile(inputPath, 'utf8');
+  t.context.event = JSON.parse(rawInput);
+});
 
 test('test pdr discovery with force=false', async (t) => {
-  const event = cloneDeep(input);
+  const { event } = t.context;
+
   event.config.bucket = randomString();
   event.config.stack = randomString();
   event.config.collection.provider_path = '/pdrs/discover-pdrs';
@@ -73,7 +78,8 @@ test('test pdr discovery with force=false', async (t) => {
 });
 
 test('test pdr discovery with force=true', async (t) => {
-  const event = cloneDeep(input);
+  const { event } = t.context;
+
   event.config.bucket = randomString();
   event.config.stack = randomString();
   event.config.collection.provider_path = '/pdrs/discover-pdrs';
