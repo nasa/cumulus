@@ -14,7 +14,7 @@ const log = require('./log');
 const string = require('./string');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
 const concurrency = require('./concurrency');
-const { noop } = require('./util');
+const { deprecate, noop } = require('./util');
 
 /**
  * Join strings into an S3 key without a leading slash or double slashes
