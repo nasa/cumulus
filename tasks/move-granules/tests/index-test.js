@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
 const test = require('ava');
 const {
   buildS3Uri,
@@ -17,8 +18,11 @@ const errors = require('@cumulus/common/errors');
 const {
   randomString, validateConfig, validateInput, validateOutput
 } = require('@cumulus/common/test-utils');
-const payload = require('./data/payload.json');
+const { promisify } = require('util');
+
 const { moveGranules } = require('..');
+
+const readFile = promisify(fs.readFile);
 
 async function uploadFiles(files, bucket) {
   await Promise.all(files.map((file) => promiseS3Upload({
@@ -38,22 +42,22 @@ async function updateFileTags(files, bucket, TagSet) {
 }
 
 function buildPayload(t) {
-  const newPayload = JSON.parse(JSON.stringify(payload));
+  const { payload } = t.context;
 
-  newPayload.config.bucket = t.context.stagingBucket;
-  newPayload.config.buckets.internal.name = t.context.stagingBucket;
-  newPayload.config.buckets.public.name = t.context.publicBucket;
-  newPayload.config.buckets.protected.name = t.context.protectedBucket;
+  payload.config.bucket = t.context.stagingBucket;
+  payload.config.buckets.internal.name = t.context.stagingBucket;
+  payload.config.buckets.public.name = t.context.publicBucket;
+  payload.config.buckets.protected.name = t.context.protectedBucket;
 
-  newPayload.input = newPayload.input.map((file) =>
+  payload.input = payload.input.map((file) =>
     buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
-  newPayload.config.input_granules.forEach((gran) => {
+  payload.config.input_granules.forEach((gran) => {
     gran.files.forEach((file) => {
       file.bucket = t.context.stagingBucket;
       file.filename = buildS3Uri(t.context.stagingBucket, parseS3Uri(file.filename).Key);
     });
   });
-  return newPayload;
+  return payload;
 }
 
 function getExpectedOutputFileNames(t) {
@@ -74,6 +78,10 @@ test.beforeEach(async (t) => {
     s3().createBucket({ Bucket: t.context.publicBucket }).promise(),
     s3().createBucket({ Bucket: t.context.protectedBucket }).promise()
   ]);
+
+  const payloadPath = path.join(__dirname, 'data', 'payload.json');
+  const rawPayload = await readFile(payloadPath, 'utf8');
+  t.context.payload = JSON.parse(rawPayload);
 });
 
 test.afterEach.always(async (t) => {
