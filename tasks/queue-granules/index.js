@@ -15,14 +15,16 @@ const { getExecutionArn } = require('@cumulus/common/aws');
 async function queueGranules(event) {
   const granules = event.input.granules || [];
 
-  const collectionConfigStore =
-    new CollectionConfigStore(event.config.internalBucket, event.config.stackName);
+  const collectionConfigStore = new CollectionConfigStore(
+    event.config.internalBucket,
+    event.config.stackName
+  );
 
   const arn = getExecutionArn(
     get(event, 'cumulus_config.state_machine'), get(event, 'cumulus_config.execution_name')
   );
 
-  const executionArns = await Promise.all( // eslint-disable-line function-paren-newline
+  const executionArns = await Promise.all(
     granules.map(async (granule) => {
       const collectionConfig = await collectionConfigStore.get(granule.dataType, granule.version);
 
