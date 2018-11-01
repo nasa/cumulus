@@ -4,11 +4,11 @@ const sinon = require('sinon');
 const proxyquire = require('proxyquire');
 const test = require('ava');
 const JSFtp = require('jsftp');
-const { ftpMixin: TestFtpMixin } = require('../ftp');
 const {
   checksumS3Objects, fileExists, recursivelyDeleteS3Bucket, s3
 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
+const { ftpMixin: TestFtpMixin } = require('../ftp');
 
 class MyTestDiscoveryClass {
   constructor(useList) {
