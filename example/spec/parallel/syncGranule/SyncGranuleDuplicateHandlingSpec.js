@@ -1,3 +1,5 @@
+'use strict';
+
 const fs = require('fs');
 const path = require('path');
 const {
@@ -59,8 +61,6 @@ describe('When the Sync Granule workflow is configured', () => {
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
   const provider = { id: `s3_provider${testSuffix}` };
   const newCollectionId = constructCollectionId(collection.name, collection.version);
-
-  const fileStagingDir = 'custom-staging-dir';
 
   let inputPayload;
   let expectedPayload;
