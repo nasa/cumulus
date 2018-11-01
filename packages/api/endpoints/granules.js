@@ -52,15 +52,16 @@ async function put(event) {
   const granule = await granuleModelClient.get({ granuleId });
 
   if (action === 'reingest') {
-    await granuleModelClient.reingest(granule);
+    const payload = await granuleModelClient.reingest(granule);
 
     return buildLambdaProxyResponse({
       json: true,
-      body: {
+      body: Object.assign({
         granuleId: granule.granuleId,
         action,
         status: 'SUCCESS'
-      }
+      },
+      (payload.warning) ? { warning: payload.warning } : {})
     });
   }
 
