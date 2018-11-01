@@ -1,4 +1,5 @@
-const fs = require('fs-extra');
+'use strict';
+
 const { Execution } = require('@cumulus/api/models');
 const {
   api: apiTestUtils,
