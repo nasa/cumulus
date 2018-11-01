@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- **CUMULUS-965**
+  - Add `@cumulus/test-data.loadJSONTestData()`,
+    `@cumulus/test-data.loadTestData()`, and
+    `@cumulus/test-data.streamTestData()` to safely load test data. These
+    functions should be used instead of using `require()` to load test data,
+    which could lead to tests interferring with each other.
+
 ## [v1.10.3] - 2018-10-31
 
 ### Added

@@ -6,6 +6,7 @@ const { justLocalRun } = require('@cumulus/common/local-helpers');
 const { getCmrFiles } = require('@cumulus/ingest/granule');
 const { publish } = require('@cumulus/ingest/cmr');
 const log = require('@cumulus/common/log');
+const { loadJSONTestData } = require('@cumulus/test-data');
 
 /**
  * Builds the output of the post-to-cmr task
@@ -103,7 +104,7 @@ function handler(event, context, callback) {
 exports.handler = handler;
 
 // use node index.js local to invoke this
-justLocalRun(() => {
-  const payload = require('@cumulus/test-data/cumulus_messages/post-to-cmr.json'); // eslint-disable-line global-require, max-len
+justLocalRun(async () => {
+  const payload = await loadJSONTestData('cumulus_messages/post-to-cmr.json');
   handler(payload, {}, (e, r) => log.info(e, r));
 });
