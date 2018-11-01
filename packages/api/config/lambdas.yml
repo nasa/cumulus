@@ -178,3 +178,15 @@ CreateReconciliationReport:
 BulkDelete:
   handler: index.bulkDeleteLambda
   source: 'node_modules/@cumulus/api/dist/'
+
+KinesisRuleInput:
+  handler: index.logger
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/api/'
+
+KinesisRuleOutput:
+  handler: index.logger
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist'
