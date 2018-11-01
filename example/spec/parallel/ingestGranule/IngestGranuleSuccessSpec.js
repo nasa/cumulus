@@ -496,7 +496,7 @@ describe('The S3 Ingest Granules workflow', () => {
           granuleId: inputPayload.granules[0].granuleId
         });
 
-        console.log(`remove from cmr response: ${removeFromCmrResponse}`);
+        console.log(`remove from cmr response: ${JSON.stringify(removeFromCmrResponse)}`);
 
         // Delete the granule
         const deleteResponse = await apiTestUtils.deleteGranule({
@@ -504,7 +504,7 @@ describe('The S3 Ingest Granules workflow', () => {
           granuleId: inputPayload.granules[0].granuleId
         });
 
-        console.log(`delete granule response: ${deleteResponse}`);
+        console.log(`delete granule response: ${JSON.stringify(deleteResponse)}`);
 
         // Verify deletion
         const granuleResponse = await apiTestUtils.getGranule({

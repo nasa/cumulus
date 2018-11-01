@@ -8,7 +8,7 @@ original_id: architecture
 # Cumulus Architecture
 Below, find a diagram with the components that comprise an instance of Cumulus.
 
-<img src="assets/cumulus-arch-diagram.png">
+![](assets/cumulus-arch-diagram.png)
 
 While the internals are complex, the boxes represent components which are easy to understand:
 
