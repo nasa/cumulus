@@ -535,7 +535,7 @@ describe('The S3 Ingest Granules workflow', () => {
       });
     });
 
-    xdescribe('executions endpoint', () => {
+    describe('executions endpoint', () => {
       let executionResponse;
 
       beforeAll(async () => {
