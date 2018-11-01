@@ -188,6 +188,9 @@ ApiRulesDefault:
     kinesisConsumer:
       function: "Ref"
       value: kinesisConsumerLambdaFunction
+    KinesisRuleInput:
+      function: "Ref"
+      value: KinesisRuleInputLambdaFunction
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain

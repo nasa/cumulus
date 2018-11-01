@@ -183,7 +183,7 @@ KinesisRuleInput:
   handler: index.logger
   timeout: 300
   memory: 512
-  source: 'node_modules/@cumulus/api/'
+  source: 'node_modules/@cumulus/api/dist/'
 
 KinesisRuleOutput:
   handler: index.logger
