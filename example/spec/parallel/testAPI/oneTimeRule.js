@@ -4,10 +4,9 @@ const cloneDeep = require('lodash.clonedeep');
 
 const {
   rulesApi: rulesApiTestUtils,
-  getExecutions,
-  LambdaStep
+  LambdaStep,
+  waitForTestExecutionStart
 } = require('@cumulus/integration-tests');
-const { sleep } = require('@cumulus/common/util');
 
 const {
   loadConfig,
@@ -17,10 +16,6 @@ const {
 const config = loadConfig();
 
 const lambdaStep = new LambdaStep();
-
-const waitPeriodMs = 1000;
-
-const maxWaitForStartedExecutionSecs = 60 * 5;
 
 const ruleName = timestampedName('HelloWorldIntegrationTestRule');
 const createdCheck = timestampedName('Created');
@@ -53,36 +48,8 @@ function removeRuleAddedParams(rule) {
   return ruleCopy;
 }
 
-/**
- * Wait for the execution kicked off by the rule to begin.
- * We check that the execution input has the rule name in meta.triggerRule
- * so that we know we are looking at the right execution of the workflow
- * and not one that could have been triggered by something else
- *
- * @param {string} - string to match triggerRule
- * @returns {undefined} - none
- */
-async function waitForTestExecution(executionMatch) {
-  let timeWaitedSecs = 0;
-  let workflowExecution;
-
-  /* eslint-disable no-await-in-loop */
-  while (timeWaitedSecs < maxWaitForStartedExecutionSecs && workflowExecution === undefined) {
-    await sleep(waitPeriodMs);
-    timeWaitedSecs += (waitPeriodMs / 1000);
-    const executions = await getExecutions(helloWorldRule.workflow, config.stackName, config.bucket);
-
-    for (const execution of executions) {
-      const taskInput = await lambdaStep.getStepInput(execution.executionArn, 'SfSnsReport');
-      if (taskInput && taskInput.meta.triggerRule && taskInput.meta.triggerRule === executionMatch) {
-        workflowExecution = execution;
-        break;
-      }
-    }
-  }
-  /* eslint-disable no-await-in-loop */
-  if (timeWaitedSecs < maxWaitForStartedExecutionSecs) return workflowExecution;
-  throw new Error('Never found started workflow.');
+function compareTriggerRule(taskInput, params) {
+  return taskInput.meta.triggerRule && taskInput.meta.triggerRule === params.rule;
 }
 
 describe('When I create a one-time rule via the Cumulus API', () => {
@@ -120,7 +87,8 @@ describe('When I create a one-time rule via the Cumulus API', () => {
 
     beforeAll(async () => {
       console.log(`Waiting for execution of ${helloWorldRule.workflow} triggered by rule`);
-      execution = await waitForTestExecution(createdCheck);
+
+      execution = await waitForTestExecutionStart(helloWorldRule.workflow, config.stackName, config.bucket, compareTriggerRule, { rule: createdCheck });
       console.log(`Execution ARN: ${execution.executionArn}`);
     });
 
@@ -148,7 +116,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
       });
 
       console.log(`Waiting for new execution of ${helloWorldRule.workflow} triggered by rerun of rule`);
-      const updatedExecution = await waitForTestExecution(updatedCheck);
+      const updatedExecution = await waitForTestExecutionStart(helloWorldRule.workflow, config.stackName, config.bucket, compareTriggerRule, { rule: updatedCheck });
       const updatedTaskInput = await lambdaStep.getStepInput(updatedExecution.executionArn, 'SfSnsReport');
       expect(updatedExecution).not.toBeNull();
       expect(updatedTaskInput.meta.triggerRule).toEqual(updatedCheck);
