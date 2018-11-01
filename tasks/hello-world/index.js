@@ -22,10 +22,14 @@ async function throwErrorIfConfigured(event) {
   const retryFilename = `${execution}_retry.txt`;
   const bucket = event.config.bucket;
 
-  const isRetry = await s3ObjectExists({
-    Bucket: bucket,
-    Key: retryFilename
-  });
+  let isRetry = false;
+
+  if (event.config.passOnRetry) {
+    isRetry = await s3ObjectExists({
+      Bucket: bucket,
+      Key: retryFilename
+    });
+  }
 
   if (event.config.passOnRetry && isRetry) {
     log.debug('Detected retry');
