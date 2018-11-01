@@ -372,6 +372,7 @@ test.serial('indexing a collection record', async (t) => {
 
 test.serial('indexing collection records with different versions', async (t) => {
   const name = randomString();
+  /* eslint-disable no-await-in-loop */
   for (let i = 1; i < 11; i += 1) {
     const version = `00${i}`;
     const key = `key${i}`;
@@ -382,10 +383,11 @@ test.serial('indexing collection records with different versions', async (t) => 
       [`${key}`]: value
     };
 
-    const r = await indexer.indexCollection(esClient, collection, esIndex); // eslint-disable-line no-await-in-loop
+    const r = await indexer.indexCollection(esClient, collection, esIndex);
     // make sure record is created
     t.is(r.result, 'created');
   }
+  /* eslint-enable no-await-in-loop */
 
   await esClient.indices.refresh();
   // check each record exists and is not affected by other collections
