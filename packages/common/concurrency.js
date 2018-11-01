@@ -4,11 +4,21 @@ const compact = require('lodash.compact');
 const http = require('follow-redirects').http;
 const https = require('follow-redirects').https;
 const url = require('url');
-const TaskQueue = require('cwait').TaskQueue;
+const pLimit = require('p-limit');
 const log = require('./log');
 const ResourcesLockedError = require('./errors').ResourcesLockedError;
 
-const limit = (n, fn) => new TaskQueue(Promise, n).wrap(fn);
+/**
+ * Wrap a function to limit how many instances can be run in parallel
+ *
+ * While this function works, odds are that you should be using
+ * [p-map](https://www.npmjs.com/package/p-map) instead.
+ *
+ * @param {integer} n - the concurrency limit
+ * @param {Function} fn - the function to limit
+ * @returns {Function} a version of `fn` that limits concurrency
+ */
+const limit = (n, fn) => pLimit(n).bind(null, fn);
 
 const mapTolerant = (arr, fn) => {
   const errors = [];
