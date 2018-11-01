@@ -16,7 +16,6 @@ const {
 } = require('@cumulus/common/aws');
 const { loadJSONTestData, testDataStream } = require('@cumulus/test-data');
 
-const cloneDeep = require('lodash.clonedeep');
 const {
   randomString,
   validateConfig,
