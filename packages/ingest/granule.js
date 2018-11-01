@@ -164,6 +164,8 @@ class Granule {
    * @param {string} fileStagingDir - staging directory on bucket to place files
    * @param {boolean} forceDownload - force download of a file
    * @param {boolean} duplicateHandling - duplicateHandling of a file
+   * @param {boolean} reingestGranule - indicate if the granule is manually reingested.
+   * When a granule is reingested, existing files will be overwritten.
    */
   constructor(
     buckets,
@@ -171,7 +173,8 @@ class Granule {
     provider,
     fileStagingDir = 'file-staging',
     forceDownload = false,
-    duplicateHandling = 'error'
+    duplicateHandling = 'error',
+    reingestGranule = false
   ) {
     if (this.constructor === Granule) {
       throw new TypeError('Can not construct abstract class.');
@@ -193,6 +196,7 @@ class Granule {
     else this.fileStagingDir = fileStagingDir;
 
     this.duplicateHandling = duplicateHandling;
+    this.reingestGranule = reingestGranule;
   }
 
   /**
@@ -234,7 +238,7 @@ class Granule {
 
     const downloadFiles = granule.files
       .filter((f) => this.filterChecksumFiles(f))
-      .map((f) => this.ingestFile(f, bucket, this.duplicateHandling));
+      .map((f) => this.ingestFile(f, bucket, this.duplicateHandling, this.reingestGranule));
 
     log.debug('awaiting all download.Files');
     const files = flatten(await Promise.all(downloadFiles));
@@ -378,7 +382,7 @@ class Granule {
     const sum = await aws.checksumS3Objects(type, bucket, key, options);
 
     if (value !== sum) {
-      const message = `Invalid checksum for ${file.name} with type ${file.checksumType} and value ${file.checksumValue}`; // eslint-disable-line max-len
+      const message = `Invalid checksum for ${file.name} with type ${file.checksumType} and value ${file.checksumValue}`;
       throw new errors.InvalidChecksum(message);
     }
     return [type, value];
@@ -484,9 +488,11 @@ class Granule {
    * 'replace' to replace the duplicate,
    * 'skip' to skip duplicate,
    * 'version' to keep both files if they have different checksums
+   * @param {boolean} reingestGranule - indicate if the granule is manually reingested.
+   * When a granule is reingested, existing files will be overwritten.
    * @returns {Array<Object>} returns the staged file and the renamed existing duplicates if any
    */
-  async ingestFile(file, bucket, duplicateHandling) {
+  async ingestFile(file, bucket, duplicateHandling, reingestGranule) {
     // Check if the file exists
     const destinationKey = path.join(this.fileStagingDir, file.name);
 
@@ -508,12 +514,12 @@ class Granule {
     log.debug(`file ${destinationKey} exists in ${bucket}: ${s3ObjAlreadyExists}`);
     // Have to throw DuplicateFile and not WorkflowError, because the latter
     // is not treated as a failure by the message adapter.
-    if (s3ObjAlreadyExists && duplicateHandling === 'error') {
+    if (s3ObjAlreadyExists && !reingestGranule && duplicateHandling === 'error') {
       throw new errors.DuplicateFile(`${destinationKey} already exists in ${bucket} bucket`);
     }
 
     // Exit early if we can
-    if (s3ObjAlreadyExists && duplicateHandling === 'skip') {
+    if (s3ObjAlreadyExists && !reingestGranule && duplicateHandling === 'skip') {
       return [Object.assign(stagedFile,
         { fileSize: (await aws.headObject(bucket, destinationKey)).ContentLength })];
     }
@@ -524,10 +530,12 @@ class Granule {
 
     const fileRemotePath = path.join(file.path, file.name);
 
+    // check if renaming file is necessary
+    const renamingFile = (s3ObjAlreadyExists && !reingestGranule && duplicateHandling === 'version') === true;
+
     // if the file already exists, and duplicateHandling is 'version',
     // we download file to a different name first
-    const stagedFileKey = (s3ObjAlreadyExists && duplicateHandling === 'version')
-      ? `${destinationKey}.${uuidv4()}` : destinationKey;
+    const stagedFileKey = renamingFile ? `${destinationKey}.${uuidv4()}` : destinationKey;
 
     // stream the source file to s3
     log.debug(`await sync file to s3 ${fileRemotePath}, ${bucket}, ${stagedFileKey}`);
@@ -538,7 +546,7 @@ class Granule {
     const [checksumType, checksumValue] = await this.validateChecksum(file, bucket, stagedFileKey);
 
     // compare the checksum of the existing file and new file, and handle them accordingly
-    if (s3ObjAlreadyExists && duplicateHandling === 'version') {
+    if (renamingFile) {
       const existingFileSum = await
       aws.checksumS3Objects(checksumType || 'CKSUM', bucket, destinationKey);
 
@@ -559,7 +567,7 @@ class Granule {
       }
     }
 
-    const renamedFiles = (duplicateHandling === 'version')
+    const renamedFiles = (!reingestGranule && duplicateHandling === 'version')
       ? await exports.getRenamedS3File(bucket, destinationKey) : [];
 
     // return all files, the renamed files don't have the same properties(name, fileSize, checksum)
@@ -872,7 +880,7 @@ function copyGranuleFile(source, target, options) {
 
   return aws.s3().copyObject(params).promise()
     .catch((err) => {
-      log.error(`Failed to copy s3://${CopySource} to s3://${target.Bucket}/${target.Key}: ${err.message}`); // eslint-disable-line max-len
+      log.error(`Failed to copy s3://${CopySource} to s3://${target.Bucket}/${target.Key}: ${err.message}`);
       throw err;
     });
 }
@@ -999,7 +1007,6 @@ async function getRenamedS3File(bucket, key) {
  * @returns {boolean} whether the file is renamed
  */
 function isFileRenamed(filename) {
-  // eslint-disable-next-line max-len
   const suffixRegex = '\\.v[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])T(2[0-3]|[01][0-9])[0-5][0-9][0-5][0-9][0-9]{3}$';
   return (filename.match(suffixRegex) !== null);
 }

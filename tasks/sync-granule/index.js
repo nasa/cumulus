@@ -3,6 +3,7 @@
 const path = require('path');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const errors = require('@cumulus/common/errors');
+const get = require('lodash.get');
 const lock = require('@cumulus/ingest/lock');
 const granule = require('@cumulus/ingest/granule');
 const log = require('@cumulus/common/log');
@@ -63,10 +64,11 @@ exports.syncGranule = function syncGranule(event) {
   const collection = config.collection;
   const forceDownload = config.forceDownload || false;
   const downloadBucket = config.downloadBucket;
-  let duplicateHandling = config.duplicateHandling;
-  if (!duplicateHandling && collection && collection.duplicateHandling) {
-    duplicateHandling = collection.duplicateHandling;
-  }
+  const reingestGranule = config.reingestGranule || false;
+
+  const duplicateHandling = get(
+    config, 'duplicateHandling', get(collection, 'duplicateHandling', 'error')
+  );
 
   log.debug(`Configured duplicateHandling value: ${duplicateHandling}`);
 
@@ -89,13 +91,18 @@ exports.syncGranule = function syncGranule(event) {
     provider,
     fileStagingDir,
     forceDownload,
-    duplicateHandling
+    duplicateHandling,
+    reingestGranule
   );
 
   return download(ingest, downloadBucket, provider, input.granules)
     .then((granules) => {
       if (ingest.end) ingest.end();
       const output = { granules };
+      // warning message in case of reingest granule
+      if (reingestGranule && ['error', 'skip', 'version'].includes(duplicateHandling)) {
+        output.warning = 'The granule files may be overwritten';
+      }
       if (collection && collection.process) output.process = collection.process;
       if (config.pdr) output.pdr = config.pdr;
       log.debug(`SyncGranule Complete. Returning output: ${JSON.stringify(output)}`);

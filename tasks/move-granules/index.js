@@ -131,9 +131,11 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
  * @param {Object} file - granule file to be moved
  * @param {string} sourceBucket - source bucket location of files
  * @param {string} duplicateHandling - how to handle duplicate files
+ * @param {boolean} reingestGranule - indicate if the granule is manually reingested.
+ * When a granule is reingested, existing files will be overwritten.
  * @returns {Array<Object>} returns the file moved and the renamed existing duplicates if any
  */
-async function moveFileRequest(file, sourceBucket, duplicateHandling) {
+async function moveFileRequest(file, sourceBucket, duplicateHandling, reingestGranule) {
   const fileStagingDir = file.fileStagingDir || 'file-staging';
   const source = {
     Bucket: sourceBucket,
@@ -156,16 +158,16 @@ async function moveFileRequest(file, sourceBucket, duplicateHandling) {
 
   // Have to throw DuplicateFile and not WorkflowError, because the latter
   // is not treated as a failure by the message adapter.
-  if (s3ObjAlreadyExists && duplicateHandling === 'error') {
+  if (s3ObjAlreadyExists && !reingestGranule && duplicateHandling === 'error') {
     throw new errors.DuplicateFile(`${target.Key} already exists in ${target.Bucket} bucket`);
   }
 
-  if (s3ObjAlreadyExists && duplicateHandling === 'skip') return [fileMoved];
+  if (s3ObjAlreadyExists && !reingestGranule && duplicateHandling === 'skip') return [fileMoved];
 
   const options = (file.bucket.type.match('public')) ? { ACL: 'public-read' } : null;
 
   // compare the checksum of the existing file and new file, and handle them accordingly
-  if (s3ObjAlreadyExists && duplicateHandling === 'version') {
+  if (s3ObjAlreadyExists && !reingestGranule && duplicateHandling === 'version') {
     const existingFileSum = await checksumS3Objects('CKSUM', target.Bucket, target.Key);
     const stagedFileSum = await checksumS3Objects('CKSUM', source.Bucket, source.Key);
 
@@ -183,7 +185,7 @@ async function moveFileRequest(file, sourceBucket, duplicateHandling) {
     await moveGranuleFile(source, target, options);
   }
 
-  const renamedFiles = (duplicateHandling === 'version')
+  const renamedFiles = (!reingestGranule && duplicateHandling === 'version')
     ? await getRenamedS3File(target.Bucket, target.Key) : [];
 
   // return both file moved and renamed files
@@ -207,7 +209,7 @@ async function moveFileRequest(file, sourceBucket, duplicateHandling) {
 * @param {string} duplicateHandling - how to handle duplicate files
 * @returns {Object} the object with updated granules
 **/
-async function moveFilesForAllGranules(granulesObject, sourceBucket, duplicateHandling) {
+async function moveFilesForAllGranules(granulesObject, sourceBucket, duplicateHandling, reingestGranule) {
   const moveFileRequests = Object.keys(granulesObject).map(async (granuleKey) => {
     const granule = granulesObject[granuleKey];
     const cmrFileFormat = /.*\.cmr\.xml$/;
@@ -215,7 +217,7 @@ async function moveFilesForAllGranules(granulesObject, sourceBucket, duplicateHa
     const cmrFile = granule.files.filter((file) => file.name.match(cmrFileFormat));
 
     const filesMoved = await Promise.all(filesToMove.map((file) =>
-      moveFileRequest(file, sourceBucket, duplicateHandling)));
+      moveFileRequest(file, sourceBucket, duplicateHandling, reingestGranule)));
     granule.files = flatten(filesMoved).concat(cmrFile);
   });
 
@@ -321,6 +323,7 @@ async function moveGranules(event) {
   const distEndpoint = get(config, 'distribution_endpoint');
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const collection = config.collection;
+  const reingestGranule = config.reingestGranule || false;
   const duplicateHandling = get(
     config, 'duplicateHandling', get(collection, 'duplicateHandling', 'error')
   );
@@ -341,25 +344,33 @@ async function moveGranules(event) {
   // allows us to disable moving the files
   if (moveStagedFiles) {
     // move files from staging location to final location
-    allGranules = await moveFilesForAllGranules(allGranules, bucket, duplicateHandling);
+    allGranules = await moveFilesForAllGranules(allGranules, bucket, duplicateHandling, reingestGranule);
 
     // update cmr.xml files with correct online access urls
     await updateCmrFileAccessURLs(cmrFiles, allGranules, allFiles, distEndpoint);
   }
 
-  return {
-    granules: Object.keys(allGranules).map((k) => {
-      const granule = allGranules[k];
+  // warning message in case of reingest granule
+  let warning;
+  if (reingestGranule && ['error', 'skip', 'version'].includes(duplicateHandling)) {
+    warning = 'The granule files may be overwritten';
+  }
 
-      // Just return the bucket name with the granules
-      granule.files.map((f) => {
-        f.bucket = f.bucket.name; /* eslint-disable-line no-param-reassign */
-        return f;
-      });
+  const granules = Object.keys(allGranules).map((k) => {
+    const granule = allGranules[k];
 
-      return granule;
-    })
-  };
+    // Just return the bucket name with the granules
+    granule.files.map((f) => {
+      f.bucket = f.bucket.name; /* eslint-disable-line no-param-reassign */
+      return f;
+    });
+    return granule;
+  });
+
+  const output = { granules };
+  if (warning) output.warning = warning;
+
+  return output;
 }
 
 exports.moveGranules = moveGranules;

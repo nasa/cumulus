@@ -99,7 +99,7 @@ class Granule extends Manager {
 
     const lambdaPayload = await Rule.buildPayload({
       workflow: 'IngestGranule',
-      meta: originalMessage.meta,
+      meta: Object.assign({}, originalMessage.meta, { reingest_granule: true }),
       payload: originalMessage.payload,
       provider: granule.provider,
       collection: {
@@ -110,7 +110,7 @@ class Granule extends Manager {
 
     await this.updateStatus({ granuleId: granule.granuleId }, 'running');
 
-    await aws.invoke(process.env.invoke, lambdaPayload);
+    return aws.invoke(process.env.invoke, lambdaPayload);
   }
 
   /**
