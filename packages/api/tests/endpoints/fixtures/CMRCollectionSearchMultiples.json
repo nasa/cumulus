@@ -1,0 +1,40 @@
+{
+  "feed": {
+    "updated": "2018-10-31T22:10:29.107Z",
+    "id": "https://cmr.uat.earthdata.nasa.gov:443/search/collections.json?short_name=MOD09GQ&version=006",
+    "title": "ECHO dataset metadata",
+    "entry": [
+      {
+        "version_id": "006",
+        "updated": "2015-09-30T10:47:34.007Z",
+        "dataset_id": "MODIS/Terra Surface Reflectance Daily L2G Global 250m SIN Grid V006",
+        "short_name": "MOD09GQ",
+        "title": "MODIS/Terra Surface Reflectance Daily L2G Global 250m SIN Grid V006",
+        "summary": "MODIS/Terra Surface Reflectance Daily L2G Global 250m SIN Grid",
+        "id": "C46683-LPDAAC_TS2"
+      },
+      {
+        "time_start": "1999-12-18T00:00:00.000Z",
+        "version_id": "006",
+        "updated": "2015-09-30T10:47:34.007Z",
+        "dataset_id": "MODIS/Terra Surface Reflectance Daily L2G Global 250m SIN Grid V006",
+        "data_center": "LPDAAC_TS1",
+        "short_name": "MOD09GQ",
+        "title": "MODIS/Terra Surface Reflectance Daily L2G Global 250m SIN Grid V006",
+        "id": "C247242-LPDAAC_TS1"
+      },
+      {
+        "version_id": "006",
+        "updated": "2016-03-21T09:32:15.906Z",
+        "dataset_id": "MODIS/Terra Surface Reflectance Daily L2G Global 250m SIN Grid V006",
+        "data_center": "CUMULUS",
+        "short_name": "MOD09GQ",
+        "title": "MODIS/Terra Surface Reflectance Daily L2G Global 250m SIN Grid V006",
+        "coordinate_system": "CARTESIAN",
+        "summary": "MODIS/Terra Surface Reflectance Daily L2G Global 250m SIN Grid",
+        "orbit_parameters": null,
+        "id": "C1218668453-CUMULUS"
+      }
+    ]
+  }
+}

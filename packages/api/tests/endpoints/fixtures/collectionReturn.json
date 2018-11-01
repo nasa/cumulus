@@ -1,0 +1,37 @@
+{
+  "meta": {
+    "name": "cumulus-api",
+    "stack": "stackname",
+    "table": "collection",
+    "limit": 50,
+    "page": 1,
+    "count": 4
+  },
+  "results": [
+    {
+      "name": "short-name-without-cmr-record",
+      "version": "006",
+      "process": "modis",
+      "sampleFileName": "samplefilename.hdf",
+      "dataType": "short-name-without-cmr-record-dataType",
+      "granuleIdExtraction": "(FAKE07JB\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)",
+      "createdAt": 1540999332662,
+      "duplicateHandling": "replace",
+      "updatedAt": 1540999332662,
+      "timestamp": 1540999332883
+    },
+    {
+      "name": "FAKE07JB-with-cmr-record",
+      "version": "001",
+      "process": "modis",
+      "sampleFileName": "FAKE07JB.A2017025.h21v00.006.2017034065104.hdf",
+      "dataType": "FAKE07JB-with-cmr-record-DataType",
+      "granuleIdExtraction": "(FAKE07JB\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)",
+      "createdAt": 1538864606893,
+      "provider_path": "cumulus-test-data/pdrs",
+      "duplicateHandling": "replace",
+      "updatedAt": 1538864606893,
+      "timestamp": 1538864607411
+    }
+  ]
+}

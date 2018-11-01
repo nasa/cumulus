@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **CUMULUS-775**
+  - Fixed `@cumlus/cmrjs.searchConcept` to search and return CMR results.
+  - Changed `@cumulus/api/endpoints/granules.list` to inject a `concept-id` key
+    to each returned granule.  If CMR cannot uniquely identify the collection by
+    `short_name`, `version` and `cmr_provider`, it sets the value to `null`.
+  - Added `@cumulus/api/lib/injectConceptId` to search and an add CMR `concept-id` to collection record.
 - **CUMULUS-965**
   - Add `@cumulus/test-data.loadJSONTestData()`,
     `@cumulus/test-data.loadTestData()`, and
