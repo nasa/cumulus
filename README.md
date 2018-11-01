@@ -7,7 +7,7 @@
 ## 📖 Documentation:
 
 - Documentation for the latest [released version](https://nasa.github.io/cumulus).
-- Documentation for the [unreleased work](https://nasa.github.io/cumulus/unreleased).
+- Documentation for the [unreleased work](https://nasa.github.io/cumulus/docs/next/cumulus-docs-readme).
 
 ## More Information
 
@@ -82,10 +82,6 @@ Run the test commands next
 
     $ export LOCALSTACK_HOST=localhost
     $ yarn test
-
-Run end to end tests with
-
-    $ yarn e2e
 
 ### Integration Tests
 

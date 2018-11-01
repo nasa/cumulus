@@ -1,5 +1,10 @@
-# Troubleshooting Cumulus Deployment
+---
+id: troubleshoot_deployment
+title: Troubleshooting Cumulus Deployment
+hide_title: true
+---
 
+# Troubleshooting Cumulus Deployment
 This document provides 'notes' on frequently encountered deployment issues. The issues reported are organized by relevant subsection.
 
 ### Configuring the Cumulus Stack
