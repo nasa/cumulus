@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/integration-tests",
-  "version": "1.10.1",
+  "version": "1.10.3",
   "description": "Integration tests",
   "bin": {
     "cumulus-test": "./bin/cli.js"
@@ -18,14 +18,15 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "scripts": {
-    "build": "echo 'no build'"
+    "build": "rm -rf dist && mkdir dist && webpack",
+    "prepublishOnly": "PRODUCTION=true npm run build"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api": "^1.10.1",
-    "@cumulus/common": "^1.10.0",
-    "@cumulus/deployment": "^1.10.1",
+    "@cumulus/api": "^1.10.3",
+    "@cumulus/common": "^1.10.3",
+    "@cumulus/deployment": "^1.10.3",
     "aws-sdk": "^2.238.1",
     "commander": "^2.15.0",
     "fs-extra": "^5.0.0",
@@ -38,5 +39,9 @@
     "p-wait-for": "^2.0.0",
     "uuid": "^3.2.1",
     "xml2js": "^0.4.19"
+  },
+  "devDependencies": {
+    "webpack": "~4.5.0",
+    "webpack-cli": "~2.0.14"
   }
 }

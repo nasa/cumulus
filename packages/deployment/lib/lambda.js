@@ -1,5 +1,3 @@
-/* eslint-disable no-console, no-param-reassign */
-
 'use strict';
 
 const fs = require('fs-extra');
@@ -38,8 +36,8 @@ class UpdatedLambda extends Lambda {
    * in the config object for a template that runs following a nested template
    * that has already run the superclass 'process' method.
    *
-   * @param {string} configKey - the configuration key with a lambda configuration
-   *                             object to be modified
+   * @param {string} configKey - the configuration key with a lambda
+   *   configuration object to be modified
    * @returns {void} returns nothing
    */
   buildAllLambdaConfiguration(configKey) {
@@ -144,11 +142,11 @@ class UpdatedLambda extends Lambda {
    * If a s3Source is used and a uniqueIdentifier is specified
    * add that value in place of a calculated hash
    *
-   * @param {Object} lambda - the Lambda object
+   * @param {Object} lambdaArg - the Lambda object
    * @returns {Object} the updated lambda object
    */
-  buildS3Path(lambda) {
-    lambda = super.buildS3Path(lambda);
+  buildS3Path(lambdaArg) {
+    const lambda = super.buildS3Path(lambdaArg);
 
     if (lambda.s3Source && lambda.s3Source.uniqueIdentifier) {
       const uniqueIdentifier = lambda.s3Source.uniqueIdentifier;

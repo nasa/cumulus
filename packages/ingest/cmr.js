@@ -1,8 +1,9 @@
 'use strict';
 
 const { CMR, getUrl } = require('@cumulus/cmrjs');
-const { DefaultProvider } = require('./crypto');
 const log = require('@cumulus/common/log');
+
+const { DefaultProvider } = require('./crypto');
 
 /**
  * function for posting cmr xml files from S3 to CMR
@@ -26,7 +27,7 @@ async function publish(cmrFile, creds, bucket, stack) {
     password = await DefaultProvider.decrypt(creds.password, undefined, bucket, stack);
   }
   catch (e) {
-    log.error('Decrypting password failed, using unencrypted password');
+    log.error('Decrypting password failed, using unencrypted password', e);
     password = creds.password;
   }
   const cmr = new CMR(
