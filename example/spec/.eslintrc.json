@@ -1,7 +1,6 @@
 {
   "rules": {
     "max-len": "off",
-    "no-console": "off",
     "operator-linebreak": [2, "after"]
   },
   "env": {
