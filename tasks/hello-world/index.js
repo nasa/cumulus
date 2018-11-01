@@ -3,8 +3,6 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { log } = require('@cumulus/common');
 
-/* eslint-disable no-unused-vars */
-
 let passOnRetry = false;
 
 /**
