@@ -30,6 +30,7 @@ jobs:
         - ./travis-ci/fetch-cache.sh
         - npm install
         - npm run bootstrap-no-build
+        - env SKIP_BUILD=true ./bin/prepare
       script: npm run lint
     - name: "Unit tests except API"
       stage: unit test and stack deployment
