@@ -1,49 +1,46 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
 const test = require('ava');
 const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
+const { promisify } = require('util');
 
 const cmrjs = require('@cumulus/cmrjs');
-const payload = require('./data/payload.json');
-const { postToCMR } = require('../index');
+const { postToCMR } = require('..');
+
+const readFile = promisify(fs.readFile);
 
 const result = {
-  'concept-id': 'testingtesging'
+  'concept-id': 'testingtesting'
 };
 
-// eslint-disable-next-line require-jsdoc
-async function deleteBucket(bucket) {
-  const response = await aws.s3().listObjects({ Bucket: bucket }).promise();
-  const keys = response.Contents.map((o) => o.Key);
-  await Promise.all(keys.map(
-    (key) => aws.s3().deleteObject({ Bucket: bucket, Key: key }).promise()
-  ));
-}
+test.beforeEach(async (t) => {
+  t.context.bucket = randomString();
 
-test.beforeEach((t) => {
-  t.context.bucket = randomString(); // eslint-disable-line no-param-reassign
+  const payloadPath = path.join(__dirname, 'data', 'payload.json');
+  const rawPayload = await readFile(payloadPath, 'utf8');
+  const payload = JSON.parse(rawPayload);
+  t.context.payload = payload;
 
   //update cmr file path
   const match = /^s3\:\/\/(.*)\/(.*)$/;
   const cmrFile = payload.input.granules[0].files[3].filename;
-  payload.input.granules[0].files[3].filename =
-    `s3://${t.context.bucket}/${match.exec(cmrFile)[2]}`;
+  payload.input.granules[0].files[3].filename = `s3://${t.context.bucket}/${match.exec(cmrFile)[2]}`;
   payload.input.granules[0].files[3].bucket = t.context.bucket;
 
   return aws.s3().createBucket({ Bucket: t.context.bucket }).promise();
 });
 
-test.afterEach.always(async (t) => {
-  deleteBucket(t.context.bucket);
-});
+test.afterEach.always((t) => aws.recursivelyDeleteS3Bucket(t.context.bucket));
 
 test.serial('postToCMR throws error if CMR correctly identifies the xml as invalid', async (t) => {
   sinon.stub(cmrjs.CMR.prototype, 'getToken');
 
-  const newPayload = JSON.parse(JSON.stringify(payload));
+  const newPayload = t.context.payload;
+
   const granuleId = newPayload.input.granules[0].granuleId;
   const key = `${granuleId}.cmr.xml`;
 
@@ -65,7 +62,8 @@ test.serial('postToCMR throws error if CMR correctly identifies the xml as inval
 });
 
 test.serial('postToCMR succeeds with correct payload', async (t) => {
-  const newPayload = JSON.parse(JSON.stringify(payload));
+  const newPayload = t.context.payload;
+
   sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
     result
   }));
@@ -91,7 +89,9 @@ test.serial('postToCMR succeeds with correct payload', async (t) => {
 
 test.serial('postToCMR returns SIT url when CMR_ENVIRONMENT=="SIT"', async (t) => {
   process.env.CMR_ENVIRONMENT = 'SIT';
-  const newPayload = JSON.parse(JSON.stringify(payload));
+
+  const newPayload = t.context.payload;
+
   sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
     result
   }));
@@ -117,7 +117,8 @@ test.serial('postToCMR returns SIT url when CMR_ENVIRONMENT=="SIT"', async (t) =
 });
 
 test.serial('postToCMR skips CMR step if the metadata file uri is missing', async (t) => {
-  const newPayload = JSON.parse(JSON.stringify(payload));
+  const newPayload = t.context.payload;
+
   newPayload.input.granules = [{
     granuleId: 'some granule',
     files: [{
@@ -126,5 +127,6 @@ test.serial('postToCMR skips CMR step if the metadata file uri is missing', asyn
   }];
 
   const output = await postToCMR(newPayload);
+
   t.is(output.granules[0].cmr, undefined);
 });
