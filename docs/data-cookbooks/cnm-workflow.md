@@ -1,3 +1,9 @@
+---
+id: cnm-workflow
+title: CNM Workflow
+hide_title: true
+---
+
 # CNM Workflow
 
 This entry documents how to setup a workflow that utilizes the built-in CNM/Kinesis functionality in Cumulus.
@@ -64,7 +70,7 @@ The following are steps that are required to set up your Cumulus instance to run
 
 In this example, we're going to trigger a workflow by creating a Kinesis rule and sending a record to a Kinesis stream.
 
-The following [workflow definition](../workflows/README.md) should be added to your deployment's `workflows.yml`.
+The following [workflow definition](workflows/README.md) should be added to your deployment's `workflows.yml`.
 
 Update the `CNMResponseStream` key in the `CnmResponse` task to match the name of the Kinesis response stream you configured in the prerequisites section.
 
@@ -233,7 +239,7 @@ Lastly, this entry also includes the tasks  `SfSnsReport`, `SyncGranule` from th
 
 Once the above configuration changes have been made, redeploy your stack.
 
-Please refer to `Updating Cumulus deployment` in the [deployment documentation](../deployment/README.md) if you are unfamiliar with redeployment.
+Please refer to `Updating Cumulus deployment` in the [deployment documentation](deployment/README.md) if you are unfamiliar with redeployment.
 
 ### Rule Configuration
 
@@ -346,7 +352,7 @@ The first task in the execution will report to Cumulus that the workflow has sta
 
 `TranslateMessage` (which corresponds to the `CNMToCMA` lambda) will take the CNM object payload and add a granules object to the CMA payload that's consistent with other Cumulus ingest tasks, and add a key 'cnm' to 'meta' (as well as the payload) to store the original message.
 
-*For more on the Message Adapter, please see [the Message Flow documentation](../workflows/cumulus-task-message-flow.md)*.
+*For more on the Message Adapter, please see [the Message Flow documentation](workflows/cumulus-task-message-flow.md)*.
 
 An example of what is happening in the `CNMToCMA` lambda is as follows:
 
@@ -478,7 +484,7 @@ In case of either success *or* failure, `CnmResponse` will then pass the results
 
 Following the successful execution of this workflow, you should expect to see the workflow complete successfully on the dashboard:
 
-![](../images/cnm_success_example.png)
+![](assets/cnm_success_example.png)
 
 ### Check the test granule has been delivered to S3 staging
 
@@ -575,7 +581,7 @@ The Kinesis error handling system - the `kinesisFallback` SNS topic, `kinesisCon
 
 
 
-![](../images/Kinesis-Error-Processing.png)
+![](assets/Kinesis-Error-Processing.png)
 
 To examine records that were unable to be processed at any step you need to go look at the dead letter queue `{{stackname}}-kinesisFailure`.
 Check the [Simple Queue Service (SQS) console](https://console.aws.amazon.com/sqs/home). Select your queue, and under the `Queue Actions` tab, you can choose `View/Delete Messages`. `Start polling` for messages and you will see records that failed to process through the `kinesisConsumer`.

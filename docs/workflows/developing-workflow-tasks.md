@@ -1,5 +1,10 @@
-# Developing Workflow Tasks
+---
+id: developing-workflow-tasks
+title: Developing Workflow Tasks
+hide_title: true
+---
 
+# Developing Workflow Tasks
 Workflow tasks can be either AWS Lambda Functions or ECS Activities.
 
 ## Lambda functions
@@ -8,7 +13,7 @@ You can use one of the many `@cumulus` node modules to take advantage of common 
 
 The full set of available lambda functions can be found on npm: [npmjs.com/org/cumulus](https://www.npmjs.com/org/cumulus) and in source code: [cumulus/tasks](https://github.com/nasa/cumulus/tree/master/tasks).
 
-You can also develop your own lambda function, read more on the [Lambda Functions](./lambda.md) page.
+You can also develop your own lambda function, read more on the [Lambda Functions](workflows/lambda.md) page.
 
 ## ECS Activities
 

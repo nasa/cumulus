@@ -495,7 +495,7 @@ Resources:
       Principal: events.amazonaws.com
 
   #################################################
-  # CloudWatch RULE config BEGIN
+  # CloudWatch RULE config END
   #################################################
 
   #################################################

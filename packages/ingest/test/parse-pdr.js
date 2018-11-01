@@ -3,23 +3,23 @@
 const test = require('ava');
 const path = require('path');
 const {
+  recursivelyDeleteS3Bucket,
+  s3
+} = require('@cumulus/common/aws');
+const {
   findTestDataDirectory,
   randomString
 } = require('@cumulus/common/test-utils');
 const { CollectionConfigStore } = require('@cumulus/common');
 const { parsePdr } = require('../parse-pdr');
-const {
-  aws: {
-    recursivelyDeleteS3Bucket,
-    s3
-  }
-} = require('@cumulus/common');
 
 test.beforeEach(async (t) => {
   t.context.internalBucket = `internal-bucket-${randomString().slice(0, 6)}`;
   t.context.stackName = `stack-${randomString().slice(0, 6)}`;
-  t.context.collectionConfigStore =
-    new CollectionConfigStore(t.context.internalBucket, t.context.stackName);
+  t.context.collectionConfigStore = new CollectionConfigStore(
+    t.context.internalBucket,
+    t.context.stackName
+  );
 
   await s3().createBucket({ Bucket: t.context.internalBucket }).promise();
 });
@@ -49,14 +49,14 @@ test.serial('parse-pdr properly parses a simple PDR file', async (t) => {
   const granule = result.granules[0];
   t.is(granule.dataType, 'MOD09GQ');
 
-  const hdfFile = result.granules[0].files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf'); // eslint-disable-line max-len
+  const hdfFile = result.granules[0].files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
   t.truthy(hdfFile);
   t.is(hdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
   t.is(hdfFile.fileSize, 17865615);
   t.is(hdfFile.checksumType, 'CKSUM');
   t.is(hdfFile.checksumValue, 4208254019);
 
-  const metFile = result.granules[0].files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met'); // eslint-disable-line max-len
+  const metFile = result.granules[0].files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
   t.truthy(metFile);
   t.is(metFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
   t.is(metFile.fileSize, 44118);
@@ -93,14 +93,14 @@ test.serial('parse-pdr properly parses PDR with granules of different data-types
   t.is(mod09Granule.granuleId, 'MOD09GQ.A2017224.h09v02.006.2017227165020');
   t.is(mod09Granule.granuleSize, 17909733);
 
-  const mod09HdfFile = mod09Granule.files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf'); // eslint-disable-line max-len
+  const mod09HdfFile = mod09Granule.files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
   t.truthy(mod09HdfFile);
   t.is(mod09HdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
   t.is(mod09HdfFile.fileSize, 17865615);
   t.is(mod09HdfFile.checksumType, 'CKSUM');
   t.is(mod09HdfFile.checksumValue, 4208254019);
 
-  const mod09MetFile = mod09Granule.files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met'); // eslint-disable-line max-len
+  const mod09MetFile = mod09Granule.files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
   t.truthy(mod09MetFile);
   t.is(mod09MetFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
   t.is(mod09MetFile.fileSize, 44118);
@@ -110,20 +110,20 @@ test.serial('parse-pdr properly parses PDR with granules of different data-types
   t.is(mod87Granule.granuleId, 'MOD87GQ.A2017224.h09v02.006.2017227165020');
   t.is(mod87Granule.granuleSize, 17909733);
 
-  const mod87HdfFile = mod87Granule.files.find((file) => file.name === 'PENS-MOD87GQ.A2017224.h09v02.006.2017227165020.hdf'); // eslint-disable-line max-len
+  const mod87HdfFile = mod87Granule.files.find((file) => file.name === 'PENS-MOD87GQ.A2017224.h09v02.006.2017227165020.hdf');
   t.truthy(mod87HdfFile);
   t.is(mod87HdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
   t.is(mod87HdfFile.fileSize, 17865615);
   t.is(mod87HdfFile.checksumType, 'CKSUM');
   t.is(mod87HdfFile.checksumValue, 4208254019);
 
-  const mod87MetFile = mod87Granule.files.find((file) => file.name === 'PENS-MOD87GQ.A2017224.h09v02.006.2017227165020.hdf.met'); // eslint-disable-line max-len
+  const mod87MetFile = mod87Granule.files.find((file) => file.name === 'PENS-MOD87GQ.A2017224.h09v02.006.2017227165020.hdf.met');
   t.truthy(mod87MetFile);
   t.is(mod87MetFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
   t.is(mod87MetFile.fileSize, 44118);
 });
 
-test.serial('parsePdr throws an exception if FILE_CKSUM_TYPE is set but FILE_CKSUM_VALUE is not', async (t) => { // eslint-disable-line max-len
+test.serial('parsePdr throws an exception if FILE_CKSUM_TYPE is set but FILE_CKSUM_VALUE is not', async (t) => {
   const testDataDirectory = await findTestDataDirectory();
   const pdrFilename = path.join(testDataDirectory, 'pdrs', 'MOD09GQ-without-FILE_CKSUM_VALUE.PDR');
 
@@ -141,7 +141,7 @@ test.serial('parsePdr throws an exception if FILE_CKSUM_TYPE is set but FILE_CKS
   }
 });
 
-test.serial('parsePdr throws an exception if FILE_CKSUM_VALUE is set but FILE_CKSUM_TYPE is not', async (t) => { // eslint-disable-line max-len
+test.serial('parsePdr throws an exception if FILE_CKSUM_VALUE is set but FILE_CKSUM_TYPE is not', async (t) => {
   const testDataDirectory = await findTestDataDirectory();
   const pdrFilename = path.join(testDataDirectory, 'pdrs', 'MOD09GQ-without-FILE_CKSUM_TYPE.PDR');
 
@@ -169,7 +169,7 @@ test.serial('parsePdr accepts an MD5 checksum', async (t) => {
   await t.context.collectionConfigStore.put('MOD09GQ', '006', collectionConfig);
 
   const parsedPdr = await parsePdr(pdrFilename, t.context.collectionConfigStore, pdrName);
-  const fileWithChecksum = parsedPdr.granules[0].files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf'); // eslint-disable-line max-len
+  const fileWithChecksum = parsedPdr.granules[0].files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
   t.is(fileWithChecksum.checksumType, 'MD5');
 });
 

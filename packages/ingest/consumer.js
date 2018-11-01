@@ -24,9 +24,15 @@ class Consume {
 
   async processMessages(fn, messageLimit) {
     let counter = 0;
-    const originalMessageLimit = messageLimit;
+    let remainingMessageLimit = messageLimit;
+    const originalMessageLimit = remainingMessageLimit;
+
+    /* eslint-disable no-await-in-loop */
     while (!this.endConsume) {
-      const messages = await receiveSQSMessages(this.queueUrl, messageLimit);
+      const messages = await receiveSQSMessages(
+        this.queueUrl,
+        { numOfMessages: messageLimit }
+      );
       counter += messages.length;
 
       if (messages.length > 0) {
@@ -41,8 +47,9 @@ class Consume {
       }
       // Only request up to the original messageLimit messages on subsequent calls to
       // `receiveSQSMessages`
-      messageLimit -= messages.length;
+      remainingMessageLimit -= messages.length;
     }
+    /* eslint-enable no-await-in-loop */
 
     return counter;
   }

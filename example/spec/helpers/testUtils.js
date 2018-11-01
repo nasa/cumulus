@@ -233,6 +233,13 @@ async function protectFile(file, fn) {
   }
 }
 
+const isLambdaStatusLogEntry = (logEntry) =>
+  logEntry.message.includes('START') ||
+  logEntry.message.includes('END') ||
+  logEntry.message.includes('REPORT');
+
+const isCumulusLogEntry = (logEntry) => !isLambdaStatusLogEntry(logEntry);
+
 module.exports = {
   timestampedName,
   createTimestampedTestId,
@@ -246,5 +253,6 @@ module.exports = {
   getExecutionUrl,
   redeploy,
   getFilesMetadata,
-  protectFile
+  protectFile,
+  isCumulusLogEntry
 };

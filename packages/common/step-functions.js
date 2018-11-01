@@ -1,8 +1,9 @@
 'use strict';
 
-const delay = require('delay');
 const pRetry = require('p-retry');
 const uuidv4 = require('uuid/v4');
+
+const { sleep } = require('./util');
 
 const {
   isThrottlingException,
@@ -15,6 +16,11 @@ const log = require('./log');
 /**
  * Constructs the input to pass to the step functions to kick off ingest. The execution name
  * that should be used is returned in ingest_meta.execution_name.
+ *
+ * @param {*} resources
+ * @param {*} provider
+ * @param {*} collection
+ * @returns {Object} a step function input
  */
 exports.constructStepFunctionInput = (resources, provider, collection) => {
   const stateMachine = collection.workflow;
@@ -112,7 +118,7 @@ exports.waitForExecutionToExist = async (executionArn, options = {}) => {
   /* eslint-disable no-await-in-loop */
   do {
     if (await exports.executionExists(executionArn)) return;
-    await delay(intervalInMs);
+    await sleep(intervalInMs);
   } while (Date.now() < failAfter);
   /* eslint-enable no-await-in-loop */
 

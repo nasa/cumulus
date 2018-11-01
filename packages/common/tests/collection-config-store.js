@@ -36,7 +36,10 @@ test.serial('get() fetches a collection config from S3', async (t) => {
   }).promise();
 
   const collectionConfigStore = new CollectionConfigStore(t.context.bucket, t.context.stackName);
-  const fetchedCollectionConfig = await collectionConfigStore.get(t.context.dataType, t.context.dataVersion);
+  const fetchedCollectionConfig = await collectionConfigStore.get(
+    t.context.dataType,
+    t.context.dataVersion
+  );
 
   t.deepEqual(fetchedCollectionConfig, t.context.collectionConfig);
 });
@@ -57,7 +60,10 @@ test.serial('get() does not hit S3 for a cached collection config', async (t) =>
   await recursivelyDeleteS3Bucket(t.context.bucket);
 
   // This get() should use the cache
-  const fetchedCollectionConfig = await collectionConfigStore.get(t.context.dataType, t.context.dataVersion);
+  const fetchedCollectionConfig = await collectionConfigStore.get(
+    t.context.dataType,
+    t.context.dataVersion
+  );
 
   t.deepEqual(fetchedCollectionConfig, t.context.collectionConfig);
 });
@@ -90,7 +96,11 @@ test.serial('get() throws an exception if the bucket does not exist', async (t) 
 
 test.serial('put() stores a collection config to S3', async (t) => {
   const collectionConfigStore = new CollectionConfigStore(t.context.bucket, t.context.stackName);
-  await collectionConfigStore.put(t.context.dataType, t.context.dataVersion, t.context.collectionConfig);
+  await collectionConfigStore.put(
+    t.context.dataType,
+    t.context.dataVersion,
+    t.context.collectionConfig
+  );
 
   const getObjectResponse = await s3().getObject({
     Bucket: t.context.bucket,
@@ -103,20 +113,29 @@ test.serial('put() stores a collection config to S3', async (t) => {
 
 test.serial('put() updates the cache with the new collection config', async (t) => {
   const collectionConfigStore = new CollectionConfigStore(t.context.bucket, t.context.stackName);
-  await collectionConfigStore.put(t.context.dataType, t.context.dataVersion, t.context.collectionConfig);
+
+  const { dataType, dataVersion, collectionConfig } = t.context;
+
+  await collectionConfigStore.put(dataType, dataVersion, collectionConfig);
 
   // Delete the S3 bucket so the config can't be fetched from S3
   await recursivelyDeleteS3Bucket(t.context.bucket);
 
   // This get() should use the cache
-  const fetchedCollectionConfig = await collectionConfigStore.get(t.context.dataType, t.context.dataVersion);
+  const fetchedCollectionConfig = await collectionConfigStore.get(
+    dataType,
+    dataVersion
+  );
 
-  t.deepEqual(fetchedCollectionConfig, t.context.collectionConfig);
+  t.deepEqual(fetchedCollectionConfig, collectionConfig);
 });
 
 test.serial('delete() removes the collection config from S3', async (t) => {
   const bucket = t.context.bucket;
-  const collectionConfigKey = t.context.collectionConfigKey(t.context.dataType, t.context.dataVersion);
+  const collectionConfigKey = t.context.collectionConfigKey(
+    t.context.dataType,
+    t.context.dataVersion
+  );
 
   // Store the collection config to S3
   await (new CollectionConfigStore(bucket, t.context.stackName))
@@ -137,7 +156,11 @@ test('delete() the collection config from the cache', async (t) => {
   const collectionConfigStore = new CollectionConfigStore(t.context.bucket, t.context.stackName);
 
   // Store the collection config to S3, which will also cache it
-  await collectionConfigStore.put(t.context.dataType, t.context.dataVersion, t.context.collectionConfig);
+  await collectionConfigStore.put(
+    t.context.dataType,
+    t.context.dataVersion,
+    t.context.collectionConfig
+  );
 
   // Delete the collection config, which should clear it from the cache
   await collectionConfigStore.delete(t.context.dataType, t.context.dataVersion);

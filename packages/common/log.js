@@ -1,12 +1,16 @@
 'use strict';
 
 const Logger = require('@cumulus/logger');
+const isNumber = require('lodash.isnumber');
+const isString = require('lodash.isstring');
 
-const logger = new Logger({
-  executions: process.env.EXECUTIONS,
-  sender: process.env.SENDER,
-  version: process.env.TASKVERSION
-});
+function logger() {
+  return new Logger({
+    executions: process.env.EXECUTIONS,
+    sender: process.env.SENDER,
+    version: process.env.TASKVERSION
+  });
+}
 
 /**
  * Constructs JSON to log
@@ -16,7 +20,7 @@ const logger = new Logger({
  * @returns {undefined} - log is printed to stdout, nothing is returned
  */
 function logAdditionalKeys(additionalKeys, ...args) {
-  logger.infoWithAdditionalKeys(additionalKeys, ...args);
+  logger().infoWithAdditionalKeys(additionalKeys, ...args);
 }
 
 /**
@@ -25,7 +29,7 @@ function logAdditionalKeys(additionalKeys, ...args) {
  * @param {string} args - Includes message and any other information to log
  */
 function info(...args) {
-  logger.info(...args);
+  logger().info(...args);
 }
 
 /**
@@ -34,7 +38,7 @@ function info(...args) {
  * @param {Object} args - Includes error and any other information to log
  */
 function error(...args) {
-  logger.error(...args);
+  logger().error(...args);
 }
 
 /**
@@ -43,7 +47,7 @@ function error(...args) {
  * @param {Object} args - Includes debugger message and any other information to log
  */
 function debug(...args) {
-  logger.debug(...args);
+  logger().debug(...args);
 }
 
 /**
@@ -52,7 +56,7 @@ function debug(...args) {
  * @param {Object} args - Includes Warn message and any other information to log
  */
 function warn(...args) {
-  logger.warn(...args);
+  logger().warn(...args);
 }
 
 /**
@@ -61,7 +65,7 @@ function warn(...args) {
  * @param {Object} args - Includes Fatal message and any other information to log
  */
 function fatal(...args) {
-  logger.fatal(...args);
+  logger().fatal(...args);
 }
 /**
  * Logs the Trace messsage
@@ -69,7 +73,7 @@ function fatal(...args) {
  * @param {Object} args - Includes Trace message and any other information to log
  */
 function trace(...args) {
-  logger.trace(...args);
+  logger().trace(...args);
 }
 
 /**
@@ -87,8 +91,8 @@ function convertLogLevel(level) {
     debug: 20,
     trace: 10
   };
-  if (typeof level === 'string') return mapping[level];
-  if (typeof level === 'number') return Object.keys(mapping).find((key) => mapping[key] === level);
+  if (isString(level)) return mapping[level];
+  if (isNumber(level)) return Object.keys(mapping).find((key) => mapping[key] === level);
   return undefined;
 }
 
