@@ -26,6 +26,7 @@ function determineIntegrationTestStackName(cb) {
     Marc: 'mth-2',
     yjpa7145: 'mth-2',
     mhuffnagle: 'mth-2',
+    'Marc Huffnagle': 'mth-2',
     'Matt Savoie': 'mhs',
     'Jonathan Kovarik': 'jk',
     'Menno Van Diermen': 'mvd',
