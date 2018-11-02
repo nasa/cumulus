@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 const fs = require('fs-extra');
-const { get, set, forEach } = require('lodash');
+const { forEach, get, set } = require('lodash');
 const path = require('path');
 
-const workingDir = process.env.PWD;
+const workingDir = process.cwd();
 const siteConfigPathNoExt = path.join(
   workingDir,
   'website',
@@ -28,7 +28,7 @@ function replaceSiteConfigAlgoliaValues(apiKey, indexName) {
     apiKey: get(process.env, envStrings.apiKey),
     indexName: get(process.env, envStrings.indexName)
   };
-    
+ 
 
   forEach(replaceValues, (value, key) => {
     if (value) {
@@ -50,7 +50,7 @@ function writeSiteConfig() {
   fs.writeFile(
     siteConfigPath,
     JSON.stringify(siteConfig),
-    {encoding: 'utf8'}
+    { encoding: 'utf8' }
   );
   console.log(`Wrote DocSearch apiKey and indexName into ${siteConfigPath}`);
 }
