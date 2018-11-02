@@ -531,11 +531,13 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   t.is(detail, 'Record deleted');
 
   // verify the files are deleted
+  /* eslint-disable no-await-in-loop */
   for (let i = 0; i < newGranule.files.length; i += 1) {
     const file = newGranule.files[i];
     const parsed = aws.parseS3Uri(file.filename);
-    t.false(await aws.fileExists(parsed.Bucket, parsed.Key)); // eslint-disable-line no-await-in-loop
+    t.false(await aws.fileExists(parsed.Bucket, parsed.Key));
   }
+  /* eslint-enable no-await-in-loop */
 
   await deleteBuckets([
     buckets.protected.name,
@@ -617,14 +619,20 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
       t.is(body.status, 'SUCCESS');
       t.is(body.action, 'move');
 
-      await aws.s3().listObjects({ Bucket: bucket, Prefix: destinationFilepath }).promise().then((list) => {
+      await aws.s3().listObjects({
+        Bucket: bucket,
+        Prefix: destinationFilepath
+      }).promise().then((list) => {
         t.is(list.Contents.length, 2);
         list.Contents.forEach((item) => {
           t.is(item.Key.indexOf(destinationFilepath), 0);
         });
       });
 
-      await aws.s3().listObjects({ Bucket: thirdBucket, Prefix: destinationFilepath }).promise().then((list) => {
+      await aws.s3().listObjects({
+        Bucket: thirdBucket,
+        Prefix: destinationFilepath
+      }).promise().then((list) => {
         t.is(list.Contents.length, 1);
         list.Contents.forEach((item) => {
           t.is(item.Key.indexOf(destinationFilepath), 0);
@@ -724,7 +732,10 @@ test.serial('move a file and update metadata', async (t) => {
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'move');
 
-  const list = await aws.s3().listObjects({ Bucket: bucket, Prefix: destinationFilepath }).promise();
+  const list = await aws.s3().listObjects({
+    Bucket: bucket,
+    Prefix: destinationFilepath
+  }).promise();
   t.is(list.Contents.length, 1);
   list.Contents.forEach((item) => {
     t.is(item.Key.indexOf(destinationFilepath), 0);
@@ -734,7 +745,10 @@ test.serial('move a file and update metadata', async (t) => {
   t.is(list2.Contents.length, 1);
   t.is(newGranule.files[1].filepath, list2.Contents[0].Key);
 
-  const file = await aws.s3().getObject({ Bucket: buckets.public.name, Key: newGranule.files[1].filepath }).promise();
+  const file = await aws.s3().getObject({
+    Bucket: buckets.public.name,
+    Key: newGranule.files[1].filepath
+  }).promise();
   await aws.recursivelyDeleteS3Bucket(buckets.public.name);
   return new Promise((resolve, reject) => {
     xml2js.parseString(file.Body, xmlParseOptions, (err, data) => {
