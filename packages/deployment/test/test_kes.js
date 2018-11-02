@@ -1,5 +1,4 @@
-/* eslint-disable eslint-comments/disable-enable-pair */
-/* eslint-disable no-param-reassign, no-template-curly-in-string, object-curly-spacing*/
+/* eslint no-template-curly-in-string: "off" */
 
 'use strict';
 
@@ -15,7 +14,7 @@ test.beforeEach((t) => {
 });
 
 function setupKesForLookupLambdaReference(kes, functionName, hashValue) {
-  kes.config.lambdas = { [functionName]: { hash: hashValue }};
+  kes.config.lambdas = { [functionName]: { hash: hashValue } };
   return kes;
 }
 
@@ -55,7 +54,7 @@ test('injectWorkflowLambdaAliases updates the correct resources', (t) => {
       States: {
         1: { Type: 'Task', Resource: '${TestLambdaLambdaFunction.Arn}' },
         2: { Type: 'Task', Resource: '${TestUnversionedLambdaLambdaFunction.Arn}' },
-        3: { Type: 'Task', Resource: '${SomethingElse.Arn}'}
+        3: { Type: 'Task', Resource: '${SomethingElse.Arn}' }
       }
     },
     TestStepFunction2: {
@@ -70,7 +69,7 @@ test('injectWorkflowLambdaAliases updates the correct resources', (t) => {
       States: {
         1: { Type: 'Task', Resource: '${TestLambdaLambdaAliasOutput}' },
         2: { Type: 'Task', Resource: '${TestUnversionedLambdaLambdaFunction.Arn}' },
-        3: { Type: 'Task', Resource: '${SomethingElse.Arn}'}
+        3: { Type: 'Task', Resource: '${SomethingElse.Arn}' }
       }
     },
     TestStepFunction2: {
@@ -213,8 +212,8 @@ test.serial('getRetainedLambdaAliasMetadata returns filtered aliasNames', async 
   t.deepEqual(expected, actual);
 });
 
-test.serial('getRetainedLambdaAliasNames returns filtered aliasNames on'
-            + 'previous version redeployment', async (t) => {
+test.serial('getRetainedLambdaAliasNames returns filtered aliasNames '
+            + 'on previous version redeployment', async (t) => {
   const kes = t.context.kes;
 
   kes.config.workflowLambdas = aliasFixture.workflowLambdas;
@@ -258,7 +257,7 @@ test.serial("getHumanReadableIdentifier returns '' for a version string with no 
 
 
 test.serial('setParentOverrideConfigValues merges defined parent configuration', (t) => {
-  const parentConfig = {overrideKey: true};
+  const parentConfig = { overrideKey: true };
   const kes = t.context.kes;
   kes.config.overrideKey = false;
   kes.config.override_with_parent = ['overrideKey'];
@@ -282,5 +281,31 @@ test.serial('setParentOverrideConfigValues ignores missing parent configuration'
   const expected = false;
   const actual = kes.config.overrideKey;
 
+  t.is(expected, actual);
+});
+
+
+test.serial('addLambdaDeadLetterQueues adds dead letter queue to the sqs configuration', (t) => {
+  const kes = t.context.kes;
+  kes.config.lambdas.jobs.namedLambdaDeadLetterQueue = true;
+  kes.config.DLQDefaultTimeout = 60;
+  kes.config.DLQDefaultMessageRetentionPeriod = 5;
+  kes.addLambdaDeadLetterQueues();
+
+  const expected = {
+    MessageRetantionPeriod: 5,
+    visibilityTimeout: 60
+  };
+
+  const actual = kes.config.sqs.jobsDeadLetterQueue;
+  t.deepEqual(expected, actual);
+});
+
+test.serial('addLambdaDeadLetterQueues adds dead letter queue to the sqs configuration', (t) => {
+  const kes = t.context.kes;
+  kes.config.lambdas.jobs.namedLambdaDeadLetterQueue = true;
+  kes.addLambdaDeadLetterQueues();
+  const actual = kes.config.lambdas.jobs.deadletterqueue;
+  const expected = 'jobsDeadLetterQueue';
   t.is(expected, actual);
 });

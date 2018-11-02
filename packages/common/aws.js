@@ -7,6 +7,7 @@ const fs = require('fs');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
 const path = require('path');
+const pMap = require('p-map');
 const pump = require('pump');
 const url = require('url');
 
@@ -169,6 +170,16 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
 };
 
 /**
+* Convert S3 TagSet Object to query string
+* e.g. [{ Key: 'tag', Value: 'value }] to 'tag=value'
+*
+* @param {Array<Object>} tagset - S3 TagSet array
+* @returns {string} - tags query string
+*/
+exports.s3TagSetToQueryString = (tagset) => tagset.reduce((acc, tag) => acc.concat(`&${tag.Key}=${tag.Value}`), '').substring(1);
+
+
+/**
  * Delete an object from S3
  *
  * @param {string} bucket - bucket where the object exists
@@ -193,10 +204,37 @@ exports.s3ObjectExists = (params) =>
       throw e;
     });
 
-exports.promiseS3Upload = (params) => {
-  const uploadFn = exports.s3().upload.bind(exports.s3());
-  return concurrency.toPromise(uploadFn, params);
+/**
+* Put an object on S3
+*
+* @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
+* @returns {Promise} - promise of the object being put
+**/
+exports.s3PutObject = (params) => {
+  if (!params.ACL) params.ACL = 'private'; //eslint-disable-line no-param-reassign
+  return exports.s3().putObject(params).promise();
 };
+
+/**
+* Copy an object from one location on S3 to another
+*
+* @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
+* @returns {Promise} - promise of the object being copied
+**/
+exports.s3CopyObject = (params) => {
+  if (!params.TaggingDirective) params.TaggingDirective = 'COPY'; //eslint-disable-line no-param-reassign
+  return exports.s3().copyObject(params).promise();
+};
+
+/**
+ * Upload data to S3
+ *
+ * Note: This is equivalent to calling `aws.s3().upload(params).promise()`
+ *
+ * @param {Object} params - see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
+ * @returns {Promise} see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
+ */
+exports.promiseS3Upload = (params) => exports.s3().upload(params).promise();
 
 /**
  * Downloads the given s3Obj to the given filename in a streaming manner
@@ -230,6 +268,16 @@ exports.downloadS3File = (s3Obj, filepath) => {
 
 exports.headObject = (bucket, key) =>
   exports.s3().headObject({ Bucket: bucket, Key: key }).promise();
+
+/**
+* Get object Tagging from S3
+*
+* @param {string} bucket - name of bucket
+* @param {string} key - key for object (filepath + filename)
+* @returns {Promise} - returns response from `S3.getObjectTagging` as a promise
+**/
+exports.s3GetObjectTagging = (bucket, key) =>
+  exports.s3().getObjectTagging({ Bucket: bucket, Key: key }).promise();
 
 /**
 * Get an object from S3
@@ -292,8 +340,8 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
         .on('error', reject);
     });
   };
-  const limitedDownload = concurrency.limit(S3_RATE_LIMIT, promiseDownload);
-  return Promise.all(scrubbedS3Objs.map(limitedDownload));
+
+  return pMap(scrubbedS3Objs, promiseDownload, { concurrency: S3_RATE_LIMIT });
 };
 
 /**
@@ -305,11 +353,11 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
  */
 exports.deleteS3Files = (s3Objs) => {
   log.info(`Starting deletion of ${s3Objs.length} object(s)`);
-
-  const promiseDelete = (s3Obj) => exports.s3().deleteObject(s3Obj).promise();
-  const limitedDelete = concurrency.limit(S3_RATE_LIMIT, promiseDelete);
-
-  return Promise.all(s3Objs.map(limitedDelete));
+  return pMap(
+    s3Objs,
+    (s3Obj) => exports.s3().deleteObject(s3Obj).promise(),
+    { concurrency: S3_RATE_LIMIT }
+  );
 };
 
 /**
@@ -358,8 +406,8 @@ exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
         return { key: key, bucket: bucket };
       });
   };
-  const limitedUpload = concurrency.limit(S3_RATE_LIMIT, promiseUpload);
-  return Promise.all(files.map(limitedUpload));
+
+  return pMap(files, promiseUpload, { concurrency: S3_RATE_LIMIT });
 };
 
 /**
@@ -698,16 +746,19 @@ exports.sendSQSMessage = (queueUrl, message) => {
  * can be set and the timeout is also adjustable.
  *
  * @param {string} queueUrl - url of the SQS queue
- * @param {integer} numOfMessages - number of messages to read from the queue
- * @param {integer} timeout - number of seconds it takes for a message to timeout
+ * @param {Object} options - options object
+ * @param {integer} [options.numOfMessages=1] - number of messages to read from the queue
+ * @param {integer} [options.timeout=30] - seconds it takes for a message to timeout
+ * @param {integer} [options.waitTimeSeconds=0] - number of seconds to poll SQS queue (long polling)
  * @returns {Promise.<Array>} an array of messages
  */
-exports.receiveSQSMessages = async (queueUrl, numOfMessages = 1, timeout = 30) => {
+exports.receiveSQSMessages = async (queueUrl, options) => {
   const params = {
     QueueUrl: queueUrl,
     AttributeNames: ['All'],
-    VisibilityTimeout: timeout,
-    MaxNumberOfMessages: numOfMessages
+    VisibilityTimeout: options.timeout || 30,
+    WaitTimeSeconds: options.waitTimeSeconds || 0,
+    MaxNumberOfMessages: options.numOfMessages || 1
   };
 
   const messages = await exports.sqs().receiveMessage(params).promise();
