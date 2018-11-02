@@ -48,7 +48,7 @@ function removeRuleAddedParams(rule) {
   return ruleCopy;
 }
 
-function compareTriggerRule(taskInput, params) {
+function isWorkflowTriggeredByRule(taskInput, params) {
   return taskInput.meta.triggerRule && taskInput.meta.triggerRule === params.rule;
 }
 
@@ -88,7 +88,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
     beforeAll(async () => {
       console.log(`Waiting for execution of ${helloWorldRule.workflow} triggered by rule`);
 
-      execution = await waitForTestExecutionStart(helloWorldRule.workflow, config.stackName, config.bucket, compareTriggerRule, { rule: createdCheck });
+      execution = await waitForTestExecutionStart(helloWorldRule.workflow, config.stackName, config.bucket, isWorkflowTriggeredByRule, { rule: createdCheck });
       console.log(`Execution ARN: ${execution.executionArn}`);
     });
 
@@ -116,7 +116,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
       });
 
       console.log(`Waiting for new execution of ${helloWorldRule.workflow} triggered by rerun of rule`);
-      const updatedExecution = await waitForTestExecutionStart(helloWorldRule.workflow, config.stackName, config.bucket, compareTriggerRule, { rule: updatedCheck });
+      const updatedExecution = await waitForTestExecutionStart(helloWorldRule.workflow, config.stackName, config.bucket, isWorkflowTriggeredByRule, { rule: updatedCheck });
       const updatedTaskInput = await lambdaStep.getStepInput(updatedExecution.executionArn, 'SfSnsReport');
       expect(updatedExecution).not.toBeNull();
       expect(updatedTaskInput.meta.triggerRule).toEqual(updatedCheck);
