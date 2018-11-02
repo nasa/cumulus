@@ -24,7 +24,7 @@ describe('The EMS report', () => {
         .promise();
       const lastUpdate = lambdaConfig.LastModified;
 
-      // Compare lambda function's lastUpate with the time 24 hours before now.
+      // Compare lambda function's lastUpdate with the time 24 hours before now.
       // If the lambda is created 24 hours ago, it must have been invoked
       // and generated EMS reports for the previous day.
       if (new Date(lastUpdate).getTime() < moment.utc().subtract(24, 'hours').toDate().getTime()) {

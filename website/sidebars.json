@@ -1,0 +1,59 @@
+{
+  "docs": {
+    "About Cumulus": [
+      "cumulus-docs-readme",
+      "architecture",
+      "team"
+    ],
+    "What are Cumulus Workflows?": [
+      "workflows/workflows-readme",
+      "workflows/protocol",
+      "workflows/input_output",
+      "workflows/cumulus-task-message-flow",
+      "workflows/developing-workflow-tasks",
+      "workflows/lambda",
+      "workflows/docker",
+      "workflows/workflow-configuration-how-to",
+      "workflows/workflow-triggers"
+    ],
+    "Deployment": [
+      "deployment/deployment-readme",
+      "deployment/create_bucket",
+      "deployment/iam_roles",
+      "deployment/troubleshoot_deployment"
+    ],
+    "Additional Features": [
+      "data_in_dynamodb",
+      "features/dead_letter_queues",
+      "ems_reporting",
+      "lambda_versioning"
+    ],
+    "Cumulus Versions": [
+      "upgrade/upgrade-readme",
+      "upgrade/1.6.0",
+      "upgrade/1.7.0",
+      "upgrade/1.9.0"
+    ],
+    "Troubleshooting": [
+      "system-documentation/system-documentation"
+    ],
+    "Cumulus Development": [
+      "adding-a-task",
+      "docs-how-to"
+    ]
+  },
+  "Data Cookbooks": {
+    "About Cookbooks": [
+      "data-cookbooks/about-cookbooks",
+      "data-cookbooks/setup"
+    ],
+    "Cookbooks": [
+      "data-cookbooks/hello-world",
+      "data-cookbooks/sns",
+      "data-cookbooks/sips-workflow",
+      "data-cookbooks/cnm-workflow",
+      "data-cookbooks/error-handling",
+      "data-cookbooks/choice-states"
+    ]
+  }
+}

@@ -5,8 +5,8 @@ CNMToCMA:
   memory: 128
   s3Source:
     bucket: '{{buckets.shared.name}}'
-    key: daacs/podaac/cnmToGranule-1532625517.zip
-    uniqueIdentifier: '1532625517'
+    key: daacs/podaac/cnmToGranule-1539697831000.zip
+    uniqueIdentifier: '1539697831000'
   useMessageAdapter: false
   launchInVpc: true
 CnmResponse:
@@ -17,8 +17,8 @@ CnmResponse:
   memory: 256
   s3Source:
     bucket: '{{buckets.shared.name}}'
-    key: daacs/podaac/cnmResponse-1532633768.zip
-    uniqueIdentifier: '1532633768'
+    key: daacs/podaac/cnmResponse-1539812129616.zip
+    uniqueIdentifier: '1539812129616'
   launchInVpc: true
 DiscoverGranules:
   handler: index.handler
@@ -125,8 +125,8 @@ SnsS3Test:
   handler: index.handler
   source: lambdas/snsS3Test/
 WaitForDeployment:
-  handler: index.handler
-  source: node_modules/@cumulus/wait-for-deploy/dist/
+  handler: index.waitForDeploymentHandler
+  source: node_modules/@cumulus/integration-tests/dist/
 VersionUpTest:
   handler: index.handler
   memory: 128

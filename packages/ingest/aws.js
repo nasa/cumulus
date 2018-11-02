@@ -1,11 +1,14 @@
 'use strict';
 
+const isObject = require('lodash.isobject');
+const isString = require('lodash.isstring');
 const url = require('url');
 const aws = require('@cumulus/common/aws');
 const AWS = require('aws-sdk');
 const moment = require('moment');
 const log = require('@cumulus/common/log');
 const errors = require('@cumulus/common/errors');
+const { deprecate } = require('@cumulus/common/util');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { describeExecution } = require('@cumulus/common/step-functions');
 
@@ -63,8 +66,8 @@ function getExecutionArn(stateMachineArn, executionName) {
  */
 function getExecutionUrl(executionArn) {
   const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-  return `https://console.aws.amazon.com/states/home?region=${region}` +
-         `#/executions/details/${executionArn}`;
+  return `https://console.aws.amazon.com/states/home?region=${region}`
+         + `#/executions/details/${executionArn}`;
 }
 
 async function invoke(name, payload, type = 'Event') {
@@ -152,6 +155,12 @@ class Events {
 
 class S3 {
   static parseS3Uri(uri) {
+    deprecate(
+      '@cumulus/ingest/aws/S3.parseUri()',
+      '1.10.2',
+      '@cumulus/common/aws.parseS3Uri()'
+    );
+
     const parsed = url.parse(uri);
     if (parsed.protocol !== 's3:') {
       throw new Error('uri must be a S3 uri, e.g. s3://bucketname');
@@ -164,6 +173,12 @@ class S3 {
   }
 
   static async copy(source, dstBucket, dstKey, isPublic = false) {
+    deprecate(
+      '@cumulus/ingest/aws/S3.copy()',
+      '1.10.2',
+      '@cumulus/common/aws.s3CopyObject()'
+    );
+
     const s3 = new AWS.S3();
 
     const params = {
@@ -177,6 +192,12 @@ class S3 {
   }
 
   static async list(bucket, prefix) {
+    deprecate(
+      '@cumulus/ingest/aws/S3.list()',
+      '1.10.2',
+      '@cumulus/common/aws.listS3ObjectsV2()'
+    );
+
     const s3 = new AWS.S3();
 
     const params = {
@@ -188,6 +209,12 @@ class S3 {
   }
 
   static async delete(bucket, key) {
+    deprecate(
+      '@cumulus/ingest/aws/S3.delete()',
+      '1.10.2',
+      '@cumulus/common/aws.deleteS3Object()'
+    );
+
     const s3 = new AWS.S3();
 
     const params = {
@@ -199,6 +226,12 @@ class S3 {
   }
 
   static async put(bucket, key, body, acl = 'private', meta = null) {
+    deprecate(
+      '@cumulus/ingest/aws/S3.put()',
+      '1.10.2',
+      '@cumulus/common/aws.s3PutObject()'
+    );
+
     const params = {
       Bucket: bucket,
       Key: key,
@@ -214,6 +247,12 @@ class S3 {
   }
 
   static async get(bucket, key) {
+    deprecate(
+      '@cumulus/ingest/aws/S3.get()',
+      '1.10.2',
+      '@cumulus/common/aws.getS3Object()'
+    );
+
     const params = {
       Bucket: bucket,
       Key: key
@@ -223,6 +262,12 @@ class S3 {
   }
 
   static async upload(bucket, key, body, acl = 'private') {
+    deprecate(
+      '@cumulus/ingest/aws/S3.upload()',
+      '1.10.2',
+      '@cumulus/common/aws.promiseS3Upload()'
+    );
+
     const s3 = new AWS.S3();
 
     const params = {
@@ -245,6 +290,12 @@ class S3 {
    */
 
   static async fileExists(bucket, key) {
+    deprecate(
+      '@cumulus/ingest/aws/S3.fileExists()',
+      '1.10.2',
+      '@cumulus/common/aws.fileExists()'
+    );
+
     const s3 = new AWS.S3();
     try {
       const r = await s3.headObject({ Key: key, Bucket: bucket }).promise();
@@ -301,14 +352,14 @@ class SQS {
 
   static async sendMessage(queueUrl, message) {
     let messageBody;
-    if (typeof message === 'string') {
+    if (isString(message)) {
       messageBody = message;
     }
-    else if (typeof message === 'object') {
+    else if (isObject(message)) {
       messageBody = JSON.stringify(message);
     }
     else {
-      throw new Error('body type is not accepted');
+      throw new TypeError('body type is not accepted');
     }
 
     const params = {
@@ -485,8 +536,11 @@ class KMS {
 
 class StepFunction {
   static async getExecution(arn, ignoreMissingExecutions = false) {
-    // eslint-disable-next-line max-len
-    log.debug('@cumulus/ingest/aws/StepFunction.getExecution is deprecated.  Use @cumulus/common/step-functions/describeExecution instead.');
+    deprecate(
+      '@cumulus/ingest/aws/StepFunction.getExecution()',
+      '1.10.2',
+      '@cumulus/common/step-functions/describeExecution()'
+    );
 
     try {
       return await describeExecution(arn);

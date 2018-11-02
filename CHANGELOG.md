@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **CUMULUS-965**
+  - Add a `@cumulus/util/deprecate()` function to mark a piece of code as
+    deprecated
+- **CUMULUS-986**
+  - Added `waitForTestExecutionStart` to `@cumulus/integration-tests`
+
+### Changed
+- Updated `@cumulus/helloworld` to use S3 to store state for pass on retry tests
+
+## [v1.10.3] - 2018-10-31
+
+### Added
+- **CUMULUS-817**
+  - Added AWS Dead Letter Queues for lambdas that are scheduled asynchronously/such that failures show up only in cloudwatch logs.
+- **CUMULUS-956**
+  - Migrated developer documentation and data-cookbooks to Docusaurus
+    - supports versioning of documentation
+  - Added `docs/docs-how-to.md` to outline how to do things like add new docs or locally install for testing.
+  - Deployment/CI scripts have been updated to work with the new format
+- **CUMULUS-811**
+  - Added new S3 functions to `@cumulus/common/aws`:
+    - `aws.s3TagSetToQueryString`: converts S3 TagSet array to querystring (for use with upload()).
+    - `aws.s3PutObject`: Returns promise of S3 `putObject`, which puts an object on S3
+    - `aws.s3CopyObject`: Returns promise of S3 `copyObject`, which copies an object in S3 to a new S3 location
+    - `aws.s3GetObjectTagging`: Returns promise of S3 `getObjectTagging`, which returns an object containing an S3 TagSet.
+  - `@/cumulus/common/aws.s3PutObject` defaults to an explicit `ACL` of 'private' if not overridden.
+  - `@/cumulus/common/aws.s3CopyObject` defaults to an explicit `TaggingDirective` of 'COPY' if not overridden.
+
+### Deprecated
+- **CUMULUS-811**
+  - Deprecated `@cumulus/ingest/aws.S3`. Member functions of this class will now
+    log warnings pointing to similar functionality in `@cumulus/common/aws`.
+
+## [v1.10.2] - 2018-10-24
+
+### Added
+- **CUMULUS-965**
+  - Added a `@cumulus/logger` package
 - **CUMULUS-885**
   - Added 'human readable' version identifiers to Lambda Versioning lambda aliases
 - **CUMULUS-705**
@@ -21,7 +59,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Adds an AsyncOperation ECS task to the `@cumulus/api` package, which will
     fetch an Lambda function, run it in ECS, and then store the result to the
     AsyncOperations table in DynamoDB.
-- **CUMULUS-851** Added workflow lambda versioning feature to allow in-flight workflows to use lambda versions that were in place when a workflow was initiated
+- **CUMULUS-851** - Added workflow lambda versioning feature to allow in-flight workflows to use lambda versions that were in place when a workflow was initiated
     - Updated Kes custom code to remove logic that used the CMA file key to determine template compilation logic.  Instead, utilize a `customCompilation` template configuration flag to indicate a template should use Cumulus's kes customized methods instead of 'core'.
 	- Added `useWorkflowLambdaVersions` configuration option to enable the lambdaVersioning feature set.   **This option is set to true by default** and should be set to false to disable the feature.
 	- Added uniqueIdentifier configuration key to S3 sourced lambdas to optionally support S3 lambda resource versioning within this scheme. This key must be unique for each modified version of the lambda package and must be updated in configuration each time the source changes.
@@ -43,6 +81,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `cleanUpProviders` combines the above in one function.
   - `@cumulus/integrations-tests/api.js`: `deleteGranule` and `deletePdr` functions to make `DELETE` requests to Cumulus API
   - `rules` API functionality for posting and deleting a rule and listing all rules
+  - `wait-for-deploy` lambda for use in the redeployment tests
 - `@cumulus/ingest/granule.js`: `ingestFile` inserts new `duplicate_found: true` field in the file's record if a duplicate file already exists on S3.
 - `@cumulus/api`: `/execution-status` endpoint requests and returns complete execution output if  execution output is stored in S3 due to size.
 - Added option to use environment variable to set CMR host in `@cumulus/cmrjs`.
@@ -57,6 +96,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- **CUMULUS-940** - modified `@cumulus/common/aws` `receiveSQSMessages` to take a parameter object instead of positional parameters.  All defaults remain the same, but now access to long polling is available through `options.waitTimeSeconds`.
+- **CUMULUS-948** - Update lambda functions `CNMToCMA` and `CnmResponse` in the `cumulus-data-shared` bucket and point the default stack to them.
 - **CUMULUS-782** - Updated `@cumulus/sync-granule` task and `Granule.ingestFile` in `@cumulus/ingest` to keep both old and new data when a destination file with different checksum already exists and `duplicateHandling` is `version`
 - Updated the config schema in `@cumulus/move-granules` to include the `moveStagedFiles` param.
 - **CUMULUS-778** - Updated config schema and documentation in `@cumulus/sync-granule` to include `duplicateHandling` parameter for specifying how duplicate filenames should be handled
@@ -71,6 +112,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - `getGranuleId` in `@cumulus/ingest` bug: `getGranuleId` was constructing an error using `filename` which was undefined. The fix replaces `filename` with the `uri` argument.
 - Fixes to `del` in `@cumulus/api/endpoints/granules.js` to not error/fail when not all files exist in S3 (e.g. delete granule which has only 2 of 3 files ingested).
+- `@cumulus/deployment/lib/crypto.js` now checks for private key existence properly.
 
 ## [v1.10.1] - 2018-09-4
 
@@ -552,7 +594,9 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.10.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.10.3...HEAD
+[v1.10.3]: https://github.com/nasa/cumulus/compare/v1.10.2...v1.10.3
+[v1.10.2]: https://github.com/nasa/cumulus/compare/v1.10.1...v1.10.2
 [v1.10.1]: https://github.com/nasa/cumulus/compare/v1.10.0...v1.10.1
 [v1.10.0]: https://github.com/nasa/cumulus/compare/v1.9.1...v1.10.0
 [v1.9.1]: https://github.com/nasa/cumulus/compare/v1.9.0...v1.9.1
