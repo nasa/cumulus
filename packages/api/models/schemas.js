@@ -304,13 +304,17 @@ module.exports.rule = {
           type: 'string',
           enum: ['onetime', 'scheduled', 'sns', 'kinesis']
         },
+        // Value is the target address, for a kinesis rule this is the arn, presumably for a SIPs rule lambda it's ... ?
         value: {
           type: 'string'
         },
-        arn: {
+        event_arn: {
           type: 'string',
           readonly: true
-        }
+        },
+        log_event_arn: {
+          type: 'string',
+          readonly: true
       },
       required: ['type']
     },
