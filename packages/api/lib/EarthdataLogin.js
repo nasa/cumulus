@@ -127,7 +127,7 @@ class EarthdataLogin extends OAuth2 {
         accessToken: response.body.access_token,
         refreshToken: response.body.refresh_token,
         username: response.body.endpoint.split('/').pop(),
-        expirationTime: Date.now() + (response.body.expires_in * 1000)
+        expirationTime: Date.now() + (86400000)
       };
     }
     catch (err) {
