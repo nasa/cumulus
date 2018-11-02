@@ -6,6 +6,7 @@ const pdr = require('@cumulus/ingest/pdr');
 const errors = require('@cumulus/common/errors');
 const log = require('@cumulus/common/log');
 const local = require('@cumulus/common/local-helpers');
+const { loadJSONTestData } = require('@cumulus/test-data');
 
 /**
  * Discover PDRs
@@ -106,7 +107,7 @@ function handler(event, context, callback) {
 exports.handler = handler;
 
 // use node index.js local to invoke this
-local.justLocalRun(() => {
-  const payload = require('@cumulus/test-data/cumulus_messages/discover-pdrs.json'); // eslint-disable-line global-require, max-len
+local.justLocalRun(async () => {
+  const payload = await loadJSONTestData('cumulus_messages/discover-pdrs.json');
   handler(payload, {}, (e, r) => console.log(e, r));
 });
