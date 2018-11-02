@@ -77,7 +77,7 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
 ];
 
-function findExecutionForGranule(taskInput, params) {
+function isExecutionForGranuleId(taskInput, params) {
   return taskInput.payload.granules && taskInput.payload.granules[0].granuleId === params.granuleId;
 }
 
@@ -499,7 +499,7 @@ describe('The S3 Ingest Granules workflow', () => {
           'PublishGranule',
           config.stackName,
           config.bucket,
-          findExecutionForGranule,
+          isExecutionForGranuleId,
           { granuleId: inputPayload.granules[0].granuleId }
         );
 
