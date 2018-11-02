@@ -8,7 +8,8 @@ const models = require('../../models');
 process.env.RulesTable = `RulesTable_${randomString()}`;
 process.env.stackName = 'my-stackName';
 process.env.kinesisConsumer = 'my-kinesisConsumer';
-process.env.bucket = 'my-bucket';
+process.env.KinesisRuleInput = 'my-ruleInput';
+process.env.bucket = randomString();
 const workflow = 'my-workflow';
 const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
 
@@ -46,19 +47,19 @@ test.before(async () => {
   // create Rules table
   ruleModel = new models.Rule();
   await ruleModel.createTable();
-
   await aws.s3().createBucket({ Bucket: process.env.bucket }).promise();
   await aws.s3().putObject({
     Bucket: process.env.bucket,
     Key: workflowfile,
     Body: 'test data'
   }).promise();
+
 });
 
 test.after.always(async () => {
   // cleanup table
-  await ruleModel.deleteTable();
-  await aws.recursivelyDeleteS3Bucket(process.env.bucket);
+  let testval1 = await ruleModel.deleteTable();
+  let testval2 = await aws.recursivelyDeleteS3Bucket(process.env.bucket);
 });
 
 test.serial('create and delete a onetime rule', async (t) => {
@@ -79,33 +80,29 @@ test.serial('create and delete a kinesis type rule', async (t) => {
     .then(async (rule) => {
       t.is(rule.name, kinesisRule.name);
       t.is(rule.rule.value, kinesisRule.rule.value);
-      t.false(rule.rule.arn === undefined);
-      // delete rule
+      t.false(rule.rule.event_arn === undefined);
       await rules.delete(rule);
     });
 });
 
-test.serial('update a kinesis type rule state, arn does not change', async (t) => {
+test.serial('update a kinesis type rule state, event_arn does not change', async (t) => {
   // create rule
   const rules = new models.Rule();
   await rules.create(kinesisRule);
   const rule = await rules.get({ name: kinesisRule.name });
-
   // update rule state
   const updated = { name: rule.name, state: 'ENABLED' };
   // deep copy rule
   const newRule = Object.assign({}, rule);
   newRule.rule = Object.assign({}, rule.rule);
   await rules.update(newRule, updated);
-
   t.true(newRule.state === 'ENABLED');
   //arn doesn't change
-  t.is(newRule.rule.arn, rule.rule.arn);
-
+  t.is(newRule.rule.event_arn, rule.rule.event_arn);
   await rules.delete(rule);
 });
 
-test.serial('update a kinesis type rule value, resulting in new arn', async (t) => {
+test.serial('update a kinesis type rule value, resulting in new event_arn', async (t) => {
   // create rule
   const rules = new models.Rule();
   await rules.create(kinesisRule);
@@ -123,7 +120,7 @@ test.serial('update a kinesis type rule value, resulting in new arn', async (t) 
 
   t.is(newRule.name, rule.name);
   t.not(newRule.rule.vale, rule.rule.value);
-  t.not(newRule.rule.arn, rule.rule.arn);
+  t.not(newRule.rule.event_arn, rule.rule.event_arn);
 
   await rules.delete(rule);
 });
@@ -143,9 +140,9 @@ test.serial('create a kinesis type rule, using the existing event source mapping
 
   t.not(newRule.name, rule.name);
   t.is(newRule.rule.value, rule.rule.value);
-  t.false(newRule.rule.arn === undefined);
+  t.false(newRule.rule.event_arn === undefined);
   // same event source mapping
-  t.is(newRule.rule.arn, rule.rule.arn);
+  t.is(newRule.rule.event_arn, rule.rule.event_arn);
 
   await rules.delete(rule);
   await rules.delete(newRule);
@@ -168,7 +165,7 @@ test.serial('it does not delete event source mapping if it exists for other rule
   const ruleTwo = await rules.get({ name: kinesisRuleTwo.name });
 
   // same event source mapping
-  t.is(ruleTwo.rule.arn, rule.rule.arn);
+  t.is(ruleTwo.rule.event_arn, rule.rule.event_arn);
 
   // delete the second rule, it should not delete the event source mapping
   await rules.delete(ruleTwo);
@@ -176,5 +173,9 @@ test.serial('it does not delete event source mapping if it exists for other rule
   // create third rule, it should use the existing event source mapping
   await rules.create(kinesisRuleThree);
   const ruleThree = await rules.get({ name: kinesisRuleThree.name });
-  t.is(ruleThree.rule.arn, rule.rule.arn);
+  t.is(ruleThree.rule.event_arn, rule.rule.event_arn);
+
+  // Cleanup -- this is required for repeated local testing, else localstack retains rules
+  await Promise.all([rule, ruleThree].map(r => rules.delete(r)));
+
 });
