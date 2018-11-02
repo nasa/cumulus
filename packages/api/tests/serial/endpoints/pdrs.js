@@ -62,7 +62,12 @@ test.before(async () => {
 
   // create fake granule records
   fakePdrs = ['completed', 'failed'].map(fakePdrFactory);
-  await Promise.all(fakePdrs.map((pdr) => pdrModel.create(pdr).then((record) => indexer.indexPdr(esClient, record, esIndex))));
+  await Promise.all(
+    fakePdrs.map(
+      (pdr) => pdrModel.create(pdr)
+        .then((record) => indexer.indexPdr(esClient, record, esIndex))
+    )
+  );
 });
 
 test.after.always(async () => {
