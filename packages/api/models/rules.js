@@ -17,8 +17,8 @@ class Rule extends Manager {
     });
 
     this.eventMapping = {event_arn: 'event_arn', log_event_arn: 'log_event_arn'};
-    this.kinesisSourceEvents = [{name: process.env.kinesisConsumer, type: 'event_arn'},
-                                {name: process.env.KinesisRuleInput, type: 'log_event_arn'}];
+    this.kinesisSourceEvents = [{name: process.env.kinesisConsumer, eventType: 'event_arn'},
+                                {name: process.env.KinesisRuleInput, eventType: 'log_event_arn'}];
     this.targetId = 'lambdaTarget';
   }
 
@@ -137,9 +137,10 @@ class Rule extends Manager {
       await this.addRule(item, payload);
       break;
     }
-    case 'kinesis':
+    case 'kinesis': {
       await this.addKinesisEventSources(item);
       break;
+    }
     default:
       throw new Error('Type not supported');
     }
@@ -149,13 +150,13 @@ class Rule extends Manager {
   }
 
   async addKinesisEventSources(item) {
-    const sourceEventPromises = this.kinesisSourceEvents.forEach((lambda) => {
-      self.addKinesisEventSources(item, lambda);
+    const sourceEventPromises = this.kinesisSourceEvents.map((lambda) => {
+      return this.addKinesisEventSource(item, lambda);
     });
     //TODO: Add this back into addKinesisEventSource or remove magic array index
     const eventAdd = await Promise.all(sourceEventPromises);
-    item.rule.event_arn = eventAdd[0];
-    item.rule.log_event_arn = eventAdd[1];
+    item.rule.event_arn = eventAdd[0].UUID;
+    item.rule.log_event_arn = eventAdd[1].UUID;
     return item;
   }
 
@@ -176,7 +177,8 @@ class Rule extends Manager {
     if (listData.EventSourceMappings && listData.EventSourceMappings.length > 0) {
       const mappingExists = listData.EventSourceMappings
         .find((mapping) => { // eslint-disable-line arrow-body-style
-          return (mapping.EventSourceArn === item.rule.value);
+          return (mapping.EventSourceArn === item.rule.value
+                  && mapping.FunctionArn.includes(lambda.name));
         });
       if (mappingExists) {
         if (mappingExists.State === 'Enabled') {
@@ -195,19 +197,17 @@ class Rule extends Manager {
     // create event source mapping
     const params = {
       EventSourceArn: item.rule.value,
-      FunctionName: lambda,
+      FunctionName: lambda.name,
       StartingPosition: 'TRIM_HORIZON',
       Enabled: item.state === 'ENABLED'
     };
-
     const data = await aws.lambda().createEventSourceMapping(params).promise();
-
     return data;
   }
 
   async updateKinesisEventSources(item) {
     const updateEvent = this.kinesisSourceEvents.map((lambda) => {
-      self.updateKinesisEventSource(item, lambda.type);
+      return this.updateKinesisEventSource(item, lambda.eventType);
     });
     return Promise.all(updateEvent);
   }
@@ -227,9 +227,9 @@ class Rule extends Manager {
   }
 
 
-  async delteKinesisEventSources(item) {
-    const deleteEventPromises = this.kinesisSourceEvents.forEach((lambda) => {
-      self.deleteKinesisEventSource(item, lambda.eventType);
+  async deleteKinesisEventSources(item) {
+    const deleteEventPromises = this.kinesisSourceEvents.map((lambda) => {
+      return this.deleteKinesisEventSource(item, lambda.eventType);
     });
     const eventDelete = await Promise.all(deleteEventPromises);
     //TODOD Remove magic array number
@@ -263,22 +263,23 @@ class Rule extends Manager {
    */
   async isEventSourceMappingShared(item, eventType) {
     const arnClause = `#rl.#${this.eventMapping[eventType]} = :${this.eventMapping[eventType]}`;
-    const kinesisRules = await super.scan({
-      names: {
-        '#nm': 'name',
-        '#rl': 'rule',
-        '#tp': 'type',
-        '#event_arn': 'event_arn',
-        '#log_event_arn': 'log_event_arn'
-      },
+    let queryNames = {
+      '#nm': 'name',
+      '#rl': 'rule',
+      '#tp': 'type',
+    };
+    queryNames[`#${eventType}`] = eventType;
 
-      fitler: '#nm <> :name AND #rl.#tp = :ruleType AND ' + arnClause,
-      values: {
+    let queryValues = {
         ':name': item.name,
         ':ruleType': item.rule.type,
-        ':event_arn': item.rule.event_arn,
-        ':log_event_arn': item.rule.log_event_arn
-      }
+    };
+    queryValues[`:${eventType}`] = item.rule[eventType];
+
+    const kinesisRules = await super.scan({
+      names: queryNames,
+      filter: '#nm <> :name AND #rl.#tp = :ruleType AND ' + arnClause,
+      values: queryValues
     });
     return (kinesisRules.Count && kinesisRules.Count > 0);
   }

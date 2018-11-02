@@ -315,6 +315,7 @@ module.exports.rule = {
         log_event_arn: {
           type: 'string',
           readonly: true
+        },
       },
       required: ['type']
     },
