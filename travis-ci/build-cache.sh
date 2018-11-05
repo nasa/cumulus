@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+set -evx
 
 # Determine what cache to use (based on all of the package.json files)
 MD5SUM=$(cat $(git ls-files | grep yarn.lock | sort) | md5sum | awk '{print $1}')
@@ -36,7 +36,7 @@ else
   yarn install
   yarn bootstrap-no-build
 
-  tar -czf "$CACHE_FILENAME" -C $(yarn cache dir)
+  tar -czf "$CACHE_FILENAME" -C $(yarn cache dir) .
 
   CACHE_SIZE=$(du -sh "$CACHE_FILENAME" | awk '{ print $1 }')
   echo "Cache size: $CACHE_SIZE"
