@@ -24,6 +24,7 @@ const {
 } = require('@cumulus/common');
 const {
   api: apiTestUtils,
+  executionsApi: executionsApiTestUtils,
   buildAndExecuteWorkflow,
   LambdaStep,
   conceptExists,
@@ -405,127 +406,139 @@ describe('The S3 Ingest Granules workflow', () => {
       workflowConfig = getConfigObject(workflowConfigFile, workflowName);
     });
 
-    describe('granule endpoint', () => {
-      let granule;
-      let cmrLink;
+    // describe('granule endpoint', () => {
+    //   let granule;
+    //   let cmrLink;
 
-      beforeAll(async () => {
-        const granuleResponse = await apiTestUtils.getGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
-        });
-        granule = JSON.parse(granuleResponse.body);
-        cmrLink = granule.cmrLink;
-      });
+    //   beforeAll(async () => {
+    //     const granuleResponse = await apiTestUtils.getGranule({
+    //       prefix: config.stackName,
+    //       granuleId: inputPayload.granules[0].granuleId
+    //     });
+    //     granule = JSON.parse(granuleResponse.body);
+    //     cmrLink = granule.cmrLink;
+    //   });
 
-      it('makes the granule available through the Cumulus API', async () => {
-        expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
-      });
+    //   it('makes the granule available through the Cumulus API', async () => {
+    //     expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
+    //   });
 
-      it('has the granule with a CMR link', () => {
-        expect(granule.cmrLink).not.toBeUndefined();
-      });
+    //   it('has the granule with a CMR link', () => {
+    //     expect(granule.cmrLink).not.toBeUndefined();
+    //   });
 
-      it('allows reingest and executes with success status', async () => {
-        const oldUpdatedAt = granule.updatedAt;
-        const oldExecution = granule.execution;
+    //   it('allows reingest and executes with success status', async () => {
+    //     const oldUpdatedAt = granule.updatedAt;
+    //     const oldExecution = granule.execution;
 
-        // Reingest Granule and compare the updatedAt times
-        const reingestGranuleResponse = await apiTestUtils.reingestGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
-        });
-        const reingestResponse = JSON.parse(reingestGranuleResponse.body);
-        expect(reingestResponse.status).toEqual('SUCCESS');
+    //     // Reingest Granule and compare the updatedAt times
+    //     const reingestGranuleResponse = await apiTestUtils.reingestGranule({
+    //       prefix: config.stackName,
+    //       granuleId: inputPayload.granules[0].granuleId
+    //     });
+    //     const reingestResponse = JSON.parse(reingestGranuleResponse.body);
+    //     expect(reingestResponse.status).toEqual('SUCCESS');
 
-        const secondGranuleResponse = await apiTestUtils.getGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
-        });
-        const secondGranule = JSON.parse(secondGranuleResponse.body);
-        expect(secondGranule.updatedAt).toBeGreaterThan(oldUpdatedAt);
+    //     const secondGranuleResponse = await apiTestUtils.getGranule({
+    //       prefix: config.stackName,
+    //       granuleId: inputPayload.granules[0].granuleId
+    //     });
+    //     const secondGranule = JSON.parse(secondGranuleResponse.body);
+    //     expect(secondGranule.updatedAt).toBeGreaterThan(oldUpdatedAt);
 
-        // Await reingest completion
-        await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
-        const updatedGranuleResponse = await apiTestUtils.getGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
-        });
-        const updatedGranule = JSON.parse(updatedGranuleResponse.body);
-        expect(updatedGranule.status).toEqual('completed');
-        expect(updatedGranule.execution).not.toEqual(oldExecution);
-      });
+    //     // Await reingest completion
+    //     await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
+    //     const updatedGranuleResponse = await apiTestUtils.getGranule({
+    //       prefix: config.stackName,
+    //       granuleId: inputPayload.granules[0].granuleId
+    //     });
+    //     const updatedGranule = JSON.parse(updatedGranuleResponse.body);
+    //     expect(updatedGranule.status).toEqual('completed');
+    //     expect(updatedGranule.execution).not.toEqual(oldExecution);
+    //   });
 
-      it('removeFromCMR removes the ingested granule from CMR', async () => {
-        const existsInCMR = await conceptExists(cmrLink);
+    //   it('removeFromCMR removes the ingested granule from CMR', async () => {
+    //     const existsInCMR = await conceptExists(cmrLink);
 
-        expect(existsInCMR).toEqual(true);
+    //     expect(existsInCMR).toEqual(true);
 
-        // Remove the granule from CMR
-        await apiTestUtils.removeFromCMR({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
-        });
+    //     // Remove the granule from CMR
+    //     await apiTestUtils.removeFromCMR({
+    //       prefix: config.stackName,
+    //       granuleId: inputPayload.granules[0].granuleId
+    //     });
 
-        // Check that the granule was removed
-        await waitForConceptExistsOutcome(cmrLink, false);
-        const doesExist = await conceptExists(cmrLink);
-        expect(doesExist).toEqual(false);
-      });
+    //     // Check that the granule was removed
+    //     await waitForConceptExistsOutcome(cmrLink, false);
+    //     const doesExist = await conceptExists(cmrLink);
+    //     expect(doesExist).toEqual(false);
+    //   });
 
-      it('applyWorkflow PublishGranule publishes the granule to CMR', async () => {
-        const existsInCMR = await conceptExists(cmrLink);
-        expect(existsInCMR).toEqual(false);
+    //   it('applyWorkflow PublishGranule publishes the granule to CMR', async () => {
+    //     const existsInCMR = await conceptExists(cmrLink);
+    //     expect(existsInCMR).toEqual(false);
 
-        // Publish the granule to CMR
-        await apiTestUtils.applyWorkflow({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId,
-          workflow: 'PublishGranule'
-        });
+    //     // Publish the granule to CMR
+    //     await apiTestUtils.applyWorkflow({
+    //       prefix: config.stackName,
+    //       granuleId: inputPayload.granules[0].granuleId,
+    //       workflow: 'PublishGranule'
+    //     });
 
-        await waitForConceptExistsOutcome(cmrLink, true);
-        const doesExist = await conceptExists(cmrLink);
-        expect(doesExist).toEqual(true);
-      });
+    //     await waitForConceptExistsOutcome(cmrLink, true);
+    //     const doesExist = await conceptExists(cmrLink);
+    //     expect(doesExist).toEqual(true);
+    //   });
 
-      it('can delete the ingested granule from the API', async () => {
-        // pre-delete: Remove the granule from CMR
-        const removeFromCmrResponse = await apiTestUtils.removeFromCMR({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
-        });
+    //   it('can delete the ingested granule from the API', async () => {
+    //     // pre-delete: Remove the granule from CMR
+    //     const removeFromCmrResponse = await apiTestUtils.removeFromCMR({
+    //       prefix: config.stackName,
+    //       granuleId: inputPayload.granules[0].granuleId
+    //     });
 
-        console.log(`remove from cmr response: ${JSON.stringify(removeFromCmrResponse)}`);
+    //     console.log(`remove from cmr response: ${JSON.stringify(removeFromCmrResponse)}`);
 
-        // Delete the granule
-        const deleteResponse = await apiTestUtils.deleteGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
-        });
+    //     // Delete the granule
+    //     const deleteResponse = await apiTestUtils.deleteGranule({
+    //       prefix: config.stackName,
+    //       granuleId: inputPayload.granules[0].granuleId
+    //     });
 
-        console.log(`delete granule response: ${JSON.stringify(deleteResponse)}`);
+    //     console.log(`delete granule response: ${JSON.stringify(deleteResponse)}`);
 
-        // Verify deletion
-        const granuleResponse = await apiTestUtils.getGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
-        });
-        const resp = JSON.parse(granuleResponse.body);
-        console.log(JSON.stringify(granuleResponse));
-        expect(resp.message).toEqual('Granule not found');
-      });
-    });
+    //     // Verify deletion
+    //     const granuleResponse = await apiTestUtils.getGranule({
+    //       prefix: config.stackName,
+    //       granuleId: inputPayload.granules[0].granuleId
+    //     });
+    //     const resp = JSON.parse(granuleResponse.body);
+    //     console.log(JSON.stringify(granuleResponse));
+    //     expect(resp.message).toEqual('Granule not found');
+    //   });
+    // });
 
     describe('executions endpoint', () => {
       let executionResponse;
+      let executions;
 
       beforeAll(async () => {
-        const executionApiResponse = await apiTestUtils.getExecution({
+        const executionsApiResponse = await executionsApiTestUtils.getExecutions({
+          prefix: config.stackName
+        });
+        console.log(executionApiResponse);
+        executions = JSON.parse(executionApiResponse.body);
+        const executionApiResponse = await executionsApiTestUtils.getExecution({
           prefix: config.stackName,
           arn: workflowExecution.executionArn
         });
         executionResponse = JSON.parse(executionApiResponse.body);
+      });
+
+      it('returns a list of exeuctions', async () => {
+        console.log('in the test');
+        console.log(executions);
+        expect(executions.length).toBeGreaterThan(0);
       });
 
       it('returns overall status and timing for the execution', async () => {
@@ -552,7 +565,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
       beforeAll(async () => {
         const executionArn = workflowExecution.executionArn;
-        const executionStatusResponse = await apiTestUtils.getExecutionStatus({
+        const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
           prefix: config.stackName,
           arn: executionArn
         });
@@ -616,40 +629,40 @@ describe('The S3 Ingest Granules workflow', () => {
       });
     });
 
-    describe('logs endpoint', () => {
-      it('returns logs with a specific execution name', async () => {
-        const executionARNTokens = workflowExecution.executionArn.split(':');
-        const logsExecutionName = executionARNTokens[executionARNTokens.length - 1];
-        const logsResponse = await apiTestUtils.getExecutionLogs({ prefix: config.stackName, executionName: logsExecutionName });
-        const logs = JSON.parse(logsResponse.body);
-        expect(logs.meta.count).not.toEqual(0);
-        logs.results.forEach((log) => {
-          expect(log.sender).not.toBe(undefined);
-          expect(log.executions).toEqual(logsExecutionName);
-        });
-      });
-    });
+    // describe('logs endpoint', () => {
+    //   it('returns logs with a specific execution name', async () => {
+    //     const executionARNTokens = workflowExecution.executionArn.split(':');
+    //     const logsExecutionName = executionARNTokens[executionARNTokens.length - 1];
+    //     const logsResponse = await apiTestUtils.getExecutionLogs({ prefix: config.stackName, executionName: logsExecutionName });
+    //     const logs = JSON.parse(logsResponse.body);
+    //     expect(logs.meta.count).not.toEqual(0);
+    //     logs.results.forEach((log) => {
+    //       expect(log.sender).not.toBe(undefined);
+    //       expect(log.executions).toEqual(logsExecutionName);
+    //     });
+    //   });
+    // });
 
-    describe('workflows endpoint', () => {
-      it('returns a list of workflows', async () => {
-        const workflowsResponse = await apiTestUtils.getWorkflows({ prefix: config.stackName });
+    // describe('workflows endpoint', () => {
+    //   it('returns a list of workflows', async () => {
+    //     const workflowsResponse = await apiTestUtils.getWorkflows({ prefix: config.stackName });
 
-        const workflows = JSON.parse(workflowsResponse.body);
-        expect(workflows).not.toBe(undefined);
-        expect(workflows.length).toBeGreaterThan(0);
-      });
+    //     const workflows = JSON.parse(workflowsResponse.body);
+    //     expect(workflows).not.toBe(undefined);
+    //     expect(workflows.length).toBeGreaterThan(0);
+    //   });
 
-      it('returns the expected workflow', async () => {
-        const workflowResponse = await apiTestUtils.getWorkflow({
-          prefix: config.stackName,
-          workflowName: workflowName
-        });
-        const foundWorkflow = JSON.parse(workflowResponse.body);
-        const foundKeys = Object.keys(foundWorkflow.definition.States);
-        const configKeys = Object.keys(workflowConfig.States);
-        expect(foundWorkflow.definition.Comment).toEqual(workflowConfig.Comment);
-        expect(foundKeys).toEqual(configKeys);
-      });
-    });
+    //   it('returns the expected workflow', async () => {
+    //     const workflowResponse = await apiTestUtils.getWorkflow({
+    //       prefix: config.stackName,
+    //       workflowName: workflowName
+    //     });
+    //     const foundWorkflow = JSON.parse(workflowResponse.body);
+    //     const foundKeys = Object.keys(foundWorkflow.definition.States);
+    //     const configKeys = Object.keys(workflowConfig.States);
+    //     expect(foundWorkflow.definition.Comment).toEqual(workflowConfig.Comment);
+    //     expect(foundKeys).toEqual(configKeys);
+    //   });
+    // });
   });
 });

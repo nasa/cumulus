@@ -44,7 +44,7 @@ function get(event, cb) {
  */
 function handler(event, context) {
   return handle(event, context, true, (cb) => {
-    if (event.httpMethod === 'GET' && event.pathParameters) {
+    if (event.httpMethod === 'GET' && event.pathParameters && event.pathParameters.arn) {
       return get(event, cb);
     }
 

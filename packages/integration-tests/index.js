@@ -29,6 +29,7 @@ const {
 const sfnStep = require('./sfnStep');
 const api = require('./api/api');
 const rulesApi = require('./api/rules');
+const executionsApi = require('./api/executions');
 const cmr = require('./cmr.js');
 const lambda = require('./lambda');
 const granule = require('./granule.js');
@@ -647,6 +648,7 @@ async function getExecutions(workflowName, stackName, bucket, maxExecutionResult
 module.exports = {
   api,
   rulesApi,
+  executionsApi,
   buildWorkflow,
   testWorkflow,
   executeWorkflow,
