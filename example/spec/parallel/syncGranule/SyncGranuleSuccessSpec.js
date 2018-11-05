@@ -176,7 +176,7 @@ describe('The Sync Granules workflow', () => {
     });
   });
 
-  describe('The reingest granule api', () => {
+  describe('when a reingest granule is triggered via the API', () => {
     let oldExecution;
     let oldUpdatedAt;
     let reingestResponse;
@@ -201,7 +201,7 @@ describe('The Sync Granules workflow', () => {
       console.log(`reingest granule response: ${JSON.stringify(reingestResponse)}`);
     });
 
-    it('executes with success status', () => {
+    it('executes successfully', () => {
       expect(reingestResponse.status).toEqual('SUCCESS');
     });
 

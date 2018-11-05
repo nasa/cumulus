@@ -392,7 +392,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(granule.cmrLink).not.toBeUndefined();
       });
 
-      describe('reingest granule api', () => {
+      describe('when a reingest granule is triggered via the API', () => {
         let oldExecution;
         let oldUpdatedAt;
         let reingestResponse;
@@ -410,7 +410,7 @@ describe('The S3 Ingest Granules workflow', () => {
           console.log(`reingest granule response: ${JSON.stringify(reingestResponse)}`);
         });
 
-        it('executes with success status', () => {
+        it('executes successfully', () => {
           expect(reingestResponse.status).toEqual('SUCCESS');
         });
 
