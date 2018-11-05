@@ -20,6 +20,7 @@ const {
   fakeUserFactory
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
+const MessageTemplateStore = require('../../../lib/MessageTemplateStore');
 
 const createBucket = (Bucket) => aws.s3().createBucket({ Bucket }).promise();
 
@@ -49,12 +50,20 @@ let esIndex;
 let granuleModel;
 let authToken;
 let userModel;
+let messageTemplateStore;
+
 test.before(async () => {
   esIndex = randomString();
   process.env.GranulesTable = randomString();
   process.env.UsersTable = randomString();
   process.env.stackName = randomString();
   process.env.internal = randomString();
+
+  messageTemplateStore = new MessageTemplateStore({
+    bucket: process.env.internal,
+    s3: aws.s3(),
+    stackName: process.env.stackName
+  });
 
   // create esClient
   esClient = await Search.es('fakehost');
@@ -326,8 +335,7 @@ test.serial('reingest a granule', async (t) => {
   // fake workflow
   process.env.bucket = process.env.internal;
   const message = JSON.parse(fakeDescribeExecutionResult.input);
-  const key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
-  await putObject({ Bucket: process.env.bucket, Key: key, Body: 'test data' });
+  await messageTemplateStore.put(message.meta.workflow_name, 'test data');
 
   const sfn = aws.sfn();
 
@@ -380,8 +388,7 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   //fake in-place workflow
   process.env.bucket = process.env.internal;
   const message = JSON.parse(fakeSFResponse.execution.input);
-  const key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
-  await putObject({ Bucket: process.env.bucket, Key: key, Body: 'fake in-place workflow' });
+  await messageTemplateStore.put(message.meta.workflow_name, 'fake in-place workflow');
 
   const fakeDescribeExecutionResult = {
     output: JSON.stringify({

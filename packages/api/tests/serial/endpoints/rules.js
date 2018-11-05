@@ -13,6 +13,7 @@ const {
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
+const MessageTemplateStore = require('../../../lib/MessageTemplateStore');
 
 const esIndex = randomString();
 
@@ -21,7 +22,6 @@ process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.bucket = randomString();
 const workflowName = randomString();
-const workflowfile = `${process.env.stackName}/workflows/${workflowName}.json`;
 
 const testRule = {
   name: 'make_coffee',
@@ -38,17 +38,22 @@ const testRule = {
 };
 
 let authHeaders;
+let messageTemplateStore;
 let ruleModel;
 let userModel;
+
 test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
 
   await aws.s3().createBucket({ Bucket: process.env.bucket }).promise();
-  await aws.s3().putObject({
-    Bucket: process.env.bucket,
-    Key: workflowfile,
-    Body: 'test data'
-  }).promise();
+
+  messageTemplateStore = new MessageTemplateStore({
+    bucket: process.env.bucket,
+    s3: aws.s3(),
+    stackName: process.env.stackName
+  });
+
+  await messageTemplateStore.put(workflowName, 'test data');
 
   ruleModel = new models.Rule();
   await ruleModel.createTable();

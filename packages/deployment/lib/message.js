@@ -4,6 +4,8 @@ const get = require('lodash.get');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
 const omit = require('lodash.omit');
+const MessageTemplateStore = require('@cumulus/api/lib/MessageTemplateStore');
+const { s3 } = require('@cumulus/common/aws');
 
 /**
  * Because both kes and message adapter use Mustache for templating,
@@ -123,9 +125,16 @@ function template(name, workflow, config, outputs) {
 
   // add the s3 uri to all the workflow templates for teh current stack
   const templatesUris = {};
-  const stepFunctions = get(config, 'stepFunctions', {});
+  const stepFunctions = config.stepFunctions || {};
+
+  const messageTemplateStore = new MessageTemplateStore({
+    bucket,
+    s3: s3(),
+    stackName: config.stack
+  });
+
   Object.keys(stepFunctions).forEach((sf) => {
-    templatesUris[sf] = `s3://${bucket}/${config.stack}/workflows/${sf}.json`;
+    templatesUris[sf] = messageTemplateStore.templateS3Url(sf);
   });
 
   const t = {
@@ -175,17 +184,24 @@ async function generateTemplates(config, outputs, uploader) {
     const templates = Object.keys(config.stepFunctions)
       .map((name) => template(name, config.stepFunctions[name], config, outputs));
 
+    const messageTemplateStore = new MessageTemplateStore({
+      bucket,
+      s3: s3(),
+      stackName: stack
+    });
+
     // uploads the generated templates to S3
     const workflows = [];
     console.log('Uploading Cumulus Message Templates for each Workflow ...');
     for (let ctr = 0; ctr < templates.length; ctr += 1) {
-      const t = templates[ctr];
-      const name = t.meta.workflow_name;
-      const key = `${stack}/workflows/${name}.json`;
-      await uploader(bucket, key, JSON.stringify(t)); // eslint-disable-line no-await-in-loop
+      const messageTemplate = templates[ctr];
+      const name = messageTemplate.meta.workflow_name;
+
+      await messageTemplateStore.put(name); // eslint-disable-line no-await-in-loop
+
       workflows.push({
         name,
-        template: `s3://${bucket}/${key}`,
+        template: messageTemplateStore.templateS3Url(name),
         definition: config.stepFunctions[name]
       });
     }

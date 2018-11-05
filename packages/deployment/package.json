@@ -39,6 +39,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cumulus/api": "^1.10.3",
     "@cumulus/common": "^1.10.3",
     "aws-sdk": "^2.238.1",
     "extract-zip": "^1.6.6",

@@ -18,6 +18,7 @@ const { Search } = require('../../../es/search');
 const models = require('../../../models');
 const { fakeGranuleFactory, fakeCollectionFactory, deleteAliases } = require('../../../lib/testUtils');
 const { bootstrapElasticSearch } = require('../../../lambdas/bootstrap');
+const MessageTemplateStore = require('../../../lib/MessageTemplateStore');
 const granuleSuccess = require('../../data/granule_success.json');
 const granuleFailure = require('../../data/granule_failed.json');
 const pdrFailure = require('../../data/pdr_failure.json');
@@ -633,8 +634,13 @@ test.serial('reingest a granule', async (t) => {
   const input = JSON.stringify(granuleSuccess);
 
   const payload = JSON.parse(input);
-  const key = `${process.env.stackName}/workflows/${payload.meta.workflow_name}.json`;
-  await aws.s3().putObject({ Bucket: process.env.bucket, Key: key, Body: 'test data' }).promise();
+
+  const messageTemplateStore = new MessageTemplateStore({
+    bucket: process.env.bucket,
+    stackName: process.env.stackName,
+    s3: aws.s3()
+  });
+  await messageTemplateStore.put(payload.meta.workflow_name, 'test data');
 
   payload.payload.granules[0].granuleId = randomString();
   const records = await indexer.granule(payload);

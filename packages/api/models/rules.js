@@ -2,11 +2,11 @@
 
 'use strict';
 
-const get = require('lodash.get');
 const { invoke, Events } = require('@cumulus/ingest/aws');
 const aws = require('@cumulus/common/aws');
 const Manager = require('./base');
 const { rule } = require('./schemas');
+const MessageTemplateStore = require('../lib/MessageTemplateStore');
 
 class Rule extends Manager {
   constructor() {
@@ -92,20 +92,22 @@ class Rule extends Manager {
   }
 
   static async buildPayload(item) {
-    // makes sure the workflow exists
-    const bucket = process.env.bucket;
-    const key = `${process.env.stackName}/workflows/${item.workflow}.json`;
-    const exists = await aws.fileExists(bucket, key);
+    const messageTemplateStore = new MessageTemplateStore({
+      bucket: process.env.bucket,
+      s3: aws.s3(),
+      stackName: process.env.stackName
+    });
 
-    if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${key} for ${item.name}`);
+    if (!(await messageTemplateStore.exists(item.workflow))) {
+      throw new Error(`Workflow message template for "${item.name}" not found`);
+    }
 
-    const template = `s3://${bucket}/${key}`;
     return {
-      template,
+      template: messageTemplateStore.templateS3Url(item.workflowName),
       provider: item.provider,
       collection: item.collection,
-      meta: get(item, 'meta', {}),
-      payload: get(item, 'payload', {})
+      meta: item.meta || {},
+      payload: item.payload || {}
     };
   }
 

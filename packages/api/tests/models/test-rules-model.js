@@ -4,13 +4,13 @@ const test = require('ava');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');
+const MessageTemplateStore = require('../../lib/MessageTemplateStore');
 
 process.env.RulesTable = `RulesTable_${randomString()}`;
 process.env.stackName = 'my-stackName';
 process.env.kinesisConsumer = 'my-kinesisConsumer';
 process.env.bucket = 'my-bucket';
 const workflow = 'my-workflow';
-const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
 
 const kinesisRule = {
   name: 'my_kinesis_rule',
@@ -48,11 +48,14 @@ test.before(async () => {
   await ruleModel.createTable();
 
   await aws.s3().createBucket({ Bucket: process.env.bucket }).promise();
-  await aws.s3().putObject({
-    Bucket: process.env.bucket,
-    Key: workflowfile,
-    Body: 'test data'
-  }).promise();
+
+  const messageTemplateStore = new MessageTemplateStore({
+    bucket: process.env.bucket,
+    s3: aws.s3(),
+    stackName: process.env.stackName
+  });
+
+  await messageTemplateStore.put(workflow, 'test data');
 });
 
 test.after.always(async () => {

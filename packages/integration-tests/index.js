@@ -25,6 +25,7 @@ const { sleep } = require('@cumulus/common/util');
 const {
   models: { Provider, Collection, Rule }
 } = require('@cumulus/api');
+const MessageTemplateStore = require('@cumulus/api/lib/MessageTemplateStore');
 
 const sfnStep = require('./sfnStep');
 const api = require('./api/api');
@@ -97,9 +98,14 @@ async function getClusterArn(stackName) {
  * @returns {Promise.<Object>} template as a JSON object
  */
 function getWorkflowTemplate(stackName, bucketName, workflowName) {
-  const key = `${stackName}/workflows/${workflowName}.json`;
-  return s3().getObject({ Bucket: bucketName, Key: key }).promise()
-    .then((templateJson) => JSON.parse(templateJson.Body.toString()));
+  const messageTemplateStore = new MessageTemplateStore({
+    bucket: bucketName,
+    stack: stackName,
+    s3: s3()
+  });
+
+  return messageTemplateStore.get(workflowName)
+    .then(JSON.parse);
 }
 
 /**
