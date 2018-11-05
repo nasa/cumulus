@@ -45,9 +45,8 @@ async function tryCatchExit(cleanupCallback, wrappedFunction, ...args) {
       console.log(`Cleanup failed, ${e}.   Stack may need to be manually cleaned up.`);
     }
     // We should find a better way to do this
-    process.exit(1);
+    process.exit(1); // eslint-disable-line no-process-exit
   }
-  return Promise.reject(new Error('tryCatchExit failed unexpectedly'));
 }
 
 /**
@@ -72,7 +71,7 @@ async function getStreamStatus(StreamName) {
  * @returns {string} current stream status: 'ACTIVE'
  * @throws {Error} - Error describing current stream status
  */
-async function waitForActiveStream(streamName, initialDelaySecs = 10, maxRetries = 10){
+async function waitForActiveStream(streamName, initialDelaySecs = 10, maxRetries = 10) {
   let streamStatus = 'UNDEFINED';
   let stream;
   const displayName = streamName.split('-').pop();
@@ -189,9 +188,10 @@ async function getShardIterator(streamName) {
 /**
  * Gets records from a kinesis stream using a shard iterator.
  *
- * @param  {string} shardIterator - Kinesis stream shard iterator.
- *                                  Shard iterators must be generated using getShardIterator.
- * @returns {Array}               - Array of records from kinesis stream.
+ * @param {string} shardIterator - Kinesis stream shard iterator. Shard
+ *   iterators must be generated using getShardIterator.
+ * @param {Array} records
+ * @returns {Array} Array of records from kinesis stream.
  */
 async function getRecords(shardIterator, records = []) {
   const data = await kinesis.getRecords({ ShardIterator: shardIterator }).promise();
@@ -238,7 +238,8 @@ async function waitForTestSf(recordIdentifier, maxWaitTimeSecs, firstStep = 'SfS
     timeWaitedSecs += (waitPeriodMs / 1000);
     const executions = await getExecutions('KinesisTriggerTest', testConfig.stackName, testConfig.bucket, maxExecutionResults);
     // Search all recent executions for target recordIdentifier
-    for (const execution of executions) {
+    for (let ctr = 0; ctr < executions.length; ctr += 1) {
+      const execution = executions[ctr];
       const taskInput = await lambdaStep.getStepInput(execution.executionArn, firstStep);
       if (taskInput !== null && taskInput.payload.identifier === recordIdentifier) {
         workflowExecution = execution;
@@ -246,7 +247,8 @@ async function waitForTestSf(recordIdentifier, maxWaitTimeSecs, firstStep = 'SfS
       }
     }
   }
-  /* eslint-disable no-await-in-loop */
+  /* eslint-enable no-await-in-loop */
+
   if (timeWaitedSecs < maxWaitTimeSecs) return workflowExecution;
   throw new Error('Never found started workflow.');
 }
