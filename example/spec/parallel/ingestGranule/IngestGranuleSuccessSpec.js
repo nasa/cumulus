@@ -407,7 +407,6 @@ describe('The S3 Ingest Granules workflow', () => {
             granuleId: inputPayload.granules[0].granuleId
           });
           reingestResponse = JSON.parse(reingestGranuleResponse.body);
-          console.log(`reingest granule response: ${JSON.stringify(reingestResponse)}`);
         });
 
         it('executes successfully', () => {
@@ -420,6 +419,18 @@ describe('The S3 Ingest Granules workflow', () => {
 
         it('overwrites granule files', async () => {
           // Await reingest completion
+          const reingestGranuleExecution = await waitForTestExecutionStart(
+            workflowName,
+            config.stackName,
+            config.bucket,
+            isExecutionForGranuleId,
+            { granuleId: inputPayload.granules[0].granuleId }
+          );
+
+          console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
+
+          await waitForCompletedExecution(reingestGranuleExecution.executionArn);
+
           await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
           const updatedGranuleResponse = await apiTestUtils.getGranule({
             prefix: config.stackName,
