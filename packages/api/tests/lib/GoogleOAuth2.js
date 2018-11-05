@@ -6,7 +6,7 @@ const GoogleOAuth2 = require('../../lib/GoogleOAuth2');
 
 test('The GoogleOAuth2 constructor throws a TypeError if googleOAuth2Client is not specified', (t) => {
   const err = t.throws(() => {
-    new GoogleOAuth2(null, {});// eslint-disable-line no-new
+    new GoogleOAuth2(null, {});
   },
   TypeError);
 
@@ -15,7 +15,7 @@ test('The GoogleOAuth2 constructor throws a TypeError if googleOAuth2Client is n
 
 test('The GoogleOAuth2 constructor throws a TypeError if googlePlusPeopleClient is not specified', (t) => {
   const err = t.throws(() => {
-    new GoogleOAuth2({}, null);// eslint-disable-line no-new
+    new GoogleOAuth2({}, null);
   },
   TypeError);
 
