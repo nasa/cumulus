@@ -4,7 +4,6 @@ const { describeExecution } = require('@cumulus/common/step-functions');
 const { IncompleteError } = require('@cumulus/common/errors');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const log = require('@cumulus/common/log');
-const pMap = require('p-map');
 
 // The default number of times to re-check for completion
 const defaultRetryLimit = 30;
@@ -153,13 +152,8 @@ function describeExecutionStatus(executionArn) {
  */
 async function checkPdrStatuses(event) {
   const runningExecutionArns = event.input.running || [];
-  const concurrency = Number(process.env.CONCURRENCY || 10);
 
-  return pMap(
-    runningExecutionArns,
-    describeExecutionStatus,
-    { concurrency }
-  )
+  return Promise.all(runningExecutionArns.map(describeExecutionStatus))
     .then(groupExecutionsByStatus)
     .then((groupedExecutions) => {
       const counter = getCounterFromEvent(event) + 1;
