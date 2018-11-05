@@ -45,6 +45,9 @@ else
 
   gzip "${MD5SUM}.tar"
 
+  CACHE_SIZE=$(du -sh "$CACHE_FILENAME" | awk '{ print $1 }')
+  echo "Cache size: $CACHE_SIZE"
+
   echo "Uploading cache"
   STRING_TO_SIGN_PUT="PUT
 

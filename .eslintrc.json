@@ -152,6 +152,7 @@
       ],
       "rules": {
         "no-console": "off",
+        "no-new": "off",
         "no-param-reassign": "off"
       }
     },
