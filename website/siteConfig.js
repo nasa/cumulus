@@ -48,7 +48,7 @@ const siteConfig = {
   /* algolia values are injected via the inject-vars-docs-config script */
   algolia: {
     apiKey: process.env.DOCSEARCH_API_KEY,
-    indexName: process.env.DOCSEARCH_NAME_INDEX
+    indexName: process.env.DOCSEARCH_INDEX_NAME
   },
 
   /* Colors for website */
