@@ -473,7 +473,7 @@ async function cleanupProviders(stackName, bucket, providersDirectory, postfix) 
  * @param {string} config - Test config used to set environment variables and template rules data
  * @param {string} dataDirectory - the directory of rules json files
  * @param {string} overrides - override rule fields
- * @returns {Promise.<number>} number of rules added
+ * @returns {Promise.<Array>} array of Rules added
  */
 async function addRules(config, dataDirectory, overrides) {
   const { stackName, bucket } = config;
@@ -487,7 +487,7 @@ async function addRules(config, dataDirectory, overrides) {
     console.log(`adding rule ${templatedRule.name}`);
     return r.create(templatedRule);
   }));
-  return Promise.all(promises).then((rs) => rs.length);
+  return Promise.all(promises); //.then((rs) => rs.length);
 }
 
 /**
@@ -681,6 +681,7 @@ module.exports = {
   waitForAsyncOperationStatus,
   getLambdaVersions: lambda.getLambdaVersions,
   getLambdaAliases: lambda.getLambdaAliases,
+  getEventSourceMapping: lambda.getEventSourceMapping,
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
   waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs,
   getExecutions,
