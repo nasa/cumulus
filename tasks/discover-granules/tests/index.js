@@ -1,18 +1,28 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
 const test = require('ava');
-const mur = require('./fixtures/mur.json');
-const cloneDeep = require('lodash.clonedeep');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const {
   randomString,
   validateConfig,
   validateOutput
 } = require('@cumulus/common/test-utils');
-const { discoverGranules } = require('../index');
+const { promisify } = require('util');
+
+const { discoverGranules } = require('..');
+
+const readFile = promisify(fs.readFile);
+
+test.beforeEach(async (t) => {
+  const eventPath = path.join(__dirname, 'fixtures', 'mur.json');
+  const rawEvent = await readFile(eventPath, 'utf8');
+  t.context.event = JSON.parse(rawEvent);
+});
 
 test('discover granules sets the correct dataType for granules', async (t) => {
-  const event = cloneDeep(mur);
+  const { event } = t.context;
   event.config.bucket = randomString();
   event.config.collection.provider_path = '/granules/fake_granules';
   event.config.provider = {
@@ -50,7 +60,7 @@ test('discover granules sets the correct dataType for granules', async (t) => {
 
 // This test is broken and will be fixed by CUMULUS-427
 test.skip('discover granules using FTP', async (t) => {
-  const event = cloneDeep(mur);
+  const { event } = t.context;
   event.config.bucket = randomString();
   event.config.collection.provider_path = '/granules/fake_granules';
   event.config.useList = true;
@@ -91,7 +101,7 @@ test('discover granules using SFTP', async (t) => {
   // Create providerPathDirectory and internal bucket
   await s3().createBucket({ Bucket: internalBucketName }).promise();
 
-  const event = cloneDeep(mur);
+  const { event } = t.context;
   event.config.collection.provider_path = 'granules/fake_granules';
   event.config.provider = {
     id: 'MODAPS',
@@ -123,7 +133,7 @@ test('discover granules using SFTP', async (t) => {
 });
 
 test('discover granules using HTTP', async (t) => {
-  const event = cloneDeep(mur);
+  const { event } = t.context;
   event.config.bucket = randomString();
   event.config.collection.provider_path = '/granules/fake_granules';
   event.config.provider = {
@@ -177,7 +187,7 @@ test('discover granules using S3', async (t) => {
       Body: `This is ${file}`
     }).promise()));
 
-  const event = cloneDeep(mur);
+  const { event } = t.context;
   event.config.collection.provider_path = providerPath;
   event.config.provider = {
     id: 'MODAPS',

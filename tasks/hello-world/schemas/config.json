@@ -8,8 +8,16 @@
       "description": "true to throw an error for the task, failing the task"
     },
     "passOnRetry": {
-      "type": "boolean", 
+      "type": "boolean",
       "description": "If configured to fail, true to pass (not throw an error) when retried"
+    },
+    "bucket": {
+      "type": "string",
+      "description": "bucket to write state information to handle the passOnRetry. Required if passOnRetry is true."
+    },
+    "execution": {
+      "type": "string",
+      "description": "execution name, used to write state information for passOnRetry. Required if passOnRetry is true."
     }
   }
 }
