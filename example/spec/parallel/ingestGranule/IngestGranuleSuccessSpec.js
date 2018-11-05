@@ -526,8 +526,7 @@ describe('The S3 Ingest Granules workflow', () => {
         const executionsApiResponse = await executionsApiTestUtils.getExecutions({
           prefix: config.stackName
         });
-        console.log(executionApiResponse);
-        executions = JSON.parse(executionApiResponse.body);
+        executions = JSON.parse(executionsApiResponse.body);
         const executionApiResponse = await executionsApiTestUtils.getExecution({
           prefix: config.stackName,
           arn: workflowExecution.executionArn
@@ -536,9 +535,10 @@ describe('The S3 Ingest Granules workflow', () => {
       });
 
       it('returns a list of exeuctions', async () => {
-        console.log('in the test');
-        console.log(executions);
-        expect(executions.length).toBeGreaterThan(0);
+        expect(executions.results.length).toBeGreaterThan(0);
+        const foundExecution = executions.results.find((e) => e.arn === workflowExecution.executionArn);
+        expect(foundExecution.status).toBeDefined();
+        expect(foundExecution.createdAt).toBeDefined();
       });
 
       it('returns overall status and timing for the execution', async () => {
