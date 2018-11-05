@@ -8,7 +8,7 @@ hide_title: true
 
 ## Run a Local Server
 
-Environment variables `DOCSEARCH_API_KEY` and `DOCSEARCH_INDEX_NAME` must be set for search to work.
+Environment variables `DOCSEARCH_API_KEY` and `DOCSEARCH_INDEX_NAME` must be set for search to work. At the moment, search is only truly functional on prod because that is the only website we have registered to be indexed with DocSearch (see below on search).
 
 ```sh
 git clone git@github.com:nasa/cumulus
@@ -45,7 +45,7 @@ We lean heavily on Docusaurus for versioning. Their suggestions and walkthrough 
 
 ### Search
 
-Search on our documentation site is taken care of by [DocSearch](https://community.algolia.com/docsearch/). We provide an `apiKey` and `indexName` in `website/siteConfig.js` and we leave the rest (indexing and searching) to DocSearch. Our builds expect environment variables for both these values to exist - `DOCSEARCH_API_KEY` and `DOCSEARCH_NAME_INDEX`.
+Search on our documentation site is taken care of by [DocSearch](https://community.algolia.com/docsearch/). We have been provided with an `apiKey` and an `indexName` by DocSearch that we include in our `website/siteConfig.js` file. The rest, indexing and actual searching, we leave to DocSearch. Our builds expect environment variables for both these values to exist - `DOCSEARCH_API_KEY` and `DOCSEARCH_NAME_INDEX`.
 
 ## Add a new task
 The tasks list in docs/tasks.md is generated from the list of task package in the task folder. Do not edit the docs/tasks.md file directly.
