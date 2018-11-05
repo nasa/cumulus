@@ -3,6 +3,7 @@
 const Crypto = require('@cumulus/ingest/crypto').DefaultProvider;
 const Manager = require('./base');
 const providerSchema = require('./schemas').provider;
+const Rule = require('./rules');
 
 class Provider extends Manager {
   constructor() {
@@ -65,6 +66,35 @@ class Provider extends Manager {
     }
 
     return super.create(item);
+  }
+
+  /**
+   * Delete a provider
+   *
+   * @param {string} id - the provider id
+   */
+  async delete(id) {
+    if (!(await this.exists(id))) throw new Error('Provider does not exist');
+
+    if (await this.hasAssociatedRules(id)) {
+      throw new Error('Cannot delete a provider that has associated rules');
+    }
+
+    await super.delete({ id });
+  }
+
+  /**
+   * Test if there are any rules associated with the provider
+   *
+   * @param {string} id - the provider id
+   * @returns {Promise<boolean>}
+   */
+  async hasAssociatedRules(id) {
+    const ruleModel = new Rule();
+    const rules = (await ruleModel.scan()).Items;
+    const associatedRules = rules.filter((r) => r.provider === id);
+
+    return associatedRules.length > 0;
   }
 }
 
