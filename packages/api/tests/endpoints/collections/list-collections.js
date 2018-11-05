@@ -4,6 +4,7 @@ const test = require('ava');
 const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
+const cmrjs = require('@cumulus/cmrjs');
 const models = require('../../../models');
 const bootstrap = require('../../../lambdas/bootstrap');
 const collectionsEndpoint = require('../../../endpoints/collections');
@@ -90,10 +91,12 @@ test.serial('default returns list of collections', async (t) => {
   };
 
   const stub = sinon.stub(EsCollection.prototype, 'getStats').returns([t.context.testCollection]);
+  const cmrStub = sinon.stub(cmrjs, 'searchConcept').returns([]);
 
   return testEndpoint(collectionsEndpoint, listEvent, (response) => {
     const { results } = JSON.parse(response.body);
     stub.restore();
+    cmrStub.restore();
     t.is(results.length, 1);
     t.is(results[0].name, t.context.testCollection.name);
   });

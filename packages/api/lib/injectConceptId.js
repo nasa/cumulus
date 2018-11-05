@@ -29,13 +29,12 @@ const updateRecordWithConceptId = async (collectionRecord) => {
 /**
  * Add concept-id to collection record
  * @param {Array} collections - array of collection results
- * @param {function} conceptIdFunction - function to use to return a
- *                   conceptId. Defaults to getConceptId.
  * @returns {Array} - input array with each element updated with its found concept-id or null.
  */
 const injectConceptIds = async (collections) => {
-  const injectedResultPromises = collections.results.map(module.exports.updateRecordWithConceptId);
-  const injectedResults = await Promise.all(injectedResultPromises);
+  const injectedResults = await Promise.all(
+    collections.results.map(module.exports.updateRecordWithConceptId)
+  );
   collections.results = injectedResults; // eslint-disable-line no-param-reassign
   return collections;
 };
