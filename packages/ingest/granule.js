@@ -1,7 +1,6 @@
 'use strict';
 
 const crypto = require('crypto');
-const deprecate = require('depd')('my-module');
 const fs = require('fs-extra');
 const cloneDeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
@@ -21,6 +20,7 @@ const {
   aws, CollectionConfigStore, constructCollectionId, log
 } = require('@cumulus/common');
 const errors = require('@cumulus/common/errors');
+const { deprecate } = require('@cumulus/common/util');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const { sftpMixin } = require('./sftp');
 const { ftpMixin } = require('./ftp');
@@ -342,7 +342,8 @@ class Granule {
    * @private
    */
   getBucket(file) {
-    deprecate();
+    deprecate('@cumulus/ingest/granule/Ingest.getBucket()', '1.10.2');
+
     return this.addUrlPathToFile(this.addBucketToFile(file));
   }
 

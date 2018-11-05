@@ -15,6 +15,16 @@ class Provider extends Manager {
     this.removeAdditional = 'all';
   }
 
+  /**
+   * Check if a given provider exists
+   *
+   * @param {string} id - provider id
+   * @returns {boolean}
+   */
+  async exists(id) {
+    return super.exists({ id });
+  }
+
   encrypt(value) {
     return Crypto.encrypt(value);
   }
