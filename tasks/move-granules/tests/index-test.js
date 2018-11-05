@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
 const test = require('ava');
 const {
   buildS3Uri,
@@ -18,8 +19,11 @@ const errors = require('@cumulus/common/errors');
 const {
   randomString, validateConfig, validateInput, validateOutput
 } = require('@cumulus/common/test-utils');
-const payload = require('./data/payload.json');
+const { promisify } = require('util');
+
 const { moveGranules } = require('..');
+
+const readFile = promisify(fs.readFile);
 
 async function uploadFiles(files, bucket) {
   await Promise.all(files.map((file) => promiseS3Upload({
@@ -39,7 +43,7 @@ async function updateFileTags(files, bucket, TagSet) {
 }
 
 function buildPayload(t) {
-  const newPayload = JSON.parse(JSON.stringify(payload));
+  const newPayload = t.context.payload;
 
   newPayload.config.bucket = t.context.stagingBucket;
   newPayload.config.buckets.internal.name = t.context.stagingBucket;
@@ -98,6 +102,10 @@ test.beforeEach(async (t) => {
     s3().createBucket({ Bucket: t.context.publicBucket }).promise(),
     s3().createBucket({ Bucket: t.context.protectedBucket }).promise()
   ]);
+
+  const payloadPath = path.join(__dirname, 'data', 'payload.json');
+  const rawPayload = await readFile(payloadPath, 'utf8');
+  t.context.payload = JSON.parse(rawPayload);
 });
 
 test.afterEach.always(async (t) => {
@@ -190,33 +198,33 @@ test.serial('should overwrite files', async (t) => {
     Body: 'Something'
   };
 
-  console.log(`CUMULUS-970 debugging: start s3 upload. params: ${JSON.stringify(uploadParams)}`);
+  t.log(`CUMULUS-970 debugging: start s3 upload. params: ${JSON.stringify(uploadParams)}`);
 
   await promiseS3Upload(uploadParams);
 
-  console.log(`CUMULUS-970 debugging: start move granules. params: ${JSON.stringify(newPayload)}`);
+  t.log(`CUMULUS-970 debugging: start move granules. params: ${JSON.stringify(newPayload)}`);
 
   let output = await moveGranules(newPayload);
 
-  console.log('CUMULUS-970 debugging: move granules complete');
+  t.log('CUMULUS-970 debugging: move granules complete');
 
   await validateOutput(t, output);
 
-  console.log(`CUMULUS-970 debugging: head object destKey ${destKey}`);
+  t.log(`CUMULUS-970 debugging: head object destKey ${destKey}`);
 
   const existingFile = await headObject(
     t.context.publicBucket,
     destKey
   );
 
-  console.log('CUMULUS-970 debugging: headobject complete');
+  t.log('CUMULUS-970 debugging: headobject complete');
 
   // re-stage source jpg file with different content
   const content = randomString();
 
   uploadParams.Body = content;
 
-  console.log(`CUMULUS-970 debugging: start s3 upload. params: ${JSON.stringify(uploadParams)}`);
+  t.log(`CUMULUS-970 debugging: start s3 upload. params: ${JSON.stringify(uploadParams)}`);
 
   await promiseS3Upload({
     Bucket: t.context.stagingBucket,
@@ -224,22 +232,22 @@ test.serial('should overwrite files', async (t) => {
     Body: content
   });
 
-  console.log(`CUMULUS-970 debugging: start move granules. params: ${JSON.stringify(newPayload)}`);
+  t.log(`CUMULUS-970 debugging: start move granules. params: ${JSON.stringify(newPayload)}`);
 
   output = await moveGranules(newPayload);
 
-  console.log('CUMULUS-970 debugging:  move granules complete');
+  t.log('CUMULUS-970 debugging:  move granules complete');
 
   const updatedFile = await headObject(
     t.context.publicBucket,
     destKey
   );
 
-  console.log(`CUMULUS-970 debugging: start list objects. params: ${JSON.stringify({ Bucket: t.context.publicBucket })}`);
+  t.log(`CUMULUS-970 debugging: start list objects. params: ${JSON.stringify({ Bucket: t.context.publicBucket })}`);
 
   const objects = await s3().listObjects({ Bucket: t.context.publicBucket }).promise();
 
-  console.log('CUMULUS-970 debugging: list objects complete');
+  t.log('CUMULUS-970 debugging: list objects complete');
 
   t.is(objects.Contents.length, 1);
 

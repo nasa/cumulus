@@ -38,6 +38,17 @@ class Collection extends Manager {
     });
   }
 
+  /**
+   * Check if a given collection exists
+   *
+   * @param {string} name - collection name
+   * @param {string} version - collection version
+   * @returns {boolean}
+   */
+  async exists(name, version) {
+    return super.exists({ name, version });
+  }
+
   async create(item) {
     const collectionConfigStore = new CollectionConfigStore(
       process.env.internal,
