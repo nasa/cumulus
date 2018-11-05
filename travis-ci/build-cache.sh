@@ -33,7 +33,7 @@ if [ "$CACHE_EXISTS_STATUS_CODE" = "200" ]; then
 else
   # If the cache does not exist then create it and upload it to S3
   echo "Creating cache"
-  yarn install
+  yarn
   yarn bootstrap-no-build
 
   tar -czf "$CACHE_FILENAME" -C $(yarn cache dir) .
