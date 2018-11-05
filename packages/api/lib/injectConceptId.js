@@ -1,5 +1,7 @@
 'use strict';
 
+const cloneDeep = require('lodash.clonedeep');
+
 const cmrjs = require('@cumulus/cmrjs');
 
 /**
@@ -8,7 +10,8 @@ const cmrjs = require('@cumulus/cmrjs');
  * @param {Object} collectionRecord - cumulus collection record.
  * @returns {string} CMR's concept-id for the record, or null.
  */
-const getConceptId = async (collectionRecord) => {
+const updateRecordWithConceptId = async (collectionRecord) => {
+  let updatedCollectionRecord = cloneDeep(collectionRecord);
   const searchParams = {
     short_name: collectionRecord.name || '',
     version: collectionRecord.version || '',
@@ -17,8 +20,10 @@ const getConceptId = async (collectionRecord) => {
 
   const cmrResult = await cmrjs.searchConcept('collections', searchParams, []);
 
-  if (cmrResult.length !== 1) return null;
-  return cmrResult[0].id;
+  let conceptId = null;
+  if (cmrResult.length === 1) conceptId = cmrResult[0].id;
+  updatedCollectionRecord = Object.assign(collectionRecord, { conceptId: conceptId });
+  return updatedCollectionRecord;
 };
 
 /**
@@ -28,17 +33,14 @@ const getConceptId = async (collectionRecord) => {
  *                   conceptId. Defaults to getConceptId.
  * @returns {Array} - input array with each element updated with its found concept-id or null.
  */
-const injectConceptId = async (collections, conceptIdFunction = getConceptId) => {
-  const conceptIds = collections.results.map(conceptIdFunction);
-  const ids = await Promise.all(conceptIds);
-  const updatedResults = collections.results.map(
-    (results, index) => Object.assign(results, { conceptId: ids[index] })
-  );
-  collections.results = updatedResults; // eslint-disable-line no-param-reassign
+const injectConceptIds = async (collections, conceptIdFunction = updateRecordWithConceptId) => {
+  const injectedResultPromises = collections.results.map(conceptIdFunction);
+  const injectedResults = await Promise.all(injectedResultPromises);
+  collections.results = injectedResults; // eslint-disable-line no-param-reassign
   return collections;
 };
 
 module.exports = {
-  getConceptId,
-  injectConceptId
+  updateRecordWithConceptId,
+  injectConceptIds
 };
