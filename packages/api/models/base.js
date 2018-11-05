@@ -1,9 +1,9 @@
 'use strict';
 
-const deprecate = require('depd')('@cumulus/api/Manager');
 const Ajv = require('ajv');
 const cloneDeep = require('lodash.clonedeep');
 const aws = require('@cumulus/common/aws');
+const { deprecate } = require('@cumulus/common/util');
 const pWaitFor = require('p-wait-for');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { errorify } = require('../lib/utils');
@@ -97,12 +97,12 @@ class Manager {
   }
 
   static createTable(tableName, hash, range = null) {
-    deprecate();
+    deprecate('@cumulus/api/models/base Manager.createTable()', '1.10.3', 'the createTable() instance method');
     return createTable(tableName, hash, range);
   }
 
   static deleteTable(tableName) {
-    deprecate();
+    deprecate('@cumulus/api/models/base Manager.deleteTable()', '1.10.3', 'the deleteTable() instance method');
     return deleteTable(tableName);
   }
 
@@ -149,6 +149,24 @@ class Manager {
    */
   deleteTable() {
     return deleteTable(this.tableName);
+  }
+
+  /**
+   * Check if an item exists
+   *
+   * @param {Object} Key - the key to check for
+   * @returns {boolean}
+   */
+  async exists(Key) {
+    try {
+      await this.get(Key);
+      return true;
+    }
+    catch (err) {
+      if (err instanceof RecordDoesNotExist) return false;
+
+      throw err;
+    }
   }
 
   /**
