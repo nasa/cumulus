@@ -86,9 +86,9 @@ test('deleteConcept throws error when request is bad', (t) => {
       stub.restore();
       t.fail();
     })
-    .catch((err) => {
+    .catch((error) => {
       stub.restore();
-      t.true(err.toString().includes('CMR error message: "Bad request"'));
+      t.true(error.toString().includes('CMR error message: "Bad request"'));
     });
 });
 
