@@ -64,13 +64,13 @@ exports.syncGranule = function syncGranule(event) {
   const collection = config.collection;
   const forceDownload = config.forceDownload || false;
   const downloadBucket = config.downloadBucket;
-  const reingestGranule = config.reingestGranule || false;
+  const reingestGranule = config.reingestGranule === true || false;
 
   const duplicateHandling = get(
     config, 'duplicateHandling', get(collection, 'duplicateHandling', 'error')
   );
 
-  log.debug(`Configured duplicateHandling value: ${duplicateHandling}`);
+  log.debug(`Configured duplicateHandling value: ${duplicateHandling}, reginestGranule ${reingestGranule}`);
 
   // use stack and collection names to prefix fileStagingDir
   const fileStagingDir = path.join(
@@ -99,10 +99,6 @@ exports.syncGranule = function syncGranule(event) {
     .then((granules) => {
       if (ingest.end) ingest.end();
       const output = { granules };
-      // warning message in case of reingest granule
-      if (reingestGranule && ['error', 'skip', 'version'].includes(duplicateHandling)) {
-        output.warning = 'The granule files may be overwritten';
-      }
       if (collection && collection.process) output.process = collection.process;
       if (config.pdr) output.pdr = config.pdr;
       log.debug(`SyncGranule Complete. Returning output: ${JSON.stringify(output)}`);

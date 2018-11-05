@@ -85,7 +85,7 @@
       "default": "error"
     },
     "reingestGranule": {
-      "type": "boolean",
+      "type": ["boolean", "null"],
       "description": "Indicates that the workflow is a manually triggered re-ingest.",
       "default": false
     }

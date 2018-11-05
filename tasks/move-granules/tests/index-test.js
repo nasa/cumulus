@@ -4,13 +4,13 @@ const fs = require('fs');
 const test = require('ava');
 const {
   buildS3Uri,
+  listS3ObjectsV2,
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
   s3,
   s3GetObjectTagging,
   promiseS3Upload,
   headObject,
-  listS3ObjectsV2,
   parseS3Uri
 } = require('@cumulus/common/aws');
 const clonedeep = require('lodash.clonedeep');
@@ -65,7 +65,6 @@ function getExpectedOutputFileNames(t) {
     `s3://${t.context.publicBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`
   ];
 }
-
 /**
  * Get file metadata for a set of files.
  * headObject from localstack doesn't return LastModified with millisecond,
@@ -76,7 +75,9 @@ function getExpectedOutputFileNames(t) {
  */
 async function getFilesMetadata(files) {
   const getFileRequests = files.map(async (f) => {
-    const s3list = await listS3ObjectsV2({ Bucket: f.bucket, Prefix: parseS3Uri(f.filename).Key });
+    const s3list = await listS3ObjectsV2(
+      { Bucket: f.bucket, Prefix: parseS3Uri(f.filename).Key }
+    );
     const s3object = s3list.filter((s3file) => s3file.Key === parseS3Uri(f.filename).Key);
 
     return {
@@ -426,7 +427,7 @@ test.serial('when duplicateHandling is "skip", does not overwrite or create new'
   });
 });
 
-async function granuleFilesOverwrittenTest(t, duplicateHandling, reingestGranule, warning) {
+async function granuleFilesOverwrittenTest(t, duplicateHandling, reingestGranule) {
   let newPayload = buildPayload(t);
   newPayload.config.duplicateHandling = duplicateHandling;
   newPayload.config.reingestGranule = reingestGranule;
@@ -471,12 +472,6 @@ async function granuleFilesOverwrittenTest(t, duplicateHandling, reingestGranule
     t.true(new Date(f.LastModified).getTime() > new Date(existingFileMeta.LastModified).getTime());
   });
 
-  if (warning) {
-    t.truthy(output.warning);
-    t.true(output.warning.length > 0);
-  }
-  else t.falsy(Object.prototype.hasOwnProperty.call(output, 'warning'));
-
   output.granules[0].files.forEach((f) => {
     if (f.filename.startsWith(`${outputHdfFile}.v`) || f.filename.endsWith('.cmr.xml')) {
       t.falsy(f.duplicate_found);
@@ -489,19 +484,18 @@ test.serial('when duplicateHandling is "replace", do overwrite files', async (t)
   await granuleFilesOverwrittenTest(t, 'replace');
 });
 
-test.serial('when duplicateHandling is "error" and reingestGranule is true, do overwrite files, return warning', async (t) => {
-  await granuleFilesOverwrittenTest(t, 'error', true, true);
+test.serial('when duplicateHandling is "error" and reingestGranule is true, do overwrite files', async (t) => {
+  await granuleFilesOverwrittenTest(t, 'error', true);
 });
 
-test.serial('when duplicateHandling is "skip" and reingestGranule is true, do overwrite files, return warning', async (t) => {
-  await granuleFilesOverwrittenTest(t, 'skip', true, true);
+test.serial('when duplicateHandling is "skip" and reingestGranule is true, do overwrite files', async (t) => {
+  await granuleFilesOverwrittenTest(t, 'skip', true);
 });
 
-test.serial('when duplicateHandling is "version" and reingestGranule is true, do overwrite files, return warning', async (t) => {
-  await granuleFilesOverwrittenTest(t, 'version', true, true);
+test.serial('when duplicateHandling is "version" and reingestGranule is true, do overwrite files', async (t) => {
+  await granuleFilesOverwrittenTest(t, 'version', true);
 });
 
-test.serial('when duplicateHandling is "replace" and reingestGranule is true, do overwrite files, no warning', async (t) => {
-  await granuleFilesOverwrittenTest(t, 'replace', true, false);
+test.serial('when duplicateHandling is "replace" and reingestGranule is true, do overwrite files', async (t) => {
+  await granuleFilesOverwrittenTest(t, 'replace', true);
 });
-

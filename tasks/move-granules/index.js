@@ -207,9 +207,12 @@ async function moveFileRequest(file, sourceBucket, duplicateHandling, reingestGr
 * @param {Object} granulesObject - an object of the granules where the key is the granuleId
 * @param {string} sourceBucket - source bucket location of files
 * @param {string} duplicateHandling - how to handle duplicate files
+* @param {boolean} reingestGranule - indicate if the granule is manually reingested
 * @returns {Object} the object with updated granules
 **/
-async function moveFilesForAllGranules(granulesObject, sourceBucket, duplicateHandling, reingestGranule) {
+async function moveFilesForAllGranules(
+  granulesObject, sourceBucket, duplicateHandling, reingestGranule
+) {
   const moveFileRequests = Object.keys(granulesObject).map(async (granuleKey) => {
     const granule = granulesObject[granuleKey];
     const cmrFileFormat = /.*\.cmr\.xml$/;
@@ -323,10 +326,12 @@ async function moveGranules(event) {
   const distEndpoint = get(config, 'distribution_endpoint');
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const collection = config.collection;
-  const reingestGranule = config.reingestGranule || false;
+  const reingestGranule = config.reingestGranule === true || false;
   const duplicateHandling = get(
     config, 'duplicateHandling', get(collection, 'duplicateHandling', 'error')
   );
+
+  log.debug(`Configured duplicateHandling value: ${duplicateHandling}, reginestGranule ${reingestGranule}`);
 
   const input = get(event, 'input', []);
 
@@ -344,33 +349,27 @@ async function moveGranules(event) {
   // allows us to disable moving the files
   if (moveStagedFiles) {
     // move files from staging location to final location
-    allGranules = await moveFilesForAllGranules(allGranules, bucket, duplicateHandling, reingestGranule);
+    allGranules = await moveFilesForAllGranules(
+      allGranules, bucket, duplicateHandling, reingestGranule
+    );
 
     // update cmr.xml files with correct online access urls
     await updateCmrFileAccessURLs(cmrFiles, allGranules, allFiles, distEndpoint);
   }
 
-  // warning message in case of reingest granule
-  let warning;
-  if (reingestGranule && ['error', 'skip', 'version'].includes(duplicateHandling)) {
-    warning = 'The granule files may be overwritten';
-  }
+  return {
+    granules: Object.keys(allGranules).map((k) => {
+      const granule = allGranules[k];
 
-  const granules = Object.keys(allGranules).map((k) => {
-    const granule = allGranules[k];
+      // Just return the bucket name with the granules
+      granule.files.map((f) => {
+        f.bucket = f.bucket.name; /* eslint-disable-line no-param-reassign */
+        return f;
+      });
 
-    // Just return the bucket name with the granules
-    granule.files.map((f) => {
-      f.bucket = f.bucket.name; /* eslint-disable-line no-param-reassign */
-      return f;
-    });
-    return granule;
-  });
-
-  const output = { granules };
-  if (warning) output.warning = warning;
-
-  return output;
+      return granule;
+    })
+  };
 }
 
 exports.moveGranules = moveGranules;
