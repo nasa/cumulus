@@ -4,10 +4,7 @@ const cloneDeep = require('lodash.clonedeep');
 
 const {
   rulesApi: rulesApiTestUtils,
-  getExecutions,
-  timeout,
-  LambdaStep,
-  waitForTestExecutionStartStart
+  waitForTestExecutionStart
 } = require('@cumulus/integration-tests');
 
 const {
@@ -17,11 +14,6 @@ const {
 
 const config = loadConfig();
 
-const lambdaStep = new LambdaStep();
-
-const waitPeriodMs = 1000;
-
-const maxWaitForStartedExecutionSecs = 60 * 5;
 
 /**
  * Remove params added to the rule when it is saved into dynamo
@@ -41,7 +33,6 @@ function removeRuleAddedParams(rule) {
 }
 
 describe('When I create a scheduled rule via the Cumulus API', () => {
-  let response;
   const scheduledRuleName = timestampedName('SchedHelloWorldIntegrationTestRule');
   const scheduledHelloWorldRule = {
     name: scheduledRuleName,
@@ -57,7 +48,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
 
   beforeAll(async () => {
     // Create a scheduled rule
-    response = await rulesApiTestUtils.postRule({
+    await rulesApiTestUtils.postRule({
       prefix: config.stackName,
       rule: scheduledHelloWorldRule
     });
@@ -76,8 +67,8 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
       expect(() => waitForTestExecutionStart({
         workflowName: scheduledHelloWorldRule.workflow,
         stackName: config.stackName,
-        bucket: config.bucket
-        findExecutionFn: (taskInput, params) => 
+        bucket: config.bucket,
+        findExecutionFn: (taskInput, params) =>
           taskInput.meta.triggerRule && taskInput.meta.triggerRule === params.ruleName,
         findExecutionFnParams: { ruleName: scheduledHelloWorldRule.name }
       })).toThrowError(Error, 'Never found started workflow.');
@@ -130,14 +121,14 @@ describe('When I create a one-time rule via the Cumulus API', () => {
 
     beforeAll(async () => {
       console.log(`Waiting for execution of ${helloWorldRule.workflow} triggered by rule`);
-      execution = await waitForTestExecutionStart(
-        workflowName: scheduledHelloWorldRule.workflow,
+      execution = await waitForTestExecutionStart({
+        workflowName: helloWorldRule.workflow,
         stackName: config.stackName,
-        bucket: config.bucket
-        findExecutionFn: (taskInput, params) => 
+        bucket: config.bucket,
+        findExecutionFn: (taskInput, params) =>
           taskInput.meta.triggerRule && taskInput.meta.triggerRule === params.ruleName,
-        findExecutionFnParams: { ruleName: scheduledHelloWorldRule.name }
-      );
+        findExecutionFnParams: { ruleName: helloWorldRule.name }
+      });
       console.log(`Execution ARN: ${execution.executionArn}`);
     });
 
