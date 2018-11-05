@@ -30,7 +30,9 @@ const {
   conceptExists,
   getOnlineResources,
   waitForConceptExistsOutcome,
-  waitUntilGranuleStatusIs
+  waitUntilGranuleStatusIs,
+  waitForTestExecutionStart,
+  waitForCompletedExecution
 } = require('@cumulus/integration-tests');
 
 const {
@@ -75,6 +77,10 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
 ];
+
+function isExecutionForGranuleId(taskInput, params) {
+  return taskInput.payload.granules && taskInput.payload.granules[0].granuleId === params.granuleId;
+}
 
 describe('The S3 Ingest Granules workflow', () => {
   const testId = createTimestampedTestId(config.stackName, 'IngestGranuleSuccess');
@@ -259,7 +265,7 @@ describe('The S3 Ingest Granules workflow', () => {
     let lambdaOutput;
     let files;
     let movedTaggings;
-    const existCheck = [];
+    let existCheck = [];
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
@@ -268,9 +274,12 @@ describe('The S3 Ingest Granules workflow', () => {
         const { Bucket, Key } = parseS3Uri(file.filename);
         return s3GetObjectTagging(Bucket, Key);
       }));
-      existCheck[0] = await s3ObjectExists({ Bucket: files[0].bucket, Key: files[0].filepath });
-      existCheck[1] = await s3ObjectExists({ Bucket: files[1].bucket, Key: files[1].filepath });
-      existCheck[2] = await s3ObjectExists({ Bucket: files[2].bucket, Key: files[2].filepath });
+
+      existCheck = await Promise.all([
+        s3ObjectExists({ Bucket: files[0].bucket, Key: files[0].filepath }),
+        s3ObjectExists({ Bucket: files[1].bucket, Key: files[1].filepath }),
+        s3ObjectExists({ Bucket: files[2].bucket, Key: files[2].filepath })
+      ]);
     });
 
     afterAll(async () => {
@@ -372,13 +381,15 @@ describe('The S3 Ingest Granules workflow', () => {
 
   describe('an SNS message', () => {
     let lambdaOutput;
-    const existCheck = [];
+    let existCheck = [];
 
     beforeAll(async () => {
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
       executionName = lambdaOutput.cumulus_meta.execution_name;
-      existCheck[0] = await s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` });
-      existCheck[1] = await s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` });
+      existCheck = await Promise.all([
+        s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }),
+        s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` })
+      ]);
     });
 
     it('is published on a successful workflow completion', () => {
@@ -485,6 +496,18 @@ describe('The S3 Ingest Granules workflow', () => {
           workflow: 'PublishGranule'
         });
 
+        const publishGranuleExecution = await waitForTestExecutionStart(
+          'PublishGranule',
+          config.stackName,
+          config.bucket,
+          isExecutionForGranuleId,
+          { granuleId: inputPayload.granules[0].granuleId }
+        );
+
+        console.log(`Wait for completed execution ${publishGranuleExecution.executionArn}`);
+
+        await waitForCompletedExecution(publishGranuleExecution.executionArn);
+
         await waitForConceptExistsOutcome(cmrLink, true);
         const doesExist = await conceptExists(cmrLink);
         expect(doesExist).toEqual(true);
@@ -492,20 +515,16 @@ describe('The S3 Ingest Granules workflow', () => {
 
       it('can delete the ingested granule from the API', async () => {
         // pre-delete: Remove the granule from CMR
-        const removeFromCmrResponse = await apiTestUtils.removeFromCMR({
+        await apiTestUtils.removeFromCMR({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
-
-        console.log(`remove from cmr response: ${JSON.stringify(removeFromCmrResponse)}`);
 
         // Delete the granule
-        const deleteResponse = await apiTestUtils.deleteGranule({
+        await apiTestUtils.deleteGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
-
-        console.log(`delete granule response: ${JSON.stringify(deleteResponse)}`);
 
         // Verify deletion
         const granuleResponse = await apiTestUtils.getGranule({
@@ -513,7 +532,6 @@ describe('The S3 Ingest Granules workflow', () => {
           granuleId: inputPayload.granules[0].granuleId
         });
         const resp = JSON.parse(granuleResponse.body);
-        console.log(JSON.stringify(granuleResponse));
         expect(resp.message).toEqual('Granule not found');
       });
     });
