@@ -8,6 +8,7 @@ const AWS = require('aws-sdk');
 const moment = require('moment');
 const log = require('@cumulus/common/log');
 const errors = require('@cumulus/common/errors');
+const { deprecate } = require('@cumulus/common/util');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { describeExecution } = require('@cumulus/common/step-functions');
 
@@ -154,7 +155,12 @@ class Events {
 
 class S3 {
   static parseS3Uri(uri) {
-    log.warn('@cumulus/ingest/aws/S3.parseUri is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws.parseS3Uri instead.');
+    deprecate(
+      '@cumulus/ingest/aws/S3.parseUri()',
+      '1.10.2',
+      '@cumulus/common/aws.parseS3Uri()'
+    );
+
     const parsed = url.parse(uri);
     if (parsed.protocol !== 's3:') {
       throw new Error('uri must be a S3 uri, e.g. s3://bucketname');
@@ -167,8 +173,13 @@ class S3 {
   }
 
   static async copy(source, dstBucket, dstKey, isPublic = false) {
+    deprecate(
+      '@cumulus/ingest/aws/S3.copy()',
+      '1.10.2',
+      '@cumulus/common/aws.s3CopyObject()'
+    );
+
     const s3 = new AWS.S3();
-    log.warn('@cumulus/ingest/aws/S3.copy is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws.s3CopyObject instead.');
 
     const params = {
       Bucket: dstBucket,
@@ -181,8 +192,13 @@ class S3 {
   }
 
   static async list(bucket, prefix) {
+    deprecate(
+      '@cumulus/ingest/aws/S3.list()',
+      '1.10.2',
+      '@cumulus/common/aws.listS3ObjectsV2()'
+    );
+
     const s3 = new AWS.S3();
-    log.warn('@cumulus/ingest/aws/S3.list is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws.listS3ObjectsV2 instead.');
 
     const params = {
       Bucket: bucket,
@@ -193,7 +209,12 @@ class S3 {
   }
 
   static async delete(bucket, key) {
-    log.warn('@cumulus/ingest/aws/S3.delete is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws.deleteS3Object instead.');
+    deprecate(
+      '@cumulus/ingest/aws/S3.delete()',
+      '1.10.2',
+      '@cumulus/common/aws.deleteS3Object()'
+    );
+
     const s3 = new AWS.S3();
 
     const params = {
@@ -205,7 +226,12 @@ class S3 {
   }
 
   static async put(bucket, key, body, acl = 'private', meta = null) {
-    log.warn('@cumulus/ingest/aws/S3.put is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws.s3PutObject instead.');
+    deprecate(
+      '@cumulus/ingest/aws/S3.put()',
+      '1.10.2',
+      '@cumulus/common/aws.s3PutObject()'
+    );
+
     const params = {
       Bucket: bucket,
       Key: key,
@@ -221,7 +247,12 @@ class S3 {
   }
 
   static async get(bucket, key) {
-    log.warn('@cumulus/ingest/aws/S3.get is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws.getS3Object instead.');
+    deprecate(
+      '@cumulus/ingest/aws/S3.get()',
+      '1.10.2',
+      '@cumulus/common/aws.getS3Object()'
+    );
+
     const params = {
       Bucket: bucket,
       Key: key
@@ -231,7 +262,12 @@ class S3 {
   }
 
   static async upload(bucket, key, body, acl = 'private') {
-    log.warn('@cumulus/ingest/aws/S3.upload is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws.promiseS3Upload instead.');
+    deprecate(
+      '@cumulus/ingest/aws/S3.upload()',
+      '1.10.2',
+      '@cumulus/common/aws.promiseS3Upload()'
+    );
+
     const s3 = new AWS.S3();
 
     const params = {
@@ -254,7 +290,12 @@ class S3 {
    */
 
   static async fileExists(bucket, key) {
-    log.warn('@cumulus/ingest/aws/S3.fileExists is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/aws/fileExists() instead.');
+    deprecate(
+      '@cumulus/ingest/aws/S3.fileExists()',
+      '1.10.2',
+      '@cumulus/common/aws.fileExists()'
+    );
+
     const s3 = new AWS.S3();
     try {
       const r = await s3.headObject({ Key: key, Bucket: bucket }).promise();
@@ -495,7 +536,11 @@ class KMS {
 
 class StepFunction {
   static async getExecution(arn, ignoreMissingExecutions = false) {
-    log.warn('@cumulus/ingest/aws/StepFunction.getExecution is deprecated as of Cumulus v1.10.2.  Use @cumulus/common/step-functions/describeExecution instead.');
+    deprecate(
+      '@cumulus/ingest/aws/StepFunction.getExecution()',
+      '1.10.2',
+      '@cumulus/common/step-functions/describeExecution()'
+    );
 
     try {
       return await describeExecution(arn);
