@@ -145,7 +145,6 @@ describe('The Sync Granules workflow', () => {
       expect(lambdaOutput.payload).toEqual(expectedPayload);
     });
 
-    // eslint-disable-next-line max-len
     it('receives meta.input_granules with files objects updated to include file staging location', () => {
       expect(lambdaOutput.meta.input_granules).toEqual(expectedPayload.granules);
     });
