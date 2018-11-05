@@ -3,7 +3,7 @@
 set -ex
 
 # Determine what cache to use (based on all of the package.json files)
-MD5SUM=$(cat $(git ls-files | grep package.json | sort) | md5sum | awk '{print $1}')
+MD5SUM=$(cat $(git ls-files | grep yarn.lock | sort) | md5sum | awk '{print $1}')
 CACHE_FILENAME="${MD5SUM}.tar.gz"
 KEY="travis-ci-cache/${CACHE_FILENAME}"
 
@@ -52,7 +52,7 @@ ${DATE}
     -H "Date: ${DATE}" \
     -H "Authorization: AWS ${CACHE_AWS_ACCESS_KEY_ID}:${SIGNATURE}" \
     https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY}
-  tar -xzf "$CACHE_FILENAME"
+  tar -xzf "$CACHE_FILENAME" -C $(yarn cache dir)
   rm "$CACHE_FILENAME"
 else
   echo "No cache found"

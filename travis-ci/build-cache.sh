@@ -3,7 +3,7 @@
 set -e
 
 # Determine what cache to use (based on all of the package.json files)
-MD5SUM=$(cat $(git ls-files | grep package.json | sort) | md5sum | awk '{print $1}')
+MD5SUM=$(cat $(git ls-files | grep yarn.lock | sort) | md5sum | awk '{print $1}')
 CACHE_FILENAME="${MD5SUM}.tar.gz"
 KEY="travis-ci-cache/${CACHE_FILENAME}"
 
@@ -33,17 +33,10 @@ if [ "$CACHE_EXISTS_STATUS_CODE" = "200" ]; then
 else
   # If the cache does not exist then create it and upload it to S3
   echo "Creating cache"
-  npm install
-  npm run bootstrap-no-build
+  yarn install
+  yarn bootstrap-no-build
 
-  for p in $(git ls-files | grep package.json); do
-    NODE_MODULES_DIR="$(dirname $p)/node_modules"
-    if [ -d "$NODE_MODULES_DIR" ]; then
-      tar -rf "${MD5SUM}.tar" "$(dirname $p)/node_modules"
-    fi
-  done
-
-  gzip "${MD5SUM}.tar"
+  tar -czf "$CACHE_FILENAME" -C $(yarn cache dir)
 
   CACHE_SIZE=$(du -sh "$CACHE_FILENAME" | awk '{ print $1 }')
   echo "Cache size: $CACHE_SIZE"

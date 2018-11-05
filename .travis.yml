@@ -28,11 +28,11 @@ jobs:
       stage: unit test and stack deployment
       install:
         - ./travis-ci/fetch-cache.sh
-        - npm install
+        - npm
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm run bootstrap-no-build
+        - yarn bootstrap-no-build
         - echo 'BOOTSTRAP FINISHED'
-      script: npm run lint
+      script: yarn lint
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "Unit tests except API"
@@ -44,9 +44,9 @@ jobs:
         - LOCAL_ES_HOST=127.0.0.1
       install:
         - ./travis-ci/fetch-cache.sh
-        - npm install
+        - yarn
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm run bootstrap-no-build
+        - yarn bootstrap-no-build
         - ./travis-ci/start-local-services.sh
         - echo 'BOOTSTRAP FINISHED'
       script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api
@@ -61,9 +61,9 @@ jobs:
         - LOCAL_ES_HOST=127.0.0.1
       install:
         - ./travis-ci/fetch-cache.sh
-        - npm install
+        - yarn
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm run bootstrap-no-build
+        - yarn bootstrap-no-build
         - ./travis-ci/start-local-services.sh
         - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/run-api-unit-tests.sh
@@ -74,9 +74,9 @@ jobs:
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
-        - npm install
+        - yarn
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm run bootstrap-no-build
+        - yarn bootstrap-no-build
         - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
@@ -86,9 +86,9 @@ jobs:
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
-        - npm install
+        - yarn
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm run bootstrap-no-build
+        - yarn bootstrap-no-build
         - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
@@ -98,9 +98,9 @@ jobs:
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
-        - npm install
+        - yarn
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm run bootstrap-no-build
+        - yarn bootstrap-no-build
         - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-redeployment-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
@@ -114,13 +114,13 @@ jobs:
       stage: deploy
       install:
         - ./travis-ci/fetch-cache.sh
-        - npm install
-        - npm run bootstrap-no-build
+        - yarn
+        - yarn bootstrap-no-build
       script: ./travis-ci/deploy-to-npm.sh
 
     - name: "Deploy to Github Pages"
       stage: deploy
-      install: npm install
+      install: yarn
       script: ./travis-ci/deploy-to-github-pages.sh
 
     - name: "Deploy packages to integration test stack"
