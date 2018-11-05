@@ -4,7 +4,7 @@ const sinon = require('sinon');
 const test = require('ava');
 const got = require('got');
 const { randomString } = require('@cumulus/common/test-utils');
-const { deleteConcept, getMetadata } = require('..');
+const { deleteConcept, getMetadata, searchConcept } = require('..');
 
 const granuleId = 'MYD13Q1.A2017297.h19v10.006.2017313221203';
 
@@ -113,5 +113,27 @@ test('get CMR metadata, fail', async (t) => {
       t.is(response, null);
     });
 
+  stub.restore();
+});
+
+test('searchConcept handles paging correctly.', async (t) => {
+  const stub = sinon.stub(got, 'get');
+  const headers = { 'cmr-hits': '4' };
+  const body1 = '{"feed":{"updated":"sometime","id":"someurl","title":"fake Cmr Results","entry":[{"cmrEntry1":"data"}, {"cmrEntry2":"data2"}]}}';
+  const body2 = '{"feed":{"updated":"anothertime","id":"another url","title":"more Results","entry":[{"cmrEntry3":"data3"}, {"cmrEntry4":"data4"}]}}';
+  stub.onCall(0).returns({ body: body1, headers: headers });
+  stub.onCall(1).returns({ body: body2, headers: headers });
+
+  const expected = [
+    { cmrEntry1: 'data' },
+    { cmrEntry2: 'data2' },
+    { cmrEntry3: 'data3' },
+    { cmrEntry4: 'data4' }];
+
+  const searchParams = { pageSize: 2 };
+
+  const results = await searchConcept('collections', searchParams);
+
+  t.deepEqual(expected, results);
   stub.restore();
 });

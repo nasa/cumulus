@@ -38,8 +38,7 @@ async function searchConcept(type, searchParams, existingResults = []) {
   // Recursively retrieve all the search results for collections or granules
   const queryObject = Object.assign({ page_size: pageSize }, searchParams, { page_num: pageNum });
 
-  const response = await got(`${getUrl('search')}${type}.json`, { query: queryObject });
-
+  const response = await got.get(`${getUrl('search')}${type}.json`, { query: queryObject });
   const body = JSON.parse(response.body);
   const _existingResults = existingResults.concat(body.feed.entry || []);
 
