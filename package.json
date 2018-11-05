@@ -12,7 +12,7 @@
     "test": "nyc lerna run test --concurrency 2",
     "bootstrap": "lerna bootstrap --npm-client=npm --hoist",
     "ybootstrap": "lerna bootstrap",
-    "bootstrap-no-build": "lerna bootstrap --ignore-scripts --npm-client=npm --hoist --loglevel silly",
+    "bootstrap-no-build": "lerna bootstrap --ignore-scripts --npm-client=npm --hoist --loglevel verbose",
     "update": "lerna publish --skip-git --skip-npm",
     "publish": "lerna publish --skip-git --repo-version $VERSION --yes --npm-client=npm",
     "clean": "lerna clean",
