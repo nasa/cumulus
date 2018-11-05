@@ -66,7 +66,9 @@ async function prepareS3DownloadEvent(t) {
  */
 async function getFilesMetadata(files) {
   const getFileRequests = files.map(async (f) => {
-    const s3list = await listS3ObjectsV2({ Bucket: f.bucket, Prefix: parseS3Uri(f.filename).Key });
+    const s3list = await listS3ObjectsV2(
+      { Bucket: f.bucket, Prefix: parseS3Uri(f.filename).Key }
+    );
     const s3object = s3list.filter((s3file) => s3file.Key === parseS3Uri(f.filename).Key);
 
     return {
@@ -717,9 +719,8 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
 /**
  * test to verify that granule files are overwritten
  * @param {Object} t - test execution object
- * @param {boolean} warning - whether the warning message should be in task output
  */
-async function granuleFilesOverwrittenTest(t, warning) {
+async function granuleFilesOverwrittenTest(t) {
   await prepareS3DownloadEvent(t);
 
   const granuleFileName = payload.input.granules[0].files[0].name;
@@ -755,12 +756,6 @@ async function granuleFilesOverwrittenTest(t, warning) {
     t.is(output.granules[0].files.length, 1);
     t.true(output.granules[0].files[0].duplicate_found);
 
-    if (warning) {
-      t.truthy(output.warning);
-      t.true(output.warning.length > 0);
-    }
-    else t.falsy(Object.prototype.hasOwnProperty.call(output, 'warning'));
-
     const currentFileInfo = (await getFilesMetadata(output.granules[0].files))[0];
     t.is(currentFileInfo.fileSize, randomString().length);
     t.true(currentFileInfo.LastModified > existingFileInfo.LastModified);
@@ -777,27 +772,27 @@ test.serial('when duplicateHandling is "replace", do overwrite files', async (t)
   t.context.event.config.duplicateHandling = 'replace';
   await granuleFilesOverwrittenTest(t, false);
 });
-/*
-test.serial('when duplicateHandling is "error" and reingestGranule is true, do overwrite files, return warning', async (t) => {
+
+test.serial('when duplicateHandling is "error" and reingestGranule is true, do overwrite files', async (t) => {
   t.context.event.config.duplicateHandling = 'error';
   t.context.event.config.reingestGranule = true;
-  await granuleFilesOverwrittenTest(t, true);
+  await granuleFilesOverwrittenTest(t);
 });
 
-test.serial('when duplicateHandling is "skip" and reingestGranule is true, do overwrite files, return warning', async (t) => {
+test.serial('when duplicateHandling is "skip" and reingestGranule is true, do overwrite files', async (t) => {
   t.context.event.config.duplicateHandling = 'skip';
   t.context.event.config.reingestGranule = true;
-  await granuleFilesOverwrittenTest(t, true);
+  await granuleFilesOverwrittenTest(t);
 });
 
-test.serial('when duplicateHandling is "version" and reingestGranule is true, do overwrite files, return warning', async (t) => {
+test.serial('when duplicateHandling is "version" and reingestGranule is true, do overwrite files', async (t) => {
   t.context.event.config.duplicateHandling = 'version';
   t.context.event.config.reingestGranule = true;
-  await granuleFilesOverwrittenTest(t, true);
+  await granuleFilesOverwrittenTest(t);
 });
 
-test.serial('when duplicateHandling is "replace" and reingestGranule is true, do overwrite files, no warning', async (t) => {
+test.serial('when duplicateHandling is "replace" and reingestGranule is true, do overwrite files', async (t) => {
   t.context.event.config.duplicateHandling = 'replace';
   t.context.event.config.reingestGranule = true;
-  await granuleFilesOverwrittenTest(t, false);
-});*/
+  await granuleFilesOverwrittenTest(t);
+});

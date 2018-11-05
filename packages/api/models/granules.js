@@ -98,8 +98,8 @@ class Granule extends Manager {
     const { name, version } = deconstructCollectionId(granule.collectionId);
 
     const lambdaPayload = await Rule.buildPayload({
-      workflow: 'IngestGranule',
-      meta: Object.assign({}, originalMessage.meta, { reingest_granule: true }),
+      workflow: originalMessage.meta.workflow_name,
+      meta: Object.assign({}, originalMessage.meta, { reingestGranule: true }),
       payload: originalMessage.payload,
       provider: granule.provider,
       collection: {

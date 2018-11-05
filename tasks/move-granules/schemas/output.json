@@ -37,10 +37,6 @@
           }
         }
       }
-    },
-    "warning": {
-      "description": "warning messages such as a warning that data may be overwritten in the case of reingest",
-      "type": "string"
     }
   }
 }

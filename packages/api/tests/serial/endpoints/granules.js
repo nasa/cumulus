@@ -16,6 +16,7 @@ const bootstrap = require('../../../lambdas/bootstrap');
 const handleRequest = require('../../../endpoints/granules');
 const indexer = require('../../../es/indexer');
 const {
+  fakeCollectionFactory,
   fakeGranuleFactoryV2,
   fakeUserFactory
 } = require('../../../lib/testUtils');
@@ -47,10 +48,12 @@ async function runTestUsingBuckets(buckets, testFunction) {
 let esClient;
 let esIndex;
 let granuleModel;
+let collectionModel;
 let authToken;
 let userModel;
 test.before(async () => {
   esIndex = randomString();
+  process.env.CollectionsTable = randomString();
   process.env.GranulesTable = randomString();
   process.env.UsersTable = randomString();
   process.env.stackName = randomString();
@@ -64,6 +67,10 @@ test.before(async () => {
 
   // create a fake bucket
   await createBucket(process.env.internal);
+
+  // create fake Collections table
+  collectionModel = new models.Collection();
+  await collectionModel.createTable();
 
   // create fake Granules table
   granuleModel = new models.Granule();
@@ -80,6 +87,14 @@ test.beforeEach(async (t) => {
   t.context.authHeaders = {
     Authorization: `Bearer ${authToken}`
   };
+
+  t.context.testCollection = fakeCollectionFactory({
+    name: 'fakeCollection',
+    dataType: 'fakeCollection',
+    version: 'v1',
+    duplicateHandling: 'error'
+  });
+  await collectionModel.create(t.context.testCollection);
 
   // create fake granule records
   t.context.fakeGranules = [
@@ -99,6 +114,7 @@ test.beforeEach(async (t) => {
 });
 
 test.after.always(async () => {
+  await collectionModel.deleteTable();
   await granuleModel.deleteTable();
   await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
@@ -346,6 +362,7 @@ test.serial('reingest a granule', async (t) => {
   const body = JSON.parse(response.body);
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'reingest');
+  t.true(body.warning.includes('overwritten'));
 
   const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
   t.is(updatedGranule.status, 'running');
