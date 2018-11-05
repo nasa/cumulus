@@ -40,7 +40,6 @@
     "@cumulus/test-data": "^1.10.2",
     "aws-sdk": "^2.238.1",
     "cksum": "^1.3.0",
-    "depd": "^1.1.2",
     "encodeurl": "^1.0.2",
     "fs-extra": "^5.0.0",
     "got": "^9.2.1",

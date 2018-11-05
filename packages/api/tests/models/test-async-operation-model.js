@@ -52,7 +52,7 @@ test.after.always(async () => {
 
 test('The AsyncOperation constructor requires that stackName be specified', (t) => {
   try {
-    new AsyncOperation({ // eslint-disable-line no-new
+    new AsyncOperation({
       systemBucket: 'asdf',
       tableName: 'asdf'
     });
@@ -66,7 +66,7 @@ test('The AsyncOperation constructor requires that stackName be specified', (t) 
 
 test('The AsyncOperation constructor requires that systemBucket be specified', (t) => {
   try {
-    new AsyncOperation({ // eslint-disable-line no-new
+    new AsyncOperation({
       stackName: 'asdf',
       tableName: 'asdf'
     });

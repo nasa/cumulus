@@ -1,10 +1,11 @@
-/* eslint-disable no-param-reassign, require-jsdoc */
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
 const test = require('ava');
 const aws = require('@cumulus/common/aws');
 const testUtils = require('@cumulus/common/test-utils');
-const input = require('./fixtures/input.json');
+const { promisify } = require('util');
 const { discoverS3 } = require('../index');
 
 async function deleteBucket(bucket) {
@@ -19,9 +20,13 @@ function putObject(bucket, key) {
   return aws.s3().putObject({ Bucket: bucket, Key: key, Body: 'test' }).promise();
 }
 
-test.beforeEach((t) => {
+test.beforeEach(async (t) => {
   t.context.bucket = testUtils.randomString();
-  return aws.s3().createBucket({ Bucket: t.context.bucket }).promise();
+  await aws.s3().createBucket({ Bucket: t.context.bucket }).promise();
+
+  const payloadPath = path.join(__dirname, 'fixtures', 'input.json');
+  const rawPayload = await readFile(payloadPath, 'utf8');
+  t.context.payload = JSON.parse(rawPayload);
 });
 
 test.afterEach.always(async (t) => {
@@ -29,7 +34,7 @@ test.afterEach.always(async (t) => {
 });
 
 test.serial('empty bucket results in empty granules array', async (t) => {
-  const newPayload = Object.assign({}, input);
+  const newPayload = t.context.payload;
   newPayload.config.bucket = t.context.bucket;
 
   const output = await discoverS3(newPayload);
@@ -39,7 +44,7 @@ test.serial('empty bucket results in empty granules array', async (t) => {
 });
 
 test.serial('filter using file_type', async (t) => {
-  const newPayload = Object.assign({}, input);
+  const newPayload = t.context.payload;
   newPayload.config.bucket = t.context.bucket;
   newPayload.config.granuleIdExtraction = '^(GW1AM2_(.*))\\.h5$';
   newPayload.config.file_type = '.h5';
@@ -59,7 +64,7 @@ test.serial('filter using file_type', async (t) => {
 });
 
 test.serial('use file_prefix', async (t) => {
-  const newPayload = Object.assign({}, input);
+  const newPayload = t.context.payload;
   newPayload.config.bucket = t.context.bucket;
   newPayload.config.granuleIdExtraction = '^(GW1AM2_(.*))\\.h5$';
   newPayload.config.file_type = null;
@@ -81,7 +86,7 @@ test.serial('use file_prefix', async (t) => {
 });
 
 test.serial('file_type and file_prefix', async (t) => {
-  const newPayload = Object.assign({}, input);
+  const newPayload = t.context.payload;
   newPayload.config.bucket = t.context.bucket;
   newPayload.config.granuleIdExtraction = '^(GW1AM2_(.*))\\.h5$';
 
