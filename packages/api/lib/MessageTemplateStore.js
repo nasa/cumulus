@@ -2,10 +2,7 @@
 
 const privates = new WeakMap();
 
-// MessageTemplateStore instance private method
-function messageTemplateKey(workflowName) {
-  const { stackName } = privates.get(this);
-
+function messageTemplateKey(stackName, workflowName) {
   return `${stackName}/workflows/${workflowName}.json`;
 }
 
@@ -40,8 +37,9 @@ class MessageTemplateStore {
    * @returns {Promise<string>} the s3:// URL of the message template
    */
   templateS3Url(workflowName) {
-    const { bucket } = privates.get(this);
-    return `s3://${bucket}/${messageTemplateKey.call(this, workflowName)}`;
+    const { bucket, stackName } = privates.get(this);
+
+    return `s3://${bucket}/${messageTemplateKey(stackName, workflowName)}`;
   }
 
   /**
@@ -51,11 +49,11 @@ class MessageTemplateStore {
    * @param {string} messageTemplate
    */
   async put(workflowName, messageTemplate) {
-    const { bucket, s3 } = privates.get(this);
+    const { bucket, s3, stackName } = privates.get(this);
 
     await s3.putObject({
       Bucket: bucket,
-      Key: messageTemplateKey.call(this, workflowName),
+      Key: messageTemplateKey(stackName, workflowName),
       Body: messageTemplate
     }).promise();
   }
@@ -67,11 +65,11 @@ class MessageTemplateStore {
    * @returns {Promise<string>}
    */
   async get(workflowName) {
-    const { bucket, s3 } = privates.get(this);
+    const { bucket, s3, stackName } = privates.get(this);
 
     return s3.getObject({
       Bucket: bucket,
-      Key: messageTemplateKey.call(this, workflowName)
+      Key: messageTemplateKey(stackName, workflowName)
     }).promise()
       .then((response) => response.Body.toString());
   }
@@ -83,12 +81,12 @@ class MessageTemplateStore {
    * @returns {Promise<boolean>}
    */
   async exists(workflowName) {
-    const { bucket, s3 } = privates.get(this);
+    const { bucket, s3, stackName } = privates.get(this);
 
     try {
       await s3.headObject({
         Bucket: bucket,
-        Key: messageTemplateKey.call(this, workflowName)
+        Key: messageTemplateKey(stackName, workflowName)
       }).promise();
 
       return true;
