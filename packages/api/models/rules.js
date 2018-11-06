@@ -16,8 +16,8 @@ class Rule extends Manager {
       schema: rule
     });
 
-    this.eventMapping = {event_arn: 'event_arn', log_event_arn: 'log_event_arn'};
-    this.kinesisSourceEvents = [{name: process.env.kinesisConsumer, eventType: 'event_arn'},
+    this.eventMapping = {arn: 'arn', log_event_arn: 'log_event_arn'};
+    this.kinesisSourceEvents = [{name: process.env.kinesisConsumer, eventType: 'arn'},
                                 {name: process.env.KinesisRuleInput, eventType: 'log_event_arn'}];
     this.targetId = 'lambdaTarget';
   }
@@ -155,7 +155,7 @@ class Rule extends Manager {
     });
     //TODO: Add this back into addKinesisEventSource or remove magic array index
     const eventAdd = await Promise.all(sourceEventPromises);
-    item.rule.event_arn = eventAdd[0].UUID;
+    item.rule.arn = eventAdd[0].UUID;
     item.rule.log_event_arn = eventAdd[1].UUID;
     return item;
   }
@@ -233,7 +233,7 @@ class Rule extends Manager {
     });
     const eventDelete = await Promise.all(deleteEventPromises);
     //TODOD Remove magic array number
-    item.rule.event_arn = eventDelete[0];
+    item.rule.arn = eventDelete[0];
     item.rule.log_event_arn = eventDelete[1];
     return item;
   }
