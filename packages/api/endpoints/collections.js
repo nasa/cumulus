@@ -35,7 +35,11 @@ function get(event, cb) {
       return collection.getStats([res], [res.name]);
     })
     .then((res) => cb(null, res[0]))
-    .catch(cb);
+    .catch((err) => {
+      if (err.name === 'RecordDoesNotExist') return cb(null, null, 404);
+
+      return cb(err);
+    });
 }
 
 /**
