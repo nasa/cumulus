@@ -5,7 +5,7 @@ const {
   validateConfig,
   validateOutput
 } = require('@cumulus/common/test-utils');
-const { discoverPdrs } = require('../index');
+const { discoverPdrs } = require('..');
 
 test.beforeEach(async (t) => {
   t.context.event = {
