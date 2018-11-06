@@ -163,8 +163,11 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
     // get readable stream for remote file
     const readable = await new Promise((resolve, reject) => {
       client.get(remotePath, (err, socket) => {
-        if (err) reject(err);
-        else resolve(socket);
+        if (err) {
+          client.destroy();
+          return reject(err);
+        }
+        return resolve(socket);
       });
     });
 
