@@ -64,14 +64,14 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
     });
 
     it('the rule does not kick off a workflow', () => {
-      expect(() => waitForTestExecutionStart({
-        workflowName: scheduledHelloWorldRule.workflow,
-        stackName: config.stackName,
-        bucket: config.bucket,
-        findExecutionFn: (taskInput, params) =>
+      expect(() => waitForTestExecutionStart(
+        scheduledHelloWorldRule.workflow,
+        config.stackName,
+        config.bucket,
+        (taskInput, params) =>
           taskInput.meta.triggerRule && taskInput.meta.triggerRule === params.ruleName,
-        findExecutionFnParams: { ruleName: scheduledHelloWorldRule.name }
-      })).toThrowError(Error, 'Never found started workflow.');
+        { ruleName: scheduledHelloWorldRule.name }
+      )).toThrowError(Error, 'Never found started workflow.');
     });
   });
 });
@@ -121,14 +121,14 @@ describe('When I create a one-time rule via the Cumulus API', () => {
 
     beforeAll(async () => {
       console.log(`Waiting for execution of ${helloWorldRule.workflow} triggered by rule`);
-      execution = await waitForTestExecutionStart({
-        workflowName: helloWorldRule.workflow,
-        stackName: config.stackName,
-        bucket: config.bucket,
-        findExecutionFn: (taskInput, params) =>
+      execution = await waitForTestExecutionStart(
+        helloWorldRule.workflow,
+        config.stackName,
+        config.bucket,
+        (taskInput, params) =>
           taskInput.meta.triggerRule && taskInput.meta.triggerRule === params.ruleName,
-        findExecutionFnParams: { ruleName: helloWorldRule.name }
-      });
+        { ruleName: helloWorldRule.name }
+      );
       console.log(`Execution ARN: ${execution.executionArn}`);
     });
 
