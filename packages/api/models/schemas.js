@@ -312,7 +312,7 @@ module.exports.rule = {
           type: 'string',
           readonly: true
         },
-        log_event_arn: {
+        logEventArn: {
           type: 'string',
           readonly: true
         },

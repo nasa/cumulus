@@ -183,7 +183,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         waitForActiveStream(cnmResponseStreamName)
       ]);
       const ruleList = await addRules(testConfig, ruleDirectory, ruleOverride);
-      logEventSourceMapping = await getEventSourceMapping(ruleList[0].rule.log_event_arn);
+      logEventSourceMapping = await getEventSourceMapping(ruleList[0].rule.logEventArn);
     });
   });
 
