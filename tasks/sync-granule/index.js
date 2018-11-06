@@ -5,7 +5,7 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const errors = require('@cumulus/common/errors');
 const get = require('lodash.get');
 const lock = require('@cumulus/ingest/lock');
-const granule = require('@cumulus/ingest/granule');
+const { selector: granuleSelector } = require('@cumulus/ingest/granule');
 const log = require('@cumulus/common/log');
 
 /**
@@ -25,25 +25,29 @@ async function download(ingest, bucket, provider, granules) {
   const proceed = await lock.proceed(bucket, provider, granules[0].granuleId);
 
   if (!proceed) {
-    const err =
-      new errors.ResourcesLockedError('Download lock remained in place after multiple tries');
+    const err = new errors.ResourcesLockedError('Download lock remained in place after multiple tries');
     log.error(err);
     throw err;
   }
 
-  for (const g of granules) {
+  /* eslint-disable no-await-in-loop */
+  for (let ctr = 0; ctr < granules.length; ctr += 1) {
+    const granule = granules[ctr];
+
     try {
-      log.debug(`await ingest.ingest(${JSON.stringify(g)}, ${bucket})`);
-      const r = await ingest.ingest(g, bucket);
+      log.debug(`await ingest.ingest(${JSON.stringify(granule)}, ${bucket})`);
+      const r = await ingest.ingest(granule, bucket);
       updatedGranules.push(r);
     }
     catch (e) {
-      log.debug(`Error caught, await lock.removeLock(${bucket}, ${provider.id}, ${g.granuleId})`);
-      await lock.removeLock(bucket, provider.id, g.granuleId);
+      log.debug(`Error caught, await lock.removeLock(${bucket}, ${provider.id}, ${granule.granuleId})`);
+      await lock.removeLock(bucket, provider.id, granule.granuleId);
       log.error(e);
       throw e;
     }
   }
+  /* eslint-enable no-await-in-loop */
+
   log.debug(`finshed, await lock.removeLock(${bucket}, ${provider.id}, ${granules[0].granuleId})`);
   await lock.removeLock(bucket, provider.id, granules[0].granuleId);
   return updatedGranules;
@@ -84,7 +88,7 @@ exports.syncGranule = function syncGranule(event) {
     return Promise.reject(err);
   }
 
-  const IngestClass = granule.selector('ingest', provider.protocol);
+  const IngestClass = granuleSelector('ingest', provider.protocol);
   const ingest = new IngestClass(
     buckets,
     collection,

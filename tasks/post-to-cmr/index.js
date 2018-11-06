@@ -1,5 +1,6 @@
 'use strict';
 
+const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
@@ -16,15 +17,17 @@ const { loadJSONTestData } = require('@cumulus/test-data');
  * @returns {Array} an updated array of granules
  */
 function buildOutput(results, granulesObject) {
+  const output = cloneDeep(granulesObject);
+
   // add results to corresponding granules
-  results.forEach((r) => {
-    if (granulesObject[r.granuleId]) {
-      granulesObject[r.granuleId].cmrLink = r.link;
-      granulesObject[r.granuleId].published = true;
+  results.forEach((result) => {
+    if (output[result.granuleId]) {
+      output[result.granuleId].cmrLink = result.link;
+      output[result.granuleId].published = true;
     }
   });
 
-  return Object.keys(granulesObject).map((k) => granulesObject[k]);
+  return Object.values(output);
 }
 
 /**
