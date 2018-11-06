@@ -13,6 +13,8 @@ RetryPassWorkflow:
       CumulusConfig:
         fail: true
         passOnRetry: true
+        bucket: '{$.meta.buckets.internal.name}'
+        execution: '{$.cumulus_meta.execution_name}'
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Next: StopStatus
