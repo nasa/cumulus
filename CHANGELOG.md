@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Updated `@cumulus/helloworld` to use S3 to store state for pass on retry tests
 
+### Fixed
+- Fixed a bug where FTP sockets were not closed after an error, keeping the Lambda function active until it timed out [CUMULUS-972]
+
 ## [v1.10.3] - 2018-10-31
 
 ### Added
