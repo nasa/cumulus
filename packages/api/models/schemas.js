@@ -309,10 +309,12 @@ module.exports.rule = {
         value: {
           type: 'string'
         },
+        // Kinesis scheduled event arn
         arn: {
           type: 'string',
           readonly: true
         },
+        // Kinesis scheduled log event arn
         logEventArn: {
           type: 'string',
           readonly: true
