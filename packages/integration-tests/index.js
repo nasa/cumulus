@@ -34,6 +34,12 @@ const lambda = require('./lambda');
 const granule = require('./granule.js');
 const waitForDeployment = require('./lambdas/waitForDeployment');
 
+const waitPeriodMs = 1000;
+
+const maxWaitForStartedExecutionSecs = 60 * 5;
+
+const lambdaStep = new sfnStep.LambdaStep();
+
 /**
  * Wait for an AsyncOperation to reach a given status
  *
@@ -645,6 +651,44 @@ async function getExecutions(workflowName, stackName, bucket, maxExecutionResult
   return (orderBy(data.executions, 'startDate', 'desc'));
 }
 
+/**
+ * Wait for the execution that matches the criteria in the compare function to begin
+ * The compare function should take 2 arguments: taskInput and params
+ *
+ * @param {string} workflowName - workflow name to find execution for
+ * @param {string} stackName - stack name
+ * @param {string} bucket - bucket name
+ * @param {function} findExecutionFn - function that takes the taskInput and findExecutionFnParams
+ * and returns a boolean indicating whether or not this is the correct instance of the workflow
+ * @param {Object} findExecutionFnParams - params to be passed into findExecutionFn
+ * @returns {undefined} - none
+ */
+async function waitForTestExecutionStart(
+  workflowName,
+  stackName,
+  bucket,
+  findExecutionFn,
+  findExecutionFnParams
+) {
+  let timeWaitedSecs = 0;
+  /* eslint-disable no-await-in-loop */
+  while (timeWaitedSecs < maxWaitForStartedExecutionSecs) {
+    await sleep(waitPeriodMs);
+    timeWaitedSecs += (waitPeriodMs / 1000);
+    const executions = await getExecutions(workflowName, stackName, bucket);
+
+    for (let executionCtr = 0; executionCtr < executions.length; executionCtr += 1) {
+      const execution = executions[executionCtr];
+      const taskInput = await lambdaStep.getStepInput(execution.executionArn, 'SfSnsReport');
+      if (taskInput && findExecutionFn(taskInput, findExecutionFnParams)) {
+        return execution;
+      }
+    }
+  }
+  /* eslint-enable no-await-in-loop */
+  throw new Error('Never found started workflow.');
+}
+
 module.exports = {
   api,
   rulesApi,
@@ -655,6 +699,7 @@ module.exports = {
   buildAndStartWorkflow,
   getWorkflowTemplate,
   waitForCompletedExecution,
+  waitForTestExecutionStart,
   ActivityStep: sfnStep.ActivityStep,
   LambdaStep: sfnStep.LambdaStep,
   /**

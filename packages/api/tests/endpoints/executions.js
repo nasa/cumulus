@@ -66,7 +66,7 @@ test('GET with an unauthorized user returns an unauthorized response', async (t)
   });
 });
 
-test.only('GET returns a single execution', async (t) => {
+test('GET returns a single execution', async (t) => {
   const executionName = randomString();
   const arn = `arn:aws:states:us-east-1:12345678:execution:fakeStateMachine-abcdefg:${executionName}`;
   const execution = {
