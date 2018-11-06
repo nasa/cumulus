@@ -184,9 +184,11 @@ KinesisRuleInput:
   timeout: 300
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
+  namedLambdaDeadLetterQueue: true
 
 KinesisRuleOutput:
   handler: index.logger
   timeout: 300
   memory: 512
   source: 'node_modules/@cumulus/api/dist'
+  namedLambdaDeadLetterQueue: true
