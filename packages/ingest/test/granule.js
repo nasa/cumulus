@@ -446,7 +446,10 @@ test('generateMoveFileParams generates correct parameters', (t) => {
   const sourceFiles = filenames.map((name) => {
     const sourcefilePath = `origin/${name}`;
     return {
-      name, sourceBucket, filepath: sourcefilePath, filename: buildS3Uri(sourceBucket, sourcefilePath)
+      name,
+      sourceBucket,
+      filepath: sourcefilePath,
+      filename: buildS3Uri(sourceBucket, sourcefilePath)
     };
   });
 
@@ -462,8 +465,7 @@ test('generateMoveFileParams generates correct parameters', (t) => {
 
   const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
 
-  moveFileParams.map((item, index) => {
-    t.deepEqual(item, {
+  moveFileParams.map((item, index) => t.deepEqual(item, {
       file: sourceFiles[index],
       source: {
         Bucket: sourceBucket,
@@ -474,7 +476,7 @@ test('generateMoveFileParams generates correct parameters', (t) => {
         Key: `${destinationFilepath}/${filenames[index]}`
       }
     })
-  });
+  );
 });
 
 test('generateMoveFileParams generates null source and target for no destination', (t) => {
@@ -489,7 +491,10 @@ test('generateMoveFileParams generates null source and target for no destination
   const sourceFiles = filenames.map((name) => {
     const sourcefilePath = `origin/${name}`;
     return {
-      name, sourceBucket, filepath: sourcefilePath, filename: buildS3Uri(sourceBucket, sourcefilePath)
+      name,
+      sourceBucket,
+      filepath: sourcefilePath,
+      filename: buildS3Uri(sourceBucket, sourcefilePath)
     };
   });
 

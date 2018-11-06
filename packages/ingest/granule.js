@@ -956,11 +956,10 @@ function generateMoveFileParams(sourceFiles, destinations) {
  * @returns {Promise<Object>} returns promise from publishing cmr file
  */
 async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoint, published) {
-
   const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
 
-  const moveFileRequests = moveFileParams.map((moveFileParams) => {
-    const { source, target, file } = moveFileParams;
+  const moveFileRequests = moveFileParams.map((moveFileParam) => {
+    const { source, target, file } = moveFileParam;
     const parsed = aws.parseS3Uri(file.filename);
 
     if (target) {
