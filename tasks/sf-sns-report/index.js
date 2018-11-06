@@ -1,6 +1,7 @@
 'use strict';
 
 const get = require('lodash.get');
+const isObject = require('lodash.isobject');
 const { setGranuleStatus, sns } = require('@cumulus/common/aws');
 const errors = require('@cumulus/common/errors');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
@@ -14,12 +15,12 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 function eventFailed(event) {
   // event has exception
   // and it is needed to avoid flagging cases like "exception: {}" or "exception: 'none'"
-  if ((event.exception) && (typeof event.exception === 'object') &&
-    (Object.keys(event.exception).length > 0)) return true;
+  if (isObject(event.exception)
+    && (Object.keys(event.exception).length > 0)) return true;
 
   // Error and error keys are not part of the cumulus message
   // and if they appear in the message something is seriously wrong
-  else if (event.Error || event.error) return true;
+  if (event.Error || event.error) return true;
 
   return false;
 }

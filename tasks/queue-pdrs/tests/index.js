@@ -16,7 +16,7 @@ const {
   validateOutput
 } = require('@cumulus/common/test-utils');
 
-const { queuePdrs } = require('../index');
+const { queuePdrs } = require('..');
 
 test.beforeEach(async (t) => {
   t.context.templateBucket = randomString();
