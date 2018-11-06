@@ -11,8 +11,8 @@
 
 const isFunction = require('lodash.isfunction');
 const isString = require('lodash.isstring');
-const deprecate = require('depd')('@cumulus/api/lib/response');
-const { log } = require('@cumulus/common');
+const log = require('@cumulus/common/log');
+const { deprecate } = require('@cumulus/common/util');
 const { User } = require('../models');
 const { errorify } = require('./utils');
 const {
@@ -35,7 +35,11 @@ function findCaseInsensitiveKey(obj, keyArg) {
 }
 
 function resp(context, err, bodyArg, statusArg = null, headers = {}) {
-  deprecate('resp(), use getAuthorizationFailureResponse() and buildLambdaProxyResponse() instead,');
+  deprecate(
+    '@cumulus/api/response.resp()',
+    '1.10.3',
+    '@cumulus/api/responses'
+  );
 
   if (!isFunction(context.succeed)) {
     throw new TypeError('context as object with succeed method not provided');
@@ -62,12 +66,20 @@ function resp(context, err, bodyArg, statusArg = null, headers = {}) {
 }
 
 function buildLambdaProxyResponse(params = {}) {
-  deprecate('buildLambdaProxyResponse(), use `new LambdaProxyResponse()` instead,');
+  deprecate(
+    '@cumulus/api/response.buildLambdaProxyResponse()',
+    '1.10.3',
+    '@cumulus/api/responses'
+  );
   return new LambdaProxyResponse(params);
 }
 
 function buildAuthorizationFailureResponse(params) {
-  deprecate('buildAuthorizationFailureResponse(), use `new AuthorizationFailureResponse()` instead,');
+  deprecate(
+    '@cumulus/api/response.buildAuthorizationFailureResponse()',
+    '1.10.3',
+    '@cumulus/api/responses'
+  );
   return new AuthorizationFailureResponse(params);
 }
 
