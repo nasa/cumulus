@@ -159,11 +159,6 @@ test.after.always(async () => {
   await ruleModel.deleteTable();
 });
 
-test.serial('foobar', async (t) => {
-  t.is(true, true);
-});
-
-
 // getKinesisRule tests
 test.serial('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', async (t) => {
   await getKinesisRules(JSON.parse(eventData))
