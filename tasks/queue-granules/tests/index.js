@@ -17,15 +17,17 @@ const {
 } = require('@cumulus/common/test-utils');
 const { CollectionConfigStore } = require('@cumulus/common');
 
-const { queueGranules } = require('../index');
+const { queueGranules } = require('..');
 
 test.beforeEach(async (t) => {
   t.context.internalBucket = `internal-bucket-${randomString().slice(0, 6)}`;
   t.context.stackName = `stack-${randomString().slice(0, 6)}`;
   t.context.stateMachineArn = randomString();
   t.context.templateBucket = randomString();
-  t.context.collectionConfigStore =
-    new CollectionConfigStore(t.context.internalBucket, t.context.stackName);
+  t.context.collectionConfigStore = new CollectionConfigStore(
+    t.context.internalBucket,
+    t.context.stackName
+  );
 
   await Promise.all([
     s3().createBucket({ Bucket: t.context.internalBucket }).promise(),
@@ -75,8 +77,12 @@ test.serial('The correct output is returned when granules are queued without a P
 
   const { event } = t.context;
   event.input.granules = [
-    { dataType: dataType, version: version, granuleId: randomString(), files: [] },
-    { dataType: dataType, version: version, granuleId: randomString(), files: [] }
+    {
+      dataType: dataType, version: version, granuleId: randomString(), files: []
+    },
+    {
+      dataType: dataType, version: version, granuleId: randomString(), files: []
+    }
   ];
 
   await validateConfig(t, event.config);
@@ -97,8 +103,12 @@ test.serial('The correct output is returned when granules are queued with a PDR'
 
   const { event } = t.context;
   event.input.granules = [
-    { dataType: dataType, version: version, granuleId: randomString(), files: [] },
-    { dataType: dataType, version: version, granuleId: randomString(), files: [] }
+    {
+      dataType: dataType, version: version, granuleId: randomString(), files: []
+    },
+    {
+      dataType: dataType, version: version, granuleId: randomString(), files: []
+    }
   ];
   event.input.pdr = { name: randomString(), path: randomString() };
 
@@ -138,8 +148,12 @@ test.serial('Granules are added to the queue', async (t) => {
 
   const { event } = t.context;
   event.input.granules = [
-    { dataType: dataType, version: version, granuleId: randomString(), files: [] },
-    { dataType: dataType, version: version, granuleId: randomString(), files: [] }
+    {
+      dataType: dataType, version: version, granuleId: randomString(), files: []
+    },
+    {
+      dataType: dataType, version: version, granuleId: randomString(), files: []
+    }
   ];
 
   await validateConfig(t, event.config);
