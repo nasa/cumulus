@@ -48,7 +48,6 @@
     "basic-auth": "^1.1.0",
     "boolean": "^0.1.3",
     "commander": "^2.15.0",
-    "depd": "^1.1.2",
     "dynamodb-data-types": "^3.0.0",
     "elasticsearch": "^14.2.2",
     "form-data": "^2.1.2",
