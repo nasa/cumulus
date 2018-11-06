@@ -53,13 +53,12 @@ test.before(async () => {
     Key: workflowfile,
     Body: 'test data'
   }).promise();
-
 });
 
 test.after.always(async () => {
   // cleanup table
-  let testval1 = await ruleModel.deleteTable();
-  let testval2 = await aws.recursivelyDeleteS3Bucket(process.env.bucket);
+  await ruleModel.deleteTable();
+  await aws.recursivelyDeleteS3Bucket(process.env.bucket);
 });
 
 test.serial('create and delete a onetime rule', async (t) => {
@@ -176,6 +175,5 @@ test.serial('it does not delete event source mapping if it exists for other rule
   t.is(ruleThree.rule.arn, rule.rule.arn);
 
   // Cleanup -- this is required for repeated local testing, else localstack retains rules
-  await Promise.all([rule, ruleThree].map(r => rules.delete(r)));
-
+  await Promise.all([rule, ruleThree].map((r) => rules.delete(r)));
 });

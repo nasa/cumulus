@@ -1,4 +1,4 @@
-no /* eslint-param-reassign: "off" */
+/* eslint no-param-reassign: "off" */
 
 'use strict';
 
@@ -16,9 +16,9 @@ class Rule extends Manager {
       schema: rule
     });
 
-    this.eventMapping = {arn: 'arn', logEventArn: 'logEventArn'};
-    this.kinesisSourceEvents = [{name: process.env.kinesisConsumer, eventType: 'arn'},
-                                {name: process.env.KinesisRuleInput, eventType: 'logEventArn'}];
+    this.eventMapping = { arn: 'arn', logEventArn: 'logEventArn' };
+    this.kinesisSourceEvents = [{ name: process.env.kinesisConsumer, eventType: 'arn' },
+      { name: process.env.KinesisRuleInput, eventType: 'logEventArn' }];
     this.targetId = 'lambdaTarget';
   }
 
@@ -150,10 +150,9 @@ class Rule extends Manager {
   }
 
   async addKinesisEventSources(item) {
-    const sourceEventPromises = this.kinesisSourceEvents.map((lambda) => {
-      return this.addKinesisEventSource(item, lambda);
-    });
-    //TODO: Add this back into addKinesisEventSource or remove magic array index
+    const sourceEventPromises = this.kinesisSourceEvents.map(
+      (lambda) => this.addKinesisEventSource(item, lambda)
+    );
     const eventAdd = await Promise.all(sourceEventPromises);
     item.rule.arn = eventAdd[0].UUID;
     item.rule.logEventArn = eventAdd[1].UUID;
@@ -165,12 +164,11 @@ class Rule extends Manager {
    * add an event source to a target lambda function
    *
    * @param {*} item - the rule item
-   * @param {String} lambda - the name of the target lambda
+   * @param {string} lambda - the name of the target lambda
    * @returns {Promise} a promise
    * @returns {Promise} updated rule item
    */
   async addKinesisEventSource(item, lambda) {
-    // TODO: Rename this function
     // use the existing event source mapping if it already exists and is enabled
     const listParams = { FunctionName: lambda.name };
     const listData = await aws.lambda(listParams).listEventSourceMappings().promise();
@@ -206,9 +204,9 @@ class Rule extends Manager {
   }
 
   async updateKinesisEventSources(item) {
-    const updateEvent = this.kinesisSourceEvents.map((lambda) => {
-      return this.updateKinesisEventSource(item, lambda.eventType);
-    });
+    const updateEvent = this.kinesisSourceEvents.map(
+      (lambda) => this.updateKinesisEventSource(item, lambda.eventType)
+    );
     return Promise.all(updateEvent);
   }
 
@@ -216,6 +214,7 @@ class Rule extends Manager {
    * update an event source, only the state can be updated
    *
    * @param {*} item - the rule item
+   * @param {string} eventType - kinesisSourceEvent Type
    * @returns {Promise} the response from event source update
    */
   updateKinesisEventSource(item, eventType) {
@@ -228,11 +227,10 @@ class Rule extends Manager {
 
 
   async deleteKinesisEventSources(item) {
-    const deleteEventPromises = this.kinesisSourceEvents.map((lambda) => {
-      return this.deleteKinesisEventSource(item, lambda.eventType);
-    });
+    const deleteEventPromises = this.kinesisSourceEvents.map(
+      (lambda) => this.deleteKinesisEventSource(item, lambda.eventType)
+    );
     const eventDelete = await Promise.all(deleteEventPromises);
-    //TODOD Remove magic array number
     item.rule.arn = eventDelete[0];
     item.rule.logEventArn = eventDelete[1];
     return item;
@@ -242,11 +240,11 @@ class Rule extends Manager {
    * deletes an event source from the kinesis consumer lambda function
    *
    * @param {*} item - the rule item
+   * @param {string} eventType - kinesisSourceEvent Type
    * @returns {Promise} the response from event source delete
    */
   async deleteKinesisEventSource(item, eventType) {
     if (await this.isEventSourceMappingShared(item, eventType)) {
-      //TODO - what, why isn't this a promise resolved or warning or ... ?
       return undefined;
     }
     const params = {
@@ -259,26 +257,27 @@ class Rule extends Manager {
    * check if a rule's event source mapping is shared with other rules
    *
    * @param {Object} item - the rule item
+   * @param {string} eventType - kinesisSourceEvent Type
    * @returns {boolean} return true if no other rules share the same event source mapping
    */
   async isEventSourceMappingShared(item, eventType) {
     const arnClause = `#rl.#${this.eventMapping[eventType]} = :${this.eventMapping[eventType]}`;
-    let queryNames = {
+    const queryNames = {
       '#nm': 'name',
       '#rl': 'rule',
-      '#tp': 'type',
+      '#tp': 'type'
     };
     queryNames[`#${eventType}`] = eventType;
 
-    let queryValues = {
-        ':name': item.name,
-        ':ruleType': item.rule.type,
+    const queryValues = {
+      ':name': item.name,
+      ':ruleType': item.rule.type
     };
     queryValues[`:${eventType}`] = item.rule[eventType];
 
     const kinesisRules = await super.scan({
       names: queryNames,
-      filter: '#nm <> :name AND #rl.#tp = :ruleType AND ' + arnClause,
+      filter: `#nm <> :name AND #rl.#tp = :ruleType AND ${arnClause}`,
       values: queryValues
     });
     return (kinesisRules.Count && kinesisRules.Count > 0);
