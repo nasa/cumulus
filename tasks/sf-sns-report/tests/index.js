@@ -2,9 +2,9 @@
 
 const test = require('ava');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
-const { publishSnsMessage } = require('../index');
 const cloneDeep = require('lodash.clonedeep');
 const { randomString } = require('@cumulus/common/test-utils');
+const { publishSnsMessage } = require('..');
 
 let bucket;
 
@@ -96,8 +96,7 @@ test('send report when sfn is finished and granule has succeeded', async (t) => 
   event.config.sfnEnd = true;
   event.config.stack = 'test_stack';
   event.config.bucket = bucket;
-  event.config.stateMachine =
-    'arn:aws:states:us-east-1:000000000000:stateMachine:TestCumulusParsePdrStateMach-K5Qk90fc8w4U';
+  event.config.stateMachine = 'arn:aws:states:us-east-1:000000000000:stateMachine:TestCumulusParsePdrStateMach-K5Qk90fc8w4U';
   event.config.executionName = '7c543392-1da9-47f0-9c34-f43f6519412a';
 
   const output = await publishSnsMessage(cloneDeep(event));
