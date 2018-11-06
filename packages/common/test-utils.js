@@ -14,9 +14,9 @@ exports.inTestMode = () => process.env.NODE_ENV === 'test';
  * Helper function to throw error for unit test exports
  * @throws {Error}
  */
-function throwTestError () {
-  throw(new Error('This function is only exportable when NODE_ENV === test for unit test purposes'));
-};
+function throwTestError() {
+  throw (new Error('This function is only exportable when NODE_ENV === test for unit test purposes'));
+}
 exports.throwTestError = throwTestError;
 
 /**

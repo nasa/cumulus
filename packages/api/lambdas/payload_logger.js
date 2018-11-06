@@ -5,15 +5,16 @@ const { inTestMode, throwTestError } = require('@cumulus/common/test-utils');
 
 /**
  * Lambda function dumps the incoming event to a log
- * @param {Object} lambda event object
- * @param {Object} Cumulus common log object.  Can be overriden for testing.
+ * @param {Object} event - event object
+ * @param {Object} logger - Cumuluss common log object.  Can be overriden for testing.
  * @returns {Object} returns event object with data field deserialized
  */
-async function kinesisEventLogger(event, logger=log) {
-  let outputEvent = event;
-  let outputRecords = event.Records.map((record) => {
-    record.kinesis.data = Buffer.from(record.kinesis.data, 'base64').toString('ascii');
-    return record;
+async function kinesisEventLogger(event, logger = log) {
+  const outputEvent = event;
+  const outputRecords = event.Records.map((record) => {
+    const updateRecord = record;
+    updateRecord.kinesis.data = Buffer.from(record.kinesis.data, 'base64').toString('ascii');
+    return updateRecord;
   });
   outputEvent.Records = outputRecords;
   logger.info(JSON.stringify(outputEvent));
