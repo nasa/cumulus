@@ -269,6 +269,7 @@ IngestGranule:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
+      ResultPath: null
       Next: VpcOrNot
     VpcOrNot:
         Type: Choice
