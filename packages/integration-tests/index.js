@@ -99,8 +99,8 @@ async function getClusterArn(stackName) {
  */
 function getWorkflowTemplate(stackName, bucketName, workflowName) {
   const messageTemplateStore = new MessageTemplateStore({
+    stackName,
     bucket: bucketName,
-    stack: stackName,
     s3: s3()
   });
 
