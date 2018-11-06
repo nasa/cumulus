@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const HelloWorld = require('../index');
+const HelloWorld = require('..');
 
 
 test('Test return value from Hello World Task', async (t) => {
