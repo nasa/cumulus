@@ -1,4 +1,4 @@
-/* eslint no-param-reassign: "off" */
+no /* eslint-param-reassign: "off" */
 
 'use strict';
 
@@ -16,9 +16,9 @@ class Rule extends Manager {
       schema: rule
     });
 
-    this.eventMapping = {arn: 'arn', log_event_arn: 'log_event_arn'};
+    this.eventMapping = {arn: 'arn', logEventArn: 'logEventArn'};
     this.kinesisSourceEvents = [{name: process.env.kinesisConsumer, eventType: 'arn'},
-                                {name: process.env.KinesisRuleInput, eventType: 'log_event_arn'}];
+                                {name: process.env.KinesisRuleInput, eventType: 'logEventArn'}];
     this.targetId = 'lambdaTarget';
   }
 
@@ -156,7 +156,7 @@ class Rule extends Manager {
     //TODO: Add this back into addKinesisEventSource or remove magic array index
     const eventAdd = await Promise.all(sourceEventPromises);
     item.rule.arn = eventAdd[0].UUID;
-    item.rule.log_event_arn = eventAdd[1].UUID;
+    item.rule.logEventArn = eventAdd[1].UUID;
     return item;
   }
 
@@ -234,7 +234,7 @@ class Rule extends Manager {
     const eventDelete = await Promise.all(deleteEventPromises);
     //TODOD Remove magic array number
     item.rule.arn = eventDelete[0];
-    item.rule.log_event_arn = eventDelete[1];
+    item.rule.logEventArn = eventDelete[1];
     return item;
   }
 
