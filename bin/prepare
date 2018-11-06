@@ -20,7 +20,9 @@ set -e
 
 # run the yarn link on packages used on the integration tests
 JOBS=$(node -e 'console.log(os.cpus().length + 1)')
-./node_modules/.bin/lerna run build --concurrency $JOBS
+
+[ -z "$SKIP_BUILD" ] && ./node_modules/.bin/lerna run build --concurrency $JOBS
+
 cat example/.tmp/cumulus_integration_tests_packages.txt | xargs -I % ./node_modules/.bin/lerna exec --concurrency $JOBS --scope % -- yarn link
 
 (
