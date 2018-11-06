@@ -74,14 +74,12 @@ test('files existing at location returns both files if both exist', async (t) =>
 
   await s3().createBucket({ Bucket: destBucket }).promise();
 
-  const sourceFiles = filenames.map((name) => {
-    return {
-      name,
-      sourceBucket,
-      filepath: name,
-      filename: buildS3Uri(sourceBucket, name)
-    };
-  });
+  const sourceFiles = filenames.map((name) => ({
+    name,
+    sourceBucket,
+    filepath: name,
+    filename: buildS3Uri(sourceBucket, name)
+  }));
 
   const destinations = [
     {
@@ -125,14 +123,12 @@ test('files existing at location returns only file that exists', async (t) => {
 
   await s3().createBucket({ Bucket: destBucket }).promise();
 
-  const sourceFiles = filenames.map((name) => {
-    return {
-      name,
-      sourceBucket,
-      filepath: name,
-      filename: buildS3Uri(sourceBucket, name)
-    };
-  });
+  const sourceFiles = filenames.map((name) => ({
+    name,
+    sourceBucket,
+    filepath: name,
+    filename: buildS3Uri(sourceBucket, name)
+  }));
 
   const destinations = [
     {
@@ -155,7 +151,7 @@ test('files existing at location returns only file that exists', async (t) => {
 
   const granulesModel = new Granule();
 
-  const filesExisting = await granulesModel.getgetFilesExistingAtLocation(granule, destinations);
+  const filesExisting = await granulesModel.getFilesExistingAtLocation(granule, destinations);
 
   t.deepEqual(filesExisting, [sourceFiles[1]]);
 

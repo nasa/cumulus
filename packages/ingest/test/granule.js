@@ -466,17 +466,15 @@ test('generateMoveFileParams generates correct parameters', (t) => {
   const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
 
   moveFileParams.map((item, index) => t.deepEqual(item, {
-      file: sourceFiles[index],
-      source: {
-        Bucket: sourceBucket,
-        Key: `origin/${filenames[index]}`
-      },
-      target: {
-        Bucket: destBucket,
-        Key: `${destinationFilepath}/${filenames[index]}`
-      }
-    })
-  );
+    file: sourceFiles[index],
+    source: {
+      Bucket: sourceBucket,
+      Key: `origin/${filenames[index]}`
+    },
+    target: {
+      Bucket: destBucket,
+      Key: `${destinationFilepath}/${filenames[index]}`
+    }}));
 });
 
 test('generateMoveFileParams generates null source and target for no destination', (t) => {
