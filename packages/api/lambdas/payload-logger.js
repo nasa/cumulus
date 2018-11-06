@@ -17,7 +17,7 @@ async function kinesisEventLogger(event, logger = log) {
     return updateRecord;
   });
   outputEvent.Records = outputRecords;
-  logger.info(JSON.stringify(outputEvent));
+  outputRecords.forEach((record) => logger.info(JSON.stringify(record)));
   return outputEvent;
 }
 

@@ -28,7 +28,7 @@ test('The lambda processes incoming record and writes to CloudWatch', async (t) 
   const expected = cloneDeep(event);
   expected.Records[0].kinesis.data = 'some_data_here';
 
-  const logMock = sinon.mock(log).expects('info').withArgs(JSON.stringify(expected)).once();
+  const logMock = sinon.mock(log).expects('info').withArgs(JSON.stringify(expected.Records[0])).once();
   log.info = logMock;
 
   const actual = await payloadLogger.kinesisEventLogger(event, log);
