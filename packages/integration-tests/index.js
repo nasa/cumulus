@@ -493,7 +493,7 @@ async function addRules(config, dataDirectory, overrides) {
     console.log(`adding rule ${templatedRule.name}`);
     return r.create(templatedRule);
   }));
-  return Promise.all(promises); //.then((rs) => rs.length);
+  return Promise.all(promises);
 }
 
 /**
