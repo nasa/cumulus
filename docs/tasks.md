@@ -1,3 +1,9 @@
+---
+id: tasks
+title: Cumulus Tasks
+hide_title: true
+---
+
 # Cumulus Tasks
 
 A list of reusable Cumulus tasks. [Add your own.](adding-a-task.md)
@@ -97,3 +103,11 @@ Fake processing task used for integration tests
 
 - Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/test-processing/schemas).
 - Resources: [npm](https://npmjs.com/package/@cumulus/test-processing) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/test-processing)
+
+---
+
+### [@cumulus/sync-granule](https://github.com/nasa/cumulus/tree/master/tasks/sync-granule)
+Download a given granule
+
+- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/sync-granule/schemas).
+- Resources: [npm](https://npmjs.com/package/@cumulus/sync-granule) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/sync-granule)

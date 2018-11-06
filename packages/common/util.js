@@ -3,6 +3,33 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const log = require('./log');
+
+/**
+ * Mark a piece of code as deprecated
+ *
+ * @param {string} name - the name of the function / method / class to deprecate
+ * @param {string} version - the version after which the code will be marked
+ *   as deprecated
+ * @param {string} [alternative] - the function / method / class to use instead
+ *   of this deprecated code
+ */
+exports.deprecate = (name, version, alternative) => {
+  let message = `${name} is deprecated after version ${version} and will be removed in a future release.`;
+  if (alternative) message += ` Use ${alternative} instead.`;
+
+  log.warn(message);
+};
+
+/**
+ * Wait for the defined number of milliseconds
+ *
+ * @param {number} waitPeriodMs - number of milliseconds to wait
+ * @returns {Promise.<undefined>} - promise resolves after a given time period
+ */
+exports.sleep = (waitPeriodMs) =>
+  (new Promise((resolve) =>
+    setTimeout(resolve, waitPeriodMs)));
 
 /**
  * Synchronously makes a temporary directory, smoothing over the differences between

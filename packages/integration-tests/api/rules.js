@@ -21,7 +21,7 @@ async function callRuleApiFunction(prefix, requestPayload) {
   console.log(`payload: ${payload}`);
 
   try {
-    return JSON.parse(payload.body);
+    return payload;
   }
   catch (error) {
     console.log(`Error parsing JSON response for rule ${payload.httpMethod}: ${payload}`);
@@ -43,6 +43,29 @@ async function postRule({ prefix, rule }) {
     resource: '/rules',
     path: 'rules',
     body: JSON.stringify(rule)
+  };
+
+  return callRuleApiFunction(prefix, payload);
+}
+
+/**
+ * Update a rule in the rules API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {Object} params.rule - the rule to update
+ * @param {Object} params.updateParams - key/value to update on the rule
+ * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
+ */
+async function updateRule({ prefix, rule, updateParams }) {
+  const payload = {
+    httpMethod: 'PUT',
+    resource: '/rules/{name}',
+    path: `rules/${rule.name}`,
+    pathParameters: {
+      name: rule.name
+    },
+    body: JSON.stringify(updateParams)
   };
 
   return callRuleApiFunction(prefix, payload);
@@ -83,8 +106,32 @@ async function deleteRule({ prefix, ruleName }) {
   return callRuleApiFunction(prefix, payload);
 }
 
+/**
+ * Rerun a rule via the API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.ruleName - the name of the rule to rerun
+ * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
+ */
+async function rerunRule({ prefix, ruleName }) {
+  const payload = {
+    httpMethod: 'PUT',
+    resource: '/rules/{name}',
+    path: `rules/${ruleName}`,
+    pathParameters: {
+      name: ruleName
+    },
+    body: JSON.stringify({ action: 'rerun' })
+  };
+
+  return callRuleApiFunction(prefix, payload);
+}
+
 module.exports = {
   postRule,
+  updateRule,
   deleteRule,
-  listRules
+  listRules,
+  rerunRule
 };

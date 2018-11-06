@@ -1,15 +1,13 @@
 'use strict';
 
+const pRetry = require('p-retry');
+
 const { Kinesis } = require('aws-sdk');
-const {
-  aws: {
-    receiveSQSMessages
-  }
-} = require('@cumulus/common');
+const { receiveSQSMessages } = require('@cumulus/common/aws');
+const { sleep } = require('@cumulus/common/util');
 
 const {
   LambdaStep,
-  timeout,
   getExecutions
 } = require('@cumulus/integration-tests');
 
@@ -47,9 +45,8 @@ async function tryCatchExit(cleanupCallback, wrappedFunction, ...args) {
       console.log(`Cleanup failed, ${e}.   Stack may need to be manually cleaned up.`);
     }
     // We should find a better way to do this
-    process.exit(1);
+    process.exit(1); // eslint-disable-line no-process-exit
   }
-  return Promise.reject(new Error('tryCatchExit failed unexpectedly'));
 }
 
 /**
@@ -67,27 +64,36 @@ async function getStreamStatus(StreamName) {
  * Wait for a number of periods for a kinesis stream to become active.
  *
  * @param {string} streamName - name of kinesis stream to wait for
- * @param {integer} maxNumberElapsedPeriods - number of periods to wait for stream
- *                  default value 30; duration of period is 1000ms
+ * @param {string} initialDelaySecs - 1 time wait period before finding stream.
+                                      Default value 10 seconds.
+ * @param {integer} maxRetries - number of retries to attempt before failing.
+ *                               default value 10
  * @returns {string} current stream status: 'ACTIVE'
  * @throws {Error} - Error describing current stream status
  */
-async function waitForActiveStream(streamName, maxNumberElapsedPeriods = 60) {
-  let streamStatus = 'Anything';
-  let elapsedPeriods = 0;
+async function waitForActiveStream(streamName, initialDelaySecs = 10, maxRetries = 10) {
+  let streamStatus = 'UNDEFINED';
   let stream;
+  const displayName = streamName.split('-').pop();
 
-  /* eslint-disable no-await-in-loop */
-  while (streamStatus !== 'ACTIVE' && elapsedPeriods < maxNumberElapsedPeriods) {
-    await timeout(waitPeriodMs);
-    stream = await kinesis.describeStream({ StreamName: streamName }).promise();
-    streamStatus = stream.StreamDescription.StreamStatus;
-    elapsedPeriods += 1;
-  }
-  /* eslint-enable no-await-in-loop */
+  await sleep(initialDelaySecs * 1000);
 
-  if (streamStatus === 'ACTIVE') return streamStatus;
-  throw new Error(`Stream never became active:  status: ${streamStatus}`);
+  return pRetry(
+    async () => {
+      stream = await kinesis.describeStream({ StreamName: streamName }).promise();
+      streamStatus = stream.StreamDescription.StreamStatus;
+      if (streamStatus === 'ACTIVE') return streamStatus;
+      throw new Error(`Stream never became active:  status: ${streamStatus}: ${streamName}`);
+    },
+    {
+      minTimeout: 3 * 1000,
+      factor: 1.45,
+      retries: maxRetries,
+      onFailedAttempt: (error) => {
+        console.log(`Stream in state ${streamStatus} retrying. ${error.attemptsLeft} remain on ${displayName} at ${new Date().toString()}`);
+      }
+    }
+  );
 }
 
 /**
@@ -98,6 +104,30 @@ async function waitForActiveStream(streamName, maxNumberElapsedPeriods = 60) {
  */
 async function deleteTestStream(streamName) {
   return kinesis.deleteStream({ StreamName: streamName }).promise();
+}
+
+
+/**
+ * patiently create a kinesis stream
+ *
+ * @param {string} streamName - name of kinesis stream to create
+ * @returns {Promise<Object>} - kinesis create stream promise if stream to be created.
+ */
+async function createKinesisStream(streamName) {
+  return pRetry(
+    async () => {
+      try {
+        return kinesis.createStream({ StreamName: streamName, ShardCount: 1 }).promise();
+      }
+      catch (error) {
+        if (error.code === 'LimitExceededException') throw new Error('Trigger retry');
+        throw new pRetry.AbortError(error);
+      }
+    },
+    {
+      onFailedAttempt: () => console.log('LimitExceededException when calling kinesis.createStream(), will retry.')
+    }
+  );
 }
 
 /**
@@ -116,9 +146,10 @@ async function createOrUseTestStream(streamName) {
   catch (err) {
     if (err.code === 'ResourceNotFoundException') {
       console.log('Creating a new stream:', streamName);
-      stream = await kinesis.createStream({ StreamName: streamName, ShardCount: 1 }).promise();
+      stream = await createKinesisStream(streamName);
     }
     else {
+      console.log(`describeStream error ${err}`);
       throw err;
     }
   }
@@ -141,10 +172,12 @@ async function getShardIterator(streamName) {
 
   const streamDetails = await kinesis.describeStream(describeStreamParams).promise();
   const shardId = streamDetails.StreamDescription.Shards[0].ShardId;
+  const startingSequenceNumber = streamDetails.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber;
 
   const shardIteratorParams = {
     ShardId: shardId, /* required */
-    ShardIteratorType: 'LATEST',
+    ShardIteratorType: 'AT_SEQUENCE_NUMBER',
+    StartingSequenceNumber: startingSequenceNumber,
     StreamName: streamName
   };
 
@@ -155,12 +188,19 @@ async function getShardIterator(streamName) {
 /**
  * Gets records from a kinesis stream using a shard iterator.
  *
- * @param  {string} shardIterator - Kinesis stream shard iterator.
- *                                  Shard iterators must be generated using getShardIterator.
- * @returns {Promise}              - kinesis GetRecords promise
+ * @param {string} shardIterator - Kinesis stream shard iterator. Shard
+ *   iterators must be generated using getShardIterator.
+ * @param {Array} records
+ * @returns {Array} Array of records from kinesis stream.
  */
-async function getRecords(shardIterator) {
-  return kinesis.getRecords({ ShardIterator: shardIterator }).promise();
+async function getRecords(shardIterator, records = []) {
+  const data = await kinesis.getRecords({ ShardIterator: shardIterator }).promise();
+  records.push(...data.Records);
+  if ((data.NextShardIterator !== null) && (data.MillisBehindLatest > 0)) {
+    await sleep(waitPeriodMs);
+    return getRecords(data.NextShardIterator, records);
+  }
+  return records;
 }
 
 /**
@@ -194,11 +234,12 @@ async function waitForTestSf(recordIdentifier, maxWaitTimeSecs, firstStep = 'SfS
 
   /* eslint-disable no-await-in-loop */
   while (timeWaitedSecs < maxWaitTimeSecs && workflowExecution === undefined) {
-    await timeout(waitPeriodMs);
+    await sleep(waitPeriodMs);
     timeWaitedSecs += (waitPeriodMs / 1000);
     const executions = await getExecutions('KinesisTriggerTest', testConfig.stackName, testConfig.bucket, maxExecutionResults);
     // Search all recent executions for target recordIdentifier
-    for (const execution of executions) {
+    for (let ctr = 0; ctr < executions.length; ctr += 1) {
+      const execution = executions[ctr];
       const taskInput = await lambdaStep.getStepInput(execution.executionArn, firstStep);
       if (taskInput !== null && taskInput.payload.identifier === recordIdentifier) {
         workflowExecution = execution;
@@ -206,7 +247,8 @@ async function waitForTestSf(recordIdentifier, maxWaitTimeSecs, firstStep = 'SfS
       }
     }
   }
-  /* eslint-disable no-await-in-loop */
+  /* eslint-enable no-await-in-loop */
+
   if (timeWaitedSecs < maxWaitTimeSecs) return workflowExecution;
   throw new Error('Never found started workflow.');
 }
@@ -245,28 +287,56 @@ function isTargetMessage(message, recordIdentifier) {
 }
 
 /**
- * Wait until a kinesisRecord appears in an SQS message who's identifier matches the input recordIdentifier.  Wait up to 10 minutes.
+ * Scan the queue as fast as possible to get all of the records that are
+ * available and see if any contain the recordIdentifier.  Do this scan faster
+ * than the visibilityTimeout of the messages you read to ensure reading all
+ * messages in the queue.
  *
- * @param {string} recordIdentifier - random string to match found messages against.
+ * We are working across purposes at this point, a queue is not designed to be
+ * searched, so we need to find the message that contains the record identifier
+ * before the timeout of the messages.
+ * @param {string} queueUrl - SQS Queue url
+ * @param {string} recordIdentifier - identifier in the original kinesis message to match.
+ */
+async function scanQueueForMessage(queueUrl, recordIdentifier) {
+  const sqsOptions = { numOfMessages: 10, timeout: 40, waitTimeSeconds: 2 };
+  const messages = await receiveSQSMessages(queueUrl, sqsOptions);
+  if (messages.length > 0) {
+    console.log(`messages retrieved: ${messages.length}`);
+    const targetMessage = messages.find((message) => isTargetMessage(message, recordIdentifier));
+    if (targetMessage) return targetMessage;
+    return scanQueueForMessage(queueUrl, recordIdentifier);
+  }
+  throw new Error('Message Not Found');
+}
+
+/**
+ * Wait until a kinesisRecord appears in an SQS message who's identifier matches the input recordIdentifier.
+ *
+ * @param {string} recordIdentifier - random string to match found kinesis messages against.
  * @param {string} queueUrl - kinesisFailure SQS url
- * @param {number} maxNumberElapsedPeriods - number of timeout intervals (5 seconds) to wait.
+ * @param {number} maxRetries - number of retries
  * @returns {Object} - matched Message from SQS.
  */
-async function waitForQueuedRecord(recordIdentifier, queueUrl, maxNumberElapsedPeriods = 120) {
-  const timeoutInterval = 5000;
-  let queuedRecord;
-  let elapsedPeriods = 0;
-
-  while (!queuedRecord && elapsedPeriods < maxNumberElapsedPeriods) {
-    const messages = await receiveSQSMessages(queueUrl);
-    if (messages.length > 0) {
-      const targetMessage = messages.find((message) => isTargetMessage(message, recordIdentifier));
-      if (targetMessage) return targetMessage;
+async function waitForQueuedRecord(recordIdentifier, queueUrl, maxRetries = 15) {
+  return pRetry(
+    async () => {
+      try {
+        return await scanQueueForMessage(queueUrl, recordIdentifier);
+      }
+      catch (error) {
+        throw new Error(`Never found ${recordIdentifier} on Queue`);
+      }
+    },
+    {
+      minTimeout: 1 * 1000,
+      maxTimeout: 60 * 1000,
+      retries: maxRetries,
+      onFailedAttempt: (error) => {
+        console.log(`No message on Queue. ${error.attemptsLeft} retries remain. ${new Date().toLocaleString()}`);
+      }
     }
-    await timeout(timeoutInterval);
-    elapsedPeriods += 1;
-  }
-  return { waitForQueuedRecord: 'never found record on queue' };
+  );
 }
 
 module.exports = {

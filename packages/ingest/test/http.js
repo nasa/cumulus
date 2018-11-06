@@ -13,7 +13,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const stubLink = 'file.txt';
 class TestEmitter extends EventEmitter {
   start() {
-    this.emit('fetchcomplete', null, `<a href="${stubLink}">link</a>`)
+    this.emit('fetchcomplete', null, `<a href="${stubLink}">link</a>`);
   }
 }
 http.__set__('Crawler', TestEmitter);
@@ -49,7 +49,7 @@ test('Download remote file to s3', async (t) => {
 });
 
 test('returns files with provider path', async (t) => {
-  const actualFiles = await myTestHttpDiscoveryClass.list()
+  const actualFiles = await myTestHttpDiscoveryClass.list();
   const expectedFiles = [{ name: stubLink, path: myTestHttpDiscoveryClass.path }];
   t.deepEqual(actualFiles, expectedFiles);
 });
