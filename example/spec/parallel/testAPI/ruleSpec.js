@@ -64,6 +64,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
     });
 
     it('the rule does not kick off a workflow', () => {
+      // This execution _should_ wait for 5 minutes and terminate with a throw.
       expect(() => waitForTestExecutionStart(
         scheduledHelloWorldRule.workflow,
         config.stackName,
