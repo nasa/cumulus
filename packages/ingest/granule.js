@@ -929,7 +929,7 @@ function generateMoveFileParams(sourceFiles, destinations) {
 
       const target = {
         Bucket: destination.bucket,
-        Key: urljoin(destination.filepath, file.name)
+        Key: destination.filepath ? urljoin(destination.filepath, file.name) : file.name
       };
 
       return { source, target, file };
