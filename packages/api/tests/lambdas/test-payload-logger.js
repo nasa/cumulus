@@ -1,12 +1,13 @@
 'use strict';
+
 const cloneDeep = require('lodash.clonedeep');
 const { log } = require('@cumulus/common');
 const sinon = require('sinon');
 const test = require('ava');
-const payloadLogger =  require('../../lambdas/payload-logger');
+const payloadLogger = require('../../lambdas/payload-logger');
 
 const event = {
-  Records: [ {
+  Records: [{
     kinesis: {
       kinesisSchemaVersion: '1.0',
       partitionKey: 'notapartitionkey',
@@ -20,14 +21,14 @@ const event = {
       awsRegion: 'us-east-1',
       eventSourceARN: 'someEventSourceArnHere'
     }
-  } ]
+  }]
 };
 
 test('The lambda processes incoming record and writes to CloudWatch', async (t) => {
   const expected = cloneDeep(event);
   expected.Records[0].kinesis.data = 'some_data_here';
 
-  const logMock = sinon.mock(log).expects("info").withArgs(JSON.stringify(expected)).once();
+  const logMock = sinon.mock(log).expects('info').withArgs(JSON.stringify(expected)).once();
   log.info = logMock;
 
   const actual = await payloadLogger.kinesisEventLogger(event, log);
