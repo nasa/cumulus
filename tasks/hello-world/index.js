@@ -3,7 +3,11 @@
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { log } = require('@cumulus/common');
 
-let passOnRetry = false;
+const {
+  deleteS3Object,
+  s3ObjectExists,
+  s3PutObject
+} = require('@cumulus/common/aws');
 
 /**
  * Throw an error if hello world is configured to throw an error for
@@ -13,17 +17,33 @@ let passOnRetry = false;
  * @param {Object} event - input from the message adapter
  * @returns {undefined} none
  */
-function throwErrorIfConfigured(event) {
-  if (event.config.passOnRetry && passOnRetry) {
+async function throwErrorIfConfigured(event) {
+  const execution = event.config.execution;
+  const retryFilename = `${execution}_retry.txt`;
+  const bucket = event.config.bucket;
+
+  let isRetry = false;
+
+  if (event.config.passOnRetry) {
+    isRetry = await s3ObjectExists({
+      Bucket: bucket,
+      Key: retryFilename
+    });
+  }
+
+  if (event.config.passOnRetry && isRetry) {
     log.debug('Detected retry');
-    passOnRetry = false;
+
+    // Delete file
+    await deleteS3Object(bucket, retryFilename);
   }
   else if (event.config.fail) {
-    // This if check is to avoid race conditions in the parallel tests,
-    // since passOnRetry is set globally across instances of the lambda
-    // Only set this variable if it specifically configured
     if (event.config.passOnRetry) {
-      passOnRetry = true;
+      await s3PutObject({
+        Bucket: bucket,
+        Key: retryFilename,
+        Body: ''
+      });
     }
 
     throw new Error('Step configured to force fail');
@@ -31,24 +51,26 @@ function throwErrorIfConfigured(event) {
 }
 
 /**
-* Return sample 'hello world' JSON
-*
-* @param {Object} event - input from the message adapter
-* @returns {Object} sample JSON object
-*/
-function helloWorld(event) {
-  throwErrorIfConfigured(event);
+ * Return sample 'hello world' JSON
+ *
+ * @param {Object} event - input from the message adapter
+ * @returns {Object} sample JSON object
+ */
+async function helloWorld(event) {
+  await throwErrorIfConfigured(event);
 
-  return { hello: 'Hello World' };
+  return {
+    hello: 'Hello World'
+  };
 }
 /**
-* Lambda handler
-*
-* @param {Object} event - a Cumulus Message
-* @param {Object} context - an AWS Lambda context
-* @param {Function} callback - an AWS Lambda handler
-* @returns {undefined} - does not return a value
-*/
+ * Lambda handler
+ *
+ * @param {Object} event - a Cumulus Message
+ * @param {Object} context - an AWS Lambda context
+ * @param {Function} callback - an AWS Lambda handler
+ * @returns {undefined} - does not return a value
+ */
 function handler(event, context, callback) {
   cumulusMessageAdapter.runCumulusTask(helloWorld, event, context, callback);
 }
