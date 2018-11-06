@@ -308,7 +308,7 @@ module.exports.rule = {
         value: {
           type: 'string'
         },
-        event_arn: {
+        arn: {
           type: 'string',
           readonly: true
         },
