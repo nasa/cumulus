@@ -31,6 +31,7 @@ jobs:
         - npm install
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
+        - env SKIP_BUILD=true ./bin/prepare
         - echo 'BOOTSTRAP FINISHED'
       script: npm run lint
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
