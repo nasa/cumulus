@@ -304,7 +304,8 @@ module.exports.rule = {
           type: 'string',
           enum: ['onetime', 'scheduled', 'sns', 'kinesis']
         },
-        // Value is the target address, for a kinesis rule this is the arn, presumably for a SIPs rule lambda it's ... ?
+        // Value is multi-use.   Fr a kinesis rule this is the target stream arn, for
+        // a scheduled event it's the schedule pattern (e.g. cron), for a one-time rule.
         value: {
           type: 'string'
         },
