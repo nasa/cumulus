@@ -197,7 +197,10 @@ async function generateTemplates(config, outputs, uploader) {
       const messageTemplate = templates[ctr];
       const name = messageTemplate.meta.workflow_name;
 
-      await messageTemplateStore.put(name); // eslint-disable-line no-await-in-loop
+      await messageTemplateStore.put( // eslint-disable-line no-await-in-loop
+        name,
+        JSON.stringify(messageTemplate)
+      );
 
       workflows.push({
         name,
