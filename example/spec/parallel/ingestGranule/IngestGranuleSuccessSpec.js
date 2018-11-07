@@ -27,6 +27,7 @@ const {
   LambdaStep,
   conceptExists,
   getOnlineResources,
+  granulesApi: granulesApiTestUtils,
   waitForConceptExistsOutcome,
   waitUntilGranuleStatusIs,
   waitForTestExecutionStart,
@@ -172,7 +173,7 @@ describe('The S3 Ingest Granules workflow', () => {
       providerModel.delete(provider),
       executionModel.delete({ arn: workflowExecution.executionArn }),
       executionModel.delete({ arn: failingWorkflowExecution.executionArn }),
-      apiTestUtils.deleteGranule({
+      granulesApiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       })
@@ -206,7 +207,7 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   it('makes the granule available through the Cumulus API', async () => {
-    const granuleResponse = await apiTestUtils.getGranule({
+    const granuleResponse = await granulesApiTestUtils.getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId
     });
@@ -376,7 +377,7 @@ describe('The S3 Ingest Granules workflow', () => {
       let cmrLink;
 
       beforeAll(async () => {
-        const granuleResponse = await apiTestUtils.getGranule({
+        const granuleResponse = await granulesApiTestUtils.getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
@@ -402,7 +403,7 @@ describe('The S3 Ingest Granules workflow', () => {
           startTime = new Date();
           oldUpdatedAt = granule.updatedAt;
           oldExecution = granule.execution;
-          const reingestGranuleResponse = await apiTestUtils.reingestGranule({
+          const reingestGranuleResponse = await granulesApiTestUtils.reingestGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId
           });
@@ -421,7 +422,7 @@ describe('The S3 Ingest Granules workflow', () => {
         it('overwrites granule files', async () => {
           // Await reingest completion
           await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
-          const updatedGranuleResponse = await apiTestUtils.getGranule({
+          const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId
           });
@@ -453,7 +454,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(existsInCMR).toEqual(true);
 
         // Remove the granule from CMR
-        await apiTestUtils.removeFromCMR({
+        await granulesApiTestUtils.removeFromCMR({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
@@ -469,7 +470,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(existsInCMR).toEqual(false);
 
         // Publish the granule to CMR
-        await apiTestUtils.applyWorkflow({
+        await granulesApiTestUtils.applyWorkflow({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
           workflow: 'PublishGranule'
@@ -494,19 +495,19 @@ describe('The S3 Ingest Granules workflow', () => {
 
       it('can delete the ingested granule from the API', async () => {
         // pre-delete: Remove the granule from CMR
-        await apiTestUtils.removeFromCMR({
+        await granulesApiTestUtils.removeFromCMR({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
 
         // Delete the granule
-        await apiTestUtils.deleteGranule({
+        await granulesApiTestUtils.deleteGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
 
         // Verify deletion
-        const granuleResponse = await apiTestUtils.getGranule({
+        const granuleResponse = await granulesApiTestUtils.getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });

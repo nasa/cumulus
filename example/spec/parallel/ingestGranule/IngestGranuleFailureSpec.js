@@ -4,11 +4,12 @@ const fs = require('fs-extra');
 const { models: { Granule } } = require('@cumulus/api');
 const {
   api: apiTestUtils,
-  addProviders,
-  cleanupProviders,
   addCollections,
+  addProviders,
+  buildAndExecuteWorkflow,
   cleanupCollections,
-  buildAndExecuteWorkflow
+  cleanupProviders,
+  granulesApi: granulesApiTestUtils
 } = require('@cumulus/integration-tests');
 
 const {
@@ -80,7 +81,7 @@ describe('The Ingest Granule failure workflow', () => {
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      apiTestUtils.deleteGranule({
+      granulesApiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       })
@@ -165,7 +166,7 @@ describe('The Ingest Granule failure workflow', () => {
     });
 
     it('fails the granule with the error message', async () => {
-      const granuleResponse = await apiTestUtils.getGranule({
+      const granuleResponse = await granulesApiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       });
