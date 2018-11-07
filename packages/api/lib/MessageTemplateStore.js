@@ -55,7 +55,10 @@ class MessageTemplateStore {
       Bucket: bucket,
       Key: messageTemplateKey(stackName, workflowName),
       Body: messageTemplate
-    }).promise();
+    }).promise()
+      .catch((err) => {
+        throw new Error(`Failed to upload message template - ${err.message}`);
+      });
   }
 
   /**

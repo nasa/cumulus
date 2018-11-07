@@ -97,15 +97,21 @@ async function getClusterArn(stackName) {
  * @param {string} workflowName - workflow name
  * @returns {Promise.<Object>} template as a JSON object
  */
-function getWorkflowTemplate(stackName, bucketName, workflowName) {
+async function getWorkflowTemplate(stackName, bucketName, workflowName) {
   const messageTemplateStore = new MessageTemplateStore({
     stackName,
     bucket: bucketName,
     s3: s3()
   });
 
-  return messageTemplateStore.get(workflowName)
-    .then(JSON.parse);
+  const template = await messageTemplateStore.get(workflowName);
+
+  try {
+    return JSON.parse(template);
+  }
+  catch (err) {
+    throw new Error(`Failed to parse workflow template - ${err.message}`);
+  }
 }
 
 /**
