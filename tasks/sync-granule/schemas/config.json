@@ -93,11 +93,6 @@
       "description": "Specifies how duplicate filenames should be handled. `error` will throw an error that, if not caught, will fail the task/workflow execution. `version` will add a suffix to the existing filename to avoid a clash.",
       "enum": ["replace", "version", "skip", "error"],
       "default": "error"
-    },
-    "reingestGranule": {
-      "type": ["boolean", "null"],
-      "description": "Indicates that the workflow is a manually triggered re-ingest.",
-      "default": false
     }
   }
 }

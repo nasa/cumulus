@@ -106,6 +106,7 @@ test.beforeEach(async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
   const rawPayload = await readFile(payloadPath, 'utf8');
   t.context.payload = JSON.parse(rawPayload);
+  process.env.REINGEST_GRANULE = false;
 });
 
 test.afterEach.always(async (t) => {
@@ -436,9 +437,10 @@ test.serial('when duplicateHandling is "skip", does not overwrite or create new'
 });
 
 async function granuleFilesOverwrittenTest(t, duplicateHandling, reingestGranule) {
+  process.env.REINGEST_GRANULE = reingestGranule || false;
+
   let newPayload = buildPayload(t);
   newPayload.config.duplicateHandling = duplicateHandling;
-  newPayload.config.reingestGranule = reingestGranule;
 
   // payload could be modified
   const newPayloadOrig = clonedeep(newPayload);
