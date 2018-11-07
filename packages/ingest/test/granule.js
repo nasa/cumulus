@@ -474,7 +474,8 @@ test('generateMoveFileParams generates correct parameters', (t) => {
     target: {
       Bucket: destBucket,
       Key: `${destinationFilepath}/${filenames[index]}`
-    }}));
+    }
+  }));
 });
 
 test('generateMoveFileParams generates null source and target for no destination', (t) => {
