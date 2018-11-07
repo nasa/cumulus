@@ -179,14 +179,14 @@ BulkDelete:
   handler: index.bulkDeleteLambda
   source: 'node_modules/@cumulus/api/dist/'
 
-KinesisRuleInput:
+KinesisInboundEventLogger:
   handler: index.logger
   timeout: 300
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
   namedLambdaDeadLetterQueue: true
 
-KinesisRuleOutput:
+KinesisOutboundEventLogger:
   handler: index.logger
   timeout: 300
   memory: 512

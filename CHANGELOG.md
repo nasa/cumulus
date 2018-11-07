@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - **CUMULUS-975**
-  - Add `KinesisRuleInput` and `KinesisRuleOutput` API lambdas.  These lambdas
+  - Add `KinesisInboundEventLogger` and `KinesisOutboundEventLogger` API lambdas.  These lambdas
     are utilized to dump incoming and outgoing ingest workflow kinesis streams
     to cloudwatch for analytics in case of AWS/stream failure.
   - Update rules model to allow tracking of log_event ARNs related to

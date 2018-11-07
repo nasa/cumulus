@@ -1,12 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'stack: {{stackName}} | deployed by Kes'
 Parameters:
-  KinesisRuleInputLambdaFunction:
+  KinesisInboundEventLoggerLambdaFunction:
     Type: String
-    Description: 'Arn for KinesisRuleInput Lambda Function'
-  KinesisRuleOutputLambdaFunction:
+    Description: 'Arn for KinesisInboundEventLogger Lambda Function'
+  KinesisOutboundEventLoggerLambdaFunction:
     Type: String
-    Description: 'Arn for KinesisRuleOutput Lambda Function'
+    Description: 'Arn for KinesisOutboundEventLogger Lambda Function'
   CmrPassword:
     Type: String
     Description: 'Password used to publish CMR records. This is encrypted by Custom::Cumulus'

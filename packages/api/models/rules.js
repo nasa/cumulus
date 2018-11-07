@@ -18,7 +18,7 @@ class Rule extends Manager {
 
     this.eventMapping = { arn: 'arn', logEventArn: 'logEventArn' };
     this.kinesisSourceEvents = [{ name: process.env.kinesisConsumer, eventType: 'arn' },
-      { name: process.env.KinesisRuleInput, eventType: 'logEventArn' }];
+      { name: process.env.KinesisInboundEventLogger, eventType: 'logEventArn' }];
     this.targetId = 'lambdaTarget';
   }
 

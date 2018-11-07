@@ -50,13 +50,13 @@ Resources:
             - {{../es.name}}Domain
             - DomainEndpoint
       {{/if}}
-        KinesisRuleInputLambdaFunction:
+        KinesisInboundEventLoggerLambdaFunction:
           Fn::GetAtt:
-            - KinesisRuleInputLambdaFunction
+            - KinesisInboundEventLoggerLambdaFunction
             - Arn
-        KinesisRuleOutputLambdaFunction:
+        KinesisOutboundEventLoggerLambdaFunction:
           Fn::GetAtt:
-            - KinesisRuleOutputLambdaFunction
+            - KinesisOutboundEventLoggerLambdaFunction
             - Arn
         log2elasticsearchLambdaFunction:
           Fn::GetAtt:

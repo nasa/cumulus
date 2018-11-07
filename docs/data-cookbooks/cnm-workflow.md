@@ -589,13 +589,13 @@ Note, these are only records that occurred when processing records from Kinesis 
 
 #### Notification Stream messages
 
-Cumulus includes two lambdas (`KinesisRuleInput` and `KinesisRuleOutput`) that utilize the same code to take a Kinesis record event as input, deserialize the data field and output the modified event to the logs.
+Cumulus includes two lambdas (`KinesisInboundEventLogger` and `KinesisOutboundEventLogger`) that utilize the same code to take a Kinesis record event as input, deserialize the data field and output the modified event to the logs.
 
-When a `kinesis` rule is created, in addition to the kinesisConsumer event mapping, an event mapping is created to trigger `KinesisRuleInput` to record a log of the inbound record, to allow for analysis in case of unexpected failure.
+When a `kinesis` rule is created, in addition to the kinesisConsumer event mapping, an event mapping is created to trigger `KinesisInboundEventLogger` to record a log of the inbound record, to allow for analysis in case of unexpected failure.
 
 #### Response Stream messages
 
-Cumulus also supports this feature for all outbound  messages.  To take advantage of this feature, you will need to set an event mapping on the `KinesisRuleOutput` lambda that targets your `cnmResponseStream`.   You can do this in the Lambda management page for `KinesisRuleOutput`.    Add a Kinesis trigger, and configure it to target the cnmResponseStream for your workflow:
+Cumulus also supports this feature for all outbound  messages.  To take advantage of this feature, you will need to set an event mapping on the `KinesisOutboundEventLogger` lambda that targets your `cnmResponseStream`.   You can do this in the Lambda management page for `KinesisOutboundEventLogger`.    Add a Kinesis trigger, and configure it to target the cnmResponseStream for your workflow:
 
 ![](assets/KinesisLambdaTriggerConfiguration.png)
 
