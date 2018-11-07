@@ -2,12 +2,12 @@ const fs = require('fs');
 const difference = require('lodash.difference');
 const path = require('path');
 const {
-  api: apiTestUtils,
   buildAndExecuteWorkflow,
   addProviders,
   cleanupProviders,
   addCollections,
   cleanupCollections,
+  granulesApi: granulesApiTestUtils,
   LambdaStep,
   waitUntilGranuleStatusIs
 } = require('@cumulus/integration-tests');
@@ -106,7 +106,7 @@ describe('The Sync Granules workflow', () => {
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      apiTestUtils.deleteGranule({
+      granulesApiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       })
@@ -184,7 +184,7 @@ describe('The Sync Granules workflow', () => {
     let granule;
 
     beforeAll(async () => {
-      const granuleResponse = await apiTestUtils.getGranule({
+      const granuleResponse = await granulesApiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       });
@@ -193,7 +193,7 @@ describe('The Sync Granules workflow', () => {
       startTime = new Date();
       oldUpdatedAt = granule.updatedAt;
       oldExecution = granule.execution;
-      const reingestGranuleResponse = await apiTestUtils.reingestGranule({
+      const reingestGranuleResponse = await granulesApiTestUtils.reingestGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       });
@@ -212,7 +212,7 @@ describe('The Sync Granules workflow', () => {
     it('overwrites granule files', async () => {
       // Await reingest completion
       await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
-      const updatedGranuleResponse = await apiTestUtils.getGranule({
+      const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       });
