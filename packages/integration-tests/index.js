@@ -289,7 +289,7 @@ function setProcessEnvironment(stackName, bucketName) {
   process.env.bucket = bucketName;
   process.env.stackName = stackName;
   process.env.kinesisConsumer = `${stackName}-kinesisConsumer`;
-  process.env.KinesisRuleInput = `${stackName}-KinesisRuleInput`;
+  process.env.KinesisInboundEventLogger = `${stackName}-KinesisInboundEventLogger`;
   process.env.CollectionsTable = `${stackName}-CollectionsTable`;
   process.env.ProvidersTable = `${stackName}-ProvidersTable`;
   process.env.RulesTable = `${stackName}-RulesTable`;

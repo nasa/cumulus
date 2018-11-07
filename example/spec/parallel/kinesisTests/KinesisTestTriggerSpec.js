@@ -193,7 +193,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
   it('Creates an event to log incoming records', async () => {
     const mapping = logEventSourceMapping;
-    expect(mapping.FunctionArn.endsWith(`${testConfig.stackName}-KinesisRuleInput`)).toBe(true);
+    expect(mapping.FunctionArn.endsWith(`${testConfig.stackName}-KinesisInboundEventLogger`)).toBe(true);
     expect(mapping.EventSourceArn.endsWith(streamName)).toBe(true);
   });
 

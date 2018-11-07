@@ -96,7 +96,7 @@ test.before(async () => {
   process.env.ProvidersTable = randomString();
   process.env.RulesTable = randomString();
   process.env.kinesisConsumer = 'my-kinesisConsumer';
-  process.env.KinesisRuleInput = 'my-ruleInput';
+  process.env.KinesisInboundEventLogger = 'my-ruleInput';
   ruleModel = new Rule();
   await ruleModel.createTable();
 });
