@@ -13,7 +13,7 @@ test.before(async () => {
 
   manager = new Manager({
     tableName: process.env.GranulesTable,
-    tableHash: { name: 'id', type: 'S' }
+    tableHash: { name: 'granuleId', type: 'S' }
   });
 
   await manager.createTable();
