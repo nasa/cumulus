@@ -6,13 +6,12 @@ const test = require('ava');
 
 const { randomString } = require('@cumulus/common/test-utils');
 const { SQS } = require('@cumulus/ingest/aws');
-const { s3, recursivelyDeleteS3Bucket, sns } = require('@cumulus/common/aws');
-const { getSnsRules, handler } = require('../../lambdas/kinesis-consumer');
+const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const { getRules, handler } = require('../../lambdas/kinesis-consumer');
 const Collection = require('../../models/collections');
 const Rule = require('../../models/rules');
 const Provider = require('../../models/providers');
 const testCollectionName = 'test-collection';
-const snsClient = sns();
 
 const snsArn = 'test-SnsArn';
 const event = {
@@ -127,7 +126,7 @@ test.beforeEach(async (t) => {
   process.env.snsConsumer = randomString();
 
   await Promise.all([rule1Params, rule2Params, disabledRuleParams]
-    .map(ruleModel.create(rule));
+    .map((rule) => ruleModel.create(rule)));
 });
 
 test.afterEach.always(async (t) => {
@@ -144,9 +143,8 @@ test.after.always(async () => {
 });
 
 // getKinesisRule tests
-// eslint-disable-next-line max-len
 test.serial('it should look up sns-type rules which are associated with the collection, but not those that are disabled', async (t) => {
-  await getSnsRules(JSON.parse(eventData))
+  await getRules(JSON.parse({ snsArn }, 'sns'))
     .then((result) => {
       t.is(result.length, 2);
     });

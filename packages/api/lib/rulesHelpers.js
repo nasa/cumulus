@@ -14,6 +14,7 @@ async function queueMessageForRule(rule, eventObject) {
     workflow: rule.workflow,
     provider: rule.provider,
     collection: rule.collection,
+    meta: rule.meta,
     payload: eventObject
   };
 

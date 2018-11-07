@@ -24,10 +24,9 @@ const validRecord = {
   }
 };
 
-const event = {
+const testKinesisEvent = {
   Records: [validRecord, validRecord]
 };
-
 
 const snsArn = 'test-SnsArn';
 const snsNotification = {
@@ -35,8 +34,8 @@ const snsNotification = {
   topicArn: snsArn
 };
 
-const snsEvent = {
-  Records: {
+const testSnsEvent = {
+  Records: [{
     EventSource: 'aws:sns',
     EventVersion: '1.0',
     EventSubscriptionArn: 'arn:aws:sns:us-east-1:00000000000:gdelt-csv:111111-111',
@@ -48,7 +47,7 @@ const snsEvent = {
       Message: snsNotification.message,
       MessageAttributes: {}
     }
-  }
+  }]
 };
 
 const collection = {
@@ -97,17 +96,21 @@ const disabledRuleParams = {
 
 const allRuleTypesParams = [kinesisRuleParams, snsRuleParams];
 const allOtherRulesParams = [rule1Params, rule2Params, disabledRuleParams];
-let rulesToCreate = [];
+const rulesToCreate = [];
+
+let sfSchedulerSpy;
+let publishStub;
+const stubQueueUrl = 'stubQueueUrl';
 
 allRuleTypesParams.forEach((ruleTypeParams) => {
   allOtherRulesParams.forEach((otherRulesParams) => {
     const ruleParams = Object.assign({}, commonRuleParams, ruleTypeParams, otherRulesParams);
-    rulesToCreate.push(ruleParams)
+    rulesToCreate.push(ruleParams);
   });
 });
 
 /**
- * translates a kinesis event object into an object that and SNS event will
+ * translates a kinesis event object into an object that an SNS event will
  * redeliver to the fallback handler.
  *
  * @param {Object} record - kinesis record object.
@@ -136,9 +139,32 @@ function testCallback(err, object) {
   return object;
 }
 
-let sfSchedulerSpy;
-let publishStub;
-const stubQueueUrl = 'stubQueueUrl';
+/**
+ * Test workflow queueing
+ *
+ * @param {Object} t - ava test object
+ */
+async function testWorkflowsQueued(t) {
+  const actualQueueUrl = sfSchedulerSpy.getCall(0).args[0];
+  t.is(actualQueueUrl, stubQueueUrl);
+  const actualMessage = sfSchedulerSpy.getCall(0).args[1];
+  const expectedMessage = {
+    cumulus_meta: {
+      state_machine: t.context.stateMachineArn
+    },
+    meta: {
+      queues: { startSF: stubQueueUrl },
+      provider,
+      collection
+    },
+    payload: {
+      collection: 'test-collection'
+    }
+  };
+  t.is(actualMessage.cumulus_meta.state_machine, expectedMessage.cumulus_meta.state_machine);
+  t.deepEqual(actualMessage.meta, expectedMessage.meta);
+  t.deepEqual(actualMessage.payload, expectedMessage.payload);
+}
 
 let ruleModel;
 test.before(async () => {
@@ -223,37 +249,15 @@ test.serial('it should look up sns-type rules which are associated with the topi
     });
 });
 
-async function testWorkflowsQueued() {
-  const actualQueueUrl = sfSchedulerSpy.getCall(0).args[0];
-  t.is(actualQueueUrl, stubQueueUrl);
-  const actualMessage = sfSchedulerSpy.getCall(0).args[1];
-  const expectedMessage = {
-    cumulus_meta: {
-      state_machine: t.context.stateMachineArn
-    },
-    meta: {
-      queues: { startSF: stubQueueUrl },
-      provider,
-      collection
-    },
-    payload: {
-      collection: 'test-collection'
-    }
-  };
-  t.is(actualMessage.cumulus_meta.state_machine, expectedMessage.cumulus_meta.state_machine);
-  t.deepEqual(actualMessage.meta, expectedMessage.meta);
-  t.deepEqual(actualMessage.payload, expectedMessage.payload);
-};
-
 // handler tests
 test.serial('(kinesis) it should enqueue a message for each associated workflow', async (t) => {
-  await handler(event, {}, testCallback);
-  testWorkflowsQueued();
+  await handler(testKinesisEvent, {}, testCallback);
+  testWorkflowsQueued(t);
 });
 
-test.serial('(sns) it should enqueue a message for each associated workflow', async(t) => {
-  await handler(snsEvent, {}, testCallback);
-  testWorkflowsQueued();
+test.serial('(sns) it should enqueue a message for each associated workflow', async (t) => {
+  await handler(testSnsEvent, {}, testCallback);
+  testWorkflowsQueued(t);
 });
 
 test.serial('A kinesis message, should publish the invalid record to fallbackSNS if message does not include a collection', async (t) => {
