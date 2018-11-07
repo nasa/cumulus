@@ -27,6 +27,9 @@ function list(event, cb) {
  */
 function get(event, cb) {
   const arn = event.pathParameters.arn;
+  if (!arn) {
+    return cb('execution arn is missing');
+  }
 
   const e = new models.Execution();
 
@@ -44,7 +47,7 @@ function get(event, cb) {
  */
 function handler(event, context) {
   return handle(event, context, true, (cb) => {
-    if (event.httpMethod === 'GET' && event.pathParameters && event.pathParameters.arn) {
+    if (event.httpMethod === 'GET' && event.pathParameters) {
       return get(event, cb);
     }
 
