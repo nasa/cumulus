@@ -5,8 +5,7 @@ const pRetry = require('p-retry');
 const {
   buildAndStartWorkflow,
   waitForCompletedExecution,
-  api: apiTestUtils,
-  executionsApi: executionsApiTestUtils,
+  executionsApi: executionsApiTestUtils
 } = require('@cumulus/integration-tests');
 
 const {
