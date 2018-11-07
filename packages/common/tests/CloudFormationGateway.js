@@ -1,8 +1,9 @@
 'use strict';
 
+const sinon = require('sinon');
 const test = require('ava');
-const td = require('testdouble');
 
+const { cf } = require('../aws');
 const CloudFormationGateway = require('../CloudFormationGateway');
 
 function buildDescribeStacksResponse(StackStatus) {
@@ -13,16 +14,18 @@ function buildDescribeStacksResponse(StackStatus) {
   };
 }
 
-test('getStackStatus returns the correct stack status', async (t) => {
-  const cfService = td.object(['describeStacks']);
+test.afterEach(() => {
+  sinon.restore();
+});
 
-  td
-    .when(cfService.describeStacks(td.matchers.contains({ StackName: 'stack-name' })))
-    .thenReturn({
-      promise: () => {
-        const response = buildDescribeStacksResponse('UPDATE_COMPLETE');
-        return Promise.resolve(response);
-      }
+test.serial('getStackStatus returns the correct stack status', async (t) => {
+  const cfService = cf();
+
+  const describeStacksResponse = buildDescribeStacksResponse('UPDATE_COMPLETE');
+
+  sinon.stub(cfService, 'describeStacks')
+    .returns({
+      promise: () => Promise.resolve(describeStacksResponse)
     });
 
   const cloudFormationGateway = new CloudFormationGateway(cfService);
@@ -32,18 +35,21 @@ test('getStackStatus returns the correct stack status', async (t) => {
   t.is(status, 'UPDATE_COMPLETE');
 });
 
-test('getStackStatus will retry if a throttling exception is encountered', async (t) => {
+test.serial('getStackStatus will retry if a throttling exception is encountered', async (t) => {
+  const cfService = cf();
+
   const throttlingResult = { code: 'ThrottlingException' };
   const goodResult = buildDescribeStacksResponse('UPDATE_COMPLETE');
 
-  const cfService = td.object(['describeStacks']);
-
-  td
-    .when(cfService.describeStacks(td.matchers.contains({ StackName: 'stack-name' })))
-    .thenReturn(
-      { promise: () => Promise.reject(throttlingResult) },
-      { promise: () => Promise.resolve(goodResult) }
-    );
+  sinon.stub(cfService, 'describeStacks')
+    .onFirstCall()
+    .returns({
+      promise: () => Promise.reject(throttlingResult)
+    })
+    .onSecondCall()
+    .returns({
+      promise: () => Promise.resolve(goodResult)
+    });
 
   const cloudFormationGateway = new CloudFormationGateway(cfService);
 
