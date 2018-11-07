@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+**Please Note**
+- `cumulus-message-adapter-js` 1.0.6+ is required for `@cumulus/api` granule reingest API to work properly.
+
 ### Changed
 
 - **CUMULUS-783 CUMULUS-790** - Updated `@cumulus/sync-granule` and `@cumulus/move-granules` tasks to always overwrite existing files for manually-triggered reingest.
