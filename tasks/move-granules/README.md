@@ -17,7 +17,6 @@ This lambda function is responsible for moving granule files from a file staging
 | duplicateHandling | string | `error` | <ul><li>`error` - Throws an error on duplicates</li><li>`replace` - Replaces the existing file</li><li>`skip` - Skips the duplicate file</li><li>`version` - Adds a suffix to the existing filename to avoid a clash</li></ul> | Specifies how duplicate filenames should be handled
 | granuleIdExtraction | string | | | The regex needed for extracting granuleId from filenames
 | moveStagedFiles | boolean | `true` | | Can set to `false` to skip moving files from the staging location. Defaults to `true`.
-| reingestGranule | boolean | false | `true` - The manually-triggered reingest always overwrites existing files | Indicates that the workflow is a manually triggered re-ingest. The parameter should be set to `{$.meta.reingestGranule}`.
 
 ## What is Cumulus?
 

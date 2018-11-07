@@ -68,13 +68,12 @@ exports.syncGranule = function syncGranule(event) {
   const collection = config.collection;
   const forceDownload = config.forceDownload || false;
   const downloadBucket = config.downloadBucket;
-  const reingestGranule = config.reingestGranule === true || false;
-
   const duplicateHandling = get(
     config, 'duplicateHandling', get(collection, 'duplicateHandling', 'error')
   );
+  const reingestGranule = process.env.REINGEST_GRANULE === 'true' || false;
 
-  log.debug(`Configured duplicateHandling value: ${duplicateHandling}, reginestGranule ${reingestGranule}`);
+  log.debug(`Configured duplicateHandling value: ${duplicateHandling}, reingestGranule ${reingestGranule}`);
 
   // use stack and collection names to prefix fileStagingDir
   const fileStagingDir = path.join(
