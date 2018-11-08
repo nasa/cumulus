@@ -50,6 +50,14 @@ Resources:
             - {{../es.name}}Domain
             - DomainEndpoint
       {{/if}}
+        KinesisInboundEventLoggerLambdaFunction:
+          Fn::GetAtt:
+            - KinesisInboundEventLoggerLambdaFunction
+            - Arn
+        KinesisOutboundEventLoggerLambdaFunction:
+          Fn::GetAtt:
+            - KinesisOutboundEventLoggerLambdaFunction
+            - Arn
         log2elasticsearchLambdaFunction:
           Fn::GetAtt:
             - log2elasticsearchLambdaFunction

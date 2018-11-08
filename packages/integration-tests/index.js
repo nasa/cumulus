@@ -289,6 +289,7 @@ function setProcessEnvironment(stackName, bucketName) {
   process.env.bucket = bucketName;
   process.env.stackName = stackName;
   process.env.kinesisConsumer = `${stackName}-kinesisConsumer`;
+  process.env.KinesisInboundEventLogger = `${stackName}-KinesisInboundEventLogger`;
   process.env.CollectionsTable = `${stackName}-CollectionsTable`;
   process.env.ProvidersTable = `${stackName}-ProvidersTable`;
   process.env.RulesTable = `${stackName}-RulesTable`;
@@ -475,10 +476,10 @@ async function cleanupProviders(stackName, bucket, providersDirectory, postfix) 
 /**
  * add rules to database
  *
- * @param {string} config - Test config used to set environmenet variables and template rules data
+ * @param {string} config - Test config used to set environment variables and template rules data
  * @param {string} dataDirectory - the directory of rules json files
  * @param {string} overrides - override rule fields
- * @returns {Promise.<number>} number of rules added
+ * @returns {Promise.<Array>} array of Rules added
  */
 async function addRules(config, dataDirectory, overrides) {
   const { stackName, bucket } = config;
@@ -492,7 +493,7 @@ async function addRules(config, dataDirectory, overrides) {
     console.log(`adding rule ${templatedRule.name}`);
     return r.create(templatedRule);
   }));
-  return Promise.all(promises).then((rs) => rs.length);
+  return Promise.all(promises);
 }
 
 /**
@@ -725,6 +726,7 @@ module.exports = {
   waitForAsyncOperationStatus,
   getLambdaVersions: lambda.getLambdaVersions,
   getLambdaAliases: lambda.getLambdaAliases,
+  getEventSourceMapping: lambda.getEventSourceMapping,
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
   waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs,
   getExecutions,
