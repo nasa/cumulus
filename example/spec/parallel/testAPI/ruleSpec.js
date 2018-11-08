@@ -69,8 +69,10 @@ fdescribe('When I create a scheduled rule via the Cumulus API', () => {
         scheduledHelloWorldRule.workflow,
         config.stackName,
         config.bucket,
-        (taskInput, params) =>
-          taskInput.meta.triggerRule && taskInput.meta.triggerRule === params.ruleName,
+        (taskInput, params) => {
+          console.log(`\ntaskInput ${JSON.stringify(taskInput)}\nparams: ${JSON.stringify(params)}\n`);
+          return taskInput.meta.triggerRule && taskInput.meta.triggerRule === params.ruleName;
+        },
         { ruleName: scheduledHelloWorldRule.name }
       )).toThrowError(Error, 'Never found started workflow.');
     });
