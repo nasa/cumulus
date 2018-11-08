@@ -88,6 +88,9 @@ kinesisConsumer:
       function: Ref
       value: ProvidersTableDynamoDB
     bucket: '{{system_bucket}}'
+    FallbackTopicArn:
+      function: Fn::Sub
+      value: '${kinesisFallbackSns}'
 
 fallbackConsumer:
   handler: index.kinesisConsumer
