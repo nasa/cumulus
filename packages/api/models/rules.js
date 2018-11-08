@@ -87,6 +87,9 @@ class Rule extends Manager {
         await this.updateKinesisEventSources(original);
       }
       break;
+    case 'sns':
+      // TODO - add SNS
+      break;
     default:
       break;
     }
@@ -197,7 +200,7 @@ class Rule extends Manager {
           name: item.name,
           rule: {
             arn: mappingExists.UUID,
-            type: 'kinesis'
+            type: item.rule.type
           }
         }, lambda.type);
       }
