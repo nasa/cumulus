@@ -393,7 +393,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(granule.cmrLink).not.toBeUndefined();
       });
 
-      describe('reingest granule api', () => {
+      describe('when a reingest granule is triggered via the API', () => {
         let oldExecution;
         let oldUpdatedAt;
         let reingestResponse;
@@ -408,10 +408,9 @@ describe('The S3 Ingest Granules workflow', () => {
             granuleId: inputPayload.granules[0].granuleId
           });
           reingestResponse = JSON.parse(reingestGranuleResponse.body);
-          console.log(`reingest granule response: ${JSON.stringify(reingestResponse)}`);
         });
 
-        it('executes with success status', () => {
+        it('executes successfully', () => {
           expect(reingestResponse.status).toEqual('SUCCESS');
         });
 
@@ -421,6 +420,18 @@ describe('The S3 Ingest Granules workflow', () => {
 
         it('overwrites granule files', async () => {
           // Await reingest completion
+          const reingestGranuleExecution = await waitForTestExecutionStart(
+            workflowName,
+            config.stackName,
+            config.bucket,
+            isExecutionForGranuleId,
+            { granuleId: inputPayload.granules[0].granuleId }
+          );
+
+          console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
+
+          await waitForCompletedExecution(reingestGranuleExecution.executionArn);
+
           await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
           const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
             prefix: config.stackName,

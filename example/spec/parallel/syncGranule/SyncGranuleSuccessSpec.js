@@ -9,7 +9,9 @@ const {
   cleanupCollections,
   granulesApi: granulesApiTestUtils,
   LambdaStep,
-  waitUntilGranuleStatusIs
+  waitUntilGranuleStatusIs,
+  waitForTestExecutionStart,
+  waitForCompletedExecution
 } = require('@cumulus/integration-tests');
 const { Collection, Execution } = require('@cumulus/api/models');
 const {
@@ -51,6 +53,10 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
+
+function isExecutionForGranuleId(taskInput, params) {
+  return taskInput.payload.granules && taskInput.payload.granules[0].granuleId === params.granuleId;
+}
 
 describe('The Sync Granules workflow', () => {
   const testId = createTimestampedTestId(config.stackName, 'SyncGranuleSuccess');
@@ -145,7 +151,6 @@ describe('The Sync Granules workflow', () => {
       expect(lambdaOutput.payload).toEqual(expectedPayload);
     });
 
-    // eslint-disable-next-line max-len
     it('receives meta.input_granules with files objects updated to include file staging location', () => {
       expect(lambdaOutput.meta.input_granules).toEqual(expectedPayload.granules);
     });
@@ -176,7 +181,7 @@ describe('The Sync Granules workflow', () => {
     });
   });
 
-  describe('The reingest granule api', () => {
+  describe('when a reingest granule is triggered via the API', () => {
     let oldExecution;
     let oldUpdatedAt;
     let reingestResponse;
@@ -198,10 +203,9 @@ describe('The Sync Granules workflow', () => {
         granuleId: inputPayload.granules[0].granuleId
       });
       reingestResponse = JSON.parse(reingestGranuleResponse.body);
-      console.log(`reingest granule response: ${JSON.stringify(reingestResponse)}`);
     });
 
-    it('executes with success status', () => {
+    it('executes successfully', () => {
       expect(reingestResponse.status).toEqual('SUCCESS');
     });
 
@@ -211,6 +215,18 @@ describe('The Sync Granules workflow', () => {
 
     it('overwrites granule files', async () => {
       // Await reingest completion
+      const reingestGranuleExecution = await waitForTestExecutionStart(
+        workflowName,
+        config.stackName,
+        config.bucket,
+        isExecutionForGranuleId,
+        { granuleId: inputPayload.granules[0].granuleId }
+      );
+
+      console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
+
+      await waitForCompletedExecution(reingestGranuleExecution.executionArn);
+
       await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
       const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
         prefix: config.stackName,

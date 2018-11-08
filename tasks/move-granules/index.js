@@ -326,12 +326,12 @@ async function moveGranules(event) {
   const distEndpoint = get(config, 'distribution_endpoint');
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const collection = config.collection;
-  const reingestGranule = config.reingestGranule === true || false;
   const duplicateHandling = get(
     config, 'duplicateHandling', get(collection, 'duplicateHandling', 'error')
   );
+  const reingestGranule = process.env.REINGEST_GRANULE === 'true' || false;
 
-  log.debug(`Configured duplicateHandling value: ${duplicateHandling}, reginestGranule ${reingestGranule}`);
+  log.debug(`Configured duplicateHandling value: ${duplicateHandling}, reingestGranule ${reingestGranule}`);
 
   const input = get(event, 'input', []);
 

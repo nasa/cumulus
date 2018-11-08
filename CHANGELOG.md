@@ -5,12 +5,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+**Please Note**
+- `cumulus-message-adapter-js` 1.0.6+ is required for `@cumulus/api` granule reingest API to work properly.
+
 ### Changed
 
 - **CUMULUS-783 CUMULUS-790** - Updated `@cumulus/sync-granule` and `@cumulus/move-granules` tasks to always overwrite existing files for manually-triggered reingest.
 - **CUMULUS-906** - Updated `@cumulus/api` granule reingest API to 
   - add `reingestGranule: true` to Cumulus message `meta` field to indicate that the workflow is a manually triggered re-ingest.
   - return warning message to operator when duplicateHandling is not `replace`
+  - `cumulus-message-adapter-js` 1.0.6+ is required
 
 ### Added
 - **CUMULUS-965**
@@ -26,6 +31,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - Updated `@cumulus/helloworld` to use S3 to store state for pass on retry tests
+
+### Fixed
+- Fixed a bug where FTP sockets were not closed after an error, keeping the Lambda function active until it timed out [CUMULUS-972]
 
 ## [v1.10.3] - 2018-10-31
 
