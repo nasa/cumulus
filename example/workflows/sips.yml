@@ -30,7 +30,6 @@ SyncGranule:
         fileStagingDir: 'custom-staging-dir'
         downloadBucket: '{$.cumulus_meta.system_bucket}'
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
-        reingestGranule: '{$.meta.reingestGranule}'
         cumulus_message:
           outputs:
             - source: '{$.granules}'
@@ -56,7 +55,6 @@ SyncGranule:
         fileStagingDir: 'custom-staging-dir'
         downloadBucket: '{$.cumulus_meta.system_bucket}'
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
-        reingestGranule: '{$.meta.reingestGranule}'
         cumulus_message:
           outputs:
             - source: '{$.granules}'
@@ -103,6 +101,7 @@ IngestAndPublishGranule:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
+      ResultPath: null
       Next: VpcOrNot
     VpcOrNot:
         Type: Choice
@@ -127,7 +126,6 @@ IngestAndPublishGranule:
         stack: '{$.meta.stack}'
         downloadBucket: '{$.cumulus_meta.system_bucket}'
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
-        reingestGranule: '{$.meta.reingestGranule}'
         pdr: '{$.meta.pdr}'
         cumulus_message:
           outputs:
@@ -158,7 +156,6 @@ IngestAndPublishGranule:
         stack: '{$.meta.stack}'
         downloadBucket: '{$.cumulus_meta.system_bucket}'
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
-        reingestGranule: '{$.meta.reingestGranule}'
         pdr: '{$.meta.pdr}'
         cumulus_message:
           outputs:
@@ -214,7 +211,6 @@ IngestAndPublishGranule:
         input_granules: '{$.meta.input_granules}'
         collection: '{$.meta.collection}'
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
-        reingestGranule: '{$.meta.reingestGranule}'
       Type: Task
       Resource: ${MoveGranulesLambdaFunction.Arn}
       Catch:
@@ -269,6 +265,7 @@ IngestGranule:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
+      ResultPath: null
       Next: VpcOrNot
     VpcOrNot:
         Type: Choice
@@ -293,7 +290,6 @@ IngestGranule:
         stack: '{$.meta.stack}'
         downloadBucket: '{$.cumulus_meta.system_bucket}'
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
-        reingestGranule: '{$.meta.reingestGranule}'
         pdr: '{$.meta.pdr}'
         cumulus_message:
           outputs:
@@ -324,7 +320,6 @@ IngestGranule:
         stack: '{$.meta.stack}'
         downloadBucket: '{$.cumulus_meta.system_bucket}'
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
-        reingestGranule: '{$.meta.reingestGranule}'
         pdr: '{$.meta.pdr}'
         cumulus_message:
           outputs:
@@ -380,7 +375,6 @@ IngestGranule:
         input_granules: '{$.meta.input_granules}'
         collection: '{$.meta.collection}'
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
-        reingestGranule: '{$.meta.reingestGranule}'
       Type: Task
       Resource: ${MoveGranulesLambdaFunction.Arn}
       Catch:

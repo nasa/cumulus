@@ -17,7 +17,6 @@ Download a given granule from a given provider to S3
 | fileStagingDir | string | `file-staging` | | Directory used for staging location of files. Granules are further organized by stack name and collection name making the full path `file-staging/<stack name>/<collection name>`
 | forceDownload | boolean | `false` | |
 | pdr | object | | | Object containing the name and path for a PDR file
-| reingestGranule | boolean | false | `true` - The manually-triggered reingest always overwrites existing files | Indicates that the workflow is a manually triggered re-ingest. The parameter should be set to `{$.meta.reingestGranule}`.
 | stack | string | | | The name of the deployment stack to use. Useful as a prefix.
 
 ## What is Cumulus?
