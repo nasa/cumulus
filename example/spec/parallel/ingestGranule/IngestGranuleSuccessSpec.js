@@ -554,9 +554,6 @@ describe('The S3 Ingest Granules workflow', () => {
 
       it('returns a list of exeuctions', async () => {
         expect(executions.results.length).toBeGreaterThan(0);
-        const foundExecution = executions.results.find((e) => e.arn === workflowExecution.executionArn);
-        expect(foundExecution.status).toBeDefined();
-        expect(foundExecution.createdAt).toBeDefined();
       });
 
       it('returns overall status and timing for the execution', async () => {
