@@ -25,7 +25,7 @@ const event = {
         MessageId: '4f411981',
         TopicArn: snsArn,
         Subject: 'Amazon S3 Notification',
-        Message: '{\"Records\":[]}',
+        Message: '{\"Records\":[{}]}',
         MessageAttributes: {}
       }
     }
@@ -77,7 +77,6 @@ function testCallback(err, object) {
 }
 
 let sfSchedulerSpy;
-let publishStub;
 const stubQueueUrl = 'stubQueueUrl';
 
 let ruleModel;
@@ -132,7 +131,6 @@ test.beforeEach(async (t) => {
 test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.templateBucket);
   sfSchedulerSpy.restore();
-  publishStub.restore();
   Rule.buildPayload.restore();
   Provider.prototype.get.restore();
   Collection.prototype.get.restore();
@@ -144,7 +142,7 @@ test.after.always(async () => {
 
 // getKinesisRule tests
 test.serial('it should look up sns-type rules which are associated with the collection, but not those that are disabled', async (t) => {
-  await getRules(JSON.parse({ snsArn }, 'sns'))
+  await getRules({ topicArn: snsArn }, 'sns')
     .then((result) => {
       t.is(result.length, 2);
     });
@@ -166,7 +164,7 @@ test.serial('it should enqueue a message for each associated workflow', async (t
       collection
     },
     payload: {
-      collection: 'test-collection'
+      topicArn: snsArn
     }
   };
   t.is(actualMessage.cumulus_meta.state_machine, expectedMessage.cumulus_meta.state_machine);
