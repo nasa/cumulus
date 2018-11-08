@@ -88,6 +88,7 @@ default:
     sethvincent: true
     menno.vandiermen: true
     matthewsavoie: true
+    mboyd: true
 
   ecs:
     restartTasksOnDeploy: false
