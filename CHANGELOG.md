@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - Fixed a bug where FTP sockets were not closed after an error, keeping the Lambda function active until it timed out [CUMULUS-972]
+- **CUMULUS-656**
+  - The API will no longer allow the deletion of a provider if that provider is
+    referenced by a rule
+  - The API will no longer allow the deletion of a collection if that collection
+    is referenced by a rule
 
 ## [v1.10.3] - 2018-10-31
 
