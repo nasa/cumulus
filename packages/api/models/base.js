@@ -152,6 +152,24 @@ class Manager {
   }
 
   /**
+   * Check if an item exists
+   *
+   * @param {Object} Key - the key to check for
+   * @returns {boolean}
+   */
+  async exists(Key) {
+    try {
+      await this.get(Key);
+      return true;
+    }
+    catch (err) {
+      if (err instanceof RecordDoesNotExist) return false;
+
+      throw err;
+    }
+  }
+
+  /**
    * Enable DynamoDB streams on the table
    *
    * @returns {Promise} resolves when streams are enabled

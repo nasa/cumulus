@@ -29,7 +29,10 @@ jobs:
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
+        - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
+        - env SKIP_BUILD=true ./bin/prepare
+        - echo 'BOOTSTRAP FINISHED'
       script: npm run lint
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
@@ -43,8 +46,10 @@ jobs:
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
+        - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
+        - echo 'BOOTSTRAP FINISHED'
       script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
@@ -58,8 +63,10 @@ jobs:
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
+        - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
+        - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/run-api-unit-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
@@ -69,7 +76,9 @@ jobs:
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
+        - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
+        - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
@@ -79,7 +88,9 @@ jobs:
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
+        - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
+        - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
@@ -89,7 +100,9 @@ jobs:
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
+        - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
+        - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-redeployment-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
