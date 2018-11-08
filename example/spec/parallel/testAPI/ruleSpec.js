@@ -32,7 +32,7 @@ function removeRuleAddedParams(rule) {
   return ruleCopy;
 }
 
-describe('When I create a scheduled rule via the Cumulus API', () => {
+fdescribe('When I create a scheduled rule via the Cumulus API', () => {
   const scheduledRuleName = timestampedName('SchedHelloWorldIntegrationTestRule');
   const scheduledHelloWorldRule = {
     name: scheduledRuleName,
