@@ -135,7 +135,6 @@ CustomBootstrap:
   source: 'node_modules/@cumulus/api/dist/'
   envs:
     internal: '{{system_bucket}}'
-    stackName: '{{stackName}}'
 
 InRegionS3Policy:
   handler: index.inRegionS3Policy
@@ -170,7 +169,6 @@ CreateReconciliationReport:
   source: 'node_modules/@cumulus/api/dist/'
   envs:
     systemBucket: '{{system_bucket}}'
-    stackName: '{{stackName}}'
     filesTableName:
       function: Ref
       value: FilesTableDynamoDB
@@ -178,3 +176,17 @@ CreateReconciliationReport:
 BulkDelete:
   handler: index.bulkDeleteLambda
   source: 'node_modules/@cumulus/api/dist/'
+
+KinesisInboundEventLogger:
+  handler: index.logger
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist/'
+  namedLambdaDeadLetterQueue: true
+
+KinesisOutboundEventLogger:
+  handler: index.logger
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist'
+  namedLambdaDeadLetterQueue: true
