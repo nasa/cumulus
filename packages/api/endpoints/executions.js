@@ -27,6 +27,9 @@ function list(event, cb) {
  */
 function get(event, cb) {
   const arn = event.pathParameters.arn;
+  if (!arn) {
+    return cb('execution arn is missing');
+  }
 
   const e = new models.Execution();
 
