@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `cumulus-message-adapter` v1.0.13+ is required.
 
 ### Added
+- **CUMULUS-975**
+  - Add `KinesisInboundEventLogger` and `KinesisOutboundEventLogger` API lambdas.  These lambdas
+    are utilized to dump incoming and outgoing ingest workflow kinesis streams
+    to cloudwatch for analytics in case of AWS/stream failure.
+  - Update rules model to allow tracking of log_event ARNs related to
+    Rule event logging.    Kinesis rule types will now automatically log
+    incoming events via a Kinesis event triggered lambda.
 - **CUMULUS-965**
   - Add `@cumulus/test-data.loadJSONTestData()`,
     `@cumulus/test-data.loadTestData()`, and
