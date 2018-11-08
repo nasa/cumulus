@@ -32,7 +32,7 @@ function removeRuleAddedParams(rule) {
   return ruleCopy;
 }
 
-fdescribe('When I create a scheduled rule via the Cumulus API', () => {
+describe('When I create a scheduled rule via the Cumulus API', () => {
   const scheduledRuleName = timestampedName('SchedHelloWorldIntegrationTestRule');
   const scheduledHelloWorldRule = {
     name: scheduledRuleName,
@@ -71,7 +71,7 @@ fdescribe('When I create a scheduled rule via the Cumulus API', () => {
         config.bucket,
         (taskInput, params) => {
           console.info(`\ntaskInput ${JSON.stringify(taskInput)}\nparams: ${JSON.stringify(params)}\n`);
-          return taskInput.meta.triggerRule && taskInput.meta.triggerRule === params.ruleName;
+          return taskInput.meta.triggerRule && (taskInput.meta.triggerRule === params.ruleName);
         },
         { ruleName: scheduledRuleName }
       )).toThrowError(Error, 'Never found started workflow.');
@@ -130,7 +130,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
         config.bucket,
         (taskInput, params) =>
           taskInput.meta.triggerRule && taskInput.meta.triggerRule === params.ruleName,
-        { ruleName: helloWorldRule.name }
+        { ruleName: oneTimeRuleName }
       );
       console.log(`Execution ARN: ${execution.executionArn}`);
     });

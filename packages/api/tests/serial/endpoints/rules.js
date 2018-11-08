@@ -350,7 +350,6 @@ test('POST returns a record exists when one exists', (t) => {
 
 test('PUT updates a rule', (t) => {
   const newRule = Object.assign({}, testRule, { state: 'ENABLED' });
-  console.log(`NewRule: ${JSON.stringify(newRule)}`);
 
   const updateEvent = {
     body: JSON.stringify({ state: 'ENABLED' }),
@@ -363,8 +362,6 @@ test('PUT updates a rule', (t) => {
 
   return testEndpoint(rulesEndpoint, updateEvent, (response) => {
     const record = JSON.parse(response.body);
-    console.log(`NewRule: ${JSON.stringify(newRule)}`);
-    console.log(`Response ${JSON.stringify(response)}`);
     newRule.createdAt = record.createdAt;
     newRule.updatedAt = record.updatedAt;
 
