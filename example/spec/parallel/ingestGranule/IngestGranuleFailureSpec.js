@@ -4,6 +4,7 @@ const fs = require('fs-extra');
 const { models: { Granule } } = require('@cumulus/api');
 const {
   api: apiTestUtils,
+  executionsApi: executionsApiTestUtils,
   addProviders,
   cleanupProviders,
   addCollections,
@@ -99,12 +100,12 @@ describe('The Ingest Granule failure workflow', () => {
 
     beforeAll(async () => {
       const executionArn = workflowExecution.executionArn;
-      const executionResponse = await apiTestUtils.getExecution({
+      const executionResponse = await executionsApiTestUtils.getExecution({
         prefix: config.stackName,
         arn: executionArn
       });
       execution = JSON.parse(executionResponse.body);
-      const executionStatusResponse = await apiTestUtils.getExecutionStatus({
+      const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
         prefix: config.stackName,
         arn: executionArn
       });
