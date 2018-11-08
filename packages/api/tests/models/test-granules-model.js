@@ -157,3 +157,68 @@ test('files existing at location returns only file that exists', async (t) => {
 
   await recursivelyDeleteS3Bucket(destBucket);
 });
+
+test('files existing at location returns only file that exists with multiple destinations', async (t) => {
+  const filenames = [
+    'granule-file-1.txt',
+    'granule-file-2.hdf'
+  ];
+
+  const sourceBucket = 'test-bucket';
+  const destBucket1 = randomString();
+  const destBucket2 = randomString();
+
+  await Promise.all([
+    s3().createBucket({ Bucket: destBucket1 }).promise(),
+    s3().createBucket({ Bucket: destBucket2 }).promise()
+  ]);
+
+  const sourceFiles = filenames.map((name) => ({
+    name,
+    sourceBucket,
+    filepath: name,
+    filename: buildS3Uri(sourceBucket, name)
+  }));
+
+  const destinations = [
+    {
+      regex: '.*.txt$',
+      bucket: destBucket1,
+      filepath: ''
+    },
+    {
+      regex: '.*.hdf$',
+      bucket: destBucket2,
+      filepath: ''
+    }
+  ];
+
+  let params = {
+    Bucket: destBucket1,
+    Key: filenames[0],
+    Body: 'test'
+  };
+  await s3().putObject(params).promise();
+
+  params = {
+    Bucket: destBucket2,
+    Key: filenames[1],
+    Body: 'test'
+  };
+  await s3().putObject(params).promise();
+
+  const granule = {
+    files: sourceFiles
+  };
+
+  const granulesModel = new Granule();
+
+  const filesExisting = await granulesModel.getFilesExistingAtLocation(granule, destinations);
+
+  t.deepEqual(filesExisting, sourceFiles);
+
+  await Promise.all([
+    recursivelyDeleteS3Bucket(destBucket1),
+    recursivelyDeleteS3Bucket(destBucket2)
+  ]);
+});
