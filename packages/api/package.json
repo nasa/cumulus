@@ -76,7 +76,7 @@
     "p-limit": "^1.2.0",
     "p-map": "^1.2.0",
     "p-retry": "^2.0.0",
-    "p-wait-for": "https://github.com/yjpa7145/p-wait-for.git#StopChecksAfterTimeout",
+    "p-wait-for": "^2.0.1",
     "querystring": "^0.2.0",
     "split2": "^2.2.0",
     "uuid": "^3.2.1"
