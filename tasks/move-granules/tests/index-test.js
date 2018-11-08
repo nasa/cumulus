@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
 const test = require('ava');
 const {
   buildS3Uri,
@@ -17,8 +18,11 @@ const errors = require('@cumulus/common/errors');
 const {
   randomString, validateConfig, validateInput, validateOutput
 } = require('@cumulus/common/test-utils');
-const payload = require('./data/payload.json');
+const { promisify } = require('util');
+
 const { moveGranules } = require('..');
+
+const readFile = promisify(fs.readFile);
 
 async function uploadFiles(files, bucket) {
   await Promise.all(files.map((file) => promiseS3Upload({
@@ -38,7 +42,7 @@ async function updateFileTags(files, bucket, TagSet) {
 }
 
 function buildPayload(t) {
-  const newPayload = JSON.parse(JSON.stringify(payload));
+  const newPayload = t.context.payload;
 
   newPayload.config.bucket = t.context.stagingBucket;
   newPayload.config.buckets.internal.name = t.context.stagingBucket;
@@ -74,6 +78,10 @@ test.beforeEach(async (t) => {
     s3().createBucket({ Bucket: t.context.publicBucket }).promise(),
     s3().createBucket({ Bucket: t.context.protectedBucket }).promise()
   ]);
+
+  const payloadPath = path.join(__dirname, 'data', 'payload.json');
+  const rawPayload = await readFile(payloadPath, 'utf8');
+  t.context.payload = JSON.parse(rawPayload);
 });
 
 test.afterEach.always(async (t) => {
