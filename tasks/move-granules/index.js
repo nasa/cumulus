@@ -345,9 +345,7 @@ async function moveGranules(event) {
   // allows us to disable moving the files
   if (moveStagedFiles) {
     // move files from staging location to final location
-    allGranules = await moveFilesForAllGranules(
-      allGranules, bucket, duplicateHandling
-    );
+    allGranules = await moveFilesForAllGranules(allGranules, bucket, duplicateHandling);
 
     // update cmr.xml files with correct online access urls
     await updateCmrFileAccessURLs(cmrFiles, allGranules, allFiles, distEndpoint);
