@@ -3,6 +3,7 @@
 const { CollectionConfigStore } = require('@cumulus/common');
 const Manager = require('./base');
 const collectionSchema = require('./schemas').collection;
+const Rule = require('./rules');
 
 function checkRegex(regex, sampleFileName) {
   const validation = new RegExp(regex);
@@ -63,6 +64,41 @@ class Collection extends Manager {
     await collectionConfigStore.put(dataType, item.version, item);
 
     return super.create(item);
+  }
+
+  /**
+   * Delete a collection
+   *
+   * @param {string} name - the collection name
+   * @param {string} version - the collection version
+   */
+  async delete(name, version) {
+    if (!(await this.exists(name, version))) throw new Error('Collection does not exist');
+
+    if (await this.hasAssociatedRules(name, version)) {
+      throw new Error('Cannot delete a collection that has associated rules');
+    }
+
+    await super.delete({ name, version });
+  }
+
+  /**
+   * Test if there are any rules associated with the collection
+   *
+   * @param {string} name - collection name
+   * @param {string} version - collection version
+   * @returns {Promise<boolean>}
+   */
+  async hasAssociatedRules(name, version) {
+    const ruleModel = new Rule();
+    const rules = (await ruleModel.scan()).Items;
+    const associatedRules = rules.filter(
+      (r) =>
+        r.collection.name === name
+        && r.collection.version === version
+    );
+
+    return associatedRules.length > 0;
   }
 }
 

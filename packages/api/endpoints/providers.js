@@ -107,8 +107,7 @@ function del(event, cb) {
   const id = event.pathParameters.id;
   const providerModel = new models.Provider();
 
-  return providerModel.get({ id })
-    .then(() => providerModel.delete({ id }))
+  return providerModel.delete(id)
     .then(() => cb(null, { message: 'Record deleted' }))
     .catch(cb);
 }

@@ -2,9 +2,14 @@
 
 const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
-const { Manager, Collection } = require('../../models');
+const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
+
+const { Manager, Collection, Rule } = require('../../models');
+const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
 
 let manager;
+let ruleModel;
+
 test.before(async () => {
   process.env.CollectionsTable = randomString();
 
@@ -15,10 +20,21 @@ test.before(async () => {
   });
 
   await manager.createTable();
+
+  process.env.RulesTable = randomString();
+  ruleModel = new Rule();
+  await ruleModel.createTable();
+
+  process.env.bucket = randomString();
+  await s3().createBucket({ Bucket: process.env.bucket }).promise();
+
+  process.env.stackName = randomString();
 });
 
 test.after.always(async () => {
   await manager.deleteTable();
+  await ruleModel.deleteTable();
+  await recursivelyDeleteS3Bucket(process.env.bucket);
 });
 
 test('Collection.exists() returns true when a record exists', async (t) => {
@@ -36,4 +52,107 @@ test('Collection.exists() returns false when a record does not exist', async (t)
   const collectionsModel = new Collection();
 
   t.false(await collectionsModel.exists(randomString()));
+});
+
+test('Collection.hasAssociatedRules() returns true when there is a rule associated with the collection', async (t) => {
+  const name = randomString();
+  const version = randomString();
+
+  await manager.create({ name, version });
+
+  const rule = fakeRuleFactoryV2({
+    collection: {
+      name,
+      version
+    },
+    rule: {
+      type: 'onetime'
+    }
+  });
+
+  // The workflow message template must exist in S3 before the rule can be created
+  await s3().putObject({
+    Bucket: process.env.bucket,
+    Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
+    Body: JSON.stringify({})
+  }).promise();
+
+  await ruleModel.create(rule);
+
+  const collectionsModel = new Collection();
+
+  t.true(await collectionsModel.hasAssociatedRules(name, version));
+});
+
+test('Collection.hasAssociatedRules() returns false when there is not a rule associated with the collection', async (t) => {
+  const name = randomString();
+  const version = randomString();
+
+  await manager.create({ name, version });
+
+  const collectionsModel = new Collection();
+
+  t.false(await collectionsModel.hasAssociatedRules(name, version));
+});
+
+test('Collection.delete() throws an exception if the collection does not exist', async (t) => {
+  const collectionsModel = new Collection();
+
+  try {
+    await collectionsModel.delete('does-not-exist', 'some-version');
+    t.fail('Expected an exception to be thrown');
+  }
+  catch (err) {
+    t.is(err.message, 'Collection does not exist');
+  }
+});
+
+test('Collection.delete() throws an exception if the collection has associated rules', async (t) => {
+  const name = randomString();
+  const version = randomString();
+
+  await manager.create({ name, version });
+
+  const rule = fakeRuleFactoryV2({
+    collection: {
+      name,
+      version
+    },
+    rule: {
+      type: 'onetime'
+    }
+  });
+
+  // The workflow message template must exist in S3 before the rule can be created
+  await s3().putObject({
+    Bucket: process.env.bucket,
+    Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
+    Body: JSON.stringify({})
+  }).promise();
+
+  await ruleModel.create(rule);
+
+  const collectionsModel = new Collection();
+
+  try {
+    await collectionsModel.delete(name, version);
+    t.fail('Expected an exception to be thrown');
+  }
+  catch (err) {
+    t.is(err.message, 'Cannot delete a collection that has associated rules');
+  }
+});
+
+test('Collection.delete() deletes a collection', async (t) => {
+  const name = randomString();
+  const version = randomString();
+
+  await manager.create({ name, version });
+
+  t.true(await manager.exists({ name, version }));
+
+  const collectionsModel = new Collection();
+  await collectionsModel.delete(name, version);
+
+  t.false(await manager.exists({ name, version }));
 });

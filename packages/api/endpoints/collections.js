@@ -122,12 +122,11 @@ function put(event, cb) {
  * @returns {Promise<Object>} a message showing the record is deleted
  */
 function del(event, cb) {
-  const name = event.pathParameters.collectionName;
-  const version = event.pathParameters.version;
-  const c = new models.Collection();
+  const { collectionName, version } = event.pathParameters;
 
-  return c.get({ name, version })
-    .then(() => c.delete({ name, version }))
+  const collectionModel = new models.Collection();
+
+  return collectionModel.delete(collectionName, version)
     .then(() => cb(null, { message: 'Record deleted' }))
     .catch(cb);
 }
