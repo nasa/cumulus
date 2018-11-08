@@ -28,4 +28,4 @@ async function queueMessageForRule(rule, eventObject) {
 
 module.exports = {
   queueMessageForRule
-}
+};

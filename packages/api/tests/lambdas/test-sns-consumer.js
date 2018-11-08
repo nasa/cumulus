@@ -14,6 +14,8 @@ const Provider = require('../../models/providers');
 const testCollectionName = 'test-collection';
 
 const snsArn = 'test-SnsArn';
+const eventData = { topicArn: snsArn };
+
 const event = {
   Records: [
     {
@@ -142,7 +144,7 @@ test.after.always(async () => {
 
 // getKinesisRule tests
 test.serial('it should look up sns-type rules which are associated with the collection, but not those that are disabled', async (t) => {
-  await getRules({ topicArn: snsArn }, 'sns')
+  await getRules(eventData, 'sns')
     .then((result) => {
       t.is(result.length, 2);
     });
@@ -163,9 +165,7 @@ test.serial('it should enqueue a message for each associated workflow', async (t
       provider,
       collection
     },
-    payload: {
-      topicArn: snsArn
-    }
+    payload: eventData
   };
   t.is(actualMessage.cumulus_meta.state_machine, expectedMessage.cumulus_meta.state_machine);
   t.deepEqual(actualMessage.meta, expectedMessage.meta);
