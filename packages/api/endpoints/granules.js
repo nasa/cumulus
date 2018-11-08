@@ -31,7 +31,7 @@ async function list(event) {
 
 /**
  * Update a single granule.
- * Supported Actions: reingest, applyWorkflow, RemoveFromCMR.
+ * Supported Actions: reingest, move, applyWorkflow, RemoveFromCMR.
  *
  * @param {Object} event - aws lambda event object.
  * @returns {Promise<Object>} a Lambda Proxy response object
@@ -102,7 +102,7 @@ async function put(event) {
   }
 
   if (action === 'move') {
-    const filesAtDestination = granuleModelClient.getFilesExistingAtLocation(
+    const filesAtDestination = await granuleModelClient.getFilesExistingAtLocation(
       granule,
       body.destinations
     );

@@ -129,10 +129,44 @@ async function deleteGranule({ prefix, granuleId }) {
   });
 }
 
+/**
+ * Move a granule via the API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.granuleId - a granule ID
+ * @param {Array<Object>} params.destinations - move granule destinations
+ * @returns {Promise<Object>} - the move response from the API
+ */
+async function moveGranule({ prefix, granuleId, destinations }) {
+  const payload = await callCumulusApi({
+    prefix: prefix,
+    functionName: 'ApiGranulesDefault',
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/granules/{granuleName}',
+      path: `/granules/${granuleId}`,
+      pathParameters: {
+        granuleName: granuleId
+      },
+      body: JSON.stringify({ action: 'move', destinations })
+    }
+  });
+
+  try {
+    return payload;
+  }
+  catch (error) {
+    console.log(`Error parsing JSON response removing granule ${granuleId} from CMR: ${JSON.stringify(payload)}`);
+    throw error;
+  }
+}
+
 module.exports = {
   getGranule,
   reingestGranule,
   removeFromCMR,
   applyWorkflow,
-  deleteGranule
+  deleteGranule,
+  moveGranule
 };
