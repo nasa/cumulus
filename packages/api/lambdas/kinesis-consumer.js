@@ -6,7 +6,8 @@ const {
   log
 } = require('@cumulus/common');
 const Rule = require('../models/rules');
-const messageSchema = require('./kinesis-consumer-event-schema.json');
+const kinesisSchema = require('./kinesis-consumer-event-schema.json');
+const snsSchema = require('./sns-consumer-event-schema.json');
 const { queueMessageForRule } = require('../lib/rulesHelpers');
 
 /**
@@ -78,14 +79,15 @@ async function getRules(event, originalMessageSource) {
 
 /**
  * `validateMessage` validates an event as being valid for creating a workflow.
- * See the messageSchema defined at the top of this file.
+ * See the schemas defined at the top of this file.
  *
  * @param {Object} event - lambda event
  * @param {string} originalMessageSource - 'kinesis' or 'sns'
+ * @param {Object} messageSchema - provided messageSchema
  * @returns {(error|Object)} Throws an Ajv.ValidationError if event object is invalid.
  * Returns the event object if event is valid.
  */
-function validateMessage(event, originalMessageSource) {
+function validateMessage(event, originalMessageSource, messageSchema) {
   if (originalMessageSource === 'sns') return Promise.resolve(event);
 
   const ajv = new Ajv({ allErrors: true });
@@ -162,6 +164,7 @@ function processRecord(record, fromSNS) {
   let eventObject;
   let isKinesisRetry = false;
   let parsed;
+  let validationSchema;
   let originalMessageSource;
 
   if (fromSNS) {
@@ -171,6 +174,7 @@ function processRecord(record, fromSNS) {
     // normal SNS notification - not a Kinesis fallback
     eventObject = parsed.Records[0];
     originalMessageSource = 'sns';
+    validationSchema = snsSchema;
     eventObject.topicArn = record.Sns.TopicArn;
   }
   else {
@@ -188,6 +192,7 @@ function processRecord(record, fromSNS) {
       const dataString = Buffer.from(dataBlob, 'base64').toString();
       eventObject = JSON.parse(dataString);
       originalMessageSource = 'kinesis';
+      validationSchema = kinesisSchema;
     }
     catch (err) {
       log.error('Caught error parsing JSON:');
@@ -196,7 +201,7 @@ function processRecord(record, fromSNS) {
     }
   }
 
-  return validateMessage(eventObject, originalMessageSource)
+  return validateMessage(eventObject, originalMessageSource, validationSchema)
     .then((e) => getRules(e, originalMessageSource))
     .then((rules) => (
       Promise.all(rules.map((rule) => queueMessageForRule(rule, eventObject)))
