@@ -99,7 +99,13 @@ class Granule extends Manager {
 
     const lambdaPayload = await Rule.buildPayload({
       workflow: originalMessage.meta.workflow_name,
-      meta: Object.assign({}, originalMessage.meta, { reingestGranule: true }),
+      meta: originalMessage.meta,
+      cumulus_meta: {
+        cumulus_context: {
+          reingestGranule: true,
+          forceDuplicateOverwrite: true
+        }
+      },
       payload: originalMessage.payload,
       provider: granule.provider,
       collection: {

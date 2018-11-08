@@ -68,12 +68,13 @@ exports.syncGranule = function syncGranule(event) {
   const collection = config.collection;
   const forceDownload = config.forceDownload || false;
   const downloadBucket = config.downloadBucket;
-  const duplicateHandling = get(
+  let duplicateHandling = get(
     config, 'duplicateHandling', get(collection, 'duplicateHandling', 'error')
   );
-  const reingestGranule = process.env.REINGEST_GRANULE === 'true' || false;
+  const forceDuplicateOverwrite = get(event, 'cumulus_config.cumulus_context.forceDuplicateOverwrite', false);
 
-  log.debug(`Configured duplicateHandling value: ${duplicateHandling}, reingestGranule ${reingestGranule}`);
+  log.debug(`Configured duplicateHandling value: ${duplicateHandling}, forceDuplicateOverwrite ${forceDuplicateOverwrite}`);
+  if (forceDuplicateOverwrite === true) duplicateHandling = 'replace';
 
   // use stack and collection names to prefix fileStagingDir
   const fileStagingDir = path.join(
@@ -94,8 +95,7 @@ exports.syncGranule = function syncGranule(event) {
     provider,
     fileStagingDir,
     forceDownload,
-    duplicateHandling,
-    reingestGranule
+    duplicateHandling
   );
 
   return download(ingest, downloadBucket, provider, input.granules)
