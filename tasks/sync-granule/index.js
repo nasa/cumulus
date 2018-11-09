@@ -3,6 +3,7 @@
 const path = require('path');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const errors = require('@cumulus/common/errors');
+const get = require('lodash.get');
 const lock = require('@cumulus/ingest/lock');
 const { selector: granuleSelector } = require('@cumulus/ingest/granule');
 const log = require('@cumulus/common/log');
@@ -67,12 +68,13 @@ exports.syncGranule = function syncGranule(event) {
   const collection = config.collection;
   const forceDownload = config.forceDownload || false;
   const downloadBucket = config.downloadBucket;
-  let duplicateHandling = config.duplicateHandling;
-  if (!duplicateHandling && collection && collection.duplicateHandling) {
-    duplicateHandling = collection.duplicateHandling;
-  }
+  let duplicateHandling = get(
+    config, 'duplicateHandling', get(collection, 'duplicateHandling', 'error')
+  );
+  const forceDuplicateOverwrite = get(event, 'cumulus_config.cumulus_context.forceDuplicateOverwrite', false);
 
-  log.debug(`Configured duplicateHandling value: ${duplicateHandling}`);
+  log.debug(`Configured duplicateHandling value: ${duplicateHandling}, forceDuplicateOverwrite ${forceDuplicateOverwrite}`);
+  if (forceDuplicateOverwrite === true) duplicateHandling = 'replace';
 
   // use stack and collection names to prefix fileStagingDir
   const fileStagingDir = path.join(
