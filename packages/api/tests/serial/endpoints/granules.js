@@ -19,7 +19,7 @@ const {
   fakeAccessTokenFactory,
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
-  fakeUserFactory
+  createAccessToken
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 
@@ -82,14 +82,11 @@ test.before(async () => {
   // create fake Users table
   userModel = new models.User();
   await userModel.createTable();
-  const userRecord = fakeUserFactory();
-  await userModel.create(userRecord);
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  const accessTokenRecord = fakeAccessTokenFactory({ username: userRecord.userName });
-  accessToken = (await accessTokenModel.create(accessTokenRecord)).accessToken;
+  accessToken = await createAccessToken({ accessTokenModel, userModel });
 });
 
 test.beforeEach(async (t) => {
@@ -142,7 +139,7 @@ test.serial('default returns list of granules', async (t) => {
 
   const { meta, results } = JSON.parse(response.body);
   t.is(results.length, 2);
-  t.is(meta.stack, process.env.stackName)
+  t.is(meta.stack, process.env.stackName);
   t.is(meta.table, 'granule');
   t.is(meta.count, 2);
   const granuleIds = t.context.fakeGranules.map((i) => i.granuleId);
