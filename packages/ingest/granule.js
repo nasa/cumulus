@@ -525,10 +525,12 @@ class Granule {
 
     const fileRemotePath = path.join(file.path, file.name);
 
+    // check if renaming file is necessary
+    const renamingFile = (s3ObjAlreadyExists && duplicateHandling === 'version') === true;
+
     // if the file already exists, and duplicateHandling is 'version',
     // we download file to a different name first
-    const stagedFileKey = (s3ObjAlreadyExists && duplicateHandling === 'version')
-      ? `${destinationKey}.${uuidv4()}` : destinationKey;
+    const stagedFileKey = renamingFile ? `${destinationKey}.${uuidv4()}` : destinationKey;
 
     // stream the source file to s3
     log.debug(`await sync file to s3 ${fileRemotePath}, ${bucket}, ${stagedFileKey}`);
@@ -539,7 +541,7 @@ class Granule {
     const [checksumType, checksumValue] = await this.validateChecksum(file, bucket, stagedFileKey);
 
     // compare the checksum of the existing file and new file, and handle them accordingly
-    if (s3ObjAlreadyExists && duplicateHandling === 'version') {
+    if (renamingFile) {
       const existingFileSum = await
       aws.checksumS3Objects(checksumType || 'CKSUM', bucket, destinationKey);
 
