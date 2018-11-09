@@ -58,9 +58,9 @@ function post(event, cb) {
           .then((r) => cb(null, { message: 'Record saved', record: r }))
           .catch(cb);
 
-	console.info(`\nRule model.create returns: ${response}\n`);
+        console.info(`\nRule model.create returns: ${response}\n`);
 
-	return response;
+        return response;
       }
       return cb(e);
     });
