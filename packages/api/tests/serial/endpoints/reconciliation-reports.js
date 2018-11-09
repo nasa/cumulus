@@ -5,7 +5,7 @@ const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const reconciliationReportEndpoint = require('../../../endpoints/reconciliation-reports');
 const {
-  fakeUserFactory,
+  createAccessToken,
   testEndpoint
 } = require('../../../lib/testUtils');
 const assertions = require('../../../lib/assertions');
@@ -14,20 +14,26 @@ const models = require('../../../models');
 process.env.invoke = 'granule-reconciliation-reports';
 process.env.stackName = 'test-stack';
 process.env.system_bucket = 'test_system_bucket';
+process.env.AccessTokensTable = randomString();
 process.env.UsersTable = randomString();
 
 const reportNames = [randomString(), randomString()];
 const reportDirectory = `${process.env.stackName}/reconciliation-reports`;
 
+let accessTokenModel;
 let authHeaders;
 let userModel;
+
 test.before(async () => {
   userModel = new models.User();
   await userModel.createTable();
 
-  const authToken = (await userModel.create(fakeUserFactory())).password;
+  accessTokenModel = new models.AccessToken();
+  await accessTokenModel.createTable();
+
+  const accessToken = await createAccessToken({ accessTokenModel, userModel });
   authHeaders = {
-    Authorization: `Bearer ${authToken}`
+    Authorization: `Bearer ${accessToken}`
   };
 });
 
@@ -46,6 +52,7 @@ test.afterEach.always(async () => {
 });
 
 test.after.always(async () => {
+  await accessTokenModel.deleteTable();
   await userModel.deleteTable();
 });
 
@@ -99,7 +106,7 @@ test('CUMULUS-911 DELETE with pathParameters and without an Authorization header
   });
 });
 
-test('CUMULUS-911 GET without pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+test('CUMULUS-911 GET without pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'GET',
     headers: {
@@ -108,11 +115,13 @@ test('CUMULUS-911 GET without pathParameters and with an unauthorized user retur
   };
 
   return testEndpoint(reconciliationReportEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
 
-test('CUMULUS-911 GET with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+test.todo('CUMULUS-911 GET without pathParameters and with an unauthorized user returns an unauthorized response');
+
+test('CUMULUS-911 GET with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'GET',
     pathParameters: {
@@ -124,11 +133,13 @@ test('CUMULUS-911 GET with pathParameters and with an unauthorized user returns 
   };
 
   return testEndpoint(reconciliationReportEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
 
-test('CUMULUS-911 POST with an unauthorized user returns an unauthorized response', async (t) => {
+test.todo('CUMULUS-911 GET with pathParameters and with an unauthorized user returns an unauthorized response');
+
+test('CUMULUS-911 POST with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'POST',
     headers: {
@@ -137,11 +148,13 @@ test('CUMULUS-911 POST with an unauthorized user returns an unauthorized respons
   };
 
   return testEndpoint(reconciliationReportEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
 
-test('CUMULUS-911 DELETE with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+test.todo('CUMULUS-911 POST with an unauthorized user returns an unauthorized response');
+
+test('CUMULUS-911 DELETE with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'DELETE',
     pathParameters: {
@@ -153,9 +166,11 @@ test('CUMULUS-911 DELETE with pathParameters and with an unauthorized user retur
   };
 
   return testEndpoint(reconciliationReportEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
+
+test.todo('CUMULUS-911 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test.serial('default returns list of reports', (t) => {
   const event = {
