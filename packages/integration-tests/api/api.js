@@ -121,29 +121,6 @@ async function deletePdr({ prefix, pdr }) {
 }
 
 /**
- * Fetch an execution from the Cumulus API
- *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.arn - an execution arn
- * @returns {Promise<Object>} - the execution fetched by the API
- */
-async function getExecution({ prefix, arn }) {
-  return callCumulusApi({
-    prefix: prefix,
-    functionName: 'ApiExecutionsDefault',
-    payload: {
-      httpMethod: 'GET',
-      resource: '/executions/{arn}',
-      path: `executions/${arn}`,
-      pathParameters: {
-        arn: arn
-      }
-    }
-  });
-}
-
-/**
  * Fetch logs from the API
  *
  * @param {Object} params - params
@@ -181,29 +158,6 @@ async function getExecutionLogs({ prefix, executionName }) {
       path: `logs/${executionName}`,
       pathParameters: {
         executionName: executionName
-      }
-    }
-  });
-}
-
-/**
- * get execution status from the Cumulus API
- *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.arn - an execution arn
- * @returns {Promise<Object>} - the execution status fetched by the API
- */
-async function getExecutionStatus({ prefix, arn }) {
-  return callCumulusApi({
-    prefix: prefix,
-    functionName: 'ApiExecutionStatusDefault',
-    payload: {
-      httpMethod: 'GET',
-      resource: '/executions/status/{arn}',
-      path: `executions/status/${arn}`,
-      pathParameters: {
-        arn: arn
       }
     }
   });
@@ -437,9 +391,7 @@ module.exports = {
   callCumulusApi,
   getAsyncOperation,
   deletePdr,
-  getExecution,
   getExecutionLogs,
-  getExecutionStatus,
   addCollectionApi,
   addProviderApi,
   getProviders,

@@ -23,6 +23,7 @@ const {
 } = require('@cumulus/common');
 const {
   api: apiTestUtils,
+  executionsApi: executionsApiTestUtils,
   buildAndExecuteWorkflow,
   LambdaStep,
   conceptExists,
@@ -556,13 +557,22 @@ describe('The S3 Ingest Granules workflow', () => {
 
     describe('executions endpoint', () => {
       let executionResponse;
+      let executions;
 
       beforeAll(async () => {
-        const executionApiResponse = await apiTestUtils.getExecution({
+        const executionsApiResponse = await executionsApiTestUtils.getExecutions({
+          prefix: config.stackName
+        });
+        executions = JSON.parse(executionsApiResponse.body);
+        const executionApiResponse = await executionsApiTestUtils.getExecution({
           prefix: config.stackName,
           arn: workflowExecution.executionArn
         });
         executionResponse = JSON.parse(executionApiResponse.body);
+      });
+
+      it('returns a list of exeuctions', async () => {
+        expect(executions.results.length).toBeGreaterThan(0);
       });
 
       it('returns overall status and timing for the execution', async () => {
@@ -589,7 +599,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
       beforeAll(async () => {
         const executionArn = workflowExecution.executionArn;
-        const executionStatusResponse = await apiTestUtils.getExecutionStatus({
+        const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
           prefix: config.stackName,
           arn: executionArn
         });

@@ -19,6 +19,7 @@ function schedule(event, context, cb) {
   const template = get(event, 'template');
   const provider = get(event, 'provider', null);
   const meta = get(event, 'meta', {});
+  const cumulusMeta = get(event, 'cumulus_meta', {});
   const collection = get(event, 'collection', null);
   const payload = get(event, 'payload', {});
   let message;
@@ -32,6 +33,7 @@ function schedule(event, context, cb) {
       message.meta = merge(message.meta, meta);
       message.payload = payload;
       message.cumulus_meta.execution_name = uuidv4();
+      message.cumulus_meta = merge(message.cumulus_meta, cumulusMeta);
     })
     .then(() => {
       if (provider) {

@@ -164,8 +164,6 @@ class Granule {
    * @param {string} fileStagingDir - staging directory on bucket to place files
    * @param {boolean} forceDownload - force download of a file
    * @param {boolean} duplicateHandling - duplicateHandling of a file
-   * @param {boolean} reingestGranule - indicate if the granule is manually reingested.
-   * When a granule is reingested, existing files will be overwritten.
    */
   constructor(
     buckets,
@@ -173,8 +171,7 @@ class Granule {
     provider,
     fileStagingDir = 'file-staging',
     forceDownload = false,
-    duplicateHandling = 'error',
-    reingestGranule = false
+    duplicateHandling = 'error'
   ) {
     if (this.constructor === Granule) {
       throw new TypeError('Can not construct abstract class.');
@@ -196,7 +193,6 @@ class Granule {
     else this.fileStagingDir = fileStagingDir;
 
     this.duplicateHandling = duplicateHandling;
-    this.reingestGranule = reingestGranule;
   }
 
   /**
@@ -238,7 +234,7 @@ class Granule {
 
     const downloadFiles = granule.files
       .filter((f) => this.filterChecksumFiles(f))
-      .map((f) => this.ingestFile(f, bucket, this.duplicateHandling, this.reingestGranule));
+      .map((f) => this.ingestFile(f, bucket, this.duplicateHandling));
 
     log.debug('awaiting all download.Files');
     const files = flatten(await Promise.all(downloadFiles));
@@ -489,11 +485,9 @@ class Granule {
    * 'replace' to replace the duplicate,
    * 'skip' to skip duplicate,
    * 'version' to keep both files if they have different checksums
-   * @param {boolean} reingestGranule - indicate if the granule is manually reingested.
-   * When a granule is reingested, existing files will be overwritten.
    * @returns {Array<Object>} returns the staged file and the renamed existing duplicates if any
    */
-  async ingestFile(file, bucket, duplicateHandling, reingestGranule) {
+  async ingestFile(file, bucket, duplicateHandling) {
     // Check if the file exists
     const destinationKey = path.join(this.fileStagingDir, file.name);
 
@@ -515,12 +509,12 @@ class Granule {
     log.debug(`file ${destinationKey} exists in ${bucket}: ${s3ObjAlreadyExists}`);
     // Have to throw DuplicateFile and not WorkflowError, because the latter
     // is not treated as a failure by the message adapter.
-    if (s3ObjAlreadyExists && !reingestGranule && duplicateHandling === 'error') {
+    if (s3ObjAlreadyExists && duplicateHandling === 'error') {
       throw new errors.DuplicateFile(`${destinationKey} already exists in ${bucket} bucket`);
     }
 
     // Exit early if we can
-    if (s3ObjAlreadyExists && !reingestGranule && duplicateHandling === 'skip') {
+    if (s3ObjAlreadyExists && duplicateHandling === 'skip') {
       return [Object.assign(stagedFile,
         { fileSize: (await aws.headObject(bucket, destinationKey)).ContentLength })];
     }
@@ -532,7 +526,7 @@ class Granule {
     const fileRemotePath = path.join(file.path, file.name);
 
     // check if renaming file is necessary
-    const renamingFile = (s3ObjAlreadyExists && !reingestGranule && duplicateHandling === 'version') === true;
+    const renamingFile = (s3ObjAlreadyExists && duplicateHandling === 'version') === true;
 
     // if the file already exists, and duplicateHandling is 'version',
     // we download file to a different name first
@@ -568,7 +562,7 @@ class Granule {
       }
     }
 
-    const renamedFiles = (!reingestGranule && duplicateHandling === 'version')
+    const renamedFiles = (duplicateHandling === 'version')
       ? await exports.getRenamedS3File(bucket, destinationKey) : [];
 
     // return all files, the renamed files don't have the same properties(name, fileSize, checksum)
