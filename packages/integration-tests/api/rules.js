@@ -45,7 +45,11 @@ async function postRule({ prefix, rule }) {
     body: JSON.stringify(rule)
   };
 
-  return callRuleApiFunction(prefix, payload);
+  console.info(`postRule calls callRuleApiFunction with: ${prefix} \n ${payload}\n`);
+
+  const response = await callRuleApiFunction(prefix, payload);
+  console.info(`Response from callRuleApiFunction (Rule): ${response}`);
+  return response;
 }
 
 /**
