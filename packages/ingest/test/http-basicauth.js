@@ -10,9 +10,9 @@ const cookieString = 'snickerdoodle';
 httpBasicAuth.__set__('request', (uriOptions, cb) => {
   const updatedUriOptions = {
     headers: {
-      'set-cookie': [ cookieString ],
+      'set-cookie': [cookieString],
       location: uriOptions.uri + 1
-    },
+    }
   };
   cb(null, updatedUriOptions, {});
 });

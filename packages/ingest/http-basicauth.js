@@ -24,8 +24,9 @@ function genUriOptions(uri, headers) {
 /**
  * authString base64 encoded string used to support a basic authentication request
  * as the value for the `authorization` header
+ * @param  {Object} provider Object including username and password
  *
- * @returns {string} Basic auth string
+ * @returns {String} Basic auth string
  */
 function authString(provider) {
   return Buffer.from(
@@ -38,12 +39,12 @@ function authString(provider) {
  * 302 responses from the server, using the basic auth header and
  * appending cookies from each request, `numRedirects` times.
  *
- * @param  {Integer} options.currentRedirect Iterator for current redirect
- * @param  {Integer} options.numRedirects    Number of redirects to follow in this
- *                                           basic auth request cycle
- * @param  {Object}  options.uriOptions      uri options to return or
- *                                           use in the next `request` call.
- * @returns {Object}                         uri options
+ * @param  {Integer} currentRedirect Iterator for current redirect
+ * @param  {Integer} numRedirects    Number of redirects to follow in this
+ *                                   basic auth request cycle
+ * @param  {Object}  uriOptions      uri options to return or
+ *                                   use in the next `request` call.
+ * @returns {Object}                 uri options
  */
 async function followRedirects({ currentRedirect, numRedirects, uriOptions }) {
   return new Promise((resolve, reject) => {
