@@ -17,8 +17,8 @@ const assertions = require('../../../lib/assertions');
 
 // create all the variables needed across this test
 let esClient;
+let esIndex;
 const fakeExecutions = [];
-const esIndex = randomString();
 process.env.AccessTokensTable = randomString();
 process.env.ExecutionsTable = randomString();
 process.env.UsersTable = randomString();
@@ -31,6 +31,7 @@ let executionModel;
 let userModel;
 
 test.before(async () => {
+  esIndex = randomString();
   // create esClient
   esClient = await Search.es('fakehost');
 
