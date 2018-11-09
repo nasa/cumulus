@@ -19,11 +19,11 @@ const {
     s3ObjectExists,
     parseS3Uri
   },
-  constructCollectionId,
-  testUtils: { randomString }
+  constructCollectionId
 } = require('@cumulus/common');
 const {
   api: apiTestUtils,
+  executionsApi: executionsApiTestUtils,
   buildAndExecuteWorkflow,
   LambdaStep,
   conceptExists,
@@ -99,7 +99,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let expectedSyncGranulePayload;
   let expectedPayload;
   let expectedS3TagSet;
-  let startTime;
 
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   const granuleModel = new Granule();
@@ -113,6 +112,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
   beforeAll(async () => {
     const collectionJson = JSON.parse(fs.readFileSync(`${collectionsDir}/s3_MOD09GQ_006.json`, 'utf8'));
+    collectionJson.duplicateHandling = 'error';
     const collectionData = Object.assign({}, collectionJson, {
       name: collection.name,
       dataType: collectionJson.dataType + testSuffix
@@ -144,25 +144,6 @@ describe('The S3 Ingest Granules workflow', () => {
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
 
-    // pre-stage destination files for MoveGranules
-    const preStageFiles = expectedPayload.granules[0].files.map((file) => {
-      // CMR file will be skipped by MoveGranules, so no need to stage it
-      if (file.filename.slice(-8) === '.cmr.xml') {
-        return Promise.resolve();
-      }
-      const params = {
-        Bucket: file.bucket,
-        Key: file.filepath,
-        Body: randomString()
-      };
-      // expect duplicates to be reported
-      // eslint-disable-next-line no-param-reassign
-      file.duplicate_found = true;
-      return s3().putObject(params).promise();
-    });
-    await Promise.all(preStageFiles);
-    startTime = new Date();
-
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
@@ -192,8 +173,6 @@ describe('The S3 Ingest Granules workflow', () => {
       providerModel.delete(provider),
       executionModel.delete({ arn: workflowExecution.executionArn }),
       executionModel.delete({ arn: failingWorkflowExecution.executionArn }),
-      s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }).promise(),
-      s3().deleteObject({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` }).promise(),
       apiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
@@ -281,20 +260,11 @@ describe('The S3 Ingest Granules workflow', () => {
       ]);
     });
 
-    afterAll(async () => {
-      await Promise.all([
-        s3().deleteObject({ Bucket: files[0].bucket, Key: files[0].filepath }).promise(),
-        s3().deleteObject({ Bucket: files[1].bucket, Key: files[1].filepath }).promise(),
-        s3().deleteObject({ Bucket: files[3].bucket, Key: files[3].filepath }).promise()
-      ]);
-    });
-
-    it('has a payload with correct buckets, filenames, filesizes, and duplicate reporting', () => {
+    it('has a payload with correct buckets, filenames, filesizes', () => {
       files.forEach((file) => {
         const expectedFile = expectedPayload.granules[0].files.find((f) => f.name === file.name);
         expect(file.filename).toEqual(expectedFile.filename);
         expect(file.bucket).toEqual(expectedFile.bucket);
-        expect(file.duplicate_found).toBe(expectedFile.duplicate_found);
         if (file.fileSize) {
           expect(file.fileSize).toEqual(expectedFile.fileSize);
         }
@@ -310,16 +280,6 @@ describe('The S3 Ingest Granules workflow', () => {
     it('preserves tags on moved files', () => {
       movedTaggings.forEach((tagging) => {
         expect(tagging.TagSet).toEqual(expectedS3TagSet);
-      });
-    });
-
-    describe('encounters duplicate filenames', () => {
-      it('overwrites the existing file with the new data', async () => {
-        const currentFiles = await getFilesMetadata(files);
-
-        currentFiles.forEach((cf) => {
-          expect(cf.LastModified).toBeGreaterThan(startTime);
-        });
       });
     });
   });
@@ -339,10 +299,6 @@ describe('The S3 Ingest Granules workflow', () => {
       cmrLink = lambdaOutput.payload.granules[0].cmrLink;
       cmrResource = await getOnlineResources(cmrLink);
       response = await got(cmrResource[1].href);
-    });
-
-    afterAll(async () => {
-      await s3().deleteObject({ Bucket: files[2].bucket, Key: files[2].filepath }).promise();
     });
 
     it('has expected payload', () => {
@@ -437,34 +393,70 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(granule.cmrLink).not.toBeUndefined();
       });
 
-      it('allows reingest and executes with success status', async () => {
-        const oldUpdatedAt = granule.updatedAt;
-        const oldExecution = granule.execution;
+      describe('when a reingest granule is triggered via the API', () => {
+        let oldExecution;
+        let oldUpdatedAt;
+        let reingestResponse;
+        let startTime;
 
-        // Reingest Granule and compare the updatedAt times
-        const reingestGranuleResponse = await apiTestUtils.reingestGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
+        beforeAll(async () => {
+          startTime = new Date();
+          oldUpdatedAt = granule.updatedAt;
+          oldExecution = granule.execution;
+          const reingestGranuleResponse = await apiTestUtils.reingestGranule({
+            prefix: config.stackName,
+            granuleId: inputPayload.granules[0].granuleId
+          });
+          reingestResponse = JSON.parse(reingestGranuleResponse.body);
         });
-        const reingestResponse = JSON.parse(reingestGranuleResponse.body);
-        expect(reingestResponse.status).toEqual('SUCCESS');
 
-        const secondGranuleResponse = await apiTestUtils.getGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
+        it('executes successfully', () => {
+          expect(reingestResponse.status).toEqual('SUCCESS');
         });
-        const secondGranule = JSON.parse(secondGranuleResponse.body);
-        expect(secondGranule.updatedAt).toBeGreaterThan(oldUpdatedAt);
 
-        // Await reingest completion
-        await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
-        const updatedGranuleResponse = await apiTestUtils.getGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
+        it('returns a warning that data may be overwritten when duplicateHandling is "error"', () => {
+          expect(reingestResponse.warning && reingestResponse.warning.includes('overwritten')).toBeTruthy();
         });
-        const updatedGranule = JSON.parse(updatedGranuleResponse.body);
-        expect(updatedGranule.status).toEqual('completed');
-        expect(updatedGranule.execution).not.toEqual(oldExecution);
+
+        it('overwrites granule files', async () => {
+          // Await reingest completion
+          const reingestGranuleExecution = await waitForTestExecutionStart(
+            workflowName,
+            config.stackName,
+            config.bucket,
+            isExecutionForGranuleId,
+            { granuleId: inputPayload.granules[0].granuleId }
+          );
+
+          console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
+
+          await waitForCompletedExecution(reingestGranuleExecution.executionArn);
+
+          await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
+          const updatedGranuleResponse = await apiTestUtils.getGranule({
+            prefix: config.stackName,
+            granuleId: inputPayload.granules[0].granuleId
+          });
+
+          const updatedGranule = JSON.parse(updatedGranuleResponse.body);
+          expect(updatedGranule.status).toEqual('completed');
+          expect(updatedGranule.updatedAt).toBeGreaterThan(oldUpdatedAt);
+          expect(updatedGranule.execution).not.toEqual(oldExecution);
+
+          // the updated granule has the same files
+          const oldFileNames = granule.files.map((f) => f.filename);
+          const newFileNames = updatedGranule.files.map((f) => f.filename);
+          expect(difference(oldFileNames, newFileNames).length).toBe(0);
+
+          const currentFiles = await getFilesMetadata(updatedGranule.files);
+          currentFiles.forEach((cf) => {
+            expect(cf.LastModified).toBeGreaterThan(startTime);
+          });
+
+          updatedGranule.files.forEach((cf) => {
+            if (!cf.filename.endsWith('.cmr.xml')) expect(cf.duplicate_found).toBe(true);
+          });
+        });
       });
 
       it('removeFromCMR removes the ingested granule from CMR', async () => {
@@ -537,13 +529,22 @@ describe('The S3 Ingest Granules workflow', () => {
 
     describe('executions endpoint', () => {
       let executionResponse;
+      let executions;
 
       beforeAll(async () => {
-        const executionApiResponse = await apiTestUtils.getExecution({
+        const executionsApiResponse = await executionsApiTestUtils.getExecutions({
+          prefix: config.stackName
+        });
+        executions = JSON.parse(executionsApiResponse.body);
+        const executionApiResponse = await executionsApiTestUtils.getExecution({
           prefix: config.stackName,
           arn: workflowExecution.executionArn
         });
         executionResponse = JSON.parse(executionApiResponse.body);
+      });
+
+      it('returns a list of exeuctions', async () => {
+        expect(executions.results.length).toBeGreaterThan(0);
       });
 
       it('returns overall status and timing for the execution', async () => {
@@ -570,7 +571,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
       beforeAll(async () => {
         const executionArn = workflowExecution.executionArn;
-        const executionStatusResponse = await apiTestUtils.getExecutionStatus({
+        const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
           prefix: config.stackName,
           arn: executionArn
         });

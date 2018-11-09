@@ -98,8 +98,14 @@ class Granule extends Manager {
     const { name, version } = deconstructCollectionId(granule.collectionId);
 
     const lambdaPayload = await Rule.buildPayload({
-      workflow: 'IngestGranule',
+      workflow: originalMessage.meta.workflow_name,
       meta: originalMessage.meta,
+      cumulus_meta: {
+        cumulus_context: {
+          reingestGranule: true,
+          forceDuplicateOverwrite: true
+        }
+      },
       payload: originalMessage.payload,
       provider: granule.provider,
       collection: {
@@ -110,7 +116,7 @@ class Granule extends Manager {
 
     await this.updateStatus({ granuleId: granule.granuleId }, 'running');
 
-    await aws.invoke(process.env.invoke, lambdaPayload);
+    return aws.invoke(process.env.invoke, lambdaPayload);
   }
 
   /**
