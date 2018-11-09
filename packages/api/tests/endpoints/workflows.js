@@ -12,17 +12,20 @@ const workflowList = require('../data/workflow_list.json');
 const models = require('../../models');
 const workflowsEndpoint = require('../../endpoints/workflows');
 const {
+  createAccessToken,
   fakeUserFactory,
   testEndpoint
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 
 let authHeaders;
+let accessTokenModel;
 let userModel;
 let testBucketName;
 let stackName;
 
 test.before(async () => {
+  process.env.AccessTokensTable = randomString();
   process.env.UsersTable = randomString();
   testBucketName = randomString();
   stackName = randomString();
@@ -41,15 +44,19 @@ test.before(async () => {
   userModel = new models.User();
   await userModel.createTable();
 
-  const authToken = (await userModel.create(fakeUserFactory())).password;
+  accessTokenModel = new models.AccessToken();
+  await accessTokenModel.createTable();
+
+  const accessToken = await createAccessToken({ accessTokenModel, userModel });
   authHeaders = {
-    Authorization: `Bearer ${authToken}`
+    Authorization: `Bearer ${accessToken}`
   };
 
   await s3().createBucket({ Bucket: testBucketName }).promise();
 });
 
 test.after.always(async () => {
+  await accessTokenModel.deleteTable();
   await userModel.deleteTable();
   await recursivelyDeleteS3Bucket(testBucketName);
 });
@@ -79,7 +86,7 @@ test('CUMULUS-911 GET with pathParameters and without an Authorization header re
   });
 });
 
-test('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+test('CUMULUS-912 GET without pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'GET',
     headers: {
@@ -88,9 +95,11 @@ test('CUMULUS-912 GET without pathParameters and with an unauthorized user retur
   };
 
   return testEndpoint(workflowsEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
+
+test.todo('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
   const request = {
@@ -104,9 +113,11 @@ test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns 
   };
 
   return testEndpoint(workflowsEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
+
+test.todo('CUMULUS-912 GET with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('GET with no path parameters and an authorized user returns a list of workflows', async (t) => {
   const request = {
