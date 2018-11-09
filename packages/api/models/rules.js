@@ -3,7 +3,12 @@
 'use strict';
 
 const get = require('lodash.get');
-const { invoke, Events } = require('@cumulus/ingest/aws');
+const {
+  invoke,
+  Events,
+  lambda,
+  sns
+} = require('@cumulus/ingest/aws');
 const aws = require('@cumulus/common/aws');
 const Manager = require('./base');
 const { rule } = require('./schemas');
@@ -43,9 +48,16 @@ class Rule extends Manager {
       await Events.deleteEvent(name);
       break;
     }
-    case 'kinesis':
+    case 'kinesis': {
       await this.deleteKinesisEventSources(item);
       break;
+    }
+    case 'sns': {
+      if (item.state === 'ENABLED') {
+        await this.deleteSnsTrigger(item);
+      }
+      break;
+    }
     default:
       break;
     }
@@ -87,9 +99,18 @@ class Rule extends Manager {
         await this.updateKinesisEventSources(original);
       }
       break;
-    case 'sns':
-      // TODO - add SNS
+    case 'sns': {
+      // TODO - check if subscription already exists
+      if (valueUpdated || original.state !== updated.state) {
+        if (original.state === 'ENABLED') {
+          await this.deleteSnsTrigger(original);
+        }
+        if (updated.state === 'ENABLED') {
+          await this.addSnsTrigger(updated);
+        }
+      }
       break;
+    }
     default:
       break;
     }
@@ -146,7 +167,9 @@ class Rule extends Manager {
       break;
     }
     case 'sns': {
-      // TODO - add event source mapping
+      if (item.state === 'ENABLED') {
+        await this.addSnsTrigger(item);
+      }
       break;
     }
     default:
@@ -305,6 +328,46 @@ class Rule extends Manager {
       values: queryValues
     });
     return (kinesisRules.Count && kinesisRules.Count > 0);
+  }
+
+  async addSnsTrigger(item) {
+    // create sns subscription
+    const subscriptionParams = {
+      TopicArn: item.rule.value,
+      Protocol: 'lambda',
+      Endpoint: process.env.kinesisConsumer,
+      ReturnSubscriptionArn: true
+    };
+    const r = await sns.subscribe(subscriptionParams).promise();
+    // create permission to invoke lambda
+    const permissionParams = {
+      Action: 'lambda:InvokeFunction',
+      FunctionName: process.env.kinesisConsumer,
+      Principal: 'sns.amazonaws.com',
+      SourceArn: item.TopicArn,
+      StatementId: `${item.name}Permission`
+    };
+    await lambda.addPermission(permissionParams).promise();
+
+    item.rule.arn = r.SubscriptionArn;
+    return item;
+  }
+
+  async deleteSnsTrigger(item) {
+    // delete permission statement
+    const permissionParams = {
+      FunctionName: process.env.kinesisConsumer,
+      StatementId: `${item.name}Permission`
+    };
+    await lambda.removePermission(permissionParams).promise();
+    // delete sns subscription
+    const subscriptionParams = {
+      SubscriptionArn: item.rule.arn
+    };
+    await sns.unsubscribe(subscriptionParams).promise();
+
+    delete item.rule.arn;
+    return item;
   }
 }
 
