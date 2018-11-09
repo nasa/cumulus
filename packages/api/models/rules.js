@@ -3,12 +3,7 @@
 'use strict';
 
 const get = require('lodash.get');
-const {
-  invoke,
-  Events,
-  lambda,
-  sns
-} = require('@cumulus/ingest/aws');
+const { invoke, Events } = require('@cumulus/ingest/aws');
 const aws = require('@cumulus/common/aws');
 const Manager = require('./base');
 const { rule } = require('./schemas');
@@ -338,7 +333,7 @@ class Rule extends Manager {
       Endpoint: process.env.kinesisConsumer,
       ReturnSubscriptionArn: true
     };
-    const r = await sns.subscribe(subscriptionParams).promise();
+    const r = await aws.sns().subscribe(subscriptionParams).promise();
     // create permission to invoke lambda
     const permissionParams = {
       Action: 'lambda:InvokeFunction',
@@ -347,7 +342,7 @@ class Rule extends Manager {
       SourceArn: item.TopicArn,
       StatementId: `${item.name}Permission`
     };
-    await lambda.addPermission(permissionParams).promise();
+    await aws.lambda().addPermission(permissionParams).promise();
 
     item.rule.arn = r.SubscriptionArn;
     return item;
@@ -359,12 +354,12 @@ class Rule extends Manager {
       FunctionName: process.env.kinesisConsumer,
       StatementId: `${item.name}Permission`
     };
-    await lambda.removePermission(permissionParams).promise();
+    await aws.lambda().removePermission(permissionParams).promise();
     // delete sns subscription
     const subscriptionParams = {
       SubscriptionArn: item.rule.arn
     };
-    await sns.unsubscribe(subscriptionParams).promise();
+    await aws.sns().unsubscribe(subscriptionParams).promise();
 
     delete item.rule.arn;
     return item;
