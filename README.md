@@ -7,7 +7,11 @@
 ## 📖 Documentation:
 
 - Documentation for the latest [released version](https://nasa.github.io/cumulus).
-- Documentation for the [unreleased work](https://nasa.github.io/cumulus/unreleased). 
+- Documentation for the [unreleased work](https://nasa.github.io/cumulus/docs/next/cumulus-docs-readme).
+
+## More Information
+
+For more information about this project of more about NASA's Earth Observing System Data and Information System (EOSDIS) and its cloud work, please contact [Katie Baynes](mailto:katie.baynes@nasa.gov) or visit us at https://earthdata.nasa.gov.
 
 # 🔨 Development
 
@@ -79,15 +83,11 @@ Run the test commands next
     $ export LOCALSTACK_HOST=localhost
     $ yarn test
 
-Run end to end tests with
-
-    $ yarn e2e
-
 ### Integration Tests
 
 For more information please [read this](docs/development/integration-tests.md).
 
-## 🔦 Code Coverage and Quality 
+## 🔦 Code Coverage and Quality
 
 For more information please [read this](docs/development/quality-and-coverage.md).
 

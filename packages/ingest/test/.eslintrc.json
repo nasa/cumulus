@@ -1,6 +1,0 @@
-{
-  "rules": {
-    "require-jsdoc": "off",
-    "no-param-reassign": "off"
-  }
-}

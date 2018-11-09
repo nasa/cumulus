@@ -3,15 +3,13 @@
 const isEqual = require('lodash.isequal');
 const some = require('lodash.some');
 const test = require('ava');
-const delay = require('delay');
-const moment = require('moment');
 const aws = require('@cumulus/common/aws');
-const { checkPdrStatuses } = require('..');
 const {
-  randomString,
   validateInput,
   validateOutput
 } = require('@cumulus/common/test-utils');
+
+const { checkPdrStatuses } = require('..');
 
 test('valid output when no running executions', async (t) => {
   const event = {
@@ -134,50 +132,4 @@ test.serial('returns the correct results in the nominal case', async (t) => {
       `${JSON.stringify(expectedItem)} not found in ${JSON.stringify(output.failed)}`
     );
   });
-});
-
-test.serial('test concurrency limit setting on sfn api calls', async (t) => {
-  process.env.CONCURRENCY = 20;
-
-  const running = [];
-  const uuid = randomString();
-  for (let i = 0; i < 200; i += 1) running[i] = `${uuid}:${i}`;
-
-  const event = {
-    input: {
-      running,
-      pdr: { name: 'test.PDR', path: 'test-path' }
-    }
-  };
-
-  await validateInput(t, event.input);
-
-  const sfn = aws.sfn();
-
-  let output;
-  let startTime;
-  try {
-    sfn.describeExecution = ({ executionArn }) => ({
-      promise: () =>
-        delay(100)
-          .then(() => ({ executionArn, status: 'SUCCEEDED' }))
-    });
-
-    startTime = moment();
-    output = await checkPdrStatuses(event);
-  }
-  finally {
-    delete sfn.describeExecution;
-  }
-
-  await validateOutput(t, output);
-  t.true(output.isFinished);
-
-  // the sf api execution time would be approximately:
-  // ((# of executions)/(# of concurrency) ) * (function execution time)
-  // (200/20) * 100 = 1000
-  // add 100ms for other operations
-  const endTime = moment();
-  const timeEscaped = moment.duration(endTime.diff(startTime)).as('milliseconds');
-  t.true(timeEscaped >= 900 && timeEscaped <= 1100);
 });

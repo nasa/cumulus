@@ -5,13 +5,13 @@ const sinon = require('sinon');
 const proxyquire = require('proxyquire');
 const test = require('ava');
 const JSFtp = require('jsftp');
-const { sftpMixin: TestSftpMixin } = require('../sftp');
 const {
   checksumS3Objects, fileExists, recursivelyDeleteS3Bucket, s3
 } = require('@cumulus/common/aws');
 const {
   randomString
 } = require('@cumulus/common/test-utils');
+const { sftpMixin: TestSftpMixin } = require('../sftp');
 
 const privateKey = 'ssh_client_rsa_key';
 const bucket = randomString();
@@ -55,7 +55,6 @@ test.after.always(async () => {
 });
 
 test('connect and retrieve list of pdrs', async (t) => {
-
   const jsftpSpy = sinon.spy(JSFtp);
   const { sftpMixin } = proxyquire('../sftp', {
     jsftp: jsftpSpy

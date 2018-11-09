@@ -1,26 +1,22 @@
 'use strict';
 
+const pMap = require('p-map');
 const test = require('ava');
 const moment = require('moment');
-const { TaskQueue } = require('cwait');
 const { promisify } = require('util');
 const chunk = require('lodash.chunk');
 const flatten = require('lodash.flatten');
 const range = require('lodash.range');
 const sample = require('lodash.sample');
-const {
-  aws,
-  testUtils: {
-    randomString
-  }
-} = require('@cumulus/common');
+const aws = require('@cumulus/common/aws');
+const { randomString } = require('@cumulus/common/test-utils');
+const { sleep } = require('@cumulus/common/util');
+
 const { handler } = require('../../lambdas/create-reconciliation-report');
 const models = require('../../models');
 
 const createBucket = (Bucket) => aws.s3().createBucket({ Bucket }).promise();
-const promisifiedBatchWriteItem = (params) => aws.dynamodb().batchWriteItem(params).promise();
 const promisifiedHandler = promisify(handler);
-const promisifiedSetTimeout = promisify(setTimeout);
 
 function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
   const bucketsConfig = {};
@@ -39,15 +35,17 @@ function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
 
 // Expect files to have bucket and key properties
 function storeFilesToS3(files) {
-  const putObjectQueue = new TaskQueue(Promise, 10);
-  const promisifiedPutObject = (params) => aws.s3().putObject(params).promise();
-  const throttledPutObject = putObjectQueue.wrap(promisifiedPutObject);
-
-  return Promise.all(files.map((file) => throttledPutObject({
+  const putObjectParams = files.map((file) => ({
     Bucket: file.bucket,
     Key: file.key,
     Body: randomString()
-  })));
+  }));
+
+  return pMap(
+    putObjectParams,
+    (params) => aws.s3().putObject(params).promise(),
+    { concurrency: 10 }
+  );
 }
 
 // Expect files to have bucket, key, and granuleId properties
@@ -65,15 +63,17 @@ function storeFilesToDynamoDb(filesTableName, files) {
   // Break the requests into groups of 25
   const putRequestsChunks = chunk(putRequests, 25);
 
-  const batchWriteItemQueue = new TaskQueue(Promise, 1);
-  const throttledBatchWriteItem = batchWriteItemQueue.wrap(promisifiedBatchWriteItem);
-
-  return Promise.all(putRequestsChunks.map((requests) => {
-    const params = { RequestItems: {} };
-    params.RequestItems[filesTableName] = requests;
-
-    return throttledBatchWriteItem(params);
+  const putRequestParams = putRequestsChunks.map((requests) => ({
+    RequestItems: {
+      [filesTableName]: requests
+    }
   }));
+
+  return pMap(
+    putRequestParams,
+    (params) => aws.dynamodb().batchWriteItem(params).promise(),
+    { concurrency: 1 }
+  );
 }
 
 async function fetchCompletedReport(Bucket, stackName) {
@@ -86,7 +86,7 @@ async function fetchCompletedReport(Bucket, stackName) {
     .then(JSON.parse);
 
   if (report.status === 'RUNNING') {
-    return promisifiedSetTimeout(1000)
+    return sleep(1000)
       .then(() => fetchCompletedReport(Bucket, stackName));
   }
 
@@ -277,12 +277,23 @@ test.serial('A valid reconciliation report is generated when there are extra Dyn
     granuleId: randomString()
   }));
 
-  const extraDbFile1 = { bucket: sample(dataBuckets), key: randomString(), granuleId: randomString() };
-  const extraDbFile2 = { bucket: sample(dataBuckets), key: randomString(), granuleId: randomString() };
+  const extraDbFile1 = {
+    bucket: sample(dataBuckets),
+    key: randomString(),
+    granuleId: randomString()
+  };
+  const extraDbFile2 = {
+    bucket: sample(dataBuckets),
+    key: randomString(),
+    granuleId: randomString()
+  };
 
   // Store the files to S3 and DynamoDB
   await storeFilesToS3(matchingFiles);
-  await storeFilesToDynamoDb(t.context.filesTableName, matchingFiles.concat([extraDbFile1, extraDbFile2]));
+  await storeFilesToDynamoDb(
+    t.context.filesTableName,
+    matchingFiles.concat([extraDbFile1, extraDbFile2])
+  );
 
   const event = {
     dataBuckets,
@@ -334,12 +345,23 @@ test.serial('A valid reconciliation report is generated when there are both extr
 
   const extraS3File1 = { bucket: sample(dataBuckets), key: randomString() };
   const extraS3File2 = { bucket: sample(dataBuckets), key: randomString() };
-  const extraDbFile1 = { bucket: sample(dataBuckets), key: randomString(), granuleId: randomString() };
-  const extraDbFile2 = { bucket: sample(dataBuckets), key: randomString(), granuleId: randomString() };
+  const extraDbFile1 = {
+    bucket: sample(dataBuckets),
+    key: randomString(),
+    granuleId: randomString()
+  };
+  const extraDbFile2 = {
+    bucket: sample(dataBuckets),
+    key: randomString(),
+    granuleId: randomString()
+  };
 
   // Store the files to S3 and DynamoDB
   await storeFilesToS3(matchingFiles.concat([extraS3File1, extraS3File2]));
-  await storeFilesToDynamoDb(t.context.filesTableName, matchingFiles.concat([extraDbFile1, extraDbFile2]));
+  await storeFilesToDynamoDb(
+    t.context.filesTableName,
+    matchingFiles.concat([extraDbFile1, extraDbFile2])
+  );
 
   const event = {
     dataBuckets,

@@ -1,4 +1,4 @@
-const SuiteTimeReporter = function () {
+function SuiteTimeReporter() {
   const suiteTimers = {};
   return {
     suiteStarted: (result) => {
@@ -6,10 +6,10 @@ const SuiteTimeReporter = function () {
     },
     suiteDone: (result) => {
       const duration = (new Date()).valueOf() - suiteTimers[result.description];
-      console.log(`\nsuiteDone: ${duration / 1000.0} secs "${result.description}"`);
+      console.log(`\nsuiteDone: ${duration / 1000.0} secs "${result.description}" at ${new Date().toString()}`);
     }
   };
-};
+}
 
 const suiteTimeReporter = new SuiteTimeReporter();
 

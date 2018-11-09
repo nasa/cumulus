@@ -6,7 +6,7 @@ const GoogleOAuth2 = require('../../lib/GoogleOAuth2');
 
 test('The GoogleOAuth2 constructor throws a TypeError if googleOAuth2Client is not specified', (t) => {
   const err = t.throws(() => {
-    new GoogleOAuth2(null, {});// eslint-disable-line no-new
+    new GoogleOAuth2(null, {});
   },
   TypeError);
 
@@ -15,7 +15,7 @@ test('The GoogleOAuth2 constructor throws a TypeError if googleOAuth2Client is n
 
 test('The GoogleOAuth2 constructor throws a TypeError if googlePlusPeopleClient is not specified', (t) => {
   const err = t.throws(() => {
-    new GoogleOAuth2({}, null);// eslint-disable-line no-new
+    new GoogleOAuth2({}, null);
   },
   TypeError);
 
@@ -122,7 +122,7 @@ test('GoogleOAuth2.getAccessToken() properly sets credentials on the googleOAuth
   };
 
   const googleOAuth2 = new GoogleOAuth2(mockGoogleOAuth2Client, mockGooglePlusPeopleClient);
-  googleOAuth2.getAccessToken('my-authorization-code');
+  await googleOAuth2.getAccessToken('my-authorization-code');
 });
 
 test('GoogleOAuth2.getAccessToken() properly requests user info from the googlePlusPeopleClient', async (t) => {
@@ -151,7 +151,7 @@ test('GoogleOAuth2.getAccessToken() properly requests user info from the googleP
   };
 
   const googleOAuth2 = new GoogleOAuth2(mockGoogleOAuth2Client, mockGooglePlusPeopleClient);
-  googleOAuth2.getAccessToken('my-authorization-code');
+  await googleOAuth2.getAccessToken('my-authorization-code');
 });
 
 test('GoogleOAuth2.getAccessToken() returns token information for a valid authorizationCode', async (t) => {

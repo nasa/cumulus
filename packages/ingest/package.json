@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/ingest",
-  "version": "1.10.0",
+  "version": "1.10.3",
   "description": "Ingest utilities",
   "engines": {
     "node": ">=8.10.0"
@@ -34,21 +34,25 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "^1.10.0",
+    "@cumulus/cmrjs": "^1.10.3",
+    "@cumulus/common": "^1.10.3",
     "@cumulus/pvl": "^1.10.0",
-    "@cumulus/test-data": "^1.9.1",
+    "@cumulus/test-data": "^1.10.2",
     "aws-sdk": "^2.238.1",
     "cksum": "^1.3.0",
-    "depd": "^1.1.2",
     "encodeurl": "^1.0.2",
     "fs-extra": "^5.0.0",
     "got": "^9.2.1",
-    "jsftp": "^2.0.0",
+    "jsftp": "https://github.com/yjpa7145/jsftp.git#Fix-partial-file-issue",
     "json-loader": "~0.5.7",
     "lodash.clonedeep": "^4.5.0",
+    "lodash.flatten": "^4.4.0",
     "lodash.get": "^4.4.2",
     "lodash.groupby": "^4.6.0",
     "lodash.identity": "^3.0.0",
+    "lodash.isnumber": "^3.0.3",
+    "lodash.isobject": "^3.0.2",
+    "lodash.isstring": "4.0.1",
     "lodash.omit": "^4.5.0",
     "moment": "^2.22.1",
     "node-forge": "^0.7.1",
@@ -61,8 +65,7 @@
     "xml2js": "^0.4.17"
   },
   "devDependencies": {
-    "@cumulus/cmrjs": "^1.10.0",
-    "@cumulus/test-data": "^1.9.1",
+    "@cumulus/test-data": "^1.10.2",
     "ava": "^0.25.0",
     "nyc": "^11.6.0",
     "proxyquire": "^2.0.0",

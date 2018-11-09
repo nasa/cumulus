@@ -1,5 +1,7 @@
+'use strict';
 
 const test = require('ava');
+
 const {
   extractCumulusConfigFromSF,
   fixCumulusMessageSyntax,
@@ -8,6 +10,8 @@ const {
 } = require('../lib/message');
 const exampleConfig = require('./fixtures/config.json');
 const exampleOutputs = require('./fixtures/outputs.json');
+
+const noop = () => {}; // eslint-disable-line lodash/prefer-noop
 
 test('test cumulus message syntax fix', (t) => {
   const fix = fixCumulusMessageSyntax;
@@ -92,6 +96,6 @@ test('generate a template', (t) => {
 });
 
 test('generate template for a step function', async (t) => {
-  const promise = generateTemplates(exampleConfig, [], () => {});
+  const promise = generateTemplates(exampleConfig, [], noop);
   await t.notThrows(promise);
 });

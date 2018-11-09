@@ -3,7 +3,8 @@
 const get = require('lodash.get');
 const merge = require('lodash.merge');
 const uuidv4 = require('uuid/v4');
-const { S3, SQS } = require('@cumulus/ingest/aws');
+const { getS3Object, parseS3Uri } = require('@cumulus/common/aws');
+const { SQS } = require('@cumulus/ingest/aws');
 const { Provider, Collection } = require('../models');
 
 /**
@@ -18,12 +19,13 @@ function schedule(event, context, cb) {
   const template = get(event, 'template');
   const provider = get(event, 'provider', null);
   const meta = get(event, 'meta', {});
+  const cumulusMeta = get(event, 'cumulus_meta', {});
   const collection = get(event, 'collection', null);
   const payload = get(event, 'payload', {});
   let message;
 
-  const parsed = S3.parseS3Uri(template);
-  S3.get(parsed.Bucket, parsed.Key)
+  const parsed = parseS3Uri(template);
+  getS3Object(parsed.Bucket, parsed.Key)
     .then((data) => {
       message = JSON.parse(data.Body);
       message.meta.provider = {};
@@ -31,6 +33,7 @@ function schedule(event, context, cb) {
       message.meta = merge(message.meta, meta);
       message.payload = payload;
       message.cumulus_meta.execution_name = uuidv4();
+      message.cumulus_meta = merge(message.cumulus_meta, cumulusMeta);
     })
     .then(() => {
       if (provider) {

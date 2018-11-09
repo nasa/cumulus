@@ -4,6 +4,7 @@ sqs2sf:
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
 
+
 executeMigrations:
   handler: index.executeMigrations
   timeout: 300
@@ -25,6 +26,7 @@ executeMigrations:
       value: PdrsTableDynamoDB
     internal: '{{system_bucket}}'
 
+
 sns2elasticsearch:
   handler: index.indexer
   timeout: 100
@@ -41,6 +43,7 @@ sns2elasticsearch:
     PdrsTable:
       function: Ref
       value: PdrsTableDynamoDB
+  namedLambdaDeadLetterQueue: true
 
 log2elasticsearch:
   handler: index.logHandler
@@ -48,6 +51,7 @@ log2elasticsearch:
   memory: 512
   useElasticSearch: '{{es.name}}'
   source: 'node_modules/@cumulus/api/dist/'
+  namedLambdaDeadLetterQueue: true
 
 dbIndexer:
   handler: index.dbIndexer
@@ -60,6 +64,7 @@ dbIndexer:
     FilesTable:
       function: Ref
       value: FilesTableDynamoDB
+  namedLambdaDeadLetterQueue: true
 
 kinesisConsumer:
   handler: index.kinesisConsumer
@@ -112,6 +117,7 @@ ScheduleSF:
     ProvidersTable:
       function: Ref
       value: ProvidersTableDynamoDB
+  namedLambdaDeadLetterQueue: true
 
 jobs:
   handler: index.jobs
@@ -119,6 +125,7 @@ jobs:
   memory: 512
   useElasticSearch: '{{es.name}}'
   source: 'node_modules/@cumulus/api/dist/'
+  namedLambdaDeadLetterQueue: true
 
 # used as custom resource for cloudformation manipulation
 CustomBootstrap:
@@ -128,7 +135,6 @@ CustomBootstrap:
   source: 'node_modules/@cumulus/api/dist/'
   envs:
     internal: '{{system_bucket}}'
-    stackName: '{{stackName}}'
 
 InRegionS3Policy:
   handler: index.inRegionS3Policy
@@ -145,6 +151,8 @@ EmsReport:
   envs:
     bucket: '{{system_bucket}}'
     ems_provider: '{{ems.provider}}'
+  namedLambdaDeadLetterQueue: true
+
 
 EmsDistributionReport:
   handler: index.emsDistributionReport
@@ -161,7 +169,6 @@ CreateReconciliationReport:
   source: 'node_modules/@cumulus/api/dist/'
   envs:
     systemBucket: '{{system_bucket}}'
-    stackName: '{{stackName}}'
     filesTableName:
       function: Ref
       value: FilesTableDynamoDB
@@ -169,3 +176,17 @@ CreateReconciliationReport:
 BulkDelete:
   handler: index.bulkDeleteLambda
   source: 'node_modules/@cumulus/api/dist/'
+
+KinesisInboundEventLogger:
+  handler: index.logger
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist/'
+  namedLambdaDeadLetterQueue: true
+
+KinesisOutboundEventLogger:
+  handler: index.logger
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist'
+  namedLambdaDeadLetterQueue: true

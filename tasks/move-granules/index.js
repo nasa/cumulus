@@ -18,7 +18,8 @@ const {
     deleteS3Object,
     parseS3Uri,
     promiseS3Upload,
-    s3ObjectExists
+    s3ObjectExists,
+    s3TagSetToQueryString
   }
 } = require('@cumulus/common');
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
@@ -269,19 +270,24 @@ async function updateCmrFileAccessURLs(cmrFiles, granulesObject, allFiles, distE
     cmrFile.metadata = xml;
     /* eslint-enable no-param-reassign */
     const updatedCmrFile = granule.files.find((f) => f.filename.match(/.*\.cmr\.xml$/));
+    // S3 upload only accepts tag query strings, so reduce tags to query string.
+    const tagsQueryString = s3TagSetToQueryString(cmrFile.s3Tags);
+    const params = {
+      Bucket: updatedCmrFile.bucket.name,
+      Key: updatedCmrFile.filepath,
+      Body: xml,
+      Tagging: tagsQueryString
+    };
     if (updatedCmrFile.bucket.type.match('public')) {
-      await promiseS3Upload({
-        Bucket: updatedCmrFile.bucket.name,
-        Key: updatedCmrFile.filepath,
-        Body: xml,
-        ACL: 'public-read'
-      });
+      params.ACL = 'public-read';
+      await promiseS3Upload(params);
     }
     else {
-      await promiseS3Upload(
-        { Bucket: updatedCmrFile.bucket.name, Key: updatedCmrFile.filepath, Body: xml }
-      );
+      await promiseS3Upload(params);
     }
+    // clean up old CmrFile after uploading new one
+    const { Bucket, Key } = parseS3Uri(cmrFile.filename);
+    await deleteS3Object(Bucket, Key);
   }));
 }
 
@@ -315,9 +321,13 @@ async function moveGranules(event) {
   const distEndpoint = get(config, 'distribution_endpoint');
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const collection = config.collection;
-  const duplicateHandling = get(
+  let duplicateHandling = get(
     config, 'duplicateHandling', get(collection, 'duplicateHandling', 'error')
   );
+  const forceDuplicateOverwrite = get(event, 'cumulus_config.cumulus_context.forceDuplicateOverwrite', false);
+
+  log.debug(`Configured duplicateHandling value: ${duplicateHandling}, forceDuplicateOverwrite ${forceDuplicateOverwrite}`);
+  if (forceDuplicateOverwrite === true) duplicateHandling = 'replace';
 
   const input = get(event, 'input', []);
 

@@ -12,6 +12,7 @@ const {
   InternalServerError,
   NotFoundResponse
 } = require('../lib/responses');
+const { deconstructCollectionId } = require('../lib/utils');
 
 /**
  * List all granules for a given collection.
@@ -52,15 +53,22 @@ async function put(event) {
   const granule = await granuleModelClient.get({ granuleId });
 
   if (action === 'reingest') {
+    const { name, version } = deconstructCollectionId(granule.collectionId);
+    const collectionModelClient = new models.Collection();
+    const collection = await collectionModelClient.get({ name, version });
+
     await granuleModelClient.reingest(granule);
+
+    const warning = 'The granule files may be overwritten';
 
     return buildLambdaProxyResponse({
       json: true,
-      body: {
+      body: Object.assign({
         granuleId: granule.granuleId,
         action,
         status: 'SUCCESS'
-      }
+      },
+      (collection.duplicateHandling !== 'replace') ? { warning } : {})
     });
   }
 

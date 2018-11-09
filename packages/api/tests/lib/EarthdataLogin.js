@@ -16,7 +16,7 @@ test.beforeEach(() => {
 
 test('The EarthdataLogin constructor throws a TypeError if clientId is not specified', (t) => {
   const err = t.throws(() => {
-    new EarthdataLogin({ // eslint-disable-line no-new
+    new EarthdataLogin({
       clientPassword: 'client-password',
       earthdataLoginUrl: 'http://www.example.com',
       redirectUri: 'http://www.example.com/cb'
@@ -29,7 +29,7 @@ test('The EarthdataLogin constructor throws a TypeError if clientId is not speci
 
 test('The EarthdataLogin constructor throws a TypeError if clientPassword is not specified', (t) => {
   const err = t.throws(() => {
-    new EarthdataLogin({ // eslint-disable-line no-new
+    new EarthdataLogin({
       clientId: 'client-id',
       earthdataLoginUrl: 'http://www.example.com',
       redirectUri: 'http://www.example.com/cb'
@@ -42,7 +42,7 @@ test('The EarthdataLogin constructor throws a TypeError if clientPassword is not
 
 test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is not specified', (t) => {
   const err = t.throws(() => {
-    new EarthdataLogin({ // eslint-disable-line no-new
+    new EarthdataLogin({
       clientId: 'client-id',
       clientPassword: 'client-password',
       redirectUri: 'http://www.example.com/cb'
@@ -55,7 +55,7 @@ test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is 
 
 test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is not a valid URL', (t) => {
   t.throws(() => {
-    new EarthdataLogin({ // eslint-disable-line no-new
+    new EarthdataLogin({
       clientId: 'client-id',
       clientPassword: 'client-password',
       earthdataLoginUrl: 'asdf',
@@ -67,7 +67,7 @@ test('The EarthdataLogin constructor throws a TypeError if earthdataLoginUrl is 
 
 test('The EarthdataLogin constructor throws a TypeError if redirectUri is not specified', (t) => {
   const err = t.throws(() => {
-    new EarthdataLogin({ // eslint-disable-line no-new
+    new EarthdataLogin({
       clientId: 'client-id',
       clientPassword: 'client-password',
       earthdataLoginUrl: 'http://www.example.com'
@@ -80,7 +80,7 @@ test('The EarthdataLogin constructor throws a TypeError if redirectUri is not sp
 
 test('The EarthdataLogin constructor throws a TypeError if redirectUri is not a valid URL', (t) => {
   t.throws(() => {
-    new EarthdataLogin({ // eslint-disable-line no-new
+    new EarthdataLogin({
       clientId: 'client-id',
       clientPassword: 'client-password',
       earthdataLoginUrl: 'http://www.example.com',
@@ -226,8 +226,8 @@ test.serial('EarthdataLogin.getAccessToken() returns token information for a val
 
   t.is(accessToken, 'access-token');
   t.is(refreshToken, 'refresh-token');
-  t.true(expirationTime >= requestStartTime + (100 * 1000));
-  t.true(expirationTime <= requestEndTime + (100 * 1000));
+  t.true(expirationTime >= requestStartTime + 86400000);
+  t.true(expirationTime <= requestEndTime + 86400000);
   t.is(username, 'sidney');
 });
 
