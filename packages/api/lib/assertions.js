@@ -7,6 +7,13 @@ exports.isAuthorizationMissingResponse = (t, response) => {
   t.is(responseBody.message, 'Authorization header missing');
 };
 
+exports.isInvalidAccessTokenResponse = (t, response) => {
+  t.is(response.statusCode, 403);
+
+  const responseBody = JSON.parse(response.body);
+  t.is(responseBody.message, 'Invalid access token');
+};
+
 exports.isUnauthorizedUserResponse = (t, response) => {
   t.is(response.statusCode, 403);
 

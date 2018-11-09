@@ -8,7 +8,7 @@ const { google } = require('googleapis');
 const EarthdataLogin = require('../lib/EarthdataLogin');
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 
-const { User } = require('../models');
+const { AccessToken } = require('../models');
 const {
   buildAuthorizationFailureResponse,
   buildLambdaProxyResponse
@@ -33,38 +33,32 @@ async function token(event, oAuth2Provider) {
     try {
       const {
         accessToken,
-        refreshToken: refresh,
-        username: userName,
-        expirationTime: expires
+        refreshToken,
+        username,
+        expirationTime
       } = await oAuth2Provider.getAccessToken(code);
 
-      const u = new User();
+      const accessTokenModel = new AccessToken();
 
-      return u.get({ userName })
-        .then(() => u.update({ userName }, { password: accessToken, refresh, expires }))
-        .then(() => {
-          if (state) {
-            log.info(`Log info: Redirecting to state: ${state} with token ${accessToken}`);
-            return buildPermanentRedirectResponse(
-              `${decodeURIComponent(state)}?token=${accessToken}`
-            );
-          }
-          log.info('Log info: No state specified, responding 200');
-          return buildLambdaProxyResponse({
-            json: true,
-            statusCode: 200,
-            body: { message: { token: accessToken } }
-          });
-        })
-        .catch((e) => {
-          if (e.message.includes('No record found for')) {
-            return buildAuthorizationFailureResponse({
-              message: 'User not authorized',
-              statusCode: 403
-            });
-          }
-          return buildAuthorizationFailureResponse({ error: e, message: e.message });
-        });
+      await accessTokenModel.create({
+        accessToken,
+        refreshToken,
+        username,
+        expirationTime
+      });
+
+      if (state) {
+        log.info(`Log info: Redirecting to state: ${state} with token ${accessToken}`);
+        return buildPermanentRedirectResponse(
+          `${decodeURIComponent(state)}?token=${accessToken}`
+        );
+      }
+      log.info('Log info: No state specified, responding 200');
+      return buildLambdaProxyResponse({
+        json: true,
+        statusCode: 200,
+        body: { message: { token: accessToken } }
+      });
     }
     catch (e) {
       if (e.statusCode === 400) {

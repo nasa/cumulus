@@ -16,6 +16,7 @@ const bootstrap = require('../../../lambdas/bootstrap');
 const handleRequest = require('../../../endpoints/granules');
 const indexer = require('../../../es/indexer');
 const {
+  fakeAccessTokenFactory,
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
   fakeUserFactory
@@ -47,12 +48,14 @@ async function runTestUsingBuckets(buckets, testFunction) {
 // create all the variables needed across this test
 let esClient;
 let esIndex;
+let accessTokenModel;
 let granuleModel;
 let collectionModel;
-let authToken;
+let accessToken;
 let userModel;
 test.before(async () => {
   esIndex = randomString();
+  process.env.AccessTokensTable = randomString();
   process.env.CollectionsTable = randomString();
   process.env.GranulesTable = randomString();
   process.env.UsersTable = randomString();
@@ -79,13 +82,19 @@ test.before(async () => {
   // create fake Users table
   userModel = new models.User();
   await userModel.createTable();
+  const userRecord = fakeUserFactory();
+  await userModel.create(userRecord);
 
-  authToken = (await userModel.create(fakeUserFactory())).password;
+  accessTokenModel = new models.AccessToken();
+  await accessTokenModel.createTable();
+
+  const accessTokenRecord = fakeAccessTokenFactory({ username: userRecord.userName });
+  accessToken = (await accessTokenModel.create(accessTokenRecord)).accessToken;
 });
 
 test.beforeEach(async (t) => {
   t.context.authHeaders = {
-    Authorization: `Bearer ${authToken}`
+    Authorization: `Bearer ${accessToken}`
   };
 
   t.context.testCollection = fakeCollectionFactory({
@@ -116,6 +125,7 @@ test.beforeEach(async (t) => {
 test.after.always(async () => {
   await collectionModel.deleteTable();
   await granuleModel.deleteTable();
+  await accessTokenModel.deleteTable();
   await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
@@ -132,7 +142,7 @@ test.serial('default returns list of granules', async (t) => {
 
   const { meta, results } = JSON.parse(response.body);
   t.is(results.length, 2);
-  t.is(meta.stack, process.env.stackName);
+  t.is(meta.stack, process.env.stackName)
   t.is(meta.table, 'granule');
   t.is(meta.count, 2);
   const granuleIds = t.context.fakeGranules.map((i) => i.granuleId);
@@ -194,11 +204,27 @@ test.serial('CUMULUS-911 DELETE with pathParameters.granuleName set and without 
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test.serial('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+test.serial('CUMULUS-912 GET without pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'GET',
     headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
+      Authorization: 'Bearer ThisIsAnInvalidAccessToken'
+    }
+  };
+
+  const response = await handleRequest(request);
+
+  assertions.isInvalidAccessTokenResponse(t, response);
+});
+
+test.serial('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+  const accessTokenRecord = fakeAccessTokenFactory();
+  await accessTokenModel.create(accessTokenRecord);
+
+  const request = {
+    httpMethod: 'GET',
+    headers: {
+      Authorization: `Bearer ${accessTokenRecord.accessToken}`
     }
   };
 
@@ -207,7 +233,7 @@ test.serial('CUMULUS-912 GET without pathParameters and with an unauthorized use
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
-test.serial('CUMULUS-912 GET with pathParameters.granuleName set and with an unauthorized user returns an unauthorized response', async (t) => {
+test.serial('CUMULUS-912 GET with pathParameters.granuleName set and with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'GET',
     headers: {
@@ -220,10 +246,12 @@ test.serial('CUMULUS-912 GET with pathParameters.granuleName set and with an una
 
   const response = await handleRequest(request);
 
-  assertions.isUnauthorizedUserResponse(t, response);
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test.serial('CUMULUS-912 PUT with pathParameters.granuleName set and with an unauthorized user returns an unauthorized response', async (t) => {
+test.todo('CUMULUS-912 GET with pathParameters.granuleName set and with an unauthorized user returns an unauthorized response');
+
+test.serial('CUMULUS-912 PUT with pathParameters.granuleName set and with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'PUT',
     headers: {
@@ -236,14 +264,21 @@ test.serial('CUMULUS-912 PUT with pathParameters.granuleName set and with an una
 
   const response = await handleRequest(request);
 
-  assertions.isUnauthorizedUserResponse(t, response);
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
+test.todo('CUMULUS-912 PUT with pathParameters.granuleName set and with an unauthorized user returns an unauthorized response');
+
 test.serial('CUMULUS-912 DELETE with pathParameters.granuleName set and with an unauthorized user returns an unauthorized response', async (t) => {
+  await accessTokenModel.create({
+    accessToken: 'my-access-token',
+    username: 'sidney'
+  });
+
   const request = {
     httpMethod: 'DELETE',
     headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
+      Authorization: 'Bearer my-access-token'
     },
     pathParameters: {
       granuleName: 'asdf'
@@ -746,6 +781,7 @@ test.serial('move a file and update metadata', async (t) => {
   const response = await handleRequest(event);
 
   const body = JSON.parse(response.body);
+
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'move');
 
