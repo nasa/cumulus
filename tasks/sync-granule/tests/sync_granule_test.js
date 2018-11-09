@@ -3,6 +3,7 @@
 const path = require('path');
 const test = require('ava');
 const errors = require('@cumulus/common/errors');
+const set = require('lodash.set');
 const { constructCollectionId } = require('@cumulus/common');
 const {
   checksumS3Objects,
@@ -114,7 +115,6 @@ test.beforeEach(async (t) => {
     name: t.context.protectedBucketName,
     type: 'protected'
   };
-  process.env.REINGEST_GRANULE = false;
 });
 
 // Clean up
@@ -709,12 +709,9 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
   }
 });
 
-/**
- * test to verify that granule files are overwritten
- */
-async function granuleFilesOverwrittenTest(t, duplicateHandling, reingestGranule) {
-  process.env.REINGEST_GRANULE = reingestGranule || false;
+async function granuleFilesOverwrittenTest(t, duplicateHandling, forceDuplicateOverwrite) {
   t.context.event.config.duplicateHandling = duplicateHandling;
+  set(t.context.event, 'cumulus_config.cumulus_context.forceDuplicateOverwrite', forceDuplicateOverwrite);
   await prepareS3DownloadEvent(t);
 
   const granuleFileName = t.context.event.input.granules[0].files[0].name;
@@ -766,18 +763,18 @@ test.serial('when duplicateHandling is "replace", do overwrite files', async (t)
   await granuleFilesOverwrittenTest(t, 'replace');
 });
 
-test.serial('when duplicateHandling is "error" and reingestGranule is true, do overwrite files', async (t) => {
+test.serial('when duplicateHandling is "error" and forceDuplicateOverwrite is true, do overwrite files', async (t) => {
   await granuleFilesOverwrittenTest(t, 'error', true);
 });
 
-test.serial('when duplicateHandling is "skip" and reingestGranule is true, do overwrite files', async (t) => {
+test.serial('when duplicateHandling is "skip" and forceDuplicateOverwrite is true, do overwrite files', async (t) => {
   await granuleFilesOverwrittenTest(t, 'skip', true);
 });
 
-test.serial('when duplicateHandling is "version" and reingestGranule is true, do overwrite files', async (t) => {
+test.serial('when duplicateHandling is "version" and forceDuplicateOverwrite is true, do overwrite files', async (t) => {
   await granuleFilesOverwrittenTest(t, 'version', true);
 });
 
-test.serial('when duplicateHandling is "replace" and reingestGranule is true, do overwrite files', async (t) => {
+test.serial('when duplicateHandling is "replace" and forceDuplicateOverwrite is true, do overwrite files', async (t) => {
   await granuleFilesOverwrittenTest(t, 'replace', true);
 });

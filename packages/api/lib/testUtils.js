@@ -142,6 +142,7 @@ function fakePdrFactory(status = 'completed') {
 function fakeExecutionFactory(status = 'completed', type = 'fakeWorkflow') {
   return {
     arn: randomString(),
+    duration: 180.5,
     name: randomString(),
     status,
     createdAt: Date.now(),

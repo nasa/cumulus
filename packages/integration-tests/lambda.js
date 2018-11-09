@@ -2,6 +2,12 @@
 
 const { lambda } = require('@cumulus/common/aws');
 
+
+
+async function getEventSourceMapping(uuid) {
+  return lambda().getEventSourceMapping({UUID: uuid}).promise();
+}
+
 /**
  * Recursively gets all pages for an AWS Lambda Aliases/Version object query
  *
@@ -54,4 +60,4 @@ async function getLambdaVersions(lambdaFunctionName) {
 }
 
 
-module.exports = { getLambdaAliases, getLambdaVersions };
+module.exports = { getLambdaAliases, getLambdaVersions, getEventSourceMapping };

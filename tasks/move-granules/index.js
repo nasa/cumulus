@@ -131,11 +131,9 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
  * @param {Object} file - granule file to be moved
  * @param {string} sourceBucket - source bucket location of files
  * @param {string} duplicateHandling - how to handle duplicate files
- * @param {boolean} reingestGranule - indicate if the granule is manually reingested.
- * When a granule is reingested, existing files will be overwritten.
  * @returns {Array<Object>} returns the file moved and the renamed existing duplicates if any
  */
-async function moveFileRequest(file, sourceBucket, duplicateHandling, reingestGranule) {
+async function moveFileRequest(file, sourceBucket, duplicateHandling) {
   const fileStagingDir = file.fileStagingDir || 'file-staging';
   const source = {
     Bucket: sourceBucket,
@@ -158,16 +156,16 @@ async function moveFileRequest(file, sourceBucket, duplicateHandling, reingestGr
 
   // Have to throw DuplicateFile and not WorkflowError, because the latter
   // is not treated as a failure by the message adapter.
-  if (s3ObjAlreadyExists && !reingestGranule && duplicateHandling === 'error') {
+  if (s3ObjAlreadyExists && duplicateHandling === 'error') {
     throw new errors.DuplicateFile(`${target.Key} already exists in ${target.Bucket} bucket`);
   }
 
-  if (s3ObjAlreadyExists && !reingestGranule && duplicateHandling === 'skip') return [fileMoved];
+  if (s3ObjAlreadyExists && duplicateHandling === 'skip') return [fileMoved];
 
   const options = (file.bucket.type.match('public')) ? { ACL: 'public-read' } : null;
 
   // compare the checksum of the existing file and new file, and handle them accordingly
-  if (s3ObjAlreadyExists && !reingestGranule && duplicateHandling === 'version') {
+  if (s3ObjAlreadyExists && duplicateHandling === 'version') {
     const existingFileSum = await checksumS3Objects('CKSUM', target.Bucket, target.Key);
     const stagedFileSum = await checksumS3Objects('CKSUM', source.Bucket, source.Key);
 
@@ -185,7 +183,7 @@ async function moveFileRequest(file, sourceBucket, duplicateHandling, reingestGr
     await moveGranuleFile(source, target, options);
   }
 
-  const renamedFiles = (!reingestGranule && duplicateHandling === 'version')
+  const renamedFiles = (duplicateHandling === 'version')
     ? await getRenamedS3File(target.Bucket, target.Key) : [];
 
   // return both file moved and renamed files
@@ -207,12 +205,9 @@ async function moveFileRequest(file, sourceBucket, duplicateHandling, reingestGr
 * @param {Object} granulesObject - an object of the granules where the key is the granuleId
 * @param {string} sourceBucket - source bucket location of files
 * @param {string} duplicateHandling - how to handle duplicate files
-* @param {boolean} reingestGranule - indicate if the granule is manually reingested
 * @returns {Object} the object with updated granules
 **/
-async function moveFilesForAllGranules(
-  granulesObject, sourceBucket, duplicateHandling, reingestGranule
-) {
+async function moveFilesForAllGranules(granulesObject, sourceBucket, duplicateHandling) {
   const moveFileRequests = Object.keys(granulesObject).map(async (granuleKey) => {
     const granule = granulesObject[granuleKey];
     const cmrFileFormat = /.*\.cmr\.xml$/;
@@ -220,7 +215,7 @@ async function moveFilesForAllGranules(
     const cmrFile = granule.files.filter((file) => file.name.match(cmrFileFormat));
 
     const filesMoved = await Promise.all(filesToMove.map((file) =>
-      moveFileRequest(file, sourceBucket, duplicateHandling, reingestGranule)));
+      moveFileRequest(file, sourceBucket, duplicateHandling)));
     granule.files = flatten(filesMoved).concat(cmrFile);
   });
 
@@ -326,12 +321,13 @@ async function moveGranules(event) {
   const distEndpoint = get(config, 'distribution_endpoint');
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const collection = config.collection;
-  const duplicateHandling = get(
+  let duplicateHandling = get(
     config, 'duplicateHandling', get(collection, 'duplicateHandling', 'error')
   );
-  const reingestGranule = process.env.REINGEST_GRANULE === 'true' || false;
+  const forceDuplicateOverwrite = get(event, 'cumulus_config.cumulus_context.forceDuplicateOverwrite', false);
 
-  log.debug(`Configured duplicateHandling value: ${duplicateHandling}, reingestGranule ${reingestGranule}`);
+  log.debug(`Configured duplicateHandling value: ${duplicateHandling}, forceDuplicateOverwrite ${forceDuplicateOverwrite}`);
+  if (forceDuplicateOverwrite === true) duplicateHandling = 'replace';
 
   const input = get(event, 'input', []);
 
@@ -349,9 +345,7 @@ async function moveGranules(event) {
   // allows us to disable moving the files
   if (moveStagedFiles) {
     // move files from staging location to final location
-    allGranules = await moveFilesForAllGranules(
-      allGranules, bucket, duplicateHandling, reingestGranule
-    );
+    allGranules = await moveFilesForAllGranules(allGranules, bucket, duplicateHandling);
 
     // update cmr.xml files with correct online access urls
     await updateCmrFileAccessURLs(cmrFiles, allGranules, allFiles, distEndpoint);
