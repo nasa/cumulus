@@ -13,7 +13,6 @@ const models = require('../../models');
 const workflowsEndpoint = require('../../endpoints/workflows');
 const {
   createAccessToken,
-  fakeUserFactory,
   testEndpoint
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
