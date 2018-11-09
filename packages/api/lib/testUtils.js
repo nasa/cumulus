@@ -230,7 +230,18 @@ function fakeAccessTokenFactory(params = {}) {
   );
 }
 
+async function createAccessToken({ accessTokenModel, userModel }) {
+  const userRecord = fakeUserFactory();
+  await userModel.create(userRecord);
+
+  const accessTokenRecord = fakeAccessTokenFactory({ username: userRecord.userName });
+  await accessTokenModel.create(accessTokenRecord);
+
+  return accessTokenRecord.accessToken;
+}
+
 module.exports = {
+  createAccessToken,
   testEndpoint,
   fakeAccessTokenFactory,
   fakeGranuleFactory,
