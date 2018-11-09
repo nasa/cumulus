@@ -15,6 +15,7 @@ const {
 const {
   aws: {
     s3,
+    deleteS3Object,
     s3GetObjectTagging,
     s3ObjectExists,
     parseS3Uri
@@ -503,33 +504,62 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(doesExist).toEqual(true);
       });
 
-      it('rejects moving a granule to a location that already exists', async () => {
-        const file = granule.files[0];
+      describe('when moving a granule', () => {
+        let file;
+        let destinationKey;
+        let destinations;
 
-        await s3().copyObject({
-          Bucket: config.bucket,
-          CopySource: `${file.bucket}/${file.filepath}`,
-          Key: `${testDataFolder}/${file.filepath}`
-        }).promise();
+        beforeAll(() => {
+          file = granule.files[0];
 
-        const destinations = [{
-          regex: '.*.hdf$',
-          bucket: config.bucket,
-          filepath: `${testDataFolder}/${file.filepath.substring(0, file.filepath.lastIndexOf('/'))}`
-        }];
+          destinationKey = `${testDataFolder}/${file.filepath}`;
 
-        const moveGranuleResponse = await granulesApiTestUtils.moveGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId,
-          destinations
+          destinations = [{
+            regex: '.*.hdf$',
+            bucket: config.bucket,
+            filepath: `${testDataFolder}/${file.filepath.substring(0, file.filepath.lastIndexOf('/'))}`
+          }];
         });
 
-        const responseBody = JSON.parse(moveGranuleResponse.body);
+        it('rejects moving a granule to a location that already exists', async () => {
+          await s3().copyObject({
+            Bucket: config.bucket,
+            CopySource: `${file.bucket}/${file.filepath}`,
+            Key: destinationKey
+          }).promise();
 
-        expect(moveGranuleResponse.statusCode).toEqual(409);
-        expect(responseBody.message).toEqual(
-          `Cannot move granule because the following files would be overwritten at the destination location: ${granule.files[0].name}. Delete the existing files or reingest the source files.`
-        );
+          const moveGranuleResponse = await granulesApiTestUtils.moveGranule({
+            prefix: config.stackName,
+            granuleId: inputPayload.granules[0].granuleId,
+            destinations
+          });
+
+          const responseBody = JSON.parse(moveGranuleResponse.body);
+
+          expect(moveGranuleResponse.statusCode).toEqual(409);
+          expect(responseBody.message).toEqual(
+            `Cannot move granule because the following files would be overwritten at the destination location: ${granule.files[0].name}. Delete the existing files or reingest the source files.`
+          );
+        });
+
+        it('when the file is deleted and the move retried, the move completes successfully', async () => {
+          await deleteS3Object(config.bucket, destinationKey);
+
+          // Sanity check
+          let fileExists = await s3ObjectExists({ Bucket: config.bucket, Key: destinationKey });
+          expect(fileExists).toBe(false);
+
+          const moveGranuleResponse = await granulesApiTestUtils.moveGranule({
+            prefix: config.stackName,
+            granuleId: inputPayload.granules[0].granuleId,
+            destinations
+          });
+
+          expect(moveGranuleResponse.statusCode).toEqual(200);
+
+          fileExists = await s3ObjectExists({ Bucket: config.bucket, Key: destinationKey });
+          expect(fileExists).toBe(true);
+        });
       });
 
       it('can delete the ingested granule from the API', async () => {

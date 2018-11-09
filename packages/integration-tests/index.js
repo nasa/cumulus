@@ -30,6 +30,7 @@ const sfnStep = require('./sfnStep');
 const api = require('./api/api');
 const rulesApi = require('./api/rules');
 const executionsApi = require('./api/executions');
+const granulesApi = require('./api/granules');
 const cmr = require('./cmr.js');
 const lambda = require('./lambda');
 const granule = require('./granule.js');
