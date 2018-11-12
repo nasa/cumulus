@@ -26,6 +26,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Update rules model to allow tracking of log_event ARNs related to
     Rule event logging.    Kinesis rule types will now automatically log
     incoming events via a Kinesis event triggered lambda.
+
+- **CUMULUS-775**
+  - Fixed `@cumulus/cmrjs.searchConcept` to search and return CMR results.
+  - Modified `@cumulus/cmrjs.CMR.searchGranule` and `@cumulus/cmrjs.CMR.searchCollection` to include CMR's provider as a default parameter to searches.
+
+
 - **CUMULUS-965**
   - Add `@cumulus/test-data.loadJSONTestData()`,
     `@cumulus/test-data.loadTestData()`, and
