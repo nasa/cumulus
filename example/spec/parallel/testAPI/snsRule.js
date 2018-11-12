@@ -7,13 +7,14 @@ const {
   waitForTestExecutionStart
 } = require('@cumulus/integration-tests');
 
-const aws = require('@cumulus/common');
+const { sns } = require('@cumulus/common/aws');
 
 const {
   loadConfig,
   timestampedName
 } = require('../../helpers/testUtils');
 
+const SNS = sns();
 const config = loadConfig();
 const ruleName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestRule`);
 const snsTopicName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestTopic`);
@@ -32,7 +33,7 @@ const snsRuleDefinition = {
 };
 
 async function getNumberOfTopicSubscriptions(snsTopicArn) {
-  const subs = await aws.sns().listSubscriptionsByTopic({ TopicArn: snsTopicArn }).promise();
+  const subs = await SNS.listSubscriptionsByTopic({ TopicArn: snsTopicArn }).promise();
   return subs.Subscriptions.length;
 }
 
@@ -41,7 +42,7 @@ describe('The SNS-type rule', () => {
   let snsTopicArn;
 
   beforeAll(async () => {
-    const { TopicArn } = await aws.sns().createTopic({ Name: snsTopicName }).promise();
+    const { TopicArn } = await SNS.createTopic({ Name: snsTopicName }).promise();
     snsTopicArn = TopicArn;
     snsRuleDefinition.rule.value = TopicArn;
     const postRuleResponse = await rulesApiTestUtils.postRule({
@@ -57,7 +58,7 @@ describe('The SNS-type rule', () => {
       prefix: config.stackName,
       ruleName: snsRuleDefinition.name
     });
-    await aws.sns().deleteTopic({ TopicArn: snsTopicArn }).promise();
+    await SNS.deleteTopic({ TopicArn: snsTopicArn }).promise();
   });
 
   it('is returned in the post response', () => {
@@ -77,7 +78,7 @@ describe('The SNS-type rule', () => {
     let execution;
 
     beforeAll(async () => {
-      await aws.sns().publish({ Message: snsMessage, TopicArn: snsTopicArn }).promise();
+      await SNS.publish({ Message: snsMessage, TopicArn: snsTopicArn }).promise();
       execution = await waitForTestExecutionStart(snsRuleDefinition.workflow, config.stackName, config.bucket, isWorkflowTriggeredByRule, { rule: ruleName });
     });
 
