@@ -1,13 +1,17 @@
 const fs = require('fs');
+const difference = require('lodash.difference');
 const path = require('path');
 const {
-  api: apiTestUtils,
   buildAndExecuteWorkflow,
   addProviders,
   cleanupProviders,
   addCollections,
   cleanupCollections,
-  LambdaStep
+  granulesApi: granulesApiTestUtils,
+  LambdaStep,
+  waitUntilGranuleStatusIs,
+  waitForTestExecutionStart,
+  waitForCompletedExecution
 } = require('@cumulus/integration-tests');
 const { Collection, Execution } = require('@cumulus/api/models');
 const {
@@ -26,7 +30,8 @@ const {
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
-  deleteFolder
+  deleteFolder,
+  getFilesMetadata
 } = require('../../helpers/testUtils');
 const {
   setupTestGranuleForIngest,
@@ -49,7 +54,11 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
 
-describe('When the Sync Granules workflow is configured to overwrite data with duplicate filenames\n', () => {
+function isExecutionForGranuleId(taskInput, params) {
+  return taskInput.payload.granules && taskInput.payload.granules[0].granuleId === params.granuleId;
+}
+
+describe('The Sync Granules workflow', () => {
   const testId = createTimestampedTestId(config.stackName, 'SyncGranuleSuccess');
   const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
@@ -103,7 +112,7 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      apiTestUtils.deleteGranule({
+      granulesApiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       })
@@ -169,6 +178,79 @@ describe('When the Sync Granules workflow is configured to overwrite data with d
     it('the execution record is added to DynamoDB', async () => {
       const record = await executionModel.get({ arn: workflowExecution.executionArn });
       expect(record.status).toEqual('completed');
+    });
+  });
+
+  describe('when a reingest granule is triggered via the API', () => {
+    let oldExecution;
+    let oldUpdatedAt;
+    let reingestResponse;
+    let startTime;
+    let granule;
+
+    beforeAll(async () => {
+      const granuleResponse = await granulesApiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      });
+      granule = JSON.parse(granuleResponse.body);
+
+      startTime = new Date();
+      oldUpdatedAt = granule.updatedAt;
+      oldExecution = granule.execution;
+      const reingestGranuleResponse = await granulesApiTestUtils.reingestGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      });
+      reingestResponse = JSON.parse(reingestGranuleResponse.body);
+    });
+
+    it('executes successfully', () => {
+      expect(reingestResponse.status).toEqual('SUCCESS');
+    });
+
+    it('does not return a warning that data may be overwritten when duplicateHandling is "replace"', () => {
+      expect(reingestResponse.warning).toBeFalsy();
+    });
+
+    it('overwrites granule files', async () => {
+      // Await reingest completion
+      const reingestGranuleExecution = await waitForTestExecutionStart(
+        workflowName,
+        config.stackName,
+        config.bucket,
+        isExecutionForGranuleId,
+        { granuleId: inputPayload.granules[0].granuleId }
+      );
+
+      console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
+
+      await waitForCompletedExecution(reingestGranuleExecution.executionArn);
+
+      await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
+      const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      });
+
+      const updatedGranule = JSON.parse(updatedGranuleResponse.body);
+      expect(updatedGranule.status).toEqual('completed');
+      expect(updatedGranule.updatedAt).toBeGreaterThan(oldUpdatedAt);
+      expect(updatedGranule.execution).not.toEqual(oldExecution);
+
+      // the updated granule has the same files
+      const oldFileNames = granule.files.map((f) => f.filename);
+      const newFileNames = updatedGranule.files.map((f) => f.filename);
+      expect(difference(oldFileNames, newFileNames).length).toBe(0);
+
+      const currentFiles = await getFilesMetadata(updatedGranule.files);
+      currentFiles.forEach((cf) => {
+        expect(cf.LastModified).toBeGreaterThan(startTime);
+      });
+
+      updatedGranule.files.forEach((cf) => {
+        expect(cf.duplicate_found).toBe(true);
+      });
     });
   });
 });

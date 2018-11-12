@@ -8,12 +8,12 @@ const {
   testUtils: { randomString }
 } = require('@cumulus/common');
 const {
-  api: apiTestUtils,
   addCollections,
   addProviders,
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
+  granulesApi: granulesApiTestUtils,
   LambdaStep
 } = require('@cumulus/integration-tests');
 const {
@@ -84,7 +84,7 @@ describe('When the Ingest Granules workflow is configured\n', () => {
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      apiTestUtils.deleteGranule({
+      granulesApiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       })
@@ -150,7 +150,7 @@ describe('When the Ingest Granules workflow is configured\n', () => {
         // There is a delay between workflow completion and the granule appears in dynamodb (sns->dbindexer),
         // so this check does not always work.
         // it('captures both files', async () => {
-        //   const granule = await apiTestUtils.getGranule({
+        //   const granule = await granulesApiTestUtils.getGranule({
         //     prefix: config.stackName,
         //     granuleId: inputPayload.granules[0].granuleId
         //   });
@@ -203,7 +203,7 @@ describe('When the Ingest Granules workflow is configured\n', () => {
       });
 
       it('captures all files', async () => {
-        const granuleResponse = await apiTestUtils.getGranule({
+        const granuleResponse = await granulesApiTestUtils.getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });

@@ -16,6 +16,7 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
+  granulesApi: granulesApiTestUtils,
   LambdaStep
 } = require('@cumulus/integration-tests');
 const {
@@ -94,7 +95,7 @@ describe('When the Sync Granule workflow is configured', () => {
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      apiTestUtils.deleteGranule({
+      granulesApiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       })
@@ -193,7 +194,7 @@ describe('When the Sync Granule workflow is configured', () => {
       });
 
       it('captures both files', async () => {
-        const granuleResponse = await apiTestUtils.getGranule({
+        const granuleResponse = await granulesApiTestUtils.getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
@@ -237,7 +238,7 @@ describe('When the Sync Granule workflow is configured', () => {
       });
 
       it('captures all files', async () => {
-        const granuleResponse = await apiTestUtils.getGranule({
+        const granuleResponse = await granulesApiTestUtils.getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
