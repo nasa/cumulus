@@ -65,16 +65,22 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
 
     it('the rule does not kick off a workflow', () => {
       // This execution _should_ wait for 5 minutes and terminate with a throw.
-      expect(() => waitForTestExecutionStart(
-        scheduledHelloWorldRule.workflow,
-        config.stackName,
-        config.bucket,
-        (taskInput, params) => {
-          console.info(`\ntaskInput ${JSON.stringify(taskInput)}\nparams: ${JSON.stringify(params)}\n`);
-          return taskInput.meta.triggerRule && (taskInput.meta.triggerRule === params.ruleName);
-        },
-        { ruleName: scheduledRuleName }
-      )).toThrowError(Error, 'Never found started workflow.');
+      try {
+        waitForTestExecutionStart(
+          scheduledHelloWorldRule.workflow,
+          config.stackName,
+          config.bucket,
+          (taskInput, params) => {
+            console.info(`\ntaskInput ${JSON.stringify(taskInput)}\nparams: ${JSON.stringify(params)}\n`);
+            return taskInput.meta.triggerRule && (taskInput.meta.triggerRule === params.ruleName);
+          },
+          { ruleName: scheduledRuleName }
+        );
+      }
+      catch (err) {
+        console.log(`\nError message thrown from waitForTestExecution: ${err.message}\n`);
+        expect(err.message).toEqual('Never found started workflow.');
+      }
     });
   });
 });
