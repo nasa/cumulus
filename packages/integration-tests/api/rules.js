@@ -87,10 +87,30 @@ async function listRules({ prefix }) {
 }
 
 /**
+ * Get a rule definition from the API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.ruleName - name of the rule
+ * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
+ */
+async function getRule({ prefix, ruleName }) {
+  const payload = {
+    httpMethod: 'GET',
+    resource: '/rules/{name}',
+    path: `rules/${ruleName}`,
+    pathParameters: { name: ruleName }
+  };
+
+  return callRuleApiFunction(prefix, payload);
+}
+
+/**
  * Delete a rule via the API
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.ruleName - name of the rule
  * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
  */
 async function deleteRule({ prefix, ruleName }) {
@@ -130,6 +150,7 @@ module.exports = {
   postRule,
   updateRule,
   deleteRule,
+  getRule,
   listRules,
   rerunRule
 };
