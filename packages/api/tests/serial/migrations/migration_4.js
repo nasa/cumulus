@@ -38,8 +38,8 @@ let ruleModel;
 
 async function getKinesisEventMappings() {
   const eventLambdas = [process.env.kinesisConsumer, process.env.KinesisInboundEventLogger];
-  const mappingPromises = eventLambdas.map((lambda) => {
-    const mappingParms = { FunctionName: lambda };
+  const mappingPromises = eventLambdas.map((eventLambda) => {
+    const mappingParms = { FunctionName: eventLambda };
     return aws.lambda().listEventSourceMappings(mappingParms).promise();
   });
   return Promise.all(mappingPromises);
@@ -60,10 +60,12 @@ test.before(async () => {
   const eventSourceMappingLists = eventMappingObjects.map((mappingObject) => {
     return mappingObject.EventSourceMappings;
   });
+
   const eventSourceMapping = [].concat(...eventSourceMappingLists);
-  const mappingPromises = eventSourceMapping.map((mapping) => {
+  const eventMappingPromises = eventSourceMapping.map((mapping) => {
     return lambda().deleteEventSourceMapping({ UUID: mapping.UUID }).promise();
-  });
+  });;
+  await Promise.all(eventMappingPromises);
 });
 
 
