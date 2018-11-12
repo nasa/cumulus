@@ -1,7 +1,7 @@
 'use strict';
 
 const pWaitFor = require('p-wait-for');
-const { getGranule } = require('./api/api');
+const { getGranule } = require('./api/granules');
 
 /**
  * Run getGranule and return expected format
