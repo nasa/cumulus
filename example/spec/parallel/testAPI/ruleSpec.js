@@ -99,10 +99,12 @@ describe('When I create a one-time rule via the Cumulus API', () => {
       prefix: config.stackName,
       rule: helloWorldRule
     });
+
+    console.log(`\npostRuleResponse: ${JSON.stringify(postRuleResponse)}\n`);
   });
 
   afterAll(async () => {
-    console.log(`deleting rule ${helloWorldRule.name}`);
+    console.log(`\ndeleting rule ${helloWorldRule.name}\n`);
     await rulesApiTestUtils.deleteRule({
       prefix: config.stackName,
       ruleName: helloWorldRule.name
@@ -123,7 +125,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
     let execution;
 
     beforeAll(async () => {
-      console.log(`Waiting for execution of ${helloWorldRule.workflow} triggered by rule`);
+      console.log(`\nWaiting for execution of ${helloWorldRule.workflow} triggered by rule\n`);
       execution = await waitForTestExecutionStart(
         helloWorldRule.workflow,
         config.stackName,
@@ -132,7 +134,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
           taskInput.meta.triggerRule && taskInput.meta.triggerRule === params.ruleName,
         { ruleName: oneTimeRuleName }
       );
-      console.log(`Execution ARN: ${execution.executionArn}`);
+      console.log(`\nExecution ARN: ${execution.executionArn}\n`);
     });
 
     it('a workflow is triggered by the rule', () => {
@@ -148,7 +150,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
         prefix: config.stackName
       });
 
-      console.log(JSON.stringify(listRulesResponse));
+      console.log(`\nlistRulesResponse: ${JSON.stringify(listRulesResponse)}\n`);
     });
 
     it('the rule is returned with the listed rules', () => {
