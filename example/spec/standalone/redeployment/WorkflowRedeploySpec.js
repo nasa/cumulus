@@ -5,7 +5,7 @@ const pRetry = require('p-retry');
 const {
   buildAndStartWorkflow,
   waitForCompletedExecution,
-  api: apiTestUtils
+  executionsApi: executionsApiTestUtils
 } = require('@cumulus/integration-tests');
 
 const {
@@ -70,7 +70,7 @@ describe('When a workflow', () => {
       let executionStatus;
 
       beforeAll(async () => {
-        const executionStatusResponse = await apiTestUtils.getExecutionStatus({
+        const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
           prefix: config.stackName,
           arn: workflowExecutionArn
         });
