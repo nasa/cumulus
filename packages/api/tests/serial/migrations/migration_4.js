@@ -6,8 +6,8 @@ const {
   aws: { dynamodb, lambda, s3 },
   testUtils: { randomString }
 } = require('@cumulus/common');
-const { run } = require('../../migrations/migration_4');
-const models = require('../../models');
+const { run } = require('../../../migrations/migration_4');
+const models = require('../../../models');
 
 process.env.RulesTable = `RulesTable_${randomString()}`;
 process.env.stackName = 'my-stackName';
@@ -28,12 +28,22 @@ const kinesisRule = {
   },
   rule: {
     type: 'kinesis',
-    value: 'aws-my-sour'
+    value: 'test-kinesisarn'
   },
   state: 'DISABLED'
 };
 
 let ruleModel;
+
+
+async function getKinesisEventMappings() {
+  const eventLambdas = [process.env.kinesisConsumer, process.env.KinesisInboundEventLogger];
+  const mappingPromises = eventLambdas.map((lambda) => {
+    const mappingParms = { FunctionName: lambda };
+    return aws.lambda().listEventSourceMappings(mappingParms).promise();
+  });
+  return Promise.all(mappingPromises);
+}
 
 test.before(async () => {
   // create Rules table
@@ -45,6 +55,15 @@ test.before(async () => {
     Key: workflowfile,
     Body: 'test data'
   }).promise();
+
+  const eventMappingObjects = await getKinesisEventMappings();
+  const eventSourceMappingLists = eventMappingObjects.map((mappingObject) => {
+    return mappingObject.EventSourceMappings;
+  });
+  const eventSourceMapping = [].concat(...eventSourceMappingLists);
+  const mappingPromises = eventSourceMapping.map((mapping) => {
+    return lambda().deleteEventSourceMapping({ UUID: mapping.UUID }).promise();
+  });
 });
 
 
@@ -52,6 +71,8 @@ test.after.always(async () => {
   // cleanup table
   await ruleModel.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.bucket);
+  const rule = new models.Rule();
+  rule.delete(kinesisRule);
 });
 
 test.serial('migration_4 adds a logEvent mapping when missing', async (t) => {
@@ -59,16 +80,15 @@ test.serial('migration_4 adds a logEvent mapping when missing', async (t) => {
   const rule = new models.Rule();
   await rule.create(kinesisRule);
   const createdRule = await rule.get({ name: kinesisRule.name });
-  lambda().deleteEventSourceMapping({ UUID: createdRule.rule.logEventArn });
 
   // Remove mapping from function, remove value from DB entry.
+  lambda().deleteEventSourceMapping({ UUID: createdRule.rule.logEventArn }).promise();
   await dynamodb().updateItem({
     TableName: process.env.RulesTable,
     Key: { name: { S: kinesisRule.name } },
     UpdateExpression: 'REMOVE #R.logEventArn',
     ExpressionAttributeNames: { '#R': 'rule' }
   }).promise();
-
   const ruleItem = await dynamodb().getItem({
     TableName: process.env.RulesTable,
     Key: { name: { S: kinesisRule.name } }
@@ -88,8 +108,8 @@ test.serial('migration_4 adds a logEvent mapping when missing', async (t) => {
   t.is(updateRuleItem.Item.rule.M.arn.S, ruleItem.Item.rule.M.arn.S);
   t.is(updateRuleItem.Item.rule.M.type.S, ruleItem.Item.rule.M.type.S);
   t.is(updateRuleItem.Item.rule.M.value.S, ruleItem.Item.rule.M.value.S);
+  await rule.delete(kinesisRule);
 });
-
 
 test.serial('migration_4 ignores logEvent mapping when not missing', async (t) => {
   // create rule
@@ -115,4 +135,6 @@ test.serial('migration_4 ignores logEvent mapping when not missing', async (t) =
   t.is(updateRuleItem.Item.rule.M.type.S, ruleItem.Item.rule.M.type.S);
   t.is(updateRuleItem.Item.rule.M.value.S, ruleItem.Item.rule.M.value.S);
   t.is(updateRuleItem.Item.rule.M.logEventArn.S, ruleItem.Item.rule.M.logEventArn.S);
+
+  await rule.delete(kinesisRule);
 });
