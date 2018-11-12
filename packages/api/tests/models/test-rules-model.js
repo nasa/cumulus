@@ -36,22 +36,22 @@ const onetimeRule = {
   collection: {
     name: 'my-collection-name',
     version: 'my-collection-version'
- },
+  },
   rule: {
     type: 'onetime'
   },
   state: 'ENABLED'
 };
 
-const getKinesisEventMappings = async function() {
-    const eventLambdas = [process.env.kinesisConsumer, process.env.KinesisInboundEventLogger];
+async function getKinesisEventMappings() {
+  const eventLambdas = [process.env.kinesisConsumer, process.env.KinesisInboundEventLogger];
 
   const mappingPromises = eventLambdas.map((lambda) => {
-    const mappingParms = {FunctionName: lambda};
+    const mappingParms = { FunctionName: lambda };
     return aws.lambda().listEventSourceMappings(mappingParms).promise();
   });
   return Promise.all(mappingPromises);
-};
+}
 
 
 let ruleModel;
@@ -189,8 +189,6 @@ test.serial('create a kinesis type rule, using the existing event source mapping
 
   await rules.delete(rule);
   await rules.delete(newRule);
-
-  const eventMappings = await getKinesisEventMappings();
 });
 
 test.serial('it does not delete event source mappings if they exist for other rules', async (t) => {
