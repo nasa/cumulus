@@ -1,10 +1,13 @@
 'use strict';
 
 const sinon = require('sinon');
+const nock = require('nock');
 const test = require('ava');
 const got = require('got');
+const some = require('lodash.some');
+
 const { randomString } = require('@cumulus/common/test-utils');
-const { deleteConcept, getMetadata } = require('..');
+const { deleteConcept, getMetadata, CMR } = require('..');
 
 const granuleId = 'MYD13Q1.A2017297.h19v10.006.2017313221203';
 
@@ -86,9 +89,9 @@ test('deleteConcept throws error when request is bad', (t) => {
       stub.restore();
       t.fail();
     })
-    .catch((err) => {
+    .catch((error) => {
       stub.restore();
-      t.true(err.toString().includes('CMR error message: "Bad request"'));
+      t.true(error.toString().includes('CMR error message: "Bad request"'));
     });
 });
 
@@ -114,4 +117,42 @@ test('get CMR metadata, fail', async (t) => {
     });
 
   stub.restore();
+});
+
+test('CMR.searchCollection handles paging correctly.', async (t) => {
+  const headers = { 'cmr-hits': 6 };
+  const body1 = '{"feed":{"updated":"sometime","id":"someurl","title":"fake Cmr Results","entry":[{"cmrEntry1":"data1"}, {"cmrEntry2":"data2"}]}}';
+  const body2 = '{"feed":{"updated":"anothertime","id":"another url","title":"more Results","entry":[{"cmrEntry3":"data3"}, {"cmrEntry4":"data4"}]}}';
+  const body3 = '{"feed":{"updated":"more time","id":"yet another","title":"morer Results","entry":[{"cmrEntry5":"data5"}, {"cmrEntry6":"data6"}]}}';
+
+  nock('https://cmr.uat.earthdata.nasa.gov')
+    .get('/search/collections.json')
+    .query((q) => q.page_num === '1')
+    .reply(200, body1, headers);
+
+  nock('https://cmr.uat.earthdata.nasa.gov')
+    .get('/search/collections.json')
+    .query((q) => q.page_num === '2')
+    .reply(200, body2, headers);
+
+  nock('https://cmr.uat.earthdata.nasa.gov')
+    .get('/search/collections.json')
+    .query((q) => q.page_num === '3')
+    .reply(200, body3, headers);
+
+  const expected = [
+    { cmrEntry1: 'data1' },
+    { cmrEntry2: 'data2' },
+    { cmrEntry3: 'data3' },
+    { cmrEntry4: 'data4' },
+    { cmrEntry5: 'data5' },
+    { cmrEntry6: 'data6' }
+  ];
+
+  const cmrSearch = new CMR('CUMULUS');
+  const results = await cmrSearch.searchCollections({});
+
+  t.is(expected.length, results.length);
+
+  expected.forEach((expectedItem) => t.true(some(results, expectedItem)));
 });
