@@ -317,6 +317,5 @@ module.exports = {
   CMR,
   getMetadata,
   getFullMetadata,
-  getHost,
-  searchConcept
+  getHost
 };

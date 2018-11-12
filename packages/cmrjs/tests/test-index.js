@@ -7,7 +7,7 @@ const got = require('got');
 const some = require('lodash.some');
 
 const { randomString } = require('@cumulus/common/test-utils');
-const { deleteConcept, getMetadata, searchConcept } = require('..');
+const { deleteConcept, getMetadata, CMR } = require('..');
 
 const granuleId = 'MYD13Q1.A2017297.h19v10.006.2017313221203';
 
@@ -119,7 +119,7 @@ test('get CMR metadata, fail', async (t) => {
   stub.restore();
 });
 
-test('searchConcept handles paging correctly.', async (t) => {
+test('CMR.searchCollection handles paging correctly.', async (t) => {
   const headers = { 'cmr-hits': 6 };
   const body1 = '{"feed":{"updated":"sometime","id":"someurl","title":"fake Cmr Results","entry":[{"cmrEntry1":"data1"}, {"cmrEntry2":"data2"}]}}';
   const body2 = '{"feed":{"updated":"anothertime","id":"another url","title":"more Results","entry":[{"cmrEntry3":"data3"}, {"cmrEntry4":"data4"}]}}';
@@ -149,7 +149,8 @@ test('searchConcept handles paging correctly.', async (t) => {
     { cmrEntry6: 'data6' }
   ];
 
-  const results = await searchConcept('collections', {});
+  const cmrSearch = new CMR('CUMULUS');
+  const results = await cmrSearch.searchCollections({});
 
   t.is(expected.length, results.length);
 
