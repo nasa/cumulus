@@ -4,12 +4,12 @@ const fs = require('fs-extra');
 
 const { models: { Granule } } = require('@cumulus/api');
 const {
-  buildAndExecuteWorkflow,
-  addProviders,
-  cleanupProviders,
   addCollections,
+  addProviders,
+  buildAndExecuteWorkflow,
   cleanupCollections,
-  api: apiTestUtils
+  cleanupProviders,
+  granulesApi: granulesApiTestUtils
 } = require('@cumulus/integration-tests');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const config = loadConfig();
@@ -60,7 +60,7 @@ describe('The FTP Ingest Granules workflow', () => {
   });
 
   it('makes the granule available through the Cumulus API', async () => {
-    const granuleResponse = await apiTestUtils.getGranule({
+    const granuleResponse = await granulesApiTestUtils.getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId
     });
@@ -68,7 +68,7 @@ describe('The FTP Ingest Granules workflow', () => {
 
     expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
     // clean up granule
-    await apiTestUtils.deleteGranule({
+    await granulesApiTestUtils.deleteGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId
     });
