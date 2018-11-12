@@ -57,14 +57,13 @@ test.before(async () => {
   }).promise();
 
   const eventMappingObjects = await getKinesisEventMappings();
-  const eventSourceMappingLists = eventMappingObjects.map((mappingObject) => {
-    return mappingObject.EventSourceMappings;
-  });
+  const sourceMappingLists = eventMappingObjects.map((mapObject) => mapObject.EventSourceMappings);
 
-  const eventSourceMapping = [].concat(...eventSourceMappingLists);
+  const eventSourceMapping = [].concat(...sourceMappingLists);
   const eventMappingPromises = eventSourceMapping.map((mapping) => {
-    return lambda().deleteEventSourceMapping({ UUID: mapping.UUID }).promise();
-  });;
+    const params = { UUID: mapping.UUID };
+    return lambda().deleteEventSourceMapping(params).promise();
+  });
   await Promise.all(eventMappingPromises);
 });
 
