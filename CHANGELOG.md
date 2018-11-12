@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     incoming events via a Kinesis event triggered lambda.
   - Update migration code to require explicit migration names per run
   - Added migration_4 to migrate/update exisitng Kinesis rules to have a log event mapping
+  - Added new IAM policy for migration lambda
 
 - **CUMULUS-965**
   - Add `@cumulus/test-data.loadJSONTestData()`,

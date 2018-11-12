@@ -94,7 +94,7 @@ program
       throw new Error('stack name is missing');
     }
     const l = lambda();
-    console.log(`invoking migration with arguments ${cmd.migrationVersion}`);
+    console.log(`Invoking migration: ${cmd.migrationVersion}`);
     l.invoke({
       FunctionName: `${cmd.stack}-executeMigrations`,
       Payload: `{ "migrations": ["${cmd.migrationVersion}"] }`
