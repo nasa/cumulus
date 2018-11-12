@@ -6,6 +6,7 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
+  granulesApi: granulesApiTestUtils,
   LambdaStep
 } = require('@cumulus/integration-tests');
 
@@ -93,7 +94,7 @@ describe('The Discover Granules workflow with https Protocol', () => {
 
     afterAll(async () => {
       await Promise.all(lambdaOutput.payload.granules.map(
-        (granule) => apiTestUtils.deleteGranule({
+        (granule) => granulesApiTestUtils.deleteGranule({
           prefix: config.stackName,
           granuleId: granule.granuleId
         })
