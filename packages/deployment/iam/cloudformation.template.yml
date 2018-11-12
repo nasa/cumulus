@@ -317,6 +317,180 @@ Resources:
                   - cloudformation:DescribeStacks
                 Resource: '*'
 
+  # Migration Processing Role with additional permissions for migrations
+  MigrationProcessingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub: "${ResourcePrefix}-migration-processing"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: MigrationProcessingLambda
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:GetFunction
+                  - lambda:invokeFunction
+                  - lambda:CreateEventSourceMapping
+                  - lambda:ListEventSourceMappings
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:DescribeLogStreams
+                  - logs:PutLogEvents
+                Resource: "*"
+
+              # Allow access to kinesis
+              - Effect: Allow
+                Action:
+                  - kinesis:GetRecords
+                  - kinesis:GetShardIterator
+                  - kinesis:DescribeStream
+                  - kinesis:ListStreams
+                  - kinesis:PutRecord
+                Resource: '*'
+
+              # Allow writing to ingest buckets
+              - Effect: Allow
+                Action:
+                  - s3:GetAccelerateConfiguration
+                  - s3:GetLifecycleConfiguration
+                  - s3:GetReplicationConfiguration
+                  - s3:GetBucket*
+                  - s3:PutAccelerateConfiguration
+                  - s3:PutLifecycleConfiguration
+                  - s3:PutReplicationConfiguration
+                  - s3:PutBucket*
+                  - s3:ListBucket*
+                Resource:
+                {{#each buckets}}
+                  - arn:aws:s3:::{{this.name}}
+                {{/each}}
+
+              - Effect: Allow
+                Action:
+                  - s3:AbortMultipartUpload
+                  - s3:GetObject*
+                  - s3:PutObject*
+                  - s3:ListMultipartUploadParts
+                  - s3:DeleteObject
+                  - s3:DeleteObjectVersion
+                Resource:
+                {{#each buckets}}
+                  - arn:aws:s3:::{{this.name}}/*
+                {{/each}}
+
+              - Effect: Allow
+                Action:
+                  - s3:ListAllMyBuckets
+                Resource: '*'
+
+              # Used for testing bucket policies
+              - Effect: Allow
+                Action:
+                  - s3:PutBucketPolicy
+                Resource:
+                  - Fn::Sub: "arn:aws:s3:::{{prefix}}-*"
+
+              # Allow access to dynamoDB
+              - Effect: Allow
+                Action:
+                  - dynamodb:DeleteItem
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:UpdateItem
+                  - dynamodb:BatchWriteItem
+                  - dynamodb:UpdateContinuousBackups
+                  - dynamodb:DescribeContinuousBackups
+                Resource:
+                  Fn::Sub: "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-*"
+
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetRecords
+                  - dynamodb:GetShardIterator
+                  - dynamodb:DescribeStream
+                  - dynamodb:ListStreams
+                Resource:
+                  Fn::Sub: "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-*/stream/*"
+
+              - Effect: Allow
+                Action:
+                  - dynamodb:ListTables
+                Resource: '*'
+
+              # Allow access to SQS
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                  - sqs:ReceiveMessage
+                  - sqs:ChangeMessageVisibility
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueUrl
+                  - sqs:GetQueueAttributes
+                Resource:
+                  Fn::Sub: "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:${ResourcePrefix}-*"
+
+              # Allow state machine interactions
+              - Effect: Allow
+                Action:
+                - states:SendTaskFailure
+                - states:SendTaskSuccess
+                - states:GetActivityTask
+                - states:GetExecutionHistory
+                - states:DescribeActivity
+                - states:DescribeExecution
+                - states:StartExecution
+                - states:StopExecution
+                - states:ListStateMachines
+                Resource: arn:aws:states:*:*:*
+
+              # allow adding/editing/deleting of rules associated with this deployment
+              - Effect: Allow
+                Action:
+                  - events:DisableRule
+                  - events:EnableRule
+                  - events:ListRules
+                  - events:PutRule
+                  - events:DeleteRule
+                  - events:DescribeRule
+                Resource: '*'
+
+              # this is needed for running Lambda in a VPC
+              # This might not be needed in the NGAP environment
+              # if all lambdas are already running in a general VPC
+              # environment
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:DeleteNetworkInterface
+                Resource: '*'
+
+              # allow publishing to SNS
+              - Effect: Allow
+                Action:
+                  - sns:publish
+                  - sns:List*
+                Resource: '*'
+
+              # Needed for AWS integration tests
+              - Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                Resource: '*'
+
+
   StepRole:
     Type: AWS::IAM::Role
     Properties:
@@ -567,6 +741,11 @@ Outputs:
     Value:
       Fn::GetAtt:
         - LambdaProcessingRole
+        - Arn
+  MigrationProcessingRoleArn:
+    Value:
+      Fn::GetAtt:
+        - MigrationProcessingRole
         - Arn
   DistributionRoleArn:
     Value:
