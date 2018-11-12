@@ -275,7 +275,7 @@ The config buckets should map to the same names you used when creating buckets i
 
 ###### iams
 
-Add the ARNs for each of the sevent  roles and one instanceProfile created in the [Create IAM Roles](create-iam-roles) step. You can retrieve the ARNs from:
+Add the ARNs for each of the seven roles and one instanceProfile created in the [Create IAM Roles](create-iam-roles) step. You can retrieve the ARNs from:
 
     $ aws iam list-roles | grep Arn
     $ aws iam list-instance-profiles | grep Arn
