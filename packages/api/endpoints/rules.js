@@ -53,11 +53,9 @@ function post(event, cb) {
     .then(() => cb({ message: `A record already exists for ${name}` }))
     .catch((e) => {
       if (e instanceof RecordDoesNotExist) {
-        const response = model.create(data)
+        return model.create(data)
           .then((r) => cb(null, { message: 'Record saved', record: r }))
           .catch(cb);
-
-        return response;
       }
       return cb(e);
     });
