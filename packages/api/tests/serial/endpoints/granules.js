@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
 const sinon = require('sinon');
 const test = require('ava');
 const aws = require('@cumulus/common/aws');
@@ -108,12 +109,6 @@ test.beforeEach(async (t) => {
     fakeGranuleFactoryV2({ status: 'failed' })
   ];
 
-  for (let i = 0; i < t.context.fakeGranules.length; i += 1) {
-    const granule = t.context.fakeGranules[i];
-    const record = await granuleModel.create(granule); // eslint-disable-line no-await-in-loop
-    await indexer.indexGranule(esClient, record, esIndex); // eslint-disable-line no-await-in-loop
-  }
-
   await Promise.all(t.context.fakeGranules.map((granule) =>
     granuleModel.create(granule)
       .then((record) => indexer.indexGranule(esClient, record, esIndex))));
@@ -127,7 +122,6 @@ test.after.always(async () => {
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
 });
-
 
 test.serial('default returns list of granules', async (t) => {
   const event = {
@@ -723,7 +717,7 @@ test.serial('move a file and update metadata', async (t) => {
 
   await createBucket(buckets.public.name);
   const newGranule = fakeGranuleFactoryV2();
-  const metadata = fs.createReadStream('tests/data/meta.xml');
+  const metadata = fs.createReadStream(path.resolve(__dirname, '../../data/meta.xml'));
 
   newGranule.files = [
     {
