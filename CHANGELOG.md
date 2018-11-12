@@ -6,7 +6,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+**Please Note**
+- `cumulus-message-adapter` v1.0.13+ is required for `@cumulus/api` granule reingest API to work properly.  The latest version should be downloaded automatically by kes.
+
+### Changed
+
+- **CUMULUS-783 CUMULUS-790** - Updated `@cumulus/sync-granule` and `@cumulus/move-granules` tasks to always overwrite existing files for manually-triggered reingest.
+- **CUMULUS-906** - Updated `@cumulus/api` granule reingest API to
+  - add `reingestGranule: true` and `forceDuplicateOverwrite: true` to Cumulus message `cumulus_meta.cumulus_context` field to indicate that the workflow is a manually triggered re-ingest.
+  - return warning message to operator when duplicateHandling is not `replace`
+  - `cumulus-message-adapter` v1.0.13+ is required.
+- **CUMULUS-793** - Updated the granule move PUT request in `@cumulus/api` to reject the move with a 409 status code if one or more of the files already exist at the destination location
+
 ### Added
+- **CUMULUS-975**
+  - Add `KinesisInboundEventLogger` and `KinesisOutboundEventLogger` API lambdas.  These lambdas
+    are utilized to dump incoming and outgoing ingest workflow kinesis streams
+    to cloudwatch for analytics in case of AWS/stream failure.
+  - Update rules model to allow tracking of log_event ARNs related to
+    Rule event logging.    Kinesis rule types will now automatically log
+    incoming events via a Kinesis event triggered lambda.
 - **CUMULUS-965**
   - Add `@cumulus/test-data.loadJSONTestData()`,
     `@cumulus/test-data.loadTestData()`, and
