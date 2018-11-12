@@ -237,7 +237,7 @@ class Rule extends Manager {
   }
 
 
-   /**
+  /**
    * Delete event source mappings for all mappings in the kinesisSourceEvents
    * @param {Object} item - the rule item
    * @returns {Promise<Array>} array of responses from the event source deletion

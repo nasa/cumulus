@@ -59,22 +59,27 @@ test.serial('migration_4 adds a logEvent mapping when missing', async (t) => {
   const rule = new models.Rule();
   await rule.create(kinesisRule);
   const createdRule = await rule.get({ name: kinesisRule.name });
-  lambda().deleteEventSourceMapping({UUID: createdRule.rule.logEventArn});
+  lambda().deleteEventSourceMapping({ UUID: createdRule.rule.logEventArn });
 
   // Remove mapping from function, remove value from DB entry.
-  await dynamodb().updateItem({TableName: process.env.RulesTable,
-                                   Key: {'name': { S: kinesisRule.name}},
-                                   UpdateExpression: 'REMOVE #R.logEventArn',
-                                   ExpressionAttributeNames: { "#R": "rule" }
-                                  }).promise();
+  await dynamodb().updateItem({
+    TableName: process.env.RulesTable,
+    Key: { name: { S: kinesisRule.name } },
+    UpdateExpression: 'REMOVE #R.logEventArn',
+    ExpressionAttributeNames: { '#R': 'rule' }
+  }).promise();
 
-  const ruleItem = await dynamodb().getItem({TableName: process.env.RulesTable,
-                                           Key: {'name': { S: kinesisRule.name}}}).promise();
-  await run({internal: process.env.bucket, stackName: process.env.stackName});
-  const updateRuleItem = await dynamodb().getItem({TableName: process.env.RulesTable,
-                                                       Key: {'name': { S: kinesisRule.name}}}).promise();
+  const ruleItem = await dynamodb().getItem({
+    TableName: process.env.RulesTable,
+    Key: { name: { S: kinesisRule.name } }
+  }).promise();
+  await run({ internal: process.env.bucket, stackName: process.env.stackName });
+  const updateRuleItem = await dynamodb().getItem({
+    TableName: process.env.RulesTable,
+    Key: { name: { S: kinesisRule.name } }
+  }).promise();
 
-  const mappingParms = {FunctionName: process.env.KinesisInboundEventLogger};
+  const mappingParms = { FunctionName: process.env.KinesisInboundEventLogger };
   const mappingsResponse = await lambda().listEventSourceMappings(mappingParms).promise();
   const eventSourceMappings = mappingsResponse.EventSourceMappings;
 
@@ -90,14 +95,17 @@ test.serial('migration_4 ignores logEvent mapping when not missing', async (t) =
   // create rule
   const rule = new models.Rule();
   await rule.create(kinesisRule);
-  const createdRule = await rule.get({ name: kinesisRule.name });
-  const ruleItem = await dynamodb().getItem({TableName: process.env.RulesTable,
-                                           Key: {'name': { S: kinesisRule.name}}}).promise();
-  await run({internal: process.env.bucket, stackName: process.env.stackName});
-  const updateRuleItem = await dynamodb().getItem({TableName: process.env.RulesTable,
-                                                       Key: {'name': { S: kinesisRule.name}}}).promise();
+  const ruleItem = await dynamodb().getItem({
+    TableName: process.env.RulesTable,
+    Key: { name: { S: kinesisRule.name } }
+  }).promise();
+  await run({ internal: process.env.bucket, stackName: process.env.stackName });
+  const updateRuleItem = await dynamodb().getItem({
+    TableName: process.env.RulesTable,
+    Key: { name: { S: kinesisRule.name } }
+  }).promise();
 
-  const mappingParms = {FunctionName: process.env.KinesisInboundEventLogger};
+  const mappingParms = { FunctionName: process.env.KinesisInboundEventLogger };
   const mappingsResponse = await lambda().listEventSourceMappings(mappingParms).promise();
   const eventSourceMappings = mappingsResponse.EventSourceMappings;
 

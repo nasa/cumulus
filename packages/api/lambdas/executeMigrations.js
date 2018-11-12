@@ -9,10 +9,12 @@ const migration2 = require('../migrations/migration_2');
 const migration3 = require('../migrations/migration_3');
 const migration4 = require('../migrations/migration_4');
 
-const mappings = { migration1: migration1,
-                   migration2: migration2,
-                   migration3: migration3,
-                   migration4: migration4 };
+const mappings = {
+  migration1: migration1,
+  migration2: migration2,
+  migration3: migration3,
+  migration4: migration4
+};
 
 /**
  * Lambda function handler for running migrations
@@ -23,9 +25,7 @@ const mappings = { migration1: migration1,
  * @returns {Promise<undefined>} undefined
  */
 function handler(event, context, cb) {
-  console.log(`PROCESS ENV IS ${JSON.stringify(process.env)}`);
-  console.log(`Event is ${JSON.stringify(event)}`);
-  const eventMigrations = event.migrations.map(m => mappings[m]);
+  const eventMigrations = event.migrations.map((m) => mappings[m]);
   return migrations(eventMigrations, {
     // Used by migration1
     tables: [
