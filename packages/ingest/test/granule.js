@@ -20,6 +20,7 @@ const {
   HttpDiscoverGranules,
   SftpDiscoverGranules,
   S3DiscoverGranules,
+  generateMoveFileParams,
   getGranuleId,
   getRenamedS3File,
   moveGranuleFiles,
@@ -430,6 +431,88 @@ test('moveGranuleFiles only moves granule files specified with regex', async (t)
   return s3().listObjects({ Bucket: secondBucket }).promise().then((list) => {
     t.is(list.Contents.length, 1);
     t.is(list.Contents[0].Key, 'destination/included-in-move.txt');
+  });
+});
+
+test('generateMoveFileParams generates correct parameters', (t) => {
+  const filenames = [
+    'included-in-move.txt',
+    'another-move.txt'
+  ];
+
+  const sourceBucket = 'test-bucket';
+  const destBucket = 'dest-bucket';
+
+  const sourceFiles = filenames.map((name) => {
+    const sourcefilePath = `origin/${name}`;
+    return {
+      name,
+      sourceBucket,
+      filepath: sourcefilePath,
+      filename: buildS3Uri(sourceBucket, sourcefilePath)
+    };
+  });
+
+  const destinationFilepath = 'destination';
+
+  const destinations = [
+    {
+      regex: '.*.txt$',
+      bucket: destBucket,
+      filepath: destinationFilepath
+    }
+  ];
+
+  const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
+
+  moveFileParams.map((item, index) => t.deepEqual(item, {
+    file: sourceFiles[index],
+    source: {
+      Bucket: sourceBucket,
+      Key: `origin/${filenames[index]}`
+    },
+    target: {
+      Bucket: destBucket,
+      Key: `${destinationFilepath}/${filenames[index]}`
+    }
+  }));
+});
+
+test('generateMoveFileParams generates null source and target for no destination', (t) => {
+  const filenames = [
+    'included-in-move.txt',
+    'exclude'
+  ];
+
+  const sourceBucket = 'test-bucket';
+  const destBucket = 'dest-bucket';
+
+  const sourceFiles = filenames.map((name) => {
+    const sourcefilePath = `origin/${name}`;
+    return {
+      name,
+      sourceBucket,
+      filepath: sourcefilePath,
+      filename: buildS3Uri(sourceBucket, sourcefilePath)
+    };
+  });
+
+  const destinationFilepath = 'destination';
+
+  const destinations = [
+    {
+      regex: '.*.txt$',
+      bucket: destBucket,
+      filepath: destinationFilepath
+    }
+  ];
+
+  const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
+
+  t.deepEqual(moveFileParams[1], {
+    file: sourceFiles[1],
+    source: null,
+    target: null
   });
 });
 
