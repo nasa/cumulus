@@ -142,7 +142,7 @@ test('Deleting a collection removes it', async (t) => {
   });
 });
 
-test('Attempting to delete a collection with an associated rule returns a 400 response', async (t) => {
+test('Attempting to delete a collection with an associated rule returns a 409 response', async (t) => {
   const collection = fakeCollectionFactory();
   await collectionModel.create(collection);
 
@@ -175,10 +175,10 @@ test('Attempting to delete a collection with an associated rule returns a 400 re
   };
 
   return testEndpoint(collectionsEndpoint, deleteRequest, (response) => {
-    t.is(response.statusCode, 400);
+    t.is(response.statusCode, 409);
 
     const body = JSON.parse(response.body);
-    t.is(body.message, 'Cannot delete a collection that has associated rules');
+    t.is(body.message, `Cannot delete collection with associated rules: ${rule.name}`);
   });
 });
 

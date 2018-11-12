@@ -112,7 +112,7 @@ test('Deleting a provider removes the provider', (t) => {
   });
 });
 
-test('Attempting to delete a provider with an associated rule returns a 400 response', async (t) => {
+test('Attempting to delete a provider with an associated rule returns a 409 response', async (t) => {
   const { testProvider } = t.context;
 
   const rule = fakeRuleFactoryV2({
@@ -138,10 +138,10 @@ test('Attempting to delete a provider with an associated rule returns a 400 resp
   };
 
   return testEndpoint(providerEndpoint, deleteRequest, (response) => {
-    t.is(response.statusCode, 400);
+    t.is(response.statusCode, 409);
 
     const body = JSON.parse(response.body);
-    t.is(body.message, 'Cannot delete a provider that has associated rules');
+    t.is(body.message, `Cannot delete provider with associated rules: ${rule.name}`);
   });
 });
 

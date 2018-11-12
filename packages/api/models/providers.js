@@ -1,9 +1,11 @@
 'use strict';
 
 const Crypto = require('@cumulus/ingest/crypto').DefaultProvider;
+
 const Manager = require('./base');
 const providerSchema = require('./schemas').provider;
 const Rule = require('./rules');
+const { AssociatedRulesError } = require('../lib/errors');
 
 class Provider extends Manager {
   constructor() {
@@ -76,25 +78,34 @@ class Provider extends Manager {
   async delete(id) {
     if (!(await this.exists(id))) throw new Error('Provider does not exist');
 
-    if (await this.hasAssociatedRules(id)) {
-      throw new Error('Cannot delete a provider that has associated rules');
+    const associatedRuleNames = (await this.associatedRules(id))
+      .map((rule) => rule.name);
+
+    if (associatedRuleNames.length > 0) {
+      throw new AssociatedRulesError(
+        'Cannot delete a provider that has associated rules',
+        associatedRuleNames
+      );
     }
 
     await super.delete({ id });
   }
 
   /**
-   * Test if there are any rules associated with the provider
+   * Get any rules associated with the provider
    *
    * @param {string} id - the provider id
    * @returns {Promise<boolean>}
    */
-  async hasAssociatedRules(id) {
+  async associatedRules(id) {
     const ruleModel = new Rule();
-    const rules = (await ruleModel.scan()).Items;
-    const associatedRules = rules.filter((r) => r.provider === id);
 
-    return associatedRules.length > 0;
+    const scanResult = await ruleModel.scan({
+      filter: 'provider = :provider',
+      values: { ':provider': id }
+    });
+
+    return scanResult.Items;
   }
 }
 
