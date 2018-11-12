@@ -4,7 +4,7 @@ const sinon = require('sinon');
 const test = require('ava');
 const got = require('got');
 const { randomString } = require('@cumulus/common/test-utils');
-const { deleteConcept, getMetadata } = require('..');
+const { deleteConcept, getMetadata, searchConcept } = require('..');
 
 const granuleId = 'MYD13Q1.A2017297.h19v10.006.2017313221203';
 
@@ -86,9 +86,9 @@ test('deleteConcept throws error when request is bad', (t) => {
       stub.restore();
       t.fail();
     })
-    .catch((err) => {
+    .catch((error) => {
       stub.restore();
-      t.true(err.toString().includes('CMR error message: "Bad request"'));
+      t.true(error.toString().includes('CMR error message: "Bad request"'));
     });
 });
 
@@ -112,6 +112,33 @@ test('get CMR metadata, fail', async (t) => {
     .then((response) => {
       t.is(response, null);
     });
+
+  stub.restore();
+});
+
+test('searchConcept handles paging correctly.', async (t) => {
+  const stub = sinon.stub(got, 'get');
+  const headers = { 'cmr-hits': '6' };
+  const body1 = '{"feed":{"updated":"sometime","id":"someurl","title":"fake Cmr Results","entry":[{"cmrEntry1":"data"}, {"cmrEntry2":"data2"}]}}';
+  const body2 = '{"feed":{"updated":"anothertime","id":"another url","title":"more Results","entry":[{"cmrEntry3":"data3"}, {"cmrEntry4":"data4"}]}}';
+  const body3 = '{"feed":{"updated":"more time","id":"yet another","title":"morer Results","entry":[{"cmrEntry5":"data5"}, {"cmrEntry6":"data6"}]}}';
+
+  stub.onCall(0).returns({ body: body1, headers: headers });
+  stub.onCall(1).returns({ body: body2, headers: headers });
+  stub.onCall(2).returns({ body: body3, headers: headers });
+
+  const expected = [
+    { cmrEntry1: 'data' },
+    { cmrEntry2: 'data2' },
+    { cmrEntry3: 'data3' },
+    { cmrEntry4: 'data4' },
+    { cmrEntry5: 'data5' },
+    { cmrEntry6: 'data6' }
+  ];
+
+  const results = await searchConcept('collections', {});
+
+  t.deepEqual(expected, results);
 
   stub.restore();
 });
