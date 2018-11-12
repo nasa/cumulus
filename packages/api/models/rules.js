@@ -108,6 +108,7 @@ class Rule extends Manager {
       provider: item.provider,
       collection: item.collection,
       meta: get(item, 'meta', {}),
+      cumulus_meta: get(item, 'cumulus_meta', {}),
       payload: get(item, 'payload', {})
     };
   }
