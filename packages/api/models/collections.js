@@ -76,7 +76,7 @@ class Collection extends Manager {
   async delete(name, version) {
     if (!(await this.exists(name, version))) throw new Error('Collection does not exist');
 
-    const associatedRuleNames = (await this.associatedRules(name, version))
+    const associatedRuleNames = (await this.getAssociatedRules(name, version))
       .map((rule) => rule.name);
 
     if (associatedRuleNames.length > 0) {
@@ -96,7 +96,7 @@ class Collection extends Manager {
    * @param {string} version - collection version
    * @returns {Promise<Object>}
    */
-  async associatedRules(name, version) {
+  async getAssociatedRules(name, version) {
     const ruleModel = new Rule();
 
     const scanResult = await ruleModel.scan(
