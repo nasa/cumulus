@@ -12,10 +12,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - **CUMULUS-783 CUMULUS-790** - Updated `@cumulus/sync-granule` and `@cumulus/move-granules` tasks to always overwrite existing files for manually-triggered reingest.
-- **CUMULUS-906** - Updated `@cumulus/api` granule reingest API to 
+- **CUMULUS-906** - Updated `@cumulus/api` granule reingest API to
   - add `reingestGranule: true` and `forceDuplicateOverwrite: true` to Cumulus message `cumulus_meta.cumulus_context` field to indicate that the workflow is a manually triggered re-ingest.
   - return warning message to operator when duplicateHandling is not `replace`
   - `cumulus-message-adapter` v1.0.13+ is required.
+- **CUMULUS-793** - Updated the granule move PUT request in `@cumulus/api` to reject the move with a 409 status code if one or more of the files already exist at the destination location
 
 ### Added
 - **CUMULUS-975**
