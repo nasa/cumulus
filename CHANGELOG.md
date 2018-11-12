@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Update rules model to allow tracking of log_event ARNs related to
     Rule event logging.    Kinesis rule types will now automatically log
     incoming events via a Kinesis event triggered lambda.
+  - Update migration code to require explicit migration names per run
+  - Added migration_4 to migrate/update exisitng Kinesis rules to have a log event mapping
+
 - **CUMULUS-965**
   - Add `@cumulus/test-data.loadJSONTestData()`,
     `@cumulus/test-data.loadTestData()`, and
