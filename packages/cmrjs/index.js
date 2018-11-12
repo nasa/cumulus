@@ -23,31 +23,32 @@ const logDetails = {
  *
  * @param {string} type - Concept type to search, choices: ['collections', 'granules']
  * @param {Object} searchParams - CMR search parameters
- * @param {Array} existingResults - array of results returned in previous recursive calls
+ * @param {Array} previousResults - array of results returned in previous recursive calls
  * @returns {Promise.<Array>} - array of search results.
  */
-async function searchConcept(type, searchParams, existingResults = []) {
-  const limitRecords = process.env.CMR_LIMIT || 100;
+async function searchConcept(type, searchParams, previousResults = []) {
+  const recordsLimit = process.env.CMR_LIMIT || 100;
   const pageSize = searchParams.pageSize || process.env.CMR_PAGE_SIZE || 50;
-  let pageNum = 1;
 
-  if (searchParams.page_num) {
-    pageNum = searchParams.page_num + 1;
-  }
+  const defaultParams = { page_size: pageSize };
+
+  const url = `${getUrl('search')}${type}.json`;
+
+  const pageNum = (searchParams.page_num) ? searchParams.page_num + 1 : 1;
 
   // Recursively retrieve all the search results for collections or granules
-  const queryObject = Object.assign({ page_size: pageSize }, searchParams, { page_num: pageNum });
+  const query = { ...defaultParams, ...searchParams, page_num: pageNum };
 
-  const response = await got.get(`${getUrl('search')}${type}.json`, { query: queryObject });
-  const body = JSON.parse(response.body);
-  const _existingResults = existingResults.concat(body.feed.entry || []);
+  const response = await got.get(url, { json: true, query });
+  const fetchedResults = previousResults.concat(response.body.feed.entry || []);
 
-  const numRecordsCollected = _existingResults.length;
-  const areThereMoreResults = response.headers['cmr-hits'] > numRecordsCollected;
-  if (areThereMoreResults && numRecordsCollected < limitRecords) {
-    return searchConcept(type, queryObject, _existingResults);
+  const numRecordsCollected = fetchedResults.length;
+  const CMRHasMoreResults = response.headers['cmr-hits'] > numRecordsCollected;
+  const recordsLimitReached = numRecordsCollected >= recordsLimit;
+  if (CMRHasMoreResults && !recordsLimitReached) {
+    return searchConcept(type, query, fetchedResults);
   }
-  return _existingResults.slice(0, limitRecords);
+  return fetchedResults.slice(0, recordsLimit);
 }
 
 
