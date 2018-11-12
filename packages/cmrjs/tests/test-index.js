@@ -1,8 +1,11 @@
 'use strict';
 
 const sinon = require('sinon');
+const nock = require('nock');
 const test = require('ava');
 const got = require('got');
+const some = require('lodash.some');
+
 const { randomString } = require('@cumulus/common/test-utils');
 const { deleteConcept, getMetadata, searchConcept } = require('..');
 
@@ -117,18 +120,28 @@ test('get CMR metadata, fail', async (t) => {
 });
 
 test('searchConcept handles paging correctly.', async (t) => {
-  const stub = sinon.stub(got, 'get');
-  const headers = { 'cmr-hits': '6' };
-  const body1 = '{"feed":{"updated":"sometime","id":"someurl","title":"fake Cmr Results","entry":[{"cmrEntry1":"data"}, {"cmrEntry2":"data2"}]}}';
+  const headers = { 'cmr-hits': 6 };
+  const body1 = '{"feed":{"updated":"sometime","id":"someurl","title":"fake Cmr Results","entry":[{"cmrEntry1":"data1"}, {"cmrEntry2":"data2"}]}}';
   const body2 = '{"feed":{"updated":"anothertime","id":"another url","title":"more Results","entry":[{"cmrEntry3":"data3"}, {"cmrEntry4":"data4"}]}}';
   const body3 = '{"feed":{"updated":"more time","id":"yet another","title":"morer Results","entry":[{"cmrEntry5":"data5"}, {"cmrEntry6":"data6"}]}}';
 
-  stub.onCall(0).returns({ body: body1, headers: headers });
-  stub.onCall(1).returns({ body: body2, headers: headers });
-  stub.onCall(2).returns({ body: body3, headers: headers });
+  nock('https://cmr.uat.earthdata.nasa.gov')
+    .get('/search/collections.json')
+    .query((q) => q.page_num === '1')
+    .reply(200, body1, headers);
+
+  nock('https://cmr.uat.earthdata.nasa.gov')
+    .get('/search/collections.json')
+    .query((q) => q.page_num === '2')
+    .reply(200, body2, headers);
+
+  nock('https://cmr.uat.earthdata.nasa.gov')
+    .get('/search/collections.json')
+    .query((q) => q.page_num === '3')
+    .reply(200, body3, headers);
 
   const expected = [
-    { cmrEntry1: 'data' },
+    { cmrEntry1: 'data1' },
     { cmrEntry2: 'data2' },
     { cmrEntry3: 'data3' },
     { cmrEntry4: 'data4' },
@@ -138,7 +151,7 @@ test('searchConcept handles paging correctly.', async (t) => {
 
   const results = await searchConcept('collections', {});
 
-  t.deepEqual(expected, results);
+  t.is(expected.length, results.length);
 
-  stub.restore();
+  expected.forEach((expectedItem) => t.true(some(results, expectedItem)));
 });
