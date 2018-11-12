@@ -4,6 +4,7 @@ const { CollectionConfigStore } = require('@cumulus/common');
 const Manager = require('./base');
 const collectionSchema = require('./schemas').collection;
 const Rule = require('./rules');
+const { AssociatedRulesError } = require('../lib/errors');
 
 function checkRegex(regex, sampleFileName) {
   const validation = new RegExp(regex);
@@ -75,30 +76,45 @@ class Collection extends Manager {
   async delete(name, version) {
     if (!(await this.exists(name, version))) throw new Error('Collection does not exist');
 
-    if (await this.hasAssociatedRules(name, version)) {
-      throw new Error('Cannot delete a collection that has associated rules');
+    const associatedRuleNames = (await this.associatedRules(name, version))
+      .map((rule) => rule.name);
+
+    if (associatedRuleNames.length > 0) {
+      throw new AssociatedRulesError(
+        'Cannot delete a collection that has associated rules',
+        associatedRuleNames
+      );
     }
 
     await super.delete({ name, version });
   }
 
   /**
-   * Test if there are any rules associated with the collection
+   * Get any rules associated with the collection
    *
    * @param {string} name - collection name
    * @param {string} version - collection version
-   * @returns {Promise<boolean>}
+   * @returns {Promise<Object>}
    */
-  async hasAssociatedRules(name, version) {
+  async associatedRules(name, version) {
     const ruleModel = new Rule();
-    const rules = (await ruleModel.scan()).Items;
-    const associatedRules = rules.filter(
-      (r) =>
-        r.collection.name === name
-        && r.collection.version === version
+
+    const scanResult = await ruleModel.scan(
+      {
+        names: {
+          '#c': 'collection',
+          '#n': 'name',
+          '#v': 'version'
+        },
+        filter: '#c.#n = :n AND #c.#v = :v',
+        values: {
+          ':n': name,
+          ':v': version
+        }
+      }
     );
 
-    return associatedRules.length > 0;
+    return scanResult.Items;
   }
 }
 

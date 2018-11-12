@@ -3,7 +3,10 @@
 const { handle } = require('../lib/response');
 const models = require('../models');
 const Collection = require('../es/collections');
-const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
+const {
+  AssociatedRulesError,
+  RecordDoesNotExist
+} = require('../lib/errors');
 
 /**
  * List all collections.
@@ -121,14 +124,24 @@ function put(event, cb) {
  * @param {Function} cb - aws lambda callback function
  * @returns {Promise<Object>} a message showing the record is deleted
  */
-function del(event, cb) {
+async function del(event, cb) {
   const { collectionName, version } = event.pathParameters;
 
   const collectionModel = new models.Collection();
 
-  return collectionModel.delete(collectionName, version)
-    .then(() => cb(null, { message: 'Record deleted' }))
-    .catch(cb);
+  try {
+    await collectionModel.delete(collectionName, version);
+  }
+  catch (err) {
+    if (err instanceof AssociatedRulesError) {
+      const message = `Cannot delete collection with associated rules: ${err.rules.join(', ')}`;
+      return cb({ message }, null, 409);
+    }
+
+    return cb(err);
+  }
+
+  return cb(null, { message: 'Record deleted' });
 }
 
 /**

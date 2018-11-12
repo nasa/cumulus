@@ -3,8 +3,10 @@
 const test = require('ava');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
+
 const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
 const { Manager, Provider, Rule } = require('../../models');
+const { AssociatedRulesError } = require('../../lib/errors');
 
 let manager;
 let ruleModel;
@@ -50,40 +52,6 @@ test('Providers.exists() returns false when a record does not exist', async (t) 
   t.false(await providersModel.exists(randomString()));
 });
 
-test('Providers.hasAssociatedRules() returns true when there is a rule associated with the provider', async (t) => {
-  const providersModel = new Provider();
-
-  const providerId = randomString();
-  await manager.create({ id: providerId });
-
-  const rule = fakeRuleFactoryV2({
-    provider: providerId,
-    rule: {
-      type: 'onetime'
-    }
-  });
-
-  // The workflow message template must exist in S3 before the rule can be created
-  await s3().putObject({
-    Bucket: process.env.bucket,
-    Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
-    Body: JSON.stringify({})
-  }).promise();
-
-  await ruleModel.create(rule);
-
-  t.true(await providersModel.hasAssociatedRules(providerId));
-});
-
-test('Providers.hasAssociatedRules() returns false when there is not a rule associated with the provider', async (t) => {
-  const providersModel = new Provider();
-
-  const providerId = randomString();
-  await manager.create({ id: providerId });
-
-  t.false(await providersModel.hasAssociatedRules(providerId));
-});
-
 test('Providers.delete() throws an exception if the provider does not exist', async (t) => {
   const providersModel = new Provider();
 
@@ -123,7 +91,9 @@ test('Providers.delete() throws an exception if the provider has associated rule
     t.fail('Expected an exception to be thrown');
   }
   catch (err) {
+    t.true(err instanceof AssociatedRulesError);
     t.is(err.message, 'Cannot delete a provider that has associated rules');
+    t.deepEqual(err.rules, [rule.name]);
   }
 });
 

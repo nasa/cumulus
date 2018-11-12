@@ -4,6 +4,7 @@ const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 
+const { AssociatedRulesError } = require('../../lib/errors');
 const { Manager, Collection, Rule } = require('../../models');
 const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
 
@@ -54,47 +55,6 @@ test('Collection.exists() returns false when a record does not exist', async (t)
   t.false(await collectionsModel.exists(randomString()));
 });
 
-test('Collection.hasAssociatedRules() returns true when there is a rule associated with the collection', async (t) => {
-  const name = randomString();
-  const version = randomString();
-
-  await manager.create({ name, version });
-
-  const rule = fakeRuleFactoryV2({
-    collection: {
-      name,
-      version
-    },
-    rule: {
-      type: 'onetime'
-    }
-  });
-
-  // The workflow message template must exist in S3 before the rule can be created
-  await s3().putObject({
-    Bucket: process.env.bucket,
-    Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
-    Body: JSON.stringify({})
-  }).promise();
-
-  await ruleModel.create(rule);
-
-  const collectionsModel = new Collection();
-
-  t.true(await collectionsModel.hasAssociatedRules(name, version));
-});
-
-test('Collection.hasAssociatedRules() returns false when there is not a rule associated with the collection', async (t) => {
-  const name = randomString();
-  const version = randomString();
-
-  await manager.create({ name, version });
-
-  const collectionsModel = new Collection();
-
-  t.false(await collectionsModel.hasAssociatedRules(name, version));
-});
-
 test('Collection.delete() throws an exception if the collection does not exist', async (t) => {
   const collectionsModel = new Collection();
 
@@ -139,7 +99,9 @@ test('Collection.delete() throws an exception if the collection has associated r
     t.fail('Expected an exception to be thrown');
   }
   catch (err) {
+    t.true(err instanceof AssociatedRulesError);
     t.is(err.message, 'Cannot delete a collection that has associated rules');
+    t.deepEqual(err.rules, [rule.name]);
   }
 });
 
