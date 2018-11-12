@@ -10,12 +10,12 @@ const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 
 const { AccessToken } = require('../models');
 const {
-  buildAuthorizationFailureResponse,
-  buildLambdaProxyResponse
-} = require('../lib/response');
+  AuthorizationFailureResponse,
+  LambdaProxyResponse
+} = require('../lib/responses');
 
 const buildPermanentRedirectResponse = (location) =>
-  buildLambdaProxyResponse({
+  new LambdaProxyResponse({
     json: false,
     statusCode: 301,
     body: 'Redirecting',
@@ -54,7 +54,7 @@ async function token(event, oAuth2Provider) {
         );
       }
       log.info('Log info: No state specified, responding 200');
-      return buildLambdaProxyResponse({
+      return new LambdaProxyResponse({
         json: true,
         statusCode: 200,
         body: { message: { token: accessToken } }
@@ -62,20 +62,20 @@ async function token(event, oAuth2Provider) {
     }
     catch (e) {
       if (e.statusCode === 400) {
-        return buildAuthorizationFailureResponse({
+        return new AuthorizationFailureResponse({
           error: 'authorization_failure',
           message: 'Failed to get authorization token'
         });
       }
 
       log.error('Error caught when checking code:', e);
-      return buildAuthorizationFailureResponse({ error: e, message: e.message });
+      return new AuthorizationFailureResponse({ error: e, message: e.message });
     }
   }
 
   const errorMessage = 'Request requires a code';
   const error = new Error(errorMessage);
-  return buildAuthorizationFailureResponse({ error: error, message: error.message });
+  return new AuthorizationFailureResponse({ error: error, message: error.message });
 }
 
 /**
@@ -102,7 +102,7 @@ const isGetTokenRequest = (request) =>
   request.httpMethod === 'GET'
   && request.resource.endsWith('/token');
 
-const notFoundResponse = buildLambdaProxyResponse({
+const notFoundResponse = new LambdaProxyResponse({
   json: false,
   statusCode: 404,
   body: 'Not found'
