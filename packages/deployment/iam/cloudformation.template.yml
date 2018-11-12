@@ -317,7 +317,7 @@ Resources:
                   - cloudformation:DescribeStacks
                 Resource: '*'
 
-  # Migration Processing Role with additional permissions for migrations
+  # Role with additional permissions for migrations
   MigrationProcessingRole:
     Type: AWS::IAM::Role
     Properties:
