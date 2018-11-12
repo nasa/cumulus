@@ -899,6 +899,40 @@ async function moveGranuleFile(source, target, options) {
 }
 
 /**
+ * For each source file, see if there is a destination and generate the source
+ * and target for the file moves.
+ * @param {Array<Object>} sourceFiles - granule file objects
+ * @param {Array<Object>} destinations - array of objects defining the destination of granule files
+ * @returns {Array<Object>} - array containing the parameters for moving the file:
+ *  {
+ *    source: { Bucket, Key },
+ *    target: { Bucket, Key },
+ *    file: file object
+ *  }
+ */
+function generateMoveFileParams(sourceFiles, destinations) {
+  return sourceFiles.map((file) => {
+    const destination = destinations.find((dest) => file.name.match(dest.regex));
+    const parsed = aws.parseS3Uri(file.filename);
+    // if there's no match, we skip the file
+    if (destination) {
+      const source = {
+        Bucket: parsed.Bucket,
+        Key: parsed.Key
+      };
+
+      const target = {
+        Bucket: destination.bucket,
+        Key: destination.filepath ? urljoin(destination.filepath, file.name) : file.name
+      };
+
+      return { source, target, file };
+    }
+    return { source: null, target: null, file };
+  });
+}
+
+/**
  * move granule files from one s3 location to another
  *
  * @param {string} granuleId - granuleiId
@@ -916,21 +950,13 @@ async function moveGranuleFile(source, target, options) {
  * @returns {Promise<Object>} returns promise from publishing cmr file
  */
 async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoint, published) {
-  const moveFileRequests = sourceFiles.map((file) => {
-    const destination = destinations.find((dest) => file.name.match(dest.regex));
+  const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
+
+  const moveFileRequests = moveFileParams.map((moveFileParam) => {
+    const { source, target, file } = moveFileParam;
     const parsed = aws.parseS3Uri(file.filename);
-    // if there's no match, we skip the file
-    if (destination) {
-      const source = {
-        Bucket: parsed.Bucket,
-        Key: parsed.Key
-      };
 
-      const target = {
-        Bucket: destination.bucket,
-        Key: urljoin(destination.filepath, file.name)
-      };
-
+    if (target) {
       log.debug('moveGranuleFiles', source, target);
       return moveGranuleFile(source, target).then(() => {
         // update the granule file location in source file
@@ -941,6 +967,7 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
         /* eslint-enable no-param-reassign */
       });
     }
+
     // else set filepath as well so it won't be null
     file.filepath = parsed.Key; /* eslint-disable-line no-param-reassign */
     return Promise.resolve();
@@ -1026,3 +1053,4 @@ module.exports.isFileRenamed = isFileRenamed;
 module.exports.moveGranuleFile = moveGranuleFile;
 module.exports.moveGranuleFiles = moveGranuleFiles;
 module.exports.renameS3FileWithTimestamp = renameS3FileWithTimestamp;
+module.exports.generateMoveFileParams = generateMoveFileParams;
