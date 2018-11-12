@@ -62,7 +62,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
     });
   });
 
-  describe('the scheduled rule is deleted', () =>  {
+  describe('the scheduled rule is deleted', () => {
     beforeAll(async () => {
       console.log(`deleting rule ${scheduledHelloWorldRule.name}`);
       await rulesApiTestUtils.deleteRule({

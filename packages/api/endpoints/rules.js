@@ -44,7 +44,6 @@ function get(event, cb) {
  * @returns {Object} returns the collection that was just saved.
  */
 function post(event, cb) {
-  console.info(`\nRule POST called with: ${JSON.stringify(event)}\n`);
   const data = JSON.parse(event.body || {});
   const name = data.name;
 
@@ -57,8 +56,6 @@ function post(event, cb) {
         const response = model.create(data)
           .then((r) => cb(null, { message: 'Record saved', record: r }))
           .catch(cb);
-
-        console.info(`\nRule model.create returns: ${response}\n`);
 
         return response;
       }
