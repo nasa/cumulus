@@ -431,7 +431,7 @@ ApiReconciliationReportV1:
       cors: true
       api: backend
 
-AsyncOperationsV1:
+ApiAsyncOperationsV1:
   handler: index.asyncOperations
   apiRole: true
   source: 'node_modules/@cumulus/api/dist/'
