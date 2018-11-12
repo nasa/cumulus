@@ -6,7 +6,7 @@ const test = require('ava');
 
 const { randomString } = require('@cumulus/common/test-utils');
 const { SQS } = require('@cumulus/ingest/aws');
-const { s3, recursivelyDeleteS3Bucket, sns } = require('@cumulus/common/aws');
+const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
 const { getRules, handler } = require('../../lambdas/kinesis-consumer');
 const Collection = require('../../models/collections');
 const Rule = require('../../models/rules');
