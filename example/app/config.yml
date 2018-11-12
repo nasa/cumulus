@@ -254,6 +254,24 @@ lf-int-test:
       name: lf-protected-2
       type: protected
 
+lf-sit:
+  stackName: lf-sit
+  stackNameNoDash: lfSit
+
+  buckets:
+    internal:
+      name: lf-sit-internal
+      type: internal
+    private:
+      name: lf-sit-private
+      type: private
+    protected:
+      name: lf-sit-protected
+      type: protected
+    public:
+      name: lf-sit-cumulus-public
+      type: public
+
 kk-uat-deployment:
   stackName: kk-test-uat
   stackNameNoDash: KkTestUat

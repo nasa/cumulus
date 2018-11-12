@@ -5,7 +5,7 @@ default:
   capabilities:
     - CAPABILITY_NAMED_IAM
 
-  system_bucket: cumulus-test-sandbox-internal
+  system_bucket: '{{buckets.internal.name}}'
 
   buckets:
     internal:
@@ -116,6 +116,24 @@ lf-int-test:
     protected-2:
       name: lf-protected-2
       type: protected
+
+lf-sit:
+  prefix: lf-sit
+  stackName: lf-sit-iam
+
+  buckets:
+    internal:
+      name: lf-sit-internal
+      type: internal
+    private:
+      name: lf-sit-private
+      type: private
+    protected:
+      name: lf-sit-protected
+      type: protected
+    public:
+      name: lf-sit-cumulus-public
+      type: public
 
 jl:
   prefix: jl-test-integration
