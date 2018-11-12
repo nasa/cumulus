@@ -6,7 +6,7 @@ const test = require('ava');
 
 const { randomString } = require('@cumulus/common/test-utils');
 const { SQS } = require('@cumulus/ingest/aws');
-const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const { s3, recursivelyDeleteS3Bucket, sns } = require('@cumulus/common/aws');
 const { getRules, handler } = require('../../lambdas/kinesis-consumer');
 const Collection = require('../../models/collections');
 const Rule = require('../../models/rules');
@@ -88,6 +88,8 @@ test.before(async () => {
   process.env.RulesTable = randomString();
   ruleModel = new Rule();
   await ruleModel.createTable();
+  sinon.stub(ruleModel, 'addSnsTrigger');
+  sinon.stub(ruleModel, 'deleteSnsTrigger');
 });
 
 test.beforeEach(async (t) => {
@@ -124,7 +126,7 @@ test.beforeEach(async (t) => {
   t.context.tableName = process.env.RulesTable;
   process.env.stackName = randomString();
   process.env.bucket = randomString();
-  process.env.snsConsumer = randomString();
+  process.env.kinesisConsumer = randomString();
 
   await Promise.all([rule1Params, rule2Params, disabledRuleParams]
     .map((rule) => ruleModel.create(rule)));
@@ -140,6 +142,8 @@ test.afterEach.always(async (t) => {
 
 test.after.always(async () => {
   await ruleModel.deleteTable();
+  ruleModel.addSnsTrigger.restore();
+  ruleModel.deleteSnsTrigger.restore();
 });
 
 // getKinesisRule tests
