@@ -78,7 +78,7 @@ class Provider extends Manager {
   async delete(id) {
     if (!(await this.exists(id))) throw new Error('Provider does not exist');
 
-    const associatedRuleNames = (await this.associatedRules(id))
+    const associatedRuleNames = (await this.getAssociatedRules(id))
       .map((rule) => rule.name);
 
     if (associatedRuleNames.length > 0) {
@@ -97,7 +97,7 @@ class Provider extends Manager {
    * @param {string} id - the provider id
    * @returns {Promise<boolean>}
    */
-  async associatedRules(id) {
+  async getAssociatedRules(id) {
     const ruleModel = new Rule();
 
     const scanResult = await ruleModel.scan({
