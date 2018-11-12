@@ -40,6 +40,7 @@
     "@cumulus/cmrjs": "^1.10.3",
     "@cumulus/common": "^1.10.3",
     "@cumulus/ingest": "^1.10.3",
+    "@cumulus/logger": "^1.10.3",
     "@cumulus/pvl": "^1.10.0",
     "@mapbox/dyno": "^1.4.1",
     "ajv": "^5.2.2",
