@@ -31,9 +31,11 @@ const {
   addCollections,
   addProviders,
   api: apiTestUtils,
+  executionsApi: executionsApiTestUtils,
   buildAndExecuteWorkflow,
   cleanupProviders,
   cleanupCollections,
+  granulesApi: granulesApiTestUtils,
   LambdaStep,
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
@@ -222,7 +224,7 @@ describe('Ingesting from PDR', () => {
         await Promise.all(queueGranulesOutput.payload.running.map(async (arn) => {
           await waitForCompletedExecution(arn);
         }));
-        await apiTestUtils.deleteGranule({
+        await granulesApiTestUtils.deleteGranule({
           prefix: config.stackName,
           granuleId: parseLambdaOutput.payload.granules[0].granuleId
         });
@@ -307,7 +309,7 @@ describe('Ingesting from PDR', () => {
           // delete ingested granule(s)
           await Promise.all(
             finalOutput.payload.granules.map((g) =>
-              apiTestUtils.deleteGranule({
+              granulesApiTestUtils.deleteGranule({
                 prefix: config.stackName,
                 granuleId: g.granuleId
               }))
@@ -334,7 +336,7 @@ describe('Ingesting from PDR', () => {
       describe('When accessing an execution via the API that was triggered from a parent step function', () => {
         it('displays a link to the parent', async () => {
           const ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
-          const ingestGranuleExecutionResponse = await apiTestUtils.getExecution({
+          const ingestGranuleExecutionResponse = await executionsApiTestUtils.getExecution({
             prefix: config.stackName,
             arn: ingestGranuleWorkflowArn
           });
@@ -346,7 +348,7 @@ describe('Ingesting from PDR', () => {
 
       describe('When accessing an execution via the API that was not triggered from a parent step function', () => {
         it('does not display a parent link', async () => {
-          const parsePdrExecutionResponse = await apiTestUtils.getExecution({
+          const parsePdrExecutionResponse = await executionsApiTestUtils.getExecution({
             prefix: config.stackName,
             arn: workflowExecution.executionArn
           });
@@ -373,7 +375,7 @@ describe('Ingesting from PDR', () => {
         let executionStatus;
 
         beforeAll(async () => {
-          const executionStatusResponse = await apiTestUtils.getExecutionStatus({
+          const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
             prefix: config.stackName,
             arn: parsePdrExecutionArn
           });
@@ -429,7 +431,7 @@ describe('Ingesting from PDR', () => {
     describe('When accessing an execution via the API that was triggered from a parent step function', () => {
       it('displays a link to the parent', async () => {
         parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
-        const parsePdrExecutionResponse = await apiTestUtils.getExecution({
+        const parsePdrExecutionResponse = await executionsApiTestUtils.getExecution({
           prefix: config.stackName,
           arn: parsePdrExecutionArn
         });
@@ -441,7 +443,7 @@ describe('Ingesting from PDR', () => {
 
     describe('When accessing an execution via the API that was not triggered from a parent step function', () => {
       it('does not display a parent link', async () => {
-        const queuePdrsExecutionResponse = await apiTestUtils.getExecution({
+        const queuePdrsExecutionResponse = await executionsApiTestUtils.getExecution({
           prefix: config.stackName,
           arn: workflowExecution.executionArn
         });

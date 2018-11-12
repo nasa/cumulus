@@ -53,28 +53,6 @@ async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
   return JSON.parse(apiOutput.Payload);
 }
 
-/**
- * GET /granules/{granuleName}
- *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.granuleId - a granule ID
- * @returns {Promise<Object>} - the granule fetched by the API
- */
-async function getGranule({ prefix, granuleId }) {
-  return callCumulusApi({
-    prefix: prefix,
-    functionName: 'ApiGranulesDefault',
-    payload: {
-      httpMethod: 'GET',
-      resource: '/granules/{granuleName}',
-      path: `/granules/${granuleId}`,
-      pathParameters: {
-        granuleName: granuleId
-      }
-    }
-  });
-}
 
 /**
  * GET /asyncOperations/{id}
@@ -120,109 +98,6 @@ function postBulkDelete({ prefix, granuleIds }) {
 }
 
 /**
- * Reingest a granule from the Cumulus API
- *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.granuleId - a granule ID
- * @returns {Promise<Object>} - the granule fetched by the API
- */
-async function reingestGranule({ prefix, granuleId }) {
-  return callCumulusApi({
-    prefix: prefix,
-    functionName: 'ApiGranulesDefault',
-    payload: {
-      httpMethod: 'PUT',
-      resource: '/granules/{granuleName}',
-      path: `/granules/${granuleId}`,
-      pathParameters: {
-        granuleName: granuleId
-      },
-      body: JSON.stringify({ action: 'reingest' })
-    }
-  });
-}
-
-/**
- * Removes a granule from CMR via the Cumulus API
- *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.granuleId - a granule ID
- * @returns {Promise<Object>} - the granule fetched by the API
- */
-async function removeFromCMR({ prefix, granuleId }) {
-  const payload = await callCumulusApi({
-    prefix: prefix,
-    functionName: 'ApiGranulesDefault',
-    payload: {
-      httpMethod: 'PUT',
-      resource: '/granules/{granuleName}',
-      path: `/granules/${granuleId}`,
-      pathParameters: {
-        granuleName: granuleId
-      },
-      body: JSON.stringify({ action: 'removeFromCmr' })
-    }
-  });
-
-  try {
-    return payload;
-  }
-  catch (error) {
-    console.log(`Error parsing JSON response removing granule ${granuleId} from CMR: ${JSON.stringify(payload)}`);
-    throw error;
-  }
-}
-/**
- * Run a workflow with the given granule as the payload
- *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.granuleId - a granule ID
- * @param {string} params.workflow - workflow to be run with given granule
- * @returns {Promise<Object>} - the granule fetched by the API
- */
-async function applyWorkflow({ prefix, granuleId, workflow }) {
-  return callCumulusApi({
-    prefix: prefix,
-    functionName: 'ApiGranulesDefault',
-    payload: {
-      httpMethod: 'PUT',
-      resource: '/granules/{granuleName}',
-      path: `/granules/${granuleId}`,
-      pathParameters: {
-        granuleName: granuleId
-      },
-      body: JSON.stringify({ action: 'applyWorkflow', workflow })
-    }
-  });
-}
-
-/**
- * Delete a granule from Cumulus via the API
- *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.granuleId - a granule ID
- * @returns {Promise<Object>} - the delete confirmation from the API
- */
-async function deleteGranule({ prefix, granuleId }) {
-  return callCumulusApi({
-    prefix: prefix,
-    functionName: 'ApiGranulesDefault',
-    payload: {
-      httpMethod: 'DELETE',
-      resource: '/granules/{granuleName}',
-      path: `/granules/${granuleId}`,
-      pathParameters: {
-        granuleName: granuleId
-      }
-    }
-  });
-}
-
-/**
  * Delete a pdr from Cumulus via the API
  *
  * @param {Object} params - params
@@ -240,29 +115,6 @@ async function deletePdr({ prefix, pdr }) {
       path: `/pdrs/${pdr}`,
       pathParameters: {
         pdrName: pdr
-      }
-    }
-  });
-}
-
-/**
- * Fetch an execution from the Cumulus API
- *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.arn - an execution arn
- * @returns {Promise<Object>} - the execution fetched by the API
- */
-async function getExecution({ prefix, arn }) {
-  return callCumulusApi({
-    prefix: prefix,
-    functionName: 'ApiExecutionsDefault',
-    payload: {
-      httpMethod: 'GET',
-      resource: '/executions/{arn}',
-      path: `executions/${arn}`,
-      pathParameters: {
-        arn: arn
       }
     }
   });
@@ -306,29 +158,6 @@ async function getExecutionLogs({ prefix, executionName }) {
       path: `logs/${executionName}`,
       pathParameters: {
         executionName: executionName
-      }
-    }
-  });
-}
-
-/**
- * get execution status from the Cumulus API
- *
- * @param {Object} params - params
- * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.arn - an execution arn
- * @returns {Promise<Object>} - the execution status fetched by the API
- */
-async function getExecutionStatus({ prefix, arn }) {
-  return callCumulusApi({
-    prefix: prefix,
-    functionName: 'ApiExecutionStatusDefault',
-    payload: {
-      httpMethod: 'GET',
-      resource: '/executions/status/{arn}',
-      path: `executions/status/${arn}`,
-      pathParameters: {
-        arn: arn
       }
     }
   });
@@ -559,14 +388,10 @@ async function updateProvider({ prefix, provider, updateParams }) {
 }
 
 module.exports = {
-  applyWorkflow,
   callCumulusApi,
   getAsyncOperation,
-  deleteGranule,
   deletePdr,
-  getExecution,
   getExecutionLogs,
-  getExecutionStatus,
   addCollectionApi,
   addProviderApi,
   getProviders,
@@ -575,11 +400,8 @@ module.exports = {
   getWorkflow,
   getProvider,
   getCollection,
-  getGranule,
   getLogs,
   postBulkDelete,
-  reingestGranule,
-  removeFromCMR,
   updateCollection,
   updateProvider
 };

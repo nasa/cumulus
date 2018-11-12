@@ -156,8 +156,11 @@ test('GET returns an existing execution', (t) => {
     headers: authHeaders
   };
   return testEndpoint(executionEndpoint, getEvent, (response) => {
-    const { arn } = JSON.parse(response.body);
-    t.is(arn, fakeExecutions[0].arn);
+    const executionResult = JSON.parse(response.body);
+    t.is(executionResult.arn, fakeExecutions[0].arn);
+    t.is(executionResult.name, fakeExecutions[0].name);
+    t.truthy(executionResult.duration);
+    t.is(executionResult.status, 'completed');
   });
 });
 

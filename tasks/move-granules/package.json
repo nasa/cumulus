@@ -40,7 +40,7 @@
   "dependencies": {
     "@cumulus/cmrjs": "^1.10.3",
     "@cumulus/common": "^1.10.3",
-    "@cumulus/cumulus-message-adapter-js": "^1.0.4",
+    "@cumulus/cumulus-message-adapter-js": "^1.0.7",
     "@cumulus/ingest": "^1.10.3",
     "@cumulus/test-data": "^1.10.2",
     "lodash.clonedeep": "^4.5.0",
