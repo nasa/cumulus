@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 **Please Note**
+-  CUMULUS-817 includes a migration that requires reconfiguration/redeployment of IAM roles.  Please see the [upgrade instructions](https://nasa.github.io/cumulus/docs/upgrade/1.11.0) for more information.
 - `cumulus-message-adapter` v1.0.13+ is required for `@cumulus/api` granule reingest API to work properly.  The latest version should be downloaded automatically by kes.
 
 ### Changed
