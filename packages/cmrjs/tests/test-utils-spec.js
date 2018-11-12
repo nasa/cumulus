@@ -27,8 +27,8 @@ test('getIp returns fallback IP when no public IP is available', async (t) => {
 test('getIp throws an error when the error is unexpected', async (t) => {
   const errorMessage = 'Server is experiencing an identity crisis';
   stub = sinon.stub(publicIp, 'v4').rejects(new Error(errorMessage));
-  await getIp().catch((e) => {
-    t.is(e.message, errorMessage);
+  await getIp().catch((error) => {
+    t.is(error.message, errorMessage);
   });
 });
 

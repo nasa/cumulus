@@ -20,57 +20,37 @@ const logDetails = {
 };
 
 /**
- * Search for a concept on CMR
  *
- * @param {string} type - the concept type. Choices are: collection, granule
- * @param {Object} searchParams - cmr search params
- * @param {Array} existingResults - array of results returned in previous recursive calls
- * @returns {Promise.<Array>} an array of search results
+ * @param {string} type - Concept type to search, choices: ['collections', 'granules']
+ * @param {Object} searchParams - CMR search parameters
+ * @param {Array} previousResults - array of results returned in previous recursive calls
+ * @returns {Promise.<Array>} - array of search results.
  */
-async function searchConcept(type, searchParams, existingResults) {
-  const limit = process.env.CMR_LIMIT || 100;
-  const pageSize = process.env.CMR_PAGE_SIZE || 50;
-  let pageNum = 1;
+async function searchConcept(type, searchParams, previousResults = []) {
+  const recordsLimit = process.env.CMR_LIMIT || 100;
+  const pageSize = searchParams.pageSize || process.env.CMR_PAGE_SIZE || 50;
 
-  if (searchParams.page_num) {
-    pageNum = searchParams.page_num + 1;
-  }
+  const defaultParams = { page_size: pageSize };
+
+  const url = `${getUrl('search')}${type}.json`;
+
+  const pageNum = (searchParams.page_num) ? searchParams.page_num + 1 : 1;
 
   // Recursively retrieve all the search results for collections or granules
-  // Also, parse them from XML into native JS objects
-  const qs = Object.assign(
-    Object.assign({ page_size: pageSize }, searchParams),
-    { page_num: pageNum }
-  );
+  const query = { ...defaultParams, ...searchParams, page_num: pageNum };
 
-  const body = await got(getUrl('search') + type, { query: qs });
+  const response = await got.get(url, { json: true, query });
+  const fetchedResults = previousResults.concat(response.body.feed.entry || []);
 
-  const str = await new Promise((resolve, reject) => {
-    parseString(body, xmlParseOptions, (err, res) => {
-      if (err) reject(err);
-
-      if (res.errors) {
-        const errorMessage = JSON.stringify(res.errors.error);
-        throw new Error(errorMessage);
-      }
-
-      resolve(res);
-    });
-  });
-
-  const _existingResults = existingResults.concat(str.results.references.reference || []);
-
-  const servedSoFar = (
-    ((qs.page_num - 1) * qs.page_size)
-      + (str.results.references ? str.results.references.reference.length : 0)
-  );
-  const isThereAnotherPage = str.results.hits > servedSoFar;
-  if (isThereAnotherPage && servedSoFar < limit) {
-    return searchConcept(type, qs, _existingResults);
+  const numRecordsCollected = fetchedResults.length;
+  const CMRHasMoreResults = response.headers['cmr-hits'] > numRecordsCollected;
+  const recordsLimitReached = numRecordsCollected >= recordsLimit;
+  if (CMRHasMoreResults && !recordsLimitReached) {
+    return searchConcept(type, query, fetchedResults);
   }
-
-  return _existingResults.slice(0, limit);
+  return fetchedResults.slice(0, recordsLimit);
 }
+
 
 /**
  * Posts a records of any kind (collection, granule, etc) to
@@ -312,7 +292,8 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async searchCollections(searchParams) {
-    return searchConcept('collection', searchParams, []);
+    const params = { ...{ provider_short_name: this.provider }, ...searchParams };
+    return searchConcept('collections', params, []);
   }
 
   /**
@@ -322,7 +303,8 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async searchGranules(searchParams) {
-    return searchConcept('granule', searchParams, []);
+    const params = { ...{ provider_short_name: this.provider }, ...searchParams };
+    return searchConcept('granules', params, []);
   }
 }
 
