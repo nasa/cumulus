@@ -34,11 +34,17 @@ const ValidationError = createErrorType('ValidationError');
  * value for CMR_ENVIRONMENT environment variable. Defaults
  * to the uat cmr
  *
+ * @param {Object} environment - process env like object
+ * @param {string} environment.CMR_ENVIRONMENT - [optional] CMR environment to
+ *              use valid arguments are ['OPS', 'SIT', 'UAT'], anything that is
+ *              not 'OPS' or 'SIT' will be interpreted as 'UAT'
+ * @param {string} environment.CMR_HOST [optional] explicit host to return, if
+ *              this has a value, it overrides any values for CMR_ENVIRONMENT
  * @returns {string} the cmr host address
  */
-function getHost() {
-  const env = process.env.CMR_ENVIRONMENT;
-  if (process.env.CMR_HOST) return process.env.CMR_HOST;
+function getHost(environment = process.env) {
+  const env = environment.CMR_ENVIRONMENT;
+  if (environment.CMR_HOST) return environment.CMR_HOST;
 
   let host;
   if (env === 'OPS') {
