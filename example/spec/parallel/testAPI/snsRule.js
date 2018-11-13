@@ -63,6 +63,7 @@ describe('The SNS-type rule', () => {
 
   it('is returned in the post response', () => {
     const responseCopy = removeRuleAddedParams(postRule.record);
+    delete responseCopy.rule.arn;
     expect(responseCopy).toEqual(snsRuleDefinition);
   });
 
@@ -96,7 +97,7 @@ describe('The SNS-type rule', () => {
     });
 
     it('saves its new state', () => {
-      expect(putRule.record.state).toBe('DISABLED');
+      expect(putRule.state).toBe('DISABLED');
     });
 
     it('deletes the subscription', async () => {
@@ -113,7 +114,7 @@ describe('The SNS-type rule', () => {
     });
 
     it('saves its new state', () => {
-      expect(putRule.record.state).toBe('ENABLED');
+      expect(putRule.state).toBe('ENABLED');
     });
 
     it('re-adds the subscription', async () => {

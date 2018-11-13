@@ -55,13 +55,13 @@ async function postRule({ prefix, rule }) {
  * @param {Object} params.updateParams - key/value to update on the rule
  * @returns {Promise<Object>} - promise that resolves to the output of the API lambda
  */
-async function updateRule({ prefix, rule, updateParams }) {
+async function updateRule({ prefix, ruleName, updateParams }) {
   const payload = {
     httpMethod: 'PUT',
     resource: '/rules/{name}',
-    path: `rules/${rule.name}`,
+    path: `rules/${ruleName}`,
     pathParameters: {
-      name: rule.name
+      name: ruleName
     },
     body: JSON.stringify(updateParams)
   };
