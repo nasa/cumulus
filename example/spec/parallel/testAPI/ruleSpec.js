@@ -71,14 +71,14 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
 
     it('does not kick off a workflow', () => {
       try {
-        waitForTestExecutionStart(
-          scheduledHelloWorldRule.workflow,
-          config.stackName,
-          config.bucket,
-          (taskInput, params) =>
+        waitForTestExecutionStart({
+          workflowName: scheduledHelloWorldRule.workflow,
+          stackName: config.stackName,
+          bucket: config.bucket,
+          findExecutionFn: (taskInput, params) =>
             taskInput.meta.triggerRule && (taskInput.meta.triggerRule === params.ruleName),
-          { ruleName: scheduledRuleName }
-        );
+          findExecutionFnParams: { ruleName: scheduledRuleName }
+        });
       }
       catch (err) {
         expect(err.message).toEqual('Never found started workflow.');
@@ -136,7 +136,13 @@ describe('When I create a one-time rule via the Cumulus API', () => {
     beforeAll(async () => {
       console.log(`Waiting for execution of ${helloWorldRule.workflow} triggered by rule`);
 
-      execution = await waitForTestExecutionStart(helloWorldRule.workflow, config.stackName, config.bucket, isWorkflowTriggeredByRule, { rule: createdCheck });
+      execution = await waitForTestExecutionStart({
+        workflowName: helloWorldRule.workflow,
+        stackName: config.stackName,
+        bucket: config.bucket,
+        findExecutionFn: isWorkflowTriggeredByRule,
+        findExecutionFnParams: { rule: createdCheck }
+      });
       console.log(`Execution ARN: ${execution.executionArn}`);
     });
 
@@ -164,7 +170,13 @@ describe('When I create a one-time rule via the Cumulus API', () => {
       });
 
       console.log(`Waiting for new execution of ${helloWorldRule.workflow} triggered by rerun of rule`);
-      const updatedExecution = await waitForTestExecutionStart(helloWorldRule.workflow, config.stackName, config.bucket, isWorkflowTriggeredByRule, { rule: updatedCheck });
+      const updatedExecution = await waitForTestExecutionStart({
+        workflowName: helloWorldRule.workflow,
+        stackName: config.stackName,
+        bucket: config.bucket,
+        findExecutionFn: isWorkflowTriggeredByRule,
+        findExecutionFnParams: { rule: updatedCheck }
+      });
       const updatedTaskInput = await lambdaStep.getStepInput(updatedExecution.executionArn, 'SfSnsReport');
       expect(updatedExecution).not.toBeNull();
       expect(updatedTaskInput.meta.triggerRule).toEqual(updatedCheck);
