@@ -36,6 +36,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     deprecated
 - **CUMULUS-986**
   - Added `waitForTestExecutionStart` to `@cumulus/integration-tests`
+- **CUMULUS-919**
+  - Added an `iam-ngap` CloudFormation template to `@cumulus/deployment`
 
 ### Changed
 - Updated `@cumulus/helloworld` to use S3 to store state for pass on retry tests
