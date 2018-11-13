@@ -213,6 +213,8 @@ The buckets created in the [Create S3 Buckets](#create-s3-buckets) step. Buckets
 
     $ ./node_modules/.bin/kes cf deploy --kes-folder iam --deployment <iam-deployment-name> --template node_modules/@cumulus/deployment/iam --region <region>
 
+**Note**: For IAM deployment to NASA NGAP accounts, the deployment package has an `iam-ngap` deployment template, which can be used by substituting `--template node_modules/@cumulus/deployment/iam-ngap` above.
+
 **Note**: If this deployment fails check the deployment details in the AWS Cloud Formation Console for information. Permissions may need to be updated by your AWS administrator.
 
 If the `iam` deployment command  succeeds, you should see 6 new roles in the [IAM Console](https://console.aws.amazon.com/iam/home):
