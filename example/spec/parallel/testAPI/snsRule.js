@@ -54,11 +54,6 @@ describe('The SNS-type rule', () => {
   });
 
   afterAll(async () => {
-    console.log(`deleting rule ${snsRuleDefinition.name}`);
-    await rulesApiTestUtils.deleteRule({
-      prefix: config.stackName,
-      ruleName: snsRuleDefinition.name
-    });
     await SNS.deleteTopic({ TopicArn: snsTopicArn }).promise();
   });
 
@@ -136,6 +131,7 @@ describe('The SNS-type rule', () => {
     let getRule;
 
     beforeAll(async () => {
+      console.log(`deleting rule ${snsRuleDefinition.name}`);
       await rulesApiTestUtils.deleteRule({ prefix: config.stackName, ruleName });
       const getRuleResponse = await rulesApiTestUtils.deleteRule({ prefix: config.stackName, ruleName });
       getRule = JSON.parse(getRuleResponse.body);
