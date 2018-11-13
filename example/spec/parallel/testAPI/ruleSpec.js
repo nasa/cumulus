@@ -145,7 +145,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
     it('the rule can be updated', async () => {
       const updatingRuleResponse = await rulesApiTestUtils.updateRule({
         prefix: config.stackName,
-        rule: helloWorldRule,
+        ruleName: helloWorldRule.name,
         updateParams: {
           meta: {
             triggerRule: updatedCheck

@@ -67,8 +67,10 @@ class Rule extends Manager {
    * @returns {Promise} the response from database updates
    */
   async update(original, updated) {
-    if (updated.state) {
+    let stateChanged;
+    if (updated.state !== original.state) {
       original.state = updated.state;
+      stateChanged = true;
     }
 
     let valueUpdated = false;
@@ -96,8 +98,8 @@ class Rule extends Manager {
       break;
     case 'sns': {
       // TODO - check if subscription already exists
-      if (valueUpdated || original.state !== updated.state) {
-        if (original.state === 'ENABLED') {
+      if (valueUpdated || stateChanged) {
+        if (original.rule.arn) {
           await this.deleteSnsTrigger(original);
         }
         if (updated.state === 'ENABLED') {
