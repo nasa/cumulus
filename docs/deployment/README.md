@@ -215,7 +215,7 @@ The buckets created in the [Create S3 Buckets](#create-s3-buckets) step. Buckets
 
 **Note**: If this deployment fails check the deployment details in the AWS Cloud Formation Console for information. Permissions may need to be updated by your AWS administrator.
 
-If the `iam` deployment command  succeeds, you should see 6 new roles in the [IAM Console](https://console.aws.amazon.com/iam/home):
+If the `iam` deployment command  succeeds, you should see 7 new roles in the [IAM Console](https://console.aws.amazon.com/iam/home):
 
 * `<stack-name>-ecs`
 * `<stack-name>-lambda-api-gateway`
@@ -223,6 +223,7 @@ If the `iam` deployment command  succeeds, you should see 6 new roles in the [IA
 * `<stack-name>-scaling-role`
 * `<stack-name>-steprole`
 * `<stack-name>-distribution-api-lambda`
+* `<stack-name>-migration-processing`
 
 
 The same information can be obtained from the AWS CLI command: `aws iam list-roles`.
@@ -274,7 +275,7 @@ The config buckets should map to the same names you used when creating buckets i
 
 ###### iams
 
-Add the ARNs for each of the four roles and one instanceProfile created in the [Create IAM Roles](create-iam-roles) step. You can retrieve the ARNs from:
+Add the ARNs for each of the seven roles and one instanceProfile created in the [Create IAM Roles](create-iam-roles) step. You can retrieve the ARNs from:
 
     $ aws iam list-roles | grep Arn
     $ aws iam list-instance-profiles | grep Arn
