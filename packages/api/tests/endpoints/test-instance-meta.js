@@ -40,9 +40,9 @@ test('GET returns expected metadata', (t) => {
   return testEndpoint(instanceMetaEndpoint, request, (response) => {
     const body = JSON.parse(response.body);
     t.deepEqual(body, {
-      instanceMetadata: {
-        CMR_PROVIDER: CMR_PROVIDER,
-        CMR_ENVIRONMENT: CMR_ENVIRONMENT
+      cmr: {
+        provider: CMR_PROVIDER,
+        environment: CMR_ENVIRONMENT
       }
     });
   });
