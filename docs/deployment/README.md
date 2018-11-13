@@ -209,6 +209,18 @@ The buckets created in the [Create S3 Buckets](#create-s3-buckets) step. Buckets
             name: <internal bucket name>
             type: internal
 
+        private: # bucket key
+            name: <private bucket name>
+            type: private
+
+        protected: # bucket key
+            name: <protected bucket name>
+            type: protected
+
+        public: # bucket key
+            name: <public bucket name>
+            type: public
+
 **Deploy `iam` stack**[^1]
 
     $ ./node_modules/.bin/kes cf deploy --kes-folder iam --deployment <iam-deployment-name> --template node_modules/@cumulus/deployment/iam --region <region>
