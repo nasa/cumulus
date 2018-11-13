@@ -106,6 +106,8 @@ class Rule extends Manager {
         }
         if (original.state === 'ENABLED') {
           await this.addSnsTrigger(original);
+          if (!updated.rule) updated.rule = original.rule;
+          else updated.rule.arn = original.rule.arn;
         }
       }
       break;
