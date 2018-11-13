@@ -18,6 +18,7 @@ const SNS = sns();
 const config = loadConfig();
 const ruleName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestRule`);
 const snsTopicName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestTopic`);
+const newValueTopicName = timestampedName(`${config.stackName}_SnsRuleValueChangeTestTopic`);
 const consumerName = `${config.stackName}-kinesisConsumer`;
 
 const snsMessage = '{\"Records\":[{}]}';
@@ -41,6 +42,7 @@ async function getNumberOfTopicSubscriptions(snsTopicArn) {
 describe('The SNS-type rule', () => {
   let postRule;
   let snsTopicArn;
+  let newTopicArn;
 
   beforeAll(async () => {
     const { TopicArn } = await SNS.createTopic({ Name: snsTopicName }).promise();
@@ -127,6 +129,33 @@ describe('The SNS-type rule', () => {
     });
   });
 
+  describe('on update with a rule.value change', () => {
+    let putRule;
+
+    beforeAll(async () => {
+      const { TopicArn } = await SNS.createTopic({ Name: newValueTopicName }).promise();
+      newTopicArn = TopicArn;
+      const putRuleResponse = await rulesApiTestUtils.updateRule({ prefix: config.stackName, ruleName, updateParams: { rule: { value: TopicArn, type: 'sns' } } });
+      putRule = JSON.parse(putRuleResponse.body);
+    });
+
+    afterAll(async () => {
+      await SNS.deleteTopic({ TopicArn: snsTopicArn }).promise();
+    });
+
+    it('saves the new rule.value', () => {
+      expect(putRule.rule.value).toEqual(newTopicArn);
+    });
+
+    it('deletes the old subscription', async () => {
+      expect(await getNumberOfTopicSubscriptions(snsTopicArn)).toBe(0);
+    });
+
+    it('adds the new subscription', async () => {
+      expect(await getNumberOfTopicSubscriptions(newTopicArn)).toBe(1);
+    });
+  });
+
   describe('on deletion', () => {
     let getRule;
 
@@ -141,8 +170,14 @@ describe('The SNS-type rule', () => {
       expect(getRule.message.includes('No record found')).toBe(true);
     });
 
-    it('deletes the subscription', async () => {
-      expect(await getNumberOfTopicSubscriptions(snsTopicArn)).toBe(0);
+    it('deletes the policy and subscription', async () => {
+      try {
+        await lambda().getPolicy({ FunctionName: consumerName }).promise();
+      }
+      catch (e) {
+        expect(e.message).toBe('The resource you requested does not exist.');
+      }
+      expect(await getNumberOfTopicSubscriptions(newTopicArn)).toBe(0);
     });
   });
 });
