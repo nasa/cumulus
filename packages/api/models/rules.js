@@ -348,7 +348,6 @@ class Rule extends Manager {
       SourceArn: item.rule.value,
       StatementId: `${item.name}Permission`
     };
-    console.log('Creating statement: ', permissionParams.StatementId);
     await aws.lambda().addPermission(permissionParams).promise();
 
     item.rule.arn = r.SubscriptionArn;
@@ -361,7 +360,6 @@ class Rule extends Manager {
       FunctionName: process.env.kinesisConsumer,
       StatementId: `${item.name}Permission`
     };
-    console.log('Deleting statement: ', permissionParams.StatementId);
     await aws.lambda().removePermission(permissionParams).promise();
     // delete sns subscription
     const subscriptionParams = {
