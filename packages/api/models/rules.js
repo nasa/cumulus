@@ -67,7 +67,7 @@ class Rule extends Manager {
    * @returns {Promise} the response from database updates
    */
   async update(original, updated) {
-    let stateChanged;
+    let stateChanged = false;
     if (updated.state !== original.state) {
       original.state = updated.state;
       stateChanged = true;
@@ -341,9 +341,10 @@ class Rule extends Manager {
       Action: 'lambda:InvokeFunction',
       FunctionName: process.env.kinesisConsumer,
       Principal: 'sns.amazonaws.com',
-      SourceArn: item.TopicArn,
+      SourceArn: item.rule.value,
       StatementId: `${item.name}Permission`
     };
+    console.log('Creating statement: ', permissionParams.StatementId);
     await aws.lambda().addPermission(permissionParams).promise();
 
     item.rule.arn = r.SubscriptionArn;
@@ -356,6 +357,7 @@ class Rule extends Manager {
       FunctionName: process.env.kinesisConsumer,
       StatementId: `${item.name}Permission`
     };
+    console.log('Deleting statement: ', permissionParams.StatementId);
     await aws.lambda().removePermission(permissionParams).promise();
     // delete sns subscription
     const subscriptionParams = {
