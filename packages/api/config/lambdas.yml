@@ -24,6 +24,12 @@ executeMigrations:
     PdrsTable:
       function: Ref
       value: PdrsTableDynamoDB
+    RulesTable:
+      function: Ref
+      value: RulesTableDynamoDB
+    KinesisInboundEventLogger:
+      function: Ref
+      value: KinesisInboundEventLoggerLambdaFunction
     internal: '{{system_bucket}}'
 
 
