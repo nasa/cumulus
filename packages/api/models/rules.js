@@ -150,6 +150,12 @@ class Rule extends Manager {
     return super.create(item);
   }
 
+
+  /**
+   * Add  event sources for all mappings in the kinesisSourceEvents
+   * @param {Object} item - the rule item
+   * @returns {Object} return updated rule item containing new arn/logEventArn
+   */
   async addKinesisEventSources(item) {
     const sourceEventPromises = this.kinesisSourceEvents.map(
       (lambda) => this.addKinesisEventSource(item, lambda)
@@ -164,7 +170,7 @@ class Rule extends Manager {
   /**
    * add an event source to a target lambda function
    *
-   * @param {*} item - the rule item
+   * @param {Object} item - the rule item
    * @param {string} lambda - the name of the target lambda
    * @returns {Promise} a promise
    * @returns {Promise} updated rule item
@@ -204,6 +210,11 @@ class Rule extends Manager {
     return data;
   }
 
+  /**
+   * Update event sources for all mappings in the kinesisSourceEvents
+   * @param {*} item - the rule item
+   * @returns {Promise<Array>} array of responses from the event source update
+   */
   async updateKinesisEventSources(item) {
     const updateEvent = this.kinesisSourceEvents.map(
       (lambda) => this.updateKinesisEventSource(item, lambda.eventType)
@@ -214,7 +225,7 @@ class Rule extends Manager {
   /**
    * update an event source, only the state can be updated
    *
-   * @param {*} item - the rule item
+   * @param {Object} item - the rule item
    * @param {string} eventType - kinesisSourceEvent Type
    * @returns {Promise} the response from event source update
    */
@@ -227,6 +238,11 @@ class Rule extends Manager {
   }
 
 
+  /**
+   * Delete event source mappings for all mappings in the kinesisSourceEvents
+   * @param {Object} item - the rule item
+   * @returns {Promise<Array>} array of responses from the event source deletion
+   */
   async deleteKinesisEventSources(item) {
     const deleteEventPromises = this.kinesisSourceEvents.map(
       (lambda) => this.deleteKinesisEventSource(item, lambda.eventType)
@@ -238,9 +254,9 @@ class Rule extends Manager {
   }
 
   /**
-   * deletes an event source from the kinesis consumer lambda function
+   * deletes an event source from an event lambda function
    *
-   * @param {*} item - the rule item
+   * @param {Object} item - the rule item
    * @param {string} eventType - kinesisSourceEvent Type
    * @returns {Promise} the response from event source delete
    */

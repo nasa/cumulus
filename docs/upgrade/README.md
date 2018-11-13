@@ -11,3 +11,4 @@ Here are the upgrade instructions for various version of Cumulus. Also, be sure 
 - **[Upgrading to Cumulus 1.6.0](upgrade/1.6.0.md)**
 - **[Upgrading to Cumulus 1.7.0](upgrade/1.7.0.md)**
 - **[Upgrading to Cumulus 1.9.0](upgrade/1.9.0.md)**
+- **[Upgrading to Cumulus 1.11.0](upgrade/1.11.0.md)**
