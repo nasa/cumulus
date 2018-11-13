@@ -219,7 +219,12 @@ Resources:
 {{else if this.distributionRole}}
       Role: {{../parent.iams.distributionRoleArn}}
 {{else}}
+{{#ifEquals @key "executeMigrations"}}
+      Role: {{../parent.iams.migrationRoleArn}}
+{{/ifEquals}}
+{{#ifNotEquals @key "executeMigrations"}}
       Role: {{../parent.iams.lambdaProcessingRoleArn}}
+{{/ifNotEquals}}
 {{/if}}
       Runtime: {{# if this.runtime}}{{this.runtime}}{{else}}nodejs8.10{{/if}}
       Timeout: {{this.timeout}}

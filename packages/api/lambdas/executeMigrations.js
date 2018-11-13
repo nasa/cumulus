@@ -7,6 +7,14 @@ const migrations = require('../migrations');
 const migration1 = require('../migrations/migration_1');
 const migration2 = require('../migrations/migration_2');
 const migration3 = require('../migrations/migration_3');
+const migration4 = require('../migrations/migration_4');
+
+const mappings = {
+  migration1: migration1,
+  migration2: migration2,
+  migration3: migration3,
+  migration4: migration4
+};
 
 /**
  * Lambda function handler for running migrations
@@ -17,7 +25,8 @@ const migration3 = require('../migrations/migration_3');
  * @returns {Promise<undefined>} undefined
  */
 function handler(event, context, cb) {
-  return migrations([migration1, migration2, migration3], {
+  const eventMigrations = event.migrations.map((m) => mappings[m]);
+  return migrations(eventMigrations, {
     // Used by migration1
     tables: [
       process.env.GranulesTable,
@@ -31,7 +40,7 @@ function handler(event, context, cb) {
     filesTable: process.env.FilesTable,
 
     // Used by Migration_3
-    internal: process.env.buckets.internal.name,
+    internal: process.env.internal.name,
     stackName: process.env.stackName
   })
     .then((r) => cb(null, r))
