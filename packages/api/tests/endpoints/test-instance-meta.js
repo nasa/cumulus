@@ -48,7 +48,7 @@ test('GET returns expected metadata', (t) => {
   });
 });
 
-test('GET with unauthorized user returns an unauthorized response', async (t) => {
+test('GET with invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'GET',
     headers: {
