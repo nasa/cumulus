@@ -76,7 +76,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
       console.log(`Scheduled Execution Response Type: ${typeof(execution)}`);
     });
 
-    it('an execution record exists' () => {
+    it('an execution record exists', () => {
       expect(execution).toBeDefined();
     });
   });
