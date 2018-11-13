@@ -7,7 +7,7 @@ const {
   waitForTestExecutionStart
 } = require('@cumulus/integration-tests');
 
-const { sns } = require('@cumulus/common/aws');
+const { sns, lambda } = require('@cumulus/common/aws');
 
 const {
   loadConfig,
@@ -18,6 +18,7 @@ const SNS = sns();
 const config = loadConfig();
 const ruleName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestRule`);
 const snsTopicName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestTopic`);
+const consumerName = `${config.stackName}-kinesisConsumer`;
 
 const snsMessage = '{\"Records\":[{}]}';
 
@@ -71,8 +72,11 @@ describe('The SNS-type rule', () => {
     expect(postRule.record.state).toEqual('ENABLED');
   });
 
-  it('creates a subscription when it is created in an enabled state', async () => {
+  it('creates a subscription and policy when it is created in an enabled state', async () => {
     expect(await getNumberOfTopicSubscriptions(snsTopicArn)).toBe(1);
+    const { Policy } = await lambda().getPolicy({ FunctionName: consumerName }).promise();
+    const statement = JSON.parse(Policy).Statement[0];
+    expect(statement.Sid).toEqual(`${ruleName}Permission`);
   });
 
   describe('when an SNS message is published', () => {
@@ -100,7 +104,13 @@ describe('The SNS-type rule', () => {
       expect(putRule.state).toBe('DISABLED');
     });
 
-    it('deletes the subscription', async () => {
+    it('deletes the policy and subscription', async () => {
+      try {
+        await lambda().getPolicy({ FunctionName: consumerName }).promise();
+      }
+      catch (e) {
+        expect(e.message).toBe('The resource you requested does not exist.');
+      }
       expect(await getNumberOfTopicSubscriptions(snsTopicArn)).toBe(0);
     });
   });
