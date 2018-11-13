@@ -12,7 +12,7 @@ This step involves getting the [Amazon Resource Names (ARNS)](https://docs.aws.a
 * ```<stack-name>-lambda-processing```
 * ```<stack-name>-lambda-api-gateway```
 * ```<stack-name>-steprole```
-
+* ```<stack-name>-migration-processing```
 
 IAM values can be found by selecting "IAM" under the Security, Identity & Compliance in the AWS management console:
 
