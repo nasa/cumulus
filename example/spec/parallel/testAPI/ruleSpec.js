@@ -39,13 +39,14 @@ function isWorkflowTriggeredByRule(taskInput, params) {
 }
 
 describe('When I create a scheduled rule via the Cumulus API', () => {
+  let execution;
   const scheduledRuleName = timestampedName('SchedHelloWorldIntegrationTestRule');
   const scheduledHelloWorldRule = {
     name: scheduledRuleName,
     workflow: 'HelloWorldWorkflow',
     rule: {
       type: 'scheduled',
-      value: 'rate(3 minutes)'
+      value: 'rate(2 minute)'
     },
     meta: {
       triggerRule: scheduledRuleName
@@ -60,7 +61,20 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
     });
   });
 
-  describe('the scheduled rule is deleted', () => {
+  it('kicks off a scheduled workflow', () => {
+    execution = waitForTestExecutionStart(
+      scheduledHelloWorldRule.workflow,
+      config.stackName,
+      config.bucket,
+      (taskInput, params) =>
+        taskInput.meta.triggerRule && (taskInput.meta.triggerRule === params.ruleName),
+      { ruleName: scheduledRuleName }
+    );
+    console.log(`Scheduled Execution: ${JSON.stringify(execution)}`);
+    expect(execution).toBeDefined();
+  });
+
+  describe('When the scheduled rule is deleted', () => {
     beforeAll(async () => {
       console.log(`deleting rule ${scheduledHelloWorldRule.name}`);
       await rulesApiTestUtils.deleteRule({
@@ -69,14 +83,18 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
       });
     });
 
-    it('does not kick off a workflow', () => {
+    it('does not kick off a scheduled workflow', () => {
       try {
         waitForTestExecutionStart(
           scheduledHelloWorldRule.workflow,
           config.stackName,
           config.bucket,
-          (taskInput, params) =>
-            taskInput.meta.triggerRule && (taskInput.meta.triggerRule === params.ruleName),
+          (taskInput, params) => {
+            console.log(`taskInput execution name: ${taskInput.cumulus_meta.execution_name}`);
+            return taskInput.meta.triggerRule &&
+              (taskInput.meta.triggerRule === params.ruleName) &&
+              (taskInput.cumulus_meta.execution_name !== execution.name);
+          },
           { ruleName: scheduledRuleName }
         );
       }
