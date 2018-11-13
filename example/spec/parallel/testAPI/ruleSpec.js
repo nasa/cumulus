@@ -91,10 +91,10 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
           config.bucket,
           (taskInput, params) => {
             console.log(`taskInput execution name: ${taskInput.cumulus_meta.execution_name}`);
-            console.log(`previous scheduled execution name: ${params.execution}`);
+            console.log(`previous scheduled execution name: ${JSON.stringify(params.execution)}`);
             return taskInput.meta.triggerRule &&
               (taskInput.meta.triggerRule === params.ruleName) &&
-              (taskInput.cumulus_meta.execution_name !== execution.name);
+              (taskInput.cumulus_meta.execution_name !== params.execution.name);
           },
           { ruleName: scheduledRuleName, execution }
         );
