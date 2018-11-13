@@ -490,7 +490,6 @@ Resources:
                   - cloudformation:DescribeStacks
                 Resource: '*'
 
-
   StepRole:
     Type: AWS::IAM::Role
     Properties:
