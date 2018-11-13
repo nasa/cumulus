@@ -73,7 +73,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
       );
 
       console.log(`Scheduled Execution: ${JSON.stringify(execution)}`);
-      console.log(`Scheduled Execution Response Type: ${typeof(execution)}`);
+      console.log(`Scheduled Execution Response Type: ${typeof execution }`);
     });
 
     it('an execution record exists', () => {
