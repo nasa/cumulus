@@ -6,9 +6,9 @@ const { handle } = require('../lib/response');
 function instanceMetadata(event, cb) {
 
   return cb(null, {
-    instanceMetadata: {
-      CMR_PROVIDER: process.env.cmr_provider,
-      CMR_ENVIRONMENT: process.env.CMR_ENVIRONMENT || 'UAT'
+    cmr: {
+      provider: process.env.cmr_provider,
+      environment: process.env.CMR_ENVIRONMENT || 'UAT'
     }
   });
 }
