@@ -4,7 +4,6 @@ const { handle } = require('../lib/response');
 
 
 function instanceMetadata(event, cb) {
-
   return cb(null, {
     cmr: {
       provider: process.env.cmr_provider,
@@ -15,9 +14,7 @@ function instanceMetadata(event, cb) {
 
 function handler(event, context) {
   const checkAuth = true;
-  return handle(event, context, checkAuth, (cb) => {
-    return instanceMetadata(event, cb);
-  });
+  return handle(event, context, checkAuth, (cb) => instanceMetadata(event, cb));
 }
 
 module.exports = handler;
