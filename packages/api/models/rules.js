@@ -101,6 +101,8 @@ class Rule extends Manager {
       if (valueUpdated || stateChanged) {
         if (original.rule.arn) {
           await this.deleteSnsTrigger(original);
+          if (!updated.rule) updated.rule = original.rule;
+          delete updated.rule.arn;
         }
         if (original.state === 'ENABLED') {
           await this.addSnsTrigger(original);
@@ -365,7 +367,6 @@ class Rule extends Manager {
     };
     await aws.sns().unsubscribe(subscriptionParams).promise();
 
-    delete item.rule.arn;
     return item;
   }
 }
