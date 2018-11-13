@@ -3,6 +3,7 @@
 const test = require('ava');
 
 const { randomString } = require('@cumulus/common/test-utils');
+const assertions = require('../../lib/assertions');
 const models = require('../../models');
 const {
   fakeUserFactory,
@@ -44,5 +45,28 @@ test('GET returns expected metadata', (t) => {
         CMR_ENVIRONMENT: CMR_ENVIRONMENT
       }
     });
+  });
+});
+
+test('GET with unauthorized user returns an unauthorized response', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    headers: {
+      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
+    }
+  };
+  return testEndpoint(instanceMetaEndpoint, request, (response) => {
+    assertions.isUnauthorizedUserResponse(t, response);
+  });
+});
+
+test('GET without without an Authorization header returns an Authorization Missing response', async (t) => {
+  const request = {
+    httpMethod: 'GET',
+    headers: {}
+  };
+
+  return testEndpoint(instanceMetaEndpoint, request, (response) => {
+    assertions.isAuthorizationMissingResponse(t, response);
   });
 });
