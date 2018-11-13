@@ -3,9 +3,8 @@
 const { lambda } = require('@cumulus/common/aws');
 
 
-
 async function getEventSourceMapping(uuid) {
-  return lambda().getEventSourceMapping({UUID: uuid}).promise();
+  return lambda().getEventSourceMapping({ UUID: uuid }).promise();
 }
 
 /**
