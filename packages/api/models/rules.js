@@ -68,7 +68,7 @@ class Rule extends Manager {
    */
   async update(original, updated) {
     let stateChanged = false;
-    if (updated.state !== original.state) {
+    if (updated.state && updated.state !== original.state) {
       original.state = updated.state;
       stateChanged = true;
     }
@@ -102,8 +102,8 @@ class Rule extends Manager {
         if (original.rule.arn) {
           await this.deleteSnsTrigger(original);
         }
-        if (updated.state === 'ENABLED') {
-          await this.addSnsTrigger(updated);
+        if (original.state === 'ENABLED') {
+          await this.addSnsTrigger(original);
         }
       }
       break;
