@@ -420,13 +420,13 @@ describe('The S3 Ingest Granules workflow', () => {
 
         it('overwrites granule files', async () => {
           // Await reingest completion
-          const reingestGranuleExecution = await waitForTestExecutionStart(
+          const reingestGranuleExecution = await waitForTestExecutionStart({
             workflowName,
-            config.stackName,
-            config.bucket,
-            isExecutionForGranuleId,
-            { granuleId: inputPayload.granules[0].granuleId }
-          );
+            stackName: config.stackName,
+            bucket: config.bucket,
+            findExecutionFn: isExecutionForGranuleId,
+            findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId }
+          });
 
           console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
 
@@ -487,13 +487,13 @@ describe('The S3 Ingest Granules workflow', () => {
           workflow: 'PublishGranule'
         });
 
-        const publishGranuleExecution = await waitForTestExecutionStart(
-          'PublishGranule',
-          config.stackName,
-          config.bucket,
-          isExecutionForGranuleId,
-          { granuleId: inputPayload.granules[0].granuleId }
-        );
+        const publishGranuleExecution = await waitForTestExecutionStart({
+          workflowName: 'PublishGranule',
+          stackName: config.stackName,
+          bucket: config.bucket,
+          findExecutionFn: isExecutionForGranuleId,
+          findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId }
+        });
 
         console.log(`Wait for completed execution ${publishGranuleExecution.executionArn}`);
 
