@@ -33,3 +33,4 @@ Changing the log retention policy in the AWS Management Console is a fairly simp
 4. Click on the value in the `Expire Events After` column.
 5. Enter/Select the number of days you'd like to retain logs in that log group for.
 
+![](assets/cloudwatch-retention.png)
