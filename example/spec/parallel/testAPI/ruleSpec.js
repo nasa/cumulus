@@ -46,7 +46,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
     workflow: 'HelloWorldWorkflow',
     rule: {
       type: 'scheduled',
-      value: 'rate(2 minute)'
+      value: 'rate(2 minutes)'
     },
     meta: {
       triggerRule: scheduledRuleName
