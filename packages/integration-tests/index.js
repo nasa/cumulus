@@ -657,24 +657,28 @@ async function getExecutions(workflowName, stackName, bucket, maxExecutionResult
  * Wait for the execution that matches the criteria in the compare function to begin
  * The compare function should take 2 arguments: taskInput and params
  *
- * @param {string} workflowName - workflow name to find execution for
- * @param {string} stackName - stack name
- * @param {string} bucket - bucket name
- * @param {function} findExecutionFn - function that takes the taskInput and findExecutionFnParams
- * and returns a boolean indicating whether or not this is the correct instance of the workflow
- * @param {Object} findExecutionFnParams - params to be passed into findExecutionFn
+ * @param {Object} options
+ * @param {string} options.workflowName - workflow name to find execution for
+ * @param {string} options.stackName - stack name
+ * @param {string} options.bucket - bucket name
+ * @param {function} options.findExecutionFn - function that takes the taskInput and
+ * findExecutionFnParams and returns a boolean indicating whether or not this is the correct
+ * instance of the workflow
+ * @param {Object} options.findExecutionFnParams - params to be passed into findExecutionFn
+ * @param {integer} options.maxWaitSeconds - an optional custom wait time in seconds
  * @returns {undefined} - none
  */
-async function waitForTestExecutionStart(
+async function waitForTestExecutionStart({
   workflowName,
   stackName,
   bucket,
   findExecutionFn,
-  findExecutionFnParams
-) {
+  findExecutionFnParams,
+  maxWaitSeconds
+}) {
   let timeWaitedSecs = 0;
   /* eslint-disable no-await-in-loop */
-  while (timeWaitedSecs < maxWaitForStartedExecutionSecs) {
+  while (timeWaitedSecs < maxWaitSeconds ? maxWaitSeconds : maxWaitForStartedExecutionSecs) {
     await sleep(waitPeriodMs);
     timeWaitedSecs += (waitPeriodMs / 1000);
     const executions = await getExecutions(workflowName, stackName, bucket);
