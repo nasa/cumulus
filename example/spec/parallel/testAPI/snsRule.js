@@ -4,7 +4,8 @@ const {
   rulesApi: rulesApiTestUtils,
   isWorkflowTriggeredByRule,
   removeRuleAddedParams,
-  waitForTestExecutionStart
+  waitForTestExecutionStart,
+  LambdaStep
 } = require('@cumulus/integration-tests');
 
 const { sns, lambda } = require('@cumulus/common/aws');
@@ -14,6 +15,7 @@ const {
   timestampedName
 } = require('../../helpers/testUtils');
 
+const lambdaStep = new LambdaStep();
 const SNS = sns();
 const config = loadConfig();
 const ruleName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestRule`);
@@ -21,7 +23,7 @@ const snsTopicName = timestampedName(`${config.stackName}_SnsRuleIntegrationTest
 const newValueTopicName = timestampedName(`${config.stackName}_SnsRuleValueChangeTestTopic`);
 const consumerName = `${config.stackName}-kinesisConsumer`;
 
-const snsMessage = '{\"Records\":[{}]}';
+const snsMessage = '{"Data":{}}';
 
 const snsRuleDefinition = {
   name: ruleName,
@@ -85,7 +87,13 @@ describe('The SNS-type rule', () => {
     });
 
     it('triggers the workflow', () => {
+      console.log('Execution: ', JSON.stringify(execution));
       expect(execution).toBeDefined();
+    });
+
+    it('passes the message as payload', async () => {
+      const executionInput = await lambdaStep.getStepInput(execution.executionArn, 'SfSnsReport');
+      expect(executionInput.payload).toEqual({});
     });
   });
 

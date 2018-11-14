@@ -15,6 +15,7 @@ const testCollectionName = 'test-collection';
 
 const snsArn = 'test-SnsArn';
 const eventData = { topicArn: snsArn };
+const messageBody = '{"Data":{}}';
 
 const event = {
   Records: [
@@ -27,7 +28,7 @@ const event = {
         MessageId: '4f411981',
         TopicArn: snsArn,
         Subject: 'Amazon S3 Notification',
-        Message: '{\"Records\":[{}]}',
+        Message: messageBody,
         MessageAttributes: {}
       }
     }
@@ -148,7 +149,7 @@ test.after.always(async () => {
 
 // getKinesisRule tests
 test.serial('it should look up sns-type rules which are associated with the collection, but not those that are disabled', async (t) => {
-  await getRules(eventData, 'sns')
+  await getRules(snsArn, 'sns')
     .then((result) => {
       t.is(result.length, 2);
     });
@@ -167,9 +168,10 @@ test.serial('it should enqueue a message for each associated workflow', async (t
     meta: {
       queues: { startSF: stubQueueUrl },
       provider,
-      collection
+      collection,
+      snsSourceArn: snsArn
     },
-    payload: eventData
+    payload: JSON.parse(messageBody)
   };
   t.is(actualMessage.cumulus_meta.state_machine, expectedMessage.cumulus_meta.state_machine);
   t.deepEqual(actualMessage.meta, expectedMessage.meta);
