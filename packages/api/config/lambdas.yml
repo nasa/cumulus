@@ -72,8 +72,8 @@ dbIndexer:
       value: FilesTableDynamoDB
   namedLambdaDeadLetterQueue: true
 
-kinesisConsumer:
-  handler: index.kinesisConsumer
+messageConsumer:
+  handler: index.messageConsumer
   timeout: 100
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
@@ -93,7 +93,7 @@ kinesisConsumer:
       value: '${kinesisFallbackSns}'
 
 fallbackConsumer:
-  handler: index.kinesisConsumer
+  handler: index.messageConsumer
   timeout: 100
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'

@@ -7,7 +7,7 @@ const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
 const { SQS } = require('@cumulus/ingest/aws');
 const { s3, recursivelyDeleteS3Bucket, sns } = require('@cumulus/common/aws');
-const { getRules, handler } = require('../../lambdas/kinesis-consumer');
+const { getRules, handler } = require('../../lambdas/message-consumer');
 const Collection = require('../../models/collections');
 const Rule = require('../../models/rules');
 const Provider = require('../../models/providers');
@@ -115,7 +115,7 @@ test.before(async () => {
   process.env.CollectionsTable = randomString();
   process.env.ProvidersTable = randomString();
   process.env.RulesTable = randomString();
-  process.env.kinesisConsumer = 'my-kinesisConsumer';
+  process.env.messageConsumer = 'my-messageConsumer';
   process.env.KinesisInboundEventLogger = 'my-ruleInput';
   ruleModel = new Rule();
   await ruleModel.createTable();
@@ -160,7 +160,7 @@ test.beforeEach(async (t) => {
   t.context.tableName = process.env.RulesTable;
   process.env.stackName = randomString();
   process.env.bucket = randomString();
-  process.env.kinesisConsumer = randomString();
+  process.env.messageConsumer = randomString();
 
   await Promise.all(rulesToCreate.map((rule) => ruleModel.create(rule)));
 });

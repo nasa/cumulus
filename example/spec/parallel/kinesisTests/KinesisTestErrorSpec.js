@@ -60,7 +60,7 @@ const ruleOverride = {
   provider: record.provider
 };
 
-describe('The kinesisConsumer receives a bad record.\n', () => {
+describe('The messageConsumer receives a bad record.\n', () => {
   const providersDir = './data/providers/PODAAC_SWOT/';
   const collectionsDir = './data/collections/L2_HR_PIXC-000/';
 

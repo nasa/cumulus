@@ -7,7 +7,7 @@ const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
 const { SQS } = require('@cumulus/ingest/aws');
 const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
-const { getRules, handler } = require('../../lambdas/kinesis-consumer');
+const { getRules, handler } = require('../../lambdas/message-consumer');
 const Collection = require('../../models/collections');
 const Rule = require('../../models/rules');
 const Provider = require('../../models/providers');
@@ -126,7 +126,7 @@ test.beforeEach(async (t) => {
   t.context.tableName = process.env.RulesTable;
   process.env.stackName = randomString();
   process.env.bucket = randomString();
-  process.env.kinesisConsumer = randomString();
+  process.env.messageConsumer = randomString();
 
   await Promise.all([rule1Params, rule2Params, disabledRuleParams]
     .map((rule) => ruleModel.create(rule)));

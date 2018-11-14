@@ -7,7 +7,7 @@ const models = require('../../models');
 
 process.env.RulesTable = `RulesTable_${randomString()}`;
 process.env.stackName = 'my-stackName';
-process.env.kinesisConsumer = 'my-kinesisConsumer';
+process.env.messageConsumer = 'my-messageConsumer';
 process.env.KinesisInboundEventLogger = 'my-ruleInput';
 process.env.bucket = randomString();
 
@@ -44,7 +44,7 @@ const onetimeRule = {
 };
 
 async function getKinesisEventMappings() {
-  const eventLambdas = [process.env.kinesisConsumer, process.env.KinesisInboundEventLogger];
+  const eventLambdas = [process.env.messageConsumer, process.env.KinesisInboundEventLogger];
 
   const mappingPromises = eventLambdas.map((lambda) => {
     const mappingParms = { FunctionName: lambda };
