@@ -39,13 +39,14 @@ function isWorkflowTriggeredByRule(taskInput, params) {
 }
 
 describe('When I create a scheduled rule via the Cumulus API', () => {
+  let execution;
   const scheduledRuleName = timestampedName('SchedHelloWorldIntegrationTestRule');
   const scheduledHelloWorldRule = {
     name: scheduledRuleName,
     workflow: 'HelloWorldWorkflow',
     rule: {
       type: 'scheduled',
-      value: 'rate(3 minutes)'
+      value: 'rate(2 minutes)'
     },
     meta: {
       triggerRule: scheduledRuleName
@@ -60,29 +61,46 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
     });
   });
 
-  describe('the scheduled rule is deleted', () => {
+  describe('The scheduled rule kicks off a workflow', () => {
+    beforeAll(async () => {
+      execution = await waitForTestExecutionStart(
+        scheduledHelloWorldRule.workflow,
+        config.stackName,
+        config.bucket,
+        (taskInput, params) =>
+          taskInput.meta.triggerRule && (taskInput.meta.triggerRule === params.ruleName),
+        { ruleName: scheduledRuleName }
+      );
+
+      console.log(`Scheduled Execution ARN: ${execution.executionArn}`);
+    });
+
+    it('an execution record exists', () => {
+      expect(execution).toBeDefined();
+    });
+  });
+
+  describe('When the scheduled rule is deleted', () => {
     beforeAll(async () => {
       console.log(`deleting rule ${scheduledHelloWorldRule.name}`);
+
       await rulesApiTestUtils.deleteRule({
         prefix: config.stackName,
         ruleName: scheduledHelloWorldRule.name
       });
     });
 
-    it('does not kick off a workflow', () => {
-      try {
-        waitForTestExecutionStart({
-          workflowName: scheduledHelloWorldRule.workflow,
-          stackName: config.stackName,
-          bucket: config.bucket,
-          findExecutionFn: (taskInput, params) =>
-            taskInput.meta.triggerRule && (taskInput.meta.triggerRule === params.ruleName),
-          findExecutionFnParams: { ruleName: scheduledRuleName }
-        });
-      }
-      catch (err) {
-        expect(err.message).toEqual('Never found started workflow.');
-      }
+    it('does not kick off a scheduled workflow', () => {
+      waitForTestExecutionStart(
+        scheduledHelloWorldRule.workflow,
+        config.stackName,
+        config.bucket,
+        (taskInput, params) =>
+          taskInput.meta.triggerRule &&
+            (taskInput.meta.triggerRule === params.ruleName) &&
+            (taskInput.cumulus_meta.execution_name !== params.execution.name),
+        { ruleName: scheduledRuleName, execution }
+      ).catch((err) => expect(err.message).toEqual('Never found started workflow'));
     });
   });
 });
@@ -114,6 +132,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
 
   afterAll(async () => {
     console.log(`deleting rule ${helloWorldRule.name}`);
+
     await rulesApiTestUtils.deleteRule({
       prefix: config.stackName,
       ruleName: helloWorldRule.name
