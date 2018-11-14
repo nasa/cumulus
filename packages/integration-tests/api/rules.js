@@ -18,8 +18,6 @@ async function callRuleApiFunction(prefix, requestPayload) {
     payload: requestPayload
   });
 
-  console.log(`payload: ${payload}`);
-
   try {
     return payload;
   }

@@ -83,16 +83,21 @@ program
 program
   .command('migrate')
   .option('--stack <stack>', 'AWS CloudFormation stack name')
+  .option('--migrationVersion <version>', 'Migration version to run')
   .description('Invokes the migration lambda function')
   .parse(process.argv)
   .action((cmd) => {
+    if (!cmd.migrationVersion) {
+      throw new Error('version argument is missing');
+    }
     if (!cmd.stack) {
       throw new Error('stack name is missing');
     }
-
     const l = lambda();
+    console.log(`Invoking migration: ${cmd.migrationVersion}`);
     l.invoke({
-      FunctionName: `${cmd.stack}-executeMigrations`
+      FunctionName: `${cmd.stack}-executeMigrations`,
+      Payload: `{ "migrations": ["${cmd.migrationVersion}"] }`
     }).promise().then(console.log).catch(console.error);
   });
 
