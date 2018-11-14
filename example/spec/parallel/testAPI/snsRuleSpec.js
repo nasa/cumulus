@@ -21,7 +21,7 @@ const config = loadConfig();
 const ruleName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestRule`);
 const snsTopicName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestTopic`);
 const newValueTopicName = timestampedName(`${config.stackName}_SnsRuleValueChangeTestTopic`);
-const consumerName = `${config.stackName}-kinesisConsumer`;
+const consumerName = `${config.stackName}-messageConsumer`;
 
 const snsMessage = '{"Data":{}}';
 

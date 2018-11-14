@@ -17,7 +17,7 @@ class Rule extends Manager {
     });
 
     this.eventMapping = { arn: 'arn', logEventArn: 'logEventArn' };
-    this.kinesisSourceEvents = [{ name: process.env.kinesisConsumer, eventType: 'arn' },
+    this.kinesisSourceEvents = [{ name: process.env.messageConsumer, eventType: 'arn' },
       { name: process.env.KinesisInboundEventLogger, eventType: 'logEventArn' }];
     this.targetId = 'lambdaTarget';
   }
@@ -336,14 +336,14 @@ class Rule extends Manager {
     const subscriptionParams = {
       TopicArn: item.rule.value,
       Protocol: 'lambda',
-      Endpoint: process.env.kinesisConsumer,
+      Endpoint: process.env.messageConsumer,
       ReturnSubscriptionArn: true
     };
     const r = await aws.sns().subscribe(subscriptionParams).promise();
     // create permission to invoke lambda
     const permissionParams = {
       Action: 'lambda:InvokeFunction',
-      FunctionName: process.env.kinesisConsumer,
+      FunctionName: process.env.messageConsumer,
       Principal: 'sns.amazonaws.com',
       SourceArn: item.rule.value,
       StatementId: `${item.name}Permission`
@@ -357,7 +357,7 @@ class Rule extends Manager {
   async deleteSnsTrigger(item) {
     // delete permission statement
     const permissionParams = {
-      FunctionName: process.env.kinesisConsumer,
+      FunctionName: process.env.messageConsumer,
       StatementId: `${item.name}Permission`
     };
     await aws.lambda().removePermission(permissionParams).promise();
