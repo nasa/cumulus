@@ -180,7 +180,7 @@ test.after.always(async () => {
 
 // getKinesisRule tests
 test.serial('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', async (t) => {
-  await getRules(JSON.parse(eventData), 'kinesis')
+  await getRules(testCollectionName, 'kinesis')
     .then((result) => {
       t.is(result.length, 2);
     });
@@ -202,7 +202,7 @@ test.serial('it should enqueue a message for each associated workflow', async (t
       collection
     },
     payload: {
-      collection: 'test-collection'
+      collection: testCollectionName
     }
   };
   t.is(actualMessage.cumulus_meta.state_machine, expectedMessage.cumulus_meta.state_machine);
