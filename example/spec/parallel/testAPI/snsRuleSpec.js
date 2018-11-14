@@ -83,7 +83,13 @@ describe('The SNS-type rule', () => {
 
     beforeAll(async () => {
       await SNS.publish({ Message: snsMessage, TopicArn: snsTopicArn }).promise();
-      execution = await waitForTestExecutionStart(snsRuleDefinition.workflow, config.stackName, config.bucket, isWorkflowTriggeredByRule, { rule: ruleName });
+      execution = await waitForTestExecutionStart({
+        workflowName: snsRuleDefinition.workflow,
+        stackName: config.stackName,
+        bucket: config.bucket,
+        findExecutionFn: isWorkflowTriggeredByRule,
+        findExecutionFnParams: { rule: ruleName }
+      });
     });
 
     it('triggers the workflow', () => {
