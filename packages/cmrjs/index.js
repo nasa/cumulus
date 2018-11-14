@@ -9,7 +9,8 @@ const {
   updateToken,
   getUrl,
   xmlParseOptions,
-  getHost
+  getHost,
+  hostId
 } = require('./utils');
 
 
@@ -317,5 +318,6 @@ module.exports = {
   CMR,
   getMetadata,
   getFullMetadata,
-  getHost
+  getHost,
+  hostId
 };
