@@ -72,8 +72,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
         { ruleName: scheduledRuleName }
       );
 
-      console.log(`Scheduled Execution: ${JSON.stringify(execution)}`);
-      console.log(`Scheduled Execution Response Type: ${typeof execution}`);
+      console.log(`Scheduled Execution ARN: ${execution.executionArn}`);
     });
 
     it('an execution record exists', () => {
@@ -84,6 +83,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
   describe('When the scheduled rule is deleted', () => {
     beforeAll(async () => {
       console.log(`deleting rule ${scheduledHelloWorldRule.name}`);
+
       await rulesApiTestUtils.deleteRule({
         prefix: config.stackName,
         ruleName: scheduledHelloWorldRule.name
@@ -132,6 +132,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
 
   afterAll(async () => {
     console.log(`deleting rule ${helloWorldRule.name}`);
+
     await rulesApiTestUtils.deleteRule({
       prefix: config.stackName,
       ruleName: helloWorldRule.name
