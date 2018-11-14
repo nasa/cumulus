@@ -4,6 +4,7 @@ exports.asyncOperations = require('./endpoints/async-operations');
 exports.token = require('./endpoints/token').handleApiGatewayRequest;
 exports.collections = require('./endpoints/collections');
 exports.granules = require('./endpoints/granules');
+exports.instanceMeta = require('./endpoints/instance-meta');
 exports.logs = require('./endpoints/logs');
 exports.pdrs = require('./endpoints/pdrs');
 exports.providers = require('./endpoints/providers');
