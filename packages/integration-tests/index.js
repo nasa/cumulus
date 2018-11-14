@@ -663,6 +663,7 @@ async function getExecutions(workflowName, stackName, bucket, maxExecutionResult
  * @param {function} findExecutionFn - function that takes the taskInput and findExecutionFnParams
  * and returns a boolean indicating whether or not this is the correct instance of the workflow
  * @param {Object} findExecutionFnParams - params to be passed into findExecutionFn
+ * @param {integer} maxWaitSeconds - Set a custom wait time in seconds
  * @returns {undefined} - none
  */
 async function waitForTestExecutionStart(
@@ -670,11 +671,12 @@ async function waitForTestExecutionStart(
   stackName,
   bucket,
   findExecutionFn,
-  findExecutionFnParams
+  findExecutionFnParams,
+  maxWaitSeconds = maxWaitForStartedExecutionSecs
 ) {
   let timeWaitedSecs = 0;
   /* eslint-disable no-await-in-loop */
-  while (timeWaitedSecs < maxWaitForStartedExecutionSecs) {
+  while (timeWaitedSecs < maxWaitSeconds) {
     await sleep(waitPeriodMs);
     timeWaitedSecs += (waitPeriodMs / 1000);
     const executions = await getExecutions(workflowName, stackName, bucket);
