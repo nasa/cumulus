@@ -14,7 +14,6 @@ const Provider = require('../../models/providers');
 const testCollectionName = 'test-collection';
 
 const snsArn = 'test-SnsArn';
-const eventData = { topicArn: snsArn };
 const messageBody = '{"Data":{}}';
 
 const event = {

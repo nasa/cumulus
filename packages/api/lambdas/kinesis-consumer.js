@@ -195,10 +195,10 @@ function processRecord(record, fromSNS) {
       dataBlob = record.kinesis.data;
     }
     try {
+      validationSchema = kinesisSchema;
+      originalMessageSource = 'kinesis';
       const dataString = Buffer.from(dataBlob, 'base64').toString();
       eventObject = JSON.parse(dataString);
-      originalMessageSource = 'kinesis';
-      validationSchema = kinesisSchema;
       ruleParam = eventObject.collection;
     }
     catch (err) {
@@ -214,7 +214,6 @@ function processRecord(record, fromSNS) {
     .then(() => getRules(ruleParam, originalMessageSource))
     .then((rules) => (
       Promise.all(rules.map((rule) => {
-        console.log('Rule: ', JSON.stringify(rule));
         if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParam);
         return queueMessageForRule(rule, eventObject);
       }))))
