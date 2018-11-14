@@ -93,7 +93,7 @@ describe('The SNS-type rule', () => {
 
     it('passes the message as payload', async () => {
       const executionInput = await lambdaStep.getStepInput(execution.executionArn, 'SfSnsReport');
-      expect(executionInput.payload).toEqual({});
+      expect(executionInput.payload).toEqual(JSON.parse(snsMessage));
     });
   });
 
