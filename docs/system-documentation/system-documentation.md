@@ -39,3 +39,13 @@ Generally, first check your rule configuration. If that is satisfactory, the ans
 For Kinesis rules specifically, if an error occurs during the kinesis consumer process, the fallback consumer lambda will be called and if the message continues to error, a message will be placed on the dead letter queue. Check the dead letter queue for a failure message. Errors can be traced back to the CloudWatch logs for the kinesis consumer and the fallback consumer.
 
 More information on kinesis error handling is [here](data-cookbooks/cnm-workflow.md#kinesis-record-error-handling).
+
+## Lambda Errors
+
+### KMS Exception: AccessDeniedException
+
+[Discussed in the Earthdata Wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/KMS+Exception%3A+AccessDeniedException).
+
+### Error: Unable to import module 'index': Error
+
+[Discussed in the Earthdata Wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/Troubleshooting).
