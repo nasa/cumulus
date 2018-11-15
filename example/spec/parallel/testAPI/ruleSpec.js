@@ -19,7 +19,7 @@ const lambdaStep = new LambdaStep();
 
 describe('When I create a scheduled rule via the Cumulus API', () => {
   let execution;
-  const scheduledRuleName = timestampedName('SchedHelloWorldIntegrationTestRule');
+  const scheduledRuleName = timestampedName('SchedHelloWorldTest');
   const scheduledHelloWorldRule = {
     name: scheduledRuleName,
     workflow: 'HelloWorldWorkflow',
