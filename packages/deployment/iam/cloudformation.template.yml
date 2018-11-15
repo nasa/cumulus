@@ -631,6 +631,13 @@ Resources:
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
+            - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                Resource:
+                  Fn::Sub: "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-AccessTokensTable"
+
               - Effect: Allow
                 Action:
                   - logs:DescribeLogStreams
