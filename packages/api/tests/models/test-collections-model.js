@@ -55,18 +55,6 @@ test('Collection.exists() returns false when a record does not exist', async (t)
   t.false(await collectionsModel.exists(randomString()));
 });
 
-test('Collection.delete() throws an exception if the collection does not exist', async (t) => {
-  const collectionsModel = new Collection();
-
-  try {
-    await collectionsModel.delete('does-not-exist', 'some-version');
-    t.fail('Expected an exception to be thrown');
-  }
-  catch (err) {
-    t.is(err.message, 'Collection does not exist');
-  }
-});
-
 test('Collection.delete() throws an exception if the collection has associated rules', async (t) => {
   const name = randomString();
   const version = randomString();
@@ -95,7 +83,7 @@ test('Collection.delete() throws an exception if the collection has associated r
   const collectionsModel = new Collection();
 
   try {
-    await collectionsModel.delete(name, version);
+    await collectionsModel.delete({ name, version });
     t.fail('Expected an exception to be thrown');
   }
   catch (err) {
@@ -114,7 +102,7 @@ test('Collection.delete() deletes a collection', async (t) => {
   t.true(await manager.exists({ name, version }));
 
   const collectionsModel = new Collection();
-  await collectionsModel.delete(name, version);
+  await collectionsModel.delete({ name, version });
 
   t.false(await manager.exists({ name, version }));
 });
