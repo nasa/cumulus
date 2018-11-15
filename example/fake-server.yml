@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Cumuls fake provider with ftp/sftp/http support'
+Description: 'Cumulus fake provider with ftp/sftp/http support'
 Parameters:
   VpcId:
     Type: String
@@ -10,10 +10,17 @@ Parameters:
   AZone:
     Type: String
     Description: 'The availability zone for the subnet provided'
+  Ngap:
+    Type: String
+    Description: 'True if deploying to an NGAP environment'
+    Default: "false"
+Conditions:
+  IsNgapEnvironment: !Equals [!Ref Ngap, 'true']
+
 
 Resources:
 
-  FakeServerRole:
+  FakeProviderRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: fakeprovider
@@ -24,9 +31,14 @@ Resources:
             Principal:
               Service: ec2.amazonaws.com
             Action: sts:AssumeRole
+      PermissionsBoundary:
+        !If
+          - IsNgapEnvironment
+          - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/NGAPShRoleBoundary'
+          - !Ref 'AWS::NoValue'
       Path: "/"
       Policies:
-        - PolicyName: FakeServerRole
+        - PolicyName: FakeProviderRole
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -57,15 +69,25 @@ Resources:
                   - logs:PutLogEvents
                 Resource: "*"
 
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket*
+                Resource:
+                  - arn:aws:s3:::cumulus-data-shared
+
+              - Effect: Allow
+                Action:
+                  - s3:GetObject*
+                Resource:
+                  - arn:aws:s3:::cumulus-data-shared/*
+
   InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
       InstanceProfileName: fakeprovider
       Path: "/"
       Roles:
-        - Fn::GetAtt:
-          - FakeServerRole
-          - RoleName
+        - !Ref FakeProviderRole
 
 
   SecurityGroup:
@@ -75,6 +97,10 @@ Resources:
       GroupDescription: Security Group for ECS containter instances of fakeprovider
       SecurityGroupIngress:
         - IpProtocol: tcp
+          CidrIp: 0.0.0.0/0
+          FromPort: '0'
+          ToPort: '65535'
+        - IpProtocol: udp
           CidrIp: 0.0.0.0/0
           FromPort: '0'
           ToPort: '65535'

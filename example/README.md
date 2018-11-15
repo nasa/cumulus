@@ -49,6 +49,23 @@ This command will update the lambda with the latest lambda code.
 
 Test data comes from the @cumulus/test-data package and is uploaded to S3 during the setup step when running all tests. The data will be uploaded to the S3 bucket specified in the test configuration.
 
+### Fake data server
+
+A fake server is required for tests testing FTP/HTTP/HTTPS discover and downloads. The Cloudformation template for the fake data server is in `fake-server.yml`. To setup the fake server run:
+
+```
+aws cloudformation deploy --template-file fake-server.yml --stack-name <stack-name> --parameter-overrides VpcId=<vpc-XXXXX> SubnetId=<subnet-XXXXXX> AZone=<az-zone> Ngap=true --capabilities CAPABILITY_NAMED_IAM
+```
+
+with the following parameters
+* stack-name - stack name for the fake server
+* VpcId - vpc id
+* SubnetId - subent id
+* AZone - availability zone, needs to match the subnet id's availability zone
+* Ngap - true if in an NASA NGAP environment, will add the NGAP permission boundary to the IAM role created
+
+In the outputs section of your Cloudformation deployment in the AWS console, you can find the address of the fake server created. In the provider configurations in `example/data/providers`, update the providers to use the correct host address.
+
 ### Run all tests
 
 Tests are written and run with [jasmine](https://jasmine.github.io/setup/nodejs.html).
