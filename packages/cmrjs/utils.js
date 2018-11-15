@@ -1,6 +1,8 @@
 const got = require('got');
+const _get = require('lodash.get');
 const publicIp = require('public-ip');
 const xml2js = require('xml2js');
+
 
 /**
  * Overrides the Error class
@@ -30,30 +32,40 @@ const createErrorType = (name, ParentType = Error) => {
 const ValidationError = createErrorType('ValidationError');
 
 /**
+ * Returns the environment specific identifier for the input cmr environment.
+ * @param {string} env - cmr environment ['OPS', 'SIT', 'UAT']
+ * @returns {string} - value to use to build correct cmr url for environment.
+ */
+function hostId(env) {
+  const id = {
+    OPS: '',
+    SIT: 'sit',
+    UAT: 'uat'
+  };
+  return _get(id, env, 'uat');
+}
+
+
+/**
  * Determines the appropriate CMR host endpoint based on a given
  * value for CMR_ENVIRONMENT environment variable. Defaults
  * to the uat cmr
  *
+ * @param {Object} environment - process env like object
+ * @param {string} environment.CMR_ENVIRONMENT - [optional] CMR environment to
+ *              use valid arguments are ['OPS', 'SIT', 'UAT'], anything that is
+ *              not 'OPS' or 'SIT' will be interpreted as 'UAT'
+ * @param {string} environment.CMR_HOST [optional] explicit host to return, if
+ *              this has a value, it overrides any values for CMR_ENVIRONMENT
  * @returns {string} the cmr host address
  */
-function getHost() {
-  const env = process.env.CMR_ENVIRONMENT;
-  if (process.env.CMR_HOST) return process.env.CMR_HOST;
+function getHost(environment = process.env) {
+  const env = environment.CMR_ENVIRONMENT;
+  if (environment.CMR_HOST) return environment.CMR_HOST;
 
-  let host;
-  if (env === 'OPS') {
-    host = 'cmr.earthdata.nasa.gov';
-  }
-  else if (env === 'SIT') {
-    host = 'cmr.sit.earthdata.nasa.gov';
-  }
-  else {
-    host = 'cmr.uat.earthdata.nasa.gov';
-  }
-
+  const host = ['cmr', hostId(env), 'earthdata.nasa.gov'].filter((d) => d).join('.');
   return host;
 }
-
 
 const xmlParseOptions = {
   ignoreAttrs: true,
@@ -203,11 +215,12 @@ async function updateToken(cmrProvider, clientId, username, password) {
 }
 
 module.exports = {
-  validate,
   ValidationError,
-  updateToken,
-  getUrl,
-  xmlParseOptions,
+  getHost,
   getIp,
-  getHost
+  getUrl,
+  hostId,
+  updateToken,
+  validate,
+  xmlParseOptions
 };

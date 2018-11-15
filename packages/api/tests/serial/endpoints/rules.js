@@ -245,6 +245,75 @@ test('GET gets a rule', (t) => {
   });
 });
 
+test('When calling the API endpoint to delete an existing rule it does not return the deleted rule', async (t) => {
+  const newRule = Object.assign({}, testRule, { name: 'pop_culture_reference' });
+  const postEvent = {
+    httpMethod: 'POST',
+    body: JSON.stringify(newRule),
+    headers: authHeaders
+  };
+
+  await testEndpoint(rulesEndpoint, postEvent, (response) => {
+    const { message } = JSON.parse(response.body);
+    t.is(message, 'Record saved');
+  });
+
+  const deleteEvent = {
+    httpMethod: 'DELETE',
+    pathParameters: {
+      name: newRule.name
+    },
+    headers: authHeaders
+  };
+
+  return testEndpoint(rulesEndpoint, deleteEvent, (response) => {
+    const { message, record } = JSON.parse(response.body);
+    t.is(message, 'Record deleted');
+    t.is(record, undefined);
+  });
+});
+
+test('403 error when calling the API endpoint to delete an existing rule without operator credentials', async (t) => {
+  const newRule = Object.assign({}, testRule, { name: 'side_step_left' });
+  const postEvent = {
+    httpMethod: 'POST',
+    body: JSON.stringify(newRule),
+    headers: authHeaders
+  };
+
+  await testEndpoint(rulesEndpoint, postEvent, (response) => {
+    const { message, record } = JSON.parse(response.body);
+    t.is(message, 'Record saved');
+    newRule.createdAt = record.createdAt;
+    newRule.updatedAt = record.updatedAt;
+  });
+
+  const deleteEvent = {
+    httpMethod: 'DELETE',
+    pathParameters: {
+      name: newRule.name
+    },
+    headers: { Authorization: 'Bearer InvalidAuthorizationToken' }
+  };
+
+  await testEndpoint(rulesEndpoint, deleteEvent, (response) => {
+    assertions.isUnauthorizedUserResponse(t, response);
+  });
+
+  const getEvent = {
+    httpMethod: 'GET',
+    pathParameters: {
+      name: newRule.name
+    },
+    headers: authHeaders
+  };
+
+  return testEndpoint(rulesEndpoint, getEvent, (response) => {
+    const record = JSON.parse(response.body);
+    t.deepEqual(newRule, record);
+  });
+});
+
 test('POST creates a rule', (t) => {
   const newRule = Object.assign(cloneDeep(testRule), { name: 'make_waffles' });
   const postEvent = {
