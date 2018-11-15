@@ -342,13 +342,15 @@ class Rule extends Manager {
         NextToken: token
       }).promise();
       token = subsResponse.NextToken;
-      /* eslint-disable no-loop-func */
-      await Promise.all(subsResponse.Subscriptions.forEach((sub) => {
-        if (sub.Endpoint === process.env.messageConsumer) {
-          subExists = true;
-          subscriptionArn = sub.SubscriptionArn;
-        }
-      }));
+      if (subsResponse.Subscriptions) {
+        /* eslint-disable no-loop-func */
+        subsResponse.Subscriptions.forEach((sub) => {
+          if (sub.Endpoint === process.env.messageConsumer) {
+            subExists = true;
+            subscriptionArn = sub.SubscriptionArn;
+          }
+        });
+      }
       /* eslint-enable no-loop-func */
       if (subExists) break;
     }
