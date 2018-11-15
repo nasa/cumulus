@@ -39,6 +39,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added migration_4 to migrate/update exisitng Kinesis rules to have a log event mapping
   - Added new IAM policy for migration lambda
 - **CUMULUS-775**
+  - Adds a instance metadata endpoint to the `@cumulus/api` package.
+  - Adds a new convenience function `hostId` to the `@cumulus/cmrjs` to help build environment specific cmr urls.
   - Fixed `@cumulus/cmrjs.searchConcept` to search and return CMR results.
   - Modified `@cumulus/cmrjs.CMR.searchGranule` and `@cumulus/cmrjs.CMR.searchCollection` to include CMR's provider as a default parameter to searches.
 - **CUMULUS-965**
