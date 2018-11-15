@@ -1,5 +1,7 @@
 'use strict';
 
+const clonedeep = require('lodash.clonedeep');
+
 const {
   rulesApi: rulesApiTestUtils,
   isWorkflowTriggeredByRule,
@@ -24,17 +26,9 @@ const newValueTopicName = timestampedName(`${config.stackName}_SnsRuleValueChang
 const consumerName = `${config.stackName}-messageConsumer`;
 
 const snsMessage = '{"Data":{}}';
-
-const snsRuleDefinition = {
-  name: ruleName,
-  workflow: 'HelloWorldWorkflow',
-  rule: {
-    type: 'sns'
-  },
-  meta: {
-    triggerRule: ruleName
-  }
-};
+const snsRuleDefinition = clonedeep(require('./snsRuleDef.json'));
+snsRuleDefinition.name = ruleName;
+snsRuleDefinition.meta.triggerRule = ruleName;
 
 async function getNumberOfTopicSubscriptions(snsTopicArn) {
   const subs = await SNS.listSubscriptionsByTopic({ TopicArn: snsTopicArn }).promise();
