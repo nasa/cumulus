@@ -342,8 +342,6 @@ class Rule extends Manager {
         NextToken: token
       }).promise();
       token = subsResponse.NextToken;
-      console.log('here');
-      console.log(JSON.stringify(subsResponse));
       if (subsResponse.Subscriptions) {
         /* eslint-disable no-loop-func */
         subsResponse.Subscriptions.forEach((sub) => {
