@@ -3,12 +3,15 @@
 const got = require('got');
 const { URL } = require('url');
 
+const log = require('@cumulus/common/log');
+
 const {
   OAuth2AuthenticationError,
   OAuth2AuthenticationFailure,
   OAuth2
 } = require('./OAuth2');
 
+const expiresInMs = 10 * 1000;
 const isBadRequestError = (err) => err.name === 'HTTPError' && err.statusCode === 400;
 
 /**
@@ -123,11 +126,14 @@ class EarthdataLogin extends OAuth2 {
     try {
       const response = await this.requestAccessToken(authorizationCode);
 
+      log.debug(`expires in: ${response.expires_in}`);
+
       return {
         accessToken: response.body.access_token,
         refreshToken: response.body.refresh_token,
         username: response.body.endpoint.split('/').pop(),
-        expirationTime: Date.now() + (86400000)
+        expirationTime: response.expires_in,
+        // expirationTime: Date.now() + (10 * 1000)
       };
     }
     catch (err) {

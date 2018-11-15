@@ -2,13 +2,14 @@
 
 const get = require('lodash.get');
 const log = require('@cumulus/common/log');
+const { sign: jwtSign } = require('jsonwebtoken');
 
 const { google } = require('googleapis');
 
 const EarthdataLogin = require('../lib/EarthdataLogin');
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 
-const { AccessToken } = require('../models');
+const { AccessToken, User } = require('../models');
 const {
   AuthorizationFailureResponse,
   LambdaProxyResponse
@@ -38,26 +39,34 @@ async function token(event, oAuth2Provider) {
         expirationTime
       } = await oAuth2Provider.getAccessToken(code);
 
+      // todo: check if user has access before returning token?
+
       const accessTokenModel = new AccessToken();
 
       await accessTokenModel.create({
         accessToken,
         refreshToken,
-        username,
-        expirationTime
+        // username,
+        // expirationTime
       });
+
+      const jwtToken = jwtSign({
+        exp: expirationTime,
+        accessToken,
+        username,
+      }, process.env.TOKEN_SECRET);
 
       if (state) {
         log.info(`Log info: Redirecting to state: ${state} with token ${accessToken}`);
         return buildPermanentRedirectResponse(
-          `${decodeURIComponent(state)}?token=${accessToken}`
+          `${decodeURIComponent(state)}?token=${jwtToken}`
         );
       }
       log.info('Log info: No state specified, responding 200');
       return new LambdaProxyResponse({
         json: true,
         statusCode: 200,
-        body: { message: { token: accessToken } }
+        body: { message: { token: jwtToken } }
       });
     }
     catch (e) {
