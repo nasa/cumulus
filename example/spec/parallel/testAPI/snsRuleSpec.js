@@ -164,6 +164,30 @@ describe('The SNS-type rule', () => {
     });
   });
 
+  describe('when subscribed to a topic where the subscription already exists', () => {
+    let subscriptionArn;
+    let putRule;
+
+    beforeAll(async () => {
+      const { TopicArn } = await SNS.createTopic({ Name: newValueTopicName }).promise();
+      newTopicArn = TopicArn;
+      const subscriptionParams = {
+        TopicArn,
+        Protocol: 'lambda',
+        Endpoint: (await lambda().getFunction({ FunctionName: consumerName }).promise()).Configuration.FunctionArn,
+        ReturnSubscriptionArn: true
+      };
+      const { SubscriptionArn } = await SNS.subscribe(subscriptionParams).promise();
+      subscriptionArn = SubscriptionArn;
+      const putRuleResponse = await rulesApiTestUtils.updateRule({ prefix: config.stackName, ruleName, updateParams: { rule: { value: TopicArn, type: 'sns' }, state: 'ENABLED' } });
+      putRule = JSON.parse(putRuleResponse.body);
+    });
+
+    it('uses the existing subscription', () => {
+      expect(putRule.rule.arn).toEqual(subscriptionArn);
+    });
+  });
+
   describe('on deletion', () => {
     let getRule;
 
