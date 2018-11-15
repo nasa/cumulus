@@ -123,6 +123,7 @@ Resources:
                   - sns:publish
                   - sns:Subscribe
                   - sns:Unsubscribe
+                  - sns:List*
                 Resource: '*'
 
               - Effect: Allow
