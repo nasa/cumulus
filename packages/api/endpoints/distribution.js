@@ -7,13 +7,13 @@ const { Cookie } = require('tough-cookie');
 
 const EarthdataLoginClient = require('../lib/EarthdataLogin');
 
-const { getCookie } = require('../lib/api-gateway');
 const { RecordDoesNotExist } = require('../lib/errors');
 const { AccessToken } = require('../models');
 const {
   NotFoundResponse,
   TemporaryRedirectResponse
 } = require('../lib/responses');
+const { findCaseInsensitiveValue } = require('../lib/utils');
 
 class UnparsableFileLocationError extends Error {
   constructor(fileLocation) {
@@ -61,7 +61,9 @@ function getSignedS3Url(s3Client, Bucket, Key, username) {
 }
 
 function getAccessTokenFromRequest(request) {
-  const accessTokenCookie = getCookie(request, 'accessToken');
+  const cookieHeaders = findCaseInsensitiveValue(request.multiValueHeaders || {}, 'Cookie') || [];
+  const cookies = cookieHeaders.map(Cookie.parse);
+  const accessTokenCookie = cookies.find((c) => c.key === 'accessToken');
 
   return accessTokenCookie ? accessTokenCookie.value : null;
 }
