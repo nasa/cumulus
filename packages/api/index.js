@@ -4,6 +4,7 @@ exports.asyncOperations = require('./endpoints/async-operations');
 exports.token = require('./endpoints/token').handleApiGatewayRequest;
 exports.collections = require('./endpoints/collections');
 exports.granules = require('./endpoints/granules');
+exports.instanceMeta = require('./endpoints/instance-meta');
 exports.logs = require('./endpoints/logs');
 exports.pdrs = require('./endpoints/pdrs');
 exports.providers = require('./endpoints/providers');
@@ -18,13 +19,14 @@ exports.distribution = require('./endpoints/distribution').handleApiGatewayReque
 exports.dbIndexer = require('./lambdas/db-indexer');
 exports.reconciliationReports = require('./endpoints/reconciliation-reports');
 
-exports.jobs = require('./lambdas/jobs');
-exports.executeMigrations = require('./lambdas/executeMigrations').handler;
 exports.bootstrap = require('./lambdas/bootstrap').handler;
+exports.executeMigrations = require('./lambdas/executeMigrations').handler;
+exports.inRegionS3Policy = require('./lambdas/in-region-s3-policy').handler;
+exports.jobs = require('./lambdas/jobs');
+exports.logger = require('./lambdas/payload-logger').handler;
+exports.kinesisConsumer = require('./lambdas/kinesis-consumer').handler;
 exports.scheduler = require('./lambdas/sf-scheduler');
 exports.starter = require('./lambdas/sf-starter');
-exports.kinesisConsumer = require('./lambdas/kinesis-consumer').handler;
-exports.inRegionS3Policy = require('./lambdas/in-region-s3-policy').handler;
 
 exports.bulkDeleteLambda = require('./lambdas/bulk-delete').handler;
 exports.bulkDeleteEndpoint = require('./endpoints/bulk-delete');

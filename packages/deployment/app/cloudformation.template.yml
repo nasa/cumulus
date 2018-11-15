@@ -50,6 +50,14 @@ Resources:
             - {{../es.name}}Domain
             - DomainEndpoint
       {{/if}}
+        KinesisInboundEventLoggerLambdaFunction:
+          Fn::GetAtt:
+            - KinesisInboundEventLoggerLambdaFunction
+            - Arn
+        KinesisOutboundEventLoggerLambdaFunction:
+          Fn::GetAtt:
+            - KinesisOutboundEventLoggerLambdaFunction
+            - Arn
         log2elasticsearchLambdaFunction:
           Fn::GetAtt:
             - log2elasticsearchLambdaFunction
@@ -677,7 +685,12 @@ Resources:
 {{else if this.distributionRole}}
       Role: {{../iams.distributionRoleArn}}
 {{else}}
+{{#ifEquals @key "executeMigrations"}}
+      Role: {{../iams.migrationRoleArn}}
+{{/ifEquals}}
+{{#ifNotEquals @key "executeMigrations"}}
       Role: {{../iams.lambdaProcessingRoleArn}}
+{{/ifNotEquals}}
 {{/if}}
       Runtime: {{# if this.runtime}}{{this.runtime}}{{else}}nodejs8.10{{/if}}
       Timeout: {{this.timeout}}

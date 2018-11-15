@@ -6,6 +6,7 @@ const pdr = require('@cumulus/ingest/pdr');
 const errors = require('@cumulus/common/errors');
 const log = require('@cumulus/common/log');
 const local = require('@cumulus/common/local-helpers');
+const { loadJSONTestData } = require('@cumulus/test-data');
 
 /**
  * Discover PDRs
@@ -20,7 +21,7 @@ function discoverPdrs(event) {
     const bucket = config.bucket;
     const collection = config.collection;
     const provider = config.provider;
-    const providerPath = config.provider_path || collection.provider_path;  
+    const providerPath = config.provider_path || collection.provider_path;
     const filterPdrs = config.filterPdrs || null;
 
     // FIXME Can config.folder not be used?
@@ -45,12 +46,12 @@ function discoverPdrs(event) {
         if (discover.connected) discover.end();
 
         // filter pdrs using filterPDrs
-        if (filterPdrs && pdrs.length) {
+        if (filterPdrs && pdrs.length > 0) {
           log.info(`Filtering ${pdrs.length} with ${filterPdrs}`);
           const fpdrs = pdrs.filter((p) => p.name.match(filterPdrs));
           return { pdrs: fpdrs };
         }
-        
+
         return { pdrs };
       })
       .catch((e) => {
@@ -106,7 +107,7 @@ function handler(event, context, callback) {
 exports.handler = handler;
 
 // use node index.js local to invoke this
-local.justLocalRun(() => {
-  const payload = require('@cumulus/test-data/cumulus_messages/discover-pdrs.json'); // eslint-disable-line global-require, max-len
-  handler(payload, {}, (e, r) => console.log(e, r));
+local.justLocalRun(async () => {
+  const payload = await loadJSONTestData('cumulus_messages/discover-pdrs.json');
+  handler(payload, {}, (e, r) => console.log(e, r)); // eslint-disable-line no-console
 });

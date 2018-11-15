@@ -1,6 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'stack: {{stackName}} | deployed by Kes'
 Parameters:
+  KinesisInboundEventLoggerLambdaFunction:
+    Type: String
+    Description: 'Arn for KinesisInboundEventLogger Lambda Function'
+  KinesisOutboundEventLoggerLambdaFunction:
+    Type: String
+    Description: 'Arn for KinesisOutboundEventLogger Lambda Function'
   CmrPassword:
     Type: String
     Description: 'Password used to publish CMR records. This is encrypted by Custom::Cumulus'
@@ -213,7 +219,12 @@ Resources:
 {{else if this.distributionRole}}
       Role: {{../parent.iams.distributionRoleArn}}
 {{else}}
+{{#ifEquals @key "executeMigrations"}}
+      Role: {{../parent.iams.migrationRoleArn}}
+{{/ifEquals}}
+{{#ifNotEquals @key "executeMigrations"}}
       Role: {{../parent.iams.lambdaProcessingRoleArn}}
+{{/ifNotEquals}}
 {{/if}}
       Runtime: {{# if this.runtime}}{{this.runtime}}{{else}}nodejs8.10{{/if}}
       Timeout: {{this.timeout}}
@@ -289,4 +300,3 @@ Resources:
   # DynamoDB Event Source Mapping END
   #################################################
 {{/if}}
-

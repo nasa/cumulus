@@ -188,6 +188,9 @@ ApiRulesDefault:
     kinesisConsumer:
       function: "Ref"
       value: kinesisConsumerLambdaFunction
+    KinesisInboundEventLogger:
+      function: "Ref"
+      value: KinesisInboundEventLoggerLambdaFunction
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain
@@ -477,3 +480,20 @@ ApiBulkDeleteDefault:
       value: AsyncOperationTaskDefinition
     stackName: '{{parent.stackName}}'
     systemBucket: '{{parent.bucket}}'
+
+ApiInstanceMetaDefault:
+  handler: index.instanceMeta
+  apiRole: true
+  source: 'node_modules/@cumulus/api/dist/'
+  envs:
+    cmr_provider: '{{parent.cmr.provider}}'
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
+
+  apiGateway:
+    # Default paths
+    - api: backend
+      path: instanceMeta
+      method: get
+      cors: true

@@ -149,7 +149,7 @@ describe('POST /bulkDelete with a failed bulk delete operation', () => {
     expect(postBulkDeleteBody.asyncOperationId).toMatch(/[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}/);
   });
 
-  it('creates an AsyncOperation', async () => { // eslint-disable-line sonarjs/no-identical-functions
+  it('creates an AsyncOperation', async () => {
     expect(beforeAllSucceeded).toBe(true);
 
     const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
@@ -164,7 +164,7 @@ describe('POST /bulkDelete with a failed bulk delete operation', () => {
     expect(getAsyncOperationBody.id).toEqual(postBulkDeleteBody.asyncOperationId);
   });
 
-  it('runs an ECS task', async () => { // eslint-disable-line sonarjs/no-identical-functions
+  it('runs an ECS task', async () => {
     expect(beforeAllSucceeded).toBe(true);
 
     // Verify that the task ARN exists in that cluster

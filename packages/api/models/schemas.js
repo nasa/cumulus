@@ -304,13 +304,21 @@ module.exports.rule = {
           type: 'string',
           enum: ['onetime', 'scheduled', 'sns', 'kinesis']
         },
+        // Value is multi-use.   For a kinesis rule this is the target stream arn, for
+        // a scheduled event it's the schedule pattern (e.g. cron), for a one-time rule.
         value: {
           type: 'string'
         },
+        // Kinesis scheduled event arn
         arn: {
           type: 'string',
           readonly: true
-        }
+        },
+        // Kinesis scheduled log event arn
+        logEventArn: {
+          type: 'string',
+          readonly: true
+        },
       },
       required: ['type']
     },

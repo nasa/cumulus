@@ -16,6 +16,7 @@ const bootstrap = require('../../../lambdas/bootstrap');
 const handleRequest = require('../../../endpoints/granules');
 const indexer = require('../../../es/indexer');
 const {
+  fakeCollectionFactory,
   fakeGranuleFactoryV2,
   fakeUserFactory
 } = require('../../../lib/testUtils');
@@ -47,10 +48,12 @@ async function runTestUsingBuckets(buckets, testFunction) {
 let esClient;
 let esIndex;
 let granuleModel;
+let collectionModel;
 let authToken;
 let userModel;
 test.before(async () => {
   esIndex = randomString();
+  process.env.CollectionsTable = randomString();
   process.env.GranulesTable = randomString();
   process.env.UsersTable = randomString();
   process.env.stackName = randomString();
@@ -64,6 +67,10 @@ test.before(async () => {
 
   // create a fake bucket
   await createBucket(process.env.internal);
+
+  // create fake Collections table
+  collectionModel = new models.Collection();
+  await collectionModel.createTable();
 
   // create fake Granules table
   granuleModel = new models.Granule();
@@ -80,6 +87,14 @@ test.beforeEach(async (t) => {
   t.context.authHeaders = {
     Authorization: `Bearer ${authToken}`
   };
+
+  t.context.testCollection = fakeCollectionFactory({
+    name: 'fakeCollection',
+    dataType: 'fakeCollection',
+    version: 'v1',
+    duplicateHandling: 'error'
+  });
+  await collectionModel.create(t.context.testCollection);
 
   // create fake granule records
   t.context.fakeGranules = [
@@ -99,6 +114,7 @@ test.beforeEach(async (t) => {
 });
 
 test.after.always(async () => {
+  await collectionModel.deleteTable();
   await granuleModel.deleteTable();
   await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
@@ -346,6 +362,7 @@ test.serial('reingest a granule', async (t) => {
   const body = JSON.parse(response.body);
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'reingest');
+  t.true(body.warning.includes('overwritten'));
 
   const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
   t.is(updatedGranule.status, 'running');
@@ -531,11 +548,13 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   t.is(detail, 'Record deleted');
 
   // verify the files are deleted
+  /* eslint-disable no-await-in-loop */
   for (let i = 0; i < newGranule.files.length; i += 1) {
     const file = newGranule.files[i];
     const parsed = aws.parseS3Uri(file.filename);
-    t.false(await aws.fileExists(parsed.Bucket, parsed.Key)); // eslint-disable-line no-await-in-loop
+    t.false(await aws.fileExists(parsed.Bucket, parsed.Key));
   }
+  /* eslint-enable no-await-in-loop */
 
   await deleteBuckets([
     buckets.protected.name,
@@ -617,14 +636,20 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
       t.is(body.status, 'SUCCESS');
       t.is(body.action, 'move');
 
-      await aws.s3().listObjects({ Bucket: bucket, Prefix: destinationFilepath }).promise().then((list) => {
+      await aws.s3().listObjects({
+        Bucket: bucket,
+        Prefix: destinationFilepath
+      }).promise().then((list) => {
         t.is(list.Contents.length, 2);
         list.Contents.forEach((item) => {
           t.is(item.Key.indexOf(destinationFilepath), 0);
         });
       });
 
-      await aws.s3().listObjects({ Bucket: thirdBucket, Prefix: destinationFilepath }).promise().then((list) => {
+      await aws.s3().listObjects({
+        Bucket: thirdBucket,
+        Prefix: destinationFilepath
+      }).promise().then((list) => {
         t.is(list.Contents.length, 1);
         list.Contents.forEach((item) => {
           t.is(item.Key.indexOf(destinationFilepath), 0);
@@ -724,7 +749,10 @@ test.serial('move a file and update metadata', async (t) => {
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'move');
 
-  const list = await aws.s3().listObjects({ Bucket: bucket, Prefix: destinationFilepath }).promise();
+  const list = await aws.s3().listObjects({
+    Bucket: bucket,
+    Prefix: destinationFilepath
+  }).promise();
   t.is(list.Contents.length, 1);
   list.Contents.forEach((item) => {
     t.is(item.Key.indexOf(destinationFilepath), 0);
@@ -734,7 +762,10 @@ test.serial('move a file and update metadata', async (t) => {
   t.is(list2.Contents.length, 1);
   t.is(newGranule.files[1].filepath, list2.Contents[0].Key);
 
-  const file = await aws.s3().getObject({ Bucket: buckets.public.name, Key: newGranule.files[1].filepath }).promise();
+  const file = await aws.s3().getObject({
+    Bucket: buckets.public.name,
+    Key: newGranule.files[1].filepath
+  }).promise();
   await aws.recursivelyDeleteS3Bucket(buckets.public.name);
   return new Promise((resolve, reject) => {
     xml2js.parseString(file.Body, xmlParseOptions, (err, data) => {
@@ -746,4 +777,82 @@ test.serial('move a file and update metadata', async (t) => {
     const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
     t.is(newUrl, newDestination);
   });
+});
+
+test('PUT with action move returns failure if one granule file exists', async (t) => {
+  const filesExistingStub = sinon.stub(models.Granule.prototype, 'getFilesExistingAtLocation').returns([{ name: 'file1' }]);
+  const moveGranuleStub = sinon.stub(models.Granule.prototype, 'move').resolves({});
+
+  const granule = t.context.fakeGranules[0];
+
+  await granuleModel.create(granule);
+
+  const body = {
+    action: 'move',
+    destinations: [{
+      regex: '.*.hdf$',
+      bucket: 'fake-bucket',
+      filepath: 'fake-destination'
+    }]
+  };
+
+  const request = {
+    httpMethod: 'PUT',
+    pathParameters: {
+      granuleName: granule.granuleId
+    },
+    body: JSON.stringify(body),
+    headers: t.context.authHeaders
+  };
+
+  const response = await handleRequest(request);
+
+  const responseBody = JSON.parse(response.body);
+  t.is(response.statusCode, 409);
+  t.is(responseBody.message,
+    'Cannot move granule because the following files would be overwritten at the destination location: file1. Delete the existing files or reingest the source files.');
+
+  filesExistingStub.restore();
+  moveGranuleStub.restore();
+});
+
+test('PUT with action move returns failure if more than one granule file exists', async (t) => {
+  const filesExistingStub = sinon.stub(models.Granule.prototype, 'getFilesExistingAtLocation').returns([
+    { name: 'file1' },
+    { name: 'file2' },
+    { name: 'file3' }
+  ]);
+  const moveGranuleStub = sinon.stub(models.Granule.prototype, 'move').resolves({});
+
+  const granule = t.context.fakeGranules[0];
+
+  await granuleModel.create(granule);
+
+  const body = {
+    action: 'move',
+    destinations: [{
+      regex: '.*.hdf$',
+      bucket: 'fake-bucket',
+      filepath: 'fake-destination'
+    }]
+  };
+
+  const request = {
+    httpMethod: 'PUT',
+    pathParameters: {
+      granuleName: granule.granuleId
+    },
+    body: JSON.stringify(body),
+    headers: t.context.authHeaders
+  };
+
+  const response = await handleRequest(request);
+
+  const responseBody = JSON.parse(response.body);
+  t.is(response.statusCode, 409);
+  t.is(responseBody.message,
+    'Cannot move granule because the following files would be overwritten at the destination location: file1, file2, file3. Delete the existing files or reingest the source files.');
+
+  filesExistingStub.restore();
+  moveGranuleStub.restore();
 });

@@ -1,9 +1,11 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
 const test = require('ava');
 const {
   buildS3Uri,
+  listS3ObjectsV2,
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
   s3,
@@ -13,12 +15,16 @@ const {
   parseS3Uri
 } = require('@cumulus/common/aws');
 const clonedeep = require('lodash.clonedeep');
+const set = require('lodash.set');
 const errors = require('@cumulus/common/errors');
 const {
   randomString, validateConfig, validateInput, validateOutput
 } = require('@cumulus/common/test-utils');
-const payload = require('./data/payload.json');
+const { promisify } = require('util');
+
 const { moveGranules } = require('..');
+
+const readFile = promisify(fs.readFile);
 
 async function uploadFiles(files, bucket) {
   await Promise.all(files.map((file) => promiseS3Upload({
@@ -38,7 +44,7 @@ async function updateFileTags(files, bucket, TagSet) {
 }
 
 function buildPayload(t) {
-  const newPayload = JSON.parse(JSON.stringify(payload));
+  const newPayload = t.context.payload;
 
   newPayload.config.bucket = t.context.stagingBucket;
   newPayload.config.buckets.internal.name = t.context.stagingBucket;
@@ -64,6 +70,29 @@ function getExpectedOutputFileNames(t) {
     `s3://${t.context.publicBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml`
   ];
 }
+/**
+ * Get file metadata for a set of files.
+ * headObject from localstack doesn't return LastModified with millisecond,
+ * use listObjectsV2 instead
+ *
+ * @param {Array<Object>} files - array of file objects
+ * @returns {Promise<Array>} - file detail responses
+ */
+async function getFilesMetadata(files) {
+  const getFileRequests = files.map(async (f) => {
+    const s3list = await listS3ObjectsV2(
+      { Bucket: f.bucket, Prefix: parseS3Uri(f.filename).Key }
+    );
+    const s3object = s3list.filter((s3file) => s3file.Key === parseS3Uri(f.filename).Key);
+
+    return {
+      filename: f.filename,
+      fileSize: s3object[0].Size,
+      LastModified: s3object[0].LastModified
+    };
+  });
+  return Promise.all(getFileRequests);
+}
 
 test.beforeEach(async (t) => {
   t.context.stagingBucket = randomString();
@@ -74,6 +103,11 @@ test.beforeEach(async (t) => {
     s3().createBucket({ Bucket: t.context.publicBucket }).promise(),
     s3().createBucket({ Bucket: t.context.protectedBucket }).promise()
   ]);
+
+  const payloadPath = path.join(__dirname, 'data', 'payload.json');
+  const rawPayload = await readFile(payloadPath, 'utf8');
+  t.context.payload = JSON.parse(rawPayload);
+  process.env.REINGEST_GRANULE = false;
 });
 
 test.afterEach.always(async (t) => {
@@ -166,33 +200,33 @@ test.serial('should overwrite files', async (t) => {
     Body: 'Something'
   };
 
-  console.log(`CUMULUS-970 debugging: start s3 upload. params: ${JSON.stringify(uploadParams)}`);
+  t.log(`CUMULUS-970 debugging: start s3 upload. params: ${JSON.stringify(uploadParams)}`);
 
   await promiseS3Upload(uploadParams);
 
-  console.log(`CUMULUS-970 debugging: start move granules. params: ${JSON.stringify(newPayload)}`);
+  t.log(`CUMULUS-970 debugging: start move granules. params: ${JSON.stringify(newPayload)}`);
 
   let output = await moveGranules(newPayload);
 
-  console.log('CUMULUS-970 debugging: move granules complete');
+  t.log('CUMULUS-970 debugging: move granules complete');
 
   await validateOutput(t, output);
 
-  console.log(`CUMULUS-970 debugging: head object destKey ${destKey}`);
+  t.log(`CUMULUS-970 debugging: head object destKey ${destKey}`);
 
   const existingFile = await headObject(
     t.context.publicBucket,
     destKey
   );
 
-  console.log('CUMULUS-970 debugging: headobject complete');
+  t.log('CUMULUS-970 debugging: headobject complete');
 
   // re-stage source jpg file with different content
   const content = randomString();
 
   uploadParams.Body = content;
 
-  console.log(`CUMULUS-970 debugging: start s3 upload. params: ${JSON.stringify(uploadParams)}`);
+  t.log(`CUMULUS-970 debugging: start s3 upload. params: ${JSON.stringify(uploadParams)}`);
 
   await promiseS3Upload({
     Bucket: t.context.stagingBucket,
@@ -200,22 +234,22 @@ test.serial('should overwrite files', async (t) => {
     Body: content
   });
 
-  console.log(`CUMULUS-970 debugging: start move granules. params: ${JSON.stringify(newPayload)}`);
+  t.log(`CUMULUS-970 debugging: start move granules. params: ${JSON.stringify(newPayload)}`);
 
   output = await moveGranules(newPayload);
 
-  console.log('CUMULUS-970 debugging:  move granules complete');
+  t.log('CUMULUS-970 debugging:  move granules complete');
 
   const updatedFile = await headObject(
     t.context.publicBucket,
     destKey
   );
 
-  console.log(`CUMULUS-970 debugging: start list objects. params: ${JSON.stringify({ Bucket: t.context.publicBucket })}`);
+  t.log(`CUMULUS-970 debugging: start list objects. params: ${JSON.stringify({ Bucket: t.context.publicBucket })}`);
 
   const objects = await s3().listObjects({ Bucket: t.context.publicBucket }).promise();
 
-  console.log('CUMULUS-970 debugging: list objects complete');
+  t.log('CUMULUS-970 debugging: list objects complete');
 
   t.is(objects.Contents.length, 1);
 
@@ -401,4 +435,77 @@ test.serial('when duplicateHandling is "skip", does not overwrite or create new'
     }
     else t.true(f.duplicate_found);
   });
+});
+
+async function granuleFilesOverwrittenTest(t, duplicateHandling, forceDuplicateOverwrite) {
+  let newPayload = buildPayload(t);
+  newPayload.config.duplicateHandling = duplicateHandling;
+  set(newPayload, 'cumulus_config.cumulus_context.forceDuplicateOverwrite', forceDuplicateOverwrite);
+
+  // payload could be modified
+  const newPayloadOrig = clonedeep(newPayload);
+
+  const expectedFilenames = getExpectedOutputFileNames(t);
+
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  let output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+  const existingFileNames = output.granules[0].files.map((f) => f.filename);
+  t.deepEqual(expectedFilenames, existingFileNames);
+
+  const existingFilesMetadata = await getFilesMetadata(output.granules[0].files);
+
+  const outputHdfFile = existingFileNames.filter((f) => f.endsWith('.hdf'))[0];
+
+  // run 'moveGranules' again with one of the input files updated
+  newPayload = clonedeep(newPayloadOrig);
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+
+  const inputHdfFile = newPayload.input.filter((f) => f.endsWith('.hdf'))[0];
+  const params = {
+    Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: randomString()
+  };
+  await s3().putObject(params).promise();
+
+  output = await moveGranules(newPayload);
+  const currentFileNames = output.granules[0].files.map((f) => f.filename);
+  t.is(currentFileNames.length, 4);
+
+  const currentFilesMetadata = await getFilesMetadata(output.granules[0].files);
+
+  const currentHdfFileMeta = currentFilesMetadata.filter((f) => f.filename === outputHdfFile)[0];
+  t.is(currentHdfFileMeta.fileSize, randomString().length);
+
+  // check timestamps are updated
+  currentFilesMetadata.forEach((f) => {
+    const existingFileMeta = existingFilesMetadata.filter((ef) => ef.filename === f.filename)[0];
+    t.true(new Date(f.LastModified).getTime() > new Date(existingFileMeta.LastModified).getTime());
+  });
+
+  output.granules[0].files.forEach((f) => {
+    if (f.filename.startsWith(`${outputHdfFile}.v`) || f.filename.endsWith('.cmr.xml')) {
+      t.falsy(f.duplicate_found);
+    }
+    else t.true(f.duplicate_found);
+  });
+}
+
+test.serial('when duplicateHandling is "replace", do overwrite files', async (t) => {
+  await granuleFilesOverwrittenTest(t, 'replace');
+});
+
+test.serial('when duplicateHandling is "error" and forceDuplicateOverwrite is true, do overwrite files', async (t) => {
+  await granuleFilesOverwrittenTest(t, 'error', true);
+});
+
+test.serial('when duplicateHandling is "skip" and forceDuplicateOverwrite is true, do overwrite files', async (t) => {
+  await granuleFilesOverwrittenTest(t, 'skip', true);
+});
+
+test.serial('when duplicateHandling is "version" and forceDuplicateOverwrite is true, do overwrite files', async (t) => {
+  await granuleFilesOverwrittenTest(t, 'version', true);
+});
+
+test.serial('when duplicateHandling is "replace" and forceDuplicateOverwrite is true, do overwrite files', async (t) => {
+  await granuleFilesOverwrittenTest(t, 'replace', true);
 });
