@@ -36,8 +36,7 @@ const provider = { id: 'PROV1' };
 
 const commonRuleParams = {
   collection,
-  provider: provider.id,
-  state: 'ENABLED'
+  provider: provider.id
 };
 
 const kinesisRuleParams = {

@@ -95,7 +95,7 @@ See [Cumulus README](https://github.com/nasa/cumulus/blob/master/README.md#insta
 
 ## Running Tests
 
-Running tests for kinesis-consumer depends on localstack. Once you have installed localstack, start it:
+Running tests for message-consumer depends on localstack. Once you have installed localstack, start it:
 
 ```
 localstack start
