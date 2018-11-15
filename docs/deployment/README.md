@@ -196,6 +196,10 @@ The name of this iam stack in CloudFormation (e.g. <prefix>-iam).
 
 The buckets created in the [Create S3 Buckets](#create-s3-buckets) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured. A key is used for the buckets to allow for swapping out the bucket names easily.
 
+###### usePermissionBoundary:
+
+If deploying to a NASA NGAP account, set `usePermissionBoundary: true`.
+
 ------
 
 **Sample new deployment added to config.yml**:
@@ -224,8 +228,6 @@ The buckets created in the [Create S3 Buckets](#create-s3-buckets) step. Buckets
 **Deploy `iam` stack**[^1]
 
     $ ./node_modules/.bin/kes cf deploy --kes-folder iam --deployment <iam-deployment-name> --template node_modules/@cumulus/deployment/iam --region <region>
-
-**Note**: For IAM deployment to NASA NGAP accounts, the deployment package has an `iam-ngap` deployment template, which can be used by substituting `--template node_modules/@cumulus/deployment/iam-ngap` above.
 
 **Note**: If this deployment fails check the deployment details in the AWS Cloud Formation Console for information. Permissions may need to be updated by your AWS administrator.
 

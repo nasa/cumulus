@@ -33,6 +33,10 @@ Resources:
               - lambda.amazonaws.com
             Action:
               - sts:AssumeRole
+    {{#if usePermissionBoundary}}
+      PermissionsBoundary:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:policy/NGAPShRoleBoundary
+    {{/if}}
       Path: "/"
       Policies:
         - PolicyName: LambdaApiGateway
@@ -159,6 +163,10 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
+    {{#if usePermissionBoundary}}
+      PermissionsBoundary:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:policy/NGAPShRoleBoundary
+    {{/if}}
       Path: "/"
       Policies:
         - PolicyName: ProcessingLambda
@@ -330,6 +338,10 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
+    {{#if usePermissionBoundary}}
+      PermissionsBoundary:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:policy/NGAPShRoleBoundary
+    {{/if}}
       Path: "/"
       Policies:
         - PolicyName: MigrationProcessingLambda
@@ -503,6 +515,10 @@ Resources:
               Service:
                 - Fn::Sub: states.${AWS::Region}.amazonaws.com
             Action: sts:AssumeRole
+    {{#if usePermissionBoundary}}
+      PermissionsBoundary:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:policy/NGAPShRoleBoundary
+    {{/if}}
       Path: "/"
       Policies:
         - PolicyName: StepRole
@@ -526,6 +542,10 @@ Resources:
             Principal:
               Service: ec2.amazonaws.com
             Action: sts:AssumeRole
+    {{#if usePermissionBoundary}}
+      PermissionsBoundary:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:policy/NGAPShRoleBoundary
+    {{/if}}
       Path: "/"
       Policies:
         - PolicyName: ECSRole
@@ -624,6 +644,10 @@ Resources:
               Service: lambda.amazonaws.com
             Action:
               - sts:AssumeRole
+    {{#if usePermissionBoundary}}
+      PermissionsBoundary:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:policy/NGAPShRoleBoundary
+    {{/if}}
       Path: "/"
       Policies:
         - PolicyName: DistributionApiGateway
@@ -694,6 +718,10 @@ Resources:
             Principal:
               Service: application-autoscaling.amazonaws.com
             Action: sts:AssumeRole
+    {{#if usePermissionBoundary}}
+      PermissionsBoundary:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:policy/NGAPShRoleBoundary
+    {{/if}}
       Path: '/'
       Policies:
         - PolicyName: ScalingPolicy
