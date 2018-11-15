@@ -35,6 +35,9 @@ async function getNumberOfTopicSubscriptions(snsTopicArn) {
   return subs.Subscriptions.length;
 }
 
+const policyError = new Error('The resource you requested does not exist.');
+const shouldThrowPolicyError = async () => lambda().getPolicy({ FunctionName: consumerName }).promise();
+
 describe('The SNS-type rule', () => {
   let postRule;
   let snsTopicArn;
@@ -110,12 +113,7 @@ describe('The SNS-type rule', () => {
     });
 
     it('deletes the policy and subscription', async () => {
-      try {
-        await lambda().getPolicy({ FunctionName: consumerName }).promise();
-      }
-      catch (e) {
-        expect(e.message).toBe('The resource you requested does not exist.');
-      }
+      expect(shouldThrowPolicyError).toThrow(policyError);
       expect(await getNumberOfTopicSubscriptions(snsTopicArn)).toBe(0);
     });
   });
@@ -148,18 +146,23 @@ describe('The SNS-type rule', () => {
     });
 
     afterAll(async () => {
-      await SNS.deleteTopic({ TopicArn: snsTopicArn }).promise();
+      await rulesApiTestUtils.updateRule({ prefix: config.stackName, ruleName, updateParams: { state: 'DISABLED' } });
+      await SNS.deleteTopic({ TopicArn: newTopicArn }).promise();
     });
 
     it('saves the new rule.value', () => {
       expect(putRule.rule.value).toEqual(newTopicArn);
     });
 
-    it('deletes the old subscription', async () => {
+    it('deletes the old policy and subscription', async () => {
+      expect(shouldThrowPolicyError).toThrow(policyError);
       expect(await getNumberOfTopicSubscriptions(snsTopicArn)).toBe(0);
     });
 
-    it('adds the new subscription', async () => {
+    it('adds the new policy and subscription', async () => {
+      const { Policy } = await lambda().getPolicy({ FunctionName: consumerName }).promise();
+      const statement = JSON.parse(Policy).Statement[0];
+      expect(statement.Sid).toEqual(`${ruleName}Permission`);
       expect(await getNumberOfTopicSubscriptions(newTopicArn)).toBe(1);
     });
   });
@@ -198,17 +201,16 @@ describe('The SNS-type rule', () => {
       getRule = JSON.parse(getRuleResponse.body);
     });
 
+    afterAll(async () => {
+      await SNS.deleteTopic({ TopicArn: newTopicArn }).promise();
+    });
+
     it('is removed from the rules API', () => {
       expect(getRule.message.includes('No record found')).toBe(true);
     });
 
     it('deletes the policy and subscription', async () => {
-      try {
-        await lambda().getPolicy({ FunctionName: consumerName }).promise();
-      }
-      catch (e) {
-        expect(e.message).toBe('The resource you requested does not exist.');
-      }
+      expect(shouldThrowPolicyError).toThrow(policyError);
       expect(await getNumberOfTopicSubscriptions(newTopicArn)).toBe(0);
     });
   });
