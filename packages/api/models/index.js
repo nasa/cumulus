@@ -10,8 +10,10 @@ const Rule = require('./rules');
 const Execution = require('./executions');
 const FileClass = require('./files');
 const User = require('./users');
+const AccessToken = require('./access-tokens');
 
 module.exports = {
+  AccessToken,
   AsyncOperation,
   User,
   Collection,

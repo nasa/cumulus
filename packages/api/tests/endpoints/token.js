@@ -9,21 +9,20 @@ const {
 } = require('@cumulus/common');
 
 const { OAuth2AuthenticationFailure } = require('../../lib/OAuth2');
-const { fakeUserFactory } = require('../../lib/testUtils');
-const { User } = require('../../models');
+const { AccessToken } = require('../../models');
 const { handleRequest } = require('../../endpoints/token');
-const assertions = require('../../lib/assertions');
 
-let userModel;
+let accessTokenModel;
+
 test.before(async () => {
-  process.env.UsersTable = randomString();
+  process.env.AccessTokensTable = randomString();
 
-  userModel = new User();
-  await userModel.createTable();
+  accessTokenModel = new AccessToken();
+  await accessTokenModel.createTable();
 });
 
 test.after.always(async () => {
-  await userModel.deleteTable();
+  await accessTokenModel.deleteTable();
 });
 
 test.serial('A request for anything other that GET /token results in a 404', async (t) => {
@@ -96,35 +95,9 @@ test.serial('GET /token with an invalid code results in an authorization failure
   t.is(JSON.parse(response.body).message, 'Failed to get authorization token');
 });
 
-test.serial('CUMULUS-912 GET /token with a code for an unauthorized user results in an authorization failure response', async (t) => {
-  const mockOAuth2Provider = {
-    getAccessToken: async () => ({
-      accessToken: 'my-access-token',
-      refreshToken: 'my-refresh-token',
-      username: 'unauthorized-user',
-      expirationTime: Date.now() + 1000
-    })
-  };
-
-  const request = {
-    httpMethod: 'GET',
-    resource: '/token',
-    queryStringParameters: {
-      code: 'my-authorization-code'
-    }
-  };
-
-  const response = await handleRequest(request, mockOAuth2Provider);
-
-  assertions.isUnauthorizedUserResponse(t, response);
-});
-
 test.serial('GET /token with a code but no state returns the access token', async (t) => {
-  const username = randomString();
-  await userModel.create(fakeUserFactory({ userName: username }));
-
   const getAccessTokenResponse = {
-    username,
+    username: 'my-username',
     accessToken: 'my-access-token',
     refreshToken: 'my-refresh-token',
     expirationTime: 12345
@@ -151,11 +124,8 @@ test.serial('GET /token with a code but no state returns the access token', asyn
 });
 
 test.serial('GET /token with a code and state results in a redirect to that state', async (t) => {
-  const username = randomString();
-  await userModel.create(fakeUserFactory({ userName: username }));
-
   const getAccessTokenResponse = {
-    username,
+    username: 'my-username',
     accessToken: 'my-access-token',
     refreshToken: 'my-refresh-token',
     expirationTime: 12345
@@ -185,11 +155,8 @@ test.serial('GET /token with a code and state results in a redirect to that stat
 });
 
 test.serial('GET /token with a code and state results in a redirect containing the access token', async (t) => {
-  const username = randomString();
-  await userModel.create(fakeUserFactory({ userName: username }));
-
   const getAccessTokenResponse = {
-    username,
+    username: 'my-username',
     accessToken: 'my-access-token',
     refreshToken: 'my-refresh-token',
     expirationTime: 12345
@@ -217,16 +184,17 @@ test.serial('GET /token with a code and state results in a redirect containing t
   t.is(locationHeader.searchParams.get('token'), 'my-access-token');
 });
 
-test.serial('When using Earthdata Login, GET /token with a code updates the user in DynamoDb', async (t) => {
-  const userName = randomString();
-  const userBefore = fakeUserFactory({ userName });
-  await userModel.create(userBefore);
+test.serial('When using Earthdata Login, GET /token with a code stores the access token in DynamoDb', async (t) => {
+  const accessToken = randomString();
+  const username = randomString();
+  const refreshToken = randomString();
+  const expirationTime = 12345;
 
   const getAccessTokenResponse = {
-    username: userName,
-    accessToken: 'my-access-token',
-    refreshToken: 'my-refresh-token',
-    expirationTime: 12345
+    accessToken,
+    expirationTime,
+    refreshToken,
+    username
   };
 
   const mockOAuth2Provider = {
@@ -244,8 +212,10 @@ test.serial('When using Earthdata Login, GET /token with a code updates the user
 
   await handleRequest(request, mockOAuth2Provider);
 
-  const userAfter = await userModel.get({ userName });
+  const tokenAfter = await accessTokenModel.get({ accessToken });
 
-  t.is(userAfter.refresh, 'my-refresh-token');
-  t.is(userAfter.password, 'my-access-token');
+  t.is(tokenAfter.accessToken, accessToken);
+  t.is(tokenAfter.refreshToken, refreshToken);
+  t.is(tokenAfter.username, username);
+  t.is(tokenAfter.expirationTime, expirationTime);
 });

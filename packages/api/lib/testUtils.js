@@ -142,6 +142,7 @@ function fakePdrFactory(status = 'completed') {
 function fakeExecutionFactory(status = 'completed', type = 'fakeWorkflow') {
   return {
     arn: randomString(),
+    duration: 180.5,
     name: randomString(),
     status,
     createdAt: Date.now(),
@@ -217,8 +218,32 @@ function fakeProviderFactory(options = {}) {
   );
 }
 
+function fakeAccessTokenFactory(params = {}) {
+  return Object.assign(
+    {
+      accessToken: randomString(),
+      refreshToken: randomString(),
+      username: randomString(),
+      expirationTime: Date.now() + (60 * 60 * 1000)
+    },
+    params
+  );
+}
+
+async function createAccessToken({ accessTokenModel, userModel }) {
+  const userRecord = fakeUserFactory();
+  await userModel.create(userRecord);
+
+  const accessTokenRecord = fakeAccessTokenFactory({ username: userRecord.userName });
+  await accessTokenModel.create(accessTokenRecord);
+
+  return accessTokenRecord.accessToken;
+}
+
 module.exports = {
+  createAccessToken,
   testEndpoint,
+  fakeAccessTokenFactory,
   fakeGranuleFactory,
   fakeGranuleFactoryV2,
   fakePdrFactory,

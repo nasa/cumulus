@@ -8,26 +8,30 @@ const bootstrap = require('../../../lambdas/bootstrap');
 const executionEndpoint = require('../../../endpoints/executions');
 const indexer = require('../../../es/indexer');
 const {
+  createAccessToken,
   testEndpoint,
-  fakeExecutionFactory,
-  fakeUserFactory
+  fakeExecutionFactory
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 
 // create all the variables needed across this test
 let esClient;
+let esIndex;
 const fakeExecutions = [];
-const esIndex = randomString();
+process.env.AccessTokensTable = randomString();
 process.env.ExecutionsTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
 
+let accessTokenModel;
 let authHeaders;
 let executionModel;
 let userModel;
+
 test.before(async () => {
+  esIndex = randomString();
   // create esClient
   esClient = await Search.es('fakehost');
 
@@ -50,13 +54,17 @@ test.before(async () => {
   userModel = new models.User();
   await userModel.createTable();
 
-  const authToken = (await userModel.create(fakeUserFactory())).password;
+  accessTokenModel = new models.AccessToken();
+  await accessTokenModel.createTable();
+
+  const accessToken = await createAccessToken({ accessTokenModel, userModel });
   authHeaders = {
-    Authorization: `Bearer ${authToken}`
+    Authorization: `Bearer ${accessToken}`
   };
 });
 
 test.after.always(async () => {
+  await accessTokenModel.deleteTable();
   await executionModel.deleteTable();
   await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
@@ -156,8 +164,11 @@ test('GET returns an existing execution', (t) => {
     headers: authHeaders
   };
   return testEndpoint(executionEndpoint, getEvent, (response) => {
-    const { arn } = JSON.parse(response.body);
-    t.is(arn, fakeExecutions[0].arn);
+    const executionResult = JSON.parse(response.body);
+    t.is(executionResult.arn, fakeExecutions[0].arn);
+    t.is(executionResult.name, fakeExecutions[0].name);
+    t.truthy(executionResult.duration);
+    t.is(executionResult.status, 'completed');
   });
 });
 

@@ -10,6 +10,7 @@ const fs = require('fs');
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 9 * 60 * 1000;
 
 const {
+  getEventSourceMapping,
   addRules,
   LambdaStep,
   waitForCompletedExecution,
@@ -121,6 +122,7 @@ const ruleOverride = {
 
 const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'];
 
+
 // When kinesis-type rules exist, the Cumulus lambda kinesisConsumer is
 // configured to trigger workflows when new records arrive on a Kinesis
 // stream. When a record appears on the stream, the kinesisConsumer lambda
@@ -131,6 +133,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   let executionStatus;
   let s3FileHead;
   let responseStreamShardIterator;
+  let logEventSourceMapping;
 
   const providersDir = './data/providers/PODAAC_SWOT/';
   const collectionsDir = './data/collections/L2_HR_PIXC-000/';
@@ -179,12 +182,19 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         waitForActiveStream(streamName),
         waitForActiveStream(cnmResponseStreamName)
       ]);
-      await addRules(testConfig, ruleDirectory, ruleOverride);
+      const ruleList = await addRules(testConfig, ruleDirectory, ruleOverride);
+      logEventSourceMapping = await getEventSourceMapping(ruleList[0].rule.logEventArn);
     });
   });
 
   afterAll(async () => {
     await cleanUp();
+  });
+
+  it('Creates an event to log incoming records', async () => {
+    const mapping = logEventSourceMapping;
+    expect(mapping.FunctionArn.endsWith(`${testConfig.stackName}-KinesisInboundEventLogger`)).toBe(true);
+    expect(mapping.EventSourceArn.endsWith(streamName)).toBe(true);
   });
 
   it('Prepares a kinesis stream for integration tests.', async () => {

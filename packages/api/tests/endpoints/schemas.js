@@ -12,6 +12,7 @@ const assertions = require('../../lib/assertions');
 
 let userModel;
 test.before(async () => {
+  process.env.AccessTokensTable = randomString();
   process.env.UsersTable = randomString();
 
   userModel = new models.User();
@@ -34,7 +35,7 @@ test('CUMULUS-911 GET with pathParameters and without an Authorization header re
   });
 });
 
-test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns an unauthorized response', (t) => {
+test('CUMULUS-912 GET with pathParameters and with an invalid access token returns an unauthorized response', (t) => {
   const request = {
     httpMethod: 'GET',
     pathParameters: {
@@ -46,6 +47,8 @@ test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns 
   };
 
   return testEndpoint(schemasEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
+
+test.todo('CUMULUS-912 GET with pathParameters and with an unauthorized user returns an unauthorized response');
