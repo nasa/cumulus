@@ -47,7 +47,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-986**
   - Added `waitForTestExecutionStart` to `@cumulus/integration-tests`
 - **CUMULUS-919**
-  - Added an `iam-ngap` CloudFormation template to `@cumulus/deployment`
+  - In `@cumulus/deployment`, added suppoirt for NGAP permissions boundaries for IAM roles with `usePermissionBoundaries` flag in `iam/config.yml`. Defaults to false.
 
 ### Changed
 - Updated `@cumulus/helloworld` to use S3 to store state for pass on retry tests
