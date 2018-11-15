@@ -130,7 +130,7 @@ async function del(event, cb) {
   const collectionModel = new models.Collection();
 
   try {
-    await collectionModel.delete(collectionName, version);
+    await collectionModel.delete({ name: collectionName, version });
   }
   catch (err) {
     if (err instanceof AssociatedRulesError) {

@@ -70,11 +70,12 @@ class Collection extends Manager {
   /**
    * Delete a collection
    *
-   * @param {string} name - the collection name
-   * @param {string} version - the collection version
+   * @param {Object} params
+   * @param {string} params.name - the collection name
+   * @param {string} params.version - the collection version
    */
-  async delete(name, version) {
-    if (!(await this.exists(name, version))) throw new Error('Collection does not exist');
+  async delete(params = {}) {
+    const { name, version } = params;
 
     const associatedRuleNames = (await this.getAssociatedRules(name, version))
       .map((rule) => rule.name);
