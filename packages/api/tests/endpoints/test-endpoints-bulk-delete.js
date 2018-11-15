@@ -5,9 +5,10 @@ const {
   testUtils: { randomString }
 } = require('@cumulus/common');
 const bulkDeleteEndpoint = require('../../endpoints/bulk-delete');
-const { User } = require('../../models');
-const { fakeUserFactory } = require('../../lib/testUtils');
+const { AccessToken, User } = require('../../models');
+const { createAccessToken } = require('../../lib/testUtils');
 
+let accessTokenModel;
 let userModel;
 let authHeaders;
 let context;
@@ -18,8 +19,14 @@ test.before(async () => {
   userModel = new User();
   await userModel.createTable();
 
-  const authToken = (await userModel.create(fakeUserFactory())).password;
-  authHeaders = { Authorization: `Bearer ${authToken}` };
+  process.env.AccessTokensTable = randomString();
+  accessTokenModel = new AccessToken();
+  await accessTokenModel.createTable();
+
+  const accessToken = await createAccessToken({ accessTokenModel, userModel });
+  authHeaders = {
+    Authorization: `Bearer ${accessToken}`
+  };
 
   context = {
     AsyncOperationsTable: randomString(),
@@ -39,6 +46,8 @@ test.after.always(async () => {
   catch (err) {
     if (err.code !== 'ResourceNotFoundException') throw err;
   }
+
+  await accessTokenModel.deleteTable();
 });
 
 test.serial('GET /bulkDelete returns a 404 status code', async (t) => {

@@ -8,14 +8,14 @@ const { google } = require('googleapis');
 const EarthdataLogin = require('../lib/EarthdataLogin');
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 
-const { User } = require('../models');
+const { AccessToken } = require('../models');
 const {
-  buildAuthorizationFailureResponse,
-  buildLambdaProxyResponse
-} = require('../lib/response');
+  AuthorizationFailureResponse,
+  LambdaProxyResponse
+} = require('../lib/responses');
 
 const buildPermanentRedirectResponse = (location) =>
-  buildLambdaProxyResponse({
+  new LambdaProxyResponse({
     json: false,
     statusCode: 301,
     body: 'Redirecting',
@@ -33,55 +33,49 @@ async function token(event, oAuth2Provider) {
     try {
       const {
         accessToken,
-        refreshToken: refresh,
-        username: userName,
-        expirationTime: expires
+        refreshToken,
+        username,
+        expirationTime
       } = await oAuth2Provider.getAccessToken(code);
 
-      const u = new User();
+      const accessTokenModel = new AccessToken();
 
-      return u.get({ userName })
-        .then(() => u.update({ userName }, { password: accessToken, refresh, expires }))
-        .then(() => {
-          if (state) {
-            log.info(`Log info: Redirecting to state: ${state} with token ${accessToken}`);
-            return buildPermanentRedirectResponse(
-              `${decodeURIComponent(state)}?token=${accessToken}`
-            );
-          }
-          log.info('Log info: No state specified, responding 200');
-          return buildLambdaProxyResponse({
-            json: true,
-            statusCode: 200,
-            body: { message: { token: accessToken } }
-          });
-        })
-        .catch((e) => {
-          if (e.message.includes('No record found for')) {
-            return buildAuthorizationFailureResponse({
-              message: 'User not authorized',
-              statusCode: 403
-            });
-          }
-          return buildAuthorizationFailureResponse({ error: e, message: e.message });
-        });
+      await accessTokenModel.create({
+        accessToken,
+        refreshToken,
+        username,
+        expirationTime
+      });
+
+      if (state) {
+        log.info(`Log info: Redirecting to state: ${state} with token ${accessToken}`);
+        return buildPermanentRedirectResponse(
+          `${decodeURIComponent(state)}?token=${accessToken}`
+        );
+      }
+      log.info('Log info: No state specified, responding 200');
+      return new LambdaProxyResponse({
+        json: true,
+        statusCode: 200,
+        body: { message: { token: accessToken } }
+      });
     }
     catch (e) {
       if (e.statusCode === 400) {
-        return buildAuthorizationFailureResponse({
+        return new AuthorizationFailureResponse({
           error: 'authorization_failure',
           message: 'Failed to get authorization token'
         });
       }
 
       log.error('Error caught when checking code:', e);
-      return buildAuthorizationFailureResponse({ error: e, message: e.message });
+      return new AuthorizationFailureResponse({ error: e, message: e.message });
     }
   }
 
   const errorMessage = 'Request requires a code';
   const error = new Error(errorMessage);
-  return buildAuthorizationFailureResponse({ error: error, message: error.message });
+  return new AuthorizationFailureResponse({ error: error, message: error.message });
 }
 
 /**
@@ -108,7 +102,7 @@ const isGetTokenRequest = (request) =>
   request.httpMethod === 'GET'
   && request.resource.endsWith('/token');
 
-const notFoundResponse = buildLambdaProxyResponse({
+const notFoundResponse = new LambdaProxyResponse({
   json: false,
   statusCode: 404,
   body: 'Not found'

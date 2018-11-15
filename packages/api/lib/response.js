@@ -13,7 +13,7 @@ const isFunction = require('lodash.isfunction');
 const isString = require('lodash.isstring');
 const log = require('@cumulus/common/log');
 const { deprecate } = require('@cumulus/common/util');
-const { User } = require('../models');
+const { AccessToken, User } = require('../models');
 const { errorify } = require('./utils');
 const {
   AuthorizationFailureResponse,
@@ -110,7 +110,7 @@ async function getAuthorizationFailureResponse(params) {
   }
 
   // Parse the Authorization header
-  const [scheme, token] = request.headers[authorizationKey].trim().split(/\s+/);
+  const [scheme, accessToken] = request.headers[authorizationKey].trim().split(/\s+/);
 
   // Verify that the Authorization type was "Bearer"
   if (scheme !== 'Bearer') {
@@ -121,35 +121,44 @@ async function getAuthorizationFailureResponse(params) {
   }
 
   // Verify that a token was set in the Authorization header
-  if (!token) {
+  if (!accessToken) {
     return new AuthorizationFailureResponse({
       error: 'invalid_request',
       message: 'Missing token'
     });
   }
 
-  const userModelClient = new User(usersTable);
-  const findUserResult = await userModelClient.scan({
-    filter: 'password = :token',
-    values: { ':token': token }
-  });
+  const accessTokenModel = new AccessToken();
 
-  // Verify that the token exists in the DynamoDB Users table
-  if (findUserResult.Count !== 1) {
-    return new AuthorizationFailureResponse({
-      message: 'User not authorized',
-      statusCode: 403
-    });
+  let getTokenResult;
+  try {
+    getTokenResult = await accessTokenModel.get({ accessToken });
+  }
+  catch (err) {
+    if (err.name === 'RecordDoesNotExist') {
+      return new AuthorizationFailureResponse({
+        message: 'Invalid access token',
+        statusCode: 403
+      });
+    }
   }
 
-  // Not sure how this could ever happen
-  if (findUserResult.Items[0].expires === undefined) {
-    log.error('Token does not have an expires field:', token);
-    return new InternalServerError();
+  const { username } = getTokenResult;
+  const userModel = new User({ tableName: usersTable });
+  try {
+    await userModel.get({ userName: username });
+  }
+  catch (err) {
+    if (err.name === 'RecordDoesNotExist') {
+      return new AuthorizationFailureResponse({
+        message: 'User not authorized',
+        statusCode: 403
+      });
+    }
   }
 
   // Verify that the token has not expired
-  if (findUserResult.Items[0].expires < Date.now()) {
+  if (getTokenResult.expirationTime < Date.now()) {
     return new AuthorizationFailureResponse({
       message: 'Access token has expired',
       statusCode: 403
