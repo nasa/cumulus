@@ -121,6 +121,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - sns:publish
+                  - sns:List*
                   - sns:Subscribe
                   - sns:Unsubscribe
                 Resource: '*'
