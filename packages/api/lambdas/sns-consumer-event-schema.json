@@ -1,9 +1,0 @@
-{
-  "$async": true,
-  "properties": {
-    "topicArn": {
-      "type": "string"
-    }
-  },
-  "required": ["topicArn"]
-}
