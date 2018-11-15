@@ -124,6 +124,7 @@ Resources:
                   - sns:List*
                   - sns:Subscribe
                   - sns:Unsubscribe
+                  - sns:List*
                 Resource: '*'
 
               - Effect: Allow
