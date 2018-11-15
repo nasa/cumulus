@@ -97,7 +97,6 @@ class Rule extends Manager {
       }
       break;
     case 'sns': {
-      // TODO - check if subscription already exists
       if (valueUpdated || stateChanged) {
         if (original.rule.arn) {
           await this.deleteSnsTrigger(original);
@@ -332,14 +331,40 @@ class Rule extends Manager {
   }
 
   async addSnsTrigger(item) {
-    // create sns subscription
-    const subscriptionParams = {
-      TopicArn: item.rule.value,
-      Protocol: 'lambda',
-      Endpoint: process.env.messageConsumer,
-      ReturnSubscriptionArn: true
-    };
-    const r = await aws.sns().subscribe(subscriptionParams).promise();
+    // check for existing subscription
+    let token;
+    let subExists = false;
+    let subscriptionArn;
+    /* eslint-disable no-await-in-loop */
+    do {
+      const subsResponse = await aws.sns().listSubscriptionsByTopic({
+        TopicArn: item.rule.value,
+        NextToken: token
+      }).promise();
+      token = subsResponse.NextToken;
+      /* eslint-disable no-loop-func */
+      await Promise.all(subsResponse.Subscriptions.forEach((sub) => {
+        if (sub.Endpoint === process.env.messageConsumer) {
+          subExists = true;
+          subscriptionArn = sub.SubscriptionArn;
+        }
+      }));
+      /* eslint-enable no-loop-func */
+      if (subExists) break;
+    }
+    while (token);
+    /* eslint-enable no-await-in-loop */
+    if (!subExists) {
+      // create sns subscription
+      const subscriptionParams = {
+        TopicArn: item.rule.value,
+        Protocol: 'lambda',
+        Endpoint: process.env.messageConsumer,
+        ReturnSubscriptionArn: true
+      };
+      const r = await aws.sns().subscribe(subscriptionParams).promise();
+      subscriptionArn = r.SubscriptionArn;
+    }
     // create permission to invoke lambda
     const permissionParams = {
       Action: 'lambda:InvokeFunction',
@@ -350,7 +375,7 @@ class Rule extends Manager {
     };
     await aws.lambda().addPermission(permissionParams).promise();
 
-    item.rule.arn = r.SubscriptionArn;
+    item.rule.arn = subscriptionArn;
     return item;
   }
 
