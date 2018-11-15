@@ -8,7 +8,6 @@ const {
 } = require('@cumulus/common');
 const Rule = require('../models/rules');
 const kinesisSchema = require('./kinesis-consumer-event-schema.json');
-const snsSchema = require('./sns-consumer-event-schema.json');
 const { queueMessageForRule } = require('../lib/rulesHelpers');
 
 /**
@@ -180,7 +179,6 @@ function processRecord(record, fromSNS) {
     // normal SNS notification - not a Kinesis fallback
     eventObject = parsed;
     originalMessageSource = 'sns';
-    validationSchema = snsSchema;
     ruleParam = record.Sns.TopicArn;
   }
   else {
