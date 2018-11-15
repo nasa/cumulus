@@ -125,7 +125,7 @@ describe('The Ingest Granule failure workflow', () => {
 
         if (currentEvent.type === 'TaskStateExited' &&
           currentEvent.name === syncGranuleNoVpcTaskName) {
-          syncGranStepOutput = currentEvent.output;
+          syncGranStepOutput = JSON.parse(currentEvent.output);
           expect(syncGranStepOutput.exception).toBeTruthy();
 
           // the previous step has the original error thrown from lambda

@@ -396,7 +396,7 @@ describe('Ingesting from PDR', () => {
             const currentEvent = events[i];
             if (currentEvent.type === 'TaskStateExited' &&
               currentEvent.name === checkStatusTaskName) {
-              const output = currentEvent.output;
+              const output = JSON.parse(currentEvent.output);
               const isFinished = output.payload.isFinished;
 
               // get the next task executed
