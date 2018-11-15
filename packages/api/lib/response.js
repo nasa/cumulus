@@ -13,6 +13,12 @@ const isFunction = require('lodash.isfunction');
 const isString = require('lodash.isstring');
 const log = require('@cumulus/common/log');
 const { deprecate } = require('@cumulus/common/util');
+const {
+  decode: jwtDecode,
+  JsonWebTokenError,
+  TokenExpiredError,
+  verify: jwtVerify
+} = require('jsonwebtoken');
 const { AccessToken, User } = require('../models');
 const { errorify } = require('./utils');
 const {
@@ -110,7 +116,7 @@ async function getAuthorizationFailureResponse(params) {
   }
 
   // Parse the Authorization header
-  const [scheme, accessToken] = request.headers[authorizationKey].trim().split(/\s+/);
+  const [scheme, jwtToken] = request.headers[authorizationKey].trim().split(/\s+/);
 
   // Verify that the Authorization type was "Bearer"
   if (scheme !== 'Bearer') {
@@ -121,21 +127,22 @@ async function getAuthorizationFailureResponse(params) {
   }
 
   // Verify that a token was set in the Authorization header
-  if (!accessToken) {
+  if (!jwtToken) {
     return new AuthorizationFailureResponse({
       error: 'invalid_request',
       message: 'Missing token'
     });
   }
 
-  const accessTokenModel = new AccessToken();
-
-  let getTokenResult;
   try {
-    getTokenResult = await accessTokenModel.get({ accessToken });
-  }
-  catch (err) {
-    if (err.name === 'RecordDoesNotExist') {
+    jwtVerify(jwtToken, process.env.TOKEN_SECRET)
+  } catch (err) {
+    if (err instanceof TokenExpiredError) {
+      return new AuthorizationFailureResponse({
+        message: 'Access token has expired',
+        statusCode: 403
+      });
+    } else if (err instanceof JsonWebTokenError) {
       return new AuthorizationFailureResponse({
         message: 'Invalid access token',
         statusCode: 403
@@ -143,7 +150,24 @@ async function getAuthorizationFailureResponse(params) {
     }
   }
 
-  const { username } = getTokenResult;
+  const { accessToken, username } = jwtDecode(jwtToken);
+
+  // const accessTokenModel = new AccessToken();
+
+  // let getTokenResult;
+  // try {
+  //   getTokenResult = await accessTokenModel.get({ accessToken });
+  // }
+  // catch (err) {
+  //   if (err.name === 'RecordDoesNotExist') {
+  //     return new AuthorizationFailureResponse({
+  //       message: 'Invalid access token',
+  //       statusCode: 403
+  //     });
+  //   }
+  // }
+
+  // const { username } = getTokenResult;
   const userModel = new User({ tableName: usersTable });
   try {
     await userModel.get({ userName: username });
@@ -158,12 +182,12 @@ async function getAuthorizationFailureResponse(params) {
   }
 
   // Verify that the token has not expired
-  if (getTokenResult.expirationTime < Date.now()) {
-    return new AuthorizationFailureResponse({
-      message: 'Access token has expired',
-      statusCode: 403
-    });
-  }
+  // if (getTokenResult.expirationTime < Date.now()) {
+  //   return new AuthorizationFailureResponse({
+  //     message: 'Access token has expired',
+  //     statusCode: 403
+  //   });
+  // }
 
   return null;
 }
