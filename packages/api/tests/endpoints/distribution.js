@@ -7,21 +7,29 @@ const { randomString } = require('@cumulus/common/test-utils');
 
 const distributionEndpoint = require('../../endpoints/distribution');
 const { AccessToken } = require('../../models');
-const { normalizeHeaders } = require('../../lib/api-gateway');
+const { findCaseInsensitiveValue } = require('../../lib/utils');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 
-function headerIs(headers, key, value) {
-  const lowerCaseKey = key.toLowerCase();
+function headerValues(response, name) {
+  return findCaseInsensitiveValue(response.multiValueHeaders, name);
+}
 
-  return headers[lowerCaseKey].length === 1
-    && headers[lowerCaseKey][0] === value;
+function headerValue(response, name) {
+  const value = headerValues(response, name);
+
+  if (!value) return undefined;
+  if (value.length > 1) throw new TypeError(`Found multiple headers values for ${name}`);
+
+  return value[0];
+}
+
+function headerIs(response, name, value) {
+  return headerValue(response, name) === value;
 }
 
 function validateDefaultHeaders(t, response) {
-  const headers = normalizeHeaders(response);
-
-  t.true(headerIs(headers, 'Access-Control-Allow-Origin', '*'));
-  t.true(headerIs(headers, 'Strict-Transport-Security', 'max-age=31536000'));
+  t.true(headerIs(response, 'Access-Control-Allow-Origin', '*'));
+  t.true(headerIs(response, 'Strict-Transport-Security', 'max-age=31536000'));
 }
 
 function validateRedirectToGetAuthorizationCode(t, response) {
@@ -266,8 +274,7 @@ test('An authenticated request for a file returns a redirect to S3', async (t) =
 
   validateDefaultHeaders(t, response);
 
-  const { location } = normalizeHeaders(response);
-  const redirectLocation = new URL(location);
+  const redirectLocation = new URL(headerValue(response, 'Location'));
 
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
@@ -312,9 +319,7 @@ test('A /redirect request with a good authorization code returns a correct respo
 
   t.is(response.headers.Location, `${distributionUrl}/${fileLocation}`);
 
-  const headers = normalizeHeaders(response);
-
-  const setCookieHeaders = headers['set-cookie'] || [];
+  const setCookieHeaders = headerValues(response, 'Set-Cookie') || [];
   const cookies = setCookieHeaders.map(Cookie.parse);
   const setAccessTokenCookie = cookies.find((c) => c.key === 'accessToken');
 
@@ -360,9 +365,7 @@ test('A /redirect request with a good authorization code stores the access token
     s3Client
   });
 
-  const headers = normalizeHeaders(response);
-
-  const setCookieHeaders = headers['set-cookie'] || [];
+  const setCookieHeaders = headerValues(response, 'Set-Cookie') || [];
   const cookies = setCookieHeaders.map(Cookie.parse);
   const setAccessTokenCookie = cookies.find((c) => c.key === 'accessToken');
 

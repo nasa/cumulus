@@ -68,6 +68,10 @@ class LambdaProxyResponse {
   get multiValueHeaders() {
     const headers = {};
 
+    Object.entries(this.headers).forEach(([key, value]) => {
+      headers[key] = [value];
+    });
+
     if (this._cookies) {
       headers['Set-Cookie'] = this._cookies.map((c) => c.toString());
     }
