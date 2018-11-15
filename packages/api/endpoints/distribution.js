@@ -1,7 +1,7 @@
 'use strict';
 
 const urljoin = require('url-join');
-const { aws } = require('@cumulus/common');
+const { s3 } = require('@cumulus/common/aws');
 const { URL } = require('url');
 const { Cookie } = require('tough-cookie');
 
@@ -204,7 +204,7 @@ async function handleApiGatewayRequest(event) {
     authClient: earthdataLoginClient,
     distributionUrl: process.env.DISTRIBUTION_URL,
     request: event,
-    s3Client: aws.s3()
+    s3Client: s3()
   });
 }
 

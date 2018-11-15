@@ -69,7 +69,7 @@ class LambdaProxyResponse {
     const headers = {};
 
     if (this._cookies) {
-      headers.Cookie = this._cookies.map((c) => c.toString());
+      headers['Set-Cookie'] = this._cookies.map((c) => c.toString());
     }
 
     return headers;
@@ -87,6 +87,7 @@ class LambdaProxyResponse {
     return {
       body: this.body,
       headers: this.headers,
+      multiValueHeaders: this.multiValueHeaders,
       statusCode: this.statusCode
     };
   }
