@@ -7,7 +7,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 
 const distributionEndpoint = require('../../endpoints/distribution');
 const { AccessToken } = require('../../models');
-const { getCookie, normalizeHeaders } = require('../../lib/api-gateway');
+const { normalizeHeaders } = require('../../lib/api-gateway');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 
 function headerIs(headers, key, value) {
@@ -312,15 +312,19 @@ test('A /redirect request with a good authorization code returns a correct respo
 
   t.is(response.headers.Location, `${distributionUrl}/${fileLocation}`);
 
-  const responseAccessTokenCookie = getCookie(response, 'accessToken');
+  const headers = normalizeHeaders(response);
 
-  t.truthy(responseAccessTokenCookie);
-  t.is(responseAccessTokenCookie.value, getAccessTokenResponse.accessToken);
-  t.is(responseAccessTokenCookie.httpOnly, true);
-  t.is(responseAccessTokenCookie.secure, true);
+  const setCookieHeaders = headers['set-cookie'] || [];
+  const cookies = setCookieHeaders.map(Cookie.parse);
+  const setAccessTokenCookie = cookies.find((c) => c.key === 'accessToken');
+
+  t.truthy(setAccessTokenCookie);
+  t.is(setAccessTokenCookie.value, getAccessTokenResponse.accessToken);
+  t.is(setAccessTokenCookie.httpOnly, true);
+  t.is(setAccessTokenCookie.secure, true);
 
   t.is(
-    responseAccessTokenCookie.expires.valueOf(),
+    setAccessTokenCookie.expires.valueOf(),
     // Cookie expirations only have per-second precision
     getAccessTokenResponse.expirationTime - (getAccessTokenResponse.expirationTime % 1000)
   );
@@ -356,7 +360,11 @@ test('A /redirect request with a good authorization code stores the access token
     s3Client
   });
 
-  const responseAccessTokenCookie = getCookie(response, 'accessToken');
+  const headers = normalizeHeaders(response);
 
-  t.true(await accessTokenModel.exists({ accessToken: responseAccessTokenCookie.value }));
+  const setCookieHeaders = headers['set-cookie'] || [];
+  const cookies = setCookieHeaders.map(Cookie.parse);
+  const setAccessTokenCookie = cookies.find((c) => c.key === 'accessToken');
+
+  t.true(await accessTokenModel.exists({ accessToken: setAccessTokenCookie.value }));
 });
