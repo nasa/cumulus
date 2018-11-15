@@ -29,10 +29,18 @@ const {
 const sfnStep = require('./sfnStep');
 const api = require('./api/api');
 const rulesApi = require('./api/rules');
+const executionsApi = require('./api/executions');
+const granulesApi = require('./api/granules');
 const cmr = require('./cmr.js');
 const lambda = require('./lambda');
 const granule = require('./granule.js');
 const waitForDeployment = require('./lambdas/waitForDeployment');
+
+const waitPeriodMs = 1000;
+
+const maxWaitForStartedExecutionSecs = 60 * 5;
+
+const lambdaStep = new sfnStep.LambdaStep();
 
 /**
  * Wait for an AsyncOperation to reach a given status
@@ -283,6 +291,7 @@ function setProcessEnvironment(stackName, bucketName) {
   process.env.bucket = bucketName;
   process.env.stackName = stackName;
   process.env.kinesisConsumer = `${stackName}-kinesisConsumer`;
+  process.env.KinesisInboundEventLogger = `${stackName}-KinesisInboundEventLogger`;
   process.env.CollectionsTable = `${stackName}-CollectionsTable`;
   process.env.ProvidersTable = `${stackName}-ProvidersTable`;
   process.env.RulesTable = `${stackName}-RulesTable`;
@@ -469,10 +478,10 @@ async function cleanupProviders(stackName, bucket, providersDirectory, postfix) 
 /**
  * add rules to database
  *
- * @param {string} config - Test config used to set environmenet variables and template rules data
+ * @param {string} config - Test config used to set environment variables and template rules data
  * @param {string} dataDirectory - the directory of rules json files
  * @param {string} overrides - override rule fields
- * @returns {Promise.<number>} number of rules added
+ * @returns {Promise.<Array>} array of Rules added
  */
 async function addRules(config, dataDirectory, overrides) {
   const { stackName, bucket } = config;
@@ -486,7 +495,7 @@ async function addRules(config, dataDirectory, overrides) {
     console.log(`adding rule ${templatedRule.name}`);
     return r.create(templatedRule);
   }));
-  return Promise.all(promises).then((rs) => rs.length);
+  return Promise.all(promises);
 }
 
 /**
@@ -644,9 +653,53 @@ async function getExecutions(workflowName, stackName, bucket, maxExecutionResult
   return (orderBy(data.executions, 'startDate', 'desc'));
 }
 
+/**
+ * Wait for the execution that matches the criteria in the compare function to begin
+ * The compare function should take 2 arguments: taskInput and params
+ *
+ * @param {Object} options
+ * @param {string} options.workflowName - workflow name to find execution for
+ * @param {string} options.stackName - stack name
+ * @param {string} options.bucket - bucket name
+ * @param {function} options.findExecutionFn - function that takes the taskInput and
+ * findExecutionFnParams and returns a boolean indicating whether or not this is the correct
+ * instance of the workflow
+ * @param {Object} options.findExecutionFnParams - params to be passed into findExecutionFn
+ * @param {integer} options.maxWaitSeconds - an optional custom wait time in seconds
+ * @returns {undefined} - none
+ */
+async function waitForTestExecutionStart({
+  workflowName,
+  stackName,
+  bucket,
+  findExecutionFn,
+  findExecutionFnParams,
+  maxWaitSeconds
+}) {
+  let timeWaitedSecs = 0;
+  /* eslint-disable no-await-in-loop */
+  while (timeWaitedSecs < maxWaitSeconds ? maxWaitSeconds : maxWaitForStartedExecutionSecs) {
+    await sleep(waitPeriodMs);
+    timeWaitedSecs += (waitPeriodMs / 1000);
+    const executions = await getExecutions(workflowName, stackName, bucket);
+
+    for (let executionCtr = 0; executionCtr < executions.length; executionCtr += 1) {
+      const execution = executions[executionCtr];
+      const taskInput = await lambdaStep.getStepInput(execution.executionArn, 'SfSnsReport');
+      if (taskInput && findExecutionFn(taskInput, findExecutionFnParams)) {
+        return execution;
+      }
+    }
+  }
+  /* eslint-enable no-await-in-loop */
+  throw new Error('Never found started workflow.');
+}
+
 module.exports = {
   api,
   rulesApi,
+  granulesApi,
+  executionsApi,
   buildWorkflow,
   testWorkflow,
   executeWorkflow,
@@ -654,6 +707,7 @@ module.exports = {
   buildAndStartWorkflow,
   getWorkflowTemplate,
   waitForCompletedExecution,
+  waitForTestExecutionStart,
   ActivityStep: sfnStep.ActivityStep,
   LambdaStep: sfnStep.LambdaStep,
   /**
@@ -680,6 +734,7 @@ module.exports = {
   waitForAsyncOperationStatus,
   getLambdaVersions: lambda.getLambdaVersions,
   getLambdaAliases: lambda.getLambdaAliases,
+  getEventSourceMapping: lambda.getEventSourceMapping,
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
   waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs,
   getExecutions,

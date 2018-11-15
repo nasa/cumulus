@@ -3,6 +3,7 @@
 const { listS3Objects } = require('@cumulus/common/aws');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
+const { loadJSONTestData } = require('@cumulus/test-data');
 
 /**
 * filterByFileType
@@ -120,7 +121,7 @@ function handler(event, context, callback) {
 exports.handler = handler;
 
 // use node index.js local to invoke this
-justLocalRun(() => {
-  const payload = require('@cumulus/test-data/cumulus_messages/discover-s3-granules.json'); // eslint-disable-line global-require, max-len
+justLocalRun(async () => {
+  const payload = await loadJSONTestData('cumulus_messages/discover-s3-granules.json');
   handler(payload, {}, (e, r) => console.log(e, r));
 });

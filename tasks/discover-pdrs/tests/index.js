@@ -4,10 +4,8 @@ const test = require('ava');
 const path = require('path');
 const fs = require('fs-extra');
 const { FTPError, RemoteResourceError } = require('@cumulus/common/errors');
-const cloneDeep = require('lodash.clonedeep');
 
-const { discoverPdrs } = require('../index');
-const input = require('./fixtures/input.json');
+const { discoverPdrs } = require('..');
 
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const {
@@ -17,8 +15,14 @@ const {
   validateOutput
 } = require('@cumulus/common/test-utils');
 
+test.beforeEach(async (t) => {
+  const inputPath = path.join(__dirname, 'fixtures', 'input.json');
+  const rawInput = await fs.readFile(inputPath, 'utf8');
+  t.context.input = JSON.parse(rawInput);
+});
+
 test('test pdr discovery with FTP assuming all PDRs are new', async (t) => {
-  const event = cloneDeep(input);
+  const event = t.context.input;
   event.config.bucket = randomString();
   event.config.collection.provider_path = '/pdrs/discover-pdrs';
   event.config.useList = true;
@@ -60,7 +64,7 @@ test('test pdr discovery with FTP invalid user/pass', async (t) => {
     password: 'testpass'
   };
 
-  const newPayload = cloneDeep(input);
+  const newPayload = t.context.input;
   newPayload.config.provider = provider;
   newPayload.input = {};
 
@@ -89,7 +93,7 @@ test('test pdr discovery with FTP connection refused', async (t) => {
     password: 'testpass'
   };
 
-  const newPayload = cloneDeep(input);
+  const newPayload = t.context.input;
   newPayload.config.provider = provider;
   newPayload.input = {};
 
@@ -111,7 +115,7 @@ test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
     password: 'testpass'
   };
 
-  const newPayload = cloneDeep(input);
+  const newPayload = t.context.input;
   newPayload.config.useList = true;
   newPayload.config.provider = provider;
   newPayload.config.collection.provider_path = '/pdrs/discover-pdrs';
@@ -162,7 +166,7 @@ test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
     const newPdrs = pdrFilenames.slice(1);
 
     // Build the event
-    const event = cloneDeep(input);
+    const event = t.context.input;
     event.config.bucket = internalBucketName;
     event.config.provider = {
       id: 'MODAPS',
@@ -221,7 +225,7 @@ test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
     const newPdrs = pdrFilenames.slice(1);
 
     // Build the event
-    const event = cloneDeep(input);
+    const event = t.context.input;
     event.config.bucket = internalBucketName;
     event.config.provider = {
       id: 'MODAPS',

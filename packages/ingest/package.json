@@ -40,7 +40,6 @@
     "@cumulus/test-data": "^1.10.2",
     "aws-sdk": "^2.238.1",
     "cksum": "^1.3.0",
-    "depd": "^1.1.2",
     "encodeurl": "^1.0.2",
     "fs-extra": "^5.0.0",
     "got": "^9.2.1",
@@ -63,14 +62,13 @@
     "ssh2": "^0.5.5",
     "url-join": "^1.0.0",
     "uuid": "^3.2.1",
-    "xml2js": "^0.4.17"
+    "xml2js": "^0.4.19"
   },
   "devDependencies": {
     "@cumulus/test-data": "^1.10.2",
     "ava": "^0.25.0",
     "nyc": "^11.6.0",
     "proxyquire": "^2.0.0",
-    "sinon": "^4.5.0",
-    "xml2js": "^0.4.19"
+    "sinon": "^7.1.1"
   }
 }

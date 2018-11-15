@@ -45,6 +45,11 @@ const siteConfig = {
     { search: true }
   ],
 
+  algolia: {
+    apiKey: process.env.DOCSEARCH_API_KEY,
+    indexName: process.env.DOCSEARCH_INDEX_NAME
+  },
+
   /* Colors for website */
   colors: {
     primaryColor: '#2276AC',
