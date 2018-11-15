@@ -43,36 +43,38 @@ describe('The SNS-type rule', () => {
   let snsTopicArn;
   let newTopicArn;
 
-  beforeAll(async () => {
-    const { TopicArn } = await SNS.createTopic({ Name: snsTopicName }).promise();
-    snsTopicArn = TopicArn;
-    snsRuleDefinition.rule.value = TopicArn;
-    const postRuleResponse = await rulesApiTestUtils.postRule({
-      prefix: config.stackName,
-      rule: snsRuleDefinition
+  describe('on creation', () => {
+    beforeAll(async () => {
+      const { TopicArn } = await SNS.createTopic({ Name: snsTopicName }).promise();
+      snsTopicArn = TopicArn;
+      snsRuleDefinition.rule.value = TopicArn;
+      const postRuleResponse = await rulesApiTestUtils.postRule({
+        prefix: config.stackName,
+        rule: snsRuleDefinition
+      });
+      postRule = JSON.parse(postRuleResponse.body);
     });
-    postRule = JSON.parse(postRuleResponse.body);
-  });
 
-  afterAll(async () => {
-    await SNS.deleteTopic({ TopicArn: snsTopicArn }).promise();
-  });
+    afterAll(async () => {
+      await SNS.deleteTopic({ TopicArn: snsTopicArn }).promise();
+    });
 
-  it('is returned in the post response', () => {
-    const responseCopy = removeRuleAddedParams(postRule.record);
-    delete responseCopy.rule.arn;
-    expect(responseCopy).toEqual(snsRuleDefinition);
-  });
+    it('is returned in the post response', () => {
+      const responseCopy = removeRuleAddedParams(postRule.record);
+      delete responseCopy.rule.arn;
+      expect(responseCopy).toEqual(snsRuleDefinition);
+    });
 
-  it('is enabled by default', () => {
-    expect(postRule.record.state).toEqual('ENABLED');
-  });
+    it('is enabled by default', () => {
+      expect(postRule.record.state).toEqual('ENABLED');
+    });
 
-  it('creates a subscription and policy when it is created in an enabled state', async () => {
-    expect(await getNumberOfTopicSubscriptions(snsTopicArn)).toBe(1);
-    const { Policy } = await lambda().getPolicy({ FunctionName: consumerName }).promise();
-    const statement = JSON.parse(Policy).Statement[0];
-    expect(statement.Sid).toEqual(`${ruleName}Permission`);
+    it('creates a subscription and policy when it is created in an enabled state', async () => {
+      expect(await getNumberOfTopicSubscriptions(snsTopicArn)).toBe(1);
+      const { Policy } = await lambda().getPolicy({ FunctionName: consumerName }).promise();
+      const statement = JSON.parse(Policy).Statement[0];
+      expect(statement.Sid).toEqual(`${ruleName}Permission`);
+    });
   });
 
   describe('when an SNS message is published', () => {
