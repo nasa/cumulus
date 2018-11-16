@@ -2,7 +2,6 @@
 
 const { randomString } = require('@cumulus/common/test-utils');
 const { Search } = require('../es/search');
-const { sign: jwtSign } = require('jsonwebtoken');
 const { createJwtToken } = require('./token');
 
 /**

@@ -138,13 +138,13 @@ async function getAuthorizationFailureResponse(params) {
 
   try {
     verifyJwtToken(jwtToken);
-  } catch (err) {
-    if (err instanceof TokenExpiredError) {
+  } catch (error) {
+    if (error instanceof TokenExpiredError) {
       return new AuthorizationFailureResponse({
         message: 'Access token has expired',
         statusCode: 403
       });
-    } else if (err instanceof JsonWebTokenError) {
+    } else if (error instanceof JsonWebTokenError) {
       return new AuthorizationFailureResponse({
         message: 'Invalid access token',
         statusCode: 403
