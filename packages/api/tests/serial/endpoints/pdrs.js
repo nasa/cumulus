@@ -36,11 +36,13 @@ process.env.PdrsTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
+process.env.TOKEN_SECRET = randomString();
 
 let accessTokenModel;
 let authHeaders;
 let pdrModel;
 let userModel;
+
 test.before(async () => {
   // create esClient
   esClient = await Search.es('fakehost');

@@ -21,6 +21,8 @@ process.env.RulesTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.bucket = randomString();
+process.env.TOKEN_SECRET = randomString();
+
 const workflowName = randomString();
 const workflowfile = `${process.env.stackName}/workflows/${workflowName}.json`;
 

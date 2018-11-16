@@ -54,6 +54,7 @@ let granuleModel;
 let collectionModel;
 let accessToken;
 let userModel;
+
 test.before(async () => {
   esIndex = randomString();
   process.env.AccessTokensTable = randomString();
@@ -62,6 +63,7 @@ test.before(async () => {
   process.env.UsersTable = randomString();
   process.env.stackName = randomString();
   process.env.internal = randomString();
+  process.env.TOKEN_SECRET = randomString();
 
   // create esClient
   esClient = await Search.es('fakehost');

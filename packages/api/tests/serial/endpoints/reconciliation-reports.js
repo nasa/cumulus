@@ -16,6 +16,7 @@ process.env.stackName = 'test-stack';
 process.env.system_bucket = 'test_system_bucket';
 process.env.AccessTokensTable = randomString();
 process.env.UsersTable = randomString();
+process.env.TOKEN_SECRET = randomString();
 
 const reportNames = [randomString(), randomString()];
 const reportDirectory = `${process.env.stackName}/reconciliation-reports`;
