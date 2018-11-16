@@ -54,7 +54,8 @@
       "data-cookbooks/sips-workflow",
       "data-cookbooks/cnm-workflow",
       "data-cookbooks/error-handling",
-      "data-cookbooks/choice-states"
+      "data-cookbooks/choice-states",
+      "data-cookbooks/cloudwatch-retention"
     ]
   }
 }
