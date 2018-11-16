@@ -18,6 +18,8 @@ process.env.UsersTable = randomString();
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
+process.env.TOKEN_SECRET = randomString();
+
 let providerModel;
 const esIndex = randomString();
 let esClient;
