@@ -4,7 +4,7 @@ const get = require('lodash.get');
 const log = require('@cumulus/common/log');
 
 const { google } = require('googleapis');
-const { decode: jwtDecode } = require('jsonwebtoken');
+const { decode: jwtDecode, JsonWebTokenError } = require('jsonwebtoken');
 
 const EarthdataLogin = require('../lib/EarthdataLogin');
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
@@ -93,11 +93,14 @@ async function token(event, oAuth2Provider) {
  * @returns {Object} an API Gateway response
  */
 async function refreshToken(request, oAuth2Provider) {
-  const requestJwtToken = get(request, 'body.token');
+  const body = request.body
+    ? JSON.parse(request.body)
+    : {};
+  const requestJwtToken = get(body, 'token');
 
   if (requestJwtToken) {
     try {
-      verifyJwtToken(jwtToken, { ignoreExpiration: true });
+      verifyJwtToken(requestJwtToken, { ignoreExpiration: true });
     } catch (err) {
       if (err instanceof JsonWebTokenError) {
         return new AuthorizationFailureResponse({
@@ -137,9 +140,11 @@ async function refreshToken(request, oAuth2Provider) {
     });
 
     // Delete old token record to prevent refresh with old tokens
-    await accessTokenModel.delete(accessTokenRecord);
+    await accessTokenModel.delete({
+      accessToken: accessTokenRecord.accessToken
+    });
 
-    const jwtToken = createJwtToken({ accessToken, username, expirationTime });
+    const jwtToken = createJwtToken({ accessToken: newAccessToken, username, expirationTime });
     return new LambdaProxyResponse({
       json: true,
       statusCode: 200,
@@ -147,9 +152,13 @@ async function refreshToken(request, oAuth2Provider) {
     });
   }
 
-  const errorMessage = 'Request requires a JWT token';
+  const errorMessage = 'Request requires a token';
   const error = new Error(errorMessage);
-  return new AuthorizationFailureResponse({ error: error, message: error.message });
+  return new AuthorizationFailureResponse({
+    statusCode: 400,
+    error: error,
+    message: error.message
+  });
 }
 
 /**

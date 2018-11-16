@@ -9,24 +9,35 @@ const {
 } = require('@cumulus/common');
 
 const { OAuth2AuthenticationFailure } = require('../../lib/OAuth2');
+const assertions = require('../../lib/assertions');
 const {
   createJwtToken
 } = require('../../lib/token');
-const { AccessToken } = require('../../models');
+const {
+  fakeAccessTokenFactory,
+  fakeUserFactory
+} = require('../../lib/testUtils');
+const { AccessToken, User } = require('../../models');
 const { handleRequest } = require('../../endpoints/token');
 
 let accessTokenModel;
+let userModel;
 
 test.before(async () => {
   process.env.TOKEN_SECRET = randomString();
   process.env.AccessTokensTable = randomString();
+  process.env.UsersTable = randomString();
 
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
+
+  userModel = new User();
+  await userModel.createTable();
 });
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
+  await userModel.deleteTable();
 });
 
 test.serial('A request for anything other that GET /token results in a 404', async (t) => {
@@ -222,4 +233,86 @@ test.serial('When using Earthdata Login, GET /token with a code stores the acces
 
   t.is(tokenAfter.accessToken, accessToken);
   t.is(tokenAfter.refreshToken, refreshToken);
+});
+
+test.serial('GET /token/refresh without a token results in an authorization failure response', async (t) => {
+  const request = {
+    httpMethod: 'POST',
+    resource: '/token/refresh',
+  };
+
+  const response = await handleRequest(request);
+
+  t.is(response.statusCode, 400);
+  t.is(JSON.parse(response.body).message, 'Request requires a token');
+});
+
+test.serial('GET /token/refresh with an invalid token results in an authorization failure response', async (t) => {
+  const request = {
+    httpMethod: 'POST',
+    resource: '/token/refresh',
+    body: JSON.stringify({
+      token: 'InvalidToken'
+    })
+  };
+
+  const response = await handleRequest(request);
+
+  assertions.isInvalidAccessTokenResponse(t, response);
+});
+
+test.serial('GET /token/refresh with an non-existent token results in an authorization failure response', async (t) => {
+  const accessTokenRecord = fakeAccessTokenFactory();
+  const jwtToken = createJwtToken(accessTokenRecord);
+
+  const request = {
+    httpMethod: 'POST',
+    resource: '/token/refresh',
+    body: JSON.stringify({
+      token: jwtToken
+    })
+  };
+
+  const response = await handleRequest(request);
+
+  assertions.isInvalidAccessTokenResponse(t, response);
+});
+
+test.serial('GET /token/refresh with a valid token returns a refreshed token', async (t) => {
+  const refreshedTokenRecord = fakeAccessTokenFactory();
+  const refreshedJwtToken = createJwtToken(refreshedTokenRecord);
+
+  const mockOAuth2Provider = {
+    refreshAccessToken: async () => refreshedTokenRecord
+  };
+
+  const userRecord = fakeUserFactory();
+  await userModel.create(userRecord);
+
+  const initialTokenRecord = fakeAccessTokenFactory({ username: userRecord.userName });
+  await accessTokenModel.create(initialTokenRecord);
+
+  const requestJwtToken = createJwtToken(initialTokenRecord);
+
+  const request = {
+    httpMethod: 'POST',
+    resource: '/token/refresh',
+    body: JSON.stringify({
+      token: requestJwtToken
+    })
+  };
+
+  const response = await handleRequest(request, mockOAuth2Provider);
+
+  t.is(response.statusCode, 200);
+
+  const parsedBody = JSON.parse(response.body);
+  t.is(parsedBody.token, refreshedJwtToken);
+
+  t.false(await accessTokenModel.exists({
+    accessToken: initialTokenRecord.accessToken
+  }));
+  t.true(await accessTokenModel.exists({
+    accessToken: refreshedTokenRecord.accessToken
+  }));
 });
