@@ -23,7 +23,7 @@ Resources:
   FakeProviderRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: fakeprovider
+      RoleName: fakeprovider-iam-role
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -84,7 +84,7 @@ Resources:
   InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
-      InstanceProfileName: fakeprovider
+      InstanceProfileName: fakeprovider-instanceProfile
       Path: "/"
       Roles:
         - !Ref FakeProviderRole
@@ -121,11 +121,16 @@ Resources:
       IamInstanceProfile:
         Ref: InstanceProfile
       # KeyName: uncomment and give a value if access to the instance is needed
-      SecurityGroupIds:
-        - Fn::GetAtt:
-          - SecurityGroup
-          - GroupId
-      SubnetId: !Ref SubnetId
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: false
+          DeleteOnTermination: true
+          Description: Main network interface
+          DeviceIndex: 0
+          GroupSet:
+            - Fn::GetAtt:
+              - SecurityGroup
+              - GroupId
+          SubnetId: !Ref SubnetId
       UserData:
         Fn::Base64:
           Fn::Join:
