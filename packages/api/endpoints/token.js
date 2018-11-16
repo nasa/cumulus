@@ -8,6 +8,9 @@ const { google } = require('googleapis');
 
 const EarthdataLogin = require('../lib/EarthdataLogin');
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
+const {
+  createJwtToken
+} = require('../lib/token');
 
 const { AccessToken, User } = require('../models');
 const {
@@ -50,14 +53,10 @@ async function token(event, oAuth2Provider) {
         // expirationTime
       });
 
-      const jwtToken = jwtSign({
-        exp: expirationTime,
-        accessToken,
-        username,
-      }, process.env.TOKEN_SECRET);
+      const jwtToken = createJwtToken({ accessToken, username, expirationTime });
 
       if (state) {
-        log.info(`Log info: Redirecting to state: ${state} with token ${accessToken}`);
+        // log.info(`Log info: Redirecting to state: ${state} with token ${jwtToken}`);
         return buildPermanentRedirectResponse(
           `${decodeURIComponent(state)}?token=${jwtToken}`
         );
