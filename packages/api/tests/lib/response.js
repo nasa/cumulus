@@ -8,6 +8,7 @@ const {
 const { AccessToken, User } = require('../../models');
 const { createAccessToken, fakeAccessTokenFactory, fakeUserFactory } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
+const { createJwtToken } = require('../../lib/token');
 const { getAuthorizationFailureResponse } = require('../../lib/response');
 
 let accessTokenModel;
@@ -20,6 +21,7 @@ test.before(async () => {
   process.env.UsersTable = usersTableName;
   userModel = new User();
   accessTokenModel = new AccessToken();
+  process.env.TOKEN_SECRET = randomString();
   await accessTokenModel.createTable();
   await userModel.createTable();
 });
@@ -107,23 +109,23 @@ test('getAuthorizationFailureResponse returns an appropriate response when an in
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test('getAuthorizationFailureResponse returns an appropriate response when the token has expired', async (t) => {
+test.only('getAuthorizationFailureResponse returns an appropriate response when the token has expired', async (t) => {
   const {
     userName
   } = await userModel.create(fakeUserFactory());
 
-  const {
-    accessToken
-  } = await accessTokenModel.create(
+  const accessTokenRecord = await accessTokenModel.create(
     fakeAccessTokenFactory({
       expirationTime: Date.now() - 60,
       username: userName
     })
   );
 
+  const jwtToken = createJwtToken(accessTokenRecord);
+
   const request = {
     headers: {
-      Authorization: `Bearer ${accessToken}`
+      Authorization: `Bearer ${jwtToken}`
     }
   };
 
