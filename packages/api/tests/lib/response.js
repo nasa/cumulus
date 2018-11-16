@@ -109,7 +109,7 @@ test('getAuthorizationFailureResponse returns an appropriate response when an in
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test.only('getAuthorizationFailureResponse returns an appropriate response when the token has expired', async (t) => {
+test('getAuthorizationFailureResponse returns an appropriate response when the token has expired', async (t) => {
   const {
     userName
   } = await userModel.create(fakeUserFactory());
