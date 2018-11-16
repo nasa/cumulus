@@ -150,24 +150,8 @@ async function getAuthorizationFailureResponse(params) {
     }
   }
 
-  const { accessToken, username } = jwtDecode(jwtToken);
+  const { username } = jwtDecode(jwtToken);
 
-  // const accessTokenModel = new AccessToken();
-
-  // let getTokenResult;
-  // try {
-  //   getTokenResult = await accessTokenModel.get({ accessToken });
-  // }
-  // catch (err) {
-  //   if (err.name === 'RecordDoesNotExist') {
-  //     return new AuthorizationFailureResponse({
-  //       message: 'Invalid access token',
-  //       statusCode: 403
-  //     });
-  //   }
-  // }
-
-  // const { username } = getTokenResult;
   const userModel = new User({ tableName: usersTable });
   try {
     await userModel.get({ userName: username });
@@ -180,14 +164,6 @@ async function getAuthorizationFailureResponse(params) {
       });
     }
   }
-
-  // Verify that the token has not expired
-  // if (getTokenResult.expirationTime < Date.now()) {
-  //   return new AuthorizationFailureResponse({
-  //     message: 'Access token has expired',
-  //     statusCode: 403
-  //   });
-  // }
 
   return null;
 }
