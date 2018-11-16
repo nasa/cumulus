@@ -1,4 +1,4 @@
-const { sign: jwtSign } = require('jsonwebtoken');
+const { sign: jwtSign, verify: jwtVerify } = require('jsonwebtoken');
 
 const createJwtToken = ({ accessToken, expirationTime, username }) => {
   // JWT expiration time is in seconds, not milliseconds
@@ -12,6 +12,11 @@ const createJwtToken = ({ accessToken, expirationTime, username }) => {
   });
 };
 
+const verifyJwtToken = (jwtToken, options = {}) => {
+  return jwtVerify(jwtToken, process.env.TOKEN_SECRET, options);
+}
+
 module.exports = {
-  createJwtToken
+  createJwtToken,
+  verifyJwtToken
 };

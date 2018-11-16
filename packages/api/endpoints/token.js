@@ -2,17 +2,18 @@
 
 const get = require('lodash.get');
 const log = require('@cumulus/common/log');
-const { sign: jwtSign } = require('jsonwebtoken');
 
 const { google } = require('googleapis');
+const { decode: jwtDecode } = require('jsonwebtoken');
 
 const EarthdataLogin = require('../lib/EarthdataLogin');
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 const {
-  createJwtToken
+  createJwtToken,
+  verifyJwtToken
 } = require('../lib/token');
 
-const { AccessToken, User } = require('../models');
+const { AccessToken } = require('../models');
 const {
   AuthorizationFailureResponse,
   LambdaProxyResponse
@@ -49,8 +50,6 @@ async function token(event, oAuth2Provider) {
       await accessTokenModel.create({
         accessToken,
         refreshToken,
-        // username,
-        // expirationTime
       });
 
       const jwtToken = createJwtToken({ accessToken, username, expirationTime });
@@ -87,6 +86,73 @@ async function token(event, oAuth2Provider) {
 }
 
 /**
+ * Handle refreshing tokens with OAuth provider
+ *
+ * @param {Object} request - an API Gateway request
+ * @param {OAuth2} oAuth2Provider - an OAuth2 instance
+ * @returns {Object} an API Gateway response
+ */
+async function refreshToken(request, oAuth2Provider) {
+  const requestJwtToken = get(request, 'body.token');
+
+  if (requestJwtToken) {
+    try {
+      verifyJwtToken(jwtToken, { ignoreExpiration: true });
+    } catch (err) {
+      if (err instanceof JsonWebTokenError) {
+        return new AuthorizationFailureResponse({
+          message: 'Invalid access token',
+          statusCode: 403
+        });
+      }
+    }
+
+    const { accessToken } = jwtDecode(requestJwtToken);
+
+    const accessTokenModel = new AccessToken();
+
+    let accessTokenRecord;
+    try {
+      accessTokenRecord = await accessTokenModel.get({ accessToken });
+    } catch (err) {
+      if (err.name === 'RecordDoesNotExist') {
+        return new AuthorizationFailureResponse({
+          message: 'Invalid access token',
+          statusCode: 403
+        });
+      }
+    }
+
+    const {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      username,
+      expirationTime
+    } = await oAuth2Provider.refreshAccessToken(accessTokenRecord.refreshToken);
+
+    // Store new token record
+    await accessTokenModel.create({
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken
+    });
+
+    // Delete old token record to prevent refresh with old tokens
+    await accessTokenModel.delete(accessTokenRecord);
+
+    const jwtToken = createJwtToken({ accessToken, username, expirationTime });
+    return new LambdaProxyResponse({
+      json: true,
+      statusCode: 200,
+      body: { token: jwtToken }
+    });
+  }
+
+  const errorMessage = 'Request requires a JWT token';
+  const error = new Error(errorMessage);
+  return new AuthorizationFailureResponse({ error: error, message: error.message });
+}
+
+/**
  * Handle client authorization
  *
  * @param {Object} request - an API Gateway request
@@ -110,6 +176,10 @@ const isGetTokenRequest = (request) =>
   request.httpMethod === 'GET'
   && request.resource.endsWith('/token');
 
+const isTokenRefreshRequest = (request) =>
+  request.httpMethod === 'POST'
+  && request.resource.endsWith('/token/refresh');
+
 const notFoundResponse = new LambdaProxyResponse({
   json: false,
   statusCode: 404,
@@ -119,6 +189,8 @@ const notFoundResponse = new LambdaProxyResponse({
 async function handleRequest(request, oAuth2Provider) {
   if (isGetTokenRequest(request)) {
     return login(request, oAuth2Provider);
+  } else if (isTokenRefreshRequest(request)) {
+    return refreshToken(request, oAuth2Provider);
   }
 
   return notFoundResponse;
