@@ -44,19 +44,24 @@ More information on kinesis error handling is [here](data-cookbooks/cnm-workflow
 
 ### KMS Exception: AccessDeniedException
 
-[Discussed in the Earthdata Wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/KMS+Exception%3A+AccessDeniedException).
-
-From the linked doc:
-
 `KMS Exception: AccessDeniedExceptionKMS Message: The ciphertext refers to a customer master key that does not exist, does not exist in this region, or you are not allowed to access.`
 
-"The above error was being thrown by cumulus lambda function invocation. The KMS key is the encryption key used to encrypt lambda environment variables...
+The above error was being thrown by cumulus lambda function invocation. The KMS key is the encryption key used to encrypt lambda environment variables. The root cause of this error is unknown.
 
-The root cause of this error is unknown. If it returns, we should considering adding a KMS key explicitly to our cloudformation templates."
+On a lambda level, this error can be resolved by updating the KMS Key to `aws/lambda`. We've done this through the management console. Unfortunately, this approach doesn't scale well.
+
+The other resolution (that scales but takes some time) that was found is as follows:
+1. Delete the whole `{{#each newsted_templates}}` section from `@cumulus/deployment/app/cloudformation.template.yml` and redeploy the primary stack.
+2. Reinstall dependencies via `npm`.
+3. Re-deploy the stack.
+
+
+[Discussed in the Earthdata Wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/KMS+Exception%3A+AccessDeniedException).
+
 
 ### Error: Unable to import module 'index': Error
 
-[Discussed in the Earthdata Wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/Troubleshooting).
+
 
 This error is shown in the CloudWatch logs for a lambda function. The cause is a lambda defined in `lambdas.yml` that is pointing to an `index.js` source file. In order to resolve this issue, update the lambda source (in `lambdas.yml`, to point to the parent directory of the `index.js` file.
 
@@ -67,3 +72,5 @@ DiscoverGranules:
   source: 'node_modules/@cumulus/discover-granules/dist/'
   useMessageAdapter: true
 ```
+
+[Discussed in the Earthdata Wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/Troubleshooting).
