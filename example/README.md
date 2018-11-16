@@ -51,7 +51,9 @@ Test data comes from the @cumulus/test-data package and is uploaded to S3 during
 
 ### Fake data server
 
-A fake server is required for tests testing FTP/HTTP/HTTPS discover and downloads. The Cloudformation template for the fake data server is in `fake-server.yml`. To setup the fake server run:
+A fake server is required for tests testing FTP/HTTP/HTTPS discover and downloads. The fake server should be set up once per account.
+
+The Cloudformation template for the fake data server is in `fake-server.yml`. To setup the fake server run:
 
 ```
 aws cloudformation deploy --template-file fake-server.yml --stack-name <stack-name> --parameter-overrides VpcId=<vpc-XXXXX> SubnetId=<subnet-XXXXXX> AZone=<az-zone> Ngap=true --capabilities CAPABILITY_NAMED_IAM
