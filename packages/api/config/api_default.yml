@@ -382,11 +382,16 @@ ApiTokenDefault:
       function: Ref
       value: UsersTableDynamoDB
     OAUTH_PROVIDER: '{{parent.oauth.provider}}'
+    TOKEN_SECRET: '{{TOKEN_SECRET}}'
   apiGateway:
     #default paths
     - api: backend
       path: token
       method: get
+      cors: true
+    - api: backend
+      path: token/refresh
+      method: post
       cors: true
 
 ApiVersionDefault:
