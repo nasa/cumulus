@@ -24,6 +24,7 @@ process.env.ExecutionsTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
+process.env.TOKEN_SECRET = randomString();
 
 let accessTokenModel;
 let authHeaders;
