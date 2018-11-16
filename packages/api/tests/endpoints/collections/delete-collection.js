@@ -19,6 +19,7 @@ process.env.CollectionsTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
+process.env.TOKEN_SECRET = randomString();
 
 const esIndex = randomString();
 let esClient;
@@ -41,8 +42,6 @@ test.before(async () => {
 
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
-
-  process.env.TOKEN_SECRET = randomString();
 
   const accessToken = await createAccessToken({ accessTokenModel, userModel });
   authHeaders = {
