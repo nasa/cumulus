@@ -56,6 +56,8 @@ Resources:
                   - lambda:DeleteEventSourceMapping
                   - lambda:GetEventSourceMapping
                   - lambda:ListEventSourceMappings
+                  - lambda:AddPermission
+                  - lambda:RemovePermission
                 Resource: "*"
 
               - Effect: Allow
@@ -114,6 +116,14 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:ListAllMyBuckets
+                Resource: '*'
+
+              - Effect: Allow
+                Action:
+                  - sns:publish
+                  - sns:Subscribe
+                  - sns:Unsubscribe
+                  - sns:List*
                 Resource: '*'
 
               - Effect: Allow

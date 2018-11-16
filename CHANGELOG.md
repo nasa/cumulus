@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 **Please Note**
 -  CUMULUS-817 includes a migration that requires reconfiguration/redeployment of IAM roles.  Please see the [upgrade instructions](https://nasa.github.io/cumulus/docs/upgrade/1.11.0) for more information.
+- CUMULUS-977 includes a few new SNS-related permissions added to the IAM roles that will require redeployment of IAM roles.
 - `cumulus-message-adapter` v1.0.13+ is required for `@cumulus/api` granule reingest API to work properly.  The latest version should be downloaded automatically by kes.
 
 ### Changed
@@ -25,6 +26,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Updated Execution model to populate originalPayload with the execution payload on record creation
   - Updated Execution model code to populate finalPayload field with the execution payload on execution completion
   - Execution API now exposes the above fields
+- **CUMULUS-977**
+  - Rename `kinesisConsumer` to `messageConsumer` as it handles both Kinesis streams and SNS topics as of this version.
+  - Add `sns`-type rule support. These rules create a subscription between an SNS topic and the `messageConsumer`.
+    When a message is received, `messageConsumer` is triggered and passes the SNS message (JSON format expected) in
+    its entirety to the workflow in the `payload` field of the Cumulus message. For more information on sns-type rules,
+    see the [documentation](https://nasa.github.io/cumulus/docs/data-cookbooks/setup#rules).
 - **CUMULUS-975**
   - Add `KinesisInboundEventLogger` and `KinesisOutboundEventLogger` API lambdas.  These lambdas
     are utilized to dump incoming and outgoing ingest workflow kinesis streams
@@ -37,6 +44,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added migration_4 to migrate/update exisitng Kinesis rules to have a log event mapping
   - Added new IAM policy for migration lambda
 - **CUMULUS-775**
+  - Adds a instance metadata endpoint to the `@cumulus/api` package.
+  - Adds a new convenience function `hostId` to the `@cumulus/cmrjs` to help build environment specific cmr urls.
   - Fixed `@cumulus/cmrjs.searchConcept` to search and return CMR results.
   - Modified `@cumulus/cmrjs.CMR.searchGranule` and `@cumulus/cmrjs.CMR.searchCollection` to include CMR's provider as a default parameter to searches.
 - **CUMULUS-965**
