@@ -36,6 +36,8 @@ test.before(async () => {
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
+  process.env.TOKEN_SECRET = randomString();
+
   const accessToken = await createAccessToken({ accessTokenModel, userModel });
   authHeaders = {
     Authorization: `Bearer ${accessToken}`
