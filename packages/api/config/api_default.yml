@@ -185,9 +185,9 @@ ApiRulesDefault:
     invokeArn:
       function: "Ref"
       value: ScheduleSFLambdaFunction
-    kinesisConsumer:
+    messageConsumer:
       function: "Ref"
-      value: kinesisConsumerLambdaFunction
+      value: messageConsumerLambdaFunction
     KinesisInboundEventLogger:
       function: "Ref"
       value: KinesisInboundEventLoggerLambdaFunction
