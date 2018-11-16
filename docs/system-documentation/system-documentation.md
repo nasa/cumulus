@@ -61,8 +61,6 @@ The other resolution (that scales but takes some time) that was found is as foll
 
 ### Error: Unable to import module 'index': Error
 
-
-
 This error is shown in the CloudWatch logs for a lambda function. The cause is a lambda defined in `lambdas.yml` that is pointing to an `index.js` source file. In order to resolve this issue, update the lambda source (in `lambdas.yml`, to point to the parent directory of the `index.js` file.
 
 ```
