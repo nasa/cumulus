@@ -7,7 +7,7 @@ const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
 const { SQS } = require('@cumulus/ingest/aws');
 const { s3, recursivelyDeleteS3Bucket, sns } = require('@cumulus/common/aws');
-const { getKinesisRules, handler } = require('../../lambdas/kinesis-consumer');
+const { getRules, handler } = require('../../lambdas/message-consumer');
 const Collection = require('../../models/collections');
 const Rule = require('../../models/rules');
 const Provider = require('../../models/providers');
@@ -18,7 +18,12 @@ const eventData = JSON.stringify({
   collection: testCollectionName
 });
 
-const validRecord = { kinesis: { data: Buffer.from(eventData).toString('base64') } };
+const validRecord = {
+  kinesis: {
+    data: Buffer.from(eventData).toString('base64')
+  }
+};
+
 const event = {
   Records: [validRecord, validRecord]
 };
@@ -31,18 +36,21 @@ const provider = { id: 'PROV1' };
 
 const commonRuleParams = {
   collection,
-  provider: provider.id,
+  provider: provider.id
+};
+
+const kinesisRuleParams = {
   rule: {
     type: 'kinesis',
     value: 'test-kinesisarn'
   }
 };
 
-const rule1Params = Object.assign({}, commonRuleParams, {
+const rule1Params = {
   name: 'testRule1',
   workflow: 'test-workflow-1',
   state: 'ENABLED'
-});
+};
 
 // if the state is not provided, it will be set to default value 'ENABLED'
 const rule2Params = Object.assign({}, commonRuleParams, {
@@ -50,14 +58,29 @@ const rule2Params = Object.assign({}, commonRuleParams, {
   workflow: 'test-workflow-2'
 });
 
-const disabledRuleParams = Object.assign({}, commonRuleParams, {
+const disabledRuleParams = {
   name: 'disabledRule',
   workflow: 'test-workflow-1',
   state: 'DISABLED'
+};
+
+const allRuleTypesParams = [kinesisRuleParams];
+const allOtherRulesParams = [rule1Params, rule2Params, disabledRuleParams];
+const rulesToCreate = [];
+
+let sfSchedulerSpy;
+let publishStub;
+const stubQueueUrl = 'stubQueueUrl';
+
+allRuleTypesParams.forEach((ruleTypeParams) => {
+  allOtherRulesParams.forEach((otherRulesParams) => {
+    const ruleParams = Object.assign({}, commonRuleParams, ruleTypeParams, otherRulesParams);
+    rulesToCreate.push(ruleParams);
+  });
 });
 
 /**
- * translates a kinesis event object into an object that and SNS event will
+ * translates a kinesis event object into an object that an SNS event will
  * redeliver to the fallback handler.
  *
  * @param {Object} record - kinesis record object.
@@ -86,16 +109,12 @@ function testCallback(err, object) {
   return object;
 }
 
-let sfSchedulerSpy;
-let publishStub;
-const stubQueueUrl = 'stubQueueUrl';
-
 let ruleModel;
 test.before(async () => {
   process.env.CollectionsTable = randomString();
   process.env.ProvidersTable = randomString();
   process.env.RulesTable = randomString();
-  process.env.kinesisConsumer = 'my-kinesisConsumer';
+  process.env.messageConsumer = 'my-messageConsumer';
   process.env.KinesisInboundEventLogger = 'my-ruleInput';
   ruleModel = new Rule();
   await ruleModel.createTable();
@@ -140,10 +159,9 @@ test.beforeEach(async (t) => {
   t.context.tableName = process.env.RulesTable;
   process.env.stackName = randomString();
   process.env.bucket = randomString();
-  process.env.kinesisConsumer = randomString();
+  process.env.messageConsumer = randomString();
 
-  await Promise.all([rule1Params, rule2Params, disabledRuleParams]
-    .map((rule) => ruleModel.create(rule)));
+  await Promise.all(rulesToCreate.map((rule) => ruleModel.create(rule)));
 });
 
 test.afterEach.always(async (t) => {
@@ -161,7 +179,7 @@ test.after.always(async () => {
 
 // getKinesisRule tests
 test.serial('it should look up kinesis-type rules which are associated with the collection, but not those that are disabled', async (t) => {
-  await getKinesisRules(JSON.parse(eventData))
+  await getRules(testCollectionName, 'kinesis')
     .then((result) => {
       t.is(result.length, 2);
     });
@@ -183,7 +201,7 @@ test.serial('it should enqueue a message for each associated workflow', async (t
       collection
     },
     payload: {
-      collection: 'test-collection'
+      collection: testCollectionName
     }
   };
   t.is(actualMessage.cumulus_meta.state_machine, expectedMessage.cumulus_meta.state_machine);
@@ -214,6 +232,7 @@ test.serial('An SNS fallback retry, should throw an error if message does not in
     t.fail('testCallback should have thrown an error');
   }
   catch (error) {
+    console.log(error);
     t.pass('Callback called with error');
     t.is(error.message, 'validation failed');
     t.is(error.errors[0].message, 'should have required property \'collection\'');
