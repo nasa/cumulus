@@ -20,7 +20,7 @@ const {
 const lambdaStep = new LambdaStep();
 const SNS = sns();
 const config = loadConfig();
-const ruleName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestRule`);
+const ruleName = timestampedName('SnsRuleIntegrationTestRule');
 const snsTopicName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestTopic`);
 const newValueTopicName = timestampedName(`${config.stackName}_SnsRuleValueChangeTestTopic`);
 const consumerName = `${config.stackName}-messageConsumer`;
