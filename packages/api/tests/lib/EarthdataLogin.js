@@ -226,8 +226,8 @@ test.serial('EarthdataLogin.getAccessToken() returns token information for a val
 
   t.is(accessToken, 'access-token');
   t.is(refreshToken, 'refresh-token');
-  t.true(expirationTime >= requestStartTime + 86400000);
-  t.true(expirationTime <= requestEndTime + 86400000);
+  t.true(expirationTime >= requestStartTime + earthdataLogin.getTokenExpirationMs());
+  t.true(expirationTime <= requestEndTime + earthdataLogin.getTokenExpirationMs());
   t.is(username, 'sidney');
 });
 
