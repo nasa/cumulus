@@ -6,7 +6,7 @@ const { inTestMode, throwTestError } = require('@cumulus/common/test-utils');
 /**
  * Lambda function dumps the incoming event to a log
  * @param {Object} event - event object
- * @param {Object} logger - Cumuluss common log object.  Can be overriden for testing.
+ * @param {Object} logger - Cumulus common log object.  Can be overriden for testing.
  * @returns {Object} returns event object with data field deserialized
  */
 async function kinesisEventLogger(event, logger = log) {
