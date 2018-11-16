@@ -156,7 +156,7 @@ class EarthdataLogin extends OAuth2 {
         form: true,
         body: {
           grant_type: 'refresh_token',
-          refreshToken
+          refresh_token: refreshToken
         },
         auth: `${this.clientId}:${this.clientPassword}`
       }
