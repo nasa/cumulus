@@ -126,6 +126,9 @@ async function refreshToken(request, oAuth2Provider) {
       }
     }
 
+    // catch this error so we can return 403 code that tells
+    // dashboard to log user out? otherwise thrown error will
+    // fall through and be handled as 500
     const {
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
