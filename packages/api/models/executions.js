@@ -49,7 +49,12 @@ class Execution extends Manager {
   }
 
 
-  // Update database row
+  /**
+   * Update an existing execution record, replacing all fields except originalPayload
+   *
+   * @param {Object} payload sns message containing the output of a Cumulus Step Function
+   * @returns {Promise<Object>} An execution record
+   */
   async updateExecutionFromSns(payload) {
     const doc = this.generateDocFromPayload(payload);
     const existingRecord = await this.get({ arn: doc.arn });
@@ -63,8 +68,8 @@ class Execution extends Manager {
   /**
    * Create a new execution record from incoming sns messages
    *
-   * @param {Object} payload - sns message containing the output of a Cumulus Step Function
-  * @returns {Promise<Object>} an execution record
+   * @param {Object} payload - SNS message containing the output of a Cumulus Step Function
+  * @returns {Promise<Object>} An execution record
    */
   async createExecutionFromSns(payload) {
     const doc = this.generateDocFromPayload(payload);
