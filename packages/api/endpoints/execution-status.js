@@ -9,7 +9,7 @@ const handle = require('../lib/response').handle;
  * fetchRemote fetches remote message from S3
  *
  * @param  {Object} eventMessage - Cumulus Message Adapter message
- * @returns {Object}              Cumulus Messsage Adapter message
+ * @returns {string}              Cumulus Messsage Adapter message in JSON string
  */
 async function fetchRemote(eventMessage) {
   if (eventMessage.replace) {
@@ -17,7 +17,7 @@ async function fetchRemote(eventMessage) {
     return file.Body.toString();
   }
 
-  return eventMessage;
+  return JSON.stringify(eventMessage);
 }
 
 /**
