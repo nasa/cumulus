@@ -22,6 +22,9 @@ const {
   fakeGranuleFactoryV2,
   createAccessToken
 } = require('../../../lib/testUtils');
+const {
+  createJwtToken
+} = require('../../../lib/token');
 const { Search } = require('../../../es/search');
 
 const createBucket = (Bucket) => aws.s3().createBucket({ Bucket }).promise();
@@ -213,11 +216,12 @@ test.serial('CUMULUS-912 GET without pathParameters and with an invalid access t
 test.serial('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory();
   await accessTokenModel.create(accessTokenRecord);
+  const jwtToken = createJwtToken(accessTokenRecord);
 
   const request = {
     httpMethod: 'GET',
     headers: {
-      Authorization: `Bearer ${accessTokenRecord.accessToken}`
+      Authorization: `Bearer ${jwtToken}`
     }
   };
 
@@ -263,15 +267,14 @@ test.serial('CUMULUS-912 PUT with pathParameters.granuleName set and with an inv
 test.todo('CUMULUS-912 PUT with pathParameters.granuleName set and with an unauthorized user returns an unauthorized response');
 
 test.serial('CUMULUS-912 DELETE with pathParameters.granuleName set and with an unauthorized user returns an unauthorized response', async (t) => {
-  await accessTokenModel.create({
-    accessToken: 'my-access-token',
-    username: 'sidney'
-  });
+  const accessTokenRecord = fakeAccessTokenFactory();
+  await accessTokenModel.create(accessTokenRecord);
+  const jwtToken = createJwtToken(accessTokenRecord);
 
   const request = {
     httpMethod: 'DELETE',
     headers: {
-      Authorization: 'Bearer my-access-token'
+      Authorization: `Bearer ${jwtToken}`
     },
     pathParameters: {
       granuleName: 'asdf'
