@@ -24,7 +24,7 @@ exports.executeMigrations = require('./lambdas/executeMigrations').handler;
 exports.inRegionS3Policy = require('./lambdas/in-region-s3-policy').handler;
 exports.jobs = require('./lambdas/jobs');
 exports.logger = require('./lambdas/payload-logger').handler;
-exports.kinesisConsumer = require('./lambdas/kinesis-consumer').handler;
+exports.messageConsumer = require('./lambdas/message-consumer').handler;
 exports.scheduler = require('./lambdas/sf-scheduler');
 exports.starter = require('./lambdas/sf-starter');
 

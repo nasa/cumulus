@@ -3,6 +3,7 @@
 'use strict';
 
 const orderBy = require('lodash.orderby');
+const cloneDeep = require('lodash.clonedeep');
 const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
@@ -290,7 +291,7 @@ function setProcessEnvironment(stackName, bucketName) {
   process.env.internal = bucketName;
   process.env.bucket = bucketName;
   process.env.stackName = stackName;
-  process.env.kinesisConsumer = `${stackName}-kinesisConsumer`;
+  process.env.messageConsumer = `${stackName}-messageConsumer`;
   process.env.KinesisInboundEventLogger = `${stackName}-KinesisInboundEventLogger`;
   process.env.CollectionsTable = `${stackName}-CollectionsTable`;
   process.env.ProvidersTable = `${stackName}-ProvidersTable`;
@@ -509,6 +510,33 @@ async function _deleteOneRule(name) {
   return r.get({ name: name }).then((item) => r.delete(item));
 }
 
+/**
+ * Remove params added to the rule when it is saved into dynamo
+ * and comes back from the db
+ *
+ * @param {Object} rule - dynamo rule object
+ * @returns {Object} - updated rule object that can be compared to the original
+ */
+function removeRuleAddedParams(rule) {
+  const ruleCopy = cloneDeep(rule);
+  delete ruleCopy.state;
+  delete ruleCopy.createdAt;
+  delete ruleCopy.updatedAt;
+  delete ruleCopy.timestamp;
+
+  return ruleCopy;
+}
+
+/**
+ * Confirm whether task was started by rule by checking for rule-specific value in meta.triggerRule
+ *
+ * @param {Object} taskInput - Cumulus Task input
+ * @param {Object} params - Object as { rule: valueToMatch }
+ * @returns {boolean} true if triggered by rule, else false
+ */
+function isWorkflowTriggeredByRule(taskInput, params) {
+  return taskInput.meta.triggerRule && taskInput.meta.triggerRule === params.rule;
+}
 
 /**
  * returns a list of rule objects
@@ -657,26 +685,28 @@ async function getExecutions(workflowName, stackName, bucket, maxExecutionResult
  * Wait for the execution that matches the criteria in the compare function to begin
  * The compare function should take 2 arguments: taskInput and params
  *
- * @param {string} workflowName - workflow name to find execution for
- * @param {string} stackName - stack name
- * @param {string} bucket - bucket name
- * @param {function} findExecutionFn - function that takes the taskInput and findExecutionFnParams
- * and returns a boolean indicating whether or not this is the correct instance of the workflow
- * @param {Object} findExecutionFnParams - params to be passed into findExecutionFn
- * @param {integer} maxWaitSeconds - Set a custom wait time in seconds
+ * @param {Object} options
+ * @param {string} options.workflowName - workflow name to find execution for
+ * @param {string} options.stackName - stack name
+ * @param {string} options.bucket - bucket name
+ * @param {function} options.findExecutionFn - function that takes the taskInput and
+ * findExecutionFnParams and returns a boolean indicating whether or not this is the correct
+ * instance of the workflow
+ * @param {Object} options.findExecutionFnParams - params to be passed into findExecutionFn
+ * @param {integer} options.maxWaitSeconds - an optional custom wait time in seconds
  * @returns {undefined} - none
  */
-async function waitForTestExecutionStart(
+async function waitForTestExecutionStart({
   workflowName,
   stackName,
   bucket,
   findExecutionFn,
   findExecutionFnParams,
-  maxWaitSeconds = maxWaitForStartedExecutionSecs
-) {
+  maxWaitSeconds
+}) {
   let timeWaitedSecs = 0;
   /* eslint-disable no-await-in-loop */
-  while (timeWaitedSecs < maxWaitSeconds) {
+  while (timeWaitedSecs < maxWaitSeconds ? maxWaitSeconds : maxWaitForStartedExecutionSecs) {
     await sleep(waitPeriodMs);
     timeWaitedSecs += (waitPeriodMs / 1000);
     const executions = await getExecutions(workflowName, stackName, bucket);
@@ -726,6 +756,8 @@ module.exports = {
   generateCmrFilesForGranules: cmr.generateCmrFilesForGranules,
   addRules,
   deleteRules,
+  removeRuleAddedParams,
+  isWorkflowTriggeredByRule,
   getClusterArn,
   getWorkflowArn,
   rulesList,
