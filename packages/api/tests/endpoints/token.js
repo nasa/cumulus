@@ -222,6 +222,4 @@ test.serial('When using Earthdata Login, GET /token with a code stores the acces
 
   t.is(tokenAfter.accessToken, accessToken);
   t.is(tokenAfter.refreshToken, refreshToken);
-  // t.is(tokenAfter.username, username);
-  // t.is(tokenAfter.expirationTime, expirationTime);
 });

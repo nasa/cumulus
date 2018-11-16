@@ -19,7 +19,9 @@ const {
   TokenExpiredError,
   verify: jwtVerify
 } = require('jsonwebtoken');
-const { AccessToken, User } = require('../models');
+
+const { User } = require('../models');
+const { verifyJwtToken } = require('./token');
 const { errorify } = require('./utils');
 const {
   AuthorizationFailureResponse,
@@ -135,7 +137,7 @@ async function getAuthorizationFailureResponse(params) {
   }
 
   try {
-    jwtVerify(jwtToken, process.env.TOKEN_SECRET)
+    verifyJwtToken(jwtToken);
   } catch (err) {
     if (err instanceof TokenExpiredError) {
       return new AuthorizationFailureResponse({
