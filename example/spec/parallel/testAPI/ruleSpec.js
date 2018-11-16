@@ -1,10 +1,10 @@
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
-
 const {
   rulesApi: rulesApiTestUtils,
+  isWorkflowTriggeredByRule,
   LambdaStep,
+  removeRuleAddedParams,
   waitForTestExecutionStart
 } = require('@cumulus/integration-tests');
 
@@ -17,30 +17,9 @@ const config = loadConfig();
 
 const lambdaStep = new LambdaStep();
 
-/**
- * Remove params added to the rule when it is saved into dynamo
- * and comes back from the db
- *
- * @param {Object} rule - dynamo rule object
- * @returns {Object} - updated rule object that can be compared to the original
- */
-function removeRuleAddedParams(rule) {
-  const ruleCopy = cloneDeep(rule);
-  delete ruleCopy.state;
-  delete ruleCopy.createdAt;
-  delete ruleCopy.updatedAt;
-  delete ruleCopy.timestamp;
-
-  return ruleCopy;
-}
-
-function isWorkflowTriggeredByRule(taskInput, params) {
-  return taskInput.meta.triggerRule && taskInput.meta.triggerRule === params.rule;
-}
-
 describe('When I create a scheduled rule via the Cumulus API', () => {
   let execution;
-  const scheduledRuleName = timestampedName('SchedHelloWorldIntegrationTestRule');
+  const scheduledRuleName = timestampedName('SchedHelloWorldTest');
   const scheduledHelloWorldRule = {
     name: scheduledRuleName,
     workflow: 'HelloWorldWorkflow',
@@ -172,7 +151,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
     it('the rule can be updated', async () => {
       const updatingRuleResponse = await rulesApiTestUtils.updateRule({
         prefix: config.stackName,
-        rule: helloWorldRule,
+        ruleName: helloWorldRule.name,
         updateParams: {
           meta: {
             triggerRule: updatedCheck
