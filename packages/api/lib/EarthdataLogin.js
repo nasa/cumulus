@@ -12,6 +12,7 @@ const {
 } = require('./OAuth2');
 
 const expiresInMs = 10 * 1000;
+// const expiresInMs = 60 * 60 * 24 * 1000;
 const isBadRequestError = (err) => err.name === 'HTTPError' && err.statusCode === 400;
 
 /**
@@ -132,8 +133,8 @@ class EarthdataLogin extends OAuth2 {
         accessToken: response.body.access_token,
         refreshToken: response.body.refresh_token,
         username: response.body.endpoint.split('/').pop(),
-        expirationTime: response.expires_in,
-        // expirationTime: Date.now() + (10 * 1000)
+        // expirationTime: response.expires_in,
+        expirationTime: Math.floor(Date.now() / 1000) + expiresInMs,
       };
     }
     catch (err) {
