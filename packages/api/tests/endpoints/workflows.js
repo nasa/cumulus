@@ -24,6 +24,7 @@ let testBucketName;
 let stackName;
 
 test.before(async () => {
+  process.env.TOKEN_SECRET = randomString();
   process.env.AccessTokensTable = randomString();
   process.env.UsersTable = randomString();
   testBucketName = randomString();
