@@ -147,5 +147,42 @@ class EarthdataLogin extends OAuth2 {
       throw new OAuth2AuthenticationError(err.message);
     }
   }
+
+  requestRefreshAccessToken(refreshToken) {
+    return got.post(
+      this.tokenEndpoint(),
+      {
+        json: true,
+        form: true,
+        body: {
+          grant_type: 'refresh_token',
+          refreshToken
+        },
+        auth: `${this.clientId}:${this.clientPassword}`
+      }
+    );
+  }
+
+  async refreshAccessToken(refreshToken) {
+    if (!refreshToken) throw new TypeError('refreshToken is required');
+
+    try {
+      const response = await this.requestRefreshAccessToken(refreshToken);
+
+      return {
+        accessToken: response.body.access_token,
+        refreshToken: response.body.refresh_token,
+        username: response.body.endpoint.split('/').pop(),
+        expirationTime: Date.now() + this.getTokenExpirationMs(),
+      };
+    }
+    catch (err) {
+      if (isBadRequestError(err)) {
+        throw new OAuth2AuthenticationFailure();
+      }
+
+      throw new OAuth2AuthenticationError(err.message);
+    }
+  }
 }
 module.exports = EarthdataLogin;
