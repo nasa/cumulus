@@ -239,7 +239,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.9.0] - 2018-08-06
 
-**Please note** additional information and upgrade instructions [here](https://nasa.github.io/cumulus/upgrade/1.9.0.html)
+**Please note** additional information and upgrade instructions [here](https://nasa.github.io/cumulus/docs/upgrade/1.9.0)
 
 ### Added
 - **CUMULUS-712** - Added integration tests verifying expected behavior in workflows
@@ -306,7 +306,7 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.7.0] - 2018-07-02
 
-### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/upgrade/1.7.0.html)
+### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/docs/upgrade/1.7.0)
 
 ### Added
 - **GITC-776-2** - Add support for versioned collectons
@@ -340,7 +340,7 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.6.0] - 2018-06-06
 
-### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/upgrade/1.6.0.html)
+### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/docs/upgrade/1.6.0)
 
 ### Fixed
 - **CUMULUS-602** - Format all logs sent to Elastic Search.
