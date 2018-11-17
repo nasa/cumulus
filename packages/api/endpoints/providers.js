@@ -110,7 +110,7 @@ async function del(event, cb) {
   const providerModel = new models.Provider();
 
   try {
-    await providerModel.delete(event.pathParameters.id);
+    await providerModel.delete({ id: event.pathParameters.id });
   }
   catch (err) {
     if (err instanceof AssociatedRulesError) {

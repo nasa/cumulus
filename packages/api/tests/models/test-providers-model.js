@@ -52,18 +52,6 @@ test('Providers.exists() returns false when a record does not exist', async (t) 
   t.false(await providersModel.exists(randomString()));
 });
 
-test('Providers.delete() throws an exception if the provider does not exist', async (t) => {
-  const providersModel = new Provider();
-
-  try {
-    await providersModel.delete('does-not-exist');
-    t.fail('Expected an exception to be thrown');
-  }
-  catch (err) {
-    t.is(err.message, 'Provider does not exist');
-  }
-});
-
 test('Providers.delete() throws an exception if the provider has associated rules', async (t) => {
   const providersModel = new Provider();
 
@@ -87,7 +75,7 @@ test('Providers.delete() throws an exception if the provider has associated rule
   await ruleModel.create(rule);
 
   try {
-    await providersModel.delete(providerId);
+    await providersModel.delete({ id: providerId });
     t.fail('Expected an exception to be thrown');
   }
   catch (err) {
@@ -103,7 +91,7 @@ test('Providers.delete() deletes a provider', async (t) => {
   const providerId = randomString();
   await manager.create({ id: providerId });
 
-  await providersModel.delete(providerId);
+  await providersModel.delete({ id: providerId });
 
   t.false(await manager.exists({ id: providerId }));
 });

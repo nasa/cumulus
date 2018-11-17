@@ -151,11 +151,11 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     const rules = await rulesList(testConfig.stackName, testConfig.bucket, ruleDirectory);
     // clean up stack state added by test
     console.log(`\nCleaning up stack & deleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
+    await deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix);
     await Promise.all([
       deleteFolder(testConfig.bucket, testDataFolder),
       cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
       cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
-      deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix),
       deleteTestStream(streamName),
       deleteTestStream(cnmResponseStreamName),
       s3().deleteObject({
