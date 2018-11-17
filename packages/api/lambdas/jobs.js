@@ -4,10 +4,25 @@
 
 const get = require('lodash.get');
 const pLimit = require('p-limit');
+
 const log = require('@cumulus/common/log');
+const { Execution } = require('../models');
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { Search } = require('../es/search');
 const { handlePayload, partialRecordUpdate } = require('../es/indexer');
+
+async function cleanExecutionPayloads() {
+  const timeout = parseInt(process.env.executionPayloadTimeout);
+  if (!process.env.executionPayloadTimeout === 'disabled') {
+      return [];
+  }
+  if (!Number.isInteger(timeout)) {
+      throw new Error(`Invalid number of days specified in configuration for payload_timout: ${process.env.executionPayloadTimeout}`);
+  }
+  const execution = new Execution();
+  return await execution.removeOldPayloadRecords(timeout);
+}
+
 
 async function findStaleRecords(type, q, limit = 100, page = 1) {
   const search = new Search({
@@ -25,6 +40,7 @@ async function findStaleRecords(type, q, limit = 100, page = 1) {
   //}
   return response.results;
 }
+
 
 async function updateGranulesAndPdrs(esClient, url, error) {
   // find related granule and update their status
@@ -133,20 +149,17 @@ async function checkExecution(arn, url, timestamp, esClient) {
 
 async function cleanup() {
   const searchTerm = 'status:running';
-
   const esClient = await Search.es();
   const executions = await findStaleRecords('execution', searchTerm, 100);
-
   log.info(`Found ${executions.length} stale executions`);
-
   const limit = pLimit(2);
-
   await Promise.all(executions.slice(0, 400).map((ex) => limit(() => checkExecution(
     ex.arn,
     ex.execution,
     ex.timestamp,
     esClient
   ))));
+  await cleanExecutionPayloads();
 }
 
 function handler(event, context, cb) {

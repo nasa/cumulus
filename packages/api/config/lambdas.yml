@@ -132,6 +132,12 @@ jobs:
   useElasticSearch: '{{es.name}}'
   source: 'node_modules/@cumulus/api/dist/'
   namedLambdaDeadLetterQueue: true
+  envs:
+    executionPayloadTimeout: '{{execution_payload_retention_period}}'
+    ExecutionsTable:
+      function: Ref
+      value: ExecutionsTableDynamoDB
+
 
 # used as custom resource for cloudformation manipulation
 CustomBootstrap:

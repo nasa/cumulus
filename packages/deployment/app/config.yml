@@ -4,6 +4,9 @@ default:
 
   urs_url: https://uat.urs.earthdata.nasa.gov
 
+
+  execution_payload_retention_period: 30 //days
+
   oauth:
     provider: earthdata
 
@@ -193,6 +196,7 @@ default:
       state: ENABLED
       targets:
         - lambda: EmsDistributionReport
+
 
   useWorkflowLambdaVersions: true
 
