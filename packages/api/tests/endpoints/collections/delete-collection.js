@@ -3,6 +3,8 @@
 const test = require('ava');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
+const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
+
 const models = require('../../../models');
 const bootstrap = require('../../../lambdas/bootstrap');
 const collectionsEndpoint = require('../../../endpoints/collections');
@@ -13,6 +15,7 @@ const {
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
+const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 
 process.env.CollectionsTable = randomString();
 process.env.UsersTable = randomString();
@@ -24,6 +27,7 @@ let esClient;
 
 let authHeaders;
 let collectionModel;
+let ruleModel;
 let userModel;
 
 test.before(async () => {
@@ -43,6 +47,15 @@ test.before(async () => {
   };
 
   esClient = await Search.es('fakehost');
+
+  process.env.RulesTable = randomString();
+  ruleModel = new models.Rule();
+  await ruleModel.createTable();
+
+  process.env.bucket = randomString();
+  await s3().createBucket({ Bucket: process.env.bucket }).promise();
+
+  process.env.stackName = randomString();
 });
 
 test.beforeEach(async (t) => {
@@ -55,6 +68,8 @@ test.after.always(async () => {
   await userModel.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
   await esClient.indices.delete({ index: esIndex });
+  await ruleModel.deleteTable();
+  await recursivelyDeleteS3Bucket(process.env.bucket);
 });
 
 test('Attempting to delete a collection without an Authorization header returns an Authorization Missing response', (t) => {
@@ -124,5 +139,82 @@ test('Deleting a collection removes it', async (t) => {
     return testEndpoint(collectionsEndpoint, getCollectionRequest, (response) => {
       t.is(response.statusCode, 404);
     });
+  });
+});
+
+test('Attempting to delete a collection with an associated rule returns a 409 response', async (t) => {
+  const collection = fakeCollectionFactory();
+  await collectionModel.create(collection);
+
+  const rule = fakeRuleFactoryV2({
+    collection: {
+      name: collection.name,
+      version: collection.version
+    },
+    rule: {
+      type: 'onetime'
+    }
+  });
+
+  // The workflow message template must exist in S3 before the rule can be created
+  await s3().putObject({
+    Bucket: process.env.bucket,
+    Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
+    Body: JSON.stringify({})
+  }).promise();
+
+  await ruleModel.create(rule);
+
+  const deleteRequest = {
+    httpMethod: 'DELETE',
+    pathParameters: {
+      collectionName: collection.name,
+      version: collection.version
+    },
+    headers: authHeaders
+  };
+
+  return testEndpoint(collectionsEndpoint, deleteRequest, (response) => {
+    t.is(response.statusCode, 409);
+
+    const body = JSON.parse(response.body);
+    t.is(body.message, `Cannot delete collection with associated rules: ${rule.name}`);
+  });
+});
+
+test('Attempting to delete a collection with an associated rule does not delete the provider', async (t) => {
+  const collection = fakeCollectionFactory();
+  await collectionModel.create(collection);
+
+  const rule = fakeRuleFactoryV2({
+    collection: {
+      name: collection.name,
+      version: collection.version
+    },
+    rule: {
+      type: 'onetime'
+    }
+  });
+
+  // The workflow message template must exist in S3 before the rule can be created
+  await s3().putObject({
+    Bucket: process.env.bucket,
+    Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
+    Body: JSON.stringify({})
+  }).promise();
+
+  await ruleModel.create(rule);
+
+  const deleteRequest = {
+    httpMethod: 'DELETE',
+    pathParameters: {
+      collectionName: collection.name,
+      version: collection.version
+    },
+    headers: authHeaders
+  };
+
+  return testEndpoint(collectionsEndpoint, deleteRequest, async () => {
+    t.true(await collectionModel.exists(collection.name, collection.version));
   });
 });
