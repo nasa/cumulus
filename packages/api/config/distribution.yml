@@ -2,16 +2,19 @@
 ApiDistribution:
   handler: index.distribution
   timeout: 20
-  memory: 256
+  memory: 512
   source: 'node_modules/@cumulus/api/dist/'
   distributionRole: true
   urs: true
   envs:
-    EARTHDATA_BASE_URL: '{{parent.urs_url}}' 
+    EARTHDATA_BASE_URL: '{{parent.urs_url}}'
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'
     EARTHDATA_CLIENT_PASSWORD: '{{EARTHDATA_CLIENT_PASSWORD}}'
+    AccessTokensTable:
+      function: Ref
+      value: AccessTokensTableDynamoDB
   apiGateway:
-    - api: download 
+    - api: download
       path: 'redirect'
       method: get
     - api: download
