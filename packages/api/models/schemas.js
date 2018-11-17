@@ -318,7 +318,7 @@ module.exports.rule = {
         logEventArn: {
           type: 'string',
           readonly: true
-        },
+        }
       },
       required: ['type']
     },
@@ -530,6 +530,14 @@ module.exports.execution = {
     timestamp: {
       type: 'number',
       readonly: true
+    },
+    originalPayload: {
+      title: 'The original payload for this workflow',
+      type: 'object'
+    },
+    finalPayload: {
+      title: 'The final payload of this workflow',
+      type: 'object'
     }
   },
   required: [
