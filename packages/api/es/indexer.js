@@ -355,10 +355,17 @@ async function handlePayload(event) {
     payload = event;
   }
 
+  let executionPromise;
   const e = new Execution();
+  if (['failed', 'completed'].includes(payload.meta.status)) {
+    executionPromise = e.updateExecutionFromSns(payload);
+  }
+  else {
+    executionPromise = e.createExecutionFromSns(payload);
+  }
 
   return {
-    sf: await e.createExecutionFromSns(payload),
+    sf: await executionPromise,
     pdr: await pdr(payload),
     granule: await granule(payload)
   };

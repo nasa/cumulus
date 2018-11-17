@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- **CUUMULUS-1000** - Distribution endpoint now persists logins, instead of
+  redirecting to Earthdata Login on every request
 - **CUMULUS-783 CUMULUS-790** - Updated `@cumulus/sync-granule` and `@cumulus/move-granules` tasks to always overwrite existing files for manually-triggered reingest.
 - **CUMULUS-906** - Updated `@cumulus/api` granule reingest API to
   - add `reingestGranule: true` and `forceDuplicateOverwrite: true` to Cumulus message `cumulus_meta.cumulus_context` field to indicate that the workflow is a manually triggered re-ingest.
@@ -21,6 +23,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-793** - Updated the granule move PUT request in `@cumulus/api` to reject the move with a 409 status code if one or more of the files already exist at the destination location
 
 ### Added
+= **CUMULUS-815/816**
+  - Added 'OriginalPayload' and 'FinalPayload' fields to Executions table
+  - Updated Execution model to populate originalPayload with the execution payload on record creation
+  - Updated Execution model code to populate finalPayload field with the execution payload on execution completion
+  - Execution API now exposes the above fields
 - **CUMULUS-977**
   - Rename `kinesisConsumer` to `messageConsumer` as it handles both Kinesis streams and SNS topics as of this version.
   - Add `sns`-type rule support. These rules create a subscription between an SNS topic and the `messageConsumer`.

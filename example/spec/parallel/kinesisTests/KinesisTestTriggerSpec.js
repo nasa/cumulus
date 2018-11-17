@@ -4,7 +4,7 @@ const {
   aws: { s3 },
   stringUtils: { globalReplace }
 } = require('@cumulus/common');
-
+const { Execution } = require('@cumulus/api/models');
 const fs = require('fs');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 9 * 60 * 1000;
@@ -122,6 +122,7 @@ const ruleOverride = {
 
 const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'];
 
+process.env.ExecutionsTable = `${testConfig.stackName}-ExecutionsTable`;
 
 // When kinesis-type rules exist, the Cumulus lambda messageConsumer is
 // configured to trigger workflows when new records arrive on a Kinesis
@@ -229,6 +230,22 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
       it('outputs the expectedTranslatePayload object', () => {
         expect(lambdaOutput.payload).toEqual(expectedTranslatePayload);
+      });
+    });
+
+    describe('the execution record', () => {
+      let startStep;
+      let endStep;
+      beforeAll(async () => {
+        startStep = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SfSnsReport');
+        endStep = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'sf2snsEnd');
+      });
+
+      it('records both the original and the final payload', async () => {
+        const execution = new Execution();
+        const executionRecord = await execution.get({ arn: workflowExecution.executionArn });
+        expect(executionRecord.originalPayload).toEqual(startStep.payload);
+        expect(executionRecord.finalPayload).toEqual(endStep.payload);
       });
     });
 

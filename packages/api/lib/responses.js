@@ -35,6 +35,7 @@ class LambdaProxyResponse {
    */
   constructor(params = {}) {
     this._body = params.body;
+    this._cookies = params.cookies || [];
     this._customHeaders = params.headers || {};
     this._json = params.json || false;
     this._statusCode = params.statusCode || 200;
@@ -64,6 +65,20 @@ class LambdaProxyResponse {
     return headers;
   }
 
+  get multiValueHeaders() {
+    const headers = {};
+
+    Object.entries(this.headers).forEach(([key, value]) => {
+      headers[key] = [value];
+    });
+
+    if (this._cookies) {
+      headers['Set-Cookie'] = this._cookies.map((c) => c.toString());
+    }
+
+    return headers;
+  }
+
   get body() {
     if (this._json) {
       return JSON.stringify(this._body);
@@ -76,11 +91,23 @@ class LambdaProxyResponse {
     return {
       body: this.body,
       headers: this.headers,
+      multiValueHeaders: this.multiValueHeaders,
       statusCode: this.statusCode
     };
   }
 }
 exports.LambdaProxyResponse = LambdaProxyResponse;
+
+class TemporaryRedirectResponse extends LambdaProxyResponse {
+  constructor(params = {}) {
+    super({
+      cookies: params.cookies,
+      statusCode: 307,
+      headers: { Location: params.location },
+    });
+  }
+}
+exports.TemporaryRedirectResponse = TemporaryRedirectResponse;
 
 class AuthorizationFailureResponse extends LambdaProxyResponse {
   constructor(params = {}) {
@@ -106,7 +133,9 @@ class AuthorizationFailureResponse extends LambdaProxyResponse {
 exports.AuthorizationFailureResponse = AuthorizationFailureResponse;
 
 class NotFoundResponse extends LambdaProxyResponse {
-  constructor({ json, body }) {
+  constructor(params = {}) {
+    const { json, body } = params;
+
     super({
       json,
       body,
