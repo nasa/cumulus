@@ -75,9 +75,7 @@ class Provider extends Manager {
    *
    * @param {string} id - the provider id
    */
-  async delete(id) {
-    if (!(await this.exists(id))) throw new Error('Provider does not exist');
-
+  async delete({ id }) {
     const associatedRuleNames = (await this.getAssociatedRules(id))
       .map((rule) => rule.name);
 
