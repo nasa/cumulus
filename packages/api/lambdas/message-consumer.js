@@ -1,24 +1,23 @@
 'use strict';
 
 const Ajv = require('ajv');
+const set = require('lodash.set');
 const {
   aws: { sns },
   log
 } = require('@cumulus/common');
 const Rule = require('../models/rules');
-const messageSchema = require('./kinesis-consumer-event-schema.json');
-const sfSchedule = require('./sf-scheduler');
-
+const kinesisSchema = require('./kinesis-consumer-event-schema.json');
+const { queueMessageForRule } = require('../lib/rulesHelpers');
 
 /**
  * `getKinesisRules` scans and returns DynamoDB rules table for enabled,
  * 'kinesis'-type rules associated with the * collection declared in the event
  *
- * @param {Object} event - lambda event
+ * @param {Object} collection - lambda event
  * @returns {Array} List of zero or more rules found from table scan
  */
-async function getKinesisRules(event) {
-  const { collection } = event;
+async function getKinesisRules(collection) {
   const model = new Rule();
   const kinesisRules = await model.scan({
     names: {
@@ -40,39 +39,55 @@ async function getKinesisRules(event) {
 }
 
 /**
- * Queue a workflow message for the kinesis rule with the message passed
- * to kinesis as the payload
+ * `getSnsRules` scans and returns DynamoDB rules table for enabled,
+ * 'sns'-type rules associated with the * collection declared in the event
  *
- * @param {Object} kinesisRule - kinesis rule to queue the message for
- * @param {Object} eventObject - message passed to kinesis
- * @returns {Promise} promise resolved when the message is queued
+ * @param {string} topicArn - sns topic arn
+ * @returns {Array} List of zero or more rules found from table scan
  */
-async function queueMessageForRule(kinesisRule, eventObject) {
-  const item = {
-    workflow: kinesisRule.workflow,
-    provider: kinesisRule.provider,
-    collection: kinesisRule.collection,
-    meta: kinesisRule.meta,
-    payload: eventObject
-  };
+async function getSnsRules(topicArn) {
+  const model = new Rule();
+  const snsRules = await model.scan({
+    names: {
+      '#st': 'state',
+      '#rl': 'rule',
+      '#tp': 'type',
+      '#vl': 'value'
+    },
+    filter: '#st = :enabledState AND #rl.#tp = :ruleType AND #rl.#vl = :ruleValue',
+    values: {
+      ':enabledState': 'ENABLED',
+      ':ruleType': 'sns',
+      ':ruleValue': topicArn
+    }
+  });
 
-  const payload = await Rule.buildPayload(item);
+  return snsRules.Items;
+}
 
-  return new Promise((resolve, reject) => sfSchedule(payload, {}, (err, result) => {
-    if (err) reject(err);
-    resolve(result);
-  }));
+async function getRules(param, originalMessageSource) {
+  if (originalMessageSource === 'kinesis') {
+    return getKinesisRules(param);
+  }
+  if (originalMessageSource === 'sns') {
+    return getSnsRules(param);
+  }
+  throw new Error('Unrecognized event source');
 }
 
 /**
  * `validateMessage` validates an event as being valid for creating a workflow.
- * See the messageSchema defined at the top of this file.
+ * See the schemas defined at the top of this file.
  *
  * @param {Object} event - lambda event
+ * @param {string} originalMessageSource - 'kinesis' or 'sns'
+ * @param {Object} messageSchema - provided messageSchema
  * @returns {(error|Object)} Throws an Ajv.ValidationError if event object is invalid.
  * Returns the event object if event is valid.
  */
-function validateMessage(event) {
+function validateMessage(event, originalMessageSource, messageSchema) {
+  if (originalMessageSource === 'sns') return Promise.resolve(event);
+
   const ajv = new Ajv({ allErrors: true });
   const validate = ajv.compile(messageSchema);
   return validate(event);
@@ -97,19 +112,26 @@ async function publishRecordToFallbackTopic(record) {
 
 
 /**
- * processRecord error handler.  If the error comes on first attempt
+ * processRecord error handler.  If the error comes on first attempt then publish the failure
+ * to the fallback SNS topic. If the message is already a fallback message, throw an error.
  *
  * @param {Error} error - error raised in processRecord.
  * @param {Object} record - record processed during error event.
- * @param {Bool} shouldRetry - flag to determine if the error should be sent
+ * @param {Bool} fromSNS - whether message that caused error is from SNS (non-kinesis)
+ * @param {Bool} isKinesisRetry - flag to determine if the error should be sent
  *   for further processing or just raised to be handled by the
- *   lambda. shouldRetry is true if the record being processes is directly from
+ *   lambda. isKinesisRetry is false if the record being processes is directly from
  *   Kinesis.
  * @returns {(res|error)} - result of publishing to topic, or original error if publish fails.
  * @throws {Error} - throws the original error if no special handling requested.
  */
-function handleProcessRecordError(error, record, shouldRetry) {
-  if (shouldRetry) {
+function handleProcessRecordError(error, record, fromSNS, isKinesisRetry) {
+  if (!isKinesisRetry) {
+    if (fromSNS) {
+      log.error('Failed SNS message:');
+      log.error(JSON.stringify(record));
+      throw error;
+    }
     return publishRecordToFallbackTopic(record)
       .then((res) => {
         log.debug('sns result:', res);
@@ -144,35 +166,59 @@ function handleProcessRecordError(error, record, shouldRetry) {
  */
 function processRecord(record, fromSNS) {
   let eventObject;
-  let dataBlob;
+  let isKinesisRetry = false;
+  let parsed;
+  let validationSchema;
+  let originalMessageSource;
+  let ruleParam;
+
   if (fromSNS) {
-    const parsed = JSON.parse(record.Sns.Message);
-    dataBlob = parsed.kinesis.data;
+    parsed = JSON.parse(record.Sns.Message);
+  }
+  if (fromSNS && !parsed.kinesis) {
+    // normal SNS notification - not a Kinesis fallback
+    eventObject = parsed;
+    originalMessageSource = 'sns';
+    ruleParam = record.Sns.TopicArn;
   }
   else {
-    dataBlob = record.kinesis.data;
+    // kinesis notification -  sns fallback or direct
+    let dataBlob;
+    if (fromSNS) {
+      // Kinesis fallback SNS notification
+      isKinesisRetry = true;
+      dataBlob = parsed.kinesis.data;
+    }
+    else {
+      dataBlob = record.kinesis.data;
+    }
+    try {
+      validationSchema = kinesisSchema;
+      originalMessageSource = 'kinesis';
+      const dataString = Buffer.from(dataBlob, 'base64').toString();
+      eventObject = JSON.parse(dataString);
+      ruleParam = eventObject.collection;
+    }
+    catch (err) {
+      log.error('Caught error parsing JSON:');
+      log.error(err);
+      if (fromSNS) {
+        return handleProcessRecordError(err, record, isKinesisRetry, fromSNS);
+      }
+    }
   }
-  const dataString = Buffer.from(dataBlob, 'base64').toString();
 
-  try {
-    eventObject = JSON.parse(dataString);
-    log.debug('processRecord eventObject', eventObject);
-  }
-  catch (err) {
-    log.error('Caught error parsing JSON:');
-    log.error(err);
-    return handleProcessRecordError(err, record, !fromSNS);
-  }
-
-  return validateMessage(eventObject)
-    .then(getKinesisRules)
-    .then((kinesisRules) => (
-      Promise.all(kinesisRules.map((kinesisRule) => queueMessageForRule(kinesisRule, eventObject)))
-    ))
+  return validateMessage(eventObject, originalMessageSource, validationSchema)
+    .then(() => getRules(ruleParam, originalMessageSource))
+    .then((rules) => (
+      Promise.all(rules.map((rule) => {
+        if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParam);
+        return queueMessageForRule(rule, eventObject);
+      }))))
     .catch((err) => {
       log.error('Caught error in processRecord:');
       log.error(err);
-      return handleProcessRecordError(err, record, !fromSNS);
+      return handleProcessRecordError(err, record, isKinesisRetry, fromSNS);
     });
 }
 
@@ -187,10 +233,10 @@ function processRecord(record, fromSNS) {
  * @returns {(error|string)} Success message or error
  */
 function handler(event, context, cb) {
-  const fallbackRetry = event.Records[0].EventSource === 'aws:sns';
+  const fromSns = event.Records[0].EventSource === 'aws:sns';
   const records = event.Records;
 
-  return Promise.all(records.map((r) => processRecord(r, fallbackRetry)))
+  return Promise.all(records.map((r) => processRecord(r, fromSns)))
     .then((results) => cb(null, results.filter((r) => r !== undefined)))
     .catch((err) => {
       cb(err);
@@ -198,6 +244,6 @@ function handler(event, context, cb) {
 }
 
 module.exports = {
-  getKinesisRules,
+  getRules,
   handler
 };

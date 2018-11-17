@@ -230,8 +230,19 @@ function fakeProviderFactory(options = {}) {
   );
 }
 
+function fakeAccessTokenFactory(params = {}) {
+  return {
+    accessToken: randomString(),
+    refreshToken: randomString(),
+    username: randomString(),
+    expirationTime: Date.now() + (60 * 60 * 1000),
+    ...params
+  };
+}
+
 module.exports = {
   testEndpoint,
+  fakeAccessTokenFactory,
   fakeGranuleFactory,
   fakeGranuleFactoryV2,
   fakePdrFactory,

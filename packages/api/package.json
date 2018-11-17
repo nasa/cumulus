@@ -70,6 +70,7 @@
     "lodash.merge": "^4.5.0",
     "lodash.omit": "^4.5.0",
     "lodash.pick": "^4.4.0",
+    "lodash.set": "^4.3.0",
     "lodash.sortby": "^4.7.0",
     "lodash.uniqby": "^4.7.0",
     "moment": "^2.22.1",
@@ -80,6 +81,8 @@
     "p-wait-for": "^2.0.1",
     "querystring": "^0.2.0",
     "split2": "^2.2.0",
+    "tough-cookie": "^2.4.3",
+    "url-join": "^4.0.0",
     "uuid": "^3.2.1"
   },
   "devDependencies": {
