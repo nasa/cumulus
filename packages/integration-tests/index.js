@@ -3,6 +3,7 @@
 'use strict';
 
 const orderBy = require('lodash.orderby');
+const cloneDeep = require('lodash.clonedeep');
 const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
@@ -290,7 +291,7 @@ function setProcessEnvironment(stackName, bucketName) {
   process.env.internal = bucketName;
   process.env.bucket = bucketName;
   process.env.stackName = stackName;
-  process.env.kinesisConsumer = `${stackName}-kinesisConsumer`;
+  process.env.messageConsumer = `${stackName}-messageConsumer`;
   process.env.KinesisInboundEventLogger = `${stackName}-KinesisInboundEventLogger`;
   process.env.CollectionsTable = `${stackName}-CollectionsTable`;
   process.env.ProvidersTable = `${stackName}-ProvidersTable`;
@@ -509,6 +510,33 @@ async function _deleteOneRule(name) {
   return r.get({ name: name }).then((item) => r.delete(item));
 }
 
+/**
+ * Remove params added to the rule when it is saved into dynamo
+ * and comes back from the db
+ *
+ * @param {Object} rule - dynamo rule object
+ * @returns {Object} - updated rule object that can be compared to the original
+ */
+function removeRuleAddedParams(rule) {
+  const ruleCopy = cloneDeep(rule);
+  delete ruleCopy.state;
+  delete ruleCopy.createdAt;
+  delete ruleCopy.updatedAt;
+  delete ruleCopy.timestamp;
+
+  return ruleCopy;
+}
+
+/**
+ * Confirm whether task was started by rule by checking for rule-specific value in meta.triggerRule
+ *
+ * @param {Object} taskInput - Cumulus Task input
+ * @param {Object} params - Object as { rule: valueToMatch }
+ * @returns {boolean} true if triggered by rule, else false
+ */
+function isWorkflowTriggeredByRule(taskInput, params) {
+  return taskInput.meta.triggerRule && taskInput.meta.triggerRule === params.rule;
+}
 
 /**
  * returns a list of rule objects
@@ -728,6 +756,8 @@ module.exports = {
   generateCmrFilesForGranules: cmr.generateCmrFilesForGranules,
   addRules,
   deleteRules,
+  removeRuleAddedParams,
+  isWorkflowTriggeredByRule,
   getClusterArn,
   getWorkflowArn,
   rulesList,

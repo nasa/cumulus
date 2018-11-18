@@ -185,9 +185,9 @@ ApiRulesV1:
     invokeArn:
       function: "Ref"
       value: ScheduleSFLambdaFunction
-    kinesisConsumer:
+    messageConsumer:
       function: "Ref"
-      value: kinesisConsumerLambdaFunction
+      value: messageConsumerLambdaFunction
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain
