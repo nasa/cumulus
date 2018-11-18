@@ -38,7 +38,7 @@ async function searchConcept(type, searchParams, previousResults = []) {
   const pageNum = (searchParams.page_num) ? searchParams.page_num + 1 : 1;
 
   // Recursively retrieve all the search results for collections or granules
-  const query = { ...defaultParams, ...searchParams, page_num: pageNum };
+  const query = Object.assign({}, defaultParams, searchParams, { page_num: pageNum });
 
   const response = await got.get(url, { json: true, query });
   const fetchedResults = previousResults.concat(response.body.feed.entry || []);
@@ -293,7 +293,7 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async searchCollections(searchParams) {
-    const params = { ...{ provider_short_name: this.provider }, ...searchParams };
+    const params = Object.assign({}, { provider_short_name: this.provider }, searchParams);
     return searchConcept('collections', params, []);
   }
 
@@ -304,7 +304,7 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async searchGranules(searchParams) {
-    const params = { ...{ provider_short_name: this.provider }, ...searchParams };
+    const params = Object.assign({}, { provider_short_name: this.provider }, searchParams);
     return searchConcept('granules', params, []);
   }
 }
