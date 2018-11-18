@@ -2,7 +2,10 @@
 
 const { handle } = require('../lib/response');
 const models = require('../models');
-const RecordDoesNotExist = require('../lib/errors').RecordDoesNotExist;
+const {
+  AssociatedRulesError,
+  RecordDoesNotExist
+} = require('../lib/errors');
 const { Search } = require('../es/search');
 
 /**
@@ -103,14 +106,22 @@ function put(event, cb) {
  * @param {Function} cb - aws lambda callback function
  * @returns {Promise<Object>} returns delete response
  */
-function del(event, cb) {
-  const id = event.pathParameters.id;
+async function del(event, cb) {
   const providerModel = new models.Provider();
 
-  return providerModel.get({ id })
-    .then(() => providerModel.delete({ id }))
-    .then(() => cb(null, { message: 'Record deleted' }))
-    .catch(cb);
+  try {
+    await providerModel.delete({ id: event.pathParameters.id });
+  }
+  catch (err) {
+    if (err instanceof AssociatedRulesError) {
+      const message = `Cannot delete provider with associated rules: ${err.rules.join(', ')}`;
+      return cb({ message }, null, 409);
+    }
+
+    return cb(err);
+  }
+
+  return cb(null, { message: 'Record deleted' });
 }
 
 /**
