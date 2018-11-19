@@ -810,3 +810,81 @@ test.serial('move a file and update metadata', async (t) => {
     t.is(newUrl, newDestination);
   });
 });
+
+test('PUT with action move returns failure if one granule file exists', async (t) => {
+  const filesExistingStub = sinon.stub(models.Granule.prototype, 'getFilesExistingAtLocation').returns([{ name: 'file1' }]);
+  const moveGranuleStub = sinon.stub(models.Granule.prototype, 'move').resolves({});
+
+  const granule = t.context.fakeGranules[0];
+
+  await granuleModel.create(granule);
+
+  const body = {
+    action: 'move',
+    destinations: [{
+      regex: '.*.hdf$',
+      bucket: 'fake-bucket',
+      filepath: 'fake-destination'
+    }]
+  };
+
+  const request = {
+    httpMethod: 'PUT',
+    pathParameters: {
+      granuleName: granule.granuleId
+    },
+    body: JSON.stringify(body),
+    headers: t.context.authHeaders
+  };
+
+  const response = await handleRequest(request);
+
+  const responseBody = JSON.parse(response.body);
+  t.is(response.statusCode, 409);
+  t.is(responseBody.message,
+    'Cannot move granule because the following files would be overwritten at the destination location: file1. Delete the existing files or reingest the source files.');
+
+  filesExistingStub.restore();
+  moveGranuleStub.restore();
+});
+
+test('PUT with action move returns failure if more than one granule file exists', async (t) => {
+  const filesExistingStub = sinon.stub(models.Granule.prototype, 'getFilesExistingAtLocation').returns([
+    { name: 'file1' },
+    { name: 'file2' },
+    { name: 'file3' }
+  ]);
+  const moveGranuleStub = sinon.stub(models.Granule.prototype, 'move').resolves({});
+
+  const granule = t.context.fakeGranules[0];
+
+  await granuleModel.create(granule);
+
+  const body = {
+    action: 'move',
+    destinations: [{
+      regex: '.*.hdf$',
+      bucket: 'fake-bucket',
+      filepath: 'fake-destination'
+    }]
+  };
+
+  const request = {
+    httpMethod: 'PUT',
+    pathParameters: {
+      granuleName: granule.granuleId
+    },
+    body: JSON.stringify(body),
+    headers: t.context.authHeaders
+  };
+
+  const response = await handleRequest(request);
+
+  const responseBody = JSON.parse(response.body);
+  t.is(response.statusCode, 409);
+  t.is(responseBody.message,
+    'Cannot move granule because the following files would be overwritten at the destination location: file1, file2, file3. Delete the existing files or reingest the source files.');
+
+  filesExistingStub.restore();
+  moveGranuleStub.restore();
+});

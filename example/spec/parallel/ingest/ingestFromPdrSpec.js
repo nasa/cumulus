@@ -35,6 +35,7 @@ const {
   buildAndExecuteWorkflow,
   cleanupProviders,
   cleanupCollections,
+  granulesApi: granulesApiTestUtils,
   LambdaStep,
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
@@ -223,7 +224,7 @@ describe('Ingesting from PDR', () => {
         await Promise.all(queueGranulesOutput.payload.running.map(async (arn) => {
           await waitForCompletedExecution(arn);
         }));
-        await apiTestUtils.deleteGranule({
+        await granulesApiTestUtils.deleteGranule({
           prefix: config.stackName,
           granuleId: parseLambdaOutput.payload.granules[0].granuleId
         });
@@ -308,7 +309,7 @@ describe('Ingesting from PDR', () => {
           // delete ingested granule(s)
           await Promise.all(
             finalOutput.payload.granules.map((g) =>
-              apiTestUtils.deleteGranule({
+              granulesApiTestUtils.deleteGranule({
                 prefix: config.stackName,
                 granuleId: g.granuleId
               }))
@@ -395,7 +396,7 @@ describe('Ingesting from PDR', () => {
             const currentEvent = events[i];
             if (currentEvent.type === 'TaskStateExited' &&
               currentEvent.name === checkStatusTaskName) {
-              const output = currentEvent.output;
+              const output = JSON.parse(currentEvent.output);
               const isFinished = output.payload.isFinished;
 
               // get the next task executed

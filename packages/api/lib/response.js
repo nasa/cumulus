@@ -17,30 +17,16 @@ const {
   decode: jwtDecode,
   JsonWebTokenError,
   TokenExpiredError,
-  verify: jwtVerify
 } = require('jsonwebtoken');
 
 const { User } = require('../models');
 const { verifyJwtToken } = require('./token');
-const { errorify } = require('./utils');
+const { errorify, findCaseInsensitiveKey } = require('./utils');
 const {
   AuthorizationFailureResponse,
   InternalServerError,
   LambdaProxyResponse
 } = require('./responses');
-
-/**
- * Find a property name in an object in a case-insensitive manner
- *
- * @param {Object} obj - the object to be searched
- * @param {string} keyArg - the name of the key to find
- * @returns {string|undefined} - the name of the matching key, or undefined if
- *   none was found
- */
-function findCaseInsensitiveKey(obj, keyArg) {
-  const keys = Object.keys(obj);
-  return keys.find((key) => key.toLowerCase() === keyArg.toLowerCase());
-}
 
 function resp(context, err, bodyArg, statusArg = null, headers = {}) {
   deprecate(

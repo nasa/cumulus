@@ -31,7 +31,7 @@ async function list(event) {
 
 /**
  * Update a single granule.
- * Supported Actions: reingest, applyWorkflow, RemoveFromCMR.
+ * Supported Actions: reingest, move, applyWorkflow, RemoveFromCMR.
  *
  * @param {Object} event - aws lambda event object.
  * @returns {Promise<Object>} a Lambda Proxy response object
@@ -102,6 +102,22 @@ async function put(event) {
   }
 
   if (action === 'move') {
+    const filesAtDestination = await granuleModelClient.getFilesExistingAtLocation(
+      granule,
+      body.destinations
+    );
+
+    if (filesAtDestination.length > 0) {
+      const filenames = filesAtDestination.map((file) => file.name);
+      const message = `Cannot move granule because the following files would be overwritten at the destination location: ${filenames.join(', ')}. Delete the existing files or reingest the source files.`;
+
+      return buildLambdaProxyResponse({
+        json: true,
+        statusCode: 409,
+        body: { message }
+      });
+    }
+
     await granuleModelClient.move(granule, body.destinations, process.env.DISTRIBUTION_ENDPOINT);
 
     return buildLambdaProxyResponse({

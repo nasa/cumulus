@@ -15,6 +15,7 @@ const {
 const {
   aws: {
     s3,
+    deleteS3Object,
     s3GetObjectTagging,
     s3ObjectExists,
     parseS3Uri
@@ -28,6 +29,7 @@ const {
   LambdaStep,
   conceptExists,
   getOnlineResources,
+  granulesApi: granulesApiTestUtils,
   waitForConceptExistsOutcome,
   waitUntilGranuleStatusIs,
   waitForTestExecutionStart,
@@ -99,6 +101,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let expectedSyncGranulePayload;
   let expectedPayload;
   let expectedS3TagSet;
+  let postToCmrOutput;
 
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   const granuleModel = new Granule();
@@ -173,7 +176,7 @@ describe('The S3 Ingest Granules workflow', () => {
       providerModel.delete(provider),
       executionModel.delete({ arn: workflowExecution.executionArn }),
       executionModel.delete({ arn: failingWorkflowExecution.executionArn }),
-      apiTestUtils.deleteGranule({
+      granulesApiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       })
@@ -207,7 +210,7 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   it('makes the granule available through the Cumulus API', async () => {
-    const granuleResponse = await apiTestUtils.getGranule({
+    const granuleResponse = await granulesApiTestUtils.getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId
     });
@@ -285,37 +288,36 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   describe('the PostToCmr task', () => {
-    let lambdaOutput;
     let cmrResource;
     let cmrLink;
     let response;
     let files;
 
     beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
-      if (lambdaOutput === null) throw new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
+      postToCmrOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
+      if (postToCmrOutput === null) throw new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
 
-      files = lambdaOutput.payload.granules[0].files;
-      cmrLink = lambdaOutput.payload.granules[0].cmrLink;
+      files = postToCmrOutput.payload.granules[0].files;
+      cmrLink = postToCmrOutput.payload.granules[0].cmrLink;
       cmrResource = await getOnlineResources(cmrLink);
       response = await got(cmrResource[1].href);
     });
 
     it('has expected payload', () => {
-      const granule = lambdaOutput.payload.granules[0];
+      const granule = postToCmrOutput.payload.granules[0];
       expect(granule.published).toBe(true);
       expect(granule.cmrLink.startsWith('https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=')).toBe(true);
 
       // Set the expected cmrLink to the actual cmrLink, since it's going to
       // be different every time this is run.
       const updatedExpectedpayload = cloneDeep(expectedPayload);
-      updatedExpectedpayload.granules[0].cmrLink = lambdaOutput.payload.granules[0].cmrLink;
+      updatedExpectedpayload.granules[0].cmrLink = postToCmrOutput.payload.granules[0].cmrLink;
 
-      expect(lambdaOutput.payload).toEqual(updatedExpectedpayload);
+      expect(postToCmrOutput.payload).toEqual(updatedExpectedpayload);
     });
 
     it('publishes the granule metadata to CMR', () => {
-      const granule = lambdaOutput.payload.granules[0];
+      const granule = postToCmrOutput.payload.granules[0];
       const result = conceptExists(granule.cmrLink);
 
       expect(granule.published).toEqual(true);
@@ -335,12 +337,10 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   describe('an SNS message', () => {
-    let lambdaOutput;
     let existCheck = [];
 
     beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
-      executionName = lambdaOutput.cumulus_meta.execution_name;
+      executionName = postToCmrOutput.cumulus_meta.execution_name;
       existCheck = await Promise.all([
         s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }),
         s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` })
@@ -377,7 +377,7 @@ describe('The S3 Ingest Granules workflow', () => {
       let cmrLink;
 
       beforeAll(async () => {
-        const granuleResponse = await apiTestUtils.getGranule({
+        const granuleResponse = await granulesApiTestUtils.getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
@@ -403,7 +403,7 @@ describe('The S3 Ingest Granules workflow', () => {
           startTime = new Date();
           oldUpdatedAt = granule.updatedAt;
           oldExecution = granule.execution;
-          const reingestGranuleResponse = await apiTestUtils.reingestGranule({
+          const reingestGranuleResponse = await granulesApiTestUtils.reingestGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId
           });
@@ -420,20 +420,20 @@ describe('The S3 Ingest Granules workflow', () => {
 
         it('overwrites granule files', async () => {
           // Await reingest completion
-          const reingestGranuleExecution = await waitForTestExecutionStart(
+          const reingestGranuleExecution = await waitForTestExecutionStart({
             workflowName,
-            config.stackName,
-            config.bucket,
-            isExecutionForGranuleId,
-            { granuleId: inputPayload.granules[0].granuleId }
-          );
+            stackName: config.stackName,
+            bucket: config.bucket,
+            findExecutionFn: isExecutionForGranuleId,
+            findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId }
+          });
 
           console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
 
           await waitForCompletedExecution(reingestGranuleExecution.executionArn);
 
           await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
-          const updatedGranuleResponse = await apiTestUtils.getGranule({
+          const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId
           });
@@ -465,7 +465,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(existsInCMR).toEqual(true);
 
         // Remove the granule from CMR
-        await apiTestUtils.removeFromCMR({
+        await granulesApiTestUtils.removeFromCMR({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
@@ -481,19 +481,19 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(existsInCMR).toEqual(false);
 
         // Publish the granule to CMR
-        await apiTestUtils.applyWorkflow({
+        await granulesApiTestUtils.applyWorkflow({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
           workflow: 'PublishGranule'
         });
 
-        const publishGranuleExecution = await waitForTestExecutionStart(
-          'PublishGranule',
-          config.stackName,
-          config.bucket,
-          isExecutionForGranuleId,
-          { granuleId: inputPayload.granules[0].granuleId }
-        );
+        const publishGranuleExecution = await waitForTestExecutionStart({
+          workflowName: 'PublishGranule',
+          stackName: config.stackName,
+          bucket: config.bucket,
+          findExecutionFn: isExecutionForGranuleId,
+          findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId }
+        });
 
         console.log(`Wait for completed execution ${publishGranuleExecution.executionArn}`);
 
@@ -504,21 +504,79 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(doesExist).toEqual(true);
       });
 
+      describe('when moving a granule', () => {
+        let file;
+        let destinationKey;
+        let destinations;
+
+        beforeAll(() => {
+          file = granule.files[0];
+
+          destinationKey = `${testDataFolder}/${file.filepath}`;
+
+          destinations = [{
+            regex: '.*.hdf$',
+            bucket: config.bucket,
+            filepath: `${testDataFolder}/${file.filepath.substring(0, file.filepath.lastIndexOf('/'))}`
+          }];
+        });
+
+        it('rejects moving a granule to a location that already exists', async () => {
+          await s3().copyObject({
+            Bucket: config.bucket,
+            CopySource: `${file.bucket}/${file.filepath}`,
+            Key: destinationKey
+          }).promise();
+
+          const moveGranuleResponse = await granulesApiTestUtils.moveGranule({
+            prefix: config.stackName,
+            granuleId: inputPayload.granules[0].granuleId,
+            destinations
+          });
+
+          const responseBody = JSON.parse(moveGranuleResponse.body);
+
+          expect(moveGranuleResponse.statusCode).toEqual(409);
+          expect(responseBody.message).toEqual(
+            `Cannot move granule because the following files would be overwritten at the destination location: ${granule.files[0].name}. Delete the existing files or reingest the source files.`
+          );
+        });
+
+        it('when the file is deleted and the move retried, the move completes successfully', async () => {
+          await deleteS3Object(config.bucket, destinationKey);
+
+          // Sanity check
+          let fileExists = await s3ObjectExists({ Bucket: config.bucket, Key: destinationKey });
+          expect(fileExists).toBe(false);
+
+          const moveGranuleResponse = await granulesApiTestUtils.moveGranule({
+            prefix: config.stackName,
+            granuleId: inputPayload.granules[0].granuleId,
+            destinations
+          });
+
+          expect(moveGranuleResponse.statusCode).toEqual(200);
+
+          fileExists = await s3ObjectExists({ Bucket: config.bucket, Key: destinationKey });
+          expect(fileExists).toBe(true);
+        });
+      });
+
       it('can delete the ingested granule from the API', async () => {
         // pre-delete: Remove the granule from CMR
-        await apiTestUtils.removeFromCMR({
+        await granulesApiTestUtils.removeFromCMR({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
 
         // Delete the granule
-        await apiTestUtils.deleteGranule({
+        await granulesApiTestUtils.deleteGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
 
         // Verify deletion
-        const granuleResponse = await apiTestUtils.getGranule({
+        const granuleResponse = await granulesApiTestUtils.getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });

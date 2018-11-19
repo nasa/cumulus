@@ -4,7 +4,7 @@
   "description": "Cumulus Framework for ingesting and processing NASA Earth data streams",
   "scripts": {
     "docs-build-tasks": "./bin/build-tasks-doc.js",
-    "docs-install": "(cd website && yarn)",
+    "docs-install": "(cd website && yarn install)",
     "docs-build": "yarn run docs-build-tasks && (cd website && yarn run build)",
     "docs-serve": "yarn run docs-build && (cd website && yarn run start)",
     "docs-start": "yarn run docs-build && (cd website && yarn run start)",

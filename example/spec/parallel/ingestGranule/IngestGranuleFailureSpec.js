@@ -3,13 +3,13 @@
 const fs = require('fs-extra');
 const { models: { Granule } } = require('@cumulus/api');
 const {
-  api: apiTestUtils,
-  executionsApi: executionsApiTestUtils,
-  addProviders,
-  cleanupProviders,
   addCollections,
+  addProviders,
+  buildAndExecuteWorkflow,
   cleanupCollections,
-  buildAndExecuteWorkflow
+  cleanupProviders,
+  executionsApi: executionsApiTestUtils,
+  granulesApi: granulesApiTestUtils
 } = require('@cumulus/integration-tests');
 
 const {
@@ -81,7 +81,7 @@ describe('The Ingest Granule failure workflow', () => {
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      apiTestUtils.deleteGranule({
+      granulesApiTestUtils.deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       })
@@ -125,7 +125,7 @@ describe('The Ingest Granule failure workflow', () => {
 
         if (currentEvent.type === 'TaskStateExited' &&
           currentEvent.name === syncGranuleNoVpcTaskName) {
-          syncGranStepOutput = currentEvent.output;
+          syncGranStepOutput = JSON.parse(currentEvent.output);
           expect(syncGranStepOutput.exception).toBeTruthy();
 
           // the previous step has the original error thrown from lambda
@@ -166,7 +166,7 @@ describe('The Ingest Granule failure workflow', () => {
     });
 
     it('fails the granule with the error message', async () => {
-      const granuleResponse = await apiTestUtils.getGranule({
+      const granuleResponse = await granulesApiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
       });

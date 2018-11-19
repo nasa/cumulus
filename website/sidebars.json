@@ -32,7 +32,8 @@
       "upgrade/upgrade-readme",
       "upgrade/1.6.0",
       "upgrade/1.7.0",
-      "upgrade/1.9.0"
+      "upgrade/1.9.0",
+      "upgrade/1.11.0"
     ],
     "Troubleshooting": [
       "system-documentation/system-documentation"
@@ -53,7 +54,8 @@
       "data-cookbooks/sips-workflow",
       "data-cookbooks/cnm-workflow",
       "data-cookbooks/error-handling",
-      "data-cookbooks/choice-states"
+      "data-cookbooks/choice-states",
+      "data-cookbooks/cloudwatch-retention"
     ]
   }
 }
