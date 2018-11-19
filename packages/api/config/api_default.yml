@@ -15,6 +15,7 @@ ApiCollectionsDefault:
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain
+    TOKEN_SECRET: '{{TOKEN_SECRET}}'
   apiGateway:
     # Default paths
     - path: collections
@@ -72,6 +73,7 @@ ApiGranulesDefault:
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain
+    TOKEN_SECRET: '{{TOKEN_SECRET}}'
   apiGateway:
     # Default paths
     - path: granules
@@ -107,6 +109,7 @@ ApiExecutionsDefault:
     ExecutionsTable:
       function: Ref
       value: ExecutionsTableDynamoDB
+    TOKEN_SECRET: '{{TOKEN_SECRET}}'
   apiGateway:
     #default paths
     - path: executions
@@ -131,6 +134,7 @@ ApiExecutionStatusDefault:
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain
+    TOKEN_SECRET: '{{TOKEN_SECRET}}'
   apiGateway:
     #default paths
     - path: executions/status/{arn}
@@ -149,6 +153,7 @@ ApiWorkflowsDefault:
     UsersTable:
       function: Ref
       value: UsersTableDynamoDB
+    TOKEN_SECRET: '{{TOKEN_SECRET}}'
   apiGateway:
     #default paths
     - path: workflows
@@ -194,6 +199,7 @@ ApiRulesDefault:
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain
+    TOKEN_SECRET: '{{TOKEN_SECRET}}'
   source: 'node_modules/@cumulus/api/dist/'
   apiGateway:
     #default paths
@@ -234,6 +240,7 @@ ApiProvidersDefault:
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain
+    TOKEN_SECRET: '{{TOKEN_SECRET}}'
   source: 'node_modules/@cumulus/api/dist/'
   apiGateway:
     #default paths
@@ -274,6 +281,7 @@ ApiPdrsDefault:
     PdrsTable:
       function: Ref
       value: PdrsTableDynamoDB
+    TOKEN_SECRET: '{{TOKEN_SECRET}}'
   apiGateway:
     #default paths
     - path: pdrs
@@ -302,6 +310,7 @@ ApiLogsDefault:
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain
+    TOKEN_SECRET: '{{TOKEN_SECRET}}'
   apiGateway:
     #default paths
     - path: stats/logs
@@ -327,6 +336,7 @@ ApiSchemaDefault:
     UsersTable:
       function: Ref
       value: UsersTableDynamoDB
+    TOKEN_SECRET: '{{TOKEN_SECRET}}'
   apiGateway:
     #default paths
     - path: schemas/{schemaName}
@@ -348,6 +358,7 @@ ApiStatsDefault:
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain
+    TOKEN_SECRET: '{{TOKEN_SECRET}}'
   apiGateway:
     #default paths
     - path: stats
@@ -423,6 +434,7 @@ ApiReconciliationReportDefault:
     invoke:
       function: Ref
       value: CreateReconciliationReportLambdaFunction
+    TOKEN_SECRET: '{{TOKEN_SECRET}}'
   apiGateway:
     #default paths
     - path: reconciliationReports
@@ -455,6 +467,7 @@ ApiAsyncOperationsDefault:
     AsyncOperationsTable:
       function: Ref
       value: AsyncOperationsTableDynamoDB
+    TOKEN_SECRET: '{{TOKEN_SECRET}}'
   apiGateway:
     - api: backend
       path: asyncOperations/{id}
@@ -488,6 +501,7 @@ ApiBulkDeleteDefault:
       value: AsyncOperationTaskDefinition
     stackName: '{{parent.stackName}}'
     systemBucket: '{{parent.bucket}}'
+    TOKEN_SECRET: '{{TOKEN_SECRET}}'
 
 ApiInstanceMetaDefault:
   handler: index.instanceMeta
@@ -498,7 +512,7 @@ ApiInstanceMetaDefault:
     UsersTable:
       function: Ref
       value: UsersTableDynamoDB
-
+    TOKEN_SECRET: '{{TOKEN_SECRET}}'
   apiGateway:
     # Default paths
     - api: backend
