@@ -6,13 +6,14 @@ const { randomString } = require('@cumulus/common/test-utils');
 const assertions = require('../../lib/assertions');
 const models = require('../../models');
 const {
-  fakeUserFactory,
-  testEndpoint
+  testEndpoint,
+  createAccessToken
 } = require('../../lib/testUtils');
 const instanceMetaEndpoint = require('../../endpoints/instance-meta');
 
 const CMR_ENVIRONMENT = randomString();
 const CMR_PROVIDER = randomString();
+let accessTokenModel;
 let userModel;
 let authHeaders;
 
@@ -21,14 +22,23 @@ test.before(async () => {
   userModel = new models.User();
   await userModel.createTable();
 
+  process.env.AccessTokensTable = randomString();
+  accessTokenModel = new models.AccessToken();
+  await accessTokenModel.createTable();
+
   process.env.CMR_ENVIRONMENT = CMR_ENVIRONMENT;
   process.env.cmr_provider = CMR_PROVIDER;
 
-
-  const authToken = (await userModel.create(fakeUserFactory())).password;
+  process.env.TOKEN_SECRET = randomString();
+  const accessToken = await createAccessToken({ accessTokenModel, userModel });
   authHeaders = {
-    Authorization: `Bearer ${authToken}`
+    Authorization: `Bearer ${accessToken}`
   };
+});
+
+test.after.always(async () => {
+  await userModel.deleteTable();
+  await accessTokenModel.deleteTable();
 });
 
 test('GET returns expected metadata', (t) => {
