@@ -387,7 +387,7 @@ ApiTokenV1:
       method: get
       cors: true
     - api: backend
-      path: token/refresh
+      path: v1/refresh
       method: post
       cors: true
 

@@ -190,7 +190,7 @@ const isGetTokenRequest = (request) =>
 
 const isTokenRefreshRequest = (request) =>
   request.httpMethod === 'POST'
-  && request.resource.endsWith('/token/refresh');
+  && request.resource.endsWith('/refresh');
 
 const notFoundResponse = new LambdaProxyResponse({
   json: false,
