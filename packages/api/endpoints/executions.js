@@ -15,7 +15,7 @@ function list(event, cb) {
   const search = new Search(event, 'execution');
   return search.query()
     .then((response) => cb(null, response))
-    .catch((e) => { cb(e); });
+    .catch((e) => cb(e));
 }
 
 /**
