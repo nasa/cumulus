@@ -17,7 +17,8 @@ const { AccessToken } = require('../models');
 const {
   AuthorizationFailureResponse,
   LambdaProxyResponse,
-  InternalServerError
+  InternalServerError,
+  InvalidTokenResponse
 } = require('../lib/responses');
 
 const buildPermanentRedirectResponse = (location) =>
@@ -104,10 +105,7 @@ async function refreshToken(request, oAuth2Provider) {
       verifyJwtToken(requestJwtToken, { ignoreExpiration: true });
     } catch (err) {
       if (err instanceof JsonWebTokenError) {
-        return new AuthorizationFailureResponse({
-          message: 'Invalid access token',
-          statusCode: 403
-        });
+        return new InvalidTokenResponse();
       }
     }
 
@@ -120,10 +118,7 @@ async function refreshToken(request, oAuth2Provider) {
       accessTokenRecord = await accessTokenModel.get({ accessToken });
     } catch (err) {
       if (err.name === 'RecordDoesNotExist') {
-        return new AuthorizationFailureResponse({
-          message: 'Invalid access token',
-          statusCode: 403
-        });
+        return new InvalidTokenResponse();
       }
     }
 

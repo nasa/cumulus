@@ -25,7 +25,9 @@ const { errorify, findCaseInsensitiveKey } = require('./utils');
 const {
   AuthorizationFailureResponse,
   InternalServerError,
-  LambdaProxyResponse
+  LambdaProxyResponse,
+  InvalidTokenResponse,
+  TokenExpiredResponse
 } = require('./responses');
 
 function resp(context, err, bodyArg, statusArg = null, headers = {}) {
@@ -127,15 +129,9 @@ async function getAuthorizationFailureResponse(params) {
   } catch (error) {
     log.error('Error caught when checking JWT token', error);
     if (error instanceof TokenExpiredError) {
-      return new AuthorizationFailureResponse({
-        message: 'Access token has expired',
-        statusCode: 403
-      });
+      return new TokenExpiredResponse();
     } else if (error instanceof JsonWebTokenError) {
-      return new AuthorizationFailureResponse({
-        message: 'Invalid access token',
-        statusCode: 403
-      });
+      return new InvalidTokenResponse();
     }
   }
 
