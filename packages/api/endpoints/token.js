@@ -51,7 +51,7 @@ async function token(event, oAuth2Provider) {
 
       await accessTokenModel.create({
         accessToken,
-        refreshToken,
+        refreshToken
       });
 
       const jwtToken = createJwtToken({ accessToken, username, expirationTime });
@@ -94,7 +94,7 @@ async function token(event, oAuth2Provider) {
  * @param {OAuth2} oAuth2Provider - an OAuth2 instance
  * @returns {Object} an API Gateway response
  */
-async function refreshToken(request, oAuth2Provider) {
+async function refreshAccessToken(request, oAuth2Provider) {
   const body = request.body
     ? JSON.parse(request.body)
     : {};
@@ -103,7 +103,8 @@ async function refreshToken(request, oAuth2Provider) {
   if (requestJwtToken) {
     try {
       verifyJwtToken(requestJwtToken, { ignoreExpiration: true });
-    } catch (err) {
+    }
+    catch (err) {
       if (err instanceof JsonWebTokenError) {
         return new InvalidTokenResponse();
       }
@@ -116,7 +117,8 @@ async function refreshToken(request, oAuth2Provider) {
     let accessTokenRecord;
     try {
       accessTokenRecord = await accessTokenModel.get({ accessToken });
-    } catch (err) {
+    }
+    catch (err) {
       if (err.name === 'RecordDoesNotExist') {
         return new InvalidTokenResponse();
       }
@@ -133,10 +135,12 @@ async function refreshToken(request, oAuth2Provider) {
         username,
         expirationTime
       } = await oAuth2Provider.refreshAccessToken(accessTokenRecord.refreshToken));
-    } catch (error) {
+    }
+    catch (error) {
       log.error('Error caught when attempting token refresh', error);
       return new InternalServerError();
-    } finally {
+    }
+    finally {
       // Delete old token record to prevent refresh with old tokens
       await accessTokenModel.delete({
         accessToken: accessTokenRecord.accessToken
@@ -203,8 +207,9 @@ const notFoundResponse = new LambdaProxyResponse({
 async function handleRequest(request, oAuth2Provider) {
   if (isGetTokenRequest(request)) {
     return login(request, oAuth2Provider);
-  } else if (isTokenRefreshRequest(request)) {
-    return refreshToken(request, oAuth2Provider);
+  }
+  if (isTokenRefreshRequest(request)) {
+    return refreshAccessToken(request, oAuth2Provider);
   }
 
   return notFoundResponse;
