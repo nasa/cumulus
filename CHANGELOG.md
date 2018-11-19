@@ -23,8 +23,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-793** - Updated the granule move PUT request in `@cumulus/api` to reject the move with a 409 status code if one or more of the files already exist at the destination location
 
 ### Added
-= **CUMULUS-815/816**
-  - Added 'OriginalPayload' and 'FinalPayload' fields to Executions table
+- **CUMULUS-798**
+  - Added daily Executions cleanup CloudWatch event that triggers cleanExecutions lambda
+  - Added cleanExecutions lambda that removes finalPayload/originalPayload field entries for records older than configured timeout value (execution_payload_retention_period), with a default of 30 days
+- **CUMULUS-815/816**
+  - Added 'originalPayload' and 'finalPayload' fields to Executions table
   - Updated Execution model to populate originalPayload with the execution payload on record creation
   - Updated Execution model code to populate finalPayload field with the execution payload on execution completion
   - Execution API now exposes the above fields
