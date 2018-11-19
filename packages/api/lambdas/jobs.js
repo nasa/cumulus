@@ -4,9 +4,7 @@
 
 const get = require('lodash.get');
 const pLimit = require('p-limit');
-
 const log = require('@cumulus/common/log');
-
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { Search } = require('../es/search');
 const { handlePayload, partialRecordUpdate } = require('../es/indexer');
@@ -27,7 +25,6 @@ async function findStaleRecords(type, q, limit = 100, page = 1) {
   //}
   return response.results;
 }
-
 
 async function updateGranulesAndPdrs(esClient, url, error) {
   // find related granule and update their status
@@ -146,7 +143,6 @@ async function cleanup() {
     ex.timestamp,
     esClient
   ))));
-  await cleanExecutionPayloads();
 }
 
 function handler(event, context, cb) {
