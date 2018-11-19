@@ -6,23 +6,10 @@ const get = require('lodash.get');
 const pLimit = require('p-limit');
 
 const log = require('@cumulus/common/log');
-const { Execution } = require('../models');
+
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { Search } = require('../es/search');
 const { handlePayload, partialRecordUpdate } = require('../es/indexer');
-
-async function cleanExecutionPayloads() {
-  const timeout = parseInt(process.env.executionPayloadTimeout);
-  if (!process.env.executionPayloadTimeout === 'disabled') {
-      return [];
-  }
-  if (!Number.isInteger(timeout)) {
-      throw new Error(`Invalid number of days specified in configuration for payload_timout: ${process.env.executionPayloadTimeout}`);
-  }
-  const execution = new Execution();
-  return await execution.removeOldPayloadRecords(timeout);
-}
-
 
 async function findStaleRecords(type, q, limit = 100, page = 1) {
   const search = new Search({
