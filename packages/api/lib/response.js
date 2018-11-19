@@ -125,6 +125,7 @@ async function getAuthorizationFailureResponse(params) {
   try {
     verifyJwtToken(jwtToken);
   } catch (error) {
+    log.error('Error caught when checking JWT token:', e);
     if (error instanceof TokenExpiredError) {
       return new AuthorizationFailureResponse({
         message: 'Access token has expired',
