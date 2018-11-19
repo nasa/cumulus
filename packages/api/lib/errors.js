@@ -21,3 +21,12 @@ const createErrorType = (name, ParentType = Error) => {
 
 module.exports.RecordDoesNotExist = createErrorType('RecordDoesNotExist');
 module.exports.ValidationError = createErrorType('ValidationError');
+
+class AssociatedRulesError extends Error {
+  constructor(message, rules = []) {
+    super(message);
+    this.rules = rules;
+    this.name = this.constructor.name;
+  }
+}
+exports.AssociatedRulesError = AssociatedRulesError;

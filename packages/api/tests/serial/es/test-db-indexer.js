@@ -30,7 +30,7 @@ process.env.CollectionsTable = `${process.env.stackName}-CollectionsTable`;
 process.env.GranulesTable = `${process.env.stackName}-GranulesTable`;
 process.env.FilesTable = `${process.env.stackName}-FilesTable`;
 process.env.ExecutionsTable = `${process.env.stackName}-ExecutionsTable`;
-
+process.env.RulesTable = randomString();
 
 function addSourceArn(tableName, records) {
   const sourceArn = 'arn:aws:dynamodb:us-east-1:000:table/'
@@ -100,6 +100,7 @@ let collectionModel;
 let executionModel;
 let fileModel;
 let granuleModel;
+let ruleModel;
 test.before(async () => {
   await deleteAliases();
   await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
@@ -109,12 +110,14 @@ test.before(async () => {
   granuleModel = new models.Granule();
   fileModel = new models.FileClass();
   executionModel = new models.Execution();
+  ruleModel = new models.Rule();
 
   await Promise.all([
     collectionModel.createTable(),
     executionModel.createTable(),
     fileModel.createTable(),
-    granuleModel.createTable()
+    granuleModel.createTable(),
+    ruleModel.createTable()
   ]);
 
   await Promise.all([
@@ -133,6 +136,7 @@ test.after.always(async () => {
   await granuleModel.deleteTable();
   await executionModel.deleteTable();
   await fileModel.deleteTable();
+  await ruleModel.deleteTable();
 
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
   await esClient.indices.delete({ index: esIndex });

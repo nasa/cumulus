@@ -66,6 +66,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - Fixed a bug where FTP sockets were not closed after an error, keeping the Lambda function active until it timed out [CUMULUS-972]
+- **CUMULUS-656**
+  - The API will no longer allow the deletion of a provider if that provider is
+    referenced by a rule
+  - The API will no longer allow the deletion of a collection if that collection
+    is referenced by a rule
 
 ## [v1.10.3] - 2018-10-31
 
@@ -239,7 +244,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.9.0] - 2018-08-06
 
-**Please note** additional information and upgrade instructions [here](https://nasa.github.io/cumulus/upgrade/1.9.0.html)
+**Please note** additional information and upgrade instructions [here](https://nasa.github.io/cumulus/docs/upgrade/1.9.0)
 
 ### Added
 - **CUMULUS-712** - Added integration tests verifying expected behavior in workflows
@@ -306,7 +311,7 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.7.0] - 2018-07-02
 
-### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/upgrade/1.7.0.html)
+### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/docs/upgrade/1.7.0)
 
 ### Added
 - **GITC-776-2** - Add support for versioned collectons
@@ -340,7 +345,7 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.6.0] - 2018-06-06
 
-### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/upgrade/1.6.0.html)
+### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/docs/upgrade/1.6.0)
 
 ### Fixed
 - **CUMULUS-602** - Format all logs sent to Elastic Search.
