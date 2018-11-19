@@ -32,6 +32,6 @@ test.serial('Function throws error if passed invalid RetentionPeriod', async (t)
   await cleanExecutionPayloads(executionModel).catch((e) => {
     actual = e.message;
   });
-  const expected = 'Invalid number of days specified in configuration for payload_timout: testValue';
+  const expected = 'Invalid number of days specified for executionPayloadRetentionPeriod env variable. It must be a number: testValue';
   t.is(actual, expected);
 });
