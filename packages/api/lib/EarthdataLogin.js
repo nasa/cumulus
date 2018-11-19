@@ -106,7 +106,7 @@ class EarthdataLogin extends OAuth2 {
   }
 
   getTokenExpirationMs() {
-    return 10 * 1000;
+    return 15 * 1000;
     // return 60 * 60 * 24 * 1000;
   }
 
