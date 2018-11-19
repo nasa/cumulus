@@ -390,7 +390,7 @@ ApiTokenDefault:
       method: get
       cors: true
     - api: backend
-      path: token/refresh
+      path: refresh
       method: post
       cors: true
 
