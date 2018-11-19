@@ -17,7 +17,7 @@ class Rule extends Manager {
     });
 
     this.eventMapping = { arn: 'arn', logEventArn: 'logEventArn' };
-    this.kinesisSourceEvents = [{ name: process.env.kinesisConsumer, eventType: 'arn' },
+    this.kinesisSourceEvents = [{ name: process.env.messageConsumer, eventType: 'arn' },
       { name: process.env.KinesisInboundEventLogger, eventType: 'logEventArn' }];
     this.targetId = 'lambdaTarget';
   }
@@ -43,9 +43,16 @@ class Rule extends Manager {
       await Events.deleteEvent(name);
       break;
     }
-    case 'kinesis':
+    case 'kinesis': {
       await this.deleteKinesisEventSources(item);
       break;
+    }
+    case 'sns': {
+      if (item.state === 'ENABLED') {
+        await this.deleteSnsTrigger(item);
+      }
+      break;
+    }
     default:
       break;
     }
@@ -60,8 +67,10 @@ class Rule extends Manager {
    * @returns {Promise} the response from database updates
    */
   async update(original, updated) {
-    if (updated.state) {
+    let stateChanged = false;
+    if (updated.state && updated.state !== original.state) {
       original.state = updated.state;
+      stateChanged = true;
     }
 
     let valueUpdated = false;
@@ -87,6 +96,21 @@ class Rule extends Manager {
         await this.updateKinesisEventSources(original);
       }
       break;
+    case 'sns': {
+      if (valueUpdated || stateChanged) {
+        if (original.rule.arn) {
+          await this.deleteSnsTrigger(original);
+          if (!updated.rule) updated.rule = original.rule;
+          delete updated.rule.arn;
+        }
+        if (original.state === 'ENABLED') {
+          await this.addSnsTrigger(original);
+          if (!updated.rule) updated.rule = original.rule;
+          else updated.rule.arn = original.rule.arn;
+        }
+      }
+      break;
+    }
     default:
       break;
     }
@@ -142,6 +166,12 @@ class Rule extends Manager {
       await this.addKinesisEventSources(item);
       break;
     }
+    case 'sns': {
+      if (item.state === 'ENABLED') {
+        await this.addSnsTrigger(item);
+      }
+      break;
+    }
     default:
       throw new Error('Type not supported');
     }
@@ -150,6 +180,12 @@ class Rule extends Manager {
     return super.create(item);
   }
 
+
+  /**
+   * Add  event sources for all mappings in the kinesisSourceEvents
+   * @param {Object} item - the rule item
+   * @returns {Object} return updated rule item containing new arn/logEventArn
+   */
   async addKinesisEventSources(item) {
     const sourceEventPromises = this.kinesisSourceEvents.map(
       (lambda) => this.addKinesisEventSource(item, lambda)
@@ -164,7 +200,7 @@ class Rule extends Manager {
   /**
    * add an event source to a target lambda function
    *
-   * @param {*} item - the rule item
+   * @param {Object} item - the rule item
    * @param {string} lambda - the name of the target lambda
    * @returns {Promise} a promise
    * @returns {Promise} updated rule item
@@ -187,7 +223,7 @@ class Rule extends Manager {
           name: item.name,
           rule: {
             arn: mappingExists.UUID,
-            type: 'kinesis'
+            type: item.rule.type
           }
         }, lambda.type);
       }
@@ -204,6 +240,11 @@ class Rule extends Manager {
     return data;
   }
 
+  /**
+   * Update event sources for all mappings in the kinesisSourceEvents
+   * @param {*} item - the rule item
+   * @returns {Promise<Array>} array of responses from the event source update
+   */
   async updateKinesisEventSources(item) {
     const updateEvent = this.kinesisSourceEvents.map(
       (lambda) => this.updateKinesisEventSource(item, lambda.eventType)
@@ -214,7 +255,7 @@ class Rule extends Manager {
   /**
    * update an event source, only the state can be updated
    *
-   * @param {*} item - the rule item
+   * @param {Object} item - the rule item
    * @param {string} eventType - kinesisSourceEvent Type
    * @returns {Promise} the response from event source update
    */
@@ -227,6 +268,11 @@ class Rule extends Manager {
   }
 
 
+  /**
+   * Delete event source mappings for all mappings in the kinesisSourceEvents
+   * @param {Object} item - the rule item
+   * @returns {Promise<Array>} array of responses from the event source deletion
+   */
   async deleteKinesisEventSources(item) {
     const deleteEventPromises = this.kinesisSourceEvents.map(
       (lambda) => this.deleteKinesisEventSource(item, lambda.eventType)
@@ -238,9 +284,9 @@ class Rule extends Manager {
   }
 
   /**
-   * deletes an event source from the kinesis consumer lambda function
+   * deletes an event source from an event lambda function
    *
-   * @param {*} item - the rule item
+   * @param {Object} item - the rule item
    * @param {string} eventType - kinesisSourceEvent Type
    * @returns {Promise} the response from event source delete
    */
@@ -282,6 +328,73 @@ class Rule extends Manager {
       values: queryValues
     });
     return (kinesisRules.Count && kinesisRules.Count > 0);
+  }
+
+  async addSnsTrigger(item) {
+    // check for existing subscription
+    let token;
+    let subExists = false;
+    let subscriptionArn;
+    /* eslint-disable no-await-in-loop */
+    do {
+      const subsResponse = await aws.sns().listSubscriptionsByTopic({
+        TopicArn: item.rule.value,
+        NextToken: token
+      }).promise();
+      token = subsResponse.NextToken;
+      if (subsResponse.Subscriptions) {
+        /* eslint-disable no-loop-func */
+        subsResponse.Subscriptions.forEach((sub) => {
+          if (sub.Endpoint === process.env.messageConsumer) {
+            subExists = true;
+            subscriptionArn = sub.SubscriptionArn;
+          }
+        });
+      }
+      /* eslint-enable no-loop-func */
+      if (subExists) break;
+    }
+    while (token);
+    /* eslint-enable no-await-in-loop */
+    if (!subExists) {
+      // create sns subscription
+      const subscriptionParams = {
+        TopicArn: item.rule.value,
+        Protocol: 'lambda',
+        Endpoint: process.env.messageConsumer,
+        ReturnSubscriptionArn: true
+      };
+      const r = await aws.sns().subscribe(subscriptionParams).promise();
+      subscriptionArn = r.SubscriptionArn;
+    }
+    // create permission to invoke lambda
+    const permissionParams = {
+      Action: 'lambda:InvokeFunction',
+      FunctionName: process.env.messageConsumer,
+      Principal: 'sns.amazonaws.com',
+      SourceArn: item.rule.value,
+      StatementId: `${item.name}Permission`
+    };
+    await aws.lambda().addPermission(permissionParams).promise();
+
+    item.rule.arn = subscriptionArn;
+    return item;
+  }
+
+  async deleteSnsTrigger(item) {
+    // delete permission statement
+    const permissionParams = {
+      FunctionName: process.env.messageConsumer,
+      StatementId: `${item.name}Permission`
+    };
+    await aws.lambda().removePermission(permissionParams).promise();
+    // delete sns subscription
+    const subscriptionParams = {
+      SubscriptionArn: item.rule.arn
+    };
+    await aws.sns().unsubscribe(subscriptionParams).promise();
+
+    return item;
   }
 }
 

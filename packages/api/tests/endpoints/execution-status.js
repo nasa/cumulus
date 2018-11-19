@@ -217,7 +217,7 @@ test('returns full message when it is already included in the output', (t) => {
 
   return testEndpoint(executionStatusEndpoint, event, (response) => {
     const executionStatus = JSON.parse(response.body);
-    t.deepEqual(fullMessageOutput, executionStatus.execution.output);
+    t.deepEqual(fullMessageOutput, JSON.parse(executionStatus.execution.output));
   });
 });
 

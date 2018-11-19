@@ -185,9 +185,9 @@ ApiRulesV1:
     invokeArn:
       function: "Ref"
       value: ScheduleSFLambdaFunction
-    kinesisConsumer:
+    messageConsumer:
       function: "Ref"
-      value: kinesisConsumerLambdaFunction
+      value: messageConsumerLambdaFunction
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain
@@ -436,7 +436,7 @@ ApiReconciliationReportV1:
       cors: true
       api: backend
 
-AsyncOperationsV1:
+ApiAsyncOperationsV1:
   handler: index.asyncOperations
   apiRole: true
   source: 'node_modules/@cumulus/api/dist/'
@@ -482,3 +482,20 @@ ApiBulkDeleteV1:
       value: AsyncOperationTaskDefinition
     stackName: '{{parent.stackName}}'
     systemBucket: '{{parent.bucket}}'
+
+ApiInstanceMetaV1:
+  handler: index.instanceMeta
+  apiRole: true
+  source: 'node_modules/@cumulus/api/dist/'
+  envs:
+    cmr_provider: '{{parent.cmr.provider}}'
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
+
+  apiGateway:
+    # Default paths
+    - api: backend
+      path: v1/instanceMeta
+      method: get
+      cors: true
