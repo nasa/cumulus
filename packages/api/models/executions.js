@@ -3,11 +3,13 @@
 const aws = require('@cumulus/ingest/aws');
 const get = require('lodash.get');
 
+const pLimit = require('p-limit');
+
 const { constructCollectionId } = require('@cumulus/common');
 const executionSchema = require('./schemas').execution;
 const Manager = require('./base');
 const { parseException } = require('../lib/utils');
-const pLimit = require('p-limit');
+
 
 class Execution extends Manager {
   constructor() {
@@ -52,7 +54,7 @@ class Execution extends Manager {
   /**
    * Scan the Executions table ahd remove originalPayload/finalPayload records from the table
    *
-   * @param {integer} maxAgeDays - Maximum number of days an execution record may have payload entries
+   * @param {integer} maxAgeDays - Maximum number of days a record may have payload entries
    * @returns {Promise<Array>} - Execution table objects that were updated
    */
   async removeOldPayloadRecords(maxAgeDays) {
@@ -60,22 +62,22 @@ class Execution extends Manager {
       return [];
     }
     // DB uses milliseconds.  Convert to days for the expiration comparison value
-    const expiryDate = Date.now() - (1000*3600*24*maxAgeDays);
-    const executionNames = { '#updatedAt': 'updatedAt'};
+    const expiryDate = Date.now() - (1000 * 3600 * 24 * maxAgeDays);
+    const executionNames = { '#updatedAt': 'updatedAt' };
     const executionValues = { ':expiryDate': expiryDate };
     const filter = '#updatedAt <= :expiryDate and (attribute_exists(originalPayload) or attribute_exists(finalPayload))';
 
-    const oldExecutionRows = await this.scan({names: executionNames,
-                                              filter: filter,
-                                              values: executionValues});
+    const oldExecutionRows = await this.scan({
+      names: executionNames,
+      filter: filter,
+      values: executionValues
+    });
 
     const concurrencyLimit = process.env.CONCURRENCY || 10;
     const limit = pLimit(concurrencyLimit);
 
-    const updatePromises = oldExecutionRows.Items.map((row) => limit(() => {
-      return this.update({arn: row.arn}, {}, ['originalPayload', 'finalPayload']);
-    }));
-    return await Promise.all(updatePromises);
+    const updatePromises = oldExecutionRows.Items.map((row) => limit(() => this.update({ arn: row.arn }, {}, ['originalPayload', 'finalPayload'])));
+    return Promise.all(updatePromises);
   }
 
   /**

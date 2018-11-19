@@ -2,20 +2,20 @@
 
 const { Execution } = require('../models');
 
-async function cleanExecutionPayloads(executionModel) {
-  const timeout = parseInt(process.env.executionPayloadTimeout);
+async function cleanExecutionPayloads(ExecutionModel) {
+  const timeout = parseInt(process.env.executionPayloadTimeout, 10);
   if (process.env.executionPayloadTimeout === 'disabled') {
-      return [];
+    return [];
   }
   if (!Number.isInteger(timeout)) {
-      throw new Error(`Invalid number of days specified in configuration for payload_timout: ${process.env.executionPayloadTimeout}`);
+    throw new TypeError(`Invalid number of days specified in configuration for payload_timout: ${process.env.executionPayloadTimeout}`);
   }
-  const execution = new executionModel();
+  const execution = new ExecutionModel();
   return execution.removeOldPayloadRecords(timeout);
 }
 
-async function handler(event) {
-  return await cleanExecutionPayloads(Execution);
+async function handler(_event) {
+  return cleanExecutionPayloads(Execution);
 }
 
 exports.handler = handler;

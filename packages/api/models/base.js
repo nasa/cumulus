@@ -345,13 +345,6 @@ class Manager {
     return this.dynamodbDocClient.delete(params).promise();
   }
 
-  /**
-   * Runs dynamodbdocclient update
-   * @param {Object} itemKeys - Key/value updates
-   * @param {} updates
-   * @param {} fieldsToDelete
-   * @returns {}
-   */
   async update(itemKeys, updates = {}, fieldsToDelete = []) {
     const actualUpdates = cloneDeep(updates);
 
