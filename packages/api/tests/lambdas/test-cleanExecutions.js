@@ -14,20 +14,20 @@ class executionModel {
 }
 
 test.serial('Function is called with passed in number of days', async (t) => {
-  process.env.executionPayloadTimeout = 100;
+  process.env.executionPayloadRetentionPeriod = 100;
   await cleanExecutionPayloads(executionModel);
   t.truthy(removeRecordsStub.calledWith(100));
 });
 
 test.serial('Function returns empty set if passed in value is disabled', async (t) => {
-  process.env.executionPayloadTimeout = 'disabled';
+  process.env.executionPayloadRetentionPeriod = 'disabled';
   const actual = await cleanExecutionPayloads(executionModel);
   const expected = [];
   t.deepEqual(actual, expected);
 });
 
-test.serial('Function throws error if passed invalid timeout', async (t) => {
-  process.env.executionPayloadTimeout = 'testValue';
+test.serial('Function throws error if passed invalid RetentionPeriod', async (t) => {
+  process.env.executionPayloadRetentionPeriod = 'testValue';
   let actual;
   await cleanExecutionPayloads(executionModel).catch((e) => {
     actual = e.message;
