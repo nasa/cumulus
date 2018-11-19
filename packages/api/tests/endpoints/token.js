@@ -238,7 +238,7 @@ test.serial('When using Earthdata Login, GET /token with a code stores the acces
 test.serial('GET /token/refresh without a token results in an authorization failure response', async (t) => {
   const request = {
     httpMethod: 'POST',
-    resource: '/token/refresh',
+    resource: '/refresh',
   };
 
   const response = await handleRequest(request);
@@ -250,7 +250,7 @@ test.serial('GET /token/refresh without a token results in an authorization fail
 test.serial('GET /token/refresh with an invalid token results in an authorization failure response', async (t) => {
   const request = {
     httpMethod: 'POST',
-    resource: '/token/refresh',
+    resource: '/refresh',
     body: JSON.stringify({
       token: 'InvalidToken'
     })
@@ -267,7 +267,7 @@ test.serial('GET /token/refresh with an non-existent token results in an authori
 
   const request = {
     httpMethod: 'POST',
-    resource: '/token/refresh',
+    resource: '/refresh',
     body: JSON.stringify({
       token: jwtToken
     })
@@ -296,7 +296,7 @@ test.serial('GET /token/refresh with a valid token returns a refreshed token', a
 
   const request = {
     httpMethod: 'POST',
-    resource: '/token/refresh',
+    resource: '/refresh',
     body: JSON.stringify({
       token: requestJwtToken
     })
