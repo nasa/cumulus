@@ -16,7 +16,8 @@ const {
 const { AccessToken } = require('../models');
 const {
   AuthorizationFailureResponse,
-  LambdaProxyResponse
+  LambdaProxyResponse,
+  InternalServerError
 } = require('../lib/responses');
 
 const buildPermanentRedirectResponse = (location) =>
@@ -126,25 +127,31 @@ async function refreshToken(request, oAuth2Provider) {
       }
     }
 
-    // catch this error so we can return 403 code that tells
-    // dashboard to log user out? otherwise thrown error will
-    // fall through and be handled as 500
-    const {
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
-      username,
-      expirationTime
-    } = await oAuth2Provider.refreshAccessToken(accessTokenRecord.refreshToken);
+    let newAccessToken;
+    let newRefreshToken;
+    let username;
+    let expirationTime;
+    try {
+      ({
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+        username,
+        expirationTime
+      } = await oAuth2Provider.refreshAccessToken(accessTokenRecord.refreshToken));
+    } catch (error) {
+      log.error('Error caught when attempting token refresh', error);
+      return new InternalServerError();
+    } finally {
+      // Delete old token record to prevent refresh with old tokens
+      await accessTokenModel.delete({
+        accessToken: accessTokenRecord.accessToken
+      });
+    }
 
     // Store new token record
     await accessTokenModel.create({
       accessToken: newAccessToken,
       refreshToken: newRefreshToken
-    });
-
-    // Delete old token record to prevent refresh with old tokens
-    await accessTokenModel.delete({
-      accessToken: accessTokenRecord.accessToken
     });
 
     const jwtToken = createJwtToken({ accessToken: newAccessToken, username, expirationTime });
