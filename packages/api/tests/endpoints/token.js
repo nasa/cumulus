@@ -8,7 +8,7 @@ const {
   }
 } = require('@cumulus/common');
 
-const { OAuth2AuthenticationFailure } = require('../../lib/OAuth2');
+const { OAuth2AuthenticationFailure, OAuth2AuthenticationError } = require('../../lib/OAuth2');
 const assertions = require('../../lib/assertions');
 const {
   createJwtToken
@@ -235,7 +235,7 @@ test.serial('When using Earthdata Login, GET /token with a code stores the acces
   t.is(tokenAfter.refreshToken, refreshToken);
 });
 
-test.serial('GET /token/refresh without a token results in an authorization failure response', async (t) => {
+test.serial('GET /refresh without a token results in an authorization failure response', async (t) => {
   const request = {
     httpMethod: 'POST',
     resource: '/refresh',
@@ -247,7 +247,7 @@ test.serial('GET /token/refresh without a token results in an authorization fail
   t.is(JSON.parse(response.body).message, 'Request requires a token');
 });
 
-test.serial('GET /token/refresh with an invalid token results in an authorization failure response', async (t) => {
+test.serial('GET /refresh with an invalid token results in an authorization failure response', async (t) => {
   const request = {
     httpMethod: 'POST',
     resource: '/refresh',
@@ -261,7 +261,7 @@ test.serial('GET /token/refresh with an invalid token results in an authorizatio
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test.serial('GET /token/refresh with an non-existent token results in an authorization failure response', async (t) => {
+test.serial('GET /refresh with an non-existent token results in an authorization failure response', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory();
   const jwtToken = createJwtToken(accessTokenRecord);
 
@@ -278,7 +278,34 @@ test.serial('GET /token/refresh with an non-existent token results in an authori
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test.serial('GET /token/refresh with a valid token returns a refreshed token', async (t) => {
+test.serial('GET /refresh returns 500 if refresh token request fails', async (t) => {
+  const mockOAuth2Provider = {
+    refreshAccessToken: async () => {
+      throw new Error('Refresh token request failed');
+    }
+  };
+
+  const userRecord = fakeUserFactory();
+  await userModel.create(userRecord);
+
+  const initialTokenRecord = fakeAccessTokenFactory({ username: userRecord.userName });
+  await accessTokenModel.create(initialTokenRecord);
+
+  const requestJwtToken = createJwtToken(initialTokenRecord);
+
+  const request = {
+    httpMethod: 'POST',
+    resource: '/refresh',
+    body: JSON.stringify({
+      token: requestJwtToken
+    })
+  };
+
+  const response = await handleRequest(request, mockOAuth2Provider);
+  t.is(response.statusCode, 500);
+});
+
+test.serial('GET /refresh with a valid token returns a refreshed token', async (t) => {
   const refreshedTokenRecord = fakeAccessTokenFactory();
   const refreshedJwtToken = createJwtToken(refreshedTokenRecord);
 
