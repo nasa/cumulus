@@ -2,9 +2,9 @@ const { sign: jwtSign, verify: jwtVerify } = require('jsonwebtoken');
 
 const createJwtToken = ({ accessToken, expirationTime, username }) => {
   // JWT expiration time is in seconds, not milliseconds
-  expirationTime = Math.floor(expirationTime / 1000);
+  const exp = Math.floor(expirationTime / 1000);
   return jwtSign({
-    exp: expirationTime,
+    exp,
     accessToken,
     username
   }, process.env.TOKEN_SECRET, {
@@ -12,12 +12,12 @@ const createJwtToken = ({ accessToken, expirationTime, username }) => {
   });
 };
 
-const verifyJwtToken = (jwtToken, options = {}) => {
-  options = Object.assign({
+const verifyJwtToken = (jwtToken, params = {}) => {
+  const options = Object.assign({
     algorithms: ['HS256']
-  }, options);
+  }, params);
   return jwtVerify(jwtToken, process.env.TOKEN_SECRET, options);
-}
+};
 
 module.exports = {
   createJwtToken,
