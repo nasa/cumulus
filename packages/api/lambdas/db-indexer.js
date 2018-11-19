@@ -3,7 +3,7 @@
 const get = require('lodash.get');
 const pLimit = require('p-limit');
 const { AttributeValue } = require('dynamodb-data-types');
-const { log } = require('@cumulus/common');
+const { aws, log } = require('@cumulus/common');
 const { FileClass } = require('../models');
 const indexer = require('../es/indexer');
 const { Search } = require('../es/search');
@@ -199,12 +199,26 @@ async function indexRecords(records) {
  * @param {Function} cb - aws callback
  * @returns {undefined} undefined
  */
-function handler(event, context, cb) {
+async function handler(event) {
   const records = event.Records;
   if (!records) {
     return cb(null, 'No records found in event');
   }
 
+  let sqsQueue;
+  try {
+    return await indexRecords(records);
+  }
+  catch (e) {
+    sqs.
+    log.error(`error encountered: ${e}`);
+    log.error(`Adding event to SQS queue`);
+    return Promise.resolve();
+  }
+
+}
+
+function handler(event, context, cb) {
   return indexRecords(records).then((r) => cb(null, r)).catch(cb);
 }
 
