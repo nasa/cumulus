@@ -136,7 +136,7 @@ class EarthdataLogin extends OAuth2 {
         accessToken: response.body.access_token,
         refreshToken: response.body.refresh_token,
         username: response.body.endpoint.split('/').pop(),
-        expirationTime: Date.now() + this.getTokenExpirationMs(),
+        expirationTime: Date.now() + this.getTokenExpirationMs()
       };
     }
     catch (err) {
@@ -173,7 +173,7 @@ class EarthdataLogin extends OAuth2 {
         accessToken: response.body.access_token,
         refreshToken: response.body.refresh_token,
         username: response.body.endpoint.split('/').pop(),
-        expirationTime: Date.now() + this.getTokenExpirationMs(),
+        expirationTime: Date.now() + this.getTokenExpirationMs()
       };
     }
     catch (err) {

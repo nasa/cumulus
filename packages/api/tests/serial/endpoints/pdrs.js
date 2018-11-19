@@ -10,7 +10,7 @@ const indexer = require('../../../es/indexer');
 const {
   createAccessToken,
   testEndpoint,
-  fakePdrFactory,
+  fakePdrFactory
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');

@@ -29,17 +29,17 @@ test.after.always(async () => {
 
 test('AccessToken model sets the tableName from a param', (t) => {
   const tableName = randomString();
-  const accessTokenModel = new AccessToken({ tableName });
+  const testAccessTokenModel = new AccessToken({ tableName });
 
-  t.is(accessTokenModel.tableName, tableName);
+  t.is(testAccessTokenModel.tableName, tableName);
 });
 
 test('AccessToken model sets the table name from the AccessTokensTable environment variable', (t) => {
   const envTableName = randomString();
   process.env.AccessTokensTable = envTableName;
 
-  const accessTokenModel = new AccessToken();
-  t.is(accessTokenModel.tableName, envTableName);
+  const testAccessTokenModel = new AccessToken();
+  t.is(testAccessTokenModel.tableName, envTableName);
 });
 
 test('create() creates a valid access token record', async (t) => {
@@ -57,9 +57,10 @@ test('create() creates a valid access token record', async (t) => {
 
 test('get() throws error for missing record', async (t) => {
   try {
-    getTokenResult = await accessTokenModel.get({ accessToken: randomString() });
+    await accessTokenModel.get({ accessToken: randomString() });
     t.fail('expected code to throw error');
-  } catch (err) {
+  }
+  catch (err) {
     t.true(err instanceof RecordDoesNotExist);
   }
 });

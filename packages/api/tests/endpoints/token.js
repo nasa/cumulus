@@ -8,7 +8,7 @@ const {
   }
 } = require('@cumulus/common');
 
-const { OAuth2AuthenticationFailure, OAuth2AuthenticationError } = require('../../lib/OAuth2');
+const { OAuth2AuthenticationFailure } = require('../../lib/OAuth2');
 const assertions = require('../../lib/assertions');
 const {
   createJwtToken

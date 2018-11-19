@@ -16,7 +16,7 @@ const { deprecate } = require('@cumulus/common/util');
 const {
   decode: jwtDecode,
   JsonWebTokenError,
-  TokenExpiredError,
+  TokenExpiredError
 } = require('jsonwebtoken');
 
 const { User } = require('../models');
@@ -126,11 +126,13 @@ async function getAuthorizationFailureResponse(params) {
 
   try {
     verifyJwtToken(jwtToken);
-  } catch (error) {
+  }
+  catch (error) {
     log.error('Error caught when checking JWT token', error);
     if (error instanceof TokenExpiredError) {
       return new TokenExpiredResponse();
-    } else if (error instanceof JsonWebTokenError) {
+    }
+    if (error instanceof JsonWebTokenError) {
       return new InvalidTokenResponse();
     }
   }
