@@ -80,7 +80,7 @@ An example of an SNS rule configuration is [here](https://github.com/nasa/cumulu
 |Key  |Value  |Required|Description|
 |:---:|:-----:|:------:|-----------|
 |name|`"L2_HR_PIXC_kinesisRule"`|Yes|Name of the rule. This is the name under which the rule will be listed on the dashboard|
-|workflow|`"KinesisTriggerTest"`|Yes|Name of the workflow to be run. A list of available workflows can be found on the Workflows page|
+|workflow|`"CNMExampleWorkflow"`|Yes|Name of the workflow to be run. A list of available workflows can be found on the Workflows page|
 |provider|`"PODAAC_SWOT"`|No|Configured provider's ID. This can be found on the Providers dashboard page|
 |collection|`<JSON Object>` collection object shown [below](#collection-object)|Yes|Name and version of the collection this rule will moderate. Relates to a collection configured and found in the Collections page|
 |rule|`<JSON Object>` rule type and associated values - discussed [below](#rule-object)|Yes|Object defining the type and subsequent attributes of the rule|
