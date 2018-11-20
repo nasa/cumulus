@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- **CUMULUS-1008**
+  - New `config.yml` parameter for core-built SQS consumers: `sqs: default_consumer_rate: (default 1000)`, which is the maximum number of messages processed by the consumer per execution.
 - **CUUMULUS-1000** - Distribution endpoint now persists logins, instead of
   redirecting to Earthdata Login on every request
 - **CUMULUS-783 CUMULUS-790** - Updated `@cumulus/sync-granule` and `@cumulus/move-granules` tasks to always overwrite existing files for manually-triggered reingest.
