@@ -436,6 +436,10 @@ mvd-dev:
 jc:
   stackName: jc
   stackNameNoDash: jc
+  ecs:
+    docker:
+      username: cumulususer
+      authType: iam
 
 mhs:
   stackName: mhs
