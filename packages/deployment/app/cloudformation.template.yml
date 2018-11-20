@@ -15,6 +15,11 @@ Parameters:
     Description: 'Email used to login to a private docker repository (not required)'
     Default: NoValue
     NoEcho: true
+  DockerRepoUrl:
+    Type: String
+    Description: 'Url of docker repository to log into (not required)'
+    Default: 'https://index.docker.io/v1/'
+    NoEcho: true
 
 Resources:
 
@@ -819,9 +824,8 @@ Resources:
                     echo ECS_CLUSTER=${CumulusECSCluster} >> /etc/ecs/ecs.config
                     echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=1m >> /etc/ecs/ecs.config
 
-                {{#if ecs.docker}}
                     echo ECS_ENGINE_AUTH_TYPE=docker >> /etc/ecs/ecs.config
-                    echo 'ECS_ENGINE_AUTH_DATA={"https://index.docker.io/v1/":{"username":"{{ecs.docker.username}}","password": "${Password}","email":"${Email}"}}' >> /etc/ecs/ecs.config
+                    echo 'ECS_ENGINE_AUTH_DATA={"${RepoUrl}":{"username":"{{ecs.docker.username}}","password": "${Password}","email":"${Email}"}}' >> /etc/ecs/ecs.config
                     echo 'DOCKER_STORAGE_OPTIONS="${!DOCKER_STORAGE_OPTIONS} --storage-driver {{ecs.docker.storageDriver}}"' >> /etc/sysconfig/docker-storage
                     {{#ifEquals ecs.docker.storageDriver "devicemapper"}}
                     echo 'OPTIONS="${!OPTIONS} --storage-opt dm.basesize={{ecs.volumeSize}}G"' >> /etc/sysconfig/docker
@@ -831,9 +835,8 @@ Resources:
                       Ref: DockerPassword
                     Email:
                       Ref: DockerEmail
-                {{else}}
-                  - Example: value
-                {{/if}}
+                    RepoUrl:
+                      Ref: DockerRepoUrl
 
           {{# if ecs.efs.mount }}
           packages:
