@@ -101,16 +101,15 @@ async function refreshAccessToken(request, oAuth2Provider) {
   const requestJwtToken = get(body, 'token');
 
   if (requestJwtToken) {
+    let accessToken;
     try {
-      verifyJwtToken(requestJwtToken, { ignoreExpiration: true });
+      ({ accessToken } = verifyJwtToken(requestJwtToken, { ignoreExpiration: true }));
     }
     catch (err) {
       if (err instanceof JsonWebTokenError) {
         return new InvalidTokenResponse();
       }
     }
-
-    const { accessToken } = jwtDecode(requestJwtToken);
 
     const accessTokenModel = new AccessToken();
 
