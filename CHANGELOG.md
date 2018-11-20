@@ -71,6 +71,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     referenced by a rule
   - The API will no longer allow the deletion of a collection if that collection
     is referenced by a rule
+- Fixed a bug where `@cumulus/sf-sns-report` was not pulling large messages from S3 correctly.
+
+### Deprecated
+- `@cumulus/ingest/aws/StepFunction.pullEvent()`. Use `@cumulus/common/aws.pullStepFunctionEvent()`.
 
 ## [v1.10.3] - 2018-10-31
 
