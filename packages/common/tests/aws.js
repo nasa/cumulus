@@ -4,6 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const { tmpdir } = require('os');
 const test = require('ava');
+const sinon = require('sinon');
+
 const aws = require('../aws');
 const { randomString } = require('../test-utils');
 
@@ -96,4 +98,51 @@ test('downloadS3File resolves filepath if key is found', async (t) => {
   });
 
   t.is(result, Body);
+});
+
+test('pullStepFunctionEvent returns original message if message not on S3', async (t) => {
+  const event = {
+    cumulus_meta: {
+      state_machine: 'state machine',
+      execution_name: 'execution'
+    },
+    meta: {
+      bucket: 'test bucket',
+    }
+  };
+
+  const message = await aws.pullStepFunctionEvent(event);
+
+  t.deepEqual(message, event);
+});
+
+test('pullStepFunctionEvent returns message from S3', async (t) => {
+  const fullMessage = {
+    cumulus_meta: {
+      state_machine: 'state machine',
+      execution_name: 'execution'
+    },
+    meta: {
+      bucket: 'test bucket'
+    }
+  };
+
+  const event = {
+    cumulus_meta: {
+      state_machine: 'state machine',
+      execution_name: 'execution'
+    },
+    replace: {
+      Bucket: 'test bucket',
+      Key: 'key'
+    }
+  };
+
+  const stub = sinon.stub(aws, 'getS3Object').resolves({ Body: JSON.stringify(fullMessage) });
+
+  const message = await aws.pullStepFunctionEvent(event);
+
+  t.deepEqual(message, fullMessage);
+
+  stub.restore();
 });
