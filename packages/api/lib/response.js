@@ -124,8 +124,9 @@ async function getAuthorizationFailureResponse(params) {
     });
   }
 
+  let username;
   try {
-    verifyJwtToken(jwtToken);
+    ({ username } = verifyJwtToken(jwtToken));
   }
   catch (error) {
     log.error('Error caught when checking JWT token', error);
@@ -136,8 +137,6 @@ async function getAuthorizationFailureResponse(params) {
       return new InvalidTokenResponse();
     }
   }
-
-  const { username } = jwtDecode(jwtToken);
 
   const userModel = new User({ tableName: usersTable });
   try {
