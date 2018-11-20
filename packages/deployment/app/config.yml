@@ -138,13 +138,14 @@ default:
     - name: backend
 
   sqs:
+    default_consumer_rate: 1000
     startSF:
-      visibilityTimeout: 20
+      visibilityTimeout: 30
       retry: 30
       consumer:
         - lambda: sqs2sf
           schedule: rate(1 minute)
-          messageLimit: 10
+          messageLimit: '{{sqs.default_consumer_rate}}'
           state: ENABLED
 
     kinesisFailure:
