@@ -14,7 +14,6 @@ const isString = require('lodash.isstring');
 const log = require('@cumulus/common/log');
 const { deprecate } = require('@cumulus/common/util');
 const {
-  decode: jwtDecode,
   JsonWebTokenError,
   TokenExpiredError
 } = require('jsonwebtoken');

@@ -4,7 +4,7 @@ const get = require('lodash.get');
 const log = require('@cumulus/common/log');
 
 const { google } = require('googleapis');
-const { decode: jwtDecode, JsonWebTokenError } = require('jsonwebtoken');
+const { JsonWebTokenError } = require('jsonwebtoken');
 
 const EarthdataLogin = require('../lib/EarthdataLogin');
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
