@@ -8,10 +8,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 **Please Note**
 -  CUMULUS-817 includes a migration that requires reconfiguration/redeployment of IAM roles.  Please see the [upgrade instructions](https://nasa.github.io/cumulus/docs/upgrade/1.11.0) for more information.
+- CUMULUS-977 includes a few new SNS-related permissions added to the IAM roles that will require redeployment of IAM roles.
 - `cumulus-message-adapter` v1.0.13+ is required for `@cumulus/api` granule reingest API to work properly.  The latest version should be downloaded automatically by kes.
 
 ### Changed
 
+- **CUUMULUS-1000** - Distribution endpoint now persists logins, instead of
+  redirecting to Earthdata Login on every request
 - **CUMULUS-783 CUMULUS-790** - Updated `@cumulus/sync-granule` and `@cumulus/move-granules` tasks to always overwrite existing files for manually-triggered reingest.
 - **CUMULUS-906** - Updated `@cumulus/api` granule reingest API to
   - add `reingestGranule: true` and `forceDuplicateOverwrite: true` to Cumulus message `cumulus_meta.cumulus_context` field to indicate that the workflow is a manually triggered re-ingest.
@@ -20,6 +23,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-793** - Updated the granule move PUT request in `@cumulus/api` to reject the move with a 409 status code if one or more of the files already exist at the destination location
 
 ### Added
+= **CUMULUS-815/816**
+  - Added 'OriginalPayload' and 'FinalPayload' fields to Executions table
+  - Updated Execution model to populate originalPayload with the execution payload on record creation
+  - Updated Execution model code to populate finalPayload field with the execution payload on execution completion
+  - Execution API now exposes the above fields
+- **CUMULUS-977**
+  - Rename `kinesisConsumer` to `messageConsumer` as it handles both Kinesis streams and SNS topics as of this version.
+  - Add `sns`-type rule support. These rules create a subscription between an SNS topic and the `messageConsumer`.
+    When a message is received, `messageConsumer` is triggered and passes the SNS message (JSON format expected) in
+    its entirety to the workflow in the `payload` field of the Cumulus message. For more information on sns-type rules,
+    see the [documentation](https://nasa.github.io/cumulus/docs/data-cookbooks/setup#rules).
 - **CUMULUS-975**
   - Add `KinesisInboundEventLogger` and `KinesisOutboundEventLogger` API lambdas.  These lambdas
     are utilized to dump incoming and outgoing ingest workflow kinesis streams
@@ -54,6 +68,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - Fixed a bug where FTP sockets were not closed after an error, keeping the Lambda function active until it timed out [CUMULUS-972]
+- **CUMULUS-656**
+  - The API will no longer allow the deletion of a provider if that provider is
+    referenced by a rule
+  - The API will no longer allow the deletion of a collection if that collection
+    is referenced by a rule
 
 ## [v1.10.3] - 2018-10-31
 
@@ -227,7 +246,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.9.0] - 2018-08-06
 
-**Please note** additional information and upgrade instructions [here](https://nasa.github.io/cumulus/upgrade/1.9.0.html)
+**Please note** additional information and upgrade instructions [here](https://nasa.github.io/cumulus/docs/upgrade/1.9.0)
 
 ### Added
 - **CUMULUS-712** - Added integration tests verifying expected behavior in workflows
@@ -294,7 +313,7 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.7.0] - 2018-07-02
 
-### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/upgrade/1.7.0.html)
+### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/docs/upgrade/1.7.0)
 
 ### Added
 - **GITC-776-2** - Add support for versioned collectons
@@ -328,7 +347,7 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.6.0] - 2018-06-06
 
-### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/upgrade/1.6.0.html)
+### Please note: [Upgrade Instructions](https://nasa.github.io/cumulus/docs/upgrade/1.6.0)
 
 ### Fixed
 - **CUMULUS-602** - Format all logs sent to Elastic Search.

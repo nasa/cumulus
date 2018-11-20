@@ -72,9 +72,10 @@ _The above optional attributes are not shown in the example provided, but they h
 
 ### Rules
 
-Rules are used by to start processing workflows and the transformation process. Rules can be invoked manually, based on a schedule, or can be configured to be triggered by events in [Kinesis](data-cookbooks/cnm-workflow.md). The current best way to understand rules is to take a look at the [schema](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) (specifically the object assigned to `module.exports.rule`). Rules can be viewed, edited, added, and removed from the Cumulus dashboard under the "Rules" navigation tab. Additionally, they can be managed via the [rules api](https://nasa.github.io/cumulus-api/?language=Python#list-rules).
+Rules are used by to start processing workflows and the transformation process. Rules can be invoked manually, based on a schedule, or can be configured to be triggered by either events in [Kinesis](data-cookbooks/cnm-workflow.md) or SNS messages. The current best way to understand rules is to take a look at the [schema](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) (specifically the object assigned to `module.exports.rule`). Rules can be viewed, edited, added, and removed from the Cumulus dashboard under the "Rules" navigation tab. Additionally, they can be managed via the [rules api](https://nasa.github.io/cumulus-api/?language=Python#list-rules).
 
 The Cumulus Core repository has an example of a Kinesis rule [here](https://github.com/nasa/cumulus/blob/master/example/data/rules/L2_HR_PIXC_kinesisRule.json).
+An example of an SNS rule configuration is [here](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/snsRuleDef.json).
 
 |Key  |Value  |Required|Description|
 |:---:|:-----:|:------:|-----------|
@@ -95,7 +96,7 @@ The Cumulus Core repository has an example of a Kinesis rule [here](https://gith
 #### rule-object
 |Key|Value|Required|Description|
 |:---:|:-----:|:------:|-----------|
-|type|`"kinesis"`|Yes|<code>("onetime"&#124;"scheduled"&#124;"kinesis")</code> type of scheduling/workflow kick-off desired|
+|type|`"kinesis"`|Yes|<code>("onetime"&#124;"scheduled"&#124;"kinesis"&#124;"sns")</code> type of scheduling/workflow kick-off desired|
 |value|`<String> Object`|Depends|Discussion of valid values is [below](#rule-value)|
 
 
@@ -104,4 +105,4 @@ The `rule - value` entry depends on the type of run:
   * If this is a onetime rule this can be left blank. [Example](data-cookbooks/hello-world.md/#execution)
   * If this is a scheduled rule this field must hold a valid [cron-type expression or rate expression](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html).
   * If this is a kinesis rule, this must be a configured `${Kinesis_stream_ARN}`. [Example](data-cookbooks/cnm-workflow.md#rule-configuration)
-
+  * If this is an sns rule, this must be an existing `${SNS_Topic_Arn}`. [Example](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/snsRuleDef.json)

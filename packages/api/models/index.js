@@ -1,5 +1,6 @@
 'use strict';
 
+const AccessToken = require('./access-tokens');
 const AsyncOperation = require('./async-operation');
 const Manager = require('./base');
 const Collection = require('./collections');
@@ -12,6 +13,7 @@ const FileClass = require('./files');
 const User = require('./users');
 
 module.exports = {
+  AccessToken,
   AsyncOperation,
   User,
   Collection,

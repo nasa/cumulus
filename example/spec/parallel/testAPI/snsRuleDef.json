@@ -1,0 +1,11 @@
+{
+  "name": "replace-me-ruleName",
+  "workflow": "HelloWorldWorkflow",
+  "rule": {
+    "type": "sns",
+    "value": "arn:aws:replace-me-with-topic-arn"
+  },
+  "meta": {
+    "triggerRule": "replace-me-rulename"
+  }
+}

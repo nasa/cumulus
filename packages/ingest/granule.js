@@ -960,16 +960,14 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
       log.debug('moveGranuleFiles', source, target);
       return moveGranuleFile(source, target).then(() => {
         // update the granule file location in source file
-        /* eslint-disable no-param-reassign */
         file.bucket = target.Bucket;
         file.filepath = target.Key;
         file.filename = aws.buildS3Uri(file.bucket, file.filepath);
-        /* eslint-enable no-param-reassign */
       });
     }
 
     // else set filepath as well so it won't be null
-    file.filepath = parsed.Key; /* eslint-disable-line no-param-reassign */
+    file.filepath = parsed.Key;
     return Promise.resolve();
   });
 

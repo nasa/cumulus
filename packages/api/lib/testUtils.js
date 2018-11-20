@@ -95,13 +95,13 @@ function fakeGranuleFactoryV2(options = {}) {
 }
 
 /**
- * creates fake rule record
+ * Create a fake rule record
  *
- * @param {string} state - rule state (default to DISABLED)
+ * @param {Object} params - overrides
  * @returns {Object} fake rule object
  */
-function fakeRuleFactory(state = 'DISABLED') {
-  return {
+function fakeRuleFactoryV2(params = {}) {
+  const rule = {
     name: randomString(),
     workflow: randomString(),
     provider: randomString(),
@@ -112,8 +112,20 @@ function fakeRuleFactory(state = 'DISABLED') {
     rule: {
       type: 'onetime'
     },
-    state
+    state: 'DISABLED'
   };
+
+  return { ...rule, ...params };
+}
+
+/**
+ * creates fake rule record
+ *
+ * @param {string} state - rule state (default to DISABLED)
+ * @returns {Object} fake rule object
+ */
+function fakeRuleFactory(state = 'DISABLED') {
+  return fakeRuleFactoryV2({ state });
 }
 
 /**
@@ -218,14 +230,26 @@ function fakeProviderFactory(options = {}) {
   );
 }
 
+function fakeAccessTokenFactory(params = {}) {
+  return {
+    accessToken: randomString(),
+    refreshToken: randomString(),
+    username: randomString(),
+    expirationTime: Date.now() + (60 * 60 * 1000),
+    ...params
+  };
+}
+
 module.exports = {
   testEndpoint,
+  fakeAccessTokenFactory,
   fakeGranuleFactory,
   fakeGranuleFactoryV2,
   fakePdrFactory,
   fakeCollectionFactory,
   fakeExecutionFactory,
   fakeRuleFactory,
+  fakeRuleFactoryV2,
   fakeFilesFactory,
   fakeUserFactory,
   fakeProviderFactory,
