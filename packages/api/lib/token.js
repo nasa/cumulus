@@ -8,6 +8,7 @@ const createJwtToken = ({ accessToken, expirationTime, username }) => {
     accessToken,
     username
   }, process.env.TOKEN_SECRET, {
+    algorithm: 'HS256',
     noTimestamp: true
   });
 };
