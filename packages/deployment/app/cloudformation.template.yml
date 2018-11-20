@@ -833,7 +833,7 @@ Resources:
                       Ref: DockerEmail
                 {{else}}
                   - Example: value
-                {{/if}}
+                {{/ifEquals}}
 
           {{# if ecs.efs.mount }}
           packages:
