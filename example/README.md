@@ -68,6 +68,8 @@ with the following parameters
 
 In the outputs section of your Cloudformation deployment in the AWS console, you can find the address of the fake server created. In the provider configurations in `example/data/providers`, update the providers to use the correct host address.
 
+By default, the data location is the `cumulus-data-shared` S3 bucket. To use a different bucket for test data, update `fake-server.yml` with the alternative bucket.
+
 ### Run all tests
 
 Tests are written and run with [jasmine](https://jasmine.github.io/setup/nodejs.html).
