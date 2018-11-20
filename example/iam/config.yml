@@ -117,7 +117,7 @@ lf-int-test:
 lf-sit:
   prefix: lf-sit
   stackName: lf-sit-iam
-  usePermissionBoundary: true
+  useNgapPermissionBoundary: true
 
   buckets:
     internal:

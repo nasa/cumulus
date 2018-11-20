@@ -196,9 +196,9 @@ The name of this iam stack in CloudFormation (e.g. <prefix>-iam).
 
 The buckets created in the [Create S3 Buckets](#create-s3-buckets) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured. A key is used for the buckets to allow for swapping out the bucket names easily.
 
-###### usePermissionBoundary:
+###### useNgapPermissionBoundary:
 
-If deploying to a NASA NGAP account, set `usePermissionBoundary: true`.
+If deploying to a NASA NGAP account, set `useNgapPermissionBoundary: true`.
 
 ------
 
