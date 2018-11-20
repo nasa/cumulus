@@ -173,7 +173,7 @@ default:
           state: ENABLED
 
     triggerLambdaFailure:
-      MessageRetantionPeriod: 1209600
+      MessageRetentionPeriod: 1209600
       visibilityTimeout: 60
 
     kinesisFailure:
