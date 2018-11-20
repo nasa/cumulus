@@ -98,6 +98,16 @@ class LambdaProxyResponse {
 }
 exports.LambdaProxyResponse = LambdaProxyResponse;
 
+class OkResponse extends LambdaProxyResponse {
+  constructor(params = {}) {
+    super({
+      ...params,
+      statusCode: 200
+    });
+  }
+}
+exports.OkResponse = OkResponse;
+
 class TemporaryRedirectResponse extends LambdaProxyResponse {
   constructor(params = {}) {
     super({
