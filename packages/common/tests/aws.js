@@ -140,9 +140,12 @@ test('pullStepFunctionEvent returns message from S3', async (t) => {
 
   const stub = sinon.stub(aws, 'getS3Object').resolves({ Body: JSON.stringify(fullMessage) });
 
-  const message = await aws.pullStepFunctionEvent(event);
+  try {
+    const message = await aws.pullStepFunctionEvent(event);
 
-  t.deepEqual(message, fullMessage);
-
-  stub.restore();
+    t.deepEqual(message, fullMessage);
+  }
+  finally {
+    stub.restore();
+  }
 });
