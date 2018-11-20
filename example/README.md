@@ -11,7 +11,7 @@ yarn
 
 ## Running tests locally
 
-These tests run against AWS, so a Cumulus deployment is needed. Set up the deployment using the configurations in this repository. Deployment instructions are located [here](https://nasa.github.io/cumulus/deployment/). The dashboard is not needed for these tests.
+These tests run against AWS, so a Cumulus deployment is needed. Set up the deployment using the configurations in this repository. Deployment instructions are located [here](https://nasa.github.io/cumulus/docs/deployment/deployment-readme). The dashboard is not needed for these tests.
 
 ### How to configure your test stack
 
@@ -84,9 +84,9 @@ To run all of the tests, including standalone, run `DEPLOYMENT=<name-of-your-dep
 
 ### Run tests for an individual test file
 
-To run an individual test file, include a path to the spec file, i.e. `DEPLOYMENT=<name-of-your-deployment> npm test spec/helloWorld/HelloWorldSuccessSpec.js`.
+To run an individual test file, include a path to the spec file, i.e. `DEPLOYMENT=<name-of-your-deployment> node_modules/.bin/jasmine spec/helloWorld/HelloWorldSuccessSpec.js`.
 
-Jasmine supports wildcard expressions for running tests, so an entire test folder can be run using `DEPLOYMENT=<name-of-your-deployment> jasmine spec/standalone/*`
+Jasmine supports wildcard expressions for running tests, so an entire test folder can be run using `DEPLOYMENT=<name-of-your-deployment> node_modules/.bin/jasmine spec/standalone/*`
 
 ## Adding tests
 
