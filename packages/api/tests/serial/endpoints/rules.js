@@ -290,7 +290,7 @@ test('When calling the API endpoint to delete an existing rule it does not retur
   });
 });
 
-test('403 error when calling the API endpoint to delete an existing rule without operator credentials', async (t) => {
+test('403 error when calling the API endpoint to delete an existing rule without an invalid access token', async (t) => {
   const newRule = Object.assign({}, testRule, { name: 'side_step_left' });
   const postEvent = {
     httpMethod: 'POST',
@@ -314,7 +314,7 @@ test('403 error when calling the API endpoint to delete an existing rule without
   };
 
   await testEndpoint(rulesEndpoint, deleteEvent, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 
   const getEvent = {
