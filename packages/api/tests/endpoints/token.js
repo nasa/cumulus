@@ -238,7 +238,7 @@ test.serial('When using Earthdata Login, GET /token with a code stores the acces
 test.serial('GET /refresh without a token results in an authorization failure response', async (t) => {
   const request = {
     httpMethod: 'POST',
-    resource: '/refresh',
+    resource: '/refresh'
   };
 
   const response = await handleRequest(request);
