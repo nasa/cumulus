@@ -131,7 +131,7 @@ CNMExampleWorkflow:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
-          Next: CmrResponse
+          Next: CnmResponse
       Next: CnmResponse
     CnmResponse:
       CumulusConfig:
@@ -219,7 +219,7 @@ CnmResponse:
   runtime: java8
   memory: 256
   s3Source:
-    bucket: 'cumulus-data-shared''
+    bucket: 'cumulus-data-shared'
     key: 'daacs/podaac/cnmResponse-1.0.zip'
   launchInVpc: true
 ```
@@ -260,7 +260,7 @@ To add a rule via the dashboard (if you'd like to use the API, see the docs [her
     "value": "arn:aws:kinesis:{{awsRegion}}:{{awsAccountId}}:stream/{{streamName}}"
   },
   "state": "ENABLED",
-  "workflow": "KinesisTriggerTest"
+  "workflow": "CNMExampleWorkflow"
 }
 ```
 
