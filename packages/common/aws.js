@@ -848,3 +848,19 @@ exports.setGranuleStatus = async (
  * @returns {boolean}
  */
 exports.isThrottlingException = (err) => err.code === 'ThrottlingException';
+
+/**
+ * Given a Cumulus step function event, if the message is on S3, pull the full message
+ * from S3 and return, otherwise return the event.
+ *
+ * @param {Object} event - the Cumulus event
+ * @returns {Object} - the full Cumulus message
+ */
+exports.pullStepFunctionEvent = async (event) => {
+  if (event.replace) {
+    const file = await exports.getS3Object(event.replace.Bucket, event.replace.Key);
+
+    return JSON.parse(file.Body.toString());
+  }
+  return event;
+};
