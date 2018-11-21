@@ -197,3 +197,17 @@ test('GoogleOAuth2.getAccessToken() returns token information for a valid author
   t.is(expirationTime, 12345);
   t.is(username, 'sidney@example.com');
 });
+
+test('GoogleOAuth2.refreshAccessToken() throws "Not implemented" error', async (t) => {
+  const mockGoogleOAuth2Client = {};
+  const mockGooglePlusPeopleClient = {};
+  const googleOAuth2 = new GoogleOAuth2(mockGoogleOAuth2Client, mockGooglePlusPeopleClient);
+
+  try {
+    await googleOAuth2.refreshAccessToken('fake-token');
+    t.fail('Expected error to be thrown');
+  }
+  catch (err) {
+    t.is(err.message, 'Not implemented');
+  }
+});
