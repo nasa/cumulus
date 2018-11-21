@@ -5,8 +5,9 @@ const {
   aws: { lambda }
 } = require('@cumulus/common');
 const {
-  models: { User },
-  testUtils: { fakeUserFactory }
+  models: { AccessToken, User },
+  testUtils: { fakeAccessTokenFactory, fakeUserFactory },
+  token: { createJwtToken }
 } = require('@cumulus/api');
 
 /**
@@ -32,11 +33,19 @@ async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
   process.env.UsersTable = `${prefix}-UsersTable`;
   const userModel = new User();
 
-  const { userName, password } = await userModel.create(fakeUserFactory());
+  const { userName } = await userModel.create(fakeUserFactory());
+
+  process.env.AccessTokensTable = `${prefix}-AccessTokensTable`;
+  const accessTokenModel = new AccessToken();
+
+  const accessTokenRecord = fakeAccessTokenFactory({ username: userName });
+  const { accessToken } = await accessTokenModel.create(accessTokenRecord);
+
+  const jwtToken = createJwtToken(accessTokenRecord);
 
   // Add authorization header to the request
   payload.headers = payload.headers || {};
-  payload.headers.Authorization = `Bearer ${password}`;
+  payload.headers.Authorization = `Bearer ${jwtToken}`;
 
   let apiOutput;
   try {
@@ -45,9 +54,13 @@ async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
       FunctionName: `${prefix}-${functionName}`
     }).promise();
   }
+  catch (err) {
+    console.log(err);
+  }
   finally {
     // Delete the user created for this request
     await userModel.delete(userName);
+    await accessTokenModel.delete({ accessToken });
   }
 
   return JSON.parse(apiOutput.Payload);
