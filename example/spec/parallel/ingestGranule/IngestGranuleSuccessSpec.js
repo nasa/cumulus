@@ -111,6 +111,7 @@ describe('The S3 Ingest Granules workflow', () => {
   const collectionModel = new Collection();
   process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
   const providerModel = new Provider();
+  process.env.RulesTable = `${config.stackName}-RulesTable`;
   let executionName;
 
   beforeAll(async () => {
