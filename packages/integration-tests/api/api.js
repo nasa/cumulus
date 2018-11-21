@@ -72,11 +72,13 @@ async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
  * throw any encountered errors.
  *
  * @param {Object} response - the parsed payload of the API response
+ * @param {Array<number>} acceptedCodes - additional HTTP status codes to consider successful
  * @throws {Error} - error from the API response
  * @returns {Object} - the original response
  */
-function verifyCumulusApiResponse(response) {
-  if (response.statusCode !== 200) {
+function verifyCumulusApiResponse(response, acceptedCodes = []) {
+  const successCodes = [200].concat(acceptedCodes);
+  if (!successCodes.includes(response.statusCode)) {
     throw new Error(response.body);
   }
   return response;
@@ -124,7 +126,7 @@ async function postBulkDelete({ prefix, granuleIds }) {
       body: JSON.stringify({ granuleIds })
     }
   });
-  return verifyCumulusApiResponse(response);
+  return verifyCumulusApiResponse(response, [202]);
 }
 
 /**
