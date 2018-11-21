@@ -140,7 +140,7 @@ default:
   sqs:
     default_consumer_rate: 1000
     startSF:
-      visibilityTimeout: 30
+      visibilityTimeout: 60
       retry: 30
       consumer:
         - lambda: sqs2sf
