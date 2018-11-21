@@ -54,9 +54,6 @@ async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
       FunctionName: `${prefix}-${functionName}`
     }).promise();
   }
-  catch (err) {
-    console.log(err);
-  }
   finally {
     // Delete the user created for this request
     await userModel.delete(userName);
