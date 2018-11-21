@@ -7,24 +7,18 @@ const test = require('ava');
 const { sleep } = require('@cumulus/common/util');
 
 const consumer = rewire('../consumer');
-const Consume = consumer.Consume;
+const Consumer = consumer.Consumer;
 
-const timeToReceiveMessages = 10;
-let messageLimit = 3;
-class MyTestConsumerClass extends Consume {
-  constructor() {
-    super();
-    this.messageLimit = messageLimit;
-    this.timeLimit = timeToReceiveMessages * 2 + 100;
-  }
-}
-let myTestConsumerClass;
+const timeToReceiveMessages = 1 * 1000;
+let testConsumer;
 
-async function stubReceiveSQSMessages() {
+async function stubReceiveSQSMessages(_url, { numOfMessages }) {
   await sleep(timeToReceiveMessages);
-  return ['hi', 'bye'];
+  return Array.apply(null, { length: numOfMessages }).map(() => 'i am a message'); // eslint-disable-line prefer-spread
 }
 consumer.__set__('receiveSQSMessages', stubReceiveSQSMessages);
+console.log(consumer.__get__('receiveSQSMessages'));
+consumer.__set__('deleteSQSMessage', async () => true);
 function processFn() {}
 
 const sandbox = sinon.sandbox.create();
@@ -32,31 +26,56 @@ let processSpy;
 
 test.beforeEach(() => {
   // need to reinstantiate because this.now = Date.now()
-  myTestConsumerClass = new MyTestConsumerClass();
-  processSpy = sandbox.spy(myTestConsumerClass, 'processMessage');
+  testConsumer = new Consumer();
+  processSpy = sandbox.spy(testConsumer, 'processMessage');
 });
 test.afterEach.always(() => sandbox.restore());
 
 test.serial('stops after timelimit', async (t) => {
-  const result = await myTestConsumerClass.processMessages(processFn, messageLimit);
-  t.is(result, 4);
-  t.is(processSpy.callCount, 4);
+  testConsumer.messageLimit = 40;
+  testConsumer.timeLimit = timeToReceiveMessages * 2 - 100;
+
+  const result = await testConsumer.consume(processFn);
+  t.is(result, 20);
+  t.is(processSpy.callCount, 20);
 });
 
 test.serial('continues when timeLimit is is greater than time to receive', async (t) => {
-  messageLimit = 10;
-  myTestConsumerClass.timeLimit = timeToReceiveMessages * messageLimit + 100;
+  testConsumer.messageLimit = 40;
+  testConsumer.timeLimit = timeToReceiveMessages * 2 + 100;
 
-  const result = await myTestConsumerClass.processMessages(processFn, messageLimit);
-  t.is(result, 10);
-  t.is(processSpy.callCount, 10);
+  const result = await testConsumer.consume(processFn);
+  t.is(result, 30);
+  t.is(processSpy.callCount, 30);
 });
 
 test.serial('stops after messageLimit is reached', async (t) => {
-  myTestConsumerClass.timeLimit = timeToReceiveMessages * 10 + 100;
-  messageLimit = 2;
+  testConsumer.timeLimit = timeToReceiveMessages;
+  testConsumer.messageLimit = 2;
 
-  const result = await myTestConsumerClass.processMessages(processFn, messageLimit);
+  const result = await testConsumer.consume(processFn);
   t.is(result, 2);
   t.is(processSpy.calledTwice, true);
+});
+
+test.serial('processMessages throws error on large batch sizes', async (t) => {
+  await t.throws(testConsumer.processMessages(processFn, 20),
+    'Cannot process more than 10 messages per function call. Received limit: 20');
+});
+
+test.serial('processMessages respect messageLimit', async (t) => {
+  const result = await testConsumer.processMessages(processFn, 3);
+  t.is(result, 3);
+});
+
+test.serial('processMessage returns count of 1 for success', async (t) => {
+  const result = await testConsumer.processMessage('', processFn);
+  t.is(result, 1);
+});
+
+test.serial('processMessage returns count of 0 for failure', async (t) => {
+  const result = await testConsumer.processMessage('', () => {
+    throw new Error('failed');
+  });
+  t.is(result, 0);
 });
