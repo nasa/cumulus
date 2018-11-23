@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - **CUMULUS-1008**
-  - New `config.yml` parameter for core-built SQS consumers: `sqs: default_consumer_rate: (default 1000)`, which is the maximum number of messages processed by the consumer per execution.
+  - New `config.yml` parameter for SQS consumers: `sqs_default_consumer_rate: (default 1000)`, which is the maximum number of messages processed by the consumer per execution.
 - **CUMULUS-798**
   - Added daily Executions cleanup CloudWatch event that triggers cleanExecutions lambda
   - Added cleanExecutions lambda that removes finalPayload/originalPayload field entries for records older than configured timeout value (execution_payload_retention_period), with a default of 30 days
