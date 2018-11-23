@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- **CUMULUS-1008**
+  - New `config.yml` parameter for core-built SQS consumers: `sqs: default_consumer_rate: (default 1000)`, which is the maximum number of messages processed by the consumer per execution.
+
 ## [v1.10.1] - 2018-09-4
 
 ### Fixed
