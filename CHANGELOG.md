@@ -13,8 +13,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
-- **CUMULUS-1008**
-  - New `config.yml` parameter for core-built SQS consumers: `sqs: default_consumer_rate: (default 1000)`, which is the maximum number of messages processed by the consumer per execution.
 - **CUUMULUS-1000** - Distribution endpoint now persists logins, instead of
   redirecting to Earthdata Login on every request
 - **CUMULUS-783 CUMULUS-790** - Updated `@cumulus/sync-granule` and `@cumulus/move-granules` tasks to always overwrite existing files for manually-triggered reingest.
@@ -25,6 +23,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-793** - Updated the granule move PUT request in `@cumulus/api` to reject the move with a 409 status code if one or more of the files already exist at the destination location
 
 ### Added
+- **CUMULUS-1008**
+  - New `config.yml` parameter for core-built SQS consumers: `sqs: default_consumer_rate: (default 1000)`, which is the maximum number of messages processed by the consumer per execution.
 - **CUMULUS-798**
   - Added daily Executions cleanup CloudWatch event that triggers cleanExecutions lambda
   - Added cleanExecutions lambda that removes finalPayload/originalPayload field entries for records older than configured timeout value (execution_payload_retention_period), with a default of 30 days
@@ -82,6 +82,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Deprecated
 - `@cumulus/ingest/aws/StepFunction.pullEvent()`. Use `@cumulus/common/aws.pullStepFunctionEvent()`.
+- `@cumulus/ingest/consumer.Consume` due to unpredictable implementation. Use `@cumulus/ingest/consumer.Consumer`. 
+Call `Consumer.consume()` instead of `Consume.read()`.
 
 ## [v1.10.3] - 2018-10-31
 
