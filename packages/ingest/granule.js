@@ -122,15 +122,6 @@ class Discover {
       log.error(`discover exception ${JSON.stringify(err)}`);
     }
 
-    // This is confusing, but I haven't figured out a better way to write it.
-    // What we're doing here is checking each discovered file to see if it
-    // already exists in S3.  If it does then it isn't a new file and we are
-    // going to ignore it.
-    const newFiles = (await Promise.all(discoveredFiles.map((discoveredFile) =>
-      aws.s3ObjectExists({ Bucket: discoveredFile.bucket, Key: discoveredFile.name })
-        .then((s3ObjAlreadyExists) => (s3ObjAlreadyExists ? null : discoveredFile)))))
-      .filter(identity);
-
     // Group the files by granuleId
     const filesByGranuleId = groupBy(newFiles, (file) => file.granuleId);
 
