@@ -401,6 +401,7 @@ mvd:
       name: '{{stackName}}-internal'
       type: internal
   bucket: '{{stackName}}-internal'
+  sqs_consumer_rate: 100
 
 mvd-dev:
   stackName: mvd-dev
