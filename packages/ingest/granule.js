@@ -123,7 +123,7 @@ class Discover {
     }
 
     // Group the files by granuleId
-    const filesByGranuleId = groupBy(newFiles, (file) => file.granuleId);
+    const filesByGranuleId = groupBy(discoveredFiles, (file) => file.granuleId);
 
     // Build and return the granules
     const granuleIds = Object.keys(filesByGranuleId);
