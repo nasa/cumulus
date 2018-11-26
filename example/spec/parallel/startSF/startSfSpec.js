@@ -58,7 +58,7 @@ describe('the sf-starter lambda function', () => {
 
   it('has a configurable message limit', () => {
     pending('CW API does not return rule inputs. Pass confirmed in manual testing.');
-    const messageLimit = config.sqs_consumer_rate;
+    const messageLimit = config.sqs_consumer_rate; // not available in config
     expect(messageLimit).toBeDefined();
   });
 

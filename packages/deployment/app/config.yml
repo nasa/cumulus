@@ -137,7 +137,7 @@ default:
     - name: download
     - name: backend
 
-  sqs_consumer_rate: 1000
+  sqs_consumer_rate: 500
   sqs:
     startSF:
       visibilityTimeout: 60
