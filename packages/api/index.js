@@ -46,4 +46,4 @@ exports.logHandler = indexer.logHandler;
 
 exports.models = require('./models');
 exports.testUtils = require('./lib/testUtils');
-exports.token = require('./lib/token');
+exports.tokenUtils = require('./lib/token');

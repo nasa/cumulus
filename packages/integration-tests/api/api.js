@@ -7,7 +7,7 @@ const {
 const {
   models: { AccessToken, User },
   testUtils: { fakeAccessTokenFactory, fakeUserFactory },
-  token: { createJwtToken }
+  tokenUtils: { createJwtToken }
 } = require('@cumulus/api');
 
 /**
