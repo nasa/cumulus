@@ -79,7 +79,7 @@ default:
       username: cumulususer
     services:
       EcsTaskHelloWorld:
-        image: cumuluss/cumulus-ecs-task
+        image: cumuluss/cumulus-ecs-task:1.2.3
         cpu: 400
         memory: 700
         count: 1
@@ -457,7 +457,7 @@ jc:
             value: HelloWorldLambdaFunction
     docker:
       username: cumulususer
-      authType: iam
+      repoHost: ecr
 
 mhs:
   stackName: mhs

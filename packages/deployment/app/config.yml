@@ -108,8 +108,8 @@ default:
             function: Fn::Sub
             value: '${AWS::Region}'
     docker:
-      # Expected auth types are 'default' and 'iam'
-      authType: default
+      # Allowed repoHost values are 'dockerhub' and 'ecr'
+      repoHost: dockerhub
       storageDriver: overlay2
 
   es:
