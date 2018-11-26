@@ -563,7 +563,7 @@ exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
   });
 };
 
-// Class to efficiently scane all of the items in a DynamoDB table, without
+// Class to efficiently scan all of the items in a DynamoDB table, without
 // loading them all into memory at once.  Handles paging.
 class DynamoDbScanQueue {
   constructor(params) {
