@@ -89,7 +89,7 @@ describe('the sf-starter lambda function', () => {
     });
 
     it('consumes the messages', async () => {
-      sleep(5000);
+      sleep(2000);
       const { Payload } = await lambda().invoke({
         FunctionName: sfStarterName,
         InvocationType: 'RequestResponse',
