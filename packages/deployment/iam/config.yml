@@ -5,19 +5,21 @@ default:
   capabilities:
     - CAPABILITY_NAMED_IAM
 
-  system_bucket: cumulus-test-sandbox-internal
+  system_bucket: '{{buckets.internal.name}}'
+
+  useNgapPermissionBoundary: false
 
   buckets:
-    internal: 
+    internal:
       name: change-me
       type: internal
-    private: 
+    private:
       name: change-me
       type: private
-    protected: 
+    protected:
       name: change-me
       type: protected
-    public: 
+    public:
       name: change-me
       type: public
 

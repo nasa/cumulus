@@ -592,6 +592,12 @@ class StepFunction {
    * @returns {Promise.<Object>} - the parsed event from S3
    */
   static async pullEvent(event) {
+    deprecate(
+      '@cumulus/ingest/aws/StepFunction.pullEvent()',
+      '1.10.4',
+      '@cumulus/common/aws.pullStepFunctionEvent()'
+    );
+
     if (event.s3_path) {
       const parsed = S3.parseS3Uri(event.s3_path);
       const file = await aws.getS3Object(parsed.Bucket, parsed.Key);

@@ -54,9 +54,9 @@ The process involves:
 
 ## Installation
 
-#### Prepare DAAC deployment repository {#prepare-deployment}
+#### Prepare DAAC deployment repository
 
-_If you already are working with an existing `<daac>-deploy` repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS configuration. ](#prepare-config)_
+_If you already are working with an existing `<daac>-deploy` repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS configuration. ](#prepare-aws-configuration) _
 
 Clone template-deploy repo and name appropriately for your DAAC or organization
 
@@ -121,7 +121,7 @@ To run the Cumulus deployment with the local code instead of the npm package, us
 
 Note: If you get errors with `npm link`, try deleting the `node_modules` folder the package you are trying to link to in the Cumulus repository.
 
-##### Copy the sample template into your repository {#copy-template}
+##### Copy the sample template into your repository
 
 The [`Cumulus`](https://github.com/nasa/cumulus) project contains default configuration values in the `app.example` folder, however these need to be customized for your Cumulus app.
 
@@ -137,7 +137,7 @@ Begin by copying the template directory to your project. You will modify it for 
 You can then [add/commit](https://help.github.com/articles/adding-a-file-to-a-repository-using-the-command-line/) changes as needed.
 
 
-#### Prepare AWS configuration  {#prepare-config}
+#### Prepare AWS configuration
 
 **Set Access Keys:**
 
@@ -196,6 +196,10 @@ The name of this iam stack in CloudFormation (e.g. <prefix>-iam).
 
 The buckets created in the [Create S3 Buckets](#create-s3-buckets) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured. A key is used for the buckets to allow for swapping out the bucket names easily.
 
+###### useNgapPermissionBoundary:
+
+If deploying to a NASA NGAP account, set `useNgapPermissionBoundary: true`.
+
 ------
 
 **Sample new deployment added to config.yml**:
@@ -208,6 +212,18 @@ The buckets created in the [Create S3 Buckets](#create-s3-buckets) step. Buckets
         internal: # bucket key
             name: <internal bucket name>
             type: internal
+
+        private: # bucket key
+            name: <private bucket name>
+            type: private
+
+        protected: # bucket key
+            name: <protected bucket name>
+            type: protected
+
+        public: # bucket key
+            name: <public bucket name>
+            type: public
 
 **Deploy `iam` stack**[^1]
 
@@ -233,7 +249,7 @@ The `iam` deployment also creates an instance profile named `<stack-name>-ecs` t
 --------------
 ## Configure and Deploy the Cumulus stack
 
-These updates configure the [copied template](#copy-template) from the cumulus repository for your DAAC.
+These updates configure the [copied template](#copy-the-sample-template-into-your-repository) from the cumulus repository for your DAAC.
 
 You should either add a new root-level key for your configuration or modify the existing default configuration key to whatever you'd like your new deployment to be.
 
@@ -271,7 +287,7 @@ Also note, if you dont specify the `amiid`, it will try to use a default, which 
 
 ###### buckets
 
-The config buckets should map to the same names you used when creating buckets in the [Prepare AWS](#prepare-config) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured.
+The config buckets should map to the same names you used when creating buckets in the [Prepare AWS](#prepare-aws-configuration) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured.
 
 ###### iams
 
@@ -428,7 +444,7 @@ If you've lost track of the needed redirect URIs, they can be located on the [AP
 
 **Create S3 bucket for dashboard:**
 
-* Create it, e.g. `<prefix>-dashboard`. Use the command line or console as you did when [preparing AWS configuration](#Prepare AWS configuration).
+* Create it, e.g. `<prefix>-dashboard`. Use the command line or console as you did when [preparing AWS configuration](#Prepare-AWS-configuration).
 * Configure the bucket to host a website:
   * AWS S3 console: Select `<prefix>-dashboard` bucket then, "Properties" -> "Static Website Hosting", point to `index.html`
   * CLI: `aws s3 website s3://<prefix>-dashboard --index-document index.html`
@@ -441,6 +457,7 @@ To install the dashboard clone the Cumulus-dashboard repository into the root de
 
     $ git clone https://github.com/nasa/cumulus-dashboard
     $ cd cumulus-dashboard
+    $ nvm use
     $ npm install
 
 ### Dashboard configuration
