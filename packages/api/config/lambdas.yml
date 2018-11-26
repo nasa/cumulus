@@ -133,6 +133,18 @@ jobs:
   source: 'node_modules/@cumulus/api/dist/'
   namedLambdaDeadLetterQueue: true
 
+cleanExecutions:
+  handler: index.cleanExecutions
+  timeout: 900
+  memory: 1024
+  source: 'node_modules/@cumulus/api/dist/'
+  namedLambdaDeadLetterQueue: true
+  envs:
+    executionPayloadRetentionPeriod: '{{execution_payload_retention_period}}'
+    ExecutionsTable:
+      function: Ref
+      value: ExecutionsTableDynamoDB
+
 # used as custom resource for cloudformation manipulation
 CustomBootstrap:
   handler: index.bootstrap

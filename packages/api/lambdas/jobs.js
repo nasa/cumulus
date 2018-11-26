@@ -133,14 +133,10 @@ async function checkExecution(arn, url, timestamp, esClient) {
 
 async function cleanup() {
   const searchTerm = 'status:running';
-
   const esClient = await Search.es();
   const executions = await findStaleRecords('execution', searchTerm, 100);
-
   log.info(`Found ${executions.length} stale executions`);
-
   const limit = pLimit(2);
-
   await Promise.all(executions.slice(0, 400).map((ex) => limit(() => checkExecution(
     ex.arn,
     ex.execution,

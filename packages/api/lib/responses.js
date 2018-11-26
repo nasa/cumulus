@@ -113,7 +113,7 @@ class TemporaryRedirectResponse extends LambdaProxyResponse {
     super({
       cookies: params.cookies,
       statusCode: 307,
-      headers: { Location: params.location },
+      headers: { Location: params.location }
     });
   }
 }
