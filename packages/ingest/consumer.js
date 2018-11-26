@@ -116,6 +116,7 @@ class Consumer {
       { numOfMessages: messageLimit }
     );
     if (messages.length > 0) {
+      log.info(`Processing batch of ${messages.length} messages...`);
       const processes = messages.map((message) => this.processMessage(message, fn));
       const results = await Promise.all(processes);
       counter = results.reduce((s, v) => s + v, 0);
