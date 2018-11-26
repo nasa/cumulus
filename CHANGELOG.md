@@ -8,7 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - **CUMULUS-1008**
-  - New `config.yml` parameter for SQS consumers: `sqs_default_consumer_rate: (default 1000)`, which is the maximum number of messages processed by the consumer per execution.
+  - New `config.yml` parameter for SQS consumers: `sqs_consumer_rate: (default 1000)`, which is the maximum
+  number of messages the consumer will attempt to process per execution. The consumer runs every minute by default,
+  making this a messages-per-minute upper bound. SQS does not guarantee the number of messages returned per call, so
+  this is not a fixed rate of consumption.
 
 ## [v1.10.1] - 2018-09-4
 
