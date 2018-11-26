@@ -4,6 +4,9 @@ default:
 
   urs_url: https://uat.urs.earthdata.nasa.gov
 
+
+  execution_payload_retention_period: 30 ## days
+
   oauth:
     provider: earthdata
 
@@ -194,6 +197,12 @@ default:
       state: ENABLED
       targets:
         - lambda: EmsDistributionReport
+    dailyExecutionPayloadCleanup:
+      # run at 0400 GMT daily
+      schedule: cron(0 4 * * ? *)
+      state: ENABLED
+      targets:
+        - lambda: cleanExecutions
 
   useWorkflowLambdaVersions: true
 

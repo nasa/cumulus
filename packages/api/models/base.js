@@ -367,7 +367,7 @@ class Manager {
       };
     });
 
-    // Add keys to be removed
+    // Add keys to be deleted
     fieldsToDelete.forEach((property) => {
       attributeUpdates[property] = { Action: 'DELETE' };
     });
