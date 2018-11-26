@@ -79,7 +79,7 @@ default:
       username: cumulususer
     services:
       EcsTaskHelloWorld:
-        image: cumuluss/cumulus-ecs-task:1.2.3
+        image: cumuluss/cumulus-ecs-task
         cpu: 400
         memory: 700
         count: 1
@@ -437,6 +437,24 @@ jc:
   stackName: jc
   stackNameNoDash: jc
   ecs:
+    services:
+      EcsTaskHelloWorld:
+        image: 596205514787.dkr.ecr.us-east-1.amazonaws.com/cumulus-dev-testing:latest
+        cpu: 400
+        memory: 700
+        count: 1
+        envs:
+          AWS_DEFAULT_REGION:
+            function: Fn::Sub
+            value: '${AWS::Region}'
+        commands:
+          - cumulus-ecs-task
+          - '--activityArn'
+          - function: Ref
+            value: EcsTaskHelloWorldActivity
+          - '--lambdaArn'
+          - function: Ref
+            value: HelloWorldLambdaFunction
     docker:
       username: cumulususer
       authType: iam
