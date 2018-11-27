@@ -11,7 +11,7 @@ const timeToReceiveMessages = 200; // ms
 const timeLimitModifier = 50;
 let testConsumer;
 
-async function stubReceiveSQSMessages(_url, { numOfMessages }) {
+async function stubReceiveSQSMessages(_url, numOfMessages) {
   await (new Promise((resolve) => setTimeout(resolve, timeToReceiveMessages)));
   return Array.apply(null, { length: numOfMessages }) // eslint-disable-line prefer-spread
     .map(() => 'i am a message');

@@ -1,13 +1,14 @@
 'use strict';
 
 const { lambda, sfn, sqs } = require('@cumulus/common/aws');
+const { randomString } = require('@cumulus/common/test-utils');
 const { loadConfig } = require('../helpers/testUtils');
 
 const config = loadConfig();
 
-const testName = `${config.stackName}-testStartSf`;
+const testName = `${config.stackName}-testStartSf-${randomString()}`;
 
-const passSfName = `${config.stackName}-passTestSf`;
+const passSfName = `${config.stackName}-passTestSf-${randomString()}`;
 const passSfDef = {
   Comment: 'Pass-only step function',
   StartAt: 'PassState',
