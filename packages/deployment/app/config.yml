@@ -113,6 +113,8 @@ default:
             function: Fn::Sub
             value: '${AWS::Region}'
     docker:
+      # Allowed registry values are 'dockerhub' and 'ecr'
+      registry: dockerhub
       storageDriver: overlay2
 
   es:
