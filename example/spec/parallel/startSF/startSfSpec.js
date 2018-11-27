@@ -57,12 +57,13 @@ describe('the sf-starter lambda function', () => {
   });
 
   it('has a configurable message limit', () => {
-    pending('CW API does not return rule inputs. Pass confirmed in manual testing.');
-    const messageLimit = config.sqs_consumer_rate; // not available in config
-    expect(messageLimit).toBeDefined();
+    const messageLimit = config.sqs_consumer_rate;
+    expect(messageLimit).toBe(300);
   });
 
   describe('when provided a queue', () => {
+    const initialMessageCount = 30;
+    const testMessageLimit = 25;
     let passSfArn;
     let qAttrParams;
     let messagesConsumed;
@@ -74,7 +75,7 @@ describe('the sf-starter lambda function', () => {
       };
       const { stateMachineArn } = await sfn().createStateMachine(passSfParams).promise();
       passSfArn = stateMachineArn;
-      const msgs = generateStartSfMessages(30, passSfArn);
+      const msgs = generateStartSfMessages(initialMessageCount, passSfArn);
       await Promise.all(msgs.map((msg) => sqs().sendMessage({ QueueUrl: queueUrl, MessageBody: JSON.stringify(msg) }).promise()));
     });
 
@@ -84,7 +85,7 @@ describe('the sf-starter lambda function', () => {
 
     it('that has messages', async () => {
       const { Attributes } = await sqs().getQueueAttributes(qAttrParams).promise();
-      expect(Attributes.ApproximateNumberOfMessages).toBe('30');
+      expect(Attributes.ApproximateNumberOfMessages).toBe(initialMessageCount.toString());
     });
 
     it('consumes the messages', async () => {
@@ -93,7 +94,7 @@ describe('the sf-starter lambda function', () => {
         InvocationType: 'RequestResponse',
         Payload: JSON.stringify({
           queueUrl,
-          messageLimit: 25
+          messageLimit: testMessageLimit
         })
       }).promise();
       messagesConsumed = parseInt(Payload, 10);
@@ -102,7 +103,9 @@ describe('the sf-starter lambda function', () => {
 
     it('up to its message limit', async () => {
       const { Attributes } = await sqs().getQueueAttributes(qAttrParams).promise();
-      expect(Attributes.ApproximateNumberOfMessages).not.toBe('0');
+      const numOfMessages = parseInt(Attributes.ApproximateNumberOfMessages, 10); // sqs returns number as string
+      expect(numOfMessages).not.toBe(0);
+      expect(numOfMessages).not.toBeGreaterThan(testMessageLimit);
     });
 
     it('to trigger workflows', async () => {
