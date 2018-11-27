@@ -2,24 +2,42 @@
 
 const { Execution } = require('../models');
 
-/**
- * Scans the execution table and remove input and output fields from
- * records that are older than the retention period
- *
- * @param {Object} ExecutionModel - the execution model class
- * @returns {Promise} the result of removing old payload records
- */
 async function cleanExecutionPayloads(ExecutionModel) {
-  const timeout = parseInt(process.env.executionPayloadRetentionPeriod, 10);
-  if (process.env.executionPayloadRetentionPeriod === 'disabled') {
+  let completeDisable = process.env.completeExecutionPayloadTimeoutDisable || 'false';
+  let nonCompleteDisable = process.env.nonCompleteExecutionPayloadTimeoutDisable || 'false';
+
+  completeDisable = JSON.parse(completeDisable);
+  nonCompleteDisable = JSON.parse(nonCompleteDisable);
+
+  const nonCompleteTimeout = parseInt(process.env.nonCompleteExecutionPayloadTimeout, 10);
+  const completeTimeout = parseInt(process.env.completeExecutionPayloadTimeout, 10);
+
+  const configuration = [{
+    name: 'nonCompleteExecutionPayloadTimeout',
+    value: nonCompleteTimeout,
+    originalValue: process.env.nonCompleteExecutionPayloadTimeout
+  },
+  {
+    name: 'completeExecutionPayloadTimeout',
+    value: completeTimeout,
+    originalValue: process.env.completeExecutionPayloadTimeout
+  }];
+
+  if (completeDisable && nonCompleteDisable) {
     return [];
   }
-  if (!Number.isInteger(timeout)) {
-    throw new TypeError('Invalid number of days specified for '
-      + `executionPayloadRetentionPeriod env variable. It must be a number: ${process.env.executionPayloadRetentionPeriod}`);
-  }
+
+  configuration.forEach((timeout) => {
+    if (!Number.isInteger(timeout.value)) {
+      throw new TypeError(`Invalid number of days specified in configuration for ${timeout.name}: ${timeout.originalValue}`);
+    }
+  });
+
   const execution = new ExecutionModel();
-  return execution.removeOldPayloadRecords(timeout);
+  return execution.removeOldPayloadRecords(completeTimeout,
+    nonCompleteTimeout,
+    completeDisable,
+    nonCompleteDisable);
 }
 
 async function handler(_event) {
