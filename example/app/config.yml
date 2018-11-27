@@ -457,7 +457,7 @@ jc:
             value: HelloWorldLambdaFunction
     docker:
       username: cumulususer
-      repoHost: ecr
+      registry: ecr
 
 mhs:
   stackName: mhs

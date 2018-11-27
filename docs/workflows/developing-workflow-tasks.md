@@ -28,7 +28,7 @@ ECS activities require a docker image. The docker image is defined as part of th
     publicIp: true
     docker:
       username: cumulususer
-      repoHost: dockerhub
+      registry: dockerhub
     services:
       EcsTaskHelloWorld:
         image: cumuluss/cumulus-ecs-task:1.2.3
@@ -37,9 +37,9 @@ ECS activities require a docker image. The docker image is defined as part of th
         count: 1
 ```
 
-### Specifying Repository Host (ECR | Dockerhub)
+### Specifying a Docker Registry (ECR | Dockerhub)
 
-Cumulus currently supports two methods of pulling images from a hosted repository by setting the `ecs.docker.repoHost` attribute to either `ecr` or `dockerhub`. `dockerhub` is the default value.
+Cumulus currently supports two methods of pulling images from a hosted repository by setting the `ecs.docker.registry` attribute to either `ecr` or `dockerhub`. `dockerhub` is the default value.
 
 *ecr* will use the IAM role attached to the instance (defined in `packages/deployment/iam/cloudformation.template.yml` under `ECSRole`) to authenticate against a repository hosted in [AWS ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/what-is-ecr.html). Using this method will still allow instances to pull images from *public* dockerhub repositories *without authentication.*
 
