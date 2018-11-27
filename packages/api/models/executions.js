@@ -84,10 +84,10 @@ class Execution extends Manager {
     const limit = pLimit(concurrencyLimit);
 
     const updatePromises = oldExecutionRows.Items.map((row) => limit(() => {
-      if (row.status === 'completed' && !disableComplete && row.updatedAt <= completeMaxMs) {
+      if (!disableComplete && row.status === 'completed' && row.updatedAt <= completeMaxMs) {
         return this.update({ arn: row.arn }, {}, ['originalPayload', 'finalPayload']);
       }
-      if (!(row.status === 'completed') && !disableNonComplete && row.updatedAt <= nonCompleteMaxMs) {
+      if (!disableNonComplete && !(row.status === 'completed') && row.updatedAt <= nonCompleteMaxMs) {
         return this.update({ arn: row.arn }, {}, ['originalPayload', 'finalPayload']);
       }
       return Promise.resolve();
