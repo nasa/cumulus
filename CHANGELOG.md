@@ -64,7 +64,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     `@cumulus/test-data.streamTestData()` to safely load test data. These
     functions should be used instead of using `require()` to load test data,
     which could lead to tests interferring with each other.
-  - Add a `@cumulus/util/deprecate()` function to mark a piece of code as
+  - Add a `@cumulus/common/util/deprecate()` function to mark a piece of code as
     deprecated
 - **CUMULUS-986**
   - Added `waitForTestExecutionStart` to `@cumulus/integration-tests`
