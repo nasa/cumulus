@@ -11,7 +11,14 @@ default:
     streamName: '{{stackName}}-testStream'
     awsAccountId: '{{AWS_ACCOUNT_ID}}'
     awsRegion: us-east-1
+<<<<<<< HEAD
     IngestGranule:
+=======
+    AsyncOperationsTable: '{{stackName}}-AsyncOperationsTable'
+    asyncOperationRunnerRole: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-lambda-api-gateway'
+    sqs_consumer_rate: 300
+    IngestAndPublishGranule:
+>>>>>>> b0875768... #722 PR feedback
       IngestGranuleOutput:
         granules:
           - files:
