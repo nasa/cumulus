@@ -38,9 +38,9 @@ test.before(async () => {
 
   process.env.TOKEN_SECRET = randomString();
 
-  const accessToken = await createJwtAuthToken({ accessTokenModel, userModel });
+  const jwtAuthToken = await createJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
-    Authorization: `Bearer ${accessToken}`
+    Authorization: `Bearer ${jwtAuthToken}`
   };
 
   context = {
