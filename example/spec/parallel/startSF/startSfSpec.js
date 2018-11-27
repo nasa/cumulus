@@ -42,10 +42,7 @@ describe('the sf-starter lambda function', () => {
 
   beforeAll(async () => {
     const { QueueUrl } = await sqs().createQueue({
-      QueueName: `${testName}Queue`,
-      Attributes: {
-        VisibilityTimeout: '0'
-      }
+      QueueName: `${testName}Queue`
     }).promise();
     queueUrl = QueueUrl;
   });
@@ -89,12 +86,6 @@ describe('the sf-starter lambda function', () => {
     });
 
     it('consumes the messages', async () => {
-      await sqs().setQueueAttributes({
-        QueueUrl: queueUrl,
-        Attributes: {
-          VisibilityTimeout: '30'
-        }
-      });
       const { Payload } = await lambda().invoke({
         FunctionName: sfStarterName,
         InvocationType: 'RequestResponse',
@@ -110,8 +101,7 @@ describe('the sf-starter lambda function', () => {
     it('up to its message limit', async () => {
       const { Attributes } = await sqs().getQueueAttributes(qAttrParams).promise();
       const numOfMessages = parseInt(Attributes.ApproximateNumberOfMessages, 10); // sqs returns number as string
-      expect(numOfMessages).not.toBeLessThan(initialMessageCount - messagesConsumed);
-      expect(numOfMessages).not.toBeGreaterThan(testMessageLimit);
+      expect(numOfMessages).toBe(initialMessageCount - messagesConsumed);
     });
 
     it('to trigger workflows', async () => {
