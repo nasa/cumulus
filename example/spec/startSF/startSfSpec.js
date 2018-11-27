@@ -1,7 +1,7 @@
 'use strict';
 
 const { lambda, sfn, sqs } = require('@cumulus/common/aws');
-const { loadConfig } = require('../../helpers/testUtils');
+const { loadConfig } = require('../helpers/testUtils');
 
 const config = loadConfig();
 
