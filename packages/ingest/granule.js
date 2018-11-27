@@ -5,7 +5,6 @@ const fs = require('fs-extra');
 const cloneDeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
 const groupBy = require('lodash.groupby');
-const identity = require('lodash.identity');
 const moment = require('moment');
 const omit = require('lodash.omit');
 const os = require('os');
