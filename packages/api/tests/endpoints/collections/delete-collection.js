@@ -11,7 +11,7 @@ const collectionsEndpoint = require('../../../endpoints/collections');
 const {
   fakeCollectionFactory,
   testEndpoint,
-  createAccessToken
+  createJwtAuthToken
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
@@ -47,7 +47,7 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  const accessToken = await createAccessToken({ accessTokenModel, userModel });
+  const accessToken = await createJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
     Authorization: `Bearer ${accessToken}`
   };

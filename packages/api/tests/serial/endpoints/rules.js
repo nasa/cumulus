@@ -8,7 +8,7 @@ const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
 const rulesEndpoint = require('../../../endpoints/rules');
 const {
-  createAccessToken,
+  createJwtAuthToken,
   testEndpoint
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
@@ -66,7 +66,7 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  const accessToken = await createAccessToken({ accessTokenModel, userModel });
+  const accessToken = await createJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
     Authorization: `Bearer ${accessToken}`
   };
