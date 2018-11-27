@@ -111,8 +111,8 @@ default:
             function: Fn::Sub
             value: '${AWS::Region}'
     docker:
-      # Allowed repoHost values are 'dockerhub' and 'ecr'
-      repoHost: dockerhub
+      # Allowed registry values are 'dockerhub' and 'ecr'
+      registry: dockerhub
       storageDriver: overlay2
 
   es:
