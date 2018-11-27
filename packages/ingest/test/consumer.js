@@ -12,8 +12,9 @@ const timeLimitModifier = 50;
 let testConsumer;
 
 async function stubReceiveSQSMessages(_url, { numOfMessages }) {
-  setTimeout(() => {}, timeToReceiveMessages);
-  return Array.apply(null, { length: numOfMessages }).map(() => 'i am a message'); // eslint-disable-line prefer-spread
+  await (new Promise((resolve) => setTimeout(resolve, timeToReceiveMessages)));
+  return Array.apply(null, { length: numOfMessages }) // eslint-disable-line prefer-spread
+    .map(() => 'i am a message');
 }
 consumer.__set__('receiveSQSMessages', stubReceiveSQSMessages);
 consumer.__set__('deleteSQSMessage', async () => true);
@@ -33,7 +34,7 @@ test.beforeEach(() => {
 test.afterEach.always(() => sandbox.restore());
 
 test.serial('stops after timelimit', async (t) => {
-  testConsumer.timeLimit = timeToReceiveMessages * 2 - timeLimitModifier;
+  testConsumer.timeLimit = (timeToReceiveMessages * 2) - timeLimitModifier;
 
   const result = await testConsumer.consume(processFn);
   t.is(result, 20);
@@ -42,7 +43,7 @@ test.serial('stops after timelimit', async (t) => {
 });
 
 test.serial('continues when timeLimit is is greater than time to receive', async (t) => {
-  testConsumer.timeLimit = timeToReceiveMessages * 2 + timeLimitModifier;
+  testConsumer.timeLimit = (timeToReceiveMessages * 2) + timeLimitModifier;
 
   const result = await testConsumer.consume(processFn);
   t.is(result, 30);
