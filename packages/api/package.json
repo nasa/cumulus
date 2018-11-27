@@ -65,6 +65,7 @@
     "lodash.uniqby": "^4.7.0",
     "moment": "^2.22.1",
     "node-forge": "^0.7.1",
+    "rewire": "^4.0.1",
     "p-limit": "^1.2.0",
     "querystring": "^0.2.0",
     "split2": "^2.2.0",
