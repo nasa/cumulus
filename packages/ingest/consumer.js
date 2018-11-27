@@ -105,10 +105,7 @@ class Consumer {
     if (messageLimit > 10) throw new Error(`Cannot process more than 10 messages per function call. Received limit: ${messageLimit}`);
 
     let counter = 0;
-    const messages = await receiveSQSMessages(
-      this.queueUrl,
-      { numOfMessages: messageLimit }
-    );
+    const messages = await receiveSQSMessages(this.queueUrl, messageLimit);
     if (messages.length > 0) {
       const processes = messages.map((message) => this.processMessage(message, fn));
       const results = await Promise.all(processes);
