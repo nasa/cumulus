@@ -52,17 +52,24 @@ class Execution extends Manager {
   }
 
   /**
-   * Scan the Executions table ahd remove originalPayload/finalPayload records from the table
+   * Scan the Executions table and remove originalPayload/finalPayload records from the table
    *
-   * @param {integer} maxAgeDays - Maximum number of days a record may have payload entries
+   * @param {integer} completeMaxDays - Maximum number of days a completed
+   *   record may have payload entries
+   * @param {integer} nonCompleteMaxDays - Maximum number of days a non-completed
+   *   record may have payload entries
+   * @param {boolean} disableComplete - Disable removal of completed execution
+   *   payloads
+   * @param {boolean} disableNonComplete - Disable removal of execution payloads for
+   *   statuses other than 'completed'
    * @returns {Promise<Array>} - Execution table objects that were updated
    */
-  async removeOldPayloadRecords(maxAgeDays) {
-    if (!process.env.executionPayloadTimeout === 'disabled') {
-      return [];
-    }
-    // DB uses milliseconds.  Convert to days for the expiration comparison value
-    const expiryDate = Date.now() - (1000 * 3600 * 24 * maxAgeDays);
+  async removeOldPayloadRecords(completeMaxDays, nonCompleteMaxDays,
+    disableComplete, disableNonComplete) {
+    const msPerDay = 1000 * 3600 * 24;
+    const completeMaxMs = Date.now() - (msPerDay * completeMaxDays);
+    const nonCompleteMaxMs = Date.now() - (msPerDay * nonCompleteMaxDays);
+    const expiryDate = completeMaxDays < nonCompleteMaxDays ? completeMaxMs : nonCompleteMaxMs;
     const executionNames = { '#updatedAt': 'updatedAt' };
     const executionValues = { ':expiryDate': expiryDate };
     const filter = '#updatedAt <= :expiryDate and (attribute_exists(originalPayload) or attribute_exists(finalPayload))';
@@ -76,7 +83,15 @@ class Execution extends Manager {
     const concurrencyLimit = process.env.CONCURRENCY || 10;
     const limit = pLimit(concurrencyLimit);
 
-    const updatePromises = oldExecutionRows.Items.map((row) => limit(() => this.update({ arn: row.arn }, {}, ['originalPayload', 'finalPayload'])));
+    const updatePromises = oldExecutionRows.Items.map((row) => limit(() => {
+      if (!disableComplete && row.status === 'completed' && row.updatedAt <= completeMaxMs) {
+        return this.update({ arn: row.arn }, {}, ['originalPayload', 'finalPayload']);
+      }
+      if (!disableNonComplete && !(row.status === 'completed') && row.updatedAt <= nonCompleteMaxMs) {
+        return this.update({ arn: row.arn }, {}, ['originalPayload', 'finalPayload']);
+      }
+      return Promise.resolve();
+    }));
     return Promise.all(updatePromises);
   }
 
