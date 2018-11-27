@@ -32,9 +32,9 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  const accessToken = await createJwtAuthToken({ accessTokenModel, userModel });
+  const jwtAuthToken = await createJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
-    Authorization: `Bearer ${accessToken}`
+    Authorization: `Bearer ${jwtAuthToken}`
   };
 });
 
