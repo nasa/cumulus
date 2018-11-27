@@ -8,10 +8,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - **CUMULUS-1008**
-  - New `config.yml` parameter for SQS consumers: `sqs_consumer_rate: (default 500)`, which is the maximum number of
+  - Backported new `config.yml` parameter for SQS consumers: `sqs_consumer_rate: (default 500)`, which is the maximum number of
   messages the consumer will attempt to process per execution. Currently this is only used by the sf-starter consumer,
   which runs every minute by default, making this a messages-per-minute upper bound. SQS does not guarantee the number
   of messages returned per call, so this is not a fixed rate of consumption, only attempted number of messages received.
+
+### Changed
+- Backported update of `packages/api` dependency `@mapbox/dyno` to `1.4.2` to mitigate `event-stream` vulnerability.
 
 ## [v1.10.1] - 2018-09-4
 
