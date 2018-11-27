@@ -32,7 +32,7 @@ test.serial.cb("The S3 redirect includes the user's Earthdata Login username", (
       },
       queryStringParameters: {
         code,
-        state: randomString()
+        state: `${randomString()}/${randomString()}`
       }
     };
 
