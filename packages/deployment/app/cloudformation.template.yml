@@ -818,14 +818,14 @@ Resources:
                     #!/bin/bash
                     echo ECS_CLUSTER=${CumulusECSCluster} >> /etc/ecs/ecs.config
                     echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=1m >> /etc/ecs/ecs.config
-
-                {{#if ecs.docker}}
-                    echo ECS_ENGINE_AUTH_TYPE=docker >> /etc/ecs/ecs.config
-                    echo 'ECS_ENGINE_AUTH_DATA={"https://index.docker.io/v1/":{"username":"{{ecs.docker.username}}","password": "${Password}","email":"${Email}"}}' >> /etc/ecs/ecs.config
                     echo 'DOCKER_STORAGE_OPTIONS="${!DOCKER_STORAGE_OPTIONS} --storage-driver {{ecs.docker.storageDriver}}"' >> /etc/sysconfig/docker-storage
                     {{#ifEquals ecs.docker.storageDriver "devicemapper"}}
                     echo 'OPTIONS="${!OPTIONS} --storage-opt dm.basesize={{ecs.volumeSize}}G"' >> /etc/sysconfig/docker
                     {{/ifEquals}}
+
+                {{#ifEquals ecs.docker.registry "dockerhub"}}
+                    echo ECS_ENGINE_AUTH_TYPE=docker >> /etc/ecs/ecs.config
+                    echo 'ECS_ENGINE_AUTH_DATA={"https://index.docker.io/v1/":{"username":"{{ecs.docker.username}}","password": "${Password}","email":"${Email}"}}' >> /etc/ecs/ecs.config
 
                   - Password:
                       Ref: DockerPassword
@@ -833,7 +833,7 @@ Resources:
                       Ref: DockerEmail
                 {{else}}
                   - Example: value
-                {{/if}}
+                {{/ifEquals}}
 
           {{# if ecs.efs.mount }}
           packages:
