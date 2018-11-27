@@ -38,7 +38,7 @@
     "@cumulus/common": "^1.10.0",
     "@cumulus/ingest": "^1.10.0",
     "@cumulus/pvl": "^1.10.0",
-    "@mapbox/dyno": "^1.4.1",
+    "@mapbox/dyno": "^1.4.2",
     "ajv": "^5.2.2",
     "archiver": "^2.1.1",
     "aws-sdk": "^2.238.1",
