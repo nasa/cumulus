@@ -9,6 +9,10 @@ async function cleanExecutionPayloads(ExecutionModel) {
   completeDisable = JSON.parse(completeDisable);
   nonCompleteDisable = JSON.parse(nonCompleteDisable);
 
+  if (completeDisable && nonCompleteDisable) {
+    return [];
+  }
+
   const nonCompleteTimeout = parseInt(process.env.nonCompleteExecutionPayloadTimeout, 10);
   const completeTimeout = parseInt(process.env.completeExecutionPayloadTimeout, 10);
 
@@ -23,9 +27,7 @@ async function cleanExecutionPayloads(ExecutionModel) {
     originalValue: process.env.completeExecutionPayloadTimeout
   }];
 
-  if (completeDisable && nonCompleteDisable) {
-    return [];
-  }
+
 
   configuration.forEach((timeout) => {
     if (!Number.isInteger(timeout.value)) {
