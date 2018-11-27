@@ -27,8 +27,6 @@ async function cleanExecutionPayloads(ExecutionModel) {
     originalValue: process.env.completeExecutionPayloadTimeout
   }];
 
-
-
   configuration.forEach((timeout) => {
     if (!Number.isInteger(timeout.value)) {
       throw new TypeError(`Invalid number of days specified in configuration for ${timeout.name}: ${timeout.originalValue}`);
