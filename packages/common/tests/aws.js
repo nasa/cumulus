@@ -107,7 +107,7 @@ test('pullStepFunctionEvent returns original message if message not on S3', asyn
       execution_name: 'execution'
     },
     meta: {
-      bucket: 'test bucket',
+      bucket: 'test bucket'
     }
   };
 
