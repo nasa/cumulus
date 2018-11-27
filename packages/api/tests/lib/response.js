@@ -6,7 +6,7 @@ const {
 } = require('@cumulus/common');
 
 const { AccessToken, User } = require('../../models');
-const { createAccessToken, fakeAccessTokenFactory, fakeUserFactory } = require('../../lib/testUtils');
+const { createJwtAuthToken, fakeAccessTokenFactory, fakeUserFactory } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 const { createJwtToken } = require('../../lib/token');
 const { getAuthorizationFailureResponse } = require('../../lib/response');
@@ -32,7 +32,7 @@ test.after.always(async (_t) => {
 });
 
 test('getAuthorizationFailureResponse returns null if authorization succeeds', async (t) => {
-  const accessToken = await createAccessToken({ accessTokenModel, userModel });
+  const accessToken = await createJwtAuthToken({ accessTokenModel, userModel });
   const request = {
     headers: {
       Authorization: `Bearer ${accessToken}`
