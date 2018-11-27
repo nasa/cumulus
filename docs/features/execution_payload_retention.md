@@ -33,3 +33,12 @@ Default value is 30 days.
 - complete_execution_payload_disable/non_complete_execution_payload_disable
 
 These flags (true/false) determine if the cleanup script's logic for 'complete' and 'non-complete' executions will run.   Default value is false for both.
+
+#### Default configuration example:
+
+```
+  non_complete_execution_payload_timeout: 30
+  complete_execution_payload_timeout: 10
+  complete_execution_payload_disable: false
+  non_complete_execution_payload_disable: false
+```
