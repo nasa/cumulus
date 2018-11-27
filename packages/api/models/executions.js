@@ -67,9 +67,9 @@ class Execution extends Manager {
   async removeOldPayloadRecords(completeMaxDays, nonCompleteMaxDays,
     disableComplete, disableNonComplete) {
     const msPerDay = 1000 * 3600 * 24;
-    const completeMaxAgeMseconds = Date.now() - (msPerDay * completeMaxDays);
-    const nonCompleteMaxAgeMseconds = Date.now() - (msPerDay * nonCompleteMaxDays);
-    const expiryDate = completeMaxDays < nonCompleteMaxDays ? completeMaxAgeMseconds : nonCompleteMaxAgeMseconds;
+    const completeMaxMs = Date.now() - (msPerDay * completeMaxDays);
+    const nonCompleteMaxMs = Date.now() - (msPerDay * nonCompleteMaxDays);
+    const expiryDate = completeMaxDays < nonCompleteMaxDays ? completeMaxMs : nonCompleteMaxMs;
     const executionNames = { '#updatedAt': 'updatedAt' };
     const executionValues = { ':expiryDate': expiryDate };
     const filter = '#updatedAt <= :expiryDate and (attribute_exists(originalPayload) or attribute_exists(finalPayload))';
@@ -84,10 +84,10 @@ class Execution extends Manager {
     const limit = pLimit(concurrencyLimit);
 
     const updatePromises = oldExecutionRows.Items.map((row) => limit(() => {
-      if (row.status === 'completed' && !disableComplete && row.updatedAt <= completeMaxAgeMseconds) {
+      if (row.status === 'completed' && !disableComplete && row.updatedAt <= completeMaxMs) {
         return this.update({ arn: row.arn }, {}, ['originalPayload', 'finalPayload']);
       }
-      if (!(row.status === 'completed') && !disableNonComplete && row.updatedAt <= nonCompleteMaxAgeMseconds) {
+      if (!(row.status === 'completed') && !disableNonComplete && row.updatedAt <= nonCompleteMaxMs) {
         return this.update({ arn: row.arn }, {}, ['originalPayload', 'finalPayload']);
       }
       return Promise.resolve();
