@@ -60,8 +60,7 @@
     "simplecrawler": "^1.1.4",
     "ssh2": "^0.5.5",
     "url-join": "^1.0.0",
-    "uuid": "^3.2.1",
-    "xml2js": "^0.4.17"
+    "uuid": "^3.2.1"
   },
   "devDependencies": {
     "@cumulus/cmrjs": "^1.10.0",
