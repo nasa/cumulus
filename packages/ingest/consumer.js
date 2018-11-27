@@ -1,12 +1,12 @@
 'use strict';
 
-const log = require('@cumulus/common/log');
+const { log, util: { deprecate } } = require('@cumulus/common');
 const { receiveSQSMessages, deleteSQSMessage } = require('@cumulus/common/aws');
 
 class Consume {
   // DEPRECATED: Consume has been superseded by Consumer
   constructor(queueUrl, messageLimit = 1, timeLimit = 90) {
-    log.warn('@cumulus/ingest/consumer.Consume is deprecated and will be removed in a future version. Use @cumulus/ingest/consumer.Consumer instead.');
+    deprecate('@cumulus/ingest/consumer.Consume', '1.10.3', '@cumulus/ingest/consumer.Consumer');
     this.queueUrl = queueUrl;
     this.messageLimit = messageLimit;
     this.timeLimit = timeLimit * 100;

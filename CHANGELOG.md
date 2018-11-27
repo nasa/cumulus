@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   which runs every minute by default, making this a messages-per-minute upper bound. SQS does not guarantee the number
   of messages returned per call, so this is not a fixed rate of consumption, only attempted number of messages received.
 
+### Deprecated
+- `@cumulus/ingest/consumer.Consume` due to unpredictable implementation. Use `@cumulus/ingest/consumer.Consumer`. 
+
 ## [v1.10.3] - 2018-10-31
 
 ### Added
