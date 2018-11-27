@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   messages the consumer will attempt to process per execution. Currently this is only used by the sf-starter consumer,
   which runs every minute by default, making this a messages-per-minute upper bound. SQS does not guarantee the number
   of messages returned per call, so this is not a fixed rate of consumption, only attempted number of messages received.
+- **CUMULUS-1050**
+  - Separated configuration flags for originalPayload/finalPayload cleanup such that they can be set to different retention times
 - **CUMULUS-798**
   - Added daily Executions cleanup CloudWatch event that triggers cleanExecutions lambda
   - Added cleanExecutions lambda that removes finalPayload/originalPayload field entries for records older than configured timeout value (execution_payload_retention_period), with a default of 30 days
