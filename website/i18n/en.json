@@ -5,6 +5,21 @@
     "previous": "Previous",
     "tagline": "This is a default tagline",
     "docs": {
+      "_book/api": {
+        "title": "_book/api"
+      },
+      "_book/development/forked-pr": {
+        "title": "_book/development/forked-pr"
+      },
+      "_book/development/integration-tests": {
+        "title": "_book/development/integration-tests"
+      },
+      "_book/development/quality-and-coverage": {
+        "title": "_book/development/quality-and-coverage"
+      },
+      "_book/development/release": {
+        "title": "_book/development/release"
+      },
       "adding-a-task": {
         "title": "Contributing a Task"
       },
@@ -22,6 +37,9 @@
       },
       "data-cookbooks/choice-states": {
         "title": "Choice States"
+      },
+      "data-cookbooks/cloudwatch-retention": {
+        "title": "Cloudwatch Retention"
       },
       "data-cookbooks/cnm-workflow": {
         "title": "CNM Workflow"
@@ -71,6 +89,12 @@
       "ems_reporting": {
         "title": "EMS Reporting"
       },
+      "features/execution_payload_retention": {
+        "title": "Execution Payload Retention"
+      },
+      "features/dead_letter_queues": {
+        "title": "Dead Letter Queues"
+      },
       "lambda_versioning": {
         "title": "Lambda Versioning"
       },
@@ -85,6 +109,9 @@
       },
       "team": {
         "title": "Team"
+      },
+      "upgrade/1.11.0": {
+        "title": "Upgrading to Cumulus 1.11.0"
       },
       "upgrade/1.6.0": {
         "title": "Upgrading to Cumulus 1.6.0"
