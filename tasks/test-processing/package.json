@@ -20,7 +20,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/cumulus-message-adapter-js": "^1.0.4",
-    "@cumulus/integration-tests": "^1.10.4"
+    "@cumulus/integration-tests": "1.10.4"
   },
   "devDependencies": {
     "webpack": "~4.5.0",
