@@ -21,7 +21,7 @@
     "test": "test"
   },
   "dependencies": {
-    "@cumulus/common": "^1.10.3",
+    "@cumulus/common": "1.10.3",
     "commander": "^2.15.0"
   },
   "devDependencies": {

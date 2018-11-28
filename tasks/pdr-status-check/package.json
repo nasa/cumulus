@@ -36,11 +36,12 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "^1.10.3",
+    "@cumulus/common": "1.10.3",
     "@cumulus/cumulus-message-adapter-js": "^1.0.4",
-    "@cumulus/ingest": "^1.10.4",
-    "@cumulus/test-data": "^1.10.2",
-    "lodash.get": "^4.4.2"
+    "@cumulus/ingest": "1.10.4",
+    "@cumulus/test-data": "1.10.2",
+    "lodash.get": "^4.4.2",
+    "p-map": "^2.0.0"
   },
   "devDependencies": {
     "ava": "^0.25.0",
