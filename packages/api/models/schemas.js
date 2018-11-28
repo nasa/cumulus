@@ -12,19 +12,21 @@ module.exports.accessToken = {
       description: 'The access token returned by the OAuth provider',
       type: 'string'
     },
+    createdAt: { type: 'integer' },
+    expirationTime: {
+      description: 'The expiration time of the access token in milliseconds',
+      type: 'integer'
+    },
     refreshToken: {
       title: 'Refresh Token',
       description: 'The refresh token returned by the OAuth provider',
       type: 'string'
     },
+    updatedAt: { type: 'integer' },
     username: {
       title: 'Username',
       description: 'The username associated with the access token. For valid request authorization, the username must match a record in the Users table',
       type: 'string'
-    },
-    expirationTime: {
-      description: 'The expiration time of the access token in milliseconds',
-      type: 'integer'
     }
   }
 };
