@@ -102,4 +102,4 @@ jobs:
 branches:
   only:
     - master
-    - v1.10.1-ratefix
+    - /^v.*$/
