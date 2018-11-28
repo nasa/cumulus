@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v1.10.4] - 2018-11-28
 
 ### Added
 - **CUMULUS-1008**
@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   of messages returned per call, so this is not a fixed rate of consumption, only attempted number of messages received.
 
 ### Deprecated
-- `@cumulus/ingest/consumer.Consume` due to unpredictable implementation. Use `@cumulus/ingest/consumer.Consumer`. 
+- `@cumulus/ingest/consumer.Consume` due to unpredictable implementation. Use `@cumulus/ingest/consumer.Consumer`.
 
 ### Changed
 - Backported update of `packages/api` dependency `@mapbox/dyno` to `1.4.2` to mitigate `event-stream` vulnerability.
@@ -595,7 +595,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.10.3...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.10.4...HEAD
+[v1.10.4]: https://github.com/nasa/cumulus/compare/v1.10.3...v1.10.4
 [v1.10.3]: https://github.com/nasa/cumulus/compare/v1.10.2...v1.10.3
 [v1.10.2]: https://github.com/nasa/cumulus/compare/v1.10.1...v1.10.2
 [v1.10.1]: https://github.com/nasa/cumulus/compare/v1.10.0...v1.10.1
