@@ -8,9 +8,9 @@ stages:
   - name: unit test
   - name: integration test
   - name: deploy
-    if: type != pull_request AND tag =~ ^v\d+
+    if: type != pull_request AND tag =~ ^v\d+.*
   - name: deployment test
-    if: type != pull_request AND tag =~ ^v\d+
+    if: type != pull_request AND tag =~ ^v\d+.*
 
 jobs:
   include:
@@ -98,8 +98,3 @@ jobs:
       env:
         - DEPLOYMENT=cumulus-from-npm
         - USE_NPM_PACKAGES=true
-
-branches:
-  only:
-    - master
-    - /^v.*$/
