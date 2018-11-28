@@ -75,7 +75,7 @@ async function token(event, oAuth2Provider) {
         });
       }
 
-      log.error('Error caught when checking code:', e);
+      log.error('Error caught when checking code', e);
       return new AuthorizationFailureResponse({ error: e, message: e.message });
     }
   }
