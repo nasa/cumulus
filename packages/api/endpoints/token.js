@@ -45,8 +45,6 @@ async function token(event, oAuth2Provider) {
         expirationTime
       } = await oAuth2Provider.getAccessToken(code);
 
-      // todo: check if user has access before returning token?
-
       const accessTokenModel = new AccessToken();
 
       await accessTokenModel.create({
