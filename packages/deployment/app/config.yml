@@ -4,8 +4,10 @@ default:
 
   urs_url: https://uat.urs.earthdata.nasa.gov
 
-
-  execution_payload_retention_period: 30 ## days
+  non_complete_execution_payload_timeout: 30 ## days
+  complete_execution_payload_timeout: 10     ## days
+  complete_execution_payload_disable: false
+  non_complete_execution_payload_disable: false
 
   oauth:
     provider: earthdata
@@ -112,6 +114,8 @@ default:
             function: Fn::Sub
             value: '${AWS::Region}'
     docker:
+      # Allowed registry values are 'dockerhub' and 'ecr'
+      registry: dockerhub
       storageDriver: overlay2
 
   es:
@@ -163,18 +167,19 @@ default:
     - name: download
     - name: backend
 
+  sqs_consumer_rate: 500
   sqs:
     startSF:
-      visibilityTimeout: 20
+      visibilityTimeout: 60
       retry: 30
       consumer:
         - lambda: sqs2sf
           schedule: rate(1 minute)
-          messageLimit: 10
+          messageLimit: '{{sqs_consumer_rate}}'
           state: ENABLED
 
     triggerLambdaFailure:
-      MessageRetantionPeriod: 1209600
+      MessageRetentionPeriod: 1209600
       visibilityTimeout: 60
 
     kinesisFailure:

@@ -14,6 +14,7 @@ default:
     awsRegion: us-east-1
     AsyncOperationsTable: '{{stackName}}-AsyncOperationsTable'
     asyncOperationRunnerRole: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-lambda-api-gateway'
+    sqs_consumer_rate: 300
     IngestAndPublishGranule:
       IngestGranuleOutput:
         granules:
@@ -436,6 +437,28 @@ mvd-dev:
 jc:
   stackName: jc
   stackNameNoDash: jc
+  ecs:
+    services:
+      EcsTaskHelloWorld:
+        image: 000000000000.dkr.ecr.us-east-1.amazonaws.com/cumulus-dev-testing:latest
+        cpu: 400
+        memory: 700
+        count: 1
+        envs:
+          AWS_DEFAULT_REGION:
+            function: Fn::Sub
+            value: '${AWS::Region}'
+        commands:
+          - cumulus-ecs-task
+          - '--activityArn'
+          - function: Ref
+            value: EcsTaskHelloWorldActivity
+          - '--lambdaArn'
+          - function: Ref
+            value: HelloWorldLambdaFunction
+    docker:
+      username: cumulususer
+      registry: ecr
 
 mhs:
   stackName: mhs

@@ -308,7 +308,7 @@ class UpdatedKes extends Kes {
         console.log(`Adding named dead letter queue for ${lambda.name}`);
         const queueName = `${lambda.name}DeadLetterQueue`;
         this.config.sqs[queueName] = {
-          MessageRetantionPeriod: this.config.DLQDefaultMessageRetentionPeriod,
+          MessageRetentionPeriod: this.config.DLQDefaultMessageRetentionPeriod,
           visibilityTimeout: this.config.DLQDefaultTimeout
         };
         this.config.lambdas[lambda.name].deadletterqueue = queueName;
