@@ -4,7 +4,7 @@ const get = require('lodash.get');
 const log = require('@cumulus/common/log');
 
 const { google } = require('googleapis');
-const { JsonWebTokenError } = require('jsonwebtoken');
+const { JsonWebTokenError, TokenExpiredError } = require('jsonwebtoken');
 
 const EarthdataLogin = require('../lib/EarthdataLogin');
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
@@ -101,9 +101,12 @@ async function refreshAccessToken(request, oAuth2Provider) {
   if (requestJwtToken) {
     let accessToken;
     try {
-      ({ accessToken } = verifyJwtToken(requestJwtToken, { ignoreExpiration: true }));
+      ({ accessToken } = verifyJwtToken(requestJwtToken));
     }
     catch (err) {
+      if (err instanceof TokenExpiredError) {
+        return new InvalidTokenResponse();
+      }
       if (err instanceof JsonWebTokenError) {
         return new InvalidTokenResponse();
       }
