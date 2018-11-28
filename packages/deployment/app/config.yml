@@ -166,18 +166,19 @@ default:
     - name: download
     - name: backend
 
+  sqs_consumer_rate: 500
   sqs:
     startSF:
-      visibilityTimeout: 20
+      visibilityTimeout: 60
       retry: 30
       consumer:
         - lambda: sqs2sf
           schedule: rate(1 minute)
-          messageLimit: 10
+          messageLimit: '{{sqs_consumer_rate}}'
           state: ENABLED
 
     triggerLambdaFailure:
-      MessageRetantionPeriod: 1209600
+      MessageRetentionPeriod: 1209600
       visibilityTimeout: 60
 
     kinesisFailure:

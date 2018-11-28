@@ -27,6 +27,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Removed code from `granule.js` which looked for files in S3 using `{ Bucket: discoveredFile.bucket, Key: discoveredFile.name }`. This is obsolete since `@cumulus/ingest` uses a `file-staging` and `constructCollectionId()` directory prefixes by default.
 
 ### Added
+- **CUMULUS-1008**
+  - New `config.yml` parameter for SQS consumers: `sqs_consumer_rate: (default 500)`, which is the maximum number of
+  messages the consumer will attempt to process per execution. Currently this is only used by the sf-starter consumer,
+  which runs every minute by default, making this a messages-per-minute upper bound. SQS does not guarantee the number
+  of messages returned per call, so this is not a fixed rate of consumption, only attempted number of messages received.
 - **CUMULUS-1050**
   - Separated configuration flags for originalPayload/finalPayload cleanup such that they can be set to different retention times
 - **CUMULUS-798**
@@ -65,7 +70,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     `@cumulus/test-data.streamTestData()` to safely load test data. These
     functions should be used instead of using `require()` to load test data,
     which could lead to tests interferring with each other.
-  - Add a `@cumulus/util/deprecate()` function to mark a piece of code as
+  - Add a `@cumulus/common/util/deprecate()` function to mark a piece of code as
     deprecated
 - **CUMULUS-986**
   - Added `waitForTestExecutionStart` to `@cumulus/integration-tests`
@@ -83,6 +88,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Deprecated
 - `@cumulus/ingest/aws/StepFunction.pullEvent()`. Use `@cumulus/common/aws.pullStepFunctionEvent()`.
+- `@cumulus/ingest/consumer.Consume` due to unpredictable implementation. Use `@cumulus/ingest/consumer.Consumer`. 
+Call `Consumer.consume()` instead of `Consume.read()`.
 
 ## [v1.10.3] - 2018-10-31
 
