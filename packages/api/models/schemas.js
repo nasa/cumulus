@@ -1,5 +1,34 @@
 'use strict';
 
+module.exports.accessToken = {
+  title: 'Access Token Object',
+  description: 'Cumulus API AccessToken Table schema',
+  type: 'object',
+  required: ['accessToken', 'refreshToken'],
+  additionalProperties: false,
+  properties: {
+    accessToken: {
+      title: 'Access Token',
+      description: 'The access token returned by the OAuth provider',
+      type: 'string'
+    },
+    refreshToken: {
+      title: 'Refresh Token',
+      description: 'The refresh token returned by the OAuth provider',
+      type: 'string'
+    },
+    username: {
+      title: 'Username',
+      description: 'The username associated with the access token. For valid request authorization, the username must match a record in the Users table',
+      type: 'string'
+    },
+    expirationTime: {
+      description: 'The expiration time of the access token in milliseconds',
+      type: 'integer'
+    }
+  }
+};
+
 // Async Operation record definition
 module.exports.asyncOperation = {
   title: 'AsyncOperation Object',
