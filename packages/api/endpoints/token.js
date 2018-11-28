@@ -18,7 +18,8 @@ const {
   AuthorizationFailureResponse,
   LambdaProxyResponse,
   InternalServerError,
-  InvalidTokenResponse
+  InvalidTokenResponse,
+  TokenExpiredResponse
 } = require('../lib/responses');
 
 const buildPermanentRedirectResponse = (location) =>
@@ -105,7 +106,7 @@ async function refreshAccessToken(request, oAuth2Provider) {
     }
     catch (err) {
       if (err instanceof TokenExpiredError) {
-        return new InvalidTokenResponse();
+        return new TokenExpiredResponse();
       }
       if (err instanceof JsonWebTokenError) {
         return new InvalidTokenResponse();
