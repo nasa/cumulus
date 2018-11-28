@@ -32,7 +32,7 @@ Add a link reference for the github "compare" view at the bottom of the CHANGELO
 
 ### 4. Update example/package.json
 
-Update example/package.json to point to the new Cumulus packages.
+Update example/package.json to point to the new Cumulus packages. If this is a backport, pin the version of the Cumulus packages to the specific version being released. Do not use `^` or `~`.
 
 ### 5. Cut new version of Cumulus Documentation
 
@@ -43,6 +43,8 @@ git add .
 ```
 
 Where `${release_version}` corresponds to the version tag `v1.2.3`, for example.
+
+Note: This is for 1.10.3 or later.
 
 ### 6. Create a pull request against the master branch
 
