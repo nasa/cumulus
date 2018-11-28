@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Removed code from `granule.js` which looked for files in S3 using `{ Bucket: discoveredFile.bucket, Key: discoveredFile.name }`. This is obsolete since `@cumulus/ingest` uses a `file-staging` and `constructCollectionId()` directory prefixes by default.
 
 ### Added
+- **CUMULUS-1050**
+  - Separated configuration flags for originalPayload/finalPayload cleanup such that they can be set to different retention times
 - **CUMULUS-798**
   - Added daily Executions cleanup CloudWatch event that triggers cleanExecutions lambda
   - Added cleanExecutions lambda that removes finalPayload/originalPayload field entries for records older than configured timeout value (execution_payload_retention_period), with a default of 30 days
