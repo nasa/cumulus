@@ -425,7 +425,7 @@ Resources:
       Targets:
         - Id: {{@../key}}WatcherScheduler
           Input:
-            Fn::Sub: '{"queueUrl": "${ {{@../key}}SQS}", "messageLimit": {{this.messageLimit}} }'
+            Fn::Sub: '{"queueUrl": "${ {{@../key}}SQS}", "messageLimit": {{this.messageLimit}}, "timeLimit": 60 }'
           Arn:
             Fn::GetAtt:
             - {{this.lambda}}LambdaFunction

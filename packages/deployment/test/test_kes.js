@@ -293,7 +293,7 @@ test.serial('addLambdaDeadLetterQueues adds dead letter queue to the sqs configu
   kes.addLambdaDeadLetterQueues();
 
   const expected = {
-    MessageRetantionPeriod: 5,
+    MessageRetentionPeriod: 5,
     visibilityTimeout: 60
   };
 
