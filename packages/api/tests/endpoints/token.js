@@ -140,12 +140,7 @@ test.serial('GET /token with a code but no state returns the access token', asyn
 });
 
 test.serial('GET /token with a code and state results in a redirect to that state', async (t) => {
-  const getAccessTokenResponse = {
-    username: 'my-username',
-    accessToken: 'my-access-token',
-    refreshToken: 'my-refresh-token',
-    expirationTime: 12345
-  };
+  const getAccessTokenResponse = fakeAccessTokenFactory();
 
   const mockOAuth2Provider = {
     getAccessToken: async () => getAccessTokenResponse
@@ -250,7 +245,10 @@ test.serial('GET /refresh with an invalid token results in an authorization fail
 });
 
 test.serial('GET /refresh with an non-existent token results in an authorization failure response', async (t) => {
-  const accessTokenRecord = fakeAccessTokenFactory();
+  const userRecord = fakeUserFactory();
+  await userModel.create(userRecord);
+
+  const accessTokenRecord = fakeAccessTokenFactory({ username: userRecord.userName });
   const jwtToken = createJwtToken(accessTokenRecord);
 
   const request = {
@@ -264,6 +262,23 @@ test.serial('GET /refresh with an non-existent token results in an authorization
   const response = await handleRequest(request);
 
   assertions.isInvalidAccessTokenResponse(t, response);
+});
+
+test.serial('GET /refresh with an unauthorized user results in an authorization failure response', async (t) => {
+  const accessTokenRecord = fakeAccessTokenFactory();
+  const jwtToken = createJwtToken(accessTokenRecord);
+
+  const request = {
+    httpMethod: 'POST',
+    resource: '/refresh',
+    body: JSON.stringify({
+      token: jwtToken
+    })
+  };
+
+  const response = await handleRequest(request);
+
+  assertions.isUnauthorizedUserResponse(t, response);
 });
 
 test.serial('GET /refresh returns 500 if refresh token request fails', async (t) => {
@@ -294,13 +309,6 @@ test.serial('GET /refresh returns 500 if refresh token request fails', async (t)
 });
 
 test.serial('GET /refresh with a valid token returns a refreshed token', async (t) => {
-  const refreshedTokenRecord = fakeAccessTokenFactory();
-  const refreshedJwtToken = createJwtToken(refreshedTokenRecord);
-
-  const mockOAuth2Provider = {
-    refreshAccessToken: async () => refreshedTokenRecord
-  };
-
   const userRecord = fakeUserFactory();
   await userModel.create(userRecord);
 
@@ -315,6 +323,13 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
     body: JSON.stringify({
       token: requestJwtToken
     })
+  };
+
+  const refreshedTokenRecord = fakeAccessTokenFactory();
+  const refreshedJwtToken = createJwtToken(refreshedTokenRecord);
+
+  const mockOAuth2Provider = {
+    refreshAccessToken: async () => refreshedTokenRecord
   };
 
   const response = await handleRequest(request, mockOAuth2Provider);
