@@ -394,7 +394,7 @@ test.serial('EarthdataLogin.refreshAccessToken() throws an OAuth2AuthenticationF
     .reply(400);
 
   try {
-    await earthdataLogin.refreshAccessToken('refresh-token');
+    await earthdataLogin.refreshAccessToken('invalid-refresh-token');
     t.fail('Expected a OAuth2AuthenticationFailure error');
   }
   catch (err) {
