@@ -38,14 +38,18 @@ async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
   process.env.AccessTokensTable = `${prefix}-AccessTokensTable`;
   const accessTokenModel = new AccessToken();
 
-  const accessTokenRecord = fakeAccessTokenFactory({ username: userName });
-  const { accessToken } = await accessTokenModel.create(accessTokenRecord);
+  const {
+    accessToken,
+    refreshToken,
+    expirationTime
+  } = fakeAccessTokenFactory();
+  await accessTokenModel.create({ accessToken, refreshToken });
 
-  const jwtToken = createJwtToken(accessTokenRecord);
+  const jwtAuthToken = createJwtToken({ accessToken, username: userName, expirationTime });
 
   // Add authorization header to the request
   payload.headers = payload.headers || {};
-  payload.headers.Authorization = `Bearer ${jwtToken}`;
+  payload.headers.Authorization = `Bearer ${jwtAuthToken}`;
 
   let apiOutput;
   try {
