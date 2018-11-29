@@ -226,9 +226,9 @@ test.serial('EarthdataLogin.getAccessToken() returns token information for a val
 
   t.is(accessToken, 'access-token');
   t.is(refreshToken, 'refresh-token');
-  // expires_in (100 seconds) * 10 = 1000 milliseconds
-  t.true(expirationTime >= requestStartTime + (100 * 10));
-  t.true(expirationTime <= requestEndTime + (100 * 10));
+  // expires_in (100 seconds) * 1000 = 1000000 milliseconds
+  t.true(expirationTime >= requestStartTime + (100 * 1000));
+  t.true(expirationTime <= requestEndTime + (100 * 1000));
   t.is(username, 'sidney');
 });
 
@@ -375,9 +375,9 @@ test.serial('EarthdataLogin.refreshAccessToken() returns token information for a
 
   t.is(accessToken, 'access-token');
   t.is(refreshToken, 'refresh-token');
-  // expires_in (100 seconds) * 10 = 1000 milliseconds
-  t.true(expirationTime >= requestStartTime + (100 * 10));
-  t.true(expirationTime <= requestEndTime + (100 * 10));
+  // expires_in (100 seconds) * 1000 = 1000000 milliseconds
+  t.true(expirationTime >= requestStartTime + (100 * 1000));
+  t.true(expirationTime <= requestEndTime + (100 * 1000));
   t.is(username, 'sidney');
 });
 
