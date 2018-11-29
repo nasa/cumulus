@@ -7,24 +7,19 @@ const {
   fakeUserFactory
 } = require('../../lib/testUtils');
 const { RecordDoesNotExist } = require('../../lib/errors');
-const { AccessToken, User } = require('../../models');
+const { AccessToken } = require('../../models');
 
 let accessTokenModel;
-let userModel;
 test.before(async () => {
   process.env.AccessTokensTable = randomString();
-  process.env.UsersTable = randomString();
 
   accessTokenModel = new AccessToken();
-  userModel = new User();
 
   await accessTokenModel.createTable();
-  await userModel.createTable();
 });
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
-  await userModel.deleteTable();
 });
 
 test('AccessToken model sets the tableName from a param', (t) => {
@@ -44,8 +39,6 @@ test('AccessToken model sets the table name from the AccessTokensTable environme
 
 test('create() creates a valid access token record', async (t) => {
   const userRecord = fakeUserFactory();
-  await userModel.create(userRecord);
-
   const accessTokenData = fakeAccessTokenFactory({ username: userRecord.userName });
   const accessTokenRecord = await accessTokenModel.create(accessTokenData);
 
@@ -53,6 +46,16 @@ test('create() creates a valid access token record', async (t) => {
   t.is(accessTokenRecord.refreshToken, accessTokenData.refreshToken);
   t.is(accessTokenRecord.username, userRecord.userName);
   t.truthy(accessTokenRecord.expirationTime);
+});
+
+test('create() creates a valid access token record without username or expiration', async (t) => {
+  const { accessToken, refreshToken } = fakeAccessTokenFactory();
+  const accessTokenRecord = await accessTokenModel.create({ accessToken, refreshToken });
+
+  t.is(accessTokenRecord.accessToken, accessToken);
+  t.is(accessTokenRecord.refreshToken, refreshToken);
+  t.is(accessTokenRecord.username, undefined);
+  t.is(accessTokenRecord.expirationTime, undefined);
 });
 
 test('get() throws error for missing record', async (t) => {
