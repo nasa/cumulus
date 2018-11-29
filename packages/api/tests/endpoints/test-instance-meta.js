@@ -6,13 +6,18 @@ const { randomString } = require('@cumulus/common/test-utils');
 const assertions = require('../../lib/assertions');
 const models = require('../../models');
 const {
-  fakeUserFactory,
-  testEndpoint
+  testEndpoint,
+  createFakeJwtAuthToken,
+  fakeAccessTokenFactory
 } = require('../../lib/testUtils');
+const {
+  createJwtToken
+} = require('../../lib/token');
 const instanceMetaEndpoint = require('../../endpoints/instance-meta');
 
 const CMR_ENVIRONMENT = randomString();
 const CMR_PROVIDER = randomString();
+let accessTokenModel;
 let userModel;
 let authHeaders;
 
@@ -21,14 +26,23 @@ test.before(async () => {
   userModel = new models.User();
   await userModel.createTable();
 
+  process.env.AccessTokensTable = randomString();
+  accessTokenModel = new models.AccessToken();
+  await accessTokenModel.createTable();
+
   process.env.CMR_ENVIRONMENT = CMR_ENVIRONMENT;
   process.env.cmr_provider = CMR_PROVIDER;
 
-
-  const authToken = (await userModel.create(fakeUserFactory())).password;
+  process.env.TOKEN_SECRET = randomString();
+  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
-    Authorization: `Bearer ${authToken}`
+    Authorization: `Bearer ${jwtAuthToken}`
   };
+});
+
+test.after.always(async () => {
+  await userModel.deleteTable();
+  await accessTokenModel.deleteTable();
 });
 
 test('GET returns expected metadata', (t) => {
@@ -48,7 +62,7 @@ test('GET returns expected metadata', (t) => {
   });
 });
 
-test('GET with invalid access token returns an unauthorized response', async (t) => {
+test('GET with invalid access token returns an invalid token response', async (t) => {
   const request = {
     httpMethod: 'GET',
     headers: {
@@ -56,11 +70,27 @@ test('GET with invalid access token returns an unauthorized response', async (t)
     }
   };
   return testEndpoint(instanceMetaEndpoint, request, (response) => {
+    assertions.isInvalidAccessTokenResponse(t, response);
+  });
+});
+
+test('GET with unauthorized user token returns an unauthorized user response', async (t) => {
+  const accessTokenRecord = await accessTokenModel.create(fakeAccessTokenFactory());
+  const requestToken = createJwtToken(accessTokenRecord);
+
+  const request = {
+    httpMethod: 'GET',
+    headers: {
+      Authorization: `Bearer ${requestToken}`
+    }
+  };
+
+  return testEndpoint(instanceMetaEndpoint, request, (response) => {
     assertions.isUnauthorizedUserResponse(t, response);
   });
 });
 
-test('GET without without an Authorization header returns an Authorization Missing response', async (t) => {
+test('GET without an Authorization header returns an Authorization Missing response', async (t) => {
   const request = {
     httpMethod: 'GET',
     headers: {}

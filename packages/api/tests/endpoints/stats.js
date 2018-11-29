@@ -12,6 +12,7 @@ const assertions = require('../../lib/assertions');
 
 let userModel;
 test.before(async () => {
+  process.env.AccessTokensTable = randomString();
   process.env.UsersTable = randomString();
 
   userModel = new models.User();
@@ -69,7 +70,7 @@ test('CUMULUS-911 GET /stats/average without an Authorization header returns an 
 
 ///
 
-test('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response', (t) => {
+test('CUMULUS-912 GET without pathParameters and with an invalid access token returns an unauthorized response', (t) => {
   const request = {
     httpMethod: 'GET',
     headers: {
@@ -78,9 +79,11 @@ test('CUMULUS-912 GET without pathParameters and with an unauthorized user retur
   };
 
   return testEndpoint(statsEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
+
+test.todo('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('CUMULUS-912 GET /stats/histogram with an unauthorized user returns an unauthorized response', (t) => {
   const request = {
@@ -92,11 +95,11 @@ test('CUMULUS-912 GET /stats/histogram with an unauthorized user returns an unau
   };
 
   return testEndpoint(statsEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
 
-test('CUMULUS-912 GET /stats/aggregate with an unauthorized user returns an unauthorized response', (t) => {
+test('CUMULUS-912 GET /stats/aggregate with an invalid access token returns an unauthorized response', (t) => {
   const request = {
     httpMethod: 'GET',
     resource: '/stats/aggregate',
@@ -106,11 +109,11 @@ test('CUMULUS-912 GET /stats/aggregate with an unauthorized user returns an unau
   };
 
   return testEndpoint(statsEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
 
-test('CUMULUS-912 GET /stats/average with an unauthorized user returns an unauthorized response', (t) => {
+test('CUMULUS-912 GET /stats/average with an invalid access token returns an unauthorized response', (t) => {
   const request = {
     httpMethod: 'GET',
     resource: '/stats/average',
@@ -120,6 +123,6 @@ test('CUMULUS-912 GET /stats/average with an unauthorized user returns an unauth
   };
 
   return testEndpoint(statsEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });

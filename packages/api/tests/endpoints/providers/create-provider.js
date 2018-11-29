@@ -7,7 +7,7 @@ const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
 const providerEndpoint = require('../../../endpoints/providers');
 const {
-  fakeUserFactory,
+  createFakeJwtAuthToken,
   fakeProviderFactory,
   testEndpoint
 } = require('../../../lib/testUtils');
@@ -15,15 +15,19 @@ const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 const { RecordDoesNotExist } = require('../../../lib/errors');
 
+process.env.AccessTokensTable = randomString();
 process.env.UsersTable = randomString();
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
+process.env.TOKEN_SECRET = randomString();
+
 let providerModel;
 const esIndex = randomString();
 let esClient;
 
 let authHeaders;
+let accessTokenModel;
 let userModel;
 
 const providerDoesNotExist = async (t, providerId) => {
@@ -40,9 +44,12 @@ test.before(async () => {
   userModel = new models.User();
   await userModel.createTable();
 
-  const authToken = (await userModel.create(fakeUserFactory())).password;
+  accessTokenModel = new models.AccessToken();
+  await accessTokenModel.createTable();
+
+  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
-    Authorization: `Bearer ${authToken}`
+    Authorization: `Bearer ${jwtAuthToken}`
   };
 
   esClient = await Search.es('fakehost');
@@ -55,6 +62,7 @@ test.beforeEach(async (t) => {
 
 test.after.always(async () => {
   await providerModel.deleteTable();
+  await accessTokenModel.deleteTable();
   await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
 });
@@ -73,7 +81,7 @@ test('CUMULUS-911 POST without an Authorization header returns an Authorization 
   });
 });
 
-test('CUMULUS-912 POST with an unauthorized user returns an unauthorized response', async (t) => {
+test('CUMULUS-912 POST with an invalid access token returns an unauthorized response', async (t) => {
   const newProvider = fakeProviderFactory();
   const request = {
     httpMethod: 'POST',
@@ -84,10 +92,12 @@ test('CUMULUS-912 POST with an unauthorized user returns an unauthorized respons
   };
 
   return testEndpoint(providerEndpoint, request, async (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
     await providerDoesNotExist(t, newProvider.id);
   });
 });
+
+test.todo('CUMULUS-912 POST with an unauthorized user returns an unauthorized response');
 
 test('POST with invalid authorization scheme returns an invalid authorization response', (t) => {
   const newProvider = fakeProviderFactory();

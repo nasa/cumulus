@@ -8,23 +8,26 @@ const models = require('../../../models');
 const bootstrap = require('../../../lambdas/bootstrap');
 const collectionsEndpoint = require('../../../endpoints/collections');
 const {
+  createFakeJwtAuthToken,
   fakeCollectionFactory,
-  fakeUserFactory,
   testEndpoint
 } = require('../../../lib/testUtils');
 const EsCollection = require('../../../es/collections');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 
+process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
+process.env.TOKEN_SECRET = randomString();
 
 const esIndex = randomString();
 let esClient;
 
 let authHeaders;
+let accessTokenModel;
 let collectionModel;
 let userModel;
 
@@ -39,9 +42,12 @@ test.before(async () => {
   userModel = new models.User();
   await userModel.createTable();
 
-  const authToken = (await userModel.create(fakeUserFactory())).password;
+  accessTokenModel = new models.AccessToken();
+  await accessTokenModel.createTable();
+
+  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
-    Authorization: `Bearer ${authToken}`
+    Authorization: `Bearer ${jwtAuthToken}`
   };
 
   esClient = await Search.es('fakehost');
@@ -53,6 +59,7 @@ test.beforeEach(async (t) => {
 });
 
 test.after.always(async () => {
+  await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
   await userModel.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
@@ -70,7 +77,7 @@ test('CUMULUS-911 GET without pathParameters and without an Authorization header
   });
 });
 
-test('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+test('CUMULUS-912 GET without pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'GET',
     headers: {
@@ -79,9 +86,11 @@ test('CUMULUS-912 GET without pathParameters and with an unauthorized user retur
   };
 
   return testEndpoint(collectionsEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
+
+test.todo('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response');
 
 test.serial('default returns list of collections', async (t) => {
   const listEvent = {

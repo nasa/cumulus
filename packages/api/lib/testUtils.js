@@ -2,6 +2,7 @@
 
 const { randomString } = require('@cumulus/common/test-utils');
 const { Search } = require('../es/search');
+const { createJwtToken } = require('./token');
 
 /**
  * mocks the context object of the lambda function with
@@ -240,7 +241,22 @@ function fakeAccessTokenFactory(params = {}) {
   };
 }
 
+async function createFakeJwtAuthToken({ accessTokenModel, userModel }) {
+  const userRecord = fakeUserFactory();
+  await userModel.create(userRecord);
+
+  const {
+    accessToken,
+    refreshToken,
+    expirationTime
+  } = fakeAccessTokenFactory();
+  await accessTokenModel.create({ accessToken, refreshToken });
+
+  return createJwtToken({ accessToken, expirationTime, username: userRecord.userName });
+}
+
 module.exports = {
+  createFakeJwtAuthToken,
   testEndpoint,
   fakeAccessTokenFactory,
   fakeGranuleFactory,
