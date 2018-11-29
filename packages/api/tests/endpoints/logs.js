@@ -13,6 +13,7 @@ const assertions = require('../../lib/assertions');
 
 let userModel;
 test.before(async () => {
+  process.env.AccessTokensTable = randomString();
   process.env.UsersTable = randomString();
 
   userModel = new User();
@@ -60,7 +61,7 @@ test('CUMULUS-911 GET with pathParameters and without an Authorization header re
   });
 });
 
-test('CUMULUS-912 GET without pathParameters and an unauthorized user returns a 401 "not authorized" response', async (t) => {
+test('CUMULUS-912 GET without pathParameters and an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'GET',
     headers: {
@@ -69,11 +70,13 @@ test('CUMULUS-912 GET without pathParameters and an unauthorized user returns a 
   };
 
   return testEndpoint(logsEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
 
-test('CUMULUS-912 GET /stats/logs with an unauthorized user returns a 401 "not authorized" response', (t) => {
+test.todo('CUMULUS-912 GET without pathParameters and an unauthorized user returns an unauthorized response');
+
+test('CUMULUS-912 GET /stats/logs with an invalid access token returns an unauthorized response', (t) => {
   const request = {
     httpMethod: 'GET',
     resource: '/stats/logs',
@@ -83,11 +86,11 @@ test('CUMULUS-912 GET /stats/logs with an unauthorized user returns a 401 "not a
   };
 
   return testEndpoint(logsEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
 
-test('CUMULUS-912 GET with pathParameters and an unauthorized user returns a 401 "not authorized" response', (t) => {
+test('CUMULUS-912 GET with pathParameters and an invalid access token returns an unauthorized response', (t) => {
   const request = {
     httpMethod: 'GET',
     pathParameters: {
@@ -99,6 +102,6 @@ test('CUMULUS-912 GET with pathParameters and an unauthorized user returns a 401
   };
 
   return testEndpoint(logsEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });

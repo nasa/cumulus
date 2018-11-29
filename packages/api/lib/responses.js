@@ -165,3 +165,25 @@ class InternalServerError extends LambdaProxyResponse {
   }
 }
 exports.InternalServerError = InternalServerError;
+
+class InvalidTokenResponse extends LambdaProxyResponse {
+  constructor() {
+    super({
+      json: true,
+      statusCode: 403,
+      body: { message: 'Invalid access token' }
+    });
+  }
+}
+exports.InvalidTokenResponse = InvalidTokenResponse;
+
+class TokenExpiredResponse extends LambdaProxyResponse {
+  constructor() {
+    super({
+      json: true,
+      statusCode: 403,
+      body: { message: 'Access token has expired' }
+    });
+  }
+}
+exports.TokenExpiredResponse = TokenExpiredResponse;
