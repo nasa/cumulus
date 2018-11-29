@@ -81,6 +81,7 @@ describe('the sf-starter lambda function', () => {
     });
 
     it('that has messages', async () => {
+      pending('until SQS provides a reliable getNumberOfMessages function');
       const { Attributes } = await sqs().getQueueAttributes(qAttrParams).promise();
       expect(Attributes.ApproximateNumberOfMessages).toBe(initialMessageCount.toString());
     });
@@ -99,8 +100,9 @@ describe('the sf-starter lambda function', () => {
     });
 
     it('up to its message limit', async () => {
+      pending('until SQS provides a way to confirm a given message/set of messages was deleted');
       const { Attributes } = await sqs().getQueueAttributes(qAttrParams).promise();
-      const numOfMessages = parseInt(Attributes.ApproximateNumberOfMessages, 10); // sqs returns number as string
+      const numOfMessages = parseInt(Attributes.ApproximateNumberOfMessages, 10); // sometimes returns 30 due to nature of SQS, failing test
       expect(numOfMessages).toBe(initialMessageCount - messagesConsumed);
     });
 
