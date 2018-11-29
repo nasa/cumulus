@@ -487,25 +487,3 @@ mboyd-int:
 pq:
   stackName: pq
   stackNameNoDash: pq
-
-mboyd-ds-cumulus:
-  stackName: mboyd-ds-cumulus
-  stackNameNoDash: mboydDsCumulus
-  es: null
-
-  buckets:
-    internal:
-      name: mboyd-ds-cumulus-internal
-      type: internal
-    private:
-      name: mboyd-ds-cumulus-private
-      type: private
-    protected:
-      name: mboyd-ds-cumulus-protected
-      type: protected
-    public:
-      name: mboyd-ds-cumulus-public
-      type: public
-    protected-2:
-      name: mboyd-ds-cumulus-protected-2
-      type: protected
