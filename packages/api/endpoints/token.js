@@ -13,7 +13,7 @@ const {
   verifyJwtToken
 } = require('../lib/token');
 
-const { AccessToken } = require('../models');
+const { AccessToken, User } = require('../models');
 const {
   AuthorizationFailureResponse,
   LambdaProxyResponse,
@@ -101,8 +101,9 @@ async function refreshAccessToken(request, oAuth2Provider) {
 
   if (requestJwtToken) {
     let accessToken;
+    let username;
     try {
-      ({ accessToken } = verifyJwtToken(requestJwtToken));
+      ({ accessToken, username } = verifyJwtToken(requestJwtToken));
     }
     catch (err) {
       if (err instanceof TokenExpiredError) {
@@ -110,6 +111,19 @@ async function refreshAccessToken(request, oAuth2Provider) {
       }
       if (err instanceof JsonWebTokenError) {
         return new InvalidTokenResponse();
+      }
+    }
+
+    const userModel = new User();
+    try {
+      await userModel.get({ userName: username });
+    }
+    catch (err) {
+      if (err.name === 'RecordDoesNotExist') {
+        return new AuthorizationFailureResponse({
+          message: 'User not authorized',
+          statusCode: 403
+        });
       }
     }
 
@@ -127,7 +141,6 @@ async function refreshAccessToken(request, oAuth2Provider) {
 
     let newAccessToken;
     let newRefreshToken;
-    let username;
     let expirationTime;
     try {
       ({
