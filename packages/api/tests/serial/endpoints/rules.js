@@ -8,7 +8,7 @@ const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
 const rulesEndpoint = require('../../../endpoints/rules');
 const {
-  fakeUserFactory,
+  createFakeJwtAuthToken,
   testEndpoint
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
@@ -16,10 +16,13 @@ const assertions = require('../../../lib/assertions');
 
 const esIndex = randomString();
 
+process.env.AccessTokensTable = randomString();
 process.env.RulesTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.bucket = randomString();
+process.env.TOKEN_SECRET = randomString();
+
 const workflowName = randomString();
 const workflowfile = `${process.env.stackName}/workflows/${workflowName}.json`;
 
@@ -37,9 +40,11 @@ const testRule = {
   state: 'DISABLED'
 };
 
+let accessTokenModel;
 let authHeaders;
 let ruleModel;
 let userModel;
+
 test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
 
@@ -58,13 +63,17 @@ test.before(async () => {
   userModel = new models.User();
   await userModel.createTable();
 
-  const authToken = (await userModel.create(fakeUserFactory())).password;
+  accessTokenModel = new models.AccessToken();
+  await accessTokenModel.createTable();
+
+  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
-    Authorization: `Bearer ${authToken}`
+    Authorization: `Bearer ${jwtAuthToken}`
   };
 });
 
 test.after.always(async () => {
+  await accessTokenModel.deleteTable();
   await ruleModel.deleteTable();
   await userModel.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.bucket);
@@ -140,7 +149,7 @@ test('CUMULUS-911 DELETE with pathParameters and without an Authorization header
   });
 });
 
-test('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+test('CUMULUS-912 GET without pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'GET',
     headers: {
@@ -149,11 +158,11 @@ test('CUMULUS-912 GET without pathParameters and with an unauthorized user retur
   };
 
   return testEndpoint(rulesEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
 
-test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+test('CUMULUS-912 GET with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'GET',
     pathParameters: {
@@ -165,11 +174,13 @@ test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns 
   };
 
   return testEndpoint(rulesEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
 
-test('CUMULUS-912 POST with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+test.todo('CUMULUS-912 GET with an unauthorized user returns an unauthorized response');
+
+test('CUMULUS-912 POST with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'POST',
     pathParameters: {
@@ -181,11 +192,13 @@ test('CUMULUS-912 POST with pathParameters and with an unauthorized user returns
   };
 
   return testEndpoint(rulesEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
 
-test('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+test.todo('CUMULUS-912 POST with pathParameters and with an unauthorized user returns an unauthorized response');
+
+test('CUMULUS-912 PUT with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'PUT',
     pathParameters: {
@@ -197,11 +210,13 @@ test('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns 
   };
 
   return testEndpoint(rulesEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
 
-test('CUMULUS-912 DELETE with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
+
+test('CUMULUS-912 DELETE with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'DELETE',
     pathParameters: {
@@ -213,9 +228,11 @@ test('CUMULUS-912 DELETE with pathParameters and with an unauthorized user retur
   };
 
   return testEndpoint(rulesEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
+
+test.todo('CUMULUS-912 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
 
 // TODO(aimee): Add a rule to ES. List uses ES and we don't have any rules in ES.
 test('default returns list of rules', (t) => {
@@ -273,7 +290,7 @@ test('When calling the API endpoint to delete an existing rule it does not retur
   });
 });
 
-test('403 error when calling the API endpoint to delete an existing rule without operator credentials', async (t) => {
+test('403 error when calling the API endpoint to delete an existing rule without an invalid access token', async (t) => {
   const newRule = Object.assign({}, testRule, { name: 'side_step_left' });
   const postEvent = {
     httpMethod: 'POST',
@@ -297,7 +314,7 @@ test('403 error when calling the API endpoint to delete an existing rule without
   };
 
   await testEndpoint(rulesEndpoint, deleteEvent, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 
   const getEvent = {

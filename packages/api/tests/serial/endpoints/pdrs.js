@@ -8,9 +8,9 @@ const bootstrap = require('../../../lambdas/bootstrap');
 const pdrEndpoint = require('../../../endpoints/pdrs');
 const indexer = require('../../../es/indexer');
 const {
+  createFakeJwtAuthToken,
   testEndpoint,
-  fakePdrFactory,
-  fakeUserFactory
+  fakePdrFactory
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
@@ -31,14 +31,18 @@ function uploadPdrToS3(stackName, bucket, pdrName, pdrBody) {
 let esClient;
 let fakePdrs;
 const esIndex = randomString();
+process.env.AccessTokensTable = randomString();
 process.env.PdrsTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
+process.env.TOKEN_SECRET = randomString();
 
+let accessTokenModel;
 let authHeaders;
 let pdrModel;
 let userModel;
+
 test.before(async () => {
   // create esClient
   esClient = await Search.es('fakehost');
@@ -55,9 +59,12 @@ test.before(async () => {
   userModel = new models.User();
   await userModel.createTable();
 
-  const authToken = (await userModel.create(fakeUserFactory())).password;
+  accessTokenModel = new models.AccessToken();
+  await accessTokenModel.createTable();
+
+  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
-    Authorization: `Bearer ${authToken}`
+    Authorization: `Bearer ${jwtAuthToken}`
   };
 
   // create fake granule records
@@ -71,6 +78,7 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
+  await accessTokenModel.deleteTable();
   await pdrModel.deleteTable();
   await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
@@ -116,7 +124,7 @@ test('CUMULUS-911 DELETE with pathParameters and without an Authorization header
   });
 });
 
-test('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+test('CUMULUS-912 GET without pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'GET',
     headers: {
@@ -125,11 +133,11 @@ test('CUMULUS-912 GET without pathParameters and with an unauthorized user retur
   };
 
   return testEndpoint(pdrEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
 
-test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+test('CUMULUS-912 GET with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'GET',
     pathParameters: {
@@ -141,11 +149,13 @@ test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns 
   };
 
   return testEndpoint(pdrEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
 
-test('CUMULUS-912 DELETE with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+test.todo('CUMULUS-912 GET with an unauthorized user returns an unauthorized response');
+
+test('CUMULUS-912 DELETE with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'DELETE',
     pathParameters: {
@@ -157,9 +167,11 @@ test('CUMULUS-912 DELETE with pathParameters and with an unauthorized user retur
   };
 
   return testEndpoint(pdrEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
+
+test.todo('CUMULUS-912 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('default returns list of pdrs', (t) => {
   const listEvent = {
