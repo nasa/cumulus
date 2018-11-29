@@ -171,12 +171,7 @@ test.serial('GET /token with a code and state results in a redirect to that stat
 });
 
 test.serial('GET /token with a code and state results in a redirect containing the access token', async (t) => {
-  const getAccessTokenResponse = {
-    username: 'my-username',
-    accessToken: 'my-access-token',
-    refreshToken: 'my-refresh-token',
-    expirationTime: 12345
-  };
+  const getAccessTokenResponse = fakeAccessTokenFactory();
   const jwtToken = createJwtToken(getAccessTokenResponse);
 
   const mockOAuth2Provider = {
@@ -198,21 +193,14 @@ test.serial('GET /token with a code and state results in a redirect containing t
 
   const locationHeader = new URL(response.headers.Location);
 
+  t.is(locationHeader.origin, 'http://www.example.com');
+  t.is(locationHeader.pathname, '/state');
   t.is(locationHeader.searchParams.get('token'), jwtToken);
 });
 
 test.serial('When using Earthdata Login, GET /token with a code stores the access token in DynamoDb', async (t) => {
-  const accessToken = randomString();
-  const username = randomString();
-  const refreshToken = randomString();
-  const expirationTime = 12345;
-
-  const getAccessTokenResponse = {
-    accessToken,
-    expirationTime,
-    refreshToken,
-    username
-  };
+  const getAccessTokenResponse = fakeAccessTokenFactory();
+  const { accessToken, refreshToken } = getAccessTokenResponse;
 
   const mockOAuth2Provider = {
     getAccessToken: async () => getAccessTokenResponse
