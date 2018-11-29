@@ -24,6 +24,8 @@ To update cumulus' version number run:
 
 ![](https://static.notion-static.com/13acbe0a-c59d-4c42-90eb-23d4ec65c9db/Screen_Shot_2018-03-15_at_12.21.16_PM.png)
 
+Lerna will handle updating the packages and all of the dependent package version numbers. If a dependency has not been changed with the update, however, lerna will not update the version of the dependency.
+
 ### 3. Update CHANGELOG.md
 
 Update the CHANGELOG.md. Put a header under the 'Unreleased' section with the new version number and the date.
