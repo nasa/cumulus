@@ -8,7 +8,7 @@ const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
 const providerEndpoint = require('../../../endpoints/providers');
 const {
-  fakeUserFactory,
+  createFakeJwtAuthToken,
   fakeProviderFactory,
   testEndpoint
 } = require('../../../lib/testUtils');
@@ -20,11 +20,14 @@ process.env.UsersTable = randomString();
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
+process.env.TOKEN_SECRET = randomString();
+
 let providerModel;
 const esIndex = randomString();
 let esClient;
 
 let authHeaders;
+let accessTokenModel;
 let ruleModel;
 let userModel;
 
@@ -37,9 +40,13 @@ test.before(async () => {
   userModel = new models.User();
   await userModel.createTable();
 
-  const authToken = (await userModel.create(fakeUserFactory())).password;
+  process.env.AccessTokensTable = randomString();
+  accessTokenModel = new models.AccessToken();
+  await accessTokenModel.createTable();
+
+  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
-    Authorization: `Bearer ${authToken}`
+    Authorization: `Bearer ${jwtAuthToken}`
   };
 
   esClient = await Search.es('fakehost');
@@ -62,6 +69,7 @@ test.beforeEach(async (t) => {
 test.after.always(async () => {
   await providerModel.deleteTable();
   await userModel.deleteTable();
+  await accessTokenModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await ruleModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.bucket);
@@ -82,7 +90,7 @@ test('Attempting to delete a provider without an Authorization header returns an
   });
 });
 
-test('Attempting to delete a provider with an unauthorized user returns an unauthorized response', async (t) => {
+test('Attempting to delete a provider with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'DELETE',
     pathParameters: {
@@ -94,9 +102,11 @@ test('Attempting to delete a provider with an unauthorized user returns an unaut
   };
 
   return testEndpoint(providerEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
+
+test.todo('Attempting to delete a provider with an unauthorized user returns an unauthorized response');
 
 test('Deleting a provider removes the provider', (t) => {
   const { testProvider } = t.context;

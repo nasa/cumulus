@@ -13,12 +13,20 @@ const isFunction = require('lodash.isfunction');
 const isString = require('lodash.isstring');
 const log = require('@cumulus/common/log');
 const { deprecate } = require('@cumulus/common/util');
+const {
+  JsonWebTokenError,
+  TokenExpiredError
+} = require('jsonwebtoken');
+
 const { User } = require('../models');
+const { verifyJwtToken } = require('./token');
 const { errorify, findCaseInsensitiveKey } = require('./utils');
 const {
   AuthorizationFailureResponse,
   InternalServerError,
-  LambdaProxyResponse
+  LambdaProxyResponse,
+  InvalidTokenResponse,
+  TokenExpiredResponse
 } = require('./responses');
 
 function resp(context, err, bodyArg, statusArg = null, headers = {}) {
@@ -97,7 +105,7 @@ async function getAuthorizationFailureResponse(params) {
   }
 
   // Parse the Authorization header
-  const [scheme, token] = request.headers[authorizationKey].trim().split(/\s+/);
+  const [scheme, jwtToken] = request.headers[authorizationKey].trim().split(/\s+/);
 
   // Verify that the Authorization type was "Bearer"
   if (scheme !== 'Bearer') {
@@ -108,39 +116,38 @@ async function getAuthorizationFailureResponse(params) {
   }
 
   // Verify that a token was set in the Authorization header
-  if (!token) {
+  if (!jwtToken) {
     return new AuthorizationFailureResponse({
       error: 'invalid_request',
       message: 'Missing token'
     });
   }
 
-  const userModelClient = new User(usersTable);
-  const findUserResult = await userModelClient.scan({
-    filter: 'password = :token',
-    values: { ':token': token }
-  });
-
-  // Verify that the token exists in the DynamoDB Users table
-  if (findUserResult.Count !== 1) {
-    return new AuthorizationFailureResponse({
-      message: 'User not authorized',
-      statusCode: 403
-    });
+  let username;
+  try {
+    ({ username } = verifyJwtToken(jwtToken));
+  }
+  catch (error) {
+    log.error('Error caught when checking JWT token', error);
+    if (error instanceof TokenExpiredError) {
+      return new TokenExpiredResponse();
+    }
+    if (error instanceof JsonWebTokenError) {
+      return new InvalidTokenResponse();
+    }
   }
 
-  // Not sure how this could ever happen
-  if (findUserResult.Items[0].expires === undefined) {
-    log.error('Token does not have an expires field:', token);
-    return new InternalServerError();
+  const userModel = new User({ tableName: usersTable });
+  try {
+    await userModel.get({ userName: username });
   }
-
-  // Verify that the token has not expired
-  if (findUserResult.Items[0].expires < Date.now()) {
-    return new AuthorizationFailureResponse({
-      message: 'Access token has expired',
-      statusCode: 403
-    });
+  catch (err) {
+    if (err.name === 'RecordDoesNotExist') {
+      return new AuthorizationFailureResponse({
+        message: 'User not authorized',
+        statusCode: 403
+      });
+    }
   }
 
   return null;

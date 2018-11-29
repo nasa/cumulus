@@ -10,22 +10,25 @@ const bootstrap = require('../../../lambdas/bootstrap');
 const collectionsEndpoint = require('../../../endpoints/collections');
 const {
   fakeCollectionFactory,
-  fakeUserFactory,
-  testEndpoint
+  testEndpoint,
+  createFakeJwtAuthToken
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 
+process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
+process.env.TOKEN_SECRET = randomString();
 
 const esIndex = randomString();
 let esClient;
 
 let authHeaders;
+let accessTokenModel;
 let collectionModel;
 let ruleModel;
 let userModel;
@@ -41,9 +44,12 @@ test.before(async () => {
   userModel = new models.User();
   await userModel.createTable();
 
-  const authToken = (await userModel.create(fakeUserFactory())).password;
+  accessTokenModel = new models.AccessToken();
+  await accessTokenModel.createTable();
+
+  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
-    Authorization: `Bearer ${authToken}`
+    Authorization: `Bearer ${jwtAuthToken}`
   };
 
   esClient = await Search.es('fakehost');
@@ -64,6 +70,7 @@ test.beforeEach(async (t) => {
 });
 
 test.after.always(async () => {
+  await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
   await userModel.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.internal);
@@ -96,7 +103,7 @@ test('Attempting to delete a collection without an Authorization header returns 
   });
 });
 
-test('Attempting to delete a collection with an unauthorized user returns an unauthorized response', async (t) => {
+test('Attempting to delete a collection with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'DELETE',
     pathParameters: {
@@ -109,9 +116,11 @@ test('Attempting to delete a collection with an unauthorized user returns an una
   };
 
   return testEndpoint(collectionsEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
+
+test.todo('Attempting to delete a collection with an unauthorized user returns an unauthorized response');
 
 test('Deleting a collection removes it', async (t) => {
   const collection = fakeCollectionFactory();
