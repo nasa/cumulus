@@ -6,7 +6,7 @@ const {
 } = require('@cumulus/common');
 const bulkDeleteEndpoint = require('../../endpoints/bulk-delete');
 const { AccessToken, User } = require('../../models');
-const { createJwtAuthToken } = require('../../lib/testUtils');
+const { createFakeJwtAuthToken } = require('../../lib/testUtils');
 
 let accessTokenModel;
 let userModel;
@@ -24,7 +24,7 @@ test.before(async () => {
   await accessTokenModel.createTable();
 
   process.env.TOKEN_SECRET = randomString();
-  const jwtAuthToken = await createJwtAuthToken({ accessTokenModel, userModel });
+  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
     Authorization: `Bearer ${jwtAuthToken}`
   };

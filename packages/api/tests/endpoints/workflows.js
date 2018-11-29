@@ -12,7 +12,7 @@ const workflowList = require('../data/workflow_list.json');
 const models = require('../../models');
 const workflowsEndpoint = require('../../endpoints/workflows');
 const {
-  createJwtAuthToken,
+  createFakeJwtAuthToken,
   testEndpoint
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
@@ -47,7 +47,7 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  const jwtAuthToken = await createJwtAuthToken({ accessTokenModel, userModel });
+  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
     Authorization: `Bearer ${jwtAuthToken}`
   };

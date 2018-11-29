@@ -241,7 +241,7 @@ function fakeAccessTokenFactory(params = {}) {
   };
 }
 
-async function createJwtAuthToken({ accessTokenModel, userModel }) {
+async function createFakeJwtAuthToken({ accessTokenModel, userModel }) {
   const userRecord = fakeUserFactory();
   await userModel.create(userRecord);
 
@@ -256,7 +256,7 @@ async function createJwtAuthToken({ accessTokenModel, userModel }) {
 }
 
 module.exports = {
-  createJwtAuthToken,
+  createFakeJwtAuthToken,
   testEndpoint,
   fakeAccessTokenFactory,
   fakeGranuleFactory,
