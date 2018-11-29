@@ -39,10 +39,10 @@ The <a href="https://github.com/nasa/cumulus/tree/master/example">Cumulus exampl
 </ul></li>
 <li>Configuring multiple buckets of the same type, i.e. multiple protected buckets and configuring different files to go in different buckets</li>
 </ul>
-<p>To get started with this new functionality, check out <a href="https://nasa.github.io/cumulus/workflows/workflow-configuration-how-to.html">Workflow Configuration How-To's</a> and the <a href="https://github.com/nasa/cumulus/blob/master/example/data/collections/s3_MOD09GQ_006.json#L17">Cumulus example collection configuration.</a></p>
+<p>To get started with this new functionality, check out <a href="https://nasa.github.io/cumulus/docs/workflows/workflow-configuration-how-to">Workflow Configuration How-To's</a> and the <a href="https://github.com/nasa/cumulus/blob/master/example/data/collections/s3_MOD09GQ_006.json#L17">Cumulus example collection configuration.</a></p>
 <h2><a class="anchor" aria-hidden="true" id="deployment-changes"></a><a href="#deployment-changes" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Deployment Changes</h2>
 <p>Upgrade kes version to 2.2.2
-An IAM template is now in the deployment package. To use this template when deploying IAMs, add <code>--template node_modules/@cumulus/deployment/iam</code> to your deployment command (this is the same way app deployment is done - see <a href="https://nasa.github.io/cumulus/deployment">deployment documentation</a>). Make sure to redeploy your IAM roles.
+An IAM template is now in the deployment package. To use this template when deploying IAMs, add <code>--template node_modules/@cumulus/deployment/iam</code> to your deployment command (this is the same way app deployment is done - see <a href="https://nasa.github.io/cumulus/docs/deployment/deployment-readme">deployment documentation</a>). Make sure to redeploy your IAM roles.
 <strong>Config Changes</strong>
 Configure system_bucket in iam/config.yml and app/config.yml - kes will use this instead of buckets.internal and the system_bucket in the workflows will be populated with this value. (<a href="https://github.com/nasa/cumulus/blob/master/example/app/config.yml#L54">Example</a>)
 The structure of buckets has changed. It is no longer key/value, but has a key, bucket name, and level. The key can be used in collection configurations so if the bucket name changes, it can be updated in the configuration without having to update collection definitions. (<a href="https://github.com/nasa/cumulus/blob/master/example/app/config.yml#L56">Example</a>)
@@ -97,8 +97,8 @@ Add MoveGranules to your workflow before Post to CMR. Lambdas.yml and Workflows.
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'f7e0be879553661f9043322d119069c8',
-                indexName: 'nasa_cumulus',
+                apiKey: 'undefined',
+                indexName: 'undefined',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>
