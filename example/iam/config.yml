@@ -255,26 +255,3 @@ mboyd-int:
 
 pq:
   prefix: pq
-
-mboyd-ds-cumulus:
-  prefix: mboyd-ds-cumulus
-  stackName: mboyd-ds-cumulus-iam
-
-  system_bucket: mboyd-ds-cumulus-internal
-
-  buckets:
-    internal:
-      name: mboyd-ds-cumulus-internal
-      type: internal
-    private:
-      name: mboyd-ds-cumulus-private
-      type: private
-    protected:
-      name: mboyd-ds-cumulus-protected
-      type: protected
-    public:
-      name: mboyd-ds-cumulus-public
-      type: public
-    protected-2:
-      name: mboyd-ds-cumulus-protected-2
-      type: protected
