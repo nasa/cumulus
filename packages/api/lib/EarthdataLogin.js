@@ -128,7 +128,7 @@ class EarthdataLogin extends OAuth2 {
         refreshToken: response.body.refresh_token,
         username: response.body.endpoint.split('/').pop(),
         // expires_in value is in seconds, but expirationTime is milliseconds
-        expirationTime: Date.now() + (response.body.expires_in * 10)
+        expirationTime: Date.now() + (response.body.expires_in * 1000)
       };
     }
     catch (err) {
@@ -165,7 +165,7 @@ class EarthdataLogin extends OAuth2 {
         accessToken: response.body.access_token,
         refreshToken: response.body.refresh_token,
         username: response.body.endpoint.split('/').pop(),
-        expirationTime: Date.now() + (response.body.expires_in * 10)
+        expirationTime: Date.now() + (response.body.expires_in * 1000)
       };
     }
     catch (err) {
