@@ -5,7 +5,7 @@ const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const reconciliationReportEndpoint = require('../../../endpoints/reconciliation-reports');
 const {
-  createJwtAuthToken,
+  createFakeJwtAuthToken,
   testEndpoint
 } = require('../../../lib/testUtils');
 const assertions = require('../../../lib/assertions');
@@ -32,7 +32,7 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  const jwtAuthToken = await createJwtAuthToken({ accessTokenModel, userModel });
+  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
     Authorization: `Bearer ${jwtAuthToken}`
   };

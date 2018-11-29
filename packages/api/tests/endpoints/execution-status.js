@@ -8,7 +8,7 @@ const models = require('../../models');
 const assertions = require('../../lib/assertions');
 const executionStatusEndpoint = rewire('../../endpoints/execution-status');
 const {
-  createJwtAuthToken,
+  createFakeJwtAuthToken,
   testEndpoint
 } = require('../../lib/testUtils');
 
@@ -149,7 +149,7 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  const jwtAuthToken = await createJwtAuthToken({ accessTokenModel, userModel });
+  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
     Authorization: `Bearer ${jwtAuthToken}`
   };

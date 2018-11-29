@@ -20,7 +20,7 @@ const {
   fakeAccessTokenFactory,
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
-  createJwtAuthToken
+  createFakeJwtAuthToken
 } = require('../../../lib/testUtils');
 const {
   createJwtToken
@@ -92,7 +92,7 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  accessToken = await createJwtAuthToken({ accessTokenModel, userModel });
+  accessToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 });
 
 test.beforeEach(async (t) => {

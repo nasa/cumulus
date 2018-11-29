@@ -10,7 +10,7 @@ const {
   AsyncOperation: AsyncOperationModel,
   User
 } = require('../../models');
-const { createJwtAuthToken } = require('../../lib/testUtils');
+const { createFakeJwtAuthToken } = require('../../lib/testUtils');
 
 let asyncOperationModel;
 let accessTokenModel;
@@ -38,7 +38,7 @@ test.before(async () => {
 
   process.env.TOKEN_SECRET = randomString();
 
-  const jwtAuthToken = await createJwtAuthToken({ accessTokenModel, userModel });
+  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
     Authorization: `Bearer ${jwtAuthToken}`
   };

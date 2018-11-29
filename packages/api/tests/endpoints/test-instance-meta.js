@@ -7,7 +7,7 @@ const assertions = require('../../lib/assertions');
 const models = require('../../models');
 const {
   testEndpoint,
-  createJwtAuthToken,
+  createFakeJwtAuthToken,
   fakeAccessTokenFactory
 } = require('../../lib/testUtils');
 const {
@@ -34,7 +34,7 @@ test.before(async () => {
   process.env.cmr_provider = CMR_PROVIDER;
 
   process.env.TOKEN_SECRET = randomString();
-  const jwtAuthToken = await createJwtAuthToken({ accessTokenModel, userModel });
+  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
     Authorization: `Bearer ${jwtAuthToken}`
   };
