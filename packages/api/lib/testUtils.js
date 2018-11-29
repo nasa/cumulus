@@ -245,15 +245,18 @@ async function createJwtAuthToken({ accessTokenModel, userModel }) {
   const userRecord = fakeUserFactory();
   await userModel.create(userRecord);
 
-  const accessTokenRecord = fakeAccessTokenFactory({ username: userRecord.userName });
-  await accessTokenModel.create(accessTokenRecord);
+  const {
+    accessToken,
+    refreshToken,
+    expirationTime
+  } = fakeAccessTokenFactory();
+  await accessTokenModel.create({ accessToken, refreshToken });
 
-  return createJwtToken(accessTokenRecord);
+  return createJwtToken({ accessToken, expirationTime, username: userRecord.userName });
 }
 
 module.exports = {
   createJwtAuthToken,
-  createJwtToken,
   testEndpoint,
   fakeAccessTokenFactory,
   fakeGranuleFactory,
