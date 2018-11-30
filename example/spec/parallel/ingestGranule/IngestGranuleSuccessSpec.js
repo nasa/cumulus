@@ -324,8 +324,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(result).not.toEqual(false);
     });
 
-    // Disabling due to CMR UAT outage
-    xit('updates the CMR metadata online resources with the final metadata location', () => {
+    it('updates the CMR metadata online resources with the final metadata location', () => {
       const distEndpoint = config.DISTRIBUTION_ENDPOINT;
       const extension1 = urljoin(files[0].bucket, files[0].filepath);
       const filename = `https://${files[2].bucket}.s3.amazonaws.com/${files[2].filepath}`;
@@ -390,8 +389,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
       });
 
-      // Disabling due to CMR UAT outage
-      xit('has the granule with a CMR link', () => {
+      it('has the granule with a CMR link', () => {
         expect(granule.cmrLink).not.toBeUndefined();
       });
 
@@ -420,8 +418,7 @@ describe('The S3 Ingest Granules workflow', () => {
           expect(reingestResponse.warning && reingestResponse.warning.includes('overwritten')).toBeTruthy();
         });
 
-        // Disabling due to CMR UAT outage
-        xit('overwrites granule files', async () => {
+        it('overwrites granule files', async () => {
           // Await reingest completion
           const reingestGranuleExecution = await waitForTestExecutionStart({
             workflowName,
@@ -462,8 +459,7 @@ describe('The S3 Ingest Granules workflow', () => {
         });
       });
 
-      // Disabling due to CMR UAT outage
-      xit('removeFromCMR removes the ingested granule from CMR', async () => {
+      it('removeFromCMR removes the ingested granule from CMR', async () => {
         const existsInCMR = await conceptExists(cmrLink);
 
         expect(existsInCMR).toEqual(true);
@@ -480,8 +476,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(doesExist).toEqual(false);
       });
 
-      // Disabling due to CMR UAT outage
-      xit('applyWorkflow PublishGranule publishes the granule to CMR', async () => {
+      it('applyWorkflow PublishGranule publishes the granule to CMR', async () => {
         const existsInCMR = await conceptExists(cmrLink);
         expect(existsInCMR).toEqual(false);
 
@@ -509,8 +504,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(doesExist).toEqual(true);
       });
 
-      // Disabling due to CMR UAT outage
-      xdescribe('when moving a granule', () => {
+      describe('when moving a granule', () => {
         let file;
         let destinationKey;
         let destinations;
