@@ -76,5 +76,9 @@ class GoogleOAuth2 extends OAuth2 {
       username: userDataResponse.data.emails[0].value
     };
   }
+
+  async refreshAccessToken() {
+    throw new Error('Not implemented');
+  }
 }
 module.exports = GoogleOAuth2;

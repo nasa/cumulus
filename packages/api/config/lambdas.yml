@@ -140,7 +140,10 @@ cleanExecutions:
   source: 'node_modules/@cumulus/api/dist/'
   namedLambdaDeadLetterQueue: true
   envs:
-    executionPayloadRetentionPeriod: '{{execution_payload_retention_period}}'
+    nonCompleteExecutionPayloadTimeout: '{{non_complete_execution_payload_timeout}}'
+    completeExecutionPayloadTimeout: '{{complete_execution_payload_timeout}}'
+    nonCompleteExecutionPayloadTimeoutDisable: '{{non_complete_execution_payload_disable}}'
+    completeExecutionPayloadTimeoutDisable: '{{complete_execution_payload_disable}}'
     ExecutionsTable:
       function: Ref
       value: ExecutionsTableDynamoDB
@@ -200,11 +203,9 @@ KinesisInboundEventLogger:
   timeout: 300
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
-  namedLambdaDeadLetterQueue: true
 
 KinesisOutboundEventLogger:
   handler: index.logger
   timeout: 300
   memory: 512
   source: 'node_modules/@cumulus/api/dist'
-  namedLambdaDeadLetterQueue: true

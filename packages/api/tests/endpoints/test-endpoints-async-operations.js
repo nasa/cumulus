@@ -7,12 +7,14 @@ const {
 } = require('@cumulus/common');
 const asyncOperationsEndpoint = require('../../endpoints/async-operations');
 const {
+  AccessToken,
   AsyncOperation: AsyncOperationModel,
   User
 } = require('../../models');
-const { fakeUserFactory } = require('../../lib/testUtils');
+const { createFakeJwtAuthToken } = require('../../lib/testUtils');
 
 let asyncOperationModel;
+let accessTokenModel;
 let userModel;
 let authHeaders;
 let context;
@@ -31,8 +33,16 @@ test.before(async () => {
   userModel = new User();
   await userModel.createTable();
 
-  const authToken = (await userModel.create(fakeUserFactory())).password;
-  authHeaders = { Authorization: `Bearer ${authToken}` };
+  process.env.AccessTokensTable = randomString();
+  accessTokenModel = new AccessToken();
+  await accessTokenModel.createTable();
+
+  process.env.TOKEN_SECRET = randomString();
+
+  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  authHeaders = {
+    Authorization: `Bearer ${jwtAuthToken}`
+  };
 
   context = {
     AsyncOperationsTable: asyncOperationModel.tableName,
@@ -56,6 +66,8 @@ test.after.always(async () => {
   catch (err) {
     if (err.code !== 'ResourceNotFoundException') throw err;
   }
+
+  await accessTokenModel.deleteTable();
 });
 
 test.serial('GET /async-operation returns a 404 status code', async (t) => {

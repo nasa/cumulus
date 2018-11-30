@@ -8,26 +8,31 @@ const bootstrap = require('../../../lambdas/bootstrap');
 const executionEndpoint = require('../../../endpoints/executions');
 const indexer = require('../../../es/indexer');
 const {
+  createFakeJwtAuthToken,
   testEndpoint,
-  fakeExecutionFactory,
-  fakeUserFactory
+  fakeExecutionFactory
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
 
 // create all the variables needed across this test
 let esClient;
+let esIndex;
 const fakeExecutions = [];
-const esIndex = randomString();
+process.env.AccessTokensTable = randomString();
 process.env.ExecutionsTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
+process.env.TOKEN_SECRET = randomString();
 
+let accessTokenModel;
 let authHeaders;
 let executionModel;
 let userModel;
+
 test.before(async () => {
+  esIndex = randomString();
   // create esClient
   esClient = await Search.es('fakehost');
 
@@ -50,13 +55,17 @@ test.before(async () => {
   userModel = new models.User();
   await userModel.createTable();
 
-  const authToken = (await userModel.create(fakeUserFactory())).password;
+  accessTokenModel = new models.AccessToken();
+  await accessTokenModel.createTable();
+
+  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
-    Authorization: `Bearer ${authToken}`
+    Authorization: `Bearer ${jwtAuthToken}`
   };
 });
 
 test.after.always(async () => {
+  await accessTokenModel.deleteTable();
   await executionModel.deleteTable();
   await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });

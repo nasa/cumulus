@@ -8,7 +8,7 @@ const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
 const providerEndpoint = require('../../../endpoints/providers');
 const {
-  fakeUserFactory,
+  createFakeJwtAuthToken,
   fakeProviderFactory,
   testEndpoint
 } = require('../../../lib/testUtils');
@@ -19,10 +19,13 @@ process.env.UsersTable = randomString();
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
+process.env.TOKEN_SECRET = randomString();
+
 let providerModel;
 const esIndex = randomString();
 let esClient;
 
+let accessTokenModel;
 let authHeaders;
 let userModel;
 
@@ -35,9 +38,13 @@ test.before(async () => {
   userModel = new models.User();
   await userModel.createTable();
 
-  const authToken = (await userModel.create(fakeUserFactory())).password;
+  process.env.AccessTokensTable = randomString();
+  accessTokenModel = new models.AccessToken();
+  await accessTokenModel.createTable();
+
+  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
-    Authorization: `Bearer ${authToken}`
+    Authorization: `Bearer ${jwtAuthToken}`
   };
 
   esClient = await Search.es('fakehost');
@@ -49,12 +56,13 @@ test.beforeEach(async (t) => {
 });
 
 test.after.always(async () => {
+  await accessTokenModel.deleteTable();
   await providerModel.deleteTable();
   await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
 });
 
-test('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+test('CUMULUS-912 PUT with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'PUT',
     pathParameters: {
@@ -66,9 +74,11 @@ test('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns 
   };
 
   return testEndpoint(providerEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
+
+test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('PUT updates an existing provider', (t) => {
   const updatedLimit = 2;
