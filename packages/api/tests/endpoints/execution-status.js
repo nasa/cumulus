@@ -8,7 +8,7 @@ const models = require('../../models');
 const assertions = require('../../lib/assertions');
 const executionStatusEndpoint = rewire('../../endpoints/execution-status');
 const {
-  fakeUserFactory,
+  createFakeJwtAuthToken,
   testEndpoint
 } = require('../../lib/testUtils');
 
@@ -135,20 +135,28 @@ executionStatusEndpoint.__set__('StepFunction', stepFunctionMock);
 executionStatusEndpoint.__set__('getS3Object', s3Mock);
 
 let authHeaders;
+let accessTokenModel;
 let userModel;
+
 test.before(async () => {
+  process.env.TOKEN_SECRET = randomString();
+  process.env.AccessTokensTable = randomString();
   process.env.UsersTable = randomString();
 
   userModel = new models.User();
   await userModel.createTable();
 
-  const authToken = (await userModel.create(fakeUserFactory())).password;
+  accessTokenModel = new models.AccessToken();
+  await accessTokenModel.createTable();
+
+  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
   authHeaders = {
-    Authorization: `Bearer ${authToken}`
+    Authorization: `Bearer ${jwtAuthToken}`
   };
 });
 
 test.after.always(async () => {
+  await accessTokenModel.deleteTable();
   await userModel.deleteTable();
 });
 
@@ -166,7 +174,7 @@ test('CUMULUS-911 GET without an Authorization header returns an Authorization M
   });
 });
 
-test('CUMULUS-912 GET with an unauthorized user returns an unauthorized response', async (t) => {
+test('CUMULUS-912 GET with an invalid access token returns an unauthorized response', async (t) => {
   const request = {
     httpMethod: 'GET',
     pathParameters: {
@@ -178,9 +186,11 @@ test('CUMULUS-912 GET with an unauthorized user returns an unauthorized response
   };
 
   return testEndpoint(executionStatusEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
+    assertions.isInvalidAccessTokenResponse(t, response);
   });
 });
+
+test.todo('CUMULUS-912 GET with an unauthorized user returns an unauthorized response');
 
 test('returns ARNs for execution and state machine', (t) => {
   const event = {

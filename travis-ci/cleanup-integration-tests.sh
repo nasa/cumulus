@@ -38,12 +38,6 @@ if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
     --yes
 
   echo Delete app deployment
-
-  ./node_modules/.bin/kes lambda S3AccessTest delete \
-    --kes-folder app \
-    --region us-west-1 \
-    --deployment "$DEPLOYMENT" \
-    --yes
 fi
 
 # Release the stack

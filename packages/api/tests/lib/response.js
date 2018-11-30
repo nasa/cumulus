@@ -5,42 +5,37 @@ const {
   testUtils: { randomString }
 } = require('@cumulus/common');
 
-const { User } = require('../../models');
-const { fakeUserFactory } = require('../../lib/testUtils');
+const { AccessToken, User } = require('../../models');
+const { createFakeJwtAuthToken, fakeAccessTokenFactory, fakeUserFactory } = require('../../lib/testUtils');
+const assertions = require('../../lib/assertions');
+const { createJwtToken } = require('../../lib/token');
 const { getAuthorizationFailureResponse } = require('../../lib/response');
-const { InternalServerError } = require('../../lib/responses');
 
+let accessTokenModel;
 let usersTableName;
 let userModel;
 
 test.before(async () => {
-  process.env.UsersTable = randomString();
+  process.env.AccessTokensTable = randomString();
+  usersTableName = randomString();
+  process.env.UsersTable = usersTableName;
   userModel = new User();
+  accessTokenModel = new AccessToken();
+  process.env.TOKEN_SECRET = randomString();
+  await accessTokenModel.createTable();
   await userModel.createTable();
-});
-
-test.beforeEach(async (t) => {
-  const { userName, password } = await userModel.create(fakeUserFactory());
-  t.context.usersToDelete = [userName];
-  t.context.userName = userName;
-  t.context.token = password;
-});
-
-test.afterEach(async (t) => {
-  await Promise.all(
-    t.context.usersToDelete.map(((userName) =>
-      userModel.delete(userName)))
-  );
 });
 
 test.after.always(async (_t) => {
   await userModel.deleteTable();
+  await accessTokenModel.deleteTable();
 });
 
 test('getAuthorizationFailureResponse returns null if authorization succeeds', async (t) => {
+  const accessToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
   const request = {
     headers: {
-      Authorization: `Bearer ${t.context.token}`
+      Authorization: `Bearer ${accessToken}`
     }
   };
 
@@ -99,7 +94,7 @@ test('getAuthorizationFailureResponse returns an appropriate response when a tok
   t.is(parsedResponseBody.message, 'Missing token');
 });
 
-test('getAuthorizationFailureResponse returns an appropriate response when a token is not found in the Users table', async (t) => {
+test('getAuthorizationFailureResponse returns an appropriate response when an invalid access token is specifieid', async (t) => {
   const request = {
     headers: {
       Authorization: 'Bearer asdf'
@@ -109,62 +104,33 @@ test('getAuthorizationFailureResponse returns an appropriate response when a tok
   const response = await getAuthorizationFailureResponse({ request, usersTable: usersTableName });
 
   t.truthy(response);
-  t.is(response.statusCode, 403);
-
   t.is(response.headers['Content-Type'], 'application/json');
 
-  const parsedResponseBody = JSON.parse(response.body);
-  t.is(parsedResponseBody.message, 'User not authorized');
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test('getAuthorizationFailureResponse returns an appropriate response when the token has expired', async (t) => {
   const {
-    userName,
-    password
-  } = await userModel.create(fakeUserFactory({ expires: Date.now() - 60 }));
-
-  t.context.usersToDelete.push(userName);
-
-  const request = {
-    headers: {
-      Authorization: `Bearer ${password}`
-    }
-  };
-
-  const response = await getAuthorizationFailureResponse({ request, usersTable: usersTableName });
-
-  t.truthy(response);
-  t.is(response.statusCode, 403);
-
-  t.is(response.headers['Content-Type'], 'application/json');
-
-  const parsedResponseBody = JSON.parse(response.body);
-  t.is(parsedResponseBody.message, 'Access token has expired');
-});
-
-test('getAuthorizationFailureResponse returns an appropriate response if the user does not have an expiration', async (t) => {
-  const {
-    userName,
-    password
+    userName
   } = await userModel.create(fakeUserFactory());
-  await userModel.update({ userName }, {}, ['expires']);
 
-  t.context.usersToDelete.push(userName);
+  const accessTokenRecord = await accessTokenModel.create(
+    fakeAccessTokenFactory({
+      expirationTime: Date.now() - 60,
+      username: userName
+    })
+  );
+
+  const jwtToken = createJwtToken(accessTokenRecord);
 
   const request = {
     headers: {
-      Authorization: `Bearer ${password}`
+      Authorization: `Bearer ${jwtToken}`
     }
   };
 
   const response = await getAuthorizationFailureResponse({ request, usersTable: usersTableName });
 
   t.truthy(response);
-  t.true(response instanceof InternalServerError);
-  t.is(response.statusCode, 500);
-
-  t.is(response.headers['Content-Type'], 'application/json');
-
-  const parsedResponseBody = JSON.parse(response.body);
-  t.is(parsedResponseBody.message, 'Internal Server Error');
+  assertions.isExpiredAccessTokenResponse(t, response);
 });

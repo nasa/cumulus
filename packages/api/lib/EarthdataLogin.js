@@ -127,7 +127,45 @@ class EarthdataLogin extends OAuth2 {
         accessToken: response.body.access_token,
         refreshToken: response.body.refresh_token,
         username: response.body.endpoint.split('/').pop(),
-        expirationTime: Date.now() + (86400000)
+        // expires_in value is in seconds, but expirationTime is milliseconds
+        expirationTime: Date.now() + (response.body.expires_in * 1000)
+      };
+    }
+    catch (err) {
+      if (isBadRequestError(err)) {
+        throw new OAuth2AuthenticationFailure();
+      }
+
+      throw new OAuth2AuthenticationError(err.message);
+    }
+  }
+
+  requestRefreshAccessToken(refreshToken) {
+    return got.post(
+      this.tokenEndpoint(),
+      {
+        json: true,
+        form: true,
+        body: {
+          grant_type: 'refresh_token',
+          refresh_token: refreshToken
+        },
+        auth: `${this.clientId}:${this.clientPassword}`
+      }
+    );
+  }
+
+  async refreshAccessToken(refreshToken) {
+    if (!refreshToken) throw new TypeError('refreshToken is required');
+
+    try {
+      const response = await this.requestRefreshAccessToken(refreshToken);
+
+      return {
+        accessToken: response.body.access_token,
+        refreshToken: response.body.refresh_token,
+        username: response.body.endpoint.split('/').pop(),
+        expirationTime: Date.now() + (response.body.expires_in * 1000)
       };
     }
     catch (err) {
