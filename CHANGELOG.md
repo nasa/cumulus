@@ -6,9 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.11.0] - 2018-11-30
+
 **Please Note**
-- CUMULUS-817 includes a migration that requires reconfiguration/redeployment of IAM roles.  Please see the [upgrade instructions](https://nasa.github.io/cumulus/docs/upgrade/1.11.0) for more information.
-- CUMULUS-977 includes a few new SNS-related permissions added to the IAM roles that will require redeployment of IAM roles.
+- Redeploy IAM roles:
+  - CUMULUS-817 includes a migration that requires reconfiguration/redeployment of IAM roles.  Please see the [upgrade instructions](https://nasa.github.io/cumulus/docs/upgrade/1.11.0) for more information.
+  - CUMULUS-977 includes a few new SNS-related permissions added to the IAM roles that will require redeployment of IAM roles.
 - `cumulus-message-adapter` v1.0.13+ is required for `@cumulus/api` granule reingest API to work properly.  The latest version should be downloaded automatically by kes.
 - A `TOKEN_SECRET` value (preferably 256-bit for security) must be added to `.env` to securely sign JWTs used for authorization in `@cumulus/api`
 
@@ -684,7 +687,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.10.4...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.11.0...HEAD
+[v1.11.0]: https://github.com/nasa/cumulus/compare/v1.10.4...v1.11.0
 [v1.10.4]: https://github.com/nasa/cumulus/compare/v1.10.3...v1.10.4
 [v1.10.3]: https://github.com/nasa/cumulus/compare/v1.10.2...v1.10.3
 [v1.10.2]: https://github.com/nasa/cumulus/compare/v1.10.1...v1.10.2
