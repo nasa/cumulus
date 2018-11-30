@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/move-granules",
-  "version": "1.10.3",
+  "version": "1.10.4",
   "description": "Move granule files from staging to final location",
   "main": "index.js",
   "directories": {
@@ -38,11 +38,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmrjs": "^1.10.3",
-    "@cumulus/common": "^1.10.3",
+    "@cumulus/cmrjs": "1.10.3",
+    "@cumulus/common": "1.10.3",
     "@cumulus/cumulus-message-adapter-js": "^1.0.7",
-    "@cumulus/ingest": "^1.10.3",
-    "@cumulus/test-data": "^1.10.2",
+    "@cumulus/ingest": "1.10.4",
+    "@cumulus/test-data": "1.10.2",
     "lodash.clonedeep": "^4.5.0",
     "lodash.flatten": "^4.4.0",
     "lodash.get": "^4.4.2",
