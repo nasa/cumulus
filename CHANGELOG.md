@@ -29,11 +29,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added `refreshAccessToken` to `@cumulus/api/lib/EarthdataLogin` to manage refresh token requests with the Earthdata OAuth provider
 
 ### Added
-- **CUMULUS-1008**
-  - New `config.yml` parameter for SQS consumers: `sqs_consumer_rate: (default 500)`, which is the maximum number of
-  messages the consumer will attempt to process per execution. Currently this is only used by the sf-starter consumer,
-  which runs every minute by default, making this a messages-per-minute upper bound. SQS does not guarantee the number
-  of messages returned per call, so this is not a fixed rate of consumption, only attempted number of messages received.
 - **CUMULUS-1050**
   - Separated configuration flags for originalPayload/finalPayload cleanup such that they can be set to different retention times
 - **CUMULUS-798**
@@ -93,8 +88,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Deprecated
 - `@cumulus/ingest/aws/StepFunction.pullEvent()`. Use `@cumulus/common/aws.pullStepFunctionEvent()`.
-- `@cumulus/ingest/consumer.Consume` due to unpredictable implementation. Use `@cumulus/ingest/consumer.Consumer`. 
+- `@cumulus/ingest/consumer.Consume` due to unpredictable implementation. Use `@cumulus/ingest/consumer.Consumer`.
 Call `Consumer.consume()` instead of `Consume.read()`.
+
+## [v1.10.4] - 2018-11-28
+
+### Added
+- **CUMULUS-1008**
+  - New `config.yml` parameter for SQS consumers: `sqs_consumer_rate: (default 500)`, which is the maximum number of
+  messages the consumer will attempt to process per execution. Currently this is only used by the sf-starter consumer,
+  which runs every minute by default, making this a messages-per-minute upper bound. SQS does not guarantee the number
+  of messages returned per call, so this is not a fixed rate of consumption, only attempted number of messages received.
+
+### Deprecated
+- `@cumulus/ingest/consumer.Consume` due to unpredictable implementation. Use `@cumulus/ingest/consumer.Consumer`.
+
+### Changed
+- Backported update of `packages/api` dependency `@mapbox/dyno` to `1.4.2` to mitigate `event-stream` vulnerability.
 
 ## [v1.10.3] - 2018-10-31
 
@@ -674,7 +684,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.10.3...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.10.4...HEAD
+[v1.10.4]: https://github.com/nasa/cumulus/compare/v1.10.3...v1.10.4
 [v1.10.3]: https://github.com/nasa/cumulus/compare/v1.10.2...v1.10.3
 [v1.10.2]: https://github.com/nasa/cumulus/compare/v1.10.1...v1.10.2
 [v1.10.1]: https://github.com/nasa/cumulus/compare/v1.10.0...v1.10.1
