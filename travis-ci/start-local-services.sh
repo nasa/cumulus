@@ -4,6 +4,13 @@ set -e
 
 docker-compose -f travis-ci/docker-compose.yml up &
 
+# Wait for the Postgres server to be available
+while ! nc -z 127.0.0.1 5432; do
+  echo 'Waiting for Postgres to start'
+  sleep 2
+done
+echo 'Postgres service is available'
+
 # Wait for the FTP server to be available
 while ! curl --connect-timeout 5 -sS -o /dev/null ftp://testuser:testpass@127.0.0.1/README.md; do
   echo 'Waiting for FTP to start'

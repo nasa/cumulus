@@ -1,5 +1,11 @@
 version: '3'
 services:
+  postgres:
+    image: postgres:9.6-alpine
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=password
   ftp:
     image: cumuluss/vsftpd:2
     ports:

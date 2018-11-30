@@ -19,8 +19,15 @@ const createErrorType = (name, ParentType = Error) => {
   return E;
 };
 
-module.exports.RecordDoesNotExist = createErrorType('RecordDoesNotExist');
 module.exports.ValidationError = createErrorType('ValidationError');
+
+class RecordDoesNotExist extends Error {
+  constructor(message) {
+    super(message || 'No record found');
+    this.name = this.constructor.name;
+  }
+}
+exports.RecordDoesNotExist = RecordDoesNotExist;
 
 class AssociatedRulesError extends Error {
   constructor(message, rules = []) {

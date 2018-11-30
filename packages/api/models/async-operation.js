@@ -1,9 +1,11 @@
 'use strict';
 
+const Ajv = require('ajv');
 const { ecs, s3 } = require('@cumulus/common/aws');
 const uuidv4 = require('uuid/v4');
-const Manager = require('./base');
-const { asyncOperation: asyncOperationSchema } = require('./schemas');
+const schemas = require('./schemas');
+const { RecordDoesNotExist } = require('../lib/errors');
+const Registry = require('../Registry');
 
 /**
  * A class for tracking AsyncOperations using DynamoDB.
@@ -11,7 +13,25 @@ const { asyncOperation: asyncOperationSchema } = require('./schemas');
  * @class AsyncOperation
  * @extends {Manager}
  */
-class AsyncOperation extends Manager {
+class AsyncOperation {
+  static recordIsValid(item, schema = null, removeAdditional = false) {
+    if (schemas.asyncOperation) {
+      const ajv = new Ajv({
+        useDefaults: true,
+        v5: true,
+        removeAdditional: removeAdditional
+      });
+      const validate = ajv.compile(schemas.asyncOperation);
+      const valid = validate(item);
+      if (!valid) {
+        const err = new Error('The record has validation errors');
+        err.name = 'SchemaValidationError';
+        err.detail = validate.errors;
+        throw err;
+      }
+    }
+  }
+
   /**
    * Creates an instance of AsyncOperation.
    *
@@ -27,14 +47,53 @@ class AsyncOperation extends Manager {
     if (!params.stackName) throw new TypeError('stackName is required');
     if (!params.systemBucket) throw new TypeError('systemBucket is required');
 
-    super({
-      tableName: params.tableName,
-      tableHash: { name: 'id', type: 'S' },
-      schema: asyncOperationSchema
-    });
-
     this.systemBucket = params.systemBucket;
     this.stackName = params.stackName;
+  }
+
+  get tableName() {
+    return 'deprecated';
+  }
+
+  table() {
+    return Registry.knex()('async_operations');
+  }
+
+  async createTable() {} // eslint-disable-line no-empty-function
+
+  async deleteTable() {} // eslint-disable-line no-empty-function
+
+  /**
+   * creates record(s)
+   *
+   * @param {Object<Array|Object>} items - the Item/Items to be added to the database
+   * @returns {Promise<Array|Object>} an array of created records or a single
+   *   created record
+   */
+  async create(items) {
+    // This is confusing because the argument named "items" could either be
+    // an Array of items or a single item.  To make this function a little
+    // easier to understand, converting the single item case here to an array
+    // containing one item.
+    const itemsArray = Array.isArray(items) ? items : [items];
+
+    // Make sure that all of the items are valid
+    itemsArray.forEach((item) => {
+      this.constructor.recordIsValid(item, this.schema, this.removeAdditional);
+    });
+
+    const insertItems = itemsArray.map((i) => ({
+      id: i.id,
+      output: i.output,
+      task_arn: i.taskArn,
+      status: i.status
+    }));
+
+    await this.table().insert(insertItems);
+
+    // If the original item was an Array, return an Array.  If the original item
+    // was an Object, return an Object.
+    return Array.isArray(items) ? itemsArray : itemsArray[0];
   }
 
   /**
@@ -44,8 +103,21 @@ class AsyncOperation extends Manager {
    * @returns {Promise<Object>} - an AsyncOperation record
    * @memberof AsyncOperation
    */
-  get(id) {
-    return super.get({ id });
+  async get(id) {
+    const records = await this.table().where({ id });
+
+    if (records.length === 0) {
+      throw new RecordDoesNotExist('No record found');
+    }
+
+    const record = records[0];
+
+    return {
+      id: record.id,
+      output: record.output,
+      status: record.status,
+      taskArn: record.task_arn
+    };
   }
 
   /**
@@ -53,14 +125,21 @@ class AsyncOperation extends Manager {
    *
    * @param {string} id - the ID of the AsyncOperation
    * @param {Object} updates - key / value pairs of fields to be updated
-   * @param {Array<string>} keysToDelete - an optional list of keys to remove
-   *   from the object
+   * @param {Array<string>} keysToDelete - deprecated
    * @returns {Promise<Object>} - a Promise that resolves to the object after it
    *   is updated
    * @memberof AsyncOperation
    */
-  update(id, updates = {}, keysToDelete = []) {
-    return super.update({ id }, updates, keysToDelete);
+  async update(id, updates = {}, keysToDelete = []) {
+    await this.table()
+      .where({ id })
+      .update({
+        output: updates.output,
+        task_arn: updates.taskArn,
+        status: updates.status
+      });
+
+    return { id };
   }
 
   /**
@@ -135,13 +214,18 @@ class AsyncOperation extends Manager {
     }
 
     // Update the database with the taskArn
-    return this.update(
+    await this.update(
       id,
       {
         status: 'RUNNING',
         taskArn: runTaskResponse.tasks[0].taskArn
       }
     );
+
+    return {
+      id,
+      taskArn: runTaskResponse.tasks[0].taskArn
+    };
   }
 }
 module.exports = AsyncOperation;

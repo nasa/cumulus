@@ -1,5 +1,6 @@
 'use strict';
 
+const uuidv4 = require('uuid/v4');
 const test = require('ava');
 const {
   testUtils: { randomString }
@@ -73,7 +74,7 @@ test.serial('GET /async-operation/{:id} returns a 401 status code if valid autho
     headers: {},
     httpMethod: 'GET',
     pathParameters: {
-      id: 'abc-123'
+      id: uuidv4()
     }
   };
 
@@ -87,7 +88,7 @@ test.serial('GET /async-operation/{:id} returns a 404 status code if the request
     headers: authHeaders,
     httpMethod: 'GET',
     pathParameters: {
-      id: 'abc-123'
+      id: uuidv4()
     }
   };
 
@@ -98,7 +99,7 @@ test.serial('GET /async-operation/{:id} returns a 404 status code if the request
 
 test.serial('GET /async-operation/{:id} returns the async operation if it does exist', async (t) => {
   const asyncOperation = {
-    id: 'abc-123',
+    id: uuidv4(),
     status: 'RUNNING',
     taskArn: randomString(),
     output: JSON.stringify({ age: 37 })
