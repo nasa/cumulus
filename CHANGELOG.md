@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - return warning message to operator when duplicateHandling is not `replace`
   - `cumulus-message-adapter` v1.0.13+ is required.
 - **CUMULUS-793** - Updated the granule move PUT request in `@cumulus/api` to reject the move with a 409 status code if one or more of the files already exist at the destination location
+- Updated `@cumulus/helloworld` to use S3 to store state for pass on retry tests
+- Updated `@cumulus/ingest`:
+  - [Required for MAAP] `http.js#list` will now find links with a trailing whitespace
+  - Removed code from `granule.js` which looked for files in S3 using `{ Bucket: discoveredFile.bucket, Key: discoveredFile.name }`. This is obsolete since `@cumulus/ingest` uses a `file-staging` and `constructCollectionId()` directory prefixes by default.
 - **CUMULUS-989**
   - Updated `@cumulus/api` to use [JWT (JSON Web Token)](https://jwt.io/introduction/) as the transport format for API authorization tokens and to use JWT verification in the request authorization
   - Updated `/token` endpoint in `@cumulus/api` to return tokens as JWTs
@@ -76,9 +80,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added `waitForTestExecutionStart` to `@cumulus/integration-tests`
 - **CUMULUS-919**
   - In `@cumulus/deployment`, added support for NGAP permissions boundaries for IAM roles with `useNgapPermissionBoundary` flag in `iam/config.yml`. Defaults to false.
-
-### Changed
-- Updated `@cumulus/helloworld` to use S3 to store state for pass on retry tests
 
 ### Fixed
 - Fixed a bug where FTP sockets were not closed after an error, keeping the Lambda function active until it timed out [CUMULUS-972]
