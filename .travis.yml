@@ -35,6 +35,7 @@ jobs:
         - npm run npm-i
         - echo 'BOOTSTRAP FINISHED'
       script: npm run audit
+      after_script: cat /home/travis/.npm/_logs/*-debug.log
 
     - name: "eslint"
       stage: audit & lint
