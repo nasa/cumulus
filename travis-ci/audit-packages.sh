@@ -4,6 +4,7 @@ echo "Starting package vulnerability audit.."
 
 (
   set -e
+  npm run audit-root
   npm run audit
 )
 result=$?
