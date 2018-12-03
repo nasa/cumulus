@@ -28,6 +28,7 @@ jobs:
     - name: "npm audit"
       stage: audit & lint
       install:
+        - nvm install-latest-npm
         - ./travis-ci/fetch-cache.sh
         - npm install
         - ln -s /dev/stdout ./lerna-debug.log
