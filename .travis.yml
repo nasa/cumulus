@@ -34,8 +34,7 @@ jobs:
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run npm-i
         - echo 'BOOTSTRAP FINISHED'
-      script: npm run audit
-      after_script: cat /home/travis/.npm/_logs/*-debug.log
+      script: ./travis-ci/audit-packages.sh
 
     - name: "eslint"
       stage: audit & lint
