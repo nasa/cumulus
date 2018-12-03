@@ -9,8 +9,5 @@ echo "Starting package vulnerability audit.."
 )
 result=$?
 
-echo "===== LERNA DEBUG LOG ====="
-cat ./lerna-debug.log
-
 echo "Test finished with exit code $result"
 exit $result
