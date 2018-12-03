@@ -34,7 +34,7 @@ jobs:
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run npm-i
         - echo 'BOOTSTRAP FINISHED'
-      script: if [ "${TRAVIS_PULL_REQUEST}" != "false" ]; then npm run audit; fi
+      script: npm run audit
 
     - name: "eslint"
       stage: audit & lint
