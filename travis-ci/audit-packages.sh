@@ -1,18 +1,15 @@
 #!/bin/sh
 
-set -e
-
-echo "starting package audit"
+echo "Starting package vulnerability audit.."
 
 (
+  set -e
   npm run audit
-  result=$?
-
-  echo "===== LERNA DEBUG LOG ====="
-  cat ./lerna-debug.log
-
-  echo "===== NPM DEBUG LOG ======="
-  cat /home/travis/.npm/_logs/*-debug.log
 )
+result=$?
 
+echo "===== LERNA DEBUG LOG ====="
+cat ./lerna-debug.log
+
+echo "Test finished with exit code $result"
 exit $result

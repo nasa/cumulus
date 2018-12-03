@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Cumulus Framework for ingesting and processing NASA Earth data streams",
   "scripts": {
-    "audit": "lerna exec 'audit-ci -h' --parallel --no-sort",
+    "audit": "lerna exec 'audit-ci -h' --parallel --no-sort --concurrency 2",
     "docs-build-tasks": "./bin/build-tasks-doc.js",
     "docs-install": "(cd website && yarn install)",
     "docs-build": "yarn run docs-build-tasks && (cd website && yarn run build)",
