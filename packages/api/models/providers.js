@@ -6,6 +6,9 @@ const { AssociatedRulesError } = require('../lib/errors');
 const Model = require('./modelBase');
 const Registry = require('../Registry');
 const Rule = require('./rules');
+const { providerModelCallback } = require('./schemas');
+const { RecordDoesNotExist } = require('../lib/errors');
+
 
 class Provider extends Model {
   /**
@@ -16,17 +19,39 @@ class Provider extends Model {
     this.removeAdditional = 'all';
   }
 
+  async createTable() {
+    const knex = Registry.knex;
+    if (process.env.NODE_ENV !== 'test') {
+      throw new Error('Table creation reserved for testing only');
+    }
+    await knex().schema.createTable(process.env.ProvidersTable, providerModelCallback);
+  }
+
+  async deleteTable() {
+    const knex = Registry.knex;
+    if (process.env.NODE_ENV !== 'test') {
+      throw new Error('Table removal reserved for testing only');
+    }
+    await knex().schema.dropTable(process.env.ProvidersTable);
+  }
+
   /**
-   * Returns rows matching id
+   * Returns row matching id
    *
-   * @param {string} id provider id
-   * @returns {Object[]} array of matching providers
+   * @param {string} item Provider item
+   * @returns {Object} provider object
    */
-  async get(id) {
-    const results = this.table()
+  async get(item) {
+    const results = await this.table()
       .select()
-      .where({ id: id });
-    return results.map((result) => this.translateItemFromPostgres(result));
+      .where({ id: item.id });
+    if (results.size > 1) {
+      throw new Error(`Provider model violated key constraints for ${JSON.stringify(item)}`);
+    }
+    if (results.length === 0) {
+      throw new RecordDoesNotExist(`No record found for ${JSON.stringify(item)}`);
+    }
+    return this.translateItemFromPostgres(results[0]);
   }
 
 
@@ -37,11 +62,16 @@ class Provider extends Model {
    * @returns {boolean}
    */
   async exists(id) {
-    const result = await this.get(id);
-    if (result.length > 0) {
+    try {
+      await this.get({ id });
       return true;
     }
-    return false;
+    catch (error) {
+      if (error instanceof RecordDoesNotExist) {
+        return false;
+      }
+      throw error;
+    }
   }
 
   /**
@@ -55,6 +85,7 @@ class Provider extends Model {
   encrypt(value) {
     return Crypto.encrypt(value);
   }
+
 
   decrypt(value) {
     return Crypto.decrypt(value);
@@ -77,12 +108,12 @@ class Provider extends Model {
   /**
    * Updates a provider
    *
-   * @param { string } id Provider id to update
+   * @param { Object } keyObject { id: key } object
    * @param { Object } _item an object with key/value pairs to update
    * @param { keysToDelete[] } keysToDelete array of keys to set to null.
    * @returns { string } id updated Provider id
    **/
-  async update(id, _item, keysToDelete = []) {
+  async update(keyObject, _item, keysToDelete = []) {
     const item = _item;
 
     keysToDelete.forEach((key) => {
@@ -93,9 +124,9 @@ class Provider extends Model {
     this.encryptItem(item);
 
     await this.table()
-      .where({ id: id })
+      .where({ id: keyObject.id })
       .update(this.translateItemToPostgres(item));
-    return id;
+    return item;
   }
 
   /**

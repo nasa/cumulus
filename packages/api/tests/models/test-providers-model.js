@@ -19,7 +19,7 @@ let id;
 const setup = () => {
   table = Registry.knex()(tableName);
   id = randomString();
-}
+};
 
 test.before(async () => {
   process.env.ProvidersTable = randomString();
@@ -43,8 +43,6 @@ test.after.always(async () => {
 
 test.serial('get() returns a translated row', async (t) => {
   setup();
-  const table = Registry.knex()(tableName);
-  const id = randomString();
   await table.insert({
     id: id,
     global_connection_limit: 10,
@@ -53,7 +51,7 @@ test.serial('get() returns a translated row', async (t) => {
   });
 
   const providersModel = new Provider();
-  const actual = (await providersModel.get(id))[0];
+  const actual = (await providersModel.get({ id }));
   t.is(id, actual.id);
   t.is(10, actual.globalConnectionLimit);
 });
@@ -170,7 +168,7 @@ test.serial('update() updates a record', async (t) => {
     host: '127.0.0.1'
   };
   await table.insert(baseRecord);
-  await providersModel.update(id, updateRecord);
-  const actual = (await providersModel.get(id))[0];
+  await providersModel.update({ id }, updateRecord);
+  const actual = (await providersModel.get({ id }));
   t.is('test_host', actual.host);
 });

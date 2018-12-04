@@ -135,7 +135,6 @@ test('PUT without an Authorization header returns an Authorization Missing respo
     httpMethod: 'PUT',
     headers: {}
   };
-
   return testEndpoint(providerEndpoint, updateEvent, async (response) => {
     assertions.isAuthorizationMissingResponse(t, response);
     const provider = await providerModel.get({
