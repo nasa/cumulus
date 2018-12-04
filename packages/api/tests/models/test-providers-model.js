@@ -143,6 +143,7 @@ test.serial('insert() inserts a translated provider', async (t) => {
     host: '127.0.0.1',
     created_at: actual.created_at,
     updated_at: actual.updated_at,
+    meta: null,
     password: null,
     port: null,
     username: null,

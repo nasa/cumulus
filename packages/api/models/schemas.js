@@ -13,6 +13,7 @@ module.exports.providerModelCallback = (table) => {
   table.string('username', 1000);
   table.string('password', 1000);
   table.string('encrypted');
+  table.json('meta');
 };
 
 module.exports.accessToken = {
