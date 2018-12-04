@@ -2,19 +2,19 @@
 
 class Model {
   recordIsValid() {
-    throw new Error('Depreciated');
+    throw new Error('Deprecated  ');
   }
 
   createTable() {
-    throw new Error('Depreciated');
+    throw new Error('Deprecated  ');
   }
 
   deleteTable() {
-    throw new Error('Depreciated');
+    throw new Error('Deprecated  ');
   }
 
   enableStream() {
-    throw new Error('Depreciated');
+    throw new Error('Deprecated  ');
   }
 
   /**
