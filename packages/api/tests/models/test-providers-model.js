@@ -4,7 +4,7 @@ const test = require('ava');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
-const { Manager, Provider, Rule } = require('../../models');
+const { Provider, Rule } = require('../../models');
 const { AssociatedRulesError } = require('../../lib/errors');
 
 const Registry = require('../../Registry');
@@ -64,9 +64,7 @@ test.serial('exists() returns true when a record exists', async (t) => {
 });
 
 test.serial('exists() returns false when a record does not exist', async (t) => {
-  const table = Registry.knex()(tableName);
   const providersModel = new Provider();
-
   t.false(await providersModel.exists(randomString()));
 });
 
@@ -128,16 +126,14 @@ test.serial('insert() inserts a translated provider', async (t) => {
   const table = Registry.knex()(tableName);
   const providersModel = new Provider();
   const providerId = randomString();
-  let baseRecord = {
+  const baseRecord = {
     id: providerId,
     globalConnectionLimit: 10,
     protocol: 'http',
-    host: '127.0.0.1',
+    host: '127.0.0.1'
   };
-  debugger;
   await providersModel.insert(baseRecord);
 
-  debugger;
   console.log(tableName);
   const actual = (await table.select().where({ id: providerId }))[0];
   const expected = {
@@ -161,13 +157,13 @@ test.serial('update() updates a record', async (t) => {
   const providersModel = new Provider();
   const providerId = randomString();
   const updateRecord = { host: 'test_host' };
-  let baseRecord = {
+  const baseRecord = {
     id: providerId,
-    globalConnectionLimit: 10,
+    global_connection_limit: 10,
     protocol: 'http',
     host: '127.0.0.1'
   };
-  await providersModel.insert(baseRecord);
+  await table.insert(baseRecord);
   await providersModel.update(providerId, updateRecord);
   const actual = (await providersModel.get(providerId))[0];
   t.is('test_host', actual.host);

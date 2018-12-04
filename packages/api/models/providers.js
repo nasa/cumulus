@@ -2,10 +2,10 @@
 
 const Crypto = require('@cumulus/ingest/crypto').DefaultProvider;
 
+const { AssociatedRulesError } = require('../lib/errors');
+const Model = require('./modelBase');
 const Registry = require('../Registry');
 const Rule = require('./rules');
-const Model = require('./modelBase');
-const { AssociatedRulesError } = require('../lib/errors');
 
 class Provider extends Model {
   /**
