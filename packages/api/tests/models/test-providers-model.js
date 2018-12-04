@@ -13,6 +13,14 @@ const { providerModelCallback } = require('../../models/schemas');
 let ruleModel;
 let tableName;
 
+let table;
+let id;
+
+const setup = () => {
+  table = Registry.knex()(tableName);
+  id = randomString();
+}
+
 test.before(async () => {
   process.env.ProvidersTable = randomString();
   tableName = process.env.ProvidersTable;
@@ -34,6 +42,7 @@ test.after.always(async () => {
 });
 
 test.serial('get() returns a translated row', async (t) => {
+  setup();
   const table = Registry.knex()(tableName);
   const id = randomString();
   await table.insert({
@@ -51,8 +60,7 @@ test.serial('get() returns a translated row', async (t) => {
 
 
 test.serial('exists() returns true when a record exists', async (t) => {
-  const table = Registry.knex()(tableName);
-  const id = randomString();
+  setup();
   await table.insert({
     id: id,
     global_connection_limit: 10,
@@ -69,17 +77,17 @@ test.serial('exists() returns false when a record does not exist', async (t) => 
 });
 
 test.serial('delete() throws an exception if the provider has associated rules', async (t) => {
-  const table = Registry.knex()(tableName);
+  setup();
   const providersModel = new Provider();
-  const providerId = randomString();
+
   await table.insert({
-    id: providerId,
+    id: id,
     global_connection_limit: 10,
     protocol: 'http',
     host: '127.0.0.1'
   });
   const rule = fakeRuleFactoryV2({
-    provider: providerId,
+    provider: id,
     rule: {
       type: 'onetime'
     }
@@ -95,7 +103,7 @@ test.serial('delete() throws an exception if the provider has associated rules',
   await ruleModel.create(rule);
 
   try {
-    await providersModel.delete({ id: providerId });
+    await providersModel.delete({ id: id });
     t.fail('Expected an exception to be thrown');
   }
   catch (err) {
@@ -106,28 +114,26 @@ test.serial('delete() throws an exception if the provider has associated rules',
 });
 
 test.serial('delete() deletes a provider', async (t) => {
-  const table = Registry.knex()(tableName);
+  setup();
   const providersModel = new Provider();
 
-  const providerId = randomString();
   await table.insert({
-    id: providerId,
+    id: id,
     global_connection_limit: 10,
     protocol: 'http',
     host: '127.0.0.1'
   });
 
-  await providersModel.delete({ id: providerId });
+  await providersModel.delete({ id: id });
 
-  t.false(await providersModel.exists({ id: providerId }));
+  t.false(await providersModel.exists({ id: id }));
 });
 
 test.serial('insert() inserts a translated provider', async (t) => {
-  const table = Registry.knex()(tableName);
+  setup();
   const providersModel = new Provider();
-  const providerId = randomString();
   const baseRecord = {
-    id: providerId,
+    id: id,
     globalConnectionLimit: 10,
     protocol: 'http',
     host: '127.0.0.1'
@@ -135,9 +141,9 @@ test.serial('insert() inserts a translated provider', async (t) => {
   await providersModel.insert(baseRecord);
 
   console.log(tableName);
-  const actual = (await table.select().where({ id: providerId }))[0];
+  const actual = (await table.select().where({ id: id }))[0];
   const expected = {
-    id: providerId,
+    id: id,
     global_connection_limit: 10,
     protocol: 'http',
     host: '127.0.0.1',
@@ -154,18 +160,17 @@ test.serial('insert() inserts a translated provider', async (t) => {
 });
 
 test.serial('update() updates a record', async (t) => {
-  const table = Registry.knex()(tableName);
+  setup();
   const providersModel = new Provider();
-  const providerId = randomString();
   const updateRecord = { host: 'test_host' };
   const baseRecord = {
-    id: providerId,
+    id: id,
     global_connection_limit: 10,
     protocol: 'http',
     host: '127.0.0.1'
   };
   await table.insert(baseRecord);
-  await providersModel.update(providerId, updateRecord);
-  const actual = (await providersModel.get(providerId))[0];
+  await providersModel.update(id, updateRecord);
+  const actual = (await providersModel.get(id))[0];
   t.is('test_host', actual.host);
 });
