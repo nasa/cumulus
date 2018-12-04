@@ -2,21 +2,33 @@
 
 const Crypto = require('@cumulus/ingest/crypto').DefaultProvider;
 
-const Manager = require('./base');
-const providerSchema = require('./schemas').provider;
+const Registry = require('../Registry');
 const Rule = require('./rules');
+const Model = require('./modelBase');
 const { AssociatedRulesError } = require('../lib/errors');
 
-class Provider extends Manager {
+class Provider extends Model {
+  /**
+   * Creates an instance of Provider
+   */
   constructor() {
-    super({
-      tableName: process.env.ProvidersTable,
-      tableHash: { name: 'id', type: 'S' },
-      schema: providerSchema
-    });
-
+    super();
     this.removeAdditional = 'all';
   }
+
+  /**
+   * Returns rows matching id
+   *
+   * @param {string} id provider id
+   * @returns {Object[]} array of matching providers
+   */
+  async get(id) {
+    const results = this.table()
+      .select()
+      .where({ id: id });
+    return results.map((result) => this.translateItemFromPostgres(result));
+  }
+
 
   /**
    * Check if a given provider exists
@@ -25,7 +37,19 @@ class Provider extends Manager {
    * @returns {boolean}
    */
   async exists(id) {
-    return super.exists({ id });
+    const result = await this.get(id);
+    if (result.length > 0) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Get a knex table object for the 'providers' table
+   * @returns {Object} knex table object
+   */
+  table() {
+    return Registry.knex()(process.env.ProvidersTable);
   }
 
   encrypt(value) {
@@ -36,9 +60,8 @@ class Provider extends Manager {
     return Crypto.decrypt(value);
   }
 
-  async update(key, _item, keysToDelete = []) {
+  async encryptItem(_item) {
     const item = _item;
-    // encrypt the password
     if (item.password) {
       item.password = await this.encrypt(item.password);
       item.encrypted = true;
@@ -48,35 +71,67 @@ class Provider extends Manager {
       item.username = await this.encrypt(item.username);
       item.encrypted = true;
     }
-
-
-    return super.update(key, item, keysToDelete);
+    return item;
   }
 
+  /**
+   * Updates a provider
+   *
+   * @param { string } id Provider id to update
+   * @param { Object } _item an object with key/value pairs to update
+   * @param { keysToDelete[] } keysToDelete array of keys to set to null.
+   * @returns { string } id updated Provider id
+   **/
+  async update(id, _item, keysToDelete = []) {
+    const item = _item;
+
+    keysToDelete.forEach((key) => {
+      item[key] = null;
+    });
+
+    // encrypt the password
+    this.encryptItem(item);
+
+    await this.table()
+      .where({ id: id })
+      .update(this.translateItemToPostgres(item));
+    return id;
+  }
+
+  /**
+   * Insert new row into database.  Alias for 'insert' function.
+   *
+   * @param {Object} _item provider 'object' representing a row to create
+   * @returns {Object} the the full item added with modifications made by the model
+   */
   async create(_item) {
+    return this.insert(_item);
+  }
+
+  /**
+   * Insert new row into the database
+   *
+   * @param {Object} _item provider 'object' representing a row to create
+   * @returns {Object} the the full item added with modifications made by the model
+   */
+  async insert(_item) {
     const item = _item;
 
     // encrypt the password
-    if (item.password) {
-      item.password = await this.encrypt(item.password);
-      item.encrypted = true;
-    }
+    this.encryptItem(item);
 
-    if (item.username) {
-      item.username = await this.encrypt(item.username);
-      item.encrypted = true;
-    }
-
-    return super.create(item);
+    await this.table()
+      .insert(this.translateItemToPostgres(item));
+    return item;
   }
 
   /**
    * Delete a provider
    *
-   * @param {string} id - the provider id
+   * @param { Object } item  Provider item to delete, uses ID field to identify row to remove.
    */
-  async delete({ id }) {
-    const associatedRuleNames = (await this.getAssociatedRules(id))
+  async delete(item) {
+    const associatedRuleNames = (await this.getAssociatedRules(item.id))
       .map((rule) => rule.name);
 
     if (associatedRuleNames.length > 0) {
@@ -85,9 +140,11 @@ class Provider extends Manager {
         associatedRuleNames
       );
     }
-
-    await super.delete({ id });
+    await this.table()
+      .where({ id: item.id })
+      .del();
   }
+
 
   /**
    * Get any rules associated with the provider
