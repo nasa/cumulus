@@ -28,9 +28,9 @@ jobs:
       stage: build cache & audit
       install:
         - nvm install-latest-npm
-        - npm install
+        - npm install --no-audit
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm run npm-i
+        - npm run install-locks
         - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/audit-packages.sh
 
