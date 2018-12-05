@@ -6,7 +6,7 @@ const { AssociatedRulesError } = require('../lib/errors');
 const Model = require('./modelBase');
 const Registry = require('../Registry');
 const Rule = require('./rules');
-const { providerModelCallback } = require('./schemas');
+const { providersModelCallback } = require('./schemas');
 const { RecordDoesNotExist } = require('../lib/errors');
 
 
@@ -24,7 +24,7 @@ class Provider extends Model {
     if (process.env.NODE_ENV !== 'test') {
       throw new Error('Table creation reserved for testing only');
     }
-    await knex().schema.createTable(process.env.ProvidersTable, providerModelCallback);
+    await knex().schema.createTable(process.env.ProvidersTable, providersModelCallback);
   }
 
   async deleteTable() {
@@ -143,7 +143,7 @@ class Provider extends Model {
    * Insert new row into the database
    *
    * @param {Object} _item provider 'object' representing a row to create
-   * @returns {Object} the the full item added with modifications made by the model
+\   * @returns {Object} the the full item added with modifications made by the model
    */
   async insert(_item) {
     const item = _item;

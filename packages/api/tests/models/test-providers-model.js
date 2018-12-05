@@ -8,7 +8,7 @@ const { Provider, Rule } = require('../../models');
 const { AssociatedRulesError } = require('../../lib/errors');
 
 const Registry = require('../../Registry');
-const { providerModelCallback } = require('../../models/schemas');
+const { providersModelCallback } = require('../../models/schemas');
 
 let ruleModel;
 let tableName;
@@ -22,7 +22,7 @@ test.beforeEach(async (t) => {
 test.before(async () => {
   process.env.ProvidersTable = randomString();
   tableName = process.env.ProvidersTable;
-  await Registry.knex().schema.createTable(tableName, providerModelCallback);
+  await Registry.knex().schema.createTable(tableName, providersModelCallback);
 
   process.env.RulesTable = randomString();
   ruleModel = new Rule();

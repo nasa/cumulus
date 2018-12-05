@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports.providerModelCallback = (table) => {
+module.exports.providersModelCallback = (table) => {
   table.string('id').primary().notNull();
   table.timestamps(false, true);
   table.integer('global_connection_limit').notNull();
