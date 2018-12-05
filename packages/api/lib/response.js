@@ -18,13 +18,11 @@ const {
   TokenExpiredError
 } = require('jsonwebtoken');
 
-const { User } = require('../models');
 const {
   TokenUnauthorizedUserError,
   TokenNotFoundError
 } = require('./errors');
-const { verifyRequestAuthorization } = require('./request');
-const { verifyJwtToken } = require('./token');
+const { verifyJwtAuthorization } = require('./request');
 const { errorify, findCaseInsensitiveKey } = require('./utils');
 const {
   AuthorizationFailureResponse,
@@ -83,7 +81,14 @@ function buildAuthorizationFailureResponse(params) {
   return new AuthorizationFailureResponse(params);
 }
 
-function handleRequestAuthorizationError (err) {
+/**
+ * Handle API response for JWT verification errors
+ *
+ * @param {Error} err - error thrown by JWT verification
+ *
+ * @returns {LambdaProxyResponse} - an API gateway response
+ */
+function handleJwtVerificationError (err) {
   if (err instanceof TokenExpiredError) {
     return new TokenExpiredResponse();
   }
@@ -146,11 +151,12 @@ async function getAuthorizationFailureResponse(params) {
     });
   }
 
+  // Verify JWT validity and user access
   try {
-    await verifyRequestAuthorization(jwtToken);
+    await verifyJwtAuthorization(jwtToken);
   }
   catch (err) {
-    return handleRequestAuthorizationError(err);
+    return handleJwtVerificationError(err);
   }
 
   return null;
@@ -199,7 +205,7 @@ module.exports = {
   buildAuthorizationFailureResponse,
   buildLambdaProxyResponse,
   getAuthorizationFailureResponse,
-  handleRequestAuthorizationError,
+  handleJwtVerificationError,
   handle,
   internalServerErrorResponse,
   notFoundResponse,

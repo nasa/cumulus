@@ -16,7 +16,7 @@ const {
   TokenUnauthorizedUserError,
   TokenNotFoundError
 } = require('../../lib/errors');
-const { verifyRequestAuthorization } = require('../../lib/request');
+const { verifyJwtAuthorization } = require('../../lib/request');
 const {
   fakeAccessTokenFactory,
   fakeUserFactory
@@ -39,9 +39,9 @@ test.after.always(async () => {
   await userModel.deleteTable();
 });
 
-test('verifyRequestAuthorization() throws JsonWebTokenError for non-JWT token', async (t) => {
+test('verifyJwtAuthorization() throws JsonWebTokenError for non-JWT token', async (t) => {
   try {
-    await verifyRequestAuthorization('invalid-token');
+    await verifyJwtAuthorization('invalid-token');
     t.fail('Expected error to be thrown');
   }
   catch (err) {
@@ -50,14 +50,14 @@ test('verifyRequestAuthorization() throws JsonWebTokenError for non-JWT token', 
   }
 });
 
-test('verifyRequestAuthorization() throws JsonWebTokenError for token signed with invalid secret', async (t) => {
+test('verifyJwtAuthorization() throws JsonWebTokenError for token signed with invalid secret', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory();
   const jwtToken = jwtSign(accessTokenRecord, 'invalid-secret', {
     algorithm: 'HS256'
   });
 
   try {
-    await verifyRequestAuthorization(jwtToken);
+    await verifyJwtAuthorization(jwtToken);
     t.fail('Expected error to be thrown');
   }
   catch (err) {
@@ -66,14 +66,14 @@ test('verifyRequestAuthorization() throws JsonWebTokenError for token signed wit
   }
 });
 
-test('verifyRequestAuthorization() throws JsonWebTokenError for token signed with invalid algorithm', async (t) => {
+test('verifyJwtAuthorization() throws JsonWebTokenError for token signed with invalid algorithm', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory();
   const jwtToken = jwtSign(accessTokenRecord, process.env.TOKEN_SECRET, {
     algorithm: 'HS512'
   });
 
   try {
-    await verifyRequestAuthorization(jwtToken);
+    await verifyJwtAuthorization(jwtToken);
     t.fail('Expected error to be thrown');
   }
   catch (err) {
@@ -83,14 +83,14 @@ test('verifyRequestAuthorization() throws JsonWebTokenError for token signed wit
 });
 
 
-test('verifyRequestAuthorization() throws TokenExpiredError for expired token', async (t) => {
+test('verifyJwtAuthorization() throws TokenExpiredError for expired token', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
     expirationTime: Date.now() - 60
   });
   const expiredJwtToken = createJwtToken(accessTokenRecord);
 
   try {
-    await verifyRequestAuthorization(expiredJwtToken);
+    await verifyJwtAuthorization(expiredJwtToken);
     t.fail('Expected error to be thrown');
   }
   catch (err) {
@@ -98,12 +98,12 @@ test('verifyRequestAuthorization() throws TokenExpiredError for expired token', 
   }
 });
 
-test('verifyRequestAuthorization() throws TokenUnauthorizedUserError for unauthorized user token', async (t) => {
+test('verifyJwtAuthorization() throws TokenUnauthorizedUserError for unauthorized user token', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory();
   const jwtToken = createJwtToken(accessTokenRecord);
 
   try {
-    await verifyRequestAuthorization(jwtToken);
+    await verifyJwtAuthorization(jwtToken);
     t.fail('Expected error to be thrown');
   }
   catch (err) {
@@ -111,7 +111,7 @@ test('verifyRequestAuthorization() throws TokenUnauthorizedUserError for unautho
   }
 });
 
-test('verifyRequestAuthorization() throws TokenNotFoundError for non-existent access token', async (t) => {
+test('verifyJwtAuthorization() throws TokenNotFoundError for non-existent access token', async (t) => {
   const userRecord = fakeUserFactory();
   const { userName: username } = await userModel.create(userRecord);
 
@@ -120,7 +120,7 @@ test('verifyRequestAuthorization() throws TokenNotFoundError for non-existent ac
   const jwtToken = createJwtToken({ accessToken, expirationTime, username });
 
   try {
-    await verifyRequestAuthorization(jwtToken);
+    await verifyJwtAuthorization(jwtToken);
     t.fail('Expected error to be thrown');
   }
   catch (err) {
