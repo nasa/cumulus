@@ -180,6 +180,43 @@ async function login(request, oAuth2Provider) {
   return buildPermanentRedirectResponse(authorizationUrl);
 }
 
+async function deleteToken(request) {
+  const requestJwtToken = get(request, 'queryStringParameters.token');
+
+  if (requestJwtToken) {
+    let accessToken;
+    try {
+      ({ accessToken } = await verifyRequestAuthorization(requestJwtToken));
+    }
+    catch (err) {
+      return handleRequestAuthorizationError(err);
+    }
+
+    const accessTokenModel = new AccessToken();
+
+    try {
+      await accessTokenModel.delete({ accessToken });
+    }
+    catch (error) {
+      if (err.name === 'RecordDoesNotExist') {
+        return new AuthorizationFailureResponse({
+          statusCode: 404,
+          error,
+          message: error.message
+        });
+      }
+    }
+  }
+
+  const errorMessage = 'Request requires a token';
+  const error = new Error(errorMessage);
+  return new AuthorizationFailureResponse({
+    statusCode: 400,
+    error: error,
+    message: error.message
+  });
+}
+
 const isGetTokenRequest = (request) =>
   request.httpMethod === 'GET'
   && request.resource.endsWith('/token');
@@ -187,6 +224,10 @@ const isGetTokenRequest = (request) =>
 const isTokenRefreshRequest = (request) =>
   request.httpMethod === 'POST'
   && request.resource.endsWith('/refresh');
+
+const isDeleteTokenRequest = (request) =>
+  request.httpMethod === 'DELETE'
+  && request.resource.endsWith('/token');
 
 const notFoundResponse = new LambdaProxyResponse({
   json: false,
@@ -200,6 +241,9 @@ async function handleRequest(request, oAuth2Provider) {
   }
   if (isTokenRefreshRequest(request)) {
     return refreshAccessToken(request, oAuth2Provider);
+  }
+  if (isDeleteTokenRequest(request)) {
+    return deleteToken(request);
   }
 
   return notFoundResponse;
