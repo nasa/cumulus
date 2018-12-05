@@ -18,8 +18,7 @@ test.beforeEach(async (t) => {
 });
 
 test.before(async () => {
-  process.env.ProvidersTable = randomString();
-  tableName = process.env.ProvidersTable;
+  tableName = 'providers';
 
   process.env.RulesTable = randomString();
   ruleModel = new Rule();
@@ -132,7 +131,6 @@ test.serial('insert() inserts a translated provider', async (t) => {
   };
   await providersModel.insert(baseRecord);
 
-  console.log(tableName);
   const actual = (await t.context.table.select().where({ id: id }))[0];
   const expected = {
     id: id,

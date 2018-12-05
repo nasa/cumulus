@@ -9,16 +9,15 @@ const Rule = require('./rules');
 const { providersModelCallback } = require('./schemas');
 const { RecordDoesNotExist } = require('../lib/errors');
 
-
 class Provider extends Model {
   /**
    * Creates an instance of Provider
    */
   constructor() {
     super();
+    this.tableName = 'providers';
     this.removeAdditional = 'all';
   }
-
 
   // Void function to prevent upstream tests from failing when they attempt to
   // clean up
@@ -41,7 +40,7 @@ class Provider extends Model {
     if (results.length === 0) {
       throw new RecordDoesNotExist(`No record found for ${JSON.stringify(item)}`);
     }
-    return this.translateItemFromPostgres(results[0]);
+    return this.translateItemToCamelCase(results[0]);
   }
 
 
@@ -69,7 +68,7 @@ class Provider extends Model {
    * @returns {Object} knex table object
    */
   table() {
-    return Registry.knex()(process.env.ProvidersTable);
+    return Registry.knex()(this.tableName);
   }
 
   encrypt(value) {
@@ -115,7 +114,7 @@ class Provider extends Model {
 
     await this.table()
       .where({ id: keyObject.id })
-      .update(this.translateItemToPostgres(item));
+      .update(this.translateItemToSnakeCase(item));
     return item;
   }
 
@@ -142,7 +141,7 @@ class Provider extends Model {
     this.encryptItem(item);
 
     await this.table()
-      .insert(this.translateItemToPostgres(item));
+      .insert(this.translateItemToSnakeCase(item));
     return item;
   }
 
