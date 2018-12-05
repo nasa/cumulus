@@ -1,7 +1,11 @@
 'use strict';
 
 const test = require('ava');
-const { JsonWebTokenError, TokenExpiredError } = require('jsonwebtoken');
+const {
+  sign: jwtSign,
+  JsonWebTokenError,
+  TokenExpiredError
+} = require('jsonwebtoken');
 const {
   testUtils: {
     randomString
@@ -39,13 +43,46 @@ test.after.always(async () => {
   await userModel.deleteTable();
 });
 
-test('verifyRequestAuthorization() throws JsonWebTokenError for invalid token', async (t) => {
+test('verifyRequestAuthorization() throws JsonWebTokenError for non-JWT token', async (t) => {
   try {
     await verifyRequestAuthorization('invalid-token');
     t.fail('Expected error to be thrown');
   }
   catch (err) {
     t.true(err instanceof JsonWebTokenError);
+    t.is(err.message, 'jwt malformed');
+  }
+});
+
+test('verifyRequestAuthorization() throws JsonWebTokenError for token signed with invalid secret', async (t) => {
+  const accessTokenRecord = fakeAccessTokenFactory();
+  const jwtToken = jwtSign(accessTokenRecord, 'invalid-secret', {
+    algorithm: 'HS256'
+  });
+
+  try {
+    await verifyRequestAuthorization(jwtToken);
+    t.fail('Expected error to be thrown');
+  }
+  catch (err) {
+    t.true(err instanceof JsonWebTokenError);
+    t.is(err.message, 'invalid signature');
+  }
+});
+
+test('verifyRequestAuthorization() throws JsonWebTokenError for token signed with invalid algorithm', async (t) => {
+  const accessTokenRecord = fakeAccessTokenFactory();
+  const jwtToken = jwtSign(accessTokenRecord, process.env.TOKEN_SECRET, {
+    algorithm: 'HS512'
+  });
+
+  try {
+    await verifyRequestAuthorization(jwtToken);
+    t.fail('Expected error to be thrown');
+  }
+  catch (err) {
+    t.true(err instanceof JsonWebTokenError);
+    t.is(err.message, 'invalid algorithm');
   }
 });
 
@@ -94,11 +131,11 @@ test('handleRequestAuthorizationError() returns unauthorized user response for T
 
 test('verifyRequestAuthorization() throws TokenNotFoundError for non-existent access token', async (t) => {
   const userRecord = fakeUserFactory();
-  await userModel.create(userRecord);
+  const { userName: username } = await userModel.create(userRecord);
 
   const { accessToken, expirationTime } = fakeAccessTokenFactory();
 
-  const jwtToken = createJwtToken({ accessToken, expirationTime, username: userRecord.userName });
+  const jwtToken = createJwtToken({ accessToken, expirationTime, username });
 
   try {
     await verifyRequestAuthorization(jwtToken);
