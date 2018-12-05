@@ -3,14 +3,15 @@ const { JsonWebTokenError, TokenExpiredError } = require('jsonwebtoken');
 
 const { AccessToken, User } = require('../models');
 const {
+  TokenUnauthorizedUserError,
+  TokenNotFoundError
+} = require('../lib/errors');
+const {
   AuthorizationFailureResponse,
   InvalidTokenResponse,
   TokenExpiredResponse
 } = require('../lib/responses');
 const { verifyJwtToken } = require('./token');
-
-class TokenUnauthorizedUserError extends Error {};
-class TokenNotFoundError extends Error {};
 
 const handleRequestAuthorizationError = (err) => {
   if (err instanceof TokenExpiredError) {
@@ -68,7 +69,5 @@ const verifyRequestAuthorization = async (requestJwtToken) => {
 
 module.exports = {
   handleRequestAuthorizationError,
-  verifyRequestAuthorization,
-  TokenUnauthorizedUserError,
-  TokenNotFoundError
+  verifyRequestAuthorization
 };
