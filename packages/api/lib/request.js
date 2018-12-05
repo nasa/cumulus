@@ -68,5 +68,7 @@ const verifyRequestAuthorization = async (requestJwtToken) => {
 
 module.exports = {
   handleRequestAuthorizationError,
-  verifyRequestAuthorization
+  verifyRequestAuthorization,
+  TokenUnauthorizedUserError,
+  TokenNotFoundError
 };
