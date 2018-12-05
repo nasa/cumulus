@@ -20,7 +20,8 @@ const createErrorType = (name, ParentType = Error) => {
 };
 
 module.exports.RecordDoesNotExist = createErrorType('RecordDoesNotExist');
-module.exports.ValidationError = createErrorType('ValidationError');
+module.exports.TokenUnauthorizedUserError = createErrorType('TokenUnauthorizedUserError');
+module.exports.TokenNotFoundError = createErrorType('TokenNotFoundError');
 
 class AssociatedRulesError extends Error {
   constructor(message, rules = []) {

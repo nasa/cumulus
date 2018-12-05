@@ -10,10 +10,12 @@ const {
 
 const assertions = require('../../lib/assertions');
 const {
-  verifyRequestAuthorization,
-  handleRequestAuthorizationError,
   TokenUnauthorizedUserError,
   TokenNotFoundError
+} = require('../../lib/errors');
+const {
+  verifyRequestAuthorization,
+  handleRequestAuthorizationError
 } = require('../../lib/request');
 const {
   fakeAccessTokenFactory,
@@ -26,6 +28,7 @@ let userModel;
 
 test.before(async () => {
   process.env.TOKEN_SECRET = randomString();
+  process.env.AccessTokensTable = randomString();
   process.env.UsersTable = randomString();
 
   userModel = new User();
