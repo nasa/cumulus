@@ -414,10 +414,10 @@ test.serial('DELETE /token with a valid token results in a successful deletion r
   const userRecord = fakeUserFactory();
   await userModel.create(userRecord);
 
-  const initialTokenRecord = fakeAccessTokenFactory({ username: userRecord.userName });
-  await accessTokenModel.create(initialTokenRecord);
+  const accessTokenRecord = fakeAccessTokenFactory({ username: userRecord.userName });
+  await accessTokenModel.create(accessTokenRecord);
 
-  const requestJwtToken = createJwtToken(initialTokenRecord);
+  const requestJwtToken = createJwtToken(accessTokenRecord);
 
   const request = {
     httpMethod: 'DELETE',
@@ -429,6 +429,7 @@ test.serial('DELETE /token with a valid token results in a successful deletion r
 
   const response = await handleRequest(request);
 
+  t.false(await accessTokenModel.exists({ accessToken: accessTokenRecord.accessToken }))
   t.is(response.statusCode, 200);
   t.is(JSON.parse(response.body).message, 'Access token record was deleted');
 });
