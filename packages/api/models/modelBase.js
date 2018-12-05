@@ -20,29 +20,29 @@ class Model {
   /**
    * Changes camel cased names to downcase-underscore seperated column names
    *
-   * @param {string} column name to translate
+   * @param {string} columnName column name to translate
    * @returns {string} updated column name
    */
-  translateDynamoColumnName(field) {
+  translateDynamoColumnName(columnName) {
     // change js camel case to all lower/seperated with "_"
-    return field.replace(/([A-Z])/g, (v) => `_${v.toLowerCase()}`).replace(/^_/, '');
+    return columnName.replace(/([A-Z])/g, (v) => `_${v.toLowerCase()}`).replace(/^_/, '');
   }
 
   /**
    * Changes downcase-underscore seperated column names to camel cased names
    *
-   * @param {string} column name to translate
+   * @param {string} columnName column name to translate
    * @returns {string} updated column name
    */
-  translatePostgresColumnName(field) {
-    return field.replace(/_([a-z])/g, (_, upChar) => upChar.toUpperCase());
+  translatePostgresColumnName(columnName) {
+    return columnName.replace(/_([a-z])/g, (_, upChar) => upChar.toUpperCase());
   }
 
 
   /**
-   * Translates provider object from camel-case to downcase/underscore seperated
+   * Translates database object keys (columms) from camel-case to downcase/underscore seperated
    * column/Object names
-   * @param {Object} Provider database object
+   * @param {Object} item database object
    * @returns { Object } Provider database object with keys translated
    */
   translateItemToPostgres(item) {
@@ -53,11 +53,11 @@ class Model {
     return translatedItem;
   }
 
- /**
-   * Translates provider object from downcase/underscore seperated
+  /**
+   * Translates database object keys (columns) from downcase/underscore seperated
    * column/Object names to camelCase.
-   * @param { Object } Provider database object
-   * @returns { Object } Provider database object with keys translated
+   * @param { Object } item database object
+   * @returns { Object }  database object with keys translated
    */
   translateItemFromPostgres(item) {
     const translatedItem = {};
