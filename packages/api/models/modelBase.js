@@ -18,24 +18,24 @@ class Model {
   }
 
   /**
-   * Changes camel cased names to downcase-underscore seperated column names
+   * Changes camel cased names to snakecase column names
    *
    * @param {string} columnName column name to translate
    * @returns {string} updated column name
    */
-  translateDynamoColumnName(columnName) {
+  translateCamelCaseColumnName(columnName) {
     // change js camel case to all lower/seperated with "_"
     return columnName.replace(/([A-Z])/g, (v) => `_${v.toLowerCase()}`).replace(/^_/, '');
   }
 
   /**
-   * Changes downcase-underscore seperated column names to camel cased names
+   * Changes snakecase column names to camel cased names
    *
    * @param {string} columnName column name to translate
    * @returns {string} updated column name
    */
-  translatePostgresColumnName(columnName) {
-    return columnName.replace(/_([a-z])/g, (_, upChar) => upChar.toUpperCase());
+  translateSnakeCaseColumnName(columnName) {
+    return columnName.replace(/_+([a-z])/g, (_, match) => match.toUpperCase());
   }
 
 
@@ -45,10 +45,10 @@ class Model {
    * @param {Object} item database object
    * @returns { Object } Provider database object with keys translated
    */
-  translateItemToPostgres(item) {
+  translateItemToSnakeCase(item) {
     const translatedItem = {};
     Object.keys(item).forEach((key) => {
-      translatedItem[this.translateDynamoColumnName(key)] = item[key];
+      translatedItem[this.translateCamelCaseColumnName(key)] = item[key];
     });
     return translatedItem;
   }
@@ -59,10 +59,10 @@ class Model {
    * @param { Object } item database object
    * @returns { Object }  database object with keys translated
    */
-  translateItemFromPostgres(item) {
+  translateItemToCamelCase(item) {
     const translatedItem = {};
     Object.keys(item).forEach((key) => {
-      translatedItem[this.translatePostgresColumnName(key)] = item[key];
+      translatedItem[this.translateSnakeCaseColumnName(key)] = item[key];
     });
     return translatedItem;
   }
