@@ -23,7 +23,7 @@ const {
 const { createJwtToken } = require('../../lib/token');
 const {
   getAuthorizationFailureResponse,
-  handleRequestAuthorizationError
+  handleJwtVerificationError
 } = require('../../lib/response');
 
 let accessTokenModel;
@@ -150,22 +150,22 @@ test('getAuthorizationFailureResponse returns an appropriate response when the t
   assertions.isExpiredAccessTokenResponse(t, response);
 });
 
-test('handleRequestAuthorizationError() returns invalid token response for JsonWebTokenError', async (t) => {
-  const response = handleRequestAuthorizationError(new JsonWebTokenError());
+test('handleJwtVerificationError() returns invalid token response for JsonWebTokenError', async (t) => {
+  const response = handleJwtVerificationError(new JsonWebTokenError());
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test('handleRequestAuthorizationError() returns expired token response for TokenExpiredError', async (t) => {
-  const response = handleRequestAuthorizationError(new TokenExpiredError());
+test('handleJwtVerificationError() returns expired token response for TokenExpiredError', async (t) => {
+  const response = handleJwtVerificationError(new TokenExpiredError());
   assertions.isExpiredAccessTokenResponse(t, response);
 });
 
-test('handleRequestAuthorizationError() returns unauthorized user response for TokenUnauthorizedUserError', async (t) => {
-  const response = handleRequestAuthorizationError(new TokenUnauthorizedUserError());
+test('handleJwtVerificationError() returns unauthorized user response for TokenUnauthorizedUserError', async (t) => {
+  const response = handleJwtVerificationError(new TokenUnauthorizedUserError());
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
-test('handleRequestAuthorizationError() returns invalid token response for TokenNotFoundError', async (t) => {
-  const response = handleRequestAuthorizationError(new TokenNotFoundError());
+test('handleJwtVerificationError() returns invalid token response for TokenNotFoundError', async (t) => {
+  const response = handleJwtVerificationError(new TokenNotFoundError());
   assertions.isInvalidAccessTokenResponse(t, response);
 });

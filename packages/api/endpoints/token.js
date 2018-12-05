@@ -10,8 +10,8 @@ const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 const {
   createJwtToken
 } = require('../lib/token');
-const { verifyRequestAuthorization } = require('../lib/request');
-const { handleRequestAuthorizationError } = require('../lib/response');
+const { verifyJwtAuthorization } = require('../lib/request');
+const { handleJwtVerificationError } = require('../lib/response');
 
 const { AccessToken } = require('../models');
 const {
@@ -100,10 +100,10 @@ async function refreshAccessToken(request, oAuth2Provider) {
   if (requestJwtToken) {
     let accessTokenRecord;
     try {
-      accessTokenRecord = await verifyRequestAuthorization(requestJwtToken);
+      accessTokenRecord = await verifyJwtAuthorization(requestJwtToken);
     }
     catch (err) {
-      return handleRequestAuthorizationError(err);
+      return handleJwtVerificationError(err);
     }
 
     const accessTokenModel = new AccessToken();
@@ -180,10 +180,10 @@ async function deleteToken(request) {
   if (requestJwtToken) {
     let accessToken;
     try {
-      ({ accessToken } = await verifyRequestAuthorization(requestJwtToken));
+      ({ accessToken } = await verifyJwtAuthorization(requestJwtToken));
     }
     catch (err) {
-      return handleRequestAuthorizationError(err);
+      return handleJwtVerificationError(err);
     }
 
     const accessTokenModel = new AccessToken();
