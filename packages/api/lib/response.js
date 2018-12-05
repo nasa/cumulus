@@ -153,6 +153,7 @@ async function getAuthorizationFailureResponse(params) {
 
   // Verify JWT validity and user access
   try {
+    // TODO: should we pass along the usersTable param here?
     await verifyJwtAuthorization(jwtToken);
   }
   catch (err) {
