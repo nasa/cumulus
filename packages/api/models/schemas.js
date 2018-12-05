@@ -1,21 +1,5 @@
 'use strict';
 
-module.exports.providersModelCallback = (table) => {
-  table.string('id').primary().notNull();
-  table.timestamps(false, true);
-  table.integer('global_connection_limit').notNull();
-  table.text('host').notNull();
-  table.enu(
-    'protocol',
-    ['http', 'https', 'ftp', 'sftp', 's3']
-  ).notNull();
-  table.integer('port');
-  table.string('username', 1000);
-  table.string('password', 1000);
-  table.string('encrypted');
-  table.json('meta');
-};
-
 module.exports.accessToken = {
   title: 'Access Token Object',
   description: 'Cumulus API AccessToken Table schema',
@@ -470,6 +454,71 @@ module.exports.pdr = {
     'provider',
     'collectionId',
     'status',
+    'createdAt'
+  ]
+};
+
+// Provider Schema => the model keeps information about each ingest location
+module.exports.provider = {
+  title: 'Provider Object',
+  description: 'Keep the information about each ingest endpoint',
+  type: 'object',
+  properties: {
+    id: {
+      title: 'Provider Name',
+      type: 'string'
+    },
+    globalConnectionLimit: {
+      title: 'Concurrent Connnection Limit',
+      type: 'number',
+      default: 10
+    },
+    protocol: {
+      title: 'Protocol',
+      type: 'string',
+      enum: ['http', 'https', 'ftp', 'sftp', 's3'],
+      default: 'http'
+    },
+    host: {
+      title: 'Host',
+      type: 'string'
+    },
+    port: {
+      title: 'Port',
+      type: 'number'
+    },
+    username: {
+      type: 'string'
+    },
+    password: {
+      type: 'string'
+    },
+    encrypted: {
+      type: 'boolean',
+      readonly: true
+    },
+    createdAt: {
+      type: 'number',
+      readonly: true
+    },
+    updatedAt: {
+      type: 'number',
+      readonly: true
+    },
+    privateKey: {
+      type: 'string',
+      description: 'filename assumed to be in s3://bucketInternal/stackName/crypto'
+    },
+    cmKeyId: {
+      type: 'string',
+      description: 'AWS KMS Customer Master Key arn or alias'
+    }
+  },
+  required: [
+    'id',
+    'globalConnectionLimit',
+    'protocol',
+    'host',
     'createdAt'
   ]
 };

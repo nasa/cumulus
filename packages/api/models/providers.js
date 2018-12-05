@@ -19,21 +19,11 @@ class Provider extends Model {
     this.removeAdditional = 'all';
   }
 
-  async createTable() {
-    const knex = Registry.knex;
-    if (process.env.NODE_ENV !== 'test') {
-      throw new Error('Table creation reserved for testing only');
-    }
-    await knex().schema.createTable(process.env.ProvidersTable, providersModelCallback);
-  }
 
-  async deleteTable() {
-    const knex = Registry.knex;
-    if (process.env.NODE_ENV !== 'test') {
-      throw new Error('Table removal reserved for testing only');
-    }
-    await knex().schema.dropTable(process.env.ProvidersTable);
-  }
+  // Void function to prevent upstream tests from failing when they attempt to
+  // clean up
+  async createTable() {}
+  async deleteTable() {}
 
   /**
    * Returns row matching id
@@ -57,7 +47,7 @@ class Provider extends Model {
 
   /**
    * Check if a given provider exists
-   *
+\   *
    * @param {string} id - provider id
    * @returns {boolean}
    */
