@@ -2,14 +2,29 @@
 
 const test = require('ava');
 const {
+  JsonWebTokenError,
+  TokenExpiredError
+} = require('jsonwebtoken');
+const {
   testUtils: { randomString }
 } = require('@cumulus/common');
 
 const { AccessToken, User } = require('../../models');
-const { createFakeJwtAuthToken, fakeAccessTokenFactory, fakeUserFactory } = require('../../lib/testUtils');
+const {
+  createFakeJwtAuthToken,
+  fakeAccessTokenFactory,
+  fakeUserFactory
+} = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
+const {
+  TokenNotFoundError,
+  TokenUnauthorizedUserError
+} = require('../../lib/errors');
 const { createJwtToken } = require('../../lib/token');
-const { getAuthorizationFailureResponse } = require('../../lib/response');
+const {
+  getAuthorizationFailureResponse,
+  handleRequestAuthorizationError
+} = require('../../lib/response');
 
 let accessTokenModel;
 let usersTableName;
@@ -133,4 +148,24 @@ test('getAuthorizationFailureResponse returns an appropriate response when the t
 
   t.truthy(response);
   assertions.isExpiredAccessTokenResponse(t, response);
+});
+
+test('handleRequestAuthorizationError() returns invalid token response for JsonWebTokenError', async (t) => {
+  const response = handleRequestAuthorizationError(new JsonWebTokenError());
+  assertions.isInvalidAccessTokenResponse(t, response);
+});
+
+test('handleRequestAuthorizationError() returns expired token response for TokenExpiredError', async (t) => {
+  const response = handleRequestAuthorizationError(new TokenExpiredError());
+  assertions.isExpiredAccessTokenResponse(t, response);
+});
+
+test('handleRequestAuthorizationError() returns unauthorized user response for TokenUnauthorizedUserError', async (t) => {
+  const response = handleRequestAuthorizationError(new TokenUnauthorizedUserError());
+  assertions.isUnauthorizedUserResponse(t, response);
+});
+
+test('handleRequestAuthorizationError() returns invalid token response for TokenNotFoundError', async (t) => {
+  const response = handleRequestAuthorizationError(new TokenNotFoundError());
+  assertions.isInvalidAccessTokenResponse(t, response);
 });

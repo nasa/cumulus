@@ -19,6 +19,10 @@ const {
 } = require('jsonwebtoken');
 
 const { User } = require('../models');
+const {
+  TokenUnauthorizedUserError,
+  TokenNotFoundError
+} = require('./errors');
 const { verifyJwtToken } = require('./token');
 const { errorify, findCaseInsensitiveKey } = require('./utils');
 const {
@@ -76,6 +80,24 @@ function buildAuthorizationFailureResponse(params) {
     '@cumulus/api/responses'
   );
   return new AuthorizationFailureResponse(params);
+}
+
+function handleRequestAuthorizationError (err) {
+  if (err instanceof TokenExpiredError) {
+    return new TokenExpiredResponse();
+  }
+  if (err instanceof JsonWebTokenError) {
+    return new InvalidTokenResponse();
+  }
+  if (err instanceof TokenUnauthorizedUserError) {
+    return new AuthorizationFailureResponse({
+      message: 'User not authorized',
+      statusCode: 403
+    });
+  }
+  if (err instanceof TokenNotFoundError) {
+    return new InvalidTokenResponse();
+  }
 }
 
 /**
@@ -196,6 +218,7 @@ module.exports = {
   buildAuthorizationFailureResponse,
   buildLambdaProxyResponse,
   getAuthorizationFailureResponse,
+  handleRequestAuthorizationError,
   handle,
   internalServerErrorResponse,
   notFoundResponse,

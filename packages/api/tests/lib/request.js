@@ -12,15 +12,11 @@ const {
   }
 } = require('@cumulus/common');
 
-const assertions = require('../../lib/assertions');
 const {
   TokenUnauthorizedUserError,
   TokenNotFoundError
 } = require('../../lib/errors');
-const {
-  verifyRequestAuthorization,
-  handleRequestAuthorizationError
-} = require('../../lib/request');
+const { verifyRequestAuthorization } = require('../../lib/request');
 const {
   fakeAccessTokenFactory,
   fakeUserFactory
@@ -86,10 +82,6 @@ test('verifyRequestAuthorization() throws JsonWebTokenError for token signed wit
   }
 });
 
-test('handleRequestAuthorizationError() returns invalid token response for JsonWebTokenError', async (t) => {
-  const response = handleRequestAuthorizationError(new JsonWebTokenError());
-  assertions.isInvalidAccessTokenResponse(t, response);
-});
 
 test('verifyRequestAuthorization() throws TokenExpiredError for expired token', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory({
@@ -106,11 +98,6 @@ test('verifyRequestAuthorization() throws TokenExpiredError for expired token', 
   }
 });
 
-test('handleRequestAuthorizationError() returns expired token response for TokenExpiredError', async (t) => {
-  const response = handleRequestAuthorizationError(new TokenExpiredError());
-  assertions.isExpiredAccessTokenResponse(t, response);
-});
-
 test('verifyRequestAuthorization() throws TokenUnauthorizedUserError for unauthorized user token', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory();
   const jwtToken = createJwtToken(accessTokenRecord);
@@ -122,11 +109,6 @@ test('verifyRequestAuthorization() throws TokenUnauthorizedUserError for unautho
   catch (err) {
     t.true(err instanceof TokenUnauthorizedUserError);
   }
-});
-
-test('handleRequestAuthorizationError() returns unauthorized user response for TokenUnauthorizedUserError', async (t) => {
-  const response = handleRequestAuthorizationError(new TokenUnauthorizedUserError());
-  assertions.isUnauthorizedUserResponse(t, response);
 });
 
 test('verifyRequestAuthorization() throws TokenNotFoundError for non-existent access token', async (t) => {
@@ -144,9 +126,4 @@ test('verifyRequestAuthorization() throws TokenNotFoundError for non-existent ac
   catch (err) {
     t.true(err instanceof TokenNotFoundError);
   }
-});
-
-test('handleRequestAuthorizationError() returns invalid token response for TokenNotFoundError', async (t) => {
-  const response = handleRequestAuthorizationError(new TokenNotFoundError());
-  assertions.isInvalidAccessTokenResponse(t, response);
 });

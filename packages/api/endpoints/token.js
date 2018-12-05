@@ -4,26 +4,20 @@ const get = require('lodash.get');
 const log = require('@cumulus/common/log');
 
 const { google } = require('googleapis');
-const { JsonWebTokenError, TokenExpiredError } = require('jsonwebtoken');
 
 const EarthdataLogin = require('../lib/EarthdataLogin');
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 const {
-  createJwtToken,
-  verifyJwtToken
+  createJwtToken
 } = require('../lib/token');
-const {
-  handleRequestAuthorizationError,
-  verifyRequestAuthorization
-} = require('../lib/request');
+const { verifyRequestAuthorization } = require('../lib/request');
+const { handleRequestAuthorizationError } = require('../lib/response');
 
-const { AccessToken, User } = require('../models');
+const { AccessToken } = require('../models');
 const {
   AuthorizationFailureResponse,
   LambdaProxyResponse,
-  InternalServerError,
-  InvalidTokenResponse,
-  TokenExpiredResponse
+  InternalServerError
 } = require('../lib/responses');
 
 const buildPermanentRedirectResponse = (location) =>
