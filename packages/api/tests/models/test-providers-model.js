@@ -13,13 +13,11 @@ const { providerModelCallback } = require('../../models/schemas');
 let ruleModel;
 let tableName;
 
-let table;
-let id;
 
-const setup = () => {
-  table = Registry.knex()(tableName);
-  id = randomString();
-};
+test.beforeEach(async (t) => {
+  t.context.table = Registry.knex()(tableName);
+  t.context.id = randomString();
+});
 
 test.before(async () => {
   process.env.ProvidersTable = randomString();
@@ -42,8 +40,8 @@ test.after.always(async () => {
 });
 
 test.serial('get() returns a translated row', async (t) => {
-  setup();
-  await table.insert({
+  const id = t.context.id;
+  await t.context.table.insert({
     id: id,
     global_connection_limit: 10,
     protocol: 'http',
@@ -58,8 +56,8 @@ test.serial('get() returns a translated row', async (t) => {
 
 
 test.serial('exists() returns true when a record exists', async (t) => {
-  setup();
-  await table.insert({
+  const id = t.context.id;
+  await t.context.table.insert({
     id: id,
     global_connection_limit: 10,
     protocol: 'http',
@@ -75,10 +73,10 @@ test.serial('exists() returns false when a record does not exist', async (t) => 
 });
 
 test.serial('delete() throws an exception if the provider has associated rules', async (t) => {
-  setup();
+  const id = t.context.id;
   const providersModel = new Provider();
 
-  await table.insert({
+  await t.context.table.insert({
     id: id,
     global_connection_limit: 10,
     protocol: 'http',
@@ -112,10 +110,10 @@ test.serial('delete() throws an exception if the provider has associated rules',
 });
 
 test.serial('delete() deletes a provider', async (t) => {
-  setup();
+  const id = t.context.id;
   const providersModel = new Provider();
 
-  await table.insert({
+  await t.context.table.insert({
     id: id,
     global_connection_limit: 10,
     protocol: 'http',
@@ -128,7 +126,7 @@ test.serial('delete() deletes a provider', async (t) => {
 });
 
 test.serial('insert() inserts a translated provider', async (t) => {
-  setup();
+  const id = t.context.id;
   const providersModel = new Provider();
   const baseRecord = {
     id: id,
@@ -139,7 +137,7 @@ test.serial('insert() inserts a translated provider', async (t) => {
   await providersModel.insert(baseRecord);
 
   console.log(tableName);
-  const actual = (await table.select().where({ id: id }))[0];
+  const actual = (await t.context.table.select().where({ id: id }))[0];
   const expected = {
     id: id,
     global_connection_limit: 10,
@@ -158,7 +156,7 @@ test.serial('insert() inserts a translated provider', async (t) => {
 });
 
 test.serial('update() updates a record', async (t) => {
-  setup();
+  const id = t.context.id;
   const providersModel = new Provider();
   const updateRecord = { host: 'test_host' };
   const baseRecord = {
@@ -167,7 +165,7 @@ test.serial('update() updates a record', async (t) => {
     protocol: 'http',
     host: '127.0.0.1'
   };
-  await table.insert(baseRecord);
+  await t.context.table.insert(baseRecord);
   await providersModel.update({ id }, updateRecord);
   const actual = (await providersModel.get({ id }));
   t.is('test_host', actual.host);
