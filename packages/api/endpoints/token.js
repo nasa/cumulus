@@ -12,6 +12,10 @@ const {
   createJwtToken,
   verifyJwtToken
 } = require('../lib/token');
+const {
+  handleRequestAuthorizationError,
+  verifyRequestAuthorization
+} = require('../lib/request');
 
 const { AccessToken, User } = require('../models');
 const {
@@ -100,48 +104,20 @@ async function refreshAccessToken(request, oAuth2Provider) {
   const requestJwtToken = get(body, 'token');
 
   if (requestJwtToken) {
-    let accessToken;
-    let username;
+    let accessTokenRecord;
     try {
-      ({ accessToken, username } = verifyJwtToken(requestJwtToken));
+      accessTokenRecord = await verifyRequestAuthorization(requestJwtToken);
     }
     catch (err) {
-      if (err instanceof TokenExpiredError) {
-        return new TokenExpiredResponse();
-      }
-      if (err instanceof JsonWebTokenError) {
-        return new InvalidTokenResponse();
-      }
-    }
-
-    const userModel = new User();
-    try {
-      await userModel.get({ userName: username });
-    }
-    catch (err) {
-      if (err.name === 'RecordDoesNotExist') {
-        return new AuthorizationFailureResponse({
-          message: 'User not authorized',
-          statusCode: 403
-        });
-      }
+      return handleRequestAuthorizationError(err);
     }
 
     const accessTokenModel = new AccessToken();
 
-    let accessTokenRecord;
-    try {
-      accessTokenRecord = await accessTokenModel.get({ accessToken });
-    }
-    catch (err) {
-      if (err.name === 'RecordDoesNotExist') {
-        return new InvalidTokenResponse();
-      }
-    }
-
     let newAccessToken;
     let newRefreshToken;
     let expirationTime;
+    let username;
     try {
       ({
         accessToken: newAccessToken,
