@@ -23,6 +23,7 @@ const {
   TokenUnauthorizedUserError,
   TokenNotFoundError
 } = require('./errors');
+const { verifyRequestAuthorization } = require('./request');
 const { verifyJwtToken } = require('./token');
 const { errorify, findCaseInsensitiveKey } = require('./utils');
 const {
@@ -145,31 +146,11 @@ async function getAuthorizationFailureResponse(params) {
     });
   }
 
-  let username;
   try {
-    ({ username } = verifyJwtToken(jwtToken));
-  }
-  catch (error) {
-    log.error('Error caught when checking JWT token', error);
-    if (error instanceof TokenExpiredError) {
-      return new TokenExpiredResponse();
-    }
-    if (error instanceof JsonWebTokenError) {
-      return new InvalidTokenResponse();
-    }
-  }
-
-  const userModel = new User({ tableName: usersTable });
-  try {
-    await userModel.get({ userName: username });
+    await verifyRequestAuthorization(jwtToken);
   }
   catch (err) {
-    if (err.name === 'RecordDoesNotExist') {
-      return new AuthorizationFailureResponse({
-        message: 'User not authorized',
-        statusCode: 403
-      });
-    }
+    return handleRequestAuthorizationError(err);
   }
 
   return null;
