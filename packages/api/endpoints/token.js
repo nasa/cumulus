@@ -174,6 +174,12 @@ async function login(request, oAuth2Provider) {
   return buildPermanentRedirectResponse(authorizationUrl);
 }
 
+/**
+ * Handle token deletion
+ *
+ * @param {Object} request - an API Gateway request
+ * @returns {Object} an API Gateway response
+ */
 async function deleteToken(request) {
   const requestJwtToken = get(request, 'queryStringParameters.token');
 
@@ -200,6 +206,14 @@ async function deleteToken(request) {
         });
       }
     }
+
+    return new LambdaProxyResponse({
+      json: true,
+      statusCode: 200,
+      body: {
+        message: 'Access token record was deleted'
+      }
+    })
   }
 
   const errorMessage = 'Request requires a token';
