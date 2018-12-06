@@ -5,7 +5,6 @@ const Crypto = require('@cumulus/ingest/crypto').DefaultProvider;
 const { AssociatedRulesError } = require('../lib/errors');
 const Model = require('./modelBase');
 const Rule = require('./rules');
-const { providersModelCallback } = require('./schemas');
 const { RecordDoesNotExist } = require('../lib/errors');
 const { ProviderSchema } = require('./schemas').provider;
 
