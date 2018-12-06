@@ -41,6 +41,15 @@ class Model {
   }
 
 
+  interpolateAttributeValues(queryString, attributeNames = {}, attributeValues = {}) {
+    let updatedQueryString = queryString;
+    const substitutionObject = Object.assign(attributeNames, attributeValues);
+    Object.keys(substitutionObject).forEach( key => {
+      updatedQueryString = updatedQueryString.replace(key, `'${substitutionObject[key]}'`);
+    });
+    return updatedQueryString;
+  }
+
   /**
    * Get a knex table object for the 'providers' table
    * @returns {Object} knex table object
@@ -48,6 +57,52 @@ class Model {
   table() {
     return Registry.knex()(this.tableName);
   }
+
+
+  async scan(query, fields, limit, select, startKey) {
+    let conditionString;
+    let selectionString = '*';
+    let count = false;
+
+    if (query) {
+      if (query.filter && query.values) {
+        conditionString = this.interpolateAttributeValues(query.filter, query.names, query.values);
+      }
+    }
+
+    if (fields) {
+      selectionString = this.interpolateAttributeValues(fields, query.names, {});
+    }
+
+    if (select) {
+      if (select === 'COUNT') {
+        count = true;
+      }
+      else if (select === 'ALL_PROJECTED_ATTRIBUTES') {
+        throw new Error('Use of projected  attribute selection in table scan depricated in Cumulus > 1.12');
+      }
+      // Other valid options require selection string to be set or default to "*" regardless
+    }
+
+    if (startKey) {
+      throw new Error('Use of start key in table scan depricated in Cumulus > 1.12');
+    }
+
+    let queryPromise;
+    if (count) {
+      queryPromise = this.table().count(selectionString);
+    }
+    else {
+      queryPromise = this.table().select(selectionString);
+    }
+
+    if (conditionString) {
+      // Consider using something other than raw before merge.
+      queryPromise = queryPromise.whereRaw(conditionString);
+    }
+    return queryPromise;
+  }
+
 
   /**
    * Changes camel cased names to snakecase column names
