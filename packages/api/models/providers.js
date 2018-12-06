@@ -57,11 +57,9 @@ class Provider extends Model {
     }
   }
 
-
   encrypt(value) {
     return Crypto.encrypt(value);
   }
-
 
   decrypt(value) {
     return Crypto.decrypt(value);

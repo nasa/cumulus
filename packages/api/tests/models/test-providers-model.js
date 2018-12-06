@@ -3,11 +3,13 @@
 const test = require('ava');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
+const sinon = require('sinon');
 const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
 const { Provider, Rule } = require('../../models');
 const { AssociatedRulesError } = require('../../lib/errors');
 const { RecordDoesNotExist } = require('../../lib/errors');
 const Registry = require('../../lib/Registry');
+
 
 let ruleModel;
 
@@ -132,12 +134,19 @@ test('delete() deletes a provider', async (t) => {
 test('insert() inserts a translated provider', async (t) => {
   const id = t.context.id;
   const providersModel = new Provider();
+
+  const encryptStub = sinon.stub(providersModel, 'encrypt');
+  encryptStub.returns(Promise.resolve('encryptedValue'));
+
   const baseRecord = {
     id,
     globalConnectionLimit: 10,
     protocol: 'http',
-    host: '127.0.0.1'
+    host: '127.0.0.1',
+    username: 'foo',
+    password: 'bar'
   };
+
   await providersModel.insert(baseRecord);
 
   const actual = { ...(await t.context.table.select().where({ id }))[0] };
@@ -149,10 +158,10 @@ test('insert() inserts a translated provider', async (t) => {
     created_at: actual.created_at,
     updated_at: actual.updated_at,
     meta: null,
-    password: null,
+    password: 'encryptedValue',
     port: null,
-    username: null,
-    encrypted: null
+    username: 'encryptedValue',
+    encrypted: true
   };
 
   t.deepEqual(actual, expected);
