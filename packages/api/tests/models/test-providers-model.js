@@ -8,7 +8,6 @@ const { Provider, Rule } = require('../../models');
 const { AssociatedRulesError } = require('../../lib/errors');
 const Registry = require('../../lib/Registry');
 
-const tableName = 'providers';
 let ruleModel;
 
 test.before(async () => {
@@ -22,7 +21,7 @@ test.before(async () => {
 });
 
 test.beforeEach(async (t) => {
-  t.context.table = Registry.knex()(tableName);
+  t.context.table = Registry.knex()(Provider.tableName);
   t.context.id = randomString();
 });
 

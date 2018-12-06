@@ -15,7 +15,7 @@ class Provider extends Model {
    */
   constructor() {
     super();
-    this.tableName = 'providers';
+    this.tableName = Provider.tableName;
     this.removeAdditional = 'all';
     this.schema = ProviderSchema;
   }
@@ -174,5 +174,7 @@ class Provider extends Model {
     return scanResult.Items;
   }
 }
+
+Provider.tableName = 'providers';
 
 module.exports = Provider;
