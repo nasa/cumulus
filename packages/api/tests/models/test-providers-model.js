@@ -6,6 +6,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
 const { Provider, Rule } = require('../../models');
 const { AssociatedRulesError } = require('../../lib/errors');
+const { RecordDoesNotExist } = require('../../lib/errors');
 const Registry = require('../../lib/Registry');
 
 let ruleModel;
@@ -43,6 +44,19 @@ test('get() returns a translated row', async (t) => {
   const actual = (await providersModel.get({ id }));
   t.is(id, actual.id);
   t.is(10, actual.globalConnectionLimit);
+});
+
+test('get() throws an exception if no record is found', async (t) => {
+  const id = { id: t.context.id };
+  const providersModel = new Provider();
+  let actual;
+  try {
+    await providersModel.get(id);
+  }
+  catch (error) {
+    actual = error;
+  }
+  t.truthy(actual instanceof RecordDoesNotExist);
 });
 
 test('exists() returns true when a record exists', async (t) => {
@@ -110,9 +124,9 @@ test('delete() deletes a provider', async (t) => {
     host: '127.0.0.1'
   });
 
-  await providersModel.delete({ id } );
+  await providersModel.delete({ id });
 
-  t.false(await providersModel.exists({ id } ));
+  t.false(await providersModel.exists({ id }));
 });
 
 test('insert() inserts a translated provider', async (t) => {
@@ -126,7 +140,7 @@ test('insert() inserts a translated provider', async (t) => {
   };
   await providersModel.insert(baseRecord);
 
-  const actual = { ...(await t.context.table.select().where({ id } ))[0] };
+  const actual = { ...(await t.context.table.select().where({ id }))[0] };
   const expected = {
     id,
     global_connection_limit: 10,
