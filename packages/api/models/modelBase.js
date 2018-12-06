@@ -100,7 +100,12 @@ class Model {
       // Consider using something other than raw before merge.
       queryPromise = queryPromise.whereRaw(conditionString);
     }
-    return queryPromise;
+    const results = await queryPromise;
+    return {
+      Items: results.map(row => ({...row})),
+      Count: results.length,
+      ScannedCount: null
+    };
   }
 
 
