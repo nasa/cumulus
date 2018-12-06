@@ -30,7 +30,30 @@ function globalReplace(string, oldSubString, newSubString) {
   return string.replace(new RegExp(oldSubString, 'g'), newSubString);
 }
 
+/**
+ * Changes camel cased names to snakecase column names
+ *
+ * @param {string} string column name to translate
+ * @returns {string} updated column name
+ */
+function translateCamelCaseColumnName(string) {
+  // change js camel case to all lower/seperated with "_"
+  return string.replace(/([A-Z])/g, (v) => `_${v.toLowerCase()}`).replace(/^_/, '');
+}
+
+/**
+ * Changes snakecase column names to camel cased names
+ *
+ * @param {string} string column name to translate
+ * @returns {string} updated column name
+ */
+function translateSnakeCaseColumnName(string) {
+  return string.replace(/_+([a-z])/g, (_, match) => match.toUpperCase());
+}
+
 module.exports = {
   globalReplace,
+  translateCamelCaseColumnName,
+  translateSnakeCaseColumnName,
   unicodeEscape
 };

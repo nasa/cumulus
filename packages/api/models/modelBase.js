@@ -1,6 +1,10 @@
 'use strict';
 
 const Ajv = require('ajv');
+const {
+  translateCamelCaseColumnName,
+  translateSnakeCaseColumnName
+} = require('@cumulus/common/string');
 const Registry = require('../lib/Registry');
 
 
@@ -25,8 +29,9 @@ class Model {
 
   // Void function to prevent upstream tests from failing when they attempt to
   // clean up
-  async createTable() {}
-  async deleteTable() {}
+  async createTable() {} // eslint-disable-line no-empty-function
+
+  async deleteTable() {} // eslint-disable-line no-empty-function
 
   enableStream() {
     throw new Error('Deprecated');
@@ -50,28 +55,6 @@ class Model {
   }
 
   /**
-   * Changes camel cased names to snakecase column names
-   *
-   * @param {string} columnName column name to translate
-   * @returns {string} updated column name
-   */
-  translateCamelCaseColumnName(columnName) {
-    // change js camel case to all lower/seperated with "_"
-    return columnName.replace(/([A-Z])/g, (v) => `_${v.toLowerCase()}`).replace(/^_/, '');
-  }
-
-  /**
-   * Changes snakecase column names to camel cased names
-   *
-   * @param {string} columnName column name to translate
-   * @returns {string} updated column name
-   */
-  translateSnakeCaseColumnName(columnName) {
-    return columnName.replace(/_+([a-z])/g, (_, match) => match.toUpperCase());
-  }
-
-
-  /**
    * Translates database object keys (columms) from camel-case to downcase/underscore seperated
    * column/Object names
    * @param {Object} item database object
@@ -80,7 +63,7 @@ class Model {
   translateItemToSnakeCase(item) {
     const translatedItem = {};
     Object.keys(item).forEach((key) => {
-      translatedItem[this.translateCamelCaseColumnName(key)] = item[key];
+      translatedItem[translateCamelCaseColumnName(key)] = item[key];
     });
     return translatedItem;
   }
@@ -94,7 +77,7 @@ class Model {
   translateItemToCamelCase(item) {
     const translatedItem = {};
     Object.keys(item).forEach((key) => {
-      translatedItem[this.translateSnakeCaseColumnName(key)] = item[key];
+      translatedItem[translateSnakeCaseColumnName(key)] = item[key];
     });
     return translatedItem;
   }
