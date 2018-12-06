@@ -76,6 +76,7 @@
     "lodash.sortby": "^4.7.0",
     "lodash.uniqby": "^4.7.0",
     "moment": "^2.22.1",
+    "mysql": "^2.16.0",
     "node-forge": "^0.7.1",
     "p-limit": "^1.2.0",
     "p-map": "^1.2.0",
