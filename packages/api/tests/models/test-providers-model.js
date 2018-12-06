@@ -8,18 +8,10 @@ const { Provider, Rule } = require('../../models');
 const { AssociatedRulesError } = require('../../lib/errors');
 const Registry = require('../../lib/Registry');
 
+const tableName = 'providers';
 let ruleModel;
-let tableName;
-
-
-test.beforeEach(async (t) => {
-  t.context.table = Registry.knex()(tableName);
-  t.context.id = randomString();
-});
 
 test.before(async () => {
-  tableName = 'providers';
-
   process.env.RulesTable = randomString();
   ruleModel = new Rule();
   await ruleModel.createTable();
@@ -29,12 +21,17 @@ test.before(async () => {
   process.env.stackName = randomString();
 });
 
+test.beforeEach(async (t) => {
+  t.context.table = Registry.knex()(tableName);
+  t.context.id = randomString();
+});
+
 test.after.always(async () => {
   await ruleModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.bucket);
 });
 
-test.serial('get() returns a translated row', async (t) => {
+test('get() returns a translated row', async (t) => {
   const id = t.context.id;
   await t.context.table.insert({
     id: id,
@@ -49,8 +46,7 @@ test.serial('get() returns a translated row', async (t) => {
   t.is(10, actual.globalConnectionLimit);
 });
 
-
-test.serial('exists() returns true when a record exists', async (t) => {
+test('exists() returns true when a record exists', async (t) => {
   const id = t.context.id;
   await t.context.table.insert({
     id: id,
@@ -62,12 +58,12 @@ test.serial('exists() returns true when a record exists', async (t) => {
   t.true(await providersModel.exists(id));
 });
 
-test.serial('exists() returns false when a record does not exist', async (t) => {
+test('exists() returns false when a record does not exist', async (t) => {
   const providersModel = new Provider();
   t.false(await providersModel.exists(randomString()));
 });
 
-test.serial('delete() throws an exception if the provider has associated rules', async (t) => {
+test('delete() throws an exception if the provider has associated rules', async (t) => {
   const id = t.context.id;
   const providersModel = new Provider();
 
@@ -94,7 +90,7 @@ test.serial('delete() throws an exception if the provider has associated rules',
   await ruleModel.create(rule);
 
   try {
-    await providersModel.delete({ id: id });
+    await providersModel.delete({ id });
     t.fail('Expected an exception to be thrown');
   }
   catch (err) {
@@ -104,7 +100,7 @@ test.serial('delete() throws an exception if the provider has associated rules',
   }
 });
 
-test.serial('delete() deletes a provider', async (t) => {
+test('delete() deletes a provider', async (t) => {
   const id = t.context.id;
   const providersModel = new Provider();
 
@@ -120,7 +116,7 @@ test.serial('delete() deletes a provider', async (t) => {
   t.false(await providersModel.exists({ id: id }));
 });
 
-test.serial('insert() inserts a translated provider', async (t) => {
+test('insert() inserts a translated provider', async (t) => {
   const id = t.context.id;
   const providersModel = new Provider();
   const baseRecord = {
@@ -149,7 +145,7 @@ test.serial('insert() inserts a translated provider', async (t) => {
   t.deepEqual(actual, expected);
 });
 
-test.serial('update() updates a record', async (t) => {
+test('update() updates a record', async (t) => {
   const id = t.context.id;
   const providersModel = new Provider();
   const updateRecord = { host: 'test_host' };
