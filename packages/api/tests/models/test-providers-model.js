@@ -6,7 +6,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
 const { Provider, Rule } = require('../../models');
 const { AssociatedRulesError } = require('../../lib/errors');
-const Registry = require('../../Registry');
+const Registry = require('../../lib/Registry');
 
 let ruleModel;
 let tableName;
@@ -146,7 +146,11 @@ test.serial('insert() inserts a translated provider', async (t) => {
     encrypted: null
   };
 
-  t.deepEqual(expected, actual);
+  t.deepEqual(Object.keys(actual).sort(), Object.keys(expected).sort());
+
+  Object.keys(expected).forEach((key) => {
+    t.deepEqual(actual[key], expected[key]);
+  });
 });
 
 test.serial('update() updates a record', async (t) => {

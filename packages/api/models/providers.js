@@ -4,7 +4,7 @@ const Crypto = require('@cumulus/ingest/crypto').DefaultProvider;
 
 const { AssociatedRulesError } = require('../lib/errors');
 const Model = require('./modelBase');
-const Registry = require('../Registry');
+const Registry = require('../lib/Registry');
 const Rule = require('./rules');
 const { providersModelCallback } = require('./schemas');
 const { RecordDoesNotExist } = require('../lib/errors');
@@ -22,6 +22,7 @@ class Provider extends Model {
   // Void function to prevent upstream tests from failing when they attempt to
   // clean up
   async createTable() {}
+
   async deleteTable() {}
 
   /**

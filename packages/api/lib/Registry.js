@@ -1,6 +1,7 @@
 'use strict';
 
 const knexModule = require('knex');
+const knexConfig = require('../knexfile');
 
 let soleInstance;
 
@@ -18,21 +19,7 @@ class Registry {
   }
 
   knex() {
-    if (!this._knex) {
-      this._knex = knexModule({
-        client: 'pg',
-        connection: {
-          host: '127.0.0.1',
-          database: 'postgres',
-          user: 'postgres',
-          password: 'password'
-        },
-        pool: {
-          min: 2,
-          max: 10
-        }
-      });
-    }
+    if (!this._knex) this._knex = knexModule(knexConfig);
 
     return this._knex;
   }
