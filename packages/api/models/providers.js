@@ -6,7 +6,6 @@ const { AssociatedRulesError } = require('../lib/errors');
 const Model = require('./modelBase');
 const Registry = require('../lib/Registry');
 const Rule = require('./rules');
-const { providersModelCallback } = require('./schemas');
 const { RecordDoesNotExist } = require('../lib/errors');
 
 class Provider extends Model {
@@ -21,9 +20,9 @@ class Provider extends Model {
 
   // Void function to prevent upstream tests from failing when they attempt to
   // clean up
-  async createTable() {}
+  async createTable() {} // eslint-disable-line no-empty-function
 
-  async deleteTable() {}
+  async deleteTable() {} // eslint-disable-line no-empty-function
 
   /**
    * Returns row matching id
