@@ -1,7 +1,7 @@
 'use strict';
 
 const Ajv = require('ajv');
-const Registry = require('../Registry');
+const Registry = require('../lib/Registry');
 
 
 class Model {

@@ -1,23 +1,26 @@
-// Update with your config settings.
+'use strict';
 
-module.exports = {};
+const parseConnection = require('knex/lib/util/parse-connection');
 
-module.exports.development = {
-  client: 'pg',
-  connection: {
-    host: '127.0.0.1',
-    database: 'postgres',
-    user: 'postgres',
-    password: 'password'
-  },
-  pool: {
-    min: 2,
-    max: 10
-  },
-  migrations: {
-    directory: 'knex_migrations',
-    tableName: 'knex_migrations'
-  }
+let config;
+if (process.env.DATABASE_URL) {
+  config = parseConnection(process.env.DATABASE_URL);
+}
+else {
+  config = {
+    client: 'mysql',
+    connection: {
+      host: '127.0.0.1',
+      database: 'cumulus',
+      user: 'cumulus',
+      password: 'password'
+    }
+  };
+}
+
+config.migrations = {
+  directory: 'knex_migrations',
+  tableName: 'knex_migrations'
 };
 
-module.exports.test = module.exports.development;
+module.exports = config;
