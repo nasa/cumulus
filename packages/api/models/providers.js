@@ -4,10 +4,10 @@ const Crypto = require('@cumulus/ingest/crypto').DefaultProvider;
 
 const { AssociatedRulesError } = require('../lib/errors');
 const Model = require('./modelBase');
-const Registry = require('../Registry');
 const Rule = require('./rules');
 const { providersModelCallback } = require('./schemas');
 const { RecordDoesNotExist } = require('../lib/errors');
+const { ProviderSchema } = require('./schemas').provider;
 
 class Provider extends Model {
   /**
@@ -17,12 +17,8 @@ class Provider extends Model {
     super();
     this.tableName = 'providers';
     this.removeAdditional = 'all';
+    this.schema = ProviderSchema;
   }
-
-  // Void function to prevent upstream tests from failing when they attempt to
-  // clean up
-  async createTable() {}
-  async deleteTable() {}
 
   /**
    * Returns row matching id
@@ -46,7 +42,7 @@ class Provider extends Model {
 
   /**
    * Check if a given provider exists
-\   *
+   *
    * @param {string} id - provider id
    * @returns {boolean}
    */
@@ -63,13 +59,6 @@ class Provider extends Model {
     }
   }
 
-  /**
-   * Get a knex table object for the 'providers' table
-   * @returns {Object} knex table object
-   */
-  table() {
-    return Registry.knex()(this.tableName);
-  }
 
   encrypt(value) {
     return Crypto.encrypt(value);
