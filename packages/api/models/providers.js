@@ -1,5 +1,6 @@
 'use strict';
 
+const cloneDeep = require('lodash.clonedeep');
 const Crypto = require('@cumulus/ingest/crypto').DefaultProvider;
 
 const { AssociatedRulesError } = require('../lib/errors');
@@ -14,7 +15,7 @@ class Provider extends Model {
    */
   constructor() {
     super();
-    this.tableName = 'providers';
+    this.tableName = Provider.tableName;
     this.removeAdditional = 'all';
     this.schema = ProviderSchema;
   }
@@ -26,16 +27,14 @@ class Provider extends Model {
    * @returns {Object} provider object
    */
   async get(item) {
-    const results = await this.table()
-      .select()
+    const result = await this.table()
+      .first()
       .where({ id: item.id });
-    if (results.size > 1) {
-      throw new Error(`Provider model violated key constraints for ${JSON.stringify(item)}`);
-    }
-    if (results.length === 0) {
+
+    if (!result) {
       throw new RecordDoesNotExist(`No record found for ${JSON.stringify(item)}`);
     }
-    return this.translateItemToCamelCase(results[0]);
+    return this.translateItemToCamelCase(result);
   }
 
 
@@ -68,69 +67,73 @@ class Provider extends Model {
     return Crypto.decrypt(value);
   }
 
-  async encryptItem(_item) {
-    const item = _item;
-    if (item.password) {
-      item.password = await this.encrypt(item.password);
-      item.encrypted = true;
+  async encryptItem(item) {
+    const encryptedItem = cloneDeep(item);
+
+    if (encryptedItem.password) {
+      encryptedItem.password = await this.encrypt(encryptedItem.password);
+      encryptedItem.encrypted = true;
     }
 
-    if (item.username) {
-      item.username = await this.encrypt(item.username);
-      item.encrypted = true;
+    if (encryptedItem.username) {
+      encryptedItem.username = await this.encrypt(encryptedItem.username);
+      encryptedItem.encrypted = true;
     }
-    return item;
+
+    return encryptedItem;
   }
 
   /**
    * Updates a provider
    *
    * @param { Object } keyObject { id: key } object
-   * @param { Object } _item an object with key/value pairs to update
-   * @param { keysToDelete[] } keysToDelete array of keys to set to null.
+   * @param { Object } item an object with key/value pairs to update
+   * @param { Array<string> } [keysToDelete=[]] array of keys to set to null.
    * @returns { string } id updated Provider id
    **/
-  async update(keyObject, _item, keysToDelete = []) {
-    const item = _item;
+  async update(keyObject, item, keysToDelete = []) {
+    const updatedItem = cloneDeep(item);
 
     keysToDelete.forEach((key) => {
-      item[key] = null;
+      updatedItem[key] = null;
     });
 
     // encrypt the password
-    this.encryptItem(item);
+    const encryptedItem = await this.encryptItem(updatedItem);
 
     await this.table()
       .where({ id: keyObject.id })
-      .update(this.translateItemToSnakeCase(item));
-    return item;
+      .update(this.translateItemToSnakeCase(encryptedItem));
+
+    return this.get(keyObject);
   }
 
   /**
    * Insert new row into database.  Alias for 'insert' function.
    *
-   * @param {Object} _item provider 'object' representing a row to create
+   * @param {Object} item provider 'object' representing a row to create
    * @returns {Object} the the full item added with modifications made by the model
    */
-  async create(_item) {
-    return this.insert(_item);
+  create(item) {
+    return this.insert(item);
   }
 
   /**
    * Insert new row into the database
    *
-   * @param {Object} _item provider 'object' representing a row to create
+   * @param {Object} item provider 'object' representing a row to create
 \   * @returns {Object} the the full item added with modifications made by the model
    */
-  async insert(_item) {
-    const item = _item;
+  async insert(item) {
+    const insertItem = cloneDeep(item);
 
     // encrypt the password
-    this.encryptItem(item);
+    const encryptedItem = await this.encryptItem(insertItem);
 
     await this.table()
-      .insert(this.translateItemToSnakeCase(item));
-    return item;
+      .insert(this.translateItemToSnakeCase(encryptedItem));
+
+    return this.get({ id: insertItem.id });
   }
 
   /**
@@ -171,5 +174,7 @@ class Provider extends Model {
     return scanResult.Items;
   }
 }
+
+Provider.tableName = 'providers';
 
 module.exports = Provider;
