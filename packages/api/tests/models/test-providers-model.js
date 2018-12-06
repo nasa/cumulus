@@ -124,16 +124,16 @@ test.serial('insert() inserts a translated provider', async (t) => {
   const id = t.context.id;
   const providersModel = new Provider();
   const baseRecord = {
-    id: id,
+    id,
     globalConnectionLimit: 10,
     protocol: 'http',
     host: '127.0.0.1'
   };
   await providersModel.insert(baseRecord);
 
-  const actual = (await t.context.table.select().where({ id: id }))[0];
+  const actual = { ...(await t.context.table.select().where({ id: id }))[0] };
   const expected = {
-    id: id,
+    id,
     global_connection_limit: 10,
     protocol: 'http',
     host: '127.0.0.1',
@@ -146,11 +146,7 @@ test.serial('insert() inserts a translated provider', async (t) => {
     encrypted: null
   };
 
-  t.deepEqual(Object.keys(actual).sort(), Object.keys(expected).sort());
-
-  Object.keys(expected).forEach((key) => {
-    t.deepEqual(actual[key], expected[key]);
-  });
+  t.deepEqual(actual, expected);
 });
 
 test.serial('update() updates a record', async (t) => {

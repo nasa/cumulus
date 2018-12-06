@@ -26,16 +26,14 @@ class Provider extends Model {
    * @returns {Object} provider object
    */
   async get(item) {
-    const results = await this.table()
-      .select()
+    const result = await this.table()
+      .first()
       .where({ id: item.id });
-    if (results.size > 1) {
-      throw new Error(`Provider model violated key constraints for ${JSON.stringify(item)}`);
-    }
-    if (results.length === 0) {
+
+    if (!result) {
       throw new RecordDoesNotExist(`No record found for ${JSON.stringify(item)}`);
     }
-    return this.translateItemToCamelCase(results[0]);
+    return this.translateItemToCamelCase(result);
   }
 
 
