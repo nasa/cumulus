@@ -110,9 +110,9 @@ test('delete() deletes a provider', async (t) => {
     host: '127.0.0.1'
   });
 
-  await providersModel.delete({ id: id });
+  await providersModel.delete({ id } );
 
-  t.false(await providersModel.exists({ id: id }));
+  t.false(await providersModel.exists({ id } ));
 });
 
 test('insert() inserts a translated provider', async (t) => {
@@ -126,7 +126,7 @@ test('insert() inserts a translated provider', async (t) => {
   };
   await providersModel.insert(baseRecord);
 
-  const actual = { ...(await t.context.table.select().where({ id: id }))[0] };
+  const actual = { ...(await t.context.table.select().where({ id } ))[0] };
   const expected = {
     id,
     global_connection_limit: 10,
