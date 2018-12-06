@@ -403,6 +403,10 @@ ApiTokenV1:
       path: v1/refresh
       method: post
       cors: true
+    - api: backend
+      path: token
+      method: delete
+      cors: true
 
 ApiVersionV1:
   handler: index.version
