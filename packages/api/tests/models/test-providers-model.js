@@ -4,6 +4,7 @@ const test = require('ava');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const sinon = require('sinon');
+const { fakeProviderFactory } = require('../../lib/testUtils.js');
 const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
 const { Provider, Rule } = require('../../models');
 const { AssociatedRulesError } = require('../../lib/errors');
@@ -25,7 +26,7 @@ test.before(async () => {
 
 test.beforeEach(async (t) => {
   t.context.table = Registry.knex()(Provider.tableName);
-  t.context.id = randomString();
+  t.context.provider = fakeProviderFactory();
 });
 
 test.after.always(async () => {
@@ -34,26 +35,22 @@ test.after.always(async () => {
 });
 
 test('get() returns a translated row', async (t) => {
-  const id = t.context.id;
-  await t.context.table.insert({
-    id: id,
-    global_connection_limit: 10,
-    protocol: 'http',
-    host: '127.0.0.1'
-  });
+  const id = t.context.provider.id;
+  t.context.provider.global_connection_limit = 10;
+  await t.context.table.insert(t.context.provider);
 
   const providersModel = new Provider();
   const actual = (await providersModel.get({ id }));
-  t.is(id, actual.id);
-  t.is(10, actual.globalConnectionLimit);
+  t.is(t.context.provider.id, actual.id);
+  t.is(t.context.provider.global_connection_limit, actual.globalConnectionLimit);
 });
 
 test('get() throws an exception if no record is found', async (t) => {
-  const id = { id: t.context.id };
+  const id = t.context.provider.id;
   const providersModel = new Provider();
   let actual;
   try {
-    await providersModel.get(id);
+    await providersModel.get({ id });
   }
   catch (error) {
     actual = error;
@@ -62,15 +59,9 @@ test('get() throws an exception if no record is found', async (t) => {
 });
 
 test('exists() returns true when a record exists', async (t) => {
-  const id = t.context.id;
-  await t.context.table.insert({
-    id: id,
-    global_connection_limit: 10,
-    protocol: 'http',
-    host: '127.0.0.1'
-  });
+  await t.context.table.insert(t.context.provider);
   const providersModel = new Provider();
-  t.true(await providersModel.exists(id));
+  t.true(await providersModel.exists(t.context.provider.id));
 });
 
 test('exists() returns false when a record does not exist', async (t) => {
@@ -79,15 +70,11 @@ test('exists() returns false when a record does not exist', async (t) => {
 });
 
 test('delete() throws an exception if the provider has associated rules', async (t) => {
-  const id = t.context.id;
+  const id = t.context.provider.id;
   const providersModel = new Provider();
 
-  await t.context.table.insert({
-    id: id,
-    global_connection_limit: 10,
-    protocol: 'http',
-    host: '127.0.0.1'
-  });
+
+  await t.context.table.insert(t.context.provider);
   const rule = fakeRuleFactoryV2({
     provider: id,
     rule: {
@@ -116,15 +103,9 @@ test('delete() throws an exception if the provider has associated rules', async 
 });
 
 test('delete() deletes a provider', async (t) => {
-  const id = t.context.id;
+  const id = t.context.provider.id;
   const providersModel = new Provider();
-
-  await t.context.table.insert({
-    id: id,
-    global_connection_limit: 10,
-    protocol: 'http',
-    host: '127.0.0.1'
-  });
+  await t.context.table.insert(t.context.provider);
 
   await providersModel.delete({ id });
 
@@ -132,53 +113,45 @@ test('delete() deletes a provider', async (t) => {
 });
 
 test('insert() inserts a translated provider', async (t) => {
-  const id = t.context.id;
+  const provider = t.context.provider;
   const providersModel = new Provider();
-
   const encryptStub = sinon.stub(providersModel, 'encrypt');
   encryptStub.returns(Promise.resolve('encryptedValue'));
 
-  const baseRecord = {
-    id,
+  const updateValues = {
     globalConnectionLimit: 10,
-    protocol: 'http',
-    host: '127.0.0.1',
     username: 'foo',
     password: 'bar'
   };
+  Object.assign(provider, updateValues);
 
-  await providersModel.insert(baseRecord);
+  await providersModel.insert(provider);
 
-  const actual = { ...(await t.context.table.select().where({ id }))[0] };
+  const actual = { ...(await t.context.table.select().where({ id: provider.id }))[0] };
   const expected = {
-    id,
+    id: provider.id,
     global_connection_limit: 10,
-    protocol: 'http',
-    host: '127.0.0.1',
+    protocol: provider.protocol,
+    host: provider.host,
     created_at: actual.created_at,
     updated_at: actual.updated_at,
     meta: null,
     password: 'encryptedValue',
-    port: null,
+    port: provider.port,
     username: 'encryptedValue',
     encrypted: true
   };
-
   t.deepEqual(actual, expected);
 });
 
 test('update() updates a record', async (t) => {
-  const id = t.context.id;
+  const id = t.context.provider.id;
   const providersModel = new Provider();
   const updateRecord = { host: 'test_host' };
-  const baseRecord = {
-    id: id,
-    global_connection_limit: 10,
-    protocol: 'http',
-    host: '127.0.0.1'
-  };
-  await t.context.table.insert(baseRecord);
+
+  await t.context.table.insert(t.context.provider);
   await providersModel.update({ id }, updateRecord);
+
   const actual = (await providersModel.get({ id }));
   t.is('test_host', actual.host);
 });
