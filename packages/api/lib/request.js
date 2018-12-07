@@ -1,9 +1,8 @@
 const log = require('@cumulus/common/log');
 
-const { AccessToken, User } = require('../models');
+const { User } = require('../models');
 const {
-  TokenUnauthorizedUserError,
-  TokenNotFoundError
+  TokenUnauthorizedUserError
 } = require('../lib/errors');
 const { verifyJwtToken } = require('./token');
 
@@ -15,7 +14,6 @@ const { verifyJwtToken } = require('./token');
  * @throws {JsonWebTokenError} - thrown if the JWT is invalid
  * @throws {TokenExpiredError} - thown if the JWT is expired
  * @throws {TokenUnauthorizedUserError} - thrown if the user is not authorized
- * @throws {TokenNotFoundError} - thrown if the access token is not found
  *
  * @returns {Object} accessTokenRecord - The access token record object.
  */
@@ -40,19 +38,7 @@ async function verifyJwtAuthorization (requestJwtToken) {
     }
   }
 
-  const accessTokenModel = new AccessToken();
-
-  let accessTokenRecord;
-  try {
-    accessTokenRecord = await accessTokenModel.get({ accessToken });
-  }
-  catch (err) {
-    if (err.name === 'RecordDoesNotExist') {
-      throw new TokenNotFoundError();
-    }
-  }
-
-  return accessTokenRecord;
+  return accessToken;
 };
 
 module.exports = {

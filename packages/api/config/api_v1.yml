@@ -404,8 +404,8 @@ ApiTokenV1:
       method: post
       cors: true
     - api: backend
-      path: token
-      method: delete
+      path: v1/token-revoke
+      method: post
       cors: true
 
 ApiVersionV1:

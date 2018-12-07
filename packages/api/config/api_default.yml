@@ -408,8 +408,8 @@ ApiTokenDefault:
       method: post
       cors: true
     - api: backend
-      path: token
-      method: delete
+      path: token-revoke
+      method: post
       cors: true
 
 ApiVersionDefault:
