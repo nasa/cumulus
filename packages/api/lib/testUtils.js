@@ -225,7 +225,7 @@ function fakeProviderFactory(options = {}) {
       global_connection_limit: 1,
       protocol: 'http',
       host: randomString(),
-      port: 80,
+      port: 80
     },
     options
   );
