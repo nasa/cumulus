@@ -187,3 +187,17 @@ class TokenExpiredResponse extends LambdaProxyResponse {
   }
 }
 exports.TokenExpiredResponse = TokenExpiredResponse;
+
+class MissingTokenResponse extends AuthorizationFailureResponse {
+  constructor() {
+    const errorMessage = 'Request requires a token';
+    const error = new Error(errorMessage);
+
+    super({
+      statusCode: 400,
+      error,
+      message: error.message
+    });
+  }
+}
+exports.MissingTokenResponse = MissingTokenResponse;
