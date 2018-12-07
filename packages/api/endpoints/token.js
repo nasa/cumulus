@@ -18,7 +18,8 @@ const {
   AuthorizationFailureResponse,
   LambdaProxyResponse,
   InternalServerError,
-  InvalidTokenResponse
+  InvalidTokenResponse,
+  MissingTokenResponse
 } = require('../lib/responses');
 
 const buildPermanentRedirectResponse = (location) =>
@@ -55,7 +56,6 @@ async function token(event, oAuth2Provider) {
       const jwtToken = createJwtToken({ accessToken, username, expirationTime });
 
       if (state) {
-        // log.info(`Log info: Redirecting to state: ${state} with token ${jwtToken}`);
         return buildPermanentRedirectResponse(
           `${decodeURIComponent(state)}?token=${jwtToken}`
         );
@@ -98,70 +98,64 @@ async function refreshAccessToken(request, oAuth2Provider) {
     : {};
   const requestJwtToken = get(body, 'token');
 
-  if (requestJwtToken) {
-    let accessToken;
-    try {
-      accessToken = await verifyJwtAuthorization(requestJwtToken);
-    }
-    catch (err) {
-      return handleJwtVerificationError(err);
-    }
+  if (!requestJwtToken) {
+    return new MissingTokenResponse();
+  }
 
-    const accessTokenModel = new AccessToken();
+  let accessToken;
+  try {
+    accessToken = await verifyJwtAuthorization(requestJwtToken);
+  }
+  catch (err) {
+    return handleJwtVerificationError(err);
+  }
 
-    let accessTokenRecord;
-    try {
-      accessTokenRecord = await accessTokenModel.get({ accessToken });
-    }
-    catch (err) {
-      if (err.name === 'RecordDoesNotExist') {
-        return new InvalidTokenResponse();
-      }
-    }
+  const accessTokenModel = new AccessToken();
 
-    let newAccessToken;
-    let newRefreshToken;
-    let expirationTime;
-    let username;
-    try {
-      ({
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
-        username,
-        expirationTime
-      } = await oAuth2Provider.refreshAccessToken(accessTokenRecord.refreshToken));
+  let accessTokenRecord;
+  try {
+    accessTokenRecord = await accessTokenModel.get({ accessToken });
+  }
+  catch (err) {
+    if (err.name === 'RecordDoesNotExist') {
+      return new InvalidTokenResponse();
     }
-    catch (error) {
-      log.error('Error caught when attempting token refresh', error);
-      return new InternalServerError();
-    }
-    finally {
-      // Delete old token record to prevent refresh with old tokens
-      await accessTokenModel.delete({
-        accessToken: accessTokenRecord.accessToken
-      });
-    }
+  }
 
-    // Store new token record
-    await accessTokenModel.create({
+  let newAccessToken;
+  let newRefreshToken;
+  let expirationTime;
+  let username;
+  try {
+    ({
       accessToken: newAccessToken,
-      refreshToken: newRefreshToken
-    });
-
-    const jwtToken = createJwtToken({ accessToken: newAccessToken, username, expirationTime });
-    return new LambdaProxyResponse({
-      json: true,
-      statusCode: 200,
-      body: { token: jwtToken }
+      refreshToken: newRefreshToken,
+      username,
+      expirationTime
+    } = await oAuth2Provider.refreshAccessToken(accessTokenRecord.refreshToken));
+  }
+  catch (error) {
+    log.error('Error caught when attempting token refresh', error);
+    return new InternalServerError();
+  }
+  finally {
+    // Delete old token record to prevent refresh with old tokens
+    await accessTokenModel.delete({
+      accessToken: accessTokenRecord.accessToken
     });
   }
 
-  const errorMessage = 'Request requires a token';
-  const error = new Error(errorMessage);
-  return new AuthorizationFailureResponse({
-    statusCode: 400,
-    error: error,
-    message: error.message
+  // Store new token record
+  await accessTokenModel.create({
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken
+  });
+
+  const jwtToken = createJwtToken({ accessToken: newAccessToken, username, expirationTime });
+  return new LambdaProxyResponse({
+    json: true,
+    statusCode: 200,
+    body: { token: jwtToken }
   });
 }
 
@@ -197,41 +191,35 @@ async function deleteToken(request) {
     : {};
   const requestJwtToken = get(body, 'token');
 
-  if (requestJwtToken) {
-    let accessToken;
-    try {
-      accessToken = await verifyJwtAuthorization(requestJwtToken);
-    }
-    catch (err) {
-      return handleJwtVerificationError(err);
-    }
-
-    const accessTokenModel = new AccessToken();
-
-    try {
-      await accessTokenModel.delete({ accessToken });
-    }
-    catch (error) {
-      log.error('Error caught when attempting token delete', error);
-      return new InternalServerError();
-    }
-
-    return new LambdaProxyResponse({
-      json: true,
-      statusCode: 200,
-      body: {
-        message: 'Token record was deleted'
-      }
-    })
+  if (!requestJwtToken) {
+    return new MissingTokenResponse();
   }
 
-  const errorMessage = 'Request requires a token';
-  const error = new Error(errorMessage);
-  return new AuthorizationFailureResponse({
-    statusCode: 400,
-    error: error,
-    message: error.message
-  });
+  let accessToken;
+  try {
+    accessToken = await verifyJwtAuthorization(requestJwtToken);
+  }
+  catch (err) {
+    return handleJwtVerificationError(err);
+  }
+
+  const accessTokenModel = new AccessToken();
+
+  try {
+    await accessTokenModel.delete({ accessToken });
+  }
+  catch (error) {
+    log.error('Error caught when attempting token delete', error);
+    return new InternalServerError();
+  }
+
+  return new LambdaProxyResponse({
+    json: true,
+    statusCode: 200,
+    body: {
+      message: 'Token record was deleted'
+    }
+  })
 }
 
 const isGetTokenRequest = (request) =>
