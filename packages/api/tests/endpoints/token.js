@@ -347,10 +347,10 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
   }));
 });
 
-test.serial('DELETE /token without a token results in an authorization failure response', async (t) => {
+test.serial('POST /token-revoke without a token results in an authorization failure response', async (t) => {
   const request = {
-    httpMethod: 'DELETE',
-    resource: '/token'
+    httpMethod: 'POST',
+    resource: '/token-revoke'
   };
 
   const response = await handleRequest(request);
@@ -359,13 +359,13 @@ test.serial('DELETE /token without a token results in an authorization failure r
   t.is(JSON.parse(response.body).message, 'Request requires a token');
 });
 
-test.serial('DELETE /token with an invalid token results in an authorization failure response', async (t) => {
+test.serial('POST /token-revoke with an invalid token results in an authorization failure response', async (t) => {
   const request = {
-    httpMethod: 'DELETE',
-    resource: '/token',
-    queryStringParameters: {
+    httpMethod: 'POST',
+    resource: '/token-revoke',
+    body: JSON.stringify({
       token: 'InvalidToken'
-    }
+    })
   };
 
   const response = await handleRequest(request);
@@ -373,36 +373,16 @@ test.serial('DELETE /token with an invalid token results in an authorization fai
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test.serial('DELETE /token with an non-existent token results in an authorization failure response', async (t) => {
-  const userRecord = fakeUserFactory();
-  await userModel.create(userRecord);
-
-  const accessTokenRecord = fakeAccessTokenFactory({ username: userRecord.userName });
-  const jwtToken = createJwtToken(accessTokenRecord);
-
-  const request = {
-    httpMethod: 'DELETE',
-    resource: '/token',
-    queryStringParameters: {
-      token: jwtToken
-    }
-  };
-
-  const response = await handleRequest(request);
-
-  assertions.isInvalidAccessTokenResponse(t, response);
-});
-
-test.serial('DELETE /token with an unauthorized user results in an authorization failure response', async (t) => {
+test.serial('POST /token-revoke with an unauthorized user results in an authorization failure response', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory();
   const jwtToken = createJwtToken(accessTokenRecord);
 
   const request = {
-    httpMethod: 'DELETE',
-    resource: '/token',
-    queryStringParameters: {
+    httpMethod: 'POST',
+    resource: '/token-revoke',
+    body: JSON.stringify({
       token: jwtToken
-    }
+    })
   };
 
   const response = await handleRequest(request);
@@ -410,7 +390,7 @@ test.serial('DELETE /token with an unauthorized user results in an authorization
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
-test.serial('DELETE /token with a valid token results in a successful deletion response', async (t) => {
+test.serial('POST /token-revoke with a valid token results in a successful deletion response', async (t) => {
   const userRecord = fakeUserFactory();
   await userModel.create(userRecord);
 
@@ -420,16 +400,16 @@ test.serial('DELETE /token with a valid token results in a successful deletion r
   const requestJwtToken = createJwtToken(accessTokenRecord);
 
   const request = {
-    httpMethod: 'DELETE',
-    resource: '/token',
-    queryStringParameters: {
+    httpMethod: 'POST',
+    resource: '/token-revoke',
+    body: JSON.stringify({
       token: requestJwtToken
-    }
+    })
   };
 
   const response = await handleRequest(request);
 
   t.false(await accessTokenModel.exists({ accessToken: accessTokenRecord.accessToken }))
   t.is(response.statusCode, 200);
-  t.is(JSON.parse(response.body).message, 'Access token record was deleted');
+  t.is(JSON.parse(response.body).message, 'Token record was deleted');
 });

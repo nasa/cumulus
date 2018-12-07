@@ -17,7 +17,8 @@ const { AccessToken } = require('../models');
 const {
   AuthorizationFailureResponse,
   LambdaProxyResponse,
-  InternalServerError
+  InternalServerError,
+  InvalidTokenResponse
 } = require('../lib/responses');
 
 const buildPermanentRedirectResponse = (location) =>
@@ -98,15 +99,25 @@ async function refreshAccessToken(request, oAuth2Provider) {
   const requestJwtToken = get(body, 'token');
 
   if (requestJwtToken) {
-    let accessTokenRecord;
+    let accessToken;
     try {
-      accessTokenRecord = await verifyJwtAuthorization(requestJwtToken);
+      accessToken = await verifyJwtAuthorization(requestJwtToken);
     }
     catch (err) {
       return handleJwtVerificationError(err);
     }
 
     const accessTokenModel = new AccessToken();
+
+    let accessTokenRecord;
+    try {
+      accessTokenRecord = await accessTokenModel.get({ accessToken });
+    }
+    catch (err) {
+      if (err.name === 'RecordDoesNotExist') {
+        return new InvalidTokenResponse();
+      }
+    }
 
     let newAccessToken;
     let newRefreshToken;
@@ -181,12 +192,15 @@ async function login(request, oAuth2Provider) {
  * @returns {Object} an API Gateway response
  */
 async function deleteToken(request) {
-  const requestJwtToken = get(request, 'queryStringParameters.token');
+  const body = request.body
+    ? JSON.parse(request.body)
+    : {};
+  const requestJwtToken = get(body, 'token');
 
   if (requestJwtToken) {
     let accessToken;
     try {
-      ({ accessToken } = await verifyJwtAuthorization(requestJwtToken));
+      accessToken = await verifyJwtAuthorization(requestJwtToken);
     }
     catch (err) {
       return handleJwtVerificationError(err);
@@ -198,20 +212,15 @@ async function deleteToken(request) {
       await accessTokenModel.delete({ accessToken });
     }
     catch (error) {
-      if (err.name === 'RecordDoesNotExist') {
-        return new AuthorizationFailureResponse({
-          statusCode: 404,
-          error,
-          message: error.message
-        });
-      }
+      log.error('Error caught when attempting token delete', error);
+      return new InternalServerError();
     }
 
     return new LambdaProxyResponse({
       json: true,
       statusCode: 200,
       body: {
-        message: 'Access token record was deleted'
+        message: 'Token record was deleted'
       }
     })
   }
@@ -233,9 +242,9 @@ const isTokenRefreshRequest = (request) =>
   request.httpMethod === 'POST'
   && request.resource.endsWith('/refresh');
 
-const isDeleteTokenRequest = (request) =>
-  request.httpMethod === 'DELETE'
-  && request.resource.endsWith('/token');
+const isRevokeTokenRequest = (request) =>
+  request.httpMethod === 'POST'
+  && request.resource.endsWith('/token-revoke');
 
 const notFoundResponse = new LambdaProxyResponse({
   json: false,
@@ -250,7 +259,7 @@ async function handleRequest(request, oAuth2Provider) {
   if (isTokenRefreshRequest(request)) {
     return refreshAccessToken(request, oAuth2Provider);
   }
-  if (isDeleteTokenRequest(request)) {
+  if (isRevokeTokenRequest(request)) {
     return deleteToken(request);
   }
 
