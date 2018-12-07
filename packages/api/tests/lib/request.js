@@ -13,13 +13,11 @@ const {
 } = require('@cumulus/common');
 
 const {
-  TokenUnauthorizedUserError,
-  TokenNotFoundError
+  TokenUnauthorizedUserError
 } = require('../../lib/errors');
 const { verifyJwtAuthorization } = require('../../lib/request');
 const {
-  fakeAccessTokenFactory,
-  fakeUserFactory
+  fakeAccessTokenFactory
 } = require('../../lib/testUtils');
 const { createJwtToken } = require('../../lib/token');
 const { User } = require('../../models');
@@ -108,22 +106,5 @@ test('verifyJwtAuthorization() throws TokenUnauthorizedUserError for unauthorize
   }
   catch (err) {
     t.true(err instanceof TokenUnauthorizedUserError);
-  }
-});
-
-test('verifyJwtAuthorization() throws TokenNotFoundError for non-existent access token', async (t) => {
-  const userRecord = fakeUserFactory();
-  const { userName: username } = await userModel.create(userRecord);
-
-  const { accessToken, expirationTime } = fakeAccessTokenFactory();
-
-  const jwtToken = createJwtToken({ accessToken, expirationTime, username });
-
-  try {
-    await verifyJwtAuthorization(jwtToken);
-    t.fail('Expected error to be thrown');
-  }
-  catch (err) {
-    t.true(err instanceof TokenNotFoundError);
   }
 });
