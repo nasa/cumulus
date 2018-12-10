@@ -15,7 +15,7 @@ const { verifyJwtToken } = require('./token');
  * @throws {TokenExpiredError} - thown if the JWT is expired
  * @throws {TokenUnauthorizedUserError} - thrown if the user is not authorized
  *
- * @returns {Object} accessTokenRecord - The access token record object.
+ * @returns {string} accessToken - The access token from the OAuth provider
  */
 async function verifyJwtAuthorization (requestJwtToken) {
   let accessToken;
