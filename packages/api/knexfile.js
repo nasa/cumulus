@@ -4,7 +4,7 @@ const parseConnection = require('knex/lib/util/parse-connection');
 
 // See https://github.com/mysqljs/mysql for more on this
 function typeCastTinyToBool(field, next) {
-  if (field.type == 'TINY' && field.length == 1) {
+  if (field.type === 'TINY' && field.length === 1) {
     return (field.string() === '1');
   }
   return next();
