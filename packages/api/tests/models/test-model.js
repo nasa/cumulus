@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const Model = require('../../models/modelBase');
+const Model = require('../../models/model');
 
 const model = new Model;
 
