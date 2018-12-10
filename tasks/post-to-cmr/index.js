@@ -44,7 +44,7 @@ function buildOutput(results, granulesObject) {
  * @returns {Promise} returns the promise of an updated event object
  */
 async function postToCMR(event) {
-  // we have to post the meta-xml file of all output granules
+  // we have to post the metadata file for the output granules files
   // first we check if there is an output file
   const config = get(event, 'config');
   const bucket = get(config, 'bucket'); // the name of the bucket with private/public keys
