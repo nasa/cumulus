@@ -87,7 +87,7 @@ function buildAuthorizationFailureResponse(params) {
  *
  * @returns {LambdaProxyResponse} - an API gateway response
  */
-function handleJwtVerificationError (err) {
+function handleJwtVerificationError(err) {
   if (err instanceof TokenExpiredError) {
     return new TokenExpiredResponse();
   }
@@ -100,6 +100,7 @@ function handleJwtVerificationError (err) {
       statusCode: 403
     });
   }
+  return InternalServerError();
 }
 
 /**
@@ -149,8 +150,7 @@ async function getAuthorizationFailureResponse(params) {
 
   // Verify JWT validity and user access
   try {
-    // TODO: should we pass along the usersTable param here?
-    await verifyJwtAuthorization(jwtToken);
+    await verifyJwtAuthorization(jwtToken, { usersTable });
   }
   catch (err) {
     return handleJwtVerificationError(err);
