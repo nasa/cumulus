@@ -347,10 +347,10 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
   }));
 });
 
-test.serial('POST /token-revoke without a token results in an authorization failure response', async (t) => {
+test.serial('POST /tokenRevoke without a token results in an authorization failure response', async (t) => {
   const request = {
     httpMethod: 'POST',
-    resource: '/token-revoke'
+    resource: '/tokenRevoke'
   };
 
   const response = await handleRequest(request);
@@ -359,10 +359,10 @@ test.serial('POST /token-revoke without a token results in an authorization fail
   t.is(JSON.parse(response.body).message, 'Request requires a token');
 });
 
-test.serial('POST /token-revoke with an invalid token results in an authorization failure response', async (t) => {
+test.serial('POST /tokenRevoke with an invalid token results in an authorization failure response', async (t) => {
   const request = {
     httpMethod: 'POST',
-    resource: '/token-revoke',
+    resource: '/tokenRevoke',
     body: JSON.stringify({
       token: 'InvalidToken'
     })
@@ -373,13 +373,13 @@ test.serial('POST /token-revoke with an invalid token results in an authorizatio
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test.serial('POST /token-revoke with an unauthorized user results in an authorization failure response', async (t) => {
+test.serial('POST /tokenRevoke with an unauthorized user results in an authorization failure response', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory();
   const jwtToken = createJwtToken(accessTokenRecord);
 
   const request = {
     httpMethod: 'POST',
-    resource: '/token-revoke',
+    resource: '/tokenRevoke',
     body: JSON.stringify({
       token: jwtToken
     })
@@ -390,7 +390,7 @@ test.serial('POST /token-revoke with an unauthorized user results in an authoriz
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
-test.serial('POST /token-revoke with a valid token results in a successful deletion response', async (t) => {
+test.serial('POST /tokenRevoke with a valid token results in a successful deletion response', async (t) => {
   const userRecord = fakeUserFactory();
   await userModel.create(userRecord);
 
@@ -401,7 +401,7 @@ test.serial('POST /token-revoke with a valid token results in a successful delet
 
   const request = {
     httpMethod: 'POST',
-    resource: '/token-revoke',
+    resource: '/tokenRevoke',
     body: JSON.stringify({
       token: requestJwtToken
     })
