@@ -10,7 +10,7 @@ const { verifyJwtToken } = require('./token');
  * Verify the validity and access of JWT for request authorization.
  *
  * @param {string} requestJwtToken - The JWT token used for request authorization
- * @param {string} params - additional parameters
+ * @param {Object} params - additional parameters
  * @param {string} params.usersTable - The name of the DynamoDB Users table
  *
  * @throws {JsonWebTokenError} - thrown if the JWT is invalid
