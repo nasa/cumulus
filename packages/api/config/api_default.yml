@@ -408,7 +408,7 @@ ApiTokenDefault:
       method: post
       cors: true
     - api: backend
-      path: token-revoke
+      path: tokenRevoke
       method: post
       cors: true
 

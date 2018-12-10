@@ -232,7 +232,7 @@ const isTokenRefreshRequest = (request) =>
 
 const isRevokeTokenRequest = (request) =>
   request.httpMethod === 'POST'
-  && request.resource.endsWith('/token-revoke');
+  && request.resource.endsWith('/tokenRevoke');
 
 const notFoundResponse = new LambdaProxyResponse({
   json: false,
