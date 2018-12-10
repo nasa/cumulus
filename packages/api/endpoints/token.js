@@ -219,7 +219,7 @@ async function deleteToken(request) {
     body: {
       message: 'Token record was deleted'
     }
-  })
+  });
 }
 
 const isGetTokenRequest = (request) =>
