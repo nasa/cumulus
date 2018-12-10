@@ -19,8 +19,7 @@ const {
 } = require('jsonwebtoken');
 
 const {
-  TokenUnauthorizedUserError,
-  TokenNotFoundError
+  TokenUnauthorizedUserError
 } = require('./errors');
 const { verifyJwtAuthorization } = require('./request');
 const { errorify, findCaseInsensitiveKey } = require('./utils');
@@ -100,9 +99,6 @@ function handleJwtVerificationError (err) {
       message: 'User not authorized',
       statusCode: 403
     });
-  }
-  if (err instanceof TokenNotFoundError) {
-    return new InvalidTokenResponse();
   }
 }
 

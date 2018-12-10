@@ -17,7 +17,6 @@ const {
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 const {
-  TokenNotFoundError,
   TokenUnauthorizedUserError
 } = require('../../lib/errors');
 const { createJwtToken } = require('../../lib/token');
@@ -163,9 +162,4 @@ test('handleJwtVerificationError() returns expired token response for TokenExpir
 test('handleJwtVerificationError() returns unauthorized user response for TokenUnauthorizedUserError', async (t) => {
   const response = handleJwtVerificationError(new TokenUnauthorizedUserError());
   assertions.isUnauthorizedUserResponse(t, response);
-});
-
-test('handleJwtVerificationError() returns invalid token response for TokenNotFoundError', async (t) => {
-  const response = handleJwtVerificationError(new TokenNotFoundError());
-  assertions.isInvalidAccessTokenResponse(t, response);
 });
