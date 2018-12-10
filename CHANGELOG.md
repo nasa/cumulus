@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Added a `/tokenRevoke` endpoint in `@cumulus/api` to delete access token records
+
 ## [v1.11.0] - 2018-11-30
 
 **Please Note**
