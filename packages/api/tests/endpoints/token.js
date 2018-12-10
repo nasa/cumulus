@@ -409,7 +409,7 @@ test.serial('POST /tokenRevoke with a valid token results in a successful deleti
 
   const response = await handleRequest(request);
 
-  t.false(await accessTokenModel.exists({ accessToken: accessTokenRecord.accessToken }))
+  t.false(await accessTokenModel.exists({ accessToken: accessTokenRecord.accessToken }));
   t.is(response.statusCode, 200);
   t.is(JSON.parse(response.body).message, 'Token record was deleted');
 });
