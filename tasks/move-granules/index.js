@@ -6,9 +6,12 @@ const get = require('lodash.get');
 const clonedeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
 const {
-  getCmrFiles, getGranuleId, getRenamedS3File, isFileRenamed,
+  getRenamedS3File, isFileRenamed,
   moveGranuleFile, renameS3FileWithTimestamp
 } = require('@cumulus/ingest/granule');
+const {
+  getCmrFiles, getGranuleId
+} = require('@cumulus/ingest/granule-extract-cmr');
 const urljoin = require('url-join');
 const path = require('path');
 const {
