@@ -4,11 +4,12 @@ const fs = require('fs');
 const path = require('path');
 const test = require('ava');
 const sinon = require('sinon');
-const aws = require('@cumulus/common/aws');
-const { randomString } = require('@cumulus/common/test-utils');
 const { promisify } = require('util');
 
 const cmrjs = require('@cumulus/cmrjs');
+const aws = require('@cumulus/common/aws');
+const { randomString } = require('@cumulus/common/test-utils');
+
 const { postToCMR } = require('..');
 
 const readFile = promisify(fs.readFile);
