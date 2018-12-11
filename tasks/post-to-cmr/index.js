@@ -4,7 +4,7 @@ const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { getCmrFiles, publish } = require('@cumulus/ingest/granule-extract-cmr');
+const { getCmrFiles, publish } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const { loadJSONTestData } = require('@cumulus/test-data');
 

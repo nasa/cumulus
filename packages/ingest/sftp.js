@@ -7,8 +7,7 @@ const { log, aws: { s3, buildS3Uri, promiseS3Upload } } = require('@cumulus/comm
 const get = require('lodash.get');
 const omit = require('lodash.omit');
 
-const { KMS } = require('./aws');
-const Crypto = require('./crypto').DefaultProvider;
+const { KMSProvider: KMS, DefaultProvider: Crypto } = require('@cumulus/common/key-pair-provider');
 const recursion = require('./recursion');
 
 module.exports.sftpMixin = (superclass) => class extends superclass {

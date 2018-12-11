@@ -10,12 +10,13 @@ const {
   errors,
   log
 } = require('@cumulus/common');
-const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
-const { CMR, getUrl } = require('@cumulus/cmrjs');
 
 // TODO: mhs extract crypto to common.
-// const { DefaultProvider } = require('@cumulus/ingest/crypto');
-const { DefaultProvider } = require('./crypto');
+const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
+
+const { CMR } = require('./index');
+const { getUrl, xmlParseOptions } = require('./utils');
+
 
 /**
  * function for posting cmr xml files from S3 to CMR
@@ -38,8 +39,8 @@ async function publish(cmrFile, creds, bucket, stack) {
   try {
     password = await DefaultProvider.decrypt(creds.password, undefined, bucket, stack);
   }
-  catch (e) {
-    log.error('Decrypting password failed, using unencrypted password', e);
+  catch (error) {
+    log.error('Decrypting password failed, using unencrypted password', error);
     password = creds.password;
   }
   const cmr = new CMR(

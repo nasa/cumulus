@@ -6,7 +6,7 @@ const { PassThrough } = require('stream');
 const { log, aws: { buildS3Uri, promiseS3Upload } } = require('@cumulus/common');
 const omit = require('lodash.omit');
 
-const Crypto = require('./crypto').DefaultProvider;
+const Crypto = require('@cumulus/common/key-pair-provider').DefaultProvider;
 const recursion = require('./recursion');
 
 module.exports.ftpMixin = (superclass) => class extends superclass {

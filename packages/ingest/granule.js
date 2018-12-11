@@ -18,14 +18,13 @@ const {
 } = require('@cumulus/common');
 const errors = require('@cumulus/common/errors');
 const { deprecate } = require('@cumulus/common/util');
+const { updateMetadata } = require('@cumulus/cmrjs');
+
 const { sftpMixin } = require('./sftp');
 const { ftpMixin } = require('./ftp');
 const { httpMixin } = require('./http');
 const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
-const {
-  updateMetadata
-} = require('./granule-extract-cmr');
 
 /**
 * The abstract Discover class
