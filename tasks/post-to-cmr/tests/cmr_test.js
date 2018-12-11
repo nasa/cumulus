@@ -54,8 +54,8 @@ test.serial('postToCMR throws error if CMR correctly identifies the xml as inval
     await postToCMR(newPayload);
     t.fail();
   }
-  catch (e) {
-    t.true(e instanceof cmrjs.ValidationError);
+  catch (error) {
+    t.true(error instanceof cmrjs.ValidationError);
   }
   finally {
     cmrjs.CMR.prototype.getToken.restore();
