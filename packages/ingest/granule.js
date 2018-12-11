@@ -18,13 +18,11 @@ const {
 } = require('@cumulus/common');
 const errors = require('@cumulus/common/errors');
 const { deprecate } = require('@cumulus/common/util');
-const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const { sftpMixin } = require('./sftp');
 const { ftpMixin } = require('./ftp');
 const { httpMixin } = require('./http');
 const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
-const { publish } = require('./cmr');
 const {
   getGranuleId,
   getCmrFiles,
@@ -121,8 +119,8 @@ class Discover {
         // Add additional granule-related properties to the file
         .map((file) => this.setGranuleInfo(file));
     }
-    catch (err) {
-      log.error(`discover exception ${JSON.stringify(err)}`);
+    catch (error) {
+      log.error(`discover exception ${JSON.stringify(error)}`);
     }
 
     // Group the files by granuleId
@@ -682,9 +680,9 @@ function copyGranuleFile(source, target, options) {
   }, (options || {}));
 
   return aws.s3().copyObject(params).promise()
-    .catch((err) => {
-      log.error(`Failed to copy s3://${CopySource} to s3://${target.Bucket}/${target.Key}: ${err.message}`);
-      throw err;
+    .catch((error) => {
+      log.error(`Failed to copy s3://${CopySource} to s3://${target.Bucket}/${target.Key}: ${error.message}`);
+      throw error;
     });
 }
 
@@ -781,6 +779,7 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
 
   await Promise.all(moveFileRequests);
 
+  // 2018-12-11 TODO: mhs refactor into helper imported from cmrjs.
   // update cmr metadata with new file urls
   const xmlFile = sourceFiles.filter((file) => file.name.endsWith('.cmr.xml'));
   if (xmlFile.length === 1) {
