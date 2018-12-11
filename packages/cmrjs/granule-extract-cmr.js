@@ -14,7 +14,8 @@ const {
 // TODO: mhs extract crypto to common.
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
-const { CMR } = require('./index');
+const { CMR } = require('./cmr');
+
 const { getUrl, xmlParseOptions } = require('./utils');
 
 
