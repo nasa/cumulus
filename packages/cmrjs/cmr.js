@@ -1,269 +1,259 @@
 'use strict';
 
-const got = require('got');
-const fs = require('fs');
-const property = require('lodash.property');
-const { parseString } = require('xml2js');
-
-const log = require('@cumulus/common/log');
+const path = require('path');
+const { promisify } = require('util');
+const urljoin = require('url-join');
+const xml2js = require('xml2js');
 
 const {
-  getUrl,
-  updateToken,
-  validate,
-  xmlParseOptions
-} = require('./utils');
+  aws,
+  errors,
+  log
+} = require('@cumulus/common');
 
-const logDetails = {
-  file: 'lib/cmrjs/index.js',
-  source: 'pushToCMR',
-  type: 'processing'
-};
 
-/**
- *
- * @param {string} type - Concept type to search, choices: ['collections', 'granules']
- * @param {Object} searchParams - CMR search parameters
- * @param {Array} previousResults - array of results returned in previous recursive calls
- * @returns {Promise.<Array>} - array of search results.
- */
-async function searchConcept(type, searchParams, previousResults = []) {
-  const recordsLimit = process.env.CMR_LIMIT || 100;
-  const pageSize = searchParams.pageSize || process.env.CMR_PAGE_SIZE || 50;
+const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
-  const defaultParams = { page_size: pageSize };
+const { CMR } = require('./cmr-class');
 
-  const url = `${getUrl('search')}${type}.json`;
+const { getUrl, xmlParseOptions } = require('./utils');
 
-  const pageNum = (searchParams.page_num) ? searchParams.page_num + 1 : 1;
-
-  // Recursively retrieve all the search results for collections or granules
-  const query = Object.assign({}, defaultParams, searchParams, { page_num: pageNum });
-
-  const response = await got.get(url, { json: true, query });
-  const fetchedResults = previousResults.concat(response.body.feed.entry || []);
-
-  const numRecordsCollected = fetchedResults.length;
-  const CMRHasMoreResults = response.headers['cmr-hits'] > numRecordsCollected;
-  const recordsLimitReached = numRecordsCollected >= recordsLimit;
-  if (CMRHasMoreResults && !recordsLimitReached) {
-    return searchConcept(type, query, fetchedResults);
-  }
-  return fetchedResults.slice(0, recordsLimit);
-}
 
 /**
- * Posts a records of any kind (collection, granule, etc) to
- * CMR
+ * function for posting cmr xml files from S3 to CMR
  *
- * @param {string} type - the concept type. Choices are: collection, granule
- * @param {string} xml - the CMR record in xml
- * @param {string} identifierPath - the concept's unique identifier
- * @param {string} provider - the CMR provider id
- * @param {string} token - the CMR token
- * @returns {Promise.<Object>} the CMR response object
+ * @param {Object} cmrFile - an object representing the cmr file
+ * @param {string} cmrFile.granuleId - the granuleId of the cmr xml File
+ * @param {string} cmrFile.filename - the s3 uri to the cmr xml file
+ * @param {string} cmrFile.metadata - granule xml document
+ * @param {Object} creds - credentials needed to post to the CMR
+ * @param {string} creds.provider - the name of the Provider used on the CMR side
+ * @param {string} creds.clientId - the clientId used to generate CMR token
+ * @param {string} creds.username - the CMR username
+ * @param {string} creds.password - the encrypted CMR password
+ * @param {string} bucket - the bucket name where public/private keys are stored
+ * @param {string} stack - the deployment stack name
+ * @returns {Object} CMR's success response which includes the concept-id
  */
-async function ingestConcept(type, xml, identifierPath, provider, token) {
-  // Accept either an XML file, or an XML string itself
-  let xmlString = xml;
-  if (fs.existsSync(xml)) {
-    xmlString = fs.readFileSync(xml, 'utf8');
-  }
-
-  let xmlObject = await new Promise((resolve, reject) => {
-    parseString(xmlString, xmlParseOptions, (err, obj) => {
-      if (err) reject(err);
-      resolve(obj);
-    });
-  });
-
-  //log.debug('XML object parsed', logDetails);
-  const identifier = property(identifierPath)(xmlObject);
-  logDetails.granuleId = identifier;
-
+async function publish(cmrFile, creds, bucket, stack) {
+  let password;
   try {
-    await validate(type, xmlString, identifier, provider);
-    //log.debug('XML object is valid', logDetails);
-
-    //log.info('Pushing xml metadata to CMR', logDetails);
-    const response = await got.put(
-      `${getUrl('ingest', provider)}${type}s/${identifier}`,
-      {
-        body: xmlString,
-        headers: {
-          'Echo-Token': token,
-          'Content-type': 'application/echo10+xml'
-        }
-      }
-    );
-
-    //log.info('Metadata pushed to CMR.', logDetails);
-
-    xmlObject = await new Promise((resolve, reject) => {
-      parseString(response.body, xmlParseOptions, (err, res) => {
-        if (err) reject(err);
-        resolve(res);
-      });
-    });
-
-    if (xmlObject.errors) {
-      const xmlObjectError = JSON.stringify(xmlObject.errors.error);
-      throw new Error(`Failed to ingest, CMR error message: ${xmlObjectError}`);
-    }
-
-    return xmlObject;
-  }
-  catch (e) {
-    log.error(e, logDetails);
-    throw e;
-  }
-}
-
-/**
- * Deletes a record from the CMR
- *
- * @param {string} type - the concept type. Choices are: collection, granule
- * @param {string} identifier - the record id
- * @param {string} provider - the CMR provider id
- * @param {string} token - the CMR token
- * @returns {Promise.<Object>} the CMR response object
- */
-async function deleteConcept(type, identifier, provider, token) {
-  const url = `${getUrl('ingest', provider)}${type}/${identifier}`;
-  log.info(`deleteConcept ${url}`);
-
-  let result;
-  try {
-    result = await got.delete(url, {
-      headers: {
-        'Echo-Token': token,
-        'Content-type': 'application/echo10+xml'
-      }
-    });
+    password = await DefaultProvider.decrypt(creds.password, undefined, bucket, stack);
   }
   catch (error) {
-    result = error.response;
+    log.error('Decrypting password failed, using unencrypted password', error);
+    password = creds.password;
   }
+  const cmr = new CMR(
+    creds.provider,
+    creds.clientId,
+    creds.username,
+    password
+  );
 
-  const xmlObject = await new Promise((resolve, reject) => {
-    parseString(result.body, xmlParseOptions, (err, res) => {
-      if (err) reject(err);
-      resolve(res);
-    });
-  });
+  const xml = cmrFile.metadata;
+  const res = await cmr.ingestGranule(xml);
+  const conceptId = res.result['concept-id'];
 
-  let errorMessage;
-  if (result.statusCode !== 200) {
-    errorMessage = `Failed to delete, statusCode: ${result.statusCode}, statusMessage: ${result.statusMessage}`;
-    if (xmlObject.errors) {
-      errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(xmlObject.errors.error)}`;
-    }
-    log.info(errorMessage);
-  }
+  log.info(`Published ${cmrFile.granuleId} to the CMR. conceptId: ${conceptId}`);
 
-  if (result.statusCode !== 200 && result.statusCode !== 404) {
-    throw new Error(errorMessage);
-  }
-
-  return xmlObject;
+  return {
+    granuleId: cmrFile.granuleId,
+    filename: cmrFile.filename,
+    conceptId,
+    link: `${getUrl('search')}granules.json?concept_id=${res.result['concept-id']}`
+  };
 }
 
 /**
- * The CMR class
+ * Extract the granule ID from the a given s3 uri
+ *
+ * @param {string} uri - the s3 uri of the file
+ * @param {string} regex - the regex for extracting the ID
+ * @returns {string} the granule
  */
-class CMR {
-  /**
-   * The constructor for the CMR class
-   *
-   * @param {string} provider - the CMR provider id
-   * @param {string} clientId - the CMR clientId
-   * @param {string} username - CMR username
-   * @param {string} password - CMR password
-   */
-  constructor(provider, clientId, username, password) {
-    this.clientId = clientId;
-    this.provider = provider;
-    this.username = username;
-    this.password = password;
-  }
+function getGranuleId(uri, regex) {
+  const match = path.basename(uri).match(regex);
+  if (match) return match[1];
+  throw new Error(`Could not determine granule id of ${uri} using ${regex}`);
+}
 
-  /**
-   * The method for getting the token
-   *
-   * @returns {Promise.<string>} the token
-   */
-  async getToken() {
-    return updateToken(this.provider, this.clientId, this.username, this.password);
+/**
+ * Gets metadata for a cmr xml file from s3
+ *
+ * @param {string} xmlFilePath - S3 URI to the xml metadata document
+ * @returns {string} returns stringified xml document downloaded from S3
+ */
+async function getXMLMetadataAsString(xmlFilePath) {
+  if (!xmlFilePath) {
+    throw new errors.XmlMetaFileNotFound('XML Metadata file not provided');
   }
+  const { Bucket, Key } = aws.parseS3Uri(xmlFilePath);
+  const obj = await aws.getS3Object(Bucket, Key);
+  return obj.Body.toString();
+}
 
-  /**
-   * Adds a collection record to the CMR
-   *
-   * @param {string} xml - the collection xml document
-   * @returns {Promise.<Object>} the CMR response
-   */
-  async ingestCollection(xml) {
-    const token = await this.getToken();
-    return ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, token);
+/**
+ * Gets body and tags of s3 metadata xml file
+ *
+ * @param {string} xmlFilePath - S3 URI to the xml metadata document
+ * @returns {Object} - object containing Body and TagSet for S3 Object
+ */
+async function getMetadataBodyAndTags(xmlFilePath) {
+  if (!xmlFilePath) {
+    throw new errors.XmlMetaFileNotFound('XML Metadata file not provided');
   }
+  const { Bucket, Key } = aws.parseS3Uri(xmlFilePath);
+  const data = await aws.getS3Object(Bucket, Key);
+  const tags = await aws.s3GetObjectTagging(Bucket, Key);
+  return {
+    Body: data.Body.toString(),
+    TagSet: tags.TagSet
+  };
+}
 
-  /**
-   * Adds a granule record to the CMR
-   *
-   * @param {string} xml - the granule xml document
-   * @returns {Promise.<Object>} the CMR response
-   */
-  async ingestGranule(xml) {
-    const token = await this.getToken();
-    return ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, token);
-  }
+/**
+ * Parse an xml string
+ *
+ * @param {string} xml - xml to parse
+ * @returns {Promise<Object>} promise resolves to object version of the xml
+ */
+async function parseXmlString(xml) {
+  return (promisify(xml2js.parseString))(xml, xmlParseOptions);
+}
 
-  /**
-   * Deletes a collection record from the CMR
-   *
-   * @param {string} datasetID - the collection unique id
-   * @returns {Promise.<Object>} the CMR response
-   */
-  async deleteCollection(datasetID) {
-    return deleteConcept('collection', datasetID);
-  }
+/**
+ * returns a list of CMR xml files
+ *
+ * @param {Array} input - an array of s3 uris
+ * @param {string} granuleIdExtraction - a regex for extracting granule IDs
+ * @returns {Promise<Array>} promise resolves to an array of objects
+ * that includes CMR xmls uris and granuleIds
+ */
+async function getCmrFiles(input, granuleIdExtraction) {
+  const files = [];
+  const expectedFormat = /.*\.cmr\.xml$/;
 
-  /**
-   * Deletes a granule record from the CMR
-   *
-   * @param {string} granuleUR - the granule unique id
-   * @returns {Promise.<Object>} the CMR response
-   */
-  async deleteGranule(granuleUR) {
-    const token = await this.getToken();
-    return deleteConcept('granules', granuleUR, this.provider, token);
-  }
+  await Promise.all(input.map(async (filename) => {
+    if (filename && filename.match(expectedFormat)) {
+      const metaResponse = await getMetadataBodyAndTags(filename);
+      const metadataObject = await parseXmlString(metaResponse.Body);
 
-  /**
-   * Search in collections
-   *
-   * @param {string} searchParams - the search parameters
-   * @returns {Promise.<Object>} the CMR response
-   */
-  async searchCollections(searchParams) {
-    const params = Object.assign({}, { provider_short_name: this.provider }, searchParams);
-    return searchConcept('collections', params, []);
-  }
+      const cmrFileObject = {
+        filename,
+        metadata: metaResponse.Body,
+        metadataObject,
+        granuleId: getGranuleId(filename, granuleIdExtraction),
+        s3Tags: metaResponse.TagSet
+      };
 
-  /**
-   * Search in granules
-   *
-   * @param {string} searchParams - the search parameters
-   * @returns {Promise.<Object>} the CMR response
-   */
-  async searchGranules(searchParams) {
-    const params = Object.assign({}, { provider_short_name: this.provider }, searchParams);
-    return searchConcept('granules', params, []);
+      files.push(cmrFileObject);
+    }
+  }));
+
+  return files;
+}
+
+async function postS3Object(destination, options) {
+  await aws.promiseS3Upload(
+    { Bucket: destination.bucket, Key: destination.key, Body: destination.body }
+  );
+  if (options) {
+    const s3 = aws.s3();
+    await s3.deleteObject(options).promise();
   }
+}
+
+/**
+ * construct a list of online access urls
+ *
+ * @param {Array<Object>} files - array of file objects
+ * @param {string} distEndpoint - distribution enpoint from config
+ * @returns {Array<{URL: string, URLDescription: string}>}
+ *   returns the list of online access url objects
+ */
+async function contructOnlineAccessUrls(files, distEndpoint) {
+  const urls = [];
+
+  const bucketsString = await aws.s3().getObject({
+    Bucket: process.env.bucket,
+    Key: `${process.env.stackName}/workflows/buckets.json`
+  }).promise();
+  const bucketsObject = JSON.parse(bucketsString.Body);
+
+  // URLs are for public and protected files
+  const bucketKeys = Object.keys(bucketsObject);
+  files.forEach((file) => {
+    const urlObj = {};
+    const bucketkey = bucketKeys.find((bucketKey) =>
+      file.bucket === bucketsObject[bucketKey].name);
+
+    if (bucketsObject[bucketkey].type === 'protected') {
+      const extension = urljoin(bucketsObject[bucketkey].name, `${file.filepath}`);
+      urlObj.URL = urljoin(distEndpoint, extension);
+      urlObj.URLDescription = 'File to download';
+      urls.push(urlObj);
+    }
+    else if (bucketsObject[bucketkey].type === 'public') {
+      urlObj.URL = `https://${bucketsObject[bucketkey].name}.s3.amazonaws.com/${file.filepath}`;
+      urlObj.URLDescription = 'File to download';
+      urls.push(urlObj);
+    }
+  });
+  return urls;
+}
+
+/**
+ * updates cmr xml file with updated file urls
+ *
+ * @param {string} granuleId - granuleId
+ * @param {Object} cmrFile - cmr xml file to be updated
+ * @param {Object[]} files - array of file objects
+ * @param {string} distEndpoint - distribution enpoint from config
+ * @param {boolean} published - indicate if publish is needed
+ * @returns {Promise} returns promise to upload updated cmr file
+ */
+async function updateMetadata(granuleId, cmrFile, files, distEndpoint, published) {
+  log.debug(`granules.updateMetadata granuleId ${granuleId}, xml file ${cmrFile.filename}`);
+
+  const urls = await contructOnlineAccessUrls(files, distEndpoint);
+
+  // add/replace the OnlineAccessUrls
+  const metadata = await getXMLMetadataAsString(cmrFile.filename);
+  const metadataObject = await parseXmlString(metadata);
+  const metadataGranule = metadataObject.Granule;
+  const updatedGranule = {};
+  Object.keys(metadataGranule).forEach((key) => {
+    if (key === 'OnlineResources' || key === 'Orderable') {
+      updatedGranule.OnlineAccessURLs = {};
+    }
+    updatedGranule[key] = metadataGranule[key];
+  });
+  updatedGranule.OnlineAccessURLs.OnlineAccessURL = urls;
+  metadataObject.Granule = updatedGranule;
+  const builder = new xml2js.Builder();
+  const xml = builder.buildObject(metadataObject);
+
+  // post meta file to CMR
+  const creds = {
+    provider: process.env.cmr_provider,
+    clientId: process.env.cmr_client_id,
+    username: process.env.cmr_username,
+    password: process.env.cmr_password
+  };
+
+  const cmrFileObject = {
+    filename: cmrFile.filename,
+    metadata: xml,
+    granuleId: granuleId
+  };
+  if (published) await publish(cmrFileObject, creds, process.env.bucket, process.env.stackName);
+  return postS3Object({ bucket: cmrFile.bucket, key: cmrFile.filepath, body: xml });
 }
 
 module.exports = {
-  ingestConcept,
-  deleteConcept,
-  CMR
+  getGranuleId,
+  getCmrFiles,
+  publish,
+  updateMetadata
 };
