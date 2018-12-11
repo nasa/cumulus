@@ -11,7 +11,7 @@ const {
 } = require('@cumulus/ingest/granule');
 const {
   getCmrFiles, getGranuleId
-} = require('@cumulus/ingest/granule-extract-cmr');
+} = require('@cumulus/cmrjs');
 const urljoin = require('url-join');
 const path = require('path');
 const {

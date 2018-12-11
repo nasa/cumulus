@@ -12,6 +12,12 @@ const {
   getHost,
   hostId
 } = require('./utils');
+const {
+  getGranuleId,
+  getCmrFiles,
+  publish,
+  updateMetadata
+} = require('./granule-extract-cmr');
 
 
 const logDetails = {
@@ -319,5 +325,9 @@ module.exports = {
   getMetadata,
   getFullMetadata,
   getHost,
-  hostId
+  hostId,
+  getGranuleId,
+  getCmrFiles,
+  publish,
+  updateMetadata
 };
