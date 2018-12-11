@@ -26,7 +26,6 @@ const { baseProtocol } = require('./protocol');
 const {
   getGranuleId,
   getCmrFiles,
-  getMetadata,
   updateMetadata
 } = require('./granule-extract-cmr');
 
@@ -851,7 +850,6 @@ module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
 module.exports.SftpGranule = SftpGranule;
 module.exports.getGranuleId = getGranuleId;
 module.exports.getCmrFiles = getCmrFiles;
-module.exports.getMetadata = getMetadata;
 module.exports.getRenamedS3File = getRenamedS3File;
 module.exports.copyGranuleFile = copyGranuleFile;
 module.exports.isFileRenamed = isFileRenamed;

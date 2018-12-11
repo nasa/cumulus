@@ -81,7 +81,7 @@ function getGranuleId(uri, regex) {
  * @param {string} xmlFilePath - S3 URI to the xml metadata document
  * @returns {string} returns stringified xml document downloaded from S3
  */
-async function getMetadata(xmlFilePath) {
+async function getXMLMetadataAsString(xmlFilePath) {
   if (!xmlFilePath) {
     throw new errors.XmlMetaFileNotFound('XML Metadata file not provided');
   }
@@ -216,7 +216,7 @@ async function updateMetadata(granuleId, cmrFile, files, distEndpoint, published
   const urls = await contructOnlineAccessUrls(files, distEndpoint);
 
   // add/replace the OnlineAccessUrls
-  const metadata = await getMetadata(cmrFile.filename);
+  const metadata = await getXMLMetadataAsString(cmrFile.filename);
   const metadataObject = await parseXmlString(metadata);
   const metadataGranule = metadataObject.Granule;
   const updatedGranule = {};
@@ -251,7 +251,6 @@ async function updateMetadata(granuleId, cmrFile, files, distEndpoint, published
 module.exports = {
   getGranuleId,
   getCmrFiles,
-  getMetadata,
   publish,
   updateMetadata
 };
