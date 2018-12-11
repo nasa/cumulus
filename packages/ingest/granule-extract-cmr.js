@@ -14,6 +14,7 @@ const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const { CMR, getUrl } = require('@cumulus/cmrjs');
 
 // TODO: mhs extract crypto to common.
+// const { DefaultProvider } = require('@cumulus/ingest/crypto');
 const { DefaultProvider } = require('./crypto');
 
 /**
