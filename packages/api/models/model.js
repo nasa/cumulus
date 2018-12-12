@@ -1,11 +1,12 @@
 'use strict';
 
 const Ajv = require('ajv');
-const {
-  translateCamelCaseColumnName,
-  translateSnakeCaseColumnName
-} = require('@cumulus/common/string');
 const Registry = require('../lib/Registry');
+const camelCase = require('lodash.camelcase');
+const mapKeys = require('lodash.mapkeys');
+const snakeCase = require('lodash.snakecase');
+
+
 
 
 class Model {
@@ -61,11 +62,7 @@ class Model {
    * @returns { Object } Provider database object with keys translated
    */
   translateItemToSnakeCase(item) {
-    const translatedItem = {};
-    Object.keys(item).forEach((key) => {
-      translatedItem[translateCamelCaseColumnName(key)] = item[key];
-    });
-    return translatedItem;
+    return mapKeys(item, (value, key) => snakeCase(key));
   }
 
   /**
@@ -75,11 +72,7 @@ class Model {
    * @returns { Object }  database object with keys translated
    */
   translateItemToCamelCase(item) {
-    const translatedItem = {};
-    Object.keys(item).forEach((key) => {
-      translatedItem[translateSnakeCaseColumnName(key)] = item[key];
-    });
-    return translatedItem;
+    return mapKeys(item, (value, key) => camelCase(key));
   }
 }
 
