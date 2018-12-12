@@ -65,6 +65,8 @@ async function publish(cmrFile, creds, bucket, stack) {
   };
 }
 
+// 2018-12-12 This doesn't belong in cmrjs, but should be resolved by
+// https://bugs.earthdata.nasa.gov/browse/CUMULUS-1086
 /**
  * Extract the granule ID from the a given s3 uri
  *
