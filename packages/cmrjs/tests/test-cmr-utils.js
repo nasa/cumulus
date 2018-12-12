@@ -2,7 +2,7 @@ const test = require('ava');
 
 const {
   getGranuleId
-} = require('../cmr');
+} = require('../cmr-utils');
 
 test('getGranuleId is successful', (t) => {
   const uri = 'test.txt';
