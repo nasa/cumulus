@@ -4,11 +4,12 @@ const fs = require('fs');
 const path = require('path');
 const test = require('ava');
 const sinon = require('sinon');
-const aws = require('@cumulus/common/aws');
-const { randomString } = require('@cumulus/common/test-utils');
 const { promisify } = require('util');
 
 const cmrjs = require('@cumulus/cmrjs');
+const aws = require('@cumulus/common/aws');
+const { randomString } = require('@cumulus/common/test-utils');
+
 const { postToCMR } = require('..');
 
 const readFile = promisify(fs.readFile);
@@ -53,8 +54,8 @@ test.serial('postToCMR throws error if CMR correctly identifies the xml as inval
     await postToCMR(newPayload);
     t.fail();
   }
-  catch (e) {
-    t.true(e instanceof cmrjs.ValidationError);
+  catch (error) {
+    t.true(error instanceof cmrjs.ValidationError);
   }
   finally {
     cmrjs.CMR.prototype.getToken.restore();

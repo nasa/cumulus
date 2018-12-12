@@ -55,7 +55,6 @@
     "lodash.isstring": "4.0.1",
     "lodash.omit": "^4.5.0",
     "moment": "^2.22.1",
-    "node-forge": "^0.7.1",
     "pino": "^4.7.1",
     "rewire": "^4.0.1",
     "simplecrawler": "^1.1.4",

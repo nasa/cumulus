@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Added a `/tokenRevoke` endpoint in `@cumulus/api` to delete access token records
 
+### Changed
+
+- CUMULUS-678
+`@cumulus/ingest/crypto` moved and renamed to `@cumulus/common/key-pair-provider`
+`@cumulus/ingest/aws` function:  `KMSDecryptionFailed` and class: `KMS` extracted and moved to `@cumulus/common` and `KMS` is exported as `KMSProvider` from `@cumulus/common/key-pair-provider`
+`@cumulus/ingest/granule` functions: `publish`, `getGranuleId`, `getXMLMetadataAsString`, `getMetadataBodyAndTags`, `parseXmlString`, `getCmrFiles`, `postS3Object`, `contructOnlineAccessUrls`, `updateMetadata`, extracted and moved to `@cumulus/cmrjs`
+`getGranuleId`, `getCmrFiles`, `publish`, `updateMetadata` removed from `@cumulus/ingest/granule` and added to `@cumulus/cmrjs`;
+`@cumulus/ingest` test files renamed.
+
 ## [v1.11.0] - 2018-11-30
 
 **Please Note**
