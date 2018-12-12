@@ -18,7 +18,7 @@ const {
 } = require('@cumulus/common');
 const errors = require('@cumulus/common/errors');
 const { deprecate } = require('@cumulus/common/util');
-const { updateMetadata } = require('@cumulus/cmrjs');
+const { updateCMRMetadata } = require('@cumulus/cmrjs');
 
 const { sftpMixin } = require('./sftp');
 const { ftpMixin } = require('./ftp');
@@ -735,23 +735,38 @@ function generateMoveFileParams(sourceFiles, destinations) {
 }
 
 /**
- * move granule files from one s3 location to another
+ * Returns a list of posible metadata file objects based on file.name extension.
  *
- * @param {string} granuleId - granuleiId
+ * @param {Array<Object>} files - list of file objects that might be metadata files.
+ * @param {string} files.name - file name
+ * @param {string} files.bucket - current bucket of file
+ * @param {string} files.filepath - current s3 key of file
+ * @returns {Array<Object>} any metadata type file object.
+ */
+function getCmrFiles(files) {
+  return files.filter((file) => file.name.endsWith('.cmr.xml') || file.name.endsWith('.cmr.json'));
+}
+
+
+/**
+ * Moves granule files from one S3 location to another.
+ *
+ * @param {string} granuleId - granuleId
  * @param {Array<Object>} sourceFiles - array of file objects, they are updated with destination
  * location after the files are moved
  * @param {string} sourceFiles.name - file name
  * @param {string} sourceFiles.bucket - current bucket of file
- * @param {string} sourceFiles.filepath - current s3 key of file
- * @param {Object[]} destinations - array of objects defining the destination of granule files
+ * @param {string} sourceFiles.filepath - current S3 key of file
+ * @param {Array<Object>} destinations - array of objects defining the destination of granule files
  * @param {string} destinations.regex - regex for matching filepath of file to new destination
  * @param {string} destinations.bucket - aws bucket of the destination
  * @param {string} destinations.filepath - file path/directory on the bucket for the destination
- * @param {string} distEndpoint - distribution enpoint from config
- * @param {boolean} published - indicate if publish is needed
- * @returns {Promise<Object>} returns promise from publishing cmr file
+ * @param {string} distEndpoint - distribution endpoint from config
+ * @param {boolean} published - indicate if files need to be published to CMR.
+ * @returns {Promise<Object>} returns promise from publishing CMR file.
  */
 async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoint, published) {
+  log.debug('Movegranulefiles<sourceFilesinput>', sourceFiles);
   const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
 
   const moveFileRequests = moveFileParams.map((moveFileParam) => {
@@ -775,14 +790,14 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
 
   await Promise.all(moveFileRequests);
 
-  // 2018-12-11 TODO: mhs refactor into helper imported from cmrjs.
-  // update cmr metadata with new file urls
-  const xmlFile = sourceFiles.filter((file) => file.name.endsWith('.cmr.xml'));
-  if (xmlFile.length === 1) {
-    return updateMetadata(granuleId, xmlFile[0], sourceFiles, distEndpoint, published);
+  // Update CMR metadata file with sourceFiles' new urls.
+  log.debug('Movegranulefiles<sourceFiles>', sourceFiles);
+  const cmrMetadataFiles = getCmrFiles(sourceFiles);
+  if (cmrMetadataFiles.length === 1) {
+    return updateCMRMetadata(granuleId, cmrMetadataFiles[0], sourceFiles, distEndpoint, published);
   }
-  if (xmlFile.length > 1) {
-    log.error('more than one .cmr.xml found');
+  if (cmrMetadataFiles.length > 1) {
+    log.error('More than one cmr metadata file found.');
   }
   return Promise.resolve();
 }
