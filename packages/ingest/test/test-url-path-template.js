@@ -24,7 +24,7 @@ const measuresXmlFile = path.join(
 * @param {string} xmlFile - file name of the cmr echo10 xml metadata
 * @returns {Promise<Object>} metadata object
 */
-function getMetadataForTest(xmlFile) {
+function getTestMetadata(xmlFile) {
   const xmlString = fs.readFileSync(xmlFile, 'utf8');
   return new Promise((resolve, reject) => {
     parseString(xmlString, xmlParseOptions, (err, obj) => {
@@ -48,14 +48,14 @@ test('test basic usage', (t) => {
 });
 
 test('url path has metadata fields', async (t) => {
-  const metadataObject = await getMetadataForTest(modisXmlFile);
+  const metadataObject = await getTestMetadata(modisXmlFile);
   const urlPath = '{cmrMetadata.Granule.Collection.ShortName}.{cmrMetadata.Granule.Collection.VersionId}';
   const result = urlPathTemplate(urlPath, { cmrMetadata: metadataObject });
   t.is(result, 'MOD09GQ.006');
 });
 
 test('url path has operations on metadata date components', async (t) => {
-  const metadataObject = await getMetadataForTest(modisXmlFile);
+  const metadataObject = await getTestMetadata(modisXmlFile);
   // build a long url path
   const yearPart = '{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/';
   const monthPart = '{extractMonth(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/';
@@ -67,14 +67,14 @@ test('url path has operations on metadata date components', async (t) => {
 });
 
 test('url path has substring operation', async (t) => {
-  const metadataObject = await getMetadataForTest(modisXmlFile);
+  const metadataObject = await getTestMetadata(modisXmlFile);
   const urlPath = '{substring(cmrMetadata.Granule.PGEVersionClass.PGEVersion, 0, 3)}';
   const result = urlPathTemplate(urlPath, { cmrMetadata: metadataObject });
   t.is(result, '6.0');
 });
 
 test('url path has metadata fields which has multiple values', async (t) => {
-  const metadataObject = await getMetadataForTest(measuresXmlFile);
+  const metadataObject = await getTestMetadata(measuresXmlFile);
   const urlPath = '{cmrMetadata.Granule.Platforms.Platform[0].ShortName}';
   const result = urlPathTemplate(urlPath, { cmrMetadata: metadataObject });
   t.is(result, 'ALOS');
