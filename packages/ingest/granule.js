@@ -766,7 +766,6 @@ function getCmrFiles(files) {
  * @returns {Promise<Object>} returns promise from publishing CMR file.
  */
 async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoint, published) {
-  log.debug('Movegranulefiles<sourceFilesinput>', sourceFiles);
   const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
 
   const moveFileRequests = moveFileParams.map((moveFileParam) => {
@@ -776,7 +775,7 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
     if (target) {
       log.debug('moveGranuleFiles', source, target);
       return moveGranuleFile(source, target).then(() => {
-        // update the granule file location in source file
+        // update the granule file location in sourceFile
         file.bucket = target.Bucket;
         file.filepath = target.Key;
         file.filename = aws.buildS3Uri(file.bucket, file.filepath);
@@ -790,8 +789,7 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
 
   await Promise.all(moveFileRequests);
 
-  // Update CMR metadata file with sourceFiles' new urls.
-  log.debug('Movegranulefiles<sourceFiles>', sourceFiles);
+  // Update CMR metadata file with sourceFiles' updated locations.
   const cmrMetadataFiles = getCmrFiles(sourceFiles);
   if (cmrMetadataFiles.length === 1) {
     return updateCMRMetadata(granuleId, cmrMetadataFiles[0], sourceFiles, distEndpoint, published);
