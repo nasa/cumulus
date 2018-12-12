@@ -6,7 +6,7 @@ const {
   ingestConcept,
   deleteConcept,
   CMR
-} = require('./cmr-class');
+} = require('./cmr');
 const {
   ValidationError,
   updateToken,
@@ -20,7 +20,7 @@ const {
   getCmrFiles,
   publish,
   updateMetadata
-} = require('./cmr');
+} = require('./cmr-utils');
 
 
 /**

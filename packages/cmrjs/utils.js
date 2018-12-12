@@ -2,7 +2,7 @@ const got = require('got');
 const _get = require('lodash.get');
 const publicIp = require('public-ip');
 const xml2js = require('xml2js');
-const { createErrorType } = require('@cumulus/common/error');
+const { createErrorType } = require('@cumulus/common/errors');
 
 const ValidationError = createErrorType('ValidationError');
 
