@@ -10,7 +10,7 @@ const commonAws = require('@cumulus/common/aws');
 const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
-const { DefaultProvider } = require('@cumulus/ingest/crypto');
+const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const {
   generateMoveFileParams,
   moveGranuleFiles

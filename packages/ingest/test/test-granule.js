@@ -21,12 +21,12 @@ const {
   SftpDiscoverGranules,
   S3DiscoverGranules,
   generateMoveFileParams,
-  getGranuleId,
   getRenamedS3File,
   moveGranuleFiles,
   moveGranuleFile,
   renameS3FileWithTimestamp
 } = require('../granule');
+
 const { baseProtocol } = require('../protocol');
 const { s3Mixin } = require('../s3');
 
@@ -514,19 +514,6 @@ test('generateMoveFileParams generates null source and target for no destination
     source: null,
     target: null
   });
-});
-
-test('getGranuleId is successful', (t) => {
-  const uri = 'test.txt';
-  const regex = '(.*).txt';
-  t.is(getGranuleId(uri, regex), 'test');
-});
-
-test('getGranuleId fails', (t) => {
-  const uri = 'test.txt';
-  const regex = '(.*).TXT';
-  const error = t.throws(() => getGranuleId(uri, regex), Error);
-  t.is(error.message, `Could not determine granule id of ${uri} using ${regex}`);
 });
 
 test('renameS3FileWithTimestamp renames file', async (t) => {
