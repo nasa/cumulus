@@ -4,8 +4,7 @@ const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { getCmrFiles } = require('@cumulus/ingest/granule');
-const { publish } = require('@cumulus/ingest/cmr');
+const { getCmrFiles, publish } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const { loadJSONTestData } = require('@cumulus/test-data');
 
@@ -44,8 +43,8 @@ function buildOutput(results, granulesObject) {
  * @returns {Promise} returns the promise of an updated event object
  */
 async function postToCMR(event) {
-  // we have to post the meta-xml file of all output granules
-  // first we check if there is an output file
+  // We have to post the metadata file for the output granules.
+  // First we check if there is an output file.
   const config = get(event, 'config');
   const bucket = get(config, 'bucket'); // the name of the bucket with private/public keys
   const stack = get(config, 'stack'); // the name of the deployment stack

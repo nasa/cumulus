@@ -7,8 +7,7 @@ const { log, aws: { s3, buildS3Uri, promiseS3Upload } } = require('@cumulus/comm
 const get = require('lodash.get');
 const omit = require('lodash.omit');
 
-const { KMS } = require('./aws');
-const Crypto = require('./crypto').DefaultProvider;
+const { KMSProvider: KMS, DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const recursion = require('./recursion');
 
 module.exports.sftpMixin = (superclass) => class extends superclass {
@@ -32,12 +31,12 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
   async connect() {
     if (!this.decrypted && this.provider.encrypted) {
       if (this.password) {
-        this.options.password = await Crypto.decrypt(this.password);
+        this.options.password = await DefaultProvider.decrypt(this.password);
         this.decrypted = true;
       }
 
       if (this.username) {
-        this.options.user = await Crypto.decrypt(this.username);
+        this.options.user = await DefaultProvider.decrypt(this.username);
         this.decrypted = true;
       }
     }
