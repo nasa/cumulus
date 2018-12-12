@@ -1,6 +1,6 @@
 'use strict';
 
-const Crypto = require('@cumulus/common/key-pair-provider').DefaultProvider;
+const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
 const Manager = require('./base');
 const providerSchema = require('./schemas').provider;
@@ -29,11 +29,11 @@ class Provider extends Manager {
   }
 
   encrypt(value) {
-    return Crypto.encrypt(value);
+    return DefaultProvider.encrypt(value);
   }
 
   decrypt(value) {
-    return Crypto.decrypt(value);
+    return DefaultProvider.decrypt(value);
   }
 
   async update(key, _item, keysToDelete = []) {
