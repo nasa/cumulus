@@ -20,7 +20,7 @@ const {
   getGranuleId,
   getCmrFiles,
   publish,
-  updateMetadata
+  updateCMRMetadata
 } = require('./cmr-utils');
 
 
@@ -85,5 +85,5 @@ module.exports = {
   getGranuleId,
   getCmrFiles,
   publish,
-  updateMetadata
+  updateCMRMetadata
 };

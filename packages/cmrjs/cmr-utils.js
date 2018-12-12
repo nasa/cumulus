@@ -125,7 +125,7 @@ async function parseXmlString(xml) {
 }
 
 /**
- * returns a list of CMR xml files
+ * returns a list of CMR xml file objects
  *
  * @param {Array} input - an array of s3 uris
  * @param {string} granuleIdExtraction - a regex for extracting granule IDs
@@ -205,18 +205,34 @@ async function contructOnlineAccessUrls(files, distEndpoint) {
   return urls;
 }
 
+
 /**
- * updates cmr xml file with updated file urls
+ * Modifies cmr Echo10 xml metadata file with files' URLs updated to their new locations.
  *
  * @param {string} granuleId - granuleId
  * @param {Object} cmrFile - cmr xml file to be updated
- * @param {Object[]} files - array of file objects
+ * @param {Array<Object>} files - array of file objects
+ * @param {string} distEndpoint - distribution endpoint from config
+ * @param {boolean} published - indicate if publish is needed
+ * @returns {Promise} returns promise to upload updated cmr file
+ */
+async function updateEcho10XMLMetadata(granuleId, cmrFile, files, distEndpoint, published) {
+  // TODO
+  return 46;
+}
+
+/**
+ * Modifies cmr metadata file with file's URLs updated to their new locations.
+ *
+ * @param {string} granuleId - granuleId
+ * @param {Object} cmrFile - cmr xml file to be updated
+ * @param {Array<Object>} files - array of file objects
  * @param {string} distEndpoint - distribution enpoint from config
  * @param {boolean} published - indicate if publish is needed
  * @returns {Promise} returns promise to upload updated cmr file
  */
-async function updateMetadata(granuleId, cmrFile, files, distEndpoint, published) {
-  log.debug(`granules.updateMetadata granuleId ${granuleId}, xml file ${cmrFile.filename}`);
+async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, published) {
+  log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, xml file ${cmrFile.filename}`);
 
   const urls = await contructOnlineAccessUrls(files, distEndpoint);
 
@@ -257,5 +273,5 @@ module.exports = {
   getGranuleId,
   getCmrFiles,
   publish,
-  updateMetadata
+  updateCMRMetadata
 };
