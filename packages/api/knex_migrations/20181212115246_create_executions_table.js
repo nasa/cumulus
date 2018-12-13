@@ -5,27 +5,28 @@ const mapValues = require('lodash.mapvalues');
 const { DynamoDbScanQueue } = require('@cumulus/common/aws');
 
 exports.up = async function(knex) {
-  try {
-    await knex.schema.createTable(
-      'executions',
-      (table) => {
-        table.string('arn').unique().notNull(),
-        table.string('parent_arn');
-        table.float('duration');
-        table.string('name');
-        table.string('execution');
-        table.json('error');
-        table.json('tasks');
-        table.string('collection_id');
-        table.string('type'); // TODO: should this be enum?
-        table.enu('status', ['running', 'completed', 'failed' ,'unknown']);
-        table.bigInteger('created_at').defaultTo(Date.now());
-        table.bigInteger('updated_at').defaultTo(Date.now());
-        table.bigInteger('timestamp').defaultTo(Date.now());
-        table.json('original_payload');
-        table.json('final_payload');
-      });
 
+  await knex.schema.createTable(
+    'executions',
+    (table) => {
+      table.bigIncrements('id').primary(),
+      table.string('arn').unique().notNull(),
+      table.string('parent_arn');
+      table.float('duration');
+      table.string('name');
+      table.string('execution');
+      table.json('error');
+      table.json('tasks');
+      table.string('collection_id');
+      table.string('type'); // TODO: should this be enum?
+      table.enu('status', ['running', 'completed', 'failed' ,'unknown']);
+      table.bigInteger('created_at').defaultTo(Date.now());
+      table.bigInteger('updated_at').defaultTo(Date.now());
+      table.bigInteger('timestamp').defaultTo(Date.now());
+      table.json('original_payload');
+      table.json('final_payload');
+    });
+  try {
     if (process.env.ExecutionsTable) {
       //  if (false) {
       const dynamoDbScanQueue = new DynamoDbScanQueue({
