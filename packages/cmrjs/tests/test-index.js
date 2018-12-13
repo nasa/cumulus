@@ -7,13 +7,15 @@ const got = require('got');
 const some = require('lodash.some');
 
 const {
-  ingestConcept,
+  CMR,
   deleteConcept,
   getMetadata,
-  CMR
+  ingestConcept,
+  searchConcept
 } = require('..');
 
 const granuleId = 'MYD13Q1.A2017297.h19v10.006.2017313221203';
+const clientId = 'test-client';
 
 const alreadyDeleted = `Concept with native-id [${granuleId}] and concept-id [G1222482315-CUMULUS] is already deleted.`;
 
@@ -163,30 +165,41 @@ test('CMR.searchCollection handles paging correctly.', async (t) => {
 
 test('ingestConcept request includes CMR client id', async (t) => {
   let request;
-  const stub = sinon.stub(got, 'put').callsFake((url, opt) => {
+  const stub = sinon.stub(got, 'put').callsFake((_url, opt) => {
     request = { headers: opt.headers };
     return gotResponses[200];
   });
   // intercept validate
   const noPost = sinon.stub(got, 'post').callsFake(() => gotResponses[200]);
 
-  await ingestConcept('granules', '<Granule><GranuleUR>granule1</GranuleUR></Granule>', 'Granule.GranuleUR', 'CUMULUS', { 'Client-Id': 'test-client' })
-    .then(() => t.is(request.headers['Client-Id'], 'test-client'));
+  await ingestConcept('granules', '<Granule><GranuleUR>granule1</GranuleUR></Granule>', 'Granule.GranuleUR', 'CUMULUS', { 'Client-Id': clientId })
+    .then(() => t.is(request.headers['Client-Id'], clientId));
 
   stub.restore();
   noPost.restore();
 });
 
 test('deleteConcept request includes CMR client id', async (t) => {
-  const clientId = 'test-client';
   let request;
-  const stub = sinon.stub(got, 'delete').callsFake((url, opt) => {
+  const stub = sinon.stub(got, 'delete').callsFake((_url, opt) => {
     request = { headers: opt.headers };
     return gotResponses[200];
   });
 
   await deleteConcept('granules', granuleId, 'CUMULUS', { 'Client-Id': clientId })
     .then(() => t.is(request.headers['Client-Id'], clientId));
+
+  stub.restore();
+});
+
+test('searchConcept request includes CMR client id', async (t) => {
+  let request;
+  const stub = sinon.stub(got, 'get').callsFake((_url, opt) => {
+    request = { headers: opt.headers };
+    return { body: { feed: { entry: [] } }, headers: { 'cmr-hits': 0 } };
+  });
+
+  await searchConcept('granules', {}, [], { 'Client-Id': clientId }).then(() => t.is(request.headers['Client-Id'], clientId));
 
   stub.restore();
 });

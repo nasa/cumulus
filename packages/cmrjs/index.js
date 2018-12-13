@@ -3,6 +3,7 @@
 const got = require('got');
 const { parseString } = require('xml2js');
 const {
+  searchConcept,
   ingestConcept,
   deleteConcept,
   CMR
@@ -70,6 +71,7 @@ async function getFullMetadata(cmrLink) {
 }
 
 module.exports = {
+  searchConcept,
   ingestConcept,
   deleteConcept,
   getUrl,
