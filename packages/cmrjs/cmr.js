@@ -25,9 +25,10 @@ const logDetails = {
  * @param {string} type - Concept type to search, choices: ['collections', 'granules']
  * @param {Object} searchParams - CMR search parameters
  * @param {Array} previousResults - array of results returned in previous recursive calls
+ * @param {Object} headers - the CMR headers
  * @returns {Promise.<Array>} - array of search results.
  */
-async function searchConcept(type, searchParams, previousResults = []) {
+async function searchConcept(type, searchParams, previousResults = [], headers) {
   const recordsLimit = process.env.CMR_LIMIT || 100;
   const pageSize = searchParams.pageSize || process.env.CMR_PAGE_SIZE || 50;
 
@@ -40,14 +41,14 @@ async function searchConcept(type, searchParams, previousResults = []) {
   // Recursively retrieve all the search results for collections or granules
   const query = Object.assign({}, defaultParams, searchParams, { page_num: pageNum });
 
-  const response = await got.get(url, { json: true, query });
+  const response = await got.get(url, { json: true, query, headers });
   const fetchedResults = previousResults.concat(response.body.feed.entry || []);
 
   const numRecordsCollected = fetchedResults.length;
   const CMRHasMoreResults = response.headers['cmr-hits'] > numRecordsCollected;
   const recordsLimitReached = numRecordsCollected >= recordsLimit;
   if (CMRHasMoreResults && !recordsLimitReached) {
-    return searchConcept(type, query, fetchedResults);
+    return searchConcept(type, query, fetchedResults, headers);
   }
   return fetchedResults.slice(0, recordsLimit);
 }
@@ -60,7 +61,7 @@ async function searchConcept(type, searchParams, previousResults = []) {
  * @param {string} xml - the CMR record in xml
  * @param {string} identifierPath - the concept's unique identifier
  * @param {string} provider - the CMR provider id
- * @param {string} headers - the CMR headers
+ * @param {Object} headers - the CMR headers
  * @returns {Promise.<Object>} the CMR response object
  */
 async function ingestConcept(type, xml, identifierPath, provider, headers) {
@@ -122,7 +123,7 @@ async function ingestConcept(type, xml, identifierPath, provider, headers) {
  * @param {string} type - the concept type. Choices are: collection, granule
  * @param {string} identifier - the record id
  * @param {string} provider - the CMR provider id
- * @param {string} headers - the CMR headers
+ * @param {Object} headers - the CMR headers
  * @returns {Promise.<Object>} the CMR response object
  */
 async function deleteConcept(type, identifier, provider, headers) {
@@ -257,7 +258,7 @@ class CMR {
    */
   async searchCollections(searchParams) {
     const params = Object.assign({}, { provider_short_name: this.provider }, searchParams);
-    return searchConcept('collections', params, []);
+    return searchConcept('collections', params, [], { 'Client-Id': this.clientId });
   }
 
   /**
@@ -268,11 +269,12 @@ class CMR {
    */
   async searchGranules(searchParams) {
     const params = Object.assign({}, { provider_short_name: this.provider }, searchParams);
-    return searchConcept('granules', params, []);
+    return searchConcept('granules', params, [], { 'Client-Id': this.clientId });
   }
 }
 
 module.exports = {
+  searchConcept,
   ingestConcept,
   deleteConcept,
   CMR
