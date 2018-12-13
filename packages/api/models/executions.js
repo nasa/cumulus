@@ -3,21 +3,20 @@
 const aws = require('@cumulus/ingest/aws');
 const get = require('lodash.get');
 
-const pLimit = require('p-limit');
-
 const { constructCollectionId } = require('@cumulus/common');
-const executionSchema = require('./schemas').execution;
-const Manager = require('./base');
+const cloneDeep = require('lodash.clonedeep');
 const { parseException } = require('../lib/utils');
+const { RecordDoesNotExist } = require('../lib/errors');
+const { ExecutionSchema } = require('./schemas').execution;
+const Model = require('./model');
 
 
-class Execution extends Manager {
+class Execution extends Model {
   constructor() {
-    super({
-      tableName: process.env.ExecutionsTable,
-      tableHash: { name: 'arn', type: 'S' },
-      schema: executionSchema
-    });
+    super();
+    this.tableName = Execution.tableName;
+    this.removeAdditional = 'all';
+    this.schema = ExecutionSchema;
   }
 
   generateDocFromPayload(payload) {
@@ -29,8 +28,11 @@ class Execution extends Manager {
     if (!arn) {
       throw new Error('State Machine Arn is missing. Must be included in the cumulus_meta');
     }
-
     const execution = aws.getExecutionUrl(arn);
+
+
+    // TODO: Right now this is the text name of the collection, *not* a collection
+    // (model?) object.  It's inferred by the payload.  We need to resolve this
     const collectionId = constructCollectionId(
       get(payload, 'meta.collection.name'), get(payload, 'meta.collection.version')
     );
@@ -52,7 +54,7 @@ class Execution extends Manager {
   }
 
   /**
-   * Scan the Executions table and remove originalPayload/finalPayload records from the table
+   *  Search the Executions table and remove originalPayload/finalPayload records from the table
    *
    * @param {integer} completeMaxDays - Maximum number of days a completed
    *   record may have payload entries
@@ -69,30 +71,98 @@ class Execution extends Manager {
     const msPerDay = 1000 * 3600 * 24;
     const completeMaxMs = Date.now() - (msPerDay * completeMaxDays);
     const nonCompleteMaxMs = Date.now() - (msPerDay * nonCompleteMaxDays);
-    const expiryDate = completeMaxDays < nonCompleteMaxDays ? completeMaxMs : nonCompleteMaxMs;
-    const executionNames = { '#updatedAt': 'updatedAt' };
-    const executionValues = { ':expiryDate': expiryDate };
-    const filter = '#updatedAt <= :expiryDate and (attribute_exists(originalPayload) or attribute_exists(finalPayload))';
 
-    const oldExecutionRows = await this.scan({
-      names: executionNames,
-      filter: filter,
-      values: executionValues
+    if (!disableComplete) {
+      await this.table()
+        .where('updated_at', '<=', completeMaxMs)
+        .where('status', 'completed')
+        .update({
+          original_payload: null,
+          final_payload: null
+        });
+    }
+    if (!disableNonComplete) {
+      await this.table()
+        .where('updated_at', '<=', nonCompleteMaxMs)
+        .whereNot('status', 'completed')
+        .update({
+          original_payload: null,
+          final_payload: null
+        });
+    }
+  }
+
+  /**
+   *
+   * @param {Obejct} item execution object to delete.  Requires arn key/value
+   */
+  async delete(item) {
+    const arn = item.arn;
+    await this.table()
+      .where({ arn })
+      .del();
+  }
+
+  /**
+   * Updates an execution
+   *
+   * @param { Object } keyObject { arn: key } object
+   * @param { Object } item an execution object with key/value pairs to update
+   * @param { Array<string> } [keysToDelete=[]] array of keys to set to null.
+   * @returns { string } arn updated execution
+   **/
+  async update(keyObject, item, keysToDelete = []) {
+    const arn = keyObject.arn;
+    const updatedItem = cloneDeep(item);
+
+    keysToDelete.forEach((key) => {
+      updatedItem[key] = null;
     });
 
-    const concurrencyLimit = process.env.CONCURRENCY || 10;
-    const limit = pLimit(concurrencyLimit);
+    await this.table()
+      .where({ arn })
+      .update(this.translateItemToSnakeCase(updatedItem));
+    return this.get(keyObject);
+  }
 
-    const updatePromises = oldExecutionRows.Items.map((row) => limit(() => {
-      if (!disableComplete && row.status === 'completed' && row.updatedAt <= completeMaxMs) {
-        return this.update({ arn: row.arn }, {}, ['originalPayload', 'finalPayload']);
-      }
-      if (!disableNonComplete && !(row.status === 'completed') && row.updatedAt <= nonCompleteMaxMs) {
-        return this.update({ arn: row.arn }, {}, ['originalPayload', 'finalPayload']);
-      }
-      return Promise.resolve();
-    }));
-    return Promise.all(updatePromises);
+
+  /**
+   * Insert new row into the database
+   *
+   * @param {Object} item execution 'object' representing a row to create
+   * @returns {Object} the the full item added with modifications made by the model
+   */
+  async insert(item) {
+    await this.table()
+      .insert(this.translateItemToSnakeCase(item));
+    return this.get({ arn: item.arn });
+  }
+
+  /**
+   * Returns row matching arn
+   *
+   * @param {string} item Execution item
+   * @returns {Object} execution object
+   */
+  async get(item) {
+    const arn = item.arn;
+    const result = await this.table()
+      .first()
+      .where({ arn });
+    if (!result) {
+      throw new RecordDoesNotExist(`No record found for ${JSON.stringify(item)}`);
+    }
+    return this.translateItemToCamelCase(result);
+  }
+
+  /**
+   * Check if a given execution exists
+   *
+   * @param {string} arn - execution arn
+   * @returns {boolean}
+   */
+  async exists(arn) {
+    return super({ arn });
   }
 
   /**
@@ -125,4 +195,5 @@ class Execution extends Manager {
   }
 }
 
+Execution.tableName = 'executions';
 module.exports = Execution;
