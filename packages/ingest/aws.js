@@ -7,7 +7,6 @@ const aws = require('@cumulus/common/aws');
 const AWS = require('aws-sdk');
 const moment = require('moment');
 const log = require('@cumulus/common/log');
-const errors = require('@cumulus/common/errors');
 const { deprecate } = require('@cumulus/common/util');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { describeExecution } = require('@cumulus/common/step-functions');
@@ -499,41 +498,6 @@ class CloudWatch {
   }
 }
 
-const KMSDecryptionFailed = errors.createErrorType('KMSDecryptionFailed');
-
-class KMS {
-  static async encrypt(text, kmsId) {
-    const params = {
-      KeyId: kmsId,
-      Plaintext: text
-    };
-
-    const kms = new AWS.KMS();
-    const r = await kms.encrypt(params).promise();
-    return r.CiphertextBlob.toString('base64');
-  }
-
-  static async decrypt(text) {
-    const params = {
-      CiphertextBlob: Buffer.from(text, 'base64')
-    };
-
-    const kms = new AWS.KMS();
-    try {
-      const r = await kms.decrypt(params).promise();
-      return r.Plaintext.toString();
-    }
-    catch (e) {
-      if (e.toString().includes('InvalidCiphertextException')) {
-        throw new KMSDecryptionFailed(
-          'Decrypting the secure text failed. The provided text is invalid'
-        );
-      }
-      throw e;
-    }
-  }
-}
-
 class StepFunction {
   static async getExecution(arn, ignoreMissingExecutions = false) {
     deprecate(
@@ -650,7 +614,6 @@ module.exports = {
   CloudWatch,
   SQS,
   S3,
-  KMS,
   ECS,
   invoke,
   getEndpoint,
