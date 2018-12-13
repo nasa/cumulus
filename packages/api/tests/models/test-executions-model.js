@@ -2,7 +2,9 @@
 
 const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
-const { Manager, Execution } = require('../../models');
+const { Execution } = require('../../models');
+const { fakeExecutionFactory } = require('../../lib/testutils');
+const Registry = require('../../lib/Registry');
 
 let arn;
 let doc;
@@ -28,6 +30,17 @@ function returnDoc(docArn, status) {
   };
 }
 
+/**
+ * creates fake execution records
+ *
+ * @param {string} status - pdr status (default to completed)
+ * @param {string} type - workflow type (default to fakeWorkflow)
+ * @returns {Object} fake execution object
+ */
+function fakeDbExecutionFactory(status = 'completed', type = 'fakeWorkflow') {
+
+
+
 async function setupRecord(executionStatus) {
   arn = randomString();
   name = randomString();
@@ -38,24 +51,17 @@ async function setupRecord(executionStatus) {
 }
 
 test.before(async () => {
-  process.env.ExecutionsTable = randomString();
-  manager = new Manager({
-    tableName: process.env.ExecutionsTable,
-    tableHash: { name: 'arn', type: 'S' }
-  });
-  await manager.createTable();
 });
 
 test.after.always(async () => {
-  await manager.deleteTable();
 });
 
-test.beforeEach(async () => {
-  await setupRecord('running');
+test.beforeEach(async (t) => {
+  t.context.table = Registry.knex()(Execution.tableName);
+  t.context.provider = fakeExecutionFactory();
 });
 
 test.afterEach(async () => {
-  await executionModel.delete({ arn: arn });
 });
 
 test.serial('Creating an execution adds a record to the database with matching values', async (t) => {
