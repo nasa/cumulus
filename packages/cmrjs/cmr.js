@@ -213,7 +213,7 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async ingestCollection(xml) {
-    const headers = this.getHeaders(this.getToken());
+    const headers = this.getHeaders(await this.getToken());
     return ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
   }
 
@@ -224,7 +224,7 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async ingestGranule(xml) {
-    const headers = this.getHeaders(this.getToken());
+    const headers = this.getHeaders(await this.getToken());
     return ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
   }
 
@@ -235,7 +235,7 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async deleteCollection(datasetID) {
-    const headers = this.getHeaders(this.getToken());
+    const headers = this.getHeaders(await this.getToken());
     return deleteConcept('collection', datasetID, headers);
   }
 
@@ -246,7 +246,7 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async deleteGranule(granuleUR) {
-    const headers = this.getHeaders(this.getToken());
+    const headers = this.getHeaders(await this.getToken());
     return deleteConcept('granules', granuleUR, this.provider, headers);
   }
 
