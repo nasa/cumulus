@@ -35,14 +35,13 @@ test.after.always(async () => {
 });
 
 test('get() returns a translated row', async (t) => {
-  const id = t.context.provider.id;
-  t.context.provider.global_connection_limit = 10;
-  await t.context.table.insert(t.context.provider);
-
   const providersModel = new Provider();
+  const id = t.context.provider.id;
+  t.context.provider.globalConnectionLimit = 10;
+  await t.context.table.insert(providersModel.translateItemToSnakeCase(t.context.provider));
   const actual = (await providersModel.get({ id }));
   t.is(t.context.provider.id, actual.id);
-  t.is(t.context.provider.global_connection_limit, actual.globalConnectionLimit);
+  t.is(t.context.provider.globalConnectionLimit, actual.globalConnectionLimit);
 });
 
 test('get() throws an exception if no record is found', async (t) => {
@@ -59,8 +58,9 @@ test('get() throws an exception if no record is found', async (t) => {
 });
 
 test('exists() returns true when a record exists', async (t) => {
-  await t.context.table.insert(t.context.provider);
   const providersModel = new Provider();
+  await t.context.table.insert(providersModel.translateItemToSnakeCase(t.context.provider));
+
   t.true(await providersModel.exists(t.context.provider.id));
 });
 
@@ -73,8 +73,7 @@ test('delete() throws an exception if the provider has associated rules', async 
   const id = t.context.provider.id;
   const providersModel = new Provider();
 
-
-  await t.context.table.insert(t.context.provider);
+  await t.context.table.insert(providersModel.translateItemToSnakeCase(t.context.provider));
   const rule = fakeRuleFactoryV2({
     provider: id,
     rule: {
@@ -105,7 +104,7 @@ test('delete() throws an exception if the provider has associated rules', async 
 test('delete() deletes a provider', async (t) => {
   const id = t.context.provider.id;
   const providersModel = new Provider();
-  await t.context.table.insert(t.context.provider);
+  await t.context.table.insert(providersModel.translateItemToSnakeCase(t.context.provider));
 
   await providersModel.delete({ id });
 
@@ -149,7 +148,7 @@ test('update() updates a record', async (t) => {
   const providersModel = new Provider();
   const updateRecord = { host: 'test_host' };
 
-  await t.context.table.insert(t.context.provider);
+  await t.context.table.insert(providersModel.translateItemToSnakeCase(t.context.provider));
   await providersModel.update({ id }, updateRecord);
 
   const actual = (await providersModel.get({ id }));

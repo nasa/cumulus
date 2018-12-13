@@ -222,7 +222,7 @@ function fakeProviderFactory(options = {}) {
   return Object.assign(
     {
       id: randomString(),
-      global_connection_limit: 1,
+      globalConnectionLimit: 1,
       protocol: 'http',
       host: randomString(),
       port: 80
