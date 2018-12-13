@@ -45,7 +45,7 @@ class Provider extends Model {
    * @returns {boolean}
    */
   async exists(id) {
-    return await super({ id });
+    return super.exists({ id });
   }
 
   encrypt(value) {

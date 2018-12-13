@@ -162,7 +162,7 @@ class Execution extends Model {
    * @returns {boolean}
    */
   async exists(arn) {
-    return super({ arn });
+    return super.exists({ arn });
   }
 
   /**
