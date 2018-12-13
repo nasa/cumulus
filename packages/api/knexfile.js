@@ -14,9 +14,9 @@ let config;
 if (process.env.DATABASE_URL) {
   config = parseConnection(process.env.DATABASE_URL);
 }
-
 else {
   config = {
+    // debug: true,
     client: 'mysql',
     connection: {
       host: '127.0.0.1',
@@ -28,8 +28,7 @@ else {
 }
 
 config.migrations = {
-  directory: 'knex_migrations',
-  tableName: 'knex_migrations'
+  directory: './db/migrations'
 };
 
 // This addresses mysql not having a native Bool type.
