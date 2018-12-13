@@ -45,16 +45,7 @@ class Provider extends Model {
    * @returns {boolean}
    */
   async exists(id) {
-    try {
-      await this.get({ id });
-      return true;
-    }
-    catch (error) {
-      if (error instanceof RecordDoesNotExist) {
-        return false;
-      }
-      throw error;
-    }
+    return await super({ id });
   }
 
   encrypt(value) {
@@ -107,20 +98,10 @@ class Provider extends Model {
   }
 
   /**
-   * Insert new row into database.  Alias for 'insert' function.
-   *
-   * @param {Object} item provider 'object' representing a row to create
-   * @returns {Object} the the full item added with modifications made by the model
-   */
-  create(item) {
-    return this.insert(item);
-  }
-
-  /**
    * Insert new row into the database
    *
    * @param {Object} item provider 'object' representing a row to create
-\   * @returns {Object} the the full item added with modifications made by the model
+   * @returns {Object} the the full item added with modifications made by the model
    */
   async insert(item) {
     const insertItem = cloneDeep(item);
