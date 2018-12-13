@@ -1,22 +1,42 @@
 'use strict';
 
+const cloneDeep = require('lodash.clonedeep');
 const Crypto = require('@cumulus/ingest/crypto').DefaultProvider;
 
-const Manager = require('./base');
-const providerSchema = require('./schemas').provider;
-const Rule = require('./rules');
 const { AssociatedRulesError } = require('../lib/errors');
+const Model = require('./model');
+const Rule = require('./rules');
+const { RecordDoesNotExist } = require('../lib/errors');
+const { ProviderSchema } = require('./schemas').provider;
 
-class Provider extends Manager {
+class Provider extends Model {
+  /**
+   * Creates an instance of Provider
+   */
   constructor() {
-    super({
-      tableName: process.env.ProvidersTable,
-      tableHash: { name: 'id', type: 'S' },
-      schema: providerSchema
-    });
-
+    super();
+    this.tableName = Provider.tableName;
     this.removeAdditional = 'all';
+    this.schema = ProviderSchema;
   }
+
+  /**
+   * Returns row matching id
+   *
+   * @param {string} item Provider item
+   * @returns {Object} provider object
+   */
+  async get(item) {
+    const result = await this.table()
+      .first()
+      .where({ id: item.id });
+
+    if (!result) {
+      throw new RecordDoesNotExist(`No record found for ${JSON.stringify(item)}`);
+    }
+    return this.translateItemToCamelCase(result);
+  }
+
 
   /**
    * Check if a given provider exists
@@ -25,7 +45,16 @@ class Provider extends Manager {
    * @returns {boolean}
    */
   async exists(id) {
-    return super.exists({ id });
+    try {
+      await this.get({ id });
+      return true;
+    }
+    catch (error) {
+      if (error instanceof RecordDoesNotExist) {
+        return false;
+      }
+      throw error;
+    }
   }
 
   encrypt(value) {
@@ -36,47 +65,82 @@ class Provider extends Manager {
     return Crypto.decrypt(value);
   }
 
-  async update(key, _item, keysToDelete = []) {
-    const item = _item;
-    // encrypt the password
-    if (item.password) {
-      item.password = await this.encrypt(item.password);
-      item.encrypted = true;
+  async encryptItem(item) {
+    const encryptedItem = cloneDeep(item);
+
+    if (encryptedItem.password) {
+      encryptedItem.password = await this.encrypt(encryptedItem.password);
+      encryptedItem.encrypted = true;
     }
 
-    if (item.username) {
-      item.username = await this.encrypt(item.username);
-      item.encrypted = true;
+    if (encryptedItem.username) {
+      encryptedItem.username = await this.encrypt(encryptedItem.username);
+      encryptedItem.encrypted = true;
     }
 
-
-    return super.update(key, item, keysToDelete);
+    return encryptedItem;
   }
 
-  async create(_item) {
-    const item = _item;
+  /**
+   * Updates a provider
+   *
+   * @param { Object } keyObject { id: key } object
+   * @param { Object } item an object with key/value pairs to update
+   * @param { Array<string> } [keysToDelete=[]] array of keys to set to null.
+   * @returns { string } id updated Provider id
+   **/
+  async update(keyObject, item, keysToDelete = []) {
+    const updatedItem = cloneDeep(item);
+
+    keysToDelete.forEach((key) => {
+      updatedItem[key] = null;
+    });
 
     // encrypt the password
-    if (item.password) {
-      item.password = await this.encrypt(item.password);
-      item.encrypted = true;
-    }
+    const encryptedItem = await this.encryptItem(updatedItem);
 
-    if (item.username) {
-      item.username = await this.encrypt(item.username);
-      item.encrypted = true;
-    }
+    await this.table()
+      .where({ id: keyObject.id })
+      .update(this.translateItemToSnakeCase(encryptedItem));
 
-    return super.create(item);
+    return this.get(keyObject);
+  }
+
+  /**
+   * Insert new row into database.  Alias for 'insert' function.
+   *
+   * @param {Object} item provider 'object' representing a row to create
+   * @returns {Object} the the full item added with modifications made by the model
+   */
+  create(item) {
+    return this.insert(item);
+  }
+
+  /**
+   * Insert new row into the database
+   *
+   * @param {Object} item provider 'object' representing a row to create
+\   * @returns {Object} the the full item added with modifications made by the model
+   */
+  async insert(item) {
+    const insertItem = cloneDeep(item);
+
+    // encrypt the password
+    const encryptedItem = await this.encryptItem(insertItem);
+
+    await this.table()
+      .insert(this.translateItemToSnakeCase(encryptedItem));
+
+    return this.get({ id: insertItem.id });
   }
 
   /**
    * Delete a provider
    *
-   * @param {string} id - the provider id
+   * @param { Object } item  Provider item to delete, uses ID field to identify row to remove.
    */
-  async delete({ id }) {
-    const associatedRuleNames = (await this.getAssociatedRules(id))
+  async delete(item) {
+    const associatedRuleNames = (await this.getAssociatedRules(item.id))
       .map((rule) => rule.name);
 
     if (associatedRuleNames.length > 0) {
@@ -85,9 +149,11 @@ class Provider extends Manager {
         associatedRuleNames
       );
     }
-
-    await super.delete({ id });
+    await this.table()
+      .where({ id: item.id })
+      .del();
   }
+
 
   /**
    * Get any rules associated with the provider
@@ -106,5 +172,7 @@ class Provider extends Manager {
     return scanResult.Items;
   }
 }
+
+Provider.tableName = 'providers';
 
 module.exports = Provider;

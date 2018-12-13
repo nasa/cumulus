@@ -4,6 +4,13 @@ set -e
 
 docker-compose -f travis-ci/docker-compose.yml up &
 
+# Wait for the MySQL service to be available
+while ! nc -z 127.0.0.1 3306; do
+  echo 'Waiting for MySQL to start'
+  sleep 2
+done
+echo 'MySQL service is started'
+
 # Wait for the FTP server to be available
 while ! curl --connect-timeout 5 -sS -o /dev/null ftp://testuser:testpass@127.0.0.1/README.md; do
   echo 'Waiting for FTP to start'
