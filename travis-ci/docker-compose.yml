@@ -1,5 +1,13 @@
 version: '3'
 services:
+  mysql:
+    image: mysql/mysql-server:5.7
+    ports:
+      - "127.0.0.1:3306:3306"
+    environment:
+      - MYSQL_DATABASE=cumulus
+      - MYSQL_USER=cumulus
+      - MYSQL_PASSWORD=password
   ftp:
     image: cumuluss/vsftpd:2
     ports:
