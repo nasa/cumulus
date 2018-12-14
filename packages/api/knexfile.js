@@ -2,10 +2,14 @@
 
 const parseConnection = require('knex/lib/util/parse-connection');
 
-// See https://github.com/mysqljs/mysql for more on this
-function typeCastTinyToBool(field, next) {
+// See https://github.com/mysqljs/mysql
+// and https://github.com/mysqljs/mysql/issues/1267 for more on this
+function typeCastMysql(field, next) {
   if (field.type === 'TINY' && field.length === 1) {
     return (field.string() === '1');
+  }
+  if (field.type === 'JSON') {
+    return (JSON.parse(field.string()));
   }
   return next();
 }
@@ -33,7 +37,7 @@ config.migrations = {
 
 // This addresses mysql not having a native Bool type.
 if (config.client === 'mysql') {
-  config.connection.typeCast = typeCastTinyToBool;
+  config.connection.typeCast = typeCastMysql;
 }
 
 module.exports = config;
