@@ -17,7 +17,7 @@ class Execution extends Model {
     this.tableName = Execution.tableName;
     this.removeAdditional = 'all';
     this.schema = ExecutionSchema;
-    this.jsonFields = ['error', 'tasks', 'originalPayload', 'finalPayload']
+    this.jsonFields = ['error', 'tasks', 'originalPayload', 'finalPayload'];
   }
 
   generateDocFromPayload(payload) {
@@ -33,7 +33,7 @@ class Execution extends Model {
 
 
     // TODO: Right now this is the text name of the collection, *not* a collection
-    // (model?) object.  It's inferred by the payload.  We need to resolve this
+    // (model?) object.  It's inferred by the payload.
     const collectionId = constructCollectionId(
       get(payload, 'meta.collection.name'), get(payload, 'meta.collection.version')
     );
@@ -179,7 +179,7 @@ class Execution extends Model {
     doc.finalPayload = get(payload, 'payload');
     doc.originalPayload = existingRecord.originalPayload;
     doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-    return this.update({arn: doc.arn}, doc);
+    return this.update({ arn: doc.arn }, doc);
   }
 
   /**

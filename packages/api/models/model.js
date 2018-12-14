@@ -1,14 +1,12 @@
 'use strict';
 
 const Ajv = require('ajv');
-const Registry = require('../lib/Registry');
 const camelCase = require('lodash.camelcase');
-const { deprecate } = require('@cumulus/common/util');
+const cloneDeep = require('lodash.clonedeep');
 const mapKeys = require('lodash.mapkeys');
-const mapValues = require('lodash.mapvalues');
 const snakeCase = require('lodash.snakecase');
 const { RecordDoesNotExist } = require('../lib/errors');
-const cloneDeep = require('lodash.clonedeep');
+const Registry = require('../lib/Registry');
 
 class Model {
   constructor() {
@@ -40,7 +38,6 @@ class Model {
   async deleteTable() {} // eslint-disable-line no-empty-function
 
 
-
   /**
    * Insert new row into database.  Alias for 'insert' function.
    *
@@ -55,7 +52,7 @@ class Model {
    * Check if an object exists.  Uses 'model' get method,
    * searches on primary key.
    *
-   * @param {string} id - provider id
+   * @param {Object} primaryKeySearchObject - api Model object that contains a primary key/value
    * @returns {boolean}
    */
   async exists(primaryKeySearchObject) {
@@ -108,7 +105,7 @@ class Model {
    */
   translateItemToSnakeCase(item) {
     const translatedItem = cloneDeep(item);
-    this.jsonFields.forEach( (field) => {
+    this.jsonFields.forEach((field) => {
       translatedItem[field] = JSON.stringify(translatedItem[field]);
     });
     return mapKeys(translatedItem, (_value, key) => snakeCase(key));

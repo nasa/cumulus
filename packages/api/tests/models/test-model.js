@@ -3,7 +3,7 @@
 const test = require('ava');
 const Model = require('../../models/model');
 
-const model = new Model;
+const model = new Model();
 
 test('translateItemToSnakeCase translates a database item', (t) => {
   const originalItem = { aTestItem: 'testing', anotherTestItem: 'testing' };
