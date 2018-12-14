@@ -25,9 +25,10 @@ const logDetails = {
  * @param {string} type - Concept type to search, choices: ['collections', 'granules']
  * @param {Object} searchParams - CMR search parameters
  * @param {Array} previousResults - array of results returned in previous recursive calls
+ * @param {Object} headers - the CMR headers
  * @returns {Promise.<Array>} - array of search results.
  */
-async function searchConcept(type, searchParams, previousResults = []) {
+async function searchConcept(type, searchParams, previousResults = [], headers) {
   const recordsLimit = process.env.CMR_LIMIT || 100;
   const pageSize = searchParams.pageSize || process.env.CMR_PAGE_SIZE || 50;
 
@@ -40,14 +41,14 @@ async function searchConcept(type, searchParams, previousResults = []) {
   // Recursively retrieve all the search results for collections or granules
   const query = Object.assign({}, defaultParams, searchParams, { page_num: pageNum });
 
-  const response = await got.get(url, { json: true, query });
+  const response = await got.get(url, { json: true, query, headers });
   const fetchedResults = previousResults.concat(response.body.feed.entry || []);
 
   const numRecordsCollected = fetchedResults.length;
   const CMRHasMoreResults = response.headers['cmr-hits'] > numRecordsCollected;
   const recordsLimitReached = numRecordsCollected >= recordsLimit;
   if (CMRHasMoreResults && !recordsLimitReached) {
-    return searchConcept(type, query, fetchedResults);
+    return searchConcept(type, query, fetchedResults, headers);
   }
   return fetchedResults.slice(0, recordsLimit);
 }
@@ -60,10 +61,10 @@ async function searchConcept(type, searchParams, previousResults = []) {
  * @param {string} xml - the CMR record in xml
  * @param {string} identifierPath - the concept's unique identifier
  * @param {string} provider - the CMR provider id
- * @param {string} token - the CMR token
+ * @param {Object} headers - the CMR headers
  * @returns {Promise.<Object>} the CMR response object
  */
-async function ingestConcept(type, xml, identifierPath, provider, token) {
+async function ingestConcept(type, xml, identifierPath, provider, headers) {
   // Accept either an XML file, or an XML string itself
   let xmlString = xml;
   if (fs.existsSync(xml)) {
@@ -90,10 +91,7 @@ async function ingestConcept(type, xml, identifierPath, provider, token) {
       `${getUrl('ingest', provider)}${type}s/${identifier}`,
       {
         body: xmlString,
-        headers: {
-          'Echo-Token': token,
-          'Content-type': 'application/echo10+xml'
-        }
+        headers
       }
     );
 
@@ -125,20 +123,17 @@ async function ingestConcept(type, xml, identifierPath, provider, token) {
  * @param {string} type - the concept type. Choices are: collection, granule
  * @param {string} identifier - the record id
  * @param {string} provider - the CMR provider id
- * @param {string} token - the CMR token
+ * @param {Object} headers - the CMR headers
  * @returns {Promise.<Object>} the CMR response object
  */
-async function deleteConcept(type, identifier, provider, token) {
+async function deleteConcept(type, identifier, provider, headers) {
   const url = `${getUrl('ingest', provider)}${type}/${identifier}`;
   log.info(`deleteConcept ${url}`);
 
   let result;
   try {
     result = await got.delete(url, {
-      headers: {
-        'Echo-Token': token,
-        'Content-type': 'application/echo10+xml'
-      }
+      headers
     });
   }
   catch (error) {
@@ -197,14 +192,29 @@ class CMR {
   }
 
   /**
+   * Return object containing CMR request headers
+   *
+   * @param {string} [token] - CMR request token
+   * @returns {Object} CMR headers object
+   */
+  getHeaders(token = null) {
+    const headers = {
+      'Client-Id': this.clientId,
+      'Content-type': 'application/echo10+xml'
+    };
+    if (token) headers['Echo-Token'] = token;
+    return headers;
+  }
+
+  /**
    * Adds a collection record to the CMR
    *
    * @param {string} xml - the collection xml document
    * @returns {Promise.<Object>} the CMR response
    */
   async ingestCollection(xml) {
-    const token = await this.getToken();
-    return ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, token);
+    const headers = this.getHeaders(await this.getToken());
+    return ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
   }
 
   /**
@@ -214,8 +224,8 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async ingestGranule(xml) {
-    const token = await this.getToken();
-    return ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, token);
+    const headers = this.getHeaders(await this.getToken());
+    return ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
   }
 
   /**
@@ -225,7 +235,8 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async deleteCollection(datasetID) {
-    return deleteConcept('collection', datasetID);
+    const headers = this.getHeaders(await this.getToken());
+    return deleteConcept('collection', datasetID, headers);
   }
 
   /**
@@ -235,8 +246,8 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async deleteGranule(granuleUR) {
-    const token = await this.getToken();
-    return deleteConcept('granules', granuleUR, this.provider, token);
+    const headers = this.getHeaders(await this.getToken());
+    return deleteConcept('granules', granuleUR, this.provider, headers);
   }
 
   /**
@@ -247,7 +258,7 @@ class CMR {
    */
   async searchCollections(searchParams) {
     const params = Object.assign({}, { provider_short_name: this.provider }, searchParams);
-    return searchConcept('collections', params, []);
+    return searchConcept('collections', params, [], { 'Client-Id': this.clientId });
   }
 
   /**
@@ -258,11 +269,12 @@ class CMR {
    */
   async searchGranules(searchParams) {
     const params = Object.assign({}, { provider_short_name: this.provider }, searchParams);
-    return searchConcept('granules', params, []);
+    return searchConcept('granules', params, [], { 'Client-Id': this.clientId });
   }
 }
 
 module.exports = {
+  searchConcept,
   ingestConcept,
   deleteConcept,
   CMR
