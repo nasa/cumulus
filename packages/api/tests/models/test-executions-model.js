@@ -11,7 +11,7 @@ let manager;
 let name;
 let executionModel;
 
-const originalPayload = { op: 'originalPayload' };
+const originalPayload = { payload: 'originalPayload' };
 
 function returnDoc(docArn, status) {
   return {
@@ -29,39 +29,19 @@ function returnDoc(docArn, status) {
     updatedAt: new Date(),
     duration: 5,
     originalPayload,
+    finalPayload: null
   };
 }
-
-
-
-// async function setupRecord(executionStatus) {
-//   arn = randomString();
-//   name = randomString();
-//   executionModel = new Execution();
-//   doc = returnDoc(arn, executionStatus);
-//   executionModel.generateDocFromPayload = (_payload) => returnDoc(arn, executionStatus);
-//   await executionModel.createExecutionFromSns({ payload: originalPayload });
-// }
-
-test.before(async () => {
-});
-
-test.after.always(async () => {
-});
 
 test.beforeEach(async (t) => {
   const arn = randomString();
   t.context.table = Registry.knex()(Execution.tableName);
   t.context.execution = returnDoc(arn, 'completed');
   t.context.executionModel = new Execution();
-  t.context.executionModel.generateDocFromPayload = (_payload) => returnDoc(arn, 'completed');
+  t.context.executionModel.generateDocFromPayload = (_payload) => t.context.execution;
 });
 
-test.afterEach(async () => {
-});
-
-
-test('insert creates inserts an execution into the database', async (t) => {
+test('Insert creates inserts an execution into the database', async (t) => {
   const arn = t.context.execution.arn;
   const execution = t.context.execution;
   await t.context.table.insert(t.context.executionModel.translateItemToSnakeCase(execution));
@@ -71,16 +51,17 @@ test('insert creates inserts an execution into the database', async (t) => {
 });
 
 
-// test.serial('Creating an execution adds a record to the database with matching values', async (t) => {
-//   const arn = t.context.execution.arn;
-//   t.context.table.insert(t.context.execution);
-//   const record = await executionModel.get({ arn });
+test('Creating an execution adds a record to the database with matching values', async (t) => {
+  const executionModel = t.context.executionModel;
+  const execution = t.context.execution;
+  t.context.table.insert(t.context.execution);
+  const actual = await executionModel.createExecutionFromSns(originalPayload);
+  execution.id = actual.id; // This is created on insert
 
-//   doc.duration = record.duration;
-//   t.deepEqual(record, doc);
-// });
+  t.deepEqual(execution, actual);
+});
 
-test.serial('Updating an existing record updates the record as expected', async (t) => {
+test('Updating an existing record updates the record as expected', async (t) => {
   const finalPayload = { test: 'payloadValue' };
   const arn = t.context.execution.arn;
   const execution = t.context.execution;
@@ -104,7 +85,7 @@ test.serial('Updating an existing record updates the record as expected', async 
   t.deepEqual(execution, actual);
 });
 
-test.serial('RemoveOldPayloadRecords removes payload attributes from old non-completed records', async (t) => {
+test('RemoveOldPayloadRecords removes payload attributes from old non-completed records', async (t) => {
   const execution = t.context.execution;
   execution.status = 'failed';
   execution.finalPayload = originalPayload;
@@ -118,7 +99,7 @@ test.serial('RemoveOldPayloadRecords removes payload attributes from old non-com
   t.falsy(updatedRecord.finalPayload);
 });
 
-test.serial('RemoveOldPayloadRecords fails to remove payload attributes from non-completed records when disabled', async (t) => {
+test('RemoveOldPayloadRecords fails to remove payload attributes from non-completed records when disabled', async (t) => {
   const execution = t.context.execution;
   const executionModel = t.context.executionModel;
   execution.status = 'failed';
@@ -132,7 +113,7 @@ test.serial('RemoveOldPayloadRecords fails to remove payload attributes from non
   t.truthy(updatedRecord.finalPayload);
 });
 
-test.serial('RemoveOldPayloadRecords removes payload attributes from old completed records', async (t) => {
+test('RemoveOldPayloadRecords removes payload attributes from old completed records', async (t) => {
   const execution = t.context.execution;
   const executionModel = t.context.executionModel;
   execution.finalPayload = originalPayload;
@@ -144,7 +125,7 @@ test.serial('RemoveOldPayloadRecords removes payload attributes from old complet
   t.falsy(updatedRecord.finalPayload);
 });
 
-test.serial('RemoveOldPayloadRecords fails to remove payload attributes from old completed records when disabled', async (t) => {
+test('RemoveOldPayloadRecords fails to remove payload attributes from old completed records when disabled', async (t) => {
   const execution = t.context.execution;
   const executionModel = t.context.executionModel;
   execution.finalPayload = originalPayload;
@@ -158,10 +139,10 @@ test.serial('RemoveOldPayloadRecords fails to remove payload attributes from old
 });
 
 
-test.serial('RemoveOldPayloadRecords does not remove attributes from new non-completed records', async (t) => {
+test('RemoveOldPayloadRecords does not remove attributes from new non-completed records', async (t) => {
   const execution = t.context.execution;
   const executionModel = t.context.executionModel;
-  const updatePayload = { test: 'payloadValue' };
+  const updatePayload = { payload: 'payloadValue' };
   execution.finalPayload = updatePayload;
   execution.status = 'failed';
   const arn = execution.arn;
@@ -173,10 +154,10 @@ test.serial('RemoveOldPayloadRecords does not remove attributes from new non-com
   t.deepEqual(updatePayload, updatedRecord.finalPayload);
 });
 
-test.only('RemoveOldPayloadRecords does not remove attributes from new completed records', async (t) => {
+test('RemoveOldPayloadRecords does not remove attributes from new completed records', async (t) => {
   const execution = t.context.execution;
   const executionModel = t.context.executionModel;
-  const updatePayload = { test: 'payloadValue' };
+  const updatePayload = { payload: 'payloadValue' };
   execution.status = 'failed';
   execution.finalPayload = updatePayload;
   const arn = execution.arn;
