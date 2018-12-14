@@ -20,9 +20,9 @@ exports.up = async (knex) => {
     'providers',
     (table) => {
       table.string('id').primary().notNull();
-      table.bigInteger('created_at').defaultTo(Date.now());
-      table.bigInteger('updated_at').defaultTo(Date.now());
-      table.bigInteger('global_connection_limit').notNull();
+      table.datetime('created_at', 3).defaultTo(knex.fn.now(3));
+      table.datetime('updated_at', 3).defaultTo(knex.fn.now(3));
+      table.integer('global_connection_limit').notNull();
       table.text('host').notNull();
       table.enu(
         'protocol',
