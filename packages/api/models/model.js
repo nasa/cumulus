@@ -5,10 +5,16 @@ const Registry = require('../lib/Registry');
 const camelCase = require('lodash.camelcase');
 const { deprecate } = require('@cumulus/common/util');
 const mapKeys = require('lodash.mapkeys');
+const mapValues = require('lodash.mapvalues');
 const snakeCase = require('lodash.snakecase');
 const { RecordDoesNotExist } = require('../lib/errors');
+const cloneDeep = require('lodash.clonedeep');
 
 class Model {
+  constructor() {
+    this.jsonFields = [];
+  }
+
   static recordIsValid(item, schema = null, removeAdditional = false) {
     if (schema) {
       const ajv = new Ajv({
@@ -32,6 +38,8 @@ class Model {
   async createTable() {} // eslint-disable-line no-empty-function
 
   async deleteTable() {} // eslint-disable-line no-empty-function
+
+
 
   /**
    * Insert new row into database.  Alias for 'insert' function.
@@ -99,7 +107,11 @@ class Model {
    * @returns { Object } Provider database object with keys translated
    */
   translateItemToSnakeCase(item) {
-    return mapKeys(item, (_value, key) => snakeCase(key));
+    const translatedItem = cloneDeep(item);
+    this.jsonFields.forEach( (field) => {
+      translatedItem[field] = JSON.stringify(translatedItem[field]);
+    });
+    return mapKeys(translatedItem, (_value, key) => snakeCase(key));
   }
 
   /**
