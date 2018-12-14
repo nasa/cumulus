@@ -5,13 +5,13 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { Execution } = require('../../models');
 const Registry = require('../../lib/Registry');
 
-let arn;
-let doc;
-let manager;
-let name;
-let executionModel;
-
 const originalPayload = { payload: 'originalPayload' };
+const finalPayload = { payload: 'finalPayload' };
+
+let arn;
+let table;
+let execution;
+let executionModel;
 
 function returnDoc(docArn, status) {
   return {
@@ -33,41 +33,32 @@ function returnDoc(docArn, status) {
   };
 }
 
-test.beforeEach(async (t) => {
-  const arn = randomString();
-  t.context.table = Registry.knex()(Execution.tableName);
-  t.context.execution = returnDoc(arn, 'completed');
-  t.context.executionModel = new Execution();
-  t.context.executionModel.generateDocFromPayload = (_payload) => t.context.execution;
+test.beforeEach(async () => {
+  arn = randomString();
+  table = Registry.knex()(Execution.tableName);
+  execution = returnDoc(arn, 'completed');
+  executionModel = new Execution();
+  executionModel.generateDocFromPayload = (_payload) => execution;
 });
 
-test('Insert creates inserts an execution into the database', async (t) => {
-  const arn = t.context.execution.arn;
-  const execution = t.context.execution;
-  await t.context.table.insert(t.context.executionModel.translateItemToSnakeCase(execution));
-  const actual = await t.context.executionModel.get({ arn });
+test.serial('Insert creates inserts an execution into the database', async (t) => {
+  await table.insert(executionModel.translateItemToSnakeCase(execution));
+  const actual = await executionModel.get({ arn });
   execution.id = actual.id; // This is created on insert
   t.deepEqual(execution, actual);
 });
 
 
-test('Creating an execution adds a record to the database with matching values', async (t) => {
-  const executionModel = t.context.executionModel;
-  const execution = t.context.execution;
-  t.context.table.insert(t.context.execution);
+test.serial('Creating an execution adds a record to the database with matching values', async (t) => {
+  table.insert(execution);
   const actual = await executionModel.createExecutionFromSns(originalPayload);
   execution.id = actual.id; // This is created on insert
 
   t.deepEqual(execution, actual);
 });
 
-test('Updating an existing record updates the record as expected', async (t) => {
-  const finalPayload = { test: 'payloadValue' };
-  const arn = t.context.execution.arn;
-  const execution = t.context.execution;
-  const executionModel = t.context.executionModel;
-
-  await t.context.table.insert(executionModel.translateItemToSnakeCase(execution));
+test.serial('Updating an existing record updates the record as expected', async (t) => {
+  await table.insert(executionModel.translateItemToSnakeCase(execution));
   await executionModel.updateExecutionFromSns({ payload: finalPayload });
   const actual = await executionModel.get({ arn });
 
@@ -85,27 +76,23 @@ test('Updating an existing record updates the record as expected', async (t) => 
   t.deepEqual(execution, actual);
 });
 
-test('RemoveOldPayloadRecords removes payload attributes from old non-completed records', async (t) => {
-  const execution = t.context.execution;
+test.serial('RemoveOldPayloadRecords removes payload attributes from old non-completed records', async (t) => {
   execution.status = 'failed';
   execution.finalPayload = originalPayload;
-  const arn = execution.arn;
-  const executionModel = t.context.executionModel;
-  await t.context.table.insert(executionModel.translateItemToSnakeCase(execution));
-  await t.context.executionModel.removeOldPayloadRecords(100, 0, true, false);
+
+  await table.insert(executionModel.translateItemToSnakeCase(execution));
+  await executionModel.removeOldPayloadRecords(100, 0, true, false);
   const updatedRecord = await executionModel.get({ arn });
 
   t.falsy(updatedRecord.originalPayload);
   t.falsy(updatedRecord.finalPayload);
 });
 
-test('RemoveOldPayloadRecords fails to remove payload attributes from non-completed records when disabled', async (t) => {
-  const execution = t.context.execution;
-  const executionModel = t.context.executionModel;
+test.serial('RemoveOldPayloadRecords fails to remove payload attributes from non-completed records when disabled', async (t) => {
   execution.status = 'failed';
   execution.finalPayload = originalPayload;
-  const arn = execution.arn;
-  await t.context.table.insert(executionModel.translateItemToSnakeCase(execution));
+
+  await table.insert(executionModel.translateItemToSnakeCase(execution));
 
   await executionModel.removeOldPayloadRecords(100, 0, true, true);
   const updatedRecord = await executionModel.get({ arn: arn });
@@ -113,24 +100,20 @@ test('RemoveOldPayloadRecords fails to remove payload attributes from non-comple
   t.truthy(updatedRecord.finalPayload);
 });
 
-test('RemoveOldPayloadRecords removes payload attributes from old completed records', async (t) => {
-  const execution = t.context.execution;
-  const executionModel = t.context.executionModel;
+test.serial('RemoveOldPayloadRecords removes payload attributes from old completed records', async (t) => {
   execution.finalPayload = originalPayload;
-  const arn = execution.arn;
-  await t.context.table.insert(executionModel.translateItemToSnakeCase(execution));
+
+  await table.insert(executionModel.translateItemToSnakeCase(execution));
   await executionModel.removeOldPayloadRecords(0, 100, false, true);
   const updatedRecord = await executionModel.get({ arn: arn });
   t.falsy(updatedRecord.originalPayload);
   t.falsy(updatedRecord.finalPayload);
 });
 
-test('RemoveOldPayloadRecords fails to remove payload attributes from old completed records when disabled', async (t) => {
-  const execution = t.context.execution;
-  const executionModel = t.context.executionModel;
+test.serial('RemoveOldPayloadRecords fails to remove payload attributes from old completed records when disabled', async (t) => {
   execution.finalPayload = originalPayload;
-  const arn = execution.arn;
-  await t.context.table.insert(executionModel.translateItemToSnakeCase(execution));
+
+  await table.insert(executionModel.translateItemToSnakeCase(execution));
 
   await executionModel.removeOldPayloadRecords(0, 100, true, true);
   const updatedRecord = await executionModel.get({ arn: arn });
@@ -139,32 +122,26 @@ test('RemoveOldPayloadRecords fails to remove payload attributes from old comple
 });
 
 
-test('RemoveOldPayloadRecords does not remove attributes from new non-completed records', async (t) => {
-  const execution = t.context.execution;
-  const executionModel = t.context.executionModel;
-  const updatePayload = { payload: 'payloadValue' };
-  execution.finalPayload = updatePayload;
+test.serial('RemoveOldPayloadRecords does not remove attributes from new non-completed records', async (t) => {
+  execution.finalPayload = finalPayload;
   execution.status = 'failed';
-  const arn = execution.arn;
-  await t.context.table.insert(executionModel.translateItemToSnakeCase(execution));
+
+  await table.insert(executionModel.translateItemToSnakeCase(execution));
 
   await executionModel.removeOldPayloadRecords(1, 1, false, false);
   const updatedRecord = await executionModel.get({ arn: arn });
   t.deepEqual(originalPayload, updatedRecord.originalPayload);
-  t.deepEqual(updatePayload, updatedRecord.finalPayload);
+  t.deepEqual(finalPayload, updatedRecord.finalPayload);
 });
 
-test('RemoveOldPayloadRecords does not remove attributes from new completed records', async (t) => {
-  const execution = t.context.execution;
-  const executionModel = t.context.executionModel;
-  const updatePayload = { payload: 'payloadValue' };
+test.serial('RemoveOldPayloadRecords does not remove attributes from new completed records', async (t) => {
   execution.status = 'failed';
-  execution.finalPayload = updatePayload;
-  const arn = execution.arn;
-  await t.context.table.insert(executionModel.translateItemToSnakeCase(execution));
+  execution.finalPayload = finalPayload;
+
+  await table.insert(executionModel.translateItemToSnakeCase(execution));
 
   await executionModel.removeOldPayloadRecords(1, 1, false, false);
   const updatedRecord = await executionModel.get({ arn: arn });
   t.deepEqual(originalPayload, updatedRecord.originalPayload);
-  t.deepEqual(updatePayload, updatedRecord.finalPayload);
+  t.deepEqual(finalPayload, updatedRecord.finalPayload);
 });
