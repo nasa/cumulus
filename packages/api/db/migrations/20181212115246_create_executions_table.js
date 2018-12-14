@@ -20,9 +20,9 @@ exports.up = async function(knex) {
       table.string('collection_id');
       table.string('type'); // TODO: should this be enum?
       table.enu('status', ['running', 'completed', 'failed' ,'unknown']);
-      table.bigInteger('created_at').defaultTo(Date.now());
-      table.bigInteger('updated_at').defaultTo(Date.now());
-      table.bigInteger('timestamp').defaultTo(Date.now());
+      table.datetime('created_at', 6).defaultTo(knex.fn.now(6));
+      table.datetime('updated_at', 6).defaultTo(knex.fn.now(6));
+      table.datetime('timestamp', 6).defaultTo(knex.fn.now(6));
       table.json('original_payload');
       table.json('final_payload');
     });
