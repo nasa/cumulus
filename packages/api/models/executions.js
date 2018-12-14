@@ -17,6 +17,7 @@ class Execution extends Model {
     this.tableName = Execution.tableName;
     this.removeAdditional = 'all';
     this.schema = ExecutionSchema;
+    this.jsonFields = ['error', 'tasks', 'originalPayload', 'finalPayload']
   }
 
   generateDocFromPayload(payload) {
@@ -69,8 +70,8 @@ class Execution extends Model {
   async removeOldPayloadRecords(completeMaxDays, nonCompleteMaxDays,
     disableComplete, disableNonComplete) {
     const msPerDay = 1000 * 3600 * 24;
-    const completeMaxMs = Date.now() - (msPerDay * completeMaxDays);
-    const nonCompleteMaxMs = Date.now() - (msPerDay * nonCompleteMaxDays);
+    const completeMaxMs = new Date(new Date() - new Date((msPerDay * completeMaxDays)));
+    const nonCompleteMaxMs = new Date(new Date() - new Date((msPerDay * nonCompleteMaxDays)));
 
     if (!disableComplete) {
       await this.table()
@@ -178,7 +179,7 @@ class Execution extends Model {
     doc.finalPayload = get(payload, 'payload');
     doc.originalPayload = existingRecord.originalPayload;
     doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-    return this.create(doc);
+    return this.update({arn: doc.arn}, doc);
   }
 
   /**
