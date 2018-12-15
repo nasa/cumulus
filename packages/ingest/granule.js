@@ -743,7 +743,7 @@ function generateMoveFileParams(sourceFiles, destinations) {
  * @param {string} files.filepath - current s3 key of file
  * @returns {Array<Object>} any metadata type file object.
  */
-function getCmrFiles(files) {
+function getCmrFileObjs(files) {
   return files.filter((file) => file.name.endsWith('.cmr.xml') || file.name.endsWith('.cmr.json'));
 }
 
@@ -790,7 +790,7 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
   await Promise.all(moveFileRequests);
 
   // Update CMR metadata file with sourceFiles' updated locations.
-  const cmrMetadataFiles = getCmrFiles(sourceFiles);
+  const cmrMetadataFiles = getCmrFileObjs(sourceFiles);
   if (cmrMetadataFiles.length === 1) {
     return updateCMRMetadata(granuleId, cmrMetadataFiles[0], sourceFiles, distEndpoint, published);
   }

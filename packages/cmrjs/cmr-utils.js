@@ -127,7 +127,7 @@ async function parseXmlString(xml) {
 /**
  * returns a list of CMR xml file objects
  *
- * @param {Array} input - an array of s3 uris
+ * @param {Array} input - an Array of S3 uris
  * @param {string} granuleIdExtraction - a regex for extracting granule IDs
  * @returns {Promise<Array>} promise resolves to an array of objects
  * that includes CMR xmls uris and granuleIds
