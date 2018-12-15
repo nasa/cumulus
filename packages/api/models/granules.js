@@ -152,13 +152,13 @@ class Granule extends Manager {
   /**
    * Move a granule's files to destination locations specified
    *
-   * @param {Object} g - the granule object
+   * @param {Object} g - the granule record object
    * @param {Array<{regex: string, bucket: string, filepath: string}>} destinations
-   * - list of destinations specified
+   *    - list of destinations specified
    *    regex - regex for matching filepath of file to new destination
    *    bucket - aws bucket of the destination
    *    filepath - file path/directory on the bucket for the destination
-   * @param {string} distEndpoint - distribution endpoint
+   * @param {string} distEndpoint - distribution endpoint URL
    * @returns {Promise<undefined>} undefined
    */
   async move(g, destinations, distEndpoint) {

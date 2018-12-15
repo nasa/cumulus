@@ -24,7 +24,7 @@ exports.throwTestError = throwTestError;
  *
  * @returns {string} - a random string
  */
-exports.randomString = () => crypto.randomBytes(20).toString('hex');
+exports.randomString = (numBytes = 20) => crypto.randomBytes(numBytes).toString('hex');
 
 /**
  * Create a random granule id from the regular expression
