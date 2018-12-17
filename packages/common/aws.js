@@ -352,7 +352,6 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
  *   from the deletion operations
  */
 exports.deleteS3Files = (s3Objs) => {
-  log.info(`Starting deletion of ${s3Objs.length} object(s)`);
   return pMap(
     s3Objs,
     (s3Obj) => exports.s3().deleteObject(s3Obj).promise(),
