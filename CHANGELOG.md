@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Added a `/tokenRevoke` endpoint in `@cumulus/api` to delete access token records
+- Added a `/tokenDelete` endpoint in `@cumulus/api` to delete access token records
 
 ### Changed
 
