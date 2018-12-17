@@ -408,8 +408,8 @@ ApiTokenDefault:
       method: post
       cors: true
     - api: backend
-      path: tokenRevoke
-      method: post
+      path: tokenDelete/{jwtToken}
+      method: delete
       cors: true
 
 ApiVersionDefault:
