@@ -186,10 +186,7 @@ async function login(request, oAuth2Provider) {
  * @returns {Object} an API Gateway response
  */
 async function deleteToken(request) {
-  const body = request.body
-    ? JSON.parse(request.body)
-    : {};
-  const requestJwtToken = get(body, 'token');
+  const requestJwtToken = get(request.pathParameters, 'jwtToken');
 
   if (!requestJwtToken) {
     return new MissingTokenResponse();
@@ -230,9 +227,9 @@ const isTokenRefreshRequest = (request) =>
   request.httpMethod === 'POST'
   && request.resource.endsWith('/refresh');
 
-const isRevokeTokenRequest = (request) =>
-  request.httpMethod === 'POST'
-  && request.resource.endsWith('/tokenRevoke');
+const isDeleteTokenRequest = (request) =>
+  request.httpMethod === 'DELETE'
+  && request.resource.endsWith('/tokenDelete');
 
 const notFoundResponse = new LambdaProxyResponse({
   json: false,
@@ -247,7 +244,7 @@ async function handleRequest(request, oAuth2Provider) {
   if (isTokenRefreshRequest(request)) {
     return refreshAccessToken(request, oAuth2Provider);
   }
-  if (isRevokeTokenRequest(request)) {
+  if (isDeleteTokenRequest(request)) {
     return deleteToken(request);
   }
 
