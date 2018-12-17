@@ -229,7 +229,8 @@ const isTokenRefreshRequest = (request) =>
 
 const isDeleteTokenRequest = (request) =>
   request.httpMethod === 'DELETE'
-  && request.resource.endsWith('/tokenDelete');
+  && request.resource.startsWith('/tokenDelete')
+  && request.pathParameters;
 
 const notFoundResponse = new LambdaProxyResponse({
   json: false,
