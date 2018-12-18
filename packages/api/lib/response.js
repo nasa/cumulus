@@ -18,8 +18,10 @@ const {
   TokenExpiredError
 } = require('jsonwebtoken');
 
-const { User } = require('../models');
-const { verifyJwtToken } = require('./token');
+const {
+  TokenUnauthorizedUserError
+} = require('./errors');
+const { verifyJwtAuthorization } = require('./request');
 const { errorify, findCaseInsensitiveKey } = require('./utils');
 const {
   AuthorizationFailureResponse,
@@ -79,6 +81,29 @@ function buildAuthorizationFailureResponse(params) {
 }
 
 /**
+ * Handle API response for JWT verification errors
+ *
+ * @param {Error} err - error thrown by JWT verification
+ *
+ * @returns {LambdaProxyResponse} - an API gateway response
+ */
+function handleJwtVerificationError(err) {
+  if (err instanceof TokenExpiredError) {
+    return new TokenExpiredResponse();
+  }
+  if (err instanceof JsonWebTokenError) {
+    return new InvalidTokenResponse();
+  }
+  if (err instanceof TokenUnauthorizedUserError) {
+    return new AuthorizationFailureResponse({
+      message: 'User not authorized',
+      statusCode: 403
+    });
+  }
+  return InternalServerError();
+}
+
+/**
  * Check an API request and, if there is an authorization failure, return a
  * Lambda Proxy response object appropriate for that failure.  If there is no
  * error, return null.
@@ -123,31 +148,12 @@ async function getAuthorizationFailureResponse(params) {
     });
   }
 
-  let username;
+  // Verify JWT validity and user access
   try {
-    ({ username } = verifyJwtToken(jwtToken));
-  }
-  catch (error) {
-    log.error('Error caught when checking JWT token', error);
-    if (error instanceof TokenExpiredError) {
-      return new TokenExpiredResponse();
-    }
-    if (error instanceof JsonWebTokenError) {
-      return new InvalidTokenResponse();
-    }
-  }
-
-  const userModel = new User({ tableName: usersTable });
-  try {
-    await userModel.get({ userName: username });
+    await verifyJwtAuthorization(jwtToken, { usersTable });
   }
   catch (err) {
-    if (err.name === 'RecordDoesNotExist') {
-      return new AuthorizationFailureResponse({
-        message: 'User not authorized',
-        statusCode: 403
-      });
-    }
+    return handleJwtVerificationError(err);
   }
 
   return null;
@@ -196,6 +202,7 @@ module.exports = {
   buildAuthorizationFailureResponse,
   buildLambdaProxyResponse,
   getAuthorizationFailureResponse,
+  handleJwtVerificationError,
   handle,
   internalServerErrorResponse,
   notFoundResponse,
