@@ -350,7 +350,8 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
 test.serial('DELETE /tokenDelete without a token returns a 400 response', async (t) => {
   const request = {
     httpMethod: 'DELETE',
-    resource: '/tokenDelete'
+    resource: '/tokenDelete',
+    pathParameters: {}
   };
 
   const response = await handleRequest(request);
