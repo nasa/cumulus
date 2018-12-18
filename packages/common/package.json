@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/common",
-  "version": "1.11.0",
+  "version": "1.11.1",
   "description": "Common utilities used across tasks",
   "keywords": [
     "GIBS",
