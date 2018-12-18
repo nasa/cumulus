@@ -346,3 +346,71 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
     accessToken: refreshedTokenRecord.accessToken
   }));
 });
+
+test.serial('DELETE /tokenDelete without a token returns a 400 response', async (t) => {
+  const request = {
+    httpMethod: 'DELETE',
+    resource: '/tokenDelete',
+    pathParameters: {}
+  };
+
+  const response = await handleRequest(request);
+
+  t.is(response.statusCode, 400);
+  t.is(JSON.parse(response.body).message, 'Request requires a token');
+});
+
+test.serial('DELETE /tokenDelete with an invalid token returns an invalid token response', async (t) => {
+  const request = {
+    httpMethod: 'DELETE',
+    resource: '/tokenDelete',
+    pathParameters: {
+      jwtToken: 'InvalidToken'
+    }
+  };
+
+  const response = await handleRequest(request);
+
+  assertions.isInvalidAccessTokenResponse(t, response);
+});
+
+test.serial('DELETE /tokenDelete with an unauthorized user returns an unauthorized user response', async (t) => {
+  const accessTokenRecord = fakeAccessTokenFactory();
+  const jwtToken = createJwtToken(accessTokenRecord);
+
+  const request = {
+    httpMethod: 'DELETE',
+    resource: '/tokenDelete',
+    pathParameters: {
+      jwtToken
+    }
+  };
+
+  const response = await handleRequest(request);
+
+  assertions.isUnauthorizedUserResponse(t, response);
+});
+
+test.serial('DELETE /tokenDelete with a valid token results in a successful deletion response', async (t) => {
+  const userRecord = fakeUserFactory();
+  await userModel.create(userRecord);
+
+  const accessTokenRecord = fakeAccessTokenFactory({ username: userRecord.userName });
+  await accessTokenModel.create(accessTokenRecord);
+
+  const jwtToken = createJwtToken(accessTokenRecord);
+
+  const request = {
+    httpMethod: 'DELETE',
+    resource: '/tokenDelete',
+    pathParameters: {
+      jwtToken
+    }
+  };
+
+  const response = await handleRequest(request);
+
+  t.false(await accessTokenModel.exists({ accessToken: accessTokenRecord.accessToken }));
+  t.is(response.statusCode, 200);
+  t.is(JSON.parse(response.body).message, 'Token record was deleted');
+});
