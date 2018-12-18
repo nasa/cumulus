@@ -231,7 +231,27 @@ mvd-dev:
   system_bucket: 'mvd-internal'
 
 jc:
+  useNgapPermissionBoundary: true
   prefix: jc
+  buckets:
+    internal:
+      name: jc-test-integration-internal
+      type: internal
+    private:
+      name: jc-test-integration-private
+      type: private
+    protected:
+      name: jc-test-integration-protected
+      type: protected
+    public:
+      name: jc-test-integration-public
+      type: public
+    protected-2:
+      name: jc-test-integration-protected-2
+      type: protected
+    shared:
+      name: cumulus-data-shared
+      type: shared
 
 mhs:
   prefix: mhs
