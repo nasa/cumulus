@@ -318,18 +318,15 @@ async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, publis
 }
 
 /**
- * Update CMR Metadata record with the current information from updatedFiles
+ * Update CMR Metadata record with the information contained in updatedFiles
  * @param {string} granuleId - granuleId
  * @param {Object} updatedFiles - list of file objects that might have different
  *                  information from the cmr metadatafile and the CMR service.
- * @param {string} updatedFiles.bucket - file object bucket
- * @param {string} updatedFiles.filepath - file object Key
- * @param {string} updatedFiles.filename - file object's S3URL.
  * @param {string} distEndpoint - distribution endpoint URL
  * @param {boolean} published - boolean true if the data should be published to the CMR service.
  */
 async function reconcileCMRMetadata(granuleId, updatedFiles, distEndpoint, published) {
-  // Update CMR metadata file with updated file locations.
+
   const cmrMetadataFiles = getCmrFileObjs(updatedFiles);
   if (cmrMetadataFiles.length === 1) {
     return updateCMRMetadata(granuleId, cmrMetadataFiles[0], updatedFiles, distEndpoint, published);
