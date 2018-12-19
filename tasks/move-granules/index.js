@@ -297,6 +297,30 @@ async function updateCmrFileAccessURLs(cmrFiles, granulesObject, allFiles, distE
 }
 
 /**
+ * Returns a directive on how to act when duplicate files are encountered.
+ *
+ * @param {Object} event - lambda function event.
+ * @param {Object} event.config - the config object
+ * @param {Object} event.config.collection - collection object.
+
+ * @returns {string} - duplicate handling directive.
+ */
+function duplicateHandlingType(event) {
+  const config = get(event, 'config');
+  const collection = get(event, 'collection');
+
+  let duplicateHandling = get(config, 'duplicateHandling', get(collection, 'duplicateHandling', 'error'));
+
+  const forceDuplicateOverwrite = get(event, 'cumulus_config.cumulus_context.forceDuplicateOverwrite', false);
+
+  log.debug(`Configured duplicateHandling value: ${duplicateHandling}, forceDuplicateOverwrite ${forceDuplicateOverwrite}`);
+
+  if (forceDuplicateOverwrite === true) duplicateHandling = 'replace';
+
+  return duplicateHandling;
+}
+
+/**
  * Move Granule files to final Location
  * See the schemas directory for detailed input and output schemas
  *
@@ -327,13 +351,7 @@ async function moveGranules(event) {
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const collection = config.collection;
 
-  let duplicateHandling = get(
-    config, 'duplicateHandling', get(collection, 'duplicateHandling', 'error')
-  );
-  const forceDuplicateOverwrite = get(event, 'cumulus_config.cumulus_context.forceDuplicateOverwrite', false);
-
-  log.debug(`Configured duplicateHandling value: ${duplicateHandling}, forceDuplicateOverwrite ${forceDuplicateOverwrite}`);
-  if (forceDuplicateOverwrite === true) duplicateHandling = 'replace';
+  const duplicateHandling = duplicateHandlingType(event);
 
   const input = get(event, 'input', []);
 
