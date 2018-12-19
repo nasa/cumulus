@@ -58,6 +58,9 @@ module.exports = {
   // The error object for when the xml file path is not provided
   XmlMetaFileNotFound: createErrorType('XmlMetaFileNotFound'),
 
+  // No CMR metadata file was present.
+  CMRMetaFileNotFound: createErrorType('CMRMetaFileNotFound'),
+
   // The provider info is missing error
   ProviderNotFound: createErrorType('ProviderNotFound'),
 

@@ -6,7 +6,7 @@ const get = require('lodash.get');
 const clonedeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
 const {
-  getRenamedS3File, isFileRenamed,
+  getRenamedS3File, unversionedFilename,
   moveGranuleFile, renameS3FileWithTimestamp
 } = require('@cumulus/ingest/granule');
 const {
@@ -88,9 +88,7 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
   Object.keys(granulesObject).forEach((granuleId) => {
     granulesObject[granuleId].files.forEach((file) => {
       collection.files.forEach((fileConfig) => {
-        const filenameWORenameSuffix = isFileRenamed(file.name)
-          ? file.name.split('.').slice(0, -1).join('.') : file.name;
-        const match = filenameWORenameSuffix.match(fileConfig.regex);
+        const match = unversionedFilename(file.name).match(fileConfig.regex);
 
         if (match) {
           if (!file.url_path) {
@@ -334,7 +332,8 @@ async function moveGranules(event) {
 
   const input = get(event, 'input', []);
 
-  // get cmr files from staging location
+  // Get list of cmr file objects from the input Array of S3 filenames (in
+  // staging location after processing)
   const cmrFiles = await getCmrFiles(input, regex);
 
   // create granules object for cumulus indexer

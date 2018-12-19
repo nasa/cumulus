@@ -8,7 +8,7 @@ const uniqBy = require('lodash.uniqby');
 const aws = require('@cumulus/ingest/aws');
 const commonAws = require('@cumulus/common/aws');
 const cmrjs = require('@cumulus/cmrjs');
-const { CMR } = require('@cumulus/cmrjs');
+const { CMR, reconcileCMRMetadata } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const {
@@ -164,8 +164,9 @@ class Granule extends Manager {
   async move(g, destinations, distEndpoint) {
     log.info(`granules.move ${g.granuleId}`);
     const files = clonedeep(g.files);
-    await moveGranuleFiles(g.granuleId, files, destinations, distEndpoint, g.published);
-    await this.update({ granuleId: g.granuleId }, { files: files });
+    const updatedFiles = await moveGranuleFiles(files, destinations);
+    await reconcileCMRMetadata(g.granuleId, updatedFiles, distEndpoint, g.published);
+    await this.update({ granuleId: g.granuleId }, { files: updatedFiles });
   }
 
   /**

@@ -4,7 +4,7 @@ const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { getCmrFiles, publish } = require('@cumulus/cmrjs');
+const { getCmrFiles, publishXML2CMR } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const { loadJSONTestData } = require('@cumulus/test-data');
 
@@ -66,7 +66,7 @@ async function postToCMR(event) {
   const cmrFiles = await getCmrFiles(allFiles, regex);
 
   // post all meta files to CMR
-  const publishRequests = cmrFiles.map((cmrFile) => publish(cmrFile, creds, bucket, stack));
+  const publishRequests = cmrFiles.map((cmrFile) => publishXML2CMR(cmrFile, creds, bucket, stack));
   const results = await Promise.all(publishRequests);
 
   return {
