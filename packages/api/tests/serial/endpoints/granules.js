@@ -805,9 +805,9 @@ test.serial('move a file and update metadata', async (t) => {
       return resolve(data);
     });
   }).then((xml) => {
-    const newUrl = xml.Granule.OnlineAccessURLs.OnlineAccessURL[0].URL;
+    const newUrls = xml.Granule.OnlineAccessURLs.OnlineAccessURL.map((obj) => obj.URL);
     const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
-    t.is(newUrl, newDestination);
+    t.true(newUrls.includes(newDestination));
   });
 });
 
