@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/post-to-cmr",
-  "version": "1.11.0",
+  "version": "1.11.1",
   "description": "Post a given granule to CMR",
   "main": "index.js",
   "directories": {
@@ -37,10 +37,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmrjs": "1.11.0",
-    "@cumulus/common": "1.11.0",
+    "@cumulus/cmrjs": "1.11.1",
+    "@cumulus/common": "1.11.1",
     "@cumulus/cumulus-message-adapter-js": "^1.0.7",
-    "@cumulus/ingest": "1.11.0",
+    "@cumulus/ingest": "1.11.1",
     "@cumulus/test-data": "1.11.0",
     "lodash.clonedeep": "~4.5.0",
     "lodash.get": "^4.4.2",
