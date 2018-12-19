@@ -734,24 +734,11 @@ function generateMoveFileParams(sourceFiles, destinations) {
   });
 }
 
-/**
- * Returns a list of posible metadata file objects based on file.name extension.
- *
- * @param {Array<Object>} files - list of file objects that might be metadata files.
- * @param {string} files.name - file name
- * @param {string} files.bucket - current bucket of file
- * @param {string} files.filepath - current s3 key of file
- * @returns {Array<Object>} any metadata type file object.
- */
-function getCmrFileObjs(files) {
-  return files.filter((file) => file.name.endsWith('.cmr.xml') || file.name.endsWith('.cmr.json'));
-}
 
 
 /**
  * Moves granule files from one S3 location to another.
  *
- * @param {string} granuleId - granuleId
  * @param {Array<Object>} sourceFiles - array of file objects, they are updated with destination
  * location after the files are moved
  * @param {string} sourceFiles.name - file name
@@ -761,13 +748,12 @@ function getCmrFileObjs(files) {
  * @param {string} destinations.regex - regex for matching filepath of file to new destination
  * @param {string} destinations.bucket - aws bucket of the destination
  * @param {string} destinations.filepath - file path/directory on the bucket for the destination
- * @param {string} distEndpoint - distribution endpoint from config
- * @param {boolean} published - indicate if files need to be published to CMR.
- * @returns {Promise<Object>} returns promise from publishing CMR file.
+ * @returns {Promise<Array>} returns array of source files updated with new locations.
  */
-async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoint, published) {
+async function moveGranuleFiles(sourceFiles, destinations) {
   const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
 
+  const processedFiles = [];
   const moveFileRequests = moveFileParams.map((moveFileParam) => {
     const { source, target, file } = moveFileParam;
     const parsed = aws.parseS3Uri(file.filename);
@@ -775,29 +761,24 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
     if (target) {
       log.debug('moveGranuleFiles', source, target);
       return moveGranuleFile(source, target).then(() => {
-        // update the granule file location in sourceFile
-        file.bucket = target.Bucket;
-        file.filepath = target.Key;
-        file.filename = aws.buildS3Uri(file.bucket, file.filepath);
+        processedFiles.push({
+          bucket: target.Bucket,
+          filepath: target.Key,
+          filename: aws.buildS3Uri(target.Bucket, target.Key),
+          name: file.name
+        });
       });
     }
-
-    // else set filepath as well so it won't be null
-    file.filepath = parsed.Key;
+    processedFiles.push({
+      bucket: parsed.Bucket,
+      filepath: parsed.Key,
+      filename: file.filename,
+      name: file.name
+    });
     return Promise.resolve();
   });
-
   await Promise.all(moveFileRequests);
-
-  // Update CMR metadata file with sourceFiles' updated locations.
-  const cmrMetadataFiles = getCmrFileObjs(sourceFiles);
-  if (cmrMetadataFiles.length === 1) {
-    return updateCMRMetadata(granuleId, cmrMetadataFiles[0], sourceFiles, distEndpoint, published);
-  }
-  if (cmrMetadataFiles.length > 1) {
-    log.error('More than one cmr metadata file found.');
-  }
-  return Promise.resolve();
+  return processedFiles;
 }
 
 /**
@@ -847,6 +828,17 @@ function isFileRenamed(filename) {
   return (filename.match(suffixRegex) !== null);
 }
 
+
+/**
+ * Returns the input filename stripping off any versioned timestamp.
+ *
+ * @param {string} filename
+ * @returns {string} - filename with timestamp removed
+ */
+function unversionedFilename(filename) {
+  return isFileRenamed(filename) ? filename.split('.').slice(0, -1).join('.') : filename;
+}
+
 module.exports.selector = selector;
 module.exports.Discover = Discover;
 module.exports.Granule = Granule;
@@ -860,7 +852,7 @@ module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
 module.exports.SftpGranule = SftpGranule;
 module.exports.getRenamedS3File = getRenamedS3File;
 module.exports.copyGranuleFile = copyGranuleFile;
-module.exports.isFileRenamed = isFileRenamed;
+module.exports.unversionedFilename = unversionedFilename;
 module.exports.moveGranuleFile = moveGranuleFile;
 module.exports.moveGranuleFiles = moveGranuleFiles;
 module.exports.renameS3FileWithTimestamp = renameS3FileWithTimestamp;
