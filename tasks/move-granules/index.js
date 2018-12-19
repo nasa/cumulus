@@ -30,6 +30,21 @@ const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
 const xml2js = require('xml2js');
 const log = require('@cumulus/common/log');
 
+
+/**
+ * Helper to turn an s3URI into a fileobject
+ * @param {string} s3URI s3://mybucket/myprefix/myobject.
+ * @returns {Object} file object
+ */
+function fileObjectFromS3URI(s3uri) {
+  const uriParsed = parseS3Uri(s3uri);
+  return {
+    name: path.basename(s3uri),
+    bucket: uriParsed.Bucket,
+    filename: s3uri
+  };
+}
+
 /**
  * Creates an object with all granule files
  * from the input array and the input_granules config
@@ -60,12 +75,7 @@ function getAllGranules(input, granules, regex) {
   input.forEach((f) => {
     if (f && !filesHash[f]) {
       const granuleId = getGranuleId(f, regex);
-      const uriParsed = parseS3Uri(f);
-      granulesHash[granuleId].files.push({
-        filename: f,
-        bucket: uriParsed.Bucket,
-        name: path.basename(f)
-      });
+      granulesHash[granuleId].files.push(fileObjectFromS3URI(f));
     }
   });
 
