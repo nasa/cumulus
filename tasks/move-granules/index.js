@@ -1,5 +1,6 @@
 'use strict';
 
+const assert = require('assert');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const errors = require('@cumulus/common/errors');
 const get = require('lodash.get');
@@ -87,9 +88,11 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
   const allFiles = [];
   Object.keys(granulesObject).forEach((granuleId) => {
     granulesObject[granuleId].files.forEach((file) => {
+      // Could just pull out matching configs with filter.
       collection.files.forEach((fileConfig) => {
         const match = unversionedFilename(file.name).match(fileConfig.regex);
 
+        // Can a file match more than one fileconfig.regex?
         if (match) {
           if (!file.url_path) {
             /* eslint-disable-next-line no-param-reassign */
@@ -100,6 +103,7 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
           const urlPath = urlPathTemplate(file.url_path, {
             file: file,
             granule: granulesObject[granuleId],
+            // Will need to parse xml or JSON cmrfiles? so this metadataobject is correct
             cmrMetadata: cmrFile ? cmrFile.metadataObject : {}
           });
 
@@ -322,6 +326,7 @@ async function moveGranules(event) {
   const distEndpoint = get(config, 'distribution_endpoint');
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const collection = config.collection;
+
   let duplicateHandling = get(
     config, 'duplicateHandling', get(collection, 'duplicateHandling', 'error')
   );
@@ -340,9 +345,15 @@ async function moveGranules(event) {
   let allGranules = getAllGranules(input, inputGranules, regex);
 
   // update granules object with final locations of files as `filename`
+  // aka. modify input allGranules object and return useless updatedResult Object.
   const updatedResult = updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
-  allGranules = updatedResult.granulesObject;
+  // allGranules = updatedResult.granulesObject;
+  // WIP:  TODO:mhs, this will be cleaned up soon.
+  const _JUNK_ = updatedResult.granulesObject;
+  assert.deepStrictEqual(allGranules, _JUNK_, 'Why you doin that baby?');
   const allFiles = updatedResult.allFiles;
+  assert.deepStrictEqual(allFiles, allGranules[Object.keys(allGranules)[0]].files, 'no no');
+
 
   // allows us to disable moving the files
   if (moveStagedFiles) {
