@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- CUMULUS-678
+  `reconcileCMRMetadata` added to `@cumulus/cmrjs` to update metadata record with new file locations.
+  `@cumulus/common/errors` adds two new error types `CMRMetaFileNotFound` and `InvalidArgument`.
+  `@cumulus/common/test-utils` adds new function `randomId` to create a random string with id to help in debugging.
+
+### Changed
+- CUMULUS-678
+  `ingest/granules.moveGranuleFiles` now just moves granule files and returns a list of the updated files. Updating metadata now handled by `@cumulus/cmrjs/reconcileCMRMetadata`.
+  `move-granules.updateGranuleMetadata` refactored and bugs fixed in the case of a file matching multiple collection.files.regexps.
+
+
 ## [v1.11.1] - 2018-12-18
 
 **Please Note**
