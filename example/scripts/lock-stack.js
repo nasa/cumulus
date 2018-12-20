@@ -22,7 +22,7 @@ async function performLock(mutex, deployment, cb) {
   try {
     await mutex.writeLock(deployment, STACK_EXPIRATION_MS);
 
-    return cb(1);
+    return cb(0);
   }
   catch (e) {
     return cb(1);
