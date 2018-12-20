@@ -25,7 +25,9 @@ fi
 cd example
 LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js $DEPLOYMENT true)
 
-while [ "$LOCK_EXISTS_STATUS" = "false" ]; do
+echo "Lock status: $LOCK_EXISTS_STATUS"
+
+while [ "$LOCK_EXISTS_STATUS" -ne "true" ]; do
   echo "Another build is using the ${DEPLOYMENT} stack."
   sleep 30
 

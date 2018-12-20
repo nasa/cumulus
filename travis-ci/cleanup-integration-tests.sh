@@ -15,6 +15,12 @@ if [ -z "$DEPLOYMENT" ]; then
 fi
 export DEPLOYMENT
 
+if [ "$USE_NPM_PACKAGES" = "true" ]; then
+  yarn
+else
+  ./bin/prepare
+fi
+
 cd example || exit 1
 
 # Delete the stack if it's a nightly build
