@@ -115,16 +115,16 @@ jobs:
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-redeployment-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
-    - name: "Cleanup integration tests"
-      stage: cleanup integration tests
-      if: commit_message !~ \[skip-integration-tests\] OR branch = master
-      install:
-        - ./travis-ci/fetch-cache.sh
-        - npm install
-        - ln -s /dev/stdout ./lerna-debug.log
-        - npm run bootstrap-no-build
-        - echo 'BOOTSTRAP FINISHED'
-      script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+    # - name: "Cleanup integration tests"
+    #   stage: cleanup integration tests
+    #   if: commit_message !~ \[skip-integration-tests\] OR branch = master
+    #   install:
+    #     - ./travis-ci/fetch-cache.sh
+    #     - npm install
+    #     - ln -s /dev/stdout ./lerna-debug.log
+    #     - npm run bootstrap-no-build
+    #     - echo 'BOOTSTRAP FINISHED'
+    #   script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "Deploy to NPM"
       stage: deploy
