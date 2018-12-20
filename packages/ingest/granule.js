@@ -835,7 +835,7 @@ function isFileRenamed(filename) {
  * @param {string} filename
  * @returns {string} - filename with timestamp removed
  */
-function unversionedFilename(filename) {
+function unversionFilename(filename) {
   return isFileRenamed(filename) ? filename.split('.').slice(0, -1).join('.') : filename;
 }
 
@@ -852,7 +852,7 @@ module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
 module.exports.SftpGranule = SftpGranule;
 module.exports.getRenamedS3File = getRenamedS3File;
 module.exports.copyGranuleFile = copyGranuleFile;
-module.exports.unversionedFilename = unversionedFilename;
+module.exports.unversionFilename = unversionFilename;
 module.exports.moveGranuleFile = moveGranuleFile;
 module.exports.moveGranuleFiles = moveGranuleFiles;
 module.exports.renameS3FileWithTimestamp = renameS3FileWithTimestamp;

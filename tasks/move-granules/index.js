@@ -7,7 +7,7 @@ const get = require('lodash.get');
 const clonedeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
 const {
-  getRenamedS3File, unversionedFilename,
+  getRenamedS3File, unversionFilename,
   moveGranuleFile, renameS3FileWithTimestamp
 } = require('@cumulus/ingest/granule');
 const {
@@ -96,39 +96,38 @@ function getAllGranules(input, granules, regex) {
 **/
 function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
   const allFiles = [];
+  const fileSpecs = collection.files;
   Object.keys(granulesObject).forEach((granuleId) => {
     granulesObject[granuleId].files.forEach((file) => {
-      // Could just pull out matching configs with filter.
-      collection.files.forEach((fileConfig) => {
-        const match = unversionedFilename(file.name).match(fileConfig.regex);
+      const matches = fileSpecs.filter((cf) => unversionFilename(file.name).match(cf.regex));
 
-        // Can a file match more than one fileconfig.regex?
-        if (match) {
-          if (!file.url_path) {
-            /* eslint-disable-next-line no-param-reassign */
-            file.url_path = fileConfig.url_path || collection.url_path || '';
-          }
-          const cmrFile = cmrFiles.find((f) => f.granuleId === granuleId);
-
-          const urlPath = urlPathTemplate(file.url_path, {
-            file: file,
-            granule: granulesObject[granuleId],
-            // Will need to parse xml or JSON cmrfiles? so this metadataobject is correct
-            cmrMetadata: cmrFile ? cmrFile.metadataObject : {}
-          });
-
-          if (!buckets[fileConfig.bucket]) {
-            throw new Error(`Collection config specifies a bucket key of ${fileConfig.bucket}, but the configured bucket keys are: ${Object.keys(buckets).join(', ')}`);
-          }
-
-          /* eslint-disable no-param-reassign */
-          file.bucket = buckets[fileConfig.bucket];
-          file.filepath = path.join(urlPath, file.name);
-          file.filename = `s3://${path.join(file.bucket.name, file.filepath)}`;
-          /* eslint-enable no-param-reassign */
-
-          allFiles.push(file);
+      matches.forEach((match) => {
+        if (!buckets[match.bucket]) {
+          throw new Error(`Collection config specifies a bucket key of ${match.bucket}, `
+                          + `but the configured bucket keys are: ${Object.keys(buckets).join(', ')}`);
         }
+
+        if (!file.url_path) {
+          /* eslint-disable-next-line no-param-reassign */
+          file.url_path = match.url_path || collection.url_path || '';
+        }
+        const cmrFile = cmrFiles.find((f) => f.granuleId === granuleId);
+
+        const urlPath = urlPathTemplate(file.url_path, {
+          file: file,
+          granule: granulesObject[granuleId],
+          // Will need to parse xml or JSON cmrfiles? so this metadataobject is correct
+          cmrMetadata: cmrFile ? cmrFile.metadataObject : {}
+        });
+
+
+        /* eslint-disable no-param-reassign */
+        file.bucket = buckets[match.bucket];
+        file.filepath = path.join(urlPath, file.name);
+        file.filename = `s3://${path.join(file.bucket.name, file.filepath)}`;
+        /* eslint-enable no-param-reassign */
+
+        allFiles.push(file);
       });
     });
   });
