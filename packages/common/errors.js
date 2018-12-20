@@ -83,6 +83,9 @@ module.exports = {
 
   DuplicateFile: createErrorType('DuplicateFile'),
 
+  // Error thrown when system encounters a conflicting request.
+  InvalidArgument: createErrorType('InvalidArgument'),
+
   // is raised if the PDR file doesn't match the collection
   MismatchPdrCollection: createErrorType('MismatchPdrCollection')
 };
