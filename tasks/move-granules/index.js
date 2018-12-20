@@ -141,7 +141,8 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
         ...{
           bucket,
           filepath,
-          filename: `s3://${path.join(bucket.name, filepath)}`
+          filename: `s3://${path.join(bucket.name, filepath)}`,
+          url_path: URLPathTemplate
         }
       });
     });
