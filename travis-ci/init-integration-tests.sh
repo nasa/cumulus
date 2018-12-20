@@ -18,7 +18,7 @@ export DEPLOYMENT
 if [ "$USE_NPM_PACKAGES" = "true" ]; then
   yarn
 else
-  (cd .. && ./bin/prepare)
+  ./bin/prepare
 fi
 
 # Wait for the stack to be available
