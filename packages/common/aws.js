@@ -351,13 +351,12 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
  * @returns {Promise} A promise that resolves to an Array of the data returned
  *   from the deletion operations
  */
-exports.deleteS3Files = (s3Objs) => {
-  return pMap(
-    s3Objs,
-    (s3Obj) => exports.s3().deleteObject(s3Obj).promise(),
-    { concurrency: S3_RATE_LIMIT }
-  );
-};
+exports.deleteS3Files = (s3Objs) => pMap(
+  s3Objs,
+  (s3Obj) => exports.s3().deleteObject(s3Obj).promise(),
+  { concurrency: S3_RATE_LIMIT }
+);
+
 
 /**
 * Delete a bucket and all of its objects from S3

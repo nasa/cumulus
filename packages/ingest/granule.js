@@ -18,7 +18,6 @@ const {
 } = require('@cumulus/common');
 const errors = require('@cumulus/common/errors');
 const { deprecate } = require('@cumulus/common/util');
-const { updateCMRMetadata } = require('@cumulus/cmrjs');
 
 const { sftpMixin } = require('./sftp');
 const { ftpMixin } = require('./ftp');
@@ -733,8 +732,6 @@ function generateMoveFileParams(sourceFiles, destinations) {
     return { source: null, target: null, file };
   });
 }
-
-
 
 /**
  * Moves granule files from one S3 location to another.

@@ -208,6 +208,7 @@ async function contructOnlineAccessUrls(files, distEndpoint) {
  * Returns True if this object can be determined to be a cmrMetadata object.
  *
  * @param {Object} fileobject
+ * @returns {boolean} true if object is cmr metadata.
  */
 function isCMRFile(fileobject) {
   const cmrFileMatcher = /(\.cmr\.xml$)|(\.cmr.json$)/;
@@ -240,7 +241,7 @@ const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
 
 
-const updateUMMGMetadata = async (granuleId, cmrFile, files, distEndpoint, published) => {
+const updateUMMGMetadata = async () => {
   const NotImplemented = errors.CreateErrorType('NotImplemented');
   throw new NotImplemented('not yet.');
 };
@@ -312,7 +313,7 @@ async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, publis
     return updateEcho10XMLMetadata(granuleId, cmrFile, files, distEndpoint, published);
   }
   if (isUMMGFile(cmrFile.filename)) {
-    return updateUMMGMetadata(granuleId, cmrFile, files, distEndpoint, published);
+    return updateUMMGMetadata();
   }
   throw new errors.CMRMetaFileNotFound('Invalid CMR filetype passed to updateCMRMetadata');
 }
@@ -326,7 +327,6 @@ async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, publis
  * @param {boolean} published - boolean true if the data should be published to the CMR service.
  */
 async function reconcileCMRMetadata(granuleId, updatedFiles, distEndpoint, published) {
-
   const cmrMetadataFiles = getCmrFileObjs(updatedFiles);
   if (cmrMetadataFiles.length === 1) {
     return updateCMRMetadata(granuleId, cmrMetadataFiles[0], updatedFiles, distEndpoint, published);
