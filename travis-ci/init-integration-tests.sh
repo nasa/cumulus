@@ -15,6 +15,12 @@ if [ -z "$DEPLOYMENT" ]; then
 fi
 export DEPLOYMENT
 
+if [ "$USE_NPM_PACKAGES" = "true" ]; then
+  yarn
+else
+  (cd .. && ./bin/prepare)
+fi
+
 # Wait for the stack to be available
 cd example
 LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js $DEPLOYMENT true)
@@ -27,12 +33,6 @@ while [ "$LOCK_EXISTS_STATUS" = "false" ]; do
 done
 
 (
-  if [ "$USE_NPM_PACKAGES" = "true" ]; then
-    yarn
-  else
-    (cd .. && ./bin/prepare)
-  fi
-
   ./node_modules/.bin/kes cf deploy \
     --kes-folder iam \
     --region us-east-1 \
