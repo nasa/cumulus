@@ -48,8 +48,7 @@
     "@cumulus/test-processing": "^1.11.0",
     "aws-sdk": "^2.227.1",
     "child-process-promise": "^2.2.1",
-    "p-retry": "^2.0.0",
-    "yaml-files": "^1.1.0"
+    "p-retry": "^2.0.0"
   },
   "devDependencies": {
     "execa": "^1.0.0",
