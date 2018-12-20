@@ -16,7 +16,7 @@ const {
 const aws = require('@cumulus/common/aws');
 
 const LOCK_TABLE_NAME = 'cumulus-int-test-lock';
-const STACK_EXPIRATION_MS = 30 * 1000; // 2 hours
+const STACK_EXPIRATION_MS = 30 * 60 * 1000; // 2 hours
 
 async function performLock(mutex, deployment, cb) {
   try {
