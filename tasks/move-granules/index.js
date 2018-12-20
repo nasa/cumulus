@@ -1,8 +1,7 @@
 'use strict';
 
-const assert = require('assert');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
-const {DuplicateFile, InvalidArgument} = require('@cumulus/common/errors');
+const { DuplicateFile, InvalidArgument } = require('@cumulus/common/errors');
 const get = require('lodash.get');
 const clonedeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
@@ -36,12 +35,12 @@ const log = require('@cumulus/common/log');
  * @param {string} s3URI s3://mybucket/myprefix/myobject.
  * @returns {Object} file object
  */
-function fileObjectFromS3URI(s3uri) {
-  const uriParsed = parseS3Uri(s3uri);
+function fileObjectFromS3URI(s3URI) {
+  const uriParsed = parseS3Uri(s3URI);
   return {
-    name: path.basename(s3uri),
+    name: path.basename(s3URI),
     bucket: uriParsed.Bucket,
-    filename: s3uri
+    filename: s3URI
   };
 }
 
@@ -257,7 +256,6 @@ async function moveFilesForAllGranules(granulesObject, sourceBucket, duplicateHa
 *
 * @param {string} cmrFiles - array of objects that include CMR xmls uris and granuleIds
 * @param {Object} granulesObject - an object of the granules where the key is the granuleId
-* @param {Array} allFiles - array of all files in all granules
 * @param {string} distEndpoint - the api distribution endpoint
 * @returns {Promise} promise resolves when all files have been updated
 **/
@@ -386,7 +384,7 @@ async function moveGranules(event) {
   // create granules object for cumulus indexer
   const allGranules = addInputFilesToGranules(input, inputGranules, regex);
 
-  let targetedGranules = updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
+  const targetedGranules = updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
 
   // allows us to disable moving the files
   let movedGranules;
