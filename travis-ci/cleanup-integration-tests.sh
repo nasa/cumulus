@@ -15,6 +15,7 @@ if [ -z "$DEPLOYMENT" ]; then
 fi
 export DEPLOYMENT
 
+# This should be able to go away once latest is released
 if [ "$USE_NPM_PACKAGES" = "true" ]; then
   yarn
 else
@@ -45,5 +46,3 @@ if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
 
   echo Delete app deployment
 fi
-
-node ./scripts/lock-stack.js false $DEPLOYMENT
