@@ -125,7 +125,7 @@ default:
   cmr:
     username: '{{CMR_USERNAME}}'
     provider: CUMULUS
-    clientId: CUMULUS
+    clientId: 'cumulus-core-{{stackName}}'
     password: '{{CMR_PASSWORD}}'
 
   stepFunctions: !!files [

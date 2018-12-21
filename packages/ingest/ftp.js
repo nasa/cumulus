@@ -6,7 +6,7 @@ const { PassThrough } = require('stream');
 const { log, aws: { buildS3Uri, promiseS3Upload } } = require('@cumulus/common');
 const omit = require('lodash.omit');
 
-const Crypto = require('./crypto').DefaultProvider;
+const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const recursion = require('./recursion');
 
 module.exports.ftpMixin = (superclass) => class extends superclass {
@@ -32,12 +32,12 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
   async decrypt() {
     if (!this.decrypted && this.provider.encrypted) {
       if (this.password) {
-        this.ftpClientOptions.pass = await Crypto.decrypt(this.password);
+        this.ftpClientOptions.pass = await DefaultProvider.decrypt(this.password);
         this.decrypted = true;
       }
 
       if (this.username) {
-        this.ftpClientOptions.user = await Crypto.decrypt(this.username);
+        this.ftpClientOptions.user = await DefaultProvider.decrypt(this.username);
         this.decrypted = true;
       }
     }
