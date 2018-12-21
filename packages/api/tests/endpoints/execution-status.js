@@ -9,7 +9,8 @@ const assertions = require('../../lib/assertions');
 const executionStatusEndpoint = rewire('../../endpoints/execution-status');
 const {
   createFakeJwtAuthToken,
-  testEndpoint
+  testEndpoint,
+  fakeExecutionFactoryV2
 } = require('../../lib/testUtils');
 
 const executionStatusCommon = {
@@ -30,6 +31,9 @@ const cumulusMetaOutput = {
     system_bucket: 'test-sandbox-internal'
   }
 };
+
+const expiredExecutionArn = 'fakeExpiredExecutionArn';
+const fakeExpiredExecution = fakeExecutionFactoryV2({ arn: expiredExecutionArn });
 
 const replaceObject = (lambdaEvent = true) => ({
   replace: {
@@ -122,6 +126,8 @@ const stepFunctionMock = {
     })
 };
 
+const executionExistsMock = (arn) => (arn !== expiredExecutionArn);
+
 const s3Mock = (_, key) =>
   new Promise((resolve) => {
     const fullMessage = key === 'events/lambdaEventUUID' ? lambdaCompleteOutput : fullMessageOutput;
@@ -131,17 +137,20 @@ const s3Mock = (_, key) =>
     resolve(s3Result);
   });
 
+executionStatusEndpoint.__set__('executionExists', executionExistsMock);
 executionStatusEndpoint.__set__('StepFunction', stepFunctionMock);
 executionStatusEndpoint.__set__('getS3Object', s3Mock);
 
 let authHeaders;
 let accessTokenModel;
 let userModel;
+let executionModel;
 
 test.before(async () => {
   process.env.TOKEN_SECRET = randomString();
   process.env.AccessTokensTable = randomString();
   process.env.UsersTable = randomString();
+  process.env.ExecutionsTable = randomString();
 
   userModel = new models.User();
   await userModel.createTable();
@@ -153,11 +162,16 @@ test.before(async () => {
   authHeaders = {
     Authorization: `Bearer ${jwtAuthToken}`
   };
+
+  executionModel = new models.Execution();
+  await executionModel.createTable();
+  await executionModel.create(fakeExpiredExecution);
 });
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await userModel.deleteTable();
+  await executionModel.deleteTable();
 });
 
 test('CUMULUS-911 GET without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -266,5 +280,24 @@ test('when execution is still running, still returns status and fetches SF execu
       stateMachine: {}
     };
     t.deepEqual(expectedResponse, executionStatus);
+  });
+});
+
+test('when execution is no longer in step function API, returns status from database', (t) => {
+  const event = {
+    pathParameters: {
+      arn: expiredExecutionArn
+    },
+    headers: authHeaders
+  };
+
+  return testEndpoint(executionStatusEndpoint, event, (response) => {
+    const executionStatus = JSON.parse(response.body);
+    t.falsy(executionStatus.executionHistory);
+    t.falsy(executionStatus.stateMachine);
+    t.is(executionStatus.execution.executionArn, fakeExpiredExecution.arn);
+    t.is(executionStatus.execution.name, fakeExpiredExecution.name);
+    t.is(executionStatus.execution.input, JSON.stringify(fakeExpiredExecution.originalPayload));
+    t.is(executionStatus.execution.output, JSON.stringify(fakeExpiredExecution.finalPayload));
   });
 });
