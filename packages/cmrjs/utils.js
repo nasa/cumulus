@@ -2,32 +2,7 @@ const got = require('got');
 const _get = require('lodash.get');
 const publicIp = require('public-ip');
 const xml2js = require('xml2js');
-
-
-/**
- * Overrides the Error class
- *
- * @param {string} message - the error message
- */
-function E(message) {
-  Error.captureStackTrace(this, this.constructor);
-  this.message = message;
-}
-
-/**
- * Creates a new error type with the given name and parent class. Sets up
- * boilerplate necessary to successfully subclass Error and preserve stack trace
- *
- * @param {string} name - The name of the error type
- * @param {Error} ParentType - The error that serves as the parent
- * @returns {Error} The new type
- */
-const createErrorType = (name, ParentType = Error) => {
-  E.prototype = new ParentType();
-  E.prototype.name = name;
-  E.prototype.constructor = E;
-  return E;
-};
+const { createErrorType } = require('@cumulus/common/errors');
 
 const ValidationError = createErrorType('ValidationError');
 

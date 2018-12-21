@@ -4,8 +4,9 @@
  */
 
 const forge = require('node-forge');
-const { s3 } = require('@cumulus/common/aws');
-const { KMS } = require('./aws');
+
+const { s3 } = require('./aws');
+const { KMS } = require('./kms');
 
 /**
  * Provides encryption and decryption methods using a keypair stored in S3
@@ -62,7 +63,7 @@ class S3KeyPairProvider {
 
 module.exports = {
   S3KeyPairProvider: S3KeyPairProvider,
-  KmsProvider: KMS,
+  KMSProvider: KMS,
   // Use S3 by default. This will be the case until KMS is available in operations
   DefaultProvider: S3KeyPairProvider
 };

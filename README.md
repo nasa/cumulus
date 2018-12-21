@@ -17,7 +17,7 @@ For more information about this project of more about NASA's Earth Observing Sys
 
 ## Installation
 
-This is for installation for Cumulus development. See the [Cumulus deployment instructions](https://nasa.github.io/cumulus/docs/deployment/deployment-readme) for instructions on deploying the released Cumulus packages.
+This is for installation for Cumulus development.  See the [Cumulus deployment instructions](https://nasa.github.io/cumulus/docs/deployment/deployment-readme) for instructions on deploying the released Cumulus packages.
 
 ### Prerequisites
 

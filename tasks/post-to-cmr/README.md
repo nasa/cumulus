@@ -4,7 +4,8 @@
 
 This lambda function is responsible for posting the CMR metadata of a given granule.
 
-It uses information in the granule record to retrieve the xml metadata file from S3 and post it to CMR.
+It will use the information contained in a metadata file on S3 and post that information to [CMR (Common Metadata Repository)](https://cmr.earthdata.nasa.gov/search/).
+The S3 metadata file can be either `ECHO10 xml` metadata with extension `.cmr.xml` or `UMM-G JSON` with extension `.cmr.json`.
 
 ## What is Cumulus?
 
