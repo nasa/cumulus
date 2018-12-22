@@ -104,8 +104,8 @@ async function get(event, cb) {
       status: response.status === 'completed' ? 'SUCCEEDED' : response.status.toUpperCase(),
       startDate: new Date(response.createdAt),
       stopDate: new Date(response.createdAt + response.duration * 1000),
-      input: JSON.stringify(response.originalPayload),
-      output: JSON.stringify(response.finalPayload)
+      ...{ input: JSON.stringify(response.originalPayload) },
+      ...{ output: JSON.stringify(response.finalPayload) }
     };
     cb(null, { warning, execution });
   })
