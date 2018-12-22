@@ -807,7 +807,7 @@ exports.getExecutionArn = (stateMachineArn, executionName) => {
 
 exports.getStateMachineArn = (executionArn) => {
   if (executionArn) {
-    return executionArn.replace('execution', 'stateMachine').split(':').slice(-1).join(':');
+    return executionArn.replace('execution', 'stateMachine').split(':').slice(0, -1).join(':');
   }
   return null;
 };
