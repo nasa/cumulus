@@ -132,29 +132,29 @@ The `iam` configuration creates 7 [roles](http://docs.aws.amazon.com/IAM/latest/
 
 **Sample new deployment added to config.yml**:
 
-Descriptions of the fields can be found in [IAM Configuration Descriptions](deployment/config_descriptions.md).
+Descriptions of the fields can be found in [IAM Configuration Descriptions](deployment/config_descriptions.md#iam-configuration).
 
 ```
 <iam-deployment-name>:    # e.g. dev (Note: Omit brackets, i.e. NOT <dev>)
-    prefix: <stack-prefix>  # prefixes CloudFormation-created iam resources and permissions
-    stackName: <stack-name> # name of this iam stack in CloudFormation (e.g. <prefix>-iams)
-    system_bucket: '{{buckets.internal.name}}' # Or can specify a different bucket for the system_bucket
-    buckets:
+  prefix: <stack-prefix>  # prefixes CloudFormation-created iam resources and permissions
+  stackName: <stack-name> # name of this iam stack in CloudFormation (e.g. <prefix>-iams)
+
+  buckets:
     internal: # bucket key
-        name: <internal bucket name>
-        type: internal
+      name: <prefix>-internal  # internal bucket name
+      type: internal
 
     private: # bucket key
-        name: <private bucket name>
-        type: private
+      name: <prefix>-private   # private bucket name
+      type: private
 
     protected: # bucket key
-        name: <protected bucket name>
-        type: protected
+      name: <prefix>-protected # protected bucket name
+      type: protected
 
     public: # bucket key
-        name: <public bucket name>
-        type: public
+      name: <prefix>-public    # public bucket name
+      type: public
 ```
 
 **Deploy `iam` stack**[^1]
@@ -193,7 +193,7 @@ If you're re-deploying based on an existing configuration you can skip this conf
 
 ### Sample config.yml
 
-Descriptions of the fields can be found in [IAM Configuration Descriptions](deployment/config_descriptions.md).
+Descriptions of the fields can be found in [App Configuration Descriptions](deployment/config_descriptions.md#app-configuration).
 
 ```
 <cumulus-deployment-name>:
@@ -213,7 +213,7 @@ Descriptions of the fields can be found in [IAM Configuration Descriptions](depl
     availabilityZone: <subnet-id-zone>
     amiid: <some-ami-id>
 
-  system_bucket: <prefix-internal>
+  system_bucket: '{{buckets.internal.name}}' # Or can specify a different bucket for the system_bucket
 
   buckets:
     internal:
@@ -249,7 +249,7 @@ The Cumulus stack is expected to authenticate with [Earthdata Login](https://urs
 
 _If you're adding a new deployment to an existing configuration repository or re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus Stack](#deploy), as these values should already be configured._
 
-Copy `app/.env.sample to app/.env` and add CMR/earthdata client [credentials](#credentials):
+Copy `app/.env.sample` to `app/.env` and add CMR/earthdata client [credentials](#credentials):
 
     CMR_PASSWORD=cmrpassword
     EARTHDATA_CLIENT_ID=clientid
@@ -412,5 +412,3 @@ Cumulus uses a global versioning approach, meaning version numbers are consisten
 [^2]: The API root can be found a number of ways. The easiest is to note it in the output of the app deployment step. But you can also find it from the `AWS console -> Amazon API Gateway -> APIs -> <prefix>-cumulus-backend -> Dashboard`, and reading the url at the top "invoke this API"
 
 [^3]: To add another redirect URIs to your application. On EarthData home page, select "My Applications" Scroll down to "Application Administration" and use the edit icon for your application.  Then Manage -> Redirect URIs.
-[^4]: This value is used by kes only to identify the configuration set to use and should not appear in any AWS object
-[^5]: For more on the AWS objects this impacts, you can look through iam/cloudformation.template.yml
