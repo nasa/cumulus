@@ -6,7 +6,9 @@ hide_title: true
 
 # Obtaining Cumulus Packages
 
-##### Option 1: Get packages from NPM
+## Option 1: Get packages from NPM
+
+Use this option to get released versions of Cumulus packages. If you want to use an unreleased version or modify the packages, use option 2.
 
 Packages are installed with npm. A list of Cumulus packages with descriptions and version information can be found [here](https://www.npmjs.com/search?q=%40cumulus).
 
@@ -23,7 +25,9 @@ To use the specific version of the package installed during deployment, point th
     SyncGranule:
       source: 'node_modules/@cumulus/sync-granule/dist/'
 
-##### Option 2: Make local copy of the `Cumulus` Repo and prepare it.
+## Option 2: Make local copy of the `Cumulus` Repo and prepare it.
+
+Use this option only if you want to use an unreleased version of a package or you want to modify a package.
 
 Clone repository
 
@@ -51,4 +55,4 @@ To run the Cumulus deployment with the local code instead of the npm package, us
 
     $ npm link ../cumulus/packages/deployment/ @cumulus/deployment
 
-Note: If you get errors with `npm link`, try deleting the `node_modules` folder the package you are trying to link to in the Cumulus repository.
+Note: If you get errors with `npm link`, try deleting the `node_modules` folder for the package you are trying to link to in the Cumulus repository.
