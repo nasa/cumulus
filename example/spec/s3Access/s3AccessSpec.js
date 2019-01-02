@@ -49,7 +49,10 @@ function createSnsMessage() {
   return { Records };
 }
 
-describe('The S3 bucket', () => {
+// Removing these tests for now. With NGAP permissions boundaries, we do not have
+// permission to update a bucket policy
+// Will be resolved with NGAP-3647
+xdescribe('The S3 bucket', () => {
   beforeAll(async () => {
     await s3().createBucket({ Bucket: testBucket }).promise();
 
