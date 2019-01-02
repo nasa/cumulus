@@ -370,14 +370,11 @@ To checkout and install a specific version of the dashboard:
 
 ### Dashboard configuration
 
-Configure dashboard:
-
-Update config in `cumulus-dashboard/app/scripts/config/config.js`:
-
-replace the default apiRoot `https://wjdkfyb6t6.execute-api.us-east-1.amazonaws.com/dev/` with your app's apiroot.[^2]
+To configure your dashboard for deployment, update `cumulus-dashboard/app/scripts/config/config.js` by replacing the default apiRoot `https://wjdkfyb6t6.execute-api.us-east-1.amazonaws.com/dev/` with your app's apiRoot:[^2]
 
     apiRoot: process.env.APIROOT || 'https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/'
 
+### Building the dashboard
 
 **Note**: These environment variables are available during the build: `APIROOT`, `DAAC_NAME`, `STAGE`, `HIDE_PDR`. Any of these can be set on the command line to override the values contained in `config.js` when running the build below.
 
@@ -428,6 +425,6 @@ Cumulus uses a global versioning approach, meaning version numbers are consisten
 
 [^1]: The iam  actions require more permissions than a typical AWS user will have and should be run by an administrator.
 
-[^2]: The API root can be found a number of ways. The easiest is to note it in the output of the app deployment step. But you can also find it from the `AWS console -> Amazon API Gateway -> APIs -> <prefix>-cumulus-backend -> Dashboard`, and reading the url at the top "invoke this API"
+[^2]: The API root can be found a number of ways. The easiest is to note it in the output of the app deployment step. But you can also find it from the `AWS console -> Amazon API Gateway -> APIs -> <prefix>-cumulus-backend -> Dashboard`, and reading the URL at the top "invoke this API"
 
 [^3]: To add another redirect URIs to your application. On EarthData home page, select "My Applications" Scroll down to "Application Administration" and use the edit icon for your application.  Then Manage -> Redirect URIs.
