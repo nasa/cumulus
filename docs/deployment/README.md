@@ -353,6 +353,21 @@ To install the dashboard clone the Cumulus-dashboard repository into the root de
     $ nvm use
     $ npm install
 
+#### Dashboard versioning
+
+By default, the `master` branch will be used for dashboard deployments. The `master` branch of the dashboard repo contains the most recent stable release of the dashboard.
+
+If you want to test unreleased changes to the dashboard, use the `develop` branch.
+
+Each release/version of the dashboard will have a tag in the dashboard repo. Release/version numbers will use semantic versioning (major/minor/patch).
+
+To checkout and install a specific version of the dashboard:
+
+    $ git fetch --tags
+    $ git checkout <version-number> # e.g. v1.2.0
+    $ nvm use
+    $ npm install
+
 ### Dashboard configuration
 
 Configure dashboard:
@@ -364,7 +379,7 @@ replace the default apiRoot `https://wjdkfyb6t6.execute-api.us-east-1.amazonaws.
     apiRoot: process.env.APIROOT || 'https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/'
 
 
-**Note**  environment variables are available during the build: `APIROOT`, `DAAC_NAME`, `STAGE`, `HIDE_PDR`, any of these can be set on the command line to override the values contained in `config.js` when running the build below.
+**Note**: These environment variables are available during the build: `APIROOT`, `DAAC_NAME`, `STAGE`, `HIDE_PDR`. Any of these can be set on the command line to override the values contained in `config.js` when running the build below.
 
 
 Build the dashboard from the dashboard repository root directory, `cumulus-dashboard`:
