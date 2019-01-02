@@ -12,13 +12,13 @@ The name (e.g. dev) of the the 'deployment' - this key tells kes which configura
 
 ### prefix:
 
-This value will prefix CloudFormation-created IAM resources and permissions.
-
-**The cumulus stack name must start with `<prefix>`** [^2]
+This value will prefix CloudFormation-created IAM resources and permissions. The stackName must start with `<prefix>`.
 
 ### stackName:
 
 The name of this iam stack in CloudFormation (e.g. <prefix>-iam).
+
+**The cumulus stack name must start with `<prefix>`** [^2]
 
 ### buckets:
 
@@ -45,7 +45,6 @@ A representation of the stack name that has dashes removed. This will be used fo
 ### vpc
 
 Configure your virtual private cloud.  You can find `<vpc-id>` and `<subnet-id>` values on the [VPC Dashboard](https://console.aws.amazon.com/vpc/home?region=us-east-1#). `vpcId` from [Your VPCs](https://console.aws.amazon.com/vpc/home?region=us-east-1#vpcs:), and `subnets` [here](https://console.aws.amazon.com/vpc/home?region=us-east-1#subnets:). When you choose a subnet, be sure to also note its availability zone, to configure `ecs`.
-
 
 ### ecs
 

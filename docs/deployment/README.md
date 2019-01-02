@@ -135,25 +135,26 @@ The `iam` configuration creates 7 [roles](http://docs.aws.amazon.com/IAM/latest/
 Descriptions of the fields can be found in [IAM Configuration Descriptions](deployment/config_descriptions.md#iam-configuration).
 
 ```
-<iam-deployment-name>:    # e.g. dev (Note: Omit brackets, i.e. NOT <dev>)
-  prefix: <stack-prefix>  # prefixes CloudFormation-created iam resources and permissions
-  stackName: <stack-name> # name of this iam stack in CloudFormation (e.g. <prefix>-iams)
+dev:                                # deployment name
+  prefix: dev-cumulus               # prefixes CloudFormation-created iam resources and permissions
+  stackName: dev-cumulus-iam        # name of this iam stack in CloudFormation (e.g. <prefix>-iams)
+  useNgapPermissionBoundary: true   # for NASA NGAP accounts
 
   buckets:
-    internal: # bucket key
-      name: <prefix>-internal  # internal bucket name
+    internal:
+      name: dev-internal            # internal bucket name
       type: internal
-
-    private: # bucket key
-      name: <prefix>-private   # private bucket name
+    private:
+      name: dev-private             # private bucket name
       type: private
-
-    protected: # bucket key
-      name: <prefix>-protected # protected bucket name
+    protected:
+      name: dev-protected           # protected bucket name
       type: protected
-
-    public: # bucket key
-      name: <prefix>-public    # public bucket name
+    public:
+      name: dev-cumulus-public      # public bucket name
+      type: public
+    otherpublic:                    # Can have more than one of each type of bucket
+      name: dev-default
       type: public
 ```
 
@@ -196,9 +197,9 @@ If you're re-deploying based on an existing configuration you can skip this conf
 Descriptions of the fields can be found in [App Configuration Descriptions](deployment/config_descriptions.md#app-configuration).
 
 ```
-<cumulus-deployment-name>:
-  stackName: <prefix>-cumulus
-  stackNameNoDash: <Prefix>Cumulus
+dev:                                    # deployment name
+  stackName: dev-cumulus
+  stackNameNoDash: DevCumulus
 
   apiStage: dev
 
@@ -215,9 +216,9 @@ Descriptions of the fields can be found in [App Configuration Descriptions](depl
 
   system_bucket: '{{buckets.internal.name}}' # Or can specify a different bucket for the system_bucket
 
-  buckets:
+  buckets:                              # Should be the same as in IAMs
     internal:
-        name: <prefix>-internal
+        name: dev-internal
         type: internal
 
   iams:
@@ -254,6 +255,9 @@ Copy `app/.env.sample` to `app/.env` and add CMR/earthdata client [credentials](
     CMR_PASSWORD=cmrpassword
     EARTHDATA_CLIENT_ID=clientid
     EARTHDATA_CLIENT_PASSWORD=clientpassword
+    TOKEN_SECRET=tokensecret
+
+The `TOKEN_SECRET` is a string value used for token refreshes when using the Cumulus dashboard. This can be any string, preferably a 256 character random string for security purposes.
 
 Note that the `.env.sample` file may be hidden, so if you do not see it, show hidden files.
 

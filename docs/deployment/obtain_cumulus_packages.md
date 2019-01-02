@@ -25,7 +25,7 @@ To use the specific version of the package installed during deployment, point th
     SyncGranule:
       source: 'node_modules/@cumulus/sync-granule/dist/'
 
-## Option 2: Make local copy of the `Cumulus` Repo and prepare it.
+## Option 2: Make local copy of the `Cumulus` repository and prepare it.
 
 Use this option only if you want to use an unreleased version of a package or you want to modify a package.
 
