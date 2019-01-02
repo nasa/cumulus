@@ -10,7 +10,7 @@ const {
   moveGranuleFile, renameS3FileWithTimestamp
 } = require('@cumulus/ingest/granule');
 const {
-  getCmrFiles, getGranuleId
+  getCmrXMLFiles, getGranuleId
 } = require('@cumulus/cmrjs');
 const urljoin = require('url-join');
 const path = require('path');
@@ -380,18 +380,18 @@ async function moveGranules(event) {
 
   // Get list of cmr file objects from the input Array of S3 filenames (in
   // staging location after processing)
-  const cmrFiles = await getCmrFiles(input, regex);
+  const cmrFiles = await getCmrXMLFiles(input, regex);
 
   // create granules object for cumulus indexer
   const allGranules = addInputFilesToGranules(input, inputGranules, regex);
 
-  const targetedGranules = updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
+  const granulesTargetedForMove = updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
 
   // allows us to disable moving the files
   let movedGranules;
   if (moveStagedFiles) {
     // move files from staging location to final location
-    movedGranules = await moveFilesForAllGranules(targetedGranules, bucket, duplicateHandling);
+    movedGranules = await moveFilesForAllGranules(granulesTargetedForMove, bucket, duplicateHandling);
     // update cmr.xml files with correct online access urls
     await updateCmrFileAccessURLs(cmrFiles, movedGranules, distEndpoint);
   }

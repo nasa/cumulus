@@ -132,7 +132,7 @@ async function parseXmlString(xml) {
  * @returns {Promise<Array>} promise resolves to an array of objects
  * that includes CMR xmls uris and granuleIds
  */
-async function getCmrFiles(input, granuleIdExtraction) {
+async function getCmrXMLFiles(input, granuleIdExtraction) {
   const files = [];
   const expectedFormat = /.*\.cmr\.xml$/;
 
@@ -332,7 +332,7 @@ async function reconcileCMRMetadata(granuleId, updatedFiles, distEndpoint, publi
 
 module.exports = {
   getGranuleId,
-  getCmrFiles,
+  getCmrXMLFiles,
   isCMRFile,
   publishXML2CMR,
   reconcileCMRMetadata,
