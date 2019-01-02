@@ -342,7 +342,6 @@ async function reconcileCMRMetadata(granuleId, updatedFiles, distEndpoint, publi
 
 
 module.exports = {
-  constructOnlineAccessUrls,
   getGranuleId,
   getCmrXMLFiles,
   isCMRFile,

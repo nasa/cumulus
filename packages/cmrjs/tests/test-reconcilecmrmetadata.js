@@ -91,7 +91,3 @@ test('reconcileCMRMetadata calls updateUMMGMetadata if json metadata present', a
   t.true(fakeCall.calledOnceWith());
   restore();
 });
-
-test.skip('constructOnlineAccesUrls ', (t) => {
-
-});
