@@ -166,6 +166,21 @@ async function postS3Object(destination, options) {
   }
 }
 
+
+/**
+ * retrieve the stack's bucket configuration from s3 and return the bucket configuration object.
+ * @param {string} bucket - system bucket name.
+ * @param {string} stackName - stack name.
+ * @returns {object} - stack's bucket configuration.
+ */
+async function bucketConfig(bucket, stackName) {
+  const bucketsString = await aws.s3().getObject({
+    Bucket: bucket,
+    Key: `${stackName}/workflows/buckets.json`
+  }).promise();
+  return JSON.parse(bucketsString.Body);
+}
+
 /**
  * construct a list of online access urls
  *
@@ -174,17 +189,13 @@ async function postS3Object(destination, options) {
  * @returns {Array<{URL: string, URLDescription: string}>}
  *   returns the list of online access url objects
  */
-async function contructOnlineAccessUrls(files, distEndpoint) {
+async function constructOnlineAccessUrls(files, distEndpoint) {
   const urls = [];
 
-  const bucketsString = await aws.s3().getObject({
-    Bucket: process.env.bucket,
-    Key: `${process.env.stackName}/workflows/buckets.json`
-  }).promise();
-  const bucketsObject = JSON.parse(bucketsString.Body);
-
+  const bucketsObject = bucketConfig(process.env.bucket, process.env.stackName);
   // URLs are for public and protected files
   const bucketKeys = Object.keys(bucketsObject);
+
   files.forEach((file) => {
     const urlObj = {};
     const bucketkey = bucketKeys.find((bucketKey) => file.bucket === bucketsObject[bucketKey].name);
@@ -249,7 +260,7 @@ const updateUMMGMetadata = async () => {
  * @returns {Promise} returns promise to upload updated cmr file
  */
 const updateEcho10XMLMetadata = async (granuleId, cmrFile, files, distEndpoint, published) => {
-  const urls = await contructOnlineAccessUrls(files, distEndpoint);
+  const urls = await constructOnlineAccessUrls(files, distEndpoint);
 
   // add/replace the OnlineAccessUrls
   const metadata = await getXMLMetadataAsString(cmrFile.filename);
@@ -331,6 +342,7 @@ async function reconcileCMRMetadata(granuleId, updatedFiles, distEndpoint, publi
 
 
 module.exports = {
+  constructOnlineAccessUrls,
   getGranuleId,
   getCmrXMLFiles,
   isCMRFile,
