@@ -6,6 +6,8 @@ const { randomId } = require('@cumulus/common/test-utils');
 
 const cmrUtils = rewire('../cmr-utils');
 
+const constructOnlineAccessUrls = cmrUtils.__get__('constructOnlineAccessUrls');
+
 test.beforeEach((t) => {
   t.context.bucketConfig = {
     private: { name: randomId('private'), type: 'private' },
@@ -35,7 +37,7 @@ test('returns correct url for protected data', async (t) => {
     }
   ];
 
-  const actual = await cmrUtils.constructOnlineAccessUrls(testFiles, endpoint);
+  const actual = await constructOnlineAccessUrls(testFiles, endpoint);
 
   t.deepEqual(actual, expected);
 });
@@ -55,7 +57,7 @@ test('Returns correct url for public data.', async (t) => {
     }
   ];
 
-  const actual = await cmrUtils.constructOnlineAccessUrls(testFiles, endpoint);
+  const actual = await constructOnlineAccessUrls(testFiles, endpoint);
 
   t.deepEqual(actual, expected);
 });
@@ -71,7 +73,7 @@ test('Returns nothing for private data.', async (t) => {
   ];
   const expected = [];
 
-  const actual = await cmrUtils.constructOnlineAccessUrls(testFiles, endpoint);
+  const actual = await constructOnlineAccessUrls(testFiles, endpoint);
 
   t.deepEqual(actual, expected);
 });
@@ -104,7 +106,7 @@ test('Works for a list of files.', async (t) => {
     }
   ];
 
-  const actual = await cmrUtils.constructOnlineAccessUrls(testFiles, endpoint);
+  const actual = await constructOnlineAccessUrls(testFiles, endpoint);
 
   t.deepEqual(actual, expected);
 });
