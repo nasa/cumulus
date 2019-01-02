@@ -4,6 +4,7 @@ const rewire = require('rewire');
 
 const cmrUtils = rewire('../cmr-utils');
 
+const log = require('@cumulus/common/log');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const {
@@ -120,4 +121,18 @@ test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', asy
 
   sinon.restore();
   restore();
+});
+
+test.only('reconcileCMRMetadata logs and error if multiple metadatafiles present', async (t) => {
+  const updatedFiles = [{ filename: 'anotherfile.cmr.json' }, { filename: 'cmrmeta.cmr.xml' }];
+  const granId = randomId('granuleID');
+  const distEndpoint = 'https://example.com/endpoint';
+  const pub = true;
+  const logmock = sinon.spy(log, 'error');
+
+  const results = await cmrUtils.reconcileCMRMetadata(granId, updatedFiles, distEndpoint, pub);
+
+  t.falsy(results);
+  t.true(logmock.calledOnceWith('More than one cmr metadata file found.'));
+  logmock.restore();
 });
