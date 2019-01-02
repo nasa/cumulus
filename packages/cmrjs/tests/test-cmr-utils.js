@@ -39,7 +39,6 @@ test('isCMRFile returns falsy if fileobject does not valid xml name', (t) => {
   t.falsy(isCMRFile(fileObj));
 });
 
-
 test('isCMRFile returns truthy if fileobject has valid json name', (t) => {
   const fileObj = {
     name: 'validfile.cmr.json'
@@ -53,7 +52,6 @@ test('isCMRFile returns falsy if fileobject does not valid json name', (t) => {
   };
   t.falsy(isCMRFile(fileObj));
 });
-
 
 test('isCMRFile returns truthy if fileobject has valid xml filenamename', (t) => {
   const fileObj = {
@@ -69,7 +67,6 @@ test('isCMRFile returns falsy if fileobject does not valid xml filenamename', (t
   t.falsy(isCMRFile(fileObj));
 });
 
-
 test('isCMRFile returns truthy if fileobject has valid json filenamename', (t) => {
   const fileObj = {
     filename: 'validfile.cmr.json'
@@ -84,11 +81,11 @@ test('isCMRFile returns falsy if fileobject does not valid json filenamename', (
   t.falsy(isCMRFile(fileObj));
 });
 
-
 test('isCMRFile returns falsy if fileobject is invalid', (t) => {
   const fileObj = { bad: 'object' };
   t.falsy(isCMRFile(fileObj));
 });
+
 
 test('reconcileCMRMetadata does not updateCMRMetadata if no metadatafile present', async (t) => {
   const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr' }];
@@ -106,7 +103,6 @@ test('reconcileCMRMetadata does not updateCMRMetadata if no metadatafile present
   sinon.restore();
   restore();
 });
-
 
 test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', async (t) => {
   const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr.xml' }];
