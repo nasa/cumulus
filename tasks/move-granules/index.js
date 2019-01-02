@@ -385,13 +385,13 @@ async function moveGranules(event) {
   // create granules object for cumulus indexer
   const allGranules = addInputFilesToGranules(input, inputGranules, regex);
 
-  const granulesTargetedForMove = updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
+  const granulesToMove = updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
 
   // allows us to disable moving the files
   let movedGranules;
   if (moveStagedFiles) {
     // move files from staging location to final location
-    movedGranules = await moveFilesForAllGranules(granulesTargetedForMove, bucket, duplicateHandling);
+    movedGranules = await moveFilesForAllGranules(granulesToMove, bucket, duplicateHandling);
     // update cmr.xml files with correct online access urls
     await updateCmrFileAccessURLs(cmrFiles, movedGranules, distEndpoint);
   }
