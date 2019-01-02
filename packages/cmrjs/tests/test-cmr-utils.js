@@ -1,9 +1,13 @@
 const test = require('ava');
+const rewire = require('rewire');
 
 const {
-  getGranuleId,
-  isCMRFile
+  getGranuleId
 } = require('../cmr-utils');
+
+const cmrUtil = rewire('../cmr-utils');
+const isCMRFile = cmrUtil.__get__('isCMRFile');
+
 
 test('getGranuleId is successful', (t) => {
   const uri = 'test.txt';
