@@ -10,14 +10,10 @@ const {
   errors,
   log
 } = require('@cumulus/common');
-
-
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
 const { CMR } = require('./cmr');
-
 const { getUrl, xmlParseOptions } = require('./utils');
-
 
 /**
  * function for posting cmr xml files from S3 to CMR
@@ -171,7 +167,7 @@ async function postS3Object(destination, options) {
  * retrieve the stack's bucket configuration from s3 and return the bucket configuration object.
  * @param {string} bucket - system bucket name.
  * @param {string} stackName - stack name.
- * @returns {object} - stack's bucket configuration.
+ * @returns {Object} - stack's bucket configuration.
  */
 async function bucketConfig(bucket, stackName) {
   const bucketsString = await aws.s3().getObject({
@@ -344,7 +340,6 @@ async function reconcileCMRMetadata(granuleId, updatedFiles, distEndpoint, publi
 module.exports = {
   getGranuleId,
   getCmrXMLFiles,
-  isCMRFile,
   publishXML2CMR,
   reconcileCMRMetadata,
   updateCMRMetadata
