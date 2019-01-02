@@ -204,24 +204,19 @@ async function contructOnlineAccessUrls(files, distEndpoint) {
   return urls;
 }
 
+
+const isECHO10File = (filename) => filename.endsWith('cmr.xml');
+const isUMMGFile = (filename) => filename.endsWith('cmr.json');
+
 /**
  * Returns True if this object can be determined to be a cmrMetadata object.
  *
  * @param {Object} fileobject
- * @returns {boolean} true if object is cmr metadata.
+ * @returns {boolean} true if object references cmr metadata.
  */
 function isCMRFile(fileobject) {
-  const cmrFileMatcher = /(\.cmr\.xml$)|(\.cmr.json$)/;
-
-  try {
-    return fileobject.name.match(cmrFileMatcher);
-  }
-  catch (Error) {
-    if (Error instanceof TypeError) {
-      return fileobject.filename.match(cmrFileMatcher);
-    }
-    return false;
-  }
+  const cmrfilename = fileobject.name || fileobject.filename || '';
+  return isECHO10File(cmrfilename) || isUMMGFile(cmrfilename);
 }
 
 /**
@@ -236,9 +231,6 @@ function isCMRFile(fileobject) {
 function getCmrFileObjs(files) {
   return files.filter((file) => isCMRFile(file));
 }
-
-const isECHO10File = (filename) => filename.endsWith('cmr.xml');
-const isUMMGFile = (filename) => filename.endsWith('cmr.json');
 
 
 const updateUMMGMetadata = async () => {
@@ -341,6 +333,7 @@ async function reconcileCMRMetadata(granuleId, updatedFiles, distEndpoint, publi
 module.exports = {
   getGranuleId,
   getCmrFiles,
+  isCMRFile,
   publishXML2CMR,
   reconcileCMRMetadata,
   updateCMRMetadata
