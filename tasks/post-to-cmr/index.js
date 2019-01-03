@@ -66,8 +66,8 @@ async function postToCMR(event) {
   const cmrFiles = await getCmrFiles(allFiles, regex);
 
   // post all meta files to CMR
-  const publishRequests = cmrFiles.map((cmrFile) => publishECHO10XML2CMR(cmrFile, creds, bucket, stack));
-  const results = await Promise.all(publishRequests);
+  const pubRequests = cmrFiles.map((cmrFile) => publishECHO10XML2CMR(cmrFile, creds, bucket, stack));
+  const results = await Promise.all(pubRequests);
 
   return {
     process: process,
