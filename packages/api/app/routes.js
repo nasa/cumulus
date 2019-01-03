@@ -9,6 +9,7 @@ const executions = require('../endpoints/executions');
 const asyncOperations = require('../endpoints/async-operations');
 const instanceMeta = require('../endpoints/instance-meta');
 const bulkDelete = require('../endpoints/bulk-delete');
+const logs = require('../endpoints/logs');
 const { tokenEndpoint, refreshEndpoint } = require('../endpoints/token')
 const { ensureAuthenticated } = require('./auth');
 
@@ -34,14 +35,15 @@ router.use('/bulkDelete', ensureAuthenticated, bulkDelete);
 // instance meta endpoint
 router.use('/instanceMeta', ensureAuthenticated, instanceMeta);
 
-// Login and Authentication
+// logs endpoint
+router.use('/logs', ensureAuthenticated, logs);
+
+// OAuth Implementation
 router.get('/token/callback',
   (req, res) => {
     // Successful authentication, redirect home.
     return res.send({ params: req.params, query: req.query });
   });
-
-
 router.get('/token', tokenEndpoint)
 router.post('/refresh', refreshEndpoint)
 
