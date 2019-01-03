@@ -4,7 +4,7 @@ const rewire = require('rewire');
 
 const cmrUtils = rewire('../cmr-utils');
 
-const log = require('@cumulus/common/log');
+const { log, errors } = require('@cumulus/common');
 
 const { randomId } = require('@cumulus/common/test-utils');
 
@@ -89,4 +89,17 @@ test('reconcileCMRMetadata calls updateUMMGMetadata if json metadata present', a
   t.true(results);
   t.true(fakeCall.calledOnceWith());
   restore();
+});
+
+test('updateCMRMetadata file throws error if incorrect cmrfile provided', async (t) => {
+  const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr.json' }];
+  const badCMRFile = { filename: 'notreallycmrfile' };
+  const { granId, distEndpoint, pub } = t.context;
+  const updateCMRMetadata = cmrUtils.__get__('updateCMRMetadata');
+
+  const error = await t.throws(
+    updateCMRMetadata(granId, badCMRFile, updatedFiles, distEndpoint, pub)
+  );
+  t.is(error.name, 'CMRMetaFileNotFound');
+  t.is(error.message, 'Invalid CMR filetype passed to updateCMRMetadata');
 });
