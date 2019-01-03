@@ -4,6 +4,7 @@ const router = require('express-promise-router')();
 const collections = require('../endpoints/collections');
 const granules = require('../endpoints/granules');
 const providers = require('../endpoints/providers');
+const pdrs = require('../endpoints/pdrs');
 const executionStatus = require('../endpoints/execution-status');
 const executions = require('../endpoints/executions');
 const asyncOperations = require('../endpoints/async-operations');
@@ -21,6 +22,9 @@ router.use('/granules', ensureAuthenticated, granules);
 
 // provider endpoints
 router.use('/providers', ensureAuthenticated, providers);
+
+// pdr endpoints
+router.use('/pdrs', ensureAuthenticated, pdrs);
 
 // executions endpoints
 router.use('/executions/status', ensureAuthenticated, executionStatus);
