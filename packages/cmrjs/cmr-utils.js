@@ -31,7 +31,7 @@ const { getUrl, xmlParseOptions } = require('./utils');
  * @param {string} stack - the deployment stack name
  * @returns {Object} CMR's success response which includes the concept-id
  */
-async function publishXML2CMR(cmrFile, creds, bucket, stack) {
+async function publishECHO10XML2CMR(cmrFile, creds, bucket, stack) {
   let password;
   try {
     password = await DefaultProvider.decrypt(creds.password, undefined, bucket, stack);
@@ -289,7 +289,7 @@ const updateEcho10XMLMetadata = async (granuleId, cmrFile, files, distEndpoint, 
   };
 
   if (published) {
-    await publishXML2CMR(cmrFileObject, creds, process.env.bucket, process.env.stackName);
+    await publishECHO10XML2CMR(cmrFileObject, creds, process.env.bucket, process.env.stackName);
   }
 
   return postS3Object({ bucket: cmrFile.bucket, key: cmrFile.filepath, body: xml });
@@ -340,7 +340,7 @@ async function reconcileCMRMetadata(granuleId, updatedFiles, distEndpoint, publi
 module.exports = {
   getGranuleId,
   getCmrXMLFiles,
-  publishXML2CMR,
+  publishECHO10XML2CMR,
   reconcileCMRMetadata,
   updateCMRMetadata
 };

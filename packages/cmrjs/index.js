@@ -19,7 +19,7 @@ const {
 const {
   getGranuleId,
   getCmrFiles,
-  publishXML2CMR,
+  publishECHO10XML2CMR,
   reconcileCMRMetadata,
   updateCMRMetadata
 } = require('./cmr-utils');
@@ -83,7 +83,7 @@ module.exports = {
   getUrl,
   hostId,
   ingestConcept,
-  publishXML2CMR,
+  publishECHO10XML2CMR,
   reconcileCMRMetadata,
   searchConcept,
   updateCMRMetadata,
