@@ -11,6 +11,7 @@ const asyncOperations = require('../endpoints/async-operations');
 const instanceMeta = require('../endpoints/instance-meta');
 const bulkDelete = require('../endpoints/bulk-delete');
 const logs = require('../endpoints/logs');
+const reconcilliationReports = require('../endpoints/reconcilliation-reports');
 const { tokenEndpoint, refreshEndpoint } = require('../endpoints/token')
 const { ensureAuthenticated } = require('./auth');
 
@@ -41,6 +42,9 @@ router.use('/instanceMeta', ensureAuthenticated, instanceMeta);
 
 // logs endpoint
 router.use('/logs', ensureAuthenticated, logs);
+
+// logs endpoint
+router.use('/reconciliationReports', ensureAuthenticated, reconcilliationReports);
 
 // OAuth Implementation
 router.get('/token/callback',
