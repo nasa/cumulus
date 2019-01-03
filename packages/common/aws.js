@@ -803,6 +803,13 @@ exports.getExecutionArn = (stateMachineArn, executionName) => {
   return null;
 };
 
+exports.getStateMachineArn = (executionArn) => {
+  if (executionArn) {
+    return executionArn.replace('execution', 'stateMachine').split(':').slice(0, -1).join(':');
+  }
+  return null;
+};
+
 /**
 * Parse event metadata to get location of granule on S3
 *
