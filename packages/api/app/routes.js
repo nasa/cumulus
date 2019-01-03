@@ -14,6 +14,7 @@ const bulkDelete = require('../endpoints/bulk-delete');
 const logs = require('../endpoints/logs');
 const reconcilliationReports = require('../endpoints/reconciliation-reports');
 const schemas = require('../endpoints/schemas');
+const stats = require('../endpoints/stats');
 const { tokenEndpoint, refreshEndpoint } = require('../endpoints/token')
 const { ensureAuthenticated } = require('./auth');
 
@@ -53,6 +54,9 @@ router.use('/reconciliationReports', ensureAuthenticated, reconcilliationReports
 
 // schemas endpoint
 router.use('/schemas', ensureAuthenticated, schemas);
+
+// stats endpoint
+router.use('/stats', ensureAuthenticated, stats);
 
 // OAuth Implementation
 router.get('/token/callback',
