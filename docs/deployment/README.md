@@ -359,7 +359,7 @@ By default, the `master` branch will be used for dashboard deployments. The `mas
 
 If you want to test unreleased changes to the dashboard, use the `develop` branch.
 
-Each release/version of the dashboard will have a tag in the dashboard repo. Release/version numbers will use semantic versioning (major/minor/patch).
+Each [release/version of the dashboard](https://github.com/nasa/cumulus-dashboard/releases) will have [a tag in the dashboard repo](https://github.com/nasa/cumulus-dashboard/tags). Release/version numbers will use semantic versioning (major/minor/patch).
 
 To checkout and install a specific version of the dashboard:
 
