@@ -3,6 +3,7 @@ const moment = require('moment');
 const path = require('path');
 
 const test = require('ava');
+
 const discoverPayload = require('@cumulus/test-data/payloads/new-message-schema/discover.json');
 const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
@@ -24,7 +25,8 @@ const {
   getRenamedS3File,
   moveGranuleFiles,
   moveGranuleFile,
-  renameS3FileWithTimestamp
+  renameS3FileWithTimestamp,
+  unversionFilename
 } = require('../granule');
 
 const { baseProtocol } = require('../protocol');
@@ -701,4 +703,22 @@ test('ingestFile throws error when configured to handle duplicates with error', 
   const destFileKey = path.join(fileStagingDir, file.name);
   t.true(error instanceof errors.DuplicateFile);
   t.is(error.message, `${destFileKey} already exists in ${destBucket} bucket`);
+});
+
+test('unversionFilename returns original filename if it has no timestamp', (t) => {
+  const noTimeStampFilename = 'somefile.v1';
+  const expected = noTimeStampFilename;
+
+  const actual = unversionFilename(noTimeStampFilename);
+
+  t.is(expected, actual);
+});
+
+test('unversionFilename returns filename without version stamp if present', (t) => {
+  const timeStampedFilename = 'somefile.v20181231T000122333';
+  const expected = 'somefile';
+
+  const actual = unversionFilename(timeStampedFilename);
+
+  t.is(expected, actual);
 });
