@@ -1,6 +1,6 @@
 'use strict';
 
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { Search } = require('../es/search');
 const { createJwtToken } = require('./token');
 
@@ -49,8 +49,8 @@ async function deleteAliases() {
  * @returns {Object} a file record
  */
 function fakeFilesFactory(bucket) {
-  const key = randomString();
-  const name = randomString();
+  const key = randomId('key');
+  const name = randomId('name');
   const filepath = `${key}/${name}`;
   const filename = `s3://${bucket}/${filepath}`;
   return {
@@ -69,9 +69,9 @@ function fakeFilesFactory(bucket) {
  */
 function fakeGranuleFactory(status = 'completed') {
   return {
-    granuleId: randomString(),
-    dataType: randomString(),
-    version: randomString(),
+    granuleId: randomId('granule'),
+    dataType: randomId('datatype'),
+    version: randomId('vers'),
     collectionId: 'fakeCollection___v1',
     status,
     execution: randomString(),
@@ -137,7 +137,7 @@ function fakeRuleFactory(state = 'DISABLED') {
  */
 function fakePdrFactory(status = 'completed') {
   return {
-    pdrName: randomString(),
+    pdrName: randomId('pdr'),
     collectionId: 'fakeCollection___v1',
     provider: 'fakeProvider',
     status,

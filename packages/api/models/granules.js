@@ -8,7 +8,7 @@ const uniqBy = require('lodash.uniqby');
 const aws = require('@cumulus/ingest/aws');
 const commonAws = require('@cumulus/common/aws');
 const cmrjs = require('@cumulus/cmrjs');
-const { CMR } = require('@cumulus/cmrjs');
+const { CMR, reconcileCMRMetadata } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const {
@@ -152,20 +152,21 @@ class Granule extends Manager {
   /**
    * Move a granule's files to destination locations specified
    *
-   * @param {Object} g - the granule object
+   * @param {Object} g - the granule record object
    * @param {Array<{regex: string, bucket: string, filepath: string}>} destinations
-   * - list of destinations specified
+   *    - list of destinations specified
    *    regex - regex for matching filepath of file to new destination
    *    bucket - aws bucket of the destination
    *    filepath - file path/directory on the bucket for the destination
-   * @param {string} distEndpoint - distribution endpoint
+   * @param {string} distEndpoint - distribution endpoint URL
    * @returns {Promise<undefined>} undefined
    */
   async move(g, destinations, distEndpoint) {
     log.info(`granules.move ${g.granuleId}`);
     const files = clonedeep(g.files);
-    await moveGranuleFiles(g.granuleId, files, destinations, distEndpoint, g.published);
-    await this.update({ granuleId: g.granuleId }, { files: files });
+    const updatedFiles = await moveGranuleFiles(files, destinations);
+    await reconcileCMRMetadata(g.granuleId, updatedFiles, distEndpoint, g.published);
+    await this.update({ granuleId: g.granuleId }, { files: updatedFiles });
   }
 
   /**
