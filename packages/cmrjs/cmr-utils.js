@@ -189,7 +189,7 @@ async function bucketConfig(bucket, stackName) {
 async function constructOnlineAccessUrls(files, distEndpoint) {
   const urls = [];
 
-  const bucketsObject = bucketConfig(process.env.bucket, process.env.stackName);
+  const bucketsObject = await bucketConfig(process.env.bucket, process.env.stackName);
   // URLs are for public and protected files
   const bucketKeys = Object.keys(bucketsObject);
 
