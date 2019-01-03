@@ -148,19 +148,39 @@ function fakePdrFactory(status = 'completed') {
 /**
  * creates fake execution records
  *
+ * @param {Object} params - overrides
+ * @returns {Object} fake execution object
+ */
+function fakeExecutionFactoryV2(params = {}) {
+  const execution = {
+    arn: randomString(),
+    duration: 180.5,
+    name: randomString(),
+    execution: randomString(),
+    parentArn: randomString(),
+    error: { test: 'error' },
+    status: 'completed',
+    createdAt: Date.now() - 180.5 * 1000,
+    updatedAt: Date.now(),
+    timestamp: Date.now(),
+    type: 'fakeWorkflow',
+    originalPayload: { testInput: 'originalPayloadValue' },
+    finalPayload: { testOutput: 'finalPayloadValue' },
+    tasks: {}
+  };
+
+  return { ...execution, ...params };
+}
+
+/**
+ * creates fake execution records
+ *
  * @param {string} status - pdr status (default to completed)
  * @param {string} type - workflow type (default to fakeWorkflow)
  * @returns {Object} fake execution object
  */
 function fakeExecutionFactory(status = 'completed', type = 'fakeWorkflow') {
-  return {
-    arn: randomString(),
-    duration: 180.5,
-    name: randomString(),
-    status,
-    createdAt: Date.now(),
-    type
-  };
+  return fakeExecutionFactoryV2({ status, type });
 }
 
 /**
@@ -264,6 +284,7 @@ module.exports = {
   fakePdrFactory,
   fakeCollectionFactory,
   fakeExecutionFactory,
+  fakeExecutionFactoryV2,
   fakeRuleFactory,
   fakeRuleFactoryV2,
   fakeFilesFactory,
