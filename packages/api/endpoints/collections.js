@@ -152,11 +152,4 @@ router.delete('/:name/:version', del)
 router.post('/', post)
 router.get('/', list)
 
-module.exports = {
-  get,
-  list,
-  post,
-  put,
-  del,
-  collectionRouter: router
-};
+module.exports = router;

@@ -7,11 +7,9 @@ const { randomString } = require('@cumulus/common/test-utils');
 
 const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
-const providerEndpoint = require('../../../endpoints/providers');
 const {
   createFakeJwtAuthToken,
-  fakeProviderFactory,
-  testEndpoint
+  fakeProviderFactory
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');

@@ -121,11 +121,4 @@ router.delete('/:id', del)
 router.post('/', post)
 router.get('/', list)
 
-module.exports = {
-  get,
-  list,
-  post,
-  put,
-  del,
-  providerRouter: router
-};
+module.exports = router;
