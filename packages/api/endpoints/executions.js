@@ -1,58 +1,41 @@
 'use strict';
 
-const handle = require('../lib/response').handle;
+const router = require('express-promise-router')();
 const Search = require('../es/search').Search;
 const models = require('../models');
 
 /**
  * List and search executions
  *
- * @param {Object} event - aws lambda event object.
- * @param {Function} cb - aws lambda callback function
- * @returns {undefined} undefined
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object 
  */
-function list(event, cb) {
-  const search = new Search(event, 'execution');
-  return search.query()
-    .then((response) => cb(null, response))
-    .catch((e) => cb(e));
+async function list(req, res) {
+  const search = new Search({
+    queryStringParameters: req.query
+  }, 'execution');
+  const response = await search.query();
+  return res.send(response);
 }
 
 /**
  * get a single execution
  *
- * @param {Object} event - aws lambda event object.
- * @param {Function} cb - aws lambda callback function
- * @returns {undefined} undefined
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object 
  */
-function get(event, cb) {
-  const arn = event.pathParameters.arn;
-  if (!arn) {
-    return cb('execution arn is missing');
-  }
+async function get(req, res) {
+  const arn = req.params.arn;
 
   const e = new models.Execution();
 
-  return e.get({ arn }).then((response) => {
-    cb(null, response);
-  }).catch(cb);
+  const response = await e.get({ arn });
+  return res.send(response)
 }
 
-/**
- * The main handler for the lambda function
- *
- * @param {Object} event - aws lambda event object.
- * @param {Object} context - aws context object
- * @returns {undefined} undefined
- */
-function handler(event, context) {
-  return handle(event, context, true, (cb) => {
-    if (event.httpMethod === 'GET' && event.pathParameters) {
-      return get(event, cb);
-    }
+router.get('/:arn', get);
+router.get('/', list);
 
-    return list(event, cb);
-  });
-}
-
-module.exports = handler;
+module.exports = router;
