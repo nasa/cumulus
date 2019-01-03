@@ -246,6 +246,16 @@ const updateUMMGMetadata = async () => {
   throw new NotImplemented('not yet.');
 };
 
+/** helper to build an CMR credential object
+ * @returns {Object} object to create CMR instance.
+*/
+const getCreds = () => ({
+  provider: process.env.cmr_provider,
+  clientId: process.env.cmr_client_id,
+  username: process.env.cmr_username,
+  password: process.env.cmr_password
+});
+
 /**
  * Modifies cmr Echo10 xml metadata file with files' URLs updated to their new locations.
  *
@@ -277,13 +287,7 @@ const updateEcho10XMLMetadata = async (granuleId, cmrFile, files, distEndpoint, 
 
   // post meta file to CMR
   if (published) {
-    const creds = {
-      provider: process.env.cmr_provider,
-      clientId: process.env.cmr_client_id,
-      username: process.env.cmr_username,
-      password: process.env.cmr_password
-    };
-
+    const creds = getCreds();
     const cmrFileObject = {
       filename: cmrFile.filename,
       metadata: xml,
