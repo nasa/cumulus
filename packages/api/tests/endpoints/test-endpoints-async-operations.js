@@ -5,7 +5,6 @@ const request = require('supertest');
 const {
   testUtils: { randomString }
 } = require('@cumulus/common');
-// const asyncOperationsEndpoint = require('../../endpoints/async-operations');
 const {
   AccessToken,
   AsyncOperation: AsyncOperationModel,
@@ -27,7 +26,6 @@ let jwtAuthToken;
 let asyncOperationModel;
 let accessTokenModel;
 let userModel;
-let context;
 
 test.before(async () => {
   // Create AsyncOperations table
