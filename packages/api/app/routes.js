@@ -15,6 +15,7 @@ const logs = require('../endpoints/logs');
 const reconcilliationReports = require('../endpoints/reconciliation-reports');
 const schemas = require('../endpoints/schemas');
 const stats = require('../endpoints/stats');
+const version = require('../endpoints/version');
 const { tokenEndpoint, refreshEndpoint } = require('../endpoints/token')
 const { ensureAuthenticated } = require('./auth');
 
@@ -57,6 +58,10 @@ router.use('/schemas', ensureAuthenticated, schemas);
 
 // stats endpoint
 router.use('/stats', ensureAuthenticated, stats);
+
+// version endpoint
+// this endpoint is not behind authentication
+router.use('/version', version);
 
 // OAuth Implementation
 router.get('/token/callback',

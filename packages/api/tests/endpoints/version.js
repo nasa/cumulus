@@ -1,15 +1,18 @@
 'use strict';
 
 const test = require('ava');
-const versionEndpoint = require('../../endpoints/version');
+const request = require('supertest');
 const pckg = require('../../package.json');
+const { app } = require('../../app');
 
 test('returns expected response', async (t) => {
-  const response = await versionEndpoint();
+  const response = await request(app)
+    .get('/version')
+    .set('Accept', 'application/json')
+    .expect(200);
 
-  t.is(response.statusCode, 200);
+  t.is(response.status, 200);
 
-  const body = JSON.parse(response.body);
-  t.is(body.response_version, 'v1');
-  t.is(body.api_version, pckg.version);
+  t.is(response.body.response_version, 'v1');
+  t.is(response.body.api_version, pckg.version);
 });
