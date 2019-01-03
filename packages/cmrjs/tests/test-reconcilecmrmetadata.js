@@ -12,12 +12,15 @@ const { randomId } = require('@cumulus/common/test-utils');
 test.beforeEach((t) => {
   t.context.granId = randomId('granuleId');
   t.context.distEndpoint = randomId('https://example.com/');
+  t.context.pub = true;
 });
 
 test('reconcileCMRMetadata does not call updateCMRMetadata if no metadatafile present', async (t) => {
-  const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr' }];
-  const { granId, distEndpoint } = t.context;
-  const pub = true;
+  const updatedFiles = [
+    { filename: 'anotherfile' },
+    { filename: 'cmrmeta.cmr' }
+  ];
+  const { granId, distEndpoint, pub } = t.context;
   const fakeCall = sinon.fake.resolves(true);
   const restore = cmrUtils.__set__('updateCMRMetadata', fakeCall);
 
@@ -32,8 +35,7 @@ test('reconcileCMRMetadata does not call updateCMRMetadata if no metadatafile pr
 
 test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', async (t) => {
   const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr.xml' }];
-  const { granId, distEndpoint } = t.context;
-  const pub = true;
+  const { granId, distEndpoint, pub } = t.context;
   const fakeCall = sinon.fake.resolves(true);
   const restore = cmrUtils.__set__('updateCMRMetadata', fakeCall);
 
@@ -48,8 +50,7 @@ test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', asy
 
 test('reconcileCMRMetadata logs an error if multiple metadatafiles present.', async (t) => {
   const updatedFiles = [{ filename: 'anotherfile.cmr.json' }, { filename: 'cmrmeta.cmr.xml' }];
-  const { granId, distEndpoint } = t.context;
-  const pub = true;
+  const { granId, distEndpoint, pub } = t.context;
   const mockLog = sinon.spy(log, 'error');
   const fakeCall = sinon.fake.resolves(true);
   const restore = cmrUtils.__set__('updateCMRMetadata', fakeCall);
@@ -66,8 +67,7 @@ test('reconcileCMRMetadata logs an error if multiple metadatafiles present.', as
 
 test('reconcileCMRMetadata calls updateEcho10XMLMetadata if xml metadata present', async (t) => {
   const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr.xml' }];
-  const { granId, distEndpoint } = t.context;
-  const pub = true;
+  const { granId, distEndpoint, pub } = t.context;
   const fakeCall = sinon.fake.resolves(true);
   const restore = cmrUtils.__set__('updateEcho10XMLMetadata', fakeCall);
 
@@ -80,8 +80,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata if xml metadata present
 
 test('reconcileCMRMetadata calls updateUMMGMetadata if json metadata present', async (t) => {
   const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr.json' }];
-  const { granId, distEndpoint } = t.context;
-  const pub = true;
+  const { granId, distEndpoint, pub } = t.context;
   const fakeCall = sinon.fake.resolves(true);
   const restore = cmrUtils.__set__('updateUMMGMetadata', fakeCall);
 
