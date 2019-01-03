@@ -164,7 +164,8 @@ async function postS3Object(destination, options) {
 
 
 /**
- * retrieve the stack's bucket configuration from s3 and return the bucket configuration object.
+ * Retrieve the stack's bucket configuration from s3 and return the bucket configuration object.
+ *
  * @param {string} bucket - system bucket name.
  * @param {string} stackName - stack name.
  * @returns {Object} - stack's bucket configuration.
@@ -178,7 +179,7 @@ async function bucketConfig(bucket, stackName) {
 }
 
 /**
- * construct a list of online access urls
+ * Construct a list of online access urls.
  *
  * @param {Array<Object>} files - array of file objects
  * @param {string} distEndpoint - distribution enpoint from config
@@ -275,20 +276,19 @@ const updateEcho10XMLMetadata = async (granuleId, cmrFile, files, distEndpoint, 
   const xml = builder.buildObject(metadataObject);
 
   // post meta file to CMR
-  const creds = {
-    provider: process.env.cmr_provider,
-    clientId: process.env.cmr_client_id,
-    username: process.env.cmr_username,
-    password: process.env.cmr_password
-  };
-
-  const cmrFileObject = {
-    filename: cmrFile.filename,
-    metadata: xml,
-    granuleId: granuleId
-  };
-
   if (published) {
+    const creds = {
+      provider: process.env.cmr_provider,
+      clientId: process.env.cmr_client_id,
+      username: process.env.cmr_username,
+      password: process.env.cmr_password
+    };
+
+    const cmrFileObject = {
+      filename: cmrFile.filename,
+      metadata: xml,
+      granuleId: granuleId
+    };
     await publishECHO10XML2CMR(cmrFileObject, creds, process.env.bucket, process.env.stackName);
   }
 
