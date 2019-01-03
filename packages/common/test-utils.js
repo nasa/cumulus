@@ -20,11 +20,24 @@ function throwTestError() {
 exports.throwTestError = throwTestError;
 
 /**
- * Generate a 40-character random string
+ * Generate a [40 character] random string
  *
+ * @param {number} numBytes - number of bytes to use in creating a random string
+ *                 defaults to 20 to produce a 40 character string
  * @returns {string} - a random string
  */
-exports.randomString = () => crypto.randomBytes(20).toString('hex');
+exports.randomString = (numBytes = 20) => crypto.randomBytes(numBytes).toString('hex');
+
+
+/**
+ * Postpend a [10-character] random string to input identifier.
+ *
+ * @param {string} id - identifer to return
+ * @param {number} numBytes - number of bytes to use to compute random
+ *                 extension. Default 5 to produce 10 characters..
+ * @returns {string} - a random string
+ */
+exports.randomId = (id, numBytes = 5) => `${id}${exports.randomString(numBytes)}`;
 
 /**
  * Create a random granule id from the regular expression

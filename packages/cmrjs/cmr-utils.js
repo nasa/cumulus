@@ -10,14 +10,10 @@ const {
   errors,
   log
 } = require('@cumulus/common');
-
-
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
 const { CMR } = require('./cmr');
-
 const { getUrl, xmlParseOptions } = require('./utils');
-
 
 /**
  * function for posting cmr xml files from S3 to CMR
@@ -35,7 +31,7 @@ const { getUrl, xmlParseOptions } = require('./utils');
  * @param {string} stack - the deployment stack name
  * @returns {Object} CMR's success response which includes the concept-id
  */
-async function publish(cmrFile, creds, bucket, stack) {
+async function publishECHO10XML2CMR(cmrFile, creds, bucket, stack) {
   let password;
   try {
     password = await DefaultProvider.decrypt(creds.password, undefined, bucket, stack);
@@ -125,14 +121,14 @@ async function parseXmlString(xml) {
 }
 
 /**
- * returns a list of CMR xml files
+ * returns a list of CMR xml file objects
  *
- * @param {Array} input - an array of s3 uris
+ * @param {Array} input - an Array of S3 uris
  * @param {string} granuleIdExtraction - a regex for extracting granule IDs
  * @returns {Promise<Array>} promise resolves to an array of objects
  * that includes CMR xmls uris and granuleIds
  */
-async function getCmrFiles(input, granuleIdExtraction) {
+async function getCmrXMLFiles(input, granuleIdExtraction) {
   const files = [];
   const expectedFormat = /.*\.cmr\.xml$/;
 
@@ -166,29 +162,40 @@ async function postS3Object(destination, options) {
   }
 }
 
+
 /**
- * construct a list of online access urls
+ * Retrieve the stack's bucket configuration from s3 and return the bucket configuration object.
+ *
+ * @param {string} bucket - system bucket name.
+ * @param {string} stackName - stack name.
+ * @returns {Object} - stack's bucket configuration.
+ */
+async function bucketConfig(bucket, stackName) {
+  const bucketsString = await aws.s3().getObject({
+    Bucket: bucket,
+    Key: `${stackName}/workflows/buckets.json`
+  }).promise();
+  return JSON.parse(bucketsString.Body);
+}
+
+/**
+ * Construct a list of online access urls.
  *
  * @param {Array<Object>} files - array of file objects
  * @param {string} distEndpoint - distribution enpoint from config
  * @returns {Array<{URL: string, URLDescription: string}>}
  *   returns the list of online access url objects
  */
-async function contructOnlineAccessUrls(files, distEndpoint) {
+async function constructOnlineAccessUrls(files, distEndpoint) {
   const urls = [];
 
-  const bucketsString = await aws.s3().getObject({
-    Bucket: process.env.bucket,
-    Key: `${process.env.stackName}/workflows/buckets.json`
-  }).promise();
-  const bucketsObject = JSON.parse(bucketsString.Body);
-
+  const bucketsObject = await bucketConfig(process.env.bucket, process.env.stackName);
   // URLs are for public and protected files
   const bucketKeys = Object.keys(bucketsObject);
+
   files.forEach((file) => {
     const urlObj = {};
-    const bucketkey = bucketKeys.find((bucketKey) =>
-      file.bucket === bucketsObject[bucketKey].name);
+    const bucketkey = bucketKeys.find((bucketKey) => file.bucket === bucketsObject[bucketKey].name);
 
     if (bucketsObject[bucketkey].type === 'protected') {
       const extension = urljoin(bucketsObject[bucketkey].name, `${file.filepath}`);
@@ -205,20 +212,62 @@ async function contructOnlineAccessUrls(files, distEndpoint) {
   return urls;
 }
 
+
+const isECHO10File = (filename) => filename.endsWith('cmr.xml');
+const isUMMGFile = (filename) => filename.endsWith('cmr.json');
+
 /**
- * updates cmr xml file with updated file urls
+ * Returns True if this object can be determined to be a cmrMetadata object.
+ *
+ * @param {Object} fileobject
+ * @returns {boolean} true if object references cmr metadata.
+ */
+function isCMRFile(fileobject) {
+  const cmrfilename = fileobject.name || fileobject.filename || '';
+  return isECHO10File(cmrfilename) || isUMMGFile(cmrfilename);
+}
+
+/**
+ * Returns a list of posible metadata file objects based on file.name extension.
+ *
+ * @param {Array<Object>} files - list of file objects that might be metadata files.
+ * @param {string} files.name - file name
+ * @param {string} files.bucket - current bucket of file
+ * @param {string} files.filepath - current s3 key of file
+ * @returns {Array<Object>} any metadata type file object.
+ */
+function getCmrFileObjs(files) {
+  return files.filter((file) => isCMRFile(file));
+}
+
+
+const updateUMMGMetadata = async () => {
+  const NotImplemented = errors.CreateErrorType('NotImplemented');
+  throw new NotImplemented('not yet.');
+};
+
+/** helper to build an CMR credential object
+ * @returns {Object} object to create CMR instance.
+*/
+const getCreds = () => ({
+  provider: process.env.cmr_provider,
+  clientId: process.env.cmr_client_id,
+  username: process.env.cmr_username,
+  password: process.env.cmr_password
+});
+
+/**
+ * Modifies cmr Echo10 xml metadata file with files' URLs updated to their new locations.
  *
  * @param {string} granuleId - granuleId
- * @param {Object} cmrFile - cmr xml file to be updated
- * @param {Object[]} files - array of file objects
- * @param {string} distEndpoint - distribution enpoint from config
+ * @param {Object} cmrFile - cmr xml file object to be updated
+ * @param {Array<Object>} files - array of file objects
+ * @param {string} distEndpoint - distribution endpoint from config
  * @param {boolean} published - indicate if publish is needed
  * @returns {Promise} returns promise to upload updated cmr file
  */
-async function updateMetadata(granuleId, cmrFile, files, distEndpoint, published) {
-  log.debug(`granules.updateMetadata granuleId ${granuleId}, xml file ${cmrFile.filename}`);
-
-  const urls = await contructOnlineAccessUrls(files, distEndpoint);
+const updateEcho10XMLMetadata = async (granuleId, cmrFile, files, distEndpoint, published) => {
+  const urls = await constructOnlineAccessUrls(files, distEndpoint);
 
   // add/replace the OnlineAccessUrls
   const metadata = await getXMLMetadataAsString(cmrFile.filename);
@@ -237,25 +286,65 @@ async function updateMetadata(granuleId, cmrFile, files, distEndpoint, published
   const xml = builder.buildObject(metadataObject);
 
   // post meta file to CMR
-  const creds = {
-    provider: process.env.cmr_provider,
-    clientId: process.env.cmr_client_id,
-    username: process.env.cmr_username,
-    password: process.env.cmr_password
-  };
+  if (published) {
+    const creds = getCreds();
+    const cmrFileObject = {
+      filename: cmrFile.filename,
+      metadata: xml,
+      granuleId: granuleId
+    };
+    await publishECHO10XML2CMR(cmrFileObject, creds, process.env.bucket, process.env.stackName);
+  }
 
-  const cmrFileObject = {
-    filename: cmrFile.filename,
-    metadata: xml,
-    granuleId: granuleId
-  };
-  if (published) await publish(cmrFileObject, creds, process.env.bucket, process.env.stackName);
   return postS3Object({ bucket: cmrFile.bucket, key: cmrFile.filepath, body: xml });
+};
+
+/**
+ * Modifies cmr metadata file with file's URLs updated to their new locations.
+ *
+ * @param {string} granuleId - granuleId
+ * @param {Object} cmrFile - cmr xml file to be updated
+ * @param {Array<Object>} files - array of file objects
+ * @param {string} distEndpoint - distribution enpoint from config
+ * @param {boolean} published - indicate if publish is needed
+ * @returns {Promise} returns promise to upload updated cmr file
+ */
+async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, published) {
+  log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${cmrFile.filename}`);
+
+  if (isECHO10File(cmrFile.filename)) {
+    return updateEcho10XMLMetadata(granuleId, cmrFile, files, distEndpoint, published);
+  }
+  if (isUMMGFile(cmrFile.filename)) {
+    return updateUMMGMetadata();
+  }
+  throw new errors.CMRMetaFileNotFound('Invalid CMR filetype passed to updateCMRMetadata');
 }
+
+/**
+ * Update CMR Metadata record with the information contained in updatedFiles
+ * @param {string} granuleId - granuleId
+ * @param {Object} updatedFiles - list of file objects that might have different
+ *                  information from the cmr metadatafile and the CMR service.
+ * @param {string} distEndpoint - distribution endpoint URL
+ * @param {boolean} published - boolean true if the data should be published to the CMR service.
+ */
+async function reconcileCMRMetadata(granuleId, updatedFiles, distEndpoint, published) {
+  const cmrMetadataFiles = getCmrFileObjs(updatedFiles);
+  if (cmrMetadataFiles.length === 1) {
+    return updateCMRMetadata(granuleId, cmrMetadataFiles[0], updatedFiles, distEndpoint, published);
+  }
+  if (cmrMetadataFiles.length > 1) {
+    log.error('More than one cmr metadata file found.');
+  }
+  return Promise.resolve();
+}
+
 
 module.exports = {
   getGranuleId,
-  getCmrFiles,
-  publish,
-  updateMetadata
+  getCmrXMLFiles,
+  publishECHO10XML2CMR,
+  reconcileCMRMetadata,
+  updateCMRMetadata
 };
