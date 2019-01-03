@@ -5,6 +5,7 @@ const passport = require('passport')
 const collectionRouter = require('../endpoints/collections');
 const providerRouter = require('../endpoints/providers');
 const executionStatusRouter = require('../endpoints/execution-status');
+const asyncOperationsRouter = require('../endpoints/async-operations');
 const { tokenEndpoint, refreshEndpoint } = require('../endpoints/token')
 const { ensureAuthenticated } = require('./auth');
 
@@ -16,6 +17,9 @@ router.use('/providers', ensureAuthenticated, providerRouter);
 
 // executions endpoints
 router.use('/executions/status', ensureAuthenticated, executionStatusRouter);
+
+// async operation endpoint
+router.use('/async-operation', ensureAuthenticated, asyncOperationsRouter);
 
 // Login and Authentication
 router.get('/login', passport.authenticate('oauth2'))
