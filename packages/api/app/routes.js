@@ -1,13 +1,13 @@
 'use strict'
 
 const router = require('express-promise-router')();
-const passport = require('passport')
 const collections = require('../endpoints/collections');
 const granules = require('../endpoints/granules');
 const providers = require('../endpoints/providers');
 const executionStatus = require('../endpoints/execution-status');
 const executions = require('../endpoints/executions');
 const asyncOperations = require('../endpoints/async-operations');
+const instanceMeta = require('../endpoints/instance-meta');
 const bulkDelete = require('../endpoints/bulk-delete');
 const { tokenEndpoint, refreshEndpoint } = require('../endpoints/token')
 const { ensureAuthenticated } = require('./auth');
@@ -31,8 +31,10 @@ router.use('/async-operation', ensureAuthenticated, asyncOperations);
 // bulk delete endpoint
 router.use('/bulkDelete', ensureAuthenticated, bulkDelete);
 
+// instance meta endpoint
+router.use('/instanceMeta', ensureAuthenticated, instanceMeta);
+
 // Login and Authentication
-router.get('/login', passport.authenticate('oauth2'))
 router.get('/token/callback',
   (req, res) => {
     // Successful authentication, redirect home.
