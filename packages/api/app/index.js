@@ -19,6 +19,10 @@ app.use(hsts({ maxAge: 31536000 }))
 
 app.use('/', router)
 
+// global 404 response when page is not found
+app.use(function (req, res, next) {
+  res.boom.notFound('requested page not found');
+})
 
 // catch all error handling
 app.use((err, req, res, next) => {
