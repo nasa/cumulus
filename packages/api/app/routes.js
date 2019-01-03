@@ -2,8 +2,9 @@
 
 const router = require('express-promise-router')();
 const passport = require('passport')
-const collection = require('../endpoints/collections');
-const provider = require('../endpoints/providers');
+const collections = require('../endpoints/collections');
+const granules = require('../endpoints/granules');
+const providers = require('../endpoints/providers');
 const executionStatus = require('../endpoints/execution-status');
 const executions = require('../endpoints/executions');
 const asyncOperations = require('../endpoints/async-operations');
@@ -12,10 +13,13 @@ const { tokenEndpoint, refreshEndpoint } = require('../endpoints/token')
 const { ensureAuthenticated } = require('./auth');
 
 // collections endpoints
-router.use('/collections', ensureAuthenticated, collection);
+router.use('/collections', ensureAuthenticated, collections);
+
+// granules endpoints
+router.use('/granules', ensureAuthenticated, granules);
 
 // provider endpoints
-router.use('/providers', ensureAuthenticated, provider);
+router.use('/providers', ensureAuthenticated, providers);
 
 // executions endpoints
 router.use('/executions/status', ensureAuthenticated, executionStatus);
