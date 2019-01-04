@@ -20,7 +20,7 @@ exports.isExpiredAccessTokenResponse = (t, response) => {
 };
 
 exports.isUnauthorizedUserResponse = (t, response) => {
-  t.is(response.status, 403);
+  t.is(response.status, 401);
   t.is(response.body.message, 'User not authorized');
 };
 

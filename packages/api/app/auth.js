@@ -56,7 +56,7 @@ async function ensureAuthenticated(req, res, next) {
       return res.boom.forbidden('Invalid access token');
     }
 
-    return res.boom.unauthorized('user not authorized');
+    return res.boom.unauthorized('User not authorized');
   }
 }
 
