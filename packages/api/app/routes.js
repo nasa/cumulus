@@ -16,6 +16,7 @@ const reconcilliationReports = require('../endpoints/reconciliation-reports');
 const schemas = require('../endpoints/schemas');
 const stats = require('../endpoints/stats');
 const version = require('../endpoints/version');
+const workflows = require('../endpoints/workflows');
 const { tokenEndpoint, refreshEndpoint } = require('../endpoints/token')
 const { ensureAuthenticated } = require('./auth');
 
@@ -63,17 +64,15 @@ router.use('/stats', ensureAuthenticated, stats);
 // this endpoint is not behind authentication
 router.use('/version', version);
 
+// workflows endpoint
+router.use('/workflows', ensureAuthenticated, workflows);
+
 // OAuth Implementation
-router.get('/token/callback',
-  (req, res) => {
-    // Successful authentication, redirect home.
-    return res.send({ params: req.params, query: req.query });
-  });
+router.get('/token/callback', (req, res) => {
+  // Successful authentication, redirect home.
+  return res.send({ params: req.params, query: req.query });
+});
 router.get('/token', tokenEndpoint)
 router.post('/refresh', refreshEndpoint)
-
-router.get('/404', (req, res) => {
-  return res.send('access denied');
-})
 
 module.exports = router;
