@@ -295,7 +295,7 @@ async function updateCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoint) {
 
     const builder = new xml2js.Builder();
     const xml = builder.buildObject(cmrFile.metadataObject);
-    cmrFile.metadata = xml;
+
     /* eslint-enable no-param-reassign */
     const updatedCmrFile = granule.files.find((f) => f.filename.match(/.*\.cmr\.xml$/));
     // S3 upload only accepts tag query strings, so reduce tags to query string.

@@ -47,7 +47,8 @@ async function publishECHO10XML2CMR(cmrFile, creds, bucket, stack) {
     password
   );
 
-  const xml = cmrFile.metadata;
+  const builder = new xml2js.Builder();
+  const xml = builder.buildObject(cmrFile.metadataObject);
   const res = await cmr.ingestGranule(xml);
   const conceptId = res.result['concept-id'];
 
@@ -96,24 +97,6 @@ async function getS3ObjectTags(objectFilePath) {
   return aws.s3GetObjectTagging(Bucket, Key);
 }
 
-/**
- * Gets body and tags of s3 metadata xml file
- *
- * @param {string} xmlFilePath - S3 URI to the xml metadata document
- * @returns {Object} - object containing Body and TagSet for S3 Object
- */
-async function getMetadataBodyAndTags(xmlFilePath) {
-  if (!xmlFilePath) {
-    throw new errors.XmlMetaFileNotFound('XML Metadata file not provided');
-  }
-  const [body, tags] = await Promise.all(
-    [getXMLMetadataAsString(xmlFilePath), getS3ObjectTags(xmlFilePath)]
-  );
-  return {
-    Body: body,
-    TagSet: tags.TagSet
-  };
-}
 
 /**
  * Parse an xml string
@@ -124,6 +107,22 @@ async function getMetadataBodyAndTags(xmlFilePath) {
 async function parseXmlString(xml) {
   return (promisify(xml2js.parseString))(xml, xmlParseOptions);
 }
+
+
+const isECHO10File = (filename) => filename.endsWith('cmr.xml');
+const isUMMGFile = (filename) => filename.endsWith('cmr.json');
+
+/**
+ * Returns True if this object can be determined to be a cmrMetadata object.
+ *
+ * @param {Object} fileobject
+ * @returns {boolean} true if object references cmr metadata.
+ */
+function isCMRFile(fileobject) {
+  const cmrfilename = fileobject.name || fileobject.filename || '';
+  return isECHO10File(cmrfilename) || isUMMGFile(cmrfilename);
+}
+
 
 /**
  * return metadata object from cmr echo10 XML file.
@@ -145,19 +144,14 @@ const metadataObjectFromCMRXMLFile = async (cmrFilename) => {
  */
 async function getCmrXMLFiles(input, granuleIdExtraction) {
   const files = [];
-  const expectedFormat = /.*\.cmr\.xml$/;
 
   await Promise.all(input.map(async (filename) => {
-    if (filename && filename.match(expectedFormat)) {
-      // TODO [MHS, 2019-01-04] deprecate getMetadataBodyAndTags and find out
-      // why/how metadataResponse.Body is used.
-      const metaResponse = await getMetadataBodyAndTags(filename);
+    if (isECHO10File(filename)) {
       const metadataObject = await metadataObjectFromCMRXMLFile(filename);
       const tags = await getS3ObjectTags(filename);
 
       const cmrFileObject = {
         filename,
-        metadata: metaResponse.Body,
         metadataObject,
         granuleId: getGranuleId(filename, granuleIdExtraction),
         s3Tags: tags.TagSet
@@ -220,20 +214,6 @@ async function constructOnlineAccessUrls(files, distEndpoint) {
 }
 
 
-const isECHO10File = (filename) => filename.endsWith('cmr.xml');
-const isUMMGFile = (filename) => filename.endsWith('cmr.json');
-
-/**
- * Returns True if this object can be determined to be a cmrMetadata object.
- *
- * @param {Object} fileobject
- * @returns {boolean} true if object references cmr metadata.
- */
-function isCMRFile(fileobject) {
-  const cmrfilename = fileobject.name || fileobject.filename || '';
-  return isECHO10File(cmrfilename) || isUMMGFile(cmrfilename);
-}
-
 /**
  * Returns a list of posible metadata file objects based on file.name extension.
  *
@@ -287,19 +267,19 @@ const updateEcho10XMLMetadata = async (granuleId, cmrFile, files, distEndpoint, 
   });
   updatedGranule.OnlineAccessURLs.OnlineAccessURL = urls;
   metadataObject.Granule = updatedGranule;
-  const builder = new xml2js.Builder();
-  const xml = builder.buildObject(metadataObject);
 
   // post meta file to CMR
   if (published) {
     const creds = getCreds();
     const cmrFileObject = {
       filename: cmrFile.filename,
-      metadata: xml,
+      metadataObject: metadataObject,
       granuleId: granuleId
     };
     await publishECHO10XML2CMR(cmrFileObject, creds, process.env.bucket, process.env.stackName);
   }
+  const builder = new xml2js.Builder();
+  const xml = builder.buildObject(metadataObject);
   return aws.promiseS3Upload({ Bucket: cmrFile.bucket, Key: cmrFile.filepath, Body: xml });
 };
 
