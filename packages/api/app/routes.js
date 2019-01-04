@@ -67,11 +67,6 @@ router.use('/version', version);
 // workflows endpoint
 router.use('/workflows', ensureAuthenticated, workflows);
 
-// OAuth Implementation
-router.get('/token/callback', (req, res) => {
-  // Successful authentication, redirect home.
-  return res.send({ params: req.params, query: req.query });
-});
 router.get('/token', tokenEndpoint)
 router.post('/refresh', refreshEndpoint)
 

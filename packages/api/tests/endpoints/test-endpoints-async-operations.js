@@ -44,13 +44,6 @@ test.before(async () => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
-
-  context = {
-    AsyncOperationsTable: asyncOperationModel.tableName,
-    UsersTable: userModel.tableName,
-    stackName: asyncOperationModel.stackName,
-    systemBucket: asyncOperationModel.systemBucket
-  };
 });
 
 test.after.always(async () => {

@@ -18,7 +18,7 @@ const { AccessToken, User } = require('../models');
 const buildPermanentRedirectResponse = (location, response) =>
   response
     .set({ Location: location })
-    .status(301)
+    .status(307)
     .send('Redirecting');
 
 async function token(event, oAuth2Provider, response) {
@@ -45,9 +45,10 @@ async function token(event, oAuth2Provider, response) {
       const jwtToken = createJwtToken({ accessToken, username, expirationTime });
 
       if (state) {
-        // log.info(`Log info: Redirecting to state: ${state} with token ${jwtToken}`);
+        log.info(`Log info: Redirecting to state: ${state} with token ${jwtToken}`);
         return buildPermanentRedirectResponse(
-          `${decodeURIComponent(state)}?token=${jwtToken}`
+          `${decodeURIComponent(state)}?token=${jwtToken}`,
+          response
         );
       }
       log.info('Log info: No state specified, responding 200');
@@ -147,7 +148,7 @@ async function refreshAccessToken(request, oAuth2Provider, response) {
   }
 
   const errorMessage = 'Request requires a token';
-  return response.boom.badReqeust(errorMessage);
+  return response.boom.badRequest(errorMessage);
 }
 
 /**
@@ -197,11 +198,25 @@ function buildOAuth2ProviderFromEnv() {
     : buildEarthdataLoginProviderFromEnv();
 }
 
+/**
+ * performs OAuth against an OAuth provider 
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object 
+ */
 async function tokenEndpoint(req, res) {
   const oAuth2Provider = buildOAuth2ProviderFromEnv();
   return login(req, oAuth2Provider, res)
 }
 
+/**
+ * refreshes an OAuth token 
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object 
+ */
 async function refreshEndpoint(req, res) {
   const oAuth2Provider = buildOAuth2ProviderFromEnv();
   return refreshAccessToken(req, oAuth2Provider, res)

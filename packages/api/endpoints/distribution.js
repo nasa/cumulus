@@ -8,6 +8,9 @@ const EarthdataLoginClient = require('../lib/EarthdataLogin');
 const { RecordDoesNotExist } = require('../lib/errors');
 const { AccessToken } = require('../models');
 
+/**
+ * Error class for file locations that are unparsable
+ */
 class UnparsableFileLocationError extends Error {
   constructor(fileLocation) {
     super(`File location "${fileLocation}" could not be parsed`);
@@ -53,10 +56,21 @@ function getSignedS3Url(s3Client, Bucket, Key, username) {
   return parsedSignedUrl.toString();
 }
 
+/**
+ * Checks if the token is expired
+ *
+ * @param {Object} accessTokenRecord - the access token record
+ * @returns {boolean} true indicates the token is expired
+ */
 function isAccessTokenExpired(accessTokenRecord) {
   return accessTokenRecord.expirationTime < Date.now();
 }
 
+/**
+ * Returns a configuration object
+ *
+ * @returns {Object} the configuration object needed to handle requests
+ */
 function getConfigurations() {
   const earthdataLoginClient = new EarthdataLoginClient({
     clientId: process.env.EARTHDATA_CLIENT_ID,
