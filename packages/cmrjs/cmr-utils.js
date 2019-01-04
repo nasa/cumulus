@@ -91,6 +91,11 @@ async function getXMLMetadataAsString(xmlFilePath) {
   return obj.Body.toString();
 }
 
+async function getS3ObjectTags(objectFilePath) {
+  const { Bucket, Key } = aws.parseS3Uri(objectFilePath);
+  return aws.s3GetObjectTagging(Bucket, Key);
+}
+
 /**
  * Gets body and tags of s3 metadata xml file
  *
@@ -101,11 +106,11 @@ async function getMetadataBodyAndTags(xmlFilePath) {
   if (!xmlFilePath) {
     throw new errors.XmlMetaFileNotFound('XML Metadata file not provided');
   }
-  const { Bucket, Key } = aws.parseS3Uri(xmlFilePath);
-  const data = await aws.getS3Object(Bucket, Key);
-  const tags = await aws.s3GetObjectTagging(Bucket, Key);
+  const [body, tags] = await Promise.all(
+    [getXMLMetadataAsString(xmlFilePath), getS3ObjectTags(xmlFilePath)]
+  );
   return {
-    Body: data.Body.toString(),
+    Body: body,
     TagSet: tags.TagSet
   };
 }
@@ -121,6 +126,16 @@ async function parseXmlString(xml) {
 }
 
 /**
+ * return metadata object from cmr echo10 XML file.
+ * @param {string} cmrFilename
+ * @returns {Object} cmr xml metadata as object.
+ */
+const metadataObjectFromCMRXMLFile = async (cmrFilename) => {
+  const metadata = await getXMLMetadataAsString(cmrFilename);
+  return parseXmlString(metadata);
+};
+
+/**
  * returns a list of CMR xml file objects
  *
  * @param {Array} input - an Array of S3 uris
@@ -134,15 +149,18 @@ async function getCmrXMLFiles(input, granuleIdExtraction) {
 
   await Promise.all(input.map(async (filename) => {
     if (filename && filename.match(expectedFormat)) {
+      // TODO [MHS, 2019-01-04] deprecate getMetadataBodyAndTags and find out
+      // why/how metadataResponse.Body is used.
       const metaResponse = await getMetadataBodyAndTags(filename);
-      const metadataObject = await parseXmlString(metaResponse.Body);
+      const metadataObject = await metadataObjectFromCMRXMLFile(filename);
+      const tags = await getS3ObjectTags(filename);
 
       const cmrFileObject = {
         filename,
         metadata: metaResponse.Body,
         metadataObject,
         granuleId: getGranuleId(filename, granuleIdExtraction),
-        s3Tags: metaResponse.TagSet
+        s3Tags: tags.TagSet
       };
 
       files.push(cmrFileObject);
@@ -258,8 +276,7 @@ const updateEcho10XMLMetadata = async (granuleId, cmrFile, files, distEndpoint, 
   const urls = await constructOnlineAccessUrls(files, distEndpoint);
 
   // add/replace the OnlineAccessUrls
-  const metadata = await getXMLMetadataAsString(cmrFile.filename);
-  const metadataObject = await parseXmlString(metadata);
+  const metadataObject = await metadataObjectFromCMRXMLFile(cmrFile.filename);
   const metadataGranule = metadataObject.Granule;
   const updatedGranule = {};
   Object.keys(metadataGranule).forEach((key) => {
