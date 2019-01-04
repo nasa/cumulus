@@ -4,6 +4,7 @@ const router = require('express-promise-router')();
 const aws = require('@cumulus/common/aws');
 const Search = require('../es/search').Search;
 const models = require('../models');
+const { RecordDoesNotExist } = require('../lib/errors');
 
 /**
  * List and search pdrs
@@ -32,8 +33,16 @@ async function get(req, res) {
 
   const pdrModel = new models.Pdr();
 
-  const result = await pdrModel.get({ pdrName });
-  return res.send(result);
+  try {
+    const result = await pdrModel.get({ pdrName });
+    return res.send(result);
+  }
+  catch(e) {
+    if (e instanceof RecordDoesNotExist) {
+      return res.boom.notFound(`No record found for ${pdrName}`);
+    }
+    throw e;
+  }
 }
 
 const isRecordDoesNotExistError = (e) => e.message.includes('RecordDoesNotExist');
