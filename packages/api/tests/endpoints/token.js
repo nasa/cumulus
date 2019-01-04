@@ -249,7 +249,7 @@ test.serial('GET /refresh with an unauthorized user results in an authorization 
     .post('/refresh')
     .set('Accept', 'application/json')
     .send({ token: jwtToken })
-    .expect(403);
+    .expect(401);
 
   assertions.isUnauthorizedUserResponse(t, response);
 });

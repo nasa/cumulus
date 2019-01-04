@@ -99,7 +99,7 @@ async function refreshAccessToken(request, oAuth2Provider, response) {
     }
     catch (err) {
       if (err.name === 'RecordDoesNotExist') {
-        return response.boom.forbidden('User not authorized');
+        return response.boom.unauthorized('User not authorized');
       }
     }
 

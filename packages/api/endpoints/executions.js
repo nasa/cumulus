@@ -3,6 +3,8 @@
 const router = require('express-promise-router')();
 const Search = require('../es/search').Search;
 const models = require('../models');
+const { RecordDoesNotExist } = require('../lib/errors');
+
 
 /**
  * List and search executions
@@ -31,8 +33,16 @@ async function get(req, res) {
 
   const e = new models.Execution();
 
-  const response = await e.get({ arn });
-  return res.send(response)
+  try {
+    const response = await e.get({ arn });
+    return res.send(response)
+  }
+  catch(e) {
+    if (e instanceof RecordDoesNotExist) {
+      return res.boom.notFound(`No record found for ${arn}`);
+    }
+    throw e;
+  }
 }
 
 router.get('/:arn', get);
