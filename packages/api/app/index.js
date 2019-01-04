@@ -3,6 +3,7 @@
 const cors = require('cors')
 const hsts = require('hsts')
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const express = require('express')
 const boom = require('express-boom')
 
@@ -14,6 +15,7 @@ const app = express()
 // Config
 app.use(boom())
 app.use(cors())
+app.use(cookieParser());
 app.use(bodyParser.json()); // for parsing application/json
 app.use(hsts({ maxAge: 31536000 }))
 
