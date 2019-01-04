@@ -150,7 +150,7 @@ class Granule extends Manager {
   }
 
   /**
-   * Move a granule's files to destination locations specified
+   * Move a granule's files to destinations specified
    *
    * @param {Object} g - the granule record object
    * @param {Array<{regex: string, bucket: string, filepath: string}>} destinations

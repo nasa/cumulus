@@ -152,17 +152,6 @@ async function getCmrXMLFiles(input, granuleIdExtraction) {
   return files;
 }
 
-async function postS3Object(destination, options) {
-  await aws.promiseS3Upload(
-    { Bucket: destination.bucket, Key: destination.key, Body: destination.body }
-  );
-  if (options) {
-    const s3 = aws.s3();
-    await s3.deleteObject(options).promise();
-  }
-}
-
-
 /**
  * Retrieve the stack's bucket configuration from s3 and return the bucket configuration object.
  *
@@ -240,7 +229,6 @@ function getCmrFileObjs(files) {
   return files.filter((file) => isCMRFile(file));
 }
 
-
 const updateUMMGMetadata = async () => {
   const NotImplemented = errors.CreateErrorType('NotImplemented');
   throw new NotImplemented('not yet.');
@@ -295,8 +283,7 @@ const updateEcho10XMLMetadata = async (granuleId, cmrFile, files, distEndpoint, 
     };
     await publishECHO10XML2CMR(cmrFileObject, creds, process.env.bucket, process.env.stackName);
   }
-
-  return postS3Object({ bucket: cmrFile.bucket, key: cmrFile.filepath, body: xml });
+  return aws.promiseS3Upload({ Bucket: cmrFile.bucket, Key: cmrFile.filepath, Body: xml });
 };
 
 /**
