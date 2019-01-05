@@ -6,17 +6,17 @@ const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');
 
 process.env.RulesTable = `RulesTable_${randomString()}`;
-process.env.stackName = 'my-stackName';
-process.env.messageConsumer = 'my-messageConsumer';
-process.env.KinesisInboundEventLogger = 'my-ruleInput';
+process.env.stackName = randomString();
+process.env.messageConsumer = randomString();
+process.env.KinesisInboundEventLogger = randomString();
 process.env.bucket = randomString();
 
-const workflow = 'my-workflow';
+const workflow = randomString();
 const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
 
 const kinesisRule = {
-  name: 'my_kinesis_rule',
-  workflow: 'my-workflow',
+  name: randomString(),
+  workflow,
   provider: 'my-provider',
   collection: {
     name: 'my-collection-name',
@@ -31,7 +31,7 @@ const kinesisRule = {
 
 const onetimeRule = {
   name: 'my_one_time_rule',
-  workflow: 'my-workflow',
+  workflow,
   provider: 'my-provider',
   collection: {
     name: 'my-collection-name',
