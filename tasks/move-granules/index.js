@@ -10,7 +10,9 @@ const {
   moveGranuleFile, renameS3FileWithTimestamp
 } = require('@cumulus/ingest/granule');
 const {
-  getCmrXMLFiles, getGranuleId
+  constructOnlineAccessUrls,
+  getCmrXMLFiles,
+  getGranuleId
 } = require('@cumulus/cmrjs');
 const urljoin = require('url-join');
 const path = require('path');
@@ -133,15 +135,15 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
         granule: granulesObject[granuleId],
         cmrMetadata: cmrFile ? cmrFile.metadataObject : {}
       });
-      const bucket = buckets[match[0].bucket];
+      const bucketName = buckets[match[0].bucket].name;
       const filepath = path.join(urlPath, file.name);
 
       updatedFiles.push({
         ...file,
         ...{
-          bucket,
+          bucket: bucketName,
           filepath,
-          filename: `s3://${path.join(bucket.name, filepath)}`,
+          filename: `s3://${path.join(bucketName, filepath)}`,
           url_path: URLPathTemplate
         }
       });
@@ -162,15 +164,16 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
  * @param {string} duplicateHandling - how to handle duplicate files
  * @returns {Array<Object>} returns the file moved and the renamed existing duplicates if any
  */
-async function moveFileRequest(file, sourceBucket, duplicateHandling) {
+async function moveFileRequest(file, sourceBucket, duplicateHandling, buckets) {
   const fileStagingDir = file.fileStagingDir || 'file-staging';
+  const bucketkey = Object.keys(buckets).find((bucketKey) => file.bucket === buckets[bucketKey].name);
   const source = {
     Bucket: sourceBucket,
     Key: `${fileStagingDir}/${file.name}`
   };
 
   const target = {
-    Bucket: file.bucket.name,
+    Bucket: file.bucket,
     Key: file.filepath
   };
 
@@ -191,7 +194,7 @@ async function moveFileRequest(file, sourceBucket, duplicateHandling) {
 
   if (s3ObjAlreadyExists && duplicateHandling === 'skip') return [fileMoved];
 
-  const options = (file.bucket.type.match('public')) ? { ACL: 'public-read' } : null;
+  const options = (buckets[bucketkey].type.match('public')) ? { ACL: 'public-read' } : null;
 
   // compare the checksum of the existing file and new file, and handle them accordingly
   if (s3ObjAlreadyExists && duplicateHandling === 'version') {
@@ -236,15 +239,16 @@ async function moveFileRequest(file, sourceBucket, duplicateHandling) {
 * @param {string} duplicateHandling - how to handle duplicate files
 * @returns {Object} the object with updated granules
 **/
-async function moveFilesForAllGranules(granulesObject, sourceBucket, duplicateHandling) {
+async function moveFilesForAllGranules(granulesObject, sourceBucket, duplicateHandling, buckets) {
   const moveFileRequests = Object.keys(granulesObject).map(async (granuleKey) => {
     const granule = granulesObject[granuleKey];
     const cmrFileFormat = /.*\.cmr\.xml$/;
     const filesToMove = granule.files.filter((file) => !file.name.match(cmrFileFormat));
     const cmrFile = granule.files.filter((file) => file.name.match(cmrFileFormat));
 
-    const filesMoved = await Promise.all(filesToMove.map((file) =>
-      moveFileRequest(file, sourceBucket, duplicateHandling)));
+    const filesMoved = await Promise.all(
+      filesToMove.map((file) => moveFileRequest(file, sourceBucket, duplicateHandling, buckets))
+    );
     granule.files = flatten(filesMoved).concat(cmrFile);
   });
 
@@ -260,27 +264,28 @@ async function moveFilesForAllGranules(granulesObject, sourceBucket, duplicateHa
 * @param {string} distEndpoint - the api distribution endpoint
 * @returns {Promise} promise resolves when all files have been updated
 **/
-async function updateCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoint) {
+async function updateCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoint, buckets) {
   await Promise.all(cmrFiles.map(async (cmrFile) => {
     const metadataGranule = get(cmrFile, 'metadataObject.Granule');
     const granule = granulesObject[cmrFile.granuleId];
-    const urls = [];
+    const urls = await constructOnlineAccessUrls(granule.files, distEndpoint, buckets);
     // Populates onlineAcessUrls with all public and protected files
-    granule.files.forEach((file) => {
-      const urlObj = {};
-      if (file.bucket.type.match('protected')) {
-        const extension = urljoin(file.bucket.name, file.filepath);
-        urlObj.URL = urljoin(distEndpoint, extension);
-        urlObj.URLDescription = 'File to download';
-        urls.push(urlObj);
-        log.info(`protected file: ${JSON.stringify(file)},\nurl: ${JSON.stringify(urlObj)}`);
-      }
-      else if (file.bucket.type.match('public')) {
-        urlObj.URL = `https://${file.bucket.name}.s3.amazonaws.com/${file.filepath}`;
-        urlObj.URLDescription = 'File to download';
-        urls.push(urlObj);
-      }
-    });
+
+    // granule.files.forEach((file) => {
+    //   const urlObj = {};
+    //   if (file.bucket.type.match('protected')) {
+    //     const extension = urljoin(file.bucket.name, file.filepath);
+    //     urlObj.URL = urljoin(distEndpoint, extension);
+    //     urlObj.URLDescription = 'File to download';
+    //     urls.push(urlObj);
+    //     log.info(`protected file: ${JSON.stringify(file)},\nurl: ${JSON.stringify(urlObj)}`);
+    //   }
+    //   else if (file.bucket.type.match('public')) {
+    //     urlObj.URL = `https://${file.bucket.name}.s3.amazonaws.com/${file.filepath}`;
+    //     urlObj.URLDescription = 'File to download';
+    //     urls.push(urlObj);
+    //   }
+    // });
 
     const updatedGranule = {};
     Object.keys(metadataGranule).forEach((key) => {
@@ -296,17 +301,18 @@ async function updateCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoint) {
     const builder = new xml2js.Builder();
     const xml = builder.buildObject(cmrFile.metadataObject);
 
-    /* eslint-enable no-param-reassign */
+
     const updatedCmrFile = granule.files.find((f) => f.filename.match(/.*\.cmr\.xml$/));
+    const cmrBucketkey = Object.keys(buckets).find((bucketKey) => updatedCmrFile.bucket === buckets[bucketKey].name);
     // S3 upload only accepts tag query strings, so reduce tags to query string.
     const tagsQueryString = s3TagSetToQueryString(cmrFile.s3Tags);
     const params = {
-      Bucket: updatedCmrFile.bucket.name,
+      Bucket: updatedCmrFile.bucket,
       Key: updatedCmrFile.filepath,
       Body: xml,
       Tagging: tagsQueryString
     };
-    if (updatedCmrFile.bucket.type.match('public')) {
+    if (buckets[cmrBucketkey].type.match('public')) {
       params.ACL = 'public-read';
       await promiseS3Upload(params);
     }
@@ -391,21 +397,14 @@ async function moveGranules(event) {
   let movedGranules;
   if (moveStagedFiles) {
     // move files from staging location to final location
-    movedGranules = await moveFilesForAllGranules(granulesToMove, bucket, duplicateHandling);
+    movedGranules = await moveFilesForAllGranules(granulesToMove, bucket, duplicateHandling, buckets);
     // update cmr.xml files with correct online access urls
-    await updateCmrFileAccessURLs(cmrFiles, movedGranules, distEndpoint);
+    await updateCmrFileAccessURLs(cmrFiles, movedGranules, distEndpoint, buckets);
   }
 
   return {
     granules: Object.keys(movedGranules).map((k) => {
       const granule = movedGranules[k];
-
-      // Just return the bucket name with the granules
-      granule.files.map((f) => {
-        f.bucket = f.bucket.name; /* eslint-disable-line no-param-reassign */
-        return f;
-      });
-
       return granule;
     })
   };
