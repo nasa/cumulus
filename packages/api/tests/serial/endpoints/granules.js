@@ -1,9 +1,11 @@
 'use strict';
 
 const fs = require('fs');
+const request = require('supertest');
 const path = require('path');
 const sinon = require('sinon');
 const test = require('ava');
+const { sfn } = require('@cumulus/common/aws');
 const aws = require('@cumulus/common/aws');
 const { CMR } = require('@cumulus/cmrjs');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
@@ -26,6 +28,18 @@ const {
   createJwtToken
 } = require('../../../lib/token');
 const { Search } = require('../../../es/search');
+
+process.env.AccessTokensTable = randomString();
+process.env.CollectionsTable = randomString();
+process.env.GranulesTable = randomString();
+process.env.UsersTable = randomString();
+process.env.stackName = randomString();
+process.env.internal = randomString();
+process.env.bucket = process.env.internal; 
+process.env.TOKEN_SECRET = randomString();
+
+// import the express app after setting the env variables
+const { app } = require('../../../app');
 
 const createBucket = (Bucket) => aws.s3().createBucket({ Bucket }).promise();
 
@@ -60,13 +74,6 @@ let userModel;
 
 test.before(async () => {
   esIndex = randomString();
-  process.env.AccessTokensTable = randomString();
-  process.env.CollectionsTable = randomString();
-  process.env.GranulesTable = randomString();
-  process.env.UsersTable = randomString();
-  process.env.stackName = randomString();
-  process.env.internal = randomString();
-  process.env.TOKEN_SECRET = randomString();
 
   // create esClient
   esClient = await Search.es('fakehost');
@@ -96,10 +103,6 @@ test.before(async () => {
 });
 
 test.beforeEach(async (t) => {
-  t.context.authHeaders = {
-    Authorization: `Bearer ${accessToken}`
-  };
-
   t.context.testCollection = fakeCollectionFactory({
     name: 'fakeCollection',
     dataType: 'fakeCollection',
@@ -129,14 +132,13 @@ test.after.always(async () => {
 });
 
 test.serial('default returns list of granules', async (t) => {
-  const event = {
-    httpMethod: 'GET',
-    headers: t.context.authHeaders
-  };
+  const response = await request(app)
+    .get('/granules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${accessToken}`)
+    .expect(200)
 
-  const response = await handleRequest(event);
-
-  const { meta, results } = JSON.parse(response.body);
+  const { meta, results } = response.body;
   t.is(results.length, 2);
   t.is(meta.stack, process.env.stackName);
   t.is(meta.table, 'granule');
@@ -148,67 +150,47 @@ test.serial('default returns list of granules', async (t) => {
 });
 
 test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    headers: {}
-  };
-
-  const response = await handleRequest(request);
+  const response = await request(app)
+    .get('/granules')
+    .set('Accept', 'application/json')
+    .expect(401)
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test.serial('CUMULUS-911 GET with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    headers: {},
-    pathParameters: {
-      granuleName: 'asdf'
-    }
-  };
-
-  const response = await handleRequest(request);
+  const response = await request(app)
+    .get('/granules/asdf')
+    .set('Accept', 'application/json')
+    .expect(401)
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test.serial('CUMULUS-911 PUT with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'PUT',
-    headers: {},
-    pathParameters: {
-      granuleName: 'asdf'
-    }
-  };
-
-  const response = await handleRequest(request);
+  const response = await request(app)
+    .put('/granules/asdf')
+    .set('Accept', 'application/json')
+    .expect(401)
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test.serial('CUMULUS-911 DELETE with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'DELETE',
-    headers: {},
-    pathParameters: {
-      granuleName: 'asdf'
-    }
-  };
-
-  const response = await handleRequest(request);
+  const response = await request(app)
+    .delete('/granules/asdf')
+    .set('Accept', 'application/json')
+    .expect(401)
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test.serial('CUMULUS-912 GET without pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAccessToken'
-    }
-  };
-
-  const response = await handleRequest(request);
+  const response = await request(app)
+    .get('/granules/asdf')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403)
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -218,30 +200,21 @@ test.serial('CUMULUS-912 GET without pathParameters and with an unauthorized use
   await accessTokenModel.create(accessTokenRecord);
   const jwtToken = createJwtToken(accessTokenRecord);
 
-  const request = {
-    httpMethod: 'GET',
-    headers: {
-      Authorization: `Bearer ${jwtToken}`
-    }
-  };
-
-  const response = await handleRequest(request);
+  const response = await request(app)
+    .get('/granules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtToken}`)
+    .expect(401)
 
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
 test.serial('CUMULUS-912 GET with pathParameters.granuleName set and with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    },
-    pathParameters: {
-      granuleName: 'asdf'
-    }
-  };
-
-  const response = await handleRequest(request);
+  const response = await request(app)
+    .get('/granules/asdf')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403)
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -249,17 +222,11 @@ test.serial('CUMULUS-912 GET with pathParameters.granuleName set and with an inv
 test.todo('CUMULUS-912 GET with pathParameters.granuleName set and with an unauthorized user returns an unauthorized response');
 
 test.serial('CUMULUS-912 PUT with pathParameters.granuleName set and with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'PUT',
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    },
-    pathParameters: {
-      granuleName: 'asdf'
-    }
-  };
-
-  const response = await handleRequest(request);
+  const response = await request(app)
+    .put('/granules/asdf')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403)
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -271,82 +238,60 @@ test.serial('CUMULUS-912 DELETE with pathParameters.granuleName set and with an 
   await accessTokenModel.create(accessTokenRecord);
   const jwtToken = createJwtToken(accessTokenRecord);
 
-  const request = {
-    httpMethod: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${jwtToken}`
-    },
-    pathParameters: {
-      granuleName: 'asdf'
-    }
-  };
-
-  const response = await handleRequest(request);
+  const response = await request(app)
+    .delete('/granules/adsf')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtToken}`)
+    .expect(401)
 
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
 test.serial('GET returns an existing granule', async (t) => {
-  const event = {
-    httpMethod: 'GET',
-    pathParameters: {
-      granuleName: t.context.fakeGranules[0].granuleId
-    },
-    headers: t.context.authHeaders
-  };
+  const response = await request(app)
+    .get(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${accessToken}`)
+    .expect(200)
 
-  const response = await handleRequest(event);
-
-  const { granuleId } = JSON.parse(response.body);
+  const { granuleId } = response.body;
   t.is(granuleId, t.context.fakeGranules[0].granuleId);
 });
 
 test.serial('GET returns a 404 response if the granule is not found', async (t) => {
-  const event = {
-    httpMethod: 'GET',
-    pathParameters: {
-      granuleName: 'unknownGranule'
-    },
-    headers: t.context.authHeaders
-  };
+  const response = await request(app)
+    .get('/granules/unknownGranule')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${accessToken}`)
+    .expect(404)
 
-  const response = await handleRequest(event);
-
-  t.is(response.statusCode, 404);
-  const { message } = JSON.parse(response.body);
+  t.is(response.status, 404);
+  const { message } = response.body;
   t.is(message, 'Granule not found');
 });
 
 test.serial('PUT fails if action is not supported', async (t) => {
-  const event = {
-    httpMethod: 'PUT',
-    pathParameters: {
-      granuleName: t.context.fakeGranules[0].granuleId
-    },
-    headers: t.context.authHeaders,
-    body: JSON.stringify({ action: 'reprocess' })
-  };
+  const response = await request(app)
+    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${accessToken}`)
+    .send({ action: 'reprecess' })
+    .expect(400)
 
-  const response = await handleRequest(event);
-
-  t.is(response.statusCode, 400);
-  const { message } = JSON.parse(response.body);
+  t.is(response.status, 400);
+  const { message } = response.body;
   t.true(message.includes('Action is not supported'));
 });
 
 test.serial('PUT fails if action is not provided', async (t) => {
-  const event = {
-    httpMethod: 'PUT',
-    pathParameters: {
-      granuleName: t.context.fakeGranules[0].granuleId
-    },
-    headers: t.context.authHeaders
-  };
+  const response = await request(app)
+    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${accessToken}`)
+    .expect(400)
 
-  const response = await handleRequest(event);
-
-  t.is(response.statusCode, 400);
-  const { message } = JSON.parse(response.body);
+  t.is(response.status, 400);
+  const { message } = response.body;
   t.is(message, 'Action is missing');
 });
 
@@ -361,42 +306,29 @@ test.serial('reingest a granule', async (t) => {
     })
   };
 
-  const event = {
-    httpMethod: 'PUT',
-    pathParameters: {
-      granuleName: t.context.fakeGranules[0].granuleId
-    },
-    headers: t.context.authHeaders,
-    body: JSON.stringify({ action: 'reingest' })
-  };
-
   // fake workflow
-  process.env.bucket = process.env.internal;
   const message = JSON.parse(fakeDescribeExecutionResult.input);
   const key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
   await putObject({ Bucket: process.env.bucket, Key: key, Body: 'test data' });
+  const stub = sinon.stub(sfn(), 'describeExecution').returns({
+    promise: () => Promise.resolve(fakeDescribeExecutionResult)
+  });
 
-  const sfn = aws.sfn();
-
-  let response;
-  try {
-    sfn.describeExecution = () => ({
-      promise: () => Promise.resolve(fakeDescribeExecutionResult)
-    });
-
-    response = await handleRequest(event);
-  }
-  finally {
-    delete sfn.describeExecution;
-  }
-
-  const body = JSON.parse(response.body);
+  const response = await request(app)
+    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${accessToken}`)
+    .send({ action: 'reingest' })
+    .expect(200)
+  
+  const body = response.body;
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'reingest');
   t.true(body.warning.includes('overwritten'));
 
   const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
   t.is(updatedGranule.status, 'running');
+  stub.restore();
 });
 
 // This needs to be serial because it is stubbing aws.sfn's responses
@@ -412,21 +344,7 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
     }
   };
 
-  const event = {
-    httpMethod: 'PUT',
-    pathParameters: {
-      granuleName: t.context.fakeGranules[0].granuleId
-    },
-    headers: t.context.authHeaders,
-    body: JSON.stringify({
-      action: 'applyWorkflow',
-      workflow: 'inPlaceWorkflow',
-      messageSource: 'output'
-    })
-  };
-
   //fake in-place workflow
-  process.env.bucket = process.env.internal;
   const message = JSON.parse(fakeSFResponse.execution.input);
   const key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
   await putObject({ Bucket: process.env.bucket, Key: key, Body: 'fake in-place workflow' });
@@ -440,38 +358,31 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
     })
   };
 
-  const sfn = aws.sfn();
+  const stub = sinon.stub(sfn(), 'describeExecution').returns({
+    promise: () => Promise.resolve(fakeDescribeExecutionResult)
+  });
 
-  let response;
-  try {
-    sfn.describeExecution = () => ({
-      promise: () => Promise.resolve(fakeDescribeExecutionResult)
-    });
-
-    response = await handleRequest(event);
-  }
-  finally {
-    delete sfn.describeExecution;
-  }
-
-  const body = JSON.parse(response.body);
+  const response = await request(app)
+    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${accessToken}`)
+    .send({
+      action: 'applyWorkflow',
+      workflow: 'inPlaceWorkflow',
+      messageSource: 'output'
+    })
+    .expect(200)
+ 
+  const body = response.body;
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'applyWorkflow inPlaceWorkflow');
 
   const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
   t.is(updatedGranule.status, 'running');
+  stub.restore();
 });
 
 test.serial('remove a granule from CMR', async (t) => {
-  const event = {
-    httpMethod: 'PUT',
-    pathParameters: {
-      granuleName: t.context.fakeGranules[0].granuleId
-    },
-    headers: t.context.authHeaders,
-    body: JSON.stringify({ action: 'removeFromCmr' })
-  };
-
   sinon.stub(
     DefaultProvider,
     'decrypt'
@@ -482,9 +393,15 @@ test.serial('remove a granule from CMR', async (t) => {
     'deleteGranule'
   ).callsFake(() => Promise.resolve());
 
-  const response = await handleRequest(event);
+  const response = await request(app)
+    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${accessToken}`)
+    .send({ action: 'removeFromCmr' })
+    .expect(200)
+ 
 
-  const body = JSON.parse(response.body);
+  const body = response.body;
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'removeFromCmr');
 
@@ -497,18 +414,14 @@ test.serial('remove a granule from CMR', async (t) => {
 });
 
 test.serial('DELETE deleting an existing granule that is published will fail', async (t) => {
-  const event = {
-    httpMethod: 'DELETE',
-    pathParameters: {
-      granuleName: t.context.fakeGranules[0].granuleId
-    },
-    headers: t.context.authHeaders
-  };
+  const response = await request(app)
+    .delete(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${accessToken}`)
+    .expect(400)
 
-  const response = await handleRequest(event);
-
-  t.is(response.statusCode, 400);
-  const { message } = JSON.parse(response.body);
+  t.is(response.status, 400);
+  const { message } = response.body;
   t.is(
     message,
     'You cannot delete a granule that is published to CMR. Remove it from CMR first'
@@ -564,18 +477,14 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   // create a new unpublished granule
   await granuleModel.create(newGranule);
 
-  const event = {
-    httpMethod: 'DELETE',
-    pathParameters: {
-      granuleName: newGranule.granuleId
-    },
-    headers: t.context.authHeaders
-  };
+  const response = await request(app)
+    .delete(`/granules/${newGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${accessToken}`)
+    .expect(200)
 
-  const response = await handleRequest(event);
-
-  t.is(response.statusCode, 200);
-  const { detail } = JSON.parse(response.body);
+  t.is(response.status, 200);
+  const { detail } = response.body;
   t.is(detail, 'Record deleted');
 
   // verify the files are deleted
@@ -661,9 +570,17 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
         })
       };
 
-      const response = await handleRequest(event);
+      const response = await request(app)
+        .put(`/granules/${newGranule.granuleId}`)
+        .set('Accept', 'application/json')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          action: 'move',
+          destinations
+        })
+        .expect(200)
 
-      const body = JSON.parse(response.body);
+      const body = response.body;
       t.is(body.status, 'SUCCESS');
       t.is(body.action, 'move');
 
@@ -701,7 +618,6 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
 
 test.serial('move a file and update metadata', async (t) => {
   const bucket = process.env.internal;
-  process.env.bucket = bucket;
   const buckets = {
     protected: {
       name: process.env.internal,
@@ -757,26 +673,22 @@ test.serial('move a file and update metadata', async (t) => {
     }
   ];
 
-  const event = {
-    httpMethod: 'PUT',
-    pathParameters: {
-      granuleName: newGranule.granuleId
-    },
-    headers: t.context.authHeaders,
-    body: JSON.stringify({
-      action: 'move',
-      destinations
-    })
-  };
-
   sinon.stub(
     CMR.prototype,
     'ingestGranule'
   ).returns({ result: { 'concept-id': 'id204842' } });
 
-  const response = await handleRequest(event);
+  const response = await request(app)
+    .put(`/granules/${newGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${accessToken}`)
+    .send({
+      action: 'move',
+      destinations
+    })
+    .expect(200)
 
-  const body = JSON.parse(response.body);
+  const body = response.body;
 
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'move');
@@ -828,19 +740,16 @@ test('PUT with action move returns failure if one granule file exists', async (t
     }]
   };
 
-  const request = {
-    httpMethod: 'PUT',
-    pathParameters: {
-      granuleName: granule.granuleId
-    },
-    body: JSON.stringify(body),
-    headers: t.context.authHeaders
-  };
+  const response = await request(app)
+    .put(`/granules/${granule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${accessToken}`)
+    .send(body)
+    .expect(409)
 
-  const response = await handleRequest(request);
 
-  const responseBody = JSON.parse(response.body);
-  t.is(response.statusCode, 409);
+  const responseBody = response.body;
+  t.is(response.status, 409);
   t.is(responseBody.message,
     'Cannot move granule because the following files would be overwritten at the destination location: file1. Delete the existing files or reingest the source files.');
 
@@ -869,18 +778,14 @@ test('PUT with action move returns failure if more than one granule file exists'
     }]
   };
 
-  const request = {
-    httpMethod: 'PUT',
-    pathParameters: {
-      granuleName: granule.granuleId
-    },
-    body: JSON.stringify(body),
-    headers: t.context.authHeaders
-  };
+  const response = await request(app)
+    .put(`/granules/${granule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${accessToken}`)
+    .send(body)
+    .expect(409)
 
-  const response = await handleRequest(request);
-
-  const responseBody = JSON.parse(response.body);
+  const responseBody = response.body;
   t.is(response.statusCode, 409);
   t.is(responseBody.message,
     'Cannot move granule because the following files would be overwritten at the destination location: file1, file2, file3. Delete the existing files or reingest the source files.');

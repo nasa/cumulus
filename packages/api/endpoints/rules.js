@@ -44,7 +44,7 @@ async function get(req, res) {
  * @returns {Promise<Object>} the promise of express response object 
  */
 async function post(req, res) {
-  const data = res.body;
+  const data = req.body;
   const name = data.name;
 
   const model = new models.Rule();
