@@ -179,33 +179,38 @@ async function bucketConfig(bucket, stackName) {
   return JSON.parse(bucketsString.Body);
 }
 
+/** Return the stack's buckets from S3 */
+const defaultBuckets = async () => bucketConfig(process.env.bucket, process.env.stackName);
+
 /**
  * Construct a list of online access urls.
  *
  * @param {Array<Object>} files - array of file objects
  * @param {string} distEndpoint - distribution enpoint from config
+ * @param {Object} buckets_ - stack's bucket configurations
  * @returns {Array<{URL: string, URLDescription: string}>}
  *   returns the list of online access url objects
  */
-async function constructOnlineAccessUrls(files, distEndpoint) {
+async function constructOnlineAccessUrls(files, distEndpoint, buckets_) {
   const urls = [];
+  // TODO [MHS, 2019-01-04] make this a sync function.
+  const buckets = buckets_ || await defaultBuckets();
 
-  const bucketsObject = await bucketConfig(process.env.bucket, process.env.stackName);
   // URLs are for public and protected files
-  const bucketKeys = Object.keys(bucketsObject);
+  const bucketKeys = Object.keys(buckets);
 
   files.forEach((file) => {
     const urlObj = {};
-    const bucketkey = bucketKeys.find((bucketKey) => file.bucket === bucketsObject[bucketKey].name);
+    const bucketkey = bucketKeys.find((bucketKey) => file.bucket === buckets[bucketKey].name);
 
-    if (bucketsObject[bucketkey].type === 'protected') {
-      const extension = urljoin(bucketsObject[bucketkey].name, `${file.filepath}`);
+    if (buckets[bucketkey].type === 'protected') {
+      const extension = urljoin(buckets[bucketkey].name, `${file.filepath}`);
       urlObj.URL = urljoin(distEndpoint, extension);
       urlObj.URLDescription = 'File to download';
       urls.push(urlObj);
     }
-    else if (bucketsObject[bucketkey].type === 'public') {
-      urlObj.URL = `https://${bucketsObject[bucketkey].name}.s3.amazonaws.com/${file.filepath}`;
+    else if (buckets[bucketkey].type === 'public') {
+      urlObj.URL = `https://${buckets[bucketkey].name}.s3.amazonaws.com/${file.filepath}`;
       urlObj.URLDescription = 'File to download';
       urls.push(urlObj);
     }
@@ -326,6 +331,7 @@ async function reconcileCMRMetadata(granuleId, updatedFiles, distEndpoint, publi
 
 
 module.exports = {
+  constructOnlineAccessUrls,
   getGranuleId,
   getCmrXMLFiles,
   publishECHO10XML2CMR,
