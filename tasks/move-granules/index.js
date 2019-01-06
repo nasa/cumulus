@@ -268,24 +268,8 @@ async function updateCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoint, b
   await Promise.all(cmrFiles.map(async (cmrFile) => {
     const metadataGranule = get(cmrFile, 'metadataObject.Granule');
     const granule = granulesObject[cmrFile.granuleId];
-    const urls = await constructOnlineAccessUrls(granule.files, distEndpoint, buckets);
-    // Populates onlineAcessUrls with all public and protected files
 
-    // granule.files.forEach((file) => {
-    //   const urlObj = {};
-    //   if (file.bucket.type.match('protected')) {
-    //     const extension = urljoin(file.bucket.name, file.filepath);
-    //     urlObj.URL = urljoin(distEndpoint, extension);
-    //     urlObj.URLDescription = 'File to download';
-    //     urls.push(urlObj);
-    //     log.info(`protected file: ${JSON.stringify(file)},\nurl: ${JSON.stringify(urlObj)}`);
-    //   }
-    //   else if (file.bucket.type.match('public')) {
-    //     urlObj.URL = `https://${file.bucket.name}.s3.amazonaws.com/${file.filepath}`;
-    //     urlObj.URLDescription = 'File to download';
-    //     urls.push(urlObj);
-    //   }
-    // });
+    const urls = await constructOnlineAccessUrls(granule.files, distEndpoint, buckets);
 
     const updatedGranule = {};
     Object.keys(metadataGranule).forEach((key) => {
@@ -297,7 +281,7 @@ async function updateCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoint, b
     updatedGranule.OnlineAccessURLs.OnlineAccessURL = urls;
     /* eslint-disable no-param-reassign */
     cmrFile.metadataObject.Granule = updatedGranule;
-
+    /* eslint-enable no-param-reassign */
     const builder = new xml2js.Builder();
     const xml = builder.buildObject(cmrFile.metadataObject);
 
