@@ -97,7 +97,6 @@ async function getS3ObjectTags(objectFilePath) {
   return aws.s3GetObjectTagging(Bucket, Key);
 }
 
-
 /**
  * Parse an xml string
  *
@@ -107,7 +106,6 @@ async function getS3ObjectTags(objectFilePath) {
 async function parseXmlString(xml) {
   return (promisify(xml2js.parseString))(xml, xmlParseOptions);
 }
-
 
 const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
@@ -122,7 +120,6 @@ function isCMRFile(fileobject) {
   const cmrfilename = fileobject.name || fileobject.filename || '';
   return isECHO10File(cmrfilename) || isUMMGFile(cmrfilename);
 }
-
 
 /**
  * return metadata object from cmr echo10 XML file.
@@ -179,8 +176,10 @@ async function bucketConfig(bucket, stackName) {
   return JSON.parse(bucketsString.Body);
 }
 
-/** Return the stack's buckets from S3 */
-const defaultBuckets = async () => bucketConfig(process.env.bucket, process.env.stackName);
+/** Return the stack's buckets object read from from S3 */
+async function defaultBuckets() {
+  return bucketConfig(process.env.bucket, process.env.stackName);
+}
 
 /**
  * Construct a list of online access urls.
@@ -232,20 +231,22 @@ function getCmrFileObjs(files) {
   return files.filter((file) => isCMRFile(file));
 }
 
-const updateUMMGMetadata = async () => {
+async function updateUMMGMetadata() {
   const NotImplemented = errors.CreateErrorType('NotImplemented');
   throw new NotImplemented('not yet.');
-};
+}
 
 /** helper to build an CMR credential object
  * @returns {Object} object to create CMR instance.
 */
-const getCreds = () => ({
-  provider: process.env.cmr_provider,
-  clientId: process.env.cmr_client_id,
-  username: process.env.cmr_username,
-  password: process.env.cmr_password
-});
+function getCreds() {
+  return {
+    provider: process.env.cmr_provider,
+    clientId: process.env.cmr_client_id,
+    username: process.env.cmr_username,
+    password: process.env.cmr_password
+  };
+}
 
 /**
  * Modifies cmr Echo10 xml metadata file with files' URLs updated to their new locations.
@@ -257,7 +258,7 @@ const getCreds = () => ({
  * @param {boolean} published - indicate if publish is needed
  * @returns {Promise} returns promise to upload updated cmr file
  */
-const updateEcho10XMLMetadata = async (granuleId, cmrFile, files, distEndpoint, published) => {
+async function updateEcho10XMLMetadata(granuleId, cmrFile, files, distEndpoint, published) {
   const urls = await constructOnlineAccessUrls(files, distEndpoint);
 
   // add/replace the OnlineAccessUrls
@@ -286,7 +287,7 @@ const updateEcho10XMLMetadata = async (granuleId, cmrFile, files, distEndpoint, 
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(metadataObject);
   return aws.promiseS3Upload({ Bucket: cmrFile.bucket, Key: cmrFile.filepath, Body: xml });
-};
+}
 
 /**
  * Modifies cmr metadata file with file's URLs updated to their new locations.
