@@ -317,14 +317,13 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
   stub.restore();
 });
 
-test.serial('DELETE /tokenDelete without a token returns a 400 response', async (t) => {
+test.serial('DELETE /tokenDelete without a token returns a 404 response', async (t) => {
   const response = await request(app)
     .delete('/token')
     .set('Accept', 'application/json')
-    .expect(401);
+    .expect(404);
 
-  t.is(response.status, 401);
-  t.is(response.body.message, 'Request requires a token');
+  t.is(response.status, 404);
 });
 
 test.serial('DELETE /tokenDelete with an invalid token returns an invalid token response', async (t) => {
