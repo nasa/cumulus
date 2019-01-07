@@ -407,6 +407,10 @@ ApiTokenDefault:
       path: refresh
       method: post
       cors: true
+    - api: backend
+      path: tokenDelete/{jwtToken}
+      method: delete
+      cors: true
 
 ApiVersionDefault:
   handler: index.version

@@ -316,3 +316,52 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
   }));
   stub.restore();
 });
+
+test.serial('DELETE /tokenDelete without a token returns a 400 response', async (t) => {
+  const response = await request(app)
+    .delete('/token')
+    .set('Accept', 'application/json')
+    .expect(401);
+
+  t.is(response.status, 401);
+  t.is(response.body.message, 'Request requires a token');
+});
+
+test.serial('DELETE /tokenDelete with an invalid token returns an invalid token response', async (t) => {
+  const response = await request(app)
+    .delete('/token/InvalidToken')
+    .set('Accept', 'application/json')
+    .expect(403);
+
+  assertions.isInvalidAccessTokenResponse(t, response);
+});
+
+test.serial('DELETE /tokenDelete with an unauthorized user returns an unauthorized user response', async (t) => {
+  const accessTokenRecord = fakeAccessTokenFactory();
+  const jwtToken = createJwtToken(accessTokenRecord);
+
+  const response = await request(app)
+    .delete(`/token/${jwtToken}`)
+    .set('Accept', 'application/json')
+    .expect(401);
+
+  assertions.isUnauthorizedUserResponse(t, response);
+});
+
+test.serial('DELETE /tokenDelete with a valid token results in a successful deletion response', async (t) => {
+  const userRecord = fakeUserFactory();
+  await userModel.create(userRecord);
+
+  const accessTokenRecord = fakeAccessTokenFactory({ username: userRecord.userName });
+  await accessTokenModel.create(accessTokenRecord);
+
+  const jwtToken = createJwtToken(accessTokenRecord);
+  const response = await request(app)
+    .delete(`/token/${jwtToken}`)
+    .set('Accept', 'application/json')
+    .expect(200);
+
+  t.false(await accessTokenModel.exists({ accessToken: accessTokenRecord.accessToken }));
+  t.is(response.status, 200);
+  t.is(response.body.message, 'Token record was deleted');
+});

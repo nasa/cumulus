@@ -155,4 +155,4 @@ jobs:
 branches:
   only:
     - master
-    - ^v\d+.*  # To build tag pushes for releases
+    - /^v\d+\.\d+(\.\d+)?(-\S*)?$/  # To build tag pushes for releases

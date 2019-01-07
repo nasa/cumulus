@@ -2,25 +2,52 @@
 
 const get = require('lodash.get');
 const log = require('@cumulus/common/log');
-
 const { google } = require('googleapis');
-const { JsonWebTokenError, TokenExpiredError } = require('jsonwebtoken');
+const {
+  JsonWebTokenError,
+  TokenExpiredError,
+  TokenUnauthorizedUserError
+} = require('jsonwebtoken');
 
 const EarthdataLogin = require('../lib/EarthdataLogin');
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 const {
-  createJwtToken,
-  verifyJwtToken
+  createJwtToken
 } = require('../lib/token');
 
-const { AccessToken, User } = require('../models');
 
-const buildPermanentRedirectResponse = (location, response) =>
-  response
-    .set({ Location: location })
-    .status(307)
-    .send('Redirecting');
+const { verifyJwtAuthorization } = require('../lib/request');
 
+const { AccessToken } = require('../models');
+
+/**
+ * Handle API response for JWT verification errors
+ *
+ * @param {Error} err - error thrown by JWT verification
+ * @param {Object} response - an express response object
+ * @returns {Promise<Object>} the promise of express response object 
+ */
+function handleJwtVerificationError(err, response) {
+  if (err instanceof TokenExpiredError) {
+    return response.boom.forbidden('Access token has expired');
+  }
+  if (err instanceof JsonWebTokenError) {
+    return response.boom.forbidden('Invalid access token');
+  }
+  if (err instanceof TokenUnauthorizedUserError) {
+    return response.boom.unauthorized('User not authorized');
+  }
+  throw err;
+}
+
+/**
+ * Handles token requests 
+ *
+ * @param {Object} event - an express request object
+ * @param {Object} oAuth2Provider - an oAuth provider object
+ * @param {Object} response - an express response object
+ * @returns {Promise<Object>} the promise of express response object 
+ */
 async function token(event, oAuth2Provider, response) {
   const code = get(event, 'query.code');
   const state = get(event, 'query.state');
@@ -45,7 +72,6 @@ async function token(event, oAuth2Provider, response) {
       const jwtToken = createJwtToken({ accessToken, username, expirationTime });
 
       if (state) {
-        log.info(`Log info: Redirecting to state: ${state} with token ${jwtToken}`);
         return buildPermanentRedirectResponse(
           `${decodeURIComponent(state)}?token=${jwtToken}`,
           response
@@ -78,85 +104,95 @@ async function token(event, oAuth2Provider, response) {
 async function refreshAccessToken(request, oAuth2Provider, response) {
   const requestJwtToken = get(request, 'body.token');
 
-  if (requestJwtToken) {
-    let accessToken;
-    let username;
-    try {
-      ({ accessToken, username } = verifyJwtToken(requestJwtToken));
-    }
-    catch (err) {
-      if (err instanceof TokenExpiredError) {
-        return response.boom.forbidden('Access token has expired');
-      }
-      if (err instanceof JsonWebTokenError) {
-        return response.boom.forbidden('Invalid access token');
-      }
-    }
-
-    const userModel = new User();
-    try {
-      await userModel.get({ userName: username });
-    }
-    catch (err) {
-      if (err.name === 'RecordDoesNotExist') {
-        return response.boom.unauthorized('User not authorized');
-      }
-    }
-
-    const accessTokenModel = new AccessToken();
-
-    let accessTokenRecord;
-    try {
-      accessTokenRecord = await accessTokenModel.get({ accessToken });
-    }
-    catch (err) {
-      if (err.name === 'RecordDoesNotExist') {
-        return response.boom.forbidden('Invalid access token');
-      }
-    }
-
-    let newAccessToken;
-    let newRefreshToken;
-    let expirationTime;
-    try {
-      ({
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
-        username,
-        expirationTime
-      } = await oAuth2Provider.refreshAccessToken(accessTokenRecord.refreshToken));
-    }
-    catch (error) {
-      log.error('Error caught when attempting token refresh', error);
-      return response.boom.badImplementation('Internal Server Error') 
-    }
-    finally {
-      // Delete old token record to prevent refresh with old tokens
-      await accessTokenModel.delete({
-        accessToken: accessTokenRecord.accessToken
-      });
-    }
-
-    // Store new token record
-    await accessTokenModel.create({
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken
-    });
-
-    const jwtToken = createJwtToken({ accessToken: newAccessToken, username, expirationTime });
-    return response.send({ token: jwtToken });
+  if (!requestJwtToken) {
+    return response.boom.unauthorized('Request requires a token');
   }
 
-  const errorMessage = 'Request requires a token';
-  return response.boom.badRequest(errorMessage);
+  let accessToken;
+  try {
+    accessToken = await verifyJwtAuthorization(requestJwtToken);
+  }
+  catch (err) {
+    return handleJwtVerificationError(err, response);
+  }
+
+  const accessTokenModel = new AccessToken();
+
+  let accessTokenRecord;
+  try {
+    accessTokenRecord = await accessTokenModel.get({ accessToken });
+  }
+  catch (err) {
+    if (err.name === 'RecordDoesNotExist') {
+      return response.boom.forbidden('Invalid access token');
+    }
+  }
+
+  let newAccessToken;
+  let newRefreshToken;
+  let expirationTime;
+  let username;
+  try {
+    ({
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      username,
+      expirationTime
+    } = await oAuth2Provider.refreshAccessToken(accessTokenRecord.refreshToken));
+  }
+  finally {
+    // Delete old token record to prevent refresh with old tokens
+    await accessTokenModel.delete({
+      accessToken: accessTokenRecord.accessToken
+    });
+  }
+
+  // Store new token record
+  await accessTokenModel.create({
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken
+  });
+
+  const jwtToken = createJwtToken({ accessToken: newAccessToken, username, expirationTime });
+  return response.send({ token: jwtToken });
+}
+
+/**
+ * Handle token deletion
+ *
+ * @param {Object} request - an express request object 
+ * @param {Object} response - an express request object 
+ * @returns {Promise<Object>} a promise of an express response
+ */
+async function deleteTokenEndpoint(request, response) {
+  const requestJwtToken = get(request.params, 'token');
+
+  if (!requestJwtToken) {
+    return response.boom.unauthorized('Request requires a token');
+  }
+
+  let accessToken;
+  try {
+    accessToken = await verifyJwtAuthorization(requestJwtToken);
+  }
+  catch (err) {
+    return handleJwtVerificationError(err, response);
+  }
+
+  const accessTokenModel = new AccessToken();
+
+  await accessTokenModel.delete({ accessToken });
+
+  return response.send({ message: 'Token record was deleted' });
 }
 
 /**
  * Handle client authorization
  *
- * @param {Object} request - an API Gateway request
+ * @param {Object} request - an express request object 
  * @param {OAuth2} oAuth2Provider - an OAuth2 instance
- * @returns {Object} an API Gateway response
+ * @param {Object} response - an express request object 
+ * @returns {Promise<Object>} a promise of an express response
  */
 async function login(request, oAuth2Provider, response) {
   const code = get(request, 'query.code');
@@ -167,7 +203,6 @@ async function login(request, oAuth2Provider, response) {
   }
 
   const authorizationUrl = oAuth2Provider.getAuthorizationUrl(state);
-  console.log(authorizationUrl)
   return buildPermanentRedirectResponse(authorizationUrl, response);
 }
 
@@ -224,5 +259,6 @@ async function refreshEndpoint(req, res) {
 
 module.exports = {
   refreshEndpoint,
-  tokenEndpoint
+  tokenEndpoint,
+  deleteTokenEndpoint,
 };

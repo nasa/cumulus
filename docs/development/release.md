@@ -26,17 +26,25 @@ To update cumulus' version number run:
 
 Lerna will handle updating the packages and all of the dependent package version numbers. If a dependency has not been changed with the update, however, lerna will not update the version of the dependency.
 
-### 3. Update CHANGELOG.md
+### 3. Check Cumulus Dashboard PRs for Version Bump
+
+There may be unreleased changes in the Cumulus Dashboard [project](https://github.com/nasa/cumulus-dashboard) that rely on this unreleased Cumulus Core version.
+
+If there is exists a PR in the cumulus-dashboard repo with a name containing: "Version Bump for Next Cumulus API Release":
+* There will be a place-holder `change-me` value that should be replaced with the Cumulus Core to-be-released-version.
+* Mark that PR as ready to be reviewed.
+
+### 4. Update CHANGELOG.md
 
 Update the CHANGELOG.md. Put a header under the 'Unreleased' section with the new version number and the date.
 
 Add a link reference for the github "compare" view at the bottom of the CHANGELOG.md, following the existing pattern. This link reference should create a link in the CHANGELOG's release header to changes in the corresponding release.
 
-### 4. Update example/package.json
+### 5. Update example/package.json
 
 Update example/package.json to point to the new Cumulus packages. If this is a backport, pin the version of the Cumulus packages to the specific version being released. Do not use `^` or `~`.
 
-### 5. Cut new version of Cumulus Documentation
+### 6. Cut new version of Cumulus Documentation
 
 ```shell
 cd website
@@ -48,11 +56,11 @@ Where `${release_version}` corresponds to the version tag `v1.2.3`, for example.
 
 Note: This is for 1.10.3 or later.
 
-### 6. Create a pull request against the master branch
+### 7. Create a pull request against the master branch
 
 Create a PR against the `master` branch. Verify that the Travis CI build for the PR succeeds and then merge to master. Once merged, the release branch can be deleted.
 
-### 7. Create a git tag for the release
+### 8. Create a git tag for the release
 
 Publishing of new releases is handled by Travis CI and is triggered when the release tag is pushed to Github. This tag should be in the format `v1.2.3`, where `1.2.3` is the new version.
 

@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api",
-  "version": "1.11.0",
+  "version": "1.11.1",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
@@ -37,9 +37,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmrjs": "1.11.0",
-    "@cumulus/common": "1.11.0",
-    "@cumulus/ingest": "1.11.0",
+    "@cumulus/cmrjs": "1.11.1",
+    "@cumulus/common": "1.11.1",
+    "@cumulus/ingest": "1.11.1",
     "@cumulus/logger": "1.11.0",
     "@cumulus/pvl": "1.10.0",
     "@mapbox/dyno": "^1.4.2",

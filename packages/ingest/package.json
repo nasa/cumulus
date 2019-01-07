@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/ingest",
-  "version": "1.11.0",
+  "version": "1.11.1",
   "description": "Ingest utilities",
   "engines": {
     "node": ">=8.10.0"
@@ -34,8 +34,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmrjs": "1.11.0",
-    "@cumulus/common": "1.11.0",
+    "@cumulus/cmrjs": "1.11.1",
+    "@cumulus/common": "1.11.1",
     "@cumulus/pvl": "1.10.0",
     "@cumulus/test-data": "1.11.0",
     "aws-sdk": "^2.238.1",
