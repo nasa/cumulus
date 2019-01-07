@@ -20,7 +20,7 @@ The process involves:
 
 *  Creating [AWS S3 Buckets](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html).
 *  Using [Kes](http://devseed.com/kes/) to transform kes templates (`cloudformation.template.yml`) into [AWS CloudFormation](https://aws.amazon.com/cloudformation/getting-started/) stack templates (`cloudformation.yml`) that are then deployed to AWS.
-*  Before deploying the Cumulus software, a CloudFormation stack is deployed that creates necessary [IAM roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) via `iams` stack.
+*  Before deploying the Cumulus software, a CloudFormation stack is deployed that creates necessary [IAM roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) via the `iams` stack.
 *  The Cumulus software is configured and deployed via the `app` stack.
 
 --------------
@@ -137,7 +137,7 @@ Descriptions of the fields can be found in [IAM Configuration Descriptions](depl
 ```
 dev:                                # deployment name
   prefix: dev-cumulus               # prefixes CloudFormation-created iam resources and permissions
-  stackName: dev-cumulus-iam        # name of this iam stack in CloudFormation (e.g. <prefix>-iams)
+  stackName: dev-cumulus-iams       # name of this iam stack in CloudFormation (e.g. <prefix>-iams)
   useNgapPermissionBoundary: true   # for NASA NGAP accounts
 
   buckets:
@@ -257,7 +257,7 @@ Copy `app/.env.sample` to `app/.env` and add CMR/earthdata client [credentials](
     EARTHDATA_CLIENT_PASSWORD=clientpassword
     TOKEN_SECRET=tokensecret
 
-The `TOKEN_SECRET` is a string value used for token refreshes when using the Cumulus dashboard. This can be any string, preferably a 256 character random string for security purposes.
+The `TOKEN_SECRET` is a string value used signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is strongly recommended that this be a 32-character string.
 
 Note that the `.env.sample` file may be hidden, so if you do not see it, show hidden files.
 
