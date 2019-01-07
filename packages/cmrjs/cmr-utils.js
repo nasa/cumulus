@@ -244,22 +244,22 @@ function getCreds() {
 }
 
 /**
- * Modifies cmr Echo10 xml metadata file with files' URLs updated to their new locations.
+ * Modifies CMR ECHO10 XML metadata file with files' URLs updated to their new locations.
  *
  * @param {string} granuleId - granuleId
  * @param {Object} cmrFile - cmr xml file object to be updated
  * @param {Array<Object>} files - array of file objects
  * @param {string} distEndpoint - distribution endpoint from config
- * @param {boolean} published - indicate if publish is needed
  * @returns {Promise} returns promise to upload updated cmr file
  */
-async function updateEcho10XMLMetadata(granuleId, cmrFile, files, distEndpoint, published) {
+async function updateEcho10XMLMetadata(granuleId, cmrFile, files, distEndpoint) {
   const buckets = new BucketsConfig(await bucketsConfigDefaults());
   const urls = constructOnlineAccessUrls(files, distEndpoint, buckets);
 
   // add/replace the OnlineAccessUrls
   const metadataObject = await metadataObjectFromCMRXMLFile(cmrFile.filename);
   const metadataGranule = metadataObject.Granule;
+
   const updatedGranule = {};
   Object.keys(metadataGranule).forEach((key) => {
     if (key === 'OnlineResources' || key === 'Orderable') {
@@ -269,20 +269,12 @@ async function updateEcho10XMLMetadata(granuleId, cmrFile, files, distEndpoint, 
   });
   updatedGranule.OnlineAccessURLs.OnlineAccessURL = urls;
   metadataObject.Granule = updatedGranule;
-
-  // post meta file to CMR
-  if (published) {
-    const creds = getCreds();
-    const cmrFileObject = {
-      filename: cmrFile.filename,
-      metadataObject: metadataObject,
-      granuleId: granuleId
-    };
-    await publishECHO10XML2CMR(cmrFileObject, creds, process.env.bucket, process.env.stackName);
-  }
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(metadataObject);
-  return aws.promiseS3Upload({ Bucket: cmrFile.bucket, Key: cmrFile.filepath, Body: xml });
+
+
+  await aws.promiseS3Upload({ Bucket: cmrFile.bucket, Key: cmrFile.filepath, Body: xml });
+  return metadataObject;
 }
 
 /**
@@ -299,7 +291,18 @@ async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, publis
   log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${cmrFile.filename}`);
 
   if (isECHO10File(cmrFile.filename)) {
-    return updateEcho10XMLMetadata(granuleId, cmrFile, files, distEndpoint, published);
+    const theMetadata = await updateEcho10XMLMetadata(granuleId, cmrFile, files, distEndpoint);
+    if (published) {
+      // post meta file to CMR
+      const creds = getCreds();
+      const cmrFileObject = {
+        filename: cmrFile.filename,
+        metadataObject: theMetadata,
+        granuleId: granuleId
+      };
+      await publishECHO10XML2CMR(cmrFileObject, creds, process.env.bucket, process.env.stackName);
+    }
+    return Promise.resolve();
   }
   if (isUMMGFile(cmrFile.filename)) {
     return updateUMMGMetadata();
