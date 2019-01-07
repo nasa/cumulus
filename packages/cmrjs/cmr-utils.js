@@ -7,6 +7,7 @@ const xml2js = require('xml2js');
 
 const {
   aws,
+  BucketsConfig,
   errors,
   log
 } = require('@cumulus/common');
@@ -177,7 +178,7 @@ async function bucketConfig(bucket, stackName) {
 }
 
 /** Return the stack's buckets object read from from S3 */
-async function defaultBuckets() {
+async function bucketsConfigDefaults() {
   return bucketConfig(process.env.bucket, process.env.stackName);
 }
 
@@ -186,30 +187,24 @@ async function defaultBuckets() {
  *
  * @param {Array<Object>} files - array of file objects
  * @param {string} distEndpoint - distribution enpoint from config
- * @param {Object} buckets_ - stack's bucket configurations
+ * @param {BucketsConfig} buckets -  Class instance
  * @returns {Array<{URL: string, URLDescription: string}>}
  *   returns the list of online access url objects
  */
-async function constructOnlineAccessUrls(files, distEndpoint, buckets_) {
+function constructOnlineAccessUrls(files, distEndpoint, buckets) {
   const urls = [];
-  // TODO [MHS, 2019-01-04] make this a sync function.
-  const buckets = buckets_ || await defaultBuckets();
-
-  // URLs are for public and protected files
-  const bucketKeys = Object.keys(buckets);
 
   files.forEach((file) => {
     const urlObj = {};
-    const bucketkey = bucketKeys.find((bucketKey) => file.bucket === buckets[bucketKey].name);
 
-    if (buckets[bucketkey].type === 'protected') {
-      const extension = urljoin(buckets[bucketkey].name, `${file.filepath}`);
+    if (buckets.type(file.bucket) === 'protected') {
+      const extension = urljoin(file.bucket, `${file.filepath}`);
       urlObj.URL = urljoin(distEndpoint, extension);
       urlObj.URLDescription = 'File to download';
       urls.push(urlObj);
     }
-    else if (buckets[bucketkey].type === 'public') {
-      urlObj.URL = `https://${buckets[bucketkey].name}.s3.amazonaws.com/${file.filepath}`;
+    else if (buckets.type(file.bucket) === 'public') {
+      urlObj.URL = `https://${file.bucket}.s3.amazonaws.com/${file.filepath}`;
       urlObj.URLDescription = 'File to download';
       urls.push(urlObj);
     }
@@ -259,7 +254,8 @@ function getCreds() {
  * @returns {Promise} returns promise to upload updated cmr file
  */
 async function updateEcho10XMLMetadata(granuleId, cmrFile, files, distEndpoint, published) {
-  const urls = await constructOnlineAccessUrls(files, distEndpoint);
+  const buckets = new BucketsConfig(await bucketsConfigDefaults());
+  const urls = constructOnlineAccessUrls(files, distEndpoint, buckets);
 
   // add/replace the OnlineAccessUrls
   const metadataObject = await metadataObjectFromCMRXMLFile(cmrFile.filename);
