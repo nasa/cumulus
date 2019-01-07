@@ -20,6 +20,12 @@ const { verifyJwtAuthorization } = require('../lib/request');
 
 const { AccessToken } = require('../models');
 
+const buildPermanentRedirectResponse = (location, response) =>
+  response
+    .status(307)
+    .set({ Location: location })
+    .send('Redirecting')
+
 /**
  * Handle API response for JWT verification errors
  *
