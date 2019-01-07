@@ -250,7 +250,7 @@ function getCreds() {
  * @param {Object} cmrFile - cmr xml file object to be updated
  * @param {Array<Object>} files - array of file objects
  * @param {string} distEndpoint - distribution endpoint from config
- * @returns {Promise} returns promise to upload updated cmr file
+ * @returns {Promise} returns promised updated metadata object.
  */
 async function updateEcho10XMLMetadata(granuleId, cmrFile, files, distEndpoint) {
   const buckets = new BucketsConfig(await bucketsConfigDefaults());
@@ -272,7 +272,6 @@ async function updateEcho10XMLMetadata(granuleId, cmrFile, files, distEndpoint) 
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(metadataObject);
 
-
   await aws.promiseS3Upload({ Bucket: cmrFile.bucket, Key: cmrFile.filepath, Body: xml });
   return metadataObject;
 }
@@ -293,7 +292,7 @@ async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, publis
   if (isECHO10File(cmrFile.filename)) {
     const theMetadata = await updateEcho10XMLMetadata(granuleId, cmrFile, files, distEndpoint);
     if (published) {
-      // post meta file to CMR
+      // post metadata Object to CMR
       const creds = getCreds();
       const cmrFileObject = {
         filename: cmrFile.filename,
