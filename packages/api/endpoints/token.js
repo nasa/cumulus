@@ -5,9 +5,11 @@ const log = require('@cumulus/common/log');
 const { google } = require('googleapis');
 const {
   JsonWebTokenError,
-  TokenExpiredError,
-  TokenUnauthorizedUserError
+  TokenExpiredError
 } = require('jsonwebtoken');
+const {
+  TokenUnauthorizedUserError
+} = require('../lib/errors');
 
 const EarthdataLogin = require('../lib/EarthdataLogin');
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');

@@ -209,9 +209,9 @@ test.serial('GET /refresh without a token results in an authorization failure re
   const response = await request(app)
     .post('/refresh')
     .set('Accept', 'application/json')
-    .expect(400);
+    .expect(401);
 
-  t.is(response.status, 400);
+  t.is(response.status, 401);
   t.is(response.body.message, 'Request requires a token');
 });
 
