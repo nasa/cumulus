@@ -134,6 +134,9 @@ ApiExecutionStatusDefault:
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain
+    ExecutionsTable:
+      function: Ref
+      value: ExecutionsTableDynamoDB
     TOKEN_SECRET: '{{TOKEN_SECRET}}'
   apiGateway:
     #default paths
