@@ -285,7 +285,8 @@ async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, publis
   log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${cmrFile.filename}`);
 
   if (isECHO10File(cmrFile.filename)) {
-    const theMetadata = await updateEcho10XMLMetadata(granuleId, cmrFile, files, distEndpoint);
+    const buckets = new BucketsConfig(await bucketsConfigDefaults());
+    const theMetadata = await updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets);
     if (published) {
       // post metadata Object to CMR
       const creds = getCreds();
@@ -328,7 +329,9 @@ module.exports = {
   constructOnlineAccessUrls,
   getGranuleId,
   getCmrXMLFiles,
+  isECHO10File,
   publishECHO10XML2CMR,
   reconcileCMRMetadata,
-  updateCMRMetadata
+  updateCMRMetadata,
+  updateEcho10XMLMetadata
 };
