@@ -247,14 +247,14 @@ function getCreds() {
 /**
  * Modifies CMR ECHO10 XML metadata file with files' URLs updated to their new locations.
  *
- * @param {string} granuleId - granuleId
  * @param {Object} cmrFile - cmr xml file object to be updated
  * @param {Array<Object>} files - array of file objects
  * @param {string} distEndpoint - distribution endpoint from config
+ * @param {BucketsConfig} buckets - stack BucketConfig instance
  * @returns {Promise} returns promised updated metadata object.
  */
-async function updateEcho10XMLMetadata(granuleId, cmrFile, files, distEndpoint) {
-  const buckets = new BucketsConfig(await bucketsConfigDefaults());
+async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
+
   const urls = constructOnlineAccessUrls(files, distEndpoint, buckets);
 
   // add/replace the OnlineAccessUrls
