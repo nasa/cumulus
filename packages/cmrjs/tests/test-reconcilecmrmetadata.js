@@ -4,7 +4,7 @@ const rewire = require('rewire');
 
 const cmrUtils = rewire('../cmr-utils');
 
-const { log, errors } = require('@cumulus/common');
+const { log, BucketsConfig } = require('@cumulus/common');
 
 const { randomId } = require('@cumulus/common/test-utils');
 
@@ -85,6 +85,9 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
   const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr.xml' }];
   const { granId, distEndpoint } = t.context;
   const pub = false;
+  const fakeBucketsConfigDefaults = sinon.fake.returns({ private: { type: 'private', name: 'private' } });
+  const restore3 = cmrUtils.__set__('bucketsConfigDefaults', fakeBucketsConfigDefaults);
+
   const fakeUpdateCMRMetadata = sinon.fake.resolves(true);
   const restore = cmrUtils.__set__('updateEcho10XMLMetadata', fakeUpdateCMRMetadata);
 
@@ -93,10 +96,11 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
 
   await cmrUtils.reconcileCMRMetadata(granId, updatedFiles, distEndpoint, pub);
 
-  t.true(fakeUpdateCMRMetadata.calledOnceWith(granId, updatedFiles[1], updatedFiles, distEndpoint));
+  t.true(fakeUpdateCMRMetadata.calledOnceWith(updatedFiles[1], updatedFiles, distEndpoint));
   t.true(fakePublishECHO10XML2CMR.notCalled);
   restore();
   restore2();
+  restore3();
 });
 
 test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CMR if xml metadata present and publish is true', async (t) => {
@@ -111,6 +115,10 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
   const fakePublishECHO10XML2CMR = sinon.fake.resolves({});
   const restore2 = cmrUtils.__set__('publishECHO10XML2CMR', fakePublishECHO10XML2CMR);
 
+  const fakeBucketsConfigDefaults = sinon.fake.returns({ private: { type: 'private', name: 'private' } });
+  const restore3 = cmrUtils.__set__('bucketsConfigDefaults', fakeBucketsConfigDefaults);
+
+
   const bucket = randomId('bucket');
   const stackName = randomId('stack');
   process.env.bucket = bucket;
@@ -124,10 +132,11 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
 
   await cmrUtils.reconcileCMRMetadata(granId, updatedFiles, distEndpoint, pub);
 
-  t.true(fakeUpdateCMRMetadata.calledOnceWith(granId, updatedFiles[1], updatedFiles, distEndpoint));
+  t.true(fakeUpdateCMRMetadata.calledOnceWith(updatedFiles[1], updatedFiles, distEndpoint));
   t.true(fakePublishECHO10XML2CMR.calledOnceWith(expectedMetadata, testCreds, bucket, stackName));
   restore();
   restore2();
+  restore3();
 });
 
 test('reconcileCMRMetadata calls updateUMMGMetadata if json metadata present', async (t) => {
