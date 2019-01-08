@@ -3,6 +3,8 @@
 const router = require('express-promise-router')();
 const aws = require('@cumulus/common/aws'); // important to import all to allow stubbing
 const { StepFunction } = require('@cumulus/ingest/aws');
+const { executionExists } = require('@cumulus/common/step-functions');
+const models = require('../models');
 
 /**
  * fetchRemote fetches remote message from S3
@@ -64,26 +66,44 @@ async function getEventDetails(event) {
 async function get(req, res) {
   const arn = req.params.arn;
 
-  const status = await StepFunction.getExecutionStatus(arn)
+  // if the execution exists in SFN API, retrieve its information, if not, get from database
+  if (await executionExists(arn)) {
+    const status = await StepFunction.getExecutionStatus(arn)
 
-  // if execution output is stored remotely, fetch it from S3 and replace it
-  const executionOutput = status.execution.output;
+    // if execution output is stored remotely, fetch it from S3 and replace it
+    const executionOutput = status.execution.output;
 
-  /* eslint-disable no-param-reassign */
-  if (executionOutput) {
-    status.execution.output = await fetchRemote(JSON.parse(status.execution.output));
+    /* eslint-disable no-param-reassign */
+    if (executionOutput) {
+      status.execution.output = await fetchRemote(JSON.parse(status.execution.output));
+    }
+    /* eslint-enable no-param-reassign */
+    const updatedEvents = [];
+    for (let i = 0; i < status.executionHistory.events.length; i += 1) {
+      const sfEvent = status.executionHistory.events[i];
+      updatedEvents.push(getEventDetails(sfEvent));
+    }
+    /* eslint-disable no-param-reassign */
+    status.executionHistory.events = await Promise.all(updatedEvents);
+    /* eslint-enable no-param-reassign */
+    return res.send(status);
   }
-  /* eslint-enable no-param-reassign */
 
-  const updatedEvents = [];
-  for (let i = 0; i < status.executionHistory.events.length; i += 1) {
-    const sfEvent = status.executionHistory.events[i];
-    updatedEvents.push(getEventDetails(sfEvent));
-  }
-  /* eslint-disable no-param-reassign */
-  status.executionHistory.events = await Promise.all(updatedEvents);
-  /* eslint-enable no-param-reassign */
-  return res.send(status);
+  // get the execution information from database
+  const e = new models.Execution();
+  const response = await e.get({ arn });
+  const warning = 'Execution does not exist in Step Functions API';
+  const execution = {
+    executionArn: response.arn,
+    stateMachineArn: aws.getStateMachineArn(response.arn),
+    name: response.name,
+    status: response.status === 'completed' ? 'SUCCEEDED' : response.status.toUpperCase(),
+    startDate: new Date(response.createdAt),
+    stopDate: new Date(response.createdAt + response.duration * 1000),
+    ...{ input: JSON.stringify(response.originalPayload) },
+    ...{ output: JSON.stringify(response.finalPayload) }
+  };
+  return res.send({ warning, execution });
 }
 
 router.get('/:arn', get);

@@ -351,14 +351,12 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
  * @returns {Promise} A promise that resolves to an Array of the data returned
  *   from the deletion operations
  */
-exports.deleteS3Files = (s3Objs) => {
-  log.info(`Starting deletion of ${s3Objs.length} object(s)`);
-  return pMap(
-    s3Objs,
-    (s3Obj) => exports.s3().deleteObject(s3Obj).promise(),
-    { concurrency: S3_RATE_LIMIT }
-  );
-};
+exports.deleteS3Files = (s3Objs) => pMap(
+  s3Objs,
+  (s3Obj) => exports.s3().deleteObject(s3Obj).promise(),
+  { concurrency: S3_RATE_LIMIT }
+);
+
 
 /**
 * Delete a bucket and all of its objects from S3
@@ -801,6 +799,13 @@ exports.getExecutionArn = (stateMachineArn, executionName) => {
   if (stateMachineArn && executionName) {
     const sfArn = stateMachineArn.replace('stateMachine', 'execution');
     return `${sfArn}:${executionName}`;
+  }
+  return null;
+};
+
+exports.getStateMachineArn = (executionArn) => {
+  if (executionArn) {
+    return executionArn.replace('execution', 'stateMachine').split(':').slice(0, -1).join(':');
   }
   return null;
 };

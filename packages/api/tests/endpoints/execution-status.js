@@ -10,9 +10,13 @@ const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
 const {
-  createFakeJwtAuthToken
+  createFakeJwtAuthToken,
+  fakeExecutionFactoryV2
 } = require('../../lib/testUtils');
 
+process.env.AccessTokensTable = randomString();
+process.env.UsersTable = randomString();
+process.env.ExecutionsTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
@@ -36,6 +40,9 @@ const cumulusMetaOutput = {
     system_bucket: 'test-sandbox-internal'
   }
 };
+
+const expiredExecutionArn = 'fakeExpiredExecutionArn';
+const fakeExpiredExecution = fakeExecutionFactoryV2({ arn: expiredExecutionArn });
 
 const replaceObject = (lambdaEvent = true) => ({
   replace: {
@@ -128,6 +135,21 @@ const stepFunctionMock = {
     })
 };
 
+const executionExistsMock = (arn) => {
+  if (arn.executionArn === expiredExecutionArn) {
+    return {
+      promise: () => {
+        const error = new Error()
+        error.code = 'ExecutionDoesNotExist';
+        return Promise.reject(error);
+      }
+    }
+  }
+  return {
+    promise: () => Promise.resolve(true)
+  };
+}
+
 const s3Mock = (_, key) =>
   new Promise((resolve) => {
     const fullMessage = key === 'events/lambdaEventUUID' ? lambdaCompleteOutput : fullMessageOutput;
@@ -139,15 +161,18 @@ const s3Mock = (_, key) =>
 
 let jwtAuthToken;
 let accessTokenModel;
+let executionModel;
 let userModel;
 let mockedS3;
 let mockedSF;
+let mockedSFExecution;
 
 test.before(async () => {
   mockedS3 = sinon.stub(commonAws, 'getS3Object').callsFake(s3Mock);
   mockedSF = sinon.stub(StepFunction, 'getExecutionStatus').callsFake(stepFunctionMock.getExecutionStatus);
-  process.env.AccessTokensTable = randomString();
-  process.env.UsersTable = randomString();
+  mockedSFExecution = sinon
+    .stub(commonAws.sfn(), 'describeExecution')
+    .callsFake(executionExistsMock);
 
   userModel = new models.User();
   await userModel.createTable();
@@ -156,6 +181,9 @@ test.before(async () => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  executionModel = new models.Execution();
+  await executionModel.createTable();
+  await executionModel.create(fakeExpiredExecution);
 });
 
 test.after.always(async () => {
@@ -163,6 +191,8 @@ test.after.always(async () => {
   await userModel.deleteTable();
   mockedS3.restore();
   mockedSF.restore();
+  mockedSFExecution.restore();
+  await executionModel.deleteTable();
 });
 
 test('CUMULUS-911 GET without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -250,4 +280,20 @@ test('when execution is still running, still returns status and fetches SF execu
     stateMachine: {}
   };
   t.deepEqual(expectedResponse, executionStatus);
+});
+
+test('when execution is no longer in step function API, returns status from database', async (t) => {
+  const response = await request(app)
+    .get(`/executions/status/${expiredExecutionArn}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const executionStatus = response.body;
+  t.falsy(executionStatus.executionHistory);
+  t.falsy(executionStatus.stateMachine);
+  t.is(executionStatus.execution.executionArn, fakeExpiredExecution.arn);
+  t.is(executionStatus.execution.name, fakeExpiredExecution.name);
+  t.is(executionStatus.execution.input, JSON.stringify(fakeExpiredExecution.originalPayload));
+  t.is(executionStatus.execution.output, JSON.stringify(fakeExpiredExecution.finalPayload));
 });
