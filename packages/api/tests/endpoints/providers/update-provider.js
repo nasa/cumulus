@@ -80,8 +80,8 @@ test('PUT updates an existing provider', async (t) => {
     .send({ globalConnectionLimit: updatedLimit })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
-  
+    .expect(200);
+
   const { globalConnectionLimit } = response.body;
   t.is(globalConnectionLimit, updatedLimit);
 });
@@ -97,7 +97,7 @@ test.serial('PUT updates an existing provider and returns it in listing', async 
     .send(updateParams)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   t.plan(2);
   const stub = sinon.stub(Search.prototype, 'query').resolves({
@@ -108,7 +108,7 @@ test.serial('PUT updates an existing provider and returns it in listing', async 
     .get('/providers')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   const { results } = response.body;
   stub.restore();
@@ -122,7 +122,7 @@ test('PUT without an Authorization header returns an Authorization Missing respo
     .put(`/providers/${t.context.testProvider.id}`)
     .send({ globalConnectionLimit: updatedLimit })
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
   const provider = await providerModel.get({

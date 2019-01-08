@@ -6,11 +6,9 @@ const { randomString } = require('@cumulus/common/test-utils');
 
 const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
-const providerEndpoint = require('../../../endpoints/providers');
 const {
   createFakeJwtAuthToken,
-  fakeProviderFactory,
-  testEndpoint
+  fakeProviderFactory
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
@@ -75,7 +73,7 @@ test('CUMULUS-911 POST without an Authorization header returns an Authorization 
     .post('/providers')
     .send(newProvider)
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
   await providerDoesNotExist(t, newProvider.id);
@@ -88,7 +86,7 @@ test('CUMULUS-912 POST with an invalid access token returns an unauthorized resp
     .send(newProvider)
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
   await providerDoesNotExist(t, newProvider.id);
@@ -104,7 +102,7 @@ test('POST with invalid authorization scheme returns an invalid authorization re
     .send(newProvider)
     .set('Accept', 'application/json')
     .set('Authorization', 'InvalidBearerScheme ThisIsAnInvalidAuthorizationToken')
-    .expect(401)
+    .expect(401);
 
   assertions.isInvalidAuthorizationResponse(t, response);
   await providerDoesNotExist(t, newProvider.id);
@@ -119,7 +117,7 @@ test('POST creates a new provider', async (t) => {
     .send(newProvider)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   const { message, record } = response.body;
   t.is(message, 'Record saved');

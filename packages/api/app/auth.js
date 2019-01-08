@@ -1,12 +1,11 @@
 
-'use strict'
+'use strict';
 
-const log = require('@cumulus/common/log');
-const { User, AccessToken } = require('../models');
 const {
   JsonWebTokenError,
   TokenExpiredError
 } = require('jsonwebtoken');
+const { User, AccessToken } = require('../models');
 const { verifyJwtToken } = require('../lib/token');
 
 /**
@@ -31,27 +30,28 @@ async function ensureAuthenticated(req, res, next) {
   if (scheme !== 'Bearer') {
     return res.boom.unauthorized('Authorization scheme must be Bearer');
   }
-  
+
   if (!jwtToken) {
     return res.boom.unauthorized('Missing token');
   }
 
-  let userName, accessToken;
+  let userName; let
+    accessToken;
   try {
     ({ username: userName, accessToken } = verifyJwtToken(jwtToken));
 
     const userModel = new User();
     const access = new AccessToken();
 
-    await userModel.get({ userName })
-    await access.get({ accessToken })
+    await userModel.get({ userName });
+    await access.get({ accessToken });
     return next();
   }
   catch (error) {
     if (error instanceof TokenExpiredError) {
-      return res.boom.unauthorized('Access token has expired')
+      return res.boom.unauthorized('Access token has expired');
     }
-    
+
     if (error instanceof JsonWebTokenError) {
       return res.boom.forbidden('Invalid access token');
     }

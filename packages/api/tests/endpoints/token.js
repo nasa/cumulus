@@ -12,7 +12,7 @@ const {
 
 const { OAuth2AuthenticationFailure } = require('../../lib/OAuth2');
 const assertions = require('../../lib/assertions');
-const EarthdataLoginClient = require('../../lib/EarthdataLogin')
+const EarthdataLoginClient = require('../../lib/EarthdataLogin');
 const {
   createJwtToken
 } = require('../../lib/token');
@@ -21,7 +21,6 @@ const {
   fakeUserFactory
 } = require('../../lib/testUtils');
 const { AccessToken, User } = require('../../models');
-const { handleRequest } = require('../../endpoints/token');
 
 let accessTokenModel;
 let userModel;
@@ -69,7 +68,7 @@ test.serial('GET /token without a code properly requests the authorization URL f
     .query({ state: 'my-state' })
     .set('Accept', 'application/json')
     .expect(307);
-  
+
   stub.restore();
 });
 
@@ -77,7 +76,7 @@ test.serial('GET /token without a code returns a redirect authorization URL from
   const stub = sinon.stub(
     EarthdataLoginClient.prototype,
     'getAuthorizationUrl'
-  ).callsFake((state) => 'http://www.example.com');
+  ).callsFake(() => 'http://www.example.com');
 
   const response = await request(app)
     .get('/token')
@@ -87,7 +86,7 @@ test.serial('GET /token without a code returns a redirect authorization URL from
 
   t.is(response.status, 307);
   t.is(response.headers.location, 'http://www.example.com');
-  
+
   stub.restore();
 });
 
@@ -259,7 +258,7 @@ test.serial('GET /refresh returns 500 if refresh token request fails', async (t)
     EarthdataLoginClient.prototype,
     'refreshAccessToken'
   ).callsFake(async () => {
-    throw new Error('Refresh token request failed')
+    throw new Error('Refresh token request failed');
   });
 
   const userRecord = fakeUserFactory();
@@ -296,7 +295,7 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
   const stub = sinon.stub(
     EarthdataLoginClient.prototype,
     'refreshAccessToken'
-  ).callsFake(async () => refreshedTokenRecord); 
+  ).callsFake(async () => refreshedTokenRecord);
 
   const response = await request(app)
     .post('/refresh')

@@ -10,13 +10,13 @@ const { Search } = require('../es/search');
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
   const search = new Search({
     queryStringParameters: req.query
   }, 'rule');
-  const response = await search.query()
+  const response = await search.query();
   return res.send(response);
 }
 
@@ -25,7 +25,7 @@ async function list(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
   const name = req.params.name;
@@ -41,7 +41,7 @@ async function get(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
   const data = req.body;
@@ -50,12 +50,12 @@ async function post(req, res) {
   const model = new models.Rule();
 
   try {
-    await model.get({ name })
+    await model.get({ name });
     return res.boom.conflict(`A record already exists for ${name}`);
   }
-  catch(e) {
+  catch (e) {
     if (e instanceof RecordDoesNotExist) {
-      const r = await model.create(data)
+      const r = await model.create(data);
       return res.send({ message: 'Record saved', record: r });
     }
     throw e;
@@ -67,7 +67,7 @@ async function post(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function put(req, res) {
   const name = req.params.name;
@@ -102,7 +102,7 @@ async function put(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
   const name = (req.params.name || '').replace(/%20/g, ' ');

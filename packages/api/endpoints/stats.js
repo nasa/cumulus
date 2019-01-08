@@ -6,10 +6,10 @@ const moment = require('moment');
 const Stats = require('../es/stats');
 
 /**
- * filter approved types 
+ * filter approved types
  *
  * @param {Object} req - express request object
- * @returns {Object} returns the type and index as an object 
+ * @returns {Object} returns the type and index as an object
  */
 function getType(req) {
   let index;
@@ -31,14 +31,14 @@ function getType(req) {
 
 
 /**
- * get summary stats 
+ * get summary stats
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function summary(req, res) {
-  let params = req.params;
+  const params = req.params;
   params.timestamp__from = get(
     params,
     'timestamp__from',
@@ -52,11 +52,11 @@ async function summary(req, res) {
 }
 
 /**
- * get histogram stats 
+ * get histogram stats
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function histogram(req, res) {
   const type = getType(req);
@@ -69,11 +69,11 @@ async function histogram(req, res) {
 }
 
 /**
- * get aggregate stats 
+ * get aggregate stats
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function aggregate(req, res) {
   const type = getType(req);
@@ -86,11 +86,11 @@ async function aggregate(req, res) {
 }
 
 /**
- * get average stats 
+ * get average stats
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function average(req, res) {
   const type = getType(req);

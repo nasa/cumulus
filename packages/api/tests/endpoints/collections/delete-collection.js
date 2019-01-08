@@ -29,7 +29,7 @@ const { app } = require('../../../app');
 const esIndex = randomString();
 let esClient;
 
-let jwtAuthToken
+let jwtAuthToken;
 let accessTokenModel;
 let collectionModel;
 let ruleModel;
@@ -83,7 +83,7 @@ test('Attempting to delete a collection without an Authorization header returns 
   const response = await request(app)
     .delete(`/collections/${testCollection.name}/${testCollection.version}`)
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   t.is(response.status, 401);
   t.true(
@@ -99,7 +99,7 @@ test('Attempting to delete a collection with an invalid access token returns an 
     .delete('/collections/asdf/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -114,13 +114,13 @@ test('Deleting a collection removes it', async (t) => {
     .delete(`/collections/${collection.name}/${collection.version}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   const response = await request(app)
     .get(`/collections/${collection.name}/${collection.version}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(404)
+    .expect(404);
 
   t.is(response.status, 404);
 });
@@ -152,7 +152,7 @@ test('Attempting to delete a collection with an associated rule returns a 409 re
     .delete(`/collections/${collection.name}/${collection.version}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(409)
+    .expect(409);
 
   t.is(response.status, 409);
   t.is(response.body.message, `Cannot delete collection with associated rules: ${rule.name}`);
@@ -185,7 +185,7 @@ test('Attempting to delete a collection with an associated rule does not delete 
     .delete(`/collections/${collection.name}/${collection.version}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(409)
+    .expect(409);
 
   t.true(await collectionModel.exists(collection.name, collection.version));
 });

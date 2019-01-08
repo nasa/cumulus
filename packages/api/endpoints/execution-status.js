@@ -61,31 +61,27 @@ async function getEventDetails(event) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
   const arn = req.params.arn;
 
   // if the execution exists in SFN API, retrieve its information, if not, get from database
   if (await executionExists(arn)) {
-    const status = await StepFunction.getExecutionStatus(arn)
+    const status = await StepFunction.getExecutionStatus(arn);
 
     // if execution output is stored remotely, fetch it from S3 and replace it
     const executionOutput = status.execution.output;
 
-    /* eslint-disable no-param-reassign */
     if (executionOutput) {
       status.execution.output = await fetchRemote(JSON.parse(status.execution.output));
     }
-    /* eslint-enable no-param-reassign */
     const updatedEvents = [];
     for (let i = 0; i < status.executionHistory.events.length; i += 1) {
       const sfEvent = status.executionHistory.events[i];
       updatedEvents.push(getEventDetails(sfEvent));
     }
-    /* eslint-disable no-param-reassign */
     status.executionHistory.events = await Promise.all(updatedEvents);
-    /* eslint-enable no-param-reassign */
     return res.send(status);
   }
 

@@ -10,7 +10,7 @@ const { AsyncOperation: AsyncOperationModel } = require('../models');
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function getAsyncOperation(req, res) {
   const asyncOperationModel = new AsyncOperationModel({
@@ -28,7 +28,7 @@ async function getAsyncOperation(req, res) {
     throw err;
   }
 
-  return res.send(pick(asyncOperation, ['id', 'status', 'taskArn', 'output']))
+  return res.send(pick(asyncOperation, ['id', 'status', 'taskArn', 'output']));
 }
 
 router.get('/:id', getAsyncOperation);

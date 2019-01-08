@@ -13,14 +13,14 @@ const {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
   const collection = new Collection({
     queryStringParameters: req.query
   });
-  const result = await collection.query()
-  return res.send(result)
+  const result = await collection.query();
+  return res.send(result);
 }
 
 /**
@@ -28,7 +28,7 @@ async function list(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
   const name = req.params.name;
@@ -36,14 +36,12 @@ async function get(req, res) {
 
   try {
     const c = new models.Collection();
-    const result = await c.get({ name, version })
-    const collection = new Collection({
-      queryStringParameters: req.query
-    });
+    const result = await c.get({ name, version });
     // const stats = await collection.getStats([res], [res.name]);
-    return res.send(result)
-  } catch (e) {
-    return res.boom.notFound(e.message)
+    return res.send(result);
+  }
+  catch (e) {
+    return res.boom.notFound(e.message);
   }
 }
 
@@ -52,7 +50,7 @@ async function get(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
   try {
@@ -67,18 +65,18 @@ async function post(req, res) {
     const c = new models.Collection();
 
     try {
-      await c.get({ name, version })
+      await c.get({ name, version });
       return res.boom.badRequest(`A record already exists for ${name} version: ${version}`);
     }
-    catch(e) {
+    catch (e) {
       if (e instanceof RecordDoesNotExist) {
-        await c.create(data)
+        await c.create(data);
         return res.send({ message: 'Record saved', record: data });
       }
       throw e;
     }
   }
-  catch(e) {
+  catch (e) {
     return res.boom.badImplementation(e.message);
   }
 }
@@ -88,7 +86,7 @@ async function post(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function put(req, res) {
   const pname = req.params.name;
@@ -112,7 +110,7 @@ async function put(req, res) {
     const result = await c.create(data);
     return res.send(result);
   }
-  catch(err) {
+  catch (err) {
     if (err instanceof RecordDoesNotExist) {
       return res.boom.notFound('Record does not exist');
     }
@@ -125,7 +123,7 @@ async function put(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
   const { name, version } = req.params;
@@ -134,7 +132,7 @@ async function del(req, res) {
 
   try {
     await collectionModel.delete({ name, version });
-    return res.send({ message: 'Record deleted' })
+    return res.send({ message: 'Record deleted' });
   }
   catch (err) {
     if (err instanceof AssociatedRulesError) {
@@ -146,10 +144,10 @@ async function del(req, res) {
 }
 
 // express routes
-router.get('/:name/:version', get)
-router.put('/:name/:version', put)
-router.delete('/:name/:version', del)
-router.post('/', post)
-router.get('/', list)
+router.get('/:name/:version', get);
+router.put('/:name/:version', put);
+router.delete('/:name/:version', del);
+router.post('/', post);
+router.get('/', list);
 
 module.exports = router;

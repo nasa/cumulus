@@ -25,7 +25,7 @@ test('CUMULUS-911 GET with pathParameters and without an Authorization header re
   const response = await request(app)
     .get('/schemas/asdf')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -35,7 +35,7 @@ test('CUMULUS-912 GET with pathParameters and with an invalid access token retur
     .get('/schemas/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });

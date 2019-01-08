@@ -60,16 +60,16 @@ test('CUMULUS-911 GET without pathParameters and without an Authorization header
   const response = await request(app)
     .get('/reconciliationReports')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
-    assertions.isAuthorizationMissingResponse(t, response);
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-911 GET with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .get('/reconciliationReports/asdf')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -78,7 +78,7 @@ test('CUMULUS-911 POST without an Authorization header returns an Authorization 
   const response = await request(app)
     .post('/reconciliationReports')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -87,7 +87,7 @@ test('CUMULUS-911 DELETE with pathParameters and without an Authorization header
   const response = await request(app)
     .delete('/reconciliationReports/asdf')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -97,7 +97,7 @@ test('CUMULUS-911 GET without pathParameters and with an invalid access token re
     .get('/reconciliationReports')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -109,7 +109,7 @@ test('CUMULUS-911 GET with pathParameters and with an invalid access token retur
     .get('/reconciliationReports/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -121,7 +121,7 @@ test('CUMULUS-911 POST with an invalid access token returns an unauthorized resp
     .post('/reconciliationReports')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -133,7 +133,7 @@ test('CUMULUS-911 DELETE with pathParameters and with an invalid access token re
     .delete('/reconciliationReports/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -145,7 +145,7 @@ test.serial('default returns list of reports', async (t) => {
     .get('/reconciliationReports')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   const results = response.body;
   t.is(results.results.length, 2);
@@ -158,19 +158,19 @@ test.serial('get a report', async (t) => {
       .get(`/reconciliationReports/${reportName}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .expect(200)
+      .expect(200);
     t.deepEqual(response.body, { test_key: `${reportName} test data` });
   }));
 });
 
 test.serial('get 404 if the report doesnt exist', async (t) => {
   const response = await request(app)
-    .get(`/reconciliationReports/404file`)
-    .set("Accept", "application/json")
-    .set("Authorization", `Bearer ${jwtAuthToken}`)
+    .get('/reconciliationReports/404file')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(404);
   t.is(response.status, 404);
-  t.is(response.body.message, 'The report does not exist!')
+  t.is(response.body.message, 'The report does not exist!');
 });
 
 test.serial('delete a report', async (t) => {
@@ -179,7 +179,7 @@ test.serial('delete a report', async (t) => {
       .delete(`/reconciliationReports/${reportName}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .expect(200)
+      .expect(200);
     t.deepEqual(response.body, { message: 'Report deleted' });
   }));
 });
@@ -189,7 +189,7 @@ test.serial('create a report', async (t) => {
     .post('/reconciliationReports')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   const content = response.body;
   t.is(content.message, 'Report is being generated');

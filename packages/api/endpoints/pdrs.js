@@ -11,7 +11,7 @@ const { RecordDoesNotExist } = require('../lib/errors');
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
   const search = new Search({
@@ -26,7 +26,7 @@ async function list(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
   const pdrName = req.params.pdrName;
@@ -37,7 +37,7 @@ async function get(req, res) {
     const result = await pdrModel.get({ pdrName });
     return res.send(result);
   }
-  catch(e) {
+  catch (e) {
     if (e instanceof RecordDoesNotExist) {
       return res.boom.notFound(`No record found for ${pdrName}`);
     }
@@ -52,7 +52,7 @@ const isRecordDoesNotExistError = (e) => e.message.includes('RecordDoesNotExist'
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
   const pdrName = req.params.pdrName;

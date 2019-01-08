@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 const router = require('express-promise-router')();
 const collections = require('../endpoints/collections');
@@ -17,7 +17,7 @@ const schemas = require('../endpoints/schemas');
 const stats = require('../endpoints/stats');
 const version = require('../endpoints/version');
 const workflows = require('../endpoints/workflows');
-const { tokenEndpoint, refreshEndpoint, deleteTokenEndpoint } = require('../endpoints/token')
+const { tokenEndpoint, refreshEndpoint, deleteTokenEndpoint } = require('../endpoints/token');
 const { ensureAuthenticated } = require('./auth');
 
 // collections endpoints
@@ -67,9 +67,9 @@ router.use('/version', version);
 // workflows endpoint
 router.use('/workflows', ensureAuthenticated, workflows);
 
-router.delete('/token/:token', deleteTokenEndpoint)
-router.delete('/tokenDelete/:token', deleteTokenEndpoint)
-router.get('/token', tokenEndpoint)
-router.post('/refresh', refreshEndpoint)
+router.delete('/token/:token', deleteTokenEndpoint);
+router.delete('/tokenDelete/:token', deleteTokenEndpoint);
+router.get('/token', tokenEndpoint);
+router.post('/refresh', refreshEndpoint);
 
 module.exports = router;

@@ -80,7 +80,7 @@ test('Attempting to delete a provider without an Authorization header returns an
   const response = await request(app)
     .delete(`/providers/${testProvider.id}`)
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   t.is(response.status, 401);
   t.true(await providerModel.exists(testProvider.id));
@@ -91,7 +91,7 @@ test('Attempting to delete a provider with an invalid access token returns an un
     .delete('/providers/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -105,7 +105,7 @@ test('Deleting a provider removes the provider', async (t) => {
     .delete(`/providers/${testProvider.id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   t.false(await providerModel.exists(testProvider.id));
 });
@@ -133,7 +133,7 @@ test('Attempting to delete a provider with an associated rule returns a 409 resp
     .delete(`/providers/${testProvider.id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(409)
+    .expect(409);
 
   t.is(response.status, 409);
   t.is(response.body.message, `Cannot delete provider with associated rules: ${rule.name}`);
@@ -162,7 +162,7 @@ test('Attempting to delete a provider with an associated rule does not delete th
     .delete(`/providers/${testProvider.id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(409)
+    .expect(409);
 
   t.true(await providerModel.exists(testProvider.id));
 });

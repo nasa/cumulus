@@ -75,7 +75,7 @@ test('CUMULUS-911 GET without pathParameters and without an Authorization header
   const response = await request(app)
     .get('/executions')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -84,7 +84,7 @@ test('CUMULUS-911 GET with pathParameters and without an Authorization header re
   const response = await request(app)
     .get('/executions/asdf')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -93,7 +93,7 @@ test('CUMULUS-912 GET without pathParameters and with an unauthorized user retur
   const response = await request(app)
     .get('/executions')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -102,7 +102,7 @@ test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns 
   const response = await request(app)
     .get('/executions/asdf')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -112,7 +112,7 @@ test('default returns list of executions', async (t) => {
     .get('/executions')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   const { meta, results } = response.body;
   t.is(results.length, 2);
@@ -157,7 +157,7 @@ test('GET returns an existing execution', async (t) => {
 
 test('GET fails if execution is not found', async (t) => {
   const response = await request(app)
-    .get(`/executions/unknown`)
+    .get('/executions/unknown')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(404);

@@ -26,14 +26,14 @@ const buildPermanentRedirectResponse = (location, response) =>
   response
     .status(307)
     .set({ Location: location })
-    .send('Redirecting')
+    .send('Redirecting');
 
 /**
  * Handle API response for JWT verification errors
  *
  * @param {Error} err - error thrown by JWT verification
  * @param {Object} response - an express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 function handleJwtVerificationError(err, response) {
   if (err instanceof TokenExpiredError) {
@@ -49,12 +49,12 @@ function handleJwtVerificationError(err, response) {
 }
 
 /**
- * Handles token requests 
+ * Handles token requests
  *
  * @param {Object} event - an express request object
  * @param {Object} oAuth2Provider - an oAuth provider object
  * @param {Object} response - an express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function token(event, oAuth2Provider, response) {
   const code = get(event, 'query.code');
@@ -86,7 +86,7 @@ async function token(event, oAuth2Provider, response) {
         );
       }
       log.info('Log info: No state specified, responding 200');
-      return response.send({ message: { token: jwtToken } })
+      return response.send({ message: { token: jwtToken } });
     }
     catch (e) {
       if (e.statusCode === 400) {
@@ -107,6 +107,7 @@ async function token(event, oAuth2Provider, response) {
  *
  * @param {Object} request - an API Gateway request
  * @param {OAuth2} oAuth2Provider - an OAuth2 instance
+ * @param {Object} response - an API Gateway response object
  * @returns {Object} an API Gateway response
  */
 async function refreshAccessToken(request, oAuth2Provider, response) {
@@ -168,8 +169,8 @@ async function refreshAccessToken(request, oAuth2Provider, response) {
 /**
  * Handle token deletion
  *
- * @param {Object} request - an express request object 
- * @param {Object} response - an express request object 
+ * @param {Object} request - an express request object
+ * @param {Object} response - an express request object
  * @returns {Promise<Object>} a promise of an express response
  */
 async function deleteTokenEndpoint(request, response) {
@@ -197,9 +198,9 @@ async function deleteTokenEndpoint(request, response) {
 /**
  * Handle client authorization
  *
- * @param {Object} request - an express request object 
+ * @param {Object} request - an express request object
  * @param {OAuth2} oAuth2Provider - an OAuth2 instance
- * @param {Object} response - an express request object 
+ * @param {Object} response - an express request object
  * @returns {Promise<Object>} a promise of an express response
  */
 async function login(request, oAuth2Provider, response) {
@@ -242,31 +243,31 @@ function buildOAuth2ProviderFromEnv() {
 }
 
 /**
- * performs OAuth against an OAuth provider 
+ * performs OAuth against an OAuth provider
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function tokenEndpoint(req, res) {
   const oAuth2Provider = buildOAuth2ProviderFromEnv();
-  return login(req, oAuth2Provider, res)
+  return login(req, oAuth2Provider, res);
 }
 
 /**
- * refreshes an OAuth token 
+ * refreshes an OAuth token
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function refreshEndpoint(req, res) {
   const oAuth2Provider = buildOAuth2ProviderFromEnv();
-  return refreshAccessToken(req, oAuth2Provider, res)
+  return refreshAccessToken(req, oAuth2Provider, res);
 }
 
 module.exports = {
   refreshEndpoint,
   tokenEndpoint,
-  deleteTokenEndpoint,
+  deleteTokenEndpoint
 };

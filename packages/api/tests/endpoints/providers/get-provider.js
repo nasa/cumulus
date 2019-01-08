@@ -64,7 +64,7 @@ test('CUMULUS-911 GET with pathParameters and without an Authorization header re
   const response = await request(app)
     .get('/providers/asdf')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -74,7 +74,7 @@ test('CUMULUS-912 GET with pathParameters and with an invalid access token retur
     .get('/providers/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -86,7 +86,7 @@ test('GET returns an existing provider', async (t) => {
     .get(`/providers/${t.context.testProvider.id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   t.is(response.body.id, t.context.testProvider.id);
 });

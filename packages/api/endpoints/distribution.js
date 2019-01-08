@@ -92,7 +92,7 @@ function getConfigurations() {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function handleRedirectRequest(req, res) {
   const {
@@ -113,23 +113,25 @@ async function handleRedirectRequest(req, res) {
   });
 
   return res.cookie(
-      'accessToken',
-      getAccessTokenResponse.accessToken,
-      { expires: new Date(getAccessTokenResponse.expirationTime),
-        httpOnly: true,
-        secure: true 
-      })
+    'accessToken',
+    getAccessTokenResponse.accessToken,
+    {
+      expires: new Date(getAccessTokenResponse.expirationTime),
+      httpOnly: true,
+      secure: true
+    }
+  )
     .set({ Location: urljoin(distributionUrl, state) })
     .status(307)
     .send('Redirecting');
 }
 
 /**
- * Responds to a file request 
+ * Responds to a file request
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function handleFileRequest(req, res) {
   const {
@@ -140,9 +142,9 @@ async function handleFileRequest(req, res) {
 
   const redirectToGetAuthorizationCode = res
     .status(307)
-    .set({ Location: authClient.getAuthorizationUrl(req.params[0]) })
+    .set({ Location: authClient.getAuthorizationUrl(req.params[0]) });
 
-  const accessToken = req.cookies.accessToken; 
+  const accessToken = req.cookies.accessToken;
 
   if (!accessToken) return redirectToGetAuthorizationCode.send('Redirecting');
 
@@ -169,8 +171,8 @@ async function handleFileRequest(req, res) {
   }
   catch (err) {
     if (err instanceof UnparsableFileLocationError) {
-      return res.boom.notFound(err.message)
-    }  
+      return res.boom.notFound(err.message);
+    }
     throw err;
   }
 
@@ -188,6 +190,6 @@ async function handleFileRequest(req, res) {
 }
 
 router.get('/redirect', handleRedirectRequest);
-router.get('/*', handleFileRequest)
+router.get('/*', handleFileRequest);
 
 module.exports = router;
