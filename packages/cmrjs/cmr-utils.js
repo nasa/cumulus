@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const _set = require('lodash.set');
 const { promisify } = require('util');
 const urljoin = require('url-join');
 const xml2js = require('xml2js');
@@ -260,14 +261,8 @@ async function updateEcho10XMLMetadata(granuleId, cmrFile, files, distEndpoint) 
   const metadataObject = await metadataObjectFromCMRXMLFile(cmrFile.filename);
   const metadataGranule = metadataObject.Granule;
 
-  const updatedGranule = {};
-  Object.keys(metadataGranule).forEach((key) => {
-    if (key === 'OnlineResources' || key === 'Orderable') {
-      updatedGranule.OnlineAccessURLs = {};
-    }
-    updatedGranule[key] = metadataGranule[key];
-  });
-  updatedGranule.OnlineAccessURLs.OnlineAccessURL = urls;
+  const updatedGranule = { ...metadataGranule };
+  _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', urls);
   metadataObject.Granule = updatedGranule;
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(metadataObject);
