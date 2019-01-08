@@ -80,7 +80,7 @@ If you prefer to run docker in detached mode (i.e. run containers in the backgro
 
 #### Run tests
 
-Run the test commands next
+Run the test commands next:
 
     $ export LOCALSTACK_HOST=localhost
     $ yarn test
