@@ -120,15 +120,15 @@ test('GET with path parameters returns a 404 for a nonexistent workflow', async 
   t.is(response.body.message, 'The specified workflow does not exist.');
 });
 
-test.serial('GET /good-workflow returns a 500 if the workflows list cannot be fetched from S3', async (t) => {
+test.serial('GET /good-workflow returns a 404 if the workflows list cannot be fetched from S3', async (t) => {
   const realBucket = process.env.bucket;
   process.env.bucket = 'bucket-does-not-exist';
   const response = await request(app)
     .get('/workflows/HelloWorldWorkflow')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(500);
+    .expect(404);
 
-  t.is(response.status, 500);
+  t.is(response.status, 404);
   process.env.bucket = realBucket;
 });
