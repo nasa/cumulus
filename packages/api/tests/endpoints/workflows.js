@@ -11,10 +11,8 @@ const {
 
 const workflowList = require('../data/workflow_list.json');
 const models = require('../../models');
-const workflowsEndpoint = require('../../endpoints/workflows');
 const {
-  createFakeJwtAuthToken,
-  testEndpoint
+  createFakeJwtAuthToken
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 
@@ -64,7 +62,7 @@ test('CUMULUS-911 GET without pathParameters and without an Authorization header
   const response = await request(app)
     .get('/workflows')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
@@ -72,7 +70,7 @@ test('CUMULUS-911 GET with pathParameters and without an Authorization header re
   const response = await request(app)
     .get('/workflows/asdf')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
@@ -81,7 +79,7 @@ test('CUMULUS-912 GET without pathParameters and with an invalid access token re
     .get('/workflows/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 

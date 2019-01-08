@@ -12,7 +12,7 @@ const { deconstructCollectionId } = require('../lib/utils');
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
   const result = await (new Search({
@@ -28,7 +28,7 @@ async function list(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function put(req, res) {
   const granuleId = req.params.granuleName;
@@ -52,11 +52,11 @@ async function put(req, res) {
     const warning = 'The granule files may be overwritten';
 
     return res.send(Object.assign({
-        granuleId: granule.granuleId,
-        action,
-        status: 'SUCCESS'
-      },
-      (collection.duplicateHandling !== 'replace') ? { warning } : {}));
+      granuleId: granule.granuleId,
+      action,
+      status: 'SUCCESS'
+    },
+    (collection.duplicateHandling !== 'replace') ? { warning } : {}));
   }
 
   if (action === 'applyWorkflow') {
@@ -66,20 +66,20 @@ async function put(req, res) {
     );
 
     return res.send({
-        granuleId: granule.granuleId,
-        action: `applyWorkflow ${body.workflow}`,
-        status: 'SUCCESS'
-      });
+      granuleId: granule.granuleId,
+      action: `applyWorkflow ${body.workflow}`,
+      status: 'SUCCESS'
+    });
   }
 
   if (action === 'removeFromCmr') {
     await granuleModelClient.removeGranuleFromCmr(granule.granuleId, granule.collectionId);
 
     return res.send({
-        granuleId: granule.granuleId,
-        action,
-        status: 'SUCCESS'
-      });
+      granuleId: granule.granuleId,
+      action,
+      status: 'SUCCESS'
+    });
   }
 
   if (action === 'move') {
@@ -98,10 +98,10 @@ async function put(req, res) {
     await granuleModelClient.move(granule, body.destinations, process.env.DISTRIBUTION_ENDPOINT);
 
     return res.send({
-        granuleId: granule.granuleId,
-        action,
-        status: 'SUCCESS'
-      });
+      granuleId: granule.granuleId,
+      action,
+      status: 'SUCCESS'
+    });
   }
 
   return res.boom.badRequest('Action is not supported. Choices are "applyWorkflow", "move", "reingest", or "removeFromCmr"');
@@ -112,7 +112,7 @@ async function put(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
   const granuleId = req.params.granuleName;
@@ -149,7 +149,7 @@ async function del(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
   let result;

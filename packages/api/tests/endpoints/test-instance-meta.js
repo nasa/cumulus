@@ -63,7 +63,7 @@ test('GET with invalid access token returns an invalid token response', async (t
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
     .expect(403);
-  
+
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
@@ -84,6 +84,6 @@ test('GET without an Authorization header returns an Authorization Missing respo
   const response = await request(app)
     .get('/instanceMeta')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
   assertions.isAuthorizationMissingResponse(t, response);
 });

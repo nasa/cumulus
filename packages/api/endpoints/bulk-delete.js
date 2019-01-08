@@ -8,7 +8,7 @@ const { AsyncOperation } = require('../models');
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function startBulkDeleteAsyncOperation(req, res) {
   const asyncOperationModel = new AsyncOperation({
@@ -32,7 +32,7 @@ async function startBulkDeleteAsyncOperation(req, res) {
     return res.boom.serverUnavailable(`Failed to run ECS task: ${err.message}`);
   }
 
-  return res.send({ asyncOperationId: asyncOperation.id })
+  return res.send({ asyncOperationId: asyncOperation.id });
 }
 
 router.post('/', startBulkDeleteAsyncOperation);

@@ -4,7 +4,7 @@ const request = require('supertest');
 const test = require('ava');
 const sinon = require('sinon');
 const commonAws = require('@cumulus/common/aws');
-const { StepFunction }= require('@cumulus/ingest/aws');
+const { StepFunction } = require('@cumulus/ingest/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const models = require('../../models');
@@ -139,16 +139,16 @@ const executionExistsMock = (arn) => {
   if (arn.executionArn === expiredExecutionArn) {
     return {
       promise: () => {
-        const error = new Error()
+        const error = new Error();
         error.code = 'ExecutionDoesNotExist';
         return Promise.reject(error);
       }
-    }
+    };
   }
   return {
     promise: () => Promise.resolve(true)
   };
-}
+};
 
 const s3Mock = (_, key) =>
   new Promise((resolve) => {

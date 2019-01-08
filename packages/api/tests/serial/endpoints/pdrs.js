@@ -89,7 +89,7 @@ test('CUMULUS-911 GET without pathParameters and without an Authorization header
   const response = await request(app)
     .get('/pdrs')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -98,7 +98,7 @@ test('CUMULUS-911 GET with pathParameters and without an Authorization header re
   const response = await request(app)
     .get('/pdrs/asdf')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -107,7 +107,7 @@ test('CUMULUS-911 DELETE with pathParameters and without an Authorization header
   const response = await request(app)
     .delete('/pdrs/asdf')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -117,7 +117,7 @@ test('CUMULUS-912 GET without pathParameters and with an invalid access token re
     .get('/pdrs')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -127,7 +127,7 @@ test('CUMULUS-912 GET with pathParameters and with an invalid access token retur
     .get('/pdrs/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -139,7 +139,7 @@ test('CUMULUS-912 DELETE with pathParameters and with an invalid access token re
     .delete('/pdrs/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -151,7 +151,7 @@ test('default returns list of pdrs', async (t) => {
     .get('/pdrs')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   const { meta, results } = response.body;
   t.is(results.length, 2);
@@ -169,7 +169,7 @@ test('GET returns an existing pdr', async (t) => {
     .get(`/pdrs/${fakePdrs[0].pdrName}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   const { pdrName } = response.body;
   t.is(pdrName, fakePdrs[0].pdrName);
@@ -180,7 +180,7 @@ test('GET fails if pdr is not found', async (t) => {
     .get('/pdrs/unknownpdr')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(404)
+    .expect(404);
 
   t.is(response.status, 404);
   const { message } = response.body;
@@ -199,7 +199,7 @@ test('DELETE a pdr', async (t) => {
     .delete(`/pdrs/${newPdr.pdrName}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   t.is(response.status, 200);
   const { detail } = response.body;
@@ -220,7 +220,7 @@ test('DELETE handles the case where the PDR exists in S3 but not in DynamoDb', a
     .delete(`/pdrs/${pdrName}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   t.is(response.status, 200);
 
@@ -236,7 +236,7 @@ test('DELETE handles the case where the PDR exists in DynamoDb but not in S3', a
     .delete(`/pdrs/${newPdr.pdrName}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   t.is(response.status, 200);
 

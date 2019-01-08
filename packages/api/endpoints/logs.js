@@ -4,11 +4,11 @@ const router = require('express-promise-router')();
 const { Search } = require('../es/search');
 
 /**
- * list all the logs 
+ * list all the logs
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
   const search = new Search({
@@ -24,7 +24,7 @@ async function list(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
   const executionName = req.params.executionName;

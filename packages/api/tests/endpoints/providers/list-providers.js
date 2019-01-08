@@ -65,7 +65,7 @@ test('CUMULUS-911 GET without pathParameters and without an Authorization header
   const response = await request(app)
     .get('/providers')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -75,7 +75,7 @@ test('CUMULUS-912 GET without pathParameters and with an invalid access token re
     .get('/providers')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -91,7 +91,7 @@ test('default returns list of providerModel', async (t) => {
     .get('/providers')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   const { results } = response.body;
   stub.restore();

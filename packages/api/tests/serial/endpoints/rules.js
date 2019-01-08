@@ -7,10 +7,8 @@ const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
-const rulesEndpoint = require('../../../endpoints/rules');
 const {
-  createFakeJwtAuthToken,
-  testEndpoint
+  createFakeJwtAuthToken
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
@@ -87,7 +85,7 @@ test('CUMULUS-911 GET without pathParameters and without an Authorization header
   const response = await request(app)
     .get('/rules')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -96,7 +94,7 @@ test('CUMULUS-911 GET with pathParameters and without an Authorization header re
   const response = await request(app)
     .get('/rules/asdf')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -105,7 +103,7 @@ test('CUMULUS-911 POST with pathParameters and without an Authorization header r
   const response = await request(app)
     .post('/rules/asdf')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -114,7 +112,7 @@ test('CUMULUS-911 PUT with pathParameters and without an Authorization header re
   const response = await request(app)
     .put('/rules/asdf')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -123,8 +121,8 @@ test('CUMULUS-911 DELETE with pathParameters and without an Authorization header
   const response = await request(app)
     .delete('/rules/asdf')
     .set('Accept', 'application/json')
-    .expect(401)
-  
+    .expect(401);
+
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
@@ -133,7 +131,7 @@ test('CUMULUS-912 GET without pathParameters and with an invalid access token re
     .get('/rules')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -143,7 +141,7 @@ test('CUMULUS-912 GET with pathParameters and with an invalid access token retur
     .get('/rules/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -155,7 +153,7 @@ test('CUMULUS-912 POST with pathParameters and with an invalid access token retu
     .post('/rules/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -167,7 +165,7 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
     .put('/rules/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -179,7 +177,7 @@ test('CUMULUS-912 DELETE with pathParameters and with an invalid access token re
     .delete('/rules/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -192,7 +190,7 @@ test('default returns list of rules', async (t) => {
     .get('/rules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   const { results } = response.body;
   t.is(results.length, 0);
@@ -203,7 +201,7 @@ test('GET gets a rule', async (t) => {
     .get(`/rules/${testRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   const { name } = response.body;
   t.is(name, testRule.name);
@@ -217,7 +215,7 @@ test('When calling the API endpoint to delete an existing rule it does not retur
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(newRule)
-    .expect(200)
+    .expect(200);
 
   t.is(response.body.message, 'Record saved');
 
@@ -225,7 +223,7 @@ test('When calling the API endpoint to delete an existing rule it does not retur
     .delete(`/rules/${newRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   const { message, record } = response.body;
   t.is(message, 'Record deleted');
@@ -240,7 +238,7 @@ test('403 error when calling the API endpoint to delete an existing rule without
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(newRule)
-    .expect(200)
+    .expect(200);
 
   const { message, record } = response.body;
   t.is(message, 'Record saved');
@@ -251,7 +249,7 @@ test('403 error when calling the API endpoint to delete an existing rule without
     .delete(`/rules/${newRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 
@@ -259,7 +257,7 @@ test('403 error when calling the API endpoint to delete an existing rule without
     .get(`/rules/${newRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   t.deepEqual(response.body, record);
 });
@@ -271,10 +269,10 @@ test('POST creates a rule', async (t) => {
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(newRule)
-    .expect(200)
+    .expect(200);
 
   const { message, record } = response.body;
-  t.is(message, "Record saved");
+  t.is(message, 'Record saved');
 
   newRule.createdAt = record.createdAt;
   newRule.updatedAt = record.updatedAt;
@@ -290,7 +288,7 @@ test('POST returns a record exists when one exists', async (t) => {
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(newRule)
-    .expect(409)
+    .expect(409);
 
   const { message, record } = response.body;
   t.is(message, `A record already exists for ${newRule.name}`);
@@ -305,7 +303,7 @@ test('PUT updates a rule', async (t) => {
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ state: 'ENABLED' })
-    .expect(200)
+    .expect(200);
 
   const record = response.body;
   newRule.createdAt = record.createdAt;
@@ -320,7 +318,7 @@ test('PUT returns "record does not exist"', async (t) => {
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ state: 'ENABLED' })
-    .expect(404)
+    .expect(404);
 
   const { message, record } = response.body;
   t.is(message, 'Record does not exist');
@@ -332,7 +330,7 @@ test('DELETE deletes a rule', async (t) => {
     .delete(`/rules/${testRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   const { message } = response.body;
   t.is(message, 'Record deleted');

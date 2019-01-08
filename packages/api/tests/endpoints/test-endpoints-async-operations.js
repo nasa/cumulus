@@ -15,7 +15,7 @@ const { createFakeJwtAuthToken } = require('../../lib/testUtils');
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.systemBucket = randomString();
-process.env.AsyncOperationsTable = randomString()
+process.env.AsyncOperationsTable = randomString();
 process.env.AccessTokensTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 

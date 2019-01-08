@@ -13,7 +13,7 @@ const { Search } = require('../es/search');
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
   const search = new Search({
@@ -28,7 +28,7 @@ async function list(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
   const id = req.params.id;
@@ -44,7 +44,7 @@ async function get(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
   const data = req.body;
@@ -54,10 +54,10 @@ async function post(req, res) {
 
   try {
     // make sure the record doesn't exist
-    await providerModel.get({ id })
+    await providerModel.get({ id });
     return res.boom.badReqest(`A record already exists for ${id}`);
   }
-  catch(e) {
+  catch (e) {
     if (e instanceof RecordDoesNotExist) {
       const record = await providerModel.create(data);
       return res.send({ record, message: 'Record saved' });
@@ -71,7 +71,7 @@ async function post(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function put(req, res) {
   const id = req.params.id;
@@ -81,11 +81,11 @@ async function put(req, res) {
 
   // get the record first
   try {
-    await providerModel.get({ id })
+    await providerModel.get({ id });
     const record = await providerModel.update({ id }, data);
     return res.send(record);
   }
-  catch(err) {
+  catch (err) {
     if (err instanceof RecordDoesNotExist) return res.boom.notFound('Record does not exist');
     throw err;
   }
@@ -96,7 +96,7 @@ async function put(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object 
+ * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
   const providerModel = new models.Provider();
@@ -115,10 +115,10 @@ async function del(req, res) {
 }
 
 // express routes
-router.get('/:id', get)
-router.put('/:id', put)
-router.delete('/:id', del)
-router.post('/', post)
-router.get('/', list)
+router.get('/:id', get);
+router.put('/:id', put);
+router.delete('/:id', del);
+router.post('/', post);
+router.get('/', list);
 
 module.exports = router;

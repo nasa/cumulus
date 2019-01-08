@@ -34,7 +34,7 @@ process.env.GranulesTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
 process.env.internal = randomString();
-process.env.bucket = process.env.internal; 
+process.env.bucket = process.env.internal;
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
@@ -135,7 +135,7 @@ test.serial('default returns list of granules', async (t) => {
     .get('/granules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${accessToken}`)
-    .expect(200)
+    .expect(200);
 
   const { meta, results } = response.body;
   t.is(results.length, 2);
@@ -152,7 +152,7 @@ test.serial('CUMULUS-911 GET without pathParameters and without an Authorization
   const response = await request(app)
     .get('/granules')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -161,7 +161,7 @@ test.serial('CUMULUS-911 GET with pathParameters.granuleName set and without an 
   const response = await request(app)
     .get('/granules/asdf')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -170,7 +170,7 @@ test.serial('CUMULUS-911 PUT with pathParameters.granuleName set and without an 
   const response = await request(app)
     .put('/granules/asdf')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -179,7 +179,7 @@ test.serial('CUMULUS-911 DELETE with pathParameters.granuleName set and without 
   const response = await request(app)
     .delete('/granules/asdf')
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
 });
@@ -189,7 +189,7 @@ test.serial('CUMULUS-912 GET without pathParameters and with an invalid access t
     .get('/granules/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -203,7 +203,7 @@ test.serial('CUMULUS-912 GET without pathParameters and with an unauthorized use
     .get('/granules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtToken}`)
-    .expect(401)
+    .expect(401);
 
   assertions.isUnauthorizedUserResponse(t, response);
 });
@@ -213,7 +213,7 @@ test.serial('CUMULUS-912 GET with pathParameters.granuleName set and with an inv
     .get('/granules/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -225,7 +225,7 @@ test.serial('CUMULUS-912 PUT with pathParameters.granuleName set and with an inv
     .put('/granules/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
@@ -241,7 +241,7 @@ test.serial('CUMULUS-912 DELETE with pathParameters.granuleName set and with an 
     .delete('/granules/adsf')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtToken}`)
-    .expect(401)
+    .expect(401);
 
   assertions.isUnauthorizedUserResponse(t, response);
 });
@@ -251,7 +251,7 @@ test.serial('GET returns an existing granule', async (t) => {
     .get(`/granules/${t.context.fakeGranules[0].granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${accessToken}`)
-    .expect(200)
+    .expect(200);
 
   const { granuleId } = response.body;
   t.is(granuleId, t.context.fakeGranules[0].granuleId);
@@ -262,7 +262,7 @@ test.serial('GET returns a 404 response if the granule is not found', async (t) 
     .get('/granules/unknownGranule')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${accessToken}`)
-    .expect(404)
+    .expect(404);
 
   t.is(response.status, 404);
   const { message } = response.body;
@@ -275,7 +275,7 @@ test.serial('PUT fails if action is not supported', async (t) => {
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${accessToken}`)
     .send({ action: 'reprecess' })
-    .expect(400)
+    .expect(400);
 
   t.is(response.status, 400);
   const { message } = response.body;
@@ -287,7 +287,7 @@ test.serial('PUT fails if action is not provided', async (t) => {
     .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${accessToken}`)
-    .expect(400)
+    .expect(400);
 
   t.is(response.status, 400);
   const { message } = response.body;
@@ -318,8 +318,8 @@ test.serial('reingest a granule', async (t) => {
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${accessToken}`)
     .send({ action: 'reingest' })
-    .expect(200)
-  
+    .expect(200);
+
   const body = response.body;
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'reingest');
@@ -370,8 +370,8 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
       workflow: 'inPlaceWorkflow',
       messageSource: 'output'
     })
-    .expect(200)
- 
+    .expect(200);
+
   const body = response.body;
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'applyWorkflow inPlaceWorkflow');
@@ -397,8 +397,8 @@ test.serial('remove a granule from CMR', async (t) => {
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${accessToken}`)
     .send({ action: 'removeFromCmr' })
-    .expect(200)
- 
+    .expect(200);
+
 
   const body = response.body;
   t.is(body.status, 'SUCCESS');
@@ -417,7 +417,7 @@ test.serial('DELETE deleting an existing granule that is published will fail', a
     .delete(`/granules/${t.context.fakeGranules[0].granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${accessToken}`)
-    .expect(400)
+    .expect(400);
 
   t.is(response.status, 400);
   const { message } = response.body;
@@ -480,7 +480,7 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
     .delete(`/granules/${newGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${accessToken}`)
-    .expect(200)
+    .expect(200);
 
   t.is(response.status, 200);
   const { detail } = response.body;
@@ -557,18 +557,6 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
         }
       ];
 
-      const event = {
-        httpMethod: 'PUT',
-        pathParameters: {
-          granuleName: newGranule.granuleId
-        },
-        headers: t.context.authHeaders,
-        body: JSON.stringify({
-          action: 'move',
-          destinations
-        })
-      };
-
       const response = await request(app)
         .put(`/granules/${newGranule.granuleId}`)
         .set('Accept', 'application/json')
@@ -577,7 +565,7 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
           action: 'move',
           destinations
         })
-        .expect(200)
+        .expect(200);
 
       const body = response.body;
       t.is(body.status, 'SUCCESS');
@@ -685,7 +673,7 @@ test.serial('move a file and update metadata', async (t) => {
       action: 'move',
       destinations
     })
-    .expect(200)
+    .expect(200);
 
   const body = response.body;
 
@@ -744,7 +732,7 @@ test('PUT with action move returns failure if one granule file exists', async (t
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${accessToken}`)
     .send(body)
-    .expect(409)
+    .expect(409);
 
 
   const responseBody = response.body;
@@ -782,7 +770,7 @@ test('PUT with action move returns failure if more than one granule file exists'
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${accessToken}`)
     .send(body)
-    .expect(409)
+    .expect(409);
 
   const responseBody = response.body;
   t.is(response.statusCode, 409);

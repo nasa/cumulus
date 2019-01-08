@@ -10,7 +10,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 
 // const distributionEndpoint = require('../../endpoints/distribution');
 const { AccessToken } = require('../../models');
-const EarthdataLoginClient = require('../../lib/EarthdataLogin')
+const EarthdataLoginClient = require('../../lib/EarthdataLogin');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 
 process.env.EARTHDATA_CLIENT_ID = randomString();
@@ -49,7 +49,7 @@ test.before(async () => {
   const fileKey = randomString();
   const fileLocation = `${fileBucket}/${fileKey}`;
   const signedFileUrl = new URL(`https://${randomString()}.com/${randomString()}`);
-  
+
 
   const getAccessTokenResponse = {
     accessToken: randomString(),
@@ -61,12 +61,12 @@ test.before(async () => {
   sinon.stub(
     EarthdataLoginClient.prototype,
     'getAccessToken'
-  ).callsFake((code) => getAccessTokenResponse);
+  ).callsFake(() => getAccessTokenResponse);
 
   sinon.stub(
     EarthdataLoginClient.prototype,
     'getAuthorizationUrl'
-  ).callsFake((state) => authorizationUrl);
+  ).callsFake(() => authorizationUrl);
 
   const accessTokenRecord = fakeAccessTokenFactory();
   await accessTokenModel.create(accessTokenRecord);
@@ -98,7 +98,7 @@ test.before(async () => {
     authorizationUrl,
     signedFileUrl,
     authorizationCode: randomString(),
-    distributionUrl: process.env.DISTRIBUTION_URL 
+    distributionUrl: process.env.DISTRIBUTION_URL
   };
 });
 
@@ -148,7 +148,7 @@ test('A request for a file using an expired access token returns a redirect to a
 });
 
 test('An authenticated request for a file that cannot be parsed returns a 404', async (t) => {
-  const { accessTokenCookie, accessTokenModel } = context;
+  const { accessTokenCookie } = context;
   const response = await request(distributionApp)
     .get('/invalid')
     .set('Accept', 'application/json')
@@ -192,7 +192,7 @@ test('A /redirect request with a good authorization code returns a correct respo
 
   const response = await request(distributionApp)
     .get('/redirect')
-    .query({ code: authorizationCode, state: fileLocation})
+    .query({ code: authorizationCode, state: fileLocation })
     .set('Accept', 'application/json')
     .expect(307);
 
@@ -225,7 +225,7 @@ test('A /redirect request with a good authorization code stores the access token
 
   const response = await request(distributionApp)
     .get('/redirect')
-    .query({ code: authorizationCode, state: fileLocation})
+    .query({ code: authorizationCode, state: fileLocation })
     .set('Accept', 'application/json')
     .expect(307);
 

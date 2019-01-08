@@ -12,7 +12,6 @@ const {
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
-const { RecordDoesNotExist } = require('../../../lib/errors');
 
 process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
@@ -31,14 +30,6 @@ let jwtAuthToken;
 let accessTokenModel;
 let collectionModel;
 let userModel;
-
-const collectionDoesNotExist = async (t, collection) => {
-  const error = await t.throws(collectionModel.get({
-    name: collection.name,
-    version: collection.version
-  }));
-  t.true(error instanceof RecordDoesNotExist);
-};
 
 test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
@@ -77,7 +68,7 @@ test('CUMULUS-911 POST without an Authorization header returns an Authorization 
     .post('/collections')
     .send(newCollection)
     .set('Accept', 'application/json')
-    .expect(401)
+    .expect(401);
   assertions.isAuthorizationMissingResponse(t, res);
 });
 
@@ -88,7 +79,7 @@ test('CUMULUS-912 POST with an invalid access token returns an unauthorized resp
     .send(newCollection)
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403)
+    .expect(403);
   assertions.isInvalidAccessTokenResponse(t, res);
 });
 
@@ -101,7 +92,7 @@ test('POST with invalid authorization scheme returns an invalid token response',
     .send(newCollection)
     .set('Accept', 'application/json')
     .set('Authorization', 'InvalidBearerScheme ThisIsAnInvalidAuthorizationToken')
-    .expect(401)
+    .expect(401);
   assertions.isInvalidAuthorizationResponse(t, res);
 });
 
@@ -112,7 +103,7 @@ test('POST creates a new collection', async (t) => {
     .send(newCollection)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+    .expect(200);
 
   const { message, record } = res.body;
   t.is(message, 'Record saved');

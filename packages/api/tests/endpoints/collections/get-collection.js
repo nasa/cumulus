@@ -7,7 +7,6 @@ const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../../models');
 const bootstrap = require('../../../lambdas/bootstrap');
-const collectionsEndpoint = require('../../../endpoints/collections');
 const {
   createFakeJwtAuthToken,
   fakeCollectionFactory
