@@ -14,7 +14,11 @@ const {
   getCmrXMLFiles,
   getGranuleId
 } = require('@cumulus/cmrjs');
-const urljoin = require('url-join');
+const {
+// TODO [MHS, 2019-01-08] refactor to not use in here, or added to cmrjs.
+  isECHO10File,
+  updateEcho10XMLMetadata
+} = require('@cumulus/cmrjs/cmr-utils');
 const path = require('path');
 const {
   aws: {
@@ -113,7 +117,7 @@ function validateMatch(match, buckets, file) {
 * @param {Object} granulesObject - an object of granules where the key is the granuleId
 * @param {Object} collection - configuration object defining a collection
 *                              of granules and their files
-* @param {string} cmrFiles - array of objects that include CMR xmls uris and granuleIds
+* @param {Array<Object>} cmrFiles - array of objects that include CMR xmls uris and granuleIds
 * @param {BucketsConfig} buckets -  instance associated with the stack
 * @returns {Object} new granulesObject where each granules' files are updated with
 *                   the correct target buckets/paths/and s3uri filenames.
@@ -259,55 +263,68 @@ async function moveFilesForAllGranules(granulesObject, sourceBucket, duplicateHa
 }
 
 /**
-* Update the online access url fields in CMR xml files
+ * Updates a CMR file modifying/adding an OnlineResources/OnlineAccessURLs
+ * element to the metadata for the new files locations.
+ *
+ * @param {Object} cmrFile - CMR file object (from getCmrXMLFiles)
+ * @param {Array<Object>} files - List of granule file objects for the CMR object
+ * @param {string} distEndpoint - distribution endpoint
+ * @param {BucketsConfig} buckets - Stack BucketsConfig instance
+ */
+async function updateCMRFileAccessURLs(cmrFile, files, distEndpoint, buckets) {
+  const metadataGranule = get(cmrFile, 'metadataObject.Granule');
+  const urls = await constructOnlineAccessUrls(files, distEndpoint, buckets);
+
+  const updatedGranule = {};
+  Object.keys(metadataGranule).forEach((key) => {
+    if (key === 'OnlineResources' || key === 'Orderable') {
+      updatedGranule.OnlineAccessURLs = {};
+    }
+    updatedGranule[key] = metadataGranule[key];
+  });
+  updatedGranule.OnlineAccessURLs.OnlineAccessURL = urls;
+  /* eslint-disable no-param-reassign */
+  cmrFile.metadataObject.Granule = updatedGranule;
+  /* eslint-enable no-param-reassign */
+  const builder = new xml2js.Builder();
+  const xml = builder.buildObject(cmrFile.metadataObject);
+
+
+  const updatedCmrFile = files.find((f) => isECHO10File(f.filename));
+  // S3 upload only accepts tag query strings, so reduce tags to query string.
+  const tagsQueryString = s3TagSetToQueryString(cmrFile.s3Tags);
+  const params = {
+    Bucket: updatedCmrFile.bucket,
+    Key: updatedCmrFile.filepath,
+    Body: xml,
+    Tagging: tagsQueryString
+  };
+  if (buckets.type(updatedCmrFile.bucket).match('public')) {
+    params.ACL = 'public-read';
+    await promiseS3Upload(params);
+  }
+  else {
+    await promiseS3Upload(params);
+  }
+  // clean up old CmrFile after uploading new one
+  const { Bucket, Key } = parseS3Uri(cmrFile.filename);
+  await deleteS3Object(Bucket, Key);
+}
+
+/**
+* Update each of the CMR files' onlineaccessurl fields to represent the new
+* file locations.
 *
-* @param {string} cmrFiles - array of objects that include CMR xmls uris and granuleIds
+* @param {Array<Object>} cmrFiles - array of objects that include CMR xmls uris and granuleIds
 * @param {Object} granulesObject - an object of the granules where the key is the granuleId
 * @param {string} distEndpoint - the api distribution endpoint
 * @param {BucketsConfig} buckets - BucketsConfig instance
 * @returns {Promise} promise resolves when all files have been updated
 **/
-async function updateCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoint, buckets) {
-  await Promise.all(cmrFiles.map(async (cmrFile) => {
-    const metadataGranule = get(cmrFile, 'metadataObject.Granule');
+async function updateEachCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoint, buckets) {
+  return Promise.all(cmrFiles.map(async (cmrFile) => {
     const granule = granulesObject[cmrFile.granuleId];
-
-    const urls = await constructOnlineAccessUrls(granule.files, distEndpoint, buckets);
-
-    const updatedGranule = {};
-    Object.keys(metadataGranule).forEach((key) => {
-      if (key === 'OnlineResources' || key === 'Orderable') {
-        updatedGranule.OnlineAccessURLs = {};
-      }
-      updatedGranule[key] = metadataGranule[key];
-    });
-    updatedGranule.OnlineAccessURLs.OnlineAccessURL = urls;
-    /* eslint-disable no-param-reassign */
-    cmrFile.metadataObject.Granule = updatedGranule;
-    /* eslint-enable no-param-reassign */
-    const builder = new xml2js.Builder();
-    const xml = builder.buildObject(cmrFile.metadataObject);
-
-
-    const updatedCmrFile = granule.files.find((f) => f.filename.match(/.*\.cmr\.xml$/));
-    // S3 upload only accepts tag query strings, so reduce tags to query string.
-    const tagsQueryString = s3TagSetToQueryString(cmrFile.s3Tags);
-    const params = {
-      Bucket: updatedCmrFile.bucket,
-      Key: updatedCmrFile.filepath,
-      Body: xml,
-      Tagging: tagsQueryString
-    };
-    if (buckets.type(updatedCmrFile.bucket).match('public')) {
-      params.ACL = 'public-read';
-      await promiseS3Upload(params);
-    }
-    else {
-      await promiseS3Upload(params);
-    }
-    // clean up old CmrFile after uploading new one
-    const { Bucket, Key } = parseS3Uri(cmrFile.filename);
-    await deleteS3Object(Bucket, Key);
+    return updateCMRFileAccessURLs(cmrFile, granule.files, distEndpoint, buckets);
   }));
 }
 
@@ -383,9 +400,11 @@ async function moveGranules(event) {
   let movedGranules;
   if (moveStagedFiles) {
     // move files from staging location to final location
-    movedGranules = await moveFilesForAllGranules(granulesToMove, bucket, duplicateHandling, buckets);
+    movedGranules = await moveFilesForAllGranules(
+      granulesToMove, bucket, duplicateHandling, buckets
+    );
     // update cmr.xml files with correct online access urls
-    await updateCmrFileAccessURLs(cmrFiles, movedGranules, distEndpoint, buckets);
+    await updateEachCmrFileAccessURLs(cmrFiles, movedGranules, distEndpoint, buckets);
   }
 
   return {
