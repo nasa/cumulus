@@ -18,9 +18,10 @@ const {
 } = require('./utils');
 const {
   getGranuleId,
-  getCmrFiles,
-  publish,
-  updateMetadata
+  getCmrXMLFiles,
+  publishECHO10XML2CMR,
+  reconcileCMRMetadata,
+  updateCMRMetadata
 } = require('./cmr-utils');
 
 
@@ -71,19 +72,20 @@ async function getFullMetadata(cmrLink) {
 }
 
 module.exports = {
-  searchConcept,
-  ingestConcept,
-  deleteConcept,
-  getUrl,
-  updateToken,
-  ValidationError,
   CMR,
-  getMetadata,
+  ValidationError,
+  deleteConcept,
+  getCmrXMLFiles,
   getFullMetadata,
-  getHost,
-  hostId,
   getGranuleId,
-  getCmrFiles,
-  publish,
-  updateMetadata
+  getHost,
+  getMetadata,
+  getUrl,
+  hostId,
+  ingestConcept,
+  publishECHO10XML2CMR,
+  reconcileCMRMetadata,
+  searchConcept,
+  updateCMRMetadata,
+  updateToken
 };

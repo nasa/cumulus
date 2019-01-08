@@ -9,14 +9,13 @@ const { sfn } = require('@cumulus/common/aws');
 const aws = require('@cumulus/common/aws');
 const { CMR } = require('@cumulus/cmrjs');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const xml2js = require('xml2js');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 
 const assertions = require('../../../lib/assertions');
 const models = require('../../../models');
 const bootstrap = require('../../../lambdas/bootstrap');
-const handleRequest = require('../../../endpoints/granules');
 const indexer = require('../../../es/indexer');
 const {
   fakeAccessTokenFactory,
@@ -431,11 +430,11 @@ test.serial('DELETE deleting an existing granule that is published will fail', a
 test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   const buckets = {
     protected: {
-      name: randomString(),
+      name: randomId('protected'),
       type: 'protected'
     },
     public: {
-      name: randomString(),
+      name: randomId('public'),
       type: 'public'
     }
   };
@@ -445,17 +444,17 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
     {
       bucket: buckets.protected.name,
       name: `${newGranule.granuleId}.hdf`,
-      filename: `s3://${buckets.protected.name}/${randomString()}/${newGranule.granuleId}.hdf`
+      filename: `s3://${buckets.protected.name}/${randomString(5)}/${newGranule.granuleId}.hdf`
     },
     {
       bucket: buckets.protected.name,
       name: `${newGranule.granuleId}.cmr.xml`,
-      filename: `s3://${buckets.protected.name}/${randomString()}/${newGranule.granuleId}.cmr.xml`
+      filename: `s3://${buckets.protected.name}/${randomString(5)}/${newGranule.granuleId}.cmr.xml`
     },
     {
       bucket: buckets.public.name,
       name: `${newGranule.granuleId}.jpg`,
-      filename: `s3://${buckets.public.name}/${randomString()}/${newGranule.granuleId}.jpg`
+      filename: `s3://${buckets.public.name}/${randomString(5)}/${newGranule.granuleId}.jpg`
     }
   ];
 
@@ -504,8 +503,8 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
 
 test.serial('move a granule with no .cmr.xml file', async (t) => {
   const bucket = process.env.internal;
-  const secondBucket = randomString();
-  const thirdBucket = randomString();
+  const secondBucket = randomId('second');
+  const thirdBucket = randomId('third');
 
   await runTestUsingBuckets(
     [secondBucket, thirdBucket],
@@ -624,7 +623,7 @@ test.serial('move a file and update metadata', async (t) => {
       type: 'protected'
     },
     public: {
-      name: randomString(),
+      name: randomId('public'),
       type: 'public'
     }
   };
@@ -717,9 +716,9 @@ test.serial('move a file and update metadata', async (t) => {
       return resolve(data);
     });
   }).then((xml) => {
-    const newUrl = xml.Granule.OnlineAccessURLs.OnlineAccessURL[0].URL;
+    const newUrls = xml.Granule.OnlineAccessURLs.OnlineAccessURL.map((obj) => obj.URL);
     const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
-    t.is(newUrl, newDestination);
+    t.true(newUrls.includes(newDestination));
   });
 });
 
