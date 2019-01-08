@@ -273,6 +273,7 @@ async function moveFilesForAllGranules(granulesObject, sourceBucket, duplicateHa
  */
 async function updateCMRFileAccessURLs(cmrFile, files, distEndpoint, buckets) {
   const metadataGranule = get(cmrFile, 'metadataObject.Granule');
+
   const urls = await constructOnlineAccessUrls(files, distEndpoint, buckets);
 
   const updatedGranule = {};
@@ -301,11 +302,8 @@ async function updateCMRFileAccessURLs(cmrFile, files, distEndpoint, buckets) {
   };
   if (buckets.type(updatedCmrFile.bucket).match('public')) {
     params.ACL = 'public-read';
-    await promiseS3Upload(params);
   }
-  else {
-    await promiseS3Upload(params);
-  }
+  await promiseS3Upload(params);
   // clean up old CmrFile after uploading new one
   const { Bucket, Key } = parseS3Uri(cmrFile.filename);
   await deleteS3Object(Bucket, Key);
@@ -406,12 +404,15 @@ async function moveGranules(event) {
     // update cmr.xml files with correct online access urls
     await updateEachCmrFileAccessURLs(cmrFiles, movedGranules, distEndpoint, buckets);
   }
+  else {
+    // TODO [MHS, 2019-01-08] This is the behavior in v1.10.4, but I'm not sure
+    // it's what we want. Validate with someone.  It updates all of the file
+    // location metadata, but doesn't move the files to those locations.
+    movedGranules = granulesToMove;
+  }
 
   return {
-    granules: Object.keys(movedGranules).map((k) => {
-      const granule = movedGranules[k];
-      return granule;
-    })
+    granules: Object.keys(movedGranules).map((k) => movedGranules[k])
   };
 }
 
