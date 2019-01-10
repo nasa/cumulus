@@ -129,13 +129,14 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
     const updatedFiles = [];
     updatedGranules[granuleId] = { ...granulesObject[granuleId] };
 
+    const cmrFile = cmrFiles.find((f) => f.granuleId === granuleId);
+    const cmrMetadata = cmrFile ? await metadataObjectFromCMRXMLFile(cmrFile.filename) : {};
+
     await Promise.all(granulesObject[granuleId].files.map(async (file) => {
       const match = fileSpecs.filter((cf) => unversionFilename(file.name).match(cf.regex));
       validateMatch(match, buckets, file);
 
       const URLPathTemplate = file.url_path || match[0].url_path || collection.url_path || '';
-      const cmrFile = cmrFiles.find((f) => f.granuleId === granuleId);
-      const cmrMetadata = cmrFile ? await metadataObjectFromCMRXMLFile(cmrFile.filename) : {};
       const urlPath = urlPathTemplate(URLPathTemplate, {
         file,
         granule: granulesObject[granuleId],
