@@ -13,7 +13,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `@cumulus/common/test-utils` adds new function `randomId` to create a random string with id to help in debugging.
   `@cumulus/common/BucketsConfig` adds a new helper class `BucketsConfig` for working with bucket stack configuration and bucket names.
   `@cumulus/common/aws` adds new fucntion `s3PutObjectTagging` as a convenience for the aws  [s3().putObjectTagging](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property) function.
-  `metadataObjectFromCMRXMLFile` added to `@cumulus/cmrjs` to read and parse CMR XML file from s3.
+  `@cumulus/cmrjs` Adds:
+      - `constructOnlineAccessUrls` - Create list of correct URLs for echo10 metadata.
+	  -	`isECHO10File` - Identify an echo10 metadata file.
+      - `metadataObjectFromCMRXMLFile` Read and parse CMR XML file from s3.
+      - `updateEcho10XMLMetadata` Modify a cmr.xml file with updated information.
+      - `updateCMRMetadata` Modify a cmr metadata file with updated information.
+	  - `publishECHO10XML2CMR` Posts XML CMR data to CMR service.
+	  - `reconcileCMRMetadata` Reconciles cmr metadata file after a file moves.
+
 
 ### Changed
 - CUMULUS-678
