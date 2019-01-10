@@ -4,8 +4,11 @@ const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { getCmrXMLFiles, publishECHO10XML2CMR } = require('@cumulus/cmrjs');
-const { metadataObjectFromCMRXMLFile } = require('@cumulus/cmrjs/cmr-utils');
+const {
+  getCmrXMLFiles,
+  metadataObjectFromCMRXMLFile,
+  publishECHO10XML2CMR
+} = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const { loadJSONTestData } = require('@cumulus/test-data');
 
@@ -79,8 +82,8 @@ async function postToCMR(event) {
     });
   });
 
-  // get cmr files
-  const cmrFiles = await getCmrXMLFiles(allFiles, regex);
+  // get cmr files and metadata
+  const cmrFiles = getCmrXMLFiles(allFiles, regex);
   const updatedCMRFiles = await addMetadataObjects(cmrFiles);
 
   // post all meta files to CMR

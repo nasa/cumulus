@@ -141,20 +141,18 @@ const metadataObjectFromCMRXMLFile = async (cmrFilename) => {
  * @returns {Promise<Array>} promise resolves to an array of objects
  * that includes CMR xmls uris and granuleIds
  */
-async function getCmrXMLFiles(input, granuleIdExtraction) {
+function getCmrXMLFiles(input, granuleIdExtraction) {
   const files = [];
 
-  await Promise.all(input.map(async (filename) => {
+  input.map((filename) => {
     if (isECHO10File(filename)) {
-      const metadataObject = await metadataObjectFromCMRXMLFile(filename);
       const cmrFileObject = {
         filename,
-        granuleId: getGranuleId(filename, granuleIdExtraction),
+        granuleId: getGranuleId(filename, granuleIdExtraction)
       };
-
       files.push(cmrFileObject);
     }
-  }));
+  });
 
   return files;
 }
@@ -259,6 +257,7 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   const updatedGranule = { ...metadataGranule };
   _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', urls);
   metadataObject.Granule = updatedGranule;
+
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(metadataObject);
 

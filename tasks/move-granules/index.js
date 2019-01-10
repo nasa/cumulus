@@ -5,23 +5,21 @@ const { DuplicateFile, InvalidArgument } = require('@cumulus/common/errors');
 const get = require('lodash.get');
 const clonedeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
+const path = require('path');
+
 const {
   getRenamedS3File, unversionFilename,
   moveGranuleFile, renameS3FileWithTimestamp
 } = require('@cumulus/ingest/granule');
+
 const {
   getCmrXMLFiles,
-  getGranuleId
-} = require('@cumulus/cmrjs');
-const {
-  // TODO [MHS, 2019-01-08] refactor to not use in here, or added to
-  // cmrjs. (2019-01-10: this will actuall depend on if we have unified the
-  // calls to updateCMRMetadata or make separate calls to xml and json.
+  getGranuleId,
   isECHO10File,
   metadataObjectFromCMRXMLFile,
   updateEcho10XMLMetadata
-} = require('@cumulus/cmrjs/cmr-utils');
-const path = require('path');
+} = require('@cumulus/cmrjs');
+
 const {
   aws: {
     buildS3Uri,
@@ -354,7 +352,7 @@ async function moveGranules(event) {
 
   // Get list of cmr file objects from the input Array of S3 filenames (in
   // staging location after processing)
-  const cmrFiles = await getCmrXMLFiles(inputFileList, regex);
+  const cmrFiles = getCmrXMLFiles(inputFileList, regex);
 
   // create granules object for cumulus indexer
   const allGranules = addInputFilesToGranules(inputFileList, inputGranules, regex);

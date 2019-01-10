@@ -20,8 +20,11 @@ const {
   constructOnlineAccessUrls,
   getGranuleId,
   getCmrXMLFiles,
+  isECHO10File,
+  metadataObjectFromCMRXMLFile,
   publishECHO10XML2CMR,
   reconcileCMRMetadata,
+  updateEcho10XMLMetadata,
   updateCMRMetadata
 } = require('./cmr-utils');
 
@@ -85,9 +88,12 @@ module.exports = {
   getUrl,
   hostId,
   ingestConcept,
+  isECHO10File,
+  metadataObjectFromCMRXMLFile,
   publishECHO10XML2CMR,
   reconcileCMRMetadata,
   searchConcept,
   updateCMRMetadata,
+  updateEcho10XMLMetadata,
   updateToken
 };
