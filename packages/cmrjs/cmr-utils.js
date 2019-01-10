@@ -94,11 +94,6 @@ async function getXMLMetadataAsString(xmlFilePath) {
   return obj.Body.toString();
 }
 
-async function getS3ObjectTags(objectFilePath) {
-  const { Bucket, Key } = aws.parseS3Uri(objectFilePath);
-  return aws.s3GetObjectTagging(Bucket, Key);
-}
-
 /**
  * Parse an xml string
  *
@@ -144,7 +139,7 @@ const metadataObjectFromCMRXMLFile = async (cmrFilename) => {
 function getCmrXMLFiles(input, granuleIdExtraction) {
   const files = [];
 
-  input.map((filename) => {
+  input.forEach((filename) => {
     if (isECHO10File(filename)) {
       const cmrFileObject = {
         filename,
