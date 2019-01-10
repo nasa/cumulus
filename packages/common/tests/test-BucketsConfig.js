@@ -22,6 +22,20 @@ test('bucket keys are found by bucketName', (t) => {
   t.is(actual, expected);
 });
 
+test('throws error if bucket missing from bucketsConfig', (t) => {
+  const missingBucketName = 'does-not-exist';
+  const Bucket = new BucketsConfig(bucketConfig);
+  const theError = t.throws(() => Bucket.bucket(missingBucketName));
+  t.regex(theError.message, /bucketName does-not-exist/);
+});
+
+test('throws error if try to get type of non-existing bucket', (t) => {
+  const missingBucketName = 'does-not-exist';
+  const Bucket = new BucketsConfig(bucketConfig);
+  const theError = t.throws(() => Bucket.type(missingBucketName));
+  t.regex(theError.message, /bucketName does-not-exist/);
+});
+
 test('bucket types are found by bucketName', (t) => {
   const bucketName = 'a-shared-bucket';
   const Bucket = new BucketsConfig(bucketConfig);

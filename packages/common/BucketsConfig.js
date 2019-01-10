@@ -2,6 +2,10 @@
 
 const isUndefined = require('lodash.isundefined');
 
+const { createErrorType } = require('./errors');
+
+const BucketsConfigError = createErrorType('BucketsConfigError');
+
 /**
  * Class representing cumulus bucket configuration.
  */
@@ -27,6 +31,9 @@ class BucketsConfig {
    */
   type(bucketName) {
     const key = this.key(bucketName);
+    if (!key) {
+      throw new BucketsConfigError(`bucketName ${bucketName} not found in config ${JSON.stringify(this.buckets)}`);
+    }
     return this.buckets[key].type;
   }
 
@@ -37,6 +44,9 @@ class BucketsConfig {
    */
   bucket(bucketName) {
     const key = this.key(bucketName);
+    if (!key) {
+      throw new BucketsConfigError(`bucketName ${bucketName} not found in config ${JSON.stringify(this.buckets)}`);
+    }
     return this.buckets[key];
   }
 
