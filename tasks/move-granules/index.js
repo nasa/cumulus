@@ -10,13 +10,15 @@ const {
   moveGranuleFile, renameS3FileWithTimestamp
 } = require('@cumulus/ingest/granule');
 const {
-  constructOnlineAccessUrls,
   getCmrXMLFiles,
   getGranuleId
 } = require('@cumulus/cmrjs');
 const {
-// TODO [MHS, 2019-01-08] refactor to not use in here, or added to cmrjs.
+  // TODO [MHS, 2019-01-08] refactor to not use in here, or added to
+  // cmrjs. (2019-01-10: this will actuall depend on if we have unified the
+  // calls to updateCMRMetadata or make separate calls to xml and json.
   isECHO10File,
+  metadataObjectFromCMRXMLFile,
   updateEcho10XMLMetadata
 } = require('@cumulus/cmrjs/cmr-utils');
 const path = require('path');
@@ -26,16 +28,11 @@ const {
     checksumS3Objects,
     deleteS3Object,
     parseS3Uri,
-    promiseS3Upload,
-    s3GetObjectTagging,
-    s3PutObjectTagging,
-    s3ObjectExists,
-    s3TagSetToQueryString
+    s3ObjectExists
   },
   BucketsConfig
 } = require('@cumulus/common');
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
-const xml2js = require('xml2js');
 const log = require('@cumulus/common/log');
 
 
@@ -124,23 +121,25 @@ function validateMatch(match, buckets, file) {
 * @returns {Object} new granulesObject where each granules' files are updated with
 *                   the correct target buckets/paths/and s3uri filenames.
 **/
-function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
+async function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
   const updatedGranules = {};
   const fileSpecs = collection.files;
-  Object.keys(granulesObject).forEach((granuleId) => {
+
+  await Promise.all(Object.keys(granulesObject).map(async (granuleId) => {
     const updatedFiles = [];
     updatedGranules[granuleId] = { ...granulesObject[granuleId] };
 
-    granulesObject[granuleId].files.forEach((file) => {
+    await Promise.all(granulesObject[granuleId].files.map(async (file) => {
       const match = fileSpecs.filter((cf) => unversionFilename(file.name).match(cf.regex));
       validateMatch(match, buckets, file);
 
       const URLPathTemplate = file.url_path || match[0].url_path || collection.url_path || '';
       const cmrFile = cmrFiles.find((f) => f.granuleId === granuleId);
+      const cmrMetadata = cmrFile ? await metadataObjectFromCMRXMLFile(cmrFile.filename) : {};
       const urlPath = urlPathTemplate(URLPathTemplate, {
         file,
         granule: granulesObject[granuleId],
-        cmrMetadata: cmrFile ? cmrFile.metadataObject : {}
+        cmrMetadata
       });
       const bucketName = buckets.nameByKey(match[0].bucket);
       const filepath = path.join(urlPath, file.name);
@@ -154,11 +153,9 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
           url_path: URLPathTemplate
         }
       });
-    });
-
+    }));
     updatedGranules[granuleId].files = [...updatedFiles];
-  });
-
+  }));
   return updatedGranules;
 }
 
@@ -352,16 +349,16 @@ async function moveGranules(event) {
 
   const duplicateHandling = duplicateHandlingType(event);
 
-  const input = get(event, 'input', []);
+  const inputFileList = get(event, 'input', []);
 
   // Get list of cmr file objects from the input Array of S3 filenames (in
   // staging location after processing)
-  const cmrFiles = await getCmrXMLFiles(input, regex);
+  const cmrFiles = await getCmrXMLFiles(inputFileList, regex);
 
   // create granules object for cumulus indexer
-  const allGranules = addInputFilesToGranules(input, inputGranules, regex);
+  const allGranules = addInputFilesToGranules(inputFileList, inputGranules, regex);
 
-  const granulesToMove = updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
+  const granulesToMove = await updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
 
   // allows us to disable moving the files
   let movedGranules;
