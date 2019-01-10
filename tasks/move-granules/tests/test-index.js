@@ -156,7 +156,7 @@ test.serial('Should update filenames with updated S3 URLs.', async (t) => {
 
   const output = await moveGranules(newPayload);
   const outputFilenames = output.granules[0].files.map((f) => f.filename);
-  t.deepEqual(expectedFilenames, outputFilenames);
+  t.deepEqual(expectedFilenames.sort(), outputFilenames.sort());
 });
 
 test.serial('Should preserve object tags.', async (t) => {
@@ -315,7 +315,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   await uploadFiles(newPayload.input, t.context.stagingBucket);
   let output = await moveGranules(newPayload);
   const existingFileNames = output.granules[0].files.map((f) => f.filename);
-  t.deepEqual(expectedFilenames, existingFileNames);
+  t.deepEqual(expectedFilenames.sort(), existingFileNames.sort());
 
   const outputHdfFile = existingFileNames.filter((f) => f.endsWith('.hdf'))[0];
   const existingHdfFileInfo = await headObject(
@@ -398,7 +398,7 @@ test.serial('When duplicateHandling is "skip", does not overwrite or create new.
   await uploadFiles(newPayload.input, t.context.stagingBucket);
   let output = await moveGranules(newPayload);
   const existingFileNames = output.granules[0].files.map((f) => f.filename);
-  t.deepEqual(expectedFilenames, existingFileNames);
+  t.deepEqual(expectedFilenames.sort(), existingFileNames.sort());
 
   const outputHdfFile = existingFileNames.filter((f) => f.endsWith('.hdf'))[0];
   const existingHdfFileInfo = await headObject(
@@ -418,7 +418,7 @@ test.serial('When duplicateHandling is "skip", does not overwrite or create new.
 
   output = await moveGranules(newPayload);
   const currentFileNames = output.granules[0].files.map((f) => f.filename);
-  t.deepEqual(expectedFilenames, currentFileNames);
+  t.deepEqual(expectedFilenames.sort(), currentFileNames.sort());
 
   // does not overwrite
   const currentHdfFileInfo = await headObject(
@@ -450,7 +450,7 @@ async function granuleFilesOverwrittenTest(t, duplicateHandling, forceDuplicateO
   let output = await moveGranules(newPayload);
   await validateOutput(t, output);
   const existingFileNames = output.granules[0].files.map((f) => f.filename);
-  t.deepEqual(expectedFilenames, existingFileNames);
+  t.deepEqual(expectedFilenames.sort(), existingFileNames.sort());
 
   const existingFilesMetadata = await getFilesMetadata(output.granules[0].files);
 

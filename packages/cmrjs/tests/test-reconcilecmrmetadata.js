@@ -4,12 +4,12 @@ const rewire = require('rewire');
 
 const cmrUtils = rewire('../cmr-utils');
 
-const { log, BucketsConfig } = require('@cumulus/common');
+const { log } = require('@cumulus/common');
 
 const { randomId } = require('@cumulus/common/test-utils');
 
 
-function expectedCreds() {
+function setTestCredentials() {
   process.env.cmr_provider = randomId('cmr_provider');
   process.env.cmr_client_id = randomId('cmr_client_id');
   process.env.cmr_username = randomId('cmr_username');
@@ -123,7 +123,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
   const stackName = randomId('stack');
   process.env.bucket = bucket;
   process.env.stackName = stackName;
-  const testCreds = expectedCreds();
+  const testCreds = setTestCredentials();
   const expectedMetadata = {
     filename: 'cmrmeta.cmr.xml',
     metadataObject: fakeMetadataObject,

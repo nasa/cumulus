@@ -147,13 +147,9 @@ async function getCmrXMLFiles(input, granuleIdExtraction) {
   await Promise.all(input.map(async (filename) => {
     if (isECHO10File(filename)) {
       const metadataObject = await metadataObjectFromCMRXMLFile(filename);
-      const tags = await getS3ObjectTags(filename);
-
       const cmrFileObject = {
         filename,
-        metadataObject,
         granuleId: getGranuleId(filename, granuleIdExtraction),
-        s3Tags: tags.TagSet
       };
 
       files.push(cmrFileObject);
@@ -333,6 +329,7 @@ module.exports = {
   getGranuleId,
   getCmrXMLFiles,
   isECHO10File,
+  metadataObjectFromCMRXMLFile,
   publishECHO10XML2CMR,
   reconcileCMRMetadata,
   updateCMRMetadata,
