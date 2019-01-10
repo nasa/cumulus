@@ -163,63 +163,6 @@ function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
 }
 
 /**
- * Moves CMR file ignoring any duplicate handling directives.
- *
- * @param {Object} file - cmr fileobject
- * @param {Object} sourceBucket - sourceBucket for the stack
- * @param {BucketsConfig} buckets - BucketsConfig instance.
- */
-async function moveCmrFileRequest(file, sourceBucket, buckets) {
-  log.debug('entered moveCmrFileRequest');
-  log.debug(`moveCmrFileRequest file: ${JSON.stringify(file)}`);
-  const fileStagingDir = file.fileStagingDir || 'file-staging';
-  let source;
-  let target;
-  let tagging;
-  try {
-    source = {
-      Bucket: sourceBucket,
-      Key: `${fileStagingDir}/${file.name}`
-    };
-    log.debug('source...', source);
-    target = {
-      Bucket: file.bucket,
-      Key: file.filepath
-    };
-    log.debug('target...', target);
-
-
-    try {
-      log.debug('before tagging');
-      tagging = await s3GetObjectTagging(sourceBucket, `${fileStagingDir}/${file.name}`);
-      log.debug('tagging');
-    }
-    catch (error) {
-      log.debug('the error', error);
-      tagging = { TagSet: [] };
-    }
-  }
-  catch (error) {
-    log.debug('inside big catch');
-    throw error;
-  }
-  // the file moved to destination
-  const fileMoved = clonedeep(file);
-
-  log.debug('getting options');
-  const options = (buckets.type(file.bucket).match('public')) ? { ACL: 'public-read' } : null;
-
-  log.debug('cmrmove: source', source);
-  log.debug('cmrmove: target', target);
-  log.debug('cmrmove: options', options);
-  await moveGranuleFile(source, target, options);
-  if (tagging.TagSet.length > 0) {
-    await s3PutObjectTagging(file.bucket, file.filepath, tagging);
-  }
-  return [fileMoved];
-}
-
-/**
  * move file from source bucket to target location, and return the file moved.
  * In case of 'version' duplicateHandling, also return the renamed files.
  *
@@ -259,7 +202,6 @@ async function moveFileRequest(file, sourceBucket, duplicateHandling, buckets) {
   if (s3ObjAlreadyExists && duplicateHandling === 'skip') return [fileMoved];
 
   const options = (buckets.type(file.bucket).match('public')) ? { ACL: 'public-read' } : null;
-  log.debug(`options: ${options}`);
 
   // compare the checksum of the existing file and new file, and handle them accordingly
   if (s3ObjAlreadyExists && duplicateHandling === 'version') {
@@ -277,32 +219,22 @@ async function moveFileRequest(file, sourceBucket, duplicateHandling, buckets) {
     }
   }
   else {
-    log.debug(`exists and duplicateHandling is ${duplicateHandling}`);
-    log.debug(`source ${JSON.stringify(source, null, 2)}`);
-    log.debug(`target ${JSON.stringify(target, null, 2)}`);
     await moveGranuleFile(source, target, options);
-    log.debug('Finished Moving existing/replace.');
   }
 
   const renamedFiles = (duplicateHandling === 'version')
     ? await getRenamedS3File(target.Bucket, target.Key) : [];
 
   // return both file moved and renamed files
-  log.debug(`fileMoved: ${JSON.stringify(fileMoved, null, 2)}`);
-  log.debug(`renamedFiles: ${JSON.stringify(renamedFiles, null, 2)}`);
   return [fileMoved]
-    .concat(renamedFiles.map((f) => {
-      log.debug(`anon: ${JSON.stringify(f)}`);
-      log.debug(`f.bucket ${f.Bucket}, file.bucket ${file.bucket}`);
-      return {
-        bucket: f.Bucket,
-        name: path.basename(f.Key),
-        filename: buildS3Uri(f.Bucket, f.Key),
-        filepath: f.Key,
-        fileSize: f.fileSize,
-        url_path: file.url_path
-      };
-    }));
+    .concat(renamedFiles.map((f) => ({
+      bucket: f.Bucket,
+      name: path.basename(f.Key),
+      filename: buildS3Uri(f.Bucket, f.Key),
+      filepath: f.Key,
+      fileSize: f.fileSize,
+      url_path: file.url_path
+    })));
 }
 
 /**
@@ -321,7 +253,6 @@ async function moveFilesForAllGranules(granulesObject, sourceBucket, duplicateHa
     const cmrFileFormat = /.*\.cmr\.xml$/;
     const filesToMove = granule.files.filter((file) => !file.name.match(cmrFileFormat));
     const cmrFiles = granule.files.filter((file) => file.name.match(cmrFileFormat));
-    log.debug('filesToMove: ', filesToMove);
     const filesMoved = await Promise.all(
       filesToMove.map((file) => moveFileRequest(file, sourceBucket, duplicateHandling, buckets))
     );
@@ -329,7 +260,6 @@ async function moveFilesForAllGranules(granulesObject, sourceBucket, duplicateHa
   });
 
   await Promise.all(moveFileRequests);
-  log.debug('exiting moveFilesForAllGranules');
   return granulesObject;
 }
 
@@ -389,14 +319,6 @@ function duplicateHandlingType(event) {
   return duplicateHandling;
 }
 
-async function validateInputObjects(fileList) {
-  log.debug(`validating fileList ${JSON.stringify(fileList)}`);
-  const validFiles = await Promise.all(fileList.map((file) => s3ObjectExists(parseS3Uri(file))));
-  if (!validFiles.every((vf) => vf === true)) {
-    throw new Error('some files in input filelist missing.');
-  }
-};
-
 /**
  * Move Granule files to final Location
  * See the schemas directory for detailed input and output schemas
@@ -431,28 +353,15 @@ async function moveGranules(event) {
   const duplicateHandling = duplicateHandlingType(event);
 
   const input = get(event, 'input', []);
-  log.debug('moveGranules input: ', JSON.stringify(input));
-
-  try {
-    await validateInputObjects(input);
-  }
-  catch (error) {
-    log.error(`input objects do not exist ${JSON.stringify(input)}`);
-    throw error;
-  }
 
   // Get list of cmr file objects from the input Array of S3 filenames (in
   // staging location after processing)
   const cmrFiles = await getCmrXMLFiles(input, regex);
-  log.debug('the found cmrFiles:', JSON.stringify(cmrFiles));
 
   // create granules object for cumulus indexer
-  log.debug(`input granules: ${JSON.stringify(inputGranules)}`);
   const allGranules = addInputFilesToGranules(input, inputGranules, regex);
-  log.debug(`allGranules ${JSON.stringify(allGranules)}`);
 
   const granulesToMove = updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
-  log.debug(`granulesToMove, ${JSON.stringify(granulesToMove)}`);
 
   // allows us to disable moving the files
   let movedGranules;
@@ -461,7 +370,6 @@ async function moveGranules(event) {
     movedGranules = await moveFilesForAllGranules(
       granulesToMove, bucket, duplicateHandling, buckets
     );
-    log.debug(`movedGranules, ${JSON.stringify(movedGranules)}`);
     // update cmr.xml files with correct online access urls
     await updateEachCmrFileAccessURLs(cmrFiles, movedGranules, distEndpoint, buckets);
   }
