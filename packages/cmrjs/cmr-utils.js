@@ -254,7 +254,6 @@ function getCreds() {
  * @returns {Promise} returns promised updated metadata object.
  */
 async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
-
   const urls = constructOnlineAccessUrls(files, distEndpoint, buckets);
 
   // add/replace the OnlineAccessUrls
@@ -267,7 +266,11 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(metadataObject);
 
-  await aws.promiseS3Upload({ Bucket: cmrFile.bucket, Key: cmrFile.filepath, Body: xml });
+  const tags = await aws.s3GetObjectTagging(cmrFile.bucket, cmrFile.filepath);
+  const tagsQueryString = aws.s3TagSetToQueryString(tags.TagSet);
+  await aws.promiseS3Upload({
+    Bucket: cmrFile.bucket, Key: cmrFile.filepath, Body: xml, Tagging: tagsQueryString
+  });
   return metadataObject;
 }
 

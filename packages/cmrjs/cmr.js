@@ -201,6 +201,7 @@ class CMR {
     const headers = {
       'Client-Id': this.clientId,
       'Content-type': 'application/echo10+xml'
+      // ummg: 'application/vnd.nasa.cmr.umm+json;version=1.4'  TODO [MHS, 2019-01-08]
     };
     if (token) headers['Echo-Token'] = token;
     return headers;
