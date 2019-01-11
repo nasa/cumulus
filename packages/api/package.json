@@ -14,6 +14,9 @@
     "test-coverage": "nyc npm test",
     "build": "webpack",
     "watch": "webpack --progress -w",
+    "serve": "NODE_ENV=test FAKE_AUTH=true cumulus-api serve",
+    "serve-oauth": "NODE_ENV=test cumulus-api serve",
+    "serve-remote": "cumulus-api serve",
     "prepublishOnly": "PRODUCTION=true npm run build"
   },
   "ava": {

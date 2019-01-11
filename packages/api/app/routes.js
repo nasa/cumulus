@@ -17,8 +17,13 @@ const schemas = require('../endpoints/schemas');
 const stats = require('../endpoints/stats');
 const version = require('../endpoints/version');
 const workflows = require('../endpoints/workflows');
-const { tokenEndpoint, refreshEndpoint, deleteTokenEndpoint } = require('../endpoints/token');
-const { ensureAuthenticated } = require('./auth');
+
+let token = require('../endpoints/token');
+let { ensureAuthenticated } = require('./auth');
+if (process.env.FAKE_AUTH === 'true') {
+  token = require('./testAuth'); // eslint-disable-line global-require
+  ensureAuthenticated = token.ensureAuthenticated;
+}
 
 // collections endpoints
 router.use('/collections', ensureAuthenticated, collections);
@@ -67,9 +72,10 @@ router.use('/version', version);
 // workflows endpoint
 router.use('/workflows', ensureAuthenticated, workflows);
 
-router.delete('/token/:token', deleteTokenEndpoint);
-router.delete('/tokenDelete/:token', deleteTokenEndpoint);
-router.get('/token', tokenEndpoint);
-router.post('/refresh', refreshEndpoint);
+router.delete('/token/:token', token.deleteTokenEndpoint);
+router.delete('/tokenDelete/:token', token.deleteTokenEndpoint);
+router.get('/token', token.tokenEndpoint);
+router.post('/refresh', token.refreshEndpoint);
+
 
 module.exports = router;
