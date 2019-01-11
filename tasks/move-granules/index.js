@@ -357,11 +357,12 @@ async function moveGranules(event) {
   // create granules object for cumulus indexer
   const allGranules = addInputFilesToGranules(inputFileList, inputGranules, regex);
 
-  const granulesToMove = await updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
-
-  // allows us to disable moving the files
+  let granulesToMove;
   let movedGranules;
+  // allows us to disable moving the files
   if (moveStagedFiles) {
+    granulesToMove = await updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
+
     // move files from staging location to final location
     movedGranules = await moveFilesForAllGranules(
       granulesToMove, bucket, duplicateHandling, buckets
@@ -370,11 +371,7 @@ async function moveGranules(event) {
     await updateEachCmrFileAccessURLs(cmrFiles, movedGranules, distEndpoint, buckets);
   }
   else {
-    // TODO [MHS, 2019-01-08] This is the behavior in v1.10.4, but I'm not sure
-    // it's what we want. Validate with someone.  It updates all of the file
-    // location metadata, but doesn't move the files to those locations.  Seems
-    // bad to me.
-    movedGranules = granulesToMove;
+    movedGranules = allGranules;
   }
 
   return {
