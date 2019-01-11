@@ -279,6 +279,19 @@ exports.headObject = (bucket, key) =>
 exports.s3GetObjectTagging = (bucket, key) =>
   exports.s3().getObjectTagging({ Bucket: bucket, Key: key }).promise();
 
+
+/**
+* Puts object Tagging in S3
+* https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property
+*
+* @param {string} bucket - name of bucket
+* @param {string} key - key for object (filepath + filename)
+* @param {Object} tagging - tagging object
+* @returns {Promise} - returns response from `S3.getObjectTagging` as a promise
+**/
+exports.s3PutObjectTagging = (bucket, key, tagging) =>
+  exports.s3().putObjectTagging({ Bucket: bucket, Key: key, Tagging: tagging }).promise();
+
 /**
 * Get an object from S3
 *
