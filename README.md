@@ -56,6 +56,17 @@ Build and watch packages:
 
     $ yarn watch
 
+## Running the cumulus API locally
+
+State localstack:
+
+    $ docker-compose up local
+
+Start the API
+
+    $ cd packages/api
+    $ yarn serve
+
 ## 📝 Tests
 
 ### Unit Tests
