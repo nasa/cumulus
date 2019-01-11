@@ -18,7 +18,7 @@ const clonedeep = require('lodash.clonedeep');
 const set = require('lodash.set');
 const errors = require('@cumulus/common/errors');
 const {
-  randomString, validateConfig, validateInput, validateOutput
+  randomString, randomId, validateConfig, validateInput, validateOutput
 } = require('@cumulus/common/test-utils');
 const { promisify } = require('util');
 
@@ -95,9 +95,9 @@ async function getFilesMetadata(files) {
 }
 
 test.beforeEach(async (t) => {
-  t.context.stagingBucket = `staging-${randomString(5)}`;
-  t.context.publicBucket = `public-${randomString(5)}`;
-  t.context.protectedBucket = `protected-${randomString(5)}`;
+  t.context.stagingBucket = randomId('staging');
+  t.context.publicBucket = randomId('public');
+  t.context.protectedBucket = randomId('protected');
   await Promise.all([
     s3().createBucket({ Bucket: t.context.stagingBucket }).promise(),
     s3().createBucket({ Bucket: t.context.publicBucket }).promise(),
@@ -129,6 +129,39 @@ test.serial('Should move files to final location.', async (t) => {
   });
 
   t.true(check);
+});
+
+test.serial('should not move files when event.moveStagedFiles is false', async (t) => {
+  const newPayload = buildPayload(t);
+  newPayload.config.moveStagedFiles = false;
+
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+
+  const output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+
+  const check = await s3ObjectExists({
+    Bucket: t.context.publicBucket,
+    Key: 'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
+  });
+
+  t.false(check);
+});
+
+test.serial('should add input files to returned granule event.moveStagedFiles is false', async (t) => {
+  const newPayload = buildPayload(t);
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  newPayload.config.moveStagedFiles = false;
+
+  const inputFiles = [...newPayload.input];
+
+  const output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+
+  const outputFilenames = output.granules[0].files.map((f) => f.filename);
+
+  t.true(output.granules[0].files.length === 4);
+  inputFiles.forEach((newFile) => t.true(outputFilenames.includes(newFile), `${newFile} not found in ${JSON.stringify(output.granules[0].files)}`));
 });
 
 test.serial('Should move renamed files in staging area to final location.', async (t) => {
