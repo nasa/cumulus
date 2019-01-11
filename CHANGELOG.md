@@ -11,11 +11,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `reconcileCMRMetadata` added to `@cumulus/cmrjs` to update metadata record with new file locations.
   `@cumulus/common/errors` adds two new error types `CMRMetaFileNotFound` and `InvalidArgument`.
   `@cumulus/common/test-utils` adds new function `randomId` to create a random string with id to help in debugging.
+  `@cumulus/common/BucketsConfig` adds a new helper class `BucketsConfig` for working with bucket stack configuration and bucket names.
+  `@cumulus/common/aws` adds new fucntion `s3PutObjectTagging` as a convenience for the aws  [s3().putObjectTagging](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property) function.
+  `@cumulus/cmrjs` Adds:
+      - `constructOnlineAccessUrls` - Create list of correct URLs for echo10 metadata.
+	  -	`isECHO10File` - Identify an echo10 metadata file.
+      - `metadataObjectFromCMRXMLFile` Read and parse CMR XML file from s3.
+      - `updateEcho10XMLMetadata` Modify a cmr.xml file with updated information.
+      - `updateCMRMetadata` Modify a cmr metadata file with updated information.
+	  - `publishECHO10XML2CMR` Posts XML CMR data to CMR service.
+	  - `reconcileCMRMetadata` Reconciles cmr metadata file after a file moves.
+
 
 ### Changed
 - CUMULUS-678
+  `tasks/move-granules` simplified and refactored to use  functionality from cmrjs.
   `ingest/granules.moveGranuleFiles` now just moves granule files and returns a list of the updated files. Updating metadata now handled by `@cumulus/cmrjs/reconcileCMRMetadata`.
   `move-granules.updateGranuleMetadata` refactored and bugs fixed in the case of a file matching multiple collection.files.regexps.
+  `getCmrXmlFiles` simplified and now only returns an object with the cmrfilename and the granuleId.
 
 - **CUMULUS-1049** Updated `Retrieve Execution Status API` in `@cumulus/api`: If the execution doesn't exist in Step Function API, Cumulus API returns the execution status information from the database.
 
