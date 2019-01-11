@@ -186,14 +186,15 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets) {
 
   files.forEach((file) => {
     const urlObj = {};
+    const bucketType = buckets.type(file.bucket);
 
-    if (buckets.type(file.bucket) === 'protected') {
+    if (bucketType === 'protected') {
       const extension = urljoin(file.bucket, `${file.filepath}`);
       urlObj.URL = urljoin(distEndpoint, extension);
       urlObj.URLDescription = 'File to download';
       urls.push(urlObj);
     }
-    else if (buckets.type(file.bucket) === 'public') {
+    else if (bucketType === 'public') {
       urlObj.URL = `https://${file.bucket}.s3.amazonaws.com/${file.filepath}`;
       urlObj.URLDescription = 'File to download';
       urls.push(urlObj);
