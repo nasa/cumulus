@@ -274,7 +274,8 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
  * @param {Array<Object>} files - array of file objects
  * @param {string} distEndpoint - distribution enpoint from config
  * @param {boolean} published - indicate if publish is needed
- * @returns {Promise} returns promise to upload updated cmr file
+ * @returns {Promise} returns promise to publish metadata to CMR Service
+ *                    or resolved promise if published === false.
  */
 async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, published) {
   log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${cmrFile.filename}`);
@@ -290,7 +291,7 @@ async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, publis
         metadataObject: theMetadata,
         granuleId: granuleId
       };
-      await publishECHO10XML2CMR(cmrFileObject, creds, process.env.bucket, process.env.stackName);
+      return publishECHO10XML2CMR(cmrFileObject, creds, process.env.bucket, process.env.stackName);
     }
     return Promise.resolve();
   }
