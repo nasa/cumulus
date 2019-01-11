@@ -235,7 +235,8 @@ function getCreds() {
 }
 
 /**
- * Modifies CMR ECHO10 XML metadata file with files' URLs updated to their new locations.
+ * After files are moved, this function creates new online access URLs and then updates
+ * the S3 ECHO10 CMR XML file with this information.
  *
  * @param {Object} cmrFile - cmr xml file object to be updated
  * @param {Array<Object>} files - array of file objects
