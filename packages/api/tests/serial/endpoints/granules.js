@@ -667,25 +667,27 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
       t.is(body.status, 'SUCCESS');
       t.is(body.action, 'move');
 
-      await aws.s3().listObjects({
+      const bucketObjects = await aws.s3().listObjects({
         Bucket: bucket,
         Prefix: destinationFilepath
-      }).promise().then((list) => {
-        t.is(list.Contents.length, 2);
-        list.Contents.forEach((item) => {
-          t.is(item.Key.indexOf(destinationFilepath), 0);
-        });
+      }).promise();
+
+      t.is(bucketObjects.Contents.length, 2);
+      bucketObjects.Contents.forEach((item) => {
+        t.is(item.Key.indexOf(destinationFilepath), 0);
       });
 
-      await aws.s3().listObjects({
+
+      const thirdBucketObjects = await aws.s3().listObjects({
         Bucket: thirdBucket,
         Prefix: destinationFilepath
-      }).promise().then((list) => {
-        t.is(list.Contents.length, 1);
-        list.Contents.forEach((item) => {
-          t.is(item.Key.indexOf(destinationFilepath), 0);
-        });
+      }).promise();
+
+      t.is(thirdBucketObjects.Contents.length, 1);
+      thirdBucketObjects.Contents.forEach((item) => {
+        t.is(item.Key.indexOf(destinationFilepath), 0);
       });
+
 
       // check the granule in table is updated
       const updatedGranule = await granuleModel.get({ granuleId: newGranule.granuleId });
@@ -699,7 +701,7 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
   );
 });
 
-test.serial('move a file and update metadata', async (t) => {
+test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   const bucket = process.env.internal;
   process.env.bucket = bucket;
   const buckets = {
@@ -785,6 +787,7 @@ test.serial('move a file and update metadata', async (t) => {
     Bucket: bucket,
     Prefix: destinationFilepath
   }).promise();
+
   t.is(list.Contents.length, 1);
   list.Contents.forEach((item) => {
     t.is(item.Key.indexOf(destinationFilepath), 0);
