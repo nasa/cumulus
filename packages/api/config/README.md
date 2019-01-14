@@ -4,7 +4,7 @@ This folder includes the configuration needed to deploy cumulus-api using [Kes](
 
 ## Api Endpoints
 
-The lambda functions and the api endpoints used by AWS ApiGateway service are stored in `api_default.yml` and `api_v1.yaml`. Each file represents a version of cumulus-api.
+The lambda functions and the api endpoints used by AWS ApiGateway service are stored in `api.yaml`.
 
 ## Api Distribution App
 

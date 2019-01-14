@@ -19,6 +19,10 @@ app.use(cookieParser());
 app.use(bodyParser.json()); // for parsing application/json
 app.use(hsts({ maxAge: 31536000 }));
 
+// v1 routs
+app.use('/v1', router);
+
+// default routes
 app.use('/', router);
 
 // global 404 response when page is not found
