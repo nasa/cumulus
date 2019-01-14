@@ -1,8 +1,8 @@
 const test = require('ava');
-const sinon = require('sinon');
 const rewire = require('rewire');
 
 const { randomId } = require('@cumulus/common/test-utils');
+const { BucketsConfig } = require('@cumulus/common');
 
 const cmrUtils = rewire('../cmr-utils');
 
@@ -14,15 +14,10 @@ test.beforeEach((t) => {
     protected: { name: randomId('protected'), type: 'protected' },
     public: { name: randomId('public'), type: 'public' }
   };
-  const fake = sinon.fake.returns(t.context.bucketConfig);
-  t.context.restore = cmrUtils.__set__('bucketConfig', fake);
+  t.context.buckets = new BucketsConfig(t.context.bucketConfig);
 });
 
-test.afterEach((t) => {
-  t.context.restore();
-});
-
-test('returns correct url for protected data', async (t) => {
+test('returns correct url for protected data', (t) => {
   const endpoint = 'https://endpoint';
   const testFiles = [
     {
@@ -37,12 +32,12 @@ test('returns correct url for protected data', async (t) => {
     }
   ];
 
-  const actual = await constructOnlineAccessUrls(testFiles, endpoint);
+  const actual = constructOnlineAccessUrls(testFiles, endpoint, t.context.buckets);
 
   t.deepEqual(actual, expected);
 });
 
-test('Returns correct url for public data.', async (t) => {
+test('Returns correct url for public data.', (t) => {
   const endpoint = 'https://endpoint';
   const testFiles = [
     {
@@ -57,13 +52,13 @@ test('Returns correct url for public data.', async (t) => {
     }
   ];
 
-  const actual = await constructOnlineAccessUrls(testFiles, endpoint);
+  const actual = constructOnlineAccessUrls(testFiles, endpoint, t.context.buckets);
 
   t.deepEqual(actual, expected);
 });
 
 
-test('Returns nothing for private data.', async (t) => {
+test('Returns nothing for private data.', (t) => {
   const endpoint = 'https://endpoint';
   const testFiles = [
     {
@@ -73,12 +68,12 @@ test('Returns nothing for private data.', async (t) => {
   ];
   const expected = [];
 
-  const actual = await constructOnlineAccessUrls(testFiles, endpoint);
+  const actual = constructOnlineAccessUrls(testFiles, endpoint, t.context.buckets);
 
   t.deepEqual(actual, expected);
 });
 
-test('Works for a list of files.', async (t) => {
+test('Works for a list of files.', (t) => {
   const endpoint = 'https://endpoint';
   const testFiles = [
     {
@@ -106,7 +101,7 @@ test('Works for a list of files.', async (t) => {
     }
   ];
 
-  const actual = await constructOnlineAccessUrls(testFiles, endpoint);
+  const actual = constructOnlineAccessUrls(testFiles, endpoint, t.context.buckets);
 
   t.deepEqual(actual, expected);
 });
