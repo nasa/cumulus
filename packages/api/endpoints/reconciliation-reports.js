@@ -76,7 +76,7 @@ async function del(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
-  const data = await invoke(process.env.invoke, {});
+  const data = await invoke(process.env.invokeReconcileLambda, {});
   return res.send({ message: 'Report is being generated', status: data.StatusCode });
 }
 
