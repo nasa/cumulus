@@ -1,9 +1,9 @@
 'use strict';
 
-exports.appHandler = require('./app/index').handler;
-exports.app = require('./app/index').app;
+exports.appHandler = require('./app').handler;
+exports.app = require('./app').app;
 exports.distributionAppHandler = require('./app/distribution').handler;
-exports.distributionApp = require('./app/index').app;
+exports.distributionApp = require('./app').app;
 exports.dbIndexer = require('./lambdas/db-indexer');
 
 exports.bootstrap = require('./lambdas/bootstrap').handler;
