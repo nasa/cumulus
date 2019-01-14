@@ -147,6 +147,7 @@ describe('The S3 Ingest Granules workflow', () => {
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
 
+    console.log('Start SuccessExecution');
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
@@ -156,6 +157,7 @@ describe('The S3 Ingest Granules workflow', () => {
       inputPayload
     );
 
+    console.log('Start FailingExecution');
     failingWorkflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
