@@ -6,6 +6,7 @@ const sinon = require('sinon');
 const test = require('ava');
 const aws = require('@cumulus/common/aws');
 const { CMR } = require('@cumulus/cmrjs');
+const { metadataObjectFromCMRXMLFile } = require('@cumulus/cmrjs/cmr-utils');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const xml2js = require('xml2js');
@@ -324,7 +325,7 @@ test.serial('PUT fails if action is not supported', async (t) => {
       granuleName: t.context.fakeGranules[0].granuleId
     },
     headers: t.context.authHeaders,
-    body: JSON.stringify({ action: 'reprocess' })
+    body: JSON.stringify({ action: 'SomeUnsuportedAction' })
   };
 
   const response = await handleRequest(event);
@@ -787,31 +788,21 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
     Bucket: bucket,
     Prefix: destinationFilepath
   }).promise();
-
   t.is(list.Contents.length, 1);
-  list.Contents.forEach((item) => {
-    t.is(item.Key.indexOf(destinationFilepath), 0);
-  });
+  t.is(list.Contents[0].Key.indexOf(destinationFilepath), 0);
 
-  const list2 = await aws.s3().listObjects({ Bucket: buckets.public.name, Prefix: `${process.env.stackName}/original_filepath` }).promise();
+  const list2 = await aws.s3().listObjects({
+    Bucket: buckets.public.name,
+    Prefix: `${process.env.stackName}/original_filepath`
+  }).promise();
   t.is(list2.Contents.length, 1);
   t.is(newGranule.files[1].filepath, list2.Contents[0].Key);
 
-  const file = await aws.s3().getObject({
-    Bucket: buckets.public.name,
-    Key: newGranule.files[1].filepath
-  }).promise();
-  await aws.recursivelyDeleteS3Bucket(buckets.public.name);
-  return new Promise((resolve, reject) => {
-    xml2js.parseString(file.Body, xmlParseOptions, (err, data) => {
-      if (err) return reject(err);
-      return resolve(data);
-    });
-  }).then((xml) => {
-    const newUrls = xml.Granule.OnlineAccessURLs.OnlineAccessURL.map((obj) => obj.URL);
-    const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
-    t.true(newUrls.includes(newDestination));
-  });
+  const xmlObject = await metadataObjectFromCMRXMLFile(newGranule.files[1].filename);
+
+  const newUrls = xmlObject.Granule.OnlineAccessURLs.OnlineAccessURL.map((obj) => obj.URL);
+  const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
+  t.true(newUrls.includes(newDestination));
 });
 
 test('PUT with action move returns failure if one granule file exists', async (t) => {
