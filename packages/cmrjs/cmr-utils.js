@@ -293,7 +293,12 @@ const updateEcho10XMLMetadata = async (granuleId, cmrFile, files, distEndpoint, 
       metadata: xml,
       granuleId: granuleId
     };
-    await publishECHO10XML2CMR(cmrFileObject, creds, process.env.system_bucket, process.env.stackName);
+    await publishECHO10XML2CMR(
+      cmrFileObject,
+      creds,
+      process.env.system_bucket,
+      process.env.stackName
+    );
   }
 
   return postS3Object({ bucket: cmrFile.bucket, key: cmrFile.filepath, body: xml });

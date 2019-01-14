@@ -4,7 +4,7 @@ const test = require('ava');
 const request = require('supertest');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
+const { s3 } = require('@cumulus/common/aws');
 
 const models = require('../../../models');
 const bootstrap = require('../../../lambdas/bootstrap');
