@@ -18,7 +18,7 @@ const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 process.env.UsersTable = randomString();
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
-process.env.internal = randomString();
+process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
@@ -54,8 +54,8 @@ test.before(async () => {
   ruleModel = new models.Rule();
   await ruleModel.createTable();
 
-  process.env.bucket = randomString();
-  await s3().createBucket({ Bucket: process.env.bucket }).promise();
+  process.env.system_bucket = randomString();
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   process.env.stackName = randomString();
 });
@@ -71,7 +71,7 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await ruleModel.deleteTable();
-  await recursivelyDeleteS3Bucket(process.env.bucket);
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test('Attempting to delete a provider without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -122,7 +122,7 @@ test('Attempting to delete a provider with an associated rule returns a 409 resp
 
   // The workflow message template must exist in S3 before the rule can be created
   await s3().putObject({
-    Bucket: process.env.bucket,
+    Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({})
   }).promise();
@@ -151,7 +151,7 @@ test('Attempting to delete a provider with an associated rule does not delete th
 
   // The workflow message template must exist in S3 before the rule can be created
   await s3().putObject({
-    Bucket: process.env.bucket,
+    Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({})
   }).promise();

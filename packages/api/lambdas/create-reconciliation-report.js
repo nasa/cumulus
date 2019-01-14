@@ -156,7 +156,7 @@ function handler(event, _context, cb) {
   // The event is used for tests
   // Environment variables are used when run in AWS
   return createReconciliationReport({
-    systemBucket: event.systemBucket || process.env.systemBucket,
+    systemBucket: event.systemBucket || process.env.system_bucket,
     stackName: event.stackName || process.env.stackName,
     filesTableName: event.filesTableName || process.env.filesTableName
   })

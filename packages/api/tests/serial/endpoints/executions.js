@@ -22,7 +22,7 @@ process.env.AccessTokensTable = randomString();
 process.env.ExecutionsTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
-process.env.internal = randomString();
+process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
@@ -42,7 +42,7 @@ test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
 
   // create a fake bucket
-  await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
+  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   // create fake granule table
   executionModel = new models.Execution();
@@ -68,7 +68,7 @@ test.after.always(async () => {
   await executionModel.deleteTable();
   await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
-  await aws.recursivelyDeleteS3Bucket(process.env.internal);
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {

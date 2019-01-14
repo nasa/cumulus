@@ -13,7 +13,7 @@ const { AsyncOperation } = require('../models');
 async function startBulkDeleteAsyncOperation(req, res) {
   const asyncOperationModel = new AsyncOperation({
     stackName: process.env.stackName,
-    systemBucket: process.env.systemBucket,
+    systemBucket: process.env.system_bucket,
     tableName: process.env.AsyncOperationsTable
   });
 

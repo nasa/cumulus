@@ -20,7 +20,7 @@ process.env.AccessTokensTable = randomString();
 process.env.CollectionsTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
-process.env.internal = randomString();
+process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
@@ -37,7 +37,7 @@ let userModel;
 
 test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
-  await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
+  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
   await collectionModel.createTable();
@@ -57,8 +57,8 @@ test.before(async () => {
   ruleModel = new models.Rule();
   await ruleModel.createTable();
 
-  process.env.bucket = randomString();
-  await s3().createBucket({ Bucket: process.env.bucket }).promise();
+  process.env.system_bucket = randomString();
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   process.env.stackName = randomString();
 });
@@ -72,10 +72,9 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await collectionModel.deleteTable();
   await userModel.deleteTable();
-  await aws.recursivelyDeleteS3Bucket(process.env.internal);
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
   await ruleModel.deleteTable();
-  await recursivelyDeleteS3Bucket(process.env.bucket);
 });
 
 test('Attempting to delete a collection without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -141,7 +140,7 @@ test('Attempting to delete a collection with an associated rule returns a 409 re
 
   // The workflow message template must exist in S3 before the rule can be created
   await s3().putObject({
-    Bucket: process.env.bucket,
+    Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({})
   }).promise();
@@ -174,7 +173,7 @@ test('Attempting to delete a collection with an associated rule does not delete 
 
   // The workflow message template must exist in S3 before the rule can be created
   await s3().putObject({
-    Bucket: process.env.bucket,
+    Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({})
   }).promise();

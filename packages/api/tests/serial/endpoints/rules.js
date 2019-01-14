@@ -19,7 +19,7 @@ process.env.AccessTokensTable = randomString();
 process.env.RulesTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
-process.env.bucket = randomString();
+process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
@@ -50,9 +50,9 @@ let userModel;
 test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
 
-  await aws.s3().createBucket({ Bucket: process.env.bucket }).promise();
+  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
   await aws.s3().putObject({
-    Bucket: process.env.bucket,
+    Bucket: process.env.system_bucket,
     Key: workflowfile,
     Body: 'test data'
   }).promise();
@@ -75,7 +75,7 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await ruleModel.deleteTable();
   await userModel.deleteTable();
-  await aws.recursivelyDeleteS3Bucket(process.env.bucket);
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 
   const esClient = await Search.es('fakehost');
   await esClient.indices.delete({ index: esIndex });

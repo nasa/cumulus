@@ -20,7 +20,7 @@ process.env.TOKEN_SECRET = randomString();
 process.env.AccessTokensTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
-process.env.bucket = randomString();
+process.env.system_bucket = randomString();
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
@@ -31,7 +31,7 @@ let testBucketName;
 let jwtAuthToken;
 
 test.before(async () => {
-  testBucketName = process.env.bucket;
+  testBucketName = process.env.system_bucket;
 
   await s3().createBucket({ Bucket: testBucketName }).promise();
   const workflowsListKey = `${process.env.stackName}/workflows/list.json`;
@@ -121,8 +121,8 @@ test('GET with path parameters returns a 404 for a nonexistent workflow', async 
 });
 
 test.serial('GET /good-workflow returns a 404 if the workflows list cannot be fetched from S3', async (t) => {
-  const realBucket = process.env.bucket;
-  process.env.bucket = 'bucket-does-not-exist';
+  const realBucket = process.env.system_bucket;
+  process.env.system_bucket = 'bucket-does-not-exist';
   const response = await request(app)
     .get('/workflows/HelloWorldWorkflow')
     .set('Accept', 'application/json')
@@ -130,5 +130,5 @@ test.serial('GET /good-workflow returns a 404 if the workflows list cannot be fe
     .expect(404);
 
   t.is(response.status, 404);
-  process.env.bucket = realBucket;
+  process.env.system_bucket = realBucket;
 });

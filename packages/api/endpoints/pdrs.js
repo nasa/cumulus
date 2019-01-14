@@ -59,7 +59,7 @@ async function del(req, res) {
 
   const pdrS3Key = `${process.env.stackName}/pdrs/${pdrName}`;
 
-  await aws.deleteS3Object(process.env.internal, pdrS3Key);
+  await aws.deleteS3Object(process.env.system_bucket, pdrS3Key);
 
   const pdrModel = new models.Pdr();
 
