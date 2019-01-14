@@ -120,7 +120,7 @@ class Rule extends Manager {
 
   static async buildPayload(item) {
     // makes sure the workflow exists
-    const bucket = process.env.bucket;
+    const bucket = process.env.system_bucket;
     const key = `${process.env.stackName}/workflows/${item.workflow}.json`;
     const exists = await aws.fileExists(bucket, key);
 

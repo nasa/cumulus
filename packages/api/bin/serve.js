@@ -9,9 +9,6 @@ const testUtils = require('../lib/testUtils');
 const workflowList = require('../app/data/workflow_list.json');
 
 const requiredEnvVariables = [
-  'internal',
-  'bucket',
-  'systemBucket',
   'system_bucket',
   'stackName',
   'EARTHDATA_BASE_URL',
@@ -25,7 +22,7 @@ async function createTable(Model, tableName) {
     const model = new Model({
       tableName,
       stackName: process.env.stackName,
-      systemBucket: process.env.internal
+      systemBucket: process.env.system_bucket
     });
     await model.createTable();
   }
@@ -163,10 +160,7 @@ async function serve(user, stackName = 'localrun') {
   const port = process.env.PORT || 5001;
   if (inTestMode()) {
     // set env variables
-    process.env.internal = 'localbucket';
-    process.env.bucket = process.env.internal;
-    process.env.systemBucket = process.env.internal;
-    process.env.system_bucket = process.env.internal;
+    process.env.system_bucket = 'localbucket';
     process.env.stackName = stackName;
     process.env.TOKEN_SECRET = 'secreeetartalksjfaf;lj';
     process.env.EARTHDATA_CLIENT_ID = randomString();
@@ -178,8 +172,8 @@ async function serve(user, stackName = 'localrun') {
     await checkOrCreateTables(stackName);
 
     checkEnvVariablesAreSet();
-    await prepareServices(stackName, process.env.internal);
-    await populateBucket(process.env.internal, stackName);
+    await prepareServices(stackName, process.env.system_bucket);
+    await populateBucket(process.env.system_bucket, stackName);
     await createDBRecords(user, stackName);
   }
   else {

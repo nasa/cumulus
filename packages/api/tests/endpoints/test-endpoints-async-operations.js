@@ -14,7 +14,7 @@ const { createFakeJwtAuthToken } = require('../../lib/testUtils');
 
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
-process.env.systemBucket = randomString();
+process.env.system_bucket = randomString();
 process.env.AsyncOperationsTable = randomString();
 process.env.AccessTokensTable = randomString();
 process.env.TOKEN_SECRET = randomString();
@@ -31,7 +31,7 @@ test.before(async () => {
   // Create AsyncOperations table
   asyncOperationModel = new AsyncOperationModel({
     stackName: process.env.stackName,
-    systemBucket: process.env.systemBucket,
+    systemBucket: process.env.system_bucket,
     tableName: process.env.AsyncOperationsTable
   });
   await asyncOperationModel.createTable();

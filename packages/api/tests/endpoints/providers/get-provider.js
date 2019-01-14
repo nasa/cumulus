@@ -16,7 +16,7 @@ const assertions = require('../../../lib/assertions');
 process.env.UsersTable = randomString();
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
-process.env.internal = randomString();
+process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables

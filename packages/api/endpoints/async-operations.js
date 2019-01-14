@@ -15,7 +15,7 @@ const { AsyncOperation: AsyncOperationModel } = require('../models');
 async function getAsyncOperation(req, res) {
   const asyncOperationModel = new AsyncOperationModel({
     stackName: process.env.stackName,
-    systemBucket: process.env.systemBucket,
+    systemBucket: process.env.system_bucket,
     tableName: process.env.AsyncOperationsTable
   });
 

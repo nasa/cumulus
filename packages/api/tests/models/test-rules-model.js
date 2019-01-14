@@ -9,7 +9,7 @@ process.env.RulesTable = `RulesTable_${randomString()}`;
 process.env.stackName = randomString();
 process.env.messageConsumer = randomString();
 process.env.KinesisInboundEventLogger = randomString();
-process.env.bucket = randomString();
+process.env.system_bucket = randomString();
 
 const workflow = randomString();
 const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
@@ -59,9 +59,9 @@ test.before(async () => {
   // create Rules table
   ruleModel = new models.Rule();
   await ruleModel.createTable();
-  await aws.s3().createBucket({ Bucket: process.env.bucket }).promise();
+  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
   await aws.s3().putObject({
-    Bucket: process.env.bucket,
+    Bucket: process.env.system_bucket,
     Key: workflowfile,
     Body: 'test data'
   }).promise();
@@ -70,7 +70,7 @@ test.before(async () => {
 test.after.always(async () => {
   // cleanup table
   await ruleModel.deleteTable();
-  await aws.recursivelyDeleteS3Bucket(process.env.bucket);
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test.serial('create and delete a onetime rule', async (t) => {

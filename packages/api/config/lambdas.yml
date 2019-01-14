@@ -30,7 +30,7 @@ executeMigrations:
     KinesisInboundEventLogger:
       function: Ref
       value: KinesisInboundEventLoggerLambdaFunction
-    internal: '{{system_bucket}}'
+    system_bucket: '{{system_bucket}}'
 
 
 sns2elasticsearch:
@@ -155,7 +155,7 @@ CustomBootstrap:
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
   envs:
-    internal: '{{system_bucket}}'
+    system_bucket: '{{system_bucket}}'
 
 InRegionS3Policy:
   handler: index.inRegionS3Policy
@@ -189,7 +189,7 @@ CreateReconciliationReport:
   handler: index.createReconciliationReport
   source: 'node_modules/@cumulus/api/dist/'
   envs:
-    systemBucket: '{{system_bucket}}'
+    system_bucket: '{{system_bucket}}'
     filesTableName:
       function: Ref
       value: FilesTableDynamoDB

@@ -189,7 +189,7 @@ async function bucketConfig(bucket, stackName) {
 async function constructOnlineAccessUrls(files, distEndpoint) {
   const urls = [];
 
-  const bucketsObject = await bucketConfig(process.env.bucket, process.env.stackName);
+  const bucketsObject = await bucketConfig(process.env.system_bucket, process.env.stackName);
   // URLs are for public and protected files
   const bucketKeys = Object.keys(bucketsObject);
 
@@ -293,7 +293,7 @@ const updateEcho10XMLMetadata = async (granuleId, cmrFile, files, distEndpoint, 
       metadata: xml,
       granuleId: granuleId
     };
-    await publishECHO10XML2CMR(cmrFileObject, creds, process.env.bucket, process.env.stackName);
+    await publishECHO10XML2CMR(cmrFileObject, creds, process.env.system_bucket, process.env.stackName);
   }
 
   return postS3Object({ bucket: cmrFile.bucket, key: cmrFile.filepath, body: xml });

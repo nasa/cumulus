@@ -11,7 +11,7 @@ const router = require('express-promise-router')();
 async function getWorkflowList() {
   const workflowsListKey = `${process.env.stackName}/workflows/list.json`;
   try {
-    const { Body } = await aws.getS3Object(process.env.bucket, workflowsListKey);
+    const { Body } = await aws.getS3Object(process.env.system_bucket, workflowsListKey);
     return Body.toString();
   }
   catch (err) {

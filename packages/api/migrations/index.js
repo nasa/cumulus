@@ -16,7 +16,7 @@ const { listS3ObjectsV2, s3 } = require('@cumulus/common/aws');
 async function findNewMigrations(allMigrations, migrationFolder) {
   // list executed migrations
   const listed = await listS3ObjectsV2({
-    Bucket: process.env.internal,
+    Bucket: process.env.system_bucket,
     Prefix: migrationFolder
   });
 
@@ -52,7 +52,7 @@ async function runMigrations(migrations, options) {
 
     // write the migration on s3
     await s3().putObject({ // eslint-disable-line no-await-in-loop
-      Bucket: process.env.internal,
+      Bucket: process.env.system_bucket,
       Key: `${migrationFolder}/${m.name}`
     }).promise();
     log.info(`Successfully ran migration script ${m.name}`);

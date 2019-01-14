@@ -33,8 +33,7 @@ process.env.CollectionsTable = randomString();
 process.env.GranulesTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
-process.env.internal = randomString();
-process.env.bucket = process.env.internal;
+process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
@@ -81,7 +80,7 @@ test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
 
   // create a fake bucket
-  await createBucket(process.env.internal);
+  await createBucket(process.env.system_bucket);
 
   // create fake Collections table
   collectionModel = new models.Collection();
@@ -127,7 +126,7 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
-  await aws.recursivelyDeleteS3Bucket(process.env.internal);
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test.serial('default returns list of granules', async (t) => {
@@ -308,7 +307,7 @@ test.serial('reingest a granule', async (t) => {
   // fake workflow
   const message = JSON.parse(fakeDescribeExecutionResult.input);
   const key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
-  await putObject({ Bucket: process.env.bucket, Key: key, Body: 'test data' });
+  await putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' });
   const stub = sinon.stub(sfn(), 'describeExecution').returns({
     promise: () => Promise.resolve(fakeDescribeExecutionResult)
   });
@@ -346,7 +345,7 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   //fake in-place workflow
   const message = JSON.parse(fakeSFResponse.execution.input);
   const key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
-  await putObject({ Bucket: process.env.bucket, Key: key, Body: 'fake in-place workflow' });
+  await putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'fake in-place workflow' });
 
   const fakeDescribeExecutionResult = {
     output: JSON.stringify({
@@ -502,7 +501,7 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
 });
 
 test.serial('move a granule with no .cmr.xml file', async (t) => {
-  const bucket = process.env.internal;
+  const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');
   const thirdBucket = randomId('third');
 
@@ -604,10 +603,10 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
 });
 
 test.serial('move a file and update metadata', async (t) => {
-  const bucket = process.env.internal;
+  const bucket = process.env.system_bucket;
   const buckets = {
     protected: {
-      name: process.env.internal,
+      name: bucket,
       type: 'protected'
     },
     public: {
