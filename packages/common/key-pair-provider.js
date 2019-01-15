@@ -26,7 +26,7 @@ class S3KeyPairProvider {
   static async encrypt(str, keyId = 'public.pub', bucket = null, stack = null) {
     // Download the publickey
     const pki = forge.pki;
-    const b = bucket || process.env.internal;
+    const b = bucket || process.env.system_bucket;
     const s = stack || process.env.stackName;
     const pub = await s3().getObject({
       Bucket: b, Key: `${s}/crypto/${keyId}`
@@ -49,7 +49,7 @@ class S3KeyPairProvider {
    */
   static async decrypt(str, keyId = 'private.pem', bucket = null, stack = null) {
     const pki = forge.pki;
-    const b = bucket || process.env.internal;
+    const b = bucket || process.env.system_bucket;
     const s = stack || process.env.stackName;
     const priv = await s3().getObject({
       Bucket: b, Key: `${s}/crypto/${keyId}`
