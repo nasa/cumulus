@@ -119,11 +119,22 @@ function isCMRFile(fileobject) {
 }
 
 /**
+ * return UMMG metadata object from CMR UMM-G json file
+ * @param {string} cmrFilename - s3 path to json file
+ * @returns {Object} CMR UMMG metadata object
+ */
+async function metadataObjectFromCMRJSONFile(cmrFilename) {
+  const { Bucket, Key } = aws.parseS3Uri(cmrFilename);
+  const obj = await aws.getS3Object(Bucket, Key);
+  return JSON.parse(obj.Body.toString());
+}
+
+/**
  * return metadata object from cmr echo10 XML file.
  * @param {string} cmrFilename
  * @returns {Object} cmr xml metadata as object.
  */
-const metadataObjectFromCMRXMLFile = async (cmrFilename) => {
+async function metadataObjectFromCMRXMLFile(cmrFilename) {
   const metadata = await getXMLMetadataAsString(cmrFilename);
   return parseXmlString(metadata);
 };
@@ -218,8 +229,7 @@ function getCmrFileObjs(files) {
 }
 
 async function updateUMMGMetadata() {
-  const NotImplemented = errors.CreateErrorType('NotImplemented');
-  throw new NotImplemented('not yet.');
+  return { fakeMetadata: 'is here' };
 }
 
 /** helper to build an CMR credential object
@@ -326,6 +336,7 @@ module.exports = {
   getGranuleId,
   getCmrXMLFiles,
   isECHO10File,
+  metadataObjectFromCMRJSONFile,
   metadataObjectFromCMRXMLFile,
   publishECHO10XML2CMR,
   reconcileCMRMetadata,

@@ -6,7 +6,10 @@ const sinon = require('sinon');
 const test = require('ava');
 const aws = require('@cumulus/common/aws');
 const { CMR } = require('@cumulus/cmrjs');
-const { metadataObjectFromCMRXMLFile } = require('@cumulus/cmrjs/cmr-utils');
+const {
+  metadataObjectFromCMRJSONFile,
+  metadataObjectFromCMRXMLFile
+} = require('@cumulus/cmrjs/cmr-utils');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const xml2js = require('xml2js');
@@ -49,6 +52,36 @@ async function runTestUsingBuckets(buckets, testFunction) {
     await deleteBuckets(buckets);
   }
 }
+
+/**
+ * Helper for creating and uploading bucket configuration for 'move' tests.
+ * @returns {Object} with keys of internalBucket, and publicBucket.
+ */
+async function setupBucketsConfig() {
+  const bucket = process.env.internal;
+  process.env.bucket = bucket;
+  const buckets = {
+    protected: {
+      name: process.env.internal,
+      type: 'protected'
+    },
+    public: {
+      name: randomId('public'),
+      type: 'public'
+    }
+  };
+
+  process.env.DISTRIBUTION_ENDPOINT = 'http://example.com/';
+  await putObject({
+    Bucket: bucket,
+    Key: `${process.env.stackName}/workflows/buckets.json`,
+    Body: JSON.stringify(buckets)
+  });
+  await createBucket(buckets.public.name);
+  return {internalBucket: bucket, publicBucket: buckets.public.name};
+}
+
+
 
 // create all the variables needed across this test
 let esClient;
@@ -703,42 +736,23 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
 });
 
 test.serial('move a file and update ECHO10 xml metadata', async (t) => {
-  const bucket = process.env.internal;
-  process.env.bucket = bucket;
-  const buckets = {
-    protected: {
-      name: process.env.internal,
-      type: 'protected'
-    },
-    public: {
-      name: randomId('public'),
-      type: 'public'
-    }
-  };
+  const {internalBucket, publicBucket} = await setupBucketsConfig();
 
-  process.env.DISTRIBUTION_ENDPOINT = 'http://example.com/';
-  await putObject({
-    Bucket: bucket,
-    Key: `${process.env.stackName}/workflows/buckets.json`,
-    Body: JSON.stringify(buckets)
-  });
-
-  await createBucket(buckets.public.name);
   const newGranule = fakeGranuleFactoryV2();
   const metadata = fs.createReadStream(path.resolve(__dirname, '../../data/meta.xml'));
 
   newGranule.files = [
     {
-      bucket,
+      bucket: internalBucket,
       name: `${newGranule.granuleId}.txt`,
       filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`,
-      filename: `s3://${bucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`
+      filename: `s3://${internalBucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`
     },
     {
-      bucket: buckets.public.name,
+      bucket: publicBucket,
       name: `${newGranule.granuleId}.cmr.xml`,
       filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.cmr.xml`,
-      filename: `s3://${buckets.public.name}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.cmr.xml`
+      filename: `s3://${publicBucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.cmr.xml`
     }
   ];
 
@@ -755,7 +769,7 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   const destinations = [
     {
       regex: '.*.txt$',
-      bucket,
+      bucket: internalBucket,
       filepath: destinationFilepath
     }
   ];
@@ -785,14 +799,14 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   t.is(body.action, 'move');
 
   const list = await aws.s3().listObjects({
-    Bucket: bucket,
+    Bucket: internalBucket,
     Prefix: destinationFilepath
   }).promise();
   t.is(list.Contents.length, 1);
   t.is(list.Contents[0].Key.indexOf(destinationFilepath), 0);
 
   const list2 = await aws.s3().listObjects({
-    Bucket: buckets.public.name,
+    Bucket: publicBucket,
     Prefix: `${process.env.stackName}/original_filepath`
   }).promise();
   t.is(list2.Contents.length, 1);
@@ -803,6 +817,98 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   const newUrls = xmlObject.Granule.OnlineAccessURLs.OnlineAccessURL.map((obj) => obj.URL);
   const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
   t.true(newUrls.includes(newDestination));
+
+  CMR.prototype.ingestGranule.restore();
+});
+
+
+test.serial.skip('move a file and update its UMM-G JSON metadata', async (t) => {
+  const {internalBucket, publicBucket} = await setupBucketsConfig();
+
+  const newGranule = fakeGranuleFactoryV2();
+  const ummgMetadataString = fs.readFileSync(path.resolve(__dirname, '../../data/ummg-meta.json'));
+
+  newGranule.files = [
+    {
+      bucket: internalBucket,
+      name: `${newGranule.granuleId}.txt`,
+      filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`,
+      filename: `s3://${internalBucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`
+    },
+    {
+      bucket: publicBucket,
+      name: `${newGranule.granuleId}.cmr.json`,
+      filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.cmr.json`,
+      filename: `s3://${publicBucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.cmr.json`
+    }
+  ];
+
+  await granuleModel.create(newGranule);
+
+  await Promise.all(newGranule.files.map((file) => {
+    if (file.name === `${newGranule.granuleId}.txt`) {
+      return putObject({ Bucket: file.bucket, Key: file.filepath, Body: 'test data' });
+    }
+    return putObject({ Bucket: file.bucket, Key: file.filepath, Body: ummgMetadataString });
+  }));
+
+  const destinationFilepath = `${process.env.stackName}/moved_granules`;
+  const destinations = [
+    {
+      regex: '.*.txt$',
+      bucket: internalBucket,
+      filepath: destinationFilepath
+    }
+  ];
+
+  const event = {
+    httpMethod: 'PUT',
+    pathParameters: {
+      granuleName: newGranule.granuleId
+    },
+    headers: t.context.authHeaders,
+    body: JSON.stringify({
+      action: 'move',
+      destinations
+    })
+  };
+
+  sinon.stub(
+    CMR.prototype,
+    'ingestGranule'
+  ).returns({ result: { 'concept-id': 'id204842' } });
+
+  const response = await handleRequest(event);
+
+  const body = JSON.parse(response.body);
+
+  t.is(body.status, 'SUCCESS');
+  t.is(body.action, 'move');
+
+  // text file has moved to correct location
+  const list = await aws.s3().listObjects({
+    Bucket: internalBucket,
+    Prefix: destinationFilepath
+  }).promise();
+  t.is(list.Contents.length, 1);
+  t.is(list.Contents[0].Key.indexOf(destinationFilepath), 0);
+
+  // CMR JSON  is in same location.
+  const list2 = await aws.s3().listObjects({
+    Bucket: publicBucket,
+    Prefix: `${process.env.stackName}/original_filepath`
+  }).promise();
+  t.is(list2.Contents.length, 1);
+  t.is(newGranule.files[1].filepath, list2.Contents[0].Key);
+
+  // CMR UMMG JSON has been updated with the location of the moved file.
+  const ummgObject = await metadataObjectFromCMRJSONFile(newGranule.files[1].filename);
+  const updatedURLs = ummgObject.items[0].umm.RelatedUrls.map((urlObj) => urlObj.URL);
+  const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
+
+  t.true(updatedURLS.includes(newDestination));
+
+  CMR.prototype.ingestGranule.restore();
 });
 
 test('PUT with action move returns failure if one granule file exists', async (t) => {
