@@ -59,7 +59,7 @@ jobs:
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
         - echo 'BOOTSTRAP FINISHED'
-      script: /bin/bash -c "./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api; echo EXITCODE $?"
+      script: /bin/bash -c "./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api; echo EXITCODE $?; exit 1"
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "API unit tests"
