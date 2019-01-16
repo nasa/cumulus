@@ -13,12 +13,12 @@ const { KMS } = require('./kms');
  */
 class S3KeyPairProvider {
   /**
-   * Encrypt the given string using the given public key stored in the internal bucket
+   * Encrypt the given string using the given public key stored in the system_bucket.
    *
    * @param {string} str - The string to encrypt
    * @param {string} keyId - The name of the public key to use for encryption
    * @param {string} bucket - the optional bucket name. if not provided will
-   *                          use env variable "internal"
+   *                          use env variable "system_bucket"
    * @param {stack} stack - the optional stack name. if not provided will
    *                        use env variable "stackName"
    * @returns {Promise} the encrypted string
@@ -26,7 +26,7 @@ class S3KeyPairProvider {
   static async encrypt(str, keyId = 'public.pub', bucket = null, stack = null) {
     // Download the publickey
     const pki = forge.pki;
-    const b = bucket || process.env.internal || process.env.system_bucket;
+    const b = bucket || process.env.system_bucket;
     const s = stack || process.env.stackName;
     const pub = await s3().getObject({
       Bucket: b, Key: `${s}/crypto/${keyId}`
@@ -42,14 +42,14 @@ class S3KeyPairProvider {
    * @param {string} str - The string to decrypt
    * @param {string} keyId - The name of the public key to use for decryption
    * @param {string} bucket - the optional bucket name. Defaults to the value of
-   *   the "internal" environment variable
+   *   the "system_bucket" environment variable
    * @param {string} stack - the optional stack name. Defaults to the value of
    *   the "stackName" environment variable
    * @returns {Promise.<string>} the decrypted string
    */
   static async decrypt(str, keyId = 'private.pem', bucket = null, stack = null) {
     const pki = forge.pki;
-    const b = bucket || process.env.internal || process.env.system_bucket;
+    const b = bucket || process.env.system_bucket;
     const s = stack || process.env.stackName;
     const priv = await s3().getObject({
       Bucket: b, Key: `${s}/crypto/${keyId}`
