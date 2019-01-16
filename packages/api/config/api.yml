@@ -44,6 +44,9 @@ ApiEndpoints:
     AsyncOperationTaskDefinition:
       function: Ref
       value: AsyncOperationTaskDefinition
+    EcsCluster:
+      function: Ref
+      value: EcsCluster
     system_bucket: '{{parent.system_bucket}}'
     invoke:
       function: "Ref"
