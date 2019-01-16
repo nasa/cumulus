@@ -32,7 +32,7 @@ async function startBulkDeleteAsyncOperation(req, res) {
     return res.boom.serverUnavailable(`Failed to run ECS task: ${err.message}`);
   }
 
-  return res.send({ asyncOperationId: asyncOperation.id });
+  return res.status(202).send({ asyncOperationId: asyncOperation.id });
 }
 
 router.post('/', startBulkDeleteAsyncOperation);
