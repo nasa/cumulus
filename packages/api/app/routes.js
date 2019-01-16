@@ -45,7 +45,7 @@ router.use('/executions/status', ensureAuthenticated, executionStatus);
 router.use('/executions', ensureAuthenticated, executions);
 
 // async operation endpoint
-router.use('/async-operation', ensureAuthenticated, asyncOperations);
+router.use('/asyncOperations', ensureAuthenticated, asyncOperations);
 
 // bulk delete endpoint
 router.use('/bulkDelete', ensureAuthenticated, bulkDelete);
