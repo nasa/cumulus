@@ -66,7 +66,7 @@ dbIndexer:
   source: 'node_modules/@cumulus/api/dist/'
   useElasticSearch: '{{es.name}}'
   envs:
-    bucket: '{{system_bucket}}'
+    system_bucket: '{{system_bucket}}'
     FilesTable:
       function: Ref
       value: FilesTableDynamoDB
@@ -87,7 +87,7 @@ messageConsumer:
     ProvidersTable:
       function: Ref
       value: ProvidersTableDynamoDB
-    bucket: '{{system_bucket}}'
+    system_bucket: '{{system_bucket}}'
     FallbackTopicArn:
       function: Fn::Sub
       value: '${kinesisFallbackSns}'
@@ -108,7 +108,7 @@ fallbackConsumer:
     ProvidersTable:
       function: Ref
       value: ProvidersTableDynamoDB
-    bucket: '{{system_bucket}}'
+    system_bucket: '{{system_bucket}}'
 
 ScheduleSF:
   description: 'This lambda function is invoked by scheduled rules created via cumulus API'
@@ -170,7 +170,7 @@ EmsReport:
   source: 'node_modules/@cumulus/api/dist/'
   useElasticSearch: '{{es.name}}'
   envs:
-    bucket: '{{system_bucket}}'
+    system_bucket: '{{system_bucket}}'
     ems_provider: '{{ems.provider}}'
   namedLambdaDeadLetterQueue: true
 
