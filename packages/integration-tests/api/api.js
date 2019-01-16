@@ -121,7 +121,10 @@ async function postBulkDelete({ prefix, granuleIds }) {
     payload: {
       httpMethod: 'POST',
       resource: '/{proxy+}',
-      path: '/bulkDelete',
+      path: '/bulkDelete/',
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ granuleIds })
     }
   });
@@ -202,6 +205,9 @@ async function addCollectionApi({ prefix, collection }) {
       httpMethod: 'POST',
       resource: '/{proxy+}',
       path: '/collections',
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(collection)
     }
   });
@@ -222,7 +228,10 @@ async function addProviderApi({ prefix, provider }) {
     payload: {
       httpMethod: 'POST',
       resource: '/{proxy+}',
-      path: '/providers',
+      path: '/providers/',
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(provider)
     }
   });
@@ -364,7 +373,10 @@ async function updateCollection({ prefix, collection, updateParams }) {
     payload: {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
-      path: '/collections',
+      path: `/collections/${collection.name}/${collection.version}`,
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(Object.assign(collection, updateParams))
     }
   });
@@ -387,7 +399,10 @@ async function updateProvider({ prefix, provider, updateParams }) {
     payload: {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
-      path: '/providers',
+      path: `/providers/${provider.id}`,
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(Object.assign(provider, updateParams))
     }
   });
