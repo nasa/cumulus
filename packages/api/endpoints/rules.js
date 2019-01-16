@@ -38,7 +38,7 @@ async function get(req, res) {
   }
   catch (e) {
     if (e instanceof RecordDoesNotExist) {
-      return res.boom.notFound(`No record found`);
+      return res.boom.notFound('No record found');
     }
     throw e;
   }
