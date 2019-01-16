@@ -125,7 +125,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
 
   const bucket = randomId('bucket');
   const stackName = randomId('stack');
-  process.env.system_bucket = bucket;
+  process.env.bucket = bucket;
   process.env.stackName = stackName;
   const testCreds = setTestCredentials();
   const expectedMetadata = {
