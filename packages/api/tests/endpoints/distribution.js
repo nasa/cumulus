@@ -8,7 +8,6 @@ const { URL } = require('url');
 const { s3 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
-// const distributionEndpoint = require('../../endpoints/distribution');
 const { AccessToken } = require('../../models');
 const EarthdataLoginClient = require('../../lib/EarthdataLogin');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
