@@ -122,7 +122,7 @@ async function del(req, res) {
   }
   catch (e) {
     if (e instanceof RecordDoesNotExist) {
-      return res.send({ message: 'No record found' });
+      return res.boom.notFound('No record found');
     }
     throw e;
   }
