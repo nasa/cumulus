@@ -326,16 +326,13 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(result).not.toEqual(false);
     });
 
-    // this test is broken as a result of change in cmrjs package. ignoring for now
-    // until integration tests are back online
-    xit('updates the CMR metadata online resources with the final metadata location', () => {
+    it('updates the CMR metadata online resources with the final metadata location', () => {
       const distEndpoint = config.DISTRIBUTION_ENDPOINT;
       const extension1 = urljoin(files[0].bucket, files[0].filepath);
       const filename = `https://${files[2].bucket}.s3.amazonaws.com/${files[2].filepath}`;
-
-      expect(cmrResource[0].href).toEqual(urljoin(distEndpoint, extension1));
-      expect(cmrResource[1].href).toEqual(filename);
-
+      const hrefs = cmrResource.map((resource) => resource.href);
+      expect(hrefs.includes(urljoin(distEndpoint, extension1))).toBe(true);
+      expect(hrefs.includes(filename)).toBe(true);
       expect(response.statusCode).toEqual(200);
     });
   });
