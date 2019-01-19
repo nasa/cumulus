@@ -6,7 +6,11 @@ const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 
 const { AssociatedRulesError } = require('../../lib/errors');
 const { Manager, Collection, Rule } = require('../../models');
-const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
+const {
+  fakeCollectionFactory,
+  fakeRuleFactoryV2
+} = require('../../lib/testUtils');
+const schemas = require('../../models/schemas');
 
 let manager;
 let ruleModel;
@@ -17,7 +21,8 @@ test.before(async () => {
   manager = new Manager({
     tableName: process.env.CollectionsTable,
     tableHash: { name: 'name', type: 'S' },
-    tableRange: { name: 'version', type: 'S' }
+    tableRange: { name: 'version', type: 'S' },
+    schema: schemas.collection
   });
 
   await manager.createTable();
@@ -42,7 +47,7 @@ test('Collection.exists() returns true when a record exists', async (t) => {
   const name = randomString();
   const version = randomString();
 
-  await manager.create({ name, version });
+  await manager.create(fakeCollectionFactory({ name, version }));
 
   const collectionsModel = new Collection();
 
@@ -59,7 +64,7 @@ test('Collection.delete() throws an exception if the collection has associated r
   const name = randomString();
   const version = randomString();
 
-  await manager.create({ name, version });
+  await manager.create(fakeCollectionFactory({ name, version }));
 
   const rule = fakeRuleFactoryV2({
     collection: {
@@ -97,7 +102,7 @@ test('Collection.delete() deletes a collection', async (t) => {
   const name = randomString();
   const version = randomString();
 
-  await manager.create({ name, version });
+  await manager.create(fakeCollectionFactory({ name, version }));
 
   t.true(await manager.exists({ name, version }));
 
