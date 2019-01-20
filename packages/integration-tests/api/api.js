@@ -19,7 +19,6 @@ const {
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
- * @param {string} params.functionName - the name of the Lambda function that
  *   backs the API Gateway endpoint.  Does not include the stack prefix in the
  *   name.
  * @param {string} params.payload - the payload to send to the Lambda function.
@@ -27,7 +26,7 @@ const {
  * @returns {Promise<Object>} - the parsed payload of the response.  See
  *   https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format
  */
-async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
+async function callCumulusApi({ prefix, payload: userPayload }) {
   const payload = cloneDeep(userPayload);
 
   process.env.UsersTable = `${prefix}-UsersTable`;
@@ -55,7 +54,7 @@ async function callCumulusApi({ prefix, functionName, payload: userPayload }) {
   try {
     apiOutput = await lambda().invoke({
       Payload: JSON.stringify(payload),
-      FunctionName: `${prefix}-${functionName}`
+      FunctionName: `${prefix}-ApiEndpoints`
     }).promise();
   }
   finally {
@@ -99,12 +98,10 @@ function verifyCumulusApiResponse(response, acceptedCodes = []) {
 async function getAsyncOperation({ prefix, id }) {
   const response = await callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiAsyncOperationsDefault',
     payload: {
       httpMethod: 'GET',
-      resource: '/asyncOperations/{id}',
-      path: `/asyncOperations/${id}`,
-      pathParameters: { id }
+      resource: '/{proxy+}',
+      path: `/asyncOperations/${id}`
     }
   });
   return verifyCumulusApiResponse(response);
@@ -121,12 +118,13 @@ async function getAsyncOperation({ prefix, id }) {
 async function postBulkDelete({ prefix, granuleIds }) {
   const response = await callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiBulkDeleteDefault',
     payload: {
       httpMethod: 'POST',
-      resource: '/bulkDelete',
-      path: '/bulkDelete',
-      pathParameters: {},
+      resource: '/{proxy+}',
+      path: '/bulkDelete/',
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ granuleIds })
     }
   });
@@ -144,14 +142,10 @@ async function postBulkDelete({ prefix, granuleIds }) {
 async function deletePdr({ prefix, pdr }) {
   const response = await callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiPdrsDefault',
     payload: {
       httpMethod: 'DELETE',
-      resource: '/pdrs/{pdrName}',
-      path: `/pdrs/${pdr}`,
-      pathParameters: {
-        pdrName: pdr
-      }
+      resource: '/{proxy+}',
+      path: `/pdrs/${pdr}`
     }
   });
   return verifyCumulusApiResponse(response);
@@ -167,12 +161,10 @@ async function deletePdr({ prefix, pdr }) {
 async function getLogs({ prefix }) {
   const response = await callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiLogsDefault',
     payload: {
       httpMethod: 'GET',
-      resource: '/logs',
-      path: 'logs',
-      pathParameters: {}
+      resource: '/{proxy+}',
+      path: '/logs'
     }
   });
   return verifyCumulusApiResponse(response);
@@ -189,14 +181,10 @@ async function getLogs({ prefix }) {
 async function getExecutionLogs({ prefix, executionName }) {
   const response = await callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiLogsDefault',
     payload: {
       httpMethod: 'GET',
-      resource: '/logs/{executionName}',
-      path: `logs/${executionName}`,
-      pathParameters: {
-        executionName: executionName
-      }
+      resource: '/{proxy+}',
+      path: `/logs/${executionName}`
     }
   });
   return verifyCumulusApiResponse(response);
@@ -213,11 +201,13 @@ async function getExecutionLogs({ prefix, executionName }) {
 async function addCollectionApi({ prefix, collection }) {
   const response = await callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiCollectionsDefault',
     payload: {
       httpMethod: 'POST',
-      resource: '/collections',
+      resource: '/{proxy+}',
       path: '/collections',
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(collection)
     }
   });
@@ -235,11 +225,13 @@ async function addCollectionApi({ prefix, collection }) {
 async function addProviderApi({ prefix, provider }) {
   const response = await callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiProvidersDefault',
     payload: {
       httpMethod: 'POST',
-      resource: '/providers',
-      path: '/providers',
+      resource: '/{proxy+}',
+      path: '/providers/',
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(provider)
     }
   });
@@ -256,10 +248,9 @@ async function addProviderApi({ prefix, provider }) {
 async function getProviders({ prefix }) {
   const response = await callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiProvidersDefault',
     payload: {
       httpMethod: 'GET',
-      resource: '/providers',
+      resource: '/{proxy+}',
       path: '/providers'
     }
   });
@@ -277,14 +268,10 @@ async function getProviders({ prefix }) {
 async function getProvider({ prefix, providerId }) {
   const response = await callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiProvidersDefault',
     payload: {
       httpMethod: 'GET',
-      resource: '/providers/{providerId}',
-      path: `/providers/${providerId}`,
-      pathParameters: {
-        id: providerId
-      }
+      resource: '/{proxy+}',
+      path: `/providers/${providerId}`
     }
   });
   return verifyCumulusApiResponse(response);
@@ -300,10 +287,9 @@ async function getProvider({ prefix, providerId }) {
 async function getCollections({ prefix }) {
   const response = await callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiCollectionsDefault',
     payload: {
       httpMethod: 'GET',
-      resource: '/collections',
+      resource: '/{proxy+}',
       path: '/collections'
     }
   });
@@ -322,15 +308,10 @@ async function getCollections({ prefix }) {
 async function getCollection({ prefix, collectionName, collectionVersion }) {
   const response = await callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiCollectionsDefault',
     payload: {
       httpMethod: 'GET',
-      resource: '/collections/{collectionName}/{version}',
-      path: `/collections/${collectionName}/${collectionVersion}`,
-      pathParameters: {
-        collectionName: collectionName,
-        version: collectionVersion
-      }
+      resource: '/{proxy+}',
+      path: `/collections/${collectionName}/${collectionVersion}`
     }
   });
   return verifyCumulusApiResponse(response);
@@ -346,10 +327,9 @@ async function getCollection({ prefix, collectionName, collectionVersion }) {
 async function getWorkflows({ prefix }) {
   const response = await callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiWorkflowsDefault',
     payload: {
       httpMethod: 'GET',
-      resource: '/workflows',
+      resource: '/{proxy+}',
       path: '/workflows'
     }
   });
@@ -367,14 +347,10 @@ async function getWorkflows({ prefix }) {
 async function getWorkflow({ prefix, workflowName }) {
   const response = await callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiWorkflowsDefault',
     payload: {
       httpMethod: 'GET',
-      resource: '/workflows/name',
-      path: `/workflows/${workflowName}`,
-      pathParameters: {
-        name: workflowName
-      }
+      resource: '/{proxy+}',
+      path: `/workflows/${workflowName}`
     }
   });
   return verifyCumulusApiResponse(response);
@@ -394,16 +370,14 @@ async function getWorkflow({ prefix, workflowName }) {
 async function updateCollection({ prefix, collection, updateParams }) {
   const response = await callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiCollectionsDefault',
     payload: {
       httpMethod: 'PUT',
-      resource: '/collections',
-      path: '/collections',
-      body: JSON.stringify(Object.assign(collection, updateParams)),
-      pathParameters: {
-        collectionName: collection.name,
-        version: collection.version
-      }
+      resource: '/{proxy+}',
+      path: `/collections/${collection.name}/${collection.version}`,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(Object.assign(collection, updateParams))
     }
   });
   return verifyCumulusApiResponse(response);
@@ -422,15 +396,14 @@ async function updateCollection({ prefix, collection, updateParams }) {
 async function updateProvider({ prefix, provider, updateParams }) {
   const response = await callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiProvidersDefault',
     payload: {
       httpMethod: 'PUT',
-      resource: '/providers',
-      path: '/providers',
-      body: JSON.stringify(Object.assign(provider, updateParams)),
-      pathParameters: {
-        id: provider.id
-      }
+      resource: '/{proxy+}',
+      path: `/providers/${provider.id}`,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(Object.assign(provider, updateParams))
     }
   });
   return verifyCumulusApiResponse(response);

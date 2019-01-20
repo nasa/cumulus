@@ -64,9 +64,9 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
 });
 
-test.serial('GET /async-operation returns a 404 status code', async (t) => {
+test.serial('GET /asyncOperations returns a 404 status code', async (t) => {
   const response = await request(app)
-    .get('/async-operation')
+    .get('/asyncOperations')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(404);
@@ -74,18 +74,18 @@ test.serial('GET /async-operation returns a 404 status code', async (t) => {
   t.is(response.status, 404);
 });
 
-test.serial('GET /async-operation/{:id} returns a 401 status code if valid authorization is not specified', async (t) => {
+test.serial('GET /asyncOperations/{:id} returns a 401 status code if valid authorization is not specified', async (t) => {
   const response = await request(app)
-    .get('/async-operation/abc-123')
+    .get('/asyncOperations/abc-123')
     .set('Accept', 'application/json')
     .expect(401);
 
   t.is(response.status, 401);
 });
 
-test.serial('GET /async-operation/{:id} returns a 404 status code if the requested async-operation does not exist', async (t) => {
+test.serial('GET /asyncOperations/{:id} returns a 404 status code if the requested async-operation does not exist', async (t) => {
   const response = await request(app)
-    .get('/async-operation/abc-123')
+    .get('/asyncOperations/abc-123')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(404);
@@ -93,7 +93,7 @@ test.serial('GET /async-operation/{:id} returns a 404 status code if the request
   t.is(response.status, 404);
 });
 
-test.serial('GET /async-operation/{:id} returns the async operation if it does exist', async (t) => {
+test.serial('GET /asyncOperations/{:id} returns the async operation if it does exist', async (t) => {
   const asyncOperation = {
     id: 'abc-123',
     status: 'RUNNING',
@@ -104,7 +104,7 @@ test.serial('GET /async-operation/{:id} returns the async operation if it does e
   const createdAsyncOperation = await asyncOperationModel.create(asyncOperation);
 
   const response = await request(app)
-    .get(`/async-operation/${createdAsyncOperation.id}`)
+    .get(`/asyncOperations/${createdAsyncOperation.id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);

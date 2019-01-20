@@ -31,9 +31,17 @@ async function get(req, res) {
   const name = req.params.name;
 
   const model = new models.Rule();
-  const result = await model.get({ name });
-  delete result.password;
-  return res.send(result);
+  try {
+    const result = await model.get({ name });
+    delete result.password;
+    return res.send(result);
+  }
+  catch (e) {
+    if (e instanceof RecordDoesNotExist) {
+      return res.boom.notFound('No record found');
+    }
+    throw e;
+  }
 }
 
 /**
@@ -108,7 +116,16 @@ async function del(req, res) {
   const name = (req.params.name || '').replace(/%20/g, ' ');
   const model = new models.Rule();
 
-  const record = await model.get({ name });
+  let record;
+  try {
+    record = await model.get({ name });
+  }
+  catch (e) {
+    if (e instanceof RecordDoesNotExist) {
+      return res.boom.notFound('No record found');
+    }
+    throw e;
+  }
   await model.delete(record);
   return res.send({ message: 'Record deleted' });
 }
