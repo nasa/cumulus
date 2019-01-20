@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+
 ### Added
 - CUMULUS-678
   `reconcileCMRMetadata` added to `@cumulus/cmrjs` to update metadata record with new file locations.
@@ -34,7 +35,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `@cumulus/api` now uses [express](http://expressjs.com/) as the API engine.
   - All `@cumulus/api` endpoints on ApiGateway are consolidated to a single endpoint the uses `{proxy+}` definition.
   - All files under `packages/api/endpoints` along with associated tests are updated to support express's request and response objects.
-  - Replaced `internal`, `bucket` and `systemBucket` environment variables with `system_bucket`.
+  - Replaced environment variables `internal`, `bucket` and `systemBucket` with `system_bucket`.
+  - Update `@cumulus/integration-tests` to work with updated cumulus-api express endpoints
 
 - **CUMULUS-1049** Updated `Retrieve Execution Status API` in `@cumulus/api`: If the execution doesn't exist in Step Function API, Cumulus API returns the execution status information from the database.
 
