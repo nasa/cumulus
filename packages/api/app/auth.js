@@ -35,8 +35,8 @@ async function ensureAuthorized(req, res, next) {
     return res.boom.unauthorized('Missing token');
   }
 
-  let userName; let
-    accessToken;
+  let userName;
+  let accessToken;
   try {
     ({ username: userName, accessToken } = verifyJwtToken(jwtToken));
 

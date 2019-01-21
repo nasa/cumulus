@@ -1,9 +1,9 @@
 /**
- * We are using a separate express for the distribution distributionApp
- * The separation of the cumulus api distributionApp from the distribution distributionApp
+ * We are using a separate express for the distribution endpoint:  distributionApp
+ * The separation of the cumulus api `app` from the distribution distributionApp
  * is necessary to ensure there are two different endpoints
  *
- * For Nasa deployments, cumulus API endpoints remain behind a
+ * For NASA deployments, cumulus API endpoints remain behind a
  * firewall and an authentication service.
  *
  * Distribution endpoints are intended for public use and are
