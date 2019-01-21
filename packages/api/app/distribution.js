@@ -19,7 +19,7 @@ const cookieParser = require('cookie-parser');
 const express = require('express');
 const boom = require('express-boom');
 const awsServerlessExpress = require('aws-serverless-express');
-const router = require('../endpoints/distribution');
+const distributionRouter = require('../endpoints/distribution');
 
 const distributionApp = express();
 
@@ -30,7 +30,7 @@ distributionApp.use(cookieParser());
 distributionApp.use(bodyParser.json()); // for parsing distributionApplication/json
 distributionApp.use(hsts({ maxAge: 31536000 }));
 
-distributionApp.use('/', router);
+distributionApp.use('/', distributionRouter);
 
 // global 404 response when page is not found
 distributionApp.use((req, res) => {
