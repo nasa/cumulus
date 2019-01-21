@@ -4,6 +4,7 @@ const router = require('express-promise-router')();
 const aws = require('@cumulus/common/aws'); // important to import all to allow stubbing
 const { StepFunction } = require('@cumulus/ingest/aws');
 const { executionExists } = require('@cumulus/common/step-functions');
+const { RecordDoesNotExist } = require('../lib/errors');
 const models = require('../models');
 
 /**
@@ -86,8 +87,16 @@ async function get(req, res) {
   }
 
   // get the execution information from database
+  let response;
   const e = new models.Execution();
-  const response = await e.get({ arn });
+  try {
+    response = await e.get({ arn });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound('Execution not found in API or database');
+    }
+  }
+
   const warning = 'Execution does not exist in Step Functions API';
   const execution = {
     executionArn: response.arn,
