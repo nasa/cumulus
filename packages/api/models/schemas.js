@@ -164,16 +164,16 @@ module.exports.collection = {
       }
     },
     createdAt: {
-      type: 'number',
+      type: 'integer',
       readonly: true
     },
     updatedAt: {
-      type: 'number',
-      readonly: true
+      type: 'integer'
     },
     meta: {
       title: 'Optional MetaData for the Collection',
-      type: 'object'
+      type: 'object',
+      additionalProperties: true
     },
     tags: {
       title: 'Optional tags for search',
