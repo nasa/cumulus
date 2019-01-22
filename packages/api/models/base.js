@@ -1,7 +1,6 @@
 'use strict';
 
 const Ajv = require('ajv');
-const cloneDeep = require('lodash.clonedeep');
 const aws = require('@cumulus/common/aws');
 const { deprecate } = require('@cumulus/common/util');
 const pWaitFor = require('p-wait-for');
@@ -79,20 +78,38 @@ async function deleteTable(tableName) {
  */
 class Manager {
   static recordIsValid(item, schema = null, removeAdditional = false) {
-    if (schema) {
-      const ajv = new Ajv({
-        useDefaults: true,
-        v5: true,
-        removeAdditional: removeAdditional
-      });
-      const validate = ajv.compile(schema);
-      const valid = validate(item);
-      if (!valid) {
-        const err = new Error('The record has validation errors');
-        err.name = 'SchemaValidationError';
-        err.detail = validate.errors;
-        throw err;
-      }
+    if (!schema) {
+      throw new Error('schema is not defined');
+    }
+
+    const schemaWithAdditionalPropertiesProhibited = JSON.parse(
+      JSON.stringify(
+        schema,
+        (_, value) => {
+          if (value.type === 'object') {
+            return {
+              additionalProperties: false,
+              ...value
+            };
+          }
+
+          return value;
+        }
+      )
+    );
+
+    const ajv = new Ajv({
+      useDefaults: true,
+      v5: true,
+      removeAdditional: removeAdditional
+    });
+    const validate = ajv.compile(schemaWithAdditionalPropertiesProhibited);
+    const valid = validate(item);
+    if (!valid) {
+      const err = new Error('The record has validation errors');
+      err.name = 'SchemaValidationError';
+      err.detail = validate.errors;
+      throw err;
     }
   }
 
@@ -221,15 +238,24 @@ class Manager {
     return this.dynamodbDocClient.batchGet(params).promise();
   }
 
-  async batchWrite(deletes, puts) {
+  async batchWrite(deletes, puts = []) {
     const deleteRequests = (deletes || []).map((Key) => ({
       DeleteRequest: { Key }
     }));
 
-    const putRequests = (puts || []).map((item) => ({
-      PutRequest: {
-        Item: Object.assign({}, item, { updatedAt: Date.now() })
-      }
+    const now = Date.now();
+    const putsWithTimestamps = puts.map((item) => ({
+      createdAt: now,
+      ...item,
+      updatedAt: now
+    }));
+
+    putsWithTimestamps.forEach((item) => {
+      this.constructor.recordIsValid(item, this.schema, this.removeAdditional);
+    });
+
+    const putRequests = putsWithTimestamps.map((Item) => ({
+      PutRequest: { Item }
     }));
 
     const requests = deleteRequests.concat(putRequests);
@@ -265,10 +291,13 @@ class Manager {
     // createdAt property, set that as well.  Instead of modifying the original
     // item, this returns an updated copy of the item.
     const itemsWithTimestamps = itemsArray.map((item) => {
-      const clonedItem = cloneDeep(item);
-      clonedItem.updatedAt = Date.now();
-      if (!clonedItem.createdAt) clonedItem.createdAt = clonedItem.updatedAt;
-      return clonedItem;
+      const now = Date.now();
+
+      return {
+        createdAt: now,
+        ...item,
+        updatedAt: now
+      };
     });
 
     // Make sure that all of the items are valid
@@ -346,7 +375,10 @@ class Manager {
   }
 
   async update(itemKeys, updates = {}, fieldsToDelete = []) {
-    const actualUpdates = cloneDeep(updates);
+    const actualUpdates = {
+      ...updates,
+      updatedAt: Date.now()
+    };
 
     // Make sure that we don't update the key fields
     const itemKeyNames = Object.keys(itemKeys);
@@ -355,8 +387,18 @@ class Manager {
     // Make sure that we don't try to update a field that's being deleted
     fieldsToDelete.forEach((property) => delete actualUpdates[property]);
 
-    // Set the "updatedAt" time
-    actualUpdates.updatedAt = Date.now();
+    const schemaWithoutRequiredParams = JSON.parse(
+      JSON.stringify(
+        this.schema,
+        (key, value) => (key === 'required' ? [] : value)
+      )
+    );
+
+    this.constructor.recordIsValid(
+      actualUpdates,
+      schemaWithoutRequiredParams,
+      this.removeAdditional
+    );
 
     // Build the actual update request
     const attributeUpdates = {};
