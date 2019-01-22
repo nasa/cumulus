@@ -99,5 +99,5 @@ test('GET returns not found for a missing provider', async (t) => {
     .expect(404);
 
   t.is(response.body.error, 'Not Found');
-  t.is(response.body.message, 'provider not found.');
+  t.is(response.body.message, 'Provider not found.');
 });
