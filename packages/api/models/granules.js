@@ -83,7 +83,7 @@ class Granule extends Manager {
     );
 
     await cmr.deleteGranule(granuleId, collectionId);
-    await this.update({ granuleId }, { published: false, cmrLink: null });
+    await this.update({ granuleId }, { published: false }, ['cmrLink']);
   }
 
   /**
