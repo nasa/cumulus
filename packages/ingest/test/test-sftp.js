@@ -17,7 +17,7 @@ const privateKey = 'ssh_client_rsa_key';
 const bucket = randomString();
 const stackName = randomString();
 
-process.env.internal = bucket;
+process.env.system_bucket = bucket;
 process.env.stackName = stackName;
 
 class MyTestDiscoveryClass {
