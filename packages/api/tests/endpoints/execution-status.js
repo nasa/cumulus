@@ -138,7 +138,7 @@ const stepFunctionMock = {
 
 const executionExistsMock = (arn) => {
   if ((arn.executionArn === expiredExecutionArn)
-      || (arn.executionArn === expiredMissingExecutionArn)){
+      || (arn.executionArn === expiredMissingExecutionArn)) {
     return {
       promise: () => {
         const error = new Error();
@@ -308,6 +308,6 @@ test('when execution not found in step function API nor database, returns not fo
     .expect(404);
 
   const executionStatus = response.body;
-  t.is(executionStatus.error, "Not Found");
-  t.is(executionStatus.message, "Execution not found in API or database");
+  t.is(executionStatus.error, 'Not Found');
+  t.is(executionStatus.message, 'Execution not found in API or database');
 });

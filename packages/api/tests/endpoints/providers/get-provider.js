@@ -93,7 +93,7 @@ test('GET returns an existing provider', async (t) => {
 
 test('GET returns not found for a missing provider', async (t) => {
   const response = await request(app)
-    .get(`/providers/missing-provider-id`)
+    .get('/providers/missing-provider-id')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(404);
