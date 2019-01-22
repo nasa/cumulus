@@ -185,6 +185,24 @@ module.exports.collection = {
   }
 };
 
+module.exports.file = {
+  type: 'object',
+  required: [
+    'granuleId',
+    'bucket',
+    'key',
+    'createdAt',
+    'updatedAt'
+  ],
+  properties: {
+    granuleId: { type: 'string' },
+    bucket: { type: 'string' },
+    key: { type: 'string' },
+    createdAt: { type: 'integer' },
+    updatedAt: { type: 'integer' }
+  }
+};
+
 // Granule Record Schema
 module.exports.granule = {
   title: 'Granule Object',
