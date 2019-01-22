@@ -445,7 +445,7 @@ module.exports.pdr = {
       type: 'string',
       readonly: true
     },
-    PANsent: {
+    PANSent: {
       type: 'boolean',
       readonly: true
     },
@@ -479,10 +479,13 @@ module.exports.pdr = {
       type: 'string',
       readonly: true
     },
+    timestamp: { type: 'integer' },
+    duration: { type: 'number' },
     createdAt: {
-      type: 'number',
+      type: 'integer',
       readonly: true
-    }
+  },
+    updatedAt: { type: 'integer' }
   },
   required: [
     'pdrName',
