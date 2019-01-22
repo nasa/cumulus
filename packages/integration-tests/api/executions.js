@@ -13,14 +13,10 @@ const { callCumulusApi } = require('./api');
 async function getExecution({ prefix, arn }) {
   return callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiExecutionsDefault',
     payload: {
       httpMethod: 'GET',
-      resource: '/executions/{arn}',
-      path: `executions/${arn}`,
-      pathParameters: {
-        arn: arn
-      }
+      resource: '/{proxy+}',
+      path: `/executions/${arn}`
     }
   });
 }
@@ -35,11 +31,10 @@ async function getExecution({ prefix, arn }) {
 async function getExecutions({ prefix }) {
   return callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiExecutionsDefault',
     payload: {
       httpMethod: 'GET',
-      resource: '/executions',
-      path: 'executions'
+      resource: '/{proxy+}',
+      path: '/executions'
     }
   });
 }
@@ -56,14 +51,10 @@ async function getExecutions({ prefix }) {
 async function getExecutionStatus({ prefix, arn }) {
   return callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiExecutionStatusDefault',
     payload: {
       httpMethod: 'GET',
-      resource: '/executions/status/{arn}',
-      path: `executions/status/${arn}`,
-      pathParameters: {
-        arn: arn
-      }
+      resource: '/{proxy+}',
+      path: `/executions/status/${arn}`
     }
   });
 }

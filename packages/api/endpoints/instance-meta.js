@@ -1,10 +1,16 @@
 'use strict';
 
-const { handle } = require('../lib/response');
+const router = require('express-promise-router')();
 
-
-function instanceMetadata(event, cb) {
-  return cb(null, {
+/**
+ * returns information about the cumulus instance
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Object} the express response object with instance meta info
+ */
+function instanceMetadata(req, res) {
+  return res.send({
     cmr: {
       provider: process.env.cmr_provider,
       environment: process.env.CMR_ENVIRONMENT || 'UAT'
@@ -12,9 +18,6 @@ function instanceMetadata(event, cb) {
   });
 }
 
-function handler(event, context) {
-  const checkAuth = true;
-  return handle(event, context, checkAuth, (cb) => instanceMetadata(event, cb));
-}
+router.get('/', instanceMetadata);
 
-module.exports = handler;
+module.exports = router;

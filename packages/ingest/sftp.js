@@ -42,7 +42,7 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
     }
 
     if (this.options.privateKey) {
-      const bucket = process.env.internal;
+      const bucket = process.env.system_bucket;
       const stackName = process.env.stackName;
       // we are assuming that the specified private key is in the S3 crypto directory
       log.debug(`Reading Key: ${this.options.privateKey} bucket:${bucket},stack:${stackName}`);

@@ -1,10 +1,10 @@
 'use strict';
 
 const test = require('ava');
+const request = require('supertest');
 const {
   testUtils: { randomString }
 } = require('@cumulus/common');
-const asyncOperationsEndpoint = require('../../endpoints/async-operations');
 const {
   AccessToken,
   AsyncOperation: AsyncOperationModel,
@@ -12,43 +12,38 @@ const {
 } = require('../../models');
 const { createFakeJwtAuthToken } = require('../../lib/testUtils');
 
+process.env.UsersTable = randomString();
+process.env.stackName = randomString();
+process.env.system_bucket = randomString();
+process.env.AsyncOperationsTable = randomString();
+process.env.AccessTokensTable = randomString();
+process.env.TOKEN_SECRET = randomString();
+
+// import the express app after setting the env variables
+const { app } = require('../../app');
+
+let jwtAuthToken;
 let asyncOperationModel;
 let accessTokenModel;
 let userModel;
-let authHeaders;
-let context;
 
 test.before(async () => {
   // Create AsyncOperations table
   asyncOperationModel = new AsyncOperationModel({
-    stackName: randomString(),
-    systemBucket: randomString(),
-    tableName: randomString()
+    stackName: process.env.stackName,
+    systemBucket: process.env.system_bucket,
+    tableName: process.env.AsyncOperationsTable
   });
   await asyncOperationModel.createTable();
 
   // Create Users table
-  process.env.UsersTable = randomString();
   userModel = new User();
   await userModel.createTable();
 
-  process.env.AccessTokensTable = randomString();
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
-  process.env.TOKEN_SECRET = randomString();
-
-  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
-  authHeaders = {
-    Authorization: `Bearer ${jwtAuthToken}`
-  };
-
-  context = {
-    AsyncOperationsTable: asyncOperationModel.tableName,
-    UsersTable: userModel.tableName,
-    stackName: asyncOperationModel.stackName,
-    systemBucket: asyncOperationModel.systemBucket
-  };
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 });
 
 test.after.always(async () => {
@@ -69,46 +64,36 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
 });
 
-test.serial('GET /async-operation returns a 404 status code', async (t) => {
-  const event = {
-    headers: authHeaders,
-    httpMethod: 'GET'
-  };
+test.serial('GET /asyncOperations returns a 404 status code', async (t) => {
+  const response = await request(app)
+    .get('/asyncOperations')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
 
-  const response = await asyncOperationsEndpoint(event, context);
-
-  t.is(response.statusCode, 404);
+  t.is(response.status, 404);
 });
 
-test.serial('GET /async-operation/{:id} returns a 401 status code if valid authorization is not specified', async (t) => {
-  const event = {
-    headers: {},
-    httpMethod: 'GET',
-    pathParameters: {
-      id: 'abc-123'
-    }
-  };
+test.serial('GET /asyncOperations/{:id} returns a 401 status code if valid authorization is not specified', async (t) => {
+  const response = await request(app)
+    .get('/asyncOperations/abc-123')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  const response = await asyncOperationsEndpoint(event, context);
-
-  t.is(response.statusCode, 401);
+  t.is(response.status, 401);
 });
 
-test.serial('GET /async-operation/{:id} returns a 404 status code if the requested async-operation does not exist', async (t) => {
-  const event = {
-    headers: authHeaders,
-    httpMethod: 'GET',
-    pathParameters: {
-      id: 'abc-123'
-    }
-  };
+test.serial('GET /asyncOperations/{:id} returns a 404 status code if the requested async-operation does not exist', async (t) => {
+  const response = await request(app)
+    .get('/asyncOperations/abc-123')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
 
-  const response = await asyncOperationsEndpoint(event, context);
-
-  t.is(response.statusCode, 404);
+  t.is(response.status, 404);
 });
 
-test.serial('GET /async-operation/{:id} returns the async operation if it does exist', async (t) => {
+test.serial('GET /asyncOperations/{:id} returns the async operation if it does exist', async (t) => {
   const asyncOperation = {
     id: 'abc-123',
     status: 'RUNNING',
@@ -118,22 +103,16 @@ test.serial('GET /async-operation/{:id} returns the async operation if it does e
 
   const createdAsyncOperation = await asyncOperationModel.create(asyncOperation);
 
-  const event = {
-    headers: authHeaders,
-    httpMethod: 'GET',
-    pathParameters: {
-      id: createdAsyncOperation.id
-    }
-  };
+  const response = await request(app)
+    .get(`/asyncOperations/${createdAsyncOperation.id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  const response = await asyncOperationsEndpoint(event, context);
-
-  t.is(response.statusCode, 200);
-
-  const parsedBody = JSON.parse(response.body);
+  t.is(response.status, 200);
 
   t.deepEqual(
-    parsedBody,
+    response.body,
     {
       id: asyncOperation.id,
       status: asyncOperation.status,

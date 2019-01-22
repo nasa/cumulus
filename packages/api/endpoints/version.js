@@ -1,23 +1,22 @@
 'use strict';
 
-const { OkResponse } = require('../lib/responses');
+const router = require('express-promise-router')();
 const pckg = require('../package.json');
 
 /**
- * Returns the response and api versions.
- * This is intended as public endpoint that requires no authentication
+ * get the API response and package versions
  *
- * @function handler
- * @returns {type} HTTP response in json format
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Object} API response and package versions
  */
-async function handler() {
-  return new OkResponse({
-    json: true,
-    body: {
-      response_version: 'v1',
-      api_version: pckg.version
-    }
+function get(req, res) {
+  return res.send({
+    response_version: 'v1',
+    api_version: pckg.version
   });
 }
 
-module.exports = handler;
+router.get('/', get);
+
+module.exports = router;
