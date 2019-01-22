@@ -254,16 +254,24 @@ module.exports.granule = {
       description: 'List of file definitions',
       type: 'array',
       items: {
-        type: 'object'
+        type: 'object',
+        required: [],
+        properties: {
+          bucket: { type: 'string' },
+          checksumType: { type: ['string', 'null'] },
+          checksumValue: { type: ['string', 'null'] },
+          filename: { type: 'string' },
+          filepath: { type: 'string' },
+          fileSize: { type: 'integer' },
+          name: { type: 'string' },
+          path: { type: 'string' },
+          url_path: { type: 'string' }
+      }
       }
     },
     error: {
       type: 'object',
-      readonly: true
-    },
-    createdAt: {
-      type: 'number',
-      readonly: true
+      additionalProperties: true
     },
     productVolume: {
       type: 'number',
@@ -300,14 +308,21 @@ module.exports.granule = {
     productionDateTime: {
       type: 'string',
       readonly: true
-    }
+  },
+    timestamp: { type: 'integer' },
+    createdAt: { type: 'integer' },
+    updatedAt: { type: 'integer' },
+    dataType: { type: 'string' },
+    version: { type: 'string' },
+    provider: { type: 'string' }
   },
   required: [
     'granuleId',
     'collectionId',
     'status',
     'execution',
-    'createdAt'
+    'createdAt',
+    'updatedAt'
   ]
 };
 
