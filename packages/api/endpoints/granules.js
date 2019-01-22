@@ -1,52 +1,42 @@
 'use strict';
 
+const router = require('express-promise-router')();
 const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
-const {
-  buildLambdaProxyResponse,
-  getAuthorizationFailureResponse
-} = require('../lib/response');
 const Search = require('../es/search').Search;
 const models = require('../models');
-const {
-  InternalServerError,
-  NotFoundResponse
-} = require('../lib/responses');
 const { deconstructCollectionId } = require('../lib/utils');
 
 /**
  * List all granules for a given collection.
  *
- * @param {Object} event - aws lambda event object.
- * @returns {Promise<Object>} a Lambda Proxy response object
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-async function list(event) {
-  const result = await (new Search(event, 'granule')).query();
+async function list(req, res) {
+  const result = await (new Search({
+    queryStringParameters: req.query
+  }, 'granule')).query();
 
-  return buildLambdaProxyResponse({
-    json: true,
-    body: result
-  });
+  return res.send(result);
 }
 
 /**
  * Update a single granule.
  * Supported Actions: reingest, move, applyWorkflow, RemoveFromCMR.
  *
- * @param {Object} event - aws lambda event object.
- * @returns {Promise<Object>} a Lambda Proxy response object
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-async function put(event) {
-  const granuleId = event.pathParameters.granuleName;
-  const body = event.body ? JSON.parse(event.body) : {};
+async function put(req, res) {
+  const granuleId = req.params.granuleName;
+  const body = req.body;
   const action = body.action;
 
   if (!action) {
-    return buildLambdaProxyResponse({
-      json: true,
-      statusCode: 400,
-      body: { message: 'Action is missing' }
-    });
+    return res.boom.badRequest('Action is missing');
   }
 
   const granuleModelClient = new models.Granule();
@@ -61,15 +51,12 @@ async function put(event) {
 
     const warning = 'The granule files may be overwritten';
 
-    return buildLambdaProxyResponse({
-      json: true,
-      body: Object.assign({
-        granuleId: granule.granuleId,
-        action,
-        status: 'SUCCESS'
-      },
-      (collection.duplicateHandling !== 'replace') ? { warning } : {})
-    });
+    return res.send(Object.assign({
+      granuleId: granule.granuleId,
+      action,
+      status: 'SUCCESS'
+    },
+    (collection.duplicateHandling !== 'replace') ? { warning } : {}));
   }
 
   if (action === 'applyWorkflow') {
@@ -78,26 +65,20 @@ async function put(event) {
       body.workflow
     );
 
-    return buildLambdaProxyResponse({
-      json: true,
-      body: {
-        granuleId: granule.granuleId,
-        action: `applyWorkflow ${body.workflow}`,
-        status: 'SUCCESS'
-      }
+    return res.send({
+      granuleId: granule.granuleId,
+      action: `applyWorkflow ${body.workflow}`,
+      status: 'SUCCESS'
     });
   }
 
   if (action === 'removeFromCmr') {
     await granuleModelClient.removeGranuleFromCmr(granule.granuleId, granule.collectionId);
 
-    return buildLambdaProxyResponse({
-      json: true,
-      body: {
-        granuleId: granule.granuleId,
-        action,
-        status: 'SUCCESS'
-      }
+    return res.send({
+      granuleId: granule.granuleId,
+      action,
+      status: 'SUCCESS'
     });
   }
 
@@ -111,59 +92,41 @@ async function put(event) {
       const filenames = filesAtDestination.map((file) => file.name);
       const message = `Cannot move granule because the following files would be overwritten at the destination location: ${filenames.join(', ')}. Delete the existing files or reingest the source files.`;
 
-      return buildLambdaProxyResponse({
-        json: true,
-        statusCode: 409,
-        body: { message }
-      });
+      return res.boom.conflict(message);
     }
 
     await granuleModelClient.move(granule, body.destinations, process.env.DISTRIBUTION_ENDPOINT);
 
-    return buildLambdaProxyResponse({
-      json: true,
-      body: {
-        granuleId: granule.granuleId,
-        action,
-        status: 'SUCCESS'
-      }
+    return res.send({
+      granuleId: granule.granuleId,
+      action,
+      status: 'SUCCESS'
     });
   }
 
-  return buildLambdaProxyResponse({
-    json: true,
-    statusCode: 400,
-    body: { message: 'Action is not supported. Choices are "applyWorkflow", "move", "reingest", or "removeFromCmr"' }
-  });
+  return res.boom.badRequest('Action is not supported. Choices are "applyWorkflow", "move", "reingest", or "removeFromCmr"');
 }
 
 /**
  * Delete a granule
  *
- * @param {Object} event - aws lambda event object.
- * @returns {Promise<Object>} a Lambda Proxy response object
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-async function del(event) {
-  const granuleId = event.pathParameters.granuleName;
+async function del(req, res) {
+  const granuleId = req.params.granuleName;
   log.info(`granules.del ${granuleId}`);
 
   const granuleModelClient = new models.Granule();
   const granule = await granuleModelClient.get({ granuleId });
 
   if (granule.detail) {
-    return buildLambdaProxyResponse({
-      json: true,
-      statusCode: 400,
-      body: granule
-    });
+    return res.boom.badRequest(granule);
   }
 
   if (granule.published) {
-    return buildLambdaProxyResponse({
-      json: true,
-      statusCode: 400,
-      body: { message: 'You cannot delete a granule that is published to CMR. Remove it from CMR first' }
-    });
+    return res.boom.badRequest('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   }
 
   // remove files from s3
@@ -178,69 +141,35 @@ async function del(event) {
 
   await granuleModelClient.delete({ granuleId });
 
-  return buildLambdaProxyResponse({
-    json: true,
-    body: { detail: 'Record deleted' }
-  });
+  return res.send({ detail: 'Record deleted' });
 }
 
 /**
  * Query a single granule.
  *
- * @param {Object} event - aws lambda event object.
- * @returns {Promise<Object>} a Lambda Proxy response object
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-async function get(event) {
+async function get(req, res) {
   let result;
   try {
-    result = await (new models.Granule()).get({ granuleId: event.pathParameters.granuleName });
+    result = await (new models.Granule()).get({ granuleId: req.params.granuleName });
   }
   catch (err) {
     if (err.message.startsWith('No record found')) {
-      return new NotFoundResponse({
-        json: true,
-        body: { message: 'Granule not found' }
-      });
+      return res.boom.notFound('Granule not found');
     }
 
     throw err;
   }
 
-  return buildLambdaProxyResponse({
-    json: true,
-    body: result
-  });
+  return res.send(result);
 }
 
-/**
- * The main handler for the lambda function
- *
- * @param {Object} request - AWS lambda event object.
- * @returns {Promise<Object>} a Lambda Proxy response object
- */
-async function handleRequest(request) {
-  // Determine what action to take
-  let action;
-  if (request.httpMethod === 'GET' && request.pathParameters) action = get;
-  else if (request.httpMethod === 'PUT' && request.pathParameters) action = put;
-  else if (request.httpMethod === 'DELETE' && request.pathParameters) action = del;
-  else action = list;
+router.get('/:granuleName', get);
+router.get('/', list);
+router.put('/:granuleName', put);
+router.delete('/:granuleName', del);
 
-  try {
-    // Verify the user's credentials
-    const authorizationFailureResponse = await getAuthorizationFailureResponse({
-      request: request,
-      usersTable: process.env.UsersTable
-    });
-    if (authorizationFailureResponse) return authorizationFailureResponse;
-
-    // Perform the requested action
-    return action(request);
-  }
-  catch (err) {
-    log.error(err);
-    return new InternalServerError();
-  }
-}
-
-module.exports = handleRequest;
+module.exports = router;

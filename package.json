@@ -21,6 +21,7 @@
     "clean": "lerna clean && rm -rf ./node_modules",
     "build": "lerna run --parallel --no-sort build",
     "watch": "lerna run --parallel --no-sort watch",
+    "serve": "lerna run serve --scope @cumulus/api",
     "coverage": "nyc report --reporter text-summary --reporter html",
     "coveralls": "nyc report --reporter=text-lcov --temp-direcotry=\"./.final_nyc_output\" | coveralls"
   },

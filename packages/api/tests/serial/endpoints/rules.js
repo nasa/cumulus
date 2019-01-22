@@ -1,15 +1,14 @@
 'use strict';
 
 const test = require('ava');
+const request = require('supertest');
 const cloneDeep = require('lodash.clonedeep');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
-const rulesEndpoint = require('../../../endpoints/rules');
 const {
-  createFakeJwtAuthToken,
-  testEndpoint
+  createFakeJwtAuthToken
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
@@ -20,8 +19,11 @@ process.env.AccessTokensTable = randomString();
 process.env.RulesTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
-process.env.bucket = randomString();
+process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
+
+// import the express app after setting the env variables
+const { app } = require('../../../app');
 
 const workflowName = randomString();
 const workflowfile = `${process.env.stackName}/workflows/${workflowName}.json`;
@@ -40,17 +42,17 @@ const testRule = {
   state: 'DISABLED'
 };
 
+let jwtAuthToken;
 let accessTokenModel;
-let authHeaders;
 let ruleModel;
 let userModel;
 
 test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
 
-  await aws.s3().createBucket({ Bucket: process.env.bucket }).promise();
+  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
   await aws.s3().putObject({
-    Bucket: process.env.bucket,
+    Bucket: process.env.system_bucket,
     Key: workflowfile,
     Body: 'test data'
   }).promise();
@@ -66,354 +68,270 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
-  authHeaders = {
-    Authorization: `Bearer ${jwtAuthToken}`
-  };
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 });
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await ruleModel.deleteTable();
   await userModel.deleteTable();
-  await aws.recursivelyDeleteS3Bucket(process.env.bucket);
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 
   const esClient = await Search.es('fakehost');
   await esClient.indices.delete({ index: esIndex });
 });
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    headers: {}
-  };
+  const response = await request(app)
+    .get('/rules')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(rulesEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-911 GET with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    pathParameters: {
-      name: 'asdf'
-    },
-    headers: {}
-  };
+  const response = await request(app)
+    .get('/rules/asdf')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(rulesEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-911 POST with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'POST',
-    pathParameters: {
-      name: 'asdf'
-    },
-    headers: {}
-  };
+  const response = await request(app)
+    .post('/rules/asdf')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(rulesEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-911 PUT with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'PUT',
-    pathParameters: {
-      name: 'asdf'
-    },
-    headers: {}
-  };
+  const response = await request(app)
+    .put('/rules/asdf')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(rulesEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-911 DELETE with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'DELETE',
-    pathParameters: {
-      name: 'asdf'
-    },
-    headers: {}
-  };
+  const response = await request(app)
+    .delete('/rules/asdf')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(rulesEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-912 GET without pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
-  };
+  const response = await request(app)
+    .get('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
 
-  return testEndpoint(rulesEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test('CUMULUS-912 GET with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    pathParameters: {
-      name: 'asdf'
-    },
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
-  };
+  const response = await request(app)
+    .get('/rules/asdf')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
 
-  return testEndpoint(rulesEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test.todo('CUMULUS-912 GET with an unauthorized user returns an unauthorized response');
 
 test('CUMULUS-912 POST with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'POST',
-    pathParameters: {
-      name: 'asdf'
-    },
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
-  };
+  const response = await request(app)
+    .post('/rules/asdf')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
 
-  return testEndpoint(rulesEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test.todo('CUMULUS-912 POST with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('CUMULUS-912 PUT with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'PUT',
-    pathParameters: {
-      name: 'asdf'
-    },
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
-  };
+  const response = await request(app)
+    .put('/rules/asdf')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
 
-  return testEndpoint(rulesEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('CUMULUS-912 DELETE with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'DELETE',
-    pathParameters: {
-      name: 'asdf'
-    },
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
-  };
+  const response = await request(app)
+    .delete('/rules/asdf')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
 
-  return testEndpoint(rulesEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test.todo('CUMULUS-912 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
 
 // TODO(aimee): Add a rule to ES. List uses ES and we don't have any rules in ES.
-test('default returns list of rules', (t) => {
-  const listEvent = {
-    httpMethod: 'GET',
-    headers: authHeaders
-  };
+test('default returns list of rules', async (t) => {
+  const response = await request(app)
+    .get('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  return testEndpoint(rulesEndpoint, listEvent, (response) => {
-    const { results } = JSON.parse(response.body);
-    t.is(results.length, 0);
-  });
+  const { results } = response.body;
+  t.is(results.length, 0);
 });
 
-test('GET gets a rule', (t) => {
-  const getEvent = {
-    pathParameters: {
-      name: testRule.name
-    },
-    httpMethod: 'GET',
-    headers: authHeaders
-  };
+test('GET gets a rule', async (t) => {
+  const response = await request(app)
+    .get(`/rules/${testRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  return testEndpoint(rulesEndpoint, getEvent, (response) => {
-    const { name } = JSON.parse(response.body);
-    t.is(name, testRule.name);
-  });
+  const { name } = response.body;
+  t.is(name, testRule.name);
 });
 
 test('When calling the API endpoint to delete an existing rule it does not return the deleted rule', async (t) => {
   const newRule = Object.assign({}, testRule, { name: 'pop_culture_reference' });
-  const postEvent = {
-    httpMethod: 'POST',
-    body: JSON.stringify(newRule),
-    headers: authHeaders
-  };
 
-  await testEndpoint(rulesEndpoint, postEvent, (response) => {
-    const { message } = JSON.parse(response.body);
-    t.is(message, 'Record saved');
-  });
+  let response = await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(200);
 
-  const deleteEvent = {
-    httpMethod: 'DELETE',
-    pathParameters: {
-      name: newRule.name
-    },
-    headers: authHeaders
-  };
+  t.is(response.body.message, 'Record saved');
 
-  return testEndpoint(rulesEndpoint, deleteEvent, (response) => {
-    const { message, record } = JSON.parse(response.body);
-    t.is(message, 'Record deleted');
-    t.is(record, undefined);
-  });
+  response = await request(app)
+    .delete(`/rules/${newRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { message, record } = response.body;
+  t.is(message, 'Record deleted');
+  t.is(record, undefined);
 });
 
-test('403 error when calling the API endpoint to delete an existing rule without an invalid access token', async (t) => {
+test('403 error when calling the API endpoint to delete an existing rule without an valid access token', async (t) => {
   const newRule = Object.assign({}, testRule, { name: 'side_step_left' });
-  const postEvent = {
-    httpMethod: 'POST',
-    body: JSON.stringify(newRule),
-    headers: authHeaders
-  };
 
-  await testEndpoint(rulesEndpoint, postEvent, (response) => {
-    const { message, record } = JSON.parse(response.body);
-    t.is(message, 'Record saved');
-    newRule.createdAt = record.createdAt;
-    newRule.updatedAt = record.updatedAt;
-  });
+  let response = await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(200);
 
-  const deleteEvent = {
-    httpMethod: 'DELETE',
-    pathParameters: {
-      name: newRule.name
-    },
-    headers: { Authorization: 'Bearer InvalidAuthorizationToken' }
-  };
+  const { message, record } = response.body;
+  t.is(message, 'Record saved');
+  newRule.createdAt = record.createdAt;
+  newRule.updatedAt = record.updatedAt;
 
-  await testEndpoint(rulesEndpoint, deleteEvent, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  response = await request(app)
+    .delete(`/rules/${newRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
 
-  const getEvent = {
-    httpMethod: 'GET',
-    pathParameters: {
-      name: newRule.name
-    },
-    headers: authHeaders
-  };
+  assertions.isInvalidAccessTokenResponse(t, response);
 
-  return testEndpoint(rulesEndpoint, getEvent, (response) => {
-    const record = JSON.parse(response.body);
-    t.deepEqual(newRule, record);
-  });
+  response = await request(app)
+    .get(`/rules/${newRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.deepEqual(response.body, record);
 });
 
-test('POST creates a rule', (t) => {
+test('POST creates a rule', async (t) => {
   const newRule = Object.assign(cloneDeep(testRule), { name: 'make_waffles' });
-  const postEvent = {
-    httpMethod: 'POST',
-    body: JSON.stringify(newRule),
-    headers: authHeaders
-  };
+  const response = await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(200);
 
-  return testEndpoint(rulesEndpoint, postEvent, (response) => {
-    const { message, record } = JSON.parse(response.body);
-    t.is(message, 'Record saved');
+  const { message, record } = response.body;
+  t.is(message, 'Record saved');
 
-    newRule.createdAt = record.createdAt;
-    newRule.updatedAt = record.updatedAt;
+  newRule.createdAt = record.createdAt;
+  newRule.updatedAt = record.updatedAt;
 
-    t.deepEqual(record, newRule);
-  });
+  t.deepEqual(record, newRule);
 });
 
-test('POST returns a record exists when one exists', (t) => {
+test('POST returns a record exists when one exists', async (t) => {
   const newRule = Object.assign({}, testRule);
-  const postEvent = {
-    httpMethod: 'POST',
-    body: JSON.stringify(newRule),
-    headers: authHeaders
-  };
 
-  return testEndpoint(rulesEndpoint, postEvent, (response) => {
-    const { message, record } = JSON.parse(response.body);
-    t.is(message, `A record already exists for ${newRule.name}`);
-    t.falsy(record);
-  });
+  const response = await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(409);
+
+  const { message, record } = response.body;
+  t.is(message, `A record already exists for ${newRule.name}`);
+  t.falsy(record);
 });
 
-test('PUT updates a rule', (t) => {
+test('PUT updates a rule', async (t) => {
   const newRule = Object.assign({}, testRule, { state: 'ENABLED' });
 
-  const updateEvent = {
-    body: JSON.stringify({ state: 'ENABLED' }),
-    pathParameters: {
-      name: testRule.name
-    },
-    httpMethod: 'PUT',
-    headers: authHeaders
-  };
+  const response = await request(app)
+    .put(`/rules/${testRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ state: 'ENABLED' })
+    .expect(200);
 
-  return testEndpoint(rulesEndpoint, updateEvent, (response) => {
-    const record = JSON.parse(response.body);
-    newRule.createdAt = record.createdAt;
-    newRule.updatedAt = record.updatedAt;
+  const record = response.body;
+  newRule.createdAt = record.createdAt;
+  newRule.updatedAt = record.updatedAt;
 
-    t.deepEqual(record, newRule);
-  });
+  t.deepEqual(record, newRule);
 });
 
-test('PUT returns "record does not exist"', (t) => {
-  const updateEvent = {
-    body: JSON.stringify({ state: 'ENABLED' }),
-    pathParameters: {
-      name: 'new_make_coffee'
-    },
-    httpMethod: 'PUT',
-    headers: authHeaders
-  };
+test('PUT returns "record does not exist"', async (t) => {
+  const response = await request(app)
+    .put('/rules/new_make_coffee')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ state: 'ENABLED' })
+    .expect(404);
 
-  return testEndpoint(rulesEndpoint, updateEvent, (response) => {
-    const { message, record } = JSON.parse(response.body);
-    t.is(message, 'Record does not exist');
-    t.falsy(record);
-  });
+  const { message, record } = response.body;
+  t.is(message, 'Record does not exist');
+  t.falsy(record);
 });
 
-test('DELETE deletes a rule', (t) => {
-  const deleteEvent = {
-    pathParameters: {
-      name: testRule.name
-    },
-    httpMethod: 'DELETE',
-    headers: authHeaders
-  };
+test('DELETE deletes a rule', async (t) => {
+  const response = await request(app)
+    .delete(`/rules/${testRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  return testEndpoint(rulesEndpoint, deleteEvent, (response) => {
-    const { message } = JSON.parse(response.body);
-    t.is(message, 'Record deleted');
-  });
+  const { message } = response.body;
+  t.is(message, 'Record deleted');
 });

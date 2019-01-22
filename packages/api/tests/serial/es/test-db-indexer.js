@@ -25,7 +25,7 @@ let esClient;
 const seq = new Set(); // to keep track of processed records in the stream
 const esIndex = randomString();
 process.env.stackName = randomString();
-process.env.internal = randomString();
+process.env.system_bucket = randomString();
 process.env.CollectionsTable = `${process.env.stackName}-CollectionsTable`;
 process.env.GranulesTable = `${process.env.stackName}-GranulesTable`;
 process.env.FilesTable = `${process.env.stackName}-FilesTable`;
@@ -103,7 +103,7 @@ let granuleModel;
 let ruleModel;
 test.before(async () => {
   await deleteAliases();
-  await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
+  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   // create tables
   collectionModel = new models.Collection();
@@ -138,7 +138,7 @@ test.after.always(async () => {
   await fileModel.deleteTable();
   await ruleModel.deleteTable();
 
-  await aws.recursivelyDeleteS3Bucket(process.env.internal);
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
 });
 

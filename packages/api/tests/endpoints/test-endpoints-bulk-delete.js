@@ -1,17 +1,29 @@
 'use strict';
 
 const test = require('ava');
+const request = require('supertest');
 const {
   testUtils: { randomString }
 } = require('@cumulus/common');
-const bulkDeleteEndpoint = require('../../endpoints/bulk-delete');
 const { AccessToken, User } = require('../../models');
 const { createFakeJwtAuthToken } = require('../../lib/testUtils');
 
 let accessTokenModel;
+let jwtAuthToken;
 let userModel;
-let authHeaders;
-let context;
+
+process.env.AsyncOperationsTable = randomString();
+process.env.AsyncOperationTaskDefinition = randomString();
+process.env.BulkDeleteLambda = randomString();
+process.env.EcsCluster = randomString();
+process.env.stackName = randomString();
+process.env.system_bucket = randomString();
+process.env.UsersTable = randomString();
+process.env.TOKEN_SECRET = randomString();
+process.env.AccessTokensTable = randomString();
+
+// import the express app after setting the env variables
+const { app } = require('../../app');
 
 test.before(async () => {
   // Create Users table
@@ -19,25 +31,10 @@ test.before(async () => {
   userModel = new User();
   await userModel.createTable();
 
-  process.env.AccessTokensTable = randomString();
   accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
-  process.env.TOKEN_SECRET = randomString();
-  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
-  authHeaders = {
-    Authorization: `Bearer ${jwtAuthToken}`
-  };
-
-  context = {
-    AsyncOperationsTable: randomString(),
-    AsyncOperationTaskDefinition: randomString(),
-    BulkDeleteLambda: randomString(),
-    EcsCluster: randomString(),
-    stackName: randomString(),
-    systemBucket: randomString(),
-    UsersTable: process.env.UsersTable
-  };
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 });
 
 test.after.always(async () => {
@@ -52,23 +49,20 @@ test.after.always(async () => {
 });
 
 test.serial('GET /bulkDelete returns a 404 status code', async (t) => {
-  const event = {
-    headers: authHeaders,
-    httpMethod: 'GET'
-  };
+  const response = await request(app)
+    .get('/bulkDelete')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
 
-  const response = await bulkDeleteEndpoint(event, context);
-
-  t.is(response.statusCode, 404);
+  t.is(response.status, 404);
 });
 
 test.serial('POST /bulkDelete returns a 401 status code if valid authorization is not specified', async (t) => {
-  const event = {
-    headers: {},
-    httpMethod: 'POST'
-  };
+  const response = await request(app)
+    .post('/bulkDelete')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  const response = await bulkDeleteEndpoint(event, context);
-
-  t.is(response.statusCode, 401);
+  t.is(response.status, 401);
 });

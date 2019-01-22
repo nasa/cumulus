@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const request = require('supertest');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   s3,
@@ -10,28 +11,27 @@ const {
 
 const workflowList = require('../data/workflow_list.json');
 const models = require('../../models');
-const workflowsEndpoint = require('../../endpoints/workflows');
 const {
-  createFakeJwtAuthToken,
-  testEndpoint
+  createFakeJwtAuthToken
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 
-let authHeaders;
+process.env.TOKEN_SECRET = randomString();
+process.env.AccessTokensTable = randomString();
+process.env.UsersTable = randomString();
+process.env.stackName = randomString();
+process.env.system_bucket = randomString();
+
+// import the express app after setting the env variables
+const { app } = require('../../app');
+
 let accessTokenModel;
 let userModel;
 let testBucketName;
-let stackName;
+let jwtAuthToken;
 
 test.before(async () => {
-  process.env.TOKEN_SECRET = randomString();
-  process.env.AccessTokensTable = randomString();
-  process.env.UsersTable = randomString();
-  testBucketName = randomString();
-  stackName = randomString();
-
-  process.env.stackName = stackName;
-  process.env.bucket = testBucketName;
+  testBucketName = process.env.system_bucket;
 
   await s3().createBucket({ Bucket: testBucketName }).promise();
   const workflowsListKey = `${process.env.stackName}/workflows/list.json`;
@@ -47,10 +47,7 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
-  authHeaders = {
-    Authorization: `Bearer ${jwtAuthToken}`
-  };
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 
   await s3().createBucket({ Bucket: testBucketName }).promise();
 });
@@ -61,126 +58,77 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(testBucketName);
 });
 
-test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', (t) => {
-  const request = {
-    httpMethod: 'GET',
-    headers: {}
-  };
-
-  return testEndpoint(workflowsEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+  const response = await request(app)
+    .get('/workflows')
+    .set('Accept', 'application/json')
+    .expect(401);
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test('CUMULUS-911 GET with pathParameters and without an Authorization header returns an Authorization Missing response', (t) => {
-  const request = {
-    httpMethod: 'GET',
-    pathParameters: {
-      name: 'asdf'
-    },
-    headers: {}
-  };
-
-  return testEndpoint(workflowsEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+test('CUMULUS-911 GET with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+  const response = await request(app)
+    .get('/workflows/asdf')
+    .set('Accept', 'application/json')
+    .expect(401);
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-912 GET without pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
-  };
-
-  return testEndpoint(workflowsEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  const response = await request(app)
+    .get('/workflows/asdf')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test.todo('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response');
-
-test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    pathParameters: {
-      name: 'asdf'
-    },
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
-  };
-
-  return testEndpoint(workflowsEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
-});
-
 test.todo('CUMULUS-912 GET with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('GET with no path parameters and an authorized user returns a list of workflows', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    headers: authHeaders
-  };
+  const response = await request(app)
+    .get('/workflows')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  return testEndpoint(workflowsEndpoint, request, (response) => {
-    t.is(response.statusCode, 200);
-    const results = JSON.parse(response.body);
-
-    t.deepEqual(results, workflowList);
-  });
+  // console.log('hi', response.body)
+  t.is(response.status, 200);
+  t.deepEqual(response.body, workflowList);
 });
 
 test('GET an existing workflow with an authorized user returns a specific workflow', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    pathParameters: {
-      name: 'HelloWorldWorkflow'
-    },
-    headers: authHeaders
-  };
+  const response = await request(app)
+    .get('/workflows/HelloWorldWorkflow')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  return testEndpoint(workflowsEndpoint, request, (response) => {
-    t.is(response.statusCode, 200);
-
-    const result = JSON.parse(response.body);
-    t.deepEqual(result, workflowList[0]);
-  });
+  t.is(response.status, 200);
+  t.deepEqual(response.body, workflowList[0]);
 });
 
 test('GET with path parameters returns a 404 for a nonexistent workflow', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    pathParameters: {
-      name: 'NonexistentWorkflow'
-    },
-    headers: authHeaders
-  };
+  const response = await request(app)
+    .get('/workflows/NonexistentWorkflow')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
 
-  return testEndpoint(workflowsEndpoint, request, (response) => {
-    t.is(response.statusCode, 404);
-
-    const result = JSON.parse(response.body);
-    t.is(result.message, 'The specified workflow does not exist.');
-  });
+  t.is(response.status, 404);
+  t.is(response.body.message, 'The specified workflow does not exist.');
 });
 
-test.serial('GET /good-workflow returns a 500 if the workflows list cannot be fetched from S3', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    pathParameters: {
-      name: 'HelloWorldWorkflow'
-    },
-    headers: authHeaders
-  };
+test.serial('GET /good-workflow returns a 404 if the workflows list cannot be fetched from S3', async (t) => {
+  const realBucket = process.env.system_bucket;
+  process.env.system_bucket = 'bucket-does-not-exist';
+  const response = await request(app)
+    .get('/workflows/HelloWorldWorkflow')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
 
-  const realBucket = process.env.bucket;
-  process.env.bucket = 'bucket-does-not-exist';
-
-  return testEndpoint(workflowsEndpoint, request, (response) => {
-    process.env.bucket = realBucket;
-    t.is(response.statusCode, 500);
-  });
+  t.is(response.status, 404);
+  process.env.system_bucket = realBucket;
 });
