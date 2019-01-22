@@ -91,7 +91,8 @@ async function get(req, res) {
   const e = new models.Execution();
   try {
     response = await e.get({ arn });
-  } catch (error) {
+  }
+  catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('Execution not found in API or database');
     }
