@@ -160,7 +160,7 @@ module.exports.collection = {
                          + 'Defaults to the collection url path',
             type: 'string'
           }
-      }
+        }
       }
     },
     createdAt: {
@@ -266,7 +266,7 @@ module.exports.granule = {
           name: { type: 'string' },
           path: { type: 'string' },
           url_path: { type: 'string' }
-      }
+        }
       }
     },
     error: {
@@ -308,7 +308,7 @@ module.exports.granule = {
     productionDateTime: {
       type: 'string',
       readonly: true
-  },
+    },
     timestamp: { type: 'integer' },
     createdAt: { type: 'integer' },
     updatedAt: { type: 'integer' },
@@ -484,7 +484,7 @@ module.exports.pdr = {
     createdAt: {
       type: 'integer',
       readonly: true
-  },
+    },
     updatedAt: { type: 'integer' }
   },
   required: [
