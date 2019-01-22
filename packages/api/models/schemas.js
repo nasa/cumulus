@@ -508,7 +508,7 @@ module.exports.provider = {
     },
     globalConnectionLimit: {
       title: 'Concurrent Connnection Limit',
-      type: 'number',
+      type: 'integer',
       default: 10
     },
     protocol: {
@@ -536,11 +536,11 @@ module.exports.provider = {
       readonly: true
     },
     createdAt: {
-      type: 'number',
+      type: 'integer',
       readonly: true
     },
     updatedAt: {
-      type: 'number',
+      type: 'integer',
       readonly: true
     },
     privateKey: {

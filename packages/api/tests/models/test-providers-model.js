@@ -4,7 +4,11 @@ const test = require('ava');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
-const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
+const schemas = require('../../models/schemas');
+const {
+  fakeProviderFactory,
+  fakeRuleFactoryV2
+} = require('../../lib/testUtils');
 const { Manager, Provider, Rule } = require('../../models');
 const { AssociatedRulesError } = require('../../lib/errors');
 
@@ -15,7 +19,8 @@ test.before(async () => {
 
   manager = new Manager({
     tableName: process.env.ProvidersTable,
-    tableHash: { name: 'id', type: 'S' }
+    tableHash: { name: 'id', type: 'S' },
+    schema: schemas.provider
   });
 
   await manager.createTable();
@@ -39,7 +44,7 @@ test.after.always(async () => {
 test('Providers.exists() returns true when a record exists', async (t) => {
   const id = randomString();
 
-  await manager.create({ id });
+  await manager.create(fakeProviderFactory({ id }));
 
   const providersModel = new Provider();
 
@@ -56,7 +61,7 @@ test('Providers.delete() throws an exception if the provider has associated rule
   const providersModel = new Provider();
 
   const providerId = randomString();
-  await manager.create({ id: providerId });
+  await manager.create(fakeProviderFactory({ id: providerId }));
 
   const rule = fakeRuleFactoryV2({
     provider: providerId,
@@ -89,7 +94,7 @@ test('Providers.delete() deletes a provider', async (t) => {
   const providersModel = new Provider();
 
   const providerId = randomString();
-  await manager.create({ id: providerId });
+  await manager.create(fakeProviderFactory({ id: providerId }));
 
   await providersModel.delete({ id: providerId });
 
