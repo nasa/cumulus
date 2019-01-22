@@ -360,7 +360,8 @@ module.exports.rule = {
     },
     meta: {
       title: 'Optional MetaData for the Rule',
-      type: 'object'
+      type: 'object',
+      additionalProperties: true
     },
     rule: {
       title: 'Ingest Rule',
@@ -394,12 +395,11 @@ module.exports.rule = {
       enum: ['ENABLED', 'DISABLED']
     },
     createdAt: {
-      type: 'number',
+      type: 'integer',
       readonly: true
     },
     updatedAt: {
-      type: 'number',
-      readonly: true
+      type: 'integer'
     },
     tags: {
       title: 'Optional tags for search',
