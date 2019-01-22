@@ -581,6 +581,10 @@ module.exports.execution = {
     },
     error: {
       title: 'The error details in case of a failed execution',
+      type: 'object',
+      additionalProperties: true,
+    },
+    tasks: {
       type: 'object'
     },
     type: {
@@ -593,21 +597,27 @@ module.exports.execution = {
       type: 'string'
     },
     createdAt: {
-      type: 'number',
+      type: 'integer',
       readonly: true
     },
+    updatedAt: { type: 'integer' },
     timestamp: {
       type: 'number',
       readonly: true
     },
     originalPayload: {
       title: 'The original payload for this workflow',
-      type: 'object'
+      type: 'object',
+      additionalProperties: true
     },
     finalPayload: {
       title: 'The final payload of this workflow',
-      type: 'object'
-    }
+      type: 'object',
+      additionalProperties: true
+    },
+    collectionId: { type: 'string' },
+    duration: { type: 'number' },
+    parentArn: { type: 'string' }
   },
   required: [
     'arn',
