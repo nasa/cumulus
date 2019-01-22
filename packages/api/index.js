@@ -1,23 +1,10 @@
 'use strict';
 
-exports.asyncOperations = require('./endpoints/async-operations');
-exports.token = require('./endpoints/token').handleApiGatewayRequest;
-exports.collections = require('./endpoints/collections');
-exports.granules = require('./endpoints/granules');
-exports.instanceMeta = require('./endpoints/instance-meta');
-exports.logs = require('./endpoints/logs');
-exports.pdrs = require('./endpoints/pdrs');
-exports.providers = require('./endpoints/providers');
-exports.rules = require('./endpoints/rules');
-exports.workflows = require('./endpoints/workflows');
-exports.executions = require('./endpoints/executions');
-exports.executionStatus = require('./endpoints/execution-status');
-exports.schemas = require('./endpoints/schemas');
-exports.stats = require('./endpoints/stats');
-exports.version = require('./endpoints/version');
-exports.distribution = require('./endpoints/distribution').handleApiGatewayRequest;
+exports.appHandler = require('./app').handler;
+exports.app = require('./app').app;
+exports.distributionAppHandler = require('./app/distribution').handler;
+exports.distributionApp = require('./app/distribution').app;
 exports.dbIndexer = require('./lambdas/db-indexer');
-exports.reconciliationReports = require('./endpoints/reconciliation-reports');
 
 exports.bootstrap = require('./lambdas/bootstrap').handler;
 exports.executeMigrations = require('./lambdas/executeMigrations').handler;
@@ -30,7 +17,6 @@ exports.scheduler = require('./lambdas/sf-scheduler');
 exports.starter = require('./lambdas/sf-starter');
 
 exports.bulkDeleteLambda = require('./lambdas/bulk-delete').handler;
-exports.bulkDeleteEndpoint = require('./endpoints/bulk-delete');
 
 exports.emsReport = require('./lambdas/ems-report').handler;
 exports.emsDistributionReport = require('./lambdas/ems-distribution-report').handler;

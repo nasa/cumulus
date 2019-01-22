@@ -34,7 +34,7 @@ async function migrateCollection(file, prefix, bucket, collectionConfigStore) {
  */
 async function run(options) {
   const stackName = options.stackName;
-  const bucket = options.internal;
+  const bucket = options.bucket;
   const prefix = `${stackName}/collections`;
 
   const collectionConfigStore = new CollectionConfigStore(bucket, stackName);

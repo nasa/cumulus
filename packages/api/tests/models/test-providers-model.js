@@ -29,8 +29,8 @@ test.before(async () => {
   ruleModel = new Rule();
   await ruleModel.createTable();
 
-  process.env.bucket = randomString();
-  await s3().createBucket({ Bucket: process.env.bucket }).promise();
+  process.env.system_bucket = randomString();
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   process.env.stackName = randomString();
 });
@@ -38,7 +38,7 @@ test.before(async () => {
 test.after.always(async () => {
   await manager.deleteTable();
   await ruleModel.deleteTable();
-  await recursivelyDeleteS3Bucket(process.env.bucket);
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test('Providers.exists() returns true when a record exists', async (t) => {
@@ -72,7 +72,7 @@ test('Providers.delete() throws an exception if the provider has associated rule
 
   // The workflow message template must exist in S3 before the rule can be created
   await s3().putObject({
-    Bucket: process.env.bucket,
+    Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({})
   }).promise();
