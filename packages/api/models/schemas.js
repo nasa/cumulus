@@ -580,3 +580,14 @@ module.exports.execution = {
     'createdAt'
   ]
 };
+
+module.exports.user = {
+  type: 'object',
+  properties: {
+    createdAt: { type: 'integer' },
+    expires: { type: 'integer' },
+    password: { type: 'string' },
+    updatedAt: { type: 'integer' },
+    userName: { type: 'string' }
+  }
+};
