@@ -11,10 +11,10 @@ const workflowList = require('../app/data/workflow_list.json');
 const requiredEnvVariables = [
   'system_bucket',
   'stackName',
-  'EARTHDATA_BASE_URL',
+  // 'EARTHDATA_BASE_URL',
   'EARTHDATA_CLIENT_ID',
   'EARTHDATA_CLIENT_PASSWORD',
-  'API_ENDPOINT'
+  // 'API_ENDPOINT'
 ];
 
 async function createTable(Model, tableName) {
@@ -156,8 +156,9 @@ async function createDBRecords(user, stackName) {
   await pdm.create(pd);
 }
 
-async function serve(user, stackName = 'localrun') {
+async function serveApi(user, stackName = 'localrun') {
   const port = process.env.PORT || 5001;
+
   if (inTestMode()) {
     // set env variables
     process.env.system_bucket = 'localbucket';
@@ -185,7 +186,39 @@ async function serve(user, stackName = 'localrun') {
   app.listen(port);
 }
 
-// require('dotenv').config()
+async function prepareDistributionApi(user, stackName = 'localrun') {
+  const port = process.env.PORT || 5002;
 
+  if (inTestMode()) {
+    // set env variables
+    process.env.system_bucket = 'localbucket';
+    process.env.stackName = stackName;
+    process.env.TOKEN_SECRET = 'secreeetartalksjfaf;lj';
+    process.env.DEPLOYMENT_ENDPOINT = `http://localhost:${port}`;
 
-module.exports = serve;
+    // create tables if not already created
+    await checkOrCreateTables(stackName);
+
+    checkEnvVariablesAreSet();
+    await prepareServices(stackName, process.env.system_bucket);
+    await populateBucket(process.env.system_bucket, stackName);
+    await createDBRecords(user, stackName);
+  }
+  else {
+    checkEnvVariablesAreSet();
+  }
+}
+
+async function serveDistributionApi(user, stackName = 'localrun') {
+  await prepareDistributionApi(user, stackName);
+
+  console.log(`Starting server on port ${port}`);
+  const { distributionApp } = require('../app/distribution'); // eslint-disable-line global-require
+  return distributionApp.listen(port);
+}
+
+module.exports = {
+  prepareDistributionApi,
+  serveApi,
+  serveDistributionApi
+};
