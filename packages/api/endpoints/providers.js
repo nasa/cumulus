@@ -39,7 +39,7 @@ async function get(req, res) {
     result = await providerModel.get({ id });
   } catch (error) {
     if (error instanceof RecordDoesNotExist)
-      return res.boom.notFound('provider not found.');
+      return res.boom.notFound('Provider not found.');
   }
   delete result.password;
   return res.send(result);
