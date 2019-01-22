@@ -30,7 +30,7 @@ async function tokenEndpoint(req, res) {
     });
   }
 
-  let uri = 'http://localhost:5001/token?code=somecode';
+  let uri = `${process.env.API_ENDPOINT}?code=somecode`;
   if (state) {
     uri += `&state=${encodeURIComponent(state)}`;
   }
