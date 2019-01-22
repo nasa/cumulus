@@ -34,7 +34,13 @@ async function get(req, res) {
   const id = req.params.id;
 
   const providerModel = new models.Provider();
-  const result = await providerModel.get({ id });
+  let result;
+  try {
+    result = await providerModel.get({ id });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist)
+      return res.boom.notFound('Provider not found.');
+  }
   delete result.password;
   return res.send(result);
 }
