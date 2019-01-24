@@ -58,7 +58,7 @@ Build and watch packages:
 
 ## Running the cumulus API locally
 
-State localstack:
+Start localstack:
 
     $ docker-compose up local
 

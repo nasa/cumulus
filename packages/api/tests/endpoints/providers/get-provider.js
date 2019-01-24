@@ -90,3 +90,14 @@ test('GET returns an existing provider', async (t) => {
 
   t.is(response.body.id, t.context.testProvider.id);
 });
+
+test('GET returns not found for a missing provider', async (t) => {
+  const response = await request(app)
+    .get('/providers/missing-provider-id')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+
+  t.is(response.body.error, 'Not Found');
+  t.is(response.body.message, 'Provider not found.');
+});

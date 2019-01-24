@@ -19,58 +19,58 @@ const version = require('../endpoints/version');
 const workflows = require('../endpoints/workflows');
 
 let token = require('../endpoints/token');
-let { ensureAuthenticated } = require('./auth');
+let { ensureAuthorized } = require('./auth');
 if (process.env.FAKE_AUTH === 'true') {
   token = require('./testAuth'); // eslint-disable-line global-require
-  ensureAuthenticated = token.ensureAuthenticated;
+  ensureAuthorized = token.ensureAuthorized;
 }
 
 // collections endpoints
-router.use('/collections', ensureAuthenticated, collections);
+router.use('/collections', ensureAuthorized, collections);
 
 // granules endpoints
-router.use('/granules', ensureAuthenticated, granules);
+router.use('/granules', ensureAuthorized, granules);
 
 // provider endpoints
-router.use('/providers', ensureAuthenticated, providers);
+router.use('/providers', ensureAuthorized, providers);
 
 // pdr endpoints
-router.use('/pdrs', ensureAuthenticated, pdrs);
+router.use('/pdrs', ensureAuthorized, pdrs);
 
 // rules endpoints
-router.use('/rules', ensureAuthenticated, rules);
+router.use('/rules', ensureAuthorized, rules);
 
 // executions endpoints
-router.use('/executions/status', ensureAuthenticated, executionStatus);
-router.use('/executions', ensureAuthenticated, executions);
+router.use('/executions/status', ensureAuthorized, executionStatus);
+router.use('/executions', ensureAuthorized, executions);
 
 // async operation endpoint
-router.use('/async-operation', ensureAuthenticated, asyncOperations);
+router.use('/asyncOperations', ensureAuthorized, asyncOperations);
 
 // bulk delete endpoint
-router.use('/bulkDelete', ensureAuthenticated, bulkDelete);
+router.use('/bulkDelete', ensureAuthorized, bulkDelete);
 
 // instance meta endpoint
-router.use('/instanceMeta', ensureAuthenticated, instanceMeta);
+router.use('/instanceMeta', ensureAuthorized, instanceMeta);
 
 // logs endpoint
-router.use('/logs', ensureAuthenticated, logs);
+router.use('/logs', ensureAuthorized, logs);
 
 // logs endpoint
-router.use('/reconciliationReports', ensureAuthenticated, reconcilliationReports);
+router.use('/reconciliationReports', ensureAuthorized, reconcilliationReports);
 
 // schemas endpoint
-router.use('/schemas', ensureAuthenticated, schemas);
+router.use('/schemas', ensureAuthorized, schemas);
 
 // stats endpoint
-router.use('/stats', ensureAuthenticated, stats);
+router.use('/stats', ensureAuthorized, stats);
 
 // version endpoint
 // this endpoint is not behind authentication
 router.use('/version', version);
 
 // workflows endpoint
-router.use('/workflows', ensureAuthenticated, workflows);
+router.use('/workflows', ensureAuthorized, workflows);
 
 router.delete('/token/:token', token.deleteTokenEndpoint);
 router.delete('/tokenDelete/:token', token.deleteTokenEndpoint);

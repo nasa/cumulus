@@ -42,6 +42,7 @@ const cumulusMetaOutput = {
 };
 
 const expiredExecutionArn = 'fakeExpiredExecutionArn';
+const expiredMissingExecutionArn = 'fakeMissingExpiredExecutionArn';
 const fakeExpiredExecution = fakeExecutionFactoryV2({ arn: expiredExecutionArn });
 
 const replaceObject = (lambdaEvent = true) => ({
@@ -136,7 +137,8 @@ const stepFunctionMock = {
 };
 
 const executionExistsMock = (arn) => {
-  if (arn.executionArn === expiredExecutionArn) {
+  if ((arn.executionArn === expiredExecutionArn)
+      || (arn.executionArn === expiredMissingExecutionArn)) {
     return {
       promise: () => {
         const error = new Error();
@@ -296,4 +298,16 @@ test('when execution is no longer in step function API, returns status from data
   t.is(executionStatus.execution.name, fakeExpiredExecution.name);
   t.is(executionStatus.execution.input, JSON.stringify(fakeExpiredExecution.originalPayload));
   t.is(executionStatus.execution.output, JSON.stringify(fakeExpiredExecution.finalPayload));
+});
+
+test('when execution not found in step function API nor database, returns not found', async (t) => {
+  const response = await request(app)
+    .get(`/executions/status/${expiredMissingExecutionArn}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+
+  const executionStatus = response.body;
+  t.is(executionStatus.error, 'Not Found');
+  t.is(executionStatus.message, 'Execution not found in API or database');
 });

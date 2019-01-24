@@ -30,7 +30,7 @@ async function tokenEndpoint(req, res) {
     });
   }
 
-  let uri = 'http://localhost:5001/token?code=somecode';
+  let uri = `${process.env.API_ENDPOINT}?code=somecode`;
   if (state) {
     uri += `&state=${encodeURIComponent(state)}`;
   }
@@ -76,7 +76,7 @@ async function deleteTokenEndpoint(req, res) {
  * @param {Function} next - express middleware callback function
  * @returns {Promise<Object>} - promise of an express response object
  */
-async function ensureAuthenticated(req, res, next) {
+async function ensureAuthorized(req, res, next) {
   // Verify that the Authorization header was set in the request
   const authorizationKey = req.headers.authorization;
   if (!authorizationKey) {
@@ -95,5 +95,5 @@ module.exports = {
   refreshEndpoint,
   deleteTokenEndpoint,
   token,
-  ensureAuthenticated
+  ensureAuthorized
 };
