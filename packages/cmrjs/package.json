@@ -6,7 +6,7 @@
     "node": ">=8.10.0"
   },
   "scripts": {
-    "test": "ava",
+    "test": "ava --serial",
     "test-coverage": "nyc ava",
     "debug": "NODE_ENV=test node --inspect-brk node_modules/ava/profile.js --serial tests/*.js"
   },
