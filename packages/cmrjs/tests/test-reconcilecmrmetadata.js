@@ -125,7 +125,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
 
   const bucket = randomId('bucket');
   const stackName = randomId('stack');
-  process.env.bucket = bucket;
+  process.env.system_bucket = bucket;
   process.env.stackName = stackName;
   const testCreds = setTestCredentials();
   const expectedMetadata = {
@@ -137,7 +137,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
   await cmrUtils.reconcileCMRMetadata(granId, updatedFiles, distEndpoint, pub);
 
   t.true(fakeUpdateCMRMetadata.calledOnceWith(updatedFiles[1], updatedFiles, distEndpoint));
-  // t.true(fakePublishECHO10XML2CMR.calledOnceWith(expectedMetadata, testCreds, bucket, stackName));
+  t.true(fakePublishECHO10XML2CMR.calledOnceWith(expectedMetadata, testCreds, bucket, stackName));
 
   sinon.restore();
   restoreUpdateEcho10XMLMetadata();
