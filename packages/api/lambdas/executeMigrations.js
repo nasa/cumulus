@@ -40,7 +40,7 @@ function handler(event, context, cb) {
     filesTable: process.env.FilesTable,
 
     // Used by Migration_3
-    internal: process.env.internal.name,
+    bucket: process.env.system_bucket,
     stackName: process.env.stackName
   })
     .then((r) => cb(null, r))

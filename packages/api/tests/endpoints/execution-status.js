@@ -1,16 +1,26 @@
 'use strict';
 
-const rewire = require('rewire');
+const request = require('supertest');
 const test = require('ava');
+const sinon = require('sinon');
+const commonAws = require('@cumulus/common/aws');
+const { StepFunction } = require('@cumulus/ingest/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
-const executionStatusEndpoint = rewire('../../endpoints/execution-status');
 const {
   createFakeJwtAuthToken,
-  testEndpoint
+  fakeExecutionFactoryV2
 } = require('../../lib/testUtils');
+
+process.env.AccessTokensTable = randomString();
+process.env.UsersTable = randomString();
+process.env.ExecutionsTable = randomString();
+process.env.TOKEN_SECRET = randomString();
+
+// import the express app after setting the env variables
+const { app } = require('../../app');
 
 const executionStatusCommon = {
   executionArn: 'arn:aws:states:us-east-1:xxx:execution:discoverGranulesStateMachine:3ea094d8',
@@ -30,6 +40,10 @@ const cumulusMetaOutput = {
     system_bucket: 'test-sandbox-internal'
   }
 };
+
+const expiredExecutionArn = 'fakeExpiredExecutionArn';
+const expiredMissingExecutionArn = 'fakeMissingExpiredExecutionArn';
+const fakeExpiredExecution = fakeExecutionFactoryV2({ arn: expiredExecutionArn });
 
 const replaceObject = (lambdaEvent = true) => ({
   replace: {
@@ -122,6 +136,22 @@ const stepFunctionMock = {
     })
 };
 
+const executionExistsMock = (arn) => {
+  if ((arn.executionArn === expiredExecutionArn)
+      || (arn.executionArn === expiredMissingExecutionArn)) {
+    return {
+      promise: () => {
+        const error = new Error();
+        error.code = 'ExecutionDoesNotExist';
+        return Promise.reject(error);
+      }
+    };
+  }
+  return {
+    promise: () => Promise.resolve(true)
+  };
+};
+
 const s3Mock = (_, key) =>
   new Promise((resolve) => {
     const fullMessage = key === 'events/lambdaEventUUID' ? lambdaCompleteOutput : fullMessageOutput;
@@ -131,17 +161,20 @@ const s3Mock = (_, key) =>
     resolve(s3Result);
   });
 
-executionStatusEndpoint.__set__('StepFunction', stepFunctionMock);
-executionStatusEndpoint.__set__('getS3Object', s3Mock);
-
-let authHeaders;
+let jwtAuthToken;
 let accessTokenModel;
+let executionModel;
 let userModel;
+let mockedS3;
+let mockedSF;
+let mockedSFExecution;
 
 test.before(async () => {
-  process.env.TOKEN_SECRET = randomString();
-  process.env.AccessTokensTable = randomString();
-  process.env.UsersTable = randomString();
+  mockedS3 = sinon.stub(commonAws, 'getS3Object').callsFake(s3Mock);
+  mockedSF = sinon.stub(StepFunction, 'getExecutionStatus').callsFake(stepFunctionMock.getExecutionStatus);
+  mockedSFExecution = sinon
+    .stub(commonAws.sfn(), 'describeExecution')
+    .callsFake(executionExistsMock);
 
   userModel = new models.User();
   await userModel.createTable();
@@ -149,122 +182,132 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
-  authHeaders = {
-    Authorization: `Bearer ${jwtAuthToken}`
-  };
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+  executionModel = new models.Execution();
+  await executionModel.createTable();
+  await executionModel.create(fakeExpiredExecution);
 });
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await userModel.deleteTable();
+  mockedS3.restore();
+  mockedSF.restore();
+  mockedSFExecution.restore();
+  await executionModel.deleteTable();
 });
 
 test('CUMULUS-911 GET without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    pathParameters: {
-      arn: 'asdf'
-    },
-    headers: {}
-  };
+  const response = await request(app)
+    .get('/executions/status/asdf')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(executionStatusEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-912 GET with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    pathParameters: {
-      arn: 'asdf'
-    },
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
-  };
+  const response = await request(app)
+    .get('/executions/status/asdf')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
 
-  return testEndpoint(executionStatusEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test.todo('CUMULUS-912 GET with an unauthorized user returns an unauthorized response');
 
-test('returns ARNs for execution and state machine', (t) => {
-  const event = {
-    pathParameters: {
-      arn: 'hasFullMessage'
-    },
-    headers: authHeaders
-  };
+test('returns ARNs for execution and state machine', async (t) => {
+  const response = await request(app)
+    .get('/executions/status/hasFullMessage')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  return testEndpoint(executionStatusEndpoint, event, (response) => {
-    const executionStatus = JSON.parse(response.body);
-    t.is(executionStatusCommon.stateMachineArn, executionStatus.execution.stateMachineArn);
-    t.is(executionStatusCommon.executionArn, executionStatus.execution.executionArn);
-  });
+  const executionStatus = response.body;
+  t.is(executionStatusCommon.stateMachineArn, executionStatus.execution.stateMachineArn);
+  t.is(executionStatusCommon.executionArn, executionStatus.execution.executionArn);
 });
 
-test('returns full message when it is already included in the output', (t) => {
-  const event = {
-    pathParameters: {
-      arn: 'hasFullMessage'
-    },
-    headers: authHeaders
-  };
+test('returns full message when it is already included in the output', async (t) => {
+  const response = await request(app)
+    .get('/executions/status/hasFullMessage')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  return testEndpoint(executionStatusEndpoint, event, (response) => {
-    const executionStatus = JSON.parse(response.body);
-    t.deepEqual(fullMessageOutput, JSON.parse(executionStatus.execution.output));
-  });
+  const executionStatus = response.body;
+  t.deepEqual(fullMessageOutput, JSON.parse(executionStatus.execution.output));
 });
 
-test('fetches messages from S3 when remote message (for both SF execution history and executions)', (t) => {
-  const event = {
-    pathParameters: {
-      arn: 'hasRemoteMessage'
-    },
-    headers: authHeaders
-  };
+test('fetches messages from S3 when remote message (for both SF execution history and executions)', async (t) => {
+  const response = await request(app)
+    .get('/executions/status/hasRemoteMessage')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  return testEndpoint(executionStatusEndpoint, event, (response) => {
-    const executionStatus = JSON.parse(response.body);
-    const expectedResponse = {
-      execution: {
-        ...executionStatusCommon,
-        output: JSON.stringify(fullMessageOutput)
-      },
-      executionHistory: {
-        events: [
-          lambdaEventOutput
-        ]
-      },
-      stateMachine: {}
-    };
-    t.deepEqual(expectedResponse, executionStatus);
-  });
+  const executionStatus = response.body;
+  const expectedResponse = {
+    execution: {
+      ...executionStatusCommon,
+      output: JSON.stringify(fullMessageOutput)
+    },
+    executionHistory: {
+      events: [
+        lambdaEventOutput
+      ]
+    },
+    stateMachine: {}
+  };
+  t.deepEqual(expectedResponse, executionStatus);
 });
 
-test('when execution is still running, still returns status and fetches SF execution history events from S3', (t) => {
-  const event = {
-    pathParameters: {
-      arn: 'stillRunning'
+test('when execution is still running, still returns status and fetches SF execution history events from S3', async (t) => {
+  const response = await request(app)
+    .get('/executions/status/stillRunning')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const executionStatus = response.body;
+  const expectedResponse = {
+    execution: executionStatusCommon,
+    executionHistory: {
+      events: [
+        lambdaEventOutput
+      ]
     },
-    headers: authHeaders
+    stateMachine: {}
   };
-  return testEndpoint(executionStatusEndpoint, event, (response) => {
-    const executionStatus = JSON.parse(response.body);
-    const expectedResponse = {
-      execution: executionStatusCommon,
-      executionHistory: {
-        events: [
-          lambdaEventOutput
-        ]
-      },
-      stateMachine: {}
-    };
-    t.deepEqual(expectedResponse, executionStatus);
-  });
+  t.deepEqual(expectedResponse, executionStatus);
+});
+
+test('when execution is no longer in step function API, returns status from database', async (t) => {
+  const response = await request(app)
+    .get(`/executions/status/${expiredExecutionArn}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const executionStatus = response.body;
+  t.falsy(executionStatus.executionHistory);
+  t.falsy(executionStatus.stateMachine);
+  t.is(executionStatus.execution.executionArn, fakeExpiredExecution.arn);
+  t.is(executionStatus.execution.name, fakeExpiredExecution.name);
+  t.is(executionStatus.execution.input, JSON.stringify(fakeExpiredExecution.originalPayload));
+  t.is(executionStatus.execution.output, JSON.stringify(fakeExpiredExecution.finalPayload));
+});
+
+test('when execution not found in step function API nor database, returns not found', async (t) => {
+  const response = await request(app)
+    .get(`/executions/status/${expiredMissingExecutionArn}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+
+  const executionStatus = response.body;
+  t.is(executionStatus.error, 'Not Found');
+  t.is(executionStatus.message, 'Execution not found in API or database');
 });

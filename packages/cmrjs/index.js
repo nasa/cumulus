@@ -17,10 +17,15 @@ const {
   hostId
 } = require('./utils');
 const {
+  constructOnlineAccessUrls,
   getGranuleId,
-  getCmrFiles,
-  publish,
-  updateMetadata
+  getCmrXMLFiles,
+  isECHO10File,
+  metadataObjectFromCMRXMLFile,
+  publishECHO10XML2CMR,
+  reconcileCMRMetadata,
+  updateEcho10XMLMetadata,
+  updateCMRMetadata
 } = require('./cmr-utils');
 
 
@@ -71,19 +76,24 @@ async function getFullMetadata(cmrLink) {
 }
 
 module.exports = {
-  searchConcept,
-  ingestConcept,
-  deleteConcept,
-  getUrl,
-  updateToken,
-  ValidationError,
   CMR,
-  getMetadata,
+  ValidationError,
+  constructOnlineAccessUrls,
+  deleteConcept,
+  getCmrXMLFiles,
   getFullMetadata,
-  getHost,
-  hostId,
   getGranuleId,
-  getCmrFiles,
-  publish,
-  updateMetadata
+  getHost,
+  getMetadata,
+  getUrl,
+  hostId,
+  ingestConcept,
+  isECHO10File,
+  metadataObjectFromCMRXMLFile,
+  publishECHO10XML2CMR,
+  reconcileCMRMetadata,
+  searchConcept,
+  updateCMRMetadata,
+  updateEcho10XMLMetadata,
+  updateToken
 };

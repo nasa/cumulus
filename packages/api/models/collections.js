@@ -53,7 +53,7 @@ class Collection extends Manager {
 
   async create(item) {
     const collectionConfigStore = new CollectionConfigStore(
-      process.env.internal,
+      process.env.system_bucket,
       process.env.stackName
     );
 
