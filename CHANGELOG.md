@@ -6,6 +6,40 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+
+### Added
+- CUMULUS-678
+  `reconcileCMRMetadata` added to `@cumulus/cmrjs` to update metadata record with new file locations.
+  `@cumulus/common/errors` adds two new error types `CMRMetaFileNotFound` and `InvalidArgument`.
+  `@cumulus/common/test-utils` adds new function `randomId` to create a random string with id to help in debugging.
+  `@cumulus/common/BucketsConfig` adds a new helper class `BucketsConfig` for working with bucket stack configuration and bucket names.
+  `@cumulus/common/aws` adds new fucntion `s3PutObjectTagging` as a convenience for the aws  [s3().putObjectTagging](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property) function.
+  `@cumulus/cmrjs` Adds:
+      - `constructOnlineAccessUrls` - Create list of correct URLs for echo10 metadata.
+	  -	`isECHO10File` - Identify an echo10 metadata file.
+      - `metadataObjectFromCMRXMLFile` Read and parse CMR XML file from s3.
+      - `updateEcho10XMLMetadata` Modify a cmr.xml file with updated information.
+      - `updateCMRMetadata` Modify a cmr metadata file with updated information.
+	  - `publishECHO10XML2CMR` Posts XML CMR data to CMR service.
+	  - `reconcileCMRMetadata` Reconciles cmr metadata file after a file moves.
+
+
+### Changed
+- CUMULUS-678
+  `tasks/move-granules` simplified and refactored to use  functionality from cmrjs.
+  `ingest/granules.moveGranuleFiles` now just moves granule files and returns a list of the updated files. Updating metadata now handled by `@cumulus/cmrjs/reconcileCMRMetadata`.
+  `move-granules.updateGranuleMetadata` refactored and bugs fixed in the case of a file matching multiple collection.files.regexps.
+  `getCmrXmlFiles` simplified and now only returns an object with the cmrfilename and the granuleId.
+
+- CUMULUS-1043
+  - `@cumulus/api` now uses [express](http://expressjs.com/) as the API engine.
+  - All `@cumulus/api` endpoints on ApiGateway are consolidated to a single endpoint the uses `{proxy+}` definition.
+  - All files under `packages/api/endpoints` along with associated tests are updated to support express's request and response objects.
+  - Replaced environment variables `internal`, `bucket` and `systemBucket` with `system_bucket`.
+  - Update `@cumulus/integration-tests` to work with updated cumulus-api express endpoints
+
+- **CUMULUS-1049** Updated `Retrieve Execution Status API` in `@cumulus/api`: If the execution doesn't exist in Step Function API, Cumulus API returns the execution status information from the database.
+
 ## [v1.11.1] - 2018-12-18
 
 **Please Note**
@@ -21,8 +55,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - CUMULUS-678
 `@cumulus/ingest/crypto` moved and renamed to `@cumulus/common/key-pair-provider`
 `@cumulus/ingest/aws` function:  `KMSDecryptionFailed` and class: `KMS` extracted and moved to `@cumulus/common` and `KMS` is exported as `KMSProvider` from `@cumulus/common/key-pair-provider`
-`@cumulus/ingest/granule` functions: `publish`, `getGranuleId`, `getXMLMetadataAsString`, `getMetadataBodyAndTags`, `parseXmlString`, `getCmrFiles`, `postS3Object`, `contructOnlineAccessUrls`, `updateMetadata`, extracted and moved to `@cumulus/cmrjs`
-`getGranuleId`, `getCmrFiles`, `publish`, `updateMetadata` removed from `@cumulus/ingest/granule` and added to `@cumulus/cmrjs`;
+`@cumulus/ingest/granule` functions: `publish`, `getGranuleId`, `getXMLMetadataAsString`, `getMetadataBodyAndTags`, `parseXmlString`, `getCmrXMLFiles`, `postS3Object`, `contructOnlineAccessUrls`, `updateMetadata`, extracted and moved to `@cumulus/cmrjs`
+`getGranuleId`, `getCmrXMLFiles`, `publish`, `updateMetadata` removed from `@cumulus/ingest/granule` and added to `@cumulus/cmrjs`;
+`updateMetadata` renamed `updateCMRMetadata`.
 `@cumulus/ingest` test files renamed.
 - **CUMULUS-1070**
   - Add `'Client-Id'` header to all `@cumulus/cmrjs` requests (made via `searchConcept`, `ingestConcept`, and `deleteConcept`).

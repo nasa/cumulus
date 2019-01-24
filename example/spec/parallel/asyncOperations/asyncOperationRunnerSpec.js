@@ -42,7 +42,7 @@ describe('The AsyncOperation task runner', () => {
     );
   });
 
-  describe('running a non-existant lambda function', () => {
+  describe('running a non-existent lambda function', () => {
     let asyncOperationId;
     let taskArn;
     let dynamoDbItem;
@@ -89,7 +89,7 @@ describe('The AsyncOperation task runner', () => {
     });
   });
 
-  describe('with a non-existant payload', () => {
+  describe('with a non-existent payload', () => {
     let asyncOperationId;
     let taskArn;
     let dynamoDbItem;

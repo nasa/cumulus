@@ -1,39 +1,48 @@
 'use strict';
 
+const router = require('express-promise-router')();
 const aws = require('@cumulus/common/aws');
-const handle = require('../lib/response').handle;
 const Search = require('../es/search').Search;
 const models = require('../models');
+const { RecordDoesNotExist } = require('../lib/errors');
 
 /**
  * List and search pdrs
  *
- * @param {Object} event - aws lambda event object.
- * @param {Function} cb - aws lambda callback function
- * @returns {undefined} undefined
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-function list(event, cb) {
-  const search = new Search(event, 'pdr');
-  return search.query().then((response) => cb(null, response)).catch((e) => {
-    cb(e);
-  });
+async function list(req, res) {
+  const search = new Search({
+    queryStringParameters: req.query
+  }, 'pdr');
+  const result = await search.query();
+  return res.send(result);
 }
 
 /**
  * get a single PDR
  *
- * @param {Object} event - aws lambda event object.
- * @param {Function} cb - aws lambda callback function
- * @returns {undefined} undefined
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-function get(event, cb) {
-  const pdrName = event.pathParameters.pdrName;
+async function get(req, res) {
+  const pdrName = req.params.pdrName;
 
   const pdrModel = new models.Pdr();
 
-  return pdrModel.get({ pdrName }).then((response) => {
-    cb(null, response);
-  }).catch(cb);
+  try {
+    const result = await pdrModel.get({ pdrName });
+    return res.send(result);
+  }
+  catch (e) {
+    if (e instanceof RecordDoesNotExist) {
+      return res.boom.notFound(`No record found for ${pdrName}`);
+    }
+    throw e;
+  }
 }
 
 const isRecordDoesNotExistError = (e) => e.message.includes('RecordDoesNotExist');
@@ -41,15 +50,16 @@ const isRecordDoesNotExistError = (e) => e.message.includes('RecordDoesNotExist'
 /**
  * delete a given PDR
  *
- * @param {Object} event - aws lambda event object.
- * @returns {Promise<Object>} the response object
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-async function del(event) {
-  const pdrName = event.pathParameters.pdrName;
+async function del(req, res) {
+  const pdrName = req.params.pdrName;
 
   const pdrS3Key = `${process.env.stackName}/pdrs/${pdrName}`;
 
-  await aws.deleteS3Object(process.env.internal, pdrS3Key);
+  await aws.deleteS3Object(process.env.system_bucket, pdrS3Key);
 
   const pdrModel = new models.Pdr();
 
@@ -60,27 +70,11 @@ async function del(event) {
     if (!isRecordDoesNotExistError(err)) throw err;
   }
 
-  return { detail: 'Record deleted' };
+  return res.send({ detail: 'Record deleted' });
 }
 
-/**
- * The main handler for the lambda function
- *
- * @param {Object} event - aws lambda event object.
- * @param {Object} context - aws context object
- * @returns {undefined} undefined
- */
-function handler(event, context) {
-  return handle(event, context, true, (cb) => {
-    if (event.httpMethod === 'GET' && event.pathParameters) {
-      return get(event, cb);
-    }
-    if (event.httpMethod === 'DELETE' && event.pathParameters) {
-      return del(event).then((r) => cb(null, r)).catch((e) => cb(e));
-    }
+router.get('/:pdrName', get);
+router.get('/', list);
+router.delete('/:pdrName', del);
 
-    return list(event, cb);
-  });
-}
-
-module.exports = handler;
+module.exports = router;

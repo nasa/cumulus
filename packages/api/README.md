@@ -8,6 +8,12 @@ This module build the Cumulus API for the Cumulus framework. It uses a combinati
 
 For the full documentation of the API see: https://nasa.github.io/cumulus-api
 
+## Development
+
+### Running the API locally
+
+  $ yarn serve
+
 ### Config
 Includes the Kes configuration files needed for the deployment of the Api:
 - `config/lambdas.yml`: Includes that Lambdas that do internal Api related tasks such as listening to SNS events or consuming SQS queues

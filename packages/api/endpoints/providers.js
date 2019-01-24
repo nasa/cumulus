@@ -1,6 +1,6 @@
 'use strict';
 
-const { handle } = require('../lib/response');
+const router = require('express-promise-router')();
 const models = require('../models');
 const {
   AssociatedRulesError,
@@ -11,143 +11,120 @@ const { Search } = require('../es/search');
 /**
  * List all providers
  *
- * @param {Object} event - aws lambda event object.
- * @param {Function} cb - aws lambda callback function
- * @returns {Promise<Object>} search response
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-function list(event, cb) {
-  const search = new Search(event, 'provider');
-  return search.query()
-    .then((response) => cb(null, response))
-    .catch(cb);
+async function list(req, res) {
+  const search = new Search({
+    queryStringParameters: req.query
+  }, 'provider');
+  const response = await search.query();
+  return res.send(response);
 }
 
 /**
  * Query a single provider
  *
- * @param {Object} event - aws lambda event object.
- * @param {Function} cb - aws lambda callback function
- * @returns {Promise<Object>} a single provider object
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-function get(event, cb) {
-  const id = event.pathParameters.id;
-  if (!id) {
-    return cb('provider id is missing');
-  }
+async function get(req, res) {
+  const id = req.params.id;
 
   const providerModel = new models.Provider();
-  return providerModel.get({ id })
-    .then((res) => {
-      delete res.password;
-      cb(null, res);
-    })
-    .catch(cb);
+  let result;
+  try {
+    result = await providerModel.get({ id });
+  }
+  catch (error) {
+    if (error instanceof RecordDoesNotExist) return res.boom.notFound('Provider not found.');
+  }
+  delete result.password;
+  return res.send(result);
 }
 
 /**
  * Creates a new provider
  *
- * @param {Object} event - aws lambda event object.
- * @param {Function} cb - aws lambda callback function
- * @returns {Promise<Object>} returns the created provider
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-function post(event, cb) {
-  const data = JSON.parse(event.body || {});
+async function post(req, res) {
+  const data = req.body;
   const id = data.id;
 
   const providerModel = new models.Provider();
 
-  return providerModel.get({ id })
-    .then(() => cb({ message: `A record already exists for ${id}` }))
-    .catch((e) => {
-      if (e instanceof RecordDoesNotExist) {
-        return providerModel.create(data)
-          .then((record) => cb(null, { record, message: 'Record saved' }))
-          .catch(cb);
-      }
-      return cb(e);
-    });
+  try {
+    // make sure the record doesn't exist
+    await providerModel.get({ id });
+    return res.boom.badReqest(`A record already exists for ${id}`);
+  }
+  catch (e) {
+    if (e instanceof RecordDoesNotExist) {
+      const record = await providerModel.create(data);
+      return res.send({ record, message: 'Record saved' });
+    }
+    return res.boom.badImplementation(e.message);
+  }
 }
 
 /**
  * Updates an existing provider
  *
- * @param {Object} event - aws lambda event object.
- * @param {Function} cb - aws lambda callback function
- * @returns {Promise<Object>} returns updated provider
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-function put(event, cb) {
-  const id = event.pathParameters.id;
+async function put(req, res) {
+  const id = req.params.id;
 
-  if (!id) {
-    return cb('provider id is missing');
-  }
-
-  const data = event.body
-    ? JSON.parse(event.body)
-    : {};
-
+  const data = req.body;
   const providerModel = new models.Provider();
 
   // get the record first
-  return providerModel.get({ id })
-    .then(() => providerModel.update({ id }, data))
-    .then((d) => cb(null, d))
-    .catch((err) => {
-      if (err instanceof RecordDoesNotExist) return cb({ message: 'Record does not exist' });
-      return cb(err);
-    });
+  try {
+    await providerModel.get({ id });
+    const record = await providerModel.update({ id }, data);
+    return res.send(record);
+  }
+  catch (err) {
+    if (err instanceof RecordDoesNotExist) return res.boom.notFound('Record does not exist');
+    throw err;
+  }
 }
 
 /**
  * Delete a provider
  *
- * @param {Object} event - aws lambda event object.
- * @param {Function} cb - aws lambda callback function
- * @returns {Promise<Object>} returns delete response
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-async function del(event, cb) {
+async function del(req, res) {
   const providerModel = new models.Provider();
 
   try {
-    await providerModel.delete({ id: event.pathParameters.id });
+    await providerModel.delete({ id: req.params.id });
+    return res.send({ message: 'Record deleted' });
   }
   catch (err) {
     if (err instanceof AssociatedRulesError) {
       const message = `Cannot delete provider with associated rules: ${err.rules.join(', ')}`;
-      return cb({ message }, null, 409);
+      return res.boom.conflict(message);
     }
-
-    return cb(err);
+    throw err;
   }
-
-  return cb(null, { message: 'Record deleted' });
 }
 
-/**
- * The main handler for the lambda function
- *
- * @param {Object} event - aws lambda event object.
- * @param {Object} context - aws context object
- * @returns {undefined} undefined
- */
-function handler(event, context) {
-  return handle(event, context, true, (cb) => {
-    if (event.httpMethod === 'GET' && event.pathParameters) {
-      return get(event, cb);
-    }
-    if (event.httpMethod === 'POST') {
-      return post(event, cb);
-    }
-    if (event.httpMethod === 'PUT' && event.pathParameters) {
-      return put(event, cb);
-    }
-    if (event.httpMethod === 'DELETE' && event.pathParameters) {
-      return del(event, cb);
-    }
+// express routes
+router.get('/:id', get);
+router.put('/:id', put);
+router.delete('/:id', del);
+router.post('/', post);
+router.get('/', list);
 
-    return list(event, cb);
-  });
-}
-
-module.exports = handler;
+module.exports = router;

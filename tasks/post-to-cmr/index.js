@@ -4,7 +4,11 @@ const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { getCmrFiles, publish } = require('@cumulus/cmrjs');
+const {
+  getCmrXMLFiles,
+  metadataObjectFromCMRXMLFile,
+  publishECHO10XML2CMR
+} = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const { loadJSONTestData } = require('@cumulus/test-data');
 
@@ -27,6 +31,22 @@ function buildOutput(results, granulesObject) {
   });
 
   return Object.values(output);
+}
+
+/**
+ * Append metadata object to each cmrFile object
+ * @param {Array<Object>} cmrFiles - CMR Objects with filenames and granuleIds.
+ * @returns {Array<Object>} clone of input array with with object updated with it's metadata.
+ */
+async function addMetadataObjects(cmrFiles) {
+  const updatedCMRFiles = [];
+  const objectPromises = cmrFiles.map(async (cmrFile) => {
+    const metadataObject = await metadataObjectFromCMRXMLFile(cmrFile.filename);
+    const updatedFile = Object.assign({}, { ...cmrFile }, { metadataObject: metadataObject });
+    updatedCMRFiles.push(updatedFile);
+  });
+  await Promise.all(objectPromises);
+  return updatedCMRFiles;
 }
 
 /**
@@ -62,11 +82,14 @@ async function postToCMR(event) {
     });
   });
 
-  // get cmr files
-  const cmrFiles = await getCmrFiles(allFiles, regex);
+  // get cmr files and metadata
+  const cmrFiles = getCmrXMLFiles(allFiles, regex);
+  const updatedCMRFiles = await addMetadataObjects(cmrFiles);
 
   // post all meta files to CMR
-  const publishRequests = cmrFiles.map((cmrFile) => publish(cmrFile, creds, bucket, stack));
+  const publishRequests = updatedCMRFiles.map((cmrFile) => (
+    publishECHO10XML2CMR(cmrFile, creds, bucket, stack)
+  ));
   const results = await Promise.all(publishRequests);
 
   return {

@@ -87,7 +87,7 @@ exports.describeExecution = (executionArn, retryOptions) => {
  */
 exports.executionExists = async (executionArn) => {
   try {
-    await exports.describeExecution({ executionArn }).promise();
+    await exports.describeExecution(executionArn);
     return true;
   }
   catch (err) {
