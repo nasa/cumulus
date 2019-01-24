@@ -34,11 +34,11 @@ jobs:
         - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/audit-packages.sh
 
-    - name: "fast fail"
+    - name: "fast pass"
       stage: build cache & audit
       install:
-        - echo 'should fail'
-      script: ./travis-ci/fail.sh
+        - echo 'should pass'
+      script: ./travis-ci/pass.sh
 
     - name: "eslint"
       stage: unit test and stack deployment
