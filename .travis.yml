@@ -34,6 +34,12 @@ jobs:
         - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/audit-packages.sh
 
+    - name: "fast fail"
+      stage: build cache & audit
+      install:
+        - echo 'should fail'
+      script: ./travis-ci/fail.sh
+
     - name: "eslint"
       stage: unit test and stack deployment
       install:
