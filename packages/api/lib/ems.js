@@ -17,7 +17,7 @@ const { Search, defaultIndexAlias } = require('../es/search');
  * process.env.ES_INDEX: set for testing purpose, default to defaultIndexAlias
  * process.env.ems_provider: default to 'cumulus'
  * process.env.stackName: it's used as part of the report filename
- * process.env.bucket: the bucket to store the generated reports
+ * process.env.system_bucket: the bucket to store the generated reports
  */
 
 const defaultESScrollSize = 1000;
@@ -179,7 +179,7 @@ function buildEMSRecords(mapping, granules) {
  * @returns {string} - uploaded file in s3
  */
 async function uploadReportToS3(filename) {
-  const bucket = process.env.bucket;
+  const bucket = process.env.system_bucket;
   const originalKey = `${process.env.stackName}/ems/${path.basename(filename)}`;
   let key = originalKey;
   let exists = await aws.fileExists(bucket, key);

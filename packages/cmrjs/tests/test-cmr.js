@@ -9,10 +9,11 @@ const some = require('lodash.some');
 const {
   CMR,
   deleteConcept,
-  getMetadata,
   ingestConcept,
   searchConcept
-} = require('..');
+} = require('../cmr');
+
+const { getMetadata } = require('..');
 
 const granuleId = 'MYD13Q1.A2017297.h19v10.006.2017313221203';
 const clientId = 'test-client';

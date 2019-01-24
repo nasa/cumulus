@@ -1,15 +1,14 @@
 'use strict';
 
 const test = require('ava');
+const request = require('supertest');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
-const providerEndpoint = require('../../../endpoints/providers');
 const {
   createFakeJwtAuthToken,
-  fakeProviderFactory,
-  testEndpoint
+  fakeProviderFactory
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
@@ -19,14 +18,17 @@ process.env.AccessTokensTable = randomString();
 process.env.UsersTable = randomString();
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
-process.env.internal = randomString();
+process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
+
+// import the express app after setting the env variables
+const { app } = require('../../../app');
 
 let providerModel;
 const esIndex = randomString();
 let esClient;
 
-let authHeaders;
+let jwtAuthToken;
 let accessTokenModel;
 let userModel;
 
@@ -47,10 +49,7 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
-  authHeaders = {
-    Authorization: `Bearer ${jwtAuthToken}`
-  };
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 
   esClient = await Search.es('fakehost');
 });
@@ -69,65 +68,58 @@ test.after.always(async () => {
 
 test('CUMULUS-911 POST without an Authorization header returns an Authorization Missing response', async (t) => {
   const newProvider = fakeProviderFactory();
-  const request = {
-    httpMethod: 'POST',
-    headers: {},
-    body: JSON.stringify(newProvider)
-  };
 
-  return testEndpoint(providerEndpoint, request, async (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-    await providerDoesNotExist(t, newProvider.id);
-  });
+  const response = await request(app)
+    .post('/providers')
+    .send(newProvider)
+    .set('Accept', 'application/json')
+    .expect(401);
+
+  assertions.isAuthorizationMissingResponse(t, response);
+  await providerDoesNotExist(t, newProvider.id);
 });
 
 test('CUMULUS-912 POST with an invalid access token returns an unauthorized response', async (t) => {
   const newProvider = fakeProviderFactory();
-  const request = {
-    httpMethod: 'POST',
-    headers: {
-      Authorization: 'Bearer invalid-token'
-    },
-    body: JSON.stringify(newProvider)
-  };
+  const response = await request(app)
+    .post('/providers')
+    .send(newProvider)
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
 
-  return testEndpoint(providerEndpoint, request, async (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-    await providerDoesNotExist(t, newProvider.id);
-  });
+  assertions.isInvalidAccessTokenResponse(t, response);
+  await providerDoesNotExist(t, newProvider.id);
 });
 
 test.todo('CUMULUS-912 POST with an unauthorized user returns an unauthorized response');
 
-test('POST with invalid authorization scheme returns an invalid authorization response', (t) => {
+test('POST with invalid authorization scheme returns an invalid authorization response', async (t) => {
   const newProvider = fakeProviderFactory();
-  const request = {
-    httpMethod: 'POST',
-    headers: {
-      Authorization: 'InvalidBearerScheme ThisIsAnInvalidAuthorizationToken'
-    },
-    body: JSON.stringify(newProvider)
-  };
 
-  return testEndpoint(providerEndpoint, request, async (response) => {
-    assertions.isInvalidAuthorizationResponse(t, response);
-    await providerDoesNotExist(t, newProvider.id);
-  });
+  const response = await request(app)
+    .post('/providers')
+    .send(newProvider)
+    .set('Accept', 'application/json')
+    .set('Authorization', 'InvalidBearerScheme ThisIsAnInvalidAuthorizationToken')
+    .expect(401);
+
+  assertions.isInvalidAuthorizationResponse(t, response);
+  await providerDoesNotExist(t, newProvider.id);
 });
 
-test('POST creates a new provider', (t) => {
+test('POST creates a new provider', async (t) => {
   const newProviderId = 'AQUA';
   const newProvider = Object.assign({}, t.context.testProvider, { id: newProviderId });
 
-  const postEvent = {
-    httpMethod: 'POST',
-    body: JSON.stringify(newProvider),
-    headers: authHeaders
-  };
+  const response = await request(app)
+    .post('/providers')
+    .send(newProvider)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  return testEndpoint(providerEndpoint, postEvent, (response) => {
-    const { message, record } = JSON.parse(response.body);
-    t.is(message, 'Record saved');
-    t.is(record.id, newProviderId);
-  });
+  const { message, record } = response.body;
+  t.is(message, 'Record saved');
+  t.is(record.id, newProviderId);
 });

@@ -75,7 +75,7 @@ const formatMappings = {
 
 process.env.ES_SCROLL_SIZE = 3;
 const esIndex = randomString();
-process.env.bucket = 'test-bucket';
+process.env.system_bucket = 'test-bucket';
 process.env.stackName = 'test-stack';
 process.env.ES_INDEX = esIndex;
 process.env.ems_provider = 'testEmsProvider';
@@ -141,11 +141,11 @@ test.after.always(async () => {
 });
 
 test.beforeEach(async () => {
-  await aws.s3().createBucket({ Bucket: process.env.bucket }).promise();
+  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 });
 
 test.afterEach.always(async () => {
-  await aws.recursivelyDeleteS3Bucket(process.env.bucket);
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test.serial('generate reports for the previous day', async (t) => {

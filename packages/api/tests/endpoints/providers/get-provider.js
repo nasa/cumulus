@@ -1,15 +1,14 @@
 'use strict';
 
 const test = require('ava');
+const request = require('supertest');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
-const providerEndpoint = require('../../../endpoints/providers');
 const {
   createFakeJwtAuthToken,
-  fakeProviderFactory,
-  testEndpoint
+  fakeProviderFactory
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
@@ -17,14 +16,17 @@ const assertions = require('../../../lib/assertions');
 process.env.UsersTable = randomString();
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
-process.env.internal = randomString();
+process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
+
+// import the express app after setting the env variables
+const { app } = require('../../../app');
 
 let providerModel;
 const esIndex = randomString();
 let esClient;
 
-let authHeaders;
+let jwtAuthToken;
 let accessTokenModel;
 let userModel;
 
@@ -41,10 +43,7 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
-  authHeaders = {
-    Authorization: `Bearer ${jwtAuthToken}`
-  };
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 
   esClient = await Search.es('fakehost');
 });
@@ -62,45 +61,43 @@ test.after.always(async () => {
 });
 
 test('CUMULUS-911 GET with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    pathParameters: {
-      id: 'asdf'
-    },
-    headers: {}
-  };
+  const response = await request(app)
+    .get('/providers/asdf')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(providerEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-912 GET with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    pathParameters: {
-      id: 'asdf'
-    },
-    headers: {
-      Authorization: 'Bearer invalid-token'
-    }
-  };
+  const response = await request(app)
+    .get('/providers/asdf')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
 
-  return testEndpoint(providerEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test.todo('CUMULUS-912 GET with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test('GET returns an existing provider', (t) => {
-  const getEvent = {
-    httpMethod: 'GET',
-    pathParameters: { id: t.context.testProvider.id },
-    headers: authHeaders
-  };
+test('GET returns an existing provider', async (t) => {
+  const response = await request(app)
+    .get(`/providers/${t.context.testProvider.id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  return testEndpoint(providerEndpoint, getEvent, (response) => {
-    t.is(JSON.parse(response.body).id, t.context.testProvider.id);
-  });
+  t.is(response.body.id, t.context.testProvider.id);
+});
+
+test('GET returns not found for a missing provider', async (t) => {
+  const response = await request(app)
+    .get('/providers/missing-provider-id')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+
+  t.is(response.body.error, 'Not Found');
+  t.is(response.body.message, 'Provider not found.');
 });
