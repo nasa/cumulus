@@ -190,6 +190,16 @@ default:
   users:
     - username: testuser
 
+localrun:
+  stackName: localrun
+  stackNameNoDash: localrun
+  bucket: localbucket
+
+  buckets:
+    internal:
+      name: localbucket
+      type: internal
+
 cumulus-from-npm:
   stackName: test-npm-integration # used by the integration repo
   stackNameNoDash: TestNpmIntegration
