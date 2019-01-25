@@ -99,9 +99,9 @@ class Manager {
     );
 
     const ajv = new Ajv({
+      removeAdditional,
       useDefaults: true,
-      v5: true,
-      removeAdditional: removeAdditional
+      v5: true
     });
     const validate = ajv.compile(schemaWithAdditionalPropertiesProhibited);
     const valid = validate(item);
