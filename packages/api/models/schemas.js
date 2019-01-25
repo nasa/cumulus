@@ -59,17 +59,6 @@ module.exports.collection = {
   title: 'Collection Object',
   description: 'Cumulus-api Collection Table schema',
   type: 'object',
-  additionalProperties: false,
-  required: [
-    'name',
-    'version',
-    'granuleId',
-    'granuleIdExtraction',
-    'sampleFileName',
-    'files',
-    'createdAt',
-    'updatedAt'
-  ],
   properties: {
     name: {
       title: 'Name',
@@ -132,12 +121,6 @@ module.exports.collection = {
       type: 'array',
       items: {
         type: 'object',
-        additionalProperties: false,
-        required: [
-          'regex',
-          'sampleFileName',
-          'bucket'
-        ],
         properties: {
           regex: {
             title: 'Regex',
@@ -160,7 +143,12 @@ module.exports.collection = {
                          + 'Defaults to the collection url path',
             type: 'string'
           }
-        }
+        },
+        required: [
+          'regex',
+          'sampleFileName',
+          'bucket'
+        ]
       }
     },
     createdAt: {
@@ -182,7 +170,17 @@ module.exports.collection = {
         type: 'string'
       }
     }
-  }
+  },
+  required: [
+    'name',
+    'version',
+    'granuleId',
+    'granuleIdExtraction',
+    'sampleFileName',
+    'files',
+    'createdAt',
+    'updatedAt'
+  ]
 };
 
 module.exports.file = {
@@ -255,7 +253,6 @@ module.exports.granule = {
       type: 'array',
       items: {
         type: 'object',
-        required: [],
         properties: {
           bucket: { type: 'string' },
           checksumType: { type: ['string', 'null'] },
