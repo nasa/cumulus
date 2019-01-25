@@ -1,6 +1,6 @@
 
 ApiDistribution:
-  handler: index.distribution
+  handler: index.distributionAppHandler
   timeout: 20
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'

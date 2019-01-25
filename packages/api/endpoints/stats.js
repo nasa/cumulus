@@ -1,12 +1,17 @@
 'use strict';
 
-const _get = require('lodash.get');
+const router = require('express-promise-router')();
+const get = require('lodash.get');
 const moment = require('moment');
-const log = require('@cumulus/common/log');
-const handle = require('../lib/response').handle;
 const Stats = require('../es/stats');
 
-function getType(event) {
+/**
+ * filter approved types
+ *
+ * @param {Object} req - express request object
+ * @returns {Object} returns the type and index as an object
+ */
+function getType(req) {
   let index;
 
   const supportedTypes = {
@@ -18,65 +23,88 @@ function getType(event) {
     executions: 'execution'
   };
 
-  const typeRequested = _get(event, 'queryStringParameters.type', null);
-  const type = _get(supportedTypes, typeRequested);
+  const typeRequested = get(req, 'params.type', null);
+  const type = get(supportedTypes, typeRequested);
 
   return { type, index };
 }
 
-function summary(event, cb) {
-  let params = _get(event, 'queryStringParameters', {});
-  if (!params) {
-    params = {};
-  }
-  params.timestamp__from = _get(
+
+/**
+ * get summary stats
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function summary(req, res) {
+  const params = req.params;
+  params.timestamp__from = get(
     params,
     'timestamp__from',
     moment().subtract(1, 'day').unix()
   );
-  params.timestamp__to = _get(params, 'timestamp__to', Date.now());
+  params.timestamp__to = get(params, 'timestamp__to', Date.now());
 
   const stats = new Stats({ queryStringParameters: params });
-  stats.query().then((r) => cb(null, r)).catch((e) => cb(e));
+  const r = await stats.query();
+  return res.send(r);
 }
 
-function histogram(event, cb) {
-  const type = getType(event);
+/**
+ * get histogram stats
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function histogram(req, res) {
+  const type = getType(req);
 
-  const stats = new Stats(event, type.type, type.index);
-  stats.histogram().then((r) => cb(null, r)).catch((e) => cb(e));
+  const stats = new Stats({
+    queryStringParameters: req.query
+  }, type.type, type.index);
+  const r = await stats.histogram();
+  return res.send(r);
 }
 
-function count(event, cb) {
-  const type = getType(event);
+/**
+ * get aggregate stats
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function aggregate(req, res) {
+  const type = getType(req);
 
-  const stats = new Stats(event, type.type, type.index);
-  stats.count().then((r) => cb(null, r)).catch((e) => cb(e));
+  const stats = new Stats({
+    queryStringParameters: req.query
+  }, type.type, type.index);
+  const r = await stats.count();
+  return res.send(r);
 }
 
-function average(event, cb) {
-  const type = getType(event);
+/**
+ * get average stats
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function average(req, res) {
+  const type = getType(req);
 
-  const stats = new Stats(event, type.type, type.index);
-  stats.avg().then((r) => cb(null, r)).catch((e) => cb(e));
+  const stats = new Stats({
+    queryStringParameters: req.query
+  }, type.type, type.index);
+  const r = await stats.avg();
+  return res.send(r);
 }
 
-function handler(event, context) {
-  log.debug(event);
-  handle(event, context, true, (cb) => {
-    if (event.httpMethod === 'GET' && event.resource.includes('/stats/histogram')) {
-      histogram(event, cb);
-    }
-    else if (event.httpMethod === 'GET' && event.resource.includes('/stats/aggregate')) {
-      count(event, cb);
-    }
-    else if (event.httpMethod === 'GET' && event.resource.includes('/stats/average')) {
-      average(event, cb);
-    }
-    else {
-      summary(event, cb);
-    }
-  });
-}
+router.get('/histogram/:type?', histogram);
+router.get('/aggregate/:type?', aggregate);
+router.get('/average/:type?', average);
+router.get('/', summary);
 
-module.exports = handler;
+module.exports = router;

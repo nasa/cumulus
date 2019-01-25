@@ -1,0 +1,79 @@
+
+ApiEndpoints:
+  handler: index.appHandler
+  timeout: 20
+  memory: '{{parent.api_lambda_memory}}'
+  source: 'node_modules/@cumulus/api/dist/'
+  apiRole: true
+  urs: true
+  envs:
+    EARTHDATA_BASE_URL: '{{parent.urs_url}}'
+    EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'
+    EARTHDATA_CLIENT_PASSWORD: '{{EARTHDATA_CLIENT_PASSWORD}}'
+    OAUTH_PROVIDER: '{{parent.oauth.provider}}'
+    AccessTokensTable:
+      function: Ref
+      value: AccessTokensTableDynamoDB
+    AsyncOperationsTable:
+      function: Ref
+      value: AsyncOperationsTableDynamoDB
+    CollectionsTable:
+      function: Ref
+      value: CollectionsTableDynamoDB
+    ExecutionsTable:
+      function: Ref
+      value: ExecutionsTableDynamoDB
+    GranulesTable:
+      function: Ref
+      value: GranulesTableDynamoDB
+    PdrsTable:
+      function: Ref
+      value: PdrsTableDynamoDB
+    ProvidersTable:
+      function: Ref
+      value: ProvidersTableDynamoDB
+    RulesTable:
+      function: Ref
+      value: RulesTableDynamoDB
+    UsersTable:
+      function: Ref
+      value: UsersTableDynamoDB
+    BulkDeleteLambda:
+      function: Ref
+      value: BulkDeleteLambdaFunction
+    AsyncOperationTaskDefinition:
+      function: Ref
+      value: AsyncOperationTaskDefinition
+    EcsCluster:
+      function: Ref
+      value: EcsCluster
+    system_bucket: '{{parent.system_bucket}}'
+    invoke:
+      function: "Ref"
+      value: ScheduleSFLambdaFunction
+    invokeArn:
+      function: "Ref"
+      value: ScheduleSFLambdaFunction
+    invokeReconcileLambda:
+      function: "Ref"
+      value: CreateReconciliationReportLambdaFunction
+    messageConsumer:
+      function: "Ref"
+      value: messageConsumerLambdaFunction
+    KinesisInboundEventLogger:
+      function: "Ref"
+      value: KinesisInboundEventLoggerLambdaFunction
+    cmr_provider: '{{parent.cmr.provider}}'
+    cmr_client_id: '{{parent.cmr.clientId}}'
+    cmr_username: '{{parent.cmr.username}}'
+    cmr_password:
+      function: "Ref"
+      value: "CmrPassword"
+    ES_HOST:
+      function: Ref
+      value: ElasticSearchDomain
+    TOKEN_SECRET: '{{TOKEN_SECRET}}'
+  apiGateway:
+    - api: backend 
+      path: '{proxy+}'
+      method: any
