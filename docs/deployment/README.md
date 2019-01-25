@@ -257,7 +257,7 @@ Copy `app/.env.sample` to `app/.env` and add CMR/earthdata client [credentials](
     EARTHDATA_CLIENT_PASSWORD=clientpassword
     TOKEN_SECRET=tokensecret
 
-The `TOKEN_SECRET` is a string value used signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is strongly recommended that this be a 32-character string.
+The `TOKEN_SECRET` is a string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is strongly recommended that this be a 32-character string.
 
 Note that the `.env.sample` file may be hidden, so if you do not see it, show hidden files.
 
