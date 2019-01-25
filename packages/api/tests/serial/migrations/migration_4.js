@@ -13,7 +13,7 @@ process.env.RulesTable = `RulesTable_${randomString()}`;
 process.env.stackName = 'my-stackName';
 process.env.messageConsumer = 'my-messageConsumer';
 process.env.KinesisInboundEventLogger = 'my-ruleInput';
-process.env.bucket = randomString();
+process.env.system_bucket = randomString();
 
 const workflow = 'my-workflow';
 const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
@@ -49,9 +49,9 @@ test.before(async () => {
   // create Rules table
   ruleModel = new models.Rule();
   await ruleModel.createTable();
-  await s3().createBucket({ Bucket: process.env.bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
   await s3().putObject({
-    Bucket: process.env.bucket,
+    Bucket: process.env.system_bucket,
     Key: workflowfile,
     Body: 'test data'
   }).promise();
@@ -71,7 +71,7 @@ test.before(async () => {
 test.after.always(async () => {
   // cleanup table
   await ruleModel.deleteTable();
-  await aws.recursivelyDeleteS3Bucket(process.env.bucket);
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
   const rule = new models.Rule();
   rule.delete(kinesisRule);
 });
@@ -94,7 +94,7 @@ test.serial('migration_4 adds a logEvent mapping when missing', async (t) => {
     TableName: process.env.RulesTable,
     Key: { name: { S: kinesisRule.name } }
   }).promise();
-  await run({ internal: process.env.bucket, stackName: process.env.stackName });
+  await run({ bucket: process.env.system_bucket, stackName: process.env.stackName });
   const updateRuleItem = await dynamodb().getItem({
     TableName: process.env.RulesTable,
     Key: { name: { S: kinesisRule.name } }
@@ -120,7 +120,7 @@ test.serial('migration_4 ignores logEvent mapping when not missing', async (t) =
     TableName: process.env.RulesTable,
     Key: { name: { S: kinesisRule.name } }
   }).promise();
-  await run({ internal: process.env.bucket, stackName: process.env.stackName });
+  await run({ bucket: process.env.system_bucket, stackName: process.env.stackName });
   const updateRuleItem = await dynamodb().getItem({
     TableName: process.env.RulesTable,
     Key: { name: { S: kinesisRule.name } }

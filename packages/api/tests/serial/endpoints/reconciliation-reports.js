@@ -2,11 +2,10 @@
 
 const test = require('ava');
 const aws = require('@cumulus/common/aws');
+const request = require('supertest');
 const { randomString } = require('@cumulus/common/test-utils');
-const reconciliationReportEndpoint = require('../../../endpoints/reconciliation-reports');
 const {
-  createFakeJwtAuthToken,
-  testEndpoint
+  createFakeJwtAuthToken
 } = require('../../../lib/testUtils');
 const assertions = require('../../../lib/assertions');
 const models = require('../../../models');
@@ -18,11 +17,14 @@ process.env.AccessTokensTable = randomString();
 process.env.UsersTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 
+// import the express app after setting the env variables
+const { app } = require('../../../app');
+
 const reportNames = [randomString(), randomString()];
 const reportDirectory = `${process.env.stackName}/reconciliation-reports`;
 
 let accessTokenModel;
-let authHeaders;
+let jwtAuthToken;
 let userModel;
 
 test.before(async () => {
@@ -32,10 +34,7 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
-  authHeaders = {
-    Authorization: `Bearer ${jwtAuthToken}`
-  };
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 });
 
 test.beforeEach(async () => {
@@ -58,174 +57,140 @@ test.after.always(async () => {
 });
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    headers: {}
-  };
+  const response = await request(app)
+    .get('/reconciliationReports')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(reconciliationReportEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-911 GET with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    pathParameters: {
-      name: 'asdf'
-    },
-    headers: {}
-  };
+  const response = await request(app)
+    .get('/reconciliationReports/asdf')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(reconciliationReportEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-911 POST without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'POST',
-    headers: {}
-  };
+  const response = await request(app)
+    .post('/reconciliationReports')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(reconciliationReportEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-911 DELETE with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'DELETE',
-    pathParameters: {
-      name: 'asdf'
-    },
-    headers: {}
-  };
+  const response = await request(app)
+    .delete('/reconciliationReports/asdf')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(reconciliationReportEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-911 GET without pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
-  };
+  const response = await request(app)
+    .get('/reconciliationReports')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
 
-  return testEndpoint(reconciliationReportEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test.todo('CUMULUS-911 GET without pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('CUMULUS-911 GET with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    pathParameters: {
-      name: 'asdf'
-    },
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
-  };
+  const response = await request(app)
+    .get('/reconciliationReports/asdf')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
 
-  return testEndpoint(reconciliationReportEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test.todo('CUMULUS-911 GET with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('CUMULUS-911 POST with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'POST',
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
-  };
+  const response = await request(app)
+    .post('/reconciliationReports')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
 
-  return testEndpoint(reconciliationReportEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test.todo('CUMULUS-911 POST with an unauthorized user returns an unauthorized response');
 
 test('CUMULUS-911 DELETE with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'DELETE',
-    pathParameters: {
-      name: 'asdf'
-    },
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
-  };
+  const response = await request(app)
+    .delete('/reconciliationReports/asdf')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
 
-  return testEndpoint(reconciliationReportEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test.todo('CUMULUS-911 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test.serial('default returns list of reports', (t) => {
-  const event = {
-    httpMethod: 'GET',
-    headers: authHeaders
-  };
+test.serial('default returns list of reports', async (t) => {
+  const response = await request(app)
+    .get('/reconciliationReports')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  return testEndpoint(reconciliationReportEndpoint, event, (response) => {
-    const results = JSON.parse(response.body);
-    t.is(results.results.length, 2);
-    results.results.forEach((reportName) => t.true(reportNames.includes(reportName)));
-  });
+  const results = response.body;
+  t.is(results.results.length, 2);
+  results.results.forEach((reportName) => t.true(reportNames.includes(reportName)));
 });
 
 test.serial('get a report', async (t) => {
-  await Promise.all(reportNames.map((reportName) => {
-    const event = {
-      pathParameters: {
-        name: reportName
-      },
-      httpMethod: 'GET',
-      headers: authHeaders
-    };
-
-    return testEndpoint(reconciliationReportEndpoint, event, (response) => {
-      t.deepEqual(JSON.parse(response.body), { test_key: `${reportName} test data` });
-    });
+  await Promise.all(reportNames.map(async (reportName) => {
+    const response = await request(app)
+      .get(`/reconciliationReports/${reportName}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .expect(200);
+    t.deepEqual(response.body, { test_key: `${reportName} test data` });
   }));
+});
+
+test.serial('get 404 if the report doesnt exist', async (t) => {
+  const response = await request(app)
+    .get('/reconciliationReports/404file')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+  t.is(response.status, 404);
+  t.is(response.body.message, 'The report does not exist!');
 });
 
 test.serial('delete a report', async (t) => {
-  await Promise.all(reportNames.map((reportName) => {
-    const event = {
-      pathParameters: {
-        name: reportName
-      },
-      httpMethod: 'DELETE',
-      headers: authHeaders
-    };
-
-    return testEndpoint(reconciliationReportEndpoint, event, (response) => {
-      t.deepEqual(JSON.parse(response.body), { message: 'Report deleted' });
-    });
+  await Promise.all(reportNames.map(async (reportName) => {
+    const response = await request(app)
+      .delete(`/reconciliationReports/${reportName}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .expect(200);
+    t.deepEqual(response.body, { message: 'Report deleted' });
   }));
 });
 
-test.serial('create a report', (t) => {
-  const event = {
-    httpMethod: 'POST',
-    headers: authHeaders
-  };
+test.serial('create a report', async (t) => {
+  const response = await request(app)
+    .post('/reconciliationReports')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  return testEndpoint(reconciliationReportEndpoint, event, (response) => {
-    const content = JSON.parse(response.body);
-    t.is(content.message, 'Report is being generated');
-  });
+  const content = response.body;
+  t.is(content.message, 'Report is being generated');
 });
