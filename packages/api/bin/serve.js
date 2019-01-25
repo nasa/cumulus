@@ -194,7 +194,8 @@ async function prepareDistributionApi(user, stackName = 'localrun') {
     process.env.system_bucket = 'localbucket';
     process.env.stackName = stackName;
     process.env.TOKEN_SECRET = 'secreeetartalksjfaf;lj';
-    process.env.DEPLOYMENT_ENDPOINT = `http://localhost:${port}`;
+    process.env.DEPLOYMENT_ENDPOINT = `http://localhost:${port}/redirect`;
+    process.env.DISTRIBUTION_URL = `http://localhost:${port}`;
 
     // create tables if not already created
     await checkOrCreateTables(stackName);
