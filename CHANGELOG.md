@@ -6,7 +6,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-
 ### Added
 - CUMULUS-678
   `reconcileCMRMetadata` added to `@cumulus/cmrjs` to update metadata record with new file locations.
@@ -25,6 +24,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ### Changed
+- CUMULUS-1121
+  - Schema validation is now strongly enforced when writing to the database.
+    Additional properties are not allowed and will result in a validation error.
 - CUMULUS-678
   `tasks/move-granules` simplified and refactored to use  functionality from cmrjs.
   `ingest/granules.moveGranuleFiles` now just moves granule files and returns a list of the updated files. Updating metadata now handled by `@cumulus/cmrjs/reconcileCMRMetadata`.
