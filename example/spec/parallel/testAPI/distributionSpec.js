@@ -1,9 +1,10 @@
 'use strict';
 
-const AWS = require('aws-sdk');
 const path = require('path');
 const { URL } = require('url');
+const base64 = require('base-64')
 const supertest = require('supertest');
+const got = require('got');
 
 const {
   aws: { s3, s3ObjectExists, deleteS3Object },
@@ -11,10 +12,11 @@ const {
     randomString
   }
 } = require('@cumulus/common');
-const EarthdataLoginClient = require('@cumulus/api/lib/EarthdataLogin');
-const { fakeAccessTokenFactory } = require('@cumulus/api/lib/testUtils');
-const { AccessToken } = require('@cumulus/api/models');
+// const EarthdataLoginClient = require('@cumulus/api/lib/EarthdataLogin');
+// const { fakeAccessTokenFactory } = require('@cumulus/api/lib/testUtils');
+// const { AccessToken } = require('@cumulus/api/models');
 const { distributionApp } = require('@cumulus/api/app/distribution');
+// const { app } = require('@cumulus/api/app');
 const { prepareDistributionApi } = require('@cumulus/api/bin/serve');
 
 const {
@@ -31,14 +33,17 @@ describe('Distribution API', () => {
   const testSuffix = createTestSuffix(testId);
 
   const fileLocation = path.join(testDataFolder, `DistributionAPI${testSuffix}`);
-  const authorizationUrl = `https://${randomString()}.com/${randomString()}`;
-  const accessTokenRecord = fakeAccessTokenFactory();
+  // const authorizationUrl = `https://${randomString()}.com/${randomString()}`;
+  // const accessTokenRecord = fakeAccessTokenFactory();
   const signedFileUrl = new URL(`https://${randomString()}.com/${randomString()}`);
 
   let server;
   let request;
 
   beforeAll(async (done) => {
+    process.env.PORT = 5002;
+    await prepareDistributionApi();
+
     const params = {
       Bucket: config.bucket,
       Key: fileLocation,
@@ -46,22 +51,19 @@ describe('Distribution API', () => {
     };
     await s3().putObject(params).promise();
 
-    process.env.PORT = 5002;
-    await prepareDistributionApi();
     server = distributionApp.listen(process.env.PORT, done);
     request = supertest.agent(server);
 
-    const accessTokenModel = new AccessToken();
-    await accessTokenModel.create(accessTokenRecord);
+    // const accessTokenModel = new AccessToken();
+    // await accessTokenModel.create(accessTokenRecord);
   });
 
   beforeEach(() => {
-    spyOn(EarthdataLoginClient.prototype, 'getAccessToken').and.returnValue(accessTokenRecord);
-    spyOn(EarthdataLoginClient.prototype, 'getAuthorizationUrl').and.returnValue(authorizationUrl);
-    spyOn(s3(), 'getSignedUrl').and.callFake(() => {
-      console.log('HERE');
-      return signedFileUrl.toString()
-    });
+    // spyOn(EarthdataLoginClient.prototype, 'getAccessToken').and.returnValue(accessTokenRecord);
+    // spyOn(EarthdataLoginClient.prototype, 'getAuthorizationUrl').and.returnValue(authorizationUrl);
+    // spyOn(s3(), 'getSignedUrl').and.callFake(() => {
+    //   return signedFileUrl.toString()
+    // });
   })
 
   afterAll(async (done) => {
@@ -69,7 +71,7 @@ describe('Distribution API', () => {
     server.close(done);
   });
 
-  it('file is created', async () => {
+  xit('file is created', async () => {
     const fileExists = await s3ObjectExists({
       Bucket: config.bucket,
       Key: fileLocation
@@ -77,22 +79,61 @@ describe('Distribution API', () => {
     expect(fileExists).toEqual(true);
   });
 
-  it(
-    'returns a redirect to an OAuth2 provider',
-    () => request
+  it('returns a redirect to an OAuth2 provider', async () => {
+    const authorizeUrl = await request
       .get(`/${fileLocation}`)
       .set('Accept', 'application/json')
-      .expect(307)
-  );
+      .redirects(0)
+      .then((res) => res.headers.location);
 
-  it('An authenticated request for a file returns a redirect to S3', async () => {
+    console.log(authorizeUrl);
+
+    const auth = base64.encode(process.env.EARTHDATA_USERNAME + ':' + process.env.EARTHDATA_PASSWORD);
+
+    var requestOptions = {
+      method: 'POST',
+      form: true,
+      body: { credentials: auth },
+      headers: {
+        origin: 'http://localhost:5002'
+      },
+      followRedirect: false
+    }
+
+    const redirectUrl = await got.post(authorizeUrl, requestOptions)
+      .then((res) => res.headers.location);
+
+    console.log(redirectUrl);
+
+    // await got(redirectUrl)
+    //   .catch((err) => {
+    //     console.log(err);
+    //   })
+    //   .then((res) => {
+    //     console.log(res.body);
+    //   });
+
+    const redirect = new URL(redirectUrl);
+
+    await request
+      .get(`${redirect.origin}${redirect.pathname}`)
+      .query(redirect.searchParams)
+      .on('error', (err) => {
+        console.log(err);
+      })
+      .then((res) => {
+        console.log(res.body);
+      });
+  });
+
+  xit('An authenticated request for a file returns a redirect to S3', async () => {
     const response = await request
       .get(`/${config.bucket}/${fileLocation}`)
       .set('Accept', 'application/json')
       .set('Cookie', [`accessToken=${accessTokenRecord.accessToken}`])
       .expect(307);
 
-    expect(s3().getSignedUrl.calls.any()).toEqual(true);
+    // expect(AWS.S3.getSignedUrl.calls.any()).toEqual(true);
     expect(response.status).toEqual(307);
 
     const redirectLocation = new URL(response.headers.location);
