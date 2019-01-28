@@ -14,8 +14,6 @@ const {
 } = require('@cumulus/cmrjs/cmr-utils');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const xml2js = require('xml2js');
-const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 
 const assertions = require('../../../lib/assertions');
 const models = require('../../../models');
@@ -32,13 +30,13 @@ const {
 } = require('../../../lib/token');
 const { Search } = require('../../../es/search');
 
-process.env.AccessTokensTable = randomString();
-process.env.CollectionsTable = randomString();
-process.env.GranulesTable = randomString();
-process.env.UsersTable = randomString();
-process.env.stackName = randomString();
-process.env.system_bucket = randomString();
-process.env.TOKEN_SECRET = randomString();
+process.env.AccessTokensTable = randomId('token');
+process.env.CollectionsTable = randomId('collection');
+process.env.GranulesTable = randomId('granules');
+process.env.UsersTable = randomId('users');
+process.env.stackName = randomId('stackname');
+process.env.system_bucket = randomId('system_bucket');
+process.env.TOKEN_SECRET = randomId('secret');
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
@@ -70,11 +68,10 @@ async function runTestUsingBuckets(buckets, testFunction) {
  * @returns {Object} with keys of internalBucket, and publicBucket.
  */
 async function setupBucketsConfig() {
-  const bucket = process.env.internal;
-  process.env.bucket = bucket;
+  const bucket = process.env.system_bucket;
   const buckets = {
     protected: {
-      name: process.env.internal,
+      name: bucket,
       type: 'protected'
     },
     public: {
@@ -90,9 +87,8 @@ async function setupBucketsConfig() {
     Body: JSON.stringify(buckets)
   });
   await createBucket(buckets.public.name);
-  return {internalBucket: bucket, publicBucket: buckets.public.name};
+  return { internalBucket: bucket, publicBucket: buckets.public.name };
 }
-
 
 
 // create all the variables needed across this test
@@ -105,7 +101,7 @@ let accessToken;
 let userModel;
 
 test.before(async () => {
-  esIndex = randomString();
+  esIndex = randomId('esindex');
 
   // create esClient
   esClient = await Search.es('fakehost');
@@ -639,8 +635,7 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
 });
 
 test.serial('move a file and update ECHO10 xml metadata', async (t) => {
-  const {internalBucket, publicBucket} = await setupBucketsConfig();
-
+  const { internalBucket, publicBucket } = await setupBucketsConfig();
   const newGranule = fakeGranuleFactoryV2();
   const metadata = fs.createReadStream(path.resolve(__dirname, '../../data/meta.xml'));
 
@@ -721,8 +716,8 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
 });
 
 
-test.serial.skip('move a file and update its UMM-G JSON metadata', async (t) => {
-  const {internalBucket, publicBucket} = await setupBucketsConfig();
+test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
+  const { internalBucket, publicBucket } = await setupBucketsConfig();
 
   const newGranule = fakeGranuleFactoryV2();
   const ummgMetadataString = fs.readFileSync(path.resolve(__dirname, '../../data/ummg-meta.json'));
@@ -777,9 +772,17 @@ test.serial.skip('move a file and update its UMM-G JSON metadata', async (t) => 
     'ingestGranule'
   ).returns({ result: { 'concept-id': 'id204842' } });
 
-  const response = await handleRequest(event);
+  const response = await request(app)
+    .put(`/granules/${newGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${accessToken}`)
+    .send({
+      action: 'move',
+      destinations
+    })
+    .expect(200);
 
-  const body = JSON.parse(response.body);
+  const body = response.body;
 
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'move');
@@ -805,7 +808,7 @@ test.serial.skip('move a file and update its UMM-G JSON metadata', async (t) => 
   const updatedURLs = ummgObject.items[0].umm.RelatedUrls.map((urlObj) => urlObj.URL);
   const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
 
-  t.true(updatedURLS.includes(newDestination));
+  t.true(updatedURLs.includes(newDestination));
 
   CMR.prototype.ingestGranule.restore();
 });
