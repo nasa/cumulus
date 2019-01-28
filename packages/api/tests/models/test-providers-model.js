@@ -4,7 +4,11 @@ const test = require('ava');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
-const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
+const schemas = require('../../models/schemas');
+const {
+  fakeProviderFactory,
+  fakeRuleFactoryV2
+} = require('../../lib/testUtils');
 const { Manager, Provider, Rule } = require('../../models');
 const { AssociatedRulesError } = require('../../lib/errors');
 
@@ -15,7 +19,8 @@ test.before(async () => {
 
   manager = new Manager({
     tableName: process.env.ProvidersTable,
-    tableHash: { name: 'id', type: 'S' }
+    tableHash: { name: 'id', type: 'S' },
+    schema: schemas.provider
   });
 
   await manager.createTable();
@@ -24,8 +29,8 @@ test.before(async () => {
   ruleModel = new Rule();
   await ruleModel.createTable();
 
-  process.env.bucket = randomString();
-  await s3().createBucket({ Bucket: process.env.bucket }).promise();
+  process.env.system_bucket = randomString();
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   process.env.stackName = randomString();
 });
@@ -33,13 +38,13 @@ test.before(async () => {
 test.after.always(async () => {
   await manager.deleteTable();
   await ruleModel.deleteTable();
-  await recursivelyDeleteS3Bucket(process.env.bucket);
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test('Providers.exists() returns true when a record exists', async (t) => {
   const id = randomString();
 
-  await manager.create({ id });
+  await manager.create(fakeProviderFactory({ id }));
 
   const providersModel = new Provider();
 
@@ -56,7 +61,7 @@ test('Providers.delete() throws an exception if the provider has associated rule
   const providersModel = new Provider();
 
   const providerId = randomString();
-  await manager.create({ id: providerId });
+  await manager.create(fakeProviderFactory({ id: providerId }));
 
   const rule = fakeRuleFactoryV2({
     provider: providerId,
@@ -67,7 +72,7 @@ test('Providers.delete() throws an exception if the provider has associated rule
 
   // The workflow message template must exist in S3 before the rule can be created
   await s3().putObject({
-    Bucket: process.env.bucket,
+    Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({})
   }).promise();
@@ -89,7 +94,7 @@ test('Providers.delete() deletes a provider', async (t) => {
   const providersModel = new Provider();
 
   const providerId = randomString();
-  await manager.create({ id: providerId });
+  await manager.create(fakeProviderFactory({ id: providerId }));
 
   await providersModel.delete({ id: providerId });
 

@@ -47,14 +47,14 @@ E.g.: node.js sample for '../cumulus/cumulus/tasks/sample-lambda' in the Cumulus
 
     <LambdaName>:                                       # eg:  LambdaSample (does not need to conform to dirname)
       handler: <dir>.<function>                                # eg:  sample-lambda.handler (assuming file has module.exports.handler = <someFunc>)
-      timeout: <ms>                                            # eg:  300
+      timeout: <s>                                             # eg:  300
       source: 'node_modules/@cumulus/<dir>/dist/'  # eg:  '../cumulus/cumulus/tasks/sample-lambda/dist/index.js'
 
 For non-node.js lambda code (e.g. python) uploaded as a .zip to an S3 bucket:
 
     PyLambda:
       handler: <file.py>.<function>               # eg:  lambda_handler.handler for lambda_handler.py with:  def handler(event, context):
-      timeout: <ms>
+      timeout: <s>
       s3Source:
         bucket: '{{buckets.internal.name}}'       # refers to bucket set in config.yml
         key: deploy/cumulus-process/<dir>/<file>  # eg: deploy/cumulus-process/modis/0.3.0b3.zip

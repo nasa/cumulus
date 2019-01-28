@@ -60,7 +60,7 @@ See the [Example GIBS Ingest Architecture](#example-gibs-ingest-architecture) sh
 
 ### Workflows
 
-A workflow is a provider configured set of steps that describe the process to ingest data. Workflows are defined using [AWS Step Functions](https://aws.amazon.com/documentation/step-functions/).
+A workflow is a provider-configured set of steps that describe the process to ingest data. Workflows are defined using [AWS Step Functions](https://aws.amazon.com/documentation/step-functions/).
 
 #### Benefits of AWS Step Functions
 

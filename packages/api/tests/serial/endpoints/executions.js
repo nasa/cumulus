@@ -1,15 +1,14 @@
 'use strict';
 
 const test = require('ava');
+const request = require('supertest');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../../models');
 const bootstrap = require('../../../lambdas/bootstrap');
-const executionEndpoint = require('../../../endpoints/executions');
 const indexer = require('../../../es/indexer');
 const {
   createFakeJwtAuthToken,
-  testEndpoint,
   fakeExecutionFactory
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
@@ -23,11 +22,14 @@ process.env.AccessTokensTable = randomString();
 process.env.ExecutionsTable = randomString();
 process.env.UsersTable = randomString();
 process.env.stackName = randomString();
-process.env.internal = randomString();
+process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
 
+// import the express app after setting the env variables
+const { app } = require('../../../app');
+
+let jwtAuthToken;
 let accessTokenModel;
-let authHeaders;
 let executionModel;
 let userModel;
 
@@ -40,7 +42,7 @@ test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
 
   // create a fake bucket
-  await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
+  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   // create fake granule table
   executionModel = new models.Execution();
@@ -58,10 +60,7 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
-  authHeaders = {
-    Authorization: `Bearer ${jwtAuthToken}`
-  };
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 });
 
 test.after.always(async () => {
@@ -69,121 +68,100 @@ test.after.always(async () => {
   await executionModel.deleteTable();
   await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
-  await aws.recursivelyDeleteS3Bucket(process.env.internal);
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    headers: {}
-  };
+  const response = await request(app)
+    .get('/executions')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(executionEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-911 GET with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    pathParameters: {
-      arn: 'asdf'
-    },
-    headers: {}
-  };
+  const response = await request(app)
+    .get('/executions/asdf')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(executionEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    headers: {}
-  };
+  const response = await request(app)
+    .get('/executions')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(executionEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-912 GET with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    pathParameters: {
-      arn: 'asdf'
-    },
-    headers: {}
-  };
+  const response = await request(app)
+    .get('/executions/asdf')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(executionEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
+  assertions.isAuthorizationMissingResponse(t, response);
+});
+
+test('default returns list of executions', async (t) => {
+  const response = await request(app)
+    .get('/executions')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta, results } = response.body;
+  t.is(results.length, 2);
+  t.is(meta.stack, process.env.stackName);
+  t.is(meta.table, 'execution');
+  t.is(meta.count, 2);
+  const arns = fakeExecutions.map((i) => i.arn);
+  results.forEach((r) => {
+    t.true(arns.includes(r.arn));
   });
 });
 
-test('default returns list of executions', (t) => {
-  const listEvent = {
-    httpMethod: 'list',
-    headers: authHeaders
-  };
-  return testEndpoint(executionEndpoint, listEvent, (response) => {
-    const { meta, results } = JSON.parse(response.body);
-    t.is(results.length, 2);
-    t.is(meta.stack, process.env.stackName);
-    t.is(meta.table, 'execution');
-    t.is(meta.count, 2);
-    const arns = fakeExecutions.map((i) => i.arn);
-    results.forEach((r) => {
-      t.true(arns.includes(r.arn));
-    });
-  });
+test('executions can be filtered by workflow', async (t) => {
+  const response = await request(app)
+    .get('/executions')
+    .query({ type: 'workflow2' })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta, results } = response.body;
+  t.is(results.length, 1);
+  t.is(meta.stack, process.env.stackName);
+  t.is(meta.table, 'execution');
+  t.is(meta.count, 1);
+  t.is(fakeExecutions[1].arn, results[0].arn);
 });
 
-test('executions can be filtered by workflow', (t) => {
-  const listEvent = {
-    httpMethod: 'list',
-    queryStringParameters: { type: 'workflow2' },
-    headers: authHeaders
-  };
-  return testEndpoint(executionEndpoint, listEvent, (response) => {
-    const { meta, results } = JSON.parse(response.body);
-    t.is(results.length, 1);
-    t.is(meta.stack, process.env.stackName);
-    t.is(meta.table, 'execution');
-    t.is(meta.count, 1);
-    t.is(fakeExecutions[1].arn, results[0].arn);
-  });
-});
+test('GET returns an existing execution', async (t) => {
+  const response = await request(app)
+    .get(`/executions/${fakeExecutions[0].arn}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-test('GET returns an existing execution', (t) => {
-  const getEvent = {
-    httpMethod: 'GET',
-    pathParameters: {
-      arn: fakeExecutions[0].arn
-    },
-    headers: authHeaders
-  };
-  return testEndpoint(executionEndpoint, getEvent, (response) => {
-    const executionResult = JSON.parse(response.body);
-    t.is(executionResult.arn, fakeExecutions[0].arn);
-    t.is(executionResult.name, fakeExecutions[0].name);
-    t.truthy(executionResult.duration);
-    t.is(executionResult.status, 'completed');
-  });
+  const executionResult = response.body;
+  t.is(executionResult.arn, fakeExecutions[0].arn);
+  t.is(executionResult.name, fakeExecutions[0].name);
+  t.truthy(executionResult.duration);
+  t.is(executionResult.status, 'completed');
 });
 
 test('GET fails if execution is not found', async (t) => {
-  const event = {
-    httpMethod: 'GET',
-    pathParameters: {
-      arn: 'unknown'
-    },
-    headers: authHeaders
-  };
+  const response = await request(app)
+    .get('/executions/unknown')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
 
-  const response = await testEndpoint(executionEndpoint, event, (r) => r);
-  t.is(response.statusCode, 400);
-  const { message } = JSON.parse(response.body);
-  t.true(message.includes('No record found for'));
+  t.is(response.status, 404);
+  t.true(response.body.message.includes('No record found for'));
 });

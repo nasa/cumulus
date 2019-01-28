@@ -1,16 +1,15 @@
 'use strict';
 
 const test = require('ava');
+const request = require('supertest');
 const { randomString } = require('@cumulus/common/test-utils');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 
 const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
-const providerEndpoint = require('../../../endpoints/providers');
 const {
   createFakeJwtAuthToken,
-  fakeProviderFactory,
-  testEndpoint
+  fakeProviderFactory
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
@@ -19,14 +18,17 @@ const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 process.env.UsersTable = randomString();
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
-process.env.internal = randomString();
+process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
+
+// import the express app after setting the env variables
+const { app } = require('../../../app');
 
 let providerModel;
 const esIndex = randomString();
 let esClient;
 
-let authHeaders;
+let jwtAuthToken;
 let accessTokenModel;
 let ruleModel;
 let userModel;
@@ -44,10 +46,7 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
-  authHeaders = {
-    Authorization: `Bearer ${jwtAuthToken}`
-  };
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 
   esClient = await Search.es('fakehost');
 
@@ -55,8 +54,8 @@ test.before(async () => {
   ruleModel = new models.Rule();
   await ruleModel.createTable();
 
-  process.env.bucket = randomString();
-  await s3().createBucket({ Bucket: process.env.bucket }).promise();
+  process.env.system_bucket = randomString();
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   process.env.stackName = randomString();
 });
@@ -72,54 +71,43 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await ruleModel.deleteTable();
-  await recursivelyDeleteS3Bucket(process.env.bucket);
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
-test('Attempting to delete a provider without an Authorization header returns an Authorization Missing response', (t) => {
+test('Attempting to delete a provider without an Authorization header returns an Authorization Missing response', async (t) => {
   const { testProvider } = t.context;
 
-  const request = {
-    httpMethod: 'DELETE',
-    pathParameters: { id: testProvider.id },
-    headers: {}
-  };
+  const response = await request(app)
+    .delete(`/providers/${testProvider.id}`)
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(providerEndpoint, request, async (response) => {
-    t.is(response.statusCode, 401);
-    t.true(await providerModel.exists(testProvider.id));
-  });
+  t.is(response.status, 401);
+  t.true(await providerModel.exists(testProvider.id));
 });
 
 test('Attempting to delete a provider with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'DELETE',
-    pathParameters: {
-      id: 'asdf'
-    },
-    headers: {
-      Authorization: 'Bearer invalid-token'
-    }
-  };
+  const response = await request(app)
+    .delete('/providers/asdf')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
 
-  return testEndpoint(providerEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test.todo('Attempting to delete a provider with an unauthorized user returns an unauthorized response');
 
-test('Deleting a provider removes the provider', (t) => {
+test('Deleting a provider removes the provider', async (t) => {
   const { testProvider } = t.context;
 
-  const deleteRequest = {
-    httpMethod: 'DELETE',
-    pathParameters: { id: testProvider.id },
-    headers: authHeaders
-  };
+  await request(app)
+    .delete(`/providers/${testProvider.id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  return testEndpoint(providerEndpoint, deleteRequest, async () => {
-    t.false(await providerModel.exists(testProvider.id));
-  });
+  t.false(await providerModel.exists(testProvider.id));
 });
 
 test('Attempting to delete a provider with an associated rule returns a 409 response', async (t) => {
@@ -134,25 +122,21 @@ test('Attempting to delete a provider with an associated rule returns a 409 resp
 
   // The workflow message template must exist in S3 before the rule can be created
   await s3().putObject({
-    Bucket: process.env.bucket,
+    Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({})
   }).promise();
 
   await ruleModel.create(rule);
 
-  const deleteRequest = {
-    httpMethod: 'DELETE',
-    pathParameters: { id: testProvider.id },
-    headers: authHeaders
-  };
+  const response = await request(app)
+    .delete(`/providers/${testProvider.id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(409);
 
-  return testEndpoint(providerEndpoint, deleteRequest, (response) => {
-    t.is(response.statusCode, 409);
-
-    const body = JSON.parse(response.body);
-    t.is(body.message, `Cannot delete provider with associated rules: ${rule.name}`);
-  });
+  t.is(response.status, 409);
+  t.is(response.body.message, `Cannot delete provider with associated rules: ${rule.name}`);
 });
 
 test('Attempting to delete a provider with an associated rule does not delete the provider', async (t) => {
@@ -167,20 +151,18 @@ test('Attempting to delete a provider with an associated rule does not delete th
 
   // The workflow message template must exist in S3 before the rule can be created
   await s3().putObject({
-    Bucket: process.env.bucket,
+    Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({})
   }).promise();
 
   await ruleModel.create(rule);
 
-  const deleteRequest = {
-    httpMethod: 'DELETE',
-    pathParameters: { id: testProvider.id },
-    headers: authHeaders
-  };
+  await request(app)
+    .delete(`/providers/${testProvider.id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(409);
 
-  return testEndpoint(providerEndpoint, deleteRequest, async () => {
-    t.true(await providerModel.exists(testProvider.id));
-  });
+  t.true(await providerModel.exists(testProvider.id));
 });
