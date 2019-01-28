@@ -137,7 +137,7 @@ async function metadataObjectFromCMRJSONFile(cmrFilename) {
 async function metadataObjectFromCMRXMLFile(cmrFilename) {
   const metadata = await getXMLMetadataAsString(cmrFilename);
   return parseXmlString(metadata);
-};
+}
 
 /**
  * returns a list of CMR xml file objects
