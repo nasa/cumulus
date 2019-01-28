@@ -3,6 +3,7 @@
 const url = require('url');
 const chunk = require('lodash.chunk');
 const Manager = require('./base');
+const schemas = require('./schemas');
 
 /**
  * extract bucket and and s3 path from a give file object
@@ -28,7 +29,8 @@ class FileClass extends Manager {
     super({
       tableName: process.env.FilesTable,
       tableHash: { name: 'bucket', type: 'S' },
-      tableRange: { name: 'key', type: 'S' }
+      tableRange: { name: 'key', type: 'S' },
+      schema: schemas.file
     });
   }
 

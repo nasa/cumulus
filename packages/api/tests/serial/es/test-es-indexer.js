@@ -24,7 +24,7 @@ const pdrFailure = require('../../data/pdr_failure.json');
 const pdrSuccess = require('../../data/pdr_success.json');
 
 const esIndex = randomString();
-process.env.bucket = randomString();
+process.env.system_bucket = randomString();
 process.env.stackName = randomString();
 const collectionTable = randomString();
 const granuleTable = randomString();
@@ -62,7 +62,7 @@ test.before(async () => {
   esClient = await Search.es();
 
   // create buckets
-  await aws.s3().createBucket({ Bucket: process.env.bucket }).promise();
+  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   const fakeMetadata = {
     time_start: '2017-10-24T00:00:00.000Z',
@@ -92,7 +92,7 @@ test.after.always(async () => {
   await pdrModel.deleteTable();
 
   await esClient.indices.delete({ index: esIndex });
-  await aws.recursivelyDeleteS3Bucket(process.env.bucket);
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 
   cmrjs.getMetadata.restore();
   cmrjs.getFullMetadata.restore();
@@ -634,7 +634,7 @@ test.serial('reingest a granule', async (t) => {
 
   const payload = JSON.parse(input);
   const key = `${process.env.stackName}/workflows/${payload.meta.workflow_name}.json`;
-  await aws.s3().putObject({ Bucket: process.env.bucket, Key: key, Body: 'test data' }).promise();
+  await aws.s3().putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' }).promise();
 
   payload.payload.granules[0].granuleId = randomString();
   const records = await indexer.granule(payload);

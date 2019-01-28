@@ -1,18 +1,18 @@
 'use strict';
 
+const router = require('express-promise-router')();
 const path = require('path');
-const { aws, log } = require('@cumulus/common');
+const { aws } = require('@cumulus/common');
 const { invoke } = require('@cumulus/ingest/aws');
-const handle = require('../lib/response').handle;
 
 /**
  * List all reconciliation reports
  *
- * @param {Object} event - aws lambda event object.
- * @param {function} cb - aws lambda callback function
- * @returns {Array} - list of reports
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-function list(event, cb) {
+async function list(req, res) {
   const constructResultFunc = (fileNames) =>
     ({
       meta: {
@@ -24,80 +24,65 @@ function list(event, cb) {
 
   const systemBucket = process.env.system_bucket;
   const key = `${process.env.stackName}/reconciliation-reports/`;
-  return aws.listS3ObjectsV2({ Bucket: systemBucket, Prefix: key })
-    .then((fileList) =>
-      fileList.filter((s3Object) => !s3Object.Key.endsWith(key))
-        .map((s3Object) => path.basename(s3Object.Key)))
-    .then((fileNames) => cb(null, constructResultFunc(fileNames)))
-    .catch((err) => cb(err));
+  const fileList = await aws.listS3ObjectsV2({ Bucket: systemBucket, Prefix: key });
+  const fileNames = fileList.filter((s3Object) => !s3Object.Key.endsWith(key))
+    .map((s3Object) => path.basename(s3Object.Key));
+  return res.send(constructResultFunc(fileNames));
 }
 
 /**
  * get a reconciliation report
  *
- * @param {Object} event - event passed to lambda
- * @param {function} cb - aws lambda callback function
- * @returns {Object} a granule reconciliation report
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-function get(event, cb) {
-  const name = event.pathParameters.name;
+async function get(req, res) {
+  const name = req.params.name;
   const key = `${process.env.stackName}/reconciliation-reports/${name}`;
 
-  return aws.getS3Object(process.env.system_bucket, key)
-    .then((file) => cb(null, file.Body.toString()))
-    .catch((err) => cb(err));
+  try {
+    const file = await aws.getS3Object(process.env.system_bucket, key);
+    return res.send(JSON.parse(file.Body.toString()));
+  }
+  catch (err) {
+    if (err.name === 'NoSuchKey') {
+      return res.boom.notFound('The report does not exist!');
+    }
+    throw err;
+  }
 }
 
 /**
  * delete a reconciliation report
  *
- * @param {Object} event - event passed to lambda
- * @param {function} cb - aws lambda callback function
- * @returns {Object} a granule reconciliation report
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-function del(event, cb) {
-  const name = event.pathParameters.name;
+async function del(req, res) {
+  const name = req.params.name;
   const key = `${process.env.stackName}/reconciliation-reports/${name}`;
 
-  return aws.deleteS3Object(process.env.system_bucket, key)
-    .then(() => cb(null, { message: 'Report deleted' }))
-    .catch((err) => cb(err));
+  await aws.deleteS3Object(process.env.system_bucket, key);
+  return res.send({ message: 'Report deleted' });
 }
 
 /**
  * Creates a new report
  *
- * @param {Object} event - event passed to lambda
- * @param {function} cb - aws lambda callback function
- * @returns {Object} returns the report generated
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-function post(event, cb) {
-  return invoke(process.env.invoke, {})
-    .then((data) => cb(null, { message: 'Report is being generated', status: data.StatusCode }))
-    .catch((err) => cb(err));
+async function post(req, res) {
+  const data = await invoke(process.env.invokeReconcileLambda, {});
+  return res.send({ message: 'Report is being generated', status: data.StatusCode });
 }
 
-/**
- * a lambda function for handling requests of reconciliation reports
- *
- * @param {Object} event - an AWS Lambda event
- * @param {Object} context - an AWS Lambda context
- * @returns {Promise} - list of report type and its file path {reportType, file}
- */
-function handler(event, context) {
-  log.debug(event.httpMethod);
-  return handle(event, context, true, (cb) => {
-    if (event.httpMethod === 'GET' && event.pathParameters) {
-      return get(event, cb);
-    }
-    if (event.httpMethod === 'POST') {
-      return post(event, cb);
-    }
-    if (event.httpMethod === 'DELETE' && event.pathParameters) {
-      return del(event, cb);
-    }
-    return list(event, cb);
-  });
-}
+router.get('/:name', get);
+router.delete('/:name', del);
+router.get('/', list);
+router.post('/', post);
 
-module.exports = handler;
+module.exports = router;

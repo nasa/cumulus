@@ -180,7 +180,7 @@ async function bucketConfig(bucket, stackName) {
 
 /** Return the stack's buckets object read from from S3 */
 async function bucketsConfigDefaults() {
-  return bucketConfig(process.env.bucket, process.env.stackName);
+  return bucketConfig(process.env.system_bucket, process.env.stackName);
 }
 
 /**
@@ -301,7 +301,12 @@ async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, publis
         metadataObject: theMetadata,
         granuleId: granuleId
       };
-      return publishECHO10XML2CMR(cmrFileObject, creds, process.env.bucket, process.env.stackName);
+      return publishECHO10XML2CMR(
+        cmrFileObject,
+        creds,
+        process.env.system_bucket,
+        process.env.stackName
+      );
     }
     return Promise.resolve();
   }

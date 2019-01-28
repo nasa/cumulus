@@ -24,11 +24,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ### Changed
+- CUMULUS-1121
+  - Schema validation is now strongly enforced when writing to the database.
+    Additional properties are not allowed and will result in a validation error.
 - CUMULUS-678
   `tasks/move-granules` simplified and refactored to use  functionality from cmrjs.
   `ingest/granules.moveGranuleFiles` now just moves granule files and returns a list of the updated files. Updating metadata now handled by `@cumulus/cmrjs/reconcileCMRMetadata`.
   `move-granules.updateGranuleMetadata` refactored and bugs fixed in the case of a file matching multiple collection.files.regexps.
   `getCmrXmlFiles` simplified and now only returns an object with the cmrfilename and the granuleId.
+
+- CUMULUS-1043
+  - `@cumulus/api` now uses [express](http://expressjs.com/) as the API engine.
+  - All `@cumulus/api` endpoints on ApiGateway are consolidated to a single endpoint the uses `{proxy+}` definition.
+  - All files under `packages/api/endpoints` along with associated tests are updated to support express's request and response objects.
+  - Replaced environment variables `internal`, `bucket` and `systemBucket` with `system_bucket`.
+  - Update `@cumulus/integration-tests` to work with updated cumulus-api express endpoints
 
 - **CUMULUS-1049** Updated `Retrieve Execution Status API` in `@cumulus/api`: If the execution doesn't exist in Step Function API, Cumulus API returns the execution status information from the database.
 

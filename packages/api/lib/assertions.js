@@ -1,17 +1,13 @@
 'use strict';
 
 exports.isAuthorizationMissingResponse = (t, response) => {
-  t.is(response.statusCode, 401);
-
-  const responseBody = JSON.parse(response.body);
-  t.is(responseBody.message, 'Authorization header missing');
+  t.is(response.status, 401);
+  t.is(response.body.message, 'Authorization header missing');
 };
 
 exports.isInvalidAccessTokenResponse = (t, response) => {
-  t.is(response.statusCode, 403);
-
-  const responseBody = JSON.parse(response.body);
-  t.is(responseBody.message, 'Invalid access token');
+  t.is(response.status, 403);
+  t.is(response.body.message, 'Invalid access token');
 };
 
 exports.isExpiredAccessTokenResponse = (t, response) => {
@@ -24,12 +20,10 @@ exports.isExpiredAccessTokenResponse = (t, response) => {
 };
 
 exports.isUnauthorizedUserResponse = (t, response) => {
-  t.is(response.statusCode, 403);
-
-  const responseBody = JSON.parse(response.body);
-  t.is(responseBody.message, 'User not authorized');
+  t.is(response.status, 401);
+  t.is(response.body.message, 'User not authorized');
 };
 
 exports.isInvalidAuthorizationResponse = (t, response) => {
-  t.is(response.statusCode, 401);
+  t.is(response.status, 401);
 };

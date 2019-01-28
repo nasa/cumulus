@@ -158,7 +158,7 @@ test.beforeEach(async (t) => {
 
   t.context.tableName = process.env.RulesTable;
   process.env.stackName = randomString();
-  process.env.bucket = randomString();
+  process.env.system_bucket = randomString();
   process.env.messageConsumer = randomString();
 
   await Promise.all(rulesToCreate.map((rule) => ruleModel.create(rule)));
