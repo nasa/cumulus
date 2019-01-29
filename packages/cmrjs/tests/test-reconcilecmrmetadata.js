@@ -148,6 +148,8 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
 test('reconcileCMRMetadata calls updateUMMGMetadata if json metadata present', async (t) => {
   const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr.json' }];
   const { granId, distEndpoint, pub } = t.context;
+  const fakeBucketsConfigDefaults = sinon.fake.returns({ private: { type: 'private', name: 'private' } });
+  const restoreBucketsConfigDefaults = cmrUtils.__set__('bucketsConfigDefaults', fakeBucketsConfigDefaults);
   const fakeUpdateUMMGMetadata = sinon.fake.resolves(true);
   const restoreUpdateUMMGMetadata = cmrUtils.__set__('updateUMMGMetadata', fakeUpdateUMMGMetadata);
 
@@ -158,6 +160,7 @@ test('reconcileCMRMetadata calls updateUMMGMetadata if json metadata present', a
 
   sinon.restore();
   restoreUpdateUMMGMetadata();
+  restoreBucketsConfigDefaults();
 });
 
 test('updateCMRMetadata file throws error if incorrect cmrfile provided', async (t) => {

@@ -349,7 +349,7 @@ async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, publis
     if (published) {
       // do published thing.
     }
-    return Promise.resolve();
+    return Promise.resolve(ummgMetadata);
   }
   throw new errors.CMRMetaFileNotFound('Invalid CMR filetype passed to updateCMRMetadata');
 }
@@ -375,7 +375,6 @@ async function reconcileCMRMetadata(granuleId, updatedFiles, distEndpoint, publi
 
 
 module.exports = {
-  constructOnlineAccessUrls,
   getGranuleId,
   getCmrXMLFiles,
   isECHO10File,
