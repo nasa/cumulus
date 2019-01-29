@@ -87,7 +87,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
   This refers to Amazon SQS Dead-Letter Queues - these SQS queues are specifically configured to capture failed messages from other services/SQS queues/etc to allow for processing of failed messages.
 
-  For more on DLQs, see the [Amazon Documentation](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html) and the [Cumulus DLQ feature page](features/dead_letter_queues.md).
+  For more on DLQs, see the [Amazon Documentation](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html) and the [Cumulus DLQ feature page](features/lambda_dead_letter_queue.md).
 
 ### ECS
 
