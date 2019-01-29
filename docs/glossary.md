@@ -51,7 +51,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
   A template that defines an AWS Cloud Formation.
 
-  For more information, see the [ AWS intro page](https://aws.amazon.com/cloudformation/aws-cloudformation-templates/).
+  For more information, see the [AWS intro page](https://aws.amazon.com/cloudformation/aws-cloudformation-templates/).
 
 ### Cloudwatch
 
