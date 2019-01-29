@@ -12,9 +12,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
 ### API Gateway
 
-  A Cumulus component that provides an API that provides accessors to Cumulus functionality.
-
-  This component is published as a [NPM package](https://www.npmjs.com/package/@cumulus/apiAPI).   API documentation can be viewed [here](https://nasa.github.io/cumulus-api/).
+  Refers to [AWS's API Gateway](https://aws.amazon.com/api-gateway/).   Used by the Cumulus API.
 
 ### ARN
 
@@ -24,7 +22,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
 ### AWS
 
-  Amazon's Cloud Services Platform "Amazon Web Services".
+  See: [aws.amazon.com](aws.amazon.com)
 
 ### AWS Lambda/Lambda Function
 
@@ -35,7 +33,6 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 ### AWS Access Keys
 
   Access credentials that give you access to AWS to act as a IAM user programatically or from the command line.
-
   For more information, see the [AWS IAM Documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html).
 
 ### Bucket
