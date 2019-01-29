@@ -64,7 +64,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
 ### Cloud Notification Mechanism (CNM)
 
-  An interface mechanism to support cloud-based ingest messageing.
+  An interface mechanism to support cloud-based ingest messaging.   Still in development/review.
 
 ### Common Metadata Repository (CMR)
 
