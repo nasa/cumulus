@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const { URL } = require('url');
 const supertest = require('supertest');
 const got = require('got');
 
@@ -32,6 +33,8 @@ describe('Distribution API', () => {
   let server;
   let request;
 
+  process.env.EARTHDATA_BASE_URL = 'https://uat.urs.earthdata.nasa.gov';
+
   beforeAll(async (done) => {
     process.env.PORT = 5002;
     await prepareDistributionApi();
@@ -47,14 +50,23 @@ describe('Distribution API', () => {
     server.close(done);
   });
 
-  it('returns a redirect to an OAuth2 provider', async (done) => {
+  it('redirects to Earthdata login for unauthorized requests', async () => {
+    let authorizeUrl = await request
+      .get(`/${config.bucket}/${fileKey}`)
+      .set('Accept', 'application/json')
+      .redirects(0)
+      .then((res) => new URL(res.headers.location));
+    expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
+  });
+
+  it('downloads the requested science file for authorized requests', async (done) => {
     const authorizeUrl = await request
       .get(`/${config.bucket}/${fileKey}`)
       .set('Accept', 'application/json')
       .redirects(0)
       .then((res) => res.headers.location);
 
-    const response = await handleEarthdataLoginAndRedirect(authorizeUrl);
+    const response = await handleEarthdataLoginAndRedirect(authorizeUrl, process.env.DISTRIBUTION_URL);
     const { ['set-cookie']: cookie, location: fileUrl } = response.headers;
 
     let fileContent = '';
