@@ -539,6 +539,38 @@ Resources:
                 Action:
                   - lambda:InvokeFunction
                 Resource: "*"
+                - Effect: Allow
+                Action:
+                  - ecr:*
+                  - cloudtrail:LookupEvents
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                - ecs:RunTask
+                Resource:
+                - "*"
+              - Effect: Allow
+                Action:
+                - ecs:StopTask
+                - ecs:DescribeTasks
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                - events:PutTargets
+                - events:PutRule
+                - events:DescribeRule
+                Resource:
+                - arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/StepFunctionsGetEventsForECSTaskRule
+              - Effect: Allow
+                Action:
+                  - autoscaling:Describe*
+                  - cloudwatch:*
+                  - logs:*
+                  - sns:*
+                  - iam:GetPolicy
+                  - iam:GetPolicyVersion
+                  - iam:GetRole
+                Resource: "*"
 
   ECSRole:
     Type: AWS::IAM::Role
