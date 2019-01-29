@@ -33,10 +33,12 @@ describe('Distribution API', () => {
   let server;
   let request;
 
+  process.env.PORT = 5002;
   process.env.EARTHDATA_BASE_URL = 'https://uat.urs.earthdata.nasa.gov';
+  process.env.DEPLOYMENT_ENDPOINT = `http://localhost:${process.env.PORT}/redirect`;
+  process.env.DISTRIBUTION_URL = `http://localhost:${process.env.PORT}`;
 
   beforeAll(async (done) => {
-    process.env.PORT = 5002;
     await prepareDistributionApi();
 
     await uploadTestDataToBucket(config.bucket, s3Data, testDataFolder);
