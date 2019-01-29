@@ -68,10 +68,10 @@ async function runTestUsingBuckets(buckets, testFunction) {
  * @returns {Object} with keys of internalBucket, and publicBucket.
  */
 async function setupBucketsConfig() {
-  const bucket = process.env.system_bucket;
+  const systemBucket = process.env.system_bucket;
   const buckets = {
     protected: {
-      name: bucket,
+      name: systemBucket,
       type: 'protected'
     },
     public: {
@@ -82,12 +82,12 @@ async function setupBucketsConfig() {
 
   process.env.DISTRIBUTION_ENDPOINT = 'http://example.com/';
   await putObject({
-    Bucket: bucket,
+    Bucket: systemBucket,
     Key: `${process.env.stackName}/workflows/buckets.json`,
     Body: JSON.stringify(buckets)
   });
   await createBucket(buckets.public.name);
-  return { internalBucket: bucket, publicBucket: buckets.public.name };
+  return { internalBucket: systemBucket, publicBucket: buckets.public.name };
 }
 
 
@@ -713,6 +713,8 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   t.true(newUrls.includes(newDestination));
 
   CMR.prototype.ingestGranule.restore();
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await createBucket(process.env.system_bucket);
 });
 
 
@@ -754,18 +756,6 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
       filepath: destinationFilepath
     }
   ];
-
-  const event = {
-    httpMethod: 'PUT',
-    pathParameters: {
-      granuleName: newGranule.granuleId
-    },
-    headers: t.context.authHeaders,
-    body: JSON.stringify({
-      action: 'move',
-      destinations
-    })
-  };
 
   sinon.stub(
     CMR.prototype,
@@ -811,6 +801,8 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   t.true(updatedURLs.includes(newDestination));
 
   CMR.prototype.ingestGranule.restore();
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await createBucket(process.env.system_bucket);
 });
 
 test('PUT with action move returns failure if one granule file exists', async (t) => {

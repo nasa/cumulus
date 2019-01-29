@@ -183,17 +183,30 @@ async function bucketsConfigDefaults() {
   return bucketConfig(process.env.system_bucket, process.env.stackName);
 }
 
+
+/**
+ * returns a copy of object with anything on it's `Type` key removed.
+ * @param {Object} object
+ * @returns {Object} object clone with Type key removed.
+ */
+function stripTypeFromObject(object) {
+  /* eslint-disable-next-line no-unused-vars */
+  const { Type, ...strippedObject } = object;
+  return strippedObject;
+}
+
 /**
  * Construct a list of online access urls.
  *
  * @param {Array<Object>} files - array of file objects
  * @param {string} distEndpoint - distribution enpoint from config
  * @param {BucketsConfig} buckets -  Class instance
+ * @param {boolean} isUMMG -  boolean to select URL behavior for UMMG vs ECHO10
  * @returns {Array<{URL: string, URLDescription: string}>}
  *   returns the list of online access url objects
  */
-function constructOnlineAccessUrls(files, distEndpoint, buckets) {
-  const urls = [];
+function constructOnlineAccessUrls(files, distEndpoint, buckets, isUMMG = false) {
+  let urls = [];
 
   files.forEach((file) => {
     const urlObj = {};
@@ -203,14 +216,21 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets) {
       const extension = urljoin(file.bucket, `${file.filepath}`);
       urlObj.URL = urljoin(distEndpoint, extension);
       urlObj.URLDescription = 'File to download';
+      urlObj.Type = 'GET DATA';
       urls.push(urlObj);
     }
     else if (bucketType === 'public') {
       urlObj.URL = `https://${file.bucket}.s3.amazonaws.com/${file.filepath}`;
       urlObj.URLDescription = 'File to download';
+      urlObj.Type = 'GET DATA';
       urls.push(urlObj);
     }
   });
+
+  if (!isUMMG) {
+    urls = urls.map(stripTypeFromObject);
+  }
+
   return urls;
 }
 
@@ -228,8 +248,21 @@ function getCmrFileObjs(files) {
   return files.filter((file) => isCMRFile(file));
 }
 
-async function updateUMMGMetadata() {
-  return { fakeMetadata: 'is here' };
+async function updateUMMGMetadata(cmrFile, files, distEndpoint, buckets) {
+  const isUMMG = true;
+  const urls = constructOnlineAccessUrls(files, distEndpoint, buckets, isUMMG);
+  const metadataObject = await metadataObjectFromCMRJSONFile(cmrFile.filename);
+  _set(metadataObject, 'items[0].umm.RelatedUrls', urls);
+
+  const tags = await aws.s3GetObjectTagging(cmrFile.bucket, cmrFile.filepath);
+  const tagsQueryString = aws.s3TagSetToQueryString(tags.TagSet);
+  await aws.promiseS3Upload({
+    Bucket: cmrFile.bucket,
+    Key: cmrFile.filepath,
+    Body: JSON.stringify(metadataObject),
+    Tagging: tagsQueryString
+  });
+  return metadataObject;
 }
 
 /** helper to build an CMR credential object
@@ -311,7 +344,12 @@ async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, publis
     return Promise.resolve();
   }
   if (isUMMGFile(cmrFile.filename)) {
-    return updateUMMGMetadata();
+    const buckets = new BucketsConfig(await bucketsConfigDefaults());
+    const ummgMetadata = await updateUMMGMetadata(cmrFile, files, distEndpoint, buckets);
+    if (published) {
+      // do published thing.
+    }
+    return Promise.resolve();
   }
   throw new errors.CMRMetaFileNotFound('Invalid CMR filetype passed to updateCMRMetadata');
 }
