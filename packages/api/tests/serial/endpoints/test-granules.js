@@ -797,8 +797,9 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   const ummgObject = await metadataObjectFromCMRJSONFile(newGranule.files[1].filename);
   const updatedURLs = ummgObject.items[0].umm.RelatedUrls.map((urlObj) => urlObj.URL);
   const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
-
+  const originalMetadataLocation = 'https://e4ftl01.cr.usgs.gov:40521//TEST2/MOLT/MOD11A1.006/2000.12.31/MOD11A1.A2000366.h22v16.006.2015111155135.hdf';
   t.true(updatedURLs.includes(newDestination));
+  // t.true(updatedURLs.includes(originalMetadataLocation));
 
   CMR.prototype.ingestGranule.restore();
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
