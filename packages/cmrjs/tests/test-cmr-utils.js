@@ -7,6 +7,7 @@ const {
 
 const cmrUtil = rewire('../cmr-utils');
 const isCMRFile = cmrUtil.__get__('isCMRFile');
+const stripTypeFromObject = cmrUtil.__get__('stripTypeFromObject');
 
 
 test('getGranuleId is successful', (t) => {
@@ -82,4 +83,28 @@ test('isCMRFile returns falsy if fileobject does not valid json filenamename', (
 test('isCMRFile returns falsy if fileobject is invalid', (t) => {
   const fileObj = { bad: 'object' };
   t.falsy(isCMRFile(fileObj));
+});
+
+test('stripTypeFromObject removes a Type key from object', (t) => {
+  const testObj = {
+    leaveme: 'a value',
+    Type: 'should be stripped'
+  };
+  const expected = { leaveme: 'a value' };
+
+  const actual = stripTypeFromObject(testObj);
+
+  t.deepEqual(expected, actual);
+});
+
+test('stripTypeFromObject returns same object if Type key does not exist', (t) => {
+  const testObj = {
+    leaveme: 'a value',
+    type: 'should not be stripped'
+  };
+  const expected = { ...testObj };
+
+  const actual = stripTypeFromObject(testObj);
+
+  t.deepEqual(expected, actual);
 });
