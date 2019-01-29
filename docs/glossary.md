@@ -62,17 +62,29 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
   For more information, see the [AWS User Guide](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html).
 
+### Cloud Notification Mechanism (CNM)
+
+  An interface mechanism to support cloud-based ingest messageing.
+
+### Common Metadata Repository (CMR)
+
+  "A high-performance, high-quality, continuously evolving metadata system that catalogs Earth Science data and associated service metadata records".  For more information, see [NASA's CMR page](https://cmr.earthdata.nasa.gov/).
+
 ### Collection (Cumulus)
 
   Cumulus Collections are logical sets of data objects of the same data type and version.
 
   For more information, see [cookbook reference page](data-cookbooks/setup.md#collections).
 
-### Cumulus Message Adapter
+### Cumulus Message Adapter (CMA)
 
   A library designed to help task developers integrate step function tasks into a Cumulus workflow by adapting task input/output into the Cumulus Message format.
 
   For more information, see [CMA workflow reference page](workflows/input_output#cumulus-message-adapter).
+
+### Distributed Active Archive Center (DAAC)
+
+  Refers to a specific organization that's part of NASA's distributed system of archive centers.   For more information see [EOSDIS's DAAC page](https://earthdata.nasa.gov/about/daacs)
 
 ### Dead Letter Queue (DLQ)
 
@@ -101,6 +113,10 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 ### GIBS
 
   [Global Imagery Browse Services](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/global-imagery-browse-services-gibs)
+
+### Granule
+
+  A granule is the smallest aggregation of data that can be independently managed (described, inventoried, and retrieved). Granules are always associated with a collection, which is a grouping of granules. A granule is a grouping of data files.
 
 ### IAM
 
