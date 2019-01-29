@@ -14,7 +14,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `@cumulus/common/BucketsConfig` adds a new helper class `BucketsConfig` for working with bucket stack configuration and bucket names.
   `@cumulus/common/aws` adds new fucntion `s3PutObjectTagging` as a convenience for the aws  [s3().putObjectTagging](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property) function.
   `@cumulus/cmrjs` Adds:
-      - `constructOnlineAccessUrls` - Create list of correct URLs for echo10 metadata.
 	  -	`isECHO10File` - Identify an echo10 metadata file.
       - `metadataObjectFromCMRXMLFile` Read and parse CMR XML file from s3.
       - `updateEcho10XMLMetadata` Modify a cmr.xml file with updated information.
