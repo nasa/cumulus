@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
       - `updateCMRMetadata` Modify a cmr metadata file with updated information.
 	  - `publishECHO10XML2CMR` Posts XML CMR data to CMR service.
 	  - `reconcileCMRMetadata` Reconciles cmr metadata file after a file moves.
+- Adds some ECS and other permissions to StepRole to enable running ECS tasks from a workflow
 
 
 ### Changed
