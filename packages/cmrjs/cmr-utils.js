@@ -201,11 +201,11 @@ function stripTypeFromObject(object) {
  * @param {Array<Object>} files - array of file objects
  * @param {string} distEndpoint - distribution enpoint from config
  * @param {BucketsConfig} buckets -  Class instance
- * @param {boolean} isUMMG -  boolean to select URL behavior for UMMG vs ECHO10
+ * @param {boolean} isECHO10 -  boolean to select URL behavior for UMMG vs ECHO10
  * @returns {Array<{URL: string, URLDescription: string}>}
  *   returns the list of online access url objects
  */
-function constructOnlineAccessUrls(files, distEndpoint, buckets, isUMMG = false) {
+function constructOnlineAccessUrls(files, distEndpoint, buckets, isECHO10 = true) {
   let urls = [];
 
   files.forEach((file) => {
@@ -227,7 +227,7 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets, isUMMG = false)
     }
   });
 
-  if (!isUMMG) {
+  if (isECHO10) {
     urls = urls.map(stripTypeFromObject);
   }
 
@@ -249,8 +249,8 @@ function getCmrFileObjs(files) {
 }
 
 async function updateUMMGMetadata(cmrFile, files, distEndpoint, buckets) {
-  const isUMMG = true;
-  const urls = constructOnlineAccessUrls(files, distEndpoint, buckets, isUMMG);
+  const isECHO10 = false;
+  const urls = constructOnlineAccessUrls(files, distEndpoint, buckets, isECHO10);
   const metadataObject = await metadataObjectFromCMRJSONFile(cmrFile.filename);
   _set(metadataObject, 'items[0].umm.RelatedUrls', urls);
 
