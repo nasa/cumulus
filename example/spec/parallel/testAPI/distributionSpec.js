@@ -1,6 +1,7 @@
 'use strict';
 
 // const path = require('path');
+const fs = require('fs');
 const { URL } = require('url');
 const base64 = require('base-64')
 const supertest = require('supertest');
@@ -21,7 +22,7 @@ const {
 } = require('../../helpers/testUtils');
 const config = loadConfig();
 
-const s3data = [
+const s3Data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
 ];
 
@@ -30,6 +31,8 @@ describe('Distribution API', () => {
   const testDataFolder = createTestDataPath(testId);
   const fileKey = `${testDataFolder}/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met`;
 
+  const fileStats = fs.statSync(require.resolve(s3Data[0]));
+
   let server;
   let request;
 
@@ -37,7 +40,7 @@ describe('Distribution API', () => {
     process.env.PORT = 5002;
     await prepareDistributionApi();
 
-    await uploadTestDataToBucket(config.bucket, s3data, testDataFolder);
+    await uploadTestDataToBucket(config.bucket, s3Data, testDataFolder);
 
     server = distributionApp.listen(process.env.PORT, done);
     request = supertest.agent(server);
@@ -56,7 +59,7 @@ describe('Distribution API', () => {
     expect(fileExists).toEqual(true);
   });
 
-  it('returns a redirect to an OAuth2 provider', async () => {
+  it('returns a redirect to an OAuth2 provider', async (done) => {
     const authorizeUrl = await request
       .get(`/${config.bucket}/${fileKey}`)
       .set('Accept', 'application/json')
@@ -65,7 +68,7 @@ describe('Distribution API', () => {
 
     const auth = base64.encode(process.env.EARTHDATA_USERNAME + ':' + process.env.EARTHDATA_PASSWORD);
 
-    var requestOptions = {
+    const requestOptions = {
       method: 'POST',
       form: true,
       body: { credentials: auth },
@@ -101,13 +104,15 @@ describe('Distribution API', () => {
         return res.headers.location;
       });
 
-    const fileContent = await got(fileUrl, { headers: { cookie } })
-      .catch((err) => {
-        console.log(err);
+    let fileContent = '';
+    await got.stream(fileUrl, { headers: { cookie } })
+      .on('data', (chunk) => {
+        console.log(`Received ${chunk.length} bytes of data.`);
+        fileContent += chunk;
       })
-      .then((res) => {
-        console.log(res.body);
-        return res.body;
+      .on('end', () => {
+        expect(fileContent.length).toEqual(fileStats.size);
+        done();
       });
   });
 
