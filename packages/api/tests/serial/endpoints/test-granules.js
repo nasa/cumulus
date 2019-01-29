@@ -710,13 +710,14 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
 
   const newUrls = xmlObject.Granule.OnlineAccessURLs.OnlineAccessURL.map((obj) => obj.URL);
   const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
+  const originalMetadataLocation = 'https://fvk4vim143.execute-api.us-east-1.amazonaws.com/dev/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml';
   t.true(newUrls.includes(newDestination));
+  t.true(newUrls.includes(originalMetadataLocation));
 
   CMR.prototype.ingestGranule.restore();
-  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await createBucket(process.env.system_bucket);
+  await deleteBuckets([publicBucket, internalBucket]);
+  await createBucket(internalBucket);
 });
-
 
 test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   const { internalBucket, publicBucket } = await setupBucketsConfig();
@@ -799,11 +800,11 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
   const originalMetadataLocation = 'https://e4ftl01.cr.usgs.gov:40521//TEST2/MOLT/MOD11A1.006/2000.12.31/MOD11A1.A2000366.h22v16.006.2015111155135.hdf';
   t.true(updatedURLs.includes(newDestination));
-  // t.true(updatedURLs.includes(originalMetadataLocation));
+  t.true(updatedURLs.includes(originalMetadataLocation));
 
   CMR.prototype.ingestGranule.restore();
-  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await createBucket(process.env.system_bucket);
+  await deleteBuckets([publicBucket, internalBucket]);
+  await createBucket(internalBucket);
 });
 
 test('PUT with action move returns failure if one granule file exists', async (t) => {
