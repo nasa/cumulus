@@ -8,13 +8,12 @@ const models = require('../models');
 const testUtils = require('../lib/testUtils');
 const workflowList = require('../app/data/workflow_list.json');
 
-const requiredEnvVariables = [
+const defaultRequiredEnvVariables = [
   'system_bucket',
   'stackName',
-  // 'EARTHDATA_BASE_URL',
+  'EARTHDATA_BASE_URL',
   'EARTHDATA_CLIENT_ID',
   'EARTHDATA_CLIENT_PASSWORD',
-  // 'API_ENDPOINT'
 ];
 
 async function createTable(Model, tableName) {
@@ -103,8 +102,9 @@ async function prepareServices(stackName, bucket) {
   await s3().createBucket({ Bucket: bucket }).promise();
 }
 
-function checkEnvVariablesAreSet() {
-  requiredEnvVariables.forEach((env) => {
+function checkEnvVariablesAreSet(moreRequiredEnvVars) {
+  const requiredEnvVars = defaultRequiredEnvVariables.concat(moreRequiredEnvVars);
+  requiredEnvVars.forEach((env) => {
     if (!process.env[env]) {
       throw new Error(`Environment Variable ${env} is not set!`);
     }
@@ -158,6 +158,7 @@ async function createDBRecords(user, stackName) {
 
 async function serveApi(user, stackName = 'localrun') {
   const port = process.env.PORT || 5001;
+  const requiredEnvVars = ['API_ENDPOINT'];
 
   if (inTestMode()) {
     // set env variables
@@ -172,13 +173,13 @@ async function serveApi(user, stackName = 'localrun') {
     // create tables if not already created
     await checkOrCreateTables(stackName);
 
-    checkEnvVariablesAreSet();
+    checkEnvVariablesAreSet(requiredEnvVars);
     await prepareServices(stackName, process.env.system_bucket);
     await populateBucket(process.env.system_bucket, stackName);
     await createDBRecords(user, stackName);
   }
   else {
-    checkEnvVariablesAreSet();
+    checkEnvVariablesAreSet(requiredEnvVars);
   }
 
   console.log(`Starting server on port ${port}`);
@@ -188,6 +189,7 @@ async function serveApi(user, stackName = 'localrun') {
 
 async function prepareDistributionApi(user, stackName = 'localrun') {
   const port = process.env.PORT || 5002;
+  const requiredEnvVars = ['DEPLOYMENT_ENDPOINT', 'DISTRIBUTION_URL'];
 
   if (inTestMode()) {
     // set env variables
@@ -200,13 +202,13 @@ async function prepareDistributionApi(user, stackName = 'localrun') {
     // create tables if not already created
     await checkOrCreateTables(stackName);
 
-    checkEnvVariablesAreSet();
+    checkEnvVariablesAreSet(requiredEnvVars);
     await prepareServices(stackName, process.env.system_bucket);
     await populateBucket(process.env.system_bucket, stackName);
     await createDBRecords(user, stackName);
   }
   else {
-    checkEnvVariablesAreSet();
+    checkEnvVariablesAreSet(requiredEnvVars);
   }
 }
 
