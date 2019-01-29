@@ -61,7 +61,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
 ### Cloud Notification Mechanism (CNM)
 
-  An interface mechanism to support cloud-based ingest messaging.   Still in development/review.
+  An interface mechanism to support cloud-based ingest messaging.   For more information, see [Earthdata Wiki's CNM page](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cloud+Notification+Mechanism).
 
 ### Common Metadata Repository (CMR)
 
