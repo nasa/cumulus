@@ -1,5 +1,6 @@
 'use strict';
 
+const get = require('lodash.get');
 const Ajv = require('ajv');
 const aws = require('@cumulus/common/aws');
 const { deprecate } = require('@cumulus/common/util');
@@ -135,9 +136,15 @@ class Manager {
    * @param {Object} params.tableRange - an object containing "name" and "type"
    *   properties, which specify the sort key of the DynamoDB table.
    * @param {Object} params.schema - the JSON schema to validate the records
-   *   against.  Defaults to {}.
+   *   against.
+   * @param {boolean} [params.validate=true] - whether items should be validated
+   *   before being written to the database.  The _only_ time this should ever
+   *   be set to false is when restoring from a backup, and that code is already
+   *   written.  So no other time.  Don't even think about it.  I know you're
+   *   going to say, "but it's only for this one test case".  No.
+   *   Find another way.
    */
-  constructor(params) {
+  constructor(params = {}) {
     // Make sure all required parameters are present
     if (!params.tableName) throw new TypeError('params.tableName is required');
     if (!params.tableHash) throw new TypeError('params.tableHash is required');
@@ -148,6 +155,8 @@ class Manager {
     this.schema = params.schema;
     this.dynamodbDocClient = aws.dynamodbDocClient({ convertEmptyValues: true });
     this.removeAdditional = false;
+
+    this.validate = get(params, 'validate', true);
   }
 
   /**
@@ -250,9 +259,11 @@ class Manager {
       updatedAt: now
     }));
 
-    putsWithTimestamps.forEach((item) => {
-      this.constructor.recordIsValid(item, this.schema, this.removeAdditional);
-    });
+    if (this.validate) {
+      putsWithTimestamps.forEach((item) => {
+        this.constructor.recordIsValid(item, this.schema, this.removeAdditional);
+      });
+    }
 
     const putRequests = putsWithTimestamps.map((Item) => ({
       PutRequest: { Item }
@@ -300,10 +311,12 @@ class Manager {
       };
     });
 
-    // Make sure that all of the items are valid
-    itemsWithTimestamps.forEach((item) => {
-      this.constructor.recordIsValid(item, this.schema, this.removeAdditional);
-    });
+    if (this.validate) {
+      // Make sure that all of the items are valid
+      itemsWithTimestamps.forEach((item) => {
+        this.constructor.recordIsValid(item, this.schema, this.removeAdditional);
+      });
+    }
 
     // Suggested method of handling a loop containing an await, according to
     // https://codeburst.io/javascript-async-await-with-foreach-b6ba62bbf404
@@ -394,11 +407,13 @@ class Manager {
       )
     );
 
-    this.constructor.recordIsValid(
-      actualUpdates,
-      schemaWithoutRequiredParams,
-      this.removeAdditional
-    );
+    if (this.validate) {
+      this.constructor.recordIsValid(
+        actualUpdates,
+        schemaWithoutRequiredParams,
+        this.removeAdditional
+      );
+    }
 
     // Build the actual update request
     const attributeUpdates = {};
