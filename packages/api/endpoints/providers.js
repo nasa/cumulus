@@ -6,7 +6,6 @@ const {
   AssociatedRulesError,
   RecordDoesNotExist
 } = require('../lib/errors');
-const { Search } = require('../es/search');
 
 /**
  * List all providers
@@ -16,11 +15,9 @@ const { Search } = require('../es/search');
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const search = new Search({
-    queryStringParameters: req.query
-  }, 'provider');
-  const response = await search.query();
-  return res.send(response);
+  const instance = new models.Provider();
+  const result = await instance.search(req.query);   
+  return res.send(result);
 }
 
 /**

@@ -2,7 +2,6 @@
 
 const router = require('express-promise-router')();
 const models = require('../models');
-const Collection = require('../es/collections');
 const {
   AssociatedRulesError,
   RecordDoesNotExist
@@ -16,10 +15,8 @@ const {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const collection = new Collection({
-    queryStringParameters: req.query
-  });
-  const result = await collection.query();
+  const instance = new models.Collection();
+  const result = await instance.search(req.query);   
   return res.send(result);
 }
 

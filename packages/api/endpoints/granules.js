@@ -3,7 +3,6 @@
 const router = require('express-promise-router')();
 const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
-const Search = require('../es/search').Search;
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
 
@@ -15,10 +14,8 @@ const { deconstructCollectionId } = require('../lib/utils');
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const result = await (new Search({
-    queryStringParameters: req.query
-  }, 'granule')).query();
-
+  const instance = new models.Granule();
+  const result = await instance.search(req.query);   
   return res.send(result);
 }
 

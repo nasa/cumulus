@@ -1,7 +1,6 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const Search = require('../es/search').Search;
 const models = require('../models');
 const { RecordDoesNotExist } = require('../lib/errors');
 
@@ -14,11 +13,9 @@ const { RecordDoesNotExist } = require('../lib/errors');
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const search = new Search({
-    queryStringParameters: req.query
-  }, 'execution');
-  const response = await search.query();
-  return res.send(response);
+  const instance = new models.Execution();
+  const result = await instance.search(req.query);   
+  return res.send(result);
 }
 
 /**

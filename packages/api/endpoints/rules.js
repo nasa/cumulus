@@ -3,7 +3,6 @@
 const router = require('express-promise-router')();
 const models = require('../models');
 const { RecordDoesNotExist } = require('../lib/errors');
-const { Search } = require('../es/search');
 
 /**
  * List all rules.
@@ -13,11 +12,9 @@ const { Search } = require('../es/search');
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const search = new Search({
-    queryStringParameters: req.query
-  }, 'rule');
-  const response = await search.query();
-  return res.send(response);
+  const instance = new models.Rule();
+  const result = await instance.search(req.query);   
+  return res.send(result);
 }
 
 /**
