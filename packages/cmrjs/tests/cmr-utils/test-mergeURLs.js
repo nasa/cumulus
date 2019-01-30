@@ -47,7 +47,7 @@ test('Replaces an updated URL.', (t) => {
   t.deepEqual(expected.sort(sortByURL), actual.sort(sortByURL));
 });
 
-test('Replaces an updated URL, but keeps any additional metadata.', (t) => {
+test('Replaces an updated URL, but keeps any additional metadata from the original urlObject.', (t) => {
   const originalURLs = [
     {
       URL: 'https://path/to/metadata.cmr.xml',
@@ -86,13 +86,13 @@ test('Replaces an updated URL, but does not overwrite existing metadata fields.'
   ];
   const newURLs = [
     {
-      URL: 's3://path/to/metadata.cmr.xml',
+      URL: 's3://expected/to/change/path/to/metadata.cmr.xml',
       URLDescription: 'UPDATED METADATA TO BE IGNORED'
     }
   ];
   const expected = [
     {
-      URL: 's3://path/to/metadata.cmr.xml',
+      URL: 's3://expected/to/change/path/to/metadata.cmr.xml',
       URLDescription: 'File to download',
       MimeType: 'application/x-hdfeos'
     }
@@ -114,14 +114,14 @@ test('Replaces an updated URL and adds new metadata, but does not overwrite exis
     {
       URL: 's3://new/path/to/metadata.cmr.xml',
       URLDescription: 'UPDATED METADATA TO BE IGNORED',
-      Type: 'GET DATA'
+      Type: 'expected to add: GET DATA'
     }
   ];
   const expected = [
     {
       URL: 's3://new/path/to/metadata.cmr.xml',
       URLDescription: 'File to download',
-      Type: 'GET DATA'
+      Type: 'expected to add: GET DATA'
     }
   ];
 
@@ -152,7 +152,7 @@ test('Does Complicated merging', (t) => {
     {
       URL: 's3://new/path/to/metadata.cmr.xml',
       URLDescription: 'from Updated',
-      Type: 'SHOULD BE IGNORED BUT WAS ACTUALLY: GET DATA'
+      Type: 'SHOULD BE IGNORED: GET DATA'
     },
     {
       URL: 's3://new/path/to/data.hdf',
