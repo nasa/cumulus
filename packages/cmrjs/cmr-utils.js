@@ -191,8 +191,8 @@ async function bucketsConfigDefaults() {
  * @returns {function} fucntion that will remove key from object.
  */
 function stripKeyFromObject(key) {
-  return function(object) {
-    const {[key]:junk, ...objectWithoutKey } = object;
+  return function (object) {
+    const { [key]: junk, ...objectWithoutKey } = object;
     return objectWithoutKey;
   };
 }
@@ -261,26 +261,35 @@ function getCmrFileObjs(files) {
 function mergeURLs(original, updated) {
   const updatedURLBasenames = updated.map((url) => path.basename(url.URL));
 
-  // TODO [MHS, 2019-01-29] could use partition here and I need to clean up these names.
-  const originalKeepers = original.filter(
+  const unchangedOriginals = original.filter(
     (url) => !updatedURLBasenames.includes(path.basename(url.URL))
   );
-  const updatedMergedWithOriginal = updated.map((url) => {
+  const updatedWithMergedOriginals = updated.map((url) => {
     const matchedOriginal = original.filter(
       (ourl) => path.basename(ourl.URL) === path.basename(url.URL)
     );
     if (matchedOriginal.length === 1) {
-      const copyOfMatch = { ...matchedOriginal[0] };
-      delete copyOfMatch.URL;
-      return { ...url, ...copyOfMatch };
+      /* eslint-disable-next-line no-unused-vars  */
+      const { URL: unused, ...matchWithoutURL } = { ...matchedOriginal[0] };
+      return { ...url, ...matchWithoutURL };
     }
     return url;
   });
 
-  return [...originalKeepers, ...updatedMergedWithOriginal];
+  return [...unchangedOriginals, ...updatedWithMergedOriginals];
 }
 
 
+/**
+ * After files are moved, create new online access URLs and then update the S3
+ * UMMG cmr.json file with this information.
+ *
+ * @param {Object} cmrFile cmr.json file whose contents will be updated.
+ * @param {Array<Object>} files - array of moved file objects.
+ * @param {string} distEndpoint - distribution endpoint form config.
+ * @param {BucketsConfig} buckets - stack BucketConfig instance.
+ * @returns {Promise} returns promised updated UMMG metadata object.
+ */
 async function updateUMMGMetadata(cmrFile, files, distEndpoint, buckets) {
   const isECHO10 = false;
   const newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets, isECHO10);
@@ -288,7 +297,6 @@ async function updateUMMGMetadata(cmrFile, files, distEndpoint, buckets) {
 
   const originalURLs = _get(metadataObject, 'items[0].umm.RelatedUrls', []);
   const mergedURLs = mergeURLs(originalURLs, newURLs);
-
   _set(metadataObject, 'items[0].umm.RelatedUrls', mergedURLs);
 
   const tags = await aws.s3GetObjectTagging(cmrFile.bucket, cmrFile.filepath);
