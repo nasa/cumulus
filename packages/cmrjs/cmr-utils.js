@@ -261,7 +261,7 @@ function getCmrFileObjs(files) {
 function mergeURLs(original, updated) {
   const updatedURLBasenames = updated.map((url) => path.basename(url.URL));
 
-  // TODO [MHS, 2019-01-29] could use partition.
+  // TODO [MHS, 2019-01-29] could use partition here and I need to clean up these names.
   const originalKeepers = original.filter(
     (url) => !updatedURLBasenames.includes(path.basename(url.URL))
   );
