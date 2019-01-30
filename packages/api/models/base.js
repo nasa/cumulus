@@ -2,12 +2,13 @@
 
 const Ajv = require('ajv');
 const cloneDeep = require('lodash.clonedeep');
+const pWaitFor = require('p-wait-for');
 const aws = require('@cumulus/common/aws');
 const { deprecate } = require('@cumulus/common/util');
-const pWaitFor = require('p-wait-for');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { errorify } = require('../lib/utils');
 const { RecordDoesNotExist } = require('../lib/errors');
+const { search } = require('../lib/search');
 
 async function enableStream(tableName) {
   const params = {
@@ -28,6 +29,18 @@ async function enableStream(tableName) {
   );
 }
 
+/**
+ * Helper for creating a dynamoDB table
+ *
+ * @param {string} tableName - dynamoDB table name 
+ * @param {Object} hash - object describing the dynamodb hash (primary key) field 
+ * @param {string} hash.name - name of the field 
+ * @param {string} hash.type - type of the field (e.g. S for string and N for number) 
+ * @param {Object} range - object describing the dynamodb range field 
+ * @param {string} range.name - name of the field 
+ * @param {string} range.type - type of the field (e.g. S for string and N for number) 
+ * @returns {Promise<Object>} aws dynamodb table creation response
+ */
 async function createTable(tableName, hash, range = null) {
   const params = {
     TableName: tableName,
@@ -267,6 +280,10 @@ class Manager {
     const itemsWithTimestamps = itemsArray.map((item) => {
       const clonedItem = cloneDeep(item);
       clonedItem.updatedAt = Date.now();
+
+      // also add timestamp to support legacy timestamp field in es
+      clonedItem.timestamp = clonedItem.updatedAt;
+    
       if (!clonedItem.createdAt) clonedItem.createdAt = clonedItem.updatedAt;
       return clonedItem;
     });
@@ -334,6 +351,10 @@ class Manager {
     }
 
     return resp;
+  }
+
+  search(query) {
+    return search({ query, context: this }); 
   }
 
   async delete(item) {
