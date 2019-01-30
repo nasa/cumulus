@@ -70,7 +70,6 @@
     "node-forge": "^0.7.5",
     "p-timeout": "2.0.1",
     "parallel": "^1.2.0",
-    "supertest": "^3.4.2",
     "tempy": "^0.2.1",
     "url-join": "^1.1.0",
     "uuid": "^3.2.1"

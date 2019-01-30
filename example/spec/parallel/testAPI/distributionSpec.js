@@ -2,7 +2,6 @@
 
 const fs = require('fs');
 const { URL } = require('url');
-const supertest = require('supertest');
 const got = require('got');
 
 const { distributionApp } = require('@cumulus/api/app/distribution');
@@ -32,7 +31,6 @@ describe('Distribution API', () => {
   const fileStats = fs.statSync(require.resolve(s3Data[0]));
 
   let server;
-  let request;
 
   beforeAll(async (done) => {
     process.env.PORT = 5002;
@@ -50,7 +48,6 @@ describe('Distribution API', () => {
     await uploadTestDataToBucket(config.bucket, s3Data, testDataFolder);
 
     server = distributionApp.listen(process.env.PORT, done);
-    request = supertest.agent(server);
   });
 
   afterAll(async (done) => {
@@ -59,19 +56,22 @@ describe('Distribution API', () => {
   });
 
   it('redirects to Earthdata login for unauthorized requests', async () => {
-    let authorizeUrl = await request
-      .get(`/${config.bucket}/${fileKey}`)
-      .set('Accept', 'application/json')
-      .redirects(0)
+    let authorizeUrl = await
+      got(
+        `${process.env.DISTRIBUTION_URL}/${config.bucket}/${fileKey}`,
+        { followRedirect: false }
+      )
       .then((res) => new URL(res.headers.location));
+
     expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
   });
 
   it('downloads the requested science file for authorized requests', async (done) => {
-    const authorizeUrl = await request
-      .get(`/${config.bucket}/${fileKey}`)
-      .set('Accept', 'application/json')
-      .redirects(0)
+    let authorizeUrl = await
+      got(
+        `${process.env.DISTRIBUTION_URL}/${config.bucket}/${fileKey}`,
+        { followRedirect: false }
+      )
       .then((res) => res.headers.location);
 
     // Login with Earthdata and intercept the redirect URL.
