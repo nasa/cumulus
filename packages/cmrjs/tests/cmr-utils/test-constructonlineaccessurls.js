@@ -22,7 +22,6 @@ test.beforeEach((t) => {
 });
 
 test('returns correct url for protected data', (t) => {
-  const isECHO10 = true;
   const endpoint = 'https://endpoint';
   const movedFiles = [
     {
@@ -33,38 +32,15 @@ test('returns correct url for protected data', (t) => {
   const expected = [
     {
       URL: `${endpoint}/${t.context.bucketConfig.protected.name}/some/path/protected-file.hdf`,
-      URLDescription: 'File to download'
-    }
-  ];
-
-  const actual = constructOnlineAccessUrls(movedFiles, endpoint, t.context.buckets, isECHO10);
-
-  t.deepEqual(actual, expected);
-});
-
-test('Includes Type on url object if UMMG (is not ECHO10XML)', (t) => {
-  const isECHO10 = false;
-  const endpoint = 'https://endpoint';
-  const protectedBucket = t.context.bucketConfig.protected.name;
-  const movedFiles = [
-    {
-      filepath: 'some/path/protected-file.hdf',
-      bucket: protectedBucket
-    }
-  ];
-  const expected = [
-    {
-      URL: `${endpoint}/${protectedBucket}/some/path/protected-file.hdf`,
       URLDescription: 'File to download',
       Type: 'GET DATA'
     }
   ];
 
-  const actual = constructOnlineAccessUrls(movedFiles, endpoint, t.context.buckets, isECHO10);
+  const actual = constructOnlineAccessUrls(movedFiles, endpoint, t.context.buckets);
 
   t.deepEqual(actual, expected);
 });
-
 
 test('Returns correct url object for public data.', (t) => {
   const endpoint = 'https://endpoint';
@@ -78,7 +54,8 @@ test('Returns correct url object for public data.', (t) => {
   const expected = [
     {
       URL: `https://${publicBucketName}.s3.amazonaws.com/some/path/browse_image.jpg`,
-      URLDescription: 'File to download'
+      URLDescription: 'File to download',
+      Type: 'GET DATA'
     }
   ];
 
@@ -106,7 +83,6 @@ test('Returns empty list for private data.', (t) => {
 
 test('returns an array of correct url objects given a list of moved files.', (t) => {
   const endpoint = 'https://endpoint';
-  const isECHO10 = true;
   const movedFiles = [
     {
       filepath: 'hidden/secretfile.gpg',
@@ -125,51 +101,16 @@ test('returns an array of correct url objects given a list of moved files.', (t)
   const expected = [
     {
       URL: `${endpoint}/${t.context.bucketConfig.protected.name}/another/path/protected.hdf`,
-      URLDescription: 'File to download'
+      URLDescription: 'File to download',
+      Type: 'GET DATA'
     },
     {
       URL: `https://${t.context.bucketConfig.public.name}.s3.amazonaws.com/path/publicfile.jpg`,
-      URLDescription: 'File to download'
+      URLDescription: 'File to download',
+      Type: 'GET DATA'
     }
   ];
 
-  const actual = constructOnlineAccessUrls(movedFiles, endpoint, t.context.buckets, isECHO10);
-  t.deepEqual(actual.sort(sortByURL), expected.sort(sortByURL));
-});
-
-
-test('returns an array of correct url objects given a list of moved files in UMMG.', (t) => {
-  const isECHO10 = false;
-  const endpoint = 'https://endpoint';
-  const movedFiles = [
-    {
-      filepath: 'hidden/secretfile.gpg',
-      bucket: t.context.bucketConfig.private.name
-    },
-    {
-      filepath: 'path/publicfile.jpg',
-      bucket: t.context.bucketConfig.public.name
-    },
-    {
-      filepath: 'another/path/protected.hdf',
-      bucket: t.context.bucketConfig.protected.name
-    }
-  ];
-
-  const expected = [
-    {
-      Type: 'GET DATA',
-      URL: `${endpoint}/${t.context.bucketConfig.protected.name}/another/path/protected.hdf`,
-      URLDescription: 'File to download'
-    },
-    {
-      Type: 'GET DATA',
-      URL: `https://${t.context.bucketConfig.public.name}.s3.amazonaws.com/path/publicfile.jpg`,
-      URLDescription: 'File to download'
-    }
-  ];
-
-  const actual = constructOnlineAccessUrls(movedFiles, endpoint, t.context.buckets, isECHO10);
-
+  const actual = constructOnlineAccessUrls(movedFiles, endpoint, t.context.buckets);
   t.deepEqual(actual.sort(sortByURL), expected.sort(sortByURL));
 });

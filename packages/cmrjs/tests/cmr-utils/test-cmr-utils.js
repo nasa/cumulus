@@ -100,7 +100,7 @@ test('stripKeyFromObject removes a Type key from object', (t) => {
 test('stripKeyFromObject returns same object if Type key does not exist', (t) => {
   const testObj = {
     leaveme: 'a value',
-    existing: 'should not be stripped',
+    existing: 'should not be stripped from object'
   };
   const expected = { ...testObj };
 
