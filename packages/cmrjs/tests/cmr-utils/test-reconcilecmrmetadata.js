@@ -2,7 +2,7 @@ const test = require('ava');
 const sinon = require('sinon');
 const rewire = require('rewire');
 
-const cmrUtils = rewire('../cmr-utils');
+const cmrUtils = rewire('../../cmr-utils');
 
 const { log } = require('@cumulus/common');
 

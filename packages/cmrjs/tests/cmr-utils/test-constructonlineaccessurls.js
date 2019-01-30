@@ -4,7 +4,7 @@ const rewire = require('rewire');
 const { randomId } = require('@cumulus/common/test-utils');
 const { BucketsConfig } = require('@cumulus/common');
 
-const cmrUtils = rewire('../cmr-utils');
+const cmrUtils = rewire('../../cmr-utils');
 
 const constructOnlineAccessUrls = cmrUtils.__get__('constructOnlineAccessUrls');
 
