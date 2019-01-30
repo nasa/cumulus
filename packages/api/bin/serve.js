@@ -13,7 +13,7 @@ const defaultRequiredEnvVariables = [
   'stackName',
   'EARTHDATA_BASE_URL',
   'EARTHDATA_CLIENT_ID',
-  'EARTHDATA_CLIENT_PASSWORD',
+  'EARTHDATA_CLIENT_PASSWORD'
 ];
 
 async function createTable(Model, tableName) {
@@ -213,6 +213,7 @@ async function prepareDistributionApi(user, stackName = 'localrun') {
 }
 
 async function serveDistributionApi(user, stackName = 'localrun') {
+  const port = process.env.PORT || 5002;
   await prepareDistributionApi(user, stackName);
 
   console.log(`Starting server on port ${port}`);
