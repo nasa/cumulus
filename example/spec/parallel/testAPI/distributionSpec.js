@@ -21,7 +21,7 @@ const {
 
 const config = loadConfig();
 const s3Data = [
-  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
+  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
 ];
 
 describe('Distribution API', () => {
@@ -59,12 +59,9 @@ describe('Distribution API', () => {
     let authorizeUrl;
 
     beforeAll(async () => {
-      authorizeUrl = await
-        got(
-          `${process.env.DISTRIBUTION_URL}/${config.bucket}/${fileKey}`,
-          { followRedirect: false }
-        )
-        .then((res) => new URL(res.headers.location));
+      authorizeUrl =
+        await got(`${process.env.DISTRIBUTION_URL}/${config.bucket}/${fileKey}`, { followRedirect: false })
+          .then((res) => new URL(res.headers.location));
     });
 
     it('redirects to Earthdata login for unauthorized requests', async () => {
@@ -79,7 +76,7 @@ describe('Distribution API', () => {
       // Make request to redirect URL to exchange Earthdata authorization code
       // for access token. Retrieve access token, which is set as a cookie.
       const response = await got(redirectUrl, { followRedirect: false });
-      const { ['set-cookie']: cookie, location: fileUrl } = response.headers;
+      const { 'set-cookie': cookie, location: fileUrl } = response.headers;
 
       // Request file from distribution API with cookie set.
       let fileContent = '';
@@ -92,5 +89,5 @@ describe('Distribution API', () => {
           done();
         });
     });
-  })
+  });
 });
