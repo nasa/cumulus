@@ -55,43 +55,42 @@ describe('Distribution API', () => {
     server.close(done);
   });
 
-  it('redirects to Earthdata login for unauthorized requests', async () => {
-    let authorizeUrl = await
-      got(
-        `${process.env.DISTRIBUTION_URL}/${config.bucket}/${fileKey}`,
-        { followRedirect: false }
-      )
-      .then((res) => new URL(res.headers.location));
+  describe('handles requests for files over HTTPS', () => {
+    let authorizeUrl;
 
-    expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
-  });
+    beforeAll(async () => {
+      authorizeUrl = await
+        got(
+          `${process.env.DISTRIBUTION_URL}/${config.bucket}/${fileKey}`,
+          { followRedirect: false }
+        )
+        .then((res) => new URL(res.headers.location));
+    });
 
-  it('downloads the requested science file for authorized requests', async (done) => {
-    let authorizeUrl = await
-      got(
-        `${process.env.DISTRIBUTION_URL}/${config.bucket}/${fileKey}`,
-        { followRedirect: false }
-      )
-      .then((res) => res.headers.location);
+    it('redirects to Earthdata login for unauthorized requests', async () => {
+      expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
+    });
 
-    // Login with Earthdata and intercept the redirect URL.
-    const redirectUrl = await handleEarthdataLogin(authorizeUrl, process.env.DISTRIBUTION_URL)
-      .then((res) => res.headers.location);
+    it('downloads the requested science file for authorized requests', async (done) => {
+      // Login with Earthdata and intercept the redirect URL.
+      const redirectUrl = await handleEarthdataLogin(authorizeUrl.href, process.env.DISTRIBUTION_URL)
+        .then((res) => res.headers.location);
 
-    // Make request to redirect URL to exchange Earthdata authorization code
-    // for access token. Retrieve access token, which is set as a cookie.
-    const response = await got(redirectUrl, { followRedirect: false });
-    const { ['set-cookie']: cookie, location: fileUrl } = response.headers;
+      // Make request to redirect URL to exchange Earthdata authorization code
+      // for access token. Retrieve access token, which is set as a cookie.
+      const response = await got(redirectUrl, { followRedirect: false });
+      const { ['set-cookie']: cookie, location: fileUrl } = response.headers;
 
-    // Request file from distribution API with cookie set.
-    let fileContent = '';
-    await got.stream(fileUrl, { headers: { cookie } })
-      .on('data', (chunk) => {
-        fileContent += chunk;
-      })
-      .on('end', () => {
-        expect(fileContent.length).toEqual(fileStats.size);
-        done();
-      });
-  });
+      // Request file from distribution API with cookie set.
+      let fileContent = '';
+      await got.stream(fileUrl, { headers: { cookie } })
+        .on('data', (chunk) => {
+          fileContent += chunk;
+        })
+        .on('end', () => {
+          expect(fileContent.length).toEqual(fileStats.size);
+          done();
+        });
+    });
+  })
 });
