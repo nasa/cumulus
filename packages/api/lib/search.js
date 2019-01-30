@@ -1,5 +1,8 @@
 'use strict';
 
+const omit = require('lodash.omit');
+const isNumber = require('lodash.isnumber');
+const clonedeep = require('lodash.clonedeep');
 const { default: sort, ASC, DESC } = require('sort-array-objects');
 
 /**
@@ -104,10 +107,83 @@ function constructPrefixSearch({ query, params, context }) {
   return params;
 }
 
+const regexes = {
+  terms: /^(.*)__in$/,
+  term: /^((?!__).)*$/,
+  not: /^(.*)__not$/,
+  exists: /^(.*)__exists$/,
+  range_from: /^(.*)__from$/,
+  range_to: /^(.*)__to$/
+};
+
+function constructFilterExpression({ field, regex }) {
+  if (regex === 'not') {
+    return `#${field} <> :${field}`;
+  }
+  else if (regex === 'range_from') {
+    return `#${field} >= :${field}`
+  }
+  else if (regex === 'range_to') {
+    return `#${field} <= :${field}`
+  }
+  return `#${field} = :${field}`;
+};
+
+function constructSearch({ query, params, context }) {
+  let q = clonedeep(query);
+
+  // remove reserved words (that are not fields)
+  q = omit(
+    q,
+    [
+      'limit',
+      'page',
+      'skip',
+      'sort_by',
+      'order',
+      'next',
+      'fields'
+    ]
+  );
+
+  // if prefix search is request all other search parameters are ignored
+  if (q.prefix) {
+    params = constructPrefixSearch({ query, params, context });
+  }
+  else if (Object.keys(q).length > 0) {
+    // construct attribute names
+    params.ExpressionAttributeNames = {};
+    params.ExpressionAttributeValues = {};
+    const filterExpressions = [];
+    Object.keys(q).forEach((field) => {
+      let fieldName = field;
+      const match = field.match(/^(.*)__(in|not|exists|from|to)$/);
+      if (match[1]) {
+        fieldName = match[1];
+      }
+      params.ExpressionAttributeNames[`#${fieldName}`] = fieldName ; 
+
+      let value = Number(q[field]);
+      if (!value) value = q[field];
+      params.ExpressionAttributeValues[`:${fieldName}`] = value; 
+
+      const regex = Object.keys(regexes).find((k) => {
+        const match = field.match(regexes[k]);
+        if (match) return true;
+        return false;
+      });
+
+      filterExpressions.push(constructFilterExpression({ field: fieldName, regex }))
+    });
+    params.FilterExpression = filterExpressions.join(' and ');
+  }
+  return params
+}
+
 /**
  * Performs search operations on a DynamoDB table using scan requests
  * This function is replicating the search functions that were previously
- * performed by ElastiSearch
+ * performed by ElasticSearch
  *
  * @param {Object} params - input parameters
  * @param {Object} params.query - the express's query parameter object
@@ -136,9 +212,8 @@ async function search({ query, context }) {
     params.AttributesToGet = query.fields.split(',');
   }
 
-  // apply prefix search filters to the dynamodb request
-  // if prefix search is request all other search parameters are ignored
-  params = constructPrefixSearch({ query, params, context });
+  // construct the filter search expression
+  params = constructSearch({ query, params, context });
 
   const scan = await context.dynamodbDocClient.scan(params).promise()
 

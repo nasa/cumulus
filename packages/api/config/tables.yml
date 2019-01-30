@@ -1,6 +1,4 @@
 AccessTokensTable:
-  read: 5
-  write: 1
   pointInTime: '{{enablePointInTime}}'
   attributes:
     - name: accessToken
@@ -8,8 +6,6 @@ AccessTokensTable:
       schema: HASH
 
 CollectionsTable:
-  read: 5
-  write: 1
   pointInTime: '{{enablePointInTime}}'
   attributes:
     - name: name
@@ -20,8 +16,6 @@ CollectionsTable:
       schema: RANGE
 
 ProvidersTable:
-  read: 5
-  write: 1
   pointInTime: '{{enablePointInTime}}'
   attributes:
     - name: id
@@ -29,8 +23,6 @@ ProvidersTable:
       schema: HASH
 
 RulesTable:
-  read: 5
-  write: 1
   pointInTime: '{{enablePointInTime}}'
   attributes:
     - name: name
@@ -38,8 +30,6 @@ RulesTable:
       schema: HASH
 
 UsersTable:
-  read: 5
-  write: 1
   pointInTime: '{{enablePointInTime}}'
   attributes:
     - name: userName
@@ -47,8 +37,6 @@ UsersTable:
       schema: HASH
 
 GranulesTable:
-  read: 5
-  write: 10
   pointInTime: '{{enablePointInTime}}'
   attributes:
     - name: granuleId
@@ -56,8 +44,6 @@ GranulesTable:
       schema: HASH
 
 PdrsTable:
-  read: 5
-  write: 2
   pointInTime: '{{enablePointInTime}}'
   attributes:
     - name: pdrName
@@ -66,8 +52,6 @@ PdrsTable:
 
 
 ExecutionsTable:
-  read: 5
-  write: 10
   pointInTime: '{{enablePointInTime}}'
   attributes:
     - name: arn
@@ -75,8 +59,6 @@ ExecutionsTable:
       schema: HASH
 
 FilesTable:
-  read: 5
-  write: 10
   pointInTime: '{{enablePointInTime}}'
   attributes:
     - name: bucket
@@ -87,8 +69,6 @@ FilesTable:
       schema: RANGE
 
 AsyncOperationsTable:
-  read: 5
-  write: 10
   pointInTime: '{{enablePointInTime}}'
   attributes:
     - name: id

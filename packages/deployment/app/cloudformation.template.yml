@@ -523,9 +523,14 @@ Resources:
       - AttributeName: {{name}}
         KeyType: {{schema}}
     {{/each}}
+    {{# if this.read }}
       ProvisionedThroughput:
         ReadCapacityUnits: {{this.read}}
         WriteCapacityUnits: {{this.write}}
+      BillingMode: 'PROVISIONED'
+    {{else}}
+      BillingMode: 'PAY_PER_REQUEST'
+    {{/if}}
       TableName: {{../stackName}}-{{@key}}
       StreamSpecification:
         StreamViewType: "NEW_AND_OLD_IMAGES"
