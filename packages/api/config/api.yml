@@ -2,7 +2,7 @@
 ApiEndpoints:
   handler: index.appHandler
   timeout: 20
-  memory: '{{parent.api_lambda_memory}}'
+  memory: 1024 
   source: 'node_modules/@cumulus/api/dist/'
   apiRole: true
   urs: true
