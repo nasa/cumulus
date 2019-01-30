@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const _get = require('lodash.get');
 const _set = require('lodash.set');
 const { promisify } = require('util');
 const urljoin = require('url-join');
@@ -278,6 +279,30 @@ function getCreds() {
 }
 
 /**
+ * Merge lists of URL objects.
+ *
+ * @param {Array<Object>} original - Array of URL Objects representing the cmr file previous state
+ * @param {Array<Object>} updated - Array of updated URL Objects representing moved/updated files
+ * @returns {Array<Object>} list of updated an original URL objects representing the updated state.
+ */
+function mergeURLs(original, updated) {
+  const updatedURLBasenames = updated.map((url) => path.basename(url.URL));
+  // TODO [MHS, 2019-01-29] could use partition.
+  const originalKeepers = original.filter((url) => !updatedURLBasenames.includes(path.basename(url.URL)));
+  const updatedMergedWithOriginal = updated.map((url) => {
+    const matchedOriginal = original.filter((ourl) => path.basename(ourl.URL) === path.basename(url.URL));
+    if (matchedOriginal.length === 1) {
+      const copyOfMatch = { ...matchedOriginal[0] };
+      delete copyOfMatch.URL;
+      return { ...url, ...copyOfMatch };
+    }
+    return url;
+  });
+
+  return [...originalKeepers, ...updatedMergedWithOriginal];
+}
+
+/**
  * After files are moved, this function creates new online access URLs and then updates
  * the S3 ECHO10 CMR XML file with this information.
  *
@@ -288,14 +313,16 @@ function getCreds() {
  * @returns {Promise} returns promised updated metadata object.
  */
 async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
-  const urls = constructOnlineAccessUrls(files, distEndpoint, buckets);
+  const newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
 
   // add/replace the OnlineAccessUrls
   const metadataObject = await metadataObjectFromCMRXMLFile(cmrFile.filename);
   const metadataGranule = metadataObject.Granule;
 
   const updatedGranule = { ...metadataGranule };
-  _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', urls);
+  const originalURLs = _get(metadataGranule, 'OnlineAccessURLs.OnlineAccessURL', []);
+  const mergedURLs = mergeURLs(originalURLs, newURLs);
+  _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedURLs);
   metadataObject.Granule = updatedGranule;
 
   const builder = new xml2js.Builder();
