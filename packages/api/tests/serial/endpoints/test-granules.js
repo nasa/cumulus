@@ -64,6 +64,15 @@ async function runTestUsingBuckets(buckets, testFunction) {
 }
 
 /**
+ * helper for cleaning up after move files tests.
+ * @param {string} publicBucket - public bucket created in setupBucketsConfig
+ */
+async function teardownBuckets(publicBucket) {
+  await deleteBuckets([publicBucket, process.env.system_bucket]);
+  await createBucket(process.env.system_bucket);
+}
+
+/**
  * Helper for creating and uploading bucket configuration for 'move' tests.
  * @returns {Object} with keys of internalBucket, and publicBucket.
  */
@@ -662,6 +671,7 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
     }
     return putObject({ Bucket: file.bucket, Key: file.filepath, Body: metadata });
   }));
+  const originalXML = await metadataObjectFromCMRXMLFile(newGranule.files[1].filename);
 
   const destinationFilepath = `${process.env.stackName}/moved_granules`;
   const destinations = [
@@ -710,13 +720,16 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
 
   const newUrls = xmlObject.Granule.OnlineAccessURLs.OnlineAccessURL.map((obj) => obj.URL);
   const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
-  const originalMetadataLocation = 'https://fvk4vim143.execute-api.us-east-1.amazonaws.com/dev/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml';
   t.true(newUrls.includes(newDestination));
-  t.true(newUrls.includes(originalMetadataLocation));
+
+  // All original URLs are unchanged (because they weren't involved in the granule move)
+  const originalURLs = originalXML.Granule.OnlineAccessURLs.OnlineAccessURL.map((urlObj) => urlObj.URL);
+  originalURLs.forEach((originalURL) => {
+    t.true(newUrls.includes(originalURL));
+  });
 
   CMR.prototype.ingestGranule.restore();
-  await deleteBuckets([publicBucket, internalBucket]);
-  await createBucket(internalBucket);
+  await teardownBuckets(publicBucket);
 });
 
 test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
@@ -724,6 +737,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
 
   const newGranule = fakeGranuleFactoryV2();
   const ummgMetadataString = fs.readFileSync(path.resolve(__dirname, '../../data/ummg-meta.json'));
+  const originalUMMG = JSON.parse(ummgMetadataString);
 
   newGranule.files = [
     {
@@ -798,13 +812,16 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   const ummgObject = await metadataObjectFromCMRJSONFile(newGranule.files[1].filename);
   const updatedURLs = ummgObject.items[0].umm.RelatedUrls.map((urlObj) => urlObj.URL);
   const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
-  const originalMetadataLocation = 'https://e4ftl01.cr.usgs.gov:40521//TEST2/MOLT/MOD11A1.006/2000.12.31/MOD11A1.A2000366.h22v16.006.2015111155135.hdf';
   t.true(updatedURLs.includes(newDestination));
-  t.true(updatedURLs.includes(originalMetadataLocation));
+
+  // Original metadata is also unchanged.
+  const origURLs = originalUMMG.items[0].umm.RelatedUrls.map((urlObj) => urlObj.URL);
+  origURLs.forEach((origURL) => {
+    t.true(updatedURLs.includes(origURL));
+  });
 
   CMR.prototype.ingestGranule.restore();
-  await deleteBuckets([publicBucket, internalBucket]);
-  await createBucket(internalBucket);
+  await teardownBuckets(publicBucket);
 });
 
 test('PUT with action move returns failure if one granule file exists', async (t) => {
