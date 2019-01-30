@@ -23,6 +23,7 @@ module.exports.accessToken = {
       type: 'string'
     },
     updatedAt: { type: 'integer' },
+    timestamp: { type: 'integer' },
     username: {
       title: 'Username',
       description: 'The username associated with the access token. For valid request authorization, the username must match a record in the Users table',
@@ -38,6 +39,7 @@ module.exports.asyncOperation = {
   type: 'object',
   required: ['createdAt', 'id', 'status', 'updatedAt'],
   additionalProperties: false,
+  timestamp: { type: 'integer' },
   properties: {
     createdAt: { type: 'integer' },
     id: { type: 'string' },
@@ -159,6 +161,7 @@ module.exports.collection = {
       type: 'number',
       readonly: true
     },
+    timestamp: { type: 'integer' },
     meta: {
       title: 'Optional MetaData for the Collection',
       type: 'object'
@@ -245,6 +248,7 @@ module.exports.granule = {
       type: 'number',
       readonly: true
     },
+    timestamp: { type: 'integer' },
     productVolume: {
       type: 'number',
       readonly: true
@@ -366,6 +370,7 @@ module.exports.rule = {
       type: 'number',
       readonly: true
     },
+    timestamp: { type: 'integer' },
     tags: {
       title: 'Optional tags for search',
       type: 'array',
@@ -444,6 +449,7 @@ module.exports.pdr = {
       type: 'string',
       readonly: true
     },
+    timestamp: { type: 'integer' },
     createdAt: {
       type: 'number',
       readonly: true
@@ -505,6 +511,7 @@ module.exports.provider = {
       type: 'number',
       readonly: true
     },
+    timestamp: { type: 'integer' },
     privateKey: {
       type: 'string',
       description: 'filename assumed to be in s3://bucketInternal/stackName/crypto'
