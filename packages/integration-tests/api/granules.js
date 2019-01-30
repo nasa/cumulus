@@ -13,14 +13,10 @@ const { callCumulusApi } = require('./api');
 async function getGranule({ prefix, granuleId }) {
   return callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiGranulesDefault',
     payload: {
       httpMethod: 'GET',
-      resource: '/granules/{granuleName}',
-      path: `/granules/${granuleId}`,
-      pathParameters: {
-        granuleName: granuleId
-      }
+      resource: '/{proxy+}',
+      path: `/granules/${granuleId}`
     }
   });
 }
@@ -36,13 +32,12 @@ async function getGranule({ prefix, granuleId }) {
 async function reingestGranule({ prefix, granuleId }) {
   return callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiGranulesDefault',
     payload: {
       httpMethod: 'PUT',
-      resource: '/granules/{granuleName}',
+      resource: '/{proxy+}',
       path: `/granules/${granuleId}`,
-      pathParameters: {
-        granuleName: granuleId
+      headers: {
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ action: 'reingest' })
     }
@@ -60,13 +55,12 @@ async function reingestGranule({ prefix, granuleId }) {
 async function removeFromCMR({ prefix, granuleId }) {
   const payload = await callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiGranulesDefault',
     payload: {
       httpMethod: 'PUT',
-      resource: '/granules/{granuleName}',
+      resource: '/{proxy+}',
       path: `/granules/${granuleId}`,
-      pathParameters: {
-        granuleName: granuleId
+      headers: {
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ action: 'removeFromCmr' })
     }
@@ -93,14 +87,13 @@ async function removeFromCMR({ prefix, granuleId }) {
 async function applyWorkflow({ prefix, granuleId, workflow }) {
   return callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiGranulesDefault',
     payload: {
       httpMethod: 'PUT',
-      resource: '/granules/{granuleName}',
-      path: `/granules/${granuleId}`,
-      pathParameters: {
-        granuleName: granuleId
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json'
       },
+      path: `/granules/${granuleId}`,
       body: JSON.stringify({ action: 'applyWorkflow', workflow })
     }
   });
@@ -117,14 +110,10 @@ async function applyWorkflow({ prefix, granuleId, workflow }) {
 async function deleteGranule({ prefix, granuleId }) {
   return callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiGranulesDefault',
     payload: {
       httpMethod: 'DELETE',
-      resource: '/granules/{granuleName}',
-      path: `/granules/${granuleId}`,
-      pathParameters: {
-        granuleName: granuleId
-      }
+      resource: '/{proxy+}',
+      path: `/granules/${granuleId}`
     }
   });
 }
@@ -141,14 +130,13 @@ async function deleteGranule({ prefix, granuleId }) {
 async function moveGranule({ prefix, granuleId, destinations }) {
   const payload = await callCumulusApi({
     prefix: prefix,
-    functionName: 'ApiGranulesDefault',
     payload: {
       httpMethod: 'PUT',
-      resource: '/granules/{granuleName}',
-      path: `/granules/${granuleId}`,
-      pathParameters: {
-        granuleName: granuleId
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json'
       },
+      path: `/granules/${granuleId}`,
       body: JSON.stringify({ action: 'move', destinations })
     }
   });

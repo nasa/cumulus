@@ -1,25 +1,29 @@
 'use strict';
 
 const test = require('ava');
-
+const request = require('supertest');
 const { randomString } = require('@cumulus/common/test-utils');
 const assertions = require('../../lib/assertions');
 const models = require('../../models');
 const {
-  testEndpoint,
   createFakeJwtAuthToken,
   fakeAccessTokenFactory
 } = require('../../lib/testUtils');
 const {
   createJwtToken
 } = require('../../lib/token');
-const instanceMetaEndpoint = require('../../endpoints/instance-meta');
 
 const CMR_ENVIRONMENT = randomString();
 const CMR_PROVIDER = randomString();
+process.env.CMR_ENVIRONMENT = CMR_ENVIRONMENT;
+process.env.cmr_provider = CMR_PROVIDER;
+process.env.TOKEN_SECRET = randomString();
 let accessTokenModel;
 let userModel;
-let authHeaders;
+let jwtAuthToken;
+
+// import the express app after setting the env variables
+const { app } = require('../../app');
 
 test.before(async () => {
   process.env.UsersTable = randomString();
@@ -30,14 +34,7 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  process.env.CMR_ENVIRONMENT = CMR_ENVIRONMENT;
-  process.env.cmr_provider = CMR_PROVIDER;
-
-  process.env.TOKEN_SECRET = randomString();
-  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
-  authHeaders = {
-    Authorization: `Bearer ${jwtAuthToken}`
-  };
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 });
 
 test.after.always(async () => {
@@ -45,58 +42,48 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
 });
 
-test('GET returns expected metadata', (t) => {
-  const request = {
-    httpMethod: 'GET',
-    headers: authHeaders
-  };
+test('GET returns expected metadata', async (t) => {
+  const response = await request(app)
+    .get('/instanceMeta')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  return testEndpoint(instanceMetaEndpoint, request, (response) => {
-    const body = JSON.parse(response.body);
-    t.deepEqual(body, {
-      cmr: {
-        provider: CMR_PROVIDER,
-        environment: CMR_ENVIRONMENT
-      }
-    });
+  t.deepEqual(response.body, {
+    cmr: {
+      provider: CMR_PROVIDER,
+      environment: CMR_ENVIRONMENT
+    }
   });
 });
 
 test('GET with invalid access token returns an invalid token response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
-  };
-  return testEndpoint(instanceMetaEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  const response = await request(app)
+    .get('/instanceMeta')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
+
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test('GET with unauthorized user token returns an unauthorized user response', async (t) => {
   const accessTokenRecord = await accessTokenModel.create(fakeAccessTokenFactory());
   const requestToken = createJwtToken(accessTokenRecord);
 
-  const request = {
-    httpMethod: 'GET',
-    headers: {
-      Authorization: `Bearer ${requestToken}`
-    }
-  };
+  const response = await request(app)
+    .get('/instanceMeta')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${requestToken}`)
+    .expect(401);
 
-  return testEndpoint(instanceMetaEndpoint, request, (response) => {
-    assertions.isUnauthorizedUserResponse(t, response);
-  });
+  assertions.isInvalidAuthorizationResponse(t, response);
 });
 
 test('GET without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    headers: {}
-  };
-
-  return testEndpoint(instanceMetaEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+  const response = await request(app)
+    .get('/instanceMeta')
+    .set('Accept', 'application/json')
+    .expect(401);
+  assertions.isAuthorizationMissingResponse(t, response);
 });

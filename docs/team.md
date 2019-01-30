@@ -6,7 +6,6 @@ hide_title: true
 
 ### Cumulus Core Team
 
-- Aimee Barciauskas ([@abarciauskas-bgse](https://github.com/abarciauskas-bgse))
 - Alireza Jazayeri ([@scisco](https://github.com/scisco))
 - Jacob Campbell ([@ifestus](https://github.com/ifestus))
 - Jonathan Kovarik ([@jkovarik](https://github.com/Jkovarik))

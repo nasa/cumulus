@@ -1,19 +1,28 @@
 'use strict';
 
 const test = require('ava');
+const request = require('supertest');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../../models');
 const bootstrap = require('../../../lambdas/bootstrap');
-const pdrEndpoint = require('../../../endpoints/pdrs');
 const indexer = require('../../../es/indexer');
 const {
   createFakeJwtAuthToken,
-  testEndpoint,
   fakePdrFactory
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
+
+process.env.AccessTokensTable = randomString();
+process.env.PdrsTable = randomString();
+process.env.UsersTable = randomString();
+process.env.stackName = randomString();
+process.env.system_bucket = randomString();
+process.env.TOKEN_SECRET = randomString();
+
+// import the express app after setting the env variables
+const { app } = require('../../../app');
 
 const pdrS3Key = (stackName, bucket, pdrName) => `${process.env.stackName}/pdrs/${pdrName}`;
 
@@ -31,15 +40,9 @@ function uploadPdrToS3(stackName, bucket, pdrName, pdrBody) {
 let esClient;
 let fakePdrs;
 const esIndex = randomString();
-process.env.AccessTokensTable = randomString();
-process.env.PdrsTable = randomString();
-process.env.UsersTable = randomString();
-process.env.stackName = randomString();
-process.env.internal = randomString();
-process.env.TOKEN_SECRET = randomString();
 
+let jwtAuthToken;
 let accessTokenModel;
-let authHeaders;
 let pdrModel;
 let userModel;
 
@@ -51,7 +54,7 @@ test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
 
   // create a fake bucket
-  await aws.s3().createBucket({ Bucket: process.env.internal }).promise();
+  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   pdrModel = new models.Pdr();
   await pdrModel.createTable();
@@ -62,10 +65,7 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
-  authHeaders = {
-    Authorization: `Bearer ${jwtAuthToken}`
-  };
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 
   // create fake granule records
   fakePdrs = ['completed', 'failed'].map(fakePdrFactory);
@@ -82,143 +82,108 @@ test.after.always(async () => {
   await pdrModel.deleteTable();
   await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
-  await aws.recursivelyDeleteS3Bucket(process.env.internal);
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    headers: {}
-  };
+  const response = await request(app)
+    .get('/pdrs')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(pdrEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-911 GET with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    pathParameters: {
-      pdrName: 'asdf'
-    },
-    headers: {}
-  };
+  const response = await request(app)
+    .get('/pdrs/asdf')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(pdrEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-911 DELETE with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
-  const request = {
-    httpMethod: 'DELETE',
-    pathParameters: {
-      pdrName: 'asdf'
-    },
-    headers: {}
-  };
+  const response = await request(app)
+    .delete('/pdrs/asdf')
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(pdrEndpoint, request, (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-  });
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('CUMULUS-912 GET without pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
-  };
+  const response = await request(app)
+    .get('/pdrs')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
 
-  return testEndpoint(pdrEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test('CUMULUS-912 GET with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'GET',
-    pathParameters: {
-      pdrName: 'asdf'
-    },
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
-  };
+  const response = await request(app)
+    .get('/pdrs/asdf')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
 
-  return testEndpoint(pdrEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test.todo('CUMULUS-912 GET with an unauthorized user returns an unauthorized response');
 
 test('CUMULUS-912 DELETE with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'DELETE',
-    pathParameters: {
-      pdrName: 'asdf'
-    },
-    headers: {
-      Authorization: 'Bearer ThisIsAnInvalidAuthorizationToken'
-    }
-  };
+  const response = await request(app)
+    .delete('/pdrs/asdf')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
 
-  return testEndpoint(pdrEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test.todo('CUMULUS-912 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test('default returns list of pdrs', (t) => {
-  const listEvent = {
-    httpMethod: 'list',
-    headers: authHeaders
-  };
+test('default returns list of pdrs', async (t) => {
+  const response = await request(app)
+    .get('/pdrs')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  return testEndpoint(pdrEndpoint, listEvent, (response) => {
-    const { meta, results } = JSON.parse(response.body);
-    t.is(results.length, 2);
-    t.is(meta.stack, process.env.stackName);
-    t.is(meta.table, 'pdr');
-    t.is(meta.count, 2);
-    const pdrNames = fakePdrs.map((i) => i.pdrName);
-    results.forEach((r) => {
-      t.true(pdrNames.includes(r.pdrName));
-    });
+  const { meta, results } = response.body;
+  t.is(results.length, 2);
+  t.is(meta.stack, process.env.stackName);
+  t.is(meta.table, 'pdr');
+  t.is(meta.count, 2);
+  const pdrNames = fakePdrs.map((i) => i.pdrName);
+  results.forEach((r) => {
+    t.true(pdrNames.includes(r.pdrName));
   });
 });
 
-test('GET returns an existing pdr', (t) => {
-  const getEvent = {
-    httpMethod: 'GET',
-    pathParameters: {
-      pdrName: fakePdrs[0].pdrName
-    },
-    headers: authHeaders
-  };
+test('GET returns an existing pdr', async (t) => {
+  const response = await request(app)
+    .get(`/pdrs/${fakePdrs[0].pdrName}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  return testEndpoint(pdrEndpoint, getEvent, (response) => {
-    const { pdrName } = JSON.parse(response.body);
-    t.is(pdrName, fakePdrs[0].pdrName);
-  });
+  const { pdrName } = response.body;
+  t.is(pdrName, fakePdrs[0].pdrName);
 });
 
 test('GET fails if pdr is not found', async (t) => {
-  const event = {
-    httpMethod: 'GET',
-    pathParameters: {
-      pdrName: 'unknownPdr'
-    },
-    headers: authHeaders
-  };
+  const response = await request(app)
+    .get('/pdrs/unknownpdr')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
 
-  const response = await testEndpoint(pdrEndpoint, event, (r) => r);
-  t.is(response.statusCode, 400);
-  const { message } = JSON.parse(response.body);
+  t.is(response.status, 404);
+  const { message } = response.body;
   t.true(message.includes('No record found for'));
 });
 
@@ -227,24 +192,18 @@ test('DELETE a pdr', async (t) => {
   // create a new pdr
   await pdrModel.create(newPdr);
 
-  const deleteEvent = {
-    httpMethod: 'DELETE',
-    pathParameters: {
-      pdrName: newPdr.pdrName
-    },
-    headers: authHeaders
-  };
-
   const key = `${process.env.stackName}/pdrs/${newPdr.pdrName}`;
-  await aws.s3().putObject({ Bucket: process.env.internal, Key: key, Body: 'test data' }).promise();
+  await aws.s3().putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' }).promise();
 
-  const response = await testEndpoint(pdrEndpoint, deleteEvent, (r) => r);
-  t.is(response.statusCode, 200);
-  const { detail } = JSON.parse(response.body);
-  t.is(
-    detail,
-    'Record deleted'
-  );
+  const response = await request(app)
+    .delete(`/pdrs/${newPdr.pdrName}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.status, 200);
+  const { detail } = response.body;
+  t.is(detail, 'Record deleted');
 });
 
 test('DELETE handles the case where the PDR exists in S3 but not in DynamoDb', async (t) => {
@@ -252,24 +211,20 @@ test('DELETE handles the case where the PDR exists in S3 but not in DynamoDb', a
 
   await uploadPdrToS3(
     process.env.stackName,
-    process.env.internal,
+    process.env.system_bucket,
     pdrName,
     'This is the PDR body'
   );
 
-  const event = {
-    httpMethod: 'DELETE',
-    pathParameters: {
-      pdrName
-    },
-    headers: authHeaders
-  };
+  const response = await request(app)
+    .delete(`/pdrs/${pdrName}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  const response = await testEndpoint(pdrEndpoint, event, (r) => r);
+  t.is(response.status, 200);
 
-  t.is(response.statusCode, 200);
-
-  const parsedBody = JSON.parse(response.body);
+  const parsedBody = response.body;
   t.is(parsedBody.detail, 'Record deleted');
 });
 
@@ -277,18 +232,14 @@ test('DELETE handles the case where the PDR exists in DynamoDb but not in S3', a
   const newPdr = fakePdrFactory('completed');
   await pdrModel.create(newPdr);
 
-  const event = {
-    httpMethod: 'DELETE',
-    pathParameters: {
-      pdrName: newPdr.pdrName
-    },
-    headers: authHeaders
-  };
+  const response = await request(app)
+    .delete(`/pdrs/${newPdr.pdrName}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  const response = await testEndpoint(pdrEndpoint, event, (r) => r);
+  t.is(response.status, 200);
 
-  t.is(response.statusCode, 200);
-
-  const parsedBody = JSON.parse(response.body);
+  const parsedBody = response.body;
   t.is(parsedBody.detail, 'Record deleted');
 });
