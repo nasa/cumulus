@@ -92,7 +92,7 @@ PostToCmr:
   source: node_modules/@cumulus/post-to-cmr/dist/
   useMessageAdapter: true
   envs:
-    internal: '{{buckets.internal.name}}'
+    system_bucket: '{{system_bucket}}'
 QueueGranules:
   handler: index.handler
   timeout: 300
@@ -111,7 +111,7 @@ SyncGranule:
   useMessageAdapter: true
   launchInVpc: true
   envs:
-    internal: '{{buckets.internal.name}}'
+    system_bucket: '{{system_bucket}}'
 SyncGranuleNoVpc:
   handler: index.handler
   timeout: 300

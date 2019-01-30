@@ -1,20 +1,16 @@
 'use strict';
 
+const router = require('express-promise-router')();
 const urljoin = require('url-join');
 const { s3 } = require('@cumulus/common/aws');
 const { URL } = require('url');
-const { Cookie } = require('tough-cookie');
-
 const EarthdataLoginClient = require('../lib/EarthdataLogin');
-
 const { RecordDoesNotExist } = require('../lib/errors');
 const { AccessToken } = require('../models');
-const {
-  NotFoundResponse,
-  TemporaryRedirectResponse
-} = require('../lib/responses');
-const { findCaseInsensitiveValue } = require('../lib/utils');
 
+/**
+ * Error class for file locations that are unparsable
+ */
 class UnparsableFileLocationError extends Error {
   constructor(fileLocation) {
     super(`File location "${fileLocation}" could not be parsed`);
@@ -60,31 +56,52 @@ function getSignedS3Url(s3Client, Bucket, Key, username) {
   return parsedSignedUrl.toString();
 }
 
-function getAccessTokenFromRequest(request) {
-  const cookieHeaders = findCaseInsensitiveValue(request.multiValueHeaders || {}, 'Cookie') || [];
-  const cookies = cookieHeaders.map(Cookie.parse);
-  const accessTokenCookie = cookies.find((c) => c.key === 'accessToken');
-
-  return accessTokenCookie ? accessTokenCookie.value : null;
-}
-
-function isRedirectRequest(request) {
-  return request.resource === '/redirect';
-}
-
+/**
+ * Checks if the token is expired
+ *
+ * @param {Object} accessTokenRecord - the access token record
+ * @returns {boolean} true indicates the token is expired
+ */
 function isAccessTokenExpired(accessTokenRecord) {
   return accessTokenRecord.expirationTime < Date.now();
 }
 
-async function handleRedirectRequest(params = {}) {
+/**
+ * Returns a configuration object
+ *
+ * @returns {Object} the configuration object needed to handle requests
+ */
+function getConfigurations() {
+  const earthdataLoginClient = new EarthdataLoginClient({
+    clientId: process.env.EARTHDATA_CLIENT_ID,
+    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
+    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
+    redirectUri: process.env.DEPLOYMENT_ENDPOINT
+  });
+
+  return {
+    accessTokenModel: new AccessToken(),
+    authClient: earthdataLoginClient,
+    distributionUrl: process.env.DISTRIBUTION_URL,
+    s3Client: s3()
+  };
+}
+
+/**
+ * Responds to a redirect request
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function handleRedirectRequest(req, res) {
   const {
     accessTokenModel,
     authClient,
-    distributionUrl,
-    request
-  } = params;
+    distributionUrl
+  } = getConfigurations();
 
-  const { code, state } = request.queryStringParameters;
+  const { code, state } = req.query;
 
   const getAccessTokenResponse = await authClient.getAccessToken(code);
 
@@ -95,35 +112,41 @@ async function handleRedirectRequest(params = {}) {
     username: getAccessTokenResponse.username
   });
 
-  return new TemporaryRedirectResponse({
-    location: urljoin(distributionUrl, state),
-    cookies: [
-      new Cookie({
-        key: 'accessToken',
-        value: getAccessTokenResponse.accessToken,
-        expires: new Date(getAccessTokenResponse.expirationTime),
-        httpOnly: true,
-        secure: true
-      })
-    ]
-  });
+  return res.cookie(
+    'accessToken',
+    getAccessTokenResponse.accessToken,
+    {
+      expires: new Date(getAccessTokenResponse.expirationTime),
+      httpOnly: true,
+      secure: true
+    }
+  )
+    .set({ Location: urljoin(distributionUrl, state) })
+    .status(307)
+    .send('Redirecting');
 }
 
-async function handleFileRequest(params = {}) {
+/**
+ * Responds to a file request
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function handleFileRequest(req, res) {
   const {
     accessTokenModel,
     authClient,
-    request,
     s3Client
-  } = params;
+  } = getConfigurations();
 
-  const redirectToGetAuthorizationCode = new TemporaryRedirectResponse({
-    location: authClient.getAuthorizationUrl(request.pathParameters.proxy)
-  });
+  const redirectToGetAuthorizationCode = res
+    .status(307)
+    .set({ Location: authClient.getAuthorizationUrl(req.params[0]) });
 
-  const accessToken = getAccessTokenFromRequest(request);
+  const accessToken = req.cookies.accessToken;
 
-  if (!accessToken) return redirectToGetAuthorizationCode;
+  if (!accessToken) return redirectToGetAuthorizationCode.send('Redirecting');
 
   let accessTokenRecord;
   try {
@@ -131,23 +154,25 @@ async function handleFileRequest(params = {}) {
   }
   catch (err) {
     if (err instanceof RecordDoesNotExist) {
-      return redirectToGetAuthorizationCode;
+      return redirectToGetAuthorizationCode.send('Redirecting');
     }
 
     throw err;
   }
 
   if (isAccessTokenExpired(accessTokenRecord)) {
-    return redirectToGetAuthorizationCode;
+    return redirectToGetAuthorizationCode.send('Redirecting');
   }
 
   let fileBucket;
   let fileKey;
   try {
-    [fileBucket, fileKey] = getFileBucketAndKey(request.pathParameters.proxy);
+    [fileBucket, fileKey] = getFileBucketAndKey(req.params[0]);
   }
   catch (err) {
-    if (err instanceof UnparsableFileLocationError) return new NotFoundResponse();
+    if (err instanceof UnparsableFileLocationError) {
+      return res.boom.notFound(err.message);
+    }
     throw err;
   }
 
@@ -158,59 +183,13 @@ async function handleFileRequest(params = {}) {
     accessTokenRecord.username
   );
 
-  return new TemporaryRedirectResponse({ location: signedS3Url });
+  return res
+    .status(307)
+    .set({ Location: signedS3Url })
+    .send('Redirecting');
 }
 
-async function handleRequest(params = {}) {
-  const {
-    accessTokenModel,
-    authClient,
-    distributionUrl,
-    request,
-    s3Client
-  } = params;
+router.get('/redirect', handleRedirectRequest);
+router.get('/*', handleFileRequest);
 
-  if (isRedirectRequest(request)) {
-    return handleRedirectRequest({
-      accessTokenModel,
-      authClient,
-      distributionUrl,
-      request
-    });
-  }
-
-  return handleFileRequest({
-    accessTokenModel,
-    authClient,
-    request,
-    s3Client
-  });
-}
-
-/**
- * Handle a request from API Gateway
- *
- * @param {Object} event - an API Gateway request
- * @returns {Promise<Object>} - an API Gateway response
- */
-async function handleApiGatewayRequest(event) {
-  const earthdataLoginClient = new EarthdataLoginClient({
-    clientId: process.env.EARTHDATA_CLIENT_ID,
-    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
-    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
-    redirectUri: process.env.DEPLOYMENT_ENDPOINT
-  });
-
-  return handleRequest({
-    accessTokenModel: new AccessToken(),
-    authClient: earthdataLoginClient,
-    distributionUrl: process.env.DISTRIBUTION_URL,
-    request: event,
-    s3Client: s3()
-  });
-}
-
-module.exports = {
-  handleRequest,
-  handleApiGatewayRequest
-};
+module.exports = router;
