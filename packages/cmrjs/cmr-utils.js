@@ -186,15 +186,15 @@ async function bucketsConfigDefaults() {
 
 
 /**
- * returns a copy of object with anything on it's `Type` key removed.
+ * returns a function that will remove the input key from an object passed to it.
  * @param {Object} object
- * @returns {Object} object clone with Type key removed.
+ * @returns {function} fucntion that will remove key from object.
  */
-function stripTypeFromObject(object) {
-  /* eslint-disable-next-line no-unused-vars */
-  const { Type, ...strippedObject } = object;
-  // TODO [MHS, 2019-01-30] const {[key]:junk, ...strippedObject } = object if key = 'Type'
-  return strippedObject;
+function stripKeyFromObject(key) {
+  return function(object) {
+    const {[key]:junk, ...objectWithoutKey } = object;
+    return objectWithoutKey;
+  };
 }
 
 /**
@@ -231,7 +231,7 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets, isECHO10 = true
   });
 
   if (isECHO10) {
-    urls = urls.map(stripTypeFromObject);
+    urls = urls.map(stripKeyFromObject('Type'));
   }
 
   return urls;
