@@ -153,9 +153,8 @@ test('reconcileCMRMetadata calls updateUMMGMetadata if json metadata present', a
   const fakeUpdateUMMGMetadata = sinon.fake.resolves(true);
   const restoreUpdateUMMGMetadata = cmrUtils.__set__('updateUMMGMetadata', fakeUpdateUMMGMetadata);
 
-  const results = await cmrUtils.reconcileCMRMetadata(granId, updatedFiles, distEndpoint, pub);
+  await cmrUtils.reconcileCMRMetadata(granId, updatedFiles, distEndpoint, pub);
 
-  t.true(results);
   t.true(fakeUpdateUMMGMetadata.calledOnceWith());
 
   sinon.restore();

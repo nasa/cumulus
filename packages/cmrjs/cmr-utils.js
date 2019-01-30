@@ -30,14 +30,14 @@ const { getUrl, xmlParseOptions } = require('./utils');
  * @param {string} creds.clientId - the clientId used to generate CMR token
  * @param {string} creds.username - the CMR username
  * @param {string} creds.password - the encrypted CMR password
- * @param {string} bucket - the bucket name where public/private keys are stored
+ * @param {string} systemBucket - the bucket name where public/private keys are stored
  * @param {string} stack - the deployment stack name
  * @returns {Object} CMR's success response which includes the concept-id
  */
-async function publishECHO10XML2CMR(cmrFile, creds, bucket, stack) {
+async function publishECHO10XML2CMR(cmrFile, creds, systemBucket, stack) {
   let password;
   try {
-    password = await DefaultProvider.decrypt(creds.password, undefined, bucket, stack);
+    password = await DefaultProvider.decrypt(creds.password, undefined, systemBucket, stack);
   }
   catch (error) {
     log.error('Decrypting password failed, using unencrypted password', error);
@@ -187,11 +187,12 @@ async function bucketsConfigDefaults() {
 
 /**
  * returns a function that will remove the input key from an object passed to it.
- * @param {Object} object
- * @returns {function} fucntion that will remove key from object.
+ * @param {Object} key - key to remove from object
+ * @returns {function} fucntion that will remove desired key from object.
  */
 function stripKeyFromObject(key) {
-  return function (object) {
+  return function omit(object) {
+    /* eslint-disable-next-line no-unused-vars */
     const { [key]: junk, ...objectWithoutKey } = object;
     return objectWithoutKey;
   };
@@ -203,13 +204,11 @@ function stripKeyFromObject(key) {
  * @param {Array<Object>} files - array of file objects
  * @param {string} distEndpoint - distribution enpoint from config
  * @param {BucketsConfig} buckets -  Class instance
- * @param {boolean} isECHO10 -  boolean to select URL behavior for UMMG vs ECHO10
  * @returns {Array<{URL: string, URLDescription: string}>}
  *   returns the list of online access url objects
  */
-function constructOnlineAccessUrls(files, distEndpoint, buckets, isECHO10 = true) {
-  // TODO [MHS, 2019-01-30] take out isecho10 test, and strip out the Type keys in the echo10 function itself.
-  let urls = [];
+function constructOnlineAccessUrls(files, distEndpoint, buckets) {
+  const urls = [];
 
   files.forEach((file) => {
     const urlObj = {};
@@ -229,10 +228,6 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets, isECHO10 = true
       urls.push(urlObj);
     }
   });
-
-  if (isECHO10) {
-    urls = urls.map(stripKeyFromObject('Type'));
-  }
 
   return urls;
 }
@@ -334,7 +329,8 @@ function getCreds() {
  * @returns {Promise} returns promised updated metadata object.
  */
 async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
-  const newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
+  let newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
+  newURLs = newURLs.map(stripKeyFromObject('Type'));
 
   // add/replace the OnlineAccessUrls
   const metadataObject = await metadataObjectFromCMRXMLFile(cmrFile.filename);
@@ -395,9 +391,16 @@ async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, publis
     const buckets = new BucketsConfig(await bucketsConfigDefaults());
     const ummgMetadata = await updateUMMGMetadata(cmrFile, files, distEndpoint, buckets);
     if (published) {
+      const creds = getCreds();
+      // return publishUMMGJSON2CMR(
+      //   ummgMetadata,
+      //   creds,
+      //   process.env.system_bucket,
+      //   process.env.stackName
+      // );
       // do published thing.
     }
-    return Promise.resolve(ummgMetadata);
+    return Promise.resolve();
   }
   throw new errors.CMRMetaFileNotFound('Invalid CMR filetype passed to updateCMRMetadata');
 }

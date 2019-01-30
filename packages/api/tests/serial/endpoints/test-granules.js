@@ -723,7 +723,8 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   t.true(newUrls.includes(newDestination));
 
   // All original URLs are unchanged (because they weren't involved in the granule move)
-  const originalURLs = originalXML.Granule.OnlineAccessURLs.OnlineAccessURL.map((urlObj) => urlObj.URL);
+  const originalURLObjects = originalXML.Granule.OnlineAccessURLs.OnlineAccessURL;
+  const originalURLs = originalURLObjects.map((urlObj) => urlObj.URL);
   originalURLs.forEach((originalURL) => {
     t.true(newUrls.includes(originalURL));
   });
