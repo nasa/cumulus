@@ -9,7 +9,7 @@ const { distributionApp } = require('@cumulus/api/app/distribution');
 const { prepareDistributionApi } = require('@cumulus/api/bin/serve');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
-  EarthdataLogin: { handleEarthdataLoginAndRedirect }
+  EarthdataLogin: { handleEarthdataLogin }
 } = require('@cumulus/integration-tests');
 
 const {
@@ -74,9 +74,16 @@ describe('Distribution API', () => {
       .redirects(0)
       .then((res) => res.headers.location);
 
-    const response = await handleEarthdataLoginAndRedirect(authorizeUrl, process.env.DISTRIBUTION_URL);
+    // Login with Earthdata and intercept the redirect URL.
+    const redirectUrl = await handleEarthdataLogin(authorizeUrl, process.env.DISTRIBUTION_URL)
+      .then((res) => res.headers.location);
+
+    // Make request to redirect URL to exchange Earthdata authorization code
+    // for access token. Retrieve access token, which is set as a cookie.
+    const response = await got(redirectUrl, { followRedirect: false });
     const { ['set-cookie']: cookie, location: fileUrl } = response.headers;
 
+    // Request file from distribution API with cookie set.
     let fileContent = '';
     await got.stream(fileUrl, { headers: { cookie } })
       .on('data', (chunk) => {
