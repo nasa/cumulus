@@ -193,6 +193,7 @@ async function bucketsConfigDefaults() {
 function stripTypeFromObject(object) {
   /* eslint-disable-next-line no-unused-vars */
   const { Type, ...strippedObject } = object;
+  // TODO [MHS, 2019-01-30] const {[key]:junk, ...strippedObject } = object if key = 'Type'
   return strippedObject;
 }
 
@@ -207,6 +208,7 @@ function stripTypeFromObject(object) {
  *   returns the list of online access url objects
  */
 function constructOnlineAccessUrls(files, distEndpoint, buckets, isECHO10 = true) {
+  // TODO [MHS, 2019-01-30] take out isecho10 test, and strip out the Type keys in the echo10 function itself.
   let urls = [];
 
   files.forEach((file) => {
@@ -249,11 +251,45 @@ function getCmrFileObjs(files) {
   return files.filter((file) => isCMRFile(file));
 }
 
+/**
+ * Merge lists of URL objects.
+ *
+ * @param {Array<Object>} original - Array of URL Objects representing the cmr file previous state
+ * @param {Array<Object>} updated - Array of updated URL Objects representing moved/updated files
+ * @returns {Array<Object>} list of updated an original URL objects representing the updated state.
+ */
+function mergeURLs(original, updated) {
+  const updatedURLBasenames = updated.map((url) => path.basename(url.URL));
+
+  // TODO [MHS, 2019-01-29] could use partition.
+  const originalKeepers = original.filter(
+    (url) => !updatedURLBasenames.includes(path.basename(url.URL))
+  );
+  const updatedMergedWithOriginal = updated.map((url) => {
+    const matchedOriginal = original.filter(
+      (ourl) => path.basename(ourl.URL) === path.basename(url.URL)
+    );
+    if (matchedOriginal.length === 1) {
+      const copyOfMatch = { ...matchedOriginal[0] };
+      delete copyOfMatch.URL;
+      return { ...url, ...copyOfMatch };
+    }
+    return url;
+  });
+
+  return [...originalKeepers, ...updatedMergedWithOriginal];
+}
+
+
 async function updateUMMGMetadata(cmrFile, files, distEndpoint, buckets) {
   const isECHO10 = false;
-  const urls = constructOnlineAccessUrls(files, distEndpoint, buckets, isECHO10);
+  const newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets, isECHO10);
   const metadataObject = await metadataObjectFromCMRJSONFile(cmrFile.filename);
-  _set(metadataObject, 'items[0].umm.RelatedUrls', urls);
+
+  const originalURLs = _get(metadataObject, 'items[0].umm.RelatedUrls', []);
+  const mergedURLs = mergeURLs(originalURLs, newURLs);
+
+  _set(metadataObject, 'items[0].umm.RelatedUrls', mergedURLs);
 
   const tags = await aws.s3GetObjectTagging(cmrFile.bucket, cmrFile.filepath);
   const tagsQueryString = aws.s3TagSetToQueryString(tags.TagSet);
@@ -278,29 +314,6 @@ function getCreds() {
   };
 }
 
-/**
- * Merge lists of URL objects.
- *
- * @param {Array<Object>} original - Array of URL Objects representing the cmr file previous state
- * @param {Array<Object>} updated - Array of updated URL Objects representing moved/updated files
- * @returns {Array<Object>} list of updated an original URL objects representing the updated state.
- */
-function mergeURLs(original, updated) {
-  const updatedURLBasenames = updated.map((url) => path.basename(url.URL));
-  // TODO [MHS, 2019-01-29] could use partition.
-  const originalKeepers = original.filter((url) => !updatedURLBasenames.includes(path.basename(url.URL)));
-  const updatedMergedWithOriginal = updated.map((url) => {
-    const matchedOriginal = original.filter((ourl) => path.basename(ourl.URL) === path.basename(url.URL));
-    if (matchedOriginal.length === 1) {
-      const copyOfMatch = { ...matchedOriginal[0] };
-      delete copyOfMatch.URL;
-      return { ...url, ...copyOfMatch };
-    }
-    return url;
-  });
-
-  return [...originalKeepers, ...updatedMergedWithOriginal];
-}
 
 /**
  * After files are moved, this function creates new online access URLs and then updates
