@@ -3,9 +3,9 @@ const rewire = require('rewire');
 
 const {
   getGranuleId
-} = require('../cmr-utils');
+} = require('../../cmr-utils');
 
-const cmrUtil = rewire('../cmr-utils');
+const cmrUtil = rewire('../../cmr-utils');
 const isCMRFile = cmrUtil.__get__('isCMRFile');
 const stripTypeFromObject = cmrUtil.__get__('stripTypeFromObject');
 
