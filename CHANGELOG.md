@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+
 ### Added
 - CUMULUS-678
   `reconcileCMRMetadata` added to `@cumulus/cmrjs` to update metadata record with new file locations.
