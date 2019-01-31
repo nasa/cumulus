@@ -16,7 +16,7 @@ const {
 const { getMetadata } = require('..');
 
 const granuleId = 'MYD13Q1.A2017297.h19v10.006.2017313221203';
-const clientId = 'test-client';
+const clientId = 'cumulus-test-client';
 
 const alreadyDeleted = `Concept with native-id [${granuleId}] and concept-id [G1222482315-CUMULUS] is already deleted.`;
 
