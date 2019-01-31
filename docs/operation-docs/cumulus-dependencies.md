@@ -59,3 +59,14 @@ To pin our dependency to a specific version, we just have to remove the `^`. Tha
 
 Changing the version should be rather straight-forward. In the instance of `@cumulus` dependenies, we can find the versioned releases on the GitHub [releases page](github.com/nasa/cumulus/releases). To update `@cumulus/api` to `1.11.1`, simply change the line to `"@cumulus/api": "1.11.1",`.
 
+
+## Adding a Dependency
+
+Cumulus provides many common tasks, such as `parse_pdr` and `move_granules`. A more complete list is available [here](https://nasa.github.io/cumulus/docs/next/tasks). There are two ways to add a package to your deployment.
+
+1. Editing the `package.json` file directly and then running an `yarn install`:
+* Add `"@cumulus/discover-pdrs": "1.11.1"` to the `dependencies` attribute in `package.json`.
+* Run `yarn install` on the command-line.
+* Check that the package has been installed by making sure the `node_modules/@cumulus/discover-pdrs` directory exists.
+2. Running `yarn add <package-name>` on the command line (this will automatically add it to the `package.json`.
+* Run `yarn add @cumulus/discover-pdrs@1.11.1`
