@@ -130,7 +130,7 @@ const regexes = {
  * @param {Object} params - input parameters
  * @param {string} params.field - the filed name (e.g. granuleId)
  * @param {string} params.regex - the type of the request (coming from the regexes object above)
- * @returns {string} the filter expression 
+ * @returns {string} the filter expression
  */
 function constructFilterExpression({ field, regex }) {
   if (regex === 'not') {
