@@ -39,7 +39,6 @@ module.exports.asyncOperation = {
   type: 'object',
   required: ['createdAt', 'id', 'status', 'updatedAt'],
   additionalProperties: false,
-  timestamp: { type: 'integer' },
   properties: {
     createdAt: { type: 'integer' },
     id: { type: 'string' },
@@ -52,6 +51,7 @@ module.exports.asyncOperation = {
       enum: ['RUNNING', 'SUCCEEDED', 'RUNNER_FAILED', 'TASK_FAILED']
     },
     taskArn: { type: 'string' },
+    timestamp: { type: 'integer' },
     updatedAt: { type: 'integer' }
   }
 };
@@ -199,6 +199,7 @@ module.exports.file = {
     granuleId: { type: 'string' },
     bucket: { type: 'string' },
     key: { type: 'string' },
+    timestamp: { type: 'integer' },
     createdAt: { type: 'integer' },
     updatedAt: { type: 'integer' }
   }
@@ -310,7 +311,6 @@ module.exports.granule = {
       type: 'string',
       readonly: true
     },
-    timestamp: { type: 'integer' },
     createdAt: { type: 'integer' },
     updatedAt: { type: 'integer' },
     dataType: { type: 'string' },
@@ -605,8 +605,7 @@ module.exports.execution = {
     },
     updatedAt: { type: 'integer' },
     timestamp: {
-      type: 'number',
-      readonly: true
+      type: 'number'
     },
     originalPayload: {
       title: 'The original payload for this workflow',
@@ -637,6 +636,7 @@ module.exports.user = {
     expires: { type: 'integer' },
     password: { type: 'string' },
     updatedAt: { type: 'integer' },
+    timestamp: { type: 'integer' },
     userName: { type: 'string' }
   }
 };
