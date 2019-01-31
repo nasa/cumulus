@@ -405,7 +405,7 @@ test.serial('remove a granule from CMR', async (t) => {
 
   const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
   t.is(updatedGranule.published, false);
-  t.is(updatedGranule.cmrLink, null);
+  t.is(updatedGranule.cmrLink, undefined);
 
   CMR.prototype.deleteGranule.restore();
   DefaultProvider.decrypt.restore();

@@ -6,7 +6,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-
 ### Added
 - CUMULUS-678
   `reconcileCMRMetadata` added to `@cumulus/cmrjs` to update metadata record with new file locations.
@@ -25,6 +24,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ### Changed
+- CUMULUS-1121
+  - Schema validation is now strongly enforced when writing to the database.
+    Additional properties are not allowed and will result in a validation error.
 - CUMULUS-678
   `tasks/move-granules` simplified and refactored to use  functionality from cmrjs.
   `ingest/granules.moveGranuleFiles` now just moves granule files and returns a list of the updated files. Updating metadata now handled by `@cumulus/cmrjs/reconcileCMRMetadata`.
@@ -39,6 +41,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Update `@cumulus/integration-tests` to work with updated cumulus-api express endpoints
 
 - **CUMULUS-1049** Updated `Retrieve Execution Status API` in `@cumulus/api`: If the execution doesn't exist in Step Function API, Cumulus API returns the execution status information from the database.
+
+### Deprecated
+`@cmrjs/ingestConcept`, instead use the CMR object methods. `@cmrjs/CMR.ingestGranule` or `@cmrjs/CMR.ingestCollection`
+`@cmrjs/searchConcept`, instead use the CMR object methods. `@cmrjs/CMR.searchGranules` or `@cmrjs/CMR.searchCollections`
+`@cmrjs/deleteConcept`, instead use the CMR object methods. `@cmrjs/CMR.deleteGranule` or `@cmrjs/CMR.deleteCollection`
+
+
 
 ## [v1.11.1] - 2018-12-18
 
