@@ -109,7 +109,7 @@ class Manager {
     if (!valid) {
       const err = new Error('The record has validation errors');
       err.name = 'SchemaValidationError';
-      err.detail = validate.errors;
+      err.detail = JSON.stringify(validate.errors);
       throw err;
     }
   }
@@ -397,23 +397,23 @@ class Manager {
     const itemKeyNames = Object.keys(itemKeys);
     itemKeyNames.forEach((property) => delete actualUpdates[property]);
 
-    // Make sure that we don't try to update a field that's being deleted
-    fieldsToDelete.forEach((property) => delete actualUpdates[property]);
-
-    const schemaWithoutRequiredParams = JSON.parse(
-      JSON.stringify(
-        this.schema,
-        (key, value) => (key === 'required' ? [] : value)
-      )
-    );
+    const currentItem = await this.get(itemKeys);
+    const updatedItem = {
+      ...currentItem,
+      ...updates
+    };
+    fieldsToDelete.forEach((f) => delete updatedItem[f]);
 
     if (this.validate) {
       this.constructor.recordIsValid(
-        actualUpdates,
-        schemaWithoutRequiredParams,
+        updatedItem,
+        this.schema,
         this.removeAdditional
       );
     }
+
+    // Make sure that we don't try to update a field that's being deleted
+    fieldsToDelete.forEach((property) => delete actualUpdates[property]);
 
     // Build the actual update request
     const attributeUpdates = {};
