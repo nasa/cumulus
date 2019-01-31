@@ -163,9 +163,11 @@ async function serve(user, stackName = 'localrun') {
     process.env.system_bucket = 'localbucket';
     process.env.stackName = stackName;
     process.env.TOKEN_SECRET = 'secreeetartalksjfaf;lj';
-    process.env.EARTHDATA_CLIENT_ID = randomString();
-    process.env.EARTHDATA_CLIENT_PASSWORD = randomString();
-    process.env.EARTHDATA_BASE_URL = 'https://example.com';
+    if (process.env.FAKE_AUTH === 'true') {
+      process.env.EARTHDATA_CLIENT_ID = randomString();
+      process.env.EARTHDATA_CLIENT_PASSWORD = randomString();
+      process.env.EARTHDATA_BASE_URL = 'https://example.com';
+    }
     process.env.API_ENDPOINT = `http://localhost:${port}/token`;
 
     // create tables if not already created
@@ -184,8 +186,6 @@ async function serve(user, stackName = 'localrun') {
   const { app } = require('../app'); // eslint-disable-line global-require
   app.listen(port);
 }
-
-// require('dotenv').config()
 
 
 module.exports = serve;
