@@ -15,7 +15,7 @@ const { deconstructCollectionId } = require('../lib/utils');
  */
 async function list(req, res) {
   const instance = new models.Granule();
-  const result = await instance.search(req.query);   
+  const result = await instance.search(req.query);
   return res.send(result);
 }
 

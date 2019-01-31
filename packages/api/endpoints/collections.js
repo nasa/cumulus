@@ -16,7 +16,7 @@ const {
  */
 async function list(req, res) {
   const instance = new models.Collection();
-  const result = await instance.search(req.query);   
+  const result = await instance.search(req.query);
   return res.send(result);
 }
 
