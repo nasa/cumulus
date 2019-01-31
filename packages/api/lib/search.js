@@ -1,7 +1,6 @@
 'use strict';
 
 const omit = require('lodash.omit');
-const isNumber = require('lodash.isnumber');
 const clonedeep = require('lodash.clonedeep');
 const { default: sort, ASC, DESC } = require('sort-array-objects');
 
@@ -19,15 +18,15 @@ function composeNext({ nextObj, context }) {
   if (nextObj) {
     next = nextObj[context.tableHash.name];
     if (context.tableRange) {
-      next = `${next}__cumuluskey__${nextObj[context.tableRange.name]}` 
+      next = `${next}__cumuluskey__${nextObj[context.tableRange.name]}`;
     }
   }
-  return next
+  return next;
 }
 
 /**
  * Determines the next string value based on the provided page and limit values
- * 
+ *
  * @param {Object} params - input parameters
  * @param {Object} params.query - the express's query parameter object
  * @param {integer} params.page - the page value
@@ -35,29 +34,33 @@ function composeNext({ nextObj, context }) {
  * @param {Object} params.context - The context of an instance of the Manager Base class
  * @returns {Promise<Object>} returns an updated query object
  */
-async function determinePage({ query, page, limit, context }) {
-  if ((page - limit) <= 0) {
-    page = 1
+async function determinePage({
+  query, page, limit, context
+}) {
+  let localPage = page;
+  const newQuery = clonedeep(query);
+  if ((localPage - limit) <= 0) {
+    localPage = 1;
   }
 
-  if (page > 1) {
+  if (localPage > 1) {
     // this is a legacy feature
     // we keep iterating through the record until we reach
     // the first record
-    const offset = limit * (page - 1);
+    const offset = limit * (localPage - 1);
     const firstRecord = await context.dynamodbDocClient.scan({
       TableName: context.tableName,
       Limit: offset,
       Select: 'COUNT'
     }).promise();
 
-    query.next = composeNext({
+    newQuery.next = composeNext({
       nextObj: firstRecord.LastEvaluatedKey,
       context
-    })
+    });
   }
 
-  return query
+  return newQuery;
 }
 
 /**
@@ -67,7 +70,7 @@ async function determinePage({ query, page, limit, context }) {
  * @param {Object} params.query - the express's query parameter object
  * @param {Object} params.context - The context of an instance of the Manager Base class
  * @param {Object} params.params - The parameter object passed to DynamoDB scan query
- * @returns {Object} returns an updated parameter object 
+ * @returns {Object} returns an updated parameter object
  */
 function determineExclusiveStartKey({ query, context, params }) {
   if (query.next) {
@@ -79,11 +82,13 @@ function determineExclusiveStartKey({ query, context, params }) {
     if (context.tableRange && context.tableRange.name && !key) {
       throw new Error(`The range (key) ${context.tableRange.name} is missing in the prev/next query`);
     }
+    const updatedParams = clonedeep(params);
 
-    params.ExclusiveStartKey = {
+    updatedParams.ExclusiveStartKey = {
       [context.tableHash.name]: hash,
       [context.tableRange.name]: key
     };
+    return updatedParams;
   }
 
   return params;
@@ -96,13 +101,15 @@ function determineExclusiveStartKey({ query, context, params }) {
  * @param {Object} params.query - the express's query parameter object
  * @param {Object} params.params - The parameter object passed to DynamoDB scan query
  * @param {Object} params.context - The context of an instance of the Manager Base class
- * @returns {Object} returns an updated parameter object 
+ * @returns {Object} returns an updated parameter object
  */
 function constructPrefixSearch({ query, params, context }) {
   if (query.prefix) {
-    params.ExpressionAttributeNames = { [`#${context.tableHash.name}`]: context.tableHash.name }; 
-    params.FilterExpression = `begins_with(#${context.tableHash.name}, :${context.tableHash.name})`;
-    params.ExpressionAttributeValues = { [`:${context.tableHash.name}`]: query.prefix };
+    const updatedParams = clonedeep(params);
+    updatedParams.ExpressionAttributeNames = { [`#${context.tableHash.name}`]: context.tableHash.name };
+    updatedParams.FilterExpression = `begins_with(#${context.tableHash.name}, :${context.tableHash.name})`;
+    updatedParams.ExpressionAttributeValues = { [`:${context.tableHash.name}`]: query.prefix };
+    return updatedParams;
   }
   return params;
 }
@@ -116,21 +123,40 @@ const regexes = {
   range_to: /^(.*)__to$/
 };
 
+/**
+ * constructs a dynamoDB filter expression based on a given
+ * query parameter field
+ *
+ * @param {Object} params - input parameters
+ * @param {string} params.field - the filed name (e.g. granuleId)
+ * @param {string} params.regex - the type of the request (coming from the regexes object above)
+ * @returns {string} the filter expression 
+ */
 function constructFilterExpression({ field, regex }) {
   if (regex === 'not') {
     return `#${field} <> :${field}`;
   }
-  else if (regex === 'range_from') {
-    return `#${field} >= :${field}`
+  if (regex === 'range_from') {
+    return `#${field} >= :${field}`;
   }
-  else if (regex === 'range_to') {
-    return `#${field} <= :${field}`
+  if (regex === 'range_to') {
+    return `#${field} <= :${field}`;
   }
   return `#${field} = :${field}`;
-};
+}
 
+/**
+ * Constructs the dynamodb filter parameters for given search queries
+ *
+ * @param {Object} params - input parameters
+ * @param {Object} params.query - the express's query parameter object
+ * @param {Object} params.params - The parameter object passed to DynamoDB scan query
+ * @param {Object} params.context - The context of an instance of the Manager Base class
+ * @returns {Object} returns an updated parameter object
+ */
 function constructSearch({ query, params, context }) {
   let q = clonedeep(query);
+  let updatedParams = clonedeep(params);
 
   // remove reserved words (that are not fields)
   q = omit(
@@ -148,36 +174,36 @@ function constructSearch({ query, params, context }) {
 
   // if prefix search is request all other search parameters are ignored
   if (q.prefix) {
-    params = constructPrefixSearch({ query, params, context });
+    updatedParams = constructPrefixSearch({ query, params: updatedParams, context });
   }
   else if (Object.keys(q).length > 0) {
     // construct attribute names
-    params.ExpressionAttributeNames = {};
-    params.ExpressionAttributeValues = {};
+    updatedParams.ExpressionAttributeNames = {};
+    updatedParams.ExpressionAttributeValues = {};
     const filterExpressions = [];
     Object.keys(q).forEach((field) => {
       let fieldName = field;
-      const match = field.match(/^(.*)__(in|not|exists|from|to)$/);
+      let match = field.match(/^(.*)__(in|not|exists|from|to)$/);
       if (match[1]) {
         fieldName = match[1];
       }
-      params.ExpressionAttributeNames[`#${fieldName}`] = fieldName ; 
+      updatedParams.ExpressionAttributeNames[`#${fieldName}`] = fieldName;
 
       let value = Number(q[field]);
       if (!value) value = q[field];
-      params.ExpressionAttributeValues[`:${fieldName}`] = value; 
+      updatedParams.ExpressionAttributeValues[`:${fieldName}`] = value;
 
       const regex = Object.keys(regexes).find((k) => {
-        const match = field.match(regexes[k]);
+        match = field.match(regexes[k]);
         if (match) return true;
         return false;
       });
 
-      filterExpressions.push(constructFilterExpression({ field: fieldName, regex }))
+      filterExpressions.push(constructFilterExpression({ field: fieldName, regex }));
     });
-    params.FilterExpression = filterExpressions.join(' and ');
+    updatedParams.FilterExpression = filterExpressions.join(' and ');
   }
-  return params
+  return updatedParams;
 }
 
 /**
@@ -186,16 +212,17 @@ function constructSearch({ query, params, context }) {
  * performed by ElasticSearch
  *
  * @param {Object} params - input parameters
- * @param {Object} params.query - the express's query parameter object
+ * @param {Object} params.q - the express's query parameter object
  * @param {Object} params.context - The context of an instance of the Manager Base class
- * @returns {Promise<Object>} returns the search results 
+ * @returns {Promise<Object>} returns the search results
  */
-async function search({ query, context }) {
+async function search({ q, context }) {
   // extract query parameters supported by the search
   let order = DESC;
+  let query = clonedeep(q);
   const sortBy = query.sort_by || 'timestamp';
-  let page = parseInt((query.page) ? query.page : 1, 10);
-  const limit = parseInt((query.limit) ? query.limit : 10);
+  const page = parseInt((query.page) ? query.page : 1, 10);
+  const limit = parseInt((query.limit) ? query.limit : 10, 10);
 
   let params = {
     TableName: context.tableName,
@@ -203,7 +230,9 @@ async function search({ query, context }) {
   };
 
   // determine the start point for the dynamoDB scan query
-  query = await determinePage({ query, page, limit, context });
+  query = await determinePage({
+    query, page, limit, context
+  });
   params = determineExclusiveStartKey({ query, context, params });
 
   // handle the fields parameter which limits which fields
@@ -215,14 +244,14 @@ async function search({ query, context }) {
   // construct the filter search expression
   params = constructSearch({ query, params, context });
 
-  const scan = await context.dynamodbDocClient.scan(params).promise()
+  const scan = await context.dynamodbDocClient.scan(params).promise();
 
   // determine whether this is an ascending or descending order sort
   // and sort the results
   if (query.order !== 'desc') {
     order = ASC;
   }
-  const results = sort(scan.Items, [sortBy], order)
+  const results = sort(scan.Items, [sortBy], order);
 
   const response = {
     meta: {
@@ -232,13 +261,13 @@ async function search({ query, context }) {
       limit,
       page,
       count: scan.ScannedCount,
-      next: composeNext({ nextObj: scan.LastEvaluatedKey, context }),
+      next: composeNext({ nextObj: scan.LastEvaluatedKey, context })
     },
-    results  
-  }
-  return response
+    results
+  };
+  return response;
 }
 
 module.exports = {
   search
-}
+};

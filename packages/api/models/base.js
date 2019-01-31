@@ -32,13 +32,13 @@ async function enableStream(tableName) {
 /**
  * Helper for creating a dynamoDB table
  *
- * @param {string} tableName - dynamoDB table name 
- * @param {Object} hash - object describing the dynamodb hash (primary key) field 
- * @param {string} hash.name - name of the field 
- * @param {string} hash.type - type of the field (e.g. S for string and N for number) 
- * @param {Object} range - object describing the dynamodb range field 
- * @param {string} range.name - name of the field 
- * @param {string} range.type - type of the field (e.g. S for string and N for number) 
+ * @param {string} tableName - dynamoDB table name
+ * @param {Object} hash - object describing the dynamodb hash (primary key) field
+ * @param {string} hash.name - name of the field
+ * @param {string} hash.type - type of the field (e.g. S for string and N for number)
+ * @param {Object} range - object describing the dynamodb range field
+ * @param {string} range.name - name of the field
+ * @param {string} range.type - type of the field (e.g. S for string and N for number)
  * @returns {Promise<Object>} aws dynamodb table creation response
  */
 async function createTable(tableName, hash, range = null) {
@@ -283,7 +283,7 @@ class Manager {
 
       // also add timestamp to support legacy timestamp field in es
       clonedItem.timestamp = clonedItem.updatedAt;
-    
+
       if (!clonedItem.createdAt) clonedItem.createdAt = clonedItem.updatedAt;
       return clonedItem;
     });
@@ -354,7 +354,7 @@ class Manager {
   }
 
   search(query) {
-    return search({ query, context: this }); 
+    return search({ q: query, context: this });
   }
 
   async delete(item) {
