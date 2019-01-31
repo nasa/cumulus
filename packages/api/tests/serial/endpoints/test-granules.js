@@ -811,12 +811,12 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
 
   // CMR UMMG JSON has been updated with the location of the moved file.
   const ummgObject = await metadataObjectFromCMRJSONFile(newGranule.files[1].filename);
-  const updatedURLs = ummgObject.items[0].umm.RelatedUrls.map((urlObj) => urlObj.URL);
+  const updatedURLs = ummgObject.RelatedUrls.map((urlObj) => urlObj.URL);
   const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
   t.true(updatedURLs.includes(newDestination));
 
   // Original metadata is also unchanged.
-  const origURLs = originalUMMG.items[0].umm.RelatedUrls.map((urlObj) => urlObj.URL);
+  const origURLs = originalUMMG.RelatedUrls.map((urlObj) => urlObj.URL);
   origURLs.forEach((origURL) => {
     t.true(updatedURLs.includes(origURL));
   });
