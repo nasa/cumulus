@@ -65,6 +65,38 @@ async function publishECHO10XML2CMR(cmrFile, creds, systemBucket, stack) {
   };
 }
 
+
+async function publishUMMGJSON2CMR(ummgMetadata, creds, systemBucket, stack) {
+  // TODO [MHS, 2019-01-30] copy and paste first to get this working...
+  let password;
+  try {
+    password = await DefaultProvider.decrypt(creds.password, undefined, systemBucket, stack);
+  }
+  catch (error) {
+    log.error('Decrypting password failed, using unencrypted password', error);
+    password = creds.password;
+  }
+  const cmr = new CMR(
+    creds.provider,
+    creds.clientId,
+    creds.username,
+    password
+  );
+
+  const granuleId = ummgMetadata.GranuleUR;
+
+  const res = await cmr.ingestUMMGranule(ummgMetadata);
+  const conceptId = res.result['concept-id'];
+
+  log.info(`Published UMMG ${granuleId} to the CMR. conceptId: ${conceptId}`);
+
+  return {
+    granuleId,
+    conceptId,
+    link: `${getUrl('search')}granules.json?concept_id=${res.result['concept-id']}`
+  };
+}
+
 // 2018-12-12 This doesn't belong in cmrjs, but should be resolved by
 // https://bugs.earthdata.nasa.gov/browse/CUMULUS-1086
 /**
@@ -392,13 +424,12 @@ async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, publis
     const ummgMetadata = await updateUMMGMetadata(cmrFile, files, distEndpoint, buckets);
     if (published) {
       const creds = getCreds();
-      // return publishUMMGJSON2CMR(
-      //   ummgMetadata,
-      //   creds,
-      //   process.env.system_bucket,
-      //   process.env.stackName
-      // );
-      // do published thing.
+      return publishUMMGJSON2CMR(
+        ummgMetadata,
+        creds,
+        process.env.system_bucket,
+        process.env.stackName
+      );
     }
     return Promise.resolve();
   }
