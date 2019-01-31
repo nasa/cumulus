@@ -117,7 +117,7 @@ test('default returns list of executions', async (t) => {
   const { meta, results } = response.body;
   t.is(results.length, 2);
   t.is(meta.stack, process.env.stackName);
-  t.is(meta.table, 'execution');
+  t.is(meta.table, process.env.ExecutionsTable);
   t.is(meta.count, 2);
   const arns = fakeExecutions.map((i) => i.arn);
   results.forEach((r) => {
@@ -136,7 +136,7 @@ test('executions can be filtered by workflow', async (t) => {
   const { meta, results } = response.body;
   t.is(results.length, 1);
   t.is(meta.stack, process.env.stackName);
-  t.is(meta.table, 'execution');
+  t.is(meta.table, process.env.ExecutionsTable);
   t.is(meta.count, 1);
   t.is(fakeExecutions[1].arn, results[0].arn);
 });

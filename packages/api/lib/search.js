@@ -184,7 +184,7 @@ function constructSearch({ query, params, context }) {
     Object.keys(q).forEach((field) => {
       let fieldName = field;
       let match = field.match(/^(.*)__(in|not|exists|from|to)$/);
-      if (match[1]) {
+      if (match && match[1]) {
         fieldName = match[1];
       }
       updatedParams.ExpressionAttributeNames[`#${fieldName}`] = fieldName;
@@ -260,7 +260,7 @@ async function search({ q, context }) {
       table: context.tableName,
       limit,
       page,
-      count: scan.ScannedCount,
+      count: results.length,
       next: composeNext({ nextObj: scan.LastEvaluatedKey, context })
     },
     results

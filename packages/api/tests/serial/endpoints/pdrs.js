@@ -156,7 +156,7 @@ test('default returns list of pdrs', async (t) => {
   const { meta, results } = response.body;
   t.is(results.length, 2);
   t.is(meta.stack, process.env.stackName);
-  t.is(meta.table, 'pdr');
+  t.is(meta.table, process.env.PdrsTable);
   t.is(meta.count, 2);
   const pdrNames = fakePdrs.map((i) => i.pdrName);
   results.forEach((r) => {

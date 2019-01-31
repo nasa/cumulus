@@ -184,7 +184,6 @@ test('CUMULUS-912 DELETE with pathParameters and with an invalid access token re
 
 test.todo('CUMULUS-912 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
 
-// TODO(aimee): Add a rule to ES. List uses ES and we don't have any rules in ES.
 test('default returns list of rules', async (t) => {
   const response = await request(app)
     .get('/rules')
@@ -193,7 +192,7 @@ test('default returns list of rules', async (t) => {
     .expect(200);
 
   const { results } = response.body;
-  t.is(results.length, 0);
+  t.is(results.length, 1);
 });
 
 test('GET gets a rule', async (t) => {
@@ -276,6 +275,7 @@ test('POST creates a rule', async (t) => {
 
   newRule.createdAt = record.createdAt;
   newRule.updatedAt = record.updatedAt;
+  newRule.timestamp = record.timestamp;
 
   t.deepEqual(record, newRule);
 });
@@ -308,6 +308,7 @@ test('PUT updates a rule', async (t) => {
   const record = response.body;
   newRule.createdAt = record.createdAt;
   newRule.updatedAt = record.updatedAt;
+  newRule.timestamp = record.timestamp;
 
   t.deepEqual(record, newRule);
 });

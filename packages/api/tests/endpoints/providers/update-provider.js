@@ -113,6 +113,11 @@ test.serial('PUT updates an existing provider and returns it in listing', async 
   const { results } = response.body;
   stub.restore();
   t.is(results.length, 1);
+
+  // remove date fields before comparing
+  delete results[0].createdAt;
+  delete results[0].updatedAt;
+  delete results[0].timestamp;
   t.deepEqual(results[0], updatedProvider);
 });
 

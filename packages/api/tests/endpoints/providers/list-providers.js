@@ -95,5 +95,9 @@ test('default returns list of providerModel', async (t) => {
 
   const { results } = response.body;
   stub.restore();
-  t.is(results[0].id, t.context.testProvider.id);
+
+  const id = results
+    .map((r) => r.id)
+    .filter((id) => id === t.context.testProvider.id); 
+  t.is(t.context.testProvider.id, id[0]);
 });

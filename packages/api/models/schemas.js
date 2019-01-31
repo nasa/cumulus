@@ -588,7 +588,8 @@ module.exports.execution = {
       additionalProperties: true,
     },
     tasks: {
-      type: 'object'
+      type: 'object',
+      additionalProperties: true,
     },
     type: {
       title: 'The workflow name, e.g. IngestGranule',

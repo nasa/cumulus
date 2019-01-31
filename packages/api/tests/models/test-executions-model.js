@@ -70,6 +70,9 @@ test.serial('Creating an execution adds a record to the database with matching v
   doc.duration = record.duration;
 
   t.true(recordExists);
+
+  // fake timestamps
+  doc.timestamp = record.timestamp; 
   t.deepEqual(record, doc);
 });
 
@@ -86,6 +89,9 @@ test.serial('Updating an existing record updates the record as expected', async 
   delete record.updatedAt;
 
   t.deepEqual(finalPayload, record.finalPayload);
+  
+  // fake timestamps
+  doc.timestamp = record.timestamp; 
   t.deepEqual(doc, record);
 });
 
