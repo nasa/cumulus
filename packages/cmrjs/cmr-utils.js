@@ -254,19 +254,19 @@ function getCmrFileObjs(files) {
  * @returns {Array<Object>} list of updated an original URL objects representing the updated state.
  */
 function mergeURLs(original, updated) {
-  const updatedURLBasenames = updated.map((url) => path.basename(url.URL));
+  const newURLBasenames = updated.map((url) => path.basename(url.URL));
 
   const unchangedOriginals = original.filter(
-    (url) => !updatedURLBasenames.includes(path.basename(url.URL))
+    (url) => !newURLBasenames.includes(path.basename(url.URL))
   );
   const updatedWithMergedOriginals = updated.map((url) => {
     const matchedOriginal = original.filter(
       (ourl) => path.basename(ourl.URL) === path.basename(url.URL)
     );
     if (matchedOriginal.length === 1) {
-      /* eslint-disable-next-line no-unused-vars  */
-      const { URL: unused, ...matchWithoutURL } = { ...matchedOriginal[0] };
-      return { ...url, ...matchWithoutURL };
+      // merge original urlObject into the updated urlObject,
+      // preferring all metadata from original except the new url.URL
+      return { ...url, ...matchedOriginal[0], ...{ URL: url.URL } };
     }
     return url;
   });
