@@ -45,7 +45,10 @@ class AsyncOperation extends Manager {
    * @memberof AsyncOperation
    */
   get(id) {
-    return super.get({ id });
+    if (id !== new Object(id)) { // eslint-disable-line no-new-object
+      return super.get({ id });
+    }
+    return super.get(id);
   }
 
   /**
