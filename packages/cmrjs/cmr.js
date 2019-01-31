@@ -6,6 +6,7 @@ const property = require('lodash.property');
 const { parseString } = require('xml2js');
 
 const log = require('@cumulus/common/log');
+const { deprecate } = require('@cumulus/common/util');
 
 const {
   getUrl,
@@ -28,7 +29,7 @@ const logDetails = {
  * @param {Object} headers - the CMR headers
  * @returns {Promise.<Array>} - array of search results.
  */
-async function searchConcept(type, searchParams, previousResults = [], headers) {
+async function _searchConcept(type, searchParams, previousResults = [], headers) {
   const recordsLimit = process.env.CMR_LIMIT || 100;
   const pageSize = searchParams.pageSize || process.env.CMR_PAGE_SIZE || 50;
 
@@ -48,10 +49,18 @@ async function searchConcept(type, searchParams, previousResults = [], headers) 
   const CMRHasMoreResults = response.headers['cmr-hits'] > numRecordsCollected;
   const recordsLimitReached = numRecordsCollected >= recordsLimit;
   if (CMRHasMoreResults && !recordsLimitReached) {
-    return searchConcept(type, query, fetchedResults, headers);
+    return _searchConcept(type, query, fetchedResults, headers);
   }
   return fetchedResults.slice(0, recordsLimit);
 }
+
+/* eslint-disable-next-line valid-jsdoc */
+/** deprecation wrapper for searchConcept see _searchConcept */
+async function searchConcept(type, searchParams, previousResults = [], headers = {}) {
+  deprecate('@cmrjs/searchConcept', '1.11.1', '@cmrjs/CMR.search(Collections|Granules)');
+  return _searchConcept(type, searchParams, previousResults, headers);
+}
+
 
 /**
  * Posts a records of any kind (collection, granule, etc) to
@@ -64,7 +73,7 @@ async function searchConcept(type, searchParams, previousResults = [], headers) 
  * @param {Object} headers - the CMR headers
  * @returns {Promise.<Object>} the CMR response object
  */
-async function ingestConcept(type, xml, identifierPath, provider, headers) {
+async function _ingestConcept(type, xml, identifierPath, provider, headers) {
   // Accept either an XML file, or an XML string itself
   let xmlString = xml;
   if (fs.existsSync(xml)) {
@@ -117,6 +126,12 @@ async function ingestConcept(type, xml, identifierPath, provider, headers) {
   }
 }
 
+/* eslint-disable-next-line valid-jsdoc */
+/** deprecation wrapper for ingestConcept see _ingestConcept */
+async function ingestConcept(type, xml, identifierPath, provider, headers) {
+  deprecate('@cmrjs/ingestConcept', '1.11.1', '@cmrjs/CMR.ingest(Collection|Granule)');
+  return _ingestConcept(type, xml, identifierPath, provider, headers);
+}
 /**
  * Deletes a record from the CMR
  *
@@ -126,7 +141,7 @@ async function ingestConcept(type, xml, identifierPath, provider, headers) {
  * @param {Object} headers - the CMR headers
  * @returns {Promise.<Object>} the CMR response object
  */
-async function deleteConcept(type, identifier, provider, headers) {
+async function _deleteConcept(type, identifier, provider, headers) {
   const url = `${getUrl('ingest', provider)}${type}/${identifier}`;
   log.info(`deleteConcept ${url}`);
 
@@ -161,6 +176,13 @@ async function deleteConcept(type, identifier, provider, headers) {
   }
 
   return xmlObject;
+}
+
+/* eslint-disable-next-line valid-jsdoc */
+/** deprecation wrapper for deleteConcept see _deleteConcept */
+async function deleteConcept(type, identifier, provider, headers) {
+  deprecate('@cmrjs/deleteConcept', '1.11.1', '@cmrjs/CMR.delete(Collection|Granule)');
+  return _deleteConcept(type, identifier, provider, headers);
 }
 
 /**
@@ -215,7 +237,7 @@ class CMR {
    */
   async ingestCollection(xml) {
     const headers = this.getHeaders(await this.getToken());
-    return ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
+    return _ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
   }
 
   /**
@@ -226,7 +248,7 @@ class CMR {
    */
   async ingestGranule(xml) {
     const headers = this.getHeaders(await this.getToken());
-    return ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
+    return _ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
   }
 
   /**
@@ -237,7 +259,7 @@ class CMR {
    */
   async deleteCollection(datasetID) {
     const headers = this.getHeaders(await this.getToken());
-    return deleteConcept('collection', datasetID, headers);
+    return _deleteConcept('collection', datasetID, headers);
   }
 
   /**
@@ -248,7 +270,7 @@ class CMR {
    */
   async deleteGranule(granuleUR) {
     const headers = this.getHeaders(await this.getToken());
-    return deleteConcept('granules', granuleUR, this.provider, headers);
+    return _deleteConcept('granules', granuleUR, this.provider, headers);
   }
 
   /**
@@ -259,7 +281,7 @@ class CMR {
    */
   async searchCollections(searchParams) {
     const params = Object.assign({}, { provider_short_name: this.provider }, searchParams);
-    return searchConcept('collections', params, [], { 'Client-Id': this.clientId });
+    return _searchConcept('collections', params, [], { 'Client-Id': this.clientId });
   }
 
   /**
@@ -270,7 +292,7 @@ class CMR {
    */
   async searchGranules(searchParams) {
     const params = Object.assign({}, { provider_short_name: this.provider }, searchParams);
-    return searchConcept('granules', params, [], { 'Client-Id': this.clientId });
+    return _searchConcept('granules', params, [], { 'Client-Id': this.clientId });
   }
 }
 
