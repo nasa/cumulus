@@ -1,246 +1,229 @@
 {
-  "hits": 1,
-  "took": 179,
-  "items": [
+  "TemporalExtent": {
+    "RangeDateTime": {
+      "BeginningDateTime": "2000-12-31T00:00:00.000Z",
+      "EndingDateTime": "2001-01-01T23:59:59.000Z"
+    }
+  },
+  "GranuleUR": "SC:MOD11A1.006:870691",
+  "AdditionalAttributes": [
     {
-      "meta": {
-        "concept-type": "granule",
-        "concept-id": "G1000225550-LPDAAC_TS2",
-        "revision-id": 5,
-        "native-id": "SC:MOD11A1.006:870691",
-        "provider-id": "LPDAAC_TS2",
-        "format": "application/echo10+xml",
-        "revision-date": "2018-10-09T22:12:19Z"
+      "Name": "QAPERCENTGOODQUALITY",
+      "Values": [
+        "34"
+      ]
+    },
+    {
+      "Name": "QAPERCENTOTHERQUALITY",
+      "Values": [
+        "3"
+      ]
+    },
+    {
+      "Name": "QAPERCENTNOTPRODUCEDCLOUD",
+      "Values": [
+        "50"
+      ]
+    },
+    {
+      "Name": "QAPERCENTNOTPRODUCEDOTHER",
+      "Values": [
+        "13"
+      ]
+    },
+    {
+      "Name": "N_GRAN_POINTERS",
+      "Values": [
+        "85"
+      ]
+    },
+    {
+      "Name": "HORIZONTALTILENUMBER",
+      "Values": [
+        "22"
+      ]
+    },
+    {
+      "Name": "VERTICALTILENUMBER",
+      "Values": [
+        "16"
+      ]
+    },
+    {
+      "Name": "TileID",
+      "Values": [
+        "51022016"
+      ]
+    },
+    {
+      "Name": "QAFRACTIONGOODQUALITY",
+      "Values": [
+        "0.3406181"
+      ]
+    },
+    {
+      "Name": "QAFRACTIONOTHERQUALITY",
+      "Values": [
+        "0.0279806"
+      ]
+    },
+    {
+      "Name": "QAFRACTIONNOTPRODUCEDCLOUD",
+      "Values": [
+        "0.4975111"
+      ]
+    },
+    {
+      "Name": "QAFRACTIONNOTPRODUCEDOTHER",
+      "Values": [
+        "0.1338903"
+      ]
+    },
+    {
+      "Name": "CLOUD_CONTAMINATED_LST_SCREENED",
+      "Values": [
+        "YES"
+      ]
+    },
+    {
+      "Name": "identifier_product_doi",
+      "Values": [
+        "10.5067/MODIS/MOD11A1.006"
+      ]
+    },
+    {
+      "Name": "identifier_product_doi_authority",
+      "Values": [
+        "http://dx.doi.org"
+      ]
+    }
+  ],
+  "MeasuredParameters": [
+    {
+      "ParameterName": "MOD 1KM L3 LST",
+      "QAStats": {
+        "QAPercentMissingData": 0.0,
+        "QAPercentOutOfBoundsData": 0.0,
+        "QAPercentInterpolatedData": 0.0,
+        "QAPercentCloudCover": 50.0
       },
-      "umm": {
-        "TemporalExtent": {
-          "RangeDateTime": {
-            "BeginningDateTime": "2000-12-31T00:00:00.000Z",
-            "EndingDateTime": "2001-01-01T23:59:59.000Z"
-          }
-        },
-        "GranuleUR": "SC:MOD11A1.006:870691",
-        "AdditionalAttributes": [
+      "QAFlags": {
+        "AutomaticQualityFlag": "Passed",
+        "AutomaticQualityFlagExplanation": "No automatic quality assessment is performed in the PGE.",
+        "ScienceQualityFlag": "Not Investigated",
+        "ScienceQualityFlagExplanation": "See http://landweb.nascom.nasa.gov/cgi-bin/QA_WWW/qaFlagPage.cgi?sat=terra for the product Science Quality status."
+      }
+    }
+  ],
+  "SpatialExtent": {
+    "HorizontalSpatialDomain": {
+      "Geometry": {
+        "GPolygons": [
           {
-            "Name": "QAPERCENTGOODQUALITY",
-            "Values": [
-              "34"
-            ]
-          },
-          {
-            "Name": "QAPERCENTOTHERQUALITY",
-            "Values": [
-              "3"
-            ]
-          },
-          {
-            "Name": "QAPERCENTNOTPRODUCEDCLOUD",
-            "Values": [
-              "50"
-            ]
-          },
-          {
-            "Name": "QAPERCENTNOTPRODUCEDOTHER",
-            "Values": [
-              "13"
-            ]
-          },
-          {
-            "Name": "N_GRAN_POINTERS",
-            "Values": [
-              "85"
-            ]
-          },
-          {
-            "Name": "HORIZONTALTILENUMBER",
-            "Values": [
-              "22"
-            ]
-          },
-          {
-            "Name": "VERTICALTILENUMBER",
-            "Values": [
-              "16"
-            ]
-          },
-          {
-            "Name": "TileID",
-            "Values": [
-              "51022016"
-            ]
-          },
-          {
-            "Name": "QAFRACTIONGOODQUALITY",
-            "Values": [
-              "0.3406181"
-            ]
-          },
-          {
-            "Name": "QAFRACTIONOTHERQUALITY",
-            "Values": [
-              "0.0279806"
-            ]
-          },
-          {
-            "Name": "QAFRACTIONNOTPRODUCEDCLOUD",
-            "Values": [
-              "0.4975111"
-            ]
-          },
-          {
-            "Name": "QAFRACTIONNOTPRODUCEDOTHER",
-            "Values": [
-              "0.1338903"
-            ]
-          },
-          {
-            "Name": "CLOUD_CONTAMINATED_LST_SCREENED",
-            "Values": [
-              "YES"
-            ]
-          },
-          {
-            "Name": "identifier_product_doi",
-            "Values": [
-              "10.5067/MODIS/MOD11A1.006"
-            ]
-          },
-          {
-            "Name": "identifier_product_doi_authority",
-            "Values": [
-              "http://dx.doi.org"
-            ]
-          }
-        ],
-        "MeasuredParameters": [
-          {
-            "ParameterName": "MOD 1KM L3 LST",
-            "QAStats": {
-              "QAPercentMissingData": 0.0,
-              "QAPercentOutOfBoundsData": 0.0,
-              "QAPercentInterpolatedData": 0.0,
-              "QAPercentCloudCover": 50.0
-            },
-            "QAFlags": {
-              "AutomaticQualityFlag": "Passed",
-              "AutomaticQualityFlagExplanation": "No automatic quality assessment is performed in the PGE.",
-              "ScienceQualityFlag": "Not Investigated",
-              "ScienceQualityFlagExplanation": "See http://landweb.nascom.nasa.gov/cgi-bin/QA_WWW/qaFlagPage.cgi?sat=terra for the product Science Quality status."
-            }
-          }
-        ],
-        "SpatialExtent": {
-          "HorizontalSpatialDomain": {
-            "Geometry": {
-              "GPolygons": [
+            "Boundary": {
+              "Points": [
                 {
-                  "Boundary": {
-                    "Points": [
-                      {
-                        "Longitude": 179.837914833559,
-                        "Latitude": -77.1458333333333
-                      },
-                      {
-                        "Longitude": 180.0,
-                        "Latitude": -73.8708333333333
-                      },
-                      {
-                        "Longitude": 146.236455457184,
-                        "Latitude": -70.0041666666667
-                      },
-                      {
-                        "Longitude": 116.986771370359,
-                        "Latitude": -70.0041666666667
-                      },
-                      {
-                        "Longitude": 179.837914833559,
-                        "Latitude": -77.1458333333333
-                      }
-                    ]
-                  }
+                  "Longitude": 179.837914833559,
+                  "Latitude": -77.1458333333333
+                },
+                {
+                  "Longitude": 180.0,
+                  "Latitude": -73.8708333333333
+                },
+                {
+                  "Longitude": 146.236455457184,
+                  "Latitude": -70.0041666666667
+                },
+                {
+                  "Longitude": 116.986771370359,
+                  "Latitude": -70.0041666666667
+                },
+                {
+                  "Longitude": 179.837914833559,
+                  "Latitude": -77.1458333333333
                 }
               ]
             }
           }
-        },
-        "TilingIdentificationSystem": {
-          "TilingIdentificationSystemName": "MODIS Tile SIN",
-          "Coordinate1": {
-            "MinimumValue": 22.0
-          },
-          "Coordinate2": {
-            "MinimumValue": 16.0
-          }
-        },
-        "ProviderDates": [
-          {
-            "Date": "2015-08-13T15:28:45.192Z",
-            "Type": "Insert"
-          },
-          {
-            "Date": "2017-10-25T14:39:12.063Z",
-            "Type": "Update"
-          }
-        ],
-        "CollectionReference": {
-          "EntryTitle": "MODIS/Terra Land Surface Temperature/Emissivity Daily L3 Global 1km SIN Grid V006"
-        },
-        "RelatedUrls": [
-          {
-            "URL": "https://e4ftl01.cr.usgs.gov:40521//TEST2/MOLT/MOD11A1.006/2000.12.31/MOD11A1.A2000366.h22v16.006.2015111155135.hdf",
-            "Type": "GET DATA",
-            "MimeType": "application/x-hdfeos"
-          },
-          {
-            "URL": "https://e4ftl01.cr.usgs.gov:40521//TEST2/BRWS/Browse.001/2015.08.13/BR_Browse.001_2152328911_1.1.jpg",
-            "Type": "GET RELATED VISUALIZATION",
-            "MimeType": "image/jpeg"
-          },
-          {
-            "URL": "https://e4ftl01.cr.usgs.gov:40521//TEST2/BRWS/Browse.001/2015.08.13/BR_Browse.001_2152328911_1.2.jpg",
-            "Type": "GET RELATED VISUALIZATION",
-            "MimeType": "image/jpeg"
-          },
-          {
-            "URL": "https://e4ftl01.cr.usgs.gov:40521//TEST2/MOLT/MOD11A1.006/2000.12.31/MOD11A1.A2000366.h22v16.006.2015111155135.hdf.xml",
-            "Type": "VIEW RELATED INFORMATION",
-            "MimeType": "text/xml"
-          }
-        ],
-        "CloudCover": 50.0,
-        "DataGranule": {
-          "DayNightFlag": "Both",
-          "Identifiers": [
-            {
-              "Identifier": "MOD11A1.A2000366.h22v16.006.2015111155135.hdf",
-              "IdentifierType": "ProducerGranuleId"
-            }
-          ],
-          "ProductionDateTime": "2015-04-21T15:51:35.000Z",
-          "ArchiveAndDistributionInformation": [
-            {
-              "Name": "Not provided",
-              "Size": 3.3233,
-              "SizeUnit": "NA"
-            }
-          ]
-        },
-        "Platforms": [
-          {
-            "ShortName": "Terra",
-            "Instruments": [
-              {
-                "ShortName": "MODIS",
-                "ComposedOf": [
-                  {
-                    "ShortName": "MODIS"
-                  }
-                ]
-              }
-            ]
-          }
         ]
       }
+    }
+  },
+  "TilingIdentificationSystem": {
+    "TilingIdentificationSystemName": "MODIS Tile SIN",
+    "Coordinate1": {
+      "MinimumValue": 22.0
+    },
+    "Coordinate2": {
+      "MinimumValue": 16.0
+    }
+  },
+  "ProviderDates": [
+    {
+      "Date": "2015-08-13T15:28:45.192Z",
+      "Type": "Insert"
+    },
+    {
+      "Date": "2017-10-25T14:39:12.063Z",
+      "Type": "Update"
+    }
+  ],
+  "CollectionReference": {
+    "EntryTitle": "MODIS/Terra Land Surface Temperature/Emissivity Daily L3 Global 1km SIN Grid V006"
+  },
+  "RelatedUrls": [
+    {
+      "URL": "https://e4ftl01.cr.usgs.gov:40521//TEST2/MOLT/MOD11A1.006/2000.12.31/MOD11A1.A2000366.h22v16.006.2015111155135.hdf",
+      "Type": "GET DATA",
+      "MimeType": "application/x-hdfeos"
+    },
+    {
+      "URL": "https://e4ftl01.cr.usgs.gov:40521//TEST2/BRWS/Browse.001/2015.08.13/BR_Browse.001_2152328911_1.1.jpg",
+      "Type": "GET RELATED VISUALIZATION",
+      "MimeType": "image/jpeg"
+    },
+    {
+      "URL": "https://e4ftl01.cr.usgs.gov:40521//TEST2/BRWS/Browse.001/2015.08.13/BR_Browse.001_2152328911_1.2.jpg",
+      "Type": "GET RELATED VISUALIZATION",
+      "MimeType": "image/jpeg"
+    },
+    {
+      "URL": "https://e4ftl01.cr.usgs.gov:40521//TEST2/MOLT/MOD11A1.006/2000.12.31/MOD11A1.A2000366.h22v16.006.2015111155135.hdf.xml",
+      "Type": "VIEW RELATED INFORMATION",
+      "MimeType": "text/xml"
+    }
+  ],
+  "CloudCover": 50.0,
+  "DataGranule": {
+    "DayNightFlag": "Both",
+    "Identifiers": [
+      {
+        "Identifier": "MOD11A1.A2000366.h22v16.006.2015111155135.hdf",
+        "IdentifierType": "ProducerGranuleId"
+      }
+    ],
+    "ProductionDateTime": "2015-04-21T15:51:35.000Z",
+    "ArchiveAndDistributionInformation": [
+      {
+        "Name": "Not provided",
+        "Size": 3.3233,
+        "SizeUnit": "NA"
+      }
+    ]
+  },
+  "Platforms": [
+    {
+      "ShortName": "Terra",
+      "Instruments": [
+        {
+          "ShortName": "MODIS",
+          "ComposedOf": [
+            {
+              "ShortName": "MODIS"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

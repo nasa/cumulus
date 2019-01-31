@@ -290,9 +290,9 @@ async function updateUMMGMetadata(cmrFile, files, distEndpoint, buckets) {
   const newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets, isECHO10);
   const metadataObject = await metadataObjectFromCMRJSONFile(cmrFile.filename);
 
-  const originalURLs = _get(metadataObject, 'items[0].umm.RelatedUrls', []);
+  const originalURLs = _get(metadataObject, 'RelatedUrls', []);
   const mergedURLs = mergeURLs(originalURLs, newURLs);
-  _set(metadataObject, 'items[0].umm.RelatedUrls', mergedURLs);
+  _set(metadataObject, 'RelatedUrls', mergedURLs);
 
   const tags = await aws.s3GetObjectTagging(cmrFile.bucket, cmrFile.filepath);
   const tagsQueryString = aws.s3TagSetToQueryString(tags.TagSet);
