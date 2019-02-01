@@ -38,35 +38,6 @@ class AsyncOperation extends Manager {
   }
 
   /**
-   * Fetch the AsyncOperation with the given id
-   *
-   * @param {string} id - an AsyncOperation id
-   * @returns {Promise<Object>} - an AsyncOperation record
-   * @memberof AsyncOperation
-   */
-  get(id) {
-    if (id !== new Object(id)) { // eslint-disable-line no-new-object
-      return super.get({ id });
-    }
-    return super.get(id);
-  }
-
-  /**
-   * Update an AsyncOperation in the database
-   *
-   * @param {string} id - the ID of the AsyncOperation
-   * @param {Object} updates - key / value pairs of fields to be updated
-   * @param {Array<string>} keysToDelete - an optional list of keys to remove
-   *   from the object
-   * @returns {Promise<Object>} - a Promise that resolves to the object after it
-   *   is updated
-   * @memberof AsyncOperation
-   */
-  update(id, updates = {}, keysToDelete = []) {
-    return super.update({ id }, updates, keysToDelete);
-  }
-
-  /**
    * Start an AsyncOperation in ECS and store its associate record to DynamoDB
    *
    * @param {Object} params - params
@@ -125,7 +96,7 @@ class AsyncOperation extends Manager {
     // If creating the stack failed, update the database
     if (runTaskResponse.failures.length > 0) {
       return this.update(
-        id,
+        { id },
         {
           status: 'RUNNER_FAILED',
           output: JSON.stringify({
@@ -139,7 +110,7 @@ class AsyncOperation extends Manager {
 
     // Update the database with the taskArn
     return this.update(
-      id,
+      { id },
       {
         status: 'RUNNING',
         taskArn: runTaskResponse.tasks[0].taskArn
