@@ -90,7 +90,7 @@ describe('Distribution API', () => {
         .on('data', (chunk) => {
           fileContent += chunk;
         })
-        .on('error', () => { done() })
+        .on('error', () => done())
         .on('end', () => {
           expect(fileContent.length).toEqual(fileStats.size);
           done();
