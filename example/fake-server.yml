@@ -14,6 +14,9 @@ Parameters:
     Type: String
     Description: 'True if deploying to an NGAP environment'
     Default: "false"
+  Prefix:
+    Type: String
+    Description: 'Prefix to use for IAM role, instance profile'
 Conditions:
   IsNgapEnvironment: !Equals [!Ref Ngap, 'true']
 
@@ -23,7 +26,7 @@ Resources:
   FakeProviderRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: fakeprovider-iam-role
+      RoleName: !Sub '${Prefix}-iam-role'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -84,7 +87,7 @@ Resources:
   InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
-      InstanceProfileName: fakeprovider-instanceProfile
+      InstanceProfileName: !Sub '${Prefix}-instanceProfile'
       Path: "/"
       Roles:
         - !Ref FakeProviderRole
@@ -93,7 +96,7 @@ Resources:
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: fakeprovider-securitygroup
+      GroupName: !Sub '${Prefix}-securitygroup'
       GroupDescription: Security Group for ECS containter instances of fakeprovider
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -141,7 +144,7 @@ Resources:
         - Key: Name
           Value: "FakeProvider Instance for ftp/sftp/http"
         - Key: Stack
-          Value: "FakeProvider"
+          Value: !Ref Prefix
 
 
   FakeProviderTaskDefinition:
@@ -149,7 +152,7 @@ Resources:
     Properties:
       NetworkMode: host
       ContainerDefinitions:
-        - Name: fakeprovider
+        - Name: !Ref Prefix
           Cpu: 0
           Memory: 256
           Essential: true
@@ -172,7 +175,7 @@ Resources:
   FakeProviderEcsLogs:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: FakeProviderEcsLogs
+      LogGroupName: !Sub '${Prefix}EcsLogs'
 
   FakeProviderECSService:
     Type: AWS::ECS::Service
