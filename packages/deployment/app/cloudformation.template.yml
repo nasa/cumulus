@@ -523,13 +523,13 @@ Resources:
       - AttributeName: {{name}}
         KeyType: {{schema}}
     {{/each}}
-    {{# if this.read }}
+    {{# if this.pay_per_request }}
+      BillingMode: 'PAY_PER_REQUEST'
+    {{else}}
       ProvisionedThroughput:
         ReadCapacityUnits: {{this.read}}
         WriteCapacityUnits: {{this.write}}
       BillingMode: 'PROVISIONED'
-    {{else}}
-      BillingMode: 'PAY_PER_REQUEST'
     {{/if}}
       TableName: {{../stackName}}-{{@key}}
       StreamSpecification:

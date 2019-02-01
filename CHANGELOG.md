@@ -40,6 +40,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Replaced environment variables `internal`, `bucket` and `systemBucket` with `system_bucket`.
   - Update `@cumulus/integration-tests` to work with updated cumulus-api express endpoints
 
+- CUMULUS-1142
+  - Use DynamoDB scan search for populating list endpoints
+  - Add support for pay_by_request billing method for dynamodb tables. Set `pay_per_request` to `true` for DynamoDB table definition to activate
+
 - **CUMULUS-1049** Updated `Retrieve Execution Status API` in `@cumulus/api`: If the execution doesn't exist in Step Function API, Cumulus API returns the execution status information from the database.
 
 ### Deprecated

@@ -98,6 +98,6 @@ test('default returns list of providerModel', async (t) => {
 
   const id = results
     .map((r) => r.id)
-    .filter((id) => id === t.context.testProvider.id); 
+    .filter((i) => i === t.context.testProvider.id);
   t.is(t.context.testProvider.id, id[0]);
 });
