@@ -23,7 +23,7 @@ let tableName;
  * @returns {Promise<Array>} an array of objects with granuleIds
  */
 async function populateDynamoDB(granuleModel, limit) {
-  const granules = range(limit).map(fakeGranuleFactory);
+  const granules = range(limit).map(() => fakeGranuleFactory());
 
   const chunkedGranules = chunk(granules, 25);
   await Promise.all(chunkedGranules.map((c) => granuleModel.batchWrite(null, c)));
