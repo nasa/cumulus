@@ -62,8 +62,8 @@
       "data-cookbooks/cloudwatch-retention"
     ]
   },
-  "Operation Docs": {
-    "About Operation Docs": [
+  "Operator Docs": {
+    "About Operator Docs": [
       "operator-docs/about-operator-docs"
     ],
     "Configuration": [
