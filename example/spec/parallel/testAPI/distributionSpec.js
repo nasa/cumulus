@@ -32,18 +32,21 @@ describe('Distribution API', () => {
 
   let server;
 
-  beforeAll(async (done) => {
-    process.env.PORT = 5002;
-    process.env.EARTHDATA_BASE_URL = 'https://uat.urs.earthdata.nasa.gov';
-    process.env.DEPLOYMENT_ENDPOINT = `http://localhost:${process.env.PORT}/redirect`;
-    process.env.DISTRIBUTION_URL = `http://localhost:${process.env.PORT}`;
+  process.env.PORT = 5002;
+  process.env.EARTHDATA_BASE_URL = 'https://uat.urs.earthdata.nasa.gov';
+  process.env.DEPLOYMENT_ENDPOINT = `http://localhost:${process.env.PORT}/redirect`;
+  process.env.DISTRIBUTION_URL = `http://localhost:${process.env.PORT}`;
 
+  beforeAll(async (done) => {
     await prepareDistributionApi();
 
-    // Point to localstack bucket
+    // Use localstack configuration, if necessary.
     if (inTestMode()) {
       config.bucket = process.env.system_bucket;
+      config.stackName = process.env.stackName;
     }
+
+    process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
 
     await uploadTestDataToBucket(config.bucket, s3Data, testDataFolder);
 
