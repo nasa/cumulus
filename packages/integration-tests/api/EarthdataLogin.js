@@ -12,7 +12,7 @@ const got = require('got');
  * @return {Promise}
  *   Promise from the request to login with Earthdata
  */
-async function handleEarthdataLogin(authorizeUrl, requestOrigin) {
+function handleEarthdataLogin(authorizeUrl, requestOrigin) {
   const auth = base64.encode(`${process.env.EARTHDATA_USERNAME}:${process.env.EARTHDATA_PASSWORD}`);
 
   const requestOptions = {
