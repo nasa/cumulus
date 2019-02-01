@@ -263,7 +263,8 @@ module.exports.granule = {
           name: { type: 'string' },
           path: { type: 'string' },
           url_path: { type: 'string' }
-        }
+        },
+        additionalProperties: true
       }
     },
     error: {
