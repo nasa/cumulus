@@ -83,7 +83,7 @@ class Granule extends Manager {
     );
 
     await cmr.deleteGranule(granuleId, collectionId);
-    await this.update({ granuleId }, { published: false, cmrLink: null });
+    await this.update({ granuleId }, { published: false }, ['cmrLink']);
   }
 
   /**
@@ -211,14 +211,14 @@ class Granule extends Manager {
    * @returns {Promise<Array>} granule records
    */
   async createGranulesFromSns(payload) {
-    const name = get(payload, 'cumulus_meta.execution_name');
     const granules = get(payload, 'payload.granules', get(payload, 'meta.input_granules'));
 
     if (!granules) return Promise.resolve();
 
+    const executionName = get(payload, 'cumulus_meta.execution_name');
     const arn = aws.getExecutionArn(
       get(payload, 'cumulus_meta.state_machine'),
-      name
+      executionName
     );
 
     if (!arn) return Promise.resolve();
@@ -230,41 +230,41 @@ class Granule extends Manager {
 
     const collectionId = constructCollectionId(collection.name, collection.version);
 
-    const done = granules.map(async (g) => {
-      if (g.granuleId) {
-        let granuleFiles = g.files;
-        granuleFiles = await this.addMissingFileSizes(uniqBy(g.files, 'filename'));
+    const done = granules.map(async (granule) => {
+      if (granule.granuleId) {
+        let granuleFiles = granule.files;
+        granuleFiles = await this.addMissingFileSizes(uniqBy(granule.files, 'filename'));
 
         const doc = {
-          granuleId: g.granuleId,
+          granuleId: granule.granuleId,
           pdrName: get(payload, 'meta.pdr.name'),
           collectionId,
           status: get(payload, 'meta.status'),
           provider: get(payload, 'meta.provider.id'),
           execution,
-          cmrLink: get(g, 'cmrLink'),
+          cmrLink: get(granule, 'cmrLink'),
           files: granuleFiles,
           error: exception,
           createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
           timestamp: Date.now(),
-          productVolume: getGranuleProductVolume(g.files),
+          productVolume: getGranuleProductVolume(granule.files),
           timeToPreprocess: get(payload, 'meta.sync_granule_duration', 0) / 1000,
           timeToArchive: get(payload, 'meta.post_to_cmr_duration', 0) / 1000,
           processingStartDateTime: extractDate(payload, 'meta.sync_granule_end_time'),
           processingEndDateTime: extractDate(payload, 'meta.post_to_cmr_start_time')
         };
 
-        doc.published = get(g, 'published', false);
+        doc.published = get(granule, 'published', false);
         // Duration is also used as timeToXfer for the EMS report
         doc.duration = (doc.timestamp - doc.createdAt) / 1000;
 
-        if (g.cmrLink) {
-          const metadata = await cmrjs.getMetadata(g.cmrLink);
+        if (granule.cmrLink) {
+          const metadata = await cmrjs.getMetadata(granule.cmrLink);
           doc.beginningDateTime = metadata.time_start;
           doc.endingDateTime = metadata.time_end;
           doc.lastUpdateDateTime = metadata.updated;
 
-          const fullMetadata = await cmrjs.getFullMetadata(g.cmrLink);
+          const fullMetadata = await cmrjs.getFullMetadata(granule.cmrLink);
           if (fullMetadata && fullMetadata.DataGranule) {
             doc.productionDateTime = fullMetadata.DataGranule.ProductionDateTime;
           }
