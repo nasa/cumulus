@@ -14,13 +14,16 @@ const router = require('./routes');
 const app = express();
 
 // logging config
-morgan.token('error_obj', function (req, res) {
-  return res.statusCode !== 200 ? res.error : undefined
-})
+morgan.token('error_obj', (req, res) => {
+  if (res.statusCode !== 200) {
+    return res.error;
+  }
+  return undefined;
+});
 morgan.format(
   'combined',
-  '[:date[clf]] ":method :url HTTP/:http-version"' +
-  ':status :res[content-length] ":referrer" ":user-agent" :error_obj'
+  '[:date[clf]] ":method :url HTTP/:http-version"'
+  + ':status :res[content-length] ":referrer" ":user-agent" :error_obj'
 );
 
 // Config
@@ -43,7 +46,7 @@ app.use((req, res) => {
 });
 
 // catch all error handling
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   res.error = JSON.stringify(err, Object.getOwnPropertyNames(err));
   return res.boom.badImplementation('Something broke!');
 });
