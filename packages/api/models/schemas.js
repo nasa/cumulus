@@ -262,9 +262,9 @@ module.exports.granule = {
           fileSize: { type: 'integer' },
           name: { type: 'string' },
           path: { type: 'string' },
-          url_path: { type: 'string' }
-        },
-        additionalProperties: true
+          url_path: { type: 'string', description: 'this should be removed' },
+          duplicate_found: { type: 'boolean', description: 'this should be removed' }
+        }
       }
     },
     error: {
