@@ -263,7 +263,8 @@ module.exports.granule = {
           name: { type: 'string' },
           path: { type: 'string' },
           url_path: { type: 'string', description: 'this should be removed' },
-          duplicate_found: { type: 'boolean', description: 'this should be removed' }
+          duplicate_found: { type: 'boolean', description: 'this should be removed' },
+          fileStagingDir: { type: 'string', description: 'this should be removed' },
         }
       }
     },
