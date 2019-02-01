@@ -266,7 +266,9 @@ module.exports.granule = {
           fileSize: { type: 'integer' },
           name: { type: 'string' },
           path: { type: 'string' },
-          url_path: { type: 'string' }
+          url_path: { type: 'string', description: 'this should be removed' },
+          duplicate_found: { type: 'boolean', description: 'this should be removed' },
+          fileStagingDir: { type: 'string', description: 'this should be removed' },
         }
       }
     },
@@ -589,7 +591,7 @@ module.exports.execution = {
     },
     tasks: {
       type: 'object',
-      additionalProperties: true,
+      additionalProperties: true
     },
     type: {
       title: 'The workflow name, e.g. IngestGranule',
