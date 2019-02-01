@@ -9,8 +9,6 @@ const testUtils = require('../lib/testUtils');
 const workflowList = require('../app/data/workflow_list.json');
 
 const defaultRequiredEnvVariables = [
-  'system_bucket',
-  'stackName',
   'EARTHDATA_BASE_URL',
   'EARTHDATA_CLIENT_ID',
   'EARTHDATA_CLIENT_PASSWORD'
@@ -69,7 +67,7 @@ function setTableEnvVariables(stackName) {
 
   // set table env variables
   tableNames = tableNames.map((t) => {
-    process.env[t] = `${stackName}-${t}sTable`;
+    process.env[t] = `${stackName}-${t}`;
     return process.env[t];
   });
 
@@ -158,7 +156,11 @@ async function createDBRecords(user, stackName) {
 
 async function serveApi(user, stackName = 'localrun') {
   const port = process.env.PORT || 5001;
-  const requiredEnvVars = ['API_ENDPOINT'];
+  const requiredEnvVars = [
+    'stackName',
+    'system_bucket',
+    'API_ENDPOINT'
+  ];
 
   if (inTestMode()) {
     // set env variables
