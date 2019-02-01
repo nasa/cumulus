@@ -78,12 +78,16 @@ describe('Distribution API', () => {
       const response = await got(redirectUrl, { followRedirect: false });
       const { 'set-cookie': cookie, location: fileUrl } = response.headers;
 
-      // Request file from distribution API with cookie set.
+      // Get S3 signed URL fromm distribution API with cookie set.
+      const signedS3Url = await got(fileUrl, { headers: { cookie }, followRedirect: false })
+        .then((res) => res.headers.location);
+
       let fileContent = '';
-      await got.stream(fileUrl, { headers: { cookie } })
+      await got.stream(signedS3Url)
         .on('data', (chunk) => {
           fileContent += chunk;
         })
+        .on('error', () => { done() })
         .on('end', () => {
           expect(fileContent.length).toEqual(fileStats.size);
           done();
