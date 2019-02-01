@@ -64,10 +64,10 @@
   },
   "Operation Docs": {
     "About Operation Docs": [
-      "operation-docs/about-operation-docs"
+      "operator-docs/about-operator-docs"
     ],
     "Configuration": [
-      "operation-docs/cumulus-dependencies"
+      "operator-docs/cumulus-dependencies"
     ]
   }
 }
