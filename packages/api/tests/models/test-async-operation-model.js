@@ -169,7 +169,7 @@ test('The AsyncAdapter.start() method sets the output if it is unable to create 
     payload: {}
   });
 
-  const { output } = await asyncOperationModel.get(id);
+  const { output } = await asyncOperationModel.get({ id });
   const parsedOutput = JSON.parse(output);
   t.is(parsedOutput.message, 'Failed to start AsyncOperation: out of cheese');
 });
@@ -187,7 +187,7 @@ test.serial('The AsyncOperation.start() method writes a new record to DynamoDB',
     payload: {}
   });
 
-  const fetchedAsyncOperation = await asyncOperationModel.get(id);
+  const fetchedAsyncOperation = await asyncOperationModel.get({ id });
   t.is(fetchedAsyncOperation.taskArn, stubbedEcsRunTaskResult.tasks[0].taskArn);
 });
 
@@ -220,7 +220,7 @@ test.serial('The AsyncOperation.start() method sets the record status to "RUNNIN
     payload: {}
   });
 
-  const fetchedAsyncOperation = await asyncOperationModel.get(id);
+  const fetchedAsyncOperation = await asyncOperationModel.get({ id });
   t.is(fetchedAsyncOperation.status, 'RUNNING');
 });
 
