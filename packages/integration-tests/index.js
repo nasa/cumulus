@@ -420,6 +420,9 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host = null,
     if (s3Host && provider.protocol === 's3') {
       provider.host = s3Host;
     }
+    else {
+      provider.host = process.env.PROVIDER_HOST || provider.host;
+    }
     console.log(`adding provider ${provider.id}`);
     return p.delete({ id: provider.id }).then(() => p.create(provider));
   }));
