@@ -393,7 +393,7 @@ We may need to update the api documentation to reflect this.
 - **CUMULUS-747** - Delete granule API doesn't delete granule files in s3 and granule in elasticsearch
     - update the StreamSpecification DynamoDB tables to have StreamViewType: "NEW_AND_OLD_IMAGES"
     - delete granule files in s3
-- **CUMULUS-398** - Fix not able to filter executions bu workflow
+- **CUMULUS-398** - Fix not able to filter executions but workflow
 - **CUMULUS-748** - Fix invalid lambda .zip files being validated/uploaded to AWS
 - **CUMULUS-544** - Post to CMR task has UAT URL hard-coded
   - Made configurable: PostToCmr now requires CMR_ENVIRONMENT env to be set to 'SIT' or 'OPS' for those CMR environments. Default is UAT.
