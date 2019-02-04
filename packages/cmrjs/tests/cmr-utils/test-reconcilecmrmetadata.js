@@ -87,7 +87,6 @@ test('reconcileCMRMetadata logs an error if multiple metadatafiles present.', as
   t.true(mockLog.calledOnceWith('More than one cmr metadata file found.'));
 
   sinon.restore();
-  mockLog.restore();
   restoreUpdateCMRMetadata();
 });
 
@@ -212,4 +211,35 @@ test('updateCMRMetadata file throws error if incorrect cmrfile provided', async 
 
   t.is(error.name, 'CMRMetaFileNotFound');
   t.is(error.message, 'Invalid CMR filetype passed to updateCMRMetadata');
+});
+
+test('publishUMMGJSON2CMR calls ingestUMMGranule with ummgMetadata via valid CMR object', async (t) => {
+  const ummgMetadata = { fake: 'metadata', GranuleUR: 'fakeGranuleID' };
+  const creds = setTestCredentials();
+  const systemBucket = process.env.system_bucket;
+  const stackName = process.env.stackName;
+  const publishUMMGJSON2CMR = cmrUtils.__get__('publishUMMGJSON2CMR');
+  const ingestFake = sinon.fake.resolves({ result: { 'concept-id': 'fakeID' } });
+  const cmrFake = sinon.fake.returns({ ingestUMMGranule: ingestFake });
+
+  const restoreCMR = cmrUtils.__set__('CMR', cmrFake);
+
+  // Act
+  try {
+    await publishUMMGJSON2CMR(ummgMetadata, creds, systemBucket, stackName);
+  }
+  catch (error) {
+    console.log(error);
+  }
+
+
+  // Assert
+  t.true(cmrFake.calledOnceWithExactly(
+    creds.provider, creds.clientId, creds.username, creds.password
+  ));
+  t.true(ingestFake.calledOnceWithExactly(ummgMetadata));
+
+  // Cleanup
+  restoreCMR();
+  sinon.restore();
 });
