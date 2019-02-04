@@ -241,7 +241,7 @@ function stripKeyFromObject(key) {
  * Construct a list of online access urls.
  *
  * @param {Array<Object>} files - array of file objects
- * @param {string} distEndpoint - distribution enpoint from config
+ * @param {string} distEndpoint - distribution endpoint from config
  * @param {BucketsConfig} buckets -  Class instance
  * @returns {Array<{URL: string, URLDescription: string}>}
  *   returns the list of online access url objects
@@ -252,7 +252,6 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets) {
   files.forEach((file) => {
     const urlObj = {};
     const bucketType = buckets.type(file.bucket);
-
     if (bucketType === 'protected') {
       const extension = urljoin(file.bucket, `${file.filepath}`);
       urlObj.URL = urljoin(distEndpoint, extension);
@@ -271,6 +270,21 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets) {
   return urls;
 }
 
+/**
+ * create a list of URL objects that should not appear in under online access in the CMR metadata.
+ * @param {Array<Object>} files - array of updated file objects
+ * @param {BucketsConfig} buckets - stack BucketConfig instance.
+ */
+function onlineAccessURLsToRemove(files, buckets) {
+  const urls = [];
+  files.forEach((file) => {
+    const bucketType = buckets.type(file.bucket);
+    if (bucketType === 'private') {
+      urls.push({ URL: file.filepath });
+    }
+  });
+  return urls;
+}
 
 /**
  * Returns a list of posible metadata file objects based on file.name extension.
@@ -290,14 +304,18 @@ function getCmrFileObjs(files) {
  *
  * @param {Array<Object>} original - Array of URL Objects representing the cmr file previous state
  * @param {Array<Object>} updated - Array of updated URL Objects representing moved/updated files
+ * @param {Array<Object>} removed - Array of URL Objects to remove from OnlineAccess.
  * @returns {Array<Object>} list of updated an original URL objects representing the updated state.
  */
-function mergeURLs(original, updated) {
+function mergeURLs(original, updated, removed = []) {
   const newURLBasenames = updated.map((url) => path.basename(url.URL));
+  const removedBasenames = removed.map((url) => path.basename(url.URL));
 
   const unchangedOriginals = original.filter(
     (url) => !newURLBasenames.includes(path.basename(url.URL))
+      && !removedBasenames.includes(path.basename(url.URL))
   );
+
   const updatedWithMergedOriginals = updated.map((url) => {
     const matchedOriginal = original.filter(
       (ourl) => path.basename(ourl.URL) === path.basename(url.URL)
@@ -325,12 +343,13 @@ function mergeURLs(original, updated) {
  * @returns {Promise} returns promised updated UMMG metadata object.
  */
 async function updateUMMGMetadata(cmrFile, files, distEndpoint, buckets) {
-  const isECHO10 = false;
-  const newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets, isECHO10);
+  const newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
+  const removedURLs = onlineAccessURLsToRemove(files, buckets);
   const metadataObject = await metadataObjectFromCMRJSONFile(cmrFile.filename);
 
   const originalURLs = _get(metadataObject, 'RelatedUrls', []);
-  const mergedURLs = mergeURLs(originalURLs, newURLs);
+  log.debug('UMMG:originalURLs', JSON.stringify(originalURLs));
+  const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
   _set(metadataObject, 'RelatedUrls', mergedURLs);
 
   const tags = await aws.s3GetObjectTagging(cmrFile.bucket, cmrFile.filepath);
@@ -370,6 +389,7 @@ function getCreds() {
 async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   let newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
   newURLs = newURLs.map(stripKeyFromObject('Type'));
+  const removedURLs = onlineAccessURLsToRemove(files, buckets);
 
   // add/replace the OnlineAccessUrls
   const metadataObject = await metadataObjectFromCMRXMLFile(cmrFile.filename);
@@ -377,7 +397,8 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
 
   const updatedGranule = { ...metadataGranule };
   const originalURLs = _get(metadataGranule, 'OnlineAccessURLs.OnlineAccessURL', []);
-  const mergedURLs = mergeURLs(originalURLs, newURLs);
+  log.debug('ECHO10:originalURLs', JSON.stringify(originalURLs));
+  const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
   _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedURLs);
   metadataObject.Granule = updatedGranule;
 
