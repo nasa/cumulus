@@ -17,13 +17,13 @@ Example:
 ```json
 ...
 dependencies: {
-  "@cumulus/api": ^1.11.1,
-  "@cumulus/ingest": ^1.11.1,
+  "@cumulus/api": "^1.11.1",
+  "@cumulus/ingest": "^1.11.1",
   ...
 }
 ```
 
-A detailed explanation of the dependency version syntax (`^1.11.1`) can be found in the npm package.json [documentation](https://docs.npmjs.com/files/package.json#dependencies). That page also has detailed documentation outlining many facets of the `package.json`.
+A detailed explanation of the dependency version syntax (`"^1.11.1"`) can be found in the npm package.json [documentation](https://docs.npmjs.com/files/package.json#dependencies). That page also has detailed documentation outlining many facets of the `package.json`.
 
 
 ## Finding Cumulus Releases
