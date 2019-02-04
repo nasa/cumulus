@@ -6,7 +6,8 @@ const {
   searchConcept,
   ingestConcept,
   deleteConcept,
-  CMR
+  CMR,
+  CMRSearchConceptQueue
 } = require('./cmr');
 const {
   ValidationError,
@@ -77,6 +78,7 @@ async function getFullMetadata(cmrLink) {
 
 module.exports = {
   CMR,
+  CMRSearchConceptQueue,
   ValidationError,
   constructOnlineAccessUrls,
   deleteConcept,
