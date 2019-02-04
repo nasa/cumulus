@@ -18,6 +18,33 @@ const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { CMR } = require('./cmr');
 const { getUrl, xmlParseOptions } = require('./utils');
 
+
+/**
+ * Instantiates a CMR instance for ingest of metadata
+ *
+ * @param {Object} creds - credentials needed to post to the CMR
+ * @param {string} systemBucket - bucket containing crypto keys.
+ * @param {string} stack - deployment stack name
+ * @returns {CMR} CMR instance.
+ */
+async function getCMRInstance(creds, systemBucket, stack) {
+  let password;
+  try {
+    password = await DefaultProvider.decrypt(creds.password, undefined, systemBucket, stack);
+  }
+  catch (error) {
+    log.error('Decrypting password failed, using unencrypted password', error);
+    password = creds.password;
+  }
+  const cmrInstance = new CMR(
+    creds.provider,
+    creds.clientId,
+    creds.username,
+    password
+  );
+  return cmrInstance;
+}
+
 /**
  * function for posting cmr xml files from S3 to CMR
  *
@@ -35,20 +62,7 @@ const { getUrl, xmlParseOptions } = require('./utils');
  * @returns {Object} CMR's success response which includes the concept-id
  */
 async function publishECHO10XML2CMR(cmrFile, creds, systemBucket, stack) {
-  let password;
-  try {
-    password = await DefaultProvider.decrypt(creds.password, undefined, systemBucket, stack);
-  }
-  catch (error) {
-    log.error('Decrypting password failed, using unencrypted password', error);
-    password = creds.password;
-  }
-  const cmr = new CMR(
-    creds.provider,
-    creds.clientId,
-    creds.username,
-    password
-  );
+  const cmr = await getCMRInstance(creds, systemBucket, stack);
 
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(cmrFile.metadataObject);
@@ -66,22 +80,15 @@ async function publishECHO10XML2CMR(cmrFile, creds, systemBucket, stack) {
 }
 
 
+/**
+ *
+ * @param {Object} ummgMetadata - UMM Granule json object
+ * @param {Object} creds - credentials needed to post to CMR service
+ * @param {string} systemBucket - bucket containing crypto keypair.
+ * @param {string} stack - stack deployment name
+ */
 async function publishUMMGJSON2CMR(ummgMetadata, creds, systemBucket, stack) {
-  // TODO [MHS, 2019-01-30] copy and paste first to get this working...
-  let password;
-  try {
-    password = await DefaultProvider.decrypt(creds.password, undefined, systemBucket, stack);
-  }
-  catch (error) {
-    log.error('Decrypting password failed, using unencrypted password', error);
-    password = creds.password;
-  }
-  const cmr = new CMR(
-    creds.provider,
-    creds.clientId,
-    creds.username,
-    password
-  );
+  const cmr = await getCMRInstance(creds, systemBucket, stack);
 
   const granuleId = ummgMetadata.GranuleUR;
 
