@@ -2,39 +2,63 @@
 
 const get = require('lodash.get');
 const log = require('@cumulus/common/log');
-
 const { google } = require('googleapis');
-const { JsonWebTokenError, TokenExpiredError } = require('jsonwebtoken');
+const {
+  JsonWebTokenError,
+  TokenExpiredError
+} = require('jsonwebtoken');
+const {
+  TokenUnauthorizedUserError
+} = require('../lib/errors');
 
 const EarthdataLogin = require('../lib/EarthdataLogin');
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 const {
-  createJwtToken,
-  verifyJwtToken
+  createJwtToken
 } = require('../lib/token');
 
-const { AccessToken, User } = require('../models');
-const {
-  AuthorizationFailureResponse,
-  LambdaProxyResponse,
-  InternalServerError,
-  InvalidTokenResponse,
-  TokenExpiredResponse
-} = require('../lib/responses');
 
-const buildPermanentRedirectResponse = (location) =>
-  new LambdaProxyResponse({
-    json: false,
-    statusCode: 301,
-    body: 'Redirecting',
-    headers: {
-      Location: location
-    }
-  });
+const { verifyJwtAuthorization } = require('../lib/request');
 
-async function token(event, oAuth2Provider) {
-  const code = get(event, 'queryStringParameters.code');
-  const state = get(event, 'queryStringParameters.state');
+const { AccessToken } = require('../models');
+
+const buildPermanentRedirectResponse = (location, response) =>
+  response
+    .status(307)
+    .set({ Location: location })
+    .send('Redirecting');
+
+/**
+ * Handle API response for JWT verification errors
+ *
+ * @param {Error} err - error thrown by JWT verification
+ * @param {Object} response - an express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+function handleJwtVerificationError(err, response) {
+  if (err instanceof TokenExpiredError) {
+    return response.boom.forbidden('Access token has expired');
+  }
+  if (err instanceof JsonWebTokenError) {
+    return response.boom.forbidden('Invalid access token');
+  }
+  if (err instanceof TokenUnauthorizedUserError) {
+    return response.boom.unauthorized('User not authorized');
+  }
+  throw err;
+}
+
+/**
+ * Handles token requests
+ *
+ * @param {Object} event - an express request object
+ * @param {Object} oAuth2Provider - an oAuth provider object
+ * @param {Object} response - an express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function token(event, oAuth2Provider, response) {
+  const code = get(event, 'query.code');
+  const state = get(event, 'query.state');
 
   // Code contains the value from the Earthdata Login redirect. We use it to get a token.
   if (code) {
@@ -56,34 +80,26 @@ async function token(event, oAuth2Provider) {
       const jwtToken = createJwtToken({ accessToken, username, expirationTime });
 
       if (state) {
-        // log.info(`Log info: Redirecting to state: ${state} with token ${jwtToken}`);
         return buildPermanentRedirectResponse(
-          `${decodeURIComponent(state)}?token=${jwtToken}`
+          `${decodeURIComponent(state)}?token=${jwtToken}`,
+          response
         );
       }
       log.info('Log info: No state specified, responding 200');
-      return new LambdaProxyResponse({
-        json: true,
-        statusCode: 200,
-        body: { message: { token: jwtToken } }
-      });
+      return response.send({ message: { token: jwtToken } });
     }
     catch (e) {
       if (e.statusCode === 400) {
-        return new AuthorizationFailureResponse({
-          error: 'authorization_failure',
-          message: 'Failed to get authorization token'
-        });
+        return response.boom.unauthorized('Failed to get authorization token');
       }
 
       log.error('Error caught when checking code', e);
-      return new AuthorizationFailureResponse({ error: e, message: e.message });
+      return response.boom.unauthorized(e.message);
     }
   }
 
   const errorMessage = 'Request requires a code';
-  const error = new Error(errorMessage);
-  return new AuthorizationFailureResponse({ error: error, message: error.message });
+  return response.boom.unauthorized(errorMessage);
 }
 
 /**
@@ -91,142 +107,112 @@ async function token(event, oAuth2Provider) {
  *
  * @param {Object} request - an API Gateway request
  * @param {OAuth2} oAuth2Provider - an OAuth2 instance
+ * @param {Object} response - an API Gateway response object
  * @returns {Object} an API Gateway response
  */
-async function refreshAccessToken(request, oAuth2Provider) {
-  const body = request.body
-    ? JSON.parse(request.body)
-    : {};
-  const requestJwtToken = get(body, 'token');
+async function refreshAccessToken(request, oAuth2Provider, response) {
+  const requestJwtToken = get(request, 'body.token');
 
-  if (requestJwtToken) {
-    let accessToken;
-    let username;
-    try {
-      ({ accessToken, username } = verifyJwtToken(requestJwtToken));
-    }
-    catch (err) {
-      if (err instanceof TokenExpiredError) {
-        return new TokenExpiredResponse();
-      }
-      if (err instanceof JsonWebTokenError) {
-        return new InvalidTokenResponse();
-      }
-    }
+  if (!requestJwtToken) {
+    return response.boom.unauthorized('Request requires a token');
+  }
 
-    const userModel = new User();
-    try {
-      await userModel.get({ userName: username });
-    }
-    catch (err) {
-      if (err.name === 'RecordDoesNotExist') {
-        return new AuthorizationFailureResponse({
-          message: 'User not authorized',
-          statusCode: 403
-        });
-      }
-    }
+  let accessToken;
+  try {
+    accessToken = await verifyJwtAuthorization(requestJwtToken);
+  }
+  catch (err) {
+    return handleJwtVerificationError(err, response);
+  }
 
-    const accessTokenModel = new AccessToken();
+  const accessTokenModel = new AccessToken();
 
-    let accessTokenRecord;
-    try {
-      accessTokenRecord = await accessTokenModel.get({ accessToken });
+  let accessTokenRecord;
+  try {
+    accessTokenRecord = await accessTokenModel.get({ accessToken });
+  }
+  catch (err) {
+    if (err.name === 'RecordDoesNotExist') {
+      return response.boom.forbidden('Invalid access token');
     }
-    catch (err) {
-      if (err.name === 'RecordDoesNotExist') {
-        return new InvalidTokenResponse();
-      }
-    }
+  }
 
-    let newAccessToken;
-    let newRefreshToken;
-    let expirationTime;
-    try {
-      ({
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
-        username,
-        expirationTime
-      } = await oAuth2Provider.refreshAccessToken(accessTokenRecord.refreshToken));
-    }
-    catch (error) {
-      log.error('Error caught when attempting token refresh', error);
-      return new InternalServerError();
-    }
-    finally {
-      // Delete old token record to prevent refresh with old tokens
-      await accessTokenModel.delete({
-        accessToken: accessTokenRecord.accessToken
-      });
-    }
-
-    // Store new token record
-    await accessTokenModel.create({
+  let newAccessToken;
+  let newRefreshToken;
+  let expirationTime;
+  let username;
+  try {
+    ({
       accessToken: newAccessToken,
-      refreshToken: newRefreshToken
-    });
-
-    const jwtToken = createJwtToken({ accessToken: newAccessToken, username, expirationTime });
-    return new LambdaProxyResponse({
-      json: true,
-      statusCode: 200,
-      body: { token: jwtToken }
+      refreshToken: newRefreshToken,
+      username,
+      expirationTime
+    } = await oAuth2Provider.refreshAccessToken(accessTokenRecord.refreshToken));
+  }
+  finally {
+    // Delete old token record to prevent refresh with old tokens
+    await accessTokenModel.delete({
+      accessToken: accessTokenRecord.accessToken
     });
   }
 
-  const errorMessage = 'Request requires a token';
-  const error = new Error(errorMessage);
-  return new AuthorizationFailureResponse({
-    statusCode: 400,
-    error: error,
-    message: error.message
+  // Store new token record
+  await accessTokenModel.create({
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken
   });
+
+  const jwtToken = createJwtToken({ accessToken: newAccessToken, username, expirationTime });
+  return response.send({ token: jwtToken });
+}
+
+/**
+ * Handle token deletion
+ *
+ * @param {Object} request - an express request object
+ * @param {Object} response - an express request object
+ * @returns {Promise<Object>} a promise of an express response
+ */
+async function deleteTokenEndpoint(request, response) {
+  const requestJwtToken = get(request.params, 'token');
+
+  if (!requestJwtToken) {
+    return response.boom.unauthorized('Request requires a token');
+  }
+
+  let accessToken;
+  try {
+    accessToken = await verifyJwtAuthorization(requestJwtToken);
+  }
+  catch (err) {
+    return handleJwtVerificationError(err, response);
+  }
+
+  const accessTokenModel = new AccessToken();
+
+  await accessTokenModel.delete({ accessToken });
+
+  return response.send({ message: 'Token record was deleted' });
 }
 
 /**
  * Handle client authorization
  *
- * @param {Object} request - an API Gateway request
+ * @param {Object} request - an express request object
  * @param {OAuth2} oAuth2Provider - an OAuth2 instance
- * @returns {Object} an API Gateway response
+ * @param {Object} response - an express request object
+ * @returns {Promise<Object>} a promise of an express response
  */
-async function login(request, oAuth2Provider) {
-  const code = get(request, 'queryStringParameters.code');
-  const state = get(request, 'queryStringParameters.state');
+async function login(request, oAuth2Provider, response) {
+  const code = get(request, 'query.code');
+  const state = get(request, 'query.state');
 
   if (code) {
-    return token(request, oAuth2Provider);
+    return token(request, oAuth2Provider, response);
   }
 
   const authorizationUrl = oAuth2Provider.getAuthorizationUrl(state);
-
-  return buildPermanentRedirectResponse(authorizationUrl);
-}
-
-const isGetTokenRequest = (request) =>
-  request.httpMethod === 'GET'
-  && request.resource.endsWith('/token');
-
-const isTokenRefreshRequest = (request) =>
-  request.httpMethod === 'POST'
-  && request.resource.endsWith('/refresh');
-
-const notFoundResponse = new LambdaProxyResponse({
-  json: false,
-  statusCode: 404,
-  body: 'Not found'
-});
-
-async function handleRequest(request, oAuth2Provider) {
-  if (isGetTokenRequest(request)) {
-    return login(request, oAuth2Provider);
-  }
-  if (isTokenRefreshRequest(request)) {
-    return refreshAccessToken(request, oAuth2Provider);
-  }
-
-  return notFoundResponse;
+  return buildPermanentRedirectResponse(authorizationUrl, response);
 }
 
 function buildGoogleOAuth2ProviderFromEnv() {
@@ -256,13 +242,32 @@ function buildOAuth2ProviderFromEnv() {
     : buildEarthdataLoginProviderFromEnv();
 }
 
-async function handleApiGatewayRequest(request) {
+/**
+ * performs OAuth against an OAuth provider
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function tokenEndpoint(req, res) {
   const oAuth2Provider = buildOAuth2ProviderFromEnv();
+  return login(req, oAuth2Provider, res);
+}
 
-  return handleRequest(request, oAuth2Provider);
+/**
+ * refreshes an OAuth token
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function refreshEndpoint(req, res) {
+  const oAuth2Provider = buildOAuth2ProviderFromEnv();
+  return refreshAccessToken(req, oAuth2Provider, res);
 }
 
 module.exports = {
-  handleRequest,
-  handleApiGatewayRequest
+  refreshEndpoint,
+  tokenEndpoint,
+  deleteTokenEndpoint
 };

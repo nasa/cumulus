@@ -1,0 +1,244 @@
+{
+  "cumulus_meta": {
+    "message_source": "sfn",
+    "process": "modis",
+    "execution_name": "6f92189c-d91e-4f00-8ed4-d7a003f03022",
+    "state_machine": "arn:aws:states:us-east-1:596205514787:stateMachine:lfIntTestSyncGranuleStateMachine-v1qQDj1Dzulq",
+    "workflow_start_time": 1549033127928,
+    "system_bucket": "lf-internal"
+  },
+  "meta": {
+    "templates": {
+      "RetryFailWorkflow": "s3://lf-internal/lf-int-test/workflows/RetryFailWorkflow.json",
+      "ParsePdr": "s3://lf-internal/lf-int-test/workflows/ParsePdr.json",
+      "HelloWorldFailWorkflow": "s3://lf-internal/lf-int-test/workflows/HelloWorldFailWorkflow.json",
+      "RetryPassWorkflow": "s3://lf-internal/lf-int-test/workflows/RetryPassWorkflow.json",
+      "IngestGranule": "s3://lf-internal/lf-int-test/workflows/IngestGranule.json",
+      "KinesisTriggerTest": "s3://lf-internal/lf-int-test/workflows/KinesisTriggerTest.json",
+      "HelloWorldWorkflow": "s3://lf-internal/lf-int-test/workflows/HelloWorldWorkflow.json",
+      "DiscoverGranules": "s3://lf-internal/lf-int-test/workflows/DiscoverGranules.json",
+      "EcsHelloWorldWorkflow": "s3://lf-internal/lf-int-test/workflows/EcsHelloWorldWorkflow.json",
+      "IngestAndPublishGranule": "s3://lf-internal/lf-int-test/workflows/IngestAndPublishGranule.json",
+      "WaitForDeployWorkflow": "s3://lf-internal/lf-int-test/workflows/WaitForDeployWorkflow.json",
+      "DiscoverAndQueuePdrs": "s3://lf-internal/lf-int-test/workflows/DiscoverAndQueuePdrs.json",
+      "SyncGranule": "s3://lf-internal/lf-int-test/workflows/SyncGranule.json",
+      "SyncGranuleCatchDuplicateErrorTest": "s3://lf-internal/lf-int-test/workflows/SyncGranuleCatchDuplicateErrorTest.json",
+      "IngestGranuleCatchDuplicateErrorTest": "s3://lf-internal/lf-int-test/workflows/IngestGranuleCatchDuplicateErrorTest.json",
+      "TestLambdaVersionWorkflow": "s3://lf-internal/lf-int-test/workflows/TestLambdaVersionWorkflow.json",
+      "PublishGranule": "s3://lf-internal/lf-int-test/workflows/PublishGranule.json"
+    },
+    "queues": {
+      "dbIndexerDeadLetterQueue": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-dbIndexerDeadLetterQueue",
+      "jobsDeadLetterQueue": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-jobsDeadLetterQueue",
+      "log2elasticsearchDeadLetterQueue": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-log2elasticsearchDeadLetterQueue",
+      "triggerLambdaFailure": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-triggerLambdaFailure",
+      "EmsReportDeadLetterQueue": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-EmsReportDeadLetterQueue",
+      "startSF": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-startSF",
+      "cleanExecutionsDeadLetterQueue": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-cleanExecutionsDeadLetterQueue",
+      "ScheduleSFDeadLetterQueue": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-ScheduleSFDeadLetterQueue",
+      "sns2elasticsearchDeadLetterQueue": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-sns2elasticsearchDeadLetterQueue",
+      "kinesisFailure": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-kinesisFailure"
+    },
+    "workflow_name": "SyncGranule",
+    "collection": {
+      "files": [{
+        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
+        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+        "bucket": "protected",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
+      }, {
+        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$",
+        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met",
+        "bucket": "private"
+      }, {
+        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.cmr\\.xml$",
+        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml",
+        "bucket": "protected-2"
+      }, {
+        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}_ndvi\\.jpg$",
+        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_ndvi.jpg",
+        "bucket": "public"
+      }],
+      "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
+      "name": "MOD09GQ_test-lf-int-test-SyncGranuleDuplicateHandling-1549033066468",
+      "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
+      "process": "modis",
+      "granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)",
+      "dataType": "MOD09GQ_test-lf-int-test-SyncGranuleDuplicateHandling-1549033066468",
+      "provider_path": "cumulus-test-data/pdrs",
+      "version": "006",
+      "updatedAt": 1549033087743,
+      "duplicateHandling": "replace",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+      "createdAt": 1549033087743
+    },
+    "stack": "lf-int-test",
+    "topic_arn": "arn:aws:sns:us-east-1:596205514787:lf-int-test-sftrackerSns-LWVRFVQ7UJT5",
+    "workflow_tasks": {
+      "Report": {
+        "version": "31",
+        "name": "lf-int-test-SfSnsReport",
+        "arn": "arn:aws:lambda:us-east-1:596205514787:function:lf-int-test-SfSnsReport:SfSnsReport-c2c7e841cc7a07ac5fe6081e5870eff524010f4f"
+      },
+      "SyncGranuleNoVpc": {
+        "version": "44",
+        "name": "lf-int-test-SyncGranuleNoVpc",
+        "arn": "arn:aws:lambda:us-east-1:596205514787:function:lf-int-test-SyncGranuleNoVpc:SyncGranuleNoVpc-f871037c4cf0d6e0952eff10dc5d838aea924453"
+      }
+    },
+    "provider": {
+      "protocol": "s3",
+      "globalConnectionLimit": 10,
+      "host": "lf-internal",
+      "updatedAt": 1549033067948,
+      "id": "s3_provider_test-lf-int-test-SyncGranuleDuplicateHandling-1549033066468",
+      "createdAt": 1549033067948
+    },
+    "buckets": {
+      "private": {
+        "type": "private",
+        "name": "lf-private"
+      },
+      "public": {
+        "type": "public",
+        "name": "lf-cumulus-public"
+      },
+      "protected-2": {
+        "type": "protected",
+        "name": "lf-protected-2"
+      },
+      "protected": {
+        "type": "protected",
+        "name": "lf-protected"
+      },
+      "shared": {
+        "type": "shared",
+        "name": "cumulus-data-shared"
+      },
+      "internal": {
+        "type": "internal",
+        "name": "lf-internal"
+      }
+    },
+    "distribution_endpoint": "https://example.com/",
+    "input_granules": [{
+      "granuleId": "MOD09GQ.A6227378.Pwoeim.006.2700768853508",
+      "dataType": "MOD09GQ_test-lf-int-test-SyncGranuleDuplicateHandling-1549033066468",
+      "version": "006",
+      "files": [{
+        "name": "MOD09GQ.A6227378.Pwoeim.006.2700768853508.hdf",
+        "bucket": "lf-internal",
+        "filename": "s3://lf-internal/custom-staging-dir/lf-int-test/MOD09GQ_test-lf-int-test-SyncGranuleDuplicateHandling-1549033066468___006/MOD09GQ.A6227378.Pwoeim.006.2700768853508.hdf",
+        "fileStagingDir": "custom-staging-dir/lf-int-test/MOD09GQ_test-lf-int-test-SyncGranuleDuplicateHandling-1549033066468___006",
+        "fileSize": 40,
+        "path": "lf-int-test-SyncGranuleDuplicateHandling-1549033066468-test-data/files",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
+        "duplicate_found": true
+      }, {
+        "name": "MOD09GQ.A6227378.Pwoeim.006.2700768853508.hdf.met",
+        "bucket": "lf-internal",
+        "filename": "s3://lf-internal/custom-staging-dir/lf-int-test/MOD09GQ_test-lf-int-test-SyncGranuleDuplicateHandling-1549033066468___006/MOD09GQ.A6227378.Pwoeim.006.2700768853508.hdf.met",
+        "fileStagingDir": "custom-staging-dir/lf-int-test/MOD09GQ_test-lf-int-test-SyncGranuleDuplicateHandling-1549033066468___006",
+        "fileSize": 21708,
+        "path": "lf-int-test-SyncGranuleDuplicateHandling-1549033066468-test-data/files",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
+        "duplicate_found": true
+      }]
+    }],
+    "cmr": {
+      "username": "lfrederick",
+      "password": "N/UR0phgd8LtUmnfb34f9GfWz7VomDn6AK6cJDpdnwVfyVSfchdv871QkTe6MPcWb8rcmoLh2X06mZSSGgXJ7fA+MWh5t7abD1jgUySN1wYWH+UDvKhF4UxaeBhrES06FFWjWEWd6Rl4tqs+NcHlUdAYFA7xEk6qSScMGP0Zwo4GwAgBSQu0+xZm9Y8NVAcMXmJLvq93FkLsp4MyljE9Z1D5yEg1ySNNqPnz0iKyO1F1v/C8NLofDoLMQUot5S8tAHNV/3qw5Gx3VwLhUGI5usJnorFXuoiXmxiFRCNAQttE9m08zDQxxRnkL96RU6JpWf243DaGkEwvjvIU1bGdPw==",
+      "clientId": "cumulus-core-lf-int-test",
+      "provider": "CUMULUS"
+    }
+  },
+  "payload": {
+    "process": "modis",
+    "granules": [{
+      "granuleId": "MOD09GQ.A6227378.Pwoeim.006.2700768853508",
+      "dataType": "MOD09GQ_test-lf-int-test-SyncGranuleDuplicateHandling-1549033066468",
+      "version": "006",
+      "files": [{
+        "name": "MOD09GQ.A6227378.Pwoeim.006.2700768853508.hdf",
+        "bucket": "lf-internal",
+        "filename": "s3://lf-internal/custom-staging-dir/lf-int-test/MOD09GQ_test-lf-int-test-SyncGranuleDuplicateHandling-1549033066468___006/MOD09GQ.A6227378.Pwoeim.006.2700768853508.hdf",
+        "fileStagingDir": "custom-staging-dir/lf-int-test/MOD09GQ_test-lf-int-test-SyncGranuleDuplicateHandling-1549033066468___006",
+        "fileSize": 40,
+        "path": "lf-int-test-SyncGranuleDuplicateHandling-1549033066468-test-data/files",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
+        "duplicate_found": true
+      }, {
+        "name": "MOD09GQ.A6227378.Pwoeim.006.2700768853508.hdf.met",
+        "bucket": "lf-internal",
+        "filename": "s3://lf-internal/custom-staging-dir/lf-int-test/MOD09GQ_test-lf-int-test-SyncGranuleDuplicateHandling-1549033066468___006/MOD09GQ.A6227378.Pwoeim.006.2700768853508.hdf.met",
+        "fileStagingDir": "custom-staging-dir/lf-int-test/MOD09GQ_test-lf-int-test-SyncGranuleDuplicateHandling-1549033066468___006",
+        "fileSize": 21708,
+        "path": "lf-int-test-SyncGranuleDuplicateHandling-1549033066468-test-data/files",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
+        "duplicate_found": true
+      }]
+    }]
+  },
+  "exception": "None",
+  "workflow_config": {
+    "StopStatus": {
+      "stateMachine": "{{$.cumulus_meta.state_machine}}",
+      "sfnEnd": true,
+      "executionName": "{{$.cumulus_meta.execution_name}}",
+      "bucket": "{{$.meta.buckets.internal.name}}",
+      "cumulus_message": {
+        "input": "{{$}}"
+      },
+      "stack": "{{$.meta.stack}}"
+    },
+    "WorkflowFailed": {},
+    "SyncGranuleNoVpc": {
+      "buckets": "{{$.meta.buckets}}",
+      "cumulus_message": {
+        "outputs": [{
+          "source": "{{$.granules}}",
+          "destination": "{{$.meta.input_granules}}"
+        }, {
+          "source": "{{$}}",
+          "destination": "{{$.payload}}"
+        }, {
+          "source": "{{$.process}}",
+          "destination": "{{$.cumulus_meta.process}}"
+        }]
+      },
+      "collection": "{{$.meta.collection}}",
+      "fileStagingDir": "custom-staging-dir",
+      "downloadBucket": "{{$.cumulus_meta.system_bucket}}",
+      "provider": "{{$.meta.provider}}",
+      "duplicateHandling": "{{$.meta.collection.duplicateHandling}}",
+      "stack": "{{$.meta.stack}}"
+    },
+    "Report": {
+      "cumulus_message": {
+        "input": "{{$}}"
+      }
+    },
+    "VpcOrNot": {},
+    "SyncGranule": {
+      "buckets": "{{$.meta.buckets}}",
+      "cumulus_message": {
+        "outputs": [{
+          "source": "{{$.granules}}",
+          "destination": "{{$.meta.input_granules}}"
+        }, {
+          "source": "{{$}}",
+          "destination": "{{$.payload}}"
+        }, {
+          "source": "{{$.process}}",
+          "destination": "{{$.cumulus_meta.process}}"
+        }]
+      },
+      "collection": "{{$.meta.collection}}",
+      "fileStagingDir": "custom-staging-dir",
+      "downloadBucket": "{{$.cumulus_meta.system_bucket}}",
+      "provider": "{{$.meta.provider}}",
+      "duplicateHandling": "{{$.meta.collection.duplicateHandling}}",
+      "stack": "{{$.meta.stack}}"
+    }
+  }
+}

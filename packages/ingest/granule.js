@@ -18,7 +18,6 @@ const {
 } = require('@cumulus/common');
 const errors = require('@cumulus/common/errors');
 const { deprecate } = require('@cumulus/common/util');
-const { updateMetadata } = require('@cumulus/cmrjs');
 
 const { sftpMixin } = require('./sftp');
 const { ftpMixin } = require('./ftp');
@@ -735,25 +734,23 @@ function generateMoveFileParams(sourceFiles, destinations) {
 }
 
 /**
- * move granule files from one s3 location to another
+ * Moves granule files from one S3 location to another.
  *
- * @param {string} granuleId - granuleiId
  * @param {Array<Object>} sourceFiles - array of file objects, they are updated with destination
  * location after the files are moved
  * @param {string} sourceFiles.name - file name
  * @param {string} sourceFiles.bucket - current bucket of file
- * @param {string} sourceFiles.filepath - current s3 key of file
- * @param {Object[]} destinations - array of objects defining the destination of granule files
+ * @param {string} sourceFiles.filepath - current S3 key of file
+ * @param {Array<Object>} destinations - array of objects defining the destination of granule files
  * @param {string} destinations.regex - regex for matching filepath of file to new destination
  * @param {string} destinations.bucket - aws bucket of the destination
  * @param {string} destinations.filepath - file path/directory on the bucket for the destination
- * @param {string} distEndpoint - distribution enpoint from config
- * @param {boolean} published - indicate if publish is needed
- * @returns {Promise<Object>} returns promise from publishing cmr file
+ * @returns {Promise<Array>} returns array of source files updated with new locations.
  */
-async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoint, published) {
+async function moveGranuleFiles(sourceFiles, destinations) {
   const moveFileParams = generateMoveFileParams(sourceFiles, destinations);
 
+  const processedFiles = [];
   const moveFileRequests = moveFileParams.map((moveFileParam) => {
     const { source, target, file } = moveFileParam;
     const parsed = aws.parseS3Uri(file.filename);
@@ -761,30 +758,24 @@ async function moveGranuleFiles(granuleId, sourceFiles, destinations, distEndpoi
     if (target) {
       log.debug('moveGranuleFiles', source, target);
       return moveGranuleFile(source, target).then(() => {
-        // update the granule file location in source file
-        file.bucket = target.Bucket;
-        file.filepath = target.Key;
-        file.filename = aws.buildS3Uri(file.bucket, file.filepath);
+        processedFiles.push({
+          bucket: target.Bucket,
+          filepath: target.Key,
+          filename: aws.buildS3Uri(target.Bucket, target.Key),
+          name: file.name
+        });
       });
     }
-
-    // else set filepath as well so it won't be null
-    file.filepath = parsed.Key;
+    processedFiles.push({
+      bucket: parsed.Bucket,
+      filepath: parsed.Key,
+      filename: file.filename,
+      name: file.name
+    });
     return Promise.resolve();
   });
-
   await Promise.all(moveFileRequests);
-
-  // 2018-12-11 TODO: mhs refactor into helper imported from cmrjs.
-  // update cmr metadata with new file urls
-  const xmlFile = sourceFiles.filter((file) => file.name.endsWith('.cmr.xml'));
-  if (xmlFile.length === 1) {
-    return updateMetadata(granuleId, xmlFile[0], sourceFiles, distEndpoint, published);
-  }
-  if (xmlFile.length > 1) {
-    log.error('more than one .cmr.xml found');
-  }
-  return Promise.resolve();
+  return processedFiles;
 }
 
 /**
@@ -834,6 +825,17 @@ function isFileRenamed(filename) {
   return (filename.match(suffixRegex) !== null);
 }
 
+
+/**
+ * Returns the input filename stripping off any versioned timestamp.
+ *
+ * @param {string} filename
+ * @returns {string} - filename with timestamp removed
+ */
+function unversionFilename(filename) {
+  return isFileRenamed(filename) ? filename.split('.').slice(0, -1).join('.') : filename;
+}
+
 module.exports.selector = selector;
 module.exports.Discover = Discover;
 module.exports.Granule = Granule;
@@ -847,7 +849,7 @@ module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
 module.exports.SftpGranule = SftpGranule;
 module.exports.getRenamedS3File = getRenamedS3File;
 module.exports.copyGranuleFile = copyGranuleFile;
-module.exports.isFileRenamed = isFileRenamed;
+module.exports.unversionFilename = unversionFilename;
 module.exports.moveGranuleFile = moveGranuleFile;
 module.exports.moveGranuleFiles = moveGranuleFiles;
 module.exports.renameS3FileWithTimestamp = renameS3FileWithTimestamp;

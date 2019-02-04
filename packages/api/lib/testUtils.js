@@ -1,6 +1,6 @@
 'use strict';
 
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { Search } = require('../es/search');
 const { createJwtToken } = require('./token');
 
@@ -49,8 +49,8 @@ async function deleteAliases() {
  * @returns {Object} a file record
  */
 function fakeFilesFactory(bucket) {
-  const key = randomString();
-  const name = randomString();
+  const key = randomId('key');
+  const name = randomId('name');
   const filepath = `${key}/${name}`;
   const filename = `s3://${bucket}/${filepath}`;
   return {
@@ -69,9 +69,9 @@ function fakeFilesFactory(bucket) {
  */
 function fakeGranuleFactory(status = 'completed') {
   return {
-    granuleId: randomString(),
-    dataType: randomString(),
-    version: randomString(),
+    granuleId: randomId('granule'),
+    dataType: randomId('datatype'),
+    version: randomId('vers'),
     collectionId: 'fakeCollection___v1',
     status,
     execution: randomString(),
@@ -137,7 +137,7 @@ function fakeRuleFactory(state = 'DISABLED') {
  */
 function fakePdrFactory(status = 'completed') {
   return {
-    pdrName: randomString(),
+    pdrName: randomId('pdr'),
     collectionId: 'fakeCollection___v1',
     provider: 'fakeProvider',
     status,
@@ -148,19 +148,39 @@ function fakePdrFactory(status = 'completed') {
 /**
  * creates fake execution records
  *
+ * @param {Object} params - overrides
+ * @returns {Object} fake execution object
+ */
+function fakeExecutionFactoryV2(params = {}) {
+  const execution = {
+    arn: randomString(),
+    duration: 180.5,
+    name: randomString(),
+    execution: randomString(),
+    parentArn: randomString(),
+    error: { test: 'error' },
+    status: 'completed',
+    createdAt: Date.now() - 180.5 * 1000,
+    updatedAt: Date.now(),
+    timestamp: Date.now(),
+    type: 'fakeWorkflow',
+    originalPayload: { testInput: 'originalPayloadValue' },
+    finalPayload: { testOutput: 'finalPayloadValue' },
+    tasks: {}
+  };
+
+  return { ...execution, ...params };
+}
+
+/**
+ * creates fake execution records
+ *
  * @param {string} status - pdr status (default to completed)
  * @param {string} type - workflow type (default to fakeWorkflow)
  * @returns {Object} fake execution object
  */
 function fakeExecutionFactory(status = 'completed', type = 'fakeWorkflow') {
-  return {
-    arn: randomString(),
-    duration: 180.5,
-    name: randomString(),
-    status,
-    createdAt: Date.now(),
-    type
-  };
+  return fakeExecutionFactoryV2({ status, type });
 }
 
 /**
@@ -264,6 +284,7 @@ module.exports = {
   fakePdrFactory,
   fakeCollectionFactory,
   fakeExecutionFactory,
+  fakeExecutionFactoryV2,
   fakeRuleFactory,
   fakeRuleFactoryV2,
   fakeFilesFactory,

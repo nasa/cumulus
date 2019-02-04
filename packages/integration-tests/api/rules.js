@@ -14,7 +14,6 @@ const { callCumulusApi } = require('./api');
 async function callRuleApiFunction(prefix, requestPayload) {
   const payload = await callCumulusApi({
     prefix,
-    functionName: 'ApiRulesDefault',
     payload: requestPayload
   });
 
@@ -38,8 +37,11 @@ async function callRuleApiFunction(prefix, requestPayload) {
 async function postRule({ prefix, rule }) {
   const payload = {
     httpMethod: 'POST',
-    resource: '/rules',
-    path: 'rules',
+    resource: '/{proxy+}',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    path: '/rules',
     body: JSON.stringify(rule)
   };
 
@@ -58,11 +60,11 @@ async function postRule({ prefix, rule }) {
 async function updateRule({ prefix, ruleName, updateParams }) {
   const payload = {
     httpMethod: 'PUT',
-    resource: '/rules/{name}',
-    path: `rules/${ruleName}`,
-    pathParameters: {
-      name: ruleName
+    resource: '/{proxy+}',
+    headers: {
+      'Content-Type': 'application/json'
     },
+    path: `/rules/${ruleName}`,
     body: JSON.stringify(updateParams)
   };
 
@@ -79,8 +81,8 @@ async function updateRule({ prefix, ruleName, updateParams }) {
 async function listRules({ prefix }) {
   const payload = {
     httpMethod: 'GET',
-    resource: '/rules',
-    path: 'rules'
+    resource: '/{proxy+}',
+    path: '/rules'
   };
 
   return callRuleApiFunction(prefix, payload);
@@ -97,9 +99,8 @@ async function listRules({ prefix }) {
 async function getRule({ prefix, ruleName }) {
   const payload = {
     httpMethod: 'GET',
-    resource: '/rules/{name}',
-    path: `rules/${ruleName}`,
-    pathParameters: { name: ruleName }
+    resource: '/{proxy+}',
+    path: `/rules/${ruleName}`
   };
 
   return callRuleApiFunction(prefix, payload);
@@ -116,9 +117,8 @@ async function getRule({ prefix, ruleName }) {
 async function deleteRule({ prefix, ruleName }) {
   const payload = {
     httpMethod: 'DELETE',
-    resource: '/rules/{name}',
-    path: `rules/${ruleName}`,
-    pathParameters: { name: ruleName }
+    resource: '/{proxy+}',
+    path: `/rules/${ruleName}`
   };
 
   return callRuleApiFunction(prefix, payload);
@@ -135,10 +135,10 @@ async function deleteRule({ prefix, ruleName }) {
 async function rerunRule({ prefix, ruleName }) {
   const payload = {
     httpMethod: 'PUT',
-    resource: '/rules/{name}',
-    path: `rules/${ruleName}`,
-    pathParameters: {
-      name: ruleName
+    resource: '/{proxy+}',
+    path: `/rules/${ruleName}`,
+    headers: {
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify({ action: 'rerun' })
   };

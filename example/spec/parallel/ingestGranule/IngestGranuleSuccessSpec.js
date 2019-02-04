@@ -147,6 +147,7 @@ describe('The S3 Ingest Granules workflow', () => {
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
 
+    console.log('Start SuccessExecution');
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
@@ -156,6 +157,7 @@ describe('The S3 Ingest Granules workflow', () => {
       inputPayload
     );
 
+    console.log('Start FailingExecution');
     failingWorkflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
@@ -328,10 +330,9 @@ describe('The S3 Ingest Granules workflow', () => {
       const distEndpoint = config.DISTRIBUTION_ENDPOINT;
       const extension1 = urljoin(files[0].bucket, files[0].filepath);
       const filename = `https://${files[2].bucket}.s3.amazonaws.com/${files[2].filepath}`;
-
-      expect(cmrResource[0].href).toEqual(urljoin(distEndpoint, extension1));
-      expect(cmrResource[1].href).toEqual(filename);
-
+      const hrefs = cmrResource.map((resource) => resource.href);
+      expect(hrefs.includes(urljoin(distEndpoint, extension1))).toBe(true);
+      expect(hrefs.includes(filename)).toBe(true);
       expect(response.statusCode).toEqual(200);
     });
   });

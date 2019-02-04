@@ -1,0 +1,22 @@
+[
+  {
+    "name": "HelloWorldWorkflow",
+    "template": "s3://bucket/cumulus/workflows/HelloWorldWorkflow.json",
+    "definition": {
+      "Comment": "Tests Lambda update after redeploy",
+      "StartAt": "StartStatus",
+      "States": {
+        "StartStatus": {
+          "Type": "Task",
+          "Resource": "${SfSnsReportLambdaAliasOutput}",
+          "Next": "StopStatus"
+        },
+        "StopStatus": {
+          "Type": "Task",
+          "Resource": "${SfSnsReportLambdaAliasOutput}",
+          "End": true
+        }
+      }
+    }
+  }
+]

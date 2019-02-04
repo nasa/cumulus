@@ -21,11 +21,11 @@ let executionsTable;
 let granuleModel;
 let granulesTable;
 test.before(async () => {
-  process.env.internal = randomString();
+  process.env.system_bucket = randomString();
   process.env.stackName = randomString();
 
   await deleteAliases();
-  await s3().createBucket({ Bucket: process.env.internal }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   granulesTable = `${process.env.stackName}-GranulesTable`;
   process.env.GranulesTable = granulesTable;
@@ -42,7 +42,7 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  await recursivelyDeleteS3Bucket(process.env.internal);
+  await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await granuleModel.deleteTable();
   await executionModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
@@ -57,7 +57,7 @@ test.serial('Run migrations the first time, it should run', async (t) => {
   const Key = `${process.env.stackName}/migrations/migration_0`;
 
   await s3().headObject({
-    Bucket: process.env.internal,
+    Bucket: process.env.system_bucket,
     Key
   }).promise();
 });
@@ -69,7 +69,7 @@ test.serial('Run the migration again, it should not run', async (t) => {
   const Key = `${process.env.stackName}/migrations/migration_0`;
 
   await s3().headObject({
-    Bucket: process.env.internal,
+    Bucket: process.env.system_bucket,
     Key
   }).promise();
 });
