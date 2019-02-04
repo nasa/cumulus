@@ -7,8 +7,11 @@ const {
     DynamoDbScanQueue,
     S3ListObjectsV2Queue,
     s3
-  }
+  },
+  constructCollectionId
 } = require('@cumulus/common');
+
+const { CMRSearchConceptQueue } = require('@cumulus/cmrjs');
 
 /**
  * Verify that all objects in an S3 bucket contain corresponding entries in
@@ -80,6 +83,95 @@ async function createReconciliationReportForBucket(Bucket, filesTableName) {
     onlyInDynamoDb
   };
 }
+
+/**
+ * Compare the holdings in CMR with Cumulus' internal data store, report any discrepancies
+ *
+ * @param {string} collectionTableName - the name of the collections table in database
+ * @returns {Promise<Object>} a report
+ */
+async function createReconciliationReportForCollections(collectionTableName) {
+  // compare collection holdings:
+  //   Get list of collections from CMR
+  //   Get list of collections from CUMULUS
+  //   Report collections only in CMR
+  //   Report collections only in CUMULUS
+  const cmrCollectionsIterator = new CMRSearchConceptQueue(
+    process.env.cmr_provider, process.env.cmr_client_id, 'collections', {}, 'umm_json'
+  );
+
+  // TODO add to collections model
+  const dbCollectionsIterator = new DynamoDbScanQueue({
+    TableName: collectionTableName,
+    ExpressionAttributeNames: { '#name': 'name', '#version': 'version' },
+    ProjectionExpression: '#name, #version'
+  });
+
+  const okCollections = [];
+  const collectionsOnlyInCmr = [];
+  const collectionsOnlyInDb = [];
+
+  let [nextCmrItem, nextDbItem] = await Promise.all([cmrCollectionsIterator.peek(), dbCollectionsIterator.peek()]); // eslint-disable-line max-len
+  while (nextCmrItem && nextDbItem) {
+    const nextCmrCollectionId = constructCollectionId(
+      nextCmrItem.umm.ShortName, nextCmrItem.umm.Version
+    );
+    const nextDbCollectionId = constructCollectionId(nextDbItem.name, nextDbItem.version);
+
+    if (nextCmrCollectionId < nextDbCollectionId) {
+      // Found an item that is only in cmr and not in database
+      collectionsOnlyInCmr.push(nextCmrCollectionId);
+      cmrCollectionsIterator.shift();
+    }
+    else if (nextCmrCollectionId > nextDbCollectionId) {
+      // Found an item that is only in database and not in cmr
+      await dbCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
+      collectionsOnlyInDb.push(nextDbCollectionId);
+    }
+    else {
+      // Found an item that is in both cmr and database
+      okCollections.push(nextDbCollectionId);
+      cmrCollectionsIterator.shift();
+      dbCollectionsIterator.shift();
+    }
+
+    [nextCmrItem, nextDbItem] = await Promise.all([cmrCollectionsIterator.peek(), dbCollectionsIterator.peek()]); // eslint-disable-line max-len, no-await-in-loop
+  }
+
+  // Add any remaining CMR items to the report
+  while (await cmrCollectionsIterator.peek()) { // eslint-disable-line no-await-in-loop
+    const cmrItem = await cmrCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
+    collectionsOnlyInCmr.push(constructCollectionId(
+      cmrItem.umm.ShortName, cmrItem.umm.Version
+    ));
+  }
+
+  // Add any remaining DynamoDB items to the report
+  while (await dbCollectionsIterator.peek()) { // eslint-disable-line no-await-in-loop
+    const dbItem = await dbCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
+    collectionsOnlyInDb.push(constructCollectionId(dbItem.name, dbItem.version));
+  }
+
+  const collections = {
+    okCollections,
+    onlyInCmr: collectionsOnlyInCmr,
+    onlyInDb: collectionsOnlyInDb
+  };
+
+  console.log({ collections });
+
+  // compare granule holdings.
+  // For collections in both CMR and CUMULUS, for each collection:
+
+  //   Get CMR granules list (by PROVIDER, short_name, version, sort_key: ['GranuleUR'])
+  //   create a CMRSearchConceptQueue class to handle paging
+  //   Get CUMULUS granules list (by collectionId, update existing DynamoDbScanQueue to use query operation)
+  //   Create a secondary index on the granules table with 'collectionid' as the partition key and 'granuleId' as the sort key, so the granules are ordered by granuleId.
+  //   Report granules only in CMR, granules only in CUMULUS
+
+  return { collections };
+}
+
 
 /**
  * Create a Reconciliation report and save it to S3
@@ -164,3 +256,8 @@ function handler(event, _context, cb) {
     .catch(cb);
 }
 exports.handler = handler;
+
+//TODO remove these
+process.env.cmr_provider = 'CUMULUS';
+process.env.cmr_client_id = 'cumulus';
+createReconciliationReportForCollections('jl-test-integration-CollectionsTable');
