@@ -1,72 +1,54 @@
 'use strict';
 
 const test = require('ava');
+const request = require('supertest');
+const sinon = require('sinon');
 const { Cookie } = require('tough-cookie');
 const { URL } = require('url');
+const { s3 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
-const distributionEndpoint = require('../../endpoints/distribution');
 const { AccessToken } = require('../../models');
-const { findCaseInsensitiveValue } = require('../../lib/utils');
+const EarthdataLoginClient = require('../../lib/EarthdataLogin');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 
-function headerValues(response, name) {
-  return findCaseInsensitiveValue(response.multiValueHeaders, name);
-}
+process.env.EARTHDATA_CLIENT_ID = randomString();
+process.env.EARTHDATA_CLIENT_PASSWORD = randomString();
+process.env.DEPLOYMENT_ENDPOINT = 'http://example.com';
+process.env.DISTRIBUTION_URL = `https://${randomString()}/${randomString()}`;
+process.env.AccessTokensTable = randomString();
+let context;
 
-function headerValue(response, name) {
-  const value = headerValues(response, name);
+// import the express app after setting the env variables
+const { distributionApp } = require('../../app/distribution');
 
-  if (!value) return undefined;
-  if (value.length > 1) throw new TypeError(`Found multiple headers values for ${name}`);
-
-  return value[0];
-}
-
-function headerIs(response, name, value) {
-  return headerValue(response, name) === value;
+function headerIs(headers, name, value) {
+  return headers[name.toLowerCase()] === value;
 }
 
 function validateDefaultHeaders(t, response) {
-  t.true(headerIs(response, 'Access-Control-Allow-Origin', '*'));
-  t.true(headerIs(response, 'Strict-Transport-Security', 'max-age=31536000'));
+  t.true(headerIs(response.headers, 'Access-Control-Allow-Origin', '*'));
+  t.true(headerIs(response.headers, 'Strict-Transport-Security', 'max-age=31536000; includeSubDomains'));
 }
 
 function validateRedirectToGetAuthorizationCode(t, response) {
-  const { authorizationUrl } = t.context;
+  const { authorizationUrl } = context;
 
-  t.is(response.statusCode, 307);
-
+  t.is(response.status, 307);
   validateDefaultHeaders(t, response);
-
-  t.is(response.headers.Location, authorizationUrl);
+  t.true(headerIs(response.headers, 'Location', authorizationUrl));
 }
 
-let suiteContext;
-
 test.before(async () => {
-  const accessTokenModel = new AccessToken({ tableName: randomString() });
+  const accessTokenModel = new AccessToken({ tableName: process.env.AccessTokensTable });
   await accessTokenModel.createTable();
 
-  suiteContext = {
-    accessTokenModel
-  };
-});
-
-test.beforeEach(async (t) => {
-  const { accessTokenModel } = suiteContext;
-
-  const accessTokenRecord = fakeAccessTokenFactory();
-  await accessTokenModel.create(accessTokenRecord);
-
-  const accessTokenCookie = new Cookie({
-    key: 'accessToken',
-    value: accessTokenRecord.accessToken
-  });
-
+  const authorizationUrl = `https://${randomString()}.com/${randomString()}`;
   const fileBucket = randomString();
   const fileKey = randomString();
   const fileLocation = `${fileBucket}/${fileKey}`;
+  const signedFileUrl = new URL(`https://${randomString()}.com/${randomString()}`);
+
 
   const getAccessTokenResponse = {
     accessToken: randomString(),
@@ -75,252 +57,149 @@ test.beforeEach(async (t) => {
     expirationTime: Date.now() + (60 * 60 * 1000)
   };
 
-  const authClient = {
-    getAccessToken(authorizationCode) {
-      if (authorizationCode !== t.context.authorizationCode) {
-        throw new Error(`Unexpected authorizationCode: ${authorizationCode}`);
-      }
+  sinon.stub(
+    EarthdataLoginClient.prototype,
+    'getAccessToken'
+  ).callsFake(() => getAccessTokenResponse);
 
-      return t.context.getAccessTokenResponse;
-    },
-    getAuthorizationUrl(state) {
-      if (state !== t.context.fileLocation) {
-        throw new Error(`Unexpected state: ${state}`);
-      }
+  sinon.stub(
+    EarthdataLoginClient.prototype,
+    'getAuthorizationUrl'
+  ).callsFake(() => authorizationUrl);
 
-      return t.context.authorizationUrl;
+  const accessTokenRecord = fakeAccessTokenFactory();
+  await accessTokenModel.create(accessTokenRecord);
+
+  sinon.stub(s3(), 'getSignedUrl').callsFake((operation, params) => {
+    if (operation !== 'getObject') {
+      throw new Error(`Unexpected operation: ${operation}`);
     }
-  };
 
-  const s3Client = {
-    getSignedUrl(operation, params) {
-      if (operation !== 'getObject') {
-        throw new Error(`Unexpected operation: ${operation}`);
-      }
-
-      if (params.Bucket !== fileBucket) {
-        throw new Error(`Unexpected params.Bucket: ${params.Bucket}`);
-      }
-
-      if (params.Key !== fileKey) {
-        throw new Error(`Unexpected params.Key: ${params.Key}`);
-      }
-
-      return t.context.signedFileUrl.toString();
+    if (params.Bucket !== fileBucket) {
+      throw new Error(`Unexpected params.Bucket: ${params.Bucket}`);
     }
-  };
 
-  t.context = {
+    if (params.Key !== fileKey) {
+      throw new Error(`Unexpected params.Key: ${params.Key}`);
+    }
+
+    return signedFileUrl.toString();
+  });
+
+  context = {
+    accessTokenModel,
     accessTokenRecord,
-    accessTokenCookie,
-    authClient,
+    accessTokenCookie: accessTokenRecord.accessToken,
     getAccessTokenResponse,
     fileBucket,
     fileKey,
     fileLocation,
-    s3Client,
-    authorizationUrl: `https://${randomString()}.com/${randomString()}`,
-    signedFileUrl: new URL(`https://${randomString()}.com/${randomString()}`),
+    authorizationUrl,
+    signedFileUrl,
     authorizationCode: randomString(),
-    distributionUrl: `https://${randomString()}/${randomString()}`
+    distributionUrl: process.env.DISTRIBUTION_URL
   };
 });
 
 test.after.always(async () => {
-  const { accessTokenModel } = suiteContext;
+  const { accessTokenModel } = context;
 
   await accessTokenModel.deleteTable();
+  sinon.reset();
 });
 
 test('A request for a file without an access token returns a redirect to an OAuth2 provider', async (t) => {
-  const { authClient, fileLocation } = t.context;
-
-  const request = {
-    httpMethod: 'GET',
-    resource: '/{proxy+}',
-    pathParameters: {
-      proxy: fileLocation
-    }
-  };
-
-  const response = await distributionEndpoint.handleRequest({
-    authClient,
-    request
-  });
+  const { fileLocation } = context;
+  const response = await request(distributionApp)
+    .get(`/${fileLocation}`)
+    .set('Accept', 'application/json')
+    .expect(307);
 
   validateRedirectToGetAuthorizationCode(t, response);
 });
 
 test('A request for a file using a non-existent access token returns a redirect to an OAuth2 provider', async (t) => {
-  const { accessTokenModel } = suiteContext;
-  const { authClient, fileLocation } = t.context;
-
-  const accessTokenCookie = new Cookie({
-    key: 'accessToken',
-    value: randomString()
-  });
-
-  const request = {
-    httpMethod: 'GET',
-    resource: '/{proxy+}',
-    pathParameters: {
-      proxy: fileLocation
-    },
-    multiValueHeaders: {
-      cookie: [accessTokenCookie.toString()]
-    }
-  };
-
-  const response = await distributionEndpoint.handleRequest({
-    accessTokenModel,
-    authClient,
-    request
-  });
+  const { fileLocation } = context;
+  const response = await request(distributionApp)
+    .get(`/${fileLocation}`)
+    .set('Accept', 'application/json')
+    .set('Cookie', [`accessToken=${randomString()}`])
+    .expect(307);
 
   validateRedirectToGetAuthorizationCode(t, response);
 });
 
 test('A request for a file using an expired access token returns a redirect to an OAuth2 provider', async (t) => {
-  const { accessTokenModel } = suiteContext;
-  const { authClient, fileLocation } = t.context;
+  const { accessTokenModel, fileLocation } = context;
 
   const accessTokenRecord = fakeAccessTokenFactory({
     expirationTime: Date.now() - (5 * 1000)
   });
   await accessTokenModel.create(accessTokenRecord);
 
-  const accessTokenCookie = new Cookie({
-    key: 'accessToken',
-    value: accessTokenRecord.accessToken
-  });
-
-  const request = {
-    httpMethod: 'GET',
-    resource: '/{proxy+}',
-    pathParameters: {
-      proxy: fileLocation
-    },
-    multiValueHeaders: {
-      cookie: [accessTokenCookie.toString()]
-    }
-  };
-
-  const response = await distributionEndpoint.handleRequest({
-    accessTokenModel,
-    authClient,
-    request
-  });
+  const response = await request(distributionApp)
+    .get(`/${fileLocation}`)
+    .set('Accept', 'application/json')
+    .set('Cookie', [`accessToken=${accessTokenRecord.accessToken}`])
+    .expect(307);
 
   validateRedirectToGetAuthorizationCode(t, response);
 });
 
 test('An authenticated request for a file that cannot be parsed returns a 404', async (t) => {
-  const { accessTokenModel } = suiteContext;
-  const { accessTokenCookie, authClient } = t.context;
-
-  t.context.fileLocation = 'invalid';
-
-  const request = {
-    httpMethod: 'GET',
-    resource: '/{proxy+}',
-    pathParameters: {
-      proxy: t.context.fileLocation
-    },
-    multiValueHeaders: {
-      cookie: [accessTokenCookie.toString()]
-    }
-  };
-
-  const response = await distributionEndpoint.handleRequest({
-    accessTokenModel,
-    authClient,
-    request
-  });
+  const { accessTokenCookie } = context;
+  const response = await request(distributionApp)
+    .get('/invalid')
+    .set('Accept', 'application/json')
+    .set('Cookie', [`accessToken=${accessTokenCookie}`])
+    .expect(404);
 
   t.is(response.statusCode, 404);
 });
 
 test('An authenticated request for a file returns a redirect to S3', async (t) => {
-  const { accessTokenModel } = suiteContext;
-
   const {
     accessTokenCookie,
     accessTokenRecord,
-    authClient,
     fileLocation,
-    s3Client,
     signedFileUrl
-  } = t.context;
+  } = context;
 
-  const request = {
-    httpMethod: 'GET',
-    resource: '/{proxy+}',
-    pathParameters: {
-      proxy: fileLocation
-    },
-    multiValueHeaders: {
-      cookie: [accessTokenCookie.toString()]
-    }
-  };
 
-  const response = await distributionEndpoint.handleRequest({
-    accessTokenModel,
-    authClient,
-    request,
-    s3Client
-  });
+  const response = await request(distributionApp)
+    .get(`/${fileLocation}`)
+    .set('Accept', 'application/json')
+    .set('Cookie', [`accessToken=${accessTokenCookie}`])
+    .expect(307);
 
-  t.is(response.statusCode, 307);
-
+  t.is(response.status, 307);
   validateDefaultHeaders(t, response);
 
-  const redirectLocation = new URL(headerValue(response, 'Location'));
-
+  const redirectLocation = new URL(response.headers.location);
   t.is(redirectLocation.origin, signedFileUrl.origin);
   t.is(redirectLocation.pathname, signedFileUrl.pathname);
-
   t.is(redirectLocation.searchParams.get('x-EarthdataLoginUsername'), accessTokenRecord.username);
 });
 
 test('A /redirect request with a good authorization code returns a correct response', async (t) => {
-  const { accessTokenModel } = suiteContext;
-
   const {
-    authClient,
     authorizationCode,
     getAccessTokenResponse,
     distributionUrl,
-    fileLocation,
-    s3Client
-  } = t.context;
+    fileLocation
+  } = context;
 
-  const request = {
-    httpMethod: 'GET',
-    resource: '/redirect',
-    pathParameters: {},
-    multiValueHeaders: {},
-    queryStringParameters: {
-      code: authorizationCode,
-      state: fileLocation
-    }
-  };
+  const response = await request(distributionApp)
+    .get('/redirect')
+    .query({ code: authorizationCode, state: fileLocation })
+    .set('Accept', 'application/json')
+    .expect(307);
 
-  const response = await distributionEndpoint.handleRequest({
-    accessTokenModel,
-    authClient,
-    distributionUrl,
-    request,
-    s3Client
-  });
-
-  t.is(response.statusCode, 307);
-
+  t.is(response.status, 307);
   validateDefaultHeaders(t, response);
+  t.is(response.headers.location, `${distributionUrl}/${fileLocation}`);
 
-  t.is(response.headers.Location, `${distributionUrl}/${fileLocation}`);
-
-  const setCookieHeaders = headerValues(response, 'Set-Cookie') || [];
-  const cookies = setCookieHeaders.map(Cookie.parse);
+  const cookies = response.headers['set-cookie'].map(Cookie.parse);
   const setAccessTokenCookie = cookies.find((c) => c.key === 'accessToken');
 
   t.truthy(setAccessTokenCookie);
@@ -336,37 +215,20 @@ test('A /redirect request with a good authorization code returns a correct respo
 });
 
 test('A /redirect request with a good authorization code stores the access token', async (t) => {
-  const { accessTokenModel } = suiteContext;
-
   const {
-    authClient,
-    authorizationCode,
-    distributionUrl,
-    fileLocation,
-    s3Client
-  } = t.context;
-
-  const request = {
-    httpMethod: 'GET',
-    resource: '/redirect',
-    pathParameters: {},
-    multiValueHeaders: {},
-    queryStringParameters: {
-      code: authorizationCode,
-      state: fileLocation
-    }
-  };
-
-  const response = await distributionEndpoint.handleRequest({
     accessTokenModel,
-    authClient,
-    distributionUrl,
-    request,
-    s3Client
-  });
+    authorizationCode,
+    fileLocation
+  } = context;
 
-  const setCookieHeaders = headerValues(response, 'Set-Cookie') || [];
-  const cookies = setCookieHeaders.map(Cookie.parse);
+
+  const response = await request(distributionApp)
+    .get('/redirect')
+    .query({ code: authorizationCode, state: fileLocation })
+    .set('Accept', 'application/json')
+    .expect(307);
+
+  const cookies = response.headers['set-cookie'].map(Cookie.parse);
   const setAccessTokenCookie = cookies.find((c) => c.key === 'accessToken');
 
   t.true(await accessTokenModel.exists({ accessToken: setAccessTokenCookie.value }));

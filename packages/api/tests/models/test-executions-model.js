@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
+const schemas = require('../../models/schemas');
 const { Manager, Execution } = require('../../models');
 
 let arn;
@@ -41,7 +42,8 @@ test.before(async () => {
   process.env.ExecutionsTable = randomString();
   manager = new Manager({
     tableName: process.env.ExecutionsTable,
-    tableHash: { name: 'arn', type: 'S' }
+    tableHash: { name: 'arn', type: 'S' },
+    schema: schemas.execution
   });
   await manager.createTable();
 });

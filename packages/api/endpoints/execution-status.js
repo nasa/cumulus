@@ -1,19 +1,21 @@
 'use strict';
 
-const _get = require('lodash.get');
-const { getS3Object } = require('@cumulus/common/aws');
+const router = require('express-promise-router')();
+const aws = require('@cumulus/common/aws'); // important to import all to allow stubbing
 const { StepFunction } = require('@cumulus/ingest/aws');
-const handle = require('../lib/response').handle;
+const { executionExists } = require('@cumulus/common/step-functions');
+const { RecordDoesNotExist } = require('../lib/errors');
+const models = require('../models');
 
 /**
  * fetchRemote fetches remote message from S3
  *
  * @param  {Object} eventMessage - Cumulus Message Adapter message
- * @returns {string}              Cumulus Messsage Adapter message in JSON string
+ * @returns {string}              Cumulus Message Adapter message in JSON string
  */
 async function fetchRemote(eventMessage) {
   if (eventMessage.replace) {
-    const file = await getS3Object(eventMessage.replace.Bucket, eventMessage.replace.Key);
+    const file = await aws.getS3Object(eventMessage.replace.Bucket, eventMessage.replace.Key);
     return file.Body.toString();
   }
 
@@ -58,46 +60,58 @@ async function getEventDetails(event) {
 /**
  * get a single execution status
  *
- * @param {Object} event - aws lambda event object.
- * @param {Function} cb - aws lambda callback function
- * @returns {undefined} undefined
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-function get(event, cb) {
-  const arn = _get(event.pathParameters, 'arn');
+async function get(req, res) {
+  const arn = req.params.arn;
 
-  return StepFunction.getExecutionStatus(arn)
-    .then(async (status) => {
-      // if execution output is stored remotely, fetch it from S3 and replace it
-      const executionOutput = status.execution.output;
+  // if the execution exists in SFN API, retrieve its information, if not, get from database
+  if (await executionExists(arn)) {
+    const status = await StepFunction.getExecutionStatus(arn);
 
-      /* eslint-disable no-param-reassign */
-      if (executionOutput) {
-        status.execution.output = await fetchRemote(JSON.parse(status.execution.output));
-      }
-      /* eslint-enable no-param-reassign */
+    // if execution output is stored remotely, fetch it from S3 and replace it
+    const executionOutput = status.execution.output;
 
-      const updatedEvents = [];
-      for (let i = 0; i < status.executionHistory.events.length; i += 1) {
-        const sfEvent = status.executionHistory.events[i];
-        updatedEvents.push(getEventDetails(sfEvent));
-      }
-      /* eslint-disable no-param-reassign */
-      status.executionHistory.events = await Promise.all(updatedEvents);
-      /* eslint-enable no-param-reassign */
-      cb(null, status);
-    })
-    .catch(cb);
+    if (executionOutput) {
+      status.execution.output = await fetchRemote(JSON.parse(status.execution.output));
+    }
+    const updatedEvents = [];
+    for (let i = 0; i < status.executionHistory.events.length; i += 1) {
+      const sfEvent = status.executionHistory.events[i];
+      updatedEvents.push(getEventDetails(sfEvent));
+    }
+    status.executionHistory.events = await Promise.all(updatedEvents);
+    return res.send(status);
+  }
+
+  // get the execution information from database
+  let response;
+  const e = new models.Execution();
+  try {
+    response = await e.get({ arn });
+  }
+  catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound('Execution not found in API or database');
+    }
+  }
+
+  const warning = 'Execution does not exist in Step Functions API';
+  const execution = {
+    executionArn: response.arn,
+    stateMachineArn: aws.getStateMachineArn(response.arn),
+    name: response.name,
+    status: response.status === 'completed' ? 'SUCCEEDED' : response.status.toUpperCase(),
+    startDate: new Date(response.createdAt),
+    stopDate: new Date(response.createdAt + response.duration * 1000),
+    ...{ input: JSON.stringify(response.originalPayload) },
+    ...{ output: JSON.stringify(response.finalPayload) }
+  };
+  return res.send({ warning, execution });
 }
 
-/**
- * The main handler for the lambda function
- *
- * @param {Object} event - aws lambda event object.
- * @param {Object} context - aws context object
- * @returns {undefined} undefined
- */
-function handler(event, context) {
-  return handle(event, context, true, (cb) => get(event, cb));
-}
+router.get('/:arn', get);
 
-module.exports = handler;
+module.exports = router;

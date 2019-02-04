@@ -288,8 +288,7 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
  * @param {string} bucketName - S3 internal bucket name
  */
 function setProcessEnvironment(stackName, bucketName) {
-  process.env.internal = bucketName;
-  process.env.bucket = bucketName;
+  process.env.system_bucket = bucketName;
   process.env.stackName = stackName;
   process.env.messageConsumer = `${stackName}-messageConsumer`;
   process.env.KinesisInboundEventLogger = `${stackName}-KinesisInboundEventLogger`;
@@ -419,6 +418,9 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host = null,
     const p = new Provider();
     if (s3Host && provider.protocol === 's3') {
       provider.host = s3Host;
+    }
+    else {
+      provider.host = process.env.PROVIDER_HOST || provider.host;
     }
     console.log(`adding provider ${provider.id}`);
     return p.delete({ id: provider.id }).then(() => p.create(provider));
