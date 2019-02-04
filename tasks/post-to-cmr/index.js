@@ -36,7 +36,7 @@ function buildOutput(results, granulesObject) {
 /**
  * Append metadata object to each cmrFile object
  * @param {Array<Object>} cmrFiles - CMR Objects with filenames and granuleIds.
- * @returns {Array<Object>} clone of input array with with object updated with it's metadata.
+ * @returns {Array<Object>} clone of input array with object updated with it's metadata.
  */
 async function addMetadataObjects(cmrFiles) {
   const updatedCMRFiles = [];
