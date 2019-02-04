@@ -88,7 +88,8 @@ class Importer extends Transform {
       // this.model.createTable() is never called on this Manager instance,
       // this _should_ work.  This should probably be re-implemented since
       // Manager is an abstract class and is not intended to be instantiated.
-      tableHash: {}
+      tableHash: {},
+      validate: false
     });
     this.promises = [];
     this.limit = pLimit(concurrencyLimit);
