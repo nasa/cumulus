@@ -539,7 +539,7 @@ Resources:
                 Action:
                   - lambda:InvokeFunction
                 Resource: "*"
-                - Effect: Allow
+              - Effect: Allow
                 Action:
                   - ecr:*
                   - cloudtrail:LookupEvents
