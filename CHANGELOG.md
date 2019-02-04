@@ -438,7 +438,7 @@ We may need to update the api documentation to reflect this.
 - **CUMULUS-747** - Delete granule API doesn't delete granule files in s3 and granule in elasticsearch
     - update the StreamSpecification DynamoDB tables to have StreamViewType: "NEW_AND_OLD_IMAGES"
     - delete granule files in s3
-- **CUMULUS-398** - Fix not able to filter executions bu workflow
+- **CUMULUS-398** - Fix not able to filter executions by workflow
 - **CUMULUS-748** - Fix invalid lambda .zip files being validated/uploaded to AWS
 - **CUMULUS-544** - Post to CMR task has UAT URL hard-coded
   - Made configurable: PostToCmr now requires CMR_ENVIRONMENT env to be set to 'SIT' or 'OPS' for those CMR environments. Default is UAT.
@@ -494,7 +494,7 @@ We may need to update the api documentation to reflect this.
   - The collection, provider and rule records in elasticsearch are now replaced with records from dynamo db when the dynamo db records are updated.
 
 ### Added
-- `@cumulus/deployment`'s default cloudformation template now configures storage for Docker to match the configured ECS Volume. The template defines Docker's devicemapper basesize (`dm.basesize`) using `ecs.volumeSize`. This is addresses ECS default of limiting Docker containers to 10GB of storage ([Read more](https://aws.amazon.com/premiumsupport/knowledge-center/increase-default-ecs-docker-limit/)).
+- `@cumulus/deployment`'s default cloudformation template now configures storage for Docker to match the configured ECS Volume. The template defines Docker's devicemapper basesize (`dm.basesize`) using `ecs.volumeSize`. This addresses ECS default of limiting Docker containers to 10GB of storage ([Read more](https://aws.amazon.com/premiumsupport/knowledge-center/increase-default-ecs-docker-limit/)).
 
 ## [v1.5.4] - 2018-05-21
 
