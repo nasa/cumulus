@@ -14,8 +14,7 @@ function checkRegex(regex, sampleFileName) {
 }
 
 class Collection extends Manager {
-  static recordIsValid(_item, schema = null) {
-    const item = _item;
+  static recordIsValid(item, schema = null) {
     super.recordIsValid(item, schema);
 
     // make sure regexes are correct
@@ -23,12 +22,14 @@ class Collection extends Manager {
     const extraction = new RegExp(item.granuleIdExtraction);
     const match = item.sampleFileName.match(extraction);
 
-    if (!match) throw new Error('granuleIdExtraction regex returns null when applied to sampleFileName');
+    if (!match) {
+      throw new Error('granuleIdExtraction regex returns null when applied to sampleFileName');
+    }
 
     checkRegex(item.granuleId, match[1]);
 
     // then check all the files
-    item.files.forEach((i) => checkRegex(i.regex, i.sampleFileName));
+    item.files.forEach((file) => checkRegex(file.regex, file.sampleFileName));
   }
 
   constructor() {
@@ -53,7 +54,7 @@ class Collection extends Manager {
 
   async create(item) {
     const collectionConfigStore = new CollectionConfigStore(
-      process.env.internal,
+      process.env.system_bucket,
       process.env.stackName
     );
 

@@ -1,30 +1,33 @@
 'use strict';
 
-const _get = require('lodash.get');
-const handle = require('../lib/response').handle;
+const router = require('express-promise-router')();
 const { Search } = require('../es/search');
 
-function count(event, cb) {
-  return cb(null, {});
-}
+/**
+ * list all the logs
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function list(req, res) {
+  const search = new Search({
+    queryStringParameters: req.query
+  }, 'logs');
 
-function list(event, cb) {
-  const search = new Search(event, 'logs');
-
-  return search.query()
-    .then((response) => cb(null, response))
-    .catch(cb);
+  const result = await search.query();
+  return res.send(result);
 }
 
 /**
  * Query logs from a single workflow execution.
  *
- * @param {Object} event - aws lambda event object.
- * @param {callback} cb - aws lambda callback function
- * @returns {undefined} undefined
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-function get(event, cb) {
-  const executionName = event.pathParameters.executionName;
+async function get(req, res) {
+  const executionName = req.params.executionName;
 
   const search = new Search({
     queryStringParameters: {
@@ -32,22 +35,11 @@ function get(event, cb) {
       'executions.keyword': executionName
     }
   }, 'logs');
-  return search.query().then((response) => cb(null, response)).catch((e) => {
-    cb(e);
-  });
+  const result = await search.query();
+  return res.send(result);
 }
 
-function handler(event, context) {
-  return handle(event, context, true, (cb) => {
-    if (event.httpMethod === 'GET' && event.resource === '/stats/logs') {
-      return count(event, cb);
-    }
-    if (event.httpMethod === 'GET' && _get(event, 'pathParameters.executionName')) {
-      return get(event, cb);
-    }
+router.get('/:executionName', get);
+router.get('/', list);
 
-    return list(event, cb);
-  });
-}
-
-module.exports = handler;
+module.exports = router;

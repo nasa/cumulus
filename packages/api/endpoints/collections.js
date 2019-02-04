@@ -1,6 +1,6 @@
 'use strict';
 
-const { handle } = require('../lib/response');
+const router = require('express-promise-router')();
 const models = require('../models');
 const Collection = require('../es/collections');
 const {
@@ -11,164 +11,143 @@ const {
 /**
  * List all collections.
  *
- * @param {Object} event - aws lambda event object.
- * @param {Function} cb - aws lambda callback function
- * @returns {Promise<Object>} the API list response
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-function list(event, cb) {
-  const collection = new Collection(event);
-  return collection.query().then((res) => cb(null, res)).catch(cb);
+async function list(req, res) {
+  const collection = new Collection({
+    queryStringParameters: req.query
+  });
+  const result = await collection.query();
+  return res.send(result);
 }
 
 /**
  * Query a single collection.
  *
- * @param {Object} event - aws lambda event object.
- * @param {Function} cb - aws lambda callback function
- * @returns {Promise<Object>} a collection record
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-function get(event, cb) {
-  const name = event.pathParameters.collectionName;
-  const version = event.pathParameters.version;
+async function get(req, res) {
+  const name = req.params.name;
+  const version = req.params.version;
 
-  const c = new models.Collection();
-  return c.get({ name, version })
-    .then((res) => {
-      const collection = new Collection(event);
-      return collection.getStats([res], [res.name]);
-    })
-    .then((res) => cb(null, res[0]))
-    .catch((err) => {
-      if (err.name === 'RecordDoesNotExist') return cb(null, null, 404);
-
-      return cb(err);
-    });
+  try {
+    const c = new models.Collection();
+    const result = await c.get({ name, version });
+    // const stats = await collection.getStats([res], [res.name]);
+    return res.send(result);
+  }
+  catch (e) {
+    return res.boom.notFound(e.message);
+  }
 }
 
 /**
  * Creates a new collection
  *
- * @param {Object} event - aws lambda event object.
- * @param {Function} cb - aws lambda callback function
- * @returns {Promise<Object>} a the posted collection record
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-function post(event, cb) {
-  const data = event.body
-    ? JSON.parse(event.body)
-    : {};
+async function post(req, res) {
+  try {
+    const data = req.body;
+    const name = data.name;
+    const version = data.version;
 
-  const name = data.name;
-  const version = data.version;
+    // make sure primary key is included
+    if (!name || !version) {
+      return res.boom.notFound('Field name and/or version is missing');
+    }
+    const c = new models.Collection();
 
-  // make sure primary key is included
-  if (!name || !version) {
-    return cb({ message: 'Field name and/or version is missing' });
-  }
-  const c = new models.Collection();
-
-  return c.get({ name, version })
-    .then(() => cb({ message: `A record already exists for ${name} version: ${version}` }))
-    .catch((e) => {
+    try {
+      await c.get({ name, version });
+      return res.boom.badRequest(`A record already exists for ${name} version: ${version}`);
+    }
+    catch (e) {
       if (e instanceof RecordDoesNotExist) {
-        return c.create(data)
-          .then(() => cb(null, { message: 'Record saved', record: data }))
-          .catch(cb);
+        await c.create(data);
+        return res.send({ message: 'Record saved', record: data });
       }
-      return cb(e);
-    });
+      throw e;
+    }
+  }
+  catch (e) {
+    return res.boom.badImplementation(e.message);
+  }
 }
 
 /**
  * Updates an existing collection
  *
- * @param {Object} event - aws lambda event object.
- * @param {Function} cb - aws lambda callback function
- * @returns {Promise<Object>} a the updated collection record
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-function put(event, cb) {
-  const pname = event.pathParameters.collectionName;
-  const pversion = event.pathParameters.version;
+async function put(req, res) {
+  const pname = req.params.name;
+  const pversion = req.params.version;
 
-  let data = event.body
-    ? JSON.parse(event.body)
-    : {};
+  let data = req.body;
 
   const name = data.name;
   const version = data.version;
 
   if (pname !== name || pversion !== version) {
-    return cb({ message: "name and version in path doesn't match the payload" });
+    return res.boom.notFound('name and version in path doesn\'t match the payload');
   }
 
   const c = new models.Collection();
 
   // get the record first
-  return c.get({ name, version })
-    .then((originalData) => {
-      data = Object.assign({}, originalData, data);
-      return c.create(data);
-    })
-    .then(() => cb(null, data))
-    .catch((err) => {
-      if (err instanceof RecordDoesNotExist) {
-        return cb({ message: 'Record does not exist' });
-      }
-      return cb(err);
-    });
+  try {
+    const originalData = await c.get({ name, version });
+    data = Object.assign({}, originalData, data);
+    const result = await c.create(data);
+    return res.send(result);
+  }
+  catch (err) {
+    if (err instanceof RecordDoesNotExist) {
+      return res.boom.notFound('Record does not exist');
+    }
+    throw err;
+  }
 }
 
 /**
  * Delete a collection record
  *
- * @param {Object} event - aws lambda event object.
- * @param {Function} cb - aws lambda callback function
- * @returns {Promise<Object>} a message showing the record is deleted
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
  */
-async function del(event, cb) {
-  const { collectionName, version } = event.pathParameters;
+async function del(req, res) {
+  const { name, version } = req.params;
 
   const collectionModel = new models.Collection();
 
   try {
-    await collectionModel.delete({ name: collectionName, version });
+    await collectionModel.delete({ name, version });
+    return res.send({ message: 'Record deleted' });
   }
   catch (err) {
     if (err instanceof AssociatedRulesError) {
       const message = `Cannot delete collection with associated rules: ${err.rules.join(', ')}`;
-      return cb({ message }, null, 409);
+      return res.boom.conflict(message);
     }
-
-    return cb(err);
+    throw err;
   }
-
-  return cb(null, { message: 'Record deleted' });
 }
 
-/**
- * Handle an API Gateway collections request
- *
- * @param {Object} event - an API Gateway Lambda request
- * @param {Object} context - an API Gateway Lambda context
- * @returns {Promise} a different promise depending on which action was invoked
- */
-function handleRequest(event, context) {
-  return handle(event, context, true, (cb) => {
-    const httpMethod = event.httpMethod;
+// express routes
+router.get('/:name/:version', get);
+router.put('/:name/:version', put);
+router.delete('/:name/:version', del);
+router.post('/', post);
+router.get('/', list);
 
-    if (httpMethod === 'GET' && event.pathParameters) {
-      return get(event, cb);
-    }
-    if (httpMethod === 'POST') {
-      return post(event, cb);
-    }
-    if (httpMethod === 'PUT' && event.pathParameters) {
-      return put(event, cb);
-    }
-    if (httpMethod === 'DELETE' && event.pathParameters) {
-      return del(event, cb);
-    }
-    return list(event, cb);
-  });
-}
-
-module.exports = handleRequest;
+module.exports = router;

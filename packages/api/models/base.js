@@ -1,7 +1,7 @@
 'use strict';
 
+const get = require('lodash.get');
 const Ajv = require('ajv');
-const cloneDeep = require('lodash.clonedeep');
 const aws = require('@cumulus/common/aws');
 const { deprecate } = require('@cumulus/common/util');
 const pWaitFor = require('p-wait-for');
@@ -79,20 +79,38 @@ async function deleteTable(tableName) {
  */
 class Manager {
   static recordIsValid(item, schema = null, removeAdditional = false) {
-    if (schema) {
-      const ajv = new Ajv({
-        useDefaults: true,
-        v5: true,
-        removeAdditional: removeAdditional
-      });
-      const validate = ajv.compile(schema);
-      const valid = validate(item);
-      if (!valid) {
-        const err = new Error('The record has validation errors');
-        err.name = 'SchemaValidationError';
-        err.detail = validate.errors;
-        throw err;
-      }
+    if (!schema) {
+      throw new Error('schema is not defined');
+    }
+
+    const schemaWithAdditionalPropertiesProhibited = JSON.parse(
+      JSON.stringify(
+        schema,
+        (_, value) => {
+          if (value.type === 'object') {
+            return {
+              additionalProperties: false,
+              ...value
+            };
+          }
+
+          return value;
+        }
+      )
+    );
+
+    const ajv = new Ajv({
+      removeAdditional,
+      useDefaults: true,
+      v5: true
+    });
+    const validate = ajv.compile(schemaWithAdditionalPropertiesProhibited);
+    const valid = validate(item);
+    if (!valid) {
+      const err = new Error('The record has validation errors');
+      err.name = 'SchemaValidationError';
+      err.detail = JSON.stringify(validate.errors);
+      throw err;
     }
   }
 
@@ -118,9 +136,15 @@ class Manager {
    * @param {Object} params.tableRange - an object containing "name" and "type"
    *   properties, which specify the sort key of the DynamoDB table.
    * @param {Object} params.schema - the JSON schema to validate the records
-   *   against.  Defaults to {}.
+   *   against.
+   * @param {boolean} [params.validate=true] - whether items should be validated
+   *   before being written to the database.  The _only_ time this should ever
+   *   be set to false is when restoring from a backup, and that code is already
+   *   written.  So no other time.  Don't even think about it.  I know you're
+   *   going to say, "but it's only for this one test case".  No.
+   *   Find another way.
    */
-  constructor(params) {
+  constructor(params = {}) {
     // Make sure all required parameters are present
     if (!params.tableName) throw new TypeError('params.tableName is required');
     if (!params.tableHash) throw new TypeError('params.tableHash is required');
@@ -131,6 +155,8 @@ class Manager {
     this.schema = params.schema;
     this.dynamodbDocClient = aws.dynamodbDocClient({ convertEmptyValues: true });
     this.removeAdditional = false;
+
+    this.validate = get(params, 'validate', true);
   }
 
   /**
@@ -221,15 +247,26 @@ class Manager {
     return this.dynamodbDocClient.batchGet(params).promise();
   }
 
-  async batchWrite(deletes, puts) {
+  async batchWrite(deletes, puts = []) {
     const deleteRequests = (deletes || []).map((Key) => ({
       DeleteRequest: { Key }
     }));
 
-    const putRequests = (puts || []).map((item) => ({
-      PutRequest: {
-        Item: Object.assign({}, item, { updatedAt: Date.now() })
-      }
+    const now = Date.now();
+    const putsWithTimestamps = puts.map((item) => ({
+      createdAt: now,
+      ...item,
+      updatedAt: now
+    }));
+
+    if (this.validate) {
+      putsWithTimestamps.forEach((item) => {
+        this.constructor.recordIsValid(item, this.schema, this.removeAdditional);
+      });
+    }
+
+    const putRequests = putsWithTimestamps.map((Item) => ({
+      PutRequest: { Item }
     }));
 
     const requests = deleteRequests.concat(putRequests);
@@ -265,16 +302,21 @@ class Manager {
     // createdAt property, set that as well.  Instead of modifying the original
     // item, this returns an updated copy of the item.
     const itemsWithTimestamps = itemsArray.map((item) => {
-      const clonedItem = cloneDeep(item);
-      clonedItem.updatedAt = Date.now();
-      if (!clonedItem.createdAt) clonedItem.createdAt = clonedItem.updatedAt;
-      return clonedItem;
+      const now = Date.now();
+
+      return {
+        createdAt: now,
+        ...item,
+        updatedAt: now
+      };
     });
 
-    // Make sure that all of the items are valid
-    itemsWithTimestamps.forEach((item) => {
-      this.constructor.recordIsValid(item, this.schema, this.removeAdditional);
-    });
+    if (this.validate) {
+      // Make sure that all of the items are valid
+      itemsWithTimestamps.forEach((item) => {
+        this.constructor.recordIsValid(item, this.schema, this.removeAdditional);
+      });
+    }
 
     // Suggested method of handling a loop containing an await, according to
     // https://codeburst.io/javascript-async-await-with-foreach-b6ba62bbf404
@@ -346,17 +388,32 @@ class Manager {
   }
 
   async update(itemKeys, updates = {}, fieldsToDelete = []) {
-    const actualUpdates = cloneDeep(updates);
+    const actualUpdates = {
+      ...updates,
+      updatedAt: Date.now()
+    };
 
     // Make sure that we don't update the key fields
     const itemKeyNames = Object.keys(itemKeys);
     itemKeyNames.forEach((property) => delete actualUpdates[property]);
 
+    const currentItem = await this.get(itemKeys);
+    const updatedItem = {
+      ...currentItem,
+      ...updates
+    };
+    fieldsToDelete.forEach((f) => delete updatedItem[f]);
+
+    if (this.validate) {
+      this.constructor.recordIsValid(
+        updatedItem,
+        this.schema,
+        this.removeAdditional
+      );
+    }
+
     // Make sure that we don't try to update a field that's being deleted
     fieldsToDelete.forEach((property) => delete actualUpdates[property]);
-
-    // Set the "updatedAt" time
-    actualUpdates.updatedAt = Date.now();
 
     // Build the actual update request
     const attributeUpdates = {};

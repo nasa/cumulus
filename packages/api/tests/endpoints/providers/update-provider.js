@@ -1,16 +1,15 @@
 'use strict';
 
 const test = require('ava');
+const request = require('supertest');
 const sinon = require('sinon');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
-const providerEndpoint = require('../../../endpoints/providers');
 const {
   createFakeJwtAuthToken,
-  fakeProviderFactory,
-  testEndpoint
+  fakeProviderFactory
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
@@ -18,15 +17,18 @@ const assertions = require('../../../lib/assertions');
 process.env.UsersTable = randomString();
 process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
-process.env.internal = randomString();
+process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
+
+// import the express app after setting the env variables
+const { app } = require('../../../app');
 
 let providerModel;
 const esIndex = randomString();
 let esClient;
 
 let accessTokenModel;
-let authHeaders;
+let jwtAuthToken;
 let userModel;
 
 test.before(async () => {
@@ -42,11 +44,7 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  const jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
-  authHeaders = {
-    Authorization: `Bearer ${jwtAuthToken}`
-  };
-
+  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
   esClient = await Search.es('fakehost');
 });
 
@@ -63,84 +61,72 @@ test.after.always(async () => {
 });
 
 test('CUMULUS-912 PUT with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
-  const request = {
-    httpMethod: 'PUT',
-    pathParameters: {
-      id: 'asdf'
-    },
-    headers: {
-      Authorization: 'Bearer invalid-token'
-    }
-  };
+  const response = await request(app)
+    .put('/providers/asdf')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
 
-  return testEndpoint(providerEndpoint, request, (response) => {
-    assertions.isInvalidAccessTokenResponse(t, response);
-  });
+  assertions.isInvalidAccessTokenResponse(t, response);
 });
 
 test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test('PUT updates an existing provider', (t) => {
+test('PUT updates an existing provider', async (t) => {
   const updatedLimit = 2;
 
-  const putEvent = {
-    httpMethod: 'PUT',
-    pathParameters: { id: t.context.testProvider.id },
-    body: JSON.stringify({ globalConnectionLimit: updatedLimit }),
-    headers: authHeaders
-  };
+  const response = await request(app)
+    .put(`/providers/${t.context.testProvider.id}`)
+    .send({ globalConnectionLimit: updatedLimit })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-  return testEndpoint(providerEndpoint, putEvent, (response) => {
-    const { globalConnectionLimit } = JSON.parse(response.body);
-    t.is(globalConnectionLimit, updatedLimit);
-  });
+  const { globalConnectionLimit } = response.body;
+  t.is(globalConnectionLimit, updatedLimit);
 });
 
-test.serial('PUT updates an existing provider and returns it in listing', (t) => {
+test.serial('PUT updates an existing provider and returns it in listing', async (t) => {
   const updateParams = {
     globalConnectionLimit: t.context.testProvider.globalConnectionLimit + 1
   };
-  const updateEvent = {
-    pathParameters: { id: t.context.testProvider.id },
-    body: JSON.stringify(updateParams),
-    httpMethod: 'PUT',
-    headers: authHeaders
-  };
   const updatedProvider = Object.assign(t.context.testProvider, updateParams);
 
-  t.plan(2);
-  return testEndpoint(providerEndpoint, updateEvent, () => {
-    const listEvent = {
-      httpMethod: 'GET',
-      headers: authHeaders
-    };
+  await request(app)
+    .put(`/providers/${t.context.testProvider.id}`)
+    .send(updateParams)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
-    const stub = sinon.stub(Search.prototype, 'query').resolves({
-      results: [updatedProvider]
-    });
-    return testEndpoint(providerEndpoint, listEvent, (response) => {
-      const { results } = JSON.parse(response.body);
-      stub.restore();
-      t.is(results.length, 1);
-      t.deepEqual(results[0], updatedProvider);
-    });
+  t.plan(2);
+  const stub = sinon.stub(Search.prototype, 'query').resolves({
+    results: [updatedProvider]
   });
+
+  const response = await request(app)
+    .get('/providers')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { results } = response.body;
+  stub.restore();
+  t.is(results.length, 1);
+  t.deepEqual(results[0], updatedProvider);
 });
 
-test('PUT without an Authorization header returns an Authorization Missing response and does not update an existing provider', (t) => {
+test('PUT without an Authorization header returns an Authorization Missing response and does not update an existing provider', async (t) => {
   const updatedLimit = t.context.testProvider.globalConnectionLimit + 1;
-  const updateEvent = {
-    pathParameters: { id: t.context.testProvider.id },
-    body: JSON.stringify({ globalConnectionLimit: updatedLimit }),
-    httpMethod: 'PUT',
-    headers: {}
-  };
+  const response = await request(app)
+    .put(`/providers/${t.context.testProvider.id}`)
+    .send({ globalConnectionLimit: updatedLimit })
+    .set('Accept', 'application/json')
+    .expect(401);
 
-  return testEndpoint(providerEndpoint, updateEvent, async (response) => {
-    assertions.isAuthorizationMissingResponse(t, response);
-    const provider = await providerModel.get({
-      id: t.context.testProvider.id
-    });
-    t.is(provider.globalConnectionLimit, t.context.testProvider.globalConnectionLimit);
+  assertions.isAuthorizationMissingResponse(t, response);
+  const provider = await providerModel.get({
+    id: t.context.testProvider.id
   });
+  t.is(provider.globalConnectionLimit, t.context.testProvider.globalConnectionLimit);
 });

@@ -18,7 +18,7 @@ const clonedeep = require('lodash.clonedeep');
 const set = require('lodash.set');
 const errors = require('@cumulus/common/errors');
 const {
-  randomString, validateConfig, validateInput, validateOutput
+  randomString, randomId, validateConfig, validateInput, validateOutput
 } = require('@cumulus/common/test-utils');
 const { promisify } = require('util');
 
@@ -95,9 +95,9 @@ async function getFilesMetadata(files) {
 }
 
 test.beforeEach(async (t) => {
-  t.context.stagingBucket = randomString();
-  t.context.publicBucket = randomString();
-  t.context.protectedBucket = randomString();
+  t.context.stagingBucket = randomId('staging');
+  t.context.publicBucket = randomId('public');
+  t.context.protectedBucket = randomId('protected');
   await Promise.all([
     s3().createBucket({ Bucket: t.context.stagingBucket }).promise(),
     s3().createBucket({ Bucket: t.context.publicBucket }).promise(),
@@ -116,7 +116,7 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.protectedBucket);
 });
 
-test.serial('should move files to final location', async (t) => {
+test.serial('Should move files to final location.', async (t) => {
   const newPayload = buildPayload(t);
   await uploadFiles(newPayload.input, t.context.stagingBucket);
 
@@ -131,7 +131,40 @@ test.serial('should move files to final location', async (t) => {
   t.true(check);
 });
 
-test.serial('should move renamed files in staging area to final location', async (t) => {
+test.serial('should not move files when event.moveStagedFiles is false', async (t) => {
+  const newPayload = buildPayload(t);
+  newPayload.config.moveStagedFiles = false;
+
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+
+  const output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+
+  const check = await s3ObjectExists({
+    Bucket: t.context.publicBucket,
+    Key: 'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg'
+  });
+
+  t.false(check);
+});
+
+test.serial('should add input files to returned granule event.moveStagedFiles is false', async (t) => {
+  const newPayload = buildPayload(t);
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  newPayload.config.moveStagedFiles = false;
+
+  const inputFiles = [...newPayload.input];
+
+  const output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+
+  const outputFilenames = output.granules[0].files.map((f) => f.filename);
+
+  t.true(output.granules[0].files.length === 4);
+  inputFiles.forEach((newFile) => t.true(outputFilenames.includes(newFile), `${newFile} not found in ${JSON.stringify(output.granules[0].files)}`));
+});
+
+test.serial('Should move renamed files in staging area to final location.', async (t) => {
   const newPayload = buildPayload(t);
   const renamedFile = `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705`;
   newPayload.input.push(renamedFile);
@@ -148,7 +181,7 @@ test.serial('should move renamed files in staging area to final location', async
   t.true(check);
 });
 
-test.serial('should update filenames with metadata fields', async (t) => {
+test.serial('Should update filenames with updated S3 URLs.', async (t) => {
   const newPayload = buildPayload(t);
   const expectedFilenames = getExpectedOutputFileNames(t);
 
@@ -156,10 +189,10 @@ test.serial('should update filenames with metadata fields', async (t) => {
 
   const output = await moveGranules(newPayload);
   const outputFilenames = output.granules[0].files.map((f) => f.filename);
-  t.deepEqual(expectedFilenames, outputFilenames);
+  t.deepEqual(expectedFilenames.sort(), outputFilenames.sort());
 });
 
-test.serial('should preserve object tags', async (t) => {
+test.serial('Should preserve object tags.', async (t) => {
   const newPayload = buildPayload(t);
   const tagset = [
     { Key: 'fakeTag', Value: 'test-tag' },
@@ -172,14 +205,11 @@ test.serial('should preserve object tags', async (t) => {
   const output = await moveGranules(newPayload);
   await Promise.all(output.granules[0].files.map(async (file) => {
     const actualTags = await s3GetObjectTagging(file.bucket, file.filepath);
-    t.deepEqual(
-      { file: file.name, tagset },
-      { file: file.name, tagset: actualTags.TagSet }
-    );
+    t.deepEqual(tagset, actualTags.TagSet);
   }));
 });
 
-test.serial('should overwrite files', async (t) => {
+test.serial('Should overwrite files.', async (t) => {
   const filename = 'MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg';
   const sourceKey = `file-staging/${filename}`;
   const destKey = `jpg/example/${filename}`;
@@ -318,7 +348,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   await uploadFiles(newPayload.input, t.context.stagingBucket);
   let output = await moveGranules(newPayload);
   const existingFileNames = output.granules[0].files.map((f) => f.filename);
-  t.deepEqual(expectedFilenames, existingFileNames);
+  t.deepEqual(expectedFilenames.sort(), existingFileNames.sort());
 
   const outputHdfFile = existingFileNames.filter((f) => f.endsWith('.hdf'))[0];
   const existingHdfFileInfo = await headObject(
@@ -336,8 +366,9 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   await uploadFiles(newPayload.input, t.context.stagingBucket);
 
   const inputHdfFile = newPayload.input.filter((f) => f.endsWith('.hdf'))[0];
+  const updatedBody = randomString();
   const params = {
-    Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: randomString()
+    Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: updatedBody
   };
   await s3().putObject(params).promise();
 
@@ -362,7 +393,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     parseS3Uri(outputHdfFile).Bucket, parseS3Uri(outputHdfFile).Key
   );
 
-  t.is(newHdfFileInfo.ContentLength, randomString().length);
+  t.is(newHdfFileInfo.ContentLength, updatedBody.length);
 
   // run 'moveGranules' the third time with the same input file updated
   newPayload = clonedeep(newPayloadOrig);
@@ -388,7 +419,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   });
 });
 
-test.serial('when duplicateHandling is "skip", does not overwrite or create new', async (t) => {
+test.serial('When duplicateHandling is "skip", does not overwrite or create new.', async (t) => {
   let newPayload = buildPayload(t);
   newPayload.config.duplicateHandling = 'skip';
 
@@ -400,7 +431,7 @@ test.serial('when duplicateHandling is "skip", does not overwrite or create new'
   await uploadFiles(newPayload.input, t.context.stagingBucket);
   let output = await moveGranules(newPayload);
   const existingFileNames = output.granules[0].files.map((f) => f.filename);
-  t.deepEqual(expectedFilenames, existingFileNames);
+  t.deepEqual(expectedFilenames.sort(), existingFileNames.sort());
 
   const outputHdfFile = existingFileNames.filter((f) => f.endsWith('.hdf'))[0];
   const existingHdfFileInfo = await headObject(
@@ -412,14 +443,15 @@ test.serial('when duplicateHandling is "skip", does not overwrite or create new'
   await uploadFiles(newPayload.input, t.context.stagingBucket);
 
   const inputHdfFile = newPayload.input.filter((f) => f.endsWith('.hdf'))[0];
+  const updatedBody = randomString();
   const params = {
-    Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: randomString()
+    Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: updatedBody
   };
   await s3().putObject(params).promise();
 
   output = await moveGranules(newPayload);
   const currentFileNames = output.granules[0].files.map((f) => f.filename);
-  t.deepEqual(expectedFilenames, currentFileNames);
+  t.deepEqual(expectedFilenames.sort(), currentFileNames.sort());
 
   // does not overwrite
   const currentHdfFileInfo = await headObject(
@@ -427,7 +459,7 @@ test.serial('when duplicateHandling is "skip", does not overwrite or create new'
   );
 
   t.is(existingHdfFileInfo.ContentLength, currentHdfFileInfo.ContentLength);
-  t.not(currentHdfFileInfo.ContentLength, randomString().length);
+  t.not(currentHdfFileInfo.ContentLength, updatedBody.length);
 
   output.granules[0].files.forEach((f) => {
     if (f.filename.endsWith('.cmr.xml')) {
@@ -451,7 +483,7 @@ async function granuleFilesOverwrittenTest(t, duplicateHandling, forceDuplicateO
   let output = await moveGranules(newPayload);
   await validateOutput(t, output);
   const existingFileNames = output.granules[0].files.map((f) => f.filename);
-  t.deepEqual(expectedFilenames, existingFileNames);
+  t.deepEqual(expectedFilenames.sort(), existingFileNames.sort());
 
   const existingFilesMetadata = await getFilesMetadata(output.granules[0].files);
 
@@ -462,8 +494,9 @@ async function granuleFilesOverwrittenTest(t, duplicateHandling, forceDuplicateO
   await uploadFiles(newPayload.input, t.context.stagingBucket);
 
   const inputHdfFile = newPayload.input.filter((f) => f.endsWith('.hdf'))[0];
+  const updatedBody = randomString();
   const params = {
-    Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: randomString()
+    Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: updatedBody
   };
   await s3().putObject(params).promise();
 
@@ -474,7 +507,7 @@ async function granuleFilesOverwrittenTest(t, duplicateHandling, forceDuplicateO
   const currentFilesMetadata = await getFilesMetadata(output.granules[0].files);
 
   const currentHdfFileMeta = currentFilesMetadata.filter((f) => f.filename === outputHdfFile)[0];
-  t.is(currentHdfFileMeta.fileSize, randomString().length);
+  t.is(currentHdfFileMeta.fileSize, updatedBody.length);
 
   // check timestamps are updated
   currentFilesMetadata.forEach((f) => {
