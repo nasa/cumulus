@@ -109,7 +109,7 @@ function checkEnvVariablesAreSet(moreRequiredEnvVars) {
   });
 }
 
-async function createDBRecords(user, stackName) {
+async function createDBRecords(stackName, user) {
   if (user) {
     // add authorized user to the user table
     const u = new models.User();
@@ -154,6 +154,12 @@ async function createDBRecords(user, stackName) {
   await pdm.create(pd);
 }
 
+/**
+ * Prepare and run the Cumulus API Express app.
+ *
+ * @param {string} user - A username to add as an authorized user for the API.
+ * @param {string} stackName - The name of local stack. Used to prefix stack resources.
+ */
 async function serveApi(user, stackName = 'localrun') {
   const port = process.env.PORT || 5001;
   const requiredEnvVars = [
@@ -178,7 +184,7 @@ async function serveApi(user, stackName = 'localrun') {
     checkEnvVariablesAreSet(requiredEnvVars);
     await prepareServices(stackName, process.env.system_bucket);
     await populateBucket(process.env.system_bucket, stackName);
-    await createDBRecords(user, stackName);
+    await createDBRecords(stackName, user);
   }
   else {
     checkEnvVariablesAreSet(requiredEnvVars);
@@ -189,7 +195,12 @@ async function serveApi(user, stackName = 'localrun') {
   app.listen(port);
 }
 
-async function prepareDistributionApi(user, stackName = 'localrun') {
+/**
+ * Prepare the resources for running the Cumulus distribution API Express app.
+ *
+ * @param {string} stackName - The name of local stack. Used to prefix stack resources.
+ */
+async function prepareDistributionApi(stackName = 'localrun') {
   const port = process.env.PORT || 5002;
   const requiredEnvVars = ['DEPLOYMENT_ENDPOINT', 'DISTRIBUTION_URL'];
 
@@ -207,16 +218,21 @@ async function prepareDistributionApi(user, stackName = 'localrun') {
     checkEnvVariablesAreSet(requiredEnvVars);
     await prepareServices(stackName, process.env.system_bucket);
     await populateBucket(process.env.system_bucket, stackName);
-    await createDBRecords(user, stackName);
+    await createDBRecords(stackName);
   }
   else {
     checkEnvVariablesAreSet(requiredEnvVars);
   }
 }
 
-async function serveDistributionApi(user, stackName = 'localrun') {
+/**
+ * Prepare and run the Cumulus distribution API Express app.
+ *
+ * @param {string} stackName - The name of local stack. Used to prefix stack resources.
+ */
+async function serveDistributionApi(stackName = 'localrun') {
   const port = process.env.PORT || 5002;
-  await prepareDistributionApi(user, stackName);
+  await prepareDistributionApi(stackName);
 
   console.log(`Starting server on port ${port}`);
   const { distributionApp } = require('../app/distribution'); // eslint-disable-line global-require

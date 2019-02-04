@@ -40,21 +40,29 @@ describe('Distribution API', () => {
   beforeAll(async (done) => {
     await prepareDistributionApi();
 
-    // Use localstack configuration, if necessary.
+    // If running the tests against localstack, point to the localstack resources.
+    // This must happen after prepareDistributionApi(), which sets the process.env
+    // values pointing to localstack.
     if (inTestMode()) {
       config.bucket = process.env.system_bucket;
       config.stackName = process.env.stackName;
     }
 
+    // Set env var to be used as the name for the access tokens table. Must happen
+    // at this point in case the config.stackName was changed to use localstack.
     process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
 
     await uploadTestDataToBucket(config.bucket, s3Data, testDataFolder);
 
+    // Use done() callback to signal end of beforeAll() after the
+    // distribution API has started up.
     server = distributionApp.listen(process.env.PORT, done);
   });
 
   afterAll(async (done) => {
     await deleteFolder(config.bucket, testDataFolder);
+    // Use done() callback to signal end of afterAll() after the
+    // distribution API has shutdown.
     server.close(done);
   });
 
