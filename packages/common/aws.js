@@ -31,6 +31,7 @@ function s3Join(...args) {
   const isNotEmptyString = (token) => token.length > 0;
 
   const key = tokens
+    .filter(isString)
     .map(removeLeadingSlash)
     .map(removeTrailingSlash)
     .filter(isNotEmptyString)
