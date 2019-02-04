@@ -9,7 +9,7 @@ hide_title: true
 
 ## Cumulus Dependency Management - A Quick Intro to package.json
 
-As is standard with nodejs projects, Cumulus has lists of dependencies in `package.json` files. For this example, we'll look at the `package.json` file under the `example` directory in the main [Cumulus project](github.com/nasa/cumulus).
+As is standard with nodejs projects, Cumulus has lists of dependencies in `package.json` files. For this example, we'll look at the `package.json` file under the `example` directory in the main [Cumulus project](https://github.com/nasa/cumulus).
 
 In the `package.json` file, both the `dev_dependencies` and `dependencies` attributes should exist. The `dev_dependencies` are packages that are used in development, but are not necessary for deployment/usage of the package; a good example of this would be testing frameworks (`ava`) or mocking packages. The `dependencies` attribute lists all the required packages for using the software. Cumulus core developed dependencies all are prefixed with `@cumulus/` (i.e. the ingest package is listed as `@cumulus/ingest`).
 
@@ -33,7 +33,7 @@ Cumulus core releases can be found in the github repository ([here](https://gith
 
 ## Walkthrough
 
-First, we'll pull the `cumulus-template-deploy` [repository](github.com/nasa/cumulus-template-deploy) from GitHub into a local `test-deployment` directory. This will give us a bare-minimum starting point for configuring a deployment.
+First, we'll pull the `cumulus-template-deploy` [repository](https://github.com/nasa/cumulus-template-deploy) from GitHub into a local `test-deployment` directory. This will give us a bare-minimum starting point for configuring a deployment.
 `git clone https://github.com/nasa/cumulus-template-deploy.git test-deployment`
 
 Let's take a look at the `dependencies` in the local repository's `package.json`:
@@ -57,16 +57,16 @@ To pin our dependency to a specific version, we just have to remove the `^`. Tha
 
 ## Changing a Version
 
-Changing the version should be rather straight-forward. In the instance of `@cumulus` dependenies, we can find the versioned releases on the GitHub [releases page](github.com/nasa/cumulus/releases). To update `@cumulus/api` to `1.11.1`, simply change the line to `"@cumulus/api": "1.11.1",`.
+Changing the version should be rather straight-forward. In the instance of `@cumulus` dependenies, we can find the versioned releases on the GitHub [releases page](https://github.com/nasa/cumulus/releases). To update `@cumulus/api` to `1.11.1`, simply change the line to `"@cumulus/api": "1.11.1",`.
 
 
 ## Adding a Dependency
 
 Cumulus provides many common tasks, such as `parse_pdr` and `move_granules`. A more complete list is available [here](https://nasa.github.io/cumulus/docs/next/tasks). There are two ways to add a package to your deployment.
 
-1. Editing the `package.json` file directly and then running an `yarn install`:
+1. Running `yarn add <package-name>` on the command line (this will automatically add it to the `package.json`.
+* Run `yarn add @cumulus/discover-pdrs@1.11.1` (will install the latest if no version is specified)
+2. Editing the `package.json` file directly and then running an `yarn install`:
 * Add `"@cumulus/discover-pdrs": "1.11.1"` to the `dependencies` attribute in `package.json`.
 * Run `yarn install` on the command-line.
 * Check that the package has been installed by making sure the `node_modules/@cumulus/discover-pdrs` directory exists.
-2. Running `yarn add <package-name>` on the command line (this will automatically add it to the `package.json`.
-* Run `yarn add @cumulus/discover-pdrs@1.11.1`
