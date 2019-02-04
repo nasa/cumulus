@@ -33,6 +33,23 @@ const executionTable = randomString();
 process.env.ES_INDEX = esIndex;
 let esClient;
 
+function granuleFileMatchesDbFile(t, granuleFile, dbFile) {
+  t.is(dbFile.bucket, granuleFile.bucket);
+  t.is(dbFile.fileName, granuleFile.name);
+  t.is(dbFile.fileSize, granuleFile.fileSize);
+
+  const parsedGranuleFileFilename = aws.parseS3Uri(granuleFile.filename);
+  t.is(dbFile.key, parsedGranuleFileFilename.Key);
+
+  if (granuleFile.checksumValue) {
+    t.is(dbFile.checksum, granuleFile.checksumValue);
+  }
+
+  if (granuleFile.checksumType) {
+    t.is(dbFile.checksumType, granuleFile.checksumType);
+  }
+}
+
 let collectionModel;
 let executionModel;
 let granuleModel;
@@ -105,15 +122,20 @@ test.serial('creating a successful granule record', async (t) => {
 
   const granule = granuleSuccess.payload.granules[0];
   const collection = granuleSuccess.meta.collection;
-  const records = await indexer.granule(granuleSuccess);
+  const [record] = await indexer.granule(granuleSuccess);
 
   const collectionId = constructCollectionId(collection.name, collection.version);
 
+  t.is(record.files.length, granule.files.length);
 
-  // check the record exists
-  const record = records[0];
+  granule.files.forEach((granuleFile) => {
+    const recordFile = record.files.find((rf) => rf.fileName === granuleFile.name);
 
-  t.deepEqual(record.files, granule.files);
+    t.true(recordFile !== undefined);
+
+    granuleFileMatchesDbFile(t, granuleFile, recordFile);
+  });
+
   t.is(record.status, 'completed');
   t.is(record.collectionId, collectionId);
   t.is(record.granuleId, granule.granuleId);
@@ -157,10 +179,18 @@ test.serial('creating multiple successful granule records', async (t) => {
 
 test.serial('creating a failed granule record', async (t) => {
   const granule = granuleFailure.payload.granules[0];
-  const records = await indexer.granule(granuleFailure);
+  const [record] = await indexer.granule(granuleFailure);
 
-  const record = records[0];
-  t.deepEqual(record.files, granule.files);
+  t.is(record.files.length, granule.files.length);
+
+  granule.files.forEach((granuleFile) => {
+    const recordFile = record.files.find((rf) => rf.fileName === granuleFile.name);
+
+    t.true(recordFile !== undefined);
+
+    granuleFileMatchesDbFile(t, granuleFile, recordFile);
+  });
+
   t.is(record.status, 'failed');
   t.is(record.granuleId, granule.granuleId);
   t.is(record.published, false);
@@ -193,11 +223,19 @@ test.serial('creating a granule record in meta section', async (t) => {
   const granule = newPayload.meta.input_granules[0];
   granule.granuleId = randomString();
 
-  const records = await indexer.granule(newPayload);
+  const [record] = await indexer.granule(newPayload);
   const collectionId = constructCollectionId(collection.name, collection.version);
 
-  const record = records[0];
-  t.deepEqual(record.files, granule.files);
+  t.is(record.files.length, granule.files.length);
+
+  granule.files.forEach((granuleFile) => {
+    const recordFile = record.files.find((rf) => rf.fileName === granuleFile.name);
+
+    t.true(recordFile !== undefined);
+
+    granuleFileMatchesDbFile(t, granuleFile, recordFile);
+  });
+
   t.is(record.status, 'running');
   t.is(record.collectionId, collectionId);
   t.is(record.granuleId, granule.granuleId);

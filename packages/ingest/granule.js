@@ -713,23 +713,21 @@ async function moveGranuleFile(source, target, options) {
  */
 function generateMoveFileParams(sourceFiles, destinations) {
   return sourceFiles.map((file) => {
-    const destination = destinations.find((dest) => file.name.match(dest.regex));
-    const parsed = aws.parseS3Uri(file.filename);
-    // if there's no match, we skip the file
-    if (destination) {
-      const source = {
-        Bucket: parsed.Bucket,
-        Key: parsed.Key
-      };
+    const destination = destinations.find((dest) => file.fileName.match(dest.regex));
 
-      const target = {
+    if (!destination) return { source: null, target: null, file };
+
+    return {
+      file,
+      source: {
+        Bucket: file.bucket,
+        Key: file.key
+      },
+      target: {
         Bucket: destination.bucket,
-        Key: destination.filepath ? urljoin(destination.filepath, file.name) : file.name
-      };
-
-      return { source, target, file };
-    }
-    return { source: null, target: null, file };
+        Key: aws.s3Join(destination.filepath, file.fileName)
+      }
+    };
   });
 }
 
@@ -753,25 +751,20 @@ async function moveGranuleFiles(sourceFiles, destinations) {
   const processedFiles = [];
   const moveFileRequests = moveFileParams.map((moveFileParam) => {
     const { source, target, file } = moveFileParam;
-    const parsed = aws.parseS3Uri(file.filename);
 
     if (target) {
       log.debug('moveGranuleFiles', source, target);
       return moveGranuleFile(source, target).then(() => {
         processedFiles.push({
+          ...file,
           bucket: target.Bucket,
-          filepath: target.Key,
-          filename: aws.buildS3Uri(target.Bucket, target.Key),
-          name: file.name
+          key: target.Key
         });
       });
     }
-    processedFiles.push({
-      bucket: parsed.Bucket,
-      filepath: parsed.Key,
-      filename: file.filename,
-      name: file.name
-    });
+
+    processedFiles.push(file);
+
     return Promise.resolve();
   });
   await Promise.all(moveFileRequests);

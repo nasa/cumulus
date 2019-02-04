@@ -29,6 +29,20 @@ const {
 const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
 
+function messageFileToDatabaseFile(messageFile) {
+  const { Bucket, Key } = commonAws.parseS3Uri(messageFile.filename);
+
+  return {
+    bucket: Bucket,
+    checksum: messageFile.checksumValue || undefined,
+    checksumType: messageFile.checksumType || undefined,
+    fileName: messageFile.name,
+    fileType: messageFile.fileType,
+    key: Key,
+    fileSize: messageFile.fileSize
+  };
+}
+
 class Granule extends Manager {
   constructor() {
     super({
@@ -46,8 +60,10 @@ class Granule extends Manager {
   */
   addMissingFileSizes(files) {
     const filePromises = files.map((file) => {
-      if (!('fileSize' in file)) {
-        return commonAws.headObject(file.bucket, file.filepath)
+      if (!file.fileSize) {
+        const { Bucket, Key } = commonAws.parseS3Uri(file.filename);
+
+        return commonAws.headObject(Bucket, Key)
           .then((result) => {
             const updatedFile = file;
             updatedFile.fileSize = result.ContentLength;
@@ -243,7 +259,7 @@ class Granule extends Manager {
           provider: get(payload, 'meta.provider.id'),
           execution,
           cmrLink: get(granule, 'cmrLink'),
-          files: granuleFiles,
+          files: granuleFiles.map(messageFileToDatabaseFile),
           error: exception,
           createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
           timestamp: Date.now(),

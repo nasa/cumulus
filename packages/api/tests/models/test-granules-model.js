@@ -2,8 +2,10 @@
 
 const test = require('ava');
 
-const { buildS3Uri, s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
+
+const { fakeFileFactoryV2 } = require('../../lib/testUtils');
 
 const { Manager, Granule } = require('../../models');
 
@@ -32,15 +34,11 @@ test('files existing at location returns empty array if no files exist', async (
   const sourceBucket = 'test-bucket';
   const destBucket = 'dest-bucket';
 
-  const sourceFiles = filenames.map((name) => {
-    const sourcefilePath = `origin/${name}`;
-    return {
-      name,
-      sourceBucket,
-      filepath: sourcefilePath,
-      filename: buildS3Uri(sourceBucket, sourcefilePath)
-    };
-  });
+  const sourceFiles = filenames.map((name) => fakeFileFactoryV2({
+    bucket: sourceBucket,
+    fileName: name,
+    key: `origin/${name}`
+  }));
 
   const destinationFilepath = 'destination';
 
@@ -74,11 +72,10 @@ test('files existing at location returns both files if both exist', async (t) =>
 
   await s3().createBucket({ Bucket: destBucket }).promise();
 
-  const sourceFiles = filenames.map((name) => ({
-    name,
-    sourceBucket,
-    filepath: name,
-    filename: buildS3Uri(sourceBucket, name)
+  const sourceFiles = filenames.map((name) => fakeFileFactoryV2({
+    bucket: sourceBucket,
+    fileName: name,
+    key: name
   }));
 
   const destinations = [
@@ -123,11 +120,10 @@ test('files existing at location returns only file that exists', async (t) => {
 
   await s3().createBucket({ Bucket: destBucket }).promise();
 
-  const sourceFiles = filenames.map((name) => ({
-    name,
-    sourceBucket,
-    filepath: name,
-    filename: buildS3Uri(sourceBucket, name)
+  const sourceFiles = filenames.map((name) => fakeFileFactoryV2({
+    bucket: sourceBucket,
+    fileName: name,
+    key: name
   }));
 
   const destinations = [
@@ -173,11 +169,10 @@ test('files existing at location returns only file that exists with multiple des
     s3().createBucket({ Bucket: destBucket2 }).promise()
   ]);
 
-  const sourceFiles = filenames.map((name) => ({
-    name,
-    sourceBucket,
-    filepath: name,
-    filename: buildS3Uri(sourceBucket, name)
+  const sourceFiles = filenames.map((name) => fakeFileFactoryV2({
+    bucket: sourceBucket,
+    fileName: name,
+    key: name
   }));
 
   const destinations = [

@@ -42,22 +42,53 @@ async function deleteAliases() {
   })));
 }
 
+function fakeFileFactoryV2(options = {}) {
+  return {
+    bucket: randomString(),
+    fileName: randomString(),
+    fileSize: 1,
+    fileType: 'data',
+    key: randomString(),
+    ...options
+  };
+}
+
 /**
- * Generates fake files for a granule
+ * Generates a fake file for a granule
  *
  * @param {string} bucket - a bucket name
  * @returns {Object} a file record
  */
-function fakeFilesFactory(bucket) {
-  const key = randomId('key');
-  const name = randomId('name');
-  const filepath = `${key}/${name}`;
-  const filename = `s3://${bucket}/${filepath}`;
-  return {
+function fakeFileFactory(bucket) {
+  const fileName = randomId('name');
+
+  return fakeFileFactoryV2({
     bucket,
-    name,
-    filepath,
-    filename
+    fileName: randomId('name'),
+    key: `${randomId('key')}/${fileName}`
+  });
+}
+
+/**
+ * Returns a fake Granule record
+ *
+ * @param {Object} options - properties to set on the granule
+ * @returns {Object} fake granule object
+ */
+function fakeGranuleFactoryV2(options = {}) {
+  return {
+    status: 'completed',
+    granuleId: randomId('granule'),
+    dataType: randomId('datatype'),
+    version: randomId('vers'),
+    collectionId: 'fakeCollection___v1',
+    files: [],
+    execution: randomString(),
+    createdAt: Date.now(),
+    published: true,
+    cmrLink: 'example.com',
+    productVolume: 100,
+    ...options
   };
 }
 
@@ -68,31 +99,7 @@ function fakeFilesFactory(bucket) {
  * @returns {Object} fake granule object
  */
 function fakeGranuleFactory(status = 'completed') {
-  return {
-    granuleId: randomId('granule'),
-    dataType: randomId('datatype'),
-    version: randomId('vers'),
-    collectionId: 'fakeCollection___v1',
-    status,
-    execution: randomString(),
-    createdAt: Date.now(),
-    published: true,
-    cmrLink: 'example.com',
-    productVolume: 100
-  };
-}
-
-/**
- * Returns a fake Granule record
- *
- * @param {Object} options - properties to set on the granule
- * @returns {Object} fake granule object
- */
-function fakeGranuleFactoryV2(options = {}) {
-  return Object.assign(
-    fakeGranuleFactory(),
-    options
-  );
+  return fakeGranuleFactoryV2({ status });
 }
 
 /**
@@ -287,7 +294,9 @@ module.exports = {
   fakeExecutionFactoryV2,
   fakeRuleFactory,
   fakeRuleFactoryV2,
-  fakeFilesFactory,
+  fakeFileFactory,
+  fakeFilesFactory: fakeFileFactory, // maintaining backward compatibility
+  fakeFileFactoryV2,
   fakeUserFactory,
   fakeProviderFactory,
   deleteAliases

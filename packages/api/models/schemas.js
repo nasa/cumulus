@@ -249,22 +249,42 @@ module.exports.granule = {
     },
     files: {
       title: 'Files',
-      description: 'List of file definitions',
       type: 'array',
       items: {
+        title: 'File',
         type: 'object',
+        required: [
+          'bucket',
+          'fileName',
+          'key'
+        ],
         properties: {
           bucket: { type: 'string' },
-          checksumType: { type: ['string', 'null'] },
-          checksumValue: { type: ['string', 'null'] },
-          filename: { type: 'string' },
-          filepath: { type: 'string' },
-          fileSize: { type: 'integer' },
-          name: { type: 'string' },
-          path: { type: 'string' },
-          url_path: { type: 'string', description: 'this should be removed' },
-          duplicate_found: { type: 'boolean', description: 'this should be removed' },
-          fileStagingDir: { type: 'string', description: 'this should be removed' },
+          checksum: { type: 'string' },
+          checksumType: {
+            type: 'string',
+            default: 'md5'
+          },
+          fileName: {
+            title: 'the name of the file',
+            description: 'Some providers will use hashes (to maximize read/write performance to/from S3 buckets) as object keys. We need a way to define what the object name should be, and explicitly told (not guessing).',
+            type: 'string'
+          },
+          fileSize: {
+            description: 'Size, in bytes, of the file',
+            type: 'integer',
+            minimum: 0
+          },
+          fileType: {
+            type: 'string',
+            enum: [
+              'browse',
+              'data',
+              'metadata',
+              'qa'
+            ]
+          },
+          key: { type: 'string' }
         }
       }
     },
@@ -316,6 +336,7 @@ module.exports.granule = {
     provider: { type: 'string' }
   },
   required: [
+    'files',
     'granuleId',
     'collectionId',
     'status',

@@ -207,9 +207,9 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
 
   // make sure all the file records are added
   await Promise.all(fakeGranule.files.map(async (file) => {
-    const record = await fileModel.get({ bucket, key: file.filepath });
+    const record = await fileModel.get({ bucket, key: file.key });
     t.is(record.bucket, file.bucket);
-    t.is(record.key, file.filepath);
+    t.is(record.key, file.key);
     t.is(record.granuleId, fakeGranule.granuleId);
   }));
 
@@ -249,7 +249,7 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
 
   // make sure the file records are deleted
   await Promise.all(fakeGranule.files.map(async (file) => {
-    const p = fileModel.get({ bucket, key: file.filepath });
+    const p = fileModel.get({ bucket, key: file.key });
     const e = await t.throws(p);
     t.true(e.message.includes('No record'));
   }));

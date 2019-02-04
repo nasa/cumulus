@@ -114,7 +114,7 @@ const isUMMGFile = (filename) => filename.endsWith('cmr.json');
  * @returns {boolean} true if object references cmr metadata.
  */
 function isCMRFile(fileobject) {
-  const cmrfilename = fileobject.name || fileobject.filename || '';
+  const cmrfilename = fileobject.fileName || '';
   return isECHO10File(cmrfilename) || isUMMGFile(cmrfilename);
 }
 
@@ -189,13 +189,13 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets) {
     const bucketType = buckets.type(file.bucket);
 
     if (bucketType === 'protected') {
-      const extension = urljoin(file.bucket, `${file.filepath}`);
+      const extension = urljoin(file.bucket, file.key);
       urlObj.URL = urljoin(distEndpoint, extension);
       urlObj.URLDescription = 'File to download';
       urls.push(urlObj);
     }
     else if (bucketType === 'public') {
-      urlObj.URL = `https://${file.bucket}.s3.amazonaws.com/${file.filepath}`;
+      urlObj.URL = `https://${file.bucket}.s3.amazonaws.com/${file.key}`;
       urlObj.URLDescription = 'File to download';
       urls.push(urlObj);
     }
@@ -214,7 +214,7 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets) {
  * @returns {Array<Object>} any metadata type file object.
  */
 function getCmrFileObjs(files) {
-  return files.filter((file) => isCMRFile(file));
+  return files.filter(isCMRFile);
 }
 
 async function updateUMMGMetadata() {
@@ -248,7 +248,7 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   const urls = constructOnlineAccessUrls(files, distEndpoint, buckets);
 
   // add/replace the OnlineAccessUrls
-  const metadataObject = await metadataObjectFromCMRXMLFile(cmrFile.filename);
+  const metadataObject = await metadataObjectFromCMRXMLFile(`s3://${cmrFile.bucket}/${cmrFile.key}`);
   const metadataGranule = metadataObject.Granule;
 
   const updatedGranule = { ...metadataGranule };
@@ -258,10 +258,10 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(metadataObject);
 
-  const tags = await aws.s3GetObjectTagging(cmrFile.bucket, cmrFile.filepath);
+  const tags = await aws.s3GetObjectTagging(cmrFile.bucket, cmrFile.key);
   const tagsQueryString = aws.s3TagSetToQueryString(tags.TagSet);
   await aws.promiseS3Upload({
-    Bucket: cmrFile.bucket, Key: cmrFile.filepath, Body: xml, Tagging: tagsQueryString
+    Bucket: cmrFile.bucket, Key: cmrFile.key, Body: xml, Tagging: tagsQueryString
   });
   return metadataObject;
 }
@@ -278,16 +278,16 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
  *                    or resolved promise if published === false.
  */
 async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, published) {
-  log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${cmrFile.filename}`);
+  log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${cmrFile.fileName}`);
 
-  if (isECHO10File(cmrFile.filename)) {
+  if (isECHO10File(cmrFile.fileName)) {
     const buckets = new BucketsConfig(await bucketsConfigDefaults());
     const theMetadata = await updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets);
     if (published) {
       // post metadata Object to CMR
       const creds = getCreds();
       const cmrFileObject = {
-        filename: cmrFile.filename,
+        filename: `s3://${cmrFile.bucket}/${cmrFile.key}`,
         metadataObject: theMetadata,
         granuleId: granuleId
       };
@@ -300,7 +300,7 @@ async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, publis
     }
     return Promise.resolve();
   }
-  if (isUMMGFile(cmrFile.filename)) {
+  if (isUMMGFile(cmrFile.fileName)) {
     return updateUMMGMetadata();
   }
   throw new errors.CMRMetaFileNotFound('Invalid CMR filetype passed to updateCMRMetadata');

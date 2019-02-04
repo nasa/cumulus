@@ -101,7 +101,6 @@ class Manager {
 
     const ajv = new Ajv({
       removeAdditional,
-      useDefaults: true,
       v5: true
     });
     const validate = ajv.compile(schemaWithAdditionalPropertiesProhibited);
@@ -109,7 +108,8 @@ class Manager {
     if (!valid) {
       const err = new Error('The record has validation errors');
       err.name = 'SchemaValidationError';
-      err.detail = JSON.stringify(validate.errors);
+      err.detail = JSON.stringify(validate.errors, null, 2);
+      err.record = JSON.stringify(item, null, 2);
       throw err;
     }
   }
