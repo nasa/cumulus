@@ -29,10 +29,11 @@ describe('Distribution API', () => {
   const testDataFolder = createTestDataPath(testId);
   const fileKey = `${testDataFolder}/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met`;
   const fileStats = fs.statSync(require.resolve(s3Data[0]));
+  const port = 5002;
 
   let server;
 
-  process.env.PORT = 5002;
+  process.env.PORT = port;
   process.env.EARTHDATA_BASE_URL = 'https://uat.urs.earthdata.nasa.gov';
   process.env.DEPLOYMENT_ENDPOINT = `http://localhost:${process.env.PORT}/redirect`;
   process.env.DISTRIBUTION_URL = `http://localhost:${process.env.PORT}`;
