@@ -1,6 +1,7 @@
 'use strict';
 
 exports.aws = require('./aws');
+exports.BucketsConfig = require('./BucketsConfig');
 exports.cliUtils = require('./cli-utils');
 exports.CloudFormationGateway = require('./CloudFormationGateway');
 exports.CollectionConfigStore = require('./collection-config-store').CollectionConfigStore;
@@ -13,3 +14,4 @@ exports.testUtils = require('./test-utils');
 exports.util = require('./util');
 exports.keyPairProvider = require('./key-pair-provider');
 exports.concurrency = require('./concurrency');
+exports.errors = require('./errors');

@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/common",
-  "version": "1.11.0",
+  "version": "1.11.1",
   "description": "Common utilities used across tasks",
   "keywords": [
     "GIBS",
@@ -58,6 +58,7 @@
     "lodash.isnumber": "^3.0.3",
     "lodash.isobject": "^3.0.2",
     "lodash.isstring": "^4.0.1",
+    "lodash.isundefined": "^3.0.1",
     "lodash.kebabcase": "^4.1.1",
     "lodash.range": "^3.2.0",
     "mocha": "^5.0.4",

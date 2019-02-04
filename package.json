@@ -21,6 +21,7 @@
     "clean": "lerna clean && rm -rf ./node_modules",
     "build": "lerna run --parallel --no-sort build",
     "watch": "lerna run --parallel --no-sort watch",
+    "serve": "lerna run serve --scope @cumulus/api",
     "coverage": "nyc report --reporter text-summary --reporter html",
     "coveralls": "nyc report --reporter=text-lcov --temp-direcotry=\"./.final_nyc_output\" | coveralls"
   },
@@ -61,7 +62,7 @@
     "eslint-plugin-lodash": "^2.7.0",
     "eslint-plugin-node": "^7.0.1",
     "eslint-plugin-unicorn": "^4.0.3",
-    "lerna": "^2.9.0",
+    "lerna": "^3.10.7",
     "nyc": "^11.6.0",
     "simple-git": "^1.96.0"
   },

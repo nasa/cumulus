@@ -279,6 +279,19 @@ exports.headObject = (bucket, key) =>
 exports.s3GetObjectTagging = (bucket, key) =>
   exports.s3().getObjectTagging({ Bucket: bucket, Key: key }).promise();
 
+
+/**
+* Puts object Tagging in S3
+* https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property
+*
+* @param {string} bucket - name of bucket
+* @param {string} key - key for object (filepath + filename)
+* @param {Object} tagging - tagging object
+* @returns {Promise} - returns response from `S3.getObjectTagging` as a promise
+**/
+exports.s3PutObjectTagging = (bucket, key, tagging) =>
+  exports.s3().putObjectTagging({ Bucket: bucket, Key: key, Tagging: tagging }).promise();
+
 /**
 * Get an object from S3
 *
@@ -351,14 +364,12 @@ exports.downloadS3Files = (s3Objs, dir, s3opts = {}) => {
  * @returns {Promise} A promise that resolves to an Array of the data returned
  *   from the deletion operations
  */
-exports.deleteS3Files = (s3Objs) => {
-  log.info(`Starting deletion of ${s3Objs.length} object(s)`);
-  return pMap(
-    s3Objs,
-    (s3Obj) => exports.s3().deleteObject(s3Obj).promise(),
-    { concurrency: S3_RATE_LIMIT }
-  );
-};
+exports.deleteS3Files = (s3Objs) => pMap(
+  s3Objs,
+  (s3Obj) => exports.s3().deleteObject(s3Obj).promise(),
+  { concurrency: S3_RATE_LIMIT }
+);
+
 
 /**
 * Delete a bucket and all of its objects from S3
@@ -801,6 +812,13 @@ exports.getExecutionArn = (stateMachineArn, executionName) => {
   if (stateMachineArn && executionName) {
     const sfArn = stateMachineArn.replace('stateMachine', 'execution');
     return `${sfArn}:${executionName}`;
+  }
+  return null;
+};
+
+exports.getStateMachineArn = (executionArn) => {
+  if (executionArn) {
+    return executionArn.replace('execution', 'stateMachine').split(':').slice(0, -1).join(':');
   }
   return null;
 };

@@ -3,6 +3,7 @@
     "About Cumulus": [
       "cumulus-docs-readme",
       "architecture",
+      "glossary",
       "team"
     ],
     "What are Cumulus Workflows?": [
@@ -20,6 +21,8 @@
       "deployment/deployment-readme",
       "deployment/create_bucket",
       "deployment/iam_roles",
+      "deployment/obtain_cumulus_packages",
+      "deployment/config_descriptions",
       "deployment/troubleshoot_deployment"
     ],
     "Additional Features": [

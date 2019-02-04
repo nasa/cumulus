@@ -4,6 +4,8 @@ default:
 
   system_bucket: '{{buckets.internal.name}}'
 
+  useNgapPermissionBoundary: true
+
   buckets:
     internal:
       name: cumulus-test-sandbox-internal

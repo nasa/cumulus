@@ -152,16 +152,16 @@ module.exports.collection = {
       }
     },
     createdAt: {
-      type: 'number',
+      type: 'integer',
       readonly: true
     },
     updatedAt: {
-      type: 'number',
-      readonly: true
+      type: 'integer'
     },
     meta: {
       title: 'Optional MetaData for the Collection',
-      type: 'object'
+      type: 'object',
+      additionalProperties: true
     },
     tags: {
       title: 'Optional tags for search',
@@ -181,6 +181,24 @@ module.exports.collection = {
     'createdAt',
     'updatedAt'
   ]
+};
+
+module.exports.file = {
+  type: 'object',
+  required: [
+    'granuleId',
+    'bucket',
+    'key',
+    'createdAt',
+    'updatedAt'
+  ],
+  properties: {
+    granuleId: { type: 'string' },
+    bucket: { type: 'string' },
+    key: { type: 'string' },
+    createdAt: { type: 'integer' },
+    updatedAt: { type: 'integer' }
+  }
 };
 
 // Granule Record Schema
@@ -234,16 +252,25 @@ module.exports.granule = {
       description: 'List of file definitions',
       type: 'array',
       items: {
-        type: 'object'
+        type: 'object',
+        properties: {
+          bucket: { type: 'string' },
+          checksumType: { type: ['string', 'null'] },
+          checksumValue: { type: ['string', 'null'] },
+          filename: { type: 'string' },
+          filepath: { type: 'string' },
+          fileSize: { type: 'integer' },
+          name: { type: 'string' },
+          path: { type: 'string' },
+          url_path: { type: 'string', description: 'this should be removed' },
+          duplicate_found: { type: 'boolean', description: 'this should be removed' },
+          fileStagingDir: { type: 'string', description: 'this should be removed' },
+        }
       }
     },
     error: {
       type: 'object',
-      readonly: true
-    },
-    createdAt: {
-      type: 'number',
-      readonly: true
+      additionalProperties: true
     },
     productVolume: {
       type: 'number',
@@ -280,14 +307,21 @@ module.exports.granule = {
     productionDateTime: {
       type: 'string',
       readonly: true
-    }
+    },
+    timestamp: { type: 'integer' },
+    createdAt: { type: 'integer' },
+    updatedAt: { type: 'integer' },
+    dataType: { type: 'string' },
+    version: { type: 'string' },
+    provider: { type: 'string' }
   },
   required: [
     'granuleId',
     'collectionId',
     'status',
     'execution',
-    'createdAt'
+    'createdAt',
+    'updatedAt'
   ]
 };
 
@@ -325,7 +359,8 @@ module.exports.rule = {
     },
     meta: {
       title: 'Optional MetaData for the Rule',
-      type: 'object'
+      type: 'object',
+      additionalProperties: true
     },
     rule: {
       title: 'Ingest Rule',
@@ -359,12 +394,11 @@ module.exports.rule = {
       enum: ['ENABLED', 'DISABLED']
     },
     createdAt: {
-      type: 'number',
+      type: 'integer',
       readonly: true
     },
     updatedAt: {
-      type: 'number',
-      readonly: true
+      type: 'integer'
     },
     tags: {
       title: 'Optional tags for search',
@@ -410,7 +444,7 @@ module.exports.pdr = {
       type: 'string',
       readonly: true
     },
-    PANsent: {
+    PANSent: {
       type: 'boolean',
       readonly: true
     },
@@ -444,10 +478,13 @@ module.exports.pdr = {
       type: 'string',
       readonly: true
     },
+    timestamp: { type: 'integer' },
+    duration: { type: 'number' },
     createdAt: {
-      type: 'number',
+      type: 'integer',
       readonly: true
-    }
+    },
+    updatedAt: { type: 'integer' }
   },
   required: [
     'pdrName',
@@ -470,7 +507,7 @@ module.exports.provider = {
     },
     globalConnectionLimit: {
       title: 'Concurrent Connnection Limit',
-      type: 'number',
+      type: 'integer',
       default: 10
     },
     protocol: {
@@ -498,11 +535,11 @@ module.exports.provider = {
       readonly: true
     },
     createdAt: {
-      type: 'number',
+      type: 'integer',
       readonly: true
     },
     updatedAt: {
-      type: 'number',
+      type: 'integer',
       readonly: true
     },
     privateKey: {
@@ -543,7 +580,12 @@ module.exports.execution = {
     },
     error: {
       title: 'The error details in case of a failed execution',
-      type: 'object'
+      type: 'object',
+      additionalProperties: true,
+    },
+    tasks: {
+      type: 'object',
+      additionalProperties: true
     },
     type: {
       title: 'The workflow name, e.g. IngestGranule',
@@ -555,21 +597,27 @@ module.exports.execution = {
       type: 'string'
     },
     createdAt: {
-      type: 'number',
+      type: 'integer',
       readonly: true
     },
+    updatedAt: { type: 'integer' },
     timestamp: {
       type: 'number',
       readonly: true
     },
     originalPayload: {
       title: 'The original payload for this workflow',
-      type: 'object'
+      type: 'object',
+      additionalProperties: true
     },
     finalPayload: {
       title: 'The final payload of this workflow',
-      type: 'object'
-    }
+      type: 'object',
+      additionalProperties: true
+    },
+    collectionId: { type: 'string' },
+    duration: { type: 'number' },
+    parentArn: { type: 'string' }
   },
   required: [
     'arn',
@@ -577,4 +625,15 @@ module.exports.execution = {
     'status',
     'createdAt'
   ]
+};
+
+module.exports.user = {
+  type: 'object',
+  properties: {
+    createdAt: { type: 'integer' },
+    expires: { type: 'integer' },
+    password: { type: 'string' },
+    updatedAt: { type: 'integer' },
+    userName: { type: 'string' }
+  }
 };
