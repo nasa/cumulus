@@ -1,5 +1,6 @@
 const fs = require('fs');
 const difference = require('lodash.difference');
+const get = require('lodash.get');
 const path = require('path');
 const {
   buildAndExecuteWorkflow,
@@ -54,8 +55,26 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
 
-function isExecutionForGranuleId(taskInput, params) {
-  return taskInput.payload.granules && taskInput.payload.granules[0].granuleId === params.granuleId;
+function isReingestExecution(taskInput) {
+  return get(
+    taskInput,
+    'cumulus_meta.cumulus_context.reingestGranule',
+    false
+  );
+}
+
+function isExecutionForGranuleId(taskInput, granuleId) {
+  const executionGranuleId = get(
+    taskInput,
+    'payload.granules[0].granuleId'
+  );
+
+  return executionGranuleId === granuleId;
+}
+
+function isReingestExecutionForGranuleId(taskInput, { granuleId }) {
+  return isReingestExecution(taskInput) &&
+    isExecutionForGranuleId(taskInput, granuleId);
 }
 
 describe('The Sync Granules workflow', () => {
@@ -219,13 +238,22 @@ describe('The Sync Granules workflow', () => {
         workflowName,
         stackName: config.stackName,
         bucket: config.bucket,
-        findExecutionFn: isExecutionForGranuleId,
+        findExecutionFn: isReingestExecutionForGranuleId,
         findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId }
       });
 
       console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
 
       await waitForCompletedExecution(reingestGranuleExecution.executionArn);
+
+      const syncGranuleTaskOutput = await lambdaStep.getStepOutput(
+        reingestGranuleExecution.executionArn,
+        'SyncGranule'
+      );
+
+      syncGranuleTaskOutput.payload.granules[0].files.forEach((f) => {
+        expect(f.duplicate_found).toBe(true);
+      });
 
       await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
       const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
@@ -246,10 +274,6 @@ describe('The Sync Granules workflow', () => {
       const currentFiles = await getFilesMetadata(updatedGranule.files);
       currentFiles.forEach((cf) => {
         expect(cf.LastModified).toBeGreaterThan(startTime);
-      });
-
-      updatedGranule.files.forEach((cf) => {
-        expect(cf.duplicate_found).toBe(true);
       });
     });
   });
