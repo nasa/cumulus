@@ -211,7 +211,6 @@ test('getHeaders returns correct Content-type for UMMG metadata', (t) => {
 
 test('getHeaders returns correct Content-type for xml metadata by default', (t) => {
   const cmrInstance = new CMR('provider', 'clientID', 'username', 'password');
-  const isUMMG = false;
   const headers = cmrInstance.getHeaders();
   console.log(headers);
   t.regex(headers['Content-type'], new RegExp('application/echo'));
