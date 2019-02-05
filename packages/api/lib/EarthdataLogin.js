@@ -177,4 +177,17 @@ class EarthdataLogin extends OAuth2 {
     }
   }
 }
-module.exports = EarthdataLogin;
+
+const createEarthdataLoginClient = (redirectUri) => {
+  return new EarthdataLogin({
+    clientId: process.env.EARTHDATA_CLIENT_ID,
+    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
+    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
+    redirectUri
+  });
+}
+
+module.exports = {
+  EarthdataLogin,
+  createEarthdataLoginClient
+};

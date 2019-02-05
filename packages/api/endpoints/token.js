@@ -11,7 +11,7 @@ const {
   TokenUnauthorizedUserError
 } = require('../lib/errors');
 
-const EarthdataLogin = require('../lib/EarthdataLogin');
+const { createEarthdataLoginClient } = require('../lib/EarthdataLogin');
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 const {
   createJwtToken
@@ -228,12 +228,7 @@ function buildGoogleOAuth2ProviderFromEnv() {
 }
 
 function buildEarthdataLoginProviderFromEnv() {
-  return new EarthdataLogin({
-    clientId: process.env.EARTHDATA_CLIENT_ID,
-    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
-    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
-    redirectUri: process.env.API_ENDPOINT
-  });
+  return createEarthdataLoginClient(process.env.API_ENDPOINT);
 }
 
 function buildOAuth2ProviderFromEnv() {
