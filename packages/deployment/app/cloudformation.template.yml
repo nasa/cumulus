@@ -666,15 +666,15 @@ Resources:
     {{/each}}
       {{# if this.urs}}
         {{# if ../api_backend_url}}
-          TOKEN_REDIRECT_URI: {{../api_backend_url}}token
+          TOKEN_REDIRECT_ENDPOINT: {{../api_backend_url}}token
         {{else}}
-          TOKEN_REDIRECT_URI:
+          TOKEN_REDIRECT_ENDPOINT:
             Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/token"]]
         {{/if}}
         {{# if ../api_distribution_url}}
-          DISTRIBUTION_REDIRECT_URI: {{../api_distribution_url}}redirect
+          DISTRIBUTION_REDIRECT_ENDPOINT: {{../api_distribution_url}}redirect
         {{else}}
-          DISTRIBUTION_REDIRECT_URI:
+          DISTRIBUTION_REDIRECT_ENDPOINT:
             Fn::Join: ["", [ "https://", {"Ref": "downloadRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/redirect"]]
         {{/if}}
       {{/if}}

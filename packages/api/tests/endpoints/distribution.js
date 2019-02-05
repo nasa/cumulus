@@ -14,7 +14,7 @@ const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 
 process.env.EARTHDATA_CLIENT_ID = randomString();
 process.env.EARTHDATA_CLIENT_PASSWORD = randomString();
-process.env.DISTRIBUTION_REDIRECT_URI = 'http://example.com';
+process.env.DISTRIBUTION_REDIRECT_ENDPOINT = 'http://example.com';
 process.env.DISTRIBUTION_ENDPOINT = `https://${randomString()}/${randomString()}`;
 process.env.AccessTokensTable = randomString();
 let context;

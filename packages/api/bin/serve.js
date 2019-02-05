@@ -165,7 +165,7 @@ async function serveApi(user, stackName = 'localrun') {
   const requiredEnvVars = [
     'stackName',
     'system_bucket',
-    'TOKEN_REDIRECT_URI'
+    'TOKEN_REDIRECT_ENDPOINT'
   ];
 
   if (inTestMode()) {
@@ -176,7 +176,7 @@ async function serveApi(user, stackName = 'localrun') {
     process.env.EARTHDATA_CLIENT_ID = randomString();
     process.env.EARTHDATA_CLIENT_PASSWORD = randomString();
     process.env.EARTHDATA_BASE_URL = 'https://example.com';
-    process.env.TOKEN_REDIRECT_URI = `http://localhost:${port}/token`;
+    process.env.TOKEN_REDIRECT_ENDPOINT = `http://localhost:${port}/token`;
 
     // create tables if not already created
     await checkOrCreateTables(stackName);
@@ -202,14 +202,14 @@ async function serveApi(user, stackName = 'localrun') {
  */
 async function prepareDistributionApi(stackName = 'localrun') {
   const port = process.env.PORT || 5002;
-  const requiredEnvVars = ['DISTRIBUTION_REDIRECT_URI', 'DISTRIBUTION_ENDPOINT'];
+  const requiredEnvVars = ['DISTRIBUTION_REDIRECT_ENDPOINT', 'DISTRIBUTION_ENDPOINT'];
 
   if (inTestMode()) {
     // set env variables
     process.env.system_bucket = 'localbucket';
     process.env.stackName = stackName;
     process.env.TOKEN_SECRET = 'secreeetartalksjfaf;lj';
-    process.env.DISTRIBUTION_REDIRECT_URI = `http://localhost:${port}/redirect`;
+    process.env.DISTRIBUTION_REDIRECT_ENDPOINT = `http://localhost:${port}/redirect`;
     process.env.DISTRIBUTION_ENDPOINT = `http://localhost:${port}`;
 
     // create tables if not already created
