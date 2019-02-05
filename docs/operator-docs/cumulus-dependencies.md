@@ -57,7 +57,10 @@ To pin our dependency to a specific version, we just have to remove the `^`. Tha
 
 ## Changing a Version
 
-Changing the version should be rather straight-forward. In the instance of `@cumulus` dependenies, we can find the versioned releases on the GitHub [releases page](https://github.com/nasa/cumulus/releases). To update `@cumulus/api` to `1.11.1`, simply change the line to `"@cumulus/api": "1.11.1",`.
+Changing the version should be rather straight-forward. In the instance of `@cumulus` dependenies, we can find the versioned releases on the GitHub [releases page](https://github.com/nasa/cumulus/releases). To update `@cumulus/api` to `1.11.1`:
+1. Change the line to read `"@cumulus/api": "1.11.1",`
+2. run an `rm -rf node_modules` to clear out currently installed dependencies
+3. run an `npm install`.
 
 
 ## Adding a Dependency
