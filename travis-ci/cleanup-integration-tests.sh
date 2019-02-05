@@ -46,3 +46,6 @@ if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
 
   echo Delete app deployment
 fi
+
+echo Unlocking stack
+node ./scripts/lock-stack.js false $DEPLOYMENT
