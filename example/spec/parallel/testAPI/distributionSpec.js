@@ -35,7 +35,7 @@ describe('Distribution API', () => {
   let server;
 
   process.env.PORT = distributionApiPort;
-  process.env.DEPLOYMENT_ENDPOINT = `http://localhost:${process.env.PORT}/redirect`;
+  process.env.DISTRIBUTION_REDIRECT_URI = `http://localhost:${process.env.PORT}/redirect`;
   process.env.DISTRIBUTION_URL = `http://localhost:${process.env.PORT}`;
   // Ensure integration tests use Earthdata login UAT if not specified.
   if (!process.env.EARTHDATA_BASE_URL) {
@@ -85,7 +85,7 @@ describe('Distribution API', () => {
       // Login with Earthdata and get response for redirect back to
       // distribution API.
       const response = await getEarthdataLoginRedirectResponse({
-        redirectUri: process.env.DEPLOYMENT_ENDPOINT,
+        redirectUri: process.env.DISTRIBUTION_REDIRECT_URI,
         requestOrigin: process.env.DISTRIBUTION_URL,
         state: fileRequestPath
       });
