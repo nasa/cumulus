@@ -348,7 +348,6 @@ async function updateUMMGMetadata(cmrFile, files, distEndpoint, buckets) {
   const metadataObject = await metadataObjectFromCMRJSONFile(cmrFile.filename);
 
   const originalURLs = _get(metadataObject, 'RelatedUrls', []);
-  log.debug('UMMG:originalURLs', JSON.stringify(originalURLs));
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
   _set(metadataObject, 'RelatedUrls', mergedURLs);
 
@@ -397,7 +396,6 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
 
   const updatedGranule = { ...metadataGranule };
   const originalURLs = _get(metadataGranule, 'OnlineAccessURLs.OnlineAccessURL', []);
-  log.debug('ECHO10:originalURLs', JSON.stringify(originalURLs));
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
   _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedURLs);
   metadataObject.Granule = updatedGranule;
