@@ -54,7 +54,7 @@ async function get(req, res) {
     return res.boom.notFound('The specified workflow does not exist.');
   }
   catch (err) {
-    if (err.name === 'NoSuchKey') {
+    if (err.name === 'NoSuchKey' || err.name === 'NoSuchBucket') {
       return res.boom.notFound('Workflow does not exist!');
     }
     throw err;
