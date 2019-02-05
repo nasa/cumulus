@@ -8,7 +8,7 @@ const { distributionApp } = require('@cumulus/api/app/distribution');
 const { prepareDistributionApi } = require('@cumulus/api/bin/serve');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const {
-  EarthdataLogin: { handleEarthdataLogin }
+  EarthdataLogin: { getEarthdataLoginRedirectResponse }
 } = require('@cumulus/integration-tests');
 
 const {
@@ -84,7 +84,7 @@ describe('Distribution API', () => {
     it('downloads the requested science file for authorized requests', async (done) => {
       // Login with Earthdata and get response for redirect back to
       // distribution API.
-      const response = await handleEarthdataLogin({
+      const response = await getEarthdataLoginRedirectResponse({
         redirectUri: process.env.DEPLOYMENT_ENDPOINT,
         requestOrigin: process.env.DISTRIBUTION_URL,
         state: fileRequestPath
