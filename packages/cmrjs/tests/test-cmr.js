@@ -199,3 +199,21 @@ test('searchConcept request includes CMR client id', async (t) => {
 
   stub.restore();
 });
+
+test('getHeaders returns correct Content-type for UMMG metadata', (t) => {
+  const cmrInstance = new CMR('provider', 'clientID', 'username', 'password');
+  const isUMMG = true;
+  const headers = cmrInstance.getHeaders(null, isUMMG);
+  console.log(headers);
+  t.regex(headers['Content-type'], new RegExp('application/vnd\.nasa\.cmr\.umm[+]json'));
+  t.is(headers.Accept, 'application/json');
+});
+
+test('getHeaders returns correct Content-type for xml metadata by default', (t) => {
+  const cmrInstance = new CMR('provider', 'clientID', 'username', 'password');
+  const isUMMG = false;
+  const headers = cmrInstance.getHeaders();
+  console.log(headers);
+  t.regex(headers['Content-type'], new RegExp('application/echo'));
+  t.is(headers.Accept, undefined);
+});
