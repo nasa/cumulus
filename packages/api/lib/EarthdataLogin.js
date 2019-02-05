@@ -15,6 +15,15 @@ const isBadRequestError = (err) => err.name === 'HTTPError' && err.statusCode ==
  * This is an interface to the Earthdata Login service.
  */
 class EarthdataLogin extends OAuth2 {
+  static createFromEnv ({ redirectUri }) {
+    return new EarthdataLogin({
+      clientId: process.env.EARTHDATA_CLIENT_ID,
+      clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
+      earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
+      redirectUri
+    });
+  };
+
   /**
    * @param {Object} params - params
    * @param {string} params.clientId - see example
@@ -178,16 +187,4 @@ class EarthdataLogin extends OAuth2 {
   }
 }
 
-const createEarthdataLoginClient = (redirectUri) => {
-  return new EarthdataLogin({
-    clientId: process.env.EARTHDATA_CLIENT_ID,
-    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
-    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
-    redirectUri
-  });
-}
-
-module.exports = {
-  EarthdataLogin,
-  createEarthdataLoginClient
-};
+module.exports = EarthdataLogin;

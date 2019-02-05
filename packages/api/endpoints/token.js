@@ -11,7 +11,7 @@ const {
   TokenUnauthorizedUserError
 } = require('../lib/errors');
 
-const { createEarthdataLoginClient } = require('../lib/EarthdataLogin');
+const EarthdataLogin = require('../lib/EarthdataLogin');
 const GoogleOAuth2 = require('../lib/GoogleOAuth2');
 const {
   createJwtToken
@@ -228,7 +228,9 @@ function buildGoogleOAuth2ProviderFromEnv() {
 }
 
 function buildEarthdataLoginProviderFromEnv() {
-  return createEarthdataLoginClient(process.env.API_ENDPOINT);
+  return EarthdataLogin.createFromEnv({
+    redirectUri: process.env.API_ENDPOINT
+  });
 }
 
 function buildOAuth2ProviderFromEnv() {
