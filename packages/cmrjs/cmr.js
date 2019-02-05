@@ -45,16 +45,11 @@ async function _searchConcept(type, searchParams, previousResults = [], headers 
 
   // if requested, recursively retrieve all the search results for collections or granules
   const query = Object.assign({}, defaultParams, searchParams, { page_num: pageNum });
-  console.log('query:', query);
   const response = await got.get(url, { json: true, query, headers });
   const responseItems = (format === 'umm_json') ? response.body.items : response.body.feed.entry;
-  //console.log(JSON.stringify(response.body));
-  //console.log(responseItems);
-  //console.log(response.headers);
   const fetchedResults = previousResults.concat(responseItems || []);
 
   const numRecordsCollected = fetchedResults.length;
-  //console.log(response.headers['cmr-hits'], numRecordsCollected);
   const CMRHasMoreResults = response.headers['cmr-hits'] > numRecordsCollected;
   const recordsLimitReached = numRecordsCollected >= recordsLimit;
   if (recursive && CMRHasMoreResults && !recordsLimitReached) {
@@ -312,8 +307,8 @@ class CMRSearchConceptQueue {
    *
    * @param {string} provider - the CMR provider id
    * @param {string} clientId - the CMR clientId
-   * @param {string} username - CMR username
-   * @param {string} password - CMR password
+   * @param {string} params - the search parameters
+   * @param {string} format - the result format
    */
   constructor(provider, clientId, type, params, format) {
     this.clientId = clientId;

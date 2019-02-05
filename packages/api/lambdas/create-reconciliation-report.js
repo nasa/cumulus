@@ -12,6 +12,7 @@ const {
 } = require('@cumulus/common');
 
 const { CMRSearchConceptQueue } = require('@cumulus/cmrjs');
+const { Collection } = require('../models');
 
 /**
  * Verify that all objects in an S3 bucket contain corresponding entries in
@@ -87,55 +88,59 @@ async function createReconciliationReportForBucket(Bucket, filesTableName) {
 /**
  * Compare the holdings in CMR with Cumulus' internal data store, report any discrepancies
  *
- * @param {string} collectionTableName - the name of the collections table in database
+ * expect process.env.CollectionsTable, process.env.GranulesTable are set
+ *
  * @returns {Promise<Object>} a report
  */
-async function createReconciliationReportForCollections(collectionTableName) {
+async function reconciliationReportForCumulusCMR() {
+  const report = {};
   // compare collection holdings:
   //   Get list of collections from CMR
   //   Get list of collections from CUMULUS
   //   Report collections only in CMR
   //   Report collections only in CUMULUS
   const cmrCollectionsIterator = new CMRSearchConceptQueue(
-    process.env.cmr_provider, process.env.cmr_client_id, 'collections', {}, 'umm_json'
+    process.env.cmr_provider, process.env.cmr_client_id, 'collections',
+    { sort_key: ['ShortName'] }, 'umm_json'
   );
 
-  // TODO add to collections model
-  const dbCollectionsIterator = new DynamoDbScanQueue({
-    TableName: collectionTableName,
-    ExpressionAttributeNames: { '#name': 'name', '#version': 'version' },
-    ProjectionExpression: '#name, #version'
-  });
+  const dbCollectionsIterator = new Collection().getAllCollections();
 
   const okCollections = [];
-  const collectionsOnlyInCmr = [];
   const collectionsOnlyInDb = [];
+  const collectionsOnlyInCmr = [];
 
-  let [nextCmrItem, nextDbItem] = await Promise.all([cmrCollectionsIterator.peek(), dbCollectionsIterator.peek()]); // eslint-disable-line max-len
-  while (nextCmrItem && nextDbItem) {
+  let [nextDbItem, nextCmrItem] = await Promise.all([dbCollectionsIterator.peek(), cmrCollectionsIterator.peek()]); // eslint-disable-line max-len
+  while (nextDbItem && nextCmrItem) {
+    const nextDbCollectionId = constructCollectionId(nextDbItem.name, nextDbItem.version);
     const nextCmrCollectionId = constructCollectionId(
       nextCmrItem.umm.ShortName, nextCmrItem.umm.Version
     );
-    const nextDbCollectionId = constructCollectionId(nextDbItem.name, nextDbItem.version);
 
-    if (nextCmrCollectionId < nextDbCollectionId) {
-      // Found an item that is only in cmr and not in database
-      collectionsOnlyInCmr.push(nextCmrCollectionId);
-      cmrCollectionsIterator.shift();
-    }
-    else if (nextCmrCollectionId > nextDbCollectionId) {
+    if (nextDbCollectionId < nextCmrCollectionId) {
       // Found an item that is only in database and not in cmr
       await dbCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
       collectionsOnlyInDb.push(nextDbCollectionId);
     }
+    else if (nextDbCollectionId > nextCmrCollectionId) {
+      // Found an item that is only in cmr and not in database
+      collectionsOnlyInCmr.push(nextCmrCollectionId);
+      cmrCollectionsIterator.shift();
+    }
     else {
       // Found an item that is in both cmr and database
       okCollections.push(nextDbCollectionId);
-      cmrCollectionsIterator.shift();
       dbCollectionsIterator.shift();
+      cmrCollectionsIterator.shift();
     }
 
-    [nextCmrItem, nextDbItem] = await Promise.all([cmrCollectionsIterator.peek(), dbCollectionsIterator.peek()]); // eslint-disable-line max-len, no-await-in-loop
+    [nextDbItem, nextCmrItem] = await Promise.all([dbCollectionsIterator.peek(), cmrCollectionsIterator.peek()]); // eslint-disable-line max-len, no-await-in-loop
+  }
+
+  // Add any remaining DynamoDB items to the report
+  while (await dbCollectionsIterator.peek()) { // eslint-disable-line no-await-in-loop
+    const dbItem = await dbCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
+    collectionsOnlyInDb.push(constructCollectionId(dbItem.name, dbItem.version));
   }
 
   // Add any remaining CMR items to the report
@@ -146,32 +151,15 @@ async function createReconciliationReportForCollections(collectionTableName) {
     ));
   }
 
-  // Add any remaining DynamoDB items to the report
-  while (await dbCollectionsIterator.peek()) { // eslint-disable-line no-await-in-loop
-    const dbItem = await dbCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
-    collectionsOnlyInDb.push(constructCollectionId(dbItem.name, dbItem.version));
-  }
-
-  const collections = {
-    okCollections,
-    onlyInCmr: collectionsOnlyInCmr,
-    onlyInDb: collectionsOnlyInDb
+  const collectionsInCumulusCmr = {
+    okCollectionCount: okCollections.length,
+    onlyInDb: collectionsOnlyInDb,
+    onlyInCmr: collectionsOnlyInCmr
   };
 
-  console.log({ collections });
-
-  // compare granule holdings.
-  // For collections in both CMR and CUMULUS, for each collection:
-
-  //   Get CMR granules list (by PROVIDER, short_name, version, sort_key: ['GranuleUR'])
-  //   create a CMRSearchConceptQueue class to handle paging
-  //   Get CUMULUS granules list (by collectionId, update existing DynamoDbScanQueue to use query operation)
-  //   Create a secondary index on the granules table with 'collectionid' as the partition key and 'granuleId' as the sort key, so the granules are ordered by granuleId.
-  //   Report granules only in CMR, granules only in CUMULUS
-
-  return { collections };
+  report.collectionsInCumulusCmr = collectionsInCumulusCmr;
+  return report;
 }
-
 
 /**
  * Create a Reconciliation report and save it to S3
@@ -202,14 +190,23 @@ async function createReconciliationReport(params) {
     .map((config) => config.name);
 
   // Write an initial report to S3
-  const report = {
+  const filesInCumulus = {
+    okFileCount: 0,
+    onlyInS3: [],
+    onlyInDynamoDb: []
+  };
+  const collectionsInCumulusCmr = {
+    okCollectionCount: 0,
+    onlyInDb: [],
+    onlyInCmr: []
+  };
+  let report = {
     reportStartTime: moment.utc().toISOString(),
     reportEndTime: null,
     status: 'RUNNING',
     error: null,
-    okFileCount: 0,
-    onlyInS3: [],
-    onlyInDynamoDb: []
+    filesInCumulus,
+    collectionsInCumulusCmr
   };
 
   const reportKey = `${stackName}/reconciliation-reports/report-${report.reportStartTime}.json`;
@@ -229,11 +226,17 @@ async function createReconciliationReport(params) {
   report.reportEndTime = moment.utc().toISOString();
   report.status = 'SUCCESS';
 
+  // compare CUMULUS internal holdings in s3 and database
   bucketReports.forEach((bucketReport) => {
-    report.okFileCount += bucketReport.okFileCount;
-    report.onlyInS3 = report.onlyInS3.concat(bucketReport.onlyInS3);
-    report.onlyInDynamoDb = report.onlyInDynamoDb.concat(bucketReport.onlyInDynamoDb);
+    filesInCumulus.okFileCount += bucketReport.okFileCount;
+    filesInCumulus.onlyInS3 = filesInCumulus.onlyInS3.concat(bucketReport.onlyInS3);
+    filesInCumulus.onlyInDynamoDb = filesInCumulus
+      .onlyInDynamoDb.concat(bucketReport.onlyInDynamoDb);
   });
+
+  // compare the CUMULUS holdings with the holdings in CMR
+  const cumulusCmrReport = await reconciliationReportForCumulusCMR();
+  report = Object.assign(report, ...cumulusCmrReport);
 
   // Write the full report to S3
   return s3().putObject({
@@ -250,7 +253,7 @@ function handler(event, _context, cb) {
   return createReconciliationReport({
     systemBucket: event.systemBucket || process.env.system_bucket,
     stackName: event.stackName || process.env.stackName,
-    filesTableName: event.filesTableName || process.env.filesTableName
+    filesTableName: event.filesTableName || process.env.FilesTable
   })
     .then(() => cb(null))
     .catch(cb);
@@ -258,6 +261,8 @@ function handler(event, _context, cb) {
 exports.handler = handler;
 
 //TODO remove these
-process.env.cmr_provider = 'CUMULUS';
-process.env.cmr_client_id = 'cumulus';
-createReconciliationReportForCollections('jl-test-integration-CollectionsTable');
+// process.env.cmr_provider = 'CUMULUS';
+// process.env.cmr_client_id = 'cumulus-core-jl-test-integration';
+// process.env.CollectionsTable = 'jl-test-integration-CollectionsTable';
+// const report = reconciliationReportForCumulusCMR('jl-test-integration-CollectionsTable');
+// console.log(report);
