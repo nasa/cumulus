@@ -15,6 +15,16 @@ const isBadRequestError = (err) => err.name === 'HTTPError' && err.statusCode ==
  * This is an interface to the Earthdata Login service.
  */
 class EarthdataLogin extends OAuth2 {
+  /**
+   * Create Earthdata login client using environment variables.
+   *
+   * @param {Object} params
+   * @param {string} params.redirectUri
+   *   The redirect URL to use for the Earthdata login client
+   *
+   * @returns {EarthdataLogin}
+   *   An Earthdata login client
+   */
   static createFromEnv ({ redirectUri }) {
     return new EarthdataLogin({
       clientId: process.env.EARTHDATA_CLIENT_ID,

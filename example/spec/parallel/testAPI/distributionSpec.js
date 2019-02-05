@@ -30,13 +30,14 @@ describe('Distribution API', () => {
   const fileKey = `${testDataFolder}/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met`;
   const fileRequestPath = `${config.bucket}/${fileKey}`;
   const fileStats = fs.statSync(require.resolve(s3Data[0]));
-  const port = 5002;
+  const distributionApiPort = 5002;
 
   let server;
 
-  process.env.PORT = port;
+  process.env.PORT = distributionApiPort;
   process.env.DEPLOYMENT_ENDPOINT = `http://localhost:${process.env.PORT}/redirect`;
   process.env.DISTRIBUTION_URL = `http://localhost:${process.env.PORT}`;
+  // Ensure integration tests use Earthdata login UAT if not specified.
   if (!process.env.EARTHDATA_BASE_URL) {
     process.env.EARTHDATA_BASE_URL = 'https://uat.urs.earthdata.nasa.gov';
   }
@@ -72,19 +73,18 @@ describe('Distribution API', () => {
 
   describe('handles requests for files over HTTPS', () => {
     it('redirects to Earthdata login for unauthorized requests', async () => {
-      const authorizeUrl =
-        await got(
-          `${process.env.DISTRIBUTION_URL}/${fileRequestPath}`,
-          { followRedirect: false }
-        )
-          .then((res) => new URL(res.headers.location));
+      const authorizeUrl = await got(
+        `${process.env.DISTRIBUTION_URL}/${fileRequestPath}`,
+        { followRedirect: false }
+      )
+        .then((res) => new URL(res.headers.location));
       expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
     });
 
     it('downloads the requested science file for authorized requests', async (done) => {
       // Login with Earthdata and get response for redirect back to
       // distribution API.
-      const response =  await handleEarthdataLogin({
+      const response = await handleEarthdataLogin({
         redirectUri: process.env.DEPLOYMENT_ENDPOINT,
         requestOrigin: process.env.DISTRIBUTION_URL,
         state: fileRequestPath

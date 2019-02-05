@@ -6,12 +6,15 @@ const EarthdataLogin = require('@cumulus/api/lib/EarthdataLogin');
 /**
  * Login to Earthdata
  *
- * @param {string} authorizeUrl
- *   The OAuth authorization endpoint for Earthdata login
- * @param {string} requestOrigin
+ * @param {Object} params
+ * @param {string} params.redirectUri
+ *   The redirect URL to use for the Earthdata login client
+ * @param {string} params.requestOrigin
  *   The URL to use as the "origin" for the request Earthdata login
+ * @param {string} params.state
+ *   The "state" query parameter included in the redirect back from Earthdata login
  *
- * @return {Promise}
+ * @returns {Promise}
  *   Promise from the request to login with Earthdata
  */
 async function handleEarthdataLogin({
