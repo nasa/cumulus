@@ -360,7 +360,7 @@ mhs2:
     shared:
       name: cumulus-data-shared
       type: shared
-  api_distribution_url: '{{API_DISTRIBUTION_URL}}'
+  api_distribution_url: '{{API_DISTRIBUTION_ENDPOINT}}'
   system_bucket: '{{buckets.internal.name}}'
 
   users:
@@ -404,7 +404,7 @@ gitc:
     shared:
       name: '{{PREFIX}}-data-shared'
       type: shared
-  api_distribution_url: '{{API_DISTRIBUTION_URL}}'
+  api_distribution_url: '{{API_DISTRIBUTION_ENDPOINT}}'
   system_bucket: '{{buckets.internal.name}}'
 
   users:

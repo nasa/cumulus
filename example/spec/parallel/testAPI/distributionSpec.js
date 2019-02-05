@@ -36,7 +36,7 @@ describe('Distribution API', () => {
 
   process.env.PORT = distributionApiPort;
   process.env.DISTRIBUTION_REDIRECT_URI = `http://localhost:${process.env.PORT}/redirect`;
-  process.env.DISTRIBUTION_URL = `http://localhost:${process.env.PORT}`;
+  process.env.DISTRIBUTION_ENDPOINT = `http://localhost:${process.env.PORT}`;
   // Ensure integration tests use Earthdata login UAT if not specified.
   if (!process.env.EARTHDATA_BASE_URL) {
     process.env.EARTHDATA_BASE_URL = 'https://uat.urs.earthdata.nasa.gov';
@@ -74,7 +74,7 @@ describe('Distribution API', () => {
   describe('handles requests for files over HTTPS', () => {
     it('redirects to Earthdata login for unauthorized requests', async () => {
       const authorizeUrl = await got(
-        `${process.env.DISTRIBUTION_URL}/${fileRequestPath}`,
+        `${process.env.DISTRIBUTION_ENDPOINT}/${fileRequestPath}`,
         { followRedirect: false }
       )
         .then((res) => new URL(res.headers.location));
@@ -86,7 +86,7 @@ describe('Distribution API', () => {
       // distribution API.
       const response = await getEarthdataLoginRedirectResponse({
         redirectUri: process.env.DISTRIBUTION_REDIRECT_URI,
-        requestOrigin: process.env.DISTRIBUTION_URL,
+        requestOrigin: process.env.DISTRIBUTION_ENDPOINT,
         state: fileRequestPath
       });
       const { 'set-cookie': cookie, location: fileUrl } = response.headers;
