@@ -4,7 +4,7 @@ const router = require('express-promise-router')();
 const urljoin = require('url-join');
 const { s3 } = require('@cumulus/common/aws');
 const { URL } = require('url');
-const { createEarthdataLoginClient } = require('../lib/EarthdataLogin');
+const EarthdataLogin = require('../lib/EarthdataLogin');
 const { RecordDoesNotExist } = require('../lib/errors');
 const { AccessToken } = require('../models');
 
@@ -72,7 +72,9 @@ function isAccessTokenExpired(accessTokenRecord) {
  * @returns {Object} the configuration object needed to handle requests
  */
 function getConfigurations() {
-  const earthdataLoginClient = createEarthdataLoginClient(process.env.DEPLOYMENT_ENDPOINT);
+  const earthdataLoginClient = EarthdataLogin.createFromEnv({
+    redirectUri: process.env.DEPLOYMENT_ENDPOINT
+  });
 
   return {
     accessTokenModel: new AccessToken(),

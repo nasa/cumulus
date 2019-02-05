@@ -9,7 +9,7 @@ const { s3 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const { AccessToken } = require('../../models');
-const { EarthdataLogin: EarthdataLoginClient } = require('../../lib/EarthdataLogin');
+const EarthdataLoginClient = require('../../lib/EarthdataLogin');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 
 process.env.EARTHDATA_CLIENT_ID = randomString();

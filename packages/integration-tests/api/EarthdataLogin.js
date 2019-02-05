@@ -1,7 +1,7 @@
 const base64 = require('base-64');
 const got = require('got');
 
-const { createEarthdataLoginClient } = require('@cumulus/api/lib/EarthdataLogin');
+const EarthdataLogin = require('@cumulus/api/lib/EarthdataLogin');
 
 /**
  * Login to Earthdata
@@ -19,7 +19,9 @@ async function handleEarthdataLogin({
   requestOrigin,
   state
 }) {
-  const earthdataLoginClient = createEarthdataLoginClient(redirectUri);
+  const earthdataLoginClient = EarthdataLogin.createFromEnv({
+    redirectUri
+  });
   const authorizeUrl = earthdataLoginClient.getAuthorizationUrl(state);
 
   const auth = base64.encode(`${process.env.EARTHDATA_USERNAME}:${process.env.EARTHDATA_PASSWORD}`);
