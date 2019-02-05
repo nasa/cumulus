@@ -187,11 +187,11 @@ Resources:
         {{/if}}
         {{# if ../api_distribution_url}}
           DISTRIBUTION_ENDPOINT: {{../api_distribution_url}}
-          DEPLOYMENT_ENDPOINT: {{../api_distribution_url}}redirect
+          DISTRIBUTION_REDIRECT_URI: {{../api_distribution_url}}redirect
         {{else}}
           DISTRIBUTION_URL:
             Fn::Join: ["", [ "https://", {"Ref": "downloadRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}"]]
-          DEPLOYMENT_ENDPOINT:
+          DISTRIBUTION_REDIRECT_URI:
             Fn::Join: ["", [ "https://", {"Ref": "downloadRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}/redirect"]]
         {{/if}}
       {{/if}}

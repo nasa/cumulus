@@ -672,9 +672,9 @@ Resources:
             Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/token"]]
         {{/if}}
         {{# if ../api_distribution_url}}
-          DEPLOYMENT_ENDPOINT: {{../api_distribution_url}}redirect
+          DISTRIBUTION_REDIRECT_URI: {{../api_distribution_url}}redirect
         {{else}}
-          DEPLOYMENT_ENDPOINT:
+          DISTRIBUTION_REDIRECT_URI:
             Fn::Join: ["", [ "https://", {"Ref": "downloadRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/redirect"]]
         {{/if}}
       {{/if}}
