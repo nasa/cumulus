@@ -96,6 +96,7 @@
     "hsts": "^2.1.0",
     "passport": "^0.4.0",
     "body-parser": "^1.18.3",
+    "morgan": "^1.9.1",
     "uuid": "^3.2.1"
   },
   "devDependencies": {
