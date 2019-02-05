@@ -40,6 +40,8 @@ SomeLambda:
 
 That key, due to AWS constraints, must be letters (```[a-zA-Z]```) only.
 
+Note that if the lambda is configured to run in a VPC and the VPC settings change, you will need to manually update the `uniqueIdentifier`.
+
 ### Changing Number of Retained Lambdas
 
 The default number of retained lambda versions is 1.
