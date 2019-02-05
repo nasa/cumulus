@@ -161,5 +161,4 @@ jobs:
 branches:
   only:
     - master
-    - shutdown
     - /^v\d+\.\d+(\.\d+)?(-\S*)?$/  # To build tag pushes for releases
