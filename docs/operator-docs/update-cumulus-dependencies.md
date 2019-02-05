@@ -6,7 +6,7 @@ hide_title: true
 
 # Updating Cumulus Dependencies
 
-This document will outline, step by step, how to update a Cumulus deployment to a newer version. It is currently assumed that _all_ Cumulus packages are to be updated to the same version at the same time. This is expected to change in the future.
+This document will outline, step by step, how to update a Cumulus deployment to a newer version. It is currently assumed that _all_ Cumulus packages are to be updated to the same version at the same time.
 
 ## Check Current Version
 
@@ -52,7 +52,7 @@ $ yarn upgrade @cumulus/<package>@<version>
 
 ## Redeploy
 
-Note that there may be configuration changes required with a new version. Please check the [release documentation](https://nasa.github.io/cumulus/docs/upgrade/upgrade-readme) for instructions regarding deployment/stack configuration. Once configuration is in an acceptable state, deployment commands should be the same as before.
+Note that there may be configuration changes required with a new version. Please check the [release documentation](https://github.com/nasa/cumulus/releases) for instructions regarding deployment/stack configuration. Once configuration is in an acceptable state, deployment commands should be the same as before.
 
 ```shell
 # IAM Deployment
