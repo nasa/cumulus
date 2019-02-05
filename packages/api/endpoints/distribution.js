@@ -73,7 +73,7 @@ function isAccessTokenExpired(accessTokenRecord) {
  */
 function getConfigurations() {
   const earthdataLoginClient = EarthdataLogin.createFromEnv({
-    redirectUri: process.env.DISTRIBUTION_REDIRECT_URI
+    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
   });
 
   return {
