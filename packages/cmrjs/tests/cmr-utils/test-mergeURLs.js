@@ -89,7 +89,7 @@ test('Replaces an updated URL, but keeps any additional metadata from the origin
       moreMetadataFields: 'somthingelse'
     }
   ];
-  const deleted = [{ URL: 'does not exist'}];
+  const deleted = [{ URL: 'does not exist' }];
   const actual = mergeURLs(originalURLs, newURLs, deleted);
 
   t.deepEqual(expected.sort(sortByURL), actual.sort(sortByURL));

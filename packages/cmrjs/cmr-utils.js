@@ -274,6 +274,7 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets) {
  * create a list of URL objects that should not appear in under online access in the CMR metadata.
  * @param {Array<Object>} files - array of updated file objects
  * @param {BucketsConfig} buckets - stack BucketConfig instance.
+ * @returns {Array<Object>} array of files to be omitted in cmr's OnlineAccessURLs
  */
 function onlineAccessURLsToRemove(files, buckets) {
   const urls = [];
