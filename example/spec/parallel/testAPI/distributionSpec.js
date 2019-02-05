@@ -34,7 +34,6 @@ describe('Distribution API', () => {
   let server;
 
   process.env.PORT = port;
-  process.env.EARTHDATA_BASE_URL = 'https://uat.urs.earthdata.nasa.gov';
   process.env.DEPLOYMENT_ENDPOINT = `http://localhost:${process.env.PORT}/redirect`;
   process.env.DISTRIBUTION_URL = `http://localhost:${process.env.PORT}`;
 
