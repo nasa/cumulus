@@ -28,6 +28,7 @@ describe('Distribution API', () => {
   const testId = createTimestampedTestId(config.stackName, 'DistributionAPITest');
   const testDataFolder = createTestDataPath(testId);
   const fileKey = `${testDataFolder}/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met`;
+  const fileRequestPath = `${config.bucket}/${fileKey}`;
   const fileStats = fs.statSync(require.resolve(s3Data[0]));
   const port = 5002;
 
@@ -36,6 +37,9 @@ describe('Distribution API', () => {
   process.env.PORT = port;
   process.env.DEPLOYMENT_ENDPOINT = `http://localhost:${process.env.PORT}/redirect`;
   process.env.DISTRIBUTION_URL = `http://localhost:${process.env.PORT}`;
+  if (!process.env.EARTHDATA_BASE_URL) {
+    process.env.EARTHDATA_BASE_URL = 'https://uat.urs.earthdata.nasa.gov';
+  }
 
   beforeAll(async (done) => {
     await prepareDistributionApi();
@@ -67,26 +71,24 @@ describe('Distribution API', () => {
   });
 
   describe('handles requests for files over HTTPS', () => {
-    let authorizeUrl;
-
-    beforeAll(async () => {
-      authorizeUrl =
-        await got(`${process.env.DISTRIBUTION_URL}/${config.bucket}/${fileKey}`, { followRedirect: false })
-          .then((res) => new URL(res.headers.location));
-    });
-
     it('redirects to Earthdata login for unauthorized requests', async () => {
+      const authorizeUrl =
+        await got(
+          `${process.env.DISTRIBUTION_URL}/${fileRequestPath}`,
+          { followRedirect: false }
+        )
+          .then((res) => new URL(res.headers.location));
       expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
     });
 
     it('downloads the requested science file for authorized requests', async (done) => {
-      // Login with Earthdata and intercept the redirect URL.
-      const redirectUrl = await handleEarthdataLogin(authorizeUrl.href, process.env.DISTRIBUTION_URL)
-        .then((res) => res.headers.location);
-
-      // Make request to redirect URL to exchange Earthdata authorization code
-      // for access token. Retrieve access token, which is set as a cookie.
-      const response = await got(redirectUrl, { followRedirect: false });
+      // Login with Earthdata and get response for redirect back to
+      // distribution API.
+      const response =  await handleEarthdataLogin({
+        redirectUri: process.env.DEPLOYMENT_ENDPOINT,
+        requestOrigin: process.env.DISTRIBUTION_URL,
+        state: fileRequestPath
+      });
       const { 'set-cookie': cookie, location: fileUrl } = response.headers;
 
       // Get S3 signed URL fromm distribution API with cookie set.

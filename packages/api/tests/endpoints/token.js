@@ -12,7 +12,7 @@ const {
 
 const { OAuth2AuthenticationFailure } = require('../../lib/OAuth2');
 const assertions = require('../../lib/assertions');
-const EarthdataLoginClient = require('../../lib/EarthdataLogin');
+const { EarthdataLogin: EarthdataLoginClient } = require('../../lib/EarthdataLogin');
 const {
   createJwtToken
 } = require('../../lib/token');

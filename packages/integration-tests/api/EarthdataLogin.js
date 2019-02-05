@@ -1,6 +1,8 @@
 const base64 = require('base-64');
 const got = require('got');
 
+const { createEarthdataLoginClient } = require('@cumulus/api/lib/EarthdataLogin');
+
 /**
  * Login to Earthdata
  *
@@ -12,7 +14,14 @@ const got = require('got');
  * @return {Promise}
  *   Promise from the request to login with Earthdata
  */
-function handleEarthdataLogin(authorizeUrl, requestOrigin) {
+async function handleEarthdataLogin({
+  redirectUri,
+  requestOrigin,
+  state
+}) {
+  const earthdataLoginClient = createEarthdataLoginClient(redirectUri);
+  const authorizeUrl = earthdataLoginClient.getAuthorizationUrl(state);
+
   const auth = base64.encode(`${process.env.EARTHDATA_USERNAME}:${process.env.EARTHDATA_PASSWORD}`);
 
   const requestOptions = {
@@ -24,7 +33,12 @@ function handleEarthdataLogin(authorizeUrl, requestOrigin) {
     followRedirect: false
   };
 
-  return got.post(authorizeUrl, requestOptions);
+  const redirectUrl = await got.post(authorizeUrl, requestOptions)
+    .then((res) => res.headers.location);
+
+  // Make request to redirect URL to exchange Earthdata authorization code
+  // for access token.
+  return got(redirectUrl, { followRedirect: false });
 }
 
 module.exports = {
