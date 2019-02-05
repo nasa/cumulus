@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - CUMULUS-678
+  - Added support for UMMG json v1.4 metadata files.
   `reconcileCMRMetadata` added to `@cumulus/cmrjs` to update metadata record with new file locations.
   `@cumulus/common/errors` adds two new error types `CMRMetaFileNotFound` and `InvalidArgument`.
   `@cumulus/common/test-utils` adds new function `randomId` to create a random string with id to help in debugging.
