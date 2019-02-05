@@ -211,6 +211,7 @@ async function prepareDistributionApi(stackName = 'localrun') {
     process.env.TOKEN_SECRET = 'secreeetartalksjfaf;lj';
     process.env.DEPLOYMENT_ENDPOINT = `http://localhost:${port}/redirect`;
     process.env.DISTRIBUTION_URL = `http://localhost:${port}`;
+    process.env.EARTHDATA_BASE_URL = 'https://uat.urs.earthdata.nasa.gov';
 
     // create tables if not already created
     await checkOrCreateTables(stackName);
