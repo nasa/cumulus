@@ -202,7 +202,7 @@ async function serveApi(user, stackName = 'localrun') {
  */
 async function prepareDistributionApi(stackName = 'localrun') {
   const port = process.env.PORT || 5002;
-  const requiredEnvVars = ['DISTRIBUTION_REDIRECT_URI', 'DISTRIBUTION_URL'];
+  const requiredEnvVars = ['DISTRIBUTION_REDIRECT_URI', 'DISTRIBUTION_ENDPOINT'];
 
   if (inTestMode()) {
     // set env variables
@@ -210,7 +210,7 @@ async function prepareDistributionApi(stackName = 'localrun') {
     process.env.stackName = stackName;
     process.env.TOKEN_SECRET = 'secreeetartalksjfaf;lj';
     process.env.DISTRIBUTION_REDIRECT_URI = `http://localhost:${port}/redirect`;
-    process.env.DISTRIBUTION_URL = `http://localhost:${port}`;
+    process.env.DISTRIBUTION_ENDPOINT = `http://localhost:${port}`;
 
     // create tables if not already created
     await checkOrCreateTables(stackName);

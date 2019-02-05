@@ -79,7 +79,7 @@ function getConfigurations() {
   return {
     accessTokenModel: new AccessToken(),
     authClient: earthdataLoginClient,
-    distributionUrl: process.env.DISTRIBUTION_URL,
+    distributionUrl: process.env.DISTRIBUTION_ENDPOINT,
     s3Client: s3()
   };
 }
