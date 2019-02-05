@@ -165,7 +165,7 @@ async function serveApi(user, stackName = 'localrun') {
   const requiredEnvVars = [
     'stackName',
     'system_bucket',
-    'API_ENDPOINT'
+    'TOKEN_REDIRECT_URI'
   ];
 
   if (inTestMode()) {
@@ -176,7 +176,7 @@ async function serveApi(user, stackName = 'localrun') {
     process.env.EARTHDATA_CLIENT_ID = randomString();
     process.env.EARTHDATA_CLIENT_PASSWORD = randomString();
     process.env.EARTHDATA_BASE_URL = 'https://example.com';
-    process.env.API_ENDPOINT = `http://localhost:${port}/token`;
+    process.env.TOKEN_REDIRECT_URI = `http://localhost:${port}/token`;
 
     // create tables if not already created
     await checkOrCreateTables(stackName);

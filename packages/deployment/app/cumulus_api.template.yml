@@ -180,9 +180,9 @@ Resources:
           stackName: {{../stackName}}
       {{# if this.urs}}
         {{# if ../api_backend_url}}
-          API_ENDPOINT: {{../api_backend_url}}token
+          TOKEN_REDIRECT_URI: {{../api_backend_url}}token
         {{else}}
-          API_ENDPOINT:
+          TOKEN_REDIRECT_URI:
             Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}/token"]]
         {{/if}}
         {{# if ../api_distribution_url}}

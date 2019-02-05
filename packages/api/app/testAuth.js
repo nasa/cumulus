@@ -30,7 +30,7 @@ async function tokenEndpoint(req, res) {
     });
   }
 
-  let uri = `${process.env.API_ENDPOINT}?code=somecode`;
+  let uri = `${process.env.TOKEN_REDIRECT_URI}?code=somecode`;
   if (state) {
     uri += `&state=${encodeURIComponent(state)}`;
   }
