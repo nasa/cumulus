@@ -33,7 +33,7 @@ To upgrade all Cumulus to the latest Cumulus version:
 $ yarn upgrade --latest --pattern "@cumulus/*"
 ```
 
-To upgrade individual Cumulus packages to the latest version:
+To upgrade an individual Cumulus `<package>` to the latest version:
 
 ```shell
 $ yarn upgrade --latest @cumulus/<package>
@@ -47,7 +47,7 @@ To upgrade individual Cumulus packages to a specific `<version>` is fairly simpl
 $ yarn upgrade @cumulus/<package>@<version>
 ```
 
-*Note:* `<version>` is a version string that adheres to the syntactic rules outlined [here](https://docs.npmjs.com/files/package.json#dependencies).
+*Note:* `<version>` is a version string that observes the syntactic rules outlined [here](https://docs.npmjs.com/files/package.json#dependencies).
 
 
 ## Redeploy
