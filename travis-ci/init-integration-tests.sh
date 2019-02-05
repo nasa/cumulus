@@ -21,8 +21,6 @@ else
   ./bin/prepare
 fi
 
-DEPLOYMENT=lf-int-test
-
 echo "Locking stack for deployment $DEPLOYMENT"
 
 # Wait for the stack to be available
