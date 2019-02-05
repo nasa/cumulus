@@ -775,7 +775,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
 
   sinon.stub(
     CMR.prototype,
-    'ingestGranule'
+    'ingestUMMGranule'
   ).returns({ result: { 'concept-id': 'id204842' } });
 
   const response = await request(app)
@@ -821,7 +821,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
     t.true(updatedURLs.includes(origURL));
   });
 
-  CMR.prototype.ingestGranule.restore();
+  CMR.prototype.ingestUMMGranule.restore();
   await teardownBuckets(publicBucket);
 });
 
