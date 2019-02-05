@@ -78,7 +78,7 @@ test('deleteConcept returns success when granule is not found ', async (t) => {
   statusCode = 404;
   const stub = sinon.stub(got, 'delete').callsFake(stubclient.delete);
   try {
-    const result = await deleteConcept('granule', granuleId, 'CUMULUS', {});
+    await deleteConcept('granule', granuleId, 'CUMULUS', {});
     t.pass();
   }
   catch (error) {

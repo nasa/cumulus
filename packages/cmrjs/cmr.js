@@ -3,7 +3,6 @@
 const got = require('got');
 const fs = require('fs');
 const property = require('lodash.property');
-const _get = require('lodash.get');
 const { parseString } = require('xml2js');
 
 const log = require('@cumulus/common/log');
