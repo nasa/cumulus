@@ -82,9 +82,6 @@ describe('Distribution API', () => {
     });
 
     it('downloads the requested science file for authorized requests', async (done) => {
-      console.log(process.env.DISTRIBUTION_REDIRECT_ENDPOINT);
-      console.log(process.env.DISTRIBUTION_ENDPOINT);
-
       // Login with Earthdata and get response for redirect back to
       // distribution API.
       let response;

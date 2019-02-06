@@ -209,8 +209,8 @@ async function prepareDistributionApi(stackName = 'localrun') {
     process.env.system_bucket = 'localbucket';
     process.env.stackName = stackName;
     process.env.TOKEN_SECRET = 'secreeetartalksjfaf;lj';
-    process.env.DISTRIBUTION_REDIRECT_ENDPOINT = `http://localhost:${port}/redirect`;
-    process.env.DISTRIBUTION_ENDPOINT = `http://localhost:${port}`;
+    process.env.DISTRIBUTION_REDIRECT_ENDPOINT = `http://127.0.0.1:${port}/redirect`;
+    process.env.DISTRIBUTION_ENDPOINT = `http://127.0.0.1:${port}`;
 
     // create tables if not already created
     await checkOrCreateTables(stackName);
