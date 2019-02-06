@@ -14,7 +14,7 @@ const ONE_MINUTE = 60000;
 /**
  * Sample granule used to update fields and save as a .cmr.xml file
  */
-const sampleGranule = {
+const sampleEcho10Granule = {
   Granule: {
     GranuleUR: 'MYD13Q1.A2017297.h19v10.006.2017313221202',
     InsertTime: '2018-04-25T21:45:45.524043',
@@ -73,6 +73,53 @@ const sampleGranule = {
     CloudCover: '13'
   }
 };
+
+const sampleUmmGranule = {
+  RelatedUrls: [
+    {
+      URL: 'https://8n7ovu33kh.execute-api.us-west-2.amazonaws.com/dev/podaac-dev-cumulus-protected/L0A_RAD_RAW_product_0017-of-0020.h5',
+      Type: 'GET DATA',
+      Description: 'File to download'
+    }
+  ],
+  SpatialExtent: {
+    HorizontalSpatialDomain: {
+      Geometry: {
+        BoundingRectangles: [
+          {
+            WestBoundingCoordinate: -180,
+            EastBoundingCoordinate: 180,
+            NorthBoundingCoordinate: 90,
+            SouthBoundingCoordinate: -90
+          }
+        ]
+      }
+    }
+  },
+  ProviderDates: [
+    {
+      Date: '2018-12-19T17:30:31.424Z',
+      Type: 'Insert'
+    }
+  ],
+  DataGranule: {
+    DayNightFlag: 'Unspecified',
+    ProductionDateTime: '2016-01-09T11:40:45.032Z',
+    ArchiveAndDistributionInformation: [
+      {
+        Name: 'Not provided',
+        Size: 1.009857177734375,
+        SizeUnit: 'NA'
+      }
+    ]
+  },
+  TemporalExtent: {
+    RangeDateTime: {
+      BeginningDateTime: '2016-01-09T11:40:45.032Z',
+      EndingDateTime: '2016-01-09T11:41:12.027Z'
+    }
+  }
+}
 
 /**
  * Returns true if the concept exists - if the cmrLink
@@ -153,7 +200,7 @@ async function getOnlineResources(cmrLink) {
  * CMR xml files
  */
 async function generateAndStoreCmrXml(granule, collection, bucket) {
-  const xmlObject = sampleGranule;
+  const xmlObject = sampleEcho10Granule;
   xmlObject.Granule.GranuleUR = granule.granuleId;
 
   xmlObject.Granule.Collection = {
@@ -184,6 +231,45 @@ async function generateAndStoreCmrXml(granule, collection, bucket) {
 
   await s3().putObject(params).promise();
 
+  granuleFiles.push(`s3://${bucket}/${filename}`);
+  log.info(`s3://${bucket}/${filename}`);
+  log.info(granuleFiles);
+  return granuleFiles;
+}
+
+/**
+ * Generate granule UMM-G JSON file based on the sample UMM-G and store
+ * it to S3 in the file staging area
+ *
+ * @param {Object} granule - granule object
+ * @param {Object} collection - collection object
+ * @param {string} bucket - bucket to save the xml file to
+ * @returns {Array<string>} - List of granule files including the created
+ * CMR files
+ */
+async function generateAndStoreCmrUmmJson(granule, collection, bucket) {
+  const jsonObject = sampleUmmGranule;
+  jsonObject.GranuleUR = granule.granuleId;
+
+  jsonObject.CollectionReference = {
+    ShortName: collection.name,
+    Version: collection.version
+  };
+
+  const stagingDir = granule.files[0].fileStagingDir;
+
+  const filename = `${stagingDir}/${granule.granuleId}.cmr.json`;
+
+  const params = {
+    Bucket: bucket,
+    Key: filename,
+    Body: JSON.stringify(jsonObject),
+    Tagging: `granuleId=${granule.granuleId}`
+  };
+
+  await s3().putObject(params).promise();
+
+  const granuleFiles = granule.files.map((f) => f.filename);
   granuleFiles.push(`s3://${bucket}/${filename}`);
   log.info(`s3://${bucket}/${filename}`);
   log.info(granuleFiles);
