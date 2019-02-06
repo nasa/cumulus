@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `@cumulus/common/errors` adds two new error types `CMRMetaFileNotFound` and `InvalidArgument`.
   `@cumulus/common/test-utils` adds new function `randomId` to create a random string with id to help in debugging.
   `@cumulus/common/BucketsConfig` adds a new helper class `BucketsConfig` for working with bucket stack configuration and bucket names.
-  `@cumulus/common/aws` adds new fucntion `s3PutObjectTagging` as a convenience for the aws  [s3().putObjectTagging](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property) function.
+  `@cumulus/common/aws` adds new function `s3PutObjectTagging` as a convenience for the aws  [s3().putObjectTagging](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property) function.
   `@cumulus/cmrjs` Adds:
       - `isECHO10File` - Identify an echo10 metadata file.
       - `metadataObjectFromCMRXMLFile` Read and parse CMR XML file from s3.
