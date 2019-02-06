@@ -1,6 +1,5 @@
 const fs = require('fs');
 const difference = require('lodash.difference');
-const get = require('lodash.get');
 const path = require('path');
 const {
   buildAndExecuteWorkflow,
@@ -38,6 +37,8 @@ const {
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleIdPathAndCollection
 } = require('../../helpers/granuleUtils');
+const { isReingestExecutionForGranuleId } = require('../../helpers/workflowUtils');
+
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const workflowName = 'SyncGranule';
@@ -54,28 +55,6 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
-
-function isReingestExecution(taskInput) {
-  return get(
-    taskInput,
-    'cumulus_meta.cumulus_context.reingestGranule',
-    false
-  );
-}
-
-function isExecutionForGranuleId(taskInput, granuleId) {
-  const executionGranuleId = get(
-    taskInput,
-    'payload.granules[0].granuleId'
-  );
-
-  return executionGranuleId === granuleId;
-}
-
-function isReingestExecutionForGranuleId(taskInput, { granuleId }) {
-  return isReingestExecution(taskInput) &&
-    isExecutionForGranuleId(taskInput, granuleId);
-}
 
 describe('The Sync Granules workflow', () => {
   const testId = createTimestampedTestId(config.stackName, 'SyncGranuleSuccess');
