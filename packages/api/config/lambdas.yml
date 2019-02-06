@@ -199,8 +199,8 @@ CreateReconciliationReport:
     FilesTable:
       function: Ref
       value: FilesTableDynamoDB
-    cmr_provider: '{{cmr_provider}}'
-    cmr_client_id: '{{cmr_client_id}}'
+    cmr_provider: '{{cmr.provider}}'
+    cmr_client_id: '{{cmr.clientId}}'
 
 BulkDelete:
   handler: index.bulkDeleteLambda
