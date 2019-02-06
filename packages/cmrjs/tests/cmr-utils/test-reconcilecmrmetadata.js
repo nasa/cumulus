@@ -206,7 +206,7 @@ test('updateCMRMetadata file throws error if incorrect cmrfile provided', async 
   const updateCMRMetadata = cmrUtils.__get__('updateCMRMetadata');
 
   const error = await t.throws(
-    updateCMRMetadata(granId, badCMRFile, updatedFiles, distEndpoint, published)
+    updateCMRMetadata(granId, badCMRFile, updatedFiles, distEndpoint, published, 'fakebucket')
   );
 
   t.is(error.name, 'CMRMetaFileNotFound');
