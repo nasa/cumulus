@@ -147,6 +147,6 @@ describe('When there are granule differences and granule reconciliation is run',
           name: extraCumulusCollection.name,
           version: extraCumulusCollection.version
         }
-      }).promise(),
+      }).promise()
     ]));
 });

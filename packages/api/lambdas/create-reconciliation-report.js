@@ -138,7 +138,7 @@ async function reconciliationReportForCollections() {
     nextCmrCollectionId = (cmrCollectionIds.length !== 0) ? cmrCollectionIds[0] : null;
   }
 
-  // Add any remaining dattabase items to the report
+  // Add any remaining database items to the report
   collectionsOnlyInCumulus = collectionsOnlyInCumulus.concat(dbCollectionIds);
 
   // Add any remaining CMR items to the report
