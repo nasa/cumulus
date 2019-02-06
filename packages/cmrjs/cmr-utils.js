@@ -412,15 +412,22 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
  * @returns {Promise} returns promise to publish metadata to CMR Service
  *                    or resolved promise if published === false.
  */
-async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, published) {
+async function updateCMRMetadata(
+  granuleId,
+  cmrFile,
+  files,
+  distEndpoint,
+  published,
+  inBuckets = null
+) {
   log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${cmrFile.filename}`);
+  const buckets = inBuckets || new BucketsConfig(await bucketsConfigDefaults());
+  const cmrCredentials = (published) ? getCreds() : {};
 
   if (isECHO10File(cmrFile.filename)) {
-    const buckets = new BucketsConfig(await bucketsConfigDefaults());
     const theMetadata = await updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets);
     if (published) {
       // post metadata Object to CMR
-      const creds = getCreds();
       const cmrFileObject = {
         filename: cmrFile.filename,
         metadataObject: theMetadata,
@@ -428,7 +435,7 @@ async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, publis
       };
       return publishECHO10XML2CMR(
         cmrFileObject,
-        creds,
+        cmrCredentials,
         process.env.system_bucket,
         process.env.stackName
       );
@@ -436,13 +443,11 @@ async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, publis
     return Promise.resolve();
   }
   if (isUMMGFile(cmrFile.filename)) {
-    const buckets = new BucketsConfig(await bucketsConfigDefaults());
     const ummgMetadata = await updateUMMGMetadata(cmrFile, files, distEndpoint, buckets);
     if (published) {
-      const creds = getCreds();
       return publishUMMGJSON2CMR(
         ummgMetadata,
-        creds,
+        cmrCredentials,
         process.env.system_bucket,
         process.env.stackName
       );
