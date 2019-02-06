@@ -15,10 +15,17 @@ if [ -z "$DEPLOYMENT" ]; then
 fi
 export DEPLOYMENT
 
+# This should be able to go away once latest is released
+if [ "$USE_NPM_PACKAGES" = "true" ]; then
+  yarn
+else
+  ./bin/prepare
+fi
+
+cd example || exit 1
 
 # Delete the stack if it's a nightly build
 if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
-  cd example || exit 1
   npm install
 
   echo Delete app deployment
@@ -40,23 +47,5 @@ if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
   echo Delete app deployment
 fi
 
-# Release the stack
-KEY="travis-ci-integration-tests/${DEPLOYMENT}.lock"
-DATE=$(date -R)
-STRING_TO_SIGN_PUT="DELETE
-
-
-${DATE}
-/${CACHE_BUCKET}/${KEY}"
-SIGNATURE=$(/bin/echo -n "$STRING_TO_SIGN_PUT" | openssl sha1 -hmac "$INTEGRATION_AWS_SECRET_ACCESS_KEY" -binary | base64)
-
-curl \
-  -sS \
-  --fail \
-  -X DELETE \
-  -H "Host: ${CACHE_BUCKET}.s3.amazonaws.com" \
-  -H "Date: ${DATE}" \
-  -H "Authorization: AWS ${INTEGRATION_AWS_ACCESS_KEY_ID}:${SIGNATURE}" \
-  https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY}
-
-exit
+echo Unlocking stack
+node ./scripts/lock-stack.js false $DEPLOYMENT
