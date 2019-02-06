@@ -1,6 +1,6 @@
 'use strict';
 
-const { aws: { DynamoDbScanQueue }, CollectionConfigStore } = require('@cumulus/common');
+const { CollectionConfigStore } = require('@cumulus/common');
 const Manager = require('./base');
 const collectionSchema = require('./schemas').collection;
 const Rule = require('./rules');
@@ -120,14 +120,15 @@ class Collection extends Manager {
   }
 
   /**
-   * query all collections and return an iterator
+   * return all collections
+   *
+   * @returns {Array<Object>} list of collections
    */
-  getAllCollections() {
-    return new DynamoDbScanQueue({
-      TableName: process.env.CollectionsTable,
-      ExpressionAttributeNames: { '#name': 'name', '#version': 'version' },
-      ProjectionExpression: '#name, #version'
-    });
+  async getAllCollections() {
+    return this.scan(
+      { names: { '#name': 'name', '#version': 'version' } },
+      '#name, #version'
+    ).then((result) => result.Items);
   }
 }
 
