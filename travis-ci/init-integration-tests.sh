@@ -15,81 +15,28 @@ if [ -z "$DEPLOYMENT" ]; then
 fi
 export DEPLOYMENT
 
+if [ "$USE_NPM_PACKAGES" = "true" ]; then
+  yarn
+else
+  ./bin/prepare
+fi
+
+echo "Locking stack for deployment $DEPLOYMENT"
+
 # Wait for the stack to be available
-KEY="travis-ci-integration-tests/${DEPLOYMENT}.lock"
-DATE=$(date -R)
-STRING_TO_SIGN_HEAD="HEAD
+cd example
+LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
 
+echo "Locking status $LOCK_EXISTS_STATUS"
 
-${DATE}
-/${CACHE_BUCKET}/${KEY}"
-SIGNATURE=$(/bin/echo -n "$STRING_TO_SIGN_HEAD" | openssl sha1 -hmac "$INTEGRATION_AWS_SECRET_ACCESS_KEY" -binary | base64)
-
-LOCK_EXISTS_STATUS_CODE=$(curl \
-  -sS \
-  -o /dev/null \
-  -w '%{http_code}' \
-  --head \
-  -H "Host: ${CACHE_BUCKET}.s3.amazonaws.com" \
-  -H "Date: ${DATE}" \
-  -H "Authorization: AWS ${INTEGRATION_AWS_ACCESS_KEY_ID}:${SIGNATURE}" \
-  https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY}
-)
-
-while [ "$LOCK_EXISTS_STATUS_CODE" = "200" ]; do
-  echo "Another build is using the ${DEPLOYMENT} stack.  Waiting for s3://${CACHE_BUCKET}/${KEY} to not exist."
+while [ "$LOCK_EXISTS_STATUS" = 1 ]; do
+  echo "Another build is using the ${DEPLOYMENT} stack."
   sleep 30
 
-  DATE=$(date -R)
-  STRING_TO_SIGN_HEAD="HEAD
-
-
-${DATE}
-/${CACHE_BUCKET}/${KEY}"
-  SIGNATURE=$(/bin/echo -n "$STRING_TO_SIGN_HEAD" | openssl sha1 -hmac "$INTEGRATION_AWS_SECRET_ACCESS_KEY" -binary | base64)
-
-  LOCK_EXISTS_STATUS_CODE=$(curl \
-    -sS \
-    -o /dev/null \
-    -w '%{http_code}' \
-    --head \
-    -H "Host: ${CACHE_BUCKET}.s3.amazonaws.com" \
-    -H "Date: ${DATE}" \
-    -H "Authorization: AWS ${INTEGRATION_AWS_ACCESS_KEY_ID}:${SIGNATURE}" \
-    https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY}
-  )
+  LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
 done
 
-# Claim the stack
-echo "https://travis-ci.org/nasa/cumulus/jobs/${TRAVIS_JOB_ID}" > "${DEPLOYMENT}.lock"
-DATE=$(date -R)
-STRING_TO_SIGN_PUT="PUT
-
-
-${DATE}
-/${CACHE_BUCKET}/${KEY}"
-SIGNATURE=$(/bin/echo -n "$STRING_TO_SIGN_PUT" | openssl sha1 -hmac "$INTEGRATION_AWS_SECRET_ACCESS_KEY" -binary | base64)
-
-curl \
-  -sS \
-  --fail \
-  -X PUT \
-  -T "${DEPLOYMENT}.lock" \
-  -H "Host: ${CACHE_BUCKET}.s3.amazonaws.com" \
-  -H "Date: ${DATE}" \
-  -H "Authorization: AWS ${INTEGRATION_AWS_ACCESS_KEY_ID}:${SIGNATURE}" \
-  https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY}
-
-rm "${DEPLOYMENT}.lock"
-
 (
-  cd example
-  if [ "$USE_NPM_PACKAGES" = "true" ]; then
-    yarn
-  else
-    (cd .. && ./bin/prepare)
-  fi
-
   ./node_modules/.bin/kes cf deploy \
     --kes-folder iam \
     --region us-east-1 \
