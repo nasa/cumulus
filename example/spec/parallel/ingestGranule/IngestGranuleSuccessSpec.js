@@ -53,6 +53,8 @@ const {
   loadFileWithUpdatedGranuleIdPathAndCollection
 } = require('../../helpers/granuleUtils');
 
+const { isReingestExecutionForGranuleId } = require('../../helpers/workflowUtils');
+
 const { getConfigObject } = require('../../helpers/configUtils');
 
 const config = loadConfig();
@@ -425,13 +427,22 @@ describe('The S3 Ingest Granules workflow', () => {
             workflowName,
             stackName: config.stackName,
             bucket: config.bucket,
-            findExecutionFn: isExecutionForGranuleId,
+            findExecutionFn: isReingestExecutionForGranuleId,
             findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId }
           });
 
           console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
 
           await waitForCompletedExecution(reingestGranuleExecution.executionArn);
+
+          const moveGranuleOutput = await lambdaStep.getStepOutput(
+            reingestGranuleExecution.executionArn,
+            'MoveGranule'
+          );
+
+          const moveGranuleOutputFiles = moveGranuleOutput.payload.granules[0].files;
+          const nonCmrFiles = moveGranuleOutputFiles.filter((f) => !f.filename.endsWith('.cmr.xml'));
+          nonCmrFiles.forEach((f) => expect(f.duplicate_found).toBe(true));
 
           await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
           const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
@@ -452,10 +463,6 @@ describe('The S3 Ingest Granules workflow', () => {
           const currentFiles = await getFilesMetadata(updatedGranule.files);
           currentFiles.forEach((cf) => {
             expect(cf.LastModified).toBeGreaterThan(startTime);
-          });
-
-          updatedGranule.files.forEach((cf) => {
-            if (!cf.filename.endsWith('.cmr.xml')) expect(cf.duplicate_found).toBe(true);
           });
         });
       });
