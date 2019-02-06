@@ -13,4 +13,5 @@ exports.stringUtils = require('./string');
 exports.testUtils = require('./test-utils');
 exports.util = require('./util');
 exports.keyPairProvider = require('./key-pair-provider');
+exports.concurrency = require('./concurrency');
 exports.errors = require('./errors');
