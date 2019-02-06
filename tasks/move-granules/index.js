@@ -145,7 +145,7 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
       const filepath = path.join(urlPath, file.name);
 
       updatedFiles.push({
-        ...file,
+        ...file, // keeps old info like "name" and "fileStagingDir"
         ...{
           bucket: bucketName,
           filepath,
@@ -157,6 +157,33 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
     updatedGranules[granuleId].files = [...updatedFiles];
   }));
   return updatedGranules;
+}
+
+/**
+ * move file from source bucket to target location, and return the file moved.
+ * In case of 'version' duplicateHandling, also return the renamed files.
+ *
+ * @param {Object} file - granule file to be moved
+ * @param {string} sourceBucket - source bucket location of files
+ * @param {string} duplicateHandling - how to handle duplicate files
+ * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
+ * @returns {Array<Object>} returns the file moved and the renamed existing duplicates if any
+ */
+async function moveCmrFileRequest(file, sourceBucket, bucketsConfig) {
+  const fileStagingDir = file.fileStagingDir || 'file-staging';
+  const source = {
+    Bucket: sourceBucket,
+    Key: `${fileStagingDir}/${file.name}`
+  };
+
+  const target = {
+    Bucket: file.bucket,
+    Key: file.filepath
+  };
+  const options = (bucketsConfig.type(file.bucket).match('public')) ? { ACL: 'public-read' } : null;
+  await moveGranuleFile(source, target, options);
+  delete file.fileStagingDir;
+  return file;
 }
 
 /**
@@ -253,6 +280,7 @@ async function moveFilesForAllGranules(
 ) {
   const moveFileRequests = Object.keys(granulesObject).map(async (granuleKey) => {
     const granule = granulesObject[granuleKey];
+    // TODO [MHS, 2019-02-05] replace with test for cmrfile
     const cmrFileFormat = /.*\.cmr\.xml$/;
     const filesToMove = granule.files.filter((file) => !file.name.match(cmrFileFormat));
     const cmrFiles = granule.files.filter((file) => file.name.match(cmrFileFormat));
@@ -261,7 +289,12 @@ async function moveFilesForAllGranules(
         (file) => moveFileRequest(file, sourceBucket, duplicateHandling, bucketsConfig)
       )
     );
-    granule.files = flatten(filesMoved).concat(flatten(cmrFiles));
+    const cmrFilesMoved = await Promise.all(
+      cmrFiles.map(
+        (file) => moveCmrFileRequest(file, sourceBucket, bucketsConfig)
+      )
+    );
+    granule.files = flatten(filesMoved).concat(flatten(cmrFilesMoved));
   });
 
   await Promise.all(moveFileRequests);
@@ -272,6 +305,11 @@ async function moveFilesForAllGranules(
  * Updates a CMR file modifying/adding an OnlineResources/OnlineAccessURLs
  * element to the metadata for the new files locations.
  *
+ * TODO [MHS, 2019-02-06] actually this moves the cmr file and then updates
+ * metadata.  if we had already moved the file, we could probably call
+ * updateCMRMetadata if we passed in buckets to that, and had it only get
+ * buckets if it were not provided
+ *
  * @param {Object} cmrFile - CMR file object (from getCmrXMLFiles)
  * @param {Array<Object>} files - List of granule file objects for the CMR object
  * @param {string} distEndpoint - distribution endpoint
@@ -279,7 +317,6 @@ async function moveFilesForAllGranules(
  */
 async function updateCMRFileAccessURLs(cmrFile, files, distEndpoint, bucketsConfig) {
   const updatedCmrFile = files.find((f) => isECHO10File(f.filename));
-  await moveGranuleFile(parseS3Uri(cmrFile.filename), parseS3Uri(updatedCmrFile.filename));
   return updateEcho10XMLMetadata(updatedCmrFile, files, distEndpoint, bucketsConfig);
 }
 
@@ -296,8 +333,9 @@ async function updateCMRFileAccessURLs(cmrFile, files, distEndpoint, bucketsConf
 async function updateEachCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoint, bucketsConfig) {
   return Promise.all(cmrFiles.map(async (cmrFile) => {
     const granule = granulesObject[cmrFile.granuleId];
+    const updatedCmrFile = granule.files.find((f) => isECHO10File(f.filename));
     //TODO [MHS, 2019-02-06] we have the granule id and can reconcile maybe?
-    return updateCMRFileAccessURLs(cmrFile, granule.files, distEndpoint, bucketsConfig);
+    return updateCMRFileAccessURLs(updatedCmrFile, granule.files, distEndpoint, bucketsConfig);
   }));
 }
 
@@ -375,6 +413,7 @@ async function moveGranules(event) {
   let movedGranules;
   // allows us to disable moving the files
   if (moveStagedFiles) {
+    // update allGranules with aspirational metadata (where the file should end up after moving.)
     granulesToMove = await updateGranuleMetadata(allGranules, collection, cmrFiles, bucketsConfig);
 
     // move files from staging location to final location
