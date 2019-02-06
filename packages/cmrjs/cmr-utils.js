@@ -14,6 +14,7 @@ const {
   log
 } = require('@cumulus/common');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
+const { omit } = require('@cumulus/common/util');
 
 const { CMR } = require('./cmr');
 const { getUrl, xmlParseOptions } = require('./utils');
@@ -223,17 +224,13 @@ async function bucketsConfigDefaults() {
   return bucketConfig(process.env.system_bucket, process.env.stackName);
 }
 
-
 /**
- * returns a function that will remove the input key from an object passed to it.
- * @param {Object} key - key to remove from object
- * @returns {function} fucntion that will remove desired key from object.
+ * returns a function that will remove the 'Type' key from an object passed to it.
+ * @returns {function} fucntion that will remove the 'Type' key from object.
  */
-function stripKeyFromObject(key) {
-  return function omit(object) {
-    /* eslint-disable-next-line no-unused-vars */
-    const { [key]: junk, ...objectWithoutKey } = object;
-    return objectWithoutKey;
+function stripTypeFromObject() {
+  return function omitType(object) {
+    return omit(object, 'Type');
   };
 }
 
@@ -390,7 +387,7 @@ function getCreds() {
  */
 async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   let newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
-  newURLs = newURLs.map(stripKeyFromObject('Type'));
+  newURLs = newURLs.map(stripTypeFromObject);
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
 
   // add/replace the OnlineAccessUrls
