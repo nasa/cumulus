@@ -278,9 +278,11 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets) {
  */
 function onlineAccessURLsToRemove(files, buckets) {
   const urls = [];
+  const typesToKeep = ['public', 'protected'];
+
   files.forEach((file) => {
     const bucketType = buckets.type(file.bucket);
-    if (bucketType === 'private') {
+    if (!typesToKeep.includes(bucketType)) {
       urls.push({ URL: file.filepath });
     }
   });
