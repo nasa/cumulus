@@ -225,16 +225,6 @@ async function bucketsConfigDefaults() {
 }
 
 /**
- * returns a function that will remove the 'Type' key from an object passed to it.
- * @returns {function} fucntion that will remove the 'Type' key from object.
- */
-function stripTypeFromObject() {
-  return function omitType(object) {
-    return omit(object, 'Type');
-  };
-}
-
-/**
  * Construct a list of online access urls.
  *
  * @param {Array<Object>} files - array of file objects
@@ -387,7 +377,7 @@ function getCreds() {
  */
 async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   let newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
-  newURLs = newURLs.map(stripTypeFromObject);
+  newURLs = newURLs.map((urlObj) => omit(urlObj, 'Type'));
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
 
   // add/replace the OnlineAccessUrls
