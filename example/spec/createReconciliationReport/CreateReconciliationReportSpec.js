@@ -59,8 +59,8 @@ async function deleteReconciliationReports(systemBucket, stackName) {
 describe('When there are granule differences and granule reconciliation is run', () => {
   let report;
   let extraS3Object;
-  let extraDynamoDbItem;
-  let extraCumulusCollectionItem;
+  let extraFileInDb;
+  let extraCumulusCollection;
   let protectedBucket;
 
   beforeAll(async () => {
@@ -75,7 +75,7 @@ describe('When there are granule differences and granule reconciliation is run',
     await s3().putObject(Object.assign({ Body: 'delete-me' }, extraS3Object)).promise();
 
     // Write an extra file to the DynamoDB Files table
-    extraDynamoDbItem = {
+    extraFileInDb = {
       bucket: { S: protectedBucket },
       key: { S: randomString() },
       granuleId: { S: randomString() }
@@ -83,18 +83,18 @@ describe('When there are granule differences and granule reconciliation is run',
 
     await dynamodb().putItem({
       TableName: filesTableName(config.stackName),
-      Item: extraDynamoDbItem
+      Item: extraFileInDb
     }).promise();
 
     // Write an extra collection to the Collections table
-    extraCumulusCollectionItem = {
+    extraCumulusCollection = {
       name: { S: randomString() },
       version: { S: randomString() }
     };
 
     await dynamodb().putItem({
       TableName: collectionsTableName(config.stackName),
-      Item: extraCumulusCollectionItem
+      Item: extraCumulusCollection
     }).promise();
 
     // Run the report
@@ -115,13 +115,13 @@ describe('When there are granule differences and granule reconciliation is run',
   });
 
   it('generates a report showing cumulus files that are in the DynamoDB Files table but not in S3', () => {
-    const extraFileUri = buildS3Uri(extraDynamoDbItem.bucket.S, extraDynamoDbItem.key.S);
+    const extraFileUri = buildS3Uri(extraFileInDb.bucket.S, extraFileInDb.key.S);
     const extraDbUris = report.filesInCumulus.onlyInDynamoDb.map((i) => i.uri);
     expect(extraDbUris).toContain(extraFileUri);
   });
 
   it('generates a report showing collections that are in the Cumulus but on in CMR', () => {
-    const extraCollection = constructCollectionId(extraCumulusCollectionItem.name.S, extraCumulusCollectionItem.version.S);
+    const extraCollection = constructCollectionId(extraCumulusCollection.name.S, extraCumulusCollection.version.S);
     expect(report.collectionsInCumulusCmr.onlyInCumulus).toContain(extraCollection);
   });
 
@@ -137,9 +137,16 @@ describe('When there are granule differences and granule reconciliation is run',
       dynamodb().deleteItem({
         TableName: filesTableName(config.stackName),
         Key: {
-          bucket: extraDynamoDbItem.bucket,
-          key: extraDynamoDbItem.key
+          bucket: extraFileInDb.bucket,
+          key: extraFileInDb.key
         }
-      }).promise()
+      }).promise(),
+      dynamodb().deleteItem({
+        TableName: collectionsTableName(config.stackName),
+        Key: {
+          name: extraCumulusCollection.name,
+          version: extraCumulusCollection.version
+        }
+      }).promise(),
     ]));
 });
