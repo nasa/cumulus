@@ -4,7 +4,7 @@ Cumulus has a comprehensive set of integration tests that tests the framework on
 ## Running integration tests on AWS
 
 - Run `./bin/prepare`
-- Deploy your instance integrations on aws and run tests by following the steps [here](../../example/README.md)
+- Deploy your instance integrations on aws and run tests by following the steps [here](https://github.com/nasa/cumulus/tree/master/example/README.md)
 
 ## Running integration tests on Travis CI
 
