@@ -50,9 +50,6 @@
       }
     ]
   },
-  "OrbitCalculatedSpatialDomains": [
-    null
-  ],
   "TemporalExtent": {
     "RangeDateTime": {
       "BeginningDateTime": "2016-01-09T11:40:45.032Z",
