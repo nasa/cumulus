@@ -8,7 +8,7 @@ const differenceWith = require('lodash.differencewith');
 const isEqual = require('lodash.isequal');
 const {
   models: {
-    Execution, Granule, Collection, Provider
+    Execution, Collection, Provider
   }
 } = require('@cumulus/api');
 const {
@@ -91,7 +91,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const collectionModel = new Collection();
   process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
   const providerModel = new Provider();
-  let executionName;
 
   beforeAll(async () => {
     const collectionJson = JSON.parse(fs.readFileSync(`${collectionsDir}/s3_MOD09GQ_006.json`, 'utf8'));
