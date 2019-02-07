@@ -327,7 +327,7 @@ class CMRSearchConceptQueue {
    * This does not remove the object from the queue.  When there are no more
    * items in the queue, returns 'null'.
    *
-   * @returns {Promise<Object>} - an item from the DynamoDB table
+   * @returns {Promise<Object>} - an item from the CMR search
    */
   async peek() {
     if (this.items.length === 0) await this.fetchItems();
@@ -339,7 +339,7 @@ class CMRSearchConceptQueue {
    *
    * When there are no more items in the queue, returns 'null'.
    *
-   * @returns {Promise<Object>} - an item from the DynamoDB table
+   * @returns {Promise<Object>} - an item from the CMR search
    */
   async shift() {
     if (this.items.length === 0) await this.fetchItems();
@@ -347,7 +347,7 @@ class CMRSearchConceptQueue {
   }
 
   /**
-   * Query the DynamoDB API to get the next batch of items
+   * Query the CMR API to get the next batch of items
    *
    * @returns {Promise<undefined>} - resolves when the queue has been updated
    * @private
