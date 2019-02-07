@@ -11,7 +11,7 @@
     "debug": "NODE_ENV=test node --inspect-brk node_modules/ava/profile.js --serial tests/*.js"
   },
   "ava": {
-    "files": "tests/*.js",
+    "files": "tests/**/*.js",
     "serial": true
   },
   "nyc": {

@@ -16,7 +16,7 @@ const {
 const { getMetadata } = require('..');
 
 const granuleId = 'MYD13Q1.A2017297.h19v10.006.2017313221203';
-const clientId = 'test-client';
+const clientId = 'cumulus-test-client';
 
 const alreadyDeleted = `Concept with native-id [${granuleId}] and concept-id [G1222482315-CUMULUS] is already deleted.`;
 
@@ -69,7 +69,7 @@ test('deleteConcept returns expected result when granule is in CMR', async (t) =
   statusCode = 200;
   const stub = sinon.stub(got, 'delete').callsFake(stubclient.delete);
 
-  const result = await deleteConcept('granules', granuleId, 'CUMULUS', {});
+  const result = await deleteConcept('granule', granuleId, 'CUMULUS', {});
   stub.restore();
   t.is(result.result['concept-id'], 'G1222482316-CUMULUS');
 });
@@ -77,39 +77,35 @@ test('deleteConcept returns expected result when granule is in CMR', async (t) =
 test('deleteConcept returns success when granule is not found ', async (t) => {
   statusCode = 404;
   const stub = sinon.stub(got, 'delete').callsFake(stubclient.delete);
-  return deleteConcept('granules', granuleId, 'CUMULUS', {})
-    .then(() => {
-      stub.restore();
-      t.pass();
-    })
-    .catch(() => {
-      stub.restore();
-      t.fail();
-    });
+  try {
+    await deleteConcept('granule', granuleId, 'CUMULUS', {});
+    t.pass();
+  }
+  catch (error) {
+    t.fail();
+  }
+  stub.restore();
 });
 
-test('deleteConcept throws error when request is bad', (t) => {
+test('deleteConcept throws error when request is bad', async (t) => {
   statusCode = 400;
   const stub = sinon.stub(got, 'delete').callsFake(stubclient.delete);
-  return deleteConcept('granules', granuleId, 'CUMULUS', {})
-    .then(() => {
-      stub.restore();
-      t.fail();
-    })
-    .catch((error) => {
-      stub.restore();
-      t.true(error.toString().includes('CMR error message: "Bad request"'));
-    });
+  try {
+    await deleteConcept('granule', granuleId, 'CUMULUS', {});
+    t.fail();
+  }
+  catch (error) {
+    t.true(error.toString().includes('CMR error message: "Bad request"'));
+  }
+  stub.restore();
 });
 
 test('get CMR metadata, success', async (t) => {
   statusCode = 200;
   const stub = sinon.stub(got, 'get').callsFake(stubclient.getCmrData);
 
-  await getMetadata('fakeLink')
-    .then((response) => {
-      t.is(response.title, 'MOD09GQ.A2016358.h13v04.006.2016360104606');
-    });
+  const response = await getMetadata('fakeLink');
+  t.is(response.title, 'MOD09GQ.A2016358.h13v04.006.2016360104606');
 
   stub.restore();
 });
@@ -118,10 +114,8 @@ test('get CMR metadata, fail', async (t) => {
   statusCode = 404;
   const stub = sinon.stub(got, 'get').callsFake(stubclient.getCmrData);
 
-  await getMetadata('fakeLink')
-    .then((response) => {
-      t.is(response, null);
-    });
+  const response = await getMetadata('fakeLink');
+  t.is(response, null);
 
   stub.restore();
 });
@@ -173,8 +167,8 @@ test('ingestConcept request includes CMR client id', async (t) => {
   // intercept validate
   const noPost = sinon.stub(got, 'post').callsFake(() => gotResponses[200]);
 
-  await ingestConcept('granules', '<Granule><GranuleUR>granule1</GranuleUR></Granule>', 'Granule.GranuleUR', 'CUMULUS', { 'Client-Id': clientId })
-    .then(() => t.is(request.headers['Client-Id'], clientId));
+  await ingestConcept('granule', '<Granule><GranuleUR>granule1</GranuleUR></Granule>', 'Granule.GranuleUR', 'CUMULUS', { 'Client-Id': clientId });
+  t.is(request.headers['Client-Id'], clientId);
 
   stub.restore();
   noPost.restore();
@@ -187,8 +181,8 @@ test('deleteConcept request includes CMR client id', async (t) => {
     return gotResponses[200];
   });
 
-  await deleteConcept('granules', granuleId, 'CUMULUS', { 'Client-Id': clientId })
-    .then(() => t.is(request.headers['Client-Id'], clientId));
+  await deleteConcept('granule', granuleId, 'CUMULUS', { 'Client-Id': clientId });
+  t.is(request.headers['Client-Id'], clientId);
 
   stub.restore();
 });
@@ -200,7 +194,25 @@ test('searchConcept request includes CMR client id', async (t) => {
     return { body: { feed: { entry: [] } }, headers: { 'cmr-hits': 0 } };
   });
 
-  await searchConcept('granules', {}, [], { 'Client-Id': clientId }).then(() => t.is(request.headers['Client-Id'], clientId));
+  await searchConcept('granule', {}, [], { 'Client-Id': clientId });
+  t.is(request.headers['Client-Id'], clientId);
 
   stub.restore();
+});
+
+test('getHeaders returns correct Content-type for UMMG metadata', (t) => {
+  const cmrInstance = new CMR('provider', 'clientID', 'username', 'password');
+  const isUMMG = true;
+  const headers = cmrInstance.getHeaders(null, isUMMG);
+  console.log(headers);
+  t.regex(headers['Content-type'], new RegExp('application/vnd\.nasa\.cmr\.umm[+]json'));
+  t.is(headers.Accept, 'application/json');
+});
+
+test('getHeaders returns correct Content-type for xml metadata by default', (t) => {
+  const cmrInstance = new CMR('provider', 'clientID', 'username', 'password');
+  const headers = cmrInstance.getHeaders();
+  console.log(headers);
+  t.regex(headers['Content-type'], new RegExp('application/echo'));
+  t.is(headers.Accept, undefined);
 });
