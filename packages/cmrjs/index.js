@@ -18,7 +18,7 @@ const {
 } = require('./utils');
 const {
   getGranuleId,
-  getCmrXMLFiles,
+  getCmrFiles,
   isECHO10File,
   metadataObjectFromCMRXMLFile,
   publishECHO10XML2CMR,
@@ -78,7 +78,7 @@ module.exports = {
   CMR,
   ValidationError,
   deleteConcept,
-  getCmrXMLFiles,
+  getCmrFiles,
   getFullMetadata,
   getGranuleId,
   getHost,

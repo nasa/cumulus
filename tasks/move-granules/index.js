@@ -14,7 +14,7 @@ const {
 } = require('@cumulus/ingest/granule');
 
 const {
-  getCmrXMLFiles,
+  getCmrFiles,
   getGranuleId,
   isECHO10File,
   metadataObjectFromCMRXMLFile,
@@ -369,7 +369,7 @@ async function moveGranules(event) {
   // TODO [MHS, 2019-02-05] this grabs the cmr xml files and creates an object
   // with the filename and granuleId attatched.
   // rename to getCMRFiles and update all docs.
-  const cmrFiles = getCmrXMLFiles(inputFileList, granuleIdExtractionRegex);
+  const cmrFiles = getCmrFiles(inputFileList, granuleIdExtractionRegex);
 
   const allGranules = mergeInputFilesWithInputGranules(
     inputFileList, inputGranules, granuleIdExtractionRegex
