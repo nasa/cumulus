@@ -409,6 +409,8 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
  * @param {Array<Object>} files - array of file objects
  * @param {string} distEndpoint - distribution enpoint from config
  * @param {boolean} published - indicate if publish is needed
+ * @param {BucketsConfig} inBuckets - BucketsConfig instance if available, will
+ *                                    default one build with s3 stored config.
  * @returns {Promise} returns promise to publish metadata to CMR Service
  *                    or resolved promise if published === false.
  */

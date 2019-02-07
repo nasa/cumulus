@@ -2,7 +2,6 @@
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { DuplicateFile, InvalidArgument } = require('@cumulus/common/errors');
-const { omit } = require('@cumulus/common/util');
 const get = require('lodash.get');
 const clonedeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
@@ -168,7 +167,8 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
  * @param {string} sourceBucket - source bucket location of files
  * @param {string} duplicateHandling - how to handle duplicate files
  * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
- * @param {boolean} markDuplicates - Override to handle cmr metadata files that shouldn't be marked as duplicates
+ * @param {boolean} markDuplicates - Override to handle cmr metadata files that
+                                     shouldn't be marked as duplicates
  * @returns {Array<Object>} returns the file moved and the renamed existing duplicates if any
  */
 async function moveFileRequest(
