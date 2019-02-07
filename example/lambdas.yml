@@ -6,7 +6,6 @@ CNMToCMA:
   s3Source:
     bucket: '{{buckets.shared.name}}'
     key: daacs/podaac/cnmToGranule-1539697831000.zip
-    uniqueIdentifier: '1539697831000'
   useMessageAdapter: false
   launchInVpc: true
 CnmResponse:
@@ -18,7 +17,6 @@ CnmResponse:
   s3Source:
     bucket: '{{buckets.shared.name}}'
     key: daacs/podaac/cnmResponse-1539812129616.zip
-    uniqueIdentifier: '1539812129616'
   launchInVpc: true
 DiscoverGranules:
   handler: index.handler

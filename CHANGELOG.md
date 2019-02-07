@@ -11,14 +11,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - CUMULUS-1103 Compare the collection holdings in CMR with Cumulus' internal data store
 
 - CUMULUS-678
+  - Added support for UMMG json v1.4 metadata files.
   `reconcileCMRMetadata` added to `@cumulus/cmrjs` to update metadata record with new file locations.
   `@cumulus/common/errors` adds two new error types `CMRMetaFileNotFound` and `InvalidArgument`.
   `@cumulus/common/test-utils` adds new function `randomId` to create a random string with id to help in debugging.
   `@cumulus/common/BucketsConfig` adds a new helper class `BucketsConfig` for working with bucket stack configuration and bucket names.
   `@cumulus/common/aws` adds new fucntion `s3PutObjectTagging` as a convenience for the aws  [s3().putObjectTagging](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property) function.
   `@cumulus/cmrjs` Adds:
-      - `constructOnlineAccessUrls` - Create list of correct URLs for echo10 metadata.
-	  -	`isECHO10File` - Identify an echo10 metadata file.
+      - `isECHO10File` - Identify an echo10 metadata file.
       - `metadataObjectFromCMRXMLFile` Read and parse CMR XML file from s3.
       - `updateEcho10XMLMetadata` Modify a cmr.xml file with updated information.
       - `updateCMRMetadata` Modify a cmr metadata file with updated information.
@@ -225,8 +225,8 @@ Call `Consumer.consume()` instead of `Consume.read()`.
     AsyncOperations table in DynamoDB.
 - **CUMULUS-851** - Added workflow lambda versioning feature to allow in-flight workflows to use lambda versions that were in place when a workflow was initiated
     - Updated Kes custom code to remove logic that used the CMA file key to determine template compilation logic.  Instead, utilize a `customCompilation` template configuration flag to indicate a template should use Cumulus's kes customized methods instead of 'core'.
-	- Added `useWorkflowLambdaVersions` configuration option to enable the lambdaVersioning feature set.   **This option is set to true by default** and should be set to false to disable the feature.
-	- Added uniqueIdentifier configuration key to S3 sourced lambdas to optionally support S3 lambda resource versioning within this scheme. This key must be unique for each modified version of the lambda package and must be updated in configuration each time the source changes.
+    - Added `useWorkflowLambdaVersions` configuration option to enable the lambdaVersioning feature set.   **This option is set to true by default** and should be set to false to disable the feature.
+    - Added uniqueIdentifier configuration key to S3 sourced lambdas to optionally support S3 lambda resource versioning within this scheme. This key must be unique for each modified version of the lambda package and must be updated in configuration each time the source changes.
     - Added a new nested stack template that will create a `LambdaVersions` stack that will take lambda parameters from the base template, generate lambda versions/aliases and return outputs with references to the most 'current' lambda alias reference, and updated 'core' template to utilize these outputs (if `useWorkflowLambdaVersions` is enabled).
 
 - Created a `@cumulus/api/lib/OAuth2` interface, which is implemented by the

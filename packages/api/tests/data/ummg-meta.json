@@ -1,0 +1,60 @@
+{
+  "RelatedUrls": [
+    {
+      "URL": "https://8n7ovu33kh.execute-api.us-west-2.amazonaws.com/dev/podaac-dev-cumulus-protected/L0A_RAD_RAW_product_0017-of-0020.h5",
+      "Type": "GET DATA",
+      "Description": "File to download"
+    },
+    {
+      "URL": "https://podaac-dev-cumulus-public.s3.amazonaws.com/L0A_RAD_RAW_product_0017-of-0020.cmr.xml",
+      "Type": "GET DATA",
+      "Description": "File to download"
+    }
+  ],
+  "SpatialExtent": {
+    "HorizontalSpatialDomain": {
+      "Geometry": {
+        "BoundingRectangles": [
+          {
+            "WestBoundingCoordinate": -180.0,
+            "EastBoundingCoordinate": 180.0,
+            "NorthBoundingCoordinate": 90.0,
+            "SouthBoundingCoordinate": -90.0
+          }
+        ]
+      }
+    }
+  },
+  "ProviderDates": [
+    {
+      "Date": "2018-12-19T17:30:31.424Z",
+      "Type": "Insert"
+    },
+    {
+      "Date": "2018-12-19T17:30:31.498Z",
+      "Type": "Update"
+    }
+  ],
+  "CollectionReference": {
+    "ShortName": "L0A_RAD_RAW",
+    "Version": "1"
+  },
+  "DataGranule": {
+    "DayNightFlag": "Unspecified",
+    "ProductionDateTime": "2016-01-09T11:40:45.032Z",
+    "ArchiveAndDistributionInformation": [
+      {
+        "Name": "Not provided",
+        "Size": 1.009857177734375,
+        "SizeUnit": "NA"
+      }
+    ]
+  },
+  "TemporalExtent": {
+    "RangeDateTime": {
+      "BeginningDateTime": "2016-01-09T11:40:45.032Z",
+      "EndingDateTime": "2016-01-09T11:41:12.027Z"
+    }
+  },
+  "GranuleUR": "L0A_RAD_RAW_product_0017-of-0020"
+}
