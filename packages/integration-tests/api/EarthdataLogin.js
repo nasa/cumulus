@@ -41,7 +41,10 @@ async function getEarthdataLoginRedirectResponse({
 
   // Make request to login to Earthdata.
   const redirectUrl = await got.post(authorizeUrl, requestOptions)
-    .then((res) => res.headers.location);
+    .then((res) => {
+      console.log(res.req._headers);
+      return res.headers.location;
+    });
 
   // Make request to redirect URL to exchange Earthdata authorization code
   // for access token.
