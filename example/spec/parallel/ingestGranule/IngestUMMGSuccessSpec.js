@@ -5,7 +5,6 @@ const urljoin = require('url-join');
 const got = require('got');
 const cloneDeep = require('lodash.clonedeep');
 const differenceWith = require('lodash.differencewith');
-const includes = require('lodash.includes');
 const isEqual = require('lodash.isequal');
 const {
   models: {
@@ -14,11 +13,8 @@ const {
 } = require('@cumulus/api');
 const {
   aws: {
-    s3,
     getS3Object,
-    parseS3Uri,
-    deleteS3Object,
-    s3ObjectExists
+    parseS3Uri
   },
   constructCollectionId
 } = require('@cumulus/common');
@@ -37,7 +33,8 @@ const {
   deleteFolder,
   createTimestampedTestId,
   createTestDataPath,
-  createTestSuffix
+  createTestSuffix,
+  templateFile
 } = require('../../helpers/testUtils');
 
 const {
@@ -45,15 +42,16 @@ const {
   loadFileWithUpdatedGranuleIdPathAndCollection
 } = require('../../helpers/granuleUtils');
 
-const { getConfigObject } = require('../../helpers/configUtils');
-
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const workflowName = 'IngestAndPublishGranule';
 
-const workflowConfigFile = './workflows/sips.yml';
-
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
+
+const templatedOutputPayloadFilename = templateFile({
+  inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.output.payload.template.json',
+  config: config[workflowName].IngestGranuleOutput
+});
 
 const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
@@ -68,7 +66,7 @@ async function getUmmJs(fileLocation) {
   return JSON.parse(ummFile.Body.toString());
 }
 
-xdescribe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
+describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const testId = createTimestampedTestId(config.stackName, 'IngestGranuleSuccess');
   const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
@@ -78,14 +76,15 @@ xdescribe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
   const provider = { id: `s3_provider${testSuffix}` };
   const cumulusDocUrl = 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme';
+  const newCollectionId = constructCollectionId(collection.name, collection.version);
   let workflowExecution = null;
   let inputPayload;
+  let expectedPayload;
   let postToCmrOutput;
   let s3ummJsonFileLocation;
   let granule;
 
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-  const granuleModel = new Granule();
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
   const executionModel = new Execution();
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
@@ -120,6 +119,9 @@ xdescribe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     const granuleId = inputPayload.granules[0].granuleId;
 
+    expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
+    expectedPayload.granules[0].dataType += testSuffix;
+
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
@@ -127,8 +129,10 @@ xdescribe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       collection,
       provider,
       inputPayload,
-      { cmrFileType: 'ummg1.4',
-        additionalUrls: [cumulusDocUrl] }
+      {
+        cmrFileType: 'ummg1.4',
+        additionalUrls: [cumulusDocUrl]
+      }
     );
   });
 
@@ -204,7 +208,6 @@ xdescribe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('publishes the granule metadata to CMR', () => {
-      const granule = postToCmrOutput.payload.granules[0];
       const result = conceptExists(granule.cmrLink);
 
       expect(granule.published).toEqual(true);
@@ -231,7 +234,6 @@ xdescribe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     let file;
     let destinationKey;
     let destinations;
-    let moveGranuleResponse;
     let originalUmm;
 
     beforeAll(async () => {
@@ -254,8 +256,6 @@ xdescribe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         granuleId: inputPayload.granules[0].granuleId,
         destinations
       });
-
-      const responseBody = JSON.parse(moveGranuleResponse.body);
 
       expect(moveGranuleResponse.statusCode).toEqual(200);
     });
