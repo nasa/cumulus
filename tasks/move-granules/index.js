@@ -2,6 +2,7 @@
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { DuplicateFile, InvalidArgument } = require('@cumulus/common/errors');
+const { omit } = require('@cumulus/common/util');
 const get = require('lodash.get');
 const clonedeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
@@ -167,36 +168,16 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
  * @param {string} sourceBucket - source bucket location of files
  * @param {string} duplicateHandling - how to handle duplicate files
  * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
+ * @param {boolean} markDuplicates - Override to handle cmr metadata files that shouldn't be marked as duplicates
  * @returns {Array<Object>} returns the file moved and the renamed existing duplicates if any
  */
-async function moveCmrFileRequest(file, sourceBucket, bucketsConfig) {
-  const fileStagingDir = file.fileStagingDir || 'file-staging';
-  const source = {
-    Bucket: sourceBucket,
-    Key: `${fileStagingDir}/${file.name}`
-  };
-
-  const target = {
-    Bucket: file.bucket,
-    Key: file.filepath
-  };
-  const options = (bucketsConfig.type(file.bucket).match('public')) ? { ACL: 'public-read' } : null;
-  await moveGranuleFile(source, target, options);
-  delete file.fileStagingDir;
-  return file;
-}
-
-/**
- * move file from source bucket to target location, and return the file moved.
- * In case of 'version' duplicateHandling, also return the renamed files.
- *
- * @param {Object} file - granule file to be moved
- * @param {string} sourceBucket - source bucket location of files
- * @param {string} duplicateHandling - how to handle duplicate files
- * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
- * @returns {Array<Object>} returns the file moved and the renamed existing duplicates if any
- */
-async function moveFileRequest(file, sourceBucket, duplicateHandling, bucketsConfig) {
+async function moveFileRequest(
+  file,
+  sourceBucket,
+  duplicateHandling,
+  bucketsConfig,
+  markDuplicates = true
+) {
   const fileStagingDir = file.fileStagingDir || 'file-staging';
   const source = {
     Bucket: sourceBucket,
@@ -215,7 +196,7 @@ async function moveFileRequest(file, sourceBucket, duplicateHandling, bucketsCon
   const s3ObjAlreadyExists = await s3ObjectExists(target);
   log.debug(`file ${target.Key} exists in ${target.Bucket}: ${s3ObjAlreadyExists}`);
 
-  if (s3ObjAlreadyExists) fileMoved.duplicate_found = true;
+  if (s3ObjAlreadyExists && markDuplicates) fileMoved.duplicate_found = true;
 
   // Have to throw DuplicateFile and not WorkflowError, because the latter
   // is not treated as a failure by the message adapter.
@@ -291,7 +272,7 @@ async function moveFilesForAllGranules(
     );
     const cmrFilesMoved = await Promise.all(
       cmrFiles.map(
-        (file) => moveCmrFileRequest(file, sourceBucket, bucketsConfig)
+        (file) => moveFileRequest(file, sourceBucket, 'replace', bucketsConfig, false)
       )
     );
     granule.files = flatten(filesMoved).concat(flatten(cmrFilesMoved));
