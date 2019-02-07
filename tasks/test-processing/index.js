@@ -20,7 +20,8 @@ async function fakeProcessing(event) {
     event.input.granules,
     collection,
     event.config.bucket,
-    event.config.cmrFileType
+    event.config.cmrFileType,
+    event.config.additionalUrls
   );
 }
 

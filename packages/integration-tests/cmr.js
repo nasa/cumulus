@@ -75,13 +75,6 @@ const sampleEcho10Granule = {
 };
 
 const sampleUmmGranule = {
-  RelatedUrls: [
-    {
-      URL: 'https://8n7ovu33kh.execute-api.us-west-2.amazonaws.com/dev/podaac-dev-cumulus-protected/L0A_RAD_RAW_product_0017-of-0020.h5',
-      Type: 'GET DATA',
-      Description: 'File to download'
-    }
-  ],
   SpatialExtent: {
     HorizontalSpatialDomain: {
       Geometry: {
@@ -196,10 +189,11 @@ async function getOnlineResources(cmrLink) {
  * @param {Object} granule - granule object
  * @param {Object} collection - collection object
  * @param {string} bucket - bucket to save the xml file to
+ * @param {Array<string>} additionalUrls - URLs to convert to online resources
  * @returns {Array<string>} - List of granule files including the created
  * CMR xml files
  */
-async function generateAndStoreCmrXml(granule, collection, bucket) {
+async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrls) {
   const xmlObject = sampleEcho10Granule;
   xmlObject.Granule.GranuleUR = granule.granuleId;
 
@@ -210,10 +204,14 @@ async function generateAndStoreCmrXml(granule, collection, bucket) {
 
   const granuleFiles = granule.files.map((f) => f.filename);
 
-  xmlObject.Granule.OnlineAccessURLs.OnlineAccessURL = granuleFiles.map((f) => ({
-    URL: f,
-    URLDescription: 'File to download'
-  }));
+  if (additionalUrls) {
+    xmlObject.Granule.OnlineAccessURLs = additionalUrls.map((url) => ({
+      OnlineAccessURL: {
+        URL: url,
+        URLDescription: 'File to download'
+      }
+    }));
+  }
 
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(xmlObject);
@@ -244,10 +242,11 @@ async function generateAndStoreCmrXml(granule, collection, bucket) {
  * @param {Object} granule - granule object
  * @param {Object} collection - collection object
  * @param {string} bucket - bucket to save the xml file to
+ * @param {Array<string>} additionalUrls - URLs to convert to related urls
  * @returns {Array<string>} - List of granule files including the created
  * CMR files
  */
-async function generateAndStoreCmrUmmJson(granule, collection, bucket) {
+async function generateAndStoreCmrUmmJson(granule, collection, bucket, additionalUrls) {
   const jsonObject = sampleUmmGranule;
   jsonObject.GranuleUR = granule.granuleId;
 
@@ -255,6 +254,13 @@ async function generateAndStoreCmrUmmJson(granule, collection, bucket) {
     ShortName: collection.name,
     Version: collection.version
   };
+
+  if (additionalUrls) {
+    jsonObject.RelatedUrls = additionalUrls.map((url) => ({
+      URL: url,
+      Type: 'GET DATA'
+    }));
+  }
 
   const stagingDir = granule.files[0].fileStagingDir;
 
@@ -286,9 +292,10 @@ async function generateAndStoreCmrUmmJson(granule, collection, bucket) {
  * @param {string} bucket - location to save the xmls to
  * @param {string} cmrFileType - CMR file type to generate. Options are echo10, ummg1.4, default
  * is echo10
+ * @param {Array<string>} additionalUrls - URLs to convert to online resources or related urls
  * @returns {Array<string>} list of S3 locations for CMR xml files
  */
-async function generateCmrFilesForGranules(granules, collection, bucket, cmrFileType) {
+async function generateCmrFilesForGranules(granules, collection, bucket, cmrFileType, additionalUrls) {
   let files;
 
   log.info(`Generating fake CMR file with type ${cmrFileType}`);
@@ -296,11 +303,11 @@ async function generateCmrFilesForGranules(granules, collection, bucket, cmrFile
   if (cmrFileType === 'ummg1.4') {
     // When we do UMM-G 1.5, we'll probably need to pass the file type into this function
     files = await Promise.all(granules.map((g) =>
-      generateAndStoreCmrUmmJson(g, collection, bucket)));
+      generateAndStoreCmrUmmJson(g, collection, bucket, additionalUrls)));
   }
   else {
     files = await Promise.all(granules.map((g) =>
-      generateAndStoreCmrXml(g, collection, bucket)));
+      generateAndStoreCmrXml(g, collection, bucket, additionalUrls)));
   }
 
   return [].concat(...files);
