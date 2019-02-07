@@ -28,6 +28,8 @@ async function getEarthdataLoginRedirectResponse({
   });
   const authorizeUrl = earthdataLoginClient.getAuthorizationUrl(state);
 
+  console.log(process.env.EARTHDATA_USERNAME);
+
   // Prepare request options for login to Earthdata.
   const auth = base64.encode(`${process.env.EARTHDATA_USERNAME}:${process.env.EARTHDATA_PASSWORD}`);
   const requestOptions = {
