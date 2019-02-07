@@ -131,6 +131,40 @@ async function validate(type, xml, identifier, provider) {
 }
 
 /**
+ * Posts a given xml string to the validate endpoint of CMR
+ * and promises true of valid.
+ *
+ * @param {string} ummMetadata - the UMM object
+ * @param {string} identifier - the document identifier
+ * @param {string} provider - the CMR provider
+ * @returns {Promise<boolean>} returns true if the document is valid
+ */
+async function validateUMMG(ummMetadata, identifier, provider) {
+  let result;
+  try {
+    result = await got.post(`${getUrl('validate', provider)}granule/${identifier}`, {
+      json: true,
+      body: ummMetadata,
+      headers: {
+        Accept: 'application/json',
+        'Content-type': 'application/vnd.nasa.cmr.umm+json;version=1.4'
+      }
+    });
+
+    if (result.statusCode === 200) {
+      return true;
+    }
+  }
+  catch (e) {
+    result = e.response;
+  }
+
+  throw new ValidationError(
+    `Validation was not successful, CMR error message: ${JSON.stringify(result)}`
+  );
+}
+
+/**
  * Returns IP address.
  *
  * For Lambdas which are launched into a private subnet, no public IP is available
@@ -197,5 +231,6 @@ module.exports = {
   hostId,
   updateToken,
   validate,
+  validateUMMG,
   xmlParseOptions
 };
