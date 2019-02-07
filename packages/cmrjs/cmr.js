@@ -346,7 +346,7 @@ class CMR {
 // loading them all into memory at once.  Handles paging.
 class CMRSearchConceptQueue {
   /**
-   * The constructor for the CMR class
+   * The constructor for the CMRSearchConceptQueue class
    *
    * @param {string} provider - the CMR provider id
    * @param {string} clientId - the CMR clientId
