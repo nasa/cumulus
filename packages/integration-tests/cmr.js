@@ -284,11 +284,24 @@ async function generateAndStoreCmrUmmJson(granule, collection, bucket) {
  * output
  * @param {Object} collection - collection object that includes name and version
  * @param {string} bucket - location to save the xmls to
+ * @param {string} cmrFileType - CMR file type to generate. Options are echo10, ummg1.4, default
+ * is echo10
  * @returns {Array<string>} list of S3 locations for CMR xml files
  */
-async function generateCmrFilesForGranules(granules, collection, bucket) {
-  const files = await Promise.all(granules.map((g) =>
-    generateAndStoreCmrXml(g, collection, bucket)));
+async function generateCmrFilesForGranules(granules, collection, bucket, cmrFileType) {
+  let files;
+
+  log.info(`Generating fake CMR file with type ${cmrFileType}`);
+
+  if (cmrFileType === 'ummg1.4') {
+    // When we do UMM-G 1.5, we'll probably need to pass the file type into this function
+    files = await Promise.all(granules.map((g) =>
+      generateAndStoreCmrUmmJson(g, collection, bucket)));
+  }
+  else {
+    files = await Promise.all(granules.map((g) =>
+      generateAndStoreCmrXml(g, collection, bucket)));
+  }
 
   return [].concat(...files);
 }
