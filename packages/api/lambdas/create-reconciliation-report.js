@@ -226,10 +226,6 @@ async function createReconciliationReport(params) {
     createReconciliationReportForBucket(bucket));
   const bucketReports = await Promise.all(promisedBucketReports);
 
-  // Create the full report
-  report.reportEndTime = moment.utc().toISOString();
-  report.status = 'SUCCESS';
-
   // compare CUMULUS internal holdings in s3 and database
   bucketReports.forEach((bucketReport) => {
     filesInCumulus.okFileCount += bucketReport.okFileCount;
@@ -242,6 +238,10 @@ async function createReconciliationReport(params) {
   const cumulusCmrReport = await reconciliationReportForCumulusCMR();
   report = Object.assign(report, cumulusCmrReport);
 
+  // Create the full report
+  report.reportEndTime = moment.utc().toISOString();
+  report.status = 'SUCCESS';
+
   // Write the full report to S3
   return s3().putObject({
     Bucket: systemBucket,
@@ -252,8 +252,10 @@ async function createReconciliationReport(params) {
 }
 
 function handler(event, _context, cb) {
-  // The event is used for tests
-  // Environment variables are used when run in AWS
+  // increase the limit of search result from CMR.searchCollections/searchGranules
+  process.env.CMR_LIMIT = process.env.CMR_LIMIT || 5000;
+  process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 200;
+
   return createReconciliationReport({
     systemBucket: event.systemBucket || process.env.system_bucket,
     stackName: event.stackName || process.env.stackName
