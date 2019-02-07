@@ -12,11 +12,12 @@ const {
   getUrl,
   updateToken,
   validate,
+  validateUMMG,
   xmlParseOptions
 } = require('./utils');
 
 const logDetails = {
-  file: 'lib/cmrjs/index.js',
+  file: 'lib/cmrjs/cmr.js',
   source: 'pushToCMR',
   type: 'processing'
 };
@@ -60,7 +61,6 @@ async function searchConcept(type, searchParams, previousResults = [], headers =
   deprecate('@cmrjs/searchConcept', '1.11.1', '@cmrjs/CMR.search(Collections|Granules)');
   return _searchConcept(type, searchParams, previousResults, headers);
 }
-
 
 /**
  * Posts a records of any kind (collection, granule, etc) to
@@ -217,15 +217,17 @@ class CMR {
    * Return object containing CMR request headers
    *
    * @param {string} [token] - CMR request token
+   * @param {boolean} isUMMG - boolean to determine content type of headers.
    * @returns {Object} CMR headers object
    */
-  getHeaders(token = null) {
+  getHeaders(token = null, isUMMG = false) {
+    const contentType = isUMMG ? 'application/vnd.nasa.cmr.umm+json;version=1.4' : 'application/echo10+xml';
     const headers = {
       'Client-Id': this.clientId,
-      'Content-type': 'application/echo10+xml'
-      // ummg: 'application/vnd.nasa.cmr.umm+json;version=1.4'  TODO [MHS, 2019-01-08]
+      'Content-type': contentType
     };
     if (token) headers['Echo-Token'] = token;
+    if (isUMMG) headers.Accept = 'application/json';
     return headers;
   }
 
@@ -249,6 +251,44 @@ class CMR {
   async ingestGranule(xml) {
     const headers = this.getHeaders(await this.getToken());
     return _ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
+  }
+
+  /**
+   * Adds/Updates UMMG json metadata in the CMR
+   *
+   * @param {Object} ummgMetadata - UMMG metadata object
+   * @returns {Promise<Object>} to the CMR response object.
+   */
+  async ingestUMMGranule(ummgMetadata) {
+    const isUMMG = true;
+    const headers = this.getHeaders(await this.getToken(), isUMMG);
+
+    const granuleId = ummgMetadata.GranuleUR || 'no GranuleId found on input metadata';
+    logDetails.granuleId = granuleId;
+
+    let response;
+    try {
+      await validateUMMG(ummgMetadata, granuleId, this.provider);
+
+      response = await got.put(
+        `${getUrl('ingest', this.provider)}granules/${granuleId}`,
+        {
+          json: true,
+          body: ummgMetadata,
+          headers
+        }
+      );
+
+      if (response.errors) {
+        throw new Error(`Failed to ingest, CMR Errors: ${response.errors}`);
+      }
+    }
+    catch (error) {
+      log.error(error, logDetails);
+      throw error;
+    }
+
+    return response;
   }
 
   /**
