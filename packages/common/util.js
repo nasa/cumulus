@@ -57,3 +57,20 @@ exports.uuid = require('uuid/v4');
  * @returns {undefined} undefined
  */
 exports.noop = () => {}; // eslint-disable-line lodash/prefer-noop
+
+/**
+ * Replacement for lodash.omit returns a shallow copy of input object
+ * with keys removed.
+ * (lodash.omit will be removed in v5.0.0)
+ * https://github.com/lodash/lodash/wiki/Roadmap#v500-2019
+ *
+ * @param {Object} objectIn - input object
+ * @param {(string|string[])} keys - key or list of keys to remove from object
+ * @returns {Object} copy of objectIn without keys attached.
+ */
+exports.omit = (objectIn, keys) => {
+  const keysToRemove = [].concat(keys);
+  const objectOut = { ...objectIn };
+  keysToRemove.forEach((key) => delete objectOut[key]);
+  return objectOut;
+};

@@ -61,5 +61,13 @@
       "data-cookbooks/choice-states",
       "data-cookbooks/cloudwatch-retention"
     ]
+  },
+  "Operator Docs": {
+    "About Operator Docs": [
+      "operator-docs/about-operator-docs"
+    ],
+    "Configuration": [
+      "operator-docs/update-cumulus-dependencies"
+    ]
   }
 }
