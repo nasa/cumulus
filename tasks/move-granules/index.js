@@ -18,7 +18,7 @@ const {
   getGranuleId,
   isECHO10File,
   metadataObjectFromCMRXMLFile,
-  updateEcho10XMLMetadata
+  updateCMRMetadata
 } = require('@cumulus/cmrjs');
 
 const {
@@ -270,9 +270,10 @@ async function moveFilesForAllGranules(
         (file) => moveFileRequest(file, sourceBucket, duplicateHandling, bucketsConfig)
       )
     );
+    const markDuplicates = false;
     const cmrFilesMoved = await Promise.all(
       cmrFiles.map(
-        (file) => moveFileRequest(file, sourceBucket, 'replace', bucketsConfig, false)
+        (file) => moveFileRequest(file, sourceBucket, 'replace', bucketsConfig, markDuplicates)
       )
     );
     granule.files = flatten(filesMoved).concat(flatten(cmrFilesMoved));
@@ -283,26 +284,7 @@ async function moveFilesForAllGranules(
 }
 
 /**
- * Updates a CMR file modifying/adding an OnlineResources/OnlineAccessURLs
- * element to the metadata for the new files locations.
- *
- * TODO [MHS, 2019-02-06] actually this moves the cmr file and then updates
- * metadata.  if we had already moved the file, we could probably call
- * updateCMRMetadata if we passed in buckets to that, and had it only get
- * buckets if it were not provided
- *
- * @param {Object} cmrFile - CMR file object (from getCmrXMLFiles)
- * @param {Array<Object>} files - List of granule file objects for the CMR object
- * @param {string} distEndpoint - distribution endpoint
- * @param {BucketsConfig} bucketsConfig - Stack BucketsConfig instance
- */
-async function updateCMRFileAccessURLs(cmrFile, files, distEndpoint, bucketsConfig) {
-  const updatedCmrFile = files.find((f) => isECHO10File(f.filename));
-  return updateEcho10XMLMetadata(updatedCmrFile, files, distEndpoint, bucketsConfig);
-}
-
-/**
- * Update each of the CMR files' onlineaccessurl fields to represent the new
+ * Update each of the CMR files' OnlineAccessURL fields to represent the new
  * file locations.
  *
  * @param {Array<Object>} cmrFiles - array of objects that include CMR xmls uris and granuleIds
@@ -313,10 +295,13 @@ async function updateCMRFileAccessURLs(cmrFile, files, distEndpoint, bucketsConf
  **/
 async function updateEachCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoint, bucketsConfig) {
   return Promise.all(cmrFiles.map(async (cmrFile) => {
-    const granule = granulesObject[cmrFile.granuleId];
+    const publish = false; // publish in publish-to-cmr step
+    const granuleId = cmrFile.granuleId;
+    const granule = granulesObject[granuleId];
     const updatedCmrFile = granule.files.find((f) => isECHO10File(f.filename));
-    //TODO [MHS, 2019-02-06] we have the granule id and can reconcile maybe?
-    return updateCMRFileAccessURLs(updatedCmrFile, granule.files, distEndpoint, bucketsConfig);
+    return updateCMRMetadata(
+      granuleId, updatedCmrFile, granule.files, distEndpoint, publish, bucketsConfig
+    );
   }));
 }
 
