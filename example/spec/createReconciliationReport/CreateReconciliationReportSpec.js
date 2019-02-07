@@ -120,12 +120,12 @@ describe('When there are granule differences and granule reconciliation is run',
     expect(extraDbUris).toContain(extraFileUri);
   });
 
-  it('generates a report showing collections that are in the Cumulus but on in CMR', () => {
+  it('generates a report showing collections that are in the Cumulus but not in CMR', () => {
     const extraCollection = constructCollectionId(extraCumulusCollection.name.S, extraCumulusCollection.version.S);
     expect(report.collectionsInCumulusCmr.onlyInCumulus).toContain(extraCollection);
   });
 
-  it('generates a report showing collections that are in the CMR but on in Cumulus', () => {
+  it('generates a report showing collections that are in the CMR but not in Cumulus', () => {
     // we know CMR has collections which are not in Cumulus
     expect(report.collectionsInCumulusCmr.onlyInCmr.length).toBeGreaterThan(0);
   });
