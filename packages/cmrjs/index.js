@@ -17,7 +17,6 @@ const {
   hostId
 } = require('./utils');
 const {
-  constructOnlineAccessUrls,
   getGranuleId,
   getCmrXMLFiles,
   isECHO10File,
@@ -78,7 +77,6 @@ async function getFullMetadata(cmrLink) {
 module.exports = {
   CMR,
   ValidationError,
-  constructOnlineAccessUrls,
   deleteConcept,
   getCmrXMLFiles,
   getFullMetadata,

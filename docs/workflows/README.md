@@ -104,7 +104,7 @@ AWS Step Functions permit [tasks](http://docs.aws.amazon.com/step-functions/late
 
 See the [Configuration File Schema](#collection-configuration-json-schema).
 
-For more details on Task Messages and Configuration, visit [Cumulus Configuration and Message Protocol](cumulus_configuration_and_message_protocol.md).
+For more details on Task Messages and Configuration, visit [Cumulus Configuration and Message Protocol](cumulus-task-message-flow.md).
 
 ### Ingest Deploy
 
