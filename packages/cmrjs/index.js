@@ -18,7 +18,6 @@ const {
   hostId
 } = require('./utils');
 const {
-  constructOnlineAccessUrls,
   getGranuleId,
   getCmrXMLFiles,
   isECHO10File,
@@ -80,7 +79,6 @@ module.exports = {
   CMR,
   CMRSearchConceptQueue,
   ValidationError,
-  constructOnlineAccessUrls,
   deleteConcept,
   getCmrXMLFiles,
   getFullMetadata,
