@@ -96,7 +96,7 @@ jobs:
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
-        # - npm install
+        - npm install
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - echo 'BOOTSTRAP FINISHED'
