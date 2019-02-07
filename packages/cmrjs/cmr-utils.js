@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const _get = require('lodash.get');
 const _set = require('lodash.set');
 const { promisify } = require('util');
 const urljoin = require('url-join');
@@ -13,9 +14,37 @@ const {
   log
 } = require('@cumulus/common');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
+const { omit } = require('@cumulus/common/util');
 
 const { CMR } = require('./cmr');
 const { getUrl, xmlParseOptions } = require('./utils');
+
+
+/**
+ * Instantiates a CMR instance for ingest of metadata
+ *
+ * @param {Object} creds - credentials needed to post to the CMR
+ * @param {string} systemBucket - bucket containing crypto keys.
+ * @param {string} stack - deployment stack name
+ * @returns {CMR} CMR instance.
+ */
+async function getCMRInstance(creds, systemBucket, stack) {
+  let password;
+  try {
+    password = await DefaultProvider.decrypt(creds.password, undefined, systemBucket, stack);
+  }
+  catch (error) {
+    log.error('Decrypting password failed, using unencrypted password', error);
+    password = creds.password;
+  }
+  const cmrInstance = new CMR(
+    creds.provider,
+    creds.clientId,
+    creds.username,
+    password
+  );
+  return cmrInstance;
+}
 
 /**
  * function for posting cmr xml files from S3 to CMR
@@ -29,25 +58,12 @@ const { getUrl, xmlParseOptions } = require('./utils');
  * @param {string} creds.clientId - the clientId used to generate CMR token
  * @param {string} creds.username - the CMR username
  * @param {string} creds.password - the encrypted CMR password
- * @param {string} bucket - the bucket name where public/private keys are stored
+ * @param {string} systemBucket - the bucket name where public/private keys are stored
  * @param {string} stack - the deployment stack name
  * @returns {Object} CMR's success response which includes the concept-id
  */
-async function publishECHO10XML2CMR(cmrFile, creds, bucket, stack) {
-  let password;
-  try {
-    password = await DefaultProvider.decrypt(creds.password, undefined, bucket, stack);
-  }
-  catch (error) {
-    log.error('Decrypting password failed, using unencrypted password', error);
-    password = creds.password;
-  }
-  const cmr = new CMR(
-    creds.provider,
-    creds.clientId,
-    creds.username,
-    password
-  );
+async function publishECHO10XML2CMR(cmrFile, creds, systemBucket, stack) {
+  const cmr = await getCMRInstance(creds, systemBucket, stack);
 
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(cmrFile.metadataObject);
@@ -59,6 +75,31 @@ async function publishECHO10XML2CMR(cmrFile, creds, bucket, stack) {
   return {
     granuleId: cmrFile.granuleId,
     filename: cmrFile.filename,
+    conceptId,
+    link: `${getUrl('search')}granules.json?concept_id=${res.result['concept-id']}`
+  };
+}
+
+
+/**
+ *
+ * @param {Object} ummgMetadata - UMM Granule json object
+ * @param {Object} creds - credentials needed to post to CMR service
+ * @param {string} systemBucket - bucket containing crypto keypair.
+ * @param {string} stack - stack deployment name
+ */
+async function publishUMMGJSON2CMR(ummgMetadata, creds, systemBucket, stack) {
+  const cmr = await getCMRInstance(creds, systemBucket, stack);
+
+  const granuleId = ummgMetadata.GranuleUR;
+
+  const res = await cmr.ingestUMMGranule(ummgMetadata);
+  const conceptId = res.result['concept-id'];
+
+  log.info(`Published UMMG ${granuleId} to the CMR. conceptId: ${conceptId}`);
+
+  return {
+    granuleId,
     conceptId,
     link: `${getUrl('search')}granules.json?concept_id=${res.result['concept-id']}`
   };
@@ -119,14 +160,25 @@ function isCMRFile(fileobject) {
 }
 
 /**
+ * return UMMG metadata object from CMR UMM-G json file
+ * @param {string} cmrFilename - s3 path to json file
+ * @returns {Object} CMR UMMG metadata object
+ */
+async function metadataObjectFromCMRJSONFile(cmrFilename) {
+  const { Bucket, Key } = aws.parseS3Uri(cmrFilename);
+  const obj = await aws.getS3Object(Bucket, Key);
+  return JSON.parse(obj.Body.toString());
+}
+
+/**
  * return metadata object from cmr echo10 XML file.
  * @param {string} cmrFilename
  * @returns {Object} cmr xml metadata as object.
  */
-const metadataObjectFromCMRXMLFile = async (cmrFilename) => {
+async function metadataObjectFromCMRXMLFile(cmrFilename) {
   const metadata = await getXMLMetadataAsString(cmrFilename);
   return parseXmlString(metadata);
-};
+}
 
 /**
  * returns a list of CMR xml file objects
@@ -176,7 +228,7 @@ async function bucketsConfigDefaults() {
  * Construct a list of online access urls.
  *
  * @param {Array<Object>} files - array of file objects
- * @param {string} distEndpoint - distribution enpoint from config
+ * @param {string} distEndpoint - distribution endpoint from config
  * @param {BucketsConfig} buckets -  Class instance
  * @returns {Array<{URL: string, URLDescription: string}>}
  *   returns the list of online access url objects
@@ -187,22 +239,42 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets) {
   files.forEach((file) => {
     const urlObj = {};
     const bucketType = buckets.type(file.bucket);
-
     if (bucketType === 'protected') {
       const extension = urljoin(file.bucket, `${file.filepath}`);
       urlObj.URL = urljoin(distEndpoint, extension);
       urlObj.URLDescription = 'File to download';
+      urlObj.Type = 'GET DATA';
       urls.push(urlObj);
     }
     else if (bucketType === 'public') {
       urlObj.URL = `https://${file.bucket}.s3.amazonaws.com/${file.filepath}`;
       urlObj.URLDescription = 'File to download';
+      urlObj.Type = 'GET DATA';
       urls.push(urlObj);
+    }
+  });
+
+  return urls;
+}
+
+/**
+ * Create a list of URL objects that should not appear under onlineAccess in the CMR metadata.
+ * @param {Array<Object>} files - array of updated file objects
+ * @param {BucketsConfig} buckets - stack BucketConfig instance.
+ * @returns {Array<Object>} array of files to be omitted in cmr's OnlineAccessURLs
+ */
+function onlineAccessURLsToRemove(files, buckets) {
+  const urls = [];
+  const typesToKeep = ['public', 'protected'];
+
+  files.forEach((file) => {
+    const bucketType = buckets.type(file.bucket);
+    if (!typesToKeep.includes(bucketType)) {
+      urls.push({ URL: file.filepath });
     }
   });
   return urls;
 }
-
 
 /**
  * Returns a list of posible metadata file objects based on file.name extension.
@@ -217,9 +289,67 @@ function getCmrFileObjs(files) {
   return files.filter((file) => isCMRFile(file));
 }
 
-async function updateUMMGMetadata() {
-  const NotImplemented = errors.CreateErrorType('NotImplemented');
-  throw new NotImplemented('not yet.');
+/**
+ * Merge lists of URL objects.
+ *
+ * @param {Array<Object>} original - Array of URL Objects representing the cmr file previous state
+ * @param {Array<Object>} updated - Array of updated URL Objects representing moved/updated files
+ * @param {Array<Object>} removed - Array of URL Objects to remove from OnlineAccess.
+ * @returns {Array<Object>} list of updated an original URL objects representing the updated state.
+ */
+function mergeURLs(original, updated, removed = []) {
+  const newURLBasenames = updated.map((url) => path.basename(url.URL));
+  const removedBasenames = removed.map((url) => path.basename(url.URL));
+
+  const unchangedOriginals = original.filter(
+    (url) => !newURLBasenames.includes(path.basename(url.URL))
+      && !removedBasenames.includes(path.basename(url.URL))
+  );
+
+  const updatedWithMergedOriginals = updated.map((url) => {
+    const matchedOriginal = original.filter(
+      (ourl) => path.basename(ourl.URL) === path.basename(url.URL)
+    );
+    if (matchedOriginal.length === 1) {
+      // merge original urlObject into the updated urlObject,
+      // preferring all metadata from original except the new url.URL
+      return { ...url, ...matchedOriginal[0], ...{ URL: url.URL } };
+    }
+    return url;
+  });
+
+  return [...unchangedOriginals, ...updatedWithMergedOriginals];
+}
+
+
+/**
+ * After files are moved, create new online access URLs and then update the S3
+ * UMMG cmr.json file with this information.
+ *
+ * @param {Object} cmrFile cmr.json file whose contents will be updated.
+ * @param {Array<Object>} files - array of moved file objects.
+ * @param {string} distEndpoint - distribution endpoint form config.
+ * @param {BucketsConfig} buckets - stack BucketConfig instance.
+ * @returns {Promise} returns promised updated UMMG metadata object.
+ */
+async function updateUMMGMetadata(cmrFile, files, distEndpoint, buckets) {
+  const newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
+  const removedURLs = onlineAccessURLsToRemove(files, buckets);
+  const metadataObject = await metadataObjectFromCMRJSONFile(cmrFile.filename);
+
+  const originalURLs = _get(metadataObject, 'RelatedUrls', []);
+  const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
+  _set(metadataObject, 'RelatedUrls', mergedURLs);
+
+  const tags = await aws.s3GetObjectTagging(cmrFile.bucket, cmrFile.filepath);
+  const tagsQueryString = aws.s3TagSetToQueryString(tags.TagSet);
+  await aws.promiseS3Upload({
+    Bucket: cmrFile.bucket,
+    Key: cmrFile.filepath,
+    Body: JSON.stringify(metadataObject),
+    Tagging: tagsQueryString
+  });
+  return metadataObject;
 }
 
 /** helper to build an CMR credential object
@@ -234,6 +364,7 @@ function getCreds() {
   };
 }
 
+
 /**
  * After files are moved, this function creates new online access URLs and then updates
  * the S3 ECHO10 CMR XML file with this information.
@@ -245,14 +376,18 @@ function getCreds() {
  * @returns {Promise} returns promised updated metadata object.
  */
 async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
-  const urls = constructOnlineAccessUrls(files, distEndpoint, buckets);
+  let newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
+  newURLs = newURLs.map((urlObj) => omit(urlObj, 'Type'));
+  const removedURLs = onlineAccessURLsToRemove(files, buckets);
 
   // add/replace the OnlineAccessUrls
   const metadataObject = await metadataObjectFromCMRXMLFile(cmrFile.filename);
   const metadataGranule = metadataObject.Granule;
 
   const updatedGranule = { ...metadataGranule };
-  _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', urls);
+  const originalURLs = _get(metadataGranule, 'OnlineAccessURLs.OnlineAccessURL', []);
+  const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
+  _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedURLs);
   metadataObject.Granule = updatedGranule;
 
   const builder = new xml2js.Builder();
@@ -301,7 +436,18 @@ async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, publis
     return Promise.resolve();
   }
   if (isUMMGFile(cmrFile.filename)) {
-    return updateUMMGMetadata();
+    const buckets = new BucketsConfig(await bucketsConfigDefaults());
+    const ummgMetadata = await updateUMMGMetadata(cmrFile, files, distEndpoint, buckets);
+    if (published) {
+      const creds = getCreds();
+      return publishUMMGJSON2CMR(
+        ummgMetadata,
+        creds,
+        process.env.system_bucket,
+        process.env.stackName
+      );
+    }
+    return Promise.resolve();
   }
   throw new errors.CMRMetaFileNotFound('Invalid CMR filetype passed to updateCMRMetadata');
 }
@@ -327,10 +473,10 @@ async function reconcileCMRMetadata(granuleId, updatedFiles, distEndpoint, publi
 
 
 module.exports = {
-  constructOnlineAccessUrls,
   getGranuleId,
   getCmrXMLFiles,
   isECHO10File,
+  metadataObjectFromCMRJSONFile,
   metadataObjectFromCMRXMLFile,
   publishECHO10XML2CMR,
   reconcileCMRMetadata,

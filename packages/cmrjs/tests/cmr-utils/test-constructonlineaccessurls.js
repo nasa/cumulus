@@ -4,9 +4,13 @@ const rewire = require('rewire');
 const { randomId } = require('@cumulus/common/test-utils');
 const { BucketsConfig } = require('@cumulus/common');
 
-const cmrUtils = rewire('../cmr-utils');
+const cmrUtils = rewire('../../cmr-utils');
 
 const constructOnlineAccessUrls = cmrUtils.__get__('constructOnlineAccessUrls');
+
+
+const sortByURL = (a, b) => a.URL < b.URL;
+
 
 test.beforeEach((t) => {
   t.context.bucketConfig = {
@@ -19,7 +23,7 @@ test.beforeEach((t) => {
 
 test('returns correct url for protected data', (t) => {
   const endpoint = 'https://endpoint';
-  const testFiles = [
+  const movedFiles = [
     {
       filepath: 'some/path/protected-file.hdf',
       bucket: t.context.bucketConfig.protected.name
@@ -28,54 +32,58 @@ test('returns correct url for protected data', (t) => {
   const expected = [
     {
       URL: `${endpoint}/${t.context.bucketConfig.protected.name}/some/path/protected-file.hdf`,
-      URLDescription: 'File to download'
+      URLDescription: 'File to download',
+      Type: 'GET DATA'
     }
   ];
 
-  const actual = constructOnlineAccessUrls(testFiles, endpoint, t.context.buckets);
+  const actual = constructOnlineAccessUrls(movedFiles, endpoint, t.context.buckets);
 
   t.deepEqual(actual, expected);
 });
 
-test('Returns correct url for public data.', (t) => {
+test('Returns correct url object for public data.', (t) => {
   const endpoint = 'https://endpoint';
-  const testFiles = [
+  const publicBucketName = t.context.bucketConfig.public.name;
+  const movedFiles = [
     {
       filepath: 'some/path/browse_image.jpg',
-      bucket: t.context.bucketConfig.public.name
+      bucket: publicBucketName
     }
   ];
   const expected = [
     {
-      URL: `https://${t.context.bucketConfig.public.name}.s3.amazonaws.com/some/path/browse_image.jpg`,
-      URLDescription: 'File to download'
+      URL: `https://${publicBucketName}.s3.amazonaws.com/some/path/browse_image.jpg`,
+      URLDescription: 'File to download',
+      Type: 'GET DATA'
     }
   ];
 
-  const actual = constructOnlineAccessUrls(testFiles, endpoint, t.context.buckets);
+  const actual = constructOnlineAccessUrls(movedFiles, endpoint, t.context.buckets);
 
   t.deepEqual(actual, expected);
 });
 
 
-test('Returns nothing for private data.', (t) => {
+test('Returns empty list for private data.', (t) => {
   const endpoint = 'https://endpoint';
-  const testFiles = [
+  const privateBucket = t.context.bucketConfig.private.name;
+  const movedFiles = [
     {
       filepath: 'some/path/top/secretfile',
-      bucket: t.context.bucketConfig.private.name
+      bucket: privateBucket
     }
   ];
   const expected = [];
 
-  const actual = constructOnlineAccessUrls(testFiles, endpoint, t.context.buckets);
+  const actual = constructOnlineAccessUrls(movedFiles, endpoint, t.context.buckets);
 
   t.deepEqual(actual, expected);
 });
 
-test('Works for a list of files.', (t) => {
+test('returns an array of correct url objects given a list of moved files.', (t) => {
   const endpoint = 'https://endpoint';
-  const testFiles = [
+  const movedFiles = [
     {
       filepath: 'hidden/secretfile.gpg',
       bucket: t.context.bucketConfig.private.name
@@ -92,16 +100,17 @@ test('Works for a list of files.', (t) => {
 
   const expected = [
     {
-      URL: `https://${t.context.bucketConfig.public.name}.s3.amazonaws.com/path/publicfile.jpg`,
-      URLDescription: 'File to download'
+      URL: `${endpoint}/${t.context.bucketConfig.protected.name}/another/path/protected.hdf`,
+      URLDescription: 'File to download',
+      Type: 'GET DATA'
     },
     {
-      URL: `${endpoint}/${t.context.bucketConfig.protected.name}/another/path/protected.hdf`,
-      URLDescription: 'File to download'
+      URL: `https://${t.context.bucketConfig.public.name}.s3.amazonaws.com/path/publicfile.jpg`,
+      URLDescription: 'File to download',
+      Type: 'GET DATA'
     }
   ];
 
-  const actual = constructOnlineAccessUrls(testFiles, endpoint, t.context.buckets);
-
-  t.deepEqual(actual, expected);
+  const actual = constructOnlineAccessUrls(movedFiles, endpoint, t.context.buckets);
+  t.deepEqual(actual.sort(sortByURL), expected.sort(sortByURL));
 });

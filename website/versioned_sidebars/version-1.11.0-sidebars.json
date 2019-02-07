@@ -58,5 +58,10 @@
       "version-1.11.0-data-cookbooks/choice-states",
       "version-1.11.0-data-cookbooks/cloudwatch-retention"
     ]
+  },
+  "version-1.11.0-Operator Docs": {
+    "About Operator Docs": [
+      "version-1.11.0-operator-docs/about-operator-docs"
+    ]
   }
 }

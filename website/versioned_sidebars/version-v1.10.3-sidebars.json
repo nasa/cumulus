@@ -54,5 +54,10 @@
       "version-v1.10.3-data-cookbooks/error-handling",
       "version-v1.10.3-data-cookbooks/choice-states"
     ]
+  },
+  "version-v1.10.3-Operator Docs": {
+    "About Operator Docs": [
+      "version-v1.10.3-operator-docs/about-operator-docs"
+    ]
   }
 }
