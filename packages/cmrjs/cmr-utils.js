@@ -188,7 +188,7 @@ async function metadataObjectFromCMRXMLFile(cmrFilename) {
  * @returns {Promise<Array>} promise resolves to an array of objects
  * that includes CMR xmls uris and granuleIds
  */
-function getCmrXMLFiles(input, granuleIdExtraction) {
+function getCmrFiles(input, granuleIdExtraction) {
   const files = [];
 
   input.forEach((filename) => {
@@ -479,7 +479,7 @@ async function reconcileCMRMetadata(granuleId, updatedFiles, distEndpoint, publi
 
 module.exports = {
   getGranuleId,
-  getCmrXMLFiles,
+  getCmrFiles,
   isECHO10File,
   metadataObjectFromCMRJSONFile,
   metadataObjectFromCMRXMLFile,
