@@ -4,7 +4,7 @@ git:
 language: node_js
 
 stages:
-  - name: build cache & audit
+  # - name: build cache & audit
   # - name: unit test and stack deployment
   - name: integration tests
   # - name: redeployment integration tests
@@ -19,10 +19,10 @@ stages:
 
 jobs:
   include:
-    - name: "Build npm cache"
-      stage: build cache & audit
-      install: true
-      script: ./travis-ci/build-cache.sh
+    # - name: "Build npm cache"
+    #   stage: build cache & audit
+    #   install: true
+    #   script: ./travis-ci/build-cache.sh
 
     # - name: "npm audit"
     #   stage: build cache & audit
@@ -96,7 +96,7 @@ jobs:
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
-        - npm install
+        # - npm install
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - echo 'BOOTSTRAP FINISHED'
@@ -120,7 +120,7 @@ jobs:
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
-        - npm install
+        # - npm install
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - echo 'BOOTSTRAP FINISHED'
