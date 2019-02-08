@@ -16,7 +16,7 @@ This document will outline, in brief, how to set data lifecycle policies so that
 
 ## Examples
 ### Walkthrough on setting time-based S3IA bucket policy
-This example will give step-by-step instructions on updating a bucket's lifecycle policy to move all objects in the bucket from the default storage (Standard) to S3IA after a period of 90 days.   Below are instructions for walking through configuration via the command line and the management console.
+This example will give step-by-step instructions on updating a bucket's lifecycle policy to move all objects in the bucket from the default storage to S3IA after a period of 90 days.   Below are instructions for walking through configuration via the command line and the management console.
 
 ### Command Line
 **Please ensure you have the AWS CLI installed and configured for access prior to attempting this example.**
