@@ -8,6 +8,7 @@ const {
     lambda,
     s3
   },
+  constructCollectionId,
   testUtils: {
     randomString
   }
@@ -17,6 +18,7 @@ const { loadConfig } = require('../helpers/testUtils');
 
 const reportsPrefix = (stackName) => `${stackName}/reconciliation-reports/`;
 const filesTableName = (stackName) => `${stackName}-FilesTable`;
+const collectionsTableName = (stackName) => `${stackName}-CollectionsTable`;
 
 const config = loadConfig();
 
@@ -57,7 +59,8 @@ async function deleteReconciliationReports(systemBucket, stackName) {
 describe('When there are granule differences and granule reconciliation is run', () => {
   let report;
   let extraS3Object;
-  let extraDynamoDbItem;
+  let extraFileInDb;
+  let extraCumulusCollection;
   let protectedBucket;
 
   beforeAll(async () => {
@@ -72,7 +75,7 @@ describe('When there are granule differences and granule reconciliation is run',
     await s3().putObject(Object.assign({ Body: 'delete-me' }, extraS3Object)).promise();
 
     // Write an extra file to the DynamoDB Files table
-    extraDynamoDbItem = {
+    extraFileInDb = {
       bucket: { S: protectedBucket },
       key: { S: randomString() },
       granuleId: { S: randomString() }
@@ -80,7 +83,18 @@ describe('When there are granule differences and granule reconciliation is run',
 
     await dynamodb().putItem({
       TableName: filesTableName(config.stackName),
-      Item: extraDynamoDbItem
+      Item: extraFileInDb
+    }).promise();
+
+    // Write an extra collection to the Collections table
+    extraCumulusCollection = {
+      name: { S: randomString() },
+      version: { S: randomString() }
+    };
+
+    await dynamodb().putItem({
+      TableName: collectionsTableName(config.stackName),
+      Item: extraCumulusCollection
     }).promise();
 
     // Run the report
@@ -95,15 +109,25 @@ describe('When there are granule differences and granule reconciliation is run',
       .then((response) => JSON.parse(response.Body.toString()));
   });
 
-  it('generates a report showing files that are in S3 but not in the DynamoDB Files table', () => {
+  it('generates a report showing cumulus files that are in S3 but not in the DynamoDB Files table', () => {
     const extraS3ObjectUri = buildS3Uri(extraS3Object.Bucket, extraS3Object.Key);
-    expect(report.onlyInS3).toContain(extraS3ObjectUri);
+    expect(report.filesInCumulus.onlyInS3).toContain(extraS3ObjectUri);
   });
 
-  it('generates a report showing files that are in the DynamoDB Files table but not in S3', () => {
-    const extraFileUri = buildS3Uri(extraDynamoDbItem.bucket.S, extraDynamoDbItem.key.S);
-    const extraDbUris = report.onlyInDynamoDb.map((i) => i.uri);
+  it('generates a report showing cumulus files that are in the DynamoDB Files table but not in S3', () => {
+    const extraFileUri = buildS3Uri(extraFileInDb.bucket.S, extraFileInDb.key.S);
+    const extraDbUris = report.filesInCumulus.onlyInDynamoDb.map((i) => i.uri);
     expect(extraDbUris).toContain(extraFileUri);
+  });
+
+  it('generates a report showing collections that are in the Cumulus but not in CMR', () => {
+    const extraCollection = constructCollectionId(extraCumulusCollection.name.S, extraCumulusCollection.version.S);
+    expect(report.collectionsInCumulusCmr.onlyInCumulus).toContain(extraCollection);
+  });
+
+  it('generates a report showing collections that are in the CMR but not in Cumulus', () => {
+    // we know CMR has collections which are not in Cumulus
+    expect(report.collectionsInCumulusCmr.onlyInCmr.length).toBeGreaterThan(0);
   });
 
   afterAll(() =>
@@ -113,8 +137,15 @@ describe('When there are granule differences and granule reconciliation is run',
       dynamodb().deleteItem({
         TableName: filesTableName(config.stackName),
         Key: {
-          bucket: extraDynamoDbItem.bucket,
-          key: extraDynamoDbItem.key
+          bucket: extraFileInDb.bucket,
+          key: extraFileInDb.key
+        }
+      }).promise(),
+      dynamodb().deleteItem({
+        TableName: collectionsTableName(config.stackName),
+        Key: {
+          name: extraCumulusCollection.name,
+          version: extraCumulusCollection.version
         }
       }).promise()
     ]));
