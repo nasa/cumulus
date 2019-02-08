@@ -3,6 +3,7 @@
 const fs = require('fs-extra');
 const urljoin = require('url-join');
 const got = require('got');
+const path = require('path');
 const cloneDeep = require('lodash.clonedeep');
 const difference = require('lodash.difference');
 const includes = require('lodash.includes');
@@ -304,7 +305,7 @@ describe('The S3 Ingest Granules workflow', () => {
       files = postToCmrOutput.payload.granules[0].files;
       cmrLink = postToCmrOutput.payload.granules[0].cmrLink;
       cmrResource = await getOnlineResources(cmrLink);
-      response = await got(cmrResource[1].href);
+      response = await got(cmrResource[2].href);
     });
 
     it('has expected payload', () => {
@@ -525,7 +526,7 @@ describe('The S3 Ingest Granules workflow', () => {
           destinations = [{
             regex: '.*.hdf$',
             bucket: config.bucket,
-            filepath: `${testDataFolder}/${file.filepath.substring(0, file.filepath.lastIndexOf('/'))}`
+            filepath: `${testDataFolder}/${path.dirname(file.filepath)}`
           }];
         });
 
