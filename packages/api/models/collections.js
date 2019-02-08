@@ -118,6 +118,18 @@ class Collection extends Manager {
 
     return scanResult.Items;
   }
+
+  /**
+   * return all collections
+   *
+   * @returns {Array<Object>} list of collections
+   */
+  async getAllCollections() {
+    return this.scan(
+      { names: { '#name': 'name', '#version': 'version' } },
+      '#name, #version'
+    ).then((result) => result.Items);
+  }
 }
 
 module.exports = Collection;
