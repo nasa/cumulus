@@ -82,8 +82,6 @@ describe('Distribution API', () => {
     });
 
     it('downloads the requested science file for authorized requests', async (done) => {
-      console.log(process.env.DISTRIBUTION_REDIRECT_ENDPOINT);
-
       // Login with Earthdata and get response for redirect back to
       // distribution API.
       let response;
@@ -97,11 +95,9 @@ describe('Distribution API', () => {
       catch (err) {
         console.log(err);
       }
-      console.log(response.headers);
 
       const { 'set-cookie': cookie, location: fileUrl } = response.headers;
 
-      console.log(fileUrl);
       // Get S3 signed URL fromm distribution API with cookie set.
       const signedS3Url = await got(fileUrl, { headers: { cookie }, followRedirect: false })
         .then((res) => res.headers.location);
