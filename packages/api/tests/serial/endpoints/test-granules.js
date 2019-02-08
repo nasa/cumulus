@@ -9,8 +9,7 @@ const { sfn } = require('@cumulus/common/aws');
 const aws = require('@cumulus/common/aws');
 const { CMR } = require('@cumulus/cmrjs');
 const {
-  metadataObjectFromCMRJSONFile,
-  metadataObjectFromCMRXMLFile
+  metadataObjectFromCMRFile
 } = require('@cumulus/cmrjs/cmr-utils');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
@@ -671,7 +670,7 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
     }
     return putObject({ Bucket: file.bucket, Key: file.filepath, Body: metadata });
   }));
-  const originalXML = await metadataObjectFromCMRXMLFile(newGranule.files[1].filename);
+  const originalXML = await metadataObjectFromCMRFile(newGranule.files[1].filename);
 
   const destinationFilepath = `${process.env.stackName}/moved_granules`;
   const destinations = [
@@ -716,7 +715,7 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   t.is(list2.Contents.length, 1);
   t.is(newGranule.files[1].filepath, list2.Contents[0].Key);
 
-  const xmlObject = await metadataObjectFromCMRXMLFile(newGranule.files[1].filename);
+  const xmlObject = await metadataObjectFromCMRFile(newGranule.files[1].filename);
 
   const newUrls = xmlObject.Granule.OnlineAccessURLs.OnlineAccessURL.map((obj) => obj.URL);
   const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
@@ -810,7 +809,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   t.is(newGranule.files[1].filepath, list2.Contents[0].Key);
 
   // CMR UMMG JSON has been updated with the location of the moved file.
-  const ummgObject = await metadataObjectFromCMRJSONFile(newGranule.files[1].filename);
+  const ummgObject = await metadataObjectFromCMRFile(newGranule.files[1].filename);
   const updatedURLs = ummgObject.RelatedUrls.map((urlObj) => urlObj.URL);
   const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
   t.true(updatedURLs.includes(newDestination));

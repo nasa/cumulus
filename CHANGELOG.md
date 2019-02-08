@@ -16,13 +16,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `@cumulus/common/errors` adds two new error types `CMRMetaFileNotFound` and `InvalidArgument`.
   `@cumulus/common/test-utils` adds new function `randomId` to create a random string with id to help in debugging.
   `@cumulus/common/BucketsConfig` adds a new helper class `BucketsConfig` for working with bucket stack configuration and bucket names.
-  `@cumulus/common/aws` adds new fucntion `s3PutObjectTagging` as a convenience for the aws  [s3().putObjectTagging](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property) function.
+  `@cumulus/common/aws` adds new function `s3PutObjectTagging` as a convenience for the aws  [s3().putObjectTagging](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property) function.
   `@cumulus/cmrjs` Adds:
-      - `isECHO10File` - Identify an echo10 metadata file.
-      - `metadataObjectFromCMRXMLFile` Read and parse CMR XML file from s3.
-      - `updateEcho10XMLMetadata` Modify a cmr.xml file with updated information.
-      - `updateCMRMetadata` Modify a cmr metadata file with updated information.
-	  - `publishECHO10XML2CMR` Posts XML CMR data to CMR service.
+      - `isCMRFile` - Identify an echo10(xml) or UMMG(json) metadata file.
+      - `metadataObjectFromCMRFile` Read and parse CMR XML file from s3.
+      - `updateCMRMetadata` Modify a cmr metadata (xml/json) file with updated information.
+	  - `publish2CMR` Posts XML or UMMG CMR data to CMR service.
 	  - `reconcileCMRMetadata` Reconciles cmr metadata file after a file moves.
 - Adds some ECS and other permissions to StepRole to enable running ECS tasks from a workflow
 - Added Apache logs to cumulus api and distribution lambdas
