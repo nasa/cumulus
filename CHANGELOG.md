@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+
 ### Added
+- CUMULUS-1103 Compare the collection holdings in CMR with Cumulus' internal data store
+
 - CUMULUS-678
   - Added support for UMMG json v1.4 metadata files.
   `reconcileCMRMetadata` added to `@cumulus/cmrjs` to update metadata record with new file locations.
