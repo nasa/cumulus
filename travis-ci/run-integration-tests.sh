@@ -23,6 +23,5 @@ export DEPLOYMENT
     (cd .. && ./bin/prepare)
   fi
 
-  yarn run jasmine spec/parallel/testAPI/distributionSpec.js
-  # yarn test
+  yarn test
 )
