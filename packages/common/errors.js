@@ -1,3 +1,5 @@
+const isFunction = require('lodash.isfunction');
+
 /**
  * Creates a new error type with the given name and parent class. Sets up
  * boilerplate necessary to successfully subclass Error and preserve stack trace
@@ -8,7 +10,12 @@
 
 const createErrorType = (name, ParentType = Error) => {
   function E(message) {
-    Error.captureStackTrace(this, this.constructor);
+    if (isFunction(Error.captureStackTrace)) {
+      Error.captureStackTrace(this, this.constructor);
+    }
+    else {
+      this.stack = (new Error(message)).stack;
+    }
     this.message = message;
   }
   E.prototype = new ParentType();
