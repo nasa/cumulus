@@ -190,7 +190,7 @@ async function getOnlineResources(cmrLink) {
  * @param {Object} collection - collection object
  * @param {string} bucket - bucket to save the xml file to
  * @param {Array<string>} additionalUrls - URLs to convert to online resources
- * @returns {Array<string>} - List of granule files including the created
+ * @returns {Promise<Array<string>>} - Promise of a list of granule files including the created
  * CMR xml files
  */
 async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrls) {
@@ -243,7 +243,7 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
  * @param {Object} collection - collection object
  * @param {string} bucket - bucket to save the xml file to
  * @param {Array<string>} additionalUrls - URLs to convert to related urls
- * @returns {Array<string>} - List of granule files including the created
+ * @returns {Promise<Array<string>>} - Promise of a list of granule files including the created
  * CMR files
  */
 async function generateAndStoreCmrUmmJson(granule, collection, bucket, additionalUrls) {
@@ -290,7 +290,7 @@ async function generateAndStoreCmrUmmJson(granule, collection, bucket, additiona
  * output
  * @param {Object} collection - collection object that includes name and version
  * @param {string} bucket - location to save the xmls to
- * @param {string} cmrFileType - CMR file type to generate. Options are echo10, ummg1.4, default
+ * @param {string} cmrFileType - CMR file type to generate. Options are echo10, umm_json_v1_4, default
  * is echo10
  * @param {Array<string>} additionalUrls - URLs to convert to online resources or related urls
  * @returns {Array<string>} list of S3 locations for CMR xml files
@@ -300,7 +300,7 @@ async function generateCmrFilesForGranules(granules, collection, bucket, cmrFile
 
   log.info(`Generating fake CMR file with type ${cmrFileType}`);
 
-  if (cmrFileType === 'ummg1.4') {
+  if (cmrFileType === 'umm_json_v1_4') {
     // When we do UMM-G 1.5, we'll probably need to pass the file type into this function
     files = await Promise.all(granules.map((g) =>
       generateAndStoreCmrUmmJson(g, collection, bucket, additionalUrls)));

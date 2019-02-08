@@ -3,6 +3,7 @@
 const fs = require('fs-extra');
 const urljoin = require('url-join');
 const got = require('got');
+const path = require('path');
 const cloneDeep = require('lodash.clonedeep');
 const differenceWith = require('lodash.differencewith');
 const isEqual = require('lodash.isequal');
@@ -129,7 +130,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       provider,
       inputPayload,
       {
-        cmrFileType: 'ummg1.4',
+        cmrFileType: 'umm_json_v1_4',
         additionalUrls: [cumulusDocUrl]
       }
     );
@@ -168,7 +169,9 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('creates a UMM JSON file', () => {
       expect(ummFiles.length).toEqual(1);
+    });
 
+    it('does not create a CMR XML file', () => {
       const xmlFiles = processingTaskOutput.payload.filter((file) => file.includes('.cmr.xml'));
       expect(xmlFiles.length).toEqual(0);
     });
@@ -188,7 +191,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       files = postToCmrOutput.payload.granules[0].files;
       cmrLink = postToCmrOutput.payload.granules[0].cmrLink;
       cmrResource = await getOnlineResources(cmrLink);
-      response = await got(cmrResource[1].href);
+      response = await got(cmrResource[2].href);
 
       resourceHrefs = cmrResource.map((resource) => resource.href);
     });
@@ -243,7 +246,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       destinations = [{
         regex: '.*.hdf$',
         bucket: config.bucket,
-        filepath: `${testDataFolder}/${file.filepath.substring(0, file.filepath.lastIndexOf('/'))}`
+        filepath: `${testDataFolder}/${path.dirname(file.filepath)}`
       }];
 
       originalUmm = await getUmmJs(s3ummJsonFileLocation);
