@@ -180,18 +180,18 @@ Resources:
           stackName: {{../stackName}}
       {{# if this.urs}}
         {{# if ../api_backend_url}}
-          API_ENDPOINT: {{../api_backend_url}}token
+          TOKEN_REDIRECT_ENDPOINT: {{../api_backend_url}}token
         {{else}}
-          API_ENDPOINT:
+          TOKEN_REDIRECT_ENDPOINT:
             Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}/token"]]
         {{/if}}
         {{# if ../api_distribution_url}}
           DISTRIBUTION_ENDPOINT: {{../api_distribution_url}}
-          DEPLOYMENT_ENDPOINT: {{../api_distribution_url}}redirect
+          DISTRIBUTION_REDIRECT_ENDPOINT: {{../api_distribution_url}}redirect
         {{else}}
-          DISTRIBUTION_URL:
+          DISTRIBUTION_ENDPOINT:
             Fn::Join: ["", [ "https://", {"Ref": "downloadRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}"]]
-          DEPLOYMENT_ENDPOINT:
+          DISTRIBUTION_REDIRECT_ENDPOINT:
             Fn::Join: ["", [ "https://", {"Ref": "downloadRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}/redirect"]]
         {{/if}}
       {{/if}}

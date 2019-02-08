@@ -27,7 +27,7 @@ let userModel;
 
 process.env.EARTHDATA_CLIENT_ID = randomString();
 process.env.EARTHDATA_CLIENT_PASSWORD = randomString();
-process.env.API_ENDPOINT = 'http://example.com';
+process.env.TOKEN_REDIRECT_ENDPOINT = 'http://example.com';
 process.env.TOKEN_SECRET = randomString();
 process.env.AccessTokensTable = randomString();
 process.env.UsersTable = randomString();
