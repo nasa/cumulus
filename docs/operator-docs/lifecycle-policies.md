@@ -6,27 +6,27 @@ hide_title: true
 
 # Setting Lifecycle Policies
 
-This document will outline, in brief, how to set data lifecycle policies so that you are more easily able to control data storage costs while keeping your data accessable.
+This document will outline, in brief, how to set data lifecycle policies so that you are more easily able to control data storage costs while keeping your data accessible.
 
 ## Requirements
 
-* An AWS user with the appropraite roles to access the target bucket as well as modify bucket policies.
-* To use the command line examples on this page you will need to have the AWS CLI installed and configured.  See [AWS's guide to seeting up the AWS CLI](https://docs.aws.amazon.com/AmazonS3/latest/dev/setup-aws-cli.html) for more on this.   Please ensure the AWS CLI is in your shell path.
-* You will need a S3 bucket on AWS.   ***You are strongly encouraged to use a bucket without volumnous amounts of data in it for experimenting/learning***.
+* An AWS user with the appropriate roles to access the target bucket as well as modify bucket policies.
+* To use the command line examples on this page you will need to have the AWS CLI installed and configured.  See [AWS's guide to setting up the AWS CLI](https://docs.aws.amazon.com/AmazonS3/latest/dev/setup-aws-cli.html) for more on this.   Please ensure the AWS CLI is in your shell path.
+* You will need a S3 bucket on AWS.   ***You are strongly encouraged to use a bucket without voluminous amounts of data in it for experimenting/learning***.
 
 ## Background Information
 
-This section lists infomation you may want prior to working through this example, however it is not nessicary to read through this.
+This section lists information you may want prior to working through this example, however it is not required to read through this.
 
 ### Strategy Overview
 
-For a discussion of overall reccomended strategy, please review the [Methodology for Data Lifecycle Management](https://wiki.earthdata.nasa.gov/display/CUMULUS/Methodology+for+Data+Lifecycle+Management) on the EarthData wiki.
+For a discussion of overall recommended strategy, please review the [Methodology for Data Lifecycle Management](https://wiki.earthdata.nasa.gov/display/CUMULUS/Methodology+for+Data+Lifecycle+Management) on the EarthData wiki.
 
 ### AWS Documentation
 
-* [AWS's guide to seeting up the AWS CLI](https://docs.aws.amazon.com/AmazonS3/latest/dev/setup-aws-cli.html)
+* [AWS's guide to setting up the AWS CLI](https://docs.aws.amazon.com/AmazonS3/latest/dev/setup-aws-cli.html)
 * [AWS's guide on setting bucket lifecycle policies via the management Console](https://docs.aws.amazon.com/AmazonS3/latest/user-guide/create-lifecycle.html)
-* [AWS's guide on setting bucket lifcycle policies using the AWS CLI](https://docs.aws.amazon.com/AmazonS3/latest/dev/set-lifecycle-cli.html)
+* [AWS's guide on setting bucket lifecycle policies using the AWS CLI](https://docs.aws.amazon.com/AmazonS3/latest/dev/set-lifecycle-cli.html)
 * [AWS's guide to lifecycle configuration](https://docs.aws.amazon.com/AmazonS3/latest/dev/lifecycle-configuration-examples.html)
 
 ## Examples
@@ -123,11 +123,11 @@ lifecycle_1.png
 
 Click `next`, and mark `Current Version` and `Previous Versions`.
 
-Then for each, click `+ Add transition` and select `Transition to Standard-IA after` for the `Object creation` field, and set `90` for the `Days after creation`/`Days after objects become noncurrent` field.    Your screen should look similar to:
+Then for each, click `+ Add transition` and select `Transition to Standard-IA after` for the `Object creation` field, and set `90` for the `Days after creation`/`Days after objects become concurrent` field.    Your screen should look similar to:
 
 lifecycle_2.png
 
-Click `next`, then next past the `Configure expiration` screeen (we won't be setting this), and on the fourth page, click `Save`:
+Click `next`, then next past the `Configure expiration` screen (we won't be setting this), and on the fourth page, click `Save`:
 
 lifecycle_4.png
 
