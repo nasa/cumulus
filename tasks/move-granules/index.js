@@ -44,7 +44,8 @@ function fileObjectFromS3URI(s3URI) {
   return {
     name: path.basename(s3URI),
     bucket: uriParsed.Bucket,
-    filename: s3URI
+    filename: s3URI,
+    fileStagingDir: path.dirname(uriParsed.Key)
   };
 }
 
@@ -271,11 +272,13 @@ async function moveFilesForAllGranules(
       )
     );
     const markDuplicates = false;
+    log.debug(`moving cmr files: ${JSON.stringify(cmrFiles)}`);
     const cmrFilesMoved = await Promise.all(
       cmrFiles.map(
         (file) => moveFileRequest(file, sourceBucket, 'replace', bucketsConfig, markDuplicates)
       )
     );
+    log.debug(`moved files: ${JSON.stringify(cmrFilesMoved)}`);
     granule.files = flatten(filesMoved).concat(flatten(cmrFilesMoved));
   });
 
