@@ -9,7 +9,7 @@ const pckg = require('../package.json');
 const es = require('./es');
 const backup = require('./backup');
 const restore = require('./restore');
-const serve = require('./serve');
+const { serveApi } = require('./serve');
 const { defaultIndexAlias } = require('../es/search');
 
 program.version(pckg.version);
@@ -141,11 +141,10 @@ program
 
 program
   .command('serve')
-// .option('--table <table>', 'AWS DynamoDB table name')
-  .description('Serves the local version of the cumulus api')
+  .description('Serves the local version of the Cumulus API')
   .parse(process.argv)
   .action(() => {
-    serve().catch(console.error);
+    serveApi().catch(console.error);
   });
 
 program

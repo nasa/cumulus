@@ -13,11 +13,11 @@ const {
 } = require('@cumulus/ingest/granule');
 
 const {
-  getCmrXMLFiles,
+  getCmrFiles,
   getGranuleId,
-  isECHO10File,
-  metadataObjectFromCMRXMLFile,
-  updateEcho10XMLMetadata
+  isCMRFile,
+  metadataObjectFromCMRFile,
+  updateCMRMetadata
 } = require('@cumulus/cmrjs');
 
 const {
@@ -44,30 +44,31 @@ function fileObjectFromS3URI(s3URI) {
   return {
     name: path.basename(s3URI),
     bucket: uriParsed.Bucket,
-    filename: s3URI
+    filename: s3URI,
+    fileStagingDir: path.dirname(uriParsed.Key)
   };
 }
 
 /**
- * Creates an object with all granule files
- * from the input array and the input_granules config
+ * Takes the files from input and granules and merges them into an object where
+ * each file is associated with it's granuleId.
  *
- * @param {Array} input - the task input array
- * @param {Array} granules - an array of the granules
+ * @param {Array} inputFiles - list of s3 files to add to the inputgranules
+ * @param {Array} inputGranules - an array of the granules
  * @param {string} regex - regex needed to extract granuleId from filenames
- * @returns {Object} an object that contains all granules
- * with the granuleId as the key of each granule
+ * @returns {Object} an object that contains lists of each granules' files
+ *                   attatched by their granuleId
  */
-function addInputFilesToGranules(input, granules, regex) {
+function mergeInputFilesWithInputGranules(inputFiles, inputGranules, regex) {
   const granulesHash = {};
-  const filesHash = {};
+  const filesFromInputGranules = {};
 
   // create hash list of the granules
   // and a hash list of files
-  granules.forEach((g) => {
+  inputGranules.forEach((g) => {
     granulesHash[g.granuleId] = g;
     g.files.forEach((f) => {
-      filesHash[f.filename] = g.granuleId;
+      filesFromInputGranules[f.filename] = g.granuleId;
     });
   });
 
@@ -75,8 +76,8 @@ function addInputFilesToGranules(input, granules, regex) {
   // the process involve getting granuleId of each file
   // match it against the granuleObj and adding the new files to the
   // file list
-  input.forEach((f) => {
-    if (f && !filesHash[f]) {
+  inputFiles.forEach((f) => {
+    if (f && !filesFromInputGranules[f]) {
       const granuleId = getGranuleId(f, regex);
       granulesHash[granuleId].files.push(fileObjectFromS3URI(f));
     }
@@ -89,11 +90,11 @@ function addInputFilesToGranules(input, granules, regex) {
  * validates the file matched only one collection.file and has a valid bucket
  * config.
  * @param {Array<Object>} match - list of matched collection.file
- * @param {BucketsConfig} buckets - instance describing stack configuration.
+ * @param {BucketsConfig} bucketsConfig - instance describing stack configuration.
  * @param {Object} file - the fileObject tested.
  * @throws {InvalidArgument} - If match is invalid, throws and error.
  */
-function validateMatch(match, buckets, file) {
+function validateMatch(match, bucketsConfig, file) {
   if (match.length > 1) {
     throw new InvalidArgument(`File (${file}) matched more than one collection.regexp.`);
   }
@@ -101,25 +102,26 @@ function validateMatch(match, buckets, file) {
     throw new InvalidArgument(`File (${file}) did not match any collection.regexp.`);
   }
 
-  if (!buckets.keyExists(match[0].bucket)) {
+  if (!bucketsConfig.keyExists(match[0].bucket)) {
     throw new InvalidArgument(`Collection config specifies a bucket key of ${match[0].bucket}, `
-                              + `but the configured bucket keys are: ${Object.keys(buckets).join(', ')}`);
+                              + `but the configured bucket keys are: ${Object.keys(bucketsConfig).join(', ')}`);
   }
 }
 
 /**
-* Update the granule metadata where each granule has it's files replaced with
-* file objects that contain the desired final locations based on the `collection.files.regexp`
-*
-* @param {Object} granulesObject - an object of granules where the key is the granuleId
-* @param {Object} collection - configuration object defining a collection
-*                              of granules and their files
-* @param {Array<Object>} cmrFiles - array of objects that include CMR xmls uris and granuleIds
-* @param {BucketsConfig} buckets -  instance associated with the stack
-* @returns {Object} new granulesObject where each granules' files are updated with
-*                   the correct target buckets/paths/and s3uri filenames.
-**/
-async function updateGranuleMetadata(granulesObject, collection, cmrFiles, buckets) {
+ * Update the granule metadata where each granule has its files replaced with
+ * file objects that contain the desired final locations based on the
+ * `collection.files.regexp`
+ *
+ * @param {Object} granulesObject - an object of granules where the key is the granuleId
+ * @param {Object} collection - configuration object defining a collection
+ *                              of granules and their files
+ * @param {Array<Object>} cmrFiles - array of objects that include CMR xmls uris and granuleIds
+ * @param {BucketsConfig} bucketsConfig -  instance associated with the stack
+ * @returns {Object} new granulesObject where each granules' files are updated with
+ *                   the correct target buckets/paths/and s3uri filenames.
+ */
+async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucketsConfig) {
   const updatedGranules = {};
   const fileSpecs = collection.files;
 
@@ -128,11 +130,11 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
     updatedGranules[granuleId] = { ...granulesObject[granuleId] };
 
     const cmrFile = cmrFiles.find((f) => f.granuleId === granuleId);
-    const cmrMetadata = cmrFile ? await metadataObjectFromCMRXMLFile(cmrFile.filename) : {};
+    const cmrMetadata = cmrFile ? await metadataObjectFromCMRFile(cmrFile.filename) : {};
 
-    await Promise.all(granulesObject[granuleId].files.map(async (file) => {
+    granulesObject[granuleId].files.forEach((file) => {
       const match = fileSpecs.filter((cf) => unversionFilename(file.name).match(cf.regex));
-      validateMatch(match, buckets, file);
+      validateMatch(match, bucketsConfig, file);
 
       const URLPathTemplate = file.url_path || match[0].url_path || collection.url_path || '';
       const urlPath = urlPathTemplate(URLPathTemplate, {
@@ -140,11 +142,11 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
         granule: granulesObject[granuleId],
         cmrMetadata
       });
-      const bucketName = buckets.nameByKey(match[0].bucket);
+      const bucketName = bucketsConfig.nameByKey(match[0].bucket);
       const filepath = path.join(urlPath, file.name);
 
       updatedFiles.push({
-        ...file,
+        ...file, // keeps old info like "name" and "fileStagingDir"
         ...{
           bucket: bucketName,
           filepath,
@@ -152,7 +154,7 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
           url_path: URLPathTemplate
         }
       });
-    }));
+    });
     updatedGranules[granuleId].files = [...updatedFiles];
   }));
   return updatedGranules;
@@ -165,10 +167,18 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
  * @param {Object} file - granule file to be moved
  * @param {string} sourceBucket - source bucket location of files
  * @param {string} duplicateHandling - how to handle duplicate files
- * @param {BucketsConfig} buckets - BucketsConfig instance
+ * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
+ * @param {boolean} markDuplicates - Override to handle cmr metadata files that
+                                     shouldn't be marked as duplicates
  * @returns {Array<Object>} returns the file moved and the renamed existing duplicates if any
  */
-async function moveFileRequest(file, sourceBucket, duplicateHandling, buckets) {
+async function moveFileRequest(
+  file,
+  sourceBucket,
+  duplicateHandling,
+  bucketsConfig,
+  markDuplicates = true
+) {
   const fileStagingDir = file.fileStagingDir || 'file-staging';
   const source = {
     Bucket: sourceBucket,
@@ -187,7 +197,7 @@ async function moveFileRequest(file, sourceBucket, duplicateHandling, buckets) {
   const s3ObjAlreadyExists = await s3ObjectExists(target);
   log.debug(`file ${target.Key} exists in ${target.Bucket}: ${s3ObjAlreadyExists}`);
 
-  if (s3ObjAlreadyExists) fileMoved.duplicate_found = true;
+  if (s3ObjAlreadyExists && markDuplicates) fileMoved.duplicate_found = true;
 
   // Have to throw DuplicateFile and not WorkflowError, because the latter
   // is not treated as a failure by the message adapter.
@@ -197,7 +207,7 @@ async function moveFileRequest(file, sourceBucket, duplicateHandling, buckets) {
 
   if (s3ObjAlreadyExists && duplicateHandling === 'skip') return [fileMoved];
 
-  const options = (buckets.type(file.bucket).match('public')) ? { ACL: 'public-read' } : null;
+  const options = (bucketsConfig.type(file.bucket).match('public')) ? { ACL: 'public-read' } : null;
 
   // compare the checksum of the existing file and new file, and handle them accordingly
   if (s3ObjAlreadyExists && duplicateHandling === 'version') {
@@ -219,7 +229,8 @@ async function moveFileRequest(file, sourceBucket, duplicateHandling, buckets) {
   }
 
   const renamedFiles = (duplicateHandling === 'version')
-    ? await getRenamedS3File(target.Bucket, target.Key) : [];
+    ? await getRenamedS3File(target.Bucket, target.Key)
+    : [];
 
   // return both file moved and renamed files
   return [fileMoved]
@@ -234,25 +245,37 @@ async function moveFileRequest(file, sourceBucket, duplicateHandling, buckets) {
 }
 
 /**
-* Move all files in a collection of granules from staging location fo final location,
-* and update granule files to include renamed files if any.
-*
-* @param {Object} granulesObject - an object of the granules where the key is the granuleId
-* @param {string} sourceBucket - source bucket location of files
-* @param {string} duplicateHandling - how to handle duplicate files
-* @param {BucketsConfig} buckets - BucketsConfig instance
-* @returns {Object} the object with updated granules
-**/
-async function moveFilesForAllGranules(granulesObject, sourceBucket, duplicateHandling, buckets) {
+ * Move all files in a collection of granules from staging location fo final location,
+ * and update granule files to include renamed files if any.
+ *
+ * @param {Object} granulesObject - an object of the granules where the key is the granuleId
+ * @param {string} sourceBucket - source bucket location of files
+ * @param {string} duplicateHandling - how to handle duplicate files
+ * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
+ * @returns {Object} the object with updated granules
+ **/
+async function moveFilesForAllGranules(
+  granulesObject,
+  sourceBucket,
+  duplicateHandling,
+  bucketsConfig
+) {
   const moveFileRequests = Object.keys(granulesObject).map(async (granuleKey) => {
     const granule = granulesObject[granuleKey];
-    const cmrFileFormat = /.*\.cmr\.xml$/;
-    const filesToMove = granule.files.filter((file) => !file.name.match(cmrFileFormat));
-    const cmrFiles = granule.files.filter((file) => file.name.match(cmrFileFormat));
+    const filesToMove = granule.files.filter((file) => !isCMRFile(file));
+    const cmrFiles = granule.files.filter((file) => isCMRFile(file));
     const filesMoved = await Promise.all(
-      filesToMove.map((file) => moveFileRequest(file, sourceBucket, duplicateHandling, buckets))
+      filesToMove.map(
+        (file) => moveFileRequest(file, sourceBucket, duplicateHandling, bucketsConfig)
+      )
     );
-    granule.files = flatten(filesMoved).concat(flatten(cmrFiles));
+    const markDuplicates = false;
+    const cmrFilesMoved = await Promise.all(
+      cmrFiles.map(
+        (file) => moveFileRequest(file, sourceBucket, 'replace', bucketsConfig, markDuplicates)
+      )
+    );
+    granule.files = flatten(filesMoved).concat(flatten(cmrFilesMoved));
   });
 
   await Promise.all(moveFileRequests);
@@ -260,34 +283,24 @@ async function moveFilesForAllGranules(granulesObject, sourceBucket, duplicateHa
 }
 
 /**
- * Updates a CMR file modifying/adding an OnlineResources/OnlineAccessURLs
- * element to the metadata for the new files locations.
+ * Update each of the CMR files' OnlineAccessURL fields to represent the new
+ * file locations.
  *
- * @param {Object} cmrFile - CMR file object (from getCmrXMLFiles)
- * @param {Array<Object>} files - List of granule file objects for the CMR object
- * @param {string} distEndpoint - distribution endpoint
- * @param {BucketsConfig} buckets - Stack BucketsConfig instance
- */
-async function updateCMRFileAccessURLs(cmrFile, files, distEndpoint, buckets) {
-  const updatedCmrFile = files.find((f) => isECHO10File(f.filename));
-  await moveGranuleFile(parseS3Uri(cmrFile.filename), parseS3Uri(updatedCmrFile.filename));
-  return updateEcho10XMLMetadata(updatedCmrFile, files, distEndpoint, buckets);
-}
-
-/**
-* Update each of the CMR files' onlineaccessurl fields to represent the new
-* file locations.
-*
-* @param {Array<Object>} cmrFiles - array of objects that include CMR xmls uris and granuleIds
-* @param {Object} granulesObject - an object of the granules where the key is the granuleId
-* @param {string} distEndpoint - the api distribution endpoint
-* @param {BucketsConfig} buckets - BucketsConfig instance
-* @returns {Promise} promise resolves when all files have been updated
-**/
-async function updateEachCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoint, buckets) {
+ * @param {Array<Object>} cmrFiles - array of objects that include CMR xmls uris and granuleIds
+ * @param {Object} granulesObject - an object of the granules where the key is the granuleId
+ * @param {string} distEndpoint - the api distribution endpoint
+ * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
+ * @returns {Promise} promise resolves when all files have been updated
+ **/
+async function updateEachCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoint, bucketsConfig) {
   return Promise.all(cmrFiles.map(async (cmrFile) => {
-    const granule = granulesObject[cmrFile.granuleId];
-    return updateCMRFileAccessURLs(cmrFile, granule.files, distEndpoint, buckets);
+    const publish = false; // Do the publish in publish-to-cmr step
+    const granuleId = cmrFile.granuleId;
+    const granule = granulesObject[granuleId];
+    const updatedCmrFile = granule.files.find(isCMRFile);
+    return updateCMRMetadata(
+      granuleId, updatedCmrFile, granule.files, distEndpoint, publish, bucketsConfig
+    );
   }));
 }
 
@@ -319,18 +332,17 @@ function duplicateHandlingType(event) {
  * Move Granule files to final Location
  * See the schemas directory for detailed input and output schemas
  *
- * @param {Object} event -Lambda function payload
+ * @param {Object} event - Lambda function payload
  * @param {Object} event.config - the config object
- * @param {string} event.config.bucket - the bucket name where public/private keys
- *                                       are stored
+ * @param {string} event.config.bucket - Bucket name where public/private keys are stored
  * @param {string} event.config.granuleIdExtraction - regex needed to extract granuleId
  *                                                    from filenames
  * @param {Array} event.config.input_granules - an array of granules
- * @param {string} event.config.distribution_endpoint - distribution enpoint for the api
- * @param {Object} event.config.collection - configuration object defining a collection
- * of granules and their files
+ * @param {string} event.config.distribution_endpoint - distribution endpoint for the api
+ * @param {Object} event.config.collection - collection configuration
+ *                     https://nasa.github.io/cumulus/docs/data-cookbooks/setup#collections
  * @param {boolean} [event.config.moveStagedFiles=true] - set to false to skip moving files
- * from staging to final bucket. Mostly useful for testing.
+ *                                 from staging to final bucket. Mostly useful for testing.
  * @param {Array} event.input - an array of s3 uris
  * @returns {Promise} returns the promise of an updated event object
  */
@@ -338,9 +350,9 @@ async function moveGranules(event) {
   // we have to post the meta-xml file of all output granules
   // first we check if there is an output file
   const config = get(event, 'config');
-  const bucket = get(config, 'bucket'); // the name of the bucket with private/public keys
-  const buckets = new BucketsConfig(get(config, 'buckets'));
-  const regex = get(config, 'granuleIdExtraction', '(.*)');
+  const sourceBucket = get(config, 'bucket'); // the name of the bucket with staged data.
+  const bucketsConfig = new BucketsConfig(get(config, 'buckets'));
+  const granuleIdExtractionRegex = get(config, 'granuleIdExtraction', '(.*)');
   const inputGranules = get(config, 'input_granules', {});
   const distEndpoint = get(config, 'distribution_endpoint');
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
@@ -352,23 +364,25 @@ async function moveGranules(event) {
 
   // Get list of cmr file objects from the input Array of S3 filenames (in
   // staging location after processing)
-  const cmrFiles = getCmrXMLFiles(inputFileList, regex);
+  const cmrFiles = getCmrFiles(inputFileList, granuleIdExtractionRegex);
 
-  // create granules object for cumulus indexer
-  const allGranules = addInputFilesToGranules(inputFileList, inputGranules, regex);
+  const allGranules = mergeInputFilesWithInputGranules(
+    inputFileList, inputGranules, granuleIdExtractionRegex
+  );
 
   let granulesToMove;
   let movedGranules;
   // allows us to disable moving the files
   if (moveStagedFiles) {
-    granulesToMove = await updateGranuleMetadata(allGranules, collection, cmrFiles, buckets);
+    // update allGranules with aspirational metadata (where the file should end up after moving.)
+    granulesToMove = await updateGranuleMetadata(allGranules, collection, cmrFiles, bucketsConfig);
 
     // move files from staging location to final location
     movedGranules = await moveFilesForAllGranules(
-      granulesToMove, bucket, duplicateHandling, buckets
+      granulesToMove, sourceBucket, duplicateHandling, bucketsConfig
     );
-    // update cmr.xml files with correct online access urls
-    await updateEachCmrFileAccessURLs(cmrFiles, movedGranules, distEndpoint, buckets);
+    // update cmr metadata files with correct online access urls
+    await updateEachCmrFileAccessURLs(cmrFiles, movedGranules, distEndpoint, bucketsConfig);
   }
   else {
     movedGranules = allGranules;
