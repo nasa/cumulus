@@ -68,6 +68,7 @@
     "lodash.has": "^4.5.2",
     "lodash.iserror": "^3.1.1",
     "lodash.isfunction": "^3.0.9",
+    "lodash.isinteger": "^4.0.4",
     "lodash.isnumber": "^3.0.3",
     "lodash.isobject": "^3.0.2",
     "lodash.isstring": "^4.0.1",
