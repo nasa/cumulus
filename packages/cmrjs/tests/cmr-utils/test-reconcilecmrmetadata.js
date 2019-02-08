@@ -174,6 +174,12 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
   const fakePublishUMMGJSON2CMR = sinon.fake.resolves({ });
   const restorePublishUMMGJSON2CMR = cmrUtils.__set__('publishUMMGJSON2CMR', fakePublishUMMGJSON2CMR);
 
+  const publishObject = {
+    filename: jsonCMRFile.filename,
+    metadataObject: { fake: 'metadata' },
+    granuleId: granId
+  };
+
   const buckets = new BucketsConfig(defaultBucketsConfig);
   const systemBucket = randomId('systembucket');
   const stackName = randomId('stackname');
@@ -189,7 +195,7 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
     fakeUpdateUMMGMetadata.calledOnceWithExactly(jsonCMRFile, updatedFiles, distEndpoint, buckets)
   );
   t.true(
-    fakePublishUMMGJSON2CMR.calledOnceWithExactly({ fake: 'metadata' }, testCreds, systemBucket, stackName)
+    fakePublishUMMGJSON2CMR.calledOnceWithExactly(publishObject, testCreds, systemBucket, stackName)
   );
 
   // cleanup
@@ -214,7 +220,11 @@ test('updateCMRMetadata file throws error if incorrect cmrfile provided', async 
 });
 
 test('publishUMMGJSON2CMR calls ingestUMMGranule with ummgMetadata via valid CMR object', async (t) => {
-  const ummgMetadata = { fake: 'metadata', GranuleUR: 'fakeGranuleID' };
+  const cmrPublishObject = {
+    filename: 'cmrfilename',
+    metadataObject: { fake: 'metadata', GranuleUR: 'fakeGranuleID' },
+    granuleId: 'fakeGranuleID'
+  };
   const creds = setTestCredentials();
   const systemBucket = process.env.system_bucket;
   const stackName = process.env.stackName;
@@ -226,7 +236,7 @@ test('publishUMMGJSON2CMR calls ingestUMMGranule with ummgMetadata via valid CMR
 
   // Act
   try {
-    await publishUMMGJSON2CMR(ummgMetadata, creds, systemBucket, stackName);
+    await publishUMMGJSON2CMR(cmrPublishObject, creds, systemBucket, stackName);
   }
   catch (error) {
     console.log(error);
@@ -237,7 +247,7 @@ test('publishUMMGJSON2CMR calls ingestUMMGranule with ummgMetadata via valid CMR
   t.true(cmrFake.calledOnceWithExactly(
     creds.provider, creds.clientId, creds.username, creds.password
   ));
-  t.true(ingestFake.calledOnceWithExactly(ummgMetadata));
+  t.true(ingestFake.calledOnceWithExactly(cmrPublishObject.metadataObject));
 
   // Cleanup
   restoreCMR();
