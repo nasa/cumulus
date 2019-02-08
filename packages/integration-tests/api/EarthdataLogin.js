@@ -28,8 +28,6 @@ async function getEarthdataLoginRedirectResponse({
   });
   const authorizeUrl = earthdataLoginClient.getAuthorizationUrl(state);
 
-  console.log(process.env.EARTHDATA_USERNAME);
-
   // Prepare request options for login to Earthdata.
   const auth = base64.encode(`${process.env.EARTHDATA_USERNAME}:${process.env.EARTHDATA_PASSWORD}`);
   const requestOptions = {
@@ -43,10 +41,7 @@ async function getEarthdataLoginRedirectResponse({
 
   // Make request to login to Earthdata.
   const redirectUrl = await got.post(authorizeUrl, requestOptions)
-    .then((res) => {
-      console.log(res.req._headers);
-      return res.headers.location;
-    });
+    .then((res) => res.headers.location);
 
   // Make request to redirect URL to exchange Earthdata authorization code
   // for access token.
