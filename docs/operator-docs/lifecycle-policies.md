@@ -146,7 +146,7 @@ For a discussion of overall recommended strategy, please review the [Methodology
 
 The examples shown in this document are obviously fairly basic cases.  By using object tags, filters and other configuration options  you can enact far more complicated policies for various scenarios.   For more reading on the topics presented on this page see:
 
-* [AWS's guide on setting bucket lifecycle policies via the management Console](https://docs.aws.amazon.com/AmazonS3/latest/user-guide/create-lifecycle.html)
-* [AWS's guide on setting bucket lifecycle policies using the AWS CLI](https://docs.aws.amazon.com/AmazonS3/latest/dev/set-lifecycle-cli.html)
+* [AWS - Guide on setting bucket lifecycle policies via the management Console](https://docs.aws.amazon.com/AmazonS3/latest/user-guide/create-lifecycle.html)
+* [AWS - Guide on setting bucket lifecycle policies using the AWS CLI](https://docs.aws.amazon.com/AmazonS3/latest/dev/set-lifecycle-cli.html)
 * [AWS - Object Lifecycle Management](https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lifecycle-mgmt.html)
 * [AWS - Lifecycle Configuration Examples](https://docs.aws.amazon.com/AmazonS3/latest/dev/lifecycle-configuration-examples.html)
