@@ -196,18 +196,26 @@ async function redeploy(config, options = {}) {
   );
 }
 
+async function getFileMetadata(file) {
+  const { Bucket, Key } = parseS3Uri(file.filename);
+
+  const headObjectResponse = await headObject(Bucket, Key);
+
+  return {
+    filename: file.filename,
+    fileSize: headObjectResponse.ContentLength,
+    LastModified: headObjectResponse.LastModified
+  };
+}
+
 /**
  * Get file headers for a set of files.
  *
  * @param {Array<Object>} files - array of file objects
  * @returns {Promise<Array>} - file detail responses
  */
-async function getFilesMetadata(files) {
-  const getFileRequests = files.map(async (f) => {
-    const header = await headObject(f.bucket, parseS3Uri(f.filename).Key);
-    return { filename: f.filename, fileSize: header.ContentLength, LastModified: header.LastModified };
-  });
-  return Promise.all(getFileRequests);
+function getFilesMetadata(files) {
+  return Promise.all(files.map(getFileMetadata));
 }
 
 const promisedCopyFile = promisify(fs.copyFile);
