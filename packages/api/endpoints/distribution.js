@@ -4,7 +4,7 @@ const router = require('express-promise-router')();
 const urljoin = require('url-join');
 const { s3 } = require('@cumulus/common/aws');
 const { URL } = require('url');
-const EarthdataLoginClient = require('../lib/EarthdataLogin');
+const EarthdataLogin = require('../lib/EarthdataLogin');
 const { RecordDoesNotExist } = require('../lib/errors');
 const { AccessToken } = require('../models');
 
@@ -72,17 +72,14 @@ function isAccessTokenExpired(accessTokenRecord) {
  * @returns {Object} the configuration object needed to handle requests
  */
 function getConfigurations() {
-  const earthdataLoginClient = new EarthdataLoginClient({
-    clientId: process.env.EARTHDATA_CLIENT_ID,
-    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
-    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
-    redirectUri: process.env.DEPLOYMENT_ENDPOINT
+  const earthdataLoginClient = EarthdataLogin.createFromEnv({
+    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT
   });
 
   return {
     accessTokenModel: new AccessToken(),
     authClient: earthdataLoginClient,
-    distributionUrl: process.env.DISTRIBUTION_URL,
+    distributionUrl: process.env.DISTRIBUTION_ENDPOINT,
     s3Client: s3()
   };
 }
