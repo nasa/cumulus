@@ -1,6 +1,7 @@
 'use strict';
 
 const get = require('lodash.get');
+const isInteger = require('lodash.isinteger');
 const isObject = require('lodash.isobject');
 
 function errorify(err) {
@@ -71,10 +72,10 @@ function extractDate(payload, dateField) {
  * @returns {Integer} - sum of granule file sizes in bytes
  */
 function getGranuleProductVolume(granuleFiles) {
-  const fileSizes = granuleFiles.map((file) => file.fileSize)
-    .filter((size) => size);
-
-  return fileSizes.reduce((a, b) => a + b);
+  return granuleFiles
+    .map((f) => f.fileSize)
+    .filter(isInteger)
+    .reduce((a, b) => a + b);
 }
 
 /**
@@ -89,7 +90,6 @@ function findCaseInsensitiveKey(obj, keyArg) {
   const keys = Object.keys(obj);
   return keys.find((key) => key.toLowerCase() === keyArg.toLowerCase());
 }
-exports.findCaseInsensitiveKey = findCaseInsensitiveKey;
 
 /**
  * Find a property value in an object in a case-insensitive manner
@@ -101,10 +101,13 @@ exports.findCaseInsensitiveKey = findCaseInsensitiveKey;
 function findCaseInsensitiveValue(obj, keyArg) {
   return obj[findCaseInsensitiveKey(obj, keyArg)];
 }
-exports.findCaseInsensitiveValue = findCaseInsensitiveValue;
 
-module.exports.errorify = errorify;
-module.exports.parseException = parseException;
-module.exports.deconstructCollectionId = deconstructCollectionId;
-module.exports.extractDate = extractDate;
-module.exports.getGranuleProductVolume = getGranuleProductVolume;
+module.exports = {
+  deconstructCollectionId,
+  errorify,
+  extractDate,
+  findCaseInsensitiveKey,
+  findCaseInsensitiveValue,
+  getGranuleProductVolume,
+  parseException
+};

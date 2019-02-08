@@ -261,13 +261,23 @@ exports.downloadS3File = (s3Obj, filepath) => {
 /**
 * Get an object header from S3
 *
-* @param {string} bucket - name of bucket
-* @param {string} key - key for object (filepath + filename)
+* @param {string} Bucket - name of bucket
+* @param {string} Key - key for object (filepath + filename)
 * @returns {Promise} - returns response from `S3.headObject` as a promise
 **/
+exports.headObject = (Bucket, Key) =>
+  exports.s3().headObject({ Bucket, Key }).promise();
 
-exports.headObject = (bucket, key) =>
-  exports.s3().headObject({ Bucket: bucket, Key: key }).promise();
+/**
+ * Get the size of an S3Object, in bytes
+ *
+ * @param {string} bucket - S3 bucket
+ * @param {string} key - S3 key
+ * @returns {Promise<integer>} - object size, in bytes
+ */
+exports.getObjectSize = (bucket, key) =>
+  exports.headObject(bucket, key)
+    .then((response) => response.ContentLength);
 
 /**
 * Get object Tagging from S3
