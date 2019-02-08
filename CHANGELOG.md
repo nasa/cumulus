@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 	  - `reconcileCMRMetadata` Reconciles cmr metadata file after a file moves.
 - Adds some ECS and other permissions to StepRole to enable running ECS tasks from a workflow
 - Added Apache logs to cumulus api and distribution lambdas
+- **CUMULUS-1119** - Added ``@cumulus/integration-tests/api/EarthdataLogin.getEarthdataLoginRedirectResponse` helper for integration tests to handle login with Earthdata and to return response from redirect to Cumulus API
 
 ### Changed
 - CUMULUS-1121
@@ -48,6 +49,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `@cumulus/integration-tests` - `buildAndExecuteWorkflow` and `buildWorkflow` updated to take a `meta` param to allow for additional fields to be added to the workflow `meta`
 
 - **CUMULUS-1049** Updated `Retrieve Execution Status API` in `@cumulus/api`: If the execution doesn't exist in Step Function API, Cumulus API returns the execution status information from the database.
+
+- **CUMULUS-1119**
+  - Renamed `DISTRIBUTION_URL` environment variable to `DISTRIBUTION_ENDPOINT`
+  - Renamed `DEPLOYMENT_ENDPOINT` environment variable to `DISTRIBUTION_REDIRECT_ENDPOINT`
+  - Renamed `API_ENDPOINT` environment variable to `TOKEN_REDIRECT_ENDPOINT`
 
 ### Deprecated
 `@cmrjs/ingestConcept`, instead use the CMR object methods. `@cmrjs/CMR.ingestGranule` or `@cmrjs/CMR.ingestCollection`

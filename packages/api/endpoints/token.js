@@ -219,7 +219,7 @@ function buildGoogleOAuth2ProviderFromEnv() {
   const googleOAuth2Client = new google.auth.OAuth2(
     process.env.EARTHDATA_CLIENT_ID,
     process.env.EARTHDATA_CLIENT_PASSWORD,
-    process.env.API_ENDPOINT
+    process.env.TOKEN_REDIRECT_ENDPOINT
   );
 
   const googlePlusPeopleClient = google.plus('v1').people;
@@ -228,11 +228,8 @@ function buildGoogleOAuth2ProviderFromEnv() {
 }
 
 function buildEarthdataLoginProviderFromEnv() {
-  return new EarthdataLogin({
-    clientId: process.env.EARTHDATA_CLIENT_ID,
-    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
-    earthdataLoginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
-    redirectUri: process.env.API_ENDPOINT
+  return EarthdataLogin.createFromEnv({
+    redirectUri: process.env.TOKEN_REDIRECT_ENDPOINT
   });
 }
 
