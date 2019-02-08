@@ -28,6 +28,7 @@
     "@cumulus/common": "1.11.1",
     "@cumulus/deployment": "1.11.1",
     "aws-sdk": "^2.238.1",
+    "base-64": "^0.1.0",
     "commander": "^2.15.0",
     "fs-extra": "^5.0.0",
     "got": "^8.3.0",
