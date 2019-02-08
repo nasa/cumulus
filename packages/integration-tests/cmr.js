@@ -62,12 +62,12 @@ const sampleEcho10Granule = {
       StartCoordinate2: '10',
       TwoDCoordinateSystemName: 'MODIS Tile SIN'
     },
-    OnlineAccessURLs: {
+    OnlineAccessURLs: [{
       OnlineAccessURL: {
         URL: 'https://enjo7p7os7.execute-api.us-east-1.amazonaws.com/dev/MYD13Q1.A2017297.h19v10.006.2017313221202.hdf',
         URLDescription: 'File to download'
       }
-    },
+    }],
     Orderable: 'true',
     Visible: 'true',
     CloudCover: '13'
