@@ -175,8 +175,8 @@ kk-uat-deployment:
       name: '{{prefix}}-public'
       type: public
 
-mth-2:
-  prefix: mth-2
+mth:
+  prefix: mth
   system_bucket: '{{prefix}}-internal'
   buckets:
     internal:
