@@ -282,8 +282,7 @@ class CMR {
           headers
         }
       );
-
-      if (response.errors) {
+      if (response.body.errors) {
         throw new Error(`Failed to ingest, CMR Errors: ${response.errors}`);
       }
     }
@@ -292,7 +291,7 @@ class CMR {
       throw error;
     }
 
-    return response;
+    return response.body;
   }
 
   /**
