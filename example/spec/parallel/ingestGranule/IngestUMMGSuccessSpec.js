@@ -50,8 +50,8 @@ const workflowName = 'IngestAndPublishGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
 const templatedOutputPayloadFilename = templateFile({
-  inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.output.payload.template.json',
-  config: config[workflowName].IngestGranuleOutput
+  inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.UMM.output.payload.template.json',
+  config: config[workflowName].IngestUMMGranuleOutput
 });
 
 const s3data = [
@@ -73,7 +73,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const testDataFolder = createTestDataPath(testId);
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
   const providersDir = './data/providers/s3/';
-  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006-umm';
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
   const provider = { id: `s3_provider${testSuffix}` };
   const cumulusDocUrl = 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme';
