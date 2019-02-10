@@ -15,7 +15,7 @@ const log = require('./log');
 const string = require('./string');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
 const concurrency = require('./concurrency');
-const { noop } = require('./util');
+const { setErrorStack, noop } = require('./util');
 
 /**
  * Join strings into an S3 key without a leading slash or double slashes
@@ -309,8 +309,21 @@ exports.s3PutObjectTagging = (bucket, key, tagging) =>
 * @param {string} key - key for object (filepath + filename)
 * @returns {Promise} - returns response from `S3.getObject` as a promise
 **/
-exports.getS3Object = (bucket, key) =>
-  exports.s3().getObject({ Bucket: bucket, Key: key }).promise();
+exports.getS3Object = async (bucket, key) => {
+  const params = { Bucket: bucket, Key: key };
+
+  const tracerError = {};
+  try {
+    Error.captureStackTrace(tracerError);
+    return await exports.s3().getObject(params).promise();
+  }
+  catch (err) {
+    err.operation = 'S3.getObject';
+    err.params = params;
+    setErrorStack(err, tracerError.stack);
+    throw err;
+  }
+};
 
 /**
 * Check if a file exists in an S3 object
