@@ -1,10 +1,8 @@
 'use strict';
 
-const clonedeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const isInteger = require('lodash.isinteger');
 const path = require('path');
-const uniqBy = require('lodash.uniqby');
 
 const aws = require('@cumulus/ingest/aws');
 const commonAws = require('@cumulus/common/aws');
@@ -30,17 +28,24 @@ const {
 const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
 
+const { cumulusMessageFileToAPIFile } = require('../lib/granuleUtils');
+
 const addMissingFileSize = async (file) => {
   if (isInteger(file.fileSize)) return file;
 
-  return {
-    ...file,
-    fileSize: await commonAws.getObjectSize(file.bucket, file.filepath)
-  };
-};
+  try {
+    const fileSize = await commonAws.getObjectSize(file.bucket, file.filepath);
+    return { ...file, fileSize };
+  }
+  catch (error) {
+    const errorMessage = error.code || error.message;
+    const s3Uri = commonAws.buildS3Uri(file.bucket, file.filepath);
 
-const addMissingFileSizes = (files) =>
-  Promise.all(files.map(addMissingFileSize));
+    log.error(`Could not get filesize for ${s3Uri}: ${errorMessage}`);
+
+    return file;
+  }
+};
 
 class Granule extends Manager {
   constructor() {
@@ -149,10 +154,15 @@ class Granule extends Manager {
    */
   async move(g, destinations, distEndpoint) {
     log.info(`granules.move ${g.granuleId}`);
-    const files = clonedeep(g.files);
-    const updatedFiles = await moveGranuleFiles(files, destinations);
+
+    const updatedFiles = await moveGranuleFiles(g.files, destinations);
+
     await reconcileCMRMetadata(g.granuleId, updatedFiles, distEndpoint, g.published);
-    await this.update({ granuleId: g.granuleId }, { files: updatedFiles });
+
+    return this.update(
+      { granuleId: g.granuleId },
+      { files: updatedFiles.map(cumulusMessageFileToAPIFile) }
+    );
   }
 
   /**
@@ -218,8 +228,11 @@ class Granule extends Manager {
 
     const done = granules.map(async (granule) => {
       if (granule.granuleId) {
-        let granuleFiles = granule.files;
-        granuleFiles = await addMissingFileSizes(uniqBy(granule.files, 'filename'));
+        const granuleFiles = await Promise.all(
+          granule.files
+            .map(cumulusMessageFileToAPIFile)
+            .map(addMissingFileSize)
+        );
 
         const doc = {
           granuleId: granule.granuleId,

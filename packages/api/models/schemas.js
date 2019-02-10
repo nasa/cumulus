@@ -257,7 +257,6 @@ module.exports.granule = {
           bucket: { type: 'string' },
           checksumType: { type: ['string', 'null'] },
           checksumValue: { type: ['string', 'null'] },
-          filename: { type: 'string' },
           filepath: { type: 'string' },
           fileSize: { type: 'integer' },
           name: { type: 'string' },

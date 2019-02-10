@@ -714,22 +714,27 @@ async function moveGranuleFile(source, target, options) {
 function generateMoveFileParams(sourceFiles, destinations) {
   return sourceFiles.map((file) => {
     const destination = destinations.find((dest) => file.name.match(dest.regex));
-    const parsed = aws.parseS3Uri(file.filename);
+
     // if there's no match, we skip the file
-    if (destination) {
-      const source = {
-        Bucket: parsed.Bucket,
-        Key: parsed.Key
-      };
+    if (!destination) return { source: null, target: null, file };
 
-      const target = {
-        Bucket: destination.bucket,
-        Key: destination.filepath ? urljoin(destination.filepath, file.name) : file.name
+    let source;
+    if (file.bucket && file.filepath) {
+      source = {
+        Bucket: file.bucket,
+        Key: file.filepath
       };
-
-      return { source, target, file };
     }
-    return { source: null, target: null, file };
+    else {
+      source = aws.parseS3Uri(file.filename);
+    }
+
+    const target = {
+      Bucket: destination.bucket,
+      Key: destination.filepath ? urljoin(destination.filepath, file.name) : file.name
+    };
+
+    return { source, target, file };
   });
 }
 
@@ -753,7 +758,6 @@ async function moveGranuleFiles(sourceFiles, destinations) {
   const processedFiles = [];
   const moveFileRequests = moveFileParams.map((moveFileParam) => {
     const { source, target, file } = moveFileParam;
-    const parsed = aws.parseS3Uri(file.filename);
 
     if (target) {
       log.debug('moveGranuleFiles', source, target);
@@ -766,12 +770,26 @@ async function moveGranuleFiles(sourceFiles, destinations) {
         });
       });
     }
+
+    let fileBucket;
+    let fileKey;
+    if (file.bucket && file.filepath) {
+      fileBucket = file.bucket;
+      fileKey = file.filepath;
+    }
+    else {
+      const parsed = aws.parseS3Uri(file.filename);
+      fileBucket = parsed.Bucket;
+      fileKey = parsed.Key;
+    }
+
     processedFiles.push({
-      bucket: parsed.Bucket,
-      filepath: parsed.Key,
-      filename: file.filename,
+      bucket: fileBucket,
+      filepath: fileKey,
+      filename: aws.buildS3Uri(fileBucket, fileKey),
       name: file.name
     });
+
     return Promise.resolve();
   });
   await Promise.all(moveFileRequests);
