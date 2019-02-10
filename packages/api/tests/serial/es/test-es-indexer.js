@@ -13,6 +13,7 @@ const {
   util: { noop }
 } = require('@cumulus/common');
 
+const { cumulusMessageFileToAPIFile } = require('../../../lib/granuleUtils');
 const indexer = require('../../../es/indexer');
 const { Search } = require('../../../es/search');
 const models = require('../../../models');
@@ -116,8 +117,10 @@ test.serial('creating a successful granule record', async (t) => {
 
   t.deepEqual(
     record.files,
-    // If fileSize is not set, default it to `mockedFileSize`
-    granule.files.map((f) => ({ fileSize: mockedFileSize, ...f }))
+    granule.files
+      // If fileSize is not set, default it to `mockedFileSize`
+      .map((f) => ({ fileSize: mockedFileSize, ...f }))
+      .map(cumulusMessageFileToAPIFile)
   );
   t.is(record.status, 'completed');
   t.is(record.collectionId, collectionId);
@@ -165,7 +168,10 @@ test.serial('creating a failed granule record', async (t) => {
   const records = await indexer.granule(granuleFailure);
 
   const record = records[0];
-  t.deepEqual(record.files, granule.files);
+  t.deepEqual(
+    record.files,
+    granule.files.map(cumulusMessageFileToAPIFile)
+  );
   t.is(record.status, 'failed');
   t.is(record.granuleId, granule.granuleId);
   t.is(record.published, false);
@@ -202,7 +208,10 @@ test.serial('creating a granule record in meta section', async (t) => {
   const collectionId = constructCollectionId(collection.name, collection.version);
 
   const record = records[0];
-  t.deepEqual(record.files, granule.files);
+  t.deepEqual(
+    record.files,
+    granule.files.map(cumulusMessageFileToAPIFile)
+  );
   t.is(record.status, 'running');
   t.is(record.collectionId, collectionId);
   t.is(record.granuleId, granule.granuleId);

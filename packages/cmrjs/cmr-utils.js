@@ -34,7 +34,8 @@ async function getCMRInstance(creds, systemBucket, stack) {
     password = await DefaultProvider.decrypt(creds.password, undefined, systemBucket, stack);
   }
   catch (error) {
-    log.error('Decrypting password failed, using unencrypted password', error);
+    const reason = error.message || error.code || error.name;
+    log.error('Decrypting password failed, using unencrypted password:', reason);
     password = creds.password;
   }
   const cmrInstance = new CMR(
@@ -74,7 +75,7 @@ async function publishECHO10XML2CMR(cmrFile, creds, systemBucket, stack) {
 
   return {
     granuleId: cmrFile.granuleId,
-    filename: cmrFile.filename,
+    filename: cmrFile.filename || aws.buildS3Uri(cmrFile.bucket, cmrFile.filepath),
     conceptId,
     link: `${getUrl('search')}granules.json?concept_id=${res.result['concept-id']}`
   };
@@ -155,7 +156,10 @@ const isUMMGFile = (filename) => filename.endsWith('cmr.json');
  * @returns {boolean} true if object references cmr metadata.
  */
 function isCMRFile(fileobject) {
-  const cmrfilename = fileobject.name || fileobject.filename || '';
+  const cmrfilename = fileobject.name
+    || fileobject.filename
+    || fileobject.filepath
+    || '';
   return isECHO10File(cmrfilename) || isUMMGFile(cmrfilename);
 }
 
@@ -335,7 +339,9 @@ function mergeURLs(original, updated, removed = []) {
 async function updateUMMGMetadata(cmrFile, files, distEndpoint, buckets) {
   const newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
-  const metadataObject = await metadataObjectFromCMRJSONFile(cmrFile.filename);
+  const filename = cmrFile.filename
+    || aws.buildS3Uri(cmrFile.bucket, cmrFile.filepath);
+  const metadataObject = await metadataObjectFromCMRJSONFile(filename);
 
   const originalURLs = _get(metadataObject, 'RelatedUrls', []);
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
@@ -381,7 +387,9 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
 
   // add/replace the OnlineAccessUrls
-  const metadataObject = await metadataObjectFromCMRXMLFile(cmrFile.filename);
+  const filename = cmrFile.filename
+    || aws.buildS3Uri(cmrFile.bucket, cmrFile.filepath);
+  const metadataObject = await metadataObjectFromCMRXMLFile(filename);
   const metadataGranule = metadataObject.Granule;
 
   const updatedGranule = { ...metadataGranule };
@@ -413,16 +421,18 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
  *                    or resolved promise if published === false.
  */
 async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, published) {
-  log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${cmrFile.filename}`);
+  const filename = cmrFile.filename
+    || aws.buildS3Uri(cmrFile.bucket, cmrFile.filepath);
+  log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${filename}`);
 
-  if (isECHO10File(cmrFile.filename)) {
+  if (isECHO10File(filename)) {
     const buckets = new BucketsConfig(await bucketsConfigDefaults());
     const theMetadata = await updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets);
     if (published) {
       // post metadata Object to CMR
       const creds = getCreds();
       const cmrFileObject = {
-        filename: cmrFile.filename,
+        filename,
         metadataObject: theMetadata,
         granuleId: granuleId
       };
@@ -435,7 +445,8 @@ async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, publis
     }
     return Promise.resolve();
   }
-  if (isUMMGFile(cmrFile.filename)) {
+
+  if (isUMMGFile(filename)) {
     const buckets = new BucketsConfig(await bucketsConfigDefaults());
     const ummgMetadata = await updateUMMGMetadata(cmrFile, files, distEndpoint, buckets);
     if (published) {
