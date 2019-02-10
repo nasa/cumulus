@@ -12,8 +12,7 @@ const {
 const aws = require('@cumulus/common/aws');
 const { CMR } = require('@cumulus/cmrjs');
 const {
-  metadataObjectFromCMRJSONFile,
-  metadataObjectFromCMRXMLFile
+  metadataObjectFromCMRFile
 } = require('@cumulus/cmrjs/cmr-utils');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
@@ -675,7 +674,7 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
     }
     return putObject({ Bucket: file.bucket, Key: file.filepath, Body: metadata });
   }));
-  const originalXML = await metadataObjectFromCMRXMLFile(
+  const originalXML = await metadataObjectFromCMRFile(
     buildS3Uri(newGranule.files[1].bucket, newGranule.files[1].filepath)
   );
 
@@ -722,7 +721,7 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   t.is(list2.Contents.length, 1);
   t.is(newGranule.files[1].filepath, list2.Contents[0].Key);
 
-  const xmlObject = await metadataObjectFromCMRXMLFile(
+  const xmlObject = await metadataObjectFromCMRFile(
     aws.buildS3Uri(newGranule.files[1].bucket, newGranule.files[1].filepath)
   );
 
@@ -816,7 +815,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   t.is(newGranule.files[1].filepath, list2.Contents[0].Key);
 
   // CMR UMMG JSON has been updated with the location of the moved file.
-  const ummgObject = await metadataObjectFromCMRJSONFile(
+  const ummgObject = await metadataObjectFromCMRFile(
     aws.buildS3Uri(newGranule.files[1].bucket, newGranule.files[1].filepath)
   );
   const updatedURLs = ummgObject.RelatedUrls.map((urlObj) => urlObj.URL);

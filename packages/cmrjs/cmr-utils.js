@@ -19,6 +19,21 @@ const { omit } = require('@cumulus/common/util');
 const { CMR } = require('./cmr');
 const { getUrl, xmlParseOptions } = require('./utils');
 
+const isECHO10File = (filename) => filename.endsWith('cmr.xml');
+const isUMMGFile = (filename) => filename.endsWith('cmr.json');
+const isCMRFilename = (filename) => isECHO10File(filename) || isUMMGFile(filename);
+
+/**
+ * Returns True if this object can be determined to be a cmrMetadata object.
+ *
+ * @param {Object} fileobject
+ * @returns {boolean} true if object references cmr metadata.
+ */
+function isCMRFile(fileobject) {
+  const cmrfilename = fileobject.name || fileobject.filename || '';
+  return isCMRFilename(cmrfilename);
+}
+
 
 /**
  * Instantiates a CMR instance for ingest of metadata
@@ -84,17 +99,20 @@ async function publishECHO10XML2CMR(cmrFile, creds, systemBucket, stack) {
 
 /**
  *
- * @param {Object} ummgMetadata - UMM Granule json object
+ * @param {Object} cmrPublishObject -
+ * @param {string} cmrPublishObject.filename - the cmr filename
+ * @param {Object} cmrPublishObject.metadataObject - the UMMG JSON cmr metadata
+ * @param {Object} cmrPublishObject.granuleId - the metadata's granuleId
  * @param {Object} creds - credentials needed to post to CMR service
  * @param {string} systemBucket - bucket containing crypto keypair.
  * @param {string} stack - stack deployment name
  */
-async function publishUMMGJSON2CMR(ummgMetadata, creds, systemBucket, stack) {
+async function publishUMMGJSON2CMR(cmrPublishObject, creds, systemBucket, stack) {
   const cmr = await getCMRInstance(creds, systemBucket, stack);
 
-  const granuleId = ummgMetadata.GranuleUR;
+  const granuleId = cmrPublishObject.metadataObject.GranuleUR;
 
-  const res = await cmr.ingestUMMGranule(ummgMetadata);
+  const res = await cmr.ingestUMMGranule(cmrPublishObject.metadataObject);
   const conceptId = res.result['concept-id'];
 
   log.info(`Published UMMG ${granuleId} to the CMR. conceptId: ${conceptId}`);
@@ -105,6 +123,30 @@ async function publishUMMGJSON2CMR(ummgMetadata, creds, systemBucket, stack) {
     link: `${getUrl('search')}granules.json?concept_id=${res.result['concept-id']}`
   };
 }
+
+/**
+ * Determines what type of metadata object and posts either ECHO10XML or UMMG
+ * JSON data to CMR.
+ *
+ * @param {Object} cmrPublishObject -
+ * @param {string} cmrPublishObject.filename - the cmr filename
+ * @param {Object} cmrPublishObject.metadataObject - the UMMG JSON cmr metadata
+ * @param {Object} cmrPublishObject.granuleId - the metadata's granuleId
+ * @param {Object} creds - credentials needed to post to CMR service
+ * @param {string} systemBucket - bucket containing crypto keypair.
+ * @param {string} stack - stack deployment name
+ */
+async function publish2CMR(cmrPublishObject, creds, systemBucket, stack) {
+  // choose xml or json and do the things.
+  if (isECHO10File(cmrPublishObject.filename)) {
+    return publishECHO10XML2CMR(cmrPublishObject, creds, systemBucket, stack);
+  }
+  if (isUMMGFile(cmrPublishObject.filename)) {
+    return publishUMMGJSON2CMR(cmrPublishObject, creds, systemBucket, stack);
+  }
+  throw new Error(`invalid cmrPublishObject passed to publis2CMR ${JSON.stringify(cmrPublishObject)}`);
+}
+
 
 // 2018-12-12 This doesn't belong in cmrjs, but should be resolved by
 // https://bugs.earthdata.nasa.gov/browse/CUMULUS-1086
@@ -146,27 +188,10 @@ async function parseXmlString(xml) {
   return (promisify(xml2js.parseString))(xml, xmlParseOptions);
 }
 
-const isECHO10File = (filename) => filename.endsWith('cmr.xml');
-const isUMMGFile = (filename) => filename.endsWith('cmr.json');
-
-/**
- * Returns True if this object can be determined to be a cmrMetadata object.
- *
- * @param {Object} fileobject
- * @returns {boolean} true if object references cmr metadata.
- */
-function isCMRFile(fileobject) {
-  const cmrfilename = fileobject.name
-    || fileobject.filename
-    || fileobject.filepath
-    || '';
-  return isECHO10File(cmrfilename) || isUMMGFile(cmrfilename);
-}
-
 /**
  * return UMMG metadata object from CMR UMM-G json file
  * @param {string} cmrFilename - s3 path to json file
- * @returns {Object} CMR UMMG metadata object
+ * @returns {Promise<Object>} CMR UMMG metadata object
  */
 async function metadataObjectFromCMRJSONFile(cmrFilename) {
   const { Bucket, Key } = aws.parseS3Uri(cmrFilename);
@@ -177,26 +202,42 @@ async function metadataObjectFromCMRJSONFile(cmrFilename) {
 /**
  * return metadata object from cmr echo10 XML file.
  * @param {string} cmrFilename
- * @returns {Object} cmr xml metadata as object.
+ * @returns {Promise<Object>} cmr xml metadata as object.
  */
 async function metadataObjectFromCMRXMLFile(cmrFilename) {
   const metadata = await getXMLMetadataAsString(cmrFilename);
   return parseXmlString(metadata);
 }
 
+
 /**
- * returns a list of CMR xml file objects
+ * Return cmr metadata object from a CMR Echo10XML file or CMR UMMG File.
+ * @param {string} cmrFilename - s3 path to cmr file
+ * @returns {Promise<Object>} - metadata object from the file.
+ */
+async function metadataObjectFromCMRFile(cmrFilename) {
+  if (isECHO10File(cmrFilename)) {
+    return metadataObjectFromCMRXMLFile(cmrFilename);
+  }
+  if (isUMMGFile(cmrFilename)) {
+    return metadataObjectFromCMRJSONFile(cmrFilename);
+  }
+  throw new Error(`cannot return metdata from invalid cmrFilename: ${cmrFilename}`);
+}
+
+/**
+ * Returns a list of CMR ECHO10 xml or UMMG JSON file objects.
  *
  * @param {Array} input - an Array of S3 uris
  * @param {string} granuleIdExtraction - a regex for extracting granule IDs
- * @returns {Promise<Array>} promise resolves to an array of objects
- * that includes CMR xmls uris and granuleIds
+ * @returns {Array} array of objects
+ * that includes CMR xml/json URIs and granuleIds
  */
-function getCmrXMLFiles(input, granuleIdExtraction) {
+function getCmrFiles(input, granuleIdExtraction) {
   const files = [];
 
   input.forEach((filename) => {
-    if (isECHO10File(filename)) {
+    if (isCMRFilename(filename)) {
       const cmrFileObject = {
         filename,
         granuleId: getGranuleId(filename, granuleIdExtraction)
@@ -393,7 +434,13 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   const metadataGranule = metadataObject.Granule;
 
   const updatedGranule = { ...metadataGranule };
-  const originalURLs = _get(metadataGranule, 'OnlineAccessURLs.OnlineAccessURL', []);
+  let originalURLs = _get(metadataGranule, 'OnlineAccessURLs.OnlineAccessURL', []);
+
+  // If there is only one OnlineAccessURL in the file, it comes back as an object and not an array
+  if (!Array.isArray(originalURLs)) {
+    originalURLs = [originalURLs];
+  }
+
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
   _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedURLs);
   metadataObject.Granule = updatedGranule;
@@ -417,50 +464,51 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
  * @param {Array<Object>} files - array of file objects
  * @param {string} distEndpoint - distribution enpoint from config
  * @param {boolean} published - indicate if publish is needed
+ * @param {BucketsConfig} inBuckets - BucketsConfig instance if available, will
+ *                                    default one build with s3 stored config.
  * @returns {Promise} returns promise to publish metadata to CMR Service
  *                    or resolved promise if published === false.
  */
-async function updateCMRMetadata(granuleId, cmrFile, files, distEndpoint, published) {
-  const filename = cmrFile.filename
-    || aws.buildS3Uri(cmrFile.bucket, cmrFile.filepath);
+async function updateCMRMetadata(
+  granuleId,
+  cmrFile,
+  files,
+  distEndpoint,
+  published,
+  inBuckets = null
+) {
+  const filename = cmrFile.filename || aws.buildS3Uri(cmrFile.bucket, cmrFile.filepath);
+
   log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${filename}`);
+  const buckets = inBuckets || new BucketsConfig(await bucketsConfigDefaults());
+  const cmrCredentials = (published) ? getCreds() : {};
+  let theMetadata;
 
   if (isECHO10File(filename)) {
-    const buckets = new BucketsConfig(await bucketsConfigDefaults());
-    const theMetadata = await updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets);
-    if (published) {
-      // post metadata Object to CMR
-      const creds = getCreds();
-      const cmrFileObject = {
-        filename,
-        metadataObject: theMetadata,
-        granuleId: granuleId
-      };
-      return publishECHO10XML2CMR(
-        cmrFileObject,
-        creds,
-        process.env.system_bucket,
-        process.env.stackName
-      );
-    }
-    return Promise.resolve();
+    theMetadata = await updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets);
+  }
+  else if (isUMMGFile(filename)) {
+    theMetadata = await updateUMMGMetadata(cmrFile, files, distEndpoint, buckets);
+  }
+  else {
+    throw new errors.CMRMetaFileNotFound('Invalid CMR filetype passed to updateCMRMetadata');
   }
 
-  if (isUMMGFile(filename)) {
-    const buckets = new BucketsConfig(await bucketsConfigDefaults());
-    const ummgMetadata = await updateUMMGMetadata(cmrFile, files, distEndpoint, buckets);
-    if (published) {
-      const creds = getCreds();
-      return publishUMMGJSON2CMR(
-        ummgMetadata,
-        creds,
-        process.env.system_bucket,
-        process.env.stackName
-      );
-    }
-    return Promise.resolve();
+  if (published) {
+    // post metadata Object to CMR
+    const cmrPublishObject = {
+      filename: cmrFile.filename,
+      metadataObject: theMetadata,
+      granuleId: granuleId
+    };
+    return publish2CMR(
+      cmrPublishObject,
+      cmrCredentials,
+      process.env.system_bucket,
+      process.env.stackName
+    );
   }
-  throw new errors.CMRMetaFileNotFound('Invalid CMR filetype passed to updateCMRMetadata');
+  return Promise.resolve();
 }
 
 /**
@@ -484,13 +532,11 @@ async function reconcileCMRMetadata(granuleId, updatedFiles, distEndpoint, publi
 
 
 module.exports = {
+  getCmrFiles,
   getGranuleId,
-  getCmrXMLFiles,
-  isECHO10File,
-  metadataObjectFromCMRJSONFile,
-  metadataObjectFromCMRXMLFile,
-  publishECHO10XML2CMR,
+  isCMRFile,
+  metadataObjectFromCMRFile,
+  publish2CMR,
   reconcileCMRMetadata,
-  updateCMRMetadata,
-  updateEcho10XMLMetadata
+  updateCMRMetadata
 };

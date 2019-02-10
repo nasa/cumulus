@@ -4,6 +4,7 @@
 
 const orderBy = require('lodash.orderby');
 const cloneDeep = require('lodash.clonedeep');
+const merge = require('lodash.merge');
 const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
@@ -32,6 +33,7 @@ const api = require('./api/api');
 const rulesApi = require('./api/rules');
 const executionsApi = require('./api/executions');
 const granulesApi = require('./api/granules');
+const EarthdataLogin = require('./api/EarthdataLogin');
 const cmr = require('./cmr.js');
 const lambda = require('./lambda');
 const granule = require('./granule.js');
@@ -583,9 +585,18 @@ async function deleteRules(stackName, bucketName, rules, postfix) {
  * @param {Object} provider - provider information
  * @param {Object} provider.id - provider id
  * @param {Object} payload - payload information
+ * @param {Object} meta - additional keys to add to meta field
  * @returns {Promise.<string>} workflow message
  */
-async function buildWorkflow(stackName, bucketName, workflowName, collection, provider, payload) {
+async function buildWorkflow(
+  stackName,
+  bucketName,
+  workflowName,
+  collection,
+  provider,
+  payload,
+  meta
+) {
   setProcessEnvironment(stackName, bucketName);
   const template = await getWorkflowTemplate(stackName, bucketName, workflowName);
   let collectionInfo = {};
@@ -599,6 +610,7 @@ async function buildWorkflow(stackName, bucketName, workflowName, collection, pr
   }
   template.meta.collection = collectionInfo;
   template.meta.provider = providerInfo;
+  template.meta = merge(template.meta, meta);
   template.payload = payload || {};
   return template;
 }
@@ -614,6 +626,7 @@ async function buildWorkflow(stackName, bucketName, workflowName, collection, pr
  * @param {Object} provider - provider information
  * @param {Object} provider.id - provider id
  * @param {Object} payload - payload information
+ * @param {Object} meta - additional keys to add to meta field
  * @param {number} [timeout=600] - number of seconds to wait for execution to complete
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  */
@@ -624,6 +637,7 @@ async function buildAndExecuteWorkflow(
   collection,
   provider,
   payload,
+  meta = {},
   timeout = 600
 ) {
   const workflowMsg = await buildWorkflow(
@@ -632,7 +646,8 @@ async function buildAndExecuteWorkflow(
     workflowName,
     collection,
     provider,
-    payload
+    payload,
+    meta
   );
   return executeWorkflow(stackName, bucketName, workflowName, workflowMsg, timeout);
 }
@@ -650,6 +665,7 @@ async function buildAndExecuteWorkflow(
  * @param {Object} provider - provider information
  * @param {Object} provider.id - provider id
  * @param {Object} payload - payload information
+ * @param {Object} meta - additional keys to add to meta field
  * @returns {string} - executionArn
  */
 async function buildAndStartWorkflow(
@@ -658,10 +674,11 @@ async function buildAndStartWorkflow(
   workflowName,
   collection,
   provider,
-  payload
+  payload,
+  meta = {}
 ) {
   const workflowMsg = await
-  buildWorkflow(stackName, bucketName, workflowName, collection, provider, payload);
+  buildWorkflow(stackName, bucketName, workflowName, collection, provider, payload, meta);
   return startWorkflow(stackName, bucketName, workflowName, workflowMsg);
 }
 
@@ -730,6 +747,7 @@ module.exports = {
   rulesApi,
   granulesApi,
   executionsApi,
+  EarthdataLogin,
   buildWorkflow,
   testWorkflow,
   executeWorkflow,

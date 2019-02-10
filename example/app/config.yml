@@ -373,7 +373,6 @@ mhs2:
   FilesTable:
     enableAutoScaling: false
 
-
 gitc:
   prefix: {{PREFIX}}
   stackName: {{stackName}}
