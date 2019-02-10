@@ -5,9 +5,9 @@ const get = require('lodash.get');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const {
-  getCmrXMLFiles,
-  metadataObjectFromCMRXMLFile,
-  publishECHO10XML2CMR
+  getCmrFiles,
+  metadataObjectFromCMRFile,
+  publish2CMR
 } = require('@cumulus/cmrjs');
 const { buildS3Uri } = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
@@ -42,7 +42,7 @@ function buildOutput(results, granulesObject) {
 async function addMetadataObjects(cmrFiles) {
   const updatedCMRFiles = [];
   const objectPromises = cmrFiles.map(async (cmrFile) => {
-    const metadataObject = await metadataObjectFromCMRXMLFile(cmrFile.filename);
+    const metadataObject = await metadataObjectFromCMRFile(cmrFile.filename);
     const updatedFile = Object.assign({}, { ...cmrFile }, { metadataObject: metadataObject });
     updatedCMRFiles.push(updatedFile);
   });
@@ -67,7 +67,7 @@ async function postToCMR(event) {
   // We have to post the metadata file for the output granules.
   // First we check if there is an output file.
   const config = get(event, 'config');
-  const bucket = get(config, 'bucket'); // the name of the bucket with private/public keys
+  const systemBucket = get(config, 'bucket'); // the name of the bucket with private/public keys
   const stack = get(config, 'stack'); // the name of the deployment stack
   const input = get(event, 'input', []);
   const process = get(config, 'process');
@@ -92,12 +92,12 @@ async function postToCMR(event) {
   });
 
   // get cmr files and metadata
-  const cmrFiles = getCmrXMLFiles(allFiles, regex);
+  const cmrFiles = getCmrFiles(allFiles, regex);
   const updatedCMRFiles = await addMetadataObjects(cmrFiles);
 
   // post all meta files to CMR
   const publishRequests = updatedCMRFiles.map((cmrFile) => (
-    publishECHO10XML2CMR(cmrFile, creds, bucket, stack)
+    publish2CMR(cmrFile, creds, systemBucket, stack)
   ));
   const results = await Promise.all(publishRequests);
 

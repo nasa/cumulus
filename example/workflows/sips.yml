@@ -189,6 +189,8 @@ IngestAndPublishGranule:
       CumulusConfig:
         bucket: '{$.meta.buckets.internal.name}'
         collection: '{$.meta.collection}'
+        cmrFileType: '{$.meta.cmrFileType}'
+        additionalUrls: '{$.meta.additionalUrls}'
       Type: Task
       Resource: ${FakeProcessingLambdaFunction.Arn}
       Catch:
