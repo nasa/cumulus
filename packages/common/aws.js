@@ -221,9 +221,23 @@ exports.s3PutObject = (params) => {
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 * @returns {Promise} - promise of the object being copied
 **/
-exports.s3CopyObject = (params) => {
-  if (!params.TaggingDirective) params.TaggingDirective = 'COPY'; //eslint-disable-line no-param-reassign
-  return exports.s3().copyObject(params).promise();
+exports.s3CopyObject = async (params) => {
+  const fullParams = {
+    TaggingDirective: 'COPY',
+    ...params
+  };
+
+  const tracerError = {};
+  try {
+    Error.captureStackTrace(tracerError);
+    return await exports.s3().copyObject(fullParams).promise();
+  }
+  catch (err) {
+    err.operation = 'S3.copyObject';
+    err.params = fullParams;
+    setErrorStack(err, tracerError.stack);
+    throw err;
+  }
 };
 
 /**
