@@ -67,7 +67,8 @@
       "operator-docs/about-operator-docs"
     ],
     "Configuration": [
-      "operator-docs/update-cumulus-dependencies"
+      "operator-docs/update-cumulus-dependencies",
+      "operator-docs/lifecycle-policies"
     ]
   }
 }
