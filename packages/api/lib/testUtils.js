@@ -49,7 +49,7 @@ function fakeFileFactory(params = {}) {
   return {
     bucket: randomString(),
     name,
-    filepath: name,
+    key: name,
     ...params
   };
 }

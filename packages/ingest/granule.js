@@ -725,8 +725,17 @@ function generateMoveFileParams(sourceFiles, destinations) {
         Key: file.filepath
       };
     }
-    else {
+    else if (file.bucket && file.key) {
+      source = {
+        Bucket: file.bucket,
+        Key: file.key
+      };
+    }
+    else if (file.filename) {
       source = aws.parseS3Uri(file.filename);
+    }
+    else {
+      throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
     }
 
     const target = {
@@ -777,10 +786,17 @@ async function moveGranuleFiles(sourceFiles, destinations) {
       fileBucket = file.bucket;
       fileKey = file.filepath;
     }
-    else {
+    else if (file.bucket && file.key) {
+      fileBucket = file.bucket;
+      fileKey = file.key;
+    }
+    else if (file.filename) {
       const parsed = aws.parseS3Uri(file.filename);
       fileBucket = parsed.Bucket;
       fileKey = parsed.Key;
+    }
+    else {
+      throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
     }
 
     processedFiles.push({

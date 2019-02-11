@@ -34,12 +34,12 @@ const addMissingFileSize = async (file) => {
   if (isInteger(file.fileSize)) return file;
 
   try {
-    const fileSize = await commonAws.getObjectSize(file.bucket, file.filepath);
+    const fileSize = await commonAws.getObjectSize(file.bucket, file.key);
     return { ...file, fileSize };
   }
   catch (error) {
     const errorMessage = error.code || error.message;
-    const s3Uri = commonAws.buildS3Uri(file.bucket, file.filepath);
+    const s3Uri = commonAws.buildS3Uri(file.bucket, file.key);
 
     log.error(`Could not get filesize for ${s3Uri}: ${errorMessage}`);
 
