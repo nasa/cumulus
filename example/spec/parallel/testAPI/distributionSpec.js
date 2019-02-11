@@ -89,6 +89,7 @@ describe('Distribution API', () => {
       );
       const authorizeUrl = new URL(response.headers.location);
       expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
+      expect(authorizeUrl.pathname).toEqual('/oauth/authorize');
     });
 
     it('downloads the requested science file for authorized requests', async () => {
