@@ -265,8 +265,21 @@ exports.downloadS3File = (s3Obj, filepath) => {
 * @param {string} Key - key for object (filepath + filename)
 * @returns {Promise} - returns response from `S3.headObject` as a promise
 **/
-exports.headObject = (Bucket, Key) =>
-  exports.s3().headObject({ Bucket, Key }).promise();
+exports.headObject = async (Bucket, Key) => {
+  const params = { Bucket, Key };
+
+  const tracerError = {};
+  try {
+    Error.captureStackTrace(tracerError);
+    return await exports.s3().headObject(params).promise();
+  }
+  catch (err) {
+    err.operation = 'S3.headObject';
+    err.params = params;
+    setErrorStack(err, tracerError.stack);
+    throw err;
+  }
+};
 
 /**
  * Get the size of an S3Object, in bytes
