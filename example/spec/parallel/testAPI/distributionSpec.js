@@ -6,7 +6,10 @@ const got = require('got');
 
 const { distributionApp } = require('@cumulus/api/app/distribution');
 const { prepareDistributionApi } = require('@cumulus/api/bin/serve');
-const { inTestMode } = require('@cumulus/common/test-utils');
+const {
+  file: { getChecksumFromStream },
+  testUtils: { inTestMode }
+} = require('@cumulus/common');
 const {
   EarthdataLogin: { getEarthdataLoginRedirectResponse }
 } = require('@cumulus/integration-tests');
@@ -29,7 +32,6 @@ describe('Distribution API', () => {
   const testDataFolder = createTestDataPath(testId);
   const fileKey = `${testDataFolder}/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met`;
   const fileRequestPath = `${config.bucket}/${fileKey}`;
-  const fileStats = fs.statSync(require.resolve(s3Data[0]));
   const distributionApiPort = 5002;
 
   let server;
@@ -72,6 +74,14 @@ describe('Distribution API', () => {
   });
 
   describe('handles requests for files over HTTPS', () => {
+    let fileChecksum;
+
+    beforeAll(async () => {
+      fileChecksum = await getChecksumFromStream(
+        fs.createReadStream(require.resolve(s3Data[0]))
+      );
+    });
+
     it('redirects to Earthdata login for unauthorized requests', async () => {
       const authorizeUrl = await got(
         `${process.env.DISTRIBUTION_ENDPOINT}/${fileRequestPath}`,
@@ -81,7 +91,7 @@ describe('Distribution API', () => {
       expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
     });
 
-    it('downloads the requested science file for authorized requests', async (done) => {
+    it('downloads the requested science file for authorized requests', async () => {
       // Login with Earthdata and get response for redirect back to
       // distribution API.
       const response = await getEarthdataLoginRedirectResponse({
@@ -96,16 +106,9 @@ describe('Distribution API', () => {
       const signedS3Url = await got(fileUrl, { headers: { cookie }, followRedirect: false })
         .then((res) => res.headers.location);
 
-      let fileContent = '';
-      await got.stream(signedS3Url)
-        .on('data', (chunk) => {
-          fileContent += chunk;
-        })
-        .on('error', () => done())
-        .on('end', () => {
-          expect(fileContent.length).toEqual(fileStats.size);
-          done();
-        });
+      // Compare checksum of downloaded file with expected checksum.
+      const downloadChecksum = await getChecksumFromStream(got.stream(signedS3Url));
+      expect(downloadChecksum).toEqual(fileChecksum);
     });
   });
 });
