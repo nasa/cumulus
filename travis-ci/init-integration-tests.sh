@@ -2,7 +2,7 @@
 
 set -e
 
-sh ./travis-ci/set-env-vars.sh
+. ./travis-ci/set-env-vars.sh
 
 if [ "$USE_NPM_PACKAGES" = "true" ]; then
   cd example
