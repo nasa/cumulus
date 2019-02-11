@@ -83,11 +83,11 @@ describe('Distribution API', () => {
     });
 
     it('redirects to Earthdata login for unauthorized requests', async () => {
-      const authorizeUrl = await got(
+      const response = await got(
         `${process.env.DISTRIBUTION_ENDPOINT}/${fileRequestPath}`,
         { followRedirect: false }
-      )
-        .then((res) => new URL(res.headers.location));
+      );
+      const authorizeUrl = new URL(response.headers.location);
       expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
     });
 
@@ -103,8 +103,8 @@ describe('Distribution API', () => {
       const { 'set-cookie': cookie, location: fileUrl } = response.headers;
 
       // Get S3 signed URL fromm distribution API with cookie set.
-      const signedS3Url = await got(fileUrl, { headers: { cookie }, followRedirect: false })
-        .then((res) => res.headers.location);
+      const fileResponse = await got(fileUrl, { headers: { cookie }, followRedirect: false });
+      const signedS3Url = fileResponse.headers.location;
 
       // Compare checksum of downloaded file with expected checksum.
       const downloadChecksum = await getFileChecksumFromStream(got.stream(signedS3Url));
