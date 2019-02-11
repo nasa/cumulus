@@ -477,7 +477,16 @@ async function updateCMRMetadata(
   published,
   inBuckets = null
 ) {
-  const filename = cmrFile.filename || aws.buildS3Uri(cmrFile.bucket, cmrFile.filepath);
+  let filename;
+  if (cmrFile.filename) {
+    filename = cmrFile.filename;
+  }
+  else if (cmrFile.bucket && cmrFile.filepath) {
+    filename = aws.buildS3Uri(cmrFile.bucket, cmrFile.filepath);
+  }
+  else {
+    throw new Error(`Unable to determine location of file: ${JSON.stringify(cmrFile)}`);
+  }
 
   log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${filename}`);
   const buckets = inBuckets || new BucketsConfig(await bucketsConfigDefaults());
@@ -497,7 +506,7 @@ async function updateCMRMetadata(
   if (published) {
     // post metadata Object to CMR
     const cmrPublishObject = {
-      filename: cmrFile.filename,
+      filename,
       metadataObject: theMetadata,
       granuleId: granuleId
     };
