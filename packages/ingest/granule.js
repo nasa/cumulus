@@ -12,12 +12,15 @@ const path = require('path');
 const urljoin = require('url-join');
 const uuidv4 = require('uuid/v4');
 const encodeurl = require('encodeurl');
-const cksum = require('cksum');
 const {
-  aws, CollectionConfigStore, constructCollectionId, log
+  aws,
+  CollectionConfigStore,
+  constructCollectionId,
+  log,
+  errors,
+  util: { deprecate },
+  file: { getChecksumFromStream }
 } = require('@cumulus/common');
-const errors = require('@cumulus/common/errors');
-const { deprecate } = require('@cumulus/common/util');
 
 const { sftpMixin } = require('./sftp');
 const { ftpMixin } = require('./ftp');
@@ -379,10 +382,7 @@ class Granule {
    * @returns {Promise<number>} checksum value calculated from file
    */
   async _cksum(filepath) {
-    return new Promise((resolve, reject) =>
-      fs.createReadStream(filepath)
-        .pipe(cksum.stream((value) => resolve(value.readUInt32BE(0))))
-        .on('error', reject));
+    return getChecksumFromStream(fs.createReadStream(filepath));
   }
 
   /**
