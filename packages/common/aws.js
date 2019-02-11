@@ -15,7 +15,7 @@ const string = require('./string');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
 const concurrency = require('./concurrency');
 const { noop } = require('./util');
-const { getChecksumFromStream } = require('./file');
+const { getFileChecksumFromStream } = require('./file');
 
 /**
  * Join strings into an S3 key without a leading slash or double slashes
@@ -559,7 +559,7 @@ exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
   const param = { Bucket: bucket, Key: key };
 
   if (algorithm.toLowerCase() === 'cksum') {
-    return getChecksumFromStream(
+    return getFileChecksumFromStream(
       exports.s3().getObject(param).createReadStream()
     );
   }

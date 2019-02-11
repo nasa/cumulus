@@ -7,7 +7,7 @@ const got = require('got');
 const { distributionApp } = require('@cumulus/api/app/distribution');
 const { prepareDistributionApi } = require('@cumulus/api/bin/serve');
 const {
-  file: { getChecksumFromStream },
+  file: { getFileChecksumFromStream },
   testUtils: { inTestMode }
 } = require('@cumulus/common');
 const {
@@ -77,7 +77,7 @@ describe('Distribution API', () => {
     let fileChecksum;
 
     beforeAll(async () => {
-      fileChecksum = await getChecksumFromStream(
+      fileChecksum = await getFileChecksumFromStream(
         fs.createReadStream(require.resolve(s3Data[0]))
       );
     });
@@ -107,7 +107,7 @@ describe('Distribution API', () => {
         .then((res) => res.headers.location);
 
       // Compare checksum of downloaded file with expected checksum.
-      const downloadChecksum = await getChecksumFromStream(got.stream(signedS3Url));
+      const downloadChecksum = await getFileChecksumFromStream(got.stream(signedS3Url));
       expect(downloadChecksum).toEqual(fileChecksum);
     });
   });

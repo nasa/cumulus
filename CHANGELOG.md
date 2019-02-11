@@ -25,7 +25,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 	  - `reconcileCMRMetadata` Reconciles cmr metadata file after a file moves.
 - Adds some ECS and other permissions to StepRole to enable running ECS tasks from a workflow
 - Added Apache logs to cumulus api and distribution lambdas
-- **CUMULUS-1119** - Added ``@cumulus/integration-tests/api/EarthdataLogin.getEarthdataLoginRedirectResponse` helper for integration tests to handle login with Earthdata and to return response from redirect to Cumulus API
+- **CUMULUS-1119** - Added `@cumulus/integration-tests/api/EarthdataLogin.getEarthdataLoginRedirectResponse` helper for integration tests to handle login with Earthdata and to return response from redirect to Cumulus API
+- **CUMULUS-673** Added `@cumulus/common/file/getFileChecksumFromStream` to get file checksum from a readable stream
 
 ### Changed
 - CUMULUS-1121
