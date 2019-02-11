@@ -22,6 +22,13 @@ async function getEarthdataLoginRedirectResponse({
   requestOrigin,
   state
 }) {
+  if (!process.env.EARTHDATA_USERNAME) {
+    throw new Error('EARTHDATA_USERNAME environment variable is required');
+  }
+  else if (!process.env.EARTHDATA_PASSWORD) {
+    throw new Error('EARTHDATA_PASSWORD environment variable is required');
+  }
+
   // Create Earthdata client and get authorization URL.
   const earthdataLoginClient = EarthdataLogin.createFromEnv({
     redirectUri
@@ -40,8 +47,25 @@ async function getEarthdataLoginRedirectResponse({
   };
 
   // Make request to login to Earthdata.
-  const redirectUrl = await got.post(authorizeUrl, requestOptions)
-    .then((res) => res.headers.location);
+  let redirectUrl;
+  try {
+    redirectUrl = await got.post(authorizeUrl, requestOptions)
+      .then((res) => res.headers.location);
+  }
+  catch (err) {
+    if (err.statusCode === 401) {
+      throw new Error(
+        'Unauthorized: Check that your EARTHDATA_USERNAME and EARTHDATA_PASSWORD values can be used for log into the Earthdata app specified by the EARTHDATA_CLIENT_ID'
+      );
+    }
+    throw err;
+  }
+
+  if (!redirectUrl.includes(redirectUri)) {
+    throw new Error(
+      `Redirect failed. Check that ${redirectUri} has been added as a redirect URI to the Earthdata app specified by the EARTHDATA_CLIENT_ID`
+    );
+  }
 
   // Make request to redirect URL to exchange Earthdata authorization code
   // for access token.
