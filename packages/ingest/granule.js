@@ -19,7 +19,7 @@ const {
   log,
   errors,
   util: { deprecate },
-  file: { getChecksumFromStream }
+  file: { getFileChecksumFromStream }
 } = require('@cumulus/common');
 
 const { sftpMixin } = require('./sftp');
@@ -382,7 +382,7 @@ class Granule {
    * @returns {Promise<number>} checksum value calculated from file
    */
   async _cksum(filepath) {
-    return getChecksumFromStream(fs.createReadStream(filepath));
+    return getFileChecksumFromStream(fs.createReadStream(filepath));
   }
 
   /**
