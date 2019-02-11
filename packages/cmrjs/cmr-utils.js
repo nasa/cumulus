@@ -424,7 +424,7 @@ function getCreds() {
  */
 async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   let newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
-  newURLs = newURLs.map((urlObj) => omit(urlObj, 'Type'));
+  newURLs = newURLs.map((urlObj) => omit(urlObj, ['Type', 'Description']));
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
 
   // add/replace the OnlineAccessUrls
