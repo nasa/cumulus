@@ -27,6 +27,10 @@ CACHE_EXISTS_STATUS_CODE=$(curl \
   https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY}
 )
 
+echo cache status code: $CACHE_EXISTS_STATUS_CODE
+
+echo cache key: $KEY
+
 if [ "$CACHE_EXISTS_STATUS_CODE" = "200" ]; then
   # If the cache exists then do nothing
   echo "Cache already exists: s3://${CACHE_BUCKET}/${KEY}"
