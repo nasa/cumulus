@@ -2,7 +2,7 @@
 
 set -e
 
-sh set-env-vars.sh
+sh ./travis-ci/set-env-vars.sh
 
 cd example || exit 1
 yarn
