@@ -203,10 +203,17 @@ async function getFileMetadata(file) {
     Bucket = file.bucket;
     Key = file.filepath;
   }
-  else {
+  else if (file.bucket && file.key) {
+    Bucket = file.bucket;
+    Key = file.key;
+  }
+  else if (file.filename) {
     const parsedUrl = parseS3Uri(file.filename);
     Bucket = parsedUrl.Bucket;
     Key = parsedUrl.Key;
+  }
+  else {
+    throw new Error(`Unable to determine file location: ${JSON.stringify(file)}`);
   }
 
   const headObjectResponse = await headObject(Bucket, Key);

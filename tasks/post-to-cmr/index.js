@@ -82,6 +82,9 @@ async function postToCMR(event) {
       if (file.bucket && file.filepath) {
         allFiles.push(buildS3Uri(file.bucket, file.filepath));
       }
+      else if (file.bucket && file.key) {
+        allFiles.push(buildS3Uri(file.bucket, file.key));
+      }
       else if (file.filename) {
         allFiles.push(file.filename);
       }
