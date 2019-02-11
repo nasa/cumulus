@@ -11,6 +11,8 @@ KEY="travis-ci-cache/${CACHE_FILENAME}"
 DATE=$(date -R)
 STRING_TO_SIGN_HEAD="HEAD
 
+echo cache key: $KEY
+
 
 ${DATE}
 /${CACHE_BUCKET}/${KEY}"
