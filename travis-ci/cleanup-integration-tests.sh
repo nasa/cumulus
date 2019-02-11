@@ -2,7 +2,7 @@
 
 set -e
 
-sh ./travis-ci/set-env-vars.sh
+. ./travis-ci/set-env-vars.sh
 
 # This should be able to go away once latest is released
 if [ "$USE_NPM_PACKAGES" = "true" ]; then
