@@ -48,6 +48,8 @@
     "@cumulus/test-processing": "^1.11.1",
     "aws-sdk": "^2.227.1",
     "child-process-promise": "^2.2.1",
+    "lodash.differencewith": "^4.5.0",
+    "lodash.isequal": "^4.5.0",
     "p-retry": "^2.0.0"
   },
   "devDependencies": {

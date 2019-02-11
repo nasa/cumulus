@@ -7,7 +7,7 @@ dist
 app/build
 app/dist
 node_modules
-.env
+*.env
 package-lock.json
 /deployer/cloudformation.yml
 CumulusApiDefault.yml

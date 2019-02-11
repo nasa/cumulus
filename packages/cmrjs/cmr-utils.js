@@ -429,7 +429,13 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   const metadataGranule = metadataObject.Granule;
 
   const updatedGranule = { ...metadataGranule };
-  const originalURLs = _get(metadataGranule, 'OnlineAccessURLs.OnlineAccessURL', []);
+  let originalURLs = _get(metadataGranule, 'OnlineAccessURLs.OnlineAccessURL', []);
+
+  // If there is only one OnlineAccessURL in the file, it comes back as an object and not an array
+  if (!Array.isArray(originalURLs)) {
+    originalURLs = [originalURLs];
+  }
+
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
   _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedURLs);
   metadataObject.Granule = updatedGranule;
