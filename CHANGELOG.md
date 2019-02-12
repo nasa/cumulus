@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   simplified.
     - The `bucket` property is now required.
     - The `filepath` property has been renamed to `key`.
+    - The `key` property is required.
     - The `path` property has been removed.
     - The `url_path` property has been removed.
     - The `filename` property (which contained an `s3://` URL) has been removed, and the `bucket`
