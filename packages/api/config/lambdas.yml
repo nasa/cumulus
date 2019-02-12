@@ -190,9 +190,17 @@ CreateReconciliationReport:
   source: 'node_modules/@cumulus/api/dist/'
   envs:
     system_bucket: '{{system_bucket}}'
-    filesTableName:
+    CollectionsTable:
+      function: Ref
+      value: CollectionsTableDynamoDB
+    GranulesTable:
+      function: Ref
+      value: GranulesTableDynamoDB
+    FilesTable:
       function: Ref
       value: FilesTableDynamoDB
+    cmr_provider: '{{cmr.provider}}'
+    cmr_client_id: '{{cmr.clientId}}'
 
 BulkDelete:
   handler: index.bulkDeleteLambda

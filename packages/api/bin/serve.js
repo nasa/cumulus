@@ -8,13 +8,10 @@ const models = require('../models');
 const testUtils = require('../lib/testUtils');
 const workflowList = require('../app/data/workflow_list.json');
 
-const requiredEnvVariables = [
-  'system_bucket',
-  'stackName',
+const defaultRequiredEnvVariables = [
   'EARTHDATA_BASE_URL',
   'EARTHDATA_CLIENT_ID',
-  'EARTHDATA_CLIENT_PASSWORD',
-  'API_ENDPOINT'
+  'EARTHDATA_CLIENT_PASSWORD'
 ];
 
 async function createTable(Model, tableName) {
@@ -70,7 +67,7 @@ function setTableEnvVariables(stackName) {
 
   // set table env variables
   tableNames = tableNames.map((t) => {
-    process.env[t] = `${stackName}-${t}sTable`;
+    process.env[t] = `${stackName}-${t}`;
     return process.env[t];
   });
 
@@ -103,15 +100,16 @@ async function prepareServices(stackName, bucket) {
   await s3().createBucket({ Bucket: bucket }).promise();
 }
 
-function checkEnvVariablesAreSet() {
-  requiredEnvVariables.forEach((env) => {
+function checkEnvVariablesAreSet(moreRequiredEnvVars) {
+  const requiredEnvVars = defaultRequiredEnvVariables.concat(moreRequiredEnvVars);
+  requiredEnvVars.forEach((env) => {
     if (!process.env[env]) {
       throw new Error(`Environment Variable ${env} is not set!`);
     }
   });
 }
 
-async function createDBRecords(user, stackName) {
+async function createDBRecords(stackName, user) {
   if (user) {
     // add authorized user to the user table
     const u = new models.User();
@@ -156,8 +154,20 @@ async function createDBRecords(user, stackName) {
   await pdm.create(pd);
 }
 
-async function serve(user, stackName = 'localrun') {
+/**
+ * Prepare and run the Cumulus API Express app.
+ *
+ * @param {string} user - A username to add as an authorized user for the API.
+ * @param {string} stackName - The name of local stack. Used to prefix stack resources.
+ */
+async function serveApi(user, stackName = 'localrun') {
   const port = process.env.PORT || 5001;
+  const requiredEnvVars = [
+    'stackName',
+    'system_bucket',
+    'TOKEN_REDIRECT_ENDPOINT'
+  ];
+
   if (inTestMode()) {
     // set env variables
     process.env.system_bucket = 'localbucket';
@@ -166,18 +176,18 @@ async function serve(user, stackName = 'localrun') {
     process.env.EARTHDATA_CLIENT_ID = randomString();
     process.env.EARTHDATA_CLIENT_PASSWORD = randomString();
     process.env.EARTHDATA_BASE_URL = 'https://example.com';
-    process.env.API_ENDPOINT = `http://localhost:${port}/token`;
+    process.env.TOKEN_REDIRECT_ENDPOINT = `http://localhost:${port}/token`;
 
     // create tables if not already created
     await checkOrCreateTables(stackName);
 
-    checkEnvVariablesAreSet();
+    checkEnvVariablesAreSet(requiredEnvVars);
     await prepareServices(stackName, process.env.system_bucket);
     await populateBucket(process.env.system_bucket, stackName);
-    await createDBRecords(user, stackName);
+    await createDBRecords(stackName, user);
   }
   else {
-    checkEnvVariablesAreSet();
+    checkEnvVariablesAreSet(requiredEnvVars);
   }
 
   console.log(`Starting server on port ${port}`);
@@ -185,7 +195,52 @@ async function serve(user, stackName = 'localrun') {
   app.listen(port);
 }
 
-// require('dotenv').config()
+/**
+ * Prepare the resources for running the Cumulus distribution API Express app.
+ *
+ * @param {string} stackName - The name of local stack. Used to prefix stack resources.
+ */
+async function prepareDistributionApi(stackName = 'localrun') {
+  const port = process.env.PORT || 5002;
+  const requiredEnvVars = ['DISTRIBUTION_REDIRECT_ENDPOINT', 'DISTRIBUTION_ENDPOINT'];
 
+  if (inTestMode()) {
+    // set env variables
+    process.env.system_bucket = 'localbucket';
+    process.env.stackName = stackName;
+    process.env.TOKEN_SECRET = 'secreeetartalksjfaf;lj';
+    process.env.DISTRIBUTION_REDIRECT_ENDPOINT = `http://localhost:${port}/redirect`;
+    process.env.DISTRIBUTION_ENDPOINT = `http://localhost:${port}`;
 
-module.exports = serve;
+    // create tables if not already created
+    await checkOrCreateTables(stackName);
+
+    checkEnvVariablesAreSet(requiredEnvVars);
+    await prepareServices(stackName, process.env.system_bucket);
+    await populateBucket(process.env.system_bucket, stackName);
+    await createDBRecords(stackName);
+  }
+  else {
+    checkEnvVariablesAreSet(requiredEnvVars);
+  }
+}
+
+/**
+ * Prepare and run the Cumulus distribution API Express app.
+ *
+ * @param {string} stackName - The name of local stack. Used to prefix stack resources.
+ */
+async function serveDistributionApi(stackName = 'localrun') {
+  const port = process.env.PORT || 5002;
+  await prepareDistributionApi(stackName);
+
+  console.log(`Starting server on port ${port}`);
+  const { distributionApp } = require('../app/distribution'); // eslint-disable-line global-require
+  return distributionApp.listen(port);
+}
+
+module.exports = {
+  prepareDistributionApi,
+  serveApi,
+  serveDistributionApi
+};

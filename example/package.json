@@ -48,12 +48,14 @@
     "@cumulus/test-processing": "^1.11.1",
     "aws-sdk": "^2.227.1",
     "child-process-promise": "^2.2.1",
+    "lodash.differencewith": "^4.5.0",
+    "lodash.isequal": "^4.5.0",
     "p-retry": "^2.0.0"
   },
   "devDependencies": {
     "execa": "^1.0.0",
     "fs-extra": "7.0.0",
-    "got": "^8.3.0",
+    "got": "^9.6.0",
     "jasmine": "^3.1.0",
     "jasmine-console-reporter": "^2.0.1",
     "js-yaml": "^3.12.0",
@@ -62,6 +64,7 @@
     "lodash.chunk": "^4.2.0",
     "lodash.clonedeep": "^4.5.0",
     "lodash.difference": "^4.5.0",
+    "lodash.get": "^4.4.2",
     "lodash.includes": "^4.3.0",
     "lodash.intersection": "^4.4.0",
     "lodash.merge": "^4.6.1",

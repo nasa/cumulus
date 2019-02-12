@@ -15,10 +15,13 @@ async function fakeProcessing(event) {
     const idx = collection.name.indexOf('_test');
     collection.name = collection.name.substring(0, idx);
   }
+
   return generateCmrFilesForGranules(
     event.input.granules,
     collection,
-    event.config.bucket
+    event.config.bucket,
+    event.config.cmrFileType,
+    event.config.additionalUrls
   );
 }
 
