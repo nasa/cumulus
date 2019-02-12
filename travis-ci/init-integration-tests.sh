@@ -2,7 +2,7 @@
 
 set -e
 
-. ./travis-ci/set-env-vars.sh SIT
+. ./travis-ci/set-env-vars.sh "SIT"
 
 if [ "$USE_NPM_PACKAGES" = "true" ]; then
   yarn
@@ -13,7 +13,8 @@ fi
 # echo "Locking stack for deployment $DEPLOYMENT"
 
 # # Wait for the stack to be available
-# cd example
+cd example
+
 # LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
 
 # echo "Locking status $LOCK_EXISTS_STATUS"
