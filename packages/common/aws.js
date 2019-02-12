@@ -210,9 +210,23 @@ exports.s3ObjectExists = (params) =>
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 * @returns {Promise} - promise of the object being put
 **/
-exports.s3PutObject = (params) => {
-  if (!params.ACL) params.ACL = 'private'; //eslint-disable-line no-param-reassign
-  return exports.s3().putObject(params).promise();
+exports.s3PutObject = async (params) => {
+  const fullParams = {
+    ACL: 'private',
+    ...params
+  };
+
+  const tracerError = {};
+  try {
+    Error.captureStackTrace(tracerError);
+    return await exports.s3().putObject(fullParams).promise();
+  }
+  catch (err) {
+    err.operation = 'S3.putObject';
+    err.params = fullParams;
+    setErrorStack(err, tracerError.stack);
+    throw err;
+  }
 };
 
 /**
