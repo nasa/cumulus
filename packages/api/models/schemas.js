@@ -253,7 +253,7 @@ module.exports.granule = {
       type: 'array',
       items: {
         type: 'object',
-        required: ['bucket'],
+        required: ['bucket', 'key'],
         properties: {
           bucket: { type: 'string' },
           checksumType: { type: ['string', 'null'] },
