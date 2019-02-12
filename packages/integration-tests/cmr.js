@@ -120,21 +120,19 @@ const sampleUmmGranule = {
  *
  * @param {string} cmrLink - CMR URL path to concept,
  * i.e. what is returned from post to cmr task
+ * @param {boolean} isUMMG - true if the CMR link is for UMM-G JSON
  * @returns {boolean} true if the concept exists in CMR, false if not
  */
-async function conceptExists(cmrLink) {
-  let response;
-  try {
-    response = await got.get(cmrLink, { json: true });
-  }
-  catch (err) {
-    log.error(err);
-    throw err;
-  }
+async function conceptExists(cmrLink, isUMMG) {
+  const response = await got.get(cmrLink, { json: true });
 
   if (response.statusCode !== 200) {
     log.info(`${cmrLink} conceptExists response: ${response}`);
     return false;
+  }
+
+  if (isUMMG) {
+    return response.body.items.length > 0;
   }
 
   return response.body.feed.entry.length > 0;
