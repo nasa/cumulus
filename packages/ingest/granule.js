@@ -719,13 +719,7 @@ function generateMoveFileParams(sourceFiles, destinations) {
     if (!destination) return { source: null, target: null, file };
 
     let source;
-    if (file.bucket && file.filepath) {
-      source = {
-        Bucket: file.bucket,
-        Key: file.filepath
-      };
-    }
-    else if (file.bucket && file.key) {
+    if (file.bucket && file.key) {
       source = {
         Bucket: file.bucket,
         Key: file.key
@@ -754,7 +748,7 @@ function generateMoveFileParams(sourceFiles, destinations) {
  * location after the files are moved
  * @param {string} sourceFiles.name - file name
  * @param {string} sourceFiles.bucket - current bucket of file
- * @param {string} sourceFiles.filepath - current S3 key of file
+ * @param {string} sourceFiles.key - current S3 key of file
  * @param {Array<Object>} destinations - array of objects defining the destination of granule files
  * @param {string} destinations.regex - regex for matching filepath of file to new destination
  * @param {string} destinations.bucket - aws bucket of the destination
@@ -773,7 +767,7 @@ async function moveGranuleFiles(sourceFiles, destinations) {
       return moveGranuleFile(source, target).then(() => {
         processedFiles.push({
           bucket: target.Bucket,
-          filepath: target.Key,
+          key: target.Key,
           name: file.name
         });
       });
@@ -781,11 +775,7 @@ async function moveGranuleFiles(sourceFiles, destinations) {
 
     let fileBucket;
     let fileKey;
-    if (file.bucket && file.filepath) {
-      fileBucket = file.bucket;
-      fileKey = file.filepath;
-    }
-    else if (file.bucket && file.key) {
+    if (file.bucket && file.key) {
       fileBucket = file.bucket;
       fileKey = file.key;
     }
@@ -800,7 +790,7 @@ async function moveGranuleFiles(sourceFiles, destinations) {
 
     processedFiles.push({
       bucket: fileBucket,
-      filepath: fileKey,
+      key: fileKey,
       name: file.name
     });
 
