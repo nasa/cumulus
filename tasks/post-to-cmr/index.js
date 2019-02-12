@@ -9,6 +9,7 @@ const {
   metadataObjectFromCMRFile,
   publish2CMR
 } = require('@cumulus/cmrjs');
+const { buildS3Uri } = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
 const { loadJSONTestData } = require('@cumulus/test-data');
 
@@ -78,7 +79,15 @@ async function postToCMR(event) {
   granules.forEach((granule) => {
     allGranules[granule.granuleId] = granule;
     granule.files.forEach((file) => {
-      allFiles.push(file.filename);
+      if (file.bucket && file.filepath) {
+        allFiles.push(buildS3Uri(file.bucket, file.filepath));
+      }
+      else if (file.filename) {
+        allFiles.push(file.filename);
+      }
+      else {
+        throw new Error(`Unable to determine S3 URL for file: ${JSON.stringify(file)}`);
+      }
     });
   });
 

@@ -197,7 +197,17 @@ async function redeploy(config, options = {}) {
 }
 
 async function getFileMetadata(file) {
-  const { Bucket, Key } = parseS3Uri(file.filename);
+  let Bucket;
+  let Key;
+  if (file.bucket && file.filepath) {
+    Bucket = file.bucket;
+    Key = file.filepath;
+  }
+  else {
+    const parsedUrl = parseS3Uri(file.filename);
+    Bucket = parsedUrl.Bucket;
+    Key = parsedUrl.Key;
+  }
 
   const headObjectResponse = await headObject(Bucket, Key);
 

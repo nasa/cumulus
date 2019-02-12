@@ -5,7 +5,10 @@ const request = require('supertest');
 const path = require('path');
 const sinon = require('sinon');
 const test = require('ava');
-const { sfn } = require('@cumulus/common/aws');
+const {
+  buildS3Uri,
+  sfn
+} = require('@cumulus/common/aws');
 const aws = require('@cumulus/common/aws');
 const { CMR } = require('@cumulus/cmrjs');
 const {
@@ -58,7 +61,7 @@ async function runTestUsingBuckets(buckets, testFunction) {
     await testFunction();
   }
   finally {
-    await deleteBuckets(buckets);
+    await Promise.all(buckets.map(aws.recursivelyDeleteS3Bucket));
   }
 }
 
@@ -481,17 +484,17 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
     {
       bucket: buckets.protected.name,
       name: `${newGranule.granuleId}.hdf`,
-      filename: `s3://${buckets.protected.name}/${randomString(5)}/${newGranule.granuleId}.hdf`
+      filepath: `${randomString(5)}/${newGranule.granuleId}.hdf`
     },
     {
       bucket: buckets.protected.name,
       name: `${newGranule.granuleId}.cmr.xml`,
-      filename: `s3://${buckets.protected.name}/${randomString(5)}/${newGranule.granuleId}.cmr.xml`
+      filepath: `${randomString(5)}/${newGranule.granuleId}.cmr.xml`
     },
     {
       bucket: buckets.public.name,
       name: `${newGranule.granuleId}.jpg`,
-      filename: `s3://${buckets.public.name}/${randomString(5)}/${newGranule.granuleId}.jpg`
+      filepath: `${randomString(5)}/${newGranule.granuleId}.jpg`
     }
   ];
 
@@ -502,10 +505,9 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
 
   for (let i = 0; i < newGranule.files.length; i += 1) {
     const file = newGranule.files[i];
-    const parsed = aws.parseS3Uri(file.filename);
     await putObject({ // eslint-disable-line no-await-in-loop
-      Bucket: parsed.Bucket,
-      Key: parsed.Key,
+      Bucket: file.bucket,
+      Key: file.filepath,
       Body: `test data ${randomString()}`
     });
   }
@@ -527,8 +529,7 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < newGranule.files.length; i += 1) {
     const file = newGranule.files[i];
-    const parsed = aws.parseS3Uri(file.filename);
-    t.false(await aws.fileExists(parsed.Bucket, parsed.Key));
+    t.false(await aws.fileExists(file.bucket, file.filepath));
   }
   /* eslint-enable no-await-in-loop */
 
@@ -552,28 +553,32 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
         {
           bucket,
           name: `${newGranule.granuleId}.txt`,
-          filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`,
-          filename: `s3://${bucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`
+          filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`
         },
         {
           bucket,
           name: `${newGranule.granuleId}.md`,
-          filename: `s3://${bucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.md`
+          filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.md`
         },
         {
           bucket: secondBucket,
           name: `${newGranule.granuleId}.jpg`,
-          filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.jpg`,
-          filename: `s3://${secondBucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.jpg`
+          filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.jpg`
         }
       ];
 
       await granuleModel.create(newGranule);
 
-      await Promise.all(newGranule.files.map((file) => {
-        const filepath = file.filepath || aws.parseS3Uri(file.filename).Key;
-        return putObject({ Bucket: file.bucket, Key: filepath, Body: 'test data' });
-      }));
+      await Promise.all(
+        newGranule.files.map(
+          (file) =>
+            putObject({
+              Bucket: file.bucket,
+              Key: file.filepath,
+              Body: 'test data'
+            })
+        )
+      );
 
       const destinationFilepath = `${process.env.stackName}/granules_moved`;
       const destinations = [
@@ -636,7 +641,8 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
         t.true(file.filepath.startsWith(destinationFilepath));
         const destination = destinations.find((dest) => file.name.match(dest.regex));
         t.is(destination.bucket, file.bucket);
-        t.true(file.filename.startsWith(aws.buildS3Uri(destination.bucket, destinationFilepath)));
+        t.is(file.bucket, destination.bucket);
+        t.true(file.filepath.startsWith(destinationFilepath));
       });
     }
   );
@@ -651,14 +657,12 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
     {
       bucket: internalBucket,
       name: `${newGranule.granuleId}.txt`,
-      filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`,
-      filename: `s3://${internalBucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`
+      filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`
     },
     {
       bucket: publicBucket,
       name: `${newGranule.granuleId}.cmr.xml`,
-      filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.cmr.xml`,
-      filename: `s3://${publicBucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.cmr.xml`
+      filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.cmr.xml`
     }
   ];
 
@@ -670,7 +674,9 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
     }
     return putObject({ Bucket: file.bucket, Key: file.filepath, Body: metadata });
   }));
-  const originalXML = await metadataObjectFromCMRFile(newGranule.files[1].filename);
+  const originalXML = await metadataObjectFromCMRFile(
+    buildS3Uri(newGranule.files[1].bucket, newGranule.files[1].filepath)
+  );
 
   const destinationFilepath = `${process.env.stackName}/moved_granules`;
   const destinations = [
@@ -715,7 +721,9 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   t.is(list2.Contents.length, 1);
   t.is(newGranule.files[1].filepath, list2.Contents[0].Key);
 
-  const xmlObject = await metadataObjectFromCMRFile(newGranule.files[1].filename);
+  const xmlObject = await metadataObjectFromCMRFile(
+    aws.buildS3Uri(newGranule.files[1].bucket, newGranule.files[1].filepath)
+  );
 
   const newUrls = xmlObject.Granule.OnlineAccessURLs.OnlineAccessURL.map((obj) => obj.URL);
   const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
@@ -743,14 +751,12 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
     {
       bucket: internalBucket,
       name: `${newGranule.granuleId}.txt`,
-      filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`,
-      filename: `s3://${internalBucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`
+      filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.txt`
     },
     {
       bucket: publicBucket,
       name: `${newGranule.granuleId}.cmr.json`,
-      filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.cmr.json`,
-      filename: `s3://${publicBucket}/${process.env.stackName}/original_filepath/${newGranule.granuleId}.cmr.json`
+      filepath: `${process.env.stackName}/original_filepath/${newGranule.granuleId}.cmr.json`
     }
   ];
 
@@ -809,7 +815,9 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   t.is(newGranule.files[1].filepath, list2.Contents[0].Key);
 
   // CMR UMMG JSON has been updated with the location of the moved file.
-  const ummgObject = await metadataObjectFromCMRFile(newGranule.files[1].filename);
+  const ummgObject = await metadataObjectFromCMRFile(
+    aws.buildS3Uri(newGranule.files[1].bucket, newGranule.files[1].filepath)
+  );
   const updatedURLs = ummgObject.RelatedUrls.map((urlObj) => urlObj.URL);
   const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].name}`;
   t.true(updatedURLs.includes(newDestination));

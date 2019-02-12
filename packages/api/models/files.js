@@ -1,28 +1,8 @@
 'use strict';
 
-const url = require('url');
 const chunk = require('lodash.chunk');
 const Manager = require('./base');
 const schemas = require('./schemas');
-
-/**
- * extract bucket and and s3 path from a give file object
- *
- * @param {Object} file - file object of a granule
- * @returns {Object} the bucket and key
- */
-function extractFileInfo(file) {
-  const parsed = url.parse(file.filename);
-  let key = parsed.pathname;
-
-  if (key.charAt(0) === '/') {
-    key = key.substr(1);
-  }
-  return {
-    bucket: parsed.hostname,
-    key
-  };
-}
 
 class FileClass extends Manager {
   constructor() {
@@ -42,19 +22,12 @@ class FileClass extends Manager {
    * @returns {Promise<Array>} an array of promise responses from aws batchwrite
    */
   createFilesFromGranule(granule) {
-    const fileRecords = [];
-    if (granule.files) {
-      granule.files.forEach((file) => {
-        if (file.filename) {
-          const extracted = extractFileInfo(file);
-          fileRecords.push({
-            granuleId: granule.granuleId,
-            bucket: extracted.bucket,
-            key: extracted.key
-          });
-        }
-      });
-    }
+    const fileRecords = (granule.files || [])
+      .map((file) => ({
+        granuleId: granule.granuleId,
+        bucket: file.bucket,
+        key: file.filepath
+      }));
 
     const chunked = chunk(fileRecords, 25);
     return Promise.all(chunked.map((c) => this.batchWrite(null, c)));
@@ -68,18 +41,11 @@ class FileClass extends Manager {
    * @returns {Promise<Array>} an array of promise responses from aws batchwrite
    */
   deleteFilesOfGranule(granule) {
-    const fileRecords = [];
-    if (granule.files) {
-      granule.files.forEach((file) => {
-        if (file.filename) {
-          const extracted = extractFileInfo(file);
-          fileRecords.push({
-            bucket: extracted.bucket,
-            key: extracted.key
-          });
-        }
-      });
-    }
+    const fileRecords = (granule.files || [])
+      .map((file) => ({
+        bucket: file.bucket,
+        key: file.filepath
+      }));
 
     const chunked = chunk(fileRecords, 25);
     return Promise.all(chunked.map((c) => this.batchWrite(c)));
@@ -96,31 +62,19 @@ class FileClass extends Manager {
    * @returns {Promise<Array>} an array of promise responses from aws batchwrite
    */
   async deleteFilesAfterCompare(newGranule, oldGranule) {
-    if (oldGranule && oldGranule.files) {
-      const currentFiles = {};
-      if (newGranule.files) {
-        newGranule.files.forEach((file) => {
-          currentFiles[file.filename] = file;
-        });
-      }
+    const buildFileId = (f) => `${f.bucket}/${f.filepath}`;
 
-      const filesToDelete = [];
-      oldGranule.files.forEach((file) => {
-        if (!currentFiles[file.filename]) {
-          if (file.filename) {
-            const extracted = extractFileInfo(file);
-            filesToDelete.push({
-              bucket: extracted.bucket,
-              key: extracted.key
-            });
-          }
-        }
-      });
+    const newFiles = (newGranule.files || []);
+    const oldFiles = (oldGranule.files || []);
 
-      const chunked = chunk(filesToDelete, 25);
-      return Promise.all(chunked.map((c) => this.batchWrite(c)));
-    }
-    return [];
+    const newFilesIds = newFiles.map(buildFileId);
+
+    const filesToDelete = oldFiles
+      .filter((oldFile) => !newFilesIds.includes(buildFileId(oldFile)))
+      .map((oldFile) => ({ bucket: oldFile.bucket, key: oldFile.filepath }));
+
+    const chunkedFilesToDelete = chunk(filesToDelete, 25);
+    return Promise.all(chunkedFilesToDelete.map((c) => this.batchWrite(c)));
   }
 }
 
