@@ -74,3 +74,17 @@ exports.omit = (objectIn, keys) => {
   keysToRemove.forEach((key) => delete objectOut[key]);
   return objectOut;
 };
+
+/**
+ * Update the stack of an error
+ *
+ * @param {Error} error - an Error
+ * @param {string} stack - a stack trace
+ */
+exports.setErrorStack = (error, stack) => {
+  // eslint-disable-next-line no-param-reassign
+  error.stack = [
+    error.stack.split('\n')[0],
+    ...stack.split('\n').slice(1)
+  ].join('\n');
+};

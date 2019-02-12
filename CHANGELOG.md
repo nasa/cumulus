@@ -28,6 +28,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1119** - Added ``@cumulus/integration-tests/api/EarthdataLogin.getEarthdataLoginRedirectResponse` helper for integration tests to handle login with Earthdata and to return response from redirect to Cumulus API
 
 ### Changed
+- CUMULUS-1139
+  - Granules stored in the API contain a `files` property. Those files
+    previously contained a `filename` property, which was an `s3://` URL. That
+    `filename` property has been removed, and the `bucket` and `filepath`
+    properties should be used instead. Any requests sent to the API containing a
+    `granule.files[].filename` property will be rejected, and any responses
+    coming back from the API will not contain that `filename` property.
+  - `@cumulus/ingest/granule.moveGranuleFiles()` no longer includes a `filename` field in its
+    output. The `bucket` and `filepath` fields should be used instead.
 - CUMULUS-1121
   - Schema validation is now strongly enforced when writing to the database.
     Additional properties are not allowed and will result in a validation error.

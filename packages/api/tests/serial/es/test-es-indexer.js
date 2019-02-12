@@ -13,6 +13,7 @@ const {
   util: { noop }
 } = require('@cumulus/common');
 
+const { cumulusMessageFileToAPIFile } = require('../../../lib/granuleUtils');
 const indexer = require('../../../es/indexer');
 const { Search } = require('../../../es/search');
 const models = require('../../../models');
@@ -99,9 +100,11 @@ test.after.always(async () => {
 });
 
 test.serial('creating a successful granule record', async (t) => {
+  const mockedFileSize = 12345;
+
   // Stub out headobject S3 call used in api/models/granules.js,
   // so we don't have to create artifacts
-  sinon.stub(aws, 'headObject').resolves({ ContentLength: 12345 });
+  sinon.stub(aws, 'headObject').resolves({ ContentLength: mockedFileSize });
 
   const granule = granuleSuccess.payload.granules[0];
   const collection = granuleSuccess.meta.collection;
@@ -109,11 +112,16 @@ test.serial('creating a successful granule record', async (t) => {
 
   const collectionId = constructCollectionId(collection.name, collection.version);
 
-
   // check the record exists
   const record = records[0];
 
-  t.deepEqual(record.files, granule.files);
+  t.deepEqual(
+    record.files,
+    granule.files
+      // If fileSize is not set, default it to `mockedFileSize`
+      .map((f) => ({ fileSize: mockedFileSize, ...f }))
+      .map(cumulusMessageFileToAPIFile)
+  );
   t.is(record.status, 'completed');
   t.is(record.collectionId, collectionId);
   t.is(record.granuleId, granule.granuleId);
@@ -160,7 +168,10 @@ test.serial('creating a failed granule record', async (t) => {
   const records = await indexer.granule(granuleFailure);
 
   const record = records[0];
-  t.deepEqual(record.files, granule.files);
+  t.deepEqual(
+    record.files,
+    granule.files.map(cumulusMessageFileToAPIFile)
+  );
   t.is(record.status, 'failed');
   t.is(record.granuleId, granule.granuleId);
   t.is(record.published, false);
@@ -197,7 +208,10 @@ test.serial('creating a granule record in meta section', async (t) => {
   const collectionId = constructCollectionId(collection.name, collection.version);
 
   const record = records[0];
-  t.deepEqual(record.files, granule.files);
+  t.deepEqual(
+    record.files,
+    granule.files.map(cumulusMessageFileToAPIFile)
+  );
   t.is(record.status, 'running');
   t.is(record.collectionId, collectionId);
   t.is(record.granuleId, granule.granuleId);

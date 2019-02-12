@@ -131,11 +131,10 @@ async function del(req, res) {
 
   // remove files from s3
   await Promise.all(granule.files.map((file) => {
-    if (!file.filename) return {};
-    const parsed = aws.parseS3Uri(file.filename);
-    if (aws.fileExists(parsed.Bucket, parsed.Key)) {
-      return aws.deleteS3Object(parsed.Bucket, parsed.Key);
+    if (aws.fileExists(file.bucket, file.filepath)) {
+      return aws.deleteS3Object(file.bucket, file.filepath);
     }
+
     return {};
   }));
 

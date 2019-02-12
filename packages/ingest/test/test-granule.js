@@ -485,20 +485,17 @@ test('moveGranuleFiles returns an updated list of files in their new locations.'
     {
       name: 'test-one.txt',
       bucket: bucket,
-      filepath: 'destination/test-one.txt',
-      filename: `s3://${bucket}/destination/test-one.txt`
+      filepath: 'destination/test-one.txt'
     },
     {
       name: 'test-two.md',
       bucket: bucket,
-      filepath: 'destination/test-two.md',
-      filename: `s3://${bucket}/destination/test-two.md`
+      filepath: 'destination/test-two.md'
     },
     {
       name: 'test-three.jpg',
       bucket: secondBucket,
-      filepath: 'destination/test-three.jpg',
-      filename: `s3://${secondBucket}/destination/test-three.jpg`
+      filepath: 'destination/test-three.jpg'
     }
   ];
 
@@ -508,7 +505,11 @@ test('moveGranuleFiles returns an updated list of files in their new locations.'
   const updatedFiles = await moveGranuleFiles(sourceFiles, destinations);
 
   expectedUpdatedFiles.forEach((expected) => {
-    const updatedFile = updatedFiles.find((file) => file.filename === expected.filename);
+    const updatedFile = updatedFiles.find(
+      (file) =>
+        file.bucket === expected.bucket
+        && file.filepath === expected.filepath
+    );
     t.deepEqual(updatedFile, expected);
   });
 });
@@ -526,9 +527,8 @@ test('generateMoveFileParams generates correct parameters', (t) => {
     const sourcefilePath = `origin/${name}`;
     return {
       name,
-      sourceBucket,
-      filepath: sourcefilePath,
-      filename: buildS3Uri(sourceBucket, sourcefilePath)
+      bucket: sourceBucket,
+      filepath: sourcefilePath
     };
   });
 
@@ -570,9 +570,8 @@ test('generateMoveFileParams generates null source and target for no destination
     const sourcefilePath = `origin/${name}`;
     return {
       name,
-      sourceBucket,
-      filepath: sourcefilePath,
-      filename: buildS3Uri(sourceBucket, sourcefilePath)
+      bucket: sourceBucket,
+      filepath: sourcefilePath
     };
   });
 
