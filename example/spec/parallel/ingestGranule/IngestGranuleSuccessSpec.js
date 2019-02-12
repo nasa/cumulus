@@ -3,6 +3,7 @@
 const fs = require('fs-extra');
 const urljoin = require('url-join');
 const got = require('got');
+const path = require('path');
 const cloneDeep = require('lodash.clonedeep');
 const difference = require('lodash.difference');
 const includes = require('lodash.includes');
@@ -52,6 +53,8 @@ const {
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleIdPathAndCollection
 } = require('../../helpers/granuleUtils');
+
+const { isReingestExecutionForGranuleId } = require('../../helpers/workflowUtils');
 
 const { getConfigObject } = require('../../helpers/configUtils');
 
@@ -302,7 +305,7 @@ describe('The S3 Ingest Granules workflow', () => {
       files = postToCmrOutput.payload.granules[0].files;
       cmrLink = postToCmrOutput.payload.granules[0].cmrLink;
       cmrResource = await getOnlineResources(cmrLink);
-      response = await got(cmrResource[1].href);
+      response = await got(cmrResource[2].href);
     });
 
     it('has expected payload', () => {
@@ -425,13 +428,22 @@ describe('The S3 Ingest Granules workflow', () => {
             workflowName,
             stackName: config.stackName,
             bucket: config.bucket,
-            findExecutionFn: isExecutionForGranuleId,
+            findExecutionFn: isReingestExecutionForGranuleId,
             findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId }
           });
 
           console.log(`Wait for completed execution ${reingestGranuleExecution.executionArn}`);
 
           await waitForCompletedExecution(reingestGranuleExecution.executionArn);
+
+          const moveGranuleOutput = await lambdaStep.getStepOutput(
+            reingestGranuleExecution.executionArn,
+            'MoveGranule'
+          );
+
+          const moveGranuleOutputFiles = moveGranuleOutput.payload.granules[0].files;
+          const nonCmrFiles = moveGranuleOutputFiles.filter((f) => !f.filename.endsWith('.cmr.xml'));
+          nonCmrFiles.forEach((f) => expect(f.duplicate_found).toBe(true));
 
           await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
           const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
@@ -452,10 +464,6 @@ describe('The S3 Ingest Granules workflow', () => {
           const currentFiles = await getFilesMetadata(updatedGranule.files);
           currentFiles.forEach((cf) => {
             expect(cf.LastModified).toBeGreaterThan(startTime);
-          });
-
-          updatedGranule.files.forEach((cf) => {
-            if (!cf.filename.endsWith('.cmr.xml')) expect(cf.duplicate_found).toBe(true);
           });
         });
       });
@@ -518,7 +526,7 @@ describe('The S3 Ingest Granules workflow', () => {
           destinations = [{
             regex: '.*.hdf$',
             bucket: config.bucket,
-            filepath: `${testDataFolder}/${file.filepath.substring(0, file.filepath.lastIndexOf('/'))}`
+            filepath: `${testDataFolder}/${path.dirname(file.filepath)}`
           }];
         });
 

@@ -6,7 +6,8 @@ const {
   searchConcept,
   ingestConcept,
   deleteConcept,
-  CMR
+  CMR,
+  CMRSearchConceptQueue
 } = require('./cmr');
 const {
   ValidationError,
@@ -18,12 +19,11 @@ const {
 } = require('./utils');
 const {
   getGranuleId,
-  getCmrXMLFiles,
-  isECHO10File,
-  metadataObjectFromCMRXMLFile,
-  publishECHO10XML2CMR,
+  getCmrFiles,
+  isCMRFile,
+  metadataObjectFromCMRFile,
+  publish2CMR,
   reconcileCMRMetadata,
-  updateEcho10XMLMetadata,
   updateCMRMetadata
 } = require('./cmr-utils');
 
@@ -76,9 +76,10 @@ async function getFullMetadata(cmrLink) {
 
 module.exports = {
   CMR,
+  CMRSearchConceptQueue,
   ValidationError,
   deleteConcept,
-  getCmrXMLFiles,
+  getCmrFiles,
   getFullMetadata,
   getGranuleId,
   getHost,
@@ -86,12 +87,11 @@ module.exports = {
   getUrl,
   hostId,
   ingestConcept,
-  isECHO10File,
-  metadataObjectFromCMRXMLFile,
-  publishECHO10XML2CMR,
+  isCMRFile,
+  metadataObjectFromCMRFile,
+  publish2CMR,
   reconcileCMRMetadata,
   searchConcept,
   updateCMRMetadata,
-  updateEcho10XMLMetadata,
   updateToken
 };

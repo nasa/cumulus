@@ -322,9 +322,9 @@ async function duplicateHandlingErrorTest(t, duplicateHandling) {
     await moveGranules(newPayloadOrig);
     t.fail('Expected a DuplicateFile error to be thrown');
   }
-  catch (err) {
-    t.true(err instanceof errors.DuplicateFile);
-    t.true(expectedErrorMessages.includes(err.message));
+  catch (error) {
+    t.true(error instanceof errors.DuplicateFile);
+    t.true(expectedErrorMessages.includes(error.message));
   }
 }
 
