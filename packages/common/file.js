@@ -3,9 +3,9 @@ const cksum = require('cksum');
 /**
  * Get file checksum from readable stream
  *
- * @param {ReadableStream} stream
+ * @param {ReadableStream} stream - A readable file stream
  *
- * @returns {number} - The file checksum
+ * @returns {Promise<number>} - Promise returning the file checksum
  */
 async function getFileChecksumFromStream(stream) {
   return new Promise((resolve, reject) =>
