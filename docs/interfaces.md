@@ -8,15 +8,21 @@ hide_title: true
 
 Cumulus has multiple interfaces that allow interaction with discrete components of the system, such as starting workflows via SNS or Kinesis, manually queueing workflow start messages, submitting SNS notifications for completed workflows, and the many operations allowed by the Cumulus API.
 
-The diagram below documents the workflow process in detail and the various interfaces that allow starting of workflows, reporting of completed workflows, and API create operations that occur when a workflow completion message is processed.
+The diagram below documents the workflow process in detail and the various interfaces that allow starting of workflows, reporting of completed workflows, and API create operations that occur when a workflow completion message is processed. Inline hyperlinks to further documentation are provided where available.
 
 Hovering over the red text will pop up small windows that document the various schemas where applicable, with links to the most recent copy in the Cumulus source code.
 
 Note: this diagram is current of v1.11.1.
+<br><br>
 
 <div style="position:relative">
-  <img src="../assets/interface_diagram.png" style="min-width:700px;max-width:700px;height:auto">
-  <div class="diagram-overlay-text red-text" style="top:97px;left:140px;font-size:0.8em;">
+  <span class="diagram-overlay-text" style="left:60px;top:-20px"><a href="../workflows/workflow-triggers">WORKFLOW TRIGGERS</a></span>
+  <span class="diagram-overlay-text" style="top:-20px;left:610px;">REPORTING</span>
+  <img src="../assets/interface_diagram.png" style="min-width:800px;max-width:800px;height:auto">
+  <div class="diagram-overlay-text" style="top:20px;left:30px">
+    SNS<br>Message
+  </div>
+  <div class="diagram-overlay-text red-text" style="top:65px;left:40px;font-size:0.8em;">
     Interface
     <div class="default-text">
       Populates <span class="red-text">payload</span> field of workflow input.
@@ -40,41 +46,15 @@ Note: this diagram is current of v1.11.1.
       </table>
     </div>
   </div>
-  <div class="diagram-overlay-text red-text" style="bottom:242px;left:215px;font-size:0.8em;">
-    Interface
-    <div class="default-text" style="bottom:0">
-      <table>
-        <tr>
-          <th>StartSF Schema</th>
-        </tr>
-        <tr>
-          <td>
-            <a href="../workflows/cumulus-task-message-flow#cumulus-message-format">Cumulus Message Format</a>
-          </td>
-        </tr>
-      </table>
-    </div>
+  <div class="diagram-overlay-text" style="top:85px;left:30px">
+    Kinesis<br>Streams
   </div>
-  <div class="diagram-overlay-text red-text" style="bottom:166px;left:568px;font-size:0.8em;">
-    Interface
-    <div class="default-text" style="bottom:0;right:0">
-      <table>
-        <tr>
-          <th>
-            SFTracker Schema
-          </th>
-        </tr>
-        <tr>
-          <td>
-            The message schema is identical to the three API interface schemas documented above. The execution schema is expected to be met, the others are optional.
-          </td>
-        </tr>
-      </table>
-    </div>
+  <div class="diagram-overlay-text" style="top:145px;left:30px">
+    Onetime &<br>Scheduled<br>Rule<br>(Cloud-<br>Watch)
   </div>
-  <div class="diagram-overlay-text red-text" style="top:260px;left:423px;font-size:0.8em;">
+  <div class="diagram-overlay-text red-text" style="top:140px;left:632px;font-size:0.8em;">
     Interface
-    <div class="default-text">
+    <div class="default-text" style="top:-350px">
       <table>
         <tr>
           <th>Granule Schema</th>
@@ -91,10 +71,10 @@ Note: this diagram is current of v1.11.1.
       "name": "string",
       "version": "string"
     },
-    "pdr": { // OPTIONAL
+    "pdr": {
       "name": "string"
     },
-    "provider": { // OPTIONAL
+    "provider": {
       "id": "string"
     },
     "status": "string",
@@ -124,9 +104,9 @@ Note: this diagram is current of v1.11.1.
       </table>
     </div>
   </div>
-  <div class="diagram-overlay-text red-text" style="top:260px;left:516px;font-size:0.8em;">
+  <div class="diagram-overlay-text red-text" style="top:140px;left:715px;font-size:0.8em;">
     Interface
-    <div class="default-text">
+    <div class="default-text" style="top:-250px">
       <table>
         <tr>
           <th>PDR Schema</th>
@@ -163,9 +143,9 @@ Note: this diagram is current of v1.11.1.
       </table>
     </div>
   </div>
-  <div class="diagram-overlay-text red-text" style="top:260px;left:610px;font-size:0.8em;">
+  <div class="diagram-overlay-text red-text" style="top:140px;left:550px;font-size:0.8em;">
     Interface
-    <div class="default-text">
+    <div class="default-text" style="top:-150px">
       <table>
         <tr>
           <th>Execution Schema</th>
@@ -192,5 +172,60 @@ Note: this diagram is current of v1.11.1.
         </tr>
       </table>
    </div>
+  </div>
+  <div class="diagram-overlay-text" style="top:45px;left:180px">
+    Message<br>Consumer
+  </div>
+  <div class="diagram-overlay-text" style="bottom:65px;left:170px">
+    SFStarter SQS
+  </div>
+  <div class="diagram-overlay-text red-text" style="bottom:30px;left:190px;font-size:0.8em;">
+    Interface
+    <div class="default-text" style="bottom:0">
+      <table>
+        <tr>
+          <th>StartSF Schema</th>
+        </tr>
+        <tr>
+          <td>
+            <a href="../workflows/cumulus-task-message-flow#cumulus-message-format">Cumulus Message Format</a>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div><div class="diagram-overlay-text" style="bottom:65px;left:377px">
+    <a href="../workflows/workflows-readme">Cumulus<br>Workflow</a>
+  </div>
+  <div class="diagram-overlay-text" style="top:35px;left:610px">
+    <a href="https://nasa.github.io/cumulus-api/">Cumulus API</a>
+  </div>
+  <div class="diagram-overlay-text" style="top:95px;left:540px">
+    <span>Execution</span>
+  </div>
+  <div class="diagram-overlay-text" style="top:95px;left:630px">
+    <span>Granule</span>
+  </div>
+  <div class="diagram-overlay-text" style="top:95px;left:725px">
+    <span>PDR</span>
+  </div>
+  <div class="diagram-overlay-text" style="bottom:55px;left:605px">
+    SFTracker SNS
+  </div>
+  <div class="diagram-overlay-text red-text" style="bottom:30px;left:630px;font-size:0.8em;">
+    Interface
+    <div class="default-text" style="bottom:0;right:0">
+      <table>
+        <tr>
+          <th>
+            SFTracker Schema
+          </th>
+        </tr>
+        <tr>
+          <td>
+            The message schema is identical to the three API interface schemas documented above. The execution schema is expected to be met, the others are optional.
+          </td>
+        </tr>
+      </table>
+    </div>
   </div>
 </div>
