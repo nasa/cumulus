@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - CUMULUS-1139 - Granules stored in the API contain a `files` property. That schema has been greatly
   simplified.
+    - The `bucket` property is now required.
     - The `filepath` property has been renamed to `key`.
     - The `path` property has been removed.
     - The `url_path` property has been removed.
