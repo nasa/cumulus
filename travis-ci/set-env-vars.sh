@@ -6,6 +6,9 @@ if [ -z $NGAP_ENV ]; then
   NGAP_ENV=SANDBOX
 fi
 
+echo param 1 $0
+echo param 2 $1
+
 echo Setting variables for environment: $NGAP_ENV
 
 if [ $NGAP_ENV = "SIT" ]; then
