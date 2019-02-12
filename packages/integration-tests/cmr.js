@@ -112,7 +112,7 @@ const sampleUmmGranule = {
       EndingDateTime: '2016-01-09T11:41:12.027Z'
     }
   }
-}
+};
 
 /**
  * Returns true if the concept exists - if the cmrLink
@@ -120,12 +120,17 @@ const sampleUmmGranule = {
  *
  * @param {string} cmrLink - CMR URL path to concept,
  * i.e. what is returned from post to cmr task
+ * @param {boolean} isUMMG - true if the CMR link is for UMM-G JSON
  * @returns {boolean} true if the concept exists in CMR, false if not
  */
-async function conceptExists(cmrLink) {
+async function conceptExists(cmrLink, isUMMG) {
   const response = await got.get(cmrLink, { json: true });
 
   if (response.statusCode !== 200) return false;
+
+  if (isUMMG) {
+    return response.body.items.length > 0;
+  }
 
   return response.body.feed.entry.length > 0;
 }
