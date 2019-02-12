@@ -260,7 +260,6 @@ module.exports.granule = {
           key: { type: 'string' },
           fileSize: { type: 'integer' },
           name: { type: 'string' },
-          url_path: { type: 'string', description: 'this should be removed' },
           duplicate_found: { type: 'boolean', description: 'this should be removed' },
           fileStagingDir: { type: 'string', description: 'this should be removed' },
         }
