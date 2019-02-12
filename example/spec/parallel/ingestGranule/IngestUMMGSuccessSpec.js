@@ -15,6 +15,7 @@ const {
 const {
   aws: {
     getS3Object,
+    s3ObjectExists,
     parseS3Uri
   },
   constructCollectionId
@@ -178,16 +179,36 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   });
 
   describe('the MoveGranules task', () => {
-    let MoveGranulesTaskOutput;
+    let moveGranulesTaskOutput;
+    let movedFiles;
+    let existCheck = [];
 
     beforeAll(async () => {
-      MoveGranulesTaskOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
+      moveGranulesTaskOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
+      movedFiles = moveGranulesTaskOutput.payload.granules[0].files;
+      existCheck = await Promise.all([
+        s3ObjectExists({ Bucket: movedFiles[0].bucket, Key: movedFiles[0].filepath }),
+        s3ObjectExists({ Bucket: movedFiles[1].bucket, Key: movedFiles[1].filepath }),
+        s3ObjectExists({ Bucket: movedFiles[2].bucket, Key: movedFiles[2].filepath })
+      ]);
+
     });
 
-    it('has moved the files', () => {
-      const movedFiles = MoveGranulesTaskOutput.payload.granules[0].files.map((file) => file.filename);
-      expect(movedFiles).not.toContain(s3ummJsonFileLocation);
-      s3ummJsonFileLocation = movedFiles.filter((file) => file.includes('.cmr.json'))[0];
+    it('has a payload with correct buckets, filenames, filesizes', () => {
+      movedFiles.forEach((file) => {
+        const expectedFile = expectedPayload.granules[0].files.find((f) => f.name === file.name);
+        expect(file.filename).toEqual(expectedFile.filename);
+        expect(file.bucket).toEqual(expectedFile.bucket);
+        if (file.fileSize) {
+          expect(file.fileSize).toEqual(expectedFile.fileSize);
+        }
+      });
+    });
+
+    it('moves files to the bucket folder based on metadata', () => {
+      existCheck.forEach((check) => {
+        expect(check).toEqual(true);
+      });
     });
   });
 
@@ -251,9 +272,12 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     let destinationKey;
     let destinations;
     let originalUmm;
+    let newS3UMMJsonFileLocation;
 
     beforeAll(async () => {
       file = granule.files[0];
+
+      newS3UMMJsonFileLocation = expectedPayload.granules[0].files.find((f) => f.filename.includes('.cmr.json')).filename;
 
       destinationKey = `${testDataFolder}/${file.filepath}`;
 
@@ -263,7 +287,9 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         filepath: `${testDataFolder}/${path.dirname(file.filepath)}`
       }];
 
-      originalUmm = await getUmmObject(s3ummJsonFileLocation);
+      originalUmm = await getUmmObject(newS3UMMJsonFileLocation);
+
+
     });
 
     it('returns success upon move', async () => {
@@ -277,7 +303,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('updates the UMM-G JSON file in S3 with new paths', async () => {
-      const updatedUmm = await getUmmObject(s3ummJsonFileLocation);
+      const updatedUmm = await getUmmObject(newS3UMMJsonFileLocation);
 
       const relatedUrlDifferences = differenceWith(updatedUmm.RelatedUrls, originalUmm.RelatedUrls, isEqual);
 
