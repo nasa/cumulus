@@ -38,7 +38,7 @@ test('files existing at location returns empty array if no files exist', async (
       fakeFileFactory({
         name,
         bucket: sourceBucket,
-        filepath: `origin/${name}`
+        key: `origin/${name}`
       })
   );
 
@@ -48,7 +48,7 @@ test('files existing at location returns empty array if no files exist', async (
     {
       regex: '.*.hdf$',
       bucket: destBucket,
-      filepath: destinationFilepath
+      key: destinationFilepath
     }
   ];
 
