@@ -774,7 +774,6 @@ async function moveGranuleFiles(sourceFiles, destinations) {
         processedFiles.push({
           bucket: target.Bucket,
           filepath: target.Key,
-          filename: aws.buildS3Uri(target.Bucket, target.Key),
           name: file.name
         });
       });
@@ -802,7 +801,6 @@ async function moveGranuleFiles(sourceFiles, destinations) {
     processedFiles.push({
       bucket: fileBucket,
       filepath: fileKey,
-      filename: aws.buildS3Uri(fileBucket, fileKey),
       name: file.name
     });
 
