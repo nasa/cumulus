@@ -91,12 +91,16 @@ async function publishECHO10XML2CMR(cmrFile, creds, systemBucket, stack) {
     granuleId: cmrFile.granuleId,
     filename: cmrFile.filename,
     conceptId,
-    link: `${getUrl('search')}granules.json?concept_id=${res.result['concept-id']}`
+    // @TODO: Use either of these instead?
+    // https://cmr.uat.earthdata.nasa.gov/search/concepts/G1225649301-CUMULUS.umm_json
+    // https://cmr.uat.earthdata.nasa.gov/search/concepts/G1225649301-CUMULUS.umm_json_v1_4
+    link: `${getUrl('search')}granules.json?concept_id=${conceptId}`
   };
 }
 
 
 /**
+ * function for posting cmr JSON files from S3 to CMR
  *
  * @param {Object} cmrPublishObject -
  * @param {string} cmrPublishObject.filename - the cmr filename
@@ -119,7 +123,7 @@ async function publishUMMGJSON2CMR(cmrPublishObject, creds, systemBucket, stack)
   return {
     granuleId,
     conceptId,
-    link: `${getUrl('search')}granules.json?concept_id=${conceptId}`
+    link: `${getUrl('search')}granules.umm_json?concept_id=${conceptId}`
   };
 }
 
