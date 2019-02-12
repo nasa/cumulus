@@ -8,7 +8,7 @@ fi
 
 echo Setting variables for environment: $NGAP_ENV
 
-if [ $NGAP_ENV = "SIT" ] then
+if [ $NGAP_ENV = "SIT" ]; then
   export AWS_ACCESS_KEY_ID="$SIT_AWS_ACCESS_KEY_ID"
   export AWS_SECRET_ACCESS_KEY="$SIT_AWS_SECRET_ACCESS_KEY"
   export AWS_DEFAULT_REGION="$INTEGRATION_AWS_DEFAULT_REGION"
