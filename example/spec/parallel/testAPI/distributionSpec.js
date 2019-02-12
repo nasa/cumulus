@@ -84,17 +84,11 @@ describe('Distribution API', () => {
     it('downloads the requested science file for authorized requests', async (done) => {
       // Login with Earthdata and get response for redirect back to
       // distribution API.
-      let response;
-      try {
-        response = await getEarthdataLoginRedirectResponse({
-          redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
-          requestOrigin: process.env.DISTRIBUTION_ENDPOINT,
-          state: fileRequestPath
-        });
-      }
-      catch (err) {
-        console.log(err);
-      }
+      const response = await getEarthdataLoginRedirectResponse({
+        redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
+        requestOrigin: process.env.DISTRIBUTION_ENDPOINT,
+        state: fileRequestPath
+      });
 
       const { 'set-cookie': cookie, location: fileUrl } = response.headers;
 
