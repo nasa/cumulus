@@ -19,6 +19,7 @@ const cumulusMessageFileToAPIFile = (file) => {
 
   delete apiFile.filename;
   delete apiFile.filepath;
+  delete apiFile.path;
 
   return apiFile;
 };
