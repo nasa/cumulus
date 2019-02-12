@@ -349,6 +349,7 @@ class CMRSearchConceptQueue {
    *
    * @param {string} provider - the CMR provider id
    * @param {string} clientId - the CMR clientId
+   * @param {string} type - the type of search 'granule' or 'collection'
    * @param {string} params - the search parameters
    * @param {string} format - the result format
    */
