@@ -88,6 +88,7 @@ jobs:
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - echo 'BOOTSTRAP FINISHED'
+        - export NGAP_ENV=SIT
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-stack.sh
 

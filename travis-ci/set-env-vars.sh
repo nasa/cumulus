@@ -1,24 +1,11 @@
 #!/bin/sh
 
 # Set the environment variables for a travis build
-# The first argument is the environment, defaults to SANDBOX
-# The second argument allows you to optionally specify a deployment
-# i.e. set-env-vars.sh SIT cumulus-sit
-
-NGAP_ENV=$1
+# based on the NGAP_ENV environment variable
 
 if [ -z $NGAP_ENV ]; then
   NGAP_ENV=SANDBOX
 fi
-
-if [ -n $2 ]; then
-  echo Setting deployment to $DEPLOYMENT
-  export DEPLOYMENT=$2
-fi
-
-echo param 1 $0
-echo param 2 $1
-echo param 2 $2
 
 echo Setting variables for environment: $NGAP_ENV
 
