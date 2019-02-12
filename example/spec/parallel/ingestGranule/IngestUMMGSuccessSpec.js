@@ -83,7 +83,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   let inputPayload;
   let expectedPayload;
   let postToCmrOutput;
-  let s3ummJsonFileLocation;
   let granule;
 
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
@@ -163,9 +162,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     beforeAll(async () => {
       processingTaskOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'FakeProcessing');
-
       ummFiles = processingTaskOutput.payload.filter((file) => file.includes('.cmr.json'));
-      s3ummJsonFileLocation = ummFiles[0];
     });
 
     it('creates a UMM JSON file', () => {
@@ -191,7 +188,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         s3ObjectExists({ Bucket: movedFiles[1].bucket, Key: movedFiles[1].filepath }),
         s3ObjectExists({ Bucket: movedFiles[2].bucket, Key: movedFiles[2].filepath })
       ]);
-
     });
 
     it('has a payload with correct buckets, filenames, filesizes', () => {
@@ -288,8 +284,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       }];
 
       originalUmm = await getUmmObject(newS3UMMJsonFileLocation);
-
-
     });
 
     it('returns success upon move', async () => {
