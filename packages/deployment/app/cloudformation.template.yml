@@ -30,7 +30,7 @@ Resources:
       Parameters:
       {{#each ../workflowLambdas}}
         {{@key}}LambdaFunction:
-          !Ref {{@key}}LambdaFunction
+          Ref: {{@key}}LambdaFunction
       {{/each}}
       TemplateURL: {{this.url}}
 {{/ifEquals}}
@@ -82,8 +82,10 @@ Resources:
           Fn::GetAtt:
             - BulkDeleteLambdaFunction
             - Arn
-        EcsCluster: !Ref CumulusECSCluster
-        AsyncOperationTaskDefinition: !Ref AsyncOperationTaskDefinition
+        EcsCluster:
+          Ref: CumulusECSCluster
+        AsyncOperationTaskDefinition:
+          Ref: AsyncOperationTaskDefinition
       {{#each ../apis}}
         {{name}}RestApi:
           Ref: {{name}}RestApi
@@ -332,9 +334,13 @@ Resources:
       DefinitionString:
     {{#ifEquals ../useWorkflowLambdaVersions true}}
         Fn::Sub:
-        - |
-            {{{ToJson this}}}
-        - { {{#each ../workflowLambdas}}{{@key}}LambdaAliasOutput: !GetAtt [WorkflowLambdaVersionsNestedStack, Outputs.{{@key}}LambdaAliasOutput],{{/each}} stackName: {{../stackName}} }
+          - |
+              {{{ToJson this}}}
+          -
+            {{#each ../workflowLambdas}}
+            {{@key}}LambdaAliasOutput: !GetAtt [WorkflowLambdaVersionsNestedStack, Outputs.{{@key}}LambdaAliasOutput]
+            {{/each}}
+            stackName: {{../stackName}}
     {{/ifEquals}}
     {{#ifNotEquals ../useWorkflowLambdaVersions true}}
         Fn::Sub: |
