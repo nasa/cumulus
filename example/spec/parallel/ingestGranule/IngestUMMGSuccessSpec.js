@@ -15,6 +15,7 @@ const {
 const {
   aws: {
     getS3Object,
+    s3ObjectExists,
     parseS3Uri
   },
   constructCollectionId
@@ -50,8 +51,8 @@ const workflowName = 'IngestAndPublishGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
 const templatedOutputPayloadFilename = templateFile({
-  inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.output.payload.template.json',
-  config: config[workflowName].IngestGranuleOutput
+  inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.UMM.output.payload.template.json',
+  config: config[workflowName].IngestUMMGranuleOutput
 });
 
 const s3data = [
@@ -60,7 +61,7 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
 ];
 
-async function getUmmJs(fileLocation) {
+async function getUmmObject(fileLocation) {
   const { Bucket, Key } = parseS3Uri(fileLocation);
 
   const ummFile = await getS3Object(Bucket, Key);
@@ -73,7 +74,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const testDataFolder = createTestDataPath(testId);
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
   const providersDir = './data/providers/s3/';
-  const collectionsDir = './data/collections/s3_MOD09GQ_006';
+  const collectionsDir = './data/collections/s3_MOD09GQ_006-umm';
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
   const provider = { id: `s3_provider${testSuffix}` };
   const cumulusDocUrl = 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme';
@@ -82,7 +83,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   let inputPayload;
   let expectedPayload;
   let postToCmrOutput;
-  let s3ummJsonFileLocation;
   let granule;
 
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
@@ -150,7 +150,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     ]);
   });
 
-  xit('completes execution with success status', () => {
+  it('completes execution with success status', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
 
@@ -162,9 +162,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     beforeAll(async () => {
       processingTaskOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'FakeProcessing');
-
       ummFiles = processingTaskOutput.payload.filter((file) => file.includes('.cmr.json'));
-      s3ummJsonFileLocation = ummFiles[0];
     });
 
     it('creates a UMM JSON file', () => {
@@ -177,7 +175,40 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
   });
 
-  xdescribe('the PostToCmr task', () => {
+  describe('the MoveGranules task', () => {
+    let moveGranulesTaskOutput;
+    let movedFiles;
+    let existCheck = [];
+
+    beforeAll(async () => {
+      moveGranulesTaskOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
+      movedFiles = moveGranulesTaskOutput.payload.granules[0].files;
+      existCheck = await Promise.all([
+        s3ObjectExists({ Bucket: movedFiles[0].bucket, Key: movedFiles[0].filepath }),
+        s3ObjectExists({ Bucket: movedFiles[1].bucket, Key: movedFiles[1].filepath }),
+        s3ObjectExists({ Bucket: movedFiles[2].bucket, Key: movedFiles[2].filepath })
+      ]);
+    });
+
+    it('has a payload with correct buckets, filenames, filesizes', () => {
+      movedFiles.forEach((file) => {
+        const expectedFile = expectedPayload.granules[0].files.find((f) => f.name === file.name);
+        expect(file.filename).toEqual(expectedFile.filename);
+        expect(file.bucket).toEqual(expectedFile.bucket);
+        if (file.fileSize) {
+          expect(file.fileSize).toEqual(expectedFile.fileSize);
+        }
+      });
+    });
+
+    it('moves files to the bucket folder based on metadata', () => {
+      existCheck.forEach((check) => {
+        expect(check).toEqual(true);
+      });
+    });
+  });
+
+  describe('the PostToCmr task', () => {
     let cmrResource;
     let cmrLink;
     let response;
@@ -209,8 +240,8 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       expect(postToCmrOutput.payload).toEqual(updatedExpectedpayload);
     });
 
-    it('publishes the granule metadata to CMR', () => {
-      const result = conceptExists(granule.cmrLink);
+    it('publishes the granule metadata to CMR', async () => {
+      const result = await conceptExists(granule.cmrLink);
 
       expect(granule.published).toEqual(true);
       expect(result).not.toEqual(false);
@@ -232,27 +263,30 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   });
 
 
-  xdescribe('When moving a granule via the Cumulus API', () => {
+  describe('When moving a granule via the Cumulus API', () => {
     let file;
     let destinationKey;
     let destinations;
     let originalUmm;
+    let newS3UMMJsonFileLocation;
 
     beforeAll(async () => {
       file = granule.files[0];
+
+      newS3UMMJsonFileLocation = expectedPayload.granules[0].files.find((f) => f.filename.includes('.cmr.json')).filename;
 
       destinationKey = `${testDataFolder}/${file.filepath}`;
 
       destinations = [{
         regex: '.*.hdf$',
-        bucket: config.bucket,
+        bucket: config.buckets.protected.name,
         filepath: `${testDataFolder}/${path.dirname(file.filepath)}`
       }];
 
-      originalUmm = await getUmmJs(s3ummJsonFileLocation);
+      originalUmm = await getUmmObject(newS3UMMJsonFileLocation);
     });
 
-    xit('returns success upon move', async () => {
+    it('returns success upon move', async () => {
       const moveGranuleResponse = await granulesApiTestUtils.moveGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
@@ -263,7 +297,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('updates the UMM-G JSON file in S3 with new paths', async () => {
-      const updatedUmm = await getUmmJs(s3ummJsonFileLocation);
+      const updatedUmm = await getUmmObject(newS3UMMJsonFileLocation);
 
       const relatedUrlDifferences = differenceWith(updatedUmm.RelatedUrls, originalUmm.RelatedUrls, isEqual);
 

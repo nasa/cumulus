@@ -3,6 +3,7 @@
     "About Cumulus": [
       "cumulus-docs-readme",
       "architecture",
+      "interfaces",
       "glossary",
       "team"
     ],
