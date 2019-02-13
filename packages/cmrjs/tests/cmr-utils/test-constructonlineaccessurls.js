@@ -32,6 +32,7 @@ test('returns correct url for protected data', (t) => {
   const expected = [
     {
       URL: `${endpoint}/${t.context.bucketConfig.protected.name}/some/path/protected-file.hdf`,
+      Description: 'File to download',
       URLDescription: 'File to download',
       Type: 'GET DATA'
     }
@@ -54,6 +55,7 @@ test('Returns correct url object for public data.', (t) => {
   const expected = [
     {
       URL: `https://${publicBucketName}.s3.amazonaws.com/some/path/browse_image.jpg`,
+      Description: 'File to download',
       URLDescription: 'File to download',
       Type: 'GET DATA'
     }
@@ -101,11 +103,13 @@ test('returns an array of correct url objects given a list of moved files.', (t)
   const expected = [
     {
       URL: `${endpoint}/${t.context.bucketConfig.protected.name}/another/path/protected.hdf`,
+      Description: 'File to download',
       URLDescription: 'File to download',
       Type: 'GET DATA'
     },
     {
       URL: `https://${t.context.bucketConfig.public.name}.s3.amazonaws.com/path/publicfile.jpg`,
+      Description: 'File to download',
       URLDescription: 'File to download',
       Type: 'GET DATA'
     }
