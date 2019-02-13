@@ -231,7 +231,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('has expected payload', () => {
       expect(granule.published).toBe(true);
-      expect(granule.cmrLink.startsWith('https://cmr.uat.earthdata.nasa.gov/search/granules_umm.json?concept_id=')).toBe(true);
+      expect(granule.cmrLink.startsWith('https://cmr.uat.earthdata.nasa.gov/search/granules.umm_json?concept_id=')).toBe(true);
 
       // Set the expected cmrLink to the actual cmrLink, since it's going to
       // be different every time this is run.
