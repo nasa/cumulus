@@ -1,8 +1,10 @@
 'use strict';
 
 const fs = require('fs');
-const path = require('path');
+const isNil = require('lodash.isnil');
+const omitBy = require('lodash.omitby');
 const os = require('os');
+const path = require('path');
 const log = require('./log');
 
 /**
@@ -88,3 +90,11 @@ exports.setErrorStack = (error, stack) => {
     ...stack.split('\n').slice(1)
   ].join('\n');
 };
+
+exports.renameProperty = (from, to, obj) => {
+  const newObj = { ...obj, [to]: obj[from] };
+  delete newObj[from];
+  return newObj;
+};
+
+exports.removeNilProperties = (obj) => omitBy(obj, isNil);
