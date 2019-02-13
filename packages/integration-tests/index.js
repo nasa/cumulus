@@ -388,6 +388,18 @@ async function cleanupCollections(stackName, bucket, collectionsDirectory, postf
   return deleteCollections(stackName, bucket, collections, postfix);
 }
 
+function getProviderHost(provider) {
+  if (process.env.PROVIDER_HOST) {
+    if (provider.protocol === 'http' || provider.protocol === 'https') {
+      return `${process.env.PROVIDER_HOST}:${process.env.PROVIDER_HOST_PORT}`;
+    }
+
+    return process.env.PROVIDER_HOST;
+  }
+
+  return provider.host;
+}
+
 /**
  * add providers to database.
  *
@@ -408,12 +420,14 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host = null,
       provider.id += postfix;
     }
     const p = new Provider();
+
     if (s3Host && provider.protocol === 's3') {
       provider.host = s3Host;
     }
     else {
-      provider.host = process.env.PROVIDER_HOST || provider.host;
+      provider.host = getProviderHost(provider);
     }
+
     console.log(`adding provider ${provider.id}`);
     return p.delete({ id: provider.id }).then(() => p.create(provider));
   }));
