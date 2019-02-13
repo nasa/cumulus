@@ -4,7 +4,12 @@ const sinon = require('sinon');
 const test = require('ava');
 const publicIp = require('public-ip');
 
-const { getIp, getHost, hostId } = require('../utils');
+const {
+  getIp,
+  getHost,
+  hostId,
+  ummVersion
+} = require('../utils');
 
 let stub;
 
@@ -63,4 +68,30 @@ test('getHost returns CMR_HOST when defined', (t) => {
   const anotherHost = 'cmr.com';
   process.env.CMR_HOST = anotherHost;
   t.is(getHost(), anotherHost);
+});
+
+test('ummVersion returns UMM version if found on metadata object.', (t) => {
+  const metadata = {
+    restOfMetadataUpHere: 'it is all fake',
+    MetadataSpecification: {
+      URL: 'https://cdn.earthdata.nasa.gov/umm/granule/v1.5',
+      Name: 'UMM-G',
+      Version: '1.5'
+    }
+  };
+
+  const actual = ummVersion(metadata);
+
+  t.is('1.5', actual);
+});
+
+test('ummVersion returns default version 1.4 if object has no metadata specification.', (t) => {
+  const metadata = {
+    restOfMetadataUpHere: 'still fake',
+    MissingMetadataSpecification: 'nothing here'
+  };
+
+  const actual = ummVersion(metadata);
+
+  t.is('1.4', actual);
 });
