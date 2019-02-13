@@ -253,16 +253,16 @@ module.exports.granule = {
       type: 'array',
       items: {
         type: 'object',
-        required: ['bucket', 'key'],
         properties: {
           bucket: { type: 'string' },
-          checksumType: { type: ['string', 'null'] },
-          checksumValue: { type: ['string', 'null'] },
+          checksumType: { type: 'string' },
+          checksum: { type: 'string' },
           key: { type: 'string' },
           fileSize: { type: 'integer' },
-          name: { type: 'string' },
+          fileName: { type: 'string' },
           duplicate_found: { type: 'boolean', description: 'this should be removed' },
           fileStagingDir: { type: 'string', description: 'this should be removed' },
+          source: { type: 'string' }
         }
       }
     },

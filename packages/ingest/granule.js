@@ -713,7 +713,8 @@ async function moveGranuleFile(source, target, options) {
  */
 function generateMoveFileParams(sourceFiles, destinations) {
   return sourceFiles.map((file) => {
-    const destination = destinations.find((dest) => file.name.match(dest.regex));
+    const fileName = file.name || file.fileName;
+    const destination = destinations.find((dest) => fileName.match(dest.regex));
 
     // if there's no match, we skip the file
     if (!destination) return { source: null, target: null, file };
@@ -734,7 +735,7 @@ function generateMoveFileParams(sourceFiles, destinations) {
 
     const target = {
       Bucket: destination.bucket,
-      Key: destination.filepath ? urljoin(destination.filepath, file.name) : file.name
+      Key: destination.filepath ? urljoin(destination.filepath, fileName) : fileName
     };
 
     return { source, target, file };
@@ -768,7 +769,7 @@ async function moveGranuleFiles(sourceFiles, destinations) {
         processedFiles.push({
           bucket: target.Bucket,
           key: target.Key,
-          name: file.name
+          name: file.name || file.fileName
         });
       });
     }
@@ -791,7 +792,7 @@ async function moveGranuleFiles(sourceFiles, destinations) {
     processedFiles.push({
       bucket: fileBucket,
       key: fileKey,
-      name: file.name
+      name: file.name || file.fileName
     });
 
     return Promise.resolve();
