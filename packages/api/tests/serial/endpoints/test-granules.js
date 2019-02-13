@@ -837,7 +837,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
 });
 
 test('PUT with action move returns failure if one granule file exists', async (t) => {
-  const filesExistingStub = sinon.stub(models.Granule.prototype, 'getFilesExistingAtLocation').returns([{ name: 'file1' }]);
+  const filesExistingStub = sinon.stub(models.Granule.prototype, 'getFilesExistingAtLocation').returns([{ fileName: 'file1' }]);
   const moveGranuleStub = sinon.stub(models.Granule.prototype, 'move').resolves({});
 
   const granule = t.context.fakeGranules[0];
@@ -872,9 +872,9 @@ test('PUT with action move returns failure if one granule file exists', async (t
 
 test('PUT with action move returns failure if more than one granule file exists', async (t) => {
   const filesExistingStub = sinon.stub(models.Granule.prototype, 'getFilesExistingAtLocation').returns([
-    { name: 'file1' },
-    { name: 'file2' },
-    { name: 'file3' }
+    { fileName: 'file1' },
+    { fileName: 'file2' },
+    { fileName: 'file3' }
   ]);
   const moveGranuleStub = sinon.stub(models.Granule.prototype, 'move').resolves({});
 
