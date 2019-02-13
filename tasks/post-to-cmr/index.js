@@ -1,8 +1,7 @@
 'use strict';
 
 const flatten = require('lodash.flatten');
-const keyBy = require('lodash.keyby');
-const cloneDeep = require('lodash.clonedeep');
+const fromPairs = require('lodash.frompairs');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const {
@@ -18,21 +17,23 @@ const { loadJSONTestData } = require('@cumulus/test-data');
  * Builds the output of the post-to-cmr task
  *
  * @param {Array} results - list of results returned by publish function
- * @param {Object} granulesObject - an object of the granules where the key is the granuleId
+ * @param {Array} granules - list of granules
  * @returns {Array} an updated array of granules
  */
-function buildOutput(results, granulesObject) {
-  const output = cloneDeep(granulesObject);
+function buildOutput(results, granules) {
+  const cmrLinksByGranuleId = fromPairs(results.map((r) => [r.granuleId, r.link]));
 
-  // add results to corresponding granules
-  results.forEach((result) => {
-    if (output[result.granuleId]) {
-      output[result.granuleId].cmrLink = result.link;
-      output[result.granuleId].published = true;
+  return granules.map((granule) => {
+    if (cmrLinksByGranuleId[granule.granuleId]) {
+      return {
+        ...granule,
+        published: true,
+        cmrLink: cmrLinksByGranuleId[granule.granuleId]
+      };
     }
-  });
 
-  return Object.values(output);
+    return granule;
+  });
 }
 
 /**
@@ -93,11 +94,9 @@ async function postToCMR(event) {
     )
   );
 
-  const granulesByGranuleId = keyBy(event.input.granules, (g) => g.granuleId);
-
   return {
     process: event.config.process,
-    granules: buildOutput(results, granulesByGranuleId)
+    granules: buildOutput(results, event.input.granules)
   };
 }
 
