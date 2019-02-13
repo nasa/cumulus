@@ -89,7 +89,7 @@ async function put(req, res) {
     );
 
     if (filesAtDestination.length > 0) {
-      const filenames = filesAtDestination.map((file) => file.name);
+      const filenames = filesAtDestination.map((file) => file.fileName);
       const message = `Cannot move granule because the following files would be overwritten at the destination location: ${filenames.join(', ')}. Delete the existing files or reingest the source files.`;
 
       return res.boom.conflict(message);

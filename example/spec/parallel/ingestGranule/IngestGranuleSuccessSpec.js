@@ -553,7 +553,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
           expect(moveGranuleResponse.statusCode).toEqual(409);
           expect(responseBody.message).toEqual(
-            `Cannot move granule because the following files would be overwritten at the destination location: ${granule.files[0].name}. Delete the existing files or reingest the source files.`
+            `Cannot move granule because the following files would be overwritten at the destination location: ${granule.files[0].fileName}. Delete the existing files or reingest the source files.`
           );
         });
 
