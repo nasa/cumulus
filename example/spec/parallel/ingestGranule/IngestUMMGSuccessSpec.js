@@ -69,7 +69,7 @@ async function getUmmObject(fileLocation) {
 }
 
 describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
-  const testId = createTimestampedTestId(config.stackName, 'IngestGranuleSuccess');
+  const testId = createTimestampedTestId(config.stackName, 'IngestUMMGSuccess');
   const testSuffix = createTestSuffix(testId);
   const testDataFolder = createTestDataPath(testId);
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
