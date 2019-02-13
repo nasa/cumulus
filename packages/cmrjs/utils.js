@@ -92,8 +92,9 @@ function getUrl(type, cmrProvider) {
 
 
 /**
- * Return the UMM version as a decimal string if a version cannot be found on
- * the input object version 1.4 is assumed and returned.
+ * Find the UMM version as a decimal string.
+ * If a version cannot be found on the input object
+ * version 1.4 is assumed and returned.
  *
  * @param {Object} umm - UMM metadata object
  * @returns {string} UMM version for the given object
