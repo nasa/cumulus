@@ -1,7 +1,8 @@
 'use strict';
 
+const flatten = require('lodash.flatten');
+const keyBy = require('lodash.keyby');
 const cloneDeep = require('lodash.clonedeep');
-const get = require('lodash.get');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const {
@@ -50,6 +51,14 @@ async function addMetadataObjects(cmrFiles) {
   return updatedCMRFiles;
 }
 
+const getS3URLOfFile = (file) => {
+  if (file.bucket && file.key) return buildS3Uri(file.bucket, file.key);
+  if (file.bucket && file.filepath) return buildS3Uri(file.bucket, file.filepath);
+  if (file.filename) return file.filename;
+
+  throw new Error(`Unable to determine S3 URL for file: ${JSON.stringify(file)}`);
+};
+
 /**
  * Post to CMR
  * See the schemas directory for detailed input and output schemas
@@ -66,47 +75,29 @@ async function addMetadataObjects(cmrFiles) {
 async function postToCMR(event) {
   // We have to post the metadata file for the output granules.
   // First we check if there is an output file.
-  const config = get(event, 'config');
-  const systemBucket = get(config, 'bucket'); // the name of the bucket with private/public keys
-  const stack = get(config, 'stack'); // the name of the deployment stack
-  const input = get(event, 'input', []);
-  const process = get(config, 'process');
-  const regex = get(config, 'granuleIdExtraction', '(.*)');
-  const granules = get(input, 'granules'); // Object of all Granules
-  const creds = get(config, 'cmr');
-  const allGranules = {};
-  const allFiles = [];
-  granules.forEach((granule) => {
-    allGranules[granule.granuleId] = granule;
-    granule.files.forEach((file) => {
-      if (file.bucket && file.filepath) {
-        allFiles.push(buildS3Uri(file.bucket, file.filepath));
-      }
-      else if (file.bucket && file.key) {
-        allFiles.push(buildS3Uri(file.bucket, file.key));
-      }
-      else if (file.filename) {
-        allFiles.push(file.filename);
-      }
-      else {
-        throw new Error(`Unable to determine S3 URL for file: ${JSON.stringify(file)}`);
-      }
-    });
-  });
+
+  const fileURLs = flatten(event.input.granules.map((g) => g.files))
+    .map(getS3URLOfFile);
+
+  const granuleIdExtractionRegex = event.config.granuleIdExtraction || '(.*)';
 
   // get cmr files and metadata
-  const cmrFiles = getCmrFiles(allFiles, regex);
+  const cmrFiles = getCmrFiles(fileURLs, granuleIdExtractionRegex);
   const updatedCMRFiles = await addMetadataObjects(cmrFiles);
 
   // post all meta files to CMR
-  const publishRequests = updatedCMRFiles.map((cmrFile) => (
-    publish2CMR(cmrFile, creds, systemBucket, stack)
-  ));
-  const results = await Promise.all(publishRequests);
+  const results = await Promise.all(
+    updatedCMRFiles.map(
+      (cmrFile) =>
+        publish2CMR(cmrFile, event.config.cmr, event.config.bucket, event.config.stack)
+    )
+  );
+
+  const granulesByGranuleId = keyBy(event.input.granules, (g) => g.granuleId);
 
   return {
-    process: process,
-    granules: buildOutput(results, allGranules)
+    process: event.config.process,
+    granules: buildOutput(results, granulesByGranuleId)
   };
 }
 
