@@ -101,6 +101,7 @@ async function runStep(lambdaPath, lambdaHandler, message, stepName) {
   process.env.CUMULUS_MESSAGE_ADAPTER_DIR = dest;
 
   // add step name to the message
+  // eslint-disable-next-line no-param-reassign
   message.cumulus_meta.task = stepName;
 
   try {
