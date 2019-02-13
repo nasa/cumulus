@@ -91,9 +91,6 @@ async function publishECHO10XML2CMR(cmrFile, creds, systemBucket, stack) {
     granuleId: cmrFile.granuleId,
     filename: cmrFile.filename,
     conceptId,
-    // @TODO: Use either of these instead?
-    // https://cmr.uat.earthdata.nasa.gov/search/concepts/G1225649301-CUMULUS.umm_json
-    // https://cmr.uat.earthdata.nasa.gov/search/concepts/G1225649301-CUMULUS.umm_json_v1_4
     link: `${getUrl('search')}granules.json?concept_id=${conceptId}`
   };
 }

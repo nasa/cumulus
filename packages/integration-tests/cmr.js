@@ -118,21 +118,34 @@ const sampleUmmGranule = {
  * Returns true if the concept exists - if the cmrLink
  * returns a 200 and there are entries
  *
- * @param {string} cmrLink - CMR URL path to concept,
- * i.e. what is returned from post to cmr task
- * @param {boolean} isUMMG - true if the CMR link is for UMM-G JSON
+ * @param {string} cmrLink
+ *   CMR URL path to concept, i.e. what is returned from post to cmr task
+ *   See `@cumulus/cmrjs/cmr-utils/publishECHO10XML2CMR` for expected URL
  * @returns {boolean} true if the concept exists in CMR, false if not
  */
-async function conceptExists(cmrLink, isUMMG) {
+async function conceptExists(cmrLink) {
   const response = await got.get(cmrLink, { json: true });
 
   if (response.statusCode !== 200) return false;
 
-  if (isUMMG) {
-    return response.body.items.length > 0;
-  }
-
   return response.body.feed.entry.length > 0;
+}
+
+/**
+ * Returns true if the concept exists - if the cmrLink
+ * returns a 200 and there are entries
+ *
+ * @param {string} cmrLink
+ *   CMR URL path to concept, i.e. what is returned from post to cmr task
+ *   See `@cumulus/cmrjs/cmr-utils/publishUMMGJSON2CMR` for expected URL
+ * @returns {boolean} true if the concept exists in CMR, false if not
+ */
+async function conceptExistsUMMG(cmrLink) {
+  const response = await got.get(cmrLink, { json: true });
+
+  if (response.statusCode !== 200) return false;
+
+  return response.body.items.length > 0;
 }
 
 // See https://bugs.earthdata.nasa.gov/browse/CUMULUS-962
@@ -165,8 +178,8 @@ async function waitForConceptExistsOutcome(cmrLink, expectation) {
 /**
  * Get the online resource links from the CMR objects
  *
- * @param {string} cmrLink - CMR URL path to concept,
- * i.e. what is returned from post to cmr task
+ * @param {string} cmrLink
+ *   CMR URL path to concept, i.e. what is returned from post to cmr task
  * @returns {Array<Object>} Array of link objects in the format
  * { inherited: true,
     rel: 'http://esipfed.org/ns/fedsearch/1.1/metadata#',
@@ -183,6 +196,31 @@ async function getOnlineResources(cmrLink) {
   const body = JSON.parse(response.body);
 
   const links = body.feed.entry.map((e) => e.links);
+
+  // Links is a list of a list, so flatten to be one list
+  return [].concat(...links);
+}
+
+/**
+ * Get the online resource links from the CMR objects for UMM-G
+ *
+ * @param {string} cmrLink
+ *   CMR URL path to concept, i.e. what is returned from post to cmr task
+ * @returns {Array<Object>} Array of link objects in the format
+ * { URL: "https://example.com/cumulus-test-sandbox-protected/MOD09GQ___006/2016/MOD/MOD09GQ.A0794505._4kqJd.006.9457902462263.hdf",
+    Description: "File to download",
+    Type: "GET DATA" }
+ */
+async function getOnlineResourcesUMMG(cmrLink) {
+  const response = await got.get(cmrLink);
+
+  if (response.statusCode !== 200) {
+    return null;
+  }
+
+  const body = JSON.parse(response.body);
+
+  const links = body.items.map((item) => item.umm.RelatedUrls);
 
   // Links is a list of a list, so flatten to be one list
   return [].concat(...links);
@@ -300,7 +338,13 @@ async function generateAndStoreCmrUmmJson(granule, collection, bucket, additiona
  * @param {Array<string>} additionalUrls - URLs to convert to online resources or related urls
  * @returns {Array<string>} list of S3 locations for CMR xml files
  */
-async function generateCmrFilesForGranules(granules, collection, bucket, cmrFileType, additionalUrls) {
+async function generateCmrFilesForGranules(
+  granules,
+  collection,
+  bucket,
+  cmrFileType,
+  additionalUrls
+) {
   let files;
 
   log.info(`Generating fake CMR file with type ${cmrFileType}`);
@@ -320,7 +364,9 @@ async function generateCmrFilesForGranules(granules, collection, bucket, cmrFile
 
 module.exports = {
   conceptExists,
+  conceptExistsUMMG,
   getOnlineResources,
+  getOnlineResourcesUMMG,
   generateCmrFilesForGranules,
   waitForConceptExistsOutcome
 };
