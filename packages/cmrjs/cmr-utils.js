@@ -127,14 +127,14 @@ async function publishUMMGJSON2CMR(cmrPublishObject, creds, systemBucket, stack)
   const granuleId = cmrPublishObject.metadataObject.GranuleUR;
 
   const res = await cmr.ingestUMMGranule(cmrPublishObject.metadataObject);
-  const conceptId = res.result['concept-id'];
+  const conceptId = res['concept-id'];
 
   log.info(`Published UMMG ${granuleId} to the CMR. conceptId: ${conceptId}`);
 
   return {
     granuleId,
     conceptId,
-    link: `${getUrl('search')}granules.json?concept_id=${res.result['concept-id']}`
+    link: `${getUrl('search')}granules.json?concept_id=${conceptId}`
   };
 }
 
@@ -301,13 +301,15 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets) {
     if (bucketType === 'protected') {
       const extension = urljoin(file.bucket, getS3KeyOfFile(file));
       urlObj.URL = urljoin(distEndpoint, extension);
-      urlObj.URLDescription = 'File to download';
-      urlObj.Type = 'GET DATA';
+      urlObj.URLDescription = 'File to download'; // used by ECHO10
+      urlObj.Description = 'File to download'; // used by UMMG
+      urlObj.Type = 'GET DATA'; // used by UMMG
       urls.push(urlObj);
     }
     else if (bucketType === 'public') {
       urlObj.URL = `https://${file.bucket}.s3.amazonaws.com/${getS3KeyOfFile(file)}`;
       urlObj.URLDescription = 'File to download';
+      urlObj.Description = 'File to download';
       urlObj.Type = 'GET DATA';
       urls.push(urlObj);
     }
@@ -392,7 +394,8 @@ function mergeURLs(original, updated, removed = []) {
  * @returns {Promise} returns promised updated UMMG metadata object.
  */
 async function updateUMMGMetadata(cmrFile, files, distEndpoint, buckets) {
-  const newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
+  let newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
+  newURLs = newURLs.map((urlObj) => omit(urlObj, 'URLDescription'));
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
   const filename = getS3UrlOfFile(cmrFile);
   const metadataObject = await metadataObjectFromCMRJSONFile(filename);
@@ -437,7 +440,7 @@ function getCreds() {
  */
 async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   let newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
-  newURLs = newURLs.map((urlObj) => omit(urlObj, 'Type'));
+  newURLs = newURLs.map((urlObj) => omit(urlObj, ['Type', 'Description']));
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
 
   // add/replace the OnlineAccessUrls

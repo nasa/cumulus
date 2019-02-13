@@ -27,6 +27,17 @@ default:
               filename: "s3://{{buckets.public.name}}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg"
             - bucket: '{{buckets.protected-2.name}}'
               filename: "s3://{{buckets.protected-2.name}}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.xml"
+      IngestUMMGranuleOutput:
+        granules:
+          - files:
+            - bucket: '{{buckets.protected.name}}'
+              filename: "s3://{{buckets.protected.name}}/MOD09GQ___006/2016/MOD/replace-me-granuleId.hdf"
+            - bucket: '{{buckets.private.name}}'
+              filename: "s3://{{buckets.private.name}}/MOD09GQ___006/MOD/replace-me-granuleId.hdf.met"
+            - bucket: '{{buckets.public.name}}'
+              filename: "s3://{{buckets.public.name}}/MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg"
+            - bucket: '{{buckets.protected-2.name}}'
+              filename: "s3://{{buckets.protected-2.name}}/MOD09GQ___006/MOD/replace-me-granuleId.cmr.json"
       SyncGranuleOutput:
         granules:
           - files:
