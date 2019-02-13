@@ -24,8 +24,8 @@ const {
   api: apiTestUtils,
   buildAndExecuteWorkflow,
   LambdaStep,
-  conceptExists,
-  getOnlineResources,
+  conceptExistsUMMG,
+  getOnlineResourcesUMMG,
   granulesApi: granulesApiTestUtils
 } = require('@cumulus/integration-tests');
 
@@ -222,15 +222,16 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       granule = postToCmrOutput.payload.granules[0];
       files = postToCmrOutput.payload.granules[0].files;
       cmrLink = postToCmrOutput.payload.granules[0].cmrLink;
-      cmrResource = await getOnlineResources(cmrLink);
-      response = await got(cmrResource[2].href);
 
-      resourceHrefs = cmrResource.map((resource) => resource.href);
+      cmrResource = await getOnlineResourcesUMMG(cmrLink);
+      response = await got(cmrResource[2].URL);
+
+      resourceHrefs = cmrResource.map((resource) => resource.URL);
     });
 
     it('has expected payload', () => {
       expect(granule.published).toBe(true);
-      expect(granule.cmrLink.startsWith('https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=')).toBe(true);
+      expect(granule.cmrLink.startsWith('https://cmr.uat.earthdata.nasa.gov/search/granules_umm.json?concept_id=')).toBe(true);
 
       // Set the expected cmrLink to the actual cmrLink, since it's going to
       // be different every time this is run.
@@ -241,7 +242,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('publishes the granule metadata to CMR', async () => {
-      const result = await conceptExists(granule.cmrLink, true);
+      const result = await conceptExistsUMMG(granule.cmrLink, true);
 
       expect(granule.published).toEqual(true);
       expect(result).not.toEqual(false);
