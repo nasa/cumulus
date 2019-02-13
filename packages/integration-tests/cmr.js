@@ -236,6 +236,21 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
 }
 
 /**
+ * Transforms a cmrfiletype to a version string or returns an empty string.
+ *
+ * @param {string} typeStr
+ * @returns {string} the decoded version or empty strign if a version can't be created.
+ */
+function fileTypeToVersion(typeStr) {
+  try {
+    return typeStr.match(/umm_json_v(.*)/)[1].replace('_', '.');
+  }
+  catch (error) {
+    return '';
+  }
+}
+
+/**
  * Generate granule UMM-G JSON file based on the sample UMM-G and store
  * it to S3 in the file staging area
  *
@@ -243,10 +258,18 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
  * @param {Object} collection - collection object
  * @param {string} bucket - bucket to save the xml file to
  * @param {Array<string>} additionalUrls - URLs to convert to related urls
+ * @param {string} cmrFileType - CMR UMM-G version string <umm_json_v[x.y]>
  * @returns {Promise<Array<string>>} - Promise of a list of granule files including the created
  * CMR files
  */
-async function generateAndStoreCmrUmmJson(granule, collection, bucket, additionalUrls) {
+async function generateAndStoreCmrUmmJson(
+  granule,
+  collection,
+  bucket,
+  additionalUrls,
+  cmrFileType
+) {
+  const versionString = fileTypeToVersion(cmrFileType);
   const jsonObject = sampleUmmGranule;
   jsonObject.GranuleUR = granule.granuleId;
 
@@ -260,6 +283,15 @@ async function generateAndStoreCmrUmmJson(granule, collection, bucket, additiona
       URL: url,
       Type: 'GET DATA'
     }));
+  }
+
+  const defaultVersion = 1.4;
+  if (Number(versionString) > defaultVersion) {
+    jsonObject.MetadataSpecification = {
+      URL: `https://cdn.earthdata.nasa.gov/umm/granule/v${versionString}`,
+      Name: 'UMM-G',
+      Version: `${versionString}`
+    };
   }
 
   const stagingDir = granule.files[0].fileStagingDir;
@@ -306,10 +338,9 @@ async function generateCmrFilesForGranules(
 
   log.info(`Generating fake CMR file with type ${cmrFileType}`);
 
-  if (cmrFileType === 'umm_json_v1_4') {
-    // When we do UMM-G 1.5, we'll probably need to pass the file type into this function
+  if (cmrFileType && cmrFileType.match(/umm_json_v/)) {
     files = await Promise.all(
-      granules.map((g) => generateAndStoreCmrUmmJson(g, collection, bucket, additionalUrls))
+      granules.map((g) => generateAndStoreCmrUmmJson(g, collection, bucket, additionalUrls, cmrFileType))
     );
   }
   else {
