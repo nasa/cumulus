@@ -29,16 +29,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - CUMULUS-1139 - Granules stored in the API contain a `files` property. That schema has been greatly
-  simplified.
-    - The `bucket` property is now required.
+  simplified and now better matches the CNM format.
+    - The `name` property has been renamed to `fileName`.
     - The `filepath` property has been renamed to `key`.
-    - The `key` property is required.
+    - The `checksumValue` property has been renamed to `checksum`.
     - The `path` property has been removed.
     - The `url_path` property has been removed.
     - The `filename` property (which contained an `s3://` URL) has been removed, and the `bucket`
       and `key` properties should be used instead. Any requests sent to the API containing a `granule.files[].filename`
       property will be rejected, and any responses coming back from the API will not contain that
       `filename` property.
+    - A `source` property has been added, which is a URL indicating the original source of the file.
   - `@cumulus/ingest/granule.moveGranuleFiles()` no longer includes a `filename` field in its
     output. The `bucket` and `key` fields should be used instead.
 - CUMULUS-1121

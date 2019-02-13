@@ -44,12 +44,12 @@ async function deleteAliases() {
 }
 
 function fakeFileFactory(params = {}) {
-  const name = randomId('name');
+  const fileName = randomId('name');
 
   return {
     bucket: randomString(),
-    name,
-    key: name,
+    fileName,
+    key: fileName,
     ...params
   };
 }

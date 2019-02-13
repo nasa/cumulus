@@ -60,9 +60,9 @@
     },
     "topic_arn": "arn:aws:sns:us-east-1:000000000000:lpdaac-cumulus-sftrackerSns-GIMUQEBE00QB",
     "provider": {
-      "protocol": "http",
+      "protocol": "https",
       "globalConnectionLimit": 10,
-      "host": "https://728d0893.ngrok.io",
+      "host": "07f1bfba.ngrok.io",
       "updatedAt": 1519154219892,
       "id": "local_ngrok",
       "createdAt": 1519154219892

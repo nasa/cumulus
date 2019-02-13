@@ -4,6 +4,7 @@ const test = require('ava');
 const sinon = require('sinon');
 const fs = require('fs');
 const clone = require('lodash.clonedeep');
+const isNil = require('lodash.isnil');
 const path = require('path');
 const aws = require('@cumulus/common/aws');
 const cmrjs = require('@cumulus/cmrjs');
@@ -13,7 +14,6 @@ const {
   util: { noop }
 } = require('@cumulus/common');
 
-const { cumulusMessageFileToAPIFile } = require('../../../lib/granuleUtils');
 const indexer = require('../../../es/indexer');
 const { Search } = require('../../../es/search');
 const models = require('../../../models');
@@ -23,6 +23,31 @@ const granuleSuccess = require('../../data/granule_success.json');
 const granuleFailure = require('../../data/granule_failed.json');
 const pdrFailure = require('../../data/pdr_failure.json');
 const pdrSuccess = require('../../data/pdr_success.json');
+
+const granuleFileToRecord = (granuleFile) => {
+  const granuleRecord = {
+    fileSize: 12345,
+    ...granuleFile,
+    key: aws.parseS3Uri(granuleFile.filename).Key,
+    fileName: granuleFile.name,
+    checksum: granuleFile.checksumValue
+  };
+
+  if (granuleFile.path) {
+    granuleRecord.source = `https://07f1bfba.ngrok.io/granules/${granuleFile.name}`;
+  }
+
+  delete granuleRecord.checksumValue;
+  delete granuleRecord.filename;
+  delete granuleRecord.name;
+  delete granuleRecord.url_path;
+  delete granuleRecord.path;
+
+  if (isNil(granuleRecord.checksum)) delete granuleRecord.checksum;
+  if (isNil(granuleRecord.checksumType)) delete granuleRecord.checksumType;
+
+  return granuleRecord;
+};
 
 const esIndex = randomString();
 process.env.system_bucket = randomString();
@@ -117,10 +142,7 @@ test.serial('creating a successful granule record', async (t) => {
 
   t.deepEqual(
     record.files,
-    granule.files
-      // If fileSize is not set, default it to `mockedFileSize`
-      .map((f) => ({ fileSize: mockedFileSize, ...f }))
-      .map(cumulusMessageFileToAPIFile)
+    granule.files.map(granuleFileToRecord)
   );
   t.is(record.status, 'completed');
   t.is(record.collectionId, collectionId);
@@ -170,7 +192,7 @@ test.serial('creating a failed granule record', async (t) => {
   const record = records[0];
   t.deepEqual(
     record.files,
-    granule.files.map(cumulusMessageFileToAPIFile)
+    granule.files.map(granuleFileToRecord)
   );
   t.is(record.status, 'failed');
   t.is(record.granuleId, granule.granuleId);
@@ -210,7 +232,7 @@ test.serial('creating a granule record in meta section', async (t) => {
   const record = records[0];
   t.deepEqual(
     record.files,
-    granule.files.map(cumulusMessageFileToAPIFile)
+    granule.files.map(granuleFileToRecord)
   );
   t.is(record.status, 'running');
   t.is(record.collectionId, collectionId);

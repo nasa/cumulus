@@ -1,7 +1,6 @@
 'use strict';
 
 const get = require('lodash.get');
-const isInteger = require('lodash.isinteger');
 const path = require('path');
 
 const aws = require('@cumulus/ingest/aws');
@@ -15,9 +14,13 @@ const {
   moveGranuleFiles
 } = require('@cumulus/ingest/granule');
 const { constructCollectionId } = require('@cumulus/common');
+const { renameProperty } = require('@cumulus/common/util');
 const { describeExecution } = require('@cumulus/common/step-functions');
 
 const Manager = require('./base');
+
+const { buildDatabaseFiles } = require('../lib/fileUtils');
+const { buildProviderURL } = require('../lib/providerUtils');
 
 const {
   parseException,
@@ -27,25 +30,6 @@ const {
 } = require('../lib/utils');
 const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
-
-const { cumulusMessageFileToAPIFile } = require('../lib/granuleUtils');
-
-const addMissingFileSize = async (file) => {
-  if (isInteger(file.fileSize)) return file;
-
-  try {
-    const fileSize = await commonAws.getObjectSize(file.bucket, file.key);
-    return { ...file, fileSize };
-  }
-  catch (error) {
-    const errorMessage = error.code || error.message;
-    const s3Uri = commonAws.buildS3Uri(file.bucket, file.key);
-
-    log.error(`Could not get filesize for ${s3Uri}: ${errorMessage}`);
-
-    return file;
-  }
-};
 
 class Granule extends Manager {
   constructor() {
@@ -161,7 +145,9 @@ class Granule extends Manager {
 
     return this.update(
       { granuleId: g.granuleId },
-      { files: updatedFiles.map(cumulusMessageFileToAPIFile) }
+      {
+        files: updatedFiles.map(renameProperty.bind(null, 'name', 'fileName'))
+      }
     );
   }
 
@@ -228,11 +214,10 @@ class Granule extends Manager {
 
     const done = granules.map(async (granule) => {
       if (granule.granuleId) {
-        const granuleFiles = await Promise.all(
-          granule.files
-            .map(cumulusMessageFileToAPIFile)
-            .map(addMissingFileSize)
-        );
+        const granuleFiles = await buildDatabaseFiles({
+          providerURL: buildProviderURL(payload.meta.provider),
+          files: granule.files
+        });
 
         const doc = {
           granuleId: granule.granuleId,
