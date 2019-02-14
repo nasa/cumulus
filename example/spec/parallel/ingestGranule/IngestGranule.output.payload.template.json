@@ -7,6 +7,8 @@
       "version": "006",
       "published": true,
       "cmrLink": "https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=G1222231611-CUMULUS",
+      "cmrConceptId": "G1222231611-CUMULUS",
+      "cmrFileType": "echo10",
       "files": [
         {
           "name": "replace-me-granuleId.hdf",

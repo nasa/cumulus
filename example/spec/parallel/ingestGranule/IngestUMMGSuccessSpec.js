@@ -231,13 +231,13 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       expect(granule.published).toBe(true);
       expect(granule.cmrLink.startsWith('https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=')).toBe(true);
 
-      // Set the expected cmrLink to the actual cmrLink, since it's going to
-      // be different every time this is run.
-      const updatedExpectedpayload = cloneDeep(expectedPayload);
-      updatedExpectedpayload.granules[0].cmrLink = granule.cmrLink;
-      updatedExpectedpayload.granules[0].cmrConceptId = granule.cmrConceptId;
+      // Set the expected CMR values since they're going to be different
+      // every time this is run.
+      const updatedExpectedPayload = cloneDeep(expectedPayload);
+      updatedExpectedPayload.granules[0].cmrLink = granule.cmrLink;
+      updatedExpectedPayload.granules[0].cmrConceptId = granule.cmrConceptId;
 
-      expect(postToCmrOutput.payload).toEqual(updatedExpectedpayload);
+      expect(postToCmrOutput.payload).toEqual(updatedExpectedPayload);
     });
 
     it('publishes the granule metadata to CMR', async () => {

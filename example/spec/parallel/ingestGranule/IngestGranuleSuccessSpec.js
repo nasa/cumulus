@@ -294,7 +294,6 @@ describe('The S3 Ingest Granules workflow', () => {
 
   describe('the PostToCmr task', () => {
     let cmrResource;
-    let cmrLink;
     let response;
     let files;
     let granule;
@@ -304,9 +303,8 @@ describe('The S3 Ingest Granules workflow', () => {
       if (postToCmrOutput === null) throw new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
 
       granule = postToCmrOutput.payload.granules[0];
-      files = postToCmrOutput.payload.granules[0].files;
-      cmrLink = postToCmrOutput.payload.granules[0].cmrLink;
-      cmrResource = await getOnlineResources(cmrLink);
+      files = granule.files;
+      cmrResource = await getOnlineResources(granule);
       response = await got(cmrResource[2].href);
     });
 
@@ -314,12 +312,13 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(granule.published).toBe(true);
       expect(granule.cmrLink.startsWith('https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=')).toBe(true);
 
-      // Set the expected cmrLink to the actual cmrLink, since it's going to
-      // be different every time this is run.
-      const updatedExpectedpayload = cloneDeep(expectedPayload);
-      updatedExpectedpayload.granules[0].cmrLink = granule.cmrLink;
+      // Set the expected CMR values since they're going to be different
+      // every time this is run.
+      const updatedExpectedPayload = cloneDeep(expectedPayload);
+      updatedExpectedPayload.granules[0].cmrLink = granule.cmrLink;
+      updatedExpectedPayload.granules[0].cmrConceptId = granule.cmrConceptId;
 
-      expect(postToCmrOutput.payload).toEqual(updatedExpectedpayload);
+      expect(postToCmrOutput.payload).toEqual(updatedExpectedPayload);
     });
 
     it('publishes the granule metadata to CMR', () => {
