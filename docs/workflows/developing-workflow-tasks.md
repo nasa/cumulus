@@ -36,6 +36,7 @@ ECS activities require a docker image. The docker image is defined as part of th
         memory: 1500
         count: 1
 ```
+*Note:* If there is no custom configuration required for docker (username/password, etc.), then we recommend either omitting the `docker` line or commenting it out.
 
 ### Specifying a Docker Registry (ECR | Dockerhub)
 
