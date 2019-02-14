@@ -1,9 +1,9 @@
 'use strict';
 
-const { describeExecution } = require('@cumulus/common/step-functions');
 const { IncompleteError } = require('@cumulus/common/errors');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const log = require('@cumulus/common/log');
+const StepFunctions = require('@cumulus/common/StepFunctions');
 
 // The default number of times to re-check for completion
 const defaultRetryLimit = 30;
@@ -133,7 +133,7 @@ function buildOutput(event, groupedExecutions) {
  * @returns {Promise.<Object>} - an object describing the status of the exection
  */
 function describeExecutionStatus(executionArn) {
-  return describeExecution(executionArn)
+  return StepFunctions.describeExecution({ executionArn })
     .catch((e) => {
       if (e.code === 'ExecutionDoesNotExist') {
         return { executionArn: executionArn, status: 'RUNNING' };
