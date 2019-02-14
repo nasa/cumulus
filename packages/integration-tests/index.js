@@ -388,6 +388,11 @@ async function cleanupCollections(stackName, bucket, collectionsDirectory, postf
   return deleteCollections(stackName, bucket, collections, postfix);
 }
 
+/**
+ * Get the provider host. If the environment variables are set,
+ *
+ * @param {*} provider
+ */
 function getProviderHost(provider) {
   if (process.env.PROVIDER_HOST) {
     console.log(`provider host set and protocol ${provider.protocol}`);
@@ -794,5 +799,6 @@ module.exports = {
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
   waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs,
   getExecutions,
-  waitForDeploymentHandler: waitForDeployment.handler
+  waitForDeploymentHandler: waitForDeployment.handler,
+  getProviderHost
 };
