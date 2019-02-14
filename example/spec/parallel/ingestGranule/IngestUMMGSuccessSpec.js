@@ -257,6 +257,11 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       expect(response.statusCode).toEqual(200);
     });
 
+    it('publishes CMR metadata online resources with the correct type', () => {
+      const validResources = cmrResource.filter((resource) => resource.Type === 'GET DATA');
+      expect(cmrResource.length).toEqual(validResources.length);
+    });
+
     it('does not overwrite the original related url', () => {
       expect(resourceURLs.includes(cumulusDocUrl)).toBe(true);
     });
