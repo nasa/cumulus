@@ -37,8 +37,6 @@ do
     sleep 60
 done
 
-echo command status code $?
-
 # exit with the status code of cmd
 wait $pid
 exit $?
