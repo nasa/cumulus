@@ -1,3 +1,5 @@
+set +e
+
 echo Running stack cleanup
 
 # Delete the stack if it's a nightly build
