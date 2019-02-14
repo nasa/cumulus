@@ -2,6 +2,7 @@
 
 const flow = require('lodash.flow');
 const isInteger = require('lodash.isinteger');
+const partial = require('lodash.partial');
 const pick = require('lodash.pick');
 const urljoin = require('url-join');
 const { getObjectSize, parseS3Uri } = require('@cumulus/common/aws');
@@ -84,7 +85,7 @@ const buildDatabaseFile = (providerURL, file) =>
     setKey,
     setChecksum,
     setFileName,
-    setSource.bind(null, providerURL),
+    partial(setSource, providerURL),
     filterDatabaseProperties,
     removeNilProperties,
     setS3FileSize // This one is last because it returns a Promise
@@ -92,7 +93,7 @@ const buildDatabaseFile = (providerURL, file) =>
 
 const buildDatabaseFiles = async ({ providerURL, files }) =>
   Promise.all(
-    files.map(buildDatabaseFile.bind(null, providerURL))
+    files.map(partial(buildDatabaseFile, providerURL))
   );
 
 module.exports = {
