@@ -222,10 +222,10 @@ class CMR {
    * Return object containing CMR request headers
    *
    * @param {string} [token] - CMR request token
-   * @param {string} ummgVersion - UMMG metadata version string or '' if echo10 metadata
+   * @param {string} ummgVersion - UMMG metadata version string or null if echo10 metadata
    * @returns {Object} CMR headers object
    */
-  getHeaders(token = null, ummgVersion = '') {
+  getHeaders(token = null, ummgVersion = null) {
     const contentType = !ummgVersion ? 'application/echo10+xml' : `application/vnd.nasa.cmr.umm+json;version=${ummgVersion}`;
     const headers = {
       'Client-Id': this.clientId,
