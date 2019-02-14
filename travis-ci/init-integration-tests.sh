@@ -4,6 +4,9 @@ set -e
 
 . ./travis-ci/set-env-vars.sh
 
+echo variables set
+exit 1
+
 if [ "$USE_NPM_PACKAGES" = "true" ]; then
   cd example
   yarn
@@ -28,7 +31,7 @@ while [ "$LOCK_EXISTS_STATUS" = 1 ]; do
   LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
 done
 
-exit 1
+
 
 (
   ./node_modules/.bin/kes cf deploy \
