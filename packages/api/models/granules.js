@@ -1,6 +1,7 @@
 'use strict';
 
 const get = require('lodash.get');
+const partial = require('lodash.partial');
 const path = require('path');
 
 const aws = require('@cumulus/ingest/aws');
@@ -146,7 +147,7 @@ class Granule extends Manager {
     return this.update(
       { granuleId: g.granuleId },
       {
-        files: updatedFiles.map(renameProperty.bind(null, 'name', 'fileName'))
+        files: updatedFiles.map(partial(renameProperty, 'name', 'fileName'))
       }
     );
   }
