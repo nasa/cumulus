@@ -251,6 +251,15 @@ function fileTypeToVersion(typeStr) {
 }
 
 /**
+ * tester to determine if the input cmrFiletype is a UMM JSON file.
+ * @param {string} cmrFileType
+ * @returns {boolean} true if the cmrFiletype matches umm_json_v
+ */
+function isUMMGFileType(cmrFileType) {
+  return cmrFileType && cmrFileType.match(/umm_json_v/);
+}
+
+/**
  * Generate granule UMM-G JSON file based on the sample UMM-G and store
  * it to S3 in the file staging area
  *
@@ -323,7 +332,7 @@ async function generateAndStoreCmrUmmJson(
  * @param {Object} collection - collection object that includes name and version
  * @param {string} bucket - location to save the xmls to
  * @param {string} cmrFileType - CMR file type to generate. Options are echo10, umm_json_v1_4,
- *                               default is echo10
+ *                               umm_json_v1_5, (and likely umm_json_v1_<x>). The default is echo10
  * @param {Array<string>} additionalUrls - URLs to convert to online resources or related urls
  * @returns {Array<string>} list of S3 locations for CMR xml files
  */
@@ -338,9 +347,11 @@ async function generateCmrFilesForGranules(
 
   log.info(`Generating fake CMR file with type ${cmrFileType}`);
 
-  if (cmrFileType && cmrFileType.match(/umm_json_v/)) {
+  if (isUMMGFileType(cmrFileType)) {
     files = await Promise.all(
-      granules.map((g) => generateAndStoreCmrUmmJson(g, collection, bucket, additionalUrls, cmrFileType))
+      granules.map(
+        (g) => generateAndStoreCmrUmmJson(g, collection, bucket, additionalUrls, cmrFileType)
+      )
     );
   }
   else {
