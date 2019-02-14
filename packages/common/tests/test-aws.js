@@ -149,3 +149,36 @@ test('pullStepFunctionEvent returns message from S3', async (t) => {
     stub.restore();
   }
 });
+
+const throwThrottlingException = () => {
+  const throttlingException = new Error('ThrottlingException');
+  throttlingException.code = 'ThrottlingException';
+
+  throw throttlingException;
+};
+
+const throttleOnce = (fn) => {
+  let throttleNextCall = true;
+
+  return (...args) => {
+    if (throttleNextCall) {
+      throttleNextCall = false;
+      throwThrottlingException();
+    }
+
+    return fn(...args);
+  };
+};
+
+test('retryOnThrottlingException() properly retries after ThrottlingExceptions', async (t) => {
+  const asyncSquare = (x) => Promise.resolve(x * x);
+
+  const throttledAsyncSquare = throttleOnce(asyncSquare);
+
+  const throttledAsyncSquareWithRetries = aws.retryOnThrottlingException(throttledAsyncSquare);
+
+  t.is(
+    await throttledAsyncSquareWithRetries(3),
+    9
+  );
+});

@@ -8,8 +8,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ### Added
+- CUMULUS-1169
+  - Added a `@cumulus/common/StepFunctions` module. It contains functions for querying the AWS
+    StepFunctions API. These functions have the ability to retry when a ThrottlingException occurs.
+  - Added `@cumulus/common/aws.retryOnThrottlingException()`, which will wrap a function in code to
+    retry on ThrottlingExceptions.
+  - Added `@cumulus/common/test-utils.throttleOnce()`, which will cause a function to return a
+    ThrottlingException the first time it is called, then return its normal result after that.
 - CUMULUS-1103 Compare the collection holdings in CMR with Cumulus' internal data store
-
 - CUMULUS-678
   - Added support for UMMG json v1.4 metadata files.
   `reconcileCMRMetadata` added to `@cumulus/cmrjs` to update metadata record with new file locations.
@@ -28,6 +34,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1119** - Added ``@cumulus/integration-tests/api/EarthdataLogin.getEarthdataLoginRedirectResponse` helper for integration tests to handle login with Earthdata and to return response from redirect to Cumulus API
 
 ### Changed
+- CUMULUS-1169
+  - Deprecated the `@cumulus/common/step-functions` module.
+  - Updated code that queries the StepFunctions API to use the retry-enabled functions from
+    `@cumulus/common/StepFunctions`
 - CUMULUS-1121
   - Schema validation is now strongly enforced when writing to the database.
     Additional properties are not allowed and will result in a validation error.

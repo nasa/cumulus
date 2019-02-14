@@ -4,12 +4,12 @@ const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
 const url = require('url');
 const aws = require('@cumulus/common/aws');
+const StepFunctions = require('@cumulus/common/StepFunctions');
 const AWS = require('aws-sdk');
 const moment = require('moment');
 const log = require('@cumulus/common/log');
 const { deprecate } = require('@cumulus/common/util');
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { describeExecution } = require('@cumulus/common/step-functions');
 
 /**
  * getEndpoint returns proper AWS arguments for various
@@ -499,22 +499,22 @@ class CloudWatch {
 }
 
 class StepFunction {
-  static async getExecution(arn, ignoreMissingExecutions = false) {
+  static async getExecution(executionArn, ignoreMissingExecutions = false) {
     deprecate(
       '@cumulus/ingest/aws/StepFunction.getExecution()',
       '1.10.2',
-      '@cumulus/common/step-functions/describeExecution()'
+      '@cumulus/common/StepFunctions.describeExecution()'
     );
 
     try {
-      return await describeExecution(arn);
+      return await StepFunctions.describeExecution({ executionArn });
     }
     catch (err) {
       if (ignoreMissingExecutions
         && err.message
         && err.message.includes('Execution Does Not Exist')) {
         return {
-          executionArn: arn,
+          executionArn,
           status: 'NOT_FOUND'
         };
       }
@@ -522,12 +522,12 @@ class StepFunction {
     }
   }
 
-  static async getExecutionStatus(arn) {
+  static async getExecutionStatus(executionArn) {
     const sfn = new AWS.StepFunctions();
 
     const [execution, executionHistory] = await Promise.all([
-      this.getExecution(arn),
-      this.getExecutionHistory(arn)
+      this.getExecution(executionArn),
+      StepFunctions.getExecutionHistory({ executionArn })
     ]);
 
     const stateMachine = await sfn.describeStateMachine({
@@ -537,15 +537,14 @@ class StepFunction {
     return { execution, executionHistory, stateMachine };
   }
 
-  static async getExecutionHistory(arn) {
-    const sfn = new AWS.StepFunctions();
+  static async getExecutionHistory(executionArn) {
+    deprecate(
+      '@cumulus/ingest/aws/StepFunction.getExecutionHistory()',
+      '1.11.1',
+      '@cumulus/common/StepFunctions.getExecutionHistory()'
+    );
 
-    const params = {
-      executionArn: arn
-    };
-
-    const execution = await sfn.getExecutionHistory(params).promise();
-    return execution;
+    return StepFunctions.getExecutionHistory({ executionArn });
   }
 
   /**
