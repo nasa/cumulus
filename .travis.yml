@@ -19,10 +19,10 @@ stages:
 
 jobs:
   include:
-    # - name: "Build npm cache"
-    #   stage: build cache & audit
-    #   install: true
-    #   script: ./travis-ci/build-cache.sh
+    - name: "Build npm cache"
+      stage: build cache & audit
+      install: true
+      script: ./travis-ci/build-cache.sh
 
     # - name: "npm audit"
     #   stage: build cache & audit
@@ -89,7 +89,7 @@ jobs:
     #     - npm run bootstrap-no-build
     #     - echo 'BOOTSTRAP FINISHED'
     #   script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
-    #   after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-stack.sh
+    #   after_failure: script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "Deploy SIT Integration Test Stack"
       stage: unit test and stack deployment
@@ -103,7 +103,7 @@ jobs:
         - export NGAP_ENV=SIT
         - export DEPLOYMENT=cumulus-sit
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
-      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-stack.sh
+      after_failure: script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     # - name: "Run integration tests"
     #   stage: integration tests
@@ -115,7 +115,7 @@ jobs:
     #     - npm run bootstrap-no-build
     #     - echo 'BOOTSTRAP FINISHED'
     #   script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
-    #   after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-stack.sh
+    #   after_failure: script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "Run SIT integration tests"
       stage: integration tests
@@ -129,7 +129,7 @@ jobs:
         - export NGAP_ENV=SIT
         - export DEPLOYMENT=cumulus-sit
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
-      after_failure: ./travis-ci/cleanup-stack.sh
+      after_failure: script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     # - name: "Run redeployment integration tests"
     #   stage: redeployment integration tests
@@ -141,7 +141,7 @@ jobs:
     #     - npm run bootstrap-no-build
     #     - echo 'BOOTSTRAP FINISHED'
     #   script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-redeployment-tests.sh
-    #   after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-stack.sh
+    #   after_failure: script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     # - name: "Cleanup integration tests"
     #   stage: cleanup integration tests
@@ -184,7 +184,7 @@ jobs:
       stage: deployment test setup
       install: true
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
-      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-stack.sh
+      after_failure: script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
       env:
         - DEPLOYMENT=cumulus-from-npm
         - USE_NPM_PACKAGES=true
@@ -193,8 +193,8 @@ jobs:
       stage: deployment test
       install: true
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
-      after_success: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-stack.sh
-      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-stack.sh
+      after_success: script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+      after_failure: script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
       env:
         - DEPLOYMENT=cumulus-from-npm
         - USE_NPM_PACKAGES=true
