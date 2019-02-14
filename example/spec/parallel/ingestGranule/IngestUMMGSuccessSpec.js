@@ -209,7 +209,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   });
 
   describe('the PostToCmr task', () => {
-    let cmrResource;
+    let onlineResources;
     let response;
     let files;
     let resourceURLs;
@@ -221,10 +221,10 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       granule = postToCmrOutput.payload.granules[0];
       files = granule.files;
 
-      cmrResource = await getOnlineResources(granule);
-      response = await got(cmrResource[2].URL);
+      onlineResources = await getOnlineResources(granule);
+      response = await got(onlineResources[2].URL);
 
-      resourceURLs = cmrResource.map((resource) => resource.URL);
+      resourceURLs = onlineResources.map((resource) => resource.URL);
     });
 
     it('has expected payload', () => {
@@ -258,8 +258,8 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('publishes CMR metadata online resources with the correct type', () => {
-      const validResources = cmrResource.filter((resource) => resource.Type === 'GET DATA');
-      expect(cmrResource.length).toEqual(validResources.length);
+      const validResources = onlineResources.filter((resource) => resource.Type === 'GET DATA');
+      expect(onlineResources.length).toEqual(validResources.length);
     });
 
     it('does not overwrite the original related url', () => {
