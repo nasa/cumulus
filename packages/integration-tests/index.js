@@ -390,6 +390,8 @@ async function cleanupCollections(stackName, bucket, collectionsDirectory, postf
 
 function getProviderHost(provider) {
   if (process.env.PROVIDER_HOST) {
+    console.log(`provider host set and protocol ${provider.protocol}`);
+
     if (provider.protocol === 'http' || provider.protocol === 'https') {
       return `http://${process.env.PROVIDER_HOST}:${process.env.PROVIDER_HOST_PORT}`;
     }
