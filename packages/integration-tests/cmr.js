@@ -126,10 +126,7 @@ const sampleUmmGranule = {
 async function conceptExists(cmrLink) {
   const response = await got.get(cmrLink, { json: true });
 
-  if (response.statusCode !== 200) {
-    log.info(`${cmrLink} conceptExists response: ${response}`);
-    return false;
-  }
+  if (response.statusCode !== 200) return false;
 
   return response.body.feed.entry.length > 0;
 }
@@ -149,11 +146,7 @@ const waitForCmrToBeConsistent = () => sleep(ONE_SECOND);
 async function waitForConceptExistsOutcome(cmrLink, expectation) {
   try {
     await pWaitFor(
-      async () => {
-        const conceptExistsBool = await conceptExists(cmrLink);
-        log.info(`${cmrLink} exists: ${conceptExistsBool}`);
-        return (conceptExistsBool) === expectation;
-      },
+      async () => (await conceptExists(cmrLink)) === expectation,
       { interval: THREE_SECONDS, timeout: ONE_MINUTE }
     );
 
