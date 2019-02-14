@@ -1,10 +1,6 @@
 'use strict';
 
-const {
-  lambda,
-  sfn,
-  sqs
-} = require('@cumulus/common/aws');
+const { lambda, sfn, sqs } = require('@cumulus/common/aws');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const { loadConfig, createTimestampedTestId, timestampedName } = require('../../helpers/testUtils');
 
