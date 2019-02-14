@@ -24,8 +24,8 @@ const {
   api: apiTestUtils,
   buildAndExecuteWorkflow,
   LambdaStep,
-  conceptExistsUMMG,
-  getOnlineResourcesUMMG,
+  conceptExists,
+  getOnlineResources,
   granulesApi: granulesApiTestUtils
 } = require('@cumulus/integration-tests');
 
@@ -213,20 +213,20 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     let cmrLink;
     let response;
     let files;
-    let resourceHrefs;
+    let resourceURLs;
 
     beforeAll(async () => {
       postToCmrOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
       if (postToCmrOutput === null) throw new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
 
       granule = postToCmrOutput.payload.granules[0];
-      files = postToCmrOutput.payload.granules[0].files;
-      cmrLink = postToCmrOutput.payload.granules[0].cmrLink;
+      files = granule.files;
+      cmrLink = granule.cmrLink;
 
-      cmrResource = await getOnlineResourcesUMMG(cmrLink);
+      cmrResource = await getOnlineResources(granule);
       response = await got(cmrResource[2].URL);
 
-      resourceHrefs = cmrResource.map((resource) => resource.URL);
+      resourceURLs = cmrResource.map((resource) => resource.URL);
     });
 
     it('has expected payload', () => {
@@ -236,13 +236,13 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       // Set the expected cmrLink to the actual cmrLink, since it's going to
       // be different every time this is run.
       const updatedExpectedpayload = cloneDeep(expectedPayload);
-      updatedExpectedpayload.granules[0].cmrLink = granule.cmrLink;
+      updatedExpectedpayload.granules[0].cmrLink = cmrLink;
 
       expect(postToCmrOutput.payload).toEqual(updatedExpectedpayload);
     });
 
     it('publishes the granule metadata to CMR', async () => {
-      const result = await conceptExistsUMMG(granule.cmrLink, true);
+      const result = await conceptExists(granule.cmrLink, true);
 
       expect(granule.published).toEqual(true);
       expect(result).not.toEqual(false);
@@ -253,16 +253,15 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       const extension1 = urljoin(files[0].bucket, files[0].filepath);
       const filename = `https://${files[2].bucket}.s3.amazonaws.com/${files[2].filepath}`;
 
-      expect(resourceHrefs.includes(urljoin(distEndpoint, extension1))).toBe(true);
-      expect(resourceHrefs.includes(filename)).toBe(true);
+      expect(resourceURLs.includes(urljoin(distEndpoint, extension1))).toBe(true);
+      expect(resourceURLs.includes(filename)).toBe(true);
       expect(response.statusCode).toEqual(200);
     });
 
     it('does not overwrite the original related url', () => {
-      expect(resourceHrefs.includes(cumulusDocUrl)).toBe(true);
+      expect(resourceURLs.includes(cumulusDocUrl)).toBe(true);
     });
   });
-
 
   describe('When moving a granule via the Cumulus API', () => {
     let file;
