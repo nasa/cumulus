@@ -338,7 +338,10 @@ Resources:
               {{{ToJson this}}}
           -
             {{#each ../workflowLambdas}}
-            {{@key}}LambdaAliasOutput: !GetAtt [WorkflowLambdaVersionsNestedStack, Outputs.{{@key}}LambdaAliasOutput]
+            {{@key}}LambdaAliasOutput:
+              'Fn::GetAtt':
+                - WorkflowLambdaVersionsNestedStack
+                - Outputs.{{@key}}LambdaAliasOutput
             {{/each}}
             stackName: {{../stackName}}
     {{/ifEquals}}
