@@ -339,7 +339,7 @@ Resources:
           -
             {{#each ../workflowLambdas}}
             {{@key}}LambdaAliasOutput:
-              'Fn::GetAtt':
+              Fn::GetAtt:
                 - WorkflowLambdaVersionsNestedStack
                 - Outputs.{{@key}}LambdaAliasOutput
             {{/each}}
