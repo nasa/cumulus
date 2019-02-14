@@ -290,7 +290,7 @@ async function generateAndStoreCmrUmmJson(
     jsonObject.MetadataSpecification = {
       URL: `https://cdn.earthdata.nasa.gov/umm/granule/v${versionString}`,
       Name: 'UMM-G',
-      Version: `${versionString}`
+      Version: versionString
     };
   }
 
