@@ -28,8 +28,6 @@ while [ "$LOCK_EXISTS_STATUS" = 1 ]; do
   LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
 done
 
-exit 1
-
 (
   ./node_modules/.bin/kes cf deploy \
     --kes-folder iam \
