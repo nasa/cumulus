@@ -26,6 +26,8 @@ function buildOutput(results, granulesObject) {
   results.forEach((result) => {
     if (output[result.granuleId]) {
       output[result.granuleId].cmrLink = result.link;
+      output[result.granuleId].cmrConceptId = result.conceptId;
+      output[result.granuleId].cmrFileType = result.fileType;
       output[result.granuleId].published = true;
     }
   });

@@ -134,23 +134,6 @@ async function conceptExists(cmrLink) {
   return response.body.feed.entry.length > 0;
 }
 
-/**
- * Returns true if the concept exists - if the cmrLink
- * returns a 200 and there are entries
- *
- * @param {string} cmrLink
- *   CMR URL path to concept, i.e. what is returned from post to cmr task
- *   See `@cumulus/cmrjs/cmr-utils/publishUMMGJSON2CMR` for expected URL
- * @returns {boolean} true if the concept exists in CMR, false if not
- */
-async function conceptExistsUMMG(cmrLink) {
-  const response = await got.get(cmrLink, { json: true });
-
-  if (response.statusCode !== 200) return false;
-
-  return response.body.items.length > 0;
-}
-
 // See https://bugs.earthdata.nasa.gov/browse/CUMULUS-962
 const waitForCmrToBeConsistent = () => sleep(ONE_SECOND);
 
@@ -183,7 +166,7 @@ async function waitForConceptExistsOutcome(cmrLink, expectation) {
 }
 
 /**
- * Get the online resource links from the CMR objects
+ * Get the online resource links from the CMR objects for ECH010
  *
  * @param {string} cmrLink
  *   CMR URL path to concept, i.e. what is returned from post to cmr task
@@ -193,7 +176,7 @@ async function waitForConceptExistsOutcome(cmrLink, expectation) {
     hreflang: 'en-US',
     href: 'https://opendap.cr.usgs.gov/opendap/hyrax/MYD13Q1.006/contents.html' }
  */
-async function getOnlineResources(cmrLink) {
+async function getOnlineResourcesECHO10(cmrLink) {
   const response = await got.get(cmrLink);
 
   if (response.statusCode !== 200) {
@@ -231,6 +214,27 @@ async function getOnlineResourcesUMMG(cmrLink) {
 
   // Links is a list of a list, so flatten to be one list
   return [].concat(...links);
+}
+
+/**
+ * Fetches online resources from CMR based on file type (ECHO10, UMM-G)
+ *
+ * @param {Object} granule
+ * @param {string} granule.cmrFileType - the cmr file type (e.g. echo10, umm-g)
+ * @param {Object} granule.cmrConceptId - the CMR granule concept ID
+ * @param {Object} granule.cmrLink - the metadata's granuleId
+ *
+ * @returns {Promise<Array<Object>>} - Promise returning array of links
+ */
+async function getOnlineResources({ cmrFileType, cmrConceptId, cmrLink }) {
+  if (cmrFileType === 'echo10') {
+    return getOnlineResourcesECHO10(cmrLink);
+  }
+  if (cmrFileType === 'umm_g') {
+    // @TODO: Build URL more intelligently
+    return getOnlineResourcesUMMG(`https://cmr.uat.earthdata.nasa.gov/granules.umm_json?concept_id=${cmrConceptId}`);
+  }
+  throw new Error(`Invalid cmrFileType passed to getOnlineResources: ${cmrFileType}}`);
 }
 
 /**
@@ -415,9 +419,7 @@ async function generateCmrFilesForGranules(
 
 module.exports = {
   conceptExists,
-  conceptExistsUMMG,
   getOnlineResources,
-  getOnlineResourcesUMMG,
   generateCmrFilesForGranules,
   waitForConceptExistsOutcome
 };

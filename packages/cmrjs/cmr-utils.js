@@ -91,6 +91,7 @@ async function publishECHO10XML2CMR(cmrFile, creds, systemBucket, stack) {
     granuleId: cmrFile.granuleId,
     filename: cmrFile.filename,
     conceptId,
+    fileType: 'echo10',
     link: `${getUrl('search')}granules.json?concept_id=${conceptId}`
   };
 }
@@ -120,7 +121,9 @@ async function publishUMMGJSON2CMR(cmrPublishObject, creds, systemBucket, stack)
   return {
     granuleId,
     conceptId,
-    link: `${getUrl('search')}granules.umm_json?concept_id=${conceptId}`
+    // @TODO: This should come from the meta.cmrFileType?
+    fileType: 'umm_g',
+    link: `${getUrl('search')}granules.json?concept_id=${conceptId}`
   };
 }
 
