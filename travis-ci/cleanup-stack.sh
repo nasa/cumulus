@@ -1,3 +1,5 @@
+echo deployment $DEPLOYMENT
+
 # Delete the stack if it's a nightly build
 if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
   npm install
