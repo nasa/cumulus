@@ -399,14 +399,16 @@ async function cleanupCollections(stackName, bucket, collectionsDirectory, postf
 }
 
 /**
- * Get the provider host. If the environment variables are set,
+ * Get the provider host. If the environment variables are set, set the host
+ * according to the variables, otherwise use the original host.
+ * This allows us to switch between different environments/accounts, which
+ * would hit a different server.
  *
- * @param {*} provider
+ * @param {Object} provider - provider object
+ * @returns {string} provider host
  */
 function getProviderHost(provider) {
   if (process.env.PROVIDER_HOST) {
-    console.log(`provider host set and protocol ${provider.protocol}`);
-
     if (provider.protocol === 'http' || provider.protocol === 'https') {
       return `http://${process.env.PROVIDER_HOST}:${process.env.PROVIDER_HOST_PORT}`;
     }
