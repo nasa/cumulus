@@ -14,3 +14,31 @@
 
 @media only screen and (min-width: 1500px) {
 }
+
+.diagram-overlay-text {
+  position: absolute;
+}
+
+.diagram-overlay-text div {
+  display: none;
+}
+
+.red-text {
+  color: red;
+}
+
+.default-text {
+  color: black;
+}
+
+.diagram-overlay-text:hover div {
+  z-index: 2;
+  display: block;
+  position: absolute;
+  background: #ffffff;
+  border: 1px solid #000000;
+}
+
+.diagram-overlay-text th {
+  min-width: 300px;
+}
