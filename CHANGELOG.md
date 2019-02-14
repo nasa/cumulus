@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added Apache logs to cumulus api and distribution lambdas
 - **CUMULUS-1119** - Added ``@cumulus/integration-tests/api/EarthdataLogin.getEarthdataLoginRedirectResponse` helper for integration tests to handle login with Earthdata and to return response from redirect to Cumulus API
 
+### Fixed
+- CUMULUS-1123
+  - Cloudformation template overrides now work as expected
+
 ### Changed
 - CUMULUS-1121
   - Schema validation is now strongly enforced when writing to the database.
