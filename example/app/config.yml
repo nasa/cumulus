@@ -478,6 +478,7 @@ mhs:
 mhs3:
   stackName: mhs3
   stackNameNoDash: mhs3
+  useWorkflowLambdaVersions: false
 
 jk:
   stackName: jk
