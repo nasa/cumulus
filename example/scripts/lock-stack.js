@@ -48,9 +48,11 @@ async function updateLock(lockFile, deployment, cb) {
   const mutex = new concurrency.Mutex(dynamodbDocClient, LOCK_TABLE_NAME);
 
   if (lockFile === 'true') {
+    console.log('Locking stack');
     return performLock(mutex, deployment, cb);
   }
 
+  console.log('Unlocking stack');
   return removeLock(mutex, deployment, cb);
 }
 
