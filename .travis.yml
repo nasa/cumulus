@@ -103,7 +103,7 @@ jobs:
         - export NGAP_ENV=SIT
         - export DEPLOYMENT=cumulus-sit
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
-      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-stack.sh
+      after_failure: ./travis-ci/cleanup-stack.sh
 
     # - name: "Run integration tests"
     #   stage: integration tests
