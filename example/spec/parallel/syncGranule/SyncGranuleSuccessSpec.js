@@ -117,6 +117,11 @@ describe('The Sync Granules workflow', () => {
     ]);
   });
 
+  it('has a checksum to test', () => {
+    expect(inputPayload.granules[0].files[0].checksumValue).toBeDefined();
+    expect(inputPayload.granules[0].files[0].checksumType).toBeDefined();
+  });
+
   it('completes execution with success status', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
   });
@@ -169,6 +174,11 @@ describe('The Sync Granules workflow', () => {
       syncedTaggings.forEach((tagging) => {
         expect(tagging.TagSet).toEqual(expectedS3TagSet);
       });
+    });
+
+    it('maintains tested checksums', () => {
+      expect(lambdaOutput.payload.granules[0].files[0].checksumValue).toBeDefined();
+      expect(lambdaOutput.payload.granules[0].files[0].checksumType).toBeDefined();
     });
   });
 
@@ -254,6 +264,27 @@ describe('The Sync Granules workflow', () => {
       currentFiles.forEach((cf) => {
         expect(cf.LastModified).toBeGreaterThan(startTime);
       });
+    });
+  });
+
+  describe('when a bad checksum is provided', () => {
+    let lambdaOutput = null;
+    let failingExecution = null;
+
+    beforeAll(async () => {
+      inputPayload.granules[0].files[0].checksumValue = 'badCheckSum01';
+      failingExecution = await buildAndExecuteWorkflow(
+        config.stackName, config.bucket, workflowName, collection, provider, inputPayload
+      );
+      lambdaOutput = await lambdaStep.getStepOutput(failingExecution.executionArn, 'SyncGranule', 'failure');
+    });
+
+    it('completes execution with failure status', () => {
+      expect(failingExecution.status).toEqual('FAILED');
+    });
+
+    it('raises an error', () => {
+      expect(lambdaOutput.error).toEqual('InvalidChecksum');
     });
   });
 });

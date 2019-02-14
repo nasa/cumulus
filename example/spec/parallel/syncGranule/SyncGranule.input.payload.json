@@ -8,6 +8,8 @@
           {
             "path": "cumulus-test-data/pdrs",
             "fileSize": 1098034,
+            "checksumValue": "8d1ec5c0463e59d26adee87cdbbee816",
+            "checksumType": "md5",
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
             "url_path": "{cmrMetadata.Granule.GranuleUR}/{file.name}"
           },
