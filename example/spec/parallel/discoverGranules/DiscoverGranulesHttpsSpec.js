@@ -7,7 +7,8 @@ const {
   cleanupCollections,
   cleanupProviders,
   granulesApi: granulesApiTestUtils,
-  LambdaStep
+  LambdaStep,
+  getProviderHost
 } = require('@cumulus/integration-tests');
 
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
@@ -37,7 +38,8 @@ describe('The Discover Granules workflow with https Protocol', () => {
     const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/https_provider.json`, 'utf8'));
     // we actually want https for this test. we will later update provider to use https
     const providerData = Object.assign(providerJson, provider, {
-      protocol: 'http'
+      protocol: 'http',
+      host: getProviderHost(providerJson)
     });
 
     // populate collections and providers
