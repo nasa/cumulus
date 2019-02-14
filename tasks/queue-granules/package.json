@@ -43,7 +43,7 @@
   "devDependencies": {
     "@mapbox/mock-aws-sdk-js": "0.0.5",
     "ava": "^0.25.0",
-    "nyc": "^11.6.0",
+    "nyc": "^13.3.0",
     "webpack": "~4.5.0",
     "webpack-cli": "~2.0.14"
   }
