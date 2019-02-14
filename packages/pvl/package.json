@@ -37,6 +37,6 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "ava": "^0.25.0",
-    "nyc": "^11.6.0"
+    "nyc": "^13.3.0"
   }
 }

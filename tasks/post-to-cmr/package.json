@@ -20,7 +20,7 @@
   "scripts": {
     "test": "ava",
     "test-coverage": "nyc ava",
-    "debug" : "NODE_ENV=test node --inspect-brk node_modules/ava/profile.js --serial tests/*.js",
+    "debug": "NODE_ENV=test node --inspect-brk node_modules/ava/profile.js --serial tests/*.js",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
     "prepublishOnly": "PRODUCTION=true npm run build"
@@ -49,7 +49,7 @@
   },
   "devDependencies": {
     "ava": "^0.25.0",
-    "nyc": "^11.6.0",
+    "nyc": "^13.3.0",
     "proxyquire": "^2.0.0",
     "sinon": "^4.5.0",
     "webpack": "~4.5.0",
