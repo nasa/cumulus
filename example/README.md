@@ -119,3 +119,16 @@ There are tests for redeploying the Cumulus stack while a workflow is running (s
 
 Please note that the stack will be redeployed multiple times when running tests and any errors during redeployment can result in errors in later tests. The deployment output is printed to the console.
 
+# Troubleshooting
+
+## Distribution API tests
+
+If you are experiencing failures in `spec/parallel/testAPI/distributionSpec.js`:
+
+- Make sure you have set `EARTHDATA_CLIENT_ID` and `EARTHDATA_CLIENT_PASSWORD` environment variables
+- Make sure you have added `http://localhost:5002/redirect` as a valid redirect URI for the Earthdata app corresponding to the `EARTHDATA_CLIENT_ID` environment variable
+- Make sure you have set `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` environment variables
+  - Make sure that these credentials are valid for login to the Earthdata app corresponding to the `EARTHDATA_CLIENT_ID` environment variable
+  - If you are sure that the credentials are correct, but they are still not working, it may be because that username has not authorized the Earthdata app identified by the `EARTHDATA_CLIENT_ID` environment variable. Authorizing an Earthdata login app for a user account requires logging in once via the web. Use the following URL to log in to your Earthdata app, replacing `EARTHDATA_CLIENT_ID` with your client ID:
+
+    `https://uat.urs.earthdata.nasa.gov/oauth/authorize?client_id=EARTHDATA_CLIENT_ID&redirect_uri=http%3A%2F%2Flocalhost%3A5002%2Fredirect&response_type=code`
