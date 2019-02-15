@@ -159,78 +159,6 @@ async function waitForConceptExistsOutcome(cmrLink, expectation) {
 }
 
 /**
- * Get the online resource links from the CMR objects for ECH010
- *
- * @param {string} cmrLink
- *   CMR URL path to concept, i.e. what is returned from post to cmr task
- * @returns {Array<Object>} Array of link objects in the format
- * { inherited: true,
-    rel: 'http://esipfed.org/ns/fedsearch/1.1/metadata#',
-    hreflang: 'en-US',
-    href: 'https://opendap.cr.usgs.gov/opendap/hyrax/MYD13Q1.006/contents.html' }
- */
-async function getOnlineResourcesECHO10(cmrLink) {
-  const response = await got.get(cmrLink);
-
-  if (response.statusCode !== 200) {
-    return null;
-  }
-
-  const body = JSON.parse(response.body);
-
-  const links = body.feed.entry.map((e) => e.links);
-
-  // Links is a list of a list, so flatten to be one list
-  return [].concat(...links);
-}
-
-/**
- * Get the online resource links from the CMR objects for UMM-G
- *
- * @param {string} cmrLink
- *   CMR URL path to concept, i.e. what is returned from post to cmr task
- * @returns {Array<Object>} Array of link objects in the format
- * { URL: "https://example.com/cumulus-test-sandbox-protected/MOD09GQ___006/2016/MOD/MOD09GQ.A0794505._4kqJd.006.9457902462263.hdf",
-    Description: "File to download",
-    Type: "GET DATA" }
- */
-async function getOnlineResourcesUMMG(cmrLink) {
-  const response = await got.get(cmrLink);
-
-  if (response.statusCode !== 200) {
-    return null;
-  }
-
-  const body = JSON.parse(response.body);
-
-  const links = body.items.map((item) => item.umm.RelatedUrls);
-
-  // Links is a list of a list, so flatten to be one list
-  return [].concat(...links);
-}
-
-/**
- * Fetches online resources from CMR based on file type (ECHO10, UMM-G)
- *
- * @param {Object} granule
- * @param {string} granule.cmrFileType - the cmr file type (e.g. echo10, umm-g)
- * @param {Object} granule.cmrConceptId - the CMR granule concept ID
- * @param {Object} granule.cmrLink - the metadata's granuleId
- *
- * @returns {Promise<Array<Object>>} - Promise returning array of links
- */
-async function getOnlineResources({ cmrFileType, cmrConceptId, cmrLink }) {
-  if (cmrFileType === 'echo10') {
-    return getOnlineResourcesECHO10(cmrLink);
-  }
-  if (cmrFileType === 'umm_g') {
-    // @TODO: Build URL more intelligently
-    return getOnlineResourcesUMMG(`https://cmr.uat.earthdata.nasa.gov/granules.umm_json?concept_id=${cmrConceptId}`);
-  }
-  throw new Error(`Invalid cmrFileType passed to getOnlineResources: ${cmrFileType}}`);
-}
-
-/**
  * Generate a granule xml and store to the given S3 bucket
  *
  * @param {Object} granule - granule object
@@ -304,6 +232,78 @@ function fileTypeToVersion(typeStr) {
  */
 function isUMMGFileType(cmrFileType) {
   return cmrFileType && cmrFileType.match(/umm_json_v/);
+}
+
+/**
+ * Get the online resource links from the CMR objects for ECH010
+ *
+ * @param {string} cmrLink
+ *   CMR URL path to concept, i.e. what is returned from post to cmr task
+ * @returns {Array<Object>} Array of link objects in the format
+ * { inherited: true,
+    rel: 'http://esipfed.org/ns/fedsearch/1.1/metadata#',
+    hreflang: 'en-US',
+    href: 'https://opendap.cr.usgs.gov/opendap/hyrax/MYD13Q1.006/contents.html' }
+ */
+async function getOnlineResourcesECHO10(cmrLink) {
+  const response = await got.get(cmrLink);
+
+  if (response.statusCode !== 200) {
+    return null;
+  }
+
+  const body = JSON.parse(response.body);
+
+  const links = body.feed.entry.map((e) => e.links);
+
+  // Links is a list of a list, so flatten to be one list
+  return [].concat(...links);
+}
+
+/**
+ * Get the online resource links from the CMR objects for UMM-G
+ *
+ * @param {string} cmrLink
+ *   CMR URL path to concept, i.e. what is returned from post to cmr task
+ * @returns {Array<Object>} Array of link objects in the format
+ * { URL: "https://example.com/cumulus-test-sandbox-protected/MOD09GQ___006/2016/MOD/MOD09GQ.A0794505._4kqJd.006.9457902462263.hdf",
+    Description: "File to download",
+    Type: "GET DATA" }
+ */
+async function getOnlineResourcesUMMG(cmrLink) {
+  const response = await got.get(cmrLink);
+
+  if (response.statusCode !== 200) {
+    return null;
+  }
+
+  const body = JSON.parse(response.body);
+
+  const links = body.items.map((item) => item.umm.RelatedUrls);
+
+  // Links is a list of a list, so flatten to be one list
+  return [].concat(...links);
+}
+
+/**
+ * Fetches online resources from CMR based on file type (ECHO10, UMM-G)
+ *
+ * @param {Object} granule
+ * @param {string} granule.cmrFileType - the cmr file type (e.g. echo10, umm-g)
+ * @param {Object} granule.cmrConceptId - the CMR granule concept ID
+ * @param {Object} granule.cmrLink - the metadata's granuleId
+ *
+ * @returns {Promise<Array<Object>>} - Promise returning array of links
+ */
+async function getOnlineResources({ cmrFileType, cmrConceptId, cmrLink }) {
+  if (cmrFileType === 'echo10') {
+    return getOnlineResourcesECHO10(cmrLink);
+  }
+  if (isUMMGFileType(cmrFileType)) {
+    // @TODO: Build URL more intelligently
+    return getOnlineResourcesUMMG(`https://cmr.uat.earthdata.nasa.gov/granules.umm_json?concept_id=${cmrConceptId}`);
+  }
+  throw new Error(`Invalid cmrFileType passed to getOnlineResources: ${cmrFileType}}`);
 }
 
 /**

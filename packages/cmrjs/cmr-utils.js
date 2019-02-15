@@ -91,6 +91,7 @@ async function publishECHO10XML2CMR(cmrFile, creds, systemBucket, stack) {
     granuleId: cmrFile.granuleId,
     filename: cmrFile.filename,
     conceptId,
+    fileType: 'echo10',
     link: `${getUrl('search')}granules.json?concept_id=${conceptId}`
   };
 }

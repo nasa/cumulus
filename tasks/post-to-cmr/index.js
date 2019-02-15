@@ -33,6 +33,9 @@ function buildOutput(results, granulesObject, cmrFileType) {
       if (cmrFileType) {
         output[result.granuleId].cmrFileType = cmrFileType;
       }
+      else if (result.fileType) {
+        output[result.granuleId].cmrFileType = result.fileType;
+      }
     }
   });
 
