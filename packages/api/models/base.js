@@ -3,6 +3,7 @@
 const get = require('lodash.get');
 const Ajv = require('ajv');
 const aws = require('@cumulus/common/aws');
+const { deprecate } = require('@cumulus/common/util');
 const pWaitFor = require('p-wait-for');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { errorify } = require('../lib/utils');
@@ -111,6 +112,16 @@ class Manager {
       err.detail = JSON.stringify(validate.errors);
       throw err;
     }
+  }
+
+  static createTable(tableName, hash, range = null) {
+    deprecate('@cumulus/api/models/base Manager.createTable()', '1.10.3', 'the createTable() instance method');
+    return createTable(tableName, hash, range);
+  }
+
+  static deleteTable(tableName) {
+    deprecate('@cumulus/api/models/base Manager.deleteTable()', '1.10.3', 'the deleteTable() instance method');
+    return deleteTable(tableName);
   }
 
   /**
