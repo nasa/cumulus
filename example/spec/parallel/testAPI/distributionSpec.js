@@ -9,7 +9,7 @@ const {
   file: { getFileChecksumFromStream },
 } = require('@cumulus/common');
 const {
-  EarthdataLogin: { getEarthdataLoginRedirectResponse }
+  EarthdataLogin: { getEarthdataAccessToken }
 } = require('@cumulus/integration-tests');
 
 const {
@@ -59,6 +59,7 @@ describe('Distribution API', () => {
 
   describe('handles requests for files over HTTPS', () => {
     let fileChecksum;
+    const fileUrl = `${process.env.DISTRIBUTION_ENDPOINT}/${fileRequestPath}`;
 
     beforeAll(async () => {
       fileChecksum = await getFileChecksumFromStream(
@@ -68,7 +69,7 @@ describe('Distribution API', () => {
 
     it('redirects to Earthdata login for unauthorized requests', async () => {
       const response = await got(
-        `${process.env.DISTRIBUTION_ENDPOINT}/${fileRequestPath}`,
+        fileUrl,
         { followRedirect: false }
       );
       const authorizeUrl = new URL(response.headers.location);
@@ -79,16 +80,18 @@ describe('Distribution API', () => {
     it('downloads the requested science file for authorized requests', async () => {
       // Login with Earthdata and get response for redirect back to
       // distribution API.
-      const response = await getEarthdataLoginRedirectResponse({
+      const { accessToken } = await getEarthdataAccessToken({
         redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
-        requestOrigin: process.env.DISTRIBUTION_ENDPOINT,
-        state: fileRequestPath
+        requestOrigin: process.env.DISTRIBUTION_ENDPOINT
       });
 
-      const { 'set-cookie': cookie, location: fileUrl } = response.headers;
-
       // Get S3 signed URL fromm distribution API with cookie set.
-      const fileResponse = await got(fileUrl, { headers: { cookie }, followRedirect: false });
+      const fileResponse = await got(fileUrl, {
+        headers: {
+          cookie: [`accessToken=${accessToken}`]
+        },
+        followRedirect: false
+      });
       const signedS3Url = fileResponse.headers.location;
 
       // Compare checksum of downloaded file with expected checksum.
