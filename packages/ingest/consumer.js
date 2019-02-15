@@ -73,6 +73,5 @@ class Consumer {
 }
 
 module.exports = {
-  Consume,
   Consumer
 };
