@@ -23,7 +23,6 @@ const {
   },
   BucketsConfig,
   constructCollectionId,
-  // testUtils: { inTestMode },
   file: { getFileChecksumFromStream }
 } = require('@cumulus/common');
 const {
@@ -33,7 +32,8 @@ const {
   conceptExists,
   getOnlineResources,
   granulesApi: granulesApiTestUtils,
-  EarthdataLogin: { getEarthdataLoginRedirectResponse }
+  EarthdataLogin: { getEarthdataAccessToken },
+  distributionApi: { getDistributionAPIFileStream }
 } = require('@cumulus/integration-tests');
 
 const {
@@ -235,7 +235,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
   describe('the PostToCmr task', () => {
     let onlineResources;
-    let response;
     let files;
     let resourceURLs;
 
@@ -247,8 +246,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       files = granule.files;
 
       onlineResources = await getOnlineResources(granule);
-      response = await got(onlineResources[2].URL);
-
       resourceURLs = onlineResources.map((resource) => resource.URL);
     });
 
@@ -274,13 +271,11 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
       const distEndpoint = process.env.DISTRIBUTION_ENDPOINT;
-      // const distEndpoint = config.DISTRIBUTION_ENDPOINT;
       const extension1 = urljoin(files[0].bucket, files[0].filepath);
       const filename = `https://${files[2].bucket}.s3.amazonaws.com/${files[2].filepath}`;
 
       expect(resourceURLs.includes(urljoin(distEndpoint, extension1))).toBe(true);
       expect(resourceURLs.includes(filename)).toBe(true);
-      expect(response.statusCode).toEqual(200);
     });
 
     it('publishes CMR metadata online resources with the correct type', () => {
@@ -293,15 +288,11 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('downloads the requested science file for authorized requests', async () => {
-      // Login with Earthdata and get response for redirect back to
-      // distribution API.
-      const test = await getEarthdataLoginRedirectResponse({
+      // Login with Earthdata and get access token.
+      const { accessToken } = await getEarthdataAccessToken({
         redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
-        requestOrigin: process.env.DISTRIBUTION_ENDPOINT,
-        state: `${files[0].bucket}/${files[0].filepath}`
+        requestOrigin: process.env.DISTRIBUTION_ENDPOINT
       });
-
-      const { 'set-cookie': cookie } = test.headers;
 
       const bucketsConfig = new BucketsConfig(config.buckets);
 
@@ -312,29 +303,25 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         scienceFileUrls
           .map(async (url) => {
             const extension = path.extname(new URL(url).pathname);
-
             const sourceFile = s3data.find((d) => d.endsWith(extension));
             const sourceChecksum = await getFileChecksumFromStream(
               fs.createReadStream(require.resolve(sourceFile))
             );
-
             const file = files.find((f) => f.name.endsWith(extension));
 
-            let fileUrl;
+            let fileStream;
 
             if (bucketsConfig.type(file.bucket) === 'protected') {
               const fileRequestPath = urljoin(file.bucket, file.filepath);
-              fileUrl = urljoin(process.env.DISTRIBUTION_ENDPOINT, fileRequestPath);
-
-              const fileResponse = await got(fileUrl, { headers: { cookie }, followRedirect: false });
-              fileUrl = fileResponse.headers.location;
+              const fileUrl = urljoin(process.env.DISTRIBUTION_ENDPOINT, fileRequestPath);
+              fileStream = getDistributionAPIFileStream(fileUrl, accessToken);
             }
             else if (bucketsConfig.type(file.bucket) === 'public') {
-              fileUrl = `https://${file.bucket}.s3.amazonaws.com/${file.filepath}`;
+              fileStream = got.stream(`https://${file.bucket}.s3.amazonaws.com/${file.filepath}`);
             }
 
             // Compare checksum of downloaded file with expected checksum.
-            const downloadChecksum = await getFileChecksumFromStream(got.stream(fileUrl));
+            const downloadChecksum = await getFileChecksumFromStream(fileStream);
             return downloadChecksum === sourceChecksum;
           })
       );
