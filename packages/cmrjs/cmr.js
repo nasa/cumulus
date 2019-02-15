@@ -13,6 +13,7 @@ const {
   updateToken,
   validate,
   validateUMMG,
+  ummVersion,
   xmlParseOptions
 } = require('./utils');
 
@@ -221,17 +222,17 @@ class CMR {
    * Return object containing CMR request headers
    *
    * @param {string} [token] - CMR request token
-   * @param {boolean} isUMMG - boolean to determine content type of headers.
+   * @param {string} ummgVersion - UMMG metadata version string or null if echo10 metadata
    * @returns {Object} CMR headers object
    */
-  getHeaders(token = null, isUMMG = false) {
-    const contentType = isUMMG ? 'application/vnd.nasa.cmr.umm+json;version=1.4' : 'application/echo10+xml';
+  getHeaders(token = null, ummgVersion = null) {
+    const contentType = !ummgVersion ? 'application/echo10+xml' : `application/vnd.nasa.cmr.umm+json;version=${ummgVersion}`;
     const headers = {
       'Client-Id': this.clientId,
       'Content-type': contentType
     };
     if (token) headers['Echo-Token'] = token;
-    if (isUMMG) headers.Accept = 'application/json';
+    if (ummgVersion) headers.Accept = 'application/json';
     return headers;
   }
 
@@ -264,8 +265,8 @@ class CMR {
    * @returns {Promise<Object>} to the CMR response object.
    */
   async ingestUMMGranule(ummgMetadata) {
-    const isUMMG = true;
-    const headers = this.getHeaders(await this.getToken(), isUMMG);
+    const ummgVersion = ummVersion(ummgMetadata);
+    const headers = this.getHeaders(await this.getToken(), ummgVersion);
 
     const granuleId = ummgMetadata.GranuleUR || 'no GranuleId found on input metadata';
     logDetails.granuleId = granuleId;
