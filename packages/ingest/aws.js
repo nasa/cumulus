@@ -7,6 +7,7 @@ const AWS = require('aws-sdk');
 const moment = require('moment');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
+const { describeExecution } = require('@cumulus/common/step-functions');
 
 /**
  * getEndpoint returns proper AWS arguments for various
@@ -341,7 +342,7 @@ class StepFunction {
     const sfn = new AWS.StepFunctions();
 
     const [execution, executionHistory] = await Promise.all([
-      this.getExecution(arn),
+      describeExecution(arn),
       this.getExecutionHistory(arn)
     ]);
 
