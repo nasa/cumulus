@@ -4,6 +4,7 @@ const fs = require('fs-extra');
 const urljoin = require('url-join');
 const got = require('got');
 const path = require('path');
+const { URL } = require('url');
 const cloneDeep = require('lodash.clonedeep');
 const differenceWith = require('lodash.differencewith');
 const isEqual = require('lodash.isequal');
@@ -21,6 +22,7 @@ const {
     s3ObjectExists,
     parseS3Uri
   },
+  BucketsConfig,
   constructCollectionId,
   testUtils: { inTestMode },
   file: { getFileChecksumFromStream }
@@ -195,7 +197,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
   // This is a sanity check to make sure we actually generated UMM and also
   // grab the location of the UMM file to use when testing move
-  describe('the processing task creates a UMM file', () => {
+  xdescribe('the processing task creates a UMM file', () => {
     let processingTaskOutput;
     let ummFiles;
 
@@ -214,7 +216,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
   });
 
-  describe('the MoveGranules task', () => {
+  xdescribe('the MoveGranules task', () => {
     let moveGranulesTaskOutput;
     let movedFiles;
     let existCheck = [];
@@ -307,10 +309,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('downloads the requested science file for authorized requests', async () => {
-      const fileChecksum = await getFileChecksumFromStream(
-        fs.createReadStream(require.resolve(s3data[1]))
-      );
-
       // Login with Earthdata and get response for redirect back to
       // distribution API.
       const test = await getEarthdataLoginRedirectResponse({
@@ -319,19 +317,49 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         state: `${files[0].bucket}/${files[0].filepath}`
       });
 
-      const { 'set-cookie': cookie, location: fileUrl } = test.headers;
+      const { 'set-cookie': cookie } = test.headers;
 
-      // Get S3 signed URL fromm distribution API with cookie set.
-      const fileResponse = await got(fileUrl, { headers: { cookie }, followRedirect: false });
-      const signedS3Url = fileResponse.headers.location;
+      const bucketsConfig = new BucketsConfig(config.buckets);
 
-      // Compare checksum of downloaded file with expected checksum.
-      const downloadChecksum = await getFileChecksumFromStream(got.stream(signedS3Url));
-      expect(downloadChecksum).toEqual(fileChecksum);
+      const scienceFileUrls = resourceURLs
+        .filter((url) => url !== cumulusDocUrl && !url.endsWith('.cmr.json'));
+
+      const checkFiles = await Promise.all(
+        scienceFileUrls
+          .map(async (url) => {
+            const extension = path.extname(new URL(url).pathname);
+
+            const sourceFile = s3data.find((d) => d.endsWith(extension));
+            const sourceChecksum = await getFileChecksumFromStream(
+              fs.createReadStream(require.resolve(sourceFile))
+            );
+
+            const file = files.find((f) => f.name.endsWith(extension));
+
+            let fileUrl;
+
+            if (bucketsConfig.type(file.bucket) === 'protected') {
+              const fileRequestPath = urljoin(file.bucket, file.filepath);
+              fileUrl = urljoin(process.env.DISTRIBUTION_ENDPOINT, fileRequestPath);
+
+              const fileResponse = await got(fileUrl, { headers: { cookie }, followRedirect: false });
+              fileUrl = fileResponse.headers.location;
+            }
+            else if (bucketsConfig.type(file.bucket) === 'public') {
+              fileUrl = `https://${file.bucket}.s3.amazonaws.com/${file.filepath}`;
+            }
+
+            // Compare checksum of downloaded file with expected checksum.
+            const downloadChecksum = await getFileChecksumFromStream(got.stream(fileUrl));
+            return downloadChecksum === sourceChecksum;
+          })
+      );
+
+      expect(checkFiles.length).toEqual(scienceFileUrls.length);
     });
   });
 
-  describe('When moving a granule via the Cumulus API', () => {
+  xdescribe('When moving a granule via the Cumulus API', () => {
     let file;
     let destinationKey;
     let destinations;
