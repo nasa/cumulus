@@ -229,14 +229,15 @@ async function prepareDistributionApi(stackName = 'localrun') {
  * Prepare and run the Cumulus distribution API Express app.
  *
  * @param {string} stackName - The name of local stack. Used to prefix stack resources.
+ * @param {function} done - Optional callback to fire when app has started listening.
  */
-async function serveDistributionApi(stackName = 'localrun') {
+async function serveDistributionApi(stackName = 'localrun', done) {
   const port = process.env.PORT || 5002;
   await prepareDistributionApi(stackName);
 
   console.log(`Starting server on port ${port}`);
   const { distributionApp } = require('../app/distribution'); // eslint-disable-line global-require
-  return distributionApp.listen(port);
+  return distributionApp.listen(port, done);
 }
 
 module.exports = {

@@ -12,10 +12,9 @@ const isEqual = require('lodash.isequal');
 const {
   models: {
     Execution, Collection, Provider
-  },
-  distributionApp
+  }
 } = require('@cumulus/api');
-const { prepareDistributionApi } = require('@cumulus/api/bin/serve');
+const { serveDistributionApi } = require('@cumulus/api/bin/serve');
 const {
   aws: {
     getS3Object,
@@ -24,7 +23,7 @@ const {
   },
   BucketsConfig,
   constructCollectionId,
-  testUtils: { inTestMode },
+  // testUtils: { inTestMode },
   file: { getFileChecksumFromStream }
 } = require('@cumulus/common');
 const {
@@ -87,12 +86,15 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const provider = { id: `s3_provider${testSuffix}` };
   const cumulusDocUrl = 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme';
   const newCollectionId = constructCollectionId(collection.name, collection.version);
+
   let workflowExecution = null;
   let inputPayload;
   let expectedPayload;
   let postToCmrOutput;
   let granule;
+  let server;
 
+  process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
   const executionModel = new Execution();
@@ -101,11 +103,8 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
   const providerModel = new Provider();
 
-  const distributionApiPort = 5002;
-
-  let server;
-
-  process.env.PORT = distributionApiPort;
+  // Distribution API env vars
+  process.env.PORT = 5002;
   process.env.DISTRIBUTION_REDIRECT_ENDPOINT = `http://localhost:${process.env.PORT}/redirect`;
   process.env.DISTRIBUTION_ENDPOINT = `http://localhost:${process.env.PORT}`;
   // Ensure integration tests use Earthdata login UAT if not specified.
@@ -156,23 +155,8 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       }
     );
 
-    await prepareDistributionApi();
-
-    // If running the tests against localstack, point to the localstack resources.
-    // This must happen after prepareDistributionApi(), which sets the process.env
-    // values pointing to localstack.
-    if (inTestMode()) {
-      config.bucket = process.env.system_bucket;
-      config.stackName = process.env.stackName;
-    }
-
-    // Set env var to be used as the name for the access tokens table. Must happen
-    // at this point in case the config.stackName was changed to use localstack.
-    process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
-
-    // Use done() callback to signal end of beforeAll() after the
-    // distribution API has started up.
-    server = distributionApp.listen(process.env.PORT, done);
+    // Use done() to signal end of beforeAll() after distribution API has started up
+    server = await serveDistributionApi(config.stackName, done);
   });
 
   afterAll(async (done) => {
