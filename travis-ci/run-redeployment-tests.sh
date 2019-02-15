@@ -1,6 +1,6 @@
 set -e
 
-sh set-env-vars.sh
+. ./travis-ci/set-env-vars.sh
 
 (
   cd example
