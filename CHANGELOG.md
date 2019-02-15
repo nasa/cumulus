@@ -60,6 +60,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Renamed `DEPLOYMENT_ENDPOINT` environment variable to `DISTRIBUTION_REDIRECT_ENDPOINT`
   - Renamed `API_ENDPOINT` environment variable to `TOKEN_REDIRECT_ENDPOINT`
 
+### Removed
+- Functions deprecated before 1.11.0:
+  - @cumulus/api/models/base: static Manager.createTable() and static Manager.deleteTable()
+  - @cumulus/ingest/aws/S3
+  - @cumulus/ingest/aws/StepFunction.getExecution()
+  - @cumulus/ingest/aws/StepFunction.pullEvent()
+  - @cumulus/ingest/consumer.Consume
+  - @cumulus/ingest/granule/Ingest.getBucket()
+
 ### Deprecated
 `@cmrjs/ingestConcept`, instead use the CMR object methods. `@cmrjs/CMR.ingestGranule` or `@cmrjs/CMR.ingestCollection`
 `@cmrjs/searchConcept`, instead use the CMR object methods. `@cmrjs/CMR.searchGranules` or `@cmrjs/CMR.searchCollections`

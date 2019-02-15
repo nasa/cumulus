@@ -18,7 +18,6 @@ const {
   constructCollectionId,
   log,
   errors,
-  util: { deprecate },
   file: { getFileChecksumFromStream }
 } = require('@cumulus/common');
 
@@ -313,24 +312,6 @@ class Granule {
     // eslint-disable-next-line camelcase
     const url_path = foundFileConfigUrlPath || this.collection.url_path || '';
     return Object.assign(cloneDeep(file), { url_path });
-  }
-
-  /**
-   * Add bucket and url_path properties to the given file
-   *
-   * Note: This returns a copy of the file parameter, it does not modify it.
-   *
-   * This method is deprecated.  A combination of the addBucketToFile and
-   *   addUrlPathToFile methods should be used instead.
-   *
-   * @param {Object} file - an object containing a "name" property
-   * @returns {Object} the file with bucket and url_path properties set
-   * @private
-   */
-  getBucket(file) {
-    deprecate('@cumulus/ingest/granule/Ingest.getBucket()', '1.10.2');
-
-    return this.addUrlPathToFile(this.addBucketToFile(file));
   }
 
   /**
