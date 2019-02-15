@@ -3,7 +3,7 @@
 exports.appHandler = require('./app').handler;
 exports.app = require('./app').app;
 exports.distributionAppHandler = require('./app/distribution').handler;
-exports.distributionApp = require('./app/distribution').app;
+exports.distributionApp = require('./app/distribution').distributionApp;
 exports.dbIndexer = require('./lambdas/db-indexer');
 
 exports.bootstrap = require('./lambdas/bootstrap').handler;

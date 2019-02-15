@@ -7,18 +7,23 @@ const path = require('path');
 const cloneDeep = require('lodash.clonedeep');
 const differenceWith = require('lodash.differencewith');
 const isEqual = require('lodash.isequal');
+
 const {
   models: {
     Execution, Collection, Provider
-  }
+  },
+  distributionApp
 } = require('@cumulus/api');
+const { prepareDistributionApi } = require('@cumulus/api/bin/serve');
 const {
   aws: {
     getS3Object,
     s3ObjectExists,
     parseS3Uri
   },
-  constructCollectionId
+  constructCollectionId,
+  testUtils: { inTestMode },
+  file: { getFileChecksumFromStream }
 } = require('@cumulus/common');
 const {
   api: apiTestUtils,
@@ -26,7 +31,8 @@ const {
   LambdaStep,
   conceptExists,
   getOnlineResources,
-  granulesApi: granulesApiTestUtils
+  granulesApi: granulesApiTestUtils,
+  EarthdataLogin: { getEarthdataLoginRedirectResponse }
 } = require('@cumulus/integration-tests');
 
 const {
@@ -93,7 +99,19 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
   const providerModel = new Provider();
 
-  beforeAll(async () => {
+  const distributionApiPort = 5002;
+
+  let server;
+
+  process.env.PORT = distributionApiPort;
+  process.env.DISTRIBUTION_REDIRECT_ENDPOINT = `http://localhost:${process.env.PORT}/redirect`;
+  process.env.DISTRIBUTION_ENDPOINT = `http://localhost:${process.env.PORT}`;
+  // Ensure integration tests use Earthdata login UAT if not specified.
+  if (!process.env.EARTHDATA_BASE_URL) {
+    process.env.EARTHDATA_BASE_URL = 'https://uat.urs.earthdata.nasa.gov';
+  }
+
+  beforeAll(async (done) => {
     const collectionJson = JSON.parse(fs.readFileSync(`${collectionsDir}/s3_MOD09GQ_006.json`, 'utf8'));
     collectionJson.duplicateHandling = 'error';
     const collectionData = Object.assign({}, collectionJson, {
@@ -131,12 +149,31 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       inputPayload,
       {
         cmrFileType: 'umm_json_v1_5',
-        additionalUrls: [cumulusDocUrl]
+        additionalUrls: [cumulusDocUrl],
+        distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT
       }
     );
+
+    await prepareDistributionApi();
+
+    // If running the tests against localstack, point to the localstack resources.
+    // This must happen after prepareDistributionApi(), which sets the process.env
+    // values pointing to localstack.
+    if (inTestMode()) {
+      config.bucket = process.env.system_bucket;
+      config.stackName = process.env.stackName;
+    }
+
+    // Set env var to be used as the name for the access tokens table. Must happen
+    // at this point in case the config.stackName was changed to use localstack.
+    process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
+
+    // Use done() callback to signal end of beforeAll() after the
+    // distribution API has started up.
+    server = distributionApp.listen(process.env.PORT, done);
   });
 
-  afterAll(async () => {
+  afterAll(async (done) => {
     // clean up stack state added by test
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
@@ -148,6 +185,8 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         granuleId: inputPayload.granules[0].granuleId
       })
     ]);
+
+    server.close(done);
   });
 
   it('completes execution with success status', () => {
@@ -248,7 +287,8 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
-      const distEndpoint = config.DISTRIBUTION_ENDPOINT;
+      const distEndpoint = process.env.DISTRIBUTION_ENDPOINT;
+      // const distEndpoint = config.DISTRIBUTION_ENDPOINT;
       const extension1 = urljoin(files[0].bucket, files[0].filepath);
       const filename = `https://${files[2].bucket}.s3.amazonaws.com/${files[2].filepath}`;
 
@@ -264,6 +304,30 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('does not overwrite the original related url', () => {
       expect(resourceURLs.includes(cumulusDocUrl)).toBe(true);
+    });
+
+    it('downloads the requested science file for authorized requests', async () => {
+      const fileChecksum = await getFileChecksumFromStream(
+        fs.createReadStream(require.resolve(s3data[1]))
+      );
+
+      // Login with Earthdata and get response for redirect back to
+      // distribution API.
+      const test = await getEarthdataLoginRedirectResponse({
+        redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
+        requestOrigin: process.env.DISTRIBUTION_ENDPOINT,
+        state: `${files[0].bucket}/${files[0].filepath}`
+      });
+
+      const { 'set-cookie': cookie, location: fileUrl } = test.headers;
+
+      // Get S3 signed URL fromm distribution API with cookie set.
+      const fileResponse = await got(fileUrl, { headers: { cookie }, followRedirect: false });
+      const signedS3Url = fileResponse.headers.location;
+
+      // Compare checksum of downloaded file with expected checksum.
+      const downloadChecksum = await getFileChecksumFromStream(got.stream(signedS3Url));
+      expect(downloadChecksum).toEqual(fileChecksum);
     });
   });
 
