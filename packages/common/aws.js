@@ -1,7 +1,6 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const cksum = require('cksum');
 const crypto = require('crypto');
 const fs = require('fs');
 const isObject = require('lodash.isobject');
@@ -16,6 +15,7 @@ const string = require('./string');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
 const concurrency = require('./concurrency');
 const { noop } = require('./util');
+const { getFileChecksumFromStream } = require('./file');
 
 /**
  * Join strings into an S3 key without a leading slash or double slashes
@@ -559,10 +559,9 @@ exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
   const param = { Bucket: bucket, Key: key };
 
   if (algorithm.toLowerCase() === 'cksum') {
-    return new Promise((resolve, reject) =>
+    return getFileChecksumFromStream(
       exports.s3().getObject(param).createReadStream()
-        .pipe(cksum.stream((value) => resolve(value.readUInt32BE(0))))
-        .on('error', reject));
+    );
   }
 
   return new Promise((resolve, reject) => {

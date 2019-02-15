@@ -95,13 +95,14 @@ function messageBuilder(workflow, configOverride, cfOutputs) {
  */
 async function runStep(lambdaPath, lambdaHandler, message, stepName) {
   const taskFullPath = path.join(process.cwd(), lambdaPath);
+  const nextMessage = { ...message };
   const src = path.join(taskFullPath, 'adapter.zip');
   const dest = path.join(taskFullPath, 'cumulus-message-adapter');
 
   process.env.CUMULUS_MESSAGE_ADAPTER_DIR = dest;
 
   // add step name to the message
-  message.cumulus_meta.task = stepName;
+  nextMessage.cumulus_meta.task = stepName;
 
   try {
     // run the task
@@ -113,7 +114,7 @@ async function runStep(lambdaPath, lambdaHandler, message, stepName) {
     console.log(`Started execution of ${stepName}`);
 
     return new Promise((resolve, reject) => {
-      task[moduleFunctionName](message, {}, (e, r) => {
+      task[moduleFunctionName](nextMessage, {}, (e, r) => {
         if (e) return reject(e);
         console.log(`Completed execution of ${stepName}`);
         return resolve(r);
