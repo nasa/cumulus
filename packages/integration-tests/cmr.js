@@ -112,7 +112,7 @@ const sampleUmmGranule = {
       EndingDateTime: '2016-01-09T11:41:12.027Z'
     }
   }
-}
+};
 
 /**
  * Returns true if the concept exists - if the cmrLink
@@ -250,6 +250,30 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
 }
 
 /**
+ * Transforms a cmrfiletype to a version string or returns an empty string.
+ *
+ * @param {string} typeStr
+ * @returns {string} the decoded version or empty strign if a version can't be created.
+ */
+function fileTypeToVersion(typeStr) {
+  try {
+    return typeStr.match(/umm_json_v(.*)/)[1].replace('_', '.');
+  }
+  catch (error) {
+    return '';
+  }
+}
+
+/**
+ * tester to determine if the input cmrFiletype is a UMM JSON file.
+ * @param {string} cmrFileType
+ * @returns {boolean} true if the cmrFiletype matches umm_json_v
+ */
+function isUMMGFileType(cmrFileType) {
+  return cmrFileType && cmrFileType.match(/umm_json_v/);
+}
+
+/**
  * Generate granule UMM-G JSON file based on the sample UMM-G and store
  * it to S3 in the file staging area
  *
@@ -257,10 +281,18 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
  * @param {Object} collection - collection object
  * @param {string} bucket - bucket to save the xml file to
  * @param {Array<string>} additionalUrls - URLs to convert to related urls
+ * @param {string} cmrFileType - CMR UMM-G version string <umm_json_v[x.y]>
  * @returns {Promise<Array<string>>} - Promise of a list of granule files including the created
  * CMR files
  */
-async function generateAndStoreCmrUmmJson(granule, collection, bucket, additionalUrls) {
+async function generateAndStoreCmrUmmJson(
+  granule,
+  collection,
+  bucket,
+  additionalUrls,
+  cmrFileType
+) {
+  const versionString = fileTypeToVersion(cmrFileType);
   const jsonObject = sampleUmmGranule;
   jsonObject.GranuleUR = granule.granuleId;
 
@@ -274,6 +306,15 @@ async function generateAndStoreCmrUmmJson(granule, collection, bucket, additiona
       URL: url,
       Type: 'GET DATA'
     }));
+  }
+
+  const defaultVersion = 1.4;
+  if (Number(versionString) > defaultVersion) {
+    jsonObject.MetadataSpecification = {
+      URL: `https://cdn.earthdata.nasa.gov/umm/granule/v${versionString}`,
+      Name: 'UMM-G',
+      Version: versionString
+    };
   }
 
   const stagingDir = granule.files[0].fileStagingDir;
@@ -301,27 +342,36 @@ async function generateAndStoreCmrUmmJson(granule, collection, bucket, additiona
  * given S3 location
  *
  * @param {Array<Object>} granules - list of granules in the format of the sync-granules
- * output
+ *                                   output
  * @param {Object} collection - collection object that includes name and version
  * @param {string} bucket - location to save the xmls to
- * @param {string} cmrFileType - CMR file type to generate. Options are echo10, umm_json_v1_4, default
- * is echo10
+ * @param {string} cmrFileType - CMR file type to generate. Options are echo10, umm_json_v1_4,
+ *                               umm_json_v1_5, (and likely umm_json_v1_<x>). The default is echo10
  * @param {Array<string>} additionalUrls - URLs to convert to online resources or related urls
  * @returns {Array<string>} list of S3 locations for CMR xml files
  */
-async function generateCmrFilesForGranules(granules, collection, bucket, cmrFileType, additionalUrls) {
+async function generateCmrFilesForGranules(
+  granules,
+  collection,
+  bucket,
+  cmrFileType,
+  additionalUrls
+) {
   let files;
 
   log.info(`Generating fake CMR file with type ${cmrFileType}`);
 
-  if (cmrFileType === 'umm_json_v1_4') {
-    // When we do UMM-G 1.5, we'll probably need to pass the file type into this function
-    files = await Promise.all(granules.map((g) =>
-      generateAndStoreCmrUmmJson(g, collection, bucket, additionalUrls)));
+  if (isUMMGFileType(cmrFileType)) {
+    files = await Promise.all(
+      granules.map(
+        (g) => generateAndStoreCmrUmmJson(g, collection, bucket, additionalUrls, cmrFileType)
+      )
+    );
   }
   else {
-    files = await Promise.all(granules.map((g) =>
-      generateAndStoreCmrXml(g, collection, bucket, additionalUrls)));
+    files = await Promise.all(
+      granules.map((g) => generateAndStoreCmrXml(g, collection, bucket, additionalUrls))
+    );
   }
 
   return [].concat(...files);
