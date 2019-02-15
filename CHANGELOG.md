@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.11.2] - 2018-2-15
 
 ### Added
 - CUMULUS-1103 Compare the collection holdings in CMR with Cumulus' internal data store
@@ -60,11 +61,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Renamed `DEPLOYMENT_ENDPOINT` environment variable to `DISTRIBUTION_REDIRECT_ENDPOINT`
   - Renamed `API_ENDPOINT` environment variable to `TOKEN_REDIRECT_ENDPOINT`
 
+### Removed
+- Functions deprecated before 1.11.0:
+  - @cumulus/api/models/base: static Manager.createTable() and static Manager.deleteTable()
+  - @cumulus/ingest/aws/S3
+  - @cumulus/ingest/aws/StepFunction.getExecution()
+  - @cumulus/ingest/aws/StepFunction.pullEvent()
+  - @cumulus/ingest/consumer.Consume
+  - @cumulus/ingest/granule/Ingest.getBucket()
+
 ### Deprecated
 `@cmrjs/ingestConcept`, instead use the CMR object methods. `@cmrjs/CMR.ingestGranule` or `@cmrjs/CMR.ingestCollection`
 `@cmrjs/searchConcept`, instead use the CMR object methods. `@cmrjs/CMR.searchGranules` or `@cmrjs/CMR.searchCollections`
 `@cmrjs/deleteConcept`, instead use the CMR object methods. `@cmrjs/CMR.deleteGranule` or `@cmrjs/CMR.deleteCollection`
-
 
 
 ## [v1.11.1] - 2018-12-18
@@ -772,8 +781,9 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.11.1...HEAD
-[v1.11.0]: https://github.com/nasa/cumulus/compare/v1.11.0...v1.11.1
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.11.2...HEAD
+[v1.11.2]: https://github.com/nasa/cumulus/compare/v1.11.0...v1.11.2
+[v1.11.1]: https://github.com/nasa/cumulus/compare/v1.11.0...v1.11.1
 [v1.11.0]: https://github.com/nasa/cumulus/compare/v1.10.4...v1.11.0
 [v1.10.4]: https://github.com/nasa/cumulus/compare/v1.10.3...v1.10.4
 [v1.10.3]: https://github.com/nasa/cumulus/compare/v1.10.2...v1.10.3
