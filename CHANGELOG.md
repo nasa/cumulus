@@ -16,19 +16,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added `@cumulus/common/test-utils.throttleOnce()`, which will cause a function to return a
     ThrottlingException the first time it is called, then return its normal result after that.
 - CUMULUS-1103 Compare the collection holdings in CMR with Cumulus' internal data store
+- CUMULUS-1099 Add support for UMMG JSON metadata versions > 1.4.
+    - If a version is found in the metadata object, that version is used for processing and publishing to CMR otherwise, version 1.4 is assumed.
 - CUMULUS-678
-  - Added support for UMMG json v1.4 metadata files.
+    - Added support for UMMG json v1.4 metadata files.
   `reconcileCMRMetadata` added to `@cumulus/cmrjs` to update metadata record with new file locations.
   `@cumulus/common/errors` adds two new error types `CMRMetaFileNotFound` and `InvalidArgument`.
   `@cumulus/common/test-utils` adds new function `randomId` to create a random string with id to help in debugging.
   `@cumulus/common/BucketsConfig` adds a new helper class `BucketsConfig` for working with bucket stack configuration and bucket names.
   `@cumulus/common/aws` adds new function `s3PutObjectTagging` as a convenience for the aws  [s3().putObjectTagging](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property) function.
   `@cumulus/cmrjs` Adds:
-      - `isCMRFile` - Identify an echo10(xml) or UMMG(json) metadata file.
-      - `metadataObjectFromCMRFile` Read and parse CMR XML file from s3.
-      - `updateCMRMetadata` Modify a cmr metadata (xml/json) file with updated information.
-	  - `publish2CMR` Posts XML or UMMG CMR data to CMR service.
-	  - `reconcileCMRMetadata` Reconciles cmr metadata file after a file moves.
+        - `isCMRFile` - Identify an echo10(xml) or UMMG(json) metadata file.
+        - `metadataObjectFromCMRFile` Read and parse CMR XML file from s3.
+        - `updateCMRMetadata` Modify a cmr metadata (xml/json) file with updated information.
+        - `publish2CMR` Posts XML or UMMG CMR data to CMR service.
+        - `reconcileCMRMetadata` Reconciles cmr metadata file after a file moves.
 - Adds some ECS and other permissions to StepRole to enable running ECS tasks from a workflow
 - Added Apache logs to cumulus api and distribution lambdas
 - **CUMULUS-1119** - Added `@cumulus/integration-tests/api/EarthdataLogin.getEarthdataLoginRedirectResponse` helper for integration tests to handle login with Earthdata and to return response from redirect to Cumulus API
