@@ -79,7 +79,7 @@ async function postToCMR(event) {
   const regex = get(config, 'granuleIdExtraction', '(.*)');
   const granules = get(input, 'granules'); // Object of all Granules
   const creds = get(config, 'cmr');
-  const cmrFileType = get(config, 'cmrFileType', 'echo10');
+  const cmrFileType = get(config, 'cmrFileType');
 
   const allGranules = {};
   const allFiles = [];
