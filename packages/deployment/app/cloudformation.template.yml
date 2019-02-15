@@ -1018,12 +1018,12 @@ Resources:
             Value: {{{this}}}
       {{/if}}
     {{/each}}
-      {{# if ../ecs.docker}}
+      {{# ifEquals ../ecs.registry "dockerhub"}}
         Image: {{image}}
       {{else}}
         Image:
           Fn::Sub: ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/{{image}}
-      {{/if}}
+      {{/ifEquals}}
         MemoryReservation: {{#if this.memory }}{{ this.memory }}{{ else }}256{{/if}}
     {{# if this.commands }}
         Command:
@@ -1130,12 +1130,12 @@ Resources:
             Value: {{{this}}}
       {{/if}}
     {{/each}}
-      {{# if ../ecs.docker}}
+      {{# ifEquals ../ecs.registry "dockerhub"}}
         Image: {{image}}
       {{else}}
         Image:
           Fn::Sub: ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/{{image}}
-      {{/if}}
+      {{/ifEquals}}
         MemoryReservation: {{#if this.memory }}{{ this.memory }}{{ else }}256{{/if}}
     {{# if this.commands }}
         Command:
