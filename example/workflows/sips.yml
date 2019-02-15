@@ -229,6 +229,7 @@ IngestAndPublishGranule:
         process: '{$.cumulus_meta.process}'
         input_granules: '{$.meta.input_granules}'
         granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+        cmrFileType: '{$.meta.cmrFileType}'
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
       Catch:
