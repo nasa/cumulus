@@ -4,11 +4,9 @@ const fs = require('fs');
 const { URL } = require('url');
 const got = require('got');
 
-const { distributionApp } = require('@cumulus/api/app/distribution');
-const { prepareDistributionApi } = require('@cumulus/api/bin/serve');
+const { serveDistributionApi } = require('@cumulus/api/bin/serve');
 const {
   file: { getFileChecksumFromStream },
-  testUtils: { inTestMode }
 } = require('@cumulus/common');
 const {
   EarthdataLogin: { getEarthdataLoginRedirectResponse }
@@ -32,11 +30,12 @@ describe('Distribution API', () => {
   const testDataFolder = createTestDataPath(testId);
   const fileKey = `${testDataFolder}/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met`;
   const fileRequestPath = `${config.bucket}/${fileKey}`;
-  const distributionApiPort = 5002;
 
   let server;
 
-  process.env.PORT = distributionApiPort;
+  process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
+  // Port for distribution API.
+  process.env.PORT = 5002;
   process.env.DISTRIBUTION_REDIRECT_ENDPOINT = `http://localhost:${process.env.PORT}/redirect`;
   process.env.DISTRIBUTION_ENDPOINT = `http://localhost:${process.env.PORT}`;
   // Ensure integration tests use Earthdata login UAT if not specified.
@@ -46,24 +45,9 @@ describe('Distribution API', () => {
 
   beforeAll(async (done) => {
     await uploadTestDataToBucket(config.bucket, s3Data, testDataFolder);
-
-    await prepareDistributionApi();
-
-    // If running the tests against localstack, point to the localstack resources.
-    // This must happen after prepareDistributionApi(), which sets the process.env
-    // values pointing to localstack.
-    if (inTestMode()) {
-      config.bucket = process.env.system_bucket;
-      config.stackName = process.env.stackName;
-    }
-
-    // Set env var to be used as the name for the access tokens table. Must happen
-    // at this point in case the config.stackName was changed to use localstack.
-    process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
-
     // Use done() callback to signal end of beforeAll() after the
     // distribution API has started up.
-    server = distributionApp.listen(process.env.PORT, done);
+    server = await serveDistributionApi(config.stackName, done);
   });
 
   afterAll(async (done) => {
