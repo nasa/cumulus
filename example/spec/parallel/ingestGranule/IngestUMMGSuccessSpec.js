@@ -24,6 +24,7 @@ const {
   constructCollectionId,
   file: { getFileChecksumFromStream }
 } = require('@cumulus/common');
+const { getUrl } = require('@cumulus/cmrjs/utils');
 const {
   api: apiTestUtils,
   buildAndExecuteWorkflow,
@@ -254,7 +255,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('has expected payload', () => {
       expect(granule.published).toBe(true);
-      expect(granule.cmrLink.startsWith('https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=')).toBe(true);
+      expect(granule.cmrLink).toEqual(`${getUrl('search')}granules.json?concept_id=${granule.cmrConceptId}`);
 
       // Set the expected CMR values since they're going to be different
       // every time this is run.
@@ -273,6 +274,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
+      // Is this test still necessary?
       const distributionUrl = getDistributionFileUrl({
         bucket: files[0].bucket,
         key: files[0].filepath
@@ -332,7 +334,9 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
           })
       );
 
-      expect(checkFiles.length).toEqual(scienceFileUrls.length);
+      checkFiles.forEach((fileCheck) => {
+        expect(fileCheck).toBe(true);
+      });
     });
   });
 

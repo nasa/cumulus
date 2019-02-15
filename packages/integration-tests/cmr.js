@@ -6,6 +6,7 @@ const xml2js = require('xml2js');
 const { s3 } = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
 const { sleep } = require('@cumulus/common/util');
+const { getUrl } = require('@cumulus/cmrjs/utils');
 
 const ONE_SECOND = 1000;
 const THREE_SECONDS = 3000;
@@ -300,8 +301,7 @@ async function getOnlineResources({ cmrFileType, cmrConceptId, cmrLink }) {
     return getOnlineResourcesECHO10(cmrLink);
   }
   if (isUMMGFileType(cmrFileType)) {
-    // @TODO: Build URL more intelligently
-    return getOnlineResourcesUMMG(`https://cmr.uat.earthdata.nasa.gov/granules.umm_json?concept_id=${cmrConceptId}`);
+    return getOnlineResourcesUMMG(`${getUrl('search')}granules.umm_json?concept_id=${cmrConceptId}`);
   }
   throw new Error(`Invalid cmrFileType passed to getOnlineResources: ${cmrFileType}}`);
 }
