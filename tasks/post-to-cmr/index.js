@@ -17,9 +17,11 @@ const { loadJSONTestData } = require('@cumulus/test-data');
  *
  * @param {Array} results - list of results returned by publish function
  * @param {Object} granulesObject - an object of the granules where the key is the granuleId
+ * @param {string} cmrFileType - CMR file type (echo10, umm_json_v1_4, umm_json_v1_5)
+ *
  * @returns {Array} an updated array of granules
  */
-function buildOutput(results, granulesObject) {
+function buildOutput(results, granulesObject, cmrFileType) {
   const output = cloneDeep(granulesObject);
 
   // add results to corresponding granules
@@ -27,8 +29,10 @@ function buildOutput(results, granulesObject) {
     if (output[result.granuleId]) {
       output[result.granuleId].cmrLink = result.link;
       output[result.granuleId].cmrConceptId = result.conceptId;
-      output[result.granuleId].cmrFileType = result.fileType;
       output[result.granuleId].published = true;
+      if (cmrFileType) {
+        output[result.granuleId].cmrFileType = cmrFileType;
+      }
     }
   });
 
@@ -75,6 +79,8 @@ async function postToCMR(event) {
   const regex = get(config, 'granuleIdExtraction', '(.*)');
   const granules = get(input, 'granules'); // Object of all Granules
   const creds = get(config, 'cmr');
+  const cmrFileType = get(config, 'cmrFileType', 'echo10');
+
   const allGranules = {};
   const allFiles = [];
   granules.forEach((granule) => {
@@ -96,7 +102,7 @@ async function postToCMR(event) {
 
   return {
     process: process,
-    granules: buildOutput(results, allGranules)
+    granules: buildOutput(results, allGranules, cmrFileType)
   };
 }
 
