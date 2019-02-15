@@ -7,7 +7,6 @@ const bootstrap = require('../../lambdas/bootstrap');
 const { Search } = require('../../es/search');
 const { bootstrapDynamoDbTables } = require('../../lambdas/bootstrap');
 const { deleteAliases } = require('../../lib/testUtils');
-const models = require('../../models');
 const mappings = require('../../models/mappings.json');
 const testMappings = require('../data/testEsMappings.json');
 const mappingsSubset = require('../data/testEsMappingsSubset.json');
@@ -16,7 +15,7 @@ const mappingsNoFields = require('../data/testEsMappingsNoFields.json');
 let esClient;
 
 // This is for a skipped test: bootstrap dynamoDb activates pointInTime on a given table
-// const tableName = randomString();
+const tableName = randomString();
 
 test.before(async () => {
   await deleteAliases();
