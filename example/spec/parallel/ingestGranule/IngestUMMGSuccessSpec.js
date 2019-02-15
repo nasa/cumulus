@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs-extra');
-const urljoin = require('url-join');
 const got = require('got');
 const path = require('path');
 const { URL } = require('url');
@@ -33,7 +32,7 @@ const {
   getOnlineResources,
   granulesApi: granulesApiTestUtils,
   EarthdataLogin: { getEarthdataAccessToken },
-  distributionApi: { getDistributionAPIFileStream }
+  distributionApi: { getDistributionApiFileStream, getDistributionFileUrl }
 } = require('@cumulus/integration-tests');
 
 const {
@@ -43,7 +42,8 @@ const {
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
-  templateFile
+  templateFile,
+  getPublicS3FileUrl
 } = require('../../helpers/testUtils');
 
 const {
@@ -234,11 +234,14 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   });
 
   describe('the PostToCmr task', () => {
+    let bucketsConfig;
     let onlineResources;
     let files;
     let resourceURLs;
 
     beforeAll(async () => {
+      bucketsConfig = new BucketsConfig(config.buckets);
+
       postToCmrOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
       if (postToCmrOutput === null) throw new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
 
@@ -270,12 +273,14 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
-      const distEndpoint = process.env.DISTRIBUTION_ENDPOINT;
-      const extension1 = urljoin(files[0].bucket, files[0].filepath);
-      const filename = `https://${files[2].bucket}.s3.amazonaws.com/${files[2].filepath}`;
+      const distributionUrl = getDistributionFileUrl({
+        bucket: files[0].bucket,
+        key: files[0].filepath
+      });
+      const s3Url = getPublicS3FileUrl({ bucket: files[2].bucket, key: files[2].filepath });
 
-      expect(resourceURLs.includes(urljoin(distEndpoint, extension1))).toBe(true);
-      expect(resourceURLs.includes(filename)).toBe(true);
+      expect(resourceURLs.includes(distributionUrl)).toBe(true);
+      expect(resourceURLs.includes(s3Url)).toBe(true);
     });
 
     it('publishes CMR metadata online resources with the correct type', () => {
@@ -294,8 +299,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         requestOrigin: process.env.DISTRIBUTION_ENDPOINT
       });
 
-      const bucketsConfig = new BucketsConfig(config.buckets);
-
       const scienceFileUrls = resourceURLs
         .filter((url) => url !== cumulusDocUrl && !url.endsWith('.cmr.json'));
 
@@ -312,12 +315,15 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
             let fileStream;
 
             if (bucketsConfig.type(file.bucket) === 'protected') {
-              const fileRequestPath = urljoin(file.bucket, file.filepath);
-              const fileUrl = urljoin(process.env.DISTRIBUTION_ENDPOINT, fileRequestPath);
-              fileStream = getDistributionAPIFileStream(fileUrl, accessToken);
+              const fileUrl = getDistributionFileUrl({
+                bucket: file.bucket,
+                key: file.filepath
+              });
+              fileStream = getDistributionApiFileStream(fileUrl, accessToken);
             }
             else if (bucketsConfig.type(file.bucket) === 'public') {
-              fileStream = got.stream(`https://${file.bucket}.s3.amazonaws.com/${file.filepath}`);
+              const s3Url = getPublicS3FileUrl({ bucket: file.bucket, key: file.filepath });
+              fileStream = got.stream(s3Url);
             }
 
             // Compare checksum of downloaded file with expected checksum.

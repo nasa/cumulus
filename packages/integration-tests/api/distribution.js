@@ -13,7 +13,7 @@ const got = require('got');
  * @returns {ReadableStream}
  *   Stream to the file protected by the distribution
  */
-function getDistributionAPIFileStream(fileUrl, accessToken) {
+function getDistributionApiFileStream(fileUrl, accessToken) {
   return got
     .stream(fileUrl, {
       headers: {
@@ -27,6 +27,20 @@ function getDistributionAPIFileStream(fileUrl, accessToken) {
     });
 }
 
+/**
+ * Get URL to request file via distribution API
+ *
+ * @param {Object} params
+ * @param {string} params.bucket - S3 bucket
+ * @param {string} params.key - S3 object key
+ *
+ * @returns {string} - Distribution API file URL
+ */
+function getDistributionFileUrl({ bucket, key }) {
+  return `${process.env.DISTRIBUTION_ENDPOINT}/${bucket}/${key}`;
+}
+
 module.exports = {
-  getDistributionAPIFileStream
+  getDistributionApiFileStream,
+  getDistributionFileUrl
 };

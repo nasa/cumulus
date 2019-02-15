@@ -6,10 +6,10 @@ const got = require('got');
 
 const { serveDistributionApi } = require('@cumulus/api/bin/serve');
 const {
-  file: { getFileChecksumFromStream },
+  file: { getFileChecksumFromStream }
 } = require('@cumulus/common');
 const {
-  distributionApi: { getDistributionAPIFileStream },
+  distributionApi: { getDistributionApiFileStream, getDistributionFileUrl },
   EarthdataLogin: { getEarthdataAccessToken }
 } = require('@cumulus/integration-tests');
 
@@ -30,7 +30,6 @@ describe('Distribution API', () => {
   const testId = createTimestampedTestId(config.stackName, 'DistributionAPITest');
   const testDataFolder = createTestDataPath(testId);
   const fileKey = `${testDataFolder}/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met`;
-  const fileRequestPath = `${config.bucket}/${fileKey}`;
 
   let server;
 
@@ -60,7 +59,10 @@ describe('Distribution API', () => {
 
   describe('handles requests for files over HTTPS', () => {
     let fileChecksum;
-    const fileUrl = `${process.env.DISTRIBUTION_ENDPOINT}/${fileRequestPath}`;
+    const fileUrl = getDistributionFileUrl({
+      bucket: config.bucket,
+      key: fileKey
+    });
 
     beforeAll(async () => {
       fileChecksum = await getFileChecksumFromStream(
@@ -88,7 +90,7 @@ describe('Distribution API', () => {
 
       // Compare checksum of downloaded file with expected checksum.
       const downloadChecksum = await getFileChecksumFromStream(
-        getDistributionAPIFileStream(fileUrl, accessToken)
+        getDistributionApiFileStream(fileUrl, accessToken)
       );
       expect(downloadChecksum).toEqual(fileChecksum);
     });
