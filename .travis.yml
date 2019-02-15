@@ -202,4 +202,5 @@ jobs:
 branches:
   only:
     - master
+    - CUMULUS-1104
     - /^v\d+\.\d+(\.\d+)?(-\S*)?$/  # To build tag pushes for releases
