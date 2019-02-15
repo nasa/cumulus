@@ -9,6 +9,7 @@ const {
   file: { getFileChecksumFromStream },
 } = require('@cumulus/common');
 const {
+  distributionApi: { getDistributionAPIFileStream },
   EarthdataLogin: { getEarthdataAccessToken }
 } = require('@cumulus/integration-tests');
 
@@ -85,17 +86,10 @@ describe('Distribution API', () => {
         requestOrigin: process.env.DISTRIBUTION_ENDPOINT
       });
 
-      // Get S3 signed URL fromm distribution API with cookie set.
-      const fileResponse = await got(fileUrl, {
-        headers: {
-          cookie: [`accessToken=${accessToken}`]
-        },
-        followRedirect: false
-      });
-      const signedS3Url = fileResponse.headers.location;
-
       // Compare checksum of downloaded file with expected checksum.
-      const downloadChecksum = await getFileChecksumFromStream(got.stream(signedS3Url));
+      const downloadChecksum = await getFileChecksumFromStream(
+        getDistributionAPIFileStream(fileUrl, accessToken)
+      );
       expect(downloadChecksum).toEqual(fileChecksum);
     });
   });
