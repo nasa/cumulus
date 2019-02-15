@@ -45,6 +45,8 @@ describe('Distribution API', () => {
   }
 
   beforeAll(async (done) => {
+    await uploadTestDataToBucket(config.bucket, s3Data, testDataFolder);
+
     await prepareDistributionApi();
 
     // If running the tests against localstack, point to the localstack resources.
@@ -58,8 +60,6 @@ describe('Distribution API', () => {
     // Set env var to be used as the name for the access tokens table. Must happen
     // at this point in case the config.stackName was changed to use localstack.
     process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
-
-    await uploadTestDataToBucket(config.bucket, s3Data, testDataFolder);
 
     // Use done() callback to signal end of beforeAll() after the
     // distribution API has started up.
