@@ -23,8 +23,7 @@ const describeStateMachine = aws.retryOnThrottlingException(
 );
 
 const executionExists = (executionArn) =>
-  describeExecution({ executionArn })
-    .then(doesExecutionExist);
+  doesExecutionExist(describeExecution({ executionArn }));
 
 const getExecutionHistory = aws.retryOnThrottlingException(
   (params) => aws.sfn().getExecutionHistory(params).promise()
