@@ -49,6 +49,7 @@
     "aws-sdk": "^2.227.1",
     "child-process-promise": "^2.2.1",
     "lodash.differencewith": "^4.5.0",
+    "lodash.find": "^4.6.0",
     "lodash.isequal": "^4.5.0",
     "p-retry": "^2.0.0"
   },
