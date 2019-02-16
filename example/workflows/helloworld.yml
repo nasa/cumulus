@@ -80,3 +80,26 @@ EcsHelloWorldWorkflow:
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
+
+FargateHelloWorld:
+  Comment: 'Runs Fargate HelloWorld Task'
+  StartAt: RunFargateTask
+  States:
+    RunFargateTask:
+      Type: Task
+      Resource: 'arn:aws:states:::ecs:runTask.sync'
+      TimeoutSeconds: 3600
+      Parameters:
+        LaunchType: 'FARGATE'
+        Cluster: ${CumulusECSCluster.Arn}
+        TaskDefinition: ${FargateHelloWorldTaskDefinition}
+        NetworkConfiguration:
+          AwsvpcConfiguration:
+            Subnets:
+              - '{{AWS_SUBNET}}'
+            AssignPublicIp: 'ENABLED'
+      Retry:
+        - ErrorEquals:
+            - States.Timeout
+          MaxAttempts: 1
+      End: true
