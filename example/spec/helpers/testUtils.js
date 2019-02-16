@@ -177,7 +177,7 @@ async function redeploy(config, options = {}) {
 
   const deploymentOptions = [
     'cf', 'deploy',
-    '--kes-folder', 'app',
+    '--kes-folder', options.kesFolder || 'app',
     '--template', options.template || 'node_modules/@cumulus/deployment/app',
     '--deployment', config.deployment,
     '--region', 'us-east-1'
