@@ -6,18 +6,16 @@ const StepFunctions = require('../StepFunctions');
 const { throttleOnce } = require('../test-utils');
 
 const runWithStubbedAndThrottledSfnOperation = async (operation, response, fn) => {
-  const sfnBefore = aws.sfn;
+  const operationBefore = aws.sfn()[operation];
   try {
     const promise = throttleOnce(() => Promise.resolve(response));
 
-    aws.sfn = () => ({
-      [operation]: () => ({ promise })
-    });
+    aws.sfn()[operation] = () => ({ promise });
 
     return await fn();
   }
   finally {
-    aws.sfn = sfnBefore;
+    aws.sfn()[operation] = operationBefore;
   }
 };
 
