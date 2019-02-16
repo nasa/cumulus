@@ -996,7 +996,7 @@ Resources:
       {{# if this.privileged }}
         Privileged: true
       {{/if}}
-
+  {{# if this.envs}}
         Environment:
     {{#each this.envs}}
       {{# if this.function}}
@@ -1018,6 +1018,7 @@ Resources:
             Value: {{{this}}}
       {{/if}}
     {{/each}}
+  {{/if}}
       {{# if ../ecs.docker}}
         Image: {{image}}
       {{else}}
@@ -1093,6 +1094,13 @@ Resources:
     {{# if this.networkMode}}
       NetworkMode: {{this.networkMode}}
     {{/if}}
+    {{# if this.fargate}}
+      Cpu: {{#if this.fargate.cpu }}{{ this.fargate.cpu }}{{ else }}2 vCPU{{/if}}
+      Memory: {{#if this.fargate.memory }}{{ this.fargate.memory }}{{ else }}4GB{{/if}}
+      ExecutionRoleArn: {{../iams.ecsRoleArn}}
+      RequiresCompatibilities:
+        - FARGATE
+    {{/if}}
       ContainerDefinitions:
       - Name: {{@key}}
         Cpu: {{#if this.cpu }}{{ this.cpu }}{{ else }}10{{/if}}
@@ -1109,6 +1117,7 @@ Resources:
         Privileged: true
       {{/if}}
 
+  {{# if this.envs}}
         Environment:
     {{#each this.envs}}
       {{# if this.function}}
@@ -1130,6 +1139,8 @@ Resources:
             Value: {{{this}}}
       {{/if}}
     {{/each}}
+  {{/if}}
+
       {{# if ../ecs.docker}}
         Image: {{image}}
       {{else}}
@@ -1154,6 +1165,10 @@ Resources:
               Ref: {{@key}}EcsLogs
             awslogs-region:
               Fn::Sub: ${AWS::Region}
+          {{# if this.fargate}}
+            awslogs-stream-prefix:
+              Fn::Sub: {{@key}}
+          {{/if}}
 
   {{@key}}EcsLogs:
     Type: AWS::Logs::LogGroup
