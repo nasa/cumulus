@@ -108,6 +108,13 @@ default:
           - '--lambdaArn'
           - function: Ref
             value: HelloWorldLambdaFunction
+    tasks:
+      FargateHelloWorld:
+        image: '{{AWS_ACCOUNT_ID}}.dkr.ecr.us-east-1.amazonaws.com/hello_world:latest'
+        fargate: true
+        networkMode: 'awsvpc'
+        envs:
+          ECS_AGENT_PULL_BEHAVIOR: 'always'
 
   activities:
     - name: EcsTaskHelloWorld
@@ -225,6 +232,17 @@ aj:
 aimee:
   stackName: aimee
   stackNameNoDash: aimee
+
+  buckets:
+    internal:
+      name: cumulus-developmentseed-internal
+      type: internal
+    private:
+      name: cumulus-developmentseed-private
+      type: private
+    protected:
+      name: cumulus-developmentseed-protected
+      type: protected
 
 lf:
   stackName: lf-cumulus
@@ -470,6 +488,7 @@ jc:
     docker:
       username: cumulususer
       registry: ecr
+
 
 mhs:
   stackName: mhs
