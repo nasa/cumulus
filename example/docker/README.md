@@ -14,6 +14,6 @@ aws ecr create-repository --repository-name ${DOCKER_TAG}
 
 ```bash
 docker build -t ${DOCKER_TAG} -f Dockerfile.hello_world .
-ocker tag ${DOCKER_TAG}:latest ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/${DOCKER_TAG}:latest
+docker tag ${DOCKER_TAG}:latest ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/${DOCKER_TAG}:latest
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/${DOCKER_TAG}:latest
 ```
