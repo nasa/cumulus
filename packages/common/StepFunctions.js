@@ -14,23 +14,31 @@ const doesExecutionExist = (describeExecutionPromise) =>
 
 // Exported functions
 
-const describeExecution = aws.retryOnThrottlingException(
-  (params) => aws.sfn().describeExecution(params).promise()
+const describeExecution = aws.improveStackTrace(
+  aws.retryOnThrottlingException(
+    (params) => aws.sfn().describeExecution(params).promise()
+  )
 );
 
-const describeStateMachine = aws.retryOnThrottlingException(
-  (params) => aws.sfn().describeStateMachine(params).promise()
+const describeStateMachine = aws.improveStackTrace(
+  aws.retryOnThrottlingException(
+    (params) => aws.sfn().describeStateMachine(params).promise()
+  )
 );
 
 const executionExists = (executionArn) =>
   doesExecutionExist(describeExecution({ executionArn }));
 
-const getExecutionHistory = aws.retryOnThrottlingException(
-  (params) => aws.sfn().getExecutionHistory(params).promise()
+const getExecutionHistory = aws.improveStackTrace(
+  aws.retryOnThrottlingException(
+    (params) => aws.sfn().getExecutionHistory(params).promise()
+  )
 );
 
-const listExecutions = aws.retryOnThrottlingException(
-  (params) => aws.sfn().listExecutions(params).promise()
+const listExecutions = aws.improveStackTrace(
+  aws.retryOnThrottlingException(
+    (params) => aws.sfn().listExecutions(params).promise()
+  )
 );
 
 module.exports = {
