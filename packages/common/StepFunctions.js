@@ -2,6 +2,18 @@
 
 const aws = require('./aws');
 
+// Utility functions
+
+const doesExecutionExist = (describeExecutionPromise) =>
+  describeExecutionPromise
+    .then(() => true)
+    .catch((err) => {
+      if (err.code === 'ExecutionDoesNotExist') return false;
+      throw err;
+    });
+
+// Exported functions
+
 const describeExecution = aws.retryOnThrottlingException(
   (params) => aws.sfn().describeExecution(params).promise()
 );
@@ -10,16 +22,9 @@ const describeStateMachine = aws.retryOnThrottlingException(
   (params) => aws.sfn().describeStateMachine(params).promise()
 );
 
-const executionExists = async (executionArn) => {
-  try {
-    await describeExecution({ executionArn });
-    return true;
-  }
-  catch (err) {
-    if (err.code === 'ExecutionDoesNotExist') return false;
-    throw err;
-  }
-};
+const executionExists = (executionArn) =>
+  describeExecution({ executionArn })
+    .then(doesExecutionExist);
 
 const getExecutionHistory = aws.retryOnThrottlingException(
   (params) => aws.sfn().getExecutionHistory(params).promise()
