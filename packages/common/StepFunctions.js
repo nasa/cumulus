@@ -38,5 +38,8 @@ module.exports = {
   describeStateMachine,
   executionExists,
   getExecutionHistory,
-  listExecutions
+  listExecutions,
+
+  // Not part of the public API, exported for testing
+  doesExecutionExist
 };

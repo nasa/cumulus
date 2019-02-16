@@ -46,3 +46,26 @@ test.serial('describeStateMachine() retries if a ThrottlingException occurs',
     5,
     async () => t.is(await StepFunctions.describeStateMachine(), 5)
   ));
+
+test('doesExecutionExist returns true if the Promise resolves', async (t) => {
+  t.true(await StepFunctions.doesExecutionExist(Promise.resolve()));
+});
+
+test('doesExecutionExist returns false if the Promise rejects with an ExecutionDoesNotExist code', async (t) => {
+  const err = new Error();
+  err.code = 'ExecutionDoesNotExist';
+
+  t.false(await StepFunctions.doesExecutionExist(Promise.reject(err)));
+});
+
+test('doesExecutionExist throws any non-ExecutionDoesNotExist errors', async (t) => {
+  const err = new Error();
+
+  try {
+    t.false(await StepFunctions.doesExecutionExist(Promise.reject(err)));
+    t.fail();
+  }
+  catch (_) {
+    t.pass();
+  }
+});
