@@ -1,3 +1,5 @@
 FROM ubuntu:16.04
 
-CMD ["echo", "Hello World"]
+COPY say_hello.sh /
+
+ENTRYPOINT ["./say_hello.sh"]
