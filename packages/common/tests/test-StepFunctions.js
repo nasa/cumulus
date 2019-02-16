@@ -5,70 +5,46 @@ const aws = require('../aws');
 const StepFunctions = require('../StepFunctions');
 const { throttleOnce } = require('../test-utils');
 
-test.serial('getExecutionHistory() retries if a ThrottlingException occurs', async (t) => {
+const runWithStubbedAndThrottledSfnOperation = async (operation, response, fn) => {
   const sfnBefore = aws.sfn;
   try {
-    // Stub out aws.sfn().getExecutionHistory so that it will throw a ThrottlingException
-    const promise = throttleOnce(() => Promise.resolve(5));
+    const promise = throttleOnce(() => Promise.resolve(response));
 
     aws.sfn = () => ({
-      getExecutionHistory: () => ({ promise })
+      [operation]: () => ({ promise })
     });
 
-    t.is(await StepFunctions.getExecutionHistory(), 5);
+    return await fn();
   }
   finally {
     aws.sfn = sfnBefore;
   }
-});
+};
 
-test.serial('describeExecution() retries if a ThrottlingException occurs', async (t) => {
-  const sfnBefore = aws.sfn;
-  try {
-    // Stub out aws.sfn().describeExecution so that it will throw a ThrottlingException
-    const promise = throttleOnce(() => Promise.resolve(5));
+test.serial('getExecutionHistory() retries if a ThrottlingException occurs',
+  (t) => runWithStubbedAndThrottledSfnOperation(
+    'getExecutionHistory',
+    5,
+    async () => t.is(await StepFunctions.getExecutionHistory(), 5)
+  ));
 
-    aws.sfn = () => ({
-      describeExecution: () => ({ promise })
-    });
+test.serial('describeExecution() retries if a ThrottlingException occurs',
+  (t) => runWithStubbedAndThrottledSfnOperation(
+    'describeExecution',
+    5,
+    async () => t.is(await StepFunctions.describeExecution(), 5)
+  ));
 
-    t.is(await StepFunctions.describeExecution(), 5);
-  }
-  finally {
-    aws.sfn = sfnBefore;
-  }
-});
+test.serial('listExecutions() retries if a ThrottlingException occurs',
+  (t) => runWithStubbedAndThrottledSfnOperation(
+    'listExecutions',
+    5,
+    async () => t.is(await StepFunctions.listExecutions(), 5)
+  ));
 
-test.serial('listExecutions() retries if a ThrottlingException occurs', async (t) => {
-  const sfnBefore = aws.sfn;
-  try {
-    // Stub out aws.sfn().listExecutions so that it will throw a ThrottlingException
-    const promise = throttleOnce(() => Promise.resolve(5));
-
-    aws.sfn = () => ({
-      listExecutions: () => ({ promise })
-    });
-
-    t.is(await StepFunctions.listExecutions(), 5);
-  }
-  finally {
-    aws.sfn = sfnBefore;
-  }
-});
-
-test.serial('describeStateMachine() retries if a ThrottlingException occurs', async (t) => {
-  const sfnBefore = aws.sfn;
-  try {
-    // Stub out aws.sfn().describeStateMachine so that it will throw a ThrottlingException
-    const promise = throttleOnce(() => Promise.resolve(5));
-
-    aws.sfn = () => ({
-      describeStateMachine: () => ({ promise })
-    });
-
-    t.is(await StepFunctions.describeStateMachine(), 5);
-  }
-  finally {
-    aws.sfn = sfnBefore;
-  }
-});
+test.serial('describeStateMachine() retries if a ThrottlingException occurs',
+  (t) => runWithStubbedAndThrottledSfnOperation(
+    'describeStateMachine',
+    5,
+    async () => t.is(await StepFunctions.describeStateMachine(), 5)
+  ));
