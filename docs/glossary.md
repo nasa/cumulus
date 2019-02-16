@@ -161,7 +161,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
 ### Packages (NPM)
 
-  [NPM](https://www.npm.js.com) hosted node.js packages.   Cumulus packages can be found on NPM's site [here](https://www.npmjs.com/search?q=%40cumulus%2F)
+  [NPM](https://www.npm.js.com) hosted node.js packages.   Cumulus packages can be found on NPM's site [here](https://www.npmjs.com/org/cumulus)
 
 ### Provider
 

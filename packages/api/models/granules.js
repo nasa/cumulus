@@ -6,6 +6,7 @@ const path = require('path');
 
 const aws = require('@cumulus/ingest/aws');
 const commonAws = require('@cumulus/common/aws');
+const StepFunctions = require('@cumulus/common/StepFunctions');
 const cmrjs = require('@cumulus/cmrjs');
 const { CMR, reconcileCMRMetadata } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
@@ -16,7 +17,6 @@ const {
 } = require('@cumulus/ingest/granule');
 const { constructCollectionId } = require('@cumulus/common');
 const { renameProperty } = require('@cumulus/common/util');
-const { describeExecution } = require('@cumulus/common/step-functions');
 
 const Manager = require('./base');
 
@@ -71,7 +71,7 @@ class Granule extends Manager {
   async reingest(granule) {
     const executionArn = path.basename(granule.execution);
 
-    const executionDescription = await describeExecution(executionArn);
+    const executionDescription = await StepFunctions.describeExecution({ executionArn });
     const originalMessage = JSON.parse(executionDescription.input);
 
     const { name, version } = deconstructCollectionId(granule.collectionId);

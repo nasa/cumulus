@@ -49,8 +49,8 @@ async function getEarthdataLoginRedirectResponse({
   // Make request to login to Earthdata.
   let redirectUrl;
   try {
-    redirectUrl = await got.post(authorizeUrl, requestOptions)
-      .then((res) => res.headers.location);
+    const loginResponse = await got.post(authorizeUrl, requestOptions);
+    redirectUrl = loginResponse.headers.location;
   }
   catch (err) {
     if (err.statusCode === 401) {

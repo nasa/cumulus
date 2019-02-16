@@ -7,22 +7,22 @@ const bootstrap = require('../../lambdas/bootstrap');
 const { Search } = require('../../es/search');
 const { bootstrapDynamoDbTables } = require('../../lambdas/bootstrap');
 const { deleteAliases } = require('../../lib/testUtils');
-const models = require('../../models');
 const mappings = require('../../models/mappings.json');
 const testMappings = require('../data/testEsMappings.json');
 const mappingsSubset = require('../data/testEsMappingsSubset.json');
 const mappingsNoFields = require('../data/testEsMappingsNoFields.json');
 
 let esClient;
+
+// This is for a skipped test: bootstrap dynamoDb activates pointInTime on a given table
 const tableName = randomString();
 
 test.before(async () => {
   await deleteAliases();
-  // create collections table
-  // await models.Manager.createTable(tableName, { name: 'someIndex', type: 'S' });
 });
 
 // Skipping this test for because LocalStack version 0.8.6 does not support pointInTime
+// When this test is back in, make sure to delete the table
 test.skip.serial('bootstrap dynamoDb activates pointInTime on a given table', async (t) => {
   const resp = await bootstrapDynamoDbTables([{ name: tableName, pointInTime: true }]);
 
@@ -30,10 +30,6 @@ test.skip.serial('bootstrap dynamoDb activates pointInTime on a given table', as
     resp.ContinuousBackupsDescription.PointInTimeRecoveryDescription.PointInTimeRecoveryStatus,
     'ENABLED'
   );
-});
-
-test.skip.after.always(async () => {
-  await models.Manager.deleteTable(tableName);
 });
 
 test.serial('bootstrap creates index with alias', async (t) => {
