@@ -247,7 +247,7 @@ class Granule extends Manager {
           error: exception,
           createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
           timestamp: Date.now(),
-          productVolume: getGranuleProductVolume(granule.files),
+          productVolume: getGranuleProductVolume(granuleFiles),
           timeToPreprocess: get(payload, 'meta.sync_granule_duration', 0) / 1000,
           timeToArchive: get(payload, 'meta.post_to_cmr_duration', 0) / 1000,
           processingStartDateTime: extractDate(payload, 'meta.sync_granule_end_time'),
