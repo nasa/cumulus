@@ -70,11 +70,11 @@ function extractDate(payload, dateField) {
  * @param {Array<Object>} granuleFiles - array of granule files
  * @returns {Integer} - sum of granule file sizes in bytes
  */
-function getGranuleProductVolume(granuleFiles) {
-  const fileSizes = granuleFiles.map((file) => file.fileSize)
-    .filter((size) => size);
-
-  return fileSizes.reduce((a, b) => a + b);
+function getGranuleProductVolume(granuleFiles = []) {
+  return granuleFiles
+    .map((file) => file.fileSize)
+    .filter((size) => size)
+    .reduce((a, b) => a + b, 0);
 }
 
 /**
