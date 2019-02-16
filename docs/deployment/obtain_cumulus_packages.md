@@ -10,7 +10,7 @@ hide_title: true
 
 Use this option to get released versions of Cumulus packages. If you want to use an unreleased version or modify the packages, use option 2.
 
-Packages are installed with npm. A list of Cumulus packages with descriptions and version information can be found [here](https://www.npmjs.com/search?q=%40cumulus).
+Packages are installed with npm. A list of Cumulus packages with descriptions and version information can be found [here](https://www.npmjs.com/org/cumulus).
 
 If you're trying to work with a certain version of a cumulus package or task, the version can be specified in `package.json` under dependencies. We use semantic versioning (major/minor/patch). You can also configure for automatic updates. Use `^` to update minor/patch versions automatically and `~` to automatically update patch versions. For example:
 
