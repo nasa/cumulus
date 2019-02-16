@@ -2,7 +2,6 @@
 
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
-const url = require('url');
 const aws = require('@cumulus/common/aws');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const AWS = require('aws-sdk');
@@ -151,165 +150,6 @@ class Events {
     return cwevents.putTargets(params).promise();
   }
 }
-
-class S3 {
-  static parseS3Uri(uri) {
-    deprecate(
-      '@cumulus/ingest/aws/S3.parseUri()',
-      '1.10.2',
-      '@cumulus/common/aws.parseS3Uri()'
-    );
-
-    const parsed = url.parse(uri);
-    if (parsed.protocol !== 's3:') {
-      throw new Error('uri must be a S3 uri, e.g. s3://bucketname');
-    }
-
-    return {
-      Bucket: parsed.hostname,
-      Key: parsed.path.substring(1)
-    };
-  }
-
-  static async copy(source, dstBucket, dstKey, isPublic = false) {
-    deprecate(
-      '@cumulus/ingest/aws/S3.copy()',
-      '1.10.2',
-      '@cumulus/common/aws.s3CopyObject()'
-    );
-
-    const s3 = new AWS.S3();
-
-    const params = {
-      Bucket: dstBucket,
-      CopySource: source,
-      Key: dstKey,
-      ACL: isPublic ? 'public-read' : 'private'
-    };
-
-    return s3.copyObject(params).promise();
-  }
-
-  static async list(bucket, prefix) {
-    deprecate(
-      '@cumulus/ingest/aws/S3.list()',
-      '1.10.2',
-      '@cumulus/common/aws.listS3ObjectsV2()'
-    );
-
-    const s3 = new AWS.S3();
-
-    const params = {
-      Bucket: bucket,
-      Prefix: prefix
-    };
-
-    return s3.listObjectsV2(params).promise();
-  }
-
-  static async delete(bucket, key) {
-    deprecate(
-      '@cumulus/ingest/aws/S3.delete()',
-      '1.10.2',
-      '@cumulus/common/aws.deleteS3Object()'
-    );
-
-    const s3 = new AWS.S3();
-
-    const params = {
-      Bucket: bucket,
-      Key: key
-    };
-
-    return s3.deleteObject(params).promise();
-  }
-
-  static async put(bucket, key, body, acl = 'private', meta = null) {
-    deprecate(
-      '@cumulus/ingest/aws/S3.put()',
-      '1.10.2',
-      '@cumulus/common/aws.s3PutObject()'
-    );
-
-    const params = {
-      Bucket: bucket,
-      Key: key,
-      Body: body,
-      ACL: acl
-    };
-
-    if (meta) {
-      params.Metadata = meta;
-    }
-
-    return aws.s3().putObject(params).promise();
-  }
-
-  static async get(bucket, key) {
-    deprecate(
-      '@cumulus/ingest/aws/S3.get()',
-      '1.10.2',
-      '@cumulus/common/aws.getS3Object()'
-    );
-
-    const params = {
-      Bucket: bucket,
-      Key: key
-    };
-
-    return aws.s3().getObject(params).promise();
-  }
-
-  static async upload(bucket, key, body, acl = 'private') {
-    deprecate(
-      '@cumulus/ingest/aws/S3.upload()',
-      '1.10.2',
-      '@cumulus/common/aws.promiseS3Upload()'
-    );
-
-    const s3 = new AWS.S3();
-
-    const params = {
-      Bucket: bucket,
-      Key: key,
-      Body: body,
-      ACL: acl
-    };
-
-    return s3.upload(params).promise();
-  }
-
-  /**
-   * checks whether a file exists on S3
-   *
-   * @param {string} bucket S3 bucket name
-   * @param {string} key S3 key: folder and file name
-   * @returns {boolean} true if found / false if not found
-   * @static
-   */
-
-  static async fileExists(bucket, key) {
-    deprecate(
-      '@cumulus/ingest/aws/S3.fileExists()',
-      '1.10.2',
-      '@cumulus/common/aws.fileExists()'
-    );
-
-    const s3 = new AWS.S3();
-    try {
-      const r = await s3.headObject({ Key: key, Bucket: bucket }).promise();
-      return r;
-    }
-    catch (e) {
-      // if file is not found download it
-      if (e.stack.match(/(NotFound)/)) {
-        return false;
-      }
-      throw e;
-    }
-  }
-}
-
 
 class SQS {
   static async getUrl(name) {
@@ -499,40 +339,15 @@ class CloudWatch {
 }
 
 class StepFunction {
-  static async getExecution(executionArn, ignoreMissingExecutions = false) {
-    deprecate(
-      '@cumulus/ingest/aws/StepFunction.getExecution()',
-      '1.10.2',
-      '@cumulus/common/StepFunctions.describeExecution()'
-    );
-
-    try {
-      return await StepFunctions.describeExecution({ executionArn });
-    }
-    catch (err) {
-      if (ignoreMissingExecutions
-        && err.message
-        && err.message.includes('Execution Does Not Exist')) {
-        return {
-          executionArn,
-          status: 'NOT_FOUND'
-        };
-      }
-      throw err;
-    }
-  }
-
   static async getExecutionStatus(executionArn) {
-    const sfn = new AWS.StepFunctions();
-
     const [execution, executionHistory] = await Promise.all([
-      this.getExecution(executionArn),
+      StepFunctions.describeExecution({ executionArn }),
       StepFunctions.getExecutionHistory({ executionArn })
     ]);
 
-    const stateMachine = await sfn.describeStateMachine({
+    const stateMachine = await StepFunctions.describeStateMachine({
       stateMachineArn: execution.stateMachineArn
-    }).promise();
+    });
 
     return { execution, executionHistory, stateMachine };
   }
@@ -545,29 +360,6 @@ class StepFunction {
     );
 
     return StepFunctions.getExecutionHistory({ executionArn });
-  }
-
-  /**
-   * Fetch an event from S3
-   *
-   * @param {Object} event - an event to be fetched from S3
-   * @param {string} event.s3_path - the S3 location of the event
-   * @returns {Promise.<Object>} - the parsed event from S3
-   */
-  static async pullEvent(event) {
-    deprecate(
-      '@cumulus/ingest/aws/StepFunction.pullEvent()',
-      '1.10.4',
-      '@cumulus/common/aws.pullStepFunctionEvent()'
-    );
-
-    if (event.s3_path) {
-      const parsed = S3.parseS3Uri(event.s3_path);
-      const file = await aws.getS3Object(parsed.Bucket, parsed.Key);
-
-      return JSON.parse(file.Body.toString());
-    }
-    return event;
   }
 
   /**
@@ -612,7 +404,6 @@ class StepFunction {
 module.exports = {
   CloudWatch,
   SQS,
-  S3,
   ECS,
   invoke,
   getEndpoint,
