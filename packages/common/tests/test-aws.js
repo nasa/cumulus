@@ -7,7 +7,7 @@ const test = require('ava');
 const sinon = require('sinon');
 
 const aws = require('../aws');
-const { randomString } = require('../test-utils');
+const { randomString, throttleOnce } = require('../test-utils');
 
 test('s3Join behaves as expected', (t) => {
   // Handles an array argument
@@ -149,26 +149,6 @@ test('pullStepFunctionEvent returns message from S3', async (t) => {
     stub.restore();
   }
 });
-
-const throwThrottlingException = () => {
-  const throttlingException = new Error('ThrottlingException');
-  throttlingException.code = 'ThrottlingException';
-
-  throw throttlingException;
-};
-
-const throttleOnce = (fn) => {
-  let throttleNextCall = true;
-
-  return (...args) => {
-    if (throttleNextCall) {
-      throttleNextCall = false;
-      throwThrottlingException();
-    }
-
-    return fn(...args);
-  };
-};
 
 test('retryOnThrottlingException() properly retries after ThrottlingExceptions', async (t) => {
   const asyncSquare = (x) => Promise.resolve(x * x);
