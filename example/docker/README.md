@@ -1,4 +1,10 @@
-# Docker files for use in task definitions
+# Docker files for creating images to be used in ECS Task Definitions
+
+## `hello_world`
+
+`hello_world` is a simple docker image currently used for testing the `FargateHelloWorld` workflow.
+
+Below are instructions for how to build and push this docker image to AWS ECR.
 
 1. Create the `hello_world` repository
 
