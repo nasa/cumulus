@@ -11,17 +11,17 @@ if (isNil(someVar)) console.log('someVar is null or undefined');
 
 ## API
 
-### negate(predicate)
+### `negate(predicate)`
 
 Creates a function that returns the opposite of the predicate function.
 
 #### Arguments
 
-**predicate (Function)**: the predicate to negate
+- **`predicate (Function)`**: the predicate to negate
 
 #### Returns
 
-**(Function)**: the new negated function
+- **`(Function)`**: the new negated function
 
 #### Example
 
