@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added Apache logs to cumulus api and distribution lambdas
 - **CUMULUS-1119** - Added `@cumulus/integration-tests/api/EarthdataLogin.getEarthdataLoginRedirectResponse` helper for integration tests to handle login with Earthdata and to return response from redirect to Cumulus API
 - **CUMULUS-673** Added `@cumulus/common/file/getFileChecksumFromStream` to get file checksum from a readable stream
+- **CUMULUS-802** Added `@cumulus/deployment` ability to configure Fargate task definitions via `config.yml`. Configuration is possible through defining `ecs.tasks` where `fargate` is a truthy object.
+  * Added documentation and files for deploying a `hello_world` docker image to be used with the `fargate` workflow.
+  * Added `sclaing/scalingSpec.js`
 
 ### Fixed
 - CUMULUS-1123
@@ -59,6 +62,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Renamed `DISTRIBUTION_URL` environment variable to `DISTRIBUTION_ENDPOINT`
   - Renamed `DEPLOYMENT_ENDPOINT` environment variable to `DISTRIBUTION_REDIRECT_ENDPOINT`
   - Renamed `API_ENDPOINT` environment variable to `TOKEN_REDIRECT_ENDPOINT`
+- **CUMULUS-802**
+  - Modified `@cumulus/deployment/iam` policies for `ECSRole` and `StepRole`; `StepRole` now uses `iam:PassRole` so the Step Function role can be assumed by our ECS role, [eference](https://stackoverflow.com/questions/48997463/ecs-unable-to-assume-role/49016565#49016565).
 
 ### Deprecated
 `@cmrjs/ingestConcept`, instead use the CMR object methods. `@cmrjs/CMR.ingestGranule` or `@cmrjs/CMR.ingestCollection`
