@@ -9,6 +9,17 @@ const { isNil } = require('@cumulus/common/util');
 if (isNil(someVar)) console.log('someVar is null or undefined');
 ```
 
+## Function list
+* [deprecate](#deprecatename-version-alternative)
+* [isNil](#isnilx)
+* [isNull](#isnullx)
+* [isUndefined](#isundefinedx)
+* [negate](#negatepredicate)
+* [noop](#noop)
+* [sleep](#sleepwaitperiodms)
+* [omit](#omitobjectin-keys)
+* [uuid](#uuid)
+
 ## API
 
 ### deprecate(name, version, [alternative])
