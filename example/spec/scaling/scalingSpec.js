@@ -53,8 +53,8 @@ describe('When a task is configured to run in Docker', () => {
       await Promise.all(completions);
     });
 
-    // Number of tasks using the Fargate launch type, per Region, per account is supposedly 50.
-    // But I was able to run more than 50. For Fargate doe we care?
+    // Number of tasks using the Fargate launch type, per Region, per account is reported by AWS to be 50.
+    // - but more than 50 have been run in testing concurrently.
     // https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service_limits.html
     it('adds new resources able to handle the load and does not add new resources to handle the load', async () => {
       await sleep(5000);
@@ -69,8 +69,6 @@ describe('When a task is configured to run in Docker', () => {
       expect(stats.runningFargateTasksCount + stats.pendingFargateTasksCount).toEqual(0);
     });
 
-    // and it is at its minimum allowable resources, it does not remove excessive resources
-    // A test for ^^ makes sense
     it('does not remove excessive resources', async () => {
       const stats = await getClusterStats({ statTypes: ['runningEC2TasksCount'] });
       expect(stats.runningEC2TasksCount).toEqual(1);
