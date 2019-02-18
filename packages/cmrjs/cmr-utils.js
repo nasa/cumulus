@@ -369,7 +369,6 @@ function mergeURLs(original, updated, removed = []) {
   return [...unchangedOriginals, ...updatedWithMergedOriginals];
 }
 
-
 /**
  * After files are moved, create new online access URLs and then update the S3
  * UMMG cmr.json file with this information.

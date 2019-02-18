@@ -196,11 +196,12 @@ async function serveApi(user, stackName = 'localrun') {
 }
 
 /**
- * Prepare the resources for running the Cumulus distribution API Express app.
+ * Prepare and run the Cumulus distribution API Express app.
  *
  * @param {string} stackName - The name of local stack. Used to prefix stack resources.
+ * @param {function} done - Optional callback to fire when app has started listening.
  */
-async function prepareDistributionApi(stackName = 'localrun') {
+async function serveDistributionApi(stackName = 'localrun', done) {
   const port = process.env.PORT || 5002;
   const requiredEnvVars = ['DISTRIBUTION_REDIRECT_ENDPOINT', 'DISTRIBUTION_ENDPOINT'];
 
@@ -223,17 +224,6 @@ async function prepareDistributionApi(stackName = 'localrun') {
   else {
     checkEnvVariablesAreSet(requiredEnvVars);
   }
-}
-
-/**
- * Prepare and run the Cumulus distribution API Express app.
- *
- * @param {string} stackName - The name of local stack. Used to prefix stack resources.
- * @param {function} done - Optional callback to fire when app has started listening.
- */
-async function serveDistributionApi(stackName = 'localrun', done) {
-  const port = process.env.PORT || 5002;
-  await prepareDistributionApi(stackName);
 
   console.log(`Starting server on port ${port}`);
   const { distributionApp } = require('../app/distribution'); // eslint-disable-line global-require
@@ -241,7 +231,6 @@ async function serveDistributionApi(stackName = 'localrun', done) {
 }
 
 module.exports = {
-  prepareDistributionApi,
   serveApi,
   serveDistributionApi
 };
