@@ -324,8 +324,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
               fileStream = getDistributionApiFileStream(fileUrl, accessToken);
             }
             else if (bucketsConfig.type(file.bucket) === 'public') {
-              const s3Url = getPublicS3FileUrl({ bucket: file.bucket, key: file.filepath });
-              fileStream = got.stream(s3Url);
+              fileStream = got.stream(url);
             }
 
             // Compare checksum of downloaded file with expected checksum.
