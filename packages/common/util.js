@@ -1,5 +1,15 @@
 'use strict';
 
+/**
+ * Simple utility functions
+ * @module
+ *
+ * @example
+ * const { isNil } = require('@cumulus/common/util');
+ *
+ * isNil(undefined); // => true
+ */
+
 const fs = require('fs');
 const isNil = require('lodash.isnil');
 const omitBy = require('lodash.omitby');
@@ -27,7 +37,7 @@ exports.deprecate = (name, version, alternative) => {
  * Wait for the defined number of milliseconds
  *
  * @param {number} waitPeriodMs - number of milliseconds to wait
- * @returns {Promise.<undefined>} - promise resolves after a given time period
+ * @returns {Promise.<undefined>} promise resolves after a given time period
  */
 exports.sleep = (waitPeriodMs) =>
   (new Promise((resolve) =>
@@ -38,7 +48,8 @@ exports.sleep = (waitPeriodMs) =>
  * mkdtempSync in node.js for various platforms and versions
  *
  * @param {string} name - A base name for the temp dir, to be uniquified for the final name
- * @returns {string} - The absolute path to the created dir
+ * @returns {string} The absolute path to the created dir
+ * @private
  */
 exports.mkdtempSync = (name) => {
   const dirname = ['gitc', name, +new Date()].join('_');
@@ -49,7 +60,9 @@ exports.mkdtempSync = (name) => {
 
 /**
  * Generate and return an RFC4122 v4 UUID.
- * @return - An RFC44122 v4 UUID.
+ *
+ * @return {string} An RFC44122 v4 UUID.
+ * @kind function
  */
 exports.uuid = require('uuid/v4');
 
@@ -78,23 +91,61 @@ exports.omit = (objectIn, keys) => {
 };
 
 /**
- * Update the stack of an error
+ * Creates a function that returns the opposite of the predicate function.
+ *
+ * @param {Function} predicate - the predicate to negate
+ * @returns {Function} the new negated function
+ * @kind function
+ */
+exports.negate = (predicate) => (...args) => !predicate.apply(this, args);
+
+exports.isNull = (x) => x === null;
+
+exports.isUndefined = (x) => x === undefined;
+
+/**
+ * Test if a value is null or undefined
+ *
+ * @param {*} x value to check
+ * @returns {boolean}
+ */
+exports.isNil = (x) => exports.isNull(x) || exports.isUndefined(x);
+
+/**
+ * Replace the stack of an error
+ *
+ * Note: This mutates the error that was passed in.
  *
  * @param {Error} error - an Error
- * @param {string} stack - a stack trace
+ * @param {string} newStack - a stack trace
  */
-exports.setErrorStack = (error, stack) => {
+exports.setErrorStack = (error, newStack) => {
   // eslint-disable-next-line no-param-reassign
   error.stack = [
     error.stack.split('\n')[0],
-    ...stack.split('\n').slice(1)
+    ...newStack.split('\n').slice(1)
   ].join('\n');
 };
 
+/**
+ * Rename an object property
+ *
+ * @param {string} from - old property name
+ * @param {string} to - new property name
+ * @param {Object} obj - object to update
+ * @returns {Object} a shallow clone of the object with updated property name
+ */
 exports.renameProperty = (from, to, obj) => {
   const newObj = { ...obj, [to]: obj[from] };
   delete newObj[from];
   return newObj;
 };
 
+/**
+ * Remove properties whose values are `null` or `undefined`
+ *
+ * @param {Object} obj - object to update
+ * @returns {Object} a shallow clone of the object with `null` and `undefined`
+ *   properties removed
+ */
 exports.removeNilProperties = (obj) => omitBy(obj, isNil);
