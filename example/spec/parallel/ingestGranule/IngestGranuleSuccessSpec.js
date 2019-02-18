@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs-extra');
-const urljoin = require('url-join');
 const got = require('got');
 const path = require('path');
 const { URL } = require('url');
@@ -9,11 +8,13 @@ const cloneDeep = require('lodash.clonedeep');
 const difference = require('lodash.difference');
 const includes = require('lodash.includes');
 const intersection = require('lodash.intersection');
+
 const {
   models: {
     Execution, Granule, Collection, Provider
   }
 } = require('@cumulus/api');
+const { serveDistributionApi } = require('@cumulus/api/bin/serve');
 const {
   aws: {
     s3,
@@ -102,6 +103,7 @@ describe('The S3 Ingest Granules workflow', () => {
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
   const newCollectionId = constructCollectionId(collection.name, collection.version);
   const provider = { id: `s3_provider${testSuffix}` };
+
   let workflowExecution = null;
   let failingWorkflowExecution;
   let failedExecutionArn;
@@ -111,6 +113,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let expectedPayload;
   let expectedS3TagSet;
   let postToCmrOutput;
+  let server;
 
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   const granuleModel = new Granule();
@@ -130,7 +133,7 @@ describe('The S3 Ingest Granules workflow', () => {
     process.env.EARTHDATA_BASE_URL = 'https://uat.urs.earthdata.nasa.gov';
   }
 
-  beforeAll(async () => {
+  beforeAll(async (done) => {
     const collectionJson = JSON.parse(fs.readFileSync(`${collectionsDir}/s3_MOD09GQ_006.json`, 'utf8'));
     collectionJson.duplicateHandling = 'error';
     const collectionData = Object.assign({}, collectionJson, {
@@ -188,9 +191,12 @@ describe('The S3 Ingest Granules workflow', () => {
     );
     failedExecutionArn = failingWorkflowExecution.executionArn.split(':');
     failedExecutionName = failedExecutionArn.pop();
+
+    // Use done() to signal end of beforeAll() after distribution API has started up
+    server = await serveDistributionApi(config.stackName, done);
   });
 
-  afterAll(async () => {
+  afterAll(async (done) => {
     // clean up stack state added by test
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
@@ -203,6 +209,7 @@ describe('The S3 Ingest Granules workflow', () => {
         granuleId: inputPayload.granules[0].granuleId
       })
     ]);
+    server.close(done);
   });
 
   it('completes execution with success status', () => {
