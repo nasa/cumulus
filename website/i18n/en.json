@@ -23,6 +23,9 @@
       "data-cookbooks/choice-states": {
         "title": "Choice States"
       },
+      "data-cookbooks/cloudwatch-retention": {
+        "title": "Cloudwatch Retention"
+      },
       "data-cookbooks/cnm-workflow": {
         "title": "CNM Workflow"
       },
@@ -41,11 +44,17 @@
       "data-cookbooks/sns": {
         "title": "SNS Notification in Workflows"
       },
+      "deployment/config_descriptions": {
+        "title": "Configuration Descriptions"
+      },
       "deployment/create_bucket": {
         "title": "Creating an S3 Bucket"
       },
       "deployment/iam_roles": {
         "title": "Cumulus IAM Roles"
+      },
+      "deployment/obtain_cumulus_packages": {
+        "title": "Obtaining Cumulus Packages"
       },
       "deployment/deployment-readme": {
         "title": "How to Deploy Cumulus"
@@ -71,8 +80,29 @@
       "ems_reporting": {
         "title": "EMS Reporting"
       },
+      "features/execution_payload_retention": {
+        "title": "Execution Payload Retention"
+      },
+      "features/dead_letter_queues": {
+        "title": "Dead Letter Queues"
+      },
+      "glossary": {
+        "title": "Cumulus Glossary"
+      },
+      "interfaces": {
+        "title": "Cumulus Interfaces"
+      },
       "lambda_versioning": {
         "title": "Lambda Versioning"
+      },
+      "operator-docs/about-operator-docs": {
+        "title": "About Operator Docs"
+      },
+      "operator-docs/lifecycle-policies": {
+        "title": "Lifecycle Policies"
+      },
+      "operator-docs/update-cumulus-dependencies": {
+        "title": "Update Cumulus Dependencies"
       },
       "cumulus-docs-readme": {
         "title": "Cumulus Description"
@@ -85,6 +115,9 @@
       },
       "team": {
         "title": "Team"
+      },
+      "upgrade/1.11.0": {
+        "title": "Upgrading to Cumulus 1.11.0"
       },
       "upgrade/1.6.0": {
         "title": "Upgrading to Cumulus 1.6.0"
@@ -123,6 +156,60 @@
         "title": "Workflow Configuration How To's"
       },
       "workflows/workflow-triggers": {
+        "title": "Workflow Triggers"
+      },
+      "version-1.11.0-cloudwatch-retention": {
+        "title": "Cloudwatch Retention"
+      },
+      "version-1.11.0-cnm-workflow": {
+        "title": "CNM Workflow"
+      },
+      "version-1.11.0-error-handling": {
+        "title": "Error Handling in Workflows"
+      },
+      "version-1.11.0-setup": {
+        "title": "Data Cookbooks Setup"
+      },
+      "version-1.11.0-iam_roles": {
+        "title": "Cumulus IAM Roles"
+      },
+      "version-1.11.0-deployment-readme": {
+        "title": "How to Deploy Cumulus"
+      },
+      "version-1.11.0-docs-how-to": {
+        "title": "Cumulus Documentation: How To's"
+      },
+      "version-1.11.0-execution_payload_retention": {
+        "title": "Execution Payload Retention"
+      },
+      "version-1.11.0-dead_letter_queues": {
+        "title": "Dead Letter Queues"
+      },
+      "version-1.11.0-about-operator-docs": {
+        "title": "About Operator Docs"
+      },
+      "version-1.11.0-system-documentation": {
+        "title": "Troubleshooting Cumulus"
+      },
+      "version-1.11.0-1.11.0": {
+        "title": "Upgrading to Cumulus 1.11.0"
+      },
+      "version-1.11.0-1.6.0": {
+        "title": "Upgrading to Cumulus 1.6.0"
+      },
+      "version-1.11.0-1.7.0": {
+        "title": "Upgrading to Cumulus 1.7.0"
+      },
+      "version-1.11.0-1.9.0": {
+        "title": "Upgrading to Cumulus 1.9.0"
+      },
+      "version-1.11.0-upgrade-readme": {
+        "title": "Upgrading Cumulus"
+      },
+      "version-1.11.0-developing-workflow-tasks": {
+        "title": "Developing Workflow Tasks"
+      },
+      "version-1.11.0-workflow-triggers": {
         "title": "Workflow Triggers"
       },
       "version-v1.10.1-adding-a-task": {
@@ -181,6 +268,9 @@
       },
       "version-v1.10.1-lambda_versioning": {
         "title": "Lambda Versioning"
+      },
+      "version-v1.10.1-about-operator-docs": {
+        "title": "About Operator Docs"
       },
       "version-v1.10.1-cumulus-docs-readme": {
         "title": "Cumulus Description"
@@ -263,6 +353,9 @@
       "version-v1.10.3-docs-how-to": {
         "title": "Cumulus Documentation: How To's"
       },
+      "version-v1.10.3-about-operator-docs": {
+        "title": "About Operator Docs"
+      },
       "version-v1.10.3-cumulus-docs-readme": {
         "title": "Cumulus Description"
       },
@@ -286,12 +379,49 @@
       },
       "version-v1.10.3-workflow-triggers": {
         "title": "Workflow Triggers"
+      },
+      "version-v1.11.1-about-operator-docs": {
+        "title": "About Operator Docs"
+      },
+      "version-v1.11.2-config_descriptions": {
+        "title": "Configuration Descriptions"
+      },
+      "version-v1.11.2-obtain_cumulus_packages": {
+        "title": "Obtaining Cumulus Packages"
+      },
+      "version-v1.11.2-deployment-readme": {
+        "title": "How to Deploy Cumulus"
+      },
+      "version-v1.11.2-glossary": {
+        "title": "Cumulus Glossary"
+      },
+      "version-v1.11.2-lifecycle-policies": {
+        "title": "Lifecycle Policies"
+      },
+      "version-v1.11.2-update-cumulus-dependencies": {
+        "title": "Update Cumulus Dependencies"
+      },
+      "version-v1.11.2-cumulus-docs-readme": {
+        "title": "Cumulus Description"
+      },
+      "version-v1.11.2-team": {
+        "title": "Team"
+      },
+      "version-v1.11.2-developing-workflow-tasks": {
+        "title": "Developing Workflow Tasks"
+      },
+      "version-v1.11.2-lambda": {
+        "title": "Develop Lambda Functions"
+      },
+      "version-v1.11.2-workflows-readme": {
+        "title": "Workflows"
       }
     },
     "links": {
+      "API Docs": "API Docs",
       "Developer Docs": "Developer Docs",
       "Data-Cookbooks": "Data-Cookbooks",
-      "API Docs": "API Docs",
+      "Operator Docs": "Operator Docs",
       "Team": "Team"
     },
     "categories": {
@@ -304,6 +434,8 @@
       "Cumulus Development": "Cumulus Development",
       "About Cookbooks": "About Cookbooks",
       "Cookbooks": "Cookbooks",
+      "About Operator Docs": "About Operator Docs",
+      "Configuration": "Configuration",
       "Operating and Contributing": "Operating and Contributing"
     }
   },
