@@ -259,7 +259,7 @@ lf-int-test:
       name: lf-private
       type: private
     protected:
-      name: lf-protected
+      name: lf-protected-test
       type: protected
     public:
       name: lf-cumulus-public
