@@ -43,4 +43,4 @@ if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
 fi
 
 echo Unlocking stack
-node ./scripts/lock-stack.js false $DEPLOYMENT
+# node ./scripts/lock-stack.js false $DEPLOYMENT
