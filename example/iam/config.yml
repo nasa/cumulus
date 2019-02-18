@@ -113,7 +113,7 @@ lf-int-test:
       name: lf-cumulus-public
       type: public
     protected-2:
-      name: lf-protected-2
+      name: lf-protected-test
       type: protected
 
 lf-sit:
