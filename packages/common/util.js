@@ -1,5 +1,15 @@
 'use strict';
 
+/**
+ * Simple utility functions
+ * @module
+ *
+ * @example
+ * const { isNil } = require('@cumulus/common/util');
+ *
+ * isNil(undefined); // => true
+ */
+
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -25,7 +35,7 @@ exports.deprecate = (name, version, alternative) => {
  * Wait for the defined number of milliseconds
  *
  * @param {number} waitPeriodMs - number of milliseconds to wait
- * @returns {Promise.<undefined>} - promise resolves after a given time period
+ * @returns {Promise.<undefined>} promise resolves after a given time period
  */
 exports.sleep = (waitPeriodMs) =>
   (new Promise((resolve) =>
@@ -36,7 +46,8 @@ exports.sleep = (waitPeriodMs) =>
  * mkdtempSync in node.js for various platforms and versions
  *
  * @param {string} name - A base name for the temp dir, to be uniquified for the final name
- * @returns {string} - The absolute path to the created dir
+ * @returns {string} The absolute path to the created dir
+ * @private
  */
 exports.mkdtempSync = (name) => {
   const dirname = ['gitc', name, +new Date()].join('_');
@@ -47,7 +58,9 @@ exports.mkdtempSync = (name) => {
 
 /**
  * Generate and return an RFC4122 v4 UUID.
- * @return - An RFC44122 v4 UUID.
+ *
+ * @return {string} An RFC44122 v4 UUID.
+ * @kind function
  */
 exports.uuid = require('uuid/v4');
 
@@ -74,3 +87,24 @@ exports.omit = (objectIn, keys) => {
   keysToRemove.forEach((key) => delete objectOut[key]);
   return objectOut;
 };
+
+/**
+ * Creates a function that returns the opposite of the predicate function.
+ *
+ * @param {Function} predicate - the predicate to negate
+ * @returns {Function} the new negated function
+ * @kind function
+ */
+exports.negate = (predicate) => (...args) => !predicate.apply(this, args);
+
+exports.isNull = (x) => x === null;
+
+exports.isUndefined = (x) => x === undefined;
+
+/**
+ * Test if a value is null or undefined
+ *
+ * @param {*} x value to check
+ * @returns {boolean}
+ */
+exports.isNil = (x) => exports.isNull(x) || exports.isUndefined(x);
