@@ -1,0 +1,146 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Error Handling in Workflows · Cumulus Documentation</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="&lt;h1&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; id=&quot;error-handling-in-workflows&quot;&gt;&lt;/a&gt;&lt;a href=&quot;#error-handling-in-workflows&quot; aria-hidden=&quot;true&quot; class=&quot;hash-link&quot;&gt;&lt;svg class=&quot;hash-link-icon&quot; aria-hidden=&quot;true&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;Error Handling in Workflows&lt;/h1&gt;
+"/><meta name="docsearch:version" content="v1.11.1"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Error Handling in Workflows · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/index.html"/><meta property="og:description" content="&lt;h1&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; id=&quot;error-handling-in-workflows&quot;&gt;&lt;/a&gt;&lt;a href=&quot;#error-handling-in-workflows&quot; aria-hidden=&quot;true&quot; class=&quot;hash-link&quot;&gt;&lt;svg class=&quot;hash-link-icon&quot; aria-hidden=&quot;true&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;Error Handling in Workflows&lt;/h1&gt;
+"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>v1.11.1</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class=""><a href="/cumulus/docs/v1.11.1/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/v1.11.1/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class=""><a href="/cumulus/docs/v1.11.1/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class=""><a href="/cumulus/docs/v1.11.1/team" target="_self">Team</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><i></i></div><h2><i>›</i><span>Cookbooks</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">About Cookbooks</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/data-cookbooks/about-cookbooks">About Cookbooks</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/data-cookbooks/setup">Data Cookbooks Setup</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Cookbooks</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/data-cookbooks/hello-world">HelloWorld Workflow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/data-cookbooks/sns">SNS Notification in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/data-cookbooks/sips-workflow">Science Investigator-led Processing Systems (SIPS)</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/data-cookbooks/cnm-workflow">CNM Workflow</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cumulus/docs/v1.11.1/data-cookbooks/error-handling">Error Handling in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/data-cookbooks/choice-states">Choice States</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/data-cookbooks/cloudwatch-retention">Cloudwatch Retention</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              const headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                if (event.target.tagName === 'A') {
+                  document.body.classList.remove('tocActive');
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="error-handling-in-workflows"></a><a href="#error-handling-in-workflows" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Error Handling in Workflows</h1>
+<p>Cumulus Workflow error handling is configurable via Cumulus Workflow Definitions. These workflow definitions are AWS Step Function definitions, and AWS Step Functions enable users to configure what the state machine does next when an exception is thrown. Read more in the AWS docs: <a href="https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html">How Step Functions Works: Error Handling</a>.</p>
+<p>Cumulus Workflow Tasks <em>should</em> throw errors and rely on the state machine logic to handle the error state. Errors and exceptions thrown in Cumulus Workflow Tasks using the Cumulus Message Adapter (CMA) are caught and rethrown by the CMA libraries <em>unless</em> the error name contains <code>WorkflowError</code>.</p>
+<p>The former (tasks which throw errors which are not <code>WorkflowError</code>s) is the expected behavior. However a <code>WorklowError</code> can be used to handle errors that should <em>not</em> result in task failure.</p>
+<h2><a class="anchor" aria-hidden="true" id="workflow-configuration"></a><a href="#workflow-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Workflow Configuration</h2>
+<p>Some best practices for error handling in Cumulus Workflows are:</p>
+<ul>
+<li>Include the <code>sf2snsEndLambdaFunction</code> as a final state (aka the <code>StopStatus</code> state). This broadcasts workflow results to an SNS topic.</li>
+<li>States should include a <code>Catch</code> configuration object which defines the <code>ResultPath</code> to be <code>$.exception</code>. This passes along the entire Cumulus Message to the next state with the addition of the <code>Error</code> and <code>Cause</code> details of the thrown error in the <code>exception</code> key.</li>
+<li>States may be configured to <code>Retry</code> a task on specified failures to handle transient issues, such as those arising from resource allocation throttling, instead of failing the entire workflow. Cumulus supports the AWS retry configuration outlined <a href="https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-errors.html#amazon-states-language-retrying-after-error">here</a> and an example is provided in the <code>HelloWorld</code> step of the <code>RetryPassWorkflow</code> workflow defined in the Cumulus repository's <a href="https://github.com/nasa/cumulus/blob/master/example/workflows.yml">example</a> <code>workflows.yml</code>.</li>
+<li>Tasks downstream of failed tasks should understand how to pass along exceptions if required: If a task throws an error which is caught by the workflow configuration and passed to another state which also uses the CMA, the CMA overrides the exception key to <code>&quot;None&quot;</code> so the exception will not be passed to downstream tasks after the next state. This is okay if the exception is not needed in downstream tasks. However, <code>sf2snsEndLambdaFunction</code> does need an exception to understand the workflow is in a failed state, so the error should be re-thrown in any states between the original failed task and <code>sf2snsEndLambdaFunction</code>. In the example below, <code>CnmResponseFail</code> re-throws any errors passed by upstream tasks.</li>
+<li>If multiple downstream tasks should run after a workflow task has thrown an error, for example sending a failure to a kinesis stream in addition to running the <code>sf2snsEndLambdaFunction</code>, this can handled by creating a second &quot;failure&quot; branch of the workflow.</li>
+</ul>
+<p><strong>Example:</strong></p>
+<p>Note: In the example below, YAML syntax (i.e. <code>&amp;ErrorEqualDefaults</code> and <code>&lt;&lt;: *ErrorEqualDefaults</code>) is used to create references to reusable blocks which makes the definition less repetitive. Read more here: <a href="https://blog.daemonl.com/2016/02/yaml.html">YAML - Anchors, References, Extend</a>.</p>
+<pre><code class="hljs css language-yaml"><span class="hljs-attr">CNMExampleWorkflow:</span>
+<span class="hljs-attr">  Comment:</span> <span class="hljs-string">'Tests Workflow from Kinesis Stream'</span>
+<span class="hljs-attr">  StartAt:</span> <span class="hljs-string">StartStatus</span>
+<span class="hljs-attr">  States:</span>
+<span class="hljs-attr">    StartStatus:</span>
+<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
+<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${SfSnsReportLambdaFunction.Arn}</span>
+<span class="hljs-attr">      Catch:</span>
+<span class="hljs-bullet">        -</span> <span class="hljs-meta">&amp;ErrorEqualDefaults</span>
+<span class="hljs-attr">          ErrorEquals:</span>
+<span class="hljs-bullet">          -</span> <span class="hljs-string">States.ALL</span>
+<span class="hljs-attr">          ResultPath:</span> <span class="hljs-string">'$.exception'</span>
+<span class="hljs-attr">          Next:</span> <span class="hljs-string">CnmResponseFail</span>
+<span class="hljs-attr">      Next:</span> <span class="hljs-string">TranslateMessage</span>
+<span class="hljs-attr">    TranslateMessage:</span>
+<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
+<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${CNMToCMALambdaFunction.Arn}</span>
+<span class="hljs-attr">      Catch:</span>
+<span class="hljs-bullet">        -</span> <span class="hljs-string">&lt;&lt;:</span> <span class="hljs-meta">*ErrorEqualDefaults</span>
+<span class="hljs-attr">      Next:</span> <span class="hljs-string">SyncGranule</span>
+<span class="hljs-attr">    SyncGranule:</span>
+<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
+<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${SyncGranuleLambdaFunction.Arn}</span>
+<span class="hljs-attr">      Catch:</span>
+<span class="hljs-bullet">        -</span> <span class="hljs-string">&lt;&lt;:</span> <span class="hljs-meta">*ErrorEqualDefaults</span>
+<span class="hljs-attr">      Next:</span> <span class="hljs-string">CnmResponse</span>
+<span class="hljs-attr">    CnmResponse:</span> <span class="hljs-meta">&amp;CnmResponseDefaults</span>
+<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
+<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${CnmResponseLambdaFunction.Arn}</span>
+<span class="hljs-attr">      Catch:</span>
+<span class="hljs-bullet">        -</span> <span class="hljs-string">&lt;&lt;:</span> <span class="hljs-meta">*ErrorEqualDefaults</span>
+<span class="hljs-attr">          Next:</span> <span class="hljs-string">StopStatus</span>
+<span class="hljs-attr">      Next:</span> <span class="hljs-string">StopStatus</span>
+<span class="hljs-attr">    CnmResponseFail:</span>
+      <span class="hljs-string">&lt;&lt;:</span> <span class="hljs-meta">*CnmResponseDefaults</span>
+<span class="hljs-attr">      Catch:</span>
+<span class="hljs-bullet">        -</span> <span class="hljs-string">&lt;&lt;:</span> <span class="hljs-meta">*ErrorEqualDefaults</span>
+<span class="hljs-attr">          Next:</span> <span class="hljs-string">StopStatusFail</span>
+<span class="hljs-attr">      Next:</span> <span class="hljs-string">StopStatusFail</span>
+<span class="hljs-attr">    StopStatus:</span> <span class="hljs-meta">&amp;StopStatusDefaults</span>
+<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
+<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${sf2snsEndLambdaFunction.Arn}</span>
+<span class="hljs-attr">      Next:</span> <span class="hljs-string">WorkflowSucceeded</span>
+<span class="hljs-attr">    StopStatusFail:</span>
+      <span class="hljs-string">&lt;&lt;:</span> <span class="hljs-meta">*StopStatusDefaults</span>
+<span class="hljs-attr">      Catch:</span>
+<span class="hljs-attr">        - ErrorEquals:</span>
+<span class="hljs-bullet">          -</span> <span class="hljs-string">States.ALL</span>
+<span class="hljs-attr">          Next:</span> <span class="hljs-string">WorkflowFailed</span>
+<span class="hljs-attr">      Next:</span> <span class="hljs-string">WorkflowFailed</span>
+<span class="hljs-attr">    WorkflowSucceeded:</span>
+<span class="hljs-attr">      Type:</span> <span class="hljs-string">Succeed</span>
+<span class="hljs-attr">    WorkflowFailed:</span>
+<span class="hljs-attr">      Type:</span> <span class="hljs-string">Fail</span>
+<span class="hljs-attr">      Cause:</span> <span class="hljs-string">'Workflow failed'</span>
+</code></pre>
+<p>The above results in a workflow which is visualized in the diagram below:</p>
+<p><img src="/cumulus/docs/assets/kinesis-workflow.png" alt="Kinesis Workflow"></p>
+<h2><a class="anchor" aria-hidden="true" id="summary"></a><a href="#summary" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Summary</h2>
+<p>Error handling should (mostly) be the domain of workflow configuration.</p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/v1.11.1/data-cookbooks/cnm-workflow"><span class="arrow-prev">← </span><span>CNM Workflow</span></a><a class="docs-next button" href="/cumulus/docs/v1.11.1/data-cookbooks/choice-states"><span>Choice States</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#workflow-configuration">Workflow Configuration</a></li><li><a href="#summary">Summary</a></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>

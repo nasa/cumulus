@@ -1,0 +1,272 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Workflows Input &amp; Output · Cumulus Documentation</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="&lt;h1&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; id=&quot;ingest-inputs-and-return-values&quot;&gt;&lt;/a&gt;&lt;a href=&quot;#ingest-inputs-and-return-values&quot; aria-hidden=&quot;true&quot; class=&quot;hash-link&quot;&gt;&lt;svg class=&quot;hash-link-icon&quot; aria-hidden=&quot;true&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;Ingest Inputs and Return Values&lt;/h1&gt;
+"/><meta name="docsearch:version" content="v1.11.1"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Workflows Input &amp; Output · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/index.html"/><meta property="og:description" content="&lt;h1&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; id=&quot;ingest-inputs-and-return-values&quot;&gt;&lt;/a&gt;&lt;a href=&quot;#ingest-inputs-and-return-values&quot; aria-hidden=&quot;true&quot; class=&quot;hash-link&quot;&gt;&lt;svg class=&quot;hash-link-icon&quot; aria-hidden=&quot;true&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;Ingest Inputs and Return Values&lt;/h1&gt;
+"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>v1.11.1</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/v1.11.1/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class=""><a href="/cumulus/docs/v1.11.1/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class=""><a href="/cumulus/docs/v1.11.1/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/v1.11.1/team" target="_self">Team</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><i></i></div><h2><i>›</i><span>What are Cumulus Workflows?</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">About Cumulus</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/cumulus-docs-readme">Cumulus Description</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/architecture">Cumulus Architecture</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/team">Team</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">What are Cumulus Workflows?</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/workflows/workflows-readme">Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/workflows/protocol">Workflow Protocol</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cumulus/docs/v1.11.1/workflows/input_output">Workflows Input &amp; Output</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/workflows/cumulus-task-message-flow">Cumulus Tasks: Message Flow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/workflows/developing-workflow-tasks">Developing Workflow Tasks</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/workflows/lambda">Develop Lambda Functions</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/workflows/docker">Dockerizing Data Processing</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/workflows/workflow-configuration-how-to">Workflow Configuration How To&#x27;s</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/workflows/workflow-triggers">Workflow Triggers</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Deployment</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/deployment/deployment-readme">How to Deploy Cumulus</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/deployment/create_bucket">Creating an S3 Bucket</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/deployment/iam_roles">Cumulus IAM Roles</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/deployment/troubleshoot_deployment">Troubleshooting Cumulus Deployment</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Additional Features</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/data_in_dynamodb">Cumulus Metadata in DynamoDB</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/features/dead_letter_queues">Dead Letter Queues</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/ems_reporting">EMS Reporting</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/features/execution_payload_retention">Execution Payload Retention</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/lambda_versioning">Lambda Versioning</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Cumulus Versions</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/upgrade/upgrade-readme">Upgrading Cumulus</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/upgrade/1.6.0">Upgrading to Cumulus 1.6.0</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/upgrade/1.7.0">Upgrading to Cumulus 1.7.0</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/upgrade/1.9.0">Upgrading to Cumulus 1.9.0</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/upgrade/1.11.0">Upgrading to Cumulus 1.11.0</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Troubleshooting</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/system-documentation/system-documentation">Troubleshooting Cumulus</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Cumulus Development</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/adding-a-task">Contributing a Task</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/docs-how-to">Cumulus Documentation: How To&#x27;s</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              const headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                if (event.target.tagName === 'A') {
+                  document.body.classList.remove('tocActive');
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="ingest-inputs-and-return-values"></a><a href="#ingest-inputs-and-return-values" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Ingest Inputs and Return Values</h1>
+<h2><a class="anchor" aria-hidden="true" id="general-structure"></a><a href="#general-structure" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>General Structure</h2>
+<p>Cumulus uses a common format for all inputs and outputs to workflows. The same format is used for input and output from workflow steps. The common format consists of a JSON object which holds all necessary information about the task execution and AWS environment. Tasks return objects identical in format to their input with the exception of a task-specific <code>payload</code> field. Tasks may also augment their execution metadata.</p>
+<h2><a class="anchor" aria-hidden="true" id="cumulus-message-adapter"></a><a href="#cumulus-message-adapter" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Cumulus Message Adapter</h2>
+<p>The Cumulus Message Adapter and Cumulus Message Adapter libraries help task developers integrate their tasks into a Cumulus workflow. These libraries adapt input and outputs from tasks into the Cumulus Message format. The Scheduler service creates the initial event message by combining the collection configuration, external resource configuration, workflow configuration, and deployment environment settings.  The subsequent workflow messages between tasks must conform to the message schema. By using the Cumulus Message Adapter, individual task Lambda functions only receive the input and output specifically configured for the task, and not non-task-related message fields.</p>
+<p>The Cumulus Message Adapter libraries are called by the tasks with a callback function containing the business logic of the task as a parameter. They first adapt the incoming message to a format more easily consumable by Cumulus tasks, then invoke the task, and then adapt the task response back to the Cumulus message protocol to be sent to the next task.</p>
+<p>A task's Lambda function can be configured to include a Cumulus Message Adapter library which constructs input/output messages and resolves task configurations. In the Lambda function configuration file lambdas.yml, a task Lambda function can be configured to use Cumulus Message Adapter, for example:</p>
+<pre><code class="hljs">DiscoverPdrs:
+  handler: index.handler
+  useMessageAdapter: true
+</code></pre>
+<p>Input to the task application code is a json object with keys:</p>
+<ul>
+<li><code>input</code>: By default, the incoming payload is the payload output from the previous task, or it can be a portion of the payload as configured for the task in the corresponding <code>.yml</code> file in the <code>workflows</code> directory.</li>
+<li><code>config</code>: Task-specific configuration object with URL templates resolved.</li>
+</ul>
+<p>Output from the task application code is returned in and placed in the <code>payload</code> key by default, but the <code>config</code> key can also be used to return just a portion of the task output.</p>
+<h3><a class="anchor" aria-hidden="true" id="cumulus-message-adapter-has-the-following-steps"></a><a href="#cumulus-message-adapter-has-the-following-steps" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Cumulus Message Adapter has the following steps:</h3>
+<h4><a class="anchor" aria-hidden="true" id="1-resolve-url-templates-in-the-task-configuration"></a><a href="#1-resolve-url-templates-in-the-task-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>1. Resolve URL templates in the task configuration</h4>
+<p>In the workflow configuration, each task has its own configuration, and it can use URL template as a value to achieve simplicity or for values only available at execution time. The Cumulus Message Adapter resolves the URL templates and then passes message to next task. For example, given a task which has the following configuration:</p>
+<pre><code class="hljs">Discovery:
+    CumulusConfig:
+      provider: '{$.meta.provider}'
+      inlinestr: 'prefix{meta.foo}suffix'
+      array: '[$.meta.foo]'
+      object: '{$.meta}'
+</code></pre>
+<p>The corresponding Cumulus Message would contain:</p>
+<pre><code class="hljs">{
+  &quot;meta&quot;: {
+    &quot;foo&quot;: &quot;bar&quot;,
+    &quot;provider&quot;: {
+      &quot;id&quot;: &quot;FOO_DAAC&quot;,
+      &quot;anykey&quot;: &quot;anyvalue&quot;
+    },
+    ...
+  },
+  &quot;workflow_config&quot;: {
+    &quot;Discovery&quot;: {
+      &quot;provider: &quot;{{$.meta.provider}}&quot;,
+      &quot;inlinestr&quot;: &quot;prefix{meta.foo}suffix&quot;,
+      &quot;array&quot;: &quot;{[$.meta.foo]}&quot;,
+      &quot;object&quot;: &quot;{{$.meta}}&quot;
+    },
+    ...
+  }
+}
+</code></pre>
+<p>The message sent to the task would be:</p>
+<pre><code class="hljs">{
+  &quot;config&quot; : {
+    &quot;provider: {
+      &quot;id&quot;: &quot;FOO_DAAC&quot;,
+      &quot;anykey&quot;: &quot;anyvalue&quot;
+    },
+    &quot;inlinestr&quot;: &quot;prefixbarsuffix&quot;,
+    &quot;array&quot;: [&quot;bar&quot;]
+    &quot;object&quot;: {
+      &quot;foo&quot;: &quot;bar&quot;,
+      &quot;provider&quot;: {
+        &quot;id&quot;: &quot;FOO_DAAC&quot;,
+        &quot;anykey&quot;: &quot;anyvalue&quot;
+       },
+       ...
+    },
+  },
+  &quot;input&quot;:{...}
+}
+</code></pre>
+<p>URL template variables replace dotted paths inside curly brackets with their corresponding value. If the Cumulus Message Adapter cannot resolve a value, it will ignore the template, leaving it verbatim in the string.  While seemingly complex, this allows significant decoupling of Tasks from one another and the data that drives them. Tasks are able to easily receive runtime configuration produced by previously run tasks and domain data.</p>
+<h4><a class="anchor" aria-hidden="true" id="2-resolve-task-input"></a><a href="#2-resolve-task-input" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>2. Resolve task input</h4>
+<p>By default, the incoming payload is the payload from the previous task.  The task can also be configured to use a portion of the payload its input message.  For example, given a task specifies cumulus_message.input:</p>
+<pre><code class="hljs">ExampleTask:
+  CumulusConfig:
+    cumulus_message:
+        input: '{$.payload.foo}'
+</code></pre>
+<p>The task configuration in the message would be:</p>
+<pre><code class="hljs">{
+  &quot;workflow_config&quot;: {
+    &quot;ExampleTask&quot;: {
+      &quot;cumulus_message&quot;: {
+        &quot;input&quot;: &quot;{{$.payload.foo}}&quot;
+      }
+    }
+  },
+  &quot;payload&quot;: {
+    &quot;foo&quot;: {
+      &quot;anykey&quot;: &quot;anyvalue&quot;
+    }
+  }
+}
+</code></pre>
+<p>The Cumulus Message Adapter will resolve the task input, instead of sending the whole <code>&quot;payload&quot;</code> as task input, the task input would be:</p>
+<pre><code class="hljs">{
+  &quot;input&quot; : {
+    &quot;anykey&quot;: &quot;anyvalue&quot;
+  },
+  &quot;config&quot;: {...}
+}
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="3-resolve-task-output"></a><a href="#3-resolve-task-output" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>3. Resolve task output</h4>
+<p>By default, the task's return value is the next payload.  However, the workflow task configuration can specify a portion of the return value as the next payload, and can also augment values to other fields. Based on the task configuration under <code>cumulus_message.outputs</code>, the Message Adapter uses a task's return value to output a message as configured by the task-specific config defined under <code>workflow_config</code>. The Message Adapter dispatches a &quot;source&quot; to a &quot;destination&quot; as defined by URL templates stored in the task-specific <code>cumulus_message.outputs</code>. The value of the task's return value at the &quot;source&quot; URL is used to create or replace the value of the task's return value at the &quot;destination&quot; URL. For example, given a task specifies cumulus_message.output in its workflow configuration as follows:</p>
+<pre><code class="hljs">ExampleTask:
+  CumulusConfig:
+    cumulus_message:
+        outputs:
+          - source: '{$}'
+            destination: '{$.payload}'
+          - source: '{$.output.anykey}'
+            destination: '{$.meta.baz}'
+</code></pre>
+<p>The corresponding Cumulus Message would be:</p>
+<pre><code class="hljs">{
+  &quot;workflow_config&quot;: {
+    &quot;ExampleTask&quot;: {
+      &quot;cumulus_message&quot;: {
+        &quot;outputs&quot;: [
+          {
+            &quot;source&quot;: &quot;{{$}}&quot;,
+            &quot;destination&quot;: &quot;{{$.payload}}&quot;
+          },
+          {
+            &quot;source&quot;: &quot;{{$.output.anykey}}&quot;,
+            &quot;destination&quot;: &quot;{{$.meta.baz}}&quot;
+          }
+        ]
+      }
+    }
+  },
+  &quot;meta&quot;: {
+    &quot;foo&quot;: &quot;bar&quot;
+  },
+  &quot;payload&quot;: {
+    &quot;anykey&quot;: &quot;anyvalue&quot;
+  }
+}
+</code></pre>
+<p>Given the response from the task is:</p>
+<pre><code class="hljs">{
+  &quot;output&quot;: {
+      &quot;anykey&quot;: &quot;boo&quot;
+  }
+}
+</code></pre>
+<p>The Cumulus Message Adapter would output the following Cumulus Message:</p>
+<pre><code class="hljs">{
+  &quot;workflow_config&quot;: {
+    &quot;ExampleTask&quot;: {
+      &quot;cumulus_message&quot;: {
+        &quot;outputs&quot;: [
+          {
+            &quot;source&quot;: &quot;{{$}}&quot;,
+            &quot;destination&quot;: &quot;{{$.payload}}&quot;
+          },
+          {
+            &quot;source&quot;: &quot;{{$.output.anykey}}&quot;,
+            &quot;destination&quot;: &quot;{{$.meta.baz}}&quot;
+          }
+        ]
+      }
+    }
+  },
+  &quot;meta&quot;: {
+    &quot;foo&quot;: &quot;bar&quot;,
+    &quot;baz&quot;: &quot;boo&quot;
+  },
+  &quot;payload&quot;: {
+    &quot;output&quot;: {
+      &quot;anykey&quot;: &quot;boo&quot;
+    }
+  }
+}
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="4-validate-task-input-output-and-configuration-messages-against-the-schemas-provided"></a><a href="#4-validate-task-input-output-and-configuration-messages-against-the-schemas-provided" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>4. Validate task input, output and configuration messages against the schemas provided.</h4>
+<p>The Cumulus Message Adapter has the capability to validate task input, output and configuration messages against their schemas.  The default location of the schemas is the schemas folder in the top level of the task and the default filenames are input.json, output.json, and config.json. The task can also configure a different schema location.  If no schema can be found, the Cumulus Message Adapter will not validate the messages.</p>
+<h2><a class="anchor" aria-hidden="true" id="common-data-types"></a><a href="#common-data-types" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Common Data Types</h2>
+<h3><a class="anchor" aria-hidden="true" id="remote-urls"></a><a href="#remote-urls" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Remote Urls</h3>
+<p>Input to: sync-http-urls</p>
+<p>Returned by: discover-http-tiles, sync-wms</p>
+<pre><code class="hljs">// Array of remote URLs
+{
+     &quot;url&quot;: &quot;&lt;string&gt;&quot;,     // A single remote URL
+     &quot;version&quot;: &quot;&lt;string&gt;&quot;  // An opaque string that identifies the remote file version.
+                            // This can be used to allow re-fetching of remote resources if
+                            // the change but still have the same URL
+},
+...                         // Potentially more URLs
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="s3-objects"></a><a href="#s3-objects" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>S3 Objects</h3>
+<p>Produced by: sync-http-urls</p>
+<p>Input to: generate-mrf</p>
+<pre><code class="hljs">// Array of S3 objects
+{
+    &quot;Bucket&quot;: &quot;&lt;string&gt;&quot;,  // The S3 bucket. The key's case convention is broken to
+                           // maintain consistency with the S3 SDK/API. These objects
+                           // can (and should) be passed verbatim to the SDK.
+    &quot;Key&quot;: &quot;&lt;string&gt;&quot;      // The S3 object's key.
+}
+...                        // Potentially more objects
+</code></pre>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/v1.11.1/workflows/protocol"><span class="arrow-prev">← </span><span>Workflow Protocol</span></a><a class="docs-next button" href="/cumulus/docs/v1.11.1/workflows/cumulus-task-message-flow"><span>Cumulus Tasks: Message Flow</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#general-structure">General Structure</a></li><li><a href="#cumulus-message-adapter">Cumulus Message Adapter</a><ul class="toc-headings"><li><a href="#cumulus-message-adapter-has-the-following-steps">Cumulus Message Adapter has the following steps:</a></li></ul></li><li><a href="#common-data-types">Common Data Types</a><ul class="toc-headings"><li><a href="#remote-urls">Remote Urls</a></li><li><a href="#s3-objects">S3 Objects</a></li></ul></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>

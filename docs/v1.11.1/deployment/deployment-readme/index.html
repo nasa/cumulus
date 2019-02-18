@@ -1,0 +1,461 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>How to Deploy Cumulus · Cumulus Documentation</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="&lt;h1&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; id=&quot;how-to-deploy-cumulus&quot;&gt;&lt;/a&gt;&lt;a href=&quot;#how-to-deploy-cumulus&quot; aria-hidden=&quot;true&quot; class=&quot;hash-link&quot;&gt;&lt;svg class=&quot;hash-link-icon&quot; aria-hidden=&quot;true&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;How to Deploy Cumulus&lt;/h1&gt;
+"/><meta name="docsearch:version" content="v1.11.1"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="How to Deploy Cumulus · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/index.html"/><meta property="og:description" content="&lt;h1&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; id=&quot;how-to-deploy-cumulus&quot;&gt;&lt;/a&gt;&lt;a href=&quot;#how-to-deploy-cumulus&quot; aria-hidden=&quot;true&quot; class=&quot;hash-link&quot;&gt;&lt;svg class=&quot;hash-link-icon&quot; aria-hidden=&quot;true&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;How to Deploy Cumulus&lt;/h1&gt;
+"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>v1.11.1</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/v1.11.1/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class=""><a href="/cumulus/docs/v1.11.1/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class=""><a href="/cumulus/docs/v1.11.1/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/v1.11.1/team" target="_self">Team</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><i></i></div><h2><i>›</i><span>Deployment</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">About Cumulus</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/cumulus-docs-readme">Cumulus Description</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/architecture">Cumulus Architecture</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/team">Team</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">What are Cumulus Workflows?</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/workflows/workflows-readme">Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/workflows/protocol">Workflow Protocol</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/workflows/input_output">Workflows Input &amp; Output</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/workflows/cumulus-task-message-flow">Cumulus Tasks: Message Flow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/workflows/developing-workflow-tasks">Developing Workflow Tasks</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/workflows/lambda">Develop Lambda Functions</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/workflows/docker">Dockerizing Data Processing</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/workflows/workflow-configuration-how-to">Workflow Configuration How To&#x27;s</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/workflows/workflow-triggers">Workflow Triggers</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Deployment</h3><ul class=""><li class="navListItem navListItemActive"><a class="navItem" href="/cumulus/docs/v1.11.1/deployment/deployment-readme">How to Deploy Cumulus</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/deployment/create_bucket">Creating an S3 Bucket</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/deployment/iam_roles">Cumulus IAM Roles</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/deployment/troubleshoot_deployment">Troubleshooting Cumulus Deployment</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Additional Features</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/data_in_dynamodb">Cumulus Metadata in DynamoDB</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/features/dead_letter_queues">Dead Letter Queues</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/ems_reporting">EMS Reporting</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/features/execution_payload_retention">Execution Payload Retention</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/lambda_versioning">Lambda Versioning</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Cumulus Versions</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/upgrade/upgrade-readme">Upgrading Cumulus</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/upgrade/1.6.0">Upgrading to Cumulus 1.6.0</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/upgrade/1.7.0">Upgrading to Cumulus 1.7.0</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/upgrade/1.9.0">Upgrading to Cumulus 1.9.0</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/upgrade/1.11.0">Upgrading to Cumulus 1.11.0</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Troubleshooting</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/system-documentation/system-documentation">Troubleshooting Cumulus</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Cumulus Development</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/adding-a-task">Contributing a Task</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.1/docs-how-to">Cumulus Documentation: How To&#x27;s</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              const headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                if (event.target.tagName === 'A') {
+                  document.body.classList.remove('tocActive');
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="how-to-deploy-cumulus"></a><a href="#how-to-deploy-cumulus" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>How to Deploy Cumulus</h1>
+<h2><a class="anchor" aria-hidden="true" id="overview"></a><a href="#overview" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Overview</h2>
+<p>This is a guide for deploying a new instance of Cumulus.</p>
+<p>The deployment documentation is current for the following component versions:</p>
+<ul>
+<li><a href="https://github.com/nasa/cumulus">Cumulus</a></li>
+<li><a href="https://github.com/nasa/template-deploy">Deployment Template</a></li>
+<li><a href="https://github.com/nasa/cumulus-dashboard">Cumulus Dashboard</a></li>
+</ul>
+<p>The process involves:</p>
+<ul>
+<li>Creating <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html">AWS S3 Buckets</a>.</li>
+<li>Using <a href="http://devseed.com/kes/">Kes</a> to transform kes templates (<code>cloudformation.template.yml</code>) into <a href="https://aws.amazon.com/cloudformation/getting-started/">AWS CloudFormation</a> stack templates (<code>cloudformation.yml</code>) that are then deployed to AWS.</li>
+<li>Before deploying the Cumulus software, CloudFormation stacks are deployed that create necessary <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html">IAM roles</a> via the <code>deployer</code> and <code>iams</code> stacks.</li>
+<li>The Cumulus software is configured and deployed via the <code>app</code> stack.</li>
+</ul>
+<hr>
+<h2><a class="anchor" aria-hidden="true" id="requirements"></a><a href="#requirements" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Requirements</h2>
+<h4><a class="anchor" aria-hidden="true" id="linux-macos-software-requirements"></a><a href="#linux-macos-software-requirements" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Linux/MacOS software requirements:</h4>
+<ul>
+<li><p>git</p></li>
+<li><p><a href="https://nodejs.org/en/">node 8.10</a> (use <a href="https://github.com/creationix/nvm">nvm</a> to upgrade/downgrade)</p></li>
+<li><p><a href="https://www.npmjs.com/get-npm">npm</a></p></li>
+<li><p>sha1sum or md5sha1sum</p></li>
+<li><p>zip</p></li>
+<li><p>AWS CLI - <a href="https://aws.amazon.com/cli/">AWS command line interface</a></p></li>
+<li><p>python</p></li>
+</ul>
+<h4><a class="anchor" aria-hidden="true" id="credentials"></a><a href="#credentials" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Credentials:</h4>
+<ul>
+<li><p><a href="https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository">CMR</a> username and password.  Can be excluded if you are not exporting metadata to CMR.</p></li>
+<li><p><a href="https://earthdata.nasa.gov/about/science-system-description/eosdis-components/earthdata-login">EarthData Client login</a> username and password. User must have the ability to administer and/or create applications in URS.   It's recommended to obtain an account in the test environment (UAT).</p></li>
+</ul>
+<h4><a class="anchor" aria-hidden="true" id="needed-git-repositories"></a><a href="#needed-git-repositories" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Needed Git Repositories:</h4>
+<ul>
+<li><a href="https://github.com/nasa/cumulus">Cumulus</a> (optional)</li>
+<li><a href="https://github.com/nasa/cumulus-dashboard">Cumulus Dashboard</a></li>
+<li><a href="https://github.com/nasa/template-deploy">Deployment Template</a></li>
+</ul>
+<h2><a class="anchor" aria-hidden="true" id="installation"></a><a href="#installation" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Installation</h2>
+<h4><a class="anchor" aria-hidden="true" id="prepare-daac-deployment-repository"></a><a href="#prepare-daac-deployment-repository" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Prepare DAAC deployment repository</h4>
+<p>_If you already are working with an existing <code>&lt;daac&gt;-deploy</code> repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to <a href="#prepare-aws-configuration">Prepare AWS configuration. </a> _</p>
+<p>Clone template-deploy repo and name appropriately for your DAAC or organization</p>
+<pre><code class="hljs">$ git clone https://github.com/nasa/template-deploy &lt;daac&gt;-deploy
+</code></pre>
+<p>Enter repository root directory</p>
+<pre><code class="hljs">$ cd &lt;daac&gt;-deploy
+</code></pre>
+<p>Then run:</p>
+<pre><code class="hljs">$ npm install
+</code></pre>
+<p><strong>Note</strong>: The npm install command will add the <a href="http://devseed.com/kes/">kes</a> utility to the <code>&lt;daac&gt;-deploy</code>'s <code>node_packages</code> directory and will be utilized later for most of the AWS deployment commands</p>
+<h4><a class="anchor" aria-hidden="true" id="obtain-cumulus-packages"></a><a href="#obtain-cumulus-packages" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Obtain Cumulus Packages</h4>
+<h5><a class="anchor" aria-hidden="true" id="option-1-get-packages-from-npm"></a><a href="#option-1-get-packages-from-npm" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Option 1: Get packages from NPM</h5>
+<p>Packages are installed with npm. A list of Cumulus packages with descriptions and version information can be found <a href="https://www.npmjs.com/org/cumulus">here</a>.</p>
+<p>If you're trying to work with a certain version of a cumulus package or task, the version can be specified in <code>package.json</code> under dependencies. We use semantic versioning (major/minor/patch). You can also configure for automatic updates. Use <code>^</code> to update minor/patch versions automatically and <code>~</code> to automatically update patch versions. For example:</p>
+<pre><code class="hljs">&quot;@cumulus/sync-granule&quot;: &quot;^1.0.0&quot;
+</code></pre>
+<p>To add a new package to your deployment, install via npm. Without a version specified, it will automatically install the latest version. For example:</p>
+<pre><code class="hljs">$ npm install --save @cumulus/deployment
+</code></pre>
+<p>To use the specific version of the package installed during deployment, point the <code>source</code> key in the lambda config to <code>node_modules/@cumulus/&lt;package-name&gt;/dist</code>. This location may vary between packages, so consult the README in each. For example, the following would update patch and minor versions of sync-granule:</p>
+<pre><code class="hljs">SyncGranule:
+  source: 'node_modules/@cumulus/sync-granule/dist/'
+</code></pre>
+<h5><a class="anchor" aria-hidden="true" id="option-2-make-local-copy-of-the-cumulus-repo-and-prepare-it"></a><a href="#option-2-make-local-copy-of-the-cumulus-repo-and-prepare-it" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Option 2: Make local copy of the <code>Cumulus</code> Repo and prepare it.</h5>
+<p>Clone repository</p>
+<pre><code class="hljs">$ git clone https://github.com/nasa/cumulus.git
+</code></pre>
+<p>Change directory to the repository root</p>
+<pre><code class="hljs">$ cd cumulus
+</code></pre>
+<p>Optionally, If you are deploying a particular version(tag), ref or branch of Cumulus core, you should check out that particular reference</p>
+<pre><code class="hljs">$ git checkout \&lt;ref/branch/tag\&gt;
+</code></pre>
+<p>Install and configure the local build environment and dependencies using npm</p>
+<pre><code class="hljs">$ nvm use
+$ npm install
+$ npm run ybootstrap
+</code></pre>
+<p>Build the Cumulus application</p>
+<pre><code class="hljs">$ npm run build
+</code></pre>
+<p>To run the Cumulus deployment with the local code instead of the npm package, use <code>npm link</code> from your deployment repository directory</p>
+<pre><code class="hljs">$ npm link ../cumulus/packages/deployment/ @cumulus/deployment
+</code></pre>
+<p>Note: If you get errors with <code>npm link</code>, try deleting the <code>node_modules</code> folder the package you are trying to link to in the Cumulus repository.</p>
+<h5><a class="anchor" aria-hidden="true" id="copy-the-sample-template-into-your-repository"></a><a href="#copy-the-sample-template-into-your-repository" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Copy the sample template into your repository</h5>
+<p>The <a href="https://github.com/nasa/cumulus"><code>Cumulus</code></a> project contains default configuration values in the <code>app.example</code> folder, however these need to be customized for your Cumulus app.</p>
+<p>Begin by copying the template directory to your project. You will modify it for your DAAC's specific needs later.</p>
+<pre><code class="hljs">$ cp -r ./node_modules/@cumulus/deployment/app.example ./app
+</code></pre>
+<p><strong>Optional:</strong> <a href="https://help.github.com/articles/creating-a-new-repository/">Create a new repository</a> <code>&lt;daac&gt;-deploy</code> so that you can track your DAAC's configuration changes:</p>
+<pre><code class="hljs">$ git remote set-url origin https://github.com/nasa/&lt;daac&gt;-deploy
+$ git push origin master
+</code></pre>
+<p>You can then <a href="https://help.github.com/articles/adding-a-file-to-a-repository-using-the-command-line/">add/commit</a> changes as needed.</p>
+<h4><a class="anchor" aria-hidden="true" id="prepare-aws-configuration"></a><a href="#prepare-aws-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Prepare AWS configuration</h4>
+<p><strong>Set Access Keys:</strong></p>
+<p>You need to make some AWS information available to your environment. If you don't already have the access key and secret access key of an AWS user with IAM Create-User permissions, you must <a href="https://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html">Create Access Keys</a> for such a user with IAM Create-User permissions, then export the access keys:</p>
+<pre><code class="hljs">$ export AWS_ACCESS_KEY_ID=&lt;AWS access key&gt;
+$ export AWS_SECRET_ACCESS_KEY=&lt;AWS secret key&gt;
+$ export AWS_REGION=&lt;region&gt;
+</code></pre>
+<p>If you don't want to set environment variables, <a href="http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html">access keys can be stored locally via the AWS CLI.</a></p>
+<h4><a class="anchor" aria-hidden="true" id="create-s3-buckets"></a><a href="#create-s3-buckets" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create S3 Buckets:</h4>
+<p>See <a href="/cumulus/docs/v1.11.1/deployment/create_bucket">creating s3 buckets</a> for more information on how to create a bucket.</p>
+<p>The following s3 bucket should be created (replacing prefix with whatever you'd like, generally your organization/DAAC's name):</p>
+<ul>
+<li><code>&lt;prefix&gt;-internal</code></li>
+</ul>
+<p>You can create additional s3 buckets based on the needs of your workflows.</p>
+<p>These buckets do not need any non-default permissions to function with Cumulus, however your local security requirements may vary.</p>
+<p><strong>Note</strong>: s3 bucket object names are global and must be unique across all accounts/locations/etc.</p>
+<hr>
+<h2><a class="anchor" aria-hidden="true" id="configure-and-deploy-the-iam-stack"></a><a href="#configure-and-deploy-the-iam-stack" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Configure and Deploy the IAM stack</h2>
+<h5><a class="anchor" aria-hidden="true" id="configure-deployment-with-daac-deploy-iam-configyml"></a><a href="#configure-deployment-with-daac-deploy-iam-configyml" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Configure deployment with <code>&lt;daac&gt;-deploy/iam/config.yml</code></h5>
+<p>The <code>iam</code> configuration creates 6 <a href="http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html">roles</a> and an <a href="http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html">instance profile</a> used internally by the Cumulus stack.</p>
+<p>The various config fields are described below with a sample <code>config.yml</code> at the end.</p>
+<hr>
+<h6><a class="anchor" aria-hidden="true" id="iam-deployment-name"></a><a href="#iam-deployment-name" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>iam-deployment-name:</h6>
+<p>The name (e.g. dev) of the the 'deployment' - this key tells kes which configuration set (in addition to the default values) to use when creating the cloud formation template<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup></p>
+<h6><a class="anchor" aria-hidden="true" id="prefix"></a><a href="#prefix" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>prefix:</h6>
+<p>This value will prefix CloudFormation-created IAM resources and permissions.</p>
+<p><strong>The cumulus stack name must start with <code>&lt;prefix&gt;</code></strong> <sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup></p>
+<h6><a class="anchor" aria-hidden="true" id="stackname"></a><a href="#stackname" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>stackName:</h6>
+<p>The name of this iam stack in CloudFormation (e.g. <prefix>-iam).</p>
+<h6><a class="anchor" aria-hidden="true" id="buckets"></a><a href="#buckets" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>buckets:</h6>
+<p>The buckets created in the <a href="#create-s3-buckets">Create S3 Buckets</a> step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured. A key is used for the buckets to allow for swapping out the bucket names easily.</p>
+<h6><a class="anchor" aria-hidden="true" id="usengappermissionboundary"></a><a href="#usengappermissionboundary" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>useNgapPermissionBoundary:</h6>
+<p>If deploying to a NASA NGAP account, set <code>useNgapPermissionBoundary: true</code>.</p>
+<hr>
+<p><strong>Sample new deployment added to config.yml</strong>:</p>
+<pre><code class="hljs">&lt;iam-deployment-name&gt;:    # e.g. dev (Note: Omit brackets, i.e. NOT &lt;dev&gt;)
+  prefix: &lt;stack-prefix&gt;  # prefixes CloudFormation-created iam resources and permissions
+  stackName: &lt;stack-name&gt; # name of this iam stack in CloudFormation (e.g. &lt;prefix&gt;-iams)
+  system_bucket: '{{buckets.internal.name}}' # Or can specify a different bucket for the system_bucket
+  buckets:
+    internal: # bucket key
+        name: &lt;internal bucket name&gt;
+        type: internal
+
+    private: # bucket key
+        name: &lt;private bucket name&gt;
+        type: private
+
+    protected: # bucket key
+        name: &lt;protected bucket name&gt;
+        type: protected
+
+    public: # bucket key
+        name: &lt;public bucket name&gt;
+        type: public
+</code></pre>
+<p><strong>Deploy <code>iam</code> stack</strong><sup class="footnote-ref"><a href="#fn3" id="fnref3">[3]</a></sup></p>
+<pre><code class="hljs">$ ./node_modules/.bin/kes cf deploy --kes-folder iam --deployment &lt;iam-deployment-name&gt; --template node_modules/@cumulus/deployment/iam --region &lt;region&gt;
+</code></pre>
+<p><strong>Note</strong>: If this deployment fails check the deployment details in the AWS Cloud Formation Console for information. Permissions may need to be updated by your AWS administrator.</p>
+<p>If the <code>iam</code> deployment command  succeeds, you should see 7 new roles in the <a href="https://console.aws.amazon.com/iam/home">IAM Console</a>:</p>
+<ul>
+<li><code>&lt;stack-name&gt;-ecs</code></li>
+<li><code>&lt;stack-name&gt;-lambda-api-gateway</code></li>
+<li><code>&lt;stack-name&gt;-lambda-processing</code></li>
+<li><code>&lt;stack-name&gt;-scaling-role</code></li>
+<li><code>&lt;stack-name&gt;-steprole</code></li>
+<li><code>&lt;stack-name&gt;-distribution-api-lambda</code></li>
+<li><code>&lt;stack-name&gt;-migration-processing</code></li>
+</ul>
+<p>The same information can be obtained from the AWS CLI command: <code>aws iam list-roles</code>.</p>
+<p>The <code>iam</code> deployment also creates an instance profile named <code>&lt;stack-name&gt;-ecs</code> that can be viewed from the AWS CLI command: <code>aws iam list-instance-profiles</code>.</p>
+<hr>
+<h2><a class="anchor" aria-hidden="true" id="configure-and-deploy-the-cumulus-stack"></a><a href="#configure-and-deploy-the-cumulus-stack" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Configure and Deploy the Cumulus stack</h2>
+<p>These updates configure the <a href="#copy-the-sample-template-into-your-repository">copied template</a> from the cumulus repository for your DAAC.</p>
+<p>You should either add a new root-level key for your configuration or modify the existing default configuration key to whatever you'd like your new deployment to be.</p>
+<p>If you're re-deploying based on an existing configuration you can skip this configuration step unless values have been updated <em>or</em> you'd like to add a new deployment to your deployment configuration file.</p>
+<p>**Edit the  <code>&lt;daac&gt;-deploy/app/config.yml</code> file **</p>
+<p>The various configuration sections are described below with a sample <code>config.yml</code> at the end:</p>
+<hr>
+<h6><a class="anchor" aria-hidden="true" id="cumulus-deployment-name"></a><a href="#cumulus-deployment-name" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>cumulus-deployment-name:</h6>
+<p>The name (e.g. dev) of the the 'deployment' - this key tells kes which configuration set (in addition to the default values) to use when creating the cloud formation template<sup class="footnote-ref"><a href="#fn1" id="fnref1:1">[1]</a></sup></p>
+<h6><a class="anchor" aria-hidden="true" id="stackname-1"></a><a href="#stackname-1" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>stackName:</h6>
+<p>The name of this stack in CloudFormation (e.g. <prefix>).    <strong>This stack name must start with the prefix listed in the <a href="#create-iam-roles">IAM</a> role configuration, or the deployment will fail.</strong></p>
+<h6><a class="anchor" aria-hidden="true" id="stacknamenodash"></a><a href="#stacknamenodash" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>stackNameNoDash:</h6>
+<p>A representation of the stack name that has dashes removed. This will be used for components that should be associated with the stack but do not allow dashes in the identifier.</p>
+<h6><a class="anchor" aria-hidden="true" id="vpc"></a><a href="#vpc" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>vpc</h6>
+<p>Configure your virtual private cloud.  You can find <code>&lt;vpc-id&gt;</code> and <code>&lt;subnet-id&gt;</code> values on the <a href="https://console.aws.amazon.com/vpc/home?region=us-east-1#">VPC Dashboard</a>. <code>vpcId</code> from <a href="https://console.aws.amazon.com/vpc/home?region=us-east-1#vpcs:">Your VPCs</a>, and <code>subnets</code> <a href="https://console.aws.amazon.com/vpc/home?region=us-east-1#subnets:">here</a>. When you choose a subnet, be sure to also note its availability zone, to configure <code>ecs</code>.</p>
+<h6><a class="anchor" aria-hidden="true" id="ecs"></a><a href="#ecs" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>ecs</h6>
+<p>Configuration for the Amazon EC2 Container Service (ECS) instance.  Update <code>availabilityZone</code> (or <code>availabilityZones</code> if using multiple AZs) with information from <a href="https://console.aws.amazon.com/vpc/home?region=us-east-1#">VPC Dashboard</a>
+note <code>instanceType</code> and <code>desiredInstances</code> have been selected for a sample install.  You will have to specify appropriate values to deploy and use ECS machines.   See <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html">EC2 Instance Types</a> for more information.</p>
+<p>Also note, if you dont specify the <code>amiid</code>, it will try to use a default, which may or may not exist.</p>
+<h6><a class="anchor" aria-hidden="true" id="buckets-1"></a><a href="#buckets-1" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>buckets</h6>
+<p>The config buckets should map to the same names you used when creating buckets in the <a href="#prepare-aws-configuration">Prepare AWS</a> step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured.</p>
+<h6><a class="anchor" aria-hidden="true" id="iams"></a><a href="#iams" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>iams</h6>
+<p>Add the ARNs for each of the seven roles and one instanceProfile created in the <a href="create-iam-roles">Create IAM Roles</a> step. You can retrieve the ARNs from:</p>
+<pre><code class="hljs">$ aws iam list-roles | grep Arn
+$ aws iam list-instance-profiles | grep Arn
+</code></pre>
+<p>For information on how to locate them in the Console see <a href="iam_roles.md">Locating Cumulus IAM Roles</a>.</p>
+<h6><a class="anchor" aria-hidden="true" id="users"></a><a href="#users" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>users</h6>
+<p>List of EarthData users you wish to have access to your dashboard application.   These users will be populated in your <code>&lt;stackname&gt;-UsersTable</code> <a href="https://console.aws.amazon.com/dynamodb/">DynamoDb</a> (in addition to the default_users defined in the Cumulus default template).</p>
+<hr>
+<h6><a class="anchor" aria-hidden="true" id="sample-configyml"></a><a href="#sample-configyml" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Sample config.yml</h6>
+<pre><code class="hljs">&lt;cumulus-deployment-name&gt;:
+  <span class="hljs-symbol">stackName:</span> &lt;prefix&gt;-cumulus
+  <span class="hljs-symbol">stackNameNoDash:</span> &lt;Prefix&gt;Cumulus
+
+  <span class="hljs-symbol">apiStage:</span> dev
+
+  <span class="hljs-symbol">vpc:</span>
+    <span class="hljs-symbol">vpcId:</span> &lt;vpc-id&gt;
+    <span class="hljs-symbol">subnets:</span>
+      - &lt;subnet-id&gt;
+
+  <span class="hljs-symbol">ecs:</span>
+    <span class="hljs-symbol">instanceType:</span> t2.micro
+    <span class="hljs-symbol">desiredInstances:</span> <span class="hljs-number">0</span>
+    <span class="hljs-symbol">availabilityZone:</span> &lt;subnet-id-zone&gt;
+    <span class="hljs-symbol">amiid:</span> &lt;some-ami-id&gt;
+
+  <span class="hljs-symbol">system_bucket:</span> &lt;prefix-internal&gt;
+
+  <span class="hljs-symbol">buckets:</span>
+    <span class="hljs-symbol">internal:</span>
+        <span class="hljs-symbol">name:</span> &lt;prefix&gt;-internal
+        <span class="hljs-symbol">type:</span> internal
+
+  <span class="hljs-symbol">iams:</span>
+    <span class="hljs-symbol">ecsRoleArn:</span> <span class="hljs-symbol">arn:</span><span class="hljs-symbol">aws:</span>iam::&lt;aws-account-id&gt;<span class="hljs-symbol">:role/&lt;iams-prefix&gt;-ecs</span>
+    <span class="hljs-symbol">lambdaApiGatewayRoleArn:</span> <span class="hljs-symbol">arn:</span><span class="hljs-symbol">aws:</span>iam::&lt;aws-account-id&gt;<span class="hljs-symbol">:role/&lt;iams-prefix&gt;-lambda-api-gateway</span>
+    <span class="hljs-symbol">lambdaProcessingRoleArn:</span> <span class="hljs-symbol">arn:</span><span class="hljs-symbol">aws:</span>iam::&lt;aws-account-id&gt;<span class="hljs-symbol">:role/&lt;iams-prefix&gt;-lambda-processing</span>
+    <span class="hljs-symbol">stepRoleArn:</span> <span class="hljs-symbol">arn:</span><span class="hljs-symbol">aws:</span>iam::&lt;aws-account-id&gt;<span class="hljs-symbol">:role/&lt;iams-prefix&gt;-steprole</span>
+    <span class="hljs-symbol">instanceProfile:</span> <span class="hljs-symbol">arn:</span><span class="hljs-symbol">aws:</span>iam::&lt;aws-account-id&gt;<span class="hljs-symbol">:instance-profile/&lt;iams-prefix&gt;-ecs</span>
+
+  <span class="hljs-symbol">urs_url:</span> <span class="hljs-symbol">https:</span>/<span class="hljs-regexp">/uat.urs.earthdata.nasa.gov/</span> <span class="hljs-comment">#make sure to include the trailing slash</span>
+
+  <span class="hljs-comment"># if not specified the value of the apigateway backend endpoint is used</span>
+  <span class="hljs-comment"># api_backend_url: https://apigateway-url-to-api-backend/ #make sure to include the trailing slash</span>
+
+  <span class="hljs-comment"># if not specified the value of the apigateway dist url is used</span>
+  <span class="hljs-comment"># api_distribution_url: https://apigateway-url-to-distribution-app/ #make sure to include the trailing slash</span>
+
+  <span class="hljs-comment"># URS users who should have access to the dashboard application.</span>
+  <span class="hljs-symbol">users:</span>
+    - <span class="hljs-symbol">username:</span> &lt;user&gt;
+    - <span class="hljs-symbol">username:</span> &lt;user2&gt;
+</code></pre>
+<h5><a class="anchor" aria-hidden="true" id="configure-earthdata-application"></a><a href="#configure-earthdata-application" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Configure EarthData application</h5>
+<p>The Cumulus stack is expected to authenticate with <a href="https://urs.earthdata.nasa.gov/documentation">Earthdata Login</a>. You must create and register a new application. Use the <a href="https://uat.urs.earthdata.nasa.gov">User Acceptance Tools (UAT) site</a> unless you changed <code>urs_url</code> above. Follow the directions on <a href="https://wiki.earthdata.nasa.gov/display/EL/How+To+Register+An+Application">how to register an application.</a>.  Use any url for the <code>Redirect URL</code>, it will be deleted in a later step. Also note the password in step 3 and client ID in step 4 use these to replace <code>clientid</code> and <code>clientpassword</code> in the <code>.env</code> file in the next step.</p>
+<h5><a class="anchor" aria-hidden="true" id="set-up-an-environment-file"></a><a href="#set-up-an-environment-file" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Set up an environment file:</h5>
+<p><em>If you're adding a new deployment to an existing configuration repository or re-deploying an existing Cumulus configuration you should skip to <a href="#deploy-the-cumulus-stack">Deploy the Cumulus Stack</a>, as these values should already be configured.</em></p>
+<p>Copy <code>app/.env.sample to app/.env</code> and add CMR/earthdata client <a href="#Credentials">credentials</a>:</p>
+<pre><code class="hljs">CMR_PASSWORD=cmrpassword
+EARTHDATA_CLIENT_ID=clientid
+EARTHDATA_CLIENT_PASSWORD=clientpassword
+</code></pre>
+<p>Note that the <code>.env.sample</code> file may be hidden, so if you do not see it, show hidden files.</p>
+<p>For security it is highly recommended that you prevent <code>apps/.env</code> from being accidentally committed to the repository by keeping it in the <code>.gitignore</code> file at the root of this repository.</p>
+<h4><a class="anchor" aria-hidden="true" id="deploy"></a><a href="#deploy" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Deploy</h4>
+<p>Once the preceding configuration steps have completed, run the following to deploy Cumulus from your <code>&lt;daac&gt;-deploy</code> root directory:</p>
+<pre><code class="hljs">$ ./node_modules/.bin/kes cf deploy --kes-folder app --region &lt;region&gt; \
+  --template node_modules/@cumulus/deployment/app \
+  --deployment &lt;cumulus-deployment-name&gt;
+</code></pre>
+<p>You can monitor the progess of the stack deployment from the <a href="https://console.aws.amazon.com/cloudformation/home">AWS CloudFormation Console</a>; this step takes a few minutes.</p>
+<p>A successful completion will result in output similar to:</p>
+<pre><code class="hljs"> $ ./node_modules/.bin/kes cf deploy --kes-folder app --region &lt;region&gt;
+   --template node_modules/@cumulus/deployment/app --deployment daac
+Generating keys. It might take a few seconds!
+Keys Generated
+keys uploaded to S3
+
+  adding: sf-starter/ (stored 0%)
+  adding: sf-starter/index.js (deflated 85%)
+
+
+  adding: daac-ops-api/ (stored 0%)
+  adding: daac-ops-api/index.js (deflated 85%)
+
+
+  adding: sf-sns-broadcast/ (stored 0%)
+  adding: sf-sns-broadcast/index.js (deflated 85%)
+
+
+  adding: hello-world/ (stored 0%)
+  adding: hello-world/index.js (deflated 85%)
+
+Uploaded: s3://daac-internal/daac-cumulus/lambdas/&lt;HASHNUMBERS&gt;/hello-world.zip
+Uploaded: s3://daac-internal/daac-cumulus/lambdas/&lt;HASHNUMBERS&gt;/sf-starter.zip
+Uploaded: s3://daac-internal/daac-cumulus/lambdas/&lt;HASHNUMBERS&gt;/sf-sns-broadcast.zip
+Uploaded: s3://daac-internal/daac-cumulus/lambdas/&lt;HASHNUMBERS&gt;/daac-ops-api.zip
+Template saved to app/cloudformation.yml
+Uploaded: s3://&lt;prefix&gt;-internal/&lt;prefix&gt;-cumulus/cloudformation.yml
+Waiting for the CF operation to complete
+CF operation is in state of CREATE_COMPLETE
+
+Here are the important URLs for this deployment:
+
+Distribution:  https://&lt;kido2r7kji&gt;.execute-api.us-east-1.amazonaws.com/dev/
+Add this url to URS:  https://&lt;kido2r7kji&gt;.execute-api.us-east-1.amazonaws.com/dev/redirect
+
+Api:  https://&lt;czbbkscuy6&gt;.execute-api.us-east-1.amazonaws.com/dev/
+Add this url to URS:  https://&lt;czbbkscuy6&gt;.execute-api.us-east-1.amazonaws.com/dev/token
+
+Uploading Workflow Input Templates
+Uploaded: s3://&lt;prefix&gt;-internal/&lt;prefix&gt;-cumulus/workflows/HelloWorldWorkflow.json
+Uploaded: s3://&lt;prefix&gt;-internal/&lt;prefix&gt;-cumulus/workflows/list.json
+</code></pre>
+<p><strong>Note:</strong> Be sure to copy the urls, as you will use them to update your EarthData application.</p>
+<h5><a class="anchor" aria-hidden="true" id="update-earthdata-application"></a><a href="#update-earthdata-application" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Update Earthdata Application.</h5>
+<p>You will need to add two redirect urls to your EarthData login application.
+Login to URS (UAT), and under My Applications -&gt; Application Administration -&gt; use the edit icon of your application.  Then under Manage -&gt; redirect URIs, add the Backend API url returned from the stack deployment, e.g. <code>https://&lt;czbbkscuy6&gt;.execute-api.us-east-1.amazonaws.com/dev/token</code>.
+Also add the Distribution url <code>https://&lt;kido2r7kji&gt;.execute-api.us-east-1.amazonaws.com/dev/redirect</code><sup class="footnote-ref"><a href="#fn4" id="fnref4">[4]</a></sup>. You may also delete the placeholder url you used to create the application.</p>
+<p>If you've lost track of the needed redirect URIs, they can be located on the <a href="https://console.aws.amazon.com/apigateway">API Gateway</a>.  Once there select <code>&lt;prefix&gt;-backend</code> and/or <code>&lt;prefix&gt;-distribution</code>, <code>Dashboard</code> and utilizing the base URL at the top of the page that is accompanied by the text <code>Invoke this API at:</code>.   Make sure to append <code>/token</code> for the backend URL and <code>/redirect</code> to the distribution URL.</p>
+<hr>
+<h2><a class="anchor" aria-hidden="true" id="deploy-cumulus-dashboard"></a><a href="#deploy-cumulus-dashboard" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Deploy Cumulus dashboard</h2>
+<h3><a class="anchor" aria-hidden="true" id="prepare-aws"></a><a href="#prepare-aws" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Prepare AWS</h3>
+<p><strong>Create S3 bucket for dashboard:</strong></p>
+<ul>
+<li>Create it, e.g. <code>&lt;prefix&gt;-dashboard</code>. Use the command line or console as you did when <a href="#Prepare-AWS-configuration">preparing AWS configuration</a>.</li>
+<li>Configure the bucket to host a website:
+<ul>
+<li>AWS S3 console: Select <code>&lt;prefix&gt;-dashboard</code> bucket then, &quot;Properties&quot; -&gt; &quot;Static Website Hosting&quot;, point to <code>index.html</code></li>
+<li>CLI: <code>aws s3 website s3://&lt;prefix&gt;-dashboard --index-document index.html</code></li>
+</ul></li>
+<li>The bucket's url will be <code>http://&lt;prefix&gt;-dashboard.s3-website-&lt;region&gt;.amazonaws.com</code> or you can find it on the AWS console via &quot;Properties&quot; -&gt; &quot;Static website hosting&quot; -&gt; &quot;Endpoint&quot;</li>
+<li>Ensure the bucket's access permissions allow your deployment user access to write to the bucket</li>
+</ul>
+<h3><a class="anchor" aria-hidden="true" id="install-dashboard"></a><a href="#install-dashboard" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Install dashboard</h3>
+<p>To install the dashboard clone the Cumulus-dashboard repository into the root deploy directory and install dependencies with <code>npm install</code>:</p>
+<pre><code class="hljs">$ git clone https://github.com/nasa/cumulus-dashboard
+$ cd cumulus-dashboard
+$ nvm use
+$ npm install
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="dashboard-configuration"></a><a href="#dashboard-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Dashboard configuration</h3>
+<p>Configure dashboard:</p>
+<p>Update config in <code>cumulus-dashboard/app/scripts/config/config.js</code>:</p>
+<p>replace the default apiRoot <code>https://wjdkfyb6t6.execute-api.us-east-1.amazonaws.com/dev/</code> with your app's apiroot.<sup class="footnote-ref"><a href="#fn5" id="fnref5">[5]</a></sup></p>
+<pre><code class="hljs">apiRoot: process.env.APIROOT || 'https://&lt;czbbkscuy6&gt;.execute-api.us-east-1.amazonaws.com/dev/'
+</code></pre>
+<p><strong>Note</strong>  environmental variables are available during the build: <code>APIROOT</code>, <code>DAAC_NAME</code>, <code>STAGE</code>, <code>HIDE_PDR</code>, any of these can be set on the command line to override the values contained in <code>config.js</code> when running the build below.</p>
+<p>Build the dashboard from the dashboard repository root directory, <code>cumulus-dashboard</code>:</p>
+<pre><code class="hljs">  $ npm run build
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="dashboard-deployment"></a><a href="#dashboard-deployment" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Dashboard deployment:</h3>
+<p>Deploy dashboard to s3 bucket from the <code>cumulus-dashboard</code> directory:</p>
+<p>Using AWS CLI:</p>
+<pre><code class="hljs">  $ aws s3 sync dist s3://&lt;prefix&gt;-dashboard --acl public-read
+</code></pre>
+<p>From the S3 Console:</p>
+<ul>
+<li>Open the <code>&lt;prefix&gt;-dashboard</code> bucket, click 'upload'. Add the contents of the 'dist' subdirectory to the upload. Then select 'Next'. On the permissions window allow the public to view. Select 'Upload'.</li>
+</ul>
+<p>You should be able to visit the dashboard website at <code>http://&lt;prefix&gt;-dashboard.s3-website-&lt;region&gt;.amazonaws.com</code> or find the url
+<code>&lt;prefix&gt;-dashboard</code> -&gt; &quot;Properties&quot; -&gt; &quot;Static website hosting&quot; -&gt; &quot;Endpoint&quot; and login with a user that you configured for access in the <a href="#configure-cumulus-stack">Configure Cumulus Stack</a> step.</p>
+<hr>
+<h2><a class="anchor" aria-hidden="true" id="updating-cumulus-deployment"></a><a href="#updating-cumulus-deployment" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Updating Cumulus deployment</h2>
+<p>Once deployed for the first time, any future updates to the role/stack configuration files/version of Cumulus can be deployed and will update the appropriate portions of the stack as needed.</p>
+<h2><a class="anchor" aria-hidden="true" id="update-roles"></a><a href="#update-roles" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Update roles</h2>
+<pre><code class="hljs">$ ./node_modules/.bin/kes cf deploy --kes-folder iam --deployment &lt;deployment-name&gt; \
+  --region &lt;region&gt; # e.g. us-east-1
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="cumulus-versioning"></a><a href="#cumulus-versioning" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Cumulus Versioning</h2>
+<p>Cumulus uses a global versioning approach, meaning version numbers are consistent across all packages and tasks, and semantic versioning to track major, minor, and patch version (i.e. 1.0.0). We use Lerna to manage versioning. Any change will force lerna to increment the version of all packages.</p>
+<h3><a class="anchor" aria-hidden="true" id="publishing-to-npm"></a><a href="#publishing-to-npm" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Publishing to NPM</h3>
+<pre><code class="hljs">$ lerna publish
+</code></pre>
+<p>To specify the level of change for the new version</p>
+<pre><code class="hljs">$ lerna publish --cd-version (major | minor | patch | prerelease)
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="update-cumulus"></a><a href="#update-cumulus" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Update Cumulus</h2>
+<pre><code class="hljs">$ kes cf deploy --kes-folder config --region &lt;region&gt; \
+  --deployment &lt;deployment-name&gt;
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="footnotes"></a><a href="#footnotes" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Footnotes:</h3>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1"  class="footnote-item"><p>This value is used by kes only to identify the configuration set to use and should not appear in any AWS object <a href="#fnref1" class="footnote-backref">↩</a> <a href="#fnref1:1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2"  class="footnote-item"><p>For more on the AWS objects this impacts, you can look through iam/cloudformation.template.yml <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn3"  class="footnote-item"><p>The iam  actions require more permissions than a typical AWS user will have and should be run by an administrator. <a href="#fnref3" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn4"  class="footnote-item"><p>To add another redirect URIs to your application. On EarthData home page, select &quot;My Applications&quot; Scroll down to &quot;Application Administration&quot; and use the edit icon for your application.  Then Manage -&gt; Redirect URIs. <a href="#fnref4" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn5"  class="footnote-item"><p>The API root can be found a number of ways. The easiest is to note it in the output of the app deployment step. But you can also find it from the <code>AWS console -&gt; Amazon API Gateway -&gt; APIs -&gt; &lt;prefix&gt;-cumulus-backend -&gt; Dashboard</code>, and reading the url at the top &quot;invoke this API&quot; <a href="#fnref5" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/v1.11.1/workflows/workflow-triggers"><span class="arrow-prev">← </span><span>Workflow Triggers</span></a><a class="docs-next button" href="/cumulus/docs/v1.11.1/deployment/create_bucket"><span>Creating an S3 Bucket</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#overview">Overview</a></li><li><a href="#requirements">Requirements</a></li><li><a href="#installation">Installation</a></li><li><a href="#configure-and-deploy-the-iam-stack">Configure and Deploy the IAM stack</a></li><li><a href="#configure-and-deploy-the-cumulus-stack">Configure and Deploy the Cumulus stack</a></li><li><a href="#deploy-cumulus-dashboard">Deploy Cumulus dashboard</a><ul class="toc-headings"><li><a href="#prepare-aws">Prepare AWS</a></li><li><a href="#install-dashboard">Install dashboard</a></li><li><a href="#dashboard-configuration">Dashboard configuration</a></li><li><a href="#dashboard-deployment">Dashboard deployment:</a></li></ul></li><li><a href="#updating-cumulus-deployment">Updating Cumulus deployment</a></li><li><a href="#update-roles">Update roles</a></li><li><a href="#cumulus-versioning">Cumulus Versioning</a><ul class="toc-headings"><li><a href="#publishing-to-npm">Publishing to NPM</a></li></ul></li><li><a href="#update-cumulus">Update Cumulus</a><ul class="toc-headings"><li><a href="#footnotes">Footnotes:</a></li></ul></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>
