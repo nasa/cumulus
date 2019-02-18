@@ -4,7 +4,7 @@
 
 Common libraries used in Cumulus.
 
-## Install
+## Usage
 ```
 $ npm install @cumulus/common
 ```
