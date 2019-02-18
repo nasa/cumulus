@@ -15,12 +15,7 @@ if [ -z "$DEPLOYMENT" ]; then
 fi
 export DEPLOYMENT
 
-# This should be able to go away once latest is released
-if [ "$USE_NPM_PACKAGES" = "true" ]; then
-  yarn
-else
-  ./bin/prepare
-fi
+yarn
 
 cd example || exit 1
 
