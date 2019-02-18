@@ -97,8 +97,20 @@ exports.omit = (objectIn, keys) => {
  */
 exports.negate = (predicate) => (...args) => !predicate.apply(this, args);
 
+/**
+ * Test if a value is null
+ *
+ * @param {*} x value to check
+ * @returns {boolean}
+ */
 exports.isNull = (x) => x === null;
 
+/**
+ * Test if a value is undefined
+ *
+ * @param {*} x value to check
+ * @returns {boolean}
+ */
 exports.isUndefined = (x) => x === undefined;
 
 /**

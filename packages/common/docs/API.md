@@ -4,7 +4,7 @@
 
 <dl>
 <dt><a href="#module_string">string</a></dt>
-<dd><p>Utility functions for working with strings</p>
+<dd><p>A collection of utilities for working with URLs</p>
 </dd>
 <dt><a href="#module_URLUtils">URLUtils</a></dt>
 <dd><p>A collection of utilities for working with URLs</p>
@@ -17,7 +17,7 @@
 <a name="module_string"></a>
 
 ## string
-Utility functions for working with strings
+A collection of utilities for working with URLs
 
 **Example**  
 ```js
@@ -199,6 +199,8 @@ isNil(undefined); // => true
     * [.noop()](#module_util.noop) ⇒ <code>undefined</code>
     * [.omit(objectIn, keys)](#module_util.omit) ⇒ <code>Object</code>
     * [.negate(predicate)](#module_util.negate) ⇒ <code>function</code>
+    * [.isNull(x)](#module_util.isNull) ⇒ <code>boolean</code>
+    * [.isUndefined(x)](#module_util.isUndefined) ⇒ <code>boolean</code>
     * [.isNil(x)](#module_util.isNil) ⇒ <code>boolean</code>
 
 <a name="module_util.deprecate"></a>
@@ -267,6 +269,28 @@ Creates a function that returns the opposite of the predicate function.
 | Param | Type | Description |
 | --- | --- | --- |
 | predicate | <code>function</code> | the predicate to negate |
+
+<a name="module_util.isNull"></a>
+
+### util.isNull(x) ⇒ <code>boolean</code>
+Test if a value is null
+
+**Kind**: static method of [<code>util</code>](#module_util)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| x | <code>\*</code> | value to check |
+
+<a name="module_util.isUndefined"></a>
+
+### util.isUndefined(x) ⇒ <code>boolean</code>
+Test if a value is undefined
+
+**Kind**: static method of [<code>util</code>](#module_util)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| x | <code>\*</code> | value to check |
 
 <a name="module_util.isNil"></a>
 
