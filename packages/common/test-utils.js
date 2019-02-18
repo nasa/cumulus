@@ -250,3 +250,30 @@ function jlog(object) {
   console.log(JSON.stringify(object, null, 2));
 }
 exports.jlog = jlog;
+
+const throwThrottlingException = () => {
+  const throttlingException = new Error('ThrottlingException');
+  throttlingException.code = 'ThrottlingException';
+
+  throw throttlingException;
+};
+
+/**
+ * Return a function that throws a ThrottlingException the first time it is called, then returns as
+ * normal any other times.
+ *
+ * @param {Function} fn
+ * @returns {Function}
+ */
+exports.throttleOnce = (fn) => {
+  let throttleNextCall = true;
+
+  return (...args) => {
+    if (throttleNextCall) {
+      throttleNextCall = false;
+      throwThrottlingException();
+    }
+
+    return fn(...args);
+  };
+};

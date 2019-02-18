@@ -7,7 +7,7 @@ const test = require('ava');
 const sinon = require('sinon');
 
 const aws = require('../aws');
-const { randomString } = require('../test-utils');
+const { randomString, throttleOnce } = require('../test-utils');
 
 test('s3Join behaves as expected', (t) => {
   // Handles an array argument
@@ -148,4 +148,17 @@ test('pullStepFunctionEvent returns message from S3', async (t) => {
   finally {
     stub.restore();
   }
+});
+
+test('retryOnThrottlingException() properly retries after ThrottlingExceptions', async (t) => {
+  const asyncSquare = (x) => Promise.resolve(x * x);
+
+  const throttledAsyncSquare = throttleOnce(asyncSquare);
+
+  const throttledAsyncSquareWithRetries = aws.retryOnThrottlingException(throttledAsyncSquare);
+
+  t.is(
+    await throttledAsyncSquareWithRetries(3),
+    9
+  );
 });
