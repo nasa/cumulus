@@ -72,7 +72,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Cloudformation template overrides now work as expected
 
 ### Changed
-
 - CUMULUS-1169
   - Deprecated the `@cumulus/common/step-functions` module.
   - Updated code that queries the StepFunctions API to use the retry-enabled functions from
