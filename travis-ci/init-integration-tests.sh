@@ -16,25 +16,26 @@ fi
 export DEPLOYMENT
 
 if [ "$USE_NPM_PACKAGES" = "true" ]; then
+  cd example
   yarn
 else
   ./bin/prepare
+  cd example
 fi
 
 echo "Locking stack for deployment $DEPLOYMENT"
 
 # Wait for the stack to be available
-cd example
-# LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
+LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
 
-# echo "Locking status $LOCK_EXISTS_STATUS"
+echo "Locking status $LOCK_EXISTS_STATUS"
 
-# while [ "$LOCK_EXISTS_STATUS" = 1 ]; do
-#   echo "Another build is using the ${DEPLOYMENT} stack."
-#   sleep 30
+while [ "$LOCK_EXISTS_STATUS" = 1 ]; do
+  echo "Another build is using the ${DEPLOYMENT} stack."
+  sleep 30
 
-#   LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
-# done
+  LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
+done
 
 (
   ./node_modules/.bin/kes cf deploy \
