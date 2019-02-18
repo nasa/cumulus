@@ -143,7 +143,10 @@ jobs:
     - name: "Deploy packages to integration test stack"
       stage: deployment test setup
       install:
-        - npm install  # Needed to lock stack
+        - npm install
+        - ln -s /dev/stdout ./lerna-debug.log
+        - npm run bootstrap-no-build
+        - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
       env:
