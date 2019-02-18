@@ -9,7 +9,6 @@ const moment = require('moment');
 const omit = require('lodash.omit');
 const os = require('os');
 const path = require('path');
-const urljoin = require('url-join');
 const uuidv4 = require('uuid/v4');
 const encodeurl = require('encodeurl');
 const {
@@ -20,6 +19,7 @@ const {
   errors,
   file: { getFileChecksumFromStream }
 } = require('@cumulus/common');
+const { buildURL } = require('@cumulus/common/URLUtils');
 
 const { sftpMixin } = require('./sftp');
 const { ftpMixin } = require('./ftp');
@@ -47,11 +47,17 @@ class Discover {
     this.useList = event.config.useList;
     this.event = event;
 
-    this.port = this.provider.port || 21;
+    this.port = this.provider.port;
     this.host = this.provider.host;
     this.path = this.collection.provider_path || '/';
 
-    this.endpoint = urljoin(this.host, this.path);
+    this.endpoint = buildURL({
+      protocol: this.provider.protocol,
+      host: this.provider.host,
+      port: this.provider.port,
+      path: this.path
+    });
+
     this.username = this.provider.username;
     this.password = this.provider.password;
 
@@ -170,7 +176,7 @@ class Granule {
     this.collection = collection;
     this.provider = provider;
 
-    this.port = this.provider.port || 21;
+    this.port = this.provider.port;
     this.host = this.provider.host;
     this.username = this.provider.username;
     this.password = this.provider.password;
@@ -647,7 +653,7 @@ function selector(type, protocol) {
 * @returns {Promise} returms a promise that is resolved when the file is copied
 **/
 function copyGranuleFile(source, target, options) {
-  const CopySource = encodeurl(urljoin(source.Bucket, source.Key));
+  const CopySource = encodeurl(`${source.Bucket}/${source.Key}`);
 
   const params = Object.assign({
     CopySource,
@@ -716,7 +722,7 @@ function generateMoveFileParams(sourceFiles, destinations) {
 
     const target = {
       Bucket: destination.bucket,
-      Key: destination.filepath ? urljoin(destination.filepath, fileName) : fileName
+      Key: destination.filepath ? `${destination.filepath}/${file.name}` : file.name
     };
 
     return { source, target, file };

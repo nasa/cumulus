@@ -1,0 +1,75 @@
+{
+  "version-v1.11.2-docs": {
+    "About Cumulus": [
+      "version-v1.11.2-cumulus-docs-readme",
+      "version-v1.11.2-architecture",
+      "version-v1.11.2-interfaces",
+      "version-v1.11.2-glossary",
+      "version-v1.11.2-team"
+    ],
+    "What are Cumulus Workflows?": [
+      "version-v1.11.2-workflows/workflows-readme",
+      "version-v1.11.2-workflows/protocol",
+      "version-v1.11.2-workflows/input_output",
+      "version-v1.11.2-workflows/cumulus-task-message-flow",
+      "version-v1.11.2-workflows/developing-workflow-tasks",
+      "version-v1.11.2-workflows/lambda",
+      "version-v1.11.2-workflows/docker",
+      "version-v1.11.2-workflows/workflow-configuration-how-to",
+      "version-v1.11.2-workflows/workflow-triggers"
+    ],
+    "Deployment": [
+      "version-v1.11.2-deployment/deployment-readme",
+      "version-v1.11.2-deployment/create_bucket",
+      "version-v1.11.2-deployment/iam_roles",
+      "version-v1.11.2-deployment/obtain_cumulus_packages",
+      "version-v1.11.2-deployment/config_descriptions",
+      "version-v1.11.2-deployment/troubleshoot_deployment"
+    ],
+    "Additional Features": [
+      "version-v1.11.2-data_in_dynamodb",
+      "version-v1.11.2-features/dead_letter_queues",
+      "version-v1.11.2-ems_reporting",
+      "version-v1.11.2-features/execution_payload_retention",
+      "version-v1.11.2-lambda_versioning"
+    ],
+    "Cumulus Versions": [
+      "version-v1.11.2-upgrade/upgrade-readme",
+      "version-v1.11.2-upgrade/1.6.0",
+      "version-v1.11.2-upgrade/1.7.0",
+      "version-v1.11.2-upgrade/1.9.0",
+      "version-v1.11.2-upgrade/1.11.0"
+    ],
+    "Troubleshooting": [
+      "version-v1.11.2-system-documentation/system-documentation"
+    ],
+    "Cumulus Development": [
+      "version-v1.11.2-adding-a-task",
+      "version-v1.11.2-docs-how-to"
+    ]
+  },
+  "version-v1.11.2-Data Cookbooks": {
+    "About Cookbooks": [
+      "version-v1.11.2-data-cookbooks/about-cookbooks",
+      "version-v1.11.2-data-cookbooks/setup"
+    ],
+    "Cookbooks": [
+      "version-v1.11.2-data-cookbooks/hello-world",
+      "version-v1.11.2-data-cookbooks/sns",
+      "version-v1.11.2-data-cookbooks/sips-workflow",
+      "version-v1.11.2-data-cookbooks/cnm-workflow",
+      "version-v1.11.2-data-cookbooks/error-handling",
+      "version-v1.11.2-data-cookbooks/choice-states",
+      "version-v1.11.2-data-cookbooks/cloudwatch-retention"
+    ]
+  },
+  "version-v1.11.2-Operator Docs": {
+    "About Operator Docs": [
+      "version-v1.11.2-operator-docs/about-operator-docs"
+    ],
+    "Configuration": [
+      "version-v1.11.2-operator-docs/update-cumulus-dependencies",
+      "version-v1.11.2-operator-docs/lifecycle-policies"
+    ]
+  }
+}

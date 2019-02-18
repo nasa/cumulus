@@ -44,7 +44,7 @@ class Discover {
     this.force = force;
 
     // get authentication information
-    this.port = get(this.provider, 'port', 21);
+    this.port = get(this.provider, 'port');
     this.host = get(this.provider, 'host', null);
     this.path = providerPath || '/';
     this.username = get(this.provider, 'username', null);
@@ -128,7 +128,7 @@ class Parse {
     this.folder = folder;
     this.useList = useList;
 
-    this.port = get(this.provider, 'port', 21);
+    this.port = get(this.provider, 'port');
     this.host = get(this.provider, 'host', null);
 
     this.username = get(this.provider, 'username', null);
@@ -280,6 +280,7 @@ function selector(type, protocol) {
   if (type === 'discover') {
     switch (protocol) {
     case 'http':
+    case 'https':
       return HttpDiscover;
     case 'ftp':
       return FtpDiscover;
@@ -294,6 +295,7 @@ function selector(type, protocol) {
   else if (type === 'parse') {
     switch (protocol) {
     case 'http':
+    case 'https':
       return HttpParse;
     case 'ftp':
       return FtpParse;
