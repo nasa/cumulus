@@ -11,11 +11,11 @@ stages:
     if: (type != pull_request AND branch = master) OR commit_message =~ \[run-redeploy-tests\] OR (type != pull_request AND tag =~ ^v\d+.*)
   - name: cleanup integration tests
   - name: deploy
-    if: type != pull_request AND tag =~ ^v\d+.*
+    #if: type != pull_request AND tag =~ ^v\d+.*
   - name: deployment test setup
-    if: type != pull_request AND tag =~ ^v\d+.*
+    #if: type != pull_request AND tag =~ ^v\d+.*
   - name: deployment test
-    if: type != pull_request AND tag =~ ^v\d+.*
+    #if: type != pull_request AND tag =~ ^v\d+.*
 
 jobs:
   include:
