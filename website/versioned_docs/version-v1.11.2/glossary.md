@@ -1,7 +1,8 @@
 ---
-id: glossary
+id: version-v1.11.2-glossary
 title: Cumulus Glossary
 hide_title: true
+original_id: glossary
 ---
 
 # AWS Glossary

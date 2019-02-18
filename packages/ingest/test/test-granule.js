@@ -246,33 +246,6 @@ test("addUrlPathToFile adds the matching collection file config's url_path as th
   t.is(updatedFile.url_path, rightCollectionFileConfig.url_path);
 });
 
-test('getBucket adds the correct url_path and bucket to the file', (t) => {
-  const buckets = {
-    private: {
-      name: 'private-bucket',
-      type: 'private'
-    },
-    right: {
-      name: 'right-bucket',
-      type: 'private'
-    }
-  };
-
-  const rightCollectionFileConfig = { regex: '^right-.*', bucket: 'right' };
-
-  const collectionConfig = {
-    files: [rightCollectionFileConfig]
-  };
-
-  const testGranule = new TestGranule(buckets, collectionConfig, {});
-
-  const file = { name: 'right-file' };
-  const updatedFile = testGranule.getBucket(file);
-
-  t.is(updatedFile.bucket, 'right-bucket');
-  t.is(updatedFile.url_path, '');
-});
-
 test('moveGranuleFile moves a single file between s3 locations', async (t) => {
   const Bucket = randomId('bucket');
   await s3().createBucket({ Bucket }).promise();

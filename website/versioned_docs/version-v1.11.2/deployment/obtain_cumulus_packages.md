@@ -1,7 +1,8 @@
 ---
-id: obtain_cumulus_packages
+id: version-v1.11.2-obtain_cumulus_packages
 title: Obtaining Cumulus Packages
 hide_title: true
+original_id: obtain_cumulus_packages
 ---
 
 # Obtaining Cumulus Packages
