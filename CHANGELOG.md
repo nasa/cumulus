@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+
 - CUMULUS-1171
   - Added `@cumulus/common` API documentation to `packages/common/docs/API.md`
   - Added an `npm run build-docs` task to `@cumulus/common`
@@ -20,6 +21,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added `@cumulus/common/util#isNull()`
   - Added `@cumulus/common/util#isUndefined()`
   - Added `@cumulus/common/util#negate()`
+
+### Changed
+
+- CUMULUS-1171
+  - Fixed provider handling in the API to make it consistent between protocols.
+    Before this change, FTP providers were configured using the `host` and
+    `port` properties. HTTP providers ignored `port` and `protocol`, and stored
+    an entire URL in the `host` property. Updated the API to only accept valid
+    hostnames or IP addresses in the `provider.host` field. Updated ingest code
+    to properly build HTTP and HTTPS URLs from `provider.protocol`,
+    `provider.host`, and `provider.port`.
+  - The default provider port was being set to 21, no matter what protocol was
+    being used. Removed that default.
+
+## [v1.11.2] - 2018-2-15
+
+### Added
+
 - CUMULUS-1169
   - Added a `@cumulus/common/StepFunctions` module. It contains functions for querying the AWS
     StepFunctions API. These functions have the ability to retry when a ThrottlingException occurs.
@@ -53,9 +72,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Cloudformation template overrides now work as expected
 
 ### Changed
-- CUMULUS-1171
-  - Fixed provider handling in the API to make it consistent between protocols.  Before this change, FTP providers were configured using the `host` and `port` properties.  HTTP providers ignored `port` and `protocol`, and stored an entire URL in the `host` property.  Updated the API to only accept valid hostnames or IP addresses in the `provider.host` field.  Updated ingest code to properly build HTTP and HTTPS URLs from `provider.protocol`, `provider.host`, and `provider.port`.
-  - Providers were
+
 - CUMULUS-1169
   - Deprecated the `@cumulus/common/step-functions` module.
   - Updated code that queries the StepFunctions API to use the retry-enabled functions from
@@ -807,8 +824,9 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.11.1...HEAD
-[v1.11.0]: https://github.com/nasa/cumulus/compare/v1.11.0...v1.11.1
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.11.2...HEAD
+[v1.11.2]: https://github.com/nasa/cumulus/compare/v1.11.1...v1.11.2
+[v1.11.1]: https://github.com/nasa/cumulus/compare/v1.11.0...v1.11.1
 [v1.11.0]: https://github.com/nasa/cumulus/compare/v1.10.4...v1.11.0
 [v1.10.4]: https://github.com/nasa/cumulus/compare/v1.10.3...v1.10.4
 [v1.10.3]: https://github.com/nasa/cumulus/compare/v1.10.2...v1.10.3
