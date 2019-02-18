@@ -31,13 +31,21 @@ function getDistributionApiFileStream(fileUrl, accessToken) {
  * Get URL to request file via distribution API
  *
  * @param {Object} params
+ * @param {string} params.distributionEndpoint - Distribution API endpoint
  * @param {string} params.bucket - S3 bucket
  * @param {string} params.key - S3 object key
  *
  * @returns {string} - Distribution API file URL
  */
-function getDistributionFileUrl({ bucket, key }) {
-  return `${process.env.DISTRIBUTION_ENDPOINT}/${bucket}/${key}`;
+function getDistributionFileUrl({
+  distributionEndpoint,
+  bucket,
+  key
+}) {
+  if (!distributionEndpoint) {
+    distributionEndpoint = process.env.DISTRIBUTION_ENDPOINT;
+  }
+  return `${distributionEndpoint}/${bucket}/${key}`;
 }
 
 module.exports = {
