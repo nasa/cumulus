@@ -7,7 +7,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
-
 - CUMULUS-1171
   - Added `@cumulus/common` API documentation to `packages/common/docs/API.md`
   - Added an `npm run build-docs` task to `@cumulus/common`
@@ -23,7 +22,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added `@cumulus/common/util#negate()`
 
 ### Changed
-
 - CUMULUS-1171
   - Fixed provider handling in the API to make it consistent between protocols.
     Before this change, FTP providers were configured using the `host` and
@@ -38,7 +36,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [v1.11.2] - 2018-2-15
 
 ### Added
-
 - CUMULUS-1169
   - Added a `@cumulus/common/StepFunctions` module. It contains functions for querying the AWS
     StepFunctions API. These functions have the ability to retry when a ThrottlingException occurs.
