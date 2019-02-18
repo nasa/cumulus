@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const { getChecksum } = require('../../../lib/fileUtils');
+const { getChecksum } = require('../../../lib/FileUtils');
 
 test('getChecksum() returns the value of the checksum property', (t) => {
   const file = { checksum: 'asdf' };

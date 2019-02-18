@@ -20,7 +20,7 @@ const { renameProperty } = require('@cumulus/common/util');
 
 const Manager = require('./base');
 
-const { buildDatabaseFiles } = require('../lib/fileUtils');
+const { buildDatabaseFiles } = require('../lib/FileUtils');
 const { buildProviderURL } = require('../lib/providerUtils');
 
 const {

@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const { filterDatabaseProperties } = require('../../../lib/fileUtils');
+const { filterDatabaseProperties } = require('../../../lib/FileUtils');
 
 test('filterDatabaseProperties() returns only those properties that belong in the database', (t) => {
   const file = {

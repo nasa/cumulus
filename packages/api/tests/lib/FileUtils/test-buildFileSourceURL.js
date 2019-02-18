@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const { buildFileSourceURL } = require('../../../lib/fileUtils');
+const { buildFileSourceURL } = require('../../../lib/FileUtils');
 
 test('buildFileSourceURL() returns a correct S3 source URL', (t) => {
   const file = {
