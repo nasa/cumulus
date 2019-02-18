@@ -319,7 +319,6 @@ describe('The S3 Ingest Granules workflow', () => {
   describe('the PostToCmr task', () => {
     let bucketsConfig;
     let cmrResource;
-    let response;
     let files;
     let granule;
     let resourceURLs;
@@ -333,13 +332,12 @@ describe('The S3 Ingest Granules workflow', () => {
       granule = postToCmrOutput.payload.granules[0];
       files = granule.files;
       cmrResource = await getOnlineResources(granule);
-      response = await got(cmrResource[2].href);
       resourceURLs = cmrResource.map((resource) => resource.href);
     });
 
     it('has expected payload', () => {
       expect(granule.published).toBe(true);
-      expect(granule.cmrLink.startsWith('https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=')).toBe(true);
+      expect(granule.cmrLink).toEqual(`${getUrl('search')}granules.json?concept_id=${granule.cmrConceptId}`);
 
       // Set the expected CMR values since they're going to be different
       // every time this is run.
