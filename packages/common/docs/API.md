@@ -199,6 +199,8 @@ isNil(undefined); // => true
     * [.noop()](#module_util.noop) ⇒ <code>undefined</code>
     * [.omit(objectIn, keys)](#module_util.omit) ⇒ <code>Object</code>
     * [.negate(predicate)](#module_util.negate) ⇒ <code>function</code>
+    * [.isNull(x)](#module_util.isNull) ⇒ <code>boolean</code>
+    * [.isUndefined(x)](#module_util.isUndefined) ⇒ <code>boolean</code>
     * [.isNil(x)](#module_util.isNil) ⇒ <code>boolean</code>
     * [.setErrorStack(error, newStack)](#module_util.setErrorStack)
     * [.renameProperty(from, to, obj)](#module_util.renameProperty) ⇒ <code>Object</code>
@@ -270,6 +272,28 @@ Creates a function that returns the opposite of the predicate function.
 | Param | Type | Description |
 | --- | --- | --- |
 | predicate | <code>function</code> | the predicate to negate |
+
+<a name="module_util.isNull"></a>
+
+### util.isNull(x) ⇒ <code>boolean</code>
+Test if a value is null
+
+**Kind**: static method of [<code>util</code>](#module_util)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| x | <code>\*</code> | value to check |
+
+<a name="module_util.isUndefined"></a>
+
+### util.isUndefined(x) ⇒ <code>boolean</code>
+Test if a value is undefined
+
+**Kind**: static method of [<code>util</code>](#module_util)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| x | <code>\*</code> | value to check |
 
 <a name="module_util.isNil"></a>
 
