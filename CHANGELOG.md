@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 
+## [v1.11.2] - 2018-2-15
+
 ### Added
+- CUMULUS-1169
+  - Added a `@cumulus/common/StepFunctions` module. It contains functions for querying the AWS
+    StepFunctions API. These functions have the ability to retry when a ThrottlingException occurs.
+  - Added `@cumulus/common/aws.retryOnThrottlingException()`, which will wrap a function in code to
+    retry on ThrottlingExceptions.
+  - Added `@cumulus/common/test-utils.throttleOnce()`, which will cause a function to return a
+    ThrottlingException the first time it is called, then return its normal result after that.
 - CUMULUS-1103 Compare the collection holdings in CMR with Cumulus' internal data store
 - CUMULUS-1099 Add support for UMMG JSON metadata versions > 1.4.
     - If a version is found in the metadata object, that version is used for processing and publishing to CMR otherwise, version 1.4 is assumed.
@@ -37,6 +46,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Cloudformation template overrides now work as expected
 
 ### Changed
+- CUMULUS-1169
+  - Deprecated the `@cumulus/common/step-functions` module.
+  - Updated code that queries the StepFunctions API to use the retry-enabled functions from
+    `@cumulus/common/StepFunctions`
 - CUMULUS-1121
   - Schema validation is now strongly enforced when writing to the database.
     Additional properties are not allowed and will result in a validation error.
@@ -786,8 +799,9 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.11.1...HEAD
-[v1.11.0]: https://github.com/nasa/cumulus/compare/v1.11.0...v1.11.1
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.11.2...HEAD
+[v1.11.2]: https://github.com/nasa/cumulus/compare/v1.11.1...v1.11.2
+[v1.11.1]: https://github.com/nasa/cumulus/compare/v1.11.0...v1.11.1
 [v1.11.0]: https://github.com/nasa/cumulus/compare/v1.10.4...v1.11.0
 [v1.10.4]: https://github.com/nasa/cumulus/compare/v1.10.3...v1.10.4
 [v1.10.3]: https://github.com/nasa/cumulus/compare/v1.10.2...v1.10.3

@@ -1,6 +1,7 @@
 'use strict';
 
-const { sfn, s3 } = require('@cumulus/common/aws');
+const { s3 } = require('@cumulus/common/aws');
+const StepFunctions = require('@cumulus/common/StepFunctions');
 
 /**
  * `SfnStep` provides methods for getting the output of a step within an AWS
@@ -66,15 +67,13 @@ class SfnStep {
    * If there are multiple executions of a step, we currently assume a retry and return
    * either the first passed execution or the last execution if no passing executions exist
    *
-   * @param {string} workflowExecutionArn - Arn of the workflow execution
+   * @param {string} executionArn - Arn of the workflow execution
    * @param {string} stepName - name of the step
    * @returns {List<Object>} objects containing a schedule event, start event, and complete
    * event if exists for each execution of the step, null if cannot find the step
    */
-  async getStepExecutions(workflowExecutionArn, stepName) {
-    const executionHistory = (
-      await sfn().getExecutionHistory({ executionArn: workflowExecutionArn }).promise()
-    );
+  async getStepExecutions(executionArn, stepName) {
+    const executionHistory = await StepFunctions.getExecutionHistory({ executionArn });
 
     // Get the event where the step was scheduled
     const scheduleEvents = executionHistory.events.filter((event) => {
@@ -233,7 +232,6 @@ class SfnStep {
  * `LambdaStep` is a step inside a step function that runs an AWS Lambda function.
  */
 class LambdaStep extends SfnStep {
-  //eslint-disable-next-line require-jsdoc
   constructor() {
     super();
     this.scheduleFailedEvent = 'LambdaFunctionScheduleFailed';
