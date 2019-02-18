@@ -182,7 +182,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
   // This is a sanity check to make sure we actually generated UMM and also
   // grab the location of the UMM file to use when testing move
-  xdescribe('the processing task creates a UMM file', () => {
+  describe('the processing task creates a UMM file', () => {
     let processingTaskOutput;
     let ummFiles;
 
@@ -201,7 +201,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
   });
 
-  xdescribe('the MoveGranules task', () => {
+  describe('the MoveGranules task', () => {
     let moveGranulesTaskOutput;
     let movedFiles;
     let existCheck = [];
@@ -339,7 +339,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
   });
 
-  xdescribe('When moving a granule via the Cumulus API', () => {
+  describe('When moving a granule via the Cumulus API', () => {
     let file;
     let destinationKey;
     let destinations;

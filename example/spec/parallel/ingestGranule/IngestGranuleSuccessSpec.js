@@ -248,7 +248,7 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
   });
 
-  xdescribe('the SyncGranules task', () => {
+  describe('the SyncGranules task', () => {
     let lambdaInput;
     let lambdaOutput;
 
@@ -271,7 +271,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  xdescribe('the MoveGranules task', () => {
+  describe('the MoveGranules task', () => {
     let lambdaOutput;
     let files;
     let movedTaggings;
@@ -414,7 +414,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  xdescribe('an SNS message', () => {
+  describe('an SNS message', () => {
     let existCheck = [];
 
     beforeAll(async () => {
@@ -444,7 +444,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  xdescribe('The Cumulus API', () => {
+  describe('The Cumulus API', () => {
     let workflowConfig;
     beforeAll(() => {
       workflowConfig = getConfigObject(workflowConfigFile, workflowName);
