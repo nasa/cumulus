@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const { getFileName } = require('../../../lib/fileUtils');
+const { getFileName } = require('../../../lib/FileUtils');
 
 test('getFileName() returns the value of the fileName property', (t) => {
   const file = { fileName: 'my-file-name.txt' };
