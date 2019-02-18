@@ -4,7 +4,7 @@
 
 <dl>
 <dt><a href="#module_string">string</a></dt>
-<dd><p>Utility functions for working with strings</p>
+<dd><p>A collection of utilities for working with URLs</p>
 </dd>
 <dt><a href="#module_URLUtils">URLUtils</a></dt>
 <dd><p>A collection of utilities for working with URLs</p>
@@ -17,7 +17,7 @@
 <a name="module_string"></a>
 
 ## string
-Utility functions for working with strings
+A collection of utilities for working with URLs
 
 **Example**  
 ```js
@@ -200,6 +200,9 @@ isNil(undefined); // => true
     * [.omit(objectIn, keys)](#module_util.omit) ⇒ <code>Object</code>
     * [.negate(predicate)](#module_util.negate) ⇒ <code>function</code>
     * [.isNil(x)](#module_util.isNil) ⇒ <code>boolean</code>
+    * [.setErrorStack(error, newStack)](#module_util.setErrorStack)
+    * [.renameProperty(from, to, obj)](#module_util.renameProperty) ⇒ <code>Object</code>
+    * [.removeNilProperties(obj)](#module_util.removeNilProperties) ⇒ <code>Object</code>
 
 <a name="module_util.deprecate"></a>
 
@@ -278,6 +281,47 @@ Test if a value is null or undefined
 | Param | Type | Description |
 | --- | --- | --- |
 | x | <code>\*</code> | value to check |
+
+<a name="module_util.setErrorStack"></a>
+
+### util.setErrorStack(error, newStack)
+Replace the stack of an error
+
+Note: This mutates the error that was passed in.
+
+**Kind**: static method of [<code>util</code>](#module_util)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| error | <code>Error</code> | an Error |
+| newStack | <code>string</code> | a stack trace |
+
+<a name="module_util.renameProperty"></a>
+
+### util.renameProperty(from, to, obj) ⇒ <code>Object</code>
+Rename an object property
+
+**Kind**: static method of [<code>util</code>](#module_util)  
+**Returns**: <code>Object</code> - a shallow clone of the object with updated property name  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| from | <code>string</code> | old property name |
+| to | <code>string</code> | new property name |
+| obj | <code>Object</code> | object to update |
+
+<a name="module_util.removeNilProperties"></a>
+
+### util.removeNilProperties(obj) ⇒ <code>Object</code>
+Remove properties whose values are `null` or `undefined`
+
+**Kind**: static method of [<code>util</code>](#module_util)  
+**Returns**: <code>Object</code> - a shallow clone of the object with `null` and `undefined`
+  properties removed  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| obj | <code>Object</code> | object to update |
 
 
 ---
