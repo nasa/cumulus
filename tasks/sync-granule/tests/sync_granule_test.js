@@ -195,7 +195,8 @@ test.serial('download Granule from HTTP endpoint', async (t) => {
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://127.0.0.1:3030'
+    host: '127.0.0.1',
+    port: 3030
   };
   t.context.event.input.granules[0].files[0].path = '/granules';
 
@@ -352,7 +353,8 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://127.0.0.1:3030'
+    host: '127.0.0.1',
+    port: 3030
   };
 
   event.input.granules[0].files[0].path = '/granules';
@@ -401,7 +403,8 @@ test.serial('download granule with bad checksum in file from HTTP endpoint throw
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://127.0.0.1:3030'
+    host: '127.0.0.1',
+    port: 3030
   };
 
   await validateConfig(t, t.context.event.config);
@@ -419,7 +422,8 @@ test.serial('validate file properties', async (t) => {
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://127.0.0.1:3030'
+    host: '127.0.0.1',
+    port: 3030
   };
   t.context.event.input.granules[0].files[0].path = '/granules';
   const [file] = t.context.event.input.granules[0].files;
