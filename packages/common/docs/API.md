@@ -198,7 +198,7 @@ isNil(undefined); // => true
     * [.uuid()](#module_util.uuid) ⇒ <code>string</code>
     * [.noop()](#module_util.noop) ⇒ <code>undefined</code>
     * [.omit(objectIn, keys)](#module_util.omit) ⇒ <code>Object</code>
-    * [.negate(predicate)](#module_util.negate) ⇒ <code>function</code>
+    * [.setErrorStack(error, newStack)](#module_util.setErrorStack)
     * [.isNull(x)](#module_util.isNull) ⇒ <code>boolean</code>
     * [.isUndefined(x)](#module_util.isUndefined) ⇒ <code>boolean</code>
     * [.isNil(x)](#module_util.isNil) ⇒ <code>boolean</code>
@@ -258,26 +258,20 @@ https://github.com/lodash/lodash/wiki/Roadmap#v500-2019
 | objectIn | <code>Object</code> | input object |
 | keys | <code>string</code> \| <code>Array.&lt;string&gt;</code> | key or list of keys to remove from object |
 
-<a name="module_util.negate"></a>
+<a name="module_util.setErrorStack"></a>
 
-### util.negate(predicate) ⇒ <code>function</code>
-Creates a function that returns the opposite of the predicate function.
+### util.setErrorStack(error, newStack)
+Replace an Error's stack trace with a new stack trace
+
+Note: This mutates the error that is passed in.
 
 **Kind**: static method of [<code>util</code>](#module_util)  
-**Returns**: <code>function</code> - the new negated function  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| predicate | <code>function</code> | the predicate to negate |
+| error | <code>Error</code> | an Error |
+| newStack | <code>string</code> | a stack trace |
 
-**Example**  
-```js
-const isEven = (x) => x % 2 === 0;
-const isOdd = negate(isEven);
-
-isOdd(2); // => false
-isOdd(3); // => true
-```
 <a name="module_util.isNull"></a>
 
 ### util.isNull(x) ⇒ <code>boolean</code>
