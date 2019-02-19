@@ -1,13 +1,21 @@
 'use strict';
 
 const http = require('@cumulus/common/http');
+const isIp = require('is-ip');
 const path = require('path');
 const { PassThrough } = require('stream');
-const urljoin = require('url-join');
 const Crawler = require('simplecrawler');
 const got = require('got');
 const { log, aws: { buildS3Uri, s3 } } = require('@cumulus/common');
+const { isValidHostname } = require('@cumulus/common/string');
+const { buildURL } = require('@cumulus/common/URLUtils');
 const errors = require('@cumulus/common/errors');
+
+const validateHost = (host) => {
+  if (isValidHostname(host) || isIp(host)) return;
+
+  throw new TypeError(`provider.host is not a valid hostname or IP: ${host}`);
+};
 
 module.exports.httpMixin = (superclass) => class extends superclass {
   /**
@@ -16,8 +24,18 @@ module.exports.httpMixin = (superclass) => class extends superclass {
    * @returns {Promise.<Array>} of a list of files
    */
   list() {
+    validateHost(this.provider.host);
+
     const pattern = /<a href="([^>]*)">[^<]+<\/a>/;
-    const c = new Crawler(urljoin(this.host, this.path));
+
+    const c = new Crawler(
+      buildURL({
+        protocol: this.provider.protocol,
+        host: this.provider.host,
+        port: this.provider.port,
+        path: this.path
+      })
+    );
 
     c.timeout = 2000;
     c.interval = 0;
@@ -72,7 +90,14 @@ module.exports.httpMixin = (superclass) => class extends superclass {
    * @returns {Promise.<string>} - the path that the file was saved to
    */
   async download(remotePath, localPath) {
-    const remoteUrl = urljoin(this.host, remotePath);
+    validateHost(this.provider.host);
+
+    const remoteUrl = buildURL({
+      protocol: this.provider.protocol,
+      host: this.provider.host,
+      port: this.provider.port,
+      path: remotePath
+    });
 
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
     try {
@@ -99,7 +124,15 @@ module.exports.httpMixin = (superclass) => class extends superclass {
    * @returns {Promise} s3 uri of destination file
    */
   async sync(remotePath, bucket, key) {
-    const remoteUrl = urljoin(this.host, remotePath);
+    validateHost(this.provider.host);
+
+    const remoteUrl = buildURL({
+      protocol: this.provider.protocol,
+      host: this.provider.host,
+      port: this.provider.port,
+      path: remotePath
+    });
+
     const s3uri = buildS3Uri(bucket, key);
     log.info(`Sync ${remoteUrl} to ${s3uri}`);
 
