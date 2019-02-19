@@ -5,8 +5,6 @@ const got = require('got');
 const path = require('path');
 const { URL } = require('url');
 const cloneDeep = require('lodash.clonedeep');
-const differenceWith = require('lodash.differencewith');
-const isEqual = require('lodash.isequal');
 
 const {
   models: {
@@ -76,6 +74,9 @@ async function getUmmObject(fileLocation) {
   return JSON.parse(ummFile.Body.toString());
 }
 
+const cumulusDocUrl = 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme';
+const isUMMGScienceUrl = (url) => url !== cumulusDocUrl && !url.endsWith('.cmr.json');
+
 describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const testId = createTimestampedTestId(config.stackName, 'IngestUMMGSuccess');
   const testSuffix = createTestSuffix(testId);
@@ -85,7 +86,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const collectionsDir = './data/collections/s3_MOD09GQ_006-umm';
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
   const provider = { id: `s3_provider${testSuffix}` };
-  const cumulusDocUrl = 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme';
   const newCollectionId = constructCollectionId(collection.name, collection.version);
 
   let workflowExecution = null;
@@ -301,8 +301,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         requestOrigin: process.env.DISTRIBUTION_ENDPOINT
       });
 
-      const scienceFileUrls = resourceURLs
-        .filter((url) => url !== cumulusDocUrl && !url.endsWith('.cmr.json'));
+      const scienceFileUrls = resourceURLs.filter(isUMMGScienceUrl);
 
       const checkFiles = await Promise.all(
         scienceFileUrls
@@ -343,7 +342,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     let file;
     let destinationKey;
     let destinations;
-    let originalUmm;
+    let originalUmmUrls;
     let newS3UMMJsonFileLocation;
 
     beforeAll(async () => {
@@ -359,7 +358,8 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         filepath: `${testDataFolder}/${path.dirname(file.filepath)}`
       }];
 
-      originalUmm = await getUmmObject(newS3UMMJsonFileLocation);
+      const originalUmm = await getUmmObject(newS3UMMJsonFileLocation)
+      originalUmmUrls =  originalUmm.RelatedUrls.map((urlObject) => urlObject.URL);
     });
 
     it('returns success upon move', async () => {
@@ -375,7 +375,16 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     it('updates the UMM-G JSON file in S3 with new paths', async () => {
       const updatedUmm = await getUmmObject(newS3UMMJsonFileLocation);
 
-      const relatedUrlDifferences = differenceWith(updatedUmm.RelatedUrls, originalUmm.RelatedUrls, isEqual);
+      const relatedUrlDifferences = updatedUmm.RelatedUrls.filter((urlObject) => {
+        // Skip non-science URLs and public S3 URLs
+        if (!isUMMGScienceUrl(urlObject.URL) ||
+            urlObject.URL.match(/s3\.amazonaws\.com/)) {
+          return false;
+        }
+        const relatedUrl = new URL(urlObject.URL);
+        relatedUrl.host = process.env.DISTRIBUTION_ENDPOINT;
+        return !originalUmmUrls.includes(relatedUrl.toString());
+      });
 
       // Only the file that was moved was updated
       expect(relatedUrlDifferences.length).toEqual(1);
