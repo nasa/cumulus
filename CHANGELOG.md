@@ -6,6 +6,39 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- CUMULUS-1171
+  - Added `@cumulus/common` API documentation to `packages/common/docs/API.md`
+  - Added an `npm run build-docs` task to `@cumulus/common`
+  - Added `@cumulus/common/string#isValidHostname()`
+  - Added `@cumulus/common/string#match()`
+  - Added `@cumulus/common/string#matches()`
+  - Added `@cumulus/common/string#toLower()`
+  - Added `@cumulus/common/string#toUpper()`
+  - Added `@cumulus/common/URLUtils#buildURL()`
+  - Added `@cumulus/common/util#isNil()`
+  - Added `@cumulus/common/util#isNull()`
+  - Added `@cumulus/common/util#isUndefined()`
+  - Added `@cumulus/common/util#negate()`
+
+### Changed
+- CUMULUS-1171
+  - NOTE: This is a breaking change. When applying this upgrade, users will need to:
+    1. Disable all workflow rules
+    2. Update any `http` or `https` providers so that the host field only
+       contains a valid hostname or IP address, and the port field contains the
+       provider port.
+    3. Perform the deployment
+    4. Re-enable workflow rules
+  - Fixed provider handling in the API to make it consistent between protocols.
+    Before this change, FTP providers were configured using the `host` and
+    `port` properties. HTTP providers ignored `port` and `protocol`, and stored
+    an entire URL in the `host` property. Updated the API to only accept valid
+    hostnames or IP addresses in the `provider.host` field. Updated ingest code
+    to properly build HTTP and HTTPS URLs from `provider.protocol`,
+    `provider.host`, and `provider.port`.
+  - The default provider port was being set to 21, no matter what protocol was
+    being used. Removed that default.
 
 ## [v1.11.2] - 2018-2-15
 
