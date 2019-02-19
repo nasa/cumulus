@@ -519,16 +519,43 @@ Resources:
         AttributeType: {{type}}
     {{/each}}
       KeySchema:
-    {{#each this.attributes}}
+    {{#if this.KeySchema}}
+      {{#each this.KeySchema}}
+      - AttributeName: {{this.AttributeName}}
+        KeyType: {{this.KeyType}}
+      {{/each}}
+    {{else}}
+      {{#each this.attributes}}
       - AttributeName: {{name}}
         KeyType: {{schema}}
-    {{/each}}
+      {{/each}}
+    {{/if}}
       ProvisionedThroughput:
         ReadCapacityUnits: {{this.read}}
         WriteCapacityUnits: {{this.write}}
       TableName: {{../stackName}}-{{@key}}
       StreamSpecification:
         StreamViewType: "NEW_AND_OLD_IMAGES"
+    {{#if this.GlobalSecondaryIndexes}}
+      GlobalSecondaryIndexes:
+      {{#each this.GlobalSecondaryIndexes}}
+      - IndexName: {{IndexName}}
+        KeySchema:
+        {{#each this.KeySchema}}
+        - AttributeName: {{this.AttributeName}}
+          KeyType: {{this.KeyType}}
+        {{/each}}
+        {{#if this.Projection}}
+        Projection:
+        {{#each this.Projection}}
+          {{@key}}: {{this}}
+        {{/each}}
+        {{/if}}
+        ProvisionedThroughput:
+          ReadCapacityUnits: {{../read}}
+          WriteCapacityUnits: {{../write}}
+      {{/each}}
+    {{/if}}
 
 {{/each}}
 

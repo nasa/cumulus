@@ -10,12 +10,13 @@ const range = require('lodash.range');
 const sample = require('lodash.sample');
 const sortBy = require('lodash.sortby');
 const sinon = require('sinon');
-const { CMR } = require('@cumulus/cmrjs');
+const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmrjs');
 const { aws, constructCollectionId } = require('@cumulus/common');
 const { randomString } = require('@cumulus/common/test-utils');
 const { sleep } = require('@cumulus/common/util');
+const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 
-const { handler } = require('../../lambdas/create-reconciliation-report');
+const { handler, reconciliationReportForGranules } = require('../../lambdas/create-reconciliation-report');
 const models = require('../../models');
 
 const createBucket = (Bucket) => aws.s3().createBucket({ Bucket }).promise();
@@ -51,44 +52,14 @@ function storeFilesToS3(files) {
   );
 }
 
-// Expect files to have bucket, key, and granuleId properties
-function storeFilesToDynamoDb(filesTableName, files) {
-  const putRequests = files.map((file) => ({
-    PutRequest: {
-      Item: {
-        bucket: { S: file.bucket },
-        key: { S: file.key },
-        granuleId: { S: file.granuleId }
-      }
-    }
-  }));
-
-  // Break the requests into groups of 25
-  const putRequestsChunks = chunk(putRequests, 25);
-
-  const putRequestParams = putRequestsChunks.map((requests) => ({
-    RequestItems: {
-      [filesTableName]: requests
-    }
-  }));
-
-  return pMap(
-    putRequestParams,
-    (params) => aws.dynamodb().batchWriteItem(params).promise(),
-    { concurrency: 1 }
-  );
-}
-
-function storeCollectionsToDynamoDb(tableName, collections) {
-  const putRequests = collections.map((collection) => ({
-    PutRequest: {
-      Item: {
-        name: { S: collection.name },
-        version: { S: collection.version }
-      }
-    }
-  }));
-
+/**
+ * store data to database
+ *
+ * @param {string} tableName table name to store data
+ * @param {Array<Object>} putRequests list of put requests
+ * @returns {undefined} promise of the store requests
+ */
+function storeToDynamoDb(tableName, putRequests) {
   // Break the requests into groups of 25
   const putRequestsChunks = chunk(putRequests, 25);
 
@@ -103,6 +74,34 @@ function storeCollectionsToDynamoDb(tableName, collections) {
     (params) => aws.dynamodb().batchWriteItem(params).promise(),
     { concurrency: 1 }
   );
+}
+
+// Expect files to have bucket, key, and granuleId properties
+function storeFilesToDynamoDb(tableName, files) {
+  const putRequests = files.map((file) => ({
+    PutRequest: {
+      Item: {
+        bucket: { S: file.bucket },
+        key: { S: file.key },
+        granuleId: { S: file.granuleId }
+      }
+    }
+  }));
+
+  return storeToDynamoDb(tableName, putRequests);
+}
+
+function storeCollectionsToDynamoDb(tableName, collections) {
+  const putRequests = collections.map((collection) => ({
+    PutRequest: {
+      Item: {
+        name: { S: collection.name },
+        version: { S: collection.version }
+      }
+    }
+  }));
+
+  return storeToDynamoDb(tableName, putRequests);
 }
 
 async function fetchCompletedReport(Bucket, stackName) {
@@ -124,6 +123,7 @@ async function fetchCompletedReport(Bucket, stackName) {
 
 test.beforeEach(async (t) => {
   process.env.CollectionsTable = randomString();
+  process.env.GranulesTable = randomString();
   process.env.FilesTable = randomString();
   t.context.bucketsToCleanup = [];
   t.context.tablesToCleanup = [];
@@ -137,10 +137,15 @@ test.beforeEach(async (t) => {
   await new models.Collection().createTable();
   t.context.tablesToCleanup.push(process.env.CollectionsTable);
 
+  await new models.Granule().createTable();
+  t.context.tablesToCleanup.push(process.env.GranulesTable);
+
   await new models.FileClass().createTable();
   t.context.tablesToCleanup.push(process.env.FilesTable);
 
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => []);
+  sinon.stub(CMRSearchConceptQueue.prototype, 'peek').callsFake(() => null);
+  sinon.stub(CMRSearchConceptQueue.prototype, 'shift').callsFake(() => null);
 });
 
 test.afterEach.always((t) => {
@@ -150,6 +155,8 @@ test.afterEach.always((t) => {
       models.Manager.deleteTable(TableName))
   ]));
   CMR.prototype.searchCollections.restore();
+  CMRSearchConceptQueue.prototype.peek.restore();
+  CMRSearchConceptQueue.prototype.shift.restore();
 });
 
 test.serial('A valid reconciliation report is generated for no buckets', async (t) => {
@@ -506,4 +513,54 @@ test.serial('A valid reconciliation report is generated when there are both extr
   const reportStartTime = moment(report.reportStartTime);
   const reportEndTime = moment(report.reportEndTime);
   t.true(reportStartTime <= reportEndTime);
+});
+
+test.serial('reconciliationReportForGranules reports discrepancy of granule holdings in CUMULUS and CMR', async (t) => {
+  const shortName = randomString();
+  const version = randomString();
+  const collectionId = constructCollectionId(shortName, version);
+
+  // create granules that are in sync
+  const matchingGrans = range(10).map(() =>
+    fakeGranuleFactoryV2({ collectionId: collectionId, status: 'completed', files: [] }));
+
+  const extraDbGrans = range(2).map(() =>
+    fakeGranuleFactoryV2({ collectionId: collectionId, status: 'completed', files: [] }));
+
+  const extraCmrGrans = range(2).map(() => ({
+    granuleId: randomString(),
+    collectionId: collectionId
+  }));
+
+  const cmrGranules = sortBy(matchingGrans.concat(extraCmrGrans), ['granuleId']).map((granule) => ({
+    umm: {
+      GranuleUR: granule.granuleId,
+      CollectionReference: { ShortName: shortName, Version: version },
+      RelatedUrls: []
+    }
+  }));
+
+  CMRSearchConceptQueue.prototype.peek.restore();
+  CMRSearchConceptQueue.prototype.shift.restore();
+  sinon.stub(CMRSearchConceptQueue.prototype, 'peek').callsFake(() => cmrGranules[0]);
+  sinon.stub(CMRSearchConceptQueue.prototype, 'shift').callsFake(() => cmrGranules.shift());
+
+  await new models.Granule().create(matchingGrans.concat(extraDbGrans));
+
+  const granulesReport = await reconciliationReportForGranules(collectionId);
+
+  const expectedOkGranulesInDb = sortBy(matchingGrans, ['granuleId']).map((gran) =>
+    ({ granuleId: gran.granuleId, collectionId: gran.collectionId, files: gran.files }));
+
+  t.deepEqual(granulesReport.okGranulesInDb, expectedOkGranulesInDb);
+
+  const expectedOkGranuleIds = matchingGrans.map((gran) => gran.granuleId).sort();
+  t.deepEqual(granulesReport.okGranulesInCmr.map((gran) => gran.GranuleUR), expectedOkGranuleIds);
+
+  const expectedOnlyInCumulus = sortBy(extraDbGrans, ['granuleId']).map((gran) =>
+    ({ granuleId: gran.granuleId, collectionId: gran.collectionId }));
+  t.deepEqual(granulesReport.onlyInCumulus, expectedOnlyInCumulus);
+
+  t.deepEqual(granulesReport.onlyInCmr.map((gran) => gran.GranuleUR),
+    extraCmrGrans.map((gran) => gran.granuleId).sort());
 });

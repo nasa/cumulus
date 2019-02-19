@@ -54,6 +54,21 @@ GranulesTable:
     - name: granuleId
       type: S
       schema: HASH
+    - name: collectionId
+      type: S
+  # overrides the default behavior of adding all defined attributes to KeySchema
+  KeySchema:
+    - KeyType: HASH
+      AttributeName: granuleId
+  GlobalSecondaryIndexes:
+    - IndexName: collectionId-granuleId-index
+      KeySchema:
+      - KeyType: HASH
+        AttributeName: collectionId
+      - KeyType: RANGE
+        AttributeName: granuleId
+      Projection:
+        ProjectionType: ALL
 
 PdrsTable:
   read: 5
