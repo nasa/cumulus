@@ -15,9 +15,8 @@ if [ -z "$DEPLOYMENT" ]; then
 fi
 export DEPLOYMENT
 
-yarn
-
 cd example || exit 1
+yarn
 
 # Delete the stack if it's a nightly build
 if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
