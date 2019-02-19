@@ -11,8 +11,6 @@
           "bucket": "",
           "filename": "",
           "fileSize": 1098034,
-          "checksumValue": "8d1ec5c0463e59d26adee87cdbbee816",
-          "checksumType": "md5",
           "path": "replace-me-path",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
         },
