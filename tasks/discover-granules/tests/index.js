@@ -28,7 +28,8 @@ test('discover granules sets the correct dataType for granules', async (t) => {
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://127.0.0.1:3030'
+    host: '127.0.0.1',
+    port: 3030
   };
 
   await validateConfig(t, event.config);
@@ -139,7 +140,8 @@ test('discover granules using HTTP', async (t) => {
   event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://127.0.0.1:3030'
+    host: '127.0.0.1',
+    port: 3030
   };
 
   await validateConfig(t, event.config);
