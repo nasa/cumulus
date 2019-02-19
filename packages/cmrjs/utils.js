@@ -90,6 +90,19 @@ function getUrl(type, cmrProvider) {
   return url;
 }
 
+
+/**
+ * Find the UMM version as a decimal string.
+ * If a version cannot be found on the input object
+ * version 1.4 is assumed and returned.
+ *
+ * @param {Object} umm - UMM metadata object
+ * @returns {string} UMM version for the given object
+ */
+function ummVersion(umm) {
+  return _get(umm, 'MetadataSpecification.Version', '1.4');
+}
+
 /**
  * Posts a given xml string to the validate endpoint of the CMR
  * and returns the results
@@ -140,14 +153,16 @@ async function validate(type, xml, identifier, provider) {
  * @returns {Promise<boolean>} returns true if the document is valid
  */
 async function validateUMMG(ummMetadata, identifier, provider) {
+  const version = ummVersion(ummMetadata);
   let result;
+
   try {
     result = await got.post(`${getUrl('validate', provider)}granule/${identifier}`, {
       json: true,
       body: ummMetadata,
       headers: {
         Accept: 'application/json',
-        'Content-type': 'application/vnd.nasa.cmr.umm+json;version=1.4'
+        'Content-type': `application/vnd.nasa.cmr.umm+json;version=${version}`
       }
     });
 
@@ -160,7 +175,7 @@ async function validateUMMG(ummMetadata, identifier, provider) {
   }
 
   throw new ValidationError(
-    `Validation was not successful, CMR error message: ${JSON.stringify(result)}`
+    `Validation was not successful. UMM metadata Object: ${JSON.stringify(ummMetadata)}`
   );
 }
 
@@ -229,6 +244,7 @@ module.exports = {
   getIp,
   getUrl,
   hostId,
+  ummVersion,
   updateToken,
   validate,
   validateUMMG,

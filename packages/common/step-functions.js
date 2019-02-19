@@ -1,17 +1,16 @@
 'use strict';
 
-const pRetry = require('p-retry');
+// This entire module is deprecated.  Nothing in it is being used, and it should be removed in a
+// future release.  Any StepFunction-related functions should be found in StepFunctions.js.
+
 const uuidv4 = require('uuid/v4');
 
-const { sleep } = require('./util');
+const { deprecate, sleep } = require('./util');
 
-const {
-  isThrottlingException,
-  sfn,
-  toSfnExecutionName
-} = require('./aws');
+const { toSfnExecutionName } = require('./aws');
+const StepFunctions = require('./StepFunctions');
 
-const log = require('./log');
+deprecate('@cumulus/common/step-functions', '1.11.1', '@cumulus/common/StepFunctions');
 
 /**
  * Constructs the input to pass to the step functions to kick off ingest. The execution name
@@ -45,15 +44,6 @@ exports.constructStepFunctionInput = (resources, provider, collection) => {
   };
 };
 
-const logSfnThrottlingException = (fn) => {
-  log.debug(`ThrottlingException in stepfunctions.${fn}(), will retry`);
-};
-
-const retryOnThrottlingException = (err) => {
-  if (isThrottlingException(err)) throw err;
-  throw new pRetry.AbortError(err);
-};
-
 /**
  * Describe a Step Function Execution
  *
@@ -61,23 +51,9 @@ const retryOnThrottlingException = (err) => {
  * function will retry up to 10 times with an exponential backoff.
  *
  * @param {string} executionArn - ARN of the execution
- * @param {Object} [retryOptions] - see the options described [here](https://github.com/tim-kos/node-retry#retrytimeoutsoptions)
  * @returns {Promise<Object>} https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#describeExecution-property
  */
-exports.describeExecution = (executionArn, retryOptions) => {
-  const fullRetryOptions = Object.assign(
-    {
-      onFailedAttempt: () => logSfnThrottlingException('describeExecution')
-    },
-    retryOptions
-  );
-
-  return pRetry(
-    () => sfn().describeExecution({ executionArn }).promise()
-      .catch(retryOnThrottlingException),
-    fullRetryOptions
-  );
-};
+exports.describeExecution = (executionArn) => StepFunctions.describeExecution({ executionArn });
 
 /**
  * Test if a Step Function Execution exists
@@ -85,16 +61,7 @@ exports.describeExecution = (executionArn, retryOptions) => {
  * @param {string} executionArn - a Step Function execution ARN
  * @returns {Promise<boolean>} true or false
  */
-exports.executionExists = async (executionArn) => {
-  try {
-    await exports.describeExecution(executionArn);
-    return true;
-  }
-  catch (err) {
-    if (err.code === 'ExecutionDoesNotExist') return false;
-    throw err;
-  }
-};
+exports.executionExists = StepFunctions.executionExists;
 
 /**
  * Wait for a Step Function execution to exist
@@ -117,7 +84,7 @@ exports.waitForExecutionToExist = async (executionArn, options = {}) => {
 
   /* eslint-disable no-await-in-loop */
   do {
-    if (await exports.executionExists(executionArn)) return;
+    if (await StepFunctions.executionExists(executionArn)) return;
     await sleep(intervalInMs);
   } while (Date.now() < failAfter);
   /* eslint-enable no-await-in-loop */
