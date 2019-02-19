@@ -38,7 +38,7 @@ xdescribe('The Discover Granules workflow with https Protocol', () => {
     const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/https_provider.json`, 'utf8'));
 
     // we actually want https for this test. we will later update provider to use https
-    const providerData = Object.assign(providerJson, provider, {
+    const provider = Object.assign(providerJson, provider, {
       protocol: 'http',
       host: getProviderHost(providerJson),
       id: `https_provider${testSuffix}`
@@ -49,7 +49,7 @@ xdescribe('The Discover Granules workflow with https Protocol', () => {
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       apiTestUtils.addProviderApi({
         prefix: config.stackName,
-        providerData
+        provider
       })
     ]);
 
