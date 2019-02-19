@@ -1,6 +1,7 @@
 'use strict';
 
 const { lambda, sfn, sqs } = require('@cumulus/common/aws');
+const StepFunctions = require('@cumulus/common/StepFunctions');
 const { loadConfig, createTimestampedTestId, timestampedName } = require('../../helpers/testUtils');
 
 const config = loadConfig();
@@ -107,7 +108,7 @@ describe('the sf-starter lambda function', () => {
     });
 
     it('to trigger workflows', async () => {
-      const { executions } = await sfn().listExecutions({ stateMachineArn: passSfArn }).promise();
+      const { executions } = await StepFunctions.listExecutions({ stateMachineArn: passSfArn });
       expect(executions.length).toBe(messagesConsumed);
     });
   });

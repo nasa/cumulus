@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/post-to-cmr",
-  "version": "1.11.1",
+  "version": "1.11.2",
   "description": "Post a given granule to CMR",
   "main": "index.js",
   "directories": {
@@ -20,7 +20,7 @@
   "scripts": {
     "test": "ava",
     "test-coverage": "nyc ava",
-    "debug" : "NODE_ENV=test node --inspect-brk node_modules/ava/profile.js --serial tests/*.js",
+    "debug": "NODE_ENV=test node --inspect-brk node_modules/ava/profile.js --serial tests/*.js",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
     "prepublishOnly": "PRODUCTION=true npm run build"
@@ -38,10 +38,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmrjs": "1.11.1",
-    "@cumulus/common": "1.11.1",
+    "@cumulus/cmrjs": "1.11.2",
+    "@cumulus/common": "1.11.2",
     "@cumulus/cumulus-message-adapter-js": "^1.0.7",
-    "@cumulus/ingest": "1.11.1",
+    "@cumulus/ingest": "1.11.2",
     "@cumulus/test-data": "1.11.0",
     "lodash.clonedeep": "~4.5.0",
     "lodash.get": "^4.4.2",
@@ -49,7 +49,7 @@
   },
   "devDependencies": {
     "ava": "^0.25.0",
-    "nyc": "^11.6.0",
+    "nyc": "^13.3.0",
     "proxyquire": "^2.0.0",
     "sinon": "^4.5.0",
     "webpack": "~4.5.0",

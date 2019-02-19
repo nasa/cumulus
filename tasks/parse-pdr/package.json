@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/parse-pdr",
-  "version": "1.11.1",
+  "version": "1.11.2",
   "description": "Download and Parse a given PDR",
   "license": "Apache-2.0",
   "main": "index.js",
@@ -35,9 +35,9 @@
     ]
   },
   "dependencies": {
-    "@cumulus/common": "1.11.1",
+    "@cumulus/common": "1.11.2",
     "@cumulus/cumulus-message-adapter-js": "^1.0.7",
-    "@cumulus/ingest": "1.11.1",
+    "@cumulus/ingest": "1.11.2",
     "@cumulus/test-data": "1.11.0",
     "lodash.clonedeep": "^4.5.0",
     "lodash.get": "^4.4.2"
@@ -45,7 +45,7 @@
   "devDependencies": {
     "ava": "^0.25.0",
     "fs-extra": "^5.0.0",
-    "nyc": "^11.6.0",
+    "nyc": "^13.3.0",
     "proxyquire": "^2.0.0",
     "webpack": "~4.5.0",
     "webpack-cli": "~2.0.14"

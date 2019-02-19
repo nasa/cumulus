@@ -3,7 +3,8 @@
 const fs = require('fs-extra');
 const jsyaml = require('js-yaml');
 
-const { aws: { cf, sfn } } = require('@cumulus/common');
+const { aws: { cf } } = require('@cumulus/common');
+const StepFunctions = require('@cumulus/common/StepFunctions');
 
 const { getWorkflowArn } = require('@cumulus/integration-tests');
 const {
@@ -45,7 +46,7 @@ describe('When the useWorkflowLambdaVersions option is set to false the deployme
     // Get the definition for all workflows
     const defPromises = Object.keys(workflows).map(async (workflow) => {
       const workflowArn = await getWorkflowArn(config.stackName, config.bucket, workflow);
-      const stateMachine = await sfn().describeStateMachine({ stateMachineArn: workflowArn }).promise();
+      const stateMachine = await StepFunctions.describeStateMachine({ stateMachineArn: workflowArn });
       return stateMachine.definition;
     });
     workflowDefinitions = await Promise.all(defPromises);
