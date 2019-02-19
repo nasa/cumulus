@@ -1,3 +1,5 @@
+# @cumulus/common API Documentation
+
 ## Modules
 
 <dl>
@@ -298,7 +300,6 @@ isNil(undefined); // => true
     * [.uuid()](#module_util.uuid) ⇒ <code>string</code>
     * [.noop()](#module_util.noop) ⇒ <code>undefined</code>
     * [.omit(objectIn, keys)](#module_util.omit) ⇒ <code>Object</code>
-    * [.negate(predicate)](#module_util.negate) ⇒ <code>function</code>
     * [.isNull(x)](#module_util.isNull) ⇒ <code>boolean</code>
     * [.isUndefined(x)](#module_util.isUndefined) ⇒ <code>boolean</code>
     * [.isNil(x)](#module_util.isNil) ⇒ <code>boolean</code>
@@ -360,18 +361,6 @@ https://github.com/lodash/lodash/wiki/Roadmap#v500-2019
 | --- | --- | --- |
 | objectIn | <code>Object</code> | input object |
 | keys | <code>string</code> \| <code>Array.&lt;string&gt;</code> | key or list of keys to remove from object |
-
-<a name="module_util.negate"></a>
-
-### util.negate(predicate) ⇒ <code>function</code>
-Creates a function that returns the opposite of the predicate function.
-
-**Kind**: static method of [<code>util</code>](#module_util)  
-**Returns**: <code>function</code> - the new negated function  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| predicate | <code>function</code> | the predicate to negate |
 
 <a name="module_util.isNull"></a>
 
@@ -447,3 +436,7 @@ Remove properties whose values are `null` or `undefined`
 | --- | --- | --- |
 | obj | <code>Object</code> | object to update |
 
+
+---
+
+Generated automatically using `npm run build-docs`

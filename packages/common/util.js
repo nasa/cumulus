@@ -90,12 +90,19 @@ exports.omit = (objectIn, keys) => {
   return objectOut;
 };
 
-/**
+/*
  * Creates a function that returns the opposite of the predicate function.
  *
  * @param {Function} predicate - the predicate to negate
  * @returns {Function} the new negated function
  * @kind function
+ *
+ * @example
+ * const isEven = (x) => x % 2 === 0;
+ * const isOdd = negate(isEven);
+ *
+ * isOdd(2); // => false
+ * isOdd(3); // => true
  */
 exports.negate = (predicate) => (...args) => !predicate.apply(this, args);
 

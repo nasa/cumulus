@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - CUMULUS-1171
+  - NOTE: This is a breaking change. When applying this upgrade, users will need to:
+    1. Disable all workflow rules
+    2. Update any `http` or `https` providers so that the host field only
+       contains a valid hostname or IP address, and the port field contains the
+       provider port.
+    3. Perform the deployment
+    4. Re-enable workflow rules
   - Fixed provider handling in the API to make it consistent between protocols.
     Before this change, FTP providers were configured using the `host` and
     `port` properties. HTTP providers ignored `port` and `protocol`, and stored
