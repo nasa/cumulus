@@ -7,6 +7,7 @@ const uniqBy = require('lodash.uniqby');
 
 const aws = require('@cumulus/ingest/aws');
 const commonAws = require('@cumulus/common/aws');
+const StepFunctions = require('@cumulus/common/StepFunctions');
 const cmrjs = require('@cumulus/cmrjs');
 const { CMR, reconcileCMRMetadata } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
@@ -16,7 +17,6 @@ const {
   moveGranuleFiles
 } = require('@cumulus/ingest/granule');
 const { constructCollectionId } = require('@cumulus/common');
-const { describeExecution } = require('@cumulus/common/step-functions');
 
 const Manager = require('./base');
 
@@ -55,7 +55,7 @@ class Granule extends Manager {
           })
           .catch((error) => {
             log.error(`Error: ${error}`);
-            log.error(`Could not validate missing filesize for s3://${file.filename}`);
+            log.error(`Could not validate missing filesize for ${file.filename}`);
 
             return file;
           });
@@ -95,7 +95,7 @@ class Granule extends Manager {
   async reingest(granule) {
     const executionArn = path.basename(granule.execution);
 
-    const executionDescription = await describeExecution(executionArn);
+    const executionDescription = await StepFunctions.describeExecution({ executionArn });
     const originalMessage = JSON.parse(executionDescription.input);
 
     const { name, version } = deconstructCollectionId(granule.collectionId);
@@ -247,7 +247,7 @@ class Granule extends Manager {
           error: exception,
           createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
           timestamp: Date.now(),
-          productVolume: getGranuleProductVolume(granule.files),
+          productVolume: getGranuleProductVolume(granuleFiles),
           timeToPreprocess: get(payload, 'meta.sync_granule_duration', 0) / 1000,
           timeToArchive: get(payload, 'meta.post_to_cmr_duration', 0) / 1000,
           processingStartDateTime: extractDate(payload, 'meta.sync_granule_end_time'),
