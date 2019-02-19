@@ -5,10 +5,10 @@ set -e
 . ./travis-ci/set-env-vars.sh
 
 cd example || exit 1
-yarn
 
 # Delete the stack if it's a nightly build
 if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
+  yarn
   echo Delete app deployment
 
   ./node_modules/.bin/kes cf delete \
@@ -26,6 +26,8 @@ if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
     --yes
 
   echo Delete app deployment
+else
+  yarn install @cumulus/common
 fi
 
 echo Unlocking stack
