@@ -12,12 +12,14 @@ const path = require('path');
 const urljoin = require('url-join');
 const uuidv4 = require('uuid/v4');
 const encodeurl = require('encodeurl');
-const cksum = require('cksum');
 const {
-  aws, CollectionConfigStore, constructCollectionId, log
+  aws,
+  CollectionConfigStore,
+  constructCollectionId,
+  log,
+  errors,
+  file: { getFileChecksumFromStream }
 } = require('@cumulus/common');
-const errors = require('@cumulus/common/errors');
-const { deprecate } = require('@cumulus/common/util');
 
 const { sftpMixin } = require('./sftp');
 const { ftpMixin } = require('./ftp');
@@ -313,24 +315,6 @@ class Granule {
   }
 
   /**
-   * Add bucket and url_path properties to the given file
-   *
-   * Note: This returns a copy of the file parameter, it does not modify it.
-   *
-   * This method is deprecated.  A combination of the addBucketToFile and
-   *   addUrlPathToFile methods should be used instead.
-   *
-   * @param {Object} file - an object containing a "name" property
-   * @returns {Object} the file with bucket and url_path properties set
-   * @private
-   */
-  getBucket(file) {
-    deprecate('@cumulus/ingest/granule/Ingest.getBucket()', '1.10.2');
-
-    return this.addUrlPathToFile(this.addBucketToFile(file));
-  }
-
-  /**
    * Filter out md5 checksum files and put them in `this.checksumFiles` object.
    * To be used with `Array.prototype.filter`.
    *
@@ -379,10 +363,7 @@ class Granule {
    * @returns {Promise<number>} checksum value calculated from file
    */
   async _cksum(filepath) {
-    return new Promise((resolve, reject) =>
-      fs.createReadStream(filepath)
-        .pipe(cksum.stream((value) => resolve(value.readUInt32BE(0))))
-        .on('error', reject));
+    return getFileChecksumFromStream(fs.createReadStream(filepath));
   }
 
   /**

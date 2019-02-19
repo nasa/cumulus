@@ -125,9 +125,8 @@ test.beforeEach(async (t) => {
   process.env.CollectionsTable = randomString();
   process.env.GranulesTable = randomString();
   process.env.FilesTable = randomString();
-  t.context.bucketsToCleanup = [];
-  t.context.tablesToCleanup = [];
 
+  t.context.bucketsToCleanup = [];
   t.context.stackName = randomString();
   t.context.systemBucket = randomString();
 
@@ -135,13 +134,8 @@ test.beforeEach(async (t) => {
     .then(() => t.context.bucketsToCleanup.push(t.context.systemBucket));
 
   await new models.Collection().createTable();
-  t.context.tablesToCleanup.push(process.env.CollectionsTable);
-
   await new models.Granule().createTable();
-  t.context.tablesToCleanup.push(process.env.GranulesTable);
-
   await new models.FileClass().createTable();
-  t.context.tablesToCleanup.push(process.env.FilesTable);
 
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => []);
   sinon.stub(CMRSearchConceptQueue.prototype, 'peek').callsFake(() => null);
@@ -151,8 +145,9 @@ test.beforeEach(async (t) => {
 test.afterEach.always((t) => {
   Promise.all(flatten([
     t.context.bucketsToCleanup.map(aws.recursivelyDeleteS3Bucket),
-    t.context.tablesToCleanup.map((TableName) =>
-      models.Manager.deleteTable(TableName))
+    new models.Collection().deleteTable(),
+    new models.Granule().deleteTable(),
+    new models.FileClass().deleteTable()
   ]));
   CMR.prototype.searchCollections.restore();
   CMRSearchConceptQueue.prototype.peek.restore();
