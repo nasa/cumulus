@@ -16,11 +16,11 @@ const {
  * @returns {Array<Object>} - a list of PutRequest objects
  */
 function filePutRequestsFromGranule(granule) {
-  return granule.files.L.map((file) => ({
+  return granule.files.map((file) => ({
     PutRequest: {
       Item: {
-        bucket: { S: file.M.bucket },
-        key: { S: parseS3Uri(file.M.filename).Key },
+        bucket: { S: file.bucket },
+        key: { S: parseS3Uri(file.filename).Key },
         granuleId: { S: granule.granuleId }
       }
     }
