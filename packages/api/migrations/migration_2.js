@@ -19,9 +19,9 @@ function filePutRequestsFromGranule(granule) {
   return granule.files.L.map((file) => ({
     PutRequest: {
       Item: {
-        bucket: { S: file.M.bucket.S },
-        key: { S: parseS3Uri(file.M.filename.S).Key },
-        granuleId: { S: granule.granuleId.S }
+        bucket: { S: file.M.bucket },
+        key: { S: parseS3Uri(file.M.filename).Key },
+        granuleId: { S: granule.granuleId }
       }
     }
   }));

@@ -47,8 +47,8 @@ test.serial('DynamoDbSearchQueue.peek() returns the next item but does not remov
 
   const queue = new DynamoDbSearchQueue({ TableName: t.context.tableName });
 
-  t.is((await queue.peek()).bucket.S, bucket);
-  t.is((await queue.peek()).bucket.S, bucket);
+  t.is((await queue.peek()).bucket, bucket);
+  t.is((await queue.peek()).bucket, bucket);
 });
 
 test.serial('DynamoDbSearchQueue.shift() returns the next object and removes it from the queue', async (t) => {
@@ -65,8 +65,8 @@ test.serial('DynamoDbSearchQueue.shift() returns the next object and removes it 
 
   const queue = new DynamoDbSearchQueue({ TableName: t.context.tableName });
 
-  t.is((await queue.peek()).bucket.S, bucket);
-  t.is((await queue.shift()).bucket.S, bucket);
+  t.is((await queue.peek()).bucket, bucket);
+  t.is((await queue.shift()).bucket, bucket);
   t.is(await queue.peek(), null);
 });
 
