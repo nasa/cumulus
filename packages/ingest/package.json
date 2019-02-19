@@ -43,6 +43,7 @@
     "encodeurl": "^1.0.2",
     "fs-extra": "^5.0.0",
     "got": "^9.2.1",
+    "is-ip": "^2.0.0",
     "jsftp": "https://github.com/yjpa7145/jsftp.git#Fix-partial-file-issue",
     "json-loader": "~0.5.7",
     "lodash.clonedeep": "^4.5.0",
