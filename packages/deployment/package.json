@@ -56,7 +56,6 @@
     "yauzl": "^2.10.0"
   },
   "devDependencies": {
-    "@cumulus/common": "1.11.1",
     "ava": "^0.25.0",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.25.0",
