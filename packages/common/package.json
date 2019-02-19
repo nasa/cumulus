@@ -20,6 +20,7 @@
   },
   "scripts": {
     "build": "true",
+    "build-docs": "jsdoc2md --template templates/docs-API.hbs string.js URLUtils.js util.js > docs/API.md",
     "lint": "eslint .",
     "mocha": "mocha test/**/*.js",
     "mocha-coverage": "nyc mocha-webpack test/**/*.js",
@@ -55,6 +56,8 @@
     "js-yaml": "^3.11.0",
     "lodash.clonedeep": "^4.5.0",
     "lodash.compact": "^3.0.1",
+    "lodash.curry": "^4.1.1",
+    "lodash.flowright": "^3.5.0",
     "lodash.isfunction": "^3.0.9",
     "lodash.isnumber": "^3.0.3",
     "lodash.isobject": "^3.0.2",
@@ -70,10 +73,12 @@
     "p-retry": "^2.0.0",
     "pump": "^3.0.0",
     "randexp": "^0.4.9",
+    "url-join": "^4.0.0",
     "uuid": "^3.2.1"
   },
   "devDependencies": {
     "ava": "^0.25.0",
+    "jsdoc-to-markdown": "^4.0.1",
     "nock": "^10.0.0",
     "nyc": "^13.3.0",
     "sinon": "^7.1.1"

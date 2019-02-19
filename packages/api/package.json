@@ -66,6 +66,7 @@
     "got": "^8.3.0",
     "hsts": "^2.1.0",
     "http-aws-es": "^1.1.3",
+    "is-ip": "^2.0.0",
     "jsonwebtoken": "^8.4.0",
     "lambda-proxy-utils": "^1.4.0",
     "lodash.chunk": "^4.2.0",
