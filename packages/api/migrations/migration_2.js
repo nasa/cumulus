@@ -4,7 +4,7 @@ const drop = require('lodash.drop');
 const {
   aws: {
     dynamodb,
-    DynamoDbScanQueue,
+    DynamoDbSearchQueue,
     parseS3Uri
   }
 } = require('@cumulus/common');
@@ -38,7 +38,7 @@ function filePutRequestsFromGranule(granule) {
  *   is complete
  */
 async function run({ granulesTable, filesTable }) {
-  const granuleTableScanQueue = new DynamoDbScanQueue({
+  const granuleTableScanQueue = new DynamoDbSearchQueue({
     TableName: granulesTable,
     ProjectionExpression: 'granuleId, files'
   });
