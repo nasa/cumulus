@@ -147,12 +147,7 @@ jobs:
     - name: "Cleanup integration tests"
       stage: cleanup integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
-      install:
-        - ./travis-ci/fetch-cache.sh
-        - npm install
-        - ln -s /dev/stdout ./lerna-debug.log
-        - npm run bootstrap-no-build
-        - echo 'BOOTSTRAP FINISHED'
+      install: true
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
 
     # - name: "Cleanup SIT integration tests"
