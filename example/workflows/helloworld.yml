@@ -49,13 +49,17 @@ EcsHelloWorldWorkflow:
           input: '{$}'
       Next: EcsTaskHelloWorld
     EcsTaskHelloWorld:
+      ResultPath: '$.payload.task_output'
       CumulusConfig:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
       Type: Task
-      Resource: ${EcsTaskHelloWorldActivity}
-      TimeoutSeconds: 60
+      Resource: 'arn:aws:states:::ecs:runTask.sync'
+      TimeoutSeconds: 120
+      Parameters:
+        Cluster: ${CumulusECSCluster.Arn}
+        TaskDefinition: ${EcsTaskHelloWorldTaskDefinition}
       Retry:
         - ErrorEquals:
             - States.Timeout

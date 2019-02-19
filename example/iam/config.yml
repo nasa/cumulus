@@ -70,9 +70,20 @@ mhs2:
 aj:
   prefix: aj-integration
 
-aimee-test:
-  prefix: aimee-test
-  stackName: aimee-test-iam
+aimee:
+  prefix: aimee
+  stackName: aimee-iam
+
+  buckets:
+    internal:
+      name: cumulus-developmentseed-internal
+      type: internal
+    private:
+      name: cumulus-developmentseed-private
+      type: private
+    protected:
+      name: cumulus-developmentseed-protected
+      type: protected
 
 lf:
   prefix: lf-cumulus

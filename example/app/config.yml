@@ -90,9 +90,9 @@ default:
     restartTasksOnDeploy: true
     docker:
       username: cumulususer
-    services:
+    tasks:
       EcsTaskHelloWorld:
-        image: cumuluss/cumulus-ecs-task:1.2.3
+        image: '{{AWS_ACCOUNT_ID}}.dkr.ecr.us-east-1.amazonaws.com/hello_world:latest'
         cpu: 400
         memory: 700
         count: 1
@@ -100,14 +100,7 @@ default:
           AWS_DEFAULT_REGION:
             function: Fn::Sub
             value: '${AWS::Region}'
-        commands:
-          - cumulus-ecs-task
-          - '--activityArn'
-          - function: Ref
-            value: EcsTaskHelloWorldActivity
-          - '--lambdaArn'
-          - function: Ref
-            value: HelloWorldLambdaFunction
+          ECS_AGENT_PULL_BEHAVIOR: 'always'
 
   activities:
     - name: EcsTaskHelloWorld
@@ -222,9 +215,20 @@ aj:
   stackName: aj-integration
   stackNameNoDash: AjIntegration
 
-aimee-test:
-  stackName: aimee-test
-  stackNameNoDash: aimeeTest
+aimee:
+  stackName: aimee
+  stackNameNoDash: aimee
+
+  buckets:
+    internal:
+      name: cumulus-developmentseed-internal
+      type: internal
+    private:
+      name: cumulus-developmentseed-private
+      type: private
+    protected:
+      name: cumulus-developmentseed-protected
+      type: protected
 
 lf:
   stackName: lf-cumulus
