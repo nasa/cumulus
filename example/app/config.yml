@@ -454,8 +454,8 @@ jc:
     ssh: true
     services:
       EcsTaskHelloWorld:
-        image: cumulus-dev-testing
-        # image: cumuluss/cumulus-ecs-task:1.2.3
+        # image: cumulus-dev-testing
+        image: cumuluss/cumulus-ecs-task:1.2.3
         cpu: 400
         memory: 700
         count: 1
@@ -473,7 +473,7 @@ jc:
             value: HelloWorldLambdaFunction
     docker:
       username: cumulususer
-      registry: ecr
+      # registry: ecr
 
 mhs:
   stackName: mhs
