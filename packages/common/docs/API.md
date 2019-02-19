@@ -270,6 +270,14 @@ Creates a function that returns the opposite of the predicate function.
 | --- | --- | --- |
 | predicate | <code>function</code> | the predicate to negate |
 
+**Example**  
+```js
+const isEven = (x) => x % 2 === 0;
+const isOdd = negate(isEven);
+
+isOdd(2); // => false
+isOdd(3); // => true
+```
 <a name="module_util.isNull"></a>
 
 ### util.isNull(x) ⇒ <code>boolean</code>
