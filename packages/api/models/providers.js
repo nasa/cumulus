@@ -1,13 +1,40 @@
 'use strict';
 
+const isIp = require('is-ip');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
+const { isNil } = require('@cumulus/common/util');
+const { isValidHostname } = require('@cumulus/common/string');
 
 const Manager = require('./base');
 const providerSchema = require('./schemas').provider;
 const Rule = require('./rules');
 const { AssociatedRulesError } = require('../lib/errors');
 
+const buildValidationError = ({ detail }) => {
+  const err = new Error('The record has validation errors');
+  err.name = 'ValidationError';
+  err.detail = detail;
+
+  return err;
+};
+
+const validateHost = (host) => {
+  if (isNil(host)) return;
+  if (isValidHostname(host)) return;
+  if (isIp(host)) return;
+
+  throw buildValidationError({
+    detail: `${host} is not a valid hostname or IP address`
+  });
+};
+
 class Provider extends Manager {
+  static recordIsValid(item, schema = null) {
+    super.recordIsValid(item, schema);
+
+    validateHost(item.host);
+  }
+
   constructor() {
     super({
       tableName: process.env.ProvidersTable,
