@@ -448,10 +448,14 @@ mvd-dev:
 jc:
   stackName: jc
   stackNameNoDash: jc
+  # es: false
   ecs:
+    keyPairName: jc-cumulus-dev
+    ssh: true
     services:
       EcsTaskHelloWorld:
-        image: 596205514787.dkr.ecr.us-east-1.amazonaws.com/cumulus-dev-testing:latest
+        image: cumulus-dev-testing
+        # image: cumuluss/cumulus-ecs-task:1.2.3
         cpu: 400
         memory: 700
         count: 1
