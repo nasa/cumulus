@@ -20,7 +20,7 @@
   },
   "scripts": {
     "build": "true",
-    "build-docs": "jsdoc2md --template templates/docs-API.hbs string.js URLUtils.js util.js > docs/API.md",
+    "build-docs": "jsdoc2md --template templates/docs-API.hbs StepFunctions.js string.js URLUtils.js util.js > docs/API.md",
     "lint": "eslint .",
     "mocha": "mocha test/**/*.js",
     "mocha-coverage": "nyc mocha-webpack test/**/*.js",

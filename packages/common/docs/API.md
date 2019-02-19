@@ -1,8 +1,9 @@
-# @cumulus/common API Documentation
-
 ## Modules
 
 <dl>
+<dt><a href="#module_StepFunctions">StepFunctions</a></dt>
+<dd><p>Utility functions for working with the AWS StepFunctions API</p>
+</dd>
 <dt><a href="#module_string">string</a></dt>
 <dd><p>A collection of utilities for working with URLs</p>
 </dd>
@@ -13,6 +14,105 @@
 <dd><p>Simple utility functions</p>
 </dd>
 </dl>
+
+<a name="module_StepFunctions"></a>
+
+## StepFunctions
+Utility functions for working with the AWS StepFunctions API
+
+**Example**  
+```js
+const StepFunctions = require('@cumulus/common/StepFunctions');
+```
+
+* [StepFunctions](#module_StepFunctions)
+    * [.describeExecution(params)](#module_StepFunctions.describeExecution) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.describeStateMachine(params)](#module_StepFunctions.describeStateMachine) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.executionExists(executionArn)](#module_StepFunctions.executionExists) ⇒ <code>Promise.&lt;boolean&gt;</code>
+    * [.getExecutionHistory(params)](#module_StepFunctions.getExecutionHistory) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.listExecutions(params)](#module_StepFunctions.listExecutions) ⇒ <code>Promise.&lt;Object&gt;</code>
+
+<a name="module_StepFunctions.describeExecution"></a>
+
+### StepFunctions.describeExecution(params) ⇒ <code>Promise.&lt;Object&gt;</code>
+Call StepFunctions DescribeExecution
+
+See [StepFunctions.describeExecution()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#describeExecution-property)
+for descriptions of `params` and the return data.
+
+If a ThrottlingException is received, this function will retry using an
+exponential backoff.
+
+**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
+
+| Param | Type |
+| --- | --- |
+| params | <code>Object</code> | 
+
+<a name="module_StepFunctions.describeStateMachine"></a>
+
+### StepFunctions.describeStateMachine(params) ⇒ <code>Promise.&lt;Object&gt;</code>
+Call StepFunctions DescribeStateMachine
+
+See [StepFunctions.describeStateMachine()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#describeStateMachine-property)
+for descriptions of `params` and the return data.
+
+If a ThrottlingException is received, this function will retry using an
+exponential backoff.
+
+**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
+
+| Param | Type |
+| --- | --- |
+| params | <code>Object</code> | 
+
+<a name="module_StepFunctions.executionExists"></a>
+
+### StepFunctions.executionExists(executionArn) ⇒ <code>Promise.&lt;boolean&gt;</code>
+Check if a Step Function Execution exists
+
+If a ThrottlingException is received, this function will retry using an
+exponential backoff.
+
+**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| executionArn | <code>string</code> | the ARN of the Step Function Execution to   check for |
+
+<a name="module_StepFunctions.getExecutionHistory"></a>
+
+### StepFunctions.getExecutionHistory(params) ⇒ <code>Promise.&lt;Object&gt;</code>
+Call StepFunctions GetExecutionHistory
+
+See [StepFunctions.getExecutionHistory()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#getExecutionHistory-property)
+for descriptions of `params` and the return data.
+
+If a ThrottlingException is received, this function will retry using an
+exponential backoff.
+
+**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
+
+| Param | Type |
+| --- | --- |
+| params | <code>Object</code> | 
+
+<a name="module_StepFunctions.listExecutions"></a>
+
+### StepFunctions.listExecutions(params) ⇒ <code>Promise.&lt;Object&gt;</code>
+Call StepFunctions ListExecutions
+
+See [StepFunctions.listExecutions()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#listExecutions-property)
+for descriptions of `params` and the return data.
+
+If a ThrottlingException is received, this function will retry using an
+exponential backoff.
+
+**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
+
+| Param | Type |
+| --- | --- |
+| params | <code>Object</code> | 
 
 <a name="module_string"></a>
 
@@ -347,7 +447,3 @@ Remove properties whose values are `null` or `undefined`
 | --- | --- | --- |
 | obj | <code>Object</code> | object to update |
 
-
----
-
-Generated automatically using `npm run build-docs`
