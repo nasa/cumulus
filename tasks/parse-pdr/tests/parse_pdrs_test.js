@@ -106,7 +106,8 @@ test.serial('parse PDR from HTTP endpoint', async (t) => {
   t.context.payload.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
-    host: 'http://127.0.0.1:3030'
+    host: '127.0.0.1',
+    port: 3030
   };
 
   await validateInput(t, t.context.payload.input);
