@@ -26,20 +26,22 @@ const executionModel = new Execution();
 
 // Note: This test runs in serial due to the logs endpoint tests
 
-describe('The Discover Granules workflow with https Protocol', () => {
+// Disabled until we're acutally using https
+xdescribe('The Discover Granules workflow with https Protocol', () => {
   const providersDir = './data/providers/https/';
   const collectionsDir = './data/collections/https_testcollection_001/';
   let httpsWorkflowExecution = null;
 
   beforeAll(async () => {
     const collection = { name: `https_testcollection${testSuffix}`, version: '001' };
-    const provider = { id: `https_provider${testSuffix}` };
 
     const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/https_provider.json`, 'utf8'));
+
     // we actually want https for this test. we will later update provider to use https
     const providerData = Object.assign(providerJson, provider, {
       protocol: 'http',
-      host: getProviderHost(providerJson)
+      host: getProviderHost(providerJson),
+      id: `https_provider${testSuffix}`
     });
 
     // populate collections and providers
@@ -47,16 +49,9 @@ describe('The Discover Granules workflow with https Protocol', () => {
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       apiTestUtils.addProviderApi({
         prefix: config.stackName,
-        provider: providerData
+        providerData
       })
     ]);
-
-    // update provider to use https
-    await apiTestUtils.updateProvider({
-      prefix: config.stackName,
-      provider,
-      updateParams: { protocol: 'https' }
-    });
 
     httpsWorkflowExecution = await buildAndExecuteWorkflow(
       config.stackName,

@@ -9,7 +9,6 @@ const moment = require('moment');
 const omit = require('lodash.omit');
 const os = require('os');
 const path = require('path');
-const urljoin = require('url-join');
 const uuidv4 = require('uuid/v4');
 const encodeurl = require('encodeurl');
 const {
@@ -18,9 +17,9 @@ const {
   constructCollectionId,
   log,
   errors,
-  util: { deprecate },
   file: { getFileChecksumFromStream }
 } = require('@cumulus/common');
+const { buildURL } = require('@cumulus/common/URLUtils');
 
 const { sftpMixin } = require('./sftp');
 const { ftpMixin } = require('./ftp');
@@ -48,11 +47,17 @@ class Discover {
     this.useList = event.config.useList;
     this.event = event;
 
-    this.port = this.provider.port || 21;
+    this.port = this.provider.port;
     this.host = this.provider.host;
     this.path = this.collection.provider_path || '/';
 
-    this.endpoint = urljoin(this.host, this.path);
+    this.endpoint = buildURL({
+      protocol: this.provider.protocol,
+      host: this.provider.host,
+      port: this.provider.port,
+      path: this.path
+    });
+
     this.username = this.provider.username;
     this.password = this.provider.password;
 
@@ -171,7 +176,7 @@ class Granule {
     this.collection = collection;
     this.provider = provider;
 
-    this.port = this.provider.port || 21;
+    this.port = this.provider.port;
     this.host = this.provider.host;
     this.username = this.provider.username;
     this.password = this.provider.password;
@@ -313,24 +318,6 @@ class Granule {
     // eslint-disable-next-line camelcase
     const url_path = foundFileConfigUrlPath || this.collection.url_path || '';
     return Object.assign(cloneDeep(file), { url_path });
-  }
-
-  /**
-   * Add bucket and url_path properties to the given file
-   *
-   * Note: This returns a copy of the file parameter, it does not modify it.
-   *
-   * This method is deprecated.  A combination of the addBucketToFile and
-   *   addUrlPathToFile methods should be used instead.
-   *
-   * @param {Object} file - an object containing a "name" property
-   * @returns {Object} the file with bucket and url_path properties set
-   * @private
-   */
-  getBucket(file) {
-    deprecate('@cumulus/ingest/granule/Ingest.getBucket()', '1.10.2');
-
-    return this.addUrlPathToFile(this.addBucketToFile(file));
   }
 
   /**
@@ -666,7 +653,7 @@ function selector(type, protocol) {
 * @returns {Promise} returms a promise that is resolved when the file is copied
 **/
 function copyGranuleFile(source, target, options) {
-  const CopySource = encodeurl(urljoin(source.Bucket, source.Key));
+  const CopySource = encodeurl(`${source.Bucket}/${source.Key}`);
 
   const params = Object.assign({
     CopySource,
@@ -724,7 +711,7 @@ function generateMoveFileParams(sourceFiles, destinations) {
 
       const target = {
         Bucket: destination.bucket,
-        Key: destination.filepath ? urljoin(destination.filepath, file.name) : file.name
+        Key: destination.filepath ? `${destination.filepath}/${file.name}` : file.name
       };
 
       return { source, target, file };

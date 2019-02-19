@@ -16,11 +16,7 @@ const {
   s3,
   sfn
 } = require('@cumulus/common/aws');
-
-const {
-  describeExecution,
-  getExecutionHistory
-} = require('@cumulus/common/step-functions');
+const StepFunctions = require('@cumulus/common/StepFunctions');
 
 const { sleep } = require('@cumulus/common/util');
 
@@ -130,17 +126,10 @@ function getWorkflowArn(stackName, bucketName, workflowName) {
  * to be refactored another day.
  *
  * @param {string} executionArn - ARN of the execution
- * @param {Object} [retryOptions] - see the options described [here](https://github.com/tim-kos/node-retry#retrytimeoutsoptions)
  * @returns {Promise<string>} status
  */
-async function getExecutionStatus(executionArn, retryOptions) {
-  try {
-    const execution = await describeExecution(executionArn, retryOptions);
-    return execution.status;
-  }
-  catch (err) {
-    throw err;
-  }
+async function getExecutionStatus(executionArn) {
+  return (await StepFunctions.describeExecution({ executionArn })).status;
 }
 
 /**
@@ -184,8 +173,9 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
   /* eslint-enable no-await-in-loop */
 
   if (executionStatus === 'RUNNING') {
-    const executionHistory = await getExecutionHistory({
-      executionArn: executionArn, maxResults: 100
+    const executionHistory = await StepFunctions.getExecutionHistory({
+      executionArn,
+      maxResults: 100
     });
     console.log(`waitForCompletedExecution('${executionArn}') timed out after ${timeout} seconds`);
     console.log('Execution History:');
@@ -716,10 +706,10 @@ async function buildAndStartWorkflow(
  */
 async function getExecutions(workflowName, stackName, bucket, maxExecutionResults = 10) {
   const kinesisTriggerTestStpFnArn = await getWorkflowArn(stackName, bucket, workflowName);
-  const data = await sfn().listExecutions({
+  const data = await StepFunctions.listExecutions({
     stateMachineArn: kinesisTriggerTestStpFnArn,
     maxResults: maxExecutionResults
-  }).promise();
+  });
   return (orderBy(data.executions, 'startDate', 'desc'));
 }
 
