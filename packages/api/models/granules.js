@@ -21,7 +21,7 @@ const { renameProperty } = require('@cumulus/common/util');
 const Manager = require('./base');
 
 const { buildDatabaseFiles } = require('../lib/FileUtils');
-const { buildUrl } = require('@cumulus/common/URLUtils');
+const { buildURL } = require('@cumulus/common/URLUtils');
 
 const {
   parseException,
@@ -216,7 +216,7 @@ class Granule extends Manager {
     const done = granules.map(async (granule) => {
       if (granule.granuleId) {
         const granuleFiles = await buildDatabaseFiles({
-          providerURL: buildUrl({
+          providerURL: buildURL({
             protocol: payload.meta.provider.protocol,
             host: payload.meta.provider.host,
             port: payload.meta.provider.port
