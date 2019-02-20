@@ -407,7 +407,7 @@ const getProviderHost = ({ host }) => process.env.PROVIDER_HOST || host;
  * @returns provider port
  */
 function getProviderPort({ protocol, port }) {
-  if (protocol === 'ftp' || protocol === 'sftp') {
+  if (protocol === 'ftp') {
     return Number(process.env.PROVIDER_FTP_PORT) || port;
   }
 
@@ -445,7 +445,7 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host = null,
     provider.port = getProviderPort(provider);
 
     console.log(`adding provider ${provider.id}`);
-    return p.delete({ id: provider.id }).then(() => p.create(provider)).catch((err) => console.log(err));
+    return p.delete({ id: provider.id }).then(() => p.create(provider)).catch(console.log);
   }));
   return Promise.all(promises).then((ps) => ps.length);
 }
