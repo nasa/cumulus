@@ -13,9 +13,9 @@ stages:
   - name: deploy
     if: type != pull_request AND tag =~ ^v\d+.*
   - name: deployment test setup
-    if: type != pull_request AND tag =~ ^v\d+.*
+    if: (type != pull_request AND tag =~ ^v\d+.*) OR type = cron
   - name: deployment test
-    if: type != pull_request AND tag =~ ^v\d+.*
+    if: (type != pull_request AND tag =~ ^v\d+.*) OR type = cron
 
 jobs:
   include:
@@ -94,7 +94,7 @@ jobs:
 
     - name: "Deploy SIT Integration Test Stack"
       stage: unit test and stack deployment
-      # if: type = cron
+      if: type = cron
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -120,7 +120,7 @@ jobs:
 
     - name: "Run SIT integration tests"
       stage: integration tests
-      # if: type = cron
+      if: type = cron
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
@@ -153,7 +153,7 @@ jobs:
 
     - name: "Cleanup SIT integration tests"
       stage: cleanup integration tests
-      # if: type = cron
+      if: type = cron
       install:
         - ./travis-ci/fetch-cache.sh
         - npm install
