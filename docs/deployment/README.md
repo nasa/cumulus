@@ -333,6 +333,20 @@ If you've lost track of the needed redirect URIs, they can be located on the [AP
 ----
 ## Deploy Cumulus dashboard
 
+### Dashboard Requirements
+
+Please note that the requirements are similar to the [Cumulus stack deployment requirements](#Requirements), however the node version may vary slightly and the dashboard requires yarn.    The installation instructions below include a step that will install/use the required node version referenced in the `.nvmrc` file in the dashboard repository.
+
+- git
+- [node 8.11.4](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
+- [npm](https://www.npmjs.com/get-npm)
+- [yarn](https://yarnpkg.com/en/docs/install#mac-stable)
+- sha1sum or md5sha1sum
+- zip
+
+- AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
+- python
+
 ### Prepare AWS
 
 **Create S3 bucket for dashboard:**
@@ -346,12 +360,15 @@ If you've lost track of the needed redirect URIs, they can be located on the [AP
 
 ### Install dashboard
 
-To install the dashboard clone the Cumulus-dashboard repository into the root deploy directory and install dependencies with `npm install`:
+To install the dashboard clone the Cumulus-dashboard repository into the root deploy directory and install dependencies with `yarn install`:
 
     $ git clone https://github.com/nasa/cumulus-dashboard
     $ cd cumulus-dashboard
     $ nvm use
-    $ npm install
+    $ yarn install
+
+If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example.
+
 
 #### Dashboard versioning
 
@@ -366,7 +383,9 @@ To checkout and install a specific version of the dashboard:
     $ git fetch --tags
     $ git checkout <version-number> # e.g. v1.2.0
     $ nvm use
-    $ npm install
+    $ yarn install
+
+If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example..
 
 ### Dashboard configuration
 
