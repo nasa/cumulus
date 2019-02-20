@@ -445,7 +445,7 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host = null,
     provider.port = getProviderPort(provider);
 
     console.log(`adding provider ${provider.id}`);
-    return p.delete({ id: provider.id }).then(() => p.create(provider));
+    return p.delete({ id: provider.id }).then(() => p.create(provider)).catch((err) => console.log(err));
   }));
   return Promise.all(promises).then((ps) => ps.length);
 }
