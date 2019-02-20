@@ -135,6 +135,34 @@ test.serial('GET /token with a code but no state returns the access token', asyn
   stub.restore();
 });
 
+test.serial('GET /token with no refreshToken in the response', async (t) => {
+  const getAccessTokenResponse = {
+    username: 'my-username',
+    accessToken: 'my-access-token',
+    expirationTime: 12345
+  };
+  const jwtToken = createJwtToken(getAccessTokenResponse);
+
+  const stub = sinon.stub(
+    EarthdataLoginClient.prototype,
+    'getAccessToken'
+  ).callsFake(async () => getAccessTokenResponse);
+
+  const response = await request(app)
+    .get('/token')
+    .query({
+      code: 'my-authorization-code',
+      scope: 'my-scope',
+      state: 'my-state',
+    })
+    .set('Accept', 'application/json')
+    .expect(307);
+
+  t.is(response.status, 307);
+  t.regex(response.headers.location, /my-state\?token\=/);
+  stub.restore();
+});
+
 test.serial('GET /token with a code and state results in a redirect to that state', async (t) => {
   const getAccessTokenResponse = fakeAccessTokenFactory();
 
