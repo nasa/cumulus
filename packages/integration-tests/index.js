@@ -411,7 +411,7 @@ function getProviderPort({ protocol, port }) {
     return process.env.PROVIDER_FTP_PORT || port;
   }
 
-  return PROVIDER_HTTP_PORT || port;
+  return process.env.PROVIDER_HTTP_PORT || port;
 }
 
 /**
