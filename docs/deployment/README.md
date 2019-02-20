@@ -385,7 +385,7 @@ To checkout and install a specific version of the dashboard:
     $ nvm use
     $ yarn install
 
-If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example..
+If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example.
 
 ### Dashboard configuration
 
