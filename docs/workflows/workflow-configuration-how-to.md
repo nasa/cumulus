@@ -141,7 +141,7 @@ This url path with be assigned as the collection shortname, `"MOD09GQ"`.
 To take a subset of any given metadata, use the option `substring`.
 
 ```
-"url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}"
+"url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.fileName, 0, 3)}"
 ```
 
 This example will populate to `"MOD09GQ/MOD"`
