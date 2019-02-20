@@ -21,9 +21,13 @@ http.__set__('Crawler', TestEmitter);
 class MyTestDiscoveryClass {
   constructor(useList) {
     this.decrypted = true;
-    this.host = 'http://localhost:3030';
     this.path = '/';
-    this.provider = { encrypted: false };
+    this.provider = {
+      protocol: 'http',
+      host: 'localhost',
+      port: 3030,
+      encrypted: false
+    };
     this.useList = useList;
   }
 }
