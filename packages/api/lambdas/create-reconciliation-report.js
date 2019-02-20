@@ -159,10 +159,10 @@ async function reconciliationReportForGranules(collectionId) {
   //   Get CUMULUS granules list (by collectionId order by granuleId)
   //   Report granules only in CMR
   //   Report granules only in CUMULUS
-  const { shortName, version } = deconstructCollectionId(collectionId);
+  const { name, version } = deconstructCollectionId(collectionId);
   const cmrGranulesIterator = new CMRSearchConceptQueue(
     process.env.cmr_provider, process.env.cmr_client_id, 'granules',
-    { short_name: shortName, version: version, sort_key: ['granule_ur'] }, 'umm_json'
+    { short_name: name, version: version, sort_key: ['granule_ur'] }, 'umm_json'
   );
 
   const dbGranulesIterator = new Granule().getGranulesForCollection(collectionId);
@@ -265,7 +265,7 @@ async function reconciliationReportForCumulusCMR() {
   granuleReports.forEach((granuleReport) => {
     granulesInCumulusCmr.okGranuleCount += granuleReport.okGranulesInDb.length;
     granulesInCumulusCmr.onlyInCumulus = granulesInCumulusCmr
-      .onlyInCumulus.concat(granuleReport.onlyInS3);
+      .onlyInCumulus.concat(granuleReport.onlyInCumulus);
     granulesInCumulusCmr.onlyInCmr = granulesInCumulusCmr.onlyInCmr.concat(granuleReport.onlyInCmr);
   });
 
@@ -375,11 +375,3 @@ function handler(event, _context, cb) {
     .catch(cb);
 }
 exports.handler = handler;
-
-//TODO remove these
-// process.env.cmr_provider = 'CUMULUS';
-// process.env.cmr_client_id = 'cumulus-core-jl-test-integration';
-// process.env.CollectionsTable = 'jl-test-integration-CollectionsTable';
-// process.env.GranulesTable = 'jl-test-integration-GranulesTable';
-// const report = reconciliationReportForCumulusCMR();
-// console.log(report);
