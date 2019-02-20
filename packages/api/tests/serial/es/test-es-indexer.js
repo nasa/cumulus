@@ -4,7 +4,6 @@ const test = require('ava');
 const sinon = require('sinon');
 const fs = require('fs');
 const clone = require('lodash.clonedeep');
-const isNil = require('lodash.isnil');
 const path = require('path');
 const aws = require('@cumulus/common/aws');
 const cmrjs = require('@cumulus/cmrjs');
@@ -13,11 +12,13 @@ const {
   constructCollectionId,
   util: { noop }
 } = require('@cumulus/common');
+const { removeNilProperties } = require('@cumulus/common/util');
 
 const indexer = require('../../../es/indexer');
 const { Search } = require('../../../es/search');
 const models = require('../../../models');
 const { fakeGranuleFactory, fakeCollectionFactory, deleteAliases } = require('../../../lib/testUtils');
+const { filterDatabaseProperties } = require('../../../lib/FileUtils');
 const { bootstrapElasticSearch } = require('../../../lambdas/bootstrap');
 const granuleSuccess = require('../../data/granule_success.json');
 const granuleFailure = require('../../data/granule_failed.json');
@@ -37,16 +38,7 @@ const granuleFileToRecord = (granuleFile) => {
     granuleRecord.source = `https://07f1bfba.ngrok.io/granules/${granuleFile.name}`;
   }
 
-  delete granuleRecord.checksumValue;
-  delete granuleRecord.filename;
-  delete granuleRecord.name;
-  delete granuleRecord.url_path;
-  delete granuleRecord.path;
-
-  if (isNil(granuleRecord.checksum)) delete granuleRecord.checksum;
-  if (isNil(granuleRecord.checksumType)) delete granuleRecord.checksumType;
-
-  return granuleRecord;
+  return removeNilProperties(filterDatabaseProperties(granuleRecord));
 };
 
 const esIndex = randomString();
