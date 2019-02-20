@@ -397,7 +397,7 @@ async function cleanupCollections(stackName, bucket, collectionsDirectory, postf
  * @param {Object} provider - provider object
  * @returns {string} provider host
  */
-function getProviderHost(provider) {
+const getProviderHost({ host }) => process.env.PROVIDER_HOST || host;
   if (process.env.PROVIDER_HOST) {
     return process.env.PROVIDER_HOST;
   }
