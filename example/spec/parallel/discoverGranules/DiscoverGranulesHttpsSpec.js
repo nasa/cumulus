@@ -8,7 +8,8 @@ const {
   cleanupProviders,
   granulesApi: granulesApiTestUtils,
   LambdaStep,
-  getProviderHost
+  getProviderHost,
+  getProviderPort
 } = require('@cumulus/integration-tests');
 
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
@@ -41,6 +42,7 @@ xdescribe('The Discover Granules workflow with https Protocol', () => {
     const provider = Object.assign(providerJson, {
       protocol: 'http',
       host: getProviderHost(providerJson),
+      port: getProviderPort(providerJson),
       id: `https_provider${testSuffix}`
     });
 

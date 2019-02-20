@@ -397,12 +397,21 @@ async function cleanupCollections(stackName, bucket, collectionsDirectory, postf
  * @param {Object} provider - provider object
  * @returns {string} provider host
  */
-const getProviderHost({ host }) => process.env.PROVIDER_HOST || host;
-  if (process.env.PROVIDER_HOST) {
-    return process.env.PROVIDER_HOST;
+const getProviderHost = ({ host }) => process.env.PROVIDER_HOST || host;
+
+/**
+ * Get the provider port. If the port is not set, leave it not set.
+ * Otherwise set it to the environment variable, if set.
+ *
+ * @param {Object} provider - provider object
+ * @returns provider port
+ */
+function getProviderPort({ protocol, port }) {
+  if (protocol === 'ftp' || protocol === 'sftp') {
+    return process.env.PROVIDER_FTP_PORT || port;
   }
 
-  return provider.host;
+  return PROVIDER_HTTP_PORT || port;
 }
 
 /**
@@ -432,6 +441,8 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host = null,
     else {
       provider.host = getProviderHost(provider);
     }
+
+    provider.port = getProviderPort(provider);
 
     console.log(`adding provider ${provider.id}`);
     return p.delete({ id: provider.id }).then(() => p.create(provider));
@@ -798,5 +809,6 @@ module.exports = {
   waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs,
   getExecutions,
   waitForDeploymentHandler: waitForDeployment.handler,
-  getProviderHost
+  getProviderHost,
+  getProviderPort
 };
