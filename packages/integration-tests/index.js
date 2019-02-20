@@ -408,10 +408,10 @@ const getProviderHost = ({ host }) => process.env.PROVIDER_HOST || host;
  */
 function getProviderPort({ protocol, port }) {
   if (protocol === 'ftp' || protocol === 'sftp') {
-    return process.env.PROVIDER_FTP_PORT || port;
+    return Number(process.env.PROVIDER_FTP_PORT) || port;
   }
 
-  return process.env.PROVIDER_HTTP_PORT || port;
+  return Number(process.env.PROVIDER_HTTP_PORT) || port;
 }
 
 /**
