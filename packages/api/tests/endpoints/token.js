@@ -141,7 +141,6 @@ test.serial('GET /token with no refreshToken in the response', async (t) => {
     accessToken: 'my-access-token',
     expirationTime: 12345
   };
-  const jwtToken = createJwtToken(getAccessTokenResponse);
 
   const stub = sinon.stub(
     EarthdataLoginClient.prototype,
@@ -153,7 +152,7 @@ test.serial('GET /token with no refreshToken in the response', async (t) => {
     .query({
       code: 'my-authorization-code',
       scope: 'my-scope',
-      state: 'my-state',
+      state: 'my-state'
     })
     .set('Accept', 'application/json')
     .expect(307);
