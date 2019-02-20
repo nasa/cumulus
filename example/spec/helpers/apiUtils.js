@@ -19,14 +19,14 @@ async function startDistributionApi(testId, done) {
     fs.outputJSONSync(distributionApiStatusPath, { listeners: [] });
   }
 
-  let distributionApiStatus = fs.readJsonSync(distributionApiStatusPath);
+  const distributionApiStatus = fs.readJsonSync(distributionApiStatusPath);
 
   const listeners = [
     ...distributionApiStatus.listeners,
     testId
   ];
 
-  if (!distributionApiStatus.listeners.length) {
+  if (distributionApiStatus.listeners.length === 0) {
     const distApiProcess = spawn('node', ['./scripts/start-distribution-API.js'], {
       env: process.env
     });
@@ -38,18 +38,17 @@ async function startDistributionApi(testId, done) {
 
     return done();
   }
-  else {
-    fs.outputJSONSync(distributionApiStatusPath, {
-      ...distributionApiStatus,
-      listeners
-    });
-    console.log('Distribution API already running');
-    return done();
-  }
+
+  fs.outputJSONSync(distributionApiStatusPath, {
+    ...distributionApiStatus,
+    listeners
+  });
+  console.log('Distribution API already running');
+  return done();
 }
 
 async function stopDistributionApi(testId, done) {
-  let distributionApiStatus = fs.readJsonSync(distributionApiStatusPath);
+  const distributionApiStatus = fs.readJsonSync(distributionApiStatusPath);
 
   const listeners = distributionApiStatus.listeners
     .filter((listener) => listener !== testId);
@@ -61,14 +60,13 @@ async function stopDistributionApi(testId, done) {
     });
     return done();
   }
-  else {
-    fs.outputJSONSync(distributionApiStatusPath, {
-      ...distributionApiStatus,
-      listeners
-    });
-    console.log(`Distribution API still in use by ${testId}, continuing`);
-    return done();
-  }
+
+  fs.outputJSONSync(distributionApiStatusPath, {
+    ...distributionApiStatus,
+    listeners
+  });
+  console.log(`Distribution API still in use by ${testId}, continuing`);
+  return done();
 }
 
 module.exports = {

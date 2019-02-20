@@ -21,7 +21,7 @@ const {
   constructCollectionId,
   file: { getFileChecksumFromStream }
 } = require('@cumulus/common');
-const { getUrl } = require('@cumulus/cmrjs/utils');
+const { getUrl } = require('@cumulus/cmrjs');
 const {
   api: apiTestUtils,
   buildAndExecuteWorkflow,
@@ -44,7 +44,7 @@ const {
   createTestDataPath,
   createTestSuffix,
   templateFile,
-  getPublicS3FileUrl,
+  getPublicS3FileUrl
 } = require('../../helpers/testUtils');
 const {
   setDistributionApiEnvVars,
@@ -357,8 +357,8 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         filepath: `${testDataFolder}/${path.dirname(file.filepath)}`
       }];
 
-      const originalUmm = await getUmmObject(newS3UMMJsonFileLocation)
-      originalUmmUrls =  originalUmm.RelatedUrls.map((urlObject) => urlObject.URL);
+      const originalUmm = await getUmmObject(newS3UMMJsonFileLocation);
+      originalUmmUrls = originalUmm.RelatedUrls.map((urlObject) => urlObject.URL);
     });
 
     it('returns success upon move', async () => {
