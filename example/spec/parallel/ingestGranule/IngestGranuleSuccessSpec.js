@@ -14,7 +14,6 @@ const {
     Execution, Granule, Collection, Provider
   }
 } = require('@cumulus/api');
-const { serveDistributionApi } = require('@cumulus/api/bin/serve');
 const {
   aws: {
     s3,
@@ -27,6 +26,7 @@ const {
   constructCollectionId,
   file: { getFileChecksumFromStream }
 } = require('@cumulus/common');
+const { getUrl } = require('@cumulus/cmrjs/utils');
 const {
   api: apiTestUtils,
   executionsApi: executionsApiTestUtils,
@@ -40,7 +40,10 @@ const {
   waitForTestExecutionStart,
   waitForCompletedExecution,
   EarthdataLogin: { getEarthdataAccessToken },
-  distributionApi: { getDistributionApiFileStream, getDistributionFileUrl }
+  distributionApi: {
+    getDistributionApiFileStream,
+    getDistributionFileUrl
+  }
 } = require('@cumulus/integration-tests');
 
 const {
@@ -55,7 +58,11 @@ const {
   getFilesMetadata,
   getPublicS3FileUrl
 } = require('../../helpers/testUtils');
-
+const {
+  setDistributionApiEnvVars,
+  startDistributionApi,
+  stopDistributionApi
+} = require('../../helpers/apiUtils');
 const {
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleIdPathAndCollection
@@ -113,7 +120,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let expectedPayload;
   let expectedS3TagSet;
   let postToCmrOutput;
-  let server;
 
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   const granuleModel = new Granule();
@@ -124,14 +130,6 @@ describe('The S3 Ingest Granules workflow', () => {
   process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
   const providerModel = new Provider();
   let executionName;
-
-  process.env.PORT = 5002;
-  process.env.DISTRIBUTION_REDIRECT_ENDPOINT = `http://localhost:${process.env.PORT}/redirect`;
-  process.env.DISTRIBUTION_ENDPOINT = `http://localhost:${process.env.PORT}`;
-  // Ensure integration tests use Earthdata login UAT if not specified.
-  if (!process.env.EARTHDATA_BASE_URL) {
-    process.env.EARTHDATA_BASE_URL = 'https://uat.urs.earthdata.nasa.gov';
-  }
 
   beforeAll(async (done) => {
     const collectionJson = JSON.parse(fs.readFileSync(`${collectionsDir}/s3_MOD09GQ_006.json`, 'utf8'));
@@ -167,6 +165,9 @@ describe('The S3 Ingest Granules workflow', () => {
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
 
+    // process.env.DISTRIBUTION_ENDPOINT needs to be set for below
+    setDistributionApiEnvVars();
+
     console.log('Start SuccessExecution');
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
@@ -193,7 +194,7 @@ describe('The S3 Ingest Granules workflow', () => {
     failedExecutionName = failedExecutionArn.pop();
 
     // Use done() to signal end of beforeAll() after distribution API has started up
-    server = await serveDistributionApi(config.stackName, done);
+    await startDistributionApi(testId, done);
   });
 
   afterAll(async (done) => {
@@ -209,7 +210,8 @@ describe('The S3 Ingest Granules workflow', () => {
         granuleId: inputPayload.granules[0].granuleId
       })
     ]);
-    server.close(done);
+
+    stopDistributionApi(testId, done);
   });
 
   it('completes execution with success status', () => {
@@ -375,9 +377,8 @@ describe('The S3 Ingest Granules workflow', () => {
 
       const scienceFileUrls = resourceURLs
         .filter((url) =>
-          (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) || url.match(/s3\.amazonaws\.com/))
-          && !url.endsWith('.cmr.xml')
-        );
+          (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) || url.match(/s3\.amazonaws\.com/)) &&
+          !url.endsWith('.cmr.xml'));
 
       const checkFiles = await Promise.all(
         scienceFileUrls

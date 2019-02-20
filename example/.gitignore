@@ -16,6 +16,7 @@ yarn.lock
 spec/config.override.yml
 spec/**/*.input.json
 spec/**/*.output.payload.json
+spec/helpers/distributionApiStatus.json
 yarn-error.log
 test_app/
 scripts/test_output/
