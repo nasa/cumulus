@@ -74,7 +74,9 @@ test('files existing at location returns both files if both exist', async (t) =>
 
   await s3().createBucket({ Bucket: destBucket }).promise();
 
-  const sourceFiles = filenames.map((name) => fakeFileFactory({ name, bucket: sourceBucket }));
+  const sourceFiles = filenames.map(
+    (fileName) => fakeFileFactory({ fileName, bucket: sourceBucket })
+  );
 
   const destinations = [
     {
@@ -118,7 +120,9 @@ test('files existing at location returns only file that exists', async (t) => {
 
   await s3().createBucket({ Bucket: destBucket }).promise();
 
-  const sourceFiles = filenames.map((name) => fakeFileFactory({ name, bucket: sourceBucket }));
+  const sourceFiles = filenames.map(
+    (fileName) => fakeFileFactory({ fileName, bucket: sourceBucket })
+  );
 
   const destinations = [
     {
@@ -163,7 +167,9 @@ test('files existing at location returns only file that exists with multiple des
     s3().createBucket({ Bucket: destBucket2 }).promise()
   ]);
 
-  const sourceFiles = filenames.map((name) => fakeFileFactory({ name, bucket: sourceBucket }));
+  const sourceFiles = filenames.map(
+    (fileName) => fakeFileFactory({ fileName, bucket: sourceBucket })
+  );
 
   const destinations = [
     {

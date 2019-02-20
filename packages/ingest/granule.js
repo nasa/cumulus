@@ -720,9 +720,15 @@ function generateMoveFileParams(sourceFiles, destinations) {
       throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
     }
 
+    const getFileName = (f) => f.fileName || f.name;
+
+    const targetKey = destination.filepath
+      ? `${destination.filepath}/${getFileName(file)}`
+      : getFileName(file);
+
     const target = {
       Bucket: destination.bucket,
-      Key: destination.filepath ? `${destination.filepath}/${file.name}` : file.name
+      Key: targetKey
     };
 
     return { source, target, file };
