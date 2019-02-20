@@ -27,7 +27,7 @@ if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
 
   echo Delete app deployment
 else
-  yarn install @cumulus/common
+  yarn add @cumulus/common
 fi
 
 echo Unlocking stack
