@@ -836,7 +836,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   await teardownBuckets(publicBucket);
 });
 
-test('PUT with action move returns failure if one granule file exists', async (t) => {
+test.serial('PUT with action move returns failure if one granule file exists', async (t) => {
   const filesExistingStub = sinon.stub(models.Granule.prototype, 'getFilesExistingAtLocation').returns([{ fileName: 'file1' }]);
   const moveGranuleStub = sinon.stub(models.Granule.prototype, 'move').resolves({});
 
