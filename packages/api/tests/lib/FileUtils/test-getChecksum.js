@@ -12,7 +12,7 @@ test('getChecksum() returns the value of the checksum property', (t) => {
   );
 });
 
-test('getFileName() returns the value of the checksumValue property', (t) => {
+test('getChecksum() returns the value of the checksumValue property', (t) => {
   const file = { checksumValue: 'asdf' };
 
   t.is(
@@ -21,7 +21,7 @@ test('getFileName() returns the value of the checksumValue property', (t) => {
   );
 });
 
-test('getFileName() prefers checksum over checksumValue', (t) => {
+test('getChecksum() prefers checksum over checksumValue', (t) => {
   const file = {
     checksum: 'my-checksum',
     checksumValue: 'my-checksumValue'
@@ -33,7 +33,7 @@ test('getFileName() prefers checksum over checksumValue', (t) => {
   );
 });
 
-test('getFileName() returns null if no checksum could be found', (t) => {
+test('getChecksum() returns null if no checksum could be found', (t) => {
   const file = {};
 
   t.is(
