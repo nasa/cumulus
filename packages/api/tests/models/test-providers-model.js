@@ -100,3 +100,37 @@ test('Providers.delete() deletes a provider', async (t) => {
 
   t.false(await manager.exists({ id: providerId }));
 });
+
+test('Providers.create() throws a ValidationError if an invalid host is used', async (t) => {
+  const providersModel = new Provider();
+
+  try {
+    await providersModel.create(
+      fakeProviderFactory({ host: 'http://www.example.com' })
+    );
+
+    t.fail('Expected an exception');
+  }
+  catch (err) {
+    t.is(err.name, 'ValidationError');
+  }
+});
+
+test('Providers.update() throws a ValidationError if an invalid host is used', async (t) => {
+  const providersModel = new Provider();
+
+  const provider = fakeProviderFactory();
+  await providersModel.create(provider);
+
+  try {
+    await providersModel.update(
+      { id: provider.id },
+      { host: 'http://www.example.com' }
+    );
+
+    t.fail('Expected an exception');
+  }
+  catch (err) {
+    t.is(err.name, 'ValidationError');
+  }
+});

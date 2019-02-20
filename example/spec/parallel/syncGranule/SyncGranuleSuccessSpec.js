@@ -91,6 +91,7 @@ describe('The Sync Granules workflow', () => {
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
+    inputPayload.granules[0].files[0] = Object.assign(inputPayload.granules[0].files[0], { checksumValue: '8d1ec5c0463e59d26adee87cdbbee816', checksumType: 'md5' });
     const newGranuleId = inputPayload.granules[0].granuleId;
     expectedS3TagSet = [{ Key: 'granuleId', Value: newGranuleId }];
     await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
@@ -98,6 +99,8 @@ describe('The Sync Granules workflow', () => {
 
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, newGranuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
+    expectedPayload.granules[0].files[0] = Object.assign(expectedPayload.granules[0].files[0], { checksumValue: '8d1ec5c0463e59d26adee87cdbbee816', checksumType: 'md5' });
+
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
@@ -115,6 +118,11 @@ describe('The Sync Granules workflow', () => {
         granuleId: inputPayload.granules[0].granuleId
       })
     ]);
+  });
+
+  it('has a checksum to test', () => {
+    expect(inputPayload.granules[0].files[0].checksumValue).toBeDefined();
+    expect(inputPayload.granules[0].files[0].checksumType).toBeDefined();
   });
 
   it('completes execution with success status', () => {
@@ -169,6 +177,11 @@ describe('The Sync Granules workflow', () => {
       syncedTaggings.forEach((tagging) => {
         expect(tagging.TagSet).toEqual(expectedS3TagSet);
       });
+    });
+
+    it('maintains tested checksums', () => {
+      expect(lambdaOutput.payload.granules[0].files[0].checksumValue).toBeDefined();
+      expect(lambdaOutput.payload.granules[0].files[0].checksumType).toBeDefined();
     });
   });
 
@@ -254,6 +267,27 @@ describe('The Sync Granules workflow', () => {
       currentFiles.forEach((cf) => {
         expect(cf.LastModified).toBeGreaterThan(startTime);
       });
+    });
+  });
+
+  describe('when a bad checksum is provided', () => {
+    let lambdaOutput = null;
+    let failingExecution = null;
+
+    beforeAll(async () => {
+      inputPayload.granules[0].files[0].checksumValue = 'badCheckSum01';
+      failingExecution = await buildAndExecuteWorkflow(
+        config.stackName, config.bucket, workflowName, collection, provider, inputPayload
+      );
+      lambdaOutput = await lambdaStep.getStepOutput(failingExecution.executionArn, 'SyncGranule', 'failure');
+    });
+
+    it('completes execution with failure status', () => {
+      expect(failingExecution.status).toEqual('FAILED');
+    });
+
+    it('raises an error', () => {
+      expect(lambdaOutput.error).toEqual('InvalidChecksum');
     });
   });
 });
