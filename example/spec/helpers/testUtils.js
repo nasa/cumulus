@@ -1,10 +1,6 @@
 'use strict';
 
 const fs = require('fs');
-const {
-  aws: { s3, headObject, parseS3Uri },
-  stringUtils: { globalReplace }
-} = require('@cumulus/common');
 const { Config } = require('kes');
 const cloneDeep = require('lodash.clonedeep');
 const merge = require('lodash.merge');
@@ -13,6 +9,11 @@ const { promisify } = require('util');
 const tempy = require('tempy');
 const execa = require('execa');
 const pTimeout = require('p-timeout');
+
+const {
+  aws: { s3, headObject, parseS3Uri },
+  stringUtils: { globalReplace }
+} = require('@cumulus/common');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 

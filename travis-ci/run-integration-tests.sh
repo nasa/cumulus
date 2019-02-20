@@ -22,6 +22,4 @@ export DEPLOYMENT
   else
     (cd .. && ./bin/prepare)
   fi
-
-  yarn test
 )

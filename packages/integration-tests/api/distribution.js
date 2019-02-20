@@ -38,13 +38,10 @@ function getDistributionApiFileStream(fileUrl, accessToken) {
  * @returns {string} - Distribution API file URL
  */
 function getDistributionFileUrl({
-  distributionEndpoint,
+  distributionEndpoint = process.env.DISTRIBUTION_ENDPOINT,
   bucket,
   key
 }) {
-  if (!distributionEndpoint) {
-    distributionEndpoint = process.env.DISTRIBUTION_ENDPOINT;
-  }
   return `${distributionEndpoint}/${bucket}/${key}`;
 }
 

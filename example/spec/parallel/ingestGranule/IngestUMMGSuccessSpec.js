@@ -11,7 +11,6 @@ const {
     Execution, Collection, Provider
   }
 } = require('@cumulus/api');
-const { serveDistributionApi } = require('@cumulus/api/bin/serve');
 const {
   aws: {
     getS3Object,
@@ -31,7 +30,10 @@ const {
   getOnlineResources,
   granulesApi: granulesApiTestUtils,
   EarthdataLogin: { getEarthdataAccessToken },
-  distributionApi: { getDistributionApiFileStream, getDistributionFileUrl }
+  distributionApi: {
+    getDistributionApiFileStream,
+    getDistributionFileUrl
+  }
 } = require('@cumulus/integration-tests');
 
 const {
@@ -42,9 +44,13 @@ const {
   createTestDataPath,
   createTestSuffix,
   templateFile,
-  getPublicS3FileUrl
+  getPublicS3FileUrl,
 } = require('../../helpers/testUtils');
-
+const {
+  setDistributionApiEnvVars,
+  startDistributionApi,
+  stopDistributionApi
+} = require('../../helpers/apiUtils');
 const {
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleIdPathAndCollection
@@ -93,7 +99,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   let expectedPayload;
   let postToCmrOutput;
   let granule;
-  let server;
 
   process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
@@ -103,15 +108,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const collectionModel = new Collection();
   process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
   const providerModel = new Provider();
-
-  // Distribution API env vars
-  process.env.PORT = 5002;
-  process.env.DISTRIBUTION_REDIRECT_ENDPOINT = `http://localhost:${process.env.PORT}/redirect`;
-  process.env.DISTRIBUTION_ENDPOINT = `http://localhost:${process.env.PORT}`;
-  // Ensure integration tests use Earthdata login UAT if not specified.
-  if (!process.env.EARTHDATA_BASE_URL) {
-    process.env.EARTHDATA_BASE_URL = 'https://uat.urs.earthdata.nasa.gov';
-  }
 
   beforeAll(async (done) => {
     const collectionJson = JSON.parse(fs.readFileSync(`${collectionsDir}/s3_MOD09GQ_006.json`, 'utf8'));
@@ -142,6 +138,9 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
 
+    // process.env.DISTRIBUTION_ENDPOINT needs to be set for below
+    setDistributionApiEnvVars();
+
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
@@ -157,7 +156,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     );
 
     // Use done() to signal end of beforeAll() after distribution API has started up
-    server = await serveDistributionApi(config.stackName, done);
+    await startDistributionApi(testId, done);
   });
 
   afterAll(async (done) => {
@@ -173,7 +172,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       })
     ]);
 
-    server.close(done);
+    stopDistributionApi(testId, done);
   });
 
   it('completes execution with success status', () => {
