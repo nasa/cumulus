@@ -26,7 +26,7 @@ const {
   constructCollectionId,
   file: { getFileChecksumFromStream }
 } = require('@cumulus/common');
-const { getUrl } = require('@cumulus/cmrjs/utils');
+const { getUrl } = require('@cumulus/cmrjs');
 const {
   api: apiTestUtils,
   executionsApi: executionsApiTestUtils,
