@@ -14,6 +14,7 @@ const {
     Execution, Granule, Collection, Provider
   }
 } = require('@cumulus/api');
+const { serveDistributionApi } = require('@cumulus/api/bin/serve');
 const {
   aws: {
     s3,
@@ -59,9 +60,7 @@ const {
   getPublicS3FileUrl
 } = require('../../helpers/testUtils');
 const {
-  setDistributionApiEnvVars,
-  startDistributionApi,
-  stopDistributionApi
+  setDistributionApiEnvVars
 } = require('../../helpers/apiUtils');
 const {
   setupTestGranuleForIngest,
@@ -120,6 +119,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let expectedPayload;
   let expectedS3TagSet;
   let postToCmrOutput;
+  let server;
 
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   const granuleModel = new Granule();
@@ -194,7 +194,7 @@ describe('The S3 Ingest Granules workflow', () => {
     failedExecutionName = failedExecutionArn.pop();
 
     // Use done() to signal end of beforeAll() after distribution API has started up
-    await startDistributionApi(testId, done);
+    server = await serveDistributionApi(config.stackName, done);
   });
 
   afterAll(async (done) => {
@@ -211,7 +211,7 @@ describe('The S3 Ingest Granules workflow', () => {
       })
     ]);
 
-    stopDistributionApi(testId, done);
+    server.close(done);
   });
 
   it('completes execution with success status', () => {

@@ -4,6 +4,7 @@ const fs = require('fs');
 const { URL } = require('url');
 const got = require('got');
 
+const { serveDistributionApi } = require('@cumulus/api/bin/serve');
 const {
   file: { getFileChecksumFromStream }
 } = require('@cumulus/common');
@@ -20,9 +21,7 @@ const {
   deleteFolder
 } = require('../../helpers/testUtils');
 const {
-  setDistributionApiEnvVars,
-  startDistributionApi,
-  stopDistributionApi
+  setDistributionApiEnvVars
 } = require('../../helpers/apiUtils');
 
 const config = loadConfig();
@@ -35,20 +34,23 @@ describe('Distribution API', () => {
   const testDataFolder = createTestDataPath(testId);
   const fileKey = `${testDataFolder}/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met`;
 
+  let server;
+
   process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
 
   beforeAll(async (done) => {
     await uploadTestDataToBucket(config.bucket, s3Data, testDataFolder);
 
+    setDistributionApiEnvVars();
+
     // Use done() callback to signal end of beforeAll() after the
     // distribution API has started up.
-    setDistributionApiEnvVars();
-    startDistributionApi(testId, done);
+    server = await serveDistributionApi(config.stackName, done);
   });
 
   afterAll(async (done) => {
     await deleteFolder(config.bucket, testDataFolder);
-    stopDistributionApi(testId, done);
+    server.close(done);
   });
 
   describe('handles requests for files over HTTPS', () => {
