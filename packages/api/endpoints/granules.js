@@ -89,7 +89,7 @@ async function put(req, res) {
     );
 
     if (filesAtDestination.length > 0) {
-      const filenames = filesAtDestination.map((file) => file.name);
+      const filenames = filesAtDestination.map((file) => file.fileName);
       const message = `Cannot move granule because the following files would be overwritten at the destination location: ${filenames.join(', ')}. Delete the existing files or reingest the source files.`;
 
       return res.boom.conflict(message);
@@ -131,8 +131,8 @@ async function del(req, res) {
 
   // remove files from s3
   await Promise.all(granule.files.map((file) => {
-    if (aws.fileExists(file.bucket, file.filepath)) {
-      return aws.deleteS3Object(file.bucket, file.filepath);
+    if (aws.fileExists(file.bucket, file.key)) {
+      return aws.deleteS3Object(file.bucket, file.key);
     }
 
     return {};

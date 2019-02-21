@@ -11,8 +11,10 @@
  */
 
 const fs = require('fs');
-const path = require('path');
+const isNil = require('lodash.isnil');
+const omitBy = require('lodash.omitby');
 const os = require('os');
+const path = require('path');
 const log = require('./log');
 
 /**
@@ -88,22 +90,6 @@ exports.omit = (objectIn, keys) => {
   return objectOut;
 };
 
-/**
- * Replace an Error's stack trace with a new stack trace
- *
- * Note: This mutates the error that is passed in.
- *
- * @param {Error} error - an Error
- * @param {string} newStack - a stack trace
- */
-exports.setErrorStack = (error, newStack) => {
-  // eslint-disable-next-line no-param-reassign
-  error.stack = [
-    error.stack.split('\n')[0],
-    ...newStack.split('\n').slice(1)
-  ].join('\n');
-};
-
 /*
  * Creates a function that returns the opposite of the predicate function.
  *
@@ -143,3 +129,42 @@ exports.isUndefined = (x) => x === undefined;
  * @returns {boolean}
  */
 exports.isNil = (x) => exports.isNull(x) || exports.isUndefined(x);
+
+/**
+ * Replace the stack of an error
+ *
+ * Note: This mutates the error that was passed in.
+ *
+ * @param {Error} error - an Error
+ * @param {string} newStack - a stack trace
+ */
+exports.setErrorStack = (error, newStack) => {
+  // eslint-disable-next-line no-param-reassign
+  error.stack = [
+    error.stack.split('\n')[0],
+    ...newStack.split('\n').slice(1)
+  ].join('\n');
+};
+
+/**
+ * Rename an object property
+ *
+ * @param {string} from - old property name
+ * @param {string} to - new property name
+ * @param {Object} obj - object to update
+ * @returns {Object} a shallow clone of the object with updated property name
+ */
+exports.renameProperty = (from, to, obj) => {
+  const newObj = { ...obj, [to]: obj[from] };
+  delete newObj[from];
+  return newObj;
+};
+
+/**
+ * Remove properties whose values are `null` or `undefined`
+ *
+ * @param {Object} obj - object to update
+ * @returns {Object} a shallow clone of the object with `null` and `undefined`
+ *   properties removed
+ */
+exports.removeNilProperties = (obj) => omitBy(obj, isNil);

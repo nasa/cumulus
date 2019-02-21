@@ -7,7 +7,12 @@ const test = require('ava');
 const discoverPayload = require('@cumulus/test-data/payloads/new-message-schema/discover.json');
 const ingestPayload = require('@cumulus/test-data/payloads/new-message-schema/ingest.json');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { buildS3Uri, s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const {
+  buildS3Uri,
+  s3,
+  s3PutObject,
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/common/aws');
 const errors = require('@cumulus/common/errors');
 
 const {
@@ -103,11 +108,11 @@ Object.keys(sums).forEach((key) => {
       ingestPayload.config.provider
     );
     const filepath = path.join(__dirname, 'fixtures', `${key}.txt`);
-    await s3().putObject({
+    await s3PutObject({
       Bucket: t.context.internalBucket,
       Key: key,
       Body: fs.createReadStream(filepath)
-    }).promise();
+    });
 
     try {
       const file = { checksumType: key, checksumValue: sums[key] };
@@ -253,7 +258,7 @@ test('moveGranuleFile moves a single file between s3 locations', async (t) => {
   const name = 'test.txt';
   const Key = `origin/${name}`;
   const params = { Bucket, Key, Body: 'test' };
-  await s3().putObject(params).promise();
+  await s3PutObject(params);
 
   const source = { Bucket, Key };
   const target = { Bucket, Key: `moved/${name}` };
@@ -275,12 +280,12 @@ test('moveGranuleFile overwrites existing file by default', async (t) => {
   const Key = `origin/${name}`;
 
   // Pre-stage destination file
-  await s3().putObject({ Bucket: t.context.destBucket, Key, Body: 'initialBody' }).promise();
+  await s3PutObject({ Bucket: t.context.destBucket, Key, Body: 'initialBody' });
 
   // Stage source file
   const updatedBody = randomId('updatedBody');
   const params = { Bucket, Key, Body: updatedBody };
-  await s3().putObject(params).promise();
+  await s3PutObject(params);
 
   const source = { Bucket, Key };
   const target = { Bucket: t.context.destBucket, Key };
@@ -319,9 +324,9 @@ test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
   const sourceFilePromises = filenames.map(async (name) => {
     const sourcefilePath = `origin/${name}`;
     const params = { Bucket: bucket, Key: sourcefilePath, Body: name };
-    await s3().putObject(params).promise();
+    await s3PutObject(params);
     return {
-      name, bucket, filepath: sourcefilePath, filename: buildS3Uri(bucket, sourcefilePath)
+      name, bucket, key: sourcefilePath, filename: buildS3Uri(bucket, sourcefilePath)
     };
   });
 
@@ -382,9 +387,9 @@ test('moveGranuleFiles only moves granule files specified with regex', async (t)
   const sourceFilePromises = filenames.map(async (name) => {
     const sourcefilePath = `origin/${name}`;
     const params = { Bucket: bucket, Key: sourcefilePath, Body: name };
-    await s3().putObject(params).promise();
+    await s3PutObject(params);
     return {
-      name, bucket, filepath: sourcefilePath, filename: buildS3Uri(bucket, sourcefilePath)
+      name, bucket, key: sourcefilePath, filename: buildS3Uri(bucket, sourcefilePath)
     };
   });
 
@@ -428,9 +433,9 @@ test('moveGranuleFiles returns an updated list of files in their new locations.'
   const sourceFilePromises = filenames.map(async (name) => {
     const sourcefilePath = `origin/${name}`;
     const params = { Bucket: bucket, Key: sourcefilePath, Body: name };
-    await s3().putObject(params).promise();
+    await s3PutObject(params);
     return {
-      name, bucket, filepath: sourcefilePath, filename: buildS3Uri(bucket, sourcefilePath)
+      name, bucket, key: sourcefilePath, filename: buildS3Uri(bucket, sourcefilePath)
     };
   });
 
@@ -458,17 +463,17 @@ test('moveGranuleFiles returns an updated list of files in their new locations.'
     {
       name: 'test-one.txt',
       bucket: bucket,
-      filepath: 'destination/test-one.txt'
+      key: 'destination/test-one.txt'
     },
     {
       name: 'test-two.md',
       bucket: bucket,
-      filepath: 'destination/test-two.md'
+      key: 'destination/test-two.md'
     },
     {
       name: 'test-three.jpg',
       bucket: secondBucket,
-      filepath: 'destination/test-three.jpg'
+      key: 'destination/test-three.jpg'
     }
   ];
 
@@ -481,7 +486,7 @@ test('moveGranuleFiles returns an updated list of files in their new locations.'
     const updatedFile = updatedFiles.find(
       (file) =>
         file.bucket === expected.bucket
-        && file.filepath === expected.filepath
+        && file.key === expected.key
     );
     t.deepEqual(updatedFile, expected);
   });
@@ -501,7 +506,7 @@ test('generateMoveFileParams generates correct parameters', (t) => {
     return {
       name,
       bucket: sourceBucket,
-      filepath: sourcefilePath
+      key: sourcefilePath
     };
   });
 
@@ -544,7 +549,7 @@ test('generateMoveFileParams generates null source and target for no destination
     return {
       name,
       bucket: sourceBucket,
-      filepath: sourcefilePath
+      key: sourcefilePath
     };
   });
 
@@ -571,14 +576,14 @@ test('renameS3FileWithTimestamp renames file', async (t) => {
   const bucket = t.context.internalBucket;
   const key = `${randomString()}/test.hdf`;
   const params = { Bucket: bucket, Key: key, Body: randomString() };
-  await s3().putObject(params).promise();
+  await s3PutObject(params);
   // put an existing renamed file
   const formatString = 'YYYYMMDDTHHmmssSSS';
   const existingRenamedKey = `${key}.v${moment.utc().format(formatString)}`;
   const existingRenamedParams = {
     Bucket: bucket, Key: existingRenamedKey, Body: randomString()
   };
-  await s3().putObject(existingRenamedParams).promise();
+  await s3PutObject(existingRenamedParams);
   await renameS3FileWithTimestamp(bucket, key);
   const renamedFiles = await getRenamedS3File(bucket, key);
 
@@ -600,7 +605,7 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
   };
   const key = path.join(file.path, file.name);
   const params = { Bucket: sourceBucket, Key: key, Body: randomString() };
-  await s3().putObject(params).promise();
+  await s3PutObject(params);
   const collectionConfig = {
     files: [
       {
@@ -628,7 +633,7 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
 
   // update the source file with different content and ingest again
   params.Body = randomString();
-  await s3().putObject(params).promise();
+  await s3PutObject(params);
   const newfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
   t.true(oldfiles[0].duplicate_found);
   t.is(newfiles.length, 2);
@@ -645,7 +650,7 @@ test('ingestFile throws error when configured to handle duplicates with error', 
 
   const Key = path.join(file.path, file.name);
   const params = { Bucket: sourceBucket, Key, Body: 'test' };
-  await s3().putObject(params).promise();
+  await s3PutObject(params);
 
   const collectionConfig = {
     files: [

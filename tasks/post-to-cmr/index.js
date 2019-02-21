@@ -1,7 +1,7 @@
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
-const get = require('lodash.get');
+const flatten = require('lodash.flatten');
+const fromPairs = require('lodash.frompairs');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const {
@@ -17,21 +17,23 @@ const { loadJSONTestData } = require('@cumulus/test-data');
  * Builds the output of the post-to-cmr task
  *
  * @param {Array} results - list of results returned by publish function
- * @param {Object} granulesObject - an object of the granules where the key is the granuleId
+ * @param {Array} granules - list of granules
  * @returns {Array} an updated array of granules
  */
-function buildOutput(results, granulesObject) {
-  const output = cloneDeep(granulesObject);
+function buildOutput(results, granules) {
+  const cmrLinksByGranuleId = fromPairs(results.map((r) => [r.granuleId, r.link]));
 
-  // add results to corresponding granules
-  results.forEach((result) => {
-    if (output[result.granuleId]) {
-      output[result.granuleId].cmrLink = result.link;
-      output[result.granuleId].published = true;
+  return granules.map((granule) => {
+    if (cmrLinksByGranuleId[granule.granuleId]) {
+      return {
+        ...granule,
+        published: true,
+        cmrLink: cmrLinksByGranuleId[granule.granuleId]
+      };
     }
-  });
 
-  return Object.values(output);
+    return granule;
+  });
 }
 
 /**
@@ -50,6 +52,14 @@ async function addMetadataObjects(cmrFiles) {
   return updatedCMRFiles;
 }
 
+const getS3URLOfFile = (file) => {
+  if (file.bucket && file.key) return buildS3Uri(file.bucket, file.key);
+  if (file.bucket && file.filepath) return buildS3Uri(file.bucket, file.filepath);
+  if (file.filename) return file.filename;
+
+  throw new Error(`Unable to determine S3 URL for file: ${JSON.stringify(file)}`);
+};
+
 /**
  * Post to CMR
  * See the schemas directory for detailed input and output schemas
@@ -66,44 +76,27 @@ async function addMetadataObjects(cmrFiles) {
 async function postToCMR(event) {
   // We have to post the metadata file for the output granules.
   // First we check if there is an output file.
-  const config = get(event, 'config');
-  const systemBucket = get(config, 'bucket'); // the name of the bucket with private/public keys
-  const stack = get(config, 'stack'); // the name of the deployment stack
-  const input = get(event, 'input', []);
-  const process = get(config, 'process');
-  const regex = get(config, 'granuleIdExtraction', '(.*)');
-  const granules = get(input, 'granules'); // Object of all Granules
-  const creds = get(config, 'cmr');
-  const allGranules = {};
-  const allFiles = [];
-  granules.forEach((granule) => {
-    allGranules[granule.granuleId] = granule;
-    granule.files.forEach((file) => {
-      if (file.bucket && file.filepath) {
-        allFiles.push(buildS3Uri(file.bucket, file.filepath));
-      }
-      else if (file.filename) {
-        allFiles.push(file.filename);
-      }
-      else {
-        throw new Error(`Unable to determine S3 URL for file: ${JSON.stringify(file)}`);
-      }
-    });
-  });
+
+  const fileURLs = flatten(event.input.granules.map((g) => g.files))
+    .map(getS3URLOfFile);
+
+  const granuleIdExtractionRegex = event.config.granuleIdExtraction || '(.*)';
 
   // get cmr files and metadata
-  const cmrFiles = getCmrFiles(allFiles, regex);
+  const cmrFiles = getCmrFiles(fileURLs, granuleIdExtractionRegex);
   const updatedCMRFiles = await addMetadataObjects(cmrFiles);
 
   // post all meta files to CMR
-  const publishRequests = updatedCMRFiles.map((cmrFile) => (
-    publish2CMR(cmrFile, creds, systemBucket, stack)
-  ));
-  const results = await Promise.all(publishRequests);
+  const results = await Promise.all(
+    updatedCMRFiles.map(
+      (cmrFile) =>
+        publish2CMR(cmrFile, event.config.cmr, event.config.bucket, event.config.stack)
+    )
+  );
 
   return {
-    process: process,
-    granules: buildOutput(results, allGranules)
+    process: event.config.process,
+    granules: buildOutput(results, event.input.granules)
   };
 }
 

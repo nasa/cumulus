@@ -19,6 +19,32 @@ const { setErrorStack, noop } = require('./util');
 const { getFileChecksumFromStream } = require('./file');
 
 /**
+ * Wrap a function and provide a better stack trace
+ *
+ * If a call is made to the aws-sdk and it causes an exception, the stack trace
+ * that is returned gives no indication of where the error actually occurred.
+ *
+ * This utility will wrap a function and, when it is called, update any raised
+ * error with a better stack trace.
+ *
+ * @param {Function} fn - the function to wrap
+ * @returns {Function} a wrapper function
+ */
+const improveStackTrace = (fn) =>
+  async (...args) => {
+    const tracerError = {};
+    try {
+      Error.captureStackTrace(tracerError);
+      return await fn(...args);
+    }
+    catch (err) {
+      setErrorStack(err, tracerError.stack);
+      throw err;
+    }
+  };
+exports.improveStackTrace = improveStackTrace;
+
+/**
  * Join strings into an S3 key without a leading slash or double slashes
  *
  * @param {...string|Array<string>} args - the strings to join
@@ -187,8 +213,10 @@ exports.s3TagSetToQueryString = (tagset) => tagset.reduce((acc, tag) => acc.conc
  * @param {string} key - key of the object to be deleted
  * @returns {Promise} - promise of the object being deleted
  */
-exports.deleteS3Object = (bucket, key) =>
-  exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise();
+exports.deleteS3Object = improveStackTrace(
+  (bucket, key) =>
+    exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise()
+);
 
 /**
  * Test if an object exists in S3
@@ -211,10 +239,12 @@ exports.s3ObjectExists = (params) =>
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 * @returns {Promise} - promise of the object being put
 **/
-exports.s3PutObject = (params) => {
-  if (!params.ACL) params.ACL = 'private'; //eslint-disable-line no-param-reassign
-  return exports.s3().putObject(params).promise();
-};
+exports.s3PutObject = improveStackTrace(
+  (params) => exports.s3().putObject({
+    ACL: 'private',
+    ...params
+  }).promise()
+);
 
 /**
 * Copy an object from one location on S3 to another
@@ -222,10 +252,12 @@ exports.s3PutObject = (params) => {
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 * @returns {Promise} - promise of the object being copied
 **/
-exports.s3CopyObject = (params) => {
-  if (!params.TaggingDirective) params.TaggingDirective = 'COPY'; //eslint-disable-line no-param-reassign
-  return exports.s3().copyObject(params).promise();
-};
+exports.s3CopyObject = improveStackTrace(
+  (params) => exports.s3().copyObject({
+    TaggingDirective: 'COPY',
+    ...params
+  }).promise()
+);
 
 /**
  * Upload data to S3
@@ -235,7 +267,9 @@ exports.s3CopyObject = (params) => {
  * @param {Object} params - see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
  * @returns {Promise} see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
  */
-exports.promiseS3Upload = (params) => exports.s3().upload(params).promise();
+exports.promiseS3Upload = improveStackTrace(
+  (params) => exports.s3().upload(params).promise()
+);
 
 /**
  * Downloads the given s3Obj to the given filename in a streaming manner
@@ -266,21 +300,9 @@ exports.downloadS3File = (s3Obj, filepath) => {
 * @param {string} Key - key for object (filepath + filename)
 * @returns {Promise} - returns response from `S3.headObject` as a promise
 **/
-exports.headObject = async (Bucket, Key) => {
-  const params = { Bucket, Key };
-
-  const tracerError = {};
-  try {
-    Error.captureStackTrace(tracerError);
-    return await exports.s3().headObject(params).promise();
-  }
-  catch (err) {
-    err.operation = 'S3.headObject';
-    err.params = params;
-    setErrorStack(err, tracerError.stack);
-    throw err;
-  }
-};
+exports.headObject = improveStackTrace(
+  (Bucket, Key) => exports.s3().headObject({ Bucket, Key }).promise()
+);
 
 /**
  * Get the size of an S3Object, in bytes
@@ -300,44 +322,40 @@ exports.getObjectSize = (bucket, key) =>
 * @param {string} key - key for object (filepath + filename)
 * @returns {Promise} - returns response from `S3.getObjectTagging` as a promise
 **/
-exports.s3GetObjectTagging = (bucket, key) =>
-  exports.s3().getObjectTagging({ Bucket: bucket, Key: key }).promise();
+exports.s3GetObjectTagging = improveStackTrace(
+  (bucket, key) =>
+    exports.s3().getObjectTagging({ Bucket: bucket, Key: key }).promise()
+);
 
 
 /**
 * Puts object Tagging in S3
 * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property
 *
-* @param {string} bucket - name of bucket
-* @param {string} key - key for object (filepath + filename)
-* @param {Object} tagging - tagging object
+* @param {string} Bucket - name of bucket
+* @param {string} Key - key for object (filepath + filename)
+* @param {Object} Tagging - tagging object
 * @returns {Promise} - returns response from `S3.getObjectTagging` as a promise
 **/
-exports.s3PutObjectTagging = (bucket, key, tagging) =>
-  exports.s3().putObjectTagging({ Bucket: bucket, Key: key, Tagging: tagging }).promise();
+exports.s3PutObjectTagging = improveStackTrace(
+  (Bucket, Key, Tagging) =>
+    exports.s3().putObjectTagging({
+      Bucket,
+      Key,
+      Tagging
+    }).promise()
+);
 
 /**
 * Get an object from S3
 *
-* @param {string} bucket - name of bucket
-* @param {string} key - key for object (filepath + filename)
+* @param {string} Bucket - name of bucket
+* @param {string} Key - key for object (filepath + filename)
 * @returns {Promise} - returns response from `S3.getObject` as a promise
 **/
-exports.getS3Object = async (bucket, key) => {
-  const params = { Bucket: bucket, Key: key };
-
-  const tracerError = {};
-  try {
-    Error.captureStackTrace(tracerError);
-    return await exports.s3().getObject(params).promise();
-  }
-  catch (err) {
-    err.operation = 'S3.getObject';
-    err.params = params;
-    setErrorStack(err, tracerError.stack);
-    throw err;
-  }
-};
+exports.getS3Object = improveStackTrace(
+  (Bucket, Key) => exports.s3().getObject({ Bucket, Key }).promise()
+);
 
 /**
 * Check if a file exists in an S3 object
@@ -828,14 +846,10 @@ exports.receiveSQSMessages = async (queueUrl, options) => {
  * @param {integer} receiptHandle - the unique identifier of the sQS message
  * @returns {Promise} an AWS SQS response
  */
-exports.deleteSQSMessage = (queueUrl, receiptHandle) => {
-  const params = {
-    QueueUrl: queueUrl,
-    ReceiptHandle: receiptHandle
-  };
-
-  return exports.sqs().deleteMessage(params).promise();
-};
+exports.deleteSQSMessage = improveStackTrace(
+  (QueueUrl, ReceiptHandle) =>
+    exports.sqs().deleteMessage({ QueueUrl, ReceiptHandle }).promise()
+);
 
 /**
  * Returns execution ARN from a statement machine Arn and executionName

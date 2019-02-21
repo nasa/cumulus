@@ -26,7 +26,7 @@ class FileClass extends Manager {
       .map((file) => ({
         granuleId: granule.granuleId,
         bucket: file.bucket,
-        key: file.filepath
+        key: file.key
       }));
 
     const chunked = chunk(fileRecords, 25);
@@ -44,7 +44,7 @@ class FileClass extends Manager {
     const fileRecords = (granule.files || [])
       .map((file) => ({
         bucket: file.bucket,
-        key: file.filepath
+        key: file.key
       }));
 
     const chunked = chunk(fileRecords, 25);
@@ -62,7 +62,7 @@ class FileClass extends Manager {
    * @returns {Promise<Array>} an array of promise responses from aws batchwrite
    */
   async deleteFilesAfterCompare(newGranule, oldGranule) {
-    const buildFileId = (f) => `${f.bucket}/${f.filepath}`;
+    const buildFileId = (f) => `${f.bucket}/${f.key}`;
 
     const newFiles = (newGranule.files || []);
     const oldFiles = (oldGranule.files || []);
@@ -71,7 +71,7 @@ class FileClass extends Manager {
 
     const filesToDelete = oldFiles
       .filter((oldFile) => !newFilesIds.includes(buildFileId(oldFile)))
-      .map((oldFile) => ({ bucket: oldFile.bucket, key: oldFile.filepath }));
+      .map((oldFile) => ({ bucket: oldFile.bucket, key: oldFile.key }));
 
     const chunkedFilesToDelete = chunk(filesToDelete, 25);
     return Promise.all(chunkedFilesToDelete.map((c) => this.batchWrite(c)));
