@@ -11,4 +11,6 @@ set -e
   else
     (cd .. && ./bin/prepare)
   fi
+
+  yarn test
 )
