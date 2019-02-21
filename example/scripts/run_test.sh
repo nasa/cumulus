@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+set +e
 
 specName=$(echo $2 | rev | cut -d'/' -f 1 | cut -d'.' -f 2 | rev)
 outputPath="$1/$specName.txt"
