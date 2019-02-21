@@ -13,9 +13,9 @@ stages:
   - name: deploy
     if: type != pull_request AND tag =~ ^v\d+.*
   - name: deployment test setup
-    if: type != pull_request AND tag =~ ^v\d+.*
+    if: (type != pull_request AND tag =~ ^v\d+.*) OR type = cron
   - name: deployment test
-    if: type != pull_request AND tag =~ ^v\d+.*
+    if: (type != pull_request AND tag =~ ^v\d+.*) OR type = cron
 
 jobs:
   include:
@@ -92,6 +92,21 @@ jobs:
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
+    - name: "Deploy SIT Integration Test Stack"
+      stage: unit test and stack deployment
+      if: type = cron
+      install:
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - ln -s /dev/stdout ./lerna-debug.log
+        - npm run bootstrap-no-build
+        - echo 'BOOTSTRAP FINISHED'
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+      env:
+        - NGAP_ENV=SIT
+        - DEPLOYMENT=cumulus-sit
+
     - name: "Run integration tests"
       stage: integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
@@ -102,7 +117,22 @@ jobs:
         - npm run bootstrap-no-build
         - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
-      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
+
+    - name: "Run SIT integration tests"
+      stage: integration tests
+      if: type = cron
+      install:
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - ln -s /dev/stdout ./lerna-debug.log
+        - npm run bootstrap-no-build
+        - echo 'BOOTSTRAP FINISHED'
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
+      env:
+        - NGAP_ENV=SIT
+        - DEPLOYMENT=cumulus-sit
 
     - name: "Run redeployment integration tests"
       stage: redeployment integration tests
@@ -114,18 +144,25 @@ jobs:
         - npm run bootstrap-no-build
         - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-redeployment-tests.sh
-      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
 
     - name: "Cleanup integration tests"
       stage: cleanup integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
+        - npm install
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+
+    - name: "Cleanup SIT integration tests"
+      stage: cleanup integration tests
+      if: type = cron
+      install:
         - ./travis-ci/fetch-cache.sh
         - npm install
-        - ln -s /dev/stdout ./lerna-debug.log
-        - npm run bootstrap-no-build
-        - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+      env:
+        - NGAP_ENV=SIT
+        - DEPLOYMENT=cumulus-sit
 
     - name: "Deploy to NPM"
       stage: deploy
