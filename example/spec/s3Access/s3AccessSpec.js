@@ -1,4 +1,4 @@
-const { Lambda } = require('aws-sdk');
+const { Lambda, S3 } = require('aws-sdk');
 const { s3 } = require('@cumulus/common/aws');
 const { loadConfig } = require('../helpers/testUtils');
 
@@ -32,7 +32,7 @@ async function canAccessObject(region) {
  * Update canAccessObject to take in the keys returned and the lambda use them to initizialize the
  *    S3 object to try to grab the object in the bucket
  */
-describe('The S3 bucket', () => {
+describe('When accessing a bucket directly', () => {
   beforeAll(async () => {
     await s3().putObject({ Bucket: protectedBucket, Key: testFileKey, Body: 'test' }).promise();
   });
@@ -41,11 +41,38 @@ describe('The S3 bucket', () => {
     await s3().deleteObject({ Bucket: protectedBucket, Key: testFileKey }).promise();
   });
 
-  it('is accessible from us-east-1', async () => {
-    expect(await canAccessObject('us-east-1')).toEqual('true');
-  });
+  describe('with credentials associated with an Earthdata Login ID', () => {
+    let credentials;
+    let s3EdlCreds;
 
-  xit('is not accessible from us-west-1', async () => {
-    expect(await canAccessObject('us-west-1')).toEqual('false');
+    beforeAll(async () => {
+      /**
+       * TO DO:
+       * Fetch the credentials from the endpoint
+       */
+      // credentials = .....
+
+      // s3EdlCreds = new S3({
+      //   apiVersion: '2006-03-01',
+      //   accessKeyId: credentials.AccessKeyId,
+      //   secretAccessKey: credentials.SecretAccessKey
+      // });
+    });
+
+    it('the data can be downloaded from within the same region', () => {
+
+    });
+
+    it('a write from the same region is rejected', () => {
+
+    });
+
+    it('the bucket contents can be listed from within the same region', () => {
+
+    });
+
+    it('when fetching data in a different region, it does not download the file', () => {
+
+    });
   });
 });
