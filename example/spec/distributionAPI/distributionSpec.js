@@ -19,10 +19,10 @@ const {
   createTimestampedTestId,
   uploadTestDataToBucket,
   deleteFolder
-} = require('../../helpers/testUtils');
+} = require('../helpers/testUtils');
 const {
   setDistributionApiEnvVars
-} = require('../../helpers/apiUtils');
+} = require('../helpers/apiUtils');
 
 const config = loadConfig();
 const s3Data = [
