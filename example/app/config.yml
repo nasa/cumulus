@@ -490,8 +490,6 @@ jk2:
 mboyd-test:
   stackName: mboyd-test
   stackNameNoDash: mboydTest
-  # oauth:
-  #   provider: google
 
 mboyd-int:
   stackName: mboyd-int
