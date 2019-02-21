@@ -55,7 +55,7 @@ The process involves:
 
 ### Prepare DAAC deployment repository
 
-_If you already are working with an existing `<daac>-deploy` repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS configuration. ](#prepare-aws-configuration)_
+_If you already are working with an existing `<daac>-deploy` repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS configuration. ](deployment-readme#prepare-aws-configuration)_
 
 Clone template-deploy repo and name appropriately for your DAAC or organization
 
@@ -182,7 +182,7 @@ The `iam` deployment also creates an instance profile named `<stack-name>-ecs` t
 --------------
 ## Configure and Deploy the Cumulus stack
 
-These updates configure the [copied template](#copy-the-sample-template-into-your-repository) from the cumulus repository for your DAAC.
+These updates configure the [copied template](deployment-readme#copy-the-sample-template-into-your-repository) from the cumulus repository for your DAAC.
 
 You should either add a new root-level key for your configuration or modify the existing default configuration key to whatever you'd like your new deployment to be.
 
@@ -248,9 +248,9 @@ The Cumulus stack is expected to authenticate with [Earthdata Login](https://urs
 
 ### Set up an environment file
 
-_If you're adding a new deployment to an existing configuration repository or re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus Stack](#deploy), as these values should already be configured._
+_If you're adding a new deployment to an existing configuration repository or re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus Stack](deployment-readme#deploy), as these values should already be configured._
 
-Copy `app/.env.sample` to `app/.env` and add CMR/earthdata client [credentials](#credentials):
+Copy `app/.env.sample` to `app/.env` and add CMR/earthdata client [credentials](deployment-readme#credentials):
 
     CMR_PASSWORD=cmrpassword
     EARTHDATA_CLIENT_ID=clientid
@@ -335,7 +335,7 @@ If you've lost track of the needed redirect URIs, they can be located on the [AP
 
 ### Dashboard Requirements
 
-Please note that the requirements are similar to the [Cumulus stack deployment requirements](#Requirements), however the node version may vary slightly and the dashboard requires yarn.    The installation instructions below include a step that will install/use the required node version referenced in the `.nvmrc` file in the dashboard repository.
+Please note that the requirements are similar to the [Cumulus stack deployment requirements](deployment-readme#requirements), however the node version may vary slightly and the dashboard requires yarn.    The installation instructions below include a step that will install/use the required node version referenced in the `.nvmrc` file in the dashboard repository.
 
 - git
 - [node 8.11.4](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
@@ -351,7 +351,7 @@ Please note that the requirements are similar to the [Cumulus stack deployment r
 
 **Create S3 bucket for dashboard:**
 
-* Create it, e.g. `<prefix>-dashboard`. Use the command line or console as you did when [preparing AWS configuration](#Prepare-AWS-configuration).
+* Create it, e.g. `<prefix>-dashboard`. Use the command line or console as you did when [preparing AWS configuration](deployment-readme#prepare-aws-configuration).
 * Configure the bucket to host a website:
   * AWS S3 console: Select `<prefix>-dashboard` bucket then, "Properties" -> "Static Website Hosting", point to `index.html`
   * CLI: `aws s3 website s3://<prefix>-dashboard --index-document index.html`
@@ -416,7 +416,7 @@ From the S3 Console:
 * Open the `<prefix>-dashboard` bucket, click 'upload'. Add the contents of the 'dist' subdirectory to the upload. Then select 'Next'. On the permissions window allow the public to view. Select 'Upload'.
 
 You should be able to visit the dashboard website at `http://<prefix>-dashboard.s3-website-<region>.amazonaws.com` or find the url
-`<prefix>-dashboard` -> "Properties" -> "Static website hosting" -> "Endpoint" and login with a user that you configured for access in the [Configure Cumulus Stack](#configure-cumulus-stack) step.
+`<prefix>-dashboard` -> "Properties" -> "Static website hosting" -> "Endpoint" and login with a user that you configured for access in the [Configure Cumulus Stack](deployment-readme#configure-cumulus-stack) step.
 
 
 
