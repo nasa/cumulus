@@ -21,7 +21,8 @@ const {
   deleteFolder
 } = require('../helpers/testUtils');
 const {
-  setDistributionApiEnvVars
+  setDistributionApiEnvVars,
+  stopDistributionApi
 } = require('../helpers/apiUtils');
 
 const config = loadConfig();
@@ -49,8 +50,13 @@ describe('Distribution API', () => {
   });
 
   afterAll(async (done) => {
-    await deleteFolder(config.bucket, testDataFolder);
-    server.close(done);
+    try {
+      await deleteFolder(config.bucket, testDataFolder);
+      stopDistributionApi(server, done);
+    }
+    catch (err) {
+      stopDistributionApi(server, done);
+    }
   });
 
   describe('handles requests for files over HTTPS', () => {
