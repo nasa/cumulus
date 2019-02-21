@@ -1,3 +1,5 @@
+/* eslint disable */
+
 const { Lambda, S3 } = require('aws-sdk');
 const { s3 } = require('@cumulus/common/aws');
 const { loadConfig } = require('../helpers/testUtils');
