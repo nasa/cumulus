@@ -10,14 +10,14 @@ const {
 const { sleep } = require('@cumulus/common/util');
 const { loadConfig } = require('../helpers/testUtils');
 
-const workflowName = 'EcsHelloWorld';
+const workflowName = 'EcsHelloWorldWorkflow';
 const config = loadConfig();
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
 let clusterArn;
 
 async function getClusterStats({
-  statTypes = ['runningEcsTasksCount', 'pendingEcsTasksCount']
+  statTypes = ['runningEC2TasksCount', 'pendingEC2TasksCount']
 }) {
   const stats = (await ecs().describeClusters({
     clusters: [clusterArn],
@@ -36,15 +36,18 @@ describe('When a task is configured to run in Docker', () => {
   });
 
   describe('the load on the system exceeds that which its resources can handle', () => {
-    let workflowExecutionArns;
-    const numExecutions = 10;
+    let workflowExecutionArns = [];
+    const numExecutions = 3;
 
     beforeAll(async () => {
-      const workflowExecutionPromises = [...new Array(numExecutions).keys()].map(() => buildAndStartWorkflow(
-        config.stackName,
-        config.bucket,
-        workflowName
-      ));
+      let workflowExecutionPromises = [];
+      for (let i = 0; i < numExecutions; i++) {
+        workflowExecutionPromises.push(buildAndStartWorkflow(
+          config.stackName,
+          config.bucket,
+          workflowName
+        ));
+      };
       workflowExecutionArns = await Promise.all(workflowExecutionPromises);
     });
 
@@ -53,10 +56,10 @@ describe('When a task is configured to run in Docker', () => {
       await Promise.all(completions);
     });
 
-    it('adds new resources able to handle the load and does not add new resources to handle the load', async () => {
+    fit('adds new resources able to handle the load and does not add new resources to handle the load', async () => {
       await sleep(5000);
       const stats = await getClusterStats({});
-      expect(stats.runningEcsTasksCount + stats.pendingEcsTasksCount).toEqual(numExecutions);
+      expect(stats.runningEC2TasksCount + stats.pendingEC2TasksCount).toEqual(numExecutions);
     });
 
     // more ecs instances should spin up if the current ecs instance can't handle the load

@@ -1,7 +1,7 @@
 {
   "spec_dir": "spec",
   "spec_files": [
-    "parallel/helloWorld/*[sS]pec.js",
+    "scaling/*[sS]pec.js",
     "setup/CleansUpTestResources.js"
   ],
   "helpers": [
