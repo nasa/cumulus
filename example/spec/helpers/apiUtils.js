@@ -8,6 +8,11 @@ function setDistributionApiEnvVars() {
   }
 }
 
+function stopDistributionApi(server, done) {
+  server.close(done);
+}
+
 module.exports = {
-  setDistributionApiEnvVars
+  setDistributionApiEnvVars,
+  stopDistributionApi
 };

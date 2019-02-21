@@ -60,7 +60,8 @@ const {
   getPublicS3FileUrl
 } = require('../../helpers/testUtils');
 const {
-  setDistributionApiEnvVars
+  setDistributionApiEnvVars,
+  stopDistributionApi
 } = require('../../helpers/apiUtils');
 const {
   setupTestGranuleForIngest,
@@ -198,20 +199,24 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   afterAll(async (done) => {
-    // clean up stack state added by test
-    await Promise.all([
-      deleteFolder(config.bucket, testDataFolder),
-      collectionModel.delete(collection),
-      providerModel.delete(provider),
-      executionModel.delete({ arn: workflowExecution.executionArn }),
-      executionModel.delete({ arn: failingWorkflowExecution.executionArn }),
-      granulesApiTestUtils.deleteGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
-      })
-    ]);
-
-    server.close(done);
+    try {
+      // clean up stack state added by test
+      await Promise.all([
+        deleteFolder(config.bucket, testDataFolder),
+        collectionModel.delete(collection),
+        providerModel.delete(provider),
+        executionModel.delete({ arn: workflowExecution.executionArn }),
+        executionModel.delete({ arn: failingWorkflowExecution.executionArn }),
+        granulesApiTestUtils.deleteGranule({
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId
+        })
+      ]);
+      stopDistributionApi(server, done);
+    }
+    catch (err) {
+      stopDistributionApi(server, done);
+    }
   });
 
   it('completes execution with success status', () => {
