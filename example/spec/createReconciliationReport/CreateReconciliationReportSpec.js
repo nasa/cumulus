@@ -22,7 +22,8 @@ const {
   cleanupCollections,
   cleanupProviders,
   granulesApi: granulesApiTestUtils,
-  waitForConceptExistsOutcome
+  waitForConceptExistsOutcome,
+  waitUntilGranuleStatusIs
 } = require('@cumulus/integration-tests');
 
 const {
@@ -108,6 +109,8 @@ async function ingestAndPublishGranule(testSuffix, testDataFolder) {
   await buildAndExecuteWorkflow(
     config.stackName, config.bucket, workflowName, collection, provider, inputPayload
   );
+
+  await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
 
   const collectionId = constructCollectionId(collection.name, collection.version);
   return { granuleId: inputPayload.granules[0].granuleId, collectionId };
