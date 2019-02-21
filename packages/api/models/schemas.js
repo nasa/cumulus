@@ -255,15 +255,13 @@ module.exports.granule = {
         type: 'object',
         properties: {
           bucket: { type: 'string' },
-          checksumType: { type: ['string', 'null'] },
-          checksumValue: { type: ['string', 'null'] },
-          filepath: { type: 'string' },
+          checksumType: { type: 'string' },
+          checksum: { type: 'string' },
+          key: { type: 'string' },
           fileSize: { type: 'integer' },
-          name: { type: 'string' },
-          path: { type: 'string' },
-          url_path: { type: 'string', description: 'this should be removed' },
-          duplicate_found: { type: 'boolean', description: 'this should be removed' },
-          fileStagingDir: { type: 'string', description: 'this should be removed' },
+          fileName: { type: 'string' },
+          source: { type: 'string' },
+          fileType: { type: 'string' }
         }
       }
     },

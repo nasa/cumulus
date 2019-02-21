@@ -700,25 +700,35 @@ async function moveGranuleFile(source, target, options) {
  */
 function generateMoveFileParams(sourceFiles, destinations) {
   return sourceFiles.map((file) => {
-    const destination = destinations.find((dest) => file.name.match(dest.regex));
+    const fileName = file.name || file.fileName;
+    const destination = destinations.find((dest) => fileName.match(dest.regex));
 
     // if there's no match, we skip the file
     if (!destination) return { source: null, target: null, file };
 
     let source;
-    if (file.bucket && file.filepath) {
+    if (file.bucket && file.key) {
       source = {
         Bucket: file.bucket,
-        Key: file.filepath
+        Key: file.key
       };
+    }
+    else if (file.filename) {
+      source = aws.parseS3Uri(file.filename);
     }
     else {
       throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
     }
 
+    const getFileName = (f) => f.fileName || f.name;
+
+    const targetKey = destination.filepath
+      ? `${destination.filepath}/${getFileName(file)}`
+      : getFileName(file);
+
     const target = {
       Bucket: destination.bucket,
-      Key: destination.filepath ? `${destination.filepath}/${file.name}` : file.name
+      Key: targetKey
     };
 
     return { source, target, file };
@@ -732,7 +742,7 @@ function generateMoveFileParams(sourceFiles, destinations) {
  * location after the files are moved
  * @param {string} sourceFiles.name - file name
  * @param {string} sourceFiles.bucket - current bucket of file
- * @param {string} sourceFiles.filepath - current S3 key of file
+ * @param {string} sourceFiles.key - current S3 key of file
  * @param {Array<Object>} destinations - array of objects defining the destination of granule files
  * @param {string} destinations.regex - regex for matching filepath of file to new destination
  * @param {string} destinations.bucket - aws bucket of the destination
@@ -751,17 +761,22 @@ async function moveGranuleFiles(sourceFiles, destinations) {
       return moveGranuleFile(source, target).then(() => {
         processedFiles.push({
           bucket: target.Bucket,
-          filepath: target.Key,
-          name: file.name
+          key: target.Key,
+          name: file.name || file.fileName
         });
       });
     }
 
     let fileBucket;
     let fileKey;
-    if (file.bucket && file.filepath) {
+    if (file.bucket && file.key) {
       fileBucket = file.bucket;
-      fileKey = file.filepath;
+      fileKey = file.key;
+    }
+    else if (file.filename) {
+      const parsed = aws.parseS3Uri(file.filename);
+      fileBucket = parsed.Bucket;
+      fileKey = parsed.Key;
     }
     else {
       throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
@@ -769,8 +784,8 @@ async function moveGranuleFiles(sourceFiles, destinations) {
 
     processedFiles.push({
       bucket: fileBucket,
-      filepath: fileKey,
-      name: file.name
+      key: fileKey,
+      name: file.name || file.fileName
     });
 
     return Promise.resolve();
