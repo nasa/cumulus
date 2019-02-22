@@ -1,5 +1,6 @@
 'use strict';
 
+const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const partial = require('lodash.partial');
 const path = require('path');
@@ -11,17 +12,17 @@ const cmrjs = require('@cumulus/cmrjs');
 const { CMR, reconcileCMRMetadata } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
+const { buildURL } = require('@cumulus/common/URLUtils');
 const {
   generateMoveFileParams,
   moveGranuleFiles
 } = require('@cumulus/ingest/granule');
 const { constructCollectionId } = require('@cumulus/common');
-const { renameProperty } = require('@cumulus/common/util');
+const { isNil, renameProperty } = require('@cumulus/common/util');
 
 const Manager = require('./base');
 
 const { buildDatabaseFiles } = require('../lib/FileUtils');
-const { buildURL } = require('@cumulus/common/URLUtils');
 
 const {
   parseException,
@@ -32,6 +33,15 @@ const {
 const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
 
+const translateGranule = async (granule) => {
+  if (isNil(granule.files)) return granule;
+
+  return {
+    ...granule,
+    files: await buildDatabaseFiles({ files: granule.files })
+  };
+};
+
 class Granule extends Manager {
   constructor() {
     super({
@@ -39,6 +49,33 @@ class Granule extends Manager {
       tableHash: { name: 'granuleId', type: 'S' },
       schema: granuleSchema
     });
+  }
+
+  async get(...args) {
+    return translateGranule(await super.get(...args));
+  }
+
+  async batchGet(...args) {
+    const result = cloneDeep(await super.batchGet(...args));
+
+    result.Responses[this.tableName] = await Promise.all(
+      result.Responses[this.tableName].map(translateGranule)
+    );
+
+    return result;
+  }
+
+  async scan(...args) {
+    const scanResponse = await super.scan(...args);
+
+    if (scanResponse.Items) {
+      return {
+        ...scanResponse,
+        Items: await Promise.all(scanResponse.Items.map(translateGranule))
+      };
+    }
+
+    return scanResponse;
   }
 
   /**

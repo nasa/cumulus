@@ -2,11 +2,18 @@
 
 const test = require('ava');
 
-const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
+const {
+  dynamodbDocClient,
+  s3,
+  recursivelyDeleteS3Bucket
+} = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const { Manager, Granule } = require('../../models');
-const { fakeFileFactory } = require('../../lib/testUtils');
+const {
+  fakeFileFactory,
+  fakeGranuleFactoryV2
+} = require('../../lib/testUtils');
 
 let manager;
 test.before(async () => {
@@ -212,4 +219,116 @@ test('files existing at location returns only file that exists with multiple des
     recursivelyDeleteS3Bucket(destBucket1),
     recursivelyDeleteS3Bucket(destBucket2)
   ]);
+});
+
+test('get() will translate an old-style granule file into the new schema', async (t) => {
+  const oldFile = {
+    bucket: 'my-bucket',
+    filename: 's3://my-bucket/path/to/file.txt',
+    filepath: 'path/to/file.txt',
+    name: 'file123.txt',
+    path: 'source/path',
+    checksumType: 'my-checksumType',
+    checksumValue: 'my-checksumValue',
+    url_path: 'some-url-path',
+    fileSize: 1234
+  };
+
+  const granule = fakeGranuleFactoryV2({ files: [oldFile] });
+
+  await dynamodbDocClient().put({
+    TableName: process.env.GranulesTable,
+    Item: granule
+  }).promise();
+
+  const granuleModel = new Granule();
+  const fetchedGranule = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(
+    fetchedGranule.files[0],
+    {
+      bucket: 'my-bucket',
+      key: 'path/to/file.txt',
+      fileName: 'file123.txt',
+      checksumType: 'my-checksumType',
+      checksum: 'my-checksumValue',
+      fileSize: 1234
+    }
+  );
+});
+
+test('batchGet() will translate old-style granule files into the new schema', async (t) => {
+  const oldFile = {
+    bucket: 'my-bucket',
+    filename: 's3://my-bucket/path/to/file.txt',
+    filepath: 'path/to/file.txt',
+    name: 'file123.txt',
+    path: 'source/path',
+    checksumType: 'my-checksumType',
+    checksumValue: 'my-checksumValue',
+    url_path: 'some-url-path',
+    fileSize: 1234
+  };
+
+  const granule = fakeGranuleFactoryV2({ files: [oldFile] });
+
+  await dynamodbDocClient().put({
+    TableName: process.env.GranulesTable,
+    Item: granule
+  }).promise();
+
+  const granuleModel = new Granule();
+  const batchGetResponse = await granuleModel.batchGet([
+    { granuleId: granule.granuleId }
+  ]);
+
+  const fetchedGranule = batchGetResponse.Responses[process.env.GranulesTable][0];
+
+  t.deepEqual(
+    fetchedGranule.files[0],
+    {
+      bucket: 'my-bucket',
+      key: 'path/to/file.txt',
+      fileName: 'file123.txt',
+      checksumType: 'my-checksumType',
+      checksum: 'my-checksumValue',
+      fileSize: 1234
+    }
+  );
+});
+
+test('scan() will translate old-style granule files into the new schema', async (t) => {
+  const oldFile = {
+    bucket: 'my-bucket',
+    filename: 's3://my-bucket/path/to/file.txt',
+    filepath: 'path/to/file.txt',
+    name: 'file123.txt',
+    path: 'source/path',
+    checksumType: 'my-checksumType',
+    checksumValue: 'my-checksumValue',
+    url_path: 'some-url-path',
+    fileSize: 1234
+  };
+
+  const granule = fakeGranuleFactoryV2({ files: [oldFile] });
+
+  await dynamodbDocClient().put({
+    TableName: process.env.GranulesTable,
+    Item: granule
+  }).promise();
+
+  const granuleModel = new Granule();
+  const scanResponse = await granuleModel.scan();
+
+  t.deepEqual(
+    scanResponse.Items[0].files[0],
+    {
+      bucket: 'my-bucket',
+      key: 'path/to/file.txt',
+      fileName: 'file123.txt',
+      checksumType: 'my-checksumType',
+      checksum: 'my-checksumValue',
+      fileSize: 1234
+    }
+  );
 });
