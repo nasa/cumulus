@@ -231,7 +231,7 @@ function fileTypeToVersion(typeStr) {
  * @param {string} cmrMetadataFormat
  * @returns {boolean} true if the cmrMetadataFormat matches umm_json_v
  */
-function isUMMGFileType(cmrMetadataFormat) {
+function isUMMGMetadataFormat(cmrMetadataFormat) {
   return cmrMetadataFormat && cmrMetadataFormat.match(/umm_json_v/);
 }
 
@@ -300,7 +300,7 @@ async function getOnlineResources({ cmrMetadataFormat, cmrConceptId, cmrLink }) 
   if (cmrMetadataFormat === 'echo10') {
     return getOnlineResourcesECHO10(cmrLink);
   }
-  if (isUMMGFileType(cmrMetadataFormat)) {
+  if (isUMMGMetadataFormat(cmrMetadataFormat)) {
     return getOnlineResourcesUMMG(`${getUrl('search')}granules.umm_json?concept_id=${cmrConceptId}`);
   }
   throw new Error(`Invalid cmrMetadataFormat passed to getOnlineResources: ${cmrMetadataFormat}}`);
@@ -394,7 +394,7 @@ async function generateCmrFilesForGranules(
 
   log.info(`Generating fake CMR file with type ${cmrMetadataFormat}`);
 
-  if (isUMMGFileType(cmrMetadataFormat)) {
+  if (isUMMGMetadataFormat(cmrMetadataFormat)) {
     files = await Promise.all(
       granules.map(
         (g) => generateAndStoreCmrUmmJson(g, collection, bucket, additionalUrls, cmrMetadataFormat)
