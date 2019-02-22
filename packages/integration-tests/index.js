@@ -794,6 +794,7 @@ module.exports = {
   conceptExists: cmr.conceptExists,
   getOnlineResources: cmr.getOnlineResources,
   generateCmrFilesForGranules: cmr.generateCmrFilesForGranules,
+  generateCmrXml: cmr.generateCmrXml,
   addRules,
   deleteRules,
   removeRuleAddedParams,
