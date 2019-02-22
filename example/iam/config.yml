@@ -157,9 +157,9 @@ jl:
       name: rvl-internal
       type: shared
 
-kk-uat-deployment:
-  prefix: kk-test-uat
-  stackName: kk-test-uat-iam
+kk:
+  prefix: kk-test
+  stackName: kk-test-iam
   system_bucket: '{{prefix}}-internal'
   buckets:
     internal:
