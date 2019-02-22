@@ -1175,7 +1175,7 @@ Resources:
 {{/if}}
 
 # ECS EC2 Autoscaling Policies
-{{#if ecs.autoscaling_policies}}
+{{# if ecs.autoscaling_policies}}
   {{#each ecs.autoscaling_policies}}
   {{@key}}ScalingPolicy:
     Type: AWS::AutoScaling::ScalingPolicy
@@ -1199,14 +1199,27 @@ Resources:
       {{/ifEquals}}
       {{#ifEquals policy_type "StepScaling"}}
       StepAdjustments:
-        {{#each this.step_adjustments }}
+        {{#each this.step_adjustments}}
         - MetricIntervalLowerBound: {{ metric_interval_lower_bound }}
           MetricIntervalUpperBound: {{ metric_interval_upper_bound }}
           ScalingAdjustment: {{ scaling_adjustment }}
         {{/each}}
       {{/ifEquals}}
-      # TargetTrackingConfiguration:
-      #   TargetTrackingConfiguration
+      {{#ifEquals policy_type "TargetTrackingScaling"}}
+      TargetTrackingConfiguration:
+        {{# if customized_metric_specification }}
+        CustomizedMetricSpecification:
+          # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-autoscaling-scalingpolicy-customizedmetricspecification.html
+          {{ customized_metric_specification }}
+        {{/if}}
+        DisableScaleIn: {{#if disable_scalein }}{{ disable_scalein }}{{else}}false{{/if}}
+        {{# if predefined_metric_type }}
+        PredefinedMetricSpecification:
+          PredefinedMetricType: {{ predefined_metric_type }}
+          ResourceLabel: {{ resource_label }}
+        {{/if}}
+        TargetValue: {{ target_value }}
+      {{/ifEquals}}
   {{/each}}
 {{/if}}
 
