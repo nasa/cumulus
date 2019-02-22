@@ -150,7 +150,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       provider,
       inputPayload,
       {
-        cmrFileType: 'umm_json_v1_5',
+        cmrMetadataFormat: 'umm_json_v1_5',
         additionalUrls: [cumulusDocUrl],
         distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT
       }

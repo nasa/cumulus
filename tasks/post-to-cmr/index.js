@@ -17,11 +17,11 @@ const { loadJSONTestData } = require('@cumulus/test-data');
  *
  * @param {Array} results - list of results returned by publish function
  * @param {Object} granulesObject - an object of the granules where the key is the granuleId
- * @param {string} cmrFileType - CMR file type (echo10, umm_json_v1_4, umm_json_v1_5)
+ * @param {string} cmrMetadataFormat - CMR metadata format (echo10, umm_json_v1_4, umm_json_v1_5)
  *
  * @returns {Array} an updated array of granules
  */
-function buildOutput(results, granulesObject, cmrFileType) {
+function buildOutput(results, granulesObject, cmrMetadataFormat) {
   const output = cloneDeep(granulesObject);
 
   // add results to corresponding granules
@@ -30,11 +30,11 @@ function buildOutput(results, granulesObject, cmrFileType) {
       output[result.granuleId].cmrLink = result.link;
       output[result.granuleId].cmrConceptId = result.conceptId;
       output[result.granuleId].published = true;
-      if (cmrFileType) {
-        output[result.granuleId].cmrFileType = cmrFileType;
+      if (cmrMetadataFormat) {
+        output[result.granuleId].cmrMetadataFormat = cmrMetadataFormat;
       }
-      else if (result.fileType) {
-        output[result.granuleId].cmrFileType = result.fileType;
+      else if (result.metadataFormat) {
+        output[result.granuleId].cmrMetadataFormat = result.metadataFormat;
       }
     }
   });
@@ -82,7 +82,7 @@ async function postToCMR(event) {
   const regex = get(config, 'granuleIdExtraction', '(.*)');
   const granules = get(input, 'granules'); // Object of all Granules
   const creds = get(config, 'cmr');
-  const cmrFileType = get(config, 'cmrFileType');
+  const cmrMetadataFormat = get(config, 'cmrMetadataFormat');
 
   const allGranules = {};
   const allFiles = [];
@@ -105,7 +105,7 @@ async function postToCMR(event) {
 
   return {
     process: process,
-    granules: buildOutput(results, allGranules, cmrFileType)
+    granules: buildOutput(results, allGranules, cmrMetadataFormat)
   };
 }
 

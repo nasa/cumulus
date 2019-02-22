@@ -212,7 +212,7 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
 }
 
 /**
- * Transforms a cmrfiletype to a version string or returns an empty string.
+ * Transforms a CMR metadata format to a version string or returns an empty string.
  *
  * @param {string} typeStr
  * @returns {string} the decoded version or empty strign if a version can't be created.
@@ -227,12 +227,12 @@ function fileTypeToVersion(typeStr) {
 }
 
 /**
- * tester to determine if the input cmrFiletype is a UMM JSON file.
- * @param {string} cmrFileType
- * @returns {boolean} true if the cmrFiletype matches umm_json_v
+ * tester to determine if the input cmrMetadataFormat is a UMM JSON file.
+ * @param {string} cmrMetadataFormat
+ * @returns {boolean} true if the cmrMetadataFormat matches umm_json_v
  */
-function isUMMGFileType(cmrFileType) {
-  return cmrFileType && cmrFileType.match(/umm_json_v/);
+function isUMMGFileType(cmrMetadataFormat) {
+  return cmrMetadataFormat && cmrMetadataFormat.match(/umm_json_v/);
 }
 
 /**
@@ -290,20 +290,20 @@ async function getOnlineResourcesUMMG(cmrLink) {
  * Fetches online resources from CMR based on file type (ECHO10, UMM-G)
  *
  * @param {Object} granule
- * @param {string} granule.cmrFileType - the cmr file type (e.g. echo10, umm-g)
+ * @param {string} granule.cmrMetadataFormat - the cmr file type (e.g. echo10, umm-g)
  * @param {Object} granule.cmrConceptId - the CMR granule concept ID
  * @param {Object} granule.cmrLink - the metadata's granuleId
  *
  * @returns {Promise<Array<Object>>} - Promise returning array of links
  */
-async function getOnlineResources({ cmrFileType, cmrConceptId, cmrLink }) {
-  if (cmrFileType === 'echo10') {
+async function getOnlineResources({ cmrMetadataFormat, cmrConceptId, cmrLink }) {
+  if (cmrMetadataFormat === 'echo10') {
     return getOnlineResourcesECHO10(cmrLink);
   }
-  if (isUMMGFileType(cmrFileType)) {
+  if (isUMMGFileType(cmrMetadataFormat)) {
     return getOnlineResourcesUMMG(`${getUrl('search')}granules.umm_json?concept_id=${cmrConceptId}`);
   }
-  throw new Error(`Invalid cmrFileType passed to getOnlineResources: ${cmrFileType}}`);
+  throw new Error(`Invalid cmrMetadataFormat passed to getOnlineResources: ${cmrMetadataFormat}}`);
 }
 
 /**
@@ -314,7 +314,7 @@ async function getOnlineResources({ cmrFileType, cmrConceptId, cmrLink }) {
  * @param {Object} collection - collection object
  * @param {string} bucket - bucket to save the xml file to
  * @param {Array<string>} additionalUrls - URLs to convert to related urls
- * @param {string} cmrFileType - CMR UMM-G version string <umm_json_v[x.y]>
+ * @param {string} cmrMetadataFormat - CMR UMM-G version string <umm_json_v[x.y]>
  * @returns {Promise<Array<string>>} - Promise of a list of granule files including the created
  * CMR files
  */
@@ -323,9 +323,9 @@ async function generateAndStoreCmrUmmJson(
   collection,
   bucket,
   additionalUrls,
-  cmrFileType
+  cmrMetadataFormat
 ) {
-  const versionString = fileTypeToVersion(cmrFileType);
+  const versionString = fileTypeToVersion(cmrMetadataFormat);
   const jsonObject = sampleUmmGranule;
   jsonObject.GranuleUR = granule.granuleId;
 
@@ -378,7 +378,7 @@ async function generateAndStoreCmrUmmJson(
  *                                   output
  * @param {Object} collection - collection object that includes name and version
  * @param {string} bucket - location to save the xmls to
- * @param {string} cmrFileType - CMR file type to generate. Options are echo10, umm_json_v1_4,
+ * @param {string} cmrMetadataFormat - CMR file type to generate. Options are echo10, umm_json_v1_4,
  *                               umm_json_v1_5, (and likely umm_json_v1_<x>). The default is echo10
  * @param {Array<string>} additionalUrls - URLs to convert to online resources or related urls
  * @returns {Array<string>} list of S3 locations for CMR xml files
@@ -387,17 +387,17 @@ async function generateCmrFilesForGranules(
   granules,
   collection,
   bucket,
-  cmrFileType,
+  cmrMetadataFormat,
   additionalUrls
 ) {
   let files;
 
-  log.info(`Generating fake CMR file with type ${cmrFileType}`);
+  log.info(`Generating fake CMR file with type ${cmrMetadataFormat}`);
 
-  if (isUMMGFileType(cmrFileType)) {
+  if (isUMMGFileType(cmrMetadataFormat)) {
     files = await Promise.all(
       granules.map(
-        (g) => generateAndStoreCmrUmmJson(g, collection, bucket, additionalUrls, cmrFileType)
+        (g) => generateAndStoreCmrUmmJson(g, collection, bucket, additionalUrls, cmrMetadataFormat)
       )
     );
   }
