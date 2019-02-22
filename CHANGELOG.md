@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added `@cumulus/common/util#isNull()`
   - Added `@cumulus/common/util#isUndefined()`
   - Added `@cumulus/common/util#negate()`
+- CUMULUS-802
+  - Added `@cumulus/deployment` ability to configure ScalingPolicies and CloudWatch Alarms and associate alarms with autoscaling policies for scaling the Cumulus ECS Cluster.
+    - NOTE: Scaling policy types `StepScaling` and `TargetTracking` do not have integration tests. These should be considered beta features for Cumulus deployments. The `SimpleScaling` policy type has integration tests in `spec/scaling/`.
+  - Added `autoscaling` AWS export from `@cumulus/common/aws`
 
 ### Changed
 - CUMULUS-1171
