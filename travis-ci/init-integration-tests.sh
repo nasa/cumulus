@@ -2,29 +2,19 @@
 
 set -e
 
-export AWS_ACCESS_KEY_ID="$INTEGRATION_AWS_ACCESS_KEY_ID"
-export AWS_SECRET_ACCESS_KEY="$INTEGRATION_AWS_SECRET_ACCESS_KEY"
-export AWS_DEFAULT_REGION="$INTEGRATION_AWS_DEFAULT_REGION"
-
-if [ -z "$DEPLOYMENT" ]; then
-  DEPLOYMENT=$(node ./travis-ci/select-stack.js)
-  if [ "$DEPLOYMENT" = "none" ]; then
-    echo "Unable to determine integration stack" >&2
-    exit 1
-  fi
-fi
-export DEPLOYMENT
+. ./travis-ci/set-env-vars.sh
 
 if [ "$USE_NPM_PACKAGES" = "true" ]; then
+  cd example
   yarn
 else
   ./bin/prepare
+  cd example
 fi
 
 echo "Locking stack for deployment $DEPLOYMENT"
 
 # Wait for the stack to be available
-cd example
 LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
 
 echo "Locking status $LOCK_EXISTS_STATUS"
