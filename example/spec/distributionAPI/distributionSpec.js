@@ -61,12 +61,13 @@ describe('Distribution API', () => {
 
   describe('handles requests for files over HTTPS', () => {
     let fileChecksum;
-    const fileUrl = getDistributionFileUrl({
-      bucket: config.bucket,
-      key: fileKey
-    });
+    let fileUrl;
 
     beforeAll(async () => {
+      fileUrl = getDistributionFileUrl({
+        bucket: config.bucket,
+        key: fileKey
+      });
       fileChecksum = await getFileChecksumFromStream(
         fs.createReadStream(require.resolve(s3Data[0]))
       );
