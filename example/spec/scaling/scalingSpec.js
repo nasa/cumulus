@@ -39,7 +39,7 @@ async function getAutoScalingGroupName(stackName) {
   return asg.AutoScalingGroupName;
 };
 
-const waitPeriod = 15000;
+const waitPeriod = 30000;
 async function getNewScalingActivity() {
   const params = {
     AutoScalingGroupName: autoScalingGroupName,
@@ -51,7 +51,7 @@ async function getNewScalingActivity() {
   while (startingActivity.ActivityId === mostRecentActivity.ActivityId) {
     activties = await autoscaling().describeScalingActivities(params).promise();
     mostRecentActivity = activties.Activities[0];
-    console.log(`waiting for ${waitPeriod/1000} seconds`);
+    console.log(`No new activity found. Sleeping for ${waitPeriod/1000} seconds.`);
     await sleep(waitPeriod);
   };
 
@@ -97,7 +97,6 @@ describe('When a task is configured to run in Docker', () => {
     it('adds new resources', async () => {
       console.log('Waiting for scale out policy to take affect');
       const mostRecentActivity = await getNewScalingActivity();
-      console.log(`mostRecentActivity ${JSON.stringify(mostRecentActivity, null, 2)}`);
       expect(mostRecentActivity.Description).toMatch(/Launching a new EC2 instance: i-*/);
     });
   });
@@ -106,7 +105,6 @@ describe('When a task is configured to run in Docker', () => {
     it('removes excessive resources but not all resources', async () => {
       console.log('Waiting for scale in policy to take affect');
       const mostRecentActivity = await getNewScalingActivity();
-      console.log(`mostRecentActivity ${JSON.stringify(mostRecentActivity, null, 2)}`);
       expect(mostRecentActivity.Description).toMatch(/Terminating EC2 instance: i-*/);
     });
   });
