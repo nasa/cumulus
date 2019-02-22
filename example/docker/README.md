@@ -6,26 +6,23 @@
 
 Below are instructions for how to build and push this docker image to AWS ECR.
 
-If the repository already exists, you can use:
-
-```sh
-sh ./build_docker.sh
-```
-
-1. Create the `hello_world` repository
+If the repository does not yet exist, run:
 
 ```bash
 export DOCKER_TAG=hello_world
-export AWS_ACCOUNT_ID=$(cat ../app/.env | grep AWS_ACCOUNT_ID | cut -d'=' -f 2) 
 
 $(aws ecr get-login --no-include-email --region us-east-1)
 aws ecr create-repository --repository-name ${DOCKER_TAG}
 ```
 
-2. Build and push
+If the repository already exists, execute:
 
 ```bash
-docker build -t ${DOCKER_TAG} -f Dockerfile.hello_world .
-docker tag ${DOCKER_TAG}:latest ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/${DOCKER_TAG}:latest
-docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/${DOCKER_TAG}:latest
+./build_dockers.sh
+```
+
+or from the root of the `example/` directory:
+
+```bash
+npm run build-dockers
 ```
