@@ -215,9 +215,9 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
  * Transforms a CMR metadata format to a version string or returns an empty string.
  *
  * @param {string} typeStr
- * @returns {string} the decoded version or empty strign if a version can't be created.
+ * @returns {string} the decoded version or empty string if a version can't be created.
  */
-function fileTypeToVersion(typeStr) {
+function metadataFormatToVersion(typeStr) {
   try {
     return typeStr.match(/umm_json_v(.*)/)[1].replace('_', '.');
   }
@@ -325,7 +325,7 @@ async function generateAndStoreCmrUmmJson(
   additionalUrls,
   cmrMetadataFormat
 ) {
-  const versionString = fileTypeToVersion(cmrMetadataFormat);
+  const versionString = metadataFormatToVersion(cmrMetadataFormat);
   const jsonObject = sampleUmmGranule;
   jsonObject.GranuleUR = granule.granuleId;
 
