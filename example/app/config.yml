@@ -81,17 +81,38 @@ default:
     subnets:
       - '{{AWS_SUBNET}}'
 
+  alarms:
+    CPUHigh:
+      alarm_action: ScaleOutScalingPolicy
+      threshold: '50'
+    CPULow:
+      alarm_action: ScaleInScalingPolicy
+      comparison_operator: LessThanThreshold
+      threshold: '50'
+
   ecs:
     instanceType: t2.medium
     desiredInstances: 1
+    maxInstances: 2
+    minInstances: 1
     availabilityZone: us-east-1b
     amiid: ami-a7a242da
     publicIp: true
     restartTasksOnDeploy: true
     docker:
       username: cumulususer
+    autoscaling_policies:
+      ScaleOut:
+        policy_type: SimpleScaling
+        adjustment_type: ChangeInCapacity
+        scaling_adjustment: 1
+      ScaleIn:
+        policy_type: SimpleScaling
+        adjustment_type: ChangeInCapacity
+        scaling_adjustment: -1
+
     services:
-      EcsTaskHelloWorld:
+      HelloWorldService:
         image: cumuluss/cumulus-ecs-task:1.2.3
         cpu: 400
         memory: 700
@@ -104,12 +125,12 @@ default:
           - cumulus-ecs-task
           - '--activityArn'
           - function: Ref
-            value: EcsTaskHelloWorldActivity
+            value: HelloWorldActivity
           - '--lambdaArn'
           - function: Ref
             value: HelloWorldLambdaFunction
     tasks:
-      EcsTaskHelloWorld:
+      HelloWorldOnDemand:
         image: '{{AWS_ACCOUNT_ID}}.dkr.ecr.us-east-1.amazonaws.com/hello_world:latest'
         cpu: 400
         memory: 700
@@ -120,7 +141,7 @@ default:
           ECS_AGENT_PULL_BEHAVIOR: 'always'
 
   activities:
-    - name: EcsTaskHelloWorld
+    - name: HelloWorld
 
   system_bucket: '{{buckets.internal.name}}'
 

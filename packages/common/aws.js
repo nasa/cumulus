@@ -86,6 +86,7 @@ const awsClient = (Service, version = null) => {
   return memoize((o) => new Service(Object.assign(options, o)));
 };
 
+exports.autoscaling = awsClient(AWS.AutoScaling, '2011-01-01');
 exports.ecs = awsClient(AWS.ECS, '2014-11-13');
 exports.s3 = awsClient(AWS.S3, '2006-03-01');
 exports.lambda = awsClient(AWS.Lambda, '2015-03-31');

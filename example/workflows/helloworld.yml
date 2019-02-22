@@ -49,6 +49,50 @@ EcsHelloWorldWorkflow:
           input: '{$}'
       Next: EcsTaskHelloWorld
     EcsTaskHelloWorld:
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+      Type: Task
+      Resource: ${HelloWorldActivity}
+      TimeoutSeconds: 60
+      Retry:
+        - ErrorEquals:
+            - States.Timeout
+          MaxAttempts: 1
+      Next: StopStatus
+    StopStatus:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          Next: WorkflowFailed
+      End: true
+    WorkflowFailed:
+      Type: Fail
+      Cause: 'Workflow failed'
+
+HelloWorldOnDemandWorkflow:
+  Comment: 'Returns Hello World'
+  StartAt: StartStatus
+  States:
+    StartStatus:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
+      Next: EcsTaskHelloWorld
+    EcsTaskHelloWorld:
       ResultPath: '$.payload.task_output'
       CumulusConfig:
         buckets: '{$.meta.buckets}'
@@ -59,7 +103,7 @@ EcsHelloWorldWorkflow:
       TimeoutSeconds: 120
       Parameters:
         Cluster: ${CumulusECSCluster.Arn}
-        TaskDefinition: ${EcsTaskHelloWorldTaskDefinition}
+        TaskDefinition: ${HelloWorldOnDemandTaskDefinition}
       Retry:
         - ErrorEquals:
             - States.Timeout

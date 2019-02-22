@@ -939,7 +939,7 @@ Resources:
     Type: AWS::AutoScaling::AutoScalingGroup
     UpdatePolicy:
       AutoScalingRollingUpdate:
-        MinInstancesInService: 0
+        MinInstancesInService: {{#if ecs.minInstances }}{{ ecs.minInstances }}{{ else }}0{{/if}}
     Properties:
       AvailabilityZones:
 {{# if ecs.availabilityZones }}
@@ -957,8 +957,8 @@ Resources:
     {{/if}}
       LaunchConfigurationName:
         Ref: CumulusContainerInstanceLaunch
-      MinSize: '0'
-      MaxSize: {{ ecs.maxInstances }}
+      MinSize: {{#if ecs.minInstances }}{{ ecs.minInstances }}{{ else }}'0'{{/if}}
+      MaxSize: {{#ifLessThan ecs.maxInstances 11 }}{{ ecs.maxInstances }}{{ else }}10{{/ifLessThan}}
       DesiredCapacity: {{ ecs.desiredInstances }}
       Tags:
       - Key: Name
@@ -1074,7 +1074,6 @@ Resources:
       DeploymentConfiguration:
         MaximumPercent: 100
         MinimumHealthyPercent: 0
-
 {{/each}}
 
 {{#each ecs.tasks}}
@@ -1174,9 +1173,70 @@ Resources:
       FilterPattern: ""
 {{/each}}
 {{/if}}
+
+# ECS EC2 Autoscaling Policies
+{{#if ecs.autoscaling_policies}}
+  {{#each ecs.autoscaling_policies}}
+  {{@key}}ScalingPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: {{ adjustment_type }}
+      AutoScalingGroupName:
+        Ref: CumulusECSAutoScalingGroup
+      {{#ifNotEquals policy_type "StepScaling"}}
+      Cooldown: {{# if cool_down }}{{ cool_down }}{{else}}60{{/if}}
+      {{/ifNotEquals}}
+      {{#ifNotEquals policy_type "SimpleScaling"}}
+      MetricAggregationType: {{# if metric_aggregation_type }}{{ metric_aggregation_type }}{{else}}Average{{/if}}
+      EstimatedInstanceWarmup: {{# if instance_warmup }}{{ instance_warmup }}{{else}}60{{/if}}
+      {{/ifNotEquals}}
+      {{#ifEquals adjustment_type "PercentChangeInCapacity" }}
+      MinAdjustmentMagnitude: {{# if min_adjustment }}{{ min_adjustment }}{{else}}1{{/if}}
+      {{/ifEquals}}
+      PolicyType: {{ policy_type }}
+      {{#ifEquals policy_type "SimpleScaling"}}
+      ScalingAdjustment: {{ scaling_adjustment }}
+      {{/ifEquals}}
+      {{#ifEquals policy_type "StepScaling"}}
+      StepAdjustments:
+        {{#each this.step_adjustments }}
+        - MetricIntervalLowerBound: {{ metric_interval_lower_bound }}
+          MetricIntervalUpperBound: {{ metric_interval_upper_bound }}
+          ScalingAdjustment: {{ scaling_adjustment }}
+        {{/each}}
+      {{/ifEquals}}
+      # TargetTrackingConfiguration:
+      #   TargetTrackingConfiguration
+  {{/each}}
+{{/if}}
+
   #################################################
   # ECS config END
   #################################################
+{{#if alarms}}
+  {{# each alarms}}
+  {{@key}}Alarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      EvaluationPeriods: {{#if evaluation_periods }}{{ evaluation_periods }}{{ else }}'1'{{/if}}
+      Statistic: {{#if statistic }}{{ statistic }}{{ else }}Average{{/if}}
+      Threshold: {{ threshold }}
+    {{#if alarm_description}}
+      AlarmDescription: {{ alarm_description }}
+    {{/if}}
+      Period: {{#if period }}{{ period }}{{ else }}'60'{{/if}}
+      AlarmActions:
+        - Ref: {{ alarm_action }}
+      Namespace: AWS/EC2
+      Dimensions:
+      - Name: AutoScalingGroupName
+        Value:
+          Ref: CumulusECSAutoScalingGroup
+      ComparisonOperator: {{#if comparison_operator }}{{ comparison_operator }}{{ else }}GreaterThanThreshold{{/if}}
+      MetricName: {{#if metric_name }}{{ metric_name }}{{ else }}CPUUtilization{{/if}}
+  {{/each}}
+{{/if}}
+
 
 Outputs:
 

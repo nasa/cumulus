@@ -1,7 +1,7 @@
 'use strict';
 
 const find = require('lodash.find');
-const { ecs } = require('@cumulus/common/aws');
+const { autoscaling, ecs } = require('@cumulus/common/aws');
 const {
   buildAndStartWorkflow,
   waitForCompletedExecution,
@@ -10,11 +10,12 @@ const {
 const { sleep } = require('@cumulus/common/util');
 const { loadConfig } = require('../helpers/testUtils');
 
-const workflowName = 'EcsHelloWorldWorkflow';
+const workflowName = 'HelloWorldOnDemandWorkflow';
 const config = loadConfig();
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
 let clusterArn;
+let autoScalingGroupName;
 
 async function getClusterStats({
   statTypes = ['runningEC2TasksCount', 'pendingEC2TasksCount']
@@ -28,16 +29,47 @@ async function getClusterStats({
     returnedStats[statType] = parseInt(find(stats, ['name', statType]).value, 10);
   });
   return returnedStats;
-}
+};
+
+async function getAutoScalingGroupName(stackName) {
+  const autoScalingGroups = (await autoscaling().describeAutoScalingGroups({}).promise()).AutoScalingGroups;
+  const asg = find(autoScalingGroups, (group) => {
+    return group.AutoScalingGroupName.match(new RegExp(stackName, 'g'));
+  });
+  return asg.AutoScalingGroupName;
+};
+
+const waitPeriod = 15000;
+async function getNewScalingActivity() {
+  const params = {
+    AutoScalingGroupName: autoScalingGroupName,
+    MaxRecords: 1
+  };
+  let activties = await autoscaling().describeScalingActivities(params).promise();
+  const startingActivity = activties.Activities[0];
+  let mostRecentActivity = Object.assign({}, startingActivity);
+  while (startingActivity.ActivityId === mostRecentActivity.ActivityId) {
+    activties = await autoscaling().describeScalingActivities(params).promise();
+    mostRecentActivity = activties.Activities[0];
+    console.log(`waiting for ${waitPeriod/1000} seconds`);
+    await sleep(waitPeriod);
+  };
+
+  return mostRecentActivity;
+};
+
+const numExecutions = 3;
+const numActivityTasks = 1;
+const minInstancesCount = 1;
 
 describe('When a task is configured to run in Docker', () => {
   beforeAll(async () => {
     clusterArn = await getClusterArn(config.stackName);
+    autoScalingGroupName = await getAutoScalingGroupName(config.stackName);
   });
 
   describe('the load on the system exceeds that which its resources can handle', () => {
     let workflowExecutionArns = [];
-    const numExecutions = 3;
 
     beforeAll(async () => {
       let workflowExecutionPromises = [];
@@ -56,24 +88,26 @@ describe('When a task is configured to run in Docker', () => {
       await Promise.all(completions);
     });
 
-    fit('adds new resources able to handle the load and does not add new resources to handle the load', async () => {
+    it('can handle the load', async () => {
       await sleep(5000);
       const stats = await getClusterStats({});
-      expect(stats.runningEC2TasksCount + stats.pendingEC2TasksCount).toEqual(numExecutions);
+      expect(stats.runningEC2TasksCount + stats.pendingEC2TasksCount).toEqual(numExecutions + numActivityTasks);
     });
 
-    // more ecs instances should spin up if the current ecs instance can't handle the load
+    it('adds new resources', async () => {
+      console.log('Waiting for scale out policy to take affect');
+      const mostRecentActivity = await getNewScalingActivity();
+      console.log(`mostRecentActivity ${JSON.stringify(mostRecentActivity, null, 2)}`);
+      expect(mostRecentActivity.Description).toMatch(/Launching a new EC2 instance: i-*/);
+    });
   });
 
   describe('the load on the system is far below what its resources can handle', () => {
-    it('removes excessive resources', async () => {
-      const stats = await getClusterStats({});
-      expect(stats.runningEcsTasksCount + stats.pendingEcsTasksCount).toEqual(0);
-    });
-
-    it('does not remove excessive resources', async () => {
-      const stats = await getClusterStats({ statTypes: ['runningEC2TasksCount'] });
-      expect(stats.runningEC2TasksCount).toEqual(1);
+    it('removes excessive resources but not all resources', async () => {
+      console.log('Waiting for scale in policy to take affect');
+      const mostRecentActivity = await getNewScalingActivity();
+      console.log(`mostRecentActivity ${JSON.stringify(mostRecentActivity, null, 2)}`);
+      expect(mostRecentActivity.Description).toMatch(/Terminating EC2 instance: i-*/);
     });
   });
 });

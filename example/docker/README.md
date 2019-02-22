@@ -6,6 +6,12 @@
 
 Below are instructions for how to build and push this docker image to AWS ECR.
 
+If the repository already exists, you can use:
+
+```sh
+sh ./build_docker.sh
+```
+
 1. Create the `hello_world` repository
 
 ```bash
