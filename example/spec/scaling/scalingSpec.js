@@ -95,7 +95,7 @@ describe('When a task is configured to run in Docker', () => {
     });
 
     it('adds new resources', async () => {
-      console.log('Waiting for scale out policy to take affect');
+      console.log('Waiting for scale out policy to take affect.');
       const mostRecentActivity = await getNewScalingActivity();
       expect(mostRecentActivity.Description).toMatch(/Launching a new EC2 instance: i-*/);
     });
@@ -103,9 +103,15 @@ describe('When a task is configured to run in Docker', () => {
 
   describe('the load on the system is far below what its resources can handle', () => {
     it('removes excessive resources but not all resources', async () => {
-      console.log('Waiting for scale in policy to take affect');
+      console.log('Waiting for scale in policy to take affect.');
       const mostRecentActivity = await getNewScalingActivity();
       expect(mostRecentActivity.Description).toMatch(/Terminating EC2 instance: i-*/);
+      const stats = await getClusterStats({});
+      console.log(`stats ${JSON.stringify(stats, null, 2)}`);
+      expect(stats.runningEC2TasksCount).toEqual(numActivityTasks);
+      const instances = await ecs().listContainerInstances({ cluster: clusterArn }).promise();
+      console.log(`instances ${JSON.stringify(instances, null, 2)}`);
+      expect(instances.containerInstanceArns.length).toEqual(minInstancesCount);
     });
   });
 });
