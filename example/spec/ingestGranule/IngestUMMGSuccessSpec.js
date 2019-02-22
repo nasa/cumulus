@@ -278,7 +278,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
-      // Is this test still necessary?
       const distributionUrl = getDistributionFileUrl({
         bucket: files[0].bucket,
         key: files[0].filepath
