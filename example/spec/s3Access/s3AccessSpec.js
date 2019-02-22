@@ -1,4 +1,5 @@
-/* eslint disable */
+/* eslint-disable no-unused-vars, lodash/prefer-noop */
+
 
 const { Lambda, S3 } = require('aws-sdk');
 const { s3 } = require('@cumulus/common/aws');
@@ -78,3 +79,4 @@ describe('When accessing a bucket directly', () => {
     });
   });
 });
+/* eslint-enable */
