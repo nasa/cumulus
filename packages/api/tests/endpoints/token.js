@@ -135,33 +135,6 @@ test.serial('GET /token with a code but no state returns the access token', asyn
   stub.restore();
 });
 
-test.serial('GET /token with no refreshToken in the response', async (t) => {
-  const getAccessTokenResponse = {
-    username: 'my-username',
-    accessToken: 'my-access-token',
-    expirationTime: 12345
-  };
-
-  const stub = sinon.stub(
-    EarthdataLoginClient.prototype,
-    'getAccessToken'
-  ).callsFake(async () => getAccessTokenResponse);
-
-  const response = await request(app)
-    .get('/token')
-    .query({
-      code: 'my-authorization-code',
-      scope: 'my-scope',
-      state: 'my-state'
-    })
-    .set('Accept', 'application/json')
-    .expect(307);
-
-  t.is(response.status, 307);
-  t.regex(response.headers.location, /my-state\?token\=/);
-  stub.restore();
-});
-
 test.serial('GET /token with a code and state results in a redirect to that state', async (t) => {
   const getAccessTokenResponse = fakeAccessTokenFactory();
 
@@ -209,7 +182,7 @@ test.serial('GET /token with a code and state results in a redirect containing t
   stub.restore();
 });
 
-test.serial('When using Earthdata Login, GET /token with a code stores the access token in DynamoDb', async (t) => {
+test.serial('GET /token with a code stores the access token in DynamoDb', async (t) => {
   const getAccessTokenResponse = fakeAccessTokenFactory();
   const { accessToken, refreshToken } = getAccessTokenResponse;
 
@@ -228,6 +201,33 @@ test.serial('When using Earthdata Login, GET /token with a code stores the acces
 
   t.is(tokenAfter.accessToken, accessToken);
   t.is(tokenAfter.refreshToken, refreshToken);
+  stub.restore();
+});
+
+test.serial('When OAuth provider returns no refresh token, GET /token with code and state results in redirect with access token', async (t) => {
+  const getAccessTokenResponse = {
+    username: 'my-username',
+    accessToken: 'my-access-token',
+    expirationTime: 12345
+  };
+  const jwtToken = createJwtToken(getAccessTokenResponse);
+
+  const stub = sinon.stub(
+    EarthdataLoginClient.prototype,
+    'getAccessToken'
+  ).callsFake(async () => getAccessTokenResponse);
+
+  const response = await request(app)
+    .get('/token')
+    .query({
+      code: 'my-authorization-code',
+      state: 'my-state'
+    })
+    .set('Accept', 'application/json')
+    .expect(307);
+
+  t.is(response.status, 307);
+  t.is(response.headers.location, `my-state?token=${jwtToken}`);
   stub.restore();
 });
 
