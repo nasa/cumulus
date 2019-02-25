@@ -52,6 +52,7 @@ function loadConfig() {
 
   config.test_configs.buckets = config.buckets;
   config.test_configs.deployment = config.deployment;
+  config.test_configs.cmr = config.cmr;
 
   return config.test_configs;
 }
