@@ -313,7 +313,7 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets) {
   });
 
   urls.push({
-    URL: urljoin(distEndpoint, changeMe),
+    URL: urljoin(distEndpoint, 'changeMe'),
     URLDescription: 'S3 Credentials Endpoint',
     Description: 'S3 Credentials Endpoint',
     Type: 'GET DATA'
