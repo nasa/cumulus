@@ -84,7 +84,7 @@ async function getUmmObject(fileLocation) {
 }
 
 const cumulusDocUrl = 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme';
-const isUMMGScienceUrl = (url) => url !== cumulusDocUrl && !url.endsWith('.cmr.json') && !url.contains('s3credentials');
+const isUMMGScienceUrl = (url) => url !== cumulusDocUrl && !url.endsWith('.cmr.json') && !url.includes('s3credentials');
 
 describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const testId = createTimestampedTestId(config.stackName, 'IngestUMMGSuccess');
