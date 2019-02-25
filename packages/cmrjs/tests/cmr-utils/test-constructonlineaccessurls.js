@@ -16,7 +16,7 @@ const s3CredentialsEndpointObject = {
   URL: `${endpoint}/s3credentials`,
   Description: 'S3 Credentials Endpoint',
   URLDescription: 'S3 Credentials Endpoint',
-  Type: 'GET DATA'
+  Type: 'VIEW RELATED INFORMATION'
 };
 
 
