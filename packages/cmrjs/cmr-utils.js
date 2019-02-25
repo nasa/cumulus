@@ -306,7 +306,7 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets, s3CredsEndpoint
     URL: urljoin(distEndpoint, s3CredsEndpoint),
     URLDescription: 'S3 Credentials Endpoint',
     Description: 'S3 Credentials Endpoint',
-    Type: 'GET DATA'
+    Type: 'VIEW RELATED INFORMATION'
   });
 
   return urls;

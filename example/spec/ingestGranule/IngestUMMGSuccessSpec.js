@@ -307,7 +307,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('adds s3credentials as the correct type to online access urls', () => {
       console.log(JSON.stringify(onlineResources));
-      const s3CredentialsResource = onlineResources.filter((resource) => resource.Type === 'USE SERVICE API');
+      const s3CredentialsResource = onlineResources.filter((resource) => resource.Type === 'VIEW RELATED INFORMATION');
       console.log('s3CredentialsResource: ', s3CredentialsResource);
       expect(s3CredentialsResource.length).toEqual(1);
     });
