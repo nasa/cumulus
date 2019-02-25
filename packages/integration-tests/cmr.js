@@ -160,16 +160,41 @@ async function waitForConceptExistsOutcome(cmrLink, expectation) {
 }
 
 /**
- * Generate a granule xml and store to the given S3 bucket
+ * Get the online resource links from the CMR objects
+ *
+ * @param {string} cmrLink - CMR URL path to concept,
+ * i.e. what is returned from post to cmr task
+ * @returns {Array<Object>} Array of link objects in the format
+ * { inherited: true,
+    rel: 'http://esipfed.org/ns/fedsearch/1.1/metadata#',
+    hreflang: 'en-US',
+    href: 'https://opendap.cr.usgs.gov/opendap/hyrax/MYD13Q1.006/contents.html' }
+ */
+async function getOnlineResources(cmrLink) {
+  const response = await got.get(cmrLink);
+
+  if (response.statusCode !== 200) {
+    return null;
+  }
+
+  const body = JSON.parse(response.body);
+
+  const links = body.feed.entry.map((e) => e.links);
+
+  // Links is a list of a list, so flatten to be one list
+  return [].concat(...links);
+}
+
+/**
+ * Generate a granule xml string
  *
  * @param {Object} granule - granule object
  * @param {Object} collection - collection object
- * @param {string} bucket - bucket to save the xml file to
  * @param {Array<string>} additionalUrls - URLs to convert to online resources
- * @returns {Promise<Array<string>>} - Promise of a list of granule files including the created
+ * @returns {Promise<Array<string>>} - Promise of the generated granule xml string
  * CMR xml files
  */
-async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrls) {
+function generateCmrXml(granule, collection, additionalUrls) {
   const xmlObject = sampleEcho10Granule;
   xmlObject.Granule.GranuleUR = granule.granuleId;
 
@@ -177,8 +202,6 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
     ShortName: collection.name,
     VersionId: collection.version
   };
-
-  const granuleFiles = granule.files.map((f) => f.filename);
 
   if (additionalUrls) {
     xmlObject.Granule.OnlineAccessURLs = additionalUrls.map((url) => ({
@@ -189,8 +212,23 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
     }));
   }
 
-  const builder = new xml2js.Builder();
-  const xml = builder.buildObject(xmlObject);
+  const xml = new xml2js.Builder().buildObject(xmlObject);
+  return xml;
+}
+
+/**
+ * Generate a granule xml and store to the given S3 bucket
+ *
+ * @param {Object} granule - granule object
+ * @param {Object} collection - collection object
+ * @param {string} bucket - bucket to save the xml file to
+ * @param {Array<string>} additionalUrls - URLs to convert to online resources
+ * @returns {Promise<Array<string>>} - Promise of a list of granule files including the created
+ * CMR xml files
+ */
+async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrls) {
+  const xml = generateCmrXml(granule, collection, additionalUrls);
+  const granuleFiles = granule.files.map((f) => f.filename);
 
   const stagingDir = granule.files[0].fileStagingDir;
 
@@ -414,5 +452,6 @@ module.exports = {
   conceptExists,
   getOnlineResources,
   generateCmrFilesForGranules,
+  generateCmrXml,
   waitForConceptExistsOutcome
 };
