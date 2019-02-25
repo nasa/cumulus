@@ -163,6 +163,9 @@ class UpdatedKes extends Kes {
     Handlebars.registerHelper('ifNotEquals', function ifNotEquals(arg1, arg2, options) {
       return (arg1 !== arg2) ? options.fn(this) : options.inverse(this);
     });
+    Handlebars.registerHelper('ifLessThan', function ifLessThan(arg1, arg2, options) {
+      return arg1 < arg2 ? options.fn(this) : options.inverse(this);
+    });
 
     return super.parseCF(cfFile);
   }
