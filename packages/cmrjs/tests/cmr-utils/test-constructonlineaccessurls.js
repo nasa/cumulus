@@ -7,17 +7,13 @@ const { BucketsConfig } = require('@cumulus/common');
 const cmrUtils = rewire('../../cmr-utils');
 
 const constructOnlineAccessUrls = cmrUtils.__get__('constructOnlineAccessUrls');
+const getS3CredentialsObject = cmrUtils.__get__('getS3CredentialsObject');
 
 
 const sortByURL = (a, b) => a.URL < b.URL;
 
 const endpoint = 'https://endpoint';
-const s3CredentialsEndpointObject = {
-  URL: `${endpoint}/s3credentials`,
-  Description: 'S3 Credentials Endpoint',
-  URLDescription: 'S3 Credentials Endpoint',
-  Type: 'VIEW RELATED INFORMATION'
-};
+const s3CredentialsEndpointObject = getS3CredentialsObject(`${endpoint}/s3credentials`);
 
 
 test.beforeEach((t) => {
