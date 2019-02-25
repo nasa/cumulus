@@ -299,6 +299,19 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       expect(onlineResources.length).toEqual(validResources.length);
     });
 
+    it('updates the CMR metadata online resources with s3credentials location', () => {
+      const s3CredentialsURL = path.join(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
+      console.log('s3CredentialsURL: ', s3CredentialsURL);
+      expect(resourceURLs.includes(s3CredentialsURL)).toBe(true);
+    });
+
+    it('adds s3credentials as the correct type to online access urls', () => {
+      console.log(JSON.stringify(onlineResources));
+      const s3CredentialsResource = onlineResources.filter((resource) => resource.Type === 'USE SERVICE API');
+      console.log('s3CredentialsResource: ', s3CredentialsResource);
+      expect(s3CredentialsResource.length).toEqual(1);
+    });
+
     it('does not overwrite the original related url', () => {
       expect(resourceURLs.includes(cumulusDocUrl)).toBe(true);
     });
