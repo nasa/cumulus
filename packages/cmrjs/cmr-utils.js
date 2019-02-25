@@ -271,6 +271,21 @@ async function bucketsConfigDefaults() {
 }
 
 /**
+ * Build and return an S3 Credentials Object for adding to CMR onlineAccessUrls
+ *
+ * @param {string} s3CredsUrl - full url pointing to the s3 credential distribution api
+ * returns {Object} Object with attributes required for adding an onlineAccessUrl
+ */
+function getS3CredentialsObject(s3CredsUrl) {
+  return {
+    URL: s3CredsUrl,
+    URLDescription: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
+    Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
+    Type: 'VIEW RELATED INFORMATION'
+  };
+};
+
+/**
  * Construct a list of online access urls.
  *
  * @param {Array<Object>} files - array of file objects
@@ -302,12 +317,7 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets, s3CredsEndpoint
     }
   });
 
-  urls.push({
-    URL: urljoin(distEndpoint, s3CredsEndpoint),
-    URLDescription: 'S3 Credentials Endpoint',
-    Description: 'S3 Credentials Endpoint',
-    Type: 'VIEW RELATED INFORMATION'
-  });
+  urls.push(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
 
   return urls;
 }
