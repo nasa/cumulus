@@ -91,12 +91,14 @@ async function publishECHO10XML2CMR(cmrFile, creds, systemBucket, stack) {
     granuleId: cmrFile.granuleId,
     filename: cmrFile.filename,
     conceptId,
-    link: `${getUrl('search')}granules.json?concept_id=${res.result['concept-id']}`
+    metadataFormat: 'echo10',
+    link: `${getUrl('search')}granules.json?concept_id=${conceptId}`
   };
 }
 
 
 /**
+ * function for posting cmr JSON files from S3 to CMR
  *
  * @param {Object} cmrPublishObject -
  * @param {string} cmrPublishObject.filename - the cmr filename
@@ -366,7 +368,6 @@ function mergeURLs(original, updated, removed = []) {
 
   return [...unchangedOriginals, ...updatedWithMergedOriginals];
 }
-
 
 /**
  * After files are moved, create new online access URLs and then update the S3
