@@ -29,15 +29,13 @@ async function getClusterStats({
     returnedStats[statType] = parseInt(find(stats, ['name', statType]).value, 10);
   });
   return returnedStats;
-};
+}
 
 async function getAutoScalingGroupName(stackName) {
   const autoScalingGroups = (await autoscaling().describeAutoScalingGroups({}).promise()).AutoScalingGroups;
-  const asg = find(autoScalingGroups, (group) => {
-    return group.AutoScalingGroupName.match(new RegExp(stackName, 'g'));
-  });
+  const asg = find(autoScalingGroups, (group) => group.AutoScalingGroupName.match(new RegExp(stackName, 'g')));
   return asg.AutoScalingGroupName;
-};
+}
 
 const waitPeriod = 30000;
 async function getNewScalingActivity() {
@@ -48,15 +46,17 @@ async function getNewScalingActivity() {
   let activties = await autoscaling().describeScalingActivities(params).promise();
   const startingActivity = activties.Activities[0];
   let mostRecentActivity = Object.assign({}, startingActivity);
+  /* eslint-disable no-await-in-loop */
   while (startingActivity.ActivityId === mostRecentActivity.ActivityId) {
     activties = await autoscaling().describeScalingActivities(params).promise();
     mostRecentActivity = activties.Activities[0];
-    console.log(`No new activity found. Sleeping for ${waitPeriod/1000} seconds.`);
+    console.log(`No new activity found. Sleeping for ${waitPeriod / 1000} seconds.`);
     await sleep(waitPeriod);
-  };
+  }
+  /* eslint-enable no-await-in-loop */
 
   return mostRecentActivity;
-};
+}
 
 const numExecutions = 3;
 const numActivityTasks = 1;
@@ -72,14 +72,14 @@ describe('When a task is configured to run in Docker', () => {
     let workflowExecutionArns = [];
 
     beforeAll(async () => {
-      let workflowExecutionPromises = [];
-      for (let i = 0; i < numExecutions; i++) {
+      const workflowExecutionPromises = [];
+      for (let i = 0; i < numExecutions; i += 1) {
         workflowExecutionPromises.push(buildAndStartWorkflow(
           config.stackName,
           config.bucket,
           workflowName
         ));
-      };
+      }
       workflowExecutionArns = await Promise.all(workflowExecutionPromises);
     });
 
