@@ -1,7 +1,6 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const crypto = require('crypto');
 const fs = require('fs');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
@@ -10,13 +9,13 @@ const pMap = require('p-map');
 const pRetry = require('p-retry');
 const pump = require('pump');
 const url = require('url');
+const { checksumFileStream } = require('@cumulus/checksum');
 
 const log = require('./log');
 const string = require('./string');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
 const concurrency = require('./concurrency');
 const { noop } = require('./util');
-const { getFileChecksumFromStream } = require('./file');
 
 /**
  * Join strings into an S3 key without a leading slash or double slashes
@@ -558,20 +557,8 @@ exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
 
 exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
   const param = { Bucket: bucket, Key: key };
-
-  if (algorithm.toLowerCase() === 'cksum') {
-    return getFileChecksumFromStream(
-      exports.s3().getObject(param).createReadStream()
-    );
-  }
-
-  return new Promise((resolve, reject) => {
-    const hash = crypto.createHash(algorithm, options);
-    const fileStream = exports.s3().getObject(param).createReadStream();
-    fileStream.on('error', reject);
-    fileStream.on('data', (chunk) => hash.update(chunk));
-    fileStream.on('end', () => resolve(hash.digest('hex')));
-  });
+  const fileStream = exports.s3().getObject(param).createReadStream();
+  return checksumFileStream(algorithm, fileStream, options);
 };
 
 // Class to efficiently search all of the items in a DynamoDB table, without
