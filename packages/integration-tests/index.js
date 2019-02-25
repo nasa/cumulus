@@ -30,6 +30,7 @@ const rulesApi = require('./api/rules');
 const executionsApi = require('./api/executions');
 const granulesApi = require('./api/granules');
 const EarthdataLogin = require('./api/EarthdataLogin');
+const distributionApi = require('./api/distribution');
 const cmr = require('./cmr.js');
 const lambda = require('./lambda');
 const granule = require('./granule.js');
@@ -767,6 +768,7 @@ module.exports = {
   rulesApi,
   granulesApi,
   executionsApi,
+  distributionApi,
   EarthdataLogin,
   buildWorkflow,
   testWorkflow,
