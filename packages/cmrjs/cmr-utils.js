@@ -233,6 +233,18 @@ async function metadataObjectFromCMRFile(cmrFilename) {
  * that includes CMR xml/json URIs and granuleIds
  */
 function getCmrFiles(input, granuleIdExtraction) {
+  return input.map((filename) => {
+    if (isCMRFilename(filename)) {
+      return {
+        filename,
+        granuleId: getGranuleId(filename, granuleIdExtraction)
+      };
+    }
+  });
+}
+
+/*
+function getCmrFiles(input, granuleIdExtraction) {
   const files = [];
 
   input.forEach((filename) => {
@@ -246,7 +258,7 @@ function getCmrFiles(input, granuleIdExtraction) {
   });
 
   return files;
-}
+}*/
 
 /**
  * Retrieve the stack's bucket configuration from s3 and return the bucket configuration object.
@@ -300,7 +312,14 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets) {
     }
   });
 
-  return urls;
+  urls.push({
+    URL: urljoin(distEndpoint, changeMe),
+    URLDescription: 'S3 Credentials Endpoint',
+    Description: 'S3 Credentials Endpoint',
+    Type: 'GET DATA'
+  });
+
+  return urls
 }
 
 /**
