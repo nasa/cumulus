@@ -301,9 +301,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       const getDataResources = onlineResources.filter((resource) => resource.Type === 'GET DATA');
       const viewRelatedInfoResource = onlineResources.filter((resource) => resource.Type === 'VIEW RELATED INFORMATION');
 
-      console.log('getDataResources: ', getDataResources);
-      console.log('viewRelatedInfoResource', viewRelatedInfoResource);
-
       // There should only be one s3credentials endpoint per granule
       expect(viewRelatedInfoResource.length).toBe(1);
       expect(getDataResources.length).toEqual(onlineResources.length - viewRelatedInfoResource.length);
@@ -312,8 +309,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('updates the CMR metadata online resources with s3credentials location', () => {
       const s3CredentialsURL = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
-      console.log('s3CredentialsURL: ', s3CredentialsURL);
-      console.log('resourceURLs: ', resourceURLs);
       expect(resourceURLs.includes(s3CredentialsURL)).toBe(true);
     });
 
@@ -330,7 +325,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       accessToken = accessTokenResponse.accessToken;
 
       const scienceFileUrls = resourceURLs.filter(isUMMGScienceUrl);
-      console.log('scienceFileUrls: ', scienceFileUrls);
 
       const checkFiles = await Promise.all(
         scienceFileUrls
