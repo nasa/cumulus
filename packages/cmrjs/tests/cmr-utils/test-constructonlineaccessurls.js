@@ -13,11 +13,11 @@ const sortByURL = (a, b) => a.URL < b.URL;
 
 const endpoint = 'https://endpoint';
 const s3CredentialsEndpointObject = {
-      URL: `${endpoint}/changeMe`,
-      Description: 'S3 Credentials Endpoint',
-      URLDescription: 'S3 Credentials Endpoint',
-      Type: 'GET DATA'
-    };
+  URL: `${endpoint}/changeMe`,
+  Description: 'S3 Credentials Endpoint',
+  URLDescription: 'S3 Credentials Endpoint',
+  Type: 'GET DATA'
+};
 
 
 test.beforeEach((t) => {
@@ -76,7 +76,6 @@ test('Returns correct url object for public data.', (t) => {
 
 
 test('Returns empty list for private data.', (t) => {
-  const endpoint = 'https://endpoint';
   const privateBucket = t.context.bucketConfig.private.name;
   const movedFiles = [
     {
