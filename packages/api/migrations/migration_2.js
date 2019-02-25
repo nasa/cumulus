@@ -4,7 +4,7 @@ const drop = require('lodash.drop');
 const {
   aws: {
     dynamodb,
-    DynamoDbScanQueue,
+    DynamoDbSearchQueue,
     parseS3Uri
   }
 } = require('@cumulus/common');
@@ -16,12 +16,12 @@ const {
  * @returns {Array<Object>} - a list of PutRequest objects
  */
 function filePutRequestsFromGranule(granule) {
-  return granule.files.L.map((file) => ({
+  return granule.files.map((file) => ({
     PutRequest: {
       Item: {
-        bucket: { S: file.M.bucket.S },
-        key: { S: parseS3Uri(file.M.filename.S).Key },
-        granuleId: { S: granule.granuleId.S }
+        bucket: { S: file.bucket },
+        key: { S: parseS3Uri(file.filename).Key },
+        granuleId: { S: granule.granuleId }
       }
     }
   }));
@@ -38,7 +38,7 @@ function filePutRequestsFromGranule(granule) {
  *   is complete
  */
 async function run({ granulesTable, filesTable }) {
-  const granuleTableScanQueue = new DynamoDbScanQueue({
+  const granuleTableScanQueue = new DynamoDbSearchQueue({
     TableName: granulesTable,
     ProjectionExpression: 'granuleId, files'
   });
