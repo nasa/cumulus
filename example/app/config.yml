@@ -238,17 +238,6 @@ aimee:
   stackName: aimee
   stackNameNoDash: aimee
 
-  buckets:
-    internal:
-      name: cumulus-developmentseed-internal
-      type: internal
-    private:
-      name: cumulus-developmentseed-private
-      type: private
-    protected:
-      name: cumulus-developmentseed-protected
-      type: protected
-
 lf:
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus

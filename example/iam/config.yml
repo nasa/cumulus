@@ -74,17 +74,6 @@ aimee:
   prefix: aimee
   stackName: aimee-iam
 
-  buckets:
-    internal:
-      name: cumulus-developmentseed-internal
-      type: internal
-    private:
-      name: cumulus-developmentseed-private
-      type: private
-    protected:
-      name: cumulus-developmentseed-protected
-      type: protected
-
 lf:
   prefix: lf-cumulus
   stackName: lf-cumulus-iam
