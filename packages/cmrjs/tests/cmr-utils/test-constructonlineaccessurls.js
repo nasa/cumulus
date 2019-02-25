@@ -13,7 +13,7 @@ const sortByURL = (a, b) => a.URL < b.URL;
 
 const endpoint = 'https://endpoint';
 const s3CredentialsEndpointObject = {
-  URL: `${endpoint}/changeMe`,
+  URL: `${endpoint}/s3credentials`,
   Description: 'S3 Credentials Endpoint',
   URLDescription: 'S3 Credentials Endpoint',
   Type: 'GET DATA'

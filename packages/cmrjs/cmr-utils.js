@@ -277,7 +277,7 @@ async function bucketsConfigDefaults() {
  * @returns {Array<{URL: string, URLDescription: string}>}
  *   returns the list of online access url objects
  */
-function constructOnlineAccessUrls(files, distEndpoint, buckets) {
+function constructOnlineAccessUrls(files, distEndpoint, buckets, s3CredsEndpoint = 's3credentials') {
   const urls = [];
 
   files.forEach((file) => {
@@ -300,13 +300,12 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets) {
     }
   });
 
-  /*
   urls.push({
-    URL: urljoin(distEndpoint, 'changeMe'),
+    URL: urljoin(distEndpoint, s3CredsEndpoint),
     URLDescription: 'S3 Credentials Endpoint',
     Description: 'S3 Credentials Endpoint',
     Type: 'GET DATA'
-  });*/
+  });
 
   return urls;
 }
