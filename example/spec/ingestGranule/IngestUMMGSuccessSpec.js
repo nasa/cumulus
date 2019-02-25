@@ -3,7 +3,10 @@
 const fs = require('fs-extra');
 const got = require('got');
 const path = require('path');
-const { URL } = require('url');
+const {
+  URL,
+  resolve
+} = require('url');
 const cloneDeep = require('lodash.clonedeep');
 
 const {
@@ -81,7 +84,7 @@ async function getUmmObject(fileLocation) {
 }
 
 const cumulusDocUrl = 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme';
-const isUMMGScienceUrl = (url) => url !== cumulusDocUrl && !url.endsWith('.cmr.json');
+const isUMMGScienceUrl = (url) => url !== cumulusDocUrl && !url.endsWith('.cmr.json') && !url.contains('s3credentials');
 
 describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const testId = createTimestampedTestId(config.stackName, 'IngestUMMGSuccess');
@@ -295,21 +298,23 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('publishes CMR metadata online resources with the correct type', () => {
-      const validResources = onlineResources.filter((resource) => resource.Type === 'GET DATA');
-      expect(onlineResources.length).toEqual(validResources.length);
+      const getDataResources = onlineResources.filter((resource) => resource.Type === 'GET DATA');
+      const viewRelatedInfoResource = onlineResources.filter((resource) => resource.Type === 'VIEW RELATED INFORMATION');
+
+      console.log('getDataResources: ', getDataResources);
+      console.log('viewRelatedInfoResource', viewRelatedInfoResource);
+
+      // There should only be one s3credentials endpoint per granule
+      expect(viewRelatedInfoResource.length).toBe(1);
+      expect(getDataResources.length).toEqual(onlineResources.length - viewRelatedInfoResource.length);
+      expect(viewRelatedInfoResource.length).toEqual(onlineResources.length - getDataResources.length);
     });
 
     it('updates the CMR metadata online resources with s3credentials location', () => {
-      const s3CredentialsURL = path.join(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
+      const s3CredentialsURL = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
       console.log('s3CredentialsURL: ', s3CredentialsURL);
+      console.log('resourceURLs: ', resourceURLs);
       expect(resourceURLs.includes(s3CredentialsURL)).toBe(true);
-    });
-
-    it('adds s3credentials as the correct type to online access urls', () => {
-      console.log(JSON.stringify(onlineResources));
-      const s3CredentialsResource = onlineResources.filter((resource) => resource.Type === 'VIEW RELATED INFORMATION');
-      console.log('s3CredentialsResource: ', s3CredentialsResource);
-      expect(s3CredentialsResource.length).toEqual(1);
     });
 
     it('does not overwrite the original related url', () => {
@@ -325,6 +330,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       accessToken = accessTokenResponse.accessToken;
 
       const scienceFileUrls = resourceURLs.filter(isUMMGScienceUrl);
+      console.log('scienceFileUrls: ', scienceFileUrls);
 
       const checkFiles = await Promise.all(
         scienceFileUrls
