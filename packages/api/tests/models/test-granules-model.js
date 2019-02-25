@@ -257,6 +257,39 @@ test('get() will translate an old-style granule file into the new schema', async
   );
 });
 
+test('get() will correctly return a granule file stored using the new schema', async (t) => {
+  const newFile = {
+    bucket: 'my-bucket',
+    key: 'path/to/file.txt',
+    fileName: 'file123.txt',
+    checksumType: 'my-checksumType',
+    checksum: 'my-checksumValue',
+    fileSize: 1234
+  };
+
+  const granule = fakeGranuleFactoryV2({ files: [newFile] });
+
+  await dynamodbDocClient().put({
+    TableName: process.env.GranulesTable,
+    Item: granule
+  }).promise();
+
+  const granuleModel = new Granule();
+  const fetchedGranule = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(
+    fetchedGranule.files[0],
+    {
+      bucket: 'my-bucket',
+      key: 'path/to/file.txt',
+      fileName: 'file123.txt',
+      checksumType: 'my-checksumType',
+      checksum: 'my-checksumValue',
+      fileSize: 1234
+    }
+  );
+});
+
 test('batchGet() will translate old-style granule files into the new schema', async (t) => {
   const oldFile = {
     bucket: 'my-bucket',
