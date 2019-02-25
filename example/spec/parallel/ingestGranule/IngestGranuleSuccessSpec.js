@@ -11,7 +11,7 @@ const intersection = require('lodash.intersection');
 
 const {
   models: {
-    Execution, Granule, Collection, Provider
+    AccessToken, Execution, Granule, Collection, Provider
   }
 } = require('@cumulus/api');
 const { serveDistributionApi } = require('@cumulus/api/bin/serve');
@@ -122,6 +122,8 @@ describe('The S3 Ingest Granules workflow', () => {
   let postToCmrOutput;
   let server;
 
+  process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
+  const accessTokensModel = new AccessToken();
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   const granuleModel = new Granule();
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
@@ -329,6 +331,7 @@ describe('The S3 Ingest Granules workflow', () => {
     let files;
     let granule;
     let resourceURLs;
+    let accessToken;
 
     beforeAll(async () => {
       bucketsConfig = new BucketsConfig(config.buckets);
@@ -340,6 +343,10 @@ describe('The S3 Ingest Granules workflow', () => {
       files = granule.files;
       cmrResource = await getOnlineResources(granule);
       resourceURLs = cmrResource.map((resource) => resource.href);
+    });
+
+    afterAll(async () => {
+      await accessTokensModel.delete({ accessToken });
     });
 
     it('has expected payload', () => {
@@ -375,10 +382,11 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('downloads the requested science file for authorized requests', async () => {
       // Login with Earthdata and get access token.
-      const { accessToken } = await getEarthdataAccessToken({
+      const accessTokenResponse = await getEarthdataAccessToken({
         redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
         requestOrigin: process.env.DISTRIBUTION_ENDPOINT
       });
+      accessToken = accessTokenResponse.accessToken;
 
       const scienceFileUrls = resourceURLs
         .filter((url) =>

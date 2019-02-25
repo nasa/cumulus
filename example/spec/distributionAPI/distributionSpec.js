@@ -4,6 +4,7 @@ const fs = require('fs');
 const { URL } = require('url');
 const got = require('got');
 
+const { models: { AccessToken } } = require('@cumulus/api');
 const { serveDistributionApi } = require('@cumulus/api/bin/serve');
 const {
   file: { getFileChecksumFromStream }
@@ -38,6 +39,7 @@ describe('Distribution API', () => {
   let server;
 
   process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
+  const accessTokensModel = new AccessToken();
 
   beforeAll(async (done) => {
     await uploadTestDataToBucket(config.bucket, s3Data, testDataFolder);
@@ -62,6 +64,7 @@ describe('Distribution API', () => {
   describe('handles requests for files over HTTPS', () => {
     let fileChecksum;
     let fileUrl;
+    let accessToken;
 
     beforeAll(async () => {
       fileUrl = getDistributionFileUrl({
@@ -71,6 +74,10 @@ describe('Distribution API', () => {
       fileChecksum = await getFileChecksumFromStream(
         fs.createReadStream(require.resolve(s3Data[0]))
       );
+    });
+
+    afterAll(async () => {
+      await accessTokensModel.delete({ accessToken });
     });
 
     it('redirects to Earthdata login for unauthorized requests', async () => {
@@ -86,10 +93,11 @@ describe('Distribution API', () => {
     it('downloads the requested science file for authorized requests', async () => {
       // Login with Earthdata and get response for redirect back to
       // distribution API.
-      const { accessToken } = await getEarthdataAccessToken({
+      const accessTokenResponse = await getEarthdataAccessToken({
         redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
         requestOrigin: process.env.DISTRIBUTION_ENDPOINT
       });
+      accessToken = accessTokenResponse.accessToken;
 
       // Compare checksum of downloaded file with expected checksum.
       const downloadChecksum = await getFileChecksumFromStream(

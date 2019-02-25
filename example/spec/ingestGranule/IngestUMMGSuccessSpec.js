@@ -8,7 +8,7 @@ const cloneDeep = require('lodash.clonedeep');
 
 const {
   models: {
-    Execution, Collection, Provider
+    AccessToken, Execution, Collection, Provider
   }
 } = require('@cumulus/api');
 const { serveDistributionApi } = require('@cumulus/api/bin/serve');
@@ -102,6 +102,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   let server;
 
   process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
+  const accessTokensModel = new AccessToken();
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
   const executionModel = new Execution();
@@ -243,6 +244,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     let onlineResources;
     let files;
     let resourceURLs;
+    let accessToken;
 
     beforeAll(async () => {
       bucketsConfig = new BucketsConfig(config.buckets);
@@ -255,6 +257,10 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
       onlineResources = await getOnlineResources(granule);
       resourceURLs = onlineResources.map((resource) => resource.URL);
+    });
+
+    afterAll(async () => {
+      await accessTokensModel.delete({ accessToken });
     });
 
     it('has expected payload', () => {
@@ -299,10 +305,11 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('downloads the requested science file for authorized requests', async () => {
       // Login with Earthdata and get access token.
-      const { accessToken } = await getEarthdataAccessToken({
+      const accessTokenResponse = await getEarthdataAccessToken({
         redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
         requestOrigin: process.env.DISTRIBUTION_ENDPOINT
       });
+      accessToken = accessTokenResponse.accessToken;
 
       const scienceFileUrls = resourceURLs.filter(isUMMGScienceUrl);
 
