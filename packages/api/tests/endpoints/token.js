@@ -204,33 +204,6 @@ test.serial('GET /token with a code stores the access token in DynamoDb', async 
   stub.restore();
 });
 
-test.serial('When OAuth provider returns no refresh token, GET /token with code and state results in redirect with access token', async (t) => {
-  const getAccessTokenResponse = {
-    username: 'my-username',
-    accessToken: 'my-access-token',
-    expirationTime: 12345
-  };
-  const jwtToken = createJwtToken(getAccessTokenResponse);
-
-  const stub = sinon.stub(
-    EarthdataLoginClient.prototype,
-    'getAccessToken'
-  ).callsFake(async () => getAccessTokenResponse);
-
-  const response = await request(app)
-    .get('/token')
-    .query({
-      code: 'my-authorization-code',
-      state: 'my-state'
-    })
-    .set('Accept', 'application/json')
-    .expect(307);
-
-  t.is(response.status, 307);
-  t.is(response.headers.location, `my-state?token=${jwtToken}`);
-  stub.restore();
-});
-
 test.serial('GET /refresh without a token results in an authorization failure response', async (t) => {
   const response = await request(app)
     .post('/refresh')
