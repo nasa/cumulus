@@ -48,6 +48,13 @@ test('create() creates a valid access token record', async (t) => {
   t.truthy(accessTokenRecord.expirationTime);
 });
 
+test('create() suceeds with only an access token value', async (t) => {
+  const { accessToken } = fakeAccessTokenFactory();
+  const accessTokenRecord = await accessTokenModel.create({ accessToken });
+
+  t.is(accessTokenRecord.accessToken, accessToken);
+});
+
 test('create() creates a valid access token record without username or expiration', async (t) => {
   const { accessToken, refreshToken } = fakeAccessTokenFactory();
   const accessTokenRecord = await accessTokenModel.create({ accessToken, refreshToken });
