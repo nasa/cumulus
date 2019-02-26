@@ -1,14 +1,13 @@
 'use strict';
 
+const got = require('got');
 const sinon = require('sinon');
 const test = require('ava');
-const got = require('got');
 
-const { getMetadata } = require('..');
+const deleteConcept = require('../deleteConcept');
 
+const clientId = 'cumulus-test-client';
 const granuleId = 'MYD13Q1.A2017297.h19v10.006.2017313221203';
-
-
 const alreadyDeleted = `Concept with native-id [${granuleId}] and concept-id [G1222482315-CUMULUS] is already deleted.`;
 
 // cmr responses for different status
@@ -56,22 +55,50 @@ const stubclient = {
   })
 };
 
-test.serial('get CMR metadata, success', async (t) => {
+test.serial('deleteConcept returns expected result when granule is in CMR', async (t) => {
   statusCode = 200;
-  const stub = sinon.stub(got, 'get').callsFake(stubclient.getCmrData);
+  const stub = sinon.stub(got, 'delete').callsFake(stubclient.delete);
 
-  const response = await getMetadata('fakeLink');
-  t.is(response.title, 'MOD09GQ.A2016358.h13v04.006.2016360104606');
+  const result = await deleteConcept('granule', granuleId, 'CUMULUS', {});
+  stub.restore();
+  t.is(result.result['concept-id'], 'G1222482316-CUMULUS');
+});
 
+test.serial('deleteConcept returns success when granule is not found ', async (t) => {
+  statusCode = 404;
+  const stub = sinon.stub(got, 'delete').callsFake(stubclient.delete);
+  try {
+    await deleteConcept('granule', granuleId, 'CUMULUS', {});
+    t.pass();
+  }
+  catch (error) {
+    t.fail();
+  }
   stub.restore();
 });
 
-test.serial('get CMR metadata, fail', async (t) => {
-  statusCode = 404;
-  const stub = sinon.stub(got, 'get').callsFake(stubclient.getCmrData);
+test.serial('deleteConcept throws error when request is bad', async (t) => {
+  statusCode = 400;
+  const stub = sinon.stub(got, 'delete').callsFake(stubclient.delete);
+  try {
+    await deleteConcept('granule', granuleId, 'CUMULUS', {});
+    t.fail();
+  }
+  catch (error) {
+    t.true(error.toString().includes('CMR error message: "Bad request"'));
+  }
+  stub.restore();
+});
 
-  const response = await getMetadata('fakeLink');
-  t.is(response, null);
+test.serial('deleteConcept request includes CMR client id', async (t) => {
+  let request;
+  const stub = sinon.stub(got, 'delete').callsFake((_url, opt) => {
+    request = { headers: opt.headers };
+    return gotResponses[200];
+  });
+
+  await deleteConcept('granule', granuleId, 'CUMULUS', { 'Client-Id': clientId });
+  t.is(request.headers['Client-Id'], clientId);
 
   stub.restore();
 });

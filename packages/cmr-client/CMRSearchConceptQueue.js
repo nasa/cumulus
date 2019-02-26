@@ -4,6 +4,8 @@ const searchConcept = require('./searchConcept');
 
 // Class to efficiently list all of the concepts (collections/granules) from CMR search, without
 // loading them all into memory at once.  Handles paging.
+// TODO Add API documentation
+// TODO Build API docs and commit
 class CMRSearchConceptQueue {
   /**
    * The constructor for the CMRSearchConceptQueue class
@@ -16,6 +18,7 @@ class CMRSearchConceptQueue {
    */
   constructor(provider, clientId, type, params, format) {
     this.clientId = clientId;
+    // TODO Do we need this param?
     this.provider = provider;
     this.type = type;
     this.params = Object.assign({}, { provider_short_name: this.provider }, params);

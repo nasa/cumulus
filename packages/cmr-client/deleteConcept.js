@@ -3,6 +3,7 @@
 const Logger = require('@cumulus/logger');
 const got = require('got');
 const { parseString } = require('xml2js');
+const { promisify } = require('util');
 
 const { getUrl } = require('./getUrl');
 
@@ -37,12 +38,7 @@ async function deleteConcept(type, identifier, provider, headers) {
     result = error.response;
   }
 
-  const xmlObject = await new Promise((resolve, reject) => {
-    parseString(result.body, xmlParseOptions, (err, res) => {
-      if (err) reject(err);
-      resolve(res);
-    });
-  });
+  const xmlObject = await promisify(parseString)(result.body, xmlParseOptions);
 
   let errorMessage;
   if (result.statusCode !== 200) {

@@ -1,7 +1,6 @@
 const got = require('got');
 const _get = require('lodash.get');
 const publicIp = require('public-ip');
-const xml2js = require('xml2js');
 const { createErrorType } = require('@cumulus/common/errors');
 const { deprecate } = require('@cumulus/common/util');
 
@@ -22,7 +21,7 @@ const xmlParseOptions = {
  * Find the UMM version as a decimal string.
  * If a version cannot be found on the input object
  * version 1.4 is assumed and returned.
- * 
+ *
  * @deprecated
  *
  * @param {Object} umm - UMM metadata object
@@ -36,7 +35,7 @@ function ummVersion(umm) {
 /**
  * Posts a given xml string to the validate endpoint of CMR
  * and promises true of valid.
- * 
+ *
  * @deprecated
  *
  * @param {string} ummMetadata - the UMM object
@@ -81,7 +80,7 @@ async function validateUMMG(ummMetadata, identifier, provider) {
  * else the request for a CMR token will fail.
  *
  * @deprecated
- * 
+ *
  * @returns {string} IP address
  */
 async function getIp() {
@@ -97,7 +96,7 @@ async function getIp() {
 
 /**
  * Returns a valid a CMR token
- * 
+ *
  * @deprecated
  *
  * @param {string} cmrProvider - the CMR provider id
