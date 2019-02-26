@@ -160,25 +160,6 @@ default:
     migrationRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-migration-processing'
 
   sns:
-    inregions3:
-      subscriptions:
-        lambda:
-          endpoint:
-            function: Fn::GetAtt
-            array:
-              - InRegionS3PolicyLambdaFunction
-              - Arn
-          protocol: lambda
-    AmazonIpSpaceChanged:
-      arn: arn:aws:sns:us-east-1:806199016981:AmazonIpSpaceChanged
-      subscriptions:
-        lambda:
-          endpoint:
-            function: Fn::GetAtt
-            array:
-              - InRegionS3PolicyLambdaFunction
-              - Arn
-          protocol: lambda
     sftracker:
       subscriptions:
         2ndlambda:

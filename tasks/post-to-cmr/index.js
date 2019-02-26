@@ -1,7 +1,7 @@
 'use strict';
 
 const flatten = require('lodash.flatten');
-const fromPairs = require('lodash.frompairs');
+const keyBy = require('lodash.keyby');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const {
@@ -11,6 +11,7 @@ const {
 } = require('@cumulus/cmrjs');
 const { buildS3Uri } = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
+const { removeNilProperties } = require('@cumulus/common/util');
 const { loadJSONTestData } = require('@cumulus/test-data');
 
 /**
@@ -18,21 +19,26 @@ const { loadJSONTestData } = require('@cumulus/test-data');
  *
  * @param {Array} results - list of results returned by publish function
  * @param {Array} granules - list of granules
+ * @param {string} cmrMetadataFormat - CMR metadata format
+ *  (echo10, umm_json_v1_4, umm_json_v1_5)
+ *
  * @returns {Array} an updated array of granules
  */
-function buildOutput(results, granules) {
-  const cmrLinksByGranuleId = fromPairs(results.map((r) => [r.granuleId, r.link]));
+function buildOutput(results, granules, cmrMetadataFormat) {
+  const resultsByGranuleId = keyBy(results, 'granuleId');
 
   return granules.map((granule) => {
-    if (cmrLinksByGranuleId[granule.granuleId]) {
-      return {
-        ...granule,
-        published: true,
-        cmrLink: cmrLinksByGranuleId[granule.granuleId]
-      };
-    }
+    const result = resultsByGranuleId[granule.granuleId];
 
-    return granule;
+    if (!result) return granule;
+
+    return removeNilProperties({
+      ...granule,
+      cmrLink: result.link,
+      cmrConceptId: result.conceptId,
+      published: true,
+      cmrMetadataFormat: cmrMetadataFormat || result.metadataFormat
+    });
   });
 }
 
@@ -74,15 +80,11 @@ const getS3URLOfFile = (file) => {
  * @returns {Promise} returns the promise of an updated event object
  */
 async function postToCMR(event) {
-  // We have to post the metadata file for the output granules.
-  // First we check if there is an output file.
-
   const fileURLs = flatten(event.input.granules.map((g) => g.files))
     .map(getS3URLOfFile);
 
-  const granuleIdExtractionRegex = event.config.granuleIdExtraction || '(.*)';
-
   // get cmr files and metadata
+  const granuleIdExtractionRegex = event.config.granuleIdExtraction || '(.*)';
   const cmrFiles = getCmrFiles(fileURLs, granuleIdExtractionRegex);
   const updatedCMRFiles = await addMetadataObjects(cmrFiles);
 
@@ -96,10 +98,13 @@ async function postToCMR(event) {
 
   return {
     process: event.config.process,
-    granules: buildOutput(results, event.input.granules)
+    granules: buildOutput(
+      results,
+      event.input.granules,
+      event.config.cmrMetadataFormat
+    )
   };
 }
-
 exports.postToCMR = postToCMR;
 
 /**
