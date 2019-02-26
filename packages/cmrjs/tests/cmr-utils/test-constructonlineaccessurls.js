@@ -42,7 +42,11 @@ test('returns correct url for protected data', (t) => {
     s3CredentialsEndpointObject
   ];
 
-  const actual = constructOnlineAccessUrls(movedFiles, endpoint, t.context.buckets);
+  const actual = constructOnlineAccessUrls({
+    files: movedFiles,
+    distEndpoint: endpoint,
+    buckets: t.context.buckets
+  });
 
   t.deepEqual(actual, expected);
 });
@@ -65,7 +69,11 @@ test('Returns correct url object for public data.', (t) => {
     s3CredentialsEndpointObject
   ];
 
-  const actual = constructOnlineAccessUrls(movedFiles, endpoint, t.context.buckets);
+  const actual = constructOnlineAccessUrls({
+    files: movedFiles,
+    distEndpoint: endpoint,
+    buckets: t.context.buckets
+  });
 
   t.deepEqual(actual, expected);
 });
@@ -81,7 +89,11 @@ test('Returns empty list for private data.', (t) => {
   ];
   const expected = [s3CredentialsEndpointObject];
 
-  const actual = constructOnlineAccessUrls(movedFiles, endpoint, t.context.buckets);
+  const actual = constructOnlineAccessUrls({
+    files: movedFiles,
+    distEndpoint: endpoint,
+    buckets: t.context.buckets
+  });
 
   t.deepEqual(actual, expected);
 });
@@ -118,6 +130,11 @@ test('returns an array of correct url objects given a list of moved files.', (t)
     s3CredentialsEndpointObject
   ];
 
-  const actual = constructOnlineAccessUrls(movedFiles, endpoint, t.context.buckets);
+  const actual = constructOnlineAccessUrls({
+    files: movedFiles,
+    distEndpoint: endpoint,
+    buckets: t.context.buckets
+  });
+
   t.deepEqual(actual.sort(sortByURL), expected.sort(sortByURL));
 });

@@ -288,14 +288,18 @@ function getS3CredentialsObject(s3CredsUrl) {
 /**
  * Construct a list of online access urls.
  *
- * @param {Array<Object>} files - array of file objects
- * @param {string} distEndpoint - distribution endpoint from config
- * @param {BucketsConfig} buckets -  Class instance
- * @param {string} s3CredsEndpoint - s3credentials endpoint name
+ * @param {Object} params - input parameters
+ * @param {Array<Object>} params.files - array of file objects
+ * @param {string} params.distEndpoint - distribution endpoint from config
+ * @param {BucketsConfig} params.buckets -  Class instance
+ * @param {string} params.s3CredsEndpoint - optional s3credentials endpoint name
  * @returns {Array<{URL: string, URLDescription: string}>}
  *   returns the list of online access url objects
  */
-function constructOnlineAccessUrls(files, distEndpoint, buckets, s3CredsEndpoint = 's3credentials') {
+function constructOnlineAccessUrls(params) {
+  const { files, distEndpoint, buckets } = params;
+  const s3CredsEndpoint = params.s3CredsEndpoint ? params.s3CredsEndpoint : 's3credentials';
+
   const urls = [];
 
   files.forEach((file) => {
@@ -398,7 +402,7 @@ function mergeURLs(original, updated, removed = []) {
  * @returns {Promise} returns promised updated UMMG metadata object.
  */
 async function updateUMMGMetadata(cmrFile, files, distEndpoint, buckets) {
-  let newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
+  let newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets });
   newURLs = newURLs.map((urlObj) => omit(urlObj, 'URLDescription'));
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
   const metadataObject = await metadataObjectFromCMRJSONFile(cmrFile.filename);
@@ -442,7 +446,7 @@ function getCreds() {
  * @returns {Promise} returns promised updated metadata object.
  */
 async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
-  let newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
+  let newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets });
   newURLs = newURLs.map((urlObj) => omit(urlObj, ['Type', 'Description']));
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
 
