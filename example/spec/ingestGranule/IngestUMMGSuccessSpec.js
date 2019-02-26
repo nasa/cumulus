@@ -84,7 +84,9 @@ async function getUmmObject(fileLocation) {
 }
 
 const cumulusDocUrl = 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme';
-const isUMMGScienceUrl = (url) => url !== cumulusDocUrl && !url.endsWith('.cmr.json') && !url.includes('s3credentials');
+const isUMMGScienceUrl = (url) => url !== cumulusDocUrl &&
+  !url.endsWith('.cmr.json') &&
+  !url.includes('s3credentials');
 
 describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const testId = createTimestampedTestId(config.stackName, 'IngestUMMGSuccess');
@@ -325,6 +327,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       accessToken = accessTokenResponse.accessToken;
 
       const scienceFileUrls = resourceURLs.filter(isUMMGScienceUrl);
+      console.log('scienceFileUrls: ', scienceFileUrls);
 
       const checkFiles = await Promise.all(
         scienceFileUrls
