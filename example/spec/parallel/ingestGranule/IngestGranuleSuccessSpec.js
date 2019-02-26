@@ -417,7 +417,7 @@ describe('The S3 Ingest Granules workflow', () => {
                 bucket: file.bucket,
                 key: file.filepath
               });
-              fileStream = getDistributionApiFileStream(fileUrl, accessToken);
+              fileStream = await getDistributionApiFileStream(fileUrl, accessToken);
             }
             else if (bucketsConfig.type(file.bucket) === 'public') {
               fileStream = got.stream(url);
