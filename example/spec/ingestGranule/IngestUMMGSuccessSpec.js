@@ -12,7 +12,7 @@ const {
   }
 } = require('@cumulus/api');
 const { serveDistributionApi } = require('@cumulus/api/bin/serve');
-const { checksumFileStream } = require('@cumulus/checksum');
+const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
   aws: {
     getS3Object,
@@ -318,7 +318,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
           .map(async (url) => {
             const extension = path.extname(new URL(url).pathname);
             const sourceFile = s3data.find((d) => d.endsWith(extension));
-            const sourceChecksum = await checksumFileStream(
+            const sourceChecksum = await generateChecksumFromStream(
               fs.createReadStream(require.resolve(sourceFile))
             );
             const file = files.find((f) => f.name.endsWith(extension));
@@ -337,7 +337,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
             }
 
             // Compare checksum of downloaded file with expected checksum.
-            const downloadChecksum = await checksumFileStream(fileStream);
+            const downloadChecksum = await generateChecksumFromStream(fileStream);
             return downloadChecksum === sourceChecksum;
           })
       );

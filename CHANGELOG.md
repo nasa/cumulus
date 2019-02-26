@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - **CUMULUS-1101**
-  - Moved `@cumulus/common/file/getFileChecksumFromStream` into a new package, `@cumulus/checksum`, and renamed it to `checksumFileStream`.
+  - Moved `@cumulus/common/file/getFileChecksumFromStream` into a new package, `@cumulus/checksum`, and renamed it to `generateChecksumFromStream`.
     This is a breaking change for users relying on `@cumulus/common/file/getFileChecksumFromStream`.
 
 - **CUMULUS-672**

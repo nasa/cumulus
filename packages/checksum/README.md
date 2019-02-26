@@ -19,8 +19,8 @@ Currently the supported input includes file streams, and supported checksum algo
 
 ```js
 const fs = require('fs');
-const { checksumFileStream } = require('@cumulus/checksum');
+const { generateChecksumFromStream } = require('@cumulus/checksum');
 
 const stream = fs.createReadStream('myDataFile.hdf');
-const myCksum = checksumFileStream('cksum', stream);
+const myCksum = generateChecksumFromStream('cksum', stream);
 ```
