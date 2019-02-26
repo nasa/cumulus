@@ -57,7 +57,7 @@ const testHdfFile = {
   path: '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA',
   fileSize: 17865615,
   checksumType: 'CKSUM',
-  checksumvalue: 4208254019,
+  checksumValue: 4208254019,
 };
 
 const testMetFile = {
