@@ -1,6 +1,10 @@
 'use strict';
 
-const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmr-client');
+const fs = require('fs');
+const cmrClient = require('@cumulus/cmr-client');
+const { promisify } = require('util');
+
+const readFile = promisify(fs.readFile);
 
 // searchConcept is being imported for backwards compat,
 // but is not part of the cmr-client public API
@@ -34,11 +38,53 @@ async function deleteConcept(type, identifier, provider, headers) {
   return _deleteConcept(type, identifier, provider, headers);
 }
 
+class CMR extends cmrClient.CMR {
+  /**
+   * Adds a collection record to the CMR
+   *
+   * @param {string} xml - the collection XML document or a filepath to the XML
+   *   document
+   * @returns {Promise.<Object>} the CMR response
+   */
+  async ingestCollection(xml) {
+    let xmlString;
+    try {
+      xmlString = await readFile(xml, 'utf8');
+    }
+    catch (err) {
+      if (err.code === 'ENOENT') xmlString = xml;
+      else throw err;
+    }
+
+    return super.ingestCollection(xmlString);
+  }
+
+  /**
+   * Adds a granule record to the CMR
+   *
+   * @param {string} xml - the granule XML document or a filepath to the XML
+   *   document
+   * @returns {Promise.<Object>} the CMR response
+   */
+  async ingestGranule(xml) {
+    let xmlString;
+    try {
+      xmlString = await readFile(xml, 'utf8');
+    }
+    catch (err) {
+      if (err.code === 'ENOENT') xmlString = xml;
+      else throw err;
+    }
+
+    return super.ingestGranule(xmlString);
+  }
+}
+
 module.exports = {
   _searchConcept,
   searchConcept,
   ingestConcept,
   deleteConcept,
   CMR,
-  CMRSearchConceptQueue
+  CMRSearchConceptQueue: cmrClient.CMRSearchConceptQueue
 };
