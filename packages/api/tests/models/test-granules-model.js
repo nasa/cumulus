@@ -2,26 +2,20 @@
 
 const test = require('ava');
 
+const range = require('lodash.range');
 const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-
-const { Manager, Granule } = require('../../models');
+const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
+const { Granule } = require('../../models');
 const { fakeFileFactory } = require('../../lib/testUtils');
 
-let manager;
 test.before(async () => {
   process.env.GranulesTable = randomString();
-
-  manager = new Manager({
-    tableName: process.env.GranulesTable,
-    tableHash: { name: 'granuleId', type: 'S' }
-  });
-
-  await manager.createTable();
+  await new Granule().createTable();
 });
 
 test.after.always(async () => {
-  await manager.deleteTable();
+  await new Granule().deleteTable();
 });
 
 test('files existing at location returns empty array if no files exist', async (t) => {
@@ -212,4 +206,46 @@ test('files existing at location returns only file that exists with multiple des
     recursivelyDeleteS3Bucket(destBucket1),
     recursivelyDeleteS3Bucket(destBucket2)
   ]);
+});
+
+test('getGranulesForCollection returns the queue of granules', async (t) => {
+  // create granules with different collectionIds and statuses
+  const collectionIds = ['testGetGranulesForCollection___v1', 'testGetGranulesForCollection___v2'];
+  const granulesV1 = range(5).map(() =>
+    fakeGranuleFactoryV2({ collectionId: collectionIds[0], status: 'completed' }));
+  const granulesV1Failed = range(5).map(() =>
+    fakeGranuleFactoryV2({ collectionId: collectionIds[0], status: 'failed' }));
+  const granulesV2 = range(5).map(() =>
+    fakeGranuleFactoryV2({ collectionId: collectionIds[1], status: 'completed' }));
+
+  const granule = new Granule();
+  await granule.create(granulesV1.concat(granulesV1Failed).concat(granulesV2));
+
+  // verify the granules retrieved meet the criteria and are in the correct order
+
+  // get all completed v1 granules
+  const queueV1Completed = granule.getGranulesForCollection(collectionIds[0], 'completed');
+  const sortedV1CompletedGranIds = granulesV1.map((gran) => gran.granuleId).sort();
+  for (let i = 0; i < 5; i += 1) {
+    const gran = await queueV1Completed.peek(); // eslint-disable-line no-await-in-loop
+    t.is(gran.granuleId, sortedV1CompletedGranIds[i]);
+    t.is(gran.collectionId, collectionIds[0]);
+    queueV1Completed.shift();
+  }
+
+  t.is(await queueV1Completed.peek(), null);
+
+  // get all the v1 granules
+  const queueV1Grans = granule.getGranulesForCollection(collectionIds[0]);
+  const sortedV1GranuleIds = granulesV1.concat(granulesV1Failed)
+    .map((gran) => gran.granuleId).sort();
+
+  for (let i = 0; i < 10; i += 1) {
+    const gran = await queueV1Grans.peek(); // eslint-disable-line no-await-in-loop
+    t.is(gran.granuleId, sortedV1GranuleIds[i]);
+    t.is(gran.collectionId, collectionIds[0]);
+    queueV1Grans.shift();
+  }
+
+  t.is(await queueV1Grans.peek(), null);
 });

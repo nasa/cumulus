@@ -628,13 +628,14 @@ exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
   });
 };
 
-// Class to efficiently scan all of the items in a DynamoDB table, without
+// Class to efficiently search all of the items in a DynamoDB table, without
 // loading them all into memory at once.  Handles paging.
-class DynamoDbScanQueue {
-  constructor(params) {
+class DynamoDbSearchQueue {
+  constructor(params, searchType = 'scan') {
     this.items = [];
     this.params = params;
-    this.dynamodb = exports.dynamodb();
+    this.dynamodbDocClient = exports.dynamodbDocClient();
+    this.searchType = searchType;
   }
 
   /**
@@ -671,7 +672,7 @@ class DynamoDbScanQueue {
   async fetchItems() {
     let response;
     do {
-      response = await this.dynamodb.scan(this.params).promise(); // eslint-disable-line no-await-in-loop, max-len
+      response = await this.dynamodbDocClient[this.searchType](this.params).promise(); // eslint-disable-line no-await-in-loop, max-len
       if (response.LastEvaluatedKey) this.params.ExclusiveStartKey = response.LastEvaluatedKey;
     } while (response.Items.length === 0 && response.LastEvaluatedKey);
 
@@ -680,7 +681,7 @@ class DynamoDbScanQueue {
     if (!response.LastEvaluatedKey) this.items.push(null);
   }
 }
-exports.DynamoDbScanQueue = DynamoDbScanQueue;
+exports.DynamoDbSearchQueue = DynamoDbSearchQueue;
 
 exports.syncUrl = async (uri, bucket, destKey) => {
   const response = await concurrency.promiseUrl(uri);
