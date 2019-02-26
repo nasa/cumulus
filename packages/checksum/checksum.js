@@ -45,7 +45,7 @@ async function _getChecksumFromStream(algorithm, fileStream, options) {
  *
  * @returns {Promise<number>} - Promise returning the file checksum
  */
-function checksumFileStream(algorithm, fileStream, options) {
+function generateChecksumFromStream(algorithm, fileStream, options) {
   if (algorithm.toLowerCase() === 'cksum') {
     return _getCksumFromStream(fileStream);
   }
@@ -53,5 +53,5 @@ function checksumFileStream(algorithm, fileStream, options) {
 }
 
 module.exports = {
-  checksumFileStream
+  generateChecksumFromStream
 };

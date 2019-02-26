@@ -2,11 +2,11 @@
 
 const fs = require('fs');
 const test = require('ava');
-const { checksumFileStream } = require('..');
+const { generateChecksumFromStream } = require('..');
 
-test('checksumFileStream returns correct cksum for file stream', async (t) => {
+test('generateChecksumFromStream returns correct cksum for file stream', async (t) => {
   const dummyFileCksum = 1685297147;
-  const result = await checksumFileStream(
+  const result = await generateChecksumFromStream(
     'CKSUM',
     fs.createReadStream('./tests/data/dummyfile.txt'),
     {}
@@ -14,9 +14,9 @@ test('checksumFileStream returns correct cksum for file stream', async (t) => {
   t.is(result, dummyFileCksum);
 });
 
-test('checksumFileStream returns correct md5 for file stream', async (t) => {
+test('generateChecksumFromStream returns correct md5 for file stream', async (t) => {
   const dummyFileMD5 = 'bc8bfaaaa002658c97d4746e055b1e5a';
-  const result = await checksumFileStream(
+  const result = await generateChecksumFromStream(
     'md5',
     fs.createReadStream('./tests/data/dummyfile.txt'),
     {}

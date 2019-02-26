@@ -9,7 +9,7 @@ const pMap = require('p-map');
 const pRetry = require('p-retry');
 const pump = require('pump');
 const url = require('url');
-const { checksumFileStream } = require('@cumulus/checksum');
+const { generateChecksumFromStream } = require('@cumulus/checksum');
 
 const log = require('./log');
 const string = require('./string');
@@ -558,7 +558,7 @@ exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
 exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
   const param = { Bucket: bucket, Key: key };
   const fileStream = exports.s3().getObject(param).createReadStream();
-  return checksumFileStream(algorithm, fileStream, options);
+  return generateChecksumFromStream(algorithm, fileStream, options);
 };
 
 // Class to efficiently search all of the items in a DynamoDB table, without
