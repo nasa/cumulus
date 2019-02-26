@@ -38,6 +38,12 @@ done
     --region us-east-1 \
     --deployment "$DEPLOYMENT" \
     --template node_modules/@cumulus/deployment/app
+
+  ./node_modules/.bin/kes lambda S3AccessTest deploy \
+    --kes-folder app \
+    --template node_modules/@cumulus/deployment/app \
+    --deployment "$DEPLOYMENT" \
+    --region us-west-2
 )
 
 exit
