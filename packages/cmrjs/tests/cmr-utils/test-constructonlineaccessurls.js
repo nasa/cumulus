@@ -7,9 +7,13 @@ const { BucketsConfig } = require('@cumulus/common');
 const cmrUtils = rewire('../../cmr-utils');
 
 const constructOnlineAccessUrls = cmrUtils.__get__('constructOnlineAccessUrls');
+const getS3CredentialsObject = cmrUtils.__get__('getS3CredentialsObject');
 
 
 const sortByURL = (a, b) => a.URL < b.URL;
+
+const endpoint = 'https://endpoint';
+const s3CredentialsEndpointObject = getS3CredentialsObject(`${endpoint}/s3credentials`);
 
 
 test.beforeEach((t) => {
@@ -22,7 +26,6 @@ test.beforeEach((t) => {
 });
 
 test('returns correct url for protected data', (t) => {
-  const endpoint = 'https://endpoint';
   const movedFiles = [
     {
       filepath: 'some/path/protected-file.hdf',
@@ -35,16 +38,20 @@ test('returns correct url for protected data', (t) => {
       Description: 'File to download',
       URLDescription: 'File to download',
       Type: 'GET DATA'
-    }
+    },
+    s3CredentialsEndpointObject
   ];
 
-  const actual = constructOnlineAccessUrls(movedFiles, endpoint, t.context.buckets);
+  const actual = constructOnlineAccessUrls({
+    files: movedFiles,
+    distEndpoint: endpoint,
+    buckets: t.context.buckets
+  });
 
   t.deepEqual(actual, expected);
 });
 
 test('Returns correct url object for public data.', (t) => {
-  const endpoint = 'https://endpoint';
   const publicBucketName = t.context.bucketConfig.public.name;
   const movedFiles = [
     {
@@ -58,17 +65,21 @@ test('Returns correct url object for public data.', (t) => {
       Description: 'File to download',
       URLDescription: 'File to download',
       Type: 'GET DATA'
-    }
+    },
+    s3CredentialsEndpointObject
   ];
 
-  const actual = constructOnlineAccessUrls(movedFiles, endpoint, t.context.buckets);
+  const actual = constructOnlineAccessUrls({
+    files: movedFiles,
+    distEndpoint: endpoint,
+    buckets: t.context.buckets
+  });
 
   t.deepEqual(actual, expected);
 });
 
 
 test('Returns empty list for private data.', (t) => {
-  const endpoint = 'https://endpoint';
   const privateBucket = t.context.bucketConfig.private.name;
   const movedFiles = [
     {
@@ -76,15 +87,18 @@ test('Returns empty list for private data.', (t) => {
       bucket: privateBucket
     }
   ];
-  const expected = [];
+  const expected = [s3CredentialsEndpointObject];
 
-  const actual = constructOnlineAccessUrls(movedFiles, endpoint, t.context.buckets);
+  const actual = constructOnlineAccessUrls({
+    files: movedFiles,
+    distEndpoint: endpoint,
+    buckets: t.context.buckets
+  });
 
   t.deepEqual(actual, expected);
 });
 
 test('returns an array of correct url objects given a list of moved files.', (t) => {
-  const endpoint = 'https://endpoint';
   const movedFiles = [
     {
       filepath: 'hidden/secretfile.gpg',
@@ -112,9 +126,15 @@ test('returns an array of correct url objects given a list of moved files.', (t)
       Description: 'File to download',
       URLDescription: 'File to download',
       Type: 'GET DATA'
-    }
+    },
+    s3CredentialsEndpointObject
   ];
 
-  const actual = constructOnlineAccessUrls(movedFiles, endpoint, t.context.buckets);
+  const actual = constructOnlineAccessUrls({
+    files: movedFiles,
+    distEndpoint: endpoint,
+    buckets: t.context.buckets
+  });
+
   t.deepEqual(actual.sort(sortByURL), expected.sort(sortByURL));
 });
