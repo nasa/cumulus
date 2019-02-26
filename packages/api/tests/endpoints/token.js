@@ -182,7 +182,7 @@ test.serial('GET /token with a code and state results in a redirect containing t
   stub.restore();
 });
 
-test.serial('When using Earthdata Login, GET /token with a code stores the access token in DynamoDb', async (t) => {
+test.serial('GET /token with a code stores the access token in DynamoDb', async (t) => {
   const getAccessTokenResponse = fakeAccessTokenFactory();
   const { accessToken, refreshToken } = getAccessTokenResponse;
 
