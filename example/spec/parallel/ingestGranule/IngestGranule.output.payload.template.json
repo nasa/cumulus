@@ -7,6 +7,8 @@
       "version": "006",
       "published": true,
       "cmrLink": "https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=G1222231611-CUMULUS",
+      "cmrConceptId": "G1222231611-CUMULUS",
+      "cmrMetadataFormat": "echo10",
       "files": [
         {
           "name": "replace-me-granuleId.hdf",
@@ -14,7 +16,7 @@
           "filename": "s3://this-should-be-replaced-with-protected-bucket-name-in-the-test/MOD09GQ/2017/MOD/replace-me-granuleId.hdf",
           "fileSize": 17865615,
           "path": "replace-me-path",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.fileName, 0, 3)}",
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
           "filepath": "MOD09GQ___006/2017/MOD/replace-me-granuleId.hdf"
         },
         {
@@ -23,7 +25,7 @@
           "filename": "s3://this-should-be-replaced-with-private-bucket-name-in-the-test/MOD09GQ/MOD/replace-me-granuleId.hdf.met",
           "fileSize": 44118,
           "path": "replace-me-path",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}",
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
           "filepath": "MOD09GQ___006/MOD/replace-me-granuleId.hdf.met"
         },
         {
@@ -32,12 +34,12 @@
           "filename": "s3://this-should-be-replaced-with-public-bucket-name-in-the-test/MOD09GQ/MOD/replace-me-granuleId_ndvi.jpg",
           "fileSize": 44118,
           "path": "replace-me-path",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}",
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
           "filepath": "MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg"
         },
         {
           "filename": "s3://this-should-be-replaced-with-protected-2-bucket-name-in-the-test/MOD09GQ/MOD/replace-me-granuleId.cmr.xml",
-          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}",
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
           "bucket": "this-should-be-replaced-with-protected-2-bucket-name-in-the-test",
           "name": "replace-me-granuleId.cmr.xml",
           "filepath": "MOD09GQ___006/MOD/replace-me-granuleId.cmr.xml"

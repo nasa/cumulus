@@ -1,6 +1,7 @@
 'use strict';
 
 const chunk = require('lodash.chunk');
+const { DynamoDbSearchQueue } = require('@cumulus/common/aws');
 const Manager = require('./base');
 const schemas = require('./schemas');
 
@@ -75,6 +76,24 @@ class FileClass extends Manager {
 
     const chunkedFilesToDelete = chunk(filesToDelete, 25);
     return Promise.all(chunkedFilesToDelete.map((c) => this.batchWrite(c)));
+  }
+
+  /**
+   * return the queue of the files for a given bucket,
+   * the items should be ordered by the range key which is the bucket 'key' attribute
+   *
+   * @param {string} bucket - bucket name
+   * @returns {Array<Object>} the files' queue for a given bucket
+   */
+  getFilesForBucket(bucket) {
+    const params = {
+      TableName: process.env.FilesTable,
+      ExpressionAttributeNames: { '#b': 'bucket' },
+      ExpressionAttributeValues: { ':bucket': bucket },
+      FilterExpression: '#b = :bucket'
+    };
+
+    return new DynamoDbSearchQueue(params, 'scan');
   }
 }
 

@@ -39,7 +39,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |process|`"modis"`|No|The options for this are found in the ChooseProcess step definition in [sips.yml](https://github.com/nasa/cumulus/tree/master/example/workflows/sips.yml)|
 |provider_path|`"cumulus-test-data/pdrs"`|No|This collection is expecting to find data in a `cumulus-test-data/pdrs` directory, whether that be in S3 or at an http endpoint|
 |meta|`<JSON Object>` of MetaData for the collection|No|MetaData for the collection. This metadata will be available to workflows for this collection via the [Cumulus Message Adapter](workflows/input_output.md).
-|url_path|`"{cmrMetadata.Granule.Collection.ShortName}/`<br/>`{substring(file.fileName, 0, 3)}"`|No|Filename without extension|
+|url_path|`"{cmrMetadata.Granule.Collection.ShortName}/`<br/>`{substring(file.name, 0, 3)}"`|No|Filename without extension|
 
 
 #### files-object
@@ -48,7 +48,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |regex|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$"`|Yes|Regex used to identify the file|
 |sampleFileName|`MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"`|Yes|Filename used to validate the provided regex|
 |bucket|`"internal"`|Yes|Name of the bucket where the file will be stored|
-|url_path|`"${collectionShortName}/{substring(file.fileName, 0, 3)}"`|No|Folder used to save the granule in the bucket. Defaults to the collection url_path|
+|url_path|`"${collectionShortName}/{substring(file.name, 0, 3)}"`|No|Folder used to save the granule in the bucket. Defaults to the collection url_path|
 
 
 ### Providers
