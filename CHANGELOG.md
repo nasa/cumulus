@@ -35,6 +35,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- **CUMULUS-1101**
+  - Moved `@cumulus/common/file/getFileChecksumFromStream` into a new package, `@cumulus/checksum`, and renamed it to `checksumFileStream`.
+    This is a breaking change for users relying on `@cumulus/common/file/getFileChecksumFromStream`.
+
 - **CUMULUS-672**
   - `@cumulus/post-to-cmr` now looks in `config.cmrMetadataFormat` instead of `config.cmrFileType` to determine the type of metadata to post to CMR
   - Changed `@cumulus/integration-tests/api/EarthdataLogin.getEarthdataLoginRedirectResponse` to `@cumulus/integration-tests/api/EarthdataLogin.getEarthdataAccessToken`. The new function returns an access response from Earthdata login, if successful.
