@@ -271,15 +271,37 @@ async function bucketsConfigDefaults() {
 }
 
 /**
+ * Build and return an S3 Credentials Object for adding to CMR onlineAccessUrls
+ *
+ * @param {string} s3CredsUrl - full url pointing to the s3 credential distribution api
+ * @returns {Object} Object with attributes required for adding an onlineAccessUrl
+ */
+function getS3CredentialsObject(s3CredsUrl) {
+  return {
+    URL: s3CredsUrl,
+    URLDescription: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
+    Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
+    Type: 'VIEW RELATED INFORMATION'
+  };
+}
+
+/**
  * Construct a list of online access urls.
  *
- * @param {Array<Object>} files - array of file objects
- * @param {string} distEndpoint - distribution endpoint from config
- * @param {BucketsConfig} buckets -  Class instance
+ * @param {Object} params - input parameters
+ * @param {Array<Object>} params.files - array of file objects
+ * @param {string} params.distEndpoint - distribution endpoint from config
+ * @param {BucketsConfig} params.buckets -  Class instance
+ * @param {string} params.s3CredsEndpoint - optional s3credentials endpoint name
  * @returns {Array<{URL: string, URLDescription: string}>}
  *   returns the list of online access url objects
  */
-function constructOnlineAccessUrls(files, distEndpoint, buckets) {
+function constructOnlineAccessUrls({
+  files,
+  distEndpoint,
+  buckets,
+  s3CredsEndpoint = 's3credentials'
+}) {
   const urls = [];
 
   files.forEach((file) => {
@@ -301,6 +323,8 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets) {
       urls.push(urlObj);
     }
   });
+
+  urls.push(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
 
   return urls;
 }
@@ -380,7 +404,7 @@ function mergeURLs(original, updated, removed = []) {
  * @returns {Promise} returns promised updated UMMG metadata object.
  */
 async function updateUMMGMetadata(cmrFile, files, distEndpoint, buckets) {
-  let newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
+  let newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets });
   newURLs = newURLs.map((urlObj) => omit(urlObj, 'URLDescription'));
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
   const metadataObject = await metadataObjectFromCMRJSONFile(cmrFile.filename);
@@ -424,7 +448,7 @@ function getCreds() {
  * @returns {Promise} returns promised updated metadata object.
  */
 async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
-  let newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
+  let newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets });
   newURLs = newURLs.map((urlObj) => omit(urlObj, ['Type', 'Description']));
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
 
