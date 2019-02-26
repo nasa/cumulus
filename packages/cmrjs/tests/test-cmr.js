@@ -66,7 +66,7 @@ const stubclient = {
   })
 };
 
-test('deleteConcept returns expected result when granule is in CMR', async (t) => {
+test.serial.only('deleteConcept returns expected result when granule is in CMR', async (t) => {
   statusCode = 200;
   const stub = sinon.stub(got, 'delete').callsFake(stubclient.delete);
 
@@ -75,7 +75,7 @@ test('deleteConcept returns expected result when granule is in CMR', async (t) =
   t.is(result.result['concept-id'], 'G1222482316-CUMULUS');
 });
 
-test('deleteConcept returns success when granule is not found ', async (t) => {
+test.serial('deleteConcept returns success when granule is not found ', async (t) => {
   statusCode = 404;
   const stub = sinon.stub(got, 'delete').callsFake(stubclient.delete);
   try {
@@ -88,7 +88,7 @@ test('deleteConcept returns success when granule is not found ', async (t) => {
   stub.restore();
 });
 
-test('deleteConcept throws error when request is bad', async (t) => {
+test.serial('deleteConcept throws error when request is bad', async (t) => {
   statusCode = 400;
   const stub = sinon.stub(got, 'delete').callsFake(stubclient.delete);
   try {
@@ -101,7 +101,7 @@ test('deleteConcept throws error when request is bad', async (t) => {
   stub.restore();
 });
 
-test('get CMR metadata, success', async (t) => {
+test.serial('get CMR metadata, success', async (t) => {
   statusCode = 200;
   const stub = sinon.stub(got, 'get').callsFake(stubclient.getCmrData);
 
@@ -111,7 +111,7 @@ test('get CMR metadata, success', async (t) => {
   stub.restore();
 });
 
-test('get CMR metadata, fail', async (t) => {
+test.serial('get CMR metadata, fail', async (t) => {
   statusCode = 404;
   const stub = sinon.stub(got, 'get').callsFake(stubclient.getCmrData);
 
@@ -196,7 +196,7 @@ test('CMRSearchConceptQueue handles paging correctly.', async (t) => {
   }
 });
 
-test('ingestConcept request includes CMR client id', async (t) => {
+test.serial('ingestConcept request includes CMR client id', async (t) => {
   let request;
   const stub = sinon.stub(got, 'put').callsFake((_url, opt) => {
     request = { headers: opt.headers };
@@ -212,7 +212,7 @@ test('ingestConcept request includes CMR client id', async (t) => {
   noPost.restore();
 });
 
-test('deleteConcept request includes CMR client id', async (t) => {
+test.serial('deleteConcept request includes CMR client id', async (t) => {
   let request;
   const stub = sinon.stub(got, 'delete').callsFake((_url, opt) => {
     request = { headers: opt.headers };
@@ -225,7 +225,7 @@ test('deleteConcept request includes CMR client id', async (t) => {
   stub.restore();
 });
 
-test('searchConcept request includes CMR client id', async (t) => {
+test.serial('searchConcept request includes CMR client id', async (t) => {
   let request;
   const stub = sinon.stub(got, 'get').callsFake((_url, opt) => {
     request = { headers: opt.headers };
