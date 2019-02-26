@@ -35,6 +35,7 @@ const {
   granulesApi: granulesApiTestUtils,
   EarthdataLogin: { getEarthdataAccessToken },
   distributionApi: {
+    getDistributionApiS3SignedUrl,
     getDistributionApiFileStream,
     getDistributionFileUrl
   }
@@ -168,6 +169,12 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
   afterAll(async (done) => {
     try {
+      // pre-delete: Remove the granule from CMR
+      await granulesApiTestUtils.removeFromCMR({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      });
+
       // clean up stack state added by test
       await Promise.all([
         deleteFolder(config.bucket, testDataFolder),
@@ -260,8 +267,20 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       granule = postToCmrOutput.payload.granules[0];
       files = granule.files;
 
-      onlineResources = await getOnlineResources(granule);
+      const result = await Promise.all([
+        getOnlineResources(granule),
+        // Login with Earthdata and get access token.
+        getEarthdataAccessToken({
+          redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
+          requestOrigin: process.env.DISTRIBUTION_ENDPOINT
+        })
+      ]);
+
+      onlineResources = result[0];
       resourceURLs = onlineResources.map((resource) => resource.URL);
+
+      const accessTokenResponse = result[1];
+      accessToken = accessTokenResponse.accessToken;
     });
 
     afterAll(async () => {
@@ -318,14 +337,16 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       expect(resourceURLs.includes(cumulusDocUrl)).toBe(true);
     });
 
-    it('downloads the requested science file for authorized requests', async () => {
-      // Login with Earthdata and get access token.
-      const accessTokenResponse = await getEarthdataAccessToken({
-        redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
-        requestOrigin: process.env.DISTRIBUTION_ENDPOINT
+    it('includes the Earthdata login ID for requests to protected science files', async () => {
+      const distributionUrl = getDistributionFileUrl({
+        bucket: files[0].bucket,
+        key: files[0].filepath
       });
-      accessToken = accessTokenResponse.accessToken;
+      const s3SignedUrl = await getDistributionApiS3SignedUrl(distributionUrl, accessToken);
+      expect(s3SignedUrl.includes(process.env.EARTHDATA_USERNAME));
+    });
 
+    it('downloads the requested science file for authorized requests', async () => {
       const scienceFileUrls = resourceURLs.filter(isUMMGScienceUrl);
       console.log('scienceFileUrls: ', scienceFileUrls);
 
@@ -346,7 +367,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
                 bucket: file.bucket,
                 key: file.filepath
               });
-              fileStream = getDistributionApiFileStream(fileUrl, accessToken);
+              fileStream = await getDistributionApiFileStream(fileUrl, accessToken);
             }
             else if (bucketsConfig.type(file.bucket) === 'public') {
               fileStream = got.stream(url);
