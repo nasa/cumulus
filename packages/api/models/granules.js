@@ -44,9 +44,32 @@ const translateGranule = async (granule) => {
 
 class Granule extends Manager {
   constructor() {
+    const globalSecondaryIndexes = [{
+      IndexName: 'collectionId-granuleId-index',
+      KeySchema: [
+        {
+          AttributeName: 'collectionId',
+          KeyType: 'HASH'
+        },
+        {
+          AttributeName: 'granuleId',
+          KeyType: 'RANGE'
+        }
+      ],
+      Projection: {
+        ProjectionType: 'ALL'
+      },
+      ProvisionedThroughput: {
+        ReadCapacityUnits: 5,
+        WriteCapacityUnits: 10
+      }
+    }];
+
     super({
       tableName: process.env.GranulesTable,
       tableHash: { name: 'granuleId', type: 'S' },
+      tableAttributes: [{ name: 'collectionId', type: 'S' }],
+      tableIndexes: { GlobalSecondaryIndexes: globalSecondaryIndexes },
       schema: granuleSchema
     });
   }
@@ -302,6 +325,35 @@ class Granule extends Manager {
     });
 
     return Promise.all(done);
+  }
+
+  /**
+   * return the queue of the granules for a given collection,
+   * the items are ordered by granuleId
+   *
+   * @param {string} collectionId - collection id
+   * @param {string} status - granule status, optional
+   * @returns {Array<Object>} the granules' queue for a given collection
+   */
+  getGranulesForCollection(collectionId, status) {
+    const params = {
+      TableName: this.tableName,
+      IndexName: 'collectionId-granuleId-index',
+      ExpressionAttributeNames:
+        { '#collectionId': 'collectionId', '#granuleId': 'granuleId', '#files': 'files' },
+      ExpressionAttributeValues: { ':collectionId': collectionId },
+      KeyConditionExpression: '#collectionId = :collectionId',
+      ProjectionExpression: '#granuleId, #collectionId, #files'
+    };
+
+    // add status filter
+    if (status) {
+      params.ExpressionAttributeNames['#status'] = 'status';
+      params.ExpressionAttributeValues[':status'] = status;
+      params.FilterExpression = '#status = :status';
+    }
+
+    return new commonAws.DynamoDbSearchQueue(params, 'query');
   }
 }
 
