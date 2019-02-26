@@ -302,9 +302,6 @@ function constructOnlineAccessUrls({
   buckets,
   s3CredsEndpoint = 's3credentials'
 }) {
-  const { files, distEndpoint, buckets } = params;
-  const s3CredsEndpoint = params.s3CredsEndpoint ? params.s3CredsEndpoint : 's3credentials';
-
   const urls = [];
 
   files.forEach((file) => {

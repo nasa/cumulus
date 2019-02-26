@@ -303,10 +303,10 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       const getDataResources = onlineResources.filter((resource) => resource.Type === 'GET DATA');
       const viewRelatedInfoResource = onlineResources.filter((resource) => resource.Type === 'VIEW RELATED INFORMATION');
 
-      // There should only be one s3credentials endpoint per granule
-      expect(viewRelatedInfoResource.length).toBe(1);
+      const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
+
+      expect(viewRelatedInfoResource.contains(s3CredsUrl)).toBe(true);
       expect(getDataResources.length).toEqual(onlineResources.length - viewRelatedInfoResource.length);
-      expect(viewRelatedInfoResource.length).toEqual(onlineResources.length - getDataResources.length);
     });
 
     it('updates the CMR metadata online resources with s3credentials location', () => {
