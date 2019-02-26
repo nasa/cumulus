@@ -305,7 +305,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
       const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
 
-      expect(viewRelatedInfoResource.includes(s3CredsUrl)).toBe(true);
+      expect(viewRelatedInfoResource.map((urlObj) => urlObj.URL).includes(s3CredsUrl)).toBe(true);
       expect(getDataResources.length).toEqual(onlineResources.length - viewRelatedInfoResource.length);
     });
 
