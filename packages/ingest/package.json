@@ -34,6 +34,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cumulus/checksum": "1.11.2-alpha2",
     "@cumulus/cmrjs": "1.11.2",
     "@cumulus/common": "1.11.2",
     "@cumulus/pvl": "1.11.2",
