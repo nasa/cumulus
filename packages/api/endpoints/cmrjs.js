@@ -17,19 +17,16 @@ async function getCollection(req, res) {
   const cmrEnvironment = req.params.env;
 
   const search = new CMR(cmrProvider);
-  return search.searchCollections({short_name: collectionName, version: collectionVersion})
-    .then((results) => {
-      if (results.length === 1) {
-        const conceptId = results[0].id;
-        if (conceptId) {
-          return buildMMTLink(conceptId, cmrEnvironment);
-        }
-      }
-      return null;
-    })
-    .catch((error) => {
-      console.log(error);
-    });
+  const results = await search.searchCollections({short_name: collectionName, version: collectionVersion});
+
+  if (results.length === 1) {
+    const conceptId = results[0].id;
+    if (conceptId) {
+      const link = buildMMTLink(conceptId, cmrEnvironment);
+      return res.send(link);
+    }
+  }
+  return res.send(null);
 }
 
 /**
