@@ -15,6 +15,7 @@ const log = new Logger({ sender: 'cmr-client' });
 
 // TODO copied in ingestConcept
 const logDetails = {
+  // TODO fix these params
   file: 'lib/cmrjs/cmr.js',
   source: 'pushToCMR',
   type: 'processing'
@@ -114,6 +115,8 @@ async function updateToken(cmrProvider, clientId, username, password) {
 /**
  * The CMR class
  */
+// TODO Add API documentation
+// TODO Build API docs and commit
 class CMR {
   /**
    * The constructor for the CMR class
@@ -156,7 +159,6 @@ class CMR {
     if (ummgVersion) headers.Accept = 'application/json';
     return headers;
   }
-
 
   // TODO check if xml is filename -> read in file
   // if it is straight xml, just pass along
@@ -249,6 +251,7 @@ class CMR {
    * @param {string} format - format of the response
    * @returns {Promise.<Object>} the CMR response
    */
+  // TODO Make provider_short_name an explicit parameter
   async searchCollections(searchParams, format = 'json') {
     const params = Object.assign({}, { provider_short_name: this.provider }, searchParams);
     return searchConcept('collections', params, [], { 'Client-Id': this.clientId }, format);
@@ -261,11 +264,11 @@ class CMR {
    * @param {string} format - format of the response
    * @returns {Promise.<Object>} the CMR response
    */
+  // TODO Make provider_short_name an explicit parameter
   async searchGranules(searchParams, format = 'json') {
     // TODO put provider in searchParams
     const params = Object.assign({}, { provider_short_name: this.provider }, searchParams);
     return searchConcept('granules', params, [], { 'Client-Id': this.clientId }, format);
   }
 }
-
 module.exports = CMR;
