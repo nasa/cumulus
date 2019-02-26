@@ -10,7 +10,7 @@ const crypto = require('crypto');
  *
  * @returns {Promise<number>} - Promise returning the file checksum
  */
-async function getCksumFromStream(stream) {
+async function _getCksumFromStream(stream) {
   return new Promise((resolve, reject) =>
     stream
       .pipe(cksum.stream((value) => resolve(value.readUInt32BE(0))))
@@ -26,7 +26,7 @@ async function getCksumFromStream(stream) {
  *
  * @returns {Promise<number>} - Promise returning the file checksum
  */
-async function getChecksumFromStream(algorithm, fileStream, options) {
+async function _getChecksumFromStream(algorithm, fileStream, options) {
   return new Promise((resolve, reject) => {
     const hash = crypto.createHash(algorithm, options);
     fileStream.on('error', reject);
@@ -47,9 +47,9 @@ async function getChecksumFromStream(algorithm, fileStream, options) {
  */
 function checksumFileStream(algorithm, fileStream, options) {
   if (algorithm.toLowerCase() === 'cksum') {
-    return getCksumFromStream(fileStream);
+    return _getCksumFromStream(fileStream);
   }
-  return getChecksumFromStream(algorithm, fileStream, options);
+  return _getChecksumFromStream(algorithm, fileStream, options);
 }
 
 module.exports = {

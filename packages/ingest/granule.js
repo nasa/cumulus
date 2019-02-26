@@ -11,13 +11,13 @@ const os = require('os');
 const path = require('path');
 const uuidv4 = require('uuid/v4');
 const encodeurl = require('encodeurl');
+const { checksumFileStream } = require('@cumulus/checksum');
 const {
   aws,
   CollectionConfigStore,
   constructCollectionId,
   log,
-  errors,
-  file: { getFileChecksumFromStream }
+  errors
 } = require('@cumulus/common');
 const { buildURL } = require('@cumulus/common/URLUtils');
 
@@ -369,7 +369,7 @@ class Granule {
    * @returns {Promise<number>} checksum value calculated from file
    */
   async _cksum(filepath) {
-    return getFileChecksumFromStream(fs.createReadStream(filepath));
+    return checksumFileStream(fs.createReadStream(filepath));
   }
 
   /**
