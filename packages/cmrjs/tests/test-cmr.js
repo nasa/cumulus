@@ -152,11 +152,7 @@ test('CMR.searchCollection handles paging correctly.', async (t) => {
   ];
 
   const cmrSearch = new CMR('CUMULUS');
-  const results = await cmrSearch.searchCollections({short_name: });
-
-  console.log('next are results');
-  console.log(results);
-  console.log('end results');
+  const results = await cmrSearch.searchCollections({});
 
   t.is(expected.length, results.length);
 
