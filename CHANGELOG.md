@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- **CUMULUS-666**
+  - Added `@api/endpoints/s3credentials` to allow EarthData Login authorized users to retrieve temporary security credentials for same-region direct S3 access.
+
 - **CUMULUS-672**
   - Added `cmrMetadataFormat` and `cmrConceptId` to output for individual granules from `@cumulus/post-to-cmr`. `cmrMetadataFormat` will default to value from workflow configuration, if provided, otherwise it will attempt to read the `cmrMetadataFormat` generated in `@cumulus/cmrjs/publish2CMR`
   - Added helpers to `@packages/integration-tests/api/distribution`:
