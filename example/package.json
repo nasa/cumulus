@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@cumulus/api": "^1.11.2",
-    "@cumulus/checksum": "^1.11.2",
+    "@cumulus/checksum": "^1.11.2-alpha1",
     "@cumulus/cmrjs": "^1.11.2",
     "@cumulus/common": "^1.11.2",
     "@cumulus/deployment": "^1.11.2",
