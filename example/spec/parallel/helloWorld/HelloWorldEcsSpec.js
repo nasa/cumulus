@@ -29,7 +29,7 @@ describe('The Hello World workflow using ECS', () => {
     beforeAll(async () => {
       activityOutput = await activityStep.getStepOutput(
         workflowExecution.executionArn,
-        'EcsTaskHelloWorld'
+        'HelloWorld'
       );
     });
 
