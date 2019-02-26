@@ -160,9 +160,6 @@ class CMR {
     return headers;
   }
 
-  // TODO check if xml is filename -> read in file
-  // if it is straight xml, just pass along
-
   /**
    * Adds a collection record to the CMR
    *
