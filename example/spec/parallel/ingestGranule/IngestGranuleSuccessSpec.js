@@ -390,8 +390,10 @@ describe('The S3 Ingest Granules workflow', () => {
 
       const scienceFileUrls = resourceURLs
         .filter((url) =>
-          (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) || url.match(/s3\.amazonaws\.com/)) &&
-          !url.endsWith('.cmr.xml'));
+          (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) ||
+          url.match(/s3\.amazonaws\.com/)) &&
+          !url.endsWith('.cmr.xml') &&
+          !url.contains('s3credentials'));
 
       const checkFiles = await Promise.all(
         scienceFileUrls
