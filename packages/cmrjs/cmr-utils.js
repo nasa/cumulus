@@ -296,7 +296,12 @@ function getS3CredentialsObject(s3CredsUrl) {
  * @returns {Array<{URL: string, URLDescription: string}>}
  *   returns the list of online access url objects
  */
-function constructOnlineAccessUrls(params) {
+function constructOnlineAccessUrls({
+  files,
+  distEndpoint,
+  buckets,
+  s3CredsEndpoint = 's3credentials'
+}) {
   const { files, distEndpoint, buckets } = params;
   const s3CredsEndpoint = params.s3CredsEndpoint ? params.s3CredsEndpoint : 's3credentials';
 
