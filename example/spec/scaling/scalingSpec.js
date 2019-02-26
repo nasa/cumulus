@@ -107,6 +107,7 @@ describe('When a task is configured to run in Docker', () => {
       const mostRecentActivity = await getNewScalingActivity();
       expect(mostRecentActivity.Description).toMatch(/Terminating EC2 instance: i-*/);
       const stats = await getClusterStats({});
+      console.log(`stats are ${JSON.stringify(stats)}`);
       expect(stats.runningEC2TasksCount).toEqual(numActivityTasks);
       const instances = await ecs().listContainerInstances({ cluster: clusterArn }).promise();
       expect(instances.containerInstanceArns.length).toEqual(minInstancesCount);
