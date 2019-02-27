@@ -33,8 +33,8 @@ logging will work.
 
 When enabling server access logging, the "Target bucket" should be set to your
 stack's internal bucket. The "Target prefix" should be set to
-"<STACK_NAME>/ems-distribution/s3-server-access-logs/" (include trailing slash), where "<STACK_NAME>" is
-replaced with the name of your Cumulus stack.
+"<STACK_NAME>/ems-distribution/s3-server-access-logs/" (include trailing slash),
+where "<STACK_NAME>" is replaced with the name of your Cumulus stack.
 
 A scheduled Lambda task will run nightly that collects distribution events and
 builds an EMS distribution report.

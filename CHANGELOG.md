@@ -7,15 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 **Please Note**
+- In order for Cumulus to produce reports of files accessed via your distribution API, you must set up S3 access logging on all of your protected buckets. See [documentation on EMS reporting](https://nasa.github.io/cumulus/docs/ems_reporting) for how to correctly set up S3 access logging for your deployment.
 - If you are using the `@cumulus/post-to-cmr` task in your workflow and specifying the metadata format to post using the `cmrFileType` config property, you must update that workflow step to use the `cmrMetadataFormat` config property instead and re-deploy
 
 ### Added
 
+- **CUMULUS-671**
+  - Added `@packages/integration-tests/api/distribution/getDistributionApiS3SignedUrl()` to return the S3 signed URL for a file protected by the distribution API
 - **CUMULUS-672**
-  - Added `cmrMetadataFormat` and `cmrConceptId` to output for individual granules from `@cumulus/post-to-cmr`. `cmrMetadataFormat` will default to value from workflow configuration, if provided, otherwise it will attempt to read the `cmrMetadataFormat` generated in `@cumulus/cmrjs/publish2CMR`
+  - Added `cmrMetadataFormat` and `cmrConceptId` to output for individual granules from `@cumulus/post-to-cmr`. `cmrMetadataFormat` will default to value from workflow configuration, if provided, otherwise it will attempt to read the `cmrMetadataFormat` generated in `@cumulus/cmrjs/publish2CMR()`
   - Added helpers to `@packages/integration-tests/api/distribution`:
-    - `getDistributionApiFileStream` returns a stream to download files protected by the distribution API
-    - `getDistributionFileUrl` constructs URLs for requesting files from the distribution API
+    - `getDistributionApiFileStream()` returns a stream to download files protected by the distribution API
+    - `getDistributionFileUrl()` constructs URLs for requesting files from the distribution API
 
 - CUMULUS-1171
   - Added `@cumulus/common` API documentation to `packages/common/docs/API.md`
