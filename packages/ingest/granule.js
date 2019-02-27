@@ -369,7 +369,7 @@ class Granule {
    * @returns {Promise<number>} checksum value calculated from file
    */
   async _cksum(filepath) {
-    return generateChecksumFromStream(fs.createReadStream(filepath));
+    return generateChecksumFromStream('cksum', fs.createReadStream(filepath));
   }
 
   /**

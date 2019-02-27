@@ -70,6 +70,7 @@ describe('Distribution API', () => {
         key: fileKey
       });
       fileChecksum = await generateChecksumFromStream(
+        'cksum',
         fs.createReadStream(require.resolve(s3Data[0]))
       );
     });
@@ -99,6 +100,7 @@ describe('Distribution API', () => {
 
       // Compare checksum of downloaded file with expected checksum.
       const downloadChecksum = await generateChecksumFromStream(
+        'cksum',
         getDistributionApiFileStream(fileUrl, accessToken)
       );
       expect(downloadChecksum).toEqual(fileChecksum);
