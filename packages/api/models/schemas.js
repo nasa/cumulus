@@ -4,7 +4,7 @@ module.exports.accessToken = {
   title: 'Access Token Object',
   description: 'Cumulus API AccessToken Table schema',
   type: 'object',
-  required: ['accessToken', 'refreshToken'],
+  required: ['accessToken'],
   additionalProperties: false,
   properties: {
     accessToken: {

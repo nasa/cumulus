@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/integration-tests",
-  "version": "1.11.1",
+  "version": "1.11.2",
   "description": "Integration tests",
   "bin": {
     "cumulus-test": "./bin/cli.js"
@@ -24,9 +24,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api": "1.11.1",
-    "@cumulus/common": "1.11.1",
-    "@cumulus/deployment": "1.11.1",
+    "@cumulus/api": "1.11.2",
+    "@cumulus/cmrjs": "^1.11.2",
+    "@cumulus/common": "1.11.2",
+    "@cumulus/deployment": "1.11.2",
     "aws-sdk": "^2.238.1",
     "base-64": "^0.1.0",
     "commander": "^2.15.0",
@@ -34,8 +35,8 @@
     "got": "^8.3.0",
     "handlebars": "^4.0.11",
     "lodash.clonedeep": "^4.5.0",
-    "lodash.orderby": "^4.6.0",
     "lodash.merge": "^4.6.0",
+    "lodash.orderby": "^4.6.0",
     "p-limit": "^1.2.0",
     "p-retry": "^2.0.0",
     "p-wait-for": "^2.0.1",
