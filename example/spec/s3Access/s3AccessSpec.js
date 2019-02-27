@@ -14,7 +14,7 @@ const protectedBucket = config.buckets.protected.name;
  *
  * @param {string} region - AWS region to run test from
  * @param {AWS.credentials} credentials - AWS.credentials object for direct s3 access
- * @param {string} testName - test to invoke from lambda can be 'list-object',
+ * @param {string} testName - test to invoke from lambda can be 'list-objects',
  *                            'get-object' or 'write-object'
  * @returns {Object} - lambda payload
  */
