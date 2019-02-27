@@ -20,7 +20,9 @@ async function _getCksumFromStream(stream) {
 /**
  * Get <algorithm> file checksum from readable stream
  *
- * @param {string} algorithm - Checksum algorithm
+ * @param {string} algorithm - algorithm to use for hash,
+ * any algorithm accepted by node's `crypto.createHash`
+ * https://nodejs.org/api/crypto.html#crypto_crypto_createhash_algorithm_options
  * @param {ReadableStream} fileStream - A readable file stream
  * @param {Object} options - Checksum options
  *

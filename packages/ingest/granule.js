@@ -1,6 +1,5 @@
 'use strict';
 
-const crypto = require('crypto');
 const fs = require('fs-extra');
 const cloneDeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
@@ -11,7 +10,6 @@ const os = require('os');
 const path = require('path');
 const uuidv4 = require('uuid/v4');
 const encodeurl = require('encodeurl');
-const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
   aws,
   CollectionConfigStore,
@@ -360,35 +358,6 @@ class Granule {
       throw new errors.InvalidChecksum(message);
     }
     return [type, value];
-  }
-
-  /**
-   * Get cksum checksum value of file
-   *
-   * @param {string} filepath - filepath of file to checksum
-   * @returns {Promise<number>} checksum value calculated from file
-   */
-  async _cksum(filepath) {
-    return generateChecksumFromStream('cksum', fs.createReadStream(filepath));
-  }
-
-  /**
-  * Get hash of file
-  *
-  * @param {string} algorithm - algorithm to use for hash,
-  * any algorithm accepted by node's `crypto.createHash`
-  * https://nodejs.org/api/crypto.html#crypto_crypto_createhash_algorithm_options
-  * @param {string} filepath - filepath of file to checksum
-  * @returns {Promise} checksum value calculated from file
-  **/
-  async _hash(algorithm, filepath) {
-    return new Promise((resolve, reject) => {
-      const hash = crypto.createHash(algorithm);
-      const fileStream = fs.createReadStream(filepath);
-      fileStream.on('error', reject);
-      fileStream.on('data', (chunk) => hash.update(chunk));
-      fileStream.on('end', () => resolve(hash.digest('hex')));
-    });
   }
 
   /**
