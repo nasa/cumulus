@@ -115,8 +115,6 @@ async function updateToken(cmrProvider, clientId, username, password) {
 /**
  * The CMR class
  */
-// TODO Add API documentation
-// TODO Build API docs and commit
 class CMR {
   /**
    * The constructor for the CMR class
