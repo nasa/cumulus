@@ -1,5 +1,4 @@
 'use strict';
-'use strict';
 
 const test = require('ava');
 const sinon = require('sinon');
