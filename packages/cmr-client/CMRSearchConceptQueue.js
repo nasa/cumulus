@@ -16,7 +16,6 @@ class CMRSearchConceptQueue {
    */
   constructor(provider, clientId, type, params, format) {
     this.clientId = clientId;
-    // TODO Do we need this param?
     this.provider = provider;
     this.type = type;
     this.params = Object.assign({}, { provider_short_name: this.provider }, params);

@@ -13,12 +13,8 @@ const ValidationError = require('./ValidationError');
 
 const log = new Logger({ sender: 'cmr-client' });
 
-// TODO copied in ingestConcept
 const logDetails = {
-  // TODO fix these params
-  file: 'lib/cmrjs/cmr.js',
-  source: 'pushToCMR',
-  type: 'processing'
+  file: 'cmr-client/CMR.js'
 };
 
 /**
@@ -243,27 +239,24 @@ class CMR {
    * Search in collections
    *
    * @param {string} searchParams - the search parameters
+   * @param {string} searchParams.provider_short_name - provider shortname
    * @param {string} format - format of the response
    * @returns {Promise.<Object>} the CMR response
    */
-  // TODO Make provider_short_name an explicit parameter
   async searchCollections(searchParams, format = 'json') {
-    const params = Object.assign({}, { provider_short_name: this.provider }, searchParams);
-    return searchConcept('collections', params, [], { 'Client-Id': this.clientId }, format);
+    return searchConcept('collections', searchParams, [], { 'Client-Id': this.clientId }, format);
   }
 
   /**
    * Search in granules
    *
    * @param {string} searchParams - the search parameters
+   * @param {string} searchParams.provider_short_name - provider shortname
    * @param {string} format - format of the response
    * @returns {Promise.<Object>} the CMR response
    */
-  // TODO Make provider_short_name an explicit parameter
   async searchGranules(searchParams, format = 'json') {
-    // TODO put provider in searchParams
-    const params = Object.assign({}, { provider_short_name: this.provider }, searchParams);
-    return searchConcept('granules', params, [], { 'Client-Id': this.clientId }, format);
+    return searchConcept('granules', searchParams, [], { 'Client-Id': this.clientId }, format);
   }
 }
 module.exports = CMR;
