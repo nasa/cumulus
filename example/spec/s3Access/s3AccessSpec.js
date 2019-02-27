@@ -31,7 +31,6 @@ async function invokeTestLambda(region, credentials, testName) {
     })
   }).promise();
 
-  console.log(`lambda return ${JSON.stringify(data)}`);
   return data.Payload;
 }
 
