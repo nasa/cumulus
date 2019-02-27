@@ -51,7 +51,7 @@ test.after.always(async () => {
 
 test('GET invokes request for credentials with username from authToken', async (t) => {
   const lambdaInstance = lambda();
-  const fakeCredential = { fake: 'credential' };
+  const fakeCredential = { Payload: JSON.stringify({ fake: 'credential' }) };
   const invokeFake = sinon.fake.returns({ promise: () => Promise.resolve(fakeCredential) });
   const previousInvoke = lambdaInstance.invoke;
   lambdaInstance.invoke = invokeFake;

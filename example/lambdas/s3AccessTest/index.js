@@ -75,7 +75,7 @@ async function testList(s3, params) {
  */
 async function handler(event) {
   const { credentials, testName, ...params } = event;
-  const s3 = new S3({ credentials: new Credentials(JSON.parse(credentials)) });
+  const s3 = new S3({ credentials: new Credentials(credentials) });
 
   const testChoices = {
     'get-object': testGet,

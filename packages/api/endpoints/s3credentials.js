@@ -39,7 +39,7 @@ async function requestTemporaryCredentialsFromNgap(username) {
 async function s3credentials(req, res) {
   const username = req.authorizedMetadata.userName;
   const credentials = await requestTemporaryCredentialsFromNgap(username);
-  return res.send(credentials.Payload);
+  return res.send(JSON.parse(credentials.Payload));
 }
 
 router.get('/', s3credentials);
