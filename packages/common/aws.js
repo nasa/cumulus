@@ -7,6 +7,7 @@ const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
 const path = require('path');
 const pMap = require('p-map');
+const pRetry = require('p-retry');
 const pump = require('pump');
 const url = require('url');
 
@@ -573,13 +574,14 @@ exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
   });
 };
 
-// Class to efficiently scan all of the items in a DynamoDB table, without
+// Class to efficiently search all of the items in a DynamoDB table, without
 // loading them all into memory at once.  Handles paging.
-class DynamoDbScanQueue {
-  constructor(params) {
+class DynamoDbSearchQueue {
+  constructor(params, searchType = 'scan') {
     this.items = [];
     this.params = params;
-    this.dynamodb = exports.dynamodb();
+    this.dynamodbDocClient = exports.dynamodbDocClient();
+    this.searchType = searchType;
   }
 
   /**
@@ -616,7 +618,7 @@ class DynamoDbScanQueue {
   async fetchItems() {
     let response;
     do {
-      response = await this.dynamodb.scan(this.params).promise(); // eslint-disable-line no-await-in-loop, max-len
+      response = await this.dynamodbDocClient[this.searchType](this.params).promise(); // eslint-disable-line no-await-in-loop, max-len
       if (response.LastEvaluatedKey) this.params.ExclusiveStartKey = response.LastEvaluatedKey;
     } while (response.Items.length === 0 && response.LastEvaluatedKey);
 
@@ -625,7 +627,7 @@ class DynamoDbScanQueue {
     if (!response.LastEvaluatedKey) this.items.push(null);
   }
 }
-exports.DynamoDbScanQueue = DynamoDbScanQueue;
+exports.DynamoDbSearchQueue = DynamoDbSearchQueue;
 
 exports.syncUrl = async (uri, bucket, destKey) => {
   const response = await concurrency.promiseUrl(uri);
@@ -881,3 +883,25 @@ exports.pullStepFunctionEvent = async (event) => {
   }
   return event;
 };
+
+const retryIfThrottlingException = (err) => {
+  if (exports.isThrottlingException(err)) throw err;
+  throw new pRetry.AbortError(err);
+};
+
+/**
+ * Wrap a function so that it will retry when a ThrottlingException is encountered.
+ *
+ * @param {Function} fn - the function to retry.  This function must return a Promise.
+ * @param {Object} options - retry options, documented here:
+ *   - https://github.com/sindresorhus/p-retry#options
+ *   - https://github.com/tim-kos/node-retry#retryoperationoptions
+ *   - https://github.com/tim-kos/node-retry#retrytimeoutsoptions
+ * @returns {Function} a function that will retry on a ThrottlingException
+ */
+exports.retryOnThrottlingException = (fn, options) =>
+  (...args) =>
+    pRetry(
+      () => fn(...args).catch(retryIfThrottlingException),
+      options
+    );

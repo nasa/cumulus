@@ -3,7 +3,6 @@
 const get = require('lodash.get');
 const Ajv = require('ajv');
 const aws = require('@cumulus/common/aws');
-const { deprecate } = require('@cumulus/common/util');
 const pWaitFor = require('p-wait-for');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { errorify } = require('../lib/utils');
@@ -28,7 +27,7 @@ async function enableStream(tableName) {
   );
 }
 
-async function createTable(tableName, hash, range = null) {
+async function createTable(tableName, hash, range = null, attributes = null, indexes = null) {
   const params = {
     TableName: tableName,
     AttributeDefinitions: [{
@@ -42,7 +41,8 @@ async function createTable(tableName, hash, range = null) {
     ProvisionedThroughput: {
       ReadCapacityUnits: 5,
       WriteCapacityUnits: 5
-    }
+    },
+    ...indexes
   };
 
   if (range) {
@@ -54,6 +54,15 @@ async function createTable(tableName, hash, range = null) {
     params.AttributeDefinitions.push({
       AttributeName: range.name,
       AttributeType: range.type
+    });
+  }
+
+  if (attributes) {
+    attributes.forEach((attribute) => {
+      params.AttributeDefinitions.push({
+        AttributeName: attribute.name,
+        AttributeType: attribute.type
+      });
     });
   }
 
@@ -114,16 +123,6 @@ class Manager {
     }
   }
 
-  static createTable(tableName, hash, range = null) {
-    deprecate('@cumulus/api/models/base Manager.createTable()', '1.10.3', 'the createTable() instance method');
-    return createTable(tableName, hash, range);
-  }
-
-  static deleteTable(tableName) {
-    deprecate('@cumulus/api/models/base Manager.deleteTable()', '1.10.3', 'the deleteTable() instance method');
-    return deleteTable(tableName);
-  }
-
   /**
    * Constructor of Manager class
    *
@@ -135,6 +134,11 @@ class Manager {
    *   table.
    * @param {Object} params.tableRange - an object containing "name" and "type"
    *   properties, which specify the sort key of the DynamoDB table.
+   * @param {Object} params.tableAttributes - list of objects containing "name"
+   *   and "type" properties, which specifies additional table attributes for
+   *   attribute definitions besides tableHash and tableRange
+   * @param {Object} params.tableIndexes - an object containing definition of indexes,
+   *   such as GlobalSecondaryIndexes, LocalSecondaryIndexes
    * @param {Object} params.schema - the JSON schema to validate the records
    *   against.
    * @param {boolean} [params.validate=true] - whether items should be validated
@@ -152,6 +156,8 @@ class Manager {
     this.tableName = params.tableName;
     this.tableHash = params.tableHash;
     this.tableRange = params.tableRange;
+    this.tableAttributes = params.tableAttributes;
+    this.tableIndexes = params.tableIndexes;
     this.schema = params.schema;
     this.dynamodbDocClient = aws.dynamodbDocClient({ convertEmptyValues: true });
     this.removeAdditional = false;
@@ -165,7 +171,9 @@ class Manager {
    * @returns {Promise} resolves when the table exists
    */
   createTable() {
-    return createTable(this.tableName, this.tableHash, this.tableRange);
+    return createTable(
+      this.tableName, this.tableHash, this.tableRange, this.tableAttributes, this.tableIndexes
+    );
   }
 
   /**
