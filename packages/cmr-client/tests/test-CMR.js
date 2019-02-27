@@ -36,8 +36,8 @@ test('CMR.searchCollection handles paging correctly.', async (t) => {
     { cmrEntry6: 'data6' }
   ];
 
-  const cmrSearch = new CMR('CUMULUS');
-  const results = await cmrSearch.searchCollections({});
+  const cmrSearch = new CMR();
+  const results = await cmrSearch.searchCollections({ provider_short_name: 'CUMULUS' });
 
   t.is(expected.length, results.length);
 

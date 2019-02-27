@@ -17,9 +17,7 @@ const xmlParseOptions = {
 };
 
 const logDetails = {
-  file: 'lib/cmrjs/cmr.js',
-  source: 'pushToCMR',
-  type: 'processing'
+  file: 'cmr-client/ingestConcept.js'
 };
 
 /**
@@ -41,15 +39,12 @@ async function ingestConcept(type, xmlString, identifierPath, provider, headers)
     });
   });
 
-  //log.debug('XML object parsed', logDetails);
   const identifier = property(identifierPath)(xmlObject);
   logDetails.granuleId = identifier;
 
   try {
     await validate(type, xmlString, identifier, provider);
-    //log.debug('XML object is valid', logDetails);
 
-    //log.info('Pushing xml metadata to CMR', logDetails);
     const response = await got.put(
       `${getUrl('ingest', provider)}${type}s/${identifier}`,
       {
@@ -57,8 +52,6 @@ async function ingestConcept(type, xmlString, identifierPath, provider, headers)
         headers
       }
     );
-
-    //log.info('Metadata pushed to CMR.', logDetails);
 
     xmlObject = await new Promise((resolve, reject) => {
       parseString(response.body, xmlParseOptions, (err, res) => {

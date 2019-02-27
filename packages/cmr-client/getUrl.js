@@ -78,9 +78,4 @@ function getUrl(type, cmrProvider) {
   return url;
 }
 
-// TODO Too many exports
-module.exports = {
-  getUrl,
-  getHost,
-  hostId
-};
+module.exports = getUrl;

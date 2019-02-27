@@ -4,8 +4,8 @@ const publicIp = require('public-ip');
 const { createErrorType } = require('@cumulus/common/errors');
 const { deprecate } = require('@cumulus/common/util');
 
-// getUrl, getHost and hostId is not part of the public cmr-client API
-const { getUrl, getHost, hostId } = require('@cumulus/cmr-client/getUrl');
+// getUrl is not part of the public cmr-client API
+const getUrl = require('@cumulus/cmr-client/getUrl');
 // validate is not part of the public cmr-client API
 const { validate } = require('@cumulus/cmr-client/ingestConcept');
 
@@ -16,6 +16,43 @@ const xmlParseOptions = {
   mergeAttrs: true,
   explicitArray: false
 };
+
+/**
+ * Returns the environment specific identifier for the input cmr environment.
+ * @deprecated
+ * @param {string} env - cmr environment ['OPS', 'SIT', 'UAT']
+ * @returns {string} - value to use to build correct cmr url for environment.
+ */
+function hostId(env) {
+  return get(
+    { OPS: '', SIT: 'sit', UAT: 'uat' },
+    env,
+    'uat'
+  );
+}
+
+/**
+ * Determines the appropriate CMR host endpoint based on a given
+ * value for CMR_ENVIRONMENT environment variable. Defaults
+ * to the uat cmr
+ *
+ * @deprecated
+ *
+ * @param {Object} environment - process env like object
+ * @param {string} environment.CMR_ENVIRONMENT - [optional] CMR environment to
+ *              use valid arguments are ['OPS', 'SIT', 'UAT'], anything that is
+ *              not 'OPS' or 'SIT' will be interpreted as 'UAT'
+ * @param {string} environment.CMR_HOST [optional] explicit host to return, if
+ *              this has a value, it overrides any values for CMR_ENVIRONMENT
+ * @returns {string} the cmr host address
+ */
+function getHost(environment = process.env) {
+  const env = environment.CMR_ENVIRONMENT;
+  if (environment.CMR_HOST) return environment.CMR_HOST;
+
+  const host = ['cmr', hostId(env), 'earthdata.nasa.gov'].filter((d) => d).join('.');
+  return host;
+}
 
 /**
  * Find the UMM version as a decimal string.
