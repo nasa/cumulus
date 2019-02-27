@@ -406,6 +406,7 @@ describe('The S3 Ingest Granules workflow', () => {
             const extension = path.extname(new URL(url).pathname);
             const sourceFile = s3data.find((d) => d.endsWith(extension));
             const sourceChecksum = await generateChecksumFromStream(
+              'cksum',
               fs.createReadStream(require.resolve(sourceFile))
             );
             const file = files.find((f) => f.name.endsWith(extension));
@@ -424,7 +425,7 @@ describe('The S3 Ingest Granules workflow', () => {
             }
 
             // Compare checksum of downloaded file with expected checksum.
-            const downloadChecksum = await generateChecksumFromStream(fileStream);
+            const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
             return downloadChecksum === sourceChecksum;
           })
       );
