@@ -342,8 +342,21 @@ describe('The S3 Ingest Granules workflow', () => {
 
       granule = postToCmrOutput.payload.granules[0];
       files = granule.files;
-      cmrResource = await getOnlineResources(granule);
+
+      const result = await Promise.all([
+        getOnlineResources(granule),
+        // Login with Earthdata and get access token.
+        getEarthdataAccessToken({
+          redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
+          requestOrigin: process.env.DISTRIBUTION_ENDPOINT
+        })
+      ]);
+
+      cmrResource = result[0];
       resourceURLs = cmrResource.map((resource) => resource.href);
+
+      const accessTokenResponse = result[1];
+      accessToken = accessTokenResponse.accessToken;
     });
 
     afterAll(async () => {
@@ -397,13 +410,6 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('downloads the requested science file for authorized requests', async () => {
-      // Login with Earthdata and get access token.
-      const accessTokenResponse = await getEarthdataAccessToken({
-        redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
-        requestOrigin: process.env.DISTRIBUTION_ENDPOINT
-      });
-      accessToken = accessTokenResponse.accessToken;
-
       const scienceFileUrls = resourceURLs
         .filter((url) =>
           (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) ||
