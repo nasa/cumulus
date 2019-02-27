@@ -1,17 +1,35 @@
 {
-  // TODO This needs to be fleshed out
   "name": "@cumulus/cmr-client",
   "version": "1.11.1",
   "engines": {
     "node": ">=8.10.0"
   },
   "scripts": {
-    "test": "ava"
+    "test": "ava",
+    "test-coverage": "nyc ava",
+    "debug": "NODE_ENV=test node --inspect-brk node_modules/ava/profile.js --serial tests/*.js"
   },
   "ava": {
-    "files": "tests",
+    "files": "tests/*.js",
     "fail-fast": true
   },
+  "nyc": {
+    "exclude": [
+      "tests"
+    ]
+  },
+  "keywords": [
+    "CUMULUS"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/logger": "^1.11.2",
     "got": "^9.6.0",
