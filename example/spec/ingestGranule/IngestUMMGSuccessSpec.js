@@ -343,7 +343,8 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         key: files[0].filepath
       });
       const s3SignedUrl = await getDistributionApiS3SignedUrl(distributionUrl, accessToken);
-      expect(s3SignedUrl.includes(process.env.EARTHDATA_USERNAME));
+      const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('x-EarthdataLoginUsername');
+      expect(earthdataLoginParam).toEqual(process.env.EARTHDATA_USERNAME);
     });
 
     it('downloads the requested science file for authorized requests', async () => {
