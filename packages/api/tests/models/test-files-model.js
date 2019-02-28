@@ -30,9 +30,9 @@ test.serial('create files records from a granule and then delete them', async (t
 
   // make sure all the records are added
   await Promise.all(granule.files.map(async (file) => {
-    const record = await fileModel.get({ bucket, key: file.filepath });
+    const record = await fileModel.get({ bucket, key: file.key });
     t.is(record.bucket, file.bucket);
-    t.is(record.key, file.filepath);
+    t.is(record.key, file.key);
     t.is(record.granuleId, granule.granuleId);
   }));
 
@@ -40,7 +40,7 @@ test.serial('create files records from a granule and then delete them', async (t
 
   const validateFile = async (file) => {
     try {
-      await fileModel.get({ bucket, key: file.filepath });
+      await fileModel.get({ bucket, key: file.key });
       fail('Expected an exception to be thrown');
     }
     catch (err) {
@@ -69,9 +69,9 @@ test.serial('create a granule wth 4 files, then remove one of the files', async 
   await fileModel.deleteFilesAfterCompare(newGranule, granule);
 
   const validateFile = async (file) => {
-    const record = await fileModel.get({ bucket, key: file.filepath });
+    const record = await fileModel.get({ bucket, key: file.key });
     t.is(record.bucket, file.bucket);
-    t.is(record.key, file.filepath);
+    t.is(record.key, file.key);
     t.is(record.granuleId, granule.granuleId);
   };
 
@@ -79,7 +79,7 @@ test.serial('create a granule wth 4 files, then remove one of the files', async 
   await Promise.all(newGranule.files.map(validateFile));
 
   // make sure the droppedFile is deleted
-  const promise = fileModel.get({ bucket: bucket, key: droppedFile.filepath });
+  const promise = fileModel.get({ bucket: bucket, key: droppedFile.key });
   const err = await t.throws(promise);
   t.true(err.message.includes('No record'));
 });

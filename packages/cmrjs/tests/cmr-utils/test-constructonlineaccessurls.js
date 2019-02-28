@@ -28,7 +28,7 @@ test.beforeEach((t) => {
 test('returns correct url for protected data', (t) => {
   const movedFiles = [
     {
-      filepath: 'some/path/protected-file.hdf',
+      key: 'some/path/protected-file.hdf',
       bucket: t.context.bucketConfig.protected.name
     }
   ];
@@ -55,7 +55,7 @@ test('Returns correct url object for public data.', (t) => {
   const publicBucketName = t.context.bucketConfig.public.name;
   const movedFiles = [
     {
-      filepath: 'some/path/browse_image.jpg',
+      key: 'some/path/browse_image.jpg',
       bucket: publicBucketName
     }
   ];
@@ -83,7 +83,7 @@ test('Returns empty list for private data.', (t) => {
   const privateBucket = t.context.bucketConfig.private.name;
   const movedFiles = [
     {
-      filepath: 'some/path/top/secretfile',
+      key: 'some/path/top/secretfile',
       bucket: privateBucket
     }
   ];
@@ -101,15 +101,15 @@ test('Returns empty list for private data.', (t) => {
 test('returns an array of correct url objects given a list of moved files.', (t) => {
   const movedFiles = [
     {
-      filepath: 'hidden/secretfile.gpg',
+      key: 'hidden/secretfile.gpg',
       bucket: t.context.bucketConfig.private.name
     },
     {
-      filepath: 'path/publicfile.jpg',
+      key: 'path/publicfile.jpg',
       bucket: t.context.bucketConfig.public.name
     },
     {
-      filepath: 'another/path/protected.hdf',
+      key: 'another/path/protected.hdf',
       bucket: t.context.bucketConfig.protected.name
     }
   ];
