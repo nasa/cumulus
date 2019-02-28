@@ -1,3 +1,9 @@
 'use strict';
 
-module.exports = require('./checksum');
+const { generateChecksumFromStream } = require('./checksum');
+const { validateChecksumFromStream } = require('./validate');
+
+module.exports = {
+  generateChecksumFromStream,
+  validateChecksumFromStream
+};
