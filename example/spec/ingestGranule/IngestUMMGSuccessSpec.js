@@ -3,7 +3,10 @@
 const fs = require('fs-extra');
 const got = require('got');
 const path = require('path');
-const { URL } = require('url');
+const {
+  URL,
+  resolve
+} = require('url');
 const cloneDeep = require('lodash.clonedeep');
 
 const {
@@ -81,7 +84,9 @@ async function getUmmObject(fileLocation) {
 }
 
 const cumulusDocUrl = 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme';
-const isUMMGScienceUrl = (url) => url !== cumulusDocUrl && !url.endsWith('.cmr.json');
+const isUMMGScienceUrl = (url) => url !== cumulusDocUrl &&
+  !url.endsWith('.cmr.json') &&
+  !url.includes('s3credentials');
 
 describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const testId = createTimestampedTestId(config.stackName, 'IngestUMMGSuccess');
@@ -295,8 +300,18 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('publishes CMR metadata online resources with the correct type', () => {
-      const validResources = onlineResources.filter((resource) => resource.Type === 'GET DATA');
-      expect(onlineResources.length).toEqual(validResources.length);
+      const getDataResources = onlineResources.filter((resource) => resource.Type === 'GET DATA');
+      const viewRelatedInfoResource = onlineResources.filter((resource) => resource.Type === 'VIEW RELATED INFORMATION');
+
+      const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
+
+      expect(viewRelatedInfoResource.map((urlObj) => urlObj.URL).includes(s3CredsUrl)).toBe(true);
+      expect(getDataResources.length).toEqual(onlineResources.length - viewRelatedInfoResource.length);
+    });
+
+    it('updates the CMR metadata online resources with s3credentials location', () => {
+      const s3CredentialsURL = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
+      expect(resourceURLs.includes(s3CredentialsURL)).toBe(true);
     });
 
     it('does not overwrite the original related url', () => {
@@ -312,6 +327,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       accessToken = accessTokenResponse.accessToken;
 
       const scienceFileUrls = resourceURLs.filter(isUMMGScienceUrl);
+      console.log('scienceFileUrls: ', scienceFileUrls);
 
       const checkFiles = await Promise.all(
         scienceFileUrls
