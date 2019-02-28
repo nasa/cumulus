@@ -3,7 +3,7 @@
 const fs = require('fs-extra');
 const got = require('got');
 const path = require('path');
-const { URL } = require('url');
+const { URL, resolve } = require('url');
 const cloneDeep = require('lodash.clonedeep');
 const difference = require('lodash.difference');
 const includes = require('lodash.includes');
@@ -376,9 +376,14 @@ describe('The S3 Ingest Granules workflow', () => {
         key: files[0].filepath
       });
       const s3Url = getPublicS3FileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+      const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
+
+      console.log('parallel resourceURLs: ', resourceURLs);
+      console.log('s3CredsUrl: ', s3CredsUrl);
 
       expect(resourceURLs.includes(distributionUrl)).toBe(true);
       expect(resourceURLs.includes(s3Url)).toBe(true);
+      expect(resourceURLs.includes(s3CredsUrl)).toBe(true);
     });
 
     it('downloads the requested science file for authorized requests', async () => {
@@ -391,8 +396,10 @@ describe('The S3 Ingest Granules workflow', () => {
 
       const scienceFileUrls = resourceURLs
         .filter((url) =>
-          (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) || url.match(/s3\.amazonaws\.com/)) &&
-          !url.endsWith('.cmr.xml'));
+          (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) ||
+          url.match(/s3\.amazonaws\.com/)) &&
+          !url.endsWith('.cmr.xml') &&
+          !url.includes('s3credentials'));
 
       const checkFiles = await Promise.all(
         scienceFileUrls
