@@ -1,15 +1,13 @@
 const got = require('got');
 const _get = require('lodash.get');
 const publicIp = require('public-ip');
-const { createErrorType } = require('@cumulus/common/errors');
 const { deprecate } = require('@cumulus/common/util');
+const { ValidationError } = require('@cumulus/cmr-client');
 
 // getUrl is not part of the public cmr-client API
 const getUrl = require('@cumulus/cmr-client/getUrl');
 // validate is not part of the public cmr-client API
 const { validate } = require('@cumulus/cmr-client/ingestConcept');
-
-const ValidationError = createErrorType('ValidationError');
 
 const xmlParseOptions = {
   ignoreAttrs: true,

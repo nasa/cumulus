@@ -45,16 +45,26 @@ test('CMR.searchCollection handles paging correctly.', async (t) => {
 });
 
 test('getHeaders returns correct Content-type for UMMG metadata', (t) => {
-  const cmrInstance = new CMR('provider', 'clientID', 'username', 'password');
+  const cmrInstance = new CMR({
+    provider: 'provider',
+    clientId: 'clientID',
+    username: 'username',
+    password: 'password'
+  });
   const ummgVersion = '1.5';
-  const headers = cmrInstance.getHeaders(null, ummgVersion);
+  const headers = cmrInstance.getHeaders({ ummgVersion });
   console.log(headers);
   t.is(headers['Content-type'], 'application/vnd.nasa.cmr.umm+json;version=1.5');
   t.is(headers.Accept, 'application/json');
 });
 
 test('getHeaders returns correct Content-type for xml metadata by default', (t) => {
-  const cmrInstance = new CMR('provider', 'clientID', 'username', 'password');
+  const cmrInstance = new CMR({
+    provider: 'provider',
+    clientId: 'clientID',
+    username: 'username',
+    password: 'password'
+  });
   const headers = cmrInstance.getHeaders();
   console.log(headers);
   t.is(headers['Content-type'], 'application/echo10+xml');

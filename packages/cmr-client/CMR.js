@@ -128,16 +128,17 @@ class CMR {
   /**
    * The constructor for the CMR class
    *
-   * @param {string} provider - the CMR provider id
-   * @param {string} clientId - the CMR clientId
-   * @param {string} username - CMR username
-   * @param {string} password - CMR password
+   * @param {Object} params
+   * @param {string} params.provider - the CMR provider id
+   * @param {string} params.clientId - the CMR clientId
+   * @param {string} params.username - CMR username
+   * @param {string} params.password - CMR password
    */
-  constructor(provider, clientId, username, password) {
-    this.clientId = clientId;
-    this.provider = provider;
-    this.username = username;
-    this.password = password;
+  constructor(params = {}) {
+    this.clientId = params.clientId;
+    this.provider = params.provider;
+    this.username = params.username;
+    this.password = params.password;
   }
 
   /**
@@ -152,40 +153,46 @@ class CMR {
   /**
    * Return object containing CMR request headers
    *
-   * @param {string} [token] - CMR request token
-   * @param {string} [ummgVersion] - UMMG metadata version string or null if echo10 metadata
+   * @param {Object} params
+   * @param {string} [params.token] - CMR request token
+   * @param {string} [params.ummgVersion] - UMMG metadata version string or null if echo10 metadata
    * @returns {Object} CMR headers object
    */
-  getHeaders(token = null, ummgVersion = null) {
-    const contentType = !ummgVersion ? 'application/echo10+xml' : `application/vnd.nasa.cmr.umm+json;version=${ummgVersion}`;
+  getHeaders(params = {}) {
+    const contentType = params.ummgVersion
+      ? `application/vnd.nasa.cmr.umm+json;version=${params.ummgVersion}`
+      : 'application/echo10+xml';
+
     const headers = {
       'Client-Id': this.clientId,
       'Content-type': contentType
     };
-    if (token) headers['Echo-Token'] = token;
-    if (ummgVersion) headers.Accept = 'application/json';
+
+    if (params.token) headers['Echo-Token'] = params.token;
+    if (params.ummgVersion) headers.Accept = 'application/json';
+
     return headers;
   }
 
   /**
    * Adds a collection record to the CMR
    *
-   * @param {string} xml - the collection xml document
+   * @param {string} xml - the collection XML document
    * @returns {Promise.<Object>} the CMR response
    */
   async ingestCollection(xml) {
-    const headers = this.getHeaders(await this.getToken());
+    const headers = this.getHeaders({ token: await this.getToken() });
     return ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
   }
 
   /**
    * Adds a granule record to the CMR
    *
-   * @param {string} xml - the granule xml document
+   * @param {string} xml - the granule XML document
    * @returns {Promise.<Object>} the CMR response
    */
   async ingestGranule(xml) {
-    const headers = this.getHeaders(await this.getToken());
+    const headers = this.getHeaders({ token: await this.getToken() });
     return ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
   }
 
@@ -196,8 +203,10 @@ class CMR {
    * @returns {Promise<Object>} to the CMR response object.
    */
   async ingestUMMGranule(ummgMetadata) {
-    const ummgVersion = ummVersion(ummgMetadata);
-    const headers = this.getHeaders(await this.getToken(), ummgVersion);
+    const headers = this.getHeaders({
+      token: await this.getToken(),
+      ummgVersion: ummVersion(ummgMetadata)
+    });
 
     const granuleId = ummgMetadata.GranuleUR || 'no GranuleId found on input metadata';
     logDetails.granuleId = granuleId;
@@ -233,7 +242,7 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async deleteCollection(datasetID) {
-    const headers = this.getHeaders(await this.getToken());
+    const headers = this.getHeaders({ token: await this.getToken() });
     return deleteConcept('collection', datasetID, headers);
   }
 
@@ -244,7 +253,7 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async deleteGranule(granuleUR) {
-    const headers = this.getHeaders(await this.getToken());
+    const headers = this.getHeaders({ token: await this.getToken() });
     return deleteConcept('granules', granuleUR, this.provider, headers);
   }
 
@@ -253,7 +262,7 @@ class CMR {
    *
    * @param {string} searchParams - the search parameters
    * @param {string} searchParams.provider_short_name - provider shortname
-   * @param {string} format - format of the response
+   * @param {string} [format=json] - format of the response
    * @returns {Promise.<Object>} the CMR response
    */
   async searchCollections(searchParams, format = 'json') {
@@ -265,7 +274,7 @@ class CMR {
    *
    * @param {string} searchParams - the search parameters
    * @param {string} searchParams.provider_short_name - provider shortname
-   * @param {string} format - format of the response
+   * @param {string} [format='json'] - format of the response
    * @returns {Promise.<Object>} the CMR response
    */
   async searchGranules(searchParams, format = 'json') {

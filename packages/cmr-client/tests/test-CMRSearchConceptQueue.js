@@ -34,7 +34,13 @@ test('CMRSearchConceptQueue handles paging correctly.', async (t) => {
     { cmrEntry6: 'data6' }
   ];
 
-  const cmrSearchQueue = new CMRSearchConceptQueue('CUMULUS', 'fakeClient', 'granules', {}, 'umm_json');
+  const cmrSearchQueue = new CMRSearchConceptQueue({
+    provider: 'CUMULUS',
+    clientId: 'fakeClient',
+    type: 'granules',
+    searchParams: {},
+    format: 'umm_json'
+  });
   for (let i = 0; i < 6; i += 1) {
     t.deepEqual(await cmrSearchQueue.peek(), expected[i]); // eslint-disable-line no-await-in-loop
     await cmrSearchQueue.shift(); // eslint-disable-line no-await-in-loop

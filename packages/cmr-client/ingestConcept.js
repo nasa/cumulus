@@ -1,14 +1,17 @@
 'use strict';
 
 const got = require('got');
-const { parseString } = require('xml2js');
+const xml2js = require('xml2js');
 const property = require('lodash.property');
 const Logger = require('@cumulus/logger');
 
 const validate = require('./validate');
-const { getUrl } = require('./getUrl');
+const getUrl = require('./getUrl');
+const { promisify } = require('./Utils');
 
 const log = new Logger({ sender: 'cmr-client' });
+
+const parseString = promisify(xml2js.parseString);
 
 const xmlParseOptions = {
   ignoreAttrs: true,
@@ -32,12 +35,7 @@ const logDetails = {
  * @returns {Promise.<Object>} the CMR response object
  */
 async function ingestConcept(type, xmlString, identifierPath, provider, headers) {
-  let xmlObject = await new Promise((resolve, reject) => {
-    parseString(xmlString, xmlParseOptions, (err, obj) => {
-      if (err) reject(err);
-      resolve(obj);
-    });
-  });
+  let xmlObject = await parseString(xmlString, xmlParseOptions);
 
   const identifier = property(identifierPath)(xmlObject);
   logDetails.granuleId = identifier;
@@ -72,8 +70,4 @@ async function ingestConcept(type, xmlString, identifierPath, provider, headers)
     throw e;
   }
 }
-
-module.exports = {
-  ingestConcept,
-  validate
-};
+module.exports = ingestConcept;
