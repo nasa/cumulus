@@ -3,7 +3,7 @@
 const got = require('got');
 const sinon = require('sinon');
 const test = require('ava');
-const { ingestConcept } = require('../ingestConcept');
+const ingestConcept = require('../ingestConcept');
 
 const clientId = 'cumulus-test-client';
 const granuleId = 'MYD13Q1.A2017297.h19v10.006.2017313221203';

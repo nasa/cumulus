@@ -10,84 +10,77 @@ A Node.js client to read from, write to, and delete from NASA's Common Metadata 
 
 <dl>
 <dt><a href="#CMR">CMR</a></dt>
-<dd><p>The CMR class</p>
+<dd><p>A class to simplify requests to the CMR</p>
 </dd>
 <dt><a href="#CMRSearchConceptQueue">CMRSearchConceptQueue</a></dt>
-<dd></dd>
-</dl>
-
-### Functions
-
-<dl>
-<dt><a href="#ummVersion">ummVersion(umm)</a> ⇒ <code>string</code></dt>
-<dd><p>Find the UMM version as a decimal string.
-If a version cannot be found on the input object
-version 1.4 is assumed and returned.</p>
-</dd>
-<dt><a href="#validateUMMG">validateUMMG(ummMetadata, identifier, provider)</a> ⇒ <code>Promise.&lt;boolean&gt;</code></dt>
-<dd><p>Posts a given xml string to the validate endpoint of CMR
-and promises true of valid.</p>
-</dd>
-<dt><a href="#updateToken">updateToken(cmrProvider, clientId, username, password)</a> ⇒ <code>Promise.&lt;string&gt;</code></dt>
-<dd><p>Returns a valid a CMR token</p>
+<dd><p>A class to efficiently list all of the concepts (collections/granules) from
+CMR search, without loading them all into memory at once.  Handles paging.</p>
 </dd>
 </dl>
 
 <a name="CMR"></a>
 
 ### CMR
-The CMR class
+A class to simplify requests to the CMR
 
 **Kind**: global class  
 
 * [CMR](#CMR)
-    * [new CMR(provider, clientId, username, password)](#new_CMR_new)
+    * [new CMR(params)](#new_CMR_new)
     * [.getToken()](#CMR+getToken) ⇒ <code>Promise.&lt;string&gt;</code>
-    * [.getHeaders([token], ummgVersion)](#CMR+getHeaders) ⇒ <code>Object</code>
+    * [.getHeaders(params)](#CMR+getHeaders) ⇒ <code>Object</code>
     * [.ingestCollection(xml)](#CMR+ingestCollection) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.ingestGranule(xml)](#CMR+ingestGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.ingestUMMGranule(ummgMetadata)](#CMR+ingestUMMGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.deleteCollection(datasetID)](#CMR+deleteCollection) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.deleteGranule(granuleUR)](#CMR+deleteGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.searchCollections(searchParams, format)](#CMR+searchCollections) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.searchGranules(searchParams, format)](#CMR+searchGranules) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.searchCollections(searchParams, [format])](#CMR+searchCollections) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.searchGranules(searchParams, [format])](#CMR+searchGranules) ⇒ <code>Promise.&lt;Object&gt;</code>
 
 <a name="new_CMR_new"></a>
 
-#### new CMR(provider, clientId, username, password)
+#### new CMR(params)
 The constructor for the CMR class
 
 
 | Param | Type | Description |
 | --- | --- | --- |
-| provider | <code>string</code> | the CMR provider id |
-| clientId | <code>string</code> | the CMR clientId |
-| username | <code>string</code> | CMR username |
-| password | <code>string</code> | CMR password |
+| params | <code>Object</code> |  |
+| params.provider | <code>string</code> | the CMR provider id |
+| params.clientId | <code>string</code> | the CMR clientId |
+| params.username | <code>string</code> | CMR username |
+| params.password | <code>string</code> | CMR password |
 
+**Example**  
+```js
+const { CMR } = require('@cumulus/cmr-client');
+
+const cmrClient = new CMR('my-provider', 'my-clientId', 'my-username', 'my-password');
+```
 <a name="CMR+getToken"></a>
 
-#### cmR.getToken() ⇒ <code>Promise.&lt;string&gt;</code>
+#### cmrClient.getToken() ⇒ <code>Promise.&lt;string&gt;</code>
 The method for getting the token
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
 **Returns**: <code>Promise.&lt;string&gt;</code> - the token  
 <a name="CMR+getHeaders"></a>
 
-#### cmR.getHeaders([token], ummgVersion) ⇒ <code>Object</code>
+#### cmrClient.getHeaders(params) ⇒ <code>Object</code>
 Return object containing CMR request headers
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
 **Returns**: <code>Object</code> - CMR headers object  
 
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| [token] | <code>string</code> | <code>null</code> | CMR request token |
-| ummgVersion | <code>string</code> | <code>null</code> | UMMG metadata version string or null if echo10 metadata |
+| Param | Type | Description |
+| --- | --- | --- |
+| params | <code>Object</code> |  |
+| [params.token] | <code>string</code> | CMR request token |
+| [params.ummgVersion] | <code>string</code> | UMMG metadata version string or null if echo10 metadata |
 
 <a name="CMR+ingestCollection"></a>
 
-#### cmR.ingestCollection(xml) ⇒ <code>Promise.&lt;Object&gt;</code>
+#### cmrClient.ingestCollection(xml) ⇒ <code>Promise.&lt;Object&gt;</code>
 Adds a collection record to the CMR
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
@@ -95,11 +88,11 @@ Adds a collection record to the CMR
 
 | Param | Type | Description |
 | --- | --- | --- |
-| xml | <code>string</code> | the collection xml document |
+| xml | <code>string</code> | the collection XML document |
 
 <a name="CMR+ingestGranule"></a>
 
-#### cmR.ingestGranule(xml) ⇒ <code>Promise.&lt;Object&gt;</code>
+#### cmrClient.ingestGranule(xml) ⇒ <code>Promise.&lt;Object&gt;</code>
 Adds a granule record to the CMR
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
@@ -107,11 +100,11 @@ Adds a granule record to the CMR
 
 | Param | Type | Description |
 | --- | --- | --- |
-| xml | <code>string</code> | the granule xml document |
+| xml | <code>string</code> | the granule XML document |
 
 <a name="CMR+ingestUMMGranule"></a>
 
-#### cmR.ingestUMMGranule(ummgMetadata) ⇒ <code>Promise.&lt;Object&gt;</code>
+#### cmrClient.ingestUMMGranule(ummgMetadata) ⇒ <code>Promise.&lt;Object&gt;</code>
 Adds/Updates UMMG json metadata in the CMR
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
@@ -123,7 +116,7 @@ Adds/Updates UMMG json metadata in the CMR
 
 <a name="CMR+deleteCollection"></a>
 
-#### cmR.deleteCollection(datasetID) ⇒ <code>Promise.&lt;Object&gt;</code>
+#### cmrClient.deleteCollection(datasetID) ⇒ <code>Promise.&lt;Object&gt;</code>
 Deletes a collection record from the CMR
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
@@ -135,7 +128,7 @@ Deletes a collection record from the CMR
 
 <a name="CMR+deleteGranule"></a>
 
-#### cmR.deleteGranule(granuleUR) ⇒ <code>Promise.&lt;Object&gt;</code>
+#### cmrClient.deleteGranule(granuleUR) ⇒ <code>Promise.&lt;Object&gt;</code>
 Deletes a granule record from the CMR
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
@@ -147,56 +140,72 @@ Deletes a granule record from the CMR
 
 <a name="CMR+searchCollections"></a>
 
-#### cmR.searchCollections(searchParams, format) ⇒ <code>Promise.&lt;Object&gt;</code>
+#### cmrClient.searchCollections(searchParams, [format]) ⇒ <code>Promise.&lt;Object&gt;</code>
 Search in collections
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| searchParams | <code>string</code> | the search parameters |
-| searchParams.provider_short_name | <code>string</code> | provider shortname |
-| format | <code>string</code> | format of the response |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| searchParams | <code>string</code> |  | the search parameters |
+| searchParams.provider_short_name | <code>string</code> |  | provider shortname |
+| [format] | <code>string</code> | <code>&quot;json&quot;</code> | format of the response |
 
 <a name="CMR+searchGranules"></a>
 
-#### cmR.searchGranules(searchParams, format) ⇒ <code>Promise.&lt;Object&gt;</code>
+#### cmrClient.searchGranules(searchParams, [format]) ⇒ <code>Promise.&lt;Object&gt;</code>
 Search in granules
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| searchParams | <code>string</code> | the search parameters |
-| searchParams.provider_short_name | <code>string</code> | provider shortname |
-| format | <code>string</code> | format of the response |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| searchParams | <code>string</code> |  | the search parameters |
+| searchParams.provider_short_name | <code>string</code> |  | provider shortname |
+| [format] | <code>string</code> | <code>&quot;&#x27;json&#x27;&quot;</code> | format of the response |
 
 <a name="CMRSearchConceptQueue"></a>
 
 ### CMRSearchConceptQueue
+A class to efficiently list all of the concepts (collections/granules) from
+CMR search, without loading them all into memory at once.  Handles paging.
+
 **Kind**: global class  
 
 * [CMRSearchConceptQueue](#CMRSearchConceptQueue)
-    * [new CMRSearchConceptQueue(provider, clientId, type, params, format)](#new_CMRSearchConceptQueue_new)
+    * [new CMRSearchConceptQueue(params)](#new_CMRSearchConceptQueue_new)
     * [.peek()](#CMRSearchConceptQueue+peek) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.shift()](#CMRSearchConceptQueue+shift) ⇒ <code>Promise.&lt;Object&gt;</code>
 
 <a name="new_CMRSearchConceptQueue_new"></a>
 
-#### new CMRSearchConceptQueue(provider, clientId, type, params, format)
+#### new CMRSearchConceptQueue(params)
 The constructor for the CMRSearchConceptQueue class
 
 
-| Param | Type | Description |
-| --- | --- | --- |
-| provider | <code>string</code> | the CMR provider id |
-| clientId | <code>string</code> | the CMR clientId |
-| type | <code>string</code> | the type of search 'granule' or 'collection' |
-| params | <code>string</code> | the search parameters |
-| format | <code>string</code> | the result format |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| params | <code>Object</code> |  |  |
+| params.provider | <code>string</code> |  | the CMR provider id |
+| params.clientId | <code>string</code> |  | the CMR clientId |
+| params.type | <code>string</code> |  | the type of search 'granule' or 'collection' |
+| [params.searchParams] | <code>string</code> | <code>&quot;{}&quot;</code> | the search parameters |
+| params.format | <code>string</code> |  | the result format |
 
+**Example**  
+```js
+const { CMRSearchConceptQueue } = require('@cumulus/cmr-client');
+
+const cmrSearchConceptQueue = new CMRSearchConceptQueue(
+  'my-provider',
+  'my-clientId',
+  'granule',
+  {},
+  'json'
+);
+```
 <a name="CMRSearchConceptQueue+peek"></a>
 
 #### cmrSearchConceptQueue.peek() ⇒ <code>Promise.&lt;Object&gt;</code>
@@ -206,60 +215,16 @@ This does not remove the object from the queue.  When there are no more
 items in the queue, returns 'null'.
 
 **Kind**: instance method of [<code>CMRSearchConceptQueue</code>](#CMRSearchConceptQueue)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - - an item from the CMR search  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - an item from the CMR search  
 <a name="CMRSearchConceptQueue+shift"></a>
 
 #### cmrSearchConceptQueue.shift() ⇒ <code>Promise.&lt;Object&gt;</code>
 Remove the next item from the queue
 
-When there are no more items in the queue, returns 'null'.
+When there are no more items in the queue, returns `null`.
 
 **Kind**: instance method of [<code>CMRSearchConceptQueue</code>](#CMRSearchConceptQueue)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - - an item from the CMR search  
-<a name="ummVersion"></a>
-
-### ummVersion(umm) ⇒ <code>string</code>
-Find the UMM version as a decimal string.
-If a version cannot be found on the input object
-version 1.4 is assumed and returned.
-
-**Kind**: global function  
-**Returns**: <code>string</code> - UMM version for the given object  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| umm | <code>Object</code> | UMM metadata object |
-
-<a name="validateUMMG"></a>
-
-### validateUMMG(ummMetadata, identifier, provider) ⇒ <code>Promise.&lt;boolean&gt;</code>
-Posts a given xml string to the validate endpoint of CMR
-and promises true of valid.
-
-**Kind**: global function  
-**Returns**: <code>Promise.&lt;boolean&gt;</code> - returns true if the document is valid  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| ummMetadata | <code>string</code> | the UMM object |
-| identifier | <code>string</code> | the document identifier |
-| provider | <code>string</code> | the CMR provider |
-
-<a name="updateToken"></a>
-
-### updateToken(cmrProvider, clientId, username, password) ⇒ <code>Promise.&lt;string&gt;</code>
-Returns a valid a CMR token
-
-**Kind**: global function  
-**Returns**: <code>Promise.&lt;string&gt;</code> - the token  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| cmrProvider | <code>string</code> | the CMR provider id |
-| clientId | <code>string</code> | the CMR clientId |
-| username | <code>string</code> | CMR username |
-| password | <code>string</code> | CMR password |
-
+**Returns**: <code>Promise.&lt;Object&gt;</code> - an item from the CMR search  
 
 ## CMR Docs
 

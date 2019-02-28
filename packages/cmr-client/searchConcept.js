@@ -1,7 +1,7 @@
 'use strict';
 
 const got = require('got');
-const { getUrl } = require('./getUrl');
+const getUrl = require('./getUrl');
 
 /**
  *
