@@ -8,18 +8,19 @@ class CMRSearchConceptQueue {
   /**
    * The constructor for the CMRSearchConceptQueue class
    *
-   * @param {string} provider - the CMR provider id
-   * @param {string} clientId - the CMR clientId
-   * @param {string} type - the type of search 'granule' or 'collection'
-   * @param {string} params - the search parameters
-   * @param {string} format - the result format
+   * @param {Object} params
+   * @param {string} params.provider - the CMR provider id
+   * @param {string} params.clientId - the CMR clientId
+   * @param {string} params.type - the type of search 'granule' or 'collection'
+   * @param {string} [params.searchParams={}] - the search parameters
+   * @param {string} params.format - the result format
    */
-  constructor(provider, clientId, type, params, format) {
-    this.clientId = clientId;
-    this.provider = provider;
-    this.type = type;
-    this.params = Object.assign({}, { provider_short_name: this.provider }, params);
-    this.format = format;
+  constructor(params = { searchParams: {} }) {
+    this.clientId = params.clientId;
+    this.provider = params.provider;
+    this.type = params.type;
+    this.params = { provider_short_name: this.provider, ...params.searchParams };
+    this.format = params.format;
     this.items = [];
   }
 

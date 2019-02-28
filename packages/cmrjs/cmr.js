@@ -93,11 +93,23 @@ class CMR extends cmrClient.CMR {
   }
 }
 
+class CMRSearchConceptQueue extends cmrClient.CMRSearchConceptQueue {
+  constructor(provider, clientId, type, searchParams, format) {
+    super({
+      provider,
+      clientId,
+      type,
+      searchParams,
+      format
+    });
+  }
+}
+
 module.exports = {
   _searchConcept,
   searchConcept,
   ingestConcept,
   deleteConcept,
   CMR,
-  CMRSearchConceptQueue: cmrClient.CMRSearchConceptQueue
+  CMRSearchConceptQueue
 };
