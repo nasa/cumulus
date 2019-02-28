@@ -39,6 +39,19 @@ async function deleteConcept(type, identifier, provider, headers) {
 }
 
 class CMR extends cmrClient.CMR {
+  constructor(provider, clientId, username, password) {
+    super({
+      provider,
+      clientId,
+      username,
+      password
+    });
+  }
+
+  getHeaders(token = null, ummgVersion = null) {
+    return super.getHeaders({ token, ummgVersion });
+  }
+
   /**
    * Adds a collection record to the CMR
    *
