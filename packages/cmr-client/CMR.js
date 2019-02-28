@@ -24,6 +24,8 @@ const logDetails = {
  *
  * @param {Object} umm - UMM metadata object
  * @returns {string} UMM version for the given object
+ *
+ * @private
  */
 function ummVersion(umm) {
   return get(umm, 'MetadataSpecification.Version', '1.4');
@@ -37,6 +39,8 @@ function ummVersion(umm) {
  * @param {string} identifier - the document identifier
  * @param {string} provider - the CMR provider
  * @returns {Promise<boolean>} returns true if the document is valid
+ *
+ * @private
  */
 async function validateUMMG(ummMetadata, identifier, provider) {
   const version = ummVersion(ummMetadata);
@@ -73,6 +77,8 @@ async function validateUMMG(ummMetadata, identifier, provider) {
  * @param {string} username - CMR username
  * @param {string} password - CMR password
  * @returns {Promise.<string>} the token
+ *
+ * @private
  */
 async function updateToken(cmrProvider, clientId, username, password) {
   if (!cmrProvider) throw new Error('cmrProvider is required.');
@@ -109,7 +115,14 @@ async function updateToken(cmrProvider, clientId, username, password) {
 }
 
 /**
- * The CMR class
+ * A class to simplify requests to the CMR
+ *
+ * @typicalname cmrClient
+ *
+ * @example
+ * const { CMR } = require('@cumulus/cmr-client');
+ *
+ * const cmrClient = new CMR('my-provider', 'my-clientId', 'my-username', 'my-password');
  */
 class CMR {
   /**
