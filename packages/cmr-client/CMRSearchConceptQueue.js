@@ -2,8 +2,23 @@
 
 const searchConcept = require('./searchConcept');
 
-// Class to efficiently list all of the concepts (collections/granules) from CMR search, without
-// loading them all into memory at once.  Handles paging.
+/**
+ * A class to efficiently list all of the concepts (collections/granules) from
+ * CMR search, without loading them all into memory at once.  Handles paging.
+ *
+ * @typicalname cmrSearchConceptQueue
+ *
+ * @example
+ * const { CMRSearchConceptQueue } = require('@cumulus/cmr-client');
+ *
+ * const cmrSearchConceptQueue = new CMRSearchConceptQueue(
+ *   'my-provider',
+ *   'my-clientId',
+ *   'granule',
+ *   {},
+ *   'json'
+ * );
+ */
 class CMRSearchConceptQueue {
   /**
    * The constructor for the CMRSearchConceptQueue class
@@ -29,7 +44,7 @@ class CMRSearchConceptQueue {
    * This does not remove the object from the queue.  When there are no more
    * items in the queue, returns 'null'.
    *
-   * @returns {Promise<Object>} - an item from the CMR search
+   * @returns {Promise<Object>} an item from the CMR search
    */
   async peek() {
     if (this.items.length === 0) await this.fetchItems();
@@ -39,9 +54,9 @@ class CMRSearchConceptQueue {
   /**
    * Remove the next item from the queue
    *
-   * When there are no more items in the queue, returns 'null'.
+   * When there are no more items in the queue, returns `null`.
    *
-   * @returns {Promise<Object>} - an item from the CMR search
+   * @returns {Promise<Object>} an item from the CMR search
    */
   async shift() {
     if (this.items.length === 0) await this.fetchItems();
@@ -51,7 +66,7 @@ class CMRSearchConceptQueue {
   /**
    * Query the CMR API to get the next batch of items
    *
-   * @returns {Promise<undefined>} - resolves when the queue has been updated
+   * @returns {Promise<undefined>} resolves when the queue has been updated
    * @private
    */
   async fetchItems() {
