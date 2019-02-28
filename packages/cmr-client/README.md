@@ -41,29 +41,30 @@ The CMR class
 **Kind**: global class  
 
 * [CMR](#CMR)
-    * [new CMR(provider, clientId, username, password)](#new_CMR_new)
+    * [new CMR(params)](#new_CMR_new)
     * [.getToken()](#CMR+getToken) ⇒ <code>Promise.&lt;string&gt;</code>
-    * [.getHeaders([token], ummgVersion)](#CMR+getHeaders) ⇒ <code>Object</code>
+    * [.getHeaders(params)](#CMR+getHeaders) ⇒ <code>Object</code>
     * [.ingestCollection(xml)](#CMR+ingestCollection) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.ingestGranule(xml)](#CMR+ingestGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.ingestUMMGranule(ummgMetadata)](#CMR+ingestUMMGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.deleteCollection(datasetID)](#CMR+deleteCollection) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.deleteGranule(granuleUR)](#CMR+deleteGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.searchCollections(searchParams, format)](#CMR+searchCollections) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.searchGranules(searchParams, format)](#CMR+searchGranules) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.searchCollections(searchParams, [format])](#CMR+searchCollections) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.searchGranules(searchParams, [format])](#CMR+searchGranules) ⇒ <code>Promise.&lt;Object&gt;</code>
 
 <a name="new_CMR_new"></a>
 
-#### new CMR(provider, clientId, username, password)
+#### new CMR(params)
 The constructor for the CMR class
 
 
 | Param | Type | Description |
 | --- | --- | --- |
-| provider | <code>string</code> | the CMR provider id |
-| clientId | <code>string</code> | the CMR clientId |
-| username | <code>string</code> | CMR username |
-| password | <code>string</code> | CMR password |
+| params | <code>Object</code> |  |
+| params.provider | <code>string</code> | the CMR provider id |
+| params.clientId | <code>string</code> | the CMR clientId |
+| params.username | <code>string</code> | CMR username |
+| params.password | <code>string</code> | CMR password |
 
 <a name="CMR+getToken"></a>
 
@@ -74,16 +75,17 @@ The method for getting the token
 **Returns**: <code>Promise.&lt;string&gt;</code> - the token  
 <a name="CMR+getHeaders"></a>
 
-#### cmR.getHeaders([token], ummgVersion) ⇒ <code>Object</code>
+#### cmR.getHeaders(params) ⇒ <code>Object</code>
 Return object containing CMR request headers
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
 **Returns**: <code>Object</code> - CMR headers object  
 
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| [token] | <code>string</code> | <code>null</code> | CMR request token |
-| ummgVersion | <code>string</code> | <code>null</code> | UMMG metadata version string or null if echo10 metadata |
+| Param | Type | Description |
+| --- | --- | --- |
+| params | <code>Object</code> |  |
+| [params.token] | <code>string</code> | CMR request token |
+| [params.ummgVersion] | <code>string</code> | UMMG metadata version string or null if echo10 metadata |
 
 <a name="CMR+ingestCollection"></a>
 
@@ -95,7 +97,7 @@ Adds a collection record to the CMR
 
 | Param | Type | Description |
 | --- | --- | --- |
-| xml | <code>string</code> | the collection xml document |
+| xml | <code>string</code> | the collection XML document |
 
 <a name="CMR+ingestGranule"></a>
 
@@ -107,7 +109,7 @@ Adds a granule record to the CMR
 
 | Param | Type | Description |
 | --- | --- | --- |
-| xml | <code>string</code> | the granule xml document |
+| xml | <code>string</code> | the granule XML document |
 
 <a name="CMR+ingestUMMGranule"></a>
 
@@ -147,31 +149,31 @@ Deletes a granule record from the CMR
 
 <a name="CMR+searchCollections"></a>
 
-#### cmR.searchCollections(searchParams, format) ⇒ <code>Promise.&lt;Object&gt;</code>
+#### cmR.searchCollections(searchParams, [format]) ⇒ <code>Promise.&lt;Object&gt;</code>
 Search in collections
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| searchParams | <code>string</code> | the search parameters |
-| searchParams.provider_short_name | <code>string</code> | provider shortname |
-| format | <code>string</code> | format of the response |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| searchParams | <code>string</code> |  | the search parameters |
+| searchParams.provider_short_name | <code>string</code> |  | provider shortname |
+| [format] | <code>string</code> | <code>&quot;json&quot;</code> | format of the response |
 
 <a name="CMR+searchGranules"></a>
 
-#### cmR.searchGranules(searchParams, format) ⇒ <code>Promise.&lt;Object&gt;</code>
+#### cmR.searchGranules(searchParams, [format]) ⇒ <code>Promise.&lt;Object&gt;</code>
 Search in granules
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| searchParams | <code>string</code> | the search parameters |
-| searchParams.provider_short_name | <code>string</code> | provider shortname |
-| format | <code>string</code> | format of the response |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| searchParams | <code>string</code> |  | the search parameters |
+| searchParams.provider_short_name | <code>string</code> |  | provider shortname |
+| [format] | <code>string</code> | <code>&quot;&#x27;json&#x27;&quot;</code> | format of the response |
 
 <a name="CMRSearchConceptQueue"></a>
 
