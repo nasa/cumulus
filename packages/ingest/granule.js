@@ -179,6 +179,7 @@ class Granule {
     this.username = this.provider.username;
     this.password = this.provider.password;
     this.checksumFiles = {};
+    this.supportedChecksumFileTypes = ['.md5', '.cksum', '.sha1', '.sha256'];
 
     this.forceDownload = forceDownload;
 
@@ -319,19 +320,22 @@ class Granule {
   }
 
   /**
-   * Filter out md5 checksum files and put them in `this.checksumFiles` object.
+   * Filter out checksum files and put them in `this.checksumFiles` object.
    * To be used with `Array.prototype.filter`.
    *
    * @param {Object} file - file object from granule.files
    * @returns {boolean} depending on if file was an md5 checksum or not
    */
   filterChecksumFiles(file) {
-    if (file.name.indexOf('.md5') > 0) {
-      this.checksumFiles[file.name.replace('.md5', '')] = file;
-      return false;
-    }
+    let unsupported = true;
+    this.supportedChecksumFileTypes.forEach((type) => {
+      if (file.name.indexOf(type) > 0) {
+        this.checksumFiles[file.name.replace(type, '')] = file;
+        unsupported = false;
+      }
+    });
 
-    return true;
+    return unsupported;
   }
 
   /**
@@ -347,7 +351,7 @@ class Granule {
    * @memberof Granule
    */
   async validateChecksum(file, bucket, key, options = {}) {
-    const [type, value] = await this.getChecksumFromFile(file);
+    const [type, value] = await this.retrieveSuppliedFileChecksumInformation(file);
 
     if (!type || !value) return [null, null];
 
@@ -380,13 +384,13 @@ class Granule {
   }
 
   /**
-   * Get a checksum from a file
+   * Retrieve supplied checksum from a file's specification or an accompanying checksum file.
    *
    * @param {Object} file - file object
    * @returns {Array} returns array where first item is the checksum algorithm,
    * and the second item is the value of the checksum
    */
-  async getChecksumFromFile(file) {
+  async retrieveSuppliedFileChecksumInformation(file) {
     if (file.checksumType && file.checksumValue) {
       return [file.checksumType, file.checksumValue];
     }
@@ -409,7 +413,15 @@ class Granule {
       }
 
       // assuming the type is md5
-      return ['md5', checksumValue];
+      let checksumType = 'md5';
+      // return type based on filename
+      this.supportedChecksumFileTypes.forEach((type) => {
+        if (checksumInfo.name.indexOf(type) > 0) {
+          checksumType = type;
+        }
+      });
+
+      return [checksumType, checksumValue];
     }
 
     // No checksum found
