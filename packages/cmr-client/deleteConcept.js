@@ -5,7 +5,7 @@ const got = require('got');
 const { parseString } = require('xml2js');
 const { promisify } = require('util');
 
-const { getUrl } = require('./getUrl');
+const getUrl = require('./getUrl');
 
 const log = new Logger({ sender: 'cmr-client' });
 // TODO copied in ingestConcept
