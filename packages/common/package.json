@@ -41,7 +41,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/checksum": "1.11.2-alpha2",
+    "@cumulus/checksum": "1.11.2-alpha3",
     "@cumulus/logger": "1.11.0",
     "@cumulus/test-data": "1.11.0",
     "ajv": "^5.2.2",
