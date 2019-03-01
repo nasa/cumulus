@@ -23,7 +23,7 @@ const {
 const {
   aws: {
     buildS3Uri,
-    checksumS3Objects,
+    calculateS3ObjectChecksum,
     deleteS3Object,
     parseS3Uri,
     s3ObjectExists
@@ -211,8 +211,8 @@ async function moveFileRequest(
 
   // compare the checksum of the existing file and new file, and handle them accordingly
   if (s3ObjAlreadyExists && duplicateHandling === 'version') {
-    const existingFileSum = await checksumS3Objects('CKSUM', target.Bucket, target.Key);
-    const stagedFileSum = await checksumS3Objects('CKSUM', source.Bucket, source.Key);
+    const existingFileSum = await calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket: target.Bucket, key: target.Key });
+    const stagedFileSum = await calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket: source.Bucket, key: source.Key });
 
     // if the checksum of the existing file is the same as the new one, keep the existing file,
     // else rename the existing file, and both files are part of the granule.

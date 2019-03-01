@@ -16,7 +16,7 @@ const log = require('./log');
 const string = require('./string');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
 const concurrency = require('./concurrency');
-const { noop } = require('./util');
+const { deprecate, noop } = require('./util');
 
 /**
  * Join strings into an S3 key without a leading slash or double slashes
@@ -588,6 +588,7 @@ exports.validateS3ObjectChecksum = ({
 
 // Maintained for backwards compatibility
 exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
+  deprecate('@cumulus/common/aws.checksumS3Objects', '1.11.2', '@cumulus/common/aws.calculateS3ObjectChecksum');
   const params = {
     algorithm, bucket, key, options
   };
