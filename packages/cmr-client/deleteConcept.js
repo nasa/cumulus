@@ -2,18 +2,11 @@
 
 const Logger = require('@cumulus/logger');
 const got = require('got');
-const { parseString } = require('xml2js');
-const { promisify } = require('util');
+const { parseXMLString } = require('./Utils');
 
 const getUrl = require('./getUrl');
 
 const log = new Logger({ sender: 'cmr-client' });
-// TODO copied in ingestConcept
-const xmlParseOptions = {
-  ignoreAttrs: true,
-  mergeAttrs: true,
-  explicitArray: false
-};
 
 /**
  * Deletes a record from the CMR
@@ -37,8 +30,7 @@ async function deleteConcept(type, identifier, provider, headers) {
   catch (error) {
     result = error.response;
   }
-
-  const xmlObject = await promisify(parseString)(result.body, xmlParseOptions);
+  const xmlObject = await parseXMLString(result.body);
 
   let errorMessage;
   if (result.statusCode !== 200) {

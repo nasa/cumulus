@@ -1,23 +1,14 @@
 'use strict';
 
 const got = require('got');
-const xml2js = require('xml2js');
 const property = require('lodash.property');
 const Logger = require('@cumulus/logger');
 
 const validate = require('./validate');
 const getUrl = require('./getUrl');
-const { promisify } = require('./Utils');
+const { parseXMLString } = require('./Utils');
 
 const log = new Logger({ sender: 'cmr-client' });
-
-const parseString = promisify(xml2js.parseString);
-
-const xmlParseOptions = {
-  ignoreAttrs: true,
-  mergeAttrs: true,
-  explicitArray: false
-};
 
 const logDetails = {
   file: 'cmr-client/ingestConcept.js'
@@ -35,7 +26,7 @@ const logDetails = {
  * @returns {Promise.<Object>} the CMR response object
  */
 async function ingestConcept(type, xmlString, identifierPath, provider, headers) {
-  let xmlObject = await parseString(xmlString, xmlParseOptions);
+  let xmlObject = await parseXMLString(xmlString);
 
   const identifier = property(identifierPath)(xmlObject);
   logDetails.granuleId = identifier;
@@ -51,12 +42,7 @@ async function ingestConcept(type, xmlString, identifierPath, provider, headers)
       }
     );
 
-    xmlObject = await new Promise((resolve, reject) => {
-      parseString(response.body, xmlParseOptions, (err, res) => {
-        if (err) reject(err);
-        resolve(res);
-      });
-    });
+    xmlObject = await parseXMLString(response.body);
 
     if (xmlObject.errors) {
       const xmlObjectError = JSON.stringify(xmlObject.errors.error);
