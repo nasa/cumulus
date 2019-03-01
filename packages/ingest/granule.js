@@ -198,7 +198,7 @@ class Granule {
    */
   async ingest(granule, bucket) {
     // for each granule file
-    // download / verify checksum / upload
+    // download / verify integrity / upload
 
     const stackName = process.env.stackName;
     let dataType = granule.dataType;
@@ -324,7 +324,7 @@ class Granule {
    * To be used with `Array.prototype.filter`.
    *
    * @param {Object} file - file object from granule.files
-   * @returns {boolean} depending on if file was an md5 checksum or not
+   * @returns {boolean} - whether file was a supported checksum or not
    */
   filterChecksumFiles(file) {
     let unsupported = true;
@@ -339,7 +339,7 @@ class Granule {
   }
 
   /**
-   * Validate a file's checksum and throw an exception if it's invalid
+   * Verify a file's integrity using its checksum and throw an exception if it's invalid
    *
    * @param {Object} file - the file object to be checked
    * @param {string} bucket - s3 bucket name of the file
@@ -350,17 +350,17 @@ class Granule {
    * Throws an error if the checksum is invalid.
    * @memberof Granule
    */
-  async validateChecksum(file, bucket, key, options = {}) {
+  async verifyFile(file, bucket, key, options = {}) {
     const [type, value] = await this.retrieveSuppliedFileChecksumInformation(file);
-
     if (!type || !value) return [null, null];
 
-    const sum = await aws.checksumS3Objects(type, bucket, key, options);
-
-    if (value !== sum) {
-      const message = `Invalid checksum for ${file.name} with type ${file.checksumType} and value ${file.checksumValue}`;
-      throw new errors.InvalidChecksum(message);
-    }
+    await aws.validateS3ObjectChecksum({
+      algorithm: type,
+      bucket,
+      key,
+      expectedSum: value,
+      options
+    });
     return [type, value];
   }
 
@@ -391,9 +391,11 @@ class Granule {
    * and the second item is the value of the checksum
    */
   async retrieveSuppliedFileChecksumInformation(file) {
+    // try to get filespec checksum data
     if (file.checksumType && file.checksumValue) {
       return [file.checksumType, file.checksumValue];
     }
+    // read checksum from checksum file
     if (this.checksumFiles[file.name]) {
       const checksumInfo = this.checksumFiles[file.name];
 
@@ -412,7 +414,7 @@ class Granule {
         await fs.remove(downloadDir);
       }
 
-      // assuming the type is md5
+      // default type to md5
       let checksumType = 'md5';
       // return type based on filename
       this.supportedChecksumFileTypes.forEach((type) => {
@@ -491,9 +493,9 @@ class Granule {
     log.debug(`await sync file to s3 ${fileRemotePath}, ${bucket}, ${stagedFileKey}`);
     await this.sync(fileRemotePath, bucket, stagedFileKey);
 
-    // Validate the checksum
-    log.debug(`await validateChecksum ${JSON.stringify(file)}, ${bucket}, ${stagedFileKey}`);
-    const [checksumType, checksumValue] = await this.validateChecksum(file, bucket, stagedFileKey);
+    // Verify file integrity
+    log.debug(`await verifyFile ${JSON.stringify(file)}, ${bucket}, ${stagedFileKey}`);
+    const [checksumType, checksumValue] = await this.verifyFile(file, bucket, stagedFileKey);
 
     // compare the checksum of the existing file and new file, and handle them accordingly
     if (renamingFile) {

@@ -5,16 +5,15 @@ const { generateChecksumFromStream } = require('./checksum');
 /**
  * Validate expected checksum against calculated checksum
  *
- * @param {string} algorithm
- * @param {ReadableStream} stream
+ * @param {string} algorithm - Checksum algorithm
+ * @param {ReadableStream} stream - A readable file stream
  * @param {string|number} expectedSum - expected checksum
+ * @param {Object} options - Checksum options
  *
  * @returns {boolean} - whether expectedSum === calculatedSum
  */
-async function validateChecksumFromStream(algorithm, stream, expectedSum) {
-  const calculatedSum = generateChecksumFromStream(algorithm, stream);
-  // Return false for fail. In future, throwing errors.InvalidChecksum would be preferable.
-  // Currently this would introduce a cyclic dependency on common.
+async function validateChecksumFromStream(algorithm, stream, expectedSum, options = {}) {
+  const calculatedSum = generateChecksumFromStream(algorithm, stream, options);
   return expectedSum === calculatedSum;
 }
 
