@@ -301,12 +301,45 @@ function getS3CredentialsObject(s3CredsUrl) {
 }
 
 /**
+ * Construct online access url for a given file.
+ *
+ * @param {Object} params - input parameters
+ * @param {Object} params.file - file object
+ * @param {string} params.distEndpoint - distribution endpoint from config
+ * @param {BucketsConfig} params.buckets -  stack BucketConfig instance
+ * @returns {Object} online access url object
+ */
+function constructOnlineAccessUrl({
+  file,
+  distEndpoint,
+  buckets
+}) {
+  let urlObj = {};
+  const bucketType = buckets.type(file.bucket);
+  if (bucketType === 'protected') {
+    const extension = urljoin(file.bucket, getS3KeyOfFile(file));
+    urlObj.URL = urljoin(distEndpoint, extension);
+    urlObj.URLDescription = 'File to download'; // used by ECHO10
+    urlObj.Description = 'File to download'; // used by UMMG
+    urlObj.Type = 'GET DATA'; // used by UMMG
+  }
+  else if (bucketType === 'public') {
+    urlObj.URL = `https://${file.bucket}.s3.amazonaws.com/${getS3KeyOfFile(file)}`;
+    urlObj.URLDescription = 'File to download';
+    urlObj.Description = 'File to download';
+    urlObj.Type = 'GET DATA';
+  }
+  else urlObj = null;
+  return urlObj;
+}
+
+/**
  * Construct a list of online access urls.
  *
  * @param {Object} params - input parameters
  * @param {Array<Object>} params.files - array of file objects
  * @param {string} params.distEndpoint - distribution endpoint from config
- * @param {BucketsConfig} params.buckets -  Class instance
+ * @param {BucketsConfig} params.buckets -  stack BucketConfig instance
  * @param {string} params.s3CredsEndpoint - optional s3credentials endpoint name
  * @returns {Array<{URL: string, URLDescription: string}>}
  *   returns the list of online access url objects
@@ -320,23 +353,8 @@ function constructOnlineAccessUrls({
   const urls = [];
 
   files.forEach((file) => {
-    const urlObj = {};
-    const bucketType = buckets.type(file.bucket);
-    if (bucketType === 'protected') {
-      const extension = urljoin(file.bucket, getS3KeyOfFile(file));
-      urlObj.URL = urljoin(distEndpoint, extension);
-      urlObj.URLDescription = 'File to download'; // used by ECHO10
-      urlObj.Description = 'File to download'; // used by UMMG
-      urlObj.Type = 'GET DATA'; // used by UMMG
-      urls.push(urlObj);
-    }
-    else if (bucketType === 'public') {
-      urlObj.URL = `https://${file.bucket}.s3.amazonaws.com/${getS3KeyOfFile(file)}`;
-      urlObj.URLDescription = 'File to download';
-      urlObj.Description = 'File to download';
-      urlObj.Type = 'GET DATA';
-      urls.push(urlObj);
-    }
+    const urlObj = constructOnlineAccessUrl({ file, distEndpoint, buckets });
+    if (urlObj) urls.push(urlObj);
   });
 
   urls.push(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
@@ -572,6 +590,7 @@ async function reconcileCMRMetadata(granuleId, updatedFiles, distEndpoint, publi
 
 
 module.exports = {
+  constructOnlineAccessUrl,
   getCmrFiles,
   getGranuleId,
   isCMRFile,
