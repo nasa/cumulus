@@ -1,15 +1,9 @@
+'use strict';
+
 const path = require('path');
 
-let mode = 'development';
-let devtool = 'inline-source-map';
-
-if(process.env.PRODUCTION) {
-  mode = 'production',
-  devtool = false  
-}
-
 module.exports = {
-  mode,
+  mode: process.env.PRODUCTION ? 'production' : 'development',
   entry: './index.js',
   output: {
     libraryTarget: 'commonjs2',
@@ -17,10 +11,9 @@ module.exports = {
     path: path.resolve(__dirname, 'dist')
   },
   externals: [
-    'aws-sdk',
     'electron',
     {'formidable': 'url'}
   ],
-  devtool,
+  devtool: process.env.PRODUCTION ? false : 'inline-source-map',
   target: 'node'
 };

@@ -65,7 +65,7 @@ default:
   # stackNameNoDash: TestCumulusIntegration
   shared_data_bucket: cumulus-data-shared
   api_distribution_url: https://example.com/
-  api_lambda_memory: 756
+  api_lambda_memory: 1024
   params:
     - name: CmrPassword
       value: '{{CMR_PASSWORD}}'

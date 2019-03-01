@@ -12,7 +12,7 @@ default:
   oauth:
     provider: earthdata
 
-  api_lambda_memory: 512
+  api_lambda_memory: 1024
 
   repo_owner: nasa
   message_adapter_repo: cumulus-message-adapter

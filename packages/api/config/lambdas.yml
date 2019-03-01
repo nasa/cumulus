@@ -1,7 +1,7 @@
 sqs2sf:
   handler: index.starter
   timeout: 200
-  memory: 512
+  memory: 1024
   source: 'node_modules/@cumulus/api/dist/'
 
 
@@ -37,7 +37,7 @@ sns2elasticsearch:
   handler: index.indexer
   timeout: 100
   useElasticSearch: '{{es.name}}'
-  memory: 512
+  memory: 1024
   source: 'node_modules/@cumulus/api/dist/'
   envs:
     GranulesTable:
@@ -54,7 +54,7 @@ sns2elasticsearch:
 log2elasticsearch:
   handler: index.logHandler
   timeout: 100
-  memory: 512
+  memory: 1024
   useElasticSearch: '{{es.name}}'
   source: 'node_modules/@cumulus/api/dist/'
   namedLambdaDeadLetterQueue: true
@@ -62,7 +62,7 @@ log2elasticsearch:
 dbIndexer:
   handler: index.dbIndexer
   timeout: 300
-  memory: 512
+  memory: 1024
   source: 'node_modules/@cumulus/api/dist/'
   useElasticSearch: '{{es.name}}'
   envs:
@@ -75,7 +75,7 @@ dbIndexer:
 messageConsumer:
   handler: index.messageConsumer
   timeout: 100
-  memory: 512
+  memory: 1024
   source: 'node_modules/@cumulus/api/dist/'
   envs:
     RulesTable:
@@ -95,7 +95,7 @@ messageConsumer:
 fallbackConsumer:
   handler: index.messageConsumer
   timeout: 100
-  memory: 512
+  memory: 1024
   source: 'node_modules/@cumulus/api/dist/'
   deadletterqueue: kinesisFailure
   envs:
@@ -114,7 +114,7 @@ ScheduleSF:
   description: 'This lambda function is invoked by scheduled rules created via cumulus API'
   handler: index.scheduler
   timeout: 100
-  memory: 512
+  memory: 1024
   source: 'node_modules/@cumulus/api/dist/'
   envs:
     CollectionsTable:
@@ -128,7 +128,7 @@ ScheduleSF:
 jobs:
   handler: index.jobs
   timeout: 300
-  memory: 512
+  memory: 1024
   useElasticSearch: '{{es.name}}'
   source: 'node_modules/@cumulus/api/dist/'
   namedLambdaDeadLetterQueue: true
@@ -152,7 +152,7 @@ cleanExecutions:
 CustomBootstrap:
   handler: index.bootstrap
   timeout: 300
-  memory: 512
+  memory: 1024
   source: 'node_modules/@cumulus/api/dist/'
   envs:
     system_bucket: '{{system_bucket}}'
@@ -160,7 +160,7 @@ CustomBootstrap:
 EmsReport:
   handler: index.emsReport
   timeout: 300
-  memory: 512
+  memory: 1024
   source: 'node_modules/@cumulus/api/dist/'
   useElasticSearch: '{{es.name}}'
   envs:
@@ -172,7 +172,7 @@ EmsReport:
 EmsDistributionReport:
   handler: index.emsDistributionReport
   timeout: 300
-  memory: 512
+  memory: 1024
   source: 'node_modules/@cumulus/api/dist/'
   envs:
     LOGS_BUCKET: '{{system_bucket}}'
@@ -180,6 +180,7 @@ EmsDistributionReport:
     STACK_NAME: '{{stackName}}'
 
 CreateReconciliationReport:
+  memory: 1024
   handler: index.createReconciliationReport
   source: 'node_modules/@cumulus/api/dist/'
   envs:
@@ -197,17 +198,18 @@ CreateReconciliationReport:
     cmr_client_id: '{{cmr.clientId}}'
 
 BulkDelete:
+  memory: 1024
   handler: index.bulkDeleteLambda
   source: 'node_modules/@cumulus/api/dist/'
 
 KinesisInboundEventLogger:
   handler: index.logger
   timeout: 300
-  memory: 512
+  memory: 1024
   source: 'node_modules/@cumulus/api/dist/'
 
 KinesisOutboundEventLogger:
   handler: index.logger
   timeout: 300
-  memory: 512
+  memory: 1024
   source: 'node_modules/@cumulus/api/dist'

@@ -48,7 +48,7 @@
     "@mapbox/dyno": "^1.4.2",
     "ajv": "^5.2.2",
     "archiver": "^2.1.1",
-    "aws-sdk": "^2.238.1",
+    "aws-sdk": "^2.412.0",
     "aws-serverless-express": "^3.3.5",
     "basic-auth": "^1.1.0",
     "body-parser": "^1.18.3",

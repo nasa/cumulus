@@ -1,11 +1,11 @@
 sf2snsStart:
   handler: index.sfStart
   timeout: 100
-  memory: 512
+  memory: 1024
   source: 'node_modules/@cumulus/api/dist/'
 
 sf2snsEnd:
   handler: index.sfEnd
   timeout: 100
-  memory: 512
+  memory: 1024
   source: 'node_modules/@cumulus/api/dist/'

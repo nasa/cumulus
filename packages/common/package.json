@@ -45,7 +45,7 @@
     "@cumulus/test-data": "1.11.0",
     "ajv": "^5.2.2",
     "async": "^2.0.0",
-    "aws-sdk": "^2.238.1",
+    "aws-sdk": "^2.412.0",
     "cksum": "^1.3.0",
     "expect.js": "^0.3.1",
     "follow-redirects": "^1.2.4",
