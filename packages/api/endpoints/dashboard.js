@@ -5,7 +5,7 @@ const {
   aws
 } = require('@cumulus/common');
 
-/**
+/*
  * To Do: Took this from dist, move to common
  */
 function getFileBucketAndKey(pathParams) {
@@ -15,7 +15,7 @@ function getFileBucketAndKey(pathParams) {
   const Key = fields.join('/');
 
   if (Bucket.length === 0 || Key.length === 0) {
-    throw new UnparsableFileLocationError(pathParams);
+    throw new Error(pathParams);
   }
 
   return [Bucket, Key];
