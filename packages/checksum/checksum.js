@@ -28,7 +28,7 @@ async function _getCksumFromStream(stream) {
  *
  * @returns {Promise<number>} - Promise returning the file checksum
  */
-async function _getChecksumFromStream(algorithm, fileStream, options) {
+async function _getChecksumFromStream(algorithm, fileStream, options = {}) {
   return new Promise((resolve, reject) => {
     const hash = crypto.createHash(algorithm, options);
     fileStream.on('error', reject);

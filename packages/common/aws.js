@@ -560,7 +560,12 @@ class S3ListObjectsV2Queue {
 exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
 
 // calculate (return sum)
-exports.calculateS3ObjectChecksum = ({ algorithm, bucket, key, options = {} }) => {
+exports.calculateS3ObjectChecksum = ({
+  algorithm,
+  bucket,
+  key,
+  options
+}) => {
   const fileStream = exports.getS3ObjectReadStream(bucket, key);
   return generateChecksumFromStream(algorithm, fileStream, options);
 };
@@ -571,7 +576,7 @@ exports.validateS3ObjectChecksum = ({
   bucket,
   key,
   expectedSum,
-  options = {}
+  options
 }) => {
   const fileStream = exports.getS3ObjectReadStream(bucket, key);
   if (!validateChecksumFromStream(algorithm, fileStream, expectedSum, options)) {
