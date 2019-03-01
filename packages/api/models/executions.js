@@ -5,7 +5,7 @@ const get = require('lodash.get');
 
 const pLimit = require('p-limit');
 
-const { constructCollectionId } = require('@cumulus/common');
+const CumulusMessage = require('../lib/CumulusMessage');
 const executionSchema = require('./schemas').execution;
 const Manager = require('./base');
 const { parseException } = require('../lib/utils');
@@ -31,9 +31,7 @@ class Execution extends Manager {
     }
 
     const execution = aws.getExecutionUrl(arn);
-    const collectionId = constructCollectionId(
-      get(payload, 'meta.collection.name'), get(payload, 'meta.collection.version')
-    );
+    const collectionId = CumulusMessage.getCollectionId(payload);
 
     const doc = {
       name,
