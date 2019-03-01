@@ -3,8 +3,9 @@
 const pvl = require('@cumulus/pvl');
 const get = require('lodash.get');
 const aws = require('@cumulus/ingest/aws');
-const { constructCollectionId } = require('@cumulus/common');
+const { isNil } = require('@cumulus/common/util');
 
+const CumulusMessage = require('../lib/CumulusMessage');
 const Manager = require('./base');
 const pdrSchema = require('./schemas').pdr;
 
@@ -46,32 +47,20 @@ class Pdr extends Manager {
     );
   }
 
-  /**
-   * Create a new pdr record from incoming sns messages
-   *
-   * @param {Object} payload - sns message containing the output of a Cumulus Step Function
-   * @returns {Promise<Object>} a pdr record
-   */
-  createPdrFromSns(payload) {
-    const name = get(payload, 'cumulus_meta.execution_name');
-    const pdrObj = get(payload, 'payload.pdr', get(payload, 'meta.pdr'));
-    const pdrName = get(pdrObj, 'name');
+  buildPdrRecordFromCumulusMessage(cumulusMessage) {
+    const pdrObj = get(cumulusMessage, 'payload.pdr', get(cumulusMessage, 'meta.pdr'));
+    const pdrName = pdrObj.name;
 
-    if (!pdrName) return Promise.resolve();
+    if (!pdrName) return null;
 
-    const arn = aws.getExecutionArn(
-      get(payload, 'cumulus_meta.state_machine'),
-      name
+    const execution = aws.getExecutionUrl(
+      CumulusMessage.getExecutionArn(cumulusMessage)
     );
-    const execution = aws.getExecutionUrl(arn);
-
-    const collection = get(payload, 'meta.collection');
-    const collectionId = constructCollectionId(collection.name, collection.version);
 
     const stats = {
-      processing: get(payload, 'payload.running', []).length,
-      completed: get(payload, 'payload.completed', []).length,
-      failed: get(payload, 'payload.failed', []).length
+      processing: get(cumulusMessage, 'payload.running', []).length,
+      completed: get(cumulusMessage, 'payload.completed', []).length,
+      failed: get(cumulusMessage, 'payload.failed', []).length
     };
 
     stats.total = stats.processing + stats.completed + stats.failed;
@@ -83,24 +72,43 @@ class Pdr extends Manager {
       progress = 100;
     }
 
-    const doc = {
+    const now = Date.now();
+
+    const pdrRecord = {
       pdrName,
-      collectionId,
-      status: get(payload, 'meta.status'),
-      provider: get(payload, 'meta.provider.id'),
+      collectionId: CumulusMessage.getCollectionId(cumulusMessage),
+      status: get(cumulusMessage, 'meta.status'),
+      provider: get(cumulusMessage, 'meta.provider.id'),
       progress,
       execution,
       PANSent: get(pdrObj, 'PANSent', false),
       PANmessage: get(pdrObj, 'PANmessage', 'N/A'),
       stats,
-      createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
-      timestamp: Date.now()
+      createdAt: get(cumulusMessage, 'cumulus_meta.workflow_start_time'),
+      timestamp: now
     };
 
-    doc.duration = (doc.timestamp - doc.createdAt) / 1000;
+    pdrRecord.duration = (pdrRecord.timestamp - pdrRecord.createdAt) / 1000;
 
-    return this.create(doc);
+    return {
+      createdAt: now,
+      ...pdrRecord,
+      updatedAt: now
+    };
+  }
+
+  /**
+   * Create a new pdr record from incoming sns messages
+   *
+   * @param {Object} cumulusMessage - sns message containing the output of a Cumulus Step Function
+   * @returns {Promise<Object>|null} a pdr record
+   */
+  createPdrFromSns(cumulusMessage) {
+    const record = this.buildPdrRecordFromCumulusMessage(cumulusMessage);
+
+    if (isNil(record)) return null;
+
+    return this.create(record);
   }
 }
-
 module.exports = Pdr;
