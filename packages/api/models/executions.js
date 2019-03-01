@@ -103,12 +103,9 @@ class Execution extends Manager {
    * @returns {Promise<Object>} An execution record
    */
   async updateExecutionFromSns(payload) {
-    const doc = this.generateDocFromPayload(payload);
-    const existingRecord = await this.get({ arn: doc.arn });
-    doc.finalPayload = get(payload, 'payload');
-    doc.originalPayload = existingRecord.originalPayload;
-    doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-    return this.create(doc);
+    return this.create(
+      await this.buildUpdatedExecutionRecordFromCumulusMessage(payload)
+    );
   }
 
   /**
@@ -118,11 +115,40 @@ class Execution extends Manager {
   * @returns {Promise<Object>} An execution record
    */
   async createExecutionFromSns(payload) {
-    const doc = this.generateDocFromPayload(payload);
-    doc.originalPayload = get(payload, 'payload');
-    doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-    return this.create(doc);
+    return this.create(
+      this.buildNewExecutionRecordFromCumulusMessage(payload)
+    );
+  }
+
+  buildNewExecutionRecordFromCumulusMessage(cumulusMessage) {
+    const executionRecord = this.generateDocFromPayload(cumulusMessage);
+
+    executionRecord.originalPayload = cumulusMessage.payload;
+    executionRecord.duration = (executionRecord.timestamp - executionRecord.createdAt) / 1000;
+
+    const now = Date.now();
+    return {
+      createdAt: now,
+      ...executionRecord,
+      updatedAt: now
+    };
+  }
+
+  async buildUpdatedExecutionRecordFromCumulusMessage(cumulusMessage) {
+    const newRecord = this.generateDocFromPayload(cumulusMessage);
+
+    const existingRecord = await this.get({ arn: newRecord.arn });
+
+    newRecord.finalPayload = get(cumulusMessage, 'payload');
+    newRecord.originalPayload = existingRecord.originalPayload;
+    newRecord.duration = (newRecord.timestamp - newRecord.createdAt) / 1000;
+
+    const now = Date.now();
+    return {
+      createdAt: now,
+      ...newRecord,
+      updatedAt: now
+    };
   }
 }
-
 module.exports = Execution;
