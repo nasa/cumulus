@@ -116,7 +116,7 @@ test('pullStepFunctionEvent returns original message if message not on S3', asyn
   t.deepEqual(message, event);
 });
 
-test('pullStepFunctionEvent returns message from S3', async (t) => {
+test.serial('pullStepFunctionEvent returns message from S3', async (t) => {
   const fullMessage = {
     cumulus_meta: {
       state_machine: 'state machine',
@@ -161,4 +161,18 @@ test('retryOnThrottlingException() properly retries after ThrottlingExceptions',
     await throttledAsyncSquareWithRetries(3),
     9
   );
+});
+
+test('better stack traces', async (t) => {
+  const f = () => aws.getS3Object('asdf');
+  const g = () => f();
+  const h = () => g();
+
+  try {
+    console.log(await h());
+    t.fail('Expected an exception');
+  }
+  catch (err) {
+    t.true(err.stack.includes(path.basename(__filename)));
+  }
 });

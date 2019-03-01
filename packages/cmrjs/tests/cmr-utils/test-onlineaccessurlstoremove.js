@@ -21,7 +21,7 @@ test.beforeEach((t) => {
 test('returns an empty set if no private files', (t) => {
   const movedFiles = [
     {
-      filepath: 'some/path/protected-file.hdf',
+      key: 'some/path/protected-file.hdf',
       bucket: t.context.bucketConfig.protected.name
     }
   ];
@@ -33,11 +33,11 @@ test('returns an empty set if no private files', (t) => {
 test('returns a list of files to remove if there are private files', (t) => {
   const movedFiles = [
     {
-      filepath: 'some/path/protected-file.hdf',
+      key: 'some/path/protected-file.hdf',
       bucket: t.context.bucketConfig.protected.name
     },
     {
-      filepath: 'some/path/private-file.hdf',
+      key: 'some/path/private-file.hdf',
       bucket: t.context.bucketConfig.private.name
     }
 

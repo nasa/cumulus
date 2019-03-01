@@ -292,6 +292,7 @@ kk:
 mth:
   stackName: mth
   stackNameNoDash: Mth
+  useWorkflowLambdaVersions: false
   buckets:
     internal:
       name: '{{stackName}}-internal'
