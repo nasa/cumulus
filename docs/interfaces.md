@@ -10,7 +10,7 @@ Cumulus has multiple interfaces that allow interaction with discrete components 
 
 The diagram below documents the workflow process in detail and the various interfaces that allow starting of workflows, reporting of completed workflows, and API create operations that occur when a workflow completion message is processed. Inline hyperlinks to further documentation are provided where available.
 
-Hovering over the red text will pop up small windows that document the various schemas where applicable, with links to the most recent copy in the Cumulus source code.
+Hovering over the red text will pop up small windows that document the various schemas where applicable, with links to the most recent copy in the Cumulus source code. These schemas also include all optional fields that are shown on the Cumulus dashboard.
 
 Note: this diagram is current of v1.11.1.
 <br /><br />
@@ -77,11 +77,7 @@ Note: this diagram is current of v1.11.1.
     "provider": {
       "id": "string"
     },
-    "status": "string",
-    "post_to_cmr_duration": "number",
-    "post_to_cmr_start_time": "number",
-    "sync_granule_duration": "number",
-    "sync_granule_end_time": "number"
+    "status": "string"
   },
   "payload": {
     "granules": [
@@ -91,8 +87,8 @@ Note: this diagram is current of v1.11.1.
         "files": [
           {
             "bucket": "string",
-            "filename": "string",
-            "name": "string"
+            "key": "string",
+            "fileName": "string"
           }
         ],
         "published": "boolean"

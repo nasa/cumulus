@@ -18,11 +18,12 @@ const { serveDistributionApi } = require('@cumulus/api/bin/serve');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
   aws: {
-    s3,
     deleteS3Object,
+    parseS3Uri,
+    s3,
+    s3CopyObject,
     s3GetObjectTagging,
-    s3ObjectExists,
-    parseS3Uri
+    s3ObjectExists
   },
   BucketsConfig,
   constructCollectionId
@@ -615,23 +616,28 @@ describe('The S3 Ingest Granules workflow', () => {
         let destinations;
 
         beforeAll(() => {
-          file = granule.files[0];
+          try {
+            file = granule.files[0];
 
-          destinationKey = `${testDataFolder}/${file.filepath}`;
+            destinationKey = `${testDataFolder}/${file.key}`;
 
-          destinations = [{
-            regex: '.*.hdf$',
-            bucket: config.bucket,
-            filepath: `${testDataFolder}/${path.dirname(file.filepath)}`
-          }];
+            destinations = [{
+              regex: '.*.hdf$',
+              bucket: config.bucket,
+              filepath: `${testDataFolder}/${path.dirname(file.key)}`
+            }];
+          }
+          catch (err) {
+            console.error('Error in beforeAll() block:', err);
+          }
         });
 
         it('rejects moving a granule to a location that already exists', async () => {
-          await s3().copyObject({
+          await s3CopyObject({
             Bucket: config.bucket,
-            CopySource: `${file.bucket}/${file.filepath}`,
+            CopySource: `${file.bucket}/${file.key}`,
             Key: destinationKey
-          }).promise();
+          });
 
           const moveGranuleResponse = await granulesApiTestUtils.moveGranule({
             prefix: config.stackName,
@@ -643,7 +649,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
           expect(moveGranuleResponse.statusCode).toEqual(409);
           expect(responseBody.message).toEqual(
-            `Cannot move granule because the following files would be overwritten at the destination location: ${granule.files[0].name}. Delete the existing files or reingest the source files.`
+            `Cannot move granule because the following files would be overwritten at the destination location: ${granule.files[0].fileName}. Delete the existing files or reingest the source files.`
           );
         });
 
