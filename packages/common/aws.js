@@ -9,8 +9,9 @@ const pMap = require('p-map');
 const pRetry = require('p-retry');
 const pump = require('pump');
 const url = require('url');
-const { generateChecksumFromStream } = require('@cumulus/checksum');
+const { generateChecksumFromStream, validateChecksumFromStream } = require('@cumulus/checksum');
 
+const errors = require('./errors');
 const log = require('./log');
 const string = require('./string');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
@@ -279,7 +280,6 @@ exports.headObject = (bucket, key) =>
 exports.s3GetObjectTagging = (bucket, key) =>
   exports.s3().getObjectTagging({ Bucket: bucket, Key: key }).promise();
 
-
 /**
 * Puts object Tagging in S3
 * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property
@@ -301,6 +301,10 @@ exports.s3PutObjectTagging = (bucket, key, tagging) =>
 **/
 exports.getS3Object = (bucket, key) =>
   exports.s3().getObject({ Bucket: bucket, Key: key }).promise();
+
+exports.getS3ObjectReadStream = (bucket, key) => exports.s3().getObject(
+  { Bucket: bucket, Key: key }
+).createReadStream();
 
 /**
 * Check if a file exists in an S3 object
@@ -555,10 +559,34 @@ class S3ListObjectsV2Queue {
 }
 exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
 
-exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
-  const param = { Bucket: bucket, Key: key };
-  const fileStream = exports.s3().getObject(param).createReadStream();
+// calculate (return sum)
+exports.calculateS3ObjectChecksum = ({ algorithm, bucket, key, options = {} }) => {
+  const fileStream = exports.getS3ObjectReadStream(bucket, key);
   return generateChecksumFromStream(algorithm, fileStream, options);
+};
+
+// validate (return true/throw error)
+exports.validateS3ObjectChecksum = ({
+  algorithm,
+  bucket,
+  key,
+  expectedSum,
+  options = {}
+}) => {
+  const fileStream = exports.getS3ObjectReadStream(bucket, key);
+  if (!validateChecksumFromStream(algorithm, fileStream, expectedSum, options)) {
+    const msg = `Invalid checksum for S3 object ${bucket}/${key} with type ${algorithm} and expected sum ${expectedSum}`;
+    throw new errors.InvalidChecksum(msg);
+  }
+  return true;
+};
+
+// Maintained for backwards compatibility
+exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
+  const params = {
+    algorithm, bucket, key, options
+  };
+  return exports.calculateS3ObjectChecksum(params);
 };
 
 // Class to efficiently search all of the items in a DynamoDB table, without

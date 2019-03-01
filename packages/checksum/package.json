@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/checksum",
   "version": "1.11.2-alpha2",
-  "description": "Cumulus checksum utlities",
+  "description": "Cumulus checksum utilities",
   "engines": {
     "node": ">=8.10.0"
   },
