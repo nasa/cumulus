@@ -559,7 +559,17 @@ class S3ListObjectsV2Queue {
 }
 exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
 
-// calculate (return sum)
+/**
+ * Calculate checksum for S3 Object
+ *
+ * @param {Object} params - params
+ * @param {string} params.algorithm - checksum algorithm
+ * @param {string} params.bucket - S3 bucket
+ * @param {string} params.key - S3 key
+ * @param {Object} [params.options] - crypto.createHash options
+ *
+ * @returns {number|string} - calculated checksum
+ */
 exports.calculateS3ObjectChecksum = ({
   algorithm,
   bucket,
@@ -570,7 +580,19 @@ exports.calculateS3ObjectChecksum = ({
   return generateChecksumFromStream(algorithm, fileStream, options);
 };
 
-// validate (return true/throw error)
+/**
+ * Validate S3 object checksum against expected sum
+ *
+ * @param {Object} params - params
+ * @param {string} params.algorithm - checksum algorithm
+ * @param {string} params.bucket - S3 bucket
+ * @param {string} params.key - S3 key
+ * @param {number|string} params.expectedSum - expected checksum
+ * @param {Object} [params.options] - crypto.createHash options
+ *
+ * @throws {InvalidChecksum} - Throws error if validation fails
+ * @returns {boolean} - returns true for success
+ */
 exports.validateS3ObjectChecksum = ({
   algorithm,
   bucket,
