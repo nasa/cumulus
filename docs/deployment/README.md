@@ -204,9 +204,9 @@ dev:                                    # deployment name
   apiStage: dev
 
   vpc:
-    vpcId: '{{VPC_ID}}' # read in from .env file
+    vpcId: '{{VPC_ID}}' # this has to be set in .env
     subnets:
-      - '{{AWS_SUBNET}}' # read in from .env file
+      - '{{AWS_SUBNET}}' # this has to be set in .env
 
   ecs:
     instanceType: t2.micro
