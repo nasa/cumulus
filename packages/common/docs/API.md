@@ -3,6 +3,9 @@
 ## Modules
 
 <dl>
+<dt><a href="#module_StepFunctions">StepFunctions</a></dt>
+<dd><p>Utility functions for working with the AWS StepFunctions API</p>
+</dd>
 <dt><a href="#module_string">string</a></dt>
 <dd><p>A collection of utilities for working with URLs</p>
 </dd>
@@ -13,6 +16,105 @@
 <dd><p>Simple utility functions</p>
 </dd>
 </dl>
+
+<a name="module_StepFunctions"></a>
+
+## StepFunctions
+Utility functions for working with the AWS StepFunctions API
+
+**Example**  
+```js
+const StepFunctions = require('@cumulus/common/StepFunctions');
+```
+
+* [StepFunctions](#module_StepFunctions)
+    * [.describeExecution(params)](#module_StepFunctions.describeExecution) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.describeStateMachine(params)](#module_StepFunctions.describeStateMachine) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.executionExists(executionArn)](#module_StepFunctions.executionExists) ⇒ <code>Promise.&lt;boolean&gt;</code>
+    * [.getExecutionHistory(params)](#module_StepFunctions.getExecutionHistory) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.listExecutions(params)](#module_StepFunctions.listExecutions) ⇒ <code>Promise.&lt;Object&gt;</code>
+
+<a name="module_StepFunctions.describeExecution"></a>
+
+### StepFunctions.describeExecution(params) ⇒ <code>Promise.&lt;Object&gt;</code>
+Call StepFunctions DescribeExecution
+
+See [StepFunctions.describeExecution()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#describeExecution-property)
+for descriptions of `params` and the return data.
+
+If a ThrottlingException is received, this function will retry using an
+exponential backoff.
+
+**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
+
+| Param | Type |
+| --- | --- |
+| params | <code>Object</code> | 
+
+<a name="module_StepFunctions.describeStateMachine"></a>
+
+### StepFunctions.describeStateMachine(params) ⇒ <code>Promise.&lt;Object&gt;</code>
+Call StepFunctions DescribeStateMachine
+
+See [StepFunctions.describeStateMachine()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#describeStateMachine-property)
+for descriptions of `params` and the return data.
+
+If a ThrottlingException is received, this function will retry using an
+exponential backoff.
+
+**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
+
+| Param | Type |
+| --- | --- |
+| params | <code>Object</code> | 
+
+<a name="module_StepFunctions.executionExists"></a>
+
+### StepFunctions.executionExists(executionArn) ⇒ <code>Promise.&lt;boolean&gt;</code>
+Check if a Step Function Execution exists
+
+If a ThrottlingException is received, this function will retry using an
+exponential backoff.
+
+**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| executionArn | <code>string</code> | the ARN of the Step Function Execution to   check for |
+
+<a name="module_StepFunctions.getExecutionHistory"></a>
+
+### StepFunctions.getExecutionHistory(params) ⇒ <code>Promise.&lt;Object&gt;</code>
+Call StepFunctions GetExecutionHistory
+
+See [StepFunctions.getExecutionHistory()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#getExecutionHistory-property)
+for descriptions of `params` and the return data.
+
+If a ThrottlingException is received, this function will retry using an
+exponential backoff.
+
+**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
+
+| Param | Type |
+| --- | --- |
+| params | <code>Object</code> | 
+
+<a name="module_StepFunctions.listExecutions"></a>
+
+### StepFunctions.listExecutions(params) ⇒ <code>Promise.&lt;Object&gt;</code>
+Call StepFunctions ListExecutions
+
+See [StepFunctions.listExecutions()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#listExecutions-property)
+for descriptions of `params` and the return data.
+
+If a ThrottlingException is received, this function will retry using an
+exponential backoff.
+
+**Kind**: static method of [<code>StepFunctions</code>](#module_StepFunctions)  
+
+| Param | Type |
+| --- | --- |
+| params | <code>Object</code> | 
 
 <a name="module_string"></a>
 
@@ -198,10 +300,12 @@ isNil(undefined); // => true
     * [.uuid()](#module_util.uuid) ⇒ <code>string</code>
     * [.noop()](#module_util.noop) ⇒ <code>undefined</code>
     * [.omit(objectIn, keys)](#module_util.omit) ⇒ <code>Object</code>
-    * [.negate(predicate)](#module_util.negate) ⇒ <code>function</code>
     * [.isNull(x)](#module_util.isNull) ⇒ <code>boolean</code>
     * [.isUndefined(x)](#module_util.isUndefined) ⇒ <code>boolean</code>
     * [.isNil(x)](#module_util.isNil) ⇒ <code>boolean</code>
+    * [.setErrorStack(error, newStack)](#module_util.setErrorStack)
+    * [.renameProperty(from, to, obj)](#module_util.renameProperty) ⇒ <code>Object</code>
+    * [.removeNilProperties(obj)](#module_util.removeNilProperties) ⇒ <code>Object</code>
 
 <a name="module_util.deprecate"></a>
 
@@ -258,26 +362,6 @@ https://github.com/lodash/lodash/wiki/Roadmap#v500-2019
 | objectIn | <code>Object</code> | input object |
 | keys | <code>string</code> \| <code>Array.&lt;string&gt;</code> | key or list of keys to remove from object |
 
-<a name="module_util.negate"></a>
-
-### util.negate(predicate) ⇒ <code>function</code>
-Creates a function that returns the opposite of the predicate function.
-
-**Kind**: static method of [<code>util</code>](#module_util)  
-**Returns**: <code>function</code> - the new negated function  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| predicate | <code>function</code> | the predicate to negate |
-
-**Example**  
-```js
-const isEven = (x) => x % 2 === 0;
-const isOdd = negate(isEven);
-
-isOdd(2); // => false
-isOdd(3); // => true
-```
 <a name="module_util.isNull"></a>
 
 ### util.isNull(x) ⇒ <code>boolean</code>
@@ -310,6 +394,47 @@ Test if a value is null or undefined
 | Param | Type | Description |
 | --- | --- | --- |
 | x | <code>\*</code> | value to check |
+
+<a name="module_util.setErrorStack"></a>
+
+### util.setErrorStack(error, newStack)
+Replace the stack of an error
+
+Note: This mutates the error that was passed in.
+
+**Kind**: static method of [<code>util</code>](#module_util)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| error | <code>Error</code> | an Error |
+| newStack | <code>string</code> | a stack trace |
+
+<a name="module_util.renameProperty"></a>
+
+### util.renameProperty(from, to, obj) ⇒ <code>Object</code>
+Rename an object property
+
+**Kind**: static method of [<code>util</code>](#module_util)  
+**Returns**: <code>Object</code> - a shallow clone of the object with updated property name  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| from | <code>string</code> | old property name |
+| to | <code>string</code> | new property name |
+| obj | <code>Object</code> | object to update |
+
+<a name="module_util.removeNilProperties"></a>
+
+### util.removeNilProperties(obj) ⇒ <code>Object</code>
+Remove properties whose values are `null` or `undefined`
+
+**Kind**: static method of [<code>util</code>](#module_util)  
+**Returns**: <code>Object</code> - a shallow clone of the object with `null` and `undefined`
+  properties removed  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| obj | <code>Object</code> | object to update |
 
 
 ---
