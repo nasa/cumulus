@@ -6,17 +6,21 @@ const moment = require('moment');
 const { promisify } = require('util');
 const chunk = require('lodash.chunk');
 const flatten = require('lodash.flatten');
+const map = require('lodash.map');
 const range = require('lodash.range');
 const sample = require('lodash.sample');
 const sortBy = require('lodash.sortby');
 const sinon = require('sinon');
 const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmrjs');
-const { aws, constructCollectionId } = require('@cumulus/common');
+const { aws, BucketsConfig, constructCollectionId } = require('@cumulus/common');
 const { randomString } = require('@cumulus/common/test-utils');
 const { sleep } = require('@cumulus/common/util');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 
-const { handler, reconciliationReportForGranules } = require('../../lambdas/create-reconciliation-report');
+const {
+  handler, reconciliationReportForGranules, reconciliationReportForGranuleFiles
+} = require('../../lambdas/create-reconciliation-report');
+
 const models = require('../../models');
 
 const createBucket = (Bucket) => aws.s3().createBucket({ Bucket }).promise();
@@ -173,7 +177,7 @@ test.serial('A valid reconciliation report is generated for no buckets', async (
 
   t.is(report.status, 'SUCCESS');
   t.is(report.error, null);
-  t.is(filesInCumulus.okFileCount, 0);
+  t.is(filesInCumulus.okCount, 0);
   t.is(filesInCumulus.onlyInS3.length, 0);
   t.is(filesInCumulus.onlyInDynamoDb.length, 0);
 
@@ -239,10 +243,10 @@ test.serial('A valid reconciliation report is generated when everything is in sy
 
   t.is(report.status, 'SUCCESS');
   t.is(report.error, null);
-  t.is(filesInCumulus.okFileCount, files.length);
+  t.is(filesInCumulus.okCount, files.length);
   t.is(filesInCumulus.onlyInS3.length, 0);
   t.is(filesInCumulus.onlyInDynamoDb.length, 0);
-  t.is(collectionsInCumulusCmr.okCollectionCount, matchingColls.length);
+  t.is(collectionsInCumulusCmr.okCount, matchingColls.length);
   t.is(collectionsInCumulusCmr.onlyInCumulus.length, 0);
   t.is(collectionsInCumulusCmr.onlyInCmr.length, 0);
 
@@ -290,7 +294,7 @@ test.serial('A valid reconciliation report is generated when there are extra S3 
 
   t.is(report.status, 'SUCCESS');
   t.is(report.error, null);
-  t.is(filesInCumulus.okFileCount, matchingFiles.length);
+  t.is(filesInCumulus.okCount, matchingFiles.length);
 
   t.is(filesInCumulus.onlyInS3.length, 2);
   t.true(filesInCumulus.onlyInS3.includes(aws.buildS3Uri(extraS3File1.bucket, extraS3File1.key)));
@@ -353,7 +357,7 @@ test.serial('A valid reconciliation report is generated when there are extra Dyn
 
   t.is(report.status, 'SUCCESS');
   t.is(report.error, null);
-  t.is(filesInCumulus.okFileCount, matchingFiles.length);
+  t.is(filesInCumulus.okCount, matchingFiles.length);
   t.is(filesInCumulus.onlyInS3.length, 0);
 
   t.is(filesInCumulus.onlyInDynamoDb.length, 2);
@@ -421,7 +425,7 @@ test.serial('A valid reconciliation report is generated when there are both extr
 
   t.is(report.status, 'SUCCESS');
   t.is(report.error, null);
-  t.is(filesInCumulus.okFileCount, matchingFiles.length);
+  t.is(filesInCumulus.okCount, matchingFiles.length);
 
   t.is(filesInCumulus.onlyInS3.length, 2);
   t.true(filesInCumulus.onlyInS3.includes(aws.buildS3Uri(extraS3File1.bucket, extraS3File1.key)));
@@ -493,7 +497,7 @@ test.serial('A valid reconciliation report is generated when there are both extr
 
   t.is(report.status, 'SUCCESS');
   t.is(report.error, null);
-  t.is(collectionsInCumulusCmr.okCollectionCount, matchingColls.length);
+  t.is(collectionsInCumulusCmr.okCount, matchingColls.length);
 
   t.is(collectionsInCumulusCmr.onlyInCumulus.length, 2);
   extraDbColls.map((collection) =>
@@ -542,15 +546,10 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
 
   await new models.Granule().create(matchingGrans.concat(extraDbGrans));
 
-  const granulesReport = await reconciliationReportForGranules(collectionId);
+  const { granulesReport, filesReport } = await
+  reconciliationReportForGranules(collectionId, new BucketsConfig({}));
 
-  const expectedOkGranulesInDb = sortBy(matchingGrans, ['granuleId']).map((gran) =>
-    ({ granuleId: gran.granuleId, collectionId: gran.collectionId, files: gran.files }));
-
-  t.deepEqual(granulesReport.okGranulesInDb, expectedOkGranulesInDb);
-
-  const expectedOkGranuleIds = matchingGrans.map((gran) => gran.granuleId).sort();
-  t.deepEqual(granulesReport.okGranulesInCmr.map((gran) => gran.GranuleUR), expectedOkGranuleIds);
+  t.is(granulesReport.okCount, 10);
 
   const expectedOnlyInCumulus = sortBy(extraDbGrans, ['granuleId']).map((gran) =>
     ({ granuleId: gran.granuleId, collectionId: gran.collectionId }));
@@ -558,4 +557,109 @@ test.serial('reconciliationReportForGranules reports discrepancy of granule hold
 
   t.deepEqual(granulesReport.onlyInCmr.map((gran) => gran.GranuleUR),
     extraCmrGrans.map((gran) => gran.granuleId).sort());
+
+  t.is(filesReport.okCount, 0);
+  t.is(filesReport.onlyInCumulus.length, 0);
+  t.is(filesReport.onlyInCmr.length, 0);
+});
+
+test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule file holdings in CUMULUS and CMR', async (t) => {
+  process.env.DISTRIBUTION_ENDPOINT = 'https://example.com/';
+  const buckets = {
+    internal: { name: 'cumulus-test-sandbox-internal', type: 'internal' },
+    private: { name: 'testbucket-private', type: 'private' },
+    protected: { name: 'testbucket-protected', type: 'protected' },
+    public: { name: 'testbucket-public', type: 'public' },
+    'protected-2': { name: 'testbucket-protected-2', type: 'protected' }
+  };
+  const bucketsConfig = new BucketsConfig(buckets);
+
+  const matchingFilesInDb = [{
+    bucket: 'testbucket-protected',
+    key: 'MOD09GQ___006/2017/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf',
+    fileSize: 17865615,
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf'
+  },
+  {
+    bucket: 'testbucket-public',
+    key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg',
+    fileSize: 44118,
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg'
+  },
+  {
+    bucket: 'testbucket-protected-2',
+    key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml',
+    fileSize: 2708,
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml'
+  }];
+
+  const privateFilesInDb = [{
+    bucket: 'testbucket-private',
+    key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf.met',
+    fileSize: 44118,
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf.met'
+  }];
+
+  const filesOnlyInDb = [{
+    bucket: 'testbucket-public',
+    key: 'MOD09GQ___006/MOD/extra123.jpg',
+    fileSize: 44118,
+    fileName: 'extra123.jpg'
+  },
+  {
+    bucket: 'testbucket-protected',
+    key: 'MOD09GQ___006/MOD/extra456.jpg',
+    fileSize: 44118,
+    fileName: 'extra456.jpg'
+  }];
+
+  const granInDb = {
+    granuleId: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
+    collectionId: 'MOD09GQ___006',
+    files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb)
+  };
+
+  const matchingFilesInCmr = [{
+    URL: 'https://example.com/testbucket-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf',
+    Type: 'GET DATA',
+    Description: 'File to download'
+  },
+  {
+    URL: 'https://testbucket-public.s3.amazonaws.com/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg',
+    Type: 'GET DATA',
+    Description: 'File to download'
+  },
+  {
+    URL: 'https://example.com/testbucket-protected-2/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml',
+    Type: 'GET DATA',
+    Description: 'File to download'
+  }];
+
+  const filesOnlyInCmr = [{
+    URL: 'https://enjo7p7os7.execute-api.us-east-1.amazonaws.com/dev/MYD13Q1.A2017297.h19v10.006.2017313221202.hdf',
+    Type: 'GET DATA',
+    Description: 'File to download'
+  }];
+
+  const urlsShouldOnlyInCmr = [{
+    URL: 'https://example.com/s3credentials',
+    Type: 'VIEW RELATED INFORMATION',
+    Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access'
+  }];
+
+  const granInCmr = {
+    GranuleUR: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
+    ShortName: 'MOD09GQ',
+    Version: '006',
+    RelatedUrls: matchingFilesInCmr.concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr)
+  };
+
+  const report = await reconciliationReportForGranuleFiles(granInDb, granInCmr, bucketsConfig);
+  t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
+
+  t.is(report.onlyInCumulus.length, filesOnlyInDb.length);
+  t.deepEqual(map(report.onlyInCumulus, 'fileName').sort(), map(filesOnlyInDb, 'fileName').sort());
+
+  t.is(report.onlyInCmr.length, filesOnlyInCmr.length);
+  t.deepEqual(map(report.onlyInCmr, 'URL').sort(), map(filesOnlyInCmr, 'URL').sort());
 });

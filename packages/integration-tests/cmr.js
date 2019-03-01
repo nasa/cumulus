@@ -196,6 +196,7 @@ async function getOnlineResources(cmrLink) {
  */
 function generateCmrXml(granule, collection, additionalUrls) {
   const xmlObject = sampleEcho10Granule;
+  const oldGranuleId = xmlObject.Granule.GranuleUR;
   xmlObject.Granule.GranuleUR = granule.granuleId;
 
   xmlObject.Granule.Collection = {
@@ -203,13 +204,17 @@ function generateCmrXml(granule, collection, additionalUrls) {
     VersionId: collection.version
   };
 
+  xmlObject.Granule.OnlineAccessURLs.forEach((url) =>
+    url.OnlineAccessURL.URL.replace(oldGranuleId, granule.granuleId));
+
   if (additionalUrls) {
-    xmlObject.Granule.OnlineAccessURLs = additionalUrls.map((url) => ({
+    const urls = additionalUrls.map((url) => ({
       OnlineAccessURL: {
         URL: url,
         URLDescription: 'File to download'
       }
     }));
+    xmlObject.Granule.OnlineAccessURLs = xmlObject.Granule.OnlineAccessURLs.concat(urls);
   }
 
   const xml = new xml2js.Builder().buildObject(xmlObject);
