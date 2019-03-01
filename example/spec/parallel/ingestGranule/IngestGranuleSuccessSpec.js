@@ -3,7 +3,7 @@
 const fs = require('fs-extra');
 const got = require('got');
 const path = require('path');
-const { URL } = require('url');
+const { URL, resolve } = require('url');
 const cloneDeep = require('lodash.clonedeep');
 const difference = require('lodash.difference');
 const includes = require('lodash.includes');
@@ -17,11 +17,12 @@ const {
 const { serveDistributionApi } = require('@cumulus/api/bin/serve');
 const {
   aws: {
-    s3,
     deleteS3Object,
+    parseS3Uri,
+    s3,
+    s3CopyObject,
     s3GetObjectTagging,
-    s3ObjectExists,
-    parseS3Uri
+    s3ObjectExists
   },
   BucketsConfig,
   constructCollectionId,
@@ -375,9 +376,14 @@ describe('The S3 Ingest Granules workflow', () => {
         key: files[0].filepath
       });
       const s3Url = getPublicS3FileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+      const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
+
+      console.log('parallel resourceURLs: ', resourceURLs);
+      console.log('s3CredsUrl: ', s3CredsUrl);
 
       expect(resourceURLs.includes(distributionUrl)).toBe(true);
       expect(resourceURLs.includes(s3Url)).toBe(true);
+      expect(resourceURLs.includes(s3CredsUrl)).toBe(true);
     });
 
     it('downloads the requested science file for authorized requests', async () => {
@@ -390,8 +396,10 @@ describe('The S3 Ingest Granules workflow', () => {
 
       const scienceFileUrls = resourceURLs
         .filter((url) =>
-          (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) || url.match(/s3\.amazonaws\.com/)) &&
-          !url.endsWith('.cmr.xml'));
+          (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) ||
+          url.match(/s3\.amazonaws\.com/)) &&
+          !url.endsWith('.cmr.xml') &&
+          !url.includes('s3credentials'));
 
       const checkFiles = await Promise.all(
         scienceFileUrls
@@ -607,23 +615,28 @@ describe('The S3 Ingest Granules workflow', () => {
         let destinations;
 
         beforeAll(() => {
-          file = granule.files[0];
+          try {
+            file = granule.files[0];
 
-          destinationKey = `${testDataFolder}/${file.filepath}`;
+            destinationKey = `${testDataFolder}/${file.key}`;
 
-          destinations = [{
-            regex: '.*.hdf$',
-            bucket: config.bucket,
-            filepath: `${testDataFolder}/${path.dirname(file.filepath)}`
-          }];
+            destinations = [{
+              regex: '.*.hdf$',
+              bucket: config.bucket,
+              filepath: `${testDataFolder}/${path.dirname(file.key)}`
+            }];
+          }
+          catch (err) {
+            console.error('Error in beforeAll() block:', err);
+          }
         });
 
         it('rejects moving a granule to a location that already exists', async () => {
-          await s3().copyObject({
+          await s3CopyObject({
             Bucket: config.bucket,
-            CopySource: `${file.bucket}/${file.filepath}`,
+            CopySource: `${file.bucket}/${file.key}`,
             Key: destinationKey
-          }).promise();
+          });
 
           const moveGranuleResponse = await granulesApiTestUtils.moveGranule({
             prefix: config.stackName,
@@ -635,7 +648,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
           expect(moveGranuleResponse.statusCode).toEqual(409);
           expect(responseBody.message).toEqual(
-            `Cannot move granule because the following files would be overwritten at the destination location: ${granule.files[0].name}. Delete the existing files or reingest the source files.`
+            `Cannot move granule because the following files would be overwritten at the destination location: ${granule.files[0].fileName}. Delete the existing files or reingest the source files.`
           );
         });
 
