@@ -4,6 +4,7 @@ const get = require('lodash.get');
 const Ajv = require('ajv');
 const aws = require('@cumulus/common/aws');
 const pWaitFor = require('p-wait-for');
+const { isNil } = require('@cumulus/common/util');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { errorify } = require('../lib/utils');
 const { RecordDoesNotExist } = require('../lib/errors');
@@ -88,6 +89,8 @@ async function deleteTable(tableName) {
  */
 class Manager {
   static recordIsValid(item, schema = null, removeAdditional = false) {
+    if (isNil(item)) return;
+
     if (!schema) {
       throw new Error('schema is not defined');
     }
