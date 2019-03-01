@@ -17,11 +17,11 @@ const {
   generateMoveFileParams,
   moveGranuleFiles
 } = require('@cumulus/ingest/granule');
-const { constructCollectionId } = require('@cumulus/common');
 const { isNil, renameProperty } = require('@cumulus/common/util');
 
 const Manager = require('./base');
 
+const CumulusMessage = require('../lib/CumulusMessage');
 const { buildDatabaseFiles } = require('../lib/FileUtils');
 
 const {
@@ -247,60 +247,50 @@ class Granule extends Manager {
     return existingFiles.filter((file) => file);
   }
 
-  /**
-   * Create new granule records from incoming sns messages
-   *
-   * @param {Object} payload - sns message containing the output of a Cumulus Step Function
-   * @returns {Promise<Array>} granule records
-   */
-  async createGranulesFromSns(payload) {
-    const granules = get(payload, 'payload.granules', get(payload, 'meta.input_granules'));
+  async buildGranuleRecordsFromCumulusMessage(cumulusMessage) {
+    const granules = get(cumulusMessage, 'payload.granules')
+      || get(cumulusMessage, 'meta.input_granules')
+      || [];
 
-    if (!granules) return Promise.resolve();
+    const collectionId = CumulusMessage.getCollectionId(cumulusMessage);
 
-    const executionName = get(payload, 'cumulus_meta.execution_name');
-    const arn = aws.getExecutionArn(
-      get(payload, 'cumulus_meta.state_machine'),
-      executionName
-    );
-
-    if (!arn) return Promise.resolve();
+    const arn = CumulusMessage.getExecutionArn(cumulusMessage);
+    if (!arn) return [];
 
     const execution = aws.getExecutionUrl(arn);
 
-    const collection = get(payload, 'meta.collection');
-    const exception = parseException(payload.exception);
+    const exception = parseException(cumulusMessage.exception);
 
-    const collectionId = constructCollectionId(collection.name, collection.version);
+    const now = Date.now();
 
-    const done = granules.map(async (granule) => {
-      if (granule.granuleId) {
+    return Promise.all(
+      granules.filter((g) => g.granuleId).map(async (granule) => {
         const granuleFiles = await buildDatabaseFiles({
           providerURL: buildURL({
-            protocol: payload.meta.provider.protocol,
-            host: payload.meta.provider.host,
-            port: payload.meta.provider.port
+            protocol: cumulusMessage.meta.provider.protocol,
+            host: cumulusMessage.meta.provider.host,
+            port: cumulusMessage.meta.provider.port
           }),
           files: granule.files
         });
 
         const doc = {
           granuleId: granule.granuleId,
-          pdrName: get(payload, 'meta.pdr.name'),
+          pdrName: get(cumulusMessage, 'meta.pdr.name'),
           collectionId,
-          status: get(payload, 'meta.status'),
-          provider: get(payload, 'meta.provider.id'),
+          status: get(cumulusMessage, 'meta.status'),
+          provider: get(cumulusMessage, 'meta.provider.id'),
           execution,
           cmrLink: get(granule, 'cmrLink'),
           files: granuleFiles,
           error: exception,
-          createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
-          timestamp: Date.now(),
+          createdAt: get(cumulusMessage, 'cumulus_meta.workflow_start_time'),
+          timestamp: now,
           productVolume: getGranuleProductVolume(granuleFiles),
-          timeToPreprocess: get(payload, 'meta.sync_granule_duration', 0) / 1000,
-          timeToArchive: get(payload, 'meta.post_to_cmr_duration', 0) / 1000,
-          processingStartDateTime: extractDate(payload, 'meta.sync_granule_end_time'),
-          processingEndDateTime: extractDate(payload, 'meta.post_to_cmr_start_time')
+          timeToPreprocess: get(cumulusMessage, 'meta.sync_granule_duration', 0) / 1000,
+          timeToArchive: get(cumulusMessage, 'meta.post_to_cmr_duration', 0) / 1000,
+          processingStartDateTime: extractDate(cumulusMessage, 'meta.sync_granule_end_time'),
+          processingEndDateTime: extractDate(cumulusMessage, 'meta.post_to_cmr_start_time')
         };
 
         doc.published = get(granule, 'published', false);
@@ -319,12 +309,24 @@ class Granule extends Manager {
           }
         }
 
-        return this.create(doc);
-      }
-      return Promise.resolve();
-    });
+        return {
+          createdAt: now,
+          ...doc,
+          updatedAt: now
+        };
+      })
+    );
+  }
 
-    return Promise.all(done);
+  /**
+   * Create new granule records from incoming sns messages
+   *
+   * @param {Object} payload - sns message containing the output of a Cumulus Step Function
+   * @returns {Promise<Array>} granule records
+   */
+  async createGranulesFromSns(payload) {
+    const granules = await this.buildGranuleRecordsFromCumulusMessage(payload);
+    return Promise.all(granules.map((granule) => this.create(granule)));
   }
 
   /**
