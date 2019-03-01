@@ -1,19 +1,9 @@
 'use strict';
 
 const got = require('got');
-const xml2js = require('xml2js');
 const ValidationError = require('./ValidationError');
 const getUrl = require('./getUrl');
-const { promisify } = require('./Utils');
-
-const parseString = promisify(xml2js.parseString);
-
-// TODO Remove this duplication
-const xmlParseOptions = {
-  ignoreAttrs: true,
-  mergeAttrs: true,
-  explicitArray: false
-};
+const { parseXMLString } = require('./Utils');
 
 /**
  * Posts a given xml string to the validate endpoint of the CMR
@@ -43,7 +33,7 @@ async function validate(type, xml, identifier, provider) {
     result = e.response;
   }
 
-  const parsed = await parseString(result.body, xmlParseOptions);
+  const parsed = await parseXMLString(result.body);
 
   throw new ValidationError(
     `Validation was not successful, CMR error message: ${JSON.stringify(parsed.errors.error)}`
