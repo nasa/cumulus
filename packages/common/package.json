@@ -57,6 +57,7 @@
     "lodash.clonedeep": "^4.5.0",
     "lodash.compact": "^3.0.1",
     "lodash.curry": "^4.1.1",
+    "lodash.every": "^4.6.0",
     "lodash.flowright": "^3.5.0",
     "lodash.isfunction": "^3.0.9",
     "lodash.isnil": "^4.0.0",

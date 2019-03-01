@@ -10,6 +10,8 @@
  * isNil(undefined); // => true
  */
 
+const curry = require('lodash.curry');
+const every = require('lodash.every');
 const fs = require('fs');
 const isNil = require('lodash.isnil');
 const omitBy = require('lodash.omitby');
@@ -161,10 +163,62 @@ exports.renameProperty = (from, to, obj) => {
 };
 
 /**
- * Remove properties whose values are `null` or `undefined`
+ * Checks if predicate returns truthy for all elements of collection.
+ *
+ * Note: This method returns true for empty collections because everything is
+ * true of elements of empty collections.
+ *
+ * See: https://lodash.com/docs/4.17.11#every
+ *
+ * This is a [curried function](https://lodash.com/docs/4.17.11#curry).
+ *
+ * @param {function} predicate - the function invoked per iteration
+ * @param {Array|Object} collection - the collection to iterate over
+ * @returns {boolean} true if all elements pass the predicate check, else false
+ *
+ * @kind function
+ *
+ * @example
+ * all(isNull, [null, null, null]); // => true
+ * all(isNull, [null, null, 5]); // => false
+ *
+ * const allNull = all(isNull);
+ *
+ * allNull([null, null, null]); // => true
+ */
+exports.all = curry((predicate, collection) => every(collection, predicate));
+
+/**
+ * Creates an object composed of the own and inherited enumerable string keyed
+ * properties of object that predicate doesn't return truthy for. The predicate
+ * is invoked with two arguments: (value, key).
+ *
+ * See: https://lodash.com/docs/4.17.11#omitBy
+ *
+ * This is a [curried function](https://lodash.com/docs/4.17.11#curry).
+ *
+ * @param {function} predicate - the function invoked per property
+ * @param {Object} obj - the collection to iterate over
+ * @returns {Object} the new object
+ *
+ * @kind function
+ *
+ * @example
+ * omitBy(isNil, { a: 1, b: null }); // => { a: 1 }
+ *
+ * const removeNils = omitBy(isNil);
+ *
+ * removeNils({ a: 1, b: null }); // => { a: 1 }
+ */
+exports.omitBy = curry((predicate, obj) => omitBy(obj, predicate));
+
+/**
+ * Remove an object's properties whose values are `null` or `undefined`
  *
  * @param {Object} obj - object to update
  * @returns {Object} a shallow clone of the object with `null` and `undefined`
  *   properties removed
+ *
+ * @kind function
  */
-exports.removeNilProperties = (obj) => omitBy(obj, isNil);
+exports.removeNilProperties = exports.omitBy(isNil);

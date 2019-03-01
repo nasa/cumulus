@@ -77,7 +77,7 @@ const toUpper = (str) => str.toUpperCase();
  *
  * Produces same output as https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match
  *
- * This is a curried function - https://lodash.com/docs/4.17.11#curry
+ * This is a [curried function](https://lodash.com/docs/4.17.11#curry).
  *
  * @param {RegExp} regexp - the pattern to match against
  * @param {string} str - the string to match against
@@ -91,7 +91,7 @@ const match = curry((regexp, str) => str.match(regexp), 2);
 /**
  * Tests a regular expression against a string, returning true / false
  *
- * This is a curried function - https://lodash.com/docs/4.17.11#curry
+ * This is a [curried function](https://lodash.com/docs/4.17.11#curry).
  *
  * @param {RegExp} regexp - the pattern to match against
  * @param {string} str - the string to match against

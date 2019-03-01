@@ -196,7 +196,7 @@ Tests a regular expression against a String, returning matches
 
 Produces same output as https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match
 
-This is a curried function - https://lodash.com/docs/4.17.11#curry
+This is a [curried function](https://lodash.com/docs/4.17.11#curry).
 
 **Kind**: static method of [<code>string</code>](#module_string)  
 
@@ -210,7 +210,7 @@ This is a curried function - https://lodash.com/docs/4.17.11#curry
 ### string.matches(regexp, str) ⇒ <code>boolean</code>
 Tests a regular expression against a string, returning true / false
 
-This is a curried function - https://lodash.com/docs/4.17.11#curry
+This is a [curried function](https://lodash.com/docs/4.17.11#curry).
 
 **Kind**: static method of [<code>string</code>](#module_string)  
 **Returns**: <code>boolean</code> - true if the pattern matches the string, false otherwise  
@@ -305,6 +305,8 @@ isNil(undefined); // => true
     * [.isNil(x)](#module_util.isNil) ⇒ <code>boolean</code>
     * [.setErrorStack(error, newStack)](#module_util.setErrorStack)
     * [.renameProperty(from, to, obj)](#module_util.renameProperty) ⇒ <code>Object</code>
+    * [.all(predicate, collection)](#module_util.all) ⇒ <code>boolean</code>
+    * [.omitBy(predicate, obj)](#module_util.omitBy) ⇒ <code>Object</code>
     * [.removeNilProperties(obj)](#module_util.removeNilProperties) ⇒ <code>Object</code>
 
 <a name="module_util.deprecate"></a>
@@ -423,10 +425,66 @@ Rename an object property
 | to | <code>string</code> | new property name |
 | obj | <code>Object</code> | object to update |
 
+<a name="module_util.all"></a>
+
+### util.all(predicate, collection) ⇒ <code>boolean</code>
+Checks if predicate returns truthy for all elements of collection.
+
+Note: This method returns true for empty collections because everything is
+true of elements of empty collections.
+
+See: https://lodash.com/docs/4.17.11#every
+
+This is a [curried function](https://lodash.com/docs/4.17.11#curry).
+
+**Kind**: static method of [<code>util</code>](#module_util)  
+**Returns**: <code>boolean</code> - true if all elements pass the predicate check, else false  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| predicate | <code>function</code> | the function invoked per iteration |
+| collection | <code>Array</code> \| <code>Object</code> | the collection to iterate over |
+
+**Example**  
+```js
+all(isNull, [null, null, null]); // => true
+all(isNull, [null, null, 5]); // => false
+
+const allNull = all(isNull);
+
+allNull([null, null, null]); // => true
+```
+<a name="module_util.omitBy"></a>
+
+### util.omitBy(predicate, obj) ⇒ <code>Object</code>
+Creates an object composed of the own and inherited enumerable string keyed
+properties of object that predicate doesn't return truthy for. The predicate
+is invoked with two arguments: (value, key).
+
+See: https://lodash.com/docs/4.17.11#omitBy
+
+This is a [curried function](https://lodash.com/docs/4.17.11#curry).
+
+**Kind**: static method of [<code>util</code>](#module_util)  
+**Returns**: <code>Object</code> - the new object  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| predicate | <code>function</code> | the function invoked per property |
+| obj | <code>Object</code> | the collection to iterate over |
+
+**Example**  
+```js
+omitBy(isNil, { a: 1, b: null }); // => { a: 1 }
+
+const removeNils = omitBy(isNil);
+
+removeNils({ a: 1, b: null }); // => { a: 1 }
+```
 <a name="module_util.removeNilProperties"></a>
 
 ### util.removeNilProperties(obj) ⇒ <code>Object</code>
-Remove properties whose values are `null` or `undefined`
+Remove an object's properties whose values are `null` or `undefined`
 
 **Kind**: static method of [<code>util</code>](#module_util)  
 **Returns**: <code>Object</code> - a shallow clone of the object with `null` and `undefined`
