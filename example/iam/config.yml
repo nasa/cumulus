@@ -94,6 +94,9 @@ lf:
     protected-2:
       name: lf-protected-2
       type: protected
+    dashboard:
+      name: cumulus-dashboard-sandbox
+      type: shared
 
 lf-int-test:
   prefix: lf-int-test
