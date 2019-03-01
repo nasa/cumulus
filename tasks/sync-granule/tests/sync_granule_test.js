@@ -6,7 +6,7 @@ const errors = require('@cumulus/common/errors');
 const set = require('lodash.set');
 const { constructCollectionId } = require('@cumulus/common');
 const {
-  checksumS3Objects,
+  calculateS3ObjectChecksum,
   headObject,
   listS3ObjectsV2,
   parseS3Uri,
@@ -603,11 +603,11 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     }).promise();
 
     t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
-    t.context.event.input.granules[0].files[0].checksumValue = await checksumS3Objects(
-      t.context.event.input.granules[0].files[0].checksumType,
-      t.context.event.config.provider.host,
+    t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
+      algorithm: t.context.event.input.granules[0].files[0].checksumType,
+      bucket: t.context.event.config.provider.host,
       key
-    );
+    });
 
     output = await syncGranule(t.context.event);
     await validateOutput(t, output);
@@ -637,11 +637,11 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     }).promise();
 
     t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
-    t.context.event.input.granules[0].files[0].checksumValue = await checksumS3Objects(
-      t.context.event.input.granules[0].files[0].checksumType,
-      t.context.event.config.provider.host,
+    t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
+      algorithm: t.context.event.input.granules[0].files[0].checksumType,
+      bucket: t.context.event.config.provider.host,
       key
-    );
+    });
 
     output = await syncGranule(t.context.event);
     await validateOutput(t, output);
@@ -690,11 +690,11 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
     }).promise();
 
     t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
-    t.context.event.input.granules[0].files[0].checksumValue = await checksumS3Objects(
-      t.context.event.input.granules[0].files[0].checksumType,
-      t.context.event.config.provider.host,
+    t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
+      algorithm: t.context.event.input.granules[0].files[0].checksumType,
+      bucket: t.context.event.config.provider.host,
       key
-    );
+    });
 
     output = await syncGranule(t.context.event);
     await validateOutput(t, output);
@@ -739,11 +739,11 @@ async function granuleFilesOverwrittenTest(t, duplicateHandling, forceDuplicateO
     }).promise();
 
     t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
-    t.context.event.input.granules[0].files[0].checksumValue = await checksumS3Objects(
-      t.context.event.input.granules[0].files[0].checksumType,
-      t.context.event.config.provider.host,
+    t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
+      algorithm: t.context.event.input.granules[0].files[0].checksumType,
+      bucket: t.context.event.config.provider.host,
       key
-    );
+    });
 
     output = await syncGranule(t.context.event);
     await validateOutput(t, output);

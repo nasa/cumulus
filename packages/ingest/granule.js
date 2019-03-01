@@ -500,10 +500,10 @@ class Granule {
     // compare the checksum of the existing file and new file, and handle them accordingly
     if (renamingFile) {
       const existingFileSum = await
-      aws.checksumS3Objects(checksumType || 'CKSUM', bucket, destinationKey);
+      aws.calculateS3ObjectChecksum({ algorithm: (checksumType || 'CKSUM'), bucket, key: destinationKey });
 
       const stagedFileSum = checksumValue
-      || await aws.checksumS3Objects('CKSUM', bucket, stagedFileKey);
+      || await aws.calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket, key: stagedFileKey });
 
       // if the checksum of the existing file is the same as the new one, keep the existing file,
       // else rename the existing file, and both files are part of the granule.
