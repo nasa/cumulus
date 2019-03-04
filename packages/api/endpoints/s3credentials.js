@@ -14,7 +14,7 @@ const { lambda } = require('@cumulus/common/aws');
  *                   for same-region s3 direct access.
  */
 async function requestTemporaryCredentialsFromNgap(username) {
-  const FunctionName = 'gsfc-ngap-sh-s3-sts-get-keys';
+  const FunctionName = process.env.STSCredentialsLambda || 'gsfc-ngap-sh-s3-sts-get-keys';
   const Payload = JSON.stringify({
     accesstype: 'sameregion',
     duration: '3600', // one hour max allowed by AWS.
