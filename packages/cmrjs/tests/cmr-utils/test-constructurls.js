@@ -184,7 +184,7 @@ test('constructRelatedUrls returns expected array when called with file list', (
 });
 
 test('constructRelatedUrls returns expected array when called with an empty file list', (t) => {
-  const movedFiles = []
+  const movedFiles = [];
   const expected = [omit(s3CredentialsEndpointObject, 'URLDescription')];
 
   const actual = constructRelatedUrls({
