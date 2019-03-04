@@ -124,12 +124,12 @@ describe('When accessing an S3 bucket directly', () => {
   });
 
   describe('with third-party/invalid credentials', () => {
-    const thirdPartyCredentials = JSON.stringify({
+    const thirdPartyCredentials = {
       accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
       secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
       sessionToken: 'FAKETOKENdfkjaf9rufjfdklajf',
       expiration: '2019-02-26 00:08:18+00:00'
-    });
+    };
 
     it('the bucket contents can NOT be listed', async () => {
       expect(await canListObjects('us-east-1', thirdPartyCredentials)).toBe('false');
