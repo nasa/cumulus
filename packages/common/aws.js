@@ -435,16 +435,18 @@ exports.deleteS3Files = (s3Objs) => pMap(
 * @param {string} bucket - name of the bucket
 * @returns {Promise} - the promised result of `S3.deleteBucket`
 **/
-exports.recursivelyDeleteS3Bucket = async (bucket) => {
-  const response = await exports.s3().listObjects({ Bucket: bucket }).promise();
-  const s3Objects = response.Contents.map((o) => ({
-    Bucket: bucket,
-    Key: o.Key
-  }));
+exports.recursivelyDeleteS3Bucket = improveStackTrace(
+  async (bucket) => {
+    const response = await exports.s3().listObjects({ Bucket: bucket }).promise();
+    const s3Objects = response.Contents.map((o) => ({
+      Bucket: bucket,
+      Key: o.Key
+    }));
 
-  await exports.deleteS3Files(s3Objects);
-  await exports.s3().deleteBucket({ Bucket: bucket }).promise();
-};
+    await exports.deleteS3Files(s3Objects);
+    await exports.s3().deleteBucket({ Bucket: bucket }).promise();
+  }
+);
 
 exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
   let i = 0;
