@@ -477,7 +477,7 @@ function setupDuplicateHandlingConfig(t, duplicateHandling, forceDuplicateOverwr
   return payload;
 }
 
-function setDuplicateHandlingCollection(t, duplicateHandling) {
+function setupDuplicateHandlingCollection(t, duplicateHandling) {
   const payload = buildPayload(t);
   set(payload, 'config.collection.duplicateHandling', duplicateHandling);
   return payload;
@@ -559,6 +559,6 @@ test.serial('when duplicateHandling is "replace" and forceDuplicateOverwrite is 
 });
 
 test.serial('when duplicateHandling is specified as "replace" via collection, do overwrite files', async (t) => {
-  const payload = setDuplicateHandlingCollection(t, 'replace');
+  const payload = setupDuplicateHandlingCollection(t, 'replace');
   await granuleFilesOverwrittenTest(t, payload);
 });
