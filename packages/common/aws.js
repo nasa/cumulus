@@ -624,7 +624,7 @@ exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
  *
  * @returns {number|string} - calculated checksum
  */
-exports.calculateS3ObjectChecksum = ({
+exports.calculateS3ObjectChecksum = async ({
   algorithm,
   bucket,
   key,
@@ -647,7 +647,7 @@ exports.calculateS3ObjectChecksum = ({
  * @throws {InvalidChecksum} - Throws error if validation fails
  * @returns {boolean} - returns true for success
  */
-exports.validateS3ObjectChecksum = ({
+exports.validateS3ObjectChecksum = async ({
   algorithm,
   bucket,
   key,
@@ -655,7 +655,7 @@ exports.validateS3ObjectChecksum = ({
   options
 }) => {
   const fileStream = exports.getS3ObjectReadStream(bucket, key);
-  if (!validateChecksumFromStream(algorithm, fileStream, expectedSum, options)) {
+  if (!(await validateChecksumFromStream(algorithm, fileStream, expectedSum, options))) {
     const msg = `Invalid checksum for S3 object ${bucket}/${key} with type ${algorithm} and expected sum ${expectedSum}`;
     throw new errors.InvalidChecksum(msg);
   }
