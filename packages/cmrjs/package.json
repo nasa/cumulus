@@ -32,7 +32,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmr-client": "1.11.2",
+    "@cumulus/cmr-client": "1.11.2-alpha1",
     "@cumulus/common": "1.11.2",
     "got": "^8.3.0",
     "lodash.get": "^4.4.2",
