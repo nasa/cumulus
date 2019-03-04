@@ -39,7 +39,6 @@ test('returns correct url for protected data', (t) => {
       URLDescription: 'File to download',
       Type: 'GET DATA'
     },
-    s3CredentialsEndpointObject
   ];
 
   const actual = constructOnlineAccessUrls({
@@ -66,7 +65,6 @@ test('Returns correct url object for public data.', (t) => {
       URLDescription: 'File to download',
       Type: 'GET DATA'
     },
-    s3CredentialsEndpointObject
   ];
 
   const actual = constructOnlineAccessUrls({
@@ -87,15 +85,13 @@ test('Returns empty list for private data.', (t) => {
       bucket: privateBucket
     }
   ];
-  const expected = [s3CredentialsEndpointObject];
-
   const actual = constructOnlineAccessUrls({
     files: movedFiles,
     distEndpoint: endpoint,
     buckets: t.context.buckets
   });
 
-  t.deepEqual(actual, expected);
+  t.deepEqual(actual, []);
 });
 
 test('returns an array of correct url objects given a list of moved files.', (t) => {
@@ -127,7 +123,6 @@ test('returns an array of correct url objects given a list of moved files.', (t)
       URLDescription: 'File to download',
       Type: 'GET DATA'
     },
-    s3CredentialsEndpointObject
   ];
 
   const actual = constructOnlineAccessUrls({
