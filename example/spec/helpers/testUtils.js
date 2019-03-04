@@ -63,7 +63,7 @@ function loadCloudformationTemplate(options = { directory: 'app' }) {
   const { directory } = options;
   const cloudformationObject = yaml.safeLoad(fs.readFileSync(`./${directory}/cloudformation.yml`));
   return cloudformationObject;
-};
+}
 
 /**
  * Creates a new file using a template file and configuration object which
