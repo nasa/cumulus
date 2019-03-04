@@ -22,6 +22,7 @@ const xmlParseOptions = {
  * @returns {string} - value to use to build correct cmr url for environment.
  */
 function hostId(env) {
+  console.log('Function hostId is deprecated as of version 1.11.2');
   return get(
     { OPS: '', SIT: 'sit', UAT: 'uat' },
     env,
@@ -45,6 +46,7 @@ function hostId(env) {
  * @returns {string} the cmr host address
  */
 function getHost(environment = process.env) {
+  console.log('Function getHost is deprecated as of version 1.11.2');
   const env = environment.CMR_ENVIRONMENT;
   if (environment.CMR_HOST) return environment.CMR_HOST;
 
@@ -119,6 +121,7 @@ async function validateUMMG(ummMetadata, identifier, provider) {
  * @returns {string} IP address
  */
 async function getIp() {
+  console.log('Function getIp is deprecated as of version 1.11.2');
   return publicIp.v4()
     .catch((err) => {
       if (err.message === 'Query timed out') {
@@ -141,6 +144,7 @@ async function getIp() {
  * @returns {Promise.<string>} the token
  */
 async function updateToken(cmrProvider, clientId, username, password) {
+  console.log('Function updateToken is deprecated as of version 1.11.2');
   if (!cmrProvider) throw new Error('cmrProvider is required.');
   if (!clientId) throw new Error('clientId is required.');
   if (!username) throw new Error('username is required.');
