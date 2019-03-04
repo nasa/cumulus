@@ -214,8 +214,18 @@ describe('When there are granule differences and granule reconciliation is run',
 
     await setupCollectionAndTestData(testSuffix, testDataFolder);
 
-    // ingest a granule and publish it to CMR
-    publishedGranule = await ingestAndPublishGranule(testSuffix, testDataFolder);
+    const ingestResults = await Promise.all([
+      // ingest a granule and publish it to CMR
+      ingestAndPublishGranule(testSuffix, testDataFolder),
+
+      // ingest a granule but not publish it to CMR
+      ingestAndPublishGranule(testSuffix, testDataFolder, false),
+
+      // ingest a granule to CMR only
+      ingestGranuleToCMR()
+    ]);
+
+    [publishedGranule, dbGranule, cmrGranule] = ingestResults;
 
     // update one of the granule files in database so that that file won't match with CMR
     const granuleResponse = await granulesApiTestUtils.getGranule({
@@ -224,12 +234,6 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranule, JSON.parse(granuleResponse.body).files, /jpg$/, 'jpg2'));
-
-    // ingest a granule but not publish it to CMR
-    dbGranule = await ingestAndPublishGranule(testSuffix, testDataFolder, false);
-
-    // ingest a granule to CMR only
-    cmrGranule = await ingestGranuleToCMR();
 
     console.log(`invoke ${config.stackName}-CreateReconciliationReport`);
 
@@ -339,7 +343,9 @@ describe('When there are granule differences and granule reconciliation is run',
       }).promise(),
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir),
-      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+      granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranule }),
+      cmr.deleteGranule(cmrGranule)
     ]);
 
     const granuleResponse = await granulesApiTestUtils.getGranule({
@@ -350,7 +356,5 @@ describe('When there are granule differences and granule reconciliation is run',
     await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: publishedGranule });
     await waitForConceptExistsOutcome(JSON.parse(granuleResponse.body).cmrLink, false);
     await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: publishedGranule });
-    await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranule });
-    await cmr.deleteGranule(cmrGranule);
   });
 });
