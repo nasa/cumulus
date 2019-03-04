@@ -302,16 +302,21 @@ describe('When there are granule differences and granule reconciliation is run',
   });
 
   it('generates a report showing granule files that are in the Cumulus but not in CMR', () => {
-    // ingested (not published) granule should only in Cumulus
+    // published granule should have one file(renamed file) in Cumulus
     const fileNames = report.filesInCumulusCmr.onlyInCumulus.map((file) => file.fileName);
     expect(fileNames).toContain(updatedGranuleFile.fileName);
     expect(fileNames).not.toContain(originalGranuleFile.fileName);
+    expect(report.filesInCumulusCmr.onlyInCumulus.filter((file) => file.granuleId === publishedGranule).length)
+      .toBe(1);
   });
 
   it('generates a report showing granule files that are in the CMR but not in Cumulus', () => {
     const urls = report.filesInCumulusCmr.onlyInCmr;
     expect(urls.find((url) => url.URL.endsWith(originalGranuleFile.fileName))).toBeTruthy();
     expect(urls.find((url) => url.URL.endsWith(updatedGranuleFile.fileName))).toBeFalsy();
+    // TBD update to 1 after the s3credentials url has type 'VIEW RELATED INFORMATION' (CUMULUS-1182)
+    expect(report.filesInCumulusCmr.onlyInCmr.filter((file) => file.GranuleUR === publishedGranule).length)
+      .toBe(2);
   });
 
   afterAll(async () => {
