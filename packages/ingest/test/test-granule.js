@@ -95,13 +95,13 @@ selectorSyncTypes.forEach((item) => {
 });
 
 /**
-* test the granule.validateChecksum() method
+* test the granule.verifyFile() method
 **/
 
 const sums = require('./fixtures/sums');
 
 Object.keys(sums).forEach((key) => {
-  test(`granule.validateChecksum ${key}`, async (t) => {
+  test(`granule.verifyFile ${key}`, async (t) => {
     const granule = new HttpGranule(
       ingestPayload.config.buckets,
       ingestPayload.config.collection,
@@ -116,8 +116,8 @@ Object.keys(sums).forEach((key) => {
 
     try {
       const file = { checksumType: key, checksumValue: sums[key] };
-      await granule.validateChecksum(file, t.context.internalBucket, key);
-      await granule.validateChecksum(key, t.context.internalBucket, key);
+      await granule.verifyFile(file, t.context.internalBucket, key);
+      await granule.verifyFile(key, t.context.internalBucket, key);
       t.pass();
     }
     catch (e) {
