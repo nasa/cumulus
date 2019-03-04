@@ -8,8 +8,11 @@ const flatten = require('lodash.flatten');
 const path = require('path');
 
 const {
-  getRenamedS3File, unversionFilename,
-  moveGranuleFile, renameS3FileWithTimestamp
+  getRenamedS3File,
+  unversionFilename,
+  moveGranuleFile,
+  renameS3FileWithTimestamp,
+  duplicateHandlingType
 } = require('@cumulus/ingest/granule');
 
 const {
@@ -302,30 +305,6 @@ async function updateEachCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoin
       granuleId, updatedCmrFile, granule.files, distEndpoint, publish, bucketsConfig
     );
   }));
-}
-
-/**
- * Returns a directive on how to act when duplicate files are encountered.
- *
- * @param {Object} event - lambda function event.
- * @param {Object} event.config - the config object
- * @param {Object} event.config.collection - collection object.
-
- * @returns {string} - duplicate handling directive.
- */
-function duplicateHandlingType(event) {
-  const config = get(event, 'config');
-  const collection = get(config, 'collection');
-
-  let duplicateHandling = get(config, 'duplicateHandling', get(collection, 'duplicateHandling', 'error'));
-
-  const forceDuplicateOverwrite = get(event, 'cumulus_config.cumulus_context.forceDuplicateOverwrite', false);
-
-  log.debug(`Configured duplicateHandling value: ${duplicateHandling}, forceDuplicateOverwrite ${forceDuplicateOverwrite}`);
-
-  if (forceDuplicateOverwrite === true) duplicateHandling = 'replace';
-
-  return duplicateHandling;
 }
 
 /**
