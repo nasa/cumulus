@@ -110,6 +110,18 @@ default:
         policy_type: SimpleScaling
         adjustment_type: ChangeInCapacity
         scaling_adjustment: -1
+      Step:
+        policy_type: StepScaling
+        adjustment_type: ChangeInCapacity
+        step_adjustments:
+          - metric_interval_lower_bound: '0'
+            scaling_adjustment: 1
+          - metric_interval_upper_bound: '0'
+            scaling_adjustment: -1
+      Target:
+        policy_type: TargetTrackingScaling
+        adjustment_type: ChangeInCapacity
+        target_value: 50
 
     services:
       HelloWorldService:
