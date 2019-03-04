@@ -3,7 +3,6 @@
 const path = require('path');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const errors = require('@cumulus/common/errors');
-const get = require('lodash.get');
 const lock = require('@cumulus/ingest/lock');
 const {
   selector: granuleSelector,
