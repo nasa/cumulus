@@ -133,6 +133,16 @@ exports.isUndefined = (x) => x === undefined;
 exports.isNil = (x) => exports.isNull(x) || exports.isUndefined(x);
 
 /**
+ * Test if a value is anything other than null or undefined
+ *
+ * @param {*} x value to check
+ * @returns {boolean}
+ *
+ * @kind function
+ */
+exports.isNotNil = exports.negate(exports.isNil);
+
+/**
  * Replace the stack of an error
  *
  * Note: This mutates the error that was passed in.

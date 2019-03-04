@@ -303,6 +303,7 @@ isNil(undefined); // => true
     * [.isNull(x)](#module_util.isNull) ⇒ <code>boolean</code>
     * [.isUndefined(x)](#module_util.isUndefined) ⇒ <code>boolean</code>
     * [.isNil(x)](#module_util.isNil) ⇒ <code>boolean</code>
+    * [.isNotNil(x)](#module_util.isNotNil) ⇒ <code>boolean</code>
     * [.setErrorStack(error, newStack)](#module_util.setErrorStack)
     * [.renameProperty(from, to, obj)](#module_util.renameProperty) ⇒ <code>Object</code>
     * [.all(predicate, collection)](#module_util.all) ⇒ <code>boolean</code>
@@ -390,6 +391,17 @@ Test if a value is undefined
 
 ### util.isNil(x) ⇒ <code>boolean</code>
 Test if a value is null or undefined
+
+**Kind**: static method of [<code>util</code>](#module_util)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| x | <code>\*</code> | value to check |
+
+<a name="module_util.isNotNil"></a>
+
+### util.isNotNil(x) ⇒ <code>boolean</code>
+Test if a value is anything other than null or undefined
 
 **Kind**: static method of [<code>util</code>](#module_util)  
 
