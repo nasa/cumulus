@@ -985,7 +985,7 @@ Resources:
       LaunchConfigurationName:
         Ref: CumulusContainerInstanceLaunch
       MinSize: {{#if ecs.minInstances }}{{ ecs.minInstances }}{{ else }}'0'{{/if}}
-      MaxSize: {{#ifLessThan ecs.maxInstances 11 }}{{ ecs.maxInstances }}{{ else }}10{{/ifLessThan}}
+      MaxSize: {{#if ecs.maxInstances }}{{ ecs.maxInstances }}{{ else }}'1'{{/if}}
       DesiredCapacity: {{ ecs.desiredInstances }}
       Tags:
       - Key: Name
@@ -1227,8 +1227,13 @@ Resources:
       {{#ifEquals policy_type "StepScaling"}}
       StepAdjustments:
         {{#each this.step_adjustments}}
-        - MetricIntervalLowerBound: {{ metric_interval_lower_bound }}
+        -
+        {{#if metric_interval_lower_bound }}
+          MetricIntervalLowerBound: {{ metric_interval_lower_bound }}
+        {{/if}}
+        {{#if metric_interval_upper_bound }}
           MetricIntervalUpperBound: {{ metric_interval_upper_bound }}
+        {{/if}}
           ScalingAdjustment: {{ scaling_adjustment }}
         {{/each}}
       {{/ifEquals}}
