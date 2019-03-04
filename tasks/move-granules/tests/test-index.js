@@ -59,6 +59,7 @@ function buildPayload(t) {
       file.filename = buildS3Uri(t.context.stagingBucket, parseS3Uri(file.filename).Key);
     });
   });
+  debugger;
   return newPayload;
 }
 
@@ -469,11 +470,20 @@ test.serial('When duplicateHandling is "skip", does not overwrite or create new.
   });
 });
 
-async function granuleFilesOverwrittenTest(t, duplicateHandling, forceDuplicateOverwrite) {
-  let newPayload = buildPayload(t);
-  newPayload.config.duplicateHandling = duplicateHandling;
-  set(newPayload, 'cumulus_config.cumulus_context.forceDuplicateOverwrite', forceDuplicateOverwrite);
+function setupDuplicateHandlingConfig(t, duplicateHandling, forceDuplicateOverwrite) {
+  const payload = buildPayload(t);
+  payload.config.duplicateHandling = duplicateHandling;
+  set(payload, 'cumulus_config.cumulus_context.forceDuplicateOverwrite', forceDuplicateOverwrite);
+  return payload;
+}
 
+function setDuplicateHandlingCollection(t, duplicateHandling) {
+  const payload = buildPayload(t);
+  set(payload, 'config.collection.duplicateHandling', duplicateHandling);
+  return payload;
+}
+
+async function granuleFilesOverwrittenTest(t, newPayload) {
   // payload could be modified
   const newPayloadOrig = clonedeep(newPayload);
 
@@ -524,21 +534,31 @@ async function granuleFilesOverwrittenTest(t, duplicateHandling, forceDuplicateO
 }
 
 test.serial('when duplicateHandling is "replace", do overwrite files', async (t) => {
-  await granuleFilesOverwrittenTest(t, 'replace');
+  const payload = setupDuplicateHandlingConfig(t, 'replace');
+  await granuleFilesOverwrittenTest(t, payload);
 });
 
 test.serial('when duplicateHandling is "error" and forceDuplicateOverwrite is true, do overwrite files', async (t) => {
-  await granuleFilesOverwrittenTest(t, 'error', true);
+  const payload = setupDuplicateHandlingConfig(t, 'error', true);
+  await granuleFilesOverwrittenTest(t, payload);
 });
 
 test.serial('when duplicateHandling is "skip" and forceDuplicateOverwrite is true, do overwrite files', async (t) => {
-  await granuleFilesOverwrittenTest(t, 'skip', true);
+  const payload = setupDuplicateHandlingConfig(t, 'skip', true);
+  await granuleFilesOverwrittenTest(t, payload);
 });
 
 test.serial('when duplicateHandling is "version" and forceDuplicateOverwrite is true, do overwrite files', async (t) => {
-  await granuleFilesOverwrittenTest(t, 'version', true);
+  const payload = setupDuplicateHandlingConfig(t, 'version', true);
+  await granuleFilesOverwrittenTest(t, payload);
 });
 
 test.serial('when duplicateHandling is "replace" and forceDuplicateOverwrite is true, do overwrite files', async (t) => {
-  await granuleFilesOverwrittenTest(t, 'replace', true);
+  const payload = setupDuplicateHandlingConfig(t, 'replace', true);
+  await granuleFilesOverwrittenTest(t, payload);
+});
+
+test.serial('when duplicateHandling is specified as "replace" via collection, do overwrite files', async (t) => {
+  const payload = setDuplicateHandlingCollection(t, 'replace');
+  await granuleFilesOverwrittenTest(t, payload);
 });
