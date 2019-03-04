@@ -398,7 +398,7 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
 test.serial('download granule with bad checksum in file from HTTP endpoint throws', async (t) => {
   const granuleChecksumValue = 8675309;
 
-  // Give it a bogus checksumValue to prompt a failure in validateChecksumFile
+  // Give it a bogus checksumValue to prompt a failure in verifyFile
   t.context.event.input.granules[0].files[0].checksumValue = granuleChecksumValue;
   t.context.event.config.provider = {
     id: 'MODAPS',
