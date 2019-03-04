@@ -59,7 +59,7 @@ function buildPayload(t) {
       file.filename = buildS3Uri(t.context.stagingBucket, parseS3Uri(file.filename).Key);
     });
   });
-  debugger;
+
   return newPayload;
 }
 
