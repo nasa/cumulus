@@ -315,7 +315,7 @@ async function updateEachCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoin
  */
 function duplicateHandlingType(event) {
   const config = get(event, 'config');
-  const collection = get(event, 'collection');
+  const collection = get(config, 'collection');
 
   let duplicateHandling = get(config, 'duplicateHandling', get(collection, 'duplicateHandling', 'error'));
 
