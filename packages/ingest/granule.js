@@ -353,7 +353,7 @@ class Granule {
    */
   async validateChecksum(file, bucket, key, options = {}) {
     deprecate('@cumulus/ingest/Granule.validateChecksum', '1.11.2', '@cumulus/ingest/Granule.verifyFile');
-    return verifyFile(file, bucket, key, options);
+    return this.verifyFile(file, bucket, key, options);
   }
 
   /**
