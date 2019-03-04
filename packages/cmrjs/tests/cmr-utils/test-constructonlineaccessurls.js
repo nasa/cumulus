@@ -13,7 +13,7 @@ const getS3CredentialsObject = cmrUtils.__get__('getS3CredentialsObject');
 const sortByURL = (a, b) => a.URL < b.URL;
 
 const endpoint = 'https://endpoint';
-const s3CredentialsEndpointObject = getS3CredentialsObject(`${endpoint}/s3credentials`);
+// const s3CredentialsEndpointObject = getS3CredentialsObject(`${endpoint}/s3credentials`);
 
 
 test.beforeEach((t) => {
@@ -38,7 +38,7 @@ test('returns correct url for protected data', (t) => {
       Description: 'File to download',
       URLDescription: 'File to download',
       Type: 'GET DATA'
-    },
+    }
   ];
 
   const actual = constructOnlineAccessUrls({
@@ -64,7 +64,7 @@ test('Returns correct url object for public data.', (t) => {
       Description: 'File to download',
       URLDescription: 'File to download',
       Type: 'GET DATA'
-    },
+    }
   ];
 
   const actual = constructOnlineAccessUrls({
@@ -122,7 +122,7 @@ test('returns an array of correct url objects given a list of moved files.', (t)
       Description: 'File to download',
       URLDescription: 'File to download',
       Type: 'GET DATA'
-    },
+    }
   ];
 
   const actual = constructOnlineAccessUrls({
