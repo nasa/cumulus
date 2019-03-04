@@ -9,6 +9,7 @@ const { promisify } = require('util');
 const tempy = require('tempy');
 const execa = require('execa');
 const pTimeout = require('p-timeout');
+const yaml = require('js-yaml');
 
 const {
   aws: { s3, headObject, parseS3Uri },
@@ -57,6 +58,12 @@ function loadConfig() {
 
   return config.test_configs;
 }
+
+function loadCloudformationTemplate(options = { directory: 'app' }) {
+  const { directory } = options;
+  const cloudformationObject = yaml.safeLoad(fs.readFileSync(`./${directory}/cloudformation.yml`));
+  return cloudformationObject;
+};
 
 /**
  * Creates a new file using a template file and configuration object which
@@ -286,6 +293,7 @@ module.exports = {
   createTestDataPath,
   createTestSuffix,
   loadConfig,
+  loadCloudformationTemplate,
   templateFile,
   updateAndUploadTestDataToBucket,
   uploadTestDataToBucket,
