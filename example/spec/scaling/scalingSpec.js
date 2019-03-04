@@ -140,7 +140,7 @@ describe('cloudformation template for scaling policies', () => {
 
     it('has the expected values', () => {
       expect(cloudformationResources.TargetScalingPolicy).toEqual(expectedTargetScalingPolicy);
-    })
+    });
   });
 });
 
