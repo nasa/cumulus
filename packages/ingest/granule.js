@@ -180,7 +180,7 @@ class Granule {
     this.username = this.provider.username;
     this.password = this.provider.password;
     this.checksumFiles = {};
-    this.supportedChecksumFileTypes = ['.md5', '.cksum', '.sha1', '.sha256'];
+    this.supportedChecksumFileTypes = ['md5', 'cksum', 'sha1', 'sha256'];
 
     this.forceDownload = forceDownload;
 
@@ -330,8 +330,9 @@ class Granule {
   filterChecksumFiles(file) {
     let unsupported = true;
     this.supportedChecksumFileTypes.forEach((type) => {
-      if (file.name.indexOf(type) > 0) {
-        this.checksumFiles[file.name.replace(type, '')] = file;
+      const ext = `.${type}`;
+      if (file.name.indexOf(ext) > 0) {
+        this.checksumFiles[file.name.replace(ext, '')] = file;
         unsupported = false;
       }
     });
