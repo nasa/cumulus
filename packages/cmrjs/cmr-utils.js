@@ -307,8 +307,7 @@ function getS3CredentialsObject(s3CredsUrl) {
  * @param {Array<Object>} params.files - array of file objects
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {BucketsConfig} params.buckets -  Class instance
- * @param {string} params.s3CredsEndpoint - optional s3credentials endpoint name
- * @returns {Array<{URL: string, URLDescription: string}>}
+ * @returns {Array<{URL: string, URLDescription: string, Description: string, Type: string}>}
  *   returns the list of online access url objects
  */
 function constructOnlineAccessUrls({
@@ -339,33 +338,16 @@ function constructOnlineAccessUrls({
   });
 
   return urlList.filter((urlObj) => !(urlObj == null));
-  /*
-  const urls = [];
-
-  files.forEach((file) => {
-    const urlObj = {};
-    const bucketType = buckets.type(file.bucket);
-    if (bucketType === 'protected') {
-      const extension = urljoin(file.bucket, getS3KeyOfFile(file));
-      urlObj.URL = urljoin(distEndpoint, extension);
-      urlObj.URLDescription = 'File to download'; // used by ECHO10
-      urlObj.Description = 'File to download'; // used by UMMG
-      urlObj.Type = 'GET DATA'; // used by UMMG
-      urls.push(urlObj);
-    }
-    else if (bucketType === 'public') {
-      urlObj.URL = `https://${file.bucket}.s3.amazonaws.com/${getS3KeyOfFile(file)}`;
-      urlObj.URLDescription = 'File to download';
-      urlObj.Description = 'File to download';
-      urlObj.Type = 'GET DATA';
-      urls.push(urlObj);
-    }
-  });
-
-  return urls;
-  */
 }
 
+/**
+ * Construct a list of ECHO10XML resource urls
+ *
+ * @param {string} distEndpoint - distribution endpoint
+ * @param {string} s3CredsEndpoint - Optional endpoint for acquiring temporary s3 creds
+ * @returns {Array<{URL: string, URLDescription: string, Type: string}>}
+ *   returns the list of online access url objects
+ */
 function constructResourceUrls(distEndpoint, s3CredsEndpoint = 's3credentials') {
   const credsUrl = urljoin(distEndpoint, s3CredsEndpoint);
   const s3CredentialsObject = getS3CredentialsObject(credsUrl);
@@ -374,6 +356,17 @@ function constructResourceUrls(distEndpoint, s3CredsEndpoint = 's3credentials') 
   return resourceUrls.map((urlObj) => omit(urlObj, 'Description'));
 }
 
+/**
+ * Construct a list of online access urls.
+ *
+ * @param {Object} params - input parameters
+ * @param {Array<Object>} params.files - array of file objects
+ * @param {string} params.distEndpoint - distribution endpoint from config
+ * @param {BucketsConfig} params.buckets -  Class instance
+ * @param {string} params.s3CredsEndpoint - Optional endpoint for acquiring temporary s3 creds
+ * @returns {Array<{URL: string, string, Description: string, Type: string}>}
+ *   returns the list of online access url objects
+ */
 function constructRelatedUrls({
   files,
   distEndpoint,
@@ -471,7 +464,6 @@ function mergeURLs(original, updated, removed = []) {
  */
 async function updateUMMGMetadata(cmrFile, files, distEndpoint, buckets) {
   const newURLs = constructRelatedUrls({ files, distEndpoint, buckets });
-  console.log('constructUMMGRelatedUrls: ', newURLs);
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
   const filename = getS3UrlOfFile(cmrFile);
   const metadataObject = await metadataObjectFromCMRJSONFile(filename);
@@ -516,10 +508,8 @@ function getCreds() {
  */
 async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   let newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets });
-  console.log('constructOnlineAccessUrls: ', newURLs);
   newURLs = newURLs.map((urlObj) => omit(urlObj, ['Type', 'Description']));
   newURLs = newURLs.concat(constructResourceUrls(distEndpoint));
-  console.log('updateEcho10XMLMetadata new URLS: ', newURLs);
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
 
   // add/replace the OnlineAccessUrls
