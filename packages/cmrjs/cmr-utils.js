@@ -19,6 +19,20 @@ const { omit } = require('@cumulus/common/util');
 const { CMR } = require('./cmr');
 const { getUrl, xmlParseOptions } = require('./utils');
 
+function getS3KeyOfFile(file) {
+  if (file.filename) return aws.parseS3Uri(file.filename).Key;
+  if (file.filepath) return file.filepath;
+  if (file.key) return file.key;
+  throw new Error(`Unable to determine s3 key of file: ${JSON.stringify(file)}`);
+}
+
+function getS3UrlOfFile(file) {
+  if (file.filename) return file.filename;
+  if (file.bucket && file.filepath) return aws.buildS3Uri(file.bucket, file.filepath);
+  if (file.bucket && file.key) return aws.buildS3Uri(file.bucket, file.key);
+  throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
+}
+
 const isECHO10File = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFile = (filename) => filename.endsWith('cmr.json');
 const isCMRFilename = (filename) => isECHO10File(filename) || isUMMGFile(filename);
@@ -49,7 +63,8 @@ async function getCMRInstance(creds, systemBucket, stack) {
     password = await DefaultProvider.decrypt(creds.password, undefined, systemBucket, stack);
   }
   catch (error) {
-    log.error('Decrypting password failed, using unencrypted password', error);
+    const reason = error.message || error.code || error.name;
+    log.error('Decrypting password failed, using unencrypted password:', reason);
     password = creds.password;
   }
   const cmrInstance = new CMR(
@@ -89,7 +104,7 @@ async function publishECHO10XML2CMR(cmrFile, creds, systemBucket, stack) {
 
   return {
     granuleId: cmrFile.granuleId,
-    filename: cmrFile.filename,
+    filename: getS3UrlOfFile(cmrFile),
     conceptId,
     metadataFormat: 'echo10',
     link: `${getUrl('search')}granules.json?concept_id=${conceptId}`
@@ -271,22 +286,44 @@ async function bucketsConfigDefaults() {
 }
 
 /**
+ * Build and return an S3 Credentials Object for adding to CMR onlineAccessUrls
+ *
+ * @param {string} s3CredsUrl - full url pointing to the s3 credential distribution api
+ * @returns {Object} Object with attributes required for adding an onlineAccessUrl
+ */
+function getS3CredentialsObject(s3CredsUrl) {
+  return {
+    URL: s3CredsUrl,
+    URLDescription: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
+    Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
+    Type: 'VIEW RELATED INFORMATION'
+  };
+}
+
+/**
  * Construct a list of online access urls.
  *
- * @param {Array<Object>} files - array of file objects
- * @param {string} distEndpoint - distribution endpoint from config
- * @param {BucketsConfig} buckets -  Class instance
+ * @param {Object} params - input parameters
+ * @param {Array<Object>} params.files - array of file objects
+ * @param {string} params.distEndpoint - distribution endpoint from config
+ * @param {BucketsConfig} params.buckets -  Class instance
+ * @param {string} params.s3CredsEndpoint - optional s3credentials endpoint name
  * @returns {Array<{URL: string, URLDescription: string}>}
  *   returns the list of online access url objects
  */
-function constructOnlineAccessUrls(files, distEndpoint, buckets) {
+function constructOnlineAccessUrls({
+  files,
+  distEndpoint,
+  buckets,
+  s3CredsEndpoint = 's3credentials'
+}) {
   const urls = [];
 
   files.forEach((file) => {
     const urlObj = {};
     const bucketType = buckets.type(file.bucket);
     if (bucketType === 'protected') {
-      const extension = urljoin(file.bucket, `${file.filepath}`);
+      const extension = urljoin(file.bucket, getS3KeyOfFile(file));
       urlObj.URL = urljoin(distEndpoint, extension);
       urlObj.URLDescription = 'File to download'; // used by ECHO10
       urlObj.Description = 'File to download'; // used by UMMG
@@ -294,13 +331,15 @@ function constructOnlineAccessUrls(files, distEndpoint, buckets) {
       urls.push(urlObj);
     }
     else if (bucketType === 'public') {
-      urlObj.URL = `https://${file.bucket}.s3.amazonaws.com/${file.filepath}`;
+      urlObj.URL = `https://${file.bucket}.s3.amazonaws.com/${getS3KeyOfFile(file)}`;
       urlObj.URLDescription = 'File to download';
       urlObj.Description = 'File to download';
       urlObj.Type = 'GET DATA';
       urls.push(urlObj);
     }
   });
+
+  urls.push(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
 
   return urls;
 }
@@ -318,7 +357,7 @@ function onlineAccessURLsToRemove(files, buckets) {
   files.forEach((file) => {
     const bucketType = buckets.type(file.bucket);
     if (!typesToKeep.includes(bucketType)) {
-      urls.push({ URL: file.filepath });
+      urls.push({ URL: getS3KeyOfFile(file) });
     }
   });
   return urls;
@@ -380,20 +419,21 @@ function mergeURLs(original, updated, removed = []) {
  * @returns {Promise} returns promised updated UMMG metadata object.
  */
 async function updateUMMGMetadata(cmrFile, files, distEndpoint, buckets) {
-  let newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
+  let newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets });
   newURLs = newURLs.map((urlObj) => omit(urlObj, 'URLDescription'));
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
-  const metadataObject = await metadataObjectFromCMRJSONFile(cmrFile.filename);
+  const filename = getS3UrlOfFile(cmrFile);
+  const metadataObject = await metadataObjectFromCMRJSONFile(filename);
 
   const originalURLs = _get(metadataObject, 'RelatedUrls', []);
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
   _set(metadataObject, 'RelatedUrls', mergedURLs);
 
-  const tags = await aws.s3GetObjectTagging(cmrFile.bucket, cmrFile.filepath);
+  const tags = await aws.s3GetObjectTagging(cmrFile.bucket, getS3KeyOfFile(cmrFile));
   const tagsQueryString = aws.s3TagSetToQueryString(tags.TagSet);
   await aws.promiseS3Upload({
     Bucket: cmrFile.bucket,
-    Key: cmrFile.filepath,
+    Key: getS3KeyOfFile(cmrFile),
     Body: JSON.stringify(metadataObject),
     Tagging: tagsQueryString
   });
@@ -424,12 +464,13 @@ function getCreds() {
  * @returns {Promise} returns promised updated metadata object.
  */
 async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
-  let newURLs = constructOnlineAccessUrls(files, distEndpoint, buckets);
+  let newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets });
   newURLs = newURLs.map((urlObj) => omit(urlObj, ['Type', 'Description']));
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
 
   // add/replace the OnlineAccessUrls
-  const metadataObject = await metadataObjectFromCMRXMLFile(cmrFile.filename);
+  const filename = getS3UrlOfFile(cmrFile);
+  const metadataObject = await metadataObjectFromCMRXMLFile(filename);
   const metadataGranule = metadataObject.Granule;
 
   const updatedGranule = { ...metadataGranule };
@@ -447,10 +488,10 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(metadataObject);
 
-  const tags = await aws.s3GetObjectTagging(cmrFile.bucket, cmrFile.filepath);
+  const tags = await aws.s3GetObjectTagging(cmrFile.bucket, getS3KeyOfFile(cmrFile));
   const tagsQueryString = aws.s3TagSetToQueryString(tags.TagSet);
   await aws.promiseS3Upload({
-    Bucket: cmrFile.bucket, Key: cmrFile.filepath, Body: xml, Tagging: tagsQueryString
+    Bucket: cmrFile.bucket, Key: getS3KeyOfFile(cmrFile), Body: xml, Tagging: tagsQueryString
   });
   return metadataObject;
 }
@@ -476,15 +517,17 @@ async function updateCMRMetadata(
   published,
   inBuckets = null
 ) {
-  log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${cmrFile.filename}`);
+  const filename = getS3UrlOfFile(cmrFile);
+
+  log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${filename}`);
   const buckets = inBuckets || new BucketsConfig(await bucketsConfigDefaults());
   const cmrCredentials = (published) ? getCreds() : {};
   let theMetadata;
 
-  if (isECHO10File(cmrFile.filename)) {
+  if (isECHO10File(filename)) {
     theMetadata = await updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets);
   }
-  else if (isUMMGFile(cmrFile.filename)) {
+  else if (isUMMGFile(filename)) {
     theMetadata = await updateUMMGMetadata(cmrFile, files, distEndpoint, buckets);
   }
   else {
@@ -494,7 +537,7 @@ async function updateCMRMetadata(
   if (published) {
     // post metadata Object to CMR
     const cmrPublishObject = {
-      filename: cmrFile.filename,
+      filename,
       metadataObject: theMetadata,
       granuleId: granuleId
     };
