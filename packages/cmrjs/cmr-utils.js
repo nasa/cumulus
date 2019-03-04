@@ -314,9 +314,32 @@ function getS3CredentialsObject(s3CredsUrl) {
 function constructOnlineAccessUrls({
   files,
   distEndpoint,
-  buckets,
-  s3CredsEndpoint = 's3credentials'
+  buckets
 }) {
+  const urlList = files.map((file) => {
+    const bucketType = buckets.type(file.bucket);
+    if (bucketType === 'protected') {
+      const extension = urljoin(file.bucket, getS3KeyOfFile(file));
+      return {
+        URL: urljoin(distEndpoint, extension),
+        URLDescription: 'File to download', // used by ECHO10
+        Description: 'File to download', // used by UMMG
+        Type: 'GET DATA' // used by UMMG
+      };
+    }
+    if (bucketType === 'public') {
+      return {
+        URL: `https://${file.bucket}.s3.amazonaws.com/${getS3KeyOfFile(file)}`,
+        URLDescription: 'File to download',
+        Description: 'File to download',
+        Type: 'GET DATA'
+      };
+    }
+    return null;
+  });
+
+  return urlList.filter((urlObj) => !(urlObj == null));
+  /*
   const urls = [];
 
   files.forEach((file) => {
@@ -339,9 +362,37 @@ function constructOnlineAccessUrls({
     }
   });
 
-  urls.push(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
-
   return urls;
+  */
+}
+
+function constructResourceUrls(distEndpoint, s3CredsEndpoint = 's3credentials') {
+  const credsUrl = urljoin(distEndpoint, s3CredsEndpoint);
+  const s3CredentialsObject = getS3CredentialsObject(credsUrl);
+  const resourceUrls = [s3CredentialsObject];
+
+  return resourceUrls.map((urlObj) => omit(urlObj, 'Description'));
+}
+
+function constructRelatedUrls({
+  files,
+  distEndpoint,
+  buckets,
+  s3CredsEndpoint = 's3credentials'
+}) {
+  const credsUrl = urljoin(distEndpoint, s3CredsEndpoint);
+  const s3CredentialsObject = getS3CredentialsObject(credsUrl);
+
+  const getDataUrls = constructOnlineAccessUrls({
+    files,
+    distEndpoint,
+    buckets,
+    s3CredsEndpoint
+  });
+  const viewRelatedInformationUrls = [s3CredentialsObject];
+  const relatedUrls = getDataUrls.concat(viewRelatedInformationUrls);
+
+  return relatedUrls.map((urlObj) => omit(urlObj, 'URLDescription'));
 }
 
 /**
@@ -419,8 +470,8 @@ function mergeURLs(original, updated, removed = []) {
  * @returns {Promise} returns promised updated UMMG metadata object.
  */
 async function updateUMMGMetadata(cmrFile, files, distEndpoint, buckets) {
-  let newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets });
-  newURLs = newURLs.map((urlObj) => omit(urlObj, 'URLDescription'));
+  const newURLs = constructRelatedUrls({ files, distEndpoint, buckets });
+  console.log('constructUMMGRelatedUrls: ', newURLs);
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
   const filename = getS3UrlOfFile(cmrFile);
   const metadataObject = await metadataObjectFromCMRJSONFile(filename);
@@ -465,7 +516,10 @@ function getCreds() {
  */
 async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   let newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets });
+  console.log('constructOnlineAccessUrls: ', newURLs);
   newURLs = newURLs.map((urlObj) => omit(urlObj, ['Type', 'Description']));
+  newURLs = newURLs.concat(constructResourceUrls(distEndpoint));
+  console.log('updateEcho10XMLMetadata new URLS: ', newURLs);
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
 
   // add/replace the OnlineAccessUrls
