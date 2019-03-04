@@ -2,7 +2,7 @@
 
 ## `hello_world`
 
-`hello_world` is a simple docker image currently used for testing the `FargateHelloWorld` workflow.
+`hello_world` is a simple docker image currently used for testing the `HelloWorldOnDemandWorkflow` workflow.
 
 Below are instructions for how to build and push this docker image to AWS ECR.
 
@@ -10,8 +10,9 @@ If the repository does not yet exist, run:
 
 ```bash
 export DOCKER_TAG=hello_world
+export AWS_REGION=$(aws configure get region)
 
-$(aws ecr get-login --no-include-email --region us-east-1)
+$(aws ecr get-login --no-include-email --region ${AWS_REGION})
 aws ecr create-repository --repository-name ${DOCKER_TAG}
 ```
 
