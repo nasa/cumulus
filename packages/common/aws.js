@@ -655,11 +655,11 @@ exports.validateS3ObjectChecksum = async ({
   options
 }) => {
   const fileStream = exports.getS3ObjectReadStream(bucket, key);
-  if (!(await validateChecksumFromStream(algorithm, fileStream, expectedSum, options))) {
-    const msg = `Invalid checksum for S3 object ${bucket}/${key} with type ${algorithm} and expected sum ${expectedSum}`;
-    throw new errors.InvalidChecksum(msg);
+  if (await validateChecksumFromStream(algorithm, fileStream, expectedSum, options)) {
+    return true;
   }
-  return true;
+  const msg = `Invalid checksum for S3 object ${bucket}/${key} with type ${algorithm} and expected sum ${expectedSum}`;
+  throw new errors.InvalidChecksum(msg);
 };
 
 // Maintained for backwards compatibility

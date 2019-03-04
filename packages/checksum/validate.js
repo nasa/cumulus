@@ -13,7 +13,7 @@ const { generateChecksumFromStream } = require('./checksum');
  * @returns {boolean} - whether expectedSum === calculatedSum
  */
 async function validateChecksumFromStream(algorithm, stream, expectedSum, options = {}) {
-  const calculatedSum = generateChecksumFromStream(algorithm, stream, options);
+  const calculatedSum = await generateChecksumFromStream(algorithm, stream, options);
   return expectedSum === calculatedSum;
 }
 
