@@ -75,7 +75,7 @@ test.serial('postToCMR succeeds with correct payload', async (t) => {
     await aws.promiseS3Upload({
       Bucket: t.context.bucket,
       Key: key,
-      Body: fs.createReadStream('tests/data/meta.xml')
+      Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml'))
     });
     const output = await postToCMR(newPayload);
     t.is(
