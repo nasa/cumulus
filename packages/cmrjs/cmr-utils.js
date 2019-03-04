@@ -507,10 +507,10 @@ function getCreds() {
  * @returns {Promise} returns promised updated metadata object.
  */
 async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
-  let newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets });
-  newURLs = newURLs.map((urlObj) => omit(urlObj, ['Type', 'Description']));
-  newURLs = newURLs.concat(constructResourceUrls(distEndpoint));
-  const removedURLs = onlineAccessURLsToRemove(files, buckets);
+  let newOnlineAccessURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets });
+  newOnlineAccessURLs = newOnlineAccessURLs.map((urlObj) => omit(urlObj, ['Type', 'Description']));
+  const newResourceURLs = constructResourceUrls(distEndpoint);
+  const removedOnlineAccessURLs = onlineAccessURLsToRemove(files, buckets);
 
   // add/replace the OnlineAccessUrls
   const filename = getS3UrlOfFile(cmrFile);
@@ -518,15 +518,29 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   const metadataGranule = metadataObject.Granule;
 
   const updatedGranule = { ...metadataGranule };
-  let originalURLs = _get(metadataGranule, 'OnlineAccessURLs.OnlineAccessURL', []);
+  let originalOnlineAccessURLs = _get(metadataGranule, 'OnlineAccessURLs.OnlineAccessURL', []);
+  let originalResourceURLs = _get(metadataGranule, 'ResourceURLs.ResourceURL', []);
 
   // If there is only one OnlineAccessURL in the file, it comes back as an object and not an array
-  if (!Array.isArray(originalURLs)) {
-    originalURLs = [originalURLs];
+  if (!Array.isArray(originalOnlineAccessURLs)) {
+    originalOnlineAccessURLs = [originalOnlineAccessURLs];
+  }
+  if (!Array.isArray(originalResourceURLs)) {
+    originalResourceURLs = [originalResourceURLs];
   }
 
-  const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
-  _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedURLs);
+  const mergedOnlineAccessURLs = mergeURLs(
+    originalOnlineAccessURLs,
+    newOnlineAccessURLs,
+    removedOnlineAccessURLs
+  );
+  const mergedResourceURLs = mergeURLs(
+    originalResourceURLs,
+    newResourceURLs
+  );
+
+  _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedOnlineAccessURLs);
+  _set(updatedGranule, 'ResourceURLs.ResourceURL', mergedResourceURLs);
   metadataObject.Granule = updatedGranule;
 
   const builder = new xml2js.Builder();
