@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/cmr-client",
-  "version": "1.11.2-alpha1",
+  "version": "1.11.2-alpha2",
   "engines": {
     "node": ">=8.10.0"
   },
@@ -40,10 +40,10 @@
     "xml2js": "^0.4.19"
   },
   "devDependencies": {
-    "ava": "^1.2.1",
+    "ava": "^0.25.0",
     "jsdoc-to-markdown": "^4.0.1",
     "lodash.some": "^4.6.0",
     "nock": "^10.0.6",
-    "sinon": "^7.2.4"
+    "sinon": "^7.1.1"
   }
 }

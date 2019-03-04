@@ -7,8 +7,6 @@ const publicIp = require('public-ip');
 
 const {
   getIp,
-  getHost,
-  hostId,
   ummVersion,
   validateUMMG
 } = require('../utils');
