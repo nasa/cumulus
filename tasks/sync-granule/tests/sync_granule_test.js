@@ -413,7 +413,9 @@ test.serial('download granule with bad checksum in file from HTTP endpoint throw
   // Stage the files to be downloaded
   const granuleFilename = t.context.event.input.granules[0].files[0].name;
   const granuleChecksumType = t.context.event.input.granules[0].files[0].checksumType;
-  const errorMessage = `Invalid checksum for ${granuleFilename} with type ${granuleChecksumType} and value ${granuleChecksumValue}`;
+  const config = t.context.event.config;
+  const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
+  const errorMessage = `Invalid checksum for S3 object s3://${t.context.internalBucketName}/${keypath}/${granuleFilename} with type ${granuleChecksumType} and expected sum ${granuleChecksumValue}`;
 
   await t.throws(syncGranule(t.context.event), errorMessage);
 });
