@@ -165,7 +165,7 @@ class Manager {
     this.dynamodbDocClient = aws.dynamodbDocClient({ convertEmptyValues: true });
     this.removeAdditional = false;
 
-    this.validate = get(params, 'validate', true);
+    this.performValidation = get(params, 'validate', true);
   }
 
   /**
@@ -270,11 +270,7 @@ class Manager {
       updatedAt: now
     }));
 
-    if (this.validate) {
-      putsWithTimestamps.forEach((item) => {
-        this.constructor.recordIsValid(item, this.schema, this.removeAdditional);
-      });
-    }
+    putsWithTimestamps.forEach((item) => this.validate(item));
 
     const putRequests = putsWithTimestamps.map((Item) => ({
       PutRequest: { Item }
@@ -322,12 +318,7 @@ class Manager {
       };
     });
 
-    if (this.validate) {
-      // Make sure that all of the items are valid
-      itemsWithTimestamps.forEach((item) => {
-        this.constructor.recordIsValid(item, this.schema, this.removeAdditional);
-      });
-    }
+    itemsWithTimestamps.forEach((item) => this.validate(item));
 
     // Suggested method of handling a loop containing an await, according to
     // https://codeburst.io/javascript-async-await-with-foreach-b6ba62bbf404
@@ -415,13 +406,7 @@ class Manager {
     };
     fieldsToDelete.forEach((f) => delete updatedItem[f]);
 
-    if (this.validate) {
-      this.constructor.recordIsValid(
-        updatedItem,
-        this.schema,
-        this.removeAdditional
-      );
-    }
+    this.validate(updatedItem);
 
     // Make sure that we don't try to update a field that's being deleted
     fieldsToDelete.forEach((property) => delete actualUpdates[property]);
@@ -476,6 +461,12 @@ class Manager {
       key,
       { status: 'failed', error: errorify(err), isActive: false }
     );
+  }
+
+  validate(item) {
+    if (this.performValidation) {
+      this.constructor.recordIsValid(item, this.schema, this.removeAdditional);
+    }
   }
 }
 

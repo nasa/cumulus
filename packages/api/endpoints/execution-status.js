@@ -3,7 +3,7 @@
 const router = require('express-promise-router')();
 const aws = require('@cumulus/common/aws'); // important to import all to allow stubbing
 const { StepFunction } = require('@cumulus/ingest/aws');
-const { executionExists } = require('@cumulus/common/step-functions');
+const { executionExists } = require('@cumulus/common/StepFunctions');
 const { RecordDoesNotExist } = require('../lib/errors');
 const models = require('../models');
 

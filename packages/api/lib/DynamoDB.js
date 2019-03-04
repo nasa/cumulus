@@ -12,6 +12,7 @@ const overSome = require('lodash.oversome');
 const {
   all,
   isUndefined,
+  isNil,
   isNull,
   negate,
   omitBy
@@ -61,8 +62,11 @@ exports.toDynamoItemFormat = toDynamoItemFormat;
  * @param {Object} record - the object to convert
  * @returns {Object} a DynamoDB Item
  */
-exports.recordToDynamoItem = (record) =>
-  mapValues(
+exports.recordToDynamoItem = (record) => {
+  if (isNil(record)) return record;
+
+  return mapValues(
     filterOutInvalidValues(record),
     toDynamoItemFormat
   );
+};

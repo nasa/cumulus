@@ -249,8 +249,9 @@ class Granule extends Manager {
 
   async buildGranuleRecordsFromCumulusMessage(cumulusMessage) {
     const granules = get(cumulusMessage, 'payload.granules')
-      || get(cumulusMessage, 'meta.input_granules')
-      || [];
+      || get(cumulusMessage, 'meta.input_granules');
+
+    if (isNil(granules)) return [];
 
     const collectionId = CumulusMessage.getCollectionId(cumulusMessage);
 
@@ -326,6 +327,9 @@ class Granule extends Manager {
    */
   async createGranulesFromSns(payload) {
     const granules = await this.buildGranuleRecordsFromCumulusMessage(payload);
+
+    if (granules.length === 0) return undefined;
+
     return Promise.all(granules.map((granule) => this.create(granule)));
   }
 

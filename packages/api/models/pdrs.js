@@ -49,9 +49,7 @@ class Pdr extends Manager {
 
   buildPdrRecordFromCumulusMessage(cumulusMessage) {
     const pdrObj = get(cumulusMessage, 'payload.pdr', get(cumulusMessage, 'meta.pdr'));
-    const pdrName = pdrObj.name;
-
-    if (!pdrName) return null;
+    if (!pdrObj) return null;
 
     const execution = aws.getExecutionUrl(
       CumulusMessage.getExecutionArn(cumulusMessage)
@@ -75,7 +73,7 @@ class Pdr extends Manager {
     const now = Date.now();
 
     const pdrRecord = {
-      pdrName,
+      pdrName: pdrObj.name,
       collectionId: CumulusMessage.getCollectionId(cumulusMessage),
       status: get(cumulusMessage, 'meta.status'),
       provider: get(cumulusMessage, 'meta.provider.id'),
@@ -101,12 +99,12 @@ class Pdr extends Manager {
    * Create a new pdr record from incoming sns messages
    *
    * @param {Object} cumulusMessage - sns message containing the output of a Cumulus Step Function
-   * @returns {Promise<Object>|null} a pdr record
+   * @returns {Promise<Object|undefined>} a PDR record
    */
   createPdrFromSns(cumulusMessage) {
     const record = this.buildPdrRecordFromCumulusMessage(cumulusMessage);
 
-    if (isNil(record)) return null;
+    if (isNil(record)) return Promise.resolve();
 
     return this.create(record);
   }

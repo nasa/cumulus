@@ -11,13 +11,18 @@
 'use strict';
 
 const cloneDeep = require('lodash.clonedeep');
-const get = require('lodash.get');
+const curry = require('lodash.curry');
+const flatten = require('lodash.flatten');
+const isEmpty = require('lodash.isempty');
 const isString = require('lodash.isstring');
 const zlib = require('zlib');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/common');
+const { dynamodb } = require('@cumulus/common/aws');
+const { isNil, isNotNil } = require('@cumulus/common/util');
 
+const DynamoDB = require('../lib/DynamoDB');
 const { Search, defaultIndexAlias } = require('./search');
 const { deconstructCollectionId } = require('../lib/utils');
 const { Granule, Pdr, Execution } = require('../models');
@@ -336,6 +341,44 @@ async function reingest(g) {
   return gObj.reingest(g);
 }
 
+const isCompletedExecutionMessage = (cumulusMessage) =>
+  ['failed', 'completed'].includes(cumulusMessage.meta.status);
+
+const buildExecutionRecord = async (executionModel, cumulusMessage) => {
+  const executionRecord = isCompletedExecutionMessage(cumulusMessage)
+    ? await executionModel.buildUpdatedExecutionRecordFromCumulusMessage(cumulusMessage)
+    : executionModel.buildNewExecutionRecordFromCumulusMessage(cumulusMessage);
+
+  executionModel.validate(executionRecord);
+
+  return executionRecord;
+};
+
+const buildGranuleRecords = async (granuleModel, cumulusMessage) => {
+  const granuleRecords = await granuleModel.buildGranuleRecordsFromCumulusMessage(cumulusMessage);
+  granuleRecords.forEach((g) => granuleModel.validate(g));
+  return granuleRecords;
+};
+
+const buildPdrRecord = (pdrModel, cumulusMessage) => {
+  const pdrRecord = pdrModel.buildPdrRecordFromCumulusMessage(cumulusMessage);
+  pdrModel.validate(pdrRecord);
+  return pdrRecord;
+};
+
+const buildTransactPut = curry(
+  (TableName, record) => {
+    if (isNil(record)) return null;
+
+    return {
+      Put: {
+        TableName,
+        Item: DynamoDB.recordToDynamoItem(record)
+      }
+    };
+  }
+);
+
 /**
  * processes the incoming cumulus message and pass it through a number
  * of indexers
@@ -344,30 +387,39 @@ async function reingest(g) {
  * @returns {Promise} object with response from the three indexer
  */
 async function handlePayload(event) {
-  let payload;
-  const source = get(event, 'EventSource');
+  const executionModel = new Execution();
+  const granuleModel = new Granule();
+  const pdrModel = new Pdr();
 
-  if (source === 'aws:sns') {
-    payload = get(event, 'Sns.Message');
-    payload = JSON.parse(payload);
-  }
-  else {
-    payload = event;
-  }
+  const payload = event.EventSource === 'aws:sns'
+    ? JSON.parse(event.Sns.Message)
+    : event;
 
-  let executionPromise;
-  const e = new Execution();
-  if (['failed', 'completed'].includes(payload.meta.status)) {
-    executionPromise = e.updateExecutionFromSns(payload);
+  const executionRecord = await buildExecutionRecord(executionModel, payload);
+  const pdrRecord = buildPdrRecord(pdrModel, payload);
+  const granuleRecords = await buildGranuleRecords(granuleModel, payload);
+
+  const recordsCount = flatten([executionRecord, granuleRecords, pdrRecord]).length;
+
+  if (recordsCount > 10 || inTestMode()) {
+    if (executionRecord) await executionModel.create(executionRecord);
+    if (pdrRecord) await pdrModel.create(pdrRecord);
+    await granuleModel.create(granuleRecords);
   }
-  else {
-    executionPromise = e.createExecutionFromSns(payload);
+  else if (recordsCount > 0) {
+    const TransactItems = flatten([
+      buildTransactPut(executionModel.tableName, executionRecord),
+      buildTransactPut(pdrModel.tableName, pdrRecord),
+      granuleRecords.map(buildTransactPut(granuleModel.tableName))
+    ]).filter(isNotNil);
+
+    await dynamodb().transactWriteItems({ TransactItems }).promise();
   }
 
   return {
-    sf: await executionPromise,
-    pdr: await pdr(payload),
-    granule: await granule(payload)
+    sf: executionRecord,
+    pdr: pdrRecord,
+    granule: isEmpty(granuleRecords) ? null : granuleRecords
   };
 }
 
@@ -401,30 +453,18 @@ function logHandler(event, context, cb) {
  * Lambda function handler for sns2elasticsearch
  *
  * @param  {Object} event - incoming message sns
- * @param  {Object} context - aws lambda context object
- * @param  {function} cb - aws lambda callback function
  * @returns {Promise} undefined
  */
-function handler(event, context, cb) {
+async function handler(event) {
   // we can handle both incoming message from SNS as well as direct payload
-  log.debug(JSON.stringify(event));
-  const records = get(event, 'Records');
-  let jobs = [];
+  const jobs = event.Records
+    ? event.Records.map(handlePayload)
+    : [handlePayload(event)];
 
-  if (records) {
-    jobs = records.map(handlePayload);
-  }
-  else {
-    jobs.push(handlePayload(event));
-  }
+  const result = await Promise.all(jobs);
+  log.info(`Updated ${result.length} es records`);
 
-  return Promise.all(jobs)
-    .then((r) => {
-      log.info(`Updated ${r.length} es records`);
-      cb(null, r);
-      return r;
-    })
-    .catch(cb);
+  return result;
 }
 
 module.exports = {
