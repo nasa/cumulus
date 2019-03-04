@@ -204,17 +204,18 @@ function generateCmrXml(granule, collection, additionalUrls) {
     VersionId: collection.version
   };
 
-  xmlObject.Granule.OnlineAccessURLs.forEach((url) =>
-    url.OnlineAccessURL.URL.replace(oldGranuleId, granule.granuleId));
+  xmlObject.Granule.OnlineAccessURLs.forEach((url) => {
+    // eslint-disable-next-line no-param-reassign
+    url.OnlineAccessURL.URL = url.OnlineAccessURL.URL.replace(oldGranuleId, granule.granuleId);
+  });
 
   if (additionalUrls) {
-    const urls = additionalUrls.map((url) => ({
+    xmlObject.Granule.OnlineAccessURLs = additionalUrls.map((url) => ({
       OnlineAccessURL: {
         URL: url,
         URLDescription: 'File to download'
       }
     }));
-    xmlObject.Granule.OnlineAccessURLs = xmlObject.Granule.OnlineAccessURLs.concat(urls);
   }
 
   const xml = new xml2js.Builder().buildObject(xmlObject);
