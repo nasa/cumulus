@@ -357,7 +357,7 @@ function constructResourceUrls(distEndpoint, s3CredsEndpoint = 's3credentials') 
 }
 
 /**
- * Construct a list of online access urls.
+ * Construct a list of UMMG related urls
  *
  * @param {Object} params - input parameters
  * @param {Array<Object>} params.files - array of file objects
