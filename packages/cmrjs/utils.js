@@ -23,7 +23,7 @@ const xmlParseOptions = {
  */
 function hostId(env) {
   console.log('Function hostId is deprecated as of version 1.11.2');
-  return get(
+  return _get(
     { OPS: '', SIT: 'sit', UAT: 'uat' },
     env,
     'uat'
