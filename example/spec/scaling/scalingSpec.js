@@ -62,7 +62,7 @@ async function getNewScalingActivity() {
 const numExecutions = 3;
 const cloudformationTemplate = loadCloudformationTemplate();
 const cloudformationResources = cloudformationTemplate.Resources;
-const numActivityTasks = Object.values(cloudformationResources).filter(resource => resource.Type === 'AWS::StepFunctions::Activity').length;
+const numActivityTasks = Object.values(cloudformationResources).filter((resource) => resource.Type === 'AWS::StepFunctions::Activity').length;
 const minInstancesCount = cloudformationResources.CumulusECSAutoScalingGroup.UpdatePolicy.AutoScalingRollingUpdate.MinInstancesInService;
 
 describe('cloudformation template for scaling policies', () => {
