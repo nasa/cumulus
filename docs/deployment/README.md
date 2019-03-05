@@ -41,7 +41,7 @@ The process involves:
 
 * [CMR](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) username and password.  Can be excluded if you are not exporting metadata to CMR.
 
-* [EarthData Client login](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/earthdata-login) username and password. User must have the ability to administer and/or create applications in URS.   It's recommended to obtain an account in the test environment (UAT).
+* [EarthData Client login](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/earthdata-login) username and password. User must have the ability to administer and/or create applications in URS.  It's recommended to obtain an account in the test environment (UAT).
 
 
 ### Needed Git Repositories
@@ -240,7 +240,8 @@ dev:                                    # deployment name
   # if not specified the value of the apigateway dist url is used
   # api_distribution_url: https://apigateway-url-to-distribution-app/ #make sure to include the trailing slash
 
-  # URS users who should have access to the dashboard application.
+  # URS users who should have access to the dashboard application and use the
+  # distribution API to access protected files.
   users:
     - username: <user>
     - username: <user2>
