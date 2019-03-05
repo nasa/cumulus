@@ -163,3 +163,4 @@ branches:
   only:
     - master
     - /^v\d+\.\d+(\.\d+)?(-\S*)?$/  # To build tag pushes for releases
+    - release-1.11.3-2
