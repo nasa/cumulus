@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- **CUMULUS-1101**
+  - Added new `@cumulus/checksum` package. This package provides functions to calculate and validate checksums.
+  - Added new checksumming functions to `@cumulus/common/aws`: `calculateS3ObjectChecksum` and `validateS3ObjectChecksum`, which depend on the `checksum` package.
+
 - **CUMULUS-672**
   - Added `cmrMetadataFormat` and `cmrConceptId` to output for individual granules from `@cumulus/post-to-cmr`. `cmrMetadataFormat` will default to value from workflow configuration, if provided, otherwise it will attempt to read the `cmrMetadataFormat` generated in `@cumulus/cmrjs/publish2CMR`
   - Added helpers to `@packages/integration-tests/api/distribution`:
@@ -36,8 +40,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - **CUMULUS-1101**
-  - Moved `@cumulus/common/file/getFileChecksumFromStream` into a new package, `@cumulus/checksum`, and renamed it to `generateChecksumFromStream`.
+  - Moved `@cumulus/common/file/getFileChecksumFromStream` into `@cumulus/checksum`, and renamed it to `generateChecksumFromStream`.
     This is a breaking change for users relying on `@cumulus/common/file/getFileChecksumFromStream`.
+  - Refactored `@cumulus/ingest/Granule` to depend on new `common/aws` checksum functions and remove significantly present checksumming code.
+    - Deprecated `@cumulus/ingest/granule.validateChecksum`. Replaced with `@cumulus/ingest/granule.verifyFile`.
+    - Renamed `granule.getChecksumFromFile` to `granule.retrieveSuppliedFileChecksumInformation` to be more accurate.
+  - Deprecated `@cumulus/common/aws.checksumS3Objects`. Use `@cumulus/common/aws.calculateS3ObjectChecksum` instead.
 
 - **CUMULUS-672**
   - `@cumulus/post-to-cmr` now looks in `config.cmrMetadataFormat` instead of `config.cmrFileType` to determine the type of metadata to post to CMR
