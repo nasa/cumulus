@@ -3,6 +3,27 @@
 const got = require('got');
 
 /**
+ * Get S3 signed URL for file protected by distribution API
+ *
+ * @param {string} fileUrl
+ *   Distribution API file URL to request
+ * @param {string} accessToken
+ *   Access token from OAuth provider
+ *
+ * @returns {string}
+ *   S3 signed URL to access file protected by distribution API
+ */
+async function getDistributionApiS3SignedUrl(fileUrl, accessToken) {
+  const response = await got(fileUrl, {
+    followRedirect: false,
+    headers: {
+      cookie: [`accessToken=${accessToken}`]
+    }
+  });
+  return response.headers.location;
+}
+
+/**
  * Return a stream for file protected by distribution API
  *
  * @param {string} fileUrl
@@ -13,18 +34,9 @@ const got = require('got');
  * @returns {ReadableStream}
  *   Stream to the file protected by the distribution
  */
-function getDistributionApiFileStream(fileUrl, accessToken) {
-  return got
-    .stream(fileUrl, {
-      headers: {
-        cookie: [`accessToken=${accessToken}`]
-      }
-    })
-    .on('redirect', (_, nextOptions) => {
-      // See https://github.com/sindresorhus/got/issues/719
-      // eslint-disable-next-line no-param-reassign
-      nextOptions.port = null;
-    });
+async function getDistributionApiFileStream(fileUrl, accessToken) {
+  const s3SignedUrl = await getDistributionApiS3SignedUrl(fileUrl, accessToken);
+  return got.stream(s3SignedUrl);
 }
 
 /**
@@ -46,6 +58,7 @@ function getDistributionFileUrl({
 }
 
 module.exports = {
+  getDistributionApiS3SignedUrl,
   getDistributionApiFileStream,
   getDistributionFileUrl
 };
