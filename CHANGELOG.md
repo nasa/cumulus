@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- **CUMULUS-1187** - Added `@cumulus/ingest/granule/duplicateHandlingType()` to determine how duplicate files should be handled in an ingest workflow
 - **CUMULUS-672**
   - Added `cmrMetadataFormat` and `cmrConceptId` to output for individual granules from `@cumulus/post-to-cmr`. `cmrMetadataFormat` will default to value from workflow configuration, if provided, otherwise it will attempt to read the `cmrMetadataFormat` generated in `@cumulus/cmrjs/publish2CMR`
   - Added helpers to `@packages/integration-tests/api/distribution`:
