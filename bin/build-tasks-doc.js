@@ -75,17 +75,19 @@ const filterOutDirsStartingWithDot = (dirs) => dirs.filter(doesNotStartWithDot);
 const isNotNull = (x) => x !== null;
 const filterOutNulls = (x) => x.filter(isNotNull);
 const sort = (x) => x.sort();
-const filterOutDirsWithoutPackageJson = (dirs) =>
+const filterOutDirsMissingPackageJson = (dirs) =>
   Promise.all(
-    dirs.map((dir) => {
-      const pkg = path.join('tasks', dir, 'package.json');
-      return fs.access(pkg).then(() => dir).catch(() => null);
-    })
+    dirs.map(
+      (dir) =>
+        fs.access(path.join('tasks', dir, 'package.json'))
+          .then(() => dir)
+          .catch(() => null)
+    )
   ).then(filterOutNulls);
 
 fs.readdir('tasks')
   .then(filterOutDirsStartingWithDot)
-  .then(filterOutDirsWithoutPackageJson)
+  .then(filterOutDirsMissingPackageJson)
   .then(sort)
   .then(createTasksDoc)
   .catch((err) => {
