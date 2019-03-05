@@ -6,8 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.11.3] - 2019-3-5
 
-## [v1.11.2] - 2018-2-15
+### Added
+
+- **CUMULUS-1187** - Added `@cumulus/ingest/granule/duplicateHandlingType()` to determine how duplicate files should be handled in an ingest workflow
+
+### Fixed
+
+- **CUMULUS-1187** - workflows not respecting the duplicate handling value specified in the collection
+- Removed refreshToken schema requirement for OAuth
+
+## [v1.11.2] - 2019-2-15
 
 ### Added
 - CUMULUS-1169
@@ -794,7 +804,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.11.2...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.11.3...HEAD
+[v1.11.3]: https://github.com/nasa/cumulus/compare/v1.11.2...v1.11.3
 [v1.11.2]: https://github.com/nasa/cumulus/compare/v1.11.1...v1.11.2
 [v1.11.1]: https://github.com/nasa/cumulus/compare/v1.11.0...v1.11.1
 [v1.11.0]: https://github.com/nasa/cumulus/compare/v1.10.4...v1.11.0
