@@ -18,8 +18,8 @@ async function requestTemporaryCredentialsFromNgap(username) {
   const Payload = JSON.stringify({
     accesstype: 'sameregion',
     duration: '3600', // one hour max allowed by AWS.
-    rolesession: 'SAME_REGION_ACCESS',
-    userid: username
+    rolesession: username, // <- shows up in access logs
+    userid: username  // <- used by NGAP
   });
 
   return lambda().invoke({
