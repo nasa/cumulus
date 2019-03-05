@@ -59,10 +59,12 @@ function loadConfig() {
   return config.test_configs;
 }
 
-function loadCloudformationTemplate(options = { directory: 'app' }) {
-  const { directory } = options;
-  const cloudformationObject = yaml.safeLoad(fs.readFileSync(`./${directory}/cloudformation.yml`));
-  return cloudformationObject;
+async function loadCloudformationTemplate(config) {
+  const Bucket = config.buckets.internal.name;
+  const Key = `${config.stackName}/cloudformation.yml`;
+  const cloudformationObject = await s3().getObject({ Bucket, Key }).promise();
+  const cloudformationTemplate = yaml.safeLoad(cloudformationObject.Body.toString('utf-8'));
+  return cloudformationTemplate;
 }
 
 /**
