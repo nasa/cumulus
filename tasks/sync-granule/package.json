@@ -41,8 +41,7 @@
     "@cumulus/common": "1.11.2",
     "@cumulus/cumulus-message-adapter-js": "^1.0.7",
     "@cumulus/ingest": "1.11.2",
-    "@cumulus/test-data": "1.11.0",
-    "lodash.get": "^4.4.2"
+    "@cumulus/test-data": "1.11.0"
   },
   "devDependencies": {
     "ava": "^0.25.0",
