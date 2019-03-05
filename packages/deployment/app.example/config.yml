@@ -30,11 +30,11 @@
       type: public
 
   iams:
-    ecsRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-ecs
-    lambdaApiGatewayRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-lambda-api-gateway
-    lambdaProcessingRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-lambda-processing
-    stepRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-steprole
-    instanceProfile: arn:aws:iam::<aws-account-id>:instance-profile/<iams-prefix>-ecs
+    ecsRoleArn: arn:aws:iam::<aws-account-id>:role/{{stackName}}-ecs
+    lambdaApiGatewayRoleArn: arn:aws:iam::<aws-account-id>:role/{{stackName}}-lambda-api-gateway
+    lambdaProcessingRoleArn: arn:aws:iam::<aws-account-id>:role/{{stackName}}-lambda-processing
+    stepRoleArn: arn:aws:iam::<aws-account-id>:role/{{stackName}}-steprole
+    instanceProfile: arn:aws:iam::<aws-account-id>:instance-profile/{{stackName}}-ecs
     distributionRoleArn: 'arn:aws:iam::<aws-account-id>:role/{{stackName}}-distribution-api-lambda'
     scalingRoleArn: 'arn:aws:iam::<aws-account-id>:role/{{stackName}}-scaling-role'
     migrationRoleArn: 'arn:aws:iam::<aws-account-id>:role/{{stackName}}-migration-processing'
