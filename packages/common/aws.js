@@ -955,3 +955,33 @@ exports.retryOnThrottlingException = (fn, options) =>
       () => fn(...args).catch(retryIfThrottlingException),
       options
     );
+
+/**
+ * Error class for file locations that are unparsable
+ */
+class UnparsableFileLocationError extends Error {
+  constructor(fileLocation) {
+    super(`File location "${fileLocation}" could not be parsed`);
+    this.name = this.constructor.name;
+  }
+}
+
+/**
+ * Extract the S3 bucket and key from the URL path parameters
+ *
+ * @param {string} pathParams - path parameters from the URL
+ * @returns {Object} - bucket/key in the form of
+ * { Bucket: x, Key: y }
+ */
+exports.getFileBucketAndKey(pathParams) {
+  const fields = pathParams.split('/');
+
+  const Bucket = fields.shift();
+  const Key = fields.join('/');
+
+  if (Bucket.length === 0 || Key.length === 0) {
+    throw new UnparsableFileLocationError(pathParams);
+  }
+
+  return [Bucket, Key];
+}
