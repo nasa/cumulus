@@ -29,7 +29,7 @@ jobs:
       if: tag !~ ^v\d+.* AND commit_message !~ \[skip-audit\]
       install:
         - nvm install-latest-npm
-        - npm install --no-audit
+        - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run install-locks
         - echo 'BOOTSTRAP FINISHED'
@@ -39,7 +39,7 @@ jobs:
       stage: unit test and stack deployment
       install:
         - ./travis-ci/fetch-cache.sh
-        - npm install
+        - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - env SKIP_BUILD=true ./bin/prepare
@@ -55,7 +55,7 @@ jobs:
         - LOCAL_ES_HOST=127.0.0.1
       install:
         - ./travis-ci/fetch-cache.sh
-        - npm install
+        - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
@@ -72,7 +72,7 @@ jobs:
         - LOCAL_ES_HOST=127.0.0.1
       install:
         - ./travis-ci/fetch-cache.sh
-        - npm install
+        - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
@@ -85,7 +85,7 @@ jobs:
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
-        - npm install
+        - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - echo 'BOOTSTRAP FINISHED'
@@ -97,7 +97,7 @@ jobs:
       if: type = cron
       install:
         - ./travis-ci/fetch-cache.sh
-        - npm install
+        - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - echo 'BOOTSTRAP FINISHED'
@@ -112,7 +112,7 @@ jobs:
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
-        - npm install
+        - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - echo 'BOOTSTRAP FINISHED'
@@ -124,7 +124,7 @@ jobs:
       if: type = cron
       install:
         - ./travis-ci/fetch-cache.sh
-        - npm install
+        - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - echo 'BOOTSTRAP FINISHED'
@@ -139,7 +139,7 @@ jobs:
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ./travis-ci/fetch-cache.sh
-        - npm install
+        - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - echo 'BOOTSTRAP FINISHED'
@@ -150,7 +150,7 @@ jobs:
       stage: cleanup integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
-        - npm install
+        - npm ci
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "Cleanup SIT integration tests"
@@ -158,7 +158,7 @@ jobs:
       if: type = cron
       install:
         - ./travis-ci/fetch-cache.sh
-        - npm install
+        - npm ci
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
       env:
         - NGAP_ENV=SIT
@@ -167,14 +167,14 @@ jobs:
     - name: "Deploy to NPM"
       stage: deploy
       install:
-        - ./travis-ci/fetch-cache.sh
+        - ./ci-ci/fetch-cache.sh
         - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/deploy-to-npm.sh
 
     - name: "Deploy to Github Pages"
       stage: deploy
-      install: npm install
+      install: npm ci
       script: ./travis-ci/deploy-to-github-pages.sh
 
     - name: "Deploy packages to integration test stack"

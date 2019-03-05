@@ -360,7 +360,8 @@ Please note that the requirements are similar to the [Cumulus stack deployment r
 
 ### Install dashboard
 
-To install the dashboard clone the Cumulus-dashboard repository into the root deploy directory and install dependencies with `yarn install`:
+To install the dashboard clone the Cumulus-dashboard repository into the root
+deploy directory and install dependencies with `npm install`:
 
     $ git clone https://github.com/nasa/cumulus-dashboard
     $ cd cumulus-dashboard

@@ -18,19 +18,19 @@ set -e
   cat package.json | jq '.dependencies | to_entries[] | select(.key | startswith("@cumulus")).key' > .tmp/cumulus_integration_tests_packages.txt
 )
 
-# run the yarn link on packages used on the integration tests
+# run the npm link on packages used on the integration tests
 JOBS=$(node -e 'console.log(os.cpus().length + 1)')
 
 [ -z "$SKIP_BUILD" ] && ./node_modules/.bin/lerna run build --concurrency $JOBS
 
-cat example/.tmp/cumulus_integration_tests_packages.txt | xargs -I % ./node_modules/.bin/lerna exec --concurrency $JOBS --scope % -- yarn link
+cat example/.tmp/cumulus_integration_tests_packages.txt | xargs -I % ./node_modules/.bin/lerna exec --concurrency $JOBS --scope % -- npm link
 
 (
   set -e
   cd example
 
-  # run the yarn link package-name on the integration tests
-  cat .tmp/cumulus_integration_tests_packages.txt | xargs -I % yarn link %
+  # run the npm link package-name on the integration tests
+  cat .tmp/cumulus_integration_tests_packages.txt | xargs -I % npm link %
 
   rm -rf .tmp
 )

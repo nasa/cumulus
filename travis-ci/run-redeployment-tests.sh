@@ -5,10 +5,10 @@ set -e
 (
   cd example
   if [ "$USE_NPM_PACKAGES" = "true" ]; then
-    yarn
+    npm ci
   else
     (cd .. && ./bin/prepare)
   fi
 
-  yarn redeploy-test
+  npm run redeploy-test
 )

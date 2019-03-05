@@ -12,7 +12,7 @@ For the full documentation of the API see: https://nasa.github.io/cumulus-api
 
 ### Running the API locally
 
-  $ yarn serve
+  $ npm run serve
 
 ### Config
 Includes the Kes configuration files needed for the deployment of the Api:

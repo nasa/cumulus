@@ -8,7 +8,7 @@ cd example || exit 1
 
 # Delete the stack if it's a nightly build
 if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
-  yarn
+  npm ci
   echo Delete app deployment
 
   ./node_modules/.bin/kes cf delete \
@@ -27,7 +27,7 @@ if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
 
   echo Delete app deployment
 else
-  yarn add @cumulus/common
+  npm install @cumulus/common
 fi
 
 echo Unlocking stack

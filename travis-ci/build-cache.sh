@@ -33,7 +33,7 @@ if [ "$CACHE_EXISTS_STATUS_CODE" = "200" ]; then
 else
   # If the cache does not exist then create it and upload it to S3
   echo "Creating cache"
-  npm install
+  npm ci
   npm run bootstrap-no-build
 
   for p in $(git ls-files | grep package.json); do

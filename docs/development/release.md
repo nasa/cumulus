@@ -20,7 +20,7 @@ Lerna handles the process of deciding which version number should be used as lon
 
 To update cumulus' version number run:
 
-     $ yarn update
+     $ npm run update
 
 ![](https://static.notion-static.com/13acbe0a-c59d-4c42-90eb-23d4ec65c9db/Screen_Shot_2018-03-15_at_12.21.16_PM.png)
 
@@ -48,7 +48,7 @@ Update example/package.json to point to the new Cumulus packages. If this is a b
 
 ```shell
 cd website
-yarn run version ${release_version}
+npm run version ${release_version}
 git add .
 ```
 
