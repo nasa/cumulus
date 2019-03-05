@@ -31,7 +31,7 @@ function createTaskResourceLinks(packageName, sourceUrl, homepage) {
  * @returns {string} markdown documentation
  */
 function createTaskMarkdown(taskName) {
-  const pkg = require(`../tasks/${taskName}/package.json`); // eslint-disable-line global-require, import/no-dynamic-require, max-len
+  const pkg = require(`../tasks/${taskName}/package.json`); // eslint-disable-line global-require, import/no-dynamic-require
   const name = pkg.name;
   const homepage = pkg.homepage;
   const description = pkg.description;
@@ -70,22 +70,25 @@ function createTasksDoc(tasks) {
   return fs.writeFile(tasksOutputFilePath, markdown);
 }
 
-/**
- * Get the list of tasks in the tasks folder
- *
- * @returns {Array} of task names
- */
-function getTaskList() {
-  const files = fs.readdirSync('tasks');
-  return files
-    .filter((file) => !file.startsWith('.'));
-}
+const doesNotStartWithDot = (x) => !x.startsWith('.');
+const filterOutDirsStartingWithDot = (dirs) => dirs.filter(doesNotStartWithDot);
+const isNotNull = (x) => x !== null;
+const filterOutNulls = (x) => x.filter(isNotNull);
+const sort = (x) => x.sort();
+const filterOutDirsWithoutPackageJson = (dirs) =>
+  Promise.all(
+    dirs.map((dir) => {
+      const pkg = path.join('tasks', dir, 'package.json');
+      return fs.access(pkg).then(() => dir).catch(() => null);
+    })
+  ).then(filterOutNulls);
 
-const taskDataRequests = getTaskList().sort();
-
-Promise.all(taskDataRequests)
+fs.readdir('tasks')
+  .then(filterOutDirsStartingWithDot)
+  .then(filterOutDirsWithoutPackageJson)
+  .then(sort)
   .then(createTasksDoc)
   .catch((err) => {
     console.error(err);
-    process.exitCode = 1;
+    process.existCode = 1;
   });
