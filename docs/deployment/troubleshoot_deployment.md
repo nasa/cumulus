@@ -60,6 +60,15 @@ If the deployment failed on nested stacks (CumulusApiDefaultNestedStack, Cumulus
 
 When the main stack is in 'CREATE_COMPLETE' state from the AWS console (ignore the kes error { BadRequestException: The REST API doesn't contain any methods}), remove the 'nested_template' line and redeploy again.  Then the nested stacks will stay, and you can debug the errors.
 
+### Missing helper: ifEquals (or similar error)
+
+This error indicates that a helper used by [`kes`](https://github.com/developmentseed/kes) to interpret Cloudformation templates is not present, so Cloudformation template compilation is failing and deployment cannot continue.
+
+First, verify that the `--template` argument to your deployment command points to a directory containing a `kes.js` file. By default, the value of `--template` for a Cumulus deployment should be `node_modules/@cumulus/deployment/app`. If you are using a different directory as your deployment template, then you are responsible for maintaining a `kes.js` file in that folder with the latest changes from [`@cumulus/deployment`](https://github.com/nasa/cumulus/blob/master/packages/deployment/lib/kes.js).
+
+If you are still experiencing the error, try updating `kes` to use the [latest released version](https://github.com/developmentseed/kes/releases).
+
+
 ### Install dashboard
 #### Dashboard configuration
 Issues:
