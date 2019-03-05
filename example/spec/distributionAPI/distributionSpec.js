@@ -99,10 +99,8 @@ describe('Distribution API', () => {
       accessToken = accessTokenResponse.accessToken;
 
       // Compare checksum of downloaded file with expected checksum.
-      const downloadChecksum = await generateChecksumFromStream(
-        'cksum',
-        getDistributionApiFileStream(fileUrl, accessToken)
-      );
+      const fileStream = await getDistributionApiFileStream(fileUrl, accessToken);
+      const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
       expect(downloadChecksum).toEqual(fileChecksum);
     });
   });
