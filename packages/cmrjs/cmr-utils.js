@@ -540,7 +540,7 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   );
 
   _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedOnlineAccessURLs);
-  _set(updatedGranule, 'ResourceURLs.ResourceURL', mergedResourceURLs);
+  _set(updatedGranule, 'OnlineResources.OnlineResource', mergedResourceURLs);
   metadataObject.Granule = updatedGranule;
 
   const builder = new xml2js.Builder();
