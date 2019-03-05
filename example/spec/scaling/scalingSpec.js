@@ -60,10 +60,10 @@ async function getNewScalingActivity() {
 }
 
 const numExecutions = 3;
-const numActivityTasks = 1;
-const minInstancesCount = 1;
 const cloudformationTemplate = loadCloudformationTemplate();
 const cloudformationResources = cloudformationTemplate.Resources;
+const numActivityTasks = Object.values(cloudformationResources).filter(resource => resource.Type === 'AWS::StepFunctions::Activity').length;
+const minInstancesCount = cloudformationResources.CumulusECSAutoScalingGroup.UpdatePolicy.AutoScalingRollingUpdate.MinInstancesInService;
 
 describe('cloudformation template for scaling policies', () => {
   describe('SimpleScaling Policies', () => {
@@ -127,13 +127,15 @@ describe('cloudformation template for scaling policies', () => {
         AdjustmentType: 'ChangeInCapacity',
         EstimatedInstanceWarmup: 60,
         Cooldown: 60,
-        MetricAggregationType: 'Average',
         AutoScalingGroupName: {
           Ref: 'CumulusECSAutoScalingGroup'
         },
         TargetTrackingConfiguration: {
           DisableScaleIn: false,
-          TargetValue: 50
+          TargetValue: 50,
+          PredefinedMetricSpecification: {
+            PredefinedMetricType: 'ASGAverageCPUUtilization'
+          }
         }
       }
     };

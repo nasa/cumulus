@@ -1214,7 +1214,6 @@ Resources:
       Cooldown: {{# if cool_down }}{{ cool_down }}{{else}}60{{/if}}
       {{/ifNotEquals}}
       {{#ifNotEquals policy_type "SimpleScaling"}}
-      MetricAggregationType: {{# if metric_aggregation_type }}{{ metric_aggregation_type }}{{else}}Average{{/if}}
       EstimatedInstanceWarmup: {{# if instance_warmup }}{{ instance_warmup }}{{else}}60{{/if}}
       {{/ifNotEquals}}
       {{#ifEquals adjustment_type "PercentChangeInCapacity" }}
@@ -1225,16 +1224,10 @@ Resources:
       ScalingAdjustment: {{ scaling_adjustment }}
       {{/ifEquals}}
       {{#ifEquals policy_type "StepScaling"}}
+      MetricAggregationType: {{# if metric_aggregation_type }}{{ metric_aggregation_type }}{{else}}Average{{/if}}
       StepAdjustments:
         {{#each this.step_adjustments}}
-        -
-        {{#if metric_interval_lower_bound }}
-          MetricIntervalLowerBound: {{ metric_interval_lower_bound }}
-        {{/if}}
-        {{#if metric_interval_upper_bound }}
-          MetricIntervalUpperBound: {{ metric_interval_upper_bound }}
-        {{/if}}
-          ScalingAdjustment: {{ scaling_adjustment }}
+        - {{{ToJson this}}}
         {{/each}}
       {{/ifEquals}}
       {{#ifEquals policy_type "TargetTrackingScaling"}}
@@ -1242,13 +1235,12 @@ Resources:
         {{# if customized_metric_specification }}
         CustomizedMetricSpecification:
           # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-autoscaling-scalingpolicy-customizedmetricspecification.html
-          {{ customized_metric_specification }}
+          {{{ToJson customized_metric_specification }}}
         {{/if}}
         DisableScaleIn: {{#if disable_scalein }}{{ disable_scalein }}{{else}}false{{/if}}
         {{# if predefined_metric_type }}
         PredefinedMetricSpecification:
-          PredefinedMetricType: {{ predefined_metric_type }}
-          ResourceLabel: {{ resource_label }}
+          {{{ToJson predefined_metric_type }}}
         {{/if}}
         TargetValue: {{ target_value }}
       {{/ifEquals}}
