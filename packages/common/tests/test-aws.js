@@ -176,3 +176,49 @@ test('better stack traces', async (t) => {
     t.true(err.stack.includes(path.basename(__filename)));
   }
 });
+
+test('calculateS3ObjectChecksum returns correct checksum', async (t) => {
+  const Bucket = randomString();
+  const Key = 'example';
+  const Body = 'example';
+  const cksum = 148323542;
+  const md5sum = '1a79a4d60de6718e8e5b326e338ae533';
+
+  await aws.s3().createBucket({ Bucket }).promise();
+  await aws.s3().putObject({ Bucket, Key, Body }).promise();
+
+  const ck = await aws.calculateS3ObjectChecksum({ algorithm: 'cksum', bucket: Bucket, key: Key });
+  const md5 = await aws.calculateS3ObjectChecksum({ algorithm: 'md5', bucket: Bucket, key: Key });
+  t.is(ck, cksum);
+  t.is(md5, md5sum);
+});
+
+test('validateS3ObjectChecksum returns true for good checksum', async (t) => {
+  const Bucket = randomString();
+  const Key = 'example';
+  const Body = 'example';
+
+  await aws.s3().createBucket({ Bucket }).promise();
+  await aws.s3().putObject({ Bucket, Key, Body }).promise();
+
+  const cksum = 148323542;
+  const ret = await aws.validateS3ObjectChecksum({
+    algorithm: 'cksum', bucket: Bucket, key: Key, expectedSum: cksum
+  });
+  t.true(ret);
+});
+
+test('validateS3ObjectChecksum throws InvalidChecksum error on bad checksum', async (t) => {
+  const Bucket = randomString();
+  const Key = 'example';
+  const Body = 'example';
+
+  await aws.s3().createBucket({ Bucket }).promise();
+  await aws.s3().putObject({ Bucket, Key, Body }).promise();
+
+  const cksum = 11111111111;
+  const errMsg = `Invalid checksum for S3 object s3://${Bucket}/${Key} with type cksum and expected sum ${cksum}`;
+  await t.throws(aws.validateS3ObjectChecksum({
+    algorithm: 'cksum', bucket: Bucket, key: Key, expectedSum: cksum
+  }), errMsg);
+});
