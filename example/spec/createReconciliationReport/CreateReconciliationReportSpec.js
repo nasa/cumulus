@@ -46,11 +46,11 @@ const filesTableName = (stackName) => `${stackName}-FilesTable`;
 const collectionsTableName = (stackName) => `${stackName}-CollectionsTable`;
 
 const providersDir = './data/providers/s3/';
-const collectionsDir = './data/collections/s3_MOD09GQ_006';
-const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
-const collection = { name: 'MOD09GQ', version: '006' };
+const collectionsDir = './data/collections/s3_MYD13Q1_006';
+const inputPayloadFilename = './spec/createReconciliationReport/IngestGranule.MYD13Q1_006.input.payload.json';
+const collection = { name: 'MYD13Q1', version: '006' };
 const collectionId = constructCollectionId(collection.name, collection.version);
-const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
+const granuleRegex = '^MYD13Q1\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
 const config = loadConfig();
 
@@ -94,12 +94,13 @@ async function deleteReconciliationReports(systemBucket, stackName) {
   return deleteS3Files(objectsToDelete);
 }
 
-// add MOD09GQ___006 collection
+// add MYD13Q1___006 collection
 async function setupCollectionAndTestData(testSuffix, testDataFolder) {
   const s3data = [
-    '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
-    '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
-    '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+    '@cumulus/test-data/granules/MYD13Q1.A2002185.h00v09.006.2015149071135.hdf.met',
+    '@cumulus/test-data/granules/MYD13Q1.A2002185.h00v09.006.2015149071135.hdf',
+    '@cumulus/test-data/granules/BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.hdf',
+    '@cumulus/test-data/granules/BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.1.jpg'
   ];
 
   // populate collections, providers and test data
@@ -264,7 +265,7 @@ describe('When there are granule differences and granule reconciliation is run',
   });
 
   it('generates a report showing number of collections that are in both Cumulus and CMR', () => {
-    // MOD09GQ___006 is in both Cumulus and CMR
+    // MYD13Q1___006 is in both Cumulus and CMR
     expect(report.collectionsInCumulusCmr.okCount).toBeGreaterThanOrEqual(1);
   });
 
