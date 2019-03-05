@@ -6,19 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-**Please Note**
-- If you are using the `@cumulus/post-to-cmr` task in your workflow and specifying the metadata format to post using the `cmrFileType` config property, you must update that workflow step to use the `cmrMetadataFormat` config property instead and re-deploy
-
 ### Added
 
 - **CUMULUS-666**
   - Added `@api/endpoints/s3credentials` to allow EarthData Login authorized users to retrieve temporary security credentials for same-region direct S3 access.
-
+- **CUMULUS-1187** - Added `@cumulus/ingest/granule/duplicateHandlingType()` to determine how duplicate files should be handled in an ingest workflow
+- **CUMULUS-671**
+  - Added `@packages/integration-tests/api/distribution/getDistributionApiS3SignedUrl()` to return the S3 signed URL for a file protected by the distribution API
 - **CUMULUS-672**
-  - Added `cmrMetadataFormat` and `cmrConceptId` to output for individual granules from `@cumulus/post-to-cmr`. `cmrMetadataFormat` will default to value from workflow configuration, if provided, otherwise it will attempt to read the `cmrMetadataFormat` generated in `@cumulus/cmrjs/publish2CMR`
+  - Added `cmrMetadataFormat` and `cmrConceptId` to output for individual granules from `@cumulus/post-to-cmr`. `cmrMetadataFormat` will be read from the `cmrMetadataFormat` generated for each granule in `@cumulus/cmrjs/publish2CMR()`
   - Added helpers to `@packages/integration-tests/api/distribution`:
-    - `getDistributionApiFileStream` returns a stream to download files protected by the distribution API
-    - `getDistributionFileUrl` constructs URLs for requesting files from the distribution API
+    - `getDistributionApiFileStream()` returns a stream to download files protected by the distribution API
+    - `getDistributionFileUrl()` constructs URLs for requesting files from the distribution API
 
 - CUMULUS-1171
   - Added `@cumulus/common` API documentation to `packages/common/docs/API.md`
@@ -38,8 +37,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- CUMULUS-1139 - Granules stored in the API contain a `files` property. That schema has been greatly
+  simplified and now better matches the CNM format.
+    - The `name` property has been renamed to `fileName`.
+    - The `filepath` property has been renamed to `key`.
+    - The `checksumValue` property has been renamed to `checksum`.
+    - The `path` property has been removed.
+    - The `url_path` property has been removed.
+    - The `filename` property (which contained an `s3://` URL) has been removed, and the `bucket`
+      and `key` properties should be used instead. Any requests sent to the API containing a `granule.files[].filename`
+      property will be rejected, and any responses coming back from the API will not contain that
+      `filename` property.
+    - A `source` property has been added, which is a URL indicating the original source of the file.
+  - `@cumulus/ingest/granule.moveGranuleFiles()` no longer includes a `filename` field in its
+    output. The `bucket` and `key` fields should be used instead.
 - **CUMULUS-672**
-  - `@cumulus/post-to-cmr` now looks in `config.cmrMetadataFormat` instead of `config.cmrFileType` to determine the type of metadata to post to CMR
   - Changed `@cumulus/integration-tests/api/EarthdataLogin.getEarthdataLoginRedirectResponse` to `@cumulus/integration-tests/api/EarthdataLogin.getEarthdataAccessToken`. The new function returns an access response from Earthdata login, if successful.
   - `@cumulus/integration-tests/cmr/getOnlineResources` now accepts an object of options, including `cmrMetadataFormat`. Based on the `cmrMetadataFormat`, the function will correctly retrieve the online resources for each metadata format (ECHO10, UMM-G)
 
@@ -97,20 +109,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Cloudformation template overrides now work as expected
 
 ### Changed
-- CUMULUS-1139 - Granules stored in the API contain a `files` property. That schema has been greatly
-  simplified and now better matches the CNM format.
-    - The `name` property has been renamed to `fileName`.
-    - The `filepath` property has been renamed to `key`.
-    - The `checksumValue` property has been renamed to `checksum`.
-    - The `path` property has been removed.
-    - The `url_path` property has been removed.
-    - The `filename` property (which contained an `s3://` URL) has been removed, and the `bucket`
-      and `key` properties should be used instead. Any requests sent to the API containing a `granule.files[].filename`
-      property will be rejected, and any responses coming back from the API will not contain that
-      `filename` property.
-    - A `source` property has been added, which is a URL indicating the original source of the file.
-  - `@cumulus/ingest/granule.moveGranuleFiles()` no longer includes a `filename` field in its
-    output. The `bucket` and `key` fields should be used instead.
 - CUMULUS-1169
   - Deprecated the `@cumulus/common/step-functions` module.
   - Updated code that queries the StepFunctions API to use the retry-enabled functions from

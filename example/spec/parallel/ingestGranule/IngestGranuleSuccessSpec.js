@@ -43,6 +43,7 @@ const {
   waitForCompletedExecution,
   EarthdataLogin: { getEarthdataAccessToken },
   distributionApi: {
+    getDistributionApiS3SignedUrl,
     getDistributionApiFileStream,
     getDistributionFileUrl
   }
@@ -210,7 +211,7 @@ describe('The S3 Ingest Granules workflow', () => {
         providerModel.delete(provider),
         executionModel.delete({ arn: workflowExecution.executionArn }),
         executionModel.delete({ arn: failingWorkflowExecution.executionArn }),
-        granulesApiTestUtils.deleteGranule({
+        granulesApiTestUtils.removePublishedGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         })
@@ -342,8 +343,21 @@ describe('The S3 Ingest Granules workflow', () => {
 
       granule = postToCmrOutput.payload.granules[0];
       files = granule.files;
-      cmrResource = await getOnlineResources(granule);
+
+      const result = await Promise.all([
+        getOnlineResources(granule),
+        // Login with Earthdata and get access token.
+        getEarthdataAccessToken({
+          redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
+          requestOrigin: process.env.DISTRIBUTION_ENDPOINT
+        })
+      ]);
+
+      cmrResource = result[0];
       resourceURLs = cmrResource.map((resource) => resource.href);
+
+      const accessTokenResponse = result[1];
+      accessToken = accessTokenResponse.accessToken;
     });
 
     afterAll(async () => {
@@ -386,14 +400,17 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(resourceURLs.includes(s3CredsUrl)).toBe(true);
     });
 
-    it('downloads the requested science file for authorized requests', async () => {
-      // Login with Earthdata and get access token.
-      const accessTokenResponse = await getEarthdataAccessToken({
-        redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
-        requestOrigin: process.env.DISTRIBUTION_ENDPOINT
+    it('includes the Earthdata login ID for requests to protected science files', async () => {
+      const distributionUrl = getDistributionFileUrl({
+        bucket: files[0].bucket,
+        key: files[0].filepath
       });
-      accessToken = accessTokenResponse.accessToken;
+      const s3SignedUrl = await getDistributionApiS3SignedUrl(distributionUrl, accessToken);
+      const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('x-EarthdataLoginUsername');
+      expect(earthdataLoginParam).toEqual(process.env.EARTHDATA_USERNAME);
+    });
 
+    it('downloads the requested science file for authorized requests', async () => {
       const scienceFileUrls = resourceURLs
         .filter((url) =>
           (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) ||
@@ -418,7 +435,7 @@ describe('The S3 Ingest Granules workflow', () => {
                 bucket: file.bucket,
                 key: file.filepath
               });
-              fileStream = getDistributionApiFileStream(fileUrl, accessToken);
+              fileStream = await getDistributionApiFileStream(fileUrl, accessToken);
             }
             else if (bucketsConfig.type(file.bucket) === 'public') {
               fileStream = got.stream(url);

@@ -206,7 +206,7 @@ async function generateDistributionReport(params) {
   const s3Objects = (await aws.listS3ObjectsV2({ Bucket: logsBucket, Prefix: logsPrefix }))
     .map((s3Object) => ({ Bucket: logsBucket, Key: s3Object.Key }));
 
-  log.info(`Found ${s3Objects} log files in S3`);
+  log.info(`Found ${s3Objects.length} log files in S3`);
 
   // Fetch all distribution events from S3
   const allDistributionEvents = flatten(await pMap(
