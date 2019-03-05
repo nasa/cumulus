@@ -197,6 +197,7 @@ test('calculateS3ObjectChecksum returns correct checksum', async (t) => {
   t.is(md5, md5sum);
   t.is(sha1, shasum);
   t.is(sha256, sha256sum);
+  return aws.recursivelyDeleteS3Bucket(Bucket);
 });
 
 test('validateS3ObjectChecksum returns true for good checksum', async (t) => {
@@ -212,6 +213,7 @@ test('validateS3ObjectChecksum returns true for good checksum', async (t) => {
     algorithm: 'cksum', bucket: Bucket, key: Key, expectedSum: cksum
   });
   t.true(ret);
+  return aws.recursivelyDeleteS3Bucket(Bucket);
 });
 
 test('validateS3ObjectChecksum throws InvalidChecksum error on bad checksum', async (t) => {
@@ -227,4 +229,5 @@ test('validateS3ObjectChecksum throws InvalidChecksum error on bad checksum', as
   await t.throws(aws.validateS3ObjectChecksum({
     algorithm: 'cksum', bucket: Bucket, key: Key, expectedSum: cksum
   }), errMsg);
+  return aws.recursivelyDeleteS3Bucket(Bucket);
 });
