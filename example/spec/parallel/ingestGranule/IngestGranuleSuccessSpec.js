@@ -344,6 +344,7 @@ describe('The S3 Ingest Granules workflow', () => {
       files = granule.files;
       cmrResource = await getOnlineResources(granule);
       resourceURLs = cmrResource.map((resource) => resource.href);
+      console.log('cmrResource: ', JSON.stringify(cmrResource));
     });
 
     afterAll(async () => {
