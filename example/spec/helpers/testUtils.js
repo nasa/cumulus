@@ -1,10 +1,6 @@
 'use strict';
 
 const fs = require('fs');
-const {
-  aws: { s3, headObject, parseS3Uri },
-  stringUtils: { globalReplace }
-} = require('@cumulus/common');
 const { Config } = require('kes');
 const cloneDeep = require('lodash.clonedeep');
 const merge = require('lodash.merge');
@@ -13,6 +9,11 @@ const { promisify } = require('util');
 const tempy = require('tempy');
 const execa = require('execa');
 const pTimeout = require('p-timeout');
+
+const {
+  aws: { s3, headObject, parseS3Uri },
+  stringUtils: { globalReplace }
+} = require('@cumulus/common');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
@@ -52,6 +53,7 @@ function loadConfig() {
 
   config.test_configs.buckets = config.buckets;
   config.test_configs.deployment = config.deployment;
+  config.test_configs.cmr = config.cmr;
 
   return config.test_configs;
 }
@@ -161,6 +163,19 @@ function getExecutionUrl(executionArn) {
 }
 
 /**
+ * Get URL to a public file in S3
+ *
+ * @param {Object} params
+ * @param {string} params.bucket - S3 bucket
+ * @param {string} params.key - S3 object key
+ *
+ * @returns {string} - Public S3 file URL
+ */
+function getPublicS3FileUrl({ bucket, key }) {
+  return `https://${bucket}.s3.amazonaws.com/${key}`;
+}
+
+/**
  * Redeploy the current Cumulus deployment.
  *
  * @param {Object} config - configuration object from loadConfig()
@@ -197,7 +212,24 @@ async function redeploy(config, options = {}) {
 }
 
 async function getFileMetadata(file) {
-  const { Bucket, Key } = parseS3Uri(file.filename);
+  let Bucket;
+  let Key;
+  if (file.bucket && file.filepath) {
+    Bucket = file.bucket;
+    Key = file.filepath;
+  }
+  else if (file.bucket && file.key) {
+    Bucket = file.bucket;
+    Key = file.key;
+  }
+  else if (file.filename) {
+    const parsedUrl = parseS3Uri(file.filename);
+    Bucket = parsedUrl.Bucket;
+    Key = parsedUrl.Key;
+  }
+  else {
+    throw new Error(`Unable to determine file location: ${JSON.stringify(file)}`);
+  }
 
   const headObjectResponse = await headObject(Bucket, Key);
 
@@ -259,6 +291,7 @@ module.exports = {
   uploadTestDataToBucket,
   deleteFolder,
   getExecutionUrl,
+  getPublicS3FileUrl,
   redeploy,
   getFilesMetadata,
   protectFile,
