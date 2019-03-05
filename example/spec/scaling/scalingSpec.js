@@ -14,7 +14,7 @@ const { loadConfig, loadCloudformationTemplate } = require('../helpers/testUtils
 const workflowName = 'HelloWorldOnDemandWorkflow';
 const config = loadConfig();
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 1000000;
 let clusterArn;
 let autoScalingGroupName;
 
