@@ -1,27 +1,23 @@
 const base64 = require('base-64');
 const got = require('got');
+const { URL } = require('url');
 
+const { AccessToken } = require('@cumulus/api/models');
 const EarthdataLogin = require('@cumulus/api/lib/EarthdataLogin');
 
 /**
- * Login to Earthdata and make request to redirect from Earthdata
+ * Login to Earthdata and get access token.
  *
  * @param {Object} params
  * @param {string} params.redirectUri
  *   The redirect URL to use for the Earthdata login client
  * @param {string} params.requestOrigin
  *   The URL to use as the "origin" for the request Earthdata login
- * @param {string} params.state
- *   The "state" query parameter included in the redirect back from Earthdata login
  *
- * @returns {Promise}
- *   Promise from the request to the redirect from Earthdata
+ * @returns {Object}
+ *   Access token object returned by Earthdata client
  */
-async function getEarthdataLoginRedirectResponse({
-  redirectUri,
-  requestOrigin,
-  state
-}) {
+async function getEarthdataAccessToken({ redirectUri, requestOrigin }) {
   if (!process.env.EARTHDATA_USERNAME) {
     throw new Error('EARTHDATA_USERNAME environment variable is required');
   }
@@ -33,7 +29,7 @@ async function getEarthdataLoginRedirectResponse({
   const earthdataLoginClient = EarthdataLogin.createFromEnv({
     redirectUri
   });
-  const authorizeUrl = earthdataLoginClient.getAuthorizationUrl(state);
+  const authorizeUrl = earthdataLoginClient.getAuthorizationUrl();
 
   // Prepare request options for login to Earthdata.
   const auth = base64.encode(`${process.env.EARTHDATA_USERNAME}:${process.env.EARTHDATA_PASSWORD}`);
@@ -67,11 +63,23 @@ async function getEarthdataLoginRedirectResponse({
     );
   }
 
-  // Make request to redirect URL to exchange Earthdata authorization code
-  // for access token.
-  return got(redirectUrl, { followRedirect: false });
+  const authorizationCode = new URL(redirectUrl).searchParams.get('code');
+  if (!authorizationCode) {
+    throw new Error(
+      `Authorization code could not be found in redirect: ${redirectUrl}`
+    );
+  }
+
+  const accessTokenResponse = await earthdataLoginClient.getAccessToken(authorizationCode);
+
+  // Store access token. All API endpoints using access tokens check that the
+  // access token exists in the database.
+  const accessTokenModel = new AccessToken();
+  await accessTokenModel.create(accessTokenResponse);
+
+  return accessTokenResponse;
 }
 
 module.exports = {
-  getEarthdataLoginRedirectResponse
+  getEarthdataAccessToken
 };

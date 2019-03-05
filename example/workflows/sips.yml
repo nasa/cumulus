@@ -189,7 +189,7 @@ IngestAndPublishGranule:
       CumulusConfig:
         bucket: '{$.meta.buckets.internal.name}'
         collection: '{$.meta.collection}'
-        cmrFileType: '{$.meta.cmrFileType}'
+        cmrMetadataFormat: '{$.meta.cmrMetadataFormat}'
         additionalUrls: '{$.meta.additionalUrls}'
       Type: Task
       Resource: ${FakeProcessingLambdaFunction.Arn}
@@ -229,6 +229,7 @@ IngestAndPublishGranule:
         process: '{$.cumulus_meta.process}'
         input_granules: '{$.meta.input_granules}'
         granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+        cmrMetadataFormat: '{$.meta.cmrMetadataFormat}'
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
       Catch:
