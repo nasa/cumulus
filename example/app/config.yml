@@ -145,7 +145,7 @@ default:
             value: HelloWorldLambdaFunction
     tasks:
       HelloWorldOnDemand:
-        image: '{{AWS_ACCOUNT_ID}}.dkr.ecr.us-east-1.amazonaws.com/hello_world:latest'
+        image: '{{AWS_ACCOUNT_ID}}.dkr.ecr.{{AWS_DEFAULT_REGION}}.amazonaws.com/hello_world:latest'
         cpu: 400
         memory: 700
         envs:
