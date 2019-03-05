@@ -620,7 +620,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
   };
 
   const matchingFilesInCmr = [{
-    URL: 'https://example.com/testbucket-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf',
+    URL: `${process.env.DISTRIBUTION_ENDPOINT}testbucket-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf`,
     Type: 'GET DATA',
     Description: 'File to download'
   },
@@ -630,7 +630,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     Description: 'File to download'
   },
   {
-    URL: 'https://example.com/testbucket-protected-2/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml',
+    URL: `${process.env.DISTRIBUTION_ENDPOINT}testbucket-protected-2/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml`,
     Type: 'GET DATA',
     Description: 'File to download'
   }];
@@ -642,7 +642,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
   }];
 
   const urlsShouldOnlyInCmr = [{
-    URL: 'https://example.com/s3credentials',
+    URL: `${process.env.DISTRIBUTION_ENDPOINT}s3credentials`,
     Type: 'VIEW RELATED INFORMATION',
     Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access'
   }];
