@@ -25,6 +25,13 @@ default:
     shared:
       name: cumulus-data-shared
       type: shared
+    # Buckets to use for seeing the dashboard. We only need them in IAMs.
+    sandbox-dashboard:
+      name: cumulus-dashboard-sandbox
+      type: shared
+    sit-dashboard:
+      name: cumulus-dashboard-sit
+      type: shared
 
   params:
      - name: ResourcePrefix
@@ -96,6 +103,9 @@ lf:
       type: protected
     dashboard:
       name: cumulus-dashboard-sandbox
+      type: shared
+    dashboard-2:
+      name: lauren-dashboard-test
       type: shared
 
 lf-int-test:
