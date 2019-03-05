@@ -39,6 +39,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- CUMULUS-1139 - Granules stored in the API contain a `files` property. That schema has been greatly
+  simplified and now better matches the CNM format.
+    - The `name` property has been renamed to `fileName`.
+    - The `filepath` property has been renamed to `key`.
+    - The `checksumValue` property has been renamed to `checksum`.
+    - The `path` property has been removed.
+    - The `url_path` property has been removed.
+    - The `filename` property (which contained an `s3://` URL) has been removed, and the `bucket`
+      and `key` properties should be used instead. Any requests sent to the API containing a `granule.files[].filename`
+      property will be rejected, and any responses coming back from the API will not contain that
+      `filename` property.
+    - A `source` property has been added, which is a URL indicating the original source of the file.
+  - `@cumulus/ingest/granule.moveGranuleFiles()` no longer includes a `filename` field in its
+    output. The `bucket` and `key` fields should be used instead.
 - **CUMULUS-672**
   - Changed `@cumulus/integration-tests/api/EarthdataLogin.getEarthdataLoginRedirectResponse` to `@cumulus/integration-tests/api/EarthdataLogin.getEarthdataAccessToken`. The new function returns an access response from Earthdata login, if successful.
   - `@cumulus/integration-tests/cmr/getOnlineResources` now accepts an object of options, including `cmrMetadataFormat`. Based on the `cmrMetadataFormat`, the function will correctly retrieve the online resources for each metadata format (ECHO10, UMM-G)
@@ -105,20 +119,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Cloudformation template overrides now work as expected
 
 ### Changed
-- CUMULUS-1139 - Granules stored in the API contain a `files` property. That schema has been greatly
-  simplified and now better matches the CNM format.
-    - The `name` property has been renamed to `fileName`.
-    - The `filepath` property has been renamed to `key`.
-    - The `checksumValue` property has been renamed to `checksum`.
-    - The `path` property has been removed.
-    - The `url_path` property has been removed.
-    - The `filename` property (which contained an `s3://` URL) has been removed, and the `bucket`
-      and `key` properties should be used instead. Any requests sent to the API containing a `granule.files[].filename`
-      property will be rejected, and any responses coming back from the API will not contain that
-      `filename` property.
-    - A `source` property has been added, which is a URL indicating the original source of the file.
-  - `@cumulus/ingest/granule.moveGranuleFiles()` no longer includes a `filename` field in its
-    output. The `bucket` and `key` fields should be used instead.
 - CUMULUS-1169
   - Deprecated the `@cumulus/common/step-functions` module.
   - Updated code that queries the StepFunctions API to use the retry-enabled functions from
