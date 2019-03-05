@@ -5,6 +5,7 @@ const fs = require('fs-extra');
 const cloneDeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
 const groupBy = require('lodash.groupby');
+const get = require('lodash.get');
 const moment = require('moment');
 const omit = require('lodash.omit');
 const os = require('os');
@@ -841,7 +842,6 @@ function isFileRenamed(filename) {
   return (filename.match(suffixRegex) !== null);
 }
 
-
 /**
  * Returns the input filename stripping off any versioned timestamp.
  *
@@ -850,6 +850,30 @@ function isFileRenamed(filename) {
  */
 function unversionFilename(filename) {
   return isFileRenamed(filename) ? filename.split('.').slice(0, -1).join('.') : filename;
+}
+
+/**
+ * Returns a directive on how to act when duplicate files are encountered.
+ *
+ * @param {Object} event - lambda function event.
+ * @param {Object} event.config - the config object
+ * @param {Object} event.config.collection - collection object.
+
+ * @returns {string} - duplicate handling directive.
+ */
+function duplicateHandlingType(event) {
+  const config = get(event, 'config');
+  const collection = get(config, 'collection');
+
+  let duplicateHandling = get(config, 'duplicateHandling', get(collection, 'duplicateHandling', 'error'));
+
+  const forceDuplicateOverwrite = get(event, 'cumulus_config.cumulus_context.forceDuplicateOverwrite', false);
+
+  log.debug(`Configured duplicateHandling value: ${duplicateHandling}, forceDuplicateOverwrite ${forceDuplicateOverwrite}`);
+
+  if (forceDuplicateOverwrite === true) duplicateHandling = 'replace';
+
+  return duplicateHandling;
 }
 
 module.exports.selector = selector;
@@ -870,3 +894,4 @@ module.exports.moveGranuleFile = moveGranuleFile;
 module.exports.moveGranuleFiles = moveGranuleFiles;
 module.exports.renameS3FileWithTimestamp = renameS3FileWithTimestamp;
 module.exports.generateMoveFileParams = generateMoveFileParams;
+module.exports.duplicateHandlingType = duplicateHandlingType;
