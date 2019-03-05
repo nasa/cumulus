@@ -1,19 +1,19 @@
-
 <cumulus-deployment-name>:
-  stackName: <prefix>-cumulus
+  stackName: <prefix>-cumulus         # stackName must match the prefix for your IAM stack
   stackNameNoDash: <Prefix>Cumulus
 
   apiStage: dev
 
   vpc:
-    vpcId: <vpc-id>
+    vpcId: '{{VPC_ID}}'         # this has to be set in .env
     subnets:
-      - <subnet-id>
+      - '{{AWS_SUBNET}}'        # this has to be set in .env
 
   ecs:
     instanceType: t2.micro
     desiredInstances: 0
     availabilityZone: <subnet-id-zone>
+    amiid: <some-ami-id>
 
   buckets:
     internal:
@@ -39,8 +39,7 @@
     scalingRoleArn: 'arn:aws:iam::<aws-account-id>:role/{{stackName}}-scaling-role'
     migrationRoleArn: 'arn:aws:iam::<aws-account-id>:role/{{stackName}}-migration-processing'
 
-
-  urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
+  urs_url: https://uat.urs.earthdata.nasa.gov/ # make sure to include the trailing slash
 
   # if not specified the value of the apigateway backend endpoint is used
   # api_backend_url: https://apigateway-url-to-api-backend/ #make sure to include the trailing slash
@@ -48,7 +47,8 @@
   # if not specified the value of the apigateway dist url is used
   # api_distribution_url: https://apigateway-url-to-distribution-app/ #make sure to include the trailing slash
 
-  # URS users who should have access to the dashboard application.
+  # URS users who should have access to the dashboard application and use the
+  # distribution API to access protected files.
   users:
     - username: <user>
     - username: <user2>
