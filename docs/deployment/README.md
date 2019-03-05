@@ -136,8 +136,8 @@ Descriptions of the fields can be found in [IAM Configuration Descriptions](depl
 
 ```
 dev:                                # deployment name
-  prefix: dev-cumulus               # prefixes CloudFormation-created iam resources and permissions
-  stackName: dev-cumulus-iams       # name of this iam stack in CloudFormation (e.g. <prefix>-iams)
+  prefix: dev-cumulus               # prefixes CloudFormation-created IAM resources and permissions
+  stackName: dev-cumulus-iams       # name of this IAM stack in CloudFormation (e.g. <prefix>-iams)
   useNgapPermissionBoundary: true   # for NASA NGAP accounts
 
   buckets:
@@ -198,15 +198,15 @@ Descriptions of the fields can be found in [App Configuration Descriptions](depl
 
 ```
 dev:                                    # deployment name
-  stackName: dev-cumulus
+  stackName: dev-cumulus        # see note below
   stackNameNoDash: DevCumulus
 
   apiStage: dev
 
   vpc:
-    vpcId: '{{VPC_ID}}' # this has to be set in .env
+    vpcId: '{{VPC_ID}}'         # this has to be set in .env
     subnets:
-      - '{{AWS_SUBNET}}' # this has to be set in .env
+      - '{{AWS_SUBNET}}'        # this has to be set in .env
 
   ecs:
     instanceType: t2.micro
@@ -214,7 +214,8 @@ dev:                                    # deployment name
     availabilityZone: <subnet-id-zone>
     amiid: <some-ami-id>
 
-  system_bucket: '{{buckets.internal.name}}' # Or can specify a different bucket for the system_bucket
+  # Or can specify a different bucket for the system_bucket
+  system_bucket: '{{buckets.internal.name}}'
 
   buckets:                              # Should be the same as in IAMs
     internal:
@@ -222,14 +223,14 @@ dev:                                    # deployment name
         type: internal
 
   iams:
-    ecsRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-ecs
-    lambdaApiGatewayRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-lambda-api-gateway
-    lambdaProcessingRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-lambda-processing
-    stepRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-steprole
-    instanceProfile: arn:aws:iam::<aws-account-id>:instance-profile/<iams-prefix>-ecs
-    distributionRoleArn: 'arn:aws:iam::<aws-account-id>:role/<iams-prefix>-distribution-api-lambda'
-    scalingRoleArn: 'arn:aws:iam::<aws-account-id>:role/<iams-prefix>-scaling-role'
-    migrationRoleArn: 'arn:aws:iam::<aws-account-id>:role/<iams-prefix>-migration-processing'
+    ecsRoleArn: arn:aws:iam::<aws-account-id>:role/<stackName>-ecs
+    lambdaApiGatewayRoleArn: arn:aws:iam::<aws-account-id>:role/<stackName>-lambda-api-gateway
+    lambdaProcessingRoleArn: arn:aws:iam::<aws-account-id>:role/<stackName>-lambda-processing
+    stepRoleArn: arn:aws:iam::<aws-account-id>:role/<stackName>-steprole
+    instanceProfile: arn:aws:iam::<aws-account-id>:instance-profile/<stackName>-ecs
+    distributionRoleArn: 'arn:aws:iam::<aws-account-id>:role/<stackName>-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::<aws-account-id>:role/<stackName>-scaling-role'
+    migrationRoleArn: 'arn:aws:iam::<aws-account-id>:role/<stackName>-migration-processing'
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
@@ -244,6 +245,8 @@ dev:                                    # deployment name
     - username: <user>
     - username: <user2>
 ```
+
+**IMPORTANT NOTE** - The `stackName` for this config **must match** the value of the resource prefix for the IAM stack. By default, this means that the `stackName` should match the value of the [`prefix` set for the IAM stack above](#configure-and-deploy-the-iam-stack). However, if you changed the value of the `ResourcePrefix` param in your IAM stack `config.yml`, you would use that value instead.
 
 ### Configure EarthData application
 
