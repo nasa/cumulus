@@ -228,12 +228,11 @@ async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bu
 exports.reconciliationReportForGranuleFiles = reconciliationReportForGranuleFiles;
 
 /**
- * Compare the granule holdings in CMR with Cumulus
+ * Compare the granule holdings in CMR with Cumulus for a given collection
  *
  * @param {string} collectionId - the collection which has the granules to be reconciled
  * @param {Object} bucketsConfig - bucket configuration object
- * @returns {Promise<Object>} an object with the okGranulesInDb, okGranulesInCmr, onlyInCumulus,
- * onlyInCmr
+ * @returns {Promise<Object>} an object with the granulesReport and filesReport
  */
 async function reconciliationReportForGranules(collectionId, bucketsConfig) {
   // compare granule holdings:
