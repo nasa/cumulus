@@ -69,7 +69,7 @@ async function canListObjects(region, credentials) {
   return invokeTestLambda(region, credentials, 'list-objects');
 }
 
-describe('When accessing an S3 bucket directly', () => {
+xdescribe('When accessing an S3 bucket directly', () => {
   beforeAll(async () => {
     await s3().putObject({ Bucket: protectedBucket, Key: testFileKey, Body: 'test' }).promise();
   });
@@ -108,18 +108,17 @@ describe('When accessing an S3 bucket directly', () => {
     });
 
     describe('while outside the region ', () => {
-      const pendingReason = '2019-02-25: MHS - NGAP same-region policy not deployed completely';
       it('the bucket contents can NOT be listed', async () => {
         expect(await canListObjects('us-west-2', credentials)).toBe('false');
-      }).pend(pendingReason);
+      });
 
       it('the data can NOT be downloaded', async () => {
         expect(await canGetObject('us-west-2', credentials)).toBe('false');
-      }).pend(pendingReason);
+      });
 
       it('a write is rejected', async () => {
         expect(await canWriteObject('us-east-1', credentials)).toBe('false');
-      }).pend(pendingReason);
+      });
     });
   });
 
