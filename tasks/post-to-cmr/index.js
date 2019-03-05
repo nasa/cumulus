@@ -19,12 +19,10 @@ const { loadJSONTestData } = require('@cumulus/test-data');
  *
  * @param {Array} results - list of results returned by publish function
  * @param {Array} granules - list of granules
- * @param {string} cmrMetadataFormat - CMR metadata format
- *  (echo10, umm_json_v1_4, umm_json_v1_5)
  *
  * @returns {Array} an updated array of granules
  */
-function buildOutput(results, granules, cmrMetadataFormat) {
+function buildOutput(results, granules) {
   const resultsByGranuleId = keyBy(results, 'granuleId');
 
   return granules.map((granule) => {
@@ -37,7 +35,7 @@ function buildOutput(results, granules, cmrMetadataFormat) {
       cmrLink: result.link,
       cmrConceptId: result.conceptId,
       published: true,
-      cmrMetadataFormat: cmrMetadataFormat || result.metadataFormat
+      cmrMetadataFormat: result.metadataFormat
     });
   });
 }
@@ -100,8 +98,7 @@ async function postToCMR(event) {
     process: event.config.process,
     granules: buildOutput(
       results,
-      event.input.granules,
-      event.config.cmrMetadataFormat
+      event.input.granules
     )
   };
 }
