@@ -150,11 +150,26 @@ async function moveGranule({ prefix, granuleId, destinations }) {
   }
 }
 
+/**
+ * Removed a granule from CMR and delete from Cumulus via the API
+ *
+ * @param {Object} params - params
+ * @param {string} params.prefix - the prefix configured for the stack
+ * @param {string} params.granuleId - a granule ID
+ * @returns {Promise<Object>} - the delete confirmation from the API
+ */
+async function removePublishedGranule({ prefix, granuleId }) {
+  // pre-delete: Remove the granule from CMR
+  await removeFromCMR({ prefix, granuleId });
+  return deleteGranule({ prefix, granuleId });
+};
+
 module.exports = {
   getGranule,
   reingestGranule,
   removeFromCMR,
   applyWorkflow,
   deleteGranule,
-  moveGranule
+  moveGranule,
+  removePublishedGranule
 };
