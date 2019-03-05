@@ -92,5 +92,5 @@ fs.readdir('tasks')
   .then(createTasksDoc)
   .catch((err) => {
     console.error(err);
-    process.existCode = 1;
+    process.exitCode = 1;
   });
