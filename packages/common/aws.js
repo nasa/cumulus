@@ -973,7 +973,7 @@ class UnparsableFileLocationError extends Error {
  * @returns {Object} - bucket/key in the form of
  * { Bucket: x, Key: y }
  */
-exports.getFileBucketAndKey(pathParams) {
+exports.getFileBucketAndKey = (pathParams) => {
   const fields = pathParams.split('/');
 
   const Bucket = fields.shift();
