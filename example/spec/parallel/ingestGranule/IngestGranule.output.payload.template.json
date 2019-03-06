@@ -17,7 +17,8 @@
           "fileSize": 17865615,
           "path": "replace-me-path",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
-          "filepath": "MOD09GQ___006/2017/MOD/replace-me-granuleId.hdf"
+          "filepath": "MOD09GQ___006/2017/MOD/replace-me-granuleId.hdf",
+          "fileType": "data"
         },
         {
           "name": "replace-me-granuleId.hdf.met",
@@ -26,7 +27,8 @@
           "fileSize": 44118,
           "path": "replace-me-path",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
-          "filepath": "MOD09GQ___006/MOD/replace-me-granuleId.hdf.met"
+          "filepath": "MOD09GQ___006/MOD/replace-me-granuleId.hdf.met",
+          "fileType": "metadata"
         },
         {
           "name": "replace-me-granuleId_ndvi.jpg",
@@ -35,14 +37,16 @@
           "fileSize": 44118,
           "path": "replace-me-path",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
-          "filepath": "MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg"
+          "filepath": "MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg",
+          "fileType": "browse"
         },
         {
           "filename": "s3://this-should-be-replaced-with-protected-2-bucket-name-in-the-test/MOD09GQ/MOD/replace-me-granuleId.cmr.xml",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
           "bucket": "this-should-be-replaced-with-protected-2-bucket-name-in-the-test",
           "name": "replace-me-granuleId.cmr.xml",
-          "filepath": "MOD09GQ___006/MOD/replace-me-granuleId.cmr.xml"
+          "filepath": "MOD09GQ___006/MOD/replace-me-granuleId.cmr.xml",
+          "fileType": "metadata"
         }
       ]
     }
