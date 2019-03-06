@@ -343,7 +343,11 @@ test('scan() will translate old-style granule files into the new schema', async 
   }).promise();
 
   const granuleModel = new Granule();
-  const scanResponse = await granuleModel.scan();
+  const scanResponse = await granuleModel.scan({
+    names: { '#granuleId': 'granuleId' },
+    filter: '#granuleId = :granuleId',
+    values: { ':granuleId': granule.granuleId }
+  });
 
   t.deepEqual(
     scanResponse.Items[0].files[0],

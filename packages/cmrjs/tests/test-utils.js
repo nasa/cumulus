@@ -8,6 +8,7 @@ const publicIp = require('public-ip');
 const {
   getIp,
   ummVersion,
+  ummVersionToMetadataFormat,
   validateUMMG
 } = require('../utils');
 
@@ -63,6 +64,14 @@ test('ummVersion returns default version 1.4 if object has no metadata specifica
   const actual = ummVersion(metadata);
 
   t.is('1.4', actual);
+});
+
+test('ummVersionToMetadataFormat returns correct metadata format for UMM-G versions', (t) => {
+  let actual = ummVersionToMetadataFormat('1.4');
+  t.is('umm_json_v1_4', actual);
+
+  actual = ummVersionToMetadataFormat('1.5');
+  t.is('umm_json_v1_5', actual);
 });
 
 test('validateUMMG calls post with correct metadata version when metadata version available', async (t) => {
