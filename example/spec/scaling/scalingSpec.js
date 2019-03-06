@@ -142,7 +142,7 @@ describe('cloudformation template for scaling policies', () => {
           DisableScaleIn: false,
           TargetValue: 50,
           PredefinedMetricSpecification: {
-            PredefinedMetricType: 'ASGAverageCPUUtilization'
+            PredefinedMetricType: 'ASGAverageNetworkIn'
           }
         }
       }
