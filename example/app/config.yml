@@ -121,9 +121,9 @@ default:
       Target:
         policy_type: TargetTrackingScaling
         adjustment_type: ChangeInCapacity
-        target_value: 50
+        target_value: 20000
         predefined_metric_type:
-          PredefinedMetricType: ASGAverageCPUUtilization
+          PredefinedMetricType: ASGAverageNetworkIn
 
     services:
       HelloWorldService:
