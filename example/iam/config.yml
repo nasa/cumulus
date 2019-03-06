@@ -30,7 +30,10 @@ default:
      - name: ResourcePrefix
        value: '{{prefix}}'
 
-cumulus-from-npm:
+# ------------------------
+# CUMULUS team deployments
+# ------------------------
+CUMULUS-from-npm:
   prefix: test-npm-integration
 
 cumulus-from-source:
@@ -42,6 +45,31 @@ cumulus-from-pr:
 cumulus-nightly:
   prefix: nightly # used by the nightly cron job
 
+# Nightly SIT stack
+cumulus-sit:
+  prefix: cumulus-sit
+  stackName: cumulus-sit-iam
+
+  buckets:
+    internal:
+      name: cumulus-sit-internal
+      type: internal
+    private:
+      name: cumulus-sit-private
+      type: private
+    protected:
+      name: cumulus-sit-protected
+      type: protected
+    public:
+      name: cumulus-sit-public
+      type: public
+    protected-2:
+      name: cumulus-sit-protected
+      type: protected
+
+# -------------------------------
+# CUMULUS individual deployments.
+# -------------------------------
 mhs2:
   prefix: mhs2
 
@@ -240,6 +268,28 @@ mhs:
 
 mhs3:
   prefix: mhs3
+  buckets:
+    internal:
+      name: mhs3-internal
+      type: internal
+    private:
+      name: mhs3-private
+      type: private
+    protected:
+      name: mhs3-protected
+      type: protected
+    public:
+      name: mhs3-public
+      type: public
+    protected-2:
+      name: mhs3-protected-2
+      type: protected
+    shared:
+      name: cumulus-data-shared
+      type: shared
+
+  system_bucket: mhs3-internal
+
 
 jk:
   prefix: jk
@@ -257,25 +307,3 @@ mboyd-int:
 
 pq:
   prefix: pq
-
-# Nightly SIT stack
-cumulus-sit:
-  prefix: cumulus-sit
-  stackName: cumulus-sit-iam
-
-  buckets:
-    internal:
-      name: cumulus-sit-internal
-      type: internal
-    private:
-      name: cumulus-sit-private
-      type: private
-    protected:
-      name: cumulus-sit-protected
-      type: protected
-    public:
-      name: cumulus-sit-public
-      type: public
-    protected-2:
-      name: cumulus-sit-protected
-      type: protected
