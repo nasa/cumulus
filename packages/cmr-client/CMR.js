@@ -33,7 +33,7 @@ function ummVersion(umm) {
 
 /**
  * Posts a given xml string to the validate endpoint of CMR
- * and promises true of valid.
+ * and promises true if valid.
  *
  * @param {string} ummMetadata - the UMM object
  * @param {string} identifier - the document identifier
