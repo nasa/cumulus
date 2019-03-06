@@ -1,7 +1,6 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const crypto = require('crypto');
 const fs = require('fs');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
@@ -10,13 +9,14 @@ const pMap = require('p-map');
 const pRetry = require('p-retry');
 const pump = require('pump');
 const url = require('url');
+const { generateChecksumFromStream, validateChecksumFromStream } = require('@cumulus/checksum');
 
+const errors = require('./errors');
 const log = require('./log');
 const string = require('./string');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
 const concurrency = require('./concurrency');
-const { setErrorStack, noop } = require('./util');
-const { getFileChecksumFromStream } = require('./file');
+const { deprecate, setErrorStack, noop } = require('./util');
 
 /**
  * Wrap a function and provide a better stack trace
@@ -327,7 +327,6 @@ exports.s3GetObjectTagging = improveStackTrace(
     exports.s3().getObjectTagging({ Bucket: bucket, Key: key }).promise()
 );
 
-
 /**
 * Puts object Tagging in S3
 * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property
@@ -356,6 +355,10 @@ exports.s3PutObjectTagging = improveStackTrace(
 exports.getS3Object = improveStackTrace(
   (Bucket, Key) => exports.s3().getObject({ Bucket, Key }).promise()
 );
+
+exports.getS3ObjectReadStream = (bucket, key) => exports.s3().getObject(
+  { Bucket: bucket, Key: key }
+).createReadStream();
 
 /**
 * Check if a file exists in an S3 object
@@ -432,16 +435,18 @@ exports.deleteS3Files = (s3Objs) => pMap(
 * @param {string} bucket - name of the bucket
 * @returns {Promise} - the promised result of `S3.deleteBucket`
 **/
-exports.recursivelyDeleteS3Bucket = async (bucket) => {
-  const response = await exports.s3().listObjects({ Bucket: bucket }).promise();
-  const s3Objects = response.Contents.map((o) => ({
-    Bucket: bucket,
-    Key: o.Key
-  }));
+exports.recursivelyDeleteS3Bucket = improveStackTrace(
+  async (bucket) => {
+    const response = await exports.s3().listObjects({ Bucket: bucket }).promise();
+    const s3Objects = response.Contents.map((o) => ({
+      Bucket: bucket,
+      Key: o.Key
+    }));
 
-  await exports.deleteS3Files(s3Objects);
-  await exports.s3().deleteBucket({ Bucket: bucket }).promise();
-};
+    await exports.deleteS3Files(s3Objects);
+    await exports.s3().deleteBucket({ Bucket: bucket }).promise();
+  }
+);
 
 exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
   let i = 0;
@@ -610,22 +615,62 @@ class S3ListObjectsV2Queue {
 }
 exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
 
-exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
-  const param = { Bucket: bucket, Key: key };
+/**
+ * Calculate checksum for S3 Object
+ *
+ * @param {Object} params - params
+ * @param {string} params.algorithm - checksum algorithm
+ * @param {string} params.bucket - S3 bucket
+ * @param {string} params.key - S3 key
+ * @param {Object} [params.options] - crypto.createHash options
+ *
+ * @returns {number|string} - calculated checksum
+ */
+exports.calculateS3ObjectChecksum = async ({
+  algorithm,
+  bucket,
+  key,
+  options
+}) => {
+  const fileStream = exports.getS3ObjectReadStream(bucket, key);
+  return generateChecksumFromStream(algorithm, fileStream, options);
+};
 
-  if (algorithm.toLowerCase() === 'cksum') {
-    return getFileChecksumFromStream(
-      exports.s3().getObject(param).createReadStream()
-    );
+/**
+ * Validate S3 object checksum against expected sum
+ *
+ * @param {Object} params - params
+ * @param {string} params.algorithm - checksum algorithm
+ * @param {string} params.bucket - S3 bucket
+ * @param {string} params.key - S3 key
+ * @param {number|string} params.expectedSum - expected checksum
+ * @param {Object} [params.options] - crypto.createHash options
+ *
+ * @throws {InvalidChecksum} - Throws error if validation fails
+ * @returns {boolean} - returns true for success
+ */
+exports.validateS3ObjectChecksum = async ({
+  algorithm,
+  bucket,
+  key,
+  expectedSum,
+  options
+}) => {
+  const fileStream = exports.getS3ObjectReadStream(bucket, key);
+  if (await validateChecksumFromStream(algorithm, fileStream, expectedSum, options)) {
+    return true;
   }
+  const msg = `Invalid checksum for S3 object s3://${bucket}/${key} with type ${algorithm} and expected sum ${expectedSum}`;
+  throw new errors.InvalidChecksum(msg);
+};
 
-  return new Promise((resolve, reject) => {
-    const hash = crypto.createHash(algorithm, options);
-    const fileStream = exports.s3().getObject(param).createReadStream();
-    fileStream.on('error', reject);
-    fileStream.on('data', (chunk) => hash.update(chunk));
-    fileStream.on('end', () => resolve(hash.digest('hex')));
-  });
+// Maintained for backwards compatibility
+exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
+  deprecate('@cumulus/common/aws.checksumS3Objects', '1.11.2', '@cumulus/common/aws.calculateS3ObjectChecksum');
+  const params = {
+    algorithm, bucket, key, options
+  };
+  return exports.calculateS3ObjectChecksum(params);
 };
 
 // Class to efficiently search all of the items in a DynamoDB table, without

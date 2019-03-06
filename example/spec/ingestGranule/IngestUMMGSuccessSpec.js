@@ -15,6 +15,7 @@ const {
   }
 } = require('@cumulus/api');
 const { serveDistributionApi } = require('@cumulus/api/bin/serve');
+const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
   aws: {
     getS3Object,
@@ -22,8 +23,7 @@ const {
     parseS3Uri
   },
   BucketsConfig,
-  constructCollectionId,
-  file: { getFileChecksumFromStream }
+  constructCollectionId
 } = require('@cumulus/common');
 const { getUrl } = require('@cumulus/cmrjs');
 const {
@@ -35,6 +35,7 @@ const {
   granulesApi: granulesApiTestUtils,
   EarthdataLogin: { getEarthdataAccessToken },
   distributionApi: {
+    getDistributionApiS3SignedUrl,
     getDistributionApiFileStream,
     getDistributionFileUrl
   }
@@ -174,7 +175,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         collectionModel.delete(collection),
         providerModel.delete(provider),
         executionModel.delete({ arn: workflowExecution.executionArn }),
-        granulesApiTestUtils.deleteGranule({
+        granulesApiTestUtils.removePublishedGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         })
@@ -260,8 +261,20 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       granule = postToCmrOutput.payload.granules[0];
       files = granule.files;
 
-      onlineResources = await getOnlineResources(granule);
+      const result = await Promise.all([
+        getOnlineResources(granule),
+        // Login with Earthdata and get access token.
+        getEarthdataAccessToken({
+          redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
+          requestOrigin: process.env.DISTRIBUTION_ENDPOINT
+        })
+      ]);
+
+      onlineResources = result[0];
       resourceURLs = onlineResources.map((resource) => resource.URL);
+
+      const accessTokenResponse = result[1];
+      accessToken = accessTokenResponse.accessToken;
     });
 
     afterAll(async () => {
@@ -318,14 +331,17 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       expect(resourceURLs.includes(cumulusDocUrl)).toBe(true);
     });
 
-    it('downloads the requested science file for authorized requests', async () => {
-      // Login with Earthdata and get access token.
-      const accessTokenResponse = await getEarthdataAccessToken({
-        redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
-        requestOrigin: process.env.DISTRIBUTION_ENDPOINT
+    it('includes the Earthdata login ID for requests to protected science files', async () => {
+      const distributionUrl = getDistributionFileUrl({
+        bucket: files[0].bucket,
+        key: files[0].filepath
       });
-      accessToken = accessTokenResponse.accessToken;
+      const s3SignedUrl = await getDistributionApiS3SignedUrl(distributionUrl, accessToken);
+      const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('x-EarthdataLoginUsername');
+      expect(earthdataLoginParam).toEqual(process.env.EARTHDATA_USERNAME);
+    });
 
+    it('downloads the requested science file for authorized requests', async () => {
       const scienceFileUrls = resourceURLs.filter(isUMMGScienceUrl);
       console.log('scienceFileUrls: ', scienceFileUrls);
 
@@ -334,7 +350,8 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
           .map(async (url) => {
             const extension = path.extname(new URL(url).pathname);
             const sourceFile = s3data.find((d) => d.endsWith(extension));
-            const sourceChecksum = await getFileChecksumFromStream(
+            const sourceChecksum = await generateChecksumFromStream(
+              'cksum',
               fs.createReadStream(require.resolve(sourceFile))
             );
             const file = files.find((f) => f.name.endsWith(extension));
@@ -346,14 +363,14 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
                 bucket: file.bucket,
                 key: file.filepath
               });
-              fileStream = getDistributionApiFileStream(fileUrl, accessToken);
+              fileStream = await getDistributionApiFileStream(fileUrl, accessToken);
             }
             else if (bucketsConfig.type(file.bucket) === 'public') {
               fileStream = got.stream(url);
             }
 
             // Compare checksum of downloaded file with expected checksum.
-            const downloadChecksum = await getFileChecksumFromStream(fileStream);
+            const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
             return downloadChecksum === sourceChecksum;
           })
       );
