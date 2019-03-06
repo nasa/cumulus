@@ -14,7 +14,8 @@ async function handler(event) {
   const message = JSON.parse(messageString);
   return s3.putObject({
     Bucket: message.cumulus_meta.system_bucket,
-    Key: `${message.meta.stack}/test-output/${message.cumulus_meta.execution_name}.output`
+    Key: `${message.meta.stack}/test-output/${message.cumulus_meta.execution_name}.output`,
+    Body: JSON.stringify(event, null, 2)
   }).promise();
 }
 exports.handler = handler;

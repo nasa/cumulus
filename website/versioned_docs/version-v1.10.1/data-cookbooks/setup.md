@@ -105,4 +105,3 @@ The `rule - value` entry depends on the type of run:
   * If this is a onetime rule this can be left blank. [Example](data-cookbooks/hello-world.md/#execution)
   * If this is a scheduled rule this field must hold a valid [cron-type expression or rate expression](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html).
   * If this is a kinesis rule, this must be a configured `${Kinesis_stream_ARN}`. [Example](data-cookbooks/cnm-workflow.md#rule-configuration)
-

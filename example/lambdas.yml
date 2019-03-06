@@ -47,11 +47,6 @@ HelloWorld:
   memory: 256
   source: node_modules/@cumulus/hello-world/dist/
   useMessageAdapter: true
-InRegionS3Policy:
-  handler: index.inRegionS3Policy
-  memory: 256
-  timeout: 300
-  source: node_modules/@cumulus/api/dist/
 ModisProcessing:
   handler: lambda_handler.handler
   timeout: 300

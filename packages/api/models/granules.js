@@ -1,9 +1,9 @@
 'use strict';
 
-const clonedeep = require('lodash.clonedeep');
+const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
+const partial = require('lodash.partial');
 const path = require('path');
-const uniqBy = require('lodash.uniqby');
 
 const aws = require('@cumulus/ingest/aws');
 const commonAws = require('@cumulus/common/aws');
@@ -12,13 +12,17 @@ const cmrjs = require('@cumulus/cmrjs');
 const { CMR, reconcileCMRMetadata } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
+const { buildURL } = require('@cumulus/common/URLUtils');
 const {
   generateMoveFileParams,
   moveGranuleFiles
 } = require('@cumulus/ingest/granule');
 const { constructCollectionId } = require('@cumulus/common');
+const { isNil, renameProperty } = require('@cumulus/common/util');
 
 const Manager = require('./base');
+
+const { buildDatabaseFiles } = require('../lib/FileUtils');
 
 const {
   parseException,
@@ -29,40 +33,72 @@ const {
 const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
 
+const translateGranule = async (granule) => {
+  if (isNil(granule.files)) return granule;
+
+  return {
+    ...granule,
+    files: await buildDatabaseFiles({ files: granule.files })
+  };
+};
+
 class Granule extends Manager {
   constructor() {
+    const globalSecondaryIndexes = [{
+      IndexName: 'collectionId-granuleId-index',
+      KeySchema: [
+        {
+          AttributeName: 'collectionId',
+          KeyType: 'HASH'
+        },
+        {
+          AttributeName: 'granuleId',
+          KeyType: 'RANGE'
+        }
+      ],
+      Projection: {
+        ProjectionType: 'ALL'
+      },
+      ProvisionedThroughput: {
+        ReadCapacityUnits: 5,
+        WriteCapacityUnits: 10
+      }
+    }];
+
     super({
       tableName: process.env.GranulesTable,
       tableHash: { name: 'granuleId', type: 'S' },
+      tableAttributes: [{ name: 'collectionId', type: 'S' }],
+      tableIndexes: { GlobalSecondaryIndexes: globalSecondaryIndexes },
       schema: granuleSchema
     });
   }
 
-  /**
-  * Adds fileSize values from S3 object metadata for granules missing that information
-  *
-  * @param {Array<Object>} files - Array of files from a payload granule object
-  * @returns {Promise<Array>} - Updated array of files with missing fileSize appended
-  */
-  addMissingFileSizes(files) {
-    const filePromises = files.map((file) => {
-      if (!('fileSize' in file)) {
-        return commonAws.headObject(file.bucket, file.filepath)
-          .then((result) => {
-            const updatedFile = file;
-            updatedFile.fileSize = result.ContentLength;
-            return updatedFile;
-          })
-          .catch((error) => {
-            log.error(`Error: ${error}`);
-            log.error(`Could not validate missing filesize for ${file.filename}`);
+  async get(...args) {
+    return translateGranule(await super.get(...args));
+  }
 
-            return file;
-          });
-      }
-      return Promise.resolve(file);
-    });
-    return Promise.all(filePromises);
+  async batchGet(...args) {
+    const result = cloneDeep(await super.batchGet(...args));
+
+    result.Responses[this.tableName] = await Promise.all(
+      result.Responses[this.tableName].map(translateGranule)
+    );
+
+    return result;
+  }
+
+  async scan(...args) {
+    const scanResponse = await super.scan(...args);
+
+    if (scanResponse.Items) {
+      return {
+        ...scanResponse,
+        Items: await Promise.all(scanResponse.Items.map(translateGranule))
+      };
+    }
+
+    return scanResponse;
   }
 
   /**
@@ -163,10 +199,17 @@ class Granule extends Manager {
    */
   async move(g, destinations, distEndpoint) {
     log.info(`granules.move ${g.granuleId}`);
-    const files = clonedeep(g.files);
-    const updatedFiles = await moveGranuleFiles(files, destinations);
+
+    const updatedFiles = await moveGranuleFiles(g.files, destinations);
+
     await reconcileCMRMetadata(g.granuleId, updatedFiles, distEndpoint, g.published);
-    await this.update({ granuleId: g.granuleId }, { files: updatedFiles });
+
+    return this.update(
+      { granuleId: g.granuleId },
+      {
+        files: updatedFiles.map(partial(renameProperty, 'name', 'fileName'))
+      }
+    );
   }
 
   /**
@@ -232,8 +275,14 @@ class Granule extends Manager {
 
     const done = granules.map(async (granule) => {
       if (granule.granuleId) {
-        let granuleFiles = granule.files;
-        granuleFiles = await this.addMissingFileSizes(uniqBy(granule.files, 'filename'));
+        const granuleFiles = await buildDatabaseFiles({
+          providerURL: buildURL({
+            protocol: payload.meta.provider.protocol,
+            host: payload.meta.provider.host,
+            port: payload.meta.provider.port
+          }),
+          files: granule.files
+        });
 
         const doc = {
           granuleId: granule.granuleId,
@@ -276,6 +325,35 @@ class Granule extends Manager {
     });
 
     return Promise.all(done);
+  }
+
+  /**
+   * return the queue of the granules for a given collection,
+   * the items are ordered by granuleId
+   *
+   * @param {string} collectionId - collection id
+   * @param {string} status - granule status, optional
+   * @returns {Array<Object>} the granules' queue for a given collection
+   */
+  getGranulesForCollection(collectionId, status) {
+    const params = {
+      TableName: this.tableName,
+      IndexName: 'collectionId-granuleId-index',
+      ExpressionAttributeNames:
+        { '#collectionId': 'collectionId', '#granuleId': 'granuleId', '#files': 'files' },
+      ExpressionAttributeValues: { ':collectionId': collectionId },
+      KeyConditionExpression: '#collectionId = :collectionId',
+      ProjectionExpression: '#granuleId, #collectionId, #files'
+    };
+
+    // add status filter
+    if (status) {
+      params.ExpressionAttributeNames['#status'] = 'status';
+      params.ExpressionAttributeValues[':status'] = status;
+      params.FilterExpression = '#status = :status';
+    }
+
+    return new commonAws.DynamoDbSearchQueue(params, 'query');
   }
 }
 

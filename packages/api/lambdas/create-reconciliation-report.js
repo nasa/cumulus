@@ -4,15 +4,15 @@ const moment = require('moment');
 const {
   aws: {
     buildS3Uri,
-    DynamoDbScanQueue,
     S3ListObjectsV2Queue,
     s3
   },
   constructCollectionId
 } = require('@cumulus/common');
 
-const { CMR } = require('@cumulus/cmrjs');
-const { Collection } = require('../models');
+const { CMR, CMRSearchConceptQueue } = require('@cumulus/cmrjs');
+const { Collection, Granule, FileClass } = require('../models');
+const { deconstructCollectionId } = require('../lib/utils');
 
 /**
  * Verify that all objects in an S3 bucket contain corresponding entries in
@@ -23,12 +23,7 @@ const { Collection } = require('../models');
  */
 async function createReconciliationReportForBucket(Bucket) {
   const s3ObjectsQueue = new S3ListObjectsV2Queue({ Bucket });
-  const dynamoDbFilesLister = new DynamoDbScanQueue({
-    TableName: process.env.FilesTable,
-    ExpressionAttributeNames: { '#b': 'bucket' },
-    ExpressionAttributeValues: { ':bucket': { S: Bucket } },
-    FilterExpression: '#b = :bucket'
-  });
+  const dynamoDbFilesLister = new FileClass().getFilesForBucket(Bucket);
 
   let okFileCount = 0;
   const onlyInS3 = [];
@@ -37,7 +32,7 @@ async function createReconciliationReportForBucket(Bucket) {
   let [nextS3Object, nextDynamoDbItem] = await Promise.all([s3ObjectsQueue.peek(), dynamoDbFilesLister.peek()]); // eslint-disable-line max-len
   while (nextS3Object && nextDynamoDbItem) {
     const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
-    const nextDynamoDbUri = buildS3Uri(Bucket, nextDynamoDbItem.key.S);
+    const nextDynamoDbUri = buildS3Uri(Bucket, nextDynamoDbItem.key);
 
     if (nextS3Uri < nextDynamoDbUri) {
       // Found an item that is only in S3 and not in DynamoDB
@@ -48,8 +43,8 @@ async function createReconciliationReportForBucket(Bucket) {
       // Found an item that is only in DynamoDB and not in S3
       const dynamoDbItem = await dynamoDbFilesLister.shift(); // eslint-disable-line no-await-in-loop, max-len
       onlyInDynamoDb.push({
-        uri: buildS3Uri(Bucket, dynamoDbItem.key.S),
-        granuleId: dynamoDbItem.granuleId.S
+        uri: buildS3Uri(Bucket, dynamoDbItem.key),
+        granuleId: dynamoDbItem.granuleId
       });
     }
     else {
@@ -72,8 +67,8 @@ async function createReconciliationReportForBucket(Bucket) {
   while (await dynamoDbFilesLister.peek()) { // eslint-disable-line no-await-in-loop
     const dynamoDbItem = await dynamoDbFilesLister.shift(); // eslint-disable-line no-await-in-loop
     onlyInDynamoDb.push({
-      uri: buildS3Uri(Bucket, dynamoDbItem.key.S),
-      granuleId: dynamoDbItem.granuleId.S
+      uri: buildS3Uri(Bucket, dynamoDbItem.key),
+      granuleId: dynamoDbItem.granuleId
     });
   }
 
@@ -87,8 +82,8 @@ async function createReconciliationReportForBucket(Bucket) {
 /**
  * Compare the collection holdings in CMR with Cumulus
  *
- * @returns {Promise<Object>} an object with the okCollections, collectionsOnlyInCumulus and
- * collectionsOnlyInCmr
+ * @returns {Promise<Object>} an object with the okCollections, onlyInCumulus and
+ * onlyInCmr
  */
 async function reconciliationReportForCollections() {
   // compare collection holdings:
@@ -152,6 +147,99 @@ async function reconciliationReportForCollections() {
 }
 
 /**
+ * Compare the granule holdings in CMR with Cumulus
+ *
+ * @param {string} collectionId - the collection which has the granules to be reconciled
+ * @returns {Promise<Object>} an object with the okGranulesInDb, okGranulesInCmr, onlyInCumulus,
+ * onlyInCmr
+ */
+async function reconciliationReportForGranules(collectionId) {
+  // compare granule holdings:
+  //   Get CMR granules list (by PROVIDER, short_name, version, sort_key: ['granule_ur'])
+  //   Get CUMULUS granules list (by collectionId order by granuleId)
+  //   Report granules only in CMR
+  //   Report granules only in CUMULUS
+  const { name, version } = deconstructCollectionId(collectionId);
+  const cmrGranulesIterator = new CMRSearchConceptQueue(
+    process.env.cmr_provider, process.env.cmr_client_id, 'granules',
+    { short_name: name, version: version, sort_key: ['granule_ur'] }, 'umm_json'
+  );
+
+  const dbGranulesIterator = new Granule().getGranulesForCollection(collectionId);
+
+  const okGranulesInDb = [];
+  const okGranulesInCmr = [];
+  const granulesOnlyInDb = [];
+  const granulesOnlyInCmr = [];
+
+  let [nextDbItem, nextCmrItem] = await Promise.all([dbGranulesIterator.peek(), cmrGranulesIterator.peek()]); // eslint-disable-line max-len
+
+  while (nextDbItem && nextCmrItem) {
+    const nextDbGranuleId = nextDbItem.granuleId;
+    const nextCmrGranuleId = nextCmrItem.umm.GranuleUR;
+
+    if (nextDbGranuleId < nextCmrGranuleId) {
+      // Found an item that is only in database and not in cmr
+      granulesOnlyInDb.push({ granuleId: nextDbGranuleId, collectionId: collectionId });
+      await dbGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+    }
+    else if (nextDbGranuleId > nextCmrGranuleId) {
+      // Found an item that is only in cmr and not in database
+      granulesOnlyInCmr.push({
+        GranuleUR: nextCmrGranuleId,
+        ShortName: nextCmrItem.umm.CollectionReference.ShortName,
+        Version: nextCmrItem.umm.CollectionReference.Version
+      });
+      await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+    }
+    else {
+      // Found an item that is in both cmr and database,
+      // save the information for file comparison later
+      okGranulesInDb.push({
+        granuleId: nextDbGranuleId,
+        collectionId: collectionId,
+        files: nextDbItem.files
+      });
+      okGranulesInCmr.push({
+        GranuleUR: nextCmrGranuleId,
+        ShortName: nextCmrItem.umm.CollectionReference.ShortName,
+        Version: nextCmrItem.umm.CollectionReference.Version,
+        RelatedUrls: nextCmrItem.umm.RelatedUrls
+      });
+      await dbGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+      await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+    }
+
+    [nextDbItem, nextCmrItem] = await Promise.all([dbGranulesIterator.peek(), cmrGranulesIterator.peek()]); // eslint-disable-line max-len, no-await-in-loop
+  }
+
+  // Add any remaining DynamoDB items to the report
+  while (await dbGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
+    const dbItem = await dbGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+    granulesOnlyInDb.push({ granuleId: dbItem.granuleId, collectionId: collectionId });
+  }
+
+  // Add any remaining CMR items to the report
+  while (await cmrGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
+    const cmrItem = await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
+    granulesOnlyInCmr.push({
+      GranuleUR: cmrItem.umm.GranuleUR,
+      ShortName: nextCmrItem.umm.CollectionReference.ShortName,
+      Version: nextCmrItem.umm.CollectionReference.Version
+    });
+  }
+
+  return {
+    okGranulesInDb,
+    okGranulesInCmr,
+    onlyInCumulus: granulesOnlyInDb,
+    onlyInCmr: granulesOnlyInCmr
+  };
+}
+// export for testing
+exports.reconciliationReportForGranules = reconciliationReportForGranules;
+
+/**
  * Compare the holdings in CMR with Cumulus' internal data store, report any discrepancies
  *
  * @returns {Promise<Object>} a reconciliation report
@@ -164,7 +252,24 @@ async function reconciliationReportForCumulusCMR() {
     onlyInCmr: collectionReport.onlyInCmr
   };
 
-  return { collectionsInCumulusCmr };
+  // create granule report for collections in both Cumulus and CMR
+  const promisedGranuleReports = collectionReport.okCollections.map((collectionId) =>
+    reconciliationReportForGranules(collectionId));
+  const granuleReports = await Promise.all(promisedGranuleReports);
+
+  const granulesInCumulusCmr = {
+    okGranuleCount: 0,
+    onlyInCumulus: [],
+    onlyInCmr: []
+  };
+  granuleReports.forEach((granuleReport) => {
+    granulesInCumulusCmr.okGranuleCount += granuleReport.okGranulesInDb.length;
+    granulesInCumulusCmr.onlyInCumulus = granulesInCumulusCmr
+      .onlyInCumulus.concat(granuleReport.onlyInCumulus);
+    granulesInCumulusCmr.onlyInCmr = granulesInCumulusCmr.onlyInCmr.concat(granuleReport.onlyInCmr);
+  });
+
+  return { collectionsInCumulusCmr, granulesInCumulusCmr };
 }
 
 /**
@@ -204,13 +309,19 @@ async function createReconciliationReport(params) {
     onlyInCumulus: [],
     onlyInCmr: []
   };
+  const granulesInCumulusCmr = {
+    okGranuleCount: 0,
+    onlyInCumulus: [],
+    onlyInCmr: []
+  };
   let report = {
     reportStartTime: moment.utc().toISOString(),
     reportEndTime: null,
     status: 'RUNNING',
     error: null,
     filesInCumulus,
-    collectionsInCumulusCmr
+    collectionsInCumulusCmr,
+    granulesInCumulusCmr
   };
 
   const reportKey = `${stackName}/reconciliation-reports/report-${report.reportStartTime}.json`;

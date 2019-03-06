@@ -1,6 +1,5 @@
 'use strict';
 
-const crypto = require('crypto');
 const fs = require('fs-extra');
 const cloneDeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
@@ -10,7 +9,6 @@ const moment = require('moment');
 const omit = require('lodash.omit');
 const os = require('os');
 const path = require('path');
-const urljoin = require('url-join');
 const uuidv4 = require('uuid/v4');
 const encodeurl = require('encodeurl');
 const {
@@ -18,9 +16,10 @@ const {
   CollectionConfigStore,
   constructCollectionId,
   log,
-  errors,
-  file: { getFileChecksumFromStream }
+  errors
 } = require('@cumulus/common');
+const { buildURL } = require('@cumulus/common/URLUtils');
+const { deprecate } = require('@cumulus/common/util');
 
 const { sftpMixin } = require('./sftp');
 const { ftpMixin } = require('./ftp');
@@ -48,11 +47,17 @@ class Discover {
     this.useList = event.config.useList;
     this.event = event;
 
-    this.port = this.provider.port || 21;
+    this.port = this.provider.port;
     this.host = this.provider.host;
     this.path = this.collection.provider_path || '/';
 
-    this.endpoint = urljoin(this.host, this.path);
+    this.endpoint = buildURL({
+      protocol: this.provider.protocol,
+      host: this.provider.host,
+      port: this.provider.port,
+      path: this.path
+    });
+
     this.username = this.provider.username;
     this.password = this.provider.password;
 
@@ -171,11 +176,12 @@ class Granule {
     this.collection = collection;
     this.provider = provider;
 
-    this.port = this.provider.port || 21;
+    this.port = this.provider.port;
     this.host = this.provider.host;
     this.username = this.provider.username;
     this.password = this.provider.password;
     this.checksumFiles = {};
+    this.supportedChecksumFileTypes = ['md5', 'cksum', 'sha1', 'sha256'];
 
     this.forceDownload = forceDownload;
 
@@ -194,7 +200,7 @@ class Granule {
    */
   async ingest(granule, bucket) {
     // for each granule file
-    // download / verify checksum / upload
+    // download / verify integrity / upload
 
     const stackName = process.env.stackName;
     let dataType = granule.dataType;
@@ -316,19 +322,23 @@ class Granule {
   }
 
   /**
-   * Filter out md5 checksum files and put them in `this.checksumFiles` object.
+   * Filter out checksum files and put them in `this.checksumFiles` object.
    * To be used with `Array.prototype.filter`.
    *
    * @param {Object} file - file object from granule.files
-   * @returns {boolean} depending on if file was an md5 checksum or not
+   * @returns {boolean} - whether file was a supported checksum or not
    */
   filterChecksumFiles(file) {
-    if (file.name.indexOf('.md5') > 0) {
-      this.checksumFiles[file.name.replace('.md5', '')] = file;
-      return false;
-    }
+    let unsupported = true;
+    this.supportedChecksumFileTypes.forEach((type) => {
+      const ext = `.${type}`;
+      if (file.name.indexOf(ext) > 0) {
+        this.checksumFiles[file.name.replace(ext, '')] = file;
+        unsupported = false;
+      }
+    });
 
-    return true;
+    return unsupported;
   }
 
   /**
@@ -344,46 +354,34 @@ class Granule {
    * @memberof Granule
    */
   async validateChecksum(file, bucket, key, options = {}) {
-    const [type, value] = await this.getChecksumFromFile(file);
+    deprecate('@cumulus/ingest/Granule.validateChecksum', '1.11.2', '@cumulus/ingest/Granule.verifyFile');
+    return this.verifyFile(file, bucket, key, options);
+  }
 
+  /**
+   * Verify a file's integrity using its checksum and throw an exception if it's invalid
+   *
+   * @param {Object} file - the file object to be checked
+   * @param {string} bucket - s3 bucket name of the file
+   * @param {string} key - s3 key of the file
+   * @param {Object} [options={}] - options for the this._hash method
+   * @returns {Array<string>} returns array where first item is the checksum algorithm,
+   * and the second item is the value of the checksum.
+   * Throws an error if the checksum is invalid.
+   * @memberof Granule
+   */
+  async verifyFile(file, bucket, key, options = {}) {
+    const [type, value] = await this.retrieveSuppliedFileChecksumInformation(file);
     if (!type || !value) return [null, null];
 
-    const sum = await aws.checksumS3Objects(type, bucket, key, options);
-
-    if (value !== sum) {
-      const message = `Invalid checksum for ${file.name} with type ${file.checksumType} and value ${file.checksumValue}`;
-      throw new errors.InvalidChecksum(message);
-    }
-    return [type, value];
-  }
-
-  /**
-   * Get cksum checksum value of file
-   *
-   * @param {string} filepath - filepath of file to checksum
-   * @returns {Promise<number>} checksum value calculated from file
-   */
-  async _cksum(filepath) {
-    return getFileChecksumFromStream(fs.createReadStream(filepath));
-  }
-
-  /**
-  * Get hash of file
-  *
-  * @param {string} algorithm - algorithm to use for hash,
-  * any algorithm accepted by node's `crypto.createHash`
-  * https://nodejs.org/api/crypto.html#crypto_crypto_createhash_algorithm_options
-  * @param {string} filepath - filepath of file to checksum
-  * @returns {Promise} checksum value calculated from file
-  **/
-  async _hash(algorithm, filepath) {
-    return new Promise((resolve, reject) => {
-      const hash = crypto.createHash(algorithm);
-      const fileStream = fs.createReadStream(filepath);
-      fileStream.on('error', reject);
-      fileStream.on('data', (chunk) => hash.update(chunk));
-      fileStream.on('end', () => resolve(hash.digest('hex')));
+    await aws.validateS3ObjectChecksum({
+      algorithm: type,
+      bucket,
+      key,
+      expectedSum: value,
+      options
     });
+    return [type, value];
   }
 
   /**
@@ -406,16 +404,18 @@ class Granule {
   }
 
   /**
-   * Get a checksum from a file
+   * Retrieve supplied checksum from a file's specification or an accompanying checksum file.
    *
    * @param {Object} file - file object
    * @returns {Array} returns array where first item is the checksum algorithm,
    * and the second item is the value of the checksum
    */
-  async getChecksumFromFile(file) {
+  async retrieveSuppliedFileChecksumInformation(file) {
+    // try to get filespec checksum data
     if (file.checksumType && file.checksumValue) {
       return [file.checksumType, file.checksumValue];
     }
+    // read checksum from checksum file
     if (this.checksumFiles[file.name]) {
       const checksumInfo = this.checksumFiles[file.name];
 
@@ -434,8 +434,16 @@ class Granule {
         await fs.remove(downloadDir);
       }
 
-      // assuming the type is md5
-      return ['md5', checksumValue];
+      // default type to md5
+      let checksumType = 'md5';
+      // return type based on filename
+      this.supportedChecksumFileTypes.forEach((type) => {
+        if (checksumInfo.name.indexOf(type) > 0) {
+          checksumType = type;
+        }
+      });
+
+      return [checksumType, checksumValue];
     }
 
     // No checksum found
@@ -505,17 +513,17 @@ class Granule {
     log.debug(`await sync file to s3 ${fileRemotePath}, ${bucket}, ${stagedFileKey}`);
     await this.sync(fileRemotePath, bucket, stagedFileKey);
 
-    // Validate the checksum
-    log.debug(`await validateChecksum ${JSON.stringify(file)}, ${bucket}, ${stagedFileKey}`);
-    const [checksumType, checksumValue] = await this.validateChecksum(file, bucket, stagedFileKey);
+    // Verify file integrity
+    log.debug(`await verifyFile ${JSON.stringify(file)}, ${bucket}, ${stagedFileKey}`);
+    const [checksumType, checksumValue] = await this.verifyFile(file, bucket, stagedFileKey);
 
     // compare the checksum of the existing file and new file, and handle them accordingly
     if (renamingFile) {
       const existingFileSum = await
-      aws.checksumS3Objects(checksumType || 'CKSUM', bucket, destinationKey);
+      aws.calculateS3ObjectChecksum({ algorithm: (checksumType || 'CKSUM'), bucket, key: destinationKey });
 
       const stagedFileSum = checksumValue
-      || await aws.checksumS3Objects('CKSUM', bucket, stagedFileKey);
+      || await aws.calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket, key: stagedFileKey });
 
       // if the checksum of the existing file is the same as the new one, keep the existing file,
       // else rename the existing file, and both files are part of the granule.
@@ -648,7 +656,7 @@ function selector(type, protocol) {
 * @returns {Promise} returms a promise that is resolved when the file is copied
 **/
 function copyGranuleFile(source, target, options) {
-  const CopySource = encodeurl(urljoin(source.Bucket, source.Key));
+  const CopySource = encodeurl(`${source.Bucket}/${source.Key}`);
 
   const params = Object.assign({
     CopySource,
@@ -695,23 +703,38 @@ async function moveGranuleFile(source, target, options) {
  */
 function generateMoveFileParams(sourceFiles, destinations) {
   return sourceFiles.map((file) => {
-    const destination = destinations.find((dest) => file.name.match(dest.regex));
-    const parsed = aws.parseS3Uri(file.filename);
+    const fileName = file.name || file.fileName;
+    const destination = destinations.find((dest) => fileName.match(dest.regex));
+
     // if there's no match, we skip the file
-    if (destination) {
-      const source = {
-        Bucket: parsed.Bucket,
-        Key: parsed.Key
-      };
+    if (!destination) return { source: null, target: null, file };
 
-      const target = {
-        Bucket: destination.bucket,
-        Key: destination.filepath ? urljoin(destination.filepath, file.name) : file.name
+    let source;
+    if (file.bucket && file.key) {
+      source = {
+        Bucket: file.bucket,
+        Key: file.key
       };
-
-      return { source, target, file };
     }
-    return { source: null, target: null, file };
+    else if (file.filename) {
+      source = aws.parseS3Uri(file.filename);
+    }
+    else {
+      throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
+    }
+
+    const getFileName = (f) => f.fileName || f.name;
+
+    const targetKey = destination.filepath
+      ? `${destination.filepath}/${getFileName(file)}`
+      : getFileName(file);
+
+    const target = {
+      Bucket: destination.bucket,
+      Key: targetKey
+    };
+
+    return { source, target, file };
   });
 }
 
@@ -722,7 +745,7 @@ function generateMoveFileParams(sourceFiles, destinations) {
  * location after the files are moved
  * @param {string} sourceFiles.name - file name
  * @param {string} sourceFiles.bucket - current bucket of file
- * @param {string} sourceFiles.filepath - current S3 key of file
+ * @param {string} sourceFiles.key - current S3 key of file
  * @param {Array<Object>} destinations - array of objects defining the destination of granule files
  * @param {string} destinations.regex - regex for matching filepath of file to new destination
  * @param {string} destinations.bucket - aws bucket of the destination
@@ -735,25 +758,39 @@ async function moveGranuleFiles(sourceFiles, destinations) {
   const processedFiles = [];
   const moveFileRequests = moveFileParams.map((moveFileParam) => {
     const { source, target, file } = moveFileParam;
-    const parsed = aws.parseS3Uri(file.filename);
 
     if (target) {
       log.debug('moveGranuleFiles', source, target);
       return moveGranuleFile(source, target).then(() => {
         processedFiles.push({
           bucket: target.Bucket,
-          filepath: target.Key,
-          filename: aws.buildS3Uri(target.Bucket, target.Key),
-          name: file.name
+          key: target.Key,
+          name: file.name || file.fileName
         });
       });
     }
+
+    let fileBucket;
+    let fileKey;
+    if (file.bucket && file.key) {
+      fileBucket = file.bucket;
+      fileKey = file.key;
+    }
+    else if (file.filename) {
+      const parsed = aws.parseS3Uri(file.filename);
+      fileBucket = parsed.Bucket;
+      fileKey = parsed.Key;
+    }
+    else {
+      throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
+    }
+
     processedFiles.push({
-      bucket: parsed.Bucket,
-      filepath: parsed.Key,
-      filename: file.filename,
-      name: file.name
+      bucket: fileBucket,
+      key: fileKey,
+      name: file.name || file.fileName
     });
+
     return Promise.resolve();
   });
   await Promise.all(moveFileRequests);
