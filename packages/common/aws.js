@@ -965,6 +965,7 @@ class UnparsableFileLocationError extends Error {
     this.name = this.constructor.name;
   }
 }
+module.exports.UnparsableFileLocationError = UnparsableFileLocationError;
 
 /**
  * Extract the S3 bucket and key from the URL path parameters
@@ -984,4 +985,4 @@ exports.getFileBucketAndKey = (pathParams) => {
   }
 
   return [Bucket, Key];
-}
+};
