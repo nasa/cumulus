@@ -60,8 +60,9 @@ test('GET invokes request for credentials with username from authToken', async (
   const FunctionName = 'gsfc-ngap-sh-s3-sts-get-keys';
   const Payload = JSON.stringify({
     accesstype: 'sameregion',
+    returntype: 'lowerCamel',
     duration: '3600',
-    rolesession: 'SAME_REGION_ACCESS',
+    rolesession: parsedToken.username,
     userid: parsedToken.username
   });
 
