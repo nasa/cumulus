@@ -21,7 +21,8 @@ jobs:
   include:
     - name: "Build npm cache"
       stage: build cache & audit
-      install: true
+      install:
+        - nvm install-latest-npm
       script: ./travis-ci/build-cache.sh
 
     - name: "npm audit"
