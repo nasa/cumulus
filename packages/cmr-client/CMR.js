@@ -122,7 +122,12 @@ async function updateToken(cmrProvider, clientId, username, password) {
  * @example
  * const { CMR } = require('@cumulus/cmr-client');
  *
- * const cmrClient = new CMR({ provider: 'my-provider', clientId: 'my-clientId', username: 'my-username', password: 'my-password' });
+ * const cmrClient = new CMR({
+ *  provider: 'my-provider',
+ *  clientId: 'my-clientId',
+ *  username: 'my-username',
+ *  password: 'my-password'
+ * });
  */
 class CMR {
   /**
