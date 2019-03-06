@@ -2,6 +2,7 @@
 
 const { randomString } = require('@cumulus/common/test-utils');
 const get = require('lodash.get');
+const { verifyJwtToken } = require('../lib/token');
 
 const token = randomString();
 
@@ -84,7 +85,9 @@ async function ensureAuthorized(req, res, next) {
   }
   const jwtToken = req.headers.authorization.trim().split(/\s+/)[1];
 
+  const parsed = verifyJwtToken(jwtToken);
   if (jwtToken === token) {
+    req.authorizedMetadata = { userName: parsed.username };
     return next();
   }
   return res.boom.unauthorized('User not authorized');

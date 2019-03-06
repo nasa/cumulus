@@ -8,8 +8,11 @@ const flatten = require('lodash.flatten');
 const path = require('path');
 
 const {
-  getRenamedS3File, unversionFilename,
-  moveGranuleFile, renameS3FileWithTimestamp
+  getRenamedS3File,
+  unversionFilename,
+  moveGranuleFile,
+  renameS3FileWithTimestamp,
+  duplicateHandlingType
 } = require('@cumulus/ingest/granule');
 
 const {
@@ -23,7 +26,7 @@ const {
 const {
   aws: {
     buildS3Uri,
-    checksumS3Objects,
+    calculateS3ObjectChecksum,
     deleteS3Object,
     parseS3Uri,
     s3ObjectExists
@@ -218,8 +221,8 @@ async function moveFileRequest(
 
   // compare the checksum of the existing file and new file, and handle them accordingly
   if (s3ObjAlreadyExists && duplicateHandling === 'version') {
-    const existingFileSum = await checksumS3Objects('CKSUM', target.Bucket, target.Key);
-    const stagedFileSum = await checksumS3Objects('CKSUM', source.Bucket, source.Key);
+    const existingFileSum = await calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket: target.Bucket, key: target.Key });
+    const stagedFileSum = await calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket: source.Bucket, key: source.Key });
 
     // if the checksum of the existing file is the same as the new one, keep the existing file,
     // else rename the existing file, and both files are part of the granule.
@@ -309,30 +312,6 @@ async function updateEachCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoin
       granuleId, updatedCmrFile, granule.files, distEndpoint, publish, bucketsConfig
     );
   }));
-}
-
-/**
- * Returns a directive on how to act when duplicate files are encountered.
- *
- * @param {Object} event - lambda function event.
- * @param {Object} event.config - the config object
- * @param {Object} event.config.collection - collection object.
-
- * @returns {string} - duplicate handling directive.
- */
-function duplicateHandlingType(event) {
-  const config = get(event, 'config');
-  const collection = get(event, 'collection');
-
-  let duplicateHandling = get(config, 'duplicateHandling', get(collection, 'duplicateHandling', 'error'));
-
-  const forceDuplicateOverwrite = get(event, 'cumulus_config.cumulus_context.forceDuplicateOverwrite', false);
-
-  log.debug(`Configured duplicateHandling value: ${duplicateHandling}, forceDuplicateOverwrite ${forceDuplicateOverwrite}`);
-
-  if (forceDuplicateOverwrite === true) duplicateHandling = 'replace';
-
-  return duplicateHandling;
 }
 
 /**
