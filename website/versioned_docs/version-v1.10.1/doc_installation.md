@@ -12,7 +12,7 @@ original_id: doc_installation
 ```sh
 git clone git@github.com:nasa/cumulus
 cd cumulus
-npm install
+npm ci
 npm run docs-serve
 ```
 

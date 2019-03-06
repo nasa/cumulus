@@ -67,13 +67,13 @@ Enter repository root directory
 
 Then run:
 
-    $ npm install
+    $ npm ci
 
-**Note**: The npm install command will add the [kes](http://devseed.com/kes/) utility to the `<daac>-deploy`'s `node_packages` directory and will be utilized later for most of the AWS deployment commands
+**Note**: The npm ci command will add the [kes](http://devseed.com/kes/) utility to the `<daac>-deploy`'s `node_packages` directory and will be utilized later for most of the AWS deployment commands
 
 #### Obtain Cumulus Packages
 
-Cumulus packages are installed from NPM using the `npm install` step above. For information on obtaining additional Cumulus packages, see [Obtaining Cumulus Packages](deployment/obtain_cumulus_packages.md).
+Cumulus packages are installed from NPM using the `npm ci` step above. For information on obtaining additional Cumulus packages, see [Obtaining Cumulus Packages](deployment/obtain_cumulus_packages.md).
 
 ### Copy the sample template into your repository
 

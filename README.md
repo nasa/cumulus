@@ -34,6 +34,11 @@ nvm install
 nvm use
 ```
 
+### Upgrade npm
+
+Installing Cumulus requires npm version 5.7.0 or later. You can upgrade your
+version of npm by running `npm install npm@latest -g`
+
 ### Install Lerna
 
 We use Lerna to manage multiple Cumulus packages in the same repo. You need to install lerna as a global module first:
@@ -44,7 +49,7 @@ We use Lerna to manage multiple Cumulus packages in the same repo. You need to i
 
 We use npm for local package management
 
-    $ npm install
+    $ npm ci
     $ npm run bootstrap
 
 Building All packages:

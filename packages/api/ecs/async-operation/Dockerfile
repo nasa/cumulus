@@ -10,7 +10,7 @@ USER task
 WORKDIR /home/task
 
 COPY package.json /home/task/
-RUN npm install
+RUN npm ci
 
 COPY index.js /home/task/
 

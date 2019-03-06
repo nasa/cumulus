@@ -180,7 +180,7 @@ jobs:
       install:
         - nvm install-latest-npm
         - ./ci-ci/fetch-cache.sh
-        - npm install
+        - npm ci
         - npm run bootstrap-no-build
       script: ./travis-ci/deploy-to-npm.sh
 

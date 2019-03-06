@@ -68,13 +68,13 @@ Enter repository root directory
 
 Then run:
 
-    $ npm install
+    $ npm ci
 
-**Note**: The npm install command will add the [kes](http://devseed.com/kes/) utility to the `<daac>-deploy`'s `node_packages` directory and will be utilized later for most of the AWS deployment commands
+**Note**: The npm ci command will add the [kes](http://devseed.com/kes/) utility to the `<daac>-deploy`'s `node_packages` directory and will be utilized later for most of the AWS deployment commands
 
 #### Obtain Cumulus Packages
 
-Cumulus packages are installed from NPM using the `npm install` step above. For information on obtaining additional Cumulus packages, see [Obtaining Cumulus Packages](deployment/obtain_cumulus_packages.md).
+Cumulus packages are installed from NPM using the `npm ci` step above. For information on obtaining additional Cumulus packages, see [Obtaining Cumulus Packages](deployment/obtain_cumulus_packages.md).
 
 ### Copy the sample template into your repository
 
@@ -347,12 +347,12 @@ If you've lost track of the needed redirect URIs, they can be located on the [AP
 
 ### Install dashboard
 
-To install the dashboard clone the Cumulus-dashboard repository into the root deploy directory and install dependencies with `npm install`:
+To install the dashboard clone the Cumulus-dashboard repository into the root deploy directory and install dependencies with `npm ci`:
 
     $ git clone https://github.com/nasa/cumulus-dashboard
     $ cd cumulus-dashboard
     $ nvm use
-    $ npm install
+    $ npm ci
 
 #### Dashboard versioning
 
@@ -367,7 +367,7 @@ To checkout and install a specific version of the dashboard:
     $ git fetch --tags
     $ git checkout <version-number> # e.g. v1.2.0
     $ nvm use
-    $ npm install
+    $ npm ci
 
 ### Dashboard configuration
 

@@ -6,7 +6,7 @@ We use this deployment example for running the Cumulus integration tests. This e
 
 ```bash
 nvm use
-npm install
+npm ci
 ```
 
 ## Running tests locally

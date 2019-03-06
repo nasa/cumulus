@@ -69,9 +69,9 @@ Enter repository root directory
 
 Then run:
 
-    $ npm install
+    $ npm ci
 
-**Note**: The npm install command will add the [kes](http://devseed.com/kes/) utility to the `<daac>-deploy`'s `node_packages` directory and will be utilized later for most of the AWS deployment commands
+**Note**: The npm ci command will add the [kes](http://devseed.com/kes/) utility to the `<daac>-deploy`'s `node_packages` directory and will be utilized later for most of the AWS deployment commands
 
 #### Obtain Cumulus Packages
 
@@ -109,8 +109,8 @@ Optionally, If you are deploying a particular version(tag), ref or branch of Cum
 Install and configure the local build environment and dependencies using npm
 
     $ nvm use
-    $ npm install
-    $ npm run ybootstrap
+    $ npm ci
+    $ npm run bootstrap
 
 Build the Cumulus application
 
@@ -437,11 +437,11 @@ If you've lost track of the needed redirect URIs, they can be located on the [AP
 
 ### Install dashboard
 
-To install the dashboard clone the Cumulus-dashboard repository into the root deploy directory and install dependencies with `npm install`:
+To install the dashboard clone the Cumulus-dashboard repository into the root deploy directory and install dependencies with `npm ci`:
 
     $ git clone https://github.com/nasa/cumulus-dashboard
     $ cd cumulus-dashboard
-    $ npm install
+    $ npm ci
 
 ### Dashboard configuration
 

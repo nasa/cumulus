@@ -45,8 +45,8 @@ Optionally, If you are deploying a particular version(tag), ref or branch of Cum
 Install and configure the local build environment and dependencies using npm
 
     $ nvm use
-    $ npm install
-    $ npm run ybootstrap
+    $ npm ci
+    $ npm run bootstrap
 
 Build the Cumulus application
 
