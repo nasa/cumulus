@@ -4,7 +4,8 @@ const router = require('express-promise-router')();
 const urljoin = require('url-join');
 const {
   s3,
-  getFileBucketAndKey
+  getFileBucketAndKey,
+  UnparsableFileLocationError
 } = require('@cumulus/common/aws');
 const { URL } = require('url');
 const EarthdataLogin = require('../lib/EarthdataLogin');
