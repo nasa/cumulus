@@ -72,8 +72,9 @@ ApiEndpoints:
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain
+    STSCredentialsLambda: '{{parent.sts_credentials_lambda}}'
     TOKEN_SECRET: '{{TOKEN_SECRET}}'
   apiGateway:
-    - api: backend 
+    - api: backend
       path: '{proxy+}'
       method: any
