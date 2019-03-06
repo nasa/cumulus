@@ -45,6 +45,8 @@ async function ensureAuthorized(req, res, next) {
 
     await userModel.get({ userName });
     await access.get({ accessToken });
+    // Adds additional metadata that authorized endpoints can access.
+    req.authorizedMetadata = { userName };
     return next();
   }
   catch (error) {
