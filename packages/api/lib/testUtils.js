@@ -36,6 +36,7 @@ async function deleteAliases() {
   const client = await Search.es();
   const aliases = await client.cat.aliases({ format: 'json' });
 
+
   // delete all aliases
   return Promise.all(aliases.map((alias) => client.indices.deleteAlias({
     index: alias.index,
@@ -50,6 +51,7 @@ function fakeFileFactory(params = {}) {
     bucket: randomString(),
     fileName,
     key: fileName,
+    fileType: 'data', // Default to data, params should override
     ...params
   };
 }
