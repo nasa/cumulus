@@ -2,6 +2,11 @@
 
 set -e
 
+mkdir -p bin
+curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
+unzip awscli-bundle.zip
+./awscli-bundle/install -b ./bin/aws
+
 # Determine what cache to use (based on all of the package.json files)
 MD5SUM=$(cat $(git ls-files | grep package-lock.json | sort) | md5sum | awk '{print $1}')
 CACHE_FILENAME="${MD5SUM}.tar.gz"
@@ -27,7 +32,7 @@ SIGNATURE=$(/bin/echo -n "$STRING_TO_SIGN_HEAD" | openssl sha1 -hmac ${CACHE_AWS
 #   https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY}
 # )
 
-aws s3 ls "s3://${CACHE_BUCKET}/${KEY}" >/dev/null
+./bin/aws s3 ls "s3://${CACHE_BUCKET}/${KEY}" >/dev/null
 CACHE_EXISTS_STATUS_CODE="$?"
 
 if [ "$CACHE_EXISTS_STATUS_CODE" -eq "0" ]; then
