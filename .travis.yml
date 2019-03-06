@@ -39,6 +39,7 @@ jobs:
     - name: "eslint"
       stage: unit test and stack deployment
       install:
+        - nvm install-latest-npm
         - ./travis-ci/fetch-cache.sh
         - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
@@ -55,6 +56,7 @@ jobs:
         - LOCALSTACK_HOST=127.0.0.1
         - LOCAL_ES_HOST=127.0.0.1
       install:
+        - nvm install-latest-npm
         - ./travis-ci/fetch-cache.sh
         - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
@@ -72,6 +74,7 @@ jobs:
         - LOCALSTACK_HOST=127.0.0.1
         - LOCAL_ES_HOST=127.0.0.1
       install:
+        - nvm install-latest-npm
         - ./travis-ci/fetch-cache.sh
         - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
@@ -85,6 +88,7 @@ jobs:
       stage: unit test and stack deployment
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
+        - nvm install-latest-npm
         - ./travis-ci/fetch-cache.sh
         - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
@@ -97,6 +101,7 @@ jobs:
       stage: unit test and stack deployment
       if: type = cron
       install:
+        - nvm install-latest-npm
         - ./travis-ci/fetch-cache.sh
         - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
@@ -112,6 +117,7 @@ jobs:
       stage: integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
+        - nvm install-latest-npm
         - ./travis-ci/fetch-cache.sh
         - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
@@ -124,6 +130,7 @@ jobs:
       stage: integration tests
       if: type = cron
       install:
+        - nvm install-latest-npm
         - ./travis-ci/fetch-cache.sh
         - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
@@ -139,6 +146,7 @@ jobs:
       stage: redeployment integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
+        - nvm install-latest-npm
         - ./travis-ci/fetch-cache.sh
         - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
@@ -151,6 +159,7 @@ jobs:
       stage: cleanup integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
+        - nvm install-latest-npm
         - npm ci
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
@@ -158,6 +167,7 @@ jobs:
       stage: cleanup integration tests
       if: type = cron
       install:
+        - nvm install-latest-npm
         - ./travis-ci/fetch-cache.sh
         - npm ci
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
@@ -168,6 +178,7 @@ jobs:
     - name: "Deploy to NPM"
       stage: deploy
       install:
+        - nvm install-latest-npm
         - ./ci-ci/fetch-cache.sh
         - npm install
         - npm run bootstrap-no-build
@@ -175,12 +186,15 @@ jobs:
 
     - name: "Deploy to Github Pages"
       stage: deploy
-      install: npm ci
+      install:
+        - nvm install-latest-npm
+        - npm ci
       script: ./travis-ci/deploy-to-github-pages.sh
 
     - name: "Deploy packages to integration test stack"
       stage: deployment test setup
-      install: true
+      install:
+        - nvm install-latest-npm
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
       env:
@@ -189,7 +203,8 @@ jobs:
 
     - name: "Run integration tests against deployed packages"
       stage: deployment test
-      install: true
+      install:
+        - nvm install-latest-npm
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
       after_success: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
