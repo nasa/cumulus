@@ -84,7 +84,7 @@ class CMR {
    * @returns {Object} CMR headers object
    */
   getHeaders(token = null, ummgVersion = null) {
-    return this.cmrClient.getHeaders({token, ummgVersion});
+    return this.cmrClient.getHeaders({ token, ummgVersion });
   }
 
   /**
@@ -187,7 +187,7 @@ class CMRSearchConceptQueue {
    * @param {string} provider - the CMR provider id
    * @param {string} clientId - the CMR clientId
    * @param {string} type - the type of search 'granule' or 'collection'
-   * @param {string} params - the search parameters
+   * @param {string} searchParams - the search parameters
    * @param {string} format - the result format
    */
   constructor(provider, clientId, type, searchParams, format) {
