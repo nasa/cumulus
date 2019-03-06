@@ -6,7 +6,7 @@ const proxyquire = require('proxyquire');
 const test = require('ava');
 const JSFtp = require('jsftp');
 const {
-  checksumS3Objects, fileExists, recursivelyDeleteS3Bucket, s3
+  calculateS3ObjectChecksum, fileExists, recursivelyDeleteS3Bucket, s3
 } = require('@cumulus/common/aws');
 const {
   randomString
@@ -75,6 +75,6 @@ test('Download remote file to s3', async (t) => {
     '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf', bucket, key
   );
   t.truthy(fileExists(bucket, key));
-  const sum = await checksumS3Objects('CKSUM', bucket, key);
+  const sum = await calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket, key });
   t.is(sum, 1435712144);
 });
