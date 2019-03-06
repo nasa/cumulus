@@ -345,15 +345,15 @@ function constructOnlineAccessUrls({
  *
  * @param {string} distEndpoint - distribution endpoint
  * @param {string} s3CredsEndpoint - Optional endpoint for acquiring temporary s3 creds
- * @returns {Array<{URL: string, URLDescription: string, Type: string}>}
+ * @returns {Array<{URL: string, Description: string, Type: string}>}
  *   returns the list of online access url objects
  */
-function constructResourceUrls(distEndpoint, s3CredsEndpoint = 's3credentials') {
+function constructOnlineResourceUrls(distEndpoint, s3CredsEndpoint = 's3credentials') {
   const credsUrl = urljoin(distEndpoint, s3CredsEndpoint);
   const s3CredentialsObject = getS3CredentialsObject(credsUrl);
   const resourceUrls = [s3CredentialsObject];
 
-  return resourceUrls.map((urlObj) => omit(urlObj, 'Description'));
+  return resourceUrls.map((urlObj) => omit(urlObj, 'URLDescription'));
 }
 
 /**
@@ -509,7 +509,7 @@ function getCreds() {
 async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   let newOnlineAccessURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets });
   newOnlineAccessURLs = newOnlineAccessURLs.map((urlObj) => omit(urlObj, ['Type', 'Description']));
-  const newResourceURLs = constructResourceUrls(distEndpoint);
+  const newResourceURLs = constructOnlineResourceUrls(distEndpoint);
   const removedOnlineAccessURLs = onlineAccessURLsToRemove(files, buckets);
 
   // add/replace the OnlineAccessUrls
@@ -519,7 +519,7 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
 
   const updatedGranule = { ...metadataGranule };
   let originalOnlineAccessURLs = _get(metadataGranule, 'OnlineAccessURLs.OnlineAccessURL', []);
-  let originalResourceURLs = _get(metadataGranule, 'ResourceURLs.ResourceURL', []);
+  let originalResourceURLs = _get(metadataGranule, 'OnlineResources.OnlineResource', []);
 
   // If there is only one OnlineAccessURL in the file, it comes back as an object and not an array
   if (!Array.isArray(originalOnlineAccessURLs)) {
