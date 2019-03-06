@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - `getDistributionApiFileStream()` returns a stream to download files protected by the distribution API
     - `getDistributionFileUrl()` constructs URLs for requesting files from the distribution API
 
+- **CUMULUS-1101**
+  - Added new `@cumulus/checksum` package. This package provides functions to calculate and validate checksums.
+  - Added new checksumming functions to `@cumulus/common/aws`: `calculateS3ObjectChecksum` and `validateS3ObjectChecksum`, which depend on the `checksum` package.
+
 - CUMULUS-1171
   - Added `@cumulus/common` API documentation to `packages/common/docs/API.md`
   - Added an `npm run build-docs` task to `@cumulus/common`
@@ -52,6 +56,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-672**
   - Changed `@cumulus/integration-tests/api/EarthdataLogin.getEarthdataLoginRedirectResponse` to `@cumulus/integration-tests/api/EarthdataLogin.getEarthdataAccessToken`. The new function returns an access response from Earthdata login, if successful.
   - `@cumulus/integration-tests/cmr/getOnlineResources` now accepts an object of options, including `cmrMetadataFormat`. Based on the `cmrMetadataFormat`, the function will correctly retrieve the online resources for each metadata format (ECHO10, UMM-G)
+
+- **CUMULUS-1101**
+  - Moved `@cumulus/common/file/getFileChecksumFromStream` into `@cumulus/checksum`, and renamed it to `generateChecksumFromStream`.
+    This is a breaking change for users relying on `@cumulus/common/file/getFileChecksumFromStream`.
+  - Refactored `@cumulus/ingest/Granule` to depend on new `common/aws` checksum functions and remove significantly present checksumming code.
+    - Deprecated `@cumulus/ingest/granule.validateChecksum`. Replaced with `@cumulus/ingest/granule.verifyFile`.
+    - Renamed `granule.getChecksumFromFile` to `granule.retrieveSuppliedFileChecksumInformation` to be more accurate.
+  - Deprecated `@cumulus/common/aws.checksumS3Objects`. Use `@cumulus/common/aws.calculateS3ObjectChecksum` instead.
 
 - CUMULUS-1171
   - NOTE: This is a breaking change. When applying this upgrade, users will need to:
