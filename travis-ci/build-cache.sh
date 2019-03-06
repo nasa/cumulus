@@ -16,18 +16,22 @@ ${DATE}
 /${CACHE_BUCKET}/${KEY}"
 SIGNATURE=$(/bin/echo -n "$STRING_TO_SIGN_HEAD" | openssl sha1 -hmac ${CACHE_AWS_SECRET_ACCESS_KEY} -binary | base64)
 
-CACHE_EXISTS_STATUS_CODE=$(curl \
-  -sS \
-  -o /dev/null \
-  -w '%{http_code}' \
-  --head \
-  -H "Host: ${CACHE_BUCKET}.s3.amazonaws.com" \
-  -H "Date: ${DATE}" \
-  -H "Authorization: AWS ${CACHE_AWS_ACCESS_KEY_ID}:${SIGNATURE}" \
-  https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY}
-)
+# CACHE_EXISTS_STATUS_CODE=$(curl \
+#   -sS \
+#   -o /dev/null \
+#   -w '%{http_code}' \
+#   --head \
+#   -H "Host: ${CACHE_BUCKET}.s3.amazonaws.com" \
+#   -H "Date: ${DATE}" \
+#   -H "Authorization: AWS ${CACHE_AWS_ACCESS_KEY_ID}:${SIGNATURE}" \
+#   https://${CACHE_BUCKET}.s3.amazonaws.com/${KEY}
+# )
 
-if [ "$CACHE_EXISTS_STATUS_CODE" = "200" ]; then
+aws s3 ls "s3://${CACHE_BUCKET}/${KEY}" >/dev/null
+CACHE_EXISTS_STATUS_CODE="$?"
+
+if [ "$CACHE_EXISTS_STATUS_CODE" -eq "0" ]; then
+# if [ "$CACHE_EXISTS_STATUS_CODE" = "200" ]; then
   # If the cache exists then do nothing
   echo "Cache already exists: s3://${CACHE_BUCKET}/${KEY}"
 else
