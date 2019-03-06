@@ -6,7 +6,7 @@ const http = rewire('../http');
 const TestHttpMixin = http.httpMixin;
 const EventEmitter = require('events');
 const {
-  checksumS3Objects, fileExists, recursivelyDeleteS3Bucket, s3
+  calculateS3ObjectChecksum, fileExists, recursivelyDeleteS3Bucket, s3
 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -21,9 +21,13 @@ http.__set__('Crawler', TestEmitter);
 class MyTestDiscoveryClass {
   constructor(useList) {
     this.decrypted = true;
-    this.host = 'http://localhost:3030';
     this.path = '/';
-    this.provider = { encrypted: false };
+    this.provider = {
+      protocol: 'http',
+      host: 'localhost',
+      port: 3030,
+      encrypted: false
+    };
     this.useList = useList;
   }
 }
@@ -40,7 +44,7 @@ test('Download remote file to s3', async (t) => {
       '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf', bucket, key
     );
     t.truthy(fileExists(bucket, key));
-    const sum = await checksumS3Objects('CKSUM', bucket, key);
+    const sum = await calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket, key });
     t.is(sum, 1435712144);
   }
   finally {

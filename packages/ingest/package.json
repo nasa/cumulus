@@ -43,6 +43,7 @@
     "encodeurl": "^1.0.2",
     "fs-extra": "^5.0.0",
     "got": "^9.2.1",
+    "is-ip": "^2.0.0",
     "jsftp": "https://github.com/yjpa7145/jsftp.git#Fix-partial-file-issue",
     "json-loader": "~0.5.7",
     "lodash.clonedeep": "^4.5.0",
@@ -59,7 +60,6 @@
     "rewire": "^4.0.1",
     "simplecrawler": "^1.1.4",
     "ssh2": "^0.5.5",
-    "url-join": "^1.0.0",
     "uuid": "^3.2.1",
     "xml2js": "^0.4.19"
   },

@@ -30,6 +30,7 @@ const rulesApi = require('./api/rules');
 const executionsApi = require('./api/executions');
 const granulesApi = require('./api/granules');
 const EarthdataLogin = require('./api/EarthdataLogin');
+const distributionApi = require('./api/distribution');
 const cmr = require('./cmr.js');
 const lambda = require('./lambda');
 const granule = require('./granule.js');
@@ -389,6 +390,32 @@ async function cleanupCollections(stackName, bucket, collectionsDirectory, postf
 }
 
 /**
+ * Get the provider host. If the environment variables are set, set the host
+ * according to the variables, otherwise use the original host.
+ * This allows us to switch between different environments/accounts, which
+ * would hit a different server.
+ *
+ * @param {Object} provider - provider object
+ * @returns {string} provider host
+ */
+const getProviderHost = ({ host }) => process.env.PROVIDER_HOST || host;
+
+/**
+ * Get the provider port. If the port is not set, leave it not set.
+ * Otherwise set it to the environment variable, if set.
+ *
+ * @param {Object} provider - provider object
+ * @returns provider port
+ */
+function getProviderPort({ protocol, port }) {
+  if (protocol === 'ftp') {
+    return Number(process.env.PROVIDER_FTP_PORT) || port;
+  }
+
+  return Number(process.env.PROVIDER_HTTP_PORT) || port;
+}
+
+/**
  * add providers to database.
  *
  * @param {string} stackName - Cloud formation stack name
@@ -408,14 +435,18 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host = null,
       provider.id += postfix;
     }
     const p = new Provider();
+
     if (s3Host && provider.protocol === 's3') {
       provider.host = s3Host;
     }
     else {
-      provider.host = process.env.PROVIDER_HOST || provider.host;
+      provider.host = getProviderHost(provider);
     }
+
+    provider.port = getProviderPort(provider);
+
     console.log(`adding provider ${provider.id}`);
-    return p.delete({ id: provider.id }).then(() => p.create(provider));
+    return p.delete({ id: provider.id }).then(() => p.create(provider)).catch(console.log);
   }));
   return Promise.all(promises).then((ps) => ps.length);
 }
@@ -737,6 +768,7 @@ module.exports = {
   rulesApi,
   granulesApi,
   executionsApi,
+  distributionApi,
   EarthdataLogin,
   buildWorkflow,
   testWorkflow,
@@ -764,6 +796,7 @@ module.exports = {
   conceptExists: cmr.conceptExists,
   getOnlineResources: cmr.getOnlineResources,
   generateCmrFilesForGranules: cmr.generateCmrFilesForGranules,
+  generateCmrXml: cmr.generateCmrXml,
   addRules,
   deleteRules,
   removeRuleAddedParams,
@@ -778,5 +811,7 @@ module.exports = {
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
   waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs,
   getExecutions,
-  waitForDeploymentHandler: waitForDeployment.handler
+  waitForDeploymentHandler: waitForDeployment.handler,
+  getProviderHost,
+  getProviderPort
 };

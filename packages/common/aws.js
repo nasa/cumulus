@@ -1,7 +1,6 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const crypto = require('crypto');
 const fs = require('fs');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
@@ -10,13 +9,40 @@ const pMap = require('p-map');
 const pRetry = require('p-retry');
 const pump = require('pump');
 const url = require('url');
+const { generateChecksumFromStream, validateChecksumFromStream } = require('@cumulus/checksum');
 
+const errors = require('./errors');
 const log = require('./log');
 const string = require('./string');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
 const concurrency = require('./concurrency');
-const { noop } = require('./util');
-const { getFileChecksumFromStream } = require('./file');
+const { deprecate, setErrorStack, noop } = require('./util');
+
+/**
+ * Wrap a function and provide a better stack trace
+ *
+ * If a call is made to the aws-sdk and it causes an exception, the stack trace
+ * that is returned gives no indication of where the error actually occurred.
+ *
+ * This utility will wrap a function and, when it is called, update any raised
+ * error with a better stack trace.
+ *
+ * @param {Function} fn - the function to wrap
+ * @returns {Function} a wrapper function
+ */
+const improveStackTrace = (fn) =>
+  async (...args) => {
+    const tracerError = {};
+    try {
+      Error.captureStackTrace(tracerError);
+      return await fn(...args);
+    }
+    catch (err) {
+      setErrorStack(err, tracerError.stack);
+      throw err;
+    }
+  };
+exports.improveStackTrace = improveStackTrace;
 
 /**
  * Join strings into an S3 key without a leading slash or double slashes
@@ -187,8 +213,10 @@ exports.s3TagSetToQueryString = (tagset) => tagset.reduce((acc, tag) => acc.conc
  * @param {string} key - key of the object to be deleted
  * @returns {Promise} - promise of the object being deleted
  */
-exports.deleteS3Object = (bucket, key) =>
-  exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise();
+exports.deleteS3Object = improveStackTrace(
+  (bucket, key) =>
+    exports.s3().deleteObject({ Bucket: bucket, Key: key }).promise()
+);
 
 /**
  * Test if an object exists in S3
@@ -211,10 +239,12 @@ exports.s3ObjectExists = (params) =>
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 * @returns {Promise} - promise of the object being put
 **/
-exports.s3PutObject = (params) => {
-  if (!params.ACL) params.ACL = 'private'; //eslint-disable-line no-param-reassign
-  return exports.s3().putObject(params).promise();
-};
+exports.s3PutObject = improveStackTrace(
+  (params) => exports.s3().putObject({
+    ACL: 'private',
+    ...params
+  }).promise()
+);
 
 /**
 * Copy an object from one location on S3 to another
@@ -222,10 +252,12 @@ exports.s3PutObject = (params) => {
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 * @returns {Promise} - promise of the object being copied
 **/
-exports.s3CopyObject = (params) => {
-  if (!params.TaggingDirective) params.TaggingDirective = 'COPY'; //eslint-disable-line no-param-reassign
-  return exports.s3().copyObject(params).promise();
-};
+exports.s3CopyObject = improveStackTrace(
+  (params) => exports.s3().copyObject({
+    TaggingDirective: 'COPY',
+    ...params
+  }).promise()
+);
 
 /**
  * Upload data to S3
@@ -235,7 +267,9 @@ exports.s3CopyObject = (params) => {
  * @param {Object} params - see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
  * @returns {Promise} see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
  */
-exports.promiseS3Upload = (params) => exports.s3().upload(params).promise();
+exports.promiseS3Upload = improveStackTrace(
+  (params) => exports.s3().upload(params).promise()
+);
 
 /**
  * Downloads the given s3Obj to the given filename in a streaming manner
@@ -262,13 +296,24 @@ exports.downloadS3File = (s3Obj, filepath) => {
 /**
 * Get an object header from S3
 *
-* @param {string} bucket - name of bucket
-* @param {string} key - key for object (filepath + filename)
+* @param {string} Bucket - name of bucket
+* @param {string} Key - key for object (filepath + filename)
 * @returns {Promise} - returns response from `S3.headObject` as a promise
 **/
+exports.headObject = improveStackTrace(
+  (Bucket, Key) => exports.s3().headObject({ Bucket, Key }).promise()
+);
 
-exports.headObject = (bucket, key) =>
-  exports.s3().headObject({ Bucket: bucket, Key: key }).promise();
+/**
+ * Get the size of an S3Object, in bytes
+ *
+ * @param {string} bucket - S3 bucket
+ * @param {string} key - S3 key
+ * @returns {Promise<integer>} - object size, in bytes
+ */
+exports.getObjectSize = (bucket, key) =>
+  exports.headObject(bucket, key)
+    .then((response) => response.ContentLength);
 
 /**
 * Get object Tagging from S3
@@ -277,31 +322,43 @@ exports.headObject = (bucket, key) =>
 * @param {string} key - key for object (filepath + filename)
 * @returns {Promise} - returns response from `S3.getObjectTagging` as a promise
 **/
-exports.s3GetObjectTagging = (bucket, key) =>
-  exports.s3().getObjectTagging({ Bucket: bucket, Key: key }).promise();
-
+exports.s3GetObjectTagging = improveStackTrace(
+  (bucket, key) =>
+    exports.s3().getObjectTagging({ Bucket: bucket, Key: key }).promise()
+);
 
 /**
 * Puts object Tagging in S3
 * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObjectTagging-property
 *
-* @param {string} bucket - name of bucket
-* @param {string} key - key for object (filepath + filename)
-* @param {Object} tagging - tagging object
+* @param {string} Bucket - name of bucket
+* @param {string} Key - key for object (filepath + filename)
+* @param {Object} Tagging - tagging object
 * @returns {Promise} - returns response from `S3.getObjectTagging` as a promise
 **/
-exports.s3PutObjectTagging = (bucket, key, tagging) =>
-  exports.s3().putObjectTagging({ Bucket: bucket, Key: key, Tagging: tagging }).promise();
+exports.s3PutObjectTagging = improveStackTrace(
+  (Bucket, Key, Tagging) =>
+    exports.s3().putObjectTagging({
+      Bucket,
+      Key,
+      Tagging
+    }).promise()
+);
 
 /**
 * Get an object from S3
 *
-* @param {string} bucket - name of bucket
-* @param {string} key - key for object (filepath + filename)
+* @param {string} Bucket - name of bucket
+* @param {string} Key - key for object (filepath + filename)
 * @returns {Promise} - returns response from `S3.getObject` as a promise
 **/
-exports.getS3Object = (bucket, key) =>
-  exports.s3().getObject({ Bucket: bucket, Key: key }).promise();
+exports.getS3Object = improveStackTrace(
+  (Bucket, Key) => exports.s3().getObject({ Bucket, Key }).promise()
+);
+
+exports.getS3ObjectReadStream = (bucket, key) => exports.s3().getObject(
+  { Bucket: bucket, Key: key }
+).createReadStream();
 
 /**
 * Check if a file exists in an S3 object
@@ -378,16 +435,18 @@ exports.deleteS3Files = (s3Objs) => pMap(
 * @param {string} bucket - name of the bucket
 * @returns {Promise} - the promised result of `S3.deleteBucket`
 **/
-exports.recursivelyDeleteS3Bucket = async (bucket) => {
-  const response = await exports.s3().listObjects({ Bucket: bucket }).promise();
-  const s3Objects = response.Contents.map((o) => ({
-    Bucket: bucket,
-    Key: o.Key
-  }));
+exports.recursivelyDeleteS3Bucket = improveStackTrace(
+  async (bucket) => {
+    const response = await exports.s3().listObjects({ Bucket: bucket }).promise();
+    const s3Objects = response.Contents.map((o) => ({
+      Bucket: bucket,
+      Key: o.Key
+    }));
 
-  await exports.deleteS3Files(s3Objects);
-  await exports.s3().deleteBucket({ Bucket: bucket }).promise();
-};
+    await exports.deleteS3Files(s3Objects);
+    await exports.s3().deleteBucket({ Bucket: bucket }).promise();
+  }
+);
 
 exports.uploadS3Files = (files, defaultBucket, keyPath, s3opts = {}) => {
   let i = 0;
@@ -556,31 +615,72 @@ class S3ListObjectsV2Queue {
 }
 exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;
 
-exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
-  const param = { Bucket: bucket, Key: key };
-
-  if (algorithm.toLowerCase() === 'cksum') {
-    return getFileChecksumFromStream(
-      exports.s3().getObject(param).createReadStream()
-    );
-  }
-
-  return new Promise((resolve, reject) => {
-    const hash = crypto.createHash(algorithm, options);
-    const fileStream = exports.s3().getObject(param).createReadStream();
-    fileStream.on('error', reject);
-    fileStream.on('data', (chunk) => hash.update(chunk));
-    fileStream.on('end', () => resolve(hash.digest('hex')));
-  });
+/**
+ * Calculate checksum for S3 Object
+ *
+ * @param {Object} params - params
+ * @param {string} params.algorithm - checksum algorithm
+ * @param {string} params.bucket - S3 bucket
+ * @param {string} params.key - S3 key
+ * @param {Object} [params.options] - crypto.createHash options
+ *
+ * @returns {number|string} - calculated checksum
+ */
+exports.calculateS3ObjectChecksum = async ({
+  algorithm,
+  bucket,
+  key,
+  options
+}) => {
+  const fileStream = exports.getS3ObjectReadStream(bucket, key);
+  return generateChecksumFromStream(algorithm, fileStream, options);
 };
 
-// Class to efficiently scan all of the items in a DynamoDB table, without
+/**
+ * Validate S3 object checksum against expected sum
+ *
+ * @param {Object} params - params
+ * @param {string} params.algorithm - checksum algorithm
+ * @param {string} params.bucket - S3 bucket
+ * @param {string} params.key - S3 key
+ * @param {number|string} params.expectedSum - expected checksum
+ * @param {Object} [params.options] - crypto.createHash options
+ *
+ * @throws {InvalidChecksum} - Throws error if validation fails
+ * @returns {boolean} - returns true for success
+ */
+exports.validateS3ObjectChecksum = async ({
+  algorithm,
+  bucket,
+  key,
+  expectedSum,
+  options
+}) => {
+  const fileStream = exports.getS3ObjectReadStream(bucket, key);
+  if (await validateChecksumFromStream(algorithm, fileStream, expectedSum, options)) {
+    return true;
+  }
+  const msg = `Invalid checksum for S3 object s3://${bucket}/${key} with type ${algorithm} and expected sum ${expectedSum}`;
+  throw new errors.InvalidChecksum(msg);
+};
+
+// Maintained for backwards compatibility
+exports.checksumS3Objects = (algorithm, bucket, key, options = {}) => {
+  deprecate('@cumulus/common/aws.checksumS3Objects', '1.11.2', '@cumulus/common/aws.calculateS3ObjectChecksum');
+  const params = {
+    algorithm, bucket, key, options
+  };
+  return exports.calculateS3ObjectChecksum(params);
+};
+
+// Class to efficiently search all of the items in a DynamoDB table, without
 // loading them all into memory at once.  Handles paging.
-class DynamoDbScanQueue {
-  constructor(params) {
+class DynamoDbSearchQueue {
+  constructor(params, searchType = 'scan') {
     this.items = [];
     this.params = params;
-    this.dynamodb = exports.dynamodb();
+    this.dynamodbDocClient = exports.dynamodbDocClient();
+    this.searchType = searchType;
   }
 
   /**
@@ -617,7 +717,7 @@ class DynamoDbScanQueue {
   async fetchItems() {
     let response;
     do {
-      response = await this.dynamodb.scan(this.params).promise(); // eslint-disable-line no-await-in-loop, max-len
+      response = await this.dynamodbDocClient[this.searchType](this.params).promise(); // eslint-disable-line no-await-in-loop, max-len
       if (response.LastEvaluatedKey) this.params.ExclusiveStartKey = response.LastEvaluatedKey;
     } while (response.Items.length === 0 && response.LastEvaluatedKey);
 
@@ -626,7 +726,7 @@ class DynamoDbScanQueue {
     if (!response.LastEvaluatedKey) this.items.push(null);
   }
 }
-exports.DynamoDbScanQueue = DynamoDbScanQueue;
+exports.DynamoDbSearchQueue = DynamoDbSearchQueue;
 
 exports.syncUrl = async (uri, bucket, destKey) => {
   const response = await concurrency.promiseUrl(uri);
@@ -792,14 +892,10 @@ exports.receiveSQSMessages = async (queueUrl, options) => {
  * @param {integer} receiptHandle - the unique identifier of the sQS message
  * @returns {Promise} an AWS SQS response
  */
-exports.deleteSQSMessage = (queueUrl, receiptHandle) => {
-  const params = {
-    QueueUrl: queueUrl,
-    ReceiptHandle: receiptHandle
-  };
-
-  return exports.sqs().deleteMessage(params).promise();
-};
+exports.deleteSQSMessage = improveStackTrace(
+  (QueueUrl, ReceiptHandle) =>
+    exports.sqs().deleteMessage({ QueueUrl, ReceiptHandle }).promise()
+);
 
 /**
  * Returns execution ARN from a statement machine Arn and executionName

@@ -160,25 +160,6 @@ default:
     migrationRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-migration-processing'
 
   sns:
-    inregions3:
-      subscriptions:
-        lambda:
-          endpoint:
-            function: Fn::GetAtt
-            array:
-              - InRegionS3PolicyLambdaFunction
-              - Arn
-          protocol: lambda
-    AmazonIpSpaceChanged:
-      arn: arn:aws:sns:us-east-1:806199016981:AmazonIpSpaceChanged
-      subscriptions:
-        lambda:
-          endpoint:
-            function: Fn::GetAtt
-            array:
-              - InRegionS3PolicyLambdaFunction
-              - Arn
-          protocol: lambda
     sftracker:
       subscriptions:
         2ndlambda:
@@ -311,6 +292,7 @@ kk-uat-deployment:
 mth:
   stackName: mth
   stackNameNoDash: Mth
+  useWorkflowLambdaVersions: false
   buckets:
     internal:
       name: '{{stackName}}-internal'
@@ -498,3 +480,24 @@ mboyd-int:
 pq:
   stackName: pq
   stackNameNoDash: pq
+
+cumulus-sit:
+  stackName: cumulus-sit
+  stackNameNoDash: cumulusSit
+
+  buckets:
+    internal:
+      name: cumulus-sit-internal
+      type: internal
+    private:
+      name: cumulus-sit-private
+      type: private
+    protected:
+      name: cumulus-sit-protected
+      type: protected
+    public:
+      name: cumulus-sit-public
+      type: public
+    protected-2:
+      name: cumulus-sit-protected
+      type: protected

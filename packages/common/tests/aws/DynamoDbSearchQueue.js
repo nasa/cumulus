@@ -5,7 +5,7 @@ const range = require('lodash.range');
 
 const {
   dynamodb,
-  DynamoDbScanQueue
+  DynamoDbSearchQueue
 } = require('../../aws');
 const { randomString } = require('../../test-utils');
 
@@ -33,7 +33,7 @@ test.beforeEach(async (t) => {
 
 test.afterEach.always((t) => dynamodb().deleteTable({ TableName: t.context.tableName }).promise());
 
-test.serial('DynamoDbScanQueue.peek() returns the next item but does not remove it from the queue', async (t) => {
+test.serial('DynamoDbSearchQueue.peek() returns the next item but does not remove it from the queue', async (t) => {
   const bucket = randomString();
   const key = randomString();
 
@@ -45,13 +45,13 @@ test.serial('DynamoDbScanQueue.peek() returns the next item but does not remove 
     }
   }).promise();
 
-  const queue = new DynamoDbScanQueue({ TableName: t.context.tableName });
+  const queue = new DynamoDbSearchQueue({ TableName: t.context.tableName });
 
-  t.is((await queue.peek()).bucket.S, bucket);
-  t.is((await queue.peek()).bucket.S, bucket);
+  t.is((await queue.peek()).bucket, bucket);
+  t.is((await queue.peek()).bucket, bucket);
 });
 
-test.serial('DynamoDbScanQueue.shift() returns the next object and removes it from the queue', async (t) => {
+test.serial('DynamoDbSearchQueue.shift() returns the next object and removes it from the queue', async (t) => {
   const bucket = randomString();
   const key = randomString();
 
@@ -63,14 +63,14 @@ test.serial('DynamoDbScanQueue.shift() returns the next object and removes it fr
     }
   }).promise();
 
-  const queue = new DynamoDbScanQueue({ TableName: t.context.tableName });
+  const queue = new DynamoDbSearchQueue({ TableName: t.context.tableName });
 
-  t.is((await queue.peek()).bucket.S, bucket);
-  t.is((await queue.shift()).bucket.S, bucket);
+  t.is((await queue.peek()).bucket, bucket);
+  t.is((await queue.shift()).bucket, bucket);
   t.is(await queue.peek(), null);
 });
 
-test.serial('DynamoDbScanQueue can handle paging', async (t) => {
+test.serial('DynamoDbSearchQueue can handle paging', async (t) => {
   await Promise.all(range(11).map(() =>
     dynamodb().putItem({
       TableName: t.context.tableName,
@@ -80,7 +80,7 @@ test.serial('DynamoDbScanQueue can handle paging', async (t) => {
       }
     }).promise()));
 
-  const queue = new DynamoDbScanQueue({
+  const queue = new DynamoDbSearchQueue({
     TableName: t.context.tableName,
     Limit: 2
   });

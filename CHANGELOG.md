@@ -6,6 +6,82 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-671**
+  - Added `@packages/integration-tests/api/distribution/getDistributionApiS3SignedUrl()` to return the S3 signed URL for a file protected by the distribution API
+- **CUMULUS-672**
+  - Added `cmrMetadataFormat` and `cmrConceptId` to output for individual granules from `@cumulus/post-to-cmr`. `cmrMetadataFormat` will be read from the `cmrMetadataFormat` generated for each granule in `@cumulus/cmrjs/publish2CMR()`
+  - Added helpers to `@packages/integration-tests/api/distribution`:
+    - `getDistributionApiFileStream()` returns a stream to download files protected by the distribution API
+    - `getDistributionFileUrl()` constructs URLs for requesting files from the distribution API
+
+- **CUMULUS-1101**
+  - Added new `@cumulus/checksum` package. This package provides functions to calculate and validate checksums.
+  - Added new checksumming functions to `@cumulus/common/aws`: `calculateS3ObjectChecksum` and `validateS3ObjectChecksum`, which depend on the `checksum` package.
+
+- CUMULUS-1171
+  - Added `@cumulus/common` API documentation to `packages/common/docs/API.md`
+  - Added an `npm run build-docs` task to `@cumulus/common`
+  - Added `@cumulus/common/string#isValidHostname()`
+  - Added `@cumulus/common/string#match()`
+  - Added `@cumulus/common/string#matches()`
+  - Added `@cumulus/common/string#toLower()`
+  - Added `@cumulus/common/string#toUpper()`
+  - Added `@cumulus/common/URLUtils#buildURL()`
+  - Added `@cumulus/common/util#isNil()`
+  - Added `@cumulus/common/util#isNull()`
+  - Added `@cumulus/common/util#isUndefined()`
+  - Added `@cumulus/common/util#negate()`
+
+- CUMULUS-1151 Compare the granule holdings in CMR with Cumulus' internal data store
+
+### Changed
+
+- CUMULUS-1139 - Granules stored in the API contain a `files` property. That schema has been greatly
+  simplified and now better matches the CNM format.
+    - The `name` property has been renamed to `fileName`.
+    - The `filepath` property has been renamed to `key`.
+    - The `checksumValue` property has been renamed to `checksum`.
+    - The `path` property has been removed.
+    - The `url_path` property has been removed.
+    - The `filename` property (which contained an `s3://` URL) has been removed, and the `bucket`
+      and `key` properties should be used instead. Any requests sent to the API containing a `granule.files[].filename`
+      property will be rejected, and any responses coming back from the API will not contain that
+      `filename` property.
+    - A `source` property has been added, which is a URL indicating the original source of the file.
+  - `@cumulus/ingest/granule.moveGranuleFiles()` no longer includes a `filename` field in its
+    output. The `bucket` and `key` fields should be used instead.
+- **CUMULUS-672**
+  - Changed `@cumulus/integration-tests/api/EarthdataLogin.getEarthdataLoginRedirectResponse` to `@cumulus/integration-tests/api/EarthdataLogin.getEarthdataAccessToken`. The new function returns an access response from Earthdata login, if successful.
+  - `@cumulus/integration-tests/cmr/getOnlineResources` now accepts an object of options, including `cmrMetadataFormat`. Based on the `cmrMetadataFormat`, the function will correctly retrieve the online resources for each metadata format (ECHO10, UMM-G)
+
+- **CUMULUS-1101**
+  - Moved `@cumulus/common/file/getFileChecksumFromStream` into `@cumulus/checksum`, and renamed it to `generateChecksumFromStream`.
+    This is a breaking change for users relying on `@cumulus/common/file/getFileChecksumFromStream`.
+  - Refactored `@cumulus/ingest/Granule` to depend on new `common/aws` checksum functions and remove significantly present checksumming code.
+    - Deprecated `@cumulus/ingest/granule.validateChecksum`. Replaced with `@cumulus/ingest/granule.verifyFile`.
+    - Renamed `granule.getChecksumFromFile` to `granule.retrieveSuppliedFileChecksumInformation` to be more accurate.
+  - Deprecated `@cumulus/common/aws.checksumS3Objects`. Use `@cumulus/common/aws.calculateS3ObjectChecksum` instead.
+
+- CUMULUS-1171
+  - NOTE: This is a breaking change. When applying this upgrade, users will need to:
+    1. Disable all workflow rules
+    2. Update any `http` or `https` providers so that the host field only
+       contains a valid hostname or IP address, and the port field contains the
+       provider port.
+    3. Perform the deployment
+    4. Re-enable workflow rules
+  - Fixed provider handling in the API to make it consistent between protocols.
+    Before this change, FTP providers were configured using the `host` and
+    `port` properties. HTTP providers ignored `port` and `protocol`, and stored
+    an entire URL in the `host` property. Updated the API to only accept valid
+    hostnames or IP addresses in the `provider.host` field. Updated ingest code
+    to properly build HTTP and HTTPS URLs from `provider.protocol`,
+    `provider.host`, and `provider.port`.
+  - The default provider port was being set to 21, no matter what protocol was
+    being used. Removed that default.
+
 ## [v1.11.3] - 2019-3-5
 
 ### Added

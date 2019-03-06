@@ -189,7 +189,7 @@ IngestAndPublishGranule:
       CumulusConfig:
         bucket: '{$.meta.buckets.internal.name}'
         collection: '{$.meta.collection}'
-        cmrFileType: '{$.meta.cmrFileType}'
+        cmrMetadataFormat: '{$.meta.cmrMetadataFormat}'
         additionalUrls: '{$.meta.additionalUrls}'
       Type: Task
       Resource: ${FakeProcessingLambdaFunction.Arn}
