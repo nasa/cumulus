@@ -1,7 +1,6 @@
 {
   "lerna": "2.9.0",
   "version": "1.11.2",
-  "npmClient": "npm",
   "packages": [
     "packages/*",
     "tasks/*"
