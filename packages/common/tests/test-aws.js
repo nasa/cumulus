@@ -231,3 +231,23 @@ test('validateS3ObjectChecksum throws InvalidChecksum error on bad checksum', as
   }), errMsg);
   return aws.recursivelyDeleteS3Bucket(Bucket);
 });
+
+test('getFileBucketAndKey parses bucket and key', (t) => {
+  const pathParams = 'test-bucket/path/key.txt';
+
+  const [bucket, key] = aws.getFileBucketAndKey(pathParams);
+
+  t.is(bucket, 'test-bucket');
+  t.is(key, 'path/key.txt');
+});
+
+test('getFileBucketAndKey throws UnparsableFileLocationError if location cannot be parsed', (t) => {
+  const pathParams = 'test-bucket';
+
+  try {
+    aws.getFileBucketAndKey(pathParams);
+  }
+  catch (err) {
+    t.true((err instanceof aws.UnparsableFileLocationError));
+  }
+});
