@@ -20,7 +20,7 @@ async function requestTemporaryCredentialsFromNgap(username) {
     returntype: 'lowerCamel',
     duration: '3600', // one hour max allowed by AWS.
     rolesession: username, // <- shows up in access logs
-    userid: username  // <- used by NGAP
+    userid: username // <- used by NGAP
   });
 
   return lambda().invoke({
