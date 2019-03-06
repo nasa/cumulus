@@ -191,7 +191,9 @@ async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bu
           // ignore any URL which is not for getting data
           // some files should not be in CMR such as private files
           onlyInCmr.push({
-            URL: relatedUrl.URL, Type: relatedUrl.Type, GranuleUR: granuleInCmr.GranuleUR
+            URL: relatedUrl.URL,
+            Type: relatedUrl.Type,
+            GranuleUR: granuleInCmr.GranuleUR
           });
         }
 
@@ -200,7 +202,9 @@ async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bu
       else if (cmrGetDataTypes.includes(relatedUrl.Type)) {
         // no matching database file, only in CMR
         onlyInCmr.push({
-          URL: relatedUrl.URL, Type: relatedUrl.Type, GranuleUR: granuleInCmr.GranuleUR
+          URL: relatedUrl.URL,
+          Type: relatedUrl.Type,
+          GranuleUR: granuleInCmr.GranuleUR
         });
       }
     }
@@ -268,7 +272,10 @@ async function reconciliationReportForGranules(collectionId, bucketsConfig) {
 
     if (nextDbGranuleId < nextCmrGranuleId) {
       // Found an item that is only in database and not in cmr
-      granulesReport.onlyInCumulus.push({ granuleId: nextDbGranuleId, collectionId: collectionId });
+      granulesReport.onlyInCumulus.push({
+        granuleId: nextDbGranuleId,
+        collectionId: collectionId
+      });
       await dbGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
     }
     else if (nextDbGranuleId > nextCmrGranuleId) {
@@ -313,7 +320,10 @@ async function reconciliationReportForGranules(collectionId, bucketsConfig) {
   // Add any remaining DynamoDB items to the report
   while (await dbGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
     const dbItem = await dbGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
-    granulesReport.onlyInCumulus.push({ granuleId: dbItem.granuleId, collectionId: collectionId });
+    granulesReport.onlyInCumulus.push({
+      granuleId: dbItem.granuleId,
+      collectionId: collectionId
+    });
   }
 
   // Add any remaining CMR items to the report
@@ -348,34 +358,31 @@ async function reconciliationReportForCumulusCMR(bucketsConfig) {
     onlyInCmr: collectionReport.onlyInCmr
   };
 
-  // create granule report for collections in both Cumulus and CMR
+  // create granule and granule file report for collections in both Cumulus and CMR
   const promisedGranuleReports = collectionReport.okCollections.map((collectionId) =>
     reconciliationReportForGranules(collectionId, bucketsConfig));
   const granuleAndFilesReports = await Promise.all(promisedGranuleReports);
 
-  const granulesInCumulusCmr = {
-    okCount: 0,
-    onlyInCumulus: [],
-    onlyInCmr: []
-  };
-  const filesInCumulusCmr = {
-    okCount: 0,
-    onlyInCumulus: [],
-    onlyInCmr: []
-  };
-  granuleAndFilesReports.forEach((granuleFileReport) => {
-    granulesInCumulusCmr.okCount += granuleFileReport.granulesReport.okCount;
-    granulesInCumulusCmr.onlyInCumulus = granulesInCumulusCmr.onlyInCumulus
-      .concat(granuleFileReport.granulesReport.onlyInCumulus);
-    granulesInCumulusCmr.onlyInCmr = granulesInCumulusCmr.onlyInCmr
-      .concat(granuleFileReport.granulesReport.onlyInCmr);
+  const granulesInCumulusCmr = {};
+  const filesInCumulusCmr = {};
 
-    filesInCumulusCmr.okCount += granuleFileReport.filesReport.okCount;
-    filesInCumulusCmr.onlyInCumulus = filesInCumulusCmr.onlyInCumulus
-      .concat(granuleFileReport.filesReport.onlyInCumulus);
-    filesInCumulusCmr.onlyInCmr = filesInCumulusCmr.onlyInCmr
-      .concat(granuleFileReport.filesReport.onlyInCmr);
-  });
+  granulesInCumulusCmr.okCount = granuleAndFilesReports
+    .reduce((accumulator, currentValue) => accumulator + currentValue.granulesReport.okCount, 0);
+  granulesInCumulusCmr.onlyInCumulus = granuleAndFilesReports.reduce(
+    (accumulator, currentValue) => accumulator.concat(currentValue.granulesReport.onlyInCumulus), []
+  );
+  granulesInCumulusCmr.onlyInCmr = granuleAndFilesReports.reduce(
+    (accumulator, currentValue) => accumulator.concat(currentValue.granulesReport.onlyInCmr), []
+  );
+
+  filesInCumulusCmr.okCount = granuleAndFilesReports
+    .reduce((accumulator, currentValue) => accumulator + currentValue.filesReport.okCount, 0);
+  filesInCumulusCmr.onlyInCumulus = granuleAndFilesReports.reduce(
+    (accumulator, currentValue) => accumulator.concat(currentValue.filesReport.onlyInCumulus), []
+  );
+  filesInCumulusCmr.onlyInCmr = granuleAndFilesReports.reduce(
+    (accumulator, currentValue) => accumulator.concat(currentValue.filesReport.onlyInCmr), []
+  );
 
   return { collectionsInCumulusCmr, granulesInCumulusCmr, filesInCumulusCmr };
 }
