@@ -1,4 +1,4 @@
-const { Lambda } = require('aws-sdk');
+const { Lambda, STS, Credentials } = require('aws-sdk');
 const { s3 } = require('@cumulus/common/aws');
 const { api: { callCumulusApi } } = require('@cumulus/integration-tests');
 const { loadConfig } = require('../helpers/testUtils');
@@ -69,7 +69,9 @@ async function canListObjects(region, credentials) {
   return invokeTestLambda(region, credentials, 'list-objects');
 }
 
-xdescribe('When accessing an S3 bucket directly', () => {
+const REASON = 'https://bugs.earthdata.nasa.gov/browse/NGAP-4149';
+
+describe('When accessing an S3 bucket directly', () => {
   beforeAll(async () => {
     await s3().putObject({ Bucket: protectedBucket, Key: testFileKey, Body: 'test' }).promise();
   });
@@ -79,7 +81,7 @@ xdescribe('When accessing an S3 bucket directly', () => {
   });
 
   describe('with credentials associated with an Earthdata Login ID', () => {
-    let credentials;
+    let creds;
 
     beforeAll(async () => {
       const payload = await callCumulusApi({
@@ -90,35 +92,44 @@ xdescribe('When accessing an S3 bucket directly', () => {
           path: '/s3credentials'
         }
       });
-      credentials = JSON.parse(payload.body);
+      creds = JSON.parse(payload.body);
+    });
+
+    it('the expected user can assume same region access', async () => {
+      const credentials = new Credentials(creds);
+      const sts = new STS({ credentials });
+      const whoami = await sts.getCallerIdentity().promise();
+
+      expect(whoami.Arn).toMatch(/arn:aws:sts::\d{12}:assumed-role\/s3-same-region-access-role\/userName.*/);
+      expect(whoami.UserId).toMatch(/.*:userName.*/);
     });
 
     describe('while in the the same region ', () => {
       it('the bucket contents can be listed', async () => {
-        expect(await canListObjects('us-east-1', credentials)).toBe('true');
-      });
+        expect(await canListObjects('us-east-1', creds)).toBe('true');
+      }).pend(REASON);
 
       it('the data can be downloaded', async () => {
-        expect(await canGetObject('us-east-1', credentials)).toBe('true');
-      });
+        expect(await canGetObject('us-east-1', creds)).toBe('true');
+      }).pend(REASON);
 
       it('a write is rejected', async () => {
-        expect(await canWriteObject('us-east-1', credentials)).toBe('false');
-      });
+        expect(await canWriteObject('us-east-1', creds)).toBe('false');
+      }).pend(REASON);
     });
 
     describe('while outside the region ', () => {
       it('the bucket contents can NOT be listed', async () => {
-        expect(await canListObjects('us-west-2', credentials)).toBe('false');
-      });
+        expect(await canListObjects('us-west-2', creds)).toBe('false');
+      }).pend(REASON);
 
       it('the data can NOT be downloaded', async () => {
-        expect(await canGetObject('us-west-2', credentials)).toBe('false');
-      });
+        expect(await canGetObject('us-west-2', creds)).toBe('false');
+      }).pend(REASON);
 
       it('a write is rejected', async () => {
-        expect(await canWriteObject('us-east-1', credentials)).toBe('false');
-      });
+        expect(await canWriteObject('us-east-1', creds)).toBe('false');
+      }).pend(REASON);
     });
   });
 
@@ -132,14 +143,14 @@ xdescribe('When accessing an S3 bucket directly', () => {
 
     it('the bucket contents can NOT be listed', async () => {
       expect(await canListObjects('us-east-1', thirdPartyCredentials)).toBe('false');
-    });
+    }).pend(REASON);
 
     it('the data can NOT be downloaded', async () => {
       expect(await canGetObject('us-east-1', thirdPartyCredentials)).toBe('false');
-    });
+    }).pend(REASON);
 
     it('a write is rejected', async () => {
       expect(await canWriteObject('us-east-1', thirdPartyCredentials)).toBe('false');
-    });
+    }).pend(REASON);
   });
 });
