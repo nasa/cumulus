@@ -519,9 +519,7 @@ jk2:
   stackNameNoDash: jk2
 
 mboyd-test:
-  prefix: mboyd-test
-  stackName: '{{prefix}}'
-  # stackName: mboyd-test
+  stackName: mboyd-test
   stackNameNoDash: mboydTest
 
   # buckets:
@@ -542,7 +540,9 @@ mboyd-test:
   #     type: protected
 
 mboyd-int:
-  stackName: mboyd-int
+  prefix: mboyd-int
+  stackName: '{{prefix}}'
+  # stackName: mboyd-int
   stackNameNoDash: mboydInt
 
 pq:
