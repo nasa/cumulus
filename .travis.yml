@@ -25,16 +25,16 @@ jobs:
         - nvm install-latest-npm
       script: ./travis-ci/build-cache.sh
 
-    - name: "npm audit"
-      stage: build cache & audit
-      if: tag !~ ^v\d+.* AND commit_message !~ \[skip-audit\]
-      install:
-        - nvm install-latest-npm
-        - npm ci
-        - ln -s /dev/stdout ./lerna-debug.log
-        - npm run install-locks
-        - echo 'BOOTSTRAP FINISHED'
-      script: ./travis-ci/audit-packages.sh
+    # - name: "npm audit"
+    #   stage: build cache & audit
+    #   if: tag !~ ^v\d+.* AND commit_message !~ \[skip-audit\]
+    #   install:
+    #     - nvm install-latest-npm
+    #     - npm ci
+    #     - ln -s /dev/stdout ./lerna-debug.log
+    #     - npm run install-locks
+    #     - echo 'BOOTSTRAP FINISHED'
+    #   script: ./travis-ci/audit-packages.sh
 
     - name: "eslint"
       stage: unit test and stack deployment

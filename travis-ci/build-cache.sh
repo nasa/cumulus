@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+set -evx
 
 # Determine what cache to use (based on all of the package.json files)
 MD5SUM=$(cat $(git ls-files | grep package.json | sort) | md5sum | awk '{print $1}')
@@ -48,7 +48,7 @@ else
   CACHE_SIZE=$(du -sh "$CACHE_FILENAME" | awk '{ print $1 }')
   echo "Cache size: $CACHE_SIZE"
 
-  echo "Uploading cache"
+  echo "Uploading cache to s3://${CACHE_BUCKET}/${KEY}"
   STRING_TO_SIGN_PUT="PUT
 
 
