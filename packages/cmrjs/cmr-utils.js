@@ -17,7 +17,12 @@ const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { omit } = require('@cumulus/common/util');
 
 const { CMR } = require('./cmr');
-const { getUrl, xmlParseOptions } = require('./utils');
+const {
+  getUrl,
+  xmlParseOptions,
+  ummVersion,
+  ummVersionToMetadataFormat
+} = require('./utils');
 
 function getS3KeyOfFile(file) {
   if (file.filename) return aws.parseS3Uri(file.filename).Key;
@@ -136,7 +141,8 @@ async function publishUMMGJSON2CMR(cmrPublishObject, creds, systemBucket, stack)
   return {
     granuleId,
     conceptId,
-    link: `${getUrl('search', null, process.env.CMR_ENVIRONMENT)}granules.json?concept_id=${conceptId}`
+    link: `${getUrl('search', null, process.env.CMR_ENVIRONMENT)}granules.json?concept_id=${conceptId}`,
+    metadataFormat: ummVersionToMetadataFormat(ummVersion(cmrPublishObject.metadataObject))
   };
 }
 
