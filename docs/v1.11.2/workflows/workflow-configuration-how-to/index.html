@@ -1,0 +1,198 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Workflow Configuration How To&#x27;s · Cumulus Documentation</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="&lt;h1&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; id=&quot;workflow-configuration-how-to-s&quot;&gt;&lt;/a&gt;&lt;a href=&quot;#workflow-configuration-how-to-s&quot; aria-hidden=&quot;true&quot; class=&quot;hash-link&quot;&gt;&lt;svg class=&quot;hash-link-icon&quot; aria-hidden=&quot;true&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;Workflow Configuration How To&#x27;s&lt;/h1&gt;
+"/><meta name="docsearch:version" content="v1.11.2"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Workflow Configuration How To&#x27;s · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/index.html"/><meta property="og:description" content="&lt;h1&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; id=&quot;workflow-configuration-how-to-s&quot;&gt;&lt;/a&gt;&lt;a href=&quot;#workflow-configuration-how-to-s&quot; aria-hidden=&quot;true&quot; class=&quot;hash-link&quot;&gt;&lt;svg class=&quot;hash-link-icon&quot; aria-hidden=&quot;true&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;Workflow Configuration How To&#x27;s&lt;/h1&gt;
+"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>v1.11.2</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/v1.11.2/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class=""><a href="/cumulus/docs/v1.11.2/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class=""><a href="/cumulus/docs/v1.11.2/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/v1.11.2/team" target="_self">Team</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><i></i></div><h2><i>›</i><span>What are Cumulus Workflows?</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">About Cumulus</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/cumulus-docs-readme">Cumulus Description</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/architecture">Cumulus Architecture</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/glossary">Cumulus Glossary</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/team">Team</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">What are Cumulus Workflows?</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/workflows/workflows-readme">Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/workflows/protocol">Workflow Protocol</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/workflows/input_output">Workflows Input &amp; Output</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/workflows/cumulus-task-message-flow">Cumulus Tasks: Message Flow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/workflows/developing-workflow-tasks">Developing Workflow Tasks</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/workflows/lambda">Develop Lambda Functions</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/workflows/docker">Dockerizing Data Processing</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cumulus/docs/v1.11.2/workflows/workflow-configuration-how-to">Workflow Configuration How To&#x27;s</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/workflows/workflow-triggers">Workflow Triggers</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Deployment</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/deployment/deployment-readme">How to Deploy Cumulus</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/deployment/create_bucket">Creating an S3 Bucket</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/deployment/iam_roles">Cumulus IAM Roles</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/deployment/obtain_cumulus_packages">Obtaining Cumulus Packages</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/deployment/config_descriptions">Configuration Descriptions</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/deployment/troubleshoot_deployment">Troubleshooting Cumulus Deployment</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Additional Features</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/data_in_dynamodb">Cumulus Metadata in DynamoDB</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/features/dead_letter_queues">Dead Letter Queues</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/ems_reporting">EMS Reporting</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/features/execution_payload_retention">Execution Payload Retention</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/lambda_versioning">Lambda Versioning</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Cumulus Versions</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/upgrade/upgrade-readme">Upgrading Cumulus</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/upgrade/1.6.0">Upgrading to Cumulus 1.6.0</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/upgrade/1.7.0">Upgrading to Cumulus 1.7.0</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/upgrade/1.9.0">Upgrading to Cumulus 1.9.0</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/upgrade/1.11.0">Upgrading to Cumulus 1.11.0</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Troubleshooting</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/system-documentation/system-documentation">Troubleshooting Cumulus</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Cumulus Development</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/adding-a-task">Contributing a Task</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/docs-how-to">Cumulus Documentation: How To&#x27;s</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              const headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                if (event.target.tagName === 'A') {
+                  document.body.classList.remove('tocActive');
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="workflow-configuration-how-to-s"></a><a href="#workflow-configuration-how-to-s" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Workflow Configuration How To's</h1>
+<h2><a class="anchor" aria-hidden="true" id="how-to-specify-a-bucket-for-granules"></a><a href="#how-to-specify-a-bucket-for-granules" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>How to specify a bucket for granules</h2>
+<p>How to configure <code>.yml</code> workflow configuration in <code>workflows</code> directory for specifying buckets.</p>
+<h3><a class="anchor" aria-hidden="true" id="bucket-configuration"></a><a href="#bucket-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Bucket configuration</h3>
+<p>Buckets configured in <code>app/config.yml</code> will ultimately become part of the workflow configuration.<code>type</code> of a bucket relies on the how that bucket will be used.
+<code>public</code> indicates a completely public bucket.
+<code>internal</code> type is for system use.
+<code>protected</code> buckets are for any information that should be behind an Earthdata Login authentication.
+<code>private</code> buckets are for private data.</p>
+<p>Consider this <code>app/config.yml</code> for all following examples:</p>
+<pre><code class="hljs">buckets:
+  internal:
+    <span class="hljs-keyword">name</span>: sample-internal-bucket
+    <span class="hljs-keyword">type</span>: internal
+  <span class="hljs-keyword">private</span>:
+    <span class="hljs-keyword">name</span>: sample-<span class="hljs-keyword">private</span>-bucket
+    <span class="hljs-keyword">type</span>: <span class="hljs-keyword">private</span>
+  <span class="hljs-keyword">protected</span>:
+    <span class="hljs-keyword">name</span>: sample-<span class="hljs-keyword">protected</span>-bucket
+    <span class="hljs-keyword">type</span>: <span class="hljs-keyword">protected</span>
+  <span class="hljs-keyword">public</span>:
+    <span class="hljs-keyword">name</span>: sample-<span class="hljs-keyword">public</span>-bucket
+    <span class="hljs-keyword">type</span>: <span class="hljs-keyword">public</span>
+  <span class="hljs-keyword">protected</span>-<span class="hljs-number">2</span>:
+    <span class="hljs-keyword">name</span>: sample-<span class="hljs-keyword">protected</span>-bucket-<span class="hljs-number">2</span>
+    <span class="hljs-keyword">type</span>: <span class="hljs-keyword">protected</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="point-to-buckets-in-the-workflow-configuration"></a><a href="#point-to-buckets-in-the-workflow-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Point to buckets in the workflow configuration</h3>
+<p>Buckets specified in <code>app/config.yml</code> will become part of the <code>meta</code> object of the Cumulus message and can be accessed in your workflow configuration.</p>
+<p>To use the buckets specified in your config, you can do the following:</p>
+<pre><code class="hljs"><span class="hljs-attribute">DiscoverGranules</span>:
+      <span class="hljs-attribute">CumulusConfig</span>:
+        <span class="hljs-attribute">provider</span>: <span class="hljs-string">'{$.meta.provider}'</span>
+        <span class="hljs-attribute">collection</span>: <span class="hljs-string">'{$.meta.collection}'</span>
+        <span class="hljs-attribute">buckets</span>: <span class="hljs-string">'{$.meta.buckets}'</span>
+</code></pre>
+<pre><code class="hljs"><span class="hljs-attribute">MoveGranules</span>:
+      <span class="hljs-attribute">CumulusConfig</span>:
+        <span class="hljs-attribute">bucket</span>: <span class="hljs-string">'{$.meta.buckets.internal.name}'</span>
+        <span class="hljs-attribute">buckets</span>: <span class="hljs-string">'{$.meta.buckets}'</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="hardcode-a-bucket"></a><a href="#hardcode-a-bucket" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Hardcode a bucket</h3>
+<p>Bucket names can be hardcoded in your workflow configuration, for example:</p>
+<pre><code class="hljs"><span class="hljs-attribute">DiscoverGranules</span>:
+      <span class="hljs-attribute">CumulusConfig</span>:
+        <span class="hljs-attribute">provider</span>: <span class="hljs-string">'{$.meta.provider}'</span>
+        <span class="hljs-attribute">collection</span>: <span class="hljs-string">'{$.meta.collection}'</span>
+        <span class="hljs-attribute">buckets</span>:
+          <span class="hljs-attribute">internal</span>: <span class="hljs-string">'sample-internal-bucket'</span>
+          <span class="hljs-attribute">protected</span>: <span class="hljs-string">'sample-protected-bucket-2'</span>
+</code></pre>
+<p>Or you can do a combination of meta buckets and hardcoded:</p>
+<pre><code class="hljs"><span class="hljs-attribute">DiscoverGranules</span>:
+      <span class="hljs-attribute">CumulusConfig</span>:
+        <span class="hljs-attribute">provider</span>: <span class="hljs-string">'{$.meta.provider}'</span>
+        <span class="hljs-attribute">collection</span>: <span class="hljs-string">'{$.meta.collection}'</span>
+        <span class="hljs-attribute">buckets</span>:
+          <span class="hljs-attribute">internal</span>: <span class="hljs-string">'sample-internal-bucket'</span>
+          <span class="hljs-attribute">private</span>: <span class="hljs-string">'{$.meta.buckets.private.name}'</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="using-meta-and-hardcoding"></a><a href="#using-meta-and-hardcoding" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Using meta and hardcoding</h3>
+<p>Bucket names can be configured using a mixture of hardcoded values and values from the meta. For example, to configure the bucket based on the collection name you could do something like:</p>
+<pre><code class="hljs"><span class="hljs-attribute">DiscoverGranules</span>:
+      <span class="hljs-attribute">CumulusConfig</span>:
+        <span class="hljs-attribute">provider</span>: <span class="hljs-string">'{$.meta.provider}'</span>
+        <span class="hljs-attribute">collection</span>: <span class="hljs-string">'{$.meta.collection}'</span>
+        <span class="hljs-attribute">buckets</span>:
+          <span class="hljs-attribute">internal</span>: <span class="hljs-string">'{$.meta.collection.name}-bucket'</span>
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="how-to-specify-a-file-location-in-a-bucket"></a><a href="#how-to-specify-a-file-location-in-a-bucket" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>How to specify a file location in a bucket</h2>
+<p>Granule files can be placed in folders and subfolders in buckets for better organization. This is done by setting a <code>url_path</code> in the base level of a collection configuration to be applied to all files. To only affect placement of a single file, the <code>url_path</code> variable can be placed in that specific file of the collection configuration. There are a number of different ways to populate <code>url_path</code>.</p>
+<h3><a class="anchor" aria-hidden="true" id="hardcoding-file-placement"></a><a href="#hardcoding-file-placement" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Hardcoding file placement</h3>
+<p>A file path can be added as the <code>url_path</code> in the collection configuration to specify the final location of the files. For example, take the following collection configuration</p>
+<pre><code class="hljs">{
+  <span class="hljs-string">"name"</span>: <span class="hljs-string">"MOD09GQ"</span>,
+  <span class="hljs-string">"version"</span>: <span class="hljs-string">"006"</span>,
+  <span class="hljs-string">"url_path"</span>: <span class="hljs-string">"example-path"</span>,
+  <span class="hljs-string">"files"</span>: {
+    {
+      <span class="hljs-string">"bucket"</span>: <span class="hljs-string">"protected"</span>,
+      <span class="hljs-string">"regex"</span>: <span class="hljs-string">"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$"</span>,
+      <span class="hljs-string">"sampleFileName"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"</span>,
+      <span class="hljs-string">"url_path"</span>: <span class="hljs-string">"file-example-path"</span>
+    },
+    {
+      <span class="hljs-string">"bucket"</span>: <span class="hljs-string">"private"</span>,
+      <span class="hljs-string">"regex"</span>: <span class="hljs-string">"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$"</span>,
+      <span class="hljs-string">"sampleFileName"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met"</span>
+    }
+  }
+}
+</code></pre>
+<p>The first file, <code>MOD09GQ.A2017025.h21v00.006.2017034065104.hdf</code> has its own <code>url_path</code> so the resulting file path might look like <code>s3://sample-protected-bucket/file-example-path/MOD09GQ.A2017025.h21v00.006.2017034065104.hdf</code>.
+The second file, <code>MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met</code>, does not have it's own <code>url_path</code> so it will use the collection <code>url_path</code> and have a final file path of <code>s3://sample-private-bucket/example-path/MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met</code>.</p>
+<h3><a class="anchor" aria-hidden="true" id="using-a-template-for-file-placement"></a><a href="#using-a-template-for-file-placement" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Using a template for file placement</h3>
+<p>Instead of hardcoding the placement, the <code>url_path</code> can be a template to be populated with metadata during the move-granules step. For example:</p>
+<pre><code class="hljs"><span class="hljs-string">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}"</span>
+</code></pre>
+<p>This url path with be assigned as the collection shortname, <code>&quot;MOD09GQ&quot;</code>.
+To take a subset of any given metadata, use the option <code>substring</code>.</p>
+<pre><code class="hljs"><span class="hljs-string">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}"</span>
+</code></pre>
+<p>This example will populate to <code>&quot;MOD09GQ/MOD&quot;</code></p>
+<p>Note: the move-granules step needs to be in the workflow for this template to be populated and the file moved. This <code>cmrMetadata</code> or CMR granule XML needs to have been generated and stored on S3. From there any field could be retrieved and used for a url_path.</p>
+<h3><a class="anchor" aria-hidden="true" id="adding-metadata-dates-and-times-to-the-url-path"></a><a href="#adding-metadata-dates-and-times-to-the-url-path" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Adding Metadata dates and times to the URL Path</h3>
+<p>There are a number of options to pull dates from the CMR file metadata. With this metadata:</p>
+<pre><code class="hljs">&lt;Granule&gt;
+    &lt;Temporal&gt;
+        &lt;RangeDateTime&gt;
+            &lt;BeginningDateTime&gt;<span class="hljs-number">2003</span><span class="hljs-number">-02</span><span class="hljs-number">-19</span>T00:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>Z&lt;/BeginningDateTime&gt;
+            &lt;EndingDateTime&gt;<span class="hljs-number">2003</span><span class="hljs-number">-02</span><span class="hljs-number">-19</span>T23:<span class="hljs-number">59</span>:<span class="hljs-number">59</span>Z&lt;/EndingDateTime&gt;
+        &lt;/RangeDateTime&gt;
+    &lt;/Temporal&gt;
+&lt;/Granule&gt;
+</code></pre>
+<p>The following examples of <code>url_path</code> could be used.</p>
+<p><code>{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}</code> will pull the year from the full date: <code>2003</code>.</p>
+<p><code>{extractMonth(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}</code> will pull the month: <code>2</code>.</p>
+<p><code>{extractDate(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}</code> will pull the day: <code>19</code>.</p>
+<p><code>{extractHour(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}</code> will pull the hour: <code>0</code>.</p>
+<p>Different values can be combined to create the <code>url_path</code>. For example</p>
+<pre><code class="hljs"><span class="hljs-string">"bucket"</span>: <span class="hljs-string">"sample-protected-bucket"</span>,
+<span class="hljs-string">"name"</span>: <span class="hljs-string">"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"</span>,
+<span class="hljs-string">"url_path"</span>: <span class="hljs-string">"{cmrMetadata.Granule.Collection.ShortName}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)/extractDate(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}"</span>
+
+</code></pre>
+<p>The final file location for the above would be <code>s3://sample-protected-bucket/MOD09GQ/2003/19/MOD09GQ.A2017025.h21v00.006.2017034065104.hdf</code>.</p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/v1.11.2/workflows/docker"><span class="arrow-prev">← </span><span>Dockerizing Data Processing</span></a><a class="docs-next button" href="/cumulus/docs/v1.11.2/workflows/workflow-triggers"><span>Workflow Triggers</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#how-to-specify-a-bucket-for-granules">How to specify a bucket for granules</a><ul class="toc-headings"><li><a href="#bucket-configuration">Bucket configuration</a></li><li><a href="#point-to-buckets-in-the-workflow-configuration">Point to buckets in the workflow configuration</a></li><li><a href="#hardcode-a-bucket">Hardcode a bucket</a></li><li><a href="#using-meta-and-hardcoding">Using meta and hardcoding</a></li></ul></li><li><a href="#how-to-specify-a-file-location-in-a-bucket">How to specify a file location in a bucket</a><ul class="toc-headings"><li><a href="#hardcoding-file-placement">Hardcoding file placement</a></li><li><a href="#using-a-template-for-file-placement">Using a template for file placement</a></li><li><a href="#adding-metadata-dates-and-times-to-the-url-path">Adding Metadata dates and times to the URL Path</a></li></ul></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>

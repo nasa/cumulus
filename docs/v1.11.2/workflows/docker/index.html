@@ -1,0 +1,220 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Dockerizing Data Processing · Cumulus Documentation</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="&lt;h1&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; id=&quot;dockerizing-data-processing&quot;&gt;&lt;/a&gt;&lt;a href=&quot;#dockerizing-data-processing&quot; aria-hidden=&quot;true&quot; class=&quot;hash-link&quot;&gt;&lt;svg class=&quot;hash-link-icon&quot; aria-hidden=&quot;true&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;Dockerizing Data Processing&lt;/h1&gt;
+"/><meta name="docsearch:version" content="v1.11.2"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Dockerizing Data Processing · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/index.html"/><meta property="og:description" content="&lt;h1&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; id=&quot;dockerizing-data-processing&quot;&gt;&lt;/a&gt;&lt;a href=&quot;#dockerizing-data-processing&quot; aria-hidden=&quot;true&quot; class=&quot;hash-link&quot;&gt;&lt;svg class=&quot;hash-link-icon&quot; aria-hidden=&quot;true&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;Dockerizing Data Processing&lt;/h1&gt;
+"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>v1.11.2</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/v1.11.2/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class=""><a href="/cumulus/docs/v1.11.2/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class=""><a href="/cumulus/docs/v1.11.2/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/v1.11.2/team" target="_self">Team</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><i></i></div><h2><i>›</i><span>What are Cumulus Workflows?</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">About Cumulus</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/cumulus-docs-readme">Cumulus Description</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/architecture">Cumulus Architecture</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/glossary">Cumulus Glossary</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/team">Team</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">What are Cumulus Workflows?</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/workflows/workflows-readme">Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/workflows/protocol">Workflow Protocol</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/workflows/input_output">Workflows Input &amp; Output</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/workflows/cumulus-task-message-flow">Cumulus Tasks: Message Flow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/workflows/developing-workflow-tasks">Developing Workflow Tasks</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/workflows/lambda">Develop Lambda Functions</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cumulus/docs/v1.11.2/workflows/docker">Dockerizing Data Processing</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/workflows/workflow-configuration-how-to">Workflow Configuration How To&#x27;s</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/workflows/workflow-triggers">Workflow Triggers</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Deployment</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/deployment/deployment-readme">How to Deploy Cumulus</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/deployment/create_bucket">Creating an S3 Bucket</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/deployment/iam_roles">Cumulus IAM Roles</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/deployment/obtain_cumulus_packages">Obtaining Cumulus Packages</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/deployment/config_descriptions">Configuration Descriptions</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/deployment/troubleshoot_deployment">Troubleshooting Cumulus Deployment</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Additional Features</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/data_in_dynamodb">Cumulus Metadata in DynamoDB</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/features/dead_letter_queues">Dead Letter Queues</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/ems_reporting">EMS Reporting</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/features/execution_payload_retention">Execution Payload Retention</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/lambda_versioning">Lambda Versioning</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Cumulus Versions</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/upgrade/upgrade-readme">Upgrading Cumulus</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/upgrade/1.6.0">Upgrading to Cumulus 1.6.0</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/upgrade/1.7.0">Upgrading to Cumulus 1.7.0</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/upgrade/1.9.0">Upgrading to Cumulus 1.9.0</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/upgrade/1.11.0">Upgrading to Cumulus 1.11.0</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Troubleshooting</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/system-documentation/system-documentation">Troubleshooting Cumulus</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Cumulus Development</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/adding-a-task">Contributing a Task</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.2/docs-how-to">Cumulus Documentation: How To&#x27;s</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              const headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                if (event.target.tagName === 'A') {
+                  document.body.classList.remove('tocActive');
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="dockerizing-data-processing"></a><a href="#dockerizing-data-processing" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Dockerizing Data Processing</h1>
+<p>The software used for processing data amongst DAAC's is developed in a variety of languages, and with different sets of dependencies and build environments. To standardize processing, Docker allows us to provide an environment (called an image) to meet the needs of any processing software, while running on the kernel of the host server (in this case, an EC2 instance). This lightweight virtualization does not carry the overhead of any additional VM, providing near-instant startup and the ability to run any dockerized process as a command-line call.</p>
+<h2><a class="anchor" aria-hidden="true" id="using-docker"></a><a href="#using-docker" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Using Docker</h2>
+<p>Docker images are run using the <code>docker</code> command and can be used to build a Docker image from a Dockerfile, fetch an existing image from a remote repository, or run an existing image. In Cumulus, <code>docker-compose</code> is used to help developers by making it easy to build images locally and test them.</p>
+<p>To run a command using docker-compose use:</p>
+<pre><code class="hljs">$ docker-compose run *command*
+</code></pre>
+<p>where <em>commmand</em> is one of</p>
+<ul>
+<li><em>build</em>: Build and tag the image using the Dockerfile</li>
+<li><em>bash</em>: Run the Dockerfile interatively (via a bash shell)</li>
+<li><em>test</em>: Processes data in the directory <em>data/input</em> and saves the output to the <em>data/test-output</em> directory. These directories must exist.</li>
+</ul>
+<h3><a class="anchor" aria-hidden="true" id="the-docker-registry"></a><a href="#the-docker-registry" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>The Docker Registry</h3>
+<p>Docker images that are built can be stored in the cloud in a Docker registry. Currently we are using the AWS Docker Registry, called ECR. To access these images, you must first log in using your AWS credentials, and use AWS CLI to get the proper login string:</p>
+<pre><code class="hljs"><span class="hljs-comment"># install awscli</span>
+$ <span class="hljs-string">pip </span><span class="hljs-string">install </span><span class="hljs-string">awscli
+</span>
+<span class="hljs-comment"># login to the AWS Docker registry</span>
+$ <span class="hljs-string">aws </span><span class="hljs-string">ecr </span><span class="hljs-built_in">get-login</span> <span class="hljs-built_in">--region</span> <span class="hljs-string">us-east-</span>1 | <span class="hljs-string">source </span>/<span class="hljs-string">dev/</span><span class="hljs-string">stdin
+</span></code></pre>
+<p>As long as you have permissions to access the NASA Cumulus AWS account, this will allow you to pull images from AWS ECR, and push rebuilt or new images there as well. Docker-compose may also be used to push images.</p>
+<pre><code class="hljs">$ docker-compose push
+</code></pre>
+<p>Which will push the built image to AWS ECR. Note that the image built by docker-compose will have is the <code>:latest</code> tag, and will overwrite the <code>:latest</code> tagged docker image on the registry.  This file should be updated to push to a different tag if overwriting is not desired.</p>
+<p>In normal use-cases, though, CircleCI takes care of this building and deploying process, as far as production.</p>
+<h3><a class="anchor" aria-hidden="true" id="source-control-and-versions"></a><a href="#source-control-and-versions" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Source Control and Versions</h3>
+<p>All the code necessary for processing a data collection, and the code used to create a Docker image for it, is contained within a single GitHub repository, following the naming convention <code>docker-${dataname}</code>, where <code>dataname</code> is the collection's short name. The git <code>develop</code> branch is the current development version, <code>master</code> is the latest release version, and a git tag exists for each tagged version (e.g., <code>v0.1.3</code>).</p>
+<p>Docker images can have multiple tagged versions. The Docker images in the registry follow this same convention. A Docker image tagged as 'develop' is an image of the development branch. 'latest' is the master brach, and thus the latest tagged version, with an additional tagged image for each version tagged in the git repository.</p>
+<p>The generation of the released tagged images are created and deployed automatically with Circle-CI, the continuous integration system used by Cumulus. When new commits are merged into a branch, the appropriate Docker image is built, tested, and deployed to the Docker registry. More on testing below.</p>
+<h2><a class="anchor" aria-hidden="true" id="docker-images"></a><a href="#docker-images" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Docker Images</h2>
+<h3><a class="anchor" aria-hidden="true" id="docker-base"></a><a href="#docker-base" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>docker-base</h3>
+<p>Docker images are built in layers, allowing common dependencies to be shared to child Docker images. A base docker image is provided that includes some dependencies shared among the current HS3 data processing codes. This includes NetCDF liraries, AWS Cli, Python, Git, as well as py-cumulus, a collection of Python utilities that are used in the processing scripts. The docker-base repository is used to generate new images that are then stored in AWS ECR.</p>
+<p>The docker-base image can be interacted with by running it in interactive mode (ie, <code>docker run -it docker-base</code>, since the default &quot;entrypoint&quot; to the image is a bash shell.</p>
+<h3><a class="anchor" aria-hidden="true" id="docker-data-example-docker-hs3-avaps"></a><a href="#docker-data-example-docker-hs3-avaps" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>docker-data example: docker-hs3-avaps</h3>
+<p>To create a new processing stream for a data collection, a Dockerfile is used to specify what additional dependencies may be required, and to build them in that environment, if necessary. An example Dockerfile is shown here, for the hs3avaps collection.</p>
+<pre><code class="hljs"><span class="hljs-comment"># cumulus processing Dockerfile: docker-hs3-avaps</span>
+
+<span class="hljs-keyword">FROM</span> <span class="hljs-number">000000000000</span>.dkr.ecr.us-east-<span class="hljs-number">1</span>.amazonaws.com/cumulus-base:latest
+
+<span class="hljs-comment"># copy needed files</span>
+<span class="hljs-keyword">WORKDIR</span><span class="bash"> /work</span>
+<span class="hljs-keyword">COPY</span><span class="bash"> . /work</span>
+
+<span class="hljs-keyword">RUN</span><span class="bash"> apt-get install -y nco libhdf5-dev</span>
+
+<span class="hljs-comment"># compile code</span>
+<span class="hljs-keyword">RUN</span><span class="bash"> gcc convert/hs3cpl2nc.c -o _convert -I/usr/include/hdf5/serial -L/usr/include/x86_64-linux-gnu -lnetcdf -lhdf5_serial</span>
+
+<span class="hljs-comment"># input and output directories will be Data Pipeline staging dir env vars</span>
+<span class="hljs-keyword">ENTRYPOINT</span><span class="bash"> [<span class="hljs-string">"/work/process.py"</span>]</span>
+<span class="hljs-keyword">CMD</span><span class="bash"> [<span class="hljs-string">"input"</span>, <span class="hljs-string">"output"</span>]</span>
+</code></pre>
+<p>When this Dockerfile is built, docker will first use the latest cumulus-base image. It will then copy the entire GitHub repository (the processing required for a single data collection is a repository) to the <code>/work</code> directory which will now contain all the code necessary to process this data. In thie case, a C file is compiled to convert the supplied hdf5 files to NetCDF files. Note that this also requires installing the system libraries <code>nco</code> and <code>libhdf5-dev</code> via <code>apt-get</code>. Lastly, the Dockerfile sets the entrypoint to the processing handler, so that this command is run when the image is run. It expects two arguments to be handed to it: 'input' and 'output' meaning the input and output directories.</p>
+<h2><a class="anchor" aria-hidden="true" id="process-handler"></a><a href="#process-handler" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Process Handler</h2>
+<p>All of the processing is managed through a handler, which is called when the docker image is run. Currently, Python is used for the process handler, which provides a simple interface to perform validation, run shell commands, test the output generated, and log the output for us. The handler function takes two arguments: input directory and output directory. Any other needed parameters are set via environment variables. The handler function will process the input directory, and put any output to be saved in the output directory.</p>
+<h3><a class="anchor" aria-hidden="true" id="py-cumulus"></a><a href="#py-cumulus" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Py-cumulus</h3>
+<p>The py-cumulus library provides some helper functions that can be used for logging, writing metadata, and testing. Py-cumulus is installed in the docker-base image. Currently, there are three modules:</p>
+<pre><code class="hljs">import cumulus.logutils
+import cumulus.metadata
+import cumulus.process
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="example-process-handler"></a><a href="#example-process-handler" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Example process handler</h3>
+<p>An example process handler is given here, in this case a shortened version of the hs3-cpl data collection. The main function at the bottom passes the provided input and output directory arguments to the process() function. The first thing process() does is to get the Cumulus logger. The Cumulus logger will send output to both stdout and Splunk, to be used in the Cumulus pipeline. Log strings are made using the make_log_string() function which properly formats a message to be handled by Splunk.</p>
+<pre><code class="hljs">#!/usr/bin/env python
+
+<span class="hljs-keyword">import</span> os
+<span class="hljs-keyword">import</span> sys
+<span class="hljs-keyword">import</span> glob
+<span class="hljs-keyword">import</span> re
+<span class="hljs-keyword">import</span> datetime
+<span class="hljs-keyword">import</span> subprocess
+<span class="hljs-keyword">from</span> cumulus.logutils <span class="hljs-keyword">import</span> get_logger, make_log_string
+<span class="hljs-keyword">from</span> cumulus.metadata <span class="hljs-keyword">import</span> write_metadata
+<span class="hljs-keyword">from</span> cumulus.process <span class="hljs-keyword">import</span> check_output
+
+# the main process <span class="hljs-keyword">handler</span>
+def process(indir, outdir):
+    """ Process this directory """
+    <span class="hljs-keyword">log</span> = get_logger()
+    <span class="hljs-keyword">log</span>.<span class="hljs-keyword">info</span>(
+        make_log_string(process=<span class="hljs-string">'processing'</span>, message="Processing %s into %s" % (indir, outdir))
+    )
+
+    dataname = <span class="hljs-string">'cpl'</span>
+    dataid = os.getenv(<span class="hljs-string">'SHORT_NAME'</span>, <span class="hljs-string">'hs3cpl'</span>)
+
+    <span class="hljs-keyword">for</span> f <span class="hljs-keyword">in</span> glob.glob(os.path.<span class="hljs-keyword">join</span>(indir, <span class="hljs-string">'*.hdf5'</span>)):
+        bname = os.path.basename(f)
+        <span class="hljs-keyword">log</span>.<span class="hljs-keyword">info</span>(
+            make_log_string(granule_id=bname, process=<span class="hljs-string">'processing'</span>, message="Processing started for %s" % bname)
+        )
+
+        # convert file <span class="hljs-keyword">to</span> netcdf
+        cmd = [<span class="hljs-string">'/work/_convert'</span>, f, outdir]
+        <span class="hljs-keyword">out</span> = subprocess.check_output(cmd)
+        fout = glob.glob(os.path.<span class="hljs-keyword">join</span>(outdir, <span class="hljs-string">'HS3_%s*.nc'</span> % bname[<span class="hljs-number">0</span>:<span class="hljs-number">7</span>]))
+        fout = <span class="hljs-string">''</span> <span class="hljs-keyword">if</span> len(fout) == <span class="hljs-number">0</span> <span class="hljs-keyword">else</span> fout[<span class="hljs-number">0</span>]
+        check_output(fout)
+        cmd = [<span class="hljs-string">'ncatted -h -a Conventions,global,c,c,"CF-1.6" %s'</span> % fout]
+        <span class="hljs-keyword">out</span> = subprocess.check_output(cmd, shell=<span class="hljs-keyword">True</span>)
+        <span class="hljs-keyword">log</span>.<span class="hljs-keyword">debug</span>(<span class="hljs-keyword">out</span>)
+
+        # <span class="hljs-keyword">write</span> metadata output
+        write_metadata(fout, dataname=dataname, dataid=dataid, outdir=outdir)
+
+    # remove the <span class="hljs-keyword">generated</span> metadata files
+    <span class="hljs-keyword">for</span> f <span class="hljs-keyword">in</span> glob.glob(os.path.<span class="hljs-keyword">join</span>(outdir, <span class="hljs-string">'*.met'</span>)):
+        os.remove(f)
+
+<span class="hljs-keyword">if</span> __name__ == "__main__":
+    indir = sys.argv[<span class="hljs-number">1</span>]
+    outdir = sys.argv[<span class="hljs-number">2</span>]
+    process(indir, outdir)
+
+</code></pre>
+<p>After setting up logging the code has a for-loop for processing any matching hdf5 in the input directory:</p>
+<ol>
+<li>convert to NetCDF with a C script</li>
+<li>validate the output (in this case just check for existence)</li>
+<li>use 'ncatted' to update the resulting file to be CF-compliant</li>
+<li>write out metadata generated for this file</li>
+</ol>
+<h2><a class="anchor" aria-hidden="true" id="process-testing"></a><a href="#process-testing" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Process Testing</h2>
+<p>It is important to have tests for data processing, however in many cases datafiles can be large so it is not practical to store the test data in the repository. Instead, test data is currrently stored on AWS S3, and can be retrieved using the AWS CLI.</p>
+<pre><code class="hljs">$ aws s3 sync s3://cumulus-ghrc-logs/sample-data/collection-name data
+</code></pre>
+<p>Where collection-name is the name of the data collection, such as 'avaps', or 'cpl'.  For example, an abridged version of the data for CPL includes:</p>
+<pre><code class="hljs">├── cpl
+│   ├── <span class="hljs-selector-tag">input</span>
+│   │   ├── HS3_CPL_ATB_12203a_20120906<span class="hljs-selector-class">.hdf5</span>
+│   │   ├── HS3_CPL_OP_12203a_20120906<span class="hljs-selector-class">.hdf5</span>
+│   └── output
+│       ├── HS3_CPL_ATB_12203a_20120906<span class="hljs-selector-class">.nc</span>
+│       ├── HS3_CPL_ATB_12203a_20120906<span class="hljs-selector-class">.nc</span><span class="hljs-selector-class">.meta</span><span class="hljs-selector-class">.xml</span>
+│       ├── HS3_CPL_OP_12203a_20120906<span class="hljs-selector-class">.nc</span>
+│       ├── HS3_CPL_OP_12203a_20120906<span class="hljs-selector-class">.nc</span><span class="hljs-selector-class">.meta</span><span class="hljs-selector-class">.xml</span>
+</code></pre>
+<p>Contained in the input directory are all possible sets of data files, while the output directory is the expected result of processing. In this case the hdf5 files are converted to NetCDF files and XML metadata files are generated.</p>
+<p>The docker image for a process can be used on the retrieved test data. First create a test-output directory in the newly created data directory.</p>
+<pre><code class="hljs">$ mkdir data/test-output
+</code></pre>
+<p>Then run the docker image using docker-compose.</p>
+<pre><code class="hljs">$ docker-compose run test
+</code></pre>
+<p>This will process the data in the data/input directory and put the output into data/test-output. Repositories also include Python based tests which will validate this newly created output to the contents of data/output. Use Python's Nose tool to run the included tests.</p>
+<pre><code class="hljs">$ nosetests
+</code></pre>
+<p>If the data/test-output directory validated against the contents of data/output the tests will be successful, otherwise an error will be reported.</p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/v1.11.2/workflows/lambda"><span class="arrow-prev">← </span><span>Develop Lambda Functions</span></a><a class="docs-next button" href="/cumulus/docs/v1.11.2/workflows/workflow-configuration-how-to"><span>Workflow Configuration How To&#x27;s</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#using-docker">Using Docker</a><ul class="toc-headings"><li><a href="#the-docker-registry">The Docker Registry</a></li><li><a href="#source-control-and-versions">Source Control and Versions</a></li></ul></li><li><a href="#docker-images">Docker Images</a><ul class="toc-headings"><li><a href="#docker-base">docker-base</a></li><li><a href="#docker-data-example-docker-hs3-avaps">docker-data example: docker-hs3-avaps</a></li></ul></li><li><a href="#process-handler">Process Handler</a><ul class="toc-headings"><li><a href="#py-cumulus">Py-cumulus</a></li><li><a href="#example-process-handler">Example process handler</a></li></ul></li><li><a href="#process-testing">Process Testing</a></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>
