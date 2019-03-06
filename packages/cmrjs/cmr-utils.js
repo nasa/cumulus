@@ -107,7 +107,7 @@ async function publishECHO10XML2CMR(cmrFile, creds, systemBucket, stack) {
     filename: getS3UrlOfFile(cmrFile),
     conceptId,
     metadataFormat: 'echo10',
-    link: `${getUrl('search')}granules.json?concept_id=${conceptId}`
+    link: `${getUrl('search', null, process.env.CMR_ENVIRONMENT)}granules.json?concept_id=${conceptId}`
   };
 }
 
@@ -136,7 +136,7 @@ async function publishUMMGJSON2CMR(cmrPublishObject, creds, systemBucket, stack)
   return {
     granuleId,
     conceptId,
-    link: `${getUrl('search')}granules.json?concept_id=${conceptId}`
+    link: `${getUrl('search', null, process.env.CMR_ENVIRONMENT)}granules.json?concept_id=${conceptId}`
   };
 }
 
