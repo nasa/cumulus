@@ -16,9 +16,9 @@ const {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
-  const params = getFileBucketAndKey(req.params[0]);
+  const [bucket, key] = getFileBucketAndKey(req.params[0]);
 
-  const getObjectResponse = await getS3Object(params[0], params[1]);
+  const getObjectResponse = await getS3Object(bucket, key);
   res.set('Content-Type', getObjectResponse.ContentType);
   return res.send(getObjectResponse.Body.toString());
 }
