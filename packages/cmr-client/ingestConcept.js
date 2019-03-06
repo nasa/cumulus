@@ -15,7 +15,7 @@ const logDetails = {
 };
 
 /**
- * Posts a records of any kind (collection, granule, etc) to
+ * Posts a record of any kind (collection, granule, etc) to
  * CMR
  *
  * @param {string} type - the concept type. Choices are: collection, granule
