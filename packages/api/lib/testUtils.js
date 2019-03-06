@@ -202,8 +202,8 @@ function fakeExecutionFactory(status = 'completed', type = 'fakeWorkflow') {
  */
 function fakeUserFactory(params = {}) {
   const {
-    userName = randomString(),
-    password = randomString(),
+    userName = randomId('userName'),
+    password = randomId('password'),
     expires = Date.now() + (60 * 60 * 1000) // Default to 1 hour
   } = params;
 

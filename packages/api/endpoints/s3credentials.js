@@ -17,6 +17,7 @@ async function requestTemporaryCredentialsFromNgap(username) {
   const FunctionName = process.env.STSCredentialsLambda || 'gsfc-ngap-sh-s3-sts-get-keys';
   const Payload = JSON.stringify({
     accesstype: 'sameregion',
+    returntype: 'lowerCamel',
     duration: '3600', // one hour max allowed by AWS.
     rolesession: username, // <- shows up in access logs
     userid: username  // <- used by NGAP
