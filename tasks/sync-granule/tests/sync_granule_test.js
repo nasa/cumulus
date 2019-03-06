@@ -6,7 +6,7 @@ const errors = require('@cumulus/common/errors');
 const set = require('lodash.set');
 const { constructCollectionId } = require('@cumulus/common');
 const {
-  checksumS3Objects,
+  calculateS3ObjectChecksum,
   headObject,
   listS3ObjectsV2,
   parseS3Uri,
@@ -398,7 +398,7 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
 test.serial('download granule with bad checksum in file from HTTP endpoint throws', async (t) => {
   const granuleChecksumValue = 8675309;
 
-  // Give it a bogus checksumValue to prompt a failure in validateChecksumFile
+  // Give it a bogus checksumValue to prompt a failure in verifyFile
   t.context.event.input.granules[0].files[0].checksumValue = granuleChecksumValue;
   t.context.event.config.provider = {
     id: 'MODAPS',
@@ -413,7 +413,9 @@ test.serial('download granule with bad checksum in file from HTTP endpoint throw
   // Stage the files to be downloaded
   const granuleFilename = t.context.event.input.granules[0].files[0].name;
   const granuleChecksumType = t.context.event.input.granules[0].files[0].checksumType;
-  const errorMessage = `Invalid checksum for ${granuleFilename} with type ${granuleChecksumType} and value ${granuleChecksumValue}`;
+  const config = t.context.event.config;
+  const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
+  const errorMessage = `Invalid checksum for S3 object s3://${t.context.internalBucketName}/${keypath}/${granuleFilename} with type ${granuleChecksumType} and expected sum ${granuleChecksumValue}`;
 
   await t.throws(syncGranule(t.context.event), errorMessage);
 });
@@ -603,11 +605,11 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     }).promise();
 
     t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
-    t.context.event.input.granules[0].files[0].checksumValue = await checksumS3Objects(
-      t.context.event.input.granules[0].files[0].checksumType,
-      t.context.event.config.provider.host,
+    t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
+      algorithm: t.context.event.input.granules[0].files[0].checksumType,
+      bucket: t.context.event.config.provider.host,
       key
-    );
+    });
 
     output = await syncGranule(t.context.event);
     await validateOutput(t, output);
@@ -637,11 +639,11 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     }).promise();
 
     t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
-    t.context.event.input.granules[0].files[0].checksumValue = await checksumS3Objects(
-      t.context.event.input.granules[0].files[0].checksumType,
-      t.context.event.config.provider.host,
+    t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
+      algorithm: t.context.event.input.granules[0].files[0].checksumType,
+      bucket: t.context.event.config.provider.host,
       key
-    );
+    });
 
     output = await syncGranule(t.context.event);
     await validateOutput(t, output);
@@ -690,11 +692,11 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
     }).promise();
 
     t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
-    t.context.event.input.granules[0].files[0].checksumValue = await checksumS3Objects(
-      t.context.event.input.granules[0].files[0].checksumType,
-      t.context.event.config.provider.host,
+    t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
+      algorithm: t.context.event.input.granules[0].files[0].checksumType,
+      bucket: t.context.event.config.provider.host,
       key
-    );
+    });
 
     output = await syncGranule(t.context.event);
     await validateOutput(t, output);
@@ -713,9 +715,16 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
   }
 });
 
-async function granuleFilesOverwrittenTest(t, duplicateHandling, forceDuplicateOverwrite) {
+function setupDuplicateHandlingConfig(t, duplicateHandling, forceDuplicateOverwrite) {
   t.context.event.config.duplicateHandling = duplicateHandling;
   set(t.context.event, 'cumulus_config.cumulus_context.forceDuplicateOverwrite', forceDuplicateOverwrite);
+}
+
+function setupDuplicateHandlingCollection(t, duplicateHandling) {
+  set(t.context.event, 'config.collection.duplicateHandling', duplicateHandling);
+}
+
+async function granuleFilesOverwrittenTest(t) {
   await prepareS3DownloadEvent(t);
 
   const granuleFileName = t.context.event.input.granules[0].files[0].name;
@@ -739,11 +748,11 @@ async function granuleFilesOverwrittenTest(t, duplicateHandling, forceDuplicateO
     }).promise();
 
     t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
-    t.context.event.input.granules[0].files[0].checksumValue = await checksumS3Objects(
-      t.context.event.input.granules[0].files[0].checksumType,
-      t.context.event.config.provider.host,
+    t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
+      algorithm: t.context.event.input.granules[0].files[0].checksumType,
+      bucket: t.context.event.config.provider.host,
       key
-    );
+    });
 
     output = await syncGranule(t.context.event);
     await validateOutput(t, output);
@@ -763,22 +772,31 @@ async function granuleFilesOverwrittenTest(t, duplicateHandling, forceDuplicateO
 }
 
 test.serial('when duplicateHandling is "replace", do overwrite files', async (t) => {
-  // duplicateHandling is taken from task config or collection config
-  await granuleFilesOverwrittenTest(t, 'replace');
+  setupDuplicateHandlingConfig(t, 'replace');
+  await granuleFilesOverwrittenTest(t);
 });
 
 test.serial('when duplicateHandling is "error" and forceDuplicateOverwrite is true, do overwrite files', async (t) => {
-  await granuleFilesOverwrittenTest(t, 'error', true);
+  setupDuplicateHandlingConfig(t, 'error', true);
+  await granuleFilesOverwrittenTest(t);
 });
 
 test.serial('when duplicateHandling is "skip" and forceDuplicateOverwrite is true, do overwrite files', async (t) => {
-  await granuleFilesOverwrittenTest(t, 'skip', true);
+  setupDuplicateHandlingConfig(t, 'skip', true);
+  await granuleFilesOverwrittenTest(t);
 });
 
 test.serial('when duplicateHandling is "version" and forceDuplicateOverwrite is true, do overwrite files', async (t) => {
-  await granuleFilesOverwrittenTest(t, 'version', true);
+  setupDuplicateHandlingConfig(t, 'version', true);
+  await granuleFilesOverwrittenTest(t);
 });
 
 test.serial('when duplicateHandling is "replace" and forceDuplicateOverwrite is true, do overwrite files', async (t) => {
-  await granuleFilesOverwrittenTest(t, 'replace', true);
+  setupDuplicateHandlingConfig(t, 'replace', true);
+  await granuleFilesOverwrittenTest(t);
+});
+
+test.serial('when duplicateHandling is specified as "replace" via collection, do overwrite files', async (t) => {
+  setupDuplicateHandlingCollection(t, 'replace');
+  await granuleFilesOverwrittenTest(t);
 });
