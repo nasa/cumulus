@@ -228,6 +228,10 @@ default:
   users:
     - username: testuser
 
+
+# ------------------------
+# CUMULUS team deployments
+# ------------------------
 cumulus-from-npm:
   stackName: test-npm-integration # used by the integration repo
   stackNameNoDash: TestNpmIntegration
@@ -244,6 +248,30 @@ cumulus-nightly:
   stackName: nightly # used by the nightly cron job
   stackNameNoDash: Nightly
 
+cumulus-sit:
+  stackName: cumulus-sit
+  stackNameNoDash: cumulusSit
+
+  buckets:
+    internal:
+      name: cumulus-sit-internal
+      type: internal
+    private:
+      name: cumulus-sit-private
+      type: private
+    protected:
+      name: cumulus-sit-protected
+      type: protected
+    public:
+      name: cumulus-sit-public
+      type: public
+    protected-2:
+      name: cumulus-sit-protected
+      type: protected
+
+# -------------------------------
+# CUMULUS individual deployments.
+# -------------------------------
 aj:
   stackName: aj-integration
   stackNameNoDash: AjIntegration
@@ -505,6 +533,27 @@ mhs:
 mhs3:
   stackName: mhs3
   stackNameNoDash: mhs3
+  buckets:
+    internal:
+      name: mhs3-internal
+      type: internal
+    private:
+      name: mhs3-private
+      type: private
+    protected:
+      name: mhs3-protected
+      type: protected
+    public:
+      name: mhs3-public
+      type: public
+    protected-2:
+      name: mhs3-protected-2
+      type: protected
+    shared:
+      name: cumulus-data-shared
+      type: shared
+  system_bucket: mhs3-internal
+
 
 jk:
   stackName: jk
@@ -525,24 +574,3 @@ mboyd-int:
 pq:
   stackName: pq
   stackNameNoDash: pq
-
-cumulus-sit:
-  stackName: cumulus-sit
-  stackNameNoDash: cumulusSit
-
-  buckets:
-    internal:
-      name: cumulus-sit-internal
-      type: internal
-    private:
-      name: cumulus-sit-private
-      type: private
-    protected:
-      name: cumulus-sit-protected
-      type: protected
-    public:
-      name: cumulus-sit-public
-      type: public
-    protected-2:
-      name: cumulus-sit-protected
-      type: protected
