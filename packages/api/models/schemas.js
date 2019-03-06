@@ -190,14 +190,18 @@ module.exports.file = {
     'bucket',
     'key',
     'createdAt',
-    'updatedAt'
+    'updatedAt',
+    'fileType'
   ],
   properties: {
     granuleId: { type: 'string' },
     bucket: { type: 'string' },
     key: { type: 'string' },
     createdAt: { type: 'integer' },
-    updatedAt: { type: 'integer' }
+    updatedAt: { type: 'integer' },
+    fileType: { 
+      type: 'string', 
+      enum: ['data', 'metadata', 'qa', 'browse'] }
   }
 };
 
