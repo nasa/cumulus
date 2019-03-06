@@ -301,6 +301,23 @@ mboyd-test:
   prefix: mboyd-test
   stackName: mboyd-test-iam
 
+  # buckets:
+  #   internal:
+  #     name: mboyd-test-internal
+  #     type: internal
+  #   private:
+  #     name: mboyd-test-private
+  #     type: private
+  #   protected:
+  #     name: mboyd-test-protected
+  #     type: protected
+  #   public:
+  #     name: mboyd-test-public
+  #     type: public
+  #   protected-2:
+  #     name: mboyd-test-protected-2
+  #     type: protected
+
 mboyd-int:
   prefix: mboyd-int
   stackName: mboyd-int-iam

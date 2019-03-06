@@ -188,7 +188,7 @@ Resources:
       MaxCapacity: 10
     {{/if}}
       ResourceId:
-        Fn::Sub: table/{{../../stackName}}-{{@key}}
+        Fn::Sub: table/{{../../prefix}}-{{@key}}
       RoleARN: {{../../this.iams.scalingRoleArn}}
       ScalableDimension: "dynamodb:table:ReadCapacityUnits"
       ServiceNamespace: dynamodb
@@ -221,7 +221,7 @@ Resources:
       MaxCapacity: 2
     {{/if}}
       ResourceId:
-        Fn::Sub: table/{{../../stackName}}-{{@key}}
+        Fn::Sub: table/{{../../prefix}}-{{@key}}
       RoleARN: {{../../this.iams.scalingRoleArn}}
       ScalableDimension: "dynamodb:table:WriteCapacityUnits"
       ServiceNamespace: dynamodb
@@ -273,7 +273,7 @@ Resources:
   {{@key}}Sns:
     Type: "AWS::SNS::Topic"
     Properties:
-      DisplayName: {{../stackName}}-{{@key}}
+      DisplayName: {{../prefix}}-{{@key}}
       Subscription:
       {{#each this.subscriptions}}
         {{# if this.endpoint.function}}
@@ -324,7 +324,7 @@ Resources:
   {{name}}Activity:
     Type: AWS::StepFunctions::Activity
     Properties:
-      Name: {{../stackName}}-{{name}}-Activity
+      Name: {{../prefix}}-{{name}}-Activity
 {{/each}}
 
 {{#each stepFunctions}}
@@ -343,7 +343,7 @@ Resources:
                 - WorkflowLambdaVersionsNestedStack
                 - Outputs.{{@key}}LambdaAliasOutput
             {{/each}}
-            stackName: {{../stackName}}
+            stackName: {{../prefix}}
     {{/ifEquals}}
     {{#ifNotEquals ../useWorkflowLambdaVersions true}}
         Fn::Sub: |
@@ -363,7 +363,7 @@ Resources:
   {{es.name}}Domain:
     Type: "AWS::Elasticsearch::Domain"
     Properties:
-      DomainName: {{stackName}}-{{es.name}}
+      DomainName: {{prefix}}-{{es.name}}
       ElasticsearchVersion: {{# if version}}{{es.version}}{{ else }}5.3{{/if}}
       ElasticsearchClusterConfig:
         InstanceCount: {{# if instanceCount}}{{es.instanceCount}}{{ else }}'1'{{/if}}
@@ -384,13 +384,13 @@ Resources:
               AWS: {{iams.lambdaProcessingRoleArn}}
             Action: "es:*"
             Resource:
-              - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{es.name}}/*"
+              - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{prefix}}-{{es.name}}/*"
           - Effect: "Allow"
             Principal:
               AWS: {{iams.lambdaApiGatewayRoleArn}}
             Action: "es:*"
             Resource:
-              - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{es.name}}/*"
+              - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{prefix}}-{{es.name}}/*"
 
 
   #################################################
@@ -405,7 +405,7 @@ Resources:
   {{@key}}SQS:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: {{../stackName}}-{{@key}}
+      QueueName: {{../prefix}}-{{@key}}
       ReceiveMessageWaitTimeSeconds: 20
     {{#if this.retry}}
       RedrivePolicy:
@@ -421,7 +421,7 @@ Resources:
   {{@key}}FailedSQS:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: {{../stackName}}-{{@key}}-failed
+      QueueName: {{../prefix}}-{{@key}}-failed
 
 {{/if}}
 
@@ -542,7 +542,7 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: {{this.read}}
         WriteCapacityUnits: {{this.write}}
-      TableName: {{../stackName}}-{{@key}}
+      TableName: {{../prefix}}-{{@key}}
       StreamSpecification:
         StreamViewType: "NEW_AND_OLD_IMAGES"
     {{#if this.GlobalSecondaryIndexes}}
@@ -656,7 +656,7 @@ Resources:
   {{name}}RestApi:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: {{../stackName}}-{{name}}
+      Name: {{../prefix}}-{{name}}
 {{/each}}
 
   #################################################
@@ -673,10 +673,10 @@ Resources:
       Code:
         S3Bucket: {{this.bucket}}
         S3Key: {{this.remote}}
-      FunctionName: {{../stackName}}-{{@key}}
+      FunctionName: {{../prefix}}-{{@key}}
       Environment:
         Variables:
-          stackName: {{../stackName}}
+          stackName: {{../prefix}}
         {{#if this.useElasticSearch }}
           ES_HOST:
             Fn::GetAtt:
@@ -742,7 +742,7 @@ Resources:
     {{/if}}
       Tags:
         - Key: Project
-          Value: {{../stackName}}
+          Value: {{../prefix}}
 
   {{# if this.launchInVpc }}
     {{# if ../vpc }}
@@ -781,13 +781,13 @@ Resources:
         Fn::GetAtt:
           - log2elasticsearchLambdaFunction
           - Arn
-      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
+      LogGroupName: '/aws/lambda/{{../prefix}}-{{@key}}'
       FilterPattern: ""
 
   {{@key}}LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
+      LogGroupName: '/aws/lambda/{{../prefix}}-{{@key}}'
       RetentionInDays: 30
 {{/if}}
 {{/each}}
@@ -814,10 +814,10 @@ Resources:
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security Group for ECS containter instances of {{stackName}}
+      GroupDescription: Security Group for ECS containter instances of {{prefix}}
       Tags:
         - Key: Name
-          Value: "{{stackName}}"
+          Value: "{{prefix}}"
       VpcId: {{vpc.vpcId}}
 
   {{#if ecs.ssh}}
@@ -992,7 +992,7 @@ Resources:
       DesiredCapacity: {{ ecs.desiredInstances }}
       Tags:
       - Key: Name
-        Value: "{{stackName}}-cumulus-ecs"
+        Value: "{{prefix}}-cumulus-ecs"
         PropagateAtLaunch: true
 
 {{#each ecs.services}}
@@ -1076,7 +1076,7 @@ Resources:
   {{@key}}EcsLogs:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+      LogGroupName: {{../prefix}}-{{@key}}EcsLogs
 
   {{@key}}EcsLogSubscription:
     Type: AWS::Logs::SubscriptionFilter
@@ -1088,7 +1088,7 @@ Resources:
         Fn::GetAtt:
           - log2elasticsearchLambdaFunction
           - Arn
-      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+      LogGroupName: {{../prefix}}-{{@key}}EcsLogs
       FilterPattern: ""
 
   {{@key}}ECSService:
@@ -1188,7 +1188,7 @@ Resources:
   {{@key}}EcsLogs:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+      LogGroupName: {{../prefix}}-{{@key}}EcsLogs
 
   {{@key}}EcsLogSubscription:
     Type: AWS::Logs::SubscriptionFilter
@@ -1200,7 +1200,7 @@ Resources:
         Fn::GetAtt:
           - log2elasticsearchLambdaFunction
           - Arn
-      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+      LogGroupName: {{../prefix}}-{{@key}}EcsLogs
       FilterPattern: ""
 {{/each}}
 {{/if}}
@@ -1281,5 +1281,5 @@ Outputs:
       Ref: SecurityGroup
     Export:
       Name:
-        Fn::Sub: "{{stackName}}-EcsSecurityGroup"
+        Fn::Sub: "{{prefix}}-EcsSecurityGroup"
 {{/if}}
