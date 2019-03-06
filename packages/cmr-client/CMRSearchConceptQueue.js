@@ -11,13 +11,13 @@ const searchConcept = require('./searchConcept');
  * @example
  * const { CMRSearchConceptQueue } = require('@cumulus/cmr-client');
  *
- * const cmrSearchConceptQueue = new CMRSearchConceptQueue(
- *   'my-provider',
- *   'my-clientId',
- *   'granule',
- *   {},
- *   'json'
- * );
+ * const cmrSearchConceptQueue = new CMRSearchConceptQueue({
+ *   provider: 'my-provider',
+ *   clientId: 'my-clientId',
+ *   type: 'granule',
+ *   searchParams: {},
+ *   format: 'json'
+ * });
  */
 class CMRSearchConceptQueue {
   /**

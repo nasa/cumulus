@@ -55,7 +55,7 @@ The constructor for the CMR class
 ```js
 const { CMR } = require('@cumulus/cmr-client');
 
-const cmrClient = new CMR('my-provider', 'my-clientId', 'my-username', 'my-password');
+const cmrClient = new CMR({ provider: 'my-provider', clientId: 'my-clientId', username: 'my-username', password: 'my-password' });
 ```
 <a name="CMR+getToken"></a>
 
@@ -198,13 +198,13 @@ The constructor for the CMRSearchConceptQueue class
 ```js
 const { CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 
-const cmrSearchConceptQueue = new CMRSearchConceptQueue(
-  'my-provider',
-  'my-clientId',
-  'granule',
-  {},
-  'json'
-);
+const cmrSearchConceptQueue = new CMRSearchConceptQueue({
+  provider: 'my-provider',
+  clientId: 'my-clientId',
+  type: 'granule',
+  searchParams: {},
+  format: 'json'
+});
 ```
 <a name="CMRSearchConceptQueue+peek"></a>
 
