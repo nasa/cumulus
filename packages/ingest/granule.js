@@ -1,6 +1,5 @@
 'use strict';
 
-const crypto = require('crypto');
 const fs = require('fs-extra');
 const cloneDeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
@@ -17,10 +16,10 @@ const {
   CollectionConfigStore,
   constructCollectionId,
   log,
-  errors,
-  file: { getFileChecksumFromStream }
+  errors
 } = require('@cumulus/common');
 const { buildURL } = require('@cumulus/common/URLUtils');
+const { deprecate } = require('@cumulus/common/util');
 
 const { sftpMixin } = require('./sftp');
 const { ftpMixin } = require('./ftp');
@@ -182,6 +181,7 @@ class Granule {
     this.username = this.provider.username;
     this.password = this.provider.password;
     this.checksumFiles = {};
+    this.supportedChecksumFileTypes = ['md5', 'cksum', 'sha1', 'sha256'];
 
     this.forceDownload = forceDownload;
 
@@ -200,7 +200,7 @@ class Granule {
    */
   async ingest(granule, bucket) {
     // for each granule file
-    // download / verify checksum / upload
+    // download / verify integrity / upload
 
     const stackName = process.env.stackName;
     let dataType = granule.dataType;
@@ -322,19 +322,23 @@ class Granule {
   }
 
   /**
-   * Filter out md5 checksum files and put them in `this.checksumFiles` object.
+   * Filter out checksum files and put them in `this.checksumFiles` object.
    * To be used with `Array.prototype.filter`.
    *
    * @param {Object} file - file object from granule.files
-   * @returns {boolean} depending on if file was an md5 checksum or not
+   * @returns {boolean} - whether file was a supported checksum or not
    */
   filterChecksumFiles(file) {
-    if (file.name.indexOf('.md5') > 0) {
-      this.checksumFiles[file.name.replace('.md5', '')] = file;
-      return false;
-    }
+    let unsupported = true;
+    this.supportedChecksumFileTypes.forEach((type) => {
+      const ext = `.${type}`;
+      if (file.name.indexOf(ext) > 0) {
+        this.checksumFiles[file.name.replace(ext, '')] = file;
+        unsupported = false;
+      }
+    });
 
-    return true;
+    return unsupported;
   }
 
   /**
@@ -350,46 +354,34 @@ class Granule {
    * @memberof Granule
    */
   async validateChecksum(file, bucket, key, options = {}) {
-    const [type, value] = await this.getChecksumFromFile(file);
+    deprecate('@cumulus/ingest/Granule.validateChecksum', '1.11.2', '@cumulus/ingest/Granule.verifyFile');
+    return this.verifyFile(file, bucket, key, options);
+  }
 
+  /**
+   * Verify a file's integrity using its checksum and throw an exception if it's invalid
+   *
+   * @param {Object} file - the file object to be checked
+   * @param {string} bucket - s3 bucket name of the file
+   * @param {string} key - s3 key of the file
+   * @param {Object} [options={}] - options for the this._hash method
+   * @returns {Array<string>} returns array where first item is the checksum algorithm,
+   * and the second item is the value of the checksum.
+   * Throws an error if the checksum is invalid.
+   * @memberof Granule
+   */
+  async verifyFile(file, bucket, key, options = {}) {
+    const [type, value] = await this.retrieveSuppliedFileChecksumInformation(file);
     if (!type || !value) return [null, null];
 
-    const sum = await aws.checksumS3Objects(type, bucket, key, options);
-
-    if (value !== sum) {
-      const message = `Invalid checksum for ${file.name} with type ${file.checksumType} and value ${file.checksumValue}`;
-      throw new errors.InvalidChecksum(message);
-    }
-    return [type, value];
-  }
-
-  /**
-   * Get cksum checksum value of file
-   *
-   * @param {string} filepath - filepath of file to checksum
-   * @returns {Promise<number>} checksum value calculated from file
-   */
-  async _cksum(filepath) {
-    return getFileChecksumFromStream(fs.createReadStream(filepath));
-  }
-
-  /**
-  * Get hash of file
-  *
-  * @param {string} algorithm - algorithm to use for hash,
-  * any algorithm accepted by node's `crypto.createHash`
-  * https://nodejs.org/api/crypto.html#crypto_crypto_createhash_algorithm_options
-  * @param {string} filepath - filepath of file to checksum
-  * @returns {Promise} checksum value calculated from file
-  **/
-  async _hash(algorithm, filepath) {
-    return new Promise((resolve, reject) => {
-      const hash = crypto.createHash(algorithm);
-      const fileStream = fs.createReadStream(filepath);
-      fileStream.on('error', reject);
-      fileStream.on('data', (chunk) => hash.update(chunk));
-      fileStream.on('end', () => resolve(hash.digest('hex')));
+    await aws.validateS3ObjectChecksum({
+      algorithm: type,
+      bucket,
+      key,
+      expectedSum: value,
+      options
     });
+    return [type, value];
   }
 
   /**
@@ -412,16 +404,18 @@ class Granule {
   }
 
   /**
-   * Get a checksum from a file
+   * Retrieve supplied checksum from a file's specification or an accompanying checksum file.
    *
    * @param {Object} file - file object
    * @returns {Array} returns array where first item is the checksum algorithm,
    * and the second item is the value of the checksum
    */
-  async getChecksumFromFile(file) {
+  async retrieveSuppliedFileChecksumInformation(file) {
+    // try to get filespec checksum data
     if (file.checksumType && file.checksumValue) {
       return [file.checksumType, file.checksumValue];
     }
+    // read checksum from checksum file
     if (this.checksumFiles[file.name]) {
       const checksumInfo = this.checksumFiles[file.name];
 
@@ -440,8 +434,16 @@ class Granule {
         await fs.remove(downloadDir);
       }
 
-      // assuming the type is md5
-      return ['md5', checksumValue];
+      // default type to md5
+      let checksumType = 'md5';
+      // return type based on filename
+      this.supportedChecksumFileTypes.forEach((type) => {
+        if (checksumInfo.name.indexOf(type) > 0) {
+          checksumType = type;
+        }
+      });
+
+      return [checksumType, checksumValue];
     }
 
     // No checksum found
@@ -511,17 +513,17 @@ class Granule {
     log.debug(`await sync file to s3 ${fileRemotePath}, ${bucket}, ${stagedFileKey}`);
     await this.sync(fileRemotePath, bucket, stagedFileKey);
 
-    // Validate the checksum
-    log.debug(`await validateChecksum ${JSON.stringify(file)}, ${bucket}, ${stagedFileKey}`);
-    const [checksumType, checksumValue] = await this.validateChecksum(file, bucket, stagedFileKey);
+    // Verify file integrity
+    log.debug(`await verifyFile ${JSON.stringify(file)}, ${bucket}, ${stagedFileKey}`);
+    const [checksumType, checksumValue] = await this.verifyFile(file, bucket, stagedFileKey);
 
     // compare the checksum of the existing file and new file, and handle them accordingly
     if (renamingFile) {
       const existingFileSum = await
-      aws.checksumS3Objects(checksumType || 'CKSUM', bucket, destinationKey);
+      aws.calculateS3ObjectChecksum({ algorithm: (checksumType || 'CKSUM'), bucket, key: destinationKey });
 
       const stagedFileSum = checksumValue
-      || await aws.checksumS3Objects('CKSUM', bucket, stagedFileKey);
+      || await aws.calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket, key: stagedFileKey });
 
       // if the checksum of the existing file is the same as the new one, keep the existing file,
       // else rename the existing file, and both files are part of the granule.
