@@ -266,7 +266,13 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async searchCollections(searchParams, format = 'json') {
-    return searchConcept('collections', searchParams, [], { 'Client-Id': this.clientId }, format);
+    return searchConcept({
+      type: 'collections',
+      searchParams,
+      previousResults: [],
+      headers: { 'Client-Id': this.clientId },
+      format
+    });
   }
 
   /**
@@ -278,7 +284,13 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async searchGranules(searchParams, format = 'json') {
-    return searchConcept('granules', searchParams, [], { 'Client-Id': this.clientId }, format);
+    return searchConcept({
+      type: 'granules',
+      searchParams,
+      previousResults: [],
+      headers: { 'Client-Id': this.clientId },
+      format
+    });
   }
 }
 module.exports = CMR;

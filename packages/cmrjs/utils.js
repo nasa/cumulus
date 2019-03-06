@@ -86,7 +86,7 @@ async function validateUMMG(ummMetadata, identifier, provider) {
   let result;
 
   try {
-    result = await got.post(`${getUrl('validate', provider)}granule/${identifier}`, {
+    result = await got.post(`${getUrl('validate', provider, process.env.CMR_ENVIRONMENT)}granule/${identifier}`, {
       json: true,
       body: ummMetadata,
       headers: {
@@ -155,7 +155,7 @@ async function updateToken(cmrProvider, clientId, username, password) {
   let response;
 
   try {
-    response = await got.post(getUrl('token'), {
+    response = await got.post(getUrl('token', null, process.env.CMR_ENVIRONMENT), {
       json: true,
       body: {
         token: {

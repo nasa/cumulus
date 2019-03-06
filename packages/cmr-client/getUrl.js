@@ -20,19 +20,17 @@ function hostId(env) {
  * value for CMR_ENVIRONMENT environment variable. Defaults
  * to the uat cmr
  *
- * @param {Object} environment - process env like object
- * @param {string} environment.CMR_ENVIRONMENT - [optional] CMR environment to
+ * @param {string} cmrEnvironment - [optional] CMR environment to
  *              use valid arguments are ['OPS', 'SIT', 'UAT'], anything that is
  *              not 'OPS' or 'SIT' will be interpreted as 'UAT'
- * @param {string} environment.CMR_HOST [optional] explicit host to return, if
- *              this has a value, it overrides any values for CMR_ENVIRONMENT
+ * @param {string} cmrHost [optional] explicit host to return, if
+ *              this has a value, it overrides any values for cmrEnvironment
  * @returns {string} the cmr host address
  */
-function getHost(environment = process.env) {
-  const env = environment.CMR_ENVIRONMENT;
-  if (environment.CMR_HOST) return environment.CMR_HOST;
+function getHost(cmrEnvironment, cmrHost) {
+  if (cmrHost) return cmrHost;
 
-  const host = ['cmr', hostId(env), 'earthdata.nasa.gov'].filter((d) => d).join('.');
+  const host = ['cmr', hostId(cmrEnvironment), 'earthdata.nasa.gov'].filter((d) => d).join('.');
   return host;
 }
 
@@ -42,20 +40,22 @@ function getHost(environment = process.env) {
  *
  * @param {string} type - the type of the service, e.g. token, search
  * @param {string} cmrProvider - the CMR provider id
+ * @param {string} cmrEnvironment - CMR environment to
+ *              use valid arguments are ['OPS', 'SIT', 'UAT']
+ * @param {string} cmrHost - CMR host
  * @returns {string} the cmr url
  */
-function getUrl(type, cmrProvider) {
+function getUrl(type, cmrProvider, cmrEnvironment, cmrHost) {
   let url;
-  const host = getHost();
-  const env = process.env.CMR_ENVIRONMENT;
+  const host = getHost(cmrEnvironment, cmrHost);
   const provider = cmrProvider;
 
   switch (type) {
   case 'token':
-    if (env === 'OPS') {
+    if (cmrEnvironment === 'OPS') {
       url = 'https://api.echo.nasa.gov/echo-rest/tokens/';
     }
-    else if (env === 'SIT') {
+    else if (cmrEnvironment === 'SIT') {
       url = 'https://testbed.echo.nasa.gov/echo-rest/tokens/';
     }
     else {

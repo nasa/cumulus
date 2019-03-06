@@ -15,7 +15,12 @@ test.serial('searchConcept request includes CMR client id', async (t) => {
     return { body: { feed: { entry: [] } }, headers: { 'cmr-hits': 0 } };
   });
 
-  await searchConcept('granule', {}, [], { 'Client-Id': clientId });
+  await searchConcept({
+    type: 'granule',
+    searchParams: {},
+    previousResults: [],
+    headers: { 'Client-Id': clientId }
+  });
   t.is(request.headers['Client-Id'], clientId);
 
   stub.restore();
