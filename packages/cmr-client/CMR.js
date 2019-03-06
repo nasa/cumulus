@@ -33,7 +33,7 @@ function ummVersion(umm) {
 
 /**
  * Posts a given xml string to the validate endpoint of CMR
- * and promises true of valid.
+ * and promises true if valid.
  *
  * @param {string} ummMetadata - the UMM object
  * @param {string} identifier - the document identifier
@@ -122,7 +122,7 @@ async function updateToken(cmrProvider, clientId, username, password) {
  * @example
  * const { CMR } = require('@cumulus/cmr-client');
  *
- * const cmrClient = new CMR('my-provider', 'my-clientId', 'my-username', 'my-password');
+ * const cmrClient = new CMR({ provider: 'my-provider', clientId: 'my-clientId', username: 'my-username', password: 'my-password' });
  */
 class CMR {
   /**
