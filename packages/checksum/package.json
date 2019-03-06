@@ -1,0 +1,40 @@
+{
+  "name": "@cumulus/checksum",
+  "version": "1.11.2-alpha3",
+  "description": "Cumulus checksum utilities",
+  "engines": {
+    "node": ">=8.10.0"
+  },
+  "scripts": {
+    "test": "ava",
+    "test-coverage": "nyc ava",
+    "debug": "NODE_ENV=test node --inspect-brk node_modules/ava/profile.js --serial tests/*.js"
+  },
+  "ava": {
+    "files": "tests/**/*.js"
+  },
+  "nyc": {
+    "exclude": [
+      "tests"
+    ]
+  },
+  "keywords": [
+    "CUMULUS"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "cksum": "^1.3.0"
+  },
+  "devDependencies": {
+    "ava": "^0.25.0",
+    "nyc": "^13.3.0"
+  }
+}
