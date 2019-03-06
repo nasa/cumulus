@@ -6,9 +6,7 @@ const got = require('got');
 
 const { models: { AccessToken } } = require('@cumulus/api');
 const { serveDistributionApi } = require('@cumulus/api/bin/serve');
-const {
-  file: { getFileChecksumFromStream }
-} = require('@cumulus/common');
+const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
   distributionApi: { getDistributionApiFileStream, getDistributionFileUrl },
   EarthdataLogin: { getEarthdataAccessToken }
@@ -71,7 +69,8 @@ describe('Distribution API', () => {
         bucket: config.bucket,
         key: fileKey
       });
-      fileChecksum = await getFileChecksumFromStream(
+      fileChecksum = await generateChecksumFromStream(
+        'cksum',
         fs.createReadStream(require.resolve(s3Data[0]))
       );
     });
@@ -101,7 +100,7 @@ describe('Distribution API', () => {
 
       // Compare checksum of downloaded file with expected checksum.
       const fileStream = await getDistributionApiFileStream(fileUrl, accessToken);
-      const downloadChecksum = await getFileChecksumFromStream(fileStream);
+      const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
       expect(downloadChecksum).toEqual(fileChecksum);
     });
   });
