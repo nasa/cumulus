@@ -8,7 +8,7 @@ const { omit } = require('@cumulus/common/util');
 const cmrUtils = rewire('../../cmr-utils');
 
 const constructOnlineAccessUrls = cmrUtils.__get__('constructOnlineAccessUrls');
-const constructResourceUrls = cmrUtils.__get__('constructResourceUrls');
+const constructOnlineResourceUrls = cmrUtils.__get__('constructOnlineResourceUrls');
 const constructRelatedUrls = cmrUtils.__get__('constructRelatedUrls');
 const getS3CredentialsObject = cmrUtils.__get__('getS3CredentialsObject');
 
@@ -137,9 +137,9 @@ test('returns an array of correct url objects given a list of moved files.', (t)
   t.deepEqual(actual.sort(sortByURL), expected.sort(sortByURL));
 });
 
-test('constructResourceUrls returns expected array of echo10xml resource urls', (t) => {
-  const expected = [omit(s3CredentialsEndpointObject, 'Description')];
-  const actual = constructResourceUrls(endpoint);
+test('constructOnlineResourceUrls returns expected array of echo10xml resource urls', (t) => {
+  const expected = [omit(s3CredentialsEndpointObject, 'URLDescription')];
+  const actual = constructOnlineResourceUrls(endpoint);
 
   t.deepEqual(expected, actual);
 });
