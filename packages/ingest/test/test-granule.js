@@ -95,13 +95,13 @@ selectorSyncTypes.forEach((item) => {
 });
 
 /**
-* test the granule.validateChecksum() method
+* test the granule.verifyFile() method
 **/
 
 const sums = require('./fixtures/sums');
 
 Object.keys(sums).forEach((key) => {
-  test(`granule.validateChecksum ${key}`, async (t) => {
+  test(`granule.verifyFile ${key}`, async (t) => {
     const granule = new HttpGranule(
       ingestPayload.config.buckets,
       ingestPayload.config.collection,
@@ -116,8 +116,8 @@ Object.keys(sums).forEach((key) => {
 
     try {
       const file = { checksumType: key, checksumValue: sums[key] };
-      await granule.validateChecksum(file, t.context.internalBucket, key);
-      await granule.validateChecksum(key, t.context.internalBucket, key);
+      await granule.verifyFile(file, t.context.internalBucket, key);
+      await granule.verifyFile(key, t.context.internalBucket, key);
       t.pass();
     }
     catch (e) {
@@ -252,8 +252,7 @@ test("addUrlPathToFile adds the matching collection file config's url_path as th
 });
 
 test('moveGranuleFile moves a single file between s3 locations', async (t) => {
-  const Bucket = randomId('bucket');
-  await s3().createBucket({ Bucket }).promise();
+  const Bucket = t.context.internalBucket;
 
   const name = 'test.txt';
   const Key = `origin/${name}`;
@@ -273,22 +272,22 @@ test('moveGranuleFile moves a single file between s3 locations', async (t) => {
 });
 
 test('moveGranuleFile overwrites existing file by default', async (t) => {
-  const Bucket = randomId('bucket');
-  await s3().createBucket({ Bucket }).promise();
+  const sourceBucket = t.context.internalBucket;
+  const destBucket = t.context.destBucket;
 
   const name = 'test.txt';
   const Key = `origin/${name}`;
 
   // Pre-stage destination file
-  await s3PutObject({ Bucket: t.context.destBucket, Key, Body: 'initialBody' });
+  await s3PutObject({ Bucket: destBucket, Key, Body: 'initialBody' });
 
   // Stage source file
   const updatedBody = randomId('updatedBody');
-  const params = { Bucket, Key, Body: updatedBody };
+  const params = { Bucket: sourceBucket, Key, Body: updatedBody };
   await s3PutObject(params);
 
-  const source = { Bucket, Key };
-  const target = { Bucket: t.context.destBucket, Key };
+  const source = { Bucket: sourceBucket, Key };
+  const target = { Bucket: destBucket, Key };
 
   try {
     await moveGranuleFile(source, target);
@@ -297,23 +296,19 @@ test('moveGranuleFile overwrites existing file by default', async (t) => {
     t.fail();
   }
   finally {
-    const objects = await s3().listObjects({ Bucket: t.context.destBucket }).promise();
+    const objects = await s3().listObjects({ Bucket: destBucket }).promise();
     t.is(objects.Contents.length, 1);
 
     const item = objects.Contents[0];
     t.is(item.Key, Key);
 
     t.is(item.Size, updatedBody.length);
-
-    await recursivelyDeleteS3Bucket(Bucket);
   }
 });
 
 test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
-  const bucket = randomId('bucket');
-  const secondBucket = randomId('bucket2');
-  await s3().createBucket({ Bucket: bucket }).promise();
-  await s3().createBucket({ Bucket: secondBucket }).promise();
+  const bucket = t.context.internalBucket;
+  const secondBucket = t.context.destBucket;
 
   const filenames = [
     'test-one.txt',
@@ -374,10 +369,8 @@ test('moveGranuleFiles moves granule files between s3 locations', async (t) => {
 });
 
 test('moveGranuleFiles only moves granule files specified with regex', async (t) => {
-  const bucket = randomString();
-  const secondBucket = randomString();
-  await s3().createBucket({ Bucket: bucket }).promise();
-  await s3().createBucket({ Bucket: secondBucket }).promise();
+  const bucket = t.context.internalBucket;
+  const secondBucket = t.context.destBucket;
 
   const filenames = [
     'included-in-move.txt',
@@ -419,10 +412,8 @@ test('moveGranuleFiles only moves granule files specified with regex', async (t)
 
 
 test('moveGranuleFiles returns an updated list of files in their new locations.', async (t) => {
-  const bucket = randomId('bucket');
-  const secondBucket = randomId('bucket2');
-  await s3().createBucket({ Bucket: bucket }).promise();
-  await s3().createBucket({ Bucket: secondBucket }).promise();
+  const bucket = t.context.internalBucket;
+  const secondBucket = t.context.destBucket;
 
   const filenames = [
     'test-one.txt',
