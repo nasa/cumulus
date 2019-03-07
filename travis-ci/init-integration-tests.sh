@@ -8,7 +8,8 @@ if [ "$USE_NPM_PACKAGES" = "true" ]; then
   cd example
   npm ci
 else
-  ./bin/prepare
+  # ./bin/prepare
+  lerna exec npm run build
   cd example
 fi
 
