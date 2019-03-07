@@ -176,6 +176,7 @@ test('constructRelatedUrls returns expected array when called with file list', (
 
   const actual = constructRelatedUrls({
     files: movedFiles,
+    backendUrl: endpoint,
     distEndpoint: endpoint,
     buckets: t.context.buckets
   });
@@ -189,6 +190,7 @@ test('constructRelatedUrls returns expected array when called with an empty file
 
   const actual = constructRelatedUrls({
     files: movedFiles,
+    backendUrl: endpoint,
     distEndpoint: endpoint,
     buckets: t.context.buckets
   });

@@ -202,7 +202,12 @@ class Granule extends Manager {
 
     const updatedFiles = await moveGranuleFiles(g.files, destinations);
 
-    await reconcileCMRMetadata(g.granuleId, updatedFiles, distEndpoint, g.published);
+    await reconcileCMRMetadata({
+      granuleId: g.granuleId,
+      updatedFiles,
+      distEndpoint,
+      published: g.published
+    });
 
     return this.update(
       { granuleId: g.granuleId },

@@ -349,13 +349,13 @@ function constructOnlineAccessUrls({
 /**
  * Construct a list of ECHO10XML resource urls
  *
- * @param {string} distEndpoint - distribution endpoint
+ * @param {string} backendUrl - distribution endpoint
  * @param {string} s3CredsEndpoint - Optional endpoint for acquiring temporary s3 creds
  * @returns {Array<{URL: string, Description: string, Type: string}>}
  *   returns the list of online access url objects
  */
-function constructOnlineResourceUrls(distEndpoint, s3CredsEndpoint = 's3credentials') {
-  const credsUrl = urljoin(distEndpoint, s3CredsEndpoint);
+function constructOnlineResourceUrls(backendUrl, s3CredsEndpoint = 's3credentials') {
+  const credsUrl = urljoin(backendUrl, s3CredsEndpoint);
   const s3CredentialsObject = getS3CredentialsObject(credsUrl);
   const resourceUrls = [s3CredentialsObject];
 
@@ -367,6 +367,7 @@ function constructOnlineResourceUrls(distEndpoint, s3CredsEndpoint = 's3credenti
  *
  * @param {Object} params - input parameters
  * @param {Array<Object>} params.files - array of file objects
+ * @param {string} params.backendUrl - api backend url
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {BucketsConfig} params.buckets -  Class instance
  * @param {string} params.s3CredsEndpoint - Optional endpoint for acquiring temporary s3 creds
@@ -375,11 +376,12 @@ function constructOnlineResourceUrls(distEndpoint, s3CredsEndpoint = 's3credenti
  */
 function constructRelatedUrls({
   files,
+  backendUrl,
   distEndpoint,
   buckets,
   s3CredsEndpoint = 's3credentials'
 }) {
-  const credsUrl = urljoin(distEndpoint, s3CredsEndpoint);
+  const credsUrl = urljoin(backendUrl, s3CredsEndpoint);
   const s3CredentialsObject = getS3CredentialsObject(credsUrl);
 
   const getDataUrls = constructOnlineAccessUrls({
@@ -462,14 +464,27 @@ function mergeURLs(original, updated, removed = []) {
  * After files are moved, create new online access URLs and then update the S3
  * UMMG cmr.json file with this information.
  *
- * @param {Object} cmrFile cmr.json file whose contents will be updated.
- * @param {Array<Object>} files - array of moved file objects.
- * @param {string} distEndpoint - distribution endpoint form config.
- * @param {BucketsConfig} buckets - stack BucketConfig instance.
+ * @param {Object} params - parameter object
+ * @param {Object} params.cmrFile - cmr.json file whose contents will be updated.
+ * @param {Array<Object>} params.files - array of moved file objects.
+ * @param {string} params.backendUrl - backend api url
+ * @param {string} params.distEndpoint - distribution endpoint form config.
+ * @param {BucketsConfig} params.buckets - stack BucketConfig instance.
  * @returns {Promise} returns promised updated UMMG metadata object.
  */
-async function updateUMMGMetadata(cmrFile, files, distEndpoint, buckets) {
-  const newURLs = constructRelatedUrls({ files, distEndpoint, buckets });
+async function updateUMMGMetadata({
+  cmrFile,
+  files,
+  backendUrl,
+  distEndpoint,
+  buckets
+}) {
+  const newURLs = constructRelatedUrls({
+    files,
+    backendUrl,
+    distEndpoint,
+    buckets
+  });
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
   const filename = getS3UrlOfFile(cmrFile);
   const metadataObject = await metadataObjectFromCMRJSONFile(filename);
@@ -506,16 +521,24 @@ function getCreds() {
  * After files are moved, this function creates new online access URLs and then updates
  * the S3 ECHO10 CMR XML file with this information.
  *
- * @param {Object} cmrFile - cmr xml file object to be updated
- * @param {Array<Object>} files - array of file objects
- * @param {string} distEndpoint - distribution endpoint from config
- * @param {BucketsConfig} buckets - stack BucketConfig instance
+ * @param {Object} params - parameter object
+ * @param {Object} params.cmrFile - cmr xml file object to be updated
+ * @param {Array<Object>} params.files - array of file objects
+ * @param {string} params.backendUrl - backend api url
+ * @param {string} params.distEndpoint - distribution endpoint from config
+ * @param {BucketsConfig} params.buckets - stack BucketConfig instance
  * @returns {Promise} returns promised updated metadata object.
  */
-async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
+async function updateEcho10XMLMetadata({
+  cmrFile,
+  files,
+  backendUrl,
+  distEndpoint,
+  buckets
+}) {
   let newOnlineAccessURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets });
   newOnlineAccessURLs = newOnlineAccessURLs.map((urlObj) => omit(urlObj, ['Type', 'Description']));
-  const newResourceURLs = constructOnlineResourceUrls(distEndpoint);
+  const newResourceURLs = constructOnlineResourceUrls(backendUrl);
   const removedOnlineAccessURLs = onlineAccessURLsToRemove(files, buckets);
 
   // add/replace the OnlineAccessUrls
@@ -545,8 +568,13 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
     newResourceURLs
   );
 
-  _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedOnlineAccessURLs);
-  _set(updatedGranule, 'OnlineResources.OnlineResource', mergedResourceURLs);
+  const updateObject = {};
+  _set(updateObject, 'OnlineAccessURLs.OnlineAccessURL', mergedOnlineAccessURLs);
+  _set(updateObject, 'OnlineResources.OnlineResource', mergedResourceURLs);
+
+  // _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedOnlineAccessURLs);
+  // _set(updatedGranule, 'OnlineResources.OnlineResource', mergedResourceURLs);
+  _set(updatedGranule, '', updateObject);
   metadataObject.Granule = updatedGranule;
 
   const builder = new xml2js.Builder();
@@ -563,24 +591,26 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
 /**
  * Modifies cmr metadata file with file's URLs updated to their new locations.
  *
- * @param {string} granuleId - granuleId
- * @param {Object} cmrFile - cmr xml file to be updated
- * @param {Array<Object>} files - array of file objects
- * @param {string} distEndpoint - distribution enpoint from config
- * @param {boolean} published - indicate if publish is needed
- * @param {BucketsConfig} inBuckets - BucketsConfig instance if available, will
+ * @param {Object} params - parameter object
+ * @param {string} params.granuleId - granuleId
+ * @param {Object} params.cmrFile - cmr xml file to be updated
+ * @param {Array<Object>} params.files - array of file objects
+ * @param {string} params.distEndpoint - distribution enpoint from config
+ * @param {boolean} params.published - indicate if publish is needed
+ * @param {BucketsConfig} params.inBuckets - BucketsConfig instance if available, will
  *                                    default one build with s3 stored config.
  * @returns {Promise} returns promise to publish metadata to CMR Service
  *                    or resolved promise if published === false.
  */
-async function updateCMRMetadata(
+async function updateCMRMetadata({
   granuleId,
   cmrFile,
   files,
+  backendUrl,
   distEndpoint,
   published,
   inBuckets = null
-) {
+}) {
   const filename = getS3UrlOfFile(cmrFile);
 
   log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${filename}`);
@@ -589,10 +619,22 @@ async function updateCMRMetadata(
   let theMetadata;
 
   if (isECHO10File(filename)) {
-    theMetadata = await updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets);
+    theMetadata = await updateEcho10XMLMetadata({
+      cmrFile,
+      files,
+      backendUrl,
+      distEndpoint,
+      buckets
+    });
   }
   else if (isUMMGFile(filename)) {
-    theMetadata = await updateUMMGMetadata(cmrFile, files, distEndpoint, buckets);
+    theMetadata = await updateUMMGMetadata({
+      cmrFile,
+      files,
+      backendUrl,
+      distEndpoint,
+      buckets
+    });
   }
   else {
     throw new errors.CMRMetaFileNotFound('Invalid CMR filetype passed to updateCMRMetadata');
@@ -617,16 +659,31 @@ async function updateCMRMetadata(
 
 /**
  * Update CMR Metadata record with the information contained in updatedFiles
- * @param {string} granuleId - granuleId
- * @param {Object} updatedFiles - list of file objects that might have different
+ * @param {Object} params - parameter object
+ * @param {string} params.granuleId - granuleId
+ * @param {Object} params.updatedFiles - list of file objects that might have different
  *                  information from the cmr metadatafile and the CMR service.
- * @param {string} distEndpoint - distribution endpoint URL
- * @param {boolean} published - boolean true if the data should be published to the CMR service.
+ * @param {string} params.distEndpoint - distribution endpoint URL
+ * @param {boolean} params.published - boolean true if the data should be published to
+ *   the CMR service.
  */
-async function reconcileCMRMetadata(granuleId, updatedFiles, distEndpoint, published) {
+async function reconcileCMRMetadata({
+  granuleId,
+  updatedFiles,
+  backendUrl,
+  distEndpoint,
+  published
+}) {
   const cmrMetadataFiles = getCmrFileObjs(updatedFiles);
   if (cmrMetadataFiles.length === 1) {
-    return updateCMRMetadata(granuleId, cmrMetadataFiles[0], updatedFiles, distEndpoint, published);
+    return updateCMRMetadata({
+      granuleId,
+      cmrFile: cmrMetadataFiles[0],
+      files: updatedFiles,
+      backendUrl,
+      distEndpoint,
+      published
+    });
   }
   if (cmrMetadataFiles.length > 1) {
     log.error('More than one cmr metadata file found.');
