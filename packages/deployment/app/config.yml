@@ -11,6 +11,8 @@ default:
 
   oauth:
     provider: earthdata
+  ## lambda function that returns temporary credentials
+  sts_credentials_lambda: gsfc-ngap-sh-s3-sts-get-keys
 
   api_lambda_memory: 512
 
