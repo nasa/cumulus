@@ -9,7 +9,7 @@
     "docs-install": "(cd website && npm ci)",
     "docs-build": "npm run docs-build-tasks && (cd website && npm run build)",
     "docs-serve": "npm run docs-build && (cd website && npm run start)",
-    "install-locks": "lerna exec 'npm i --package-lock-only --no-audit' --parallel --no-sort",
+    "link": "lerna link",
     "lint": "eslint example packages/api packages/cmrjs packages/common packages/deployment packages/ingest tasks",
     "test": "nyc lerna run test --concurrency 2",
     "bootstrap": "lerna bootstrap",
