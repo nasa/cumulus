@@ -196,12 +196,18 @@ async function getOnlineResources(cmrLink) {
  */
 function generateCmrXml(granule, collection, additionalUrls) {
   const xmlObject = sampleEcho10Granule;
+  const oldGranuleId = xmlObject.Granule.GranuleUR;
   xmlObject.Granule.GranuleUR = granule.granuleId;
 
   xmlObject.Granule.Collection = {
     ShortName: collection.name,
     VersionId: collection.version
   };
+
+  xmlObject.Granule.OnlineAccessURLs.forEach((url) => {
+    // eslint-disable-next-line no-param-reassign
+    url.OnlineAccessURL.URL = url.OnlineAccessURL.URL.replace(oldGranuleId, granule.granuleId);
+  });
 
   if (additionalUrls) {
     xmlObject.Granule.OnlineAccessURLs = additionalUrls.map((url) => ({
