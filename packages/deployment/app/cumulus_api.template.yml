@@ -174,7 +174,7 @@ Resources:
       Code:
         S3Bucket: {{this.bucket}}
         S3Key: {{this.remote}}
-      FunctionName: {{../stackName}}-{{@key}}
+      FunctionName: {{../prefix}}-{{@key}}
       Environment:
         Variables:
           stackName: {{../stackName}}
@@ -264,14 +264,14 @@ Resources:
     Properties:
       DestinationArn:
         Ref: log2elasticsearchLambdaFunction
-      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
+      LogGroupName: '/aws/lambda/{{../prefix}}-{{@key}}'
       FilterPattern: ""
 {{/if}}
 
   {{@key}}LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
+      LogGroupName: '/aws/lambda/{{../prefix}}-{{@key}}'
       RetentionInDays: 30
 {{/each}}
 
