@@ -166,18 +166,17 @@ dev:                                # deployment name
 
 If the `iam` deployment command  succeeds, you should see 7 new roles in the [IAM Console](https://console.aws.amazon.com/iam/home):
 
-* `<iams-prefix>-ecs`
-* `<iams-prefix>-lambda-api-gateway`
-* `<iams-prefix>-lambda-processing`
-* `<iams-prefix>-scaling-role`
-* `<iams-prefix>-steprole`
-* `<iams-prefix>-distribution-api-lambda`
-* `<iams-prefix>-migration-processing`
-
+* `<prefix>-ecs`
+* `<prefix>-lambda-api-gateway`
+* `<prefix>-lambda-processing`
+* `<prefix>-scaling-role`
+* `<prefix>-steprole`
+* `<prefix>-distribution-api-lambda`
+* `<prefix>-migration-processing`
 
 The same information can be obtained from the AWS CLI command: `aws iam list-roles`.
 
-The `iam` deployment also creates an instance profile named `<stack-name>-ecs` that can be viewed from the AWS CLI command: `aws iam list-instance-profiles`.
+The `iam` deployment also creates an instance profile named `<prefix>-ecs` that can be viewed from the AWS CLI command: `aws iam list-instance-profiles`.
 
 --------------
 ## Configure and Deploy the Cumulus stack
@@ -197,8 +196,9 @@ If you're re-deploying based on an existing configuration you can skip this conf
 Descriptions of the fields can be found in [App Configuration Descriptions](deployment/config_descriptions.md#app-configuration).
 
 ```
-dev:                                    # deployment name
-  stackName: dev-cumulus        # see note below
+dev:                            # deployment name
+  prefix: dev                   # see note below
+  stackName: dev-cumulus
   stackNameNoDash: DevCumulus
 
   apiStage: dev
@@ -223,14 +223,14 @@ dev:                                    # deployment name
         type: internal
 
   iams:
-    ecsRoleArn: arn:aws:iam::<aws-account-id>:role/<stackName>-ecs
-    lambdaApiGatewayRoleArn: arn:aws:iam::<aws-account-id>:role/<stackName>-lambda-api-gateway
-    lambdaProcessingRoleArn: arn:aws:iam::<aws-account-id>:role/<stackName>-lambda-processing
-    stepRoleArn: arn:aws:iam::<aws-account-id>:role/<stackName>-steprole
-    instanceProfile: arn:aws:iam::<aws-account-id>:instance-profile/<stackName>-ecs
-    distributionRoleArn: 'arn:aws:iam::<aws-account-id>:role/<stackName>-distribution-api-lambda'
-    scalingRoleArn: 'arn:aws:iam::<aws-account-id>:role/<stackName>-scaling-role'
-    migrationRoleArn: 'arn:aws:iam::<aws-account-id>:role/<stackName>-migration-processing'
+    ecsRoleArn: arn:aws:iam::<aws-account-id>:role/<prefix>-ecs
+    lambdaApiGatewayRoleArn: arn:aws:iam::<aws-account-id>:role/<prefix>-lambda-api-gateway
+    lambdaProcessingRoleArn: arn:aws:iam::<aws-account-id>:role/<prefix>-lambda-processing
+    stepRoleArn: arn:aws:iam::<aws-account-id>:role/<prefix>-steprole
+    instanceProfile: arn:aws:iam::<aws-account-id>:instance-profile/<prefix>-ecs
+    distributionRoleArn: 'arn:aws:iam::<aws-account-id>:role/<prefix>-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::<aws-account-id>:role/<prefix>-scaling-role'
+    migrationRoleArn: 'arn:aws:iam::<aws-account-id>:role/<prefix>-migration-processing'
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
@@ -247,7 +247,7 @@ dev:                                    # deployment name
     - username: <user2>
 ```
 
-**IMPORTANT NOTE** - The `stackName` for this config **must match** the value of the resource prefix for the IAM stack. By default, this means that the `stackName` should match the value of the [`prefix` set for the IAM stack above](#configure-and-deploy-the-iam-stack). However, if you changed the value of the `ResourcePrefix` param in your IAM stack `config.yml`, you would use that value instead.
+**IMPORTANT NOTE** - This `prefix` value **must match** the value of the resource prefix for the IAM stack. By default, this means that it should match the value of the [`prefix` set for the IAM stack above](#configure-and-deploy-the-iam-stack). However, if you changed the value of the `ResourcePrefix` param in your IAM stack `config.yml`, you would use that value instead.
 
 ### Configure EarthData application
 
