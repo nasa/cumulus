@@ -12,8 +12,10 @@ KEY="travis-ci-cache/${CACHE_FILENAME}"
 echo "Fetching cache from s3://${CACHE_BUCKET}/${KEY}"
 
 # Determine if the cache exists
+set +e
 ~/bin/aws s3 ls "s3://${CACHE_BUCKET}/${KEY}" >/dev/null
 CACHE_EXISTS_STATUS_CODE="$?"
+set -e
 
 if [ "$CACHE_EXISTS_STATUS_CODE" -eq "0" ]; then
   # If the cache exists, download it from S3
