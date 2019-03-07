@@ -8,9 +8,7 @@ hide_title: true
 
 Buckets can be created on the command line with [AWS CLI][cli] or via the web interface on the [AWS console][web].
 
-When creating a protected bucket (a bucket containing data which will be
-served through the distribution API), make sure to enable S3 Server Access
-Logging. See [EMS Reporting](ems_reporting.md) for more details.
+When creating a protected bucket (a bucket containing data which will be served through the distribution API), make sure to enable S3 Server Access Logging. See [EMS Reporting](ems_reporting.md) for more details.
 
 
 ## Command line
@@ -27,7 +25,6 @@ $ aws s3api create-bucket --bucket foobar-internal
 Please note security settings and other bucket options can be set via the options listed in the s3api documentation.
 
 Repeat the above step for each bucket to be created.
-
 
 ## Web interface
 
