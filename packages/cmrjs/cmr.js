@@ -59,6 +59,7 @@ class CMR {
    * @param {string} password - CMR password
    */
   constructor(provider, clientId, username, password) {
+    this.provider = provider;
     this.cmrClient = new cmrClient.CMR({
       provider,
       clientId,
@@ -163,7 +164,8 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async searchCollections(searchParams, format = 'json') {
-    return this.cmrClient.searchCollections(searchParams, format);
+    const params = Object.assign({}, { provider_short_name: this.provider }, searchParams);
+    return this.cmrClient.searchCollections(params, format);
   }
 
   /**
@@ -174,7 +176,8 @@ class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async searchGranules(searchParams, format = 'json') {
-    return this.cmrClient.searchGranules(searchParams, format);
+    const params = Object.assign({}, { provider_short_name: this.provider }, searchParams);
+    return this.cmrClient.searchGranules(params, format);
   }
 }
 
