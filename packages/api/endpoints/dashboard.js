@@ -4,7 +4,7 @@ const router = require('express-promise-router')();
 const {
   getS3Object,
   getFileBucketAndKey
-} = require('@cumulus/common');
+} = require('@cumulus/common/aws');
 
 /**
  * Given a path in the form of bucket/key, get the item from
