@@ -364,7 +364,7 @@ class UpdatedKes extends Kes {
     const aliasListsPromises = lambdaNames.map(async (lambdaName) => {
       const listAliasesConfig = {
         MaxItems: 10000,
-        FunctionName: `${this.config.stackName}-${lambdaName}`
+        FunctionName: `${this.config.prefix}-${lambdaName}`
       };
       return this.getAllLambdaAliases(awsLambda, listAliasesConfig);
     });
