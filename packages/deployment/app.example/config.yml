@@ -1,5 +1,6 @@
 <cumulus-deployment-name>:
-  stackName: <prefix>-cumulus         # stackName must match the prefix for your IAM stack
+  prefix: <prefix>              # must match the prefix for your IAM stack
+  stackName: <prefix>-cumulus
   stackNameNoDash: <Prefix>Cumulus
 
   apiStage: dev
@@ -30,14 +31,14 @@
       type: public
 
   iams:
-    ecsRoleArn: arn:aws:iam::<aws-account-id>:role/{{stackName}}-ecs
-    lambdaApiGatewayRoleArn: arn:aws:iam::<aws-account-id>:role/{{stackName}}-lambda-api-gateway
-    lambdaProcessingRoleArn: arn:aws:iam::<aws-account-id>:role/{{stackName}}-lambda-processing
-    stepRoleArn: arn:aws:iam::<aws-account-id>:role/{{stackName}}-steprole
-    instanceProfile: arn:aws:iam::<aws-account-id>:instance-profile/{{stackName}}-ecs
-    distributionRoleArn: 'arn:aws:iam::<aws-account-id>:role/{{stackName}}-distribution-api-lambda'
-    scalingRoleArn: 'arn:aws:iam::<aws-account-id>:role/{{stackName}}-scaling-role'
-    migrationRoleArn: 'arn:aws:iam::<aws-account-id>:role/{{stackName}}-migration-processing'
+    ecsRoleArn: arn:aws:iam::<aws-account-id>:role/{{prefix}}-ecs
+    lambdaApiGatewayRoleArn: arn:aws:iam::<aws-account-id>:role/{{prefix}}-lambda-api-gateway
+    lambdaProcessingRoleArn: arn:aws:iam::<aws-account-id>:role/{{prefix}}-lambda-processing
+    stepRoleArn: arn:aws:iam::<aws-account-id>:role/{{prefix}}-steprole
+    instanceProfile: arn:aws:iam::<aws-account-id>:instance-profile/{{prefix}}-ecs
+    distributionRoleArn: 'arn:aws:iam::<aws-account-id>:role/{{prefix}}-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::<aws-account-id>:role/{{prefix}}-scaling-role'
+    migrationRoleArn: 'arn:aws:iam::<aws-account-id>:role/{{prefix}}-migration-processing'
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ # make sure to include the trailing slash
 

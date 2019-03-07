@@ -1,4 +1,5 @@
 default:
+  prefix: change-me
   stackName: change-me-cumulus
   stackNameNoDash: ChangeMeCumulus
 
