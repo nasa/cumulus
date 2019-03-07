@@ -8,11 +8,13 @@ hide_title: true
 
 This step involves getting the [Amazon Resource Names (ARNS)](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html) for the Cumulus roles:
 
-* ```<stack-name>-cumulus-ecs```
-* ```<stack-name>-lambda-processing```
-* ```<stack-name>-lambda-api-gateway```
-* ```<stack-name>-steprole```
-* ```<stack-name>-migration-processing```
+* `<prefix>-ecs`
+* `<prefix>-lambda-api-gateway`
+* `<prefix>-lambda-processing`
+* `<prefix>-scaling-role`
+* `<prefix>-steprole`
+* `<prefix>-distribution-api-lambda`
+* `<prefix>-migration-processing`
 
 IAM values can be found by selecting "IAM" under the Security, Identity & Compliance in the AWS management console:
 
