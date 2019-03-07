@@ -19,11 +19,11 @@ stages:
 
 jobs:
   include:
-    - name: "Build npm cache"
-      stage: build cache & audit
-      install:
-        - nvm install-latest-npm
-      script: ./travis-ci/build-cache.sh
+    # - name: "Build npm cache"
+    #   stage: build cache & audit
+    #   install:
+    #     - nvm install-latest-npm
+    #   script: ./travis-ci/build-cache.sh
 
     # - name: "npm audit"
     #   stage: build cache & audit
@@ -39,12 +39,13 @@ jobs:
     - name: "eslint"
       stage: unit test and stack deployment
       install:
-        # - nvm install-latest-npm
-        - ./travis-ci/fetch-cache.sh
-        # - npm ci
+        - nvm install-latest-npm
+        # - ./travis-ci/fetch-cache.sh
+        - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm run bootstrap-no-build
-        - env SKIP_BUILD=true ./bin/prepare
+        - ./node_modules/.bin/lerna --loglevel silly --no-progress bootstrap --ignore-scripts -- --loglevel silly
+        # - npm run bootstrap-no-build
+        # - env SKIP_BUILD=true ./bin/prepare
         # - echo 'BOOTSTRAP FINISHED'
       script: npm run lint
 

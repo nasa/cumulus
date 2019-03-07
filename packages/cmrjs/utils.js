@@ -107,6 +107,7 @@ function ummVersion(umm) {
  * Transform UMM version number to metadata format string.
  *
  * @param {string} versionNumber - UMM version string in decimal format (e.g. 1.4)
+ * @param {string} [ummFormat='json'] - UMM format
  * @returns {string} UMM-G metadata format string (e.g. umm_json_v1_4)
  */
 function ummVersionToMetadataFormat(versionNumber, ummFormat = 'json') {
