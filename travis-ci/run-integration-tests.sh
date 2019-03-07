@@ -4,13 +4,12 @@ set -e
 
 . ./travis-ci/set-env-vars.sh
 
-(
-  cd example
-  if [ "$USE_NPM_PACKAGES" = "true" ]; then
-    npm ci
-  else
-    (cd .. && ./bin/prepare)
-  fi
+if [ "$USE_NPM_PACKAGES" = "true" ]; then
+  (set -e && cd example && npm ci)
+else
+  ./travis-ci/fetch-cache.sh
+  ln -s /dev/stdout ./lerna-debug.log
+  lerna link
+fi
 
-  npm test
-)
+(set -e && cd example && npm test)
