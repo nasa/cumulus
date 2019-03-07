@@ -618,23 +618,20 @@ async function updateCMRMetadata({
   const cmrCredentials = (published) ? getCreds() : {};
   let theMetadata;
 
+  const params = {
+    cmrFile,
+    files,
+    backendUrl,
+    distEndpoint,
+    buckets
+  };
+  console.log(JSON.stringify(params));
+
   if (isECHO10File(filename)) {
-    theMetadata = await updateEcho10XMLMetadata({
-      cmrFile,
-      files,
-      backendUrl,
-      distEndpoint,
-      buckets
-    });
+    theMetadata = await updateEcho10XMLMetadata(params);
   }
   else if (isUMMGFile(filename)) {
-    theMetadata = await updateUMMGMetadata({
-      cmrFile,
-      files,
-      backendUrl,
-      distEndpoint,
-      buckets
-    });
+    theMetadata = await updateUMMGMetadata(params);
   }
   else {
     throw new errors.CMRMetaFileNotFound('Invalid CMR filetype passed to updateCMRMetadata');
