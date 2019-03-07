@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - **CUMULUS-1105** - Added a dashboard endpoint to serve the dashboard from an S3 bucket
+- **CUMULUS-666**
+  - Added `@api/endpoints/s3credentials` to allow EarthData Login authorized users to retrieve temporary security credentials for same-region direct S3 access.
 - **CUMULUS-1187** - Added `@cumulus/ingest/granule/duplicateHandlingType()` to determine how duplicate files should be handled in an ingest workflow
 - **CUMULUS-671**
   - Added `@packages/integration-tests/api/distribution/getDistributionApiS3SignedUrl()` to return the S3 signed URL for a file protected by the distribution API
@@ -37,6 +39,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added `@cumulus/common/util#negate()`
 
 - CUMULUS-1151 Compare the granule holdings in CMR with Cumulus' internal data store
+- CUMULUS-1152 Compare the granule file holdings in CMR with Cumulus' internal data store
 
 ### Changed
 

@@ -15,6 +15,7 @@ const logs = require('../endpoints/logs');
 const reconcilliationReports = require('../endpoints/reconciliation-reports');
 const schemas = require('../endpoints/schemas');
 const stats = require('../endpoints/stats');
+const s3credentials = require('../endpoints/s3credentials');
 const version = require('../endpoints/version');
 const workflows = require('../endpoints/workflows');
 const dashboard = require('../endpoints/dashboard');
@@ -65,6 +66,8 @@ router.use('/schemas', ensureAuthorized, schemas);
 
 // stats endpoint
 router.use('/stats', ensureAuthorized, stats);
+
+router.use('/s3credentials', ensureAuthorized, s3credentials);
 
 // version endpoint
 // this endpoint is not behind authentication
