@@ -65,26 +65,27 @@ jobs:
         - ./node_modules/.bin/lerna --loglevel silly --no-progress bootstrap --ignore-scripts -- --loglevel silly
         - ./travis-ci/start-local-services.sh
         # - echo 'BOOTSTRAP FINISHED'
-      script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api
+      script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api --ignore cumulus-integration-tests
       # after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
-#     - name: "API unit tests"
-#       stage: unit test and stack deployment
-#       services:
-#         - docker
-#       env:
-#         - LOCALSTACK_HOST=127.0.0.1
-#         - LOCAL_ES_HOST=127.0.0.1
-#       install:
-#         - nvm install-latest-npm
-#         - ./travis-ci/fetch-cache.sh
-#         - npm ci
-#         - ln -s /dev/stdout ./lerna-debug.log
-#         - npm run bootstrap-no-build
-#         - ./travis-ci/start-local-services.sh
-#         - echo 'BOOTSTRAP FINISHED'
-#       script: ./travis-ci/run-api-unit-tests.sh
-#       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+    - name: "API unit tests"
+      stage: unit test and stack deployment
+      services:
+        - docker
+      env:
+        - LOCALSTACK_HOST=127.0.0.1
+        - LOCAL_ES_HOST=127.0.0.1
+      install:
+        - nvm install-latest-npm
+        # - ./travis-ci/fetch-cache.sh
+        - npm ci
+        - ln -s /dev/stdout ./lerna-debug.log
+        # - npm run bootstrap-no-build
+        - ./node_modules/.bin/lerna --loglevel silly --no-progress bootstrap --ignore-scripts -- --loglevel silly
+        - ./travis-ci/start-local-services.sh
+        # - echo 'BOOTSTRAP FINISHED'
+      script: ./travis-ci/run-api-unit-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
 #     - name: "Deploy Integration Test Stack"
 #       stage: unit test and stack deployment
