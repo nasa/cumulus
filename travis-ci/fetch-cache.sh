@@ -19,7 +19,7 @@ if [ "$CACHE_EXISTS_STATUS_CODE" -eq "0" ]; then
   # If the cache exists, download it from S3
   echo "Fetching cache"
 
-  ~/bin/aws s3 cp "s3://${CACHE_BUCKET}/${KEY}" | tar -xz
+  ~/bin/aws s3 cp "s3://${CACHE_BUCKET}/${KEY}" - | tar -xz
 else
   echo "No cache found" >&2
   exit 1
