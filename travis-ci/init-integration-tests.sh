@@ -9,7 +9,7 @@ if [ "$USE_NPM_PACKAGES" = "true" ]; then
   npm ci
 else
   # ./bin/prepare
-  lerna exec npm run build
+  lerna run build
   cd example
 fi
 
