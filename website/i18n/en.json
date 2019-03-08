@@ -59,6 +59,9 @@
       "deployment/deployment-readme": {
         "title": "How to Deploy Cumulus"
       },
+      "deployment/server_access_logging": {
+        "title": "S3 Server Access Logging"
+      },
       "deployment/troubleshoot_deployment": {
         "title": "Troubleshooting Cumulus Deployment"
       },
@@ -100,6 +103,9 @@
       },
       "operator-docs/lifecycle-policies": {
         "title": "Lifecycle Policies"
+      },
+      "operator-docs/locating-access-logs": {
+        "title": "Locating S3 Access Logs"
       },
       "operator-docs/update-cumulus-dependencies": {
         "title": "Update Cumulus Dependencies"
