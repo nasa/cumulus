@@ -315,7 +315,7 @@ async function updateEachCmrFileAccessURLs(
       backendUrl,
       distEndpoint,
       publish,
-      bucketsConfig
+      inBuckets: bucketsConfig
     });
   }));
 }
