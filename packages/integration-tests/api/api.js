@@ -23,16 +23,17 @@ const {
  *   name.
  * @param {string} params.payload - the payload to send to the Lambda function.
  *   See https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
+ * @param {Object} params.userParams - parameter object passed to fakeUserFactory
  * @returns {Promise<Object>} - the parsed payload of the response.  See
  *   https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format
  */
-async function callCumulusApi({ prefix, payload: userPayload }) {
+async function callCumulusApi({ prefix, payload: userPayload, userParams = {} }) {
   const payload = cloneDeep(userPayload);
 
   process.env.UsersTable = `${prefix}-UsersTable`;
   const userModel = new User();
 
-  const { userName } = await userModel.create(fakeUserFactory());
+  const { userName } = await userModel.create(fakeUserFactory(userParams));
 
   process.env.AccessTokensTable = `${prefix}-AccessTokensTable`;
   const accessTokenModel = new AccessToken();
