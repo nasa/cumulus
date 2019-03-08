@@ -343,7 +343,7 @@ Resources:
                 - WorkflowLambdaVersionsNestedStack
                 - Outputs.{{@key}}LambdaAliasOutput
             {{/each}}
-            stackName: {{../prefix}}
+            stackName: {{../stackName}}
     {{/ifEquals}}
     {{#ifNotEquals ../useWorkflowLambdaVersions true}}
         Fn::Sub: |
@@ -676,7 +676,7 @@ Resources:
       FunctionName: {{../prefix}}-{{@key}}
       Environment:
         Variables:
-          stackName: {{../prefix}}
+          stackName: {{../stackName}}
         {{#if this.useElasticSearch }}
           ES_HOST:
             Fn::GetAtt:
@@ -814,7 +814,7 @@ Resources:
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security Group for ECS containter instances of {{prefix}}
+      GroupDescription: Security Group for ECS containter instances of {{stackName}}
       Tags:
         - Key: Name
           Value: "{{prefix}}"
