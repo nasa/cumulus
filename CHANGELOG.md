@@ -1,10 +1,15 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Please Note
+
+- For existing deployments, you must add a `prefix` value to your deployment configuration in  `app/config.yml`. This `prefix` must match your existing `stackName`.
 
 ### Added
 
@@ -42,6 +47,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- **CUMULUS-1168** - The app cloudformation template now uses a new `prefix` property to prefix the names of deployed resources. Previously, the IAM deployment config `prefix` had to match the app deployment config `stackName` in order for your IAM policies to specify access to the correct resources for your deployment. Now, the requirement is that the `prefix` for the IAM deployment config and app deployment config must match.
 - CUMULUS-1139 - Granules stored in the API contain a `files` property. That schema has been greatly
   simplified and now better matches the CNM format.
     - The `name` property has been renamed to `fileName`.
