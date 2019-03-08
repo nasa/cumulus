@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Granule>
+  <GranuleUR>TestFixtureGranuleUR</GranuleUR>
+  <InsertTime>2018-04-25T21:45:45.524043</InsertTime>
+  <LastUpdate>2018-04-25T21:45:45.524053</LastUpdate>
+  <Collection>
+    <ShortName>ShortName</ShortName>
+    <VersionId>001</VersionId>
+  </Collection>
+  <Temporal>
+    <RangeDateTime>
+      <BeginningDateTime>2017-10-24T00:00:00Z</BeginningDateTime>
+      <EndingDateTime>2017-11-08T23:59:59Z</EndingDateTime>
+    </RangeDateTime>
+  </Temporal>
+  <Spatial>
+    <HorizontalSpatialDomain>
+      <Geometry>
+        <GPolygon>
+          <Boundary>
+            <Point>
+              <PointLongitude>10.598766856250499</PointLongitude>
+              <PointLatitude>-20.004533998735798</PointLatitude>
+            </Point>
+            <Point>
+              <PointLongitude>10.116488181247300</PointLongitude>
+              <PointLatitude>-9.963464459448231</PointLatitude>
+            </Point>
+            <Point>
+              <PointLongitude>20.318223437416400</PointLongitude>
+              <PointLatitude>-9.958850980581371</PointLatitude>
+            </Point>
+            <Point>
+              <PointLongitude>21.290997939442398</PointLongitude>
+              <PointLatitude>-19.999772984245801</PointLatitude>
+            </Point>
+          </Boundary>
+        </GPolygon>
+      </Geometry>
+    </HorizontalSpatialDomain>
+  </Spatial>
+  <TwoDCoordinateSystem>
+    <StartCoordinate1>19</StartCoordinate1>
+    <StartCoordinate2>10</StartCoordinate2>
+    <TwoDCoordinateSystemName>MODIS Tile SIN</TwoDCoordinateSystemName>
+  </TwoDCoordinateSystem>
+  <OnlineAccessURLs>
+    <OnlineAccessURL>
+      <URL>https://textFixtureUrl.gov/someCmrFile</URL>
+      <URLDescription>File to download</URLDescription>
+    </OnlineAccessURL>
+  </OnlineAccessURLs>
+  <Orderable>true</Orderable>
+  <Visible>true</Visible>
+  <CloudCover>13</CloudCover>
+  <OnlineResources>
+    <OnlineResource>
+      <URL>https://example.com/s3credentials</URL>
+      <Description>api endpoint to retrieve temporary credentials valid for same-region direct s3 access</Description>
+      <Type>VIEW RELATED INFORMATION</Type>
+    </OnlineResource>
+  </OnlineResources>
+</Granule>
