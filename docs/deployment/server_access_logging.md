@@ -13,7 +13,7 @@ To enable [EMS Reporting](../ems_reporting.md), you need to enable [S3 Server ac
 
 [Enable Server Access Logging for an S3 Bucket][howtologging]
 
-### Via [AWS CLI][cli].
+### Via [AWS CLI][cli]
 
 
 1. create a `logging.json` file with these contents, replacing `<stack-internal-bucket>` with your stack's internal bucket name, and `<stack>` with the name of your cumulus stack.
