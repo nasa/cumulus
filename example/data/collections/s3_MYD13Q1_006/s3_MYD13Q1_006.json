@@ -1,0 +1,40 @@
+{
+    "name": "MYD13Q1",
+    "version": "006",
+    "dataType": "MYD13Q1",
+    "process": "modis",
+    "duplicateHandling": "replace",
+    "provider_path": "cumulus-test-data/pdrs",
+    "granuleId": "^MYD13Q1\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
+    "granuleIdExtraction": "(MYD13Q1\\..*)(\\.hdf|\\.cmr|_1.jpg|_2.jpg)",
+    "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
+    "sampleFileName": "MYD13Q1.A2017025.h21v00.006.2017034065104.hdf",
+    "files": [
+        {
+            "bucket": "protected",
+            "regex": "^MYD13Q1\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
+            "sampleFileName": "MYD13Q1.A2017025.h21v00.006.2017034065104.hdf",
+            "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
+        },
+        {
+            "bucket": "private",
+            "regex": "^BROWSE\\.MYD13Q1\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
+            "sampleFileName": "BROWSE.MYD13Q1.A2017025.h21v00.006.2017034065104.hdf"
+        },
+        {
+            "bucket": "private",
+            "regex": "^MYD13Q1\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$",
+            "sampleFileName": "MYD13Q1.A2017025.h21v00.006.2017034065104.hdf.met"
+        },
+        {
+            "bucket": "protected-2",
+            "regex": "^MYD13Q1\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.cmr\\.xml$",
+            "sampleFileName": "MYD13Q1.A2017025.h21v00.006.2017034065104.cmr.xml"
+        },
+        {
+            "bucket": "public",
+            "regex": "^BROWSE\\.MYD13Q1\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.[\\d]{1}\\.jpg$",
+            "sampleFileName": "BROWSE.MYD13Q1.A2017025.h21v00.006.2017034065104.1.jpg"
+        }
+    ]
+}

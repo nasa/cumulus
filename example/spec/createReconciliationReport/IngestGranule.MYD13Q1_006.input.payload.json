@@ -1,0 +1,37 @@
+{
+  "granules": [
+    {
+      "granuleId": "MYD13Q1.A2002185.h00v09.006.2015149071135",
+      "dataType": "MYD13Q1",
+      "version": "006",
+      "files": [
+        {
+          "path": "cumulus-test-data/pdrs",
+          "fileSize": 5192514,
+          "name": "MYD13Q1.A2002185.h00v09.006.2015149071135.hdf"
+        },
+        {
+          "path": "cumulus-test-data/pdrs",
+          "fileSize": 21708,
+          "name": "MYD13Q1.A2002185.h00v09.006.2015149071135.hdf.met"
+        },
+        {
+          "path": "cumulus-test-data/pdrs",
+          "fileSize": 32795,
+          "name": "BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.hdf"
+        },
+        {
+          "path": "cumulus-test-data/pdrs",
+          "fileSize": 15797,
+          "name": "BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.1.jpg"
+        }
+      ]
+    }
+  ],
+  "pdr": {
+    "path": "cumulus-test-data/pdrs",
+    "size": 596,
+    "name": "MYD13Q1.A2002185.h00v09.006.2015149071135.hdf.PDR",
+    "time": 1520873050000
+  }
+}

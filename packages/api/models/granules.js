@@ -42,6 +42,16 @@ const translateGranule = async (granule) => {
   };
 };
 
+class GranuleSearchQueue extends commonAws.DynamoDbSearchQueue {
+  peek() {
+    return super.peek().then((g) => (isNil(g) ? g : translateGranule(g)));
+  }
+
+  shift() {
+    return super.shift().then((g) => (isNil(g) ? g : translateGranule(g)));
+  }
+}
+
 class Granule extends Manager {
   constructor() {
     const globalSecondaryIndexes = [{
@@ -358,7 +368,7 @@ class Granule extends Manager {
       params.FilterExpression = '#status = :status';
     }
 
-    return new commonAws.DynamoDbSearchQueue(params, 'query');
+    return new GranuleSearchQueue(params, 'query');
   }
 }
 
