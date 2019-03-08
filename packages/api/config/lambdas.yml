@@ -182,6 +182,7 @@ EmsDistributionReport:
 CreateReconciliationReport:
   handler: index.createReconciliationReport
   source: 'node_modules/@cumulus/api/dist/'
+  urs: true
   envs:
     system_bucket: '{{system_bucket}}'
     CollectionsTable:

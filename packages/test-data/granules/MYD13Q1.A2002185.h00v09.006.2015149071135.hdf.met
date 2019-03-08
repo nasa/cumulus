@@ -1,0 +1,1287 @@
+
+GROUP                  = INVENTORYMETADATA
+  GROUPTYPE            = MASTERGROUP
+
+  GROUP                  = ECSDATAGRANULE
+
+    OBJECT                 = REPROCESSINGPLANNED
+      NUM_VAL              = 1
+      VALUE                = "further update is anticipated"
+    END_OBJECT             = REPROCESSINGPLANNED
+
+    OBJECT                 = REPROCESSINGACTUAL
+      NUM_VAL              = 1
+      VALUE                = "reprocessed"
+    END_OBJECT             = REPROCESSINGACTUAL
+
+    OBJECT                 = LOCALGRANULEID
+      NUM_VAL              = 1
+      VALUE                = "MYD13Q1.A2002185.h00v09.006.2015149071135.hdf"
+    END_OBJECT             = LOCALGRANULEID
+
+    OBJECT                 = DAYNIGHTFLAG
+      NUM_VAL              = 1
+      VALUE                = "Day"
+    END_OBJECT             = DAYNIGHTFLAG
+
+    OBJECT                 = PRODUCTIONDATETIME
+      NUM_VAL              = 1
+      VALUE                = "2015-05-29T11:11:36.000Z"
+    END_OBJECT             = PRODUCTIONDATETIME
+
+    OBJECT                 = LOCALVERSIONID
+      NUM_VAL              = 1
+      VALUE                = "6.0.14"
+    END_OBJECT             = LOCALVERSIONID
+
+  END_GROUP              = ECSDATAGRANULE
+
+  GROUP                  = MEASUREDPARAMETER
+
+    OBJECT                 = MEASUREDPARAMETERCONTAINER
+      CLASS                = "1"
+
+      OBJECT                 = PARAMETERNAME
+        CLASS                = "1"
+        NUM_VAL              = 1
+        VALUE                = "250m 16 days NDVI"
+      END_OBJECT             = PARAMETERNAME
+
+      GROUP                  = QAFLAGS
+        CLASS                = "1"
+
+        OBJECT                 = AUTOMATICQUALITYFLAG
+          NUM_VAL              = 1
+          CLASS                = "1"
+          VALUE                = "Passed"
+        END_OBJECT             = AUTOMATICQUALITYFLAG
+
+        OBJECT                 = OPERATIONALQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "1"
+          VALUE                = "Passed"
+        END_OBJECT             = OPERATIONALQUALITYFLAGEXPLANATION
+
+        OBJECT                 = OPERATIONALQUALITYFLAG
+          NUM_VAL              = 1
+          CLASS                = "1"
+          VALUE                = "Passed"
+        END_OBJECT             = OPERATIONALQUALITYFLAG
+
+        OBJECT                 = AUTOMATICQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "1"
+          VALUE                = "No automatic quality assessment is performed in the PGE"
+        END_OBJECT             = AUTOMATICQUALITYFLAGEXPLANATION
+
+        OBJECT                 = SCIENCEQUALITYFLAG
+          NUM_VAL              = 1
+          VALUE                = "Not Investigated"
+          CLASS                = "1"
+        END_OBJECT             = SCIENCEQUALITYFLAG
+
+        OBJECT                 = SCIENCEQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "1"
+          VALUE                = "See http://landweb.nascom.nasa.gov/cgi-bin/QA_WWW/qaFlagPage.cgi?sat=aqua&ver=C6 for the product Science Quality status."
+        END_OBJECT             = SCIENCEQUALITYFLAGEXPLANATION
+
+      END_GROUP              = QAFLAGS
+
+      GROUP                  = QASTATS
+        CLASS                = "1"
+
+        OBJECT                 = QAPERCENTINTERPOLATEDDATA
+          NUM_VAL              = 1
+          CLASS                = "1"
+          VALUE                = 78
+        END_OBJECT             = QAPERCENTINTERPOLATEDDATA
+
+        OBJECT                 = QAPERCENTMISSINGDATA
+          NUM_VAL              = 1
+          CLASS                = "1"
+          VALUE                = 22
+        END_OBJECT             = QAPERCENTMISSINGDATA
+
+        OBJECT                 = QAPERCENTOUTOFBOUNDSDATA
+          NUM_VAL              = 1
+          CLASS                = "1"
+          VALUE                = 0
+        END_OBJECT             = QAPERCENTOUTOFBOUNDSDATA
+
+        OBJECT                 = QAPERCENTCLOUDCOVER
+          NUM_VAL              = 1
+          CLASS                = "1"
+          VALUE                = 65
+        END_OBJECT             = QAPERCENTCLOUDCOVER
+
+      END_GROUP              = QASTATS
+
+    END_OBJECT             = MEASUREDPARAMETERCONTAINER
+
+    OBJECT                 = MEASUREDPARAMETERCONTAINER
+      CLASS                = "2"
+
+      OBJECT                 = PARAMETERNAME
+        CLASS                = "2"
+        NUM_VAL              = 1
+        VALUE                = "250m 16 days EVI"
+      END_OBJECT             = PARAMETERNAME
+
+      GROUP                  = QAFLAGS
+        CLASS                = "2"
+
+        OBJECT                 = AUTOMATICQUALITYFLAG
+          NUM_VAL              = 1
+          CLASS                = "2"
+          VALUE                = "Passed"
+        END_OBJECT             = AUTOMATICQUALITYFLAG
+
+        OBJECT                 = AUTOMATICQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "2"
+          VALUE                = "No automatic quality assessment is performed in the PGE"
+        END_OBJECT             = AUTOMATICQUALITYFLAGEXPLANATION
+
+        OBJECT                 = SCIENCEQUALITYFLAG
+          NUM_VAL              = 1
+          VALUE                = "Not Investigated"
+          CLASS                = "2"
+        END_OBJECT             = SCIENCEQUALITYFLAG
+
+        OBJECT                 = SCIENCEQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "2"
+          VALUE                = "See http://landweb.nascom.nasa.gov/cgi-bin/QA_WWW/qaFlagPage.cgi?sat=aqua&ver=C6 for the product Science Quality status."
+        END_OBJECT             = SCIENCEQUALITYFLAGEXPLANATION
+
+      END_GROUP              = QAFLAGS
+
+      GROUP                  = QASTATS
+        CLASS                = "2"
+
+        OBJECT                 = QAPERCENTINTERPOLATEDDATA
+          NUM_VAL              = 1
+          CLASS                = "2"
+          VALUE                = 78
+        END_OBJECT             = QAPERCENTINTERPOLATEDDATA
+
+        OBJECT                 = QAPERCENTMISSINGDATA
+          NUM_VAL              = 1
+          CLASS                = "2"
+          VALUE                = 22
+        END_OBJECT             = QAPERCENTMISSINGDATA
+
+        OBJECT                 = QAPERCENTOUTOFBOUNDSDATA
+          NUM_VAL              = 1
+          CLASS                = "2"
+          VALUE                = 0
+        END_OBJECT             = QAPERCENTOUTOFBOUNDSDATA
+
+        OBJECT                 = QAPERCENTCLOUDCOVER
+          NUM_VAL              = 1
+          CLASS                = "2"
+          VALUE                = 65
+        END_OBJECT             = QAPERCENTCLOUDCOVER
+
+      END_GROUP              = QASTATS
+
+    END_OBJECT             = MEASUREDPARAMETERCONTAINER
+
+    OBJECT                 = MEASUREDPARAMETERCONTAINER
+      CLASS                = "3"
+
+      OBJECT                 = PARAMETERNAME
+        CLASS                = "3"
+        NUM_VAL              = 1
+        VALUE                = "250m 16 days VI Quality"
+      END_OBJECT             = PARAMETERNAME
+
+      GROUP                  = QAFLAGS
+        CLASS                = "3"
+
+        OBJECT                 = AUTOMATICQUALITYFLAG
+          NUM_VAL              = 1
+          CLASS                = "3"
+          VALUE                = "Passed"
+        END_OBJECT             = AUTOMATICQUALITYFLAG
+
+        OBJECT                 = AUTOMATICQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "3"
+          VALUE                = "No automatic quality assessment is performed in the PGE"
+        END_OBJECT             = AUTOMATICQUALITYFLAGEXPLANATION
+
+        OBJECT                 = SCIENCEQUALITYFLAG
+          NUM_VAL              = 1
+          VALUE                = "Not Investigated"
+          CLASS                = "3"
+        END_OBJECT             = SCIENCEQUALITYFLAG
+
+        OBJECT                 = SCIENCEQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "3"
+          VALUE                = "See http://landweb.nascom.nasa.gov/cgi-bin/QA_WWW/qaFlagPage.cgi?sat=aqua&ver=C6 for the product Science Quality status."
+        END_OBJECT             = SCIENCEQUALITYFLAGEXPLANATION
+
+      END_GROUP              = QAFLAGS
+
+      GROUP                  = QASTATS
+        CLASS                = "3"
+
+        OBJECT                 = QAPERCENTINTERPOLATEDDATA
+          NUM_VAL              = 1
+          CLASS                = "3"
+          VALUE                = 78
+        END_OBJECT             = QAPERCENTINTERPOLATEDDATA
+
+        OBJECT                 = QAPERCENTMISSINGDATA
+          NUM_VAL              = 1
+          CLASS                = "3"
+          VALUE                = 22
+        END_OBJECT             = QAPERCENTMISSINGDATA
+
+        OBJECT                 = QAPERCENTOUTOFBOUNDSDATA
+          NUM_VAL              = 1
+          CLASS                = "3"
+          VALUE                = 0
+        END_OBJECT             = QAPERCENTOUTOFBOUNDSDATA
+
+        OBJECT                 = QAPERCENTCLOUDCOVER
+          NUM_VAL              = 1
+          CLASS                = "3"
+          VALUE                = 65
+        END_OBJECT             = QAPERCENTCLOUDCOVER
+
+      END_GROUP              = QASTATS
+
+    END_OBJECT             = MEASUREDPARAMETERCONTAINER
+
+    OBJECT                 = MEASUREDPARAMETERCONTAINER
+      CLASS                = "4"
+
+      OBJECT                 = PARAMETERNAME
+        CLASS                = "4"
+        NUM_VAL              = 1
+        VALUE                = "250m 16 days red reflectance"
+      END_OBJECT             = PARAMETERNAME
+
+      GROUP                  = QAFLAGS
+        CLASS                = "4"
+
+        OBJECT                 = AUTOMATICQUALITYFLAG
+          NUM_VAL              = 1
+          CLASS                = "4"
+          VALUE                = "Passed"
+        END_OBJECT             = AUTOMATICQUALITYFLAG
+
+        OBJECT                 = AUTOMATICQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "4"
+          VALUE                = "No automatic quality assessment is performed in the PGE"
+        END_OBJECT             = AUTOMATICQUALITYFLAGEXPLANATION
+
+        OBJECT                 = SCIENCEQUALITYFLAG
+          NUM_VAL              = 1
+          VALUE                = "Not Investigated"
+          CLASS                = "4"
+        END_OBJECT             = SCIENCEQUALITYFLAG
+
+        OBJECT                 = SCIENCEQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "4"
+          VALUE                = "See http://landweb.nascom.nasa.gov/cgi-bin/QA_WWW/qaFlagPage.cgi?sat=aqua&ver=C6 for the product Science Quality status."
+        END_OBJECT             = SCIENCEQUALITYFLAGEXPLANATION
+
+      END_GROUP              = QAFLAGS
+
+      GROUP                  = QASTATS
+        CLASS                = "4"
+
+        OBJECT                 = QAPERCENTINTERPOLATEDDATA
+          NUM_VAL              = 1
+          CLASS                = "4"
+          VALUE                = 78
+        END_OBJECT             = QAPERCENTINTERPOLATEDDATA
+
+        OBJECT                 = QAPERCENTMISSINGDATA
+          NUM_VAL              = 1
+          CLASS                = "4"
+          VALUE                = 22
+        END_OBJECT             = QAPERCENTMISSINGDATA
+
+        OBJECT                 = QAPERCENTOUTOFBOUNDSDATA
+          NUM_VAL              = 1
+          CLASS                = "4"
+          VALUE                = 0
+        END_OBJECT             = QAPERCENTOUTOFBOUNDSDATA
+
+        OBJECT                 = QAPERCENTCLOUDCOVER
+          NUM_VAL              = 1
+          CLASS                = "4"
+          VALUE                = 65
+        END_OBJECT             = QAPERCENTCLOUDCOVER
+
+      END_GROUP              = QASTATS
+
+    END_OBJECT             = MEASUREDPARAMETERCONTAINER
+
+    OBJECT                 = MEASUREDPARAMETERCONTAINER
+      CLASS                = "5"
+
+      OBJECT                 = PARAMETERNAME
+        CLASS                = "5"
+        NUM_VAL              = 1
+        VALUE                = "250m 16 days NIR reflectance"
+      END_OBJECT             = PARAMETERNAME
+
+      GROUP                  = QAFLAGS
+        CLASS                = "5"
+
+        OBJECT                 = AUTOMATICQUALITYFLAG
+          NUM_VAL              = 1
+          CLASS                = "5"
+          VALUE                = "Passed"
+        END_OBJECT             = AUTOMATICQUALITYFLAG
+
+        OBJECT                 = AUTOMATICQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "5"
+          VALUE                = "No automatic quality assessment is performed in the PGE"
+        END_OBJECT             = AUTOMATICQUALITYFLAGEXPLANATION
+
+        OBJECT                 = SCIENCEQUALITYFLAG
+          NUM_VAL              = 1
+          VALUE                = "Not Investigated"
+          CLASS                = "5"
+        END_OBJECT             = SCIENCEQUALITYFLAG
+
+        OBJECT                 = SCIENCEQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "5"
+          VALUE                = "See http://landweb.nascom.nasa.gov/cgi-bin/QA_WWW/qaFlagPage.cgi?sat=aqua&ver=C6 for the product Science Quality status."
+        END_OBJECT             = SCIENCEQUALITYFLAGEXPLANATION
+
+      END_GROUP              = QAFLAGS
+
+      GROUP                  = QASTATS
+        CLASS                = "5"
+
+        OBJECT                 = QAPERCENTINTERPOLATEDDATA
+          NUM_VAL              = 1
+          CLASS                = "5"
+          VALUE                = 78
+        END_OBJECT             = QAPERCENTINTERPOLATEDDATA
+
+        OBJECT                 = QAPERCENTMISSINGDATA
+          NUM_VAL              = 1
+          CLASS                = "5"
+          VALUE                = 22
+        END_OBJECT             = QAPERCENTMISSINGDATA
+
+        OBJECT                 = QAPERCENTOUTOFBOUNDSDATA
+          NUM_VAL              = 1
+          CLASS                = "5"
+          VALUE                = 0
+        END_OBJECT             = QAPERCENTOUTOFBOUNDSDATA
+
+        OBJECT                 = QAPERCENTCLOUDCOVER
+          NUM_VAL              = 1
+          CLASS                = "5"
+          VALUE                = 65
+        END_OBJECT             = QAPERCENTCLOUDCOVER
+
+      END_GROUP              = QASTATS
+
+    END_OBJECT             = MEASUREDPARAMETERCONTAINER
+
+    OBJECT                 = MEASUREDPARAMETERCONTAINER
+      CLASS                = "6"
+
+      OBJECT                 = PARAMETERNAME
+        CLASS                = "6"
+        NUM_VAL              = 1
+        VALUE                = "250m 16 days blue reflectance"
+      END_OBJECT             = PARAMETERNAME
+
+      GROUP                  = QAFLAGS
+        CLASS                = "6"
+
+        OBJECT                 = AUTOMATICQUALITYFLAG
+          NUM_VAL              = 1
+          CLASS                = "6"
+          VALUE                = "Passed"
+        END_OBJECT             = AUTOMATICQUALITYFLAG
+
+        OBJECT                 = AUTOMATICQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "6"
+          VALUE                = "No automatic quality assessment is performed in the PGE"
+        END_OBJECT             = AUTOMATICQUALITYFLAGEXPLANATION
+
+        OBJECT                 = SCIENCEQUALITYFLAG
+          NUM_VAL              = 1
+          VALUE                = "Not Investigated"
+          CLASS                = "6"
+        END_OBJECT             = SCIENCEQUALITYFLAG
+
+        OBJECT                 = SCIENCEQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "6"
+          VALUE                = "See http://landweb.nascom.nasa.gov/cgi-bin/QA_WWW/qaFlagPage.cgi?sat=aqua&ver=C6 for the product Science Quality status."
+        END_OBJECT             = SCIENCEQUALITYFLAGEXPLANATION
+
+      END_GROUP              = QAFLAGS
+
+      GROUP                  = QASTATS
+        CLASS                = "6"
+
+        OBJECT                 = QAPERCENTINTERPOLATEDDATA
+          NUM_VAL              = 1
+          CLASS                = "6"
+          VALUE                = 78
+        END_OBJECT             = QAPERCENTINTERPOLATEDDATA
+
+        OBJECT                 = QAPERCENTMISSINGDATA
+          NUM_VAL              = 1
+          CLASS                = "6"
+          VALUE                = 22
+        END_OBJECT             = QAPERCENTMISSINGDATA
+
+        OBJECT                 = QAPERCENTOUTOFBOUNDSDATA
+          NUM_VAL              = 1
+          CLASS                = "6"
+          VALUE                = 0
+        END_OBJECT             = QAPERCENTOUTOFBOUNDSDATA
+
+        OBJECT                 = QAPERCENTCLOUDCOVER
+          NUM_VAL              = 1
+          CLASS                = "6"
+          VALUE                = 65
+        END_OBJECT             = QAPERCENTCLOUDCOVER
+
+      END_GROUP              = QASTATS
+
+    END_OBJECT             = MEASUREDPARAMETERCONTAINER
+
+    OBJECT                 = MEASUREDPARAMETERCONTAINER
+      CLASS                = "7"
+
+      OBJECT                 = PARAMETERNAME
+        CLASS                = "7"
+        NUM_VAL              = 1
+        VALUE                = "250m 16 days MIR reflectance"
+      END_OBJECT             = PARAMETERNAME
+
+      GROUP                  = QAFLAGS
+        CLASS                = "7"
+
+        OBJECT                 = AUTOMATICQUALITYFLAG
+          NUM_VAL              = 1
+          CLASS                = "7"
+          VALUE                = "Passed"
+        END_OBJECT             = AUTOMATICQUALITYFLAG
+
+        OBJECT                 = AUTOMATICQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "7"
+          VALUE                = "No automatic quality assessment is performed in the PGE"
+        END_OBJECT             = AUTOMATICQUALITYFLAGEXPLANATION
+
+        OBJECT                 = SCIENCEQUALITYFLAG
+          NUM_VAL              = 1
+          VALUE                = "Not Investigated"
+          CLASS                = "7"
+        END_OBJECT             = SCIENCEQUALITYFLAG
+
+        OBJECT                 = SCIENCEQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "7"
+          VALUE                = "See http://landweb.nascom.nasa.gov/cgi-bin/QA_WWW/qaFlagPage.cgi?sat=aqua&ver=C6 for the product Science Quality status."
+        END_OBJECT             = SCIENCEQUALITYFLAGEXPLANATION
+
+      END_GROUP              = QAFLAGS
+
+      GROUP                  = QASTATS
+        CLASS                = "7"
+
+        OBJECT                 = QAPERCENTINTERPOLATEDDATA
+          NUM_VAL              = 1
+          CLASS                = "7"
+          VALUE                = 78
+        END_OBJECT             = QAPERCENTINTERPOLATEDDATA
+
+        OBJECT                 = QAPERCENTMISSINGDATA
+          NUM_VAL              = 1
+          CLASS                = "7"
+          VALUE                = 22
+        END_OBJECT             = QAPERCENTMISSINGDATA
+
+        OBJECT                 = QAPERCENTOUTOFBOUNDSDATA
+          NUM_VAL              = 1
+          CLASS                = "7"
+          VALUE                = 0
+        END_OBJECT             = QAPERCENTOUTOFBOUNDSDATA
+
+        OBJECT                 = QAPERCENTCLOUDCOVER
+          NUM_VAL              = 1
+          CLASS                = "7"
+          VALUE                = 65
+        END_OBJECT             = QAPERCENTCLOUDCOVER
+
+      END_GROUP              = QASTATS
+
+    END_OBJECT             = MEASUREDPARAMETERCONTAINER
+
+    OBJECT                 = MEASUREDPARAMETERCONTAINER
+      CLASS                = "8"
+
+      OBJECT                 = PARAMETERNAME
+        CLASS                = "8"
+        NUM_VAL              = 1
+        VALUE                = "250m 16 days view zenith angle"
+      END_OBJECT             = PARAMETERNAME
+
+      GROUP                  = QAFLAGS
+        CLASS                = "8"
+
+        OBJECT                 = AUTOMATICQUALITYFLAG
+          NUM_VAL              = 1
+          CLASS                = "8"
+          VALUE                = "Passed"
+        END_OBJECT             = AUTOMATICQUALITYFLAG
+
+        OBJECT                 = AUTOMATICQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "8"
+          VALUE                = "No automatic quality assessment is performed in the PGE"
+        END_OBJECT             = AUTOMATICQUALITYFLAGEXPLANATION
+
+        OBJECT                 = SCIENCEQUALITYFLAG
+          NUM_VAL              = 1
+          VALUE                = "Not Investigated"
+          CLASS                = "8"
+        END_OBJECT             = SCIENCEQUALITYFLAG
+
+        OBJECT                 = SCIENCEQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "8"
+          VALUE                = "See http://landweb.nascom.nasa.gov/cgi-bin/QA_WWW/qaFlagPage.cgi?sat=aqua&ver=C6 for the product Science Quality status."
+        END_OBJECT             = SCIENCEQUALITYFLAGEXPLANATION
+
+      END_GROUP              = QAFLAGS
+
+      GROUP                  = QASTATS
+        CLASS                = "8"
+
+        OBJECT                 = QAPERCENTINTERPOLATEDDATA
+          NUM_VAL              = 1
+          CLASS                = "8"
+          VALUE                = 78
+        END_OBJECT             = QAPERCENTINTERPOLATEDDATA
+
+        OBJECT                 = QAPERCENTMISSINGDATA
+          NUM_VAL              = 1
+          CLASS                = "8"
+          VALUE                = 22
+        END_OBJECT             = QAPERCENTMISSINGDATA
+
+        OBJECT                 = QAPERCENTOUTOFBOUNDSDATA
+          NUM_VAL              = 1
+          CLASS                = "8"
+          VALUE                = 0
+        END_OBJECT             = QAPERCENTOUTOFBOUNDSDATA
+
+        OBJECT                 = QAPERCENTCLOUDCOVER
+          NUM_VAL              = 1
+          CLASS                = "8"
+          VALUE                = 65
+        END_OBJECT             = QAPERCENTCLOUDCOVER
+
+      END_GROUP              = QASTATS
+
+    END_OBJECT             = MEASUREDPARAMETERCONTAINER
+
+    OBJECT                 = MEASUREDPARAMETERCONTAINER
+      CLASS                = "9"
+
+      OBJECT                 = PARAMETERNAME
+        CLASS                = "9"
+        NUM_VAL              = 1
+        VALUE                = "250m 16 days sun zenith angle"
+      END_OBJECT             = PARAMETERNAME
+
+      GROUP                  = QAFLAGS
+        CLASS                = "9"
+
+        OBJECT                 = AUTOMATICQUALITYFLAG
+          NUM_VAL              = 1
+          CLASS                = "9"
+          VALUE                = "Passed"
+        END_OBJECT             = AUTOMATICQUALITYFLAG
+
+        OBJECT                 = AUTOMATICQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "9"
+          VALUE                = "No automatic quality assessment is performed in the PGE"
+        END_OBJECT             = AUTOMATICQUALITYFLAGEXPLANATION
+
+        OBJECT                 = SCIENCEQUALITYFLAG
+          NUM_VAL              = 1
+          VALUE                = "Not Investigated"
+          CLASS                = "9"
+        END_OBJECT             = SCIENCEQUALITYFLAG
+
+        OBJECT                 = SCIENCEQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "9"
+          VALUE                = "See http://landweb.nascom.nasa.gov/cgi-bin/QA_WWW/qaFlagPage.cgi?sat=aqua&ver=C6 for the product Science Quality status."
+        END_OBJECT             = SCIENCEQUALITYFLAGEXPLANATION
+
+      END_GROUP              = QAFLAGS
+
+      GROUP                  = QASTATS
+        CLASS                = "9"
+
+        OBJECT                 = QAPERCENTINTERPOLATEDDATA
+          NUM_VAL              = 1
+          CLASS                = "9"
+          VALUE                = 78
+        END_OBJECT             = QAPERCENTINTERPOLATEDDATA
+
+        OBJECT                 = QAPERCENTMISSINGDATA
+          NUM_VAL              = 1
+          CLASS                = "9"
+          VALUE                = 22
+        END_OBJECT             = QAPERCENTMISSINGDATA
+
+        OBJECT                 = QAPERCENTOUTOFBOUNDSDATA
+          NUM_VAL              = 1
+          CLASS                = "9"
+          VALUE                = 0
+        END_OBJECT             = QAPERCENTOUTOFBOUNDSDATA
+
+        OBJECT                 = QAPERCENTCLOUDCOVER
+          NUM_VAL              = 1
+          CLASS                = "9"
+          VALUE                = 65
+        END_OBJECT             = QAPERCENTCLOUDCOVER
+
+      END_GROUP              = QASTATS
+
+    END_OBJECT             = MEASUREDPARAMETERCONTAINER
+
+    OBJECT                 = MEASUREDPARAMETERCONTAINER
+      CLASS                = "10"
+
+      OBJECT                 = PARAMETERNAME
+        CLASS                = "10"
+        NUM_VAL              = 1
+        VALUE                = "250m 16 days relative azimuth angle"
+      END_OBJECT             = PARAMETERNAME
+
+      GROUP                  = QAFLAGS
+        CLASS                = "10"
+
+        OBJECT                 = AUTOMATICQUALITYFLAG
+          NUM_VAL              = 1
+          CLASS                = "10"
+          VALUE                = "Passed"
+        END_OBJECT             = AUTOMATICQUALITYFLAG
+
+        OBJECT                 = AUTOMATICQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "10"
+          VALUE                = "No automatic quality assessment is performed in the PGE"
+        END_OBJECT             = AUTOMATICQUALITYFLAGEXPLANATION
+
+        OBJECT                 = SCIENCEQUALITYFLAG
+          NUM_VAL              = 1
+          VALUE                = "Not Investigated"
+          CLASS                = "10"
+        END_OBJECT             = SCIENCEQUALITYFLAG
+
+        OBJECT                 = SCIENCEQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "10"
+          VALUE                = "See http://landweb.nascom.nasa.gov/cgi-bin/QA_WWW/qaFlagPage.cgi?sat=aqua&ver=C6 for the product Science Quality status."
+        END_OBJECT             = SCIENCEQUALITYFLAGEXPLANATION
+
+      END_GROUP              = QAFLAGS
+
+      GROUP                  = QASTATS
+        CLASS                = "10"
+
+        OBJECT                 = QAPERCENTINTERPOLATEDDATA
+          NUM_VAL              = 1
+          CLASS                = "10"
+          VALUE                = 78
+        END_OBJECT             = QAPERCENTINTERPOLATEDDATA
+
+        OBJECT                 = QAPERCENTMISSINGDATA
+          NUM_VAL              = 1
+          CLASS                = "10"
+          VALUE                = 22
+        END_OBJECT             = QAPERCENTMISSINGDATA
+
+        OBJECT                 = QAPERCENTOUTOFBOUNDSDATA
+          NUM_VAL              = 1
+          CLASS                = "10"
+          VALUE                = 0
+        END_OBJECT             = QAPERCENTOUTOFBOUNDSDATA
+
+        OBJECT                 = QAPERCENTCLOUDCOVER
+          NUM_VAL              = 1
+          CLASS                = "10"
+          VALUE                = 65
+        END_OBJECT             = QAPERCENTCLOUDCOVER
+
+      END_GROUP              = QASTATS
+
+    END_OBJECT             = MEASUREDPARAMETERCONTAINER
+
+    OBJECT                 = MEASUREDPARAMETERCONTAINER
+      CLASS                = "11"
+
+      OBJECT                 = PARAMETERNAME
+        CLASS                = "11"
+        NUM_VAL              = 1
+        VALUE                = "250m 16 days composite day of the year"
+      END_OBJECT             = PARAMETERNAME
+
+      GROUP                  = QAFLAGS
+        CLASS                = "11"
+
+        OBJECT                 = AUTOMATICQUALITYFLAG
+          NUM_VAL              = 1
+          CLASS                = "11"
+          VALUE                = "Passed"
+        END_OBJECT             = AUTOMATICQUALITYFLAG
+
+        OBJECT                 = AUTOMATICQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "11"
+          VALUE                = "No automatic quality assessment is performed in the PGE"
+        END_OBJECT             = AUTOMATICQUALITYFLAGEXPLANATION
+
+        OBJECT                 = SCIENCEQUALITYFLAG
+          NUM_VAL              = 1
+          VALUE                = "Not Investigated"
+          CLASS                = "11"
+        END_OBJECT             = SCIENCEQUALITYFLAG
+
+        OBJECT                 = SCIENCEQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "11"
+          VALUE                = "See http://landweb.nascom.nasa.gov/cgi-bin/QA_WWW/qaFlagPage.cgi?sat=aqua&ver=C6 for the product Science Quality status."
+        END_OBJECT             = SCIENCEQUALITYFLAGEXPLANATION
+
+      END_GROUP              = QAFLAGS
+
+      GROUP                  = QASTATS
+        CLASS                = "11"
+
+        OBJECT                 = QAPERCENTINTERPOLATEDDATA
+          NUM_VAL              = 1
+          CLASS                = "11"
+          VALUE                = 78
+        END_OBJECT             = QAPERCENTINTERPOLATEDDATA
+
+        OBJECT                 = QAPERCENTMISSINGDATA
+          NUM_VAL              = 1
+          CLASS                = "11"
+          VALUE                = 22
+        END_OBJECT             = QAPERCENTMISSINGDATA
+
+        OBJECT                 = QAPERCENTOUTOFBOUNDSDATA
+          NUM_VAL              = 1
+          CLASS                = "11"
+          VALUE                = 0
+        END_OBJECT             = QAPERCENTOUTOFBOUNDSDATA
+
+        OBJECT                 = QAPERCENTCLOUDCOVER
+          NUM_VAL              = 1
+          CLASS                = "11"
+          VALUE                = 65
+        END_OBJECT             = QAPERCENTCLOUDCOVER
+
+      END_GROUP              = QASTATS
+
+    END_OBJECT             = MEASUREDPARAMETERCONTAINER
+
+    OBJECT                 = MEASUREDPARAMETERCONTAINER
+      CLASS                = "12"
+
+      OBJECT                 = PARAMETERNAME
+        CLASS                = "12"
+        NUM_VAL              = 1
+        VALUE                = "250m 16 days pixel reliability"
+      END_OBJECT             = PARAMETERNAME
+
+      GROUP                  = QAFLAGS
+        CLASS                = "12"
+
+        OBJECT                 = AUTOMATICQUALITYFLAG
+          NUM_VAL              = 1
+          CLASS                = "12"
+          VALUE                = "Passed"
+        END_OBJECT             = AUTOMATICQUALITYFLAG
+
+        OBJECT                 = AUTOMATICQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "12"
+          VALUE                = "No automatic quality assessment is performed in the PGE"
+        END_OBJECT             = AUTOMATICQUALITYFLAGEXPLANATION
+
+        OBJECT                 = SCIENCEQUALITYFLAG
+          NUM_VAL              = 1
+          VALUE                = "Not Investigated"
+          CLASS                = "12"
+        END_OBJECT             = SCIENCEQUALITYFLAG
+
+        OBJECT                 = SCIENCEQUALITYFLAGEXPLANATION
+          NUM_VAL              = 1
+          CLASS                = "12"
+          VALUE                = "See http://landweb.nascom.nasa.gov/cgi-bin/QA_WWW/qaFlagPage.cgi?sat=aqua&ver=C6 for the product Science Quality status."
+        END_OBJECT             = SCIENCEQUALITYFLAGEXPLANATION
+
+      END_GROUP              = QAFLAGS
+
+      GROUP                  = QASTATS
+        CLASS                = "12"
+
+        OBJECT                 = QAPERCENTINTERPOLATEDDATA
+          NUM_VAL              = 1
+          CLASS                = "12"
+          VALUE                = 78
+        END_OBJECT             = QAPERCENTINTERPOLATEDDATA
+
+        OBJECT                 = QAPERCENTMISSINGDATA
+          NUM_VAL              = 1
+          CLASS                = "12"
+          VALUE                = 22
+        END_OBJECT             = QAPERCENTMISSINGDATA
+
+        OBJECT                 = QAPERCENTOUTOFBOUNDSDATA
+          NUM_VAL              = 1
+          CLASS                = "12"
+          VALUE                = 0
+        END_OBJECT             = QAPERCENTOUTOFBOUNDSDATA
+
+        OBJECT                 = QAPERCENTCLOUDCOVER
+          NUM_VAL              = 1
+          CLASS                = "12"
+          VALUE                = 65
+        END_OBJECT             = QAPERCENTCLOUDCOVER
+
+      END_GROUP              = QASTATS
+
+    END_OBJECT             = MEASUREDPARAMETERCONTAINER
+
+  END_GROUP              = MEASUREDPARAMETER
+
+  GROUP                  = COLLECTIONDESCRIPTIONCLASS
+
+    OBJECT                 = SHORTNAME
+      NUM_VAL              = 1
+      VALUE                = "MYD13Q1"
+    END_OBJECT             = SHORTNAME
+
+    OBJECT                 = VERSIONID
+      NUM_VAL              = 1
+      VALUE                = 6
+    END_OBJECT             = VERSIONID
+
+  END_GROUP              = COLLECTIONDESCRIPTIONCLASS
+
+  GROUP                  = INPUTGRANULE
+
+    OBJECT                 = INPUTPOINTER
+      NUM_VAL              = 160
+      VALUE                = ("MYD09Q1.A2002185.h00v09.006.2015149104536.hdf", "MYD09Q1.A2002193.h00v09.006.2015149110233.hdf", "MYD09A1.A2002185.h00v09.006.2015149104536.hdf", "MYD09A1.A2002193.h00v09.006.2015149110233.hdf")
+    END_OBJECT             = INPUTPOINTER
+
+  END_GROUP              = INPUTGRANULE
+
+  GROUP                  = SPATIALDOMAINCONTAINER
+
+    GROUP                  = HORIZONTALSPATIALDOMAINCONTAINER
+
+      GROUP                  = GPOLYGON
+
+        OBJECT                 = GPOLYGONCONTAINER
+          CLASS                = "1"
+
+          GROUP                  = GRING
+            CLASS                = "1"
+
+            OBJECT                 = EXCLUSIONGRINGFLAG
+              NUM_VAL              = 1
+              CLASS                = "1"
+              VALUE                = "N"
+            END_OBJECT             = EXCLUSIONGRINGFLAG
+
+          END_GROUP              = GRING
+
+          GROUP                  = GRINGPOINT
+            CLASS                = "1"
+
+            OBJECT                 = GRINGPOINTLATITUDE
+              NUM_VAL              = 4
+              CLASS                = "1"
+              VALUE                = (-9.99897818038112, 0.0068192428090709, -5.67120187035294e-06, -9.99094976958276)
+            END_OBJECT             = GRINGPOINTLATITUDE
+
+            OBJECT                 = GRINGPOINTLONGITUDE
+              NUM_VAL              = 4
+              CLASS                = "1"
+              VALUE                = (179.92847338047, -179.999951699336, -169.991725713781, -169.920139762593)
+            END_OBJECT             = GRINGPOINTLONGITUDE
+
+            OBJECT                 = GRINGPOINTSEQUENCENO
+              NUM_VAL              = 4
+              CLASS                = "1"
+              VALUE                = (1, 2, 3, 4)
+            END_OBJECT             = GRINGPOINTSEQUENCENO
+
+          END_GROUP              = GRINGPOINT
+
+        END_OBJECT             = GPOLYGONCONTAINER
+
+      END_GROUP              = GPOLYGON
+
+    END_GROUP              = HORIZONTALSPATIALDOMAINCONTAINER
+
+  END_GROUP              = SPATIALDOMAINCONTAINER
+
+  GROUP                  = RANGEDATETIME
+
+    OBJECT                 = RANGEBEGINNINGTIME
+      NUM_VAL              = 1
+      VALUE                = "00:00:00"
+    END_OBJECT             = RANGEBEGINNINGTIME
+
+    OBJECT                 = RANGEENDINGTIME
+      NUM_VAL              = 1
+      VALUE                = "23:59:59"
+    END_OBJECT             = RANGEENDINGTIME
+
+    OBJECT                 = RANGEBEGINNINGDATE
+      NUM_VAL              = 1
+      VALUE                = "2002-07-04"
+    END_OBJECT             = RANGEBEGINNINGDATE
+
+    OBJECT                 = RANGEENDINGDATE
+      NUM_VAL              = 1
+      VALUE                = "2002-07-19"
+    END_OBJECT             = RANGEENDINGDATE
+
+  END_GROUP              = RANGEDATETIME
+
+  GROUP                  = PGEVERSIONCLASS
+
+    OBJECT                 = PGEVERSION
+      NUM_VAL              = 1
+      VALUE                = "6.0.27"
+    END_OBJECT             = PGEVERSION
+
+  END_GROUP              = PGEVERSIONCLASS
+
+  GROUP                  = ASSOCIATEDPLATFORMINSTRUMENTSENSOR
+
+    OBJECT                 = ASSOCIATEDPLATFORMINSTRUMENTSENSORCONTAINER
+      CLASS                = "1"
+
+      OBJECT                 = ASSOCIATEDSENSORSHORTNAME
+        CLASS                = "1"
+        NUM_VAL              = 1
+        VALUE                = "MODIS"
+      END_OBJECT             = ASSOCIATEDSENSORSHORTNAME
+
+      OBJECT                 = ASSOCIATEDPLATFORMSHORTNAME
+        CLASS                = "1"
+        NUM_VAL              = 1
+        VALUE                = "Aqua"
+      END_OBJECT             = ASSOCIATEDPLATFORMSHORTNAME
+
+      OBJECT                 = ASSOCIATEDINSTRUMENTSHORTNAME
+        CLASS                = "1"
+        NUM_VAL              = 1
+        VALUE                = "MODIS"
+      END_OBJECT             = ASSOCIATEDINSTRUMENTSHORTNAME
+
+    END_OBJECT             = ASSOCIATEDPLATFORMINSTRUMENTSENSORCONTAINER
+
+  END_GROUP              = ASSOCIATEDPLATFORMINSTRUMENTSENSOR
+
+  GROUP                  = ADDITIONALATTRIBUTES
+
+    OBJECT                 = ADDITIONALATTRIBUTESCONTAINER
+      CLASS                = "1"
+
+      OBJECT                 = ADDITIONALATTRIBUTENAME
+        CLASS                = "1"
+        NUM_VAL              = 1
+        VALUE                = "QAPERCENTGOODQUALITY"
+      END_OBJECT             = ADDITIONALATTRIBUTENAME
+
+      GROUP                  = INFORMATIONCONTENT
+        CLASS                = "1"
+
+        OBJECT                 = PARAMETERVALUE
+          NUM_VAL              = 1
+          CLASS                = "1"
+          VALUE                = "0"
+        END_OBJECT             = PARAMETERVALUE
+
+      END_GROUP              = INFORMATIONCONTENT
+
+    END_OBJECT             = ADDITIONALATTRIBUTESCONTAINER
+
+    OBJECT                 = ADDITIONALATTRIBUTESCONTAINER
+      CLASS                = "2"
+
+      OBJECT                 = ADDITIONALATTRIBUTENAME
+        CLASS                = "2"
+        NUM_VAL              = 1
+        VALUE                = "QAPERCENTOTHERQUALITY"
+      END_OBJECT             = ADDITIONALATTRIBUTENAME
+
+      GROUP                  = INFORMATIONCONTENT
+        CLASS                = "2"
+
+        OBJECT                 = PARAMETERVALUE
+          NUM_VAL              = 1
+          CLASS                = "2"
+          VALUE                = "100"
+        END_OBJECT             = PARAMETERVALUE
+
+      END_GROUP              = INFORMATIONCONTENT
+
+    END_OBJECT             = ADDITIONALATTRIBUTESCONTAINER
+
+    OBJECT                 = ADDITIONALATTRIBUTESCONTAINER
+      CLASS                = "3"
+
+      OBJECT                 = ADDITIONALATTRIBUTENAME
+        CLASS                = "3"
+        NUM_VAL              = 1
+        VALUE                = "QAPERCENTNOTPRODUCEDCLOUD"
+      END_OBJECT             = ADDITIONALATTRIBUTENAME
+
+      GROUP                  = INFORMATIONCONTENT
+        CLASS                = "3"
+
+        OBJECT                 = PARAMETERVALUE
+          NUM_VAL              = 1
+          CLASS                = "3"
+          VALUE                = "0"
+        END_OBJECT             = PARAMETERVALUE
+
+      END_GROUP              = INFORMATIONCONTENT
+
+    END_OBJECT             = ADDITIONALATTRIBUTESCONTAINER
+
+    OBJECT                 = ADDITIONALATTRIBUTESCONTAINER
+      CLASS                = "4"
+
+      OBJECT                 = ADDITIONALATTRIBUTENAME
+        CLASS                = "4"
+        NUM_VAL              = 1
+        VALUE                = "QAPERCENTNOTPRODUCEDOTHER"
+      END_OBJECT             = ADDITIONALATTRIBUTENAME
+
+      GROUP                  = INFORMATIONCONTENT
+        CLASS                = "4"
+
+        OBJECT                 = PARAMETERVALUE
+          NUM_VAL              = 1
+          CLASS                = "4"
+          VALUE                = "0"
+        END_OBJECT             = PARAMETERVALUE
+
+      END_GROUP              = INFORMATIONCONTENT
+
+    END_OBJECT             = ADDITIONALATTRIBUTESCONTAINER
+
+    OBJECT                 = ADDITIONALATTRIBUTESCONTAINER
+      CLASS                = "5"
+
+      OBJECT                 = ADDITIONALATTRIBUTENAME
+        CLASS                = "5"
+        NUM_VAL              = 1
+        VALUE                = "NDVI250M16DAYQCLASSPERCENTAGE"
+      END_OBJECT             = ADDITIONALATTRIBUTENAME
+
+      GROUP                  = INFORMATIONCONTENT
+        CLASS                = "5"
+
+        OBJECT                 = PARAMETERVALUE
+          NUM_VAL              = 1
+          CLASS                = "5"
+          VALUE                = "0"
+        END_OBJECT             = PARAMETERVALUE
+
+      END_GROUP              = INFORMATIONCONTENT
+
+    END_OBJECT             = ADDITIONALATTRIBUTESCONTAINER
+
+    OBJECT                 = ADDITIONALATTRIBUTESCONTAINER
+      CLASS                = "6"
+
+      OBJECT                 = ADDITIONALATTRIBUTENAME
+        CLASS                = "6"
+        NUM_VAL              = 1
+        VALUE                = "EVI250M16DAYQCLASSPERCENTAGE"
+      END_OBJECT             = ADDITIONALATTRIBUTENAME
+
+      GROUP                  = INFORMATIONCONTENT
+        CLASS                = "6"
+
+        OBJECT                 = PARAMETERVALUE
+          NUM_VAL              = 1
+          CLASS                = "6"
+          VALUE                = "0"
+        END_OBJECT             = PARAMETERVALUE
+
+      END_GROUP              = INFORMATIONCONTENT
+
+    END_OBJECT             = ADDITIONALATTRIBUTESCONTAINER
+
+    OBJECT                 = ADDITIONALATTRIBUTESCONTAINER
+      CLASS                = "7"
+
+      OBJECT                 = ADDITIONALATTRIBUTENAME
+        CLASS                = "7"
+        NUM_VAL              = 1
+        VALUE                = "HORIZONTALTILENUMBER"
+      END_OBJECT             = ADDITIONALATTRIBUTENAME
+
+      GROUP                  = INFORMATIONCONTENT
+        CLASS                = "7"
+
+        OBJECT                 = PARAMETERVALUE
+          NUM_VAL              = 1
+          CLASS                = "7"
+          VALUE                = "00"
+        END_OBJECT             = PARAMETERVALUE
+
+      END_GROUP              = INFORMATIONCONTENT
+
+    END_OBJECT             = ADDITIONALATTRIBUTESCONTAINER
+
+    OBJECT                 = ADDITIONALATTRIBUTESCONTAINER
+      CLASS                = "8"
+
+      OBJECT                 = ADDITIONALATTRIBUTENAME
+        CLASS                = "8"
+        NUM_VAL              = 1
+        VALUE                = "VERTICALTILENUMBER"
+      END_OBJECT             = ADDITIONALATTRIBUTENAME
+
+      GROUP                  = INFORMATIONCONTENT
+        CLASS                = "8"
+
+        OBJECT                 = PARAMETERVALUE
+          NUM_VAL              = 1
+          CLASS                = "8"
+          VALUE                = "09"
+        END_OBJECT             = PARAMETERVALUE
+
+      END_GROUP              = INFORMATIONCONTENT
+
+    END_OBJECT             = ADDITIONALATTRIBUTESCONTAINER
+
+    OBJECT                 = ADDITIONALATTRIBUTESCONTAINER
+      CLASS                = "9"
+
+      OBJECT                 = ADDITIONALATTRIBUTENAME
+        CLASS                = "9"
+        NUM_VAL              = 1
+        VALUE                = "TileID"
+      END_OBJECT             = ADDITIONALATTRIBUTENAME
+
+      GROUP                  = INFORMATIONCONTENT
+        CLASS                = "9"
+
+        OBJECT                 = PARAMETERVALUE
+          NUM_VAL              = 1
+          CLASS                = "9"
+          VALUE                = "51000009"
+        END_OBJECT             = PARAMETERVALUE
+
+      END_GROUP              = INFORMATIONCONTENT
+
+    END_OBJECT             = ADDITIONALATTRIBUTESCONTAINER
+
+    OBJECT                 = ADDITIONALATTRIBUTESCONTAINER
+      CLASS                = "10"
+
+      OBJECT                 = ADDITIONALATTRIBUTENAME
+        CLASS                = "10"
+        NUM_VAL              = 1
+        VALUE                = "INPUTPRODUCTRESOLUTION"
+      END_OBJECT             = ADDITIONALATTRIBUTENAME
+
+      GROUP                  = INFORMATIONCONTENT
+        CLASS                = "10"
+
+        OBJECT                 = PARAMETERVALUE
+          NUM_VAL              = 1
+          CLASS                = "10"
+          VALUE                = "Product input resolution 250m"
+        END_OBJECT             = PARAMETERVALUE
+
+      END_GROUP              = INFORMATIONCONTENT
+
+    END_OBJECT             = ADDITIONALATTRIBUTESCONTAINER
+
+    OBJECT                 = ADDITIONALATTRIBUTESCONTAINER
+      CLASS                = "11"
+
+      OBJECT                 = ADDITIONALATTRIBUTENAME
+        CLASS                = "11"
+        NUM_VAL              = 1
+        VALUE                = "identifier_product_doi"
+      END_OBJECT             = ADDITIONALATTRIBUTENAME
+
+      GROUP                  = INFORMATIONCONTENT
+        CLASS                = "11"
+
+        OBJECT                 = PARAMETERVALUE
+          NUM_VAL              = 1
+          CLASS                = "11"
+          VALUE                = "10.5067/MODIS/MYD13Q1.006"
+        END_OBJECT             = PARAMETERVALUE
+
+      END_GROUP              = INFORMATIONCONTENT
+
+    END_OBJECT             = ADDITIONALATTRIBUTESCONTAINER
+
+    OBJECT                 = ADDITIONALATTRIBUTESCONTAINER
+      CLASS                = "12"
+
+      OBJECT                 = ADDITIONALATTRIBUTENAME
+        CLASS                = "12"
+        NUM_VAL              = 1
+        VALUE                = "identifier_product_doi_authority"
+      END_OBJECT             = ADDITIONALATTRIBUTENAME
+
+      GROUP                  = INFORMATIONCONTENT
+        CLASS                = "12"
+
+        OBJECT                 = PARAMETERVALUE
+          NUM_VAL              = 1
+          CLASS                = "12"
+          VALUE                = "http://dx.doi.org"
+        END_OBJECT             = PARAMETERVALUE
+
+      END_GROUP              = INFORMATIONCONTENT
+
+    END_OBJECT             = ADDITIONALATTRIBUTESCONTAINER
+
+  END_GROUP              = ADDITIONALATTRIBUTES
+
+END_GROUP              = INVENTORYMETADATA
+
+END
