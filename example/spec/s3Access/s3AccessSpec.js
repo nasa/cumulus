@@ -1,5 +1,5 @@
 const { Lambda, STS, Credentials } = require('aws-sdk');
-const { s3 } = require('@cumulus/common/aws');
+const { aws: { s3 }, testUtils: { randomId } } = require('@cumulus/common');
 const { api: { callCumulusApi } } = require('@cumulus/integration-tests');
 const { loadConfig } = require('../helpers/testUtils');
 
@@ -82,6 +82,7 @@ describe('When accessing an S3 bucket directly', () => {
 
   describe('with credentials associated with an Earthdata Login ID', () => {
     let creds;
+    const userName = randomId('newUser');
 
     beforeAll(async () => {
       const payload = await callCumulusApi({
@@ -90,7 +91,8 @@ describe('When accessing an S3 bucket directly', () => {
           httpMethod: 'GET',
           resource: '/{proxy+}',
           path: '/s3credentials'
-        }
+        },
+        userParams: { userName }
       });
       creds = JSON.parse(payload.body);
     });
@@ -100,8 +102,8 @@ describe('When accessing an S3 bucket directly', () => {
       const sts = new STS({ credentials });
       const whoami = await sts.getCallerIdentity().promise();
 
-      expect(whoami.Arn).toMatch(/arn:aws:sts::\d{12}:assumed-role\/s3-same-region-access-role\/userName.*/);
-      expect(whoami.UserId).toMatch(/.*:userName.*/);
+      expect(whoami.Arn).toMatch(new RegExp(`arn:aws:sts::\\d{12}:assumed-role/s3-same-region-access-role/${userName}.*`));
+      expect(whoami.UserId).toMatch(new RegExp(`.*:${userName}`));
     });
 
     describe('while in the the same region ', () => {

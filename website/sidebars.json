@@ -21,6 +21,7 @@
     "Deployment": [
       "deployment/deployment-readme",
       "deployment/create_bucket",
+      "deployment/server_access_logging",
       "deployment/iam_roles",
       "deployment/obtain_cumulus_packages",
       "deployment/config_descriptions",
@@ -69,7 +70,8 @@
     ],
     "Configuration": [
       "operator-docs/update-cumulus-dependencies",
-      "operator-docs/lifecycle-policies"
+      "operator-docs/lifecycle-policies",
+      "operator-docs/locating-access-logs"
     ]
   }
 }
