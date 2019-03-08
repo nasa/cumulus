@@ -223,14 +223,14 @@ dev:                            # deployment name
         type: internal
 
   iams:
-    ecsRoleArn: arn:aws:iam::<aws-account-id>:role/<prefix>-ecs
-    lambdaApiGatewayRoleArn: arn:aws:iam::<aws-account-id>:role/<prefix>-lambda-api-gateway
-    lambdaProcessingRoleArn: arn:aws:iam::<aws-account-id>:role/<prefix>-lambda-processing
-    stepRoleArn: arn:aws:iam::<aws-account-id>:role/<prefix>-steprole
-    instanceProfile: arn:aws:iam::<aws-account-id>:instance-profile/<prefix>-ecs
-    distributionRoleArn: 'arn:aws:iam::<aws-account-id>:role/<prefix>-distribution-api-lambda'
-    scalingRoleArn: 'arn:aws:iam::<aws-account-id>:role/<prefix>-scaling-role'
-    migrationRoleArn: 'arn:aws:iam::<aws-account-id>:role/<prefix>-migration-processing'
+    ecsRoleArn: arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-ecs
+    lambdaApiGatewayRoleArn: arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway
+    lambdaProcessingRoleArn: arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-processing
+    stepRoleArn: arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-steprole
+    instanceProfile: arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-scaling-role'
+    migrationRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-migration-processing'
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
