@@ -327,15 +327,15 @@ function constructOnlineAccessUrl({
       URL: urljoin(distEndpoint, extension),
       URLDescription: 'File to download', // used by ECHO10
       Description: 'File to download', // used by UMMG
-      Type: 'GET DATA'; // used by UMMG
+      Type: 'GET DATA' // used by UMMG
     };
   }
   if (bucketType === 'public') {
     return {
       URL: `https://${file.bucket}.s3.amazonaws.com/${getS3KeyOfFile(file)}`,
-      URLDescription = 'File to download',
-      Description = 'File to download',
-      Type = 'GET DATA'
+      URLDescription: 'File to download',
+      Description: 'File to download',
+      Type: 'GET DATA'
     };
   }
   return null;
