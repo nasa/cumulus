@@ -18,6 +18,7 @@ const stats = require('../endpoints/stats');
 const s3credentials = require('../endpoints/s3credentials');
 const version = require('../endpoints/version');
 const workflows = require('../endpoints/workflows');
+const dashboard = require('../endpoints/dashboard');
 
 let token = require('../endpoints/token');
 let { ensureAuthorized } = require('./auth');
@@ -79,6 +80,8 @@ router.delete('/token/:token', token.deleteTokenEndpoint);
 router.delete('/tokenDelete/:token', token.deleteTokenEndpoint);
 router.get('/token', token.tokenEndpoint);
 router.post('/refresh', token.refreshEndpoint);
+
+router.use('/dashboard', dashboard);
 
 
 module.exports = router;
