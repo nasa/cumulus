@@ -625,7 +625,6 @@ async function updateCMRMetadata({
     distEndpoint,
     buckets
   };
-  console.log(JSON.stringify(params));
 
   if (isECHO10File(filename)) {
     theMetadata = await updateEcho10XMLMetadata(params);
