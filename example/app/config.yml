@@ -61,6 +61,7 @@ default:
             fileStagingDir: 'custom-staging-dir/{{stackName}}/replace-me-collectionId'
   # test configuration ends
 
+  prefix: 'change-me'
   stackName: 'change-me'
   # stackNameNoDash: TestCumulusIntegration
   shared_data_bucket: cumulus-data-shared
@@ -188,22 +189,27 @@ default:
 # CUMULUS team deployments
 # ------------------------
 cumulus-from-npm:
+  prefix: test-npm-integration
   stackName: test-npm-integration # used by the integration repo
   stackNameNoDash: TestNpmIntegration
 
 cumulus-from-source:
+  prefix: test-src-integration
   stackName: test-src-integration # used by the cumulus repo
   stackNameNoDash: TestSourceIntegration
 
 cumulus-from-pr:
+  prefix: test-pr-integration
   stackName: test-pr-integration # used by the PR
   stackNameNoDash: TestPrIntegration
 
 cumulus-nightly:
+  prefix: nightly
   stackName: nightly # used by the nightly cron job
   stackNameNoDash: Nightly
 
 cumulus-sit:
+  prefix: cumulus-sit
   stackName: cumulus-sit
   stackNameNoDash: cumulusSit
 
@@ -227,15 +233,13 @@ cumulus-sit:
 # -------------------------------
 # CUMULUS individual deployments.
 # -------------------------------
-aj:
-  stackName: aj-integration
-  stackNameNoDash: AjIntegration
-
 aimee-test:
+  prefix: aimee-test
   stackName: aimee-test
   stackNameNoDash: aimeeTest
 
 lf:
+  prefix: lf-cumulus
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus
 
@@ -257,6 +261,7 @@ lf:
       type: protected
 
 lf-int-test:
+  prefix: lf-int-test
   stackName: lf-int-test
   stackNameNoDash: lfIntTest
 
@@ -278,6 +283,7 @@ lf-int-test:
       type: protected
 
 lf-sit:
+  prefix: lf-sit
   stackName: lf-sit
   stackNameNoDash: lfSit
 
@@ -299,6 +305,7 @@ lf-sit:
       type: protected
 
 kk-uat-deployment:
+  prefix: kk-test-uat
   stackName: kk-test-uat
   stackNameNoDash: KkTestUat
   esHost: https://search-kk-test-uat-es5-bk24w6blilunzp4fc4ma3xwtqu.us-east-1.es.amazonaws.com
@@ -318,6 +325,7 @@ kk-uat-deployment:
       type: public
 
 mth:
+  prefix: mth
   stackName: mth
   stackNameNoDash: Mth
   useWorkflowLambdaVersions: false
@@ -339,6 +347,7 @@ mth:
       type: public
 
 jl:
+  prefix: jl-test-integration
   stackName: jl-test-integration
   stackNameNoDash: JlTestIntegration
   buckets:
@@ -394,7 +403,7 @@ mhs2:
     enableAutoScaling: false
 
 gitc:
-  prefix: {{PREFIX}}
+  prefix: {{stackName}}
   stackName: {{stackName}}
   stackNameNoDash: {{stackNameNoDash}}
 
@@ -438,6 +447,7 @@ gitc:
     enableAutoScaling: false
 
 mvd:
+  prefix: mvd
   stackName: mvd
   stackNameNoDash: mvd
   buckets:
@@ -447,6 +457,7 @@ mvd:
   bucket: '{{stackName}}-internal'
 
 mvd-dev:
+  prefix: mvd-dev
   stackName: mvd-dev
   stackNameNoDash: mvdDev
   buckets:
@@ -456,6 +467,7 @@ mvd-dev:
   bucket: 'mvd-internal'
 
 jc:
+  prefix: jc
   stackName: jc
   stackNameNoDash: jc
   ecs:
@@ -482,10 +494,12 @@ jc:
       registry: ecr
 
 mhs:
+  prefix: mhs
   stackName: mhs
   stackNameNoDash: mhs
 
 mhs3:
+  prefix: mhs3
   stackName: mhs3
   stackNameNoDash: mhs3
   buckets:
@@ -509,47 +523,27 @@ mhs3:
       type: shared
   system_bucket: mhs3-internal
 
-
 jk:
+  prefix: jk
   stackName: jk
   stackNameNoDash: jk
 
 jk2:
+  prefix: jk2
   stackName: jk2
   stackNameNoDash: jk2
 
 mboyd-test:
   prefix: mboyd-test
   stackName: '{{prefix}}'
-  # stackName: mboyd-test
   stackNameNoDash: mboydTest
-
-  users:
-    - username: testuser3
-
-  # buckets:
-  #   internal:
-  #     name: mboyd-test-internal
-  #     type: internal
-  #   private:
-  #     name: mboyd-test-private
-  #     type: private
-  #   protected:
-  #     name: mboyd-test-protected
-  #     type: protected
-  #   public:
-  #     name: mboyd-test-public
-  #     type: public
-  #   protected-2:
-  #     name: mboyd-test-protected-2
-  #     type: protected
 
 mboyd-int:
   prefix: mboyd-int
   stackName: '{{prefix}}'
-  # stackName: mboyd-int
   stackNameNoDash: mboydInt
 
 pq:
+  prefix: pq
   stackName: pq
   stackNameNoDash: pq
