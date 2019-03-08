@@ -7,6 +7,7 @@ const test = require('ava');
 const sinon = require('sinon');
 
 const aws = require('../aws');
+const { UnparsableFileLocationError } = require('../errors.js');
 const { randomString, throttleOnce } = require('../test-utils');
 
 test('s3Join behaves as expected', (t) => {
@@ -248,6 +249,6 @@ test('getFileBucketAndKey throws UnparsableFileLocationError if location cannot 
     aws.getFileBucketAndKey(pathParams);
   }
   catch (err) {
-    t.true((err instanceof aws.UnparsableFileLocationError));
+    t.true((err instanceof UnparsableFileLocationError));
   }
 });

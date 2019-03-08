@@ -133,7 +133,7 @@ lf:
       name: cumulus-dashboard-sandbox
       type: shared
     dashboard-2:
-      name: lauren-dashboard-test
+      name: lf-dashboard
       type: shared
 
 lf-int-test:

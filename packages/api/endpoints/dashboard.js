@@ -2,7 +2,7 @@
 
 const router = require('express-promise-router')();
 const {
-  getS3Object,
+  s3,
   getFileBucketAndKey
 } = require('@cumulus/common/aws');
 
@@ -16,11 +16,14 @@ const {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
-  const [bucket, key] = getFileBucketAndKey(req.params[0]);
+  const [Bucket, Key] = getFileBucketAndKey(req.params[0]);
 
-  const getObjectResponse = await getS3Object(bucket, key);
-  res.set('Content-Type', getObjectResponse.ContentType);
-  return res.send(getObjectResponse.Body.toString());
+  return s3().getObject({ Bucket, Key })
+    .on('httpHeaders', (code, headers) => {
+      res.set('Content-Type', headers['content-type']);
+    })
+    .createReadStream()
+    .pipe(res);
 }
 
 router.get('/*', get);
