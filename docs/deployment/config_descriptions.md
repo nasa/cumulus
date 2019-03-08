@@ -12,7 +12,7 @@ The name (e.g. dev) of the the 'deployment' - this key tells kes which configura
 
 ## prefix
 
-This value will prefix CloudFormation-created IAM resources and permissions.
+This value will prefix CloudFormation-created IAM resources and permissions. **This value must match the prefix used in the [app](deployment-readme#configure-and-deploy-the-cumulus-stack) deployment, or the deployment will fail.**
 
 ## stackName
 
