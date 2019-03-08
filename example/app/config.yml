@@ -3,6 +3,7 @@ default:
 
   # test configuration starts
   test_configs:
+    prefix: '{{prefix}}'
     stackName: '{{stackName}}'
     bucket: '{{buckets.internal.name}}'
     DISTRIBUTION_ENDPOINT: '{{api_distribution_url}}'
