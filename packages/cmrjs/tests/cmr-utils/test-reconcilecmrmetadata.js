@@ -132,7 +132,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
   const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr.xml' }];
   const { granId, backendUrl, distEndpoint } = t.context;
   const published = false;
-  const fakeBuckets = { private: {type: 'private', name: 'private' } };
+  const fakeBuckets = { private: { type: 'private', name: 'private' } };
   const fakeBucketsConfigDefaults = sinon.fake.returns(fakeBuckets);
   const restoreBucketsConfigDefaults = cmrUtils.__set__('bucketsConfigDefaults', fakeBucketsConfigDefaults);
 
@@ -188,7 +188,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
   const fakePublishECHO10XML2CMR = sinon.fake.resolves({});
   const restorePublishECHO10XML2CMR = cmrUtils.__set__('publishECHO10XML2CMR', fakePublishECHO10XML2CMR);
 
-  const fakeBuckets = { private: {type: 'private', name: 'private' } };
+  const fakeBuckets = { private: { type: 'private', name: 'private' } };
   const fakeBucketsConfigDefaults = sinon.fake.returns(fakeBuckets);
   const restoreBucketsConfigDefaults = cmrUtils.__set__('bucketsConfigDefaults', fakeBucketsConfigDefaults);
 
@@ -278,7 +278,7 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
     files: updatedFiles,
     backendUrl,
     distEndpoint,
-    buckets: new BucketsConfig(defaultBucketsConfig)
+    buckets
   };
 
   // assert
@@ -298,7 +298,12 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
 test('updateCMRMetadata file throws error if incorrect cmrfile provided', async (t) => {
   const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr.json' }];
   const badCMRFile = { filename: 'notreallycmrfile' };
-  const { granId, backendUrl, distEndpoint, published } = t.context;
+  const {
+    granId,
+    backendUrl,
+    distEndpoint,
+    published
+  } = t.context;
   const updateCMRMetadata = cmrUtils.__get__('updateCMRMetadata');
 
   const error = await t.throws(
