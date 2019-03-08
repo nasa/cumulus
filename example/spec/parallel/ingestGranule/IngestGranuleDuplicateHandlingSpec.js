@@ -85,7 +85,7 @@ describe('When the Ingest Granules workflow is configured\n', () => {
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       granulesApiTestUtils.deleteGranule({
-        prefix: config.stackName,
+        prefix: config.prefix,
         granuleId: inputPayload.granules[0].granuleId
       })
     ]);
@@ -151,7 +151,7 @@ describe('When the Ingest Granules workflow is configured\n', () => {
         // so this check does not always work.
         // it('captures both files', async () => {
         //   const granule = await granulesApiTestUtils.getGranule({
-        //     prefix: config.stackName,
+        //     prefix: config.prefix,
         //     granuleId: inputPayload.granules[0].granuleId
         //   });
         //   expect(granule.files.length).toEqual(5);
@@ -204,7 +204,7 @@ describe('When the Ingest Granules workflow is configured\n', () => {
 
       it('captures all files', async () => {
         const granuleResponse = await granulesApiTestUtils.getGranule({
-          prefix: config.stackName,
+          prefix: config.prefix,
           granuleId: inputPayload.granules[0].granuleId
         });
 

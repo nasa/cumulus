@@ -42,8 +42,8 @@ const {
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 
 const reportsPrefix = (stackName) => `${stackName}/reconciliation-reports/`;
-const filesTableName = (stackName) => `${stackName}-FilesTable`;
-const collectionsTableName = (stackName) => `${stackName}-CollectionsTable`;
+const filesTableName = (prefix) => `${prefix}-FilesTable`;
+const collectionsTableName = (prefix) => `${prefix}-CollectionsTable`;
 
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MYD13Q1_006';
@@ -54,8 +54,8 @@ const granuleRegex = '^MYD13Q1\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
 const config = loadConfig();
 
-process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+process.env.CollectionsTable = `${config.prefix}-CollectionsTable`;
+process.env.GranulesTable = `${config.prefix}-GranulesTable`;
 const granuleModel = new Granule();
 
 const cmr = new CMR(config.cmr.provider, config.cmr.clientId, config.cmr.username, config.cmr.password);
@@ -194,7 +194,7 @@ describe('When there are granule differences and granule reconciliation is run',
     };
 
     await dynamodb().putItem({
-      TableName: filesTableName(config.stackName),
+      TableName: filesTableName(config.prefix),
       Item: extraFileInDb
     }).promise();
 
@@ -205,7 +205,7 @@ describe('When there are granule differences and granule reconciliation is run',
     };
 
     await dynamodb().putItem({
-      TableName: collectionsTableName(config.stackName),
+      TableName: collectionsTableName(config.prefix),
       Item: extraCumulusCollection
     }).promise();
 
@@ -230,16 +230,16 @@ describe('When there are granule differences and granule reconciliation is run',
 
     // update one of the granule files in database so that that file won't match with CMR
     const granuleResponse = await granulesApiTestUtils.getGranule({
-      prefix: config.stackName,
+      prefix: config.prefix,
       granuleId: publishedGranule
     });
 
     ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranule, JSON.parse(granuleResponse.body).files, /jpg$/, 'jpg2'));
 
-    console.log(`invoke ${config.stackName}-CreateReconciliationReport`);
+    console.log(`invoke ${config.prefix}-CreateReconciliationReport`);
 
     // Run the report
-    await lambda().invoke({ FunctionName: `${config.stackName}-CreateReconciliationReport` }).promise();
+    await lambda().invoke({ FunctionName: `${config.prefix}-CreateReconciliationReport` }).promise();
 
     // Fetch the report
     const reportKey = (await getReportsKeys(config.bucket, config.stackName))[0];
@@ -329,14 +329,14 @@ describe('When there are granule differences and granule reconciliation is run',
       deleteReconciliationReports(config.bucket, config.stackName),
       s3().deleteObject(extraS3Object).promise(),
       dynamodb().deleteItem({
-        TableName: filesTableName(config.stackName),
+        TableName: filesTableName(config.Prefix),
         Key: {
           bucket: extraFileInDb.bucket,
           key: extraFileInDb.key
         }
       }).promise(),
       dynamodb().deleteItem({
-        TableName: collectionsTableName(config.stackName),
+        TableName: collectionsTableName(config.prefix),
         Key: {
           name: extraCumulusCollection.name,
           version: extraCumulusCollection.version
@@ -345,17 +345,17 @@ describe('When there are granule differences and granule reconciliation is run',
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranule }),
+      granulesApiTestUtils.deleteGranule({ prefix: config.prefix, granuleId: dbGranule }),
       cmr.deleteGranule(cmrGranule)
     ]);
 
     const granuleResponse = await granulesApiTestUtils.getGranule({
-      prefix: config.stackName,
+      prefix: config.prefix,
       granuleId: publishedGranule
     });
 
-    await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: publishedGranule });
+    await granulesApiTestUtils.removeFromCMR({ prefix: config.prefix, granuleId: publishedGranule });
     await waitForConceptExistsOutcome(JSON.parse(granuleResponse.body).cmrLink, false);
-    await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: publishedGranule });
+    await granulesApiTestUtils.deleteGranule({ prefix: config.prefix, granuleId: publishedGranule });
   });
 });

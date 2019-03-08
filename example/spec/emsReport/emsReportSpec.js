@@ -7,7 +7,7 @@ const { loadConfig } = require('../helpers/testUtils');
 
 const config = loadConfig();
 
-const emsReportLambda = `${config.stackName}-EmsReport`;
+const emsReportLambda = `${config.prefix}-EmsReport`;
 const bucket = config.bucket;
 const emsProvider = config.ems_provider;
 const stackName = config.stackName;

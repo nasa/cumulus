@@ -50,7 +50,7 @@ xdescribe('The Discover Granules workflow with https Protocol', () => {
     await Promise.all([
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       apiTestUtils.addProviderApi({
-        prefix: config.stackName,
+        prefix: config.prefix,
         provider
       })
     ]);
@@ -94,7 +94,7 @@ xdescribe('The Discover Granules workflow with https Protocol', () => {
     afterAll(async () => {
       await Promise.all(lambdaOutput.payload.granules.map(
         (granule) => granulesApiTestUtils.deleteGranule({
-          prefix: config.stackName,
+          prefix: config.prefix,
           granuleId: granule.granuleId
         })
       ));

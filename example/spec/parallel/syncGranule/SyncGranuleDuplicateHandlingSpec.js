@@ -96,7 +96,7 @@ describe('When the Sync Granule workflow is configured', () => {
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       granulesApiTestUtils.deleteGranule({
-        prefix: config.stackName,
+        prefix: config.prefix,
         granuleId: inputPayload.granules[0].granuleId
       })
     ]);
@@ -121,7 +121,7 @@ describe('When the Sync Granule workflow is configured', () => {
 
         // set collection duplicate handling to 'version'
         await apiTestUtils.updateCollection({
-          prefix: config.stackName,
+          prefix: config.prefix,
           collection,
           updateParams: { duplicateHandling: 'version' }
         });
@@ -195,7 +195,7 @@ describe('When the Sync Granule workflow is configured', () => {
 
       it('captures both files', async () => {
         const granuleResponse = await granulesApiTestUtils.getGranule({
-          prefix: config.stackName,
+          prefix: config.prefix,
           granuleId: inputPayload.granules[0].granuleId
         });
         const granule = JSON.parse(granuleResponse.body);
@@ -239,7 +239,7 @@ describe('When the Sync Granule workflow is configured', () => {
 
       it('captures all files', async () => {
         const granuleResponse = await granulesApiTestUtils.getGranule({
-          prefix: config.stackName,
+          prefix: config.prefix,
           granuleId: inputPayload.granules[0].granuleId
         });
         const granule = JSON.parse(granuleResponse.body);
@@ -253,7 +253,7 @@ describe('When the Sync Granule workflow is configured', () => {
       beforeAll(async () => {
         // set collection duplicate handling to 'error'
         await apiTestUtils.updateCollection({
-          prefix: config.stackName,
+          prefix: config.prefix,
           collection,
           updateParams: { duplicateHandling: 'error' }
         });

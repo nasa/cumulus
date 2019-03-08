@@ -107,14 +107,14 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   let granule;
   let server;
 
-  process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
+  process.env.AccessTokensTable = `${config.prefix}-AccessTokensTable`;
   const accessTokensModel = new AccessToken();
-  process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-  process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+  process.env.GranulesTable = `${config.prefix}-GranulesTable`;
+  process.env.ExecutionsTable = `${config.prefix}-ExecutionsTable`;
   const executionModel = new Execution();
-  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+  process.env.CollectionsTable = `${config.prefix}-CollectionsTable`;
   const collectionModel = new Collection();
-  process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
+  process.env.ProvidersTable = `${config.prefix}-ProvidersTable`;
   const providerModel = new Provider();
 
   beforeAll(async (done) => {
@@ -134,8 +134,8 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-      apiTestUtils.addCollectionApi({ prefix: config.stackName, collection: collectionData }),
-      apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData })
+      apiTestUtils.addCollectionApi({ prefix: config.prefix, collection: collectionData }),
+      apiTestUtils.addProviderApi({ prefix: config.prefix, provider: providerData })
     ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
@@ -164,7 +164,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     );
 
     // Use done() to signal end of beforeAll() after distribution API has started up
-    server = await serveDistributionApi(config.stackName, done);
+    server = await serveDistributionApi(config.prefix, done);
   });
 
   afterAll(async (done) => {
@@ -176,7 +176,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         providerModel.delete(provider),
         executionModel.delete({ arn: workflowExecution.executionArn }),
         granulesApiTestUtils.removePublishedGranule({
-          prefix: config.stackName,
+          prefix: config.prefix,
           granuleId: inputPayload.granules[0].granuleId
         })
       ]);
@@ -407,7 +407,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('returns success upon move', async () => {
       const moveGranuleResponse = await granulesApiTestUtils.moveGranule({
-        prefix: config.stackName,
+        prefix: config.prefix,
         granuleId: inputPayload.granules[0].granuleId,
         destinations
       });

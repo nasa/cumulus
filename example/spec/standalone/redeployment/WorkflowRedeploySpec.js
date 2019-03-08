@@ -71,7 +71,7 @@ describe('When a workflow', () => {
 
       beforeAll(async () => {
         const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
-          prefix: config.stackName,
+          prefix: config.prefix,
           arn: workflowExecutionArn
         });
         executionStatus = JSON.parse(executionStatusResponse.body);

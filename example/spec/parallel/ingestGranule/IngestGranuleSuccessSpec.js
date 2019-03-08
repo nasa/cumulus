@@ -153,8 +153,8 @@ describe('The S3 Ingest Granules workflow', () => {
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-      apiTestUtils.addCollectionApi({ prefix: config.stackName, collection: collectionData }),
-      apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData })
+      apiTestUtils.addCollectionApi({ prefix: config.prefix, collection: collectionData }),
+      apiTestUtils.addProviderApi({ prefix: config.prefix, provider: providerData })
     ]);
 
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
@@ -212,7 +212,7 @@ describe('The S3 Ingest Granules workflow', () => {
         executionModel.delete({ arn: workflowExecution.executionArn }),
         executionModel.delete({ arn: failingWorkflowExecution.executionArn }),
         granulesApiTestUtils.removePublishedGranule({
-          prefix: config.stackName,
+          prefix: config.prefix,
           granuleId: inputPayload.granules[0].granuleId
         })
       ]);
@@ -228,22 +228,22 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   it('can retrieve the specific provider that was created', async () => {
-    const providerListResponse = await apiTestUtils.getProviders({ prefix: config.stackName });
+    const providerListResponse = await apiTestUtils.getProviders({ prefix: config.prefix });
     const providerList = JSON.parse(providerListResponse.body);
     expect(providerList.results.length).toBeGreaterThan(0);
 
-    const providerResultResponse = await apiTestUtils.getProvider({ prefix: config.stackName, providerId: provider.id });
+    const providerResultResponse = await apiTestUtils.getProvider({ prefix: config.prefix, providerId: provider.id });
     const providerResult = JSON.parse(providerResultResponse.body);
     expect(providerResult).not.toBeNull();
   });
 
   it('can retrieve the specific collection that was created', async () => {
-    const collectionListResponse = await apiTestUtils.getCollections({ prefix: config.stackName });
+    const collectionListResponse = await apiTestUtils.getCollections({ prefix: config.prefix });
     const collectionList = JSON.parse(collectionListResponse.body);
     expect(collectionList.results.length).toBeGreaterThan(0);
 
     const collectionResponse = await apiTestUtils.getCollection(
-      { prefix: config.stackName, collectionName: collection.name, collectionVersion: collection.version }
+      { prefix: config.prefix, collectionName: collection.name, collectionVersion: collection.version }
     );
     const collectionResult = JSON.parse(collectionResponse.body);
     expect(collectionResult).not.toBeNull();
@@ -251,7 +251,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
   it('makes the granule available through the Cumulus API', async () => {
     const granuleResponse = await granulesApiTestUtils.getGranule({
-      prefix: config.stackName,
+      prefix: config.prefix,
       granuleId: inputPayload.granules[0].granuleId
     });
     const granule = JSON.parse(granuleResponse.body);
@@ -496,7 +496,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
       beforeAll(async () => {
         const granuleResponse = await granulesApiTestUtils.getGranule({
-          prefix: config.stackName,
+          prefix: config.prefix,
           granuleId: inputPayload.granules[0].granuleId
         });
         granule = JSON.parse(granuleResponse.body);
@@ -522,7 +522,7 @@ describe('The S3 Ingest Granules workflow', () => {
           oldUpdatedAt = granule.updatedAt;
           oldExecution = granule.execution;
           const reingestGranuleResponse = await granulesApiTestUtils.reingestGranule({
-            prefix: config.stackName,
+            prefix: config.prefix,
             granuleId: inputPayload.granules[0].granuleId
           });
           reingestResponse = JSON.parse(reingestGranuleResponse.body);
@@ -561,7 +561,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
           await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
           const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
-            prefix: config.stackName,
+            prefix: config.prefix,
             granuleId: inputPayload.granules[0].granuleId
           });
 
@@ -589,7 +589,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
         // Remove the granule from CMR
         await granulesApiTestUtils.removeFromCMR({
-          prefix: config.stackName,
+          prefix: config.prefix,
           granuleId: inputPayload.granules[0].granuleId
         });
 
@@ -605,7 +605,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
         // Publish the granule to CMR
         await granulesApiTestUtils.applyWorkflow({
-          prefix: config.stackName,
+          prefix: config.prefix,
           granuleId: inputPayload.granules[0].granuleId,
           workflow: 'PublishGranule'
         });
@@ -657,7 +657,7 @@ describe('The S3 Ingest Granules workflow', () => {
           });
 
           const moveGranuleResponse = await granulesApiTestUtils.moveGranule({
-            prefix: config.stackName,
+            prefix: config.prefix,
             granuleId: inputPayload.granules[0].granuleId,
             destinations
           });
@@ -678,7 +678,7 @@ describe('The S3 Ingest Granules workflow', () => {
           expect(fileExists).toBe(false);
 
           const moveGranuleResponse = await granulesApiTestUtils.moveGranule({
-            prefix: config.stackName,
+            prefix: config.prefix,
             granuleId: inputPayload.granules[0].granuleId,
             destinations
           });
@@ -693,19 +693,19 @@ describe('The S3 Ingest Granules workflow', () => {
       it('can delete the ingested granule from the API', async () => {
         // pre-delete: Remove the granule from CMR
         await granulesApiTestUtils.removeFromCMR({
-          prefix: config.stackName,
+          prefix: config.prefix,
           granuleId: inputPayload.granules[0].granuleId
         });
 
         // Delete the granule
         await granulesApiTestUtils.deleteGranule({
-          prefix: config.stackName,
+          prefix: config.prefix,
           granuleId: inputPayload.granules[0].granuleId
         });
 
         // Verify deletion
         const granuleResponse = await granulesApiTestUtils.getGranule({
-          prefix: config.stackName,
+          prefix: config.prefix,
           granuleId: inputPayload.granules[0].granuleId
         });
         const resp = JSON.parse(granuleResponse.body);
@@ -719,11 +719,11 @@ describe('The S3 Ingest Granules workflow', () => {
 
       beforeAll(async () => {
         const executionsApiResponse = await executionsApiTestUtils.getExecutions({
-          prefix: config.stackName
+          prefix: config.prefix
         });
         executions = JSON.parse(executionsApiResponse.body);
         const executionApiResponse = await executionsApiTestUtils.getExecution({
-          prefix: config.stackName,
+          prefix: config.prefix,
           arn: workflowExecution.executionArn
         });
         executionResponse = JSON.parse(executionApiResponse.body);
@@ -758,7 +758,7 @@ describe('The S3 Ingest Granules workflow', () => {
       beforeAll(async () => {
         const executionArn = workflowExecution.executionArn;
         const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
-          prefix: config.stackName,
+          prefix: config.prefix,
           arn: executionArn
         });
         executionStatus = JSON.parse(executionStatusResponse.body);
@@ -825,7 +825,7 @@ describe('The S3 Ingest Granules workflow', () => {
       it('returns logs with a specific execution name', async () => {
         const executionARNTokens = workflowExecution.executionArn.split(':');
         const logsExecutionName = executionARNTokens[executionARNTokens.length - 1];
-        const logsResponse = await apiTestUtils.getExecutionLogs({ prefix: config.stackName, executionName: logsExecutionName });
+        const logsResponse = await apiTestUtils.getExecutionLogs({ prefix: config.prefix, executionName: logsExecutionName });
         const logs = JSON.parse(logsResponse.body);
         expect(logs.meta.count).not.toEqual(0);
         logs.results.forEach((log) => {
@@ -837,7 +837,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
     describe('workflows endpoint', () => {
       it('returns a list of workflows', async () => {
-        const workflowsResponse = await apiTestUtils.getWorkflows({ prefix: config.stackName });
+        const workflowsResponse = await apiTestUtils.getWorkflows({ prefix: config.prefix });
 
         const workflows = JSON.parse(workflowsResponse.body);
         expect(workflows).not.toBe(undefined);
@@ -846,7 +846,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
       it('returns the expected workflow', async () => {
         const workflowResponse = await apiTestUtils.getWorkflow({
-          prefix: config.stackName,
+          prefix: config.prefix,
           workflowName: workflowName
         });
         const foundWorkflow = JSON.parse(workflowResponse.body);

@@ -114,7 +114,7 @@ describe('The Sync Granules workflow', () => {
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       granulesApiTestUtils.deleteGranule({
-        prefix: config.stackName,
+        prefix: config.prefix,
         granuleId: inputPayload.granules[0].granuleId
       })
     ]);
@@ -201,7 +201,7 @@ describe('The Sync Granules workflow', () => {
 
     beforeAll(async () => {
       const granuleResponse = await granulesApiTestUtils.getGranule({
-        prefix: config.stackName,
+        prefix: config.prefix,
         granuleId: inputPayload.granules[0].granuleId
       });
       granule = JSON.parse(granuleResponse.body);
@@ -210,7 +210,7 @@ describe('The Sync Granules workflow', () => {
       oldUpdatedAt = granule.updatedAt;
       oldExecution = granule.execution;
       const reingestGranuleResponse = await granulesApiTestUtils.reingestGranule({
-        prefix: config.stackName,
+        prefix: config.prefix,
         granuleId: inputPayload.granules[0].granuleId
       });
       reingestResponse = JSON.parse(reingestGranuleResponse.body);
@@ -249,7 +249,7 @@ describe('The Sync Granules workflow', () => {
 
       await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
       const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
-        prefix: config.stackName,
+        prefix: config.prefix,
         granuleId: inputPayload.granules[0].granuleId
       });
 

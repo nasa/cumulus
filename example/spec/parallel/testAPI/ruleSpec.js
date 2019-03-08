@@ -35,7 +35,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
   beforeAll(async () => {
     // Create a scheduled rule
     await rulesApiTestUtils.postRule({
-      prefix: config.stackName,
+      prefix: config.prefix,
       rule: scheduledHelloWorldRule
     });
   });
@@ -64,7 +64,7 @@ describe('When I create a scheduled rule via the Cumulus API', () => {
       console.log(`deleting rule ${scheduledHelloWorldRule.name}`);
 
       await rulesApiTestUtils.deleteRule({
-        prefix: config.stackName,
+        prefix: config.prefix,
         ruleName: scheduledHelloWorldRule.name
       });
     });
@@ -103,7 +103,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
   beforeAll(async () => {
     // Create a one-time rule
     const postRuleResponse = await rulesApiTestUtils.postRule({
-      prefix: config.stackName,
+      prefix: config.prefix,
       rule: helloWorldRule
     });
     postRule = JSON.parse(postRuleResponse.body);
@@ -113,7 +113,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
     console.log(`deleting rule ${helloWorldRule.name}`);
 
     await rulesApiTestUtils.deleteRule({
-      prefix: config.stackName,
+      prefix: config.prefix,
       ruleName: helloWorldRule.name
     });
   });
@@ -150,7 +150,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
 
     it('the rule can be updated', async () => {
       const updatingRuleResponse = await rulesApiTestUtils.updateRule({
-        prefix: config.stackName,
+        prefix: config.prefix,
         ruleName: helloWorldRule.name,
         updateParams: {
           meta: {
@@ -163,7 +163,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
       console.log('Updated Rule', updatedRule);
 
       await rulesApiTestUtils.rerunRule({
-        prefix: config.stackName,
+        prefix: config.prefix,
         ruleName: helloWorldRule.name
       });
 
@@ -186,7 +186,7 @@ describe('When I create a one-time rule via the Cumulus API', () => {
 
     beforeAll(async () => {
       const listRulesResponse = await rulesApiTestUtils.listRules({
-        prefix: config.stackName
+        prefix: config.prefix
       });
 
       listRules = JSON.parse(listRulesResponse.body);

@@ -27,7 +27,7 @@ const lambdaStep = new LambdaStep();
 const workflowName = 'DiscoverGranules';
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
-process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+process.env.ExecutionsTable = `${config.prefix}-ExecutionsTable`;
 const executionModel = new Execution();
 
 
@@ -132,14 +132,14 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
     describe('logs endpoint', () => {
       it('returns the execution logs', async () => {
-        const logsResponse = await apiTestUtils.getLogs({ prefix: config.stackName });
+        const logsResponse = await apiTestUtils.getLogs({ prefix: config.prefix });
         const logs = JSON.parse(logsResponse.body);
         expect(logs).not.toBe(undefined);
         expect(logs.results.length).toEqual(10);
       });
 
       it('returns logs with sender set', async () => {
-        const getLogsResponse = await apiTestUtils.getLogs({ prefix: config.stackName });
+        const getLogsResponse = await apiTestUtils.getLogs({ prefix: config.prefix });
         const logs = JSON.parse(getLogsResponse.body);
         const logEntries = logs.results;
         const cumulusLogEntries = logEntries.filter(isCumulusLogEntry);

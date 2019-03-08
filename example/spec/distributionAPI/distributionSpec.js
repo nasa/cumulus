@@ -36,7 +36,7 @@ describe('Distribution API', () => {
 
   let server;
 
-  process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
+  process.env.AccessTokensTable = `${config.prefix}-AccessTokensTable`;
   const accessTokensModel = new AccessToken();
 
   beforeAll(async (done) => {
@@ -46,7 +46,7 @@ describe('Distribution API', () => {
 
     // Use done() callback to signal end of beforeAll() after the
     // distribution API has started up.
-    server = await serveDistributionApi(config.stackName, done);
+    server = await serveDistributionApi(config.prefix, done);
   });
 
   afterAll(async (done) => {

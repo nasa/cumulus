@@ -23,14 +23,14 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
     if (!clusterArn) throw new Error('Unable to find ECS cluster');
 
     postBulkDeleteResponse = await apiTestUtils.postBulkDelete({
-      prefix: config.stackName,
+      prefix: config.prefix,
       granuleIds: ['g-123']
     });
     postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
 
     // Query the AsyncOperation API to get the task ARN
     const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
-      prefix: config.stackName,
+      prefix: config.prefix,
       id: postBulkDeleteBody.asyncOperationId
     });
     ({ taskArn } = JSON.parse(getAsyncOperationResponse.body));
@@ -52,7 +52,7 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
     expect(beforeAllSucceeded).toBe(true);
 
     const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
-      prefix: config.stackName,
+      prefix: config.prefix,
       id: postBulkDeleteBody.asyncOperationId
     });
 
@@ -87,7 +87,7 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
     ).promise();
 
     const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
-      prefix: config.stackName,
+      prefix: config.prefix,
       id: postBulkDeleteBody.asyncOperationId
     });
 
@@ -124,14 +124,14 @@ describe('POST /bulkDelete with a failed bulk delete operation', () => {
     if (!clusterArn) throw new Error('Unable to find ECS cluster');
 
     postBulkDeleteResponse = await apiTestUtils.postBulkDelete({
-      prefix: config.stackName,
+      prefix: config.prefix,
       granuleIds: ['trigger-failure']
     });
     postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
 
     // Query the AsyncOperation API to get the task ARN
     const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
-      prefix: config.stackName,
+      prefix: config.prefix,
       id: postBulkDeleteBody.asyncOperationId
     });
     ({ taskArn } = JSON.parse(getAsyncOperationResponse.body));
@@ -153,7 +153,7 @@ describe('POST /bulkDelete with a failed bulk delete operation', () => {
     expect(beforeAllSucceeded).toBe(true);
 
     const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
-      prefix: config.stackName,
+      prefix: config.prefix,
       id: postBulkDeleteBody.asyncOperationId
     });
 
@@ -188,7 +188,7 @@ describe('POST /bulkDelete with a failed bulk delete operation', () => {
     ).promise();
 
     const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
-      prefix: config.stackName,
+      prefix: config.prefix,
       id: postBulkDeleteBody.asyncOperationId
     });
 

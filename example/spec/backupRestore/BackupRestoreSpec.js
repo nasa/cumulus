@@ -18,7 +18,7 @@ describe('Backup and Restore', () => {
   let restoreFile;
   const granuleIds = [];
   const limit = 30;
-  process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+  process.env.GranulesTable = `${config.prefix}-GranulesTable`;
   const model = new Granule();
 
 

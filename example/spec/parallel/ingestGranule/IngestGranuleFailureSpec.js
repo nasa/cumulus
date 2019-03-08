@@ -82,7 +82,7 @@ describe('The Ingest Granule failure workflow', () => {
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       granulesApiTestUtils.deleteGranule({
-        prefix: config.stackName,
+        prefix: config.prefix,
         granuleId: inputPayload.granules[0].granuleId
       })
     ]);
@@ -101,12 +101,12 @@ describe('The Ingest Granule failure workflow', () => {
     beforeAll(async () => {
       const executionArn = workflowExecution.executionArn;
       const executionResponse = await executionsApiTestUtils.getExecution({
-        prefix: config.stackName,
+        prefix: config.prefix,
         arn: executionArn
       });
       execution = JSON.parse(executionResponse.body);
       const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
-        prefix: config.stackName,
+        prefix: config.prefix,
         arn: executionArn
       });
       executionStatus = JSON.parse(executionStatusResponse.body);
@@ -167,7 +167,7 @@ describe('The Ingest Granule failure workflow', () => {
 
     it('fails the granule with the error message', async () => {
       const granuleResponse = await granulesApiTestUtils.getGranule({
-        prefix: config.stackName,
+        prefix: config.prefix,
         granuleId: inputPayload.granules[0].granuleId
       });
       const granule = JSON.parse(granuleResponse.body);
