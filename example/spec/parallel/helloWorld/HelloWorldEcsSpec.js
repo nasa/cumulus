@@ -8,7 +8,7 @@ const activityStep = new ActivityStep();
 
 describe('The Hello World workflow using ECS', () => {
   let workflowExecution = null;
-  process.env.ExecutionsTable = `${awsConfig.stackName}-ExecutionsTable`;
+  process.env.ExecutionsTable = `${awsConfig.prefix}-ExecutionsTable`;
   const executionModel = new Execution();
 
   beforeAll(async () => {

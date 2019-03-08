@@ -71,7 +71,7 @@ describe('The messageConsumer receives a bad record.\n', () => {
 
   const streamName = `${testId}-KinesisTestErrorStream`;
   testConfig.streamName = streamName;
-  const failureSqsUrl = `https://sqs.${testConfig.awsRegion}.amazonaws.com/${testConfig.awsAccountId}/${testConfig.stackName}-kinesisFailure`;
+  const failureSqsUrl = `https://sqs.${testConfig.awsRegion}.amazonaws.com/${testConfig.awsAccountId}/${testConfig.prefix}-kinesisFailure`;
 
   async function cleanUp() {
     if (this.ReceiptHandle) {

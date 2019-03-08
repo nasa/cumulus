@@ -35,7 +35,7 @@ describe('When a workflow is running and a new version of a workflow lambda is d
 
   const lambdaFile = './lambdas/versionUpTest/index.js';
 
-  const lambdaName = `${config.stackName}-VersionUpTest`;
+  const lambdaName = `${config.prefix}-VersionUpTest`;
 
   beforeAll(async () => {
     await protectFile(lambdaFile, async () => {

@@ -32,7 +32,7 @@ describe('When a task is configured', () => {
   let retryPassLambdaExecutions = null;
   let retryFailLambdaExecutions = null;
 
-  process.env.ExecutionsTable = `${awsConfig.stackName}-ExecutionsTable`;
+  process.env.ExecutionsTable = `${awsConfig.prefix}-ExecutionsTable`;
 
   beforeAll(async () => {
     const retryPassPromise = buildAndExecuteWorkflow(

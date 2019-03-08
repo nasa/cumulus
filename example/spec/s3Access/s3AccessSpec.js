@@ -22,7 +22,7 @@ async function invokeTestLambda(region, credentials, testName) {
   const lambda = new Lambda({ region });
 
   const data = await lambda.invoke({
-    FunctionName: `${config.stackName}-S3AccessTest`,
+    FunctionName: `${config.prefix}-S3AccessTest`,
     Payload: JSON.stringify({
       Bucket: protectedBucket,
       Key: testFileKey,
@@ -85,7 +85,7 @@ describe('When accessing an S3 bucket directly', () => {
 
     beforeAll(async () => {
       const payload = await callCumulusApi({
-        prefix: `${config.stackName}`,
+        prefix: `${config.prefix}`,
         payload: {
           httpMethod: 'GET',
           resource: '/{proxy+}',

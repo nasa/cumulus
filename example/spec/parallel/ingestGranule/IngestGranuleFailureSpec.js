@@ -43,7 +43,7 @@ describe('The Ingest Granule failure workflow', () => {
   let workflowExecution = null;
   let inputPayload;
 
-  process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+  process.env.GranulesTable = `${config.prefix}-GranulesTable`;
   const granuleModel = new Granule();
 
   beforeAll(async () => {

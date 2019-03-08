@@ -74,9 +74,9 @@ describe('The Sync Granules workflow', () => {
   let expectedS3TagSet;
   let workflowExecution;
 
-  process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+  process.env.ExecutionsTable = `${config.prefix}-ExecutionsTable`;
   const executionModel = new Execution();
-  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+  process.env.CollectionsTable = `${config.prefix}-CollectionsTable`;
   const collectionModel = new Collection();
 
   beforeAll(async () => {

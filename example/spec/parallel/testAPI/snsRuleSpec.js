@@ -23,7 +23,7 @@ const config = loadConfig();
 const ruleName = timestampedName('SnsRuleIntegrationTestRule');
 const snsTopicName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestTopic`);
 const newValueTopicName = timestampedName(`${config.stackName}_SnsRuleValueChangeTestTopic`);
-const consumerName = `${config.stackName}-messageConsumer`;
+const consumerName = `${config.prefix}-messageConsumer`;
 
 const snsMessage = '{"Data":{}}';
 const snsRuleDefinition = clonedeep(require('./snsRuleDef.json'));

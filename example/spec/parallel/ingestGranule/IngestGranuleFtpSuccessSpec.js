@@ -26,7 +26,7 @@ describe('The FTP Ingest Granules workflow', () => {
   let workflowExecution = null;
   let inputPayload;
 
-  process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+  process.env.GranulesTable = `${config.prefix}-GranulesTable`;
   const granuleModel = new Granule();
 
   beforeAll(async () => {

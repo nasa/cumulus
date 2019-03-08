@@ -124,15 +124,15 @@ describe('The S3 Ingest Granules workflow', () => {
   let postToCmrOutput;
   let server;
 
-  process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
+  process.env.AccessTokensTable = `${config.prefix}-AccessTokensTable`;
   const accessTokensModel = new AccessToken();
-  process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+  process.env.GranulesTable = `${config.prefix}-GranulesTable`;
   const granuleModel = new Granule();
-  process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+  process.env.ExecutionsTable = `${config.prefix}-ExecutionsTable`;
   const executionModel = new Execution();
-  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+  process.env.CollectionsTable = `${config.prefix}-CollectionsTable`;
   const collectionModel = new Collection();
-  process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
+  process.env.ProvidersTable = `${config.prefix}-ProvidersTable`;
   const providerModel = new Provider();
   let executionName;
 
@@ -199,7 +199,7 @@ describe('The S3 Ingest Granules workflow', () => {
     failedExecutionName = failedExecutionArn.pop();
 
     // Use done() to signal end of beforeAll() after distribution API has started up
-    server = await serveDistributionApi(config.stackName, done);
+    server = await serveDistributionApi(config.prefix, done);
   });
 
   afterAll(async (done) => {

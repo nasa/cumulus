@@ -122,7 +122,7 @@ const ruleOverride = {
 
 const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'];
 
-process.env.ExecutionsTable = `${testConfig.stackName}-ExecutionsTable`;
+process.env.ExecutionsTable = `${testConfig.prefix}-ExecutionsTable`;
 
 // When kinesis-type rules exist, the Cumulus lambda messageConsumer is
 // configured to trigger workflows when new records arrive on a Kinesis
@@ -194,7 +194,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
   it('Creates an event to log incoming records', async () => {
     const mapping = logEventSourceMapping;
-    expect(mapping.FunctionArn.endsWith(`${testConfig.stackName}-KinesisInboundEventLogger`)).toBe(true);
+    expect(mapping.FunctionArn.endsWith(`${testConfig.prefix}-KinesisInboundEventLogger`)).toBe(true);
     expect(mapping.EventSourceArn.endsWith(streamName)).toBe(true);
   });
 

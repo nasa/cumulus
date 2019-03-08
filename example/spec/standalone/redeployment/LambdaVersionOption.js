@@ -19,7 +19,7 @@ describe('When the useWorkflowLambdaVersions option is set to false the deployme
   let workflowDefinitions;
   let stackList;
   const deletedStatuses = ['DELETE_COMPLETE'];
-  const lambdaVersionStackName = `${config.stackName}-WorkflowLambdaVersionsNestedStack`;
+  const lambdaVersionStackName = `${config.prefix}-WorkflowLambdaVersionsNestedStack`;
   const startDate = new Date();
 
   beforeAll(async () => {

@@ -22,7 +22,7 @@ const lambdaStep = new LambdaStep();
 const workflowName = 'DiscoverGranules';
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 2000000;
-process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+process.env.ExecutionsTable = `${config.prefix}-ExecutionsTable`;
 const executionModel = new Execution();
 
 // Note: This test runs in serial due to the logs endpoint tests

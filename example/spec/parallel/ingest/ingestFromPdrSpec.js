@@ -78,9 +78,9 @@ describe('Ingesting from PDR', () => {
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
   const provider = { id: `s3_provider${testSuffix}` };
 
-  process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-  process.env.PdrsTable = `${config.stackName}-PdrsTable`;
+  process.env.ExecutionsTable = `${config.prefix}-ExecutionsTable`;
+  process.env.CollectionsTable = `${config.prefix}-CollectionsTable`;
+  process.env.PdrsTable = `${config.prefix}-PdrsTable`;
 
   const executionModel = new Execution();
   const collectionModel = new Collection();

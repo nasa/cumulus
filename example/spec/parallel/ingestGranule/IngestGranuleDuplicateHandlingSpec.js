@@ -56,7 +56,7 @@ describe('When the Ingest Granules workflow is configured\n', () => {
   let inputPayload;
   let granulesIngested;
 
-  process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+  process.env.CollectionsTable = `${config.prefix}-CollectionsTable`;
   const collectionModel = new Collection();
 
   beforeAll(async () => {

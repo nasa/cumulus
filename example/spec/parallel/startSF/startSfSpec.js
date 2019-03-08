@@ -20,7 +20,7 @@ const passSfDef = {
     }
   }
 };
-const passSfRoleArn = `arn:aws:iam::${config.awsAccountId}:role/${config.stackName}-steprole`;
+const passSfRoleArn = `arn:aws:iam::${config.awsAccountId}:role/${config.prefix}-steprole`;
 
 const passSfParams = {
   name: passSfName,
@@ -28,7 +28,7 @@ const passSfParams = {
   roleArn: passSfRoleArn
 };
 
-const sfStarterName = `${config.stackName}-sqs2sf`;
+const sfStarterName = `${config.prefix}-sqs2sf`;
 
 function generateStartSfMessages(num, workflowArn) {
   const arr = [];

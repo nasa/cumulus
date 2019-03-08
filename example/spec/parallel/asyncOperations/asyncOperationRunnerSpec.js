@@ -23,8 +23,8 @@ describe('The AsyncOperation task runner', () => {
   beforeAll(async () => {
     config = loadConfig();
 
-    successFunctionName = `${config.stackName}-AsyncOperationSuccess`;
-    failFunctionName = `${config.stackName}-AsyncOperationFail`;
+    successFunctionName = `${config.prefix}-AsyncOperationSuccess`;
+    failFunctionName = `${config.prefix}-AsyncOperationFail`;
 
     asyncOperationModel = new AsyncOperation({
       stackName: config.stackName,
@@ -38,7 +38,7 @@ describe('The AsyncOperation task runner', () => {
     // Find the ARN of the AsyncOperationTaskDefinition
     const { taskDefinitionArns } = await ecs().listTaskDefinitions().promise();
     asyncOperationTaskDefinition = taskDefinitionArns.find(
-      (arn) => arn.includes(`${config.stackName}-AsyncOperationTaskDefinition-`)
+      (arn) => arn.includes(`${config.prefix}-AsyncOperationTaskDefinition-`)
     );
   });
 
