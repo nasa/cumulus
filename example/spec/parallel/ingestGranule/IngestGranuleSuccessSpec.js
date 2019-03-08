@@ -274,7 +274,6 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('output includes the ingested granule with file staging location paths', () => {
-      debugger;
       expect(lambdaOutput.payload).toEqual(expectedSyncGranulePayload);
     });
 
@@ -333,7 +332,7 @@ describe('The S3 Ingest Granules workflow', () => {
     let cmrResource;
     let files;
     let granule;
-    let resourceURLs;
+    let resourceURLs
     let accessToken;
 
 

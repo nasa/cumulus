@@ -313,13 +313,13 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('publishes CMR metadata online resources with the correct type', () => {
-      const getDataResources = onlineResources.filter((resource) => resource.Type === 'GET DATA');
       const viewRelatedInfoResource = onlineResources.filter((resource) => resource.Type === 'VIEW RELATED INFORMATION');
-
       const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
 
+      const ExpectedResources = ['GET DATA', 'GET DATA', 'GET RELATED VISUALIZATION',
+        'EXTENDED METADATA', 'VIEW RELATED INFORMATION'].sort();
       expect(viewRelatedInfoResource.map((urlObj) => urlObj.URL).includes(s3CredsUrl)).toBe(true);
-      expect(getDataResources.length).toEqual(onlineResources.length - viewRelatedInfoResource.length);
+      expect(onlineResources.map((x) => x.Type).sort()).toEqual(ExpectedResources);
     });
 
     it('updates the CMR metadata online resources with s3credentials location', () => {
