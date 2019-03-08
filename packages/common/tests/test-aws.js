@@ -7,6 +7,7 @@ const test = require('ava');
 const sinon = require('sinon');
 
 const aws = require('../aws');
+const { UnparsableFileLocationError } = require('../errors.js');
 const { randomString, throttleOnce } = require('../test-utils');
 
 test('s3Join behaves as expected', (t) => {
@@ -230,4 +231,24 @@ test('validateS3ObjectChecksum throws InvalidChecksum error on bad checksum', as
     algorithm: 'cksum', bucket: Bucket, key: Key, expectedSum: cksum
   }), errMsg);
   return aws.recursivelyDeleteS3Bucket(Bucket);
+});
+
+test('getFileBucketAndKey parses bucket and key', (t) => {
+  const pathParams = 'test-bucket/path/key.txt';
+
+  const [bucket, key] = aws.getFileBucketAndKey(pathParams);
+
+  t.is(bucket, 'test-bucket');
+  t.is(key, 'path/key.txt');
+});
+
+test('getFileBucketAndKey throws UnparsableFileLocationError if location cannot be parsed', (t) => {
+  const pathParams = 'test-bucket';
+
+  try {
+    aws.getFileBucketAndKey(pathParams);
+  }
+  catch (err) {
+    t.true((err instanceof UnparsableFileLocationError));
+  }
 });
