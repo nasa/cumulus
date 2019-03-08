@@ -11,7 +11,7 @@ To enable [EMS Reporting](../ems_reporting.md), you need to enable [S3 Server ac
 
 ### Via AWS Console.
 
-[Enable Server Access Logging for an S3 Bucket?][howtologging]
+[Enable Server Access Logging for an S3 Bucket][howtologging]
 
 ### Via [AWS CLI][cli].
 
