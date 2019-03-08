@@ -26,7 +26,7 @@
           "filename": "s3://this-should-be-replaced-with-private-bucket-name-in-the-test/MOD09GQ/MOD/replace-me-granuleId.hdf.met",
           "fileSize": 44118,
           "path": "replace-me-path",
-          "fileType": "data",
+          "fileType": "metadata",
           "url_path": "{cmrMetadata.CollectionReference.ShortName}___{cmrMetadata.CollectionReference.Version}/{substring(file.name, 0, 3)}",
           "filepath": "MOD09GQ___006/MOD/replace-me-granuleId.hdf.met"
         },
@@ -35,7 +35,7 @@
           "bucket": "this-should-be-replaced-with-public-bucket-name-in-the-test",
           "filename": "s3://this-should-be-replaced-with-public-bucket-name-in-the-test/MOD09GQ/MOD/replace-me-granuleId_ndvi.jpg",
           "fileSize": 44118,
-          "fileType": "data",
+          "fileType": "browse",
           "path": "replace-me-path",
           "url_path": "{cmrMetadata.CollectionReference.ShortName}___{cmrMetadata.CollectionReference.Version}/{substring(file.name, 0, 3)}",
           "filepath": "MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg"
