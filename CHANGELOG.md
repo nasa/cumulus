@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added `@cumulus/common/util#negate()`
 
 - CUMULUS-1151 Compare the granule holdings in CMR with Cumulus' internal data store
+- CUMULUS-1152 Compare the granule file holdings in CMR with Cumulus' internal data store
 
 ### Changed
 
