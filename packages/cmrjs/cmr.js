@@ -53,12 +53,16 @@ class CMR {
   /**
    * The constructor for the CMR class
    *
+   * @deprecated
+   *
    * @param {string} provider - the CMR provider id
    * @param {string} clientId - the CMR clientId
    * @param {string} username - CMR username
    * @param {string} password - CMR password
    */
   constructor(provider, clientId, username, password) {
+    deprecate('@cmrjs/CMR', '1.11.3');
+
     this.provider = provider;
     this.cmrClient = new cmrClient.CMR({
       provider,
@@ -100,7 +104,7 @@ class CMR {
       xmlString = await readFile(xml, 'utf8');
     }
     catch (err) {
-      if (err.code === 'ENOENT') xmlString = xml;
+      if (err.code === 'ENOENT' || err.code === 'ENAMETOOLONG') xmlString = xml;
       else throw err;
     }
 
@@ -119,7 +123,7 @@ class CMR {
       xmlString = await readFile(xml, 'utf8');
     }
     catch (err) {
-      if (err.code === 'ENOENT') xmlString = xml;
+      if (err.code === 'ENOENT' || err.code === 'ENAMETOOLONG') xmlString = xml;
       else throw err;
     }
 
@@ -187,6 +191,8 @@ class CMRSearchConceptQueue {
   /**
    * The constructor for the CMRSearchConceptQueue class
    *
+   * @deprecated
+   *
    * @param {string} provider - the CMR provider id
    * @param {string} clientId - the CMR clientId
    * @param {string} type - the type of search 'granule' or 'collection'
@@ -194,6 +200,8 @@ class CMRSearchConceptQueue {
    * @param {string} format - the result format
    */
   constructor(provider, clientId, type, searchParams, format) {
+    deprecate('@cmrjs/CMRSearchConceptQueue', '1.11.3');
+
     this.cmrClientSearchConceptQueue = new cmrClient.CMRSearchConceptQueue({
       provider,
       clientId,
