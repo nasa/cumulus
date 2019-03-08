@@ -35,7 +35,7 @@ An S3 Access lambda is needed in the us-west-2 region to run the integration tes
 aws lambda create-function --region us-west-2  --function-name <STACK>-S3AccessTest --zip-file fileb://app/build/cloudformation/<ZIP>-S3AccessTest.zip  --role arn:aws:iam::<AWS_ACCOUNT_ID>:role/<PREFIX>-lambda-processing  --handler index.handler --runtime nodejs8.10 --profile <NGAP Profile>
 ```
 
-Replace `<AWS_ACCOUNT_ID>` with your account Id, `<STACK>` with your stack name, `<PREFIX>` with your iam prefix name, and use your NGAP profile. An S3AccessTest zip file `<ZIP>` can be found under `app/build/` following a stack deployment (either in `cloudformation` or `workflow_lambda_versions` depending on your stack configuration). The version of zip file that you upload does not matter, but you need to deploy something to us-west-2 so that travis can update it with current lambdas.
+Replace `<AWS_ACCOUNT_ID>` with your account Id, `<STACK>` with your stack name, `<PREFIX>` with your iam prefix name, and use your NGAP profile. An S3AccessTest zip file `<ZIP>` can be found under `app/build/` following a stack deployment (either in `cloudformation` or `workflow_lambda_versions` depending on your stack configuration). The version of the zip file that you upload does not matter, but you need to deploy something to us-west-2 so that travis can update it with current lambdas.
 
 If you need, after the initial creation of this lambda, you can update it by running:
 
