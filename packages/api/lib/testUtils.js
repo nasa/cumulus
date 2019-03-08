@@ -201,17 +201,13 @@ function fakeExecutionFactory(status = 'completed', type = 'fakeWorkflow') {
  * @returns {Object} - a fake user
  */
 function fakeUserFactory(params = {}) {
-  const {
-    userName = randomString(),
-    password = randomString(),
-    expires = Date.now() + (60 * 60 * 1000) // Default to 1 hour
-  } = params;
-
-  return {
-    userName,
-    password,
-    expires
+  const user = {
+    userName: randomId('userName'),
+    password: randomId('password'),
+    expires: Date.now() + (60 * 60 * 1000) // Default to 1 hour
   };
+
+  return { ...user, ...params };
 }
 
 /**
