@@ -166,13 +166,13 @@ dev:                                # deployment name
 
 If the `iam` deployment command  succeeds, you should see 7 new roles in the [IAM Console](https://console.aws.amazon.com/iam/home):
 
-* `<iams-prefix>-ecs`
-* `<iams-prefix>-lambda-api-gateway`
-* `<iams-prefix>-lambda-processing`
-* `<iams-prefix>-scaling-role`
-* `<iams-prefix>-steprole`
-* `<iams-prefix>-distribution-api-lambda`
-* `<iams-prefix>-migration-processing`
+* `<prefix>-ecs`
+* `<prefix>-lambda-api-gateway`
+* `<prefix>-lambda-processing`
+* `<prefix>-scaling-role`
+* `<prefix>-steprole`
+* `<prefix>-distribution-api-lambda`
+* `<prefix>-migration-processing`
 
 
 The same information can be obtained from the AWS CLI command: `aws iam list-roles`.
@@ -223,14 +223,14 @@ dev:                                    # deployment name
         type: internal
 
   iams:
-    ecsRoleArn: arn:aws:iam::<aws-account-id>:role/<stackName>-ecs
-    lambdaApiGatewayRoleArn: arn:aws:iam::<aws-account-id>:role/<stackName>-lambda-api-gateway
-    lambdaProcessingRoleArn: arn:aws:iam::<aws-account-id>:role/<stackName>-lambda-processing
-    stepRoleArn: arn:aws:iam::<aws-account-id>:role/<stackName>-steprole
-    instanceProfile: arn:aws:iam::<aws-account-id>:instance-profile/<stackName>-ecs
-    distributionRoleArn: 'arn:aws:iam::<aws-account-id>:role/<stackName>-distribution-api-lambda'
-    scalingRoleArn: 'arn:aws:iam::<aws-account-id>:role/<stackName>-scaling-role'
-    migrationRoleArn: 'arn:aws:iam::<aws-account-id>:role/<stackName>-migration-processing'
+    ecsRoleArn: arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-ecs
+    lambdaApiGatewayRoleArn: arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-lambda-api-gateway
+    lambdaProcessingRoleArn: arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-lambda-processing
+    stepRoleArn: arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-steprole
+    instanceProfile: arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{stackName}}-ecs
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-scaling-role'
+    migrationRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-migration-processing'
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
