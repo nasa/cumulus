@@ -134,7 +134,7 @@ The `iam` configuration creates 7 [roles](http://docs.aws.amazon.com/IAM/latest/
 
 Descriptions of the fields can be found in [IAM Configuration Descriptions](deployment/config_descriptions.md#iam-configuration).
 
-```
+```yaml
 dev:                                # deployment name
   prefix: dev-cumulus               # prefixes CloudFormation-created IAM resources and permissions
   stackName: dev-cumulus-iams       # name of this IAM stack in CloudFormation (e.g. <prefix>-iams)
@@ -195,7 +195,7 @@ If you're re-deploying based on an existing configuration you can skip this conf
 
 Descriptions of the fields can be found in [App Configuration Descriptions](deployment/config_descriptions.md#app-configuration).
 
-```
+```yaml
 dev:                            # deployment name
   prefix: dev                   # see note below
   stackName: dev-cumulus
@@ -247,7 +247,7 @@ dev:                            # deployment name
     - username: <user2>
 ```
 
-**IMPORTANT NOTE** - This `prefix` value **must match** the value of the resource prefix for the IAM stack. By default, this means that it should match the value of the [`prefix` set for the IAM stack above](#configure-and-deploy-the-iam-stack). However, if you changed the value of the `ResourcePrefix` param in your IAM stack `config.yml`, you would use that value instead.
+**IMPORTANT NOTE - This `prefix` value must match the value of the resource prefix for the IAM stack**. By default, this means that it should match the value of the [`prefix` set for the IAM stack above](#configure-and-deploy-the-iam-stack). However, if you changed the value of the `ResourcePrefix` param in your IAM stack `config.yml`, you would use that value instead.
 
 ### Configure EarthData application
 
@@ -288,6 +288,7 @@ You can monitor the progess of the stack deployment from the [AWS CloudFormation
 
 A successful completion will result in output similar to:
 
+```bash
 	 $ ./node_modules/.bin/kes cf deploy --kes-folder app --region <region>
        --template node_modules/@cumulus/deployment/app --deployment daac
 	Generating keys. It might take a few seconds!
@@ -329,7 +330,7 @@ A successful completion will result in output similar to:
 	Uploading Workflow Input Templates
 	Uploaded: s3://<prefix>-internal/<prefix>-cumulus/workflows/HelloWorldWorkflow.json
 	Uploaded: s3://<prefix>-internal/<prefix>-cumulus/workflows/list.json
-
+```
 
 __Note:__ Be sure to copy the urls, as you will use them to update your EarthData application.
 

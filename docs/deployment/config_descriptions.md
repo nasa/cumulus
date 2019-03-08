@@ -36,7 +36,7 @@ The name (e.g. dev) of the the 'deployment' - this key tells kes which configura
 
 ## prefix
 
-This value will prefix CloudFormation-created resources for the deployment. **This value must match the prefix used in the [IAM](deployment/deployment-readme#configure-and-deploy-the-iam-stack) deployment, or the deployment will fail.**
+This value will prefix CloudFormation-created resources for the deployment. **This value must match the prefix used in the [IAM](deployment-readme#configure-and-deploy-the-iam-stack) deployment, or the deployment will fail.**
 
 ## stackName
 
@@ -59,11 +59,11 @@ Also note, if you dont specify the `amiid`, it will try to use a default, which 
 
 ## buckets
 
-The config buckets should map to the same names you used when creating buckets in the [Prepare AWS](#prepare-aws-configuration) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured.
+The config buckets should map to the same names you used when creating buckets in the [Prepare AWS](deployment-readme#prepare-aws-configuration) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured.
 
 ## iams
 
-Add the ARNs for each of the seven roles and one instanceProfile created in the [Configure and Deploy the IAM stack](deployment/deployment-readme#configure-and-deploy-the-iam-stack) step. You can retrieve the ARNs from:
+Add the ARNs for each of the seven roles and one instanceProfile created in the [Configure and Deploy the IAM stack](deployment-readme#configure-and-deploy-the-iam-stack) step. You can retrieve the ARNs from:
 
     $ aws iam list-roles | grep Arn
     $ aws iam list-instance-profiles | grep Arn
@@ -72,7 +72,7 @@ For information on how to locate them in the Console see [Locating Cumulus IAM R
 
 ## users
 
-List of EarthData users you wish to have access to your dashboard application.   These users will be populated in your `<stackname>-UsersTable` [DynamoDb](https://console.aws.amazon.com/dynamodb/) (in addition to the default_users defined in the Cumulus default template).
+List of EarthData users you wish to have access to your dashboard application. These users will be populated in your `<prefix>-UsersTable` [DynamoDb](https://console.aws.amazon.com/dynamodb/) (in addition to the default_users defined in the Cumulus default template).
 
 # Footnotes
 
