@@ -8,7 +8,6 @@ const { getMetadata } = require('..');
 
 const granuleId = 'MYD13Q1.A2017297.h19v10.006.2017313221203';
 
-
 const alreadyDeleted = `Concept with native-id [${granuleId}] and concept-id [G1222482315-CUMULUS] is already deleted.`;
 
 // cmr responses for different status

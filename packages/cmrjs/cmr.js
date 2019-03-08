@@ -45,7 +45,6 @@ async function deleteConcept(type, identifier, provider, headers) {
   return _deleteConcept(type, identifier, provider, headers);
 }
 
-
 /**
  * The CMR class
  */

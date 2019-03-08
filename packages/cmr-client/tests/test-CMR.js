@@ -68,5 +68,6 @@ test('getHeaders returns correct Content-type for xml metadata by default', (t) 
   const headers = cmrInstance.getHeaders();
   console.log(headers);
   t.is(headers['Content-type'], 'application/echo10+xml');
+  t.is(headers['Client-Id'], 'clientID');
   t.is(headers.Accept, undefined);
 });

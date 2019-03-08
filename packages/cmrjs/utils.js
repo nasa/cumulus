@@ -22,7 +22,7 @@ const xmlParseOptions = {
  * @returns {string} - value to use to build correct cmr url for environment.
  */
 function hostId(env) {
-  deprecate('@cumulus/cmrjs/utils#hostId', '1.11.2');
+  deprecate('@cumulus/cmrjs/utils#hostId', '1.11.3');
   return _get(
     { OPS: '', SIT: 'sit', UAT: 'uat' },
     env,
@@ -46,7 +46,7 @@ function hostId(env) {
  * @returns {string} the cmr host address
  */
 function getHost(environment = process.env) {
-  deprecate('@cumulus/cmrjs/utils#getHost', '1.11.2');
+  deprecate('@cumulus/cmrjs/utils#getHost', '1.11.3');
   const env = environment.CMR_ENVIRONMENT;
   if (environment.CMR_HOST) return environment.CMR_HOST;
 
@@ -65,7 +65,7 @@ function getHost(environment = process.env) {
  * @returns {string} UMM version for the given object
  */
 function ummVersion(umm) {
-  deprecate('@cumulus/cmrjs/utils#ummVersion', '1.11.1');
+  deprecate('@cumulus/cmrjs/utils#ummVersion', '1.11.3');
   return _get(umm, 'MetadataSpecification.Version', '1.4');
 }
 
@@ -92,7 +92,7 @@ function ummVersionToMetadataFormat(versionNumber, ummFormat = 'json') {
  * @returns {Promise<boolean>} returns true if the document is valid
  */
 async function validateUMMG(ummMetadata, identifier, provider) {
-  deprecate('@cumulus/cmrjs/utils#validateUMMG', '1.11.1');
+  deprecate('@cumulus/cmrjs/utils#validateUMMG', '1.11.3');
   const version = ummVersion(ummMetadata);
   let result;
 
@@ -132,7 +132,7 @@ async function validateUMMG(ummMetadata, identifier, provider) {
  * @returns {string} IP address
  */
 async function getIp() {
-  deprecate('@cumulus/cmrjs/utils#getIp', '1.11.2');
+  deprecate('@cumulus/cmrjs/utils#getIp', '1.11.3');
   return publicIp.v4()
     .catch((err) => {
       if (err.message === 'Query timed out') {
@@ -155,7 +155,7 @@ async function getIp() {
  * @returns {Promise.<string>} the token
  */
 async function updateToken(cmrProvider, clientId, username, password) {
-  deprecate('@cumulus/cmrjs/utils#updateToken', '1.11.2');
+  deprecate('@cumulus/cmrjs/utils#updateToken', '1.11.3');
   if (!cmrProvider) throw new Error('cmrProvider is required.');
   if (!clientId) throw new Error('clientId is required.');
   if (!username) throw new Error('username is required.');
