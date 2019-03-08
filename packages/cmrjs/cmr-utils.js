@@ -341,7 +341,6 @@ function constructOnlineAccessUrls({
   s3CredsEndpoint = 's3credentials'
 }) {
   const urls = [];
-  debugger;
   files.forEach((file) => {
     const urlObj = {};
     const bucketType = buckets.type(file.bucket);
@@ -408,7 +407,6 @@ function getCmrFileObjs(files) {
  * @returns {Array<Object>} list of updated an original URL objects representing the updated state.
  */
 function mergeURLs(original, updated, removed = []) {
-  debugger;
   const newURLBasenames = updated.map((url) => path.basename(url.URL));
   const removedBasenames = removed.map((url) => path.basename(url.URL));
 
@@ -526,7 +524,6 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
 async function uploadEcho10CMRFile(xml, cmrFile) {
   const tags = await aws.s3GetObjectTagging(cmrFile.bucket, getS3KeyOfFile(cmrFile));
   const tagsQueryString = aws.s3TagSetToQueryString(tags.TagSet);
-  debugger;
   return aws.promiseS3Upload({
     Bucket: cmrFile.bucket, Key: getS3KeyOfFile(cmrFile), Body: xml, Tagging: tagsQueryString
   });
