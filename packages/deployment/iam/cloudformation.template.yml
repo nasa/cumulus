@@ -778,6 +778,8 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
+                  - ecs:UpdateService
+                  - ecs:DescribeServices
                   - dynamodb:DescribeTable
                   - dynamodb:UpdateTable
                   - cloudwatch:PutMetricAlarm

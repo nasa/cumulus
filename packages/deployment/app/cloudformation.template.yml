@@ -1104,6 +1104,41 @@ Resources:
       DeploymentConfiguration:
         MaximumPercent: 100
         MinimumHealthyPercent: 0
+
+  {{@key}}ECSServiceScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    DependsOn:
+    - {{@key}}ECSService
+    Properties:
+      # What is the right maximum number of tasks? This is a required field.
+      MaxCapacity: 100
+      MinCapacity: 1
+      ResourceId:
+        Fn::Join:
+          - /
+          - - service
+            - Ref: CumulusECSCluster
+            - Fn::GetAtt:
+              - {{@key}}ECSService
+              - Name
+      RoleARN: {{../this.iams.scalingRoleArn}}
+      ScalableDimension: 'ecs:service:DesiredCount'
+      ServiceNamespace: ecs
+
+  {{@key}}ECSServiceApplicationScalingPolicy:
+    Type : "AWS::ApplicationAutoScaling::ScalingPolicy"
+    Properties: 
+      PolicyName: {{@key}}ECSServiceApplicationScalingPolicy
+      PolicyType: StepScaling
+      ScalingTargetId:
+        Ref: {{@key}}ECSServiceScalableTarget
+      StepScalingPolicyConfiguration:
+        AdjustmentType: ChangeInCapacity
+        Cooldown: 60
+        MetricAggregationType: Average
+        StepAdjustments:
+        - MetricIntervalLowerBound: 0
+          ScalingAdjustment: 5
 {{/each}}
 
 {{#each ecs.tasks}}
@@ -1204,7 +1239,7 @@ Resources:
 {{/each}}
 {{/if}}
 
-# ECS EC2 Autoscaling Policies
+### ECS Autoscaling Policies
 {{# if ecs.autoscaling_policies}}
   {{#each ecs.autoscaling_policies}}
   {{@key}}ScalingPolicy:
@@ -1258,22 +1293,23 @@ Resources:
   {{@key}}Alarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      EvaluationPeriods: {{#if evaluation_periods }}{{ evaluation_periods }}{{ else }}'1'{{/if}}
-      Statistic: {{#if statistic }}{{ statistic }}{{ else }}Average{{/if}}
-      Threshold: {{ threshold }}
-    {{#if alarm_description}}
-      AlarmDescription: {{ alarm_description }}
-    {{/if}}
-      Period: {{#if period }}{{ period }}{{ else }}'60'{{/if}}
-      AlarmActions:
-        - Ref: {{ alarm_action }}
-      Namespace: AWS/EC2
-      Dimensions:
-      - Name: AutoScalingGroupName
-        Value:
-          Ref: CumulusECSAutoScalingGroup
-      ComparisonOperator: {{#if comparison_operator }}{{ comparison_operator }}{{ else }}GreaterThanThreshold{{/if}}
-      MetricName: {{#if metric_name }}{{ metric_name }}{{ else }}CPUUtilization{{/if}}
+      {{{ToJson this}}}
+    #   EvaluationPeriods: {{#if evaluation_periods }}{{ evaluation_periods }}{{ else }}'1'{{/if}}
+    #   Statistic: {{#if statistic }}{{ statistic }}{{ else }}Average{{/if}}
+    #   Threshold: {{ threshold }}
+    # {{#if alarm_description}}
+    #   AlarmDescription: {{ alarm_description }}
+    # {{/if}}
+    #   Period: {{#if period }}{{ period }}{{ else }}'60'{{/if}}
+    #   AlarmActions:
+    #     - Ref: {{ alarm_action }}
+    #   Namespace: AWS/EC2
+    #   Dimensions:
+    #   - Name: AutoScalingGroupName
+    #     Value:
+    #       Ref: CumulusECSAutoScalingGroup
+    #   ComparisonOperator: {{#if comparison_operator }}{{ comparison_operator }}{{ else }}GreaterThanThreshold{{/if}}
+    #   MetricName: {{#if metric_name }}{{ metric_name }}{{ else }}CPUUtilization{{/if}}
   {{/each}}
 {{/if}}
 

@@ -82,13 +82,58 @@ default:
       - '{{AWS_SUBNET}}'
 
   alarms:
-    CPUHigh:
-      alarm_action: ScaleOutScalingPolicy
-      threshold: '50'
-    CPULow:
-      alarm_action: ScaleInScalingPolicy
-      comparison_operator: LessThanThreshold
-      threshold: '50'
+    ECSMemoryUtilization:
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 1
+      Threshold: 50
+      Metrics:
+        - Id: m1
+          MetricStat:
+            Metric:
+              Namespace: AWS/ECS
+              MetricName: MemoryUtilization
+              Dimensions:
+                - Name: ClusterName
+                  Value:
+                    Ref: CumulusECSCluster
+            Period: 60
+            Stat: Average
+    ActivitiesWaiting:
+      AlarmActions:
+        - Ref: HelloWorldServiceECSServiceApplicationScalingPolicy
+      ComparisonOperator: GreaterThanThreshold
+      EvaluationPeriods: 1
+      Threshold: 1
+      Metrics:
+        - Id: e1
+          Expression: m2 - m1
+          Label: HelloWorldActivitiesWaiting
+        - Id: m2
+          MetricStat:
+            Metric:
+              Namespace: AWS/States
+              MetricName: ActivitiesScheduled
+              Dimensions:
+                - Name: ActivityArn
+                  Value:
+                    Ref: HelloWorldActivity
+            Period: 60
+            Stat: Sum
+            Unit: Count
+          ReturnData: false
+        - Id: m1
+          MetricStat:
+            Metric:
+              Namespace: AWS/States
+              MetricName: ActivitiesStarted
+              Dimensions:
+                - Name: ActivityArn
+                  Value:
+                    Ref: HelloWorldActivity
+            Period: 60
+            Stat: Sum
+            Unit: Count
+          ReturnData: false
 
   ecs:
     instanceType: t2.medium
@@ -128,6 +173,7 @@ default:
     services:
       HelloWorldService:
         image: cumuluss/cumulus-ecs-task:1.2.3
+        # I find this is a little confusing - the task has service and memory limit not the service
         cpu: 400
         memory: 700
         count: 1

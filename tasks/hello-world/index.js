@@ -2,6 +2,7 @@
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { log } = require('@cumulus/common');
+const { sleep } = require('@cumulus/common/util');
 
 const {
   deleteS3Object,
@@ -50,6 +51,14 @@ async function throwErrorIfConfigured(event) {
   }
 }
 
+async function sleepIfConfigured(event) {
+  if (event.input.sleep) {
+    log.debug(`Detected sleep, sleeping for ${event.input.sleep}`);
+    await sleep(event.input.sleep);
+  }
+  return;
+}
+
 /**
  * Return sample 'hello world' JSON
  *
@@ -58,6 +67,7 @@ async function throwErrorIfConfigured(event) {
  */
 async function helloWorld(event) {
   await throwErrorIfConfigured(event);
+  await sleepIfConfigured(event);
 
   return {
     hello: 'Hello World'
