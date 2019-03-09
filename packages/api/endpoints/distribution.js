@@ -2,41 +2,15 @@
 
 const router = require('express-promise-router')();
 const urljoin = require('url-join');
-const { s3 } = require('@cumulus/common/aws');
+const {
+  s3,
+  getFileBucketAndKey
+} = require('@cumulus/common/aws');
+const { UnparsableFileLocationError } = require('@cumulus/common/errors');
 const { URL } = require('url');
 const EarthdataLogin = require('../lib/EarthdataLogin');
 const { RecordDoesNotExist } = require('../lib/errors');
 const { AccessToken } = require('../models');
-
-/**
- * Error class for file locations that are unparsable
- */
-class UnparsableFileLocationError extends Error {
-  constructor(fileLocation) {
-    super(`File location "${fileLocation}" could not be parsed`);
-    this.name = this.constructor.name;
-  }
-}
-
-/**
- * Extract the S3 bucket and key from the URL path parameters
- *
- * @param {string} pathParams - path parameters from the URL
- * @returns {Object} - bucket/key in the form of
- * { Bucket: x, Key: y }
- */
-function getFileBucketAndKey(pathParams) {
-  const fields = pathParams.split('/');
-
-  const Bucket = fields.shift();
-  const Key = fields.join('/');
-
-  if (Bucket.length === 0 || Key.length === 0) {
-    throw new UnparsableFileLocationError(pathParams);
-  }
-
-  return [Bucket, Key];
-}
 
 /**
  * Return a signed URL to an S3 object
