@@ -1,5 +1,6 @@
 'use strict';
 
+const cloneDeep = require('lodash.clonedeep');
 const fs = require('fs-extra');
 const {
   aws: {
@@ -17,6 +18,7 @@ const {
 } = require('@cumulus/common');
 
 const { CMR } = require('@cumulus/cmrjs');
+const { Granule } = require('@cumulus/api/models');
 const {
   addCollections,
   addProviders,
@@ -44,15 +46,17 @@ const filesTableName = (stackName) => `${stackName}-FilesTable`;
 const collectionsTableName = (stackName) => `${stackName}-CollectionsTable`;
 
 const providersDir = './data/providers/s3/';
-const collectionsDir = './data/collections/s3_MOD09GQ_006';
-const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
-const collection = { name: 'MOD09GQ', version: '006' };
+const collectionsDir = './data/collections/s3_MYD13Q1_006';
+const inputPayloadFilename = './spec/createReconciliationReport/IngestGranule.MYD13Q1_006.input.payload.json';
+const collection = { name: 'MYD13Q1', version: '006' };
 const collectionId = constructCollectionId(collection.name, collection.version);
-const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
+const granuleRegex = '^MYD13Q1\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
 const config = loadConfig();
 
 process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+const granuleModel = new Granule();
 
 const cmr = new CMR(config.cmr.provider, config.cmr.clientId, config.cmr.username, config.cmr.password);
 
@@ -90,12 +94,13 @@ async function deleteReconciliationReports(systemBucket, stackName) {
   return deleteS3Files(objectsToDelete);
 }
 
-// add MOD09GQ___006 collection
+// add MYD13Q1___006 collection
 async function setupCollectionAndTestData(testSuffix, testDataFolder) {
   const s3data = [
-    '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
-    '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf',
-    '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg'
+    '@cumulus/test-data/granules/MYD13Q1.A2002185.h00v09.006.2015149071135.hdf.met',
+    '@cumulus/test-data/granules/MYD13Q1.A2002185.h00v09.006.2015149071135.hdf',
+    '@cumulus/test-data/granules/BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.hdf',
+    '@cumulus/test-data/granules/BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.1.jpg'
   ];
 
   // populate collections, providers and test data
@@ -133,6 +138,25 @@ async function ingestGranuleToCMR() {
   return granuleId;
 }
 
+// update granule file which matches the regex
+async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
+  console.log(`update granule file: ${granuleId} regex ${regex} to ${replacement}`);
+  let originalGranuleFile;
+  let updatedGranuleFile;
+  const updatedFiles = granuleFiles.map((file) => {
+    const updatedFile = cloneDeep(file);
+    if (file.fileName.match(regex)) {
+      originalGranuleFile = file;
+      updatedGranuleFile = updatedFile;
+    }
+    updatedFile.fileName = updatedFile.fileName.replace(regex, replacement);
+    updatedFile.key = updatedFile.key.replace(regex, replacement);
+    return updatedFile;
+  });
+  await granuleModel.update({ granuleId: granuleId }, { files: updatedFiles });
+  return { originalGranuleFile, updatedGranuleFile };
+}
+
 describe('When there are granule differences and granule reconciliation is run', () => {
   let report;
   let extraS3Object;
@@ -141,9 +165,15 @@ describe('When there are granule differences and granule reconciliation is run',
   let protectedBucket;
   let testDataFolder;
   let testSuffix;
+
+  // granuleIds of the granules in both Cumulus and CMR, only in Cumulus, only in CMR
   let publishedGranule;
   let dbGranule;
   let cmrGranule;
+
+  // the original file and updated file object of granule files being updated
+  let originalGranuleFile;
+  let updatedGranuleFile;
 
   beforeAll(async () => {
     // Remove any pre-existing reconciliation reports
@@ -185,14 +215,26 @@ describe('When there are granule differences and granule reconciliation is run',
 
     await setupCollectionAndTestData(testSuffix, testDataFolder);
 
-    // ingest a granule and publish it to CMR
-    publishedGranule = await ingestAndPublishGranule(testSuffix, testDataFolder);
+    const ingestResults = await Promise.all([
+      // ingest a granule and publish it to CMR
+      ingestAndPublishGranule(testSuffix, testDataFolder),
 
-    // ingest a granule but not publish it to CMR
-    dbGranule = await ingestAndPublishGranule(testSuffix, testDataFolder, false);
+      // ingest a granule but not publish it to CMR
+      ingestAndPublishGranule(testSuffix, testDataFolder, false),
 
-    // ingest a granule to CMR only
-    cmrGranule = await ingestGranuleToCMR();
+      // ingest a granule to CMR only
+      ingestGranuleToCMR()
+    ]);
+
+    [publishedGranule, dbGranule, cmrGranule] = ingestResults;
+
+    // update one of the granule files in database so that that file won't match with CMR
+    const granuleResponse = await granulesApiTestUtils.getGranule({
+      prefix: config.stackName,
+      granuleId: publishedGranule
+    });
+
+    ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranule, JSON.parse(granuleResponse.body).files, /jpg$/, 'jpg2'));
 
     console.log(`invoke ${config.stackName}-CreateReconciliationReport`);
 
@@ -206,6 +248,9 @@ describe('When there are granule differences and granule reconciliation is run',
       Key: reportKey
     }).promise()
       .then((response) => JSON.parse(response.Body.toString()));
+
+    console.log(`update granule files back ${publishedGranule}`);
+    await granuleModel.update({ granuleId: publishedGranule }, { files: JSON.parse(granuleResponse.body).files });
   });
 
   it('generates a report showing cumulus files that are in S3 but not in the DynamoDB Files table', () => {
@@ -220,8 +265,8 @@ describe('When there are granule differences and granule reconciliation is run',
   });
 
   it('generates a report showing number of collections that are in both Cumulus and CMR', () => {
-    // MOD09GQ___006 is in both Cumulus and CMR
-    expect(report.collectionsInCumulusCmr.okCollectionCount).toBeGreaterThan(0);
+    // MYD13Q1___006 is in both Cumulus and CMR
+    expect(report.collectionsInCumulusCmr.okCount).toBeGreaterThanOrEqual(1);
   });
 
   it('generates a report showing collections that are in the Cumulus but not in CMR', () => {
@@ -232,13 +277,13 @@ describe('When there are granule differences and granule reconciliation is run',
 
   it('generates a report showing collections that are in the CMR but not in Cumulus', () => {
     // we know CMR has collections which are not in Cumulus
-    expect(report.collectionsInCumulusCmr.onlyInCmr.length).toBeGreaterThan(0);
+    expect(report.collectionsInCumulusCmr.onlyInCmr.length).toBeGreaterThanOrEqual(1);
     expect(report.collectionsInCumulusCmr.onlyInCmr).not.toContain(collectionId);
   });
 
   it('generates a report showing number of granules that are in both Cumulus and CMR', () => {
     // published granule should in both Cumulus and CMR
-    expect(report.granulesInCumulusCmr.okGranuleCount).toBeGreaterThan(0);
+    expect(report.granulesInCumulusCmr.okCount).toBeGreaterThanOrEqual(1);
   });
 
   it('generates a report showing granules that are in the Cumulus but not in CMR', () => {
@@ -250,10 +295,33 @@ describe('When there are granule differences and granule reconciliation is run',
 
   it('generates a report showing granules that are in the CMR but not in Cumulus', () => {
     const cmrGranuleIds = report.granulesInCumulusCmr.onlyInCmr.map((gran) => gran.GranuleUR);
-    expect(cmrGranuleIds.length).toBeGreaterThan(0);
+    expect(cmrGranuleIds.length).toBeGreaterThanOrEqual(1);
     expect(cmrGranuleIds).toContain(cmrGranule);
     expect(cmrGranuleIds).not.toContain(dbGranule);
     expect(cmrGranuleIds).not.toContain(publishedGranule);
+  });
+
+  it('generates a report showing number of granule files that are in both Cumulus and CMR', () => {
+    // published granule should have 2 files in both Cumulus and CMR
+    expect(report.filesInCumulusCmr.okCount).toBeGreaterThanOrEqual(2);
+  });
+
+  it('generates a report showing granule files that are in the Cumulus but not in CMR', () => {
+    // published granule should have one file(renamed file) in Cumulus
+    const fileNames = report.filesInCumulusCmr.onlyInCumulus.map((file) => file.fileName);
+    expect(fileNames).toContain(updatedGranuleFile.fileName);
+    expect(fileNames).not.toContain(originalGranuleFile.fileName);
+    expect(report.filesInCumulusCmr.onlyInCumulus.filter((file) => file.granuleId === publishedGranule).length)
+      .toBe(1);
+  });
+
+  it('generates a report showing granule files that are in the CMR but not in Cumulus', () => {
+    const urls = report.filesInCumulusCmr.onlyInCmr;
+    expect(urls.find((url) => url.URL.endsWith(originalGranuleFile.fileName))).toBeTruthy();
+    expect(urls.find((url) => url.URL.endsWith(updatedGranuleFile.fileName))).toBeFalsy();
+    // TBD update to 1 after the s3credentials url has type 'VIEW RELATED INFORMATION' (CUMULUS-1182)
+    expect(report.filesInCumulusCmr.onlyInCmr.filter((file) => file.GranuleUR === publishedGranule).length)
+      .toBe(2);
   });
 
   afterAll(async () => {
@@ -276,7 +344,9 @@ describe('When there are granule differences and granule reconciliation is run',
       }).promise(),
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir),
-      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+      granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranule }),
+      cmr.deleteGranule(cmrGranule)
     ]);
 
     const granuleResponse = await granulesApiTestUtils.getGranule({
@@ -287,7 +357,5 @@ describe('When there are granule differences and granule reconciliation is run',
     await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: publishedGranule });
     await waitForConceptExistsOutcome(JSON.parse(granuleResponse.body).cmrLink, false);
     await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: publishedGranule });
-    await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranule });
-    await cmr.deleteGranule(cmrGranule);
   });
 });
