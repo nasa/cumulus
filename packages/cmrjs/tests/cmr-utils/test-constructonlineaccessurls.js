@@ -8,7 +8,7 @@ const cmrUtils = rewire('../../cmr-utils');
 
 const constructOnlineAccessUrls = cmrUtils.__get__('constructOnlineAccessUrls');
 const getS3CredentialsObject = cmrUtils.__get__('getS3CredentialsObject');
-
+const mapCNMTypeToCMRType = cmrUtils.__get__('mapCNMTypeToCMRType');
 
 const sortByURL = (a, b) => a.URL < b.URL;
 
@@ -23,6 +23,18 @@ test.beforeEach((t) => {
     public: { name: randomId('public'), type: 'public' }
   };
   t.context.buckets = new BucketsConfig(t.context.bucketConfig);
+});
+
+test('mapCNMTypeToCMRType returns a mapping', (t) => {
+  const expected = 'GET RELATED VISUALIZATION';
+  const actual = mapCNMTypeToCMRType('browse');
+  t.is(expected, actual);
+});
+
+test('mapCNMTypeToCMRType returns a default', (t) => {
+  const expected = 'GET DATA';
+  const actual = mapCNMTypeToCMRType(undefined);
+  t.is(expected, actual);
 });
 
 test('returns correct url for protected data', (t) => {
@@ -102,15 +114,18 @@ test('returns an array of correct url objects given a list of moved files.', (t)
   const movedFiles = [
     {
       key: 'hidden/secretfile.gpg',
-      bucket: t.context.bucketConfig.private.name
+      bucket: t.context.bucketConfig.private.name,
+      fileType: 'data',
     },
     {
       key: 'path/publicfile.jpg',
-      bucket: t.context.bucketConfig.public.name
+      bucket: t.context.bucketConfig.public.name,
+      fileType: 'browse'
     },
     {
       key: 'another/path/protected.hdf',
-      bucket: t.context.bucketConfig.protected.name
+      bucket: t.context.bucketConfig.protected.name,
+      fileType: 'data'
     }
   ];
 
@@ -125,7 +140,7 @@ test('returns an array of correct url objects given a list of moved files.', (t)
       URL: `https://${t.context.bucketConfig.public.name}.s3.amazonaws.com/path/publicfile.jpg`,
       Description: 'File to download',
       URLDescription: 'File to download',
-      Type: 'GET DATA'
+      Type: 'GET RELATED VISUALIZATION'
     },
     s3CredentialsEndpointObject
   ];

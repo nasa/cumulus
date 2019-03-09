@@ -306,7 +306,6 @@ function getS3CredentialsObject(s3CredsUrl) {
   };
 }
 
-
 function mapCNMTypeToCMRType(type){
   const mapping = {
     'data': 'GET DATA',
@@ -503,8 +502,8 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   let newOnlineAccessURLs = newURLs.filter((urlObj) => urlObj.Type === 'GET DATA');
   newOnlineAccessURLs = newOnlineAccessURLs.map((urlObj) => omit(urlObj, ['Type', 'Description']));
 
-  originalOnlineAccessURLs = [].concat([originalOnlineAccessURLs]);
-  originalOnlineResources = [].concat([originalOnlineResources]);
+  originalOnlineAccessURLs = [].concat(originalOnlineAccessURLs);
+  originalOnlineResources = [].concat(originalOnlineResources);
 
   const mergedOnlineAccessURLs = mergeURLs(originalOnlineAccessURLs, newOnlineAccessURLs, removedURLs);
   const mergedOnlineResources = mergeURLs(originalOnlineResources, newOnlineResources, removedURLs);
@@ -512,13 +511,31 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   // Update the Granule with the updated/merged lists
   _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedOnlineAccessURLs);
   _set(updatedGranule, 'OnlineResources.OnlineResource', mergedOnlineResources);
-  metadataObject.Granule = updatedGranule;
-
+  metadataObject.Granule = reorderGranuleHack(updatedGranule);
   // Build and upload the output
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(metadataObject);
   await uploadEcho10CMRFile(xml, cmrFile);
   return metadataObject;
+}
+
+// Hack to get integration tests working.
+// Do not merge with master/approve PR.  Do not pass go.
+function reorderGranuleHack(granule) {
+  let newGranule = {}
+  Object.keys(granule).forEach((key) => {
+    if (key === 'OnlineAccessURLs') {
+      newGranule[key] = granule[key];
+      newGranule.OnlineResources = granule.OnlineResources;
+    }
+    else if (key === 'OnlineResources') {
+      log.warn('Ignoring Resources key as it should be added with access URLs');
+    }
+    else {
+      newGranule[key] = granule[key];
+    }
+  });
+  return newGranule
 }
 
 async function uploadEcho10CMRFile(xml, cmrFile) {
