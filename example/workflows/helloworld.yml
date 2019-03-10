@@ -104,6 +104,10 @@ HelloWorldOnDemandWorkflow:
       Parameters:
         Cluster: ${CumulusECSCluster.Arn}
         TaskDefinition: ${HelloWorldOnDemandTaskDefinition}
+        Overrides:
+          ContainerOverrides:
+            - Name: HelloWorldOnDemand
+              'Command.$': '$.payload.commands'
       Retry:
         - ErrorEquals:
             - States.Timeout
