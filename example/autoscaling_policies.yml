@@ -1,0 +1,22 @@
+Step:
+  step_adjustments:
+    - MetricIntervalLowerBound: 0
+      ScalingAdjustment: 1
+    - MetricIntervalUpperBound: 0
+      ScalingAdjustment: -1
+Target:
+  override_defaults: true
+  properties:
+    AdjustmentType: ChangeInCapacity
+    AutoScalingGroupName:
+      Ref: CumulusECSAutoScalingGroup
+    PolicyType: TargetTrackingScaling
+    TargetTrackingConfiguration:
+      TargetValue: 20
+      CustomizedMetricSpecification:
+        Namespace: AWS/ECS
+        MetricName: MemoryUtilization
+        Dimensions:
+          - Name: ClusterName
+            Value:
+              Ref: CumulusECSCluster 

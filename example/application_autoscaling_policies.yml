@@ -1,0 +1,23 @@
+Step:
+  step_adjustments:
+    - MetricIntervalLowerBound: 0
+      ScalingAdjustment: 1
+    - MetricIntervalUpperBound: 0
+      ScalingAdjustment: -1
+Target:
+  override_defaults: true
+  properties:
+    PolicyName: HelloWorldECSServiceApplicationTargetScalingPolicy
+    ScalingTargetId:
+      Ref: HelloWorldServiceECSServiceScalableTarget              
+    AdjustmentType: ChangeInCapacity
+    PolicyType: TargetTrackingScaling
+    TargetTrackingScalingPolicyConfiguration:
+      TargetValue: 0
+      CustomizedMetricSpecification:
+        Namespace: AWS/States
+        MetricName: ActivitiesScheduled
+        Dimensions:
+          - Name: ActivityArn
+            Value:
+              Ref: HelloWorldActivity
