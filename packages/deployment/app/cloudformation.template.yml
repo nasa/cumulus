@@ -1001,6 +1001,9 @@ Resources:
   {{@key}}ScalingPolicy:
     Type: AWS::AutoScaling::ScalingPolicy
     Properties:
+    {{#if this.override_defaults}}
+      {{{ ToJson this.properties }}}
+    {{else}}
       AdjustmentType: ChangeInCapacity
       AutoScalingGroupName:
         Ref: CumulusECSAutoScalingGroup
@@ -1010,6 +1013,7 @@ Resources:
       StepAdjustments:
         {{{ToJson this.step_adjustments}}}
       # TODO(Aimee): Add simple scaling and target tracking configuration option
+    {{/if}}
   {{/each}}
 {{/if}}
 
@@ -1123,7 +1127,7 @@ Resources:
         MaximumPercent: 100
         MinimumHealthyPercent: 0
 
-{{#if this.application_autoscaling}}
+{{#if this.application_autoscaling_policies}}
   {{@key}}ECSServiceScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     DependsOn:
@@ -1144,20 +1148,24 @@ Resources:
       ScalableDimension: 'ecs:service:DesiredCount'
       ServiceNamespace: ecs
 
+{{#each this.application_autoscaling_policies}}
   {{@key}}ECSServiceApplicationScalingPolicy:
-    Type : "AWS::ApplicationAutoScaling::ScalingPolicy"
-    Properties: 
+    Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
+    Properties:
+    {{#if this.override_defaults}}
+      {{{ToJson this.properties}}}
+    {{else}}
       PolicyName: {{@key}}ECSServiceApplicationScalingPolicy
-      PolicyType: StepScaling
       ScalingTargetId:
-        Ref: {{@key}}ECSServiceScalableTarget
+        Ref: {{@../key}}ECSServiceScalableTarget
+      PolicyType: StepScaling
       StepScalingPolicyConfiguration:
-        # Should these be configurable?
         AdjustmentType: ChangeInCapacity
         Cooldown: 60
         MetricAggregationType: Average
-        StepAdjustments: {{{ ToJson this.application_autoscaling.step_adjustments }}}
-      # TODO: Add TargetScalingPolicyConfiguration options
+        StepAdjustments: {{{ ToJson this.step_adjustments }}}
+    {{/if}}
+{{/each}}
 {{/if}}
 {{/each}}
 
