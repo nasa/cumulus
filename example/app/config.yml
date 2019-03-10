@@ -124,7 +124,6 @@ default:
             function: Fn::Sub
             value: '${AWS::Region}'
           ECS_AGENT_PULL_BEHAVIOR: 'always'
-    autoscaling_policies: !!files [ 'autoscaling_policies.yml' ]
 
   activities:
     - name: HelloWorld

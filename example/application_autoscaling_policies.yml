@@ -9,14 +9,14 @@ Target:
   properties:
     PolicyName: HelloWorldECSServiceApplicationTargetScalingPolicy
     ScalingTargetId:
-      Ref: HelloWorldServiceECSServiceScalableTarget              
-    AdjustmentType: ChangeInCapacity
+      Ref: HelloWorldServiceECSServiceScalableTarget
     PolicyType: TargetTrackingScaling
     TargetTrackingScalingPolicyConfiguration:
-      TargetValue: 0
+      TargetValue: 0.1 # Can't be 0?
       CustomizedMetricSpecification:
         Namespace: AWS/States
         MetricName: ActivitiesScheduled
+        Statistic: Sum
         Dimensions:
           - Name: ActivityArn
             Value:

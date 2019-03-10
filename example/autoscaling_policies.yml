@@ -16,6 +16,7 @@ Target:
       CustomizedMetricSpecification:
         Namespace: AWS/ECS
         MetricName: MemoryUtilization
+        Statistic: Average
         Dimensions:
           - Name: ClusterName
             Value:

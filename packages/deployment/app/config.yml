@@ -105,6 +105,7 @@ default:
     availabilityZone: 'us-east-1b'
     maxInstances: 1
     desiredInstances: 0
+    autoscaling_policies: !!files [ 'autoscaling_policies.yml' ]
     tasks:
       AsyncOperation:
         image: cumuluss/async-operation:25
