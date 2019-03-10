@@ -24,12 +24,12 @@ describe('scaling for step function activities', () => {
   });
 
   it('cloudformation stack has an alarm for ActivitiesWaiting', () => {
-    expect(activitiesWaitingAlarm).not.toEqual(undefined);
+    expect(activitiesWaitingAlarm.Type).toEqual('Type: AWS::CloudWatch::Alarm');
   });
 
   it('HelloWorld ECS Service is a scalable target', () => {
     const helloWorldScalableTarget = cloudformationResources.HelloWorldServiceECSServiceScalableTarget;
-    expect(helloWorldScalableTarget).not.toEqual(undefined);
+    expect(helloWorldScalableTarget.Type).toEqual('AWS::ApplicationAutoScaling::ScalableTarget');
   });
 
   it('ActivitiesWaitingAlarm is configured to scale the ECSService', () => {
@@ -47,7 +47,7 @@ describe('scaling for step function activities', () => {
       const alarmEvaluationPeriods = activitiesWaitingAlarm.Properties.EvaluationPeriods;
       const alarmPeriod = activitiesWaitingAlarm.Properties.Metrics[1].MetricStat.Period;
       alarmPeriodSeconds = alarmPeriod / alarmEvaluationPeriods;
-      const sleepMs = 2 * alarmPeriodSeconds * 1000;
+      sleepMs = 2 * alarmPeriodSeconds * 1000;
 
       for (let i = 0; i < numExecutions; i += 1) {
         workflowExecutionPromises.push(buildAndStartWorkflow(
@@ -66,7 +66,7 @@ describe('scaling for step function activities', () => {
 
     describe('when activities waiting are greater than the threshold', () => {
       it('the number of tasks the service is running should increase', async() => {
-        await sleep(alarmPeriodSeconds * 1000 + 10);
+        await sleep(sleepMs);
         const clusterStats = await getClusterStats(config.stackName);
         console.log(`clusterStats ${JSON.stringify(clusterStats, null, 2)}\n`);
         const runningEC2TasksCount = find(clusterStats, ['name', 'runningEC2TasksCount']).value;

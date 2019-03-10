@@ -82,9 +82,13 @@ describe('When a task is configured to run in ECS', () => {
     });
 
     it('can handle the load (has the expected number of running tasks)', async () => {
+      sleep(5000);
       const stats = await getClusterStats(config.stackName);
-      const runningEC2TasksCount = find(stats, ['name', 'runningEC2TasksCount']).value;
-      const pendingEC2TasksCount = find(stats, ['name', 'pendingEC2TasksCount']).value;
+      console.log(`stats are ${JSON.stringify(stats, null, 2)}\n`);
+      console.log(`numExecutions ${numExecutions}\n`);
+      console.log(`numActivityTasks ${numActivityTasks}\n`);
+      const runningEC2TasksCount = parseInt(find(stats, ['name', 'runningEC2TasksCount']).value);
+      const pendingEC2TasksCount = parseInt(find(stats, ['name', 'pendingEC2TasksCount']).value);
       expect(runningEC2TasksCount + pendingEC2TasksCount).toEqual(numExecutions + numActivityTasks);
     });
 
@@ -96,14 +100,17 @@ describe('When a task is configured to run in ECS', () => {
   });
 
   describe('the load on the system is far below what its resources can handle', () => {
-    it('removes excessive resources but not all resources', async () => {
+    it('removes excess resources', async () => {
       console.log('Waiting for scale in policy to take affect.');
       const mostRecentActivity = await getNewScalingActivity();
       expect(mostRecentActivity.Description).toMatch(/Terminating EC2 instance: i-*/);
       const stats = await getClusterStats(config.stackName);
-      const runningEC2TasksCount = find(stats, ['name', 'runningEC2TasksCount']).value;
-      const pendingEC2TasksCount = find(stats, ['name', 'pendingEC2TasksCount']).value;
+      const runningEC2TasksCount = parseInt(find(stats, ['name', 'runningEC2TasksCount']).value);
+      const pendingEC2TasksCount = parseInt(find(stats, ['name', 'pendingEC2TasksCount']).value);
       expect(runningEC2TasksCount + pendingEC2TasksCount).toEqual(numActivityTasks);
+    });
+
+    it('does not remove all resources', async () => {
       const instances = await ecs().listContainerInstances({ cluster: clusterArn }).promise();
       console.log(`instances : ${JSON.stringify(instances, 2)}`);
       expect(instances.containerInstanceArns.length).toEqual(minInstancesCount);
