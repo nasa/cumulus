@@ -15,7 +15,7 @@ const config = loadConfig();
 let cloudformationResources;
 let numExecutions = 2;
 let activitiesWaitingAlarm;
-const workflowName = 'EcsHelloWorldWorkflow';
+const workflowName = 'HelloWorldActivityWorkflow';
 
 describe('scaling for step function activities', () => {
   beforeAll(async() => {
@@ -63,7 +63,6 @@ describe('scaling for step function activities', () => {
       }
       workflowExecutionArns = await Promise.all(workflowExecutionPromises);
     });
-
 
     describe('when activities waiting are greater than the threshold', () => {
       it('the number of tasks the service is running should increase', async() => {
