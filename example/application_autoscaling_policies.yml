@@ -12,7 +12,7 @@ Target:
       Ref: HelloWorldServiceECSServiceScalableTarget
     PolicyType: TargetTrackingScaling
     TargetTrackingScalingPolicyConfiguration:
-      TargetValue: 0.1 # Can't be 0?
+      TargetValue: 0.1 # Apparently, this can't be 0, see https://docs.aws.amazon.com/autoscaling/application/APIReference/API_TargetTrackingScalingPolicyConfiguration.html
       CustomizedMetricSpecification:
         Namespace: AWS/States
         MetricName: ActivitiesScheduled
