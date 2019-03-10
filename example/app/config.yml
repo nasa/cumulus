@@ -83,6 +83,8 @@ default:
 
   alarms:
     ECSMemoryUtilization:
+      AlarmActions:
+        - Ref: StepScalingPolicy
       ComparisonOperator: GreaterThanOrEqualToThreshold
       EvaluationPeriods: 1
       Threshold: 50
@@ -101,7 +103,7 @@ default:
     ActivitiesWaiting:
       AlarmActions:
         - Ref: HelloWorldServiceECSServiceApplicationScalingPolicy
-      ComparisonOperator: GreaterThanThreshold
+      ComparisonOperator: GreaterThanOrEqualToThreshold
       EvaluationPeriods: 1
       Threshold: 1
       Metrics:
@@ -138,7 +140,7 @@ default:
   ecs:
     instanceType: t2.medium
     desiredInstances: 1
-    maxInstances: 2
+    maxInstances: 3
     minInstances: 1
     availabilityZone: us-east-1b
     amiid: ami-a7a242da
@@ -146,30 +148,6 @@ default:
     restartTasksOnDeploy: true
     docker:
       username: cumulususer
-    autoscaling_policies:
-      ScaleOut:
-        policy_type: SimpleScaling
-        adjustment_type: ChangeInCapacity
-        scaling_adjustment: 1
-      ScaleIn:
-        policy_type: SimpleScaling
-        adjustment_type: ChangeInCapacity
-        scaling_adjustment: -1
-      Step:
-        policy_type: StepScaling
-        adjustment_type: ChangeInCapacity
-        step_adjustments:
-          - MetricIntervalLowerBound: 0
-            ScalingAdjustment: 1
-          - MetricIntervalUpperBound: 0
-            ScalingAdjustment: -1
-      Target:
-        policy_type: TargetTrackingScaling
-        adjustment_type: ChangeInCapacity
-        target_value: 20000
-        predefined_metric_type:
-          PredefinedMetricType: ASGAverageNetworkIn
-
     services:
       HelloWorldService:
         image: cumuluss/cumulus-ecs-task:1.2.3
@@ -199,6 +177,15 @@ default:
             function: Fn::Sub
             value: '${AWS::Region}'
           ECS_AGENT_PULL_BEHAVIOR: 'always'
+    autoscaling_policies:
+      Step:
+        policy_type: StepScaling
+        adjustment_type: ChangeInCapacity
+        step_adjustments:
+          - MetricIntervalLowerBound: 0
+            ScalingAdjustment: 1
+          - MetricIntervalUpperBound: 0
+            ScalingAdjustment: -1
 
   activities:
     - name: HelloWorld
