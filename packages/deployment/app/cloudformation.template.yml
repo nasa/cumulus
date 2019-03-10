@@ -995,36 +995,21 @@ Resources:
         Value: "{{stackName}}-cumulus-ecs"
         PropagateAtLaunch: true
 
-### ECS Autoscaling Policies
+### ECS EC2 Autoscaling Policies
 {{# if ecs.autoscaling_policies}}
   {{#each ecs.autoscaling_policies}}
   {{@key}}ScalingPolicy:
     Type: AWS::AutoScaling::ScalingPolicy
     Properties:
-      AdjustmentType: {{ adjustment_type }}
+      AdjustmentType: ChangeInCapacity
       AutoScalingGroupName:
         Ref: CumulusECSAutoScalingGroup
-      {{#ifNotEquals policy_type "StepScaling"}}
-      Cooldown: {{# if cool_down }}{{ cool_down }}{{else}}60{{/if}}
-      {{/ifNotEquals}}
-      {{#ifNotEquals policy_type "SimpleScaling"}}
-      EstimatedInstanceWarmup: {{# if instance_warmup }}{{ instance_warmup }}{{else}}60{{/if}}
-      {{/ifNotEquals}}
-      {{#ifEquals adjustment_type "PercentChangeInCapacity" }}
-      MinAdjustmentMagnitude: {{# if min_adjustment }}{{ min_adjustment }}{{else}}1{{/if}}
-      {{/ifEquals}}
-      PolicyType: {{ policy_type }}
-      {{#ifEquals policy_type "SimpleScaling"}}
-      ScalingAdjustment: {{ scaling_adjustment }}
-      {{/ifEquals}}
-      {{#ifEquals policy_type "StepScaling"}}
-      MetricAggregationType: {{# if metric_aggregation_type }}{{ metric_aggregation_type }}{{else}}Average{{/if}}
+      EstimatedInstanceWarmup: 60
+      PolicyType: StepScaling
+      MetricAggregationType: Average
       StepAdjustments:
-        {{#each this.step_adjustments}}
-        - {{{ToJson this}}}
-        {{/each}}
-      {{/ifEquals}}
-      # TODO: Add target tracking configuration option
+        {{{ToJson this.step_adjustments}}}
+      # TODO(Aimee): Add simple scaling and target tracking configuration option
   {{/each}}
 {{/if}}
 
@@ -1138,6 +1123,7 @@ Resources:
         MaximumPercent: 100
         MinimumHealthyPercent: 0
 
+{{#if this.application_autoscaling}}
   {{@key}}ECSServiceScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     DependsOn:
@@ -1166,14 +1152,13 @@ Resources:
       ScalingTargetId:
         Ref: {{@key}}ECSServiceScalableTarget
       StepScalingPolicyConfiguration:
+        # Should these be configurable?
         AdjustmentType: ChangeInCapacity
         Cooldown: 60
         MetricAggregationType: Average
-        StepAdjustments:
-        - MetricIntervalLowerBound: 0
-          ScalingAdjustment: 1
-        - MetricIntervalUpperBound: 0
-          ScalingAdjustment: -1
+        StepAdjustments: {{{ ToJson this.application_autoscaling.step_adjustments }}}
+      # TODO: Add TargetScalingPolicyConfiguration options
+{{/if}}
 {{/each}}
 
 {{#each ecs.tasks}}
@@ -1230,7 +1215,12 @@ Resources:
       {{/if}}
     {{/each}}
       {{# if ../ecs.docker}}
+        {{#if this.ecr}}
+        Image:
+          Fn::Sub: ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/{{image}}
+        {{else}}
         Image: {{image}}
+        {{/if}}
       {{else}}
         Image:
           Fn::Sub: ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/{{image}}
