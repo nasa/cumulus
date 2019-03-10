@@ -37,7 +37,7 @@ HelloWorldWorkflow:
       Type: Fail
       Cause: 'Workflow failed'
 
-EcsHelloWorldWorkflow:
+HelloWorldActivityWorkflow:
   Comment: 'Returns Hello World'
   StartAt: StartStatus
   States:
@@ -47,15 +47,15 @@ EcsHelloWorldWorkflow:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
-      Next: EcsTaskHelloWorld
-    EcsTaskHelloWorld:
+      Next: HelloWorldActivityTask
+    HelloWorldActivityTask:
       CumulusConfig:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
       Type: Task
       Resource: ${HelloWorldActivity}
-      TimeoutSeconds: 60
+      TimeoutSeconds: 180
       Retry:
         - ErrorEquals:
             - States.Timeout
@@ -91,8 +91,8 @@ HelloWorldOnDemandWorkflow:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
-      Next: EcsTaskHelloWorld
-    EcsTaskHelloWorld:
+      Next: HelloWorldTask
+    HelloWorldTask:
       ResultPath: '$.payload.task_output'
       CumulusConfig:
         buckets: '{$.meta.buckets}'
@@ -100,7 +100,7 @@ HelloWorldOnDemandWorkflow:
         collection: '{$.meta.collection}'
       Type: Task
       Resource: 'arn:aws:states:::ecs:runTask.sync'
-      TimeoutSeconds: 120
+      TimeoutSeconds: 180
       Parameters:
         Cluster: ${CumulusECSCluster.Arn}
         TaskDefinition: ${HelloWorldOnDemandTaskDefinition}
