@@ -85,9 +85,11 @@ default:
     ECSMemoryUtilization:
       AlarmActions:
         - Ref: StepScalingPolicy
+      OKActions:
+        - Ref: StepScalingPolicy
       ComparisonOperator: GreaterThanOrEqualToThreshold
       EvaluationPeriods: 1
-      Threshold: 50
+      Threshold: 20
       Metrics:
         - Id: m1
           MetricStat:
@@ -103,6 +105,9 @@ default:
     ActivitiesWaiting:
       AlarmActions:
         - Ref: HelloWorldServiceECSServiceApplicationScalingPolicy
+      OKActions:
+        - Ref: HelloWorldServiceECSServiceApplicationScalingPolicy
+      TreatMissingData: notBreaching
       ComparisonOperator: GreaterThanOrEqualToThreshold
       EvaluationPeriods: 1
       Threshold: 1
@@ -167,9 +172,17 @@ default:
           - '--lambdaArn'
           - function: Ref
             value: HelloWorldLambdaFunction
+        # Scale the number of tasks based on number schedued
+        application_autoscaling:
+          step_adjustments:
+            - MetricIntervalLowerBound: 1
+              ScalingAdjustment: 1
+            - MetricIntervalUpperBound: 1
+              ScalingAdjustment: -1
     tasks:
       HelloWorldOnDemand:
-        image: '{{AWS_ACCOUNT_ID}}.dkr.ecr.{{AWS_DEFAULT_REGION}}.amazonaws.com/hello_world:latest'
+        ecr: true
+        image: hello_world:latest
         cpu: 400
         memory: 700
         envs:
@@ -178,9 +191,8 @@ default:
             value: '${AWS::Region}'
           ECS_AGENT_PULL_BEHAVIOR: 'always'
     autoscaling_policies:
+      # EC2 scaling
       Step:
-        policy_type: StepScaling
-        adjustment_type: ChangeInCapacity
         step_adjustments:
           - MetricIntervalLowerBound: 0
             ScalingAdjustment: 1
