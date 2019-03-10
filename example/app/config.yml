@@ -81,67 +81,6 @@ default:
     subnets:
       - '{{AWS_SUBNET}}'
 
-  alarms:
-    ECSMemoryUtilization:
-      AlarmActions:
-        - Ref: StepScalingPolicy
-      OKActions:
-        - Ref: StepScalingPolicy
-      ComparisonOperator: GreaterThanOrEqualToThreshold
-      EvaluationPeriods: 1
-      Threshold: 20
-      Metrics:
-        - Id: m1
-          MetricStat:
-            Metric:
-              Namespace: AWS/ECS
-              MetricName: MemoryUtilization
-              Dimensions:
-                - Name: ClusterName
-                  Value:
-                    Ref: CumulusECSCluster
-            Period: 60
-            Stat: Average
-    ActivitiesWaiting:
-      AlarmActions:
-        - Ref: HelloWorldServiceECSServiceApplicationScalingPolicy
-      OKActions:
-        - Ref: HelloWorldServiceECSServiceApplicationScalingPolicy
-      TreatMissingData: notBreaching
-      ComparisonOperator: GreaterThanOrEqualToThreshold
-      EvaluationPeriods: 1
-      Threshold: 0
-      Metrics:
-        - Id: e1
-          Expression: m2 - m1
-          Label: HelloWorldActivitiesWaiting
-        - Id: m2
-          MetricStat:
-            Metric:
-              Namespace: AWS/States
-              MetricName: ActivitiesScheduled
-              Dimensions:
-                - Name: ActivityArn
-                  Value:
-                    Ref: HelloWorldActivity
-            Period: 60
-            Stat: Sum
-            Unit: Count
-          ReturnData: false
-        - Id: m1
-          MetricStat:
-            Metric:
-              Namespace: AWS/States
-              MetricName: ActivitiesStarted
-              Dimensions:
-                - Name: ActivityArn
-                  Value:
-                    Ref: HelloWorldActivity
-            Period: 60
-            Stat: Sum
-            Unit: Count
-          ReturnData: false
-
   ecs:
     instanceType: t2.medium
     desiredInstances: 1
@@ -173,12 +112,7 @@ default:
           - function: Ref
             value: HelloWorldLambdaFunction
         # Scale the number of tasks based on number schedued
-        application_autoscaling:
-          step_adjustments:
-            - MetricIntervalLowerBound: 0
-              ScalingAdjustment: 1
-            - MetricIntervalUpperBound: 0
-              ScalingAdjustment: -1
+        application_autoscaling_policies: !!files [ 'application_autoscaling_policies.yml' ]
     tasks:
       HelloWorldOnDemand:
         ecr: true
@@ -190,14 +124,7 @@ default:
             function: Fn::Sub
             value: '${AWS::Region}'
           ECS_AGENT_PULL_BEHAVIOR: 'always'
-    autoscaling_policies:
-      # EC2 scaling
-      Step:
-        step_adjustments:
-          - MetricIntervalLowerBound: 0
-            ScalingAdjustment: 1
-          - MetricIntervalUpperBound: 0
-            ScalingAdjustment: -1
+    autoscaling_policies: !!files [ 'autoscaling_policies.yml' ]
 
   activities:
     - name: HelloWorld
