@@ -90,6 +90,15 @@ async function getClusterArn(stackName) {
   return listClustersResponse.clusterArns.find((arn) => arn.includes(clusterPrefix));
 }
 
+async function getClusterStats(stackName) {
+  const clusterArn = await getClusterArn(stackName);
+  const stats = (await ecs().describeClusters({
+    clusters: [clusterArn],
+    include: ['STATISTICS']
+  }).promise()).clusters[0].statistics;
+  return stats;
+}
+
 /**
  * Get the template JSON from S3 for the workflow
  *
@@ -802,6 +811,7 @@ module.exports = {
   removeRuleAddedParams,
   isWorkflowTriggeredByRule,
   getClusterArn,
+  getClusterStats,
   getWorkflowArn,
   rulesList,
   waitForAsyncOperationStatus,
