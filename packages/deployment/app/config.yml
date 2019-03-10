@@ -225,3 +225,5 @@ default:
   'lambdas.yml',
   'node_modules/@cumulus/api/config/workflowLambdas.yml'
   ]
+
+  alarms: !!files ['alarms.yml']
