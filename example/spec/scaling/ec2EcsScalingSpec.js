@@ -55,6 +55,10 @@ describe('When a task is configured to run in ECS', () => {
   beforeAll(async () => {
     clusterArn = await getClusterArn(config.stackName);
     autoScalingGroupName = await getAutoScalingGroupName(config.stackName);
+    const cloudformationTemplate = await loadCloudformationTemplate(config);
+    cloudformationResources = cloudformationTemplate.Resources;
+    numActivityTasks = Object.values(cloudformationResources).filter((resource) => resource.Type === 'AWS::StepFunctions::Activity').length;
+    minInstancesCount = cloudformationResources.CumulusECSAutoScalingGroup.UpdatePolicy.AutoScalingRollingUpdate.MinInstancesInService;
   });
 
   describe('the load on the system exceeds that which its resources can handle', () => {
@@ -79,7 +83,9 @@ describe('When a task is configured to run in ECS', () => {
 
     it('can handle the load (has the expected number of running tasks)', async () => {
       const stats = await getClusterStats(config.stackName);
-      expect(stats.runningEC2TasksCount + stats.pendingEC2TasksCount).toEqual(numExecutions + numActivityTasks);
+      const runningEC2TasksCount = find(stats, ['name', 'runningEC2TasksCount']).value;
+      const pendingEC2TasksCount = find(stats, ['name', 'pendingEC2TasksCount']).value;
+      expect(runningEC2TasksCount + pendingEC2TasksCount).toEqual(numExecutions + numActivityTasks);
     });
 
     it('adds new resources', async () => {
@@ -95,8 +101,11 @@ describe('When a task is configured to run in ECS', () => {
       const mostRecentActivity = await getNewScalingActivity();
       expect(mostRecentActivity.Description).toMatch(/Terminating EC2 instance: i-*/);
       const stats = await getClusterStats(config.stackName);
-      expect(stats.runningEC2TasksCount + stats.pendingEC2TasksCount).toEqual(numActivityTasks);
+      const runningEC2TasksCount = find(stats, ['name', 'runningEC2TasksCount']).value;
+      const pendingEC2TasksCount = find(stats, ['name', 'pendingEC2TasksCount']).value;
+      expect(runningEC2TasksCount + pendingEC2TasksCount).toEqual(numActivityTasks);
       const instances = await ecs().listContainerInstances({ cluster: clusterArn }).promise();
+      console.log(`instances : ${JSON.stringify(instances, 2)}`);
       expect(instances.containerInstanceArns.length).toEqual(minInstancesCount);
     });
   });

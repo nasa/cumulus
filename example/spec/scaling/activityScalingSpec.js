@@ -46,7 +46,7 @@ describe('scaling for step function activities', () => {
       const workflowExecutionPromises = [];
       const alarmEvaluationPeriods = activitiesWaitingAlarm.Properties.EvaluationPeriods;
       const alarmPeriod = activitiesWaitingAlarm.Properties.Metrics[1].MetricStat.Period;
-      const alarmPeriodSeconds = alarmPeriod / alarmEvaluationPeriods;
+      alarmPeriodSeconds = alarmPeriod / alarmEvaluationPeriods;
       const sleepMs = 2 * alarmPeriodSeconds * 1000;
 
       for (let i = 0; i < numExecutions; i += 1) {
@@ -68,9 +68,10 @@ describe('scaling for step function activities', () => {
       it('the number of tasks the service is running should increase', async() => {
         await sleep(alarmPeriodSeconds * 1000 + 10);
         const clusterStats = await getClusterStats(config.stackName);
+        console.log(`clusterStats ${JSON.stringify(clusterStats, null, 2)}\n`);
         const runningEC2TasksCount = find(clusterStats, ['name', 'runningEC2TasksCount']).value;
         expect(runningEC2TasksCount).toBe('2');
-      });      
+      });
     });
 
     describe('when activities waiting are below the threshold', () => {
@@ -78,6 +79,7 @@ describe('scaling for step function activities', () => {
         const completions = workflowExecutionArns.map((executionArn) => waitForCompletedExecution(executionArn));
         await Promise.all(completions);
         const clusterStats = await getClusterStats(config.stackName);
+        console.log(`clusterStats ${JSON.stringify(clusterStats, null, 2)}\n`);
         const runningEC2TasksCount = find(clusterStats, ['name', 'runningEC2TasksCount']).value;
         expect(runningEC2TasksCount).toBe('1');
       });

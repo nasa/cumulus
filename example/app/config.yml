@@ -110,7 +110,7 @@ default:
       TreatMissingData: notBreaching
       ComparisonOperator: GreaterThanOrEqualToThreshold
       EvaluationPeriods: 1
-      Threshold: 1
+      Threshold: 0
       Metrics:
         - Id: e1
           Expression: m2 - m1
@@ -175,9 +175,9 @@ default:
         # Scale the number of tasks based on number schedued
         application_autoscaling:
           step_adjustments:
-            - MetricIntervalLowerBound: 1
+            - MetricIntervalLowerBound: 0
               ScalingAdjustment: 1
-            - MetricIntervalUpperBound: 1
+            - MetricIntervalUpperBound: 0
               ScalingAdjustment: -1
     tasks:
       HelloWorldOnDemand:
