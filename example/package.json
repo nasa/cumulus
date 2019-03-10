@@ -7,7 +7,7 @@
     "node": ">=8.10.0"
   },
   "scripts": {
-    "build-dockers": "cd docker && ./build_dockers.sh",
+    "build-dockers": "cd docker && AWS_REGION=us-east-1 ./build_dockers.sh",
     "test": "jasmine && npm run parallel-tests",
     "parallel-tests": "sh scripts/tests-parallel.sh",
     "redeploy-test": "jasmine spec/standalone/redeployment/*.js",
