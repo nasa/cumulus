@@ -115,11 +115,6 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
   ];
   const onlineResourcesExpected = [
     {
-      URL: 'https://cumulus-test-sandbox-public.s3.amazonaws.com/MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg',
-      Type: 'GET RELATED VISUALIZATION',
-      Description: 'File to download'
-    },
-    {
       URL: `${distEndpoint}/cumulus-test-sandbox-protected-2/MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248.cmr.json`,
       Type: 'EXTENDED METADATA',
       Description: 'File to download'
@@ -129,11 +124,17 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
       Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
       Type: 'VIEW RELATED INFORMATION'
     }
-
+  ];
+  const AssociatedBrowseExpected = [
+    {
+      URL: 'https://cumulus-test-sandbox-public.s3.amazonaws.com/MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg',
+      Description: 'File to download'
+    }
   ];
   const actual = await updateEcho10XMLMetadata({filename: 's3://cumulus-test-sandbox-private/notUsed'}, filesObject, distEndpoint, buckets);
-    t.deepEqual(actual.Granule.OnlineAccessURLs.OnlineAccessURL, onlineAccessURLsExpected);
+  t.deepEqual(actual.Granule.OnlineAccessURLs.OnlineAccessURL, onlineAccessURLsExpected);
   t.deepEqual(actual.Granule.OnlineResources.OnlineResource, onlineResourcesExpected);
+  t.deepEqual(actual.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl, AssociatedBrowseExpected);
 
   revertMetaObject();
   revertMockUpload();

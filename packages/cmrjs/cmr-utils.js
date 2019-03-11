@@ -422,7 +422,7 @@ function getCmrFileObjs(files) {
  * @param {Array<Object>} removed - Array of URL Objects to remove from OnlineAccess.
  * @returns {Array<Object>} list of updated an original URL objects representing the updated state.
  */
-function mergeURLs(original, updated, removed = []) {
+function mergeURLs(original, updated = [], removed = []) {
   const newURLBasenames = updated.map((url) => path.basename(url.URL));
   const removedBasenames = removed.map((url) => path.basename(url.URL));
 
@@ -507,28 +507,28 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   const metadataObject = await metadataObjectFromCMRXMLFile(filename);
   const metadataGranule = metadataObject.Granule;
   const updatedGranule = { ...metadataGranule };
-  let originalOnlineAccessURLs = _get(metadataGranule, 'OnlineAccessURLs.OnlineAccessURL', []);
-  let originalOnlineResources = _get(metadataGranule, 'OnlineResources.OnlineResource', []);
+
+  //TODO: Dry this up
+  let originalOnlineAccessURLs = [].concat(_get(metadataGranule, 'OnlineAccessURLs.OnlineAccessURL', []));
+  let originalOnlineResourceURLs = [].concat(_get(metadataGranule, 'OnlineResources.OnlineResource', []));
+  let originalAssociatedBrowseURLs = [].concat(_get(metadataGranule, 'AssociatedBrowseImageUrls.ProviderBrowseUrl', []))
 
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
   // TODO Rename this method
   let newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets });
-
-  let newOnlineResources = newURLs.filter((urlObj) => urlObj.Type !== 'GET DATA');
-  newOnlineResources = newOnlineResources.map((urlObj) => omit(urlObj, ['URLDescription']));
-  let newOnlineAccessURLs = newURLs.filter((urlObj) => urlObj.Type === 'GET DATA');
-  newOnlineAccessURLs = newOnlineAccessURLs.map((urlObj) => omit(urlObj, ['Type', 'Description']));
-
-  originalOnlineAccessURLs = [].concat(originalOnlineAccessURLs);
-  originalOnlineResources = [].concat(originalOnlineResources);
-
-  const mergedOnlineAccessURLs = mergeURLs(originalOnlineAccessURLs, newOnlineAccessURLs, removedURLs);
-  const mergedOnlineResources = mergeURLs(originalOnlineResources, newOnlineResources, removedURLs);
+  const mergedOnlineResources = buildMergedEchoURLObject(newURLs, originalOnlineResourceURLs, removedURLs,
+    ['EXTENDED METADATA', 'VIEW RELATED INFORMATION'], ['URLDescription']);
+  const mergedOnlineAccessURLs = buildMergedEchoURLObject(newURLs, originalOnlineAccessURLs, removedURLs,
+    ['GET DATA'], ['Type', 'Description']);
+  const mergedAssociatedBrowse = buildMergedEchoURLObject(newURLs, originalAssociatedBrowseURLs, removedURLs,
+    ['GET RELATED VISUALIZATION'], ['URLDescription', 'Type']);
 
   // Update the Granule with the updated/merged lists
   _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedOnlineAccessURLs);
   _set(updatedGranule, 'OnlineResources.OnlineResource', mergedOnlineResources);
-  metadataObject.Granule = reorderGranuleHack(updatedGranule);
+  _set(updatedGranule, 'AssociatedBrowseImageUrls.ProviderBrowseUrl', mergedAssociatedBrowse);
+
+  metadataObject.Granule = reorderGranule(updatedGranule);
   // Build and upload the output
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(metadataObject);
@@ -536,9 +536,14 @@ async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
   return metadataObject;
 }
 
+function buildMergedEchoURLObject(URLlist = [], originalURLlist = [], removedURLs = [], URLTypes, URLlistFieldFilter) {
+  let filteredURLObjectList = URLlist.filter((urlObj) => URLTypes.includes(urlObj.Type));
+  filteredURLObjectList = filteredURLObjectList.map((urlObj) => omit(urlObj, URLlistFieldFilter));
+  return mergeURLs(originalURLlist, filteredURLObjectList, removedURLs);
+}
+
 // Hack to get integration tests working.
-// Do not merge with master/approve PR.  Do not pass go.
-function reorderGranuleHack(granule) {
+function reorderGranule(granule) {
   let newGranule = {}
   Object.keys(granule).forEach((key) => {
     if (key === 'OnlineAccessURLs') {
