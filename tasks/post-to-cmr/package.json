@@ -48,6 +48,7 @@
     "xml2js": "^0.4.19"
   },
   "devDependencies": {
+    "@cumulus/cmr-client": "^1.11.2-alpha2",
     "ava": "^0.25.0",
     "nyc": "^13.3.0",
     "proxyquire": "^2.0.0",

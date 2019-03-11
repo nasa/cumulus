@@ -7,6 +7,7 @@ const sinon = require('sinon');
 const { promisify } = require('util');
 
 const cmrjs = require('@cumulus/cmrjs');
+const cmrClient = require('@cumulus/cmr-client');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -38,7 +39,7 @@ test.beforeEach(async (t) => {
 test.afterEach.always((t) => aws.recursivelyDeleteS3Bucket(t.context.bucket));
 
 test.serial('postToCMR throws error if CMR correctly identifies the xml as invalid', async (t) => {
-  sinon.stub(cmrjs.CMR.prototype, 'getToken');
+  sinon.stub(cmrClient.CMR.prototype, 'getToken');
 
   const newPayload = t.context.payload;
 
@@ -55,10 +56,10 @@ test.serial('postToCMR throws error if CMR correctly identifies the xml as inval
     t.fail();
   }
   catch (error) {
-    t.true(error instanceof cmrjs.ValidationError);
+    t.true(error instanceof cmrClient.ValidationError);
   }
   finally {
-    cmrjs.CMR.prototype.getToken.restore();
+    cmrClient.CMR.prototype.getToken.restore();
   }
 });
 
