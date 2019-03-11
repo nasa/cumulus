@@ -17,8 +17,8 @@ const pdrToCnmMap = {
   SCIENCE: 'data',
   BROWSE: 'browse',
   METADATA: 'metadata',
-  'BROWSE_METADATA': 'metadata',
-  'QA_METADATA': 'metadata',
+  BROWSE_METADATA: 'metadata',
+  QA_METADATA: 'metadata',
   PRODHIST: 'qa',
   QA: 'metadata',
   TGZ: 'data'

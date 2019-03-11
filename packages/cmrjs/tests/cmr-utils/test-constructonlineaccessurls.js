@@ -115,7 +115,7 @@ test('returns an array of correct url objects given a list of moved files.', (t)
     {
       key: 'hidden/secretfile.gpg',
       bucket: t.context.bucketConfig.private.name,
-      fileType: 'data',
+      fileType: 'data'
     },
     {
       key: 'path/publicfile.jpg',

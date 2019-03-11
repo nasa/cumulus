@@ -49,7 +49,7 @@ test.beforeEach(async (t) => {
 const testGranule = {
   granuleId: 'MOD09GQ.A2017224.h09v02.006.2017227165020',
   dataType: 'MOD09GQ',
-  granuleSize: 17909733,
+  granuleSize: 17909733
 };
 
 const testHdfFile = {
@@ -57,7 +57,7 @@ const testHdfFile = {
   path: '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA',
   fileSize: 17865615,
   checksumType: 'CKSUM',
-  checksumValue: 4208254019,
+  checksumValue: 4208254019
 };
 
 const testMetFile = {
@@ -96,15 +96,15 @@ test.serial('parse PDR from FTP endpoint', async (t) => {
     t.is(output.totalSize, 17909733);
 
     const granule = output.granules[0];
-    Object.keys(testGranule).forEach(key => t.is(granule[key], testGranule[key]));
+    Object.keys(testGranule).forEach((key) => t.is(granule[key], testGranule[key]));
 
     const hdfFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
-    Object.keys(testHdfFile).forEach(key => t.is(testHdfFile[key], hdfFile[key]));
+    Object.keys(testHdfFile).forEach((key) => t.is(testHdfFile[key], hdfFile[key]));
 
     const metFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
-    Object.keys(testMetFile).forEach(key => t.is(testMetFile[key], metFile[key]));
+    Object.keys(testMetFile).forEach((key) => t.is(testMetFile[key], metFile[key]));
   }
 
   catch (err) {
@@ -139,7 +139,7 @@ test.serial('parse PDR from HTTP endpoint', async (t) => {
     t.is(output.totalSize, 17909733);
 
     const granule = output.granules[0];
-    Object.keys(testGranule).forEach(key => t.is(granule[key], testGranule[key]));
+    Object.keys(testGranule).forEach((key) => t.is(granule[key], testGranule[key]));
 
     const hdfFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
@@ -152,8 +152,7 @@ test.serial('parse PDR from HTTP endpoint', async (t) => {
     const metFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
     t.truthy(metFile);
-    Object.keys(testMetFile).forEach(key => t.is(testMetFile[key], metFile[key]));
-
+    Object.keys(testMetFile).forEach((key) => t.is(testMetFile[key], metFile[key]));
   }
   catch (err) {
     if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
@@ -189,18 +188,18 @@ test.serial('parse PDR from SFTP endpoint', async (t) => {
     t.is(output.totalSize, 17909733);
 
     const granule = output.granules[0];
-    Object.keys(testGranule).forEach(key => t.is(granule[key], testGranule[key]));
+    Object.keys(testGranule).forEach((key) => t.is(granule[key], testGranule[key]));
 
     const hdfFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
     t.truthy(hdfFile);
-    Object.keys(testHdfFile).forEach(key => t.is(testHdfFile[key], hdfFile[key]));
+    Object.keys(testHdfFile).forEach((key) => t.is(testHdfFile[key], hdfFile[key]));
 
 
     const metFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
     t.truthy(metFile);
-    Object.keys(testMetFile).forEach(key => t.is(testMetFile[key], metFile[key]));
+    Object.keys(testMetFile).forEach((key) => t.is(testMetFile[key], metFile[key]));
   }
   catch (err) {
     if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
@@ -241,15 +240,15 @@ test.serial('Parse a PDR from an S3 provider', async (t) => {
     t.is(output.totalSize, 17909733);
 
     const granule = output.granules[0];
-    Object.keys(testGranule).forEach(key => t.is(granule[key], testGranule[key]));
+    Object.keys(testGranule).forEach((key) => t.is(granule[key], testGranule[key]));
 
     const hdfFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
-    Object.keys(testHdfFile).forEach(key => t.is(testHdfFile[key], hdfFile[key]));
+    Object.keys(testHdfFile).forEach((key) => t.is(testHdfFile[key], hdfFile[key]));
 
     const metFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
-    Object.keys(testMetFile).forEach(key => t.is(testMetFile[key], metFile[key]));
+    Object.keys(testMetFile).forEach((key) => t.is(testMetFile[key], metFile[key]));
   }
   catch (err) {
     if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
@@ -318,7 +317,7 @@ test.serial('Empty FILE_ID valule in PDR, parse-pdr throws error', async (t) => 
   try {
     await s3().putObject({
       Bucket: t.context.payload.config.provider.host,
-     Key: `${t.context.payload.input.pdr.path}/${t.context.payload.input.pdr.name}`,
+      Key: `${t.context.payload.input.pdr.path}/${t.context.payload.input.pdr.name}`,
       Body: streamTestData('pdrs/MOD09GQ-without-file-id-value.PDR')
     }).promise();
 
