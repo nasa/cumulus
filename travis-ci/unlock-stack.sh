@@ -4,8 +4,12 @@ set -e
 
 . ./travis-ci/set-env-vars.sh
 
-cd example || exit 1
-npm install
+(
+  set -e
 
-echo Unlocking stack
-node ./scripts/lock-stack.js false $DEPLOYMENT
+  cd example
+  npm install
+
+  echo Unlocking stack
+  node ./scripts/lock-stack.js false $DEPLOYMENT
+)

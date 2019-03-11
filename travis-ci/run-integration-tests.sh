@@ -4,13 +4,10 @@ set -e
 
 . ./travis-ci/set-env-vars.sh
 
-(
-  cd example
-  if [ "$USE_NPM_PACKAGES" = "true" ]; then
-    npm install
-  else
-    (cd .. && ./bin/prepare)
-  fi
+if [ "$USE_NPM_PACKAGES" = "true" ]; then
+  (set -e && cd example && npm install)
+else
+  npm bootstrap
+fi
 
-  npm test
-)
+(set -e && cd example && npm test)

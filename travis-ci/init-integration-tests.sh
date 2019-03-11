@@ -8,7 +8,8 @@ if [ "$USE_NPM_PACKAGES" = "true" ]; then
   cd example
   npm install
 else
-  ./bin/prepare
+  # ./bin/prepare
+  npm run bootstrap
   cd example
 fi
 
