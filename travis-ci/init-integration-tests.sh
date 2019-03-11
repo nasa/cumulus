@@ -6,7 +6,7 @@ set -e
 
 if [ "$USE_NPM_PACKAGES" = "true" ]; then
   cd example
-  yarn
+  npm install
 else
   ./bin/prepare
   cd example

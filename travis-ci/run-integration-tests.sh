@@ -7,10 +7,10 @@ set -e
 (
   cd example
   if [ "$USE_NPM_PACKAGES" = "true" ]; then
-    yarn
+    npm install
   else
     (cd .. && ./bin/prepare)
   fi
 
-  yarn test
+  npm test
 )

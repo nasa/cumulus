@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-data",
-  "version": "1.11.0",
+  "version": "1.11.2",
   "description": "Includes the test data for various packages",
   "keywords": [
     "GIBS",
@@ -17,10 +17,6 @@
   },
   "engines": {
     "node": ">=8.10.0"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\"",
-    "build": "echo \"Nothing to build\""
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0"
