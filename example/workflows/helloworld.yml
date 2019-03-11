@@ -112,6 +112,11 @@ HelloWorldOnDemandWorkflow:
         - ErrorEquals:
             - States.Timeout
           MaxAttempts: 1
+        - ErrorEquals:
+          - ECS.AmazonECSException
+          IntervalSeconds: 60
+          BackoffRate: 1 # The multiplier by which the retry interval increases during each attempt (2.0 by default).
+          MaxAttempts: 20
       Next: StopStatus
     StopStatus:
       Type: Task
