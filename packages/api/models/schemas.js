@@ -191,7 +191,6 @@ module.exports.file = {
     'key',
     'createdAt',
     'updatedAt',
-    'fileType'
   ],
   properties: {
     granuleId: { type: 'string' },
@@ -199,8 +198,8 @@ module.exports.file = {
     key: { type: 'string' },
     createdAt: { type: 'integer' },
     updatedAt: { type: 'integer' },
-    fileType: { 
-      type: 'string', 
+    fileType: {
+      type: 'string',
       enum: ['data', 'metadata', 'qa', 'browse'] }
   }
 };
