@@ -18,7 +18,7 @@ function determineIntegrationTestStackName(cb) {
     'Aimee Barciauskas': 'aimee-test',
     'Jenny Liu': 'jl',
     jennyhliu: 'jl',
-    kkelly51: 'kk-uat-deployment',
+    kkelly51: 'kk',
     'Lauren Frederick': 'lf-int-test',
     laurenfrederick: 'lf-int-test',
     'Mark Boyd': 'mboyd-int',

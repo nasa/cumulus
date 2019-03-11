@@ -93,7 +93,7 @@ cumulus-api complete-reindex --help
 
 Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's future Earth science data streams.
 
-[Cumulus Documentation](https://nasa.github.io/)
+[Cumulus Documentation](https://nasa.github.io/cumulus)
 
 ## Contributing
 
