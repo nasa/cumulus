@@ -28,7 +28,6 @@ class FileClass extends Manager {
         granuleId: granule.granuleId,
         bucket: file.bucket,
         key: file.key,
-        fileType: file.fileType
       }));
 
     const chunked = chunk(fileRecords, 25);
