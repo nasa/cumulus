@@ -11,7 +11,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1105** - Added a dashboard endpoint to serve the dashboard from an S3 bucket
 - **CUMULUS-666**
   - Added `@api/endpoints/s3credentials` to allow EarthData Login authorized users to retrieve temporary security credentials for same-region direct S3 access.
-- **CUMULUS-1187** - Added `@cumulus/ingest/granule/duplicateHandlingType()` to determine how duplicate files should be handled in an ingest workflow
 - **CUMULUS-671**
   - Added `@packages/integration-tests/api/distribution/getDistributionApiS3SignedUrl()` to return the S3 signed URL for a file protected by the distribution API
 - **CUMULUS-672**
@@ -87,7 +86,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - The default provider port was being set to 21, no matter what protocol was
     being used. Removed that default.
 
-## [v1.11.2] - 2018-2-15
+## [v1.11.3] - 2019-3-5
+
+### Added
+
+- **CUMULUS-1187** - Added `@cumulus/ingest/granule/duplicateHandlingType()` to determine how duplicate files should be handled in an ingest workflow
+
+### Fixed
+
+- **CUMULUS-1187** - workflows not respecting the duplicate handling value specified in the collection
+- Removed refreshToken schema requirement for OAuth
+
+## [v1.11.2] - 2019-2-15
 
 ### Added
 - CUMULUS-1169
@@ -874,7 +884,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.11.2...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.11.3...HEAD
+[v1.11.3]: https://github.com/nasa/cumulus/compare/v1.11.2...v1.11.3
 [v1.11.2]: https://github.com/nasa/cumulus/compare/v1.11.1...v1.11.2
 [v1.11.1]: https://github.com/nasa/cumulus/compare/v1.11.0...v1.11.1
 [v1.11.0]: https://github.com/nasa/cumulus/compare/v1.10.4...v1.11.0
