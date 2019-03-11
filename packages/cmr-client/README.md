@@ -34,8 +34,8 @@ A class to simplify requests to the CMR
     * [.ingestUMMGranule(ummgMetadata)](#CMR+ingestUMMGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.deleteCollection(datasetID)](#CMR+deleteCollection) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.deleteGranule(granuleUR)](#CMR+deleteGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.searchCollections(searchParams, [format])](#CMR+searchCollections) ⇒ <code>Promise.&lt;Object&gt;</code>
-    * [.searchGranules(searchParams, [format])](#CMR+searchGranules) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.searchCollections(params, [format])](#CMR+searchCollections) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.searchGranules(params, [format])](#CMR+searchGranules) ⇒ <code>Promise.&lt;Object&gt;</code>
 
 <a name="new_CMR_new"></a>
 
@@ -55,7 +55,12 @@ The constructor for the CMR class
 ```js
 const { CMR } = require('@cumulus/cmr-client');
 
-const cmrClient = new CMR({ provider: 'my-provider', clientId: 'my-clientId', username: 'my-username', password: 'my-password' });
+const cmrClient = new CMR({
+ provider: 'my-provider',
+ clientId: 'my-clientId',
+ username: 'my-username',
+ password: 'my-password'
+});
 ```
 <a name="CMR+getToken"></a>
 
@@ -140,7 +145,7 @@ Deletes a granule record from the CMR
 
 <a name="CMR+searchCollections"></a>
 
-#### cmrClient.searchCollections(searchParams, [format]) ⇒ <code>Promise.&lt;Object&gt;</code>
+#### cmrClient.searchCollections(params, [format]) ⇒ <code>Promise.&lt;Object&gt;</code>
 Search in collections
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
@@ -148,13 +153,12 @@ Search in collections
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| searchParams | <code>string</code> |  | the search parameters |
-| searchParams.provider_short_name | <code>string</code> |  | provider shortname |
+| params | <code>string</code> |  | the search parameters |
 | [format] | <code>string</code> | <code>&quot;json&quot;</code> | format of the response |
 
 <a name="CMR+searchGranules"></a>
 
-#### cmrClient.searchGranules(searchParams, [format]) ⇒ <code>Promise.&lt;Object&gt;</code>
+#### cmrClient.searchGranules(params, [format]) ⇒ <code>Promise.&lt;Object&gt;</code>
 Search in granules
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
@@ -162,8 +166,7 @@ Search in granules
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| searchParams | <code>string</code> |  | the search parameters |
-| searchParams.provider_short_name | <code>string</code> |  | provider shortname |
+| params | <code>string</code> |  | the search parameters |
 | [format] | <code>string</code> | <code>&quot;&#x27;json&#x27;&quot;</code> | format of the response |
 
 <a name="CMRSearchConceptQueue"></a>

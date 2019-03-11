@@ -265,12 +265,12 @@ class CMR {
   /**
    * Search in collections
    *
-   * @param {string} searchParams - the search parameters
-   * @param {string} searchParams.provider_short_name - provider shortname
+   * @param {string} params - the search parameters
    * @param {string} [format=json] - format of the response
    * @returns {Promise.<Object>} the CMR response
    */
-  async searchCollections(searchParams, format = 'json') {
+  async searchCollections(params, format = 'json') {
+    const searchParams = Object.assign({}, { provider_short_name: this.provider }, params);
     return searchConcept({
       type: 'collections',
       searchParams,
@@ -283,12 +283,12 @@ class CMR {
   /**
    * Search in granules
    *
-   * @param {string} searchParams - the search parameters
-   * @param {string} searchParams.provider_short_name - provider shortname
+   * @param {string} params - the search parameters
    * @param {string} [format='json'] - format of the response
    * @returns {Promise.<Object>} the CMR response
    */
-  async searchGranules(searchParams, format = 'json') {
+  async searchGranules(params, format = 'json') {
+    const searchParams = Object.assign({}, { provider_short_name: this.provider }, params);
     return searchConcept({
       type: 'granules',
       searchParams,
