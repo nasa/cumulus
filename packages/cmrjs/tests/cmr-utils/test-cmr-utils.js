@@ -2,6 +2,7 @@ const test = require('ava');
 const rewire = require('rewire');
 const fs = require('fs-extra');
 const xml2js = require('xml2js');
+const sinon = require('sinon');
 const { xmlParseOptions } = require('../../utils');
 const { promisify } = require('util');
 const { readJsonFixture } = require('@cumulus/common/test-utils');
@@ -92,16 +93,31 @@ test('isCMRFile returns falsy if fileobject is invalid', (t) => {
   t.falsy(isCMRFile(fileObj));
 });
 
+test('mapACNMTypeToCMRType returns a mapping', (t) => {
+  const mapCNMTypeToCMRType = cmrUtil.__get__('mapCNMTypeToCMRType');
+  t.is('EXTENDED METADATA', mapCNMTypeToCMRType('qa'));
+})
+
+test('mapACNMTypeToCMRType returns a default mapping if non CNM mapping specified', (t) => {
+  const mapCNMTypeToCMRType = cmrUtil.__get__('mapCNMTypeToCMRType');
+  t.is('GET DATA', mapCNMTypeToCMRType('NOTAREALVALUE'));
+})
+
 
 test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAccessURLs/OnlineResources', async (t) => {
+  const uploadEchoSpy = sinon.spy(() => Promise.resolve);
+
   const cmrXml = await fs.readFile('./tests/fixtures/cmrFileUpdateFixture.cmr.xml', 'utf8');
   const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
   const filesObject = await readJsonFixture('./tests/fixtures/filesObjectFixture.json');
   const buckets = new BucketsConfig(await readJsonFixture('./tests/fixtures/buckets.json'));
-  const distEndpoint = 'https://distendpoint.com';
+  const distEndpoint = 'https://distendpoint.com';;
+
   const updateEcho10XMLMetadata = cmrUtil.__get__('updateEcho10XMLMetadata');
+
+  const revertGenerateXml = cmrUtil.__set__('generateEcho10XMLString', () => 'testXmlString');
   const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRXMLFile', () => cmrMetadata);
-  const revertMockUpload = cmrUtil.__set__('uploadEcho10CMRFile', () => Promise.resolve());
+  const revertMockUpload = cmrUtil.__set__('uploadEcho10CMRFile', uploadEchoSpy);
 
   const onlineAccessURLsExpected = [
     {
@@ -136,6 +152,9 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
   t.deepEqual(actual.Granule.OnlineResources.OnlineResource, onlineResourcesExpected);
   t.deepEqual(actual.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl, AssociatedBrowseExpected);
 
+  t.truthy(uploadEchoSpy.calledWith('testXmlString', {filename: 's3://cumulus-test-sandbox-private/notUsed'}));
+
   revertMetaObject();
   revertMockUpload();
+  revertGenerateXml();
 });
