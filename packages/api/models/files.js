@@ -27,7 +27,7 @@ class FileClass extends Manager {
       .map((file) => ({
         granuleId: granule.granuleId,
         bucket: file.bucket,
-        key: file.key,
+        key: file.key
       }));
 
     const chunked = chunk(fileRecords, 25);

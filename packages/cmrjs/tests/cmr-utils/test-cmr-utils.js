@@ -3,11 +3,10 @@ const rewire = require('rewire');
 const fs = require('fs-extra');
 const xml2js = require('xml2js');
 const sinon = require('sinon');
-const { xmlParseOptions } = require('../../utils');
 const { promisify } = require('util');
 const { readJsonFixture } = require('@cumulus/common/test-utils');
-const { BucketsConfig } = require('@cumulus/common')
-
+const { BucketsConfig } = require('@cumulus/common');
+const { xmlParseOptions } = require('../../utils');
 
 
 const {
@@ -96,12 +95,12 @@ test('isCMRFile returns falsy if fileobject is invalid', (t) => {
 test('mapACNMTypeToCMRType returns a mapping', (t) => {
   const mapCNMTypeToCMRType = cmrUtil.__get__('mapCNMTypeToCMRType');
   t.is('EXTENDED METADATA', mapCNMTypeToCMRType('qa'));
-})
+});
 
 test('mapACNMTypeToCMRType returns a default mapping if non CNM mapping specified', (t) => {
   const mapCNMTypeToCMRType = cmrUtil.__get__('mapCNMTypeToCMRType');
   t.is('GET DATA', mapCNMTypeToCMRType('NOTAREALVALUE'));
-})
+});
 
 
 test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAccessURLs/OnlineResources', async (t) => {
@@ -111,7 +110,7 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
   const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
   const filesObject = await readJsonFixture('./tests/fixtures/filesObjectFixture.json');
   const buckets = new BucketsConfig(await readJsonFixture('./tests/fixtures/buckets.json'));
-  const distEndpoint = 'https://distendpoint.com';;
+  const distEndpoint = 'https://distendpoint.com';
 
   const updateEcho10XMLMetadata = cmrUtil.__get__('updateEcho10XMLMetadata');
 
@@ -147,12 +146,12 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
       Description: 'File to download'
     }
   ];
-  const actual = await updateEcho10XMLMetadata({filename: 's3://cumulus-test-sandbox-private/notUsed'}, filesObject, distEndpoint, buckets);
+  const actual = await updateEcho10XMLMetadata({ filename: 's3://cumulus-test-sandbox-private/notUsed' }, filesObject, distEndpoint, buckets);
   t.deepEqual(actual.Granule.OnlineAccessURLs.OnlineAccessURL, onlineAccessURLsExpected);
   t.deepEqual(actual.Granule.OnlineResources.OnlineResource, onlineResourcesExpected);
   t.deepEqual(actual.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl, AssociatedBrowseExpected);
 
-  t.truthy(uploadEchoSpy.calledWith('testXmlString', {filename: 's3://cumulus-test-sandbox-private/notUsed'}));
+  t.truthy(uploadEchoSpy.calledWith('testXmlString', { filename: 's3://cumulus-test-sandbox-private/notUsed' }));
 
   revertMetaObject();
   revertMockUpload();
