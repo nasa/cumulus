@@ -26,7 +26,6 @@ const createErrorType = (name, ParentType = Error) => {
 
 const WorkflowError = createErrorType('WorkflowError');
 
-
 /**
  * Returns true if the error is a resource error.
  *
@@ -94,5 +93,8 @@ module.exports = {
   InvalidArgument: createErrorType('InvalidArgument'),
 
   // is raised if the PDR file doesn't match the collection
-  MismatchPdrCollection: createErrorType('MismatchPdrCollection')
+  MismatchPdrCollection: createErrorType('MismatchPdrCollection'),
+
+  // Error class for file locations that are unparsable
+  UnparsableFileLocationError: createErrorType('UnparsableFileLocationError')
 };

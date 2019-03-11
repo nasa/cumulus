@@ -54,12 +54,12 @@ class SfnStep {
     if (scheduleEvent.type !== this.startFailedEvent) {
       startEvent = this.getStartEvent(executionHistory, scheduleEvent, this);
 
-      if (startEvent !== null && startEvent.type !== this.startFailedEvent) {
+      if (startEvent && startEvent.type !== this.startFailedEvent) {
         completeEvent = this.getCompletionEvent(executionHistory, startEvent, this);
+        return { scheduleEvent, startEvent, completeEvent };
       }
     }
-
-    return { scheduleEvent, startEvent, completeEvent };
+    return null;
   }
 
   /**
@@ -88,7 +88,8 @@ class SfnStep {
       return null;
     }
 
-    return scheduleEvents.map((e) => this.getStepExecutionInstance(executionHistory, e));
+    return scheduleEvents.map((e) => this.getStepExecutionInstance(executionHistory, e))
+      .filter((e) => e);
   }
 
 
@@ -116,7 +117,7 @@ class SfnStep {
   async getStepInput(workflowExecutionArn, stepName) {
     const stepExecutions = await this.getStepExecutions(workflowExecutionArn, stepName, this);
 
-    if (stepExecutions === null) {
+    if (stepExecutions === null || stepExecutions.length === 0) {
       console.log(`Could not find step ${stepName} in execution.`);
       return null;
     }
