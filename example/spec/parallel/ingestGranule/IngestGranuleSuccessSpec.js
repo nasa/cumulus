@@ -332,7 +332,7 @@ describe('The S3 Ingest Granules workflow', () => {
     let cmrResource;
     let files;
     let granule;
-    let resourceURLs
+    let resourceURLs;
     let accessToken;
 
 
