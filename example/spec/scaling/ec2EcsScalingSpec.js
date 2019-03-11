@@ -70,7 +70,10 @@ describe('When a task is configured to run in ECS', () => {
         workflowExecutionPromises.push(buildAndStartWorkflow(
           config.stackName,
           config.bucket,
-          workflowName
+          workflowName,
+          null,
+          null,
+          { commands: null }
         ));
       }
       workflowExecutionArns = await Promise.all(workflowExecutionPromises);
