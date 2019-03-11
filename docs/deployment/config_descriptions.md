@@ -12,7 +12,7 @@ The name (e.g. dev) of the the 'deployment' - this key tells kes which configura
 
 ## prefix
 
-This value will prefix CloudFormation-created IAM resources and permissions. **This value must match the stackName used in the [app](deployment/deployment-readme#configure-and-deploy-the-cumulus-stack) deployment or the deployment will not work correctly.**
+This value will prefix CloudFormation-created IAM resources and permissions. **The `stackName` used in the [app](deployment/deployment-readme#configure-and-deploy-the-cumulus-stack) deployment must start with this prefix or the deployment will not work correctly.**
 
 ## stackName
 
@@ -36,7 +36,7 @@ The name (e.g. dev) of the the 'deployment' - this key tells kes which configura
 
 ## stackName
 
-The name of this stack in CloudFormation (e.g. <prefix>). **This value must match the prefix used in the [IAM](deployment/deployment-readme#configure-and-deploy-the-iam-stack) deployment or the deployment will not work correctly.**
+The name of this stack in CloudFormation. **This value must start with the `prefix` used in the [IAM](deployment/deployment-readme#configure-and-deploy-the-iam-stack) deployment or the deployment will not work correctly.**
 
 ## stackNameNoDash
 
