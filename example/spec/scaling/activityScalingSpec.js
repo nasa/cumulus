@@ -24,7 +24,7 @@ describe('scaling for step function activities', () => {
   });
 
   it('cloudformation stack has an alarm for ActivitiesWaiting', () => {
-    expect(activitiesWaitingAlarm.Type).toEqual('Type: AWS::CloudWatch::Alarm');
+    expect(activitiesWaitingAlarm.Type).toEqual('AWS::CloudWatch::Alarm');
   });
 
   it('HelloWorld ECS Service is a scalable target', () => {
@@ -34,7 +34,7 @@ describe('scaling for step function activities', () => {
 
   it('ActivitiesWaitingAlarm is configured to scale the ECSService', () => {
     const alarmAction = activitiesWaitingAlarm.Properties.AlarmActions[0].Ref;
-    expect(alarmAction).toEqual('HelloWorldServiceECSServiceApplicationScalingPolicy');
+    expect(alarmAction).toEqual('StepECSServiceApplicationScalingPolicy');
   });
 
   describe('scaling activities', () => {

@@ -22,7 +22,7 @@ ActivitiesWaiting:
   AlarmActions:
     - Ref: StepECSServiceApplicationScalingPolicy
   OKActions:
-    - Ref: TargetECSServiceApplicationScalingPolicy
+    - Ref: StepECSServiceApplicationScalingPolicy
   TreatMissingData: notBreaching
   ComparisonOperator: GreaterThanOrEqualToThreshold
   EvaluationPeriods: 1
