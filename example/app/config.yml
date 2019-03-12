@@ -94,6 +94,7 @@ default:
       username: cumulususer
     services:
       HelloWorldService:
+        activity_name: HelloWorld
         image: cumuluss/cumulus-ecs-task:1.2.3
         # I find this is a little confusing - the task has service and memory limit not the service
         cpu: 100
