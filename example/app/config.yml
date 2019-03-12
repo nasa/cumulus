@@ -111,17 +111,6 @@ default:
           - '--lambdaArn'
           - function: Ref
             value: HelloWorldLambdaFunction
-    tasks:
-      HelloWorldOnDemand:
-        ecr: true
-        image: hello_world:latest
-        cpu: 400
-        memory: 700
-        envs:
-          AWS_DEFAULT_REGION:
-            function: Fn::Sub
-            value: '${AWS::Region}'
-          ECS_AGENT_PULL_BEHAVIOR: 'always'
 
   activities:
     - name: HelloWorld

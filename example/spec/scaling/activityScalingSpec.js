@@ -52,50 +52,50 @@ describe('scaling for step function activities', () => {
     expect(alarmAction).toEqual('ScaleOutTasksECSServiceApplicationScalingPolicy');
   });
 
-  // describe('scaling the service\'s desired tasks', () => {
-  //   let workflowExecutionArns = [];
-  //   let alarmPeriodSeconds;
-  //   let sleepMs;
+  describe('scaling the service\'s desired tasks', () => {
+    let workflowExecutionArns = [];
+    let alarmPeriodSeconds;
+    let sleepMs;
 
-  //   beforeAll(async () => {
-  //     const workflowExecutionPromises = [];
+    beforeAll(async () => {
+      const workflowExecutionPromises = [];
 
-  //     for (let i = 0; i < numExecutions; i += 1) {
-  //       workflowExecutionPromises.push(buildAndStartWorkflow(
-  //         stackName,
-  //         config.bucket,
-  //         workflowName,
-  //         null,
-  //         null,
-  //         {
-  //           sleep: sleepMs
-  //         }
-  //       ));
-  //     }
-  //     workflowExecutionArns = await Promise.all(workflowExecutionPromises);
-  //   });
+      for (let i = 0; i < numExecutions; i += 1) {
+        workflowExecutionPromises.push(buildAndStartWorkflow(
+          stackName,
+          config.bucket,
+          workflowName,
+          null,
+          null,
+          {
+            sleep: sleepMs
+          }
+        ));
+      }
+      workflowExecutionArns = await Promise.all(workflowExecutionPromises);
+    });
 
-  //   describe('when activities waiting are greater than the threshold', () => {
-  //     it('the number of tasks the service is running should increase', async() => {
-  //       await sleep(sleepMs);
-  //       const clusterStats = await getClusterStats(stackName);
-  //       console.log(`clusterStats ${JSON.stringify(clusterStats, null, 2)}\n`);
-  //       const runningEC2TasksCount = find(clusterStats, ['name', 'runningEC2TasksCount']).value;
-  //       expect(runningEC2TasksCount).toBe('2');
-  //     });
-  //   });
+    describe('when activities waiting are greater than the threshold', () => {
+      it('the number of tasks the service is running should increase', async() => {
+        await sleep(sleepMs);
+        const clusterStats = await getClusterStats(stackName);
+        console.log(`clusterStats ${JSON.stringify(clusterStats, null, 2)}\n`);
+        const runningEC2TasksCount = find(clusterStats, ['name', 'runningEC2TasksCount']).value;
+        expect(runningEC2TasksCount).toBe('2');
+      });
+    });
 
-  //   describe('when activities waiting are below the threshold', () => {
-  //     it('the number of tasks the service is running should decrease', async() => {
-  //       const completions = workflowExecutionArns.map((executionArn) => waitForCompletedExecution(executionArn));
-  //       await Promise.all(completions);
-  //       const clusterStats = await getClusterStats(stackName);
-  //       console.log(`clusterStats ${JSON.stringify(clusterStats, null, 2)}\n`);
-  //       const runningEC2TasksCount = find(clusterStats, ['name', 'runningEC2TasksCount']).value;
-  //       expect(runningEC2TasksCount).toBe('1');
-  //     });
-  //   });
-  // });
+    describe('when activities waiting are below the threshold', () => {
+      it('the number of tasks the service is running should decrease', async() => {
+        const completions = workflowExecutionArns.map((executionArn) => waitForCompletedExecution(executionArn));
+        await Promise.all(completions);
+        const clusterStats = await getClusterStats(stackName);
+        console.log(`clusterStats ${JSON.stringify(clusterStats, null, 2)}\n`);
+        const runningEC2TasksCount = find(clusterStats, ['name', 'runningEC2TasksCount']).value;
+        expect(runningEC2TasksCount).toBe('1');
+      });
+    });
+  });
 
   describe('scaling the cluster\'s desired ec2 instances', () => {
     numExecutions = 10;

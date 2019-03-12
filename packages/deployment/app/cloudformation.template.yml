@@ -1222,12 +1222,7 @@ Resources:
       {{/if}}
     {{/each}}
       {{# if ../ecs.docker}}
-        {{#if this.ecr}}
-        Image:
-          Fn::Sub: ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/{{image}}
-        {{else}}
         Image: {{image}}
-        {{/if}}
       {{else}}
         Image:
           Fn::Sub: ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/{{image}}
