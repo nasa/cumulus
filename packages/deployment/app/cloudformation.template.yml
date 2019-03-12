@@ -1165,6 +1165,43 @@ Resources:
         StepAdjustments: {{{ ToJson this.StepAdjustments }}}
     {{/if}}
 {{/each}}
+
+  # If NumRequiredInstances is greater than the threshold, we will use step
+  # scaling to scale up to the level required by number of scheduled activities
+  {{@key}}NumRequiredInstancesAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        # This is dependent on autoscaling_policies.yml
+        - Ref: ScaleOutEc2ScalingPolicy
+      OKActions:
+        - Ref: ScaleInEc2ScalingPolicy
+      TreatMissingData: notBreaching
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 1
+      # Threshold should really be the number of existing instances.
+      Threshold: 1
+      Metrics:
+        - Id: e1
+          # Number of required instances should equal
+          # (Activities scheduled * memory required / activity) / (memory per instance)
+          Expression: (m1 * {{ this.memory }})/{{#if this.ec2_memory }}{{ this.ec2_memory }}{{ else }}3952{{/if}}
+          Label: NumInstancesRequired
+        - Id: m1
+          MetricStat:
+            Metric:
+              Namespace: AWS/States
+              MetricName: ActivitiesScheduled
+              Dimensions:
+                - Name: ActivityArn
+                  Value:
+                    # TODO(aimee) - Is there a way to make this activity naming
+                    # less brittle with services?
+                    Ref: {{ this.activity_name }}Activity
+            Period: 60
+            Stat: Sum
+            Unit: Count
+          ReturnData: false
 {{/if}}
 {{/each}}
 
