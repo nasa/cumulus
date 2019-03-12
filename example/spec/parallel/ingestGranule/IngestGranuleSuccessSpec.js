@@ -356,6 +356,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
       cmrResource = result[0];
       resourceURLs = cmrResource.map((resource) => resource.href);
+      console.log('cmrResource: ', JSON.stringify(cmrResource));
 
       const accessTokenResponse = result[1];
       accessToken = accessTokenResponse.accessToken;

@@ -298,19 +298,32 @@ async function moveFilesForAllGranules(
  *
  * @param {Array<Object>} cmrFiles - array of objects that include CMR xmls uris and granuleIds
  * @param {Object} granulesObject - an object of the granules where the key is the granuleId
+ * @param {string} backendUrl - the api backend url
  * @param {string} distEndpoint - the api distribution endpoint
  * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
  * @returns {Promise} promise resolves when all files have been updated
  **/
-async function updateEachCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoint, bucketsConfig) {
+async function updateEachCmrFileAccessURLs(
+  cmrFiles,
+  granulesObject,
+  backendUrl,
+  distEndpoint,
+  bucketsConfig
+) {
   return Promise.all(cmrFiles.map(async (cmrFile) => {
     const publish = false; // Do the publish in publish-to-cmr step
     const granuleId = cmrFile.granuleId;
     const granule = granulesObject[granuleId];
     const updatedCmrFile = granule.files.find(isCMRFile);
-    return updateCMRMetadata(
-      granuleId, updatedCmrFile, granule.files, distEndpoint, publish, bucketsConfig
-    );
+    return updateCMRMetadata({
+      granuleId,
+      cmrFile: updatedCmrFile,
+      files: granule.files,
+      backendUrl,
+      distEndpoint,
+      publish,
+      inBuckets: bucketsConfig
+    });
   }));
 }
 
@@ -343,6 +356,7 @@ async function moveGranules(event) {
   const distEndpoint = get(config, 'distribution_endpoint');
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const collection = config.collection;
+  const backendUrl = process.env.BACKEND_API_URL;
 
   const duplicateHandling = duplicateHandlingType(event);
 
@@ -368,7 +382,13 @@ async function moveGranules(event) {
       granulesToMove, sourceBucket, duplicateHandling, bucketsConfig
     );
     // update cmr metadata files with correct online access urls
-    await updateEachCmrFileAccessURLs(cmrFiles, movedGranules, distEndpoint, bucketsConfig);
+    await updateEachCmrFileAccessURLs(
+      cmrFiles,
+      movedGranules,
+      backendUrl,
+      distEndpoint,
+      bucketsConfig
+    );
   }
   else {
     movedGranules = allGranules;
