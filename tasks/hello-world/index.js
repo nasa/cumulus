@@ -56,7 +56,6 @@ async function sleepIfConfigured(event) {
     log.debug(`Detected sleep, sleeping for ${event.input.sleep}`);
     await sleep(event.input.sleep);
   }
-  return;
 }
 
 /**
