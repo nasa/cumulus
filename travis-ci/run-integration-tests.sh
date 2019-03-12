@@ -7,7 +7,7 @@ set -e
 if [ "$USE_NPM_PACKAGES" = "true" ]; then
   (set -e && cd example && rm -rf node_modules && npm install)
 else
-  npm bootstrap
+  npm run bootstrap
 fi
 
 (set -e && cd example && npm test)
