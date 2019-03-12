@@ -227,9 +227,6 @@ cumulus-sit:
 # -------------------------------
 # CUMULUS individual deployments.
 # -------------------------------
-aj:
-  stackName: aj-integration
-  stackNameNoDash: AjIntegration
 
 aimee-test:
   stackName: aimee-test
@@ -509,7 +506,6 @@ mhs3:
       type: shared
   system_bucket: mhs3-internal
 
-
 jk:
   stackName: jk
   stackNameNoDash: jk
@@ -521,6 +517,14 @@ jk2:
 mboyd-test:
   stackName: mboyd-test
   stackNameNoDash: mboydTest
+
+  es:
+    name: es5update
+    # elasticSearchMapping: 8
+    # version: 5.3
+    # instanceCount: 1
+    # instanceType: t2.small.elasticsearch
+    # volumeSize: 35
 
 mboyd-int:
   stackName: mboyd-int

@@ -391,7 +391,17 @@ Resources:
             Action: "es:*"
             Resource:
               - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{es.name}}/*"
-
+    {{# if vpc }}
+      VPCOptions:
+        SecurityGroupIds:
+          - Fn::GetAtt:
+            - SecurityGroup
+            - GroupId
+        SubnetIds:
+        {{#each vpc.subnets}}
+          - {{this}}
+        {{/each}}
+    {{/if}}
 
   #################################################
   # ElasticSearch config END
