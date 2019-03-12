@@ -121,7 +121,7 @@ async function getAutoScalingGroupName(stackName) {
 }
 
 async function getNewScalingActivity({ stackName, waitPeriod }) {
-  waitPeriod = waitPeriod || 3000;
+  waitPeriod = waitPeriod || 30000;
   const autoScalingGroupName = await getAutoScalingGroupName(stackName);
   const params = {
     AutoScalingGroupName: autoScalingGroupName,
@@ -855,6 +855,7 @@ module.exports = {
   isWorkflowTriggeredByRule,
   getClusterArn,
   getClusterStats,
+  getExecutionStatus,
   getAutoScalingGroupName,
   getNewScalingActivity,
   getWorkflowArn,
