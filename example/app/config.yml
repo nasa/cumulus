@@ -302,10 +302,10 @@ lf-sit:
       name: lf-sit-protected
       type: protected
 
-kk-uat-deployment:
-  stackName: kk-test-uat
-  stackNameNoDash: KkTestUat
-  esHost: https://search-kk-test-uat-es5-bk24w6blilunzp4fc4ma3xwtqu.us-east-1.es.amazonaws.com
+kk:
+  stackName: kk-test
+  stackNameNoDash: KkTest
+  esHost: https://search-kk-test-es5-bk24w6blilunzp4fc4ma3xwtqu.us-east-1.es.amazonaws.com
   system_bucket: '{{stackName}}-internal'
   buckets:
     internal:
