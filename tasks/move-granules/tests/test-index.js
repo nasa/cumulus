@@ -14,7 +14,6 @@ const {
   headObject,
   parseS3Uri
 } = require('@cumulus/common/aws');
-const { getCmrFiles } = require('@cumulus/cmrjs');
 const clonedeep = require('lodash.clonedeep');
 const set = require('lodash.set');
 const errors = require('@cumulus/common/errors');
