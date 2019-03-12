@@ -15,12 +15,16 @@ ScaleOutEc2:
       ScalingAdjustment: 6
     - MetricIntervalLowerBound: 6
       MetricIntervalUpperBound: 8
-      ScalingAdjustment: 8   
+      ScalingAdjustment: 8
     # Assumig a max of 10 and min of 1
     - MetricIntervalLowerBound: 8
       ScalingAdjustment: 10
 ScaleInEc2:
-  StepAdjustments:
-    # MemoryReservation should never be below 0
-    - MetricIntervalUpperBound: 0
-      ScalingAdjustment: -5
+  override_defaults: true
+  properties:
+    AdjustmentType: ChangeInCapacity
+    PolicyType: SimpleScaling
+    Cooldown: 60
+    AutoScalingGroupName:
+      Ref: CumulusECSAutoScalingGroup
+    ScalingAdjustment: -1
