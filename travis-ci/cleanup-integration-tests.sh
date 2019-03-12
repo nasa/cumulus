@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+set -evx
 
 . ./travis-ci/set-env-vars.sh
 
@@ -29,6 +29,9 @@ if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
 else
   npm install @cumulus/common
 fi
+
+pwd
+ls -l node_modules/@cumulus/
 
 echo Unlocking stack
 node ./scripts/lock-stack.js false $DEPLOYMENT

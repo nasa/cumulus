@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+set -evx
 
 . ./travis-ci/set-env-vars.sh
 
@@ -12,6 +12,9 @@ else
   npm run bootstrap
   cd example
 fi
+
+pwd
+ls -l node_modules/@cumulus/
 
 echo "Locking stack for deployment $DEPLOYMENT"
 
@@ -27,24 +30,22 @@ while [ "$LOCK_EXISTS_STATUS" = 1 ]; do
   LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
 done
 
-(
-  ./node_modules/.bin/kes cf deploy \
-    --kes-folder iam \
-    --region us-east-1 \
-    --deployment "$DEPLOYMENT" \
-    --template node_modules/@cumulus/deployment/iam
+# (
+#   ./node_modules/.bin/kes cf deploy \
+#     --kes-folder iam \
+#     --region us-east-1 \
+#     --deployment "$DEPLOYMENT" \
+#     --template node_modules/@cumulus/deployment/iam
 
-  ./node_modules/.bin/kes cf deploy \
-    --kes-folder app \
-    --region us-east-1 \
-    --deployment "$DEPLOYMENT" \
-    --template node_modules/@cumulus/deployment/app
+#   ./node_modules/.bin/kes cf deploy \
+#     --kes-folder app \
+#     --region us-east-1 \
+#     --deployment "$DEPLOYMENT" \
+#     --template node_modules/@cumulus/deployment/app
 
-  ./node_modules/.bin/kes lambda S3AccessTest deploy \
-    --kes-folder app \
-    --template node_modules/@cumulus/deployment/app \
-    --deployment "$DEPLOYMENT" \
-    --region us-west-2
-)
-
-exit
+#   ./node_modules/.bin/kes lambda S3AccessTest deploy \
+#     --kes-folder app \
+#     --template node_modules/@cumulus/deployment/app \
+#     --deployment "$DEPLOYMENT" \
+#     --region us-west-2
+# )
