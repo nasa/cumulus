@@ -76,7 +76,8 @@ class Discover {
    * Receives a file object and adds granule-specific properties to it
    *
    * @param {Object} file - the file object
-   * @returns {Object} Updated file with granuleId, bucket, and url_path information
+   * @returns {Object} Updated file with granuleId, bucket,
+   *                   filetype, and url_path information
    */
   setGranuleInfo(file) {
     const granuleIdMatch = file.name.match(this.collection.granuleIdExtraction);
