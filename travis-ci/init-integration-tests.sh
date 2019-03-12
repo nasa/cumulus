@@ -5,47 +5,44 @@ set -evx
 . ./travis-ci/set-env-vars.sh
 
 if [ "$USE_NPM_PACKAGES" = "true" ]; then
-  cd example
-  npm install
+  (set -e && cd example && rm -rf node_modules && npm install)
 else
-  # ./bin/prepare
   npm run bootstrap
-  cd example
 fi
 
-pwd
-ls -l node_modules/@cumulus/
-
 echo "Locking stack for deployment $DEPLOYMENT"
+(
+  set -evx
 
-# Wait for the stack to be available
-LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
+  cd example
 
-echo "Locking status $LOCK_EXISTS_STATUS"
-
-while [ "$LOCK_EXISTS_STATUS" = 1 ]; do
-  echo "Another build is using the ${DEPLOYMENT} stack."
-  sleep 30
-
+  # Wait for the stack to be available
   LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
-done
 
-# (
-#   ./node_modules/.bin/kes cf deploy \
-#     --kes-folder iam \
-#     --region us-east-1 \
-#     --deployment "$DEPLOYMENT" \
-#     --template node_modules/@cumulus/deployment/iam
+  echo "Locking status $LOCK_EXISTS_STATUS"
 
-#   ./node_modules/.bin/kes cf deploy \
-#     --kes-folder app \
-#     --region us-east-1 \
-#     --deployment "$DEPLOYMENT" \
-#     --template node_modules/@cumulus/deployment/app
+  while [ "$LOCK_EXISTS_STATUS" = 1 ]; do
+    echo "Another build is using the ${DEPLOYMENT} stack."
+    sleep 30
 
-#   ./node_modules/.bin/kes lambda S3AccessTest deploy \
-#     --kes-folder app \
-#     --template node_modules/@cumulus/deployment/app \
-#     --deployment "$DEPLOYMENT" \
-#     --region us-west-2
-# )
+    LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
+  done
+
+  ./node_modules/.bin/kes cf deploy \
+    --kes-folder iam \
+    --region us-east-1 \
+    --deployment "$DEPLOYMENT" \
+    --template node_modules/@cumulus/deployment/iam
+
+  ./node_modules/.bin/kes cf deploy \
+    --kes-folder app \
+    --region us-east-1 \
+    --deployment "$DEPLOYMENT" \
+    --template node_modules/@cumulus/deployment/app
+
+  ./node_modules/.bin/kes lambda S3AccessTest deploy \
+    --kes-folder app \
+    --template node_modules/@cumulus/deployment/app \
+    --deployment "$DEPLOYMENT" \
+    --region us-west-2
+)
