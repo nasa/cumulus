@@ -8,6 +8,7 @@ const {
   waitForCompletedExecution,
   getClusterArn,
   getClusterStats,
+  getExecutionStatus,
   getNewScalingActivity
 } = require('@cumulus/integration-tests');
 const { sleep } = require('@cumulus/common/util');
@@ -23,6 +24,7 @@ let alarmPeriodSeconds;
 let sleepMs;
 let clusterArn;
 let numActivityTasks;
+let minInstancesCount;
 const workflowName = 'HelloWorldActivityWorkflow';
 
 describe('scaling for step function activities', () => {
@@ -30,7 +32,7 @@ describe('scaling for step function activities', () => {
     cloudformationResources = (await loadCloudformationTemplate(config)).Resources;
     activitiesWaitingAlarm = cloudformationResources.ActivitiesWaitingAlarm;
     alarmEvaluationPeriods = activitiesWaitingAlarm.Properties.EvaluationPeriods;
-    const alarmPeriod = activitiesWaitingAlarm.Properties.Metrics[0].MetricStat.Period;
+    const alarmPeriod = activitiesWaitingAlarm.Properties.Metrics[1].MetricStat.Period;
     alarmPeriodSeconds = alarmPeriod / alarmEvaluationPeriods;
     sleepMs = 2 * alarmPeriodSeconds * 1000;
     clusterArn = await getClusterArn(stackName);
@@ -54,8 +56,7 @@ describe('scaling for step function activities', () => {
 
   describe('scaling the service\'s desired tasks', () => {
     let workflowExecutionArns = [];
-    let alarmPeriodSeconds;
-    let sleepMs;
+    numExecutions = 10;
 
     beforeAll(async () => {
       const workflowExecutionPromises = [];
@@ -81,7 +82,7 @@ describe('scaling for step function activities', () => {
         const clusterStats = await getClusterStats(stackName);
         console.log(`clusterStats ${JSON.stringify(clusterStats, null, 2)}\n`);
         const runningEC2TasksCount = find(clusterStats, ['name', 'runningEC2TasksCount']).value;
-        expect(runningEC2TasksCount).toBe('2');
+        expect(runningEC2TasksCount).toBeGreaterThan(numActivityTasks);
       });
     });
 
@@ -90,16 +91,22 @@ describe('scaling for step function activities', () => {
         const completions = workflowExecutionArns.map((executionArn) => waitForCompletedExecution(executionArn));
         await Promise.all(completions);
         const clusterStats = await getClusterStats(stackName);
+        await sleep(sleepMs);
         console.log(`clusterStats ${JSON.stringify(clusterStats, null, 2)}\n`);
-        const runningEC2TasksCount = find(clusterStats, ['name', 'runningEC2TasksCount']).value;
-        expect(runningEC2TasksCount).toBe('1');
+        const runningEC2TasksCount = parseInt(find(clusterStats, ['name', 'runningEC2TasksCount']).value);
+        expect(runningEC2TasksCount).toBe(numActivityTask);
       });
+    });
+
+    it('all executions succeeded', async () => {
+      const results = await Promise.all(workflowExecutionArns.map(getExecutionStatus));
+      expect(results).toEqual(Array.from('SUCCEEDED'.repeat(numExecutions)));
     });
   });
 
   describe('scaling the cluster\'s desired ec2 instances', () => {
-    numExecutions = 10;
     let workflowExecutionArns = [];
+    numExecutions = 10;
 
     beforeAll(async () => {
       const workflowExecutionPromises = [];
@@ -133,14 +140,20 @@ describe('scaling for step function activities', () => {
         const stats = await getClusterStats(stackName);
         const runningEC2TasksCount = parseInt(find(stats, ['name', 'runningEC2TasksCount']).value);
         const pendingEC2TasksCount = parseInt(find(stats, ['name', 'pendingEC2TasksCount']).value);
+        console.log(`clusterStats ${clusterStats} `)
         expect(runningEC2TasksCount + pendingEC2TasksCount).toEqual(numActivityTasks);
       });
 
       it('does not remove all resources', async () => {
         const instances = await ecs().listContainerInstances({ cluster: clusterArn }).promise();
-        console.log(`instances : ${JSON.stringify(instances, 2)}`);
-        expect(instances.containerInstanceArns.length).toEqual(minInstancesCount);
+        // scale in only happens one at a time
+        expect(instances.containerInstanceArns.length).toEqual(minInstancesCount + 1);
       });
+    });
+
+    it('all executions succeeded', async () => {
+      const results = await Promise.all(workflowExecutionArns.map(getExecutionStatus));
+      expect(results).toEqual(Array.from('SUCCEEDED'.repeat(numExecutions)));
     });
   });
 });
