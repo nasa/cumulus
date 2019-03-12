@@ -335,7 +335,6 @@ describe('The S3 Ingest Granules workflow', () => {
     let resourceURLs;
     let accessToken;
 
-
     beforeAll(async () => {
       bucketsConfig = new BucketsConfig(config.buckets);
 
@@ -415,7 +414,7 @@ describe('The S3 Ingest Granules workflow', () => {
       const scienceFileUrls = resourceURLs
         .filter((url) =>
           (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) ||
-            url.match(/s3\.amazonaws\.com/)) &&
+          url.match(/s3\.amazonaws\.com/)) &&
           !url.endsWith('.cmr.xml') &&
           !url.includes('s3credentials'));
 
