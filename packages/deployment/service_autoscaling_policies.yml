@@ -16,5 +16,8 @@ ScaleInTasks:
   StepAdjustments:      
       # Activities scheduled will negative, so every minute that there are 0
       # activities scheduled, scale back 5 tasks
-    - MetricIntervalUpperBound: 0
-      ScalingAdjustment: -5 
+    - MetricIntervalUpperBound: -1
+      ScalingAdjustment: -10
+    - MetricIntervalLowerBound: -1
+      MetricIntervalUpperBound: 0
+      ScalingAdjustment: -5
