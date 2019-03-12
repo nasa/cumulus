@@ -24,74 +24,60 @@ jobs:
     #   install: true
     #   script: ./travis-ci/build-cache.sh
 
-    # - name: "npm audit"
-    #   stage: build cache & audit
-    #   if: tag !~ ^v\d+.* AND commit_message !~ \[skip-audit\]
-    #   install:
-    #     - nvm install-latest-npm
-    #     - npm install --no-audit
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #     - npm run install-locks
-    #     - echo 'BOOTSTRAP FINISHED'
-    #   script: ./travis-ci/audit-packages.sh
+    - name: "npm audit"
+      stage: build cache & audit
+      if: tag !~ ^v\d+.* AND commit_message !~ \[skip-audit\]
+      install:
+        - ln -s /dev/stdout ./lerna-debug.log
+        - nvm install-latest-npm
+        - npm install --no-audit
+        - npm run install-locks
+      script: ./travis-ci/audit-packages.sh
 
-    # - name: "eslint"
-    #   stage: unit test and stack deployment
-    #   install:
-    #     # - ./travis-ci/fetch-cache.sh
-    #     - npm install
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #     - npm run bootstrap-no-build
-    #     # - env SKIP_BUILD=true ./bin/prepare
-    #     - echo 'BOOTSTRAP FINISHED'
-    #   script: npm run lint
+    - name: "eslint"
+      stage: unit test and stack deployment
+      install:
+        - ln -s /dev/stdout ./lerna-debug.log
+        - npm install
+        - npm run bootstrap-no-build
+      script: npm run lint
 
-    # - name: "Unit tests except API"
-    #   stage: unit test and stack deployment
-    #   services:
-    #     - docker
-    #   env:
-    #     - LOCALSTACK_HOST=127.0.0.1
-    #     - LOCAL_ES_HOST=127.0.0.1
-    #   install:
-    #     # - ./travis-ci/fetch-cache.sh
-    #     - npm install
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #     - npm run bootstrap-no-build
-    #     - ./travis-ci/start-local-services.sh
-    #     - echo 'BOOTSTRAP FINISHED'
-    #   script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api --ignore cumulus-integration-tests
-    #   # after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+    - name: "Unit tests except API"
+      stage: unit test and stack deployment
+      services:
+        - docker
+      env:
+        - LOCALSTACK_HOST=127.0.0.1
+        - LOCAL_ES_HOST=127.0.0.1
+      install:
+        - ln -s /dev/stdout ./lerna-debug.log
+        - npm install
+        - npm run bootstrap-no-build
+        - ./travis-ci/start-local-services.sh
+      script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api --ignore cumulus-integration-tests
 
-    # - name: "API unit tests"
-    #   stage: unit test and stack deployment
-    #   services:
-    #     - docker
-    #   env:
-    #     - LOCALSTACK_HOST=127.0.0.1
-    #     - LOCAL_ES_HOST=127.0.0.1
-    #   install:
-    #     # - ./travis-ci/fetch-cache.sh
-    #     - npm install
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #     - npm run bootstrap-no-build
-    #     - ./travis-ci/start-local-services.sh
-    #     - echo 'BOOTSTRAP FINISHED'
-    #   script: ./travis-ci/run-api-unit-tests.sh
-    #   # after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+    - name: "API unit tests"
+      stage: unit test and stack deployment
+      services:
+        - docker
+      env:
+        - LOCALSTACK_HOST=127.0.0.1
+        - LOCAL_ES_HOST=127.0.0.1
+      install:
+        - ln -s /dev/stdout ./lerna-debug.log
+        - npm install
+        - npm run bootstrap-no-build
+        - ./travis-ci/start-local-services.sh
+      script: ./travis-ci/run-api-unit-tests.sh
 
-    # - name: "Deploy Integration Test Stack"
-    #   stage: unit test and stack deployment
-    #   if: commit_message !~ \[skip-integration-tests\] OR branch = master
-    #   install:
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #     # - ./travis-ci/fetch-cache.sh
-    #     - npm install
-    #     # - npm run bootstrap-no-build
-    #   script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
-    #   # script: /bin/false
-    #   after_success: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
-    #   after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+    - name: "Deploy Integration Test Stack"
+      stage: unit test and stack deployment
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
+      install:
+        - ln -s /dev/stdout ./lerna-debug.log
+        - npm install
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     # - name: "Deploy SIT Integration Test Stack"
     #   stage: unit test and stack deployment
@@ -113,9 +99,7 @@ jobs:
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ln -s /dev/stdout ./lerna-debug.log
-        # - ./travis-ci/fetch-cache.sh
         - npm install
-        # - npm run bootstrap-no-build
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
 
@@ -146,12 +130,13 @@ jobs:
 #       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-redeployment-tests.sh
 #       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
 
-#     - name: "Cleanup integration tests"
-#       stage: cleanup integration tests
-#       if: commit_message !~ \[skip-integration-tests\] OR branch = master
-#       install:
-#         - npm install
-#       script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+    - name: "Cleanup integration tests"
+      stage: cleanup integration tests
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
+      install:
+        - ln -s /dev/stdout ./lerna-debug.log
+        - npm install
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
 #     - name: "Cleanup SIT integration tests"
 #       stage: cleanup integration tests
