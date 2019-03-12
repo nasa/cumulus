@@ -51,7 +51,6 @@ function fakeFileFactory(params = {}) {
     bucket: randomString(),
     fileName,
     key: fileName,
-    fileType: 'data', // Default to data, params should override
     ...params
   };
 }
