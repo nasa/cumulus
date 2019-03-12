@@ -11,6 +11,7 @@ const fs = require('fs-extra');
 const pLimit = require('p-limit');
 
 const {
+  autoscaling,
   dynamodb,
   ecs,
   s3,
@@ -90,6 +91,20 @@ async function getClusterArn(stackName) {
   return listClustersResponse.clusterArns.find((arn) => arn.includes(clusterPrefix));
 }
 
+/**
+ * Return the statistics of the Cumulus ECS cluster
+ *
+ * @param {string} stackName - the Cumulus stack name
+ * @returns {Object} - key/value pairs
+ *  runningEC2TasksCount
+ *  runningFargateTasksCount
+ *  pendingEC2TasksCount
+ *  pendingFargateTasksCount
+ *  activeEC2ServiceCount
+ *  activeFargateServiceCount
+ *  drainingEC2ServiceCount
+ *  drainingFargateServiceCount
+ */
 async function getClusterStats(stackName) {
   const clusterArn = await getClusterArn(stackName);
   const stats = (await ecs().describeClusters({
@@ -97,6 +112,34 @@ async function getClusterStats(stackName) {
     include: ['STATISTICS']
   }).promise()).clusters[0].statistics;
   return stats;
+}
+
+async function getAutoScalingGroupName(stackName) {
+  const autoScalingGroups = (await autoscaling().describeAutoScalingGroups({}).promise()).AutoScalingGroups;
+  const asg = autoScalingGroups.find((group) => group.AutoScalingGroupName.match(new RegExp(stackName, 'g')));
+  return asg.AutoScalingGroupName;
+}
+
+async function getNewScalingActivity({ stackName, waitPeriod }) {
+  waitPeriod = waitPeriod || 3000;
+  const autoScalingGroupName = await getAutoScalingGroupName(stackName);
+  const params = {
+    AutoScalingGroupName: autoScalingGroupName,
+    MaxRecords: 1
+  };
+  let activities = await autoscaling().describeScalingActivities(params).promise();
+  const startingActivity = activities.Activities[0];
+  let mostRecentActivity = Object.assign({}, startingActivity);
+  /* eslint-disable no-await-in-loop */
+  while (startingActivity.ActivityId === mostRecentActivity.ActivityId) {
+    activities = await autoscaling().describeScalingActivities(params).promise();
+    mostRecentActivity = activities.Activities[0];
+    console.log(`No new activity found. Sleeping for ${waitPeriod / 1000} seconds.`);
+    await sleep(waitPeriod);
+  }
+  /* eslint-enable no-await-in-loop */
+
+  return mostRecentActivity;
 }
 
 /**
@@ -812,6 +855,8 @@ module.exports = {
   isWorkflowTriggeredByRule,
   getClusterArn,
   getClusterStats,
+  getAutoScalingGroupName,
+  getNewScalingActivity,
   getWorkflowArn,
   rulesList,
   waitForAsyncOperationStatus,

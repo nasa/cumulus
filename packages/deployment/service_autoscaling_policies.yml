@@ -1,0 +1,20 @@
+ScaleOutTasks:
+  # Scale by chunks of 10 every time activities scheduled 
+  StepAdjustments:
+    - MetricIntervalLowerBound: 0
+      MetricIntervalUpperBound: 10
+      ScalingAdjustment: 10
+    - MetricIntervalLowerBound: 10
+      MetricIntervalUpperBound: 20
+      ScalingAdjustment: 20
+    - MetricIntervalLowerBound: 20
+      MetricIntervalUpperBound: 30
+      ScalingAdjustment: 30
+    - MetricIntervalLowerBound: 30
+      ScalingAdjustment: 60
+ScaleInTasks:
+  StepAdjustments:      
+      # Activities scheduled will negative, so every minute that there are 0
+      # activities scheduled, scale back 5 tasks
+    - MetricIntervalUpperBound: 0
+      ScalingAdjustment: -5 

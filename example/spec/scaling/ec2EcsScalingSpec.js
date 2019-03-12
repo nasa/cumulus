@@ -26,7 +26,7 @@ async function getAutoScalingGroupName(stackName) {
 }
 
 const waitPeriod = 30000;
-async function getNewScalingActivity() {
+async function getNewScalingActivity({ stackName, waitPeriod }) {
   const params = {
     AutoScalingGroupName: autoScalingGroupName,
     MaxRecords: 1

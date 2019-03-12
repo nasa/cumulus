@@ -1011,8 +1011,7 @@ Resources:
       PolicyType: StepScaling
       MetricAggregationType: Average
       StepAdjustments:
-        {{{ToJson this.step_adjustments}}}
-      # TODO(Aimee): Add simple scaling and target tracking configuration option
+        {{{ToJson this.StepAdjustments}}}
     {{/if}}
   {{/each}}
 {{/if}}
@@ -1127,7 +1126,7 @@ Resources:
         MaximumPercent: 100
         MinimumHealthyPercent: 0
 
-{{#if this.application_autoscaling_policies}}
+{{#if ../ecs.service_autoscaling_policies}}
   {{@key}}ECSServiceScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     DependsOn:
@@ -1148,7 +1147,7 @@ Resources:
       ScalableDimension: 'ecs:service:DesiredCount'
       ServiceNamespace: ecs
 
-{{#each this.application_autoscaling_policies}}
+{{#each ../ecs.service_autoscaling_policies}}
   {{@key}}ECSServiceApplicationScalingPolicy:
     Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
     Properties:
@@ -1163,7 +1162,7 @@ Resources:
         AdjustmentType: ChangeInCapacity
         Cooldown: 60
         MetricAggregationType: Average
-        StepAdjustments: {{{ ToJson this.step_adjustments }}}
+        StepAdjustments: {{{ ToJson this.StepAdjustments }}}
     {{/if}}
 {{/each}}
 {{/if}}

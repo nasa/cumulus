@@ -96,7 +96,7 @@ default:
       HelloWorldService:
         image: cumuluss/cumulus-ecs-task:1.2.3
         # I find this is a little confusing - the task has service and memory limit not the service
-        cpu: 400
+        cpu: 100
         memory: 700
         count: 1
         envs:
@@ -111,8 +111,6 @@ default:
           - '--lambdaArn'
           - function: Ref
             value: HelloWorldLambdaFunction
-        # Scale the number of tasks based on number schedued
-        application_autoscaling_policies: !!files [ 'application_autoscaling_policies.yml' ]
     tasks:
       HelloWorldOnDemand:
         ecr: true

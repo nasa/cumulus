@@ -105,7 +105,12 @@ default:
     availabilityZone: 'us-east-1b'
     maxInstances: 1
     desiredInstances: 0
-    autoscaling_policies: !!files [ 'autoscaling_policies.yml' ]
+    autoscaling_policies: !!files [
+      'node_modules/@cumulus/deployment/autoscaling_policies.yml'
+    ]
+    service_autoscaling_policies: !!files [
+      'node_modules/@cumulus/deployment/service_autoscaling_policies.yml'
+    ]
     tasks:
       AsyncOperation:
         image: cumuluss/async-operation:25
@@ -227,4 +232,4 @@ default:
   'node_modules/@cumulus/api/config/workflowLambdas.yml'
   ]
 
-  alarms: !!files ['alarms.yml']
+  alarms: !!files ['node_modules/@cumulus/deployment/alarms.yml']

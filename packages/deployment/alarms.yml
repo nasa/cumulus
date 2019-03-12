@@ -1,0 +1,69 @@
+# Always scale activities to number required by the activities scheduled
+ActivitiesWaiting:
+  AlarmActions:
+    - Ref: ScaleOutTasksECSServiceApplicationScalingPolicy
+  OKActions:
+    - Ref: ScaleInTasksECSServiceApplicationScalingPolicy
+  TreatMissingData: notBreaching
+  ComparisonOperator: GreaterThanOrEqualToThreshold
+  EvaluationPeriods: 1
+  Threshold: 0
+  Metrics:
+    - Id: e1
+      Expression: m2 - m1
+      Label: HelloWorldActivitiesWaiting
+    - Id: m2
+      MetricStat:
+        Metric:
+          Namespace: AWS/States
+          MetricName: ActivitiesScheduled
+          Dimensions:
+            - Name: ActivityArn
+              Value:
+                Ref: HelloWorldActivity
+        Period: 60
+        Stat: Sum
+        Unit: Count
+      ReturnData: false
+    - Id: m1
+      MetricStat:
+        Metric:
+          Namespace: AWS/States
+          MetricName: ActivitiesStarted
+          Dimensions:
+            - Name: ActivityArn
+              Value:
+                Ref: HelloWorldActivity
+        Period: 60
+        Stat: Sum
+        Unit: Count
+      ReturnData: false        
+# If NumRequiredInstances is greater than the threshold, we will use step scaling
+NumRequiredInstances:
+  AlarmActions:
+    - Ref: ScaleOutEc2ScalingPolicy
+  OKActions:
+    - Ref: ScaleInEc2ScalingPolicy
+  TreatMissingData: notBreaching
+  ComparisonOperator: GreaterThanOrEqualToThreshold
+  EvaluationPeriods: 1
+  # Threshold should really be the number of existing instances.
+  Threshold: 1
+  Metrics:
+    - Id: e1
+      # (Activities scheduled * memory req / activity) / memory per instance
+      Expression: (m1*700)/3952
+      Label: NumInstancesRequired
+    - Id: m1
+      MetricStat:
+        Metric:
+          Namespace: AWS/States
+          MetricName: ActivitiesScheduled
+          Dimensions:
+            - Name: ActivityArn
+              Value:
+                Ref: HelloWorldActivity
+        Period: 60
+        Stat: Sum
+        Unit: Count
+      ReturnData: false
