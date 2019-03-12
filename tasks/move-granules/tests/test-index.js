@@ -14,6 +14,7 @@ const {
   headObject,
   parseS3Uri
 } = require('@cumulus/common/aws');
+const { getCmrFiles } = require('@cumulus/cmrjs');
 const clonedeep = require('lodash.clonedeep');
 const set = require('lodash.set');
 const errors = require('@cumulus/common/errors');
@@ -181,6 +182,20 @@ test.serial('Should move renamed files in staging area to final location.', asyn
 
   t.true(check);
 });
+
+test.serial('Should add metadata type to CMR granule files.', async (t) => {
+  const newPayload = buildPayload(t);
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  const output = await moveGranules(newPayload);
+
+  const outputFiles = output.granules[0].files;
+  const cmrOutputFiles = outputFiles.filter((f) => f.filename.includes('.cmr.xml'));
+  cmrOutputFiles.forEach((file) => {
+    t.is('metadata', file.fileType);
+  });
+  t.is(1, cmrOutputFiles.length);
+});
+
 
 test.serial('Should update filenames with updated S3 URLs.', async (t) => {
   const newPayload = buildPayload(t);
