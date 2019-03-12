@@ -31,7 +31,10 @@ else
 fi
 
 pwd
+ls -l node_modules/
 ls -l node_modules/@cumulus/
+ls -l node_modules/@cumulus/common/
+ls -l node_modules/@cumulus/common/node_modules/
 
 echo Unlocking stack
 node ./scripts/lock-stack.js false $DEPLOYMENT

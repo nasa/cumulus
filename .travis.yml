@@ -89,7 +89,8 @@ jobs:
         - ln -s /dev/stdout ./lerna-debug.log
         # - npm run bootstrap-no-build
         - echo 'BOOTSTRAP FINISHED'
-      script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
+      # script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
+      script: false
       after_success: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
