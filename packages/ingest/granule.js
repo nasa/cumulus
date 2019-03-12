@@ -122,7 +122,7 @@ class Discover {
         // Make sure there is a config for this type of file
         .filter((file) => this.fileTypeConfigForFile(file))
         // Add additional granule-related properties to the file
-        .map((file) => this.setGranuleInfo(file))
+        .map((file) => this.setGranuleInfo(file));
     }
     catch (error) {
       log.error(`discover exception ${JSON.stringify(error)}`);
