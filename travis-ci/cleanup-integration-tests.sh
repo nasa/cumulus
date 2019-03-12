@@ -4,37 +4,36 @@ set -evx
 
 . ./travis-ci/set-env-vars.sh
 
-cd example || exit 1
+(
+  set -evx
+  cd example
 
-# Delete the stack if it's a nightly build
-if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
-  npm install
-  echo Delete app deployment
+  rm -rf node_modules
 
-  ./node_modules/.bin/kes cf delete \
-    --kes-folder app \
-    --region us-east-1 \
-    --deployment "$DEPLOYMENT" \
-    --yes
+  # Delete the stack if it's a nightly build
+  if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
+    npm install
+    echo Delete app deployment
 
-  echo Delete iam deployment
+    ./node_modules/.bin/kes cf delete \
+      --kes-folder app \
+      --region us-east-1 \
+      --deployment "$DEPLOYMENT" \
+      --yes
 
-  ./node_modules/.bin/kes cf delete \
-    --kes-folder iam \
-    --region us-east-1 \
-    --deployment "$DEPLOYMENT" \
-    --yes
+    echo Delete iam deployment
 
-  echo Delete app deployment
-else
-  npm install @cumulus/common
-fi
+    ./node_modules/.bin/kes cf delete \
+      --kes-folder iam \
+      --region us-east-1 \
+      --deployment "$DEPLOYMENT" \
+      --yes
 
-pwd
-ls -l node_modules/
-ls -l node_modules/@cumulus/
-ls -l node_modules/@cumulus/common/
-ls -l node_modules/@cumulus/common/node_modules/
+    echo Delete app deployment
+  else
+    npm install @cumulus/common
+  fi
 
-echo Unlocking stack
-node ./scripts/lock-stack.js false $DEPLOYMENT
+  echo Unlocking stack
+  node ./scripts/lock-stack.js false $DEPLOYMENT
+)
