@@ -114,7 +114,7 @@ function validateMatch(match, bucketsConfig, file) {
 /**
  * Update the granule metadata where each granule has its files replaced with
  * file objects that contain the desired final locations based on the
- * `collection.files.regexp`.   Newly created CMR metadata files have a fileType added.
+ * `collection.files.regexp`.  CMR metadata files have a fileType added.
  *
  * @param {Object} granulesObject - an object of granules where the key is the granuleId
  * @param {Object} collection - configuration object defining a collection
@@ -138,7 +138,7 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
 
     granulesObject[granuleId].files.forEach((file) => {
       const cmrFileTypeObject = {};
-      if (cmrFileNames.includes(file.name)) {
+      if (cmrFileNames.includes(file.name) && !file.fileType) {
         cmrFileTypeObject.fileType = 'metadata';
       }
 
