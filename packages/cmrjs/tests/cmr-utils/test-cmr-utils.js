@@ -111,6 +111,7 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
   const filesObject = await readJsonFixture('./tests/fixtures/filesObjectFixture.json');
   const buckets = new BucketsConfig(await readJsonFixture('./tests/fixtures/buckets.json'));
   const distEndpoint = 'https://distendpoint.com';
+  const backendUrl = 'https://backendpoint.com';
 
   const updateEcho10XMLMetadata = cmrUtil.__get__('updateEcho10XMLMetadata');
 
@@ -135,7 +136,7 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
       Description: 'File to download'
     },
     {
-      URL: `${distEndpoint}/s3credentials`,
+      URL: `${backendUrl}/s3credentials`,
       Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
       Type: 'VIEW RELATED INFORMATION'
     }
@@ -146,7 +147,13 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
       Description: 'File to download'
     }
   ];
-  const actual = await updateEcho10XMLMetadata({ filename: 's3://cumulus-test-sandbox-private/notUsed' }, filesObject, distEndpoint, buckets);
+  const actual = await updateEcho10XMLMetadata({
+    cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+    files: filesObject,
+    backendUrl,
+    distEndpoint,
+    buckets
+  });
   t.deepEqual(actual.Granule.OnlineAccessURLs.OnlineAccessURL, onlineAccessURLsExpected);
   t.deepEqual(actual.Granule.OnlineResources.OnlineResource, onlineResourcesExpected);
   t.deepEqual(actual.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl, AssociatedBrowseExpected);
