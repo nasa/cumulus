@@ -349,7 +349,7 @@ function constructOnlineAccessUrl({
       URL: urljoin(distEndpoint, extension),
       URLDescription: 'File to download', // used by ECHO10
       Description: 'File to download', // used by UMMG
-      Type: mapCNMTypeToCMRType(file.fileType); // used by UMMG
+      Type: mapCNMTypeToCMRType(file.fileType) // used by UMMG
     };
   }
   if (bucketType === 'public') {
@@ -357,7 +357,7 @@ function constructOnlineAccessUrl({
       URL: `https://${file.bucket}.s3.amazonaws.com/${getS3KeyOfFile(file)}`,
       URLDescription: 'File to download',
       Description: 'File to download',
-      Type: mapCNMTypeToCMRType(file.fileType);
+      Type: mapCNMTypeToCMRType(file.fileType)
     };
   }
   return null;
@@ -407,7 +407,7 @@ function constructRelatedUrls({
   const cmrUrlObjects = constructOnlineAccessUrls({
     files,
     distEndpoint,
-    buckets,
+    buckets
   });
 
   const relatedUrls = cmrUrlObjects.concat(s3CredentialsObject);
@@ -613,8 +613,8 @@ async function updateEcho10XMLMetadata({
     'AssociatedBrowseImageUrls.ProviderBrowseUrl', []));
 
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
-  const newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets }).
-    concat(getS3CredentialsObject(urljoin(backendUrl, s3CredsEndpoint)));
+  const newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets })
+    .concat(getS3CredentialsObject(urljoin(backendUrl, s3CredsEndpoint)));
 
   const mergedOnlineResources = buildMergedEchoURLObject(newURLs, originalOnlineResourceURLs,
     removedURLs, ['EXTENDED METADATA', 'VIEW RELATED INFORMATION'], ['URLDescription']);
