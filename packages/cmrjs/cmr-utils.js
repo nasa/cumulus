@@ -583,13 +583,8 @@ async function updateEcho10XMLMetadata({
     newResourceURLs
   );
 
-  const updateObject = {};
-  _set(updateObject, 'OnlineAccessURLs.OnlineAccessURL', mergedOnlineAccessURLs);
-  _set(updateObject, 'OnlineResources.OnlineResource', mergedResourceURLs);
-
-  // _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedOnlineAccessURLs);
-  // _set(updatedGranule, 'OnlineResources.OnlineResource', mergedResourceURLs);
-  _set(updatedGranule, '', updateObject);
+  _set(updatedGranule, 'OnlineResources.OnlineResource', mergedResourceURLs);
+  _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedOnlineAccessURLs);
   metadataObject.Granule = updatedGranule;
 
   const builder = new xml2js.Builder();
