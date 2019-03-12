@@ -66,7 +66,8 @@ class Discover {
     this.collection.files.forEach((f) => {
       this.regexes[f.regex] = {
         collection: this.collection.name,
-        bucket: this.buckets[f.bucket].name
+        bucket: this.buckets[f.bucket].name,
+        fileType: f.fileType
       };
     });
   }
@@ -89,7 +90,8 @@ class Discover {
       {
         granuleId,
         bucket: this.buckets[fileTypeConfig.bucket].name,
-        url_path: fileTypeConfig.url_path || this.collection.url_path || ''
+        url_path: fileTypeConfig.url_path || this.collection.url_path || '',
+        fileType: fileTypeConfig.fileType || ''
       }
     );
   }
@@ -120,7 +122,7 @@ class Discover {
         // Make sure there is a config for this type of file
         .filter((file) => this.fileTypeConfigForFile(file))
         // Add additional granule-related properties to the file
-        .map((file) => this.setGranuleInfo(file));
+        .map((file) => this.setGranuleInfo(file))
     }
     catch (error) {
       log.error(`discover exception ${JSON.stringify(error)}`);
