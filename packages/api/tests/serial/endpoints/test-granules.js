@@ -10,6 +10,7 @@ const {
   sfn
 } = require('@cumulus/common/aws');
 const aws = require('@cumulus/common/aws');
+const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmrjs');
 const {
   metadataObjectFromCMRFile
@@ -432,13 +433,17 @@ test.serial('remove a granule from CMR', async (t) => {
     'deleteGranule'
   ).callsFake(() => Promise.resolve());
 
+  sinon.stub(
+    cmrjs,
+    'getMetadata'
+  ).callsFake(() => Promise.resolve({ title: t.context.fakeGranules[0].granuleId }));
+
   const response = await request(app)
     .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${accessToken}`)
     .send({ action: 'removeFromCmr' })
     .expect(200);
-
 
   const body = response.body;
   t.is(body.status, 'SUCCESS');
@@ -450,6 +455,7 @@ test.serial('remove a granule from CMR', async (t) => {
 
   CMR.prototype.deleteGranule.restore();
   DefaultProvider.decrypt.restore();
+  cmrjs.getMetadata.restore();
 });
 
 test.serial('DELETE deleting an existing granule that is published will fail', async (t) => {

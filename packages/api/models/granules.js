@@ -13,6 +13,7 @@ const { CMR, reconcileCMRMetadata } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { buildURL } = require('@cumulus/common/URLUtils');
+const { deprecate } = require('@cumulus/common/util');
 const {
   generateMoveFileParams,
   moveGranuleFiles
@@ -111,15 +112,13 @@ class Granule extends Manager {
     return scanResponse;
   }
 
-  /**
-   * Removes a give granule from CMR
-   *
-   * @param {string} granuleId - the granule ID
-   * @param {string} collectionId - the collection ID
-   * @returns {Promise<undefined>} - undefined
-   */
-  async removeGranuleFromCmr(granuleId, collectionId) {
-    log.info(`granules.removeGranuleFromCmr ${granuleId}`);
+  async removeGranuleFromCmrByGranule(granule) {
+    log.info(`granules.removeGranuleFromCmrByGranule ${granule.granuleId}`);
+
+    if (!granule.published || !granule.cmrLink) {
+      throw new Error(`Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
+    }
+
     const password = await DefaultProvider.decrypt(process.env.cmr_password);
     const cmr = new CMR(
       process.env.cmr_provider,
@@ -128,8 +127,26 @@ class Granule extends Manager {
       password
     );
 
-    await cmr.deleteGranule(granuleId, collectionId);
-    await this.update({ granuleId }, { published: false }, ['cmrLink']);
+    const metadata = await cmrjs.getMetadata(granule.cmrLink);
+
+    await cmr.deleteGranule(metadata.title, granule.collectionId); // Use granule UR to delete from CMR
+    await this.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
+  }
+
+  /**
+   * Removes a give granule from CMR
+   *
+   * @param {string} granuleId - the granule ID
+   * @param {string} collectionId - the collection ID
+   * @returns {Promise<undefined>} - undefined
+   */
+  // eslint-disable-next-line no-unused-vars
+  async removeGranuleFromCmr(granuleId, collectionId) {
+    deprecate('@cumulus/api/Granule.removeGranuleFromCmr', '1.11.3', '@cumulus/api/Granule.removeGranuleFromCmrByGranule');
+
+    const granule = await this.get({ granuleId });
+
+    return this.removeGranuleFromCmrByGranule(granule);
   }
 
   /**

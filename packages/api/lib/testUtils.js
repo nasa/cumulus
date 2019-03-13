@@ -81,6 +81,7 @@ function fakeGranuleFactory(status = 'completed') {
     status,
     execution: randomString(),
     createdAt: Date.now(),
+    updatedAt: Date.now(),
     published: true,
     cmrLink: 'example.com',
     productVolume: 100
