@@ -314,7 +314,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('publishes CMR metadata online resources with the correct type', () => {
       const viewRelatedInfoResource = onlineResources.filter((resource) => resource.Type === 'VIEW RELATED INFORMATION');
-      console.log(`viewRelatedInfoResource: ${viewRelatedInfoResource}`);
+      console.log(`viewRelatedInfoResource: ${JSON.stringify(viewRelatedInfoResource)}`);
       const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
 
       const ExpectedResources = ['GET DATA', 'GET DATA', 'GET RELATED VISUALIZATION',
@@ -324,9 +324,10 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('updates the CMR metadata online resources with s3credentials location', () => {
-      const s3CredentialsURL = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
+      // const s3CredentialsURL = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
       console.log(`resourceURLs: ${resourceURLs}`);
-      expect(resourceURLs.includes(s3CredentialsURL)).toBe(true);
+      const s3CredentialsURL = resourceURLs.filter((url) => url.contains('s3credentials'));
+      expect((s3CredentialsURL.length() === 1).includes(s3CredentialsURL)).toBe(true);
     });
 
     it('does not overwrite the original related url', () => {
