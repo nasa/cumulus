@@ -53,13 +53,14 @@ class S3KeyPairProvider {
     return privateKey.decrypt(decoded);
   }
 
-  static retrieveKey(keyId = null, bucket = null, stack = null) {
+  static async retrieveKey(keyId = null, bucket = null, stack = null) {
     const b = bucket || process.env.system_bucket;
     const s = stack || process.env.stackName;
     try {
-      return getS3Object({
+      const key = await getS3Object({
         Bucket: b, Key: `${s}/crypto/${keyId}`
       }).promise();
+      return key;
     }
     catch (err) {
       log.error(`Failed to retrieve S3KeyPair key from bucket ${b} on stack ${s}`);
