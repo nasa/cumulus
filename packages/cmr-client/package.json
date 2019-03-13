@@ -1,18 +1,18 @@
 {
-  "name": "@cumulus/cmrjs",
-  "version": "1.11.2",
-  "description": "A node SDK for CMR",
+  "name": "@cumulus/cmr-client",
+  "version": "1.11.2-alpha2",
   "engines": {
     "node": ">=8.10.0"
   },
   "scripts": {
+    "build-docs": "jsdoc2md --heading-depth 3 --template templates/README.hbs CMR.js CMRSearchConceptQueue.js > README.md",
     "test": "ava",
     "test-coverage": "nyc ava",
     "debug": "NODE_ENV=test node --inspect-brk node_modules/ava/profile.js --serial tests/*.js"
   },
   "ava": {
-    "files": "tests/**/*.js",
-    "serial": true
+    "files": "tests/*.js",
+    "fail-fast": true
   },
   "nyc": {
     "exclude": [
@@ -32,24 +32,18 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmr-client": "1.11.2-alpha2",
-    "@cumulus/common": "1.11.2",
-    "got": "^8.3.0",
-    "js2xmlparser": "^4.0.0",
+    "@cumulus/logger": "^1.11.2",
+    "got": "^9.6.0",
     "lodash.get": "^4.4.2",
     "lodash.property": "^4.4.2",
-    "lodash.set": "^4.3.2",
-    "public-ip": "^2.3.5",
-    "url-join": "^1.0.0",
+    "public-ip": "^3.0.0",
     "xml2js": "^0.4.19"
   },
   "devDependencies": {
     "ava": "^0.25.0",
-    "fs-extra": "7.0.0",
+    "jsdoc-to-markdown": "^4.0.1",
     "lodash.some": "^4.6.0",
-    "nock": "^10.0.2",
-    "nyc": "^13.3.0",
-    "rewire": "^4.0.1",
+    "nock": "^10.0.6",
     "sinon": "^7.1.1"
   }
 }
