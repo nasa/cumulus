@@ -19,11 +19,6 @@ stages:
 
 jobs:
   include:
-    # - name: "Build npm cache"
-    #   stage: build cache & audit
-    #   install: true
-    #   script: ./travis-ci/build-cache.sh
-
     - name: "npm audit"
       stage: build cache & audit
       if: tag !~ ^v\d+.* AND commit_message !~ \[skip-audit\]
@@ -75,7 +70,6 @@ jobs:
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm install
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
@@ -84,7 +78,6 @@ jobs:
       if: type = cron
       install:
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm install
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
       env:
@@ -96,7 +89,6 @@ jobs:
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm install
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
 
@@ -105,7 +97,6 @@ jobs:
       if: type = cron
       install:
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm install
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
       env:
@@ -114,7 +105,6 @@ jobs:
 
     - name: "Run redeployment integration tests"
       stage: redeployment integration tests
-      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ln -s /dev/stdout ./lerna-debug.log
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-redeployment-tests.sh
@@ -125,7 +115,6 @@ jobs:
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm install
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "Cleanup SIT integration tests"
@@ -133,45 +122,44 @@ jobs:
       if: type = cron
       install:
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm install
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
       env:
         - NGAP_ENV=SIT
         - DEPLOYMENT=cumulus-sit
 
-#     - name: "Deploy to NPM"
-#       stage: deploy
-#       install:
-#         - ./travis-ci/fetch-cache.sh
-#         - npm install
-#         - npm run bootstrap-no-build
-#       script: ./travis-ci/deploy-to-npm.sh
+    - name: "Deploy to NPM"
+      stage: deploy
+      install:
+        - ./travis-ci/fetch-cache.sh
+        - npm install
+        - npm run bootstrap-no-build
+      script: ./travis-ci/deploy-to-npm.sh
 
-#     - name: "Deploy to Github Pages"
-#       stage: deploy
-#       install: npm install
-#       script: ./travis-ci/deploy-to-github-pages.sh
+    - name: "Deploy to Github Pages"
+      stage: deploy
+      install: npm install
+      script: ./travis-ci/deploy-to-github-pages.sh
 
-#     - name: "Deploy packages to integration test stack"
-#       stage: deployment test setup
-#       install: true
-#       script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
-#       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
-#       env:
-#         - DEPLOYMENT=cumulus-from-npm
-#         - USE_NPM_PACKAGES=true
+    - name: "Deploy packages to integration test stack"
+      stage: deployment test setup
+      install: /bin/true
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+      env:
+        - DEPLOYMENT=cumulus-from-npm
+        - USE_NPM_PACKAGES=true
 
-#     - name: "Run integration tests against deployed packages"
-#       stage: deployment test
-#       install: true
-#       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
-#       after_success: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
-#       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
-#       env:
-#         - DEPLOYMENT=cumulus-from-npm
-#         - USE_NPM_PACKAGES=true
+    - name: "Run integration tests against deployed packages"
+      stage: deployment test
+      install: /bin/true
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
+      after_success: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+      env:
+        - DEPLOYMENT=cumulus-from-npm
+        - USE_NPM_PACKAGES=true
 
-# branches:
-#   only:
-#     - master
-#     - /^v\d+\.\d+(\.\d+)?(-\S*)?$/  # To build tag pushes for releases
+branches:
+  only:
+    - master
+    - /^v\d+\.\d+(\.\d+)?(-\S*)?$/  # To build tag pushes for releases
