@@ -53,6 +53,17 @@ class S3KeyPairProvider {
     return privateKey.decrypt(decoded);
   }
 
+  /**
+   * Retrieve encryption/decryption key from S3
+   *
+   * @param {string} keyId - The name of the key to retrieve
+   * @param {string} bucket - the optional bucket name. if not provided will
+   *                          use env variable "system_bucket"
+   * @param {stack} stack - the optional stack name. if not provided will
+   *                        use env variable "stackName"
+   * @throws {Error} - throws AWS SDK error if encountered. Logs error's variables before throwing.
+   * @returns {Promise} - AWS S3 Object
+   */
   static async retrieveKey(keyId = null, bucket = null, stack = null) {
     const b = bucket || process.env.system_bucket;
     const s = stack || process.env.stackName;
