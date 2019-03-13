@@ -330,6 +330,7 @@ describe('The S3 Ingest Granules workflow', () => {
   describe('the PostToCmr task', () => {
     let bucketsConfig;
     let cmrResource;
+    let ummCmrResource;
     let files;
     let granule;
     let resourceURLs;
@@ -337,27 +338,24 @@ describe('The S3 Ingest Granules workflow', () => {
 
     beforeAll(async () => {
       bucketsConfig = new BucketsConfig(config.buckets);
-
       postToCmrOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
       if (postToCmrOutput === null) throw new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
-
       granule = postToCmrOutput.payload.granules[0];
+      const ummGranule = Object.assign({}, granule, { cmrMetadataFormat: 'umm_json_v5' });
       files = granule.files;
-
       const result = await Promise.all([
         getOnlineResources(granule),
+        getOnlineResources(ummGranule),
         // Login with Earthdata and get access token.
         getEarthdataAccessToken({
           redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
           requestOrigin: process.env.DISTRIBUTION_ENDPOINT
         })
       ]);
-
       cmrResource = result[0];
+      ummCmrResource = result[1];
       resourceURLs = cmrResource.map((resource) => resource.href);
-
-      const accessTokenResponse = result[1];
-      accessToken = accessTokenResponse.accessToken;
+      accessToken = result[2].accessToken;
     });
 
     afterAll(async () => {
@@ -398,6 +396,17 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(resourceURLs.includes(distributionUrl)).toBe(true);
       expect(resourceURLs.includes(s3Url)).toBe(true);
       expect(resourceURLs.includes(s3CredsUrl)).toBe(true);
+    });
+
+    it('updates the CMR metadata "online resources" with the proper types', () => {
+      const resource = ummCmrResource;
+      const expected = [
+        'GET DATA',
+        'VIEW RELATED INFORMATION',
+        'VIEW RELATED INFORMATION',
+        'GET RELATED VISUALIZATION'
+      ];
+      expect(expected).toEqual(resource.map((r) => r.Type));
     });
 
     it('includes the Earthdata login ID for requests to protected science files', async () => {
@@ -797,7 +806,7 @@ describe('The S3 Ingest Granules workflow', () => {
         // expected 'executed' steps
         const expectedExecutedSteps = difference(allStates, expectedNotExecutedSteps);
 
-        // steps with *EventDetails will have the input/output, and also stepname when state is entered/exited
+        // steps with *EventDetails will have the input/output, and also stepname when state is entered/eited
         const stepNames = [];
         executionStatus.executionHistory.events.forEach((event) => {
           // expect timing information for each step
@@ -806,7 +815,7 @@ describe('The S3 Ingest Granules workflow', () => {
           // protect against "undefined": TaskStateEntered has "input" but not "name"
           if (event.name && intersection(eventKeys, ['input', 'output']).length === 1) {
             // each step should contain status information
-            if (event.type === 'TaskStateExited') {
+            if (event.type === 'TaskStateEited') {
               const prevEvent = executionStatus.executionHistory.events[event.previousEventId - 1];
               expect(['LambdaFunctionSucceeded', 'LambdaFunctionFailed']).toContain(prevEvent.type);
             }
