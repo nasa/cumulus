@@ -1,6 +1,9 @@
 'use strict';
 
 const router = require('express-promise-router')();
+
+const log = require('@cumulus/common/log');
+
 const collections = require('../endpoints/collections');
 const granules = require('../endpoints/granules');
 const providers = require('../endpoints/providers');
@@ -86,7 +89,9 @@ router.use('/dashboard', dashboard);
 // Catch and send the error message down (instead of just 500: internal server error)
 // Need all 4 params, because that's how express knows this is the error handler
 // eslint-disable-next-line no-unused-vars
-router.use((error, req, res, next) =>
-  res.boom.badImplementation(error.message));
+router.use((error, req, res, next) => {
+  log.error(error);
+  return res.status(500).send({ error: error.message });
+});
 
 module.exports = router;
