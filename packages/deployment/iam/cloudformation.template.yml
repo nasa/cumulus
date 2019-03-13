@@ -243,7 +243,7 @@ Resources:
                 Action:
                   - s3:PutBucketPolicy
                 Resource:
-                  - Fn::Sub: "arn:aws:s3:::{{prefix}}-*"
+                  - Fn::Sub: "arn:aws:s3:::${ResourcePrefix}-*"
 
               # Allow access to dynamoDB
               - Effect: Allow
@@ -420,7 +420,7 @@ Resources:
                 Action:
                   - s3:PutBucketPolicy
                 Resource:
-                  - Fn::Sub: "arn:aws:s3:::{{prefix}}-*"
+                  - Fn::Sub: "arn:aws:s3:::${ResourcePrefix}-*"
 
               # Allow access to dynamoDB
               - Effect: Allow
