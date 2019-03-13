@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/deployment",
-  "version": "1.11.2",
+  "version": "1.11.3",
   "description": "Deployment templates for cumulus",
   "scripts": {
     "test": "ava",
