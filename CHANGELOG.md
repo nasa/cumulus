@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- CUMULUS-1170 - Update scripts and docs to use `npm` instead of `yarn`
 - CUMULUS-1139 - Granules stored in the API contain a `files` property. That schema has been greatly
   simplified and now better matches the CNM format.
     - The `name` property has been renamed to `fileName`.

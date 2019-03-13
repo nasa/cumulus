@@ -22,7 +22,6 @@ This is for installation for Cumulus development.  See the [Cumulus deployment i
 ### Prerequisites
 
 * [NVM](https://github.com/creationix/nvm) and node version 8.
-* [yarn](https://yarnpkg.com/en/)
 * [AWS CLI](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
 * BASH
 * Docker (only required for testing)
@@ -39,22 +38,22 @@ nvm use
 
 We use Lerna to manage multiple Cumulus packages in the same repo. You need to install lerna as a global module first:
 
-    $ yarn global add lerna
+    $ npm install -g lerna
 
 ### Install Local Dependencies
 
-We use yarn for local package management
+We use npm for local package management
 
-    $ yarn install
-    $ yarn ybootstrap
+    $ npm install
+    $ npm bootstrap
 
 Building All packages:
 
-    $ yarn build
+    $ npm run build
 
 Build and watch packages:
 
-    $ yarn watch
+    $ npm run watch
 
 ## Running the cumulus API locally
 
@@ -65,7 +64,7 @@ Start localstack:
 Start the API
 
     $ cd packages/api
-    $ yarn serve
+    $ npm run serve
 
 ## 📝 Tests
 
@@ -94,7 +93,7 @@ If you prefer to run docker in detached mode (i.e. run containers in the backgro
 Run the test commands next
 
     $ export LOCALSTACK_HOST=localhost
-    $ yarn test
+    $ npm test
 
 ### Integration Tests
 
@@ -116,7 +115,7 @@ Make sure to name the package as `@cumulus/package-name`.
 
 ## Cleaning Up all the repos
 
-    $ yarn clean
+    $ npm run clean
 
 ##  Contribution
 
