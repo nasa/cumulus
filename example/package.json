@@ -56,7 +56,6 @@
     "p-retry": "^2.0.0"
   },
   "devDependencies": {
-    "@cumulus/test-data": "^1.11.2",
     "execa": "^1.0.0",
     "fs-extra": "7.0.0",
     "got": "^9.6.0",

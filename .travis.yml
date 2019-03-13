@@ -23,17 +23,17 @@ jobs:
       stage: build cache & audit
       if: tag !~ ^v\d+.* AND commit_message !~ \[skip-audit\]
       install:
-        - ln -s /dev/stdout ./lerna-debug.log
         - nvm install-latest-npm
         - npm install --no-audit
+        - ln -s /dev/stdout ./lerna-debug.log
         - npm run install-locks
       script: ./travis-ci/audit-packages.sh
 
     - name: "eslint"
       stage: unit test and stack deployment
       install:
-        - ln -s /dev/stdout ./lerna-debug.log
         - npm install
+        - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
       script: npm run lint
 
@@ -45,8 +45,8 @@ jobs:
         - LOCALSTACK_HOST=127.0.0.1
         - LOCAL_ES_HOST=127.0.0.1
       install:
-        - ln -s /dev/stdout ./lerna-debug.log
         - npm install
+        - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
       script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api --ignore cumulus-integration-tests
@@ -59,8 +59,8 @@ jobs:
         - LOCALSTACK_HOST=127.0.0.1
         - LOCAL_ES_HOST=127.0.0.1
       install:
-        - ln -s /dev/stdout ./lerna-debug.log
         - npm install
+        - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
       script: ./travis-ci/run-api-unit-tests.sh

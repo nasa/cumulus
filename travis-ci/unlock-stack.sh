@@ -1,11 +1,11 @@
 #!/bin/sh
 
-set -evx
+set -e
 
 . ./travis-ci/set-env-vars.sh
 
 (
-  set -evx
+  set -e
 
   cd example
   rm -rf node_modules

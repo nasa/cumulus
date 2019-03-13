@@ -41,7 +41,7 @@ To update individual Cumulus packages to a specific `<version>` is fairly
 simple: For each package,
 
 ```shell
-$ npp update @cumulus/<package>@<version>
+$ npm update @cumulus/<package>@<version>
 ```
 
 *Note:* `<version>` is a version string that observes the syntactic rules outlined [here](https://docs.npmjs.com/files/package.json#dependencies).

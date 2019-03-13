@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -evx
+set -e
 
 . ./travis-ci/set-env-vars.sh
 
@@ -13,7 +13,7 @@ fi
 
 echo "Locking stack for deployment $DEPLOYMENT"
 (
-  set -evx
+  set -e
 
   cd example
 

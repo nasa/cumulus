@@ -45,7 +45,7 @@ We use Lerna to manage multiple Cumulus packages in the same repo. You need to i
 We use npm for local package management
 
     $ npm install
-    $ npm bootstrap
+    $ npm run bootstrap
 
 Building All packages:
 

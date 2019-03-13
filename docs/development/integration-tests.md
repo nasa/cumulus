@@ -9,7 +9,6 @@ you can run the tests as described below:
   ```
   npm install
   npm run bootstrap
-  npm run build
   ```
 - Deploy your instance integrations on aws and run tests by following the steps
   [here](https://github.com/nasa/cumulus/tree/master/example/README.md)
