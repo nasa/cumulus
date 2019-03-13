@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added helpers to `@packages/integration-tests/api/distribution`:
     - `getDistributionApiFileStream()` returns a stream to download files protected by the distribution API
     - `getDistributionFileUrl()` constructs URLs for requesting files from the distribution API
+- **CUMULUS-1185** `@cumulus/api/models/Granule.removeGranuleFromCmrByGranule` to replace `@cumulus/api/models/Granule.removeGranuleFromCmr` and use the Granule UR from the CMR metadata to remove the granule from CMR
 
 - **CUMULUS-1101**
   - Added new `@cumulus/checksum` package. This package provides functions to calculate and validate checksums.
@@ -85,6 +86,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     `provider.host`, and `provider.port`.
   - The default provider port was being set to 21, no matter what protocol was
     being used. Removed that default.
+
+### Deprecated
+
+- `@cumulus/api/models/Granule.removeGranuleFromCmr`, instead use `@cumulus/api/models/Granule.removeGranuleFromCmrByGranule`
 
 ## [v1.11.3] - 2019-3-5
 
