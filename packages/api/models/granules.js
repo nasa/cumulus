@@ -129,7 +129,8 @@ class Granule extends Manager {
 
     const metadata = await cmrjs.getMetadata(granule.cmrLink);
 
-    await cmr.deleteGranule(metadata.title, granule.collectionId); // Use granule UR to delete from CMR
+    // Use granule UR to delete from CMR
+    await cmr.deleteGranule(metadata.title, granule.collectionId);
     await this.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
   }
 
