@@ -83,5 +83,10 @@ router.post('/refresh', token.refreshEndpoint);
 
 router.use('/dashboard', dashboard);
 
+// Catch and send the error message down (instead of just 500: internal server error)
+// Need all 4 params, because that's how express knows this is the error handler
+// eslint-disable-next-line no-unused-vars
+router.use((error, req, res, next) =>
+  res.boom.badImplementation(error.message));
 
 module.exports = router;
