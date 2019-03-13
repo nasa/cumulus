@@ -41,7 +41,7 @@ The process involves:
 
 * [CMR](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) username and password.  Can be excluded if you are not exporting metadata to CMR.
 
-* [EarthData Client login](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/earthdata-login) username and password. User must have the ability to administer and/or create applications in URS.   It's recommended to obtain an account in the test environment (UAT).
+* [EarthData Client login](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/earthdata-login) username and password. User must have the ability to administer and/or create applications in URS.  It's recommended to obtain an account in the test environment (UAT).
 
 
 ### Needed Git Repositories
@@ -136,8 +136,8 @@ Descriptions of the fields can be found in [IAM Configuration Descriptions](depl
 
 ```
 dev:                                # deployment name
-  prefix: dev-cumulus               # prefixes CloudFormation-created iam resources and permissions
-  stackName: dev-cumulus-iams       # name of this iam stack in CloudFormation (e.g. <prefix>-iams)
+  prefix: dev-cumulus               # prefixes CloudFormation-created IAM resources and permissions
+  stackName: dev-cumulus-iams       # name of this IAM stack in CloudFormation (e.g. <prefix>-iams)
   useNgapPermissionBoundary: true   # for NASA NGAP accounts
 
   buckets:
@@ -166,13 +166,13 @@ dev:                                # deployment name
 
 If the `iam` deployment command  succeeds, you should see 7 new roles in the [IAM Console](https://console.aws.amazon.com/iam/home):
 
-* `<stack-name>-ecs`
-* `<stack-name>-lambda-api-gateway`
-* `<stack-name>-lambda-processing`
-* `<stack-name>-scaling-role`
-* `<stack-name>-steprole`
-* `<stack-name>-distribution-api-lambda`
-* `<stack-name>-migration-processing`
+* `<prefix>-ecs`
+* `<prefix>-lambda-api-gateway`
+* `<prefix>-lambda-processing`
+* `<prefix>-scaling-role`
+* `<prefix>-steprole`
+* `<prefix>-distribution-api-lambda`
+* `<prefix>-migration-processing`
 
 
 The same information can be obtained from the AWS CLI command: `aws iam list-roles`.
@@ -198,15 +198,15 @@ Descriptions of the fields can be found in [App Configuration Descriptions](depl
 
 ```
 dev:                                    # deployment name
-  stackName: dev-cumulus
+  stackName: dev-cumulus        # see note below
   stackNameNoDash: DevCumulus
 
   apiStage: dev
 
   vpc:
-    vpcId: <vpc-id>
+    vpcId: '{{VPC_ID}}'         # this has to be set in .env
     subnets:
-      - <subnet-id>
+      - '{{AWS_SUBNET}}'        # this has to be set in .env
 
   ecs:
     instanceType: t2.micro
@@ -214,7 +214,8 @@ dev:                                    # deployment name
     availabilityZone: <subnet-id-zone>
     amiid: <some-ami-id>
 
-  system_bucket: '{{buckets.internal.name}}' # Or can specify a different bucket for the system_bucket
+  # Or can specify a different bucket for the system_bucket
+  system_bucket: '{{buckets.internal.name}}'
 
   buckets:                              # Should be the same as in IAMs
     internal:
@@ -222,11 +223,14 @@ dev:                                    # deployment name
         type: internal
 
   iams:
-    ecsRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-ecs
-    lambdaApiGatewayRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-lambda-api-gateway
-    lambdaProcessingRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-lambda-processing
-    stepRoleArn: arn:aws:iam::<aws-account-id>:role/<iams-prefix>-steprole
-    instanceProfile: arn:aws:iam::<aws-account-id>:instance-profile/<iams-prefix>-ecs
+    ecsRoleArn: arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-ecs
+    lambdaApiGatewayRoleArn: arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-lambda-api-gateway
+    lambdaProcessingRoleArn: arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-lambda-processing
+    stepRoleArn: arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-steprole
+    instanceProfile: arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/<iams-prefix>-ecs
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-scaling-role'
+    migrationRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-migration-processing'
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
@@ -236,15 +240,18 @@ dev:                                    # deployment name
   # if not specified the value of the apigateway dist url is used
   # api_distribution_url: https://apigateway-url-to-distribution-app/ #make sure to include the trailing slash
 
-  # URS users who should have access to the dashboard application.
+  # URS users who should have access to the dashboard application and use the
+  # distribution API to access protected files.
   users:
     - username: <user>
     - username: <user2>
 ```
 
+**IMPORTANT NOTE** - The `stackName` for this config **must start with** the value of the resource prefix for the IAM stack. By default, this means that the `stackName` should start with the value of the [`prefix` set for the IAM stack above](#configure-and-deploy-the-iam-stack). However, if you changed the value of the `ResourcePrefix` param in your IAM stack `config.yml`, you would use that value instead.
+
 ### Configure EarthData application
 
-The Cumulus stack is expected to authenticate with [Earthdata Login](https://urs.earthdata.nasa.gov/documentation). You must create and register a new application. Use the [User Acceptance Tools (UAT) site](https://uat.urs.earthdata.nasa.gov) unless you changed `urs_url` above. Follow the directions on [how to register an application.](https://wiki.earthdata.nasa.gov/display/EL/How+To+Register+An+Application).  Use any url for the `Redirect URL`, it will be deleted in a later step. Also note the password in step 3 and client ID in step 4 use these to replace `clientid` and `clientpassword` in the `.env` file in the next step.
+The Cumulus stack is expected to authenticate with [Earthdata Login](https://urs.earthdata.nasa.gov/documentation). You must create and register a new application. Use the [User Acceptance Tools (UAT) site](https://uat.urs.earthdata.nasa.gov) unless you changed `urs_url` above. Follow the directions on [how to register an application.](https://wiki.earthdata.nasa.gov/display/EL/How+To+Register+An+Application).  Use any url for the `Redirect URL`, it will be deleted in a later step. Also note the password in step 3 and client ID in step 4 use these to replace `EARTHDATA_CLIENT_ID` and `EARTHDATA_CLIENT_PASSWORD` in the `.env` file in the next step.
 
 ### Set up an environment file
 
@@ -252,9 +259,13 @@ _If you're adding a new deployment to an existing configuration repository or re
 
 Copy `app/.env.sample` to `app/.env` and add CMR/earthdata client [credentials](deployment-readme#credentials):
 
+    CMR_USERNAME=cmrusername
     CMR_PASSWORD=cmrpassword
     EARTHDATA_CLIENT_ID=clientid
     EARTHDATA_CLIENT_PASSWORD=clientpassword
+    VPC_ID=someid
+    AWS_SUBNET=somesubnet
+    AWS_ACCOUNT_ID=0000000
     TOKEN_SECRET=tokensecret
 
 The `TOKEN_SECRET` is a string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is strongly recommended that this be a 32-character string.
