@@ -70,7 +70,7 @@ class S3KeyPairProvider {
     try {
       const key = await getS3Object({
         Bucket: b, Key: `${s}/crypto/${keyId}`
-      }).promise();
+      });
       return key;
     }
     catch (err) {
