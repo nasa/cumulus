@@ -19,6 +19,8 @@ const stackName = config.stackName;
 let cloudformationResources;
 let numExecutions = 2;
 let activitiesWaitingAlarm;
+let memoryReservationHighAlarm;
+let memoryReservationLowAlarm;
 let alarmEvaluationPeriods;
 let alarmPeriodSeconds;
 let sleepMs;
@@ -26,11 +28,12 @@ let clusterArn;
 let numActivityTasks;
 let minInstancesCount;
 const workflowName = 'HelloWorldActivityWorkflow';
+const serviceScaleOutPolicyName = 'HelloWorldServiceScaleOutScalingPolicy';
 
 describe('scaling for step function activities', () => {
   beforeAll(async () => {
     cloudformationResources = (await loadCloudformationTemplate(config)).Resources;
-    activitiesWaitingAlarm = cloudformationResources.ActivitiesWaitingAlarm;
+    activitiesWaitingAlarm = cloudformationResources.HelloWorldServiceActivitiesWaitingAlarm;
     alarmEvaluationPeriods = activitiesWaitingAlarm.Properties.EvaluationPeriods;
     const alarmPeriod = activitiesWaitingAlarm.Properties.Metrics[1].MetricStat.Period;
     alarmPeriodSeconds = alarmPeriod / alarmEvaluationPeriods;
@@ -38,6 +41,9 @@ describe('scaling for step function activities', () => {
     clusterArn = await getClusterArn(stackName);
     numActivityTasks = Object.values(cloudformationResources).filter((resource) => resource.Type === 'AWS::StepFunctions::Activity').length;
     minInstancesCount = cloudformationResources.CumulusECSAutoScalingGroup.UpdatePolicy.AutoScalingRollingUpdate.MinInstancesInService;
+
+    memoryReservationHighAlarm = cloudformationResources.MemoryReservationHighAlarm;
+    memoryReservationLowAlarm = cloudformationResources.MemoryReservationLowAlarm;
   });
 
   it('cloudformation stack has an alarm for ActivitiesWaiting ', () => {
@@ -49,9 +55,30 @@ describe('scaling for step function activities', () => {
     expect(helloWorldScalableTarget.Type).toEqual('AWS::ApplicationAutoScaling::ScalableTarget');
   });
 
-  it('ActivitiesWaitingAlarm is configured to scale the ECSService', () => {
+  it('ActivitiesWaitingAlarm is configured to scale out the ECSService', () => {
     const alarmAction = activitiesWaitingAlarm.Properties.AlarmActions[0].Ref;
-    expect(alarmAction).toEqual('ScaleOutTasksECSServiceApplicationScalingPolicy');
+    expect(alarmAction).toEqual(serviceScaleOutPolicyName);
+  });
+
+  it('ActivitiesWaitingAlarm is configured to scale in the ECSService')
+
+  it('ScaleOutTasks scaling policy scales out % when ActivitiesWaiting Alarm triggers', () => {
+    const scaleOutTasksPolicy = cloudformationResources[serviceScaleOutPolicyName].Properties;
+    expect(scaleOutTasksPolicy.StepScalingPolicyConfiguration.AdjustmentType).toEqual('ChangeInCapacity');
+  });
+
+  describe('memory reservation alarms', () => {
+    it('cloudformation stack has an alarm for High and Low MemoryReservation', () => {
+      expect(memoryReservationHighAlarm.Type).toEqual('AWS::CloudWatch::Alarm');
+      expect(memoryReservationLowAlarm.Type).toEqual('AWS::CloudWatch::Alarm');
+    });
+
+    it('Memory reservation alarms triggers ec2 scale in or out policies', () => {
+      let alarmAction = memoryReservationHighAlarm.Properties.AlarmActions[0].Ref;
+      expect(alarmAction).toEqual('ScaleOutEc2ScalingPolicy'); 
+      alarmAction = memoryReservationLowAlarm.Properties.AlarmActions[0].Ref;
+      expect(alarmAction).toEqual('ScaleInEc2ScalingPolicy');          
+    });
   });
 
   describe('scaling the service\'s desired tasks', () => {
@@ -81,7 +108,6 @@ describe('scaling for step function activities', () => {
         // wait the period of the alarm plus a bit
         await sleep(alarmPeriodSeconds * 1000 + 30000);
         const clusterStats = await getClusterStats(stackName);
-        console.log(`clusterStats ${JSON.stringify(clusterStats, null, 2)}\n`);
         const runningEC2TasksCount = parseInt(find(clusterStats, ['name', 'runningEC2TasksCount']).value, 10);
         expect(runningEC2TasksCount).toBeGreaterThan(numActivityTasks);
       });
@@ -106,13 +132,11 @@ describe('scaling for step function activities', () => {
         const clusterStats = await getClusterStats(stackName);
         const runningEC2TasksCount = parseInt(find(clusterStats, ['name', 'runningEC2TasksCount']).value, 10);
         const pendingEC2TasksCount = parseInt(find(clusterStats, ['name', 'pendingEC2TasksCount']).value, 10);
-        console.log(`clusterStats ${clusterStats} `);
         expect(runningEC2TasksCount + pendingEC2TasksCount).toEqual(numActivityTasks);
       });
 
       it('the number of tasks the service is running should decrease', async () => {
         const clusterStats = await getClusterStats(stackName);
-        console.log(`clusterStats ${JSON.stringify(clusterStats, null, 2)}\n`);
         const runningEC2TasksCount = parseInt(find(clusterStats, ['name', 'runningEC2TasksCount']).value, 10);
         expect(runningEC2TasksCount).toBe(numActivityTasks);
       });
