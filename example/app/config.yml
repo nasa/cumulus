@@ -112,6 +112,25 @@ default:
           - '--lambdaArn'
           - function: Ref
             value: HelloWorldLambdaFunction
+        service_scaling:
+          scale_in:
+            evaluation_periods: 1
+          scale_out:
+            evaluation_periods: 1
+            step_adjustment_config:
+              AdjustmentType: ChangeInCapacity
+              StepAdjustments:
+              - MetricIntervalLowerBound: 0
+                MetricIntervalUpperBound: 10
+                ScalingAdjustment: 10
+              - MetricIntervalLowerBound: 10
+                MetricIntervalUpperBound: 20
+                ScalingAdjustment: 20
+              - MetricIntervalLowerBound: 20
+                MetricIntervalUpperBound: 30
+                ScalingAdjustment: 30
+              - MetricIntervalLowerBound: 30
+                ScalingAdjustment: 60
 
   activities:
     - name: HelloWorld
