@@ -17,7 +17,6 @@ const config = loadConfig();
 
 const stackName = config.stackName;
 let cloudformationResources;
-let numExecutions = 2;
 let activitiesScheduledAlarm;
 let memoryReservationHighAlarm;
 let memoryReservationLowAlarm;
@@ -36,7 +35,7 @@ describe('scaling for step function activities', () => {
     cloudformationResources = (await loadCloudformationTemplate(config)).Resources;
     activitiesScheduledAlarm = cloudformationResources[activiitesScheduledAlarmName];
     alarmEvaluationPeriods = activitiesScheduledAlarm.Properties.EvaluationPeriods;
-    const alarmPeriod = activitiesScheduledAlarm.Properties.Metrics[1].MetricStat.Period;
+    const alarmPeriod = activitiesScheduledAlarm.Properties.Metrics[0].MetricStat.Period;
     alarmPeriodSeconds = alarmPeriod / alarmEvaluationPeriods;
     sleepMs = 2 * alarmPeriodSeconds * 1000;
     clusterArn = await getClusterArn(stackName);
@@ -60,8 +59,6 @@ describe('scaling for step function activities', () => {
     expect(alarmAction).toEqual(serviceScaleOutPolicyName);
   });
 
-  it('ActivitiesScheduledAlarm is configured to scale in the ECSService')
-
   it('ScaleOutTasks scaling policy scales out % when ActivitiesScheduled Alarm triggers', () => {
     const scaleOutTasksPolicy = cloudformationResources[serviceScaleOutPolicyName].Properties;
     expect(scaleOutTasksPolicy.StepScalingPolicyConfiguration.AdjustmentType).toEqual('ChangeInCapacity');
@@ -83,7 +80,7 @@ describe('scaling for step function activities', () => {
 
   describe('scaling the service\'s desired tasks', () => {
     let workflowExecutionArns = [];
-    numExecutions = 10;
+    const numExecutions = 10;
 
     beforeAll(async () => {
       const workflowExecutionPromises = [];
@@ -112,20 +109,20 @@ describe('scaling for step function activities', () => {
         expect(runningEC2TasksCount).toBeGreaterThan(numActivityTasks);
       });
 
-      it('adds new ec2 resources', async () => {
+      xit('adds new ec2 resources', async () => {
         console.log('Scheduled for scale out policy to take affect.');
         const mostRecentActivity = await getNewScalingActivity({ stackName });
         expect(mostRecentActivity.Description).toMatch(/Launching a new EC2 instance: i-*/);
       });
     });
 
-    describe('when activities Scheduled are below the threshold', () => {
+    describe('when activities scheduled are below the threshold', () => {
       beforeAll(async () => {
         const completions = workflowExecutionArns.map((executionArn) => waitForCompletedExecution(executionArn));
         await Promise.all(completions);
       });
 
-      it('removes excess resources', async () => {
+      xit('removes excess resources', async () => {
         console.log('Scheduled for scale in policy to take affect.');
         const mostRecentActivity = await getNewScalingActivity({ stackName });
         expect(mostRecentActivity.Description).toMatch(/Terminating EC2 instance: i-*/);
@@ -135,21 +132,21 @@ describe('scaling for step function activities', () => {
         expect(runningEC2TasksCount + pendingEC2TasksCount).toEqual(numActivityTasks);
       });
 
-      it('the number of tasks the service is running should decrease', async () => {
+      xit('the number of tasks the service is running should decrease', async () => {
         const clusterStats = await getClusterStats(stackName);
         const runningEC2TasksCount = parseInt(find(clusterStats, ['name', 'runningEC2TasksCount']).value, 10);
         expect(runningEC2TasksCount).toBe(numActivityTasks);
       });
 
-      it('does not remove all resources', async () => {
+      xit('does not remove all resources', async () => {
         const instances = await ecs().listContainerInstances({ cluster: clusterArn }).promise();
         expect(instances.containerInstanceArns.length).toEqual(minInstancesCount);
       });
+    });
 
-      it('all executions succeeded', async () => {
-        const results = await Promise.all(workflowExecutionArns.map((arn) => getExecutionStatus(arn)));
-        expect(results).toEqual(new Array(numExecutions).fill('SUCCEEDED'));
-      });
+    it('all executions succeeded', async () => {
+      const results = await Promise.all(workflowExecutionArns.map((arn) => getExecutionStatus(arn)));
+      expect(results).toEqual(new Array(numExecutions).fill('SUCCEEDED'));
     });
   });
 });

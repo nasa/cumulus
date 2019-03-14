@@ -1250,12 +1250,15 @@ Resources:
       ScalingTargetId:
         Ref: {{@key}}ECSServiceScalableTarget
       PolicyType: TargetTrackingScaling # SimpleScaling is not supported
-      # TODO: make this configurable
       TargetTrackingScalingPolicyConfiguration:
       {{#if this.service_scaling.target_adjustment_config}}
         {{{ToJson this.service_scaling.target_adjustment_config}}}
       {{else}}
-        TargetValue: 50
+      {{#if this.service_scaling.target_value}}
+        TargetValue: this.service_scaling.target_value
+      {{else}}
+        TargetValue: 20
+      {{/if}}
         PredefinedMetricSpecification:
         {{#if this.service_scaling.predefined_metric_type}}
           PredefinedMetricType: this.service_scaling.predefined_metric_type
