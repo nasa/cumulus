@@ -59,7 +59,7 @@
     "dynamodb-data-types": "^3.0.0",
     "elasticsearch": "^14.2.2",
     "express": "^4.16.4",
-    "express-boom": "^2.0.0",
+    "express-boom": "^3.0.0",
     "express-promise-router": "^3.0.3",
     "form-data": "^2.1.2",
     "googleapis": "^29.0.0",

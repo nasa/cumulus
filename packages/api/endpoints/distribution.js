@@ -11,6 +11,7 @@ const { URL } = require('url');
 const EarthdataLogin = require('../lib/EarthdataLogin');
 const { RecordDoesNotExist } = require('../lib/errors');
 const { AccessToken } = require('../models');
+const s3credentials = require('./s3credentials');
 
 /**
  * Return a signed URL to an S3 object
@@ -83,18 +84,53 @@ async function handleRedirectRequest(req, res) {
     username: getAccessTokenResponse.username
   });
 
-  return res.cookie(
-    'accessToken',
-    getAccessTokenResponse.accessToken,
-    {
-      expires: new Date(getAccessTokenResponse.expirationTime),
-      httpOnly: true,
-      secure: true
-    }
-  )
+  return res
+    .cookie(
+      'accessToken',
+      getAccessTokenResponse.accessToken,
+      {
+        expires: new Date(getAccessTokenResponse.expirationTime),
+        httpOnly: true,
+        secure: true
+      }
+    )
     .set({ Location: urljoin(distributionUrl, state) })
     .status(307)
     .send('Redirecting');
+}
+
+async function handleCredentialRequest(req, res) {
+  const {
+    accessTokenModel,
+    authClient,
+  } = getConfigurations();
+
+  const redirectToGetAuthorizationCode = res
+    .status(307)
+    .set({ Location: authClient.getAuthorizationUrl('/s3credentials') });
+
+  const accessToken = req.cookies.accessToken;
+
+  if (!accessToken) return redirectToGetAuthorizationCode.send('Redirecting');
+
+  let accessTokenRecord;
+  try {
+    accessTokenRecord = await accessTokenModel.get({ accessToken });
+  }
+  catch (err) {
+    if (err instanceof RecordDoesNotExist) {
+      return redirectToGetAuthorizationCode.send('Redirecting');
+    }
+
+    throw err;
+  }
+
+  if (isAccessTokenExpired(accessTokenRecord)) {
+    return redirectToGetAuthorizationCode.send('Redirecting');
+  }
+  req.authorizedMetadata = {userName: accessTokenRecord.username};
+  res.status(200);
+  return s3credentials(req, res);
 }
 
 /**
@@ -161,6 +197,7 @@ async function handleFileRequest(req, res) {
 }
 
 router.get('/redirect', handleRedirectRequest);
+router.get('/s3credentials', handleCredentialRequest);
 router.get('/*', handleFileRequest);
 
 module.exports = router;

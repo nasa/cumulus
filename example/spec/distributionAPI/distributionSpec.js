@@ -29,6 +29,20 @@ const s3Data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
 ];
 
+
+/**
+ * Login with Earthdata and get response for redirect back to
+ * distribution API.
+ */
+async function getTestAccessToken() {
+  const accessTokenResponse = await getEarthdataAccessToken({
+    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
+    requestOrigin: process.env.DISTRIBUTION_ENDPOINT
+  });
+  return accessTokenResponse.accessToken;
+}
+
+
 describe('Distribution API', () => {
   const testId = createTimestampedTestId(config.stackName, 'DistributionAPITest');
   const testDataFolder = createTestDataPath(testId);
@@ -79,6 +93,34 @@ describe('Distribution API', () => {
       await accessTokensModel.delete({ accessToken });
     });
 
+    it('redirects to Earthdata login for unauthorized requests to /s3credentials endpoint.', async () => {
+      const response = await got(
+        `${process.env.DISTRIBUTION_ENDPOINT}/s3credentials`,
+        { followRedirect: false }
+      );
+      const authorizeUrl = new URL(response.headers.location);
+      expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
+      expect(authorizeUrl.pathname).toEqual('/oauth/authorize');
+    });
+
+    it('returns Credentials for authorized requests to /s3credentials endpoint', async () => {
+      accessToken = await getTestAccessToken();
+      const response = await got(
+        `${process.env.DISTRIBUTION_ENDPOINT}/s3credentials`,
+        {
+          followRedirect: false,
+          headers: {
+            cookie: [`accessToken=${accessToken}`]
+          }
+        }
+      );
+      const returnedCredentials = JSON.parse(response.body);
+      expect(returnedCredentials.accessKeyId).toBeDefined();
+      expect(returnedCredentials.secretAccessKey).toBeDefined();
+      expect(returnedCredentials.sessionToken).toBeDefined();
+      expect(returnedCredentials.expiration).toBeDefined();
+    });
+
     it('redirects to Earthdata login for unauthorized requests', async () => {
       const response = await got(
         fileUrl,
@@ -90,14 +132,7 @@ describe('Distribution API', () => {
     });
 
     it('downloads the requested science file for authorized requests', async () => {
-      // Login with Earthdata and get response for redirect back to
-      // distribution API.
-      const accessTokenResponse = await getEarthdataAccessToken({
-        redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
-        requestOrigin: process.env.DISTRIBUTION_ENDPOINT
-      });
-      accessToken = accessTokenResponse.accessToken;
-
+      accessToken = await getTestAccessToken();
       // Compare checksum of downloaded file with expected checksum.
       const fileStream = await getDistributionApiFileStream(fileUrl, accessToken);
       const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);

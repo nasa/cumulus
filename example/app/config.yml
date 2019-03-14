@@ -176,7 +176,7 @@ default:
     # if not specified the value of the apigateway backend endpoint is used
     # api_backend_url: https://apigateway-url-to-api-backend/ #make sure to include the trailing slash
 
-    # if not specified the value of the apigateway dist url is used
+    # if not specified the value of the apigateway distribution url is used
     # api_distribution_url: https://apigateway-url-to-distribution-app/ #make sure to include the trailing slash
 
   # URS users who should have access to the dashboard application.
