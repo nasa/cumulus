@@ -68,9 +68,7 @@ class S3KeyPairProvider {
     const b = bucket || process.env.system_bucket;
     const s = stack || process.env.stackName;
     try {
-      const key = await getS3Object({
-        Bucket: b, Key: `${s}/crypto/${keyId}`
-      });
+      const key = await getS3Object(b, `${s}/crypto/${keyId}`);
       return key;
     }
     catch (err) {
