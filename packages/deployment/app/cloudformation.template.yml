@@ -1032,9 +1032,9 @@ Resources:
               Namespace: AWS/ECS
               MetricName: {{ecs.autoscaling_policies.metric}}Reservation
               Dimensions:
-                - Name: ClusterName
-                  Value:
-                    Ref: CumulusECSCluster
+              - Name: ClusterName
+                Value:
+                  Ref: CumulusECSCluster
             Period: 60
             Stat: Average
 
@@ -1054,9 +1054,9 @@ Resources:
               Namespace: AWS/ECS
               MetricName: {{ ecs.autoscaling_policies.metric }}Reservation
               Dimensions:
-                - Name: ClusterName
-                  Value:
-                    Ref: CumulusECSCluster
+              - Name: ClusterName
+                Value:
+                  Ref: CumulusECSCluster
             Period: 60
             Stat: Average
 {{/if}}
@@ -1237,9 +1237,14 @@ Resources:
               Namespace: AWS/ECS
               MetricName: {{ this.service_scaling.metric }}
               Dimensions:
-                - Name: ServiceName
-                  Value:
-                    Ref: {{@key}}ECSService
+              - Name: ClusterName
+                Value:
+                  Ref: CumulusECSCluster
+              - Name: ServiceName
+                Value:
+                  Fn::GetAtt:
+                  - {{@key}}ECSService
+                  - Name
             Period: 60
             Stat: Sum
             Unit: Count
@@ -1268,9 +1273,14 @@ Resources:
               Namespace: AWS/ECS
               MetricName: {{ this.service_scaling.metric }}
               Dimensions:
-                - Name: ServiceName
-                  Value:
-                    Ref: {{@key}}ECSService
+              - Name: ClusterName
+                Value:
+                  Ref: CumulusECSCluster
+              - Name: ServiceName
+                Value:
+                  Fn::GetAtt:
+                  - {{@key}}ECSService
+                  - Name
             Period: 60
             Stat: Sum
             Unit: Count
