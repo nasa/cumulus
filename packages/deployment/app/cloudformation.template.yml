@@ -1191,6 +1191,57 @@ Resources:
       ScalableDimension: 'ecs:service:DesiredCount'
       ServiceNamespace: ecs
 
+  {{@key}}ScaleOutScalingPolicy:
+    Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
+    Properties:
+      PolicyName: {{@key}}ScaleOutScalingPolicy
+      ScalingTargetId:
+        Ref: {{@key}}ECSServiceScalableTarget
+      PolicyType: StepScaling # SimpleScaling is not supported
+      # TODO: make this configurable
+      StepScalingPolicyConfiguration:
+      {{#if this.service_scaling.scale_out.step_adjustment_config}}
+        {{{ToJson this.service_scaling.scale_out.step_adjustment_config}}}
+      {{else}}
+        # I don't think this works in practice because activities waiting /
+        # scheduled is not a persistent metric reflecting activities which can't be placed
+        AdjustmentType: PercentChangeInCapacity
+        StepAdjustments:
+        - MetricIntervalLowerBound: 0
+          ScalingAdjustment: 10
+      {{/if}}
+
+  {{@key}}ActivitiesScheduledAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - Ref: {{@key}}ScaleOutScalingPolicy
+      TreatMissingData: notBreaching
+      ComparisonOperator: GreaterThanThreshold
+    {{#if this.service_scaling.scale_out.evaluation_periods}}
+      EvaluationPeriods: {{ this.service_scaling.scale_out.evaluation_periods }}
+    {{else}}
+      EvaluationPeriods: 5
+    {{/if}}
+    {{#if this.service_scaling.scale_out.threshold}}
+      Threshold: {{ this.service_scaling.scale_out.threshold }}
+    {{else}}
+      Threshold: 0
+    {{/if}}
+      Metrics:
+        - Id: m1
+          MetricStat:
+            Metric:
+              Namespace: AWS/States
+              MetricName: ActivitiesScheduled
+              Dimensions:
+                - Name: ActivityArn
+                  Value:
+                    Ref: {{this.activity_name}}Activity
+            Period: 60
+            Stat: Sum
+            Unit: Count
+
   # Scale in desired tasks whenever there are no more activities scheduled
   {{@key}}ScalingPolicy:
     Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
@@ -1212,78 +1263,6 @@ Resources:
           PredefinedMetricType: ECSServiceAverageCPUUtilization
         {{/if}}
       {{/if}}
-
-  {{@key}}{{ this.service_scaling.metric }}HighAlarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmActions:
-        - Ref: {{@key}}ScalingPolicy
-      TreatMissingData: notBreaching
-      ComparisonOperator: GreaterThanThreshold
-    {{#if this.service_scaling.scale_out.evaluation_periods}}
-      EvaluationPeriods: {{ this.service_scaling.scale_out.evaluation_periods }}
-    {{else}}
-      EvaluationPeriods: 5
-    {{/if}}
-    {{#if this.service_scaling.scale_out.threshold}}
-      Threshold: {{ this.service_scaling.scale_out.threshold }}
-    {{else}}
-      Threshold: 50
-    {{/if}}
-      Metrics:
-        - Id: m1
-          MetricStat:
-            Metric:
-              Namespace: AWS/ECS
-              MetricName: {{ this.service_scaling.metric }}
-              Dimensions:
-              - Name: ClusterName
-                Value:
-                  Ref: CumulusECSCluster
-              - Name: ServiceName
-                Value:
-                  Fn::GetAtt:
-                  - {{@key}}ECSService
-                  - Name
-            Period: 60
-            Stat: Sum
-            Unit: Count
-
-  {{@key}}{{ this.service_scaling.metric }}LowAlarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmActions:
-        - Ref: {{@key}}ScalingPolicy
-      TreatMissingData: notBreaching
-      ComparisonOperator: LessThanThreshold
-    {{#if this.service_scaling.scale_out.evaluation_periods}}
-      EvaluationPeriods: {{ this.service_scaling.scale_out.evaluation_periods }}
-    {{else}}
-      EvaluationPeriods: 5
-    {{/if}}
-    {{#if this.service_scaling.scale_out.threshold}}
-      Threshold: {{ this.service_scaling.scale_out.threshold }}
-    {{else}}
-      Threshold: 50
-    {{/if}}
-      Metrics:
-        - Id: m1
-          MetricStat:
-            Metric:
-              Namespace: AWS/ECS
-              MetricName: {{ this.service_scaling.metric }}
-              Dimensions:
-              - Name: ClusterName
-                Value:
-                  Ref: CumulusECSCluster
-              - Name: ServiceName
-                Value:
-                  Fn::GetAtt:
-                  - {{@key}}ECSService
-                  - Name
-            Period: 60
-            Stat: Sum
-            Unit: Count
 {{/each}}
 
 {{#each ecs.tasks}}
