@@ -28,7 +28,7 @@ let clusterArn;
 let numActivityTasks;
 let minInstancesCount;
 const workflowName = 'HelloWorldActivityWorkflow';
-const serviceScaleOutPolicyName = 'HelloWorldServiceScaleOutScalingPolicy';
+const serviceScaleOutPolicyName = 'HelloWorldServiceScalingPolicy';
 
 describe('scaling for step function activities', () => {
   beforeAll(async () => {
