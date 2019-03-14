@@ -997,23 +997,68 @@ Resources:
 
 ### ECS EC2 Autoscaling Policies
 {{# if ecs.autoscaling_policies}}
-  {{#each ecs.autoscaling_policies}}
-  {{@key}}ScalingPolicy:
+  ScaleOutEc2ScalingPolicy:
     Type: AWS::AutoScaling::ScalingPolicy
     Properties:
-    {{#if this.override_defaults}}
-      {{{ ToJson this.properties }}}
-    {{else}}
-      AdjustmentType: ChangeInCapacity
+      AdjustmentType: PercentChangeInCapacity
+      # MinAdjustmentMagnitude - not required, may default to 1
       AutoScalingGroupName:
         Ref: CumulusECSAutoScalingGroup
-      EstimatedInstanceWarmup: 60
-      PolicyType: StepScaling
-      MetricAggregationType: Average
-      StepAdjustments:
-        {{{ToJson this.StepAdjustments}}}
-    {{/if}}
-  {{/each}}
+      PolicyType: SimpleScaling
+      ScalingAdjustment: 10
+
+  ScaleInEc2ScalingPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: PercentChangeInCapacity
+      AutoScalingGroupName:
+        Ref: CumulusECSAutoScalingGroup
+      PolicyType: SimpleScaling
+      ScalingAdjustment: -10
+
+  {{ ecs.autoscaling_policies.metric }}ReservationHighAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - Ref: ScaleOutEc2ScalingPolicy
+      TreatMissingData: notBreaching
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 1
+      Threshold: 75
+      Metrics:
+        - Id: m1
+          MetricStat:
+            Metric:
+              Namespace: AWS/ECS
+              MetricName: {{ecs.autoscaling_policies.metric}}Reservation
+              Dimensions:
+                - Name: ClusterName
+                  Value:
+                    Ref: CumulusECSCluster
+            Period: 60
+            Stat: Average
+
+  {{ ecs.autoscaling_policies.metric }}ReservationLowAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - Ref: ScaleInEc2ScalingPolicy
+      TreatMissingData: notBreaching
+      ComparisonOperator: LessThanOrEqualToThreshold
+      EvaluationPeriods: 1
+      Threshold: 50
+      Metrics:
+        - Id: m1
+          MetricStat:
+            Metric:
+              Namespace: AWS/ECS
+              MetricName: {{ ecs.autoscaling_policies.metric }}Reservation
+              Dimensions:
+                - Name: ClusterName
+                  Value:
+                    Ref: CumulusECSCluster
+            Period: 60
+            Stat: Average
 {{/if}}
 
 {{#each ecs.services}}
@@ -1126,7 +1171,6 @@ Resources:
         MaximumPercent: 100
         MinimumHealthyPercent: 0
 
-{{#if ../ecs.service_autoscaling_policies}}
   {{@key}}ECSServiceScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     DependsOn:
@@ -1147,47 +1191,73 @@ Resources:
       ScalableDimension: 'ecs:service:DesiredCount'
       ServiceNamespace: ecs
 
-{{#each ../ecs.service_autoscaling_policies}}
-  {{@key}}ECSServiceApplicationScalingPolicy:
+  # Scale out when activities waiting is
+  {{@key}}ScaleOutScalingPolicy:
     Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
     Properties:
-    {{#if this.override_defaults}}
-      {{{ToJson this.properties}}}
-    {{else}}
-      PolicyName: {{@key}}ECSServiceApplicationScalingPolicy
+      PolicyName: {{@key}}ScaleOutScalingPolicy
       ScalingTargetId:
-        Ref: {{@../key}}ECSServiceScalableTarget
-      PolicyType: StepScaling
+        Ref: {{@key}}ECSServiceScalableTarget
+      PolicyType: StepScaling # SimpleScaling is not supported
+      # TODO: make this configurable
       StepScalingPolicyConfiguration:
-        AdjustmentType: ChangeInCapacity
-        Cooldown: 60
-        MetricAggregationType: Average
-        StepAdjustments: {{{ ToJson this.StepAdjustments }}}
-    {{/if}}
-{{/each}}
+      {{#if this.service_scaling.scale_out.step_adjustment_config}}
+        {{{ToJson this.service_scaling.scale_out.step_adjustment_config}}}
+      {{else}}
+        # I don't think this works in practice because activities waiting /
+        # scheduled is not a persistent metric reflecting activities which can't be placed
+        AdjustmentType: PercentChangeInCapacity
+        StepAdjustments:
+        - MetricIntervalLowerBound: 0
+          ScalingAdjustment: 10
+      {{/if}}
 
-  # If NumRequiredInstances is greater than the threshold, we will use step
-  # scaling to scale up to the level required by number of scheduled activities
-  {{@key}}NumRequiredInstancesAlarm:
+  # Scale in desired tasks whenever there are no more activities scheduled
+  {{@key}}ScaleInScalingPolicy:
+    Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
+    Properties:
+      PolicyName: {{@key}}ScaleInScalingPolicy
+      ScalingTargetId:
+        Ref: {{@key}}ECSServiceScalableTarget
+      PolicyType: StepScaling # SimpleScaling is not supported
+      # TODO: make this configurable
+      StepScalingPolicyConfiguration:
+      {{#if this.service_scaling.scale_in.step_adjustment_config}}
+        {{{ToJson this.service_scaling.scale_in.step_adjustment_config}}}
+      {{else}}
+        AdjustmentType: PercentChangeInCapacity
+        StepAdjustments:
+        - MetricIntervalUpperBound: -1
+          ScalingAdjustment: -10
+        - MetricIntervalLowerBound: -1
+          MetricIntervalUpperBound: 0
+          ScalingAdjustment: -5
+      {{/if}}
+
+  {{@key}}ActivitiesWaitingAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmActions:
-        # This is dependent on autoscaling_policies.yml
-        - Ref: ScaleOutEc2ScalingPolicy
+        - Ref: {{@key}}ScaleOutScalingPolicy
       OKActions:
-        - Ref: ScaleInEc2ScalingPolicy
+        - Ref: {{@key}}ScaleInScalingPolicy
       TreatMissingData: notBreaching
-      ComparisonOperator: GreaterThanOrEqualToThreshold
-      EvaluationPeriods: 1
-      # Threshold should really be the number of existing instances.
-      Threshold: 1
+      ComparisonOperator: GreaterThanThreshold
+    {{#if this.service_scaling.scale_out.evaluation_periods}}
+      EvaluationPeriods: {{ this.service_scaling.scale_out.evaluation_periods }}
+    {{else}}
+      EvaluationPeriods: 5
+    {{/if}}
+    {{#if this.service_scaling.scale_out.threshold}}
+      Threshold: {{ this.service_scaling.scale_out.threshold }}
+    {{else}}
+      Threshold: 0
+    {{/if}}
       Metrics:
         - Id: e1
-          # Number of required instances should equal
-          # (Activities scheduled * memory required / activity) / (memory per instance)
-          Expression: (m1 * {{ this.memory }})/{{#if this.ec2_memory }}{{ this.ec2_memory }}{{ else }}3952{{/if}}
-          Label: NumInstancesRequired
-        - Id: m1
+          Expression: m2 - m1
+          Label: {{@key}}ActivitiesWaiting
+        - Id: m2
           MetricStat:
             Metric:
               Namespace: AWS/States
@@ -1195,14 +1265,24 @@ Resources:
               Dimensions:
                 - Name: ActivityArn
                   Value:
-                    # TODO(aimee) - Is there a way to make this activity naming
-                    # less brittle with services?
-                    Ref: {{ this.activity_name }}Activity
+                    Ref: {{this.activity_name}}Activity
             Period: 60
             Stat: Sum
             Unit: Count
           ReturnData: false
-{{/if}}
+        - Id: m1
+          MetricStat:
+            Metric:
+              Namespace: AWS/States
+              MetricName: ActivitiesStarted
+              Dimensions:
+                - Name: ActivityArn
+                  Value:
+                    Ref: {{this.activity_name}}Activity
+            Period: 60
+            Stat: Sum
+            Unit: Count
+          ReturnData: false
 {{/each}}
 
 {{#each ecs.tasks}}
@@ -1306,14 +1386,6 @@ Resources:
   #################################################
   # ECS config END
   #################################################
-{{#if alarms}}
-  {{# each alarms}}
-  {{@key}}Alarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      {{{ToJson this}}}
-  {{/each}}
-{{/if}}
 
 Outputs:
 
