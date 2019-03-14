@@ -73,7 +73,7 @@ async function put(req, res) {
   }
 
   if (action === 'removeFromCmr') {
-    await granuleModelClient.removeGranuleFromCmr(granule.granuleId, granule.collectionId);
+    await granuleModelClient.removeGranuleFromCmrByGranule(granule);
 
     return res.send({
       granuleId: granule.granuleId,
