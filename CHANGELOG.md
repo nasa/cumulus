@@ -87,9 +87,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - The default provider port was being set to 21, no matter what protocol was
     being used. Removed that default.
 
+- CUMULUS-1174
+  - Better error message and stacktrace for S3KeyPairProvider error reporting.
+
 ### Deprecated
 
 - `@cumulus/api/models/Granule.removeGranuleFromCmr`, instead use `@cumulus/api/models/Granule.removeGranuleFromCmrByGranule`
+- `@cumulus/ingest/granule.validateChecksum`, instead use `@cumulus/ingest/granule.verifyFile`
+- `@cumulus/common/aws.checksumS3Objects`, instead use `@cumulus/common/aws.calculateS3ObjectChecksum`
 
 ## [v1.11.3] - 2019-3-5
 
