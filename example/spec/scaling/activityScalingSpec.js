@@ -41,7 +41,6 @@ describe('scaling for step function activities', () => {
     clusterArn = await getClusterArn(stackName);
     numActivityTasks = Object.values(cloudformationResources).filter((resource) => resource.Type === 'AWS::StepFunctions::Activity').length;
     minInstancesCount = cloudformationResources.CumulusECSAutoScalingGroup.UpdatePolicy.AutoScalingRollingUpdate.MinInstancesInService;
-
     memoryReservationHighAlarm = cloudformationResources.MemoryReservationHighAlarm;
     memoryReservationLowAlarm = cloudformationResources.MemoryReservationLowAlarm;
   });

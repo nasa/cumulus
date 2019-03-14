@@ -1191,56 +1191,33 @@ Resources:
       ScalableDimension: 'ecs:service:DesiredCount'
       ServiceNamespace: ecs
 
-  # Scale out when activities waiting is
-  {{@key}}ScaleOutScalingPolicy:
-    Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
-    Properties:
-      PolicyName: {{@key}}ScaleOutScalingPolicy
-      ScalingTargetId:
-        Ref: {{@key}}ECSServiceScalableTarget
-      PolicyType: StepScaling # SimpleScaling is not supported
-      # TODO: make this configurable
-      StepScalingPolicyConfiguration:
-      {{#if this.service_scaling.scale_out.step_adjustment_config}}
-        {{{ToJson this.service_scaling.scale_out.step_adjustment_config}}}
-      {{else}}
-        # I don't think this works in practice because activities waiting /
-        # scheduled is not a persistent metric reflecting activities which can't be placed
-        AdjustmentType: PercentChangeInCapacity
-        StepAdjustments:
-        - MetricIntervalLowerBound: 0
-          ScalingAdjustment: 10
-      {{/if}}
-
   # Scale in desired tasks whenever there are no more activities scheduled
-  {{@key}}ScaleInScalingPolicy:
+  {{@key}}ScalingPolicy:
     Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
     Properties:
-      PolicyName: {{@key}}ScaleInScalingPolicy
+      PolicyName: {{@key}}ScalingPolicy
       ScalingTargetId:
         Ref: {{@key}}ECSServiceScalableTarget
-      PolicyType: StepScaling # SimpleScaling is not supported
+      PolicyType: TargetTrackingScaling # SimpleScaling is not supported
       # TODO: make this configurable
-      StepScalingPolicyConfiguration:
-      {{#if this.service_scaling.scale_in.step_adjustment_config}}
-        {{{ToJson this.service_scaling.scale_in.step_adjustment_config}}}
+      TargetTrackingScalingPolicyConfiguration:
+      {{#if this.service_scaling.target_adjustment_config}}
+        {{{ToJson this.service_scaling.target_adjustment_config}}}
       {{else}}
-        AdjustmentType: PercentChangeInCapacity
-        StepAdjustments:
-        - MetricIntervalUpperBound: -1
-          ScalingAdjustment: -10
-        - MetricIntervalLowerBound: -1
-          MetricIntervalUpperBound: 0
-          ScalingAdjustment: -5
+        TargetValue: 50
+        PredefinedMetricSpecification:
+        {{#if this.service_scaling.predefined_metric_type}}
+          PredefinedMetricType: this.service_scaling.predefined_metric_type
+        {{else}}
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        {{/if}}
       {{/if}}
 
-  {{@key}}ActivitiesWaitingAlarm:
+  {{@key}}{{ this.service_scaling.metric }}HighAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmActions:
-        - Ref: {{@key}}ScaleOutScalingPolicy
-      OKActions:
-        - Ref: {{@key}}ScaleInScalingPolicy
+        - Ref: {{@key}}ScalingPolicy
       TreatMissingData: notBreaching
       ComparisonOperator: GreaterThanThreshold
     {{#if this.service_scaling.scale_out.evaluation_periods}}
@@ -1251,38 +1228,52 @@ Resources:
     {{#if this.service_scaling.scale_out.threshold}}
       Threshold: {{ this.service_scaling.scale_out.threshold }}
     {{else}}
-      Threshold: 0
+      Threshold: 50
     {{/if}}
       Metrics:
-        - Id: e1
-          Expression: m2 - m1
-          Label: {{@key}}ActivitiesWaiting
-        - Id: m2
-          MetricStat:
-            Metric:
-              Namespace: AWS/States
-              MetricName: ActivitiesScheduled
-              Dimensions:
-                - Name: ActivityArn
-                  Value:
-                    Ref: {{this.activity_name}}Activity
-            Period: 60
-            Stat: Sum
-            Unit: Count
-          ReturnData: false
         - Id: m1
           MetricStat:
             Metric:
-              Namespace: AWS/States
-              MetricName: ActivitiesStarted
+              Namespace: AWS/ECS
+              MetricName: {{ this.service_scaling.metric }}
               Dimensions:
-                - Name: ActivityArn
+                - Name: ServiceName
                   Value:
-                    Ref: {{this.activity_name}}Activity
+                    Ref: {{@key}}ECSService
             Period: 60
             Stat: Sum
             Unit: Count
-          ReturnData: false
+
+  {{@key}}{{ this.service_scaling.metric }}LowAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - Ref: {{@key}}ScalingPolicy
+      TreatMissingData: notBreaching
+      ComparisonOperator: LessThanThreshold
+    {{#if this.service_scaling.scale_out.evaluation_periods}}
+      EvaluationPeriods: {{ this.service_scaling.scale_out.evaluation_periods }}
+    {{else}}
+      EvaluationPeriods: 5
+    {{/if}}
+    {{#if this.service_scaling.scale_out.threshold}}
+      Threshold: {{ this.service_scaling.scale_out.threshold }}
+    {{else}}
+      Threshold: 50
+    {{/if}}
+      Metrics:
+        - Id: m1
+          MetricStat:
+            Metric:
+              Namespace: AWS/ECS
+              MetricName: {{ this.service_scaling.metric }}
+              Dimensions:
+                - Name: ServiceName
+                  Value:
+                    Ref: {{@key}}ECSService
+            Period: 60
+            Stat: Sum
+            Unit: Count
 {{/each}}
 
 {{#each ecs.tasks}}
