@@ -1,8 +1,8 @@
 'use strict';
 
-const router = require('express-promise-router')();
-
 const { lambda } = require('@cumulus/common/aws');
+const Logger = require('@cumulus/logger');
+const log = new Logger({sender: 's3credentials'});
 
 /**
  * Use NGAP's time-based, temporary credential dispensing lambda.
@@ -40,9 +40,14 @@ async function requestTemporaryCredentialsFromNgap(username) {
 async function s3credentials(req, res) {
   const username = req.authorizedMetadata.userName;
   const credentials = await requestTemporaryCredentialsFromNgap(username);
-  return res.send(JSON.parse(credentials.Payload));
+  try {
+    return res.send(JSON.parse(credentials.Payload));
+  } catch (error) {
+    log.error(`credentials.Payload: ${credentials.Payload}`);
+    log.error(error);
+    return res.boom.failedDependency('Unable to retrieve credentials from Server.');
+  }
 }
 
-router.get('/', s3credentials);
 
-module.exports = router;
+module.exports = s3credentials;
