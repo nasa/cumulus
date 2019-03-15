@@ -324,10 +324,9 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('updates the CMR metadata online resources with s3credentials location', () => {
-      // const s3CredentialsURL = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
+      const s3CredentialsURL = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
       console.log(`resourceURLs: ${resourceURLs}`);
-      const s3CredentialsURL = resourceURLs.filter((url) => url.contains('s3credentials'));
-      expect((s3CredentialsURL.length() === 1).includes(s3CredentialsURL)).toBe(true);
+      expect(resourceURLs.includes(s3CredentialsURL)).toBe(true);
     });
 
     it('does not overwrite the original related url', () => {
