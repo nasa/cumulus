@@ -61,14 +61,14 @@ The metric, threshold and evaluation periods used in ECS Cluster Scale In / Out 
 
 However, in order for the `Memory` or `CPUReservation` ECS Cluster metrics to decrease, the number of running / desired tasks needs to be scaled in.
 
-In order to scale in desired tasks, the default configuration uses a [`TargetTracking`](https://docs.aws.amazon.com/autoscaling/application/userguide/application-auto-scaling-target-tracking.html) scaling policy type to keep `ECSServiceAverageCPUUtilization` at 20%. A utilization metric must be used because States/Activities metric cannot be used to affect gradual scale in or scale out: States/Activities metrics are not are not persistent - e.g. when no activities are scheduled, Cloudwatch regards this as "missing data" and missing data can only be trigger one Alarm state change (e.g. from ALARM to OK).
+In order to scale in desired tasks, the default configuration uses a [`TargetTracking`](https://docs.aws.amazon.com/autoscaling/application/userguide/application-auto-scaling-target-tracking.html) scaling policy type to keep `ECSServiceAverageCPUUtilization` at 50%. A utilization metric must be used because States/Activities metric cannot be used to affect gradual scale in or scale out: States/Activities metrics are not are not persistent - e.g. when no activities are scheduled, Cloudwatch regards this as "missing data" and missing data can only be trigger one Alarm state change (e.g. from ALARM to OK).
 
 The scale in target tracking can also be configured in `app/config.yml`:
 
 ```yaml
   ecs:
     service_scaling:
-      target_value: 50
+      target_value: 70
       predefined_metric_type: ECSServiceAverageMemoryUtilization
 ```
 
