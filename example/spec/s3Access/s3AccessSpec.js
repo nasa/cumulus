@@ -1,6 +1,19 @@
+'use strict';
+
+const got = require('got');
 const { Lambda, STS, Credentials } = require('aws-sdk');
+
+const { models: { AccessToken } } = require('@cumulus/api');
 const { aws: { s3 }, testUtils: { randomId } } = require('@cumulus/common');
-const { api: { callCumulusApi } } = require('@cumulus/integration-tests');
+const { serveDistributionApi } = require('@cumulus/api/bin/serve');
+const {
+  EarthdataLogin: { getEarthdataAccessToken }
+} = require('@cumulus/integration-tests');
+
+const {
+  setDistributionApiEnvVars,
+  stopDistributionApi
+} = require('../helpers/apiUtils');
 const { loadConfig } = require('../helpers/testUtils');
 
 const config = loadConfig();
@@ -71,30 +84,54 @@ async function canListObjects(region, credentials) {
 
 const REASON = 'https://bugs.earthdata.nasa.gov/browse/NGAP-4149';
 
+let server;
+
+process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
+const accessTokensModel = new AccessToken();
+
 describe('When accessing an S3 bucket directly', () => {
-  beforeAll(async () => {
+  let accessToken;
+
+  beforeAll(async (done) => {
     await s3().putObject({ Bucket: protectedBucket, Key: testFileKey, Body: 'test' }).promise();
+    setDistributionApiEnvVars();
+    // Use done() callback to signal end of beforeAll() after the
+    // distribution API has started up.
+    server = await serveDistributionApi(config.stackName, done);
   });
 
-  afterAll(async () => {
-    await s3().deleteObject({ Bucket: protectedBucket, Key: testFileKey }).promise();
+  afterAll(async (done) => {
+    try {
+      await s3().deleteObject({ Bucket: protectedBucket, Key: testFileKey }).promise();
+      await accessTokensModel.delete({ accessToken });
+    }
+    finally {
+      stopDistributionApi(server, done);
+    }
   });
 
   describe('with credentials associated with an Earthdata Login ID', () => {
     let creds;
-    const userName = randomId('newUser');
+    const username = randomId('newUser');
 
     beforeAll(async () => {
-      const payload = await callCumulusApi({
-        prefix: `${config.stackName}`,
-        payload: {
-          httpMethod: 'GET',
-          resource: '/{proxy+}',
-          path: '/s3credentials'
-        },
-        userParams: { userName }
+      const accessTokenResponse = await getEarthdataAccessToken({
+        redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
+        requestOrigin: process.env.DISTRIBUTION_ENDPOINT,
+        userParams: { username }
       });
-      creds = JSON.parse(payload.body);
+      accessToken = accessTokenResponse.accessToken;
+
+      const response = await got(
+        `${process.env.DISTRIBUTION_ENDPOINT}/s3credentials`,
+        {
+          followRedirect: false,
+          headers: {
+            cookie: [`accessToken=${accessToken}`]
+          }
+        }
+      );
+      creds = JSON.parse(response.body);
     });
 
     it('the expected user can assume same region access', async () => {
@@ -102,8 +139,8 @@ describe('When accessing an S3 bucket directly', () => {
       const sts = new STS({ credentials });
       const whoami = await sts.getCallerIdentity().promise();
 
-      expect(whoami.Arn).toMatch(new RegExp(`arn:aws:sts::\\d{12}:assumed-role/s3-same-region-access-role/${userName}.*`));
-      expect(whoami.UserId).toMatch(new RegExp(`.*:${userName}`));
+      expect(whoami.Arn).toMatch(new RegExp(`arn:aws:sts::\\d{12}:assumed-role/s3-same-region-access-role/${username}.*`));
+      expect(whoami.UserId).toMatch(new RegExp(`.*:${username}`));
     });
 
     describe('while in the the same region ', () => {
