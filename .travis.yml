@@ -91,13 +91,14 @@ jobs:
     #     - NGAP_ENV=SIT
     #     - DEPLOYMENT=cumulus-sit
 
-    # - name: "Run integration tests"
-    #   stage: integration tests
-    #   if: commit_message !~ \[skip-integration-tests\] OR branch = master
-    #   install:
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #   script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
-    #   after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
+    - name: "Run integration tests"
+      stage: integration tests
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
+      install:
+        - nvm install-latest-npm
+        - ln -s /dev/stdout ./lerna-debug.log
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
 
     # - name: "Run SIT integration tests"
     #   stage: integration tests
