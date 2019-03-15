@@ -5,8 +5,9 @@
 
 const forge = require('node-forge');
 
-const { s3 } = require('./aws');
+const { getS3Object } = require('./aws');
 const { KMS } = require('./kms');
+const log = require('./log');
 
 /**
  * Provides encryption and decryption methods using a keypair stored in S3
@@ -26,11 +27,7 @@ class S3KeyPairProvider {
   static async encrypt(str, keyId = 'public.pub', bucket = null, stack = null) {
     // Download the publickey
     const pki = forge.pki;
-    const b = bucket || process.env.system_bucket;
-    const s = stack || process.env.stackName;
-    const pub = await s3().getObject({
-      Bucket: b, Key: `${s}/crypto/${keyId}`
-    }).promise();
+    const pub = await this.retrieveKey(keyId, bucket, stack);
 
     const publicKey = pki.publicKeyFromPem(pub.Body.toString());
     return forge.util.encode64(publicKey.encrypt(str));
@@ -49,15 +46,35 @@ class S3KeyPairProvider {
    */
   static async decrypt(str, keyId = 'private.pem', bucket = null, stack = null) {
     const pki = forge.pki;
-    const b = bucket || process.env.system_bucket;
-    const s = stack || process.env.stackName;
-    const priv = await s3().getObject({
-      Bucket: b, Key: `${s}/crypto/${keyId}`
-    }).promise();
+    const priv = await this.retrieveKey(keyId, bucket, stack);
 
     const decoded = forge.util.decode64(str);
     const privateKey = pki.privateKeyFromPem(priv.Body.toString());
     return privateKey.decrypt(decoded);
+  }
+
+  /**
+   * Retrieve encryption/decryption key from S3
+   *
+   * @param {string} keyId - The name of the key to retrieve
+   * @param {string} bucket - the optional bucket name. if not provided will
+   *                          use env variable "system_bucket"
+   * @param {stack} stack - the optional stack name. if not provided will
+   *                        use env variable "stackName"
+   * @throws {Error} - throws AWS SDK error if encountered. Logs error's variables before throwing.
+   * @returns {Promise} - AWS S3 Object
+   */
+  static async retrieveKey(keyId = null, bucket = null, stack = null) {
+    const b = bucket || process.env.system_bucket;
+    const s = stack || process.env.stackName;
+    try {
+      const key = await getS3Object(b, `${s}/crypto/${keyId}`);
+      return key;
+    }
+    catch (err) {
+      log.error(`Failed to retrieve S3KeyPair key from bucket ${b} on stack ${s}`);
+      throw err;
+    }
   }
 }
 
