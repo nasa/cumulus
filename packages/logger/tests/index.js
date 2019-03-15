@@ -178,7 +178,7 @@ test('Logger.error() logs info about an Error', (t) => {
   t.is(logEntry.error.name, 'Error');
   t.is(logEntry.error.message, 'test123');
   t.true(Array.isArray(logEntry.error.stack));
-  t.true(Array.isString(logEntry.error.stack[0]));
+  t.true(isString(logEntry.error.stack[0]));
 });
 
 test('Logger.error() can handle just an Error', (t) => {
