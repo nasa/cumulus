@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');
@@ -238,9 +239,8 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
     state: 'ENABLED'
   });
 
-  const lambdaBefore = aws.lambda;
-  try {
-    aws.lambda = () => ({
+  const lambdaStub = sinon.stub(aws, 'lambda')
+    .returns({
       createEventSourceMapping: () => ({
         promise: () => Promise.resolve({ UUID: randomString() })
       }),
@@ -261,15 +261,14 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
       })
     });
 
-    try {
-      await (new models.Rule()).create(item);
-      t.pass();
-    }
-    catch (err) {
-      t.fail(err);
-    }
+  try {
+    await (new models.Rule()).create(item);
+    t.pass();
+  }
+  catch (err) {
+    t.fail(err);
   }
   finally {
-    aws.lambda = lambdaBefore;
+    lambdaStub.reset();
   }
 });
