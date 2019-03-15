@@ -59,6 +59,12 @@ function loadConfig() {
   return config.test_configs;
 }
 
+/**
+ * Loads final app/cloudformation.yml file produced by deployment from S3.
+ *
+ * @param  {Object} - configuration object from loadConfig()
+ * @return {Object}   Cloudformation template object
+ */
 async function loadCloudformationTemplate(config) {
   const Bucket = config.buckets.internal.name;
   const Key = `${config.stackName}/cloudformation.yml`;
