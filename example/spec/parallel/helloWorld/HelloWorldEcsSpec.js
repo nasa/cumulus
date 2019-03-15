@@ -15,7 +15,7 @@ describe('The Hello World workflow using ECS', () => {
     workflowExecution = await buildAndExecuteWorkflow(
       awsConfig.stackName,
       awsConfig.bucket,
-      'EcsHelloWorldWorkflow'
+      'HelloWorldActivityWorkflow'
     );
   });
 
