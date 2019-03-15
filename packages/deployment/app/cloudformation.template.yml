@@ -1197,21 +1197,20 @@ Resources:
       PolicyName: {{@key}}ScaleOutScalingPolicy
       ScalingTargetId:
         Ref: {{@key}}ECSServiceScalableTarget
-      PolicyType: StepScaling # SimpleScaling is not supported
-      # TODO: make this configurable
+      # Note: SimpleScaling is not supported by ApplicationAutoScaling
+      PolicyType: StepScaling
       StepScalingPolicyConfiguration:
       {{#if this.service_scaling.scale_out.step_adjustment_config}}
         {{{ToJson this.service_scaling.scale_out.step_adjustment_config}}}
       {{else}}
-        # I don't think this works in practice because activities waiting /
-        # scheduled is not a persistent metric reflecting activities which can't be placed
+        # Scaling out only happens once per activities waiting alarm is triggered (so assumes new activities are scheduled which can't be placed).
         AdjustmentType: PercentChangeInCapacity
         StepAdjustments:
         - MetricIntervalLowerBound: 0
           ScalingAdjustment: 10
       {{/if}}
 
-  {{@key}}ActivitiesScheduledAlarm:
+  {{@key}}ActivitiesWaitingAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmActions:
@@ -1229,7 +1228,10 @@ Resources:
       Threshold: 0
     {{/if}}
       Metrics:
-        - Id: m1
+        - Id: e1
+          Expression: m2 - m1
+          Label: {{@key}}ActivitiesWaiting
+        - Id: m2
           MetricStat:
             Metric:
               Namespace: AWS/States
@@ -1241,6 +1243,20 @@ Resources:
             Period: 60
             Stat: Sum
             Unit: Count
+          ReturnData: false
+        - Id: m1
+          MetricStat:
+            Metric:
+              Namespace: AWS/States
+              MetricName: ActivitiesStarted
+              Dimensions:
+                - Name: ActivityArn
+                  Value:
+                    Ref: {{this.activity_name}}Activity
+            Period: 60
+            Stat: Sum
+            Unit: Count
+          ReturnData: false
 
   # Scale in desired tasks whenever there are no more activities scheduled
   {{@key}}ScalingPolicy:
