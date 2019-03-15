@@ -11,6 +11,7 @@
           "bucket": "",
           "filename": "",
           "fileSize": 17865615,
+          "fileType": "data",
           "path": "replace-me-path",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
         },
@@ -19,6 +20,7 @@
           "bucket": "",
           "filename": "",
           "fileSize": 44118,
+          "fileType": "metadata",
           "path": "replace-me-path",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
         },
@@ -27,6 +29,7 @@
           "bucket": "",
           "filename": "",
           "fileSize": 44118,
+          "fileType": "browse",
           "path": "replace-me-path",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
         }
