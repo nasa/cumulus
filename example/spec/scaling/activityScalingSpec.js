@@ -2,14 +2,11 @@
 
 const find = require('lodash.find');
 
-const { ecs } = require('@cumulus/common/aws');
 const {
   buildAndStartWorkflow,
   waitForCompletedExecution,
-  getClusterArn,
   getClusterStats,
-  getExecutionStatus,
-  getNewScalingActivity
+  getExecutionStatus
 } = require('@cumulus/integration-tests');
 const { sleep } = require('@cumulus/common/util');
 const { loadConfig, loadCloudformationTemplate } = require('../helpers/testUtils');
@@ -23,9 +20,7 @@ let memoryReservationLowAlarm;
 let alarmEvaluationPeriods;
 let alarmPeriodSeconds;
 let sleepMs;
-let clusterArn;
 let numActivityTasks;
-let minInstancesCount;
 const workflowName = 'HelloWorldActivityWorkflow';
 const serviceScaleOutPolicyName = 'HelloWorldServiceScaleOutScalingPolicy';
 const activiitesWaitingAlarmName = 'HelloWorldServiceActivitiesWaitingAlarm';
@@ -39,9 +34,7 @@ describe('scaling for step function activities', () => {
     const alarmPeriod = activitiesWaitingAlarm.Properties.Metrics[1].MetricStat.Period;
     alarmPeriodSeconds = alarmPeriod / alarmEvaluationPeriods;
     sleepMs = 2 * alarmPeriodSeconds * 1000;
-    clusterArn = await getClusterArn(stackName);
     numActivityTasks = Object.values(cloudformationResources).filter((resource) => resource.Type === 'AWS::StepFunctions::Activity').length;
-    minInstancesCount = cloudformationResources.CumulusECSAutoScalingGroup.UpdatePolicy.AutoScalingRollingUpdate.MinInstancesInService;
     memoryReservationHighAlarm = cloudformationResources.MemoryReservationHighAlarm;
     memoryReservationLowAlarm = cloudformationResources.MemoryReservationLowAlarm;
   });
@@ -70,7 +63,7 @@ describe('scaling for step function activities', () => {
   describe('ECS Service TargetTracking Policy', () => {
     it('triggers at 20% of CPUUtilization', () => {
       const targetTrackingConfiguration = cloudformationResources[targetTrackingScalingPolicy].Properties.TargetTrackingScalingPolicyConfiguration;
-      expect(targetTrackingConfiguration.TargetValue).toEqual(20)
+      expect(targetTrackingConfiguration.TargetValue).toEqual(20);
       expect(targetTrackingConfiguration.PredefinedMetricSpecification.PredefinedMetricType).toEqual('ECSServiceAverageCPUUtilization');
     });
   });
