@@ -6,6 +6,7 @@ const _set = require('lodash.set');
 const { promisify } = require('util');
 const urljoin = require('url-join');
 const xml2js = require('xml2js');
+const js2xmlParser = require('js2xmlparser');
 
 const {
   aws,
@@ -307,6 +308,27 @@ function getS3CredentialsObject(s3CredsUrl) {
 }
 
 /**
+ * Returns UMM/ECHO10 resource type mapping for CNM fileType
+ *
+ * @param {string} type - CNM resource type to convert to UMM/ECHO10 type
+ * @returns {string} type - UMM/ECHO10 resource type
+ */
+function mapCNMTypeToCMRType(type) {
+  const mapping = {
+    data: 'GET DATA',
+    browse: 'GET RELATED VISUALIZATION',
+    metadata: 'EXTENDED METADATA',
+    qa: 'EXTENDED METADATA'
+  };
+  if (!mapping[type]) {
+    log.warn(`CNM Type ${type} invalid for mapping to UMM/ECHO10 type value, using GET DATA instead`);
+    return 'GET DATA';
+  }
+  return mapping[type];
+}
+
+
+/**
  * Construct online access url for a given file.
  *
  * @param {Object} params - input parameters
@@ -327,13 +349,13 @@ function constructOnlineAccessUrl({
     urlObj.URL = urljoin(distEndpoint, extension);
     urlObj.URLDescription = 'File to download'; // used by ECHO10
     urlObj.Description = 'File to download'; // used by UMMG
-    urlObj.Type = 'GET DATA'; // used by UMMG
+    urlObj.Type = mapCNMTypeToCMRType(file.fileType); // used by UMMG
   }
   else if (bucketType === 'public') {
     urlObj.URL = `https://${file.bucket}.s3.amazonaws.com/${getS3KeyOfFile(file)}`;
     urlObj.URLDescription = 'File to download';
     urlObj.Description = 'File to download';
-    urlObj.Type = 'GET DATA';
+    urlObj.Type = mapCNMTypeToCMRType(file.fileType);
   }
   else urlObj = null;
   return urlObj;
@@ -357,7 +379,6 @@ function constructOnlineAccessUrls({
   s3CredsEndpoint = 's3credentials'
 }) {
   const urls = [];
-
   files.forEach((file) => {
     const urlObj = constructOnlineAccessUrl({ file, distEndpoint, buckets });
     if (urlObj) urls.push(urlObj);
@@ -408,7 +429,7 @@ function getCmrFileObjs(files) {
  * @param {Array<Object>} removed - Array of URL Objects to remove from OnlineAccess.
  * @returns {Array<Object>} list of updated an original URL objects representing the updated state.
  */
-function mergeURLs(original, updated, removed = []) {
+function mergeURLs(original, updated = [], removed = []) {
   const newURLBasenames = updated.map((url) => path.basename(url.URL));
   const removedBasenames = removed.map((url) => path.basename(url.URL));
 
@@ -476,6 +497,50 @@ function getCreds() {
   };
 }
 
+function generateEcho10XMLString(granule) {
+  const mapping = new Map([]);
+  Object.keys(granule).forEach((key) => {
+    if (key === 'OnlineAccessURLs') {
+      mapping.set(key, granule[key]);
+      mapping.set('OnlineResources', granule.OnlineResources);
+    }
+    else if (key !== 'OnlineResources') {
+      mapping.set(key, granule[key]);
+    }
+  });
+  return js2xmlParser.parse('Granule', mapping);
+}
+/**
+ * Updates CMR xml file with 'xml' string
+ *
+ * @param  {string} xml - XML to write to cmrFile
+ * @param  {Object} cmrFile - cmr file object to write xml to
+ * @returns {Promise} returns promised aws.promiseS3Upload response
+ */
+async function uploadEcho10CMRFile(xml, cmrFile) {
+  const tags = await aws.s3GetObjectTagging(cmrFile.bucket, getS3KeyOfFile(cmrFile));
+  const tagsQueryString = aws.s3TagSetToQueryString(tags.TagSet);
+  return aws.promiseS3Upload({
+    Bucket: cmrFile.bucket, Key: getS3KeyOfFile(cmrFile), Body: xml, Tagging: tagsQueryString
+  });
+}
+/**
+ * Method takes an array of URL objects to update, an 'origin' array of original URLs
+ * and a list of URLs to remove and returns an array of merged URL objectgs
+ *
+ * @param  {Array<Object>} URLlist - array of URL objects
+ * @param  {Array<Object>} originalURLlist - array of URL objects
+ * @param  {Array<Object>} removedURLs - array of URL objects
+ * @param  {Array<Object>} URLTypes - array of UMM/Echo FileTypes to include
+ * @param  {Array<Object>} URLlistFieldFilter - array of URL Object keys to omit
+ * @returns {Array<Object>} array of merged URL objects, filtered
+ */
+function buildMergedEchoURLObject(URLlist = [], originalURLlist = [], removedURLs = [],
+  URLTypes, URLlistFieldFilter) {
+  let filteredURLObjectList = URLlist.filter((urlObj) => URLTypes.includes(urlObj.Type));
+  filteredURLObjectList = filteredURLObjectList.map((urlObj) => omit(urlObj, URLlistFieldFilter));
+  return mergeURLs(originalURLlist, filteredURLObjectList, removedURLs);
+}
 
 /**
  * After files are moved, this function creates new online access URLs and then updates
@@ -488,35 +553,36 @@ function getCreds() {
  * @returns {Promise} returns promised updated metadata object.
  */
 async function updateEcho10XMLMetadata(cmrFile, files, distEndpoint, buckets) {
-  let newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets });
-  newURLs = newURLs.map((urlObj) => omit(urlObj, ['Type', 'Description']));
-  const removedURLs = onlineAccessURLsToRemove(files, buckets);
-
-  // add/replace the OnlineAccessUrls
   const filename = getS3UrlOfFile(cmrFile);
   const metadataObject = await metadataObjectFromCMRXMLFile(filename);
   const metadataGranule = metadataObject.Granule;
-
   const updatedGranule = { ...metadataGranule };
-  let originalURLs = _get(metadataGranule, 'OnlineAccessURLs.OnlineAccessURL', []);
 
-  // If there is only one OnlineAccessURL in the file, it comes back as an object and not an array
-  if (!Array.isArray(originalURLs)) {
-    originalURLs = [originalURLs];
-  }
+  const originalOnlineAccessURLs = [].concat(_get(metadataGranule,
+    'OnlineAccessURLs.OnlineAccessURL', []));
+  const originalOnlineResourceURLs = [].concat(_get(metadataGranule,
+    'OnlineResources.OnlineResource', []));
+  const originalAssociatedBrowseURLs = [].concat(_get(metadataGranule,
+    'AssociatedBrowseImageUrls.ProviderBrowseUrl', []));
 
-  const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
-  _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedURLs);
+  const removedURLs = onlineAccessURLsToRemove(files, buckets);
+  const newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets });
+
+  const mergedOnlineResources = buildMergedEchoURLObject(newURLs, originalOnlineResourceURLs,
+    removedURLs, ['EXTENDED METADATA', 'VIEW RELATED INFORMATION'], ['URLDescription']);
+  const mergedOnlineAccessURLs = buildMergedEchoURLObject(newURLs, originalOnlineAccessURLs,
+    removedURLs, ['GET DATA'], ['Type', 'Description']);
+  const mergedAssociatedBrowse = buildMergedEchoURLObject(newURLs, originalAssociatedBrowseURLs,
+    removedURLs, ['GET RELATED VISUALIZATION'], ['URLDescription', 'Type']);
+
+  // Update the Granule with the updated/merged lists
+  _set(updatedGranule, 'OnlineAccessURLs.OnlineAccessURL', mergedOnlineAccessURLs);
+  _set(updatedGranule, 'OnlineResources.OnlineResource', mergedOnlineResources);
+  _set(updatedGranule, 'AssociatedBrowseImageUrls.ProviderBrowseUrl', mergedAssociatedBrowse);
+
   metadataObject.Granule = updatedGranule;
-
-  const builder = new xml2js.Builder();
-  const xml = builder.buildObject(metadataObject);
-
-  const tags = await aws.s3GetObjectTagging(cmrFile.bucket, getS3KeyOfFile(cmrFile));
-  const tagsQueryString = aws.s3TagSetToQueryString(tags.TagSet);
-  await aws.promiseS3Upload({
-    Bucket: cmrFile.bucket, Key: getS3KeyOfFile(cmrFile), Body: xml, Tagging: tagsQueryString
-  });
+  const xml = generateEcho10XMLString(updatedGranule);
+  await uploadEcho10CMRFile(xml, cmrFile);
   return metadataObject;
 }
 

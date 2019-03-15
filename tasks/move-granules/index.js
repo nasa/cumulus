@@ -114,7 +114,7 @@ function validateMatch(match, bucketsConfig, file) {
 /**
  * Update the granule metadata where each granule has its files replaced with
  * file objects that contain the desired final locations based on the
- * `collection.files.regexp`
+ * `collection.files.regexp`.  CMR metadata files have a fileType added.
  *
  * @param {Object} granulesObject - an object of granules where the key is the granuleId
  * @param {Object} collection - configuration object defining a collection
@@ -126,6 +126,7 @@ function validateMatch(match, bucketsConfig, file) {
  */
 async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucketsConfig) {
   const updatedGranules = {};
+  const cmrFileNames = cmrFiles.map((f) => fileObjectFromS3URI(f.filename).name);
   const fileSpecs = collection.files;
 
   await Promise.all(Object.keys(granulesObject).map(async (granuleId) => {
@@ -136,6 +137,11 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
     const cmrMetadata = cmrFile ? await metadataObjectFromCMRFile(cmrFile.filename) : {};
 
     granulesObject[granuleId].files.forEach((file) => {
+      const cmrFileTypeObject = {};
+      if (cmrFileNames.includes(file.name) && !file.fileType) {
+        cmrFileTypeObject.fileType = 'metadata';
+      }
+
       const match = fileSpecs.filter((cf) => unversionFilename(file.name).match(cf.regex));
       validateMatch(match, bucketsConfig, file);
 
@@ -150,6 +156,7 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
 
       updatedFiles.push({
         ...file, // keeps old info like "name" and "fileStagingDir"
+        ...cmrFileTypeObject, // Add fileType if the file is a CMR file
         ...{
           bucket: bucketName,
           filepath,

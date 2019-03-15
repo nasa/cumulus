@@ -142,6 +142,11 @@ module.exports.collection = {
             description: 'Folder used to save the granule in the bucket. '
                          + 'Defaults to the collection url path',
             type: 'string'
+          },
+          fileType: {
+            title: 'File Type',
+            description: 'CNM Filetype.  Used for submission to CMR.  Non CNM Filetypes default to "data"',
+            type: 'string'
           }
         },
         required: [

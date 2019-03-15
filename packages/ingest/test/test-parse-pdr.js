@@ -55,11 +55,13 @@ test.serial('parse-pdr properly parses a simple PDR file', async (t) => {
   t.is(hdfFile.fileSize, 17865615);
   t.is(hdfFile.checksumType, 'CKSUM');
   t.is(hdfFile.checksumValue, 4208254019);
+  t.is(hdfFile.fileType, 'data');
 
   const metFile = result.granules[0].files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
   t.truthy(metFile);
   t.is(metFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
   t.is(metFile.fileSize, 44118);
+  t.is(metFile.fileType, 'metadata');
 });
 
 test.serial('parse-pdr properly parses PDR with granules of different data-types', async (t) => {
@@ -99,16 +101,19 @@ test.serial('parse-pdr properly parses PDR with granules of different data-types
   t.is(mod09HdfFile.fileSize, 17865615);
   t.is(mod09HdfFile.checksumType, 'CKSUM');
   t.is(mod09HdfFile.checksumValue, 4208254019);
+  t.is(mod09HdfFile.fileType, 'data');
 
   const mod09MetFile = mod09Granule.files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
   t.truthy(mod09MetFile);
   t.is(mod09MetFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
   t.is(mod09MetFile.fileSize, 44118);
+  t.is(mod09MetFile.fileType, 'metadata');
 
   const mod87Granule = result.granules.find((granule) => granule.dataType === 'MOD87GQ');
   t.truthy(mod87Granule);
   t.is(mod87Granule.granuleId, 'MOD87GQ.A2017224.h09v02.006.2017227165020');
   t.is(mod87Granule.granuleSize, 17909733);
+
 
   const mod87HdfFile = mod87Granule.files.find((file) => file.name === 'PENS-MOD87GQ.A2017224.h09v02.006.2017227165020.hdf');
   t.truthy(mod87HdfFile);
@@ -116,11 +121,14 @@ test.serial('parse-pdr properly parses PDR with granules of different data-types
   t.is(mod87HdfFile.fileSize, 17865615);
   t.is(mod87HdfFile.checksumType, 'CKSUM');
   t.is(mod87HdfFile.checksumValue, 4208254019);
+  t.is(mod87HdfFile.fileType, 'data');
+
 
   const mod87MetFile = mod87Granule.files.find((file) => file.name === 'PENS-MOD87GQ.A2017224.h09v02.006.2017227165020.hdf.met');
   t.truthy(mod87MetFile);
   t.is(mod87MetFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
   t.is(mod87MetFile.fileSize, 44118);
+  t.is(mod87MetFile.fileType, 'metadata');
 });
 
 test.serial('parsePdr throws an exception if FILE_CKSUM_TYPE is set but FILE_CKSUM_VALUE is not', async (t) => {
@@ -188,5 +196,23 @@ test.serial('parsePdr throws an exception if the value of an MD5 checksum is not
   }
   catch (err) {
     t.true(err.message.startsWith('Expected MD5 value to be a string'));
+  }
+});
+
+
+test.serial('parsePdr throws an exception if the a FILE_TYPE in the evaluated PDR is invalid', async (t) => {
+  const testDataDirectory = await findTestDataDirectory();
+  const pdrFilename = path.join(testDataDirectory, 'pdrs', 'MOD09GQ-with-invalid-file-type.PDR');
+  const pdrName = `${randomString()}.PDR`;
+
+  const collectionConfig = { granuleIdExtraction: '^(.*)\.hdf' };
+  await t.context.collectionConfigStore.put('MOD09GQ', '006', collectionConfig);
+
+  try {
+    await parsePdr(pdrFilename, t.context.collectionConfigStore, pdrName);
+    t.fail('Expcected parsePdr to throw an error');
+  }
+  catch (err) {
+    t.is(err.message, 'INVALID FILE_TYPE PARAMETER : INVALID');
   }
 });
