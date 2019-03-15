@@ -115,7 +115,6 @@ describe('scaling for step function activities', () => {
 
     describe('when activities Waiting are greater than the threshold', () => {
       it('the number of tasks the service is running should increase', async () => {
-        // wait the period of the alarm plus a bit
         await sleep(sleepMs);
         const clusterStats = await getClusterStats(stackName);
         const runningEC2TasksCount = parseInt(find(clusterStats, ['name', 'runningEC2TasksCount']).value, 10);
