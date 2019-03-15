@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const sinon = require('sinon');
 
 const {
   dynamodbDocClient,
@@ -8,6 +9,9 @@ const {
   recursivelyDeleteS3Bucket
 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
+const cmrjs = require('@cumulus/cmrjs');
+const { CMR } = require('@cumulus/cmrjs');
+const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
 const range = require('lodash.range');
 
@@ -21,6 +25,7 @@ test.before(async () => {
 
 test.after.always(async () => {
   await new Granule().deleteTable();
+  sinon.reset();
 });
 
 test('files existing at location returns empty array if no files exist', async (t) => {
@@ -402,4 +407,86 @@ test('getGranulesForCollection returns the queue of granules', async (t) => {
   }
 
   t.is(await queueV1Grans.peek(), null);
+});
+
+test('removing a granule from CMR fails if the granule is not in CMR', async (t) => {
+  const granule = fakeGranuleFactoryV2({ published: false });
+
+  await dynamodbDocClient().put({
+    TableName: process.env.GranulesTable,
+    Item: granule
+  }).promise();
+
+  const granuleModel = new Granule();
+
+  try {
+    await granuleModel.removeGranuleFromCmrByGranule(granule);
+  }
+  catch (err) {
+    t.is(err.message, `Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
+  }
+});
+
+test.serial('removing a granule from CMR passes the granule UR to the cmr delete function', async (t) => {
+  sinon.stub(
+    DefaultProvider,
+    'decrypt'
+  ).callsFake(() => Promise.resolve('fakePassword'));
+
+  sinon.stub(
+    CMR.prototype,
+    'deleteGranule'
+  ).callsFake((granuleUr) => Promise.resolve(t.is(granuleUr, 'granule-ur')));
+
+  sinon.stub(
+    cmrjs,
+    'getMetadata'
+  ).callsFake(() => Promise.resolve({ title: 'granule-ur' }));
+
+  const granule = fakeGranuleFactoryV2();
+
+  await dynamodbDocClient().put({
+    TableName: process.env.GranulesTable,
+    Item: granule
+  }).promise();
+
+  const granuleModel = new Granule();
+
+  await granuleModel.removeGranuleFromCmrByGranule(granule);
+
+  CMR.prototype.deleteGranule.restore();
+  DefaultProvider.decrypt.restore();
+  cmrjs.getMetadata.restore();
+});
+
+test.serial('legacy remove granule from CMR fetches the granule and succeeds', async (t) => {
+  sinon.stub(
+    DefaultProvider,
+    'decrypt'
+  ).callsFake(() => Promise.resolve('fakePassword'));
+
+  sinon.stub(
+    CMR.prototype,
+    'deleteGranule'
+  ).callsFake((granuleUr) => Promise.resolve(t.is(granuleUr, 'granule-ur')));
+
+  sinon.stub(
+    cmrjs,
+    'getMetadata'
+  ).callsFake(() => Promise.resolve({ title: 'granule-ur' }));
+
+  const granule = fakeGranuleFactoryV2();
+
+  await dynamodbDocClient().put({
+    TableName: process.env.GranulesTable,
+    Item: granule
+  }).promise();
+
+  const granuleModel = new Granule();
+
+  await granuleModel.removeGranuleFromCmr(granule.granuleId, granule.collectionId);
+
+  CMR.prototype.deleteGranule.restore();
+  DefaultProvider.decrypt.restore();
+  cmrjs.getMetadata.restore();
 });
