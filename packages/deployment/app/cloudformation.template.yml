@@ -1164,7 +1164,7 @@ Resources:
     Properties:
       Cluster:
         Ref: CumulusECSCluster
-      DesiredCount: {{# if this.count}}{{this.count}}{{ else }} 0 {{/if}}
+      DesiredCount: {{# if this.count}}{{this.count}}{{ else }} 1 {{/if}}
       TaskDefinition:
         Ref: {{@key}}TaskDefinition
       DeploymentConfiguration:
@@ -1176,9 +1176,8 @@ Resources:
     DependsOn:
     - {{@key}}ECSService
     Properties:
-      # What is the right maximum number of tasks? This is a required field.
-      MaxCapacity: 100
-      MinCapacity: 1
+      MaxCapacity: {{# if this.max_count}}{{this.max_count}}{{ else }} 100 {{/if}}
+      MinCapacity: {{# if this.count}}{{this.count}}{{ else }} 1 {{/if}}
       ResourceId:
         Fn::Join:
           - /
