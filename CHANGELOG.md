@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
-
+- **CUMULUS-1184** - Added kes logging output to ensure we always see the state machine reference before failures due to configuration
 - **CUMULUS-1105** - Added a dashboard endpoint to serve the dashboard from an S3 bucket
 - **CUMULUS-666**
   - Added `@api/endpoints/s3credentials` to allow EarthData Login authorized users to retrieve temporary security credentials for same-region direct S3 access.
@@ -19,7 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - `getDistributionApiFileStream()` returns a stream to download files protected by the distribution API
     - `getDistributionFileUrl()` constructs URLs for requesting files from the distribution API
 - **CUMULUS-802**
-  - `@cumulus/deployment` Added ECS Service and Cluster autoscaling configuration to default deployment configuration. Read more in the docs: [ECS Auto Scaling](https://nasa.github.io/cumulus/docs/features/ecs_autoscaling).
+  - `@cumulus/deployment` Added ECS Service and Cluster autoscaling configuration to default deployment configuration. Read more in the docs: [ECS Auto Scaling](https://nasa.github.io/cumulus/docs/features/ecs_autoscaling)
+- **CUMULUS-1185** `@cumulus/api/models/Granule.removeGranuleFromCmrByGranule` to replace `@cumulus/api/models/Granule.removeGranuleFromCmr` and use the Granule UR from the CMR metadata to remove the granule from CMR
 
 - **CUMULUS-1101**
   - Added new `@cumulus/checksum` package. This package provides functions to calculate and validate checksums.
@@ -87,6 +88,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     `provider.host`, and `provider.port`.
   - The default provider port was being set to 21, no matter what protocol was
     being used. Removed that default.
+
+- CUMULUS-1174
+  - Better error message and stacktrace for S3KeyPairProvider error reporting.
+
+### Deprecated
+
+- `@cumulus/api/models/Granule.removeGranuleFromCmr`, instead use `@cumulus/api/models/Granule.removeGranuleFromCmrByGranule`
+- `@cumulus/ingest/granule.validateChecksum`, instead use `@cumulus/ingest/granule.verifyFile`
+- `@cumulus/common/aws.checksumS3Objects`, instead use `@cumulus/common/aws.calculateS3ObjectChecksum`
 
 ## [v1.11.3] - 2019-3-5
 

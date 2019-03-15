@@ -480,8 +480,9 @@ class UpdatedKes extends Kes {
 
         if ((stateObject.Type === 'Task')
             && (stateObject.Resource.endsWith('LambdaFunction.Arn}'))) {
+          console.log(`Updating workflow ${stateObject.Resource} reference`);
           const lambdaAlias = this.lookupLambdaReference(stateObject.Resource);
-          console.log(`Updating workflow ${stateObject.Resource} reference to ${lambdaAlias}`);
+          console.log(`Setting reference to ${lambdaAlias}`);
           stateObject.Resource = lambdaAlias;
         }
       });
