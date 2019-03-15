@@ -114,34 +114,6 @@ async function getClusterStats(stackName) {
   return stats;
 }
 
-async function getAutoScalingGroupName(stackName) {
-  const autoScalingGroups = (await autoscaling().describeAutoScalingGroups({}).promise()).AutoScalingGroups;
-  const asg = autoScalingGroups.find((group) => group.AutoScalingGroupName.match(new RegExp(stackName, 'g')));
-  return asg.AutoScalingGroupName;
-}
-
-async function getNewScalingActivity({ stackName, waitPeriod }) {
-  waitPeriod = waitPeriod || 30000;
-  const autoScalingGroupName = await getAutoScalingGroupName(stackName);
-  const params = {
-    AutoScalingGroupName: autoScalingGroupName,
-    MaxRecords: 1
-  };
-  let activities = await autoscaling().describeScalingActivities(params).promise();
-  const startingActivity = activities.Activities[0];
-  let mostRecentActivity = Object.assign({}, startingActivity);
-  /* eslint-disable no-await-in-loop */
-  while (startingActivity.ActivityId === mostRecentActivity.ActivityId) {
-    activities = await autoscaling().describeScalingActivities(params).promise();
-    mostRecentActivity = activities.Activities[0];
-    console.log(`No new activity found. Sleeping for ${waitPeriod / 1000} seconds.`);
-    await sleep(waitPeriod);
-  }
-  /* eslint-enable no-await-in-loop */
-
-  return mostRecentActivity;
-}
-
 /**
  * Get the template JSON from S3 for the workflow
  *
