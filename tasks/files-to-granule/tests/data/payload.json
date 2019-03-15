@@ -1,0 +1,89 @@
+{
+  "config": {
+    "bucket": "cumulus-internal",
+    "buckets": {
+      "internal": {
+        "name": "cumulus-internal",
+        "type": "internal"
+      },
+      "private": {
+        "name": "cumulus-private",
+        "type": "private"
+      },
+      "protected": {
+        "name": "cumulus-protected",
+        "type": "protected"
+      },
+      "public": {
+        "name": "cumulus-public",
+        "type": "public"
+      }
+    },
+    "granuleIdExtraction": "(MOD11A1\\..*)(\\.hdf|\\.cmr\\.xml|_[\\w]{1,}\\.jpg)",
+    "input_granules": [
+      {
+        "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
+        "files": [
+          {
+            "name": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+            "bucket": "cumulus-internal",
+            "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+            "fileStagingDir": "file-staging/subdir"
+          }
+        ]
+      }
+    ],
+    "distribution_endpoint": "https://something.api.us-east-1.amazonaws.com/",
+    "collection": {
+      "files": [
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+          "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+          "bucket": "protected"
+        },
+        {
+          "regex": "^BROWSE\\.MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf$",
+          "sampleFileName": "BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+          "bucket": "private"
+        },
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.hdf\\.met$",
+          "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met",
+          "bucket": "private"
+        },
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.cmr\\.xml$",
+          "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
+          "bucket": "public"
+        },
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_2\\.jpg$",
+          "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+          "bucket": "public"
+        },
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}_1\\.jpg$",
+          "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+          "bucket": "public",
+          "url_path": "jpg/example/"
+        }
+      ],
+      "url_path": "example/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/",
+      "name": "MOD11A1",
+      "granuleId": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
+      "dataType": "MOD11A1",
+      "granuleIdExtraction": "(MOD11A1\\.(.*))\\.hdf",
+      "process": "modis",
+      "provider_path": "/TEST_B/Cumulus/MODIS/PDR/",
+      "version": "006",
+      "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+      "id": "MOD11A1"
+    }
+  },
+  "input": [
+    "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+    "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+    "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+    "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml"
+  ]
+}

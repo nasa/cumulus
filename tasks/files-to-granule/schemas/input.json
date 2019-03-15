@@ -1,0 +1,14 @@
+{
+  "title": "MoveGranulesInput",
+  "description": "Describes the input expected by the files-to-granules task",
+  "type": "array",
+  "items": {
+    "granules": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "list of s3 uris"
+      }
+    }
+  }
+}
