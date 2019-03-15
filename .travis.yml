@@ -19,14 +19,14 @@ stages:
 
 jobs:
   include:
-    - name: "npm audit"
-      stage: build cache & audit
-      if: tag !~ ^v\d+.* AND commit_message !~ \[skip-audit\]
-      install:
-        - nvm install-latest-npm
-        - ln -s /dev/stdout ./lerna-debug.log
-        - npm ci
-      script: ./travis-ci/audit-packages.sh
+    # - name: "npm audit"
+    #   stage: build cache & audit
+    #   if: tag !~ ^v\d+.* AND commit_message !~ \[skip-audit\]
+    #   install:
+    #     - nvm install-latest-npm
+    #     - ln -s /dev/stdout ./lerna-debug.log
+    #     - npm ci
+    #   script: ./travis-ci/audit-packages.sh
 
     - name: "eslint"
       stage: unit test and stack deployment
