@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');
@@ -239,36 +238,21 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
     state: 'ENABLED'
   });
 
-  const lambdaStub = sinon.stub(aws, 'lambda')
-    .returns({
-      createEventSourceMapping: () => ({
-        promise: () => Promise.resolve({ UUID: randomString() })
-      }),
-      deleteEventSourceMapping: () => ({
-        promise: () => Promise.resolve()
-      }),
-      listEventSourceMappings: () => ({
-        promise: () => Promise.resolve({
-          EventSourceMappings: [
-            {
-              UUID: randomString(),
-              EventSourceArn: item.rule.value,
-              FunctionArn: `arn:aws:lambda:us-west-2:123456789012:function:${process.env.messageConsumer}`,
-              State: 'Disabled'
-            }
-          ]
-        })
-      })
-    });
+  await aws.lambda().createEventSourceMapping({
+    EventSourceArn: item.rule.value,
+    FunctionName: process.env.messageConsumer,
+    Enabled: false
+  }).promise();
 
-  try {
-    await (new models.Rule()).create(item);
-    t.pass();
-  }
-  catch (err) {
-    t.fail(err);
-  }
-  finally {
-    lambdaStub.reset();
-  }
+  const myRuleModel = new models.Rule();
+
+  await myRuleModel.create(item);
+
+  const { EventSourceMappings } = await aws.lambda().listEventSourceMappings({
+    EventSourceArn: item.rule.value,
+    FunctionName: process.env.messageConsumer
+  }).promise();
+
+  t.is(EventSourceMappings.length, 1);
+  t.is(EventSourceMappings[0].State, 'Enabled');
 });
