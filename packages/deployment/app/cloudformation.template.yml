@@ -1273,7 +1273,7 @@ Resources:
       {{#if this.service_scaling.target_value}}
         TargetValue: this.service_scaling.target_value
       {{else}}
-        TargetValue: 20
+        TargetValue: 50
       {{/if}}
         PredefinedMetricSpecification:
         {{#if this.service_scaling.predefined_metric_type}}

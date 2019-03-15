@@ -64,7 +64,7 @@ describe('scaling for step function activities', () => {
   describe('ECS Service TargetTracking Policy', () => {
     it('triggers at 20% of CPUUtilization', () => {
       const targetTrackingConfiguration = cloudformationResources[targetTrackingScalingPolicy].Properties.TargetTrackingScalingPolicyConfiguration;
-      expect(targetTrackingConfiguration.TargetValue).toEqual(20);
+      expect(targetTrackingConfiguration.TargetValue).toEqual(50);
       expect(targetTrackingConfiguration.PredefinedMetricSpecification.PredefinedMetricType).toEqual('ECSServiceAverageCPUUtilization');
     });
   });
