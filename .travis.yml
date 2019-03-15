@@ -36,6 +36,7 @@ jobs:
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
       script: npm run lint
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "Unit tests except API"
       stage: unit test and stack deployment
@@ -50,6 +51,7 @@ jobs:
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
       script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api --ignore cumulus-integration-tests
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "API unit tests"
       stage: unit test and stack deployment
@@ -64,6 +66,7 @@ jobs:
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
       script: ./travis-ci/run-api-unit-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "Deploy Integration Test Stack"
       stage: unit test and stack deployment
