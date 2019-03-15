@@ -2,6 +2,7 @@
 
 set -e
 
+npm ci
 . ./travis-ci/set-env-vars.sh
 
 (
