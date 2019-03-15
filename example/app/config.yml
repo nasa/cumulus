@@ -119,7 +119,7 @@ default:
           scale_out:
             evaluation_periods: 1
             step_adjustment_config:
-              AdjustmentType: ChangeInCapacity
+              AdjustmentType: PercentChangeInCapacity
               StepAdjustments:
               - MetricIntervalLowerBound: 0
                 MetricIntervalUpperBound: 10
