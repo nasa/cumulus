@@ -2,6 +2,8 @@
 
 const find = require('lodash.find');
 
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 900000;
+
 const {
   buildAndStartWorkflow,
   waitForCompletedExecution,
