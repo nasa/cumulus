@@ -1,9 +1,11 @@
 'use strict';
 
 const test = require('ava');
+const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');
+const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
 
 process.env.RulesTable = `RulesTable_${randomString()}`;
 process.env.stackName = randomString();
@@ -223,4 +225,50 @@ test.serial('it does not delete event source mappings if they exist for other ru
   // Cleanup -- this is required for repeated local testing, else localstack retains rules
   await rules.delete(rule);
   await rules.delete(ruleThree);
+});
+
+test.serial('Creating a kinesis rule where an event source mapping already exists, but is not enabled, succeeds', async (t) => {
+  process.env.messageConsumer = randomString();
+
+  const item = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'kinesis',
+      value: randomString()
+    },
+    state: 'ENABLED'
+  });
+
+  const lambdaStub = sinon.stub(aws, 'lambda')
+    .returns({
+      createEventSourceMapping: () => ({
+        promise: () => Promise.resolve({ UUID: randomString() })
+      }),
+      deleteEventSourceMapping: () => ({
+        promise: () => Promise.resolve()
+      }),
+      listEventSourceMappings: () => ({
+        promise: () => Promise.resolve({
+          EventSourceMappings: [
+            {
+              UUID: randomString(),
+              EventSourceArn: item.rule.value,
+              FunctionArn: `arn:aws:lambda:us-west-2:123456789012:function:${process.env.messageConsumer}`,
+              State: 'Disabled'
+            }
+          ]
+        })
+      })
+    });
+
+  try {
+    await (new models.Rule()).create(item);
+    t.pass();
+  }
+  catch (err) {
+    t.fail(err);
+  }
+  finally {
+    lambdaStub.reset();
+  }
 });
