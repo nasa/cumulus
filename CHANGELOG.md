@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added helpers to `@packages/integration-tests/api/distribution`:
     - `getDistributionApiFileStream()` returns a stream to download files protected by the distribution API
     - `getDistributionFileUrl()` constructs URLs for requesting files from the distribution API
+- **CUMULUS-802**
+  - `@cumulus/deployment` Added ECS Service and Cluster autoscaling configuration to default deployment configuration. Read more in the docs: [ECS Auto Scaling](https://nasa.github.io/cumulus/docs/features/ecs_autoscaling).
 
 - **CUMULUS-1101**
   - Added new `@cumulus/checksum` package. This package provides functions to calculate and validate checksums.
