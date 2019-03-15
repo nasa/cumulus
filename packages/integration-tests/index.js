@@ -828,8 +828,6 @@ module.exports = {
   getClusterArn,
   getClusterStats,
   getExecutionStatus,
-  getAutoScalingGroupName,
-  getNewScalingActivity,
   getWorkflowArn,
   rulesList,
   waitForAsyncOperationStatus,
