@@ -106,6 +106,12 @@ default:
     desiredInstances: 0
     autoscaling_policies:
       metric: Memory
+      scale_out:
+        evaluation_periods: 1
+        threshold: 75
+      scale_in:
+        evaluation_periods: 1
+        threshold: 50
     tasks:
       AsyncOperation:
         image: cumuluss/async-operation:25

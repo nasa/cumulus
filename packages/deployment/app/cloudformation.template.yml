@@ -1023,8 +1023,8 @@ Resources:
         - Ref: ScaleOutEc2ScalingPolicy
       TreatMissingData: notBreaching
       ComparisonOperator: GreaterThanOrEqualToThreshold
-      EvaluationPeriods: 1
-      Threshold: 75
+      EvaluationPeriods: {{ ecs.autoscaling_policies.scale_out.evaluation_periods }}
+      Threshold: {{ ecs.autoscaling_policies.scale_out.threshold }}
       Metrics:
         - Id: m1
           MetricStat:
@@ -1045,8 +1045,8 @@ Resources:
         - Ref: ScaleInEc2ScalingPolicy
       TreatMissingData: notBreaching
       ComparisonOperator: LessThanOrEqualToThreshold
-      EvaluationPeriods: 1
-      Threshold: 50
+      EvaluationPeriods: {{ ecs.autoscaling_policies.scale_in.evaluation_periods }}
+      Threshold: {{ ecs.autoscaling_policies.scale_in.threshold }}
       Metrics:
         - Id: m1
           MetricStat:
@@ -1267,9 +1267,9 @@ Resources:
         Ref: {{@key}}ECSServiceScalableTarget
       PolicyType: TargetTrackingScaling # SimpleScaling is not supported
       TargetTrackingScalingPolicyConfiguration:
-      {{#if this.service_scaling.target_adjustment_config}}
+    {{#if this.service_scaling.target_adjustment_config}}
         {{{ToJson this.service_scaling.target_adjustment_config}}}
-      {{else}}
+    {{else}}
       {{#if this.service_scaling.target_value}}
         TargetValue: this.service_scaling.target_value
       {{else}}
@@ -1281,7 +1281,7 @@ Resources:
         {{else}}
           PredefinedMetricType: ECSServiceAverageCPUUtilization
         {{/if}}
-      {{/if}}
+    {{/if}}
 {{/each}}
 
 {{#each ecs.tasks}}
