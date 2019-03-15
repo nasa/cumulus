@@ -26,7 +26,6 @@ function setTestCredentials() {
 
 test.beforeEach((t) => {
   t.context.granId = randomId('granuleId');
-  t.context.backendUrl = randomId('https://backend.com/');
   t.context.distEndpoint = randomId('https://example.com/');
   t.context.published = true;
 });
@@ -38,7 +37,6 @@ test('reconcileCMRMetadata does not call updateCMRMetadata if no metadatafile pr
   ];
   const {
     granId,
-    backendUrl,
     distEndpoint,
     published
   } = t.context;
@@ -48,7 +46,6 @@ test('reconcileCMRMetadata does not call updateCMRMetadata if no metadatafile pr
   const results = await cmrUtils.reconcileCMRMetadata({
     granuleId: granId,
     updatedFiles,
-    backendUrl,
     distEndpoint,
     published
   });
@@ -64,7 +61,6 @@ test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', asy
   const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr.xml' }];
   const {
     granId,
-    backendUrl,
     distEndpoint,
     published
   } = t.context;
@@ -75,7 +71,6 @@ test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', asy
   const params = {
     granuleId: granId,
     updatedFiles,
-    backendUrl,
     distEndpoint,
     published
   };
@@ -88,7 +83,6 @@ test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', asy
       granuleId: granId,
       cmrFile: updatedFiles[1],
       files: updatedFiles,
-      backendUrl,
       distEndpoint,
       published
     })
@@ -102,7 +96,6 @@ test('reconcileCMRMetadata logs an error if multiple metadatafiles present.', as
   const updatedFiles = [{ filename: 'anotherfile.cmr.json' }, { filename: 'cmrmeta.cmr.xml' }];
   const {
     granId,
-    backendUrl,
     distEndpoint,
     published
   } = t.context;
@@ -113,7 +106,6 @@ test('reconcileCMRMetadata logs an error if multiple metadatafiles present.', as
   const results = await cmrUtils.reconcileCMRMetadata({
     granuleId: granId,
     updatedFiles,
-    backendUrl,
     distEndpoint,
     published
   });
@@ -130,7 +122,7 @@ test('reconcileCMRMetadata logs an error if multiple metadatafiles present.', as
 test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XML2CMR if xml metadata present and publish is false', async (t) => {
   // arrange
   const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr.xml' }];
-  const { granId, backendUrl, distEndpoint } = t.context;
+  const { granId, distEndpoint } = t.context;
   const published = false;
   const fakeBuckets = { private: { type: 'private', name: 'private' } };
   const fakeBucketsConfigDefaults = sinon.fake.returns(fakeBuckets);
@@ -146,7 +138,6 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
   await cmrUtils.reconcileCMRMetadata({
     granuleId: granId,
     updatedFiles,
-    backendUrl,
     distEndpoint,
     published
   });
@@ -154,7 +145,6 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
   const paramsIntoUpdateEcho10XML = {
     cmrFile: updatedFiles[1],
     files: updatedFiles,
-    backendUrl,
     distEndpoint,
     buckets: new BucketsConfig(fakeBuckets)
   };
@@ -175,7 +165,6 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
   const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr.xml' }];
   const {
     granId,
-    backendUrl,
     distEndpoint,
     published
   } = t.context;
@@ -207,7 +196,6 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
   await cmrUtils.reconcileCMRMetadata({
     granuleId: granId,
     updatedFiles,
-    backendUrl,
     distEndpoint,
     published
   });
@@ -215,7 +203,6 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
   const paramsIntoUpdateEcho10XML = {
     cmrFile: updatedFiles[1],
     files: updatedFiles,
-    backendUrl,
     distEndpoint,
     buckets: new BucketsConfig(fakeBuckets)
   };
@@ -236,7 +223,6 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
   const updatedFiles = [{ filename: 'anotherfile' }, jsonCMRFile];
   const {
     granId,
-    backendUrl,
     distEndpoint,
     published
   } = t.context;
@@ -268,7 +254,6 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
   await cmrUtils.reconcileCMRMetadata({
     granuleId: granId,
     updatedFiles,
-    backendUrl,
     distEndpoint,
     published
   });
@@ -276,7 +261,6 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
   const paramsIntoUpdateUMMG = {
     cmrFile: updatedFiles[1],
     files: updatedFiles,
-    backendUrl,
     distEndpoint,
     buckets
   };
@@ -300,7 +284,6 @@ test('updateCMRMetadata file throws error if incorrect cmrfile provided', async 
   const badCMRFile = { filename: 'notreallycmrfile' };
   const {
     granId,
-    backendUrl,
     distEndpoint,
     published
   } = t.context;
@@ -312,7 +295,6 @@ test('updateCMRMetadata file throws error if incorrect cmrfile provided', async 
       granuleId: granId,
       cmrFile: badCMRFile,
       files: updatedFiles,
-      backendUrl,
       distEndpoint,
       published,
       inBuckets: 'fakebucket'

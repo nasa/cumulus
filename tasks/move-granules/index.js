@@ -298,7 +298,6 @@ async function moveFilesForAllGranules(
  *
  * @param {Array<Object>} cmrFiles - array of objects that include CMR xmls uris and granuleIds
  * @param {Object} granulesObject - an object of the granules where the key is the granuleId
- * @param {string} backendUrl - the api backend url
  * @param {string} distEndpoint - the api distribution endpoint
  * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
  * @returns {Promise} promise resolves when all files have been updated
@@ -306,7 +305,6 @@ async function moveFilesForAllGranules(
 async function updateEachCmrFileAccessURLs(
   cmrFiles,
   granulesObject,
-  backendUrl,
   distEndpoint,
   bucketsConfig
 ) {
@@ -319,7 +317,6 @@ async function updateEachCmrFileAccessURLs(
       granuleId,
       cmrFile: updatedCmrFile,
       files: granule.files,
-      backendUrl,
       distEndpoint,
       publish,
       inBuckets: bucketsConfig
@@ -356,7 +353,6 @@ async function moveGranules(event) {
   const distEndpoint = get(config, 'distribution_endpoint');
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
   const collection = config.collection;
-  const backendUrl = process.env.BACKEND_API_URL;
 
   const duplicateHandling = duplicateHandlingType(event);
 
@@ -385,7 +381,6 @@ async function moveGranules(event) {
     await updateEachCmrFileAccessURLs(
       cmrFiles,
       movedGranules,
-      backendUrl,
       distEndpoint,
       bucketsConfig
     );

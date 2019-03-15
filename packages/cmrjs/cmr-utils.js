@@ -388,7 +388,6 @@ function constructOnlineAccessUrls({
  *
  * @param {Object} params - input parameters
  * @param {Array<Object>} params.files - array of file objects
- * @param {string} params.backendUrl - api backend url
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {BucketsConfig} params.buckets -  Class instance
  * @param {string} params.s3CredsEndpoint - Optional endpoint for acquiring temporary s3 creds
@@ -397,12 +396,11 @@ function constructOnlineAccessUrls({
  */
 function constructRelatedUrls({
   files,
-  backendUrl,
   distEndpoint,
   buckets,
   s3CredsEndpoint = 's3credentials'
 }) {
-  const credsUrl = urljoin(backendUrl, s3CredsEndpoint);
+  const credsUrl = urljoin(distEndpoint, s3CredsEndpoint);
   const s3CredentialsObject = getS3CredentialsObject(credsUrl);
   const cmrUrlObjects = constructOnlineAccessUrls({
     files,
@@ -485,7 +483,6 @@ function mergeURLs(original, updated = [], removed = []) {
  * @param {Object} params - parameter object
  * @param {Object} params.cmrFile - cmr.json file whose contents will be updated.
  * @param {Array<Object>} params.files - array of moved file objects.
- * @param {string} params.backendUrl - backend api url
  * @param {string} params.distEndpoint - distribution endpoint form config.
  * @param {BucketsConfig} params.buckets - stack BucketConfig instance.
  * @returns {Promise} returns promised updated UMMG metadata object.
@@ -493,13 +490,11 @@ function mergeURLs(original, updated = [], removed = []) {
 async function updateUMMGMetadata({
   cmrFile,
   files,
-  backendUrl,
   distEndpoint,
   buckets
 }) {
   const newURLs = constructRelatedUrls({
     files,
-    backendUrl,
     distEndpoint,
     buckets
   });
@@ -586,7 +581,6 @@ function buildMergedEchoURLObject(URLlist = [], originalURLlist = [], removedURL
  * @param {Object} params - parameter object
  * @param {Object} params.cmrFile - cmr xml file object to be updated
  * @param {Array<Object>} params.files - array of file objects
- * @param {string} params.backendUrl - backend api url
  * @param {string} params.distEndpoint - distribution endpoint from config
  * @param {BucketsConfig} params.buckets - stack BucketConfig instance
  * @returns {Promise} returns promised updated metadata object.
@@ -594,7 +588,6 @@ function buildMergedEchoURLObject(URLlist = [], originalURLlist = [], removedURL
 async function updateEcho10XMLMetadata({
   cmrFile,
   files,
-  backendUrl,
   distEndpoint,
   buckets,
   s3CredsEndpoint = 's3credentials'
@@ -614,7 +607,7 @@ async function updateEcho10XMLMetadata({
 
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
   const newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets })
-    .concat(getS3CredentialsObject(urljoin(backendUrl, s3CredsEndpoint)));
+    .concat(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
 
   const mergedOnlineResources = buildMergedEchoURLObject(newURLs, originalOnlineResourceURLs,
     removedURLs, ['EXTENDED METADATA', 'VIEW RELATED INFORMATION'], ['URLDescription']);
@@ -652,7 +645,6 @@ async function updateCMRMetadata({
   granuleId,
   cmrFile,
   files,
-  backendUrl,
   distEndpoint,
   published,
   inBuckets = null
@@ -667,7 +659,6 @@ async function updateCMRMetadata({
   const params = {
     cmrFile,
     files,
-    backendUrl,
     distEndpoint,
     buckets
   };
@@ -712,7 +703,6 @@ async function updateCMRMetadata({
 async function reconcileCMRMetadata({
   granuleId,
   updatedFiles,
-  backendUrl,
   distEndpoint,
   published
 }) {
@@ -722,7 +712,6 @@ async function reconcileCMRMetadata({
       granuleId,
       cmrFile: cmrMetadataFiles[0],
       files: updatedFiles,
-      backendUrl,
       distEndpoint,
       published
     });
