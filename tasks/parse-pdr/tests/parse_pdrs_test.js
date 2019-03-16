@@ -46,6 +46,26 @@ test.beforeEach(async (t) => {
   await t.context.collectionConfigStore.put('MOD09GQ', '006', collectionConfig);
 });
 
+const testGranule = {
+  granuleId: 'MOD09GQ.A2017224.h09v02.006.2017227165020',
+  dataType: 'MOD09GQ',
+  granuleSize: 17909733
+};
+
+const testHdfFile = {
+  fileType: 'data',
+  path: '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA',
+  fileSize: 17865615,
+  checksumType: 'CKSUM',
+  checksumValue: 4208254019
+};
+
+const testMetFile = {
+  path: '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA',
+  fileSize: 44118,
+  fileType: 'metadata'
+};
+
 test.afterEach(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.payload.config.bucket);
 });
@@ -76,24 +96,17 @@ test.serial('parse PDR from FTP endpoint', async (t) => {
     t.is(output.totalSize, 17909733);
 
     const granule = output.granules[0];
-    t.is(granule.granuleId, 'MOD09GQ.A2017224.h09v02.006.2017227165020');
-    t.is(granule.dataType, 'MOD09GQ');
-    t.is(granule.granuleSize, 17909733);
+    Object.keys(testGranule).forEach((key) => t.is(granule[key], testGranule[key]));
 
     const hdfFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
-    t.truthy(hdfFile);
-    t.is(hdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
-    t.is(hdfFile.fileSize, 17865615);
-    t.is(hdfFile.checksumType, 'CKSUM');
-    t.is(hdfFile.checksumValue, 4208254019);
+    Object.keys(testHdfFile).forEach((key) => t.is(testHdfFile[key], hdfFile[key]));
 
     const metFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
-    t.truthy(metFile);
-    t.is(metFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
-    t.is(metFile.fileSize, 44118);
+    Object.keys(testMetFile).forEach((key) => t.is(testMetFile[key], metFile[key]));
   }
+
   catch (err) {
     if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
       t.pass('ignoring this test. Test server seems to be down');
@@ -126,23 +139,20 @@ test.serial('parse PDR from HTTP endpoint', async (t) => {
     t.is(output.totalSize, 17909733);
 
     const granule = output.granules[0];
-    t.is(granule.granuleId, 'MOD09GQ.A2017224.h09v02.006.2017227165020');
-    t.is(granule.dataType, 'MOD09GQ');
-    t.is(granule.granuleSize, 17909733);
+    Object.keys(testGranule).forEach((key) => t.is(granule[key], testGranule[key]));
 
     const hdfFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
     t.truthy(hdfFile);
-    t.is(hdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
-    t.is(hdfFile.fileSize, 17865615);
-    t.is(hdfFile.checksumType, 'CKSUM');
-    t.is(hdfFile.checksumValue, 4208254019);
+    Object.keys(testHdfFile).forEach((key) => {
+      t.is(testHdfFile[key], hdfFile[key]);
+    });
+
 
     const metFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
     t.truthy(metFile);
-    t.is(metFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
-    t.is(metFile.fileSize, 44118);
+    Object.keys(testMetFile).forEach((key) => t.is(testMetFile[key], metFile[key]));
   }
   catch (err) {
     if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
@@ -178,23 +188,18 @@ test.serial('parse PDR from SFTP endpoint', async (t) => {
     t.is(output.totalSize, 17909733);
 
     const granule = output.granules[0];
-    t.is(granule.granuleId, 'MOD09GQ.A2017224.h09v02.006.2017227165020');
-    t.is(granule.dataType, 'MOD09GQ');
-    t.is(granule.granuleSize, 17909733);
+    Object.keys(testGranule).forEach((key) => t.is(granule[key], testGranule[key]));
 
     const hdfFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
     t.truthy(hdfFile);
-    t.is(hdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
-    t.is(hdfFile.fileSize, 17865615);
-    t.is(hdfFile.checksumType, 'CKSUM');
-    t.is(hdfFile.checksumValue, 4208254019);
+    Object.keys(testHdfFile).forEach((key) => t.is(testHdfFile[key], hdfFile[key]));
+
 
     const metFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
     t.truthy(metFile);
-    t.is(metFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
-    t.is(metFile.fileSize, 44118);
+    Object.keys(testMetFile).forEach((key) => t.is(testMetFile[key], metFile[key]));
   }
   catch (err) {
     if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
@@ -235,23 +240,15 @@ test.serial('Parse a PDR from an S3 provider', async (t) => {
     t.is(output.totalSize, 17909733);
 
     const granule = output.granules[0];
-    t.is(granule.granuleId, 'MOD09GQ.A2017224.h09v02.006.2017227165020');
-    t.is(granule.dataType, 'MOD09GQ');
-    t.is(granule.granuleSize, 17909733);
+    Object.keys(testGranule).forEach((key) => t.is(granule[key], testGranule[key]));
 
     const hdfFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
-    t.truthy(hdfFile);
-    t.is(hdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
-    t.is(hdfFile.fileSize, 17865615);
-    t.is(hdfFile.checksumType, 'CKSUM');
-    t.is(hdfFile.checksumValue, 4208254019);
+    Object.keys(testHdfFile).forEach((key) => t.is(testHdfFile[key], hdfFile[key]));
 
     const metFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
-    t.truthy(metFile);
-    t.is(metFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
-    t.is(metFile.fileSize, 44118);
+    Object.keys(testMetFile).forEach((key) => t.is(testMetFile[key], metFile[key]));
   }
   catch (err) {
     if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
