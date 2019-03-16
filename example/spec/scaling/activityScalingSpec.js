@@ -91,7 +91,7 @@ describe('scaling for step function activities', () => {
     });
   });
 
-  describe('scaling the service\'s desired tasks', () => {
+  xdescribe('scaling the service\'s desired tasks', () => {
     let workflowExecutionArns = [];
     const numExecutions = 10;
 
