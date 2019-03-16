@@ -77,11 +77,12 @@ const expectedTranslatePayload = {
       granuleId: record.product.name,
       files: [
         {
+          name: recordFile.name,
+          fileType: recordFile.type,
+          bucket: record.bucket,
           path: testDataFolder,
           url_path: recordFile.uri,
-          bucket: record.bucket,
-          name: recordFile.name,
-          size: recordFile.size
+          fileSize: recordFile.size
         }
       ]
     }

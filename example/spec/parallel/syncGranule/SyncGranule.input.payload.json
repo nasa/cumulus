@@ -1,29 +1,31 @@
 {
-    "granules": [
-      {
-        "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606",
-        "dataType": "MOD09GQ",
-        "version": "006",
-        "files": [
-          {
-            "path": "cumulus-test-data/pdrs",
-            "fileSize": 1098034,
-            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-            "url_path": "{cmrMetadata.Granule.GranuleUR}/{file.name}"
-          },
-          {
-            "path": "cumulus-test-data/pdrs",
-            "fileSize": 21708,
-            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-            "url_path": "{cmrMetadata.Granule.GranuleUR}/{file.name}"
-          }
-        ]
-      }
-    ],
-    "pdr": {
-      "path": "cumulus-test-data/pdrs",
-      "size": 596,
-      "name": "MOD09GQ_1granule_v3.PDR",
-      "time": 1520873050000
+  "granules": [
+    {
+      "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606",
+      "dataType": "MOD09GQ",
+      "version": "006",
+      "files": [
+        {
+          "path": "cumulus-test-data/pdrs",
+          "fileSize": 1098034,
+          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+          "fileType": "data",
+          "url_path": "{cmrMetadata.Granule.GranuleUR}/{file.name}"
+        },
+        {
+          "path": "cumulus-test-data/pdrs",
+          "fileSize": 21708,
+          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+          "fileType": "metadata",
+          "url_path": "{cmrMetadata.Granule.GranuleUR}/{file.name}"
+        }
+      ]
     }
+  ],
+  "pdr": {
+    "path": "cumulus-test-data/pdrs",
+    "size": 596,
+    "name": "MOD09GQ_1granule_v3.PDR",
+    "time": 1520873050000
+  }
 }
