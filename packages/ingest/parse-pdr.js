@@ -21,7 +21,8 @@ const pdrToCnmMap = {
   QA_METADATA: 'metadata',
   PRODHIST: 'qa',
   QA: 'metadata',
-  TGZ: 'data'
+  TGZ: 'data',
+  LINKAGE: 'data'
 };
 
 function getItem(spec, pdrName, name, must = true) {

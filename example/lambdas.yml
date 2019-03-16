@@ -4,8 +4,8 @@ CNMToCMA:
   runtime: java8
   memory: 128
   s3Source:
-    bucket: '{{buckets.internal.name}}'
-    key: cnmGranulePrerelease/cnmToGranule-1.0.2j.zip
+    bucket: '{{buckets.shared.name}}'
+    key: daacs/podaac/cnmToGranule-1.0.2j.zip
   useMessageAdapter: false
   launchInVpc: true
 CnmResponse:

@@ -146,19 +146,23 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
       Description: 'File to download'
     }
   ];
-  const actual = await updateEcho10XMLMetadata({
-    cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
-    files: filesObject,
-    distEndpoint,
-    buckets
-  });
+  let actual;
+  try {
+    actual = await updateEcho10XMLMetadata({
+      cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+      files: filesObject,
+      distEndpoint,
+      buckets
+    });
+  }
+  finally {
+    revertMetaObject();
+    revertMockUpload();
+    revertGenerateXml();
+  }
+
   t.deepEqual(actual.Granule.OnlineAccessURLs.OnlineAccessURL, onlineAccessURLsExpected);
   t.deepEqual(actual.Granule.OnlineResources.OnlineResource, onlineResourcesExpected);
   t.deepEqual(actual.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl, AssociatedBrowseExpected);
-
   t.truthy(uploadEchoSpy.calledWith('testXmlString', { filename: 's3://cumulus-test-sandbox-private/notUsed' }));
-
-  revertMetaObject();
-  revertMockUpload();
-  revertGenerateXml();
 });

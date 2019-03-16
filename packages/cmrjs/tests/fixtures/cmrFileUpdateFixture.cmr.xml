@@ -50,9 +50,6 @@
       <URLDescription>File to download</URLDescription>
     </OnlineAccessURL>
   </OnlineAccessURLs>
-  <Orderable>true</Orderable>
-  <Visible>true</Visible>
-  <CloudCover>13</CloudCover>
   <OnlineResources>
     <OnlineResource>
       <URL>https://example.com/s3credentials</URL>
@@ -60,4 +57,7 @@
       <Type>VIEW RELATED INFORMATION</Type>
     </OnlineResource>
   </OnlineResources>
+  <Orderable>true</Orderable>
+  <Visible>true</Visible>
+  <CloudCover>13</CloudCover>
 </Granule>

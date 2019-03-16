@@ -145,7 +145,7 @@ module.exports.collection = {
           },
           fileType: {
             title: 'File Type',
-            description: 'CNM Filetype.  Used for submission to CMR',
+            description: 'CNM Filetype.  Used for submission to CMR.  Non CNM Filetypes default to "data"',
             type: 'string'
           }
         },
