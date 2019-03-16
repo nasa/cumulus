@@ -6,70 +6,90 @@ const request = require('supertest');
 
 const {
   testUtils: {
-    randomString
+    randomId
   },
   aws: {
     lambda
   }
 } = require('@cumulus/common');
-const { verifyJwtToken } = require('../../lib/token');
-const assertions = require('../../lib/assertions');
+
+const EarthdataLoginClient = require('../../lib/EarthdataLogin');
+
 const models = require('../../models');
-const {
-  createFakeJwtAuthToken,
-  fakeAccessTokenFactory
-} = require('../../lib/testUtils');
+const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 const {
   createJwtToken
 } = require('../../lib/token');
 
-process.env.TOKEN_SECRET = randomString();
-let accessTokenModel;
-let userModel;
-let jwtAuthToken;
+process.env.EARTHDATA_CLIENT_ID = randomId('edlID');
+process.env.EARTHDATA_CLIENT_PASSWORD = randomId('edlPW');
+process.env.DISTRIBUTION_REDIRECT_ENDPOINT = 'http://example.com';
+process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('host')}/${randomId('path')}`;
+process.env.AccessTokensTable = randomId('tokenTable');
 
+
+process.env.TOKEN_SECRET = randomId('tokenSecret');
+let accessTokenModel;
+let authorizationUrl;
+let userModel;
 
 // import the express app after setting the env variables
-const { app } = require('../../app');
+const { distributionApp } = require('../../app/distribution');
+
 
 test.before(async () => {
-  process.env.UsersTable = randomString();
-  userModel = new models.User();
-  await userModel.createTable();
-
-  process.env.AccessTokensTable = randomString();
-  accessTokenModel = new models.AccessToken();
+  accessTokenModel = new models.AccessToken('token');
   await accessTokenModel.createTable();
 
-  jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+
+  const getAccessTokenResponse = {
+    accessToken: randomId('accessToken'),
+    refreshToken: randomId('refreshToken'),
+    username: randomId('username'),
+    expirationTime: Date.now() + (60 * 60 * 1000)
+  };
+  authorizationUrl = randomId('authURL');
+
+  sinon.stub(
+    EarthdataLoginClient.prototype,
+    'getAccessToken'
+  ).callsFake(() => getAccessTokenResponse);
+
+  sinon.stub(
+    EarthdataLoginClient.prototype,
+    'getAuthorizationUrl'
+  ).callsFake(() => authorizationUrl);
 });
 
 test.after.always(async () => {
-  await userModel.deleteTable();
   await accessTokenModel.deleteTable();
+  sinon.reset();
 });
 
-test('GET invokes request for credentials with username from authToken', async (t) => {
+test('An authorized s3credential requeste invokes NGAPs request for credentials with username from accessToken cookie', async (t) => {
+  const username = randomId('username');
   const lambdaInstance = lambda();
   const fakeCredential = { Payload: JSON.stringify({ fake: 'credential' }) };
   const invokeFake = sinon.fake.returns({ promise: () => Promise.resolve(fakeCredential) });
   const previousInvoke = lambdaInstance.invoke;
   lambdaInstance.invoke = invokeFake;
 
-  const parsedToken = verifyJwtToken(jwtAuthToken);
+  const accessTokenRecord = fakeAccessTokenFactory({ username });
+  await accessTokenModel.create(accessTokenRecord);
+
   const FunctionName = 'gsfc-ngap-sh-s3-sts-get-keys';
   const Payload = JSON.stringify({
     accesstype: 'sameregion',
     returntype: 'lowerCamel',
     duration: '3600',
-    rolesession: parsedToken.username,
-    userid: parsedToken.username
+    rolesession: username,
+    userid: username
   });
 
-  await request(app)
+  await request(distributionApp)
     .get('/s3credentials')
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Cookie', [`accessToken=${accessTokenRecord.accessToken}`])
     .expect(200);
 
   t.true(invokeFake.calledOnceWithExactly({
@@ -80,33 +100,29 @@ test('GET invokes request for credentials with username from authToken', async (
   lambdaInstance.invoke = previousInvoke;
 });
 
-test('GET with invalid access token returns an invalid token response', async (t) => {
-  const response = await request(app)
+
+test('An s3credential request without access Token redirects to Oauth2 provider.', async (t) => {
+  const response = await request(distributionApp)
     .get('/s3credentials')
     .set('Accept', 'application/json')
-    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
-    .expect(403);
+    .expect(307);
 
-  assertions.isInvalidAccessTokenResponse(t, response);
+  t.is(response.status, 307);
+  t.is(response.headers.location, authorizationUrl);
 });
 
-test('GET with unauthorized user token returns an unauthorized user response', async (t) => {
-  const accessTokenRecord = await accessTokenModel.create(fakeAccessTokenFactory());
-  const requestToken = createJwtToken(accessTokenRecord);
+test('An s3credential request with expired accessToken redirects to Oauth2 provider', async (t) => {
+  const accessTokenRecord = fakeAccessTokenFactory({
+    expirationTime: Date.now() - (5 * 1000)
+  });
+  await accessTokenModel.create(accessTokenRecord);
 
-  const response = await request(app)
+  const response = await request(distributionApp)
     .get('/s3credentials')
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${requestToken}`)
-    .expect(401);
+    .set('Cookie', [`accessToken=${accessTokenRecord.accessToken}`])
+    .expect(307);
 
-  assertions.isInvalidAuthorizationResponse(t, response);
-});
-
-test('GET without an Authorization header returns an Authorization Missing response', async (t) => {
-  const response = await request(app)
-    .get('/s3credentials')
-    .set('Accept', 'application/json')
-    .expect(401);
-  assertions.isAuthorizationMissingResponse(t, response);
+  t.is(response.status, 307);
+  t.is(response.headers.location, authorizationUrl);
 });
