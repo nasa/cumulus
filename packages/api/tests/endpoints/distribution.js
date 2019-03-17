@@ -6,17 +6,17 @@ const sinon = require('sinon');
 const { Cookie } = require('tough-cookie');
 const { URL } = require('url');
 const { s3 } = require('@cumulus/common/aws');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomId } = require('@cumulus/common/test-utils');
 
 const { AccessToken } = require('../../models');
 const EarthdataLoginClient = require('../../lib/EarthdataLogin');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 
-process.env.EARTHDATA_CLIENT_ID = randomString();
-process.env.EARTHDATA_CLIENT_PASSWORD = randomString();
+process.env.EARTHDATA_CLIENT_ID = randomId('edlId');
+process.env.EARTHDATA_CLIENT_PASSWORD = randomId('edlPw');
 process.env.DISTRIBUTION_REDIRECT_ENDPOINT = 'http://example.com';
-process.env.DISTRIBUTION_ENDPOINT = `https://${randomString()}/${randomString()}`;
-process.env.AccessTokensTable = randomString();
+process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('host')}/${randomId('path')}`;
+process.env.AccessTokensTable = randomId('tokenTable');
 let context;
 
 // import the express app after setting the env variables
@@ -43,17 +43,17 @@ test.before(async () => {
   const accessTokenModel = new AccessToken({ tableName: process.env.AccessTokensTable });
   await accessTokenModel.createTable();
 
-  const authorizationUrl = `https://${randomString()}.com/${randomString()}`;
-  const fileBucket = randomString();
-  const fileKey = randomString();
+  const authorizationUrl = `https://${randomId('host')}.com/${randomId('path')}`;
+  const fileBucket = randomId('bucket');
+  const fileKey = randomId('key');
   const fileLocation = `${fileBucket}/${fileKey}`;
-  const signedFileUrl = new URL(`https://${randomString()}.com/${randomString()}`);
+  const signedFileUrl = new URL(`https://${randomId('host2')}.com/${randomId('path2')}`);
 
 
   const getAccessTokenResponse = {
-    accessToken: randomString(),
-    refreshToken: randomString(),
-    username: randomString(),
+    accessToken: randomId('token'),
+    refreshToken: randomId('refreshToken'),
+    username: randomId('username'),
     expirationTime: Date.now() + (60 * 60 * 1000)
   };
 
@@ -96,7 +96,7 @@ test.before(async () => {
     fileLocation,
     authorizationUrl,
     signedFileUrl,
-    authorizationCode: randomString(),
+    authorizationCode: randomId('code'),
     distributionUrl: process.env.DISTRIBUTION_ENDPOINT
   };
 });
@@ -123,7 +123,7 @@ test('A request for a file using a non-existent access token returns a redirect 
   const response = await request(distributionApp)
     .get(`/${fileLocation}`)
     .set('Accept', 'application/json')
-    .set('Cookie', [`accessToken=${randomString()}`])
+    .set('Cookie', [`accessToken=${randomId('cookie')}`])
     .expect(307);
 
   validateRedirectToGetAuthorizationCode(t, response);
