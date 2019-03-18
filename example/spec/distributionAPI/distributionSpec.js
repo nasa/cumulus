@@ -103,6 +103,16 @@ describe('Distribution API', () => {
       expect(authorizeUrl.pathname).toEqual('/oauth/authorize');
     });
 
+    it('redirecting to Earthdata login for unauthorized requests to /s3credentials endpoint.', async () => {
+      const response = await got(
+        `${process.env.DISTRIBUTION_ENDPOINT}/s3credentials`,
+        { followRedirect: false }
+      );
+      const authorizeUrl = new URL(response.headers.location);
+      expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
+      expect(authorizeUrl.pathname).toEqual('/oauth/authorize');
+    });
+
     it('downloads the requested science file for authorized requests', async () => {
       accessToken = await getTestAccessToken();
       // Compare checksum of downloaded file with expected checksum.
