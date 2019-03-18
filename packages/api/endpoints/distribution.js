@@ -106,15 +106,15 @@ async function handleRedirectRequest(req, res) {
  * @param {any} res
  * @param {any} state
  */
-async function ensureAuthorizedOrRedirect(req, res, state) {
+async function ensureAuthorizedOrRedirect(req, res, next) {
   const {
     accessTokenModel,
     authClient
   } = getConfigurations();
 
   const redirectToGetAuthorizationCode = res
-        .status(307)
-        .set({ Location: authClient.getAuthorizationUrl(state) });
+    .status(307)
+    .set({ Location: authClient.getAuthorizationUrl(req.params[0]) });
 
   const accessToken = req.cookies.accessToken;
 
@@ -136,11 +136,9 @@ async function ensureAuthorizedOrRedirect(req, res, state) {
     return redirectToGetAuthorizationCode.send('Redirecting');
   }
 
-  req.authorizedMetadata = {userName: accessTokenRecord.username};
-  return [req, res];
+  req.authorizedMetadata = { userName: accessTokenRecord.username };
+  return next();
 }
-
-
 
 /**
  * Responds to a request for temporary s3 credentials.
@@ -151,7 +149,6 @@ async function ensureAuthorizedOrRedirect(req, res, state) {
  * temporary credentials
  */
 async function handleCredentialRequest(req, res) {
-  [req, res] = await ensureAuthorizedOrRedirect(req, res, '/s3credentials');
   res.status(200);
   return s3credentials(req, res);
 }
@@ -165,8 +162,6 @@ async function handleCredentialRequest(req, res) {
  */
 async function handleFileRequest(req, res) {
   const { s3Client } = getConfigurations();
-
-  [req, res] = await ensureAuthorizedOrRedirect(req, res, req.params[0]);
 
   let fileBucket;
   let fileKey;
@@ -194,7 +189,7 @@ async function handleFileRequest(req, res) {
 }
 
 router.get('/redirect', handleRedirectRequest);
-router.get('/s3credentials', handleCredentialRequest);
-router.get('/*', handleFileRequest);
+router.get('/s3credentials', ensureAuthorizedOrRedirect, handleCredentialRequest);
+router.get('/*', ensureAuthorizedOrRedirect, handleFileRequest);
 
 module.exports = router;
