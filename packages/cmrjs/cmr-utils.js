@@ -54,6 +54,21 @@ function isCMRFile(fileobject) {
   return isCMRFilename(cmrfilename);
 }
 
+/**
+ * Reduce granule object array to CMR files array
+ *
+ * @param {Object} granules = granule objects array
+ *
+ * @returns {Array<Object>} - CMR file object array: { filename, granuleId }
+ */
+function reduceGranulesToCmrFileObjects(granules) {
+  const reducer = (cFiles, g) => cFiles.concat(
+    g.files.filter(isCMRFile).map(
+      (cf) => ({ filename: cf.filename, granuleId: g.granuleId })
+    ));
+  return granules.reduce(reducer, []);
+}
+
 
 /**
  * Instantiates a CMR instance for ingest of metadata
@@ -669,5 +684,6 @@ module.exports = {
   metadataObjectFromCMRFile,
   publish2CMR,
   reconcileCMRMetadata,
+  reduceGranulesToCmrFileObjects,
   updateCMRMetadata
 };
