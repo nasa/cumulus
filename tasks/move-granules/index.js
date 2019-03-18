@@ -302,9 +302,9 @@ async function moveGranules(event) {
 
   const granulesInput = get(event, 'input.granules', []);
   const cmrFiles = granulesInput.reduce(
-    (cFiles, g) => g.files.filter(isCMRFile).map(
+    (cFiles, g) => cFiles.concat(g.files.filter(isCMRFile).map(
       (cf) => ({ filename: cf.filename, granuleId: g.granuleId })
-    ), []
+    )), []
   );
   const allGranules = keyBy(granulesInput, 'granuleId');
 

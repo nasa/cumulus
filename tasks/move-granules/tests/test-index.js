@@ -45,7 +45,7 @@ async function updateFileTags(files, bucket, TagSet) {
 }
 
 function granulesToFileURIs(granules) {
-  const m = granules.reduce((arr, g) => g.files.map((file) => file.filename), []);
+  const m = granules.reduce((arr, g) => arr.concat(g.files.map((file) => file.filename)), []);
   return m;
 }
 
