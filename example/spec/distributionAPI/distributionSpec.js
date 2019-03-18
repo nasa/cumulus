@@ -93,34 +93,6 @@ describe('Distribution API', () => {
       await accessTokensModel.delete({ accessToken });
     });
 
-    it('redirects to Earthdata login for unauthorized requests to /s3credentials endpoint.', async () => {
-      const response = await got(
-        `${process.env.DISTRIBUTION_ENDPOINT}/s3credentials`,
-        { followRedirect: false }
-      );
-      const authorizeUrl = new URL(response.headers.location);
-      expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
-      expect(authorizeUrl.pathname).toEqual('/oauth/authorize');
-    });
-
-    it('returns Credentials for authorized requests to /s3credentials endpoint', async () => {
-      accessToken = await getTestAccessToken();
-      const response = await got(
-        `${process.env.DISTRIBUTION_ENDPOINT}/s3credentials`,
-        {
-          followRedirect: false,
-          headers: {
-            cookie: [`accessToken=${accessToken}`]
-          }
-        }
-      );
-      const returnedCredentials = JSON.parse(response.body);
-      expect(returnedCredentials.accessKeyId).toBeDefined();
-      expect(returnedCredentials.secretAccessKey).toBeDefined();
-      expect(returnedCredentials.sessionToken).toBeDefined();
-      expect(returnedCredentials.expiration).toBeDefined();
-    });
-
     it('redirects to Earthdata login for unauthorized requests', async () => {
       const response = await got(
         fileUrl,
