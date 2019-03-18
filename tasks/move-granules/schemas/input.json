@@ -1,5 +1,5 @@
 {
-  "title": "PostToCmrInput",
+  "title": "MoveGranulesInput",
   "description": "Describes the input expected by the move-granules task",
   "type": "object",
   "required": [
@@ -20,8 +20,15 @@
             "type": "array",
             "items": {
               "type": "object",
+              "required": ["name"],
               "properties": {
+                "name": {
+                  "type": "string"
+                },
                 "filename": {
+                  "type": "string"
+                },
+                "fileType": {
                   "type": "string"
                 },
                 "bucket": {
