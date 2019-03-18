@@ -1,13 +1,13 @@
 'use strict';
 
-const got = require('got');
 const { Lambda, STS } = require('aws-sdk');
 
 const { models: { AccessToken } } = require('@cumulus/api');
 const { aws: { s3 }, testUtils: { randomId } } = require('@cumulus/common');
 const { serveDistributionApi } = require('@cumulus/api/bin/serve');
 const {
-  EarthdataLogin: { getEarthdataAccessToken }
+  EarthdataLogin: { getEarthdataAccessToken },
+  distributionApi: { getDistributionApiResponse }
 } = require('@cumulus/integration-tests');
 
 const {
@@ -102,8 +102,10 @@ describe('When accessing an S3 bucket directly', () => {
 
   afterAll(async (done) => {
     try {
-      await s3().deleteObject({ Bucket: protectedBucket, Key: testFileKey }).promise();
-      await accessTokensModel.delete({ accessToken });
+      await Promise.all([
+        s3().deleteObject({ Bucket: protectedBucket, Key: testFileKey }).promise(),
+        accessTokensModel.delete({ accessToken })
+      ]);
     }
     finally {
       stopDistributionApi(server, done);
@@ -122,14 +124,9 @@ describe('When accessing an S3 bucket directly', () => {
       });
       accessToken = accessTokenResponse.accessToken;
 
-      const response = await got(
+      const response = await getDistributionApiResponse(
         `${process.env.DISTRIBUTION_ENDPOINT}/s3credentials`,
-        {
-          followRedirect: false,
-          headers: {
-            cookie: [`accessToken=${accessToken}`]
-          }
-        }
+        accessToken
       );
       creds = JSON.parse(response.body);
     });
