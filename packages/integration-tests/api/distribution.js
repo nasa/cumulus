@@ -10,16 +10,32 @@ const got = require('got');
  * @param {string} accessToken
  *   Access token from OAuth provider
  *
- * @returns {string}
+ * @returns {Response} - response object from distribution api
  *   S3 signed URL to access file protected by distribution API
  */
-async function getDistributionApiS3SignedUrl(fileUrl, accessToken) {
+async function getDistributionApiResponse(fileUrl, accessToken) {
   const response = await got(fileUrl, {
     followRedirect: false,
     headers: {
       cookie: [`accessToken=${accessToken}`]
     }
   });
+  return response;
+}
+
+/**
+ * Get S3 signed URL for file protected by distribution API
+ *
+ * @param {string} fileUrl
+ *   Distribution API file URL to request
+ * @param {string} accessToken
+ *   Access token from OAuth provider
+ *
+ * @returns {string}
+ *   S3 signed URL to access file protected by distribution API
+ */
+async function getDistributionApiS3SignedUrl(fileUrl, accessToken) {
+  const response = await getDistributionApiResponse(fileUrl, accessToken);
   return response.headers.location;
 }
 
@@ -58,6 +74,7 @@ function getDistributionFileUrl({
 }
 
 module.exports = {
+  getDistributionApiResponse,
   getDistributionApiS3SignedUrl,
   getDistributionApiFileStream,
   getDistributionFileUrl
