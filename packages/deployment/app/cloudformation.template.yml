@@ -1001,7 +1001,11 @@ Resources:
     Type: AWS::AutoScaling::ScalingPolicy
     Properties:
       AdjustmentType: PercentChangeInCapacity
-      # MinAdjustmentMagnitude - not required, may default to 1
+    {{#if ecs.autoscaling_policies.min_adjustment}}
+      MinAdjustmentMagnitude: {{ecs.autoscaling_policies.min_adjustment}}
+    {{else}}
+      MinAdjustmentMagnitude: 1
+    {{/if}}
       AutoScalingGroupName:
         Ref: CumulusECSAutoScalingGroup
       PolicyType: SimpleScaling
@@ -1011,6 +1015,11 @@ Resources:
     Type: AWS::AutoScaling::ScalingPolicy
     Properties:
       AdjustmentType: PercentChangeInCapacity
+    {{#if ecs.autoscaling_policies.min_adjustment}}
+      MinAdjustmentMagnitude: {{ecs.autoscaling_policies.min_adjustment}}
+    {{else}}
+      MinAdjustmentMagnitude: 1
+    {{/if}}
       AutoScalingGroupName:
         Ref: CumulusECSAutoScalingGroup
       PolicyType: SimpleScaling
@@ -1199,15 +1208,20 @@ Resources:
       # Note: SimpleScaling is not supported by ApplicationAutoScaling
       PolicyType: StepScaling
       StepScalingPolicyConfiguration:
-      {{#if this.service_scaling.scale_out.step_adjustment_config}}
+    {{#if this.service_scaling.scale_out.step_adjustment_config}}
         {{{ToJson this.service_scaling.scale_out.step_adjustment_config}}}
-      {{else}}
+    {{else}}
         # Scaling out only happens once per activities waiting alarm is triggered (so assumes new activities are scheduled which can't be placed).
+      {{#if ecs.autoscaling_policies.min_adjustment}}
+        MinAdjustmentMagnitude: {{this.service_scaling.scale_out.min_adjustment}}
+      {{else}}
+        MinAdjustmentMagnitude: 1
+      {{/if}}
         AdjustmentType: PercentChangeInCapacity
         StepAdjustments:
         - MetricIntervalLowerBound: 0
           ScalingAdjustment: 10
-      {{/if}}
+    {{/if}}
 
   {{@key}}ActivitiesWaitingAlarm:
     Type: AWS::CloudWatch::Alarm
