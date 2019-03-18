@@ -17,9 +17,6 @@ const EarthdataLoginClient = require('../../lib/EarthdataLogin');
 
 const models = require('../../models');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
-const {
-  createJwtToken
-} = require('../../lib/token');
 
 process.env.EARTHDATA_CLIENT_ID = randomId('edlID');
 process.env.EARTHDATA_CLIENT_PASSWORD = randomId('edlPW');
@@ -31,7 +28,6 @@ process.env.AccessTokensTable = randomId('tokenTable');
 process.env.TOKEN_SECRET = randomId('tokenSecret');
 let accessTokenModel;
 let authorizationUrl;
-let userModel;
 
 // import the express app after setting the env variables
 const { distributionApp } = require('../../app/distribution');

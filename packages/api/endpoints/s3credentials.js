@@ -2,7 +2,7 @@
 
 const { lambda } = require('@cumulus/common/aws');
 const Logger = require('@cumulus/logger');
-const log = new Logger({sender: 's3credentials'});
+const log = new Logger({ sender: 's3credentials' });
 
 /**
  * Use NGAP's time-based, temporary credential dispensing lambda.
@@ -42,7 +42,8 @@ async function s3credentials(req, res) {
   const credentials = await requestTemporaryCredentialsFromNgap(username);
   try {
     return res.send(JSON.parse(credentials.Payload));
-  } catch (error) {
+  }
+  catch (error) {
     log.error(`credentials.Payload: ${credentials.Payload}`);
     log.error(error);
     return res.boom.failedDependency('Unable to retrieve credentials from Server.');

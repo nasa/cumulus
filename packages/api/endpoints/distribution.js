@@ -102,9 +102,10 @@ async function handleRedirectRequest(req, res) {
 /**
  * Ensure request is authorized through EarthdataLogin or redirect to become so.
  *
- * @param {any} req
- * @param {any} res
- * @param {any} state
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @param {Function} next - express middleware callback function
+ * @returns {Promise<Object>} - promise of an express response object
  */
 async function ensureAuthorizedOrRedirect(req, res, next) {
   const {

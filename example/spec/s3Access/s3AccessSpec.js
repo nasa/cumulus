@@ -1,7 +1,7 @@
 'use strict';
 
 const got = require('got');
-const { Lambda, STS, Credentials } = require('aws-sdk');
+const { Lambda, STS } = require('aws-sdk');
 
 const { models: { AccessToken } } = require('@cumulus/api');
 const { aws: { s3 }, testUtils: { randomId } } = require('@cumulus/common');
@@ -135,10 +135,18 @@ describe('When accessing an S3 bucket directly', () => {
     });
 
     it('the expected user can assume same region access', async () => {
-      const credentials = new Credentials(creds);
-      const sts = new STS({ credentials });
+      const {
+        accessKeyId,
+        secretAccessKey,
+        sessionToken
+      } = creds;
+
+      const sts = new STS({ accessKeyId, secretAccessKey, sessionToken });
       const whoami = await sts.getCallerIdentity().promise();
 
+      expect(accessKeyId).toBeDefined();
+      expect(secretAccessKey).toBeDefined();
+      expect(sessionToken).toBeDefined();
       expect(whoami.Arn).toMatch(new RegExp(`arn:aws:sts::\\d{12}:assumed-role/s3-same-region-access-role/${username}.*`));
       expect(whoami.UserId).toMatch(new RegExp(`.*:${username}`));
     });
