@@ -314,7 +314,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('publishes CMR metadata online resources with the correct type', () => {
       const viewRelatedInfoResource = onlineResources.filter((resource) => resource.Type === 'VIEW RELATED INFORMATION');
-      console.log(`viewRelatedInfoResource: ${JSON.stringify(viewRelatedInfoResource)}`);
       const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
 
       const ExpectedResources = ['GET DATA', 'GET DATA', 'GET RELATED VISUALIZATION',
