@@ -91,6 +91,12 @@ describe('scaling for step function activities', () => {
     });
   });
 
+  // This test is skipped because it is a timely operation to scale in and
+  // scale out EC2 instances.
+  //
+  // The test kicks off 10 workflow executions and asserts an increase in the number of
+  // running tasks for the hello world service. It also asserts that (eventually) the
+  // number of EC2 instances scales out (and back in).
   xdescribe('scaling the service\'s desired tasks', () => {
     let workflowExecutionArns = [];
     const numExecutions = 10;
