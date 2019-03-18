@@ -1,13 +1,36 @@
 {
-  "title": "MoveGranulesInput",
+  "title": "PostToCmrInput",
   "description": "Describes the input expected by the move-granules task",
-  "type": "array",
-  "items": {
+  "type": "object",
+  "required": [
+    "granules"
+  ],
+  "properties": {
     "granules": {
       "type": "array",
+      "description": "Array of all granules",
       "items": {
-        "type": "string",
-        "description": "list of s3 uris"
+        "type": "object",
+        "required": ["granuleId", "files"],
+        "properties": {
+          "granuleId": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "filename": {
+                  "type": "string"
+                },
+                "bucket": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

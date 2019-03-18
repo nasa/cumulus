@@ -10,6 +10,7 @@ const {
   s3ObjectExists,
   s3,
   s3GetObjectTagging,
+  s3PutObjectTagging,
   promiseS3Upload,
   headObject,
   parseS3Uri
@@ -36,11 +37,16 @@ async function uploadFiles(files, bucket) {
 }
 
 async function updateFileTags(files, bucket, TagSet) {
-  await Promise.all(files.map((file) => s3().putObjectTagging({
-    Bucket: bucket,
-    Key: parseS3Uri(file).Key,
-    Tagging: { TagSet }
-  }).promise()));
+  await Promise.all(files.map((file) => s3PutObjectTagging(
+    bucket,
+    parseS3Uri(file).Key,
+    { TagSet }
+  )));
+}
+
+function granulesToFileURIs(granules) {
+  const m = granules.reduce((arr, g) => g.files.map((file) => file.filename), []);
+  return m;
 }
 
 function buildPayload(t) {
@@ -51,9 +57,7 @@ function buildPayload(t) {
   newPayload.config.buckets.public.name = t.context.publicBucket;
   newPayload.config.buckets.protected.name = t.context.protectedBucket;
 
-  newPayload.input = newPayload.input.map((file) =>
-    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
-  newPayload.config.input_granules.forEach((gran) => {
+  newPayload.input.granules.forEach((gran) => {
     gran.files.forEach((file) => {
       file.bucket = t.context.stagingBucket;
       file.filename = buildS3Uri(t.context.stagingBucket, parseS3Uri(file.filename).Key);
@@ -61,16 +65,6 @@ function buildPayload(t) {
   });
 
   return newPayload;
-}
-
-function addCmrFileToPayload(t, payload) {
-  payload.config.input_granules[0].files.push({
-    name: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-    bucket: t.context.publicBucket,
-    fileType: 'userSetType',
-    filename: 's3://staging0ef4cf086c/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
-    fileStagingDir: 'file-staging/subdir'
-  });
 }
 
 function getExpectedOutputFileNames(t) {
@@ -118,6 +112,9 @@ test.beforeEach(async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
   const rawPayload = await readFile(payloadPath, 'utf8');
   t.context.payload = JSON.parse(rawPayload);
+  const filesToUpload = granulesToFileURIs(t.context.payload.input.granules);
+  t.context.filesToUpload = filesToUpload.map((file) =>
+    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
   process.env.REINGEST_GRANULE = false;
 });
 
@@ -129,7 +126,7 @@ test.afterEach.always(async (t) => {
 
 test.serial('Should move files to final location.', async (t) => {
   const newPayload = buildPayload(t);
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
 
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
@@ -146,7 +143,7 @@ test.serial('should not move files when event.moveStagedFiles is false', async (
   const newPayload = buildPayload(t);
   newPayload.config.moveStagedFiles = false;
 
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
 
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
@@ -161,10 +158,10 @@ test.serial('should not move files when event.moveStagedFiles is false', async (
 
 test.serial('should add input files to returned granule event.moveStagedFiles is false', async (t) => {
   const newPayload = buildPayload(t);
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
   newPayload.config.moveStagedFiles = false;
 
-  const inputFiles = [...newPayload.input];
+  const inputFiles = [...t.context.filesToUpload];
 
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
@@ -177,9 +174,15 @@ test.serial('should add input files to returned granule event.moveStagedFiles is
 
 test.serial('Should move renamed files in staging area to final location.', async (t) => {
   const newPayload = buildPayload(t);
-  const renamedFile = `s3://${t.context.stagingBucket}/file-staging/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705`;
-  newPayload.input.push(renamedFile);
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  const renamedFile = `s3://${t.context.stagingBucket}/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705`;
+  t.context.filesToUpload.push(renamedFile);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
+  newPayload.input.granules[0].files.push({
+    name: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705',
+    bucket: t.context.stagingBucket,
+    filename: `s3://${t.context.stagingBucket}/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.v20180926T131408705`,
+    fileStagingDir: 'file-staging/subdir'
+  });
 
   const output = await moveGranules(newPayload);
   await validateOutput(t, output);
@@ -194,7 +197,7 @@ test.serial('Should move renamed files in staging area to final location.', asyn
 
 test.serial('Should add metadata type to CMR granule files.', async (t) => {
   const newPayload = buildPayload(t);
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
   const output = await moveGranules(newPayload);
 
   const outputFiles = output.granules[0].files;
@@ -210,7 +213,7 @@ test.serial('Should update filenames with updated S3 URLs.', async (t) => {
   const newPayload = buildPayload(t);
   const expectedFilenames = getExpectedOutputFileNames(t);
 
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
 
   const output = await moveGranules(newPayload);
   const outputFilenames = output.granules[0].files.map((f) => f.filename);
@@ -220,9 +223,10 @@ test.serial('Should update filenames with updated S3 URLs.', async (t) => {
 
 test.serial('Should not overwrite CMR fileType if already explicitly set', async (t) => {
   const newPayload = buildPayload(t);
-  addCmrFileToPayload(t, newPayload);
+  //addCmrFileToPayload(t, newPayload);
+  newPayload.input.granules[0].files[3].fileType = 'userSetType';
 
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
 
   const output = await moveGranules(newPayload);
   const cmrFile = output.granules[0].files.filter((file) => file.filename.includes('.cmr.xml'));
@@ -233,11 +237,11 @@ test.serial('Should preserve object tags.', async (t) => {
   const newPayload = buildPayload(t);
   const tagset = [
     { Key: 'fakeTag', Value: 'test-tag' },
-    { Key: 'granId', Value: newPayload.config.input_granules[0].granuleId }
+    { Key: 'granId', Value: newPayload.input.granules[0].granuleId }
   ];
 
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
-  await updateFileTags(newPayload.input, t.context.stagingBucket, tagset);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
+  await updateFileTags(t.context.filesToUpload, t.context.stagingBucket, tagset);
 
   const output = await moveGranules(newPayload);
   await Promise.all(output.granules[0].files.map(async (file) => {
@@ -253,10 +257,10 @@ test.serial('Should overwrite files.', async (t) => {
 
   const newPayload = buildPayload(t);
   newPayload.config.duplicateHandling = 'replace';
-  newPayload.input = [
+  t.context.filesToUpload = [
     `s3://${t.context.stagingBucket}/${sourceKey}`
   ];
-  newPayload.config.input_granules[0].files = [{
+  newPayload.input.granules[0].files = [{
     filename: `s3://${t.context.stagingBucket}/${sourceKey}`,
     name: filename
   }];
@@ -337,7 +341,7 @@ async function duplicateHandlingErrorTest(t, duplicateHandling) {
   const newPayload = buildPayload(t);
   if (duplicateHandling) newPayload.config.duplicateHandling = duplicateHandling;
 
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
 
   let expectedErrorMessages;
   try {
@@ -355,7 +359,7 @@ async function duplicateHandlingErrorTest(t, duplicateHandling) {
       return `${parsed.Key} already exists in ${parsed.Bucket} bucket`;
     });
 
-    await uploadFiles(newPayload.input, t.context.stagingBucket);
+    await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
     await moveGranules(newPayloadOrig);
     t.fail('Expected a DuplicateFile error to be thrown');
   }
@@ -382,7 +386,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
 
   const expectedFilenames = getExpectedOutputFileNames(t);
 
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
   let output = await moveGranules(newPayload);
   const existingFileNames = output.granules[0].files.map((f) => f.filename);
   t.deepEqual(expectedFilenames.sort(), existingFileNames.sort());
@@ -400,9 +404,9 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
 
   // run 'moveGranules' again with one of the input files updated
   newPayload = clonedeep(newPayloadOrig);
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
 
-  const inputHdfFile = newPayload.input.filter((f) => f.endsWith('.hdf'))[0];
+  const inputHdfFile = t.context.filesToUpload.filter((f) => f.endsWith('.hdf'))[0];
   const updatedBody = randomString();
   const params = {
     Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: updatedBody
@@ -434,7 +438,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
 
   // run 'moveGranules' the third time with the same input file updated
   newPayload = clonedeep(newPayloadOrig);
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
 
   params.Body = randomString();
   await s3().putObject(params).promise();
@@ -465,7 +469,7 @@ test.serial('When duplicateHandling is "skip", does not overwrite or create new.
 
   const expectedFilenames = getExpectedOutputFileNames(t);
 
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
   let output = await moveGranules(newPayload);
   const existingFileNames = output.granules[0].files.map((f) => f.filename);
   t.deepEqual(expectedFilenames.sort(), existingFileNames.sort());
@@ -477,9 +481,9 @@ test.serial('When duplicateHandling is "skip", does not overwrite or create new.
 
   // run 'moveGranules' again with one of the input files updated
   newPayload = clonedeep(newPayloadOrig);
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
 
-  const inputHdfFile = newPayload.input.filter((f) => f.endsWith('.hdf'))[0];
+  const inputHdfFile = t.context.filesToUpload.filter((f) => f.endsWith('.hdf'))[0];
   const updatedBody = randomString();
   const params = {
     Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: updatedBody
@@ -525,7 +529,7 @@ async function granuleFilesOverwrittenTest(t, newPayload) {
 
   const expectedFilenames = getExpectedOutputFileNames(t);
 
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
   let output = await moveGranules(newPayload);
   await validateOutput(t, output);
   const existingFileNames = output.granules[0].files.map((f) => f.filename);
@@ -537,9 +541,9 @@ async function granuleFilesOverwrittenTest(t, newPayload) {
 
   // run 'moveGranules' again with one of the input files updated
   newPayload = clonedeep(newPayloadOrig);
-  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
 
-  const inputHdfFile = newPayload.input.filter((f) => f.endsWith('.hdf'))[0];
+  const inputHdfFile = t.context.filesToUpload.filter((f) => f.endsWith('.hdf'))[0];
   const updatedBody = randomString();
   const params = {
     Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: updatedBody
