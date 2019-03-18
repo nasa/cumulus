@@ -47,6 +47,7 @@
     "lodash.clonedeep": "^4.5.0",
     "lodash.flatten": "^4.4.0",
     "lodash.get": "^4.4.2",
+    "lodash.keyby": "^4.6.0",
     "url-join": "^1.0.0",
     "xml2js": "^0.4.19"
   },
