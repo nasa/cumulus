@@ -59,6 +59,18 @@ function mergeInputFilesWithInputGranules(inputFiles, inputGranules, regex) {
   return granulesHash;
 }
 
+/**
+ * Convert array-of-file-URIs to granules object by merging files into input granules.
+ *
+ * @param {Object} event - Lambda function payload
+ * @param {Object} event.config - Cumulus config object
+ * @param {string} event.config.granuleIdExtraction - regex needed to extract granuleId
+ *                                                    from filenames
+ * @param {Array} event.config.input_granules - an array of granules
+ * @param {Array} event.input - an array of s3 uris
+ *
+ * @returns {Object} - Granules object
+ */
 function convertFileURIArrayToGranuleObjectArray(event) {
   const granuleIdExtractionRegex = get(event.config, 'granuleIdExtraction', '(.*)');
   const inputGranules = get(event.config, 'input_granules', {});
@@ -73,7 +85,23 @@ function convertFileURIArrayToGranuleObjectArray(event) {
   };
 }
 
-exports.filesToGranules = convertFileURIArrayToGranuleObjectArray;
+/**
+ * Files-To-Granules task to change array-of-files input to granules object output
+ *
+ * @param {Object} event - Lambda function payload
+ * @param {Object} event.config - Cumulus config object
+ * @param {string} event.config.granuleIdExtraction - regex needed to extract granuleId
+ *                                                    from filenames
+ * @param {Array} event.config.input_granules - an array of granules
+ * @param {Array} event.input - an array of s3 uris
+ *
+ * @returns {Object} - Granules object
+ */
+function filesToGranules(event) {
+  return convertFileURIArrayToGranuleObjectArray(event);
+}
+
+exports.filesToGranules = filesToGranules;
 
 function handler(event, context, callback) {
   cumulusMessageAdapter.runCumulusTask(
