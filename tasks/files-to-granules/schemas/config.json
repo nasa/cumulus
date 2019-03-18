@@ -10,7 +10,34 @@
       "type": "array",
       "description": "granules object used to construct output for cumulus indexer",
       "items": {
-        "type": "object"
+        "type": "object",
+        "required": ["granuleId", "files"],
+        "properties": {
+          "granuleId": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "filename": {
+                  "type": "string"
+                },
+                "fileType": {
+                  "type": "string"
+                },
+                "bucket": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "granuleIdExtraction": {
