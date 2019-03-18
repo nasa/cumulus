@@ -19,6 +19,7 @@ const {
 const {
   isCMRFile,
   metadataObjectFromCMRFile,
+  reduceGranulesToCmrFileObjects,
   updateCMRMetadata
 } = require('@cumulus/cmrjs');
 
@@ -301,11 +302,7 @@ async function moveGranules(event) {
   const duplicateHandling = duplicateHandlingType(event);
 
   const granulesInput = get(event, 'input.granules', []);
-  const cmrFiles = granulesInput.reduce(
-    (cFiles, g) => cFiles.concat(g.files.filter(isCMRFile).map(
-      (cf) => ({ filename: cf.filename, granuleId: g.granuleId })
-    )), []
-  );
+  const cmrFiles = reduceGranulesToCmrFileObjects(granulesInput);
   const allGranules = keyBy(granulesInput, 'granuleId');
 
   let granulesToMove;
