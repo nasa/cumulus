@@ -1,13 +1,9 @@
 {
-  "title": "MoveGranulesConfig",
-  "description": "Describes the config used by the move-granules task",
+  "title": "FilesToGranulesConfig",
+  "description": "Describes the config used by the files-to-granules task",
   "type": "object",
   "required": [
-    "bucket",
-    "input_granules",
-    "distribution_endpoint",
-    "collection",
-    "buckets"
+    "input_granules"
   ],
   "properties": {
     "input_granules": {
@@ -17,72 +13,9 @@
         "type": "object"
       }
     },
-    "bucket": {
-      "type": "string",
-      "description": "the bucket the has the private/public key needed for decrypting cmr password"
-    },
-    "buckets": {
-      "type": "object",
-      "description": "aws s3 buckets used by this task",
-      "patternProperties": {
-        "\\S*": {
-          "description": "bucket configuration for the key'd bucket",
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string",
-              "description": "name of the S3 bucket"
-            },
-            "type": {
-              "type": "string",
-              "description": "the type of bucket - i.e. internal, public, private, protected"
-            }
-          }
-        }
-      }
-    },
-    "distribution_endpoint": {
-      "type": "string",
-      "description": "The api distribution endpoint"
-    },
     "granuleIdExtraction": {
       "type": "string",
       "description": "The regex needed for extracting granuleId from filenames"
-    },
-    "collection": {
-      "type": "object",
-      "required": [
-        "files",
-        "name"
-      ],
-      "properties": {
-        "name": { "type": "string" },
-        "process": { "type": "string" },
-        "url_path": { "type": "string" },
-        "duplicateHandling": { "type": "string" },
-        "files": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["regex", "bucket"],
-            "properties": {
-              "regex": { "type": "string" },
-              "bucket": { "type": "string" },
-              "url_path": { "type": "string" }
-            }
-          }
-        }
-      }
-    },
-    "moveStagedFiles": {
-      "type": "boolean",
-      "description": "Can set to false to skip moving files from the staging location. Defaults to true."
-    },
-    "duplicateHandling": {
-      "type": "string",
-      "description": "Specifies how duplicate filenames should be handled. `error` will throw an error that, if not caught, will fail the task/workflow execution. `version` will add a suffix to the existing filename to avoid a clash.",
-      "enum": ["replace", "version", "skip", "error"],
-      "default": "error"
     }
   }
 }
