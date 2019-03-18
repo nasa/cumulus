@@ -36,17 +36,14 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "1.11.2",
+    "@cumulus/common": "1.11.3",
     "@cumulus/cumulus-message-adapter-js": "^1.0.7",
     "@cumulus/cmrjs": "1.11.3",
-    "lodash.get": "^4.4.2",
-    "lodash.keyby": "^4.6.0"
+    "lodash.get": "^4.4.2"
   },
   "devDependencies": {
     "ava": "^0.25.0",
     "nyc": "^13.3.0",
-    "proxyquire": "^2.0.0",
-    "sinon": "^4.5.0",
     "webpack": "~4.5.0",
     "webpack-cli": "~2.0.14"
   }
