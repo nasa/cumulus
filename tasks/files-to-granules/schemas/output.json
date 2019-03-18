@@ -1,6 +1,6 @@
 {
-  "title": "MoveGranulesOutput",
-  "description": "Describes the output produced by the move-granules task",
+  "title": "FilesToGranulesOutput",
+  "description": "Describes the output produced by the files-to-granules task",
   "type": "object",
   "properties": {
     "granules": {
