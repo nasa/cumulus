@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+- CUMULUS-1176:
+  - `@cumulus/move-granules` input expectations have changed. `@cumulus/files-to-granules` is a new intermediate task to perform input translation in the old style.
+    See the Added and Changed sections of this release changelog for more information.
+
 ### Added
 
 - **CUMULUS-670**
@@ -98,6 +103,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     `provider.host`, and `provider.port`.
   - The default provider port was being set to 21, no matter what protocol was
     being used. Removed that default.
+
+- **CUMULUS-1176**
+  - `@cumulus/move-granules` breaking change: Input to `move-granules` is now expected to be in the form of granules object (i.e. `{ granules: [ ... ] }`);
+    In order to continue to provide array-of-files type inputs following processing steps, use the new `@cumulus/files-to-granules` task as an intermediate step.
+    This task will perform the input translation. This change allows `move-granules` to be simpler and behave more predictably.
 
 - CUMULUS-1174
   - Better error message and stacktrace for S3KeyPairProvider error reporting.
