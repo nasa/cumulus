@@ -36,6 +36,7 @@ async function deleteAliases() {
   const client = await Search.es();
   const aliases = await client.cat.aliases({ format: 'json' });
 
+
   // delete all aliases
   return Promise.all(aliases.map((alias) => client.indices.deleteAlias({
     index: alias.index,

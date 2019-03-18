@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+
+- **CUMULUS-670**
+  - Added new Collection file parameter "fileType" that allows configuration of workflow granule file fileType assignments
 - **CUMULUS-1184** - Added kes logging output to ensure we always see the state machine reference before failures due to configuration
 - **CUMULUS-1105** - Added a dashboard endpoint to serve the dashboard from an S3 bucket
 - **CUMULUS-666**
@@ -43,19 +46,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
-- CUMULUS-1170 - Update scripts and docs to use `npm` instead of `yarn`
-- CUMULUS-1139 - Granules stored in the API contain a `files` property. That schema has been greatly
+
+- **CUMULUS-1170** - Update scripts and docs to use `npm` instead of `yarn`
+- **CUMULUS-670**
+  - Updated ParsePDR task to read standard PDR types+ (+ tgz as an external customer requirement) and add a fileType to granule-files on Granule discovery
+  - Updated ParsePDR to fail if unrecognized type is used
+  - Updated all relevant task schemas to include granule->files->filetype as a string value
+  - Updated tests/test fixtures to include the fileType in the step function/task inputs and output validations as needed
+  - Updated DiscoverGranules step/related workflows to read new Collection file parameter fileType that will map a discovered file to a workflow fileType
+  - Updated CNM parser to add the fileType to the defined granule file fileType on ingest and updated integration tests to verify/validate that behavior
+  - Updated generateEcho10XMLString in cmr-utils.js to use a map/related library to ensure order as CMR requires ordering for their online resources.
+  - Updated post-to-cmr task to appropriately export CNM filetypes to CMR in echo10/UMM exports
+- **CUMULUS-1139** - Granules stored in the API contain a `files` property. That schema has been greatly
+
   simplified and now better matches the CNM format.
-    - The `name` property has been renamed to `fileName`.
-    - The `filepath` property has been renamed to `key`.
-    - The `checksumValue` property has been renamed to `checksum`.
-    - The `path` property has been removed.
-    - The `url_path` property has been removed.
-    - The `filename` property (which contained an `s3://` URL) has been removed, and the `bucket`
-      and `key` properties should be used instead. Any requests sent to the API containing a `granule.files[].filename`
-      property will be rejected, and any responses coming back from the API will not contain that
-      `filename` property.
-    - A `source` property has been added, which is a URL indicating the original source of the file.
+  - The `name` property has been renamed to `fileName`.
+  - The `filepath` property has been renamed to `key`.
+  - The `checksumValue` property has been renamed to `checksum`.
+  - The `path` property has been removed.
+  - The `url_path` property has been removed.
+  - The `filename` property (which contained an `s3://` URL) has been removed, and the `bucket`
+    and `key` properties should be used instead. Any requests sent to the API containing a `granule.files[].filename`
+    property will be rejected, and any responses coming back from the API will not contain that
+    `filename` property.
+  - A `source` property has been added, which is a URL indicating the original source of the file.
   - `@cumulus/ingest/granule.moveGranuleFiles()` no longer includes a `filename` field in its
     output. The `bucket` and `key` fields should be used instead.
 - **CUMULUS-672**

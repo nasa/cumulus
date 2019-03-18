@@ -63,6 +63,16 @@ function buildPayload(t) {
   return newPayload;
 }
 
+function addCmrFileToPayload(t, payload) {
+  payload.config.input_granules[0].files.push({
+    name: 'MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+    bucket: t.context.publicBucket,
+    fileType: 'userSetType',
+    filename: 's3://staging0ef4cf086c/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+    fileStagingDir: 'file-staging/subdir'
+  });
+}
+
 function getExpectedOutputFileNames(t) {
   return [
     `s3://${t.context.protectedBucket}/example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf`,
@@ -182,6 +192,20 @@ test.serial('Should move renamed files in staging area to final location.', asyn
   t.true(check);
 });
 
+test.serial('Should add metadata type to CMR granule files.', async (t) => {
+  const newPayload = buildPayload(t);
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+  const output = await moveGranules(newPayload);
+
+  const outputFiles = output.granules[0].files;
+  const cmrOutputFiles = outputFiles.filter((f) => f.filename.includes('.cmr.xml'));
+  cmrOutputFiles.forEach((file) => {
+    t.is('metadata', file.fileType);
+  });
+  t.is(1, cmrOutputFiles.length);
+});
+
+
 test.serial('Should update filenames with updated S3 URLs.', async (t) => {
   const newPayload = buildPayload(t);
   const expectedFilenames = getExpectedOutputFileNames(t);
@@ -191,6 +215,18 @@ test.serial('Should update filenames with updated S3 URLs.', async (t) => {
   const output = await moveGranules(newPayload);
   const outputFilenames = output.granules[0].files.map((f) => f.filename);
   t.deepEqual(expectedFilenames.sort(), outputFilenames.sort());
+});
+
+
+test.serial('Should not overwrite CMR fileType if already explicitly set', async (t) => {
+  const newPayload = buildPayload(t);
+  addCmrFileToPayload(t, newPayload);
+
+  await uploadFiles(newPayload.input, t.context.stagingBucket);
+
+  const output = await moveGranules(newPayload);
+  const cmrFile = output.granules[0].files.filter((file) => file.filename.includes('.cmr.xml'));
+  t.is('userSetType', cmrFile[0].fileType);
 });
 
 test.serial('Should preserve object tags.', async (t) => {
