@@ -145,7 +145,7 @@ module.exports.collection = {
           },
           fileType: {
             title: 'File Type',
-            description: 'CNM Filetype.  Used for submission to CMR.  Non CNM Filetypes default to "data"',
+            description: 'CNM Filetype.  Cumulus uses this for CMR submission.  Non-CNM filetypes will be treated as "data" fileType',
             type: 'string'
           }
         },
