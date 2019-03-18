@@ -43,7 +43,6 @@
     "@cumulus/cumulus-message-adapter-js": "^1.0.7",
     "@cumulus/ingest": "1.11.3",
     "@cumulus/test-data": "1.11.0",
-    "lodash.flatten": "^4.4.0",
     "lodash.keyby": "^4.6.0",
     "xml2js": "^0.4.19"
   },

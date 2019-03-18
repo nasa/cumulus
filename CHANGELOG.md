@@ -99,6 +99,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - The default provider port was being set to 21, no matter what protocol was
     being used. Removed that default.
 
+- **CUMULUS-1176**
+  - `@cumulus/post-to-cmr`: `config.granuleIdExtraction` is no longer needed/used by `post-to-cmr`.
+
 - CUMULUS-1174
   - Better error message and stacktrace for S3KeyPairProvider error reporting.
 
