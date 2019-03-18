@@ -73,7 +73,8 @@ test('An authorized s3credential requeste invokes NGAPs request for credentials 
   const accessTokenRecord = fakeAccessTokenFactory({ username });
   await accessTokenModel.create(accessTokenRecord);
 
-  const FunctionName = 'gsfc-ngap-sh-s3-sts-get-keys';
+  process.env.STSCredentialsLambda = 'Fake-NGAP-Credential-Dispensing-Lambda';
+  const FunctionName = process.env.STSCredentialsLambda;
   const Payload = JSON.stringify({
     accesstype: 'sameregion',
     returntype: 'lowerCamel',
