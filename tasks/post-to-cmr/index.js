@@ -1,15 +1,13 @@
 'use strict';
 
-const flatten = require('lodash.flatten');
 const keyBy = require('lodash.keyby');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const {
-  getCmrFiles,
+  reduceGranulesToCmrFileObjects,
   metadataObjectFromCMRFile,
   publish2CMR
 } = require('@cumulus/cmrjs');
-const { buildS3Uri } = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { loadJSONTestData } = require('@cumulus/test-data');
@@ -56,14 +54,6 @@ async function addMetadataObjects(cmrFiles) {
   return updatedCMRFiles;
 }
 
-const getS3URLOfFile = (file) => {
-  if (file.bucket && file.key) return buildS3Uri(file.bucket, file.key);
-  if (file.bucket && file.filepath) return buildS3Uri(file.bucket, file.filepath);
-  if (file.filename) return file.filename;
-
-  throw new Error(`Unable to determine S3 URL for file: ${JSON.stringify(file)}`);
-};
-
 /**
  * Post to CMR
  * See the schemas directory for detailed input and output schemas
@@ -78,12 +68,8 @@ const getS3URLOfFile = (file) => {
  * @returns {Promise} returns the promise of an updated event object
  */
 async function postToCMR(event) {
-  const fileURLs = flatten(event.input.granules.map((g) => g.files))
-    .map(getS3URLOfFile);
-
   // get cmr files and metadata
-  const granuleIdExtractionRegex = event.config.granuleIdExtraction || '(.*)';
-  const cmrFiles = getCmrFiles(fileURLs, granuleIdExtractionRegex);
+  const cmrFiles = reduceGranulesToCmrFileObjects(event.input.granules);
   const updatedCMRFiles = await addMetadataObjects(cmrFiles);
 
   // post all meta files to CMR

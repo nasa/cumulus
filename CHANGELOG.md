@@ -108,6 +108,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `@cumulus/move-granules` breaking change: Input to `move-granules` is now expected to be in the form of granules object (i.e. `{ granules: [ ... ] }`);
     In order to continue to provide array-of-files type inputs following processing steps, use the new `@cumulus/files-to-granules` task as an intermediate step.
     This task will perform the input translation. This change allows `move-granules` to be simpler and behave more predictably.
+  - `@cumulus/post-to-cmr`: `config.granuleIdExtraction` is no longer needed/used by `post-to-cmr`.
 
 - CUMULUS-1174
   - Better error message and stacktrace for S3KeyPairProvider error reporting.
