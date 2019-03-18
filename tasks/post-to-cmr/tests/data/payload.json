@@ -6,7 +6,6 @@
       "username": "xxxxxx",
       "password": "xxxxx"
     },
-    "granuleIdExtraction": "(MOD11A1\\..*)(\\.hdf|\\.cmr\\.xml|_[\\w]{1,}\\..*)",
     "bucket": "cumulus-internal",
     "stack": "myStack"
   },
