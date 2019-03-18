@@ -113,13 +113,11 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
     authClient
   } = getConfigurations();
 
-  const redirectToGetAuthorizationCode = res
-    .status(307)
-    .set({ Location: authClient.getAuthorizationUrl(req.params[0]) });
+  const redirectURLForAuthorizationCode = authClient.getAuthorizationUrl(req.params[0]);
 
   const accessToken = req.cookies.accessToken;
 
-  if (!accessToken) return redirectToGetAuthorizationCode.send('Redirecting');
+  if (!accessToken) return res.redirect(307, redirectURLForAuthorizationCode);
 
   let accessTokenRecord;
   try {
@@ -127,14 +125,14 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   }
   catch (err) {
     if (err instanceof RecordDoesNotExist) {
-      return redirectToGetAuthorizationCode.send('Redirecting');
+      return res.redirect(307, redirectURLForAuthorizationCode);
     }
 
     throw err;
   }
 
   if (isAccessTokenExpired(accessTokenRecord)) {
-    return redirectToGetAuthorizationCode.send('Redirecting');
+    return res.redirect(307, redirectURLForAuthorizationCode);
   }
 
   req.authorizedMetadata = { userName: accessTokenRecord.username };
@@ -150,7 +148,6 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
  * temporary credentials
  */
 async function handleCredentialRequest(req, res) {
-  res.status(200);
   return s3credentials(req, res);
 }
 
