@@ -13,6 +13,8 @@ const EarthdataLogin = require('@cumulus/api/lib/EarthdataLogin');
  *   The redirect URL to use for the Earthdata login client
  * @param {string} params.requestOrigin
  *   The URL to use as the "origin" for the request Earthdata login
+ * @param {Object} params.userParams
+ *   optional object to overide the getAccessToken response with predetermined values.
  *
  * @returns {Object}
  *   Access token object returned by Earthdata client
