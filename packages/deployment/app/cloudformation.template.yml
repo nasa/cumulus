@@ -1009,7 +1009,7 @@ Resources:
       AutoScalingGroupName:
         Ref: CumulusECSAutoScalingGroup
       PolicyType: SimpleScaling
-      ScalingAdjustment: 10
+      ScalingAdjustment: {{ecs.autoscaling_policies.scale_out.scaling_adjustment}}
 
   ScaleInEc2ScalingPolicy:
     Type: AWS::AutoScaling::ScalingPolicy
@@ -1023,7 +1023,7 @@ Resources:
       AutoScalingGroupName:
         Ref: CumulusECSAutoScalingGroup
       PolicyType: SimpleScaling
-      ScalingAdjustment: -10
+      ScalingAdjustment: {{ecs.autoscaling_policies.scale_in.scaling_adjustment}}
 
   {{ ecs.autoscaling_policies.metric }}ReservationHighAlarm:
     Type: AWS::CloudWatch::Alarm

@@ -50,9 +50,11 @@ The metric, threshold and evaluation periods used in ECS Cluster Scale In / Out 
     autoscaling_policies:
       metric: CPU
       scale_out:
+        scaling_adjustment: 50
         evaluation_periods: 1
         threshold: 90
       scale_in:
+        scaling_adjustment: -50
         evaluation_periods: 1
         threshold: 60 
 ```

@@ -107,9 +107,11 @@ default:
     autoscaling_policies:
       metric: Memory
       scale_out:
+        scaling_adjustment: 10
         evaluation_periods: 1
         threshold: 75
       scale_in:
+        scaling_adjustment: -10
         evaluation_periods: 1
         threshold: 50
     tasks:
