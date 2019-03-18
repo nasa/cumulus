@@ -30,10 +30,6 @@
                 },
                 "bucket": {
                   "type": "string"
-                },
-                "duplicate_found": {
-                  "description": "whether a duplicate for this file was found",
-                  "type": "boolean"
                 }
               }
             }
