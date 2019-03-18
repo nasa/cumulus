@@ -42,7 +42,6 @@
     "@cumulus/common": "1.11.2",
     "@cumulus/cumulus-message-adapter-js": "^1.0.7",
     "@cumulus/test-data": "1.11.0",
-    "lodash.flatten": "^4.4.0",
     "lodash.keyby": "^4.6.0"
   },
   "devDependencies": {
