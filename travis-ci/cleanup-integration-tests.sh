@@ -5,6 +5,7 @@ set -e
 npm ci
 . ./travis-ci/set-env-vars.sh
 
+set +e
 (
   set -e
 
@@ -34,7 +35,11 @@ npm ci
     rm -rf node_modules
     npm install @cumulus/common
   fi
-
-  echo Unlocking stack
-  node ./scripts/lock-stack.js false $DEPLOYMENT
 )
+RESULT=$?
+set -e
+
+echo Unlocking stack
+node ./scripts/lock-stack.js false $DEPLOYMENT
+
+exit $RESULT
