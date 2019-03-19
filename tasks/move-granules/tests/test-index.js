@@ -48,7 +48,9 @@ async function updateFileTags(files, bucket, TagSet) {
 function updateCmrFileType(payload) {
   payload.input.granules.forEach(
     (g) => {
-      g.files.filter(isCMRFile).forEach((cmrFile) => cmrFile.fileType = 'userSetType');
+      g.files.filter(isCMRFile).forEach((cmrFile) => {
+        cmrFile.fileType = 'userSetType'
+      });
     }
   );
 }
