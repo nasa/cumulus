@@ -103,6 +103,7 @@ default:
           AWS_DEFAULT_REGION:
             function: Fn::Sub
             value: '${AWS::Region}'
+          ECS_AGENT_PULL_BEHAVIOR: 'always'
         commands:
           - cumulus-ecs-task
           - '--activityArn'
