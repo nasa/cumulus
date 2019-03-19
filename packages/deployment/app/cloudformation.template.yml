@@ -700,6 +700,12 @@ Resources:
           {{@key}}: {{{this}}}
       {{/if}}
     {{/each}}
+      {{# if ../api_backend_url}}
+          BACKEND_API_URL: {{../api_backend_url}}
+      {{else}}
+          BACKEND_API_URL:
+            Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/"]]
+      {{/if}}
       {{# if this.urs}}
         {{# if ../api_backend_url}}
           TOKEN_REDIRECT_ENDPOINT: {{../api_backend_url}}token
