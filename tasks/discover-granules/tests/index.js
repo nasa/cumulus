@@ -83,6 +83,7 @@ test.skip('discover granules using FTP', async (t) => {
     await validateOutput(t, output);
     t.is(output.granules.length, 3);
     t.is(output.granules[0].files.length, 2);
+    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].fileType));
   }
   catch (e) {
     if (e.message.includes('getaddrinfo ENOTFOUND')) {
@@ -120,6 +121,7 @@ test('discover granules using SFTP', async (t) => {
     await validateOutput(t, output);
     t.is(output.granules.length, 3);
     t.is(output.granules[0].files.length, 2);
+    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].fileType));
   }
   catch (err) {
     if (err.code === 'ECONNREFUSED') {
@@ -152,6 +154,7 @@ test('discover granules using HTTP', async (t) => {
     await validateOutput(t, output);
     t.is(output.granules.length, 3);
     t.is(output.granules[0].files.length, 2);
+    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].fileType));
   }
   catch (err) {
     if (err.message === 'Connection Refused') {
@@ -204,6 +207,7 @@ test('discover granules using S3', async (t) => {
     await validateOutput(t, output);
     t.is(output.granules.length, 3);
     t.is(output.granules[0].files.length, 2);
+    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].fileType));
   }
   finally {
     // Clean up

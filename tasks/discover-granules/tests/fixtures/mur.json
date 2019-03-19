@@ -36,27 +36,32 @@
         {
           "regex": ".*.nc$",
           "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
-          "bucket": "protected"
+          "bucket": "protected",
+          "fileType": "data"
         },
         {
           "regex": ".*.nc.md5$",
           "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5",
-          "bucket": "public"
+          "bucket": "public",
+          "fileType": "metadata"
         },
         {
           "regex": ".*.nc.xml",
           "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.xml",
-          "bucket": "public"
+          "bucket": "public",
+          "fileType": "metadata"
         },
         {
           "regex": "^.*.nc_analysed_sst.png$",
           "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc_analysed_sst.png",
-          "bucket": "public"
+          "bucket": "public",
+          "fileType": "browse"
         },
         {
           "regex": "^.*.nc_analysis_error.png$",
           "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc_analysis_error.png",
-          "bucket": "public"
+          "bucket": "public",
+          "fileType": "browse"
         }
       ]
     }
