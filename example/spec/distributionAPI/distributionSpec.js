@@ -40,7 +40,10 @@ describe('Distribution API', () => {
   const accessTokensModel = new AccessToken();
 
   beforeAll(async (done) => {
-    await uploadTestDataToBucket(config.bucket, s3Data, testDataFolder);
+    Promise.all(
+      uploadTestDataToBucket(config.bucket, s3Data, testDataFolder),
+      uploadTestDataToBucket(config.public_bucket, s3Data, testDataFolder)
+    );
 
     setDistributionApiEnvVars();
 
@@ -51,7 +54,10 @@ describe('Distribution API', () => {
 
   afterAll(async (done) => {
     try {
-      await deleteFolder(config.bucket, testDataFolder);
+      Promise.all(
+        deleteFolder(config.bucket, testDataFolder),
+        deleteFolder(config.public_bucket, testDataFolder)
+      );
       stopDistributionApi(server, done);
     }
     catch (err) {
@@ -62,6 +68,7 @@ describe('Distribution API', () => {
   describe('handles requests for files over HTTPS', () => {
     let fileChecksum;
     let fileUrl;
+    let publicFileUrl;
     let accessToken;
 
     beforeAll(async () => {
@@ -69,6 +76,11 @@ describe('Distribution API', () => {
         bucket: config.bucket,
         key: fileKey
       });
+      publicFileUrl = getDistributionFileUrl({
+        bucket: config.public_bucket,
+        key: fileKey
+      });
+
       fileChecksum = await generateChecksumFromStream(
         'cksum',
         fs.createReadStream(require.resolve(s3Data[0]))
@@ -77,6 +89,12 @@ describe('Distribution API', () => {
 
     afterAll(async () => {
       await accessTokensModel.delete({ accessToken });
+    });
+
+    it('allows unauthorized access to public documents', async () => {
+      const fileStream = await got.stream(publicFileUrl);
+      const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
+      expect(downloadChecksum).toEqual(fileChecksum);
     });
 
     it('redirects to Earthdata login for unauthorized requests', async () => {
