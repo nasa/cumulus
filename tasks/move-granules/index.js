@@ -264,15 +264,25 @@ async function moveFilesForAllGranules(
  * @param {BucketsConfig} bucketsConfig - BucketsConfig instance
  * @returns {Promise} promise resolves when all files have been updated
  **/
-async function updateEachCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoint, bucketsConfig) {
+async function updateEachCmrFileAccessURLs(
+  cmrFiles,
+  granulesObject,
+  distEndpoint,
+  bucketsConfig
+) {
   return Promise.all(cmrFiles.map(async (cmrFile) => {
     const publish = false; // Do the publish in publish-to-cmr step
     const granuleId = cmrFile.granuleId;
     const granule = granulesObject[granuleId];
     const updatedCmrFile = granule.files.find(isCMRFile);
-    return updateCMRMetadata(
-      granuleId, updatedCmrFile, granule.files, distEndpoint, publish, bucketsConfig
-    );
+    return updateCMRMetadata({
+      granuleId,
+      cmrFile: updatedCmrFile,
+      files: granule.files,
+      distEndpoint,
+      publish,
+      inBuckets: bucketsConfig
+    });
   }));
 }
 
@@ -320,7 +330,10 @@ async function moveGranules(event) {
     );
     // update cmr metadata files with correct online access urls
     await updateEachCmrFileAccessURLs(
-      cmrFiles, movedGranules, config.distribution_endpoint, bucketsConfig
+      cmrFiles,
+      movedGranules,
+      config.distribution_endpoint,
+      bucketsConfig
     );
   }
   else {
