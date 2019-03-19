@@ -70,8 +70,10 @@ async function addMetadataObjects(cmrFiles) {
 async function postToCMR(event) {
   // get cmr files and metadata
   const cmrFiles = reduceGranulesToCmrFileObjects(event.input.granules);
+  log.debug(`Found ${cmrFiles.length} CMR files.`);
   const updatedCMRFiles = await addMetadataObjects(cmrFiles);
 
+  log.info(`Publishing ${updatedCMRFiles.length} CMR files.`);
   // post all meta files to CMR
   const results = await Promise.all(
     updatedCMRFiles.map(
