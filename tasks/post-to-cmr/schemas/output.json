@@ -20,15 +20,14 @@
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["name"],
               "properties": {
                 "name": {
                   "type": "string"
                 },
-                "filename": {
+                "fileName": {
                   "type": "string"
                 },
-                "fileTupe": {
+                "fileType": {
                   "type": "string"
                 },
                 "bucket": {
