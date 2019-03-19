@@ -19,14 +19,15 @@ stages:
 
 jobs:
   include:
-    # - name: "npm audit"
-    #   stage: audit
-    #   if: tag !~ ^v\d+.* AND commit_message !~ \[skip-audit\]
-    #   install:
-    #     - nvm install-latest-npm
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #     - npm ci
-    #   script: ./travis-ci/audit-packages.sh
+    - name: "npm audit"
+      stage: audit
+      if: tag !~ ^v\d+.* AND commit_message !~ \[skip-audit\]
+      install:
+        - nvm install-latest-npm
+        - ln -s /dev/stdout ./lerna-debug.log
+        - npm ci
+        - npm run bootstrap-no-build
+      script: npm run audit
 
     - name: "eslint"
       stage: unit test and stack deployment
