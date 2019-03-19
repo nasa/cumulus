@@ -209,7 +209,7 @@ IngestAndPublishGranule:
         input_granules: '{$.meta.input_granules}'
         granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
       Type: Task
-      Resource: ${FilesToGranulesLambdaFunction.arn}
+      Resource: ${FilesToGranulesLambdaFunction.Arn}
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -385,7 +385,7 @@ IngestGranule:
         input_granules: '{$.meta.input_granules}'
         granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
       Type: Task
-      Resource: ${FilesToGranulesLambdaFunction.arn}
+      Resource: ${FilesToGranulesLambdaFunction.Arn}
       Catch:
         - ErrorEquals:
           - States.ALL
