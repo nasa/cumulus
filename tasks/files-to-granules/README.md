@@ -25,7 +25,7 @@ Input array specification:
 
 | field name | type | default | description
 | ---------- | ---- | ------- | -----------
-| N/A | array\<string\> | (required) | Array of S3 URIs
+| N/A | array\<string\> | (required) | Array of S3 URIs (i.e. `s3://bucket/path/to/file`);
 
 ### Output
 
