@@ -50,12 +50,7 @@ test.before(async () => {
   const signedFileUrl = new URL(`https://${randomId('host2')}.com/${randomId('path2')}`);
 
 
-  const getAccessTokenResponse = {
-    accessToken: randomId('token'),
-    refreshToken: randomId('refreshToken'),
-    username: randomId('username'),
-    expirationTime: Date.now() + (60 * 60 * 1000)
-  };
+  const getAccessTokenResponse = fakeAccessTokenFactory();
 
   sinon.stub(
     EarthdataLoginClient.prototype,

@@ -37,19 +37,13 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken('token');
   await accessTokenModel.createTable();
 
-
-  const getAccessTokenResponse = {
-    accessToken: randomId('accessToken'),
-    refreshToken: randomId('refreshToken'),
-    username: randomId('username'),
-    expirationTime: Date.now() + (60 * 60 * 1000)
-  };
   authorizationUrl = randomId('authURL');
+  const stubbedAccessToken = fakeAccessTokenFactory();
 
   sinon.stub(
     EarthdataLoginClient.prototype,
     'getAccessToken'
-  ).callsFake(() => getAccessTokenResponse);
+  ).callsFake(() => stubbedAccessToken);
 
   sinon.stub(
     EarthdataLoginClient.prototype,
