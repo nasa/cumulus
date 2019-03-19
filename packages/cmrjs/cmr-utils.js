@@ -57,7 +57,7 @@ function isCMRFile(fileobject) {
 /**
  * Reduce granule object array to CMR files array
  *
- * @param {Object} granules = granule objects array
+ * @param {Array<Object>} granules - granule objects array
  *
  * @returns {Array<Object>} - CMR file object array: { filename, granuleId }
  */
@@ -69,7 +69,6 @@ function reduceGranulesToCmrFileObjects(granules) {
   );
   return granules.reduce(reducer, []);
 }
-
 
 /**
  * Instantiates a CMR instance for ingest of metadata
