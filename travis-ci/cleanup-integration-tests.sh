@@ -2,6 +2,7 @@
 
 set -e
 
+npm ci
 . ./travis-ci/set-env-vars.sh
 
 (
@@ -9,11 +10,9 @@ set -e
 
   cd example
 
-  rm -rf node_modules
-
   # Delete the stack if it's a nightly build
   if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
-    npm install
+    npm ci
     echo Delete app deployment
 
     ./node_modules/.bin/kes cf delete \
@@ -32,6 +31,7 @@ set -e
 
     echo Delete app deployment
   else
+    rm -rf node_modules
     npm install @cumulus/common
   fi
 

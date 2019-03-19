@@ -17,7 +17,7 @@ jobs:
             if [ -z "${CIRCLE_PR_REPONAME}" ]; then
               echo 'skipping the step because this is not a forked PR'
             else
-              npm install
+              npm ci
             fi
 
       - run:
