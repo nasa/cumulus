@@ -46,6 +46,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added `@cumulus/common/util#isUndefined()`
   - Added `@cumulus/common/util#negate()`
 
+- **CUMULUS-1176**
+  - Added new `@cumulus/files-to-granules` task to handle converting file array output from `cumulus-process` tasks into granule objects.
+    This will allow simplification of the move-granules task and reduce that task's dependence on `granuleIdExtraction` assumptions.
+
 - CUMULUS-1151 Compare the granule holdings in CMR with Cumulus' internal data store
 - CUMULUS-1152 Compare the granule file holdings in CMR with Cumulus' internal data store
 
