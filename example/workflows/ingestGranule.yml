@@ -66,14 +66,24 @@ IngestGranuleCatchDuplicateErrorTest:
             - States.ALL
           IntervalSeconds: 2
           MaxAttempts: 3
+      Next: FilesToGranulesStep
+    FilesToGranulesStep:
+      CumulusConfig:
+        input_granules: '{$.meta.input_granules}'
+        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+      Type: Task
+      Resource: ${FilesToGranulesLambdaFunction.arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
       Next: MoveGranuleStep
     MoveGranuleStep:
       CumulusConfig:
         bucket: '{$.meta.buckets.internal.name}'
         buckets: '{$.meta.buckets}'
-        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
         distribution_endpoint: '{$.meta.distribution_endpoint}'
-        input_granules: '{$.meta.input_granules}'
         collection: '{$.meta.collection}'
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
       Type: Task

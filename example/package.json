@@ -36,6 +36,7 @@
     "@cumulus/deployment": "^1.11.3",
     "@cumulus/discover-granules": "^1.11.3",
     "@cumulus/discover-pdrs": "^1.11.3",
+    "@cumulus/files-to-granules": "^1.11.3-alpha1",
     "@cumulus/hello-world": "^1.11.3",
     "@cumulus/integration-tests": "^1.11.3",
     "@cumulus/move-granules": "^1.11.3",
