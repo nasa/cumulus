@@ -40,10 +40,10 @@ describe('Distribution API', () => {
   const accessTokensModel = new AccessToken();
 
   beforeAll(async (done) => {
-    Promise.all(
+    Promise.all([
       uploadTestDataToBucket(config.bucket, s3Data, testDataFolder),
       uploadTestDataToBucket(config.public_bucket, s3Data, testDataFolder)
-    );
+    ]);
 
     setDistributionApiEnvVars();
 
@@ -54,10 +54,10 @@ describe('Distribution API', () => {
 
   afterAll(async (done) => {
     try {
-      Promise.all(
+      Promise.all([
         deleteFolder(config.bucket, testDataFolder),
         deleteFolder(config.public_bucket, testDataFolder)
-      );
+      ]);
       stopDistributionApi(server, done);
     }
     catch (err) {
