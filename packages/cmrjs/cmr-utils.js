@@ -65,7 +65,8 @@ function reduceGranulesToCmrFileObjects(granules) {
   const reducer = (cFiles, g) => cFiles.concat(
     g.files.filter(isCMRFile).map(
       (cf) => ({ filename: cf.filename, granuleId: g.granuleId })
-    ));
+    )
+  );
   return granules.reduce(reducer, []);
 }
 
