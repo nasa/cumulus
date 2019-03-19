@@ -40,6 +40,6 @@ RESULT=$?
 set -e
 
 echo Unlocking stack
-node ./scripts/lock-stack.js false $DEPLOYMENT
+(cd example && node ./scripts/lock-stack.js false $DEPLOYMENT)
 
 exit $RESULT
