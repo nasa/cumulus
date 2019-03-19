@@ -31,7 +31,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |name |`"MOD09GQ"`|Yes|The name attribute designates the name of the collection. This is the name under which the collection will be displayed on the dashboard|
 |version|`"006"`|Yes|A version tag for the collection|
 |granuleId|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$"`|Yes|REGEX to match granuleId extracted via granuleIdExtraction|
-|granuleIdExtraction|<code>"(MOD09GQ\\..*)(\\.hdf&#124;\\.cmr&#124;_ndvi\\.jpg)"</code>|Yes|REGEX that extracts a granuleId from name|
+|granuleIdExtraction|<code>"(MOD09GQ\\..*)(\\.hdf&#124;\\.cmr&#124;_ndvi\\.jpg)"</code>|Yes|REGEX that extracts a granuleId from filename|
 |sampleFileName|`"MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"`|Yes|An example filename belonging to this collection|
 |files|`<JSON Object>` of files defined [here](#files-object)|Yes|Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)|
 |dataType|`"MOD09GQ"`|No|Can be specified, but this value will default to the collection_name if not|
