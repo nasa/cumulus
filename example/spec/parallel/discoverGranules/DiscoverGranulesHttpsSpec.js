@@ -108,6 +108,7 @@ xdescribe('The Discover Granules workflow with https Protocol', () => {
       expect(lambdaOutput.payload.granules.length).toEqual(3);
       expect(lambdaOutput.payload.granules[0].granuleId).toEqual('granule-1');
       expect(lambdaOutput.payload.granules[0].files.length).toEqual(2);
+      expect(lambdaOutput.payload.granules[0].files[0].fileType).toEqual('data');
     });
   });
 

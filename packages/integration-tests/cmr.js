@@ -160,32 +160,6 @@ async function waitForConceptExistsOutcome(cmrLink, expectation) {
 }
 
 /**
- * Get the online resource links from the CMR objects
- *
- * @param {string} cmrLink - CMR URL path to concept,
- * i.e. what is returned from post to cmr task
- * @returns {Array<Object>} Array of link objects in the format
- * { inherited: true,
-    rel: 'http://esipfed.org/ns/fedsearch/1.1/metadata#',
-    hreflang: 'en-US',
-    href: 'https://opendap.cr.usgs.gov/opendap/hyrax/MYD13Q1.006/contents.html' }
- */
-async function getOnlineResources(cmrLink) {
-  const response = await got.get(cmrLink);
-
-  if (response.statusCode !== 200) {
-    return null;
-  }
-
-  const body = JSON.parse(response.body);
-
-  const links = body.feed.entry.map((e) => e.links);
-
-  // Links is a list of a list, so flatten to be one list
-  return [].concat(...links);
-}
-
-/**
  * Generate a granule xml string
  *
  * @param {Object} granule - granule object

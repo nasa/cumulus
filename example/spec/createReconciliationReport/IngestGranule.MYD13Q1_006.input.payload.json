@@ -8,21 +8,25 @@
         {
           "path": "cumulus-test-data/pdrs",
           "fileSize": 5192514,
+          "fileType": "data",
           "name": "MYD13Q1.A2002185.h00v09.006.2015149071135.hdf"
         },
         {
           "path": "cumulus-test-data/pdrs",
+          "fileType": "metadata",
           "fileSize": 21708,
           "name": "MYD13Q1.A2002185.h00v09.006.2015149071135.hdf.met"
         },
         {
           "path": "cumulus-test-data/pdrs",
           "fileSize": 32795,
+          "fileType": "data",
           "name": "BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.hdf"
         },
         {
           "path": "cumulus-test-data/pdrs",
           "fileSize": 15797,
+          "fileType": "browse",
           "name": "BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.1.jpg"
         }
       ]

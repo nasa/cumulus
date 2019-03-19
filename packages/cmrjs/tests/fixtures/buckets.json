@@ -1,0 +1,26 @@
+{
+  "private": {
+    "type": "private",
+    "name": "cumulus-test-sandbox-private"
+  },
+  "public": {
+    "type": "public",
+    "name": "cumulus-test-sandbox-public"
+  },
+  "protected-2": {
+    "type": "protected",
+    "name": "cumulus-test-sandbox-protected-2"
+  },
+  "protected": {
+    "type": "protected",
+    "name": "cumulus-test-sandbox-protected"
+  },
+  "shared": {
+    "type": "shared",
+    "name": "cumulus-data-shared"
+  },
+  "internal": {
+    "type": "internal",
+    "name": "cumulus-test-sandbox-internal"
+  }
+}

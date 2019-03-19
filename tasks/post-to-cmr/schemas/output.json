@@ -28,6 +28,9 @@
                 "filename": {
                   "type": "string"
                 },
+                "fileTupe": {
+                  "type": "string"
+                },
                 "bucket": {
                   "type": "string"
                 }
