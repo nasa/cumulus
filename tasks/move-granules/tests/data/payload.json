@@ -19,7 +19,6 @@
         "type": "public"
       }
     },
-    "granuleIdExtraction": "(MOD11A1\\..*)(\\.hdf|\\.cmr\\.xml|_[\\w]{1,}\\.jpg)",
     "distribution_endpoint": "https://something.api.us-east-1.amazonaws.com/",
     "collection": {
       "files": [
@@ -59,7 +58,6 @@
       "name": "MOD11A1",
       "granuleId": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
       "dataType": "MOD11A1",
-      "granuleIdExtraction": "(MOD11A1\\.(.*))\\.hdf",
       "process": "modis",
       "provider_path": "/TEST_B/Cumulus/MODIS/PDR/",
       "version": "006",
