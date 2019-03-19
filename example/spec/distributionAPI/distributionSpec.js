@@ -5,6 +5,7 @@ const { URL } = require('url');
 const got = require('got');
 
 const { models: { AccessToken } } = require('@cumulus/api');
+const { getS3ObjectReadStream } = require('@cumulus/common/aws');
 const { serveDistributionApi } = require('@cumulus/api/bin/serve');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
@@ -68,7 +69,6 @@ describe('Distribution API', () => {
   describe('handles requests for files over HTTPS', () => {
     let fileChecksum;
     let fileUrl;
-    let publicFileUrl;
     let accessToken;
 
     beforeAll(async () => {
@@ -76,11 +76,6 @@ describe('Distribution API', () => {
         bucket: config.bucket,
         key: fileKey
       });
-      publicFileUrl = getDistributionFileUrl({
-        bucket: config.public_bucket,
-        key: fileKey
-      });
-
       fileChecksum = await generateChecksumFromStream(
         'cksum',
         fs.createReadStream(require.resolve(s3Data[0]))
@@ -92,7 +87,7 @@ describe('Distribution API', () => {
     });
 
     it('allows unauthorized access to public documents', async () => {
-      const fileStream = await got.stream(publicFileUrl);
+      const fileStream = await getS3ObjectReadStream(config.public_bucket, fileKey);
       const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
       expect(downloadChecksum).toEqual(fileChecksum);
     });
