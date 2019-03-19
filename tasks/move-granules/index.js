@@ -289,7 +289,7 @@ async function updateEachCmrFileAccessURLs(cmrFiles, granulesObject, distEndpoin
  *                     https://nasa.github.io/cumulus/docs/data-cookbooks/setup#collections
  * @param {boolean} [event.config.moveStagedFiles=true] - set to false to skip moving files
  *                                 from staging to final bucket. Mostly useful for testing.
- * @param {Object} event.input - an array of s3 uris
+ * @param {Object} event.input - a granules object containing an array of granules
  * @returns {Promise} returns the promise of an updated event object
  */
 async function moveGranules(event) {
