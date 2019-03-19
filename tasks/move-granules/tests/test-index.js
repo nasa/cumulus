@@ -15,6 +15,7 @@ const {
   headObject,
   parseS3Uri
 } = require('@cumulus/common/aws');
+const { isCMRFile } = require('@cumulus/cmrjs');
 const clonedeep = require('lodash.clonedeep');
 const set = require('lodash.set');
 const errors = require('@cumulus/common/errors');
@@ -42,6 +43,14 @@ async function updateFileTags(files, bucket, TagSet) {
     parseS3Uri(file).Key,
     { TagSet }
   )));
+}
+
+function updateCmrFileType(payload) {
+  payload.input.granules.forEach(
+    (g) => {
+      g.files.filter(isCMRFile).forEach((cmrFile) => cmrFile.fileType = 'userSetType');
+    }
+  );
 }
 
 function granulesToFileURIs(granules) {
@@ -223,8 +232,7 @@ test.serial('Should update filenames with updated S3 URLs.', async (t) => {
 
 test.serial('Should not overwrite CMR fileType if already explicitly set', async (t) => {
   const newPayload = buildPayload(t);
-  //addCmrFileToPayload(t, newPayload);
-  newPayload.input.granules[0].files[3].fileType = 'userSetType';
+  updateCmrFileType(newPayload);
 
   await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
 
