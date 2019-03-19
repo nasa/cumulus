@@ -148,7 +148,12 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
   ];
   let actual;
   try {
-    actual = await updateEcho10XMLMetadata({ filename: 's3://cumulus-test-sandbox-private/notUsed' }, filesObject, distEndpoint, buckets);
+    actual = await updateEcho10XMLMetadata({
+      cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+      files: filesObject,
+      distEndpoint,
+      buckets
+    });
   }
   finally {
     revertMetaObject();
