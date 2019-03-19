@@ -5,7 +5,11 @@
 This lambda function is responsible for moving granule files from a file staging location to their final location.
 
 ## Message Configuration
+
+For more information on configuring a Cumulus Message Adapter task, see [the Cumulus workflow input/output documentation](https://nasa.github.io/cumulus/docs/workflows/input_output).
+
 ### Config
+
 Config object fields:
 
 | field name | type | default | values | description
@@ -18,6 +22,7 @@ Config object fields:
 | moveStagedFiles | boolean | `true` | | Can set to `false` to skip moving files from the staging location. Defaults to `true`.
 
 ### Input
+
 Input object fields:
 
 | field name | type | default | description
@@ -25,6 +30,7 @@ Input object fields:
 | granules | array\<object\> | (required) | List of granule objects
 
 ### Output
+
 Output object fields:
 
 | field name | type | default | description

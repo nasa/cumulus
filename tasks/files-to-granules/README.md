@@ -7,7 +7,11 @@ It is primarily intended to support the standard output of a [cumulus-process](h
 and convert that output into a granule object accepted as input by the majority of other Cumulus tasks.
 
 ## Message configuration
+
+For more information on configuring a Cumulus Message Adapter task, see [the Cumulus workflow input/output documentation](https://nasa.github.io/cumulus/docs/workflows/input_output).
+
 ### Config
+
 Config object fields:
 
 | field name | type | default | description
@@ -16,6 +20,7 @@ Config object fields:
 | granuleIdExtraction | string | (.*) | Regex used to extract granuleId from filenames
 
 ### Input
+
 Input array specification:
 
 | field name | type | default | description
@@ -23,6 +28,7 @@ Input array specification:
 | N/A | array\<string\> | (required) | Array of S3 URIs
 
 ### Output
+
 Output object fields:
 
 | field name | type | default | description
