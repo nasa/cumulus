@@ -13,6 +13,32 @@ The `move-granules` task and the `(api)granules.move` function will both update 
 
 A granule's files URL, and Type/Description for UMMG and URLDescription for ECHO10, are modified for each file in the granule based on its bucket location. The metadata URLs are based on the file bucket storage type.  Files placed in protected buckets will get a url to the distribution endpoint. Files in public buckets will get direct `https` links. URLs not directly related to the granule's files are unmodified and preserved as they exist.
 
+## Message Configuration
+### Config
+Config object fields:
+
+| field name | type | default | description
+| ---------- | ---- | ------- | -----------
+| bucket | string | (required) | Name of S3 bucket containing public/private key pair to decrypt CMR credentials
+| process | string | (required) | Process the granules went through
+| stack | string | (required) | Name of deployment stack
+| cmr | object | (required) | CMR credentials object
+
+### Input
+Input object fields:
+
+| field name | type | default | description
+| ---------- | ---- | ------- | -----------
+| granules | array\<object\> | (required) | List of granule objects
+
+### Output
+Output object fields:
+
+| field name | type | default | values | description
+| ---------- | ---- | ------- | ------ | -----------
+| granules | array\<object\> | N/A | List of granule objects published to CMR
+| process | string | N/A | Process the granules went through
+
 
 ## What is Cumulus?
 
