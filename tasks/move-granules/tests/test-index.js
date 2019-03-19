@@ -56,8 +56,8 @@ function updateCmrFileType(payload) {
 }
 
 function granulesToFileURIs(granules) {
-  const m = granules.reduce((arr, g) => arr.concat(g.files.map((file) => file.filename)), []);
-  return m;
+  const s3URIs = granules.reduce((arr, g) => arr.concat(g.files.map((file) => file.filename)), []);
+  return s3URIs;
 }
 
 function buildPayload(t) {
