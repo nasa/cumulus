@@ -10,7 +10,7 @@ Cumulus deployments are configured to scale out ECS Services' desired tasks and 
 
 ## ECS Service Auto Scaling Scale Out
 
-[ECS Service Auto Scaling](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-auto-scaling.html) is configured per-service to scale whenever AWS Step Functions schedules more activities than can be started by running ECS Tasks. The `ActivitiesWaiting` metric is calculated using metrics from the AWS `States/Activities` namespace. The `ActivitiesWaiting` metric is derived in the AWS Cloudformation template using `ActivitesScheduled - ActivitiesStarted` (see: [MetricDataQuery](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudwatch-alarm-metricdataquery.html). 
+[ECS Service Auto Scaling](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-auto-scaling.html) is configured per-service to scale whenever AWS Step Functions schedules more activities than can be started by running ECS Tasks. The `ActivitiesWaiting` metric is calculated using metrics from the AWS `States/Activities` namespace. The `ActivitiesWaiting` metric is derived in the AWS Cloudformation template using `ActivitesScheduled - ActivitiesStarted` (see: [MetricDataQuery](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudwatch-alarm-metricdataquery.html)).
 
 By default, the ECS Service Scale Out policy increases desired tasks by 10% whenever the `ActivitiesWaiting` metric is above 0 for 5 periods of 1 minute (using [StepScaling](https://docs.aws.amazon.com/autoscaling/application/userguide/application-auto-scaling-step-scaling-policies.html)). Note - `ActivitesWaiting` can go negative. However, these settings can be configured in `app/config.yml`:
 
@@ -76,7 +76,7 @@ The scale in target tracking can also be configured in `app/config.yml`:
 
 ### CloudWatch Metrics
 
-For reference, here are the available CloudWatch metrics available (by namespace and metric name) for use in scaling ECS services and clusters:
+For reference, here are the available CloudWatch metrics (by namespace and metric name) for use in scaling ECS services and clusters:
 
 ECS/Cluster
 * MemoryReservation
