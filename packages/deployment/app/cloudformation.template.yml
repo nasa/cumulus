@@ -856,7 +856,10 @@ Resources:
                   - |
                     #!/bin/bash
                     echo ECS_CLUSTER=${CumulusECSCluster} >> /etc/ecs/ecs.config
+                    # Time duration to wait from when a task is stopped until the Docker container is removed
                     echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=1m >> /etc/ecs/ecs.config
+                    # Time duration to wait from when a task is stopped before its containers are forcefully killed if they do not exit normally on their own.
+                    echo ECS_CONTAINER_STOP_TIMEOUT={{ecs.container_stop_timeout}}
                     echo 'DOCKER_STORAGE_OPTIONS="${!DOCKER_STORAGE_OPTIONS} --storage-driver {{ecs.docker.storageDriver}}"' >> /etc/sysconfig/docker-storage
                     {{#ifEquals ecs.docker.storageDriver "devicemapper"}}
                     echo 'OPTIONS="${!OPTIONS} --storage-opt dm.basesize={{ecs.volumeSize}}G"' >> /etc/sysconfig/docker
