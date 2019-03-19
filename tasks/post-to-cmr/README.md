@@ -14,7 +14,11 @@ The `move-granules` task and the `(api)granules.move` function will both update 
 A granule's files URL, and Type/Description for UMMG and URLDescription for ECHO10, are modified for each file in the granule based on its bucket location. The metadata URLs are based on the file bucket storage type.  Files placed in protected buckets will get a url to the distribution endpoint. Files in public buckets will get direct `https` links. URLs not directly related to the granule's files are unmodified and preserved as they exist.
 
 ## Message Configuration
+
+For more information on configuring a Cumulus Message Adapter task, see [the Cumulus workflow input/output documentation](https://nasa.github.io/cumulus/docs/workflows/input_output).
+
 ### Config
+
 Config object fields:
 
 | field name | type | default | description
@@ -25,6 +29,7 @@ Config object fields:
 | cmr | object | (required) | CMR credentials object
 
 ### Input
+
 Input object fields:
 
 | field name | type | default | description
@@ -32,6 +37,7 @@ Input object fields:
 | granules | array\<object\> | (required) | List of granule objects
 
 ### Output
+
 Output object fields:
 
 | field name | type | default | values | description
