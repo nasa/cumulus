@@ -113,7 +113,8 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
     authClient
   } = getConfigurations();
 
-  const redirectURLForAuthorizationCode = authClient.getAuthorizationUrl(req.params[0]);
+  const redirectState = req.params[0] || '/s3credentials';
+  const redirectURLForAuthorizationCode = authClient.getAuthorizationUrl(redirectState);
 
   const accessToken = req.cookies.accessToken;
 
