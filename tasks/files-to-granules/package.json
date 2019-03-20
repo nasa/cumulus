@@ -19,7 +19,7 @@
     "test-coverage": "nyc ava",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
-    "prepublishOnly": "PRODUCTION=true npm run build"
+    "prepare": "npm run build"
   },
   "engines": {
     "node": ">=8.10.0"
@@ -36,12 +36,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "1.11.3",
     "@cumulus/cumulus-message-adapter-js": "^1.0.7",
-    "@cumulus/cmrjs": "1.11.3",
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {
+    "@cumulus/common": "1.11.3",
     "ava": "^0.25.0",
     "nyc": "^13.3.0",
     "webpack": "~4.5.0",

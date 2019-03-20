@@ -3,9 +3,9 @@
 const get = require('lodash.get');
 const path = require('path');
 
-const { getGranuleId } = require('@cumulus/cmrjs');
-const { parseS3Uri } = require('@cumulus/common/aws');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
+
+const { getGranuleId, parseS3Uri } = require('./utils');
 
 /**
  * Helper to turn an s3URI into a fileobject
@@ -66,14 +66,14 @@ function mergeInputFilesWithInputGranules(inputFiles, inputGranules, regex) {
  * @param {Object} event.config - Cumulus config object
  * @param {string} event.config.granuleIdExtraction - regex needed to extract granuleId
  *                                                    from filenames
- * @param {Array} event.config.input_granules - an array of granules
+ * @param {Array} event.config.inputGranules - an array of granules
  * @param {Array} event.input - an array of s3 uris
  *
  * @returns {Object} - Granules object
  */
 function convertFileURIArrayToGranuleObjectArray(event) {
   const granuleIdExtractionRegex = get(event.config, 'granuleIdExtraction', '(.*)');
-  const inputGranules = get(event.config, 'input_granules', {});
+  const inputGranules = get(event.config, 'inputGranules', []);
   const inputFileList = get(event, 'input', []);
 
   const allGranules = mergeInputFilesWithInputGranules(
@@ -92,7 +92,7 @@ function convertFileURIArrayToGranuleObjectArray(event) {
  * @param {Object} event.config - Cumulus config object
  * @param {string} event.config.granuleIdExtraction - regex needed to extract granuleId
  *                                                    from filenames
- * @param {Array} event.config.input_granules - an array of granules
+ * @param {Array} event.config.inputGranules - an array of granules
  * @param {Array} event.input - an array of s3 uris
  *
  * @returns {Object} - Granules object
