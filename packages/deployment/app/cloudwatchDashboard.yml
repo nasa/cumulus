@@ -10,7 +10,7 @@ esSampleAlarm:
     view: singleValue
 
 esHeader:
-  type: text
+- type: text
   width: 24
   height: 1
   properties:
@@ -19,7 +19,7 @@ esHeader:
       # Elasticsearch Service
 
 esAlarmHeader:
-  type: text
+- type: text
   width: 24
   height: 1
   properties:

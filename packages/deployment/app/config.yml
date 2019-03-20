@@ -232,5 +232,5 @@ default:
   ]
 
   dashboard: !!files [
-  'node_modules/@cumulus/deployment/app/cloudwatch.yml'
+  'node_modules/@cumulus/deployment/app/cloudwatchDashboard.yml'
   ]

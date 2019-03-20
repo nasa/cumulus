@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- **CUMULUS-805** - Added a CloudWatch alarm to check running ElasticSearch instances, and a CloudWatch dashboard to view the health of ElasticSearch
 - **CUMULUS-670**
   - Added new Collection file parameter "fileType" that allows configuration of workflow granule file fileType assignments
 - **CUMULUS-1184** - Added kes logging output to ensure we always see the state machine reference before failures due to configuration
