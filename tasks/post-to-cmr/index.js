@@ -56,16 +56,20 @@ async function addMetadataObjects(cmrFiles) {
 
 /**
  * Post to CMR
+ *
  * See the schemas directory for detailed input and output schemas
  *
- * @param {Object} event -Lambda function payload
+ * @param {Object} event - Lambda function payload
  * @param {Object} event.config - the config object
- * @param {string} event.config.bucket - the bucket name where public/private keys
- *                                       are stored
+ * @param {string} event.config.bucket - the bucket name where public/private
+ *   keys are stored
+ * @param {Object} event.config.cmr - the cmr object containing user/pass and
+ *   provider
+ * @param {string} event.config.process - the process the granules went through
  * @param {string} event.config.stack - the deployment stack name
- * @param {Object} event.input.granules - Object of all granules where granuleID is the key
- * @param {Object} event.config.cmr - the cmr object containing user/pass and provider
- * @returns {Promise} returns the promise of an updated event object
+ * @param {Object} event.input.granules - Object of all granules where granuleID
+ *    is the key
+ * @returns {Promise<Object>} the promise of an updated event object
  */
 async function postToCMR(event) {
   // get cmr files and metadata
