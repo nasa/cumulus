@@ -7,7 +7,7 @@
     "test-coverage": "nyc npm test",
     "build": "babel lib -d app",
     "watch": "babel lib -d app -w",
-    "prepublishOnly": "npm run build"
+    "prepare": "npm run build"
   },
   "ava": {
     "files": "test"
