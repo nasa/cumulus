@@ -150,90 +150,94 @@ describe('scaling for step function activities', () => {
     const numExecutions = 2;
 
     beforeAll(async (done) => {
-      console.log(`in before block`)
-      const workflowExecutionPromises = [];
-      const clusterArn = await getClusterArn(stackName);
-      console.log(`clusterArn ${clusterArn}`);
-      const asgName = await getAutoScalingGroupName(stackName);
-      console.log(`asgName ${asgName}`);
+      try {
+        console.log(`in before block`)
+        const workflowExecutionPromises = [];
+        const clusterArn = await getClusterArn(stackName);
+        console.log(`clusterArn ${clusterArn}`);
+        const asgName = await getAutoScalingGroupName(stackName);
+        console.log(`asgName ${asgName}`);
 
-      // set desired instances to 2 so scale in will take affect
-      const setDesiredCapacityParams = {
-        AutoScalingGroupName: asgName,
-        DesiredCapacity: 2,
-        HonorCooldown: true
-      };
-      await autoscaling().setDesiredCapacity(setDesiredCapacityParams).promise()
-        .catch((err) => {
-          console.log(`err ${JSON.stringify(err, null, 2)}`)
-          if (err.code === 'ScalingActivityInProgress') {
-            console.log('ScalingActivityInProgress. Cannot make update.');
-          } else {
-            throw(err);
-          }
-        });
+        // set desired instances to 2 so scale in will take affect
+        const setDesiredCapacityParams = {
+          AutoScalingGroupName: asgName,
+          DesiredCapacity: 2,
+          HonorCooldown: true
+        };
+        await autoscaling().setDesiredCapacity(setDesiredCapacityParams).promise()
+          .catch((err) => {
+            console.log(`err ${JSON.stringify(err, null, 2)}`)
+            if (err.code === 'ScalingActivityInProgress') {
+              console.log('ScalingActivityInProgress. Cannot make update.');
+            } else {
+              throw(err);
+            }
+          });
 
-      // wait for instances to be active
-      const listContainerInstancesParams = { cluster: clusterArn };
-      let containerInstanceIds = (await ecs().listContainerInstances(listContainerInstancesParams).promise()).containerInstanceArns;
-      let waitTime = 30000;
-      while (containerInstanceIds.length < 2) {
-        console.log(`waiting for instances to become active`);
-        await sleep(waitTime);
-        containerInstanceIds = (await ecs().listContainerInstances(listContainerInstancesParams).promise()).containerInstanceArns;
-        console.log(`containerInstanceIds ${containerInstanceIds}`);
-      };
+        // wait for instances to be active
+        const listContainerInstancesParams = { cluster: clusterArn };
+        let containerInstanceIds = (await ecs().listContainerInstances(listContainerInstancesParams).promise()).containerInstanceArns;
+        let waitTime = 30000;
+        while (containerInstanceIds.length < 2) {
+          console.log(`waiting for instances to become active`);
+          await sleep(waitTime);
+          containerInstanceIds = (await ecs().listContainerInstances(listContainerInstancesParams).promise()).containerInstanceArns;
+          console.log(`containerInstanceIds ${containerInstanceIds}`);
+        };
 
-      // set desired tasks to 2
-      // const services = await ecs().listServices({cluster: clusterArn}).promise();
-      // const serviceName = services.serviceArn[0];
-      const updateServiceParams = {
-        desiredCount: 2,
-        cluster: clusterArn,
-        // TODO(aimee): create function for
-        service: 'aimee-HelloWorldServiceECSService-1MFFX4O20792I'
-      };
-      const updateServiceResponse = await ecs().updateService(updateServiceParams).promise();
+        // set desired tasks to 2
+        const services = await ecs().listServices({cluster: clusterArn}).promise();
+        const serviceName = services.serviceArns[0].split('/').pop();
+        const updateServiceParams = {
+          desiredCount: 2,
+          cluster: clusterArn,
+          service: serviceName
+        };
+        const updateServiceResponse = await ecs().updateService(updateServiceParams).promise();
 
-      // Check there is a task running on each instance
-      const describeContainerInstanceParams = {
-        cluster: clusterArn,
-        containerInstances: containerInstanceIds
-      }
-      let instanceData = await ecs().describeContainerInstances(describeContainerInstanceParams).promise();
-      let firstInstanceRunningTasks = instanceData.containerInstances[0].runningTasksCount;
-      let secondInstanceRunningTasks = instanceData.containerInstances[1].runningTasksCount;
-      console.log(`firstInstanceRunningTasks ${firstInstanceRunningTasks}`);
-      console.log(`secondInstanceRunningTasks ${secondInstanceRunningTasks}`);
-      while (!(firstInstanceRunningTasks === 1) && !(secondInstanceRunningTasks === 1)) {
-        await sleep(waitTime);
-        instanceData = await ecs().describeContainerInstances(describeContainerInstanceParams).promise();
-        firstInstanceRunningTasks = instanceData.containerInstances[0].runningTasksCount;
-        secondInstanceRunningTasks = instanceData.containerInstances[1].runningTasksCount;
+        // Check there is a task running on each instance
+        const describeContainerInstanceParams = {
+          cluster: clusterArn,
+          containerInstances: containerInstanceIds
+        }
+        let instanceData = await ecs().describeContainerInstances(describeContainerInstanceParams).promise();
+        let firstInstanceRunningTasks = instanceData.containerInstances[0].runningTasksCount;
+        let secondInstanceRunningTasks = instanceData.containerInstances[1].runningTasksCount;
         console.log(`firstInstanceRunningTasks ${firstInstanceRunningTasks}`);
         console.log(`secondInstanceRunningTasks ${secondInstanceRunningTasks}`);
-      };
+        while (!(firstInstanceRunningTasks === 1 && secondInstanceRunningTasks === 1)) {
+          await sleep(waitTime);
+          instanceData = await ecs().describeContainerInstances(describeContainerInstanceParams).promise();
+          firstInstanceRunningTasks = instanceData.containerInstances[0].runningTasksCount;
+          secondInstanceRunningTasks = instanceData.containerInstances[1].runningTasksCount;
+          console.log(`firstInstanceRunningTasks ${firstInstanceRunningTasks}`);
+          console.log(`secondInstanceRunningTasks ${secondInstanceRunningTasks}`);
+        };
 
-      for (let i = 0; i < numExecutions; i += 1) {
-        workflowExecutionPromises.push(buildAndStartWorkflow(
-          stackName,
-          config.bucket,
-          workflowName,
-          null,
-          null,
-          {
-            sleep: 4 * sleepMs // sleep for long enough for scale in to take affect (about 7 minutes)
-          }
-        ));
+        for (let i = 0; i < numExecutions; i += 1) {
+          workflowExecutionPromises.push(buildAndStartWorkflow(
+            stackName,
+            config.bucket,
+            workflowName,
+            null,
+            null,
+            {
+              sleep: 4 * sleepMs // sleep for long enough for scale in to take affect (about 7 minutes)
+            }
+          ));
+        }
+        // set desired tasks to 1 so memory reservation low alarm will be triggered
+        workflowExecutionArns = await Promise.all(workflowExecutionPromises);
+        done();
+      } catch (e) {
+        console.log(e);
+        throw(e);
       }
-      // set desired tasks to 1 so memory reservation low alarm will be triggered
-      workflowExecutionArns = await Promise.all(workflowExecutionPromises);
-      done();
     }, 20*60*1000);
 
     it('all tasks should complete before instance is terminated', async () => {
       const newScalingActivity = await getNewScalingActivity({stackName});
-      console.log(`newScalingActivity ${JSON.stringify(newScalingActivity, null, 2)}`);
+      expect(newScalingActivity.Description).toMatch(/Terminating EC2 instance: i-*/);
       // expect instance not to be terminated until running tasks complete.
       // So all should complete within sleep
       const completions = workflowExecutionArns.map((executionArn) => waitForCompletedExecution(executionArn));

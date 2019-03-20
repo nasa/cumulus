@@ -98,7 +98,7 @@ default:
         image: cumuluss/cumulus-ecs-task:802-testing
         cpu: 400
         memory: 700
-        count: 1
+        count: 2
         envs:
           AWS_DEFAULT_REGION:
             function: Fn::Sub
