@@ -145,7 +145,7 @@ describe('scaling for step function activities', () => {
     });
   });
 
-  describe('when scale in takes affect', () => {
+  xdescribe('when scale in takes affect', () => {
     let workflowExecutionArns = [];
     const numExecutions = 2;
 
