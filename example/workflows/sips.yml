@@ -239,8 +239,6 @@ IngestAndPublishGranule:
         stack: '{$.meta.stack}'
         cmr: '{$.meta.cmr}'
         process: '{$.cumulus_meta.process}'
-        input_granules: '{$.meta.input_granules}'
-        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
       Catch:
@@ -446,8 +444,6 @@ PublishGranule:
         stack: '{$.meta.stack}'
         cmr: '{$.meta.cmr}'
         process: 'N/A'
-        input_granules: '{$.meta.input_granules}'
-        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
       Catch:
