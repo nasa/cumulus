@@ -4,7 +4,7 @@ const keyBy = require('lodash.keyby');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { justLocalRun } = require('@cumulus/common/local-helpers');
 const {
-  reduceGranulesToCmrFileObjects,
+  granulesToCmrFileObjects,
   metadataObjectFromCMRFile,
   publish2CMR
 } = require('@cumulus/cmrjs');
@@ -69,7 +69,7 @@ async function addMetadataObjects(cmrFiles) {
  */
 async function postToCMR(event) {
   // get cmr files and metadata
-  const cmrFiles = reduceGranulesToCmrFileObjects(event.input.granules);
+  const cmrFiles = granulesToCmrFileObjects(event.input.granules);
   log.debug(`Found ${cmrFiles.length} CMR files.`);
   const updatedCMRFiles = await addMetadataObjects(cmrFiles);
 
