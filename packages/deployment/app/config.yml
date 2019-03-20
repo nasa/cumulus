@@ -98,7 +98,8 @@ default:
 
   ecs:
     restartTasksOnDeploy: false
-    container_stop_timeout: 5m
+    container_stop_timeout: 10m
+    task_cleanup_wait_duration: 10m
     amiid: ami-6944c513
     instanceType: change-ecs-instanceType
     volumeSize: 50
@@ -111,10 +112,12 @@ default:
         scaling_adjustment: 10
         evaluation_periods: 1
         threshold: 75
+        cooldown: 120
       scale_in:
         scaling_adjustment: -10
         evaluation_periods: 1
         threshold: 50
+        cooldown: 120
     tasks:
       AsyncOperation:
         image: cumuluss/async-operation:25
