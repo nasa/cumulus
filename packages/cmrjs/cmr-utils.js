@@ -16,7 +16,7 @@ const {
   log
 } = require('@cumulus/common');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
-const { omit } = require('@cumulus/common/util');
+const { deprecate, omit } = require('@cumulus/common/util');
 
 const { CMR } = require('./cmr');
 const {
@@ -205,6 +205,7 @@ async function publish2CMR(cmrPublishObject, creds, systemBucket, stack) {
  * @returns {string} the granule
  */
 function getGranuleId(uri, regex) {
+  deprecate('@cumulus/cmrjs.getGranuleId', '1.11.3');
   const match = path.basename(uri).match(regex);
   if (match) return match[1];
   throw new Error(`Could not determine granule id of ${uri} using ${regex}`);
@@ -281,6 +282,7 @@ async function metadataObjectFromCMRFile(cmrFilename) {
  * that includes CMR xml/json URIs and granuleIds
  */
 function getCmrFiles(input, granuleIdExtraction) {
+  deprecate('@cumulus/cmrjs.getCmrFiles', '1.11.3');
   const files = [];
 
   input.forEach((filename) => {
