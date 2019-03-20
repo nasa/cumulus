@@ -1,7 +1,7 @@
 {
   "config": {
     "granuleIdExtraction": "(MOD11A1\\..*)(\\.hdf|\\.cmr\\.xml|_[\\w]{1,}\\.jpg)",
-    "input_granules": [
+    "inputGranules": [
       {
         "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
         "files": [

@@ -3,10 +3,10 @@
   "description": "Describes the config used by the files-to-granules task",
   "type": "object",
   "required": [
-    "input_granules"
+    "inputGranules"
   ],
   "properties": {
-    "input_granules": {
+    "inputGranules": {
       "type": "array",
       "description": "granules object used to construct output for cumulus indexer",
       "items": {

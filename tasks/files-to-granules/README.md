@@ -16,7 +16,7 @@ Config object fields:
 
 | field name | type | default | description
 | ---------- | ---- | ------- | -----------
-| input_granules | array\<object\> | (required) | Granules to which the files belong
+| inputGranules | array\<object\> | (required) | Granules to which the files belong
 | granuleIdExtraction | string | (.*) | Regex used to extract granuleId from filenames
 
 ### Input
@@ -33,7 +33,7 @@ Output object fields:
 
 | field name | type | default | description
 | ---------- | ---- | ------- | -----------
-| granules | array\<object\> | N/A | Array of input_granules merged with S3 files input
+| granules | array\<object\> | N/A | Array of inputGranules merged with S3 files input
 
 ## What is Cumulus?
 
