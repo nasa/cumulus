@@ -113,9 +113,7 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
     authClient
   } = getConfigurations();
 
-  const redirectState = req.authorizedMetadata.route;
-  const redirectURLForAuthorizationCode = authClient.getAuthorizationUrl(redirectState);
-
+  const redirectURLForAuthorizationCode = authClient.getAuthorizationUrl(req.path);
   const accessToken = req.cookies.accessToken;
 
   if (!accessToken) return res.redirect(307, redirectURLForAuthorizationCode);
@@ -187,21 +185,6 @@ async function handleFileRequest(req, res) {
     .send('Redirecting');
 }
 
-/**
- * attatch the desired route to the request so that ensureAuthorizedOrRedirect
- * knows the state to continue with.
- *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @param {Function} next - express middleware callback function
- * @returns {Promise<Object>} - promise of an express response object
- */
-async function populateRoutes(req, res, next) {
-  req.authorizedMetadata = { route: req.params[0] };
-  next();
-}
-
-router.get('/*', populateRoutes);
 router.get('/redirect', handleRedirectRequest);
 router.get('/s3credentials', ensureAuthorizedOrRedirect, handleCredentialRequest);
 router.get('/*', ensureAuthorizedOrRedirect, handleFileRequest);
