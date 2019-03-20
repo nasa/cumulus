@@ -41,7 +41,7 @@ describe('Distribution API', () => {
   const accessTokensModel = new AccessToken();
 
   beforeAll(async (done) => {
-    Promise.all([
+    await Promise.all([
       uploadTestDataToBucket(config.bucket, s3Data, testDataFolder),
       uploadTestDataToBucket(config.public_bucket, s3Data, testDataFolder)
     ]);
