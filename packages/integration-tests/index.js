@@ -115,6 +115,47 @@ async function getClusterStats(stackName) {
 }
 
 /**
+ * Queries for autoscaling groups and returns the first one matching the stackName passed as an argument.
+ * @param  {string} stackName stackName to use looking up autoscaling group.
+ * @return {string}           Name of the autoscaling group which has a name which includes the stackName
+ */
+async function getAutoScalingGroupName(stackName) {
+  const autoScalingGroups = (await autoscaling().describeAutoScalingGroups({}).promise()).AutoScalingGroups;
+  const asg = autoScalingGroups.find((group) => group.AutoScalingGroupName.match(new RegExp(stackName, 'g')));
+  return asg.AutoScalingGroupName;
+}
+
+/**
+ * Checks for new scaling activities by getting the most recent scaling activity
+ * and then looping until a new one has been triggered.
+ *
+ * @param  {string} options.stackName   stackName to use looking up the autoscaling group.
+ * @param  {Integer} options.waitPeriod Time to wait before checking for a new scaling activity
+ * @return {Object}                     AWS Scaling Activity object
+ */
+async function getNewScalingActivity({ stackName, waitPeriod }) {
+  waitPeriod = waitPeriod || 30000;
+  const autoScalingGroupName = await getAutoScalingGroupName(stackName);
+  const params = {
+    AutoScalingGroupName: autoScalingGroupName,
+    MaxRecords: 1
+  };
+  let activities = await autoscaling().describeScalingActivities(params).promise();
+  const startingActivity = activities.Activities[0];
+  let mostRecentActivity = Object.assign({}, startingActivity);
+  /* eslint-disable no-await-in-loop */
+  while (startingActivity.ActivityId === mostRecentActivity.ActivityId) {
+    activities = await autoscaling().describeScalingActivities(params).promise();
+    mostRecentActivity = activities.Activities[0];
+    console.log(`No new activity found. Sleeping for ${waitPeriod / 1000} seconds.`);
+    await sleep(waitPeriod);
+  }
+  /* eslint-enable no-await-in-loop */
+
+  return mostRecentActivity;
+}
+
+/**
  * Get the template JSON from S3 for the workflow
  *
  * @param {string} stackName - Cloud formation stack name
@@ -827,6 +868,8 @@ module.exports = {
   isWorkflowTriggeredByRule,
   getClusterArn,
   getClusterStats,
+  getAutoScalingGroupName,
+  getNewScalingActivity,
   getExecutionStatus,
   getWorkflowArn,
   rulesList,
