@@ -173,25 +173,19 @@ class UpdatedKes extends Kes {
     let y = 0;
 
     const widgets = [];
-    widgets.push(Object.assign(dashboardConfig.esHeader, { x, y }));
-    y += dashboardConfig.esHeader.height;
-    widgets.push(Object.assign(dashboardConfig.esAlarmHeader, { x, y }));
-    y += dashboardConfig.esAlarmHeader.height;
+    const allEsWidgets = dashboardConfig.esHeader.concat(dashboardConfig.esAlarmHeader)
+      .concat(alarms).concat(dashboardConfig.esWidgets);
 
-    alarms.forEach((alarm) => {
-      widgets.push(Object.assign(alarm, { x, y }));
-      x += alarm.width;
-    });
-    x = 0;
-    y += alarms[0].height;
-
-    dashboardConfig.esWidgets.forEach((widget) => {
+    let previousHeight = 0;
+    // place the widgets side by side until reach size 24
+    allEsWidgets.forEach((widget) => {
+      if (x + widget.width > 24) {
+        x = 0;
+        y += previousHeight;
+      }
       widgets.push(Object.assign(widget, { x, y }));
       x += widget.width;
-      if (x > 18) {
-        x = 0;
-        y += widget.height;
-      }
+      previousHeight = widget.height;
     });
 
     return JSON.stringify({ widgets });
