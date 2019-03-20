@@ -12,5 +12,4 @@ lerna publish \
   --repo-version "$VERSION" \
   --yes \
   --force-publish=* \
-  --npm-client=npm \
   --npm-tag="$NPM_TAG"
