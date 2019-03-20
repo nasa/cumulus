@@ -13,8 +13,8 @@ Environment variables `DOCSEARCH_API_KEY` and `DOCSEARCH_INDEX_NAME` must be set
 ```sh
 git clone git@github.com:nasa/cumulus
 cd cumulus
-yarn docs-install
-yarn docs-serve
+npm run docs-install
+npm run docs-serve
 ```
 
 **Note:** `docs-build` will build the documents into `website/build/Cumulus`.
