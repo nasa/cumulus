@@ -100,6 +100,7 @@ describe('Distribution API', () => {
       );
       const authorizeUrl = new URL(response.headers.location);
       expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
+      expect(authorizeUrl.searchParams.get('state')).toEqual(`/${config.bucket}/${fileKey}`);
       expect(authorizeUrl.pathname).toEqual('/oauth/authorize');
     });
 
@@ -110,6 +111,7 @@ describe('Distribution API', () => {
       );
       const authorizeUrl = new URL(response.headers.location);
       expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
+      expect(authorizeUrl.searchParams.get('state')).toEqual('/s3credentials');
       expect(authorizeUrl.pathname).toEqual('/oauth/authorize');
     });
 
