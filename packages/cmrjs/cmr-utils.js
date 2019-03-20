@@ -3,6 +3,7 @@
 const path = require('path');
 const _get = require('lodash.get');
 const _set = require('lodash.set');
+const flatten = require('lodash.flatten');
 const { promisify } = require('util');
 const urljoin = require('url-join');
 const xml2js = require('xml2js');
@@ -55,19 +56,27 @@ function isCMRFile(fileobject) {
 }
 
 /**
+ * Extract CMR file object from granule object
+ *
+ * @param {Object} granule - granule object
+ *
+ * @returns {Array<Object>} - array of CMR file objects
+ */
+function granuleToCmrFileObject(granule) {
+  return granule.files
+    .filter(isCMRFile)
+    .map((f) => ({ filename: f.filename, granuleId: granule.granuleId }));
+}
+
+/**
  * Reduce granule object array to CMR files array
  *
  * @param {Array<Object>} granules - granule objects array
  *
  * @returns {Array<Object>} - CMR file object array: { filename, granuleId }
  */
-function reduceGranulesToCmrFileObjects(granules) {
-  const reducer = (cFiles, g) => cFiles.concat(
-    g.files.filter(isCMRFile).map(
-      (cf) => ({ filename: cf.filename, granuleId: g.granuleId })
-    )
-  );
-  return granules.reduce(reducer, []);
+function granulesToCmrFileObjects(granules) {
+  return flatten(granules.map(granuleToCmrFileObject));
 }
 
 /**
@@ -746,6 +755,6 @@ module.exports = {
   metadataObjectFromCMRFile,
   publish2CMR,
   reconcileCMRMetadata,
-  reduceGranulesToCmrFileObjects,
+  granulesToCmrFileObjects,
   updateCMRMetadata
 };
