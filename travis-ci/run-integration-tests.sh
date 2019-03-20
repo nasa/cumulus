@@ -2,15 +2,13 @@
 
 set -e
 
+npm ci
 . ./travis-ci/set-env-vars.sh
 
-(
-  cd example
-  if [ "$USE_NPM_PACKAGES" = "true" ]; then
-    yarn
-  else
-    (cd .. && ./bin/prepare)
-  fi
+if [ "$USE_NPM_PACKAGES" = "true" ]; then
+  (cd example && npm ci)
+else
+  npm run bootstrap
+fi
 
-  yarn test
-)
+(cd example && npm test)
