@@ -1,6 +1,8 @@
 'use strict';
 
+const flatten = require('lodash.flatten');
 const get = require('lodash.get');
+const keyBy = require('lodash.keyby');
 const path = require('path');
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
@@ -9,7 +11,8 @@ const { getGranuleId, parseS3Uri } = require('./utils');
 
 /**
  * Helper to turn an s3URI into a fileobject
- * @param {string} s3URI s3://mybucket/myprefix/myobject.
+ *
+ * @param {string} s3URI - s3://mybucket/myprefix/myobject.
  * @returns {Object} file object
  */
 function fileObjectFromS3URI(s3URI) {
@@ -24,64 +27,31 @@ function fileObjectFromS3URI(s3URI) {
 
 /**
  * Takes the files from input and granules and merges them into an object where
- * each file is associated with it's granuleId.
+ * each file is associated with its granuleId.
  *
  * @param {Array} inputFiles - list of s3 files to add to the inputgranules
  * @param {Array} inputGranules - an array of the granules
  * @param {string} regex - regex needed to extract granuleId from filenames
- * @returns {Object} an object that contains lists of each granules' files
- *                   attatched by their granuleId
+ * @returns {Object} inputGranules with updated file lists
  */
 function mergeInputFilesWithInputGranules(inputFiles, inputGranules, regex) {
-  const granulesHash = {};
-  const filesFromInputGranules = {};
-
   // create hash list of the granules
-  // and a hash list of files
-  inputGranules.forEach((g) => {
-    granulesHash[g.granuleId] = g;
-    g.files.forEach((f) => {
-      filesFromInputGranules[f.filename] = g.granuleId;
-    });
-  });
+  // and a list of files
+  const granulesHash = keyBy(inputGranules, 'granuleId');
+  const filesFromInputGranules = flatten(inputGranules.map((g) => g.files));
 
   // add input files to corresponding granules
   // the process involve getting granuleId of each file
   // match it against the granuleObj and adding the new files to the
   // file list
-  inputFiles.forEach((f) => {
-    if (f && !filesFromInputGranules[f]) {
-      const granuleId = getGranuleId(f, regex);
-      granulesHash[granuleId].files.push(fileObjectFromS3URI(f));
-    }
-  });
-
-  return granulesHash;
-}
-
-/**
- * Convert array-of-file-URIs to granules object by merging files into input granules.
- *
- * @param {Object} event - Lambda function payload
- * @param {Object} event.config - Cumulus config object
- * @param {string} event.config.granuleIdExtraction - regex needed to extract granuleId
- *                                                    from filenames
- * @param {Array} event.config.inputGranules - an array of granules
- * @param {Array} event.input - an array of s3 uris
- *
- * @returns {Object} - Granules object
- */
-function convertFileURIArrayToGranuleObjectArray(event) {
-  const granuleIdExtractionRegex = get(event.config, 'granuleIdExtraction', '(.*)');
-  const inputGranules = get(event.config, 'inputGranules', []);
-  const inputFileList = get(event, 'input', []);
-
-  const allGranules = mergeInputFilesWithInputGranules(
-    inputFileList, inputGranules, granuleIdExtractionRegex
-  );
+  inputFiles
+    .filter((f) => !filesFromInputGranules.includes(f))
+    .forEach((f) => {
+      if (f) granulesHash[getGranuleId(f, regex)].files.push(fileObjectFromS3URI(f));
+    });
 
   return {
-    granules: Object.keys(allGranules).map((k) => allGranules[k])
+    granules: Object.keys(granulesHash).map((k) => granulesHash[k])
   };
 }
 
@@ -98,14 +68,19 @@ function convertFileURIArrayToGranuleObjectArray(event) {
  * @returns {Object} - Granules object
  */
 function filesToGranules(event) {
-  return convertFileURIArrayToGranuleObjectArray(event);
-}
+  const granuleIdExtractionRegex = get(event.config, 'granuleIdExtraction', '(.*)');
+  const inputGranules = get(event.config, 'inputGranules', []);
+  const inputFileList = get(event, 'input', []);
 
+  return mergeInputFilesWithInputGranules(
+    inputFileList, inputGranules, granuleIdExtractionRegex
+  );
+}
 exports.filesToGranules = filesToGranules;
 
 function handler(event, context, callback) {
   cumulusMessageAdapter.runCumulusTask(
-    convertFileURIArrayToGranuleObjectArray, event, context, callback
+    filesToGranules, event, context, callback
   );
 }
 
