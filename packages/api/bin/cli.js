@@ -9,7 +9,7 @@ const pckg = require('../package.json');
 const es = require('./es');
 const backup = require('./backup');
 const restore = require('./restore');
-const { serveApi } = require('./serve');
+const { serveApi, serveDistributionApi } = require('./serve');
 const { defaultIndexAlias } = require('../es/search');
 
 program.version(pckg.version);
@@ -145,6 +145,14 @@ program
   .parse(process.argv)
   .action(() => {
     serveApi().catch(console.error);
+  });
+
+program
+  .command('serve-dist')
+  .description('Serves the local version of the distribution API')
+  .parse(process.argv)
+  .action(() => {
+    serveDistributionApi().catch(console.error);
   });
 
 program

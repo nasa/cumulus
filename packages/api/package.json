@@ -15,6 +15,7 @@
     "build": "webpack",
     "watch": "webpack --progress -w",
     "serve": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve",
+    "serve-dist": "LOCALSTACK_HOST=localhost NODE_ENV=test cumulus-api serve-dist",
     "serve-oauth": "LOCALSTACK_HOST=localhost NODE_ENV=test cumulus-api serve",
     "serve-remote": "cumulus-api serve",
     "prepare": "npm run build"
