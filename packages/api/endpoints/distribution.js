@@ -11,6 +11,7 @@ const { URL } = require('url');
 const EarthdataLogin = require('../lib/EarthdataLogin');
 const { RecordDoesNotExist } = require('../lib/errors');
 const { AccessToken } = require('../models');
+const s3credentials = require('./s3credentials');
 
 /**
  * Return a signed URL to an S3 object
@@ -83,18 +84,70 @@ async function handleRedirectRequest(req, res) {
     username: getAccessTokenResponse.username
   });
 
-  return res.cookie(
-    'accessToken',
-    getAccessTokenResponse.accessToken,
-    {
-      expires: new Date(getAccessTokenResponse.expirationTime),
-      httpOnly: true,
-      secure: true
-    }
-  )
+  return res
+    .cookie(
+      'accessToken',
+      getAccessTokenResponse.accessToken,
+      {
+        expires: new Date(getAccessTokenResponse.expirationTime),
+        httpOnly: true,
+        secure: true
+      }
+    )
     .set({ Location: urljoin(distributionUrl, state) })
     .status(307)
     .send('Redirecting');
+}
+
+/**
+ * Ensure request is authorized through EarthdataLogin or redirect to become so.
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @param {Function} next - express middleware callback function
+ * @returns {Promise<Object>} - promise of an express response object
+ */
+async function ensureAuthorizedOrRedirect(req, res, next) {
+  const {
+    accessTokenModel,
+    authClient
+  } = getConfigurations();
+
+  const redirectURLForAuthorizationCode = authClient.getAuthorizationUrl(req.path);
+  const accessToken = req.cookies.accessToken;
+
+  if (!accessToken) return res.redirect(307, redirectURLForAuthorizationCode);
+
+  let accessTokenRecord;
+  try {
+    accessTokenRecord = await accessTokenModel.get({ accessToken });
+  }
+  catch (err) {
+    if (err instanceof RecordDoesNotExist) {
+      return res.redirect(307, redirectURLForAuthorizationCode);
+    }
+
+    throw err;
+  }
+
+  if (isAccessTokenExpired(accessTokenRecord)) {
+    return res.redirect(307, redirectURLForAuthorizationCode);
+  }
+
+  req.authorizedMetadata = { userName: accessTokenRecord.username };
+  return next();
+}
+
+/**
+ * Responds to a request for temporary s3 credentials.
+ *
+ * @param {any} req - express request object
+ * @param {any} res - express response object
+ * @returns {Promise<Object>} the promise of express response object containing
+ * temporary credentials
+ */
+async function handleCredentialRequest(req, res) {
+  return s3credentials(req, res);
 }
 
 /**
@@ -105,35 +158,7 @@ async function handleRedirectRequest(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function handleFileRequest(req, res) {
-  const {
-    accessTokenModel,
-    authClient,
-    s3Client
-  } = getConfigurations();
-
-  const redirectToGetAuthorizationCode = res
-    .status(307)
-    .set({ Location: authClient.getAuthorizationUrl(req.params[0]) });
-
-  const accessToken = req.cookies.accessToken;
-
-  if (!accessToken) return redirectToGetAuthorizationCode.send('Redirecting');
-
-  let accessTokenRecord;
-  try {
-    accessTokenRecord = await accessTokenModel.get({ accessToken });
-  }
-  catch (err) {
-    if (err instanceof RecordDoesNotExist) {
-      return redirectToGetAuthorizationCode.send('Redirecting');
-    }
-
-    throw err;
-  }
-
-  if (isAccessTokenExpired(accessTokenRecord)) {
-    return redirectToGetAuthorizationCode.send('Redirecting');
-  }
+  const { s3Client } = getConfigurations();
 
   let fileBucket;
   let fileKey;
@@ -151,7 +176,7 @@ async function handleFileRequest(req, res) {
     s3Client,
     fileBucket,
     fileKey,
-    accessTokenRecord.username
+    req.authorizedMetadata.userName
   );
 
   return res
@@ -161,6 +186,7 @@ async function handleFileRequest(req, res) {
 }
 
 router.get('/redirect', handleRedirectRequest);
-router.get('/*', handleFileRequest);
+router.get('/s3credentials', ensureAuthorizedOrRedirect, handleCredentialRequest);
+router.get('/*', ensureAuthorizedOrRedirect, handleFileRequest);
 
 module.exports = router;
