@@ -14,27 +14,21 @@ esHeader:
   width: 24
   height: 1
   properties:
-    markdown: |2
-
-      # Elasticsearch Service
+    markdown: "# Elasticsearch Service"
 
 esAlarmHeader:
 - type: text
   width: 24
   height: 1
   properties:
-    markdown: |2
-
-      ## Alarms
+    markdown: "## Alarms"
 
 esWidgets:
 - type: text
   width: 24
   height: 1
   properties:
-    markdown: |2
-
-      ## Overall health
+    markdown: "## Overall health"
 - type: metric
   width: 6
   height: 6
