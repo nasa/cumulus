@@ -46,6 +46,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- **CUMULUS-1170**
+  - Update scripts and docs to use `npm` instead of `yarn`
+  - Use `package-lock.json` files to ensure matching versions of npm packages
+  - Update CI builds to use `npm ci` instead of `npm install`
 - **CUMULUS-670**
   - Updated ParsePDR task to read standard PDR types+ (+ tgz as an external customer requirement) and add a fileType to granule-files on Granule discovery
   - Updated ParsePDR to fail if unrecognized type is used
