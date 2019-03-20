@@ -38,7 +38,7 @@ function mergeInputFilesWithInputGranules(inputFiles, inputGranules, regex) {
   // create hash list of the granules
   // and a list of files
   const granulesHash = keyBy(inputGranules, 'granuleId');
-  const filesFromInputGranules = flatten(inputGranules.map((g) => g.files));
+  const filesFromInputGranules = flatten(inputGranules.map((g) => g.files.map((f) => f.filename)));
 
   // add input files to corresponding granules
   // the process involve getting granuleId of each file
