@@ -22,7 +22,7 @@
     "test-coverage": "nyc ava",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
-    "prepublishOnly": "PRODUCTION=true npm run build"
+    "prepare": "npm run build"
   },
   "ava": {
     "files": "tests"

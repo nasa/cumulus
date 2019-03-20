@@ -17,7 +17,7 @@ jobs:
             if [ -z "${CIRCLE_PR_REPONAME}" ]; then
               echo 'skipping the step because this is not a forked PR'
             else
-              yarn
+              npm ci
             fi
 
       - run:
@@ -43,7 +43,7 @@ jobs:
               sudo bash /usr/sbin/sftp.sh user:password
               sudo cp -r /home/circleci/project/packages/test-data/* /home/user/
 
-              yarn bootstrap-no-build
+              npm run bootstrap-no-build
             fi
 
       - run:
