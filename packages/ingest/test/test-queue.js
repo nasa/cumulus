@@ -1,17 +1,16 @@
 'use strict';
 
 const test = require('ava');
-const {
-  createQueue, sqs, s3, recursivelyDeleteS3Bucket
-} = require('@cumulus/common/aws');
-const { randomString } = require('@cumulus/common/test-utils');
+const sinon = require('sinon');
+const aws = require('@cumulus/common/aws');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const queue = require('../queue');
 
 test.beforeEach(async (t) => {
   t.context.templateBucket = randomString();
-  await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
+  await aws.s3().createBucket({ Bucket: t.context.templateBucket }).promise();
 
-  t.context.queueUrl = await createQueue();
+  t.context.queueUrl = await aws.createQueue();
 
   t.context.stateMachineArn = randomString();
 
@@ -24,7 +23,7 @@ test.beforeEach(async (t) => {
 
   const messageTemplateKey = `${randomString()}/template.json`;
   t.context.messageTemplateKey = messageTemplateKey;
-  await s3().putObject({
+  await aws.s3().putObject({
     Bucket: t.context.templateBucket,
     Key: messageTemplateKey,
     Body: JSON.stringify(t.context.messageTemplate)
@@ -35,8 +34,8 @@ test.beforeEach(async (t) => {
 
 test.afterEach(async (t) => {
   await Promise.all([
-    recursivelyDeleteS3Bucket(t.context.templateBucket),
-    sqs().deleteQueue({ QueueUrl: t.context.queueUrl }).promise()
+    aws.recursivelyDeleteS3Bucket(t.context.templateBucket),
+    aws.sqs().deleteQueue({ QueueUrl: t.context.queueUrl }).promise()
   ]);
 });
 
@@ -50,7 +49,7 @@ test.serial(
 
     const output = await queue
       .enqueueGranuleIngestMessage(granule, queueUrl, templateUri, provider, collection);
-    await sqs().receiveMessage({
+    await aws.sqs().receiveMessage({
       QueueUrl: t.context.queueUrl,
       MaxNumberOfMessages: 10,
       WaitTimeSeconds: 1
@@ -89,7 +88,7 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
 
   const output = await queue
     .enqueueGranuleIngestMessage(granule, queueUrl, templateUri, provider, collection, pdr, arn);
-  await sqs().receiveMessage({
+  await aws.sqs().receiveMessage({
     QueueUrl: t.context.queueUrl,
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1
@@ -116,4 +115,38 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
       expectedMessage.cumulus_meta.execution_name = actualMessage.cumulus_meta.execution_name;
       t.deepEqual(expectedMessage, actualMessage);
     });
+});
+
+test.serial('enqueueGranuleIngestMessage does not transform granule objects ', async (t) => {
+  const sendSQSMessageStub = sinon.stub(aws, 'sendSQSMessage').resolves();
+
+  const granule = {
+    granuleId: randomId(),
+    dataType: randomString(),
+    version: randomString(),
+    files: [],
+    foo: "bar" // should not be removed or altered
+  }
+  const { queueUrl } = t.context;
+  const templateUri = `s3://${t.context.templateBucket}/${t.context.messageTemplateKey}`;
+  const collection = { name: 'test-collection', version: '0.0.0' };
+  const provider = { id: 'test-provider' };
+
+  const expectedPayload = {
+    granules: [granule]
+  };
+
+  try {
+    await queue.enqueueGranuleIngestMessage(
+      granule, queueUrl, templateUri, provider, collection
+    );
+  }
+  catch (err) {
+    t.fail(err);
+  }
+  finally {
+    t.true(sendSQSMessageStub.calledOnce);
+    t.deepEqual(sendSQSMessageStub.getCall(0).args[1].payload, expectedPayload);
+    sendSQSMessageStub.restore();
+  }
 });
