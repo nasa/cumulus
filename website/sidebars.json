@@ -61,7 +61,8 @@
       "data-cookbooks/cnm-workflow",
       "data-cookbooks/error-handling",
       "data-cookbooks/choice-states",
-      "data-cookbooks/cloudwatch-retention"
+      "data-cookbooks/cloudwatch-retention",
+      "data-cookbooks/browse-generation"
     ]
   },
   "Operator Docs": {
