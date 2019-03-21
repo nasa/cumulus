@@ -94,7 +94,7 @@ For this example, you are going to be adding two workflows to your Cumulus deplo
 
 #### Workflow Configuration
 
-Open a editor, and add the following to a new file ```browseExample.yml``` in your deployment's main directory (the same location your app directory, lambdas.yml, etc are), copy the example file [from github](https://github.com/nasa/cumulus/blob/master/example/workflows/browseExample.yml).  The file should contain the two example workflows.
+Add the following to a new file ```browseExample.yml``` in your deployment's main directory (the same location your app directory, lambdas.yml, etc are), copy the example file [from github](https://github.com/nasa/cumulus/blob/master/example/workflows/browseExample.yml).  The file should contain the two example workflows.
 
 A few things to note about tasks in the workflow being added:
 
