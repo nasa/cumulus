@@ -3,6 +3,7 @@
 const path = require('path');
 const url = require('url');
 
+// Copied here to avoid importing the entire @cumulus/cmrjs dependency tree for one function.
 /**
  * Extract the granule ID from the a given s3 uri
  *
@@ -17,6 +18,8 @@ function getGranuleId(uri, regex) {
 }
 exports.getGranuleId = getGranuleId;
 
+
+// Copied here to avoid importing the entire @cumulus/common dependency tree for one function.
 /**
 * parse an s3 uri to get the bucket and key
 *
