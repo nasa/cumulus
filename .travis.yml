@@ -4,7 +4,7 @@ git:
 language: node_js
 
 stages:
-  - name: audit
+  - name: audit and lint
   - name: unit test and stack deployment
   - name: integration tests
   - name: redeployment integration tests
@@ -20,7 +20,7 @@ stages:
 jobs:
   include:
     - name: "npm audit"
-      stage: audit
+      stage: audit and lint
       if: tag !~ ^v\d+.* AND commit_message !~ \[skip-audit\]
       install:
         - nvm install-latest-npm
@@ -30,14 +30,13 @@ jobs:
       script: npm run audit
 
     - name: "eslint"
-      stage: unit test and stack deployment
+      stage: audit and lint
       install:
         - nvm install-latest-npm
         - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
       script: npm run lint
-      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "Unit tests except API"
       stage: unit test and stack deployment
