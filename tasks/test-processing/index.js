@@ -2,6 +2,37 @@
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { generateCmrFilesForGranules } = require('@cumulus/integration-tests');
+const { promiseS3Upload } = require('@cumulus/common/aws');
+const cloneDeep = require('lodash.clonedeep');
+const path = require('path');
+const fs = require('fs');
+const img = require('./data/testBrowse.jpg');
+
+
+async function uploadFakeBrowse(input) {
+  const uploadPromises = [];
+  input.granules.forEach((granule) => {
+    granule.files.forEach((file) => {
+      if (file.fileType === 'data') {
+        const browseFile = cloneDeep(file);
+        const browseName = browseFile.filename;
+        browseFile.filename = browseName.replace(path.extname(browseName), '.jpg');
+        browseFile.name = browseFile.name.replace(path.extname(browseFile.name), '.jpg');
+        browseFile.fileType = 'browse';
+        const browseStream = fs.createReadStream(img);
+        uploadPromises.push(promiseS3Upload({
+          Bucket: browseFile.bucket,
+          Key: (`${browseFile.fileStagingDir}/${browseFile.name}`),
+          Body: browseStream
+        }));
+        granule.files.push(browseFile);
+      }
+    });
+  })
+  await Promise.all(uploadPromises);
+  return input.granules;
+}
+
 
 /**
  * For each granule, create a CMR XML file and store to S3
@@ -9,20 +40,27 @@ const { generateCmrFilesForGranules } = require('@cumulus/integration-tests');
  * @param {Object} event - an ingest object
  * @returns {Array<string>} - the list of s3 locations for granule files
  */
+
 async function fakeProcessing(event) {
+  const input = event.input;
   const collection = event.config.collection;
   if (collection.name.includes('_test')) {
     const idx = collection.name.indexOf('_test');
     collection.name = collection.name.substring(0, idx);
   }
 
-  return generateCmrFilesForGranules(
-    event.input.granules,
+  if (event.config.generateFakeBrowse) {
+    input.granules = await uploadFakeBrowse(input);
+  }
+
+  const outputFiles = await generateCmrFilesForGranules(
+    input.granules,
     collection,
     event.config.bucket,
     event.config.cmrMetadataFormat,
     event.config.additionalUrls
   );
+  return { files: outputFiles, granules: input.granules };
 }
 
 /**
