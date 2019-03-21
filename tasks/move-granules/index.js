@@ -289,15 +289,15 @@ async function updateEachCmrFileAccessURLs(
 async function moveGranules(event) {
   // we have to post the meta-xml file of all output granules
   // first we check if there is an output file
-  const config = get(event, 'config');
-  const bucketsConfig = new BucketsConfig(get(config, 'buckets'));
+  const config = event.config;
+  const bucketsConfig = new BucketsConfig(config.buckets);
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
 
   const duplicateHandling = duplicateHandlingType(event);
 
-  const granulesInput = get(event, 'input.granules', []);
+  const granulesInput = event.input.granules;
   const cmrFiles = granulesToCmrFileObjects(granulesInput);
-  const allGranules = keyBy(granulesInput, 'granuleId');
+  const granulesByGranuleId = keyBy(granulesInput, 'granuleId');
 
   let granulesToMove;
   let movedGranules;
@@ -305,7 +305,7 @@ async function moveGranules(event) {
   if (moveStagedFiles) {
     // update allGranules with aspirational metadata (where the file should end up after moving.)
     granulesToMove = await updateGranuleMetadata(
-      allGranules, config.collection, cmrFiles, bucketsConfig
+      granulesByGranuleId, config.collection, cmrFiles, bucketsConfig
     );
 
     // move files from staging location to final location
@@ -321,7 +321,7 @@ async function moveGranules(event) {
     );
   }
   else {
-    movedGranules = allGranules;
+    movedGranules = granulesByGranuleId;
   }
 
   return {
