@@ -69,7 +69,7 @@ IngestGranuleCatchDuplicateErrorTest:
       Next: FilesToGranulesStep
     FilesToGranulesStep:
       CumulusConfig:
-        input_granules: '{$.meta.input_granules}'
+        inputGranules: '{$.meta.input_granules}'
         granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
       Type: Task
       Resource: ${FilesToGranulesLambdaFunction.Arn}
