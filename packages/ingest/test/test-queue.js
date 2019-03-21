@@ -125,15 +125,17 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
     dataType: randomString(),
     version: randomString(),
     files: [],
-    foo: "bar" // should not be removed or altered
-  }
+    foo: 'bar' // should not be removed or altered
+  };
   const { queueUrl } = t.context;
   const templateUri = `s3://${t.context.templateBucket}/${t.context.messageTemplateKey}`;
   const collection = { name: 'test-collection', version: '0.0.0' };
   const provider = { id: 'test-provider' };
 
   const expectedPayload = {
-    granules: [granule]
+    granules: [
+      granule
+    ]
   };
 
   try {

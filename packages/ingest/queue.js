@@ -83,7 +83,9 @@ async function enqueueGranuleIngestMessage(
   const message = await getMessageFromTemplate(granuleIngestMessageTemplateUri);
 
   message.payload = {
-    granules: [ granule ]
+    granules: [
+      granule
+    ]
   };
   if (pdr) message.meta.pdr = pdr;
 
