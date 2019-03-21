@@ -29,8 +29,8 @@ function fileObjectFromS3URI(s3URI) {
  * Takes the files from input and granules and merges them into an object where
  * each file is associated with its granuleId.
  *
- * @param {Array} inputFiles - list of s3 files to add to the inputgranules
- * @param {Array} inputGranules - an array of the granules
+ * @param {Array<string>} inputFiles - list of s3 files to add to the inputgranules
+ * @param {Array<Object>} inputGranules - an array of the granules
  * @param {string} regex - regex needed to extract granuleId from filenames
  * @returns {Object} inputGranules with updated file lists
  */
@@ -70,10 +70,10 @@ function mergeInputFilesWithInputGranules(inputFiles, inputGranules, regex) {
  * @param {Object} event.config - Cumulus config object
  * @param {string} event.config.granuleIdExtraction - regex needed to extract granuleId
  *                                                    from filenames
- * @param {Array} event.config.inputGranules - an array of granules
- * @param {Array} event.input - an array of s3 uris
+ * @param {Array<Object>} event.config.inputGranules - an array of granules
+ * @param {Array<string>} event.input - an array of s3 uris
  *
- * @returns {Object} - Granules object
+ * @returns {Object} Granules object
  */
 function filesToGranules(event) {
   const granuleIdExtractionRegex = get(event.config, 'granuleIdExtraction', '(.*)');

@@ -15,10 +15,10 @@ const { loadJSONTestData } = require('@cumulus/test-data');
 /**
  * Builds the output of the post-to-cmr task
  *
- * @param {Array} results - list of results returned by publish function
- * @param {Array} granules - list of granules
+ * @param {Array<Object>} results - list of results returned by publish function
+ * @param {Array<Object>} granules - list of granules
  *
- * @returns {Array} an updated array of granules
+ * @returns {Array<Object>} an updated array of granules
  */
 function buildOutput(results, granules) {
   const resultsByGranuleId = keyBy(results, 'granuleId');
