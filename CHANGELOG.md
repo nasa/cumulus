@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added new Collection file parameter "fileType" that allows configuration of workflow granule file fileType assignments
 - **CUMULUS-1184** - Added kes logging output to ensure we always see the state machine reference before failures due to configuration
 - **CUMULUS-1105** - Added a dashboard endpoint to serve the dashboard from an S3 bucket
+- **CUMULUS-1199** - Moves `s3credentials` endpoint from the backend to the distribution API.
 - **CUMULUS-666**
   - Added `@api/endpoints/s3credentials` to allow EarthData Login authorized users to retrieve temporary security credentials for same-region direct S3 access.
 - **CUMULUS-671**
@@ -46,6 +47,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- **CUMULUS-1170**
+  - Update scripts and docs to use `npm` instead of `yarn`
+  - Use `package-lock.json` files to ensure matching versions of npm packages
+  - Update CI builds to use `npm ci` instead of `npm install`
 - **CUMULUS-670**
   - Updated ParsePDR task to read standard PDR types+ (+ tgz as an external customer requirement) and add a fileType to granule-files on Granule discovery
   - Updated ParsePDR to fail if unrecognized type is used

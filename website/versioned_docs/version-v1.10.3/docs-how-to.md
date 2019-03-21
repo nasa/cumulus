@@ -12,8 +12,8 @@ original_id: docs-how-to
 ```sh
 git clone git@github.com:nasa/cumulus
 cd cumulus
-yarn docs-install
-yarn docs-serve
+npm run docs-install
+npm run docs-serve
 ```
 
 Note: `docs-build` will build the documents into `website/build/Cumulus`.
