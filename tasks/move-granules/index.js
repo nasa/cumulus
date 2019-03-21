@@ -28,7 +28,6 @@ const {
     buildS3Uri,
     calculateS3ObjectChecksum,
     deleteS3Object,
-    parseS3Uri,
     s3ObjectExists
   },
   BucketsConfig
@@ -59,21 +58,6 @@ function validateMatch(match, bucketsConfig, file) {
 }
 
 /**
- * Helper to turn an s3URI into a fileobject
- * @param {string} s3URI s3://mybucket/myprefix/myobject.
- * @returns {Object} file object
- */
-function fileObjectFromS3URI(s3URI) {
-  const uriParsed = parseS3Uri(s3URI);
-  return {
-    name: path.basename(s3URI),
-    bucket: uriParsed.Bucket,
-    filename: s3URI,
-    fileStagingDir: path.dirname(uriParsed.Key)
-  };
-}
-
-/**
  * Update the granule metadata where each granule has its files replaced with
  * file objects that contain the desired final locations based on the
  * `collection.files.regexp`.  CMR metadata files have a fileType added.
@@ -88,7 +72,7 @@ function fileObjectFromS3URI(s3URI) {
  */
 async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucketsConfig) {
   const updatedGranules = {};
-  const cmrFileNames = cmrFiles.map((f) => fileObjectFromS3URI(f.filename).name);
+  const cmrFileNames = cmrFiles.map((f) => path.basename(f.filename));
   const fileSpecs = collection.files;
 
   await Promise.all(Object.keys(granulesObject).map(async (granuleId) => {
