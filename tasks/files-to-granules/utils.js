@@ -9,7 +9,7 @@ const url = require('url');
  *
  * @param {string} uri - the s3 uri of the file
  * @param {string} regex - the regex for extracting the ID
- * @returns {string} the granule
+ * @returns {string} - the granule
  */
 function getGranuleId(uri, regex) {
   const match = path.basename(uri).match(regex);
