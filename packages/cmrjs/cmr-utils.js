@@ -51,7 +51,7 @@ const isCMRFilename = (filename) => isECHO10File(filename) || isUMMGFile(filenam
  * @returns {boolean} true if object references cmr metadata.
  */
 function isCMRFile(fileobject) {
-  const cmrfilename = fileobject.name || fileobject.filename || '';
+  const cmrfilename = fileobject.key || fileobject.name || fileobject.filename || '';
   return isCMRFilename(cmrfilename);
 }
 
