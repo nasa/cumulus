@@ -1,6 +1,6 @@
 ---
 id: browse-generation
-title: Browse Generation HowTo
+title: Ingest Browse Generation
 hide_title: true
 ---
 
@@ -13,10 +13,10 @@ We will discuss how to run a processing workflow against an inbound granule that
 ## Sections:
 
 * [Prerequisites](#prerequisites)
-* [Configure Cumulus](configure-cumulus)
-* [Configure Ingest](configure-ingest)
-* [Run Workflows](run-workflows)
-* [Build Processing Lambda](build-processing-lambda)
+* [Configure Cumulus](#configure-cumulus)
+* [Configure Ingest](#configure-ingest)
+* [Run Workflows](#run-workflows)
+* [Build Processing Lambda](#build-processing-lambda)
 
 
 ## Prerequisites
@@ -25,15 +25,15 @@ We will discuss how to run a processing workflow against an inbound granule that
 
 This entry assumes you have a deployed instance of Cumulus (> version 1.11.3), and a working dashboard following the instructions in the [deployment documentation](/deployment/deployment_readme).  This entry also assumes you have some knowledge of how to configure Collections, Providers and Rules and basic Cumulus operation.
 
-Prior to working through this entry, you should be somewhat familiar with the [Hello World](/data-cookbooks/hello-world) example the [Workflows](/workflows/workflows-readme) section of the documentation, and [building Cumulus lambdas](workflows/lambda).
+Prior to working through this entry, you should be somewhat familiar with the [Hello World](hello-world) example the [Workflows](../workflows/workflows-readme) section of the documentation, and [building Cumulus lambdas](../workflows/lambda).
 
-You should also review the [Data Cookbooks Setup](/data-cookbooks/setup) portion of the documentation as it contains useful information on the inter-task message schema expectations.
+You should also review the [Data Cookbooks Setup](setup) portion of the documentation as it contains useful information on the inter-task message schema expectations.
 
-This entry will utilize the [dashboard application](https://github.com/nasa/cumulus-dashboard).  You will need to have a dashboard deployed to follow the instructions in this example.
+This entry will utilize the [dashboard application](https://github.com/nasa/cumulus-dashboard).  You will need to have a dashboard deployed as described in the [Cumulus deployment documentation](deployment/deployment-readme) to follow the instructions in this example.
 
-if you'd prefer to *not* utilize a running dashboard to add Collections, Providers and trigger Rules, you can set the Collection/Provider and Rule via the API, however in that instance you should be very familiar with the [Cumulus API](https://nasa.github.io/cumulus-api/) before attempting the example in this entry.
+If you'd prefer to *not* utilize a running dashboard to add Collections, Providers and trigger Rules, you can set the Collection/Provider and Rule via the API, however in that instance you should be very familiar with the [Cumulus API](https://nasa.github.io/cumulus-api/) before attempting the example in this entry.
 
-### CMR
+### Common Metadata Repository
 
 You should be familiar with the [Common Metadata Repository](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) and already be set up as a provider with configured collections and credentials to ingest data into CMR.   You should know what the collection name and version number are.
 
@@ -45,7 +45,10 @@ For the purposes of this entry, we will be using a pre-configured  MOD09GQ versi
 
 If you'd prefer to ingest another data type, you will need to generate a processing lambda (see [Build Processing Lambda](#build-processing-lamvda) below).
 
+-----------
+
 ## Configure Cumulus
+
 ### CMR
 
 The following configuration settings will allow the workflow in this example to authenticate with CMR.
@@ -239,7 +242,7 @@ distribution endpoints with the id XXXXXXXXXX redeployed.
 
 Wait for the above to complete. It's particularly important that the new workflow message template is uploaded for the workflow to complete.
 
-
+-----------
 
 ## Configure Ingest
 
@@ -323,31 +326,33 @@ Once you have your provider and rule added, go to the Rules tab, and add a rule 
 }
 ```
 
+-----------
+
 ## Run Workflows
 
 Once you've configured the Collection and Provider and added a onetime rule, you're ready to trigger your rule, and watch the ingest workflows process.
 
 Go to the Rules tab, click the rule you just created:
 
-![Image Missing](assets/browse_processing_1.png)
+![Image Missing](../../assets/browse_processing_1.png)
 
 Then click the gear in the upper right corner and click "ReRun":
 
-![Image Missing](assets/browse_processing_2.png)
+![Image Missing](../../assets/browse_processing_2.png)
 
 Tab over to executions and you should see the ```DiscoverGranulesBrowseExample``` workflow fire, succeed and then moments later the ```CookbookBrowseExample```.
 
-![Image Missing](assets/browse_processing_3.png)
+![Image Missing](../../assets/browse_processing_3.png)
 
 ### Results
 
 You can verify your data has ingested by clicking the successful workflow entry:
 
-![Image Missing](assets/browse_processing_4.png)
+![Image Missing](../../assets/browse_processing_4.png)
 
 Select "Show Output" on the next page
 
-![Image Missing](assets/browse_processing_5.png)
+![Image Missing](../../assets/browse_processing_5.png)
 
 and you should see in the payload from the workflow something similar to:
 
@@ -414,6 +419,10 @@ and you should see in the payload from the workflow something similar to:
 ```
 
 You can verify the granules exist within your cumulus instance (search using the Granules interface, check the S3 buckets, etc) and validate that the above CMR entry
+
+
+-----
+
 
 ## Build Processing Lambda
 
@@ -525,7 +534,7 @@ In the provided example, a payload being passed to MoveGranules should be expect
   ]
 ```
 
-This list is the list of granules MoveGranules will act upon to move from the staging directory to the cofigured buckets.
+This list is the list of granules MoveGranules will act upon to move from the staging directory to the configured buckets.
 
 The pathing is generated from sync-granules, but in principle the files can be staged wherever you like so long as the processing/MoveGranules lambda's roles have access and the filename matches the collection configuration.
 
