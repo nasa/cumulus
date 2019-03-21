@@ -65,7 +65,9 @@ function isCMRFile(fileobject) {
 function granuleToCmrFileObject(granule) {
   return granule.files
     .filter(isCMRFile)
-    .map((f) => ({ filename: f.filename, granuleId: granule.granuleId }));
+    .map((f) => ({ // handle both new-style and old-style files model
+      filename: f.key ? aws.buildS3Uri(f.bucket, f.key) : f.filename, granuleId: granule.granuleId
+    }));
 }
 
 /**
