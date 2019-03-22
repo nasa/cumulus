@@ -1,5 +1,65 @@
-IngestGranuleCatchDuplicateErrorTest:
-  Comment: 'Ingest Granule Catch Duplicate Error'
+DiscoverGranulesBrowseExample:
+  Comment: 'Example for Browse Generation Data Cookbook'
+  StartAt: StatusReport
+  TimeoutSeconds: 18000 # 5 hours
+  States:
+    StatusReport:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
+      Next: DiscoverGranules
+    DiscoverGranules:
+      CumulusConfig:
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        buckets: '{$.meta.buckets}'
+        stack: '{$.meta.stack}'
+      Type: Task
+      Resource: ${DiscoverGranulesLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: QueueGranules
+    QueueGranules:
+      CumulusConfig:
+        provider: '{$.meta.provider}'
+        internalBucket: '{$.meta.buckets.internal.name}'
+        stackName: '{$.meta.stack}'
+        granuleIngestMessageTemplateUri: '{$.meta.templates.CookbookBrowseExample}'
+        queueUrl: '{$.meta.queues.startSF}'
+      Type: Task
+      Resource: ${QueueGranulesLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: StopStatus
+    StopStatus:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          Next: WorkflowFailed
+      End: true
+    WorkflowFailed:
+      Type: Fail
+      Cause: 'Workflow failed'
+
+CookbookBrowseExample:
   StartAt: Report
   States:
     Report:
@@ -8,6 +68,7 @@ IngestGranuleCatchDuplicateErrorTest:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
+      ResultPath: null
       Next: SyncGranuleNoVpc
     SyncGranuleNoVpc:
       CumulusConfig:
@@ -35,27 +96,21 @@ IngestGranuleCatchDuplicateErrorTest:
             MaxAttempts: 3
       Catch:
         - ErrorEquals:
-          - 'DuplicateFile'
-          ResultPath: '$.meta.syncGranCaughtError'
-          Next: WorkflowSucceeded
-        - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
           Next: StopStatus
-      Next: ChooseProcess
-    ChooseProcess:
-      Type: Choice
-      Choices:
-        - Variable: $.cumulus_meta.process
-          StringEquals: modis
-          Next: ProcessingStep
-      Default: StopStatus
+      Next: ProcessingStep
     ProcessingStep:
       CumulusConfig:
         bucket: '{$.meta.buckets.internal.name}'
         collection: '{$.meta.collection}'
+        cmrMetadataFormat: '{$.meta.cmrMetadataFormat}'
+        additionalUrls: '{$.meta.additionalUrls}'
+        generateFakeBrowse: true
         cumulus_message:
           outputs:
+            - source: '{$.granules}'
+              destination: '{$.meta.input_granules}'
             - source: '{$.files}'
               destination: '{$.payload}'
       Type: Task
@@ -70,33 +125,35 @@ IngestGranuleCatchDuplicateErrorTest:
             - States.ALL
           IntervalSeconds: 2
           MaxAttempts: 3
-      Next: FilesToGranulesStep
-    FilesToGranulesStep:
-      CumulusConfig:
-        inputGranules: '{$.meta.input_granules}'
-        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
-      Type: Task
-      Resource: ${FilesToGranulesLambdaFunction.Arn}
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          ResultPath: '$.exception'
-          Next: StopStatus
       Next: MoveGranuleStep
     MoveGranuleStep:
       CumulusConfig:
         bucket: '{$.meta.buckets.internal.name}'
         buckets: '{$.meta.buckets}'
+        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
         distribution_endpoint: '{$.meta.distribution_endpoint}'
+        input_granules: '{$.meta.input_granules}'
         collection: '{$.meta.collection}'
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
       Type: Task
       Resource: ${MoveGranulesLambdaFunction.Arn}
       Catch:
         - ErrorEquals:
-          - 'DuplicateFile'
-          ResultPath: '$.meta.moveGranCaughtError'
-          Next: WorkflowSucceeded
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: CmrStep
+    CmrStep:
+      CumulusConfig:
+        bucket: '{$.meta.buckets.internal.name}'
+        stack: '{$.meta.stack}'
+        cmr: '{$.meta.cmr}'
+        process: '{$.cumulus_meta.process}'
+        input_granules: '{$.meta.input_granules}'
+        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+      Type: Task
+      Resource: ${PostToCmrLambdaFunction.Arn}
+      Catch:
         - ErrorEquals:
           - States.ALL
           ResultPath: '$.exception'
@@ -121,5 +178,3 @@ IngestGranuleCatchDuplicateErrorTest:
     WorkflowFailed:
       Type: Fail
       Cause: 'Workflow failed'
-    WorkflowSucceeded:
-      Type: Succeed

@@ -191,6 +191,10 @@ IngestAndPublishGranule:
         collection: '{$.meta.collection}'
         cmrMetadataFormat: '{$.meta.cmrMetadataFormat}'
         additionalUrls: '{$.meta.additionalUrls}'
+        cumulus_message:
+          outputs:
+            - source: '{$.files}'
+              destination: '{$.payload}'
       Type: Task
       Resource: ${FakeProcessingLambdaFunction.Arn}
       Catch:
@@ -365,6 +369,10 @@ IngestGranule:
       CumulusConfig:
         bucket: '{$.meta.buckets.internal.name}'
         collection: '{$.meta.collection}'
+        cumulus_message:
+          outputs:
+            - source: '{$.files}'
+              destination: '{$.payload}'
       Type: Task
       Resource: ${FakeProcessingLambdaFunction.Arn}
       Catch:
