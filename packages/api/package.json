@@ -17,7 +17,7 @@
     "serve": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve",
     "serve-oauth": "LOCALSTACK_HOST=localhost NODE_ENV=test cumulus-api serve",
     "serve-remote": "cumulus-api serve",
-    "prepublishOnly": "PRODUCTION=true npm run build"
+    "prepare": "npm run build"
   },
   "ava": {
     "files": [
@@ -41,7 +41,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/cmrjs": "1.11.2",
-    "@cumulus/common": "1.11.2",
+    "@cumulus/common": "1.11.3",
     "@cumulus/ingest": "1.11.3",
     "@cumulus/logger": "1.11.0",
     "@cumulus/pvl": "1.11.2",
@@ -59,7 +59,7 @@
     "dynamodb-data-types": "^3.0.0",
     "elasticsearch": "^14.2.2",
     "express": "^4.16.4",
-    "express-boom": "^2.0.0",
+    "express-boom": "^3.0.0",
     "express-promise-router": "^3.0.3",
     "form-data": "^2.1.2",
     "googleapis": "^29.0.0",

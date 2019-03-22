@@ -28,7 +28,7 @@ async function uploadFakeBrowse(input) {
         granule.files.push(browseFile);
       }
     });
-  })
+  });
   await Promise.all(uploadPromises);
   return input.granules;
 }
