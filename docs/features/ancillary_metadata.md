@@ -17,7 +17,7 @@ This feature utilizes the fileType key on a files object in a Cumulus [granule](
   Uses a task-specific mapping to map PDR 'FILE_TYPE' to a CNM type to set fileType on granules from the PDR.
 
 ### CNMToCMALambdaFunction
-  Natively supports fileTypes that are included in incoming messages to a [CNM Workflow](data-cookbooks/cnm-workflow).
+  Natively supports fileTypes that are included in incoming messages to a [CNM Workflow](../data-cookbooks/cnm-workflow).
 
 ## Tasks using fileType
 
