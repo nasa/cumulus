@@ -20,9 +20,12 @@ This task utilizes the incoming config.input_granules and the task input list of
 
 * Update the config.input_granules object with the new file locations.
 
-* If the granule has a ECHO10/UMM CMR file(.cmr.xml or .cmr.json) file included in the config.input_granules, open that file and update access locations, and add it to the appropriate access URL category for the CMR filetype as defined by granule CNM filetype.   Set the CMR file to 'metadata' in the output granules object and add it to  the granule files if it's not already present.
+* If the granule has a ECHO10/UMM CMR file(.cmr.xml or .cmr.json) file included in the config.input_granules:
+  *  Update that file's access locations
+  *  Add it to the appropriate access URL category for the CMR filetype as defined by granule CNM filetype.
+  *  Set the CMR file to 'metadata' in the output granules object and add it to  the granule files if it's not already present.
 
-  Please note: **Granules without a valid CNM type set in the granule file fileType field in config.input_granules will be treated as 'data' in the updated CMR metadata file**
+      Please note: **Granules without a valid CNM type set in the granule file fileType field in config.input_granules will be treated as 'data' in the updated CMR metadata file**
 
 * Task then outputs an updated list of [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects.
 
