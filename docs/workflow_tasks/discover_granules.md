@@ -14,7 +14,7 @@ Links to the npm package, task input, output and configuration schema definition
 
 The purpose of this task is to facilitate ingest of data that does not conform to either a PDR/[SIPS](../data-cookbooks/sips-workflow) discovery mechanism, a [CNM Workflow](../data-cookbooks/sips-workflow) or direct injection of workflow triggering events into Cumulus core components.
 
-The task utilizes a defined [collection](../data-cookbooks/setup#collections) in concert with a defined [provider](../data-cookbooks/setup#provider) to scan a location for files matching the defined collection configuration, assemble those files into groupings by granule, and passes the constructed granules object as an output.
+The task utilizes a defined [collection](../data-cookbooks/setup#collections) in concert with a defined [provider](../data-cookbooks/setup#providers) to scan a location for files matching the defined collection configuration, assemble those files into groupings by granule, and passes the constructed granules object as an output.
 
 The constructed granules object is defined by the collection passed in the configuration, and has impacts to other provided core [Cumulus Tasks](../tasks).
 
