@@ -6,9 +6,9 @@ hide_title: true
 
 # Move Granules
 
-Links to the npm package, task input, output and configuration schema definitions and more can be found on the auto-generated [Cumulus Tasks](../tasks) page.
-
 This task utilizes the Cumulus Message Adapter to interpret and construct incoming and outgoing messages.
+
+Links to the npm package, task input, output and configuration schema definitions and more can be found on the auto-generated [Cumulus Tasks](../tasks) page.
 
 ## Summary
 
@@ -20,9 +20,9 @@ This task utilizes the incoming config.input_granules and the task input list of
 
 * Update the config.input_granules object with the new file locations.
 
-* If the granule has a ECHO10/UMM CMR file(.cmr.xml or .cmr.json) file included in the input file list, open that file and update access locations, and add it to the appropriate access URL category for the CMR filetype as defined by granule CNM filetype.   Set the CMR file to 'metadata' in the output granules object and add it to  the granule files if it's not already present.
+* If the granule has a ECHO10/UMM CMR file(.cmr.xml or .cmr.json) file included in the config.input_granules, open that file and update access locations, and add it to the appropriate access URL category for the CMR filetype as defined by granule CNM filetype.   Set the CMR file to 'metadata' in the output granules object and add it to  the granule files if it's not already present.
 
-  Please note: **Granules without a valid CNM type set in the config.input_granules will be treated as 'data' in the updated CMR metadata file**
+  Please note: **Granules without a valid CNM type set in config.input_granules will be treated as 'data' in the updated CMR metadata file**
 
 * Task then outputs an updated list of [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects.
 
