@@ -58,9 +58,9 @@ test.serial('the queue receives a correctly formatted workflow message without a
       QueueUrl: t.context.queueUrl,
       MaxNumberOfMessages: 10,
       WaitTimeSeconds: 1
-    }).promise()
+    }).promise();
   }
-  catch(err) {
+  catch (err) {
     t.fail(err);
   }
 
@@ -104,9 +104,9 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
       QueueUrl: t.context.queueUrl,
       MaxNumberOfMessages: 10,
       WaitTimeSeconds: 1
-    }).promise()
+    }).promise();
   }
-  catch(err) {
+  catch (err) {
     t.fail(err);
   }
 
