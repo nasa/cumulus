@@ -8,7 +8,7 @@ Detailed code coverage in html can be found by going to the Artifacts tab and
 navigating to `index.html` in the coverage folder. Clicking on `index.html` will
 take you to an html page showing code coverage for each individual file.
 
-The `yarn test` command will output code coverage data for the entire Cumulus
+The `npm test` command will output code coverage data for the entire Cumulus
 repository. To create an html report, run `nyc report --reporter html` and open
 the `index.html` file in the coverage folder.
 
