@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `@cumulus/move-granules` input expectations have changed. `@cumulus/files-to-granules` is a new intermediate task to perform input translation in the old style.
     See the Added and Changed sections of this release changelog for more information.
 
+### PLEASE NOTE
+
+- As a result of **CUMULUS-1208**, the granule object input to `@cumulus/queue-granules` will be added to ingest workflow messages **as is**. In practice, this means that if you are using `@cumulus/queue-granules` to trigger ingest workflows and your granule objects input have invalid properties, then your ingest workflows will fail due to schema validation errors.
+
 ### Added
 
 - **CUMULUS-670**
@@ -70,6 +74,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- **CUMULUS-1208** - Updated `@cumulus/ingest/queue/enqueueGranuleIngestMessage()` to not transform granule object passed to it when building an ingest message
 - **CUMULUS-1170**
   - Update scripts and docs to use `npm` instead of `yarn`
   - Use `package-lock.json` files to ensure matching versions of npm packages
