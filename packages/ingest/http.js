@@ -136,13 +136,17 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     const s3uri = buildS3Uri(bucket, key);
     log.info(`Sync ${remoteUrl} to ${s3uri}`);
 
+    let contentType = null;
     const pass = new PassThrough();
-    got.stream(remoteUrl).pipe(pass);
+    got.stream(remoteUrl).on('response', (response) => {
+      console.log(response.body);
+    }).pipe(pass);
 
     await s3().upload({
       Bucket: bucket,
       Key: key,
-      Body: pass
+      Body: pass,
+      ContentType: contentType ? contentType : 'binary/octet'
     }).promise();
 
     log.info('Uploading to s3 is complete (http)', s3uri);
