@@ -39,7 +39,7 @@
       "ems_reporting",
       "features/execution_payload_retention",
       "lambda_versioning",
-      "ancillary_metadata"
+      "features/ancillary_metadata"
     ],
     "Cumulus Versions": [
       "upgrade/upgrade-readme",
