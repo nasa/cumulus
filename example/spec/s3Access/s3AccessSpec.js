@@ -82,8 +82,6 @@ async function canListObjects(region, credentials) {
   return invokeTestLambda(region, credentials, 'list-objects');
 }
 
-const REASON = 'https://bugs.earthdata.nasa.gov/browse/NGAP-4149';
-
 let server;
 
 process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
@@ -151,29 +149,29 @@ describe('When accessing an S3 bucket directly', () => {
     describe('while in the the same region ', () => {
       it('the bucket contents can be listed', async () => {
         expect(await canListObjects('us-east-1', creds)).toBe('true');
-      }).pend(REASON);
+      });
 
       it('the data can be downloaded', async () => {
         expect(await canGetObject('us-east-1', creds)).toBe('true');
-      }).pend(REASON);
+      });
 
       it('a write is rejected', async () => {
         expect(await canWriteObject('us-east-1', creds)).toBe('false');
-      }).pend(REASON);
+      });
     });
 
     describe('while outside the region ', () => {
       it('the bucket contents can NOT be listed', async () => {
         expect(await canListObjects('us-west-2', creds)).toBe('false');
-      }).pend(REASON);
+      });
 
       it('the data can NOT be downloaded', async () => {
         expect(await canGetObject('us-west-2', creds)).toBe('false');
-      }).pend(REASON);
+      });
 
       it('a write is rejected', async () => {
         expect(await canWriteObject('us-east-1', creds)).toBe('false');
-      }).pend(REASON);
+      });
     });
   });
 
@@ -187,14 +185,14 @@ describe('When accessing an S3 bucket directly', () => {
 
     it('the bucket contents can NOT be listed', async () => {
       expect(await canListObjects('us-east-1', thirdPartyCredentials)).toBe('false');
-    }).pend(REASON);
+    });
 
     it('the data can NOT be downloaded', async () => {
       expect(await canGetObject('us-east-1', thirdPartyCredentials)).toBe('false');
-    }).pend(REASON);
+    });
 
     it('a write is rejected', async () => {
       expect(await canWriteObject('us-east-1', thirdPartyCredentials)).toBe('false');
-    }).pend(REASON);
+    });
   });
 });

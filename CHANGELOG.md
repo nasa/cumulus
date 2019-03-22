@@ -110,6 +110,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - CUMULUS-1174
   - Better error message and stacktrace for S3KeyPairProvider error reporting.
 
+### Fixed
+
+- **CUMULUS-1218** Reconciliation report will now scan only completed granules.  
+
 ### Deprecated
 
 - `@cumulus/api/models/Granule.removeGranuleFromCmr`, instead use `@cumulus/api/models/Granule.removeGranuleFromCmrByGranule`
