@@ -256,9 +256,9 @@ function fakeProviderFactory(options = {}) {
 
 function fakeAccessTokenFactory(params = {}) {
   return {
-    accessToken: randomString(),
-    refreshToken: randomString(),
-    username: randomString(),
+    accessToken: randomId('accessToken'),
+    refreshToken: randomId('refreshToken'),
+    username: randomId('username'),
     expirationTime: Date.now() + (60 * 60 * 1000),
     ...params
   };

@@ -14,7 +14,7 @@ This document will outline, step by step, how to update a Cumulus deployment to 
 In the directory from which you deploy Cumulus (the directory that has `app/` and `iam/` sub-directories), run the following:
 
 ```shell
-$ yarn list --depth 0 | grep "@cumulus" | awk '{ print $2 }'
+$ (cd node_modules && for x in @cumulus/*; do v=$(grep version $x/package.json | cut -d '"' -f 4); echo "$x@$v"; done)
 @cumulus/api@1.11.0
 @cumulus/common@1.11.0
 @cumulus/deployment@1.11.0
@@ -26,26 +26,22 @@ The command above lists the Cumulus packages and their version in the format `@c
 
 ## Update to Latest Version
 
-One can update packages fairly painlessly using the provided `yarn upgrade` command.
+One can update packages fairly painlessly using the provided `npm update`
+command.
 
-To upgrade all Cumulus to the latest Cumulus version:
-
-```shell
-$ yarn upgrade --latest --pattern "@cumulus/*"
-```
-
-To upgrade an individual Cumulus `<package>` to the latest version:
+To update an individual Cumulus `<package>` to the latest version:
 
 ```shell
-$ yarn upgrade --latest @cumulus/<package>
+$ npm update @cumulus/<package>@latest
 ```
 
 ## Update to a Specific Version
 
-To upgrade individual Cumulus packages to a specific `<version>` is fairly simple: For each package,
+To update individual Cumulus packages to a specific `<version>` is fairly
+simple: For each package,
 
 ```shell
-$ yarn upgrade @cumulus/<package>@<version>
+$ npm update @cumulus/<package>@<version>
 ```
 
 *Note:* `<version>` is a version string that observes the syntactic rules outlined [here](https://docs.npmjs.com/files/package.json#dependencies).

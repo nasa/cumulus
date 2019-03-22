@@ -35,13 +35,20 @@ test('reconcileCMRMetadata does not call updateCMRMetadata if no metadatafile pr
     { filename: 'anotherfile' },
     { filename: 'cmrmeta.cmr' }
   ];
-  const { granId, distEndpoint, published } = t.context;
+  const {
+    granId,
+    distEndpoint,
+    published
+  } = t.context;
   const fakeUpdateCMRMetadata = sinon.fake.resolves(true);
   const restoreUpdateCMRMetadata = cmrUtils.__set__('updateCMRMetadata', fakeUpdateCMRMetadata);
 
-  const results = await cmrUtils.reconcileCMRMetadata(
-    granId, updatedFiles, distEndpoint, published
-  );
+  const results = await cmrUtils.reconcileCMRMetadata({
+    granuleId: granId,
+    updatedFiles,
+    distEndpoint,
+    published
+  });
 
   t.falsy(results);
   t.false(fakeUpdateCMRMetadata.called);
@@ -52,19 +59,33 @@ test('reconcileCMRMetadata does not call updateCMRMetadata if no metadatafile pr
 
 test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', async (t) => {
   const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr.xml' }];
-  const { granId, distEndpoint, published } = t.context;
+  const {
+    granId,
+    distEndpoint,
+    published
+  } = t.context;
 
   const fakeUpdateCMRMetadata = sinon.fake.resolves(true);
   const restoreUpdateCMRMetadata = cmrUtils.__set__('updateCMRMetadata', fakeUpdateCMRMetadata);
 
-  const results = await cmrUtils.reconcileCMRMetadata(granId, updatedFiles,
-    distEndpoint, published);
+  const params = {
+    granuleId: granId,
+    updatedFiles,
+    distEndpoint,
+    published
+  };
+
+  const results = await cmrUtils.reconcileCMRMetadata(params);
 
   t.true(results);
   t.true(
-    fakeUpdateCMRMetadata.calledOnceWith(
-      granId, updatedFiles[1], updatedFiles, distEndpoint, published
-    )
+    fakeUpdateCMRMetadata.calledOnceWith({
+      granuleId: granId,
+      cmrFile: updatedFiles[1],
+      files: updatedFiles,
+      distEndpoint,
+      published
+    })
   );
 
   sinon.restore();
@@ -73,14 +94,21 @@ test('reconcileCMRMetadata calls updateCMRMetadata if metadatafile present', asy
 
 test('reconcileCMRMetadata logs an error if multiple metadatafiles present.', async (t) => {
   const updatedFiles = [{ filename: 'anotherfile.cmr.json' }, { filename: 'cmrmeta.cmr.xml' }];
-  const { granId, distEndpoint, published } = t.context;
+  const {
+    granId,
+    distEndpoint,
+    published
+  } = t.context;
   const mockLog = sinon.spy(log, 'error');
   const fakeUpdateCMRMetadata = sinon.fake.resolves(true);
   const restoreUpdateCMRMetadata = cmrUtils.__set__('updateCMRMetadata', fakeUpdateCMRMetadata);
 
-  const results = await cmrUtils.reconcileCMRMetadata(
-    granId, updatedFiles, distEndpoint, published
-  );
+  const results = await cmrUtils.reconcileCMRMetadata({
+    granuleId: granId,
+    updatedFiles,
+    distEndpoint,
+    published
+  });
 
   t.falsy(results);
   t.false(fakeUpdateCMRMetadata.called);
@@ -96,7 +124,8 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
   const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr.xml' }];
   const { granId, distEndpoint } = t.context;
   const published = false;
-  const fakeBucketsConfigDefaults = sinon.fake.returns({ private: { type: 'private', name: 'private' } });
+  const fakeBuckets = { private: { type: 'private', name: 'private' } };
+  const fakeBucketsConfigDefaults = sinon.fake.returns(fakeBuckets);
   const restoreBucketsConfigDefaults = cmrUtils.__set__('bucketsConfigDefaults', fakeBucketsConfigDefaults);
 
   const fakeUpdateCMRMetadata = sinon.fake.resolves(true);
@@ -106,10 +135,23 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
   const restorePublishECHO10XML2CMR = cmrUtils.__set__('publishECHO10XML2CMR', fakePublishECHO10XML2CMR);
 
   // act
-  await cmrUtils.reconcileCMRMetadata(granId, updatedFiles, distEndpoint, published);
+  await cmrUtils.reconcileCMRMetadata({
+    granuleId: granId,
+    updatedFiles,
+    distEndpoint,
+    published
+  });
+
+  const paramsIntoUpdateEcho10XML = {
+    cmrFile: updatedFiles[1],
+    files: updatedFiles,
+    distEndpoint,
+    buckets: new BucketsConfig(fakeBuckets)
+  };
 
   // assert
-  t.true(fakeUpdateCMRMetadata.calledOnceWith(updatedFiles[1], updatedFiles, distEndpoint));
+  t.deepEqual(paramsIntoUpdateEcho10XML, fakeUpdateCMRMetadata.firstCall.args[0]);
+  t.true(fakeUpdateCMRMetadata.calledOnce);
   t.true(fakePublishECHO10XML2CMR.notCalled);
 
   // cleanup
@@ -121,7 +163,11 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
 
 test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CMR if xml metadata present and publish is true', async (t) => {
   const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr.xml' }];
-  const { granId, distEndpoint, published } = t.context;
+  const {
+    granId,
+    distEndpoint,
+    published
+  } = t.context;
 
   const fakeMetadataObject = { fake: 'metadata' };
 
@@ -131,7 +177,8 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
   const fakePublishECHO10XML2CMR = sinon.fake.resolves({});
   const restorePublishECHO10XML2CMR = cmrUtils.__set__('publishECHO10XML2CMR', fakePublishECHO10XML2CMR);
 
-  const fakeBucketsConfigDefaults = sinon.fake.returns({ private: { type: 'private', name: 'private' } });
+  const fakeBuckets = { private: { type: 'private', name: 'private' } };
+  const fakeBucketsConfigDefaults = sinon.fake.returns(fakeBuckets);
   const restoreBucketsConfigDefaults = cmrUtils.__set__('bucketsConfigDefaults', fakeBucketsConfigDefaults);
 
 
@@ -146,9 +193,22 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
     granuleId: granId
   };
 
-  await cmrUtils.reconcileCMRMetadata(granId, updatedFiles, distEndpoint, published);
+  await cmrUtils.reconcileCMRMetadata({
+    granuleId: granId,
+    updatedFiles,
+    distEndpoint,
+    published
+  });
 
-  t.true(fakeUpdateCMRMetadata.calledOnceWith(updatedFiles[1], updatedFiles, distEndpoint));
+  const paramsIntoUpdateEcho10XML = {
+    cmrFile: updatedFiles[1],
+    files: updatedFiles,
+    distEndpoint,
+    buckets: new BucketsConfig(fakeBuckets)
+  };
+
+  t.deepEqual(paramsIntoUpdateEcho10XML, fakeUpdateCMRMetadata.firstCall.args[0]);
+  t.true(fakeUpdateCMRMetadata.calledOnce);
   t.true(fakePublishECHO10XML2CMR.calledOnceWith(expectedMetadata, testCreds, bucket, stackName));
 
   sinon.restore();
@@ -161,10 +221,13 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
   // arrange
   const jsonCMRFile = { filename: 'cmrmeta.cmr.json' };
   const updatedFiles = [{ filename: 'anotherfile' }, jsonCMRFile];
-  const { granId, distEndpoint, published } = t.context;
+  const {
+    granId,
+    distEndpoint,
+    published
+  } = t.context;
 
   const defaultBucketsConfig = { private: { type: 'private', name: 'private' } };
-
   const fakeBucketsConfigDefaults = sinon.fake.returns(defaultBucketsConfig);
   const restoreBucketsConfigDefaults = cmrUtils.__set__('bucketsConfigDefaults', fakeBucketsConfigDefaults);
 
@@ -188,12 +251,23 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
   const testCreds = setTestCredentials();
 
   // act
-  await cmrUtils.reconcileCMRMetadata(granId, updatedFiles, distEndpoint, published);
+  await cmrUtils.reconcileCMRMetadata({
+    granuleId: granId,
+    updatedFiles,
+    distEndpoint,
+    published
+  });
+
+  const paramsIntoUpdateUMMG = {
+    cmrFile: updatedFiles[1],
+    files: updatedFiles,
+    distEndpoint,
+    buckets
+  };
 
   // assert
-  t.true(
-    fakeUpdateUMMGMetadata.calledOnceWithExactly(jsonCMRFile, updatedFiles, distEndpoint, buckets)
-  );
+  t.deepEqual(paramsIntoUpdateUMMG, fakeUpdateUMMGMetadata.firstCall.args[0]);
+  t.true(fakeUpdateUMMGMetadata.calledOnce);
   t.true(
     fakePublishUMMGJSON2CMR.calledOnceWithExactly(publishObject, testCreds, systemBucket, stackName)
   );
@@ -208,11 +282,23 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
 test('updateCMRMetadata file throws error if incorrect cmrfile provided', async (t) => {
   const updatedFiles = [{ filename: 'anotherfile' }, { filename: 'cmrmeta.cmr.json' }];
   const badCMRFile = { filename: 'notreallycmrfile' };
-  const { granId, distEndpoint, published } = t.context;
+  const {
+    granId,
+    distEndpoint,
+    published
+  } = t.context;
   const updateCMRMetadata = cmrUtils.__get__('updateCMRMetadata');
 
   const error = await t.throws(
-    updateCMRMetadata(granId, badCMRFile, updatedFiles, distEndpoint, published, 'fakebucket')
+    // updateCMRMetadata(granId, badCMRFile, updatedFiles, distEndpoint, published, 'fakebucket')
+    updateCMRMetadata({
+      granuleId: granId,
+      cmrFile: badCMRFile,
+      files: updatedFiles,
+      distEndpoint,
+      published,
+      inBuckets: 'fakebucket'
+    })
   );
 
   t.is(error.name, 'CMRMetaFileNotFound');
