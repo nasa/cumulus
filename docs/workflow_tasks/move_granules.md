@@ -16,7 +16,7 @@ This task utilizes the incoming config.input_granules and the task input list of
 
 * Take the list of incoming files and sort them into a list of granule objects.  Assign files to existing granules where appropriate.
 
-* Move granules from their 'staging' location to the final location (as configured )
+* Move granules from their 'staging' location to the final location (as configured in the Sync Granules task)
 
 * Update the config.input_granules object with the new file locations.
 
