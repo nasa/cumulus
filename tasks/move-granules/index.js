@@ -56,11 +56,11 @@ function fileObjectFromS3URI(s3URI) {
  * Takes the files from input and granules and merges them into an object where
  * each file is associated with it's granuleId.
  *
- * @param {Array} inputFiles - list of s3 files to add to the inputgranules
+ * @param {Array} inputFiles - list of s3 files to add to the inputGranules
  * @param {Array} inputGranules - an array of the granules
  * @param {string} regex - regex needed to extract granuleId from filenames
  * @returns {Object} an object that contains lists of each granules' files
- *                   attatched by their granuleId
+ *                   attached by their granuleId
  */
 function mergeInputFilesWithInputGranules(inputFiles, inputGranules, regex) {
   const granulesHash = {};
