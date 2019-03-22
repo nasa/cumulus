@@ -151,20 +151,20 @@ class UpdatedKes extends Kes {
   /**
    * build CloudWatch dashboard based on the dashboard configuration and other configurations
    *
-   * @param {Object} dashboardConfig dashbo
+   * @param {Object} dashboardConfig dashboard configuration for creating widgets
    * @param {Object} es elastic search configuration including configuration for alarms
    * @param {string} stackName stack name
    * @returns {string} returns dashboard body string
    */
   buildCWDashboard(dashboardConfig, es, stackName) {
-    const esSampleAlarm = dashboardConfig.esSampleAlarm;
+    const esTemplateAlarm = dashboardConfig.esTemplateAlarm;
 
     // build ES alarm widgets
     const alarms = Object.keys(es.alarms).map((alarmName) => {
-      const esAlarm = cloneDeep(esSampleAlarm);
+      const esAlarm = cloneDeep(esTemplateAlarm);
       const title = `${stackName}-${es.name}-${alarmName}Alarm`;
       esAlarm.properties.title = title;
-      esAlarm.properties.annotations.alarms[0] = esAlarm.properties.annotations.alarms[0].replace('esSampleAlarm', title);
+      esAlarm.properties.annotations.alarms[0] = esAlarm.properties.annotations.alarms[0].replace('esTemplateAlarm', title);
       return esAlarm;
     });
 
