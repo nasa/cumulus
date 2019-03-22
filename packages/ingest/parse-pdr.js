@@ -11,7 +11,7 @@ const isString = require('lodash.isstring');
 const pvl = require('@cumulus/pvl/t');
 const { PDRParsingError } = require('@cumulus/common/errors');
 
-// If updating this table, please update the related documentation
+// If updating this mapping, please update the related documentation
 // at docs/workflow_tasks/parse_pdr.md
 const pdrToCnmMap = {
   HDF: 'data',
