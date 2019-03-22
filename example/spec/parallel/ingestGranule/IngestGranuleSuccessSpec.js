@@ -398,15 +398,26 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(resourceURLs.includes(s3CredsUrl)).toBe(true);
     });
 
-    it('updates the CMR metadata "online resources" with the proper types', () => {
+    it('updates the CMR metadata "online resources" with the proper types and urls', () => {
       const resource = ummCmrResource;
-      const expected = [
+      const distributionUrl = getDistributionFileUrl({
+        bucket: files[0].bucket,
+        key: files[0].filepath
+      });
+      const s3Url = getPublicS3FileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+      const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
+      const expectedTypes = [
         'GET DATA',
         'VIEW RELATED INFORMATION',
         'VIEW RELATED INFORMATION',
         'GET RELATED VISUALIZATION'
       ];
-      expect(expected).toEqual(resource.map((r) => r.Type));
+      const cmrUrls = resource.map((r) => r.URL);
+
+      expect(cmrUrls.includes(distributionUrl)).toBe(true);
+      expect(cmrUrls.includes(s3Url)).toBe(true);
+      expect(cmrUrls.includes(s3CredsUrl)).toBe(true);
+      expect(expectedTypes).toEqual(resource.map((r) => r.Type));
     });
 
     it('includes the Earthdata login ID for requests to protected science files', async () => {
