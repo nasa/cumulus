@@ -88,7 +88,7 @@ For this example, you are going to be adding two workflows to your Cumulus deplo
 
   The output from this step will be passed into the 'ProcessingStep', which in this example will utilize a 'fake' processing lambda we provide for testing/as an example in Core, however to use your own data you will need to write a lambda that generates the appropriate CMR metadata file and accepts and returns appropriate task inputs and outputs.
 
-  From that step we will utilize the core task ```Move Granules```  to move the granules to the target buckets as defined in the collection configuration.  That step will transfer the files to their final storage location and update the payload.
+  From that step we will utilize the core task ```MoveGranules``` to move the granules to the target buckets as defined in the collection configuration.  That step will transfer the files to their final storage location and update the payload.
 
   That payload will be used in the ```CmrStep``` combined with the previously generated CMR file to export the granule metadata to CMR.
 
@@ -493,20 +493,20 @@ The provided example script used in the example goes through all granules and ad
 
 The processing lambda you construct will need to do the following:
 
-* Create a browse image file based on the input data, and stage it to a location accessible to both this task and the MoveGranules task in a S3 bucket.
+* Create a browse image file based on the input data, and stage it to a location accessible to both this task and the ```MoveGrranules``` task in a S3 bucket.
 * Add the browse file to the input granule files, making sure to set the granule fileType to ```browse```.
-* Update meta.input_granules with the updated granules list, as well as provide the files to be moved in the payload for MoveGranules as output from the task.
+* Update meta.input_granules with the updated granules list, as well as provide the files to be moved in the payload for ```MoveGranules``` as output from the task.
 
 
 ### Generating/updating CMR metadata
 
-If you do not already have a CMR file in the granules list, you will need to generate one for valid export.   This example's processing script generates and adds it to the moveGranules file list via the payload  but it can be present in the InputGranules from the DiscoverGranules step as well if you'd prefer to pre-generate it.
+If you do not already have a CMR file in the granules list, you will need to generate one for valid export.   This example's processing script generates and adds it to the ```MoveGranules``` file list via the payload  but it can be present in the InputGranules from the DiscoverGranules step as well if you'd prefer to pre-generate it.
 
 Both ```MoveGranules``` and ```CmrStep``` expect a valid CMR file to be available if you want to export to CMR.
 
 ### Expected Outputs for processing step/steps
 
-In the above example, the critical portion of the output to MoveGranules is the payload and meta.input_granules.
+In the above example, the critical portion of the output to ```MoveGranules``` is the payload and meta.input_granules.
 
 In the example provided, the processing step is setup to return an object with the keys "files" and "granules".   In the cumulus_message configuration, the outputs are mapped in the configuration to the payload, granules to meta.input_granules:
 
@@ -521,9 +521,9 @@ Their expected values from the example above may be useful in constructing a pro
 
 #### payload
 
-The payload includes a full list of files to be 'moved' into the cumulus archive.   The MoveGranules step will take this list, merge it with the information from input_granules adn move the files to their targets, then update the cmr metadata file if it exists with the updated granule locations.
+The payload includes a full list of files to be 'moved' into the cumulus archive.   The ```MoveGranules``` step will take this list, merge it with the information from input_granules adn move the files to their targets, then update the cmr metadata file if it exists with the updated granule locations.
 
-In the provided example, a payload being passed to MoveGranules should be expected to look like:
+In the provided example, a payload being passed to ```MoveGranules``` should be expected to look like:
 
 ```
   "payload": [
@@ -534,13 +534,13 @@ In the provided example, a payload being passed to MoveGranules should be expect
   ]
 ```
 
-This list is the list of granules MoveGranules will act upon to move from the staging directory to the configured buckets.
+This list is the list of granules ```MoveGranules``` will act upon to move from the staging directory to the configured buckets.
 
-The pathing is generated from sync-granules, but in principle the files can be staged wherever you like so long as the processing/MoveGranules lambda's roles have access and the filename matches the collection configuration.
+The pathing is generated from sync-granules, but in principle the files can be staged wherever you like so long as the processing/```MoveGranules``` lambda's roles have access and the filename matches the collection configuration.
 
 #### input_granules
 
-The MoveGranules task utilizes the incoming payload to chose which files to move, but pulls all other metadata from meta.input_granules.  As such, the output payload in the example would look like:
+The ```MoveGranules``` task utilizes the incoming payload to chose which files to move, but pulls all other metadata from meta.input_granules.  As such, the output payload in the example would look like:
 
 ```
 "input_granules": [
