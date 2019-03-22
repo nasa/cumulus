@@ -43,7 +43,9 @@ async function s3credentials(req, res) {
   const creds = JSON.parse(credentials.Payload);
   if (Object.keys(creds).some((key) => ['errorMessage', 'errorType', 'stackTrace'].includes(key))) {
     log.error(credentials.Payload);
-    return res.boom.failedDependency('Unable to retrieve credentials from Server.');
+    return res.boom.failedDependency(
+      `Unable to retrieve credentials from Server: ${credentials.Payload}`
+    );
   }
   return res.send(creds);
 }

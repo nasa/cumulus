@@ -5,5 +5,10 @@
     "example",
     "packages/*",
     "tasks/*"
-  ]
+  ],
+  "command": {
+    "bootstrap": {
+      "npmClientArgs": ["--no-package-lock"]
+    }
+  }
 }
