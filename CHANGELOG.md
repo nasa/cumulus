@@ -126,7 +126,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     For backwards compatibility with array-of-files outputs from processing steps, use the new `@cumulus/files-to-granules` task as an intermediate step.
     This task will perform the input translation. This change allows `move-granules` to be simpler and behave more predictably.
      `config.granuleIdExtraction` and `config.input_granules` are no longer needed/used by `move-granules`.
-  - `@cumulus/post-to-cmr`: `config.granuleIdExtraction` and `config.input_granules` are no longer needed/used by `post-to-cmr`.
+  - `@cumulus/post-to-cmr`: `config.granuleIdExtraction` is no longer needed/used by `post-to-cmr`.
 
 - CUMULUS-1174
   - Better error message and stacktrace for S3KeyPairProvider error reporting.
