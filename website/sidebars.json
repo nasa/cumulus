@@ -18,6 +18,12 @@
       "workflows/workflow-configuration-how-to",
       "workflows/workflow-triggers"
     ],
+    "Tasks" : [
+      "tasks",
+      "workflow_tasks/discover_granules",
+      "workflow_tasks/move_granules",
+      "workflow_tasks/parse_pdr"
+    ],
     "Deployment": [
       "deployment/deployment-readme",
       "deployment/create_bucket",
@@ -32,7 +38,8 @@
       "features/dead_letter_queues",
       "ems_reporting",
       "features/execution_payload_retention",
-      "lambda_versioning"
+      "lambda_versioning",
+      "ancillary_metadata"
     ],
     "Cumulus Versions": [
       "upgrade/upgrade-readme",
