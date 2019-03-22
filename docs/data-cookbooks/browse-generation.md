@@ -525,7 +525,7 @@ In the provided example, a payload being passed to MoveGranules should be expect
   ]
 ```
 
-This list is the list of granules MoveGranules will act upon to move from the staging directory to the cofigured buckets.
+This list is the list of granules MoveGranules will act upon to move from the staging directory to the configured buckets.
 
 The pathing is generated from sync-granules, but in principle the files can be staged wherever you like so long as the processing/MoveGranules lambda's roles have access and the filename matches the collection configuration.
 
