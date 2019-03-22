@@ -74,4 +74,4 @@ This task outputs a single payload output object containing metadata about the p
 
 ## Examples
 
-See [the SIPS workflow cookbook](data-cookbooks/sips-workflow) for an example of this task in a workflow
+See [the SIPS workflow cookbook](../data-cookbooks/sips-workflow) for an example of this task in a workflow
