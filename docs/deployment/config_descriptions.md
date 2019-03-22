@@ -57,13 +57,13 @@ Also note, if you dont specify the `amiid`, it will try to use a default, which 
 Configuration for the Amazon Elasticsearch Service (ES) instance.  You can update `es` properties and add additional ES alarms. For example:
 
     es:
-        instanceCount: 2
-        alarms:
+      instanceCount: 2
+      alarms:
         NodesHigh:
-            alarm_description: 'There are more instances running than the desired'
-            comparison_operator: GreaterThanThreshold
-            threshold: '{{es.instanceCount}}'
-            metric: Nodes
+          alarm_description: 'There are more instances running than the desired'
+          comparison_operator: GreaterThanThreshold
+          threshold: '{{es.instanceCount}}'
+          metric: Nodes
 
 ## buckets
 
