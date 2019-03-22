@@ -2,7 +2,12 @@
 
 const uuidv4 = require('uuid/v4');
 
-const aws = require('@cumulus/common/aws');
+const {
+  getS3Object,
+  sendSQSMessage,
+  parseS3Uri,
+  getExecutionArn
+} = require('@cumulus/common/aws');
 
 /**
  * Create a message from a template stored on S3
@@ -11,8 +16,8 @@ const aws = require('@cumulus/common/aws');
  * @returns {Promise} message object
  **/
 async function getMessageFromTemplate(templateUri) {
-  const parsedS3Uri = aws.parseS3Uri(templateUri);
-  const data = await aws.getS3Object(parsedS3Uri.Bucket, parsedS3Uri.Key);
+  const parsedS3Uri = parseS3Uri(templateUri);
+  const data = await getS3Object(parsedS3Uri.Bucket, parsedS3Uri.Key);
   return JSON.parse(data.Body);
 }
 
@@ -47,11 +52,11 @@ async function enqueueParsePdrMessage(
   if (parentExecutionArn) message.cumulus_meta.parentExecutionArn = parentExecutionArn;
 
   message.cumulus_meta.execution_name = uuidv4();
-  const arn = aws.getExecutionArn(
+  const arn = getExecutionArn(
     message.cumulus_meta.state_machine,
     message.cumulus_meta.execution_name
   );
-  await aws.sendSQSMessage(queueUrl, message);
+  await sendSQSMessage(queueUrl, message);
   return arn;
 }
 module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
@@ -94,11 +99,11 @@ async function enqueueGranuleIngestMessage(
   if (parentExecutionArn) message.cumulus_meta.parentExecutionArn = parentExecutionArn;
 
   message.cumulus_meta.execution_name = uuidv4();
-  const arn = aws.getExecutionArn(
+  const arn = getExecutionArn(
     message.cumulus_meta.state_machine,
     message.cumulus_meta.execution_name
   );
-  await aws.sendSQSMessage(queueUrl, message);
+  await sendSQSMessage(queueUrl, message);
   return arn;
 }
 exports.enqueueGranuleIngestMessage = enqueueGranuleIngestMessage;
