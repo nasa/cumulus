@@ -7,7 +7,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### BREAKING CHANGES
-- CUMULUS-1176:
+
+- **CUMULUS-1139**
+  - `granule.applyWorkflow`  uses the new-style granule record as input to workflows.
+
+- **CUMULUS-1171**
+  - Fixed provider handling in the API to make it consistent between protocols.
+    NOTE: This is a breaking change. When applying this upgrade, users will need to:
+    1. Disable all workflow rules
+    2. Update any `http` or `https` providers so that the host field only
+       contains a valid hostname or IP address, and the port field contains the
+       provider port.
+    3. Perform the deployment
+    4. Re-enable workflow rules
+
+- **CUMULUS-1176**:
   - `@cumulus/move-granules` input expectations have changed. `@cumulus/files-to-granules` is a new intermediate task to perform input translation in the old style.
     See the Added and Changed sections of this release changelog for more information.
 
@@ -49,7 +63,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1176**
   - Added new `@cumulus/files-to-granules` task to handle converting file array output from `cumulus-process` tasks into granule objects.
-    This will allow simplification of the move-granules task and reduce that task's dependence on `granuleIdExtraction` assumptions.
+    Allows simplification of `@cumulus/move-granules` and `@cumulus/post-to-cmr`, see Changed section for more details.
 
 - CUMULUS-1151 Compare the granule holdings in CMR with Cumulus' internal data store
 - CUMULUS-1152 Compare the granule file holdings in CMR with Cumulus' internal data store
@@ -96,13 +110,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Deprecated `@cumulus/common/aws.checksumS3Objects`. Use `@cumulus/common/aws.calculateS3ObjectChecksum` instead.
 
 - CUMULUS-1171
-  - NOTE: This is a breaking change. When applying this upgrade, users will need to:
-    1. Disable all workflow rules
-    2. Update any `http` or `https` providers so that the host field only
-       contains a valid hostname or IP address, and the port field contains the
-       provider port.
-    3. Perform the deployment
-    4. Re-enable workflow rules
   - Fixed provider handling in the API to make it consistent between protocols.
     Before this change, FTP providers were configured using the `host` and
     `port` properties. HTTP providers ignored `port` and `protocol`, and stored
@@ -114,10 +121,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     being used. Removed that default.
 
 - **CUMULUS-1176**
-  - `@cumulus/move-granules` breaking change: Input to `move-granules` is now expected to be in the form of granules object (i.e. `{ granules: [ ... ] }`);
-    In order to continue to provide array-of-files type inputs following processing steps, use the new `@cumulus/files-to-granules` task as an intermediate step.
+  - `@cumulus/move-granules` breaking change:
+    Input to `move-granules` is now expected to be in the form of a granules object (i.e. `{ granules: [ { ... }, { ... } ] }`);
+    For backwards compatibility with array-of-files outputs from processing steps, use the new `@cumulus/files-to-granules` task as an intermediate step.
     This task will perform the input translation. This change allows `move-granules` to be simpler and behave more predictably.
-  - `@cumulus/post-to-cmr`: `config.granuleIdExtraction` is no longer needed/used by `post-to-cmr`.
+     `config.granuleIdExtraction` and `config.input_granules` are no longer needed/used by `move-granules`.
+  - `@cumulus/post-to-cmr`: `config.granuleIdExtraction` and `config.input_granules` are no longer needed/used by `post-to-cmr`.
 
 - CUMULUS-1174
   - Better error message and stacktrace for S3KeyPairProvider error reporting.
