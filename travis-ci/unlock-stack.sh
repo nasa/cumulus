@@ -2,10 +2,16 @@
 
 set -e
 
+npm ci
 . ./travis-ci/set-env-vars.sh
 
-cd example || exit 1
-yarn
+(
+  set -e
 
-echo Unlocking stack
-node ./scripts/lock-stack.js false $DEPLOYMENT
+  cd example
+  rm -rf node_modules
+  npm install @cumulus/common
+
+  echo Unlocking stack
+  node ./scripts/lock-stack.js false $DEPLOYMENT
+)

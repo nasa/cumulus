@@ -19,7 +19,7 @@
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && webpack",
-    "prepublishOnly": "PRODUCTION=true npm run build"
+    "prepare": "npm run build"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
