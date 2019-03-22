@@ -250,7 +250,7 @@ async function reconciliationReportForGranules(collectionId, bucketsConfig) {
     { short_name: name, version: version, sort_key: ['granule_ur'] }, 'umm_json'
   );
 
-  const dbGranulesIterator = new Granule().getGranulesForCollection(collectionId);
+  const dbGranulesIterator = new Granule().getGranulesForCollection(collectionId, 'completed');
 
   const granulesReport = {
     okCount: 0,
