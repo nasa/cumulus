@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **CUMULUS-670**
+  - The behavior of ParsePDR and related code has changed in this release.  PDRs with FILE_TYPEs that do not conform to the PDR ICD (+ TGZ) (https://cdn.earthdata.nasa.gov/conduit/upload/6376/ESDS-RFC-030v1.0.pdf) will fail to parse.
+
 ### PLEASE NOTE
 
 - As a result of **CUMULUS-1208**, the granule object input to `@cumulus/queue-granules` will be added to ingest workflow messages **as is**. In practice, this means that if you are using `@cumulus/queue-granules` to trigger ingest workflows and your granule objects input have invalid properties, then your ingest workflows will fail due to schema validation errors.
@@ -19,7 +24,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added a CloudWatch alarm to check running ElasticSearch instances, and a CloudWatch dashboard to view the health of ElasticSearch
   - Specify `AWS_REGION` in `.env` to be used by deployment script
 - **CUMULUS-670**
-  - Added new Collection file parameter "fileType" that allows configuration of workflow granule file fileType assignments
+  - Added Ancillary Metadata Export feature (see http://localhost:3000/cumulus/docs/features/ancillary_metadata for more information)
+  - Added new Collection file parameter "fileType" that allows configuration of workflow granule file fileType
 - **CUMULUS-1184** - Added kes logging output to ensure we always see the state machine reference before failures due to configuration
 - **CUMULUS-1105** - Added a dashboard endpoint to serve the dashboard from an S3 bucket
 - **CUMULUS-1199** - Moves `s3credentials` endpoint from the backend to the distribution API.
@@ -67,6 +73,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Updated ParsePDR to fail if unrecognized type is used
   - Updated all relevant task schemas to include granule->files->filetype as a string value
   - Updated tests/test fixtures to include the fileType in the step function/task inputs and output validations as needed
+  - Updated MoveGranules task to handle incoming configuration with new "fileType" values and to add them as appropriate to the lambda output.
   - Updated DiscoverGranules step/related workflows to read new Collection file parameter fileType that will map a discovered file to a workflow fileType
   - Updated CNM parser to add the fileType to the defined granule file fileType on ingest and updated integration tests to verify/validate that behavior
   - Updated generateEcho10XMLString in cmr-utils.js to use a map/related library to ensure order as CMR requires ordering for their online resources.
