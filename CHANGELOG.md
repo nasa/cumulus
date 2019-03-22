@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added a CloudWatch alarm to check running ElasticSearch instances, and a CloudWatch dashboard to view the health of ElasticSearch
   - Specify `AWS_REGION` in `.env` to be used by deployment script
 - **CUMULUS-670**
-  - Added Ancillary Metadata Export feature (see http://localhost:3000/cumulus/docs/features/ancillary_metadata for more information)
+  - Added Ancillary Metadata Export feature (see https://nasa.github.io/cumulus/docs/features/ancillary_metadata for more information)
   - Added new Collection file parameter "fileType" that allows configuration of workflow granule file fileType
 - **CUMULUS-1184** - Added kes logging output to ensure we always see the state machine reference before failures due to configuration
 - **CUMULUS-1105** - Added a dashboard endpoint to serve the dashboard from an S3 bucket
