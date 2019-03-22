@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- **CUMULUS-853**
+  - Updated FakeProcessing example lambda to include option to generate fake browse
+  - Added feature documentation for ancillary metadata export, a new cookbook entry describing a workflow with ancillary metadata generation(browse), and related task definition documentation
 - **CUMULUS-670**
   - Added new Collection file parameter "fileType" that allows configuration of workflow granule file fileType assignments
 - **CUMULUS-1184** - Added kes logging output to ensure we always see the state machine reference before failures due to configuration
@@ -109,7 +112,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- **CUMULUS-1218** Reconciliation report will now scan only completed granules.  
+- **CUMULUS-1218** Reconciliation report will now scan only completed granules.
 
 ### Deprecated
 
