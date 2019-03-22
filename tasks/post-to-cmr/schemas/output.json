@@ -24,7 +24,7 @@
                 "name": {
                   "type": "string"
                 },
-                "fileName": {
+                "filename": {
                   "type": "string"
                 },
                 "fileType": {
