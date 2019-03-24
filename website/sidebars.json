@@ -21,6 +21,7 @@
     "Tasks" : [
       "tasks",
       "workflow_tasks/discover_granules",
+      "workflow_tasks/files_to_granules",
       "workflow_tasks/move_granules",
       "workflow_tasks/parse_pdr"
     ],
