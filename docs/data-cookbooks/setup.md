@@ -47,7 +47,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |:---:|:-----:|:--------:|-----------|
 |regex|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$"`|Yes|Regex used to identify the file|
 |sampleFileName|`MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"`|Yes|Filename used to validate the provided regex|
-|fileType|`"data"`|No|Value to be assigned to the granule file fileType.  CNM file types will be used by Cumulus CMR steps as the fileType, non-CNM values will be treated as the 'data' fileType|
+|fileType|`"data"`|No|Value to be assigned to the Granule File Filetype. CNM filetypes used by Cumulus CMR steps, non-CNM values will be treated as 'data' fileType.  Currently only utilized in DiscoverGranules task|
 |bucket|`"internal"`|Yes|Name of the bucket where the file will be stored|
 |url_path|`"${collectionShortName}/{substring(file.name, 0, 3)}"`|No|Folder used to save the granule in the bucket. Defaults to the collection url_path|
 
