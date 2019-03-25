@@ -42,7 +42,7 @@
             "checksumType": "CKSUM",
             "bucket": "cumulus-private",
             "checksumValue": 4026661056,
-            "fileType": "data",
+            "fileType": "browse",
             "filename": "s3://cumulus-private/BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
             "fileSize": 59849,
             "path": "/TEST_B/Cumulus/MODIS/DATA",
