@@ -43,11 +43,11 @@ For the most recent config.json schema, please see the [Cumulus Tasks page](../t
 
 ### Input
 
-This task expects event.input to provide an array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects with post-move file locations.   The files listed for each granule represent the files to be acted upon as described in [summary](#summary).
+This task expects event.input to provide an array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects.   The files listed for each granule represent the files to be acted upon as described in [summary](#summary).
 
 ## Task Outputs
 
-This task outputs an assembled array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects as the payload for the next task, and returns only the expected payload for the next task.    If a CMR file has been specified for a granule object, the CMR resources related to the granule files  will be updated according to the updatee granule file metadata.
+This task outputs an assembled array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects  with post-move file locations as the payload for the next task, and returns only the expected payload for the next task.    If a CMR file has been specified for a granule object, the CMR resources related to the granule files  will be updated according to the updatee granule file metadata.
 
 ## Examples
 
