@@ -47,7 +47,7 @@ This task expects event.input to provide an array of Cumulus [granule](https://g
 
 ## Task Outputs
 
-This task outputs an assembled array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects as the payload for the next task, and returns only the expected payload for the next task.    If a CMR file has been specified for a granule, it will be updated with the appropriate values for it's relevant metadata.
+This task outputs an assembled array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects as the payload for the next task, and returns only the expected payload for the next task.    If a CMR file has been specified for a granule object, the CMR resources related to the granule files  will be updated according to the updatee granule file metadata.
 
 ## Examples
 
