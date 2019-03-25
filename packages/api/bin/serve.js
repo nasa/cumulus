@@ -175,19 +175,21 @@ async function serveApi(user, stackName = 'localrun') {
   const requiredEnvVars = [
     'stackName',
     'system_bucket',
-    'TOKEN_REDIRECT_ENDPOINT'
+    'TOKEN_REDIRECT_ENDPOINT',
+    'TOKEN_SECRET'
   ];
 
   // Set env variable to mark this as a local run of the API
   testUtils.setLocalApi();
+
+  process.env.TOKEN_REDIRECT_ENDPOINT = `http://localhost:${port}/token`;
+  process.env.TOKEN_SECRET = randomString();
 
   if (inTestMode()) {
     // set env variables
     setAuthEnvVariables();
     process.env.system_bucket = 'localbucket';
     process.env.stackName = stackName;
-    process.env.TOKEN_SECRET = 'secreeetartalksjfaf;lj';
-    process.env.TOKEN_REDIRECT_ENDPOINT = `http://localhost:${port}/token`;
 
     checkEnvVariablesAreSet(requiredEnvVars);
 
@@ -200,6 +202,7 @@ async function serveApi(user, stackName = 'localrun') {
   }
   else {
     checkEnvVariablesAreSet(requiredEnvVars);
+    setTableEnvVariables(process.env.stackName);
   }
 
   console.log(`Starting server on port ${port}`);
