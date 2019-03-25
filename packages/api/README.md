@@ -12,9 +12,34 @@ For the full documentation of the API see: https://nasa.github.io/cumulus-api
 
 ### Running the API locally
 
+To run the API locally using Localstack for AWS services and faked authentication (no Earthdata login required):
+
+```bash
   $ npm run serve
+```
+
+To run the API locally using Localstack for AWS services and Earthdata authentication:
+
+```bash
+  $ EARTHDATA_CLIENT_ID=<your_client_id> EARTHDATA_CLIENT_PASSWORD=<your_password> npm run serve-oauth
+```
+
+To run the API locally using your deployed stack and Earthdata authentication:
+
+```bash
+  $ EARTHDATA_CLIENT_ID=<your_client_id> EARTHDATA_CLIENT_PASSWORD=<your_password> npm run serve-remote
+```
+
+### Running the distribution API locally
+
+To run the distribution API and still use Earthdata authentication:
+
+```bash
+  $ EARTHDATA_CLIENT_ID=<your_client_id> EARTHDATA_CLIENT_PASSWORD=<your_password> npm run serve-dist
+```
 
 ### Config
+
 Includes the Kes configuration files needed for the deployment of the Api:
 - `config/lambdas.yml`: Includes that Lambdas that do internal Api related tasks such as listening to SNS events or consuming SQS queues
 - `config/api_v1.yml`: Includes all the Api endpoints and is versioned. Future versions of the Api should duplicate and rename this file
