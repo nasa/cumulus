@@ -278,6 +278,28 @@ mvd-dev:
 
 jc:
   prefix: jc
+  buckets:
+    internal:
+      name: cumulus-test-sandbox-internal
+      type: internal
+    private:
+      name: cumulus-test-sandbox-private
+      type: private
+    protected:
+      name: cumulus-test-sandbox-protected
+      type: protected
+    public:
+      name: cumulus-test-sandbox-public
+      type: public
+    protected-2:
+      name: cumulus-test-sandbox-protected-2
+      type: protected
+    shared:
+      name: cumulus-data-shared
+      type: shared
+    dashboard:
+      name: jc-test-dashboard
+      type: shared
 
 mhs:
   prefix: mhs
