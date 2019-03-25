@@ -306,10 +306,10 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         bucket: files[0].bucket,
         key: files[0].filepath
       });
-      const s3Url = getPublicS3FileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+      const s3BrowseImageUrl = getPublicS3FileUrl({ bucket: files[2].bucket, key: files[2].filepath });
 
       expect(resourceURLs.includes(distributionUrl)).toBe(true);
-      expect(resourceURLs.includes(s3Url)).toBe(true);
+      expect(resourceURLs.includes(s3BrowseImageUrl)).toBe(true);
     });
 
     it('publishes CMR metadata online resources with the correct type', () => {
