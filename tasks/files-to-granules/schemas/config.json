@@ -1,14 +1,14 @@
 {
-  "title": "MoveGranulesInput",
-  "description": "Describes the input expected by the move-granules task",
+  "title": "FilesToGranulesConfig",
+  "description": "Describes the config used by the files-to-granules task",
   "type": "object",
   "required": [
-    "granules"
+    "inputGranules"
   ],
   "properties": {
-    "granules": {
+    "inputGranules": {
       "type": "array",
-      "description": "Array of all granules",
+      "description": "granules object used to construct output for cumulus indexer",
       "items": {
         "type": "object",
         "required": ["granuleId", "files"],
@@ -22,16 +22,7 @@
               "type": "object",
               "required": ["name"],
               "properties": {
-                "name": {
-                  "type": "string"
-                },
                 "filename": {
-                  "type": "string"
-                },
-                "fileType": {
-                  "type": "string"
-                },
-                "bucket": {
                   "type": "string"
                 }
               }
@@ -39,6 +30,10 @@
           }
         }
       }
+    },
+    "granuleIdExtraction": {
+      "type": "string",
+      "description": "The regex needed for extracting granuleId from filenames"
     }
   }
 }
