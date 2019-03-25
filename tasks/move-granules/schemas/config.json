@@ -4,19 +4,11 @@
   "type": "object",
   "required": [
     "bucket",
-    "input_granules",
     "distribution_endpoint",
     "collection",
     "buckets"
   ],
   "properties": {
-    "input_granules": {
-      "type": "array",
-      "description": "granules object used to construct output for cumulus indexer",
-      "items": {
-        "type": "object"
-      }
-    },
     "bucket": {
       "type": "string",
       "description": "the bucket the has the private/public key needed for decrypting cmr password"
@@ -44,10 +36,6 @@
     "distribution_endpoint": {
       "type": "string",
       "description": "The api distribution endpoint"
-    },
-    "granuleIdExtraction": {
-      "type": "string",
-      "description": "The regex needed for extracting granuleId from filenames"
     },
     "collection": {
       "type": "object",

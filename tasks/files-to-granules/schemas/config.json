@@ -1,0 +1,39 @@
+{
+  "title": "FilesToGranulesConfig",
+  "description": "Describes the config used by the files-to-granules task",
+  "type": "object",
+  "required": [
+    "inputGranules"
+  ],
+  "properties": {
+    "inputGranules": {
+      "type": "array",
+      "description": "granules object used to construct output for cumulus indexer",
+      "items": {
+        "type": "object",
+        "required": ["granuleId", "files"],
+        "properties": {
+          "granuleId": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "filename": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "granuleIdExtraction": {
+      "type": "string",
+      "description": "The regex needed for extracting granuleId from filenames"
+    }
+  }
+}
