@@ -130,5 +130,35 @@ test.serial('postToCMR skips CMR step if the metadata file uri is missing', asyn
 
   const output = await postToCMR(newPayload);
 
-  t.is(output.granules[0].cmr, undefined);
+  t.is(output.granules[0].cmrLink, undefined);
+});
+
+test.serial('postToCmr identifies files with the new file schema', async (t) => {
+  const newPayload = t.context.payload;
+  const cmrFile = newPayload.input.granules[0].files[3];
+  newPayload.input.granules[0].files = [{
+    bucket: t.context.bucket,
+    key: `path/${cmrFile.name}`,
+    fileName: cmrFile.name
+  }];
+
+  sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
+    result
+  }));
+
+  try {
+    await aws.promiseS3Upload({
+      Bucket: t.context.bucket,
+      Key: `path/${cmrFile.name}`,
+      Body: fs.createReadStream('tests/data/meta.xml')
+    });
+    const output = await postToCMR(newPayload);
+    t.is(
+      output.granules[0].cmrLink,
+      `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+    );
+  }
+  finally {
+    cmrjs.CMR.prototype.ingestGranule.restore();
+  }
 });
