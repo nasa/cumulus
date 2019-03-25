@@ -17,8 +17,8 @@
     "clean": "lerna clean && rm -rf ./node_modules",
     "build": "lerna run --ignore cumulus-integration-tests build",
     "watch": "lerna run --parallel --no-sort watch",
-    "serve": "lerna run serve --scope @cumulus/api",
-    "serve-dist": "lerna run serve-dist --scope @cumulus/api",
+    "serve": "lerna run --stream serve --scope @cumulus/api",
+    "serve-dist": "lerna run --stream serve-dist --scope @cumulus/api",
     "coverage": "nyc report --reporter text-summary --reporter html",
     "coveralls": "nyc report --reporter=text-lcov --temp-direcotry=\"./.final_nyc_output\" | coveralls"
   },
