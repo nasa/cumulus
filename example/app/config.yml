@@ -146,7 +146,8 @@ default:
     'workflows/errorsAndRetries.yml',
     'workflows/sips.yml',
     'workflows/ingestGranule.yml',
-    'workflows/syncGranule.yml'
+    'workflows/syncGranule.yml',
+    'workflows/browseExample.yml'
   ]
 
   iams:
