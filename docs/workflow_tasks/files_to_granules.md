@@ -12,9 +12,9 @@ Links to the npm package, task input, output and configuration schema definition
 
 ## Summary
 
-This task utilizes the incoming ```config.input_granules``` and the task input list of s3 URIs along with the rest of the configuration objects to take the list of incoming files and sort them into a list of granule objects.
+This task utilizes the incoming ```config.inputGranules``` and the task input list of s3 URIs along with the rest of the configuration objects to take the list of incoming files and sort them into a list of granule objects.
 
-  **Please note** Files passed in without metadata defined previously for ```config.input_granules``` will be added with the following keys:
+  **Please note** Files passed in without metadata defined previously for ```config.inputGranules``` will be added with the following keys:
 
 * name
 * bucket
