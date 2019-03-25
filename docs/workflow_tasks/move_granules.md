@@ -12,20 +12,18 @@ Links to the npm package, task input, output and configuration schema definition
 
 ## Summary
 
-This task utilizes the incoming ```config.input_granules``` and the task input list of s3 URIs along with the rest of the configuration objects to do the following for a list of files assigned to a single collection:
-
-* Take the list of incoming files and sort them into a list of granule objects.  Assign files to existing granules where appropriate.
+This task utilizes the incoming ```event.input``` array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects to do the following:
 
 * Move granules from their 'staging' location to the final location (as configured in the Sync Granules task)
 
-* Update the ```config.input_granules``` object with the new file locations.
+* Update the ```event.input``` object with the new file locations.
 
-* If the granule has a ECHO10/UMM CMR file(.cmr.xml or .cmr.json) file included in the ```config.input_granules```:
+* If the granule has a ECHO10/UMM CMR file(.cmr.xml or .cmr.json) file included in the ```event.input```:
   *  Update that file's access locations
   *  Add it to the appropriate access URL category for the CMR filetype as defined by granule CNM filetype.
   *  Set the CMR file to 'metadata' in the output granules object and add it to  the granule files if it's not already present.
 
-      Please note: **Granules without a valid CNM type set in the granule file fileType field in ```config.input_granules``` will be treated as 'data' in the updated CMR metadata file**
+      Please note: **Granules without a valid CNM type set in the granule file fileType field in ```event.input``` will be treated as 'data' in the updated CMR metadata file**
 
 * Task then outputs an updated list of [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects.
 
@@ -43,17 +41,13 @@ This task does expect values to be set in the CumulusConfig for the workflows.  
 
 For the most recent config.json schema, please see the [Cumulus Tasks page](../tasks) entry for the schema.
 
-Below are expanded descriptions of selected config keys:
+### Input
 
-#### Input_Granules
-
-An array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects.
-
-This object will be used to define metadata values for the move granules task, and is the basis for the updated object that will be added to the output.
+This task expects event.input to provide an array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects.   The files listed for each granule represent the files to be acted upon as described in [summary](#summary).
 
 ## Task Outputs
 
-This task outputs an assembled array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects as the payload for the next task, and returns only the expected payload for the next task.
+This task outputs an assembled array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects  with post-move file locations as the payload for the next task, and returns only the expected payload for the next task.    If a CMR file has been specified for a granule object, the CMR resources related to the granule files  will be updated according to the updated granule file metadata.
 
 ## Examples
 

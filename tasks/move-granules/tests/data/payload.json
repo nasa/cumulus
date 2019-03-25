@@ -19,21 +19,6 @@
         "type": "public"
       }
     },
-    "granuleIdExtraction": "(MOD11A1\\..*)(\\.hdf|\\.cmr\\.xml|_[\\w]{1,}\\.jpg)",
-    "input_granules": [
-      {
-        "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
-        "files": [
-          {
-            "name": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-            "bucket": "cumulus-internal",
-            "fileType": "data",
-            "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-            "fileStagingDir": "file-staging/subdir"
-          }
-        ]
-      }
-    ],
     "distribution_endpoint": "https://something.api.us-east-1.amazonaws.com/",
     "collection": {
       "files": [
@@ -73,7 +58,6 @@
       "name": "MOD11A1",
       "granuleId": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
       "dataType": "MOD11A1",
-      "granuleIdExtraction": "(MOD11A1\\.(.*))\\.hdf",
       "process": "modis",
       "provider_path": "/TEST_B/Cumulus/MODIS/PDR/",
       "version": "006",
@@ -81,10 +65,41 @@
       "id": "MOD11A1"
     }
   },
-  "input": [
-    "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-    "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
-    "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
-    "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml"
-  ]
+  "input": {
+    "granules": [
+      {
+        "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
+        "files": [
+          {
+            "name": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+            "bucket": "cumulus-internal",
+            "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+            "fileType": "data",
+            "fileStagingDir": "file-staging/subdir"
+          },
+          {
+            "name": "MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+            "bucket": "cumulus-internal",
+            "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+            "fileType": "browse",
+            "fileStagingDir": "file-staging/subdir"
+          },
+          {
+            "name": "MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+            "bucket": "cumulus-internal",
+            "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+            "fileType": "browse",
+            "fileStagingDir": "file-staging/subdir"
+          },
+          {
+            "name": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
+            "bucket": "cumulus-internal",
+            "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
+            "fileType": "metadata",
+            "fileStagingDir": "file-staging/subdir"
+          }
+        ]
+      }
+    ]
+  }
 }

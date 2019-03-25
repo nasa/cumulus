@@ -1,10 +1,7 @@
 {
-  "title": "MoveGranulesInput",
-  "description": "Describes the input expected by the move-granules task",
+  "title": "FilesToGranulesOutput",
+  "description": "Describes the output produced by the files-to-granules task",
   "type": "object",
-  "required": [
-    "granules"
-  ],
   "properties": {
     "granules": {
       "type": "array",
@@ -32,6 +29,9 @@
                   "type": "string"
                 },
                 "bucket": {
+                  "type": "string"
+                },
+                "fileStagingDir" : {
                   "type": "string"
                 }
               }
