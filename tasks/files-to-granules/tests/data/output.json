@@ -1,0 +1,34 @@
+{
+  "granules": [
+    {
+      "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
+      "files": [
+        {
+          "name": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+          "bucket": "cumulus-internal",
+          "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+          "fileType": "data",
+          "fileStagingDir": "file-staging/subdir"
+        },
+        {
+          "name": "MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+          "bucket": "cumulus-internal",
+          "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+          "fileStagingDir": "file-staging/subdir"
+        },
+        {
+          "name": "MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+          "bucket": "cumulus-internal",
+          "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+          "fileStagingDir": "file-staging/subdir"
+        },
+        {
+          "name": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
+          "bucket": "cumulus-internal",
+          "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
+          "fileStagingDir": "file-staging/subdir"
+        }
+      ]
+    }
+  ]
+}

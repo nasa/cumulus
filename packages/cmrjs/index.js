@@ -24,6 +24,7 @@ const {
   isCMRFile,
   metadataObjectFromCMRFile,
   publish2CMR,
+  granulesToCmrFileObjects,
   reconcileCMRMetadata,
   updateCMRMetadata
 } = require('./cmr-utils');
@@ -93,6 +94,7 @@ module.exports = {
   metadataObjectFromCMRFile,
   publish2CMR,
   reconcileCMRMetadata,
+  granulesToCmrFileObjects,
   searchConcept,
   updateCMRMetadata,
   updateToken
