@@ -95,6 +95,7 @@ default:
     menno.vandiermen: true
     matthewsavoie: true
     mboyd: true
+    jmcampbell: true
 
   ecs:
     restartTasksOnDeploy: false
