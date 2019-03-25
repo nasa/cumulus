@@ -178,6 +178,9 @@ async function serveApi(user, stackName = 'localrun') {
     'TOKEN_REDIRECT_ENDPOINT'
   ];
 
+  // Set env variable to mark this as a local run of the API
+  testUtils.setLocalApi();
+
   if (inTestMode()) {
     // set env variables
     setAuthEnvVariables();
@@ -186,10 +189,11 @@ async function serveApi(user, stackName = 'localrun') {
     process.env.TOKEN_SECRET = 'secreeetartalksjfaf;lj';
     process.env.TOKEN_REDIRECT_ENDPOINT = `http://localhost:${port}/token`;
 
+    checkEnvVariablesAreSet(requiredEnvVars);
+
     // create tables if not already created
     await checkOrCreateTables(stackName);
 
-    checkEnvVariablesAreSet(requiredEnvVars);
     await prepareServices(stackName, process.env.system_bucket);
     await populateBucket(process.env.system_bucket, stackName);
     await createDBRecords(stackName, user);
@@ -213,6 +217,9 @@ async function serveDistributionApi(stackName = 'localrun', done) {
   const port = process.env.PORT || 5002;
   const requiredEnvVars = ['DISTRIBUTION_REDIRECT_ENDPOINT', 'DISTRIBUTION_ENDPOINT'];
 
+  // Set env variable to mark this as a local run of the API
+  testUtils.setLocalApi();
+
   if (inTestMode()) {
     // set env variables
     setAuthEnvVariables();
@@ -222,10 +229,11 @@ async function serveDistributionApi(stackName = 'localrun', done) {
     process.env.DISTRIBUTION_REDIRECT_ENDPOINT = `http://localhost:${port}/redirect`;
     process.env.DISTRIBUTION_ENDPOINT = `http://localhost:${port}`;
 
+    checkEnvVariablesAreSet(requiredEnvVars);
+
     // create tables if not already created
     await checkOrCreateTables(stackName);
 
-    checkEnvVariablesAreSet(requiredEnvVars);
     await prepareServices(stackName, process.env.system_bucket);
     await populateBucket(process.env.system_bucket, stackName);
     await createDBRecords(stackName);
