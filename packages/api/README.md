@@ -44,6 +44,12 @@ To run the distribution API locally using Localstack for AWS services with Earth
   $ EARTHDATA_CLIENT_ID=<your_client_id> EARTHDATA_CLIENT_PASSWORD=<your_password> npm run serve-dist-oauth
 ```
 
+To run the distribution API locally using your deployed stack with Earthdata authentication required:
+
+```bash
+  $ stackName=<your_stack_name> EARTHDATA_CLIENT_ID=<your_client_id> EARTHDATA_CLIENT_PASSWORD=<your_password> npm run serve-dist-remote
+```
+
 ### Config
 
 Includes the Kes configuration files needed for the deployment of the Api:

@@ -220,14 +220,15 @@ async function serveDistributionApi(stackName = 'localrun', done) {
   // Set env variable to mark this as a local run of the API
   testUtils.setLocalApi();
 
+  // Point distribution API to local
+  process.env.DISTRIBUTION_REDIRECT_ENDPOINT = `http://localhost:${port}/redirect`;
+  process.env.DISTRIBUTION_ENDPOINT = `http://localhost:${port}`;
+
   if (inTestMode()) {
     // set env variables
     setAuthEnvVariables();
     process.env.system_bucket = 'localbucket';
     process.env.stackName = stackName;
-    process.env.TOKEN_SECRET = 'secreeetartalksjfaf;lj';
-    process.env.DISTRIBUTION_REDIRECT_ENDPOINT = `http://localhost:${port}/redirect`;
-    process.env.DISTRIBUTION_ENDPOINT = `http://localhost:${port}`;
 
     checkEnvVariablesAreSet(requiredEnvVars);
 
@@ -239,7 +240,9 @@ async function serveDistributionApi(stackName = 'localrun', done) {
     await createDBRecords(stackName);
   }
   else {
+    requiredEnvVars.push('stackName');
     checkEnvVariablesAreSet(requiredEnvVars);
+    setTableEnvVariables(process.env.stackName);
   }
 
   console.log(`Starting server on port ${port}`);
