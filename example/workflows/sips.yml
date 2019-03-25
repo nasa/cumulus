@@ -191,6 +191,10 @@ IngestAndPublishGranule:
         collection: '{$.meta.collection}'
         cmrMetadataFormat: '{$.meta.cmrMetadataFormat}'
         additionalUrls: '{$.meta.additionalUrls}'
+        cumulus_message:
+          outputs:
+            - source: '{$.files}'
+              destination: '{$.payload}'
       Type: Task
       Resource: ${FakeProcessingLambdaFunction.Arn}
       Catch:
@@ -203,14 +207,24 @@ IngestAndPublishGranule:
             - States.ALL
           IntervalSeconds: 2
           MaxAttempts: 3
+      Next: FilesToGranulesStep
+    FilesToGranulesStep:
+      CumulusConfig:
+        inputGranules: '{$.meta.input_granules}'
+        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+      Type: Task
+      Resource: ${FilesToGranulesLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
       Next: MoveGranuleStep
     MoveGranuleStep:
       CumulusConfig:
         bucket: '{$.meta.buckets.internal.name}'
         buckets: '{$.meta.buckets}'
-        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
         distribution_endpoint: '{$.meta.distribution_endpoint}'
-        input_granules: '{$.meta.input_granules}'
         collection: '{$.meta.collection}'
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
       Type: Task
@@ -227,8 +241,6 @@ IngestAndPublishGranule:
         stack: '{$.meta.stack}'
         cmr: '{$.meta.cmr}'
         process: '{$.cumulus_meta.process}'
-        input_granules: '{$.meta.input_granules}'
-        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
       Catch:
@@ -355,6 +367,10 @@ IngestGranule:
       CumulusConfig:
         bucket: '{$.meta.buckets.internal.name}'
         collection: '{$.meta.collection}'
+        cumulus_message:
+          outputs:
+            - source: '{$.files}'
+              destination: '{$.payload}'
       Type: Task
       Resource: ${FakeProcessingLambdaFunction.Arn}
       Catch:
@@ -367,14 +383,24 @@ IngestGranule:
             - States.ALL
           IntervalSeconds: 2
           MaxAttempts: 3
+      Next: FilesToGranulesStep
+    FilesToGranulesStep:
+      CumulusConfig:
+        inputGranules: '{$.meta.input_granules}'
+        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+      Type: Task
+      Resource: ${FilesToGranulesLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
       Next: MoveGranuleStep
     MoveGranuleStep:
       CumulusConfig:
         bucket: '{$.meta.buckets.internal.name}'
         buckets: '{$.meta.buckets}'
-        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
         distribution_endpoint: '{$.meta.distribution_endpoint}'
-        input_granules: '{$.meta.input_granules}'
         collection: '{$.meta.collection}'
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
       Type: Task
@@ -422,8 +448,6 @@ PublishGranule:
         stack: '{$.meta.stack}'
         cmr: '{$.meta.cmr}'
         process: 'N/A'
-        input_granules: '{$.meta.input_granules}'
-        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
       Catch:
