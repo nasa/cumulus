@@ -82,7 +82,7 @@ jobs:
     - name: "Deploy SIT Integration Test Stack"
       stage: unit test and stack deployment
       if: type = cron
-      stall:
+      install:
         - nvm install-latest-npm
         - ln -s /dev/stdout ./lerna-debug.log
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
