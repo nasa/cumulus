@@ -32,6 +32,7 @@ To run the API locally using your deployed stack with Earthdata authentication r
 
 ```bash
   stackName=<your_stack_name> \
+    system_bucket=<your_system_bucket> \
     EARTHDATA_CLIENT_ID=<your_client_id> \
     EARTHDATA_CLIENT_PASSWORD=<your_password> \
     npm run serve-remote
