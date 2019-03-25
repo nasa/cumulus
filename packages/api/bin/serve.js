@@ -215,7 +215,11 @@ async function serveApi(user, stackName = 'localrun') {
  */
 async function serveDistributionApi(stackName = 'localrun', done) {
   const port = process.env.PORT || 5002;
-  const requiredEnvVars = ['DISTRIBUTION_REDIRECT_ENDPOINT', 'DISTRIBUTION_ENDPOINT'];
+  const requiredEnvVars = [
+    'stackName',
+    'DISTRIBUTION_REDIRECT_ENDPOINT',
+    'DISTRIBUTION_ENDPOINT'
+  ];
 
   // Set env variable to mark this as a local run of the API
   testUtils.setLocalApi();
@@ -240,7 +244,6 @@ async function serveDistributionApi(stackName = 'localrun', done) {
     await createDBRecords(stackName);
   }
   else {
-    requiredEnvVars.push('stackName');
     checkEnvVariablesAreSet(requiredEnvVars);
     setTableEnvVariables(process.env.stackName);
   }
