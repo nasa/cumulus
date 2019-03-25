@@ -93,8 +93,11 @@ async function handleRedirectRequest(req, res) {
         expires: new Date(getAccessTokenResponse.expirationTime),
         httpOnly: true,
         // Running API locally will be on http, not https, so cookies
-        // must not be set to secure
-        secure: isLocalApi() ? false : true
+        // should not be set to secure for local runs of the API.
+        //
+        // isLocalApi() is local: true !== true = false (not secure)
+        // isLocalApi() is not local: false !== true = true (secure)
+        secure: (isLocalApi() !== true)
       }
     )
     .set({ Location: urljoin(distributionUrl, state) })

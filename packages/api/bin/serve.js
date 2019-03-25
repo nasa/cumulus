@@ -180,7 +180,7 @@ async function serveApi(user, stackName = 'localrun') {
   ];
 
   // Set env variable to mark this as a local run of the API
-  testUtils.setLocalApi();
+  process.env.CUMULUS_ENV = 'local';
 
   process.env.TOKEN_REDIRECT_ENDPOINT = `http://localhost:${port}/token`;
   process.env.TOKEN_SECRET = randomString();
@@ -225,7 +225,7 @@ async function serveDistributionApi(stackName = 'localrun', done) {
   ];
 
   // Set env variable to mark this as a local run of the API
-  testUtils.setLocalApi();
+  process.env.CUMULUS_ENV = 'local';
 
   // Point distribution API to local
   process.env.DISTRIBUTION_REDIRECT_ENDPOINT = `http://localhost:${port}/redirect`;
