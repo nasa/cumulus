@@ -30,6 +30,9 @@
                 },
                 "bucket": {
                   "type": "string"
+                },
+                "fileStagingDir" : {
+                  "type": "string"
                 }
               }
             }
