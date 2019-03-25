@@ -111,6 +111,11 @@ async function handleRedirectRequest(req, res) {
  * @returns {Promise<Object>} - promise of an express response object
  */
 async function ensureAuthorizedOrRedirect(req, res, next) {
+  // Skip authentication for debugging purposes.
+  if (process.env.FAKE_AUTH) {
+    return next();
+  }
+
   const {
     accessTokenModel,
     authClient
