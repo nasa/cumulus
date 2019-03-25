@@ -526,7 +526,7 @@ Their expected values from the example above may be useful in constructing a pro
 
 #### payload
 
-The payload includes a full list of files to be 'moved' into the cumulus archive.   The ```FilesToGranules``` task will take this list, merge it with the information from ```InputGranules```, then pass that list to the ```MoveGranules``` task and move the files to their targets and update the cmr metadata file if it exists with the updated granule locations.
+The payload includes a full list of files to be 'moved' into the cumulus archive.   The ```FilesToGranules``` task will take this list, merge it with the information from ```InputGranules```, then pass that list to the ```MoveGranules``` task.  The ```MoveGranules``` task will then move the files to their targets and update the CMR metadata file if it exists with the updated granule locations.
 
 In the provided example, a payload being passed to the  ```FilesToGranules``` task should be expected to look like:
 
@@ -539,7 +539,7 @@ In the provided example, a payload being passed to the  ```FilesToGranules``` ta
   ]
 ```
 
-This list is the list of granules ```FilesToGranules``` will act upon to move from the staging directory to the configured buckets.
+This list is the list of granules ```FilesToGranules``` will act upon to add/merge with the input_granules object.
 
 The pathing is generated from sync-granules, but in principle the files can be staged wherever you like so long as the processing/```MoveGranules``` task's roles have access and the filename matches the collection configuration.
 
