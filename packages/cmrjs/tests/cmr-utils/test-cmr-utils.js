@@ -8,28 +8,8 @@ const { readJsonFixture } = require('@cumulus/common/test-utils');
 const { BucketsConfig } = require('@cumulus/common');
 const { xmlParseOptions } = require('../../utils');
 
-
-const {
-  getGranuleId
-} = require('../../cmr-utils');
-
 const cmrUtil = rewire('../../cmr-utils');
 const isCMRFile = cmrUtil.__get__('isCMRFile');
-
-
-test('getGranuleId is successful', (t) => {
-  const uri = 'test.txt';
-  const regex = '(.*).txt';
-  t.is(getGranuleId(uri, regex), 'test');
-});
-
-test('getGranuleId fails', (t) => {
-  const uri = 'test.txt';
-  const regex = '(.*).TXT';
-  const error = t.throws(() => getGranuleId(uri, regex), Error);
-  t.is(error.message, `Could not determine granule id of ${uri} using ${regex}`);
-});
-
 
 test('isCMRFile returns truthy if fileobject has valid xml name', (t) => {
   const fileObj = {
