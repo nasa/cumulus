@@ -43,7 +43,7 @@ For the most recent config.json schema, please see the [Cumulus Tasks page](../t
 
 ### Input
 
-This task expects event.input to provide an array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects.   The files listed for each granule represent the files to be acted upon as described in [summary](#summary).
+This task expects event.input to provide an array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects with post-move file locations.   The files listed for each granule represent the files to be acted upon as described in [summary](#summary).
 
 ## Task Outputs
 
