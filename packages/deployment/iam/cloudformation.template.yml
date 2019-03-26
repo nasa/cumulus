@@ -787,6 +787,11 @@ Resources:
                   - cloudwatch:DeleteAlarms
                 Resource: '*'
 
+  ESServiceLinkedRole:
+    Type: 'AWS::IAM::ServiceLinkedRole'
+    Properties:
+      AWSServiceName: es.amazonaws.com
+
   CumulusInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
