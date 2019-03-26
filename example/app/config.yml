@@ -236,6 +236,34 @@ lf:
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus
 
+  es:
+    name: es5update
+
+  buckets:
+    internal:
+      name: lf-internal
+      type: internal
+    private:
+      name: lf-private
+      type: private
+    protected:
+      name: lf-protected
+      type: protected
+    public:
+      name: lf-cumulus-public
+      type: public
+    protected-2:
+      name: lf-protected-2
+      type: protected
+
+lf-test:
+  stackName: lf-test
+  stackNameNoDash: lfTest
+
+  es:
+    name: lfes5
+    elasticSearchMapping: 9
+
   buckets:
     internal:
       name: lf-internal
