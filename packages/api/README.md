@@ -12,7 +12,7 @@ For the full documentation of the API see: https://nasa.github.io/cumulus-api
 
 ### Running the API locally
 
-To run the API locally using Localstack for AWS services without Earthdta authentication required:
+To run the API locally using Localstack for AWS services without Earthdata authentication required:
 
 ```bash
   $ npm run serve
@@ -35,7 +35,14 @@ To run the API locally using your deployed stack with Earthdata authentication r
     system_bucket=<your_system_bucket> \
     EARTHDATA_CLIENT_ID=<your_client_id> \
     EARTHDATA_CLIENT_PASSWORD=<your_password> \
+    ES_HOST=<your_elasticsearch_host> \
     npm run serve-remote
+```
+
+If you want endpoints that interact with Elasticsearch to work, you must specify the `ES_HOST` environment variable for this command. You can get the Elasticsearch domain for your stack using the AWS CLI:
+
+```bash
+  aws es describe-elasticsearch-domain --domain-name <your_es_domain_name> --query 'DomainStatus.Endpoint'
 ```
 
 ### Running the distribution API locally
