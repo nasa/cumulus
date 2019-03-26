@@ -65,7 +65,6 @@ program
   .option('--host <host>', 'AWS Elasticsearch host', null)
   .option('-s, --source-index <sourceIndex>', 'Index to switch from and no longer used', null)
   .option('-d, --dest-index <destIndex>', 'Index to be aliased and used as the elasticsearch index for Cumulus', null)
-  .parse(process.argv)
   .action((cmd) => {
     const missingOptions = cliUtils.findMissingOptions(cmd, ['host']);
     if (missingOptions.length === 0) {
@@ -86,7 +85,6 @@ program
   .option('--stack <stack>', 'AWS CloudFormation stack name')
   .option('--migrationVersion <version>', 'Migration version to run')
   .description('Invokes the migration lambda function')
-  .parse(process.argv)
   .action((cmd) => {
     if (!cmd.migrationVersion) {
       throw new Error('version argument is missing');
@@ -109,7 +107,6 @@ program
   .option('--directory <directory>', 'The directory to save the backups to.'
     + ' Defaults to backups in the current directory')
   .description('Backup a given AWS folder to the current folder')
-  .parse(process.argv)
   .action((cmd) => {
     if (!cmd.table) {
       throw new Error('table name is missing');
@@ -124,7 +121,6 @@ program
   .option('--region <region>', 'AWS region name (default: us-east-1)')
   .option('--concurrency <concurrency>', 'Number of concurrent calls to DynamoDB. Default is 2')
   .description('Backup a given AWS folder to the current folder')
-  .parse(process.argv)
   .action((file, cmd) => {
     if (!cmd.table) {
       throw new Error('table name is missing');
@@ -141,17 +137,16 @@ program
 
 program
   .command('serve')
-  .option('--username <username>', 'Username to add as allowed for the API. Used with Localstack only.')
+  .option('--username [username]', 'Username to add as allowed for the API. Used with Localstack only.')
   .description('Serves the local version of the Cumulus API')
-  .parse(process.argv)
-  .action((username) => {
-    serveApi(username).catch(console.error);
+  .action((cmd) => {
+    console.log(cmd.username);
+    serveApi(cmd.username).catch(console.error);
   });
 
 program
   .command('serve-dist')
   .description('Serves the local version of the distribution API')
-  .parse(process.argv)
   .action(() => {
     serveDistributionApi().catch(console.error);
   });
