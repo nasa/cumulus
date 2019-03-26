@@ -23,6 +23,7 @@
 
 'use strict';
 
+const cloneDeep = require('lodash.clonedeep');
 const zipObject = require('lodash.zipobject');
 const { Kes, utils } = require('kes');
 const fs = require('fs-extra');
@@ -148,6 +149,49 @@ class UpdatedKes extends Kes {
   }
 
   /**
+   * build CloudWatch dashboard based on the dashboard configuration and other configurations
+   *
+   * @param {Object} dashboardConfig dashboard configuration for creating widgets
+   * @param {Object} es elastic search configuration including configuration for alarms
+   * @param {string} stackName stack name
+   * @returns {string} returns dashboard body string
+   */
+  buildCWDashboard(dashboardConfig, es, stackName) {
+    const esTemplateAlarm = dashboardConfig.esTemplateAlarm;
+
+    // build ES alarm widgets
+    const alarms = Object.keys(es.alarms).map((alarmName) => {
+      const esAlarm = cloneDeep(esTemplateAlarm);
+      const title = `${stackName}-${es.name}-${alarmName}Alarm`;
+      esAlarm.properties.title = title;
+      esAlarm.properties.annotations.alarms[0] = esAlarm.properties.annotations.alarms[0].replace('esTemplateAlarm', title);
+      return esAlarm;
+    });
+
+    // put all widgets together
+    let x = 0;
+    let y = 0;
+
+    const widgets = [];
+    const allEsWidgets = dashboardConfig.esHeader.concat(dashboardConfig.esAlarmHeader)
+      .concat(alarms).concat(dashboardConfig.esWidgets);
+
+    let previousHeight = 0;
+    // place the widgets side by side until reach size 24
+    allEsWidgets.forEach((widget) => {
+      if (x + widget.width > 24) {
+        x = 0;
+        y += previousHeight;
+      }
+      widgets.push(Object.assign(widget, { x, y }));
+      x += widget.width;
+      previousHeight = widget.height;
+    });
+
+    return JSON.stringify({ widgets });
+  }
+
+  /**
    * Override CF parse to add Handlebars template helpers
    *
    * @param  {string} cfFile - Filename
@@ -163,6 +207,9 @@ class UpdatedKes extends Kes {
     Handlebars.registerHelper('ifNotEquals', function ifNotEquals(arg1, arg2, options) {
       return (arg1 !== arg2) ? options.fn(this) : options.inverse(this);
     });
+
+    Handlebars.registerHelper('buildCWDashboard', (dashboardConfig, es, stackName) =>
+      this.buildCWDashboard(dashboardConfig, es, stackName));
 
     return super.parseCF(cfFile);
   }

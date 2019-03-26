@@ -1,0 +1,51 @@
+{
+  "name": "@cumulus/files-to-granules",
+  "version": "1.11.3-alpha1",
+  "description": "Converts array-of-files input into a granules object by extracting granuleId from filename",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "ava",
+    "test-coverage": "nyc ava",
+    "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack",
+    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
+    "prepare": "npm run build"
+  },
+  "engines": {
+    "node": ">=8.10.0"
+  },
+  "ava": {
+    "files": "tests",
+    "color": false
+  },
+  "nyc": {
+    "exclude": [
+      "tests"
+    ]
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cumulus/cumulus-message-adapter-js": "^1.0.7",
+    "lodash.flatten": "^4.4.0",
+    "lodash.get": "^4.4.2",
+    "lodash.keyby": "^4.6.0"
+  },
+  "devDependencies": {
+    "@cumulus/common": "1.11.3",
+    "ava": "^0.25.0",
+    "nyc": "^13.3.0",
+    "webpack": "~4.5.0",
+    "webpack-cli": "~2.0.14"
+  }
+}

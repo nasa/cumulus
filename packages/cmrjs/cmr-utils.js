@@ -3,6 +3,7 @@
 const path = require('path');
 const _get = require('lodash.get');
 const _set = require('lodash.set');
+const flatten = require('lodash.flatten');
 const { promisify } = require('util');
 const urljoin = require('url-join');
 const xml2js = require('xml2js');
@@ -15,7 +16,7 @@ const {
   log
 } = require('@cumulus/common');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
-const { omit } = require('@cumulus/common/util');
+const { deprecate, omit } = require('@cumulus/common/util');
 
 const { CMR } = require('./cmr');
 const {
@@ -50,10 +51,35 @@ const isCMRFilename = (filename) => isECHO10File(filename) || isUMMGFile(filenam
  * @returns {boolean} true if object references cmr metadata.
  */
 function isCMRFile(fileobject) {
-  const cmrfilename = fileobject.name || fileobject.filename || '';
+  const cmrfilename = fileobject.key || fileobject.name || fileobject.filename || '';
   return isCMRFilename(cmrfilename);
 }
 
+/**
+ * Extract CMR file object from granule object
+ *
+ * @param {Object} granule - granule object
+ *
+ * @returns {Array<Object>} - array of CMR file objects
+ */
+function granuleToCmrFileObject(granule) {
+  return granule.files
+    .filter(isCMRFile)
+    .map((f) => ({ // handle both new-style and old-style files model
+      filename: f.key ? aws.buildS3Uri(f.bucket, f.key) : f.filename, granuleId: granule.granuleId
+    }));
+}
+
+/**
+ * Reduce granule object array to CMR files array
+ *
+ * @param {Array<Object>} granules - granule objects array
+ *
+ * @returns {Array<Object>} - CMR file object array: { filename, granuleId }
+ */
+function granulesToCmrFileObjects(granules) {
+  return flatten(granules.map(granuleToCmrFileObject));
+}
 
 /**
  * Instantiates a CMR instance for ingest of metadata
@@ -181,6 +207,7 @@ async function publish2CMR(cmrPublishObject, creds, systemBucket, stack) {
  * @returns {string} the granule
  */
 function getGranuleId(uri, regex) {
+  deprecate('@cumulus/cmrjs.getGranuleId', '1.11.3');
   const match = path.basename(uri).match(regex);
   if (match) return match[1];
   throw new Error(`Could not determine granule id of ${uri} using ${regex}`);
@@ -257,6 +284,7 @@ async function metadataObjectFromCMRFile(cmrFilename) {
  * that includes CMR xml/json URIs and granuleIds
  */
 function getCmrFiles(input, granuleIdExtraction) {
+  deprecate('@cumulus/cmrjs.getCmrFiles', '1.11.3');
   const files = [];
 
   input.forEach((filename) => {
@@ -731,5 +759,6 @@ module.exports = {
   metadataObjectFromCMRFile,
   publish2CMR,
   reconcileCMRMetadata,
+  granulesToCmrFileObjects,
   updateCMRMetadata
 };

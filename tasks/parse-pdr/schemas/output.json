@@ -3,6 +3,9 @@
   "description": "Describes the output produced by the parse-pdr task",
   "type": "object",
   "properties": {
+    "filesCount": { "type": "number" },
+    "totalSize": { "type": "number" },
+    "granulesCount": { "type": "number" },
     "pdr": {
       "type": "object",
       "required": ["name", "path"],

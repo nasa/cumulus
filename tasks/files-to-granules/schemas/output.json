@@ -1,0 +1,44 @@
+{
+  "title": "FilesToGranulesOutput",
+  "description": "Describes the output produced by the files-to-granules task",
+  "type": "object",
+  "properties": {
+    "granules": {
+      "type": "array",
+      "description": "Array of all granules",
+      "items": {
+        "type": "object",
+        "required": ["granuleId", "files"],
+        "properties": {
+          "granuleId": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "filename": {
+                  "type": "string"
+                },
+                "fileType": {
+                  "type": "string"
+                },
+                "bucket": {
+                  "type": "string"
+                },
+                "fileStagingDir" : {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
