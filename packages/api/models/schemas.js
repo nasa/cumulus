@@ -142,6 +142,11 @@ module.exports.collection = {
             description: 'Folder used to save the granule in the bucket. '
                          + 'Defaults to the collection url path',
             type: 'string'
+          },
+          fileType: {
+            title: 'File Type',
+            description: 'CNM file type.  Cumulus uses this for CMR submission.  Non-CNM file types will be treated as "data" fileType',
+            type: 'string'
           }
         },
         required: [

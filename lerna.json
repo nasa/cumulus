@@ -1,9 +1,14 @@
 {
   "lerna": "2.9.0",
   "version": "1.11.3",
-  "npmClient": "yarn",
   "packages": [
+    "example",
     "packages/*",
     "tasks/*"
-  ]
+  ],
+  "command": {
+    "bootstrap": {
+      "npmClientArgs": ["--no-package-lock"]
+    }
+  }
 }

@@ -110,7 +110,7 @@ Install and configure the local build environment and dependencies using npm
 
     $ nvm use
     $ npm install
-    $ npm run ybootstrap
+    $ npm run bootstrap
 
 Build the Cumulus application
 

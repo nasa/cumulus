@@ -330,6 +330,7 @@ describe('The S3 Ingest Granules workflow', () => {
   describe('the PostToCmr task', () => {
     let bucketsConfig;
     let cmrResource;
+    let ummCmrResource;
     let files;
     let granule;
     let resourceURLs;
@@ -337,27 +338,24 @@ describe('The S3 Ingest Granules workflow', () => {
 
     beforeAll(async () => {
       bucketsConfig = new BucketsConfig(config.buckets);
-
       postToCmrOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
       if (postToCmrOutput === null) throw new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
-
       granule = postToCmrOutput.payload.granules[0];
+      const ummGranule = Object.assign({}, granule, { cmrMetadataFormat: 'umm_json_v5' });
       files = granule.files;
-
       const result = await Promise.all([
         getOnlineResources(granule),
+        getOnlineResources(ummGranule),
         // Login with Earthdata and get access token.
         getEarthdataAccessToken({
           redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
           requestOrigin: process.env.DISTRIBUTION_ENDPOINT
         })
       ]);
-
       cmrResource = result[0];
+      ummCmrResource = result[1];
       resourceURLs = cmrResource.map((resource) => resource.href);
-
-      const accessTokenResponse = result[1];
-      accessToken = accessTokenResponse.accessToken;
+      accessToken = result[2].accessToken;
     });
 
     afterAll(async () => {
@@ -389,15 +387,37 @@ describe('The S3 Ingest Granules workflow', () => {
         bucket: files[0].bucket,
         key: files[0].filepath
       });
-      const s3Url = getPublicS3FileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+      const s3BrowseImageUrl = getPublicS3FileUrl({ bucket: files[2].bucket, key: files[2].filepath });
       const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
 
       console.log('parallel resourceURLs: ', resourceURLs);
       console.log('s3CredsUrl: ', s3CredsUrl);
 
       expect(resourceURLs.includes(distributionUrl)).toBe(true);
-      expect(resourceURLs.includes(s3Url)).toBe(true);
+      expect(resourceURLs.includes(s3BrowseImageUrl)).toBe(true);
       expect(resourceURLs.includes(s3CredsUrl)).toBe(true);
+    });
+
+    it('updates the CMR metadata "online resources" with the proper types and urls', () => {
+      const resource = ummCmrResource;
+      const distributionUrl = getDistributionFileUrl({
+        bucket: files[0].bucket,
+        key: files[0].filepath
+      });
+      const s3BrowseImageUrl = getPublicS3FileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+      const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
+      const expectedTypes = [
+        'GET DATA',
+        'VIEW RELATED INFORMATION',
+        'VIEW RELATED INFORMATION',
+        'GET RELATED VISUALIZATION'
+      ];
+      const cmrUrls = resource.map((r) => r.URL);
+
+      expect(cmrUrls.includes(distributionUrl)).toBe(true);
+      expect(cmrUrls.includes(s3BrowseImageUrl)).toBe(true);
+      expect(cmrUrls.includes(s3CredsUrl)).toBe(true);
+      expect(expectedTypes).toEqual(resource.map((r) => r.Type));
     });
 
     it('includes the Earthdata login ID for requests to protected science files', async () => {

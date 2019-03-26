@@ -36,6 +36,7 @@ async function deleteAliases() {
   const client = await Search.es();
   const aliases = await client.cat.aliases({ format: 'json' });
 
+
   // delete all aliases
   return Promise.all(aliases.map((alias) => client.indices.deleteAlias({
     index: alias.index,
@@ -81,6 +82,7 @@ function fakeGranuleFactory(status = 'completed') {
     status,
     execution: randomString(),
     createdAt: Date.now(),
+    updatedAt: Date.now(),
     published: true,
     cmrLink: 'example.com',
     productVolume: 100
@@ -254,9 +256,9 @@ function fakeProviderFactory(options = {}) {
 
 function fakeAccessTokenFactory(params = {}) {
   return {
-    accessToken: randomString(),
-    refreshToken: randomString(),
-    username: randomString(),
+    accessToken: randomId('accessToken'),
+    refreshToken: randomId('refreshToken'),
+    username: randomId('username'),
     expirationTime: Date.now() + (60 * 60 * 1000),
     ...params
   };

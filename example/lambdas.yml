@@ -5,7 +5,7 @@ CNMToCMA:
   memory: 128
   s3Source:
     bucket: '{{buckets.shared.name}}'
-    key: daacs/podaac/cnmToGranule-1539697831000.zip
+    key: daacs/podaac/cnmToGranule-1.0.2j.zip
   useMessageAdapter: false
   launchInVpc: true
 CnmResponse:
@@ -40,6 +40,10 @@ DiscoverPdrs:
 FakeProcessing:
   handler: index.handler
   source: node_modules/@cumulus/test-processing/dist/
+  useMessageAdapter: true
+FilesToGranules:
+  handler: index.handler
+  source: node_modules/@cumulus/files-to-granules/dist/
   useMessageAdapter: true
 HelloWorld:
   handler: index.handler

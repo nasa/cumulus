@@ -11,6 +11,22 @@ const isString = require('lodash.isstring');
 const pvl = require('@cumulus/pvl/t');
 const { PDRParsingError } = require('@cumulus/common/errors');
 
+// If updating this mapping, please update the related documentation
+// at docs/workflow_tasks/parse_pdr.md
+const pdrToCnmMap = {
+  HDF: 'data',
+  'HDF-EOS': 'data',
+  SCIENCE: 'data',
+  BROWSE: 'browse',
+  METADATA: 'metadata',
+  BROWSE_METADATA: 'metadata',
+  QA_METADATA: 'metadata',
+  PRODHIST: 'qa',
+  QA: 'metadata',
+  TGZ: 'data',
+  LINKAGE: 'data'
+};
+
 function getItem(spec, pdrName, name, must = true) {
   const item = spec.get(name);
   if (item) {
@@ -40,9 +56,17 @@ function parseSpec(pdrName, spec) {
   const path = get('DIRECTORY_ID');
   const filename = get('FILE_ID');
   const fileSize = get('FILE_SIZE');
+  const fileType = get('FILE_TYPE');
 
   const checksumType = get('FILE_CKSUM_TYPE', false);
   const checksumValue = get('FILE_CKSUM_VALUE', false);
+
+  // Validate fileType is in the mapping
+  if (fileType) {
+    if (!Object.keys(pdrToCnmMap).includes(fileType)) {
+      throw new PDRParsingError(`INVALID FILE_TYPE PARAMETER : ${fileType}`);
+    }
+  }
 
   if (checksumType || checksumValue) {
     // Make sure that both checksumType and checksumValue are set
@@ -66,7 +90,8 @@ function parseSpec(pdrName, spec) {
   const parsedSpec = {
     path,
     fileSize,
-    name: filename
+    name: filename,
+    fileType: pdrToCnmMap[fileType]
   };
   if (checksumType) parsedSpec.checksumType = checksumType;
   if (checksumValue) parsedSpec.checksumValue = checksumValue;
