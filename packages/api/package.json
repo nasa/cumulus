@@ -20,7 +20,8 @@
     "serve-dist": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve-dist",
     "serve-dist-oauth": "LOCALSTACK_HOST=localhost NODE_ENV=test cumulus-api serve-dist",
     "serve-dist-remote": "cumulus-api serve-dist",
-    "prepare": "npm run build"
+    "link-api-bin": "ln -sf $(pwd)/bin/cli.js /usr/local/bin/cumulus-api",
+    "prepare": "npm run build && npm run link-api-bin"
   },
   "ava": {
     "files": [
