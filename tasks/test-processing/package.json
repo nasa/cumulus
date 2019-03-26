@@ -14,15 +14,18 @@
   "scripts": {
     "build": "webpack",
     "watch": "webpack --progress -w",
-    "prepublishOnly": "PRODUCTION=true npm run build"
+    "prepare": "npm run build"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/cumulus-message-adapter-js": "^1.0.7",
-    "@cumulus/integration-tests": "1.11.3"
+    "@cumulus/integration-tests": "1.11.3",
+    "@cumulus/common": "^1.11.3",
+    "lodash.clonedeep": "^4.5.0"
   },
   "devDependencies": {
+    "file-loader": "^3.0.1",
     "webpack": "~4.5.0",
     "webpack-cli": "~2.0.14"
   }

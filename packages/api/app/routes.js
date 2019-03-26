@@ -1,6 +1,9 @@
 'use strict';
 
 const router = require('express-promise-router')();
+
+const log = require('@cumulus/common/log');
+
 const collections = require('../endpoints/collections');
 const granules = require('../endpoints/granules');
 const providers = require('../endpoints/providers');
@@ -15,7 +18,6 @@ const logs = require('../endpoints/logs');
 const reconcilliationReports = require('../endpoints/reconciliation-reports');
 const schemas = require('../endpoints/schemas');
 const stats = require('../endpoints/stats');
-const s3credentials = require('../endpoints/s3credentials');
 const version = require('../endpoints/version');
 const workflows = require('../endpoints/workflows');
 const dashboard = require('../endpoints/dashboard');
@@ -67,8 +69,6 @@ router.use('/schemas', ensureAuthorized, schemas);
 // stats endpoint
 router.use('/stats', ensureAuthorized, stats);
 
-router.use('/s3credentials', ensureAuthorized, s3credentials);
-
 // version endpoint
 // this endpoint is not behind authentication
 router.use('/version', version);
@@ -83,5 +83,12 @@ router.post('/refresh', token.refreshEndpoint);
 
 router.use('/dashboard', dashboard);
 
+// Catch and send the error message down (instead of just 500: internal server error)
+// Need all 4 params, because that's how express knows this is the error handler
+// eslint-disable-next-line no-unused-vars
+router.use((error, req, res, next) => {
+  log.error(error);
+  return res.status(500).send({ error: error.message });
+});
 
 module.exports = router;

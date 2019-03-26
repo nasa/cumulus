@@ -1,0 +1,325 @@
+##############################################################
+# Specify templates for creating widgets, and predefined
+# widgets to be added to the dashboard.
+# The kes helper function will use these information to create
+# dashboard.
+##############################################################
+
+## template for creating widgets for Elasticsearch Service alarms
+esTemplateAlarm:
+  type: metric
+  width: 6
+  height: 3
+  properties:
+    title: esTemplateAlarm
+    annotations:
+      alarms:
+      - arn:aws:cloudwatch:{{AWS_REGION}}:{{AWS_ACCOUNT_ID}}:alarm:esTemplateAlarm
+    view: singleValue
+
+## header widget for ES
+esHeader:
+- type: text
+  width: 24
+  height: 1
+  properties:
+    markdown: "# Elasticsearch Service"
+
+# header widget for ES alarms
+esAlarmHeader:
+- type: text
+  width: 24
+  height: 1
+  properties:
+    markdown: "## Alarms"
+
+## additional widgets for ES
+esWidgets:
+- type: text
+  width: 24
+  height: 1
+  properties:
+    markdown: "## Overall health"
+- type: metric
+  width: 6
+  height: 6
+  properties:
+    metrics:
+    - - expression: m1/3
+        label: ClusterStatus.green
+        id: e1
+        color: "#093"
+    - - AWS/ES
+      - ClusterStatus.green
+      - DomainName
+      - '{{stackName}}-{{es.name}}'
+      - ClientId
+      - '{{AWS_ACCOUNT_ID}}'
+      - color: "#dbdb8d"
+        yAxis: left
+        id: m1
+        visible: false
+    - - "."
+      - ClusterStatus.yellow
+      - "."
+      - "."
+      - "."
+      - "."
+      - color: "#c7c7c7"
+        id: m2
+        visible: false
+    - - expression: m2*2/3
+        label: ClusterStatus.yellow
+        id: e2
+        color: "#e07700"
+    - - AWS/ES
+      - ClusterStatus.red
+      - DomainName
+      - '{{stackName}}-{{es.name}}'
+      - ClientId
+      - '{{AWS_ACCOUNT_ID}}'
+      - id: m3
+        color: "#C00"
+    view: timeSeries
+    stacked: false
+    region: '{{AWS_REGION}}'
+    title: Cluster status
+    fill: Below
+    period: 60
+    stat: Maximum
+    yAxis:
+      left:
+        min: 0
+        max: 1
+        showUnits: false
+    legend:
+      position: hidden
+- type: metric
+  width: 6
+  height: 6
+  properties:
+    metrics:
+    - - expression: "(m3*(-1))+1"
+        label: ClusterIndexWritesBlocked-green
+        id: e1
+        color: "#093"
+    - - expression: m3*2
+        label: ClusterIndexWritesBlocked-red
+        id: e2
+        color: "#C00"
+    - - AWS/ES
+      - ClusterIndexWritesBlocked
+      - DomainName
+      - '{{stackName}}-{{es.name}}'
+      - ClientId
+      - '{{AWS_ACCOUNT_ID}}'
+      - id: m3
+        color: "#C00"
+        visible: false
+    view: timeSeries
+    stacked: false
+    region: '{{AWS_REGION}}'
+    title: Cluster writes status
+    fill: Below
+    period: 60
+    stat: Maximum
+    yAxis:
+      left:
+        min: 0
+        max: 2
+        showUnits: false
+    legend:
+      position: hidden
+- type: metric
+  width: 6
+  height: 6
+  properties:
+    metrics:
+    - - expression: m3
+        label: MasterReachableFromNode-green
+        id: e1
+        color: "#093"
+    - - expression: "(m3*(-2))+2"
+        label: MasterReachableFromNode-red
+        id: e2
+        color: "#C00"
+    - - AWS/ES
+      - MasterReachableFromNode
+      - DomainName
+      - '{{stackName}}-{{es.name}}'
+      - ClientId
+      - '{{AWS_ACCOUNT_ID}}'
+      - id: m3
+        color: "#C00"
+        visible: false
+    view: timeSeries
+    stacked: false
+    region: '{{AWS_REGION}}'
+    title: Master instance connection status
+    fill: Below
+    period: 60
+    stat: Maximum
+    yAxis:
+      left:
+        min: 0
+        max: 2
+        showUnits: false
+    legend:
+      position: hidden
+- type: metric
+  width: 6
+  height: 6
+  properties:
+    metrics:
+    - - expression: "(m3*(-1))+1"
+        label: AutomatedSnapshotFailure-green
+        id: e1
+        color: "#093"
+    - - expression: m3*2
+        label: AutomatedSnapshotFailure-red
+        id: e2
+        color: "#C00"
+    - - AWS/ES
+      - AutomatedSnapshotFailure
+      - DomainName
+      - '{{stackName}}-{{es.name}}'
+      - ClientId
+      - '{{AWS_ACCOUNT_ID}}'
+      - id: m3
+        color: "#C00"
+        visible: false
+    view: timeSeries
+    stacked: false
+    region: '{{AWS_REGION}}'
+    title: Snapshot failure status
+    fill: Below
+    period: 60
+    stat: Maximum
+    yAxis:
+      left:
+        min: 0
+        max: 2
+        showUnits: false
+    legend:
+      position: hidden
+- type: metric
+  width: 6
+  height: 6
+  properties:
+    view: timeSeries
+    stacked: false
+    metrics:
+    - - AWS/ES
+      - Nodes
+      - DomainName
+      - '{{stackName}}-{{es.name}}'
+      - ClientId
+      - '{{AWS_ACCOUNT_ID}}'
+    region: '{{AWS_REGION}}'
+    title: Total nodes (Count)
+    period: 60
+    stat: Minimum
+    yAxis:
+      left:
+        showUnits: false
+- type: metric
+  width: 6
+  height: 6
+  properties:
+    view: timeSeries
+    stacked: false
+    metrics:
+    - - expression: FLOOR(m1/1024)
+        label: FreeStorageSpace
+        id: e1
+    - - AWS/ES
+      - FreeStorageSpace
+      - DomainName
+      - '{{stackName}}-{{es.name}}'
+      - ClientId
+      - '{{AWS_ACCOUNT_ID}}'
+      - id: m1
+        visible: false
+    region: '{{AWS_REGION}}'
+    title: Total free storage space (GiB)
+    period: 60
+    stat: Sum
+    yAxis:
+      left:
+        showUnits: false
+- type: metric
+  width: 6
+  height: 6
+  properties:
+    metrics:
+    - - expression: m3
+        label: KibanaHealthyNodes-green
+        id: e1
+        color: "#093"
+    - - expression: "(m3*(-2))+2"
+        label: KibanaHealthyNodes-red
+        id: e2
+        color: "#C00"
+    - - AWS/ES
+      - KibanaHealthyNodes
+      - DomainName
+      - '{{stackName}}-{{es.name}}'
+      - ClientId
+      - '{{AWS_ACCOUNT_ID}}'
+      - id: m3
+        color: "#C00"
+        visible: false
+    view: timeSeries
+    stacked: false
+    region: '{{AWS_REGION}}'
+    title: Kibana health status
+    fill: Below
+    period: 60
+    stat: Minimum
+    yAxis:
+      left:
+        min: 0
+        max: 2
+        showUnits: false
+    legend:
+      position: hidden
+- type: metric
+  width: 6
+  height: 6
+  properties:
+    view: timeSeries
+    stacked: false
+    metrics:
+    - - AWS/ES
+      - DeletedDocuments
+      - DomainName
+      - '{{stackName}}-{{es.name}}'
+      - ClientId
+      - '{{AWS_ACCOUNT_ID}}'
+    region: '{{AWS_REGION}}'
+    title: Deleted documents (Count)
+    period: 60
+    stat: Average
+    yAxis:
+      left:
+        showUnits: false
+- type: metric
+  width: 6
+  height: 6
+  properties:
+    view: timeSeries
+    stacked: false
+    metrics:
+    - - AWS/ES
+      - SearchableDocuments
+      - DomainName
+      - '{{stackName}}-{{es.name}}'
+      - ClientId
+      - '{{AWS_ACCOUNT_ID}}'
+    region: '{{AWS_REGION}}'
+    title: Searchable documents (Count)
+    period: 60
+    stat: Average
+    yAxis:
+      left:
+        showUnits: false

@@ -4,7 +4,7 @@ git:
 language: node_js
 
 stages:
-  - name: build cache & audit
+  - name: audit and lint
   - name: unit test and stack deployment
   - name: integration tests
   - name: redeployment integration tests
@@ -19,31 +19,23 @@ stages:
 
 jobs:
   include:
-    - name: "Build npm cache"
-      stage: build cache & audit
-      install: true
-      script: ./travis-ci/build-cache.sh
-
     - name: "npm audit"
-      stage: build cache & audit
+      stage: audit and lint
       if: tag !~ ^v\d+.* AND commit_message !~ \[skip-audit\]
       install:
         - nvm install-latest-npm
-        - npm install --no-audit
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm run install-locks
-        - echo 'BOOTSTRAP FINISHED'
-      script: ./travis-ci/audit-packages.sh
+        - npm ci
+        - npm run bootstrap-no-build
+      script: npm run audit
 
     - name: "eslint"
-      stage: unit test and stack deployment
+      stage: audit and lint
       install:
-        - ./travis-ci/fetch-cache.sh
-        - npm install
+        - nvm install-latest-npm
+        - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
-        - env SKIP_BUILD=true ./bin/prepare
-        - echo 'BOOTSTRAP FINISHED'
       script: npm run lint
 
     - name: "Unit tests except API"
@@ -54,13 +46,12 @@ jobs:
         - LOCALSTACK_HOST=127.0.0.1
         - LOCAL_ES_HOST=127.0.0.1
       install:
-        - ./travis-ci/fetch-cache.sh
-        - npm install
+        - nvm install-latest-npm
+        - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
-        - echo 'BOOTSTRAP FINISHED'
-      script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api
+      script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api --ignore cumulus-integration-tests
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "API unit tests"
@@ -71,12 +62,11 @@ jobs:
         - LOCALSTACK_HOST=127.0.0.1
         - LOCAL_ES_HOST=127.0.0.1
       install:
-        - ./travis-ci/fetch-cache.sh
-        - npm install
+        - nvm install-latest-npm
+        - npm ci
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
-        - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/run-api-unit-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
@@ -84,11 +74,8 @@ jobs:
       stage: unit test and stack deployment
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
-        - ./travis-ci/fetch-cache.sh
-        - npm install
+        - nvm install-latest-npm
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm run bootstrap-no-build
-        - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
@@ -96,11 +83,8 @@ jobs:
       stage: unit test and stack deployment
       if: type = cron
       install:
-        - ./travis-ci/fetch-cache.sh
-        - npm install
+        - nvm install-latest-npm
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm run bootstrap-no-build
-        - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
       env:
@@ -111,11 +95,8 @@ jobs:
       stage: integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
-        - ./travis-ci/fetch-cache.sh
-        - npm install
+        - nvm install-latest-npm
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm run bootstrap-no-build
-        - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
 
@@ -123,11 +104,8 @@ jobs:
       stage: integration tests
       if: type = cron
       install:
-        - ./travis-ci/fetch-cache.sh
-        - npm install
+        - nvm install-latest-npm
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm run bootstrap-no-build
-        - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
       env:
@@ -136,13 +114,9 @@ jobs:
 
     - name: "Run redeployment integration tests"
       stage: redeployment integration tests
-      if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
-        - ./travis-ci/fetch-cache.sh
-        - npm install
+        - nvm install-latest-npm
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm run bootstrap-no-build
-        - echo 'BOOTSTRAP FINISHED'
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-redeployment-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
 
@@ -150,15 +124,16 @@ jobs:
       stage: cleanup integration tests
       if: commit_message !~ \[skip-integration-tests\] OR branch = master
       install:
-        - npm install
+        - nvm install-latest-npm
+        - ln -s /dev/stdout ./lerna-debug.log
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
     - name: "Cleanup SIT integration tests"
       stage: cleanup integration tests
       if: type = cron
       install:
-        - ./travis-ci/fetch-cache.sh
-        - npm install
+        - nvm install-latest-npm
+        - ln -s /dev/stdout ./lerna-debug.log
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
       env:
         - NGAP_ENV=SIT
@@ -167,19 +142,22 @@ jobs:
     - name: "Deploy to NPM"
       stage: deploy
       install:
-        - ./travis-ci/fetch-cache.sh
-        - npm install
-        - npm run bootstrap-no-build
+        - nvm install-latest-npm
+        - npm ci
       script: ./travis-ci/deploy-to-npm.sh
 
     - name: "Deploy to Github Pages"
       stage: deploy
-      install: npm install
+      install:
+        - nvm install-latest-npm
+        - npm ci
       script: ./travis-ci/deploy-to-github-pages.sh
 
     - name: "Deploy packages to integration test stack"
       stage: deployment test setup
-      install: true
+      install:
+        - nvm install-latest-npm
+        - ln -s /dev/stdout ./lerna-debug.log
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
       env:
@@ -188,7 +166,9 @@ jobs:
 
     - name: "Run integration tests against deployed packages"
       stage: deployment test
-      install: true
+      install:
+        - nvm install-latest-npm
+        - ln -s /dev/stdout ./lerna-debug.log
       script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
       after_success: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
       after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh

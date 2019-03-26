@@ -3,11 +3,12 @@
 set -e
 
 rm -rf website/build
-yarn docs-install
-yarn docs-build
+npm run docs-install
+npm run docs-build
 
 git clone --depth=50 --branch=gh-pages "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/nasa/cumulus.git" gh-pages
 (
+  set -e
   cd gh-pages
   rm -rf *
   rsync -av ../website/build/Cumulus/ .

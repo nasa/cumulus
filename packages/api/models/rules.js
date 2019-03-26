@@ -225,7 +225,7 @@ class Rule extends Manager {
             arn: mappingExists.UUID,
             type: item.rule.type
           }
-        }, lambda.type);
+        }, lambda.eventType);
       }
     }
 

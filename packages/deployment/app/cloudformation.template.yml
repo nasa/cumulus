@@ -364,10 +364,10 @@ Resources:
     Type: "AWS::Elasticsearch::Domain"
     Properties:
       DomainName: {{stackName}}-{{es.name}}
-      ElasticsearchVersion: {{# if version}}{{es.version}}{{ else }}5.3{{/if}}
+      ElasticsearchVersion: {{# if es.version}}{{es.version}}{{ else }}5.3{{/if}}
       ElasticsearchClusterConfig:
-        InstanceCount: {{# if instanceCount}}{{es.instanceCount}}{{ else }}'1'{{/if}}
-        InstanceType: {{# if instanceType}}{{es.instanceType}}{{ else }}"t2.small.elasticsearch"{{/if}}
+        InstanceCount: {{# if es.instanceCount}}{{es.instanceCount}}{{ else }}'1'{{/if}}
+        InstanceType: {{# if es.instanceType}}{{es.instanceType}}{{ else }}"t2.small.elasticsearch"{{/if}}
       SnapshotOptions:
         AutomatedSnapshotStartHour: "0"
       EBSOptions:
@@ -402,6 +402,32 @@ Resources:
           - {{this}}
         {{/each}}
     {{/if}}
+
+  {{#if es.alarms}}
+  {{# each es.alarms}}
+  {{../es.name}}{{@key}}Alarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+    {{#if alarm_description}}
+      AlarmDescription: {{ alarm_description }}
+    {{/if}}
+      AlarmName: {{../stackName}}-{{../es.name}}-{{@key}}Alarm
+      ComparisonOperator: {{ comparison_operator }}
+      EvaluationPeriods: {{#if evaluation_periods }}{{ evaluation_periods }}{{ else }}5{{/if}}
+      MetricName: {{ metric }}
+      Statistic: {{#if statistic }}{{ statistic }}{{ else }}Average{{/if}}
+      Threshold: {{ threshold }}
+      Period: {{#if period }}{{ period }}{{ else }}60{{/if}}
+      Namespace: AWS/ES
+      Dimensions:
+        - Name: ClientId
+          Value:
+            Fn::Sub: ${AWS::AccountId}
+        - Name: DomainName
+          Value:
+            Ref: {{../es.name}}Domain
+  {{/each}}
+  {{/if}}
 
   #################################################
   # ElasticSearch config END
@@ -710,6 +736,12 @@ Resources:
           {{@key}}: {{{this}}}
       {{/if}}
     {{/each}}
+      {{# if ../api_backend_url}}
+          BACKEND_API_URL: {{../api_backend_url}}
+      {{else}}
+          BACKEND_API_URL:
+            Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/"]]
+      {{/if}}
       {{# if this.urs}}
         {{# if ../api_backend_url}}
           TOKEN_REDIRECT_ENDPOINT: {{../api_backend_url}}token
@@ -1221,6 +1253,20 @@ Resources:
 {{/if}}
   #################################################
   # ECS config END
+  #################################################
+
+  #################################################
+  # CloudWatch Dashboard BEGIN
+  #################################################
+{{# if es.name}}
+  CumulusCloudWatchDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: {{stackName}}-CloudWatch-Dashboard
+      DashboardBody: '{{#buildCWDashboard dashboard es stackName}}{{/buildCWDashboard}}'
+{{/if}}
+  #################################################
+  # CloudWatch Dashboard END
   #################################################
 
 Outputs:
