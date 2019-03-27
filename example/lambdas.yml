@@ -41,6 +41,10 @@ FakeProcessing:
   handler: index.handler
   source: node_modules/@cumulus/test-processing/dist/
   useMessageAdapter: true
+FilesToGranules:
+  handler: index.handler
+  source: node_modules/@cumulus/files-to-granules/dist/
+  useMessageAdapter: true
 HelloWorld:
   handler: index.handler
   timeout: 300

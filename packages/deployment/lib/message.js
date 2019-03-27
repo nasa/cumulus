@@ -121,7 +121,7 @@ function template(name, workflow, config, outputs) {
     workflowConfig[state] = config.workflowConfigs[name][state];
   });
 
-  // add the s3 uri to all the workflow templates for teh current stack
+  // add the s3 uri to all the workflow templates for the current stack
   const templatesUris = {};
   const stepFunctions = get(config, 'stepFunctions', {});
   Object.keys(stepFunctions).forEach((sf) => {
