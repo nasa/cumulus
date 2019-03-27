@@ -3,6 +3,7 @@ const router = require('express-promise-router')();
 const { randomId } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('../lib/errors');
 const {
+  getConfigurations,
   handleRedirectRequest,
   handleCredentialRequest,
   handleFileRequest

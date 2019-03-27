@@ -145,6 +145,7 @@ async function handleFileRequest(req, res) {
 }
 
 module.exports = {
+  getConfigurations,
   handleRedirectRequest,
   handleCredentialRequest,
   handleFileRequest
