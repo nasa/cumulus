@@ -40,7 +40,7 @@ To run the API locally using your deployed stack with Earthdata authentication r
     npm run serve-remote
 ```
 
-If you want endpoints that interact with Elasticsearch to work, you must specify the `ES_HOST` environment variable for this command. You can get the value for `ES_HOST` for your stack using the AWS CLI, where `<your_es_domain_name>` is the value of `es.name` in your app deployment config.yml:
+If you want endpoints that interact with Elasticsearch to work, you must specify the `ES_HOST` environment variable for this command. You can get the value for `ES_HOST` for your stack using the AWS CLI, where `<your_es_domain_name>` is the value of `<stackName>-<es.name>` for your app deployment in config.yml:
 
 ```bash
   aws es describe-elasticsearch-domain --domain-name <your_es_domain_name> --query 'DomainStatus.Endpoint'
