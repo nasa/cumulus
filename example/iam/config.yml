@@ -219,8 +219,8 @@ kk:
       name: '{{prefix}}-public'
       type: public
 
-mth:
-  prefix: mth
+mth-2:
+  prefix: mth-2
   system_bucket: '{{prefix}}-internal'
   buckets:
     internal:
