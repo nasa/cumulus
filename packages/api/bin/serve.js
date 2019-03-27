@@ -219,7 +219,6 @@ async function serveApi(user, stackName = 'localrun') {
 async function serveDistributionApi(stackName = 'localrun', done) {
   const port = process.env.PORT || 5002;
   const requiredEnvVars = [
-    'stackName',
     'DISTRIBUTION_REDIRECT_ENDPOINT',
     'DISTRIBUTION_ENDPOINT'
   ];
@@ -235,7 +234,6 @@ async function serveDistributionApi(stackName = 'localrun', done) {
     // set env variables
     setAuthEnvVariables();
     process.env.system_bucket = 'localbucket';
-    process.env.stackName = stackName;
 
     checkEnvVariablesAreSet(requiredEnvVars);
 
@@ -248,7 +246,7 @@ async function serveDistributionApi(stackName = 'localrun', done) {
   }
   else {
     checkEnvVariablesAreSet(requiredEnvVars);
-    setTableEnvVariables(process.env.stackName);
+    setTableEnvVariables(stackName);
   }
 
   console.log(`Starting server on port ${port}`);

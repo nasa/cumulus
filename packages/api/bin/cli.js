@@ -147,7 +147,7 @@ program
   .command('serve-dist')
   .description('Serves the local version of the distribution API')
   .action(() => {
-    serveDistributionApi().catch(console.error);
+    serveDistributionApi(process.env.stackName).catch(console.error);
   });
 
 program
