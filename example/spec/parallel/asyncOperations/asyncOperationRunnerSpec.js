@@ -84,7 +84,7 @@ describe('The AsyncOperation task runner', () => {
       expect(parsedOutput.message).toContain('Function not found');
     });
     // Disabled pending resolution of CUMULUS-966
-    xit('updates the updatedAt field in DynamoDB', async () => {
+    it('updates the updatedAt field in DynamoDB', async () => {
       expect(dynamoDbItem.updatedAt.N).toBeGreaterThan(dynamoDbItem.createdAt.N);
     });
   });
@@ -151,7 +151,7 @@ describe('The AsyncOperation task runner', () => {
       expect(parsedOutput.message).toBe(`Failed to fetch ${payloadUrl}: The specified key does not exist.`);
     });
     // Disabled pending resolution of CUMULUS-966
-    xit('updates the updatedAt field in DynamoDB', async () => {
+    it('updates the updatedAt field in DynamoDB', async () => {
       expect(dynamoDbItem.updatedAt.N).toBeGreaterThan(dynamoDbItem.createdAt.N);
     });
   });
@@ -225,7 +225,7 @@ describe('The AsyncOperation task runner', () => {
       expect(parsedOutput.message).toContain('Unable to parse payload:');
     });
     // Disabled pending resolution of CUMULUS-966
-    xit('updates the updatedAt field in DynamoDB', async () => {
+    it('updates the updatedAt field in DynamoDB', async () => {
       expect(dynamoDbItem.updatedAt.N).toBeGreaterThan(dynamoDbItem.createdAt.N);
     });
 
@@ -301,7 +301,7 @@ describe('The AsyncOperation task runner', () => {
       expect(parsedOutput).toEqual([1, 2, 3]);
     });
     // Disabled pending resolution of CUMULUS-966
-    xit('updates the updatedAt field in DynamoDB', async () => {
+    it('updates the updatedAt field in DynamoDB', async () => {
       expect(dynamoDbItem.updatedAt.N).toBeGreaterThan(dynamoDbItem.createdAt.N);
     });
 
@@ -377,7 +377,7 @@ describe('The AsyncOperation task runner', () => {
       expect(parsedOutput.message).toBe('triggered failure');
     });
     // Disabled pending resolution of CUMULUS-966
-    xit('updates the updatedAt field in DynamoDB', async () => {
+    it('updates the updatedAt field in DynamoDB', async () => {
       expect(dynamoDbItem.updatedAt.N).toBeGreaterThan(dynamoDbItem.createdAt.N);
     });
 
