@@ -162,7 +162,7 @@ async function removePublishedGranule({ prefix, granuleId }) {
   // pre-delete: Remove the granule from CMR
   await removeFromCMR({ prefix, granuleId });
   return deleteGranule({ prefix, granuleId });
-};
+}
 
 module.exports = {
   getGranule,

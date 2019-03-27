@@ -117,7 +117,7 @@ async function getClusterStats(stackName) {
 /**
  * Queries for autoscaling groups and returns the first one matching the stackName passed as an argument.
  * @param  {string} stackName stackName to use looking up autoscaling group.
- * @return {string}           Name of the autoscaling group which has a name which includes the stackName
+ * @returns {string}           Name of the autoscaling group which has a name which includes the stackName
  */
 async function getAutoScalingGroupName(stackName) {
   const autoScalingGroups = (await autoscaling().describeAutoScalingGroups({}).promise()).AutoScalingGroups;
@@ -131,7 +131,7 @@ async function getAutoScalingGroupName(stackName) {
  *
  * @param  {string} options.stackName   stackName to use looking up the autoscaling group.
  * @param  {Integer} options.waitPeriod Time to wait before checking for a new scaling activity
- * @return {Object}                     AWS Scaling Activity object
+ * @returns {Object}                     AWS Scaling Activity object
  */
 async function getNewScalingActivity({ stackName, waitPeriod }) {
   waitPeriod = waitPeriod || 30000;

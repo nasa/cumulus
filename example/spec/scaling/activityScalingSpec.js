@@ -151,7 +151,7 @@ describe('scaling for step function activities', () => {
 
     beforeAll(async (done) => {
       try {
-        console.log(`in before block`)
+        console.log('in before block');
         const workflowExecutionPromises = [];
         const clusterArn = await getClusterArn(stackName);
         console.log(`clusterArn ${clusterArn}`);
@@ -166,53 +166,53 @@ describe('scaling for step function activities', () => {
         };
         await autoscaling().setDesiredCapacity(setDesiredCapacityParams).promise()
           .catch((err) => {
-            console.log(`err ${JSON.stringify(err, null, 2)}`)
+            console.log(`err ${JSON.stringify(err, null, 2)}`);
             if (err.code === 'ScalingActivityInProgress') {
               console.log('ScalingActivityInProgress. Cannot make update.');
-            } else {
-              throw(err);
+            }
+            else {
+              throw (err);
             }
           });
 
         // wait for instances to be active
         const listContainerInstancesParams = { cluster: clusterArn };
         let containerInstanceIds = (await ecs().listContainerInstances(listContainerInstancesParams).promise()).containerInstanceArns;
-        let waitTime = 30000;
+        const waitTime = 30000;
+        /* eslint-disable no-await-in-loop */
         while (containerInstanceIds.length < 2) {
-          console.log(`waiting for instances to become active`);
+          console.log('waiting for instances to become active');
           await sleep(waitTime);
           containerInstanceIds = (await ecs().listContainerInstances(listContainerInstancesParams).promise()).containerInstanceArns;
-          console.log(`containerInstanceIds ${containerInstanceIds}`);
-        };
+        }
+        /* eslint-enable no-await-in-loop */
 
         // set desired tasks to 2
-        const services = await ecs().listServices({cluster: clusterArn}).promise();
+        const services = await ecs().listServices({ cluster: clusterArn }).promise();
         const serviceName = services.serviceArns[0].split('/').pop();
         const updateServiceParams = {
           desiredCount: 2,
           cluster: clusterArn,
           service: serviceName
         };
-        const updateServiceResponse = await ecs().updateService(updateServiceParams).promise();
+        await ecs().updateService(updateServiceParams).promise();
 
         // Check there is a task running on each instance
         const describeContainerInstanceParams = {
           cluster: clusterArn,
           containerInstances: containerInstanceIds
-        }
+        };
         let instanceData = await ecs().describeContainerInstances(describeContainerInstanceParams).promise();
         let firstInstanceRunningTasks = instanceData.containerInstances[0].runningTasksCount;
         let secondInstanceRunningTasks = instanceData.containerInstances[1].runningTasksCount;
-        console.log(`firstInstanceRunningTasks ${firstInstanceRunningTasks}`);
-        console.log(`secondInstanceRunningTasks ${secondInstanceRunningTasks}`);
+        /* eslint-disable no-await-in-loop */
         while (!(firstInstanceRunningTasks === 1 && secondInstanceRunningTasks === 1)) {
           await sleep(waitTime);
           instanceData = await ecs().describeContainerInstances(describeContainerInstanceParams).promise();
           firstInstanceRunningTasks = instanceData.containerInstances[0].runningTasksCount;
           secondInstanceRunningTasks = instanceData.containerInstances[1].runningTasksCount;
-          console.log(`firstInstanceRunningTasks ${firstInstanceRunningTasks}`);
-          console.log(`secondInstanceRunningTasks ${secondInstanceRunningTasks}`);
-        };
+        }
+        /* eslint-enable no-await-in-loop */
 
         for (let i = 0; i < numExecutions; i += 1) {
           workflowExecutionPromises.push(buildAndStartWorkflow(
@@ -229,19 +229,20 @@ describe('scaling for step function activities', () => {
         // set desired tasks to 1 so memory reservation low alarm will be triggered
         workflowExecutionArns = await Promise.all(workflowExecutionPromises);
         done();
-      } catch (e) {
-        console.log(e);
-        throw(e);
       }
-    }, 20*60*1000);
+      catch (e) {
+        console.log(e);
+        throw (e);
+      }
+    }, 20 * 60 * 1000);
 
     it('all tasks should complete before instance is terminated', async () => {
-      const newScalingActivity = await getNewScalingActivity({stackName});
+      const newScalingActivity = await getNewScalingActivity({ stackName });
       expect(newScalingActivity.Description).toMatch(/Terminating EC2 instance: i-*/);
       // expect instance not to be terminated until running tasks complete.
       // So all should complete within sleep
       const completions = workflowExecutionArns.map((executionArn) => waitForCompletedExecution(executionArn));
-      console.log(`waiting for completed executions`);
+      console.log('waiting for completed executions');
       await Promise.all(completions);
       const results = await Promise.all(workflowExecutionArns.map((arn) => getExecutionStatus(arn)));
       expect(results).toEqual(new Array(numExecutions).fill('SUCCEEDED'));
