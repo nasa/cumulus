@@ -104,7 +104,7 @@ function getRequiredAuthEnvVariables() {
 function setAuthEnvVariables() {
   if (process.env.FAKE_AUTH) {
     process.env.EARTHDATA_CLIENT_ID = randomId('EARTHDATA_CLIENT_ID');
-    process.env.EARTHDATA_CLIENT_PASSWORD = randomString('EARTHDATA_CLIENT_PASSWORD');
+    process.env.EARTHDATA_CLIENT_PASSWORD = randomId('EARTHDATA_CLIENT_PASSWORD');
     process.env.EARTHDATA_BASE_URL = 'https://example.com';
   }
 }
