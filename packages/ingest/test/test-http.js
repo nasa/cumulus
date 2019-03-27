@@ -2,7 +2,6 @@
 
 const rewire = require('rewire');
 const test = require('ava');
-const got = rewire('got');
 const http = rewire('../http');
 const TestHttpMixin = http.httpMixin;
 const EventEmitter = require('events');

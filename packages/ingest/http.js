@@ -145,7 +145,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     catch (err) {
       log.info(`HEAD failed for ${remoteUrl} with error: ${err}.`);
     }
-    const contentType = headers['content-type'] || mime.lookup(key) || headResponse;
+    const contentType = headers['content-type'] || mime.lookup(key) || 'binary/octet';
 
     const pass = new PassThrough();
     got.stream(remoteUrl).pipe(pass);
