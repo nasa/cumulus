@@ -11,6 +11,8 @@ const isString = require('lodash.isstring');
 const pvl = require('@cumulus/pvl/t');
 const { PDRParsingError } = require('@cumulus/common/errors');
 
+// If updating this mapping, please update the related documentation
+// at docs/workflow_tasks/parse_pdr.md
 const pdrToCnmMap = {
   HDF: 'data',
   'HDF-EOS': 'data',
@@ -59,7 +61,7 @@ function parseSpec(pdrName, spec) {
   const checksumType = get('FILE_CKSUM_TYPE', false);
   const checksumValue = get('FILE_CKSUM_VALUE', false);
 
-  // Validate fileType is in the mappping
+  // Validate fileType is in the mapping
   if (fileType) {
     if (!Object.keys(pdrToCnmMap).includes(fileType)) {
       throw new PDRParsingError(`INVALID FILE_TYPE PARAMETER : ${fileType}`);

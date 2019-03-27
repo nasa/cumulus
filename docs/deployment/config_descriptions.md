@@ -53,6 +53,18 @@ note `instanceType` and `desiredInstances` have been selected for a sample insta
 
 Also note, if you dont specify the `amiid`, it will try to use a default, which may or may not exist.
 
+## es
+Configuration for the Amazon Elasticsearch Service (ES) instance.  You can update `es` properties and add additional ES alarms. For example:
+
+    es:
+      instanceCount: 2
+      alarms:
+        NodesHigh:
+          alarm_description: 'There are more instances running than the desired'
+          comparison_operator: GreaterThanThreshold
+          threshold: '{{es.instanceCount}}'
+          metric: Nodes
+
 ## buckets
 
 The config buckets should map to the same names you used when creating buckets in the [Prepare AWS](#prepare-aws-configuration) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured.
