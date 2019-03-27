@@ -2,7 +2,7 @@
 
 const pLimit = require('p-limit');
 const { s3, promiseS3Upload } = require('@cumulus/common/aws');
-const { randomString, inTestMode } = require('@cumulus/common/test-utils');
+const { randomString, randomId, inTestMode } = require('@cumulus/common/test-utils');
 const bootstrap = require('../lambdas/bootstrap');
 const models = require('../models');
 const testUtils = require('../lib/testUtils');
@@ -103,8 +103,8 @@ function getRequiredAuthEnvVariables() {
 
 function setAuthEnvVariables() {
   if (process.env.FAKE_AUTH) {
-    process.env.EARTHDATA_CLIENT_ID = randomString();
-    process.env.EARTHDATA_CLIENT_PASSWORD = randomString();
+    process.env.EARTHDATA_CLIENT_ID = randomId('EARTHDATA_CLIENT_ID');
+    process.env.EARTHDATA_CLIENT_PASSWORD = randomString('EARTHDATA_CLIENT_PASSWORD');
     process.env.EARTHDATA_BASE_URL = 'https://example.com';
   }
 }
