@@ -2,12 +2,16 @@
 
 const rewire = require('rewire');
 const test = require('ava');
-const got = require('got');
+const got = rewire('got');
 const http = rewire('../http');
 const TestHttpMixin = http.httpMixin;
 const EventEmitter = require('events');
 const {
-  calculateS3ObjectChecksum, fileExists, recursivelyDeleteS3Bucket, s3, headObject
+  calculateS3ObjectChecksum,
+  fileExists,
+  recursivelyDeleteS3Bucket,
+  s3,
+  headObject
 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
