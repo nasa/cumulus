@@ -6,6 +6,7 @@ const {
   s3,
   getFileBucketAndKey
 } = require('@cumulus/common/aws');
+const { randomId } = require('@cumulus/common/test-utils');
 const { UnparsableFileLocationError } = require('@cumulus/common/errors');
 const { URL } = require('url');
 const EarthdataLogin = require('../lib/EarthdataLogin');
@@ -120,6 +121,7 @@ async function handleRedirectRequest(req, res) {
 async function ensureAuthorizedOrRedirect(req, res, next) {
   // Skip authentication for debugging purposes.
   if (process.env.FAKE_AUTH) {
+    req.authorizedMetadata = { userName: randomId('username') };
     return next();
   }
 
