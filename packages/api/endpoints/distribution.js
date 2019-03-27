@@ -14,6 +14,15 @@ const { isLocalApi } = require('../lib/testUtils');
 const { AccessToken } = require('../models');
 const s3credentials = require('./s3credentials');
 
+// Running API locally will be on http, not https, so cookies
+// should not be set to secure for local runs of the API.
+const useSecureCookies = () => {
+  if (isLocalApi()) {
+    return false;
+  }
+  return true;
+}
+
 /**
  * Return a signed URL to an S3 object
  *
@@ -92,12 +101,7 @@ async function handleRedirectRequest(req, res) {
       {
         expires: new Date(getAccessTokenResponse.expirationTime),
         httpOnly: true,
-        // Running API locally will be on http, not https, so cookies
-        // should not be set to secure for local runs of the API.
-        //
-        // isLocalApi() is local: true !== true = false (not secure)
-        // isLocalApi() is not local: false !== true = true (secure)
-        secure: (isLocalApi() !== true)
+        secure: useSecureCookies()
       }
     )
     .set({ Location: urljoin(distributionUrl, state) })
