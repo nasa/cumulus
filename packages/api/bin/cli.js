@@ -140,7 +140,6 @@ program
   .option('--username [username]', 'Username to add as allowed for the API. Used with Localstack only.')
   .description('Serves the local version of the Cumulus API')
   .action((cmd) => {
-    console.log(cmd.username);
     serveApi(cmd.username).catch(console.error);
   });
 
