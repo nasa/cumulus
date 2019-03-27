@@ -19,7 +19,7 @@ const useSecureCookies = () => {
     return false;
   }
   return true;
-}
+};
 
 /**
  * Return a signed URL to an S3 object
