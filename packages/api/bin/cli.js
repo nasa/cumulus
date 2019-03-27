@@ -137,10 +137,9 @@ program
 
 program
   .command('serve')
-  .option('--username [username]', 'Username to add as allowed for the API. Used with Localstack only.')
   .description('Serves the local version of the Cumulus API')
-  .action((cmd) => {
-    serveApi(cmd.username).catch(console.error);
+  .action(() => {
+    serveApi(process.env.USERNAME).catch(console.error);
   });
 
 program

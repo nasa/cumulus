@@ -23,11 +23,11 @@ To run the API locally using Localstack for AWS services with Earthdata authenti
 ```bash
   EARTHDATA_CLIENT_ID=<your_client_id> \
     EARTHDATA_CLIENT_PASSWORD=<your_password> \
-    npm run serve-oauth \
-    -- --username <your_username> # the extra `--` is required
+    USERNAME=<username> \
+    npm run serve-oauth
 ```
 
-**Note**: The Cumulus API checks whether the username used to login with Earthdata is an allowed user for the API. In order to add your Earthdata username as an allowed user when running the API against Localstack, you must specify it using the `--username` option.
+**Note**: The Cumulus API checks whether the username used to login with Earthdata is an allowed user for the API. In order to add your Earthdata username as an allowed user when running the API against Localstack, you must specify it using the `USERNAME` environment variable.
 
 To run the API locally using your deployed stack with Earthdata authentication required:
 
