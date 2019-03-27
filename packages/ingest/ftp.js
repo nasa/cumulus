@@ -1,5 +1,6 @@
 'use strict';
 
+const mime = require('mime-types');
 const JSFtp = require('jsftp');
 const join = require('path').join;
 const { PassThrough } = require('stream');
@@ -174,7 +175,12 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
     const pass = new PassThrough();
     readable.pipe(pass);
 
-    const params = { Bucket: bucket, Key: key, Body: pass };
+    const params = {
+      Bucket: bucket,
+      Key: key,
+      Body: pass,
+      ContentType: mime.lookup(key) || 'binary/octet'
+    };
     await promiseS3Upload(params);
     log.info('Uploading to s3 is complete(ftp)', s3uri);
 

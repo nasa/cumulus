@@ -3,6 +3,7 @@
 const http = require('@cumulus/common/http');
 const isIp = require('is-ip');
 const path = require('path');
+const mime = require('mime-types');
 const { PassThrough } = require('stream');
 const Crawler = require('simplecrawler');
 const got = require('got');
@@ -136,17 +137,24 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     const s3uri = buildS3Uri(bucket, key);
     log.info(`Sync ${remoteUrl} to ${s3uri}`);
 
-    let contentType = null;
+    let headers = {};
+    try {
+      const headResponse = await got.head(remoteUrl);
+      headers = headResponse.headers;
+    }
+    catch (err) {
+      log.info(`HEAD failed for ${remoteUrl} with error: ${err}.`);
+    }
+    const contentType = headers['content-type'] || mime.lookup(key) || headResponse;
+
     const pass = new PassThrough();
-    got.stream(remoteUrl).on('response', (response) => {
-      console.log(response.body);
-    }).pipe(pass);
+    got.stream(remoteUrl).pipe(pass);
 
     await s3().upload({
       Bucket: bucket,
       Key: key,
       Body: pass,
-      ContentType: contentType ? contentType : 'binary/octet'
+      ContentType: contentType
     }).promise();
 
     log.info('Uploading to s3 is complete (http)', s3uri);
