@@ -73,7 +73,7 @@ Then run:
   $ npm install
 ```
 
-**Note**: The npm install command will add the [kes](http://devseed.com/kes/) utility to the `<daac>-deploy`'s `node_packages` directory and will be utilized later for most of the AWS deployment commands
+**Note**: The npm install command will add the [kes](http://devseed.com/kes/) utility to the `<daac>-deploy`'s `node_packages` directory and will be utilized later for most of the AWS deployment commands.
 
 #### Obtain Cumulus Packages
 
@@ -205,51 +205,53 @@ If you're re-deploying based on an existing configuration you can skip this conf
 Descriptions of the fields can be found in [App Configuration Descriptions](deployment/config_descriptions.md#app-configuration).
 
 ```yaml
-dev:                                    # deployment name
-  stackName: dev-cumulus        # see note below
-  stackNameNoDash: DevCumulus
+dev:                            # deployment name
+  stackName: dev-cumulus        # Required. See note below
+  stackNameNoDash: DevCumulus   # Required.
 
-  apiStage: dev
+  apiStage: dev                 # Optional
 
-  vpc:
+  vpc:                          # Optional
     vpcId: '{{VPC_ID}}'         # this has to be set in .env
     subnets:
       - '{{AWS_SUBNET}}'        # this has to be set in .env
 
-  ecs:
+  ecs:                          # Required
     instanceType: t2.micro
     desiredInstances: 0
     availabilityZone: <subnet-id-zone>
     amiid: <some-ami-id>
 
-  # Or can specify a different bucket for the system_bucket
+  # Required. You can specify a different bucket for the system_bucket
   system_bucket: '{{buckets.internal.name}}'
 
-  buckets:                              # Should be the same as in IAMs
+  # Required. Should be the same as in IAM deployment config.yml
+  buckets:
     internal:
         name: dev-internal
         type: internal
 
+  # Required.
   iams:
-    ecsRoleArn: arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-ecs
-    lambdaApiGatewayRoleArn: arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-lambda-api-gateway
-    lambdaProcessingRoleArn: arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-lambda-processing
-    stepRoleArn: arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-steprole
-    instanceProfile: arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/<iams-prefix>-ecs
+    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-ecs'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-lambda-processing'
+    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-steprole'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/<iams-prefix>-ecs'
     distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-distribution-api-lambda'
     scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-scaling-role'
     migrationRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-migration-processing'
 
-  urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
+  # Optional
+  urs_url: https://uat.urs.earthdata.nasa.gov/ # make sure to include the trailing slash
 
-  # if not specified the value of the apigateway backend endpoint is used
-  # api_backend_url: https://apigateway-url-to-api-backend/ #make sure to include the trailing slash
+  # if not specified, the value of the API gateway backend endpoint is used
+  # api_backend_url: https://apigateway-url-to-api-backend/ # make sure to include the trailing slash
 
-  # if not specified the value of the apigateway dist url is used
-  # api_distribution_url: https://apigateway-url-to-distribution-app/ #make sure to include the trailing slash
+  # if not specified, the value of the API gateway distribution endpoint is used
+  # api_distribution_url: https://apigateway-url-to-distribution-app/ # make sure to include the trailing slash
 
-  # URS users who should have access to the dashboard application and use the
-  # distribution API to access protected files.
+  # Required. URS users who should have access to the dashboard application.
   users:
     - username: <user>
     - username: <user2>
