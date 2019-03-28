@@ -62,3 +62,20 @@ Note that there may be configuration changes required with a new version. Please
 When breaking changes have been introduced, the Cumulus Core team will publish a document with instructions on migrating from one version to another. *IMPORTANT:* When upgrading through many versions, each migration should be done in the order of release (if going from version 1.z.0 from 1.x.0, 1.x.0 -> 1.y.0 -> 1.z.0).
 
 The migration documents published on release can be found [here](https://nasa.github.io/cumulus/docs/upgrade/upgrade-readme).
+
+## Maintaining the current Version of a Dependency
+
+If you wish to maintain the current version for a specific dependency, make sure to save that version to the package.json with this command.
+
+```shell
+npm install [<@scope>/]<name>@<version> --save --save-exact
+```
+
+Or update that dependency version directly in your package.json to include no prefix.
+For example: `<name>: "1.4.2"` instead of `<name>: "^1.4.2"`. This will cause `npm install` to install that specific version.
+
+To maintain current dependencies without individually editing them in your package.json file, you can run this command that will use the exact versions last saved in your package-lock.json. Note: this requires npm version 5.7.0 or higher and a package-lock.json to already exist in the project.
+
+```shell
+npm ci
+```
