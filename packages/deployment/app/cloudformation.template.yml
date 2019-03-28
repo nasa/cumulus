@@ -410,11 +410,9 @@ Resources:
       Namespace: AWS/ES
       Dimensions:
         - Name: ClientId
-          Value:
-            Fn::Sub: ${AWS::AccountId}
+          Value: !Sub ${AWS::AccountId}
         - Name: DomainName
-          Value:
-            Ref: {{../es.name}}Domain
+          Value: !Ref {{../es.name}}Domain
   {{/each}}
   {{/if}}
 
@@ -1136,6 +1134,49 @@ Resources:
         MaximumPercent: 100
         MinimumHealthyPercent: 0
 
+  {{@key}}ECSServiceTaskCountLowAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: There are less tasks running than the desired
+      AlarmName: {{../stackName}}-{{@key}}-TaskCountLowAlarm
+      ComparisonOperator: LessThanThreshold
+      EvaluationPeriods: 1
+      MetricName: MemoryUtilization
+      Statistic: SampleCount
+      Threshold: {{# if this.count}}{{this.count}}{{ else }} 0 {{/if}}
+      Period: 60
+      Namespace: AWS/ECS
+      Dimensions:
+        - Name: ClusterName
+          Value: !Ref CumulusECSCluster
+        - Name: ServiceName
+          Value: !GetAtt {{@key}}ECSService.Name
+
+  {{# if this.alarms}}
+  # the service has cumstom alarms
+  {{# each this.alarms}}
+  {{@../key}}{{@key}}Alarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+    {{#if alarm_description}}
+      AlarmDescription: {{ alarm_description }}
+    {{/if}}
+      AlarmName: {{../../stackName}}-{{@../key}}-{{@key}}Alarm
+      ComparisonOperator: {{ comparison_operator }}
+      EvaluationPeriods: {{#if evaluation_periods }}{{ evaluation_periods }}{{ else }}5{{/if}}
+      MetricName: {{ metric }}
+      Statistic: {{#if statistic }}{{ statistic }}{{ else }}Average{{/if}}
+      Threshold: {{ threshold }}
+      Period: {{#if period }}{{ period }}{{ else }}60{{/if}}
+      Namespace: AWS/ECS
+      Dimensions:
+        - Name: ClusterName
+          Value: !Ref CumulusECSCluster
+        - Name: ServiceName
+          Value: !GetAtt {{@../key}}ECSService.Name
+  {{/each}}
+  {{/if}}
+
 {{/each}}
 
 {{#each ecs.tasks}}
@@ -1242,13 +1283,11 @@ Resources:
   #################################################
   # CloudWatch Dashboard BEGIN
   #################################################
-{{# if es.name}}
-  CumulusCloudWatchDashboard:
-    Type: AWS::CloudWatch::Dashboard
-    Properties:
-      DashboardName: {{stackName}}-CloudWatch-Dashboard
-      DashboardBody: '{{#buildCWDashboard dashboard es stackName}}{{/buildCWDashboard}}'
-{{/if}}
+  # CumulusCloudWatchDashboard:
+  #   Type: AWS::CloudWatch::Dashboard
+  #   Properties:
+  #     DashboardName: {{stackName}}-CloudWatch-Dashboard
+  #     DashboardBody: '{{#buildCWDashboard dashboard ecs es stackName}}{{/buildCWDashboard}}'
   #################################################
   # CloudWatch Dashboard END
   #################################################
