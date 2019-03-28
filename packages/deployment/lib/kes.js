@@ -148,33 +148,55 @@ class UpdatedKes extends Kes {
     }
   }
 
+  buildAlarmWidgets(alarmNames, alarmTemplate) {
+    return alarmNames.map((alarmName) => {
+      const alarm = cloneDeep(alarmTemplate);
+      alarm.properties.title = alarmName;
+      alarm.properties.annotations.alarms[0] = alarm.properties.annotations.alarms[0].replace('alarmTemplate', alarmName);
+      return alarm;
+    });
+  }
+
   /**
    * build CloudWatch dashboard based on the dashboard configuration and other configurations
    *
    * @param {Object} dashboardConfig dashboard configuration for creating widgets
-   * @param {Object} es elastic search configuration including configuration for alarms
+   * @param {Object} ecs Elastic Container Service configuration including custom configuration
+   * for alarms
+   * @param {Object} es Elasticsearch configuration including configuration for alarms
    * @param {string} stackName stack name
    * @returns {string} returns dashboard body string
    */
-  buildCWDashboard(dashboardConfig, es, stackName) {
-    const esTemplateAlarm = dashboardConfig.esTemplateAlarm;
+  buildCWDashboard(dashboardConfig, ecs, es, stackName) {
+    const alarmTemplate = dashboardConfig.alarmTemplate;
+
+    // build ECS alarm widgets
+    const ecsAlarmNames = [];
+    Object.keys(ecs.services).forEach((serviceName) => {
+      // default alarm
+      const defaultAlarmName = `${stackName}-${serviceName}-TaskCountLowAlarm`;
+      ecsAlarmNames.push(defaultAlarmName);
+      // custom alarm
+      Object.keys(ecs.services[serviceName].alarms).forEach((alarmName) => {
+        const name = `${stackName}-${serviceName}-${alarmName}`;
+        ecsAlarmNames.push(name);
+      });
+    });
+
+    const ecsAlarms = this.buildAlarmWidgets(ecsAlarmNames, alarmTemplate);
 
     // build ES alarm widgets
-    const alarms = Object.keys(es.alarms).map((alarmName) => {
-      const esAlarm = cloneDeep(esTemplateAlarm);
-      const title = `${stackName}-${es.name}-${alarmName}Alarm`;
-      esAlarm.properties.title = title;
-      esAlarm.properties.annotations.alarms[0] = esAlarm.properties.annotations.alarms[0].replace('esTemplateAlarm', title);
-      return esAlarm;
-    });
+    const esAlarmNames = Object.keys(es.alarms).map((alarmName) =>
+      `${stackName}-${es.name}-${alarmName}`);
+    const esAlarms = this.buildAlarmWidgets(esAlarmNames, alarmTemplate);
 
     // put all widgets together
     let x = 0;
     let y = 0;
 
     const widgets = [];
-    const allEsWidgets = dashboardConfig.esHeader.concat(dashboardConfig.esAlarmHeader)
-      .concat(alarms).concat(dashboardConfig.esWidgets);
+    const allEsWidgets = dashboardConfig.esHeader
+      .concat(dashboardConfig.esAlarmHeader, ecsAlarms, esAlarms, dashboardConfig.esWidgets);
 
     let previousHeight = 0;
     // place the widgets side by side until reach size 24
