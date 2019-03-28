@@ -73,7 +73,9 @@ Then run:
   $ npm install
 ```
 
-**Note**: The npm install command will add the [kes](http://devseed.com/kes/) utility to the `<daac>-deploy`'s `node_packages` directory and will be utilized later for most of the AWS deployment commands.
+If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example.
+
+**Note**: The `npm install` command will add the [kes](http://devseed.com/kes/) utility to the `<daac>-deploy`'s `node_packages` directory and will be utilized later for most of the AWS deployment commands.
 
 #### Obtain Cumulus Packages
 
@@ -167,7 +169,10 @@ dev:                                # deployment name
 **Deploy `iam` stack**[^1]
 
 ```bash
-  $ ./node_modules/.bin/kes cf deploy --kes-folder iam --deployment <iam-deployment-name> --template node_modules/@cumulus/deployment/iam --region <region>
+  $ DEPLOYMENT=<iam-deployment-name> \
+      AWS_REGION=<region> \ # e.g. us-east-1
+      AWS_PROFILE=<profile> \
+      npm run deploy-iam
 ```
 
 **Note**: If this deployment fails check the deployment details in the AWS Cloud Formation Console for information. Permissions may need to be updated by your AWS administrator.
@@ -291,9 +296,10 @@ For security it is highly recommended that you prevent `apps/.env` from being ac
 Once the preceding configuration steps have completed, run the following to deploy Cumulus from your `<daac>-deploy` root directory:
 
 ```bash
-  $ ./node_modules/.bin/kes cf deploy --kes-folder app --region <region> \
-    --template node_modules/@cumulus/deployment/app \
-    --deployment <cumulus-deployment-name>
+  $ DEPLOYMENT=<cumulus-deployment-name> \
+      AWS_REGION=<region> \ # e.g. us-east-1
+      AWS_PROFILE=<profile> \
+      npm run deploy
 ```
 
 You can monitor the progess of the stack deployment from the [AWS CloudFormation Console](https://console.aws.amazon.com/cloudformation/home); this step takes a few minutes.
@@ -301,8 +307,10 @@ You can monitor the progess of the stack deployment from the [AWS CloudFormation
 A successful completion will result in output similar to:
 
 ```bash
-  $ ./node_modules/.bin/kes cf deploy --kes-folder app --region <region>
-        --template node_modules/@cumulus/deployment/app --deployment daac
+  $ DEPLOYMENT=<cumulus-deployment-name> \
+      AWS_REGION=<region> \ # e.g. us-east-1
+      AWS_PROFILE=<profile> \
+      npm run deploy
   Generating keys. It might take a few seconds!
   Keys Generated
   keys uploaded to S3
@@ -458,8 +466,10 @@ Once deployed for the first time, any future updates to the role/stack configura
 ## Update roles
 
 ```bash
-  $ ./node_modules/.bin/kes cf deploy --kes-folder iam --deployment <deployment-name> \
-    --region <region> # e.g. us-east-1
+  $ DEPLOYMENT=<iam-deployment-name> \
+      AWS_REGION=<region> \ # e.g. us-east-1
+      AWS_PROFILE=<profile> \
+      npm run deploy-iam
 ```
 
 ## Cumulus Versioning
@@ -469,8 +479,10 @@ Cumulus uses a global versioning approach, meaning version numbers are consisten
 ## Update Cumulus
 
 ```bash
-  $ ./node_modules/.bin/kes cf deploy --kes-folder config --region <region> \
-    --deployment <deployment-name>
+  $ DEPLOYMENT=<cumulus-deployment-name> \
+      AWS_REGION=<region> \ # e.g. us-east-1
+      AWS_PROFILE=<profile> \
+      npm run deploy
 ```
 
 ### Footnotes
