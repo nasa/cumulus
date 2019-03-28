@@ -3,6 +3,7 @@
 const fs = require('fs');
 const { Config } = require('kes');
 const cloneDeep = require('lodash.clonedeep');
+const mime = require('mime-types');
 const merge = require('lodash.merge');
 const path = require('path');
 const { promisify } = require('util');
@@ -100,7 +101,8 @@ function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-da
   return s3().putObject({
     Bucket: bucket,
     Key: `${prefix}/${key}`,
-    Body: data
+    Body: data,
+    ContentType: mime.lookup(key) || 'binary/octet'
   }).promise();
 }
 

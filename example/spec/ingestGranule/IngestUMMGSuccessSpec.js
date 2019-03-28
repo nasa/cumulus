@@ -24,7 +24,7 @@ const {
     headObject
   },
   BucketsConfig,
-  constructCollectionId,
+  constructCollectionId
 } = require('@cumulus/common');
 const { getUrl } = require('@cumulus/cmrjs');
 const {
@@ -223,7 +223,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       moveGranulesTaskOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
       movedFiles = moveGranulesTaskOutput.payload.granules[0].files;
       existCheck = await Promise.all(movedFiles.map((fileObject) =>
-        s3ObjectExists({ Bucket: fileObject.bucket, Key: fileObject.filepath })))
+        s3ObjectExists({ Bucket: fileObject.bucket, Key: fileObject.filepath })));
       headObjects = await Promise.all(movedFiles.map((fileObject) => headObject(fileObject.bucket, fileObject.filepath)));
     });
 
