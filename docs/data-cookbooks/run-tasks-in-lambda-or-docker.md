@@ -46,7 +46,7 @@ QueueGranules:
   useMessageAdapter: true
 ```
 
-Given the `QueueGranules` lambda package is already used Step Function State Machine definition, the following will exist in a workflows yml file:
+Given the `QueueGranules` lambda package is already used in a Step Function State Machine definition, the following will exist in a workflow YAML file:
 
 ```yaml
     QueueGranules:
