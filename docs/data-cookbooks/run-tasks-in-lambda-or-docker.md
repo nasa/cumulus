@@ -102,7 +102,7 @@ When deploying AWS Lambdas and AWS Activities as detailed above, note the follow
 * `QueueGranules` in `lambdas.yml`: When kes generates the final cloudformation file, it will define a resource called `QueueGranulesLambdaFunction`. A valid lambda function resource name, such as `QueueGranulesLambdaFunction`, must be used in `app/config.yml` when passed as a command argument to `cumulus-ecs-task`.
 * `QueueGranules` in `app/config.yml`: The string `QueueGranules` exists twice in the `app/config.yml` above.
     * The first occurence is as a key under `services`. This key provides a descriptive prefix when naming the corresponding ECS Service. It will be included in final cloudformation yaml as an `AWS::ECS::Service` resource with the name `QueueGranulesECSService`. This ECS Service name prefix (`QueueGranules` in this example) can be anything since the service is not referenced in any other part of the deployment at this time.
-    * The second occurence of `QueueGranules` is as a value under `activities: - name:`. The value of `activites: - name:` can be anything, but it should match the prefix of the `--activityArn` command argument passed to `cumulus-ecs-task`.
+    * The second occurrence of `QueueGranules` is as a value under `activities: - name:`. The value of `activites: - name:` can be anything, but the `--activityArn` command argument passed to `cumulus-ecs-task` must use this value plus `Activity` as a suffix (`QueueGranulesActivity` in this example).
 
 ## Final Note
 
