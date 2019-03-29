@@ -59,7 +59,7 @@
       "granuleId": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
       "dataType": "MOD11A1",
       "process": "modis",
-      "provider_path": "/TEST_B/Cumulus/MODIS/PDR/",
+      "provider_path": "TEST_B/Cumulus/MODIS/PDR/",
       "version": "006",
       "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
       "id": "MOD11A1"
