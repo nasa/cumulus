@@ -410,9 +410,11 @@ Resources:
       Namespace: AWS/ES
       Dimensions:
         - Name: ClientId
-          Value: !Sub ${AWS::AccountId}
+          Value:
+            Fn::Sub: ${AWS::AccountId}
         - Name: DomainName
-          Value: !Ref {{../es.name}}Domain
+          Value:
+            Fn::Sub: {{../es.name}}Domain
   {{/each}}
   {{/if}}
 
@@ -1148,9 +1150,13 @@ Resources:
       Namespace: AWS/ECS
       Dimensions:
         - Name: ClusterName
-          Value: !Ref CumulusECSCluster
+          Value:
+            Ref: CumulusECSCluster
         - Name: ServiceName
-          Value: !GetAtt {{@key}}ECSService.Name
+          Value:
+            Fn::GetAtt:
+              - {{@key}}ECSService
+              - Name
 
   {{# if this.alarms}}
   # the service has cumstom alarms
@@ -1171,9 +1177,13 @@ Resources:
       Namespace: AWS/ECS
       Dimensions:
         - Name: ClusterName
-          Value: !Ref CumulusECSCluster
+          Value:
+            Ref: CumulusECSCluster
         - Name: ServiceName
-          Value: !GetAtt {{@../key}}ECSService.Name
+          Value:
+            Fn::GetAtt:
+              - {{@../key}}ECSService
+              - Name
   {{/each}}
   {{/if}}
 
