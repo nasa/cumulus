@@ -93,7 +93,7 @@ and then modifying the corresponding Step Function State Machine definition in a
       Next: StopStatus
 ```
 
-## How do I name my resources? A Short Primer on Cumulus Resource Naming Conventions
+## How do I name my resources? A short primer on Cumulus resource naming conventions
 
 Cumulus deployments currently depend on the [`kes`](https://github.com/developmentseed/kes) cli tool. `kes` references values in `app/config.yml`, `iam/config.yml`, lambda and workflow `.yml` files to populate the cloudformation templates that are a part of the `@cumulus/deployment` package. `kes` generates final cloudformation files and uploads them to AWS Cloudformation, creating or updating AWS Cloudformation Stacks.
 
