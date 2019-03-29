@@ -84,7 +84,7 @@ Given it has been discovered this task can no longer run in AWS Lambda, it can b
     - name: QueueGranules
 ```
 
-and then modifying the corresponding Step Function State Machine definition:
+and then modifying the corresponding Step Function State Machine definition in a workflow YAML file:
 
 ```yaml
     QueueGranules:
