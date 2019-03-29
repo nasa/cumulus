@@ -11,6 +11,7 @@ function conformProviderPath(provPath) {
     if (provPath[0] === '/') {
       return provPath.substr(1);
     }
+    return provPath;
   }
   return '';
 }
