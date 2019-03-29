@@ -26,7 +26,7 @@ class MyTestDiscoveryClass {
     this.host = '127.0.0.1';
     this.port = '2222';
     this.username = 'user';
-    this.path = '/pdrs';
+    this.path = 'pdrs';
     this.provider = {
       encrypted: false,
       privateKey: privateKey

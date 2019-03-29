@@ -13,6 +13,7 @@ const { httpMixin } = require('./http');
 const { parsePdr } = require('./parse-pdr');
 const { s3Mixin } = require('./s3');
 const { sftpMixin } = require('./sftp');
+const { conformProviderPath } = require('./util');
 
 
 /**
@@ -46,7 +47,7 @@ class Discover {
     // get authentication information
     this.port = get(this.provider, 'port');
     this.host = get(this.provider, 'host', null);
-    this.path = providerPath || '/';
+    this.path = conformProviderPath(providerPath);
     this.username = get(this.provider, 'username', null);
     this.password = get(this.provider, 'password', null);
   }
