@@ -44,7 +44,7 @@
     "dataType": "MOD11A1",
     "granuleIdExtraction": "(MOD11A1\\.(.*))\\.hdf",
     "process": "modis",
-    "provider_path": "/TEST_B/Cumulus/MODIS/PDR/",
+    "provider_path": "TEST_B/Cumulus/MODIS/PDR/",
     "version": "006",
     "sampleFileName": "MOD11A1.A2017025.h21v00.006.2017034065104.hdf",
     "id": "MOD11A1"

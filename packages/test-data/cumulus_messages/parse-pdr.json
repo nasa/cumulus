@@ -64,7 +64,7 @@
       "process": "modis",
       "dataType": "MOD09GQ",
       "granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr\\.xml|_[\\w]{1,}\\.jpg)",
-      "provider_path": "/",
+      "provider_path": "",
       "version": "006",
       "updatedAt": 1519154288958,
       "duplicateHandling": "replace",
