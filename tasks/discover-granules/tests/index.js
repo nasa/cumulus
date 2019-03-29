@@ -59,8 +59,7 @@ test('discover granules sets the correct dataType for granules', async (t) => {
   }
 });
 
-// This test is broken and will be fixed by CUMULUS-427
-test.skip('discover granules using FTP', async (t) => {
+test('discover granules using FTP', async (t) => {
   const { event } = t.context;
   event.config.bucket = randomString();
   event.config.collection.provider_path = '/granules/fake_granules';
