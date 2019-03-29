@@ -45,7 +45,6 @@ For example:
 | ems.provider | CUMULUS | the provider used for sending reports to EMS
 | vpc.vpcId | (required if ecs is used) | the vpcId used with the deployment
 | vpc.subnets | (required) | the subnets used
-| defaults_users | cumulus core | list of default users included in all deployments
 | ecs.amiid | ami-9eb4b1e5 | amiid of an optimized ecs instance (differnet for each region)
 | ecs.instanceType | (required) | the instance type of the ec2 machine used for running ecs tasks
 | ecs.volumeSize | 50 | the storage on ec2 instance running the ecs tasks
