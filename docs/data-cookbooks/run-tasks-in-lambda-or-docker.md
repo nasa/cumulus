@@ -93,6 +93,17 @@ and then modifying the corresponding Step Function State Machine definition in a
       Next: StopStatus
 ```
 
+## How do I name my resources? A Short Primer on Cumulus Resource Naming Conventions
+
+Cumulus deployments currently depend on the [`kes`](https://github.com/developmentseed/kes) cli tool. `kes` references values in `app/config.yml`, `iam/config.yml`, lambda and workflow `.yml` files to populate the cloudformation templates that are a part of the `@cumulus/deployment` package. `kes` generates final cloudformation files and uploads them to AWS Cloudformation, creating or updating AWS Cloudformation Stacks.
+
+When deploying AWS Lambdas and AWS Activities as detailed above, note the following naming conventions:
+
+* `QueueGranules` in `lambdas.yml`: When kes generates the final cloudformation file, it will define a resource called `QueueGranulesLambdaFunction`. A valid lambda function resource name, such as `QueueGranulesLambdaFunction`, must be used in `app/config.yml` when passed as a command argument to `cumulus-ecs-task`.
+* `QueueGranules` in `app/config.yml`: The string `QueueGranules` exists twice in the `app/config.yml` above.
+    * The first occurence is as a key under `services`. This key provides a descriptive prefix when naming the corresponding ECS Service. It will be included in final cloudformation yaml as an `AWS::ECS::Service` resource with the name `QueueGranulesECSService`. This ECS Service name prefix (`QueueGranules` in this example) can be anything since the service is not referenced in any other part of the deployment at this time.
+    * The second occurence of `QueueGranules` is as a value under `activities: - name:`. The value of `activites: - name:` can be anything, but it should match the prefix of the `--activityArn` command argument passed to `cumulus-ecs-task`.
+
 ## Final Note
 
 Step Function Activities and AWS Lambda are not the only ways to run tasks in an AWS Step Function. Learn more about other service integrations, including direct ECS integration via the [AWS Service Integrations](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-connectors.html) page.
