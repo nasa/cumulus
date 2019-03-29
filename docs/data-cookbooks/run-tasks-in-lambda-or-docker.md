@@ -10,7 +10,7 @@ hide_title: true
 
 [AWS Step Function Tasks](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-tasks.html) can run tasks on [AWS Lambda](https://aws.amazon.com/lambda/) or on [AWS Elastic Container Service (ECS)](https://aws.amazon.com/ecs/) as a Docker container.
 
-Lambda provides serverless architecture, providing the best option for minimizing cost and server management. ECS provides the flexibility to execute arbitrary code on any AWS EC2 instance type. 
+Lambda provides serverless architecture, providing the best option for minimizing cost and server management. ECS provides the fullest extent of AWS EC2 resources via the flexibility to execute arbitrary code on any AWS EC2 instance type.
 
 ## When to use Lambda
 
