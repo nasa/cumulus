@@ -148,6 +148,13 @@ class UpdatedKes extends Kes {
     }
   }
 
+  /**
+   * build CloudWatch alarm widgets
+   *
+   * @param {string[]} alarmNames list of alarm names
+   * @param {Object} alarmTemplate widget template for alarm
+   * @returns {Object[]} list of alarm widgets
+   */
   buildAlarmWidgets(alarmNames, alarmTemplate) {
     return alarmNames.map((alarmName) => {
       const alarm = cloneDeep(alarmTemplate);
@@ -177,37 +184,45 @@ class UpdatedKes extends Kes {
       const defaultAlarmName = `${stackName}-${serviceName}-TaskCountLowAlarm`;
       ecsAlarmNames.push(defaultAlarmName);
       // custom alarm
-      Object.keys(ecs.services[serviceName].alarms).forEach((alarmName) => {
-        const name = `${stackName}-${serviceName}-${alarmName}`;
-        ecsAlarmNames.push(name);
-      });
+      if (ecs.services[serviceName].alarms) {
+        Object.keys(ecs.services[serviceName].alarms).forEach((alarmName) => {
+          const name = `${stackName}-${serviceName}-${alarmName}Alarm`;
+          ecsAlarmNames.push(name);
+        });
+      }
     });
 
     const ecsAlarms = this.buildAlarmWidgets(ecsAlarmNames, alarmTemplate);
 
     // build ES alarm widgets
-    const esAlarmNames = Object.keys(es.alarms).map((alarmName) =>
-      `${stackName}-${es.name}-${alarmName}`);
-    const esAlarms = this.buildAlarmWidgets(esAlarmNames, alarmTemplate);
+    let esWidgets = [];
+    if (es) {
+      const esAlarmNames = Object.keys(es.alarms).map((alarmName) =>
+        `${stackName}-${es.name}-${alarmName}Alarm`);
+      const esAlarms = this.buildAlarmWidgets(esAlarmNames, alarmTemplate);
+      esWidgets = dashboardConfig.esHeader
+        .concat(cloneDeep(dashboardConfig.alarmHeader), esAlarms, dashboardConfig.esWidgets);
+    }
 
     // put all widgets together
     let x = 0;
     let y = 0;
 
     const widgets = [];
-    const allEsWidgets = dashboardConfig.esHeader
-      .concat(dashboardConfig.esAlarmHeader, ecsAlarms, esAlarms, dashboardConfig.esWidgets);
+    const allWidgets = dashboardConfig.ecsHeader
+      .concat(cloneDeep(dashboardConfig.alarmHeader), ecsAlarms,
+        esWidgets);
 
-    let previousHeight = 0;
-    // place the widgets side by side until reach size 24
-    allEsWidgets.forEach((widget) => {
+    let previousWgHeight = 0;
+    // place the widgets side by side until reach width 24
+    allWidgets.forEach((widget) => {
       if (x + widget.width > 24) {
         x = 0;
-        y += previousHeight;
+        y += previousWgHeight;
       }
       widgets.push(Object.assign(widget, { x, y }));
       x += widget.width;
-      previousHeight = widget.height;
+      previousWgHeight = widget.height;
     });
 
     return JSON.stringify({ widgets });
@@ -230,8 +245,8 @@ class UpdatedKes extends Kes {
       return (arg1 !== arg2) ? options.fn(this) : options.inverse(this);
     });
 
-    Handlebars.registerHelper('buildCWDashboard', (dashboardConfig, es, stackName) =>
-      this.buildCWDashboard(dashboardConfig, es, stackName));
+    Handlebars.registerHelper('buildCWDashboard', (dashboardConfig, ecs, es, stackName) =>
+      this.buildCWDashboard(dashboardConfig, ecs, es, stackName));
 
     return super.parseCF(cfFile);
   }

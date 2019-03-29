@@ -1283,11 +1283,11 @@ Resources:
   #################################################
   # CloudWatch Dashboard BEGIN
   #################################################
-  # CumulusCloudWatchDashboard:
-  #   Type: AWS::CloudWatch::Dashboard
-  #   Properties:
-  #     DashboardName: {{stackName}}-CloudWatch-Dashboard
-  #     DashboardBody: '{{#buildCWDashboard dashboard ecs es stackName}}{{/buildCWDashboard}}'
+  CumulusCloudWatchDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: {{stackName}}-CloudWatch-Dashboard
+      DashboardBody: '{{#buildCWDashboard dashboard ecs es stackName}}{{/buildCWDashboard}}'
   #################################################
   # CloudWatch Dashboard END
   #################################################
