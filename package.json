@@ -18,7 +18,11 @@
     "build": "lerna run --ignore cumulus-integration-tests build",
     "watch": "lerna run --parallel --no-sort watch",
     "serve": "lerna run --stream serve --scope @cumulus/api",
+    "serve-oauth": "lerna run --stream serve-oauth --scope @cumulus/api",
+    "serve-remote": "lerna run --stream serve-remote --scope @cumulus/api",
     "serve-dist": "lerna run --stream serve-dist --scope @cumulus/api",
+    "serve-dist-oauth": "lerna run --stream serve-dist-oauth --scope @cumulus/api",
+    "serve-dist-remote": "lerna run --stream serve-dist-remote --scope @cumulus/api",
     "coverage": "nyc report --reporter text-summary --reporter html",
     "coveralls": "nyc report --reporter=text-lcov --temp-direcotry=\"./.final_nyc_output\" | coveralls"
   },
