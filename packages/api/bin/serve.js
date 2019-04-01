@@ -2,7 +2,7 @@
 
 const pLimit = require('p-limit');
 const { s3, promiseS3Upload } = require('@cumulus/common/aws');
-const { randomString, inTestMode } = require('@cumulus/common/test-utils');
+const { randomString, randomId, inTestMode } = require('@cumulus/common/test-utils');
 const bootstrap = require('../lambdas/bootstrap');
 const models = require('../models');
 const testUtils = require('../lib/testUtils');
@@ -103,8 +103,8 @@ function getRequiredAuthEnvVariables() {
 
 function setAuthEnvVariables() {
   if (process.env.FAKE_AUTH) {
-    process.env.EARTHDATA_CLIENT_ID = randomString();
-    process.env.EARTHDATA_CLIENT_PASSWORD = randomString();
+    process.env.EARTHDATA_CLIENT_ID = randomId('EARTHDATA_CLIENT_ID');
+    process.env.EARTHDATA_CLIENT_PASSWORD = randomId('EARTHDATA_CLIENT_PASSWORD');
     process.env.EARTHDATA_BASE_URL = 'https://example.com';
   }
 }
@@ -175,20 +175,23 @@ async function serveApi(user, stackName = 'localrun') {
   const requiredEnvVars = [
     'stackName',
     'system_bucket',
-    'TOKEN_REDIRECT_ENDPOINT'
+    'TOKEN_REDIRECT_ENDPOINT',
+    'TOKEN_SECRET'
   ];
 
   // Set env variable to mark this as a local run of the API
-  testUtils.setLocalApi();
+  process.env.CUMULUS_ENV = 'local';
+
+  process.env.TOKEN_REDIRECT_ENDPOINT = `http://localhost:${port}/token`;
+  process.env.TOKEN_SECRET = randomString();
 
   if (inTestMode()) {
     // set env variables
     setAuthEnvVariables();
     process.env.system_bucket = 'localbucket';
     process.env.stackName = stackName;
-    process.env.TOKEN_SECRET = 'secreeetartalksjfaf;lj';
-    process.env.TOKEN_REDIRECT_ENDPOINT = `http://localhost:${port}/token`;
 
+    checkEnvVariablesAreSet(requiredEnvVars);
     checkEnvVariablesAreSet(requiredEnvVars);
 
     // create tables if not already created
@@ -200,6 +203,7 @@ async function serveApi(user, stackName = 'localrun') {
   }
   else {
     checkEnvVariablesAreSet(requiredEnvVars);
+    setTableEnvVariables(process.env.stackName);
   }
 
   console.log(`Starting server on port ${port}`);
@@ -215,7 +219,17 @@ async function serveApi(user, stackName = 'localrun') {
  */
 async function serveDistributionApi(stackName = 'localrun', done) {
   const port = process.env.PORT || 5002;
-  const requiredEnvVars = ['DISTRIBUTION_REDIRECT_ENDPOINT', 'DISTRIBUTION_ENDPOINT'];
+  const requiredEnvVars = [
+    'DISTRIBUTION_REDIRECT_ENDPOINT',
+    'DISTRIBUTION_ENDPOINT'
+  ];
+
+  // Set env variable to mark this as a local run of the API
+  process.env.CUMULUS_ENV = 'local';
+
+  // Point distribution API to local
+  process.env.DISTRIBUTION_REDIRECT_ENDPOINT = `http://localhost:${port}/redirect`;
+  process.env.DISTRIBUTION_ENDPOINT = `http://localhost:${port}`;
 
   // Set env variable to mark this as a local run of the API
   testUtils.setLocalApi();
@@ -224,10 +238,8 @@ async function serveDistributionApi(stackName = 'localrun', done) {
     // set env variables
     setAuthEnvVariables();
     process.env.system_bucket = 'localbucket';
-    process.env.stackName = stackName;
-    process.env.TOKEN_SECRET = 'secreeetartalksjfaf;lj';
-    process.env.DISTRIBUTION_REDIRECT_ENDPOINT = `http://localhost:${port}/redirect`;
-    process.env.DISTRIBUTION_ENDPOINT = `http://localhost:${port}`;
+
+    checkEnvVariablesAreSet(requiredEnvVars);
 
     checkEnvVariablesAreSet(requiredEnvVars);
 
@@ -240,6 +252,7 @@ async function serveDistributionApi(stackName = 'localrun', done) {
   }
   else {
     checkEnvVariablesAreSet(requiredEnvVars);
+    setTableEnvVariables(stackName);
   }
 
   console.log(`Starting server on port ${port}`);
