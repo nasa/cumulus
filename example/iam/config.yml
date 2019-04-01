@@ -139,9 +139,9 @@ lf:
       name: lf-dashboard
       type: shared
 
-lf-test:
-  prefix: lf-test
-  stackName: lf-test-iam
+lf-test-2:
+  prefix: lf-test-2
+  stackName: lf-test-2-iam
 
   buckets:
     internal:
