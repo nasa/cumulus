@@ -145,7 +145,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     catch (err) {
       log.info(`HEAD failed for ${remoteUrl} with error: ${err}.`);
     }
-    const contentType = headers['content-type'] || mime.lookup(key) || 'binary/octet';
+    const contentType = headers['content-type'] || mime.lookup(key);
 
     const pass = new PassThrough();
     got.stream(remoteUrl).pipe(pass);
@@ -154,7 +154,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
       Bucket: bucket,
       Key: key,
       Body: pass,
-      ContentType: contentType
+      ContentType: contentType || null
     }).promise();
 
     log.info('Uploading to s3 is complete (http)', s3uri);

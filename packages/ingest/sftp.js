@@ -199,7 +199,7 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
       Bucket: bucket,
       Key: key,
       Body: pass,
-      ContentType: mime.lookup(key) || 'binary/octet'
+      ContentType: mime.lookup(key) || null
     };
 
     const result = await promiseS3Upload(params);

@@ -179,7 +179,7 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
       Bucket: bucket,
       Key: key,
       Body: pass,
-      ContentType: mime.lookup(key) || 'binary/octet'
+      ContentType: mime.lookup(key) || null
     };
     await promiseS3Upload(params);
     log.info('Uploading to s3 is complete(ftp)', s3uri);
