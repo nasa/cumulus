@@ -5,17 +5,33 @@
 # dashboard.
 ##############################################################
 
-## template for creating widgets for Elasticsearch Service alarms
-esTemplateAlarm:
+## template for creating widgets for alarms
+alarmTemplate:
   type: metric
   width: 6
   height: 3
   properties:
-    title: esTemplateAlarm
+    title: alarmTemplate
     annotations:
       alarms:
-      - arn:aws:cloudwatch:{{AWS_REGION}}:{{AWS_ACCOUNT_ID}}:alarm:esTemplateAlarm
+      - arn:aws:cloudwatch:{{AWS_REGION}}:{{AWS_ACCOUNT_ID}}:alarm:alarmTemplate
     view: singleValue
+
+## header widget for alarms
+alarmHeader:
+- type: text
+  width: 24
+  height: 1
+  properties:
+    markdown: "## Alarms"
+
+## header widget for ECS
+ecsHeader:
+- type: text
+  width: 24
+  height: 1
+  properties:
+    markdown: "# Elastic Container Service"
 
 ## header widget for ES
 esHeader:
@@ -24,14 +40,6 @@ esHeader:
   height: 1
   properties:
     markdown: "# Elasticsearch Service"
-
-# header widget for ES alarms
-esAlarmHeader:
-- type: text
-  width: 24
-  height: 1
-  properties:
-    markdown: "## Alarms"
 
 ## additional widgets for ES
 esWidgets:
