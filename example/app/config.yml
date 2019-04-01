@@ -181,7 +181,18 @@ default:
 
   # URS users who should have access to the dashboard application.
   users:
-    - username: testuser
+    - username: aimeeb
+    - username: jennyhliu
+    - username: jnorton1
+    - username: kbaynes
+    - username: kkelly
+    - username: kovarik
+    - username: lfrederick
+    - username: mhuffnagle2
+    - username: pquinn1
+    - username: menno.vandiermen
+    - username: matthewsavoie
+    - username: mboyd
 
 
 # ------------------------
