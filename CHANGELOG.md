@@ -39,6 +39,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-805**
   - Added a CloudWatch alarm to check running ElasticSearch instances, and a CloudWatch dashboard to view the health of ElasticSearch
   - Specify `AWS_REGION` in `.env` to be used by deployment script
+- **CUMULUS-803**
+  - Added CloudWatch alarms to check running tasks of each ECS service, and add the alarms to CloudWatch dashboard
 - **CUMULUS-670**
   - Added Ancillary Metadata Export feature (see https://nasa.github.io/cumulus/docs/features/ancillary_metadata for more information)
   - Added new Collection file parameter "fileType" that allows configuration of workflow granule file fileType
