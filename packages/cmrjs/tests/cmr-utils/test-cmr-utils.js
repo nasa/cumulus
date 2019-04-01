@@ -146,3 +146,59 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
   t.deepEqual(actual.Granule.AssociatedBrowseImageUrls.ProviderBrowseUrl, AssociatedBrowseExpected);
   t.truthy(uploadEchoSpy.calledWith('testXmlString', { filename: 's3://cumulus-test-sandbox-private/notUsed' }));
 });
+
+test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule files', async (t) => {
+  const uploadEchoSpy = sinon.spy(() => Promise.resolve);
+
+  const cmrJSON = await fs.readFile('./tests/fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json', 'utf8');
+  const cmrMetadata = JSON.parse(cmrJSON);
+  const filesObject = await readJsonFixture('./tests/fixtures/UMMGFilesObjectFixture.json');
+  const buckets = new BucketsConfig(await readJsonFixture('./tests/fixtures/buckets.json'));
+  const distEndpoint = 'https://distendpoint.com';
+
+  const updateUMMGMetadata = cmrUtil.__get__('updateUMMGMetadata');
+
+  const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRJSONFile', () => cmrMetadata);
+  const revertMockUpload = cmrUtil.__set__('uploadUMMGJSONCMRFile', uploadEchoSpy);
+
+  const expectedRelatedURLs = [
+    {
+      URL: 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme',
+      Type: 'GET DATA'
+    },
+    {
+      URL: `${distEndpoint}/cumulus-test-sandbox-protected/MOD09GQ___006/2016/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.hdf`,
+      Description: 'File to download',
+      Type: 'GET DATA'
+    },
+    {
+      URL: 'https://cumulus-test-sandbox-public.s3.amazonaws.com/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg',
+      Description: 'File to download',
+      Type: 'GET RELATED VISUALIZATION'
+    },
+    {
+      URL: `${distEndpoint}/cumulus-test-sandbox-protected-2/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json`,
+      Description: 'File to download',
+      Type: 'EXTENDED METADATA'
+    },
+    {
+      URL: `${distEndpoint}/s3credentials`,
+      Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
+      Type: 'VIEW RELATED INFORMATION'
+    }
+  ];
+  let actualOutput;
+  try {
+    actualOutput = await updateUMMGMetadata({
+      cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+      files: filesObject,
+      distEndpoint,
+      buckets
+    });
+  }
+  finally {
+    revertMetaObject();
+    revertMockUpload();
+  }
+  t.deepEqual(actualOutput.RelatedUrls, expectedRelatedURLs);
+});
