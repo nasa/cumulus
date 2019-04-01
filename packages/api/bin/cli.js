@@ -150,12 +150,4 @@ program
   });
 
 program
-  .command('serve-dist')
-  .description('Serves the local version of the distribution API')
-  .parse(process.argv)
-  .action(() => {
-    serveDistributionApi().catch(console.error);
-  });
-
-program
   .parse(process.argv);

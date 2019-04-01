@@ -192,7 +192,6 @@ async function serveApi(user, stackName = 'localrun') {
     process.env.stackName = stackName;
 
     checkEnvVariablesAreSet(requiredEnvVars);
-    checkEnvVariablesAreSet(requiredEnvVars);
 
     // create tables if not already created
     await checkOrCreateTables(stackName);
@@ -231,15 +230,10 @@ async function serveDistributionApi(stackName = 'localrun', done) {
   process.env.DISTRIBUTION_REDIRECT_ENDPOINT = `http://localhost:${port}/redirect`;
   process.env.DISTRIBUTION_ENDPOINT = `http://localhost:${port}`;
 
-  // Set env variable to mark this as a local run of the API
-  testUtils.setLocalApi();
-
   if (inTestMode()) {
     // set env variables
     setAuthEnvVariables();
     process.env.system_bucket = 'localbucket';
-
-    checkEnvVariablesAreSet(requiredEnvVars);
 
     checkEnvVariablesAreSet(requiredEnvVars);
 
