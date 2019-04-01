@@ -414,7 +414,7 @@ Resources:
             Fn::Sub: ${AWS::AccountId}
         - Name: DomainName
           Value:
-            Fn::Sub: {{../es.name}}Domain
+            Ref: {{../es.name}}Domain
   {{/each}}
   {{/if}}
 
