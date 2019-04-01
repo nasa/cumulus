@@ -5,6 +5,9 @@ const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { Search } = require('../es/search');
 const { createJwtToken } = require('./token');
 
+const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
+const setLocalApi = () => process.env.CUMULUS_ENV = 'local';
+
 /**
  * mocks the context object of the lambda function with
  * succeed and fail functions to facilitate testing of
@@ -279,6 +282,8 @@ async function createFakeJwtAuthToken({ accessTokenModel, userModel }) {
 }
 
 module.exports = {
+  isLocalApi,
+  setLocalApi,
   createFakeJwtAuthToken,
   testEndpoint,
   fakeAccessTokenFactory,

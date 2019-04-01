@@ -10,6 +10,7 @@ const { UnparsableFileLocationError } = require('@cumulus/common/errors');
 const { URL } = require('url');
 const EarthdataLogin = require('../lib/EarthdataLogin');
 const { RecordDoesNotExist } = require('../lib/errors');
+const { isLocalApi } = require('../lib/testUtils');
 const { AccessToken } = require('../models');
 const s3credentials = require('./s3credentials');
 
@@ -91,7 +92,9 @@ async function handleRedirectRequest(req, res) {
       {
         expires: new Date(getAccessTokenResponse.expirationTime),
         httpOnly: true,
-        secure: true
+        // Running API locally will be on http, not https, so cookies
+        // must not be set to secure
+        secure: isLocalApi() ? false : true
       }
     )
     .set({ Location: urljoin(distributionUrl, state) })
