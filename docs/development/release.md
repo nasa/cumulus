@@ -20,7 +20,9 @@ Lerna handles the process of deciding which version number should be used as lon
 
 To update Cumulus's version number run:
 
-     $ npm run update
+```bash
+  $ npm run update
+```
 
 ![](https://static.notion-static.com/13acbe0a-c59d-4c42-90eb-23d4ec65c9db/Screen_Shot_2018-03-15_at_12.21.16_PM.png)
 
@@ -31,7 +33,8 @@ Lerna will handle updating the packages and all of the dependent package version
 There may be unreleased changes in the Cumulus Dashboard [project](https://github.com/nasa/cumulus-dashboard) that rely on this unreleased Cumulus Core version.
 
 If there is exists a PR in the cumulus-dashboard repo with a name containing: "Version Bump for Next Cumulus API Release":
-* There will be a place-holder `change-me` value that should be replaced with the Cumulus Core to-be-released-version.
+
+* There will be a placeholder `change-me` value that should be replaced with the Cumulus Core to-be-released-version.
 * Mark that PR as ready to be reviewed.
 
 ### 4. Update CHANGELOG.md
@@ -66,12 +69,22 @@ Publishing of new releases is handled by Travis CI and is triggered when the rel
 
 Create and push a new git tag:
 
-```
-$ git tag -a v1.x.x -m "Release 1.x.x"
-$ git push origin v1.x.x
+```bash
+  $ git tag -a v1.x.x -m "Release 1.x.x"
+  $ git push origin v1.x.x
 ```
 
 Travis will build and run tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.
+
+### 9. Update cumulus-template-deploy repo with latest package versions
+
+The [cumulus-template-deploy repo](https://github.com/nasa/cumulus-template-deploy) depends on Cumulus packages used in the deployment process. Once new versions of Cumulus packages have been published to NPM, these dependencies should be updated:
+
+```bash
+  $ npm install @cumulus/deployment@^1.x.x --save
+```
+
+This step should be repeated for each of the Cumulus package dependencies for the cumulus-template-deploy repo.
 
 ## Backporting to a previous release
 
