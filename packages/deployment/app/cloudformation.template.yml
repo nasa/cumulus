@@ -151,12 +151,6 @@ Resources:
         table:
           Ref: UsersTableDynamoDB
         records:
-        {{# each default_users}}
-          {{# if this }}
-          - username: {{@key}}
-            password: OAuth
-          {{/if}}
-        {{/each}}
         {{# each users}}
           - username: {{username}}
             password: OAuth
