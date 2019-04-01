@@ -571,6 +571,13 @@ class UpdatedKes extends Kes {
     return `\$\{${lambdaKey}LambdaAliasOutput\}`;
   }
 
+  uploadTaskReaper() {
+    return this.s3.putObject({
+      Bucket: this.bucket,
+      Key: `${this.stack}/deployment-staging/task-reaper.sh`,
+      Body: fs.createReadStream(path.join(__dirname, '..', 'task-reaper.sh'))
+    }).promise();
+  }
 
   /**
    * Override opsStack method.
@@ -588,6 +595,7 @@ class UpdatedKes extends Kes {
     this.config = extractCumulusConfigFromSF(this.config);
 
     return crypto(this.stack, this.bucket, this.s3)
+      .then(() => this.uploadTaskReaper())
       .then(() => super.opsStack())
       .then(() => this.describeCF())
       .then((r) => {
