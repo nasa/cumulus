@@ -21,6 +21,15 @@ Resources:
   #################################################
   #  BEGIN
   #################################################
+
+{{#if ../es.name}}
+ESServiceLinkedRole:
+  Type: 'AWS::IAM::ServiceLinkedRole'
+  Properties:
+    AWSServiceName: es.amazonaws.com
+{{/if}}
+
+
 {{#each nested_templates}}
 {{#ifEquals @key "WorkflowLambdaVersions"}}
 {{#ifEquals ../useWorkflowLambdaVersions true}}

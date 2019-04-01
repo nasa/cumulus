@@ -98,7 +98,8 @@ async function updateToken(cmrProvider, clientId, username, password) {
           username: username,
           password: password,
           client_id: clientId,
-          user_ip_address: await publicIp.v4().catch((_) => '127.0.0.1'),
+          // LAUREN TO DO
+          user_ip_address: '127.0.0.1',
           provider: cmrProvider
         }
       }

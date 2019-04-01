@@ -257,13 +257,9 @@ lf:
       name: lf-protected-2
       type: protected
 
-lf-test:
-  stackName: lf-test
-  stackNameNoDash: lfTest
-
-  es:
-    name: lfes5
-    elasticSearchMapping: 9
+lf-test-2:
+  stackName: lf-test-2
+  stackNameNoDash: lfTest2
 
   buckets:
     internal:
