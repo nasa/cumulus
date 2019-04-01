@@ -1,6 +1,5 @@
 'use strict';
 
-const router = require('express-promise-router')();
 const urljoin = require('url-join');
 const {
   s3,
@@ -9,9 +8,18 @@ const {
 const { UnparsableFileLocationError } = require('@cumulus/common/errors');
 const { URL } = require('url');
 const EarthdataLogin = require('../lib/EarthdataLogin');
-const { RecordDoesNotExist } = require('../lib/errors');
+const { isLocalApi } = require('../lib/testUtils');
 const { AccessToken } = require('../models');
 const s3credentials = require('./s3credentials');
+
+// Running API locally will be on http, not https, so cookies
+// should not be set to secure for local runs of the API.
+const useSecureCookies = () => {
+  if (isLocalApi()) {
+    return false;
+  }
+  return true;
+};
 
 /**
  * Return a signed URL to an S3 object
@@ -29,16 +37,6 @@ function getSignedS3Url(s3Client, Bucket, Key, username) {
   parsedSignedUrl.searchParams.set('x-EarthdataLoginUsername', username);
 
   return parsedSignedUrl.toString();
-}
-
-/**
- * Checks if the token is expired
- *
- * @param {Object} accessTokenRecord - the access token record
- * @returns {boolean} true indicates the token is expired
- */
-function isAccessTokenExpired(accessTokenRecord) {
-  return accessTokenRecord.expirationTime < Date.now();
 }
 
 /**
@@ -91,51 +89,12 @@ async function handleRedirectRequest(req, res) {
       {
         expires: new Date(getAccessTokenResponse.expirationTime),
         httpOnly: true,
-        secure: true
+        secure: useSecureCookies()
       }
     )
     .set({ Location: urljoin(distributionUrl, state) })
     .status(307)
     .send('Redirecting');
-}
-
-/**
- * Ensure request is authorized through EarthdataLogin or redirect to become so.
- *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @param {Function} next - express middleware callback function
- * @returns {Promise<Object>} - promise of an express response object
- */
-async function ensureAuthorizedOrRedirect(req, res, next) {
-  const {
-    accessTokenModel,
-    authClient
-  } = getConfigurations();
-
-  const redirectURLForAuthorizationCode = authClient.getAuthorizationUrl(req.path);
-  const accessToken = req.cookies.accessToken;
-
-  if (!accessToken) return res.redirect(307, redirectURLForAuthorizationCode);
-
-  let accessTokenRecord;
-  try {
-    accessTokenRecord = await accessTokenModel.get({ accessToken });
-  }
-  catch (err) {
-    if (err instanceof RecordDoesNotExist) {
-      return res.redirect(307, redirectURLForAuthorizationCode);
-    }
-
-    throw err;
-  }
-
-  if (isAccessTokenExpired(accessTokenRecord)) {
-    return res.redirect(307, redirectURLForAuthorizationCode);
-  }
-
-  req.authorizedMetadata = { userName: accessTokenRecord.username };
-  return next();
 }
 
 /**
@@ -185,8 +144,9 @@ async function handleFileRequest(req, res) {
     .send('Redirecting');
 }
 
-router.get('/redirect', handleRedirectRequest);
-router.get('/s3credentials', ensureAuthorizedOrRedirect, handleCredentialRequest);
-router.get('/*', ensureAuthorizedOrRedirect, handleFileRequest);
-
-module.exports = router;
+module.exports = {
+  getConfigurations,
+  handleRedirectRequest,
+  handleCredentialRequest,
+  handleFileRequest
+};

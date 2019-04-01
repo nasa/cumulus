@@ -2,17 +2,11 @@
 
 const pLimit = require('p-limit');
 const { s3, promiseS3Upload } = require('@cumulus/common/aws');
-const { randomString, inTestMode } = require('@cumulus/common/test-utils');
+const { randomString, randomId, inTestMode } = require('@cumulus/common/test-utils');
 const bootstrap = require('../lambdas/bootstrap');
 const models = require('../models');
 const testUtils = require('../lib/testUtils');
 const workflowList = require('../app/data/workflow_list.json');
-
-const defaultRequiredEnvVariables = [
-  'EARTHDATA_BASE_URL',
-  'EARTHDATA_CLIENT_ID',
-  'EARTHDATA_CLIENT_PASSWORD'
-];
 
 async function createTable(Model, tableName) {
   try {
@@ -100,8 +94,24 @@ async function prepareServices(stackName, bucket) {
   await s3().createBucket({ Bucket: bucket }).promise();
 }
 
+function getRequiredAuthEnvVariables() {
+  const authEnvVariables = process.env.FAKE_AUTH
+    ? []
+    : ['EARTHDATA_CLIENT_ID', 'EARTHDATA_CLIENT_PASSWORD'];
+  return authEnvVariables;
+}
+
+function setAuthEnvVariables() {
+  if (process.env.FAKE_AUTH) {
+    process.env.EARTHDATA_CLIENT_ID = randomId('EARTHDATA_CLIENT_ID');
+    process.env.EARTHDATA_CLIENT_PASSWORD = randomId('EARTHDATA_CLIENT_PASSWORD');
+    process.env.EARTHDATA_BASE_URL = 'https://example.com';
+  }
+}
+
 function checkEnvVariablesAreSet(moreRequiredEnvVars) {
-  const requiredEnvVars = defaultRequiredEnvVariables.concat(moreRequiredEnvVars);
+  const authEnvVariables = getRequiredAuthEnvVariables();
+  const requiredEnvVars = authEnvVariables.concat(moreRequiredEnvVars);
   requiredEnvVars.forEach((env) => {
     if (!process.env[env]) {
       throw new Error(`Environment Variable ${env} is not set!`);
@@ -165,29 +175,34 @@ async function serveApi(user, stackName = 'localrun') {
   const requiredEnvVars = [
     'stackName',
     'system_bucket',
-    'TOKEN_REDIRECT_ENDPOINT'
+    'TOKEN_REDIRECT_ENDPOINT',
+    'TOKEN_SECRET'
   ];
+
+  // Set env variable to mark this as a local run of the API
+  process.env.CUMULUS_ENV = 'local';
+
+  process.env.TOKEN_REDIRECT_ENDPOINT = `http://localhost:${port}/token`;
+  process.env.TOKEN_SECRET = randomString();
 
   if (inTestMode()) {
     // set env variables
+    setAuthEnvVariables();
     process.env.system_bucket = 'localbucket';
     process.env.stackName = stackName;
-    process.env.TOKEN_SECRET = 'secreeetartalksjfaf;lj';
-    process.env.EARTHDATA_CLIENT_ID = randomString();
-    process.env.EARTHDATA_CLIENT_PASSWORD = randomString();
-    process.env.EARTHDATA_BASE_URL = 'https://example.com';
-    process.env.TOKEN_REDIRECT_ENDPOINT = `http://localhost:${port}/token`;
+
+    checkEnvVariablesAreSet(requiredEnvVars);
 
     // create tables if not already created
     await checkOrCreateTables(stackName);
 
-    checkEnvVariablesAreSet(requiredEnvVars);
     await prepareServices(stackName, process.env.system_bucket);
     await populateBucket(process.env.system_bucket, stackName);
     await createDBRecords(stackName, user);
   }
   else {
     checkEnvVariablesAreSet(requiredEnvVars);
+    setTableEnvVariables(process.env.stackName);
   }
 
   console.log(`Starting server on port ${port}`);
@@ -203,26 +218,35 @@ async function serveApi(user, stackName = 'localrun') {
  */
 async function serveDistributionApi(stackName = 'localrun', done) {
   const port = process.env.PORT || 5002;
-  const requiredEnvVars = ['DISTRIBUTION_REDIRECT_ENDPOINT', 'DISTRIBUTION_ENDPOINT'];
+  const requiredEnvVars = [
+    'DISTRIBUTION_REDIRECT_ENDPOINT',
+    'DISTRIBUTION_ENDPOINT'
+  ];
+
+  // Set env variable to mark this as a local run of the API
+  process.env.CUMULUS_ENV = 'local';
+
+  // Point distribution API to local
+  process.env.DISTRIBUTION_REDIRECT_ENDPOINT = `http://localhost:${port}/redirect`;
+  process.env.DISTRIBUTION_ENDPOINT = `http://localhost:${port}`;
 
   if (inTestMode()) {
     // set env variables
+    setAuthEnvVariables();
     process.env.system_bucket = 'localbucket';
-    process.env.stackName = stackName;
-    process.env.TOKEN_SECRET = 'secreeetartalksjfaf;lj';
-    process.env.DISTRIBUTION_REDIRECT_ENDPOINT = `http://localhost:${port}/redirect`;
-    process.env.DISTRIBUTION_ENDPOINT = `http://localhost:${port}`;
+
+    checkEnvVariablesAreSet(requiredEnvVars);
 
     // create tables if not already created
     await checkOrCreateTables(stackName);
 
-    checkEnvVariablesAreSet(requiredEnvVars);
     await prepareServices(stackName, process.env.system_bucket);
     await populateBucket(process.env.system_bucket, stackName);
     await createDBRecords(stackName);
   }
   else {
     checkEnvVariablesAreSet(requiredEnvVars);
+    setTableEnvVariables(stackName);
   }
 
   console.log(`Starting server on port ${port}`);
