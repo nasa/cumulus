@@ -81,22 +81,6 @@ default:
     subnets:
       - subnet-xxxxx #change me
 
-  default_users:
-    aimeeb: true
-    jennyhliu: true
-    jnorton1: true
-    kbaynes: true
-    kkelly: true
-    kovarik: true
-    lfrederick: true
-    mhuffnagle2: true
-    pquinn1: true
-    sethvincent: true
-    menno.vandiermen: true
-    matthewsavoie: true
-    mboyd: true
-    jmcampbell: true
-
   ecs:
     restartTasksOnDeploy: false
     amiid: ami-6944c513
