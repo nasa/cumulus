@@ -76,16 +76,6 @@ Create and push a new git tag:
 
 Travis will build and run tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.
 
-### 9. Update cumulus-template-deploy repo with latest package versions
-
-The [cumulus-template-deploy repo](https://github.com/nasa/cumulus-template-deploy) depends on Cumulus packages used in the deployment process. Once new versions of Cumulus packages have been published to NPM, these dependencies should be updated:
-
-```bash
-  $ npm install @cumulus/deployment@^1.x.x --save
-```
-
-This step should be repeated for each of the Cumulus package dependencies for the cumulus-template-deploy repo.
-
 ## Backporting to a previous release
 
 Creating a new release for an older major or minor version is similar to creating any other release. Create a branch starting at the tag of the previous release, then follow the [instructions for creating a new release](#updating-cumulus-version-and-publishing-to-npm).
