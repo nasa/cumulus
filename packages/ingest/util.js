@@ -7,7 +7,7 @@
  * @param {string} provPath - provider path
  * @returns {string} path, updated to conform if necessary.
  */
-function conformProviderPath(provPath) {
+function normalizeProviderPath(provPath) {
   if (provPath) {
     const leadingSlashRegex = /^\/*/g;
     return provPath.replace(leadingSlashRegex, '');
@@ -16,5 +16,5 @@ function conformProviderPath(provPath) {
 }
 
 module.exports = {
-  conformProviderPath
+  normalizeProviderPath
 };
