@@ -12,6 +12,7 @@ hide_title: true
 * [File Types](#file-types)
 * [Collection Configuration](#collection-configuration)
 * [Publish to CMR](#publish-to-cmr)
+* [Common Use Cases](#common-use-cases)
 
 ### Introduction
 
@@ -81,3 +82,40 @@ The UMM-G column reflects the `RelatedURL`'s `Type` derived from the CNM type, w
 | `browse` | `RelatedURL.Type = 'GET RELATED VISUALIZATION'` | `AssociatedBrowseImage` |
 | `metadata` | `RelatedURL.Type = 'EXTENDED METADATA` | `OnlineResource` |
 | `qa` | `RelatedURL.Type = 'EXTENDED METADATA'` | `OnlineResource` |
+
+### Common Use Cases
+
+This section briefly documents some common use cases and the recommended collection configuration for the file.
+
+Configuring browse imagery:
+
+```json
+{
+  "bucket": "public",
+  "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\_[\\d]{1}.jpg$",
+  "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_1.jpg",
+  "fileType": "browse"
+}  
+```
+
+Configuring a documentation entry:
+
+```json
+{
+  "bucket": "protected",
+  "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\_README.pdf$",
+  "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_README.pdf",
+  "fileType": "metadata"
+}
+```
+
+Configuring other associated files (use fileTypes `metadata` or `qa` as appropriate):
+
+```json
+{
+  "bucket": "protected",
+  "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\_QA.txt$",
+  "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_QA.txt",
+  "fileType": "qa"
+}
+```
