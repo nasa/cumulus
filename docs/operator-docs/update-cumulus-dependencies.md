@@ -77,4 +77,4 @@ To maintain current dependencies without individually installing each one, you c
 npm ci
 ```
 
-This can be more useful than `npm install` because it is faster and will keep the last version you used, instead of going to find the most recently published. This should be used when temporarily avoiding a breaking change in an updated version.
+This can be more useful than `npm install` because it is faster and will install the exact dependency versions specified in package-lock.json, while `npm install` may install a more recently published version of a dependency, especially if semantic ranges (`^1.1.0` or `~1.1.0`) are used in package.json. `npm ci` should be used when temporarily avoiding a breaking change in an updated version.
