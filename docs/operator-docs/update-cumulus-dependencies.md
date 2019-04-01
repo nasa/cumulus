@@ -65,7 +65,7 @@ The migration documents published on release can be found [here](https://nasa.gi
 
 ## Maintaining the current Version of a Dependency
 
-If you wish to maintain the current version for a specific dependency, make sure to save that version to the package.json with this command.
+If you wish to maintain the current version for a specific dependency, run this command to ensure both your package.json and package-lock.json reference that exact version of the dependency.
 
 ```shell
 npm install @cumulus/deployment@1.11.3 --save --save-exact
