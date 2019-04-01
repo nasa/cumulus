@@ -75,7 +75,7 @@ Then run:
 
 If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example.
 
-**Note**: The `npm install` command will add the [kes](http://devseed.com/kes/) utility to the `<daac>-deploy`'s `node_packages` directory and will be utilized later for most of the AWS deployment commands.
+**Note**: The `npm install` command will add the [kes](http://devseed.com/kes/) utility to the `<daac>-deploy`'s `node_modules` directory and will be utilized later for most of the AWS deployment commands.
 
 #### Obtain Cumulus Packages
 
@@ -216,7 +216,7 @@ dev:                            # deployment name
 
   apiStage: dev                 # Optional
 
-  vpc:                          # Optional
+  vpc:                          # Required for NGAP environments
     vpcId: '{{VPC_ID}}'         # this has to be set in .env
     subnets:
       - '{{AWS_SUBNET}}'        # this has to be set in .env
@@ -236,7 +236,7 @@ dev:                            # deployment name
         name: dev-internal
         type: internal
 
-  # Required.
+  # Required. <iams-prefix> = prefix from IAM stack above.
   iams:
     ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-ecs'
     lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-lambda-api-gateway'
