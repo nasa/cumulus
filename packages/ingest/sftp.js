@@ -91,7 +91,7 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
   async download(remotePath, localPath) {
     if (!this.connected) await this.connect();
 
-    const remoteUrl = `sftp://${this.host}${remotePath}`;
+    const remoteUrl = `sftp://${this.host}/${remotePath}`;
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
 
     return new Promise((resolve, reject) => {
@@ -187,7 +187,7 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
    * @returns {Promise} s3 uri of destination file
    */
   async sync(remotePath, bucket, key) {
-    const remoteUrl = `sftp://${this.host}${remotePath}`;
+    const remoteUrl = `sftp://${this.host}/${remotePath}`;
     const s3uri = buildS3Uri(bucket, key);
     log.info(`Sync ${remoteUrl} to ${s3uri}`);
 

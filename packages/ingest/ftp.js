@@ -52,7 +52,7 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
    * @returns {Promise.<string>} - the path that the file was saved to
    */
   async download(remotePath, localPath) {
-    const remoteUrl = `ftp://${this.host}${remotePath}`;
+    const remoteUrl = `ftp://${this.host}/${remotePath}`;
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
 
     if (!this.decrypted) await this.decrypt();
@@ -154,7 +154,7 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
    * @returns {Promise} s3 uri of destination file
    */
   async sync(remotePath, bucket, key) {
-    const remoteUrl = `ftp://${this.host}${remotePath}`;
+    const remoteUrl = `ftp://${this.host}/${remotePath}`;
     const s3uri = buildS3Uri(bucket, key);
     log.info(`Sync ${remoteUrl} to ${s3uri}`);
 

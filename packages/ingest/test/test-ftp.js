@@ -19,7 +19,7 @@ class MyTestDiscoveryClass {
     this.decrypted = true;
     this.host = '127.0.0.1';
     this.password = 'testpass';
-    this.path = '/';
+    this.path = '';
     this.provider = { encrypted: false };
     this.useList = useList;
     this.username = 'testuser';
