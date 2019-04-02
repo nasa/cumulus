@@ -251,6 +251,9 @@ lf:
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus
 
+  es:
+    name: estest
+
   buckets:
     internal:
       name: lf-internal
