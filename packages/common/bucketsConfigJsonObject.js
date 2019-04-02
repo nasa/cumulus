@@ -13,15 +13,16 @@ async function bucketsConfigJsonObject(
   bucket = process.env.system_bucket,
   stackName = process.env.stackName
 ) {
+  const Key = `${stackName}/workflows/buckets.json`;
   try {
     const bucketsString = await aws.s3().getObject({
       Bucket: bucket,
-      Key: `${stackName}/workflows/buckets.json`
+      Key
     }).promise();
     return JSON.parse(bucketsString.Body);
   }
   catch (error) {
-    error.message = `Unable to read bucketsConfiguration from s3: ${error.message}`;
+    error.message = `Unable to read bucketsConfiguration from ${bucket}/${Key}: ${error.message}`;
     throw error;
   }
 }
