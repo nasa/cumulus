@@ -47,13 +47,13 @@ class FileClass extends Manager {
   createFilesFromGranule(granule) {
     const fileRecords = (granule.files || [])
       .map((file) => {
-        let { bucket, key } = this.getBucketAndKey(file);
+        const { bucket, key } = this.getBucketAndKey(file);
 
         return {
           granuleId: granule.granuleId,
           bucket,
           key
-        }
+        };
       });
 
     const chunked = chunk(fileRecords, 25);
@@ -96,7 +96,7 @@ class FileClass extends Manager {
     // all we need is the bucket and key
     oldFiles = oldFiles.map((file) => this.getBucketAndKey(file));
 
-    const newFilesIds = newFiles.map(buildFileId);
+    const newFilesIds = newFiles.map((f) => buildFileId(this.getBucketAndKey(f)));
 
     const filesToDelete = oldFiles
       .filter((oldFile) => !newFilesIds.includes(buildFileId(oldFile)));
