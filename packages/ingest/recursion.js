@@ -18,7 +18,7 @@ const log = require('@cumulus/common/log');
 async function recursion(fn, originalPath, currentPath = null, position = 0) {
   // build the recursion path object
   const regex = /(\(.*?\))/g;
-  const rules = originalPath.split(regex).map((i) => i.replace(/\\\\/g, '\\'));
+  const rules = (originalPath || '/').split(regex).map((i) => i.replace(/\\\\/g, '\\'));
   const map = rules.map((r) => (r.match(regex) !== null));
 
   let files = [];

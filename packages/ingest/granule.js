@@ -26,6 +26,7 @@ const { ftpMixin } = require('./ftp');
 const { httpMixin } = require('./http');
 const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
+const { normalizeProviderPath } = require('./util');
 
 /**
 * The abstract Discover class
@@ -49,12 +50,12 @@ class Discover {
 
     this.port = this.provider.port;
     this.host = this.provider.host;
-    this.path = this.collection.provider_path || '/';
+    this.path = normalizeProviderPath(this.collection.provider_path);
 
     this.endpoint = buildURL({
       protocol: this.provider.protocol,
-      host: this.provider.host,
-      port: this.provider.port,
+      host: this.host,
+      port: this.port,
       path: this.path
     });
 
