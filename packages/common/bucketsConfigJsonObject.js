@@ -18,9 +18,10 @@ async function bucketsConfigJsonObject(
       Bucket: bucket,
       Key: `${stackName}/workflows/buckets.json`
     }).promise();
-    return JSON.parse(bucketsString.Body);}
-  catch (error){
-    error.message = 'Unable to read bucketsConfiguration from s3: ' + error.message;
+    return JSON.parse(bucketsString.Body);
+  }
+  catch (error) {
+    error.message = `Unable to read bucketsConfiguration from s3: ${error.message}`;
     throw error;
   }
 }
