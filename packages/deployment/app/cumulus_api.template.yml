@@ -178,6 +178,9 @@ Resources:
       Environment:
         Variables:
           stackName: {{../stackName}}
+          system_bucket: {{../parent.system_bucket}}
+          public_buckets: {{{collectBuckets ../parent.buckets "public"}}}
+          protected_buckets: {{{collectBuckets ../parent.buckets "protected"}}}
       {{# if this.urs}}
         {{# if ../parent.api_backend_url}}
           TOKEN_REDIRECT_ENDPOINT: {{../parent.api_backend_url}}token
