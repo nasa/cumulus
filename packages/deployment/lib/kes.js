@@ -166,6 +166,14 @@ class UpdatedKes extends Kes {
     });
   }
 
+
+  collectBuckets(buckets, bucketType) {
+    const matchingBuckets = Object.values(buckets)
+      .filter((bucket) => bucket.type === bucketType)
+      .map((object) => object.name);
+    return new Handlebars.SafeString(matchingBuckets.toString());
+  }
+
   /**
   * Build list of buckets of desired type.
   *
