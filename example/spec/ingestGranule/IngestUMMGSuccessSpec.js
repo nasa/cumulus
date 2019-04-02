@@ -8,6 +8,7 @@ const {
   resolve
 } = require('url');
 const cloneDeep = require('lodash.clonedeep');
+const mime = require('mime-types');
 
 const {
   models: {
@@ -224,7 +225,11 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       movedFiles = moveGranulesTaskOutput.payload.granules[0].files;
       existCheck = await Promise.all(movedFiles.map((fileObject) =>
         s3ObjectExists({ Bucket: fileObject.bucket, Key: fileObject.filepath })));
-      headObjects = await Promise.all(movedFiles.map((fileObject) => headObject(fileObject.bucket, fileObject.filepath)));
+      headObjects = await Promise.all(movedFiles.map(async (fileObject) =>
+        Object.assign({},
+          fileObject,
+          await headObject(fileObject.bucket, fileObject.filepath),
+          { expectedMime: mime.lookup(fileObject.filepath) || 'binary/octet'})));
     });
 
     it('has a payload with correct buckets, filenames, filesizes', () => {
@@ -239,10 +244,9 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('has expected ContentType values in s3', () => {
-      movedFiles.forEach((fileObject) => {
-        console.log(fileObject.filename);
-      });
       console.log(headObjects);
+      const checkContentType = headObjects.map((headObject) => headObject.expectedMime == headObject.ContentType);
+      checkContentType.forEach(eva => expect(eva).toEqual(true));
     });
 
     it('moves files to the bucket folder based on metadata', () => {

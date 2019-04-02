@@ -540,6 +540,7 @@ async function updateUMMGMetadata({
     Bucket: cmrFile.bucket,
     Key: getS3KeyOfFile(cmrFile),
     Body: JSON.stringify(metadataObject),
+    ContentType: 'application/json',
     Tagging: tagsQueryString
   });
   return metadataObject;
@@ -581,7 +582,11 @@ async function uploadEcho10CMRFile(xml, cmrFile) {
   const tags = await aws.s3GetObjectTagging(cmrFile.bucket, getS3KeyOfFile(cmrFile));
   const tagsQueryString = aws.s3TagSetToQueryString(tags.TagSet);
   return aws.promiseS3Upload({
-    Bucket: cmrFile.bucket, Key: getS3KeyOfFile(cmrFile), Body: xml, Tagging: tagsQueryString
+    Bucket: cmrFile.bucket,
+    Key: getS3KeyOfFile(cmrFile),
+    Body: xml,
+    ContentType: 'application/xml',
+    Tagging: tagsQueryString
   });
 }
 /**
