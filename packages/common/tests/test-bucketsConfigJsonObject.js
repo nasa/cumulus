@@ -44,12 +44,13 @@ test('reads default bucket.json values', async (t) => {
 });
 
 test('has understandable error messages for bad bucket name', async (t) => {
-  process.env.system_bucket = 'badbucket';
+  process.env.system_bucket = 'bad-bucket';
   process.env.stackName = context.stackName;
+  const location = `bad-bucket/${context.stackName}/workflows/buckets.json`;
 
   await t.throws(
     bucketsConfigJsonObject(),
-    'Unable to read bucketsConfiguration from s3: The specified bucket does not exist'
+    `Unable to read bucketsConfiguration from ${location}: The specified bucket does not exist`
   );
 });
 
@@ -57,8 +58,10 @@ test('has understandable error messages for bad key', async (t) => {
   process.env.system_bucket = context.systemBucket;
   process.env.stackName = 'wrong-stackname';
 
+  const location = `${context.systemBucket}/wrong-stackname/workflows/buckets.json`;
+
   await t.throws(
     bucketsConfigJsonObject(),
-    'Unable to read bucketsConfiguration from s3: The specified key does not exist.'
+    `Unable to read bucketsConfiguration from ${location}: The specified key does not exist.`
   );
 });
