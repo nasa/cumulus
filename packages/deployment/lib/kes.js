@@ -166,6 +166,14 @@ class UpdatedKes extends Kes {
     });
   }
 
+
+  collectBuckets(buckets, bucketType) {
+    const matchingBuckets = Object.values(buckets)
+      .filter((bucket) => bucket.type === bucketType)
+      .map((object) => object.name);
+    return new Handlebars.SafeString(matchingBuckets.toString());
+  }
+
   /**
    * build CloudWatch dashboard based on the dashboard configuration and other configurations
    *
@@ -246,6 +254,8 @@ class UpdatedKes extends Kes {
     Handlebars.registerHelper('ifNotEquals', function ifNotEquals(arg1, arg2, options) {
       return (arg1 !== arg2) ? options.fn(this) : options.inverse(this);
     });
+
+    Handlebars.registerHelper('collectBuckets', (buckets, bucketType) => this.collectBuckets(buckets, bucketType));
 
     Handlebars.registerHelper('buildCWDashboard', (dashboardConfig, ecs, es, stackName) =>
       this.buildCWDashboard(dashboardConfig, ecs, es, stackName));
