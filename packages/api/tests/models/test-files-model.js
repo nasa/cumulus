@@ -90,8 +90,8 @@ test.serial('create a granule wth 4 files with just a source, then remove one of
   const granule = fakeGranuleFactory();
   granule.files = [];
   for (let i = 0; i < 4; i += 1) {
-    granule.files.push({ source: `s3://${bucket}/${randomString()}`});
-  };
+    granule.files.push({ source: `s3://${bucket}/${randomString()}` });
+  }
 
   await fileModel.createFilesFromGranule(granule);
 
@@ -123,7 +123,7 @@ test('getBucketAndKey returns correct bucket and key when file has a bucket and 
     bucket: 'fake-bucket',
     key: 'fake-key',
     source: 's3://fake-source-bucket/key' // keeping this different from bucket/key intentionally
-  }
+  };
 
   t.deepEqual(fileModel.getBucketAndKey(file), { bucket: 'fake-bucket', key: 'fake-key' });
 });
@@ -131,7 +131,7 @@ test('getBucketAndKey returns correct bucket and key when file has a bucket and 
 test('getBucketAndKey returns correct bucket and key when file does not have a bucket and key', (t) => {
   const file = {
     source: 's3://fake-source-bucket/fake-key'
-  }
+  };
 
   t.deepEqual(fileModel.getBucketAndKey(file), { bucket: 'fake-source-bucket', key: 'fake-key' });
 });

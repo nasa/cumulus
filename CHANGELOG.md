@@ -149,6 +149,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - **CUMULUS-1218** Reconciliation report will now scan only completed granules.
+- `@cumulus/api` files and granules were not getting indexed correctly because files indexing was failing in `db-indexer`
+- `@cumulus/deployment` A bug in the Cloudformation template was preventing the API from being able to be launched in a VPC, updated the IAM template to give the permissions to be able to run the API in a VPC
 
 ### Deprecated
 
