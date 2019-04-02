@@ -328,9 +328,9 @@ kk:
       name: '{{stackName}}-public'
       type: public
 
-mth-2:
-  stackName: mth-2
-  stackNameNoDash: Mth2
+mth:
+  stackName: mth
+  stackNameNoDash: Mth
   useWorkflowLambdaVersions: false
   buckets:
     internal:
