@@ -10,7 +10,7 @@ hide_title: true
 
 * [Introduction](#introduction)
 * [File Types](#file-types)
-* [Collection Configuration](#collection-configuration)
+* [File Type Configuration](#file-type-configuration)
 * [Publish to CMR](#publish-to-cmr)
 * [Common Use Cases](#common-use-cases)
 
@@ -18,7 +18,7 @@ hide_title: true
 
 This document covers setting up ingest to track primary and ancillary files under various file types, which will carry through to the CMR and granule record.
 Cumulus has a number of options for tracking files and publishing files to CMR under certain metadata elements or with specified file types.
-We will cover Cumulus file types, collection configuration, and effects on publishing to CMR.
+We will cover Cumulus file types, file type configuration, effects on publishing to CMR, and some common use case examples.
 
 ### File types
 
@@ -32,48 +32,15 @@ Cumulus follows the Cloud Notification Mechanism (CNM) file type conventions. Un
 In Cumulus, these data types are mapped to the `Type` attribute on `RelatedURL`s for UMM-G metadata, or used to map
 resources to one of `OnlineAccessURL`, `OnlineResource` or `AssociatedBrowseImages` for ECHO10 XML metadata.
 
-### Collection Configuration
+### File Type Configuration
 
-File types for each file in a granule can be configured at the collection level as below:
-
-```json
-{
-  "name": "MOD09GQ",
-  "version": "006",
-  "dataType": "MOD09GQ",
-  "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
-  "granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)",
-  "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
-  "files": [
-    {
-      "bucket": "protected",
-      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
-      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
-      "fileType": "data"
-    },
-    {
-      "bucket": "protected-2",
-      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.cmr\\.xml$",
-      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml",
-      "fileType": "metadata"
-    },
-    {
-      "bucket": "public",
-      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}_ndvi\\.jpg$",
-      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_ndvi.jpg",
-      "fileType": "browse"
-    }
-  ]
-}
-```
-
-Files on a particular granule which match a given file specification will be receive the provided `fileType` in the granule record,
-which will then be used to inform CMR metadata updates in the publish step.
+File types for each file in a granule can be configured in a number of different ways, depending on the ingest type and workflow.
+For more information, see the [ancillary metadata](../features/ancillary_metadata) documentation.
 
 ### Publish to CMR
 
 When publishing granule metadata to CMR, the `PostToCmr` task will perform a few metadata updates in the area of URLs for its respective metadata schema.
-The table below shows how the CNM data types map to CMR Metadata updates.
+The table below shows how the CNM data types map to CMR Metadata updates. Non-CNM file types are handled as 'data' file types.
 The UMM-G column reflects the `RelatedURL`'s `Type` derived from the CNM type, whereas the ECHO10 column shows how the CNM type affects the destination element.
 
 |CNM Type |UMM-G Location |ECHO10 Location |
@@ -85,7 +52,9 @@ The UMM-G column reflects the `RelatedURL`'s `Type` derived from the CNM type, w
 
 ### Common Use Cases
 
-This section briefly documents some common use cases and the recommended collection configuration for the file.
+This section briefly documents some common use cases and the recommended configuration for the file.
+The examples shown here are for the DiscoverGranules use case, which allows configuration at the Cumulus dashboard level.
+The other two cases covered in the [ancillary metadata](../features/ancillary_metadata) documentation require configuration at the provider notification level (either CNM message or PDR) and are not covered here.
 
 Configuring browse imagery:
 

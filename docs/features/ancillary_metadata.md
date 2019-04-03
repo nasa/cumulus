@@ -25,3 +25,8 @@ This feature utilizes the fileType key on a files object in a Cumulus [granule](
   Uses the granule file fileType key to update UMM/ECHO 10 CMR files passed in as candidates to the task.   This task adds the external facing URLs to the CMR metadata file based on the fileType.
 
   If a non CNM fileType is specified, the task assumes it is a 'data' file.
+
+### Post to CMR
+  When publishing granule metadata to CMR, the `PostToCmr` task will perform a few metadata updates in the area of URLs for its respective metadata schema.
+  See the [file tracking data cookbook](../data-cookbooks/tracking-files#publish-to-cmr) for a detailed mapping.
+  If a non CNM fileType is specified, the task assumes it is a 'data' file and will use the 'data' mapping for URLs.
