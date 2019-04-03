@@ -1,0 +1,168 @@
+{
+  "config": {
+    "stack": "lpdaac-cumulus-phaseIII",
+    "buckets": {
+      "internal": {
+        "name": "cumulus-test-sandbox-internal",
+        "type": "internal"
+      },
+      "private": {
+        "name": "cumulus-test-sandbox-private",
+        "type": "private"
+      },
+      "protected": {
+        "name": "cumulus-test-sandbox-protected",
+        "type": "protected"
+      },
+      "public": {
+        "name": "cumulus-test-sandbox-public",
+        "type": "public"
+      }
+    },
+    "queues": {
+      "startSF": "https://sqs.us-east-1.amazonaws.com/xxxxx/lpdaac-cumulus-phaseIII-dev-startSF"
+    },
+    "templates": {
+      "IngestGranule": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/IngestGranule.json",
+      "ParsePdr": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/ParsePdr.json",
+      "DiscoverPdrs": "s3://cumulus-internal/lpdaac-cumulus-phaseIII-dev/workflows/DiscoverPdrs.json"
+    },
+    "cumulus_meta": {
+      "state_machine": "arn:aws:states:us-east-1:xxxxx:stateMachine:IngestGranuleLpdaacCumulusPhaseIIIdevStateMachine-XAWXXUDXOVQG",
+      "state_machine_name": "IngestGranule",
+      "execution_name": "MOD09GQ__GRANULE__MOD09GQ.A2017224.h27v08.006.2017227165029__1502835944713"
+    },
+    "provider": {
+      "id": "MODAPS",
+      "globalConnectionLimit": 20,
+      "protocol": "ftp",
+      "host": "modpdr01.nascom.nasa.gov",
+      "username": "xxxx",
+      "password": "xxxx",
+      "encrypted": true
+    },
+    "collection": {
+      "name": "MOD09GQ",
+      "dataType": "MOD09GQ",
+      "version": "006",
+      "process": "modis",
+      "provider_path": "MODOPS/MODAPS/EDC/CUMULUS/FPROC/PDR/",
+      "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+      "granuleIdExtraction": "(MOD09GQ\\.(.*))\\.hdf",
+      "url_path": "collection-example/",
+      "files": [
+        {
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
+          "bucket": "protected",
+          "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+          "url_path": "file-example/"
+        },
+        {
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$",
+          "bucket": "private",
+          "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met"
+        },
+        {
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.meta\\.xml$",
+          "bucket": "protected",
+          "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.meta.xml"
+        },
+        {
+          "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}_1\\.jpg$",
+          "bucket": "public",
+          "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_1.jpg"
+        }
+      ]
+    }
+  },
+  "input": {
+    "granules": [
+      {
+        "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606",
+        "dataType": "MOD09GQ",
+        "version": "006",
+        "files": [
+          {
+            "path": "/granules",
+            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+            "fileSize": 1098034,
+            "fileType": "data",
+            "checksumType": "CKSUM",
+            "checksumValue": 1435712144
+          },
+          {
+            "path": "/granules",
+            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+            "fileSize": 21708,
+            "fileType": "metadata"
+          }
+        ]
+      },
+      {
+        "granuleId": "MOD09GQ.A2017224.h27v08.006.2017227165029",
+        "dataType": "MOD09GQ",
+        "version": "006",
+        "files": [
+          {
+            "path": "/granules",
+            "name": "MOD09GQ.A2017224.h27v08.006.2017227165029.hdf",
+            "fileSize": 1098034,
+            "fileType": "data",
+            "checksumType": "CKSUM",
+            "checksumValue": 1435712144
+          },
+          {
+            "path": "/granules",
+            "name": "MOD09GQ.A2017224.h27v08.006.2017227165029.hdf.met",
+            "fileSize": 20165,
+            "fileType": "metadata"
+          }
+        ]
+      },
+      {
+        "granuleId": "MYD13Q1.A2002185.h00v09.006.2015149071135",
+        "dataType": "MYD13Q1",
+        "version": "006",
+        "files": [
+          {
+            "path": "/granules",
+            "name": "MYD13Q1.A2002185.h00v09.006.2015149071135.hdf",
+            "fileSize": 5192514,
+            "fileType": "data",
+            "checksumType": "CKSUM",
+            "checksumValue": 862302916
+          },
+          {
+            "path": "/granules",
+            "name": "MOD09GQ.A2017224.h27v08.006.2017227165029.hdf.met",
+            "fileSize": 46419,
+            "fileType": "metadata"
+          },
+          {
+            "path": "/granules",
+            "name": "BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.hdf",
+            "fileSize": 32795,
+            "fileType": "data"
+          },
+          {
+            "path": "/granules",
+            "name": "BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.1.jpg",
+            "fileSize": 15797,
+            "fileType": "browse"
+          }
+        ]
+      }
+    ],
+    "pdr": {
+      "name": "MODAPSops8.16485340.PDR",
+      "type": "-",
+      "size": 171776,
+      "time": "2017-08-15T16:11:00.000Z",
+      "owner": "modaps",
+      "group": "modapspd",
+      "path": "/MODOPS/MODAPS/EDC/CUMULUS/FPROC/PDR/"
+    }
+  },
+  "exception": "None"
+}
