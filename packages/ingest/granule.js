@@ -160,7 +160,7 @@ class Granule {
    * @param {Object} buckets - s3 buckets available from config
    * @param {Object} collection - collection configuration object
    * @param {Object} provider - provider configuration object
-   * @param {string} fileStagingDir - staging directory on bucket, 
+   * @param {string} fileStagingDir - staging directory on bucket,
    * files will be placed in collectionId subdirectory
    * @param {boolean} forceDownload - force download of a file
    * @param {boolean} duplicateHandling - duplicateHandling of a file
