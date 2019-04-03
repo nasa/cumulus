@@ -59,9 +59,14 @@ function isPublicRequest(path) {
  * @returns {boolean} - whether this request goes to a public bucket
  */
 function isPublicRequest(path) {
-  const publicBuckets = process.env.public_buckets.split(',');
-  const requestedBucket = path.split('/').filter((d) => d).shift();
-  return publicBuckets.includes(requestedBucket);
+  try {
+    const publicBuckets = process.env.public_buckets.split(',');
+    const requestedBucket = path.split('/').filter((d) => d).shift();
+    return publicBuckets.includes(requestedBucket);
+  }
+  catch (error) {
+    return false;
+  }
 }
 
 /**
