@@ -1,11 +1,13 @@
 /* eslint-disable no-template-curly-in-string */
+/*eslint-comments/disable-enable-pair": ["error", {"allowWholeFile": true}]*/
+
 'use strict';
 
 const test = require('ava');
 const validateWorkflowDefinedLambdas = require('../lib/configValidators');
 
 test.beforeEach((t) => {
-  t.context.config = {}
+  t.context.config = {};
   t.context.config.lambdas = { TestLambda1: {}, TestLambda2: {} };
   t.context.config.stepFunctions = {
     SomeStepFunction: {
@@ -23,7 +25,7 @@ test.beforeEach((t) => {
         }
       }
     }
-  }
+  };
 });
 
 test('validateWorkflowDefinedLambdas throws an exception when lambda is undefined', async (t) => {

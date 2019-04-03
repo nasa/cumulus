@@ -21,7 +21,7 @@
  *
  */
 
- 'use strict';
+'use strict';
 
 const cloneDeep = require('lodash.clonedeep');
 const zipObject = require('lodash.zipobject');
