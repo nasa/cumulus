@@ -31,8 +31,8 @@ test.before(async () => {
   }).promise();
 });
 
-test.after.always(() => {
-  recursivelyDeleteS3Bucket(context.systemBucket);
+test.after.always(async () => {
+  await recursivelyDeleteS3Bucket(context.systemBucket);
 });
 
 test('reads default bucket.json values', async (t) => {
