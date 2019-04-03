@@ -20,6 +20,19 @@ function isAccessTokenExpired(accessTokenRecord) {
 }
 
 /**
+ * Reads the input path and determines if this is a request for public data
+ * or not.
+ *
+ * @param {string} path - req.path paramater
+ * @returns {boolean} - whether this request goes to a public bucket
+ */
+function isPublicRequest(path) {
+  const publicBuckets = process.env.public_buckets.split(',');
+  const requestedBucket = path.split('/').filter((d) => d).shift();
+  return publicBuckets.includes(requestedBucket);
+}
+
+/**
  * Ensure request is authorized through EarthdataLogin or redirect to become so.
  *
  * @param {Object} req - express request object
@@ -31,6 +44,12 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   // Skip authentication for debugging purposes.
   if (process.env.FAKE_AUTH) {
     req.authorizedMetadata = { userName: randomId('username') };
+    return next();
+  }
+
+  // Public data doesn't need authentication
+  if (isPublicRequest(req.path)) {
+    req.authorizedMetadata = { userName: 'publicAccess' };
     return next();
   }
 
