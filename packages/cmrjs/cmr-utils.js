@@ -12,6 +12,7 @@ const js2xmlParser = require('js2xmlparser');
 const {
   aws,
   BucketsConfig,
+  bucketsConfigJsonObject,
   errors,
   log
 } = require('@cumulus/common');
@@ -298,26 +299,6 @@ function getCmrFiles(input, granuleIdExtraction) {
   });
 
   return files;
-}
-
-/**
- * Retrieve the stack's bucket configuration from s3 and return the bucket configuration object.
- *
- * @param {string} bucket - system bucket name.
- * @param {string} stackName - stack name.
- * @returns {Object} - stack's bucket configuration.
- */
-async function bucketConfig(bucket, stackName) {
-  const bucketsString = await aws.s3().getObject({
-    Bucket: bucket,
-    Key: `${stackName}/workflows/buckets.json`
-  }).promise();
-  return JSON.parse(bucketsString.Body);
-}
-
-/** Return the stack's buckets object read from from S3 */
-async function bucketsConfigDefaults() {
-  return bucketConfig(process.env.system_bucket, process.env.stackName);
 }
 
 /**
@@ -685,7 +666,10 @@ async function updateCMRMetadata({
   const filename = getS3UrlOfFile(cmrFile);
 
   log.debug(`cmrjs.updateCMRMetadata granuleId ${granuleId}, cmrMetadata file ${filename}`);
-  const buckets = inBuckets || new BucketsConfig(await bucketsConfigDefaults());
+  const buckets = inBuckets
+        || new BucketsConfig(
+          await bucketsConfigJsonObject(process.env.system_bucket, process.env.stackName)
+        );
   const cmrCredentials = (published) ? getCreds() : {};
   let theMetadata;
 
