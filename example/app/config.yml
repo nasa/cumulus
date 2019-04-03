@@ -481,7 +481,7 @@ jc:
   ecs:
     services:
       EcsTaskHelloWorld:
-        image: 596205514787.dkr.ecr.us-east-1.amazonaws.com/cumulus-dev-testing:latest
+        image: '{{ECR_TESTING_IMAGE_ARN}}'
         cpu: 400
         memory: 700
         count: 1
