@@ -4,6 +4,7 @@ const router = require('express-promise-router')();
 
 const log = require('@cumulus/common/log');
 
+const mappings = require('../models/mappings.json');
 const { defaultIndexAlias, Search } = require('../es/search');
 
 const snapshotRepoName = 'cumulus-es-snapshots';
@@ -95,14 +96,14 @@ async function reindex(req, res) {
   }
 
   // reindex
-  await esClient.reindex({
+  const response = await esClient.reindex({
     body: {
       source: { index: sourceIndex },
       dest: { index: destIndex }
     }
   });
 
-  return res.send(`Reindexing from ${sourceIndex} to ${destIndex}`);
+  return res.status(200).send(response);
 }
 
 async function reindexStatus(req, res) {

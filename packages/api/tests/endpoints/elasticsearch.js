@@ -56,11 +56,11 @@ test('PUT snapshot with an invalid access token returns an unauthorized response
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test('PUT snapshot', async (t) => {
-  const response = await request(app)
-    .put('/elasticsearch/create-snapshot')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-});
+// test('PUT snapshot', async (t) => {
+//   const response = await request(app)
+//     .put('/elasticsearch/create-snapshot')
+//     .set('Accept', 'application/json')
+//     .set('Authorization', `Bearer ${jwtAuthToken}`)
+//     .expect(200);
+// });
 

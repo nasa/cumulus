@@ -2,6 +2,7 @@
 
 const request = require('supertest');
 const test = require('ava');
+const get = require('lodash.get');
 
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -174,5 +175,58 @@ test.serial('Reindex - specify a source index that is not aliased', async (t) =>
   await esClient.indices.delete({ index: indexName });
 });
 
+test.serial('Reindex success', async (t) => {
+  const destIndex = 'cumulus-dest';
+
+  const response = await request(app)
+    .put('/elasticsearch/reindex')
+    .send({
+      aliasName: indexAlias,
+      destIndex,
+      sourceIndex: esIndex
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  // Verify the 3 records were created according to the reindex response
+  t.is(response.body.created, 3);
+
+  // Refresh to make sure the records are in the destination index
+  await esClient.indices.refresh();
+
+  // Validate that the destination index was created
+  t.is(true, await esClient.indices.exists({ index: destIndex }));
+
+  // Validate destination index mappings are correct
+  const fieldMappings = await esClient.indices.getMapping();
+
+  const sourceMapping = get(fieldMappings, esIndex);
+  const destMapping = get(fieldMappings, destIndex);
+
+  t.deepEqual(sourceMapping.mappings, destMapping.mappings);
+
+  const count = await esClient.count({ index: destIndex });
+
+  // Validate that dest-index has the indexed data from the source index
+  t.is(3, count.count);
+
+  await esClient.indices.delete({ index: destIndex });
+});
+
+test.only('Reindex - destination index exists', async (t) => {
+  const response = await request(app)
+    .put('/elasticsearch/reindex')
+    .send({
+      aliasName: indexAlias,
+      destIndex: esIndex,
+      sourceIndex: esIndex
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+    t.is(response.body.message, `Destination index ${esIndex} exists. Please specify an index name that does not exist.`);
+});
 
 
