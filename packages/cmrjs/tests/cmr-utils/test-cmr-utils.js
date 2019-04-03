@@ -5,11 +5,17 @@ const xml2js = require('xml2js');
 const sinon = require('sinon');
 const { promisify } = require('util');
 const { readJsonFixture } = require('@cumulus/common/test-utils');
+const {
+  recursivelyDeleteS3Bucket, s3, promiseS3Upload, getS3Object, s3GetObjectTagging
+} = require('@cumulus/common/aws');
 const { BucketsConfig } = require('@cumulus/common');
 const { xmlParseOptions } = require('../../utils');
 
 const cmrUtil = rewire('../../cmr-utils');
-const isCMRFile = cmrUtil.__get__('isCMRFile');
+const { isCMRFile } = cmrUtil;
+const uploadEcho10CMRFile = cmrUtil.__get__('uploadEcho10CMRFile');
+const uploadUMMGJSONCMRFile = cmrUtil.__get__('uploadUMMGJSONCMRFile');
+
 
 test('isCMRFile returns truthy if fileobject has valid xml name', (t) => {
   const fileObj = {
@@ -82,6 +88,65 @@ test('mapACNMTypeToCMRType returns a default mapping if non CNM mapping specifie
   t.is('GET DATA', mapCNMTypeToCMRType('NOTAREALVALUE'));
 });
 
+test.serial('uploadEcho10CMRFile uploads CMR File to S3 correctly, preserving tags and setting ContentType', async (t) => {
+  const cmrFile = {
+    bucket: 'Echo10FileBucket',
+    key: 'metadata.cmr.xml'
+  };
+  await s3().createBucket({ Bucket: cmrFile.bucket }).promise();
+  try {
+    const fakeXmlString = '<Granule>fake-granule</Granule>';
+    await promiseS3Upload({
+      Bucket: cmrFile.bucket,
+      Key: cmrFile.key,
+      Body: fakeXmlString,
+      Tagging: 'tagA=iamtag1&tagB=iamtag2'
+    });
+
+    const newXmlString = '<Granule>new-granule</Granule>';
+    await uploadEcho10CMRFile(newXmlString, cmrFile);
+
+    const s3Obj = await getS3Object(cmrFile.bucket, cmrFile.key);
+    t.is(s3Obj.Body.toString(), newXmlString);
+    t.is(s3Obj.ContentType, 'application/xml');
+
+    const tags = await s3GetObjectTagging(cmrFile.bucket, cmrFile.key);
+    t.deepEqual(tags.TagSet, [{ Key: 'tagA', Value: 'iamtag1' }, { Key: 'tagB', Value: 'iamtag2' }]);
+  }
+  finally {
+    recursivelyDeleteS3Bucket(cmrFile.bucket);
+  }
+});
+
+test.serial('uploadUMMGJSONCMRFile uploads CMR File to S3 correctly, preserving tags and setting ContentType', async (t) => {
+  const cmrFile = {
+    bucket: 'UMMGJSONFileBucket',
+    key: 'metadata.cmr.json'
+  };
+  await s3().createBucket({ Bucket: cmrFile.bucket }).promise();
+  try {
+    const fakeMetadataObject = { fake: 'data' };
+    await promiseS3Upload({
+      Bucket: cmrFile.bucket,
+      Key: cmrFile.key,
+      Body: JSON.stringify(fakeMetadataObject),
+      Tagging: 'tagA=iamtag1&tagB=iamtag2'
+    });
+
+    const newFakeMetaObj = { newFake: 'granule' };
+    await uploadUMMGJSONCMRFile(newFakeMetaObj, cmrFile);
+
+    const s3Obj = await getS3Object(cmrFile.bucket, cmrFile.key);
+    t.is(s3Obj.Body.toString(), JSON.stringify(newFakeMetaObj));
+    t.is(s3Obj.ContentType, 'application/json');
+
+    const tags = await s3GetObjectTagging(cmrFile.bucket, cmrFile.key);
+    t.deepEqual(tags.TagSet, [{ Key: 'tagA', Value: 'iamtag1' }, { Key: 'tagB', Value: 'iamtag2' }]);
+  }
+  finally {
+    recursivelyDeleteS3Bucket(cmrFile.bucket);
+  }
+});
 
 test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAccessURLs/OnlineResources', async (t) => {
   const uploadEchoSpy = sinon.spy(() => Promise.resolve);
