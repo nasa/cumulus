@@ -35,7 +35,13 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
    * @private
    */
   async list() {
-    // The use of "path" here is in reference to the file that was
+    // There are two different "path" variables being set here, which gets
+    // confusing.  "this.path" originally comes from
+    // "event.config.collection.provider_path".  In the case of S3, it refers
+    // to the prefix used when searching for objects.  That should be the
+    // _only_ time that variable is used.
+    //
+    // The other use of "path" here is in reference to the file that was
     // discovered.  It's easiest to explain using an example.  Given this URL:
     //
     // s3://my-bucket/some/path/my-file.pdr
