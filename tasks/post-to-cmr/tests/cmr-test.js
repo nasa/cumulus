@@ -10,6 +10,7 @@ const cmrjs = require('@cumulus/cmrjs');
 const cmrClient = require('@cumulus/cmr-client');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
+const { CMRMetaFileNotFound } = require('@cumulus/common/errors');
 
 const { postToCMR } = require('..');
 
@@ -118,7 +119,7 @@ test.serial('postToCMR returns SIT url when CMR_ENVIRONMENT=="SIT"', async (t) =
   }
 });
 
-test.serial('postToCMR skips CMR step if the metadata file uri is missing', async (t) => {
+test.serial('postToCMR throws an error if there is no CMR Meta file', async (t) => {
   const newPayload = t.context.payload;
 
   newPayload.input.granules = [{
@@ -128,9 +129,61 @@ test.serial('postToCMR skips CMR step if the metadata file uri is missing', asyn
     }]
   }];
 
-  const output = await postToCMR(newPayload);
+  try {
+    await postToCMR(newPayload);
+  }
+  catch (error) {
+    t.true(error instanceof CMRMetaFileNotFound);
+  }
+});
 
-  t.is(output.granules[0].cmrLink, undefined);
+test.serial('postToCMR throws an error if any granule is missing a Meta file', async (t) => {
+  const newPayload = t.context.payload;
+  const newGranule = {
+    granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090555',
+    files: [{
+      filename: `s3://${t.context.bucket}/to/file.xml`
+    }]
+  };
+  newPayload.input.granules.push(newGranule);
+
+  try {
+    await postToCMR(newPayload);
+  }
+  catch (error) {
+    t.true(error instanceof CMRMetaFileNotFound);
+    t.is(error.message, (`CMR Meta file not found for granule ${newGranule.granuleId}`));
+  }
+});
+
+test.serial('postToCMR continues without Meta file if there is metaCheck flag', async (t) => {
+  const newPayload = t.context.payload;
+  const newGranule = [{
+    granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090555',
+    files: [{
+      filename: `s3://${t.context.bucket}/to/file.xml`
+    }]
+  }];
+  newPayload.input.granules = newGranule;
+  newPayload.config.metaCheck = true;
+  const granuleId = newPayload.input.granules[0].granuleId;
+  const key = `${granuleId}.cmr.xml`;
+
+  sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
+    result
+  }));
+  try {
+    await aws.promiseS3Upload({
+      Bucket: t.context.bucket,
+      Key: key,
+      Body: fs.createReadStream('tests/data/meta.xml')
+    });
+    const output = await postToCMR(newPayload);
+    t.is(output.granules[0].granuleId, granuleId);
+  }
+  finally {
+    cmrjs.CMR.prototype.ingestGranule.restore();
+  }
 });
 
 test.serial('postToCmr identifies files with the new file schema', async (t) => {
