@@ -73,9 +73,9 @@ test('connect and retrieve list of pdrs', async (t) => {
 test('Download remote file to s3 with correct content-type', async (t) => {
   class MyTestSftpDiscoveryClass extends TestSftpMixin(MyTestDiscoveryClass) {}
   const myTestSftpDiscoveryClass = new MyTestSftpDiscoveryClass(true);
-  const expectedContentType = 'binary/octet';
+  const expectedContentType = 'application/x-hdf';
 
-  const key = randomString();
+  const key = randomString() + '.hdf';
   await myTestSftpDiscoveryClass.sync(
     '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf', bucket, key
   );

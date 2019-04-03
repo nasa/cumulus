@@ -1,5 +1,7 @@
 'use strict';
 
+const mime = require('mime-types');
+
 /**
  * Ensure provider path conforms to expectations.
  * Removes any/all leading forward slashes.
@@ -15,6 +17,17 @@ function normalizeProviderPath(provPath) {
   return '';
 }
 
+/**
+ * Return mime-type based on input url or filename
+ * 
+ * @param {string} key
+ * @returns {string} mimeType or null
+ */
+function lookupMimeType(key) {
+  return mime.lookup(key) || null;
+}
+
 module.exports = {
-  normalizeProviderPath
+  normalizeProviderPath,
+  lookupMimeType
 };

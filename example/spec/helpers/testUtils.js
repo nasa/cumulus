@@ -102,7 +102,7 @@ function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-da
     Bucket: bucket,
     Key: `${prefix}/${key}`,
     Body: data,
-    ContentType: mime.lookup(key) || 'binary/octet'
+    ContentType: mime.lookup(key) || null
   }).promise();
 }
 

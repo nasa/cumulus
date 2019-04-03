@@ -60,8 +60,8 @@ test('Download remote file to s3 with correct content-type', async (t) => {
   class MyTestFtpDiscoveryClass extends TestFtpMixin(MyTestDiscoveryClass) {}
   const myTestFtpDiscoveryClass = new MyTestFtpDiscoveryClass();
   const bucket = randomString();
-  const key = randomString();
-  const expectedContentType = 'binary/octet';
+  const key = randomString() + '.hdf';
+  const expectedContentType = 'application/x-hdf';
   try {
     await s3().createBucket({ Bucket: bucket }).promise();
     await myTestFtpDiscoveryClass.sync(

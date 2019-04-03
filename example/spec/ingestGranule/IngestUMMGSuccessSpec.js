@@ -245,7 +245,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
     it('has expected ContentType values in s3', () => {
       const checkContentType = headObjects.map((headObj) => headObj.expectedMime === headObj.ContentType);
-      checkContentType.forEach((eva) => expect(eva).toEqual(true));
+      checkContentType.forEach((contentTypeMatches) => expect(contentTypeMatches).toEqual(true));
     });
 
     it('moves files to the bucket folder based on metadata', () => {

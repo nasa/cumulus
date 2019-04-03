@@ -3,13 +3,13 @@
 const http = require('@cumulus/common/http');
 const isIp = require('is-ip');
 const path = require('path');
-const mime = require('mime-types');
 const { PassThrough } = require('stream');
 const Crawler = require('simplecrawler');
 const got = require('got');
 const { log, aws: { buildS3Uri, s3 } } = require('@cumulus/common');
 const { isValidHostname } = require('@cumulus/common/string');
 const { buildURL } = require('@cumulus/common/URLUtils');
+const { lookupMimeType } = require('./util');
 const errors = require('@cumulus/common/errors');
 
 const validateHost = (host) => {
@@ -145,7 +145,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     catch (err) {
       log.info(`HEAD failed for ${remoteUrl} with error: ${err}.`);
     }
-    const contentType = headers['content-type'] || mime.lookup(key);
+    const contentType = headers['content-type'] || lookupMimeType(key);
 
     const pass = new PassThrough();
     got.stream(remoteUrl).pipe(pass);
@@ -154,7 +154,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
       Bucket: bucket,
       Key: key,
       Body: pass,
-      ContentType: contentType || null
+      ContentType: contentType
     }).promise();
 
     log.info('Uploading to s3 is complete (http)', s3uri);

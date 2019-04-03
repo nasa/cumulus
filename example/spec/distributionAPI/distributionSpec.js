@@ -69,7 +69,7 @@ describe('Distribution API', () => {
 
   afterAll(async (done) => {
     try {
-      Promise.all([
+      await Promise.all([
         deleteFolder(config.bucket, testDataFolder),
         deleteFolder(config.public_bucket, testDataFolder)
       ]);

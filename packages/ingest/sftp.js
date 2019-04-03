@@ -1,6 +1,6 @@
 'use strict';
 
-const mime = require('mime-types');
+const { lookupMimeType } = require('./util');
 const { Client } = require('ssh2');
 const { PassThrough } = require('stream');
 const { join } = require('path');
@@ -199,7 +199,7 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
       Bucket: bucket,
       Key: key,
       Body: pass,
-      ContentType: mime.lookup(key) || null
+      ContentType: lookupMimeType(key)
     };
 
     const result = await promiseS3Upload(params);
