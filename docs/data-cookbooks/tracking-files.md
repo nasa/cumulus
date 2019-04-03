@@ -11,14 +11,14 @@ hide_title: true
 * [Introduction](#introduction)
 * [File Types](#file-types)
 * [File Type Configuration](#file-type-configuration)
-* [Publish to CMR](#publish-to-cmr)
+* [CMR Metadata](#cmr-metadata)
 * [Common Use Cases](#common-use-cases)
 
 ### Introduction
 
 This document covers setting up ingest to track primary and ancillary files under various file types, which will carry through to the CMR and granule record.
-Cumulus has a number of options for tracking files and publishing files to CMR under certain metadata elements or with specified file types.
-We will cover Cumulus file types, file type configuration, effects on publishing to CMR, and some common use case examples.
+Cumulus has a number of options for tracking files in granule records, and in CMR metadata under certain metadata elements or with specified file types.
+We will cover Cumulus file types, file type configuration, effects on CMR metadata, and some common use case examples.
 
 ### File types
 
@@ -37,10 +37,10 @@ resources to one of `OnlineAccessURL`, `OnlineResource` or `AssociatedBrowseImag
 File types for each file in a granule can be configured in a number of different ways, depending on the ingest type and workflow.
 For more information, see the [ancillary metadata](../features/ancillary_metadata) documentation.
 
-### Publish to CMR
+### CMR Metadata
 
-When publishing granule metadata to CMR, the `PostToCmr` task will perform a few metadata updates in the area of URLs for its respective metadata schema.
-The table below shows how the CNM data types map to CMR Metadata updates. Non-CNM file types are handled as 'data' file types.
+When updating granule CMR metadata, the `MoveGranules` task will add the external facing URLs to the CMR metadata file based on the fileType.
+The table below shows how the CNM data types map to CMR metadata updates. Non-CNM file types are handled as 'data' file types.
 The UMM-G column reflects the `RelatedURL`'s `Type` derived from the CNM type, whereas the ECHO10 column shows how the CNM type affects the destination element.
 
 |CNM Type |UMM-G `RelatedUrl.Type` |ECHO10 Location |
