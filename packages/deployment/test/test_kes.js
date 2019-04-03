@@ -5,17 +5,21 @@
 const sinon = require('sinon');
 const test = require('ava');
 const get = require('lodash.get');
+const clonedeep = require('lodash.clonedeep');
 
 const configFixture = require('./fixtures/config.json');
 const aliasFixture = require('./fixtures/aliases.json');
 const UpdatedKes = require('../lib/kes');
 
 test.beforeEach((t) => {
-  t.context.kes = new UpdatedKes(configFixture);
+  const config = clonedeep(configFixture);
+  t.context.kes = new UpdatedKes(config);
 });
 
 function setupKesForLookupLambdaReference(kes, functionName, hashValue) {
-  kes.config.lambdas = { [functionName]: { hash: hashValue } };
+  kes.config.lambdas = Object.assign({}, kes.config.lambdas, {
+    [functionName]: { hash: hashValue }
+  });
   return kes;
 }
 
@@ -147,7 +151,6 @@ test('parseAliasName returns null hash if hash missing', (t) => {
   t.deepEqual(expected, actual);
 });
 
-
 test.serial('getAllLambdaAliases returns an unpaginated list of aliases', async (t) => {
   const kes = t.context.kes;
 
@@ -187,7 +190,7 @@ test.serial('getAllLambdaAliases returns an unpaginated list of aliases', async 
 test.serial('getRetainedLambdaAliasMetadata returns filtered aliasNames', async (t) => {
   const kes = t.context.kes;
 
-  kes.config.workflowLambdas = aliasFixture.workflowLambdas;
+  kes.config.workflowLambdas = clonedeep(aliasFixture.workflowLambdas);
   kes.config.maxNumberOfRetainedLambdas = 2;
   const getAllLambdaAliasesStub = sinon.stub(kes, 'getAllLambdaAliases');
   for (let i = 0; i < aliasFixture.aliases.length; i += 1) {
@@ -217,7 +220,8 @@ test.serial('getRetainedLambdaAliasNames returns filtered aliasNames '
             + 'on previous version redeployment', async (t) => {
   const kes = t.context.kes;
 
-  kes.config.workflowLambdas = aliasFixture.workflowLambdas;
+  kes.config.workflowLambdas = clonedeep(aliasFixture.workflowLambdas);
+  kes.config.maxNumberOfRetainedLambdas = 2;
   kes.config.workflowLambdas.VersionUpTest.hash = 'PreviousVersionHash';
   const getAllLambdaAliasesStub = sinon.stub(kes, 'getAllLambdaAliases');
   for (let i = 0; i < aliasFixture.aliases.length; i += 1) {
@@ -242,14 +246,14 @@ test.serial('getRetainedLambdaAliasNames returns filtered aliasNames '
   t.deepEqual(expected, actual);
 });
 
-test.serial('getHumanReadableIdentifier returns a packed ID from the descriptiohn string', (t) => {
+test('getHumanReadableIdentifier returns a packed ID from the descriptiohn string', (t) => {
   const testString = 'Some Description Here|version';
   const expected = 'version';
   const actual = t.context.kes.getHumanReadableIdentifier(testString);
   t.is(expected, actual);
 });
 
-test.serial("getHumanReadableIdentifier returns '' for a version string with no packed ID", (t) => {
+test("getHumanReadableIdentifier returns '' for a version string with no packed ID", (t) => {
   const testString = 'Some Bogus Version String';
   const expected = '';
   const actual = t.context.kes.getHumanReadableIdentifier(testString);
@@ -257,7 +261,7 @@ test.serial("getHumanReadableIdentifier returns '' for a version string with no 
 });
 
 
-test.serial('setParentOverrideConfigValues merges defined parent configuration', (t) => {
+test('setParentOverrideConfigValues merges defined parent configuration', (t) => {
   const parentConfig = { overrideKey: true };
   const kes = t.context.kes;
   kes.config.overrideKey = false;
@@ -271,7 +275,7 @@ test.serial('setParentOverrideConfigValues merges defined parent configuration',
   t.is(expected, actual);
 });
 
-test.serial('setParentOverrideConfigValues ignores missing parent configuration', (t) => {
+test('setParentOverrideConfigValues ignores missing parent configuration', (t) => {
   const parentConfig = {};
   const kes = t.context.kes;
   kes.config.overrideKey = false;
@@ -286,7 +290,7 @@ test.serial('setParentOverrideConfigValues ignores missing parent configuration'
 });
 
 
-test.serial('addLambdaDeadLetterQueues adds dead letter queue to the sqs configuration', (t) => {
+test('addLambdaDeadLetterQueues adds dead letter queue to the sqs configuration', (t) => {
   const kes = t.context.kes;
   kes.config.lambdas.jobs.namedLambdaDeadLetterQueue = true;
   kes.config.DLQDefaultTimeout = 60;
@@ -297,12 +301,11 @@ test.serial('addLambdaDeadLetterQueues adds dead letter queue to the sqs configu
     MessageRetentionPeriod: 5,
     visibilityTimeout: 60
   };
-
   const actual = kes.config.sqs.jobsDeadLetterQueue;
   t.deepEqual(expected, actual);
 });
 
-test.serial('addLambdaDeadLetterQueues adds dead letter queue to the sqs configuration', (t) => {
+test('addLambdaDeadLetterQueues adds dead letter queue to the sqs configuration', (t) => {
   const kes = t.context.kes;
   kes.config.lambdas.jobs.namedLambdaDeadLetterQueue = true;
   kes.addLambdaDeadLetterQueues();
@@ -311,7 +314,7 @@ test.serial('addLambdaDeadLetterQueues adds dead letter queue to the sqs configu
   t.is(expected, actual);
 });
 
-test.serial('buildCWDashboard creates alarm widgets', (t) => {
+test('buildCWDashboard creates alarm widgets', (t) => {
   const kes = t.context.kes;
   // each ECS service has a default alarm
   const ecsDefaultAlarmCount = Object.keys(kes.config.ecs.services).length;
