@@ -39,6 +39,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-805**
   - Added a CloudWatch alarm to check running ElasticSearch instances, and a CloudWatch dashboard to view the health of ElasticSearch
   - Specify `AWS_REGION` in `.env` to be used by deployment script
+- **CUMULUS-803**
+  - Added CloudWatch alarms to check running tasks of each ECS service, and add the alarms to CloudWatch dashboard
 - **CUMULUS-670**
   - Added Ancillary Metadata Export feature (see https://nasa.github.io/cumulus/docs/features/ancillary_metadata for more information)
   - Added new Collection file parameter "fileType" that allows configuration of workflow granule file fileType
@@ -84,6 +86,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - **CUMULUS-1208** - Updated `@cumulus/ingest/queue/enqueueGranuleIngestMessage()` to not transform granule object passed to it when building an ingest message
+- **CUMULUS-1198** - `@cumulus/ingest` no longer enforces any expectations about whether `provider_path` contains a leading slash or not.
 - **CUMULUS-1170**
   - Update scripts and docs to use `npm` instead of `yarn`
   - Use `package-lock.json` files to ensure matching versions of npm packages

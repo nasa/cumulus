@@ -108,6 +108,14 @@ default:
           - '--lambdaArn'
           - function: Ref
             value: HelloWorldLambdaFunction
+        alarms:
+          TaskCountHigh:
+            alarm_description: 'There are more tasks running than the desired'
+            comparison_operator: GreaterThanThreshold
+            evaluation_periods: 1
+            metric: MemoryUtilization
+            statistic: SampleCount
+            threshold: '{{ecs.services.EcsTaskHelloWorld.count}}'
 
   activities:
     - name: EcsTaskHelloWorld
