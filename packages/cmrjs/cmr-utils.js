@@ -509,6 +509,7 @@ function mergeURLs(original, updated = [], removed = []) {
  *
  * @param {Object} metadataObject - JSON Object to stringify
  * @param {Object} cmrFile - cmr file object to write body to
+ * @returns {Promise} returns promised aws.promiseS3Upload response
  */
 async function uploadUMMGJSONCMRFile(metadataObject, cmrFile) {
   const tags = await aws.s3GetObjectTagging(cmrFile.bucket, getS3KeyOfFile(cmrFile));
@@ -517,7 +518,8 @@ async function uploadUMMGJSONCMRFile(metadataObject, cmrFile) {
     Bucket: cmrFile.bucket,
     Key: getS3KeyOfFile(cmrFile),
     Body: JSON.stringify(metadataObject),
-    Tagging: tagsQueryString
+    Tagging: tagsQueryString,
+    ContentType: 'application/json'
   });
 }
 
@@ -592,7 +594,11 @@ async function uploadEcho10CMRFile(xml, cmrFile) {
   const tags = await aws.s3GetObjectTagging(cmrFile.bucket, getS3KeyOfFile(cmrFile));
   const tagsQueryString = aws.s3TagSetToQueryString(tags.TagSet);
   return aws.promiseS3Upload({
-    Bucket: cmrFile.bucket, Key: getS3KeyOfFile(cmrFile), Body: xml, Tagging: tagsQueryString
+    Bucket: cmrFile.bucket,
+    Key: getS3KeyOfFile(cmrFile),
+    Body: xml,
+    Tagging: tagsQueryString,
+    ContentType: 'application/xml'
   });
 }
 /**
