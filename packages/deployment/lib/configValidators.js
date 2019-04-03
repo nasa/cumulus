@@ -1,7 +1,10 @@
 'use strict';
 
 const get = require('lodash.get');
-
+/**
+ * @param  {Object} config kes configuration object
+ *
+ */
 function validateWorkflowDefinedLambdas(config) {
   const lambdaResourceMatch = /\$\{(.*)LambdaFunction\.Arn\}/;
   const stepFunctions = get(config, 'stepFunctions', {});

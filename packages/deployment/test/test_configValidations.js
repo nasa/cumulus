@@ -1,5 +1,4 @@
 /* eslint-disable no-template-curly-in-string */
-/*eslint-comments/disable-enable-pair": ["error", {"allowWholeFile": true}]*/
 
 'use strict';
 

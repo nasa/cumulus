@@ -17,7 +17,9 @@ test.beforeEach((t) => {
 });
 
 function setupKesForLookupLambdaReference(kes, functionName, hashValue) {
-  kes.config.lambdas = Object.assign(kes.config.lambdas, { [functionName]: { hash: hashValue } });
+  kes.config.lambdas = Object.assign({}, kes.config.lambdas, {
+    [functionName]: { hash: hashValue }
+  });
   return kes;
 }
 
