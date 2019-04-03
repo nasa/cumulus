@@ -12,7 +12,7 @@ function validateWorkflowDefinedLambdas(config) {
   const stepFunctionStates = Object.values(stepFunctions).map((sf) => Object.values(sf.States));
   const lambdas = Object.keys(config.lambdas);
 
-  let resources = [].concat(...stepFunctionStates).reduce((result, cfg) => {
+  const resources = [].concat(...stepFunctionStates).reduce((result, cfg) => {
     if (cfg.Type === 'Task') {
       const lambdaArnMatch = cfg.Resource.match(lambdaResourceMatch);
       if (lambdaArnMatch && !result.includes(lambdaArnMatch[1])) {
