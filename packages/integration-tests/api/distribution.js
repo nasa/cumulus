@@ -1,5 +1,7 @@
 'use strict';
 
+const { Lambda } = require('aws-sdk');
+const { URL } = require('url');
 const got = require('got');
 
 /**
@@ -55,6 +57,41 @@ async function getDistributionApiFileStream(fileUrl, accessToken) {
   return got.stream(s3SignedUrl);
 }
 
+
+/**
+ * Invoke distribution api lambda directly to get a signed s3 URL.  This is
+ * used in integration testing to we can be sure to use the lambda's iams
+ * permisions to generate correct access.
+ *
+ * @param {string} fileUrl
+ *   Distribution API file URL to request
+ * @param {string} accessToken
+ *   Access token from OAuth provider
+ * @returns {string}
+ *   signed s3 URL for the requested file.
+ */
+async function invokeLambdaForS3SignedUrl(fileUrl, accessToken) {
+  const lambda = new Lambda();
+  const FunctionName = `${process.env.stackName}-ApiDistribution`;
+
+  const path = fileUrl.replace(process.env.DISTRIBUTION_ENDPOINT, '/').replace('//', '/');
+  const event = {
+    method: 'GET',
+    path,
+    headers: {
+      cookie: [`accessToken=${accessToken}`]
+    }
+  };
+  const data = await lambda.invoke({
+    FunctionName,
+    Payload: JSON.stringify(event)
+  }).promise();
+
+  const payload = JSON.parse(data.Payload);
+
+  return payload.headers.location;
+}
+
 /**
  * Get URL to request file via distribution API
  *
@@ -77,5 +114,6 @@ module.exports = {
   getDistributionApiResponse,
   getDistributionApiS3SignedUrl,
   getDistributionApiFileStream,
-  getDistributionFileUrl
+  getDistributionFileUrl,
+  invokeLambdaForS3SignedUrl
 };

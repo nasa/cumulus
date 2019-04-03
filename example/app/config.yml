@@ -530,6 +530,7 @@ mhs3:
     shared:
       name: cumulus-data-shared
       type: shared
+  system_bucket: mhs3-internal
   api_distribution_url: '{{API_DISTRIBUTION_URL}}'
 
 jk:
