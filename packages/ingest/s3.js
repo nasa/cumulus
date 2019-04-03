@@ -54,7 +54,8 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
 
     const params = {
       Bucket: this.host,
-      FetchOwner: true
+      FetchOwner: true,
+      Prefix: this.path
     };
 
     const objects = await aws.listS3ObjectsV2(params);
