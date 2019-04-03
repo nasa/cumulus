@@ -43,12 +43,12 @@ When publishing granule metadata to CMR, the `PostToCmr` task will perform a few
 The table below shows how the CNM data types map to CMR Metadata updates. Non-CNM file types are handled as 'data' file types.
 The UMM-G column reflects the `RelatedURL`'s `Type` derived from the CNM type, whereas the ECHO10 column shows how the CNM type affects the destination element.
 
-|CNM Type |UMM-G Location |ECHO10 Location |
+|CNM Type |UMM-G `RelatedUrl.Type` |ECHO10 Location |
 | ------  | ------ | ------ |
-| `data` | `RelatedURL.Type = 'GET DATA'` | `OnlineAccessURL` |
-| `browse` | `RelatedURL.Type = 'GET RELATED VISUALIZATION'` | `AssociatedBrowseImage` |
-| `metadata` | `RelatedURL.Type = 'EXTENDED METADATA` | `OnlineResource` |
-| `qa` | `RelatedURL.Type = 'EXTENDED METADATA'` | `OnlineResource` |
+| `data` | `'GET DATA'` | `OnlineAccessURL` |
+| `browse` | `'GET RELATED VISUALIZATION'` | `AssociatedBrowseImage` |
+| `metadata` | `'EXTENDED METADATA'` | `OnlineResource` |
+| `qa` | `'EXTENDED METADATA'` | `OnlineResource` |
 
 ### Common Use Cases
 
