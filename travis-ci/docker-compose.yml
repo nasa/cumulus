@@ -18,7 +18,8 @@ services:
     volumes:
       - ../packages/test-data:/usr/local/apache2/htdocs:ro
   sftp:
-    image: panubo/sshd
+    # image: panubo/sshd:latest
+    image: nsidc/panubo_sshd:latest
     command: /bootstrap-sftp.sh
     ports:
       - "127.0.0.1:2222:22"
@@ -29,6 +30,7 @@ services:
     environment:
       - SSH_USERS=user:2000:2000
       - SFTP_MODE=true
+      - SSH_ENABLE_ROOT=true
   elasticsearch:
     image: elasticsearch:5.6
     ports:
