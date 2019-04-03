@@ -33,6 +33,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- **CUMULUS-777**
+  - Added new cookbook entry on configuring Cumulus to track ancillary files.
 - **CUMULUS-1183**
   - Kes overrides will now abort with a warning if a workflow step is configured without a corresponding
     lambda configuration
