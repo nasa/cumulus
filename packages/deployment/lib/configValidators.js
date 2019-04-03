@@ -8,10 +8,10 @@ const get = require('lodash.get');
 function validateWorkflowDefinedLambdas(config) {
   const lambdaResourceMatch = /\$\{(.*)LambdaFunction\.Arn\}/;
   const stepFunctions = get(config, 'stepFunctions', {});
-  const stepFunctionValues = Object.values(stepFunctions).map((sf) => Object.values(sf.States));
+  const stepFunctionStates = Object.values(stepFunctions).map((sf) => Object.values(sf.States));
   const lambdas = Object.keys(config.lambdas);
 
-  let resources = [].concat(...stepFunctionValues).reduce((result, cfg) => {
+  let resources = [].concat(...stepFunctionStates).reduce((result, cfg) => {
     if (cfg.Type === 'Task') {
       const lambdaArnMatch = cfg.Resource.match(lambdaResourceMatch);
       if (lambdaArnMatch) {
