@@ -9,6 +9,7 @@ const {
     S3ListObjectsV2Queue,
     s3
   },
+  bucketsConfigJsonObject,
   BucketsConfig,
   constructCollectionId
 } = require('@cumulus/common');
@@ -404,16 +405,11 @@ async function createReconciliationReport(params) {
   } = params;
 
   // Fetch the bucket names to reconcile
-  const bucketsConfigJson = await s3().getObject({
-    Bucket: systemBucket,
-    Key: `${stackName}/workflows/buckets.json`
-  }).promise()
-    .then((response) => response.Body.toString());
-  const dataBuckets = Object.values(JSON.parse(bucketsConfigJson))
-    .filter((config) => config.name !== systemBucket)
-    .map((config) => config.name);
+  const bucketsConfigJson = await bucketsConfigJsonObject(systemBucket, stackName);
+  const dataBuckets = Object.values(bucketsConfigJson)
+    .filter((config) => config.name !== systemBucket).map((config) => config.name);
 
-  const bucketsConfig = new BucketsConfig(JSON.parse(bucketsConfigJson));
+  const bucketsConfig = new BucketsConfig(bucketsConfigJson);
 
   // Write an initial report to S3
   const filesInCumulus = {
@@ -448,8 +444,9 @@ async function createReconciliationReport(params) {
   }).promise();
 
   // Create a report for each bucket
-  const promisedBucketReports = dataBuckets.map((bucket) =>
-    createReconciliationReportForBucket(bucket));
+  const promisedBucketReports = dataBuckets.map(
+    (bucket) => createReconciliationReportForBucket(bucket)
+  );
   const bucketReports = await Promise.all(promisedBucketReports);
 
   // compare CUMULUS internal holdings in s3 and database
