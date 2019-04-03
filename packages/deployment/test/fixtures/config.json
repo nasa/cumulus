@@ -39,6 +39,119 @@
         "clientId": "CUMULUS",
         "password": "kD;LfvcNTBRJXTiUBmFd9Z3Fw%wkgQhWskYyxFJ9w.fXCuq?g7"
     },
+    "ecs": {
+        "restartTasksOnDeploy": true,
+        "amiid": "ami-a7a242da",
+        "instanceType": "t2.medium",
+        "volumeSize": 50,
+        "availabilityZone": "us-east-1b",
+        "maxInstances": 2,
+        "desiredInstances": 2,
+        "tasks": {
+            "AsyncOperation": {
+                "image": "cumuluss/async-operation:25",
+                "cpu": 400,
+                "memory": 700,
+                "count": 1,
+                "envs": {
+                    "AWS_REGION": {
+                        "function": "Fn::Sub",
+                        "value": "${AWS::Region}"
+                    }
+                }
+            }
+        },
+        "docker": {
+            "registry": "dockerhub",
+            "storageDriver": "overlay2",
+            "username": "cumulususer"
+        },
+        "publicIp": true,
+        "services": {
+            "EcsTaskHelloWorld": {
+                "image": "cumuluss/cumulus-ecs-task:1.2.3",
+                "cpu": 400,
+                "memory": 700,
+                "count": 1,
+                "envs": {
+                    "AWS_DEFAULT_REGION": {
+                        "function": "Fn::Sub",
+                        "value": "${AWS::Region}"
+                    }
+                },
+                "commands": [
+                    "cumulus-ecs-task",
+                    "--activityArn",
+                    {
+                        "function": "Ref",
+                        "value": "EcsTaskHelloWorldActivity"
+                    },
+                    "--lambdaArn",
+                    {
+                        "function": "Ref",
+                        "value": "HelloWorldLambdaFunction"
+                    }
+                ],
+                "alarms": {
+                    "TaskCountHigh": {
+                        "alarm_description": "There are more instances running than the desired",
+                        "comparison_operator": "GreaterThanThreshold",
+                        "evaluation_periods": 1,
+                        "metric": "MemoryUtilization",
+                        "statistic": "SampleCount",
+                        "threshold": "1"
+                    }
+                }
+            },
+            "EcsTaskHelloWorldSecond": {
+                "image": "cumuluss/cumulus-ecs-task:1.2.3",
+                "cpu": 400,
+                "memory": 700,
+                "count": 2,
+                "envs": {
+                    "AWS_DEFAULT_REGION": {
+                        "function": "Fn::Sub",
+                        "value": "${AWS::Region}"
+                    }
+                },
+                "commands": [
+                    "cumulus-ecs-task",
+                    "--activityArn",
+                    {
+                        "function": "Ref",
+                        "value": "EcsTaskHelloWorldActivity"
+                    },
+                    "--lambdaArn",
+                    {
+                        "function": "Ref",
+                        "value": "HelloWorldLambdaFunction"
+                    }
+                ]
+            }
+        }
+    },
+    "es": {
+        "name": "es5",
+        "elasticSearchMapping": 8,
+        "version": 5.3,
+        "instanceCount": 2,
+        "instanceType": "t2.small.elasticsearch",
+        "volumeSize": 35,
+        "alarms": {
+            "NodesLow": {
+                "alarm_description": "There are less instances running than the desired",
+                "comparison_operator": "LessThanThreshold",
+                "threshold": "2",
+                "metric": "Nodes"
+            },
+            "NodesHigh": {
+                "alarm_description": "There are more instances running than the desired",
+                "comparison_operator": "GreaterThanThreshold",
+                "threshold": "2",
+                "metric": "Nodes"
+            }
+        }
+    },
     "apiStage": "dev",
     "dynamos": {
         "CollectionsTable": {
@@ -773,5 +886,90 @@
             "WorkflowFailed": {}
         }
     },
-    "distribution_endpoint": "https://example.execute-api.us-east-1.amazonaws.com/dev/"
+    "distribution_endpoint": "https://example.execute-api.us-east-1.amazonaws.com/dev/",
+    "dashboard": 
+    {
+        "alarmTemplate": {
+            "type": "metric",
+            "width": 6,
+            "height": 3,
+            "properties": {
+                "title": "alarmTemplate",
+                "annotations": {
+                    "alarms": [
+                        "arn:aws:cloudwatch:us-east-1:596205514787:alarm:alarmTemplate"
+                    ]
+                },
+                "view": "singleValue"
+            }
+        },
+        "alarmHeader": [
+            {
+                "type": "text",
+                "width": 24,
+                "height": 1,
+                "properties": {
+                    "markdown": "## Alarms"
+                }
+            }
+        ],
+        "ecsHeader": [
+            {
+                "type": "text",
+                "width": 24,
+                "height": 1,
+                "properties": {
+                    "markdown": "# Elastic Container Service"
+                }
+            }
+        ],
+        "esHeader": [
+            {
+                "type": "text",
+                "width": 24,
+                "height": 1,
+                "properties": {
+                    "markdown": "# Elasticsearch Service"
+                }
+            }
+        ],
+        "esWidgets": [
+            {
+                "type": "text",
+                "width": 24,
+                "height": 1,
+                "properties": {
+                    "markdown": "## Overall health"
+                }
+            },
+            {
+                "type": "metric",
+                "width": 6,
+                "height": 6,
+                "properties": {
+                    "view": "timeSeries",
+                    "stacked": false,
+                    "metrics": [
+                        [
+                            "AWS/ES",
+                            "Nodes",
+                            "DomainName",
+                            "jl-test-integration-es5",
+                            "ClientId",
+                            "596205514787"
+                        ]
+                    ],
+                    "region": "us-east-1",
+                    "title": "Total nodes (Count)",
+                    "period": 60,
+                    "stat": "Minimum",
+                    "yAxis": {
+                        "left": {
+                            "showUnits": false
+                        }
+                    }
+                }
+            }
+        ]
+    }
 }
