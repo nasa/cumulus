@@ -49,7 +49,7 @@
       "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
       "dataType": "MOD09GQ",
       "process": "modis",
-      "provider_path": "/",
+      "provider_path": "",
       "version": "006",
       "updatedAt": 1519154288958,
       "duplicateHandling": "replace",

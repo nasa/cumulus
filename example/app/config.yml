@@ -108,6 +108,14 @@ default:
           - '--lambdaArn'
           - function: Ref
             value: HelloWorldLambdaFunction
+        alarms:
+          TaskCountHigh:
+            alarm_description: 'There are more tasks running than the desired'
+            comparison_operator: GreaterThanThreshold
+            evaluation_periods: 1
+            metric: MemoryUtilization
+            statistic: SampleCount
+            threshold: '{{ecs.services.EcsTaskHelloWorld.count}}'
 
   activities:
     - name: EcsTaskHelloWorld
@@ -519,8 +527,7 @@ mhs3:
     shared:
       name: cumulus-data-shared
       type: shared
-  system_bucket: mhs3-internal
-
+  api_distribution_url: '{{API_DISTRIBUTION_URL}}'
 
 jk:
   stackName: jk

@@ -62,3 +62,19 @@ Note that there may be configuration changes required with a new version. Please
 When breaking changes have been introduced, the Cumulus Core team will publish a document with instructions on migrating from one version to another. *IMPORTANT:* When upgrading through many versions, each migration should be done in the order of release (if going from version 1.z.0 from 1.x.0, 1.x.0 -> 1.y.0 -> 1.z.0).
 
 The migration documents published on release can be found [here](https://nasa.github.io/cumulus/docs/upgrade/upgrade-readme).
+
+## Maintaining the current Version of a Dependency
+
+If you wish to maintain the current version for a specific dependency, run this command to ensure both your package.json and package-lock.json reference that exact version of the dependency.
+
+```shell
+npm install @cumulus/deployment@1.11.3 --save --save-exact
+```
+
+To maintain current dependencies without individually installing each one, you can run this command that will use the exact versions last saved in your package-lock.json. Note: this requires npm version 5.7.0 or higher and a package-lock.json to already exist in the project.
+
+```shell
+npm ci
+```
+
+This can be more useful than `npm install` because it is faster and will install the exact dependency versions specified in package-lock.json, while `npm install` may install a more recently published version of a dependency, especially if semantic ranges (`^1.1.0` or `~1.1.0`) are used in package.json. `npm ci` should be used when temporarily avoiding a breaking change in an updated version.

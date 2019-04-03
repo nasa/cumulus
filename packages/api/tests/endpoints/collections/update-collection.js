@@ -84,7 +84,7 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
 test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('PUT updates an existing collection', async (t) => {
-  const newPath = '/new_path';
+  const newPath = 'new_path';
   const response = await request(app)
     .put(`/collections/${t.context.testCollection.name}/${t.context.testCollection.version}`)
     .set('Accept', 'application/json')

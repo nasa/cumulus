@@ -60,23 +60,9 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
 
     const params = {
       Bucket: this.host,
-      FetchOwner: true
+      FetchOwner: true,
+      Prefix: this.path
     };
-
-    // The constructor defaults the path to '/' if one is not specified when
-    // this object is created.  That is a problem in the case of S3 because
-    // S3 keys do not start with a leading slash.  This module is mixed in to
-    // a number of different types of objects, not all of which have the same
-    // constructor arguments.  We can't override the constructor here because
-    // of that.  As a result, we need to test for a default path of '/'.
-    // also handle the edge case where leading / in key creates incorrect path
-    // by remove the first slash if it exists
-    if (this.path && this.path !== '/') {
-      if (this.path[0] === '/') {
-        this.path = this.path.substr(1);
-      }
-      params.Prefix = this.path;
-    }
 
     const objects = await aws.listS3ObjectsV2(params);
 
