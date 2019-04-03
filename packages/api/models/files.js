@@ -91,12 +91,14 @@ class FileClass extends Manager {
   async deleteFilesAfterCompare(newGranule, oldGranule) {
     const buildFileId = (f) => `${f.bucket}/${f.key}`;
 
-    const newFiles = (newGranule.files || []);
+    let newFiles = (newGranule.files || []);
     let oldFiles = (oldGranule.files || []);
+
     // all we need is the bucket and key
     oldFiles = oldFiles.map((file) => this.getBucketAndKey(file));
+    newFiles = newFiles.map((file) => this.getBucketAndKey(file));
 
-    const newFilesIds = newFiles.map((f) => buildFileId(this.getBucketAndKey(f)));
+    const newFilesIds = newFiles.map((f) => buildFileId(f));
 
     const filesToDelete = oldFiles
       .filter((oldFile) => !newFilesIds.includes(buildFileId(oldFile)));
