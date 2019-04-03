@@ -4,6 +4,7 @@
 
 const sinon = require('sinon');
 const test = require('ava');
+const get = require('lodash.get');
 
 const configFixture = require('./fixtures/config.json');
 const aliasFixture = require('./fixtures/aliases.json');
@@ -308,4 +309,33 @@ test.serial('addLambdaDeadLetterQueues adds dead letter queue to the sqs configu
   const actual = kes.config.lambdas.jobs.deadletterqueue;
   const expected = 'jobsDeadLetterQueue';
   t.is(expected, actual);
+});
+
+test.serial('buildCWDashboard creates alarm widgets', (t) => {
+  const kes = t.context.kes;
+  // each ECS service has a default alarm
+  const ecsDefaultAlarmCount = Object.keys(kes.config.ecs.services).length;
+
+  // custom ECS alarms
+  const alarmReducer = (accumulator, serviceName) => {
+    const service = kes.config.ecs.services[serviceName];
+    const numberOfAlarms = (service.alarms) ? Object.keys(service.alarms).length : 0;
+    return accumulator + numberOfAlarms;
+  };
+
+  const ecsCustomAlarmCount = Object.keys(kes.config.ecs.services).reduce(alarmReducer, 0);
+  const esAlarmsCount = Object.keys(kes.config.es.alarms).length;
+
+  const dashboardWithEs = kes.buildCWDashboard(kes.config.dashboard, kes.config.ecs, kes.config.es, 'mystack');
+  const widgets = JSON.parse(dashboardWithEs).widgets;
+
+  // widgets for alarms
+  const alarmWidgets = widgets.filter((widget) => get(widget, 'properties.annotations.alarms'));
+  t.is(alarmWidgets.length, ecsDefaultAlarmCount + ecsCustomAlarmCount + esAlarmsCount);
+
+  // test no ES
+  const dashboardNoEs = kes.buildCWDashboard(kes.config.dashboard, kes.config.ecs, null, 'mystack');
+  const widgetsNoEs = JSON.parse(dashboardNoEs).widgets;
+  const alarmWidgetsNoEs = widgetsNoEs.filter((widget) => get(widget, 'properties.annotations.alarms'));
+  t.is(alarmWidgetsNoEs.length, ecsDefaultAlarmCount + ecsCustomAlarmCount);
 });
