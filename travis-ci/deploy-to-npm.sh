@@ -8,8 +8,7 @@ NPM_TAG=$(node ./travis-ci/npm-tag.js);
 
 echo "Publishing packages to NPM with version=${VERSION} and tag=${NPM_TAG}"
 lerna publish \
-  --no-git-tag-version \
-  --no-push \
+  --skip-git \
   --yes \
   --force-publish=* \
-  --dist-tag="$NPM_TAG"
+  --npm-tag="$NPM_TAG"
