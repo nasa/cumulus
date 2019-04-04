@@ -157,7 +157,10 @@ describe('When accessing an S3 bucket directly', () => {
       expect(whoami.UserId).toMatch(new RegExp(`.*:${username}`));
     });
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> DRY up tests.
     function executeTestsAgainst(testBucket) {
       describe('while in the the same region ', () => {
         it('the bucket contents can be listed', async () => {
@@ -192,16 +195,26 @@ describe('When accessing an S3 bucket directly', () => {
       executeTestsAgainst(protectedBucketName);
     });
 
+<<<<<<< HEAD
     // TODO [MHS, 2019-04-08] enable public test when bucket policy is applied to public buckets.
     xdescribe('against public buckets', () => {
+=======
+    describe('against public buckets', () => {
+>>>>>>> DRY up tests.
       executeTestsAgainst(publicBucketName);
     });
 
     describe('with third-party/invalid credentials', () => {
       const thirdPartyCredentials = {
+<<<<<<< HEAD
         accessKeyId: randomId('accessKeyId'),
         secretAccessKey: randomId('secretAccessKey'),
         sessionToken: randomId('sessionToken'),
+=======
+        accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+        secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+        sessionToken: 'FAKETOKENdfkjaf9rufjfdklajf',
+>>>>>>> DRY up tests.
         expiration: '2019-02-26 00:08:18+00:00'
       };
 
@@ -218,11 +231,17 @@ describe('When accessing an S3 bucket directly', () => {
           expect(await canWriteObject('us-east-1', testBucket, thirdPartyCredentials)).toBe('false');
         });
       }
+<<<<<<< HEAD
 
       describe('against protected buckets', () => {
         executeThirdPartyTestsAgainst(protectedBucketName);
       });
 
+=======
+      describe('against protected buckets', () => {
+        executeThirdPartyTestsAgainst(protectedBucketName);
+      });
+>>>>>>> DRY up tests.
       describe('against public buckets', () => {
         executeThirdPartyTestsAgainst(publicBucketName);
       });
