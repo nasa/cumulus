@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+- **CUMULUS-1223**
+  - Adds unauthenticated access for public bucket files to the distributionApi.  Public files are requested just as protected files, but now a redirect to a self signed URL will happen without checking for an accessToken cookie from EarthdataLogin.
+
 ## [v1.12.0] - 2019-4-4
 
 ### BREAKING CHANGES
@@ -41,7 +44,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Kes overrides will now abort with a warning if a workflow step is configured without a corresponding
     lambda configuration
 - **CUMULUS-1223**
-  - Adds unauthenticated access for public bucket files to the distributionApi.  Public files are requested just as protected files, but now a redirect to a self signed URL will happen without checking for an accessToken cookie from EarthdataLogin.
   - Adds convenience function `@cumulus/common/bucketsConfigJsonObject` for fetching stack's bucket configuration as an object.
 
 - **CUMULUS-853**
