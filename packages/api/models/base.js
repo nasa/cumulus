@@ -116,7 +116,7 @@ class Manager {
     const validate = ajv.compile(schemaWithAdditionalPropertiesProhibited);
     const valid = validate(item);
     if (!valid) {
-      const err = new Error('The record has validation errors');
+      const err = new Error('The record has validation errors: ' + JSON.stringify(validate.errors));
       err.name = 'SchemaValidationError';
       err.detail = JSON.stringify(validate.errors);
       throw err;
