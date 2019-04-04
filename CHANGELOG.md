@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.12.0] - 2019-4-4
+
 ### BREAKING CHANGES
 
 - **CUMULUS-1139**
@@ -33,6 +35,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- **CUMULUS-777**
+  - Added new cookbook entry on configuring Cumulus to track ancillary files.
+- **CUMULUS-1183**
+  - Kes overrides will now abort with a warning if a workflow step is configured without a corresponding
+    lambda configuration
 - **CUMULUS-1223**
   - Adds convenience function `@cumulus/common/bucketsConfigJsonObject` for fetching stack's bucket configuration as an object .
 - **CUMULUS-853**
@@ -155,6 +162,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - **CUMULUS-1218** Reconciliation report will now scan only completed granules.
+- `@cumulus/api` files and granules were not getting indexed correctly because files indexing was failing in `db-indexer`
+- `@cumulus/deployment` A bug in the Cloudformation template was preventing the API from being able to be launched in a VPC, updated the IAM template to give the permissions to be able to run the API in a VPC
 
 ### Deprecated
 
@@ -961,7 +970,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.11.3...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.12.0...HEAD
+[v1.12.0]: https://github.com/nasa/cumulus/compare/v1.11.3...v1.12.0
 [v1.11.3]: https://github.com/nasa/cumulus/compare/v1.11.2...v1.11.3
 [v1.11.2]: https://github.com/nasa/cumulus/compare/v1.11.1...v1.11.2
 [v1.11.1]: https://github.com/nasa/cumulus/compare/v1.11.0...v1.11.1

@@ -33,6 +33,7 @@ const util = require('util');
 const { sleep } = require('@cumulus/common/util');
 
 const Lambda = require('./lambda');
+const validateWorkflowDefinedLambdas = require('./configValidators');
 const { crypto } = require('./crypto');
 const { fetchMessageAdapter } = require('./adapter');
 const { extractCumulusConfigFromSF, generateTemplates } = require('./message');
@@ -62,6 +63,7 @@ class UpdatedKes extends Kes {
   constructor(config) {
     super(config);
     this.Lambda = Lambda;
+    validateWorkflowDefinedLambdas(config);
     this.messageAdapterGitPath = `${config.repo_owner}/${config.message_adapter_repo}`;
   }
 
@@ -581,7 +583,7 @@ class UpdatedKes extends Kes {
    *
    * @param {string} stateObjectResource - CF template resource reference for a state function
    * @returns {string} The correct reference to the lambda function, either a hashed alias
-   * reference or the passed in resource if hasing/versioning isn't possible for this resource
+   * reference or the passed in resource if hashing/versioning isn't possible for this resource
    * @throws {Error} Throws an error if the passed in stateObjectResource isn't a LambdaFunctionArn
    * reference
    */
