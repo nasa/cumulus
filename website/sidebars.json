@@ -70,7 +70,8 @@
       "data-cookbooks/error-handling",
       "data-cookbooks/choice-states",
       "data-cookbooks/cloudwatch-retention",
-      "data-cookbooks/browse-generation"
+      "data-cookbooks/browse-generation",
+      "data-cookbooks/tracking-files"
     ]
   },
   "Operator Docs": {

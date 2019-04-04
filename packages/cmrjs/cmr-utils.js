@@ -486,6 +486,25 @@ function mergeURLs(original, updated = [], removed = []) {
 }
 
 /**
+ * Updates CMR JSON file with stringified 'metadataObject'
+ *
+ * @param {Object} metadataObject - JSON Object to stringify
+ * @param {Object} cmrFile - cmr file object to write body to
+ * @returns {Promise} returns promised aws.promiseS3Upload response
+ */
+async function uploadUMMGJSONCMRFile(metadataObject, cmrFile) {
+  const tags = await aws.s3GetObjectTagging(cmrFile.bucket, getS3KeyOfFile(cmrFile));
+  const tagsQueryString = aws.s3TagSetToQueryString(tags.TagSet);
+  return aws.promiseS3Upload({
+    Bucket: cmrFile.bucket,
+    Key: getS3KeyOfFile(cmrFile),
+    Body: JSON.stringify(metadataObject),
+    Tagging: tagsQueryString,
+    ContentType: 'application/json'
+  });
+}
+
+/**
  * After files are moved, create new online access URLs and then update the S3
  * UMMG cmr.json file with this information.
  *
@@ -515,14 +534,7 @@ async function updateUMMGMetadata({
   const mergedURLs = mergeURLs(originalURLs, newURLs, removedURLs);
   _set(metadataObject, 'RelatedUrls', mergedURLs);
 
-  const tags = await aws.s3GetObjectTagging(cmrFile.bucket, getS3KeyOfFile(cmrFile));
-  const tagsQueryString = aws.s3TagSetToQueryString(tags.TagSet);
-  await aws.promiseS3Upload({
-    Bucket: cmrFile.bucket,
-    Key: getS3KeyOfFile(cmrFile),
-    Body: JSON.stringify(metadataObject),
-    Tagging: tagsQueryString
-  });
+  await uploadUMMGJSONCMRFile(metadataObject, cmrFile);
   return metadataObject;
 }
 
@@ -551,6 +563,7 @@ function generateEcho10XMLString(granule) {
   });
   return js2xmlParser.parse('Granule', mapping);
 }
+
 /**
  * Updates CMR xml file with 'xml' string
  *
@@ -562,7 +575,11 @@ async function uploadEcho10CMRFile(xml, cmrFile) {
   const tags = await aws.s3GetObjectTagging(cmrFile.bucket, getS3KeyOfFile(cmrFile));
   const tagsQueryString = aws.s3TagSetToQueryString(tags.TagSet);
   return aws.promiseS3Upload({
-    Bucket: cmrFile.bucket, Key: getS3KeyOfFile(cmrFile), Body: xml, Tagging: tagsQueryString
+    Bucket: cmrFile.bucket,
+    Key: getS3KeyOfFile(cmrFile),
+    Body: xml,
+    Tagging: tagsQueryString,
+    ContentType: 'application/xml'
   });
 }
 /**

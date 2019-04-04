@@ -251,13 +251,16 @@ aj:
   stackName: aj-integration
   stackNameNoDash: AjIntegration
 
-aimee-test:
-  stackName: aimee-test
-  stackNameNoDash: aimeeTest
+aimee:
+  stackName: aimee
+  stackNameNoDash: aimee
 
 lf:
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus
+
+  es:
+    name: estest
 
   buckets:
     internal:
@@ -481,7 +484,7 @@ jc:
   ecs:
     services:
       EcsTaskHelloWorld:
-        image: 000000000000.dkr.ecr.us-east-1.amazonaws.com/cumulus-dev-testing:latest
+        image: '{{ECR_TESTING_IMAGE_ARN}}'
         cpu: 400
         memory: 700
         count: 1
