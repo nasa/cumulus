@@ -91,7 +91,7 @@ describe('Distribution API', () => {
       accessToken = await getTestAccessToken();
       fileChecksum = await generateChecksumFromStream(
         'cksum',
-        fs.createReadStream(require.resolve(protectedS3Data[0]))
+        fs.createReadStream(require.resolve(s3Data[0]))
       );
       publicFilePath = `/${publicBucketName}/${fileKey}`;
       protectedFilePath = `/${protectedBucketName}/${fileKey}`;
