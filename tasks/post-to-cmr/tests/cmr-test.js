@@ -161,13 +161,27 @@ test.serial('postToCMR continues without metadata file if there is skipMetaCheck
   const newGranule = [{
     granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090555',
     files: [{
-      filename: `s3://${t.context.bucket}/to/file.xml`
+      filename: `s3://${t.context.bucket}/to/file.blah`
     }]
   }];
   newPayload.input.granules = newGranule;
   newPayload.config.skipMetaCheck = true;
   const granuleId = newPayload.input.granules[0].granuleId;
-  const key = `${granuleId}.cmr.xml`;
+
+  const output = await postToCMR(newPayload);
+  t.is(output.granules[0].granuleId, granuleId);
+});
+
+test.serial('postToCMR continues with skipMetaCheck even if any granule is missing a metadata file', async (t) => {
+  const newPayload = t.context.payload;
+  const newGranule = {
+    granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090555',
+    files: [{
+      filename: `s3://${t.context.bucket}/to/file.blah`
+    }]
+  };
+  newPayload.input.granules.push(newGranule);
+  newPayload.config.skipMetaCheck = true;
 
   sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
     result
@@ -175,11 +189,15 @@ test.serial('postToCMR continues without metadata file if there is skipMetaCheck
   try {
     await aws.promiseS3Upload({
       Bucket: t.context.bucket,
-      Key: key,
+      Key: `${newPayload.input.granules[0].granuleId}.cmr.xml`,
       Body: fs.createReadStream('tests/data/meta.xml')
     });
     const output = await postToCMR(newPayload);
-    t.is(output.granules[0].granuleId, granuleId);
+    t.is(
+      output.granules[0].cmrLink,
+      `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+    );
+    t.is(output.granules[1].cmrLink, undefined);
   }
   finally {
     cmrjs.CMR.prototype.ingestGranule.restore();
