@@ -76,6 +76,47 @@ class BucketsConfig {
   nameByKey(configKey) {
     return this.buckets[configKey].name;
   }
+
+  /**
+   * return a list of configured buckets of desired type.
+   *
+   * @param {string/Array} types - types of buckets to return
+   * @returns {Array<Object>} - array of buckets that are of desired types
+   */
+  bucketsOfType(types) {
+    const checkTypes = [].concat(types);
+    return Object.keys(this.buckets).map((key) => {
+      if (checkTypes.includes(this.buckets[key].type)) {
+        return this.buckets[key];
+      }
+      return undefined;
+    }).filter((valid) => valid);
+  }
+
+  /** @returns {Array} list of private buckets */
+  privateBuckets() {
+    return this.bucketsOfType('private');
+  }
+
+  /** @returns {Array} list of protected buckets */
+  protectedBuckets() {
+    return this.bucketsOfType('protected');
+  }
+
+  /** @returns {Array} list of public buckets */
+  publicBuckets() {
+    return this.bucketsOfType('public');
+  }
+
+  /** @returns {Array} list of shared buckets */
+  sharedBuckets() {
+    return this.bucketsOfType('shared');
+  }
+
+  /** @returns {Array} list of internal buckets */
+  internalBuckets() {
+    return this.bucketsOfType('internal');
+  }
 }
 
 
