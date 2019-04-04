@@ -33,7 +33,7 @@
       }
     },
     "skipMetaCheck": {
-      "description": "Adds the option to allow PostToCMR to pass when uploading a granule without a Meta file.",
+      "description": "Adds the option to allow PostToCMR to pass when processing a granule without a metadata file.",
       "default": false,
       "type": "boolean"
     }
