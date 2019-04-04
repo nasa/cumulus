@@ -30,7 +30,6 @@ services:
     environment:
       - SSH_USERS=user:2000:2000
       - SFTP_MODE=true
-      - SSH_ENABLE_ROOT=true
   elasticsearch:
     image: elasticsearch:5.6
     ports:
