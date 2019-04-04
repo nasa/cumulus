@@ -12,7 +12,7 @@
     "test": "nyc lerna run --ignore cumulus-integration-tests test",
     "bootstrap": "lerna bootstrap --force-local",
     "bootstrap-no-build": "lerna bootstrap --force-local --ignore-scripts",
-    "update": "lerna publish --skip-git --skip-npm --exact",
+    "update": "lerna publish --skip-git --skip-npm --exact --force-publish",
     "publish": "lerna publish --skip-git --yes --exact",
     "clean": "lerna clean && rm -rf ./node_modules",
     "build": "lerna run --ignore cumulus-integration-tests build",
