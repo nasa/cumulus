@@ -125,8 +125,8 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
   const { granId, distEndpoint } = t.context;
   const published = false;
   const fakeBuckets = { private: { type: 'private', name: 'private' } };
-  const fakeBucketsConfigDefaults = sinon.fake.returns(fakeBuckets);
-  const restoreBucketsConfigDefaults = cmrUtils.__set__('bucketsConfigDefaults', fakeBucketsConfigDefaults);
+  const fakeBucketsConfigJsonObject = sinon.fake.returns(fakeBuckets);
+  const restoreBucketsConfigDefaults = cmrUtils.__set__('bucketsConfigJsonObject', fakeBucketsConfigJsonObject);
 
   const fakeUpdateCMRMetadata = sinon.fake.resolves(true);
   const restoreUpdateEcho10XMLMetadata = cmrUtils.__set__('updateEcho10XMLMetadata', fakeUpdateCMRMetadata);
@@ -178,8 +178,8 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
   const restorePublishECHO10XML2CMR = cmrUtils.__set__('publishECHO10XML2CMR', fakePublishECHO10XML2CMR);
 
   const fakeBuckets = { private: { type: 'private', name: 'private' } };
-  const fakeBucketsConfigDefaults = sinon.fake.returns(fakeBuckets);
-  const restoreBucketsConfigDefaults = cmrUtils.__set__('bucketsConfigDefaults', fakeBucketsConfigDefaults);
+  const fakeBucketsConfigJsonObject = sinon.fake.returns(fakeBuckets);
+  const restoreBucketsConfigDefaults = cmrUtils.__set__('bucketsConfigJsonObject', fakeBucketsConfigJsonObject);
 
 
   const bucket = randomId('bucket');
@@ -228,8 +228,8 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
   } = t.context;
 
   const defaultBucketsConfig = { private: { type: 'private', name: 'private' } };
-  const fakeBucketsConfigDefaults = sinon.fake.returns(defaultBucketsConfig);
-  const restoreBucketsConfigDefaults = cmrUtils.__set__('bucketsConfigDefaults', fakeBucketsConfigDefaults);
+  const fakeBucketsConfigJsonObject = sinon.fake.returns(defaultBucketsConfig);
+  const restoreBucketsConfigDefaults = cmrUtils.__set__('bucketsConfigJsonObject', fakeBucketsConfigJsonObject);
 
   const fakeUpdateUMMGMetadata = sinon.fake.resolves({ fake: 'metadata' });
   const restoreUpdateUMMGMetadata = cmrUtils.__set__('updateUMMGMetadata', fakeUpdateUMMGMetadata);
