@@ -86,7 +86,7 @@ default:
     desiredInstances: 1
     availabilityZone: us-east-1b
     amiid: ami-a7a242da
-    publicIp: true
+    publicIp: false 
     restartTasksOnDeploy: true
     docker:
       username: cumulususer
