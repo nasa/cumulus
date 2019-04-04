@@ -477,7 +477,7 @@ In our example, the payload would look like the following.  **Note**: The fileTy
           },
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-            "fileType": "meatadata",
+            "fileType": "metadata",
             "bucket": "cumulus-test-sandbox-internal",
             "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
             "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
@@ -568,7 +568,7 @@ The ```FilesToGranules``` task utilizes the incoming payload to chose which file
           },
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-            "fileType": "meatadata",
+            "fileType": "metadata",
             "bucket": "cumulus-test-sandbox-internal",
             "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
             "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
