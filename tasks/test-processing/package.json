@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-processing",
-  "version": "1.11.3",
+  "version": "1.12.0",
   "description": "Fake processing task used for integration tests",
   "main": "index.js",
   "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/test-processing",
@@ -19,9 +19,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cumulus/common": "1.12.0",
     "@cumulus/cumulus-message-adapter-js": "^1.0.7",
-    "@cumulus/integration-tests": "1.11.3",
-    "@cumulus/common": "^1.11.3",
+    "@cumulus/integration-tests": "1.12.0",
     "lodash.clonedeep": "^4.5.0"
   },
   "devDependencies": {
