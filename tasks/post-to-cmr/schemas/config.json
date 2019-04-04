@@ -32,7 +32,7 @@
         "password": { "type": "string" }
       }
     },
-    "metaCheck": {
+    "skipMetaCheck": {
       "description": "Adds the option to allow PostToCMR to pass when uploading a granule without a Meta file.",
       "default": false,
       "type": "boolean"
