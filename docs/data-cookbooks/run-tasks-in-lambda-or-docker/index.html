@@ -1,0 +1,102 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Run Step Function Tasks in Lambda or Docker · Cumulus Documentation</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="&lt;h1&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; id=&quot;running-step-function-tasks-in-aws-lambda-or-docker&quot;&gt;&lt;/a&gt;&lt;a href=&quot;#running-step-function-tasks-in-aws-lambda-or-docker&quot; aria-hidden=&quot;true&quot; class=&quot;hash-link&quot;&gt;&lt;svg class=&quot;hash-link-icon&quot; aria-hidden=&quot;true&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;Running Step Function Tasks in AWS Lambda or Docker&lt;/h1&gt;
+"/><meta name="docsearch:version" content="1.12.0"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Run Step Function Tasks in Lambda or Docker · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/"/><meta property="og:description" content="&lt;h1&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; id=&quot;running-step-function-tasks-in-aws-lambda-or-docker&quot;&gt;&lt;/a&gt;&lt;a href=&quot;#running-step-function-tasks-in-aws-lambda-or-docker&quot; aria-hidden=&quot;true&quot; class=&quot;hash-link&quot;&gt;&lt;svg class=&quot;hash-link-icon&quot; aria-hidden=&quot;true&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;Running Step Function Tasks in AWS Lambda or Docker&lt;/h1&gt;
+"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>1.12.0</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class=""><a href="/cumulus/docs/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class=""><a href="/cumulus/docs/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class=""><a href="/cumulus/docs/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class=""><a href="/cumulus/docs/team" target="_self">Team</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="running-step-function-tasks-in-aws-lambda-or-docker"></a><a href="#running-step-function-tasks-in-aws-lambda-or-docker" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Running Step Function Tasks in AWS Lambda or Docker</h1>
+<h2><a class="anchor" aria-hidden="true" id="overview"></a><a href="#overview" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Overview</h2>
+<p><a href="https://docs.aws.amazon.com/step-functions/latest/dg/concepts-tasks.html">AWS Step Function Tasks</a> can run tasks on <a href="https://aws.amazon.com/lambda/">AWS Lambda</a> or on <a href="https://aws.amazon.com/ecs/">AWS Elastic Container Service (ECS)</a> as a Docker container.</p>
+<p>Lambda provides serverless architecture, providing the best option for minimizing cost and server management. ECS provides the fullest extent of AWS EC2 resources via the flexibility to execute arbitrary code on any AWS EC2 instance type.</p>
+<h2><a class="anchor" aria-hidden="true" id="when-to-use-lambda"></a><a href="#when-to-use-lambda" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>When to use Lambda</h2>
+<p>You should use AWS Lambda whenever all of the following are true:</p>
+<ul>
+<li>The task runs on one of the supported <a href="https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html">Lambda Runtimes</a>. At time of this writing, supported runtimes include versions of python, Java, Ruby, node.js, Go and .NET.</li>
+<li>The lambda package is less than 50 MB in size, zipped.</li>
+<li>The task consumes less than each of the following resources:
+<ul>
+<li>3008 MB memory allocation</li>
+<li>512 MB disk storage (must be written to <code>/tmp</code>)</li>
+<li>15 minutes of execution time</li>
+</ul></li>
+</ul>
+<p>See <a href="https://docs.aws.amazon.com/lambda/latest/dg/limits.html">this page</a> for a complete and up-to-date list of AWS Lambda limits.</p>
+<p>If your task requires more than any of these resources or an unsupported runtime, creating a Docker image which can be run on ECS is the way to go. Cumulus supports running any lambda package as a Docker container with <a href="https://github.com/nasa/cumulus-ecs-task"><code>cumulus-ecs-task</code></a>.</p>
+<h2><a class="anchor" aria-hidden="true" id="step-function-activities-and-cumulus-ecs-task"></a><a href="#step-function-activities-and-cumulus-ecs-task" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Step Function Activities and <code>cumulus-ecs-task</code></h2>
+<p><a href="https://docs.aws.amazon.com/step-functions/latest/dg/concepts-activities.html">Step Function Activities</a> enable a state machine task to &quot;publish&quot; an activity task which can be picked up by any activity worker. Activity workers can run pretty much anywhere, but Cumulus workflows support the <a href="https://github.com/nasa/cumulus-ecs-task"><code>cumulus-ecs-task</code></a> activity worker. The <code>cumulus-ecs-task</code> worker runs as a Docker container on the Cumulus ECS cluster.</p>
+<p>The <code>cumulus-ecs-task</code> container takes an AWS Lambda Amazon Resource Name (ARN) as an argument (see <code>--lambdaArn</code> in the example below). This ARN argument is defined at deployment time. The <code>cumulus-ecs-task</code> worker polls for new Step Function Activity Tasks. When a Step Function executes, the worker (container) picks up the activity task and runs the code contained in the lambda package defined on deployment.</p>
+<h2><a class="anchor" aria-hidden="true" id="example-replacing-aws-lambda-with-a-docker-container-run-on-ecs"></a><a href="#example-replacing-aws-lambda-with-a-docker-container-run-on-ecs" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Example: Replacing AWS Lambda with a Docker container run on ECS</h2>
+<p>Whether using AWS Lambda or Step Functions Activities, there will be a lambda package defined in <code>lambdas.yml</code>:</p>
+<pre><code class="hljs css language-yaml"><span class="hljs-attr">QueueGranules:</span>
+<span class="hljs-attr">  handler:</span> <span class="hljs-string">index.handler</span>
+<span class="hljs-attr">  timeout:</span> <span class="hljs-number">900</span>
+<span class="hljs-attr">  memory:</span> <span class="hljs-number">3008</span>
+<span class="hljs-attr">  source:</span> <span class="hljs-string">node_modules/@cumulus/queue-granules/dist/</span>
+<span class="hljs-attr">  useMessageAdapter:</span> <span class="hljs-literal">true</span>
+</code></pre>
+<p>Given the <code>QueueGranules</code> lambda package is already used in a Step Function State Machine definition, the following will exist in a workflow YAML file:</p>
+<pre><code class="hljs css language-yaml"><span class="hljs-attr">    QueueGranules:</span>
+<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
+<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${QueueGranulesLambdaFunction.Arn}</span>
+<span class="hljs-attr">      Next:</span> <span class="hljs-string">StopStatus</span>
+</code></pre>
+<p>Given it has been discovered this task can no longer run in AWS Lambda, it can be run on the Cumulus ECS cluster by including the following in <code>app/config.yml</code>:</p>
+<pre><code class="hljs css language-yaml"><span class="hljs-attr">  ecs:</span>
+<span class="hljs-attr">    instanceType:</span> <span class="hljs-string">t2.large</span>
+<span class="hljs-attr">    desiredInstances:</span> <span class="hljs-number">1</span>
+<span class="hljs-attr">    services:</span>
+<span class="hljs-attr">      QueueGranules:</span>
+<span class="hljs-attr">        docker:</span> <span class="hljs-literal">true</span>
+<span class="hljs-attr">        image:</span> <span class="hljs-string">cumuluss/cumulus-ecs-task:1.2.5</span>
+<span class="hljs-attr">        memory:</span> <span class="hljs-number">4000</span>
+<span class="hljs-attr">        count:</span> <span class="hljs-number">1</span>
+<span class="hljs-attr">        envs:</span>
+<span class="hljs-attr">          AWS_DEFAULT_REGION:</span>
+<span class="hljs-attr">            function:</span> <span class="hljs-attr">Fn::Sub</span>
+<span class="hljs-attr">            value:</span> <span class="hljs-string">'${AWS::Region}'</span>
+<span class="hljs-attr">        commands:</span>
+<span class="hljs-bullet">          -</span> <span class="hljs-string">cumulus-ecs-task</span>
+<span class="hljs-bullet">          -</span> <span class="hljs-string">'--activityArn'</span>
+<span class="hljs-attr">          - function:</span> <span class="hljs-string">Ref</span>
+<span class="hljs-attr">            value:</span> <span class="hljs-string">QueueGranulesActivity</span>
+<span class="hljs-bullet">          -</span> <span class="hljs-string">'--lambdaArn'</span>
+<span class="hljs-attr">          - function:</span> <span class="hljs-string">Ref</span>
+<span class="hljs-attr">            value:</span> <span class="hljs-string">QueueGranulesLambdaFunction</span>
+
+<span class="hljs-attr">  activities:</span>
+<span class="hljs-attr">    - name:</span> <span class="hljs-string">QueueGranules</span>
+</code></pre>
+<p>and then modifying the corresponding Step Function State Machine definition in a workflow YAML file:</p>
+<pre><code class="hljs css language-yaml"><span class="hljs-attr">    QueueGranules:</span>
+<span class="hljs-attr">      Type:</span> <span class="hljs-string">Task</span>
+<span class="hljs-attr">      Resource:</span> <span class="hljs-string">${QueueGranulesActivity}</span>
+<span class="hljs-attr">      Next:</span> <span class="hljs-string">StopStatus</span>
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="how-do-i-name-my-resources-a-short-primer-on-cumulus-resource-naming-conventions"></a><a href="#how-do-i-name-my-resources-a-short-primer-on-cumulus-resource-naming-conventions" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>How do I name my resources? A short primer on Cumulus resource naming conventions</h2>
+<p>Cumulus deployments currently depend on the <a href="https://github.com/developmentseed/kes"><code>kes</code></a> cli tool. <code>kes</code> references values in <code>app/config.yml</code>, <code>iam/config.yml</code>, lambda and workflow <code>.yml</code> files to populate the cloudformation templates that are a part of the <code>@cumulus/deployment</code> package. <code>kes</code> generates final cloudformation files and uploads them to AWS Cloudformation, creating or updating AWS Cloudformation Stacks.</p>
+<p>When deploying AWS Lambdas and AWS Activities as detailed above, note the following naming conventions:</p>
+<ul>
+<li><code>QueueGranules</code> in <code>lambdas.yml</code>: When kes generates the final cloudformation file, it will define a resource called <code>QueueGranulesLambdaFunction</code>. A valid lambda function resource name, such as <code>QueueGranulesLambdaFunction</code>, must be used in <code>app/config.yml</code> when passed as a command argument to <code>cumulus-ecs-task</code>.</li>
+<li><code>QueueGranules</code> in <code>app/config.yml</code>: The string <code>QueueGranules</code> exists twice in the <code>app/config.yml</code> above.
+<ul>
+<li>The first occurrence is as a key under <code>services</code>. This key provides a descriptive prefix when naming the corresponding ECS Service. It will be included in final cloudformation YAML as an <code>AWS::ECS::Service</code> resource with the name <code>QueueGranulesECSService</code>. This ECS Service name prefix (<code>QueueGranules</code> in this example) can be anything since the service is not referenced in any other part of the deployment at this time.</li>
+<li>The second occurrence of <code>QueueGranules</code> is as a value under <code>activities: - name:</code>. The value of <code>activites: - name:</code> can be anything, but the <code>--activityArn</code> command argument passed to <code>cumulus-ecs-task</code> must use this value plus <code>Activity</code> as a suffix (<code>QueueGranulesActivity</code> in this example).</li>
+</ul></li>
+</ul>
+<h2><a class="anchor" aria-hidden="true" id="final-note"></a><a href="#final-note" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Final Note</h2>
+<p>Step Function Activities and AWS Lambda are not the only ways to run tasks in an AWS Step Function. Learn more about other service integrations, including direct ECS integration via the <a href="https://docs.aws.amazon.com/step-functions/latest/dg/concepts-connectors.html">AWS Service Integrations</a> page.</p>
+</span></div></article></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#overview">Overview</a></li><li><a href="#when-to-use-lambda">When to use Lambda</a></li><li><a href="#step-function-activities-and-cumulus-ecs-task">Step Function Activities and <code>cumulus-ecs-task</code></a></li><li><a href="#example-replacing-aws-lambda-with-a-docker-container-run-on-ecs">Example: Replacing AWS Lambda with a Docker container run on ECS</a></li><li><a href="#how-do-i-name-my-resources-a-short-primer-on-cumulus-resource-naming-conventions">How do I name my resources? A short primer on Cumulus resource naming conventions</a></li><li><a href="#final-note">Final Note</a></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>

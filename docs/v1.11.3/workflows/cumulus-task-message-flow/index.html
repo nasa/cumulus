@@ -1,0 +1,168 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Cumulus Tasks: Message Flow · Cumulus Documentation</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="&lt;h1&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; id=&quot;cumulus-tasks-message-flow&quot;&gt;&lt;/a&gt;&lt;a href=&quot;#cumulus-tasks-message-flow&quot; aria-hidden=&quot;true&quot; class=&quot;hash-link&quot;&gt;&lt;svg class=&quot;hash-link-icon&quot; aria-hidden=&quot;true&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;Cumulus Tasks: Message Flow&lt;/h1&gt;
+"/><meta name="docsearch:version" content="v1.11.3"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Cumulus Tasks: Message Flow · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/"/><meta property="og:description" content="&lt;h1&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; id=&quot;cumulus-tasks-message-flow&quot;&gt;&lt;/a&gt;&lt;a href=&quot;#cumulus-tasks-message-flow&quot; aria-hidden=&quot;true&quot; class=&quot;hash-link&quot;&gt;&lt;svg class=&quot;hash-link-icon&quot; aria-hidden=&quot;true&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;Cumulus Tasks: Message Flow&lt;/h1&gt;
+"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>v1.11.3</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/v1.11.3/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class=""><a href="/cumulus/docs/v1.11.3/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class=""><a href="/cumulus/docs/v1.11.3/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/v1.11.3/team" target="_self">Team</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><i></i></div><h2><i>›</i><span>What are Cumulus Workflows?</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">About Cumulus</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/cumulus-docs-readme">Cumulus Description</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/architecture">Cumulus Architecture</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/glossary">Cumulus Glossary</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/team">Team</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">What are Cumulus Workflows?</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/workflows/workflows-readme">Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/workflows/protocol">Workflow Protocol</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/workflows/input_output">Workflows Input &amp; Output</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cumulus/docs/v1.11.3/workflows/cumulus-task-message-flow">Cumulus Tasks: Message Flow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/workflows/developing-workflow-tasks">Developing Workflow Tasks</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/workflows/lambda">Develop Lambda Functions</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/workflows/docker">Dockerizing Data Processing</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/workflows/workflow-configuration-how-to">Workflow Configuration How To&#x27;s</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/workflows/workflow-triggers">Workflow Triggers</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Deployment</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/deployment/deployment-readme">How to Deploy Cumulus</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/deployment/create_bucket">Creating an S3 Bucket</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/deployment/iam_roles">Cumulus IAM Roles</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/deployment/obtain_cumulus_packages">Obtaining Cumulus Packages</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/deployment/config_descriptions">Configuration Descriptions</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/deployment/troubleshoot_deployment">Troubleshooting Cumulus Deployment</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Additional Features</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/data_in_dynamodb">Cumulus Metadata in DynamoDB</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/features/dead_letter_queues">Dead Letter Queues</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/ems_reporting">EMS Reporting</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/features/execution_payload_retention">Execution Payload Retention</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/lambda_versioning">Lambda Versioning</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Cumulus Versions</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/upgrade/upgrade-readme">Upgrading Cumulus</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/upgrade/1.6.0">Upgrading to Cumulus 1.6.0</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/upgrade/1.7.0">Upgrading to Cumulus 1.7.0</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/upgrade/1.9.0">Upgrading to Cumulus 1.9.0</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/upgrade/1.11.0">Upgrading to Cumulus 1.11.0</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Troubleshooting</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/system-documentation/system-documentation">Troubleshooting Cumulus</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Cumulus Development</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/adding-a-task">Contributing a Task</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/docs-how-to">Cumulus Documentation: How To&#x27;s</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              const headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                if (event.target.tagName === 'A') {
+                  document.body.classList.remove('tocActive');
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="cumulus-tasks-message-flow"></a><a href="#cumulus-tasks-message-flow" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Cumulus Tasks: Message Flow</h1>
+<p>Cumulus Tasks comprise Cumulus Workflows and are either AWS Lambda tasks or AWS Elastic Container Service (ECS) activities. Cumulus Tasks permit a payload as input to the main task application code. The task payload is additionally wrapped by the <a href="https://github.com/nasa/cumulus-message-adapter">Cumulus Message Adapter</a>. The Cumulus Message Adapter supplies additional information supporting message templating and metadata management of these workflows.</p>
+<p><img src="/cumulus/docs/assets/cumulus-task-message-flow.png" alt=""></p>
+<p>The steps in this flow are detailed in sections below.</p>
+<h2><a class="anchor" aria-hidden="true" id="cumulus-message-format"></a><a href="#cumulus-message-format" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Cumulus Message Format</h2>
+<p>Cumulus Messages come in 2 flavors: The full <strong>Cumulus Message</strong> and the <strong>Cumulus Remote Message</strong>. The Cumulus Remote Message points to a full Cumulus Message stored in S3 because of size limitations.</p>
+<p>A full <strong>Cumulus Message</strong> has the 4 following keys:</p>
+<ul>
+<li><strong><code>workflow_config</code>:</strong> Definition-time information to set up tasks. Optionally includes configuration for each task in the workflow, keyed by task name.</li>
+<li><strong><code>cumulus_meta</code>:</strong> System runtime information that should generally not be touched outside of Cumulus library code or the Cumulus Message Adapter. Stores meta information about the workflow such as the state machine name and the current workflow execution's name. This information is used to look up the current active task. The name of the current active task is used to look up the corresponding task's config in <code>workflow_config</code>.</li>
+<li><strong><code>meta</code>:</strong> Runtime information captured by the workflow operators. Stores execution-agnostic variables which can be re-used via templates in <code>workflow_config</code>.</li>
+<li><strong><code>payload</code>:</strong> Payload is runtime information for the tasks.</li>
+</ul>
+<p>Here's a simple example of a Cumulus Message:</p>
+<pre><code class="hljs css language-json">{
+  <span class="hljs-attr">"workflow_config"</span>: {
+    <span class="hljs-attr">"Example"</span>: {
+      <span class="hljs-attr">"inlinestr"</span>: <span class="hljs-string">"prefix{meta.foo}suffix"</span>,
+      <span class="hljs-attr">"array"</span>: <span class="hljs-string">"{[$.meta.foo]}"</span>,
+      <span class="hljs-attr">"object"</span>: <span class="hljs-string">"{{$.meta}}"</span>
+    }
+  },
+  <span class="hljs-attr">"cumulus_meta"</span>: {
+    <span class="hljs-attr">"message_source"</span>: <span class="hljs-string">"sfn"</span>,
+    <span class="hljs-attr">"state_machine"</span>: <span class="hljs-string">"arn:aws:states:us-east-1:1234:stateMachine:MySfn"</span>,
+    <span class="hljs-attr">"execution_name"</span>: <span class="hljs-string">"MyExecution__id-1234"</span>,
+    <span class="hljs-attr">"id"</span>: <span class="hljs-string">"id-1234"</span>
+  },
+  <span class="hljs-attr">"meta"</span>: {
+    <span class="hljs-attr">"foo"</span>: <span class="hljs-string">"bar"</span>
+  },
+  <span class="hljs-attr">"payload"</span>: {
+    <span class="hljs-attr">"anykey"</span>: <span class="hljs-string">"anyvalue"</span>
+  }
+}
+</code></pre>
+<p>A <strong>Cumulus Remote Message</strong> has only the keys <code>replace</code> and <code>cumulus_meta</code>.</p>
+<pre><code class="hljs css language-json">{
+  <span class="hljs-attr">"replace"</span>: {
+    <span class="hljs-attr">"Bucket"</span>: <span class="hljs-string">"cumulus-bucket"</span>,
+    <span class="hljs-attr">"Key"</span>: <span class="hljs-string">"my-large-event.json"</span>
+  },
+  <span class="hljs-attr">"cumulus_meta"</span>: {}
+}
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="cumulus-message-preparation"></a><a href="#cumulus-message-preparation" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Cumulus Message Preparation</h2>
+<p>The event coming into a Cumulus Task is assumed to be a Cumulus Message or Cumulus Remote Message and should first be handled by the functions described below before being passed to the task application code.</p>
+<h4><a class="anchor" aria-hidden="true" id="preparation-step-1-fetch-remote-event"></a><a href="#preparation-step-1-fetch-remote-event" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Preparation Step 1: Fetch remote event</h4>
+<p>Fetch remote event will fetch the full event from S3 if the cumulus message includes a <code>replace</code> key.</p>
+<p>Once &quot;my-large-event.json&quot; is fetched from S3, it's returned from the fetch remote event function. If no &quot;replace&quot; key is present, the event passed to the fetch remote event function is assumed to be a full Cumulus Message and returned as-is.</p>
+<h4><a class="anchor" aria-hidden="true" id="preparation-step-2-fetch-step-function-config"></a><a href="#preparation-step-2-fetch-step-function-config" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Preparation Step 2: Fetch step function config</h4>
+<p>Fetch step function config determines what current task is being executed. Note this is different from what lambda or activity is being executed, because the same lambda or activity can be used for different tasks. The current task name is used to load the appropriate configuration from the Cumulus Message's 'workflow_config'.</p>
+<h4><a class="anchor" aria-hidden="true" id="preparation-step-3-load-nested-event"></a><a href="#preparation-step-3-load-nested-event" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Preparation Step 3: Load nested event</h4>
+<p>Using the config returned from the previous step, load nested event resolves templates for the final config and input to send to the task's application code. Read more on URL Templating in the <a href="protocol.html#url-templating">Protocol section</a>.</p>
+<h2><a class="anchor" aria-hidden="true" id="task-application-code"></a><a href="#task-application-code" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Task Application Code</h2>
+<p>After message prep, the message passed to the task application code is of the form:</p>
+<pre><code class="hljs css language-json">{
+  <span class="hljs-attr">"input"</span>: {},
+  <span class="hljs-attr">"config"</span>: {}
+}
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="create-next-message-functions"></a><a href="#create-next-message-functions" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create Next Message functions</h2>
+<p>Whatever comes out of the task application code is used to construct an outgoing Cumulus Message.</p>
+<h4><a class="anchor" aria-hidden="true" id="create-next-message-step-1-assign-outputs"></a><a href="#create-next-message-step-1-assign-outputs" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create Next Message Step 1: Assign outputs</h4>
+<p>The config loaded from the <strong>Fetch step function config</strong> step may have a <code>cumulus_message</code> key. This can be used to &quot;dispatch&quot; fields from the task's application output to a destination in the final event output (via URL templating). Here's an example where the value of <code>input.anykey</code> would be dispatched as the value of <code>payload.out</code> in the final cumulus message:</p>
+<pre><code class="hljs css language-json">{
+  <span class="hljs-attr">"workflow_config"</span>: {
+    <span class="hljs-attr">"Example"</span>: {
+      <span class="hljs-attr">"bar"</span>: <span class="hljs-string">"baz"</span>,
+      <span class="hljs-attr">"cumulus_message"</span>: {
+        <span class="hljs-attr">"input"</span>: <span class="hljs-string">"{{$.payload.input}}"</span>,
+        <span class="hljs-attr">"outputs"</span>: [
+          {
+            <span class="hljs-attr">"source"</span>: <span class="hljs-string">"{{$.input.anykey}}"</span>,
+            <span class="hljs-attr">"destination"</span>: <span class="hljs-string">"{{$.payload.out}}"</span>
+          }
+        ]
+      }
+    }
+  },
+  <span class="hljs-attr">"cumulus_meta"</span>: {
+    <span class="hljs-attr">"task"</span>: <span class="hljs-string">"Example"</span>,
+    <span class="hljs-attr">"message_source"</span>: <span class="hljs-string">"local"</span>,
+    <span class="hljs-attr">"id"</span>: <span class="hljs-string">"id-1234"</span>
+  },
+  <span class="hljs-attr">"meta"</span>: {
+    <span class="hljs-attr">"foo"</span>: <span class="hljs-string">"bar"</span>
+  },
+  <span class="hljs-attr">"payload"</span>: {
+    <span class="hljs-attr">"input"</span>: {
+      <span class="hljs-attr">"anykey"</span>: <span class="hljs-string">"anyvalue"</span>
+    }
+  }
+}
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="create-next-message-step-2-store-remote-event"></a><a href="#create-next-message-step-2-store-remote-event" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create Next Message Step 2: Store remote event</h4>
+<p><strong>Store remote event</strong> complements <strong>Fetch remote event:</strong> If the cumulus message is too big, it will be stored in S3 and the final output of the task will be Cumulus Remove Message - an object with only the <code>replace</code> and <code>cumulus_meta</code> keys. The <code>replace</code> key identifies where the large event has been stored in S3.</p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/v1.11.3/workflows/input_output"><span class="arrow-prev">← </span><span>Workflows Input &amp; Output</span></a><a class="docs-next button" href="/cumulus/docs/v1.11.3/workflows/developing-workflow-tasks"><span>Developing Workflow Tasks</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#cumulus-message-format">Cumulus Message Format</a></li><li><a href="#cumulus-message-preparation">Cumulus Message Preparation</a></li><li><a href="#task-application-code">Task Application Code</a></li><li><a href="#create-next-message-functions">Create Next Message functions</a></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Data Cookbooks Setup · Cumulus Documentation</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="&lt;h1&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; id=&quot;setup&quot;&gt;&lt;/a&gt;&lt;a href=&quot;#setup&quot; aria-hidden=&quot;true&quot; class=&quot;hash-link&quot;&gt;&lt;svg class=&quot;hash-link-icon&quot; aria-hidden=&quot;true&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;Setup&lt;/h1&gt;
+"/><meta name="docsearch:version" content="v1.11.3"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Data Cookbooks Setup · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/"/><meta property="og:description" content="&lt;h1&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; id=&quot;setup&quot;&gt;&lt;/a&gt;&lt;a href=&quot;#setup&quot; aria-hidden=&quot;true&quot; class=&quot;hash-link&quot;&gt;&lt;svg class=&quot;hash-link-icon&quot; aria-hidden=&quot;true&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;Setup&lt;/h1&gt;
+"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>v1.11.3</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class=""><a href="/cumulus/docs/v1.11.3/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/v1.11.3/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class=""><a href="/cumulus/docs/v1.11.3/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class=""><a href="/cumulus/docs/v1.11.3/team" target="_self">Team</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><i></i></div><h2><i>›</i><span>About Cookbooks</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">About Cookbooks</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/data-cookbooks/about-cookbooks">About Cookbooks</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cumulus/docs/v1.11.3/data-cookbooks/setup">Data Cookbooks Setup</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Cookbooks</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/data-cookbooks/hello-world">HelloWorld Workflow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/data-cookbooks/sns">SNS Notification in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/data-cookbooks/sips-workflow">Science Investigator-led Processing Systems (SIPS)</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/data-cookbooks/cnm-workflow">CNM Workflow</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/data-cookbooks/error-handling">Error Handling in Workflows</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/data-cookbooks/choice-states">Choice States</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/v1.11.3/data-cookbooks/cloudwatch-retention">Cloudwatch Retention</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              const headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                if (event.target.tagName === 'A') {
+                  document.body.classList.remove('tocActive');
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="setup"></a><a href="#setup" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Setup</h1>
+<h3><a class="anchor" aria-hidden="true" id="getting-setup-to-work-with-data-cookboooks"></a><a href="#getting-setup-to-work-with-data-cookboooks" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Getting setup to work with data-cookboooks</h3>
+<p>In the following data cookbooks we'll go through things like setting up workflows, making configuration changes, and interacting with CNM. The point of this section is to set up, or at least better understand, collections, providers, and rules and how they are configured.</p>
+<h3><a class="anchor" aria-hidden="true" id="schemas"></a><a href="#schemas" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Schemas</h3>
+<p>Looking at our api schema <a href="https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js">definitions</a> can provide us with some insight into collections, providers, rules, and their attributes (and whether those are required or not). The schema for different concepts will be reference throughout this document.</p>
+<p><strong>Note:</strong> The schemas are <em>extremely</em> useful for understanding what attributes are configurable and which of those are required. Indeed, they are what the Cumulus code validates definitions (whether that be collection, provider, or others) against. Much of this document is simply providing some context to the information in the schemas.</p>
+<h3><a class="anchor" aria-hidden="true" id="collections"></a><a href="#collections" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Collections</h3>
+<p>Collections are logical sets of data objects of the same data type and version. A collection provides contextual information used by Cumulus ingest. We have a few <a href="https://github.com/nasa/cumulus/tree/master/example/data/collections">test collections</a> configured in Cumulus source for integration testing. Collections can be viewed, edited, added, and removed from the Cumulus dashboard under the &quot;Collections&quot; navigation tab. Additionally, they can be managed via the <a href="https://nasa.github.io/cumulus-api/?language=Python#list-collections">collections api</a>.</p>
+<p>The schema for collections can be found <a href="https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js">here</a> as the object assigned to <code>module.exports.collection</code> and tells us all about what values are expected, accepted, and required in a collection object (where required attribute keys are assigned as a string to the <code>required</code> attribute).</p>
+<p><strong>Break down of <a href="https://github.com/nasa/cumulus/tree/master/example/data/collections/s3_MOD09GQ_006.json">s3_MOD09GQ_006.json</a></strong></p>
+<table>
+<thead>
+<tr><th style="text-align:center">Key</th><th style="text-align:center">Value</th><th style="text-align:center">Required</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td style="text-align:center">name</td><td style="text-align:center"><code>&quot;MOD09GQ&quot;</code></td><td style="text-align:center">Yes</td><td>The name attribute designates the name of the collection. This is the name under which the collection will be displayed on the dashboard</td></tr>
+<tr><td style="text-align:center">version</td><td style="text-align:center"><code>&quot;006&quot;</code></td><td style="text-align:center">Yes</td><td>A version tag for the collection</td></tr>
+<tr><td style="text-align:center">granuleId</td><td style="text-align:center"><code>&quot;^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$&quot;</code></td><td style="text-align:center">Yes</td><td>REGEX to match granuleId</td></tr>
+<tr><td style="text-align:center">granuleIdExtraction</td><td style="text-align:center"><code>&quot;(MOD09GQ\..*)(\.hdf|\.cmr|_ndvi\.jpg)&quot;</code></td><td style="text-align:center">Yes</td><td>REGEX that extracts granuleId from file names</td></tr>
+<tr><td style="text-align:center">sampleFileName</td><td style="text-align:center"><code>&quot;MOD09GQ.A2017025.h21v00.006.2017034065104.hdf&quot;</code></td><td style="text-align:center">Yes</td><td>An example filename belonging to this collection</td></tr>
+<tr><td style="text-align:center">files</td><td style="text-align:center"><code>&lt;JSON Object&gt;</code> of files defined <a href="#files-object">here</a></td><td style="text-align:center">Yes</td><td>Describe the individual files that will exist for each granule in this collection (size, browse, meta, etc.)</td></tr>
+<tr><td style="text-align:center">dataType</td><td style="text-align:center"><code>&quot;MOD09GQ&quot;</code></td><td style="text-align:center">No</td><td>Can be specified, but this value will default to the collection_name if not</td></tr>
+<tr><td style="text-align:center">duplicateHandling</td><td style="text-align:center"><code>&quot;replace&quot;</code></td><td style="text-align:center">No</td><td><code>(&quot;replace&quot;|&quot;version&quot;|&quot;skip&quot;)</code> determines granule duplicate handling scheme</td></tr>
+<tr><td style="text-align:center">process</td><td style="text-align:center"><code>&quot;modis&quot;</code></td><td style="text-align:center">No</td><td>The options for this are found in the ChooseProcess step definition in <a href="https://github.com/nasa/cumulus/tree/master/example/workflows/sips.yml">sips.yml</a></td></tr>
+<tr><td style="text-align:center">provider_path</td><td style="text-align:center"><code>&quot;cumulus-test-data/pdrs&quot;</code></td><td style="text-align:center">No</td><td>This collection is expecting to find data in a <code>cumulus-test-data/pdrs</code> directory, whether that be in S3 or at an http endpoint</td></tr>
+<tr><td style="text-align:center">meta</td><td style="text-align:center"><code>&lt;JSON Object&gt;</code> of MetaData for the collection</td><td style="text-align:center">No</td><td>MetaData for the collection. This metadata will be available to workflows for this collection via the <a href="/cumulus/docs/v1.11.3/workflows/input_output">Cumulus Message Adapter</a>.</td></tr>
+<tr><td style="text-align:center">url_path</td><td style="text-align:center"><code>&quot;{cmrMetadata.Granule.Collection.ShortName}/</code><br/><code>{substring(file.name, 0, 3)}&quot;</code></td><td style="text-align:center">No</td><td>Filename without extension</td></tr>
+</tbody>
+</table>
+<h4><a class="anchor" aria-hidden="true" id="files-object"></a><a href="#files-object" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>files-object</h4>
+<table>
+<thead>
+<tr><th style="text-align:center">Key</th><th style="text-align:center">Value</th><th style="text-align:center">Required</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td style="text-align:center">regex</td><td style="text-align:center"><code>&quot;^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$&quot;</code></td><td style="text-align:center">Yes</td><td>Regex used to identify the file</td></tr>
+<tr><td style="text-align:center">sampleFileName</td><td style="text-align:center"><code>MOD09GQ.A2017025.h21v00.006.2017034065104.hdf&quot;</code></td><td style="text-align:center">Yes</td><td>Filename used to validate the provided regex</td></tr>
+<tr><td style="text-align:center">bucket</td><td style="text-align:center"><code>&quot;internal&quot;</code></td><td style="text-align:center">Yes</td><td>Name of the bucket where the file will be stored</td></tr>
+<tr><td style="text-align:center">url_path</td><td style="text-align:center"><code>&quot;${collectionShortName}/{substring(file.name, 0, 3)}&quot;</code></td><td style="text-align:center">No</td><td>Folder used to save the granule in the bucket. Defaults to the collection url_path</td></tr>
+</tbody>
+</table>
+<h3><a class="anchor" aria-hidden="true" id="providers"></a><a href="#providers" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Providers</h3>
+<p>Providers generate and distribute input data that Cumulus obtains and sends to workflows. Schema for providers can be found <a href="https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js">here</a> in the object assigned to <code>module.exports.provider</code>. A few example provider configurations can be found <a href="https://github.com/nasa/cumulus/tree/master/example/data/providers">here</a>. Providers can be viewed, edited, added, and removed from the Cumulus dashboard under the &quot;Providers&quot; navigation tab. Additionally, they can be managed via the <a href="https://nasa.github.io/cumulus-api/?language=Python#list-providers">providers api</a>.</p>
+<p><strong>Break down of <a href="https://github.com/nasa/cumulus/tree/master/example/data/providers/s3_provider.json">s3_provider.json</a>:</strong></p>
+<table>
+<thead>
+<tr><th style="text-align:center">Key</th><th style="text-align:center">Value</th><th style="text-align:center">Required</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td style="text-align:center">id</td><td style="text-align:center"><code>&quot;s3_provider&quot;</code></td><td style="text-align:center">Yes</td><td>Unique identifier for provider</td></tr>
+<tr><td style="text-align:center">globalConnectionLimit</td><td style="text-align:center"><code>10</code></td><td style="text-align:center">Yes</td><td>Integer specifying the connection limit to the provider</td></tr>
+<tr><td style="text-align:center">protocol</td><td style="text-align:center"><code>s3</code></td><td style="text-align:center">Yes</td><td><code>(http|https|ftp|sftp|s3)</code> are current valid entries</td></tr>
+<tr><td style="text-align:center">host</td><td style="text-align:center"><code>&quot;cumulus-data-shared&quot;</code></td><td style="text-align:center">Yes</td><td>Host where the files will exist or s3 bucket if &quot;s3&quot; provider</td></tr>
+<tr><td style="text-align:center">port</td><td style="text-align:center"><code>${port_number}</code></td><td style="text-align:center">No</td><td>Port to connect with the provider on</td></tr>
+<tr><td style="text-align:center">username</td><td style="text-align:center"><code>${username}</code></td><td style="text-align:center">No</td><td>Username for access to the provider. Plain-text or encrypted. Encrypted is highly encouraged</td></tr>
+<tr><td style="text-align:center">password</td><td style="text-align:center"><code>${password}</code></td><td style="text-align:center">No</td><td>Password for accces to the provider. Plain-text or encrypted. Encrypted is highly encouraged</td></tr>
+</tbody>
+</table>
+<p><em>The above optional attributes are not shown in the example provided, but they have been included in this document for completeness</em></p>
+<h3><a class="anchor" aria-hidden="true" id="rules"></a><a href="#rules" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Rules</h3>
+<p>Rules are used by to start processing workflows and the transformation process. Rules can be invoked manually, based on a schedule, or can be configured to be triggered by either events in <a href="/cumulus/docs/v1.11.3/data-cookbooks/cnm-workflow">Kinesis</a> or SNS messages. The current best way to understand rules is to take a look at the <a href="https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js">schema</a> (specifically the object assigned to <code>module.exports.rule</code>). Rules can be viewed, edited, added, and removed from the Cumulus dashboard under the &quot;Rules&quot; navigation tab. Additionally, they can be managed via the <a href="https://nasa.github.io/cumulus-api/?language=Python#list-rules">rules api</a>.</p>
+<p>The Cumulus Core repository has an example of a Kinesis rule <a href="https://github.com/nasa/cumulus/blob/master/example/data/rules/L2_HR_PIXC_kinesisRule.json">here</a>.
+An example of an SNS rule configuration is <a href="https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/snsRuleDef.json">here</a>.</p>
+<table>
+<thead>
+<tr><th style="text-align:center">Key</th><th style="text-align:center">Value</th><th style="text-align:center">Required</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td style="text-align:center">name</td><td style="text-align:center"><code>&quot;L2_HR_PIXC_kinesisRule&quot;</code></td><td style="text-align:center">Yes</td><td>Name of the rule. This is the name under which the rule will be listed on the dashboard</td></tr>
+<tr><td style="text-align:center">workflow</td><td style="text-align:center"><code>&quot;CNMExampleWorkflow&quot;</code></td><td style="text-align:center">Yes</td><td>Name of the workflow to be run. A list of available workflows can be found on the Workflows page</td></tr>
+<tr><td style="text-align:center">provider</td><td style="text-align:center"><code>&quot;PODAAC_SWOT&quot;</code></td><td style="text-align:center">No</td><td>Configured provider's ID. This can be found on the Providers dashboard page</td></tr>
+<tr><td style="text-align:center">collection</td><td style="text-align:center"><code>&lt;JSON Object&gt;</code> collection object shown <a href="#collection-object">below</a></td><td style="text-align:center">Yes</td><td>Name and version of the collection this rule will moderate. Relates to a collection configured and found in the Collections page</td></tr>
+<tr><td style="text-align:center">rule</td><td style="text-align:center"><code>&lt;JSON Object&gt;</code> rule type and associated values - discussed <a href="#rule-object">below</a></td><td style="text-align:center">Yes</td><td>Object defining the type and subsequent attributes of the rule</td></tr>
+<tr><td style="text-align:center">state</td><td style="text-align:center"><code>&quot;ENABLED&quot;</code></td><td style="text-align:center">No</td><td><code>(&quot;ENABLED&quot;|&quot;DISABLED&quot;)</code> whether or not the rule will be active. Defaults to <code>&quot;ENABLED&quot;</code>.</td></tr>
+<tr><td style="text-align:center">tags</td><td style="text-align:center"><code>[&quot;kinesis&quot;, &quot;podaac&quot;]</code></td><td style="text-align:center">No</td><td>An array of strings that can be used to simplify search</td></tr>
+</tbody>
+</table>
+<h4><a class="anchor" aria-hidden="true" id="collection-object"></a><a href="#collection-object" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>collection-object</h4>
+<table>
+<thead>
+<tr><th style="text-align:center">Key</th><th style="text-align:center">Value</th><th style="text-align:center">Required</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td style="text-align:center">name</td><td style="text-align:center"><code>&quot;L2_HR_PIXC&quot;</code></td><td style="text-align:center">Yes</td><td>Name of a collection defined/configured in the Collections dashboard page</td></tr>
+<tr><td style="text-align:center">version</td><td style="text-align:center"><code>&quot;000&quot;</code></td><td style="text-align:center">Yes</td><td>Version number of a collection defined/configured in the Collections dashboard page</td></tr>
+</tbody>
+</table>
+<h4><a class="anchor" aria-hidden="true" id="rule-object"></a><a href="#rule-object" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>rule-object</h4>
+<table>
+<thead>
+<tr><th style="text-align:center">Key</th><th style="text-align:center">Value</th><th style="text-align:center">Required</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td style="text-align:center">type</td><td style="text-align:center"><code>&quot;kinesis&quot;</code></td><td style="text-align:center">Yes</td><td><code>(&quot;onetime&quot;|&quot;scheduled&quot;|&quot;kinesis&quot;|&quot;sns&quot;)</code> type of scheduling/workflow kick-off desired</td></tr>
+<tr><td style="text-align:center">value</td><td style="text-align:center"><code>&lt;String&gt; Object</code></td><td style="text-align:center">Depends</td><td>Discussion of valid values is <a href="#rule-value">below</a></td></tr>
+</tbody>
+</table>
+<h4><a class="anchor" aria-hidden="true" id="rule-value"></a><a href="#rule-value" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>rule-value</h4>
+<p>The <code>rule - value</code> entry depends on the type of run:</p>
+<ul>
+<li>If this is a onetime rule this can be left blank. <a href="/cumulus/docs/v1.11.3/data-cookbooks/hello-world/#execution">Example</a></li>
+<li>If this is a scheduled rule this field must hold a valid <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html">cron-type expression or rate expression</a>.</li>
+<li>If this is a kinesis rule, this must be a configured <code>${Kinesis_stream_ARN}</code>. <a href="/cumulus/docs/v1.11.3/data-cookbooks/cnm-workflow#rule-configuration">Example</a></li>
+<li>If this is an sns rule, this must be an existing <code>${SNS_Topic_Arn}</code>. <a href="https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/snsRuleDef.json">Example</a></li>
+</ul>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/v1.11.3/data-cookbooks/about-cookbooks"><span class="arrow-prev">← </span><span>About Cookbooks</span></a><a class="docs-next button" href="/cumulus/docs/v1.11.3/data-cookbooks/hello-world"><span class="function-name-prevnext">HelloWorld Workflow</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>
