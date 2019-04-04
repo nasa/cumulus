@@ -166,7 +166,7 @@ class UpdatedKes extends Kes {
     });
   }
 
-/**
+  /**
   * Build list of buckets of desired type.
   *
   * @param {Object} buckets - config buckets
