@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 - **CUMULUS-1223**
-  - Adds unauthenticated access for public bucket files to the distributionApi.  Public files are requested just as protected files, but now a redirect to a self signed URL will happen without checking for an accessToken cookie from EarthdataLogin.
+  - Adds unauthenticated access for public bucket files to the Distribution API.  Public files should be requested the same way as protected files, but for public files a redirect to a self-signed S3 URL will happen without requiring authentication with Earthdata login.
 
 ## [v1.12.0] - 2019-4-4
 
