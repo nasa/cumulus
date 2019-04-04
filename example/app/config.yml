@@ -483,7 +483,7 @@ jc:
   ecs:
     services:
       EcsTaskHelloWorld:
-        image: `{{ECR_TEST_IMAGE_ARN}}'
+        image: '{{ECR_TEST_IMAGE_ARN}}'
         cpu: 400
         memory: 700
         count: 1

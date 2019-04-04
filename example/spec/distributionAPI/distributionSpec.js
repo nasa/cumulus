@@ -100,12 +100,6 @@ describe('Distribution API', () => {
       await accessTokensModel.delete({ accessToken });
     });
 
-    it('allows unauthorized access to public documents', async () => {
-      const fileStream = await getS3ObjectReadStream(config.public_bucket, fileKey);
-      const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
-      expect(downloadChecksum).toEqual(fileChecksum);
-    });
-
     it('redirects to Earthdata login for unauthorized requests', async () => {
       const response = await got(
         fileUrl,
