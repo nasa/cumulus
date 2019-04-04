@@ -229,7 +229,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         Object.assign({},
           fileObject,
           await headObject(fileObject.bucket, fileObject.filepath),
-          { expectedMime: mime.lookup(fileObject.filepath) || 'binary/octet' })));
+          { expectedMime: mime.lookup(fileObject.filepath) || 'application/octet-stream' })));
     });
 
     it('has a payload with correct buckets, filenames, filesizes', () => {
@@ -244,8 +244,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('has expected ContentType values in s3', () => {
-      const checkContentType = headObjects.map((headObj) => headObj.expectedMime === headObj.ContentType);
-      checkContentType.forEach((contentTypeMatches) => expect(contentTypeMatches).toEqual(true));
+      headObjects.forEach((headObj) => expect(headObj.expectedMime).toEqual(headObj.ContentType));
     });
 
     it('moves files to the bucket folder based on metadata', () => {

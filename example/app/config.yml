@@ -5,7 +5,6 @@ default:
   test_configs:
     stackName: '{{stackName}}'
     bucket: '{{buckets.internal.name}}'
-    public_bucket: '{{buckets.public.name}}'
     DISTRIBUTION_ENDPOINT: '{{api_distribution_url}}'
     ems_provider: CUMULUS
     esHost: '{{esHost}}'

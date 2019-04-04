@@ -54,10 +54,7 @@ describe('Distribution API', () => {
   const accessTokensModel = new AccessToken();
 
   beforeAll(async (done) => {
-    await Promise.all([
-      uploadTestDataToBucket(config.bucket, s3Data, testDataFolder),
-      uploadTestDataToBucket(config.public_bucket, s3Data, testDataFolder)
-    ]);
+    await uploadTestDataToBucket(config.bucket, s3Data, testDataFolder);
 
     setDistributionApiEnvVars();
 
@@ -68,10 +65,7 @@ describe('Distribution API', () => {
 
   afterAll(async (done) => {
     try {
-      await Promise.all([
-        deleteFolder(config.bucket, testDataFolder),
-        deleteFolder(config.public_bucket, testDataFolder)
-      ]);
+      await deleteFolder(config.bucket, testDataFolder);
       stopDistributionApi(server, done);
     }
     catch (err) {
