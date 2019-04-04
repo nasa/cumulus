@@ -15,7 +15,7 @@ function determineIntegrationTestStackName(cb) {
   if (branch === 'master') return cb('cumulus-from-source');
 
   const stacks = {
-    'Aimee Barciauskas': 'aimee-test',
+    'Aimee Barciauskas': 'aimee',
     'Jenny Liu': 'jl',
     jennyhliu: 'jl',
     kkelly51: 'kk',
