@@ -10,6 +10,8 @@ const {
     lambda,
     s3
   },
+  BucketsConfig,
+  bucketsConfigJsonObject,
   constructCollectionId,
   testUtils: {
     randomString,
@@ -61,18 +63,10 @@ const granuleModel = new Granule();
 const cmr = new CMR(config.cmr.provider, config.cmr.clientId, config.cmr.username, config.cmr.password);
 
 async function findProtectedBucket(systemBucket, stackName) {
-  const bucketConfigs = await s3().getObject({
-    Bucket: systemBucket,
-    Key: `${stackName}/workflows/buckets.json`
-  }).promise()
-    .then((response) => response.Body.toString())
-    .then((bucketsConfigString) => JSON.parse(bucketsConfigString))
-    .then(Object.values);
-
-  const protectedBucketConfig = bucketConfigs.find((bc) => bc.type === 'protected');
-  if (!protectedBucketConfig) throw new Error(`Unable to find protected bucket in ${JSON.stringify(bucketConfigs)}`);
-
-  return protectedBucketConfig.name;
+  const bucketsConfig = new BucketsConfig(await bucketsConfigJsonObject(systemBucket, stackName));
+  const protectedBucketConfig = bucketsConfig.protectedBuckets();
+  if (!protectedBucketConfig) throw new Error(`Unable to find protected bucket in ${JSON.stringify(bucketsConfig)}`);
+  return protectedBucketConfig[0].name;
 }
 
 function getReportsKeys(systemBucket, stackName) {

@@ -26,6 +26,14 @@ Discover PDRs in FTP and HTTP endpoints
 
 ---
 
+### [@cumulus/files-to-granules](https://github.com/nasa/cumulus/tree/master/tasks/files-to-granules)
+Converts array-of-files input into a granules object by extracting granuleId from filename
+
+- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/files-to-granules/schemas).
+- Resources: [npm](https://npmjs.com/package/@cumulus/files-to-granules) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/files-to-granules)
+
+---
+
 ### [@cumulus/hello-world](https://github.com/nasa/cumulus/tree/master/tasks/hello-world)
 Example task
 
