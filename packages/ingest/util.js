@@ -19,7 +19,7 @@ function normalizeProviderPath(provPath) {
 
 /**
  * Return mime-type based on input url or filename
- * 
+ *
  * @param {string} key
  * @returns {string} mimeType or null
  */

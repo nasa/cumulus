@@ -9,8 +9,8 @@ const got = require('got');
 const { log, aws: { buildS3Uri, s3 } } = require('@cumulus/common');
 const { isValidHostname } = require('@cumulus/common/string');
 const { buildURL } = require('@cumulus/common/URLUtils');
-const { lookupMimeType } = require('./util');
 const errors = require('@cumulus/common/errors');
+const { lookupMimeType } = require('./util');
 
 const validateHost = (host) => {
   if (isValidHostname(host) || isIp(host)) return;

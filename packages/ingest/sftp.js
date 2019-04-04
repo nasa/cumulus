@@ -1,6 +1,5 @@
 'use strict';
 
-const { lookupMimeType } = require('./util');
 const { Client } = require('ssh2');
 const { PassThrough } = require('stream');
 const { join } = require('path');
@@ -9,6 +8,7 @@ const get = require('lodash.get');
 const omit = require('lodash.omit');
 
 const { KMSProvider: KMS, DefaultProvider } = require('@cumulus/common/key-pair-provider');
+const { lookupMimeType } = require('./util');
 const recursion = require('./recursion');
 
 module.exports.sftpMixin = (superclass) => class extends superclass {

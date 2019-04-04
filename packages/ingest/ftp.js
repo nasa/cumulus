@@ -1,6 +1,5 @@
 'use strict';
 
-const { lookupMimeType } = require('./util');
 const JSFtp = require('jsftp');
 const join = require('path').join;
 const { PassThrough } = require('stream');
@@ -8,6 +7,7 @@ const { log, aws: { buildS3Uri, promiseS3Upload } } = require('@cumulus/common')
 const omit = require('lodash.omit');
 
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
+const { lookupMimeType } = require('./util');
 const recursion = require('./recursion');
 
 module.exports.ftpMixin = (superclass) => class extends superclass {

@@ -5,7 +5,6 @@ const { URL } = require('url');
 const got = require('got');
 
 const { models: { AccessToken } } = require('@cumulus/api');
-const { getS3ObjectReadStream } = require('@cumulus/common/aws');
 const { serveDistributionApi } = require('@cumulus/api/bin/serve');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
