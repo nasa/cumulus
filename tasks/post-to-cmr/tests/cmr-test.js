@@ -119,7 +119,7 @@ test.serial('postToCMR returns SIT url when CMR_ENVIRONMENT=="SIT"', async (t) =
   }
 });
 
-test.serial('postToCMR throws an error if there is no CMR Meta file', async (t) => {
+test.serial('postToCMR throws an error if there is no CMR metadata file', async (t) => {
   const newPayload = t.context.payload;
 
   newPayload.input.granules = [{
