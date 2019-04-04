@@ -1,6 +1,6 @@
 'use strict';
 
-const { S3, Credentials } = require('aws-sdk');
+const { S3 } = require('aws-sdk');
 
 
 /**
@@ -74,8 +74,21 @@ async function testList(s3, params) {
  * @returns {undefined} - does not return a value
  */
 async function handler(event) {
-  const { credentials, testName, ...params } = event;
-  const s3 = new S3({ credentials: new Credentials(credentials) });
+  const {
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+      sessionToken
+    },
+    testName,
+    ...params
+  } = event;
+
+  const s3 = new S3({
+    accessKeyId,
+    secretAccessKey,
+    sessionToken
+  });
 
   const testChoices = {
     'get-object': testGet,
