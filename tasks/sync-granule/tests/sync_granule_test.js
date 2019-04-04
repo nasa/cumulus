@@ -14,6 +14,8 @@ const {
   s3ObjectExists,
   s3,
   s3GetObjectTagging,
+  s3PutObject,
+  s3PutObjectTagging,
   promiseS3Upload
 } = require('@cumulus/common/aws');
 const { loadJSONTestData, streamTestData } = require('@cumulus/test-data');
@@ -49,11 +51,11 @@ async function prepareS3DownloadEvent(t) {
       const key = `${granuleFilePath}/${granuleFileName}`;
 
       // eslint-disable-next-line no-await-in-loop
-      await s3().putObject({
+      await s3PutObject({
         Bucket: t.context.event.config.provider.host,
         Key: key,
         Body: streamTestData(`granules/${granuleFileName}`)
-      }).promise();
+      });
     }
   }
 }
@@ -299,17 +301,17 @@ test.serial('download granule from S3 provider', async (t) => {
   try {
     const TagSet = [{ Key: 'granuleId', Value: 'test-granuleId' }];
     // Stage the file that's going to be downloaded
-    await s3().putObject({
+    await s3PutObject({
       Bucket: t.context.event.config.provider.host,
       Key: `${granuleFilePath}/${granuleFileName}`,
       Body: streamTestData(`granules/${granuleFileName}`)
-    }).promise();
+    });
     // add tags to test preservation
-    await s3().putObjectTagging({
-      Bucket: t.context.event.config.provider.host,
-      Key: `${granuleFilePath}/${granuleFileName}`,
-      Tagging: { TagSet }
-    }).promise();
+    await s3PutObjectTagging(
+      t.context.event.config.provider.host,
+      `${granuleFilePath}/${granuleFileName}`,
+      { TagSet }
+    );
 
     const output = await syncGranule(t.context.event);
 
@@ -603,11 +605,11 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     );
 
     // stage the file with different content
-    await s3().putObject({
+    await s3PutObject({
       Bucket: t.context.event.config.provider.host,
       Key: key,
       Body: randomString()
-    }).promise();
+    });
 
     t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
     t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
@@ -637,11 +639,11 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     t.deepEqual(existingFileInfo, renamedFileInfo);
 
     // stage the file again with different content
-    await s3().putObject({
+    await s3PutObject({
       Bucket: t.context.event.config.provider.host,
       Key: key,
       Body: randomString()
-    }).promise();
+    });
 
     t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
     t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
@@ -690,11 +692,11 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
     );
 
     // stage the file with different content
-    await s3().putObject({
+    await s3PutObject({
       Bucket: t.context.event.config.provider.host,
       Key: key,
       Body: randomString()
-    }).promise();
+    });
 
     t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
     t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
@@ -746,11 +748,11 @@ async function granuleFilesOverwrittenTest(t) {
     const existingFileInfo = (await getFilesMetadata(output.granules[0].files))[0];
 
     // stage the file with different content
-    await s3().putObject({
+    await s3PutObject({
       Bucket: t.context.event.config.provider.host,
       Key: key,
       Body: randomString()
-    }).promise();
+    });
 
     t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
     t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
@@ -831,14 +833,10 @@ test.serial('download multiple granules from S3 provider to staging directory', 
           output.granules[i].files[j].filename,
           `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}`
         );
-        t.is(
-          true,
-          // eslint-disable-next-line no-await-in-loop
-          await s3ObjectExists({
-            Bucket: t.context.internalBucketName,
-            Key: `${keypath}/${granuleFileName}`
-          })
-        );
+        s3ObjectExists({
+          Bucket: t.context.internalBucketName,
+          Key: `${keypath}/${granuleFileName}`
+        }).then((outcome) => t.is(outcome, true));
       }
     }
   }
