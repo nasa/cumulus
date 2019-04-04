@@ -6,13 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [v1.12.0] - 2019-4-4
-
 ### BREAKING CHANGES
 
 - **CUMULUS-1212**
   - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file.
     New config option. Set `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
+
+## [v1.12.0] - 2019-4-4
+
+### BREAKING CHANGES
 
 - **CUMULUS-1139**
   - `granule.applyWorkflow`  uses the new-style granule record as input to workflows.
