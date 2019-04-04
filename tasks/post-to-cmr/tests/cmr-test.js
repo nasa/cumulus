@@ -137,7 +137,7 @@ test.serial('postToCMR throws an error if there is no CMR metadata file', async 
   }
 });
 
-test.serial('postToCMR throws an error if any granule is missing a Meta file', async (t) => {
+test.serial('postToCMR throws an error if any granule is missing a metadata file', async (t) => {
   const newPayload = t.context.payload;
   const newGranule = {
     granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090555',
