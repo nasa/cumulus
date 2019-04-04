@@ -40,7 +40,7 @@ default:
 # ------------------------
 # CUMULUS team deployments
 # ------------------------
-CUMULUS-from-npm:
+cumulus-from-npm:
   prefix: test-npm-integration
 
 cumulus-from-source:
@@ -56,6 +56,30 @@ cumulus-nightly:
 cumulus-sit:
   prefix: cumulus-sit
   stackName: cumulus-sit-iam
+
+  buckets:
+    internal:
+      name: cumulus-sit-internal
+      type: internal
+    private:
+      name: cumulus-sit-private
+      type: private
+    protected:
+      name: cumulus-sit-protected
+      type: protected
+    public:
+      name: cumulus-sit-public
+      type: public
+    protected-2:
+      name: cumulus-sit-protected
+      type: protected
+    dashboard:
+      name: cumulus-sit-dashboard
+      type: shared
+
+sit-demo:
+  prefix: sit-demo
+  stackName: sit-demo-iam
 
   buckets:
     internal:
