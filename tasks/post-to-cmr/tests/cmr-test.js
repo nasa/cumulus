@@ -125,7 +125,7 @@ test.serial('postToCMR throws an error if there is no CMR Meta file', async (t) 
   newPayload.input.granules = [{
     granuleId: 'some granule',
     files: [{
-      filename: `s3://${t.context.bucket}/to/file.xml`
+      filename: `s3://${t.context.bucket}/to/file.blah`
     }]
   }];
 
@@ -142,7 +142,7 @@ test.serial('postToCMR throws an error if any granule is missing a Meta file', a
   const newGranule = {
     granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090555',
     files: [{
-      filename: `s3://${t.context.bucket}/to/file.xml`
+      filename: `s3://${t.context.bucket}/to/file.blah`
     }]
   };
   newPayload.input.granules.push(newGranule);
@@ -156,7 +156,7 @@ test.serial('postToCMR throws an error if any granule is missing a Meta file', a
   }
 });
 
-test.serial('postToCMR continues without Meta file if there is metaCheck flag', async (t) => {
+test.serial('postToCMR continues without Meta file if there is skipMetaCheck flag', async (t) => {
   const newPayload = t.context.payload;
   const newGranule = [{
     granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090555',
@@ -165,7 +165,7 @@ test.serial('postToCMR continues without Meta file if there is metaCheck flag', 
     }]
   }];
   newPayload.input.granules = newGranule;
-  newPayload.config.metaCheck = true;
+  newPayload.config.skipMetaCheck = true;
   const granuleId = newPayload.input.granules[0].granuleId;
   const key = `${granuleId}.cmr.xml`;
 
