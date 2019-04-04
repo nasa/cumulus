@@ -161,8 +161,7 @@ describe('When accessing an S3 bucket directly', () => {
       expect(whoami.UserId).toMatch(new RegExp(`.*:${username}`));
     });
 
-    describe('against protected buckets', () => {
-      const testBucket = protectedBucketName;
+    function executeTestsAgainst(testBucket) {
       describe('while in the the same region ', () => {
         it('the bucket contents can be listed', async () => {
           expect(await canListObjects('us-east-1', testBucket, creds)).toBe('true');
@@ -190,76 +189,42 @@ describe('When accessing an S3 bucket directly', () => {
           expect(await canWriteObject('us-east-1', testBucket, creds)).toBe('false');
         });
       });
+    }
+
+    describe('against protected buckets', () => {
+      executeTestsAgainst(protectedBucketName);
     });
 
     describe('against public buckets', () => {
-      const testBucket = publicBucketName;
+      executeTestsAgainst(publicBucketName);
+    });
 
-      describe('while in the the same region ', () => {
-        it('the bucket contents can be listed', async () => {
-          expect(await canListObjects('us-east-1', testBucket, creds)).toBe('true');
-        });
+    describe('with third-party/invalid credentials', () => {
+      const thirdPartyCredentials = {
+        accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+        secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+        sessionToken: 'FAKETOKENdfkjaf9rufjfdklajf',
+        expiration: '2019-02-26 00:08:18+00:00'
+      };
 
-        it('the data can be downloaded', async () => {
-          expect(await canGetObject('us-east-1', testBucket, creds)).toBe('true');
-        });
-
-        it('a write is rejected', async () => {
-          expect(await canWriteObject('us-east-1', testBucket, creds)).toBe('false');
-        });
-      });
-
-      describe('while outside the region ', () => {
+      function executeThirdPartyTestsAgainst(testBucket) {
         it('the bucket contents can NOT be listed', async () => {
-          expect(await canListObjects('us-west-2', testBucket, creds)).toBe('false');
+          expect(await canListObjects('us-east-1', testBucket, thirdPartyCredentials)).toBe('false');
         });
 
         it('the data can NOT be downloaded', async () => {
-          expect(await canGetObject('us-west-2', testBucket, creds)).toBe('false');
+          expect(await canGetObject('us-east-1', testBucket, thirdPartyCredentials)).toBe('false');
         });
 
         it('a write is rejected', async () => {
-          expect(await canWriteObject('us-east-1', testBucket, creds)).toBe('false');
+          expect(await canWriteObject('us-east-1', testBucket, thirdPartyCredentials)).toBe('false');
         });
+      }
+      describe('against protected buckets', () => {
+        executeThirdPartyTestsAgainst(protectedBucketName);
       });
-    });
-  });
-
-  describe('with third-party/invalid credentials', () => {
-    const thirdPartyCredentials = {
-      accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
-      secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
-      sessionToken: 'FAKETOKENdfkjaf9rufjfdklajf',
-      expiration: '2019-02-26 00:08:18+00:00'
-    };
-
-    describe('against protected buckets', () => {
-      const testBucket = protectedBucketName;
-      it('the bucket contents can NOT be listed', async () => {
-        expect(await canListObjects('us-east-1', testBucket, thirdPartyCredentials)).toBe('false');
-      });
-
-      it('the data can NOT be downloaded', async () => {
-        expect(await canGetObject('us-east-1', testBucket, thirdPartyCredentials)).toBe('false');
-      });
-
-      it('a write is rejected', async () => {
-        expect(await canWriteObject('us-east-1', testBucket, thirdPartyCredentials)).toBe('false');
-      });
-    });
-
-    describe('against public buckets', () => {
-      const testBucket = publicBucketName;
-      it('the bucket contents can NOT be listed', async () => {
-        expect(await canListObjects('us-east-1', testBucket, thirdPartyCredentials)).toBe('false');
-      });
-
-      it('the data can NOT be downloaded', async () => {
-        expect(await canGetObject('us-east-1', testBucket, thirdPartyCredentials)).toBe('false');
-      });
-
-      it('a write is rejected', async () => {
-        expect(await canWriteObject('us-east-1', testBucket, thirdPartyCredentials)).toBe('false');
+      describe('against public buckets', () => {
+        executeThirdPartyTestsAgainst(publicBucketName);
       });
     });
   });
