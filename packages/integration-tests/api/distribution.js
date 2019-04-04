@@ -61,7 +61,7 @@ async function getDistributionApiFileStream(fileUrl, accessToken) {
 /**
  * Invoke distribution api lambda directly to get a signed s3 URL.  This is
  * used in integration testing so that we use the lambda's IAM
- * permisions to generate correct access.
+ * role/permissions when accessing resources.
  *
  * @param {string} fileUrl
  *   Distribution API file URL to request
