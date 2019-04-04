@@ -251,13 +251,16 @@ aj:
   stackName: aj-integration
   stackNameNoDash: AjIntegration
 
-aimee-test:
-  stackName: aimee-test
-  stackNameNoDash: aimeeTest
+aimee:
+  stackName: aimee
+  stackNameNoDash: aimee
 
 lf:
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus
+
+  es:
+    name: estest
 
   buckets:
     internal:
@@ -527,8 +530,7 @@ mhs3:
     shared:
       name: cumulus-data-shared
       type: shared
-  system_bucket: mhs3-internal
-
+  api_distribution_url: '{{API_DISTRIBUTION_URL}}'
 
 jk:
   stackName: jk
