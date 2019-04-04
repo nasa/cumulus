@@ -194,6 +194,13 @@ class Granule {
     else this.fileStagingDir = fileStagingDir;
 
     this.duplicateHandling = duplicateHandling;
+
+    // default collectionId, could be overwritten by granule's collection information
+    if (this.collection) {
+      this.collectionId = constructCollectionId(
+        this.collection.dataType || this.collection.name, this.collection.version
+      );
+    }
   }
 
   /**
