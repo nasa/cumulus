@@ -236,7 +236,7 @@ Resources:
     {{# if ../parent.vpc }}
       VpcConfig:
         SecurityGroupIds:
-          Ref: SecurityGroupId
+          - Ref: SecurityGroupId
         SubnetIds:
         {{#each ../parent.vpc.subnets}}
           - {{this}}
