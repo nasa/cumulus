@@ -54,7 +54,7 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
 
   // Public data doesn't need authentication
   if (isPublicRequest(req.path)) {
-    req.authorizedMetadata = { userName: 'publicAccess' };
+    req.authorizedMetadata = { userName: 'unauthenticated user' };
     return next();
   }
 
