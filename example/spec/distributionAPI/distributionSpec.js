@@ -40,6 +40,12 @@ const s3Data = [
 
 process.env.stackName = config.stackName;
 
+
+async function apiDistributionLocation(filepath, accessToken){
+  const payload = await invokeApiDistributionLambda(filepath, accessToken);
+  return payload.headers.location;
+}
+
 /**
  * Login with Earthdata and get response for redirect back to
  * distribution API.
@@ -104,8 +110,9 @@ describe('Distribution API', () => {
     });
 
     describe('an unauthorized user', () => {
-      it('redirects to Earthdata login for unauthorized requests', async () => {
-        const response = await invokeApiDistributionLambda(protectedFilePath);
+
+      it('redirects to Earthdata login for unauthorized requests for protected files', async () => {
+        const response = await apiDistributionLocation(protectedFilePath);
         const authorizeUrl = new URL(response);
         expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
         expect(authorizeUrl.searchParams.get('state')).toEqual(`/${protectedBucketName}/${fileKey}`);
@@ -113,7 +120,7 @@ describe('Distribution API', () => {
       });
 
       it('redirects to Earthdata login for requests on /s3credentials endpoint.', async () => {
-        const response = await invokeApiDistributionLambda('/s3credentials');
+        const response = await apiDistributionLocation('/s3credentials');
         const authorizeUrl = new URL(response);
         expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
         expect(authorizeUrl.searchParams.get('state')).toEqual('/s3credentials');
@@ -121,7 +128,7 @@ describe('Distribution API', () => {
       });
 
       it('downloads a public science file', async () => {
-        const s3SignedUrl = await invokeApiDistributionLambda(publicFilePath, invalidAccessToken);
+        const s3SignedUrl = await apiDistributionLocation(publicFilePath);
         const parts = new URL(s3SignedUrl);
         const userName = parts.searchParams.get('x-EarthdataLoginUsername');
 
@@ -129,20 +136,19 @@ describe('Distribution API', () => {
         const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
         expect(userName).toEqual('unauthenticated user');
         expect(downloadChecksum).toEqual(fileChecksum);
-      });
-
-      it('refuses downloads of files in private buckets (by redirecting for authentication)', async () => {
-        const notASignedUrl = await invokeApiDistributionLambda(privateFilePath, invalidAccessToken);
-        const authorizeUrl = new URL(notASignedUrl);
-        expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
-        expect(authorizeUrl.pathname).toEqual('/oauth/authorize');
-        expect(authorizeUrl.searchParams.get('state')).toEqual(`/${privateBucketName}/${fileKey}`);
       });
     });
 
     describe('an authorized user', () => {
+      it('downloads the protected science file for authorized requests', async () => {
+        const s3SignedUrl = await apiDistributionLocation(protectedFilePath, validAccessToken);
+        const fileStream = got.stream(s3SignedUrl);
+        const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
+        expect(downloadChecksum).toEqual(fileChecksum);
+      });
+
       it('downloads a public science file', async () => {
-        const s3SignedUrl = await invokeApiDistributionLambda(publicFilePath, validAccessToken);
+        const s3SignedUrl = await apiDistributionLocation(publicFilePath, validAccessToken);
         const parts = new URL(s3SignedUrl);
         const userName = parts.searchParams.get('x-EarthdataLoginUsername');
 
@@ -152,15 +158,8 @@ describe('Distribution API', () => {
         expect(downloadChecksum).toEqual(fileChecksum);
       });
 
-      it('downloads the protected science file for authorized requests', async () => {
-        const s3SignedUrl = await invokeApiDistributionLambda(protectedFilePath, validAccessToken);
-        const fileStream = got.stream(s3SignedUrl);
-        const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
-        expect(downloadChecksum).toEqual(fileChecksum);
-      });
-
       it('refuses downloads of files in private buckets as forbidden', async () => {
-        const signedUrl = await invokeApiDistributionLambda(privateFilePath, validAccessToken);
+        const signedUrl = await apiDistributionLocation(privateFilePath, validAccessToken);
         try {
           await got(signedUrl);
           fail('Expected an error to be thrown');
