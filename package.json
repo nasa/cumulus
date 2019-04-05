@@ -14,7 +14,6 @@
     "bootstrap": "lerna bootstrap --no-ci --force-local",
     "bootstrap-no-build": "lerna bootstrap --no-ci --force-local --ignore-scripts",
     "update": "lerna publish --skip-git --skip-npm --exact --force-publish",
-    "publish": "lerna publish --skip-git --yes --exact",
     "clean": "lerna clean && rm -rf ./node_modules",
     "build": "lerna run --ignore cumulus-integration-tests build",
     "watch": "lerna run --parallel --no-sort watch",
