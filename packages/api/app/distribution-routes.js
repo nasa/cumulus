@@ -27,7 +27,7 @@ function isAccessTokenExpired(accessTokenRecord) {
  * "bucket/key" -> "bucket"
  *
  * @param {string} path - express request path parameter
- * return the first part of a path which is our bucketName
+ * @returns {string} the first part of a path which is our bucket name
  */
 function bucketNameFromPath(path) {
   return path.split('/').filter((d) => d).shift();
