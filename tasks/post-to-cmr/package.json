@@ -41,11 +41,11 @@
     "@cumulus/cmrjs": "1.12.0",
     "@cumulus/common": "1.12.0",
     "@cumulus/cumulus-message-adapter-js": "^1.0.7",
-    "@cumulus/test-data": "1.11.0",
     "lodash.keyby": "^4.6.0"
   },
   "devDependencies": {
     "@cumulus/cmr-client": "1.12.0",
+    "@cumulus/test-data": "1.12.0",
     "ava": "^0.25.0",
     "nyc": "^13.3.0",
     "sinon": "^4.5.0",
