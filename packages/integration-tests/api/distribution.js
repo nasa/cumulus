@@ -90,7 +90,7 @@ async function invokeApiDistributionLambda(path, accessToken = '') {
 
   const payload = JSON.parse(data.Payload);
 
-  return payload.headers.location;
+  return payload;
 }
 
 /**
