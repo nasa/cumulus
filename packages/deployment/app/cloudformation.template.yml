@@ -951,8 +951,14 @@ Resources:
               EOF
 
             --==BOUNDARY==--
+            {{# if ecs.efs.mount }}
             - EFSFileSystemId:
                 Fn::ImportValue: "{{stackName}}-EFSFileSystemId"
+            {{else}}
+            # This is necessary because, if we are not setting a mount,
+            # the Fn::Sub function still requires a variable map
+            - Nothing: nothing
+            {{/if}}
 
   CumulusECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
