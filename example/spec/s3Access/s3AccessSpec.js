@@ -1,5 +1,7 @@
 'use strict';
 
+const { URL } = require('url');
+
 const { Lambda, STS } = require('aws-sdk');
 
 const { models: { AccessToken } } = require('@cumulus/api');
@@ -8,16 +10,13 @@ const {
   testUtils: { randomId },
   BucketsConfig
 } = require('@cumulus/common');
-const { serveDistributionApi } = require('@cumulus/api/bin/serve');
-const {
-  EarthdataLogin: { getEarthdataAccessToken },
-  distributionApi: { getDistributionApiResponse }
-} = require('@cumulus/integration-tests');
 
 const {
-  setDistributionApiEnvVars,
-  stopDistributionApi
-} = require('../helpers/apiUtils');
+  EarthdataLogin: { getEarthdataAccessToken },
+  distributionApi: { invokeApiDistributionLambda }
+} = require('@cumulus/integration-tests');
+
+const { setDistributionApiEnvVars } = require('../helpers/apiUtils');
 const { loadConfig } = require('../helpers/testUtils');
 
 const config = loadConfig();
@@ -26,7 +25,8 @@ const protectedBucketName = bucketConfig.protectedBuckets()[0].name;
 const publicBucketName = bucketConfig.publicBuckets()[0].name;
 
 const testFileKey = `${config.stackName}-s3AccessTest/test.txt`;
-
+const protectedBucket = config.buckets.protected.name;
+process.env.stackName = config.stackName;
 
 /**
  * Calls the s3AccessTest lambda in the given region, which returns
@@ -93,36 +93,36 @@ async function canListObjects(region, testBucketName, credentials) {
   return invokeTestLambda(region, testBucketName, credentials, 'list-objects');
 }
 
-let server;
-
 process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
 const accessTokensModel = new AccessToken();
 
 describe('When accessing an S3 bucket directly', () => {
   let accessToken;
 
-  beforeAll(async (done) => {
+  beforeAll(async () => {
     await Promise.all([
       s3().putObject({ Bucket: protectedBucketName, Key: testFileKey, Body: 'test' }).promise(),
       s3().putObject({ Bucket: publicBucketName, Key: testFileKey, Body: 'test' }).promise()
     ]);
     setDistributionApiEnvVars();
-    // Use done() callback to signal end of beforeAll() after the
-    // distribution API has started up.
-    server = await serveDistributionApi(config.stackName, done);
   });
 
-  afterAll(async (done) => {
-    try {
+  afterAll(async () => {
       await Promise.all([
         s3().deleteObject({ Bucket: protectedBucketName, Key: testFileKey }).promise(),
         s3().deleteObject({ Bucket: publicBucketName, Key: testFileKey }).promise(),
         accessTokensModel.delete({ accessToken })
       ]);
-    }
-    finally {
-      stopDistributionApi(server, done);
-    }
+  });
+
+  describe('an unauthenticated request', () => {
+    it('redirects to Earthdata login for requests on /s3credentials endpoint.', async () => {
+      const response = await invokeApiDistributionLambda('/s3credentials');
+      const authorizeUrl = new URL(response.headers.location);
+      expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
+      expect(authorizeUrl.searchParams.get('state')).toEqual('/s3credentials');
+      expect(authorizeUrl.pathname).toEqual('/oauth/authorize');
+    });
   });
 
   describe('with credentials associated with an Earthdata Login ID', () => {
@@ -137,10 +137,7 @@ describe('When accessing an S3 bucket directly', () => {
       });
       accessToken = accessTokenResponse.accessToken;
 
-      const response = await getDistributionApiResponse(
-        `${process.env.DISTRIBUTION_ENDPOINT}/s3credentials`,
-        accessToken
-      );
+      const response = await invokeApiDistributionLambda('/s3credentials', accessToken);
       creds = JSON.parse(response.body);
     });
 

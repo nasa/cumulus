@@ -19,6 +19,38 @@ function isAccessTokenExpired(accessTokenRecord) {
   return accessTokenRecord.expirationTime < Date.now();
 }
 
+
+/**
+ * Helper function to pull bucket out of a path string.
+ * Will ignore leading slash.
+ * "/bucket/key" -> "bucket"
+ * "bucket/key" -> "bucket"
+ *
+ * @param {string} path - express request path parameter
+ * @returns {string} the first part of a path which is our bucket name
+ */
+function bucketNameFromPath(path) {
+  return path.split('/').filter((d) => d).shift();
+}
+
+/**
+ * Reads the input path and determines if this is a request for public data
+ * or not.
+ *
+ * @param {string} path - req.path paramater
+ * @returns {boolean} - whether this request goes to a public bucket
+ */
+function isPublicRequest(path) {
+  try {
+    const publicBuckets = process.env.public_buckets.split(',');
+    const requestedBucket = bucketNameFromPath(path);
+    return publicBuckets.includes(requestedBucket);
+  }
+  catch (error) {
+    return false;
+  }
+}
+
 /**
  * Reads the input path and determines if this is a request for public data
  * or not.
@@ -54,7 +86,7 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
 
   // Public data doesn't need authentication
   if (isPublicRequest(req.path)) {
-    req.authorizedMetadata = { userName: 'publicAccess' };
+    req.authorizedMetadata = { userName: 'unauthenticated user' };
     return next();
   }
 
