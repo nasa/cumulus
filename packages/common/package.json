@@ -78,7 +78,7 @@
     "uuid": "^3.2.1"
   },
   "devDependencies": {
-    "@cumulus/test-data": "1.11.0",
+    "@cumulus/test-data": "1.12.0",
     "ava": "^0.25.0",
     "jsdoc-to-markdown": "^4.0.1",
     "nock": "^10.0.0",
