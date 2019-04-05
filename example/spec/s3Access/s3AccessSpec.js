@@ -1,5 +1,7 @@
 'use strict';
 
+const { URL } = require('url');
+
 const { Lambda, STS } = require('aws-sdk');
 
 const { models: { AccessToken } } = require('@cumulus/api');
@@ -95,6 +97,16 @@ describe('When accessing an S3 bucket directly', () => {
       s3().deleteObject({ Bucket: protectedBucket, Key: testFileKey }).promise(),
       accessTokensModel.delete({ accessToken })
     ]);
+  });
+
+  describe('an unauthenticated request', () => {
+    it('redirects to Earthdata login for requests on /s3credentials endpoint.', async () => {
+      const response = await invokeApiDistributionLambda('/s3credentials');
+      const authorizeUrl = new URL(response.headers.location);
+      expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
+      expect(authorizeUrl.searchParams.get('state')).toEqual('/s3credentials');
+      expect(authorizeUrl.pathname).toEqual('/oauth/authorize');
+    });
   });
 
   describe('with credentials associated with an Earthdata Login ID', () => {

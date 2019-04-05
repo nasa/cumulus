@@ -110,20 +110,11 @@ describe('Distribution API', () => {
     });
 
     describe('an unauthorized user', () => {
-
       it('redirects to Earthdata login for unauthorized requests for protected files', async () => {
         const response = await apiDistributionLocation(protectedFilePath);
         const authorizeUrl = new URL(response);
         expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
         expect(authorizeUrl.searchParams.get('state')).toEqual(`/${protectedBucketName}/${fileKey}`);
-        expect(authorizeUrl.pathname).toEqual('/oauth/authorize');
-      });
-
-      it('redirects to Earthdata login for requests on /s3credentials endpoint.', async () => {
-        const response = await apiDistributionLocation('/s3credentials');
-        const authorizeUrl = new URL(response);
-        expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
-        expect(authorizeUrl.searchParams.get('state')).toEqual('/s3credentials');
         expect(authorizeUrl.pathname).toEqual('/oauth/authorize');
       });
 
