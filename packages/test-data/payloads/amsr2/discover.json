@@ -50,7 +50,7 @@
     "meta": {
       "name": "AMSR2",
       "version": "1",
-      "provider_path": "/prd/NRT/([\\d]{4}\\.[\\d]{2}\\.[\\d]{2})/L1/L1R/global",
+      "provider_path": "prd/NRT/([\\d]{4}\\.[\\d]{2}\\.[\\d]{2})/L1/L1R/global",
       "granuleId": "^GW1AM2_[\\d]{12}_[\\d]{3}B_L1S[N|G]RTBR_[\\d]{7}$",
       "sampleFileName": "GW1AM2_201708071110_057B_L1SNRTBR_2220220.h5.gz",
       "granuleIdExtraction": "^(GW1AM2_(.*))\\.h5\\.gz$",

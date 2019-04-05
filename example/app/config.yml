@@ -107,6 +107,14 @@ default:
           - '--lambdaArn'
           - function: Ref
             value: HelloWorldLambdaFunction
+        alarms:
+          TaskCountHigh:
+            alarm_description: 'There are more tasks running than the desired'
+            comparison_operator: GreaterThanThreshold
+            evaluation_periods: 1
+            metric: MemoryUtilization
+            statistic: SampleCount
+            threshold: '{{ecs.services.EcsTaskHelloWorld.count}}'
 
   activities:
     - name: EcsTaskHelloWorld
@@ -242,13 +250,16 @@ aj:
   stackName: aj-integration
   stackNameNoDash: AjIntegration
 
-aimee-test:
-  stackName: aimee-test
-  stackNameNoDash: aimeeTest
+aimee:
+  stackName: aimee
+  stackNameNoDash: aimee
 
 lf:
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus
+
+  es:
+    name: estest
 
   buckets:
     internal:
@@ -475,7 +486,7 @@ jc:
   ecs:
     services:
       EcsTaskHelloWorld:
-        image: 596205514787.dkr.ecr.us-east-1.amazonaws.com/cumulus-dev-testing:latest
+        image: '{{ECR_TESTING_IMAGE_ARN}}'
         cpu: 400
         memory: 700
         count: 1
@@ -521,8 +532,7 @@ mhs3:
     shared:
       name: cumulus-data-shared
       type: shared
-  system_bucket: mhs3-internal
-
+  api_distribution_url: '{{API_DISTRIBUTION_URL}}'
 
 jk:
   stackName: jk

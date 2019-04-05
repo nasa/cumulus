@@ -39,7 +39,7 @@
     "collection": {
       "process": "modis",
       "duplicateHandling": "replace",
-      "provider_path": "/",
+      "provider_path": "",
       "granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr\\.xml|_[\\w]{1,}\\.jpg)",
       "version": "006",
       "dataType": "MOD09GQ",
