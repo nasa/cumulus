@@ -85,7 +85,7 @@ default:
     instanceType: t2.medium
     desiredInstances: 1
     availabilityZone: us-east-1b
-    publicIp: true
+    publicIp: false 
     restartTasksOnDeploy: true
     docker:
       username: cumulususer
