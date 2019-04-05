@@ -14,7 +14,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1212**
   - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
 
+## [v1.12.1] - 2019-4-5
+
+Note: There was an issue publishing 1.12.0, so please see notes from 1.12.0
+
 ## [v1.12.0] - 2019-4-4
+
+Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ### BREAKING CHANGES
 
@@ -979,7 +985,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.12.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.12.1...HEAD
+[v1.12.1]: https://github.com/nasa/cumulus/compare/v1.12.0...v1.12.1
 [v1.12.0]: https://github.com/nasa/cumulus/compare/v1.11.3...v1.12.0
 [v1.11.3]: https://github.com/nasa/cumulus/compare/v1.11.2...v1.11.3
 [v1.11.2]: https://github.com/nasa/cumulus/compare/v1.11.1...v1.11.2
