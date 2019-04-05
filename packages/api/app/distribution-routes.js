@@ -19,6 +19,20 @@ function isAccessTokenExpired(accessTokenRecord) {
   return accessTokenRecord.expirationTime < Date.now();
 }
 
+
+/**
+ * Helper function to pull bucket out of a path string.
+ * Will ignore leading slash.
+ * "/bucket/key" -> "bucket"
+ * "bucket/key" -> "bucket"
+ *
+ * @param {string} path - express request path parameter
+ * return the first part of a path which is our bucketName
+ */
+function bucketNameFromPath(path) {
+  return path.split('/').filter((d) => d).shift();
+}
+
 /**
  * Reads the input path and determines if this is a request for public data
  * or not.
@@ -29,7 +43,7 @@ function isAccessTokenExpired(accessTokenRecord) {
 function isPublicRequest(path) {
   try {
     const publicBuckets = process.env.public_buckets.split(',');
-    const requestedBucket = path.split('/').filter((d) => d).shift();
+    const requestedBucket = bucketNameFromPath(path);
     return publicBuckets.includes(requestedBucket);
   }
   catch (error) {
