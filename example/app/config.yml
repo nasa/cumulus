@@ -360,6 +360,7 @@ mth:
       name: '{{stackName}}-public'
       type: public
   ecs:
+    maxInstances: 3
     ssh: true
     keyPairName: mhuffnag
 
