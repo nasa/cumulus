@@ -874,7 +874,7 @@ Resources:
           - GroupId
        {{# if ecs.efs.mount}}
         - Fn::ImportValue:
-            "{{prefix}}-EFSSecurityGroup"
+            "{{stackName}}-EFSSecurityGroup"
         {{/if}}
 
       ImageId: {{ecs.amiid}}
@@ -891,62 +891,68 @@ Resources:
     {{/if}}
       UserData:
         Fn::Base64:
-          Fn::Sub: |
-            Content-Type: multipart/mixed; boundary="==BOUNDARY=="
-            MIME-Version: 1.0
+          Fn::Sub:
+            - |
+              Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+              MIME-Version: 1.0
 
-            --==BOUNDARY==
-            Content-Type: text/cloud-boothook; charset="us-ascii"
+              --==BOUNDARY==
+              Content-Type: text/cloud-boothook; charset="us-ascii"
 
-            sed -i '/^\s*DOCKER_STORAGE_OPTIONS=/d' /etc/sysconfig/docker-storage
-            echo 'DOCKER_STORAGE_OPTIONS="--storage-driver {{ecs.docker.storageDriver}}"' >> /etc/sysconfig/docker-storage
+              sed -i '/^\s*DOCKER_STORAGE_OPTIONS=/d' /etc/sysconfig/docker-storage
+              echo 'DOCKER_STORAGE_OPTIONS="--storage-driver {{ecs.docker.storageDriver}}"' >> /etc/sysconfig/docker-storage
 
-            {{#ifEquals ecs.docker.storageDriver "devicemapper"}}
-            sed -i '/^\s*OPTIONS=/d' /etc/sysconfig/docker
-            echo 'OPTIONS="--storage-opt dm.basesize={{ecs.volumeSize}}G"' >> /etc/sysconfig/docker
-            {{/ifEquals}}
+              {{#ifEquals ecs.docker.storageDriver "devicemapper"}}
+              sed -i '/^\s*OPTIONS=/d' /etc/sysconfig/docker
+              echo 'OPTIONS="--default-ulimit nofile=1024:4096 --storage-opt dm.basesize={{ecs.volumeSize}}G"' >> /etc/sysconfig/docker
+              {{/ifEquals}}
 
-            {{# if ecs.efs.mount }}
-            yum install -y nfs-utils
+              --==BOUNDARY==
+              Content-Type: text/x-shellscript; charset="us-ascii"
 
-            mkdir -p {{ecs.efs.mount}}
-            mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 {{prefix}}-EFSFileSystemId.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}}
-            chmod 777 {{ecs.efs.mount}}
+              {{# if ecs.efs.mount }}
+              AZ=$(curl http://169.254.169.254/latest/meta-data/placement/availability-zone)
+              yum install -y nfs-utils
 
-            echo '{{prefix}}-EFSFileSystemId.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}} nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0' | tee -a /etc/fstab
-            mount -a
-            {{/if}}
+              mkdir -p {{ecs.efs.mount}}
+              mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${!AZ}.${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}}
+              chmod 777 {{ecs.efs.mount}}
 
-            --==BOUNDARY==
-            Content-Type: text/x-shellscript; charset="us-ascii"
+              echo "${!AZ}.${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}} nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0" | tee -a /etc/fstab
+              mount -a
 
-            cat <<'EOF' >> /etc/ecs/ecs.config
-            ECS_CLUSTER=${CumulusECSCluster}
-            ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=1m
-            ECS_CONTAINER_STOP_TIMEOUT={{ecs.container_stop_timeout}}
-            EOF
+              service docker restart
+              {{/if}}
 
-            {{#ifEquals ecs.docker.registry "dockerhub"}}
-            echo ECS_ENGINE_AUTH_TYPE=docker >> /etc/ecs/ecs.config
-            echo 'ECS_ENGINE_AUTH_DATA={"https://index.docker.io/v1/":{"username":"{{ecs.docker.username}}","password": "${DockerPassword}","email":"${DockerEmail}"}}' >> /etc/ecs/ecs.config
-            {{/ifEquals}}
+              cat <<'EOF' >> /etc/ecs/ecs.config
+              ECS_CLUSTER=${CumulusECSCluster}
+              ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=1m
+              ECS_CONTAINER_STOP_TIMEOUT={{ecs.container_stop_timeout}}
+              EOF
 
-            yum install -y jq unzip
-            curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
-            unzip awscli-bundle.zip
-            ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
-            rm -rf ./awscli-bundle awscli-bundle.zip
+              {{#ifEquals ecs.docker.registry "dockerhub"}}
+              echo ECS_ENGINE_AUTH_TYPE=docker >> /etc/ecs/ecs.config
+              echo 'ECS_ENGINE_AUTH_DATA={"https://index.docker.io/v1/":{"username":"{{ecs.docker.username}}","password": "${DockerPassword}","email":"${DockerEmail}"}}' >> /etc/ecs/ecs.config
+              {{/ifEquals}}
 
-            aws s3 cp s3://{{bucket}}/{{stackName}}/deployment-staging/task-reaper.sh /usr/local/bin/task-reaper.sh
-            chmod +x /usr/local/bin/task-reaper.sh
+              yum install -y jq unzip
+              curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
+              unzip awscli-bundle.zip
+              ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+              rm -rf ./awscli-bundle awscli-bundle.zip
 
-            cat <<'EOF' >> /etc/cron.d/task-reaper
-            PATH=/bin:/usr/local/bin
-            AWS_DEFAULT_REGION=${AWS::Region}
-            * * * * * root /usr/local/bin/task-reaper.sh >> /var/log/task-reaper.log 2>&1
-            EOF
+              aws s3 cp s3://{{bucket}}/{{stackName}}/deployment-staging/task-reaper.sh /usr/local/bin/task-reaper.sh
+              chmod +x /usr/local/bin/task-reaper.sh
+
+              cat <<'EOF' >> /etc/cron.d/task-reaper
+              PATH=/bin:/usr/local/bin
+              AWS_DEFAULT_REGION=${AWS::Region}
+              * * * * * root /usr/local/bin/task-reaper.sh >> /var/log/task-reaper.log 2>&1
+              EOF
 
             --==BOUNDARY==--
+            - EFSFileSystemId:
+                Fn::ImportValue: "{{stackName}}-EFSFileSystemId"
 
   CumulusECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -1096,6 +1102,57 @@ Resources:
         MaximumPercent: 100
         MinimumHealthyPercent: 0
 
+  {{@key}}ECSServiceTaskCountLowAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: There are less tasks running than the desired
+      AlarmName: {{../stackName}}-{{@key}}-TaskCountLowAlarm
+      ComparisonOperator: LessThanThreshold
+      EvaluationPeriods: 1
+      MetricName: MemoryUtilization
+      Statistic: SampleCount
+      Threshold: {{# if this.count}}{{this.count}}{{ else }} 0 {{/if}}
+      Period: 60
+      Namespace: AWS/ECS
+      Dimensions:
+        - Name: ClusterName
+          Value:
+            Ref: CumulusECSCluster
+        - Name: ServiceName
+          Value:
+            Fn::GetAtt:
+              - {{@key}}ECSService
+              - Name
+
+  {{# if this.alarms}}
+  # the service has cumstom alarms
+  {{# each this.alarms}}
+  {{@../key}}{{@key}}Alarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+    {{#if alarm_description}}
+      AlarmDescription: {{ alarm_description }}
+    {{/if}}
+      AlarmName: {{../../stackName}}-{{@../key}}-{{@key}}Alarm
+      ComparisonOperator: {{ comparison_operator }}
+      EvaluationPeriods: {{#if evaluation_periods }}{{ evaluation_periods }}{{ else }}5{{/if}}
+      MetricName: {{ metric }}
+      Statistic: {{#if statistic }}{{ statistic }}{{ else }}Average{{/if}}
+      Threshold: {{ threshold }}
+      Period: {{#if period }}{{ period }}{{ else }}60{{/if}}
+      Namespace: AWS/ECS
+      Dimensions:
+        - Name: ClusterName
+          Value:
+            Ref: CumulusECSCluster
+        - Name: ServiceName
+          Value:
+            Fn::GetAtt:
+              - {{@../key}}ECSService
+              - Name
+  {{/each}}
+  {{/if}}
+
 {{/each}}
 
 {{#each ecs.tasks}}
@@ -1202,13 +1259,11 @@ Resources:
   #################################################
   # CloudWatch Dashboard BEGIN
   #################################################
-{{# if es.name}}
   CumulusCloudWatchDashboard:
     Type: AWS::CloudWatch::Dashboard
     Properties:
       DashboardName: {{stackName}}-CloudWatch-Dashboard
-      DashboardBody: '{{#buildCWDashboard dashboard es stackName}}{{/buildCWDashboard}}'
-{{/if}}
+      DashboardBody: '{{#buildCWDashboard dashboard ecs es stackName}}{{/buildCWDashboard}}'
   #################################################
   # CloudWatch Dashboard END
   #################################################
@@ -1285,6 +1340,5 @@ Outputs:
     Value:
       Ref: SecurityGroup
     Export:
-      Name:
-        Fn::Sub: "{{stackName}}-EcsSecurityGroup"
+      Name: "{{stackName}}-EcsSecurityGroup"
 {{/if}}

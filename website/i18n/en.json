@@ -20,6 +20,9 @@
       "data-cookbooks/about-cookbooks": {
         "title": "About Cookbooks"
       },
+      "data-cookbooks/browse-generation": {
+        "title": "Ingest Browse Generation"
+      },
       "data-cookbooks/choice-states": {
         "title": "Choice States"
       },
@@ -43,6 +46,9 @@
       },
       "data-cookbooks/sns": {
         "title": "SNS Notification in Workflows"
+      },
+      "data-cookbooks/tracking-files": {
+        "title": "Tracking Ancillary Files"
       },
       "deployment/config_descriptions": {
         "title": "Configuration Descriptions"
@@ -82,6 +88,9 @@
       },
       "ems_reporting": {
         "title": "EMS Reporting"
+      },
+      "features/ancillary_metadata": {
+        "title": "Ancillary Metadata Export"
       },
       "features/execution_payload_retention": {
         "title": "Execution Payload Retention"
@@ -137,6 +146,18 @@
       "upgrade/upgrade-readme": {
         "title": "Upgrading Cumulus"
       },
+      "workflow_tasks/discover_granules": {
+        "title": "Discover Granules"
+      },
+      "workflow_tasks/files_to_granules": {
+        "title": "Files To Granules"
+      },
+      "workflow_tasks/move_granules": {
+        "title": "Move Granules"
+      },
+      "workflow_tasks/parse_pdr": {
+        "title": "Parse PDR"
+      },
       "workflows/cumulus-task-message-flow": {
         "title": "Cumulus Tasks: Message Flow"
       },
@@ -164,262 +185,262 @@
       "workflows/workflow-triggers": {
         "title": "Workflow Triggers"
       },
-      "version-1.11.0-cloudwatch-retention": {
+      "version-1.11.0/data-cookbooks/version-1.11.0-cloudwatch-retention": {
         "title": "Cloudwatch Retention"
       },
-      "version-1.11.0-cnm-workflow": {
+      "version-1.11.0/data-cookbooks/version-1.11.0-cnm-workflow": {
         "title": "CNM Workflow"
       },
-      "version-1.11.0-error-handling": {
+      "version-1.11.0/data-cookbooks/version-1.11.0-error-handling": {
         "title": "Error Handling in Workflows"
       },
-      "version-1.11.0-setup": {
+      "version-1.11.0/data-cookbooks/version-1.11.0-setup": {
         "title": "Data Cookbooks Setup"
       },
-      "version-1.11.0-iam_roles": {
+      "version-1.11.0/deployment/version-1.11.0-iam_roles": {
         "title": "Cumulus IAM Roles"
       },
-      "version-1.11.0-deployment-readme": {
+      "version-1.11.0/deployment/version-1.11.0-deployment-readme": {
         "title": "How to Deploy Cumulus"
       },
-      "version-1.11.0-docs-how-to": {
+      "version-1.11.0/version-1.11.0-docs-how-to": {
         "title": "Cumulus Documentation: How To's"
       },
-      "version-1.11.0-execution_payload_retention": {
+      "version-1.11.0/features/version-1.11.0-execution_payload_retention": {
         "title": "Execution Payload Retention"
       },
-      "version-1.11.0-dead_letter_queues": {
+      "version-1.11.0/features/version-1.11.0-dead_letter_queues": {
         "title": "Dead Letter Queues"
       },
-      "version-1.11.0-about-operator-docs": {
+      "version-1.11.0/operator-docs/version-1.11.0-about-operator-docs": {
         "title": "About Operator Docs"
       },
-      "version-1.11.0-system-documentation": {
+      "version-1.11.0/system-documentation/version-1.11.0-system-documentation": {
         "title": "Troubleshooting Cumulus"
       },
-      "version-1.11.0-1.11.0": {
+      "version-1.11.0/upgrade/version-1.11.0-1.11.0": {
         "title": "Upgrading to Cumulus 1.11.0"
       },
-      "version-1.11.0-1.6.0": {
+      "version-1.11.0/upgrade/version-1.11.0-1.6.0": {
         "title": "Upgrading to Cumulus 1.6.0"
       },
-      "version-1.11.0-1.7.0": {
+      "version-1.11.0/upgrade/version-1.11.0-1.7.0": {
         "title": "Upgrading to Cumulus 1.7.0"
       },
-      "version-1.11.0-1.9.0": {
+      "version-1.11.0/upgrade/version-1.11.0-1.9.0": {
         "title": "Upgrading to Cumulus 1.9.0"
       },
-      "version-1.11.0-upgrade-readme": {
+      "version-1.11.0/upgrade/version-1.11.0-upgrade-readme": {
         "title": "Upgrading Cumulus"
       },
-      "version-1.11.0-developing-workflow-tasks": {
+      "version-1.11.0/workflows/version-1.11.0-developing-workflow-tasks": {
         "title": "Developing Workflow Tasks"
       },
-      "version-1.11.0-workflow-triggers": {
+      "version-1.11.0/workflows/version-1.11.0-workflow-triggers": {
         "title": "Workflow Triggers"
       },
-      "version-v1.10.1-adding-a-task": {
+      "version-v1.10.1/version-v1.10.1-adding-a-task": {
         "title": "Contributing a Task"
       },
-      "version-v1.10.1-api": {
+      "version-v1.10.1/version-v1.10.1-api": {
         "title": "Cumulus API"
       },
-      "version-v1.10.1-architecture": {
+      "version-v1.10.1/version-v1.10.1-architecture": {
         "title": "Cumulus Architecture"
       },
-      "version-v1.10.1-data_in_dynamodb": {
+      "version-v1.10.1/version-v1.10.1-data_in_dynamodb": {
         "title": "Cumulus Metadata in DynamoDB"
       },
-      "version-v1.10.1-about-cookbooks": {
+      "version-v1.10.1/data-cookbooks/version-v1.10.1-about-cookbooks": {
         "title": "About Cookbooks"
       },
-      "version-v1.10.1-choice-states": {
+      "version-v1.10.1/data-cookbooks/version-v1.10.1-choice-states": {
         "title": "Choice States"
       },
-      "version-v1.10.1-cnm-workflow": {
+      "version-v1.10.1/data-cookbooks/version-v1.10.1-cnm-workflow": {
         "title": "CNM Workflow"
       },
-      "version-v1.10.1-error-handling": {
+      "version-v1.10.1/data-cookbooks/version-v1.10.1-error-handling": {
         "title": "Error Handling in Workflows"
       },
-      "version-v1.10.1-hello-world": {
+      "version-v1.10.1/data-cookbooks/version-v1.10.1-hello-world": {
         "title": "HelloWorld Workflow"
       },
-      "version-v1.10.1-setup": {
+      "version-v1.10.1/data-cookbooks/version-v1.10.1-setup": {
         "title": "Data Cookbooks Setup"
       },
-      "version-v1.10.1-sips-workflow": {
+      "version-v1.10.1/data-cookbooks/version-v1.10.1-sips-workflow": {
         "title": "Science Investigator-led Processing Systems (SIPS)"
       },
-      "version-v1.10.1-sns": {
+      "version-v1.10.1/data-cookbooks/version-v1.10.1-sns": {
         "title": "SNS Notification in Workflows"
       },
-      "version-v1.10.1-create_bucket": {
+      "version-v1.10.1/deployment/version-v1.10.1-create_bucket": {
         "title": "Creating an S3 Bucket"
       },
-      "version-v1.10.1-iam_roles": {
+      "version-v1.10.1/deployment/version-v1.10.1-iam_roles": {
         "title": "Cumulus IAM Roles"
       },
-      "version-v1.10.1-deployment-readme": {
+      "version-v1.10.1/deployment/version-v1.10.1-deployment-readme": {
         "title": "How to Deploy Cumulus"
       },
-      "version-v1.10.1-troubleshoot_deployment": {
+      "version-v1.10.1/deployment/version-v1.10.1-troubleshoot_deployment": {
         "title": "Troubleshooting Cumulus Deployment"
       },
-      "version-v1.10.1-doc_installation": {
+      "version-v1.10.1/version-v1.10.1-doc_installation": {
         "title": "Cumulus Docs Installation"
       },
-      "version-v1.10.1-ems_reporting": {
+      "version-v1.10.1/version-v1.10.1-ems_reporting": {
         "title": "EMS Reporting"
       },
-      "version-v1.10.1-lambda_versioning": {
+      "version-v1.10.1/version-v1.10.1-lambda_versioning": {
         "title": "Lambda Versioning"
       },
-      "version-v1.10.1-about-operator-docs": {
+      "version-v1.10.1/operator-docs/version-v1.10.1-about-operator-docs": {
         "title": "About Operator Docs"
       },
-      "version-v1.10.1-cumulus-docs-readme": {
+      "version-v1.10.1/version-v1.10.1-cumulus-docs-readme": {
         "title": "Cumulus Description"
       },
-      "version-v1.10.1-system-documentation": {
+      "version-v1.10.1/system-documentation/version-v1.10.1-system-documentation": {
         "title": "System Documentation"
       },
-      "version-v1.10.1-tasks": {
+      "version-v1.10.1/version-v1.10.1-tasks": {
         "title": "Cumulus Tasks"
       },
-      "version-v1.10.1-team": {
+      "version-v1.10.1/version-v1.10.1-team": {
         "title": "Team"
       },
-      "version-v1.10.1-1.6.0": {
+      "version-v1.10.1/upgrade/version-v1.10.1-1.6.0": {
         "title": "Upgrading to Cumulus 1.6.0"
       },
-      "version-v1.10.1-1.7.0": {
+      "version-v1.10.1/upgrade/version-v1.10.1-1.7.0": {
         "title": "Upgrading to Cumulus 1.7.0"
       },
-      "version-v1.10.1-1.9.0": {
+      "version-v1.10.1/upgrade/version-v1.10.1-1.9.0": {
         "title": "Upgrading to Cumulus 1.9.0"
       },
-      "version-v1.10.1-upgrade-readme": {
+      "version-v1.10.1/upgrade/version-v1.10.1-upgrade-readme": {
         "title": "Upgrading Cumulus"
       },
-      "version-v1.10.1-cumulus-task-message-flow": {
+      "version-v1.10.1/workflows/version-v1.10.1-cumulus-task-message-flow": {
         "title": "Cumulus Tasks: Message Flow"
       },
-      "version-v1.10.1-developing-workflow-tasks": {
+      "version-v1.10.1/workflows/version-v1.10.1-developing-workflow-tasks": {
         "title": "Developing Workflow Tasks"
       },
-      "version-v1.10.1-docker": {
+      "version-v1.10.1/workflows/version-v1.10.1-docker": {
         "title": "Dockerizing Data Processing"
       },
-      "version-v1.10.1-input_output": {
+      "version-v1.10.1/workflows/version-v1.10.1-input_output": {
         "title": "Workflows Input & Output"
       },
-      "version-v1.10.1-lambda": {
+      "version-v1.10.1/workflows/version-v1.10.1-lambda": {
         "title": "Develop Lambda Functions"
       },
-      "version-v1.10.1-protocol": {
+      "version-v1.10.1/workflows/version-v1.10.1-protocol": {
         "title": "Workflow Protocol"
       },
-      "version-v1.10.1-workflows-readme": {
+      "version-v1.10.1/workflows/version-v1.10.1-workflows-readme": {
         "title": "Workflows"
       },
-      "version-v1.10.1-workflow-configuration-how-to": {
+      "version-v1.10.1/workflows/version-v1.10.1-workflow-configuration-how-to": {
         "title": "Workflow Configuration How To's"
       },
-      "version-v1.10.1-workflow-triggers": {
+      "version-v1.10.1/workflows/version-v1.10.1-workflow-triggers": {
         "title": "Workflow Triggers"
       },
-      "version-v1.10.3-adding-a-task": {
+      "version-v1.10.3/version-v1.10.3-adding-a-task": {
         "title": "Contributing a Task"
       },
-      "version-v1.10.3-architecture": {
+      "version-v1.10.3/version-v1.10.3-architecture": {
         "title": "Cumulus Architecture"
       },
-      "version-v1.10.3-about-cookbooks": {
+      "version-v1.10.3/data-cookbooks/version-v1.10.3-about-cookbooks": {
         "title": "About Cookbooks"
       },
-      "version-v1.10.3-choice-states": {
+      "version-v1.10.3/data-cookbooks/version-v1.10.3-choice-states": {
         "title": "Choice States"
       },
-      "version-v1.10.3-cnm-workflow": {
+      "version-v1.10.3/data-cookbooks/version-v1.10.3-cnm-workflow": {
         "title": "CNM Workflow"
       },
-      "version-v1.10.3-error-handling": {
+      "version-v1.10.3/data-cookbooks/version-v1.10.3-error-handling": {
         "title": "Error Handling in Workflows"
       },
-      "version-v1.10.3-hello-world": {
+      "version-v1.10.3/data-cookbooks/version-v1.10.3-hello-world": {
         "title": "HelloWorld Workflow"
       },
-      "version-v1.10.3-sips-workflow": {
+      "version-v1.10.3/data-cookbooks/version-v1.10.3-sips-workflow": {
         "title": "Science Investigator-led Processing Systems (SIPS)"
       },
-      "version-v1.10.3-iam_roles": {
+      "version-v1.10.3/deployment/version-v1.10.3-iam_roles": {
         "title": "Cumulus IAM Roles"
       },
-      "version-v1.10.3-docs-how-to": {
+      "version-v1.10.3/version-v1.10.3-docs-how-to": {
         "title": "Cumulus Documentation: How To's"
       },
-      "version-v1.10.3-about-operator-docs": {
+      "version-v1.10.3/operator-docs/version-v1.10.3-about-operator-docs": {
         "title": "About Operator Docs"
       },
-      "version-v1.10.3-cumulus-docs-readme": {
+      "version-v1.10.3/version-v1.10.3-cumulus-docs-readme": {
         "title": "Cumulus Description"
       },
-      "version-v1.10.3-system-documentation": {
+      "version-v1.10.3/system-documentation/version-v1.10.3-system-documentation": {
         "title": "Troubleshooting Cumulus"
       },
-      "version-v1.10.3-tasks": {
+      "version-v1.10.3/version-v1.10.3-tasks": {
         "title": "Cumulus Tasks"
       },
-      "version-v1.10.3-cumulus-task-message-flow": {
+      "version-v1.10.3/workflows/version-v1.10.3-cumulus-task-message-flow": {
         "title": "Cumulus Tasks: Message Flow"
       },
-      "version-v1.10.3-docker": {
+      "version-v1.10.3/workflows/version-v1.10.3-docker": {
         "title": "Dockerizing Data Processing"
       },
-      "version-v1.10.3-protocol": {
+      "version-v1.10.3/workflows/version-v1.10.3-protocol": {
         "title": "Workflow Protocol"
       },
-      "version-v1.10.3-workflows-readme": {
+      "version-v1.10.3/workflows/version-v1.10.3-workflows-readme": {
         "title": "Workflows"
       },
-      "version-v1.10.3-workflow-triggers": {
+      "version-v1.10.3/workflows/version-v1.10.3-workflow-triggers": {
         "title": "Workflow Triggers"
       },
-      "version-v1.11.1-about-operator-docs": {
+      "version-v1.11.1/operator-docs/version-v1.11.1-about-operator-docs": {
         "title": "About Operator Docs"
       },
-      "version-v1.11.2-config_descriptions": {
+      "version-v1.11.2/deployment/version-v1.11.2-config_descriptions": {
         "title": "Configuration Descriptions"
       },
-      "version-v1.11.2-obtain_cumulus_packages": {
+      "version-v1.11.2/deployment/version-v1.11.2-obtain_cumulus_packages": {
         "title": "Obtaining Cumulus Packages"
       },
-      "version-v1.11.2-deployment-readme": {
+      "version-v1.11.2/deployment/version-v1.11.2-deployment-readme": {
         "title": "How to Deploy Cumulus"
       },
-      "version-v1.11.2-glossary": {
+      "version-v1.11.2/version-v1.11.2-glossary": {
         "title": "Cumulus Glossary"
       },
-      "version-v1.11.2-lifecycle-policies": {
+      "version-v1.11.2/operator-docs/version-v1.11.2-lifecycle-policies": {
         "title": "Lifecycle Policies"
       },
-      "version-v1.11.2-update-cumulus-dependencies": {
+      "version-v1.11.2/operator-docs/version-v1.11.2-update-cumulus-dependencies": {
         "title": "Update Cumulus Dependencies"
       },
-      "version-v1.11.2-cumulus-docs-readme": {
+      "version-v1.11.2/version-v1.11.2-cumulus-docs-readme": {
         "title": "Cumulus Description"
       },
-      "version-v1.11.2-team": {
+      "version-v1.11.2/version-v1.11.2-team": {
         "title": "Team"
       },
-      "version-v1.11.2-developing-workflow-tasks": {
+      "version-v1.11.2/workflows/version-v1.11.2-developing-workflow-tasks": {
         "title": "Developing Workflow Tasks"
       },
-      "version-v1.11.2-lambda": {
+      "version-v1.11.2/workflows/version-v1.11.2-lambda": {
         "title": "Develop Lambda Functions"
       },
-      "version-v1.11.2-workflows-readme": {
+      "version-v1.11.2/workflows/version-v1.11.2-workflows-readme": {
         "title": "Workflows"
       }
     },
@@ -433,6 +454,7 @@
     "categories": {
       "About Cumulus": "About Cumulus",
       "What are Cumulus Workflows?": "What are Cumulus Workflows?",
+      "Tasks": "Tasks",
       "Deployment": "Deployment",
       "Additional Features": "Additional Features",
       "Cumulus Versions": "Cumulus Versions",

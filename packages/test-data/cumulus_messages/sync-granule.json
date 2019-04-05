@@ -70,7 +70,7 @@
       "process": "aster",
       "dataType": "AST_L1A",
       "granuleIdExtraction": "^pg-[P|B]R(1A.*)$",
-      "provider_path": "/TEST_B/Cumulus/PDR/",
+      "provider_path": "TEST_B/Cumulus/PDR/",
       "version": "003",
       "url_path": "/",
       "updatedAt": 1517326637137,

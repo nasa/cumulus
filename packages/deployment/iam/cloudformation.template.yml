@@ -160,6 +160,17 @@ Resources:
                   - states:GetExecutionHistory
                 Resource: arn:aws:states:*:*:*
 
+              # this is needed for running Lambda in a VPC
+              # This might not be needed in the NGAP environment
+              # if all lambdas are already running in a general VPC
+              # environment
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:DeleteNetworkInterface
+                Resource: '*'
+
   # role for Lambdas that are NOT used with APIGateway
   LambdaProcessingRole:
     Type: AWS::IAM::Role
