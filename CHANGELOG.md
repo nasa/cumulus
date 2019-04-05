@@ -94,6 +94,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- **CUMULUS-1216** - Updated `@cumulus/ingest/granule/ingestFile` to download files to expected staging location.
 - **CUMULUS-1208** - Updated `@cumulus/ingest/queue/enqueueGranuleIngestMessage()` to not transform granule object passed to it when building an ingest message
 - **CUMULUS-1198** - `@cumulus/ingest` no longer enforces any expectations about whether `provider_path` contains a leading slash or not.
 - **CUMULUS-1170**
