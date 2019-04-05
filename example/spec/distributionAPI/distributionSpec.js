@@ -5,10 +5,7 @@ const { URL } = require('url');
 const got = require('got');
 
 const { models: { AccessToken } } = require('@cumulus/api');
-const {
-  BucketsConfig,
-  testUtils: { randomId }
-} = require('@cumulus/common');
+const { BucketsConfig } = require('@cumulus/common');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
   distributionApi: {
