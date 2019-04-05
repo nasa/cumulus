@@ -66,21 +66,23 @@ async function getDistributionApiFileStream(fileUrl, accessToken) {
  * @param {string} path
  *   path to file requested.  This is just "/bucket/keytofile"
  * @param {string} accessToken
- *   Access token from OAuth provider
+ *   Access token from OAuth provider or nothing.
  * @returns {string}
  *   signed s3 URL for the requested file.
  */
-async function invokeLambdaForS3SignedUrl(path, accessToken) {
+async function invokeApiDistributionLambda(path, accessToken = '') {
   const lambda = new Lambda();
   const FunctionName = `${process.env.stackName}-ApiDistribution`;
 
   const event = {
     method: 'GET',
-    path,
-    headers: {
-      cookie: [`accessToken=${accessToken}`]
-    }
+    path
   };
+
+  if (accessToken) {
+    event.headers = { cookie: [`accessToken=${accessToken}`] };
+  }
+
   const data = await lambda.invoke({
     FunctionName,
     Payload: JSON.stringify(event)
@@ -114,5 +116,5 @@ module.exports = {
   getDistributionApiS3SignedUrl,
   getDistributionApiFileStream,
   getDistributionFileUrl,
-  invokeLambdaForS3SignedUrl
+  invokeApiDistributionLambda
 };
