@@ -5,7 +5,6 @@ const { URL } = require('url');
 const got = require('got');
 
 const { models: { AccessToken } } = require('@cumulus/api');
-const { serveDistributionApi } = require('@cumulus/api/bin/serve');
 const {
   BucketsConfig,
   testUtils: { randomId }
@@ -34,14 +33,14 @@ const protectedBucketName = bucketsConfig.protectedBuckets()[0].name;
 const privateBucketName = bucketsConfig.privateBuckets()[0].name;
 const publicBucketName = bucketsConfig.publicBuckets()[0].name;
 process.env.stackName = config.stackName;
-const s3Data = [ '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met' ];
+const s3Data = ['@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'];
 
 /**
  * Invoke the ApiDistributionLambda and return the headers location
  * @param {filepath} filepath - request.path parameter
  * @param {string} accessToken - authenticiation cookie (can be undefined).
  */
-async function apiDistributionLocation(filepath, accessToken){
+async function getDistributionApiRedirect(filepath, accessToken) {
   const payload = await invokeApiDistributionLambda(filepath, accessToken);
   return payload.headers.location;
 }
@@ -74,7 +73,6 @@ describe('Distribution API', () => {
       uploadTestDataToBucket(publicBucketName, s3Data, testDataFolder)
     ]);
     setDistributionApiEnvVars();
-
   });
 
   afterAll(async () => {
@@ -90,12 +88,10 @@ describe('Distribution API', () => {
     let protectedFilePath;
     let privateFilePath;
     let publicFilePath;
-    let validAccessToken;
-    let invalidAccessToken = randomId('accessToken');
-
+    let accessToken;
 
     beforeAll(async () => {
-      validAccessToken = await getTestAccessToken();
+      accessToken = await getTestAccessToken();
       fileChecksum = await generateChecksumFromStream(
         'cksum',
         fs.createReadStream(require.resolve(s3Data[0]))
@@ -106,12 +102,12 @@ describe('Distribution API', () => {
     });
 
     afterAll(async () => {
-      await accessTokensModel.delete({ accessToken: validAccessToken });
+      await accessTokensModel.delete({ accessToken });
     });
 
     describe('an unauthorized user', () => {
       it('redirects to Earthdata login for unauthorized requests for protected files', async () => {
-        const response = await apiDistributionLocation(protectedFilePath);
+        const response = await getDistributionApiRedirect(protectedFilePath);
         const authorizeUrl = new URL(response);
         expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
         expect(authorizeUrl.searchParams.get('state')).toEqual(`/${protectedBucketName}/${fileKey}`);
@@ -119,7 +115,7 @@ describe('Distribution API', () => {
       });
 
       it('downloads a public science file', async () => {
-        const s3SignedUrl = await apiDistributionLocation(publicFilePath);
+        const s3SignedUrl = await getDistributionApiRedirect(publicFilePath);
         const parts = new URL(s3SignedUrl);
         const userName = parts.searchParams.get('x-EarthdataLoginUsername');
 
@@ -132,14 +128,14 @@ describe('Distribution API', () => {
 
     describe('an authorized user', () => {
       it('downloads the protected science file for authorized requests', async () => {
-        const s3SignedUrl = await apiDistributionLocation(protectedFilePath, validAccessToken);
+        const s3SignedUrl = await getDistributionApiRedirect(protectedFilePath, accessToken);
         const fileStream = got.stream(s3SignedUrl);
         const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
         expect(downloadChecksum).toEqual(fileChecksum);
       });
 
       it('downloads a public science file', async () => {
-        const s3SignedUrl = await apiDistributionLocation(publicFilePath, validAccessToken);
+        const s3SignedUrl = await getDistributionApiRedirect(publicFilePath, accessToken);
         const parts = new URL(s3SignedUrl);
         const userName = parts.searchParams.get('x-EarthdataLoginUsername');
 
@@ -150,7 +146,7 @@ describe('Distribution API', () => {
       });
 
       it('refuses downloads of files in private buckets as forbidden', async () => {
-        const signedUrl = await apiDistributionLocation(privateFilePath, validAccessToken);
+        const signedUrl = await getDistributionApiRedirect(privateFilePath, accessToken);
         try {
           await got(signedUrl);
           fail('Expected an error to be thrown');
