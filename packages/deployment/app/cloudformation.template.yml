@@ -950,7 +950,7 @@ Resources:
               * * * * * root /usr/local/bin/task-reaper.sh >> /var/log/task-reaper.log 2>&1
               EOF
 
-            --==BOUNDARY==--
+              --==BOUNDARY==--
             {{# if ecs.efs.mount }}
             - EFSFileSystemId:
                 Fn::ImportValue: "{{stackName}}-EFSFileSystemId"
@@ -982,7 +982,7 @@ Resources:
     {{/if}}
       LaunchConfigurationName:
         Ref: CumulusContainerInstanceLaunch
-      MinSize: '0'
+      MinSize: 1
       MaxSize: {{ ecs.maxInstances }}
       DesiredCapacity: {{ ecs.desiredInstances }}
       Tags:
@@ -997,6 +997,105 @@ Resources:
       DefaultResult: CONTINUE
       HeartbeatTimeout: 150
       LifecycleTransition: "autoscaling:EC2_INSTANCE_TERMINATING"
+
+  CumulusECSScaleOutPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref CumulusECSAutoScalingGroup
+      EstimatedInstanceWarmup: 300
+      MetricAggregationType: Average
+      PolicyType:  StepScaling
+      StepAdjustments:
+        - MetricIntervalLowerBound: 0
+          ScalingAdjustment: 1
+
+  CumulusECSMemoryScaleOutAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref CumulusECSScaleOutPolicy
+      ComparisonOperator: GreaterThanThreshold
+      DatapointsToAlarm: 1
+      Dimensions:
+        - Name: ClusterName
+          Value: !Ref CumulusECSCluster
+      EvaluationPeriods: 1
+      MetricName: MemoryReservation
+      Namespace: AWS/ECS
+      Period: 60
+      Statistic: Average
+      Threshold: 75
+      Unit: Percent
+
+  CumulusECSCPUScaleOutAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref CumulusECSScaleOutPolicy
+      ComparisonOperator: GreaterThanThreshold
+      DatapointsToAlarm: 1
+      Dimensions:
+        - Name: ClusterName
+          Value: !Ref CumulusECSCluster
+      EvaluationPeriods: 1
+      MetricName: CPUReservation
+      Namespace: AWS/ECS
+      Period: 60
+      Statistic: Average
+      Threshold: 75
+      Unit: Percent
+
+  CumulusECSScaleInPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref CumulusECSAutoScalingGroup
+      MetricAggregationType: Average
+      PolicyType:  StepScaling
+      StepAdjustments:
+        - MetricIntervalUpperBound: 0
+          ScalingAdjustment: -1
+
+  CumulusECSMemoryScaleInAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref CumulusECSScaleInPolicy
+      ComparisonOperator: LessThanThreshold
+      DatapointsToAlarm: 1
+      Dimensions:
+        - Name: ClusterName
+          Value: !Ref CumulusECSCluster
+      EvaluationPeriods: 1
+      MetricName: MemoryReservation
+      Namespace: AWS/ECS
+      Period: 60
+      Statistic: Average
+      Threshold: 25
+      Unit: Percent
+
+  CumulusECSCPUScaleInAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref CumulusECSScaleInPolicy
+      ComparisonOperator: LessThanThreshold
+      DatapointsToAlarm: 1
+      Dimensions:
+        - Name: ClusterName
+          Value: !Ref CumulusECSCluster
+      EvaluationPeriods: 1
+      MetricName: CPUReservation
+      Namespace: AWS/ECS
+      Period: 60
+      Statistic: Average
+      Threshold: 25
+      Unit: Percent
 
 {{#each ecs.services}}
   # adding TaskDefinition for Lambda/ECS services
