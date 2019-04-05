@@ -33,14 +33,14 @@ const bucketsConfig = new BucketsConfig(config.buckets);
 const protectedBucketName = bucketsConfig.protectedBuckets()[0].name;
 const privateBucketName = bucketsConfig.privateBuckets()[0].name;
 const publicBucketName = bucketsConfig.publicBuckets()[0].name;
-
-const s3Data = [
-  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
-];
-
 process.env.stackName = config.stackName;
+const s3Data = [ '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met' ];
 
-
+/**
+ * Invoke the ApiDistributionLambda and return the headers location
+ * @param {filepath} filepath - request.path parameter
+ * @param {string} accessToken - authenticiation cookie (can be undefined).
+ */
 async function apiDistributionLocation(filepath, accessToken){
   const payload = await invokeApiDistributionLambda(filepath, accessToken);
   return payload.headers.location;
