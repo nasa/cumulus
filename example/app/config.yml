@@ -85,14 +85,13 @@ default:
     instanceType: t2.medium
     desiredInstances: 1
     availabilityZone: us-east-1b
-    amiid: ami-a7a242da
     publicIp: false 
     restartTasksOnDeploy: true
     docker:
       username: cumulususer
     services:
       EcsTaskHelloWorld:
-        image: cumuluss/cumulus-ecs-task:1.2.3
+        image: cumuluss/cumulus-ecs-task:1.2.5
         cpu: 400
         memory: 700
         count: 1
@@ -360,6 +359,9 @@ mth:
     public:
       name: '{{stackName}}-public'
       type: public
+  ecs:
+    ssh: true
+    keyPairName: mhuffnag
 
 jl:
   stackName: jl-test-integration
