@@ -63,18 +63,17 @@ async function getDistributionApiFileStream(fileUrl, accessToken) {
  * used in integration testing so that we use the lambda's IAM
  * role/permissions when accessing resources.
  *
- * @param {string} fileUrl
- *   Distribution API file URL to request
+ * @param {string} path
+ *   path to file requested.  This is just "/bucket/keytofile"
  * @param {string} accessToken
  *   Access token from OAuth provider
  * @returns {string}
  *   signed s3 URL for the requested file.
  */
-async function invokeLambdaForS3SignedUrl(fileUrl, accessToken) {
+async function invokeLambdaForS3SignedUrl(path, accessToken) {
   const lambda = new Lambda();
   const FunctionName = `${process.env.stackName}-ApiDistribution`;
 
-  const path = fileUrl.replace(process.env.DISTRIBUTION_ENDPOINT, '/').replace('//', '/');
   const event = {
     method: 'GET',
     path,
