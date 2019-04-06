@@ -167,6 +167,20 @@ class UpdatedKes extends Kes {
   }
 
   /**
+  * Build list of buckets of desired type.
+  *
+  * @param {Object} buckets - config buckets
+  * @param {string} bucketType - selected type.
+  * @returns {string} - comma separated list of every bucket in buckets that matches bucketType.
+  */
+  collectBuckets(buckets, bucketType) {
+    const matchingBuckets = Object.values(buckets)
+      .filter((bucket) => bucket.type === bucketType)
+      .map((object) => object.name);
+    return new Handlebars.SafeString(matchingBuckets.toString());
+  }
+
+  /**
    * build CloudWatch dashboard based on the dashboard configuration and other configurations
    *
    * @param {Object} dashboardConfig dashboard configuration for creating widgets
@@ -246,6 +260,8 @@ class UpdatedKes extends Kes {
     Handlebars.registerHelper('ifNotEquals', function ifNotEquals(arg1, arg2, options) {
       return (arg1 !== arg2) ? options.fn(this) : options.inverse(this);
     });
+
+    Handlebars.registerHelper('collectBuckets', (buckets, bucketType) => this.collectBuckets(buckets, bucketType));
 
     Handlebars.registerHelper('buildCWDashboard', (dashboardConfig, ecs, es, stackName) =>
       this.buildCWDashboard(dashboardConfig, ecs, es, stackName));
