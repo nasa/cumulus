@@ -1,0 +1,175 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Lifecycle Policies · Cumulus Documentation</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="&lt;h1&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; id=&quot;setting-s3-lifecycle-policies&quot;&gt;&lt;/a&gt;&lt;a href=&quot;#setting-s3-lifecycle-policies&quot; aria-hidden=&quot;true&quot; class=&quot;hash-link&quot;&gt;&lt;svg class=&quot;hash-link-icon&quot; aria-hidden=&quot;true&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;Setting S3 Lifecycle Policies&lt;/h1&gt;
+"/><meta name="docsearch:version" content="1.12.0"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Lifecycle Policies · Cumulus Documentation"/><meta property="og:type" content="website"/><meta property="og:url" content="https://nasa.github.io/cumulus/"/><meta property="og:description" content="&lt;h1&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; id=&quot;setting-s3-lifecycle-policies&quot;&gt;&lt;/a&gt;&lt;a href=&quot;#setting-s3-lifecycle-policies&quot; aria-hidden=&quot;true&quot; class=&quot;hash-link&quot;&gt;&lt;svg class=&quot;hash-link-icon&quot; aria-hidden=&quot;true&quot; height=&quot;16&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;Setting S3 Lifecycle Policies&lt;/h1&gt;
+"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/cumulus/undefined"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><link rel="stylesheet" href="/cumulus/css/main.css"/><script src="/cumulus/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cumulus/"><h2 class="headerTitle">Cumulus Documentation</h2></a><a href="/cumulus/versions"><h3>1.12.0</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="https://nasa.github.io/cumulus-api" target="_self">API Docs</a></li><li class=""><a href="/cumulus/docs/1.12.0/cumulus-docs-readme" target="_self">Developer Docs</a></li><li class=""><a href="/cumulus/docs/1.12.0/data-cookbooks/about-cookbooks" target="_self">Data-Cookbooks</a></li><li class="siteNavGroupActive"><a href="/cumulus/docs/1.12.0/operator-docs/about-operator-docs" target="_self">Operator Docs</a></li><li class=""><a href="/cumulus/docs/1.12.0/team" target="_self">Team</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><i></i></div><h2><i>›</i><span>Configuration</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">About Operator Docs</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/1.12.0/operator-docs/about-operator-docs">About Operator Docs</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Configuration</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cumulus/docs/1.12.0/operator-docs/update-cumulus-dependencies">Update Cumulus Dependencies</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cumulus/docs/1.12.0/operator-docs/lifecycle-policies">Lifecycle Policies</a></li><li class="navListItem"><a class="navItem" href="/cumulus/docs/1.12.0/operator-docs/locating-access-logs">Locating S3 Access Logs</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              const headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                if (event.target.tagName === 'A') {
+                  document.body.classList.remove('tocActive');
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="setting-s3-lifecycle-policies"></a><a href="#setting-s3-lifecycle-policies" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Setting S3 Lifecycle Policies</h1>
+<p>This document will outline, in brief, how to set data lifecycle policies so that you are more easily able to control data storage costs while keeping your data accessible.   For more information on why you might want to do this, see the 'Additional Information' section at the end of the document.</p>
+<h2><a class="anchor" aria-hidden="true" id="requirements"></a><a href="#requirements" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Requirements</h2>
+<ul>
+<li>The AWS CLI installed and configured (if you wish to run the CLI example).  See <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/setup-aws-cli.html">AWS's guide to setting up the AWS CLI</a> for more on this.   Please ensure the AWS CLI is in your shell path.</li>
+<li>You will need a S3 bucket on AWS. <strong><em>You are strongly encouraged to use a bucket without voluminous amounts of data in it for experimenting/learning</em></strong>.</li>
+<li>An AWS user with the appropriate roles to access the target bucket as well as modify bucket policies.</li>
+</ul>
+<h2><a class="anchor" aria-hidden="true" id="examples"></a><a href="#examples" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Examples</h2>
+<h3><a class="anchor" aria-hidden="true" id="walkthrough-on-setting-time-based-s3-infrequent-access-s3ia-bucket-policy"></a><a href="#walkthrough-on-setting-time-based-s3-infrequent-access-s3ia-bucket-policy" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Walkthrough on setting time-based S3 Infrequent Access (S3IA) bucket policy</h3>
+<p>This example will give step-by-step instructions on updating a bucket's lifecycle policy to move all objects in the bucket from the default storage to S3 Infrequent Access (S3IA) after a period of 90 days.   Below are instructions for walking through configuration via the command line and the management console.</p>
+<h3><a class="anchor" aria-hidden="true" id="command-line"></a><a href="#command-line" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Command Line</h3>
+<p><strong>Please ensure you have the AWS CLI installed and configured for access prior to attempting this example.</strong></p>
+<h5><a class="anchor" aria-hidden="true" id="create-policy"></a><a href="#create-policy" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create policy</h5>
+<p>From any directory you chose, open an editor and add the following to a file named <code>exampleRule.json</code></p>
+<pre><code class="hljs">{
+    <span class="hljs-attr">"Rules"</span>: [
+        {
+          <span class="hljs-attr">"Status"</span>: <span class="hljs-string">"Enabled"</span>,
+          <span class="hljs-attr">"Filter"</span>: {
+            <span class="hljs-attr">"Prefix"</span>: <span class="hljs-string">""</span>
+          },
+          <span class="hljs-attr">"Transitions"</span>: [
+            {
+              <span class="hljs-attr">"Days"</span>: <span class="hljs-number">90</span>,
+              <span class="hljs-attr">"StorageClass"</span>: <span class="hljs-string">"STANDARD_IA"</span>
+            }
+          ],
+          <span class="hljs-attr">"NoncurrentVersionTransitions"</span>: [
+            {
+              <span class="hljs-attr">"NoncurrentDays"</span>: <span class="hljs-number">90</span>,
+              <span class="hljs-attr">"StorageClass"</span>: <span class="hljs-string">"STANDARD_IA"</span>
+            }
+          ]
+          <span class="hljs-string">"ID"</span>: <span class="hljs-string">"90DayS3IAExample"</span>
+        }
+    ]
+}
+</code></pre>
+<h5><a class="anchor" aria-hidden="true" id="set-policy"></a><a href="#set-policy" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Set policy</h5>
+<p>On the command line run the following command (with the bucket you're working with substituted in place of yourBucketNameHere).</p>
+<pre><code class="hljs">aws s3api <span class="hljs-keyword">put</span>-bucket-lifecycle-configuration --bucket yourBucketNameHere --lifecycle-configuration <span class="hljs-keyword">file</span>:<span class="hljs-comment">//exampleRule.json</span>
+</code></pre>
+<h5><a class="anchor" aria-hidden="true" id="verify-policy-has-been-set"></a><a href="#verify-policy-has-been-set" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Verify policy has been set</h5>
+<p>To obtain all of the existing policies for a bucket, run the following command (again substituting the correct bucket name):</p>
+<pre><code class="hljs"> <span class="hljs-string">aws </span><span class="hljs-string">s3api </span><span class="hljs-built_in">get-bucket-lifecycle-configuration</span> <span class="hljs-built_in">--bucket</span> <span class="hljs-string">yourBucketNameHere
+</span></code></pre>
+<p>This should output:</p>
+<pre><code class="hljs">{
+    <span class="hljs-attr">"Rules"</span>: [
+        {
+            <span class="hljs-attr">"Status"</span>: <span class="hljs-string">"Enabled"</span>,
+            <span class="hljs-attr">"Filter"</span>: {
+                <span class="hljs-attr">"Prefix"</span>: <span class="hljs-string">""</span>
+            },
+            <span class="hljs-attr">"Transitions"</span>: [
+            {
+                    <span class="hljs-attr">"Days"</span>: <span class="hljs-number">90</span>,
+                    <span class="hljs-attr">"StorageClass"</span>: <span class="hljs-string">"STANDARD_IA"</span>
+                }
+            ],
+            <span class="hljs-attr">"NoncurrentVersionTransitions"</span>: [
+                {
+                    <span class="hljs-attr">"NoncurrentDays"</span>: <span class="hljs-number">90</span>,
+                    <span class="hljs-attr">"StorageClass"</span>: <span class="hljs-string">"STANDARD_IA"</span>
+                }
+            ]
+            <span class="hljs-string">"ID"</span>: <span class="hljs-string">"90DayS3IAExample"</span>
+        }
+    ]
+}
+</code></pre>
+<p>You have set a policy that transitions any version of an object in the bucket to S3IA after each object version has not been modified for 90 days.</p>
+<h3><a class="anchor" aria-hidden="true" id="management-console"></a><a href="#management-console" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Management Console</h3>
+<h5><a class="anchor" aria-hidden="true" id="create-policy-1"></a><a href="#create-policy-1" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create Policy</h5>
+<p>To create the example policy on a bucket via the management console, go to the following URL (replacing 'yourBucketHere' with the bucket you intend to update):</p>
+<pre><code class="hljs"><span class="hljs-symbol">https</span>://<span class="hljs-built_in">s3</span>.console.aws.amazon.com/<span class="hljs-built_in">s3</span>/<span class="hljs-keyword">buckets/yourBucketHere/?tab=overview
+</span></code></pre>
+<p>You should see a screen similar to:</p>
+<p><img src="/cumulus/docs/assets/aws_bucket_console_example.png" alt=""></p>
+<p>Click the &quot;Management&quot; Tab, then lifecycle button and press <code>+ add lifecycle rule</code>:</p>
+<p><img src="/cumulus/docs/assets/add_lifecycle_rule.png" alt=""></p>
+<p>Give the rule a name (e.g. '90DayRule'), leaving the filter blank:</p>
+<p><img src="/cumulus/docs/assets/lifecycle_1.png" alt=""></p>
+<p>Click <code>next</code>, and mark <code>Current Version</code> and <code>Previous Versions</code>.</p>
+<p>Then for each, click <code>+ Add transition</code> and select <code>Transition to Standard-IA after</code> for the <code>Object creation</code> field, and set <code>90</code> for the <code>Days after creation</code>/<code>Days after objects become concurrent</code> field.    Your screen should look similar to:</p>
+<p><img src="/cumulus/docs/assets/lifecycle_2.png" alt=""></p>
+<p>Click <code>next</code>, then next past the <code>Configure expiration</code> screen (we won't be setting this), and on the fourth page, click <code>Save</code>:</p>
+<p><img src="/cumulus/docs/assets/lifecycle_4.png" alt=""></p>
+<p>You should now see you have a rule configured for your bucket:</p>
+<p><img src="/cumulus/docs/assets/lifecycle_5.png" alt=""></p>
+<p>You have now set a policy that transitions any version of an object in the bucket to S3IA after each object has not been modified for 90 days.</p>
+<h1><a class="anchor" aria-hidden="true" id="additional-information"></a><a href="#additional-information" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Additional Information</h1>
+<p>This section lists information you may want prior to enacting lifecycle policies.  It is not required content for working through the examples.</p>
+<h3><a class="anchor" aria-hidden="true" id="strategy-overview"></a><a href="#strategy-overview" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Strategy Overview</h3>
+<p>For a discussion of overall recommended strategy, please review the <a href="https://wiki.earthdata.nasa.gov/display/CUMULUS/Methodology+for+Data+Lifecycle+Management">Methodology for Data Lifecycle Management</a> on the EarthData wiki.</p>
+<h3><a class="anchor" aria-hidden="true" id="aws-documentation"></a><a href="#aws-documentation" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>AWS Documentation</h3>
+<p>The examples shown in this document are obviously fairly basic cases.  By using object tags, filters and other configuration options  you can enact far more complicated policies for various scenarios.   For more reading on the topics presented on this page see:</p>
+<ul>
+<li><a href="https://docs.aws.amazon.com/AmazonS3/latest/user-guide/create-lifecycle.html">AWS - Guide on setting bucket lifecycle policies via the management Console</a></li>
+<li><a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/set-lifecycle-cli.html">AWS - Guide on setting bucket lifecycle policies using the AWS CLI</a></li>
+<li><a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lifecycle-mgmt.html">AWS - Object Lifecycle Management</a></li>
+<li><a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/lifecycle-configuration-examples.html">AWS - Lifecycle Configuration Examples</a></li>
+</ul>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/1.12.0/operator-docs/update-cumulus-dependencies"><span class="arrow-prev">← </span><span>Update Cumulus Dependencies</span></a><a class="docs-next button" href="/cumulus/docs/1.12.0/operator-docs/locating-access-logs"><span>Locating S3 Access Logs</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#requirements">Requirements</a></li><li><a href="#examples">Examples</a><ul class="toc-headings"><li><a href="#walkthrough-on-setting-time-based-s3-infrequent-access-s3ia-bucket-policy">Walkthrough on setting time-based S3 Infrequent Access (S3IA) bucket policy</a></li><li><a href="#command-line">Command Line</a></li><li><a href="#management-console">Management Console</a></li><li><a href="#strategy-overview">Strategy Overview</a></li><li><a href="#aws-documentation">AWS Documentation</a></li></ul></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>
