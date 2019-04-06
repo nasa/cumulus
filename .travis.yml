@@ -144,6 +144,7 @@ jobs:
       install:
         - nvm install-latest-npm
         - npm install
+        - npm run bootstrap-no-build
       script: ./travis-ci/deploy-to-npm.sh
 
     - name: "Deploy to Github Pages"
