@@ -13,9 +13,9 @@ stages:
   - name: deploy
     if: type != pull_request AND tag =~ ^v\d+.*
   - name: deployment test setup
-    if: (type != pull_request AND tag =~ ^v\d+.*) OR type = cron
+    # if: (type != pull_request AND tag =~ ^v\d+.*) OR type = cron
   - name: deployment test
-    if: (type != pull_request AND tag =~ ^v\d+.*) OR type = cron
+    # if: (type != pull_request AND tag =~ ^v\d+.*) OR type = cron
 
 jobs:
   include:
@@ -181,3 +181,4 @@ branches:
   only:
     - master
     - /^v\d+\.\d+(\.\d+)?(-\S*)?$/  # To build tag pushes for releases
+    - release-1.12.1
