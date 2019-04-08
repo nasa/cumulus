@@ -5,7 +5,11 @@ const proxyquire = require('proxyquire');
 const test = require('ava');
 const JSFtp = require('jsftp');
 const {
-  calculateS3ObjectChecksum, fileExists, recursivelyDeleteS3Bucket, s3
+  calculateS3ObjectChecksum,
+  fileExists,
+  recursivelyDeleteS3Bucket,
+  s3,
+  headObject
 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const { ftpMixin: TestFtpMixin } = require('../ftp');
@@ -52,11 +56,12 @@ test('useList defaults to false when not assigned', async (t) => {
   t.is(jsftpSpy.getCall(0).args[0].useList, false);
 });
 
-test('Download remote file to s3', async (t) => {
+test('Download remote file to s3 with correct content-type', async (t) => {
   class MyTestFtpDiscoveryClass extends TestFtpMixin(MyTestDiscoveryClass) {}
   const myTestFtpDiscoveryClass = new MyTestFtpDiscoveryClass();
   const bucket = randomString();
-  const key = randomString();
+  const key = randomString() + '.hdf';
+  const expectedContentType = 'application/x-hdf';
   try {
     await s3().createBucket({ Bucket: bucket }).promise();
     await myTestFtpDiscoveryClass.sync(
@@ -65,6 +70,9 @@ test('Download remote file to s3', async (t) => {
     t.truthy(fileExists(bucket, key));
     const sum = await calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket, key });
     t.is(sum, 1435712144);
+
+    const s3HeadResponse = await headObject(bucket, key);
+    t.is(expectedContentType, s3HeadResponse.ContentType);
   }
   finally {
     await recursivelyDeleteS3Bucket(bucket);
