@@ -746,7 +746,7 @@ Resources:
                   - s3:ListBucket*
                 Resource:
                 {{#each buckets}}
-                {{#BucketIsType this "protected"}}
+                {{#BucketIsType this "protected,public"}}
                   - arn:aws:s3:::{{this.name}}
                 {{/BucketIsType}}
                 {{/each}}
@@ -760,7 +760,7 @@ Resources:
                   - s3:DeleteObjectVersion
                 Resource:
                 {{#each buckets}}
-                {{#BucketIsType this "protected"}}
+                {{#BucketIsType this "protected,public"}}
                   - arn:aws:s3:::{{this.name}}/*
                 {{/BucketIsType}}
                 {{/each}}

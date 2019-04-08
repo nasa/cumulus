@@ -7,6 +7,7 @@ const { log, aws: { buildS3Uri, promiseS3Upload } } = require('@cumulus/common')
 const omit = require('lodash.omit');
 
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
+const { lookupMimeType } = require('./util');
 const recursion = require('./recursion');
 
 module.exports.ftpMixin = (superclass) => class extends superclass {
@@ -174,7 +175,12 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
     const pass = new PassThrough();
     readable.pipe(pass);
 
-    const params = { Bucket: bucket, Key: key, Body: pass };
+    const params = {
+      Bucket: bucket,
+      Key: key,
+      Body: pass,
+      ContentType: lookupMimeType(key)
+    };
     await promiseS3Upload(params);
     log.info('Uploading to s3 is complete(ftp)', s3uri);
 
