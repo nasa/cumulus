@@ -2,7 +2,7 @@
 
 set -e
 
-npm ci
+npm install
 
 . ./travis-ci/set-env-vars.sh
 
