@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const configUtil = require('./config');
 const log = require('./log');
+const { deprecate } = require('./util');
 
 const isMocha = process.argv[1] && process.argv[1].includes('mocha-webpack');
 
@@ -139,6 +140,7 @@ exports.collectionMessageInput = (id, taskName, payload = (o) => o, configFile =
  * @returns {undefined} none
  */
 exports.setupLocalRun = (handler, invocation) => {
+  deprecate('@cumulus/common/local-helpers.justLocalRun', '1.12.0');
   if (isLocal) {
     handler(invocation(), {}, (result) => result);
   }
@@ -153,6 +155,7 @@ exports.setupLocalRun = (handler, invocation) => {
  * @returns {undefined} none
  */
 exports.justLocalRun = (fn) => {
+  deprecate('@cumulus/common/local-helpers.justLocalRun', '1.12.0');
   if (isLocal) {
     fn();
   }
