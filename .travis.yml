@@ -13,137 +13,137 @@ stages:
   - name: deploy
     if: type != pull_request AND tag =~ ^v\d+.*
   - name: deployment test setup
-    # if: (type != pull_request AND tag =~ ^v\d+.*) OR type = cron
+    if: (type != pull_request AND tag =~ ^v\d+.*) OR type = cron
   - name: deployment test
-    # if: (type != pull_request AND tag =~ ^v\d+.*) OR type = cron
+    if: (type != pull_request AND tag =~ ^v\d+.*) OR type = cron
 
 jobs:
   include:
-    # - name: "npm audit"
-    #   stage: audit and lint
-    #   if: tag !~ ^v\d+.* AND commit_message !~ \[skip-audit\]
-    #   install:
-    #     - nvm install-latest-npm
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #     - npm ci
-    #     - npm run bootstrap-no-build
-    #   script: npm run audit
+    - name: "npm audit"
+      stage: audit and lint
+      if: tag !~ ^v\d+.* AND commit_message !~ \[skip-audit\]
+      install:
+        - nvm install-latest-npm
+        - ln -s /dev/stdout ./lerna-debug.log
+        - npm install --no-audit
+        - npm run install-locks
+      script: npm run audit
 
-    # - name: "eslint"
-    #   stage: audit and lint
-    #   install:
-    #     - nvm install-latest-npm
-    #     - npm ci
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #     - npm run bootstrap-no-build
-    #   script: npm run lint
+    - name: "eslint"
+      stage: audit and lint
+      install:
+        - nvm install-latest-npm
+        - npm install
+        - ln -s /dev/stdout ./lerna-debug.log
+        - npm run bootstrap-no-build
+      script: npm run lint
 
-    # - name: "Unit tests except API"
-    #   stage: unit test and stack deployment
-    #   services:
-    #     - docker
-    #   env:
-    #     - LOCALSTACK_HOST=127.0.0.1
-    #     - LOCAL_ES_HOST=127.0.0.1
-    #   install:
-    #     - nvm install-latest-npm
-    #     - npm ci
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #     - npm run bootstrap-no-build
-    #     - ./travis-ci/start-local-services.sh
-    #   script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api --ignore cumulus-integration-tests
-    #   after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+    - name: "Unit tests except API"
+      stage: unit test and stack deployment
+      services:
+        - docker
+      env:
+        - LOCALSTACK_HOST=127.0.0.1
+        - LOCAL_ES_HOST=127.0.0.1
+      install:
+        - nvm install-latest-npm
+        - npm install
+        - ln -s /dev/stdout ./lerna-debug.log
+        - npm run bootstrap-no-build
+        - ./travis-ci/start-local-services.sh
+      script: ./node_modules/.bin/nyc ./node_modules/.bin/lerna run test --ignore @cumulus/api --ignore cumulus-integration-tests
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
-    # - name: "API unit tests"
-    #   stage: unit test and stack deployment
-    #   services:
-    #     - docker
-    #   env:
-    #     - LOCALSTACK_HOST=127.0.0.1
-    #     - LOCAL_ES_HOST=127.0.0.1
-    #   install:
-    #     - nvm install-latest-npm
-    #     - npm ci
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #     - npm run bootstrap-no-build
-    #     - ./travis-ci/start-local-services.sh
-    #   script: ./travis-ci/run-api-unit-tests.sh
-    #   after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+    - name: "API unit tests"
+      stage: unit test and stack deployment
+      services:
+        - docker
+      env:
+        - LOCALSTACK_HOST=127.0.0.1
+        - LOCAL_ES_HOST=127.0.0.1
+      install:
+        - nvm install-latest-npm
+        - npm install
+        - ln -s /dev/stdout ./lerna-debug.log
+        - npm run bootstrap-no-build
+        - ./travis-ci/start-local-services.sh
+      script: ./travis-ci/run-api-unit-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
-    # - name: "Deploy Integration Test Stack"
-    #   stage: unit test and stack deployment
-    #   if: commit_message !~ \[skip-integration-tests\] OR branch = master
-    #   install:
-    #     - nvm install-latest-npm
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #   script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
-    #   after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+    - name: "Deploy Integration Test Stack"
+      stage: unit test and stack deployment
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
+      install:
+        - nvm install-latest-npm
+        - ln -s /dev/stdout ./lerna-debug.log
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
-    # - name: "Deploy SIT Integration Test Stack"
-    #   stage: unit test and stack deployment
-    #   if: type = cron
-    #   install:
-    #     - nvm install-latest-npm
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #   script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
-    #   after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
-    #   env:
-    #     - NGAP_ENV=SIT
-    #     - DEPLOYMENT=cumulus-sit
+    - name: "Deploy SIT Integration Test Stack"
+      stage: unit test and stack deployment
+      if: type = cron
+      install:
+        - nvm install-latest-npm
+        - ln -s /dev/stdout ./lerna-debug.log
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+      env:
+        - NGAP_ENV=SIT
+        - DEPLOYMENT=cumulus-sit
 
-    # - name: "Run integration tests"
-    #   stage: integration tests
-    #   if: commit_message !~ \[skip-integration-tests\] OR branch = master
-    #   install:
-    #     - nvm install-latest-npm
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #   script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
-    #   after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
+    - name: "Run integration tests"
+      stage: integration tests
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
+      install:
+        - nvm install-latest-npm
+        - ln -s /dev/stdout ./lerna-debug.log
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
 
-    # - name: "Run SIT integration tests"
-    #   stage: integration tests
-    #   if: type = cron
-    #   install:
-    #     - nvm install-latest-npm
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #   script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
-    #   after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
-    #   env:
-    #     - NGAP_ENV=SIT
-    #     - DEPLOYMENT=cumulus-sit
+    - name: "Run SIT integration tests"
+      stage: integration tests
+      if: type = cron
+      install:
+        - nvm install-latest-npm
+        - ln -s /dev/stdout ./lerna-debug.log
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-integration-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
+      env:
+        - NGAP_ENV=SIT
+        - DEPLOYMENT=cumulus-sit
 
-    # - name: "Run redeployment integration tests"
-    #   stage: redeployment integration tests
-    #   install:
-    #     - nvm install-latest-npm
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #   script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-redeployment-tests.sh
-    #   after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
+    - name: "Run redeployment integration tests"
+      stage: redeployment integration tests
+      install:
+        - nvm install-latest-npm
+        - ln -s /dev/stdout ./lerna-debug.log
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/run-redeployment-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/unlock-stack.sh
 
-    # - name: "Cleanup integration tests"
-    #   stage: cleanup integration tests
-    #   if: commit_message !~ \[skip-integration-tests\] OR branch = master
-    #   install:
-    #     - nvm install-latest-npm
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #   script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+    - name: "Cleanup integration tests"
+      stage: cleanup integration tests
+      if: commit_message !~ \[skip-integration-tests\] OR branch = master
+      install:
+        - nvm install-latest-npm
+        - ln -s /dev/stdout ./lerna-debug.log
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
 
-    # - name: "Cleanup SIT integration tests"
-    #   stage: cleanup integration tests
-    #   if: type = cron
-    #   install:
-    #     - nvm install-latest-npm
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #   script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
-    #   env:
-    #     - NGAP_ENV=SIT
-    #     - DEPLOYMENT=cumulus-sit
+    - name: "Cleanup SIT integration tests"
+      stage: cleanup integration tests
+      if: type = cron
+      install:
+        - nvm install-latest-npm
+        - ln -s /dev/stdout ./lerna-debug.log
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+      env:
+        - NGAP_ENV=SIT
+        - DEPLOYMENT=cumulus-sit
 
     - name: "Deploy to NPM"
       stage: deploy
       install:
         - nvm install-latest-npm
-        - npm ci
+        - npm install
         - npm run bootstrap-no-build
       script: ./travis-ci/deploy-to-npm.sh
 
@@ -151,19 +151,19 @@ jobs:
       stage: deploy
       install:
         - nvm install-latest-npm
-        - npm ci
+        - npm install
       script: ./travis-ci/deploy-to-github-pages.sh
 
-    # - name: "Deploy packages to integration test stack"
-    #   stage: deployment test setup
-    #   install:
-    #     - nvm install-latest-npm
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #   script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
-    #   after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
-    #   env:
-    #     - DEPLOYMENT=cumulus-from-npm
-    #     - USE_NPM_PACKAGES=true
+    - name: "Deploy packages to integration test stack"
+      stage: deployment test setup
+      install:
+        - nvm install-latest-npm
+        - ln -s /dev/stdout ./lerna-debug.log
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+      env:
+        - DEPLOYMENT=cumulus-from-npm
+        - USE_NPM_PACKAGES=true
 
     - name: "Run integration tests against deployed packages"
       stage: deployment test
@@ -181,4 +181,3 @@ branches:
   only:
     - master
     - /^v\d+\.\d+(\.\d+)?(-\S*)?$/  # To build tag pushes for releases
-    - release-1.12.1

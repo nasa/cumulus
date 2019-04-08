@@ -6,9 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [v1.12.1] - 2019-4-5
-
-Note: There was an issue publishing 1.12.0, so please see notes from 1.12.0
+- **CUMULUS-1223**
+  - Adds unauthenticated access for public bucket files to the Distribution API.  Public files should be requested the same way as protected files, but for public files a redirect to a self-signed S3 URL will happen without requiring authentication with Earthdata login.
 
 ## [v1.12.0] - 2019-4-4
 
@@ -47,7 +46,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
   - Kes overrides will now abort with a warning if a workflow step is configured without a corresponding
     lambda configuration
 - **CUMULUS-1223**
-  - Adds convenience function `@cumulus/common/bucketsConfigJsonObject` for fetching stack's bucket configuration as an object .
+  - Adds convenience function `@cumulus/common/bucketsConfigJsonObject` for fetching stack's bucket configuration as an object.
+
 - **CUMULUS-853**
   - Updated FakeProcessing example lambda to include option to generate fake browse
   - Added feature documentation for ancillary metadata export, a new cookbook entry describing a workflow with ancillary metadata generation(browse), and related task definition documentation
@@ -100,6 +100,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ### Changed
 
+- **CUMULUS-1216** - Updated `@cumulus/ingest/granule/ingestFile` to download files to expected staging location.
 - **CUMULUS-1208** - Updated `@cumulus/ingest/queue/enqueueGranuleIngestMessage()` to not transform granule object passed to it when building an ingest message
 - **CUMULUS-1198** - `@cumulus/ingest` no longer enforces any expectations about whether `provider_path` contains a leading slash or not.
 - **CUMULUS-1170**

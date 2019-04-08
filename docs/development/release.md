@@ -43,11 +43,7 @@ Update the CHANGELOG.md. Put a header under the 'Unreleased' section with the ne
 
 Add a link reference for the github "compare" view at the bottom of the CHANGELOG.md, following the existing pattern. This link reference should create a link in the CHANGELOG's release header to changes in the corresponding release.
 
-### 5. Update example/package.json
-
-Update example/package.json to point to the new Cumulus packages. If this is a backport, pin the version of the Cumulus packages to the specific version being released. Do not use `^` or `~`.
-
-### 6. Cut new version of Cumulus Documentation
+### 5. Cut new version of Cumulus Documentation
 
 ```shell
 cd website
@@ -59,11 +55,11 @@ Where `${release_version}` corresponds to the version tag `v1.2.3`, for example.
 
 Note: This is for 1.10.3 or later.
 
-### 7. Create a pull request against the master branch
+### 6. Create a pull request against the master branch
 
 Create a PR against the `master` branch. Verify that the Travis CI build for the PR succeeds and then merge to master. Once merged, the release branch can be deleted.
 
-### 8. Create a git tag for the release
+### 7. Create a git tag for the release
 
 Publishing of new releases is handled by Travis CI and is triggered when the release tag is pushed to Github. This tag should be in the format `v1.2.3`, where `1.2.3` is the new version.
 
@@ -81,3 +77,14 @@ Travis will build and run tests against that tagged release, publish the new pac
 Creating a new release for an older major or minor version is similar to creating any other release. Create a branch starting at the tag of the previous release, then follow the [instructions for creating a new release](#updating-cumulus-version-and-publishing-to-npm).
 
 For example, if versions 1.7.0 and 1.8.0 had been published and you wanted to create a 1.7.1 release, you would create the release branch by running `git checkout -b release-1.7.1 v1.7.0`.
+
+## Troubleshooting
+
+### Delete and regenerate the tag
+
+To delete a published tag to re-tag, follow these steps:
+
+```bash
+  $ git tag -d v1.x.x
+  $ git push -d origin v1.x.x
+```
