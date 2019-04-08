@@ -8,6 +8,7 @@ const {
   resolve
 } = require('url');
 const cloneDeep = require('lodash.clonedeep');
+const mime = require('mime-types');
 
 const {
   models: {
@@ -20,7 +21,8 @@ const {
   aws: {
     getS3Object,
     s3ObjectExists,
-    parseS3Uri
+    parseS3Uri,
+    headObject
   },
   BucketsConfig,
   constructCollectionId
@@ -214,17 +216,20 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
   describe('the MoveGranules task', () => {
     let moveGranulesTaskOutput;
+    let headObjects;
     let movedFiles;
     let existCheck = [];
 
     beforeAll(async () => {
       moveGranulesTaskOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
       movedFiles = moveGranulesTaskOutput.payload.granules[0].files;
-      existCheck = await Promise.all([
-        s3ObjectExists({ Bucket: movedFiles[0].bucket, Key: movedFiles[0].filepath }),
-        s3ObjectExists({ Bucket: movedFiles[1].bucket, Key: movedFiles[1].filepath }),
-        s3ObjectExists({ Bucket: movedFiles[2].bucket, Key: movedFiles[2].filepath })
-      ]);
+      existCheck = await Promise.all(movedFiles.map((fileObject) =>
+        s3ObjectExists({ Bucket: fileObject.bucket, Key: fileObject.filepath })));
+      headObjects = await Promise.all(movedFiles.map(async (fileObject) =>
+        Object.assign({},
+          fileObject,
+          await headObject(fileObject.bucket, fileObject.filepath),
+          { expectedMime: mime.lookup(fileObject.filepath) || 'application/octet-stream' })));
     });
 
     it('has a payload with correct buckets, filenames, filesizes', () => {
@@ -236,6 +241,10 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
           expect(file.fileSize).toEqual(expectedFile.fileSize);
         }
       });
+    });
+
+    it('has expected ContentType values in s3', () => {
+      headObjects.forEach((headObj) => expect(headObj.expectedMime).toEqual(headObj.ContentType));
     });
 
     it('moves files to the bucket folder based on metadata', () => {

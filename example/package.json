@@ -75,6 +75,7 @@
     "lodash.intersection": "^4.4.0",
     "lodash.merge": "^4.6.1",
     "lodash.unset": "^4.5.2",
+    "mime-types": "^2.1.22",
     "moment": "^2.22.2",
     "node-forge": "^0.7.5",
     "p-timeout": "2.0.1",
