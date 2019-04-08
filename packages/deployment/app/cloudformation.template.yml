@@ -151,12 +151,6 @@ Resources:
         table:
           Ref: UsersTableDynamoDB
         records:
-        {{# each default_users}}
-          {{# if this }}
-          - username: {{@key}}
-            password: OAuth
-          {{/if}}
-        {{/each}}
         {{# each users}}
           - username: {{username}}
             password: OAuth
@@ -845,7 +839,7 @@ Resources:
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security Group for ECS containter instances of {{stackName}}
+      GroupDescription: Security Group for ECS container instances of {{stackName}}
       Tags:
         - Key: Name
           Value: "{{stackName}}"
@@ -870,97 +864,6 @@ Resources:
 
   CumulusContainerInstanceLaunch:
     Type: AWS::AutoScaling::LaunchConfiguration
-    Metadata:
-      AWS::CloudFormation::Init:
-        configSets:
-          MountConfig:
-          - config
-          {{# if ecs.efs.mount }}
-          - mount
-          {{/if}}
-
-        config:
-          commands:
-            01_add_instance_to_cluster:
-              command:
-                Fn::Sub:
-                  - |
-                    #!/bin/bash
-                    echo ECS_CLUSTER=${CumulusECSCluster} >> /etc/ecs/ecs.config
-                    echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=1m >> /etc/ecs/ecs.config
-                    echo 'DOCKER_STORAGE_OPTIONS="${!DOCKER_STORAGE_OPTIONS} --storage-driver {{ecs.docker.storageDriver}}"' >> /etc/sysconfig/docker-storage
-                    {{#ifEquals ecs.docker.storageDriver "devicemapper"}}
-                    echo 'OPTIONS="${!OPTIONS} --storage-opt dm.basesize={{ecs.volumeSize}}G"' >> /etc/sysconfig/docker
-                    {{/ifEquals}}
-
-                {{#ifEquals ecs.docker.registry "dockerhub"}}
-                    echo ECS_ENGINE_AUTH_TYPE=docker >> /etc/ecs/ecs.config
-                    echo 'ECS_ENGINE_AUTH_DATA={"https://index.docker.io/v1/":{"username":"{{ecs.docker.username}}","password": "${Password}","email":"${Email}"}}' >> /etc/ecs/ecs.config
-
-                  - Password:
-                      Ref: DockerPassword
-                    Email:
-                      Ref: DockerEmail
-                {{else}}
-                  - Example: value
-                {{/ifEquals}}
-
-          {{# if ecs.efs.mount }}
-          packages:
-            yum:
-              nfs-utils: []
-          {{/if}}
-
-          files:
-            "/etc/cfn/cfn-hup.conf":
-              content:
-                Fn::Sub: |
-                  [main]
-                  stack=${AWS::StackId}
-                  region=${AWS::Region}
-              mode: '000400'
-              owner: root
-              group: root
-            "/etc/cfn/hooks.d/cfn-auto-reloader.conf":
-              content:
-                Fn::Sub: |
-                  [cfn-auto-reloader-hook]
-                  triggers=post.update
-                  path=Resources.CumulusContainerInstanceLaunch.Metadata.AWS::CloudFormation::Init
-                  action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region}
-                  runas=root
-          services:
-            sysvinit:
-              cfn-hup:
-                enabled: 'true'
-                ensureRunning: 'true'
-                files:
-                - "/etc/cfn/cfn-hup.conf"
-                - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
-
-        {{# if ecs.efs.mount}}
-        mount:
-          commands:
-            01_mount:
-              command:
-                Fn::Sub:
-                  - |
-                    #!/bin/bash -xe
-
-                    mkdir -p {{ecs.efs.mount}}
-                    mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}}
-                    chmod 777 {{ecs.efs.mount}}
-
-                    echo '${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}} nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0' | tee -a /etc/fstab
-                    mount -a
-                    service docker restart
-                    start ecs
-
-                  - EFSFileSystemId:
-                      Fn::ImportValue:
-                        Fn::Sub: "{{prefix}}-EFSFileSystemId"
-        {{/if}}
-
     Properties:
     {{# if vpc.subnets }}
       AssociatePublicIpAddress: {{#if ecs.publicIp}}{{ecs.publicIp}}{{else}}false{{/if}}
@@ -971,7 +874,7 @@ Resources:
           - GroupId
        {{# if ecs.efs.mount}}
         - Fn::ImportValue:
-            "{{prefix}}-EFSSecurityGroup"
+            "{{stackName}}-EFSSecurityGroup"
         {{/if}}
 
       ImageId: {{ecs.amiid}}
@@ -987,14 +890,60 @@ Resources:
       KeyName: {{ ecs.keyPairName }}
     {{/if}}
       UserData:
-        "Fn::Base64":
-          Fn::Join:
-            - ""
-            - - "#cloud-boothook\n"
-              - "\n"
-              - "yum install -y aws-cfn-bootstrap\n"
-              - Fn::Sub: "/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CumulusContainerInstanceLaunch --region ${AWS::Region} -c MountConfig\n"
-              - Fn::Sub: "/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource CumulusECSAutoScalingGroup --region ${AWS::Region}"
+        Fn::Base64:
+          Fn::Sub:
+            - |
+              Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+              MIME-Version: 1.0
+
+              --==BOUNDARY==
+              Content-Type: text/cloud-boothook; charset="us-ascii"
+
+              sed -i '/^\s*DOCKER_STORAGE_OPTIONS=/d' /etc/sysconfig/docker-storage
+              echo 'DOCKER_STORAGE_OPTIONS="--storage-driver {{ecs.docker.storageDriver}}"' >> /etc/sysconfig/docker-storage
+
+              {{#ifEquals ecs.docker.storageDriver "devicemapper"}}
+              sed -i '/^\s*OPTIONS=/d' /etc/sysconfig/docker
+              echo 'OPTIONS="--default-ulimit nofile=1024:4096 --storage-opt dm.basesize={{ecs.volumeSize}}G"' >> /etc/sysconfig/docker
+              {{/ifEquals}}
+
+              --==BOUNDARY==
+              Content-Type: text/x-shellscript; charset="us-ascii"
+
+              {{# if ecs.efs.mount }}
+              AZ=$(curl http://169.254.169.254/latest/meta-data/placement/availability-zone)
+              yum install -y nfs-utils
+
+              mkdir -p {{ecs.efs.mount}}
+              mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${!AZ}.${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}}
+              chmod 777 {{ecs.efs.mount}}
+
+              echo "${!AZ}.${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}} nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0" | tee -a /etc/fstab
+              mount -a
+
+              service docker restart
+              {{/if}}
+
+              cat <<'EOF' >> /etc/ecs/ecs.config
+              ECS_CLUSTER=${CumulusECSCluster}
+              ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=1m
+              ECS_CONTAINER_STOP_TIMEOUT={{ecs.container_stop_timeout}}
+              EOF
+
+              {{#ifEquals ecs.docker.registry "dockerhub"}}
+              echo ECS_ENGINE_AUTH_TYPE=docker >> /etc/ecs/ecs.config
+              echo 'ECS_ENGINE_AUTH_DATA={"https://index.docker.io/v1/":{"username":"{{ecs.docker.username}}","password": "${DockerPassword}","email":"${DockerEmail}"}}' >> /etc/ecs/ecs.config
+              {{/ifEquals}}
+
+              --==BOUNDARY==--
+            {{# if ecs.efs.mount }}
+            - EFSFileSystemId:
+                Fn::ImportValue: "{{stackName}}-EFSFileSystemId"
+            {{else}}
+            # This is necessary because, if we are not setting a mount,
+            # the Fn::Sub function still requires a variable map
+            - Nothing: nothing
+            {{/if}}
 
   CumulusECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -1136,6 +1085,57 @@ Resources:
         MaximumPercent: 100
         MinimumHealthyPercent: 0
 
+  {{@key}}ECSServiceTaskCountLowAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: There are less tasks running than the desired
+      AlarmName: {{../stackName}}-{{@key}}-TaskCountLowAlarm
+      ComparisonOperator: LessThanThreshold
+      EvaluationPeriods: 1
+      MetricName: MemoryUtilization
+      Statistic: SampleCount
+      Threshold: {{# if this.count}}{{this.count}}{{ else }} 0 {{/if}}
+      Period: 60
+      Namespace: AWS/ECS
+      Dimensions:
+        - Name: ClusterName
+          Value:
+            Ref: CumulusECSCluster
+        - Name: ServiceName
+          Value:
+            Fn::GetAtt:
+              - {{@key}}ECSService
+              - Name
+
+  {{# if this.alarms}}
+  # the service has cumstom alarms
+  {{# each this.alarms}}
+  {{@../key}}{{@key}}Alarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+    {{#if alarm_description}}
+      AlarmDescription: {{ alarm_description }}
+    {{/if}}
+      AlarmName: {{../../stackName}}-{{@../key}}-{{@key}}Alarm
+      ComparisonOperator: {{ comparison_operator }}
+      EvaluationPeriods: {{#if evaluation_periods }}{{ evaluation_periods }}{{ else }}5{{/if}}
+      MetricName: {{ metric }}
+      Statistic: {{#if statistic }}{{ statistic }}{{ else }}Average{{/if}}
+      Threshold: {{ threshold }}
+      Period: {{#if period }}{{ period }}{{ else }}60{{/if}}
+      Namespace: AWS/ECS
+      Dimensions:
+        - Name: ClusterName
+          Value:
+            Ref: CumulusECSCluster
+        - Name: ServiceName
+          Value:
+            Fn::GetAtt:
+              - {{@../key}}ECSService
+              - Name
+  {{/each}}
+  {{/if}}
+
 {{/each}}
 
 {{#each ecs.tasks}}
@@ -1242,13 +1242,11 @@ Resources:
   #################################################
   # CloudWatch Dashboard BEGIN
   #################################################
-{{# if es.name}}
   CumulusCloudWatchDashboard:
     Type: AWS::CloudWatch::Dashboard
     Properties:
       DashboardName: {{stackName}}-CloudWatch-Dashboard
-      DashboardBody: '{{#buildCWDashboard dashboard es stackName}}{{/buildCWDashboard}}'
-{{/if}}
+      DashboardBody: '{{#buildCWDashboard dashboard ecs es stackName}}{{/buildCWDashboard}}'
   #################################################
   # CloudWatch Dashboard END
   #################################################
@@ -1325,6 +1323,5 @@ Outputs:
     Value:
       Ref: SecurityGroup
     Export:
-      Name:
-        Fn::Sub: "{{stackName}}-EcsSecurityGroup"
+      Name: "{{stackName}}-EcsSecurityGroup"
 {{/if}}

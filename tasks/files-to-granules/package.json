@@ -1,12 +1,12 @@
 {
   "name": "@cumulus/files-to-granules",
-  "version": "1.11.3-alpha1",
+  "version": "1.12.0",
   "description": "Converts array-of-files input into a granules object by extracting granuleId from filename",
   "main": "index.js",
   "directories": {
     "test": "tests"
   },
-  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/files-to-granules",
   "repository": {
     "type": "git",
     "url": "https://github.com/nasa/cumulus"

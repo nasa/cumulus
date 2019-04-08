@@ -108,9 +108,9 @@ mhs2:
 aj:
   prefix: aj-integration
 
-aimee-test:
-  prefix: aimee-test
-  stackName: aimee-test-iam
+aimee:
+  prefix: aimee
+  stackName: aimee-iam
 
 lf:
   prefix: lf-cumulus
@@ -284,6 +284,7 @@ mhs:
 
 mhs3:
   prefix: mhs3
+  stackName: mhs3-iam
   buckets:
     internal:
       name: mhs3-internal
