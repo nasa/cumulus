@@ -56,7 +56,7 @@ async function addMetadataObjects(cmrFiles) {
 /**
  * Check that each granule to upload contains a CMR Metadata file
  *
- * @param {Array} granules - granules object from input.
+ * @param {Array} granules - Granules object from input.
  * @param {Array} cmrFiles - CMR Objects with filenames and granuleIds.
  *
  * @throws {Error} - Error indicating a missing metadata file.
