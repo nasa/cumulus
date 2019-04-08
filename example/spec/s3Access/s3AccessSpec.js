@@ -5,7 +5,12 @@ const { URL } = require('url');
 const { Lambda, STS } = require('aws-sdk');
 
 const { models: { AccessToken } } = require('@cumulus/api');
-const { aws: { s3 }, testUtils: { randomId } } = require('@cumulus/common');
+const {
+  aws: { s3 },
+  testUtils: { randomId },
+  BucketsConfig
+} = require('@cumulus/common');
+
 const {
   EarthdataLogin: { getEarthdataAccessToken },
   distributionApi: { invokeApiDistributionLambda }
@@ -15,9 +20,11 @@ const { setDistributionApiEnvVars } = require('../helpers/apiUtils');
 const { loadConfig } = require('../helpers/testUtils');
 
 const config = loadConfig();
+const bucketConfig = new BucketsConfig(config.buckets);
+const protectedBucketName = bucketConfig.protectedBuckets()[0].name;
+const publicBucketName = bucketConfig.publicBuckets()[0].name;
 
 const testFileKey = `${config.stackName}-s3AccessTest/test.txt`;
-const protectedBucket = config.buckets.protected.name;
 process.env.stackName = config.stackName;
 
 /**
@@ -25,18 +32,19 @@ process.env.stackName = config.stackName;
  * true or false based on whether test on the s3 Object passes or fails.
  *
  * @param {string} region - AWS region to run test from
- * @param {AWS.credentials} credentials - AWS.credentials object for direct s3 access
- * @param {string} testName - test to invoke from lambda can be 'list-objects',
- *                            'get-object' or 'write-object'
+ * @param {string} testBucketName - bucket to test against
+ * @param {Object} credentials - object with AWS credentials keys for direct s3 access
+ * @param {string} testName - test to invoke from lambda can be ['list-objects',
+ *                            'get-object' or 'write-object']
  * @returns {Object} - lambda payload
  */
-async function invokeTestLambda(region, credentials, testName) {
+async function invokeTestLambda(region, testBucketName, credentials, testName) {
   const lambda = new Lambda({ region });
 
   const data = await lambda.invoke({
     FunctionName: `${config.stackName}-S3AccessTest`,
     Payload: JSON.stringify({
-      Bucket: protectedBucket,
+      Bucket: testBucketName,
       Key: testFileKey,
       credentials,
       testName
@@ -51,11 +59,12 @@ async function invokeTestLambda(region, credentials, testName) {
  * true if the S3 Object can be read, false otherwise.
  *
  * @param {string} region - AWS region
+ * @param {string} testBucketName - bucket to test against.
  * @param {Object} credentials - AWS.credentials object
  * @returns {string} - 'true' or 'false'
  */
-async function canGetObject(region, credentials) {
-  return invokeTestLambda(region, credentials, 'get-object');
+async function canGetObject(region, testBucketName, credentials) {
+  return invokeTestLambda(region, testBucketName, credentials, 'get-object');
 }
 
 /**
@@ -63,22 +72,24 @@ async function canGetObject(region, credentials) {
  * tests which returns false if an S3 Object can be written to the protected
  * bucket, false otherwise.
  * @param {string} region - aws region
- * @param {AWS.Credentials} credentials - credential object
+ * @param {string} testBucketName - bucket to test against.
+ * @param {Object} credentials - object with AWS Credentials keys
  * @returns {string} - 'true' or 'false'
  */
-async function canWriteObject(region, credentials) {
-  return invokeTestLambda(region, credentials, 'write-object');
+async function canWriteObject(region, testBucketName, credentials) {
+  return invokeTestLambda(region, testBucketName, credentials, 'write-object');
 }
 
 /**
  * Calls the s3AccessTest lambda in the given region, and runs the list-objects
  * test which returns true if the protected buckets objects can be listed, false otherwise.
  * @param {string} region - aws region
- * @param {AWS.Credentials} credentials - credential object
+ * @param {string} testBucketName - bucket to test against.
+ * @param {Object} credentials - Object with AWS Credentials keys
  * @returns {string} - 'true' or 'false'
  */
-async function canListObjects(region, credentials) {
-  return invokeTestLambda(region, credentials, 'list-objects');
+async function canListObjects(region, testBucketName, credentials) {
+  return invokeTestLambda(region, testBucketName, credentials, 'list-objects');
 }
 
 process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
@@ -88,13 +99,17 @@ describe('When accessing an S3 bucket directly', () => {
   let accessToken;
 
   beforeAll(async () => {
-    await s3().putObject({ Bucket: protectedBucket, Key: testFileKey, Body: 'test' }).promise();
+    await Promise.all([
+      s3().putObject({ Bucket: protectedBucketName, Key: testFileKey, Body: 'test' }).promise(),
+      s3().putObject({ Bucket: publicBucketName, Key: testFileKey, Body: 'test' }).promise()
+    ]);
     setDistributionApiEnvVars();
   });
 
   afterAll(async () => {
     await Promise.all([
-      s3().deleteObject({ Bucket: protectedBucket, Key: testFileKey }).promise(),
+      s3().deleteObject({ Bucket: protectedBucketName, Key: testFileKey }).promise(),
+      s3().deleteObject({ Bucket: publicBucketName, Key: testFileKey }).promise(),
       accessTokensModel.delete({ accessToken })
     ]);
   });
@@ -142,53 +157,75 @@ describe('When accessing an S3 bucket directly', () => {
       expect(whoami.UserId).toMatch(new RegExp(`.*:${username}`));
     });
 
-    describe('while in the the same region ', () => {
-      it('the bucket contents can be listed', async () => {
-        expect(await canListObjects('us-east-1', creds)).toBe('true');
+
+    function executeTestsAgainst(testBucket) {
+      describe('while in the the same region ', () => {
+        it('the bucket contents can be listed', async () => {
+          expect(await canListObjects('us-east-1', testBucket, creds)).toBe('true');
+        });
+
+        it('the data can be downloaded', async () => {
+          expect(await canGetObject('us-east-1', testBucket, creds)).toBe('true');
+        });
+
+        it('a write is rejected', async () => {
+          expect(await canWriteObject('us-east-1', testBucket, creds)).toBe('false');
+        });
       });
 
-      it('the data can be downloaded', async () => {
-        expect(await canGetObject('us-east-1', creds)).toBe('true');
-      });
+      describe('while outside the region ', () => {
+        it('the bucket contents can NOT be listed', async () => {
+          expect(await canListObjects('us-west-2', testBucket, creds)).toBe('false');
+        });
 
-      it('a write is rejected', async () => {
-        expect(await canWriteObject('us-east-1', creds)).toBe('false');
+        it('the data can NOT be downloaded', async () => {
+          expect(await canGetObject('us-west-2', testBucket, creds)).toBe('false');
+        });
+
+        it('a write is rejected', async () => {
+          expect(await canWriteObject('us-west-2', testBucket, creds)).toBe('false');
+        });
       });
+    }
+
+    describe('against protected buckets', () => {
+      executeTestsAgainst(protectedBucketName);
     });
 
-    describe('while outside the region ', () => {
-      it('the bucket contents can NOT be listed', async () => {
-        expect(await canListObjects('us-west-2', creds)).toBe('false');
-      });
-
-      it('the data can NOT be downloaded', async () => {
-        expect(await canGetObject('us-west-2', creds)).toBe('false');
-      });
-
-      it('a write is rejected', async () => {
-        expect(await canWriteObject('us-east-1', creds)).toBe('false');
-      });
-    });
-  });
-
-  describe('with third-party/invalid credentials', () => {
-    const thirdPartyCredentials = {
-      accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
-      secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
-      sessionToken: 'FAKETOKENdfkjaf9rufjfdklajf',
-      expiration: '2019-02-26 00:08:18+00:00'
-    };
-
-    it('the bucket contents can NOT be listed', async () => {
-      expect(await canListObjects('us-east-1', thirdPartyCredentials)).toBe('false');
+    // TODO [MHS, 2019-04-08] enable public test when bucket policy is applied to public buckets.
+    xdescribe('against public buckets', () => {
+      executeTestsAgainst(publicBucketName);
     });
 
-    it('the data can NOT be downloaded', async () => {
-      expect(await canGetObject('us-east-1', thirdPartyCredentials)).toBe('false');
-    });
+    describe('with third-party/invalid credentials', () => {
+      const thirdPartyCredentials = {
+        accessKeyId: randomId('accessKeyId'),
+        secretAccessKey: randomId('secretAccessKey'),
+        sessionToken: randomId('sessionToken'),
+        expiration: '2019-02-26 00:08:18+00:00'
+      };
 
-    it('a write is rejected', async () => {
-      expect(await canWriteObject('us-east-1', thirdPartyCredentials)).toBe('false');
+      function executeThirdPartyTestsAgainst(testBucket) {
+        it('the bucket contents can NOT be listed', async () => {
+          expect(await canListObjects('us-east-1', testBucket, thirdPartyCredentials)).toBe('false');
+        });
+
+        it('the data can NOT be downloaded', async () => {
+          expect(await canGetObject('us-east-1', testBucket, thirdPartyCredentials)).toBe('false');
+        });
+
+        it('a write is rejected', async () => {
+          expect(await canWriteObject('us-east-1', testBucket, thirdPartyCredentials)).toBe('false');
+        });
+      }
+
+      describe('against protected buckets', () => {
+        executeThirdPartyTestsAgainst(protectedBucketName);
+      });
+
+      describe('against public buckets', () => {
+        executeThirdPartyTestsAgainst(publicBucketName);
+      });
     });
   });
 });
