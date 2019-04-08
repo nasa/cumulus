@@ -35,7 +35,8 @@ set +e
     rm -rf node_modules
 
     # Needed functionality is in 1.11.3
-    # Prevents breaking on a release build when
+    # Prevents breaking on a release build when it tries to install
+    # the version that does not exist
     npm install @cumulus/common@1.11.3
   fi
 )
