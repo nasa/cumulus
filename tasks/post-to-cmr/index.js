@@ -10,7 +10,6 @@ const {
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { CMRMetaFileNotFound } = require('@cumulus/common/errors');
-const { loadJSONTestData } = require('@cumulus/test-data');
 
 /**
  * Builds the output of the post-to-cmr task
