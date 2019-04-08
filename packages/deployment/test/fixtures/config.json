@@ -897,7 +897,7 @@
                 "title": "alarmTemplate",
                 "annotations": {
                     "alarms": [
-                        "arn:aws:cloudwatch:us-east-1:000000000000:alarm:alarmTemplate"
+                        "fakeArn:alarmTemplate"
                     ]
                 },
                 "view": "singleValue"
@@ -956,7 +956,7 @@
                             "DomainName",
                             "jl-test-integration-es5",
                             "ClientId",
-                            "000000000000"
+                            "123456"
                         ]
                     ],
                     "region": "us-east-1",
