@@ -86,7 +86,7 @@ default:
     instanceType: t2.medium
     desiredInstances: 1
     availabilityZone: us-east-1b
-    publicIp: true
+    publicIp: false 
     restartTasksOnDeploy: true
     docker:
       username: cumulususer
@@ -533,6 +533,7 @@ mhs3:
     shared:
       name: cumulus-data-shared
       type: shared
+  system_bucket: mhs3-internal
   api_distribution_url: '{{API_DISTRIBUTION_URL}}'
 
 jk:

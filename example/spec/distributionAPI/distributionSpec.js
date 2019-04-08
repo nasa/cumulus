@@ -5,10 +5,12 @@ const { URL } = require('url');
 const got = require('got');
 
 const { models: { AccessToken } } = require('@cumulus/api');
-const { serveDistributionApi } = require('@cumulus/api/bin/serve');
+const { BucketsConfig } = require('@cumulus/common');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
-  distributionApi: { getDistributionApiFileStream, getDistributionFileUrl },
+  distributionApi: {
+    invokeApiDistributionLambda
+  },
   EarthdataLogin: { getEarthdataAccessToken }
 } = require('@cumulus/integration-tests');
 
@@ -19,16 +21,26 @@ const {
   uploadTestDataToBucket,
   deleteFolder
 } = require('../helpers/testUtils');
-const {
-  setDistributionApiEnvVars,
-  stopDistributionApi
-} = require('../helpers/apiUtils');
+const { setDistributionApiEnvVars } = require('../helpers/apiUtils');
 
 const config = loadConfig();
-const s3Data = [
-  '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'
-];
 
+const bucketsConfig = new BucketsConfig(config.buckets);
+const protectedBucketName = bucketsConfig.protectedBuckets()[0].name;
+const privateBucketName = bucketsConfig.privateBuckets()[0].name;
+const publicBucketName = bucketsConfig.publicBuckets()[0].name;
+process.env.stackName = config.stackName;
+const s3Data = ['@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'];
+
+/**
+ * Invoke the ApiDistributionLambda and return the headers location
+ * @param {filepath} filepath - request.path parameter
+ * @param {string} accessToken - authenticiation cookie (can be undefined).
+ */
+async function getDistributionApiRedirect(filepath, accessToken) {
+  const payload = await invokeApiDistributionLambda(filepath, accessToken);
+  return payload.headers.location;
+}
 
 /**
  * Login with Earthdata and get response for redirect back to
@@ -48,8 +60,6 @@ describe('Distribution API', () => {
   const testDataFolder = createTestDataPath(testId);
   const fileKey = `${testDataFolder}/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met`;
 
-  let server;
-
   process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
   const accessTokensModel = new AccessToken();
 
@@ -58,12 +68,7 @@ describe('Distribution API', () => {
       uploadTestDataToBucket(config.bucket, s3Data, testDataFolder),
       uploadTestDataToBucket(config.public_bucket, s3Data, testDataFolder)
     );
-
     setDistributionApiEnvVars();
-
-    // Use done() callback to signal end of beforeAll() after the
-    // distribution API has started up.
-    server = await serveDistributionApi(config.stackName, done);
   });
 
   afterAll(async (done) => {
@@ -99,6 +104,9 @@ describe('Distribution API', () => {
         'cksum',
         fs.createReadStream(require.resolve(s3Data[0]))
       );
+      publicFilePath = `/${publicBucketName}/${fileKey}`;
+      protectedFilePath = `/${protectedBucketName}/${fileKey}`;
+      privateFilePath = `/${privateBucketName}/${fileKey}`;
     });
 
     afterAll(async () => {
@@ -122,23 +130,48 @@ describe('Distribution API', () => {
       expect(authorizeUrl.pathname).toEqual('/oauth/authorize');
     });
 
-    it('redirecting to Earthdata login for unauthorized requests to /s3credentials endpoint.', async () => {
-      const response = await got(
-        `${process.env.DISTRIBUTION_ENDPOINT}/s3credentials`,
-        { followRedirect: false }
-      );
-      const authorizeUrl = new URL(response.headers.location);
-      expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
-      expect(authorizeUrl.searchParams.get('state')).toEqual('/s3credentials');
-      expect(authorizeUrl.pathname).toEqual('/oauth/authorize');
+      it('downloads a public science file', async () => {
+        const s3SignedUrl = await getDistributionApiRedirect(publicFilePath);
+        const parts = new URL(s3SignedUrl);
+        const userName = parts.searchParams.get('x-EarthdataLoginUsername');
+
+        const fileStream = got.stream(s3SignedUrl);
+        const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
+        expect(userName).toEqual('unauthenticated user');
+        expect(downloadChecksum).toEqual(fileChecksum);
+      });
     });
 
-    it('downloads the requested science file for authorized requests', async () => {
-      accessToken = await getTestAccessToken();
-      // Compare checksum of downloaded file with expected checksum.
-      const fileStream = await getDistributionApiFileStream(fileUrl, accessToken);
-      const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
-      expect(downloadChecksum).toEqual(fileChecksum);
+    describe('an authorized user', () => {
+      it('downloads the protected science file for authorized requests', async () => {
+        const s3SignedUrl = await getDistributionApiRedirect(protectedFilePath, accessToken);
+        const fileStream = got.stream(s3SignedUrl);
+        const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
+        expect(downloadChecksum).toEqual(fileChecksum);
+      });
+
+      it('downloads a public science file', async () => {
+        const s3SignedUrl = await getDistributionApiRedirect(publicFilePath, accessToken);
+        const parts = new URL(s3SignedUrl);
+        const userName = parts.searchParams.get('x-EarthdataLoginUsername');
+
+        const fileStream = got.stream(s3SignedUrl);
+        const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
+        expect(userName).toEqual('unauthenticated user');
+        expect(downloadChecksum).toEqual(fileChecksum);
+      });
+
+      it('refuses downloads of files in private buckets as forbidden', async () => {
+        const signedUrl = await getDistributionApiRedirect(privateFilePath, accessToken);
+        try {
+          await got(signedUrl);
+          fail('Expected an error to be thrown');
+        }
+        catch (error) {
+          expect(error.statusCode).toEqual(403);
+          expect(error.message).toMatch(/Forbidden/);
+        }
+      });
     });
   });
 });
