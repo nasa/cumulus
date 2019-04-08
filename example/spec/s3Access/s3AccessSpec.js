@@ -183,7 +183,7 @@ describe('When accessing an S3 bucket directly', () => {
         });
 
         it('a write is rejected', async () => {
-          expect(await canWriteObject('us-east-1', testBucket, creds)).toBe('false');
+          expect(await canWriteObject('us-west-2', testBucket, creds)).toBe('false');
         });
       });
     }
@@ -199,9 +199,9 @@ describe('When accessing an S3 bucket directly', () => {
 
     describe('with third-party/invalid credentials', () => {
       const thirdPartyCredentials = {
-        accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
-        secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
-        sessionToken: 'FAKETOKENdfkjaf9rufjfdklajf',
+        accessKeyId: randomId('accessKeyId'),
+        secretAccessKey: randomId('secretAccessKey'),
+        sessionToken: randomId('sessionToken'),
         expiration: '2019-02-26 00:08:18+00:00'
       };
 
