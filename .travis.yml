@@ -25,15 +25,15 @@ jobs:
       install:
         - nvm install-latest-npm
         - ln -s /dev/stdout ./lerna-debug.log
-        - npm ci
-        - npm run bootstrap-no-build
+        - npm install --no-audit
+        - npm run install-locks
       script: npm run audit
 
     - name: "eslint"
       stage: audit and lint
       install:
         - nvm install-latest-npm
-        - npm ci
+        - npm install
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
       script: npm run lint
@@ -47,7 +47,7 @@ jobs:
         - LOCAL_ES_HOST=127.0.0.1
       install:
         - nvm install-latest-npm
-        - npm ci
+        - npm install
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
@@ -63,7 +63,7 @@ jobs:
         - LOCAL_ES_HOST=127.0.0.1
       install:
         - nvm install-latest-npm
-        - npm ci
+        - npm install
         - ln -s /dev/stdout ./lerna-debug.log
         - npm run bootstrap-no-build
         - ./travis-ci/start-local-services.sh
@@ -143,14 +143,14 @@ jobs:
       stage: deploy
       install:
         - nvm install-latest-npm
-        - npm ci
+        - npm install
       script: ./travis-ci/deploy-to-npm.sh
 
     - name: "Deploy to Github Pages"
       stage: deploy
       install:
         - nvm install-latest-npm
-        - npm ci
+        - npm install
       script: ./travis-ci/deploy-to-github-pages.sh
 
     - name: "Deploy packages to integration test stack"

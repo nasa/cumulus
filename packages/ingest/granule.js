@@ -26,6 +26,7 @@ const { ftpMixin } = require('./ftp');
 const { httpMixin } = require('./http');
 const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
+const { normalizeProviderPath } = require('./util');
 
 /**
 * The abstract Discover class
@@ -49,12 +50,12 @@ class Discover {
 
     this.port = this.provider.port;
     this.host = this.provider.host;
-    this.path = this.collection.provider_path || '/';
+    this.path = normalizeProviderPath(this.collection.provider_path);
 
     this.endpoint = buildURL({
       protocol: this.provider.protocol,
-      host: this.provider.host,
-      port: this.provider.port,
+      host: this.host,
+      port: this.port,
       path: this.path
     });
 
@@ -159,7 +160,8 @@ class Granule {
    * @param {Object} buckets - s3 buckets available from config
    * @param {Object} collection - collection configuration object
    * @param {Object} provider - provider configuration object
-   * @param {string} fileStagingDir - staging directory on bucket to place files
+   * @param {string} fileStagingDir - staging directory on bucket,
+   * files will be placed in collectionId subdirectory
    * @param {boolean} forceDownload - force download of a file
    * @param {boolean} duplicateHandling - duplicateHandling of a file
    */
@@ -192,6 +194,13 @@ class Granule {
     else this.fileStagingDir = fileStagingDir;
 
     this.duplicateHandling = duplicateHandling;
+
+    // default collectionId, could be overwritten by granule's collection information
+    if (this.collection) {
+      this.collectionId = constructCollectionId(
+        this.collection.dataType || this.collection.name, this.collection.version
+      );
+    }
   }
 
   /**
@@ -229,7 +238,6 @@ class Granule {
     this.collection.url_path = this.collection.url_path || '';
 
     this.collectionId = constructCollectionId(dataType, version);
-    this.fileStagingDir = path.join(this.fileStagingDir, this.collectionId);
 
     const downloadFiles = granule.files
       .filter((f) => this.filterChecksumFiles(f))
@@ -468,8 +476,10 @@ class Granule {
    * @returns {Array<Object>} returns the staged file and the renamed existing duplicates if any
    */
   async ingestFile(file, bucket, duplicateHandling) {
+    // place files in the <collectionId> subdirectory
+    const stagingPath = path.join(this.fileStagingDir, this.collectionId);
     // Check if the file exists
-    const destinationKey = path.join(this.fileStagingDir, file.name);
+    const destinationKey = path.join(stagingPath, file.name);
 
     const s3ObjAlreadyExists = await aws.s3ObjectExists({
       Bucket: bucket,
@@ -480,7 +490,7 @@ class Granule {
     const stagedFile = Object.assign(file,
       {
         filename: aws.buildS3Uri(bucket, destinationKey),
-        fileStagingDir: this.fileStagingDir,
+        fileStagingDir: stagingPath,
         url_path: this.getUrlPath(file),
         bucket
       });
@@ -554,7 +564,7 @@ class Granule {
         path: file.path,
         filename: aws.buildS3Uri(f.Bucket, f.Key),
         fileSize: f.fileSize,
-        fileStagingDir: this.fileStagingDir,
+        fileStagingDir: stagingPath,
         url_path: this.getUrlPath(file),
         bucket
       };
