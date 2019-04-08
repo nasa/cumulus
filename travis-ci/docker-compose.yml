@@ -18,6 +18,7 @@ services:
     volumes:
       - ../packages/test-data:/usr/local/apache2/htdocs:ro
   sftp:
+    # image: panubo/sshd:latest
     image: nsidc/panubo_sshd:latest
     command: /bootstrap-sftp.sh
     ports:

@@ -2,7 +2,6 @@
 
 const keyBy = require('lodash.keyby');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
-const { justLocalRun } = require('@cumulus/common/local-helpers');
 const {
   granulesToCmrFileObjects,
   metadataObjectFromCMRFile,
@@ -10,7 +9,6 @@ const {
 } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
-const { loadJSONTestData } = require('@cumulus/test-data');
 
 /**
  * Builds the output of the post-to-cmr task
@@ -123,9 +121,3 @@ function handler(event, context, callback) {
 }
 
 exports.handler = handler;
-
-// use node index.js local to invoke this
-justLocalRun(async () => {
-  const payload = await loadJSONTestData('cumulus_messages/post-to-cmr.json');
-  handler(payload, {}, (e, r) => log.info(e, r));
-});
