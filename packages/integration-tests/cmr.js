@@ -218,6 +218,7 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
     Bucket: bucket,
     Key: filename,
     Body: xml,
+    ContentType: 'application/xml',
     Tagging: `granuleId=${granule.granuleId}`
   };
 
@@ -376,6 +377,7 @@ async function generateAndStoreCmrUmmJson(
     Bucket: bucket,
     Key: filename,
     Body: JSON.stringify(jsonObject),
+    ContentType: 'application/json',
     Tagging: `granuleId=${granule.granuleId}`
   };
 
