@@ -201,6 +201,7 @@ default:
     - username: menno.vandiermen
     - username: matthewsavoie
     - username: mboyd
+    - username: jmcampbell
 
 
 # ------------------------
@@ -483,28 +484,28 @@ mvd-dev:
 jc:
   stackName: jc
   stackNameNoDash: jc
-  ecs:
-    services:
-      EcsTaskHelloWorld:
-        image: '{{ECR_TESTING_IMAGE_ARN}}'
-        cpu: 400
-        memory: 700
-        count: 1
-        envs:
-          AWS_DEFAULT_REGION:
-            function: Fn::Sub
-            value: '${AWS::Region}'
-        commands:
-          - cumulus-ecs-task
-          - '--activityArn'
-          - function: Ref
-            value: EcsTaskHelloWorldActivity
-          - '--lambdaArn'
-          - function: Ref
-            value: HelloWorldLambdaFunction
-    docker:
-      username: cumulususer
-      registry: ecr
+  # ecs:
+  #  services:
+  #    EcsTaskHelloWorld:
+  #      image: '{{ECR_TESTING_IMAGE_ARN}}'
+  #      cpu: 400
+  #      memory: 700
+  #      count: 1
+  #      envs:
+  #        AWS_DEFAULT_REGION:
+  #          function: Fn::Sub
+  #          value: '${AWS::Region}'
+  #      commands:
+  #        - cumulus-ecs-task
+  #        - '--activityArn'
+  #        - function: Ref
+  #          value: EcsTaskHelloWorldActivity
+  #        - '--lambdaArn'
+  #        - function: Ref
+  #          value: HelloWorldLambdaFunction
+  #  docker:
+  #    username: cumulususer
+  #    registry: ecr
 
 mhs:
   stackName: mhs
