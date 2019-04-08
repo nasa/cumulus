@@ -63,34 +63,32 @@ describe('Distribution API', () => {
   process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
   const accessTokensModel = new AccessToken();
 
-  beforeAll(async (done) => {
-    Promise.all(
-      uploadTestDataToBucket(config.bucket, s3Data, testDataFolder),
-      uploadTestDataToBucket(config.public_bucket, s3Data, testDataFolder)
-    );
+  beforeAll(async () => {
+    await Promise.all([
+      uploadTestDataToBucket(protectedBucketName, s3Data, testDataFolder),
+      uploadTestDataToBucket(privateBucketName, s3Data, testDataFolder),
+      uploadTestDataToBucket(publicBucketName, s3Data, testDataFolder)
+    ]);
     setDistributionApiEnvVars();
   });
 
-  afterAll(async (done) => {
-    try {
-      await deleteFolder(config.bucket, testDataFolder);
-      stopDistributionApi(server, done);
-    }
-    catch (err) {
-      stopDistributionApi(server, done);
-    }
+  afterAll(async () => {
+    await Promise.all([
+      deleteFolder(protectedBucketName, testDataFolder),
+      deleteFolder(privateBucketName, testDataFolder),
+      deleteFolder(publicBucketName, testDataFolder)
+    ]);
   });
 
   describe('handles requests for files over HTTPS', () => {
     let fileChecksum;
-    let fileUrl;
+    let protectedFilePath;
+    let privateFilePath;
+    let publicFilePath;
     let accessToken;
 
     beforeAll(async () => {
-      fileUrl = getDistributionFileUrl({
-        bucket: config.bucket,
-        key: fileKey
-      });
+      accessToken = await getTestAccessToken();
       fileChecksum = await generateChecksumFromStream(
         'cksum',
         fs.createReadStream(require.resolve(s3Data[0]))
@@ -104,16 +102,14 @@ describe('Distribution API', () => {
       await accessTokensModel.delete({ accessToken });
     });
 
-    it('redirects to Earthdata login for unauthorized requests', async () => {
-      const response = await got(
-        fileUrl,
-        { followRedirect: false }
-      );
-      const authorizeUrl = new URL(response.headers.location);
-      expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
-      expect(authorizeUrl.searchParams.get('state')).toEqual(`/${config.bucket}/${fileKey}`);
-      expect(authorizeUrl.pathname).toEqual('/oauth/authorize');
-    });
+    describe('an unauthorized user', () => {
+      it('redirects to Earthdata login for unauthorized requests for protected files', async () => {
+        const response = await getDistributionApiRedirect(protectedFilePath);
+        const authorizeUrl = new URL(response);
+        expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
+        expect(authorizeUrl.searchParams.get('state')).toEqual(`/${protectedBucketName}/${fileKey}`);
+        expect(authorizeUrl.pathname).toEqual('/oauth/authorize');
+      });
 
       it('downloads a public science file', async () => {
         const s3SignedUrl = await getDistributionApiRedirect(publicFilePath);
