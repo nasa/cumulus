@@ -3,6 +3,7 @@
 const fs = require('fs-extra');
 
 const { models: { Granule } } = require('@cumulus/api');
+const { aws: { headObject } } = require('@cumulus/common');
 const {
   addCollections,
   addProviders,
@@ -11,6 +12,7 @@ const {
   cleanupProviders,
   granulesApi: granulesApiTestUtils
 } = require('@cumulus/integration-tests');
+const mime = require('mime-types');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const config = loadConfig();
 const workflowName = 'IngestGranule';
@@ -55,22 +57,41 @@ describe('The FTP Ingest Granules workflow', () => {
     ]);
   });
 
-  it('completes execution with success status', () => {
-    expect(workflowExecution.status).toEqual('SUCCEEDED');
-  });
+  describe('the execution', () => {
+    let granule;
+    let granuleResponse;
 
-  it('makes the granule available through the Cumulus API', async () => {
-    const granuleResponse = await granulesApiTestUtils.getGranule({
-      prefix: config.stackName,
-      granuleId: inputPayload.granules[0].granuleId
+    beforeAll(async () => {
+      granuleResponse = await granulesApiTestUtils.getGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      });
+      granule = JSON.parse(granuleResponse.body);
     });
-    const granule = JSON.parse(granuleResponse.body);
 
-    expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
-    // clean up granule
-    await granulesApiTestUtils.deleteGranule({
-      prefix: config.stackName,
-      granuleId: inputPayload.granules[0].granuleId
+    afterAll(async () => {
+      // clean up granule
+      await granulesApiTestUtils.deleteGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      });
+    });
+
+    it('completes execution with success status', () => {
+      expect(workflowExecution.status).toEqual('SUCCEEDED');
+    });
+
+    it('makes the granule available through the Cumulus API', async () => {
+      expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
+    });
+
+    it('uploaded the granules with correct ContentType', async () => {
+      const headObjects = await Promise.all(granule.files.map(async (fileObject) =>
+        Object.assign({},
+          fileObject,
+          await headObject(fileObject.bucket, fileObject.key),
+          { expectedMime: mime.lookup(fileObject.key) || 'application/octet-stream' })));
+      headObjects.forEach((headObj) => expect(headObj.expectedMime).toEqual(headObj.ContentType));
     });
   });
 });
