@@ -218,9 +218,11 @@ describe('When accessing an S3 bucket directly', () => {
           expect(await canWriteObject('us-east-1', testBucket, thirdPartyCredentials)).toBe('false');
         });
       }
+
       describe('against protected buckets', () => {
         executeThirdPartyTestsAgainst(protectedBucketName);
       });
+
       describe('against public buckets', () => {
         executeThirdPartyTestsAgainst(publicBucketName);
       });
