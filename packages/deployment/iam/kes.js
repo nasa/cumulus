@@ -23,8 +23,9 @@ class UpdatedKes extends Kes {
     Handlebars.registerHelper('BucketIsType', (bucket, type, options) => {
       const fnTrue = options.fn;
       const fnFalse = options.inverse;
+      const types = type.split(',');
 
-      if (bucket.type === type) return fnTrue(bucket);
+      if (types.includes(bucket.type)) return fnTrue(bucket);
 
       return fnFalse(bucket);
     });

@@ -284,6 +284,7 @@ mhs:
 
 mhs3:
   prefix: mhs3
+  stackName: mhs3-iam
   buckets:
     internal:
       name: mhs3-internal
