@@ -358,12 +358,12 @@ Resources:
     Type: "AWS::Elasticsearch::Domain"
     Properties:
       DomainName: {{stackName}}-{{es.name}}
-      ElasticsearchVersion: {{# if es.version}}{{es.version}}{{ else }}5.3{{/if}}
+      ElasticsearchVersion: {{# if es.version}}{{es.version}}{{ else }}'5.3'{{/if}}
       ElasticsearchClusterConfig:
-        InstanceCount: {{# if es.instanceCount}}{{es.instanceCount}}{{ else }}'1'{{/if}}
+        InstanceCount: {{# if es.instanceCount}}{{es.instanceCount}}{{ else }}1{{/if}}
         InstanceType: {{# if es.instanceType}}{{es.instanceType}}{{ else }}"t2.small.elasticsearch"{{/if}}
       SnapshotOptions:
-        AutomatedSnapshotStartHour: "0"
+        AutomatedSnapshotStartHour: 0
       EBSOptions:
         EBSEnabled: true
         VolumeType: gp2
@@ -968,8 +968,8 @@ Resources:
       LaunchConfigurationName:
         Ref: CumulusContainerInstanceLaunch
       MinSize: '0'
-      MaxSize: {{ ecs.maxInstances }}
-      DesiredCapacity: {{ ecs.desiredInstances }}
+      MaxSize: '{{ ecs.maxInstances }}'
+      DesiredCapacity: '{{ ecs.desiredInstances }}'
       Tags:
       - Key: Name
         Value: "{{stackName}}-cumulus-ecs"
