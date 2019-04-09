@@ -6,22 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-- **CUMULUS-1223**
-  - Adds unauthenticated access for public bucket files to the Distribution API.  Public files should be requested the same way as protected files, but for public files a redirect to a self-signed S3 URL will happen without requiring authentication with Earthdata login.
-
-<<<<<<< HEAD
 ### BREAKING CHANGES
 
 - **CUMULUS-1212**
   - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
 
-## [v1.12.1] - 2019-4-5
+## Changed
 
-Note: There was an issue publishing 1.12.0, so please see notes from 1.12.0
+- **CUMULUS-1223**
+  - Adds unauthenticated access for public bucket files to the Distribution API.  Public files should be requested the same way as protected files, but for public files a redirect to a self-signed S3 URL will happen without requiring authentication with Earthdata login.
 
-=======
 ## [v1.12.1] - 2019-4-8
->>>>>>> Quick fixes
+
 ## [v1.12.0] - 2019-4-4
 
 Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.

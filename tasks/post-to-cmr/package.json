@@ -45,6 +45,7 @@
   },
   "devDependencies": {
     "@cumulus/cmr-client": "1.12.1",
+    "@cumulus/test-data": "1.12.1",
     "ava": "^0.25.0",
     "nyc": "^13.3.0",
     "sinon": "^4.5.0",
