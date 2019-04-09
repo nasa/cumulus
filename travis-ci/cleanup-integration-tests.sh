@@ -37,6 +37,7 @@ set +e
     # Needed functionality is in 1.11.3
     # Prevents breaking on a release build when it tries to install
     # the version that does not exist
+    # We only need the common package for the lock-stack script
     npm install @cumulus/common@1.11.3
   fi
 )
