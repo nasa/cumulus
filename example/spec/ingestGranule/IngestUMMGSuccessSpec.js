@@ -419,27 +419,27 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     it('updates the UMM-G JSON file in S3 with new paths', async () => {
       const updatedUmm = await getUmmObject(newS3UMMJsonFileLocation);
 
-      const expectedToChange = updatedUmm.RelatedUrls
+      const changedUrls = updatedUmm.RelatedUrls
         .filter((urlObject) => urlObject.URL.match(/.*.hdf$/))
         .map((urlObject) => urlObject.URL);
-      const expectedSame = updatedUmm.RelatedUrls
+      const unchangedUrls = updatedUmm.RelatedUrls
         .filter((urlObject) => !urlObject.URL.match(/.*.hdf$/))
         .map((urlObject) => urlObject.URL);
 
       // Only the file that was moved was updated
-      expect(expectedToChange.length).toEqual(1);
-      expect(expectedToChange[0]).toContain(destinationKey);
+      expect(changedUrls.length).toEqual(1);
+      expect(changedUrls[0]).toContain(destinationKey);
 
-      const unchangedOriginals = originalUmmUrls.filter((original) => !original.match(/.*.hdf$/));
-      expect(unchangedOriginals.length).toEqual(expectedSame.length);
+      const unchangedOriginalUrls = originalUmmUrls.filter((original) => !original.match(/.*.hdf$/));
+      expect(unchangedOriginalUrls.length).toEqual(unchangedUrls.length);
 
       // Each originalUmmUrl (removing the DISTRIBUTION_ENDPOINT) should be found
       // in one of the updated URLs. We have to do this comparison because the
       // setup tests uses a fake endpoint, but it's possible that the api has
       // the actual endpoint.
-      unchangedOriginals.forEach((original) => {
+      unchangedOriginalUrls.forEach((original) => {
         const base = original.replace(process.env.DISTRIBUTION_ENDPOINT, '');
-        expect(expectedSame.filter((expected) => expected.match(base)).length).toBe(1);
+        expect(unchangedUrls.filter((expected) => expected.match(base)).length).toBe(1);
       });
     });
   });
