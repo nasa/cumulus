@@ -352,8 +352,8 @@ function constructOnlineAccessUrl({
   buckets
 }) {
   const bucketType = buckets.type(file.bucket);
-  const urlBuckets = ['protected', 'public'];
-  if (urlBuckets.includes(bucketType)) {
+  const distributionApiBuckets = ['protected', 'public'];
+  if (distributionApiBuckets.includes(bucketType)) {
     const extension = urljoin(file.bucket, getS3KeyOfFile(file));
     return {
       URL: urljoin(distEndpoint, extension),
