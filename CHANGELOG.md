@@ -242,7 +242,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
   - Schema validation is now strongly enforced when writing to the database.
     Additional properties are not allowed and will result in a validation error.
 - CUMULUS-678
-  `tasks/move-granules` simplified and refactored to use  functionality from cmrjs.
+  `tasks/move-granules` simplified and refactored to use functionality from cmrjs.
   `ingest/granules.moveGranuleFiles` now just moves granule files and returns a list of the updated files. Updating metadata now handled by `@cumulus/cmrjs/reconcileCMRMetadata`.
   `move-granules.updateGranuleMetadata` refactored and bugs fixed in the case of a file matching multiple collection.files.regexps.
   `getCmrXmlFiles` simplified and now only returns an object with the cmrfilename and the granuleId.

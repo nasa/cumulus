@@ -50,8 +50,7 @@ const {
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
-  templateFile,
-  getPublicS3FileUrl
+  templateFile
 } = require('../helpers/testUtils');
 const {
   setDistributionApiEnvVars,
@@ -311,11 +310,16 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
+      const scienceFile = files.find((f) => f.filepath.endsWith('hdf'));
+      const browseFile = files.find((f) => f.filepath.endsWith('jpg'));
+
       const distributionUrl = getDistributionFileUrl({
-        bucket: files[0].bucket,
-        key: files[0].filepath
+        bucket: scienceFile.bucket, key: scienceFile.filepath
       });
-      const s3BrowseImageUrl = getPublicS3FileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+
+      const s3BrowseImageUrl = getDistributionFileUrl({
+        bucket: browseFile.bucket, key: browseFile.filepath
+      });
 
       expect(resourceURLs.includes(distributionUrl)).toBe(true);
       expect(resourceURLs.includes(s3BrowseImageUrl)).toBe(true);
@@ -365,18 +369,11 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
             );
             const file = files.find((f) => f.name.endsWith(extension));
 
-            let fileStream;
-
-            if (bucketsConfig.type(file.bucket) === 'protected') {
-              const fileUrl = getDistributionFileUrl({
-                bucket: file.bucket,
-                key: file.filepath
-              });
-              fileStream = await getDistributionApiFileStream(fileUrl, accessToken);
-            }
-            else if (bucketsConfig.type(file.bucket) === 'public') {
-              fileStream = got.stream(url);
-            }
+            const fileUrl = getDistributionFileUrl({
+              bucket: file.bucket,
+              key: file.filepath
+            });
+            const fileStream = await getDistributionApiFileStream(fileUrl, accessToken);
 
             // Compare checksum of downloaded file with expected checksum.
             const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
@@ -427,21 +424,28 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     it('updates the UMM-G JSON file in S3 with new paths', async () => {
       const updatedUmm = await getUmmObject(newS3UMMJsonFileLocation);
 
-      const relatedUrlDifferences = updatedUmm.RelatedUrls.filter((urlObject) => {
-        // Skip non-science URLs and public S3 URLs
-        if (!isUMMGScienceUrl(urlObject.URL) ||
-            urlObject.URL.match(/s3\.amazonaws\.com/)) {
-          return false;
-        }
-        const relatedUrl = new URL(urlObject.URL);
-        relatedUrl.host = process.env.DISTRIBUTION_ENDPOINT;
-        return !originalUmmUrls.includes(relatedUrl.toString());
-      });
+      const expectedToChange = updatedUmm.RelatedUrls
+        .filter((urlObject) => urlObject.URL.match(/.*.hdf$/))
+        .map((urlObject) => urlObject.URL);
+      const expectedSame = updatedUmm.RelatedUrls
+        .filter((urlObject) => !urlObject.URL.match(/.*.hdf$/))
+        .map((urlObject) => urlObject.URL);
 
       // Only the file that was moved was updated
-      expect(relatedUrlDifferences.length).toEqual(1);
+      expect(expectedToChange.length).toEqual(1);
+      expect(expectedToChange[0]).toContain(destinationKey);
 
-      expect(relatedUrlDifferences[0].URL).toContain(destinationKey);
+      const unchangedOriginals = originalUmmUrls.filter((original) => !original.match(/.*.hdf$/));
+      expect(unchangedOriginals.length).toEqual(expectedSame.length);
+
+      // Each originalUmmUrl (removing the DISTRIBUTION_ENDPOINT) should be found
+      // in one of the updated URLs. We have to do this comparison because the
+      // setup tests uses a fake endpoint, but it's possible that the api has
+      // the actual endpoint.
+      unchangedOriginals.forEach((original) => {
+        const base = original.replace(process.env.DISTRIBUTION_ENDPOINT, '');
+        expect(expectedSame.filter((expected) => expected.match(base)).length).toBe(1);
+      });
     });
   });
 });

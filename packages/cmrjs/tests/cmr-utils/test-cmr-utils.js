@@ -187,7 +187,7 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
   ];
   const AssociatedBrowseExpected = [
     {
-      URL: 'https://cumulus-test-sandbox-public.s3.amazonaws.com/MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg',
+      URL: `${distEndpoint}/cumulus-test-sandbox-public/MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg`,
       Description: 'File to download'
     }
   ];
@@ -237,7 +237,7 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
       Type: 'GET DATA'
     },
     {
-      URL: 'https://cumulus-test-sandbox-public.s3.amazonaws.com/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg',
+      URL: `${distEndpoint}/cumulus-test-sandbox-public/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg`,
       Description: 'File to download',
       Type: 'GET RELATED VISUALIZATION'
     },

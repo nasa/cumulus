@@ -108,7 +108,8 @@ function getDistributionFileUrl({
   bucket,
   key
 }) {
-  return `${distributionEndpoint}/${bucket}/${key}`;
+  const theUrl = new URL(`${bucket}/${key}`, distributionEndpoint);
+  return theUrl.href;
 }
 
 module.exports = {
