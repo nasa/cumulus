@@ -165,19 +165,6 @@ function getExecutionUrl(executionArn) {
 }
 
 /**
- * Get URL to a public file in S3
- *
- * @param {Object} params
- * @param {string} params.bucket - S3 bucket
- * @param {string} params.key - S3 object key
- *
- * @returns {string} - Public S3 file URL
- */
-function getPublicS3FileUrl({ bucket, key }) {
-  return `https://${bucket}.s3.amazonaws.com/${key}`;
-}
-
-/**
  * Redeploy the current Cumulus deployment.
  *
  * @param {Object} config - configuration object from loadConfig()
@@ -293,7 +280,6 @@ module.exports = {
   uploadTestDataToBucket,
   deleteFolder,
   getExecutionUrl,
-  getPublicS3FileUrl,
   redeploy,
   getFilesMetadata,
   protectFile,
