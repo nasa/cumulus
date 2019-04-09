@@ -109,16 +109,12 @@ test('PUT snapshot with an invalid access token returns an unauthorized response
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test.serial('PUT snapshot', async (t) => {
-  const response = await request(app)
-    .put('/elasticsearch/create-snapshot')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-});
-
 test.serial('Reindex - multiple aliases found', async (t) => {
-  const indexName = 'cumulus-dup';
+  // Prefixes for error message predictability
+  const indexName = `z-${randomString()}`;
+  const otherIndexName = `a-${randomString()}`;
+
+  const aliasName = randomString();
 
   await esClient.indices.create({
     index: indexName,
@@ -127,21 +123,30 @@ test.serial('Reindex - multiple aliases found', async (t) => {
 
   await esClient.indices.putAlias({
     index: indexName,
-    name: indexAlias
+    name: aliasName
+  });
+
+  await esClient.indices.create({
+    index: otherIndexName,
+    body: { mappings }
+  });
+
+  await esClient.indices.putAlias({
+    index: otherIndexName,
+    name: aliasName
   });
 
   const response = await request(app)
     .put('/elasticsearch/reindex')
-    .send({ aliasName: indexAlias })
+    .send({ aliasName })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
 
-  console.log(response.body);
-
-  t.is(response.body.message, 'Multiple indices found for alias cumulus-1-alias. Specify source index as one of [cumulus-1, cumulus-dup]');
+  t.is(response.body.message, `Multiple indices found for alias ${aliasName}. Specify source index as one of [${otherIndexName}, ${indexName}].`);
 
   await esClient.indices.delete({ index: indexName });
+  await esClient.indices.delete({ index: otherIndexName });
 });
 
 test.serial('Reindex - specify a source index that does not exist', async (t) => {
@@ -176,7 +181,7 @@ test.serial('Reindex - specify a source index that is not aliased', async (t) =>
 });
 
 test.serial('Reindex success', async (t) => {
-  const destIndex = 'cumulus-dest';
+  const destIndex = randomString();
 
   const response = await request(app)
     .put('/elasticsearch/reindex')
@@ -214,7 +219,7 @@ test.serial('Reindex success', async (t) => {
   await esClient.indices.delete({ index: destIndex });
 });
 
-test.only('Reindex - destination index exists', async (t) => {
+test.serial('Reindex - destination index exists', async (t) => {
   const response = await request(app)
     .put('/elasticsearch/reindex')
     .send({
@@ -230,3 +235,162 @@ test.only('Reindex - destination index exists', async (t) => {
 });
 
 
+test.serial('Reindex status', async (t) => {
+  const response = await request(app)
+    .get('/elasticsearch/reindex-status')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.deepEqual(response.body, { nodes: {} });
+});
+
+test.serial('Complete index - no source', async (t) => {
+  const response = await request(app)
+    .put('/elasticsearch/complete-reindex')
+    .send({
+      aliasName: indexAlias,
+      destIndex: 'dest-index'
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  t.is(response.body.message, 'Please explicity specify a source and destination index.');
+});
+
+test.serial('Complete index - no destination', async (t) => {
+  const response = await request(app)
+    .put('/elasticsearch/complete-reindex')
+    .send({
+      aliasName: indexAlias,
+      sourceIndex: 'source-index'
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  t.is(response.body.message, 'Please explicity specify a source and destination index.');
+});
+
+test.serial('Complete index - source index does not exist', async (t) => {
+  const sourceIndex = `source-index`;
+
+  const response = await request(app)
+    .put('/elasticsearch/complete-reindex')
+    .send({
+      aliasName: indexAlias,
+      sourceIndex,
+      destIndex: 'dest-index'
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  t.is(response.body.message, `Source index ${sourceIndex} does not exist.`);
+});
+
+test.serial('Complete index - no destination', async (t) => {
+  const destIndex = 'dest-index';
+
+  const response = await request(app)
+    .put('/elasticsearch/complete-reindex')
+    .send({
+      aliasName: indexAlias,
+      sourceIndex: esIndex,
+      destIndex
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  t.is(response.body.message, `Destination index ${destIndex} does not exist.`);
+});
+
+test.serial('Complete index - source index same as dest index', async (t) => {
+  const response = await request(app)
+    .put('/elasticsearch/complete-reindex')
+    .send({
+      aliasName: indexAlias,
+      sourceIndex: 'source',
+      destIndex: 'source'
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  t.is(response.body.message, 'The source index cannot be the same as the destination index.');
+});
+
+test.serial('Complete re-index', async (t) => {
+  const sourceIndex = randomString();
+  const aliasName = randomString();
+  const destIndex = randomString();
+
+  await createIndex(sourceIndex, aliasName);
+
+  await request(app)
+    .put('/elasticsearch/reindex')
+    .send({
+      aliasName,
+      sourceIndex,
+      destIndex
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  await request(app)
+    .put('/elasticsearch/complete-reindex')
+    .send({
+      aliasName,
+      sourceIndex,
+      destIndex
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const alias = await esClient.indices.getAlias({ name: aliasName });
+
+  // Test that the only index connected to the alias is the destination index
+  t.deepEqual(Object.keys(alias), [destIndex]);
+
+  t.is(await esClient.indices.exists({ index: sourceIndex }), true);
+
+  await esClient.indices.delete({ index: destIndex });
+});
+
+test.serial('Complete re-index and delete source index', async (t) => {
+  const sourceIndex = randomString();
+  const aliasName = randomString();
+  const destIndex = randomString();
+
+  await createIndex(sourceIndex, aliasName);
+
+  await request(app)
+    .put('/elasticsearch/reindex')
+    .send({
+      aliasName,
+      sourceIndex,
+      destIndex
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  await request(app)
+    .put('/elasticsearch/complete-reindex')
+    .send({
+      aliasName,
+      sourceIndex,
+      destIndex,
+      deleteSource: true
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(await esClient.indices.exists({ index: sourceIndex }), false);
+
+  await esClient.indices.delete({ index: destIndex });
+});

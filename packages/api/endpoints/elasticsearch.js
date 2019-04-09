@@ -7,21 +7,25 @@ const log = require('@cumulus/common/log');
 const mappings = require('../models/mappings.json');
 const { defaultIndexAlias, Search } = require('../es/search');
 
-const snapshotRepoName = 'cumulus-es-snapshots';
+// const snapshotRepoName = 'cumulus-es-snapshots';
 
 async function createEsSnapshot(req, res) {
-  const esClient = await Search.es();
+
+  return res.boom.badRequest('Functionality not yet implemented');
+
+  // *** Currently blocked on NGAP ****
+  // const esClient = await Search.es();
 
   //let repository = null;
 
-  try {
-    const repository = await esClient.snapshot.getRepository({ repository: snapshotRepoName });
-  }
-  catch (err) {
-    // Handle repository missing exceptions
-    if (!err.message.includes('[repository_missing_exception]')) {
-      throw err;
-    }
+  // try {
+  //   const repository = await esClient.snapshot.getRepository({ repository: snapshotRepoName });
+  // }
+  // catch (err) {
+  //   // Handle repository missing exceptions
+  //   if (!err.message.includes('[repository_missing_exception]')) {
+  //     throw err;
+  //   }
 
     // TO DO: when permission boundaries are updated
     // repository = await esClient.snapshot.createRepository({
@@ -36,15 +40,13 @@ async function createEsSnapshot(req, res) {
     //     }
     //   }
     // });
-  }
-
-  return res.boom.badRequest('done');
+  // }
 }
 
 async function reindex(req, res) {
   let sourceIndex = req.body.sourceIndex;
   let destIndex = req.body.destIndex;
-  let aliasName = req.body.aliasName || defaultIndexAlias;
+  const aliasName = req.body.aliasName || defaultIndexAlias;
 
   const esClient = await Search.es();
 
@@ -107,17 +109,66 @@ async function reindex(req, res) {
 }
 
 async function reindexStatus(req, res) {
-  return res.send('To do: implement reindex status');
+  const esClient = await Search.es();
+
+  const status = await esClient.tasks.list({ actions: ['*reindex'] });
+
+  return res.send(status);
 }
 
 async function completeReindex(req, res) {
-  return res.send('To do: implement create reindex');
+  const deleteSource = req.body.deleteSource;
+  const aliasName = req.body.aliasName || defaultIndexAlias;
+  const sourceIndex = req.body.sourceIndex;
+  const destIndex = req.body.destIndex;
+
+  const esClient = await Search.es();
+
+  if (!sourceIndex || !destIndex) {
+    return res.boom.badRequest('Please explicity specify a source and destination index.');
+  }
+
+  if (sourceIndex === destIndex) {
+    return res.boom.badRequest('The source index cannot be the same as the destination index.');
+  }
+
+  const sourceExists = await esClient.indices.exists({ index: sourceIndex });
+
+  if (!sourceExists) {
+    return res.boom.badRequest(`Source index ${sourceIndex} does not exist.`);
+  }
+
+  const destExists = await esClient.indices.exists({ index: destIndex });
+
+  if (!destExists) {
+    return res.boom.badRequest(`Destination index ${destIndex} does not exist.`);
+  }
+
+  await esClient.indices.updateAliases({
+    body: {
+      actions: [
+        { remove: { index: sourceIndex, alias: aliasName } },
+        { add: { index: destIndex, alias: aliasName } }
+      ]
+    }
+  }).then(() => {
+    log.info(`Removed alias ${aliasName} from index ${sourceIndex} and added alias to ${destIndex}`);
+  }, (err) => {
+    return res.boom.badRequest(`Error removing alias ${aliasName} from index ${sourceIndex} and adding alias to ${destIndex}: ${err}`);
+  });
+
+  if (deleteSource) {
+    await esClient.indices.delete({ index: sourceIndex });
+    log.info(`Deleted index ${sourceIndex}`);
+  }
+
+  res.send('success');
 }
 
 // express routes
 router.put('/create-snapshot', createEsSnapshot);
 router.put('/reindex', reindex);
-router.put('/reindex-status', reindexStatus);
+router.get('/reindex-status', reindexStatus);
 router.put('/complete-reindex', completeReindex);
 
 module.exports = router;
