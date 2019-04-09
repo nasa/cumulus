@@ -13,7 +13,6 @@ const {
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const { bootstrapElasticSearch } = require('../../../lambdas/bootstrap');
-const es = require('../../../bin/es');
 const mappings = require('../../../models/mappings.json');
 
 const esIndex = 'cumulus-1';
@@ -195,7 +194,8 @@ test.serial('Reindex success', async (t) => {
     .expect(200);
 
   // Verify the 3 records were created according to the reindex response
-  t.is(response.body.created, 3);
+  t.is(response.body.elasticsearchResponse.created, 3);
+  t.is(response.body.message, `Reindexed to ${destIndex} from ${esIndex}`);
 
   // Refresh to make sure the records are in the destination index
   await esClient.indices.refresh();
@@ -231,9 +231,8 @@ test.serial('Reindex - destination index exists', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
 
-    t.is(response.body.message, `Destination index ${esIndex} exists. Please specify an index name that does not exist.`);
+  t.is(response.body.message, `Destination index ${esIndex} exists. Please specify an index name that does not exist.`);
 });
-
 
 test.serial('Reindex status', async (t) => {
   const response = await request(app)
@@ -273,7 +272,7 @@ test.serial('Complete index - no destination', async (t) => {
 });
 
 test.serial('Complete index - source index does not exist', async (t) => {
-  const sourceIndex = `source-index`;
+  const sourceIndex = 'source-index';
 
   const response = await request(app)
     .put('/elasticsearch/complete-reindex')
@@ -339,7 +338,7 @@ test.serial('Complete re-index', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  await request(app)
+  const response = await request(app)
     .put('/elasticsearch/complete-reindex')
     .send({
       aliasName,
@@ -349,6 +348,9 @@ test.serial('Complete re-index', async (t) => {
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
+
+  t.is(response.body.message,
+    `Reindex success - alias ${aliasName} now pointing to ${destIndex}`);
 
   const alias = await esClient.indices.getAlias({ name: aliasName });
 
@@ -378,7 +380,7 @@ test.serial('Complete re-index and delete source index', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  await request(app)
+  const response = await request(app)
     .put('/elasticsearch/complete-reindex')
     .send({
       aliasName,
@@ -390,6 +392,8 @@ test.serial('Complete re-index and delete source index', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
+  t.is(response.body.message,
+    `Reindex success - alias ${aliasName} now pointing to ${destIndex} and index ${sourceIndex} deleted`);
   t.is(await esClient.indices.exists({ index: sourceIndex }), false);
 
   await esClient.indices.delete({ index: destIndex });

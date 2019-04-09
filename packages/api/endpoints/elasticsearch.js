@@ -10,7 +10,6 @@ const { defaultIndexAlias, Search } = require('../es/search');
 // const snapshotRepoName = 'cumulus-es-snapshots';
 
 async function createEsSnapshot(req, res) {
-
   return res.boom.badRequest('Functionality not yet implemented');
 
   // *** Currently blocked on NGAP ****
@@ -27,19 +26,19 @@ async function createEsSnapshot(req, res) {
   //     throw err;
   //   }
 
-    // TO DO: when permission boundaries are updated
-    // repository = await esClient.snapshot.createRepository({
-    //   repository: snapshotRepoName,
-    //   verify: false,
-    //   body: {
-    //     type: 's3',
-    //     settings: {
-    //       bucket: 'lf-internal',
-    //       region: 'us-east-1',
-    //       role_arn: process.env.ROLE_ARN
-    //     }
-    //   }
-    // });
+  // TO DO: when permission boundaries are updated
+  // repository = await esClient.snapshot.createRepository({
+  //   repository: snapshotRepoName,
+  //   verify: false,
+  //   body: {
+  //     type: 's3',
+  //     settings: {
+  //       bucket: 'lf-internal',
+  //       region: 'us-east-1',
+  //       role_arn: process.env.ROLE_ARN
+  //     }
+  //   }
+  // });
   // }
 }
 
@@ -77,7 +76,7 @@ async function reindex(req, res) {
     }
   }
 
-  if (destIndex === null) {
+  if (!destIndex) {
     const date = new Date();
     destIndex = `cumulus-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
   }
@@ -105,7 +104,12 @@ async function reindex(req, res) {
     }
   });
 
-  return res.status(200).send(response);
+  const successResponse = {
+    elasticsearchResponse: response,
+    message: `Reindexed to ${destIndex} from ${sourceIndex}`
+  }
+
+  return res.status(200).send(successResponse);
 }
 
 async function reindexStatus(req, res) {
@@ -153,16 +157,18 @@ async function completeReindex(req, res) {
     }
   }).then(() => {
     log.info(`Removed alias ${aliasName} from index ${sourceIndex} and added alias to ${destIndex}`);
-  }, (err) => {
-    return res.boom.badRequest(`Error removing alias ${aliasName} from index ${sourceIndex} and adding alias to ${destIndex}: ${err}`);
-  });
+  }, (err) =>
+    res.boom.badRequest(`Error removing alias ${aliasName} from index ${sourceIndex} and adding alias to ${destIndex}: ${err}`));
+
+  let message = `Reindex success - alias ${aliasName} now pointing to ${destIndex}`;
 
   if (deleteSource) {
     await esClient.indices.delete({ index: sourceIndex });
     log.info(`Deleted index ${sourceIndex}`);
+    message = `${message} and index ${sourceIndex} deleted`;
   }
 
-  res.send('success');
+  return res.send({ message });
 }
 
 // express routes
