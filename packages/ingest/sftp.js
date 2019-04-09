@@ -8,6 +8,7 @@ const get = require('lodash.get');
 const omit = require('lodash.omit');
 
 const { KMSProvider: KMS, DefaultProvider } = require('@cumulus/common/key-pair-provider');
+const { lookupMimeType } = require('./util');
 const recursion = require('./recursion');
 
 module.exports.sftpMixin = (superclass) => class extends superclass {
@@ -90,7 +91,7 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
   async download(remotePath, localPath) {
     if (!this.connected) await this.connect();
 
-    const remoteUrl = `sftp://${this.host}${remotePath}`;
+    const remoteUrl = `sftp://${this.host}/${remotePath}`;
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
 
     return new Promise((resolve, reject) => {
@@ -186,7 +187,7 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
    * @returns {Promise} s3 uri of destination file
    */
   async sync(remotePath, bucket, key) {
-    const remoteUrl = `sftp://${this.host}${remotePath}`;
+    const remoteUrl = `sftp://${this.host}/${remotePath}`;
     const s3uri = buildS3Uri(bucket, key);
     log.info(`Sync ${remoteUrl} to ${s3uri}`);
 
@@ -194,7 +195,13 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
     const pass = new PassThrough();
     readable.pipe(pass);
 
-    const params = { Bucket: bucket, Key: key, Body: pass };
+    const params = {
+      Bucket: bucket,
+      Key: key,
+      Body: pass,
+      ContentType: lookupMimeType(key)
+    };
+
     const result = await promiseS3Upload(params);
     log.info('Uploading to s3 is complete(sftp)', result);
     return s3uri;

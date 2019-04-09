@@ -85,14 +85,13 @@ default:
     instanceType: t2.medium
     desiredInstances: 1
     availabilityZone: us-east-1b
-    amiid: ami-a7a242da
-    publicIp: true
+    publicIp: false 
     restartTasksOnDeploy: true
     docker:
       username: cumulususer
     services:
       EcsTaskHelloWorld:
-        image: cumuluss/cumulus-ecs-task:1.2.3
+        image: cumuluss/cumulus-ecs-task:1.2.5
         cpu: 400
         memory: 700
         count: 1
@@ -108,6 +107,14 @@ default:
           - '--lambdaArn'
           - function: Ref
             value: HelloWorldLambdaFunction
+        alarms:
+          TaskCountHigh:
+            alarm_description: 'There are more tasks running than the desired'
+            comparison_operator: GreaterThanThreshold
+            evaluation_periods: 1
+            metric: MemoryUtilization
+            statistic: SampleCount
+            threshold: '{{ecs.services.EcsTaskHelloWorld.count}}'
 
   activities:
     - name: EcsTaskHelloWorld
@@ -194,6 +201,7 @@ default:
     - username: menno.vandiermen
     - username: matthewsavoie
     - username: mboyd
+    - username: jmcampbell
 
 
 # ------------------------
@@ -243,13 +251,16 @@ aj:
   stackName: aj-integration
   stackNameNoDash: AjIntegration
 
-aimee-test:
-  stackName: aimee-test
-  stackNameNoDash: aimeeTest
+aimee:
+  stackName: aimee
+  stackNameNoDash: aimee
 
 lf:
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus
+
+  es:
+    name: estest
 
   buckets:
     internal:
@@ -349,6 +360,9 @@ mth:
     public:
       name: '{{stackName}}-public'
       type: public
+  ecs:
+    ssh: true
+    keyPairName: mhuffnag
 
 jl:
   stackName: jl-test-integration
@@ -470,28 +484,28 @@ mvd-dev:
 jc:
   stackName: jc
   stackNameNoDash: jc
-  ecs:
-    services:
-      EcsTaskHelloWorld:
-        image: 596205514787.dkr.ecr.us-east-1.amazonaws.com/cumulus-dev-testing:latest
-        cpu: 400
-        memory: 700
-        count: 1
-        envs:
-          AWS_DEFAULT_REGION:
-            function: Fn::Sub
-            value: '${AWS::Region}'
-        commands:
-          - cumulus-ecs-task
-          - '--activityArn'
-          - function: Ref
-            value: EcsTaskHelloWorldActivity
-          - '--lambdaArn'
-          - function: Ref
-            value: HelloWorldLambdaFunction
-    docker:
-      username: cumulususer
-      registry: ecr
+  # ecs:
+  #  services:
+  #    EcsTaskHelloWorld:
+  #      image: '{{ECR_TESTING_IMAGE_ARN}}'
+  #      cpu: 400
+  #      memory: 700
+  #      count: 1
+  #      envs:
+  #        AWS_DEFAULT_REGION:
+  #          function: Fn::Sub
+  #          value: '${AWS::Region}'
+  #      commands:
+  #        - cumulus-ecs-task
+  #        - '--activityArn'
+  #        - function: Ref
+  #          value: EcsTaskHelloWorldActivity
+  #        - '--lambdaArn'
+  #        - function: Ref
+  #          value: HelloWorldLambdaFunction
+  #  docker:
+  #    username: cumulususer
+  #    registry: ecr
 
 mhs:
   stackName: mhs
@@ -520,7 +534,7 @@ mhs3:
       name: cumulus-data-shared
       type: shared
   system_bucket: mhs3-internal
-
+  api_distribution_url: '{{API_DISTRIBUTION_URL}}'
 
 jk:
   stackName: jk

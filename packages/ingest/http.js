@@ -10,6 +10,7 @@ const { log, aws: { buildS3Uri, s3 } } = require('@cumulus/common');
 const { isValidHostname } = require('@cumulus/common/string');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const errors = require('@cumulus/common/errors');
+const { lookupMimeType } = require('./util');
 
 const validateHost = (host) => {
   if (isValidHostname(host) || isIp(host)) return;
@@ -136,13 +137,24 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     const s3uri = buildS3Uri(bucket, key);
     log.info(`Sync ${remoteUrl} to ${s3uri}`);
 
+    let headers = {};
+    try {
+      const headResponse = await got.head(remoteUrl);
+      headers = headResponse.headers;
+    }
+    catch (err) {
+      log.info(`HEAD failed for ${remoteUrl} with error: ${err}.`);
+    }
+    const contentType = headers['content-type'] || lookupMimeType(key);
+
     const pass = new PassThrough();
     got.stream(remoteUrl).pipe(pass);
 
     await s3().upload({
       Bucket: bucket,
       Key: key,
-      Body: pass
+      Body: pass,
+      ContentType: contentType
     }).promise();
 
     log.info('Uploading to s3 is complete (http)', s3uri);

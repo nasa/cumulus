@@ -6,8 +6,6 @@ const get = require('lodash.get');
 const errors = require('@cumulus/common/errors');
 const pdr = require('@cumulus/ingest/pdr');
 const log = require('@cumulus/common/log');
-const { justLocalRun } = require('@cumulus/common/local-helpers');
-const { loadJSONTestData } = require('@cumulus/test-data');
 
 /**
 * Parse a PDR
@@ -87,11 +85,3 @@ function handler(event, context, callback) {
   cumulusMessageAdapter.runCumulusTask(parsePdr, event, context, callback);
 }
 exports.handler = handler;
-
-// use node index.js local to invoke this
-justLocalRun(async () => {
-  const payload = await loadJSONTestData('cumulus_messages/parse-pdr.json');
-  handler(payload, {}, (e, r) => {
-    console.log(JSON.stringify(r, null, '\t')); // eslint-disable-line no-console
-  });
-});
