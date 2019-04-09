@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs-extra');
-const got = require('got');
 const path = require('path');
 const { URL, resolve } = require('url');
 const cloneDeep = require('lodash.clonedeep');
@@ -25,7 +24,6 @@ const {
     s3GetObjectTagging,
     s3ObjectExists
   },
-  BucketsConfig,
   constructCollectionId
 } = require('@cumulus/common');
 const { getUrl } = require('@cumulus/cmrjs');
@@ -327,7 +325,6 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   describe('the PostToCmr task', () => {
-    let bucketsConfig;
     let cmrResource;
     let ummCmrResource;
     let files;
@@ -336,7 +333,6 @@ describe('The S3 Ingest Granules workflow', () => {
     let accessToken;
 
     beforeAll(async () => {
-      bucketsConfig = new BucketsConfig(config.buckets);
       postToCmrOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
       if (postToCmrOutput === null) throw new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
       granule = postToCmrOutput.payload.granules[0];

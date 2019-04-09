@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs-extra');
-const got = require('got');
 const path = require('path');
 const {
   URL,
@@ -24,7 +23,6 @@ const {
     parseS3Uri,
     headObject
   },
-  BucketsConfig,
   constructCollectionId
 } = require('@cumulus/common');
 const { getUrl } = require('@cumulus/cmrjs');
@@ -254,15 +252,12 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   });
 
   describe('the PostToCmr task', () => {
-    let bucketsConfig;
     let onlineResources;
     let files;
     let resourceURLs;
     let accessToken;
 
     beforeAll(async () => {
-      bucketsConfig = new BucketsConfig(config.buckets);
-
       postToCmrOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
       if (postToCmrOutput === null) throw new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
 
