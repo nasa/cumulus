@@ -1001,14 +1001,14 @@ Resources:
   CumulusECSScaleOutPolicy:
     Type: AWS::AutoScaling::ScalingPolicy
     Properties:
-      AdjustmentType: ChangeInCapacity
+      AdjustmentType: PercentChangeInCapacity
       AutoScalingGroupName: !Ref CumulusECSAutoScalingGroup
       EstimatedInstanceWarmup: 300
       MetricAggregationType: Average
-      PolicyType:  StepScaling
+      PolicyType: StepScaling
       StepAdjustments:
         - MetricIntervalLowerBound: 0
-          ScalingAdjustment: 1
+          ScalingAdjustment: {{ecs.autoscaling.scalingAdjustmentPercent}}
 
   CumulusECSMemoryScaleOutAlarm:
     Type: AWS::CloudWatch::Alarm
@@ -1026,7 +1026,7 @@ Resources:
       Namespace: AWS/ECS
       Period: 60
       Statistic: Average
-      Threshold: 75
+      Threshold: {{ecs.autoscaling.scaleOutThresholdPercent}}
       Unit: Percent
 
   CumulusECSCPUScaleOutAlarm:
@@ -1045,19 +1045,19 @@ Resources:
       Namespace: AWS/ECS
       Period: 60
       Statistic: Average
-      Threshold: 75
+      Threshold: {{ecs.autoscaling.scaleOutThresholdPercent}}
       Unit: Percent
 
   CumulusECSScaleInPolicy:
     Type: AWS::AutoScaling::ScalingPolicy
     Properties:
-      AdjustmentType: ChangeInCapacity
+      AdjustmentType: PercentChangeInCapacity
       AutoScalingGroupName: !Ref CumulusECSAutoScalingGroup
       MetricAggregationType: Average
-      PolicyType:  StepScaling
+      PolicyType: StepScaling
       StepAdjustments:
         - MetricIntervalUpperBound: 0
-          ScalingAdjustment: -1
+          ScalingAdjustment: -{{ecs.autoscaling.scalingAdjustmentPercent}}
 
   CumulusECSMemoryScaleInAlarm:
     Type: AWS::CloudWatch::Alarm
@@ -1075,7 +1075,7 @@ Resources:
       Namespace: AWS/ECS
       Period: 60
       Statistic: Average
-      Threshold: 25
+      Threshold: {{ecs.autoscaling.scaleInThresholdPercent}}
       Unit: Percent
 
   CumulusECSCPUScaleInAlarm:
@@ -1094,7 +1094,7 @@ Resources:
       Namespace: AWS/ECS
       Period: 60
       Statistic: Average
-      Threshold: 25
+      Threshold: {{ecs.autoscaling.scaleInThresholdPercent}}
       Unit: Percent
 
 {{#each ecs.services}}
