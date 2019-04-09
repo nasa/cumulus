@@ -170,20 +170,6 @@ class UpdatedKes extends Kes {
   * Build list of buckets of desired type.
   *
   * @param {Object} buckets - config buckets
-  * @param {any} bucketType - selected type.
-  * @returns {string} - comma separated list of every bucket in buckets that matches bucketType.
-  */
-  collectBuckets(buckets, bucketType) {
-    const matchingBuckets = Object.values(buckets)
-      .filter((bucket) => bucket.type === bucketType)
-      .map((object) => object.name);
-    return new Handlebars.SafeString(matchingBuckets.toString());
-  }
-
-  /**
-  * Build list of buckets of desired type.
-  *
-  * @param {Object} buckets - config buckets
   * @param {string} bucketType - selected type.
   * @returns {string} - comma separated list of every bucket in buckets that matches bucketType.
   */

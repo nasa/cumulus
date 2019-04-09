@@ -154,16 +154,16 @@ jobs:
         - npm install
       script: ./travis-ci/deploy-to-github-pages.sh
 
-    # - name: "Deploy packages to integration test stack"
-    #   stage: deployment test setup
-    #   install:
-    #     - nvm install-latest-npm
-    #     - ln -s /dev/stdout ./lerna-debug.log
-    #   script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
-    #   after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
-    #   env:
-    #     - DEPLOYMENT=cumulus-from-npm
-    #     - USE_NPM_PACKAGES=true
+    - name: "Deploy packages to integration test stack"
+      stage: deployment test setup
+      install:
+        - nvm install-latest-npm
+        - ln -s /dev/stdout ./lerna-debug.log
+      script: ./travis-ci/travis_wait_new 50 ./travis-ci/init-integration-tests.sh
+      after_failure: ./travis-ci/travis_wait_new 50 ./travis-ci/cleanup-integration-tests.sh
+      env:
+        - DEPLOYMENT=cumulus-from-npm
+        - USE_NPM_PACKAGES=true
 
     - name: "Run integration tests against deployed packages"
       stage: deployment test
