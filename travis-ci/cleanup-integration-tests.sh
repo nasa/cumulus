@@ -2,7 +2,7 @@
 
 set -e
 
-npm ci
+npm install
 . ./travis-ci/set-env-vars.sh
 
 set +e
@@ -13,7 +13,7 @@ set +e
 
   # Delete the stack if it's a nightly build
   if [ "$DEPLOYMENT" = "cumulus-nightly" ]; then
-    npm ci
+    npm install
     echo Delete app deployment
 
     ./node_modules/.bin/kes cf delete \
@@ -33,7 +33,12 @@ set +e
     echo Delete app deployment
   else
     rm -rf node_modules
-    npm install @cumulus/common
+
+    # Needed functionality is in 1.11.3
+    # Prevents breaking on a release build when it tries to install
+    # the version that does not exist
+    # We only need the common package for the lock-stack script
+    npm install @cumulus/common@1.11.3
   fi
 )
 RESULT=$?

@@ -85,7 +85,7 @@ module.exports.collection = {
       description: 'The path to look for the collection Granules or '
                    + 'PDRs. Use regex for recursive search',
       type: 'string',
-      default: '/'
+      default: ''
     },
     url_path: {
       title: 'Url Path',
