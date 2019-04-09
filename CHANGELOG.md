@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Changed
 
+- **CUMULUS-1236**
+  - Moves access to public files behind the distribution endpoint.  Authentication is not required, but direct http access has been disallowed.
+
 - **CUMULUS-1223**
   - Adds unauthenticated access for public bucket files to the Distribution API.  Public files should be requested the same way as protected files, but for public files a redirect to a self-signed S3 URL will happen without requiring authentication with Earthdata login.
 

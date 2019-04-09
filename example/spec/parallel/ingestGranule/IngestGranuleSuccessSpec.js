@@ -58,8 +58,7 @@ const {
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
-  getFilesMetadata,
-  getPublicS3FileUrl
+  getFilesMetadata
 } = require('../../helpers/testUtils');
 const {
   setDistributionApiEnvVars,
@@ -383,17 +382,14 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
-      const distributionUrl = getDistributionFileUrl({
-        bucket: files[0].bucket,
-        key: files[0].filepath
-      });
-      const s3BrowseImageUrl = getPublicS3FileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+      const scienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath });
+      const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
       const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
 
       console.log('parallel resourceURLs: ', resourceURLs);
       console.log('s3CredsUrl: ', s3CredsUrl);
 
-      expect(resourceURLs.includes(distributionUrl)).toBe(true);
+      expect(resourceURLs.includes(scienceFileUrl)).toBe(true);
       expect(resourceURLs.includes(s3BrowseImageUrl)).toBe(true);
       expect(resourceURLs.includes(s3CredsUrl)).toBe(true);
     });
@@ -404,7 +400,7 @@ describe('The S3 Ingest Granules workflow', () => {
         bucket: files[0].bucket,
         key: files[0].filepath
       });
-      const s3BrowseImageUrl = getPublicS3FileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+      const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
       const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
       const expectedTypes = [
         'GET DATA',
@@ -449,19 +445,8 @@ describe('The S3 Ingest Granules workflow', () => {
             );
             const file = files.find((f) => f.name.endsWith(extension));
 
-            let fileStream;
-
-            if (bucketsConfig.type(file.bucket) === 'protected') {
-              const fileUrl = getDistributionFileUrl({
-                bucket: file.bucket,
-                key: file.filepath
-              });
-              fileStream = await getDistributionApiFileStream(fileUrl, accessToken);
-            }
-            else if (bucketsConfig.type(file.bucket) === 'public') {
-              fileStream = got.stream(url);
-            }
-
+            const fileUrl = getDistributionFileUrl({ bucket: file.bucket, key: file.filepath });
+            const fileStream = await getDistributionApiFileStream(fileUrl, accessToken);
             // Compare checksum of downloaded file with expected checksum.
             const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
             return downloadChecksum === sourceChecksum;
