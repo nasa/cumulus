@@ -156,8 +156,7 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
     iteration += 1;
     try {
       executionStatus = await getExecutionStatus(executionArn);
-    }
-    catch (err) {
+    } catch (err) {
       if (!(err.code === 'ExecutionDoesNotExist') || iteration > maxIterationsToStart) {
         console.log(`waitForCompletedExecution failed: ${err.code}, arn: ${executionArn}`);
         throw err;
@@ -264,12 +263,10 @@ async function testWorkflow(stackName, bucketName, workflowName, inputFile) {
 
     if (workflowStatus.status === 'SUCCEEDED') {
       console.log(`Workflow ${workflowName} execution succeeded.`);
-    }
-    else {
+    } else {
       console.log(`Workflow ${workflowName} execution failed with state: ${workflowStatus.status}`);
     }
-  }
-  catch (err) {
+  } catch (err) {
     console.log(`Error executing workflow ${workflowName}. Error: ${err}`);
   }
 }
@@ -438,8 +435,7 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host = null,
 
     if (s3Host && provider.protocol === 's3') {
       provider.host = s3Host;
-    }
-    else {
+    } else {
       provider.host = getProviderHost(provider);
     }
 
