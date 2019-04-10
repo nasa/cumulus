@@ -1,5 +1,6 @@
 'use strict';
 
+const { URL } = require('url');
 const { Lambda } = require('aws-sdk');
 const got = require('got');
 
