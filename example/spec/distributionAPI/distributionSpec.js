@@ -147,8 +147,7 @@ describe('Distribution API', () => {
         try {
           await got(signedUrl);
           fail('Expected an error to be thrown');
-        }
-        catch (error) {
+        } catch (error) {
           expect(error.statusCode).toEqual(403);
           expect(error.message).toMatch(/Forbidden/);
         }

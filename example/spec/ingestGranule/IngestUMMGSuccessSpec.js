@@ -180,8 +180,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
         })
       ]);
       stopDistributionApi(server, done);
-    }
-    catch (err) {
+    } catch (err) {
       stopDistributionApi(server, done);
     }
   });

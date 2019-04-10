@@ -119,8 +119,7 @@ Object.keys(sums).forEach((key) => {
       await granule.verifyFile(file, t.context.internalBucket, key);
       await granule.verifyFile(key, t.context.internalBucket, key);
       t.pass();
-    }
-    catch (e) {
+    } catch (e) {
       t.fail(e);
     }
   });
@@ -176,8 +175,7 @@ test('addBucketToFile throws an exception if no config matches', (t) => {
 
   try {
     testGranule.addBucketToFile(file);
-  }
-  catch (e) {
+  } catch (e) {
     t.is(e.message, 'Unable to update file. Cannot find file config for file right-file');
   }
 });
@@ -291,11 +289,9 @@ test('moveGranuleFile overwrites existing file by default', async (t) => {
 
   try {
     await moveGranuleFile(source, target);
-  }
-  catch (err) {
+  } catch (err) {
     t.fail();
-  }
-  finally {
+  } finally {
     const objects = await s3().listObjects({ Bucket: destBucket }).promise();
     t.is(objects.Contents.length, 1);
 

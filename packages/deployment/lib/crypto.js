@@ -74,8 +74,7 @@ async function crypto(stack, bucket, s3) {
       Key: `${key}/private.pem`,
       Bucket: bucket
     }).promise();
-  }
-  catch (e) {
+  } catch (e) {
     await uploadKeyPair(bucket, key, s3);
   }
 }

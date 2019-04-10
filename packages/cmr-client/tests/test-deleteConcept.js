@@ -70,8 +70,7 @@ test.serial('deleteConcept returns success when granule is not found ', async (t
   try {
     await deleteConcept('granule', granuleId, 'CUMULUS', {});
     t.pass();
-  }
-  catch (error) {
+  } catch (error) {
     t.fail();
   }
   stub.restore();
@@ -83,8 +82,7 @@ test.serial('deleteConcept throws error when request is bad', async (t) => {
   try {
     await deleteConcept('granule', granuleId, 'CUMULUS', {});
     t.fail();
-  }
-  catch (error) {
+  } catch (error) {
     t.true(error.toString().includes('CMR error message: "Bad request"'));
   }
   stub.restore();

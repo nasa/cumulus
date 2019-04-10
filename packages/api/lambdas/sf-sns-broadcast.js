@@ -45,8 +45,7 @@ function makeLambdaFunctionFail(event) {
   if (error) {
     if (errors[error]) {
       throw new errors[error](cause);
-    }
-    else if (error === 'TypeError') {
+    } else if (error === 'TypeError') {
       throw new TypeError(cause);
     }
     throw new Error(cause);
@@ -74,8 +73,7 @@ async function publish(message, finished = false) {
     if (finished) {
       if (failed) {
         event.meta.status = 'failed';
-      }
-      else {
+      } else {
         event.meta.status = 'completed';
       }
       const granuleId = get(event, 'meta.granuleId', null);
@@ -89,8 +87,7 @@ async function publish(message, finished = false) {
           event.meta.status
         );
       }
-    }
-    else {
+    } else {
       event.meta.status = 'running';
     }
 

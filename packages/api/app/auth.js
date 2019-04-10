@@ -48,8 +48,7 @@ async function ensureAuthorized(req, res, next) {
     // Adds additional metadata that authorized endpoints can access.
     req.authorizedMetadata = { userName };
     return next();
-  }
-  catch (error) {
+  } catch (error) {
     if (error instanceof TokenExpiredError) {
       return res.boom.unauthorized('Access token has expired');
     }

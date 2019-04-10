@@ -22,8 +22,7 @@ function fixCumulusMessageSyntax(cumulusConfig) {
     if (isObject(cumulusConfig[n])) {
       // eslint-disable-next-line no-param-reassign
       cumulusConfig[n] = fixCumulusMessageSyntax(cumulusConfig[n]);
-    }
-    else if (isString(cumulusConfig[n])) {
+    } else if (isString(cumulusConfig[n])) {
       const match = cumulusConfig[n].match(test);
       if (match) {
         // eslint-disable-next-line no-param-reassign

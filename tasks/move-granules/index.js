@@ -174,13 +174,11 @@ async function moveFileRequest(
     // else rename the existing file, and both files are part of the granule.
     if (existingFileSum === stagedFileSum) {
       await deleteS3Object(source.Bucket, source.Key);
-    }
-    else {
+    } else {
       await renameS3FileWithTimestamp(target.Bucket, target.Key);
       await moveGranuleFile(source, target, options);
     }
-  }
-  else {
+  } else {
     await moveGranuleFile(source, target, options);
   }
 
@@ -319,8 +317,7 @@ async function moveGranules(event) {
       config.distribution_endpoint,
       bucketsConfig
     );
-  }
-  else {
+  } else {
     movedGranules = granulesByGranuleId;
   }
 

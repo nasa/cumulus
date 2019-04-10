@@ -75,8 +75,7 @@ test.serial('get() throws an exception if the collection config could not be fou
   try {
     await collectionConfigStore.get(invalidDataType, t.context.dataVersion);
     t.fail('Expected an error to be thrown');
-  }
-  catch (err) {
+  } catch (err) {
     t.is(err.message, `A collection config for data type "${invalidDataType}__${t.context.dataVersion}" was not found.`);
   }
 });
@@ -88,8 +87,7 @@ test.serial('get() throws an exception if the bucket does not exist', async (t) 
   try {
     await collectionConfigStore.get(t.context.dataType, t.context.dataVersion);
     t.fail('Expected an error to be thrown');
-  }
-  catch (err) {
+  } catch (err) {
     t.is(err.message, `Collection config bucket does not exist: ${invalidBucket}`);
   }
 });
@@ -169,8 +167,7 @@ test('delete() the collection config from the cache', async (t) => {
   try {
     await collectionConfigStore.get(t.context.dataType, t.context.dataVersion);
     t.fail('Expected an error to be thrown');
-  }
-  catch (err) {
+  } catch (err) {
     t.is(err.message, `A collection config for data type "${t.context.dataType}__${t.context.dataVersion}" was not found.`);
   }
 });
