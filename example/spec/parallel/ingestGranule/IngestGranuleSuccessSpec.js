@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs-extra');
-const got = require('got');
 const path = require('path');
 const { URL, resolve } = require('url');
 const cloneDeep = require('lodash.clonedeep');
@@ -59,7 +58,7 @@ const {
   getFilesMetadata
 } = require('../../helpers/testUtils');
 const {
-  setDistributionApiEnvVars,
+  setDistributionApiEnvVars
 } = require('../../helpers/apiUtils');
 const {
   setupTestGranuleForIngest,
