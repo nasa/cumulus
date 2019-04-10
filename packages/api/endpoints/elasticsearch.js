@@ -86,15 +86,14 @@ async function reindex(req, res) {
   if (destExists) {
     return res.boom.badRequest(`Destination index ${destIndex} exists. Please specify an index name that does not exist.`);
   }
-  else {
-    // create destination index
-    await esClient.indices.create({
-      index: destIndex,
-      body: { mappings }
-    });
 
-    log.info(`Created destination index ${destIndex}.`);
-  }
+  // create destination index
+  await esClient.indices.create({
+    index: destIndex,
+    body: { mappings }
+  });
+
+  log.info(`Created destination index ${destIndex}.`);
 
   // reindex
   const response = await esClient.reindex({
@@ -107,7 +106,7 @@ async function reindex(req, res) {
   const successResponse = {
     elasticsearchResponse: response,
     message: `Reindexed to ${destIndex} from ${sourceIndex}`
-  }
+  };
 
   return res.status(200).send(successResponse);
 }
