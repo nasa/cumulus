@@ -352,21 +352,14 @@ function constructOnlineAccessUrl({
   buckets
 }) {
   const bucketType = buckets.type(file.bucket);
-  if (bucketType === 'protected') {
+  const distributionApiBuckets = ['protected', 'public'];
+  if (distributionApiBuckets.includes(bucketType)) {
     const extension = urljoin(file.bucket, getS3KeyOfFile(file));
     return {
       URL: urljoin(distEndpoint, extension),
       URLDescription: 'File to download', // used by ECHO10
       Description: 'File to download', // used by UMMG
       Type: mapCNMTypeToCMRType(file.fileType) // used by UMMG
-    };
-  }
-  if (bucketType === 'public') {
-    return {
-      URL: `https://${file.bucket}.s3.amazonaws.com/${getS3KeyOfFile(file)}`,
-      URLDescription: 'File to download',
-      Description: 'File to download',
-      Type: mapCNMTypeToCMRType(file.fileType)
     };
   }
   return null;

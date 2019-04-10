@@ -1,5 +1,6 @@
 'use strict';
 
+const { URL } = require('url');
 const { Lambda } = require('aws-sdk');
 const got = require('got');
 
@@ -107,7 +108,8 @@ function getDistributionFileUrl({
   bucket,
   key
 }) {
-  return `${distributionEndpoint}/${bucket}/${key}`;
+  const theUrl = new URL(`${bucket}/${key}`, distributionEndpoint);
+  return theUrl.href;
 }
 
 module.exports = {
