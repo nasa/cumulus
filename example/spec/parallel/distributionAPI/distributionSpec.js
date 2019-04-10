@@ -20,8 +20,8 @@ const {
   createTimestampedTestId,
   uploadTestDataToBucket,
   deleteFolder
-} = require('../helpers/testUtils');
-const { setDistributionApiEnvVars } = require('../helpers/apiUtils');
+} = require('../../helpers/testUtils');
+const { setDistributionApiEnvVars } = require('../../helpers/apiUtils');
 
 const config = loadConfig();
 
