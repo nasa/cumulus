@@ -16,8 +16,8 @@ const {
   distributionApi: { invokeApiDistributionLambda }
 } = require('@cumulus/integration-tests');
 
-const { setDistributionApiEnvVars } = require('../helpers/apiUtils');
-const { loadConfig } = require('../helpers/testUtils');
+const { setDistributionApiEnvVars } = require('../../helpers/apiUtils');
+const { loadConfig } = require('../../helpers/testUtils');
 
 const config = loadConfig();
 const bucketConfig = new BucketsConfig(config.buckets);

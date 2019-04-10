@@ -40,27 +40,6 @@ async function invokeApiDistributionLambda(path, accessToken = '') {
 }
 
 /**
- * Get S3 signed URL for file protected by distribution API
- *
- * @param {string} fileUrl
- *   Distribution API file URL to request
- * @param {string} accessToken
- *   Access token from OAuth provider
- *
- * @returns {Promise.<Response>} - Promise of response object from distribution
- *   api S3 signed URL to access file protected by distribution API
- */
-async function getDistributionApiResponse(fileUrl, accessToken) {
-  const response = got(fileUrl, {
-    followRedirect: false,
-    headers: {
-      cookie: [`accessToken=${accessToken}`]
-    }
-  });
-  return response;
-}
-
-/**
  * Invoke the ApiDistributionLambda and return the headers location
  * @param {filepath} filepath - request.path parameter
  * @param {string} accessToken - authenticiation cookie (can be undefined).
@@ -107,9 +86,8 @@ function getDistributionFileUrl({
 }
 
 module.exports = {
-  getDistributionApiRedirect,
-  getDistributionApiResponse,
   getDistributionApiFileStream,
+  getDistributionApiRedirect,
   getDistributionFileUrl,
   invokeApiDistributionLambda
 };

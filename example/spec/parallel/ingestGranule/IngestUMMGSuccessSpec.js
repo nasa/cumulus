@@ -48,14 +48,14 @@ const {
   createTestDataPath,
   createTestSuffix,
   templateFile
-} = require('../helpers/testUtils');
+} = require('../../helpers/testUtils');
 const {
   setDistributionApiEnvVars
-} = require('../helpers/apiUtils');
+} = require('../../helpers/apiUtils');
 const {
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleIdPathAndCollection
-} = require('../helpers/granuleUtils');
+} = require('../../helpers/granuleUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
@@ -64,7 +64,7 @@ const workflowName = 'IngestAndPublishGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
 const templatedOutputPayloadFilename = templateFile({
-  inputTemplateFilename: './spec/ingestGranule/IngestGranule.UMM.output.payload.template.json',
+  inputTemplateFilename: './spec/parallel/ingestGranule/IngestGranule.UMM.output.payload.template.json',
   config: config[workflowName].IngestUMMGranuleOutput
 });
 
