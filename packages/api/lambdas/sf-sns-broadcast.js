@@ -21,10 +21,9 @@ function eventFailed(event) {
         return true;
       }
     }
-  }
-  // Error and error keys are not part of the cumulus message
-  // and if they appear in the message something is seriously wrong
-  else if (event.Error || event.error) {
+  } else if (event.Error || event.error) {
+    // Error and error keys are not part of the cumulus message
+    // and if they appear in the message something is seriously wrong
     return true;
   }
   return false;
