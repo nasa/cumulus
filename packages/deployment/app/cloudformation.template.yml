@@ -737,9 +737,9 @@ Resources:
           DISTRIBUTION_REDIRECT_ENDPOINT: {{../api_distribution_url}}redirect
         {{else}}
           DISTRIBUTION_ENDPOINT:
-            Fn::Join: ["", [ "https://", {"Ref": "downloadRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}"]]
+            Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}"]]
           DISTRIBUTION_REDIRECT_ENDPOINT:
-            Fn::Join: ["", [ "https://", {"Ref": "downloadRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/redirect"]]
+            Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/redirect"]]
         {{/if}}
       {{/if}}
       Handler: {{this.handler}}
@@ -1266,7 +1266,7 @@ Outputs:
     Value: {{api_distribution_url}}
   {{else}}
     Value:
-      Fn::Join: ["", [ "https://", {"Ref": "downloadRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
+      Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
   {{/if}}
 
   ApiId:
@@ -1275,7 +1275,7 @@ Outputs:
 
   DistributionId:
     Value:
-      Ref: downloadRestApi
+      Ref: distributionRestApi
 
   ApiStage:
     Value: {{apiStage}}
