@@ -9,8 +9,8 @@ app/dist
 node_modules
 *.env
 /deployer/cloudformation.yml
-CumulusApiDefault.yml
-CumulusApiV1.yml
+CumulusApiBackend.yml
+CumulusApiDistribution.yml
 yarn.lock
 spec/config.override.yml
 spec/**/*.input.json
