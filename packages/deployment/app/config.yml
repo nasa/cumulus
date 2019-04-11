@@ -157,7 +157,7 @@ default:
           protocol: lambda
 
   apis:
-    - name: download
+    - name: distribution
     - name: backend
 
   sqs_consumer_rate: 500

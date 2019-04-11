@@ -14,9 +14,9 @@ ApiDistribution:
       function: Ref
       value: AccessTokensTableDynamoDB
   apiGateway:
-    - api: download
+    - api: distribution
       path: 'redirect'
       method: get
-    - api: download
+    - api: distribution
       path: '{proxy+}'
       method: any

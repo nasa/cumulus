@@ -14,7 +14,7 @@ default:
       - ExecutionsTable
 
   apis:
-    - name: download
+    - name: distribution
 
   lambdas: !!files [
     'node_modules/@cumulus/api/config/distribution.yml'
