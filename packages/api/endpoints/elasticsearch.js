@@ -111,7 +111,7 @@ async function reindex(req, res) {
 async function reindexStatus(req, res) {
   const esClient = await Search.es();
 
-  const reindexStatus = await esClient.tasks.list({ actions: ['*reindex'] });
+  const reindexTaskStatus = await esClient.tasks.list({ actions: ['*reindex'] });
 
   await esClient.indices.refresh();
 
@@ -120,9 +120,9 @@ async function reindexStatus(req, res) {
   });
 
   const status = {
-    reindexStatus,
+    reindexStatus: reindexTaskStatus,
     indexStatus
-  }
+  };
 
   return res.send(status);
 }

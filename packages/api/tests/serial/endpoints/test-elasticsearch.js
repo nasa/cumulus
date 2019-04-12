@@ -222,7 +222,7 @@ test.serial('Reindex success', async (t) => {
 
   const indexStatus = statusResponse.body.indexStatus.indices[destIndex];
 
-  t.is(3, indexStatus.primaries.docs.count)
+  t.is(3, indexStatus.primaries.docs.count);
 
   await esClient.indices.delete({ index: destIndex });
 });
@@ -242,7 +242,7 @@ test.serial('Reindex - destination index exists', async (t) => {
   t.is(response.body.message, `Destination index ${esIndex} exists. Please specify an index name that does not exist.`);
 });
 
-test.serial('Reindex status', async (t) => {
+test.serial('Reindex status, no task running', async (t) => {
   const response = await request(app)
     .get('/elasticsearch/reindex-status')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
