@@ -139,8 +139,7 @@ test('EarthdataLogin.getAccessToken() throws a TypeError if authorizationCode is
   try {
     await earthdataLogin.getAccessToken();
     t.fail('Expected getAccessToken to throw an error');
-  }
-  catch (err) {
+  } catch (err) {
     t.true(err instanceof TypeError);
     t.is(err.message, 'authorizationCode is required');
   }
@@ -247,8 +246,7 @@ test.serial('EarthdataLogin.getAccessToken() throws an OAuth2AuthenticationFailu
   try {
     await earthdataLogin.getAccessToken('authorization-code');
     t.fail('Expected a OAuth2AuthenticationFailure error');
-  }
-  catch (err) {
+  } catch (err) {
     t.true(err instanceof OAuth2AuthenticationFailure);
   }
 
@@ -270,8 +268,7 @@ test.serial('EarthdataLogin.getAccessToken() throws an OAuth2AuthenticationError
   try {
     await earthdataLogin.getAccessToken('authorization-code');
     t.fail('Expected a OAuth2AuthenticationError error');
-  }
-  catch (err) {
+  } catch (err) {
     t.true(err instanceof OAuth2AuthenticationError);
   }
 
@@ -289,8 +286,7 @@ test('EarthdataLogin.refreshAccessToken() throws a TypeError if refreshToken is 
   try {
     await earthdataLogin.refreshAccessToken();
     t.fail('Expected refreshAccessToken to throw an error');
-  }
-  catch (err) {
+  } catch (err) {
     t.true(err instanceof TypeError);
     t.is(err.message, 'refreshToken is required');
   }
@@ -396,8 +392,7 @@ test.serial('EarthdataLogin.refreshAccessToken() throws an OAuth2AuthenticationF
   try {
     await earthdataLogin.refreshAccessToken('invalid-refresh-token');
     t.fail('Expected a OAuth2AuthenticationFailure error');
-  }
-  catch (err) {
+  } catch (err) {
     t.true(err instanceof OAuth2AuthenticationFailure);
   }
 
@@ -419,8 +414,7 @@ test.serial('EarthdataLogin.refreshAccessToken() throws an OAuth2AuthenticationE
   try {
     await earthdataLogin.refreshAccessToken('refresh-token');
     t.fail('Expected a OAuth2AuthenticationError error');
-  }
-  catch (err) {
+  } catch (err) {
     t.true(err instanceof OAuth2AuthenticationError);
   }
 

@@ -103,13 +103,11 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
     try {
       await http.download(remoteUrl, localPath);
-    }
-    catch (e) {
+    } catch (e) {
       if (e.message && e.message.includes('Unexpected HTTP status code: 403')) {
         const message = `${path.basename(remotePath)} was not found on the server with 403 status`;
         throw new errors.FileNotFound(message);
-      }
-      else throw e;
+      } else throw e;
     }
     log.info(`Finishing downloading ${remoteUrl}`);
 
@@ -141,8 +139,7 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     try {
       const headResponse = await got.head(remoteUrl);
       headers = headResponse.headers;
-    }
-    catch (err) {
+    } catch (err) {
       log.info(`HEAD failed for ${remoteUrl} with error: ${err}.`);
     }
     const contentType = headers['content-type'] || lookupMimeType(key);

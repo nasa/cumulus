@@ -132,8 +132,7 @@ module.exports = class CloudWatchLogger {
       this.token = messageData.nextSequenceToken;
       this.retries = 0;
       this.queue = [];
-    }
-    catch (err) {
+    } catch (err) {
       log.error(err, err.stack);
       if (this.retries < MAX_RETRIES) {
         this.retries += 1;

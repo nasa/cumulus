@@ -62,8 +62,7 @@ test('GoogleOAuth2.getAccessToken() throws a TypeError if authorizationCode is n
   try {
     await googleOAuth2.getAccessToken();
     t.fail('Expected getAccessToken to throw an error');
-  }
-  catch (err) {
+  } catch (err) {
     t.true(err instanceof TypeError);
     t.is(err.message, 'authorizationCode is required');
   }
@@ -206,8 +205,7 @@ test('GoogleOAuth2.refreshAccessToken() throws "Not implemented" error', async (
   try {
     await googleOAuth2.refreshAccessToken('fake-token');
     t.fail('Expected error to be thrown');
-  }
-  catch (err) {
+  } catch (err) {
     t.is(err.message, 'Not implemented');
   }
 });

@@ -58,8 +58,7 @@ const setS3FileSize = async (file) => {
   try {
     const fileSize = await getObjectSize(file.bucket, file.key);
     return { ...file, fileSize };
-  }
-  catch (error) {
+  } catch (error) {
     return file;
   }
 };

@@ -95,8 +95,7 @@ test('fetchMessageAdapter() throws na exception if the version does not exist', 
     );
 
     t.fail('Expected an exception to be thrown');
-  }
-  catch (err) {
+  } catch (err) {
     t.pass();
   }
 });

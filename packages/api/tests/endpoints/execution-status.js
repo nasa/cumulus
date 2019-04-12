@@ -117,8 +117,7 @@ const stepFunctionMock = {
       let executionStatus;
       if (arn === 'stillRunning') {
         executionStatus = { ...executionStatusCommon };
-      }
-      else {
+      } else {
         executionStatus = {
           ...executionStatusCommon,
           output: arn === 'hasFullMessage' ? JSON.stringify(fullMessageOutput) : JSON.stringify(remoteExecutionOutput)

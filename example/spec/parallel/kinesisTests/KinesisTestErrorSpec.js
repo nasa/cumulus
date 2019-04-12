@@ -112,8 +112,7 @@ describe('The messageConsumer receives a bad record.\n', () => {
   afterAll(async () => {
     try {
       await cleanUp.bind(this)();
-    }
-    catch (e) {
+    } catch (e) {
       console.log(`Cleanup Failed ${e}`);
     }
   });

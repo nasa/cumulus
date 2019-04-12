@@ -49,15 +49,13 @@ test.before(async () => {
 test.after.always(async () => {
   try {
     await asyncOperationModel.deleteTable();
-  }
-  catch (err) {
+  } catch (err) {
     if (err.code !== 'ResourceNotFoundException') throw err;
   }
 
   try {
     await userModel.deleteTable();
-  }
-  catch (err) {
+  } catch (err) {
     if (err.code !== 'ResourceNotFoundException') throw err;
   }
 

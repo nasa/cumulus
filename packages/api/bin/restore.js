@@ -66,8 +66,7 @@ class Aggregator extends Transform {
     if (this.records.length === 25) {
       this.push(this.records);
       this.records = [record];
-    }
-    else {
+    } else {
       this.records.push(record);
     }
     callback();

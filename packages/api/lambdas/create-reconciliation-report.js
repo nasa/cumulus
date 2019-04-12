@@ -42,16 +42,14 @@ async function createReconciliationReportForBucket(Bucket) {
       // Found an item that is only in S3 and not in DynamoDB
       onlyInS3.push(nextS3Uri);
       s3ObjectsQueue.shift();
-    }
-    else if (nextS3Uri > nextDynamoDbUri) {
+    } else if (nextS3Uri > nextDynamoDbUri) {
       // Found an item that is only in DynamoDB and not in S3
       const dynamoDbItem = await dynamoDbFilesLister.shift(); // eslint-disable-line no-await-in-loop, max-len
       onlyInDynamoDb.push({
         uri: buildS3Uri(Bucket, dynamoDbItem.key),
         granuleId: dynamoDbItem.granuleId
       });
-    }
-    else {
+    } else {
       // Found an item that is in both S3 and DynamoDB
       okCount += 1;
       s3ObjectsQueue.shift();
@@ -120,13 +118,11 @@ async function reconciliationReportForCollections() {
       // Found an item that is only in database and not in cmr
       await dbCollectionIds.shift(); // eslint-disable-line no-await-in-loop
       collectionsOnlyInCumulus.push(nextDbCollectionId);
-    }
-    else if (nextDbCollectionId > nextCmrCollectionId) {
+    } else if (nextDbCollectionId > nextCmrCollectionId) {
       // Found an item that is only in cmr and not in database
       collectionsOnlyInCmr.push(nextCmrCollectionId);
       cmrCollectionIds.shift();
-    }
-    else {
+    } else {
       // Found an item that is in both cmr and database
       okCollections.push(nextDbCollectionId);
       dbCollectionIds.shift();
@@ -187,8 +183,7 @@ async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bu
 
         if (accessUrl && relatedUrl.URL === accessUrl.URL) {
           okCount += 1;
-        }
-        else if (cmrGetDataTypes.includes(relatedUrl.Type)) {
+        } else if (cmrGetDataTypes.includes(relatedUrl.Type)) {
           // ignore any URL which is not for getting data
           // some files should not be in CMR such as private files
           onlyInCmr.push({
@@ -199,8 +194,7 @@ async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bu
         }
 
         delete granuleFiles[urlFileName];
-      }
-      else if (cmrGetDataTypes.includes(relatedUrl.Type)) {
+      } else if (cmrGetDataTypes.includes(relatedUrl.Type)) {
         // no matching database file, only in CMR
         onlyInCmr.push({
           URL: relatedUrl.URL,
@@ -217,8 +211,7 @@ async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bu
     if (bucketsConfig.key(granuleFiles[fileName].bucket)
       && bucketsConfig.type(granuleFiles[fileName].bucket) === 'private') {
       okCount += 1;
-    }
-    else {
+    } else {
       onlyInCumulus.push({
         fileName: fileName,
         uri: buildS3Uri(granuleFiles[fileName].bucket, granuleFiles[fileName].key),
@@ -278,8 +271,7 @@ async function reconciliationReportForGranules(collectionId, bucketsConfig) {
         collectionId: collectionId
       });
       await dbGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
-    }
-    else if (nextDbGranuleId > nextCmrGranuleId) {
+    } else if (nextDbGranuleId > nextCmrGranuleId) {
       // Found an item that is only in cmr and not in database
       granulesReport.onlyInCmr.push({
         GranuleUR: nextCmrGranuleId,
@@ -287,8 +279,7 @@ async function reconciliationReportForGranules(collectionId, bucketsConfig) {
         Version: nextCmrItem.umm.CollectionReference.Version
       });
       await cmrGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
-    }
-    else {
+    } else {
       // Found an item that is in both cmr and database
       granulesReport.okCount += 1;
       const granuleInDb = {

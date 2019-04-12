@@ -36,8 +36,7 @@ async function get(req, res) {
   try {
     const result = await pdrModel.get({ pdrName });
     return res.send(result);
-  }
-  catch (e) {
+  } catch (e) {
     if (e instanceof RecordDoesNotExist) {
       return res.boom.notFound(`No record found for ${pdrName}`);
     }
@@ -65,8 +64,7 @@ async function del(req, res) {
 
   try {
     await pdrModel.delete({ pdrName });
-  }
-  catch (err) {
+  } catch (err) {
     if (!isRecordDoesNotExistError(err)) throw err;
   }
 

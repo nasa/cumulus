@@ -38,11 +38,9 @@ async function getEventDetails(event) {
 
   if (event.type.endsWith('StateEntered')) {
     prop = 'stateEnteredEventDetails';
-  }
-  else if (event.type.endsWith('StateExited')) {
+  } else if (event.type.endsWith('StateExited')) {
     prop = 'stateExitedEventDetails';
-  }
-  else if (event.type) {
+  } else if (event.type) {
     prop = `${event.type.charAt(0).toLowerCase() + event.type.slice(1)}EventDetails`;
   }
 
@@ -91,8 +89,7 @@ async function get(req, res) {
   const e = new models.Execution();
   try {
     response = await e.get({ arn });
-  }
-  catch (error) {
+  } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('Execution not found in API or database');
     }

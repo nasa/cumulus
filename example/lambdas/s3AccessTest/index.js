@@ -15,8 +15,7 @@ async function testGet(s3, params) {
   try {
     const result = await s3.getObject(params).promise();
     return result.Body !== null;
-  }
-  catch (error) {
+  } catch (error) {
     return false;
   }
 }
@@ -34,8 +33,7 @@ async function testWrite(s3, params) {
   try {
     await s3.putObject(callParams).promise();
     return true;
-  }
-  catch (error) {
+  } catch (error) {
     return false;
   }
 }
@@ -55,8 +53,7 @@ async function testList(s3, params) {
   try {
     await s3.listObjectsV2(callParams).promise();
     return true;
-  }
-  catch (error) {
+  } catch (error) {
     return false;
   }
 }
