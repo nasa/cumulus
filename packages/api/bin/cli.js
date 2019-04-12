@@ -3,14 +3,11 @@
 'use strict';
 
 const program = require('commander');
-const { cliUtils } = require('@cumulus/common');
 const { lambda } = require('@cumulus/common/aws');
 const pckg = require('../package.json');
-const es = require('./es');
 const backup = require('./backup');
 const restore = require('./restore');
 const { serveApi, serveDistributionApi } = require('./serve');
-const { defaultIndexAlias } = require('../es/search');
 
 program.version(pckg.version);
 
