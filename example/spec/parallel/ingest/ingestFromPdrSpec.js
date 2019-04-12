@@ -209,8 +209,7 @@ describe('Ingesting from PDR', () => {
             parsePdrExecutionArn,
             'QueueGranules'
           );
-        }
-        catch (error) {
+        } catch (error) {
           console.log(error);
         }
       });
@@ -414,8 +413,7 @@ describe('Ingesting from PDR', () => {
 
               if (isFinished === true) {
                 expect(nextTask).toEqual(stopStatusTaskName);
-              }
-              else {
+              } else {
                 expect(nextTask).toEqual(pdrStatusReportTaskName);
               }
               choiceVerified = true;

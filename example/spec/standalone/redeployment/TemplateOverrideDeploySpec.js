@@ -26,8 +26,7 @@ describe('When an override template is in the application directory', () => {
         kesFolder: 'test_app_override'
       });
       stackDescription = await cf().describeStacks({ StackName: config.stackName }).promise();
-    }
-    finally {
+    } finally {
       await fs.remove('test_app_override');
     }
   });

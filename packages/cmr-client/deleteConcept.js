@@ -26,8 +26,7 @@ async function deleteConcept(type, identifier, provider, headers) {
     result = await got.delete(url, {
       headers
     });
-  }
-  catch (error) {
+  } catch (error) {
     result = error.response;
   }
   const xmlObject = await parseXMLString(result.body);

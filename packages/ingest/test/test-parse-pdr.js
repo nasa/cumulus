@@ -143,8 +143,7 @@ test.serial('parsePdr throws an exception if FILE_CKSUM_TYPE is set but FILE_CKS
   try {
     await parsePdr(pdrFilename, t.context.collectionConfigStore, pdrName);
     t.fail('Expcected parsePdr to throw an error');
-  }
-  catch (err) {
+  } catch (err) {
     t.is(err.message, 'MISSING FILE_CKSUM_VALUE PARAMETER');
   }
 });
@@ -161,8 +160,7 @@ test.serial('parsePdr throws an exception if FILE_CKSUM_VALUE is set but FILE_CK
   try {
     await parsePdr(pdrFilename, t.context.collectionConfigStore, pdrName);
     t.fail('Expcected parsePdr to throw an error');
-  }
-  catch (err) {
+  } catch (err) {
     t.is(err.message, 'MISSING FILE_CKSUM_TYPE PARAMETER');
   }
 });
@@ -193,8 +191,7 @@ test.serial('parsePdr throws an exception if the value of an MD5 checksum is not
   try {
     await parsePdr(pdrFilename, t.context.collectionConfigStore, pdrName);
     t.fail('Expcected parsePdr to throw an error');
-  }
-  catch (err) {
+  } catch (err) {
     t.true(err.message.startsWith('Expected MD5 value to be a string'));
   }
 });
@@ -211,8 +208,7 @@ test.serial('parsePdr throws an exception if the a FILE_TYPE in the evaluated PD
   try {
     await parsePdr(pdrFilename, t.context.collectionConfigStore, pdrName);
     t.fail('Expcected parsePdr to throw an error');
-  }
-  catch (err) {
+  } catch (err) {
     t.is(err.message, 'INVALID FILE_TYPE PARAMETER : INVALID');
   }
 });

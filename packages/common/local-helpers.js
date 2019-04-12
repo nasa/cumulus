@@ -24,11 +24,9 @@ exports.isLocal = isLocal;
 let rootPath;
 if (isMocha) {
   rootPath = '../../../..';
-}
-else if (isJupyter || isAva || isDebug) {
+} else if (isJupyter || isAva || isDebug) {
   rootPath = '../..';
-}
-else {
+} else {
   rootPath = '../../..';
 }
 

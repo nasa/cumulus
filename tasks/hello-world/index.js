@@ -36,8 +36,7 @@ async function throwErrorIfConfigured(event) {
 
     // Delete file
     await deleteS3Object(bucket, retryFilename);
-  }
-  else if (event.config.fail) {
+  } else if (event.config.fail) {
     if (event.config.passOnRetry) {
       await s3PutObject({
         Bucket: bucket,

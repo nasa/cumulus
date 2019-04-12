@@ -87,8 +87,7 @@ async function token(event, oAuth2Provider, response) {
       }
       log.info('Log info: No state specified, responding 200');
       return response.send({ message: { token: jwtToken } });
-    }
-    catch (e) {
+    } catch (e) {
       if (e.statusCode === 400) {
         return response.boom.unauthorized('Failed to get authorization token');
       }
@@ -120,8 +119,7 @@ async function refreshAccessToken(request, oAuth2Provider, response) {
   let accessToken;
   try {
     accessToken = await verifyJwtAuthorization(requestJwtToken);
-  }
-  catch (err) {
+  } catch (err) {
     return handleJwtVerificationError(err, response);
   }
 
@@ -130,8 +128,7 @@ async function refreshAccessToken(request, oAuth2Provider, response) {
   let accessTokenRecord;
   try {
     accessTokenRecord = await accessTokenModel.get({ accessToken });
-  }
-  catch (err) {
+  } catch (err) {
     if (err.name === 'RecordDoesNotExist') {
       return response.boom.forbidden('Invalid access token');
     }
@@ -148,8 +145,7 @@ async function refreshAccessToken(request, oAuth2Provider, response) {
       username,
       expirationTime
     } = await oAuth2Provider.refreshAccessToken(accessTokenRecord.refreshToken));
-  }
-  finally {
+  } finally {
     // Delete old token record to prevent refresh with old tokens
     await accessTokenModel.delete({
       accessToken: accessTokenRecord.accessToken
@@ -183,8 +179,7 @@ async function deleteTokenEndpoint(request, response) {
   let accessToken;
   try {
     accessToken = await verifyJwtAuthorization(requestJwtToken);
-  }
-  catch (err) {
+  } catch (err) {
     return handleJwtVerificationError(err, response);
   }
 
