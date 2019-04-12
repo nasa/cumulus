@@ -6,10 +6,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **CUMULUS-1212**
+  - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
+
+## Changed
+
+- **CUMULUS-1236**
+  - Moves access to public files behind the distribution endpoint.  Authentication is not required, but direct http access has been disallowed.
+
 - **CUMULUS-1223**
   - Adds unauthenticated access for public bucket files to the Distribution API.  Public files should be requested the same way as protected files, but for public files a redirect to a self-signed S3 URL will happen without requiring authentication with Earthdata login.
 
+## [v1.12.1] - 2019-4-8
+
 ## [v1.12.0] - 2019-4-4
+
+Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ### BREAKING CHANGES
 
@@ -231,7 +245,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Schema validation is now strongly enforced when writing to the database.
     Additional properties are not allowed and will result in a validation error.
 - CUMULUS-678
-  `tasks/move-granules` simplified and refactored to use  functionality from cmrjs.
+  `tasks/move-granules` simplified and refactored to use functionality from cmrjs.
   `ingest/granules.moveGranuleFiles` now just moves granule files and returns a list of the updated files. Updating metadata now handled by `@cumulus/cmrjs/reconcileCMRMetadata`.
   `move-granules.updateGranuleMetadata` refactored and bugs fixed in the case of a file matching multiple collection.files.regexps.
   `getCmrXmlFiles` simplified and now only returns an object with the cmrfilename and the granuleId.
@@ -974,7 +988,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.12.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.12.1...HEAD
+[v1.12.1]: https://github.com/nasa/cumulus/compare/v1.12.0...v1.12.1
 [v1.12.0]: https://github.com/nasa/cumulus/compare/v1.11.3...v1.12.0
 [v1.11.3]: https://github.com/nasa/cumulus/compare/v1.11.2...v1.11.3
 [v1.11.2]: https://github.com/nasa/cumulus/compare/v1.11.1...v1.11.2
