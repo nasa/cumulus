@@ -96,25 +96,33 @@ async function reindex(req, res) {
   log.info(`Created destination index ${destIndex}.`);
 
   // reindex
-  const response = await esClient.reindex({
+  esClient.reindex({
     body: {
       source: { index: sourceIndex },
       dest: { index: destIndex }
     }
   });
 
-  const successResponse = {
-    elasticsearchResponse: response,
-    message: `Reindexed to ${destIndex} from ${sourceIndex}`
-  };
+  const message = `Reindexing to ${destIndex} from ${sourceIndex}. Check the reindex-status endpoint for status.`;
 
-  return res.status(200).send(successResponse);
+  return res.status(200).send({ message });
 }
 
 async function reindexStatus(req, res) {
   const esClient = await Search.es();
 
-  const status = await esClient.tasks.list({ actions: ['*reindex'] });
+  const reindexStatus = await esClient.tasks.list({ actions: ['*reindex'] });
+
+  await esClient.indices.refresh();
+
+  const indexStatus = await esClient.indices.stats({
+    metric: 'docs'
+  });
+
+  const status = {
+    reindexStatus,
+    indexStatus
+  }
 
   return res.send(status);
 }
