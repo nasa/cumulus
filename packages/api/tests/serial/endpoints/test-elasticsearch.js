@@ -193,9 +193,7 @@ test.serial('Reindex success', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  // Verify the 3 records were created according to the reindex response
-  t.is(response.body.elasticsearchResponse.created, 3);
-  t.is(response.body.message, `Reindexed to ${destIndex} from ${esIndex}`);
+  t.is(response.body.message, `Reindexing to ${destIndex} from ${esIndex}. Check the reindex-status endpoint for status.`);
 
   // Refresh to make sure the records are in the destination index
   await esClient.indices.refresh();
@@ -215,6 +213,16 @@ test.serial('Reindex success', async (t) => {
 
   // Validate that dest-index has the indexed data from the source index
   t.is(3, count.count);
+
+  // Check the reindex status endpoint
+  const statusResponse = await request(app)
+    .get('/elasticsearch/reindex-status')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const indexStatus = statusResponse.body.indexStatus.indices[destIndex];
+
+  t.is(3, indexStatus.primaries.docs.count)
 
   await esClient.indices.delete({ index: destIndex });
 });
@@ -240,7 +248,7 @@ test.serial('Reindex status', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.deepEqual(response.body, { nodes: {} });
+  t.deepEqual(response.body.reindexStatus, { nodes: {} });
 });
 
 test.serial('Complete index - no source', async (t) => {
