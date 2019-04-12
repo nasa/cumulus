@@ -36,8 +36,7 @@ program
         cmd.indexAlias
       ).then((response) => console.log(`Reindex successful: ${JSON.stringify(response)}`))
         .catch((err) => console.error(`Error reindexing: ${err.message}`));
-    }
-    else {
+    } else {
       cliUtils.displayMissingOptionsMessage(missingOptions);
     }
   });
@@ -52,8 +51,7 @@ program
       es.getStatus(cmd.host)
         .then((tasks) => console.log(JSON.stringify(tasks)))
         .catch((err) => console.error(`Error getting status: ${err.message}`));
-    }
-    else {
+    } else {
       cliUtils.displayMissingOptionsMessage(missingOptions);
     }
   });
@@ -74,8 +72,7 @@ program
         cmd.destIndex,
         cmd.indexAlias
       ).catch((err) => console.error(`Error: ${err.message}`));
-    }
-    else {
+    } else {
       cliUtils.displayMissingOptionsMessage(missingOptions);
     }
   });

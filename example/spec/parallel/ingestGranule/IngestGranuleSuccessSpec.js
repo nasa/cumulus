@@ -629,8 +629,7 @@ describe('The S3 Ingest Granules workflow', () => {
               bucket: config.bucket,
               filepath: `${testDataFolder}/${path.dirname(file.key)}`
             }];
-          }
-          catch (err) {
+          } catch (err) {
             console.error('Error in beforeAll() block:', err);
           }
         });

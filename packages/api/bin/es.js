@@ -116,8 +116,7 @@ async function reindex(
     }
 
     sourceIndex = indices[0];
-  }
-  else {
+  } else {
     const sourceExists = await esClient.indices.exists({ index: sourceIndex });
 
     if (!sourceExists) {
@@ -138,8 +137,7 @@ async function reindex(
 
   if (destExists) {
     throw new Error(`Destination index ${destIndex} exists. Please specify an index name that does not exist.`);
-  }
-  else {
+  } else {
     // create destination index
     await esClient.indices.create({
       index: destIndex,

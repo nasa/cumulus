@@ -123,8 +123,7 @@ async function handleFileRequest(req, res) {
   let fileKey;
   try {
     [fileBucket, fileKey] = getFileBucketAndKey(req.params[0]);
-  }
-  catch (err) {
+  } catch (err) {
     if (err instanceof UnparsableFileLocationError) {
       return res.boom.notFound(err.message);
     }

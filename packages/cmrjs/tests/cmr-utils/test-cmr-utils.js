@@ -112,8 +112,7 @@ test.serial('uploadEcho10CMRFile uploads CMR File to S3 correctly, preserving ta
 
     const tags = await s3GetObjectTagging(cmrFile.bucket, cmrFile.key);
     t.deepEqual(tags.TagSet, [{ Key: 'tagA', Value: 'iamtag1' }, { Key: 'tagB', Value: 'iamtag2' }]);
-  }
-  finally {
+  } finally {
     recursivelyDeleteS3Bucket(cmrFile.bucket);
   }
 });
@@ -142,8 +141,7 @@ test.serial('uploadUMMGJSONCMRFile uploads CMR File to S3 correctly, preserving 
 
     const tags = await s3GetObjectTagging(cmrFile.bucket, cmrFile.key);
     t.deepEqual(tags.TagSet, [{ Key: 'tagA', Value: 'iamtag1' }, { Key: 'tagB', Value: 'iamtag2' }]);
-  }
-  finally {
+  } finally {
     recursivelyDeleteS3Bucket(cmrFile.bucket);
   }
 });
@@ -199,8 +197,7 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
       distEndpoint,
       buckets
     });
-  }
-  finally {
+  } finally {
     revertMetaObject();
     revertMockUpload();
     revertGenerateXml();
@@ -260,8 +257,7 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
       distEndpoint,
       buckets
     });
-  }
-  finally {
+  } finally {
     revertMetaObject();
     revertMockUpload();
   }

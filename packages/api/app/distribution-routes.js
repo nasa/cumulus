@@ -45,8 +45,7 @@ function isPublicRequest(path) {
     const publicBuckets = process.env.public_buckets.split(',');
     const requestedBucket = bucketNameFromPath(path);
     return publicBuckets.includes(requestedBucket);
-  }
-  catch (error) {
+  } catch (error) {
     return false;
   }
 }
@@ -85,8 +84,7 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   let accessTokenRecord;
   try {
     accessTokenRecord = await accessTokenModel.get({ accessToken });
-  }
-  catch (err) {
+  } catch (err) {
     if (err instanceof RecordDoesNotExist) {
       return res.redirect(307, redirectURLForAuthorizationCode);
     }

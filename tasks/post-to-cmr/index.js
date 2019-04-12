@@ -131,8 +131,7 @@ function handler(event, context, callback) {
   cumulusMessageAdapter.runCumulusTask(postToCMR, event, context, (err, data) => {
     if (err) {
       callback(err);
-    }
-    else {
+    } else {
       const additionalMetaFields = {
         post_to_cmr_duration: Date.now() - startTime,
         post_to_cmr_start_time: startTime

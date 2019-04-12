@@ -41,16 +41,14 @@ async function fetchPayload(Bucket, Key) {
   let payloadResponse;
   try {
     payloadResponse = await s3.getObject({ Bucket, Key }).promise();
-  }
-  catch (err) {
+  } catch (err) {
     throw new Error(`Failed to fetch s3://${Bucket}/${Key}: ${err.message}`);
   }
 
   let parsedPayload;
   try {
     parsedPayload = JSON.parse(payloadResponse.Body.toString());
-  }
-  catch (err) {
+  } catch (err) {
     if (err.name !== 'SyntaxError') throw err;
     const newError = new Error(`Unable to parse payload: ${err.message}`);
     newError.name = 'JSONParsingError';
@@ -200,8 +198,7 @@ async function runTask() {
 
     // Download the task (to the /home/task/lambda-function directory)
     await fetchLambdaFunction(lambdaInfo.codeUrl);
-  }
-  catch (err) {
+  } catch (err) {
     logger.error('Failed to fetch lambda function:', err);
     await updateAsyncOperation('RUNNER_FAILED', err);
     return;
@@ -210,13 +207,11 @@ async function runTask() {
   try {
     // Fetch the event that will be passed to the lambda function from S3
     payload = await fetchAndDeletePayload(process.env.payloadUrl);
-  }
-  catch (err) {
+  } catch (err) {
     logger.error('Failed to fetch payload:', err);
     if (err.name === 'JSONParsingError') {
       await updateAsyncOperation('TASK_FAILED', err);
-    }
-    else {
+    } else {
       await updateAsyncOperation('RUNNER_FAILED', err);
     }
 
@@ -230,8 +225,7 @@ async function runTask() {
 
     // Run the lambda function
     result = await task[lambdaInfo.moduleFunctionName](payload);
-  }
-  catch (err) {
+  } catch (err) {
     logger.error('Failed to execute the lambda function:', err);
     await updateAsyncOperation('TASK_FAILED', err);
     return;

@@ -54,8 +54,7 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
       if (this.options.cmKeyId) {
         // we are using AWS KMS and the privateKey is encrypted
         this.options.privateKey = await KMS.decrypt(priv.Body.toString());
-      }
-      else {
+      } else {
         // private key is not encrypted...
         this.options.privateKey = priv.Body.toString();
       }

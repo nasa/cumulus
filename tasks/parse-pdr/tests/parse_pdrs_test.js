@@ -105,13 +105,10 @@ test.serial('parse PDR from FTP endpoint', async (t) => {
     const metFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
     Object.keys(testMetFile).forEach((key) => t.is(testMetFile[key], metFile[key]));
-  }
-
-  catch (err) {
+  } catch (err) {
     if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else t.fail(err);
+    } else t.fail(err);
   }
 });
 
@@ -153,12 +150,10 @@ test.serial('parse PDR from HTTP endpoint', async (t) => {
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
     t.truthy(metFile);
     Object.keys(testMetFile).forEach((key) => t.is(testMetFile[key], metFile[key]));
-  }
-  catch (err) {
+  } catch (err) {
     if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else t.fail(err);
+    } else t.fail(err);
   }
 });
 
@@ -200,12 +195,10 @@ test.serial('parse PDR from SFTP endpoint', async (t) => {
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
     t.truthy(metFile);
     Object.keys(testMetFile).forEach((key) => t.is(testMetFile[key], metFile[key]));
-  }
-  catch (err) {
+  } catch (err) {
     if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else t.fail(err);
+    } else t.fail(err);
   }
 });
 
@@ -249,14 +242,11 @@ test.serial('Parse a PDR from an S3 provider', async (t) => {
     const metFile = granule.files.find((f) =>
       f.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
     Object.keys(testMetFile).forEach((key) => t.is(testMetFile[key], metFile[key]));
-  }
-  catch (err) {
+  } catch (err) {
     if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else t.fail(err);
-  }
-  finally {
+    } else t.fail(err);
+  } finally {
     await recursivelyDeleteS3Bucket(t.context.payload.config.provider.host);
   }
 });
@@ -322,12 +312,10 @@ test.serial('Empty FILE_ID valule in PDR, parse-pdr throws error', async (t) => 
     }).promise();
 
     await t.throws(parsePdr(t.context.payload), "Failed to parse value ('') of FILE_ID", 'Value corresponding to FILE_ID key in the PDR is empty');
-  }
-  catch (err) {
+  } catch (err) {
     if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else t.fail(err);
+    } else t.fail(err);
   }
 });
 
@@ -352,12 +340,10 @@ test.serial('Missing FILE_ID in PDR, parse-pdr throws error', async (t) => {
     }).promise();
 
     await t.throws(parsePdr(t.context.payload), 'FILE_ID', 'FILE_ID Key is not present in the supplied PDR');
-  }
-  catch (err) {
+  } catch (err) {
     if (err instanceof errors.RemoteResourceError || err.code === 'AllAccessDisabled') {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else t.fail(err);
+    } else t.fail(err);
   }
 });
 

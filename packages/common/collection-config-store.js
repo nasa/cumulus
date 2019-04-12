@@ -50,8 +50,7 @@ class CollectionConfigStore {
           Bucket: this.bucket,
           Key: this.configKey(collectionId)
         }).promise();
-      }
-      catch (err) {
+      } catch (err) {
         if (err.code === 'NoSuchKey') {
           throw new Error(`A collection config for data type "${dataType}__${dataVersion}" was not found.`);
         }

@@ -97,8 +97,7 @@ test('validateUMMG calls post with correct metadata version when metadata versio
   try {
     const actual = await validateUMMG(metadata, identifier, provider);
     t.true(actual);
-  }
-  catch (error) {
+  } catch (error) {
     t.fail(error);
   }
   t.true(nock.isDone());
@@ -123,8 +122,7 @@ test('validateUMMG calls post with default version (1.4) when metadata version u
   try {
     const actual = await validateUMMG(metadata, identifier, provider);
     t.true(actual);
-  }
-  catch (error) {
+  } catch (error) {
     t.fail(error);
   }
   t.true(nock.isDone());

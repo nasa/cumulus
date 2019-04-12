@@ -51,14 +51,12 @@ async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'l
       && entryParts[entryParts.length - 1].endsWith('}')) {
         record = JSON.parse(entryParts.slice(2).join('\t'));
         record.RequestId = entryParts[1];
-      }
-      else { // other logs e.g. cumulus-ecs-task
+      } else { // other logs e.g. cumulus-ecs-task
         record = JSON.parse(p.message);
       }
       // level is number in elasticsearch
       if (isString(record.level)) record.level = log.convertLogLevel(record.level);
-    }
-    catch (e) {
+    } catch (e) {
       record = {
         message: p.message.trim(),
         sender: p.sender,
@@ -350,8 +348,7 @@ async function handlePayload(event) {
   if (source === 'aws:sns') {
     payload = get(event, 'Sns.Message');
     payload = JSON.parse(payload);
-  }
-  else {
+  } else {
     payload = event;
   }
 
@@ -359,8 +356,7 @@ async function handlePayload(event) {
   const e = new Execution();
   if (['failed', 'completed'].includes(payload.meta.status)) {
     executionPromise = e.updateExecutionFromSns(payload);
-  }
-  else {
+  } else {
     executionPromise = e.createExecutionFromSns(payload);
   }
 
@@ -389,8 +385,7 @@ function logHandler(event, context, cb) {
       return indexLog(undefined, logs.logEvents)
         .then((s) => cb(null, s))
         .catch(cb);
-    }
-    catch (err) {
+    } catch (err) {
       log.error(e);
       return cb(null);
     }
@@ -413,8 +408,7 @@ function handler(event, context, cb) {
 
   if (records) {
     jobs = records.map(handlePayload);
-  }
-  else {
+  } else {
     jobs.push(handlePayload(event));
   }
 

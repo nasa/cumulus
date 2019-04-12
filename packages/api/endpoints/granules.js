@@ -154,8 +154,7 @@ async function get(req, res) {
   let result;
   try {
     result = await (new models.Granule()).get({ granuleId: req.params.granuleName });
-  }
-  catch (err) {
+  } catch (err) {
     if (err.message.startsWith('No record found')) {
       return res.boom.notFound('Granule not found');
     }

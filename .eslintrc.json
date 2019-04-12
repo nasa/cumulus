@@ -94,7 +94,7 @@
     ],
     "brace-style": [
       2,
-      "stroustrup"
+      "1tbs"
     ],
     "max-len": [
       2,

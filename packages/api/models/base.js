@@ -195,8 +195,7 @@ class Manager {
     try {
       await this.get(Key);
       return true;
-    }
-    catch (err) {
+    } catch (err) {
       if (err instanceof RecordDoesNotExist) return false;
 
       throw err;
@@ -231,8 +230,7 @@ class Manager {
         throw new RecordDoesNotExist();
       }
       return getResponse.Item;
-    }
-    catch (e) {
+    } catch (e) {
       throw new RecordDoesNotExist(
         `No record found for ${JSON.stringify(item)} in ${this.tableName}`
       );
