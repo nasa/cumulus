@@ -105,8 +105,7 @@ class StateMachineS3MessageSource extends MessageSource {
       const taskName = await aws.getCurrentSfnTask(meta.state_machine, meta.execution_name);
       log.debug(`TASK NAME is [${taskName}]`);
       return workflowConfig[taskName];
-    }
-    catch (e) {
+    } catch (e) {
       log.info('Exception in loadConfigTemplate');
       throw e;
     }
@@ -124,8 +123,7 @@ class StateMachineS3MessageSource extends MessageSource {
       const data = await aws.s3().getObject(s3Config).promise();
 
       return JSON.parse(data.Body.toString());
-    }
-    catch (e) {
+    } catch (e) {
       if (e.code !== 'NoSuchKey') {
         throw e;
       }
@@ -141,8 +139,7 @@ class StateMachineS3MessageSource extends MessageSource {
       }
       const payloadJson = await aws.s3().getObject(message.payload).promise();
       return Object.assign({}, message, { payload: JSON.parse(payloadJson.Body) });
-    }
-    catch (e) {
+    } catch (e) {
       log.info('Exception in loadMessageData');
       throw e;
     }
@@ -169,8 +166,7 @@ class StateMachineS3MessageSource extends MessageSource {
       const message = Object.assign({}, this.originalMessage, { payload: data, exception: 'None' });
       callback(null, message);
       returnValue = Promise.resolve(null);
-    }
-    else {
+    } else {
       log.debug('Using S3 payload');
       const scopedKey = [handler.name, this.key, uuid()].join('/');
       const params = {
@@ -256,8 +252,7 @@ class StdinMessageSource extends InlineMessageSource {
     return new Promise((resolve) => {
       if (this.stdinMessages) {
         resolve(this.getMessageScopedJsonImmediate());
-      }
-      else {
+      } else {
         this.callbacks.push(() => {
           resolve(this.getMessageScopedJsonImmediate());
         });

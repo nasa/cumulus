@@ -65,8 +65,7 @@ class Logger {
         actualMessageArgs,
         additionalKeys
       );
-    }
-    else {
+    } else {
       this._writeLogEvent('error', messageArgs);
     }
   }

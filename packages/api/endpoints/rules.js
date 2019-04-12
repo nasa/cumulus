@@ -35,8 +35,7 @@ async function get(req, res) {
     const result = await model.get({ name });
     delete result.password;
     return res.send(result);
-  }
-  catch (e) {
+  } catch (e) {
     if (e instanceof RecordDoesNotExist) {
       return res.boom.notFound('No record found');
     }
@@ -60,8 +59,7 @@ async function post(req, res) {
   try {
     await model.get({ name });
     return res.boom.conflict(`A record already exists for ${name}`);
-  }
-  catch (e) {
+  } catch (e) {
     if (e instanceof RecordDoesNotExist) {
       const r = await model.create(data);
       return res.send({ message: 'Record saved', record: r });
@@ -89,8 +87,7 @@ async function put(req, res) {
   let originalData;
   try {
     originalData = await model.get({ name });
-  }
-  catch (e) {
+  } catch (e) {
     if (e instanceof RecordDoesNotExist) return res.boom.notFound('Record does not exist');
     throw e;
   }
@@ -119,8 +116,7 @@ async function del(req, res) {
   let record;
   try {
     record = await model.get({ name });
-  }
-  catch (e) {
+  } catch (e) {
     if (e instanceof RecordDoesNotExist) {
       return res.boom.notFound('No record found');
     }

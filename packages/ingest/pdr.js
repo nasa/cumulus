@@ -171,8 +171,7 @@ class Parse {
         this.pdr.name,
         pdrLocalPath
       );
-    }
-    finally {
+    } finally {
       // Clean up the temporary download directory
       await fs.remove(downloadDir);
     }
@@ -292,8 +291,7 @@ function selector(type, protocol) {
     default:
       throw new Error(`Protocol ${protocol} is not supported.`);
     }
-  }
-  else if (type === 'parse') {
+  } else if (type === 'parse') {
     switch (protocol) {
     case 'http':
     case 'https':

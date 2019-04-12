@@ -13,8 +13,7 @@ async function getWorkflowList() {
   try {
     const { Body } = await aws.getS3Object(process.env.system_bucket, workflowsListKey);
     return Body.toString();
-  }
-  catch (err) {
+  } catch (err) {
     throw err;
   }
 }
@@ -52,8 +51,7 @@ async function get(req, res) {
     if (matchingWorkflow) return res.send(matchingWorkflow);
 
     return res.boom.notFound('The specified workflow does not exist.');
-  }
-  catch (err) {
+  } catch (err) {
     if (err.name === 'NoSuchKey' || err.name === 'NoSuchBucket') {
       return res.boom.notFound('Workflow does not exist!');
     }

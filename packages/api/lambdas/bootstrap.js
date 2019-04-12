@@ -89,8 +89,7 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
     });
 
     log.info(`index ${index} created with alias ${alias} and mappings added.`);
-  }
-  else {
+  } else {
     log.info(`index ${index} already exists`);
 
     let aliasedIndex = index;
@@ -106,8 +105,7 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
       });
 
       log.info(`Created alias ${alias} for index ${index}`);
-    }
-    else {
+    } else {
       const indices = await esClient.indices.getAlias({ name: alias });
 
       aliasedIndex = Object.keys(indices)[0];
