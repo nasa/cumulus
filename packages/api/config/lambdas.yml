@@ -140,10 +140,10 @@ cleanExecutions:
   source: 'node_modules/@cumulus/api/dist/'
   namedLambdaDeadLetterQueue: true
   envs:
-    nonCompleteExecutionPayloadTimeout: '{{non_complete_execution_payload_timeout}}'
-    completeExecutionPayloadTimeout: '{{complete_execution_payload_timeout}}'
-    nonCompleteExecutionPayloadTimeoutDisable: '{{non_complete_execution_payload_disable}}'
-    completeExecutionPayloadTimeoutDisable: '{{complete_execution_payload_disable}}'
+    nonCompleteExecutionPayloadTimeout: '"{{non_complete_execution_payload_timeout}}"'
+    completeExecutionPayloadTimeout: '"{{complete_execution_payload_timeout}}"'
+    nonCompleteExecutionPayloadTimeoutDisable: '"{{non_complete_execution_payload_disable}}"'
+    completeExecutionPayloadTimeoutDisable: '"{{complete_execution_payload_disable}}"'
     ExecutionsTable:
       function: Ref
       value: ExecutionsTableDynamoDB

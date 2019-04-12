@@ -60,7 +60,7 @@ test('Download remote file to s3 with correct content-type', async (t) => {
   class MyTestFtpDiscoveryClass extends TestFtpMixin(MyTestDiscoveryClass) {}
   const myTestFtpDiscoveryClass = new MyTestFtpDiscoveryClass();
   const bucket = randomString();
-  const key = randomString() + '.hdf';
+  const key = `${randomString()}.hdf`;
   const expectedContentType = 'application/x-hdf';
   try {
     await s3().createBucket({ Bucket: bucket }).promise();
@@ -73,8 +73,7 @@ test('Download remote file to s3 with correct content-type', async (t) => {
 
     const s3HeadResponse = await headObject(bucket, key);
     t.is(expectedContentType, s3HeadResponse.ContentType);
-  }
-  finally {
+  } finally {
     await recursivelyDeleteS3Bucket(bucket);
   }
 });

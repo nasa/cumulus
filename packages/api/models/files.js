@@ -28,7 +28,7 @@ class FileClass extends Manager {
   getBucketAndKey(file) {
     let { bucket, key } = file;
 
-    if (file.source) {
+    if (file.source && file.source.startsWith('s3')) {
       const { Bucket, Key } = parseS3Uri(file.source);
       bucket = bucket || Bucket;
       key = key || Key;
@@ -54,7 +54,8 @@ class FileClass extends Manager {
           bucket,
           key
         };
-      });
+      })
+      .filter((file) => file.bucket && file.key);
 
     const chunked = chunk(fileRecords, 25);
     return Promise.all(chunked.map((c) => this.batchWrite(null, c)));

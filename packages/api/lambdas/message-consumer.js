@@ -180,16 +180,14 @@ function processRecord(record, fromSNS) {
     eventObject = parsed;
     originalMessageSource = 'sns';
     ruleParam = record.Sns.TopicArn;
-  }
-  else {
+  } else {
     // kinesis notification -  sns fallback or direct
     let dataBlob;
     if (fromSNS) {
       // Kinesis fallback SNS notification
       isKinesisRetry = true;
       dataBlob = parsed.kinesis.data;
-    }
-    else {
+    } else {
       dataBlob = record.kinesis.data;
     }
     try {
@@ -198,8 +196,7 @@ function processRecord(record, fromSNS) {
       const dataString = Buffer.from(dataBlob, 'base64').toString();
       eventObject = JSON.parse(dataString);
       ruleParam = eventObject.collection;
-    }
-    catch (err) {
+    } catch (err) {
       log.error('Caught error parsing JSON:');
       log.error(err);
       if (fromSNS) {

@@ -1,6 +1,6 @@
 'use strict';
 
-const { S3, Credentials } = require('aws-sdk');
+const { S3 } = require('aws-sdk');
 
 
 /**
@@ -15,8 +15,7 @@ async function testGet(s3, params) {
   try {
     const result = await s3.getObject(params).promise();
     return result.Body !== null;
-  }
-  catch (error) {
+  } catch (error) {
     return false;
   }
 }
@@ -34,8 +33,7 @@ async function testWrite(s3, params) {
   try {
     await s3.putObject(callParams).promise();
     return true;
-  }
-  catch (error) {
+  } catch (error) {
     return false;
   }
 }
@@ -55,8 +53,7 @@ async function testList(s3, params) {
   try {
     await s3.listObjectsV2(callParams).promise();
     return true;
-  }
-  catch (error) {
+  } catch (error) {
     return false;
   }
 }
@@ -74,8 +71,21 @@ async function testList(s3, params) {
  * @returns {undefined} - does not return a value
  */
 async function handler(event) {
-  const { credentials, testName, ...params } = event;
-  const s3 = new S3({ credentials: new Credentials(credentials) });
+  const {
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+      sessionToken
+    },
+    testName,
+    ...params
+  } = event;
+
+  const s3 = new S3({
+    accessKeyId,
+    secretAccessKey,
+    sessionToken
+  });
 
   const testChoices = {
     'get-object': testGet,

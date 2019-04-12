@@ -20,8 +20,7 @@ async function bucketsConfigJsonObject(
       Key
     }).promise();
     return JSON.parse(bucketsString.Body);
-  }
-  catch (error) {
+  } catch (error) {
     error.message = `Unable to read bucketsConfiguration from ${bucket}/${Key}: ${error.message}`;
     throw error;
   }

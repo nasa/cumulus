@@ -9,7 +9,7 @@ const { BucketsConfig } = require('@cumulus/common');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
   distributionApi: {
-    invokeApiDistributionLambda
+    getDistributionApiRedirect
   },
   EarthdataLogin: { getEarthdataAccessToken }
 } = require('@cumulus/integration-tests');
@@ -20,8 +20,8 @@ const {
   createTimestampedTestId,
   uploadTestDataToBucket,
   deleteFolder
-} = require('../helpers/testUtils');
-const { setDistributionApiEnvVars } = require('../helpers/apiUtils');
+} = require('../../helpers/testUtils');
+const { setDistributionApiEnvVars } = require('../../helpers/apiUtils');
 
 const config = loadConfig();
 
@@ -31,16 +31,6 @@ const privateBucketName = bucketsConfig.privateBuckets()[0].name;
 const publicBucketName = bucketsConfig.publicBuckets()[0].name;
 process.env.stackName = config.stackName;
 const s3Data = ['@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met'];
-
-/**
- * Invoke the ApiDistributionLambda and return the headers location
- * @param {filepath} filepath - request.path parameter
- * @param {string} accessToken - authenticiation cookie (can be undefined).
- */
-async function getDistributionApiRedirect(filepath, accessToken) {
-  const payload = await invokeApiDistributionLambda(filepath, accessToken);
-  return payload.headers.location;
-}
 
 /**
  * Login with Earthdata and get response for redirect back to
@@ -147,8 +137,7 @@ describe('Distribution API', () => {
         try {
           await got(signedUrl);
           fail('Expected an error to be thrown');
-        }
-        catch (error) {
+        } catch (error) {
           expect(error.statusCode).toEqual(403);
           expect(error.message).toMatch(/Forbidden/);
         }

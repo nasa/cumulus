@@ -54,11 +54,9 @@ function getUrl(type, cmrProvider, cmrEnvironment, cmrHost) {
   case 'token':
     if (cmrEnvironment === 'OPS') {
       url = 'https://api.echo.nasa.gov/echo-rest/tokens/';
-    }
-    else if (cmrEnvironment === 'SIT') {
+    } else if (cmrEnvironment === 'SIT') {
       url = 'https://testbed.echo.nasa.gov/echo-rest/tokens/';
-    }
-    else {
+    } else {
       url = 'https://api-test.echo.nasa.gov/echo-rest/tokens/';
     }
     break;

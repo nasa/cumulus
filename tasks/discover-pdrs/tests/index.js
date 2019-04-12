@@ -43,14 +43,11 @@ test('test pdr discovery with FTP assuming all PDRs are new', async (t) => {
 
     await validateOutput(t, output);
     t.is(output.pdrs.length, 5);
-  }
-  catch (err) {
+  } catch (err) {
     if (err instanceof RemoteResourceError) {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else t.fail(err);
-  }
-  finally {
+    } else t.fail(err);
+  } finally {
     await recursivelyDeleteS3Bucket(event.config.bucket);
   }
 });
@@ -75,8 +72,7 @@ test('test pdr discovery with FTP invalid user/pass', async (t) => {
     .catch((e) => {
       if (e instanceof RemoteResourceError) {
         t.pass('ignoring this test. Test server seems to be down');
-      }
-      else {
+      } else {
         t.true(e instanceof FTPError);
         t.true(e.message.includes('Login incorrect'));
       }
@@ -195,15 +191,12 @@ test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
       t.is(output.pdrs.length, 4);
       const names = output.pdrs.map((p) => p.name);
       newPdrs.forEach((pdr) => t.true(names.includes(pdr)));
-    }
-    catch (e) {
+    } catch (e) {
       if (e instanceof RemoteResourceError) {
         t.pass('Ignoring this test. Test server seems to be down');
-      }
-      else t.fail(e);
+      } else t.fail(e);
     }
-  }
-  finally {
+  } finally {
     // Clean up
     await recursivelyDeleteS3Bucket(internalBucketName);
   }
@@ -257,15 +250,12 @@ test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
       t.is(output.pdrs.length, 4);
       const names = output.pdrs.map((p) => p.name);
       newPdrs.forEach((pdr) => t.true(names.includes(pdr)));
-    }
-    catch (e) {
+    } catch (e) {
       if (e instanceof RemoteResourceError) {
         t.pass('Ignoring this test. Test server seems to be down');
-      }
-      else t.fail(e);
+      } else t.fail(e);
     }
-  }
-  finally {
+  } finally {
     // Clean up
     await recursivelyDeleteS3Bucket(internalBucketName);
   }
