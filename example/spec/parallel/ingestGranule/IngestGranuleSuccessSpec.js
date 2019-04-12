@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs-extra');
-const got = require('got');
 const path = require('path');
 const { URL, resolve } = require('url');
 const cloneDeep = require('lodash.clonedeep');
@@ -14,7 +13,6 @@ const {
     AccessToken, Execution, Granule, Collection, Provider
   }
 } = require('@cumulus/api');
-const { serveDistributionApi } = require('@cumulus/api/bin/serve');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
   aws: {
@@ -25,7 +23,6 @@ const {
     s3GetObjectTagging,
     s3ObjectExists
   },
-  BucketsConfig,
   constructCollectionId
 } = require('@cumulus/common');
 const { getUrl } = require('@cumulus/cmrjs');
@@ -43,7 +40,7 @@ const {
   waitForCompletedExecution,
   EarthdataLogin: { getEarthdataAccessToken },
   distributionApi: {
-    getDistributionApiS3SignedUrl,
+    getDistributionApiRedirect,
     getDistributionApiFileStream,
     getDistributionFileUrl
   }
@@ -58,12 +55,10 @@ const {
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
-  getFilesMetadata,
-  getPublicS3FileUrl
+  getFilesMetadata
 } = require('../../helpers/testUtils');
 const {
-  setDistributionApiEnvVars,
-  stopDistributionApi
+  setDistributionApiEnvVars
 } = require('../../helpers/apiUtils');
 const {
   setupTestGranuleForIngest,
@@ -122,7 +117,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let expectedPayload;
   let expectedS3TagSet;
   let postToCmrOutput;
-  let server;
 
   process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
   const accessTokensModel = new AccessToken();
@@ -136,7 +130,7 @@ describe('The S3 Ingest Granules workflow', () => {
   const providerModel = new Provider();
   let executionName;
 
-  beforeAll(async (done) => {
+  beforeAll(async () => {
     const collectionJson = JSON.parse(fs.readFileSync(`${collectionsDir}/s3_MOD09GQ_006.json`, 'utf8'));
     collectionJson.duplicateHandling = 'error';
     const collectionData = Object.assign({}, collectionJson, {
@@ -197,30 +191,21 @@ describe('The S3 Ingest Granules workflow', () => {
     );
     failedExecutionArn = failingWorkflowExecution.executionArn.split(':');
     failedExecutionName = failedExecutionArn.pop();
-
-    // Use done() to signal end of beforeAll() after distribution API has started up
-    server = await serveDistributionApi(config.stackName, done);
   });
 
-  afterAll(async (done) => {
-    try {
-      // clean up stack state added by test
-      await Promise.all([
-        deleteFolder(config.bucket, testDataFolder),
-        collectionModel.delete(collection),
-        providerModel.delete(provider),
-        executionModel.delete({ arn: workflowExecution.executionArn }),
-        executionModel.delete({ arn: failingWorkflowExecution.executionArn }),
-        granulesApiTestUtils.removePublishedGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId
-        })
-      ]);
-      stopDistributionApi(server, done);
-    }
-    catch (err) {
-      stopDistributionApi(server, done);
-    }
+  afterAll(async () => {
+    // clean up stack state added by test
+    await Promise.all([
+      deleteFolder(config.bucket, testDataFolder),
+      collectionModel.delete(collection),
+      providerModel.delete(provider),
+      executionModel.delete({ arn: workflowExecution.executionArn }),
+      executionModel.delete({ arn: failingWorkflowExecution.executionArn }),
+      granulesApiTestUtils.removePublishedGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      })
+    ]);
   });
 
   it('completes execution with success status', () => {
@@ -328,7 +313,6 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   describe('the PostToCmr task', () => {
-    let bucketsConfig;
     let cmrResource;
     let ummCmrResource;
     let files;
@@ -337,7 +321,6 @@ describe('The S3 Ingest Granules workflow', () => {
     let accessToken;
 
     beforeAll(async () => {
-      bucketsConfig = new BucketsConfig(config.buckets);
       postToCmrOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
       if (postToCmrOutput === null) throw new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
       granule = postToCmrOutput.payload.granules[0];
@@ -383,17 +366,14 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('updates the CMR metadata online resources with the final metadata location', () => {
-      const distributionUrl = getDistributionFileUrl({
-        bucket: files[0].bucket,
-        key: files[0].filepath
-      });
-      const s3BrowseImageUrl = getPublicS3FileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+      const scienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath });
+      const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
       const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
 
       console.log('parallel resourceURLs: ', resourceURLs);
       console.log('s3CredsUrl: ', s3CredsUrl);
 
-      expect(resourceURLs.includes(distributionUrl)).toBe(true);
+      expect(resourceURLs.includes(scienceFileUrl)).toBe(true);
       expect(resourceURLs.includes(s3BrowseImageUrl)).toBe(true);
       expect(resourceURLs.includes(s3CredsUrl)).toBe(true);
     });
@@ -404,7 +384,7 @@ describe('The S3 Ingest Granules workflow', () => {
         bucket: files[0].bucket,
         key: files[0].filepath
       });
-      const s3BrowseImageUrl = getPublicS3FileUrl({ bucket: files[2].bucket, key: files[2].filepath });
+      const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
       const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
       const expectedTypes = [
         'GET DATA',
@@ -421,11 +401,8 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('includes the Earthdata login ID for requests to protected science files', async () => {
-      const distributionUrl = getDistributionFileUrl({
-        bucket: files[0].bucket,
-        key: files[0].filepath
-      });
-      const s3SignedUrl = await getDistributionApiS3SignedUrl(distributionUrl, accessToken);
+      const filepath = `/${files[0].bucket}/${files[0].filepath}`;
+      const s3SignedUrl = await getDistributionApiRedirect(filepath, accessToken);
       const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('x-EarthdataLoginUsername');
       expect(earthdataLoginParam).toEqual(process.env.EARTHDATA_USERNAME);
     });
@@ -449,19 +426,8 @@ describe('The S3 Ingest Granules workflow', () => {
             );
             const file = files.find((f) => f.name.endsWith(extension));
 
-            let fileStream;
-
-            if (bucketsConfig.type(file.bucket) === 'protected') {
-              const fileUrl = getDistributionFileUrl({
-                bucket: file.bucket,
-                key: file.filepath
-              });
-              fileStream = await getDistributionApiFileStream(fileUrl, accessToken);
-            }
-            else if (bucketsConfig.type(file.bucket) === 'public') {
-              fileStream = got.stream(url);
-            }
-
+            const filepath = `/${file.bucket}/${file.filepath}`;
+            const fileStream = await getDistributionApiFileStream(filepath, accessToken);
             // Compare checksum of downloaded file with expected checksum.
             const downloadChecksum = await generateChecksumFromStream('cksum', fileStream);
             return downloadChecksum === sourceChecksum;
