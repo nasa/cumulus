@@ -74,8 +74,7 @@ test('downloadS3File rejects promise if key not found', async (t) => {
 
   try {
     await aws.downloadS3File({ Bucket, Key: 'not-gonna-find-it' }, '/tmp/wut');
-  }
-  catch (err) {
+  } catch (err) {
     t.is(err.message, 'The specified key does not exist.');
   }
 });
@@ -145,8 +144,7 @@ test.serial('pullStepFunctionEvent returns message from S3', async (t) => {
     const message = await aws.pullStepFunctionEvent(event);
 
     t.deepEqual(message, fullMessage);
-  }
-  finally {
+  } finally {
     stub.restore();
   }
 });
@@ -172,8 +170,7 @@ test('better stack traces', async (t) => {
   try {
     console.log(await h());
     t.fail('Expected an exception');
-  }
-  catch (err) {
+  } catch (err) {
     t.true(err.stack.includes(path.basename(__filename)));
   }
 });
@@ -247,8 +244,7 @@ test('getFileBucketAndKey throws UnparsableFileLocationError if location cannot 
 
   try {
     aws.getFileBucketAndKey(pathParams);
-  }
-  catch (err) {
+  } catch (err) {
     t.true((err instanceof UnparsableFileLocationError));
   }
 });

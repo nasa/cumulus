@@ -41,8 +41,7 @@ async function shouldCatchPolicyError() {
   try {
     await lambda().getPolicy({ FunctionName: consumerName }).promise();
     return undefined;
-  }
-  catch (e) {
+  } catch (e) {
     return e.message;
   }
 }

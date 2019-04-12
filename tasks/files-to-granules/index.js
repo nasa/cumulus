@@ -51,8 +51,7 @@ function mergeInputFilesWithInputGranules(inputFiles, inputGranules, regex) {
         const fileGranuleId = getGranuleId(f, regex);
         try {
           granulesHash[fileGranuleId].files.push(fileObjectFromS3URI(f));
-        }
-        catch (e) {
+        } catch (e) {
           throw new Error(`Failed adding ${f} to ${fileGranuleId}'s files`);
         }
       }

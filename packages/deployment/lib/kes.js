@@ -83,8 +83,7 @@ class UpdatedKes extends Kes {
         const apigateway = new this.AWS.APIGateway();
         await apigateway.createDeployment({ restApiId, stageName }).promise();
         console.log(`${name} endpoints with the id ${restApiId} redeployed.`);
-      }
-      catch (e) {
+      } catch (e) {
         if (e.message && e.message.includes('Too Many Requests')) {
           console.log(
             `Redeploying ${restApiId} was throttled. `
@@ -143,8 +142,7 @@ class UpdatedKes extends Kes {
             console.log(`ECS task ${task} restarted`);
           }
         }
-      }
-      catch (err) {
+      } catch (err) {
         console.log(err);
       }
     }
@@ -343,8 +341,7 @@ class UpdatedKes extends Kes {
     // lhe lambda zips
     if (this.config.lambdaProcess) {
       this.config = await lambda.process();
-    }
-    else {
+    } else {
       lambda.buildAllLambdaConfiguration('lambdas');
     }
 
@@ -378,16 +375,14 @@ class UpdatedKes extends Kes {
 
         // merge the the two
         cf = utils.mergeYamls(mainCF, overrideCF);
-      }
-      catch (e) {
+      } catch (e) {
         if (!e.message.includes('ENOENT')) {
           console.log(`compiling the override template at ${this.config.cfFile} failed:`);
           throw e;
         }
         cf = mainCF;
       }
-    }
-    else {
+    } else {
       cf = this.parseCF(this.config.cfFile);
     }
     const destPath = path.join(this.config.kesFolder, this.cf_template_name);
@@ -429,8 +424,7 @@ class UpdatedKes extends Kes {
     let aliasPage;
     try {
       aliasPage = await lambda.listAliases(lambdaConfig).promise();
-    }
-    catch (err) {
+    } catch (err) {
       if (err.statusCode === 404) {
         return [];
       }
@@ -610,8 +604,7 @@ class UpdatedKes extends Kes {
 
     if (matchArray) {
       lambdaKey = matchArray[1];
-    }
-    else {
+    } else {
       console.log(`Invalid workflow configuration, ${stateObjectResource} `
                   + 'is not a valid Lambda ARN');
       throw new Error(`Invalid stateObjectResource: ${stateObjectResource}`);

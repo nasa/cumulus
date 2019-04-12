@@ -71,8 +71,7 @@ function urlPathTemplate(pathTemplate, context) {
     // match: The matched substring, submatch: The parenthesized submatch string
     return pathTemplate.replace(templateRegex, (match, submatch) =>
       templateReplacer(context, submatch));
-  }
-  catch (e) {
+  } catch (e) {
     throw new Error(
       `Could not resolve path template "${pathTemplate}" with error "${e.toString()}"`
     );

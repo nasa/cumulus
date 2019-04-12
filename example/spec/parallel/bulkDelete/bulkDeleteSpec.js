@@ -99,8 +99,7 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
     let output;
     try {
       output = JSON.parse(getAsyncOperationBody.output);
-    }
-    catch (err) {
+    } catch (err) {
       throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
     }
 
@@ -200,8 +199,7 @@ describe('POST /bulkDelete with a failed bulk delete operation', () => {
     let output;
     try {
       output = JSON.parse(getAsyncOperationBody.output);
-    }
-    catch (err) {
+    } catch (err) {
       throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
     }
 

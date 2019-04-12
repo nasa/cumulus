@@ -45,8 +45,7 @@ function removeTaskFromWorkflow(workflowName, taskName, workflowConfigFile) {
     if (workflowConfig.States[task].Next === taskName) {
       if (index < tasks.length - 1) {
         workflowConfig.States[task].Next = tasks[index + 1];
-      }
-      else {
+      } else {
         delete workflowConfig.States[task].Next;
       }
     }

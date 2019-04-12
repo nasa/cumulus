@@ -40,7 +40,7 @@ default:
 # ------------------------
 # CUMULUS team deployments
 # ------------------------
-CUMULUS-from-npm:
+cumulus-from-npm:
   prefix: test-npm-integration
 
 cumulus-from-source:

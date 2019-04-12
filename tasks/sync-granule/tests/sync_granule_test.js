@@ -137,8 +137,7 @@ test.serial('error when provider info is missing', async (t) => {
   try {
     await syncGranule(t.context.event);
     t.fail();
-  }
-  catch (error) {
+  } catch (error) {
     t.true(error instanceof errors.ProviderNotFound);
   }
 });
@@ -189,12 +188,10 @@ test.serial('download Granule from FTP endpoint', async (t) => {
       `s3://${t.context.internalBucketName}/${keypath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`
     );
     t.truthy(output.granules[0].files[0].url_path);
-  }
-  catch (e) {
+  } catch (e) {
     if (e instanceof errors.RemoteResourceError) {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else throw e;
+    } else throw e;
   }
 });
 
@@ -226,12 +223,10 @@ test.serial('download Granule from HTTP endpoint', async (t) => {
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
     );
-  }
-  catch (e) {
+  } catch (e) {
     if (e instanceof errors.RemoteResourceError) {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else throw e;
+    } else throw e;
   }
 });
 
@@ -272,12 +267,10 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
         Key: `${keypath}/${granuleFilename}`
       })
     );
-  }
-  catch (e) {
+  } catch (e) {
     if (e instanceof errors.RemoteResourceError) {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else throw e;
+    } else throw e;
   }
 });
 
@@ -334,8 +327,7 @@ test.serial('download granule from S3 provider', async (t) => {
     );
     const actualTags = await s3GetObjectTagging(t.context.internalBucketName, `${keypath}/${granuleFileName}`);
     t.deepEqual(TagSet, actualTags.TagSet);
-  }
-  finally {
+  } finally {
     // Clean up
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
@@ -393,12 +385,10 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
         Key: `${keypath}/${granuleFilename}`
       })
     );
-  }
-  catch (e) {
+  } catch (e) {
     if (e instanceof errors.RemoteResourceError) {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else throw e;
+    } else throw e;
   }
 });
 
@@ -462,12 +452,10 @@ test.serial('validate file properties', async (t) => {
     );
     t.is(output.granules[0].files[0].url_path, 'file-example/');
     t.is(output.granules[0].files[1].url_path, 'collection-example/');
-  }
-  catch (e) {
+  } catch (e) {
     if (e instanceof errors.RemoteResourceError) {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else throw e;
+    } else throw e;
   }
 });
 
@@ -492,8 +480,7 @@ test.serial('attempt to download file from non-existent path - throw error', asy
 
   try {
     await t.throws(syncGranule(t.context.event), null, 'Source file not found');
-  }
-  finally {
+  } finally {
     // Clean up
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
@@ -509,8 +496,7 @@ async function duplicateHandlingErrorTest(t) {
 
     await syncGranule(t.context.event);
     t.fail();
-  }
-  catch (err) {
+  } catch (err) {
     const collection = t.context.event.config.collection;
     const collectionId = constructCollectionId(collection.name, collection.version);
     const granuleFileKey = path.join(
@@ -524,8 +510,7 @@ async function duplicateHandlingErrorTest(t) {
       err.message,
       `${granuleFileKey} already exists in ${t.context.event.config.downloadBucket} bucket`
     );
-  }
-  finally {
+  } finally {
     // Clean up
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
@@ -664,8 +649,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     filesRenamed = output.granules[0].files
       .filter((f) => path.basename(parseS3Uri(f.filename).Key).startsWith(`${granuleFileName}.v`));
     t.is(filesRenamed.length, 2);
-  }
-  finally {
+  } finally {
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
 });
@@ -716,8 +700,7 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
       parseS3Uri(currentFile).Bucket, parseS3Uri(currentFile).Key
     );
     t.deepEqual(existingFileInfo, currentFileInfo);
-  }
-  finally {
+  } finally {
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
 });
@@ -772,8 +755,7 @@ async function granuleFilesOverwrittenTest(t) {
     t.true(currentFileInfo.LastModified > existingFileInfo.LastModified);
 
     t.true(output.granules[0].files[0].duplicate_found);
-  }
-  finally {
+  } finally {
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
 }
@@ -839,8 +821,7 @@ test.serial('download multiple granules from S3 provider to staging directory', 
         }).then((outcome) => t.is(outcome, true));
       }
     }
-  }
-  finally {
+  } finally {
     // Clean up
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }

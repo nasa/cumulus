@@ -85,8 +85,7 @@ class UpdatedLambda extends Lambda {
       try {
         await (util.promisify(yauzl.open))(lambda.local); // Verify yauzl can open the .zip file
         return Promise.resolve(lambda);
-      }
-      catch (e) {
+      } catch (e) {
         console.log(`${lambda.local} is invalid and will be rebuilt`);
       }
     }
@@ -103,8 +102,7 @@ class UpdatedLambda extends Lambda {
 
     try {
       await utils.zip(lambda.local, fileList);
-    }
-    catch (e) {
+    } catch (e) {
       console.log(`Error zipping ${e}`);
       throw e;
     }
@@ -120,8 +118,7 @@ class UpdatedLambda extends Lambda {
       if (fs.existsSync(JsonFilePath)) {
         packageJson = fs.readFileSync(`${JsonFilePath}`);
       }
-    }
-    catch (e) {
+    } catch (e) {
       console.log(`Error reading package.json from ${JsonFilePath}`);
       throw (e);
     }
@@ -155,8 +152,7 @@ class UpdatedLambda extends Lambda {
       }
       lambda.hash = uniqueIdentifier;
       lambda.humanReadableIdentifier = uniqueIdentifier;
-    }
-    else {
+    } else {
       const lambdaVersion = this.getLambdaVersionFromPackageFile(lambda.source);
       lambda.humanReadableIdentifier = lambdaVersion || lambda.hash;
     }

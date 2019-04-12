@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/discover-pdrs",
-  "version": "1.12.0",
+  "version": "1.12.1",
   "description": "Discover PDRs in FTP and HTTP endpoints",
   "main": "index.js",
   "directories": {
@@ -36,13 +36,13 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "1.12.0",
+    "@cumulus/common": "1.12.1",
     "@cumulus/cumulus-message-adapter-js": "^1.0.7",
-    "@cumulus/ingest": "1.12.0",
+    "@cumulus/ingest": "1.12.1",
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {
-    "@cumulus/test-data": "1.12.0",
+    "@cumulus/test-data": "1.12.1",
     "ava": "^0.25.0",
     "fs-extra": "^5.0.0",
     "lodash.clonedeep": "^4.5.0",

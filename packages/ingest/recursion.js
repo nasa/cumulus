@@ -50,9 +50,8 @@ async function recursion(fn, originalPath, currentPath = null, position = 0) {
       // decide whether to do more recursion
       if (isRegex) {
         regexPath = new RegExp(rules[position + 1]);
-      }
-      // if it is just a path, we use that segment and its children
-      else {
+      } else {
+        // if it is just a path, we use that segment and its children
         textPath = rules[position + 1];
       }
 
@@ -60,13 +59,11 @@ async function recursion(fn, originalPath, currentPath = null, position = 0) {
       //  list
       if (isRegex && item.name.match(regexPath)) {
         newPath = join(path, item.name);
-      }
-      // if it is a regular path, use the path
-      else if (textPath) {
+      } else if (textPath) {
+        // if it is a regular path, use the path
         newPath = join(path, textPath);
-      }
-      // and ignore all cases that does't match this rule
-      else {
+      } else {
+        // and ignore all cases that does't match this rule
         continue; // eslint-disable-line no-continue
       }
 
@@ -75,9 +72,8 @@ async function recursion(fn, originalPath, currentPath = null, position = 0) {
       files = files.concat(tmp);
 
       if (textPath) break;
-    }
-    // add file to the list
-    else if (item.type === '-' || item.type === 0) {
+    } else if (item.type === '-' || item.type === 0) {
+      // add file to the list
       files = files.concat(item);
     }
   }
