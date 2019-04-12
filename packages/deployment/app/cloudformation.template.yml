@@ -947,10 +947,11 @@ Resources:
               cat <<'EOF' >> /etc/cron.d/task-reaper
               PATH=/bin:/usr/local/bin
               AWS_DEFAULT_REGION=${AWS::Region}
+              LIFECYCLE_HOOK_NAME={{stackName}}-ecs-termination-hook
               * * * * * root /usr/local/bin/task-reaper.sh >> /var/log/task-reaper.log 2>&1
               EOF
 
-            --==BOUNDARY==--
+              --==BOUNDARY==--
             {{# if ecs.efs.mount }}
             - EFSFileSystemId:
                 Fn::ImportValue: "{{stackName}}-EFSFileSystemId"
@@ -993,6 +994,7 @@ Resources:
   CumulusECSAutoScalingLifeCycleHook:
     Type: AWS::AutoScaling::LifecycleHook
     Properties:
+      LifecycleHookName: {{stackName}}-ecs-termination-hook
       AutoScalingGroupName: !Ref CumulusECSAutoScalingGroup
       DefaultResult: CONTINUE
       HeartbeatTimeout: 150
