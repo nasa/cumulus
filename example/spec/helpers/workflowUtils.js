@@ -3,7 +3,7 @@
 const get = require('lodash.get');
 const unset = require('lodash.unset');
 
-const { loadYmlFile, saveYmlConfigFile } = require('./configUtils.js');
+const { loadYmlConfigFile, saveYmlConfigFile } = require('./configUtils.js');
 
 
 /**
@@ -14,7 +14,7 @@ const { loadYmlFile, saveYmlConfigFile } = require('./configUtils.js');
  * @returns {undefined} none
  */
 function removeWorkflow(workflowName, workflowConfigFile) {
-  const config = loadYmlFile(workflowConfigFile);
+  const config = loadYmlConfigFile(workflowConfigFile);
 
   delete config[workflowName];
 
@@ -32,7 +32,7 @@ function removeWorkflow(workflowName, workflowConfigFile) {
  * @returns {undefined} none
  */
 function removeTaskFromWorkflow(workflowName, taskName, workflowConfigFile) {
-  const config = loadYmlFile(workflowConfigFile);
+  const config = loadYmlConfigFile(workflowConfigFile);
 
   unset(config, `${workflowName}.States.${taskName}`);
 
