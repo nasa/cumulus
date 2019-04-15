@@ -82,8 +82,7 @@ async function checkExecution(arn, url, timestamp, esClient) {
 
   try {
     output = JSON.parse(output);
-  }
-  catch (e) {
+  } catch (e) {
     output = input;
   }
 
@@ -109,8 +108,7 @@ async function checkExecution(arn, url, timestamp, esClient) {
       await partialRecordUpdate(esClient, arn, 'execution', { status: 'failed', error });
       await updateGranulesAndPdrs(esClient, url, error);
     }
-  }
-  else {
+  } else {
     if (output.error) {
       input.exception = output.error;
       input.meta.status = 'failed';
@@ -122,8 +120,7 @@ async function checkExecution(arn, url, timestamp, esClient) {
       output.meta = {
         status: r.status
       };
-    }
-    else {
+    } else {
       output.meta.status = r.status;
     }
 

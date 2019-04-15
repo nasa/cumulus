@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api",
-  "version": "1.11.3",
+  "version": "1.12.1",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
@@ -17,7 +17,11 @@
     "serve": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve",
     "serve-oauth": "LOCALSTACK_HOST=localhost NODE_ENV=test cumulus-api serve",
     "serve-remote": "cumulus-api serve",
-    "prepare": "npm run build"
+    "serve-dist": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve-dist",
+    "serve-dist-oauth": "LOCALSTACK_HOST=localhost NODE_ENV=test cumulus-api serve-dist",
+    "serve-dist-remote": "cumulus-api serve-dist",
+    "link-api-bin": "sh ./bin/link-api-bin.sh",
+    "prepare": "npm run build && npm run link-api-bin"
   },
   "ava": {
     "files": [
@@ -40,11 +44,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmrjs": "1.11.2",
-    "@cumulus/common": "1.11.3",
-    "@cumulus/ingest": "1.11.3",
+    "@cumulus/cmrjs": "1.12.1",
+    "@cumulus/common": "1.12.1",
+    "@cumulus/ingest": "1.12.1",
     "@cumulus/logger": "1.11.0",
-    "@cumulus/pvl": "1.11.2",
+    "@cumulus/pvl": "1.12.1",
     "@mapbox/dyno": "^1.4.2",
     "ajv": "^5.2.2",
     "archiver": "^2.1.1",

@@ -37,8 +37,7 @@ async function get(req, res) {
   let result;
   try {
     result = await providerModel.get({ id });
-  }
-  catch (error) {
+  } catch (error) {
     if (error instanceof RecordDoesNotExist) return res.boom.notFound('Provider not found.');
   }
   delete result.password;
@@ -62,8 +61,7 @@ async function post(req, res) {
     // make sure the record doesn't exist
     await providerModel.get({ id });
     return res.boom.badReqest(`A record already exists for ${id}`);
-  }
-  catch (e) {
+  } catch (e) {
     if (e instanceof RecordDoesNotExist) {
       const record = await providerModel.create(data);
       return res.send({ record, message: 'Record saved' });
@@ -90,8 +88,7 @@ async function put(req, res) {
     await providerModel.get({ id });
     const record = await providerModel.update({ id }, data);
     return res.send(record);
-  }
-  catch (err) {
+  } catch (err) {
     if (err instanceof RecordDoesNotExist) return res.boom.notFound('Record does not exist');
     throw err;
   }
@@ -110,8 +107,7 @@ async function del(req, res) {
   try {
     await providerModel.delete({ id: req.params.id });
     return res.send({ message: 'Record deleted' });
-  }
-  catch (err) {
+  } catch (err) {
     if (err instanceof AssociatedRulesError) {
       const message = `Cannot delete provider with associated rules: ${err.rules.join(', ')}`;
       return res.boom.conflict(message);

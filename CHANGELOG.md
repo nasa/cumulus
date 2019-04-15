@@ -8,6 +8,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### BREAKING CHANGES
 
+- **CUMULUS-1212**
+  - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
+
+## Changed
+
+- **CUMULUS-1236**
+  - Moves access to public files behind the distribution endpoint.  Authentication is not required, but direct http access has been disallowed.
+
+- **CUMULUS-1223**
+  - Adds unauthenticated access for public bucket files to the Distribution API.  Public files should be requested the same way as protected files, but for public files a redirect to a self-signed S3 URL will happen without requiring authentication with Earthdata login.
+
+## [v1.12.1] - 2019-4-8
+
+## [v1.12.0] - 2019-4-4
+
+Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
+
+### BREAKING CHANGES
+
 - **CUMULUS-1139**
   - `granule.applyWorkflow`  uses the new-style granule record as input to workflows.
 
@@ -28,11 +47,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-670**
   - The behavior of ParsePDR and related code has changed in this release.  PDRs with FILE_TYPEs that do not conform to the PDR ICD (+ TGZ) (https://cdn.earthdata.nasa.gov/conduit/upload/6376/ESDS-RFC-030v1.0.pdf) will fail to parse.
 
-### PLEASE NOTE
-
-- As a result of **CUMULUS-1208**, the granule object input to `@cumulus/queue-granules` will be added to ingest workflow messages **as is**. In practice, this means that if you are using `@cumulus/queue-granules` to trigger ingest workflows and your granule objects input have invalid properties, then your ingest workflows will fail due to schema validation errors.
+- **CUMULUS-1208**
+  - The granule object input to `@cumulus/queue-granules` will now be added to ingest workflow messages **as is**. In practice, this means that if you are using `@cumulus/queue-granules` to trigger ingest workflows and your granule objects input have invalid properties, then your ingest workflows will fail due to schema validation errors.
 
 ### Added
+
+- **CUMULUS-777**
+  - Added new cookbook entry on configuring Cumulus to track ancillary files.
+- **CUMULUS-1183**
+  - Kes overrides will now abort with a warning if a workflow step is configured without a corresponding
+    lambda configuration
+- **CUMULUS-1223**
+  - Adds convenience function `@cumulus/common/bucketsConfigJsonObject` for fetching stack's bucket configuration as an object.
 
 - **CUMULUS-853**
   - Updated FakeProcessing example lambda to include option to generate fake browse
@@ -40,6 +66,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-805**
   - Added a CloudWatch alarm to check running ElasticSearch instances, and a CloudWatch dashboard to view the health of ElasticSearch
   - Specify `AWS_REGION` in `.env` to be used by deployment script
+- **CUMULUS-803**
+  - Added CloudWatch alarms to check running tasks of each ECS service, and add the alarms to CloudWatch dashboard
 - **CUMULUS-670**
   - Added Ancillary Metadata Export feature (see https://nasa.github.io/cumulus/docs/features/ancillary_metadata for more information)
   - Added new Collection file parameter "fileType" that allows configuration of workflow granule file fileType
@@ -84,7 +112,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- **CUMULUS-1216** - Updated `@cumulus/ingest/granule/ingestFile` to download files to expected staging location.
 - **CUMULUS-1208** - Updated `@cumulus/ingest/queue/enqueueGranuleIngestMessage()` to not transform granule object passed to it when building an ingest message
+- **CUMULUS-1198** - `@cumulus/ingest` no longer enforces any expectations about whether `provider_path` contains a leading slash or not.
 - **CUMULUS-1170**
   - Update scripts and docs to use `npm` instead of `yarn`
   - Use `package-lock.json` files to ensure matching versions of npm packages
@@ -150,6 +180,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - **CUMULUS-1218** Reconciliation report will now scan only completed granules.
+- `@cumulus/api` files and granules were not getting indexed correctly because files indexing was failing in `db-indexer`
+- `@cumulus/deployment` A bug in the Cloudformation template was preventing the API from being able to be launched in a VPC, updated the IAM template to give the permissions to be able to run the API in a VPC
 
 ### Deprecated
 
@@ -213,7 +245,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Schema validation is now strongly enforced when writing to the database.
     Additional properties are not allowed and will result in a validation error.
 - CUMULUS-678
-  `tasks/move-granules` simplified and refactored to use  functionality from cmrjs.
+  `tasks/move-granules` simplified and refactored to use functionality from cmrjs.
   `ingest/granules.moveGranuleFiles` now just moves granule files and returns a list of the updated files. Updating metadata now handled by `@cumulus/cmrjs/reconcileCMRMetadata`.
   `move-granules.updateGranuleMetadata` refactored and bugs fixed in the case of a file matching multiple collection.files.regexps.
   `getCmrXmlFiles` simplified and now only returns an object with the cmrfilename and the granuleId.
@@ -956,7 +988,9 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.11.3...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.12.1...HEAD
+[v1.12.1]: https://github.com/nasa/cumulus/compare/v1.12.0...v1.12.1
+[v1.12.0]: https://github.com/nasa/cumulus/compare/v1.11.3...v1.12.0
 [v1.11.3]: https://github.com/nasa/cumulus/compare/v1.11.2...v1.11.3
 [v1.11.2]: https://github.com/nasa/cumulus/compare/v1.11.1...v1.11.2
 [v1.11.1]: https://github.com/nasa/cumulus/compare/v1.11.0...v1.11.1

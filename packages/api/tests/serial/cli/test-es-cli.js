@@ -63,8 +63,7 @@ test.after.always(async () => {
 test.serial('Reindex - alias does not exist', async (t) => {
   try {
     await es.reindex('fakehost', null, null, 'idx-alias');
-  }
-  catch (err) {
+  } catch (err) {
     t.is(
       err.message,
       'Alias idx-alias does not exist. Before re-indexing, re-deploy your instance of Cumulus.'
@@ -87,8 +86,7 @@ test.serial('Reindex - multiple aliases found', async (t) => {
 
   try {
     await es.reindex('fakehost', null, null, indexAlias);
-  }
-  catch (err) {
+  } catch (err) {
     t.is(
       err.message,
       'Multiple indices found for alias cumulus-1-alias. Specify source index as one of [cumulus-1, cumulus-dup].'
@@ -101,8 +99,7 @@ test.serial('Reindex - multiple aliases found', async (t) => {
 test.serial('Reindex - Specify source index that does not exist', async (t) => {
   try {
     await es.reindex('fakehost', 'source-index', null, indexAlias);
-  }
-  catch (err) {
+  } catch (err) {
     t.is(
       err.message,
       'Source index source-index does not exist.'
@@ -120,8 +117,7 @@ test.serial('Reindex - specify a source index that is not aliased', async (t) =>
 
   try {
     await es.reindex('fakehost', indexName, null, indexAlias);
-  }
-  catch (err) {
+  } catch (err) {
     t.is(
       err.message,
       'Source index source-index is not aliased with alias cumulus-1-alias.'
@@ -162,8 +158,7 @@ test.serial('Reindex success', async (t) => {
 test.serial('Reindex - destination index exists', async (t) => {
   try {
     await es.reindex('fakehost', esIndex, esIndex, indexAlias);
-  }
-  catch (err) {
+  } catch (err) {
     t.is(
       err.message,
       'Destination index cumulus-1 exists. Please specify an index name that does not exist.'
@@ -174,8 +169,7 @@ test.serial('Reindex - destination index exists', async (t) => {
 test.serial('Complete index - no source', async (t) => {
   try {
     await es.completeReindex('fakehost', null, 'dest-index', esIndex);
-  }
-  catch (err) {
+  } catch (err) {
     t.is(
       err.message,
       'Please explicity specify a source and destination index.'
@@ -186,8 +180,7 @@ test.serial('Complete index - no source', async (t) => {
 test.serial('Complete index - no destination', async (t) => {
   try {
     await es.completeReindex('fakehost', 'source-index', null, esIndex);
-  }
-  catch (err) {
+  } catch (err) {
     t.is(
       err.message,
       'Please explicity specify a source and destination index.'
@@ -198,8 +191,7 @@ test.serial('Complete index - no destination', async (t) => {
 test.serial('Complete index - source index does not exist', async (t) => {
   try {
     await es.completeReindex('fakehost', 'source-index', 'dest-index', esIndex);
-  }
-  catch (err) {
+  } catch (err) {
     t.is(
       err.message,
       'Source index source-index does not exist.'
@@ -210,8 +202,7 @@ test.serial('Complete index - source index does not exist', async (t) => {
 test.serial('Complete index - no destination', async (t) => {
   try {
     await es.completeReindex('fakehost', 'cumulus-1', 'dest-index', esIndex);
-  }
-  catch (err) {
+  } catch (err) {
     t.is(
       err.message,
       'Destination index dest-index does not exist.'
@@ -222,8 +213,7 @@ test.serial('Complete index - no destination', async (t) => {
 test.serial('Complete index - source index same as dest index', async (t) => {
   try {
     await es.completeReindex('fakehost', 'source', 'source', esIndex);
-  }
-  catch (err) {
+  } catch (err) {
     t.is(
       err.message,
       'The source index cannot be the same as the destination index.'

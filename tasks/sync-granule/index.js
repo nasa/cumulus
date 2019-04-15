@@ -40,8 +40,7 @@ async function download(ingest, bucket, provider, granules) {
       log.debug(`await ingest.ingest(${JSON.stringify(granule)}, ${bucket})`);
       const r = await ingest.ingest(granule, bucket);
       updatedGranules.push(r);
-    }
-    catch (e) {
+    } catch (e) {
       log.debug(`Error caught, await lock.removeLock(${bucket}, ${provider.id}, ${granule.granuleId})`);
       await lock.removeLock(bucket, provider.id, granule.granuleId);
       log.error(e);
@@ -73,7 +72,7 @@ exports.syncGranule = function syncGranule(event) {
 
   const duplicateHandling = duplicateHandlingType(event);
 
-  // use stack and collection names to prefix fileStagingDir
+  // use stack and collection names to suffix fileStagingDir
   const fileStagingDir = path.join(
     (config.fileStagingDir || 'file-staging'),
     stack
@@ -110,8 +109,7 @@ exports.syncGranule = function syncGranule(event) {
       let errorToThrow = e;
       if (e.toString().includes('ECONNREFUSED')) {
         errorToThrow = new errors.RemoteResourceError('Connection Refused');
-      }
-      else if (e.details && e.details.status === 'timeout') {
+      } else if (e.details && e.details.status === 'timeout') {
         errorToThrow = new errors.ConnectionTimeout('connection Timed out');
       }
 
@@ -134,8 +132,7 @@ exports.handler = function handler(event, context, callback) {
   cumulusMessageAdapter.runCumulusTask(exports.syncGranule, event, context, (err, data) => {
     if (err) {
       callback(err);
-    }
-    else {
+    } else {
       const endTime = Date.now();
       const additionalMetaFields = {
         sync_granule_duration: endTime - startTime,

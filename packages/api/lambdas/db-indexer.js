@@ -115,8 +115,7 @@ function performDelete(esClient, tableIndex, fields, body) {
   const idKeys = Object.keys(fields);
   if (idKeys.length > 1) {
     id = indexer.constructCollectionId(...Object.values(fields));
-  }
-  else {
+  } else {
     id = fields[idKeys[0]];
   }
 

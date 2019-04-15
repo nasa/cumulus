@@ -41,8 +41,7 @@ test('verifyJwtAuthorization() throws JsonWebTokenError for non-JWT token', asyn
   try {
     await verifyJwtAuthorization('invalid-token');
     t.fail('Expected error to be thrown');
-  }
-  catch (err) {
+  } catch (err) {
     t.true(err instanceof JsonWebTokenError);
     t.is(err.message, 'jwt malformed');
   }
@@ -57,8 +56,7 @@ test('verifyJwtAuthorization() throws JsonWebTokenError for token signed with in
   try {
     await verifyJwtAuthorization(jwtToken);
     t.fail('Expected error to be thrown');
-  }
-  catch (err) {
+  } catch (err) {
     t.true(err instanceof JsonWebTokenError);
     t.is(err.message, 'invalid signature');
   }
@@ -73,8 +71,7 @@ test('verifyJwtAuthorization() throws JsonWebTokenError for token signed with in
   try {
     await verifyJwtAuthorization(jwtToken);
     t.fail('Expected error to be thrown');
-  }
-  catch (err) {
+  } catch (err) {
     t.true(err instanceof JsonWebTokenError);
     t.is(err.message, 'invalid algorithm');
   }
@@ -90,8 +87,7 @@ test('verifyJwtAuthorization() throws TokenExpiredError for expired token', asyn
   try {
     await verifyJwtAuthorization(expiredJwtToken);
     t.fail('Expected error to be thrown');
-  }
-  catch (err) {
+  } catch (err) {
     t.true(err instanceof TokenExpiredError);
   }
 });
@@ -103,8 +99,7 @@ test('verifyJwtAuthorization() throws TokenUnauthorizedUserError for unauthorize
   try {
     await verifyJwtAuthorization(jwtToken);
     t.fail('Expected error to be thrown');
-  }
-  catch (err) {
+  } catch (err) {
     t.true(err instanceof TokenUnauthorizedUserError);
   }
 });

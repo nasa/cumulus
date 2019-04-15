@@ -20,7 +20,7 @@ const express = require('express');
 const boom = require('express-boom');
 const awsServerlessExpress = require('aws-serverless-express');
 const morgan = require('morgan');
-const distributionRouter = require('../endpoints/distribution');
+const distributionRouter = require('./distribution-routes');
 
 const distributionApp = express();
 

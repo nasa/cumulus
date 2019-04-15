@@ -230,8 +230,7 @@ test.serial('An SNS fallback retry, should throw an error if message does not in
   try {
     await handler(snsEvent, {}, testCallback);
     t.fail('testCallback should have thrown an error');
-  }
-  catch (error) {
+  } catch (error) {
     console.log(error);
     t.pass('Callback called with error');
     t.is(error.message, 'validation failed');
@@ -260,8 +259,7 @@ test.serial('An SNS Fallback retry, should throw an error if message collection 
   try {
     await handler(snsEvent, {}, testCallback);
     t.fail('testCallback should have thrown an error');
-  }
-  catch (error) {
+  } catch (error) {
     t.is(error.message, 'validation failed');
     t.is(error.errors[0].dataPath, '.collection');
     t.is(error.errors[0].message, 'should be string');
@@ -288,8 +286,7 @@ test.serial('An SNS Fallback retry, should throw an error if message is invalid 
   const snsEvent = wrapKinesisRecord(kinesisEvent.Records[0]);
   try {
     await handler(snsEvent, {}, testCallback);
-  }
-  catch (error) {
+  } catch (error) {
     t.is(error.message, 'Unexpected end of JSON input');
   }
 });

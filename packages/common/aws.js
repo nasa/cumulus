@@ -37,8 +37,7 @@ const improveStackTrace = (fn) =>
     try {
       Error.captureStackTrace(tracerError);
       return await fn(...args);
-    }
-    catch (err) {
+    } catch (err) {
       setErrorStack(err, tracerError.stack);
       throw err;
     }
@@ -186,12 +185,10 @@ exports.findResourceArn = (obj, fn, prefix, baseName, opts, callback) => {
 
     if (matchingArn) {
       callback(null, matchingArn);
-    }
-    else if (data.NextToken) {
+    } else if (data.NextToken) {
       const nextOpts = Object.assign({}, opts, { NextToken: data.NextToken });
       exports.findResourceArn(obj, fn, prefix, baseName, nextOpts, callback);
-    }
-    else {
+    } else {
       callback(`Could not find resource ${baseName} in ${fn}`);
     }
   });
@@ -375,8 +372,7 @@ exports.fileExists = async (bucket, key) => {
   try {
     const r = await s3.headObject({ Key: key, Bucket: bucket }).promise();
     return r;
-  }
-  catch (e) {
+  } catch (e) {
     // if file is not return false
     if (e.stack.match(/(NotFound)/) || e.stack.match(/(NoSuchBucket)/)) {
       return false;
@@ -610,8 +606,7 @@ class S3ListObjectsV2Queue {
 
     if (response.IsTruncated) {
       this.params.ContinuationToken = response.NextContinuationToken;
-    }
-    else this.items.push(null);
+    } else this.items.push(null);
   }
 }
 exports.S3ListObjectsV2Queue = S3ListObjectsV2Queue;

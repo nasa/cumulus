@@ -1,7 +1,10 @@
 'use strict';
 
 const chunk = require('lodash.chunk');
-const { DynamoDbSearchQueue } = require('@cumulus/common/aws');
+const {
+  DynamoDbSearchQueue,
+  parseS3Uri
+} = require('@cumulus/common/aws');
 const Manager = require('./base');
 const schemas = require('./schemas');
 
@@ -16,6 +19,25 @@ class FileClass extends Manager {
   }
 
   /**
+   * Get the bucket and key from the file record. If the bucket
+   * and key exist, use those, otherwise use the source to extract it
+   *
+   * @param {Object} file
+   * @returns {Object} { bucket: 'bucket, key: 'key' }
+   */
+  getBucketAndKey(file) {
+    let { bucket, key } = file;
+
+    if (file.source && file.source.startsWith('s3')) {
+      const { Bucket, Key } = parseS3Uri(file.source);
+      bucket = bucket || Bucket;
+      key = key || Key;
+    }
+
+    return { bucket, key };
+  }
+
+  /**
    * Create file records from a given granule record
    *
    * @param {Object} granule - the granule record
@@ -24,11 +46,16 @@ class FileClass extends Manager {
    */
   createFilesFromGranule(granule) {
     const fileRecords = (granule.files || [])
-      .map((file) => ({
-        granuleId: granule.granuleId,
-        bucket: file.bucket,
-        key: file.key
-      }));
+      .map((file) => {
+        const { bucket, key } = this.getBucketAndKey(file);
+
+        return {
+          granuleId: granule.granuleId,
+          bucket,
+          key
+        };
+      })
+      .filter((file) => file.bucket && file.key);
 
     const chunked = chunk(fileRecords, 25);
     return Promise.all(chunked.map((c) => this.batchWrite(null, c)));
@@ -65,14 +92,17 @@ class FileClass extends Manager {
   async deleteFilesAfterCompare(newGranule, oldGranule) {
     const buildFileId = (f) => `${f.bucket}/${f.key}`;
 
-    const newFiles = (newGranule.files || []);
-    const oldFiles = (oldGranule.files || []);
+    let newFiles = (newGranule.files || []);
+    let oldFiles = (oldGranule.files || []);
 
-    const newFilesIds = newFiles.map(buildFileId);
+    // all we need is the bucket and key
+    oldFiles = oldFiles.map((file) => this.getBucketAndKey(file));
+    newFiles = newFiles.map((file) => this.getBucketAndKey(file));
+
+    const newFilesIds = newFiles.map((f) => buildFileId(f));
 
     const filesToDelete = oldFiles
-      .filter((oldFile) => !newFilesIds.includes(buildFileId(oldFile)))
-      .map((oldFile) => ({ bucket: oldFile.bucket, key: oldFile.key }));
+      .filter((oldFile) => !newFilesIds.includes(buildFileId(oldFile)));
 
     const chunkedFilesToDelete = chunk(filesToDelete, 25);
     return Promise.all(chunkedFilesToDelete.map((c) => this.batchWrite(c)));

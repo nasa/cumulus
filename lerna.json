@@ -1,6 +1,6 @@
 {
   "lerna": "2.9.0",
-  "version": "1.11.3",
+  "version": "1.12.1",
   "packages": [
     "example",
     "packages/*",
@@ -8,7 +8,9 @@
   ],
   "command": {
     "bootstrap": {
-      "npmClientArgs": ["--no-package-lock"]
+      "npmClientArgs": [
+        "--no-package-lock"
+      ]
     }
   }
 }
