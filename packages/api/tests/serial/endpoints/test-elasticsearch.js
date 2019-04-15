@@ -201,12 +201,14 @@ test.serial('Reindex success', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
+  /* eslint-disable no-await-in-loop */
   while (Object.keys(statusResponse.body.reindexStatus.nodes).length > 0) {
     statusResponse = await request(app)
       .get('/elasticsearch/reindex-status')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .expect(200);
   }
+  /* eslint-enable no-await-in-loop */
 
   const indexStatus = statusResponse.body.indexStatus.indices[destIndex];
 
