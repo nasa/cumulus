@@ -60,8 +60,7 @@ function parsePdr(event) {
         const err = new errors.RemoteResourceError('Connection Refused');
         log.error(err);
         throw err;
-      }
-      else if (e.details && e.details.status === 'timeout') {
+      } else if (e.details && e.details.status === 'timeout') {
         const err = new errors.ConnectionTimeout('connection Timed out');
         log.error(err);
         throw err;

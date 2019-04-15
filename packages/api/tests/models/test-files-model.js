@@ -43,8 +43,7 @@ test.serial('create files records from a granule and then delete them', async (t
     try {
       await fileModel.get({ bucket, key: file.key });
       fail('Expected an exception to be thrown');
-    }
-    catch (err) {
+    } catch (err) {
       t.true(err.message.includes('No record'));
     }
   };

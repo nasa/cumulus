@@ -323,8 +323,7 @@ test('publishUMMGJSON2CMR calls ingestUMMGranule with ummgMetadata via valid CMR
   // Act
   try {
     await publishUMMGJSON2CMR(cmrPublishObject, creds, systemBucket, stackName);
-  }
-  catch (error) {
+  } catch (error) {
     console.log(error);
   }
 

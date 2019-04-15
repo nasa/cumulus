@@ -34,14 +34,12 @@ const waitPeriodMs = 1000;
 async function tryCatchExit(cleanupCallback, wrappedFunction, ...args) {
   try {
     return await wrappedFunction.apply(this, args);
-  }
-  catch (error) {
+  } catch (error) {
     console.log(`${error}`);
     console.log("Tests conditions can't get met...exiting.");
     try {
       await cleanupCallback();
-    }
-    catch (e) {
+    } catch (e) {
       console.log(`Cleanup failed, ${e}.   Stack may need to be manually cleaned up.`);
     }
     // We should find a better way to do this
@@ -118,8 +116,7 @@ async function createKinesisStream(streamName) {
     async () => {
       try {
         return kinesis.createStream({ StreamName: streamName, ShardCount: 1 }).promise();
-      }
-      catch (error) {
+      } catch (error) {
         if (error.code === 'LimitExceededException') throw new Error('Trigger retry');
         throw new pRetry.AbortError(error);
       }
@@ -142,13 +139,11 @@ async function createOrUseTestStream(streamName) {
 
   try {
     stream = await kinesis.describeStream({ StreamName: streamName }).promise();
-  }
-  catch (err) {
+  } catch (err) {
     if (err.code === 'ResourceNotFoundException') {
       console.log('Creating a new stream:', streamName);
       stream = await createKinesisStream(streamName);
-    }
-    else {
+    } else {
       console.log(`describeStream error ${err}`);
       throw err;
     }
@@ -265,8 +260,7 @@ function kinesisEventFromSqsMessage(message) {
     const originalKinesisMessage = JSON.parse(message.Body.Records[0].Sns.Message);
     const dataString = Buffer.from(originalKinesisMessage.kinesis.data, 'base64').toString();
     kinesisEvent = JSON.parse(dataString);
-  }
-  catch (error) {
+  } catch (error) {
     console.log('Error parsing KinesisEventFromSqsMessage(message)', JSON.stringify(message));
     console.log(error);
     kinesisEvent = { identifier: 'Fake Wrong Message' };
@@ -323,8 +317,7 @@ async function waitForQueuedRecord(recordIdentifier, queueUrl, maxRetries = 15) 
     async () => {
       try {
         return await scanQueueForMessage(queueUrl, recordIdentifier);
-      }
-      catch (error) {
+      } catch (error) {
         throw new Error(`Never found ${recordIdentifier} on Queue`);
       }
     },

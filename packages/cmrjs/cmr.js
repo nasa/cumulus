@@ -101,8 +101,7 @@ class CMR {
     let xmlString;
     try {
       xmlString = await readFile(xml, 'utf8');
-    }
-    catch (err) {
+    } catch (err) {
       if (err.code === 'ENOENT' || err.code === 'ENAMETOOLONG') xmlString = xml;
       else throw err;
     }
@@ -120,8 +119,7 @@ class CMR {
     let xmlString;
     try {
       xmlString = await readFile(xml, 'utf8');
-    }
-    catch (err) {
+    } catch (err) {
       if (err.code === 'ENOENT' || err.code === 'ENAMETOOLONG') xmlString = xml;
       else throw err;
     }

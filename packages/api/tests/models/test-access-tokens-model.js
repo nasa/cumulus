@@ -69,8 +69,7 @@ test('get() throws error for missing record', async (t) => {
   try {
     await accessTokenModel.get({ accessToken: randomString() });
     t.fail('expected code to throw error');
-  }
-  catch (err) {
+  } catch (err) {
     t.true(err instanceof RecordDoesNotExist);
   }
 });

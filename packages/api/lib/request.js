@@ -24,8 +24,7 @@ async function verifyJwtAuthorization(requestJwtToken, params = {}) {
   let username;
   try {
     ({ accessToken, username } = verifyJwtToken(requestJwtToken));
-  }
-  catch (err) {
+  } catch (err) {
     log.error('Error caught when checking JWT token', err);
     throw err;
   }
@@ -33,8 +32,7 @@ async function verifyJwtAuthorization(requestJwtToken, params = {}) {
   const userModel = new User(params);
   try {
     await userModel.get({ userName: username });
-  }
-  catch (err) {
+  } catch (err) {
     if (err.name === 'RecordDoesNotExist') {
       throw new TokenUnauthorizedUserError();
     }

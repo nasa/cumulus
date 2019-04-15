@@ -56,11 +56,9 @@ test.serial('error thrown when limit exceeded', async (t) => {
 
     await checkPdrStatuses(event);
     t.fail();
-  }
-  catch (err) {
+  } catch (err) {
     t.is(err.name, 'IncompleteWorkflowError');
-  }
-  finally {
+  } finally {
     delete sfn.describeExecution;
   }
 });
@@ -106,8 +104,7 @@ test.serial('returns the correct results in the nominal case', async (t) => {
     });
 
     output = await checkPdrStatuses(event);
-  }
-  finally {
+  } finally {
     delete sfn.describeExecution;
   }
 

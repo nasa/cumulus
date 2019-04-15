@@ -54,8 +54,7 @@ test('Download remote file to s3 with correct content-type', async (t) => {
 
     const s3HeadResponse = await headObject(bucket, key);
     t.is(expectedContentType, s3HeadResponse.ContentType);
-  }
-  finally {
+  } finally {
     await recursivelyDeleteS3Bucket(bucket);
   }
 });

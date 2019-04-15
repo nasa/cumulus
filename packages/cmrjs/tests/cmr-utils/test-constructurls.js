@@ -14,8 +14,8 @@ const mapCNMTypeToCMRType = cmrUtils.__get__('mapCNMTypeToCMRType');
 
 const sortByURL = (a, b) => a.URL < b.URL;
 
-const endpoint = 'https://endpoint';
-const s3CredentialsEndpointObject = getS3CredentialsObject(`${endpoint}/s3credentials`);
+const distEndpoint = 'https://endpoint';
+const s3CredentialsEndpointObject = getS3CredentialsObject(`${distEndpoint}/s3credentials`);
 
 
 test.beforeEach((t) => {
@@ -48,7 +48,7 @@ test('returns correct url for protected data', (t) => {
   ];
   const expected = [
     {
-      URL: `${endpoint}/${t.context.bucketConfig.protected.name}/some/path/protected-file.hdf`,
+      URL: `${distEndpoint}/${t.context.bucketConfig.protected.name}/some/path/protected-file.hdf`,
       Description: 'File to download',
       URLDescription: 'File to download',
       Type: 'GET DATA'
@@ -57,7 +57,7 @@ test('returns correct url for protected data', (t) => {
 
   const actual = constructOnlineAccessUrls({
     files: movedFiles,
-    distEndpoint: endpoint,
+    distEndpoint,
     buckets: t.context.buckets
   });
 
@@ -74,7 +74,7 @@ test('Returns correct url object for public data.', (t) => {
   ];
   const expected = [
     {
-      URL: `https://${publicBucketName}.s3.amazonaws.com/some/path/browse_image.jpg`,
+      URL: `${distEndpoint}/${publicBucketName}/some/path/browse_image.jpg`,
       Description: 'File to download',
       URLDescription: 'File to download',
       Type: 'GET DATA'
@@ -83,7 +83,7 @@ test('Returns correct url object for public data.', (t) => {
 
   const actual = constructOnlineAccessUrls({
     files: movedFiles,
-    distEndpoint: endpoint,
+    distEndpoint,
     buckets: t.context.buckets
   });
 
@@ -101,7 +101,7 @@ test('Returns empty list for private data.', (t) => {
   ];
   const actual = constructOnlineAccessUrls({
     files: movedFiles,
-    distEndpoint: endpoint,
+    distEndpoint,
     buckets: t.context.buckets
   });
 
@@ -129,13 +129,13 @@ test('returns an array of correct url objects given a list of moved files.', (t)
 
   const expected = [
     {
-      URL: `${endpoint}/${t.context.bucketConfig.protected.name}/another/path/protected.hdf`,
+      URL: `${distEndpoint}/${t.context.bucketConfig.protected.name}/another/path/protected.hdf`,
       Description: 'File to download',
       URLDescription: 'File to download',
       Type: 'GET DATA'
     },
     {
-      URL: `https://${t.context.bucketConfig.public.name}.s3.amazonaws.com/path/publicfile.jpg`,
+      URL: `${distEndpoint}/${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
       Description: 'File to download',
       URLDescription: 'File to download',
       Type: 'GET RELATED VISUALIZATION'
@@ -144,7 +144,7 @@ test('returns an array of correct url objects given a list of moved files.', (t)
 
   const actual = constructOnlineAccessUrls({
     files: movedFiles,
-    distEndpoint: endpoint,
+    distEndpoint,
     buckets: t.context.buckets
   });
 
@@ -169,12 +169,12 @@ test('constructRelatedUrls returns expected array when called with file list', (
 
   const expected = [
     {
-      URL: `${endpoint}/${t.context.bucketConfig.protected.name}/another/path/protected.hdf`,
+      URL: `${distEndpoint}/${t.context.bucketConfig.protected.name}/another/path/protected.hdf`,
       Description: 'File to download',
       Type: 'GET DATA'
     },
     {
-      URL: `https://${t.context.bucketConfig.public.name}.s3.amazonaws.com/path/publicfile.jpg`,
+      URL: `${distEndpoint}/${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
       Description: 'File to download',
       Type: 'GET DATA'
     },
@@ -183,7 +183,7 @@ test('constructRelatedUrls returns expected array when called with file list', (
 
   const actual = constructRelatedUrls({
     files: movedFiles,
-    distEndpoint: endpoint,
+    distEndpoint,
     buckets: t.context.buckets
   });
 
@@ -196,7 +196,7 @@ test('constructRelatedUrls returns expected array when called with an empty file
 
   const actual = constructRelatedUrls({
     files: movedFiles,
-    distEndpoint: endpoint,
+    distEndpoint,
     buckets: t.context.buckets
   });
 

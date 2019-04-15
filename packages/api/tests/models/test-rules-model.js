@@ -253,7 +253,7 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
             {
               UUID: randomString(),
               EventSourceArn: item.rule.value,
-              FunctionArn: `arn:aws:lambda:us-west-2:123456789012:function:${process.env.messageConsumer}`,
+              FunctionArn: `arn:aws:lambda:us-west-2:000000000000:function:${process.env.messageConsumer}`,
               State: 'Disabled'
             }
           ]
@@ -264,11 +264,9 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
   try {
     await (new models.Rule()).create(item);
     t.pass();
-  }
-  catch (err) {
+  } catch (err) {
     t.fail(err);
-  }
-  finally {
+  } finally {
     lambdaStub.reset();
   }
 });

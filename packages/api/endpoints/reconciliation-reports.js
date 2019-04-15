@@ -44,8 +44,7 @@ async function get(req, res) {
   try {
     const file = await aws.getS3Object(process.env.system_bucket, key);
     return res.send(JSON.parse(file.Body.toString()));
-  }
-  catch (err) {
+  } catch (err) {
     if (err.name === 'NoSuchKey') {
       return res.boom.notFound('The report does not exist!');
     }

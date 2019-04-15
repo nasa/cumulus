@@ -16,12 +16,10 @@ async function createTable(Model, tableName) {
       systemBucket: process.env.system_bucket
     });
     await model.createTable();
-  }
-  catch (e) {
+  } catch (e) {
     if (e && e.message && e.message === 'Cannot create preexisting table') {
       console.log(`${tableName} is already created`);
-    }
-    else {
+    } else {
       throw e;
     }
   }
@@ -199,8 +197,7 @@ async function serveApi(user, stackName = 'localrun') {
     await prepareServices(stackName, process.env.system_bucket);
     await populateBucket(process.env.system_bucket, stackName);
     await createDBRecords(stackName, user);
-  }
-  else {
+  } else {
     checkEnvVariablesAreSet(requiredEnvVars);
     setTableEnvVariables(process.env.stackName);
   }
@@ -243,8 +240,7 @@ async function serveDistributionApi(stackName = 'localrun', done) {
     await prepareServices(stackName, process.env.system_bucket);
     await populateBucket(process.env.system_bucket, stackName);
     await createDBRecords(stackName);
-  }
-  else {
+  } else {
     checkEnvVariablesAreSet(requiredEnvVars);
     setTableEnvVariables(stackName);
   }

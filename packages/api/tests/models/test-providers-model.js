@@ -82,8 +82,7 @@ test('Providers.delete() throws an exception if the provider has associated rule
   try {
     await providersModel.delete({ id: providerId });
     t.fail('Expected an exception to be thrown');
-  }
-  catch (err) {
+  } catch (err) {
     t.true(err instanceof AssociatedRulesError);
     t.is(err.message, 'Cannot delete a provider that has associated rules');
     t.deepEqual(err.rules, [rule.name]);
@@ -110,8 +109,7 @@ test('Providers.create() throws a ValidationError if an invalid host is used', a
     );
 
     t.fail('Expected an exception');
-  }
-  catch (err) {
+  } catch (err) {
     t.is(err.name, 'ValidationError');
   }
 });
@@ -129,8 +127,7 @@ test('Providers.update() throws a ValidationError if an invalid host is used', a
     );
 
     t.fail('Expected an exception');
-  }
-  catch (err) {
+  } catch (err) {
     t.is(err.name, 'ValidationError');
   }
 });

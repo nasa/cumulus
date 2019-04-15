@@ -109,8 +109,7 @@ async function validateUMMG(ummMetadata, identifier, provider) {
     if (result.statusCode === 200) {
       return true;
     }
-  }
-  catch (e) {
+  } catch (e) {
     result = e.response;
   }
 
@@ -178,8 +177,7 @@ async function updateToken(cmrProvider, clientId, username, password) {
         }
       }
     });
-  }
-  catch (err) {
+  } catch (err) {
     if (err.response.body.errors) throw new Error(`CMR Error: ${err.response.body.errors[0]}`);
     throw err;
   }
