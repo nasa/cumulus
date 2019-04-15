@@ -208,6 +208,11 @@ test.serial('Reindex success', async (t) => {
       .expect(200);
   }
 
+  console.log('\n\n');
+  console.log(destIndex);
+  console.log(JSON.stringify(statusResponse.body));
+  console.log('\n\n');
+
   const indexStatus = statusResponse.body.indexStatus.indices[destIndex];
 
   t.is(3, indexStatus.primaries.docs.count);
