@@ -86,14 +86,14 @@ Resources:
           Ref: CumulusECSCluster
         AsyncOperationTaskDefinition:
           Ref: AsyncOperationTaskDefinition
-      {{#each ../apis}}
-        {{name}}RestApi:
-          Ref: {{name}}RestApi
-        {{name}}RestApiRootId:
-          Fn::GetAtt:
-            - {{name}}RestApi
-            - RootResourceId
-      {{/each}}
+      # {{#each ../apis}}
+      #   {{name}}RestApi:
+      #     Ref: {{name}}RestApi
+      #   {{name}}RestApiRootId:
+      #     Fn::GetAtt:
+      #       - {{name}}RestApi
+      #       - RootResourceId
+      # {{/each}}
       {{# each ../dynamos}}
         {{@key}}DynamoDB:
           Ref: {{@key}}DynamoDB
@@ -594,89 +594,89 @@ Resources:
   #################################################
   # APIGateway config BEGIN
   #################################################
-{{# if apiMethods}}
+# {{# if apiMethods}}
 
-{{#each apiMethods}}
-  {{name}}:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      ResourceId:
-        Ref: {{resource}}
-      RestApiId:
-        Ref: {{api}}RestApi
-      HttpMethod: {{method}}
-      AuthorizationType: NONE
-      Integration:
-        Type: AWS_PROXY
-        IntegrationHttpMethod: POST
-        Uri:
-          Fn::Join:
-          - ''
-          - - 'arn:aws:apigateway:'
-            - Ref: AWS::Region
-            - :lambda:path/2015-03-31/functions/
-            - Fn::GetAtt:
-              - {{lambda}}LambdaFunction
-              - Arn
-            - /invocations
+# {{#each apiMethods}}
+#   {{name}}:
+#     Type: AWS::ApiGateway::Method
+#     Properties:
+#       ResourceId:
+#         Ref: {{resource}}
+#       RestApiId:
+#         Ref: {{api}}RestApi
+#       HttpMethod: {{method}}
+#       AuthorizationType: NONE
+#       Integration:
+#         Type: AWS_PROXY
+#         IntegrationHttpMethod: POST
+#         Uri:
+#           Fn::Join:
+#           - ''
+#           - - 'arn:aws:apigateway:'
+#             - Ref: AWS::Region
+#             - :lambda:path/2015-03-31/functions/
+#             - Fn::GetAtt:
+#               - {{lambda}}LambdaFunction
+#               - Arn
+#             - /invocations
 
-{{/each}}
+# {{/each}}
 
-{{#each apiMethodsOptions}}
-  {{name}}:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      AuthorizationType: NONE
-      HttpMethod: OPTIONS
-      Integration:
-        IntegrationResponses:
-        - ResponseParameters:
-            method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
-            method.response.header.Access-Control-Allow-Methods: '''OPTIONS,PUT,POST,GET,DELETE'''
-            method.response.header.Access-Control-Allow-Origin: '''*'''
-          ResponseTemplates:
-            application/json: ''
-          StatusCode: '200'
-        RequestTemplates:
-          application/json: '{statusCode:200}'
-        Type: MOCK
-      MethodResponses:
-      - ResponseModels: {}
-        ResponseParameters:
-          method.response.header.Access-Control-Allow-Headers: true
-          method.response.header.Access-Control-Allow-Methods: true
-          method.response.header.Access-Control-Allow-Origin: true
-        StatusCode: '200'
-      RequestParameters:
-        method.request.header.Authorization: true
-      ResourceId:
-        Ref: {{resource}}
-      RestApiId:
-        Ref: {{api}}RestApi
+# {{#each apiMethodsOptions}}
+#   {{name}}:
+#     Type: AWS::ApiGateway::Method
+#     Properties:
+#       AuthorizationType: NONE
+#       HttpMethod: OPTIONS
+#       Integration:
+#         IntegrationResponses:
+#         - ResponseParameters:
+#             method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+#             method.response.header.Access-Control-Allow-Methods: '''OPTIONS,PUT,POST,GET,DELETE'''
+#             method.response.header.Access-Control-Allow-Origin: '''*'''
+#           ResponseTemplates:
+#             application/json: ''
+#           StatusCode: '200'
+#         RequestTemplates:
+#           application/json: '{statusCode:200}'
+#         Type: MOCK
+#       MethodResponses:
+#       - ResponseModels: {}
+#         ResponseParameters:
+#           method.response.header.Access-Control-Allow-Headers: true
+#           method.response.header.Access-Control-Allow-Methods: true
+#           method.response.header.Access-Control-Allow-Origin: true
+#         StatusCode: '200'
+#       RequestParameters:
+#         method.request.header.Authorization: true
+#       ResourceId:
+#         Ref: {{resource}}
+#       RestApiId:
+#         Ref: {{api}}RestApi
 
-{{/each}}
+# {{/each}}
 
-{{#each apiResources}}
-  {{name}}:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      ParentId:
-      {{#each parents}}
-        {{this}}
-      {{/each}}
-      PathPart: '{{pathPart}}'
-      RestApiId:
-        Ref: {{api}}RestApi
+# {{#each apiResources}}
+#   {{name}}:
+#     Type: AWS::ApiGateway::Resource
+#     Properties:
+#       ParentId:
+#       {{#each parents}}
+#         {{this}}
+#       {{/each}}
+#       PathPart: '{{pathPart}}'
+#       RestApiId:
+#         Ref: {{api}}RestApi
 
-{{/each}}
-{{/if}}
+# {{/each}}
+# {{/if}}
 
-{{#each apis}}
-  {{name}}RestApi:
-    Type: AWS::ApiGateway::RestApi
-    Properties:
-      Name: {{../stackName}}-{{name}}
-{{/each}}
+# {{#each apis}}
+#   {{name}}RestApi:
+#     Type: AWS::ApiGateway::RestApi
+#     Properties:
+#       Name: {{../stackName}}-{{name}}
+# {{/each}}
 
   #################################################
   # APIGateway config END
@@ -723,23 +723,58 @@ Resources:
           BACKEND_API_URL: {{../api_backend_url}}
       {{else}}
           BACKEND_API_URL:
-            Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/"]]
+            Fn::Join:
+              - ""
+              - - "https://"
+                - Fn::GetAtt:
+                  - CumulusApiBackendNestedStack
+                  - Outputs.backendRestApiResourceId
+                - ".execute-api."
+                - { "Fn::Sub": "${AWS::Region}" }
+                - ".amazonaws.com/{{../apiStage}}/"
       {{/if}}
       {{# if this.urs}}
         {{# if ../api_backend_url}}
           TOKEN_REDIRECT_ENDPOINT: {{../api_backend_url}}token
         {{else}}
           TOKEN_REDIRECT_ENDPOINT:
-            Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/token"]]
+            Fn::Join:
+              - ""
+              - - "https://"
+                - Fn::GetAtt:
+                  - CumulusApiBackendNestedStack
+                  - Outputs.backendRestApiResourceId
+                - ".execute-api."
+                - { "Fn::Sub": "${AWS::Region}" }
+                - ".amazonaws.com/{{../apiStage}}/token"
+            # Fn::Join: ["", [ "https://", {"Ref": "backendRestApiResourceId"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/token"]]
         {{/if}}
         {{# if ../api_distribution_url}}
           DISTRIBUTION_ENDPOINT: {{../api_distribution_url}}
           DISTRIBUTION_REDIRECT_ENDPOINT: {{../api_distribution_url}}redirect
         {{else}}
           DISTRIBUTION_ENDPOINT:
-            Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}"]]
+            Fn::Join:
+              - ""
+              - - "https://"
+                - Fn::GetAtt:
+                  - CumulusApiDistributionNestedStack
+                  - Outputs.distributionRestApiResourceId
+                - ".execute-api."
+                - { "Fn::Sub": "${AWS::Region}" }
+                - ".amazonaws.com/{{../apiStage}}"
+            # Fn::Join: ["", [ "https://", {"Ref": "distributionRestApiResourceId"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}"]]
           DISTRIBUTION_REDIRECT_ENDPOINT:
-            Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/redirect"]]
+            Fn::Join:
+              - ""
+              - - "https://"
+                - Fn::GetAtt:
+                  - CumulusApiDistributionNestedStack
+                  - Outputs.distributionRestApiResourceId
+                - ".execute-api."
+                - { "Fn::Sub": "${AWS::Region}" }
+                - ".amazonaws.com/{{../apiStage}}/redirect"
+            # Fn::Join: ["", [ "https://", {"Ref": "distributionRestApiResourceId"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/redirect"]]
         {{/if}}
       {{/if}}
       Handler: {{this.handler}}
@@ -1258,7 +1293,7 @@ Outputs:
     Value: {{api_backend_url}}
   {{else}}
     Value:
-      Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
+      Fn::Join: ["", [ "https://", {"Ref": "backendRestApiResourceId"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
       {{/if}}
 
   Distribution:
@@ -1266,16 +1301,16 @@ Outputs:
     Value: {{api_distribution_url}}
   {{else}}
     Value:
-      Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
+      Fn::Join: ["", [ "https://", {"Ref": "distributionRestApiResourceId"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
   {{/if}}
 
   ApiId:
     Value:
-      Ref: backendRestApi
+      Ref: backendRestApiResourceId
 
   DistributionId:
     Value:
-      Ref: distributionRestApi
+      Ref: distributionRestApiResourceId
 
   ApiStage:
     Value: {{apiStage}}

@@ -41,14 +41,14 @@ Parameters:
     Type: String
   EcsCluster:
     Type: String
-{{#each parent.apis}}
-  {{name}}RestApi:
-    Type: String
-    Description: restAPI id
-  {{name}}RestApiRootId:
-    Type: String
-    Description: restAPI root resource id
-{{/each}}
+# {{#each parent.apis}}
+#   {{name}}RestApi:
+#     Type: String
+#     Description: restAPI id
+#   {{name}}RestApiRootId:
+#     Type: String
+#     Description: restAPI root resource id
+# {{/each}}
 {{# each parent.dynamos}}
   {{@key}}DynamoDB:
     Type: String
@@ -65,6 +65,13 @@ Resources:
   #################################################
   # APIGateway config BEGIN
   #################################################
+{{#each apis}}
+  {{name}}RestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: {{../stackName}}-{{name}}
+{{/each}}
+
 {{# if apiMethods}}
 {{# each apiDependencies}}
   {{# if apiDeploy }}
@@ -302,3 +309,27 @@ Resources:
   # DynamoDB Event Source Mapping END
   #################################################
 {{/if}}
+
+#################################################
+# Outputs block BEGIN
+#################################################
+Outputs:
+{{#each apis}}
+  {{name}}RestApiResourceId:
+    Value:
+      - Fn::Ref:
+        - {{name}}RestApi
+  {{name}}RestApiBaseUrl:
+    Value:
+      - Fn::Join:
+        - ""
+        - - "https://"
+          - Fn::Ref:
+            - {{name}}RestApi
+          - ".execute-api."
+          - { "Fn::Sub": "${AWS::Region}" }
+          - ".amazonaws.com/{{../apiStage}}"
+{{/each}}
+################################################
+# Outputs block END
+#################################################
