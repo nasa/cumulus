@@ -17,6 +17,8 @@ const logDetails = {
   file: 'cmr-client/CMR.js'
 };
 
+const IP_TIMEOUT_MS = 1 * 1000;
+
 /**
  * Find the UMM version as a decimal string.
  * If a version cannot be found on the input object
@@ -98,7 +100,7 @@ async function updateToken(cmrProvider, clientId, username, password) {
           password: password,
           client_id: clientId,
           // LAUREN TO DO
-          user_ip_address: '127.0.0.1',
+          user_ip_address: await publicIp.v4({ timeout: IP_TIMEOUT_MS }).catch((_) => '127.0.0.1'),
           provider: cmrProvider
         }
       }

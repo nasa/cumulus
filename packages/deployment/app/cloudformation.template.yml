@@ -862,7 +862,7 @@ ESServiceLinkedRole:
       GroupDescription: Security Group for ECS containter instances of {{stackName}}
       SecurityGroupIngress:
         - IpProtocol: tcp
-          CidrIp: 0.0.0.0/0
+          CidrIp: {{vpc.cidrIp}}
           FromPort: '443'
           ToPort: '443'
       Tags:

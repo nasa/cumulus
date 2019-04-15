@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1212**
   - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
 
+- **CUMULUS-1193**
+  - The elasticsearch instance is moved behind the VPC. There are two migration options, both will incur loss of data:
+    - Create a completely new stack
+    - Deploy to your current stack. This will create a new ES instance and remove your current instance and WILL RESULT IN LOSS OF DATA. You will need to manually remove data from the following DynamoDb tables: Providers, Collections, Granules, Files, Pdrs, Rules, and Executions to stay in sync with ES and regenerate all data.
+  - You will need to populate `VPC_CIDR_IP` in your `app/.env` file. The IPv4 CIDR can be found in your AWS Console in your VPC settings.
+
 ## Changed
 
 - **CUMULUS-1236**
