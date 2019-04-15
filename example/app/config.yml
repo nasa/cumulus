@@ -80,6 +80,7 @@ default:
     vpcId: '{{VPC_ID}}'
     subnets:
       - '{{AWS_SUBNET}}'
+    cidrIp: '{{VPC_CIDR_IP}}'
 
   ecs:
     instanceType: t2.medium
