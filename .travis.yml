@@ -19,16 +19,6 @@ stages:
 
 jobs:
   include:
-    - name: "npm audit"
-      stage: audit and lint
-      if: tag !~ ^v\d+.* AND commit_message !~ \[skip-audit\]
-      install:
-        - nvm install-latest-npm
-        - ln -s /dev/stdout ./lerna-debug.log
-        - npm install --no-audit
-        - npm run install-locks
-      script: npm run audit
-
     - name: "eslint"
       stage: audit and lint
       install:
