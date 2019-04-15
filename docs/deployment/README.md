@@ -39,7 +39,7 @@ The process involves:
 
 ### Credentials
 
-* [CMR](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) username and password.  Can be excluded if you are not exporting metadata to CMR.
+* [CMR](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) username and password.  Can be excluded if you are not exporting metadata to CMR. More information about CMR configuration can be found [here](./config_descriptions#cmr).
 * [EarthData Client login](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/earthdata-login) username and password. User must have the ability to administer and/or create applications in URS.  It's recommended to obtain an account in the test environment (UAT).
 
 ### Needed Git Repositories
