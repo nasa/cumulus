@@ -208,20 +208,9 @@ test.serial('Reindex success', async (t) => {
       .expect(200);
   }
 
-  console.log('\n\n');
-  console.log(destIndex);
-  console.log(JSON.stringify(statusResponse.body));
-  console.log('\n\n');
-
   const indexStatus = statusResponse.body.indexStatus.indices[destIndex];
 
   t.is(3, indexStatus.primaries.docs.count);
-
-  // Refresh to make sure the records are in the destination index
-  await esClient.indices.refresh();
-
-  // Validate that the destination index was created
-  t.is(true, await esClient.indices.exists({ index: destIndex }));
 
   // Validate destination index mappings are correct
   const fieldMappings = await esClient.indices.getMapping();
@@ -230,11 +219,6 @@ test.serial('Reindex success', async (t) => {
   const destMapping = get(fieldMappings, destIndex);
 
   t.deepEqual(sourceMapping.mappings, destMapping.mappings);
-
-  const count = await esClient.count({ index: destIndex });
-
-  // Validate that dest-index has the indexed data from the source index
-  t.is(3, count.count);
 
   await esClient.indices.delete({ index: destIndex });
 });
