@@ -2,17 +2,17 @@
 
 const fs = require('fs-extra');
 const yaml = require('js-yaml');
-
+const { loadYmlFile } = require('./testUtils');
 const { assignIn } = require('lodash.assignin');
 
 /**
- * Load a yml file
+ * Load a configuration yml file
  *
  * @param {string} filePath - workflow yml filepath
  * @returns {Object} - JS Object representation of yml file
  */
-function loadYmlFile(filePath) {
-  return yaml.safeLoad(fs.readFileSync(filePath, 'utf8'));
+function loadYmlConfigFile(filePath) {
+  return loadYmlFile(filePath);
 }
 
 /**
@@ -36,7 +36,7 @@ function saveYmlConfigFile(configJs, filepath) {
  * @returns {Object} return the workflow configuration
  */
 function getConfigObject(configFilepath, nodeName) {
-  const config = loadYmlFile(configFilepath);
+  const config = loadYmlConfigFile(configFilepath);
   if (nodeName) return config[nodeName];
   return config;
 }
@@ -50,7 +50,7 @@ function getConfigObject(configFilepath, nodeName) {
  */
 
 function updateConfigObject(configFilePath, nodeName, configJson) {
-  const config = loadYmlFile(configFilePath);
+  const config = loadYmlConfigFile(configFilePath);
   assignIn(config[nodeName], configJson);
   saveYmlConfigFile(config, configFilePath);
 }

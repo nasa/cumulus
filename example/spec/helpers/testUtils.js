@@ -10,6 +10,7 @@ const { promisify } = require('util');
 const tempy = require('tempy');
 const execa = require('execa');
 const pTimeout = require('p-timeout');
+const yaml = require('js-yaml');
 
 const {
   aws: { s3, headObject, parseS3Uri },
@@ -286,6 +287,16 @@ async function protectFile(file, fn) {
   }
 }
 
+/**
+ * Load a yml file
+ *
+ * @param {string} filePath - workflow yml filepath
+ * @returns {Object} - JS Object representation of yml file
+ */
+function loadYmlFile(filePath) {
+  return yaml.safeLoad(fs.readFileSync(filePath, 'utf8'));
+}
+
 const isLambdaStatusLogEntry = (logEntry) =>
   logEntry.message.includes('START') ||
   logEntry.message.includes('END') ||
@@ -294,19 +305,20 @@ const isLambdaStatusLogEntry = (logEntry) =>
 const isCumulusLogEntry = (logEntry) => !isLambdaStatusLogEntry(logEntry);
 
 module.exports = {
-  timestampedName,
-  createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
-  loadConfig,
-  templateFile,
-  updateAndUploadTestDataToBucket,
-  uploadTestDataToBucket,
+  createTimestampedTestId,
   deleteFolder,
   getExecutionUrl,
-  getPublicS3FileUrl,
   getFilesMetadata,
-  protectFile,
+  getPublicS3FileUrl,
   isCumulusLogEntry,
-  runKes
+  loadConfig,
+  loadYmlFile,
+  protectFile,
+  runKes,
+  templateFile,
+  timestampedName,
+  updateAndUploadTestDataToBucket,
+  uploadTestDataToBucket
 };
