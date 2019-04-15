@@ -54,7 +54,6 @@ function handler(event, _context, cb) {
     con.consume(dispatch)
       .then((r) => cb(null, r))
       .catch(cb);
-  }
-  else cb(new Error('queueUrl is missing'));
+  } else cb(new Error('queueUrl is missing'));
 }
 module.exports = handler;

@@ -42,16 +42,14 @@ module.exports = class FieldPattern {
     if (isString(patternVal)) {
       this.type = 'string';
       this.patternStr = patternVal;
-    }
-    else {
+    } else {
       this.type = patternVal.type || 'string';
       this.patternStr = patternVal.value;
     }
     const match = this.patternStr.match(this.fieldRegex);
     if (match) {
       this.fields = match.map((f) => f.substr(1, f.length - 2));
-    }
-    else {
+    } else {
       this.fields = [];
     }
     const bareStr = this.patternStr.replace(this.fieldRegex, 'TEMPLATE_FIELD');
@@ -110,8 +108,7 @@ module.exports = class FieldPattern {
       const doy = match[2];
       const datetime = new Date(+new Date(`${year}-01-01Z`) + (24 * 60 * 60 * 1000 * (doy - 1)));
       isoDateTime = datetime.toISOString();
-    }
-    else if (date.match(/^\d{4}-\d{2}-\d{2}T/)) {
+    } else if (date.match(/^\d{4}-\d{2}-\d{2}T/)) {
       isoDateTime = date;
     }
 

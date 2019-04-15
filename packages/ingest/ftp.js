@@ -7,6 +7,7 @@ const { log, aws: { buildS3Uri, promiseS3Upload } } = require('@cumulus/common')
 const omit = require('lodash.omit');
 
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
+const { lookupMimeType } = require('./util');
 const recursion = require('./recursion');
 
 module.exports.ftpMixin = (superclass) => class extends superclass {
@@ -51,7 +52,7 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
    * @returns {Promise.<string>} - the path that the file was saved to
    */
   async download(remotePath, localPath) {
-    const remoteUrl = `ftp://${this.host}${remotePath}`;
+    const remoteUrl = `ftp://${this.host}/${remotePath}`;
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
 
     if (!this.decrypted) await this.decrypt();
@@ -153,7 +154,7 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
    * @returns {Promise} s3 uri of destination file
    */
   async sync(remotePath, bucket, key) {
-    const remoteUrl = `ftp://${this.host}${remotePath}`;
+    const remoteUrl = `ftp://${this.host}/${remotePath}`;
     const s3uri = buildS3Uri(bucket, key);
     log.info(`Sync ${remoteUrl} to ${s3uri}`);
 
@@ -174,7 +175,12 @@ module.exports.ftpMixin = (superclass) => class extends superclass {
     const pass = new PassThrough();
     readable.pipe(pass);
 
-    const params = { Bucket: bucket, Key: key, Body: pass };
+    const params = {
+      Bucket: bucket,
+      Key: key,
+      Body: pass,
+      ContentType: lookupMimeType(key)
+    };
     await promiseS3Upload(params);
     log.info('Uploading to s3 is complete(ftp)', s3uri);
 

@@ -13,6 +13,7 @@ const { httpMixin } = require('./http');
 const { parsePdr } = require('./parse-pdr');
 const { s3Mixin } = require('./s3');
 const { sftpMixin } = require('./sftp');
+const { normalizeProviderPath } = require('./util');
 
 
 /**
@@ -46,7 +47,7 @@ class Discover {
     // get authentication information
     this.port = get(this.provider, 'port');
     this.host = get(this.provider, 'host', null);
-    this.path = providerPath || '/';
+    this.path = normalizeProviderPath(providerPath);
     this.username = get(this.provider, 'username', null);
     this.password = get(this.provider, 'password', null);
   }
@@ -170,8 +171,7 @@ class Parse {
         this.pdr.name,
         pdrLocalPath
       );
-    }
-    finally {
+    } finally {
       // Clean up the temporary download directory
       await fs.remove(downloadDir);
     }
@@ -291,8 +291,7 @@ function selector(type, protocol) {
     default:
       throw new Error(`Protocol ${protocol} is not supported.`);
     }
-  }
-  else if (type === 'parse') {
+  } else if (type === 'parse') {
     switch (protocol) {
     case 'http':
     case 'https':

@@ -97,8 +97,7 @@ async function publishSnsMessage(event) {
           message.meta.status
         );
       }
-    }
-    else {
+    } else {
       message.meta.status = 'running';
     }
 

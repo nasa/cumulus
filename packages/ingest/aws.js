@@ -193,11 +193,9 @@ class SQS {
     let messageBody;
     if (isString(message)) {
       messageBody = message;
-    }
-    else if (isObject(message)) {
+    } else if (isObject(message)) {
       messageBody = JSON.stringify(message);
-    }
-    else {
+    } else {
       throw new TypeError('body type is not accepted');
     }
 

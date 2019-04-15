@@ -70,8 +70,7 @@ class S3KeyPairProvider {
     try {
       const key = await getS3Object(b, `${s}/crypto/${keyId}`);
       return key;
-    }
-    catch (err) {
+    } catch (err) {
       log.error(`Failed to retrieve S3KeyPair key from bucket ${b} on stack ${s}`);
       throw err;
     }

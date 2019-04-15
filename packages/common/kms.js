@@ -27,8 +27,7 @@ class KMS {
     try {
       const r = await kms.decrypt(params).promise();
       return r.Plaintext.toString();
-    }
-    catch (e) {
+    } catch (e) {
       if (e.toString().includes('InvalidCiphertextException')) {
         throw new KMSDecryptionFailed(
           'Decrypting the secure text failed. The provided text is invalid'

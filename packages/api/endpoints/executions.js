@@ -36,8 +36,7 @@ async function get(req, res) {
   try {
     const response = await e.get({ arn });
     return res.send(response);
-  }
-  catch (err) {
+  } catch (err) {
     if (err instanceof RecordDoesNotExist) {
       return res.boom.notFound(`No record found for ${arn}`);
     }

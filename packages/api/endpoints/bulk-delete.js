@@ -25,8 +25,7 @@ async function startBulkDeleteAsyncOperation(req, res) {
       lambdaName: process.env.BulkDeleteLambda,
       payload: { granuleIds: req.body.granuleIds }
     });
-  }
-  catch (err) {
+  } catch (err) {
     if (err.name !== 'EcsStartTaskError') throw err;
 
     return res.boom.serverUnavailable(`Failed to run ECS task: ${err.message}`);

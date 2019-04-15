@@ -12,8 +12,7 @@ const createErrorType = (name, ParentType = Error) => {
   function E(message) {
     if (isFunction(Error.captureStackTrace)) {
       Error.captureStackTrace(this, this.constructor);
-    }
-    else {
+    } else {
       this.stack = (new Error(message)).stack;
     }
     this.message = message;

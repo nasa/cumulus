@@ -17,8 +17,7 @@ class Consumer {
       await fn(message);
       await deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
       return 1;
-    }
-    catch (e) {
+    } catch (e) {
       log.error(e);
       return 0;
     }
@@ -52,8 +51,7 @@ class Consumer {
       if (messageLimit > 10) {
         results = await this.processMessages(fn, 10);
         messageLimit -= 10;
-      }
-      else if (messageLimit > 0) {
+      } else if (messageLimit > 0) {
         results = await this.processMessages(fn, messageLimit);
         messageLimit -= messageLimit;
       }

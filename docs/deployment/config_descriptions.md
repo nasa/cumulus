@@ -53,6 +53,20 @@ note `instanceType` and `desiredInstances` have been selected for a sample insta
 
 Also note, if you dont specify the `amiid`, it will try to use a default, which may or may not exist.
 
+For each service, a TaskCountLowAlarm alarm is added to check the RUNNING Task Count against the service configuration.  You can update `ecs` properties and add additional ECS alarms to your service.  For example,
+
+    ecs:
+      services:
+        EcsTaskHelloWorld:
+          alarms:
+            TaskCountHigh:
+              alarm_description: 'There are more tasks running than the desired'
+              comparison_operator: GreaterThanThreshold
+              evaluation_periods: 1
+              metric: MemoryUtilization
+              statistic: SampleCount
+              threshold: '{{ecs.services.EcsTaskHelloWorld.count}}'
+
 ## es
 Configuration for the Amazon Elasticsearch Service (ES) instance.  You can update `es` properties and add additional ES alarms. For example:
 
@@ -80,7 +94,7 @@ For information on how to locate them in the Console see [Locating Cumulus IAM R
 
 ## users
 
-List of EarthData users you wish to have access to your dashboard application.   These users will be populated in your `<stackname>-UsersTable` [DynamoDb](https://console.aws.amazon.com/dynamodb/) (in addition to the default_users defined in the Cumulus default template).
+List of EarthData users you wish to have access to your dashboard application. These users will be populated in your `<stackname>-UsersTable` [DynamoDb](https://console.aws.amazon.com/dynamodb/) table.
 
 # Footnotes
 

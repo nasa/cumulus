@@ -9,7 +9,7 @@ const pckg = require('../package.json');
 const es = require('./es');
 const backup = require('./backup');
 const restore = require('./restore');
-const { serveApi } = require('./serve');
+const { serveApi, serveDistributionApi } = require('./serve');
 const { defaultIndexAlias } = require('../es/search');
 
 program.version(pckg.version);
@@ -36,8 +36,7 @@ program
         cmd.indexAlias
       ).then((response) => console.log(`Reindex successful: ${JSON.stringify(response)}`))
         .catch((err) => console.error(`Error reindexing: ${err.message}`));
-    }
-    else {
+    } else {
       cliUtils.displayMissingOptionsMessage(missingOptions);
     }
   });
@@ -52,8 +51,7 @@ program
       es.getStatus(cmd.host)
         .then((tasks) => console.log(JSON.stringify(tasks)))
         .catch((err) => console.error(`Error getting status: ${err.message}`));
-    }
-    else {
+    } else {
       cliUtils.displayMissingOptionsMessage(missingOptions);
     }
   });
@@ -65,7 +63,6 @@ program
   .option('--host <host>', 'AWS Elasticsearch host', null)
   .option('-s, --source-index <sourceIndex>', 'Index to switch from and no longer used', null)
   .option('-d, --dest-index <destIndex>', 'Index to be aliased and used as the elasticsearch index for Cumulus', null)
-  .parse(process.argv)
   .action((cmd) => {
     const missingOptions = cliUtils.findMissingOptions(cmd, ['host']);
     if (missingOptions.length === 0) {
@@ -75,8 +72,7 @@ program
         cmd.destIndex,
         cmd.indexAlias
       ).catch((err) => console.error(`Error: ${err.message}`));
-    }
-    else {
+    } else {
       cliUtils.displayMissingOptionsMessage(missingOptions);
     }
   });
@@ -86,7 +82,6 @@ program
   .option('--stack <stack>', 'AWS CloudFormation stack name')
   .option('--migrationVersion <version>', 'Migration version to run')
   .description('Invokes the migration lambda function')
-  .parse(process.argv)
   .action((cmd) => {
     if (!cmd.migrationVersion) {
       throw new Error('version argument is missing');
@@ -109,7 +104,6 @@ program
   .option('--directory <directory>', 'The directory to save the backups to.'
     + ' Defaults to backups in the current directory')
   .description('Backup a given AWS folder to the current folder')
-  .parse(process.argv)
   .action((cmd) => {
     if (!cmd.table) {
       throw new Error('table name is missing');
@@ -124,7 +118,6 @@ program
   .option('--region <region>', 'AWS region name (default: us-east-1)')
   .option('--concurrency <concurrency>', 'Number of concurrent calls to DynamoDB. Default is 2')
   .description('Backup a given AWS folder to the current folder')
-  .parse(process.argv)
   .action((file, cmd) => {
     if (!cmd.table) {
       throw new Error('table name is missing');
@@ -142,9 +135,15 @@ program
 program
   .command('serve')
   .description('Serves the local version of the Cumulus API')
-  .parse(process.argv)
   .action(() => {
-    serveApi().catch(console.error);
+    serveApi(process.env.USERNAME).catch(console.error);
+  });
+
+program
+  .command('serve-dist')
+  .description('Serves the local version of the distribution API')
+  .action(() => {
+    serveDistributionApi(process.env.stackName).catch(console.error);
   });
 
 program

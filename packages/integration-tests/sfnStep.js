@@ -194,8 +194,7 @@ class SfnStep {
         && successfulPassedExecutions
         && successfulPassedExecutions.length > 0) {
       stepExecution = successfulPassedExecutions[0];
-    }
-    else {
+    } else {
       stepExecution = stepExecutions[stepExecutions.length - 1];
     }
 
@@ -208,8 +207,7 @@ class SfnStep {
     let stepOutput = {};
     if (eventType === 'success') {
       stepOutput = this.getSuccessOutput(stepExecution, stepName);
-    }
-    else if (eventType === 'failure') {
+    } else if (eventType === 'failure') {
       stepOutput = this.getFailureOutput(stepExecution, stepName);
     }
 

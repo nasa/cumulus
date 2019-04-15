@@ -383,8 +383,7 @@ async function duplicateHandlingErrorTest(t, duplicateHandling) {
     await uploadFiles(filesToUpload, t.context.stagingBucket);
     await moveGranules(newPayloadOrig);
     t.fail('Expected a DuplicateFile error to be thrown');
-  }
-  catch (error) {
+  } catch (error) {
     t.true(error instanceof errors.DuplicateFile);
     t.true(expectedErrorMessages.includes(error.message));
   }
@@ -478,8 +477,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   output.granules[0].files.forEach((f) => {
     if (f.filename.startsWith(`${outputHdfFile}.v`) || f.filename.endsWith('.cmr.xml')) {
       t.falsy(f.duplicate_found);
-    }
-    else t.true(f.duplicate_found);
+    } else t.true(f.duplicate_found);
   });
 });
 
@@ -529,8 +527,7 @@ test.serial('When duplicateHandling is "skip", does not overwrite or create new.
   output.granules[0].files.forEach((f) => {
     if (f.filename.endsWith('.cmr.xml')) {
       t.falsy(f.duplicate_found);
-    }
-    else t.true(f.duplicate_found);
+    } else t.true(f.duplicate_found);
   });
 });
 
@@ -593,8 +590,7 @@ async function granuleFilesOverwrittenTest(t, newPayload) {
   output.granules[0].files.forEach((f) => {
     if (f.filename.startsWith(`${outputHdfFile}.v`) || f.filename.endsWith('.cmr.xml')) {
       t.falsy(f.duplicate_found);
-    }
-    else t.true(f.duplicate_found);
+    } else t.true(f.duplicate_found);
   });
 }
 

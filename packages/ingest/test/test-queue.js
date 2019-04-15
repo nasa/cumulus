@@ -59,8 +59,7 @@ test.serial('the queue receives a correctly formatted workflow message without a
       MaxNumberOfMessages: 10,
       WaitTimeSeconds: 1
     }).promise();
-  }
-  catch (err) {
+  } catch (err) {
     t.fail(err);
   }
 
@@ -105,8 +104,7 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
       MaxNumberOfMessages: 10,
       WaitTimeSeconds: 1
     }).promise();
-  }
-  catch (err) {
+  } catch (err) {
     t.fail(err);
   }
 
@@ -162,8 +160,7 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
       MaxNumberOfMessages: 10,
       WaitTimeSeconds: 1
     }).promise();
-  }
-  catch (err) {
+  } catch (err) {
     t.fail(err);
   }
 

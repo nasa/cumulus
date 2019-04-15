@@ -6,7 +6,11 @@ const http = rewire('../http');
 const TestHttpMixin = http.httpMixin;
 const EventEmitter = require('events');
 const {
-  calculateS3ObjectChecksum, fileExists, recursivelyDeleteS3Bucket, s3
+  calculateS3ObjectChecksum,
+  fileExists,
+  recursivelyDeleteS3Bucket,
+  s3,
+  headObject
 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -21,7 +25,7 @@ http.__set__('Crawler', TestEmitter);
 class MyTestDiscoveryClass {
   constructor(useList) {
     this.decrypted = true;
-    this.path = '/';
+    this.path = '';
     this.provider = {
       protocol: 'http',
       host: 'localhost',
@@ -35,9 +39,10 @@ class MyTestDiscoveryClass {
 class MyTestHttpDiscoveryClass extends TestHttpMixin(MyTestDiscoveryClass) {}
 const myTestHttpDiscoveryClass = new MyTestHttpDiscoveryClass();
 
-test('Download remote file to s3', async (t) => {
+test('Download remote file to s3 with correct content-type', async (t) => {
   const bucket = randomString();
   const key = randomString();
+  const expectedContentType = 'application/x-hdf';
   try {
     await s3().createBucket({ Bucket: bucket }).promise();
     await myTestHttpDiscoveryClass.sync(
@@ -46,8 +51,10 @@ test('Download remote file to s3', async (t) => {
     t.truthy(fileExists(bucket, key));
     const sum = await calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket, key });
     t.is(sum, 1435712144);
-  }
-  finally {
+
+    const s3HeadResponse = await headObject(bucket, key);
+    t.is(expectedContentType, s3HeadResponse.ContentType);
+  } finally {
     await recursivelyDeleteS3Bucket(bucket);
   }
 });

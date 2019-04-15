@@ -5,6 +5,8 @@ const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { Search } = require('../es/search');
 const { createJwtToken } = require('./token');
 
+const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
+
 /**
  * mocks the context object of the lambda function with
  * succeed and fail functions to facilitate testing of
@@ -224,7 +226,7 @@ function fakeCollectionFactory(options = {}) {
       name: randomString(),
       dataType: randomString(),
       version: '0.0.0',
-      provider_path: '/',
+      provider_path: '',
       duplicateHandling: 'replace',
       granuleId: '^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$',
       granuleIdExtraction: '(MOD09GQ\\.(.*))\\.hdf',
@@ -279,6 +281,7 @@ async function createFakeJwtAuthToken({ accessTokenModel, userModel }) {
 }
 
 module.exports = {
+  isLocalApi,
   createFakeJwtAuthToken,
   testEndpoint,
   fakeAccessTokenFactory,

@@ -3,6 +3,7 @@
 const fs = require('fs');
 const { Config } = require('kes');
 const cloneDeep = require('lodash.clonedeep');
+const mime = require('mime-types');
 const merge = require('lodash.merge');
 const path = require('path');
 const { promisify } = require('util');
@@ -94,13 +95,13 @@ function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-da
     replacements.forEach((replace) => {
       data = globalReplace(data, replace.old, replace.new);
     });
-  }
-  else data = fs.readFileSync(require.resolve(file));
+  } else data = fs.readFileSync(require.resolve(file));
   const key = path.basename(file);
   return s3().putObject({
     Bucket: bucket,
     Key: `${prefix}/${key}`,
-    Body: data
+    Body: data,
+    ContentType: mime.lookup(key) || null
   }).promise();
 }
 
@@ -163,19 +164,6 @@ function getExecutionUrl(executionArn) {
 }
 
 /**
- * Get URL to a public file in S3
- *
- * @param {Object} params
- * @param {string} params.bucket - S3 bucket
- * @param {string} params.key - S3 object key
- *
- * @returns {string} - Public S3 file URL
- */
-function getPublicS3FileUrl({ bucket, key }) {
-  return `https://${bucket}.s3.amazonaws.com/${key}`;
-}
-
-/**
  * Redeploy the current Cumulus deployment.
  *
  * @param {Object} config - configuration object from loadConfig()
@@ -217,17 +205,14 @@ async function getFileMetadata(file) {
   if (file.bucket && file.filepath) {
     Bucket = file.bucket;
     Key = file.filepath;
-  }
-  else if (file.bucket && file.key) {
+  } else if (file.bucket && file.key) {
     Bucket = file.bucket;
     Key = file.key;
-  }
-  else if (file.filename) {
+  } else if (file.filename) {
     const parsedUrl = parseS3Uri(file.filename);
     Bucket = parsedUrl.Bucket;
     Key = parsedUrl.Key;
-  }
-  else {
+  } else {
     throw new Error(`Unable to determine file location: ${JSON.stringify(file)}`);
   }
 
@@ -266,8 +251,7 @@ async function protectFile(file, fn) {
 
   try {
     return await Promise.resolve().then(fn);
-  }
-  finally {
+  } finally {
     await promisedCopyFile(backupLocation, file);
     await promisedUnlink(backupLocation);
   }
@@ -291,7 +275,6 @@ module.exports = {
   uploadTestDataToBucket,
   deleteFolder,
   getExecutionUrl,
-  getPublicS3FileUrl,
   redeploy,
   getFilesMetadata,
   protectFile,

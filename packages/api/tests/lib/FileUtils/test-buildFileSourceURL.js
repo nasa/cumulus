@@ -47,8 +47,7 @@ test('buildFileSourceURL() throws a TypeError if the file does not have a path p
   try {
     buildFileSourceURL('http://example.com', file);
     t.fail('Expected a TypeError to be thrown');
-  }
-  catch (err) {
+  } catch (err) {
     t.true(err instanceof TypeError);
     t.is(err.message, 'Cannot build a source URL for a file without a path property');
   }

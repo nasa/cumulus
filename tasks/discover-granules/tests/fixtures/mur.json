@@ -28,7 +28,7 @@
       "name": "MUR-JPL-L4-GLOB-v4.1",
       "dataType": "MUR-JPL-L4-GLOB",
       "version": "4.1",
-      "provider_path": "/allData/ghrsst/data/GDS2/L4/GLOB/JPL/MUR/v4.1/2017/(20[1-3])",
+      "provider_path": "allData/ghrsst/data/GDS2/L4/GLOB/JPL/MUR/v4.1/2017/(20[1-3])",
       "granuleId": "^.*$",
       "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
       "granuleIdExtraction": "^(.*)\\.(nc|nc\\.md5)$",
