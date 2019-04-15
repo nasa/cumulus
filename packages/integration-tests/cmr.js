@@ -152,8 +152,7 @@ async function waitForConceptExistsOutcome(cmrLink, expectation) {
     );
 
     await waitForCmrToBeConsistent();
-  }
-  catch (err) {
+  } catch (err) {
     console.error('waitForConceptExistsOutcome() failed:', err);
     throw err;
   }
@@ -239,8 +238,7 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
 function metadataFormatToVersion(typeStr) {
   try {
     return typeStr.match(/umm_json_v(.*)/)[1].replace('_', '.');
-  }
-  catch (error) {
+  } catch (error) {
     return '';
   }
 }
@@ -420,8 +418,7 @@ async function generateCmrFilesForGranules(
         (g) => generateAndStoreCmrUmmJson(g, collection, bucket, additionalUrls, cmrMetadataFormat)
       )
     );
-  }
-  else {
+  } else {
     files = await Promise.all(
       granules.map((g) => generateAndStoreCmrXml(g, collection, bucket, additionalUrls))
     );

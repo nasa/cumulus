@@ -94,8 +94,7 @@ async function getCMRInstance(creds, systemBucket, stack) {
   let password;
   try {
     password = await DefaultProvider.decrypt(creds.password, undefined, systemBucket, stack);
-  }
-  catch (error) {
+  } catch (error) {
     const reason = error.message || error.code || error.name;
     log.error('Decrypting password failed, using unencrypted password:', reason);
     password = creds.password;
@@ -352,21 +351,14 @@ function constructOnlineAccessUrl({
   buckets
 }) {
   const bucketType = buckets.type(file.bucket);
-  if (bucketType === 'protected') {
+  const distributionApiBuckets = ['protected', 'public'];
+  if (distributionApiBuckets.includes(bucketType)) {
     const extension = urljoin(file.bucket, getS3KeyOfFile(file));
     return {
       URL: urljoin(distEndpoint, extension),
       URLDescription: 'File to download', // used by ECHO10
       Description: 'File to download', // used by UMMG
       Type: mapCNMTypeToCMRType(file.fileType) // used by UMMG
-    };
-  }
-  if (bucketType === 'public') {
-    return {
-      URL: `https://${file.bucket}.s3.amazonaws.com/${getS3KeyOfFile(file)}`,
-      URLDescription: 'File to download',
-      Description: 'File to download',
-      Type: mapCNMTypeToCMRType(file.fileType)
     };
   }
   return null;
@@ -556,8 +548,7 @@ function generateEcho10XMLString(granule) {
     if (key === 'OnlineAccessURLs') {
       mapping.set(key, granule[key]);
       mapping.set('OnlineResources', granule.OnlineResources);
-    }
-    else if (key !== 'OnlineResources') {
+    } else if (key !== 'OnlineResources') {
       mapping.set(key, granule[key]);
     }
   });
@@ -694,11 +685,9 @@ async function updateCMRMetadata({
 
   if (isECHO10File(filename)) {
     theMetadata = await updateEcho10XMLMetadata(params);
-  }
-  else if (isUMMGFile(filename)) {
+  } else if (isUMMGFile(filename)) {
     theMetadata = await updateUMMGMetadata(params);
-  }
-  else {
+  } else {
     throw new errors.CMRMetaFileNotFound('Invalid CMR filetype passed to updateCMRMetadata');
   }
 

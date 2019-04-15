@@ -64,18 +64,15 @@ function discoverPdrs(event) {
           const err = new errors.RemoteResourceError('Connection Refused');
           log.error(err);
           throw err;
-        }
-        else if (e.message.includes('Please login with USER and PASS')) {
+        } else if (e.message.includes('Please login with USER and PASS')) {
           const err = new errors.FTPError('Login incorrect');
           log.error(err);
           throw err;
-        }
-        else if (e.details && e.details.status === 'timeout') {
+        } else if (e.details && e.details.status === 'timeout') {
           const err = new errors.ConnectionTimeout('connection Timed out');
           log.error(err);
           throw err;
-        }
-        else if (e.details && e.details.status === 'notfound') {
+        } else if (e.details && e.details.status === 'notfound') {
           const err = new errors.HostNotFound(`${e.details.url} not found`);
           log.error(err);
           throw err;
@@ -83,8 +80,7 @@ function discoverPdrs(event) {
 
         throw e;
       });
-  }
-  catch (e) {
+  } catch (e) {
     log.error(e);
     throw e;
   }

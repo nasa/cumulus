@@ -23,8 +23,7 @@ async function performLock(mutex, deployment, cb) {
     await mutex.writeLock(deployment, STACK_EXPIRATION_MS);
 
     return cb(0);
-  }
-  catch (e) {
+  } catch (e) {
     return cb(1);
   }
 }
@@ -34,8 +33,7 @@ async function removeLock(mutex, deployment, cb) {
     await mutex.unlock(deployment);
 
     return cb(0);
-  }
-  catch (e) {
+  } catch (e) {
     return cb(1);
   }
 }

@@ -51,8 +51,7 @@ class BaseSearch {
       esConfig = {
         host: BaseSearch.getLocalEsHost()
       };
-    }
-    else {
+    } else {
       if (!aws.config.credentials) {
         await new Promise((resolve, reject) => aws.config.getCredentials((err) => {
           if (err) return reject(err);
@@ -105,8 +104,7 @@ class BaseSearch {
 
     if (this.type === process.env.CollectionsTable) {
       this.hash = 'collectionName';
-    }
-    else if (this.type === process.env.PdrsTable) {
+    } else if (this.type === process.env.PdrsTable) {
       this.hash = 'pdrName';
     }
   }
@@ -141,8 +139,7 @@ class BaseSearch {
       fields.forEach((field) => {
         if (field === 'createdAt') {
           aggrs.aggs = Object.assign(aggrs.aggs, aggs.date(field));
-        }
-        else {
+        } else {
           aggrs.aggs = Object.assign(aggrs.aggs, aggs.term(field));
         }
       });
@@ -198,8 +195,7 @@ class BaseSearch {
       const resp = result.hits.hits[0]._source;
       resp._id = result.hits.hits[0]._id;
       return resp;
-    }
-    catch (e) {
+    } catch (e) {
       //log.error(e, logDetails);
       throw e;
     }
@@ -267,8 +263,7 @@ class BaseSearch {
         )
         * 100
       );
-    }
-    else {
+    } else {
       newObj.progress = 0;
     }
 
@@ -297,8 +292,7 @@ class BaseSearch {
         meta,
         results: response
       };
-    }
-    catch (e) {
+    } catch (e) {
       //log.error(e, logDetails);
       return e;
     }
@@ -322,8 +316,7 @@ class BaseSearch {
         },
         counts: result.aggregations
       };
-    }
-    catch (e) {
+    } catch (e) {
       //log.error(e, logDetails);
       return e;
     }

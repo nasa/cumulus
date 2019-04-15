@@ -141,8 +141,7 @@ async function loadPdrFile(pdrFilePath) {
   let parsed;
   try {
     parsed = pvl.pvlToJS(pdrString);
-  }
-  catch (e) {
+  } catch (e) {
     throw new PDRParsingError(e.message);
   }
 

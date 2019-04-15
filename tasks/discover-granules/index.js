@@ -21,8 +21,7 @@ async function discoverGranules(event) {
   let granules;
   try {
     granules = await discover.discover();
-  }
-  finally {
+  } finally {
     if (discover.connected) discover.end();
   }
 

@@ -55,11 +55,9 @@ test.serial('postToCMR throws error if CMR correctly identifies the xml as inval
     });
     await postToCMR(newPayload);
     t.fail();
-  }
-  catch (error) {
+  } catch (error) {
     t.true(error instanceof cmrClient.ValidationError);
-  }
-  finally {
+  } finally {
     cmrClient.CMR.prototype.getToken.restore();
   }
 });
@@ -84,8 +82,7 @@ test.serial('postToCMR succeeds with correct payload', async (t) => {
       output.granules[0].cmrLink,
       `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
     );
-  }
-  finally {
+  } finally {
     cmrjs.CMR.prototype.ingestGranule.restore();
   }
 });
@@ -112,8 +109,7 @@ test.serial('postToCMR returns SIT url when CMR_ENVIRONMENT=="SIT"', async (t) =
       output.granules[0].cmrLink,
       `https://cmr.sit.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
     );
-  }
-  finally {
+  } finally {
     cmrjs.CMR.prototype.ingestGranule.restore();
     delete process.env.CMR_ENVIRONMENT;
   }
@@ -131,8 +127,7 @@ test.serial('postToCMR throws an error if there is no CMR metadata file', async 
 
   try {
     await postToCMR(newPayload);
-  }
-  catch (error) {
+  } catch (error) {
     t.true(error instanceof CMRMetaFileNotFound);
   }
 });
@@ -149,8 +144,7 @@ test.serial('postToCMR throws an error if any granule is missing a metadata file
 
   try {
     await postToCMR(newPayload);
-  }
-  catch (error) {
+  } catch (error) {
     t.true(error instanceof CMRMetaFileNotFound);
     t.is(error.message, (`CMR Meta file not found for granule ${newGranule.granuleId}`));
   }
@@ -170,8 +164,7 @@ test.serial('postToCMR continues without metadata file if there is skipMetaCheck
   try {
     const output = await postToCMR(newPayload);
     t.is(output.granules[0].granuleId, granuleId);
-  }
-  catch (err) {
+  } catch (err) {
     t.fail(err);
   }
 });
@@ -202,11 +195,9 @@ test.serial('postToCMR continues with skipMetaCheck even if any granule is missi
       `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
     );
     t.is(output.granules[1].cmrLink, undefined);
-  }
-  catch (err) {
+  } catch (err) {
     t.fail(err);
-  }
-  finally {
+  } finally {
     cmrjs.CMR.prototype.ingestGranule.restore();
   }
 });
@@ -235,8 +226,7 @@ test.serial('postToCmr identifies files with the new file schema', async (t) => 
       output.granules[0].cmrLink,
       `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
     );
-  }
-  finally {
+  } finally {
     cmrjs.CMR.prototype.ingestGranule.restore();
   }
 });

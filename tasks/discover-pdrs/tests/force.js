@@ -65,14 +65,11 @@ test('test pdr discovery with force=false', async (t) => {
     await validateOutput(t, output2);
 
     t.is(output2.pdrs.length, 0);
-  }
-  catch (err) {
+  } catch (err) {
     if (err instanceof RemoteResourceError) {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else t.fail(err);
-  }
-  finally {
+    } else t.fail(err);
+  } finally {
     await recursivelyDeleteS3Bucket(event.config.bucket);
   }
 });
@@ -121,14 +118,11 @@ test('test pdr discovery with force=true', async (t) => {
     await validateOutput(t, output2);
 
     t.is(output2.pdrs.length, 5);
-  }
-  catch (err) {
+  } catch (err) {
     if (err instanceof RemoteResourceError) {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else t.fail(err);
-  }
-  finally {
+    } else t.fail(err);
+  } finally {
     await recursivelyDeleteS3Bucket(event.config.bucket);
   }
 });

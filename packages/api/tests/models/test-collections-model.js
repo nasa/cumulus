@@ -90,8 +90,7 @@ test('Collection.delete() throws an exception if the collection has associated r
   try {
     await collectionsModel.delete({ name, version });
     t.fail('Expected an exception to be thrown');
-  }
-  catch (err) {
+  } catch (err) {
     t.true(err instanceof AssociatedRulesError);
     t.is(err.message, 'Cannot delete a collection that has associated rules');
     t.deepEqual(err.rules, [rule.name]);

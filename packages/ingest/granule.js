@@ -125,8 +125,7 @@ class Discover {
         .filter((file) => this.fileTypeConfigForFile(file))
         // Add additional granule-related properties to the file
         .map((file) => this.setGranuleInfo(file));
-    }
-    catch (error) {
+    } catch (error) {
       log.error(`discover exception ${JSON.stringify(error)}`);
     }
 
@@ -227,8 +226,7 @@ class Granule {
       }
       const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
       this.collection = await collectionConfigStore.get(granule.dataType, granule.version);
-    }
-    else {
+    } else {
       // Collection is passed in, but granule does not define the dataType and version
       if (!dataType) dataType = this.collection.dataType || this.collection.name;
       if (!version) version = this.collection.version;
@@ -440,8 +438,7 @@ class Granule {
         await this.download(checksumRemotePath, checksumLocalPath);
         const checksumFile = await fs.readFile(checksumLocalPath, 'utf8');
         [checksumValue] = checksumFile.split(' ');
-      }
-      finally {
+      } finally {
         await fs.remove(downloadDir);
       }
 
@@ -542,8 +539,7 @@ class Granule {
       // else rename the existing file, and both files are part of the granule.
       if (existingFileSum === stagedFileSum) {
         await aws.deleteS3Object(bucket, stagedFileKey);
-      }
-      else {
+      } else {
         log.debug(`Renaming file to ${destinationKey}`);
         await exports.renameS3FileWithTimestamp(bucket, destinationKey);
         await exports.moveGranuleFile(
@@ -635,8 +631,7 @@ function selector(type, protocol) {
     default:
       throw new Error(`Protocol ${protocol} is not supported.`);
     }
-  }
-  else if (type === 'ingest') {
+  } else if (type === 'ingest') {
     switch (protocol) {
     case 'sftp':
       return SftpGranule;
@@ -728,11 +723,9 @@ function generateMoveFileParams(sourceFiles, destinations) {
         Bucket: file.bucket,
         Key: file.key
       };
-    }
-    else if (file.filename) {
+    } else if (file.filename) {
       source = aws.parseS3Uri(file.filename);
-    }
-    else {
+    } else {
       throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
     }
 
@@ -788,13 +781,11 @@ async function moveGranuleFiles(sourceFiles, destinations) {
     if (file.bucket && file.key) {
       fileBucket = file.bucket;
       fileKey = file.key;
-    }
-    else if (file.filename) {
+    } else if (file.filename) {
       const parsed = aws.parseS3Uri(file.filename);
       fileBucket = parsed.Bucket;
       fileKey = parsed.Key;
-    }
-    else {
+    } else {
       throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
     }
 

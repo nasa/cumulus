@@ -39,8 +39,7 @@ async function get(req, res) {
     const result = await c.get({ name, version });
     // const stats = await collection.getStats([res], [res.name]);
     return res.send(result);
-  }
-  catch (e) {
+  } catch (e) {
     return res.boom.notFound(e.message);
   }
 }
@@ -67,16 +66,14 @@ async function post(req, res) {
     try {
       await c.get({ name, version });
       return res.boom.badRequest(`A record already exists for ${name} version: ${version}`);
-    }
-    catch (e) {
+    } catch (e) {
       if (e instanceof RecordDoesNotExist) {
         await c.create(data);
         return res.send({ message: 'Record saved', record: data });
       }
       throw e;
     }
-  }
-  catch (e) {
+  } catch (e) {
     return res.boom.badImplementation(e.message);
   }
 }
@@ -109,8 +106,7 @@ async function put(req, res) {
     data = Object.assign({}, originalData, data);
     const result = await c.create(data);
     return res.send(result);
-  }
-  catch (err) {
+  } catch (err) {
     if (err instanceof RecordDoesNotExist) {
       return res.boom.notFound('Record does not exist');
     }
@@ -133,8 +129,7 @@ async function del(req, res) {
   try {
     await collectionModel.delete({ name, version });
     return res.send({ message: 'Record deleted' });
-  }
-  catch (err) {
+  } catch (err) {
     if (err instanceof AssociatedRulesError) {
       const message = `Cannot delete collection with associated rules: ${err.rules.join(', ')}`;
       return res.boom.conflict(message);
