@@ -62,8 +62,7 @@ describe('When an application override template is in the application directory'
         kesFolder: 'test_app_override'
       });
       cloudFormation = loadYmlFile('test_app_override/cloudformation.yml');
-    }
-    finally {
+    } finally { 
       await fs.remove('test_app_override');
     }
   });

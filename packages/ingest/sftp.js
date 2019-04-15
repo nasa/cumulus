@@ -8,6 +8,7 @@ const get = require('lodash.get');
 const omit = require('lodash.omit');
 
 const { KMSProvider: KMS, DefaultProvider } = require('@cumulus/common/key-pair-provider');
+const { lookupMimeType } = require('./util');
 const recursion = require('./recursion');
 
 module.exports.sftpMixin = (superclass) => class extends superclass {
@@ -53,8 +54,7 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
       if (this.options.cmKeyId) {
         // we are using AWS KMS and the privateKey is encrypted
         this.options.privateKey = await KMS.decrypt(priv.Body.toString());
-      }
-      else {
+      } else {
         // private key is not encrypted...
         this.options.privateKey = priv.Body.toString();
       }
@@ -194,7 +194,13 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
     const pass = new PassThrough();
     readable.pipe(pass);
 
-    const params = { Bucket: bucket, Key: key, Body: pass };
+    const params = {
+      Bucket: bucket,
+      Key: key,
+      Body: pass,
+      ContentType: lookupMimeType(key)
+    };
+
     const result = await promiseS3Upload(params);
     log.info('Uploading to s3 is complete(sftp)', result);
     return s3uri;

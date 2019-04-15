@@ -678,8 +678,7 @@ test.serial('reingest a granule', async (t) => {
     });
 
     await indexer.reingest(record);
-  }
-  finally {
+  } finally {
     delete sfn.describeExecution;
   }
 

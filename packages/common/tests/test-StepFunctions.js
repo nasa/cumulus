@@ -13,8 +13,7 @@ const runWithStubbedAndThrottledSfnOperation = async (operation, response, fn) =
     aws.sfn()[operation] = () => ({ promise });
 
     return await fn();
-  }
-  finally {
+  } finally {
     aws.sfn()[operation] = operationBefore;
   }
 };
@@ -64,8 +63,7 @@ test('doesExecutionExist throws any non-ExecutionDoesNotExist errors', async (t)
   try {
     t.false(await StepFunctions.doesExecutionExist(Promise.reject(err)));
     t.fail();
-  }
-  catch (_) {
+  } catch (_) {
     t.pass();
   }
 });

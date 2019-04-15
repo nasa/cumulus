@@ -42,7 +42,7 @@ default:
 # ------------------------
 # CUMULUS team deployments
 # ------------------------
-CUMULUS-from-npm:
+cumulus-from-npm:
   prefix: test-npm-integration
 
 cumulus-from-source:
@@ -286,6 +286,7 @@ mhs:
 
 mhs3:
   prefix: mhs3
+  stackName: mhs3-iam
   buckets:
     internal:
       name: mhs3-internal

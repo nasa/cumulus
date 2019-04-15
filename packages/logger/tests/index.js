@@ -149,8 +149,7 @@ test('Logger.error() supports templates when an Error object is passed', (t) => 
 
   try {
     throw new Error('so wrong');
-  }
-  catch (err) {
+  } catch (err) {
     logger.error('%s %s', 'hello', 'world', err);
   }
 
@@ -165,8 +164,7 @@ test('Logger.error() logs info about an Error', (t) => {
 
   try {
     throw new Error('test123');
-  }
-  catch (err) {
+  } catch (err) {
     logger.error('something bad', err);
   }
 
@@ -188,8 +186,7 @@ test('Logger.error() can handle just an Error', (t) => {
 
   try {
     throw new Error('test123');
-  }
-  catch (err) {
+  } catch (err) {
     logger.error(err);
   }
 

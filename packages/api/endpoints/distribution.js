@@ -100,8 +100,8 @@ async function handleRedirectRequest(req, res) {
 /**
  * Responds to a request for temporary s3 credentials.
  *
- * @param {any} req - express request object
- * @param {any} res - express response object
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object containing
  * temporary credentials
  */
@@ -123,8 +123,7 @@ async function handleFileRequest(req, res) {
   let fileKey;
   try {
     [fileBucket, fileKey] = getFileBucketAndKey(req.params[0]);
-  }
-  catch (err) {
+  } catch (err) {
     if (err instanceof UnparsableFileLocationError) {
       return res.boom.notFound(err.message);
     }

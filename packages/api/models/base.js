@@ -116,7 +116,7 @@ class Manager {
     const validate = ajv.compile(schemaWithAdditionalPropertiesProhibited);
     const valid = validate(item);
     if (!valid) {
-      const err = new Error('The record has validation errors: ' + JSON.stringify(validate.errors));
+      const err = new Error(`The record has validation errors: ${JSON.stringify(validate.errors)}`);
       err.name = 'SchemaValidationError';
       err.detail = JSON.stringify(validate.errors);
       throw err;
@@ -195,8 +195,7 @@ class Manager {
     try {
       await this.get(Key);
       return true;
-    }
-    catch (err) {
+    } catch (err) {
       if (err instanceof RecordDoesNotExist) return false;
 
       throw err;
@@ -231,8 +230,7 @@ class Manager {
         throw new RecordDoesNotExist();
       }
       return getResponse.Item;
-    }
-    catch (e) {
+    } catch (e) {
       throw new RecordDoesNotExist(
         `No record found for ${JSON.stringify(item)} in ${this.tableName}`
       );
