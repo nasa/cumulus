@@ -63,8 +63,7 @@ async function reindex(req, res) {
     }
 
     sourceIndex = indices[0];
-  }
-  else {
+  } else {
     const sourceExists = await esClient.indices.exists({ index: sourceIndex });
 
     if (!sourceExists) {
