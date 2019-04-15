@@ -30,8 +30,8 @@ const MILLISECONDS_IN_A_MINUTE = 60 * 1000;
  *
  * @returns {Object} - Configuration object
 */
-function loadConfig() {
-  // make sure deployment env variable is set
+function loadConfig(type='app') {
+    // make sure deployment env variable is set
   if (!process.env.DEPLOYMENT) {
     throw new Error(
       'You MUST set DEPLOYMENT environment variable with the name' +
@@ -40,22 +40,36 @@ function loadConfig() {
   }
 
   const params = {
-    deployment: process.env.DEPLOYMENT,
-    configFile: './app/config.yml',
-    kesFolder: './app'
+    app: {
+      deployment: process.env.DEPLOYMENT,
+      configFile: './app/config.yml',
+      kesFolder: './app'
+    },
+    iam: {
+      deployment: process.env.DEPLOYMENT,
+      configFile: './iam/config.yml',
+      kesFolder: './iam',
+      stackName: '{{prefix}}}-iam'
+    }
   };
+  const config = new Config(params[type]);
+  return setConfig(config);
+}
 
-  const config = new Config(params);
 
-  if (config.deployment === 'default') {
+function setConfig(config) {
+  let updatedConfig = cloneDeep(config);
+  if (!updatedConfig.test_configs) {
+    updatedConfig.test_configs = {};
+  }
+  if (updatedConfig.deployment === 'default') {
     throw new Error('the default deployment cannot be used for integration tests');
   }
+  updatedConfig.test_configs.buckets = updatedConfig.buckets;
+  updatedConfig.test_configs.deployment = updatedConfig.deployment;
+  updatedConfig.test_configs.cmr = updatedConfig.cmr;
 
-  config.test_configs.buckets = config.buckets;
-  config.test_configs.deployment = config.deployment;
-  config.test_configs.cmr = config.cmr;
-
-  return config.test_configs;
+  return updatedConfig.test_configs;
 }
 
 /**
@@ -176,37 +190,38 @@ function getPublicS3FileUrl({ bucket, key }) {
 }
 
 /**
- * Redeploy the current Cumulus deployment.
+ * Run kes command using stack configuration.
  *
  * @param {Object} config - configuration object from loadConfig()
  * @param {Object} [options] - configuration options with the following keys>
  * @param {string} [options.template=template=node_modules/@cumulus/deployment/app] - optional template command line kes option
  * @param {string} [options.kesClass] - optional kes-class command line kes option
+ * @param {string} [options.kesCommand] - optional kes command to run, defaults to deploy
  * @param {integer} [options.timeout=30] - Timeout value in minutes
  * @returns {Promise<undefined>}
  */
-async function redeploy(config, options = {}) {
+async function runKes(config, options = {}) {
   const timeoutInMinutes = options.timeout || 30;
 
-  const deploymentCommand = './node_modules/.bin/kes';
+  const kesCommand = './node_modules/.bin/kes';
 
-  const deploymentOptions = [
-    'cf', 'deploy',
+  const kesOptions = [
+    'cf', options.kesCommand || 'deploy',
     '--kes-folder', options.kesFolder || 'app',
     '--template', options.template || 'node_modules/@cumulus/deployment/app',
     '--deployment', config.deployment,
     '--region', 'us-east-1'
   ];
 
-  if (options.kesClass) deploymentOptions.push('--kes-class', options.kesClass);
+  if (options.kesClass) kesOptions.push('--kes-class', options.kesClass);
 
-  const deploymentProcess = execa(deploymentCommand, deploymentOptions);
+  const kesProcess = execa(kesCommand, kesOptions);
 
-  deploymentProcess.stdout.pipe(process.stdout);
-  deploymentProcess.stderr.pipe(process.stderr);
+  kesProcess.stdout.pipe(process.stdout);
+  kesProcess.stderr.pipe(process.stderr);
 
   await pTimeout(
-    deploymentProcess,
+    kesProcess,
     timeoutInMinutes * MILLISECONDS_IN_A_MINUTE
   );
 }
@@ -292,8 +307,8 @@ module.exports = {
   deleteFolder,
   getExecutionUrl,
   getPublicS3FileUrl,
-  redeploy,
   getFilesMetadata,
   protectFile,
-  isCumulusLogEntry
+  isCumulusLogEntry,
+  runKes
 };

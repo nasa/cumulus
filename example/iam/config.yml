@@ -1,4 +1,6 @@
 default:
+  test_configs:
+    stackName: '{{stackName}}'
   prefix: test-cumulus-integration
   stackName: '{{prefix}}-iam'
 
@@ -309,7 +311,6 @@ mhs3:
 
 jk:
   prefix: jk
-
 jk2:
   prefix: jk2
 
