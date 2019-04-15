@@ -8,7 +8,7 @@ const { assignIn } = require('lodash.assignin');
 /**
  * Load a yml file
  *
- * @param {string} workflowConfigFile - workflow yml filepath
+ * @param {string} filePath - workflow yml filepath
  * @returns {Object} - JS Object representation of yml file
  */
 function loadYmlFile(filePath) {

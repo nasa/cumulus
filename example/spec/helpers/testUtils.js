@@ -26,13 +26,30 @@ const createTestSuffix = (prefix) => `_test-${prefix}`;
 
 const MILLISECONDS_IN_A_MINUTE = 60 * 1000;
 
+function setConfig(config) {
+  const updatedConfig = cloneDeep(config);
+  if (!updatedConfig.test_configs) {
+    updatedConfig.test_configs = {};
+  }
+  if (updatedConfig.deployment === 'default') {
+    throw new Error('the default deployment cannot be used for integration tests');
+  }
+  updatedConfig.test_configs.buckets = updatedConfig.buckets;
+  updatedConfig.test_configs.deployment = updatedConfig.deployment;
+  updatedConfig.test_configs.cmr = updatedConfig.cmr;
+
+  return updatedConfig.test_configs;
+}
+
 /**
  * Loads and parses the configuration defined in `./app/config.yml`
  *
+ * @param {string} type - type of configuration to load (iam|app)
+ *
  * @returns {Object} - Configuration object
 */
-function loadConfig(type='app') {
-    // make sure deployment env variable is set
+function loadConfig(type = 'app') {
+  // make sure deployment env variable is set
   if (!process.env.DEPLOYMENT) {
     throw new Error(
       'You MUST set DEPLOYMENT environment variable with the name' +
@@ -55,22 +72,6 @@ function loadConfig(type='app') {
   };
   const config = new Config(params[type]);
   return setConfig(config);
-}
-
-
-function setConfig(config) {
-  let updatedConfig = cloneDeep(config);
-  if (!updatedConfig.test_configs) {
-    updatedConfig.test_configs = {};
-  }
-  if (updatedConfig.deployment === 'default') {
-    throw new Error('the default deployment cannot be used for integration tests');
-  }
-  updatedConfig.test_configs.buckets = updatedConfig.buckets;
-  updatedConfig.test_configs.deployment = updatedConfig.deployment;
-  updatedConfig.test_configs.cmr = updatedConfig.cmr;
-
-  return updatedConfig.test_configs;
 }
 
 /**
@@ -304,7 +305,6 @@ module.exports = {
   deleteFolder,
   getExecutionUrl,
   getPublicS3FileUrl,
-  redeploy,
   getFilesMetadata,
   protectFile,
   isCumulusLogEntry,

@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs-extra');
-const { aws: { cf } } = require('@cumulus/common');
 
 const {
   loadConfig,
@@ -11,7 +10,6 @@ const {
 const { loadYmlFile } = require('../../helpers/configUtils');
 
 describe('When an iam override template is in the IAM directory ', () => {
-  let stackDescription;
   let config;
   let cloudFormation;
   beforeAll(async () => {
@@ -20,7 +18,7 @@ describe('When an iam override template is in the IAM directory ', () => {
     try {
       await fs.mkdir('test_iam_override');
       await fs.copy('spec/standalone/redeployment/iam_override_template.yml', 'test_iam_override/cloudformation.template.yml');
-            let fileList = await fs.readdir('iam');
+      let fileList = await fs.readdir('iam');
       fileList = fileList.filter((x) => x !== 'build');
       const promiseList = fileList.map((filename) => fs.copy(`iam/${filename}`, `test_iam_override/${filename}`));
       await Promise.all(promiseList);
@@ -28,11 +26,10 @@ describe('When an iam override template is in the IAM directory ', () => {
         kesCommand: 'compile',
         kesClass: 'node_modules/@cumulus/deployment/iam/kes.js',
         kesFolder: 'test_iam_override',
-        template:  'node_modules/@cumulus/deployment/iam',
+        template: 'node_modules/@cumulus/deployment/iam'
       });
       cloudFormation = loadYmlFile('test_iam_override/cloudformation.yml');
-    }
-    finally {
+    } finally {
       await fs.remove('test_iam_override');
     }
   });
@@ -43,7 +40,6 @@ describe('When an iam override template is in the IAM directory ', () => {
 
 
 describe('When an application override template is in the application directory', () => {
-  let stackDescription;
   let config;
   let cloudFormation;
   beforeAll(async () => {
@@ -62,7 +58,7 @@ describe('When an application override template is in the application directory'
         kesFolder: 'test_app_override'
       });
       cloudFormation = loadYmlFile('test_app_override/cloudformation.yml');
-    } finally { 
+    } finally {
       await fs.remove('test_app_override');
     }
   });
