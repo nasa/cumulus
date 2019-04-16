@@ -51,23 +51,7 @@ If you'd prefer to ingest another data type, you will need to generate a process
 
 ### CMR
 
-The following configuration settings will allow the workflow in this example to authenticate with CMR.
-
-Ensure your CMR username/password is included in your ```app/.env``` file, as noted in the [deployment documentation](../deployment/deployment-readme):
-```
-CMR_USERNAME=cmruser
-CMR_PASSWORD=cmrpassword
-```
-
-These values will be imported via kes in your configuration file.   You should ensure your ```app/config.yml``` contains the following lines:
-cmr:
-
-```
-  username: '{{CMR_USERNAME}}'
-  provider: CUMULUS
-  clientId: 'cumulus-core-{{stackName}}'
-  password: '{{CMR_PASSWORD}}'
-```
+Visit the [config_description](../deployment/config_descriptions#cmr) documentation for instructions on CMR integration and configuration.
 
 These configuration keys will be used in the CmrStep/PostToCmr Lambda function below.
 

@@ -48,25 +48,26 @@ Configure your virtual private cloud.  You can find `<vpc-id>` and `<subnet-id>`
 
 ## cmr
 
-Configuration is required for Cumulus integration with CMR services. The most obvious example of this integration is the `PostToCmr` Cumulus [task](https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr). `username` and `password` should be a CMR service username/password pair. Often in our documentation you will see these set as:
+Configuration is required for Cumulus integration with CMR services. The most obvious example of this integration is the `PostToCmr` Cumulus [task](https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr).
 
-```yaml
-cmr:
-  username: '{{CMR_USERNAME}}'
-  password: '{{CMR_PASSWORD}}'
+Ensure your CMR username/password is included in your ```app/.env``` file, as noted in the [deployment documentation](./deployment-readme):
+
+```shell
+CMR_USERNAME=cmruser
+CMR_PASSWORD=cmrpassword
 ```
 
-`{{CMR_USERNAME}}` references a `CMR_USERNAME` value set in the `app/.env` file. `{{CMR_PASSWORD}}` references `CMR_PASSWORD` in the same way.
+These values will be imported via kes in your configuration file.   You should ensure your ```app/config.yml``` contains the following lines:
+
+```yaml
+cmr: 
+  username: '{{CMR_USERNAME}}'
+  provider: CUMULUS
+  clientId: '<replace-with-daac-name>-{{stackName}}'
+  password: '{{CMR_PASSWORD}}'
+```
 
 `clientId` and `provider` should be configured to point to a user specified CMR `clientId` and `provider`. We use the `CUMULUS` provider in our configurations, but users can specify their own.
-
-```yaml
-cmr:
-  username: '{{CMR_USERNAME}}'
-  password: '{{CMR_PASSWORD}}'
-  clientId: 'cumulus-core-{{stackName}}'
-  provider: CUMULUS
-```
 
 ## ecs
 

@@ -260,6 +260,12 @@ dev:                            # deployment name
   users:
     - username: <user>
     - username: <user2>
+  
+  cmr:
+    username: '{{CMR_USERNAME}}'
+    password: '{{CMR_PASSWORD}}'
+    clientId: '<replace-with-daac-name>-{{stackName}}'
+    provider: CUMULUS
 ```
 
 **IMPORTANT NOTE** - The `stackName` for this config **must start with** the value of the resource prefix for the IAM stack. By default, this means that the `stackName` should start with the value of the [`prefix` set for the IAM stack above](#configure-and-deploy-the-iam-stack). However, if you changed the value of the `ResourcePrefix` param in your IAM stack `config.yml`, you would use that value instead.
