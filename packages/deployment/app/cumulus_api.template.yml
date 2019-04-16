@@ -1,12 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'stack: {{stackName}} | deployed by Kes'
 Parameters:
-  # KinesisInboundEventLoggerLambdaFunction:
-  #   Type: String
-  #   Description: 'Arn for KinesisInboundEventLogger Lambda Function'
-  # KinesisOutboundEventLoggerLambdaFunction:
-  #   Type: String
-  #   Description: 'Arn for KinesisOutboundEventLogger Lambda Function'
   CmrPassword:
     Type: String
     Description: 'Password used to publish CMR records. This is encrypted by Custom::Cumulus'
@@ -23,20 +17,9 @@ Parameters:
   log2elasticsearchLambdaFunction:
     Type: String
     Description: 'logToElasticsearch Lambda function arn'
-  # ScheduleSFLambdaFunction:
-  #   Type: String
-  #   Description: 'ScheduleSF lambda function arn'
   dbIndexerLambdaFunction:
     Type: String
     Description: 'Arn for dbIndexer lambda function'
-  # messageConsumerLambdaFunction:
-  #   Type: String
-  #   Description: 'messageConsumer lambda function arn'
-  # CreateReconciliationReportLambdaFunction:
-  #   Type: String
-  #   Description: 'CreateReconciliationReport lambda function arn'
-  # BulkDeleteLambdaFunction:
-  #   Type: String
   AsyncOperationTaskDefinition:
     Type: String
   EcsCluster:
@@ -44,14 +27,11 @@ Parameters:
   kinesisFallbackSns:
     Type: String
     Description: 'Kinesis fallback SNS topic ARN'
-# {{#each parent.apis}}
-#   {{name}}RestApi:
-#     Type: String
-#     Description: restAPI id
-#   {{name}}RestApiRootId:
-#     Type: String
-#     Description: restAPI root resource id
-# {{/each}}
+{{# ifEquals apiName "backend" }}
+  distributionRestApi:
+    Type: string
+    Description: Distribution REST API ID
+{{/ifEquals}}
 {{# each parent.dynamos}}
   {{@key}}DynamoDB:
     Type: String
@@ -157,7 +137,9 @@ Resources:
     Properties:
       ParentId:
     {{# if firstParent}}
-        Ref: {{api}}RestApiRootId
+        Fn::GetAtt:
+          - {{api}}RestApi
+          - RootResourceId
     {{else}}
       {{#each parents}}
         {{this}}
@@ -191,12 +173,14 @@ Resources:
           public_buckets: {{{collectBuckets ../parent.buckets "public"}}}
           protected_buckets: {{{collectBuckets ../parent.buckets "protected"}}}
       {{# if this.urs}}
+        {{# ifEquals ../apiName "backend" }}
         {{# if ../parent.api_backend_url}}
           TOKEN_REDIRECT_ENDPOINT: {{../parent.api_backend_url}}token
         {{else}}
           TOKEN_REDIRECT_ENDPOINT:
             Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}/token"]]
         {{/if}}
+        {{/ifEquals}}
         {{# if ../parent.api_distribution_url}}
           DISTRIBUTION_ENDPOINT: {{../parent.api_distribution_url}}
           DISTRIBUTION_REDIRECT_ENDPOINT: {{../parent.api_distribution_url}}redirect
@@ -226,18 +210,18 @@ Resources:
     {{/each}}
       Handler: {{this.handler}}
       MemorySize: {{this.memory}}
-{{# if this.apiRole }}
+    {{# if this.apiRole }}
       Role: {{../parent.iams.lambdaApiGatewayRoleArn}}
-{{else if this.distributionRole}}
+    {{else if this.distributionRole}}
       Role: {{../parent.iams.distributionRoleArn}}
-{{else}}
-{{#ifEquals @key "executeMigrations"}}
+    {{else}}
+    {{#ifEquals @key "executeMigrations"}}
       Role: {{../parent.iams.migrationRoleArn}}
-{{/ifEquals}}
-{{#ifNotEquals @key "executeMigrations"}}
+    {{/ifEquals}}
+    {{#ifNotEquals @key "executeMigrations"}}
       Role: {{../parent.iams.lambdaProcessingRoleArn}}
-{{/ifNotEquals}}
-{{/if}}
+    {{/ifNotEquals}}
+    {{/if}}
       Runtime: {{# if this.runtime}}{{this.runtime}}{{else}}nodejs8.10{{/if}}
       Timeout: {{this.timeout}}
       Tags:
@@ -334,18 +318,7 @@ Outputs:
 {{#each apis}}
   {{name}}RestApiResourceId:
     Value:
-      - Fn::Ref:
-        - {{name}}RestApi
-  {{name}}RestApiBaseUrl:
-    Value:
-      - Fn::Join:
-        - ""
-        - - "https://"
-          - Fn::Ref:
-            - {{name}}RestApi
-          - ".execute-api."
-          - { "Fn::Sub": "${AWS::Region}" }
-          - ".amazonaws.com/{{../apiStage}}"
+      Ref: {{name}}RestApi
 {{/each}}
 ################################################
 # Outputs block END
