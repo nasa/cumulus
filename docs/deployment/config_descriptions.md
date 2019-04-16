@@ -57,7 +57,7 @@ CMR_USERNAME=cmruser
 CMR_PASSWORD=cmrpassword
 ```
 
-These values will be imported via kes in your configuration file.   You should ensure your ```app/config.yml``` contains the following lines:
+These values will be imported via kes in your configuration file.   You should ensure your `app/config.yml` contains the following lines:
 
 ```yaml
 cmr: 
