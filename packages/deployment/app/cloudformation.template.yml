@@ -50,6 +50,30 @@ Resources:
             - {{../es.name}}Domain
             - DomainEndpoint
       {{/if}}
+        KinesisInboundEventLoggerLambdaFunction:
+          Fn::GetAtt:
+            - KinesisInboundEventLoggerLambdaFunction
+            - Arn
+        KinesisOutboundEventLoggerLambdaFunction:
+          Fn::GetAtt:
+            - KinesisOutboundEventLoggerLambdaFunction
+            - Arn
+        ScheduleSFLambdaFunction:
+          Fn::GetAtt:
+            - ScheduleSFLambdaFunction
+            - Arn
+        messageConsumerLambdaFunction:
+          Fn::GetAtt:
+            - messageConsumerLambdaFunction
+            - Arn
+        CreateReconciliationReportLambdaFunction:
+          Fn::GetAtt:
+            - CreateReconciliationReportLambdaFunction
+            - Arn
+        BulkDeleteLambdaFunction:
+          Fn::GetAtt:
+            - BulkDeleteLambdaFunction
+            - Arn
         log2elasticsearchLambdaFunction:
           Fn::GetAtt:
             - log2elasticsearchLambdaFunction
@@ -678,6 +702,20 @@ Resources:
       LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
       RetentionInDays: 30
 {{/if}}
+
+  {{#ifEquals @key "ScheduleSF"}}
+  ## Generic lambda permission for custom rules
+  ## created in the dashboard
+  GenericLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+        - ScheduleSFLambdaFunction
+        - Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+  {{/ifEquals}}
 {{/each}}
 
   log2elasticsearchLambdaPermissionLog:
