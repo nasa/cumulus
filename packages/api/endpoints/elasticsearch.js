@@ -126,7 +126,7 @@ async function reindexStatus(req, res) {
   return res.send(status);
 }
 
-async function completeReindex(req, res) {
+async function changeIndex(req, res) {
   const deleteSource = req.body.deleteSource;
   const aliasName = req.body.aliasName || defaultIndexAlias;
   const sourceIndex = req.body.sourceIndex;
@@ -163,7 +163,7 @@ async function completeReindex(req, res) {
     }
   }).then(() => {
     log.info(`Removed alias ${aliasName} from index ${sourceIndex} and added alias to ${destIndex}`);
-  }, (err) =>
+  }).catch((err) =>
     res.boom.badRequest(`Error removing alias ${aliasName} from index ${sourceIndex} and adding alias to ${destIndex}: ${err}`));
 
   let message = `Reindex success - alias ${aliasName} now pointing to ${destIndex}`;
@@ -179,8 +179,8 @@ async function completeReindex(req, res) {
 
 // express routes
 router.put('/create-snapshot', createEsSnapshot);
-router.put('/reindex', reindex);
+router.post('/reindex', reindex);
 router.get('/reindex-status', reindexStatus);
-router.put('/complete-reindex', completeReindex);
+router.post('/change-index', changeIndex);
 
 module.exports = router;

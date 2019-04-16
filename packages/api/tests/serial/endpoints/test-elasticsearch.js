@@ -91,7 +91,7 @@ test.after.always(async () => {
 
 test('PUT snapshot without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
-    .put('/elasticsearch/create-snapshot')
+    .post('/elasticsearch/create-snapshot')
     .set('Accept', 'application/json')
     .expect(401);
 
@@ -100,7 +100,7 @@ test('PUT snapshot without an Authorization header returns an Authorization Miss
 
 test('PUT snapshot with an invalid access token returns an unauthorized response', async (t) => {
   const response = await request(app)
-    .put('/elasticsearch/create-snapshot')
+    .post('/elasticsearch/create-snapshot')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
     .expect(403);
@@ -136,7 +136,7 @@ test.serial('Reindex - multiple aliases found', async (t) => {
   });
 
   const response = await request(app)
-    .put('/elasticsearch/reindex')
+    .post('/elasticsearch/reindex')
     .send({ aliasName })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -150,7 +150,7 @@ test.serial('Reindex - multiple aliases found', async (t) => {
 
 test.serial('Reindex - specify a source index that does not exist', async (t) => {
   const response = await request(app)
-    .put('/elasticsearch/reindex')
+    .post('/elasticsearch/reindex')
     .send({ aliasName: indexAlias, sourceIndex: 'source-index' })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -168,7 +168,7 @@ test.serial('Reindex - specify a source index that is not aliased', async (t) =>
   });
 
   const response = await request(app)
-    .put('/elasticsearch/reindex')
+    .post('/elasticsearch/reindex')
     .send({ aliasName: indexAlias, sourceIndex: indexName })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -183,7 +183,7 @@ test.serial('Reindex success', async (t) => {
   const destIndex = randomString();
 
   const response = await request(app)
-    .put('/elasticsearch/reindex')
+    .post('/elasticsearch/reindex')
     .send({
       aliasName: indexAlias,
       destIndex,
@@ -227,7 +227,7 @@ test.serial('Reindex success', async (t) => {
 
 test.serial('Reindex - destination index exists', async (t) => {
   const response = await request(app)
-    .put('/elasticsearch/reindex')
+    .post('/elasticsearch/reindex')
     .send({
       aliasName: indexAlias,
       destIndex: esIndex,
@@ -251,7 +251,7 @@ test.serial('Reindex status, no task running', async (t) => {
 
 test.serial('Complete index - no source', async (t) => {
   const response = await request(app)
-    .put('/elasticsearch/complete-reindex')
+    .post('/elasticsearch/change-index')
     .send({
       aliasName: indexAlias,
       destIndex: 'dest-index'
@@ -265,7 +265,7 @@ test.serial('Complete index - no source', async (t) => {
 
 test.serial('Complete index - no destination', async (t) => {
   const response = await request(app)
-    .put('/elasticsearch/complete-reindex')
+    .post('/elasticsearch/change-index')
     .send({
       aliasName: indexAlias,
       sourceIndex: 'source-index'
@@ -281,7 +281,7 @@ test.serial('Complete index - source index does not exist', async (t) => {
   const sourceIndex = 'source-index';
 
   const response = await request(app)
-    .put('/elasticsearch/complete-reindex')
+    .post('/elasticsearch/change-index')
     .send({
       aliasName: indexAlias,
       sourceIndex,
@@ -298,7 +298,7 @@ test.serial('Complete index - no destination', async (t) => {
   const destIndex = 'dest-index';
 
   const response = await request(app)
-    .put('/elasticsearch/complete-reindex')
+    .post('/elasticsearch/change-index')
     .send({
       aliasName: indexAlias,
       sourceIndex: esIndex,
@@ -313,7 +313,7 @@ test.serial('Complete index - no destination', async (t) => {
 
 test.serial('Complete index - source index same as dest index', async (t) => {
   const response = await request(app)
-    .put('/elasticsearch/complete-reindex')
+    .post('/elasticsearch/change-index')
     .send({
       aliasName: indexAlias,
       sourceIndex: 'source',
@@ -334,7 +334,7 @@ test.serial('Complete re-index', async (t) => {
   await createIndex(sourceIndex, aliasName);
 
   await request(app)
-    .put('/elasticsearch/reindex')
+    .post('/elasticsearch/reindex')
     .send({
       aliasName,
       sourceIndex,
@@ -345,7 +345,7 @@ test.serial('Complete re-index', async (t) => {
     .expect(200);
 
   const response = await request(app)
-    .put('/elasticsearch/complete-reindex')
+    .post('/elasticsearch/change-index')
     .send({
       aliasName,
       sourceIndex,
@@ -376,7 +376,7 @@ test.serial('Complete re-index and delete source index', async (t) => {
   await createIndex(sourceIndex, aliasName);
 
   await request(app)
-    .put('/elasticsearch/reindex')
+    .post('/elasticsearch/reindex')
     .send({
       aliasName,
       sourceIndex,
@@ -387,7 +387,7 @@ test.serial('Complete re-index and delete source index', async (t) => {
     .expect(200);
 
   const response = await request(app)
-    .put('/elasticsearch/complete-reindex')
+    .post('/elasticsearch/change-index')
     .send({
       aliasName,
       sourceIndex,
