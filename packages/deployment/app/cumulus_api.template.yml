@@ -24,14 +24,14 @@ Parameters:
     Type: String
   EcsCluster:
     Type: String
-  kinesisFallbackSns:
+{{#each parent.apis}}
+  {{name}}RestApi:
     Type: String
-    Description: 'Kinesis fallback SNS topic ARN'
-{{# ifEquals apiName "backend" }}
-  distributionRestApi:
-    Type: string
-    Description: Distribution REST API ID
-{{/ifEquals}}
+    Description: restAPI id
+  {{name}}RestApiRootId:
+    Type: String
+    Description: restAPI root resource id
+{{/each}}
 {{# each parent.dynamos}}
   {{@key}}DynamoDB:
     Type: String
@@ -48,12 +48,12 @@ Resources:
   #################################################
   # APIGateway config BEGIN
   #################################################
-{{#each apis}}
-  {{name}}RestApi:
-    Type: AWS::ApiGateway::RestApi
-    Properties:
-      Name: {{../stackName}}-{{name}}
-{{/each}}
+# {{#each apis}}
+#   {{name}}RestApi:
+#     Type: AWS::ApiGateway::RestApi
+#     Properties:
+#       Name: {{../stackName}}-{{name}}
+# {{/each}}
 
 {{# if apiMethods}}
 {{# each apiDependencies}}
@@ -310,16 +310,3 @@ Resources:
   # DynamoDB Event Source Mapping END
   #################################################
 {{/if}}
-
-#################################################
-# Outputs block BEGIN
-#################################################
-Outputs:
-{{#each apis}}
-  {{name}}RestApiResourceId:
-    Value:
-      Ref: {{name}}RestApi
-{{/each}}
-################################################
-# Outputs block END
-#################################################

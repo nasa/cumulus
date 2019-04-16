@@ -62,14 +62,14 @@ Resources:
           Ref: CumulusECSCluster
         AsyncOperationTaskDefinition:
           Ref: AsyncOperationTaskDefinition
-        kinesisFallbackSns:
-          Ref: kinesisFallbackSns
-      {{#ifEquals @key "CumulusApiBackend"}}
-        distributionRestApi:
+      {{#each ../apis}}
+        {{name}}RestApi:
+          Ref: {{name}}RestApi
+        {{name}}RestApiRootId:
           Fn::GetAtt:
-            - CumulusApiDistributionNestedStack
-            - Outputs.distributionRestApiResourceId
-      {{/ifEquals}}
+            - {{name}}RestApi
+            - RootResourceId
+      {{/each}}
       {{# each ../dynamos}}
         {{@key}}DynamoDB:
           Ref: {{@key}}DynamoDB
@@ -553,6 +553,19 @@ Resources:
 
   #################################################
   # DynamoDB config END
+  #################################################
+
+  #################################################
+  # APIGateway config BEGIN
+  #################################################
+{{#each apis}}
+  {{name}}RestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: {{../stackName}}-{{name}}
+{{/each}}
+  #################################################
+  # APIGateway config END
   #################################################
 
   #################################################
@@ -1108,15 +1121,7 @@ Outputs:
     Value: {{api_backend_url}}
   {{else}}
     Value:
-      Fn::Join:
-        - ""
-        - - "https://"
-          - Fn::GetAtt:
-            - CumulusApiBackendNestedStack
-            - Outputs.backendRestApiResourceId
-          - ".execute-api."
-          - { "Fn::Sub": "${AWS::Region}" }
-          - ".amazonaws.com/{{../apiStage}}/"
+      Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
   {{/if}}
 
   Distribution:
@@ -1124,30 +1129,16 @@ Outputs:
     Value: {{api_distribution_url}}
   {{else}}
     Value:
-      Fn::Join:
-        - ""
-        - - "https://"
-          - Fn::GetAtt:
-            - CumulusApiDistributionNestedStack
-            - Outputs.distributionRestApiResourceId
-          - ".execute-api."
-          - { "Fn::Sub": "${AWS::Region}" }
-          - ".amazonaws.com/{{../apiStage}}/"
+      Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
   {{/if}}
 
   ApiId:
     Value:
-      Fn::GetAtt:
-        - CumulusApiBackendNestedStack
-        - Outputs.backendRestApiResourceId
-      # Ref: backendRestApiResourceId
+      Ref: backendRestApi
 
   DistributionId:
     Value:
-      Fn::GetAtt:
-        - CumulusApiDistributionNestedStack
-        - Outputs.distributionRestApiResourceId
-      # Ref: distributionRestApiResourceId
+      Ref: distributionRestApi
 
   ApiStage:
     Value: {{apiStage}}
