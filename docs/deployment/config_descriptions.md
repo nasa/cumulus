@@ -55,6 +55,7 @@ cmr:
   username: '{{CMR_USERNAME}}'
   password: '{{CMR_PASSWORD}}'
 ```
+
 `{{CMR_USERNAME}}` references a `CMR_USERNAME` value set in the `app/.env` file. `{{CMR_PASSWORD}}` references `CMR_PASSWORD` in the same way.
 
 `clientId` and `provider` should be configured to point to a user specified CMR `clientId` and `provider`. We use the `CUMULUS` provider in our configurations, but users can specify their own.
