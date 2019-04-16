@@ -50,7 +50,7 @@ Configure your virtual private cloud.  You can find `<vpc-id>` and `<subnet-id>`
 
 Configuration is required for Cumulus integration with CMR services. The most obvious example of this integration is the `PostToCmr` Cumulus [task](https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr).
 
-Ensure your CMR username/password is included in your ```app/.env``` file, as noted in the [deployment documentation](./deployment-readme):
+Ensure your CMR username/password is included in your `app/.env` file, as noted in the [deployment documentation](./deployment-readme):
 
 ```shell
 CMR_USERNAME=cmruser
