@@ -1,12 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'stack: {{stackName}} | deployed by Kes'
 Parameters:
-  KinesisInboundEventLoggerLambdaFunction:
-    Type: String
-    Description: 'Arn for KinesisInboundEventLogger Lambda Function'
-  KinesisOutboundEventLoggerLambdaFunction:
-    Type: String
-    Description: 'Arn for KinesisOutboundEventLogger Lambda Function'
+  # KinesisInboundEventLoggerLambdaFunction:
+  #   Type: String
+  #   Description: 'Arn for KinesisInboundEventLogger Lambda Function'
+  # KinesisOutboundEventLoggerLambdaFunction:
+  #   Type: String
+  #   Description: 'Arn for KinesisOutboundEventLogger Lambda Function'
   CmrPassword:
     Type: String
     Description: 'Password used to publish CMR records. This is encrypted by Custom::Cumulus'
@@ -23,24 +23,27 @@ Parameters:
   log2elasticsearchLambdaFunction:
     Type: String
     Description: 'logToElasticsearch Lambda function arn'
-  ScheduleSFLambdaFunction:
-    Type: String
-    Description: 'ScheduleSF lambda function arn'
+  # ScheduleSFLambdaFunction:
+  #   Type: String
+  #   Description: 'ScheduleSF lambda function arn'
   dbIndexerLambdaFunction:
     Type: String
     Description: 'Arn for dbIndexer lambda function'
-  messageConsumerLambdaFunction:
-    Type: String
-    Description: 'messageConsumer lambda function arn'
-  CreateReconciliationReportLambdaFunction:
-    Type: String
-    Description: 'CreateReconciliationReport lambda function arn'
-  BulkDeleteLambdaFunction:
-    Type: String
+  # messageConsumerLambdaFunction:
+  #   Type: String
+  #   Description: 'messageConsumer lambda function arn'
+  # CreateReconciliationReportLambdaFunction:
+  #   Type: String
+  #   Description: 'CreateReconciliationReport lambda function arn'
+  # BulkDeleteLambdaFunction:
+  #   Type: String
   AsyncOperationTaskDefinition:
     Type: String
   EcsCluster:
     Type: String
+  kinesisFallbackSns:
+    Type: String
+    Description: 'Kinesis fallback SNS topic ARN'
 # {{#each parent.apis}}
 #   {{name}}RestApi:
 #     Type: String
@@ -282,6 +285,20 @@ Resources:
     Properties:
       LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
       RetentionInDays: 30
+
+  {{#ifEquals @key "ScheduleSF"}}
+  ## Generic lambda permission for custom rules
+  ## created in the dashboard
+  GenericLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+        - ScheduleSFLambdaFunction
+        - Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+  {{/ifEquals}}
 {{/each}}
 
   #################################################

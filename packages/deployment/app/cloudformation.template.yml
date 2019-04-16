@@ -50,42 +50,44 @@ Resources:
             - {{../es.name}}Domain
             - DomainEndpoint
       {{/if}}
-        KinesisInboundEventLoggerLambdaFunction:
-          Fn::GetAtt:
-            - KinesisInboundEventLoggerLambdaFunction
-            - Arn
-        KinesisOutboundEventLoggerLambdaFunction:
-          Fn::GetAtt:
-            - KinesisOutboundEventLoggerLambdaFunction
-            - Arn
+        # KinesisInboundEventLoggerLambdaFunction:
+        #   Fn::GetAtt:
+        #     - KinesisInboundEventLoggerLambdaFunction
+        #     - Arn
+        # KinesisOutboundEventLoggerLambdaFunction:
+        #   Fn::GetAtt:
+        #     - KinesisOutboundEventLoggerLambdaFunction
+        #     - Arn
         log2elasticsearchLambdaFunction:
           Fn::GetAtt:
             - log2elasticsearchLambdaFunction
             - Arn
-        ScheduleSFLambdaFunction:
-          Fn::GetAtt:
-            - ScheduleSFLambdaFunction
-            - Arn
+        # ScheduleSFLambdaFunction:
+        #   Fn::GetAtt:
+        #     - ScheduleSFLambdaFunction
+        #     - Arn
         dbIndexerLambdaFunction:
           Fn::GetAtt:
             - dbIndexerLambdaFunction
             - Arn
-        messageConsumerLambdaFunction:
-          Fn::GetAtt:
-            - messageConsumerLambdaFunction
-            - Arn
-        CreateReconciliationReportLambdaFunction:
-          Fn::GetAtt:
-            - CreateReconciliationReportLambdaFunction
-            - Arn
-        BulkDeleteLambdaFunction:
-          Fn::GetAtt:
-            - BulkDeleteLambdaFunction
-            - Arn
+        # messageConsumerLambdaFunction:
+        #   Fn::GetAtt:
+        #     - messageConsumerLambdaFunction
+        #     - Arn
+        # CreateReconciliationReportLambdaFunction:
+        #   Fn::GetAtt:
+        #     - CreateReconciliationReportLambdaFunction
+        #     - Arn
+        # BulkDeleteLambdaFunction:
+        #   Fn::GetAtt:
+        #     - BulkDeleteLambdaFunction
+        #     - Arn
         EcsCluster:
           Ref: CumulusECSCluster
         AsyncOperationTaskDefinition:
           Ref: AsyncOperationTaskDefinition
+        kinesisFallbackSns:
+          Ref: kinesisFallbackSns
       # {{#each ../apis}}
       #   {{name}}RestApi:
       #     Ref: {{name}}RestApi
@@ -518,18 +520,6 @@ Resources:
   {{/each}}
 {{/each}}
 
-## Generic lambda permission for custom rules
-## created in the dashboard
-  GenericLambdaPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName:
-        Fn::GetAtt:
-        - ScheduleSFLambdaFunction
-        - Arn
-      Action: lambda:InvokeFunction
-      Principal: events.amazonaws.com
-
   #################################################
   # CloudWatch RULE config END
   #################################################
@@ -719,64 +709,64 @@ Resources:
           {{@key}}: {{{this}}}
       {{/if}}
     {{/each}}
-      {{# if ../api_backend_url}}
-          BACKEND_API_URL: {{../api_backend_url}}
-      {{else}}
-          BACKEND_API_URL:
-            Fn::Join:
-              - ""
-              - - "https://"
-                - Fn::GetAtt:
-                  - CumulusApiBackendNestedStack
-                  - Outputs.backendRestApiResourceId
-                - ".execute-api."
-                - { "Fn::Sub": "${AWS::Region}" }
-                - ".amazonaws.com/{{../apiStage}}/"
-      {{/if}}
-      {{# if this.urs}}
-        {{# if ../api_backend_url}}
-          TOKEN_REDIRECT_ENDPOINT: {{../api_backend_url}}token
-        {{else}}
-          TOKEN_REDIRECT_ENDPOINT:
-            Fn::Join:
-              - ""
-              - - "https://"
-                - Fn::GetAtt:
-                  - CumulusApiBackendNestedStack
-                  - Outputs.backendRestApiResourceId
-                - ".execute-api."
-                - { "Fn::Sub": "${AWS::Region}" }
-                - ".amazonaws.com/{{../apiStage}}/token"
-            # Fn::Join: ["", [ "https://", {"Ref": "backendRestApiResourceId"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/token"]]
-        {{/if}}
-        {{# if ../api_distribution_url}}
-          DISTRIBUTION_ENDPOINT: {{../api_distribution_url}}
-          DISTRIBUTION_REDIRECT_ENDPOINT: {{../api_distribution_url}}redirect
-        {{else}}
-          DISTRIBUTION_ENDPOINT:
-            Fn::Join:
-              - ""
-              - - "https://"
-                - Fn::GetAtt:
-                  - CumulusApiDistributionNestedStack
-                  - Outputs.distributionRestApiResourceId
-                - ".execute-api."
-                - { "Fn::Sub": "${AWS::Region}" }
-                - ".amazonaws.com/{{../apiStage}}"
-            # Fn::Join: ["", [ "https://", {"Ref": "distributionRestApiResourceId"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}"]]
-          DISTRIBUTION_REDIRECT_ENDPOINT:
-            Fn::Join:
-              - ""
-              - - "https://"
-                - Fn::GetAtt:
-                  - CumulusApiDistributionNestedStack
-                  - Outputs.distributionRestApiResourceId
-                - ".execute-api."
-                - { "Fn::Sub": "${AWS::Region}" }
-                - ".amazonaws.com/{{../apiStage}}/redirect"
-            # Fn::Join: ["", [ "https://", {"Ref": "distributionRestApiResourceId"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/redirect"]]
-        {{/if}}
-      {{/if}}
+      # {{# if ../api_backend_url}}
+      #     BACKEND_API_URL: {{../api_backend_url}}
+      # {{else}}
+      #     BACKEND_API_URL:
+      #       Fn::Join:
+      #         - ""
+      #         - - "https://"
+      #           - Fn::GetAtt:
+      #             - CumulusApiBackendNestedStack
+      #             - Outputs.backendRestApiResourceId
+      #           - ".execute-api."
+      #           - { "Fn::Sub": "${AWS::Region}" }
+      #           - ".amazonaws.com/{{../apiStage}}/"
+      # {{/if}}
+      # {{# if this.urs}}
+      #   {{# if ../api_backend_url}}
+      #     TOKEN_REDIRECT_ENDPOINT: {{../api_backend_url}}token
+      #   {{else}}
+      #     TOKEN_REDIRECT_ENDPOINT:
+      #       Fn::Join:
+      #         - ""
+      #         - - "https://"
+      #           - Fn::GetAtt:
+      #             - CumulusApiBackendNestedStack
+      #             - Outputs.backendRestApiResourceId
+      #           - ".execute-api."
+      #           - { "Fn::Sub": "${AWS::Region}" }
+      #           - ".amazonaws.com/{{../apiStage}}/token"
+      #       # Fn::Join: ["", [ "https://", {"Ref": "backendRestApiResourceId"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/token"]]
+      #   {{/if}}
+      #   {{# if ../api_distribution_url}}
+      #     DISTRIBUTION_ENDPOINT: {{../api_distribution_url}}
+      #     DISTRIBUTION_REDIRECT_ENDPOINT: {{../api_distribution_url}}redirect
+      #   {{else}}
+      #     DISTRIBUTION_ENDPOINT:
+      #       Fn::Join:
+      #         - ""
+      #         - - "https://"
+      #           - Fn::GetAtt:
+      #             - CumulusApiDistributionNestedStack
+      #             - Outputs.distributionRestApiResourceId
+      #           - ".execute-api."
+      #           - { "Fn::Sub": "${AWS::Region}" }
+      #           - ".amazonaws.com/{{../apiStage}}"
+      #       # Fn::Join: ["", [ "https://", {"Ref": "distributionRestApiResourceId"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}"]]
+      #     DISTRIBUTION_REDIRECT_ENDPOINT:
+      #       Fn::Join:
+      #         - ""
+      #         - - "https://"
+      #           - Fn::GetAtt:
+      #             - CumulusApiDistributionNestedStack
+      #             - Outputs.distributionRestApiResourceId
+      #           - ".execute-api."
+      #           - { "Fn::Sub": "${AWS::Region}" }
+      #           - ".amazonaws.com/{{../apiStage}}/redirect"
+      #       # Fn::Join: ["", [ "https://", {"Ref": "distributionRestApiResourceId"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../apiStage}}/redirect"]]
+      #   {{/if}}
+      # {{/if}}
       Handler: {{this.handler}}
       MemorySize: {{this.memory}}
 {{# if this.apiRole }}
@@ -1293,24 +1283,48 @@ Outputs:
     Value: {{api_backend_url}}
   {{else}}
     Value:
-      Fn::Join: ["", [ "https://", {"Ref": "backendRestApiResourceId"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
-      {{/if}}
+      Fn::Join:
+        - ""
+        - - "https://"
+          - Fn::GetAtt:
+            - CumulusApiBackendNestedStack
+            - Outputs.backendRestApiResourceId
+          - ".execute-api."
+          - { "Fn::Sub": "${AWS::Region}" }
+          - ".amazonaws.com/{{../apiStage}}/"
+      # Fn::Join: ["", [ "https://", {"Ref": "backendRestApiResourceId"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
+  {{/if}}
 
   Distribution:
   {{# if api_distribution_url}}
     Value: {{api_distribution_url}}
   {{else}}
     Value:
-      Fn::Join: ["", [ "https://", {"Ref": "distributionRestApiResourceId"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
+      Fn::Join:
+        - ""
+        - - "https://"
+          - Fn::GetAtt:
+            - CumulusApiDistributionNestedStack
+            - Outputs.distributionRestApiResourceId
+          - ".execute-api."
+          - { "Fn::Sub": "${AWS::Region}" }
+          - ".amazonaws.com/{{../apiStage}}/"
+      # Fn::Join: ["", [ "https://", {"Ref": "distributionRestApiResourceId"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
   {{/if}}
 
   ApiId:
     Value:
-      Ref: backendRestApiResourceId
+      Fn::GetAtt:
+        - CumulusApiBackendNestedStack
+        - Outputs.backendRestApiResourceId
+      # Ref: backendRestApiResourceId
 
   DistributionId:
     Value:
-      Ref: distributionRestApiResourceId
+      Fn::GetAtt:
+        - CumulusApiDistributionNestedStack
+        - Outputs.distributionRestApiResourceId
+      # Ref: distributionRestApiResourceId
 
   ApiStage:
     Value: {{apiStage}}
