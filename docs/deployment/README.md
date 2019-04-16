@@ -261,6 +261,7 @@ dev:                            # deployment name
     - username: <user>
     - username: <user2>
   
+  # Optional. Only necessary if you have workflows that integrate with CMR
   cmr:
     username: '{{CMR_USERNAME}}'
     password: '{{CMR_PASSWORD}}'
