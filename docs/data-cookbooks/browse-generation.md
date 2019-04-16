@@ -51,7 +51,7 @@ If you'd prefer to ingest another data type, you will need to generate a process
 
 ### CMR
 
-Visit the [config_description](../deployment/config_descriptions#cmr) documentation for instructions on CMR integration and configuration.
+Visit the [CMR configuration documentation](../deployment/config_descriptions#cmr) for instructions on CMR integration and configuration.
 
 These configuration keys will be used in the CmrStep/PostToCmr Lambda function below.
 
