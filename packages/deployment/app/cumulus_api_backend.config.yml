@@ -3,4 +3,6 @@ default:
   apis:
     - name: backend
 
+  apiName: backend
+
   lambdas: !!files [ 'node_modules/@cumulus/api/config/api.yml' ]
