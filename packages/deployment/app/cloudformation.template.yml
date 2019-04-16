@@ -89,10 +89,10 @@ Resources:
       {{#each ../apis}}
         {{name}}RestApi:
           Ref: {{name}}RestApi
-        {{name}}RestApiRootId:
-          Fn::GetAtt:
-            - {{name}}RestApi
-            - RootResourceId
+        # {{name}}RestApiRootId:
+        #   Fn::GetAtt:
+        #     - {{name}}RestApi
+        #     - RootResourceId
       {{/each}}
       {{# each ../dynamos}}
         {{@key}}DynamoDB:

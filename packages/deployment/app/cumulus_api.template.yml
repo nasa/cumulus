@@ -45,9 +45,9 @@ Parameters:
   {{name}}RestApi:
     Type: String
     Description: restAPI id
-  {{name}}RestApiRootId:
-    Type: String
-    Description: restAPI root resource id
+  # {{name}}RestApiRootId:
+  #   Type: String
+  #   Description: restAPI root resource id
 {{/each}}
 {{# each parent.dynamos}}
   {{@key}}DynamoDB:
@@ -220,18 +220,18 @@ Resources:
     {{/each}}
       Handler: {{this.handler}}
       MemorySize: {{this.memory}}
-    {{# if this.apiRole }}
+{{# if this.apiRole }}
       Role: {{../parent.iams.lambdaApiGatewayRoleArn}}
-    {{else if this.distributionRole}}
+{{else if this.distributionRole}}
       Role: {{../parent.iams.distributionRoleArn}}
-    {{else}}
-    {{#ifEquals @key "executeMigrations"}}
+{{else}}
+{{#ifEquals @key "executeMigrations"}}
       Role: {{../parent.iams.migrationRoleArn}}
-    {{/ifEquals}}
-    {{#ifNotEquals @key "executeMigrations"}}
+{{/ifEquals}}
+{{#ifNotEquals @key "executeMigrations"}}
       Role: {{../parent.iams.lambdaProcessingRoleArn}}
-    {{/ifNotEquals}}
-    {{/if}}
+{{/ifNotEquals}}
+{{/if}}
       Runtime: {{# if this.runtime}}{{this.runtime}}{{else}}nodejs8.10{{/if}}
       Timeout: {{this.timeout}}
       Tags:
