@@ -4,34 +4,32 @@ sqs2sf:
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
 
-
-executeMigrations:
-  handler: index.executeMigrations
-  timeout: 300
-  useElasticSearch: '{{es.name}}'
-  memory: 1024
-  source: 'node_modules/@cumulus/api/dist/'
-  envs:
-    GranulesTable:
-      function: Ref
-      value: GranulesTableDynamoDB
-    FilesTable:
-      function: Ref
-      value: FilesTableDynamoDB
-    ExecutionsTable:
-      function: Ref
-      value: ExecutionsTableDynamoDB
-    PdrsTable:
-      function: Ref
-      value: PdrsTableDynamoDB
-    RulesTable:
-      function: Ref
-      value: RulesTableDynamoDB
-    KinesisInboundEventLogger:
-      function: Ref
-      value: KinesisInboundEventLoggerLambdaFunction
-    system_bucket: '{{system_bucket}}'
-
+# executeMigrations:
+#   handler: index.executeMigrations
+#   timeout: 300
+#   useElasticSearch: '{{es.name}}'
+#   memory: 1024
+#   source: 'node_modules/@cumulus/api/dist/'
+#   envs:
+#     GranulesTable:
+#       function: Ref
+#       value: GranulesTableDynamoDB
+#     FilesTable:
+#       function: Ref
+#       value: FilesTableDynamoDB
+#     ExecutionsTable:
+#       function: Ref
+#       value: ExecutionsTableDynamoDB
+#     PdrsTable:
+#       function: Ref
+#       value: PdrsTableDynamoDB
+#     RulesTable:
+#       function: Ref
+#       value: RulesTableDynamoDB
+#     KinesisInboundEventLogger:
+#       function: Ref
+#       value: KinesisInboundEventLoggerLambdaFunction
+#     system_bucket: '{{system_bucket}}'
 
 sns2elasticsearch:
   handler: index.indexer
@@ -72,25 +70,25 @@ dbIndexer:
       value: FilesTableDynamoDB
   namedLambdaDeadLetterQueue: true
 
-messageConsumer:
-  handler: index.messageConsumer
-  timeout: 100
-  memory: 512
-  source: 'node_modules/@cumulus/api/dist/'
-  envs:
-    RulesTable:
-      function: Ref
-      value: RulesTableDynamoDB
-    CollectionsTable:
-      function: Ref
-      value: CollectionsTableDynamoDB
-    ProvidersTable:
-      function: Ref
-      value: ProvidersTableDynamoDB
-    system_bucket: '{{system_bucket}}'
-    FallbackTopicArn:
-      function: Fn::Sub
-      value: '${kinesisFallbackSns}'
+# messageConsumer:
+#   handler: index.messageConsumer
+#   timeout: 100
+#   memory: 512
+#   source: 'node_modules/@cumulus/api/dist/'
+#   envs:
+#     RulesTable:
+#       function: Ref
+#       value: RulesTableDynamoDB
+#     CollectionsTable:
+#       function: Ref
+#       value: CollectionsTableDynamoDB
+#     ProvidersTable:
+#       function: Ref
+#       value: ProvidersTableDynamoDB
+#     system_bucket: '{{system_bucket}}'
+#     FallbackTopicArn:
+#       function: Fn::Sub
+#       value: '${kinesisFallbackSns}'
 
 fallbackConsumer:
   handler: index.messageConsumer
@@ -110,20 +108,20 @@ fallbackConsumer:
       value: ProvidersTableDynamoDB
     system_bucket: '{{system_bucket}}'
 
-ScheduleSF:
-  description: 'This lambda function is invoked by scheduled rules created via cumulus API'
-  handler: index.scheduler
-  timeout: 100
-  memory: 512
-  source: 'node_modules/@cumulus/api/dist/'
-  envs:
-    CollectionsTable:
-      function: Ref
-      value: CollectionsTableDynamoDB
-    ProvidersTable:
-      function: Ref
-      value: ProvidersTableDynamoDB
-  namedLambdaDeadLetterQueue: true
+# ScheduleSF:
+#   description: 'This lambda function is invoked by scheduled rules created via cumulus API'
+#   handler: index.scheduler
+#   timeout: 100
+#   memory: 512
+#   source: 'node_modules/@cumulus/api/dist/'
+#   envs:
+#     CollectionsTable:
+#       function: Ref
+#       value: CollectionsTableDynamoDB
+#     ProvidersTable:
+#       function: Ref
+#       value: ProvidersTableDynamoDB
+#   namedLambdaDeadLetterQueue: true
 
 jobs:
   handler: index.jobs
@@ -168,7 +166,6 @@ EmsReport:
     ems_provider: '{{ems.provider}}'
   namedLambdaDeadLetterQueue: true
 
-
 EmsDistributionReport:
   handler: index.emsDistributionReport
   timeout: 300
@@ -179,36 +176,36 @@ EmsDistributionReport:
     REPORTS_BUCKET: '{{system_bucket}}'
     STACK_NAME: '{{stackName}}'
 
-CreateReconciliationReport:
-  handler: index.createReconciliationReport
-  source: 'node_modules/@cumulus/api/dist/'
-  urs: true
-  envs:
-    system_bucket: '{{system_bucket}}'
-    CollectionsTable:
-      function: Ref
-      value: CollectionsTableDynamoDB
-    GranulesTable:
-      function: Ref
-      value: GranulesTableDynamoDB
-    FilesTable:
-      function: Ref
-      value: FilesTableDynamoDB
-    cmr_provider: '{{cmr.provider}}'
-    cmr_client_id: '{{cmr.clientId}}'
+# CreateReconciliationReport:
+#   handler: index.createReconciliationReport
+#   source: 'node_modules/@cumulus/api/dist/'
+#   urs: true
+#   envs:
+#     system_bucket: '{{system_bucket}}'
+#     CollectionsTable:
+#       function: Ref
+#       value: CollectionsTableDynamoDB
+#     GranulesTable:
+#       function: Ref
+#       value: GranulesTableDynamoDB
+#     FilesTable:
+#       function: Ref
+#       value: FilesTableDynamoDB
+#     cmr_provider: '{{cmr.provider}}'
+#     cmr_client_id: '{{cmr.clientId}}'
 
-BulkDelete:
-  handler: index.bulkDeleteLambda
-  source: 'node_modules/@cumulus/api/dist/'
+# BulkDelete:
+#   handler: index.bulkDeleteLambda
+#   source: 'node_modules/@cumulus/api/dist/'
 
-KinesisInboundEventLogger:
-  handler: index.logger
-  timeout: 300
-  memory: 512
-  source: 'node_modules/@cumulus/api/dist/'
+# KinesisInboundEventLogger:
+#   handler: index.logger
+#   timeout: 300
+#   memory: 512
+#   source: 'node_modules/@cumulus/api/dist/'
 
-KinesisOutboundEventLogger:
-  handler: index.logger
-  timeout: 300
-  memory: 512
-  source: 'node_modules/@cumulus/api/dist'
+# KinesisOutboundEventLogger:
+#   handler: index.logger
+#   timeout: 300
+#   memory: 512
+#   source: 'node_modules/@cumulus/api/dist'

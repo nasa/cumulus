@@ -1,3 +1,98 @@
+executeMigrations:
+  handler: index.executeMigrations
+  timeout: 300
+  useElasticSearch: '{{es.name}}'
+  memory: 1024
+  source: 'node_modules/@cumulus/api/dist/'
+  envs:
+    GranulesTable:
+      function: Ref
+      value: GranulesTableDynamoDB
+    FilesTable:
+      function: Ref
+      value: FilesTableDynamoDB
+    ExecutionsTable:
+      function: Ref
+      value: ExecutionsTableDynamoDB
+    PdrsTable:
+      function: Ref
+      value: PdrsTableDynamoDB
+    RulesTable:
+      function: Ref
+      value: RulesTableDynamoDB
+    KinesisInboundEventLogger:
+      function: Ref
+      value: KinesisInboundEventLoggerLambdaFunction
+    system_bucket: '{{parent.system_bucket}}'
+
+messageConsumer:
+  handler: index.messageConsumer
+  timeout: 100
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist/'
+  envs:
+    RulesTable:
+      function: Ref
+      value: RulesTableDynamoDB
+    CollectionsTable:
+      function: Ref
+      value: CollectionsTableDynamoDB
+    ProvidersTable:
+      function: Ref
+      value: ProvidersTableDynamoDB
+    system_bucket: '{{parent.system_bucket}}'
+    FallbackTopicArn:
+      function: Fn::Sub
+      value: '${kinesisFallbackSns}'
+
+CreateReconciliationReport:
+  handler: index.createReconciliationReport
+  source: 'node_modules/@cumulus/api/dist/'
+  urs: true
+  envs:
+    system_bucket: '{{parent.system_bucket}}'
+    CollectionsTable:
+      function: Ref
+      value: CollectionsTableDynamoDB
+    GranulesTable:
+      function: Ref
+      value: GranulesTableDynamoDB
+    FilesTable:
+      function: Ref
+      value: FilesTableDynamoDB
+    cmr_provider: '{{parent.cmr.provider}}'
+    cmr_client_id: '{{parent.cmr.clientId}}'
+
+BulkDelete:
+  handler: index.bulkDeleteLambda
+  source: 'node_modules/@cumulus/api/dist/'
+
+KinesisInboundEventLogger:
+  handler: index.logger
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist/'
+
+KinesisOutboundEventLogger:
+  handler: index.logger
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist'
+
+ScheduleSF:
+  description: 'This lambda function is invoked by scheduled rules created via cumulus API'
+  handler: index.scheduler
+  timeout: 100
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist/'
+  envs:
+    CollectionsTable:
+      function: Ref
+      value: CollectionsTableDynamoDB
+    ProvidersTable:
+      function: Ref
+      value: ProvidersTableDynamoDB
+  namedLambdaDeadLetterQueue: true
 
 ApiEndpoints:
   handler: index.appHandler
@@ -38,9 +133,6 @@ ApiEndpoints:
     UsersTable:
       function: Ref
       value: UsersTableDynamoDB
-    BulkDeleteLambda:
-      function: Ref
-      value: BulkDeleteLambdaFunction
     AsyncOperationTaskDefinition:
       function: Ref
       value: AsyncOperationTaskDefinition
@@ -48,6 +140,9 @@ ApiEndpoints:
       function: Ref
       value: EcsCluster
     system_bucket: '{{parent.system_bucket}}'
+    BulkDeleteLambda:
+      function: Ref
+      value: BulkDeleteLambdaFunction
     invoke:
       function: "Ref"
       value: ScheduleSFLambdaFunction
@@ -63,6 +158,7 @@ ApiEndpoints:
     KinesisInboundEventLogger:
       function: "Ref"
       value: KinesisInboundEventLoggerLambdaFunction
+    STSCredentialsLambda: '{{parent.sts_credentials_lambda}}'
     cmr_provider: '{{parent.cmr.provider}}'
     cmr_client_id: '{{parent.cmr.clientId}}'
     cmr_username: '{{parent.cmr.username}}'
@@ -72,7 +168,6 @@ ApiEndpoints:
     ES_HOST:
       function: Ref
       value: ElasticSearchDomain
-    STSCredentialsLambda: '{{parent.sts_credentials_lambda}}'
     TOKEN_SECRET: '{{TOKEN_SECRET}}'
   apiGateway:
     - api: backend
