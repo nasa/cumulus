@@ -45,9 +45,9 @@ Parameters:
   {{name}}RestApi:
     Type: String
     Description: restAPI id
-  # {{name}}RestApiRootId:
-  #   Type: String
-  #   Description: restAPI root resource id
+  {{name}}RestApiRootId:
+    Type: String
+    Description: restAPI root resource id
 {{/each}}
 {{# each parent.dynamos}}
   {{@key}}DynamoDB:
@@ -147,9 +147,7 @@ Resources:
     Properties:
       ParentId:
     {{# if firstParent}}
-        Fn::GetAtt:
-          - {{api}}RestApi
-          - RootResourceId
+        Ref: {{api}}RestApiRootId
     {{else}}
       {{#each parents}}
         {{this}}
