@@ -129,49 +129,49 @@ async function reindexStatus(req, res) {
 async function changeIndex(req, res) {
   const deleteSource = req.body.deleteSource;
   const aliasName = req.body.aliasName || defaultIndexAlias;
-  const sourceIndex = req.body.sourceIndex;
-  const destIndex = req.body.destIndex;
+  const currentIndex = req.body.currentIndex;
+  const newIndex = req.body.newIndex;
 
   const esClient = await Search.es();
 
-  if (!sourceIndex || !destIndex) {
-    return res.boom.badRequest('Please explicity specify a source and destination index.');
+  if (!currentIndex || !newIndex) {
+    return res.boom.badRequest('Please explicity specify a current and new index.');
   }
 
-  if (sourceIndex === destIndex) {
-    return res.boom.badRequest('The source index cannot be the same as the destination index.');
+  if (currentIndex === newIndex) {
+    return res.boom.badRequest('The current index cannot be the same as the new index.');
   }
 
-  const sourceExists = await esClient.indices.exists({ index: sourceIndex });
+  const currentExists = await esClient.indices.exists({ index: currentIndex });
 
-  if (!sourceExists) {
-    return res.boom.badRequest(`Source index ${sourceIndex} does not exist.`);
+  if (!currentExists) {
+    return res.boom.badRequest(`Current index ${currentIndex} does not exist.`);
   }
 
-  const destExists = await esClient.indices.exists({ index: destIndex });
+  const destExists = await esClient.indices.exists({ index: newIndex });
 
   if (!destExists) {
-    return res.boom.badRequest(`Destination index ${destIndex} does not exist.`);
+    return res.boom.badRequest(`New index ${newIndex} does not exist.`);
   }
 
   await esClient.indices.updateAliases({
     body: {
       actions: [
-        { remove: { index: sourceIndex, alias: aliasName } },
-        { add: { index: destIndex, alias: aliasName } }
+        { remove: { index: currentIndex, alias: aliasName } },
+        { add: { index: newIndex, alias: aliasName } }
       ]
     }
   }).then(() => {
-    log.info(`Removed alias ${aliasName} from index ${sourceIndex} and added alias to ${destIndex}`);
+    log.info(`Removed alias ${aliasName} from index ${currentIndex} and added alias to ${newIndex}`);
   }).catch((err) =>
-    res.boom.badRequest(`Error removing alias ${aliasName} from index ${sourceIndex} and adding alias to ${destIndex}: ${err}`));
+    res.boom.badRequest(`Error removing alias ${aliasName} from index ${currentIndex} and adding alias to ${newIndex}: ${err}`));
 
-  let message = `Reindex success - alias ${aliasName} now pointing to ${destIndex}`;
+  let message = `Reindex success - alias ${aliasName} now pointing to ${newIndex}`;
 
   if (deleteSource) {
-    await esClient.indices.delete({ index: sourceIndex });
-    log.info(`Deleted index ${sourceIndex}`);
-    message = `${message} and index ${sourceIndex} deleted`;
+    await esClient.indices.delete({ index: currentIndex });
+    log.info(`Deleted index ${currentIndex}`);
+    message = `${message} and index ${currentIndex} deleted`;
   }
 
   return res.send({ message });
