@@ -249,84 +249,84 @@ test.serial('Reindex status, no task running', async (t) => {
   t.deepEqual(response.body.reindexStatus, { nodes: {} });
 });
 
-test.serial('Complete index - no source', async (t) => {
+test.serial('Change index - no current', async (t) => {
   const response = await request(app)
     .post('/elasticsearch/change-index')
     .send({
       aliasName: indexAlias,
-      destIndex: 'dest-index'
+      newIndex: 'dest-index'
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
 
-  t.is(response.body.message, 'Please explicity specify a source and destination index.');
+  t.is(response.body.message, 'Please explicity specify a current and new index.');
 });
 
-test.serial('Complete index - no destination', async (t) => {
+test.serial('Change index - no new', async (t) => {
   const response = await request(app)
     .post('/elasticsearch/change-index')
     .send({
       aliasName: indexAlias,
-      sourceIndex: 'source-index'
+      currentIndex: 'source-index'
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
 
-  t.is(response.body.message, 'Please explicity specify a source and destination index.');
+  t.is(response.body.message, 'Please explicity specify a current and new index.');
 });
 
-test.serial('Complete index - source index does not exist', async (t) => {
-  const sourceIndex = 'source-index';
+test.serial('Change index - current index does not exist', async (t) => {
+  const currentIndex = 'source-index';
 
   const response = await request(app)
     .post('/elasticsearch/change-index')
     .send({
       aliasName: indexAlias,
-      sourceIndex,
-      destIndex: 'dest-index'
+      currentIndex,
+      newIndex: 'dest-index'
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
 
-  t.is(response.body.message, `Source index ${sourceIndex} does not exist.`);
+  t.is(response.body.message, `Current index ${currentIndex} does not exist.`);
 });
 
-test.serial('Complete index - no destination', async (t) => {
-  const destIndex = 'dest-index';
+test.serial('Change index - new index does not exist', async (t) => {
+  const newIndex = 'dest-index';
 
   const response = await request(app)
     .post('/elasticsearch/change-index')
     .send({
       aliasName: indexAlias,
-      sourceIndex: esIndex,
-      destIndex
+      currentIndex: esIndex,
+      newIndex
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
 
-  t.is(response.body.message, `Destination index ${destIndex} does not exist.`);
+  t.is(response.body.message, `New index ${newIndex} does not exist.`);
 });
 
-test.serial('Complete index - source index same as dest index', async (t) => {
+test.serial('Change index - current index same as new index', async (t) => {
   const response = await request(app)
     .post('/elasticsearch/change-index')
     .send({
       aliasName: indexAlias,
-      sourceIndex: 'source',
-      destIndex: 'source'
+      currentIndex: 'source',
+      newIndex: 'source'
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
 
-  t.is(response.body.message, 'The source index cannot be the same as the destination index.');
+  t.is(response.body.message, 'The current index cannot be the same as the new index.');
 });
 
-test.serial('Complete re-index', async (t) => {
+test.serial('Change index', async (t) => {
   const sourceIndex = randomString();
   const aliasName = randomString();
   const destIndex = randomString();
@@ -348,8 +348,8 @@ test.serial('Complete re-index', async (t) => {
     .post('/elasticsearch/change-index')
     .send({
       aliasName,
-      sourceIndex,
-      destIndex
+      currentIndex: sourceIndex,
+      newIndex: destIndex
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
@@ -368,7 +368,7 @@ test.serial('Complete re-index', async (t) => {
   await esClient.indices.delete({ index: destIndex });
 });
 
-test.serial('Complete re-index and delete source index', async (t) => {
+test.serial('Change index and delete source index', async (t) => {
   const sourceIndex = randomString();
   const aliasName = randomString();
   const destIndex = randomString();
@@ -390,8 +390,8 @@ test.serial('Complete re-index and delete source index', async (t) => {
     .post('/elasticsearch/change-index')
     .send({
       aliasName,
-      sourceIndex,
-      destIndex,
+      currentIndex: sourceIndex,
+      newIndex: destIndex,
       deleteSource: true
     })
     .set('Accept', 'application/json')
