@@ -1,7 +1,7 @@
 executeMigrations:
   handler: index.executeMigrations
   timeout: 300
-  useElasticSearch: '{{es.name}}'
+  useElasticSearch: '{{parent.es.name}}'
   memory: 1024
   source: 'node_modules/@cumulus/api/dist/'
   envs:
