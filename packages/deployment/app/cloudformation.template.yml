@@ -35,7 +35,19 @@ Resources:
       TemplateURL: {{this.url}}
 {{/ifEquals}}
 {{/ifEquals}}
+{{#ifEquals @key "DataStorage"}}
+  {{@key}}NestedStack:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      Parameters:
+        dbIndexerLambdaFunction:
+          Fn::GetAtt:
+            - dbIndexerLambdaFunction
+            - Arn
+      TemplateURL: {{this.url}}
+{{/ifEquals}}
 {{#ifNotEquals @key "WorkflowLambdaVersions"}}
+{{#ifNotEquals @key "DataStorage"}}
   {{@key}}NestedStack:
     Type: "AWS::CloudFormation::Stack"
     Properties:
@@ -81,6 +93,7 @@ Resources:
       {{/if}}
       TemplateURL: {{this.url}}
 {{/ifNotEquals}}
+{{/ifNotEquals}}
 {{/each}}
 
   #################################################
@@ -112,7 +125,7 @@ Resources:
       DynamoDBTables:
       {{#each dynamos}}
         - name:
-            Ref: {{@key}}DynamoDB          
+            Ref: {{@key}}DynamoDB
           pointInTime: {{this.pointInTime}}
       {{/each}}
     {{/if}}

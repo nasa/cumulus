@@ -1,5 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'stack: {{stackName}} | deployed by Kes'
+Parameters:
+  dbIndexerLambdaFunction:
+    Type: String
+    Description: 'dbIndexer Lambda function ARN'
 
 Resources:
 
