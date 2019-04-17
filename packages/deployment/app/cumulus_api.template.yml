@@ -1,12 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'stack: {{stackName}} | deployed by Kes'
 Parameters:
-  KinesisInboundEventLoggerLambdaFunction:
-    Type: String
-    Description: 'Arn for KinesisInboundEventLogger Lambda Function'
-  KinesisOutboundEventLoggerLambdaFunction:
-    Type: String
-    Description: 'Arn for KinesisOutboundEventLogger Lambda Function'
   CmrPassword:
     Type: String
     Description: 'Password used to publish CMR records. This is encrypted by Custom::Cumulus'
@@ -20,15 +14,12 @@ Parameters:
     Type: String
     Description: 'Security Group ID'
     Default: 'noValue'
-  log2elasticsearchLambdaFunction:
+  KinesisInboundEventLoggerLambdaFunction:
     Type: String
-    Description: 'logToElasticsearch Lambda function arn'
+    Description: 'Arn for KinesisInboundEventLogger Lambda Function'
   ScheduleSFLambdaFunction:
     Type: String
     Description: 'ScheduleSF lambda function arn'
-  dbIndexerLambdaFunction:
-    Type: String
-    Description: 'Arn for dbIndexer lambda function'
   messageConsumerLambdaFunction:
     Type: String
     Description: 'messageConsumer lambda function arn'
@@ -37,6 +28,12 @@ Parameters:
     Description: 'CreateReconciliationReport lambda function arn'
   BulkDeleteLambdaFunction:
     Type: String
+  log2elasticsearchLambdaFunction:
+    Type: String
+    Description: 'logToElasticsearch Lambda function arn'
+  dbIndexerLambdaFunction:
+    Type: String
+    Description: 'Arn for dbIndexer lambda function'
   AsyncOperationTaskDefinition:
     Type: String
   EcsCluster:
@@ -181,20 +178,22 @@ Resources:
           public_buckets: {{{collectBuckets ../parent.buckets "public"}}}
           protected_buckets: {{{collectBuckets ../parent.buckets "protected"}}}
       {{# if this.urs}}
+        {{# ifEquals ../apiName "backend" }}
         {{# if ../parent.api_backend_url}}
           TOKEN_REDIRECT_ENDPOINT: {{../parent.api_backend_url}}token
         {{else}}
           TOKEN_REDIRECT_ENDPOINT:
             Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}/token"]]
         {{/if}}
+        {{/ifEquals}}
         {{# if ../parent.api_distribution_url}}
           DISTRIBUTION_ENDPOINT: {{../parent.api_distribution_url}}
           DISTRIBUTION_REDIRECT_ENDPOINT: {{../parent.api_distribution_url}}redirect
         {{else}}
           DISTRIBUTION_ENDPOINT:
-            Fn::Join: ["", [ "https://", {"Ref": "downloadRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}"]]
+            Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}"]]
           DISTRIBUTION_REDIRECT_ENDPOINT:
-            Fn::Join: ["", [ "https://", {"Ref": "downloadRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}/redirect"]]
+            Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}/redirect"]]
         {{/if}}
       {{/if}}
     {{#each this.envs}}

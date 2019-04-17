@@ -4,7 +4,6 @@ sqs2sf:
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
 
-
 executeMigrations:
   handler: index.executeMigrations
   timeout: 300
@@ -31,7 +30,6 @@ executeMigrations:
       function: Ref
       value: KinesisInboundEventLoggerLambdaFunction
     system_bucket: '{{system_bucket}}'
-
 
 sns2elasticsearch:
   handler: index.indexer
@@ -167,7 +165,6 @@ EmsReport:
     system_bucket: '{{system_bucket}}'
     ems_provider: '{{ems.provider}}'
   namedLambdaDeadLetterQueue: true
-
 
 EmsDistributionReport:
   handler: index.emsDistributionReport

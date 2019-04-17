@@ -28,12 +28,12 @@ default:
   processDefaultDeadLetterQueues: true
 
   nested_templates:
-    CumulusApiDefault:
+    CumulusApiDistribution:
       cfFile: node_modules/@cumulus/deployment/app/cumulus_api.template.yml
-      configFile: node_modules/@cumulus/deployment/app/cumulus_api_default.config.yml
-    CumulusApiV1:
+      configFile: node_modules/@cumulus/deployment/app/cumulus_api_distribution.config.yml
+    CumulusApiBackend:
       cfFile: node_modules/@cumulus/deployment/app/cumulus_api.template.yml
-      configFile: node_modules/@cumulus/deployment/app/cumulus_api_v1.config.yml
+      configFile: node_modules/@cumulus/deployment/app/cumulus_api_backend.config.yml
     WorkflowLambdaVersions:
       cfFile: node_modules/@cumulus/deployment/app/workflow_lambda_versions.template.yml
       configFile: node_modules/@cumulus/deployment/app/workflow_lambda_versions.config.yml
@@ -157,7 +157,7 @@ default:
           protocol: lambda
 
   apis:
-    - name: download
+    - name: distribution
     - name: backend
 
   sqs_consumer_rate: 500
