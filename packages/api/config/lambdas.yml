@@ -10,16 +10,20 @@ sns2elasticsearch:
   useElasticSearch: '{{es.name}}'
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
-  envs:
-    GranulesTable:
-      function: Ref
-      value: GranulesTableDynamoDB
-    ExecutionsTable:
-      function: Ref
-      value: ExecutionsTableDynamoDB
-    PdrsTable:
-      function: Ref
-      value: PdrsTableDynamoDB
+  tables:
+    - GranulesTable
+    - ExecutionsTable
+    - PdrsTable
+  # envs:
+  #   GranulesTable:
+  #     function: Ref
+  #     value: GranulesTableDynamoDB
+  #   ExecutionsTable:
+  #     function: Ref
+  #     value: ExecutionsTableDynamoDB
+  #   PdrsTable:
+  #     function: Ref
+  #     value: PdrsTableDynamoDB
   namedLambdaDeadLetterQueue: true
 
 log2elasticsearch:
@@ -36,11 +40,13 @@ dbIndexer:
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
   useElasticSearch: '{{es.name}}'
+  tables:
+    - FilesTable
   envs:
     system_bucket: '{{system_bucket}}'
-    FilesTable:
-      function: Ref
-      value: FilesTableDynamoDB
+    # FilesTable:
+    #   function: Ref
+    #   value: FilesTableDynamoDB
   namedLambdaDeadLetterQueue: true
 
 fallbackConsumer:
@@ -49,16 +55,20 @@ fallbackConsumer:
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
   deadletterqueue: kinesisFailure
+  tables:
+    - RulesTable
+    - CollectionsTable
+    - ProvidersTable
   envs:
-    RulesTable:
-      function: Ref
-      value: RulesTableDynamoDB
-    CollectionsTable:
-      function: Ref
-      value: CollectionsTableDynamoDB
-    ProvidersTable:
-      function: Ref
-      value: ProvidersTableDynamoDB
+    # RulesTable:
+    #   function: Ref
+    #   value: RulesTableDynamoDB
+    # CollectionsTable:
+    #   function: Ref
+    #   value: CollectionsTableDynamoDB
+    # ProvidersTable:
+    #   function: Ref
+    #   value: ProvidersTableDynamoDB
     system_bucket: '{{system_bucket}}'
 
 jobs:
@@ -75,14 +85,16 @@ cleanExecutions:
   memory: 1024
   source: 'node_modules/@cumulus/api/dist/'
   namedLambdaDeadLetterQueue: true
+  tables:
+    - ExecutionsTable
   envs:
     nonCompleteExecutionPayloadTimeout: '"{{non_complete_execution_payload_timeout}}"'
     completeExecutionPayloadTimeout: '"{{complete_execution_payload_timeout}}"'
     nonCompleteExecutionPayloadTimeoutDisable: '"{{non_complete_execution_payload_disable}}"'
     completeExecutionPayloadTimeoutDisable: '"{{complete_execution_payload_disable}}"'
-    ExecutionsTable:
-      function: Ref
-      value: ExecutionsTableDynamoDB
+    # ExecutionsTable:
+    #   function: Ref
+    #   value: ExecutionsTableDynamoDB
 
 # used as custom resource for cloudformation manipulation
 CustomBootstrap:

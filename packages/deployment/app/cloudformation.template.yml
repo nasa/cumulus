@@ -125,13 +125,19 @@ Resources:
       DynamoDBTables:
       {{#each dynamos}}
         - name:
-            Ref: {{@key}}DynamoDB
+            # Ref: {{@key}}DynamoDB
+            Fn::GetAtt:
+              - DataStorageNestedStack
+              - Outputs.{{@key}}DynamoDB
           pointInTime: {{this.pointInTime}}
       {{/each}}
     {{/if}}
       Users:
         table:
-          Ref: UsersTableDynamoDB
+          # Ref: UsersTableDynamoDB
+          Fn::GetAtt:
+            - DataStorageNestedStack
+            - Outputs.UsersTableDynamoDB
         records:
         {{# each users}}
           - username: {{username}}
@@ -377,6 +383,12 @@ Resources:
               - {{../es.name}}Domain
               - DomainEndpoint
         {{/if}}
+        {{#each this.tables}}
+          {{this}}:
+            Fn::GetAtt:
+              - DataStorageNestedStack
+              - Outputs.{{this}}DynamoDB
+        {{/each}}
     {{#each this.envs}}
       {{# if this.function}}
         {{#if this.array}}
