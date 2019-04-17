@@ -17,9 +17,6 @@ Parameters:
   KinesisInboundEventLoggerLambdaFunction:
     Type: String
     Description: 'Arn for KinesisInboundEventLogger Lambda Function'
-  KinesisOutboundEventLoggerLambdaFunction:
-    Type: String
-    Description: 'Arn for KinesisOutboundEventLogger Lambda Function'
   ScheduleSFLambdaFunction:
     Type: String
     Description: 'ScheduleSF lambda function arn'

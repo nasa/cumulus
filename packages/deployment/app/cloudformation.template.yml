@@ -54,10 +54,6 @@ Resources:
           Fn::GetAtt:
             - KinesisInboundEventLoggerLambdaFunction
             - Arn
-        KinesisOutboundEventLoggerLambdaFunction:
-          Fn::GetAtt:
-            - KinesisOutboundEventLoggerLambdaFunction
-            - Arn
         ScheduleSFLambdaFunction:
           Fn::GetAtt:
             - ScheduleSFLambdaFunction
