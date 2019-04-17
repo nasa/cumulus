@@ -5,11 +5,11 @@ Parameters:
     Type: String
     Description: 'Password used to publish CMR records. This is encrypted by Custom::Cumulus'
     NoEcho: true
-  # ElasticSearchDomain:
-  #   Type: String
-  #   Description: 'ElasticSearch Url'
-  #   NoEcho: true
-  #   Default: 'noValue'
+  ElasticSearchDomain:
+    Type: String
+    Description: 'ElasticSearch Url'
+    NoEcho: true
+    Default: 'noValue'
   SecurityGroupId:
     Type: String
     Description: 'Security Group ID'

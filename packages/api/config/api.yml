@@ -167,9 +167,9 @@ ApiEndpoints:
     cmr_password:
       function: "Ref"
       value: "CmrPassword"
-    # ES_HOST:
-    #   function: Ref
-    #   value: ElasticSearchDomain
+    ES_HOST:
+      function: Ref
+      value: ElasticSearchDomain
     TOKEN_SECRET: '{{TOKEN_SECRET}}'
   apiGateway:
     - api: backend

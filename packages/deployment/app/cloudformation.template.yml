@@ -44,12 +44,12 @@ Resources:
           Fn::GetAtt:
             - CumulusCustomResource
             - CmrPassword
-      # {{#if ../es.name}}
-      #   ElasticSearchDomain:
-      #     Fn::GetAtt:
-      #       - {{../es.name}}Domain
-      #       - DomainEndpoint
-      # {{/if}}
+      {{#if ../es.name}}
+        ElasticSearchDomain:
+          Fn::GetAtt:
+            - {{../es.name}}Domain
+            - DomainEndpoint
+      {{/if}}
         log2elasticsearchLambdaFunction:
           Fn::GetAtt:
             - log2elasticsearchLambdaFunction
