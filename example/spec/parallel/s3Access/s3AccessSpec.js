@@ -133,6 +133,9 @@ describe('When accessing an S3 bucket directly', () => {
         redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
         requestOrigin: process.env.DISTRIBUTION_ENDPOINT,
         userParams: { username }
+      }).catch((err) => {
+        console.log(err);
+        throw err;
       });
       accessToken = accessTokenResponse.accessToken;
 
@@ -192,8 +195,7 @@ describe('When accessing an S3 bucket directly', () => {
       executeTestsAgainst(protectedBucketName);
     });
 
-    // TODO [MHS, 2019-04-08] enable public test when bucket policy is applied to public buckets.
-    xdescribe('against public buckets', () => {
+    describe('against public buckets', () => {
       executeTestsAgainst(publicBucketName);
     });
 
