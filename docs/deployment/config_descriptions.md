@@ -46,6 +46,29 @@ A representation of the stack name that has dashes removed. This will be used fo
 
 Configure your virtual private cloud.  You can find the VPC Id, subnets, and IPv4 CIDR values on the [VPC Dashboard](https://console.aws.amazon.com/vpc/home?region=us-east-1#). `vpcId` from [Your VPCs](https://console.aws.amazon.com/vpc/home?region=us-east-1#vpcs:), and `subnets` [here](https://console.aws.amazon.com/vpc/home?region=us-east-1#subnets:). When you choose a subnet, be sure to also note its availability zone, to configure `ecs`.
 
+## cmr
+
+Configuration is required for Cumulus integration with CMR services. The most obvious example of this integration is the `PostToCmr` Cumulus [task](https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr).
+
+Ensure your CMR username/password is included in your `app/.env` file, as noted in the [deployment documentation](./deployment-readme):
+
+```shell
+CMR_USERNAME=cmruser
+CMR_PASSWORD=cmrpassword
+```
+
+These values will be imported via kes in your configuration file.   You should ensure your `app/config.yml` contains the following lines:
+
+```yaml
+cmr: 
+  username: '{{CMR_USERNAME}}'
+  provider: CUMULUS
+  clientId: '<replace-with-daac-name>-{{stackName}}'
+  password: '{{CMR_PASSWORD}}'
+```
+
+`clientId` and `provider` should be configured to point to a user specified CMR `clientId` and `provider`. We use the `CUMULUS` provider in our configurations, but users can specify their own.
+
 ## ecs
 
 Configuration for the Amazon EC2 Container Service (ECS) instance.  Update `availabilityZone` (or `availabilityZones` if using multiple AZs) with information from [VPC Dashboard](https://console.aws.amazon.com/vpc/home?region=us-east-1#)
