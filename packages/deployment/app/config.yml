@@ -37,6 +37,8 @@ default:
     WorkflowLambdaVersions:
       cfFile: node_modules/@cumulus/deployment/app/workflow_lambda_versions.template.yml
       configFile: node_modules/@cumulus/deployment/app/workflow_lambda_versions.config.yml
+    DataStorage:
+      cfFile: node_modules/@cumulus/deployment/app/data_storage.template.yml
 
   # if not specified the value of the apigatewy backend endpoint is used
   # api_backend_url: https://apigateway-url-to-api-backend/
@@ -134,7 +136,7 @@ default:
       - ProvidersTable
       - GranulesTable
       - PdrsTable
-      - ExecutionsTable  
+      - ExecutionsTable
 
   # set to true to activate pointInTime on all tables
   enablePointInTime: false

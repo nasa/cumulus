@@ -68,7 +68,10 @@ Resources:
         {{/ifEquals}}
       {{# each ../dynamos}}
         {{@key}}DynamoDB:
-          Ref: {{@key}}DynamoDB
+          # Ref: {{@key}}DynamoDB
+          Fn::GetAtt:
+            - DataStorageNestedStack
+            - Outputs.{{@key}}DynamoDB
       {{/each}}
       {{# if ../vpc }}
         SecurityGroupId:
@@ -109,7 +112,7 @@ Resources:
       DynamoDBTables:
       {{#each dynamos}}
         - name:
-            Ref: {{@key}}DynamoDB
+            Ref: {{@key}}DynamoDB          
           pointInTime: {{this.pointInTime}}
       {{/each}}
     {{/if}}
@@ -124,86 +127,6 @@ Resources:
 
   #################################################
   # Cumulus Custom Resource END
-  #################################################
-
-  #################################################
-  # Cumulus DynamoDB Auto Scaling START
-  #################################################
-
-{{# each dynamos}}
-  {{#with (lookup ../this @key)}}
-  {{#if this.enableAutoScaling}}
-  ### Read scaling policy
-  {{@key}}ReadCapacityScalableTarget:
-    Type: "AWS::ApplicationAutoScaling::ScalableTarget"
-    Properties:
-    {{#if this.ReadMinCapacity}}
-      MinCapacity: {{ this.ReadMinCapacity }}
-    {{else}}
-      MinCapacity: 5
-    {{/if}}
-    {{#if this.ReadMaxCapacity}}
-      MaxCapacity: {{ this.ReadMaxCapacity }}
-    {{else}}
-      MaxCapacity: 10
-    {{/if}}
-      ResourceId:
-        Fn::Sub: table/{{../../stackName}}-{{@key}}
-      RoleARN: {{../../this.iams.scalingRoleArn}}
-      ScalableDimension: "dynamodb:table:ReadCapacityUnits"
-      ServiceNamespace: dynamodb
-  {{@key}}TableReadScalingPolicy:
-    Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
-    Properties:
-      PolicyName: ReadAutoScalingPolicy
-      PolicyType: TargetTrackingScaling
-      ScalingTargetId:
-        Ref: {{@key}}ReadCapacityScalableTarget
-      TargetTrackingScalingPolicyConfiguration:
-        TargetValue: {{ ../../this.AutoScalingPolicyConfiguration.targetValue }}
-        ScaleInCooldown: {{ ../../this.AutoScalingPolicyConfiguration.scaleInCooldown }}
-        ScaleOutCooldown: {{ ../../this.AutoScalingPolicyConfiguration.scaleOutCooldown }}
-        PredefinedMetricSpecification:
-          PredefinedMetricType: DynamoDBReadCapacityUtilization
-
-  ### Write scaling policy
-  {{@key}}WriteCapacityScalableTarget:
-    Type: "AWS::ApplicationAutoScaling::ScalableTarget"
-    Properties:
-    {{#if this.WriteMinCapacity}}
-      MinCapacity: {{ this.WriteMinCapacity }}
-    {{else}}
-      MinCapacity: 1
-    {{/if}}
-    {{#if this.WriteMaxCapacity}}
-      MaxCapacity: {{ this.WriteMaxCapacity }}
-    {{else}}
-      MaxCapacity: 2
-    {{/if}}
-      ResourceId:
-        Fn::Sub: table/{{../../stackName}}-{{@key}}
-      RoleARN: {{../../this.iams.scalingRoleArn}}
-      ScalableDimension: "dynamodb:table:WriteCapacityUnits"
-      ServiceNamespace: dynamodb
-  {{@key}}TableWriteScalingPolicy:
-    Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
-    Properties:
-      PolicyName: WriteAutoScalingPolicy
-      PolicyType: TargetTrackingScaling
-      ScalingTargetId:
-        Ref: {{@key}}WriteCapacityScalableTarget
-      TargetTrackingScalingPolicyConfiguration:
-        TargetValue: {{ ../../this.AutoScalingPolicyConfiguration.targetValue }}
-        ScaleInCooldown: {{ ../../this.AutoScalingPolicyConfiguration.scaleInCooldown }}
-        ScaleOutCooldown: {{ ../../this.AutoScalingPolicyConfiguration.scaleOutCooldown }}
-        PredefinedMetricSpecification:
-          PredefinedMetricType: DynamoDBWriteCapacityUtilization
-  {{/if}}
-  {{/with}}
-{{/each}}
-
-  #################################################
-  # Cumulus DynamoDB Auto Scaling END
   #################################################
 
   #################################################
@@ -316,73 +239,6 @@ Resources:
   # Step Functions config END
   #################################################
 
-{{# if es.name}}
-  #################################################
-  # ElasticSearch config BEGIN
-  #################################################
-  {{es.name}}Domain:
-    Type: "AWS::Elasticsearch::Domain"
-    Properties:
-      DomainName: {{stackName}}-{{es.name}}
-      ElasticsearchVersion: {{# if es.version}}{{es.version}}{{ else }}'5.3'{{/if}}
-      ElasticsearchClusterConfig:
-        InstanceCount: {{# if es.instanceCount}}{{es.instanceCount}}{{ else }}1{{/if}}
-        InstanceType: {{# if es.instanceType}}{{es.instanceType}}{{ else }}"t2.small.elasticsearch"{{/if}}
-      SnapshotOptions:
-        AutomatedSnapshotStartHour: 0
-      EBSOptions:
-        EBSEnabled: true
-        VolumeType: gp2
-        VolumeSize: {{es.volumeSize}}
-      AdvancedOptions:
-        rest.action.multi.allow_explicit_index: "true"
-      AccessPolicies:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              AWS: {{iams.lambdaProcessingRoleArn}}
-            Action: "es:*"
-            Resource:
-              - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{es.name}}/*"
-          - Effect: "Allow"
-            Principal:
-              AWS: {{iams.lambdaApiGatewayRoleArn}}
-            Action: "es:*"
-            Resource:
-              - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{es.name}}/*"
-
-  {{#if es.alarms}}
-  {{# each es.alarms}}
-  {{../es.name}}{{@key}}Alarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-    {{#if alarm_description}}
-      AlarmDescription: {{ alarm_description }}
-    {{/if}}
-      AlarmName: {{../stackName}}-{{../es.name}}-{{@key}}Alarm
-      ComparisonOperator: {{ comparison_operator }}
-      EvaluationPeriods: {{#if evaluation_periods }}{{ evaluation_periods }}{{ else }}5{{/if}}
-      MetricName: {{ metric }}
-      Statistic: {{#if statistic }}{{ statistic }}{{ else }}Average{{/if}}
-      Threshold: {{ threshold }}
-      Period: {{#if period }}{{ period }}{{ else }}60{{/if}}
-      Namespace: AWS/ES
-      Dimensions:
-        - Name: ClientId
-          Value:
-            Fn::Sub: ${AWS::AccountId}
-        - Name: DomainName
-          Value:
-            Ref: {{../es.name}}Domain
-  {{/each}}
-  {{/if}}
-
-  #################################################
-  # ElasticSearch config END
-  #################################################
-{{/if}}
-
   #################################################
   # SQS config BEGIN
   #################################################
@@ -487,87 +343,6 @@ Resources:
   #################################################
   # CloudWatch RULE config END
   #################################################
-
-  #################################################
-  # DynamoDB config BEGIN
-  #################################################
-{{#each dynamos}}
-  {{@key}}DynamoDB:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      AttributeDefinitions:
-    {{#each this.attributes}}
-      - AttributeName: {{name}}
-        AttributeType: {{type}}
-    {{/each}}
-      KeySchema:
-    {{#if this.KeySchema}}
-      {{#each this.KeySchema}}
-      - AttributeName: {{this.AttributeName}}
-        KeyType: {{this.KeyType}}
-      {{/each}}
-    {{else}}
-      {{#each this.attributes}}
-      - AttributeName: {{name}}
-        KeyType: {{schema}}
-      {{/each}}
-    {{/if}}
-      ProvisionedThroughput:
-        ReadCapacityUnits: {{this.read}}
-        WriteCapacityUnits: {{this.write}}
-      TableName: {{../stackName}}-{{@key}}
-      StreamSpecification:
-        StreamViewType: "NEW_AND_OLD_IMAGES"
-    {{#if this.GlobalSecondaryIndexes}}
-      GlobalSecondaryIndexes:
-      {{#each this.GlobalSecondaryIndexes}}
-      - IndexName: {{IndexName}}
-        KeySchema:
-        {{#each this.KeySchema}}
-        - AttributeName: {{this.AttributeName}}
-          KeyType: {{this.KeyType}}
-        {{/each}}
-        {{#if this.Projection}}
-        Projection:
-        {{#each this.Projection}}
-          {{@key}}: {{this}}
-        {{/each}}
-        {{/if}}
-        ProvisionedThroughput:
-          ReadCapacityUnits: {{../read}}
-          WriteCapacityUnits: {{../write}}
-      {{/each}}
-    {{/if}}
-
-{{/each}}
-
-  #################################################
-  # DynamoDB config END
-  #################################################
-
-{{# if dynamo2ElasticSearch}}
-  #################################################
-  # DynamoDB Event Source Mapping BEGIN
-  #################################################
-
-  {{#each dynamo2ElasticSearch.tables}}
-  {{this}}EventSourceMapping:
-    Type: AWS::Lambda::EventSourceMapping
-    Properties:
-      EventSourceArn:
-        Fn::GetAtt:
-          - {{this}}DynamoDB
-          - StreamArn        
-      FunctionName:
-        Ref: {{../dynamo2ElasticSearch.lambda}}LambdaFunction
-      BatchSize: {{../dynamo2ElasticSearch.batchSize}}
-      StartingPosition: {{../dynamo2ElasticSearch.startingPosition}}
-  {{/each}}
-
-  #################################################
-  # DynamoDB Event Source Mapping END
-  #################################################
-{{/if}}
 
   #################################################
   # Lambda config BEGIN
