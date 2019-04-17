@@ -302,6 +302,8 @@ lf-int-test:
   stackName: lf-int-test
   stackNameNoDash: lfIntTest
 
+  useWorkflowLambdaVersions: false
+
   buckets:
     internal:
       name: lf-internal
