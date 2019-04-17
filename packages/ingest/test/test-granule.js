@@ -619,15 +619,15 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
   );
 
   const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
-  t.is(oldfiles[0].duplicate_found, undefined);
   t.is(oldfiles.length, 1);
+  t.is(oldfiles[0].duplicate_found, undefined);
 
   // update the source file with different content and ingest again
   params.Body = randomString();
   await s3PutObject(params);
   const newfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
-  t.true(oldfiles[0].duplicate_found);
   t.is(newfiles.length, 2);
+  t.true(newfiles[0].duplicate_found);
 });
 
 test('ingestFile throws error when configured to handle duplicates with error', async (t) => {
@@ -664,6 +664,84 @@ test('ingestFile throws error when configured to handle duplicates with error', 
   const destFileKey = path.join(fileStagingDir, testGranule.collectionId, file.name);
   t.true(error instanceof errors.DuplicateFile);
   t.is(error.message, `${destFileKey} already exists in ${destBucket} bucket`);
+});
+
+test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
+  const sourceBucket = t.context.internalBucket;
+  const destBucket = t.context.destBucket;
+  const file = {
+    path: randomString(),
+    name: 'test.txt'
+  };
+  const key = path.join(file.path, file.name);
+  const params = { Bucket: sourceBucket, Key: key, Body: randomString(30) };
+  await s3PutObject(params);
+
+  const duplicateHandling = 'skip';
+  const fileStagingDir = 'file-staging';
+  const testGranule = new TestS3Granule(
+    {},
+    collectionConfig,
+    {
+      host: sourceBucket
+    },
+    fileStagingDir,
+    false,
+    duplicateHandling,
+  );
+
+  const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  t.is(oldfiles.length, 1);
+  t.is(oldfiles[0].duplicate_found, undefined);
+  t.is(oldfiles[0].fileSize, params.Body.length);
+
+  // update the source file with different content and ingest again
+  params.Body = randomString(100);
+  await s3PutObject(params);
+  const newfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  t.is(newfiles.length, 1);
+  t.true(newfiles[0].duplicate_found);
+  t.is(newfiles[0].fileSize, oldfiles[0].fileSize);
+  t.not(newfiles[0].fileSize, params.Body.length);
+});
+
+test.serial('ingestFile replaces file when duplicateHandling is replace', async (t) => {
+  const sourceBucket = t.context.internalBucket;
+  const destBucket = t.context.destBucket;
+  const file = {
+    path: randomString(),
+    name: 'test.txt'
+  };
+  const key = path.join(file.path, file.name);
+  const params = { Bucket: sourceBucket, Key: key, Body: randomString(30) };
+  await s3PutObject(params);
+
+  const duplicateHandling = 'replace';
+  const fileStagingDir = 'file-staging';
+  const testGranule = new TestS3Granule(
+    {},
+    collectionConfig,
+    {
+      host: sourceBucket
+    },
+    fileStagingDir,
+    false,
+    duplicateHandling,
+  );
+
+  const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  t.is(oldfiles.length, 1);
+  t.is(oldfiles[0].duplicate_found, undefined);
+  t.is(oldfiles[0].fileSize, params.Body.length);
+
+  // update the source file with different content and ingest again
+  params.Body = randomString(100);
+  await s3PutObject(params);
+  const newfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  t.is(newfiles.length, 1);
+  t.true(newfiles[0].duplicate_found);
+  t.not(newfiles[0].fileSize, oldfiles[0].fileSize);
+  t.is(newfiles[0].fileSize, params.Body.length);
 });
 
 test('unversionFilename returns original filename if it has no timestamp', (t) => {
