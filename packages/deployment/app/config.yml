@@ -107,7 +107,7 @@ default:
       storageDriver: overlay2
 
   es:
-    name: es5
+    name: es5vpc
     elasticSearchMapping: 8
     version: 5.3
     instanceCount: 1
