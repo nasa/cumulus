@@ -99,7 +99,6 @@ async function updateToken(cmrProvider, clientId, username, password) {
           username: username,
           password: password,
           client_id: clientId,
-          // LAUREN TO DO
           user_ip_address: await publicIp.v4({ timeout: IP_TIMEOUT_MS }).catch((_) => '127.0.0.1'),
           provider: cmrProvider
         }
