@@ -16,8 +16,6 @@ default:
   apis:
     - name: distribution
 
-  apiName: distribution
-
   lambdas: !!files [
     'node_modules/@cumulus/api/config/distribution.yml'
   ]
