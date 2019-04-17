@@ -11,6 +11,7 @@ node_modules
 /deployer/cloudformation.yml
 CumulusApiBackend.yml
 CumulusApiDistribution.yml
+DataStorage.yml
 yarn.lock
 spec/config.override.yml
 spec/**/*.input.json
