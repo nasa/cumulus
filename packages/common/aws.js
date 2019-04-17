@@ -224,7 +224,7 @@ exports.deleteS3Object = improveStackTrace(
  *                               if the object exists
  */
 exports.s3ObjectExists = (params) =>
-  exports.s3().headObject(params).promise()
+  exports.headObject(params.Bucket, params.Key)
     .then(() => true)
     .catch((e) => {
       if (e.code === 'NotFound') return false;
