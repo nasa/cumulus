@@ -139,7 +139,6 @@ Resources:
     Properties:
       ParentId:
     {{# if firstParent}}
-        # Ref: {{api}}RestApiRootId
         Fn::GetAtt:
           - {{api}}RestApi
           - RootResourceId
