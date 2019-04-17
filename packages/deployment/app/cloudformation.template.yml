@@ -44,32 +44,12 @@ Resources:
           Fn::GetAtt:
             - CumulusCustomResource
             - CmrPassword
-      {{#if ../es.name}}
-        ElasticSearchDomain:
-          Fn::GetAtt:
-            - {{../es.name}}Domain
-            - DomainEndpoint
-      {{/if}}
-        # KinesisInboundEventLoggerLambdaFunction:
-        #   Fn::GetAtt:
-        #     - KinesisInboundEventLoggerLambdaFunction
-        #     - Arn
-        # ScheduleSFLambdaFunction:
-        #   Fn::GetAtt:
-        #     - ScheduleSFLambdaFunction
-        #     - Arn
-        # messageConsumerLambdaFunction:
-        #   Fn::GetAtt:
-        #     - messageConsumerLambdaFunction
-        #     - Arn
-        # CreateReconciliationReportLambdaFunction:
-        #   Fn::GetAtt:
-        #     - CreateReconciliationReportLambdaFunction
-        #     - Arn
-        # BulkDeleteLambdaFunction:
-        #   Fn::GetAtt:
-        #     - BulkDeleteLambdaFunction
-        #     - Arn
+      # {{#if ../es.name}}
+      #   ElasticSearchDomain:
+      #     Fn::GetAtt:
+      #       - {{../es.name}}Domain
+      #       - DomainEndpoint
+      # {{/if}}
         log2elasticsearchLambdaFunction:
           Fn::GetAtt:
             - log2elasticsearchLambdaFunction
@@ -89,20 +69,7 @@ Resources:
           Fn::GetAtt:
             - CumulusApiDistributionNestedStack
             - Outputs.distributionRestApiResource
-        # {{else}}
-        # backendRestApi:
-        #   Fn::GetAtt:
-        #     - CumulusApiBackendNestedStack
-        #     - Outputs.backendRestApiResource
         {{/ifEquals}}
-      # {{#each ../apis}}
-      #   {{name}}RestApi:
-      #     Ref: {{name}}RestApi
-      #   {{name}}RestApiRootId:
-      #     Fn::GetAtt:
-      #       - {{name}}RestApi
-      #       - RootResourceId
-      # {{/each}}
       {{# each ../dynamos}}
         {{@key}}DynamoDB:
           Ref: {{@key}}DynamoDB
@@ -589,19 +556,6 @@ Resources:
   #################################################
 
   #################################################
-  # APIGateway config BEGIN
-  #################################################
-# {{#each apis}}
-#   {{name}}RestApi:
-#     Type: AWS::ApiGateway::RestApi
-#     Properties:
-#       Name: {{../stackName}}-{{name}}
-# {{/each}}
-  #################################################
-  # APIGateway config END
-  #################################################
-
-  #################################################
   # Lambda config BEGIN
   #################################################
 {{#each lambdas}}
@@ -729,9 +683,9 @@ Resources:
   # Lambda config END
   #################################################
 
-  #################################################
-  # ECS config BEGIN
-  #################################################
+#   #################################################
+#   # ECS config BEGIN
+#   #################################################
 {{# if vpc }}
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -1155,11 +1109,9 @@ Outputs:
     Value: {{api_backend_url}}
   {{else}}
     Value:
-      # Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
       Fn::Join:
         - ""
         - - "https://"
-          # - {"Ref": "backendRestApi"}
           - Fn::GetAtt:
             - CumulusApiBackendNestedStack
             - Outputs.backendRestApiResource
@@ -1173,11 +1125,9 @@ Outputs:
     Value: {{api_distribution_url}}
   {{else}}
     Value:
-      # Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
       Fn::Join:
         - ""
         - - "https://"
-          # - {"Ref": "distributionRestApi"}
           - Fn::GetAtt:
             - CumulusApiDistributionNestedStack
             - Outputs.distributionRestApiResource
@@ -1188,14 +1138,12 @@ Outputs:
 
   ApiId:
     Value:
-      # Ref: backendRestApi
       Fn::GetAtt:
         - CumulusApiBackendNestedStack
         - Outputs.backendRestApiResource
 
   DistributionId:
     Value:
-      # Ref: distributionRestApi
       Fn::GetAtt:
         - CumulusApiDistributionNestedStack
         - Outputs.distributionRestApiResource

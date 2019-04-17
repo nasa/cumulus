@@ -5,29 +5,15 @@ Parameters:
     Type: String
     Description: 'Password used to publish CMR records. This is encrypted by Custom::Cumulus'
     NoEcho: true
-  ElasticSearchDomain:
-    Type: String
-    Description: 'ElasticSearch Url'
-    NoEcho: true
-    Default: 'noValue'
+  # ElasticSearchDomain:
+  #   Type: String
+  #   Description: 'ElasticSearch Url'
+  #   NoEcho: true
+  #   Default: 'noValue'
   SecurityGroupId:
     Type: String
     Description: 'Security Group ID'
     Default: 'noValue'
-  # KinesisInboundEventLoggerLambdaFunction:
-  #   Type: String
-  #   Description: 'Arn for KinesisInboundEventLogger Lambda Function'
-  # ScheduleSFLambdaFunction:
-  #   Type: String
-  #   Description: 'ScheduleSF lambda function arn'
-  # messageConsumerLambdaFunction:
-  #   Type: String
-  #   Description: 'messageConsumer lambda function arn'
-  # CreateReconciliationReportLambdaFunction:
-  #   Type: String
-  #   Description: 'CreateReconciliationReport lambda function arn'
-  # BulkDeleteLambdaFunction:
-  #   Type: String
   log2elasticsearchLambdaFunction:
     Type: String
     Description: 'logToElasticsearch Lambda function arn'
@@ -46,20 +32,8 @@ Parameters:
   distributionRestApi:
     Type: String
     Description: Distribution REST API ID
-  # {{else}}
-  # backendRestApi:
-  #   Type: String
-  #   Description: Backend REST API ID
   {{/ifEquals}}
 {{/each}}
-# {{#each parent.apis}}
-#   {{name}}RestApi:
-#     Type: String
-#     Description: restAPI id
-#   {{name}}RestApiRootId:
-#     Type: String
-#     Description: restAPI root resource id
-# {{/each}}
 {{# each parent.dynamos}}
   {{@key}}DynamoDB:
     Type: String
