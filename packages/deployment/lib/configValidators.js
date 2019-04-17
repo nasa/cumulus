@@ -7,6 +7,10 @@ const get = require('lodash.get');
  *
  */
 function validateWorkflowDefinedLambdas(config) {
+  if (!config.lambdas) {
+    return;
+  }
+
   const lambdaResourceMatch = /\$\{(.*)LambdaFunction\.Arn\}/;
   const stepFunctions = get(config, 'stepFunctions', {});
   const stepFunctionStates = Object.values(stepFunctions).map((sf) => Object.values(sf.States));
