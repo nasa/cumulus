@@ -153,6 +153,7 @@ async function moveFileRequest(
   let versionedFiles = [];
   if (s3ObjAlreadyExists) {
     if (markDuplicates) fileMoved.duplicate_found = true;
+    // returns renamed files for 'version', otherwise empty array
     versionedFiles = await handleDuplicateFile({
       source,
       target,
@@ -274,12 +275,11 @@ async function moveGranules(event) {
   const cmrFiles = granulesToCmrFileObjects(granulesInput);
   const granulesByGranuleId = keyBy(granulesInput, 'granuleId');
 
-  let granulesToMove;
   let movedGranules;
   // allows us to disable moving the files
   if (moveStagedFiles) {
     // update allGranules with aspirational metadata (where the file should end up after moving.)
-    granulesToMove = await updateGranuleMetadata(
+    const granulesToMove = await updateGranuleMetadata(
       granulesByGranuleId, config.collection, cmrFiles, bucketsConfig
     );
 
@@ -302,7 +302,6 @@ async function moveGranules(event) {
     granules: Object.keys(movedGranules).map((k) => movedGranules[k])
   };
 }
-
 exports.moveGranules = moveGranules;
 
 /**

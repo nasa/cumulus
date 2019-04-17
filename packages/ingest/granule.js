@@ -475,6 +475,7 @@ class Granule {
       { Bucket: destinationBucket, Key: destinationKey }
     );
     log.debug(`file ${destinationKey} exists in ${destinationBucket}: ${s3ObjAlreadyExists}`);
+
     let versionedFiles = [];
     if (s3ObjAlreadyExists) {
       stagedFile.duplicate_found = true;
@@ -496,7 +497,7 @@ class Granule {
     }
 
     // Set final filesize
-    stagedFile.fileSize = (await aws.headObject(destinationBucket, destinationKey)).ContentLength;
+    stagedFile.fileSize = await aws.getObjectSize(destinationBucket, destinationKey);
     // return all files, the renamed files don't have the same properties
     // (name, fileSize, checksum) as input file
     log.debug(`returning ${JSON.stringify(stagedFile)}`);
@@ -635,12 +636,29 @@ function copyGranuleFile(source, target, options) {
 * @param {string} target.Key - target
 * @param {Object} options - optional object with properties as defined by AWS API:
 * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-prop
-* @returns {Promise} returms a promise that is resolved when the file is moved
+* @returns {Promise} returns a promise that is resolved when the file is moved
 **/
 async function moveGranuleFile(source, target, options) {
   await copyGranuleFile(source, target, options);
   return aws.deleteS3Object(source.Bucket, source.Key);
 }
+
+/**
+* Move granule file from one s3 bucket & keypath to another
+*
+* @param {Object} source - source
+* @param {string} source.Bucket - source
+* @param {string} source.Key - source
+* @param {Object} target - target
+* @param {string} target.Bucket - target
+* @param {string} target.Key - target
+* @param {Object} sourceChecksumObject - source checksum information
+* @param {string} sourceChecksumObject.checksumType - checksum type, e.g. 'md5'
+* @param {Object} sourceChecksumObject.checksumValues - checksum value
+* @param {Object} copyOptions - optional object with properties as defined by AWS API:
+* https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-prop
+* @returns {Promise<Array>} returns a promise that resolves to a list of s3 version file objects.
+**/
 
 async function moveGranuleFileWithVersioning(source, target, sourceChecksumObject, copyOptions) {
   const { checksumType, checksumValue } = sourceChecksumObject;
@@ -669,7 +687,25 @@ async function moveGranuleFileWithVersioning(source, target, sourceChecksumObjec
   return exports.getRenamedS3File(target.Bucket, target.Key);
 }
 
-
+/**
+ * handle duplicate file in S3 syncs and moves
+ *
+ * @param {Object} params - params object
+ * @param {Object} params.source - source object: { Bucket, Key }
+ * @param {Object} params.target - target object: { Bucket, Key }
+ * @param {Object} params.copyOptions - s3 CopyObject() options
+ * @param {string} params.duplicateHandling - duplicateHandling config string
+ * Supports `error`, `skip`, `replace`, and `version` values.
+ * @param {Function} [params.checksumFunction] - optional function to checksum source & target:
+ * Called as `await checksumFunction(bucket, key);`, expected to return array where:
+ * array[0] - string - checksum type
+ * array[1] - string - checksum value
+ * @param {Function} [params.syncFileFunction] - optional function to sync file from non-s3 source.
+ * Syncs to temporary source location for `version` case and to target location for `replace` case.
+ * Should be partially applied as needed to allow calling as `await syncFileFunction(bucket, key);`
+ * @throws {DuplicateFile} DuplicateFile error in `error` case.
+ * @returns {Array<Object>} List of file version S3 Objects in `version` case, otherwise empty.
+ */
 async function handleDuplicateFile({
   source,
   target,
@@ -683,10 +719,11 @@ async function handleDuplicateFile({
     // is not treated as a failure by the message adapter.
     throw new errors.DuplicateFile(`${target.Key} already exists in ${target.Bucket} bucket`);
   } else if (duplicateHandling === 'version') {
-    // sync to staging location if required and verify integrity
+    // sync to staging location if required
     if (syncFileFunction) await syncFileFunction(source.Bucket, source.Key);
     let sourceChecksumObject = {};
     if (checksumFunction) {
+      // verify integrity
       const [checksumType, checksumValue] = await checksumFunction(source.Bucket, source.Key);
       sourceChecksumObject = { checksumType, checksumValue };
     }
@@ -701,11 +738,11 @@ async function handleDuplicateFile({
     if (syncFileFunction) {
       // sync directly to target location
       await syncFileFunction(target.Bucket, target.Key);
-      // await verifyFile
-      if (checksumFunction) await checksumFunction(target.Bucket, target.Key);
     } else {
       await moveGranuleFile(source, target, copyOptions);
     }
+    // verify integrity after sync/move
+    if (checksumFunction) await checksumFunction(target.Bucket, target.Key);
   }
   // 'skip' and 'replace' returns
   return [];
