@@ -1,7 +1,7 @@
 'use strict';
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
-const { DuplicateFile, InvalidArgument } = require('@cumulus/common/errors');
+const { InvalidArgument } = require('@cumulus/common/errors');
 const get = require('lodash.get');
 const clonedeep = require('lodash.clonedeep');
 const flatten = require('lodash.flatten');
@@ -9,10 +9,9 @@ const keyBy = require('lodash.keyby');
 const path = require('path');
 
 const {
-  getRenamedS3File,
+  handleDuplicateFile,
   unversionFilename,
   moveGranuleFile,
-  renameS3FileWithTimestamp,
   duplicateHandlingType
 } = require('@cumulus/ingest/granule');
 
@@ -26,8 +25,6 @@ const {
 const {
   aws: {
     buildS3Uri,
-    calculateS3ObjectChecksum,
-    deleteS3Object,
     s3ObjectExists
   },
   BucketsConfig
@@ -140,7 +137,6 @@ async function moveFileRequest(
     Bucket: sourceBucket,
     Key: `${fileStagingDir}/${file.name}`
   };
-
   const target = {
     Bucket: file.bucket,
     Key: file.filepath
@@ -153,42 +149,23 @@ async function moveFileRequest(
   const s3ObjAlreadyExists = await s3ObjectExists(target);
   log.debug(`file ${target.Key} exists in ${target.Bucket}: ${s3ObjAlreadyExists}`);
 
-  if (s3ObjAlreadyExists && markDuplicates) fileMoved.duplicate_found = true;
-
-  // Have to throw DuplicateFile and not WorkflowError, because the latter
-  // is not treated as a failure by the message adapter.
-  if (s3ObjAlreadyExists && duplicateHandling === 'error') {
-    throw new DuplicateFile(`${target.Key} already exists in ${target.Bucket} bucket`);
-  }
-
-  if (s3ObjAlreadyExists && duplicateHandling === 'skip') return [fileMoved];
-
   const options = (bucketsConfig.type(file.bucket).match('public')) ? { ACL: 'public-read' } : null;
-
-  // compare the checksum of the existing file and new file, and handle them accordingly
-  if (s3ObjAlreadyExists && duplicateHandling === 'version') {
-    const existingFileSum = await calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket: target.Bucket, key: target.Key });
-    const stagedFileSum = await calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket: source.Bucket, key: source.Key });
-
-    // if the checksum of the existing file is the same as the new one, keep the existing file,
-    // else rename the existing file, and both files are part of the granule.
-    if (existingFileSum === stagedFileSum) {
-      await deleteS3Object(source.Bucket, source.Key);
-    } else {
-      await renameS3FileWithTimestamp(target.Bucket, target.Key);
-      await moveGranuleFile(source, target, options);
-    }
+  let versionedFiles = [];
+  if (s3ObjAlreadyExists) {
+    if (markDuplicates) fileMoved.duplicate_found = true;
+    versionedFiles = await handleDuplicateFile({
+      source,
+      target,
+      copyOptions: options,
+      duplicateHandling
+    });
   } else {
     await moveGranuleFile(source, target, options);
   }
 
-  const renamedFiles = (duplicateHandling === 'version')
-    ? await getRenamedS3File(target.Bucket, target.Key)
-    : [];
-
   // return both file moved and renamed files
   return [fileMoved]
-    .concat(renamedFiles.map((f) => ({
+    .concat(versionedFiles.map((f) => ({
       bucket: f.Bucket,
       name: path.basename(f.Key),
       filename: buildS3Uri(f.Bucket, f.Key),
