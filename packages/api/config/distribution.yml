@@ -5,7 +5,9 @@ ApiDistribution:
   memory: '{{parent.api_lambda_memory}}'
   source: 'node_modules/@cumulus/api/dist/'
   distributionRole: true
-  urs: true
+  # urs: true
+  urs_redirect: 'distribution'
+  useDistributionApi: true
   envs:
     EARTHDATA_BASE_URL: '{{parent.urs_url}}'
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'

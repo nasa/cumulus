@@ -50,26 +50,26 @@ Resources:
             - {{../es.name}}Domain
             - DomainEndpoint
       {{/if}}
-        KinesisInboundEventLoggerLambdaFunction:
-          Fn::GetAtt:
-            - KinesisInboundEventLoggerLambdaFunction
-            - Arn
-        ScheduleSFLambdaFunction:
-          Fn::GetAtt:
-            - ScheduleSFLambdaFunction
-            - Arn
-        messageConsumerLambdaFunction:
-          Fn::GetAtt:
-            - messageConsumerLambdaFunction
-            - Arn
-        CreateReconciliationReportLambdaFunction:
-          Fn::GetAtt:
-            - CreateReconciliationReportLambdaFunction
-            - Arn
-        BulkDeleteLambdaFunction:
-          Fn::GetAtt:
-            - BulkDeleteLambdaFunction
-            - Arn
+        # KinesisInboundEventLoggerLambdaFunction:
+        #   Fn::GetAtt:
+        #     - KinesisInboundEventLoggerLambdaFunction
+        #     - Arn
+        # ScheduleSFLambdaFunction:
+        #   Fn::GetAtt:
+        #     - ScheduleSFLambdaFunction
+        #     - Arn
+        # messageConsumerLambdaFunction:
+        #   Fn::GetAtt:
+        #     - messageConsumerLambdaFunction
+        #     - Arn
+        # CreateReconciliationReportLambdaFunction:
+        #   Fn::GetAtt:
+        #     - CreateReconciliationReportLambdaFunction
+        #     - Arn
+        # BulkDeleteLambdaFunction:
+        #   Fn::GetAtt:
+        #     - BulkDeleteLambdaFunction
+        #     - Arn
         log2elasticsearchLambdaFunction:
           Fn::GetAtt:
             - log2elasticsearchLambdaFunction
@@ -78,18 +78,31 @@ Resources:
           Fn::GetAtt:
             - dbIndexerLambdaFunction
             - Arn
+        kinesisFallbackSns:
+          Ref: kinesisFallbackSns
         EcsCluster:
           Ref: CumulusECSCluster
         AsyncOperationTaskDefinition:
           Ref: AsyncOperationTaskDefinition
-      {{#each ../apis}}
-        {{name}}RestApi:
-          Ref: {{name}}RestApi
-        {{name}}RestApiRootId:
+        {{#ifEquals @key "CumulusApiBackend"}}
+        distributionRestApi:
           Fn::GetAtt:
-            - {{name}}RestApi
-            - RootResourceId
-      {{/each}}
+            - CumulusApiDistributionNestedStack
+            - Outputs.distributionRestApiResource
+        # {{else}}
+        # backendRestApi:
+        #   Fn::GetAtt:
+        #     - CumulusApiBackendNestedStack
+        #     - Outputs.backendRestApiResource
+        {{/ifEquals}}
+      # {{#each ../apis}}
+      #   {{name}}RestApi:
+      #     Ref: {{name}}RestApi
+      #   {{name}}RestApiRootId:
+      #     Fn::GetAtt:
+      #       - {{name}}RestApi
+      #       - RootResourceId
+      # {{/each}}
       {{# each ../dynamos}}
         {{@key}}DynamoDB:
           Ref: {{@key}}DynamoDB
@@ -578,12 +591,12 @@ Resources:
   #################################################
   # APIGateway config BEGIN
   #################################################
-{{#each apis}}
-  {{name}}RestApi:
-    Type: AWS::ApiGateway::RestApi
-    Properties:
-      Name: {{../stackName}}-{{name}}
-{{/each}}
+# {{#each apis}}
+#   {{name}}RestApi:
+#     Type: AWS::ApiGateway::RestApi
+#     Properties:
+#       Name: {{../stackName}}-{{name}}
+# {{/each}}
   #################################################
   # APIGateway config END
   #################################################
@@ -699,19 +712,6 @@ Resources:
       RetentionInDays: 30
 {{/if}}
 
-  {{#ifEquals @key "ScheduleSF"}}
-  ## Generic lambda permission for custom rules
-  ## created in the dashboard
-  GenericLambdaPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName:
-        Fn::GetAtt:
-        - ScheduleSFLambdaFunction
-        - Arn
-      Action: lambda:InvokeFunction
-      Principal: events.amazonaws.com
-  {{/ifEquals}}
 {{/each}}
 
   log2elasticsearchLambdaPermissionLog:
@@ -1155,7 +1155,17 @@ Outputs:
     Value: {{api_backend_url}}
   {{else}}
     Value:
-      Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
+      # Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
+      Fn::Join:
+        - ""
+        - - "https://"
+          # - {"Ref": "backendRestApi"}
+          - Fn::GetAtt:
+            - CumulusApiBackendNestedStack
+            - Outputs.backendRestApiResource
+          - ".execute-api."
+          - {"Fn::Sub": "${AWS::Region}"}
+          - ".amazonaws.com/{{apiStage}}/"
   {{/if}}
 
   Distribution:
@@ -1163,16 +1173,32 @@ Outputs:
     Value: {{api_distribution_url}}
   {{else}}
     Value:
-      Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
+      # Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{apiStage}}/"]]
+      Fn::Join:
+        - ""
+        - - "https://"
+          # - {"Ref": "distributionRestApi"}
+          - Fn::GetAtt:
+            - CumulusApiDistributionNestedStack
+            - Outputs.distributionRestApiResource
+          - ".execute-api."
+          - {"Fn::Sub": "${AWS::Region}"}
+          - ".amazonaws.com/{{apiStage}}/"
   {{/if}}
 
   ApiId:
     Value:
-      Ref: backendRestApi
+      # Ref: backendRestApi
+      Fn::GetAtt:
+        - CumulusApiBackendNestedStack
+        - Outputs.backendRestApiResource
 
   DistributionId:
     Value:
-      Ref: distributionRestApi
+      # Ref: distributionRestApi
+      Fn::GetAtt:
+        - CumulusApiDistributionNestedStack
+        - Outputs.distributionRestApiResource
 
   ApiStage:
     Value: {{apiStage}}

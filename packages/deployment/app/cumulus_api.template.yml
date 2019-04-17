@@ -14,38 +14,52 @@ Parameters:
     Type: String
     Description: 'Security Group ID'
     Default: 'noValue'
-  KinesisInboundEventLoggerLambdaFunction:
-    Type: String
-    Description: 'Arn for KinesisInboundEventLogger Lambda Function'
-  ScheduleSFLambdaFunction:
-    Type: String
-    Description: 'ScheduleSF lambda function arn'
-  messageConsumerLambdaFunction:
-    Type: String
-    Description: 'messageConsumer lambda function arn'
-  CreateReconciliationReportLambdaFunction:
-    Type: String
-    Description: 'CreateReconciliationReport lambda function arn'
-  BulkDeleteLambdaFunction:
-    Type: String
+  # KinesisInboundEventLoggerLambdaFunction:
+  #   Type: String
+  #   Description: 'Arn for KinesisInboundEventLogger Lambda Function'
+  # ScheduleSFLambdaFunction:
+  #   Type: String
+  #   Description: 'ScheduleSF lambda function arn'
+  # messageConsumerLambdaFunction:
+  #   Type: String
+  #   Description: 'messageConsumer lambda function arn'
+  # CreateReconciliationReportLambdaFunction:
+  #   Type: String
+  #   Description: 'CreateReconciliationReport lambda function arn'
+  # BulkDeleteLambdaFunction:
+  #   Type: String
   log2elasticsearchLambdaFunction:
     Type: String
     Description: 'logToElasticsearch Lambda function arn'
   dbIndexerLambdaFunction:
     Type: String
     Description: 'Arn for dbIndexer lambda function'
+  kinesisFallbackSns:
+    Type: String
+    Description: 'SNS Topic ARN for Kinesis fallback'
   AsyncOperationTaskDefinition:
     Type: String
   EcsCluster:
     Type: String
-{{#each parent.apis}}
-  {{name}}RestApi:
+{{#each apis}}
+  {{#ifEquals name "backend" }}
+  distributionRestApi:
     Type: String
-    Description: restAPI id
-  {{name}}RestApiRootId:
-    Type: String
-    Description: restAPI root resource id
+    Description: Distribution REST API ID
+  # {{else}}
+  # backendRestApi:
+  #   Type: String
+  #   Description: Backend REST API ID
+  {{/ifEquals}}
 {{/each}}
+# {{#each parent.apis}}
+#   {{name}}RestApi:
+#     Type: String
+#     Description: restAPI id
+#   {{name}}RestApiRootId:
+#     Type: String
+#     Description: restAPI root resource id
+# {{/each}}
 {{# each parent.dynamos}}
   {{@key}}DynamoDB:
     Type: String
@@ -62,6 +76,13 @@ Resources:
   #################################################
   # APIGateway config BEGIN
   #################################################
+{{#each apis}}
+  {{name}}RestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: {{../stackName}}-{{name}}
+{{/each}}
+
 {{# if apiMethods}}
 {{# each apiDependencies}}
   {{# if ../apiDeploy }}
@@ -144,7 +165,10 @@ Resources:
     Properties:
       ParentId:
     {{# if firstParent}}
-        Ref: {{api}}RestApiRootId
+        # Ref: {{api}}RestApiRootId
+        Fn::GetAtt:
+          - {{api}}RestApi
+          - RootResourceId
     {{else}}
       {{#each parents}}
         {{this}}
@@ -177,21 +201,28 @@ Resources:
           stackName: {{../stackName}}
           public_buckets: {{{collectBuckets ../parent.buckets "public"}}}
           protected_buckets: {{{collectBuckets ../parent.buckets "protected"}}}
-      {{# if this.urs}}
+      {{# ifEquals this.urs_redirect "token"}}
         {{# if ../parent.api_backend_url}}
           TOKEN_REDIRECT_ENDPOINT: {{../parent.api_backend_url}}token
         {{else}}
           TOKEN_REDIRECT_ENDPOINT:
             Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}/token"]]
         {{/if}}
+      {{/ifEquals}}
+      {{# ifEquals this.urs_redirect "distribution"}}
+        {{# if ../parent.api_distribution_url}}
+          DISTRIBUTION_REDIRECT_ENDPOINT: {{../parent.api_distribution_url}}redirect
+        {{else}}
+          DISTRIBUTION_REDIRECT_ENDPOINT:
+            Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}/redirect"]]
+        {{/if}}
+      {{/ifEquals}}
+      {{# if this.useDistributionApi}}
         {{# if ../parent.api_distribution_url}}
           DISTRIBUTION_ENDPOINT: {{../parent.api_distribution_url}}
-          DISTRIBUTION_REDIRECT_ENDPOINT: {{../parent.api_distribution_url}}redirect
         {{else}}
           DISTRIBUTION_ENDPOINT:
             Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}"]]
-          DISTRIBUTION_REDIRECT_ENDPOINT:
-            Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}/redirect"]]
         {{/if}}
       {{/if}}
     {{#each this.envs}}
@@ -272,6 +303,21 @@ Resources:
     Properties:
       LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
       RetentionInDays: 30
+
+  {{#ifEquals @key "ScheduleSF"}}
+  ## Generic lambda permission for custom rules
+  ## created in the dashboard
+  GenericLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+        - ScheduleSFLambdaFunction
+        - Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+  {{/ifEquals}}
+
 {{/each}}
 
   #################################################
@@ -299,3 +345,10 @@ Resources:
   # DynamoDB Event Source Mapping END
   #################################################
 {{/if}}
+
+Outputs:
+  {{#each apis}}
+  {{name}}RestApiResource:
+    Value:
+      Ref: {{name}}RestApi
+  {{/each}}
