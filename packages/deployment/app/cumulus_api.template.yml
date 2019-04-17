@@ -64,7 +64,7 @@ Resources:
   #################################################
 {{# if apiMethods}}
 {{# each apiDependencies}}
-  {{# if apiDeploy }}
+  {{# if ../apiDeploy }}
   ApiGatewayDeployment{{../parent.apiStage}}{{name}}:
     DependsOn:
   {{#each methods}}
@@ -178,14 +178,12 @@ Resources:
           public_buckets: {{{collectBuckets ../parent.buckets "public"}}}
           protected_buckets: {{{collectBuckets ../parent.buckets "protected"}}}
       {{# if this.urs}}
-        {{# ifEquals ../apiName "backend" }}
         {{# if ../parent.api_backend_url}}
           TOKEN_REDIRECT_ENDPOINT: {{../parent.api_backend_url}}token
         {{else}}
           TOKEN_REDIRECT_ENDPOINT:
             Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}/token"]]
         {{/if}}
-        {{/ifEquals}}
         {{# if ../parent.api_distribution_url}}
           DISTRIBUTION_ENDPOINT: {{../parent.api_distribution_url}}
           DISTRIBUTION_REDIRECT_ENDPOINT: {{../parent.api_distribution_url}}redirect

@@ -1,5 +1,6 @@
 default:
 
+  apiDeploy: true
   apis:
     - name: backend
 
