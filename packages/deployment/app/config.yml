@@ -124,6 +124,18 @@ default:
 
   dynamos: !!files ['node_modules/@cumulus/api/config/tables.yml']
 
+  dynamo2ElasticSearch:
+    batchSize: 10
+    startingPosition: TRIM_HORIZON
+    lambda: dbIndexer
+    tables:
+      - CollectionsTable
+      - RulesTable
+      - ProvidersTable
+      - GranulesTable
+      - PdrsTable
+      - ExecutionsTable  
+
   # set to true to activate pointInTime on all tables
   enablePointInTime: false
 

@@ -54,10 +54,6 @@ Resources:
           Fn::GetAtt:
             - log2elasticsearchLambdaFunction
             - Arn
-        dbIndexerLambdaFunction:
-          Fn::GetAtt:
-            - dbIndexerLambdaFunction
-            - Arn
         kinesisFallbackSns:
           Ref: kinesisFallbackSns
         EcsCluster:
@@ -73,12 +69,6 @@ Resources:
       {{# each ../dynamos}}
         {{@key}}DynamoDB:
           Ref: {{@key}}DynamoDB
-      {{/each}}
-      {{# each ../dynamos}}
-        {{@key}}DynamoDBStreamArn:
-          Fn::GetAtt:
-            - {{@key}}DynamoDB
-            - StreamArn
       {{/each}}
       {{# if ../vpc }}
         SecurityGroupId:
@@ -554,6 +544,30 @@ Resources:
   #################################################
   # DynamoDB config END
   #################################################
+
+{{# if dynamo2ElasticSearch}}
+  #################################################
+  # DynamoDB Event Source Mapping BEGIN
+  #################################################
+
+  {{#each dynamo2ElasticSearch.tables}}
+  {{this}}EventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn:
+        Fn::GetAtt:
+          - {{this}}DynamoDB
+          - StreamArn        
+      FunctionName:
+        Ref: {{../dynamo2ElasticSearch.lambda}}LambdaFunction
+      BatchSize: {{../dynamo2ElasticSearch.batchSize}}
+      StartingPosition: {{../dynamo2ElasticSearch.startingPosition}}
+  {{/each}}
+
+  #################################################
+  # DynamoDB Event Source Mapping END
+  #################################################
+{{/if}}
 
   #################################################
   # Lambda config BEGIN

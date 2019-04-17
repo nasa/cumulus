@@ -17,9 +17,6 @@ Parameters:
   log2elasticsearchLambdaFunction:
     Type: String
     Description: 'logToElasticsearch Lambda function arn'
-  dbIndexerLambdaFunction:
-    Type: String
-    Description: 'Arn for dbIndexer lambda function'
   kinesisFallbackSns:
     Type: String
     Description: 'SNS Topic ARN for Kinesis fallback'
@@ -38,11 +35,6 @@ Parameters:
   {{@key}}DynamoDB:
     Type: String
     Description: '{{@key}} Table name'
-{{/each}}
-{{# each parent.dynamos}}
-  {{@key}}DynamoDBStreamArn:
-    Type: String
-    Description: '{{@key}} Table Stream Arns'
 {{/each}}
 
 Resources:
@@ -296,28 +288,6 @@ Resources:
   #################################################
   # Lambda config END
   #################################################
-
-{{# if dynamo2ElasticSearch}}
-  #################################################
-  # DynamoDB Event Source Mapping BEGIN
-  #################################################
-
-  {{#each dynamo2ElasticSearch.tables}}
-  {{this}}EventSourceMapping:
-    Type: AWS::Lambda::EventSourceMapping
-    Properties:
-      EventSourceArn:
-        Ref: {{this}}DynamoDBStreamArn
-      FunctionName:
-        Ref: {{../dynamo2ElasticSearch.lambda}}LambdaFunction
-      BatchSize: {{../dynamo2ElasticSearch.batchSize}}
-      StartingPosition: {{../dynamo2ElasticSearch.startingPosition}}
-  {{/each}}
-
-  #################################################
-  # DynamoDB Event Source Mapping END
-  #################################################
-{{/if}}
 
 Outputs:
   {{#each apis}}
