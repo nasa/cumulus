@@ -39,7 +39,7 @@ The process involves:
 
 ### Credentials
 
-* [CMR](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) username and password.  Can be excluded if you are not exporting metadata to CMR.
+* [CMR](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) username and password.  Can be excluded if you are not exporting metadata to CMR. More information about CMR configuration can be found [here](./config_descriptions#cmr).
 * [EarthData Client login](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/earthdata-login) username and password. User must have the ability to administer and/or create applications in URS.  It's recommended to obtain an account in the test environment (UAT).
 
 ### Needed Git Repositories
@@ -261,6 +261,13 @@ dev:                            # deployment name
   users:
     - username: <user>
     - username: <user2>
+  
+  # Optional. Only necessary if you have workflows that integrate with CMR
+  cmr:
+    username: '{{CMR_USERNAME}}'
+    password: '{{CMR_PASSWORD}}'
+    clientId: '<replace-with-daac-name>-{{stackName}}'
+    provider: CUMULUS
 ```
 
 **IMPORTANT NOTE** - The `stackName` for this config **must start with** the value of the resource prefix for the IAM stack. By default, this means that the `stackName` should start with the value of the [`prefix` set for the IAM stack above](#configure-and-deploy-the-iam-stack). However, if you changed the value of the `ResourcePrefix` param in your IAM stack `config.yml`, you would use that value instead.
