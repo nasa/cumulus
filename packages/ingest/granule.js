@@ -19,7 +19,6 @@ const {
   errors
 } = require('@cumulus/common');
 const { buildURL } = require('@cumulus/common/URLUtils');
-const { deprecate } = require('@cumulus/common/util');
 
 const { sftpMixin } = require('./sftp');
 const { ftpMixin } = require('./ftp');
@@ -348,23 +347,6 @@ class Granule {
     });
 
     return unsupported;
-  }
-
-  /**
-   * Validate a file's checksum and throw an exception if it's invalid
-   *
-   * @param {Object} file - the file object to be checked
-   * @param {string} bucket - s3 bucket name of the file
-   * @param {string} key - s3 key of the file
-   * @param {Object} [options={}] - options for the this._hash method
-   * @returns {Array<string>} returns array where first item is the checksum algorithm,
-   * and the second item is the value of the checksum.
-   * Throws an error if the checksum is invalid.
-   * @memberof Granule
-   */
-  async validateChecksum(file, bucket, key, options = {}) {
-    deprecate('@cumulus/ingest/Granule.validateChecksum', '1.11.2', '@cumulus/ingest/Granule.verifyFile');
-    return this.verifyFile(file, bucket, key, options);
   }
 
   /**
