@@ -63,7 +63,6 @@ ScheduleSF:
 CreateReconciliationReport:
   handler: index.createReconciliationReport
   source: 'node_modules/@cumulus/api/dist/'
-  # urs: true
   useDistributionApi: true
   envs:
     system_bucket: '{{parent.system_bucket}}'
