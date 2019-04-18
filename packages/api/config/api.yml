@@ -143,23 +143,35 @@ ApiEndpoints:
       value: EcsCluster
     system_bucket: '{{parent.system_bucket}}'
     BulkDeleteLambda:
-      function: Ref
-      value: BulkDeleteLambdaFunction
+      function: Fn::GetAtt
+      array:
+        - BulkDeleteLambdaFunction
+        - Arn
     invoke:
-      function: "Ref"
-      value: ScheduleSFLambdaFunction
+      function: Fn::GetAtt
+      array:
+        - ScheduleSFLambdaFunction
+        - Arn
     invokeArn:
-      function: "Ref"
-      value: ScheduleSFLambdaFunction
+      function: Fn::GetAtt
+      array:
+        - ScheduleSFLambdaFunction
+        - Arn
     invokeReconcileLambda:
-      function: "Ref"
-      value: CreateReconciliationReportLambdaFunction
+      function: Fn::GetAtt
+      array:
+        - CreateReconciliationReportLambdaFunction
+        - Arn
     messageConsumer:
-      function: "Ref"
-      value: messageConsumerLambdaFunction
+      function: Fn::GetAtt
+      array:
+        - messageConsumerLambdaFunction
+        - Arn
     KinesisInboundEventLogger:
-      function: "Ref"
-      value: KinesisInboundEventLoggerLambdaFunction
+      function: Fn::GetAtt
+      array:
+        - KinesisInboundEventLoggerLambdaFunction
+        - Arn
     STSCredentialsLambda: '{{parent.sts_credentials_lambda}}'
     cmr_provider: '{{parent.cmr.provider}}'
     cmr_client_id: '{{parent.cmr.clientId}}'
