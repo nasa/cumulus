@@ -366,7 +366,7 @@ class Granule {
     if (!type || !value) {
       log.info(`No checksum found to verify file ${file.name}, falling back to fileSize`);
       if (file.fileSize) {
-        const ingestedSize = aws.getObjectSize(bucket, key);
+        const ingestedSize = await aws.getObjectSize(bucket, key);
         if (ingestedSize !== file.fileSize) {
           throw new errors.UnexpectedFileSize(
             `verifyFile failed: Actual filesize ${file.fileSize}`
