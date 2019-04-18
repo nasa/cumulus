@@ -1,0 +1,43 @@
+version: '3'
+services:
+  ftp:
+    image: cumuluss/vsftpd:2
+    network_mode: "service:build_env"
+    volumes:
+      - ../packages/test-data:/srv:ro
+    environment:
+      - FTP_USER=testuser
+      - FTP_PASSWORD=testpass
+      - FTP_PASV_ADDRESS=127.0.0.1
+  http:
+    image: httpd:alpine
+    network_mode: "service:build_env"
+    volumes:
+      - ../packages/test-data:/usr/local/apache2/htdocs:ro
+      - ./httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
+  sftp:
+    # image: panubo/sshd:latest
+    image: nsidc/panubo_sshd:latest
+    command: /bootstrap-sftp.sh
+    network_mode: "service:build_env"
+    volumes:
+      - ./bootstrap-sftp.sh:/bootstrap-sftp.sh
+      - ../packages/test-data/keys/ssh_client_rsa_key.pub:/etc/authorized_keys/user
+      - ../packages/test-data:/data
+    environment:
+      - SSH_USERS=user:2000:2000
+      - SFTP_MODE=true
+  elasticsearch:
+    image: elasticsearch:5.6
+    network_mode: "service:build_env"
+    environment:
+      ES_JAVA_OPTS: "-Xms750m -Xmx750m"
+  localstack:
+    image: localstack/localstack:0.8.7
+    network_mode: "service:build_env"
+    environment:
+      SERVICES: 'kinesis,lambda,s3,sns,sqs,dynamodb,dynamodbstreams'
+  build_env:
+    image: node:8.10
+    command: tail -f /dev/null
+
