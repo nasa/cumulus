@@ -9,33 +9,6 @@ const RandExp = require('randexp');
 const fs = require('fs-extra');
 const { isNil } = require('./util');
 
-const awsServiceInterfaceMethodWrapper = (client) => {
-  const originalFunctions = {};
-
-  return (methodName, dataHandler) => {
-    originalFunctions[methodName] = client[methodName];
-
-    // eslint-disable-next-line no-param-reassign
-    client[methodName] = (params = {}, callback) => {
-      if (callback) {
-        return originalFunctions[methodName].call(
-          client,
-          params,
-          (err, data) => {
-            if (err) callback(err);
-            callback(null, dataHandler(data, params));
-          }
-        );
-      }
-
-      return {
-        promise: () => originalFunctions[methodName].call(client, params).promise()
-          .then((data) => dataHandler(data, params))
-      };
-    };
-  };
-};
-
 exports.inTestMode = () => process.env.NODE_ENV === 'test';
 
 /**
@@ -153,6 +126,33 @@ function localStackAwsClient(Service, options) {
   return new Service(localStackOptions);
 }
 
+// const awsServiceInterfaceMethodWrapper = (client) => {
+//   const originalFunctions = {};
+
+//   return (methodName, dataHandler) => {
+//     originalFunctions[methodName] = client[methodName];
+
+//     // eslint-disable-next-line no-param-reassign
+//     client[methodName] = (params = {}, callback) => {
+//       if (callback) {
+//         return originalFunctions[methodName].call(
+//           client,
+//           params,
+//           (err, data) => {
+//             if (err) callback(err);
+//             callback(null, dataHandler(data, params));
+//           }
+//         );
+//       }
+
+//       return {
+//         promise: () => originalFunctions[methodName].call(client, params).promise()
+//           .then((data) => dataHandler(data, params))
+//       };
+//     };
+//   };
+// };
+
 /**
  * Create an AWS service object that does not actually talk to AWS.
  *
@@ -164,63 +164,109 @@ function testAwsClient(Service, options) {
   if (Service.serviceIdentifier === 'lambda') {
     const lambdaClient = localStackAwsClient(Service, options);
 
-    const eventSourceMappingStates = {};
+    const originalCreateEventSourceMapping = lambdaClient.createEventSourceMapping;
 
-    const deleteState = (UUID) => {
-      delete eventSourceMappingStates[UUID];
-    };
+    lambdaClient.createEventSourceMapping = (params = {}, callback) => {
+      if (callback) {
+        return originalCreateEventSourceMapping.call(
+          lambdaClient,
+          params,
+          (createErr, createData) => {
+            if (createErr) callback(createErr);
 
-    const getState = (UUID) => eventSourceMappingStates[UUID];
+            const { Enabled = true } = params;
 
-    const setState = (state, UUID) => {
-      eventSourceMappingStates[UUID] = state;
-    };
-
-    const lambdaWrapper = awsServiceInterfaceMethodWrapper(lambdaClient);
-
-    lambdaWrapper(
-      'createEventSourceMapping',
-      (data, params) => {
-        setState((isNil(params.Enabled) || params.Enabled) ? 'Enabled' : 'Disabled', data.UUID);
-        return { ...data, State: getState(data.UUID) };
+            lambdaClient.updateEventSourceMapping(
+              { UUID: createData.UUID, Enabled },
+              (updateErr, updateData) => {
+                if (updateErr) callback(updateErr);
+                return {
+                  ...createData,
+                  State: updateData.State
+                };
+              }
+            );
+          }
+        );
       }
-    );
 
-    lambdaWrapper(
-      'deleteEventSourceMapping',
-      (data, params) => {
-        deleteState(params.UUID);
-        return { ...data, State: '' };
-      }
-    );
+      return {
+        promise: async () => {
+          // eslint-disable-next-line max-len
+          const createData = await originalCreateEventSourceMapping.call(lambdaClient, params).promise();
 
-    lambdaWrapper(
-      'getEventSourceMapping',
-      (data) => ({ ...data, State: getState(data.UUID) })
-    );
+          const { Enabled = true } = params;
+          // eslint-disable-next-line max-len
+          const updateData = await lambdaClient.updateEventSourceMapping({ UUID: createData.UUID, Enabled }).promise();
 
-    lambdaWrapper(
-      'listEventSourceMappings',
-      (data) => ({
-        ...data,
-        EventSourceMappings: data.EventSourceMappings
-          .filter((esm) => Object.keys(eventSourceMappingStates).includes(esm.UUID))
-          .map((esm) => ({ ...esm, State: getState(esm.UUID) }))
-      })
-    );
-
-    lambdaWrapper(
-      'updateEventSourceMapping',
-      (data, params) => {
-        if (!isNil(params.Enabled)) {
-          const enabled = isNil(params.Enabled) || params.Enabled;
-          setState(enabled ? 'Enabled' : 'Disabled', data.UUID);
+          return {
+            ...createData,
+            State: updateData.State
+          };
         }
-        return { ...data, State: getState(data.UUID) };
-      }
-    );
+      };
+    };
 
     return lambdaClient;
+
+    // const eventSourceMappingStates = {};
+
+    // const deleteState = (UUID) => {
+    //   delete eventSourceMappingStates[UUID];
+    // };
+
+    // const getState = (UUID) => eventSourceMappingStates[UUID];
+
+    // const setState = (state, UUID) => {
+    //   eventSourceMappingStates[UUID] = state;
+    // };
+
+    // const lambdaWrapper = awsServiceInterfaceMethodWrapper(lambdaClient);
+
+    // lambdaWrapper(
+    //   'createEventSourceMapping',
+    //   (data, params) => {
+
+    //     // setState((isNil(params.Enabled) || params.Enabled) ? 'Enabled' : 'Disabled', data.UUID);
+    //     // return { ...data, State: getState(data.UUID) };
+    //   }
+    // );
+
+    // lambdaWrapper(
+    //   'deleteEventSourceMapping',
+    //   (data, params) => {
+    //     deleteState(params.UUID);
+    //     return { ...data, State: '' };
+    //   }
+    // );
+
+    // lambdaWrapper(
+    //   'getEventSourceMapping',
+    //   (data) => ({ ...data, State: getState(data.UUID) })
+    // );
+
+    // lambdaWrapper(
+    //   'listEventSourceMappings',
+    //   (data) => ({
+    //     ...data,
+    //     EventSourceMappings: data.EventSourceMappings
+    //       .filter((esm) => Object.keys(eventSourceMappingStates).includes(esm.UUID))
+    //       .map((esm) => ({ ...esm, State: getState(esm.UUID) }))
+    //   })
+    // );
+
+    // lambdaWrapper(
+    //   'updateEventSourceMapping',
+    //   (data, params) => {
+    //     if (!isNil(params.Enabled)) {
+    //       const enabled = isNil(params.Enabled) || params.Enabled;
+    //       setState(enabled ? 'Enabled' : 'Disabled', data.UUID);
+    //     }
+    //     return { ...data, State: getState(data.UUID) };
+    //   }
+    // );
+
+    // return lambdaClient;
   }
 
   if (localstackSupportedService(Service)) {
