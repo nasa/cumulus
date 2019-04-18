@@ -90,10 +90,11 @@ default:
     availabilityZone: 'us-east-1b'
     desiredInstances: 1
     maxInstances: 1
-    autoscaling:
+    clusterAutoscaling:
       scaleInThresholdPercent: 25
+      scaleInAdjustmentPercent: -5
       scaleOutThresholdPercent: 75
-      scalingAdjustmentPercent: 10
+      scaleOutAdjustmentPercent: 10
 
     tasks:
       AsyncOperation:
