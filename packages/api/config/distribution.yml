@@ -7,6 +7,7 @@ ApiDistribution:
   distributionRole: true
   urs_redirect: 'distribution'
   useDistributionApi: true
+  addLogGroup: true
   envs:
     EARTHDATA_BASE_URL: '{{parent.urs_url}}'
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'

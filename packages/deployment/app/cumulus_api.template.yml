@@ -261,13 +261,21 @@ Resources:
         Ref: log2elasticsearchLambdaFunction
       LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
       FilterPattern: ""
-{{/if}}
 
   {{@key}}LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
       RetentionInDays: 30
+{{/if}}
+
+{{# if this.addLogGroup }}
+  {{@key}}LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
+      RetentionInDays: 30
+{{/if}}
 
   {{#ifEquals @key "ScheduleSF"}}
   ## Generic lambda permission for custom rules
