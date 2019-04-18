@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1193**
   - Moved reindex CLI functionality to an API endpoint
+  
+### Fixed
+- **CUMULUS-1203**
+  - Fixes IAM template's use of intrinsic functions such that IAM template overrides now work with kes
 
 ## [v1.12.1] - 2019-4-8
 
