@@ -39,5 +39,8 @@ services:
       SERVICES: 'kinesis,lambda,s3,sns,sqs,dynamodb,dynamodbstreams'
   build_env:
     image: node:8.10
+    volumes:
+      - ./source/cumulus:/source/cumulus
+    environment:
+      LOCALSTACK_HOST: "127.0.0.1"
     command: tail -f /dev/null
-
