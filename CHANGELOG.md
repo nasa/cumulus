@@ -1,4 +1,5 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
@@ -10,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1212**
   - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
+- **CUMULUS-1264**
+  - The deployment configuration for the nested API stacks has been substantially refactored. **As a result, you must deleting your existing app stack before deploying this version of Cumulus.**
 
 ## Changed
 
@@ -21,6 +24,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1193**
   - Moved reindex CLI functionality to an API endpoint
+
+### Fixed
+
+- **CUMULUS-1203**
+  - Fixes IAM template's use of intrinsic functions such that IAM template overrides now work with kes
 
 ## [v1.12.1] - 2019-4-8
 

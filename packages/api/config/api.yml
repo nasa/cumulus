@@ -63,7 +63,6 @@ ScheduleSF:
 CreateReconciliationReport:
   handler: index.createReconciliationReport
   source: 'node_modules/@cumulus/api/dist/'
-  # urs: true
   useDistributionApi: true
   envs:
     system_bucket: '{{parent.system_bucket}}'
@@ -103,6 +102,7 @@ ApiEndpoints:
   apiRole: true
   urs_redirect: 'token'
   useDistributionApi: true
+  addLogGroup: true
   envs:
     EARTHDATA_BASE_URL: '{{parent.urs_url}}'
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'
