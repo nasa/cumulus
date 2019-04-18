@@ -19,8 +19,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1223**
   - Adds unauthenticated access for public bucket files to the Distribution API.  Public files should be requested the same way as protected files, but for public files a redirect to a self-signed S3 URL will happen without requiring authentication with Earthdata login.
 
+- **CUMULUS-1193**
+  - Moved reindex CLI functionality to an API endpoint
+  
 ### Fixed
-
 - **CUMULUS-1203**
   - Fixes IAM template's use of intrinsic functions such that IAM template overrides now work with kes
 
