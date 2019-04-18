@@ -1,4 +1,5 @@
----
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'stack: {{stackName}} | deployed by Kes'
 Parameters:
   CreateDeploymentRole:
     Type: String
@@ -45,7 +46,8 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: ecs:RunTask
-                Resource: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/${ResourcePrefix}-AsyncOperationTaskDefinition-*"
+                Resource:
+                 Fn::Sub: "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/${ResourcePrefix}-AsyncOperationTaskDefinition-*"
 
               - Effect: Allow
                 Action:
@@ -606,7 +608,8 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: dynamodb:UpdateItem
-                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-AsyncOperationsTable"
+                Resource:
+                 Fn::Sub: "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-AsyncOperationsTable"
               - Effect: Allow
                 Action:
                   - cloudwatch:GetMetricStatistics
