@@ -364,7 +364,7 @@ class Granule {
   async verifyFile(file, bucket, key, options = {}) {
     const [type, value] = await this.retrieveSuppliedFileChecksumInformation(file);
     if (!type || !value) {
-      log.debug(`No checksum found to verify file ${file.name}, falling back to fileSize`);
+      log.info(`No checksum found to verify file ${file.name}, falling back to fileSize`);
       if (file.fileSize) {
         const ingestedSize = aws.getObjectSize(bucket, key);
         if (ingestedSize !== file.fileSize) {
@@ -373,6 +373,8 @@ class Granule {
             + `did not match expected fileSize ${ingestedSize}`
           );
         }
+      } else {
+        log.warn(`No fileSize found to verify file ${file.name}. File cannot be verified.`);
       }
       return [null, null];
     }
