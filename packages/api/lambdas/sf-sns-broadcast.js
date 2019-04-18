@@ -21,10 +21,9 @@ function eventFailed(event) {
         return true;
       }
     }
-  }
-  // Error and error keys are not part of the cumulus message
-  // and if they appear in the message something is seriously wrong
-  else if (event.Error || event.error) {
+  } else if (event.Error || event.error) {
+    // Error and error keys are not part of the cumulus message
+    // and if they appear in the message something is seriously wrong
     return true;
   }
   return false;
@@ -45,8 +44,7 @@ function makeLambdaFunctionFail(event) {
   if (error) {
     if (errors[error]) {
       throw new errors[error](cause);
-    }
-    else if (error === 'TypeError') {
+    } else if (error === 'TypeError') {
       throw new TypeError(cause);
     }
     throw new Error(cause);
@@ -74,8 +72,7 @@ async function publish(message, finished = false) {
     if (finished) {
       if (failed) {
         event.meta.status = 'failed';
-      }
-      else {
+      } else {
         event.meta.status = 'completed';
       }
       const granuleId = get(event, 'meta.granuleId', null);
@@ -89,8 +86,7 @@ async function publish(message, finished = false) {
           event.meta.status
         );
       }
-    }
-    else {
+    } else {
       event.meta.status = 'running';
     }
 

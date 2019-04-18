@@ -68,8 +68,7 @@ async function removeFromCMR({ prefix, granuleId }) {
 
   try {
     return payload;
-  }
-  catch (error) {
+  } catch (error) {
     console.log(`Error parsing JSON response removing granule ${granuleId} from CMR: ${JSON.stringify(payload)}`);
     throw error;
   }
@@ -143,8 +142,7 @@ async function moveGranule({ prefix, granuleId, destinations }) {
 
   try {
     return payload;
-  }
-  catch (error) {
+  } catch (error) {
     console.log(`Error parsing JSON response removing granule ${granuleId} from CMR: ${JSON.stringify(payload)}`);
     throw error;
   }
@@ -162,7 +160,7 @@ async function removePublishedGranule({ prefix, granuleId }) {
   // pre-delete: Remove the granule from CMR
   await removeFromCMR({ prefix, granuleId });
   return deleteGranule({ prefix, granuleId });
-};
+}
 
 module.exports = {
   getGranule,

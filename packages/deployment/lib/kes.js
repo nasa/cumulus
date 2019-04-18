@@ -23,6 +23,7 @@
 
 'use strict';
 
+const cloneDeep = require('lodash.clonedeep');
 const zipObject = require('lodash.zipobject');
 const { Kes, utils } = require('kes');
 const fs = require('fs-extra');
@@ -32,6 +33,7 @@ const util = require('util');
 const { sleep } = require('@cumulus/common/util');
 
 const Lambda = require('./lambda');
+const validateWorkflowDefinedLambdas = require('./configValidators');
 const { crypto } = require('./crypto');
 const { fetchMessageAdapter } = require('./adapter');
 const { extractCumulusConfigFromSF, generateTemplates } = require('./message');
@@ -61,6 +63,7 @@ class UpdatedKes extends Kes {
   constructor(config) {
     super(config);
     this.Lambda = Lambda;
+    validateWorkflowDefinedLambdas(config);
     this.messageAdapterGitPath = `${config.repo_owner}/${config.message_adapter_repo}`;
   }
 
@@ -80,8 +83,7 @@ class UpdatedKes extends Kes {
         const apigateway = new this.AWS.APIGateway();
         await apigateway.createDeployment({ restApiId, stageName }).promise();
         console.log(`${name} endpoints with the id ${restApiId} redeployed.`);
-      }
-      catch (e) {
+      } catch (e) {
         if (e.message && e.message.includes('Too Many Requests')) {
           console.log(
             `Redeploying ${restApiId} was throttled. `
@@ -140,11 +142,104 @@ class UpdatedKes extends Kes {
             console.log(`ECS task ${task} restarted`);
           }
         }
-      }
-      catch (err) {
+      } catch (err) {
         console.log(err);
       }
     }
+  }
+
+  /**
+   * build CloudWatch alarm widgets
+   *
+   * @param {string[]} alarmNames list of alarm names
+   * @param {Object} alarmTemplate widget template for alarm
+   * @returns {Object[]} list of alarm widgets
+   */
+  buildAlarmWidgets(alarmNames, alarmTemplate) {
+    return alarmNames.map((alarmName) => {
+      const alarm = cloneDeep(alarmTemplate);
+      alarm.properties.title = alarmName;
+      alarm.properties.annotations.alarms[0] = alarm.properties.annotations.alarms[0].replace('alarmTemplate', alarmName);
+      return alarm;
+    });
+  }
+
+  /**
+  * Build list of buckets of desired type.
+  *
+  * @param {Object} buckets - config buckets
+  * @param {string} bucketType - selected type.
+  * @returns {string} - comma separated list of every bucket in buckets that matches bucketType.
+  */
+  collectBuckets(buckets, bucketType) {
+    const matchingBuckets = Object.values(buckets)
+      .filter((bucket) => bucket.type === bucketType)
+      .map((object) => object.name);
+    return new Handlebars.SafeString(matchingBuckets.toString());
+  }
+
+  /**
+   * build CloudWatch dashboard based on the dashboard configuration and other configurations
+   *
+   * @param {Object} dashboardConfig dashboard configuration for creating widgets
+   * @param {Object} ecs Elastic Container Service configuration including custom configuration
+   * for alarms
+   * @param {Object} es Elasticsearch configuration including configuration for alarms
+   * @param {string} stackName stack name
+   * @returns {string} returns dashboard body string
+   */
+  buildCWDashboard(dashboardConfig, ecs, es, stackName) {
+    const alarmTemplate = dashboardConfig.alarmTemplate;
+
+    // build ECS alarm widgets
+    const ecsAlarmNames = [];
+    Object.keys(ecs.services).forEach((serviceName) => {
+      // default alarm
+      const defaultAlarmName = `${stackName}-${serviceName}-TaskCountLowAlarm`;
+      ecsAlarmNames.push(defaultAlarmName);
+      // custom alarm
+      if (ecs.services[serviceName].alarms) {
+        Object.keys(ecs.services[serviceName].alarms).forEach((alarmName) => {
+          const name = `${stackName}-${serviceName}-${alarmName}Alarm`;
+          ecsAlarmNames.push(name);
+        });
+      }
+    });
+
+    const ecsAlarms = this.buildAlarmWidgets(ecsAlarmNames, alarmTemplate);
+
+    // build ES alarm widgets
+    let esWidgets = [];
+    if (es) {
+      const esAlarmNames = Object.keys(es.alarms).map((alarmName) =>
+        `${stackName}-${es.name}-${alarmName}Alarm`);
+      const esAlarms = this.buildAlarmWidgets(esAlarmNames, alarmTemplate);
+      esWidgets = dashboardConfig.esHeader
+        .concat(cloneDeep(dashboardConfig.alarmHeader), esAlarms, dashboardConfig.esWidgets);
+    }
+
+    // put all widgets together
+    let x = 0;
+    let y = 0;
+
+    const widgets = [];
+    const allWidgets = dashboardConfig.ecsHeader
+      .concat(cloneDeep(dashboardConfig.alarmHeader), ecsAlarms,
+        esWidgets);
+
+    let previousWgHeight = 0;
+    // place the widgets side by side until reach width 24
+    allWidgets.forEach((widget) => {
+      if (x + widget.width > 24) {
+        x = 0;
+        y += previousWgHeight;
+      }
+      widgets.push(Object.assign(widget, { x, y }));
+      x += widget.width;
+      previousWgHeight = widget.height;
+    });
+
+    return JSON.stringify({ widgets });
   }
 
   /**
@@ -163,6 +258,11 @@ class UpdatedKes extends Kes {
     Handlebars.registerHelper('ifNotEquals', function ifNotEquals(arg1, arg2, options) {
       return (arg1 !== arg2) ? options.fn(this) : options.inverse(this);
     });
+
+    Handlebars.registerHelper('collectBuckets', (buckets, bucketType) => this.collectBuckets(buckets, bucketType));
+
+    Handlebars.registerHelper('buildCWDashboard', (dashboardConfig, ecs, es, stackName) =>
+      this.buildCWDashboard(dashboardConfig, ecs, es, stackName));
 
     return super.parseCF(cfFile);
   }
@@ -241,8 +341,7 @@ class UpdatedKes extends Kes {
     // lhe lambda zips
     if (this.config.lambdaProcess) {
       this.config = await lambda.process();
-    }
-    else {
+    } else {
       lambda.buildAllLambdaConfiguration('lambdas');
     }
 
@@ -276,16 +375,14 @@ class UpdatedKes extends Kes {
 
         // merge the the two
         cf = utils.mergeYamls(mainCF, overrideCF);
-      }
-      catch (e) {
+      } catch (e) {
         if (!e.message.includes('ENOENT')) {
           console.log(`compiling the override template at ${this.config.cfFile} failed:`);
           throw e;
         }
         cf = mainCF;
       }
-    }
-    else {
+    } else {
       cf = this.parseCF(this.config.cfFile);
     }
     const destPath = path.join(this.config.kesFolder, this.cf_template_name);
@@ -327,8 +424,7 @@ class UpdatedKes extends Kes {
     let aliasPage;
     try {
       aliasPage = await lambda.listAliases(lambdaConfig).promise();
-    }
-    catch (err) {
+    } catch (err) {
       if (err.statusCode === 404) {
         return [];
       }
@@ -497,7 +593,7 @@ class UpdatedKes extends Kes {
    *
    * @param {string} stateObjectResource - CF template resource reference for a state function
    * @returns {string} The correct reference to the lambda function, either a hashed alias
-   * reference or the passed in resource if hasing/versioning isn't possible for this resource
+   * reference or the passed in resource if hashing/versioning isn't possible for this resource
    * @throws {Error} Throws an error if the passed in stateObjectResource isn't a LambdaFunctionArn
    * reference
    */
@@ -508,8 +604,7 @@ class UpdatedKes extends Kes {
 
     if (matchArray) {
       lambdaKey = matchArray[1];
-    }
-    else {
+    } else {
       console.log(`Invalid workflow configuration, ${stateObjectResource} `
                   + 'is not a valid Lambda ARN');
       throw new Error(`Invalid stateObjectResource: ${stateObjectResource}`);

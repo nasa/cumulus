@@ -152,37 +152,10 @@ async function waitForConceptExistsOutcome(cmrLink, expectation) {
     );
 
     await waitForCmrToBeConsistent();
-  }
-  catch (err) {
+  } catch (err) {
     console.error('waitForConceptExistsOutcome() failed:', err);
     throw err;
   }
-}
-
-/**
- * Get the online resource links from the CMR objects
- *
- * @param {string} cmrLink - CMR URL path to concept,
- * i.e. what is returned from post to cmr task
- * @returns {Array<Object>} Array of link objects in the format
- * { inherited: true,
-    rel: 'http://esipfed.org/ns/fedsearch/1.1/metadata#',
-    hreflang: 'en-US',
-    href: 'https://opendap.cr.usgs.gov/opendap/hyrax/MYD13Q1.006/contents.html' }
- */
-async function getOnlineResources(cmrLink) {
-  const response = await got.get(cmrLink);
-
-  if (response.statusCode !== 200) {
-    return null;
-  }
-
-  const body = JSON.parse(response.body);
-
-  const links = body.feed.entry.map((e) => e.links);
-
-  // Links is a list of a list, so flatten to be one list
-  return [].concat(...links);
 }
 
 /**
@@ -244,6 +217,7 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
     Bucket: bucket,
     Key: filename,
     Body: xml,
+    ContentType: 'application/xml',
     Tagging: `granuleId=${granule.granuleId}`
   };
 
@@ -264,8 +238,7 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
 function metadataFormatToVersion(typeStr) {
   try {
     return typeStr.match(/umm_json_v(.*)/)[1].replace('_', '.');
-  }
-  catch (error) {
+  } catch (error) {
     return '';
   }
 }
@@ -402,6 +375,7 @@ async function generateAndStoreCmrUmmJson(
     Bucket: bucket,
     Key: filename,
     Body: JSON.stringify(jsonObject),
+    ContentType: 'application/json',
     Tagging: `granuleId=${granule.granuleId}`
   };
 
@@ -444,8 +418,7 @@ async function generateCmrFilesForGranules(
         (g) => generateAndStoreCmrUmmJson(g, collection, bucket, additionalUrls, cmrMetadataFormat)
       )
     );
-  }
-  else {
+  } else {
     files = await Promise.all(
       granules.map((g) => generateAndStoreCmrXml(g, collection, bucket, additionalUrls))
     );

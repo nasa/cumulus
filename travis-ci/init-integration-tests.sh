@@ -2,31 +2,34 @@
 
 set -e
 
+npm install
+
 . ./travis-ci/set-env-vars.sh
 
 if [ "$USE_NPM_PACKAGES" = "true" ]; then
-  cd example
-  yarn
+  (cd example && npm install)
 else
-  ./bin/prepare
-  cd example
+  npm run bootstrap
 fi
 
 echo "Locking stack for deployment $DEPLOYMENT"
-
-# Wait for the stack to be available
-LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
-
-echo "Locking status $LOCK_EXISTS_STATUS"
-
-while [ "$LOCK_EXISTS_STATUS" = 1 ]; do
-  echo "Another build is using the ${DEPLOYMENT} stack."
-  sleep 30
-
-  LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
-done
-
 (
+  set -e
+
+  cd example
+
+  # Wait for the stack to be available
+  LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
+
+  echo "Locking status $LOCK_EXISTS_STATUS"
+
+  while [ "$LOCK_EXISTS_STATUS" = 1 ]; do
+    echo "Another build is using the ${DEPLOYMENT} stack."
+    sleep 30
+
+    LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
+  done
+
   ./node_modules/.bin/kes cf deploy \
     --kes-folder iam \
     --region us-east-1 \
@@ -45,5 +48,3 @@ done
     --deployment "$DEPLOYMENT" \
     --region us-west-2
 )
-
-exit

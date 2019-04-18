@@ -94,7 +94,7 @@
     ],
     "brace-style": [
       2,
-      "stroustrup"
+      "1tbs"
     ],
     "max-len": [
       2,
@@ -111,6 +111,7 @@
     "implicit-arrow-linebreak": "off",
 
     "eslint-comments/no-unused-disable": "warn",
+    "eslint-comments/disable-enable-pair": ["error", {"allowWholeFile": true}],
 
     "lodash/import-scope": ["error", "method-package"],
     "lodash/prefer-constant": "off",

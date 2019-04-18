@@ -328,6 +328,13 @@ function findTestDataDirectory() {
 }
 exports.findTestDataDirectory = findTestDataDirectory;
 
+
+function readJsonFixture(fixturePath) {
+  return fs.readFile(fixturePath).then((obj) => JSON.parse(obj));
+}
+
+exports.readJsonFixture = readJsonFixture;
+
 /**
  * Prettify and display something to the console.
  *

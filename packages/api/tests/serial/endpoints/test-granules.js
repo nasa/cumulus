@@ -60,8 +60,7 @@ async function runTestUsingBuckets(buckets, testFunction) {
   try {
     await createBuckets(buckets);
     await testFunction();
-  }
-  finally {
+  } finally {
     await Promise.all(buckets.map(aws.recursivelyDeleteS3Bucket));
   }
 }

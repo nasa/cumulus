@@ -3,12 +3,14 @@
 const fs = require('fs');
 const { Config } = require('kes');
 const cloneDeep = require('lodash.clonedeep');
+const mime = require('mime-types');
 const merge = require('lodash.merge');
 const path = require('path');
 const { promisify } = require('util');
 const tempy = require('tempy');
 const execa = require('execa');
 const pTimeout = require('p-timeout');
+const yaml = require('js-yaml');
 
 const {
   aws: { s3, headObject, parseS3Uri },
@@ -25,12 +27,29 @@ const createTestSuffix = (prefix) => `_test-${prefix}`;
 
 const MILLISECONDS_IN_A_MINUTE = 60 * 1000;
 
+function setConfig(config) {
+  const updatedConfig = cloneDeep(config);
+  if (!updatedConfig.test_configs) {
+    updatedConfig.test_configs = {};
+  }
+  if (updatedConfig.deployment === 'default') {
+    throw new Error('the default deployment cannot be used for integration tests');
+  }
+  updatedConfig.test_configs.buckets = updatedConfig.buckets;
+  updatedConfig.test_configs.deployment = updatedConfig.deployment;
+  updatedConfig.test_configs.cmr = updatedConfig.cmr;
+
+  return updatedConfig.test_configs;
+}
+
 /**
  * Loads and parses the configuration defined in `./app/config.yml`
  *
+ * @param {string} type - type of configuration to load (iam|app)
+ *
  * @returns {Object} - Configuration object
 */
-function loadConfig() {
+function loadConfig(type = 'app') {
   // make sure deployment env variable is set
   if (!process.env.DEPLOYMENT) {
     throw new Error(
@@ -40,22 +59,20 @@ function loadConfig() {
   }
 
   const params = {
-    deployment: process.env.DEPLOYMENT,
-    configFile: './app/config.yml',
-    kesFolder: './app'
+    app: {
+      deployment: process.env.DEPLOYMENT,
+      configFile: './app/config.yml',
+      kesFolder: './app'
+    },
+    iam: {
+      deployment: process.env.DEPLOYMENT,
+      configFile: './iam/config.yml',
+      kesFolder: './iam',
+      stackName: '{{prefix}}}-iam'
+    }
   };
-
-  const config = new Config(params);
-
-  if (config.deployment === 'default') {
-    throw new Error('the default deployment cannot be used for integration tests');
-  }
-
-  config.test_configs.buckets = config.buckets;
-  config.test_configs.deployment = config.deployment;
-  config.test_configs.cmr = config.cmr;
-
-  return config.test_configs;
+  const config = new Config(params[type]);
+  return setConfig(config);
 }
 
 /**
@@ -94,13 +111,13 @@ function updateAndUploadTestFileToBucket(file, bucket, prefix = 'cumulus-test-da
     replacements.forEach((replace) => {
       data = globalReplace(data, replace.old, replace.new);
     });
-  }
-  else data = fs.readFileSync(require.resolve(file));
+  } else data = fs.readFileSync(require.resolve(file));
   const key = path.basename(file);
   return s3().putObject({
     Bucket: bucket,
     Key: `${prefix}/${key}`,
-    Body: data
+    Body: data,
+    ContentType: mime.lookup(key) || null
   }).promise();
 }
 
@@ -176,37 +193,38 @@ function getPublicS3FileUrl({ bucket, key }) {
 }
 
 /**
- * Redeploy the current Cumulus deployment.
+ * Run kes command using stack configuration.
  *
  * @param {Object} config - configuration object from loadConfig()
  * @param {Object} [options] - configuration options with the following keys>
  * @param {string} [options.template=template=node_modules/@cumulus/deployment/app] - optional template command line kes option
  * @param {string} [options.kesClass] - optional kes-class command line kes option
+ * @param {string} [options.kesCommand] - optional kes command to run, defaults to deploy
  * @param {integer} [options.timeout=30] - Timeout value in minutes
  * @returns {Promise<undefined>}
  */
-async function redeploy(config, options = {}) {
+async function runKes(config, options = {}) {
   const timeoutInMinutes = options.timeout || 30;
 
-  const deploymentCommand = './node_modules/.bin/kes';
+  const kesCommand = './node_modules/.bin/kes';
 
-  const deploymentOptions = [
-    'cf', 'deploy',
+  const kesOptions = [
+    'cf', options.kesCommand || 'deploy',
     '--kes-folder', options.kesFolder || 'app',
     '--template', options.template || 'node_modules/@cumulus/deployment/app',
     '--deployment', config.deployment,
     '--region', 'us-east-1'
   ];
 
-  if (options.kesClass) deploymentOptions.push('--kes-class', options.kesClass);
+  if (options.kesClass) kesOptions.push('--kes-class', options.kesClass);
 
-  const deploymentProcess = execa(deploymentCommand, deploymentOptions);
+  const kesProcess = execa(kesCommand, kesOptions);
 
-  deploymentProcess.stdout.pipe(process.stdout);
-  deploymentProcess.stderr.pipe(process.stderr);
+  kesProcess.stdout.pipe(process.stdout);
+  kesProcess.stderr.pipe(process.stderr);
 
   await pTimeout(
-    deploymentProcess,
+    kesProcess,
     timeoutInMinutes * MILLISECONDS_IN_A_MINUTE
   );
 }
@@ -217,17 +235,14 @@ async function getFileMetadata(file) {
   if (file.bucket && file.filepath) {
     Bucket = file.bucket;
     Key = file.filepath;
-  }
-  else if (file.bucket && file.key) {
+  } else if (file.bucket && file.key) {
     Bucket = file.bucket;
     Key = file.key;
-  }
-  else if (file.filename) {
+  } else if (file.filename) {
     const parsedUrl = parseS3Uri(file.filename);
     Bucket = parsedUrl.Bucket;
     Key = parsedUrl.Key;
-  }
-  else {
+  } else {
     throw new Error(`Unable to determine file location: ${JSON.stringify(file)}`);
   }
 
@@ -266,11 +281,20 @@ async function protectFile(file, fn) {
 
   try {
     return await Promise.resolve().then(fn);
-  }
-  finally {
+  } finally {
     await promisedCopyFile(backupLocation, file);
     await promisedUnlink(backupLocation);
   }
+}
+
+/**
+ * Load a yml file
+ *
+ * @param {string} filePath - workflow yml filepath
+ * @returns {Object} - JS Object representation of yml file
+ */
+function loadYmlFile(filePath) {
+  return yaml.safeLoad(fs.readFileSync(filePath, 'utf8'));
 }
 
 const isLambdaStatusLogEntry = (logEntry) =>
@@ -281,19 +305,20 @@ const isLambdaStatusLogEntry = (logEntry) =>
 const isCumulusLogEntry = (logEntry) => !isLambdaStatusLogEntry(logEntry);
 
 module.exports = {
-  timestampedName,
-  createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
-  loadConfig,
-  templateFile,
-  updateAndUploadTestDataToBucket,
-  uploadTestDataToBucket,
+  createTimestampedTestId,
   deleteFolder,
   getExecutionUrl,
-  getPublicS3FileUrl,
-  redeploy,
   getFilesMetadata,
+  getPublicS3FileUrl,
+  isCumulusLogEntry,
+  loadConfig,
+  loadYmlFile,
   protectFile,
-  isCumulusLogEntry
+  runKes,
+  templateFile,
+  timestampedName,
+  updateAndUploadTestDataToBucket,
+  uploadTestDataToBucket
 };

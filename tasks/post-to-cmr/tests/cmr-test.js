@@ -10,6 +10,7 @@ const cmrjs = require('@cumulus/cmrjs');
 const cmrClient = require('@cumulus/cmr-client');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
+const { CMRMetaFileNotFound } = require('@cumulus/common/errors');
 
 const { postToCMR } = require('..');
 
@@ -54,11 +55,9 @@ test.serial('postToCMR throws error if CMR correctly identifies the xml as inval
     });
     await postToCMR(newPayload);
     t.fail();
-  }
-  catch (error) {
+  } catch (error) {
     t.true(error instanceof cmrClient.ValidationError);
-  }
-  finally {
+  } finally {
     cmrClient.CMR.prototype.getToken.restore();
   }
 });
@@ -83,8 +82,7 @@ test.serial('postToCMR succeeds with correct payload', async (t) => {
       output.granules[0].cmrLink,
       `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
     );
-  }
-  finally {
+  } finally {
     cmrjs.CMR.prototype.ingestGranule.restore();
   }
 });
@@ -111,24 +109,124 @@ test.serial('postToCMR returns SIT url when CMR_ENVIRONMENT=="SIT"', async (t) =
       output.granules[0].cmrLink,
       `https://cmr.sit.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
     );
-  }
-  finally {
+  } finally {
     cmrjs.CMR.prototype.ingestGranule.restore();
     delete process.env.CMR_ENVIRONMENT;
   }
 });
 
-test.serial('postToCMR skips CMR step if the metadata file uri is missing', async (t) => {
+test.serial('postToCMR throws an error if there is no CMR metadata file', async (t) => {
   const newPayload = t.context.payload;
 
   newPayload.input.granules = [{
     granuleId: 'some granule',
     files: [{
-      filename: `s3://${t.context.bucket}/to/file.xml`
+      filename: `s3://${t.context.bucket}/to/file.blah`
     }]
   }];
 
-  const output = await postToCMR(newPayload);
+  try {
+    await postToCMR(newPayload);
+  } catch (error) {
+    t.true(error instanceof CMRMetaFileNotFound);
+  }
+});
 
-  t.is(output.granules[0].cmr, undefined);
+test.serial('postToCMR throws an error if any granule is missing a metadata file', async (t) => {
+  const newPayload = t.context.payload;
+  const newGranule = {
+    granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090555',
+    files: [{
+      filename: `s3://${t.context.bucket}/to/file.blah`
+    }]
+  };
+  newPayload.input.granules.push(newGranule);
+
+  try {
+    await postToCMR(newPayload);
+  } catch (error) {
+    t.true(error instanceof CMRMetaFileNotFound);
+    t.is(error.message, (`CMR Meta file not found for granule ${newGranule.granuleId}`));
+  }
+});
+
+test.serial('postToCMR continues without metadata file if there is skipMetaCheck flag', async (t) => {
+  const newPayload = t.context.payload;
+  const newGranule = [{
+    granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090555',
+    files: [{
+      filename: `s3://${t.context.bucket}/to/file.blah`
+    }]
+  }];
+  newPayload.input.granules = newGranule;
+  newPayload.config.skipMetaCheck = true;
+  const granuleId = newPayload.input.granules[0].granuleId;
+  try {
+    const output = await postToCMR(newPayload);
+    t.is(output.granules[0].granuleId, granuleId);
+  } catch (err) {
+    t.fail(err);
+  }
+});
+
+test.serial('postToCMR continues with skipMetaCheck even if any granule is missing a metadata file', async (t) => {
+  const newPayload = t.context.payload;
+  const newGranule = {
+    granuleId: 'MOD11A1.A2017200.h19v04.006.2017201090555',
+    files: [{
+      filename: `s3://${t.context.bucket}/to/file.blah`
+    }]
+  };
+  newPayload.input.granules.push(newGranule);
+  newPayload.config.skipMetaCheck = true;
+
+  sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
+    result
+  }));
+  try {
+    await aws.promiseS3Upload({
+      Bucket: t.context.bucket,
+      Key: `${newPayload.input.granules[0].granuleId}.cmr.xml`,
+      Body: fs.createReadStream('tests/data/meta.xml')
+    });
+    const output = await postToCMR(newPayload);
+    t.is(
+      output.granules[0].cmrLink,
+      `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+    );
+    t.is(output.granules[1].cmrLink, undefined);
+  } catch (err) {
+    t.fail(err);
+  } finally {
+    cmrjs.CMR.prototype.ingestGranule.restore();
+  }
+});
+
+test.serial('postToCmr identifies files with the new file schema', async (t) => {
+  const newPayload = t.context.payload;
+  const cmrFile = newPayload.input.granules[0].files[3];
+  newPayload.input.granules[0].files = [{
+    bucket: t.context.bucket,
+    key: `path/${cmrFile.name}`,
+    fileName: cmrFile.name
+  }];
+
+  sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
+    result
+  }));
+
+  try {
+    await aws.promiseS3Upload({
+      Bucket: t.context.bucket,
+      Key: `path/${cmrFile.name}`,
+      Body: fs.createReadStream('tests/data/meta.xml')
+    });
+    const output = await postToCMR(newPayload);
+    t.is(
+      output.granules[0].cmrLink,
+      `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+    );
+  } finally {
+    cmrjs.CMR.prototype.ingestGranule.restore();
+  }
 });

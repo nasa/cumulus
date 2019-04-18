@@ -1,11 +1,9 @@
 'use strict';
 
 const test = require('ava');
-const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');
-const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
 
 process.env.RulesTable = `RulesTable_${randomString()}`;
 process.env.stackName = randomString();

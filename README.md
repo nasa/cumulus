@@ -4,7 +4,7 @@
 [![npm version](https://badge.fury.io/js/%40cumulus%2Fapi.svg)](https://badge.fury.io/js/%40cumulus%2Fapi)
 [![Coverage Status](https://coveralls.io/repos/github/nasa/cumulus/badge.svg?branch=master)](https://coveralls.io/github/nasa/cumulus?branch=master)
 
-## 📖 Documentation:
+## 📖 Documentation
 
 - Documentation for the latest [released version](https://nasa.github.io/cumulus).
 - Documentation for the [unreleased work](https://nasa.github.io/cumulus/docs/next/cumulus-docs-readme).
@@ -21,16 +21,15 @@ This is for installation for Cumulus development.  See the [Cumulus deployment i
 
 ### Prerequisites
 
-* [NVM](https://github.com/creationix/nvm) and node version 8.
-* [yarn](https://yarnpkg.com/en/)
-* [AWS CLI](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
-* BASH
-* Docker (only required for testing)
-* docker-compose (only required for testing `pip install docker-compose`)
+- [NVM](https://github.com/creationix/nvm) and node version 8.
+- [AWS CLI](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
+- BASH
+- Docker (only required for testing)
+- docker-compose (only required for testing `pip install docker-compose`)
 
 Install the correct node version:
 
-```
+```bash
 nvm install
 nvm use
 ```
@@ -39,33 +38,38 @@ nvm use
 
 We use Lerna to manage multiple Cumulus packages in the same repo. You need to install lerna as a global module first:
 
-    $ yarn global add lerna
+    $ npm install -g lerna
 
 ### Install Local Dependencies
 
-We use yarn for local package management
+We use npm for local package management
 
-    $ yarn install
-    $ yarn ybootstrap
+    $ npm install
+    $ npm run bootstrap
 
 Building All packages:
 
-    $ yarn build
+    $ npm run build
 
 Build and watch packages:
 
-    $ yarn watch
+    $ npm run watch
 
-## Running the cumulus API locally
+## Running the Cumulus APIs locally
 
 Start localstack:
 
     $ docker-compose up local
 
-Start the API
+Start the API:
 
-    $ cd packages/api
-    $ yarn serve
+    $ npm run serve
+
+Or start the distribution API:
+
+    $ npm run serve-dist
+
+See the [API package documentation](packages/api/README.md#running-the-api-locally) for more options.
 
 ## 📝 Tests
 
@@ -94,7 +98,7 @@ If you prefer to run docker in detached mode (i.e. run containers in the backgro
 Run the test commands next
 
     $ export LOCALSTACK_HOST=localhost
-    $ yarn test
+    $ npm test
 
 ### Integration Tests
 
@@ -116,9 +120,9 @@ Make sure to name the package as `@cumulus/package-name`.
 
 ## Cleaning Up all the repos
 
-    $ yarn clean
+    $ npm run clean
 
-##  Contribution
+## Contribution
 
 Please refer to: https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md for more information.
 

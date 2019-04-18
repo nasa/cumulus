@@ -46,21 +46,17 @@ test('discover granules sets the correct dataType for granules', async (t) => {
     output.granules.forEach((granule) => {
       t.not(granule.dataType, event.config.collection.name);
     });
-  }
-  catch (err) {
+  } catch (err) {
     if (err.message === 'Connection Refused') {
       t.pass('Ignoring this test. Remote host seems to be down.');
-    }
-    else throw err;
-  }
-  finally {
+    } else throw err;
+  } finally {
     // Clean up
     await recursivelyDeleteS3Bucket(event.config.bucket);
   }
 });
 
-// This test is broken and will be fixed by CUMULUS-427
-test.skip('discover granules using FTP', async (t) => {
+test('discover granules using FTP', async (t) => {
   const { event } = t.context;
   event.config.bucket = randomString();
   event.config.collection.provider_path = '/granules/fake_granules';
@@ -83,14 +79,12 @@ test.skip('discover granules using FTP', async (t) => {
     await validateOutput(t, output);
     t.is(output.granules.length, 3);
     t.is(output.granules[0].files.length, 2);
-  }
-  catch (e) {
+    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].fileType));
+  } catch (e) {
     if (e.message.includes('getaddrinfo ENOTFOUND')) {
       t.pass('Ignoring this test. Test server seems to be down');
-    }
-    else t.fail(e);
-  }
-  finally {
+    } else t.fail(e);
+  } finally {
     // Clean up
     await recursivelyDeleteS3Bucket(event.config.bucket);
   }
@@ -120,14 +114,12 @@ test('discover granules using SFTP', async (t) => {
     await validateOutput(t, output);
     t.is(output.granules.length, 3);
     t.is(output.granules[0].files.length, 2);
-  }
-  catch (err) {
+    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].fileType));
+  } catch (err) {
     if (err.code === 'ECONNREFUSED') {
       t.pass('Ignoring this test. Remote host seems to be down.');
-    }
-    else throw err;
-  }
-  finally {
+    } else throw err;
+  } finally {
     // Clean up
     await recursivelyDeleteS3Bucket(internalBucketName);
   }
@@ -152,14 +144,12 @@ test('discover granules using HTTP', async (t) => {
     await validateOutput(t, output);
     t.is(output.granules.length, 3);
     t.is(output.granules[0].files.length, 2);
-  }
-  catch (err) {
+    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].fileType));
+  } catch (err) {
     if (err.message === 'Connection Refused') {
       t.pass('Ignoring this test. Remote host seems to be down.');
-    }
-    else throw err;
-  }
-  finally {
+    } else throw err;
+  } finally {
     // Clean up
     await recursivelyDeleteS3Bucket(event.config.bucket);
   }
@@ -204,8 +194,8 @@ test('discover granules using S3', async (t) => {
     await validateOutput(t, output);
     t.is(output.granules.length, 3);
     t.is(output.granules[0].files.length, 2);
-  }
-  finally {
+    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].fileType));
+  } finally {
     // Clean up
     await Promise.all([
       recursivelyDeleteS3Bucket(internalBucketName),

@@ -1,4 +1,5 @@
----
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'stack: {{stackName}} | deployed by Kes'
 Parameters:
   CreateDeploymentRole:
     Type: String
@@ -45,7 +46,8 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: ecs:RunTask
-                Resource: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/${ResourcePrefix}-AsyncOperationTaskDefinition-*"
+                Resource:
+                 Fn::Sub: "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/${ResourcePrefix}-AsyncOperationTaskDefinition-*"
 
               - Effect: Allow
                 Action:
@@ -159,6 +161,17 @@ Resources:
                   - states:DescribeStateMachine
                   - states:GetExecutionHistory
                 Resource: arn:aws:states:*:*:*
+
+              # this is needed for running Lambda in a VPC
+              # This might not be needed in the NGAP environment
+              # if all lambdas are already running in a general VPC
+              # environment
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:DeleteNetworkInterface
+                Resource: '*'
 
   # role for Lambdas that are NOT used with APIGateway
   LambdaProcessingRole:
@@ -595,7 +608,8 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: dynamodb:UpdateItem
-                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-AsyncOperationsTable"
+                Resource:
+                 Fn::Sub: "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-AsyncOperationsTable"
               - Effect: Allow
                 Action:
                   - cloudwatch:GetMetricStatistics
@@ -730,7 +744,7 @@ Resources:
                   - s3:ListBucket*
                 Resource:
                 {{#each buckets}}
-                {{#BucketIsType this "protected"}}
+                {{#BucketIsType this "protected,public"}}
                   - arn:aws:s3:::{{this.name}}
                 {{/BucketIsType}}
                 {{/each}}
@@ -744,7 +758,7 @@ Resources:
                   - s3:DeleteObjectVersion
                 Resource:
                 {{#each buckets}}
-                {{#BucketIsType this "protected"}}
+                {{#BucketIsType this "protected,public"}}
                   - arn:aws:s3:::{{this.name}}/*
                 {{/BucketIsType}}
                 {{/each}}

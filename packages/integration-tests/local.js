@@ -120,8 +120,7 @@ async function runStep(lambdaPath, lambdaHandler, message, stepName) {
         return resolve(r);
       });
     });
-  }
-  finally {
+  } finally {
     await fs.remove(src);
   }
 }

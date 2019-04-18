@@ -46,12 +46,61 @@ A representation of the stack name that has dashes removed. This will be used fo
 
 Configure your virtual private cloud.  You can find `<vpc-id>` and `<subnet-id>` values on the [VPC Dashboard](https://console.aws.amazon.com/vpc/home?region=us-east-1#). `vpcId` from [Your VPCs](https://console.aws.amazon.com/vpc/home?region=us-east-1#vpcs:), and `subnets` [here](https://console.aws.amazon.com/vpc/home?region=us-east-1#subnets:). When you choose a subnet, be sure to also note its availability zone, to configure `ecs`.
 
+## cmr
+
+Configuration is required for Cumulus integration with CMR services. The most obvious example of this integration is the `PostToCmr` Cumulus [task](https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr).
+
+Ensure your CMR username/password is included in your `app/.env` file, as noted in the [deployment documentation](./deployment-readme):
+
+```shell
+CMR_USERNAME=cmruser
+CMR_PASSWORD=cmrpassword
+```
+
+These values will be imported via kes in your configuration file.   You should ensure your `app/config.yml` contains the following lines:
+
+```yaml
+cmr: 
+  username: '{{CMR_USERNAME}}'
+  provider: CUMULUS
+  clientId: '<replace-with-daac-name>-{{stackName}}'
+  password: '{{CMR_PASSWORD}}'
+```
+
+`clientId` and `provider` should be configured to point to a user specified CMR `clientId` and `provider`. We use the `CUMULUS` provider in our configurations, but users can specify their own.
+
 ## ecs
 
 Configuration for the Amazon EC2 Container Service (ECS) instance.  Update `availabilityZone` (or `availabilityZones` if using multiple AZs) with information from [VPC Dashboard](https://console.aws.amazon.com/vpc/home?region=us-east-1#)
 note `instanceType` and `desiredInstances` have been selected for a sample install.  You will have to specify appropriate values to deploy and use ECS machines.   See [EC2 Instance Types](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html) for more information.
 
 Also note, if you dont specify the `amiid`, it will try to use a default, which may or may not exist.
+
+For each service, a TaskCountLowAlarm alarm is added to check the RUNNING Task Count against the service configuration.  You can update `ecs` properties and add additional ECS alarms to your service.  For example,
+
+    ecs:
+      services:
+        EcsTaskHelloWorld:
+          alarms:
+            TaskCountHigh:
+              alarm_description: 'There are more tasks running than the desired'
+              comparison_operator: GreaterThanThreshold
+              evaluation_periods: 1
+              metric: MemoryUtilization
+              statistic: SampleCount
+              threshold: '{{ecs.services.EcsTaskHelloWorld.count}}'
+
+## es
+Configuration for the Amazon Elasticsearch Service (ES) instance.  You can update `es` properties and add additional ES alarms. For example:
+
+    es:
+      instanceCount: 2
+      alarms:
+        NodesHigh:
+          alarm_description: 'There are more instances running than the desired'
+          comparison_operator: GreaterThanThreshold
+          threshold: '{{es.instanceCount}}'
+          metric: Nodes
 
 ## buckets
 
@@ -68,7 +117,7 @@ For information on how to locate them in the Console see [Locating Cumulus IAM R
 
 ## users
 
-List of EarthData users you wish to have access to your dashboard application.   These users will be populated in your `<stackname>-UsersTable` [DynamoDb](https://console.aws.amazon.com/dynamodb/) (in addition to the default_users defined in the Cumulus default template).
+List of EarthData users you wish to have access to your dashboard application. These users will be populated in your `<stackname>-UsersTable` [DynamoDb](https://console.aws.amazon.com/dynamodb/) table.
 
 # Footnotes
 

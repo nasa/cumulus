@@ -28,8 +28,7 @@ async function validate(type, xml, identifier, provider) {
     if (result.statusCode === 200) {
       return true;
     }
-  }
-  catch (e) {
+  } catch (e) {
     result = e.response;
   }
 

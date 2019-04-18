@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/discover-granules",
-  "version": "1.11.3",
+  "version": "1.12.1",
   "description": "Discover Granules in FTP/HTTP/HTTPS/SFTP/S3 endpoints",
   "main": "index.js",
   "directories": {
@@ -20,7 +20,7 @@
     "local": "node index.js | pino",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
-    "prepublishOnly": "PRODUCTION=true npm run build"
+    "prepare": "npm run build"
   },
   "publishConfig": {
     "access": "public"
@@ -37,10 +37,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "1.11.2",
+    "@cumulus/common": "1.12.1",
     "@cumulus/cumulus-message-adapter-js": "^1.0.7",
-    "@cumulus/ingest": "1.11.3",
-    "@cumulus/test-data": "1.11.0",
+    "@cumulus/ingest": "1.12.1",
+    "@cumulus/test-data": "1.12.1",
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {

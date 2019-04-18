@@ -21,10 +21,6 @@
       "type": "string",
       "description": "The name of the deployment stack"
     },
-    "granuleIdExtraction": {
-      "type": "string",
-      "description": "The regex needed for extracting granuleId from filenames"
-    },
     "cmr": {
       "type": "object",
       "description": "credentials needed to post metadata to CMR",
@@ -35,6 +31,11 @@
         "username": { "type": "string" },
         "password": { "type": "string" }
       }
+    },
+    "skipMetaCheck": {
+      "description": "Adds the option to allow PostToCMR to pass when processing a granule without a metadata file.",
+      "default": false,
+      "type": "boolean"
     }
   }
 }

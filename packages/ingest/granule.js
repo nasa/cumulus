@@ -26,6 +26,7 @@ const { ftpMixin } = require('./ftp');
 const { httpMixin } = require('./http');
 const { s3Mixin } = require('./s3');
 const { baseProtocol } = require('./protocol');
+const { normalizeProviderPath } = require('./util');
 
 /**
 * The abstract Discover class
@@ -49,12 +50,12 @@ class Discover {
 
     this.port = this.provider.port;
     this.host = this.provider.host;
-    this.path = this.collection.provider_path || '/';
+    this.path = normalizeProviderPath(this.collection.provider_path);
 
     this.endpoint = buildURL({
       protocol: this.provider.protocol,
-      host: this.provider.host,
-      port: this.provider.port,
+      host: this.host,
+      port: this.port,
       path: this.path
     });
 
@@ -66,7 +67,8 @@ class Discover {
     this.collection.files.forEach((f) => {
       this.regexes[f.regex] = {
         collection: this.collection.name,
-        bucket: this.buckets[f.bucket].name
+        bucket: this.buckets[f.bucket].name,
+        fileType: f.fileType
       };
     });
   }
@@ -75,7 +77,8 @@ class Discover {
    * Receives a file object and adds granule-specific properties to it
    *
    * @param {Object} file - the file object
-   * @returns {Object} Updated file with granuleId, bucket, and url_path information
+   * @returns {Object} Updated file with granuleId, bucket,
+   *                   filetype, and url_path information
    */
   setGranuleInfo(file) {
     const granuleIdMatch = file.name.match(this.collection.granuleIdExtraction);
@@ -89,7 +92,8 @@ class Discover {
       {
         granuleId,
         bucket: this.buckets[fileTypeConfig.bucket].name,
-        url_path: fileTypeConfig.url_path || this.collection.url_path || ''
+        url_path: fileTypeConfig.url_path || this.collection.url_path || '',
+        fileType: fileTypeConfig.fileType || ''
       }
     );
   }
@@ -121,8 +125,7 @@ class Discover {
         .filter((file) => this.fileTypeConfigForFile(file))
         // Add additional granule-related properties to the file
         .map((file) => this.setGranuleInfo(file));
-    }
-    catch (error) {
+    } catch (error) {
       log.error(`discover exception ${JSON.stringify(error)}`);
     }
 
@@ -156,7 +159,8 @@ class Granule {
    * @param {Object} buckets - s3 buckets available from config
    * @param {Object} collection - collection configuration object
    * @param {Object} provider - provider configuration object
-   * @param {string} fileStagingDir - staging directory on bucket to place files
+   * @param {string} fileStagingDir - staging directory on bucket,
+   * files will be placed in collectionId subdirectory
    * @param {boolean} forceDownload - force download of a file
    * @param {boolean} duplicateHandling - duplicateHandling of a file
    */
@@ -189,6 +193,13 @@ class Granule {
     else this.fileStagingDir = fileStagingDir;
 
     this.duplicateHandling = duplicateHandling;
+
+    // default collectionId, could be overwritten by granule's collection information
+    if (this.collection) {
+      this.collectionId = constructCollectionId(
+        this.collection.dataType || this.collection.name, this.collection.version
+      );
+    }
   }
 
   /**
@@ -215,8 +226,7 @@ class Granule {
       }
       const collectionConfigStore = new CollectionConfigStore(bucket, stackName);
       this.collection = await collectionConfigStore.get(granule.dataType, granule.version);
-    }
-    else {
+    } else {
       // Collection is passed in, but granule does not define the dataType and version
       if (!dataType) dataType = this.collection.dataType || this.collection.name;
       if (!version) version = this.collection.version;
@@ -226,7 +236,6 @@ class Granule {
     this.collection.url_path = this.collection.url_path || '';
 
     this.collectionId = constructCollectionId(dataType, version);
-    this.fileStagingDir = path.join(this.fileStagingDir, this.collectionId);
 
     const downloadFiles = granule.files
       .filter((f) => this.filterChecksumFiles(f))
@@ -429,8 +438,7 @@ class Granule {
         await this.download(checksumRemotePath, checksumLocalPath);
         const checksumFile = await fs.readFile(checksumLocalPath, 'utf8');
         [checksumValue] = checksumFile.split(' ');
-      }
-      finally {
+      } finally {
         await fs.remove(downloadDir);
       }
 
@@ -465,8 +473,10 @@ class Granule {
    * @returns {Array<Object>} returns the staged file and the renamed existing duplicates if any
    */
   async ingestFile(file, bucket, duplicateHandling) {
+    // place files in the <collectionId> subdirectory
+    const stagingPath = path.join(this.fileStagingDir, this.collectionId);
     // Check if the file exists
-    const destinationKey = path.join(this.fileStagingDir, file.name);
+    const destinationKey = path.join(stagingPath, file.name);
 
     const s3ObjAlreadyExists = await aws.s3ObjectExists({
       Bucket: bucket,
@@ -477,7 +487,7 @@ class Granule {
     const stagedFile = Object.assign(file,
       {
         filename: aws.buildS3Uri(bucket, destinationKey),
-        fileStagingDir: this.fileStagingDir,
+        fileStagingDir: stagingPath,
         url_path: this.getUrlPath(file),
         bucket
       });
@@ -529,8 +539,7 @@ class Granule {
       // else rename the existing file, and both files are part of the granule.
       if (existingFileSum === stagedFileSum) {
         await aws.deleteS3Object(bucket, stagedFileKey);
-      }
-      else {
+      } else {
         log.debug(`Renaming file to ${destinationKey}`);
         await exports.renameS3FileWithTimestamp(bucket, destinationKey);
         await exports.moveGranuleFile(
@@ -551,7 +560,7 @@ class Granule {
         path: file.path,
         filename: aws.buildS3Uri(f.Bucket, f.Key),
         fileSize: f.fileSize,
-        fileStagingDir: this.fileStagingDir,
+        fileStagingDir: stagingPath,
         url_path: this.getUrlPath(file),
         bucket
       };
@@ -622,8 +631,7 @@ function selector(type, protocol) {
     default:
       throw new Error(`Protocol ${protocol} is not supported.`);
     }
-  }
-  else if (type === 'ingest') {
+  } else if (type === 'ingest') {
     switch (protocol) {
     case 'sftp':
       return SftpGranule;
@@ -715,11 +723,9 @@ function generateMoveFileParams(sourceFiles, destinations) {
         Bucket: file.bucket,
         Key: file.key
       };
-    }
-    else if (file.filename) {
+    } else if (file.filename) {
       source = aws.parseS3Uri(file.filename);
-    }
-    else {
+    } else {
       throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
     }
 
@@ -775,13 +781,11 @@ async function moveGranuleFiles(sourceFiles, destinations) {
     if (file.bucket && file.key) {
       fileBucket = file.bucket;
       fileKey = file.key;
-    }
-    else if (file.filename) {
+    } else if (file.filename) {
       const parsed = aws.parseS3Uri(file.filename);
       fileBucket = parsed.Bucket;
       fileKey = parsed.Key;
-    }
-    else {
+    } else {
       throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
     }
 

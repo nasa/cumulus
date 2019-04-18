@@ -5,7 +5,7 @@ let devtool = 'inline-source-map';
 
 if(process.env.PRODUCTION) {
   mode = 'production',
-  devtool = false  
+  devtool = false
 }
 
 module.exports = {
@@ -22,5 +22,17 @@ module.exports = {
     {'formidable': 'url'}
   ],
   devtool,
-  target: 'node'
+  target: 'node',
+  module: {
+    rules: [
+      {
+        test: /\.jpg$/,
+        use: [
+          {
+            loader: 'file-loader',
+          }
+        ]
+      }
+    ]
+  }
 };

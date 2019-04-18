@@ -1,0 +1,87 @@
+{
+  "version-1.12.0-docs": {
+    "About Cumulus": [
+      "version-1.12.0-cumulus-docs-readme",
+      "version-1.12.0-architecture",
+      "version-1.12.0-interfaces",
+      "version-1.12.0-glossary",
+      "version-1.12.0-team"
+    ],
+    "What are Cumulus Workflows?": [
+      "version-1.12.0-workflows/workflows-readme",
+      "version-1.12.0-workflows/protocol",
+      "version-1.12.0-workflows/input_output",
+      "version-1.12.0-workflows/cumulus-task-message-flow",
+      "version-1.12.0-workflows/developing-workflow-tasks",
+      "version-1.12.0-workflows/lambda",
+      "version-1.12.0-workflows/docker",
+      "version-1.12.0-workflows/workflow-configuration-how-to",
+      "version-1.12.0-workflows/workflow-triggers"
+    ],
+    "Tasks": [
+      "version-1.12.0-tasks",
+      "version-1.12.0-workflow_tasks/discover_granules",
+      "version-1.12.0-workflow_tasks/files_to_granules",
+      "version-1.12.0-workflow_tasks/move_granules",
+      "version-1.12.0-workflow_tasks/parse_pdr"
+    ],
+    "Deployment": [
+      "version-1.12.0-deployment/deployment-readme",
+      "version-1.12.0-deployment/create_bucket",
+      "version-1.12.0-deployment/server_access_logging",
+      "version-1.12.0-deployment/iam_roles",
+      "version-1.12.0-deployment/obtain_cumulus_packages",
+      "version-1.12.0-deployment/config_descriptions",
+      "version-1.12.0-deployment/troubleshoot_deployment"
+    ],
+    "Additional Features": [
+      "version-1.12.0-data_in_dynamodb",
+      "version-1.12.0-features/dead_letter_queues",
+      "version-1.12.0-ems_reporting",
+      "version-1.12.0-features/execution_payload_retention",
+      "version-1.12.0-lambda_versioning",
+      "version-1.12.0-features/ancillary_metadata"
+    ],
+    "Cumulus Versions": [
+      "version-1.12.0-upgrade/upgrade-readme",
+      "version-1.12.0-upgrade/1.6.0",
+      "version-1.12.0-upgrade/1.7.0",
+      "version-1.12.0-upgrade/1.9.0",
+      "version-1.12.0-upgrade/1.11.0"
+    ],
+    "Troubleshooting": [
+      "version-1.12.0-system-documentation/system-documentation"
+    ],
+    "Cumulus Development": [
+      "version-1.12.0-adding-a-task",
+      "version-1.12.0-docs-how-to"
+    ]
+  },
+  "version-1.12.0-Data Cookbooks": {
+    "About Cookbooks": [
+      "version-1.12.0-data-cookbooks/about-cookbooks",
+      "version-1.12.0-data-cookbooks/setup"
+    ],
+    "Cookbooks": [
+      "version-1.12.0-data-cookbooks/hello-world",
+      "version-1.12.0-data-cookbooks/sns",
+      "version-1.12.0-data-cookbooks/sips-workflow",
+      "version-1.12.0-data-cookbooks/cnm-workflow",
+      "version-1.12.0-data-cookbooks/error-handling",
+      "version-1.12.0-data-cookbooks/choice-states",
+      "version-1.12.0-data-cookbooks/cloudwatch-retention",
+      "version-1.12.0-data-cookbooks/browse-generation",
+      "version-1.12.0-data-cookbooks/tracking-files"
+    ]
+  },
+  "version-1.12.0-Operator Docs": {
+    "About Operator Docs": [
+      "version-1.12.0-operator-docs/about-operator-docs"
+    ],
+    "Configuration": [
+      "version-1.12.0-operator-docs/update-cumulus-dependencies",
+      "version-1.12.0-operator-docs/lifecycle-policies",
+      "version-1.12.0-operator-docs/locating-access-logs"
+    ]
+  }
+}

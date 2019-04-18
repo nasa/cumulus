@@ -22,8 +22,7 @@ function fixCumulusMessageSyntax(cumulusConfig) {
     if (isObject(cumulusConfig[n])) {
       // eslint-disable-next-line no-param-reassign
       cumulusConfig[n] = fixCumulusMessageSyntax(cumulusConfig[n]);
-    }
-    else if (isString(cumulusConfig[n])) {
+    } else if (isString(cumulusConfig[n])) {
       const match = cumulusConfig[n].match(test);
       if (match) {
         // eslint-disable-next-line no-param-reassign
@@ -121,7 +120,7 @@ function template(name, workflow, config, outputs) {
     workflowConfig[state] = config.workflowConfigs[name][state];
   });
 
-  // add the s3 uri to all the workflow templates for teh current stack
+  // add the s3 uri to all the workflow templates for the current stack
   const templatesUris = {};
   const stepFunctions = get(config, 'stepFunctions', {});
   Object.keys(stepFunctions).forEach((sf) => {

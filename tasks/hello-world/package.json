@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/hello-world",
-  "version": "1.11.2",
+  "version": "1.12.1",
   "description": "Example task",
   "main": "index.js",
   "directories": {
@@ -19,7 +19,7 @@
     "test-coverage": "nyc ava",
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && webpack --progress -w",
-    "prepublishOnly": "PRODUCTION=true npm run build"
+    "prepare": "npm run build"
   },
   "ava": {
     "files": "tests/*.js",
@@ -37,7 +37,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "1.11.2",
+    "@cumulus/common": "1.12.1",
     "@cumulus/cumulus-message-adapter-js": "^1.0.7"
   },
   "devDependencies": {

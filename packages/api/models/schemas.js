@@ -85,7 +85,7 @@ module.exports.collection = {
       description: 'The path to look for the collection Granules or '
                    + 'PDRs. Use regex for recursive search',
       type: 'string',
-      default: '/'
+      default: ''
     },
     url_path: {
       title: 'Url Path',
@@ -141,6 +141,11 @@ module.exports.collection = {
             title: 'Url Path',
             description: 'Folder used to save the granule in the bucket. '
                          + 'Defaults to the collection url path',
+            type: 'string'
+          },
+          fileType: {
+            title: 'File Type',
+            description: 'CNM file type.  Cumulus uses this for CMR submission.  Non-CNM file types will be treated as "data" fileType',
             type: 'string'
           }
         },

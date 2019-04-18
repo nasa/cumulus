@@ -73,8 +73,7 @@ const promiseUrl = (urlstr) =>
     return client.get(options, (response) => {
       if (response.statusCode >= 300) {
         reject(new Error(`HTTP Error ${response.statusCode}`));
-      }
-      else {
+      } else {
         resolve(response);
       }
     }).on('error', reject);
@@ -99,8 +98,7 @@ class Semaphore {
     log.info(`Incrementing ${key} by ${count}`);
     try {
       await this.add(key, count, max);
-    }
-    catch (e) {
+    } catch (e) {
       if (e.message === 'The conditional request failed') {
         throw new ResourcesLockedError(`Could not increment ${key} by ${count}`);
       }
@@ -109,8 +107,7 @@ class Semaphore {
     }
     try {
       result = await fn();
-    }
-    finally {
+    } finally {
       log.info(`Decrementing ${key} by ${count}`);
       await this.add(key, -count);
     }
@@ -130,8 +127,7 @@ class Semaphore {
         ExpressionAttributeValues: { ':key': key }
       };
       await this.docClient.put(params).promise();
-    }
-    catch (e) {
+    } catch (e) {
       if (e.code !== 'ConditionalCheckFailedException') {
         throw e;
       }
@@ -167,8 +163,7 @@ class Mutex {
     let result = null;
     try {
       result = await fn();
-    }
-    finally {
+    } finally {
       log.info(`Releasing lock ${key}`);
       await this.unlock(key);
       log.info(`Released lock ${key}`);

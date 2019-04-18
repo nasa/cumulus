@@ -1,6 +1,5 @@
 'use strict';
 
-const router = require('express-promise-router')();
 const urljoin = require('url-join');
 const {
   s3,
@@ -9,8 +8,18 @@ const {
 const { UnparsableFileLocationError } = require('@cumulus/common/errors');
 const { URL } = require('url');
 const EarthdataLogin = require('../lib/EarthdataLogin');
-const { RecordDoesNotExist } = require('../lib/errors');
+const { isLocalApi } = require('../lib/testUtils');
 const { AccessToken } = require('../models');
+const s3credentials = require('./s3credentials');
+
+// Running API locally will be on http, not https, so cookies
+// should not be set to secure for local runs of the API.
+const useSecureCookies = () => {
+  if (isLocalApi()) {
+    return false;
+  }
+  return true;
+};
 
 /**
  * Return a signed URL to an S3 object
@@ -28,16 +37,6 @@ function getSignedS3Url(s3Client, Bucket, Key, username) {
   parsedSignedUrl.searchParams.set('x-EarthdataLoginUsername', username);
 
   return parsedSignedUrl.toString();
-}
-
-/**
- * Checks if the token is expired
- *
- * @param {Object} accessTokenRecord - the access token record
- * @returns {boolean} true indicates the token is expired
- */
-function isAccessTokenExpired(accessTokenRecord) {
-  return accessTokenRecord.expirationTime < Date.now();
 }
 
 /**
@@ -83,18 +82,31 @@ async function handleRedirectRequest(req, res) {
     username: getAccessTokenResponse.username
   });
 
-  return res.cookie(
-    'accessToken',
-    getAccessTokenResponse.accessToken,
-    {
-      expires: new Date(getAccessTokenResponse.expirationTime),
-      httpOnly: true,
-      secure: true
-    }
-  )
+  return res
+    .cookie(
+      'accessToken',
+      getAccessTokenResponse.accessToken,
+      {
+        expires: new Date(getAccessTokenResponse.expirationTime),
+        httpOnly: true,
+        secure: useSecureCookies()
+      }
+    )
     .set({ Location: urljoin(distributionUrl, state) })
     .status(307)
     .send('Redirecting');
+}
+
+/**
+ * Responds to a request for temporary s3 credentials.
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object containing
+ * temporary credentials
+ */
+async function handleCredentialRequest(req, res) {
+  return s3credentials(req, res);
 }
 
 /**
@@ -105,42 +117,13 @@ async function handleRedirectRequest(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function handleFileRequest(req, res) {
-  const {
-    accessTokenModel,
-    authClient,
-    s3Client
-  } = getConfigurations();
-
-  const redirectToGetAuthorizationCode = res
-    .status(307)
-    .set({ Location: authClient.getAuthorizationUrl(req.params[0]) });
-
-  const accessToken = req.cookies.accessToken;
-
-  if (!accessToken) return redirectToGetAuthorizationCode.send('Redirecting');
-
-  let accessTokenRecord;
-  try {
-    accessTokenRecord = await accessTokenModel.get({ accessToken });
-  }
-  catch (err) {
-    if (err instanceof RecordDoesNotExist) {
-      return redirectToGetAuthorizationCode.send('Redirecting');
-    }
-
-    throw err;
-  }
-
-  if (isAccessTokenExpired(accessTokenRecord)) {
-    return redirectToGetAuthorizationCode.send('Redirecting');
-  }
+  const { s3Client } = getConfigurations();
 
   let fileBucket;
   let fileKey;
   try {
     [fileBucket, fileKey] = getFileBucketAndKey(req.params[0]);
-  }
-  catch (err) {
+  } catch (err) {
     if (err instanceof UnparsableFileLocationError) {
       return res.boom.notFound(err.message);
     }
@@ -151,7 +134,7 @@ async function handleFileRequest(req, res) {
     s3Client,
     fileBucket,
     fileKey,
-    accessTokenRecord.username
+    req.authorizedMetadata.userName
   );
 
   return res
@@ -160,7 +143,9 @@ async function handleFileRequest(req, res) {
     .send('Redirecting');
 }
 
-router.get('/redirect', handleRedirectRequest);
-router.get('/*', handleFileRequest);
-
-module.exports = router;
+module.exports = {
+  getConfigurations,
+  handleRedirectRequest,
+  handleCredentialRequest,
+  handleFileRequest
+};

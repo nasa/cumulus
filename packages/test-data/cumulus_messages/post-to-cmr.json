@@ -49,7 +49,7 @@
       "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
       "dataType": "MOD09GQ",
       "process": "modis",
-      "provider_path": "/",
+      "provider_path": "",
       "version": "006",
       "updatedAt": 1519154288958,
       "duplicateHandling": "replace",
@@ -101,6 +101,7 @@
             "checksumValue": null,
             "filename": "s3://cumulus-devseed-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
             "fileSize": 17865615,
+            "fileType": "data",
             "path": "granules",
             "url_path": "",
             "checksumType": null
@@ -111,6 +112,7 @@
             "checksumValue": null,
             "filename": "s3://cumulus-devseed-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
             "fileSize": 44118,
+            "fileType": "metadata",
             "path": "granules",
             "url_path": "",
             "checksumType": null

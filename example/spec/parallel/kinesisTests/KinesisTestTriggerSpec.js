@@ -77,11 +77,12 @@ const expectedTranslatePayload = {
       granuleId: record.product.name,
       files: [
         {
+          name: recordFile.name,
+          fileType: recordFile.type,
+          bucket: record.bucket,
           path: testDataFolder,
           url_path: recordFile.uri,
-          bucket: record.bucket,
-          name: recordFile.name,
-          size: recordFile.size
+          fileSize: recordFile.size
         }
       ]
     }
@@ -350,8 +351,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         // TODO(aimee): This should check the record identifier is equal to bad
         // record identifier, but this requires a change to cnmresponse task
         expect(parsedRecords[parsedRecords.length - 1].response.status).toEqual('FAILURE');
-      }
-      else {
+      } else {
         fail(`unexpected error occurred and no messages found in ${cnmResponseStreamName}. Did the "ouputs the record" above fail?`);
       }
     });

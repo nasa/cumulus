@@ -5,6 +5,8 @@ const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { Search } = require('../es/search');
 const { createJwtToken } = require('./token');
 
+const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
+
 /**
  * mocks the context object of the lambda function with
  * succeed and fail functions to facilitate testing of
@@ -35,6 +37,7 @@ function testEndpoint(endpoint, event, testCallback) {
 async function deleteAliases() {
   const client = await Search.es();
   const aliases = await client.cat.aliases({ format: 'json' });
+
 
   // delete all aliases
   return Promise.all(aliases.map((alias) => client.indices.deleteAlias({
@@ -223,7 +226,7 @@ function fakeCollectionFactory(options = {}) {
       name: randomString(),
       dataType: randomString(),
       version: '0.0.0',
-      provider_path: '/',
+      provider_path: '',
       duplicateHandling: 'replace',
       granuleId: '^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$',
       granuleIdExtraction: '(MOD09GQ\\.(.*))\\.hdf',
@@ -255,9 +258,9 @@ function fakeProviderFactory(options = {}) {
 
 function fakeAccessTokenFactory(params = {}) {
   return {
-    accessToken: randomString(),
-    refreshToken: randomString(),
-    username: randomString(),
+    accessToken: randomId('accessToken'),
+    refreshToken: randomId('refreshToken'),
+    username: randomId('username'),
     expirationTime: Date.now() + (60 * 60 * 1000),
     ...params
   };
@@ -278,6 +281,7 @@ async function createFakeJwtAuthToken({ accessTokenModel, userModel }) {
 }
 
 module.exports = {
+  isLocalApi,
   createFakeJwtAuthToken,
   testEndpoint,
   fakeAccessTokenFactory,

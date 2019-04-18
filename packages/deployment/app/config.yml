@@ -2,7 +2,7 @@ default:
   stackName: change-me-cumulus
   stackNameNoDash: ChangeMeCumulus
 
-  urs_url: https://uat.urs.earthdata.nasa.gov
+  urs_url: https://uat.urs.earthdata.nasa.gov/
 
   non_complete_execution_payload_timeout: 30 ## days
   complete_execution_payload_timeout: 10     ## days
@@ -81,24 +81,10 @@ default:
     subnets:
       - subnet-xxxxx #change me
 
-  default_users:
-    aimeeb: true
-    jennyhliu: true
-    jnorton1: true
-    kbaynes: true
-    kkelly: true
-    kovarik: true
-    lfrederick: true
-    mhuffnagle2: true
-    pquinn1: true
-    sethvincent: true
-    menno.vandiermen: true
-    matthewsavoie: true
-    mboyd: true
-
   ecs:
     restartTasksOnDeploy: false
-    amiid: ami-6944c513
+    container_stop_timeout: 2m
+    amiid: ami-007571470797b8ffa
     instanceType: change-ecs-instanceType
     volumeSize: 50
     availabilityZone: 'us-east-1b'
@@ -126,6 +112,12 @@ default:
     instanceCount: 1
     instanceType: t2.small.elasticsearch
     volumeSize: 35
+    alarms:
+      NodesLow:
+        alarm_description: 'There are less instances running than the desired'
+        comparison_operator: LessThanThreshold
+        threshold: '{{es.instanceCount}}'
+        metric: Nodes
 
   # defining the APIs. Each item will include a separate endpoint
   apiStage: dev
@@ -223,4 +215,8 @@ default:
   workflowLambdas: !!files [
   'lambdas.yml',
   'node_modules/@cumulus/api/config/workflowLambdas.yml'
+  ]
+
+  dashboard: !!files [
+  'node_modules/@cumulus/deployment/app/cloudwatchDashboard.yml'
   ]

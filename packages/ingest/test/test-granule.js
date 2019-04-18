@@ -119,8 +119,7 @@ Object.keys(sums).forEach((key) => {
       await granule.verifyFile(file, t.context.internalBucket, key);
       await granule.verifyFile(key, t.context.internalBucket, key);
       t.pass();
-    }
-    catch (e) {
+    } catch (e) {
       t.fail(e);
     }
   });
@@ -176,8 +175,7 @@ test('addBucketToFile throws an exception if no config matches', (t) => {
 
   try {
     testGranule.addBucketToFile(file);
-  }
-  catch (e) {
+  } catch (e) {
     t.is(e.message, 'Unable to update file. Cannot find file config for file right-file');
   }
 });
@@ -291,11 +289,9 @@ test('moveGranuleFile overwrites existing file by default', async (t) => {
 
   try {
     await moveGranuleFile(source, target);
-  }
-  catch (err) {
+  } catch (err) {
     t.fail();
-  }
-  finally {
+  } finally {
     const objects = await s3().listObjects({ Bucket: destBucket }).promise();
     t.is(objects.Contents.length, 1);
 
@@ -587,6 +583,16 @@ test('renameS3FileWithTimestamp renames file', async (t) => {
 
 class TestS3Granule extends s3Mixin(baseProtocol(Granule)) {}
 
+const collectionConfig = {
+  dataType: 'testDataType',
+  version: 'testVersion',
+  files: [
+    {
+      regex: '^[A-Z]|[a-z]+\.txt'
+    }
+  ]
+};
+
 test('ingestFile keeps both new and old data when duplicateHandling is version', async (t) => {
   const sourceBucket = t.context.internalBucket;
   const destBucket = t.context.destBucket;
@@ -597,13 +603,7 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
   const key = path.join(file.path, file.name);
   const params = { Bucket: sourceBucket, Key: key, Body: randomString() };
   await s3PutObject(params);
-  const collectionConfig = {
-    files: [
-      {
-        regex: '^[A-Z]|[a-z]+\.txt'
-      }
-    ]
-  };
+
   const duplicateHandling = 'version';
   // leading '/' should be trimmed
   const fileStagingDir = '/file-staging';
@@ -643,13 +643,6 @@ test('ingestFile throws error when configured to handle duplicates with error', 
   const params = { Bucket: sourceBucket, Key, Body: 'test' };
   await s3PutObject(params);
 
-  const collectionConfig = {
-    files: [
-      {
-        regex: '^[A-Z]|[a-z]+\.txt'
-      }
-    ]
-  };
   const duplicateHandling = 'error';
   const fileStagingDir = 'file-staging';
   const testGranule = new TestS3Granule(
@@ -668,7 +661,7 @@ test('ingestFile throws error when configured to handle duplicates with error', 
   // first attempt to ingest the file.
   await testGranule.ingestFile(file, destBucket, duplicateHandling);
   const error = await t.throws(testGranule.ingestFile(file, destBucket, duplicateHandling));
-  const destFileKey = path.join(fileStagingDir, file.name);
+  const destFileKey = path.join(fileStagingDir, testGranule.collectionId, file.name);
   t.true(error instanceof errors.DuplicateFile);
   t.is(error.message, `${destFileKey} already exists in ${destBucket} bucket`);
 });

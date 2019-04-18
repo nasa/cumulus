@@ -91,8 +91,7 @@ class Rule extends Manager {
         await this.deleteKinesisEventSources(original);
         await this.addKinesisEventSources(original);
         updated.rule.arn = original.rule.arn;
-      }
-      else {
+      } else {
         await this.updateKinesisEventSources(original);
       }
       break;

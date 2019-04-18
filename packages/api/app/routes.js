@@ -18,10 +18,10 @@ const logs = require('../endpoints/logs');
 const reconcilliationReports = require('../endpoints/reconciliation-reports');
 const schemas = require('../endpoints/schemas');
 const stats = require('../endpoints/stats');
-const s3credentials = require('../endpoints/s3credentials');
 const version = require('../endpoints/version');
 const workflows = require('../endpoints/workflows');
 const dashboard = require('../endpoints/dashboard');
+const elasticsearch = require('../endpoints/elasticsearch');
 
 let token = require('../endpoints/token');
 let { ensureAuthorized } = require('./auth');
@@ -70,8 +70,6 @@ router.use('/schemas', ensureAuthorized, schemas);
 // stats endpoint
 router.use('/stats', ensureAuthorized, stats);
 
-router.use('/s3credentials', ensureAuthorized, s3credentials);
-
 // version endpoint
 // this endpoint is not behind authentication
 router.use('/version', version);
@@ -85,6 +83,8 @@ router.get('/token', token.tokenEndpoint);
 router.post('/refresh', token.refreshEndpoint);
 
 router.use('/dashboard', dashboard);
+
+router.use('/elasticsearch', ensureAuthorized, elasticsearch);
 
 // Catch and send the error message down (instead of just 500: internal server error)
 // Need all 4 params, because that's how express knows this is the error handler

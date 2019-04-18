@@ -14,6 +14,8 @@ const {
   s3ObjectExists,
   s3,
   s3GetObjectTagging,
+  s3PutObject,
+  s3PutObjectTagging,
   promiseS3Upload
 } = require('@cumulus/common/aws');
 const { loadJSONTestData, streamTestData } = require('@cumulus/test-data');
@@ -29,7 +31,6 @@ const { syncGranule } = require('..');
 // prepare the s3 event and data
 async function prepareS3DownloadEvent(t) {
   const granuleFilePath = randomString();
-  const granuleFileName = t.context.event.input.granules[0].files[0].name;
 
   t.context.event.config.provider = {
     id: 'MODAPS',
@@ -40,18 +41,23 @@ async function prepareS3DownloadEvent(t) {
   t.context.event.input.granules[0].files[0].path = granuleFilePath;
   t.context.event.config.fileStagingDir = randomString();
 
-  await validateConfig(t, t.context.event.config);
-  await validateInput(t, t.context.event.input);
-
   await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
 
   // Stage the file that's going to be downloaded
-  const key = `${granuleFilePath}/${granuleFileName}`;
-  await s3().putObject({
-    Bucket: t.context.event.config.provider.host,
-    Key: key,
-    Body: streamTestData(`granules/${granuleFileName}`)
-  }).promise();
+  for (let i = 0; i < t.context.event.input.granules.length; i += 1) {
+    for (let j = 0; j < t.context.event.input.granules[i].files.length; j += 1) {
+      t.context.event.input.granules[i].files[j].path = granuleFilePath;
+      const granuleFileName = t.context.event.input.granules[i].files[j].name;
+      const key = `${granuleFilePath}/${granuleFileName}`;
+
+      // eslint-disable-next-line no-await-in-loop
+      await s3PutObject({
+        Bucket: t.context.event.config.provider.host,
+        Key: key,
+        Body: streamTestData(`granules/${granuleFileName}`)
+      });
+    }
+  }
 }
 
 /**
@@ -91,6 +97,7 @@ test.beforeEach(async (t) => {
   ]);
 
   t.context.event = await loadJSONTestData('payloads/new-message-schema/ingest.json');
+  t.context.event_multigran = await loadJSONTestData('payloads/new-message-schema/ingest-multigran.json');
 
   const collection = t.context.event.config.collection;
   // save collection in internal/stackName/collections/collectionId
@@ -130,8 +137,7 @@ test.serial('error when provider info is missing', async (t) => {
   try {
     await syncGranule(t.context.event);
     t.fail();
-  }
-  catch (error) {
+  } catch (error) {
     t.true(error instanceof errors.ProviderNotFound);
   }
 });
@@ -182,12 +188,10 @@ test.serial('download Granule from FTP endpoint', async (t) => {
       `s3://${t.context.internalBucketName}/${keypath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`
     );
     t.truthy(output.granules[0].files[0].url_path);
-  }
-  catch (e) {
+  } catch (e) {
     if (e instanceof errors.RemoteResourceError) {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else throw e;
+    } else throw e;
   }
 });
 
@@ -219,12 +223,10 @@ test.serial('download Granule from HTTP endpoint', async (t) => {
       output.granules[0].files[0].filename,
       `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
     );
-  }
-  catch (e) {
+  } catch (e) {
     if (e instanceof errors.RemoteResourceError) {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else throw e;
+    } else throw e;
   }
 });
 
@@ -265,12 +267,10 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
         Key: `${keypath}/${granuleFilename}`
       })
     );
-  }
-  catch (e) {
+  } catch (e) {
     if (e instanceof errors.RemoteResourceError) {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else throw e;
+    } else throw e;
   }
 });
 
@@ -294,17 +294,17 @@ test.serial('download granule from S3 provider', async (t) => {
   try {
     const TagSet = [{ Key: 'granuleId', Value: 'test-granuleId' }];
     // Stage the file that's going to be downloaded
-    await s3().putObject({
+    await s3PutObject({
       Bucket: t.context.event.config.provider.host,
       Key: `${granuleFilePath}/${granuleFileName}`,
       Body: streamTestData(`granules/${granuleFileName}`)
-    }).promise();
+    });
     // add tags to test preservation
-    await s3().putObjectTagging({
-      Bucket: t.context.event.config.provider.host,
-      Key: `${granuleFilePath}/${granuleFileName}`,
-      Tagging: { TagSet }
-    }).promise();
+    await s3PutObjectTagging(
+      t.context.event.config.provider.host,
+      `${granuleFilePath}/${granuleFileName}`,
+      { TagSet }
+    );
 
     const output = await syncGranule(t.context.event);
 
@@ -327,8 +327,7 @@ test.serial('download granule from S3 provider', async (t) => {
     );
     const actualTags = await s3GetObjectTagging(t.context.internalBucketName, `${keypath}/${granuleFileName}`);
     t.deepEqual(TagSet, actualTags.TagSet);
-  }
-  finally {
+  } finally {
     // Clean up
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
@@ -386,12 +385,10 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
         Key: `${keypath}/${granuleFilename}`
       })
     );
-  }
-  catch (e) {
+  } catch (e) {
     if (e instanceof errors.RemoteResourceError) {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else throw e;
+    } else throw e;
   }
 });
 
@@ -455,12 +452,10 @@ test.serial('validate file properties', async (t) => {
     );
     t.is(output.granules[0].files[0].url_path, 'file-example/');
     t.is(output.granules[0].files[1].url_path, 'collection-example/');
-  }
-  catch (e) {
+  } catch (e) {
     if (e instanceof errors.RemoteResourceError) {
       t.pass('ignoring this test. Test server seems to be down');
-    }
-    else throw e;
+    } else throw e;
   }
 });
 
@@ -485,8 +480,7 @@ test.serial('attempt to download file from non-existent path - throw error', asy
 
   try {
     await t.throws(syncGranule(t.context.event), null, 'Source file not found');
-  }
-  finally {
+  } finally {
     // Clean up
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
@@ -502,8 +496,7 @@ async function duplicateHandlingErrorTest(t) {
 
     await syncGranule(t.context.event);
     t.fail();
-  }
-  catch (err) {
+  } catch (err) {
     const collection = t.context.event.config.collection;
     const collectionId = constructCollectionId(collection.name, collection.version);
     const granuleFileKey = path.join(
@@ -517,8 +510,7 @@ async function duplicateHandlingErrorTest(t) {
       err.message,
       `${granuleFileKey} already exists in ${t.context.event.config.downloadBucket} bucket`
     );
-  }
-  finally {
+  } finally {
     // Clean up
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
@@ -598,11 +590,11 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     );
 
     // stage the file with different content
-    await s3().putObject({
+    await s3PutObject({
       Bucket: t.context.event.config.provider.host,
       Key: key,
       Body: randomString()
-    }).promise();
+    });
 
     t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
     t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
@@ -632,11 +624,11 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     t.deepEqual(existingFileInfo, renamedFileInfo);
 
     // stage the file again with different content
-    await s3().putObject({
+    await s3PutObject({
       Bucket: t.context.event.config.provider.host,
       Key: key,
       Body: randomString()
-    }).promise();
+    });
 
     t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
     t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
@@ -657,8 +649,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     filesRenamed = output.granules[0].files
       .filter((f) => path.basename(parseS3Uri(f.filename).Key).startsWith(`${granuleFileName}.v`));
     t.is(filesRenamed.length, 2);
-  }
-  finally {
+  } finally {
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
 });
@@ -685,11 +676,11 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
     );
 
     // stage the file with different content
-    await s3().putObject({
+    await s3PutObject({
       Bucket: t.context.event.config.provider.host,
       Key: key,
       Body: randomString()
-    }).promise();
+    });
 
     t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
     t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
@@ -709,8 +700,7 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
       parseS3Uri(currentFile).Bucket, parseS3Uri(currentFile).Key
     );
     t.deepEqual(existingFileInfo, currentFileInfo);
-  }
-  finally {
+  } finally {
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
 });
@@ -741,11 +731,11 @@ async function granuleFilesOverwrittenTest(t) {
     const existingFileInfo = (await getFilesMetadata(output.granules[0].files))[0];
 
     // stage the file with different content
-    await s3().putObject({
+    await s3PutObject({
       Bucket: t.context.event.config.provider.host,
       Key: key,
       Body: randomString()
-    }).promise();
+    });
 
     t.context.event.input.granules[0].files[0].fileSize = granuleFileName.length;
     t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
@@ -765,8 +755,7 @@ async function granuleFilesOverwrittenTest(t) {
     t.true(currentFileInfo.LastModified > existingFileInfo.LastModified);
 
     t.true(output.granules[0].files[0].duplicate_found);
-  }
-  finally {
+  } finally {
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
 }
@@ -799,4 +788,41 @@ test.serial('when duplicateHandling is "replace" and forceDuplicateOverwrite is 
 test.serial('when duplicateHandling is specified as "replace" via collection, do overwrite files', async (t) => {
   setupDuplicateHandlingCollection(t, 'replace');
   await granuleFilesOverwrittenTest(t);
+});
+
+test.serial('download multiple granules from S3 provider to staging directory', async (t) => {
+  t.context.event.input.granules = t.context.event_multigran.input.granules;
+  try {
+    await prepareS3DownloadEvent(t);
+
+    const output = await syncGranule(t.context.event);
+
+    await validateOutput(t, output);
+
+    t.is(output.granules.length, 3);
+
+    const config = t.context.event.config;
+
+    // verify the files are downloaded to the correct staging area
+    for (let i = 0; i < output.granules.length; i += 1) {
+      for (let j = 0; j < output.granules[i].files.length; j += 1) {
+        const collectionId = constructCollectionId(
+          output.granules[i].dataType, output.granules[i].version
+        );
+        const keypath = `${config.fileStagingDir}/${config.stack}/${collectionId}`;
+        const granuleFileName = t.context.event.input.granules[i].files[j].name;
+        t.is(
+          output.granules[i].files[j].filename,
+          `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}`
+        );
+        s3ObjectExists({
+          Bucket: t.context.internalBucketName,
+          Key: `${keypath}/${granuleFileName}`
+        }).then((outcome) => t.is(outcome, true));
+      }
+    }
+  } finally {
+    // Clean up
+    recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
+  }
 });

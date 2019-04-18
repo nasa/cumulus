@@ -78,8 +78,7 @@ class Pdr extends Manager {
     let progress = 0;
     if (stats.processing > 0 && stats.total > 0) {
       progress = ((stats.total - stats.processing) / stats.total) * 100;
-    }
-    else if (stats.processing === 0 && stats.total > 0) {
+    } else if (stats.processing === 0 && stats.total > 0) {
       progress = 100;
     }
 

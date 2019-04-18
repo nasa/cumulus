@@ -6,9 +6,81 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **CUMULUS-1212**
+  - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
+
+## Changed
+
+- **CUMULUS-1236**
+  - Moves access to public files behind the distribution endpoint.  Authentication is not required, but direct http access has been disallowed.
+
+- **CUMULUS-1223**
+  - Adds unauthenticated access for public bucket files to the Distribution API.  Public files should be requested the same way as protected files, but for public files a redirect to a self-signed S3 URL will happen without requiring authentication with Earthdata login.
+
+- **CUMULUS-1193**
+  - Moved reindex CLI functionality to an API endpoint
+  
+### Fixed
+- **CUMULUS-1203**
+  - Fixes IAM template's use of intrinsic functions such that IAM template overrides now work with kes
+
+## [v1.12.1] - 2019-4-8
+
+## [v1.12.0] - 2019-4-4
+
+Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
+
+### BREAKING CHANGES
+
+- **CUMULUS-1139**
+  - `granule.applyWorkflow`  uses the new-style granule record as input to workflows.
+
+- **CUMULUS-1171**
+  - Fixed provider handling in the API to make it consistent between protocols.
+    NOTE: This is a breaking change. When applying this upgrade, users will need to:
+    1. Disable all workflow rules
+    2. Update any `http` or `https` providers so that the host field only
+       contains a valid hostname or IP address, and the port field contains the
+       provider port.
+    3. Perform the deployment
+    4. Re-enable workflow rules
+
+- **CUMULUS-1176**:
+  - `@cumulus/move-granules` input expectations have changed. `@cumulus/files-to-granules` is a new intermediate task to perform input translation in the old style.
+    See the Added and Changed sections of this release changelog for more information.
+
+- **CUMULUS-670**
+  - The behavior of ParsePDR and related code has changed in this release.  PDRs with FILE_TYPEs that do not conform to the PDR ICD (+ TGZ) (https://cdn.earthdata.nasa.gov/conduit/upload/6376/ESDS-RFC-030v1.0.pdf) will fail to parse.
+
+- **CUMULUS-1208**
+  - The granule object input to `@cumulus/queue-granules` will now be added to ingest workflow messages **as is**. In practice, this means that if you are using `@cumulus/queue-granules` to trigger ingest workflows and your granule objects input have invalid properties, then your ingest workflows will fail due to schema validation errors.
+
 ### Added
+
+- **CUMULUS-777**
+  - Added new cookbook entry on configuring Cumulus to track ancillary files.
+- **CUMULUS-1183**
+  - Kes overrides will now abort with a warning if a workflow step is configured without a corresponding
+    lambda configuration
+- **CUMULUS-1223**
+  - Adds convenience function `@cumulus/common/bucketsConfigJsonObject` for fetching stack's bucket configuration as an object.
+
+- **CUMULUS-853**
+  - Updated FakeProcessing example lambda to include option to generate fake browse
+  - Added feature documentation for ancillary metadata export, a new cookbook entry describing a workflow with ancillary metadata generation(browse), and related task definition documentation
+- **CUMULUS-805**
+  - Added a CloudWatch alarm to check running ElasticSearch instances, and a CloudWatch dashboard to view the health of ElasticSearch
+  - Specify `AWS_REGION` in `.env` to be used by deployment script
+- **CUMULUS-803**
+  - Added CloudWatch alarms to check running tasks of each ECS service, and add the alarms to CloudWatch dashboard
+- **CUMULUS-670**
+  - Added Ancillary Metadata Export feature (see https://nasa.github.io/cumulus/docs/features/ancillary_metadata for more information)
+  - Added new Collection file parameter "fileType" that allows configuration of workflow granule file fileType
 - **CUMULUS-1184** - Added kes logging output to ensure we always see the state machine reference before failures due to configuration
 - **CUMULUS-1105** - Added a dashboard endpoint to serve the dashboard from an S3 bucket
+- **CUMULUS-1199** - Moves `s3credentials` endpoint from the backend to the distribution API.
 - **CUMULUS-666**
   - Added `@api/endpoints/s3credentials` to allow EarthData Login authorized users to retrieve temporary security credentials for same-region direct S3 access.
 - **CUMULUS-671**
@@ -38,23 +110,44 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added `@cumulus/common/util#isUndefined()`
   - Added `@cumulus/common/util#negate()`
 
+- **CUMULUS-1176**
+  - Added new `@cumulus/files-to-granules` task to handle converting file array output from `cumulus-process` tasks into granule objects.
+    Allows simplification of `@cumulus/move-granules` and `@cumulus/post-to-cmr`, see Changed section for more details.
+
 - CUMULUS-1151 Compare the granule holdings in CMR with Cumulus' internal data store
 - CUMULUS-1152 Compare the granule file holdings in CMR with Cumulus' internal data store
 
 ### Changed
 
-- CUMULUS-1139 - Granules stored in the API contain a `files` property. That schema has been greatly
+- **CUMULUS-1216** - Updated `@cumulus/ingest/granule/ingestFile` to download files to expected staging location.
+- **CUMULUS-1208** - Updated `@cumulus/ingest/queue/enqueueGranuleIngestMessage()` to not transform granule object passed to it when building an ingest message
+- **CUMULUS-1198** - `@cumulus/ingest` no longer enforces any expectations about whether `provider_path` contains a leading slash or not.
+- **CUMULUS-1170**
+  - Update scripts and docs to use `npm` instead of `yarn`
+  - Use `package-lock.json` files to ensure matching versions of npm packages
+  - Update CI builds to use `npm ci` instead of `npm install`
+- **CUMULUS-670**
+  - Updated ParsePDR task to read standard PDR types+ (+ tgz as an external customer requirement) and add a fileType to granule-files on Granule discovery
+  - Updated ParsePDR to fail if unrecognized type is used
+  - Updated all relevant task schemas to include granule->files->filetype as a string value
+  - Updated tests/test fixtures to include the fileType in the step function/task inputs and output validations as needed
+  - Updated MoveGranules task to handle incoming configuration with new "fileType" values and to add them as appropriate to the lambda output.
+  - Updated DiscoverGranules step/related workflows to read new Collection file parameter fileType that will map a discovered file to a workflow fileType
+  - Updated CNM parser to add the fileType to the defined granule file fileType on ingest and updated integration tests to verify/validate that behavior
+  - Updated generateEcho10XMLString in cmr-utils.js to use a map/related library to ensure order as CMR requires ordering for their online resources.
+  - Updated post-to-cmr task to appropriately export CNM filetypes to CMR in echo10/UMM exports
+- **CUMULUS-1139** - Granules stored in the API contain a `files` property. That schema has been greatly
   simplified and now better matches the CNM format.
-    - The `name` property has been renamed to `fileName`.
-    - The `filepath` property has been renamed to `key`.
-    - The `checksumValue` property has been renamed to `checksum`.
-    - The `path` property has been removed.
-    - The `url_path` property has been removed.
-    - The `filename` property (which contained an `s3://` URL) has been removed, and the `bucket`
-      and `key` properties should be used instead. Any requests sent to the API containing a `granule.files[].filename`
-      property will be rejected, and any responses coming back from the API will not contain that
-      `filename` property.
-    - A `source` property has been added, which is a URL indicating the original source of the file.
+  - The `name` property has been renamed to `fileName`.
+  - The `filepath` property has been renamed to `key`.
+  - The `checksumValue` property has been renamed to `checksum`.
+  - The `path` property has been removed.
+  - The `url_path` property has been removed.
+  - The `filename` property (which contained an `s3://` URL) has been removed, and the `bucket`
+    and `key` properties should be used instead. Any requests sent to the API containing a `granule.files[].filename`
+    property will be rejected, and any responses coming back from the API will not contain that
+    `filename` property.
+  - A `source` property has been added, which is a URL indicating the original source of the file.
   - `@cumulus/ingest/granule.moveGranuleFiles()` no longer includes a `filename` field in its
     output. The `bucket` and `key` fields should be used instead.
 - **CUMULUS-672**
@@ -70,13 +163,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Deprecated `@cumulus/common/aws.checksumS3Objects`. Use `@cumulus/common/aws.calculateS3ObjectChecksum` instead.
 
 - CUMULUS-1171
-  - NOTE: This is a breaking change. When applying this upgrade, users will need to:
-    1. Disable all workflow rules
-    2. Update any `http` or `https` providers so that the host field only
-       contains a valid hostname or IP address, and the port field contains the
-       provider port.
-    3. Perform the deployment
-    4. Re-enable workflow rules
   - Fixed provider handling in the API to make it consistent between protocols.
     Before this change, FTP providers were configured using the `host` and
     `port` properties. HTTP providers ignored `port` and `protocol`, and stored
@@ -87,14 +173,29 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - The default provider port was being set to 21, no matter what protocol was
     being used. Removed that default.
 
+- **CUMULUS-1176**
+  - `@cumulus/move-granules` breaking change:
+    Input to `move-granules` is now expected to be in the form of a granules object (i.e. `{ granules: [ { ... }, { ... } ] }`);
+    For backwards compatibility with array-of-files outputs from processing steps, use the new `@cumulus/files-to-granules` task as an intermediate step.
+    This task will perform the input translation. This change allows `move-granules` to be simpler and behave more predictably.
+     `config.granuleIdExtraction` and `config.input_granules` are no longer needed/used by `move-granules`.
+  - `@cumulus/post-to-cmr`: `config.granuleIdExtraction` is no longer needed/used by `post-to-cmr`.
+
 - CUMULUS-1174
   - Better error message and stacktrace for S3KeyPairProvider error reporting.
+
+### Fixed
+
+- **CUMULUS-1218** Reconciliation report will now scan only completed granules.
+- `@cumulus/api` files and granules were not getting indexed correctly because files indexing was failing in `db-indexer`
+- `@cumulus/deployment` A bug in the Cloudformation template was preventing the API from being able to be launched in a VPC, updated the IAM template to give the permissions to be able to run the API in a VPC
 
 ### Deprecated
 
 - `@cumulus/api/models/Granule.removeGranuleFromCmr`, instead use `@cumulus/api/models/Granule.removeGranuleFromCmrByGranule`
 - `@cumulus/ingest/granule.validateChecksum`, instead use `@cumulus/ingest/granule.verifyFile`
 - `@cumulus/common/aws.checksumS3Objects`, instead use `@cumulus/common/aws.calculateS3ObjectChecksum`
+- `@cumulus/cmrjs`: `getGranuleId` and `getCmrFiles` are deprecated due to changes in input handling.
 
 ## [v1.11.3] - 2019-3-5
 
@@ -151,7 +252,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Schema validation is now strongly enforced when writing to the database.
     Additional properties are not allowed and will result in a validation error.
 - CUMULUS-678
-  `tasks/move-granules` simplified and refactored to use  functionality from cmrjs.
+  `tasks/move-granules` simplified and refactored to use functionality from cmrjs.
   `ingest/granules.moveGranuleFiles` now just moves granule files and returns a list of the updated files. Updating metadata now handled by `@cumulus/cmrjs/reconcileCMRMetadata`.
   `move-granules.updateGranuleMetadata` refactored and bugs fixed in the case of a file matching multiple collection.files.regexps.
   `getCmrXmlFiles` simplified and now only returns an object with the cmrfilename and the granuleId.
@@ -894,7 +995,9 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.11.3...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.12.1...HEAD
+[v1.12.1]: https://github.com/nasa/cumulus/compare/v1.12.0...v1.12.1
+[v1.12.0]: https://github.com/nasa/cumulus/compare/v1.11.3...v1.12.0
 [v1.11.3]: https://github.com/nasa/cumulus/compare/v1.11.2...v1.11.3
 [v1.11.2]: https://github.com/nasa/cumulus/compare/v1.11.1...v1.11.2
 [v1.11.1]: https://github.com/nasa/cumulus/compare/v1.11.0...v1.11.1
