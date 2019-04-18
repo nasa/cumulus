@@ -705,7 +705,7 @@ test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
   t.not(newfiles[0].fileSize, params.Body.length);
 });
 
-test.serial('ingestFile replaces file when duplicateHandling is replace', async (t) => {
+test('ingestFile replaces file when duplicateHandling is replace', async (t) => {
   const sourceBucket = t.context.internalBucket;
   const destBucket = t.context.destBucket;
   const file = {
@@ -742,6 +742,80 @@ test.serial('ingestFile replaces file when duplicateHandling is replace', async 
   t.true(newfiles[0].duplicate_found);
   t.not(newfiles[0].fileSize, oldfiles[0].fileSize);
   t.is(newfiles[0].fileSize, params.Body.length);
+});
+
+test('ingestFile throws an error when invalid checksum is provided', async (t) => {
+  const sourceBucket = t.context.internalBucket;
+  const destBucket = t.context.destBucket;
+
+  const file = {
+    path: '',
+    name: 'test.txt',
+    checksumType: 'md5',
+    checksumValue: 'badchecksum'
+  };
+
+  const Key = path.join(file.path, file.name);
+  const params = { Bucket: sourceBucket, Key, Body: randomString(30) };
+  await s3PutObject(params);
+
+  const duplicateHandling = 'replace';
+  const fileStagingDir = 'file-staging';
+  const testGranule = new TestS3Granule(
+    {},
+    collectionConfig,
+    {
+      host: sourceBucket
+    },
+    fileStagingDir,
+    false,
+    duplicateHandling,
+  );
+
+  const stagingPath = path.join(testGranule.fileStagingDir, testGranule.collectionId);
+  // This test needs to use a unique bucket for each test (or remove the object
+  // added to the destination bucket). Otherwise, it will throw an error on the
+  // first attempt to ingest the file.
+  const error = await t.throws(testGranule.ingestFile(file, destBucket, duplicateHandling));
+  t.true(error instanceof errors.InvalidChecksum);
+  t.is(error.message, `Invalid checksum for S3 object s3://${destBucket}/${stagingPath}/${file.name}`
+    + ` with type ${file.checksumType} and expected sum ${file.checksumValue}`);
+});
+
+test('ingestFile throws an error when no checksum is provided and the fileSize is not as expected', async (t) => {
+  const sourceBucket = t.context.internalBucket;
+  const destBucket = t.context.destBucket;
+
+  const file = {
+    path: '',
+    name: 'test.txt',
+    fileSize: 123456789
+  };
+
+  const Key = path.join(file.path, file.name);
+  const params = { Bucket: sourceBucket, Key, Body: randomString(30) };
+  await s3PutObject(params);
+
+  const duplicateHandling = 'replace';
+  const fileStagingDir = 'file-staging';
+  const testGranule = new TestS3Granule(
+    {},
+    collectionConfig,
+    {
+      host: sourceBucket
+    },
+    fileStagingDir,
+    false,
+    duplicateHandling,
+  );
+
+  // This test needs to use a unique bucket for each test (or remove the object
+  // added to the destination bucket). Otherwise, it will throw an error on the
+  // first attempt to ingest the file.
+  const error = await t.throws(testGranule.ingestFile(file, destBucket, duplicateHandling));
+  t.true(error instanceof errors.UnexpectedFileSize);
+  t.is(error.message, `verifyFile failed: Actual filesize ${params.Body.length}`
+    + ` did not match expected fileSize ${file.fileSize}`);
 });
 
 test('unversionFilename returns original filename if it has no timestamp', (t) => {

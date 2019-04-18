@@ -369,8 +369,8 @@ class Granule {
         const ingestedSize = await aws.getObjectSize(bucket, key);
         if (ingestedSize !== file.fileSize) {
           throw new errors.UnexpectedFileSize(
-            `verifyFile failed: Actual filesize ${file.fileSize}`
-            + `did not match expected fileSize ${ingestedSize}`
+            `verifyFile failed: Actual filesize ${ingestedSize}`
+            + ` did not match expected fileSize ${file.fileSize}`
           );
         }
       } else {
