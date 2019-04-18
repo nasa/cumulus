@@ -206,29 +206,6 @@ class Rule extends Manager {
    * @returns {Promise} updated rule item
    */
   async addKinesisEventSource(item, lambda) {
-    // use the existing event source mapping if it already exists and is enabled
-    const listParams = { FunctionName: lambda.name };
-    const listData = await aws.lambda(listParams).listEventSourceMappings().promise();
-    if (listData.EventSourceMappings && listData.EventSourceMappings.length > 0) {
-      const mappingExists = listData.EventSourceMappings
-        .find((mapping) => { // eslint-disable-line arrow-body-style
-          return (mapping.EventSourceArn === item.rule.value
-                  && mapping.FunctionArn.includes(lambda.name));
-        });
-      if (mappingExists) {
-        if (mappingExists.State === 'Enabled') {
-          return mappingExists;
-        }
-        await this.deleteKinesisEventSource({
-          name: item.name,
-          rule: {
-            arn: mappingExists.UUID,
-            type: item.rule.type
-          }
-        }, lambda.eventType);
-      }
-    }
-
     // create event source mapping
     const params = {
       EventSourceArn: item.rule.value,
@@ -291,43 +268,10 @@ class Rule extends Manager {
    * @returns {Promise} the response from event source delete
    */
   async deleteKinesisEventSource(item, eventType) {
-    if (await this.isEventSourceMappingShared(item, eventType)) {
-      return undefined;
-    }
     const params = {
       UUID: item.rule[this.eventMapping[eventType]]
     };
     return aws.lambda().deleteEventSourceMapping(params).promise();
-  }
-
-  /**
-   * check if a rule's event source mapping is shared with other rules
-   *
-   * @param {Object} item - the rule item
-   * @param {string} eventType - kinesisSourceEvent Type
-   * @returns {boolean} return true if no other rules share the same event source mapping
-   */
-  async isEventSourceMappingShared(item, eventType) {
-    const arnClause = `#rl.#${this.eventMapping[eventType]} = :${this.eventMapping[eventType]}`;
-    const queryNames = {
-      '#nm': 'name',
-      '#rl': 'rule',
-      '#tp': 'type'
-    };
-    queryNames[`#${eventType}`] = eventType;
-
-    const queryValues = {
-      ':name': item.name,
-      ':ruleType': item.rule.type
-    };
-    queryValues[`:${eventType}`] = item.rule[eventType];
-
-    const kinesisRules = await super.scan({
-      names: queryNames,
-      filter: `#nm <> :name AND #rl.#tp = :ruleType AND ${arnClause}`,
-      values: queryValues
-    });
-    return (kinesisRules.Count && kinesisRules.Count > 0);
   }
 
   async addSnsTrigger(item) {
