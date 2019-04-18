@@ -1,9 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'stack: {{stackName}} | deployed by Kes'
-Parameters:
-  dbIndexerLambdaFunction:
-    Type: String
-    Description: 'dbIndexer Lambda function ARN'
 
 Resources:
 
@@ -144,30 +140,6 @@ Resources:
   # Cumulus DynamoDB Auto Scaling END
   #################################################
 
-{{# if parent.dynamo2ElasticSearch}}
-  #################################################
-  # DynamoDB Event Source Mapping BEGIN
-  #################################################
-
-  {{#each parent.dynamo2ElasticSearch.tables}}
-  {{this}}EventSourceMapping:
-    Type: AWS::Lambda::EventSourceMapping
-    Properties:
-      EventSourceArn:
-        Fn::GetAtt:
-          - {{this}}DynamoDB
-          - StreamArn
-      FunctionName:
-        Ref: {{../parent.dynamo2ElasticSearch.lambda}}LambdaFunction
-      BatchSize: {{../parent.dynamo2ElasticSearch.batchSize}}
-      StartingPosition: {{../parent.dynamo2ElasticSearch.startingPosition}}
-  {{/each}}
-
-  #################################################
-  # DynamoDB Event Source Mapping END
-  #################################################
-{{/if}}
-
 {{# if parent.es.name}}
   #################################################
   # ElasticSearch config BEGIN
@@ -240,4 +212,10 @@ Outputs:
   {{@key}}DynamoDB:
     Value:
       Ref: {{@key}}DynamoDB
+
+  {{@key}}DynamoDBStreamArn:
+    Value:
+      Fn::GetAtt:
+        - {{@key}}DynamoDB
+        - StreamArn
   {{/each}}

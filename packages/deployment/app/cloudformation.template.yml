@@ -39,11 +39,6 @@ Resources:
   {{@key}}NestedStack:
     Type: "AWS::CloudFormation::Stack"
     Properties:
-      Parameters:
-        dbIndexerLambdaFunction:
-          Fn::GetAtt:
-            - dbIndexerLambdaFunction
-            - Arn
       TemplateURL: {{this.url}}
 {{/ifEquals}}
 {{#ifNotEquals @key "WorkflowLambdaVersions"}}
@@ -51,6 +46,11 @@ Resources:
   {{@key}}NestedStack:
     Type: "AWS::CloudFormation::Stack"
     Properties:
+      DependsOn:
+        - DataStorageNestedStack
+      {{#ifEquals @key "CumulusApiBackend"}}
+        - CumulusApiDistributionNestedStack
+      {{/ifEquals}}
       Parameters:
         CmrPassword:
           Fn::GetAtt:
@@ -362,6 +362,30 @@ Resources:
   #################################################
   # CloudWatch RULE config END
   #################################################
+
+{{# if dynamo2ElasticSearch}}
+  #################################################
+  # DynamoDB Event Source Mapping BEGIN
+  #################################################
+
+  {{#each dynamo2ElasticSearch.tables}}
+  {{this}}EventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn:
+        Fn::GetAtt:
+          - DataStorageNestedStack
+          - Outputs.{{this}}DynamoDBStreamArn
+      FunctionName:
+        Ref: {{../dynamo2ElasticSearch.lambda}}LambdaFunction
+      BatchSize: {{../dynamo2ElasticSearch.batchSize}}
+      StartingPosition: {{../dynamo2ElasticSearch.startingPosition}}
+  {{/each}}
+
+  #################################################
+  # DynamoDB Event Source Mapping END
+  #################################################
+{{/if}}
 
   #################################################
   # Lambda config BEGIN
