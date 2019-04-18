@@ -363,7 +363,19 @@ class Granule {
    */
   async verifyFile(file, bucket, key, options = {}) {
     const [type, value] = await this.retrieveSuppliedFileChecksumInformation(file);
-    if (!type || !value) return [null, null];
+    if (!type || !value) {
+      log.debug(`No checksum found to verify file ${file.name}, falling back to fileSize`);
+      if (file.fileSize) {
+        const ingestedSize = aws.getObjectSize(bucket, key);
+        if (ingestedSize !== file.fileSize) {
+          throw new errors.UnexpectedFileSize(
+            `verifyFile failed: Actual filesize ${file.fileSize}`
+            + `did not match expected fileSize ${ingestedSize}`
+          );
+        }
+      }
+      return [null, null];
+    }
 
     await aws.validateS3ObjectChecksum({
       algorithm: type,
@@ -659,7 +671,6 @@ async function moveGranuleFile(source, target, options) {
 * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-prop
 * @returns {Promise<Array>} returns a promise that resolves to a list of s3 version file objects.
 **/
-
 async function moveGranuleFileWithVersioning(source, target, sourceChecksumObject, copyOptions) {
   const { checksumType, checksumValue } = sourceChecksumObject;
   // compare the checksum of the existing file and new file, and handle them accordingly
