@@ -83,7 +83,9 @@ default:
 
   ecs:
     instanceType: t2.medium
+    minInstances: 1
     desiredInstances: 1
+    maxInstances: 1
     availabilityZone: us-east-1b
     publicIp: false
     restartTasksOnDeploy: true

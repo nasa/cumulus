@@ -60,7 +60,7 @@ CMR_PASSWORD=cmrpassword
 These values will be imported via kes in your configuration file.   You should ensure your `app/config.yml` contains the following lines:
 
 ```yaml
-cmr: 
+cmr:
   username: '{{CMR_USERNAME}}'
   provider: CUMULUS
   clientId: '<replace-with-daac-name>-{{stackName}}'
