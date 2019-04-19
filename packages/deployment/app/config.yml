@@ -91,6 +91,11 @@ default:
     minInstances: 1
     desiredInstances: 1
     maxInstances: 1
+    autoscaling:
+      scaleInThresholdPercent: 25
+      scaleOutThresholdPercent: 75
+      scalingAdjustmentPercent: 10
+
     tasks:
       AsyncOperation:
         image: cumuluss/async-operation:25
