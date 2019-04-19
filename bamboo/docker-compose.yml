@@ -42,6 +42,6 @@ services:
     volumes:
       - ./source/cumulus:/source/host_cumulus
     environment:
-      - LOCALSTACK_HOST: "127.0.0.1"
+      - LOCALSTACK_HOST=127.0.0.1
       - CI_UID
     command: tail -f /dev/null
