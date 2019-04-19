@@ -96,7 +96,14 @@ default:
         image: cumuluss/cumulus-ecs-task:1.2.5
         cpu: 400
         memory: 700
+        minTasks: 1
         count: 1
+        maxTasks: 10
+        scaleInActivityScheduleTime: 5000
+        scaleInAdjustmentPercent: -5
+        scaleOutActivityScheduleTime: 10000
+        scaleOutAdjustmentPercent: 10
+        activityName: EcsTaskHelloWorld
         envs:
           AWS_DEFAULT_REGION:
             function: Fn::Sub

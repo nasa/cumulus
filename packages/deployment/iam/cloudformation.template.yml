@@ -797,13 +797,16 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - dynamodb:DescribeTable
-                  - dynamodb:UpdateTable
-                  - cloudwatch:PutMetricAlarm
+                  - application-autoscaling:*"
+                  - cloudwatch:DeleteAlarms
                   - cloudwatch:DescribeAlarms
                   - cloudwatch:GetMetricStatistics
+                  - cloudwatch:PutMetricAlarm
                   - cloudwatch:SetAlarmState
-                  - cloudwatch:DeleteAlarms
+                  - dynamodb:DescribeTable
+                  - dynamodb:UpdateTable
+                  - ecs:DescribeServices
+                  - ecs:UpdateService
                 Resource: '*'
 
   CumulusInstanceProfile:
