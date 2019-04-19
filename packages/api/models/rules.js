@@ -253,9 +253,9 @@ class Rule extends Manager {
     const deleteEventPromises = this.kinesisSourceEvents.map(
       (lambda) => this.deleteKinesisEventSource(item, lambda.eventType)
     );
-    const eventDelete = await Promise.all(deleteEventPromises);
-    item.rule.arn = eventDelete[0];
-    item.rule.logEventArn = eventDelete[1];
+    await Promise.all(deleteEventPromises);
+    item.rule.arn = null;
+    item.rule.logEventArn = null;
     return item;
   }
 
@@ -267,10 +267,14 @@ class Rule extends Manager {
    * @returns {Promise} the response from event source delete
    */
   async deleteKinesisEventSource(item, eventType) {
-    const params = {
-      UUID: item.rule[this.eventMapping[eventType]]
-    };
-    return aws.lambda().deleteEventSourceMapping(params).promise();
+    if (item.rule[this.eventMapping[eventType]]) {
+      const params = {
+        UUID: item.rule[this.eventMapping[eventType]]
+      };
+      return aws.lambda().deleteEventSourceMapping(params).promise();
+    }
+
+    return Promise.resolve();
   }
 
   async addSnsTrigger(item) {
