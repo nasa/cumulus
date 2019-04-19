@@ -26,7 +26,7 @@ echo 'HTTP service is available'
 chmod 0400 ./packages/test-data/keys/ssh_client_rsa_key
 while ! sftp \
   -P 2222 \
-  -i ./packages/test-data/keys/ssh_client_rsa_key \
+  -i ../packages/test-data/keys/ssh_client_rsa_key \
   -o 'ConnectTimeout=5' \
   -o 'StrictHostKeyChecking=no' \
   -o 'UserKnownHostsFile=/dev/null' \
