@@ -219,3 +219,11 @@ Outputs:
         - {{@key}}DynamoDB
         - StreamArn
   {{/each}}
+
+{{# if parent.es.name}}
+  {{parent.es.name}}DomainEndpoint:
+    Value:
+      Fn::GetAtt:
+        - {{parent.es.name}}Domain
+        - DomainEndpoint
+{{/if}}

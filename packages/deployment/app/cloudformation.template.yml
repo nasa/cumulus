@@ -54,8 +54,8 @@ Resources:
       {{#if ../es.name}}
         ElasticSearchDomain:
           Fn::GetAtt:
-            - {{../es.name}}Domain
-            - DomainEndpoint
+            - DataStorageNestedStack
+            - Outputs.{{../es.name}}DomainEndpoint
       {{/if}}
         log2elasticsearchLambdaFunction:
           Fn::GetAtt:
@@ -111,8 +111,8 @@ Resources:
       ElasticSearch:
         host:
           Fn::GetAtt:
-            - {{es.name}}Domain
-            - DomainEndpoint
+            - DataStorageNestedStack
+            - Outputs.{{es.name}}DomainEndpoint
         version: {{es.elasticSearchMapping}}
     {{/if}}
     {{# if dynamos}}
@@ -394,10 +394,12 @@ Resources:
         Variables:
           stackName: {{../stackName}}
         {{#if this.useElasticSearch }}
+        {{#if ../es.name}}
           ES_HOST:
             Fn::GetAtt:
-              - {{../es.name}}Domain
-              - DomainEndpoint
+              - DataStorageNestedStack
+              - Outputs.{{../es.name}}DomainEndpoint
+        {{/if}}
         {{/if}}
         {{#each this.tables}}
           {{this}}:
@@ -997,8 +999,8 @@ Outputs:
   {{es.name}}Domain:
     Value:
       Fn::GetAtt:
-        - {{es.name}}Domain
-        - DomainEndpoint
+        - DataStorageNestedStack
+        - Outputs.{{es.name}}DomainEndpoint
 {{/if}}
 
 {{#each sns}}

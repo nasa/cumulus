@@ -166,6 +166,12 @@ Resources:
           stackName: {{../stackName}}
           public_buckets: {{{collectBuckets ../parent.buckets "public"}}}
           protected_buckets: {{{collectBuckets ../parent.buckets "protected"}}}
+        {{#if this.useElasticSearch }}
+        {{#if ../parent.es.name}}
+          ES_HOST:
+            Ref: ElasticSearchDomain
+        {{/if}}
+        {{/if}}
       {{# ifEquals this.urs_redirect "token"}}
         {{# if ../parent.api_backend_url}}
           TOKEN_REDIRECT_ENDPOINT: {{../parent.api_backend_url}}token

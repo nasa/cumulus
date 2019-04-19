@@ -103,6 +103,7 @@ ApiEndpoints:
   urs_redirect: 'token'
   useDistributionApi: true
   addLogGroup: true
+  useElasticSearch: '{{parent.es.name}}'
   envs:
     EARTHDATA_BASE_URL: '{{parent.urs_url}}'
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'
@@ -179,9 +180,6 @@ ApiEndpoints:
     cmr_password:
       function: "Ref"
       value: "CmrPassword"
-    ES_HOST:
-      function: Ref
-      value: ElasticSearchDomain
     TOKEN_SECRET: '{{TOKEN_SECRET}}'
   apiGateway:
     - api: backend
