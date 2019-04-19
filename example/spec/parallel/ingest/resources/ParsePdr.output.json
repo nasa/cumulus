@@ -1,6 +1,6 @@
 {
   "filesCount": 2,
-  "totalSize": 17909733,
+  "totalSize": 17887323,
   "granulesCount": 1,
   "pdr": {
     "path": "replace-me-path",
@@ -13,17 +13,19 @@
       "files": [
         {
           "path": "replace-me-path",
-          "fileSize": 17865615,
-          "name": "replace-me-granuleId.hdf"
+          "fileSize": 1098034,
+          "name": "replace-me-granuleId.hdf",
+          "fileType": "data"
         },
         {
           "path": "replace-me-path",
-          "fileSize": 44118,
-          "name": "replace-me-granuleId.hdf.met"
+          "fileSize": 21708,
+          "name": "replace-me-granuleId.hdf.met",
+          "fileType": "metadata"
         }
       ],
       "version": "006",
-      "granuleSize": 17909733,
+      "granuleSize": 1119742,
       "granuleId": "replace-me-granuleId"
     }
   ]
