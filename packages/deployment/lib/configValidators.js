@@ -7,7 +7,7 @@ const get = require('lodash.get');
  *
  */
 function validateWorkflowDefinedLambdas(config) {
-  if (!config.lambdas) {
+  if (!config.stepFunctions) {
     return;
   }
 
