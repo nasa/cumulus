@@ -425,22 +425,6 @@ Resources:
               - DataStorageNestedStack
               - Outputs.{{this}}DynamoDB
         {{/each}}
-      # {{# if this.useDistributionApi}}
-      #   {{# if ../api_distribution_url}}
-      #     DISTRIBUTION_ENDPOINT: {{../api_distribution_url}}
-      #   {{else}}
-      #     DISTRIBUTION_ENDPOINT:
-      #       Fn::Join:
-      #         - ""
-      #         - - "https://"
-      #           - Fn::GetAtt:
-      #             - CumulusApiDistributionNestedStack
-      #             - Outputs.distributionRestApiResource
-      #           - ".execute-api."
-      #           - {"Fn::Sub": "${AWS::Region}"}
-      #           - ".amazonaws.com/{{apiStage}}/"
-      #   {{/if}}
-      # {{/if}}
     {{#each this.envs}}
       {{# if this.function}}
         {{#if this.array}}
