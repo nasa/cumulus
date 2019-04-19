@@ -100,3 +100,63 @@ EmsDistributionReport:
     LOGS_BUCKET: '{{system_bucket}}'
     REPORTS_BUCKET: '{{system_bucket}}'
     STACK_NAME: '{{stackName}}'
+
+executeMigrations:
+  handler: index.executeMigrations
+  timeout: 300
+  useElasticSearch: '{{es.name}}'
+  memory: 1024
+  source: 'node_modules/@cumulus/api/dist/'
+  tables:
+    - GranulesTable
+    - FilesTable
+    - ExecutionsTable
+    - PdrsTable
+    - RulesTable
+  envs:
+    KinesisInboundEventLogger:
+      function: Ref
+      value: KinesisInboundEventLoggerLambdaFunction
+    system_bucket: '{{system_bucket}}'
+
+messageConsumer:
+  handler: index.messageConsumer
+  timeout: 100
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist/'
+  tables:
+    - RulesTable
+    - CollectionsTable
+    - ProvidersTable
+  envs:
+    system_bucket: '{{system_bucket}}'
+    FallbackTopicArn:
+      function: Fn::Sub
+      value: '${kinesisFallbackSns}'
+
+ScheduleSF:
+  description: 'This lambda function is invoked by scheduled rules created via cumulus API'
+  handler: index.scheduler
+  timeout: 100
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist/'
+  tables:
+    - CollectionsTable
+    - ProvidersTable
+  namedLambdaDeadLetterQueue: true
+
+BulkDelete:
+  handler: index.bulkDeleteLambda
+  source: 'node_modules/@cumulus/api/dist/'
+
+KinesisInboundEventLogger:
+  handler: index.logger
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist/'
+
+KinesisOutboundEventLogger:
+  handler: index.logger
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist'

@@ -14,18 +14,27 @@ Parameters:
     Type: String
     Description: 'Security Group ID'
     Default: 'noValue'
-  log2elasticsearchLambdaFunction:
+  log2elasticsearchLambdaFunctionArn:
     Type: String
-    Description: 'logToElasticsearch Lambda function arn'
-  kinesisFallbackSns:
-    Type: String
-    Description: 'SNS Topic ARN for Kinesis fallback'
-  AsyncOperationTaskDefinition:
-    Type: String
-  EcsCluster:
-    Type: String
+    Description: 'logToElasticsearch Lambda function ARN'
 {{#each apis}}
   {{#ifEquals name "backend" }}
+  EcsCluster:
+    Type: String
+  AsyncOperationTaskDefinition:
+    Type: String
+  BulkDeleteLambdaFunctionArn:
+    Type: String
+    Description: 'BulkDelete Lambda function ARN'
+  messageConsumerLambdaFunctionArn:
+    Type: String
+    Description: 'messageConsumer Lambda function ARN'
+  ScheduleSFLambdaFunctionArn:
+    Type: String
+    Description: 'ScheduleSF Lambda function ARN'
+  KinesisInboundEventLoggerLambdaFunctionArn:
+    Type: String
+    Description: 'KinesisInboundEventLogger Lambda function ARN'
   distributionRestApi:
     Type: String
     Description: Distribution REST API ID
@@ -264,7 +273,7 @@ Resources:
       - {{@key}}LogGroup
     Properties:
       DestinationArn:
-        Ref: log2elasticsearchLambdaFunction
+        Ref: log2elasticsearchLambdaFunctionArn
       LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
       FilterPattern: ""
 
@@ -283,19 +292,19 @@ Resources:
       RetentionInDays: 30
 {{/if}}
 
-  {{#ifEquals @key "ScheduleSF"}}
-  ## Generic lambda permission for custom rules
-  ## created in the dashboard
-  GenericLambdaPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName:
-        Fn::GetAtt:
-        - ScheduleSFLambdaFunction
-        - Arn
-      Action: lambda:InvokeFunction
-      Principal: events.amazonaws.com
-  {{/ifEquals}}
+  # {{#ifEquals @key "ScheduleSF"}}
+  # ## Generic lambda permission for custom rules
+  # ## created in the dashboard
+  # GenericLambdaPermission:
+  #   Type: AWS::Lambda::Permission
+  #   Properties:
+  #     FunctionName:
+  #       Fn::GetAtt:
+  #       - ScheduleSFLambdaFunction
+  #       - Arn
+  #     Action: lambda:InvokeFunction
+  #     Principal: events.amazonaws.com
+  # {{/ifEquals}}
 
 {{/each}}
 

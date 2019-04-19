@@ -57,17 +57,35 @@ Resources:
             - DataStorageNestedStack
             - Outputs.{{../es.name}}DomainEndpoint
       {{/if}}
-        log2elasticsearchLambdaFunction:
+        log2elasticsearchLambdaFunctionArn:
           Fn::GetAtt:
             - log2elasticsearchLambdaFunction
             - Arn
-        kinesisFallbackSns:
-          Ref: kinesisFallbackSns
+        {{#ifEquals @key "CumulusApiBackend"}}
+        # Only the backend API lambdas need these references.
         EcsCluster:
           Ref: CumulusECSCluster
         AsyncOperationTaskDefinition:
           Ref: AsyncOperationTaskDefinition
-        {{#ifEquals @key "CumulusApiBackend"}}
+        BulkDeleteLambdaFunctionArn:
+          Fn::GetAtt:
+            - BulkDeleteLambdaFunction
+            - Arn
+        messageConsumerLambdaFunctionArn:
+          Fn::GetAtt:
+            - messageConsumerLambdaFunction
+            - Arn
+        ScheduleSFLambdaFunctionArn:
+          Fn::GetAtt:
+            - ScheduleSFLambdaFunction
+            - Arn
+        KinesisInboundEventLoggerLambdaFunctionArn:
+          Fn::GetAtt:
+            - KinesisInboundEventLoggerLambdaFunction
+            - Arn
+        # The backend API needs a reference to the distributionRestApi so
+        # it can construct values for the DISTRIBUTION_REDIRECT_ENDPOINT
+        # environment variable. The /granules endpoint uses this variable.
         distributionRestApi:
           Fn::GetAtt:
             - CumulusApiDistributionNestedStack
@@ -407,6 +425,22 @@ Resources:
               - DataStorageNestedStack
               - Outputs.{{this}}DynamoDB
         {{/each}}
+      # {{# if this.useDistributionApi}}
+      #   {{# if ../api_distribution_url}}
+      #     DISTRIBUTION_ENDPOINT: {{../api_distribution_url}}
+      #   {{else}}
+      #     DISTRIBUTION_ENDPOINT:
+      #       Fn::Join:
+      #         - ""
+      #         - - "https://"
+      #           - Fn::GetAtt:
+      #             - CumulusApiDistributionNestedStack
+      #             - Outputs.distributionRestApiResource
+      #           - ".execute-api."
+      #           - {"Fn::Sub": "${AWS::Region}"}
+      #           - ".amazonaws.com/{{apiStage}}/"
+      #   {{/if}}
+      # {{/if}}
     {{#each this.envs}}
       {{# if this.function}}
         {{#if this.array}}
@@ -497,6 +531,20 @@ Resources:
       LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
       RetentionInDays: 30
 {{/if}}
+
+  {{#ifEquals @key "ScheduleSF"}}
+  ## Generic lambda permission for custom rules
+  ## created in the dashboard
+  GenericLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+        - ScheduleSFLambdaFunction
+        - Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+  {{/ifEquals}}
 
 {{/each}}
 
