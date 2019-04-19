@@ -22,13 +22,6 @@ Resources:
   #  BEGIN
   #################################################
 
-{{#if ../es.name}}
-ESServiceLinkedRole:
-  Type: 'AWS::IAM::ServiceLinkedRole'
-  Properties:
-    AWSServiceName: es.amazonaws.com
-{{/if}}
-
 
 {{#each nested_templates}}
 {{#ifEquals @key "WorkflowLambdaVersions"}}
@@ -363,6 +356,11 @@ ESServiceLinkedRole:
   #################################################
   # ElasticSearch config BEGIN
   #################################################
+  ESServiceLinkedRole:
+    Type: 'AWS::IAM::ServiceLinkedRole'
+    Properties:
+      AWSServiceName: es.amazonaws.com
+
   {{es.name}}Domain:
     Type: "AWS::Elasticsearch::Domain"
     Properties:

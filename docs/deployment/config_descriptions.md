@@ -44,7 +44,9 @@ A representation of the stack name that has dashes removed. This will be used fo
 
 ## vpc
 
-Configure your virtual private cloud.  You can find the VPC Id, subnets, and IPv4 CIDR values on the [VPC Dashboard](https://console.aws.amazon.com/vpc/home?region=us-east-1#). `vpcId` from [Your VPCs](https://console.aws.amazon.com/vpc/home?region=us-east-1#vpcs:), and `subnets` [here](https://console.aws.amazon.com/vpc/home?region=us-east-1#subnets:). When you choose a subnet, be sure to also note its availability zone, to configure `ecs`.
+Configure your virtual private cloud.  You can find the VPC Id, subnets, and IPv4 CIDR values on the [VPC Dashboard](https://console.aws.amazon.com/vpc/home?region=us-east-1#). `vpcId` from [Your VPCs](https://console.aws.amazon.com/vpc/home?region=us-east-1#vpcs:), and `subnets` [here](https://console.aws.amazon.com/vpc/home?region=us-east-1#subnets:). When you choose a subnet, be sure to also note its availability zone, which is used to configure `ecs`.
+
+Note: The console links are specific to `us-east-1`. Use the corresponding links for your region.
 
 ## cmr
 
@@ -60,7 +62,7 @@ CMR_PASSWORD=cmrpassword
 These values will be imported via kes in your configuration file.   You should ensure your `app/config.yml` contains the following lines:
 
 ```yaml
-cmr: 
+cmr:
   username: '{{CMR_USERNAME}}'
   provider: CUMULUS
   clientId: '<replace-with-daac-name>-{{stackName}}'
