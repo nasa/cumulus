@@ -356,11 +356,6 @@ Resources:
   #################################################
   # ElasticSearch config BEGIN
   #################################################
-  ESServiceLinkedRole:
-    Type: 'AWS::IAM::ServiceLinkedRole'
-    Properties:
-      AWSServiceName: es.amazonaws.com
-
   {{es.name}}Domain:
     Type: "AWS::Elasticsearch::Domain"
     Properties:
