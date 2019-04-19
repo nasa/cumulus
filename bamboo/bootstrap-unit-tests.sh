@@ -1,7 +1,5 @@
 #!/bin/sh
-
 set -e
-
 docker-compose up &
 docker exec -t bamboo_build_env_1 /bin/bash -c /source/cumulus/bamboo/unit-test-install-dependencies.sh
 # Wait for the FTP server to be available
