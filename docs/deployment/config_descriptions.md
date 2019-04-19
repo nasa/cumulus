@@ -139,7 +139,7 @@ The above code is an example of configuration for an SNS topic that will be call
         protocol: lambda
 ```
 
-This snippet is an example of configuration for a list of SNS Subscriptions. The main difference between this and the previous example is the inclusion of the `sns.arn` attribute - this tells our deployment/compiling step that we're configuring subscriptions, not a new topic.
+This snippet is an example of configuration for a list of SNS Subscriptions. The main difference between this and the previous example is the inclusion of the `sns.arn` attribute - this tells our deployment/compiling step that we're configuring subscriptions, not a new topic. More information for each of the individual attributes can be found in [AWS SNS Subscription Documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-sns-subscription.html).
 
 ## buckets
 
