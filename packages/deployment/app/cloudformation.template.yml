@@ -71,10 +71,6 @@ Resources:
           Fn::GetAtt:
             - BulkDeleteLambdaFunction
             - Arn
-        # executeMigrationsLambdaFunctionArn:
-        #   Fn::GetAtt:
-        #     - executeMigrationsLambdaFunction
-        #     - Arn
         messageConsumerLambdaFunctionArn:
           Fn::GetAtt:
             - messageConsumerLambdaFunction

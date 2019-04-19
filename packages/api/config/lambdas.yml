@@ -114,21 +114,6 @@ executeMigrations:
     - PdrsTable
     - RulesTable
   envs:
-    # GranulesTable:
-    #   function: Ref
-    #   value: GranulesTableDynamoDB
-    # FilesTable:
-    #   function: Ref
-    #   value: FilesTableDynamoDB
-    # ExecutionsTable:
-    #   function: Ref
-    #   value: ExecutionsTableDynamoDB
-    # PdrsTable:
-    #   function: Ref
-    #   value: PdrsTableDynamoDB
-    # RulesTable:
-    #   function: Ref
-    #   value: RulesTableDynamoDB
     KinesisInboundEventLogger:
       function: Ref
       value: KinesisInboundEventLoggerLambdaFunction
@@ -144,15 +129,6 @@ messageConsumer:
     - CollectionsTable
     - ProvidersTable
   envs:
-    # RulesTable:
-    #   function: Ref
-    #   value: RulesTableDynamoDB
-    # CollectionsTable:
-    #   function: Ref
-    #   value: CollectionsTableDynamoDB
-    # ProvidersTable:
-    #   function: Ref
-    #   value: ProvidersTableDynamoDB
     system_bucket: '{{system_bucket}}'
     FallbackTopicArn:
       function: Fn::Sub
@@ -167,36 +143,7 @@ ScheduleSF:
   tables:
     - CollectionsTable
     - ProvidersTable
-  envs:
-    # CollectionsTable:
-    #   function: Ref
-    #   value: CollectionsTableDynamoDB
-    # ProvidersTable:
-    #   function: Ref
-    #   value: ProvidersTableDynamoDB
   namedLambdaDeadLetterQueue: true
-
-# CreateReconciliationReport:
-#   handler: index.createReconciliationReport
-#   source: 'node_modules/@cumulus/api/dist/'
-#   useDistributionApi: true
-#   tables:
-#     - RulesTable
-#     - GranulesTable
-#     - FilesTable
-#   envs:
-#     system_bucket: '{{system_bucket}}'
-#     # CollectionsTable:
-#     #   function: Ref
-#     #   value: CollectionsTableDynamoDB
-#     # GranulesTable:
-#     #   function: Ref
-#     #   value: GranulesTableDynamoDB
-#     # FilesTable:
-#     #   function: Ref
-#     #   value: FilesTableDynamoDB
-#     cmr_provider: '{{cmr.provider}}'
-#     cmr_client_id: '{{cmr.clientId}}'
 
 BulkDelete:
   handler: index.bulkDeleteLambda

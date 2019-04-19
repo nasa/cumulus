@@ -26,9 +26,6 @@ Parameters:
   BulkDeleteLambdaFunctionArn:
     Type: String
     Description: 'BulkDelete Lambda function ARN'
-  # executeMigrationsLambdaFunctionArn:
-  #   Type: String
-  #   Description: 'executeMigrations Lambda function ARN'
   messageConsumerLambdaFunctionArn:
     Type: String
     Description: 'messageConsumer Lambda function ARN'
