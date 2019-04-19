@@ -1,4 +1,5 @@
----
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'stack: {{stackName}} | deployed by Kes'
 Parameters:
   CreateDeploymentRole:
     Type: String
@@ -45,7 +46,8 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: ecs:RunTask
-                Resource: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/${ResourcePrefix}-AsyncOperationTaskDefinition-*"
+                Resource:
+                 Fn::Sub: "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/${ResourcePrefix}-AsyncOperationTaskDefinition-*"
 
               - Effect: Allow
                 Action:
@@ -606,9 +608,14 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: dynamodb:UpdateItem
-                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-AsyncOperationsTable"
+                Resource:
+                 Fn::Sub: "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-AsyncOperationsTable"
               - Effect: Allow
                 Action:
+                  - autoscaling:CompleteLifecycleAction
+                  - autoscaling:DescribeAutoScalingInstances
+                  - autoscaling:DescribeLifecycleHooks
+                  - autoscaling:RecordLifecycleActionHeartbeat
                   - cloudwatch:GetMetricStatistics
                   - ec2:DescribeInstances
                   - ecr:BatchCheckLayerAvailability
@@ -629,6 +636,7 @@ Resources:
                   - ecs:RunTask
                   - ecs:StartTelemetrySession
                   - ecs:Submit*
+                  - ecs:UpdateContainerInstancesState
                   - lambda:GetFunction
                   - lambda:invokeFunction
                   - logs:CreateLogGroup
@@ -789,13 +797,16 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - dynamodb:DescribeTable
-                  - dynamodb:UpdateTable
-                  - cloudwatch:PutMetricAlarm
+                  - application-autoscaling:*"
+                  - cloudwatch:DeleteAlarms
                   - cloudwatch:DescribeAlarms
                   - cloudwatch:GetMetricStatistics
+                  - cloudwatch:PutMetricAlarm
                   - cloudwatch:SetAlarmState
-                  - cloudwatch:DeleteAlarms
+                  - dynamodb:DescribeTable
+                  - dynamodb:UpdateTable
+                  - ecs:DescribeServices
+                  - ecs:UpdateService
                 Resource: '*'
 
   CumulusInstanceProfile:
