@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1212**
   - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
 
+## Added
+
+- **CUMULUS-802**
+  - Adds autoscaling of ECS clusters
+
 ## Changed
 
 - **CUMULUS-1236**

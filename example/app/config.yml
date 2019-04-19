@@ -83,9 +83,11 @@ default:
 
   ecs:
     instanceType: t2.medium
+    minInstances: 1
     desiredInstances: 1
+    maxInstances: 1
     availabilityZone: us-east-1b
-    publicIp: false 
+    publicIp: false
     restartTasksOnDeploy: true
     docker:
       username: cumulususer
@@ -361,6 +363,7 @@ mth:
       name: '{{stackName}}-public'
       type: public
   ecs:
+    maxInstances: 3
     ssh: true
     keyPairName: mhuffnag
 
