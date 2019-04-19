@@ -46,11 +46,6 @@ Resources:
   {{@key}}NestedStack:
     Type: "AWS::CloudFormation::Stack"
     Properties:
-      DependsOn:
-        - DataStorageNestedStack
-      {{#ifEquals @key "CumulusApiBackend"}}
-        - CumulusApiDistributionNestedStack
-      {{/ifEquals}}
       Parameters:
         CmrPassword:
           Fn::GetAtt:
@@ -80,7 +75,6 @@ Resources:
         {{/ifEquals}}
       {{# each ../dynamos}}
         {{@key}}DynamoDB:
-          # Ref: {{@key}}DynamoDB
           Fn::GetAtt:
             - DataStorageNestedStack
             - Outputs.{{@key}}DynamoDB
@@ -125,7 +119,6 @@ Resources:
       DynamoDBTables:
       {{#each dynamos}}
         - name:
-            # Ref: {{@key}}DynamoDB
             Fn::GetAtt:
               - DataStorageNestedStack
               - Outputs.{{@key}}DynamoDB
@@ -134,7 +127,6 @@ Resources:
     {{/if}}
       Users:
         table:
-          # Ref: UsersTableDynamoDB
           Fn::GetAtt:
             - DataStorageNestedStack
             - Outputs.UsersTableDynamoDB
