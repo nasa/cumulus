@@ -7,7 +7,7 @@ while ! docker container inspect bamboo_build_env_1; do
 done
 
 docker exec -t bamboo_build_env_1 /bin/bash -c 'ls /source/cumulus/'
-docker exec -t bamboo_build_env_1 /bin/bash -c '/source/cumulus/bamboo/unit-test-install-dependencies.sh'
+#docker exec -t bamboo_build_env_1 /bin/bash -c '/source/cumulus/bamboo/unit-test-install-dependencies.sh'
 # Wait for the FTP server to be available
 while ! curl --connect-timeout 5 -sS -o /dev/null ftp://testuser:testpass@127.0.0.1/README.md; do
   echo 'Waiting for FTP to start'
