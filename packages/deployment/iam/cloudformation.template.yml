@@ -612,6 +612,10 @@ Resources:
                  Fn::Sub: "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-AsyncOperationsTable"
               - Effect: Allow
                 Action:
+                  - autoscaling:CompleteLifecycleAction
+                  - autoscaling:DescribeAutoScalingInstances
+                  - autoscaling:DescribeLifecycleHooks
+                  - autoscaling:RecordLifecycleActionHeartbeat
                   - cloudwatch:GetMetricStatistics
                   - ec2:DescribeInstances
                   - ecr:BatchCheckLayerAvailability
@@ -632,6 +636,7 @@ Resources:
                   - ecs:RunTask
                   - ecs:StartTelemetrySession
                   - ecs:Submit*
+                  - ecs:UpdateContainerInstancesState
                   - lambda:GetFunction
                   - lambda:invokeFunction
                   - logs:CreateLogGroup
