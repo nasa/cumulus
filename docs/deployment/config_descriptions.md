@@ -93,6 +93,7 @@ For each service, a TaskCountLowAlarm alarm is added to check the RUNNING Task C
 ## es
 Configuration for the Amazon Elasticsearch Service (ES) instance.  You can update `es` properties and add additional ES alarms. For example:
 
+```yaml
     es:
       instanceCount: 2
       alarms:
@@ -101,6 +102,44 @@ Configuration for the Amazon Elasticsearch Service (ES) instance.  You can updat
           comparison_operator: GreaterThanThreshold
           threshold: '{{es.instanceCount}}'
           metric: Nodes
+```
+
+## sns
+Cumulus supports configuration and deployment of SNS topics and subscribers using `app/config.yml`. In the following code snippets we'll see an example topic and subscriber configuration.
+
+```yaml
+sns:
+  # this topic receives all the updates from
+  # step functions
+  sftracker:
+    subscriptions:
+      lambda:
+        endpoint:
+          function: Fn::GetAtt
+          array:
+            - sns2elasticsearchLambdaFunction
+            - Arn
+        protocol: lambda
+```
+
+The above code is an example of configuration for an SNS topic that will be called `sftrackerSns` in the resulting `cloudformation.yml` file. More information for each of the individual attributes can be found in [AWS SNS Topic Documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-sns-topic.html).
+
+```yaml
+# sns: ...
+  sftrackerSubscription:
+    arn:
+      Fn::GetAtt:
+        - sftrackerSns
+        - Arn
+      endpoint:
+        function: Fn::GetAtt
+          array:
+            - someOtherLambdaFunction
+            - Arn
+        protocol: lambda
+```
+
+This snippet is an example of configuration for a list of SNS Subscriptions. The main difference between this and the previous example is the inclusion of the `sns.arn` attribute - this tells our deployment/compiling step that we're configuring subscriptions, not a new topic.
 
 ## buckets
 
