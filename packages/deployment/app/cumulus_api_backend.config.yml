@@ -4,4 +4,4 @@ default:
   apis:
     - name: backend
 
-  lambdas: !!files [ 'node_modules/@cumulus/api/config/api.yml' ]
+  lambdas: !!files [ 'node_modules/@cumulus/api/config/backend_api_lambdas.yml' ]
