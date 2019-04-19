@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1212**
   - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
 - **CUMULUS-1264**
-  - The Cloudformation templating and deployment configuration has been substantially refactored. **As a result, you must delete your existing app stack before deploying this version of Cumulus.**
+  - The Cloudformation templating and deployment configuration has been substantially refactored. **As a result, you must delete your existing stacks before deploying this version of Cumulus.**
     - `CumulusApiDefault` nested stack resource has been renamed to `CumulusApiDistribution`
     - `CumulusApiV1` nested stack resource has been renamed to `CumulusApiBackend`
     - `DataStorage` nested stack resource has been added for managing resources related to data persistence (DynamoDB and Elasticsearch)
