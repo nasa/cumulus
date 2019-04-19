@@ -88,6 +88,7 @@ default:
     instanceType: change-ecs-instanceType
     volumeSize: 50
     availabilityZone: 'us-east-1b'
+    minInstances: 1
     desiredInstances: 1
     maxInstances: 1
     clusterAutoscaling:
