@@ -90,6 +90,37 @@ For each service, a TaskCountLowAlarm alarm is added to check the RUNNING Task C
               statistic: SampleCount
               threshold: '{{ecs.services.EcsTaskHelloWorld.count}}'
 
+### AutoScaling
+
+Cumulus ECS clusters have the ability to scale out and in based on
+[CPU and memory reservations](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/cloudwatch-metrics.html#cluster_reservation).
+There are a few configuration values that affect how the ECS cluster instances
+scale:
+
+* `ecs.autoscaling.scaleInThresholdPercent`: the reservation percentage where,
+  if both CPU and memory are under, the EC2 cluster will be scaled in
+* `ecs.autoscaling.scaleOutThresholdPercent`: the reservation percentage where,
+  if both CPU and memory are under, the EC2 cluster will be scaled out
+* `ecs.autoscaling.scalingAdjustmentPercent`: the percentage to increase or
+  decrease the cluster size by when a scaling action is taken. For more
+  information see the
+  [PercentChangeInCapacity documentation](https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scaling-simple-step.html#as-scaling-adjustment),
+  specifically the section on `PercentChangeInCapacity`.
+
+```yaml
+# Defaults
+ecs:
+  autoscaling:
+    scaleInThresholdPercent: 25
+    scaleOutThresholdPercent: 75
+    scalingAdjustmentPercent: 10
+```
+
+The default behavior is that, if more than 75% of your cluster's CPU or memory
+has been reserved, the size of the cluster will be increased by 10%. (There is a
+minimum change of 1 instance.) If _both_ CPU and memory reservation for the
+cluster are under 25%, then the cluster size will be reduced by 10%.
+
 ## es
 Configuration for the Amazon Elasticsearch Service (ES) instance.  You can update `es` properties and add additional ES alarms. For example:
 
