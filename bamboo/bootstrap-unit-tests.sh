@@ -25,7 +25,7 @@ echo 'HTTP service is available'
 # Wait for the SFTP server to be available
 chmod 0400 ../packages/test-data/keys/ssh_client_rsa_key
 echo "Checking Key"
-ls -l ../packages/test-data/keys/ssh_client_rsa_key
+ls -l ../packages/test-data/keys/*
 while ! sftp \
   -P 2222 \
   -i ../packages/test-data/keys/ssh_client_rsa_key \
