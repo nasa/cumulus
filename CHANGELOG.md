@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1232**
   - `@cumulus/sync-granule` will no longer silently pass if no checksum data is provided. It will use input
   from the granule object to:
-    - Verify checksum if `checksumType` and `checksumValue` are in the file record (throws `InvalidChecksum` on fail).
+    - Verify checksum if `checksumType` and `checksumValue` are in the file record OR a checksum file is provided
+      (throws `InvalidChecksum` on fail).
     - Else, verify synced S3 file size if `fileSize` is in the file record (throws `UnexpectedFileSize` on fail).
     - Else, log warning that file was not verified (but pass the step).
 
