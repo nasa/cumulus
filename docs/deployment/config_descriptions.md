@@ -138,8 +138,8 @@ up for processing. If the average activity is waiting more than the configured
 `scaleOutActivityScheduleTime` time, then additional tasks will be added to the
 service. If the average activity is waiting less than the configured
 `scaleInActivityScheduleTime` time, then tasks will be removed from the service.
-Ideally, the average wait time for tasks should settle somewhere between those
-two numbers.
+Ideally, the average wait time for tasks should settle somewhere between
+`scaleInActivityScheduleTime` and `scaleOutActivityScheduleTime`.
 
 Configuration values that affect ECS service autoscaling. These would all be
 defined for a specific service.
@@ -172,6 +172,9 @@ defined for a specific service.
   scaling in to be enabled
 * `scaleOutActivityScheduleTime` and `scaleOutAdjustmentPercent` are required
   for scaling out to be enabled
+* When scaling of a service is triggered, the number of tasks will always change
+  by at least 1, even if the number that would be changed based on the
+  configured adjustment percent is less than 1.
 
 **Example**
 
