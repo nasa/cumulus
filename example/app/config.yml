@@ -302,8 +302,6 @@ lf-int-test:
   stackName: lf-int-test
   stackNameNoDash: lfIntTest
 
-  useWorkflowLambdaVersions: false
-
   buckets:
     internal:
       name: lf-internal
@@ -568,14 +566,6 @@ jk2:
 mboyd-test:
   stackName: mboyd-test
   stackNameNoDash: mboydTest
-
-  es:
-    name: es5update
-    # elasticSearchMapping: 8
-    # version: 5.3
-    # instanceCount: 1
-    # instanceType: t2.small.elasticsearch
-    # volumeSize: 35
 
 mboyd-int:
   stackName: mboyd-int
