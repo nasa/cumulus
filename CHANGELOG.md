@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1212**
   - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
+- **CUMULUS-1232**
+  - `@cumulus/sync-granule` will no longer silently pass if no checksum data is provided. It will use input
+  from the granule object to:
+    - Verify checksum if `checksumType` and `checksumValue` are in the file record (throws `InvalidChecksum` on fail).
+    - Else, verify synced S3 file size if `fileSize` is in the file record (throws `UnexpectedFileSize` on fail).
+    - Else, log warning that file was not verified (but pass the step).
 
 ## Added
 
@@ -20,6 +26,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1236**
   - Moves access to public files behind the distribution endpoint.  Authentication is not required, but direct http access has been disallowed.
+
+- **CUMULUS-1232**
+  - Unifies duplicate handling in `ingest/granule.handleDuplicateFile` for maintainability.
+  - Changed `ingest/granule.ingestFile` and `move-granules/index.moveFileRequest` to use new function.
+  - Moved file versioning code to `ingest/granule.moveGranuleFileWithVersioning`
+  - `ingest/granule.verifyFile` now falls back to `fileSize` for verification if checksum is not available in input and throws `UnexpectedFileSize` error for fileSize not matching input.
+  - `ingest/granule.verifyFile` logs warning if neither checksum nor fileSize are available.
 
 - **CUMULUS-1223**
   - Adds unauthenticated access for public bucket files to the Distribution API.  Public files should be requested the same way as protected files, but for public files a redirect to a self-signed S3 URL will happen without requiring authentication with Earthdata login.
