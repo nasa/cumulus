@@ -983,9 +983,9 @@ Resources:
     {{/if}}
       LaunchConfigurationName:
         Ref: CumulusContainerInstanceLaunch
-      MinSize: '0'
-      MaxSize: '{{ ecs.maxInstances }}'
+      MinSize: '{{ ecs.minInstances }}'
       DesiredCapacity: '{{ ecs.desiredInstances }}'
+      MaxSize: '{{ ecs.maxInstances }}'
       Tags:
       - Key: Name
         Value: "{{stackName}}-cumulus-ecs"
