@@ -20,6 +20,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - `urs_redirect: 'token'`: This will expose a `TOKEN_REDIRECT_ENDPOINT` environment variable to your lambda that references the `/token` endpoint on the Cumulus backend API
     - `urs_redirect: 'distribution'`: This will expose a `DISTRIBUTION_REDIRECT_ENDPOINT` environment variable to your lambda that references the `/redirect` endpoint on the Cumulus distribution API
 
+- **CUMULUS-1193**
+  - The elasticsearch instance is moved behind the VPC. **You should recreate your stack when taking these changes**
+  - Your account will need an Elasticsearch Service Linked role. This is a one-time setup for the account. You can follow the instructions to use the AWS console or AWS CLI [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/using-service-linked-roles.html) or use the following Cloudformation yaml in your `app` or `iam` `cloudformation.template.yml`, deploy one time, and remove:
+  ```yaml
+  ESServiceLinkedRole:
+      Type: 'AWS::IAM::ServiceLinkedRole'
+      Properties:
+        AWSServiceName: es.amazonaws.com
+  ```
+  - You will need to populate `VPC_CIDR_IP` in your `app/.env` file. The IPv4 CIDR can be found in your AWS Console in your VPC settings.
+
 ## Added
 
 - **CUMULUS-802**

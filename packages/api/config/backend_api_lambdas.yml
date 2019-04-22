@@ -26,6 +26,7 @@ ApiEndpoints:
   useDistributionApi: true
   addLogGroup: true
   useElasticSearch: '{{parent.es.name}}'
+  launchInVpc: true
   envs:
     EARTHDATA_BASE_URL: '{{parent.urs_url}}'
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'

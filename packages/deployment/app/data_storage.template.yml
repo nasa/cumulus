@@ -165,16 +165,27 @@ Resources:
         Statement:
           - Effect: "Allow"
             Principal:
-              AWS: {{parent.iams.lambdaProcessingRoleArn}}
+              AWS: {{iams.lambdaProcessingRoleArn}}
             Action: "es:*"
             Resource:
               - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{parent.es.name}}/*"
           - Effect: "Allow"
             Principal:
-              AWS: {{parent.iams.lambdaApiGatewayRoleArn}}
+              AWS: {{iams.lambdaApiGatewayRoleArn}}
             Action: "es:*"
             Resource:
               - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{parent.es.name}}/*"
+    {{# if parent.vpc }}
+      VPCOptions:
+        SecurityGroupIds:
+          - Fn::GetAtt:
+            - SecurityGroup
+            - GroupId
+        SubnetIds:
+        {{#each parent.vpc.subnets}}
+          - {{this}}
+        {{/each}}
+    {{/if}}
 
   {{#if parent.es.alarms}}
   {{# each parent.es.alarms}}
@@ -206,6 +217,7 @@ Resources:
   # ElasticSearch config END
   #################################################
 {{/if}}
+
 
 Outputs:
   {{#each parent.dynamos}}
