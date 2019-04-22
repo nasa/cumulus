@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - `urs_redirect: 'token'`: This will expose a `TOKEN_REDIRECT_ENDPOINT` environment variable to your lambda that references the `/token` endpoint on the Cumulus backend API
     - `urs_redirect: 'distribution'`: This will expose a `DISTRIBUTION_REDIRECT_ENDPOINT` environment variable to your lambda that references the `/redirect` endpoint on the Cumulus distribution API
 
+## Added
+
+- **CUMULUS-802**
+  - Adds autoscaling of ECS clusters
+  - Adds autoscaling of ECS services that are handling StepFunction activities
+
 ## Changed
 
 - **CUMULUS-1236**

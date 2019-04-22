@@ -11,7 +11,7 @@ const {
 const {
   loadConfig,
   protectFile,
-  redeploy
+  runKes
 } = require('../../helpers/testUtils');
 
 const {
@@ -28,7 +28,7 @@ const deployTimeout = 15; // deployment timeout in minutes
 
 function redeployWithRetries() {
   return pRetry(
-    () => redeploy(config, { timeout: deployTimeout }),
+    () => runKes(config, { timeout: deployTimeout }),
     {
       retries: 2,
       minTimeout: 0
@@ -54,7 +54,7 @@ describe('When a workflow', () => {
 
         await protectFile(workflowsYmlFile, async () => {
           removeTaskFromWorkflow('WaitForDeployWorkflow', 'HelloWorld', workflowsYmlFile);
-          await redeploy(config, { timeout: deployTimeout });
+          await runKes(config, { timeout: deployTimeout });
         });
 
         workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
@@ -108,7 +108,7 @@ describe('When a workflow', () => {
 
         await protectFile(workflowsYmlFile, async () => {
           removeWorkflow('WaitForDeployWorkflow', workflowsYmlFile);
-          await redeploy(config, { timeout: deployTimeout });
+          await runKes(config, { timeout: deployTimeout });
         });
 
         workflowStatus = await waitForCompletedExecution(workflowExecutionArn);
