@@ -137,10 +137,18 @@ describe('When accessing an S3 bucket directly', () => {
         console.log(err);
         throw err;
       });
+
       accessToken = accessTokenResponse.accessToken;
 
-      const response = await invokeApiDistributionLambda('/s3credentials', accessToken);
-      creds = JSON.parse(response.body);
+      let response;
+      try {
+        response = await invokeApiDistributionLambda('/s3credentials', accessToken);
+        creds = JSON.parse(response.body);
+      } catch (e) {
+        console.log(e);
+        console.log(`Distribution API response: ${JSON.stringify(response, null, 2)}`);
+        throw e;
+      }
     });
 
     it('the expected user can assume same region access', async () => {
