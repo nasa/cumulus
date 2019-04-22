@@ -364,7 +364,10 @@ class Granule {
   async verifyFile(file, bucket, key, options = {}) {
     const [type, value] = await this.retrieveSuppliedFileChecksumInformation(file);
     if (!type || !value) {
-      log.info(`No checksum found to verify file ${file.name}, falling back to fileSize`);
+      log.warn(
+        `Could not verify ${file.name} with checksum ${value}`
+        + ` of type ${type}, falling back to fileSize.`
+      );
       if (file.fileSize) {
         const ingestedSize = await aws.getObjectSize(bucket, key);
         if (ingestedSize !== file.fileSize) {
@@ -658,7 +661,9 @@ async function moveGranuleFile(source, target, options) {
 }
 
 /**
-* Move granule file from one s3 bucket & keypath to another
+* Move granule file from one s3 bucket & keypath to another,
+* creating a versioned copy of any file already existing at the target location
+* and returning an array of the moved file and all versioned filenames.
 *
 * @param {Object} source - source
 * @param {string} source.Bucket - source
