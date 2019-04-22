@@ -41,6 +41,11 @@ Resources:
   {{@key}}NestedStack:
     Type: "AWS::CloudFormation::Stack"
     Properties:
+      Parameters:
+        SecurityGroupId:
+          Fn::GetAtt:
+            - SecurityGroup
+            - GroupId
       TemplateURL: {{this.url}}
 {{/ifEquals}}
 {{#ifNotEquals @key "WorkflowLambdaVersions"}}

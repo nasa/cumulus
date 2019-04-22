@@ -1,5 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'stack: {{stackName}} | deployed by Kes'
+Parameters:
+  SecurityGroupId:
+    Type: String
+    Description: 'Security group ID'
 
 Resources:
 
@@ -165,22 +169,20 @@ Resources:
         Statement:
           - Effect: "Allow"
             Principal:
-              AWS: {{iams.lambdaProcessingRoleArn}}
+              AWS: {{parent.iams.lambdaProcessingRoleArn}}
             Action: "es:*"
             Resource:
               - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{parent.es.name}}/*"
           - Effect: "Allow"
             Principal:
-              AWS: {{iams.lambdaApiGatewayRoleArn}}
+              AWS: {{parent.iams.lambdaApiGatewayRoleArn}}
             Action: "es:*"
             Resource:
               - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{parent.es.name}}/*"
     {{# if parent.vpc }}
       VPCOptions:
         SecurityGroupIds:
-          - Fn::GetAtt:
-            - SecurityGroup
-            - GroupId
+          - Ref: SecurityGroupId
         SubnetIds:
         {{#each parent.vpc.subnets}}
           - {{this}}
