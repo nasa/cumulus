@@ -350,7 +350,9 @@ class Granule {
   }
 
   /**
-   * Verify a file's integrity using its checksum and throw an exception if it's invalid
+   * Verify a file's integrity using its checksum and throw an exception if it's invalid.
+   * Verify file's filesize if checksum type or value is not available.
+   * Logs warning if neither check is possible.
    *
    * @param {Object} file - the file object to be checked
    * @param {string} bucket - s3 bucket name of the file
@@ -673,7 +675,7 @@ async function moveGranuleFile(source, target, options) {
 * @param {string} target.Key - target
 * @param {Object} sourceChecksumObject - source checksum information
 * @param {string} sourceChecksumObject.checksumType - checksum type, e.g. 'md5'
-* @param {Object} sourceChecksumObject.checksumValues - checksum value
+* @param {Object} sourceChecksumObject.checksumValue - checksum value
 * @param {Object} copyOptions - optional object with properties as defined by AWS API:
 * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-prop
 * @returns {Promise<Array>} returns a promise that resolves to a list of s3 version file objects.
@@ -713,14 +715,16 @@ async function moveGranuleFileWithVersioning(source, target, sourceChecksumObjec
  * @param {Object} params.target - target object: { Bucket, Key }
  * @param {Object} params.copyOptions - s3 CopyObject() options
  * @param {string} params.duplicateHandling - duplicateHandling config string
- * Supports `error`, `skip`, `replace`, and `version` values.
- * @param {Function} [params.checksumFunction] - optional function to checksum source & target:
+ * One of [`error`, `skip`, `replace`, `version`].
+ * @param {Function} [params.checksumFunction] - optional function to verify source & target:
  * Called as `await checksumFunction(bucket, key);`, expected to return array where:
  * array[0] - string - checksum type
  * array[1] - string - checksum value
+ * Should be partially applied with expected values if needed as used in `ingestFile` in this module.
  * @param {Function} [params.syncFileFunction] - optional function to sync file from non-s3 source.
  * Syncs to temporary source location for `version` case and to target location for `replace` case.
- * Should be partially applied as needed to allow calling as `await syncFileFunction(bucket, key);`
+ * Should be partially applied if needed to allow calling as `await syncFileFunction(bucket, key);`.
+ * An example of this is used in the `ingestFile` function in this module.
  * @throws {DuplicateFile} DuplicateFile error in `error` case.
  * @returns {Array<Object>} List of file version S3 Objects in `version` case, otherwise empty.
  */
