@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Cumulus Framework for ingesting and processing NASA Earth data streams",
   "scripts": {
-    "audit": "audit-ci -h && lerna exec -- audit-ci -h",
+    "audit": "audit-ci --config $(pwd)/audit-ci.json && lerna exec -- audit-ci --config $(pwd)/audit-ci.json",
     "docs-build-tasks": "./bin/build-tasks-doc.js",
     "docs-install": "(cd website && npm install)",
     "docs-build": "npm run docs-build-tasks && (cd website && npm run build)",
@@ -52,7 +52,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "devDependencies": {
-    "audit-ci": "1.0.2",
+    "audit-ci": "^1.6.0",
     "ava": "^0.25.0",
     "babel-eslint": "^8.2.2",
     "coveralls": "^3.0.0",
