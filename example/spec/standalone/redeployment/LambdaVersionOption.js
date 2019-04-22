@@ -9,7 +9,7 @@ const StepFunctions = require('@cumulus/common/StepFunctions');
 const { getWorkflowArn } = require('@cumulus/integration-tests');
 const {
   loadConfig,
-  redeploy
+  runKes
 } = require('../../helpers/testUtils');
 
 const config = loadConfig();
@@ -23,7 +23,7 @@ describe('When the useWorkflowLambdaVersions option is set to false the deployme
   const startDate = new Date();
 
   beforeAll(async () => {
-    await redeploy(config);
+    await runKes(config);
 
     // Redeploy with custom configuration
     try {
@@ -32,7 +32,7 @@ describe('When the useWorkflowLambdaVersions option is set to false the deployme
       const updatedConfig = configString.replace(/useWorkflowLambdaVersions: true/, 'useWorkflowLambdaVersions: false/');
       await fs.writeFile('./test_app/config.yml', updatedConfig, 'utf-8');
 
-      await redeploy(config, {
+      await runKes(config, {
         template: 'test_app/',
         kesClass: 'node_modules/@cumulus/deployment/app/kes.js'
       });
@@ -54,7 +54,7 @@ describe('When the useWorkflowLambdaVersions option is set to false the deployme
     stackList = await cf().listStacks({ StackStatusFilter: deletedStatuses }).promise();
   });
 
-  afterAll(() => redeploy(config));
+  afterAll(() => runKes(config));
 
   it('has no alias references in any workflow', () => {
     const allStates = workflowDefinitions.map((def) => jsyaml.load(def).States);
