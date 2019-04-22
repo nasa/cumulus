@@ -11,6 +11,7 @@ executeMigrations:
   useElasticSearch: '{{es.name}}'
   memory: 1024
   source: 'node_modules/@cumulus/api/dist/'
+  launchInVpc: true
   envs:
     GranulesTable:
       function: Ref
@@ -37,6 +38,7 @@ sns2elasticsearch:
   handler: index.indexer
   timeout: 100
   useElasticSearch: '{{es.name}}'
+  launchInVpc: true
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
   envs:
@@ -56,6 +58,7 @@ log2elasticsearch:
   timeout: 100
   memory: 512
   useElasticSearch: '{{es.name}}'
+  launchInVpc: true
   source: 'node_modules/@cumulus/api/dist/'
   namedLambdaDeadLetterQueue: true
 
@@ -65,6 +68,7 @@ dbIndexer:
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
   useElasticSearch: '{{es.name}}'
+  launchInVpc: true
   envs:
     system_bucket: '{{system_bucket}}'
     FilesTable:
@@ -130,6 +134,7 @@ jobs:
   timeout: 300
   memory: 512
   useElasticSearch: '{{es.name}}'
+  launchInVpc: true
   source: 'node_modules/@cumulus/api/dist/'
   namedLambdaDeadLetterQueue: true
 
@@ -154,6 +159,7 @@ CustomBootstrap:
   timeout: 300
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
+  launchInVpc: true
   envs:
     system_bucket: '{{system_bucket}}'
 
@@ -163,6 +169,7 @@ EmsReport:
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
   useElasticSearch: '{{es.name}}'
+  launchInVpc: true
   envs:
     system_bucket: '{{system_bucket}}'
     ems_provider: '{{ems.provider}}'

@@ -77,9 +77,10 @@ default:
 
   # this whole section has to be updated in each deployment section
   vpc:
-    vpcId: xxxxxx #change-me
+    vpcId: '{{VPC_ID}}'         # this has to be set in .env
     subnets:
-      - subnet-xxxxx #change me
+      - '{{AWS_SUBNET}}'        # this has to be set in .env
+    cidrIp: '{{VPC_CIDR_IP}}'   # this has to be set in .env
 
   ecs:
     restartTasksOnDeploy: false
@@ -88,8 +89,15 @@ default:
     instanceType: change-ecs-instanceType
     volumeSize: 50
     availabilityZone: 'us-east-1b'
+    minInstances: 1
+    desiredInstances: 1
     maxInstances: 1
-    desiredInstances: 0
+    clusterAutoscaling:
+      scaleInThresholdPercent: 25
+      scaleInAdjustmentPercent: -5
+      scaleOutThresholdPercent: 75
+      scaleOutAdjustmentPercent: 10
+
     tasks:
       AsyncOperation:
         image: cumuluss/async-operation:25
@@ -106,7 +114,7 @@ default:
       storageDriver: overlay2
 
   es:
-    name: es5
+    name: es5vpc
     elasticSearchMapping: 8
     version: 5.3
     instanceCount: 1

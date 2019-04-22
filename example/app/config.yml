@@ -80,12 +80,15 @@ default:
     vpcId: '{{VPC_ID}}'
     subnets:
       - '{{AWS_SUBNET}}'
+    cidrIp: '{{VPC_CIDR_IP}}'
 
   ecs:
     instanceType: t2.medium
+    minInstances: 1
     desiredInstances: 1
+    maxInstances: 1
     availabilityZone: us-east-1b
-    publicIp: false 
+    publicIp: false
     restartTasksOnDeploy: true
     docker:
       username: cumulususer
@@ -94,7 +97,14 @@ default:
         image: cumuluss/cumulus-ecs-task:1.2.5
         cpu: 400
         memory: 700
+        minTasks: 1
         count: 1
+        maxTasks: 10
+        scaleInActivityScheduleTime: 5000
+        scaleInAdjustmentPercent: -5
+        scaleOutActivityScheduleTime: 10000
+        scaleOutAdjustmentPercent: 10
+        activityName: EcsTaskHelloWorld
         envs:
           AWS_DEFAULT_REGION:
             function: Fn::Sub
@@ -247,9 +257,6 @@ cumulus-sit:
 # -------------------------------
 # CUMULUS individual deployments.
 # -------------------------------
-aj:
-  stackName: aj-integration
-  stackNameNoDash: AjIntegration
 
 aimee:
   stackName: aimee
@@ -261,6 +268,27 @@ lf:
 
   es:
     name: estest
+
+  buckets:
+    internal:
+      name: lf-internal
+      type: internal
+    private:
+      name: lf-private
+      type: private
+    protected:
+      name: lf-protected
+      type: protected
+    public:
+      name: lf-cumulus-public
+      type: public
+    protected-2:
+      name: lf-protected-2
+      type: protected
+
+lf-test-2:
+  stackName: lf-test-2
+  stackNameNoDash: lfTest2
 
   buckets:
     internal:
@@ -361,6 +389,7 @@ mth:
       name: '{{stackName}}-public'
       type: public
   ecs:
+    maxInstances: 3
     ssh: true
     keyPairName: mhuffnag
 

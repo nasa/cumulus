@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1212**
   - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
 
+- **CUMULUS-1193**
+  - The elasticsearch instance is moved behind the VPC. **You should recreate your stack when taking these changes**
+  - Your account will need an Elasticsearch Service Linked role. This is a one-time setup for the account. You can follow the instructions to use the AWS console or AWS CLI [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/using-service-linked-roles.html) or use the following Cloudformation yaml in your `app` or `iam` `cloudformation.template.yml`, deploy one time, and remove:
+  ```yaml
+  ESServiceLinkedRole:
+      Type: 'AWS::IAM::ServiceLinkedRole'
+      Properties:
+        AWSServiceName: es.amazonaws.com
+  ```
+  - You will need to populate `VPC_CIDR_IP` in your `app/.env` file. The IPv4 CIDR can be found in your AWS Console in your VPC settings.
+
+## Added
+
+- **CUMULUS-802**
+  - Adds autoscaling of ECS clusters
+  - Adds autoscaling of ECS services that are handling StepFunction activities
+
 ## Changed
 
 - **CUMULUS-1236**
@@ -21,7 +38,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1193**
   - Moved reindex CLI functionality to an API endpoint
-  
+
 ### Fixed
 - **CUMULUS-1203**
   - Fixes IAM template's use of intrinsic functions such that IAM template overrides now work with kes
