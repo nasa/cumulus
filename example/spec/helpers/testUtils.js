@@ -197,7 +197,7 @@ function getPublicS3FileUrl({ bucket, key }) {
  *
  * @param {Object} config - configuration object from loadConfig()
  * @param {Object} [options] - configuration options with the following keys>
- * @param {string} [options.template=template=node_modules/@cumulus/deployment/app] - optional template command line kes option
+ * @param {string} [options.template=node_modules/@cumulus/deployment/app] - optional template command line kes option
  * @param {string} [options.kesClass] - optional kes-class command line kes option
  * @param {string} [options.kesCommand] - optional kes command to run, defaults to deploy
  * @param {integer} [options.timeout=30] - Timeout value in minutes
@@ -207,7 +207,6 @@ async function runKes(config, options = {}) {
   const timeoutInMinutes = options.timeout || 30;
 
   const kesCommand = './node_modules/.bin/kes';
-
   const kesOptions = [
     'cf', options.kesCommand || 'deploy',
     '--kes-folder', options.kesFolder || 'app',
