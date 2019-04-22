@@ -84,7 +84,9 @@ default:
 
   ecs:
     instanceType: t2.medium
+    minInstances: 1
     desiredInstances: 1
+    maxInstances: 1
     availabilityZone: us-east-1b
     publicIp: false
     restartTasksOnDeploy: true
@@ -95,7 +97,14 @@ default:
         image: cumuluss/cumulus-ecs-task:1.2.5
         cpu: 400
         memory: 700
+        minTasks: 1
         count: 1
+        maxTasks: 10
+        scaleInActivityScheduleTime: 5000
+        scaleInAdjustmentPercent: -5
+        scaleOutActivityScheduleTime: 10000
+        scaleOutAdjustmentPercent: 10
+        activityName: EcsTaskHelloWorld
         envs:
           AWS_DEFAULT_REGION:
             function: Fn::Sub
@@ -380,6 +389,7 @@ mth:
       name: '{{stackName}}-public'
       type: public
   ecs:
+    maxInstances: 3
     ssh: true
     keyPairName: mhuffnag
 

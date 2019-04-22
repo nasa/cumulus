@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   ```
   - You will need to populate `VPC_CIDR_IP` in your `app/.env` file. The IPv4 CIDR can be found in your AWS Console in your VPC settings.
 
+## Added
+
+- **CUMULUS-802**
+  - Adds autoscaling of ECS clusters
+  - Adds autoscaling of ECS services that are handling StepFunction activities
+
 ## Changed
 
 - **CUMULUS-1236**
@@ -32,6 +38,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1193**
   - Moved reindex CLI functionality to an API endpoint
+
+### Fixed
+- **CUMULUS-1203**
+  - Fixes IAM template's use of intrinsic functions such that IAM template overrides now work with kes
 
 ## [v1.12.1] - 2019-4-8
 

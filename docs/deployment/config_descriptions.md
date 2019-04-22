@@ -92,6 +92,116 @@ For each service, a TaskCountLowAlarm alarm is added to check the RUNNING Task C
               statistic: SampleCount
               threshold: '{{ecs.services.EcsTaskHelloWorld.count}}'
 
+### Cluster AutoScaling
+
+Cumulus ECS clusters have the ability to scale out and in based on
+[CPU and memory reservations](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/cloudwatch-metrics.html#cluster_reservation).
+There are a few configuration values that affect how the ECS cluster instances
+scale:
+
+* `ecs.clusterAutoscaling.scaleInThresholdPercent`: the reservation percentage
+  where, if both CPU and memory are under, the EC2 cluster will be scaled in
+* `ecs.clusterAutoscaling.scaleInAdjustmentPercent`: the percentage to increase
+  or decrease the number of EC2 instances in the cluster when the "scale in"
+  alarm is triggered. Since this is a "scale in" setting, it should typically be
+  a negative value. For more information see the
+  [PercentChangeInCapacity documentation](https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scaling-simple-step.html#as-scaling-adjustment),
+  specifically the section on `PercentChangeInCapacity`.
+* `ecs.clusterAutoscaling.scaleOutThresholdPercent`: the reservation percentage
+  where, if both CPU and memory are under, the EC2 cluster will be scaled out
+* `ecs.clusterAutoscaling.scaleOutAdjustmentPercent`: the percentage to increase
+  or decrease the number of EC2 instances in the cluster when the "scale out"
+  alarm is triggered. Since this is a "scale out" setting, it should typically
+  be a positive value. For more information see the
+  [PercentChangeInCapacity documentation](https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scaling-simple-step.html#as-scaling-adjustment),
+  specifically the section on `PercentChangeInCapacity`.
+
+```yaml
+# Defaults
+ecs:
+  clusterAutoscaling:
+    scaleInThresholdPercent: 25
+    scaleInAdjustmentPercent: -5
+    scaleOutThresholdPercent: 75
+    scaleOutAdjustmentPercent: 10
+```
+
+The default behavior is that, if more than 75% of your cluster's CPU or memory
+has been reserved, the size of the cluster will be increased by 10%. (There is a
+minimum change of 1 instance.) If _both_ CPU and memory reservation for the
+cluster are under 25%, then the cluster size will be reduced by 5%.
+
+### Service AutoScaling
+
+Cumulus supports automatically scaling the number of tasks configured for an ECS
+service. The scaling of tasks is based on the `ActivityScheduleTime` metric,
+which measures how long (in milliseconds) an activity waited before being picked
+up for processing. If the average activity is waiting more than the configured
+`scaleOutActivityScheduleTime` time, then additional tasks will be added to the
+service. If the average activity is waiting less than the configured
+`scaleInActivityScheduleTime` time, then tasks will be removed from the service.
+Ideally, the average wait time for tasks should settle somewhere between
+`scaleInActivityScheduleTime` and `scaleOutActivityScheduleTime`.
+
+Configuration values that affect ECS service autoscaling. These would all be
+defined for a specific service.
+
+* `minTasks`: the minimum number of tasks to maintain in a service
+* `maxTasks`: the maximum number of tasks to maintain in a service
+* `scaleInAdjustmentPercent`: the percentage to increase or decrease the number
+  of tasks in the cluster by when the "scale in" alarm is triggered. Since this
+  is a "scale in" setting, it should typically be a negative value. For more
+  information see the
+  [PercentChangeInCapacity documentation](https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scaling-simple-step.html#as-scaling-adjustment),
+  specifically the section on `PercentChangeInCapacity`.
+* `scaleInActivityScheduleTime`: a duration in milliseconds. If the average task
+  is waiting for less than this amount of time before being started, then the
+  number of tasks configured for the service will be reduced
+* `scaleOutAdjustmentPercent`: the percentage to increase or decrease the number
+  of tasks in the cluster by when the "scale out" alarm is triggered. Since this
+  is a "scale out" setting, it should typically be a negative value. For more
+  information see the
+  [PercentChangeInCapacity documentation](https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scaling-simple-step.html#as-scaling-adjustment),
+  specifically the section on `PercentChangeInCapacity`.
+  * `scaleOutActivityScheduleTime`: a duration in milliseconds. If the average
+    task is waiting for more than this amount of time before being started, then
+    the number of tasks configured for the service will be increased
+
+**Notes**
+
+* `minTasks` and `maxTasks` are required for autoscaling to be enabled
+* `scaleInActivityScheduleTime` and `scaleInAdjustmentPercent` are required for
+  scaling in to be enabled
+* `scaleOutActivityScheduleTime` and `scaleOutAdjustmentPercent` are required
+  for scaling out to be enabled
+* When scaling of a service is triggered, the number of tasks will always change
+  by at least 1, even if the number that would be changed based on the
+  configured adjustment percent is less than 1.
+
+**Example**
+
+Only auto scaling-related fields are shown in this example config.
+
+```yaml
+ecs:
+  services:
+    ExampleService:
+      minTasks: 1
+      maxTasks: 10
+      scaleInActivityScheduleTime: 5000
+      scaleInAdjustmentPercent: -5
+      scaleOutActivityScheduleTime: 10000
+      scaleOutAdjustmentPercent: 10
+```
+
+In this example configuration, the minimum number of tasks is 1 and the maximum
+is 10. If the average time for activities to be started is less than 5 seconds,
+then the number of tasks configured for the service will be reduced by 5%. If
+the average time for activities to be started is greater than 10 seconds, then
+the number of tasks configured for the service will be increased by 10%.
+Eventually, the average time that a task takes to start should hover between 5
+and 10 seconds.
+
 ## es
 Configuration for the Amazon Elasticsearch Service (ES) instance.  You can update `es` properties and add additional ES alarms. For example:
 
