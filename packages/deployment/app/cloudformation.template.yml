@@ -1000,7 +1000,8 @@ Resources:
       {{/each}}
     {{/if}}
       LaunchConfigurationName:
-        Ref: CumulusContainerInstanceLaunch
+        Ref:
+          CumulusContainerInstanceLaunch
       MinSize: '{{ ecs.minInstances }}'
       DesiredCapacity: '{{ ecs.desiredInstances }}'
       MaxSize: '{{ ecs.maxInstances }}'
@@ -1013,7 +1014,9 @@ Resources:
     Type: AWS::AutoScaling::LifecycleHook
     Properties:
       LifecycleHookName: {{stackName}}-ecs-termination-hook
-      AutoScalingGroupName: !Ref CumulusECSAutoScalingGroup
+      AutoScalingGroupName:
+        Ref:
+          CumulusECSAutoScalingGroup
       DefaultResult: CONTINUE
       HeartbeatTimeout: 150
       LifecycleTransition: "autoscaling:EC2_INSTANCE_TERMINATING"
@@ -1022,7 +1025,9 @@ Resources:
     Type: AWS::AutoScaling::ScalingPolicy
     Properties:
       AdjustmentType: PercentChangeInCapacity
-      AutoScalingGroupName: !Ref CumulusECSAutoScalingGroup
+      AutoScalingGroupName:
+        Ref:
+          CumulusECSAutoScalingGroup
       EstimatedInstanceWarmup: 180
       MetricAggregationType: Average
       PolicyType: StepScaling
@@ -1035,12 +1040,14 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !Ref CumulusECSScaleOutPolicy
+        - Ref: CumulusECSScaleOutPolicy
       ComparisonOperator: GreaterThanThreshold
       DatapointsToAlarm: 1
       Dimensions:
         - Name: ClusterName
-          Value: !Ref CumulusECSCluster
+          Value:
+           Ref:
+             CumulusECSCluster
       EvaluationPeriods: 1
       MetricName: MemoryReservation
       Namespace: AWS/ECS
@@ -1054,12 +1061,14 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !Ref CumulusECSScaleOutPolicy
+        - Ref: CumulusECSScaleOutPolicy
       ComparisonOperator: GreaterThanThreshold
       DatapointsToAlarm: 1
       Dimensions:
         - Name: ClusterName
-          Value: !Ref CumulusECSCluster
+          Value:
+            Ref:
+              CumulusECSCluster
       EvaluationPeriods: 1
       MetricName: CPUReservation
       Namespace: AWS/ECS
@@ -1072,7 +1081,9 @@ Resources:
     Type: AWS::AutoScaling::ScalingPolicy
     Properties:
       AdjustmentType: PercentChangeInCapacity
-      AutoScalingGroupName: !Ref CumulusECSAutoScalingGroup
+      AutoScalingGroupName:
+        Ref:
+          CumulusECSAutoScalingGroup
       MetricAggregationType: Average
       PolicyType: StepScaling
       StepAdjustments:
@@ -1084,12 +1095,14 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !Ref CumulusECSScaleInPolicy
+        - Ref: CumulusECSScaleInPolicy
       ComparisonOperator: LessThanThreshold
       DatapointsToAlarm: 1
       Dimensions:
         - Name: ClusterName
-          Value: !Ref CumulusECSCluster
+          Value:
+            Ref:
+              CumulusECSCluster
       EvaluationPeriods: 1
       MetricName: MemoryReservation
       Namespace: AWS/ECS
@@ -1103,12 +1116,14 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !Ref CumulusECSScaleInPolicy
+        - Ref: CumulusECSScaleInPolicy
       ComparisonOperator: LessThanThreshold
       DatapointsToAlarm: 1
       Dimensions:
         - Name: ClusterName
-          Value: !Ref CumulusECSCluster
+          Value:
+            Ref:
+              CumulusECSCluster
       EvaluationPeriods: 1
       MetricName: CPUReservation
       Namespace: AWS/ECS
@@ -1254,7 +1269,9 @@ Resources:
     Properties:
       PolicyName: {{../stackName}}{{@key}}ECSServiceScalingInPolicy
       PolicyType: StepScaling
-      ScalingTargetId: !Ref {{@key}}ECSServiceScalableTarget
+      ScalingTargetId:
+        Ref:
+         {{@key}}ECSServiceScalableTarget
       StepScalingPolicyConfiguration:
         Cooldown: 60
         AdjustmentType: PercentChangeInCapacity
@@ -1270,7 +1287,9 @@ Resources:
     Properties:
       PolicyName: {{../stackName}}{{@key}}ECSServiceScalingOutPolicy
       PolicyType: StepScaling
-      ScalingTargetId: !Ref {{@key}}ECSServiceScalableTarget
+      ScalingTargetId:
+        Ref:
+         {{@key}}ECSServiceScalableTarget
       StepScalingPolicyConfiguration:
         Cooldown: 60
         AdjustmentType: PercentChangeInCapacity
@@ -1286,7 +1305,7 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !Ref {{@key}}ECSServiceScalingInPolicy
+        - Ref: {{@key}}ECSServiceScalingInPolicy
       DatapointsToAlarm: 1
       EvaluationPeriods: 1
       Metrics:
@@ -1300,7 +1319,9 @@ Resources:
               MetricName: ActivityScheduleTime
               Dimensions:
                 - Name: ActivityArn
-                  Value: !Ref {{this.activityName}}Activity
+                  Value:
+                    Ref:
+                      {{this.activityName}}Activity
             Period: 60
             Stat: Average
           ReturnData: false
@@ -1315,7 +1336,7 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !Ref {{@key}}ECSServiceScalingOutPolicy
+        - Ref: {{@key}}ECSServiceScalingOutPolicy
       DatapointsToAlarm: 1
       EvaluationPeriods: 1
       Metrics:
@@ -1329,7 +1350,9 @@ Resources:
               MetricName: ActivityScheduleTime
               Dimensions:
                 - Name: ActivityArn
-                  Value: !Ref {{this.activityName}}Activity
+                  Value:
+                    Ref:
+                      {{this.activityName}}Activity
             Period: 60
             Stat: Average
           ReturnData: false
