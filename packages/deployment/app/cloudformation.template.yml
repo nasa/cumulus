@@ -953,6 +953,22 @@ Resources:
               echo 'ECS_ENGINE_AUTH_DATA={"https://index.docker.io/v1/":{"username":"{{ecs.docker.username}}","password": "${DockerPassword}","email":"${DockerEmail}"}}' >> /etc/ecs/ecs.config
               {{/ifEquals}}
 
+              yum install -y jq unzip
+              curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
+              unzip awscli-bundle.zip
+              ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+              rm -rf ./awscli-bundle awscli-bundle.zip
+
+              aws s3 cp s3://{{bucket}}/{{stackName}}/deployment-staging/task-reaper.sh /usr/local/bin/task-reaper.sh
+              chmod +x /usr/local/bin/task-reaper.sh
+
+              cat <<'EOF' >> /etc/cron.d/task-reaper
+              PATH=/bin:/usr/local/bin
+              AWS_DEFAULT_REGION=${AWS::Region}
+              LIFECYCLE_HOOK_NAME={{stackName}}-ecs-termination-hook
+              * * * * * root /usr/local/bin/task-reaper.sh >> /var/log/task-reaper.log 2>&1
+              EOF
+
               --==BOUNDARY==--
             {{# if ecs.efs.mount }}
             - EFSFileSystemId:
@@ -985,13 +1001,121 @@ Resources:
     {{/if}}
       LaunchConfigurationName:
         Ref: CumulusContainerInstanceLaunch
-      MinSize: '0'
-      MaxSize: '{{ ecs.maxInstances }}'
+      MinSize: '{{ ecs.minInstances }}'
       DesiredCapacity: '{{ ecs.desiredInstances }}'
+      MaxSize: '{{ ecs.maxInstances }}'
       Tags:
       - Key: Name
         Value: "{{stackName}}-cumulus-ecs"
         PropagateAtLaunch: true
+
+  CumulusECSAutoScalingLifeCycleHook:
+    Type: AWS::AutoScaling::LifecycleHook
+    Properties:
+      LifecycleHookName: {{stackName}}-ecs-termination-hook
+      AutoScalingGroupName: !Ref CumulusECSAutoScalingGroup
+      DefaultResult: CONTINUE
+      HeartbeatTimeout: 150
+      LifecycleTransition: "autoscaling:EC2_INSTANCE_TERMINATING"
+
+  CumulusECSScaleOutPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: PercentChangeInCapacity
+      AutoScalingGroupName: !Ref CumulusECSAutoScalingGroup
+      EstimatedInstanceWarmup: 180
+      MetricAggregationType: Average
+      PolicyType: StepScaling
+      StepAdjustments:
+        - MetricIntervalLowerBound: 0
+          ScalingAdjustment: {{ecs.clusterAutoscaling.scaleOutAdjustmentPercent}}
+
+  CumulusECSMemoryScaleOutAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref CumulusECSScaleOutPolicy
+      ComparisonOperator: GreaterThanThreshold
+      DatapointsToAlarm: 1
+      Dimensions:
+        - Name: ClusterName
+          Value: !Ref CumulusECSCluster
+      EvaluationPeriods: 1
+      MetricName: MemoryReservation
+      Namespace: AWS/ECS
+      Period: 60
+      Statistic: Average
+      Threshold: {{ecs.clusterAutoscaling.scaleOutThresholdPercent}}
+      Unit: Percent
+
+  CumulusECSCPUScaleOutAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref CumulusECSScaleOutPolicy
+      ComparisonOperator: GreaterThanThreshold
+      DatapointsToAlarm: 1
+      Dimensions:
+        - Name: ClusterName
+          Value: !Ref CumulusECSCluster
+      EvaluationPeriods: 1
+      MetricName: CPUReservation
+      Namespace: AWS/ECS
+      Period: 60
+      Statistic: Average
+      Threshold: {{ecs.clusterAutoscaling.scaleOutThresholdPercent}}
+      Unit: Percent
+
+  CumulusECSScaleInPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: PercentChangeInCapacity
+      AutoScalingGroupName: !Ref CumulusECSAutoScalingGroup
+      MetricAggregationType: Average
+      PolicyType: StepScaling
+      StepAdjustments:
+        - MetricIntervalUpperBound: 0
+          ScalingAdjustment: {{ecs.clusterAutoscaling.scaleInAdjustmentPercent}}
+
+  CumulusECSMemoryScaleInAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref CumulusECSScaleInPolicy
+      ComparisonOperator: LessThanThreshold
+      DatapointsToAlarm: 1
+      Dimensions:
+        - Name: ClusterName
+          Value: !Ref CumulusECSCluster
+      EvaluationPeriods: 1
+      MetricName: MemoryReservation
+      Namespace: AWS/ECS
+      Period: 60
+      Statistic: Average
+      Threshold: {{ecs.clusterAutoscaling.scaleInThresholdPercent}}
+      Unit: Percent
+
+  CumulusECSCPUScaleInAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref CumulusECSScaleInPolicy
+      ComparisonOperator: LessThanThreshold
+      DatapointsToAlarm: 1
+      Dimensions:
+        - Name: ClusterName
+          Value: !Ref CumulusECSCluster
+      EvaluationPeriods: 1
+      MetricName: CPUReservation
+      Namespace: AWS/ECS
+      Period: 60
+      Statistic: Average
+      Threshold: {{ecs.clusterAutoscaling.scaleInThresholdPercent}}
+      Unit: Percent
 
 {{#each ecs.services}}
   # adding TaskDefinition for Lambda/ECS services
@@ -1096,12 +1220,124 @@ Resources:
     Properties:
       Cluster:
         Ref: CumulusECSCluster
-      DesiredCount: {{# if this.count}}{{this.count}}{{ else }} 0 {{/if}}
+      DesiredCount: {{# if this.count}}{{this.count}}{{ else }}0{{/if}}
       TaskDefinition:
         Ref: {{@key}}TaskDefinition
       DeploymentConfiguration:
         MaximumPercent: 100
         MinimumHealthyPercent: 0
+
+  {{! If minTasks and maxTasks are not configured for this service, do not configure autoscaling }}
+  {{# if this.minTasks }}{{# if this.maxTasks }}
+
+  {{@key}}ECSServiceScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: {{this.minTasks}}
+      MaxCapacity: {{this.maxTasks}}
+      ResourceId:
+        Fn::Sub:
+          - service/${CumulusECSCluster}/${ServiceName}
+          - ServiceName:
+              Fn::GetAtt:
+                - "{{@key}}ECSService"
+                - Name
+      RoleARN: {{../this.iams.scalingRoleArn}}
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+
+  {{# if this.scaleInAdjustmentPercent }}
+  {{@key}}ECSServiceScalingInPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    DependsOn:
+      - {{@key}}ECSServiceScalableTarget
+    Properties:
+      PolicyName: {{../stackName}}{{@key}}ECSServiceScalingInPolicy
+      PolicyType: StepScaling
+      ScalingTargetId: !Ref {{@key}}ECSServiceScalableTarget
+      StepScalingPolicyConfiguration:
+        Cooldown: 60
+        AdjustmentType: PercentChangeInCapacity
+        MinAdjustmentMagnitude: 1
+        StepAdjustments:
+          - MetricIntervalUpperBound: 0
+            ScalingAdjustment: {{this.scaleInAdjustmentPercent}}
+  {{/if}}{{! End of "if this.scaleInAdjustmentPercent" condition }}
+
+  {{# if this.scaleOutAdjustmentPercent }}
+  {{@key}}ECSServiceScalingOutPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: {{../stackName}}{{@key}}ECSServiceScalingOutPolicy
+      PolicyType: StepScaling
+      ScalingTargetId: !Ref {{@key}}ECSServiceScalableTarget
+      StepScalingPolicyConfiguration:
+        Cooldown: 60
+        AdjustmentType: PercentChangeInCapacity
+        MinAdjustmentMagnitude: 1
+        StepAdjustments:
+          - MetricIntervalLowerBound: 0
+            ScalingAdjustment: {{this.scaleOutAdjustmentPercent}}
+  {{/if}}{{! End of "if this.scaleOutAdjustmentPercent" condition }}
+
+  {{# if this.scaleInAdjustmentPercent }}{{# if this.scaleInActivityScheduleTime }}
+  {{@key}}ECSServiceScalingInAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref {{@key}}ECSServiceScalingInPolicy
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Metrics:
+        - Id: e1
+          Expression: "FILL(m1, 0)"
+          Label: NormalizedActivityScheduleTime
+        - Id: m1
+          MetricStat:
+            Metric:
+              Namespace: AWS/States
+              MetricName: ActivityScheduleTime
+              Dimensions:
+                - Name: ActivityArn
+                  Value: !Ref {{this.activityName}}Activity
+            Period: 60
+            Stat: Average
+          ReturnData: false
+      ComparisonOperator: LessThanThreshold
+      Threshold: {{this.scaleInActivityScheduleTime}}
+      TreatMissingData: missing
+  {{/if}}{{/if}}{{! End of "if this.scaleInAdjustmentPercent && this.scaleInActivityScheduleTime" condition}}
+
+  {{# if this.scaleOutAdjustmentPercent }}{{# if this.scaleOutActivityScheduleTime }}
+  {{@key}}ECSServiceScalingOutAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref {{@key}}ECSServiceScalingOutPolicy
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Metrics:
+        - Id: e1
+          Expression: "FILL(m1, 0)"
+          Label: NormalizedActivityScheduleTime
+        - Id: m1
+          MetricStat:
+            Metric:
+              Namespace: AWS/States
+              MetricName: ActivityScheduleTime
+              Dimensions:
+                - Name: ActivityArn
+                  Value: !Ref {{this.activityName}}Activity
+            Period: 60
+            Stat: Average
+          ReturnData: false
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Threshold: {{this.scaleOutActivityScheduleTime}}
+      TreatMissingData: missing
+  {{/if}}{{/if}}{{! End of "if this.scaleOutAdjustmentPercent && this.scaleOutActivityScheduleTime" condition}}
+  {{/if}}{{/if}}{{! End of "if this.minTasks && this.maxTasks" condition }}
 
   {{@key}}ECSServiceTaskCountLowAlarm:
     Type: AWS::CloudWatch::Alarm

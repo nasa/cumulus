@@ -89,8 +89,15 @@ default:
     instanceType: change-ecs-instanceType
     volumeSize: 50
     availabilityZone: 'us-east-1b'
+    minInstances: 1
+    desiredInstances: 1
     maxInstances: 1
-    desiredInstances: 0
+    clusterAutoscaling:
+      scaleInThresholdPercent: 25
+      scaleInAdjustmentPercent: -5
+      scaleOutThresholdPercent: 75
+      scaleOutAdjustmentPercent: 10
+
     tasks:
       AsyncOperation:
         image: cumuluss/async-operation:25
