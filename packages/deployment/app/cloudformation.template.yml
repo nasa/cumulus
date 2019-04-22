@@ -21,6 +21,8 @@ Resources:
   #################################################
   #  BEGIN
   #################################################
+
+
 {{#each nested_templates}}
 {{#ifEquals @key "WorkflowLambdaVersions"}}
 {{#ifEquals ../useWorkflowLambdaVersions true}}
@@ -385,6 +387,17 @@ Resources:
             Action: "es:*"
             Resource:
               - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{es.name}}/*"
+    {{# if vpc }}
+      VPCOptions:
+        SecurityGroupIds:
+          - Fn::GetAtt:
+            - SecurityGroup
+            - GroupId
+        SubnetIds:
+        {{#each vpc.subnets}}
+          - {{this}}
+        {{/each}}
+    {{/if}}
 
   {{#if es.alarms}}
   {{# each es.alarms}}
@@ -839,7 +852,12 @@ Resources:
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security Group for ECS container instances of {{stackName}}
+      GroupDescription: Security Group for ECS containter instances of {{stackName}}
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          CidrIp: {{vpc.cidrIp}}
+          FromPort: '443'
+          ToPort: '443'
       Tags:
         - Key: Name
           Value: "{{stackName}}"
