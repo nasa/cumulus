@@ -1,4 +1,6 @@
 default:
+  test_configs:
+    stackName: '{{stackName}}'
   prefix: test-cumulus-integration
   stackName: '{{prefix}}-iam'
 
@@ -115,6 +117,33 @@ aimee:
 lf:
   prefix: lf-cumulus
   stackName: lf-cumulus-iam
+
+  buckets:
+    internal:
+      name: lf-internal
+      type: internal
+    private:
+      name: lf-private
+      type: private
+    protected:
+      name: lf-protected
+      type: protected
+    public:
+      name: lf-cumulus-public
+      type: public
+    protected-2:
+      name: lf-protected-2
+      type: protected
+    dashboard:
+      name: cumulus-dashboard-sandbox
+      type: shared
+    dashboard-2:
+      name: lf-dashboard
+      type: shared
+
+lf-test-2:
+  prefix: lf-test-2
+  stackName: lf-test-2-iam
 
   buckets:
     internal:
@@ -310,9 +339,10 @@ mhs3:
 
 jk:
   prefix: jk
-
 jk2:
   prefix: jk2
+jk3: 
+  prefix: jk3
 
 mboyd-test:
   prefix: mboyd-test

@@ -12,7 +12,7 @@ const fs = require('fs-extra');
 const {
   loadConfig,
   protectFile,
-  redeploy
+  runKes
 } = require('../../helpers/testUtils');
 
 const config = loadConfig();
@@ -40,7 +40,7 @@ describe('When a workflow is running and a new version of a workflow lambda is d
   beforeAll(async () => {
     await protectFile(lambdaFile, async () => {
       await fs.appendFile(lambdaFile, `// ${new Date()}`);
-      await redeploy(config);
+      await runKes(config);
     });
 
     startVersions = await getLambdaVersions(lambdaName);
@@ -54,7 +54,7 @@ describe('When a workflow is running and a new version of a workflow lambda is d
 
     await protectFile(lambdaFile, async () => {
       await fs.appendFile(lambdaFile, `// ${new Date()}`);
-      await redeploy(config);
+      await runKes(config);
     });
 
     workflowStatus = await waitForCompletedExecution(workflowExecutionArn);

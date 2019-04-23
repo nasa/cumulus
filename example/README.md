@@ -119,6 +119,10 @@ There are tests for redeploying the Cumulus stack while a workflow is running (s
 
 Please note that the stack will be redeployed multiple times when running tests and any errors during redeployment can result in errors in later tests. The deployment output is printed to the console.
 
+### S3 Access Tests
+
+The direct S3 access tests (`s3AccessSpec`) are specific to NASA NGAP accounts. You will need the NGAP in-region access policy applied to all of your public and protected buckets for these tests to work.
+
 # Troubleshooting
 
 ## Distribution API tests

@@ -45,12 +45,14 @@ For example:
 | ems.provider | CUMULUS | the provider used for sending reports to EMS
 | vpc.vpcId | (required if ecs is used) | the vpcId used with the deployment
 | vpc.subnets | (required) | the subnets used
+| vpc.cidrIp | (required) | the IPv4 CIDR of the VPC
 | ecs.amiid | ami-9eb4b1e5 | amiid of an optimized ecs instance (differnet for each region)
 | ecs.instanceType | (required) | the instance type of the ec2 machine used for running ecs tasks
 | ecs.volumeSize | 50 | the storage on ec2 instance running the ecs tasks
 | ecs.availabilityZone | us-east-1a | the availibity zone used for launching ec2 machines
+| ecs.minInstances | 1 | min number of ec2 instances to launch in an autoscaling group
+| ecs.desiredInstances | 1 | desired number of ec2 instances needed in an autoscaling group
 | ecs.maxInstances | 1 | max number of ec2 instances to launch in an autoscaling group
-| ecs.desiredInstances | 0 | desired number of ec2 instances needed in an autoscaling group
 | es.name | es5 | name of the elasticsearch cluster
 | es.elasticSearchMapping | 4 | version number of the elasticsearch mapping used
 | es.version | 5.3 | elasticsearch software version
