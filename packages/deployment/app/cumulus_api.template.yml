@@ -332,5 +332,5 @@ Outputs:
           - Ref: {{name}}RestApi
           - ".execute-api."
           - {"Fn::Sub": "${AWS::Region}"}
-          - ".amazonaws.com/{{../parent.apiStage}}"
+          - ".amazonaws.com/{{../parent.apiStage}}/"
   {{/each}}
