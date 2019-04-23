@@ -818,6 +818,41 @@ test('ingestFile throws an error when no checksum is provided and the fileSize i
     + ` did not match expected fileSize ${file.fileSize}`);
 });
 
+test('verifyFile returns type and value when file is verified', async (t) => {
+  const sourceBucket = t.context.internalBucket;
+
+  const content = 'test-string';
+
+  const file = {
+    path: '',
+    name: 'test.txt',
+    checksumType: 'md5',
+    checksumValue: '661f8009fa8e56a9d0e94a0a644397d7',
+    fileSize: content.length
+  };
+
+  const Key = path.join(file.path, file.name);
+  const params = { Bucket: sourceBucket, Key, Body: content };
+  await s3PutObject(params);
+
+  const duplicateHandling = 'replace';
+  const fileStagingDir = 'file-staging';
+  const testGranule = new TestS3Granule(
+    {},
+    collectionConfig,
+    {
+      host: sourceBucket
+    },
+    fileStagingDir,
+    false,
+    duplicateHandling,
+  );
+
+  const [type, value] = await testGranule.verifyFile(file, sourceBucket, Key);
+  t.is(type, file.checksumType);
+  t.is(value, file.checksumValue);
+});
+
 test('unversionFilename returns original filename if it has no timestamp', (t) => {
   const noTimeStampFilename = 'somefile.v1';
   const expected = noTimeStampFilename;
