@@ -215,6 +215,7 @@ Configuration for the Amazon Elasticsearch Service (ES) instance.  You can updat
 ```
 
 ## sns
+
 Cumulus supports configuration and deployment of SNS topics and subscribers using `app/config.yml`. In the following code snippets we'll see an example topic and subscriber configuration.
 
 ```yaml
