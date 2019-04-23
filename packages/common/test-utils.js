@@ -9,6 +9,29 @@ const RandExp = require('randexp');
 const fs = require('fs-extra');
 const { isNil } = require('./util');
 
+/**
+ * Wrapper around an AWS method to allow calling a function
+ * after the AWS function
+ *
+ * Example:
+ * // Initialize wrapper for AWS Lambda
+ * const lambdaWrapper = awsServiceInterfaceMethodWrapper(lambdaClient);
+
+  // Wrap the Lambda createEventSourceMapping function so that upon completion
+  // it updates internal state
+    lambdaWrapper(
+      'createEventSourceMapping',
+      (data, params) => {
+        setState((isNil(params.Enabled) || params.Enabled) ? 'Enabled' : 'Disabled', data.UUID);
+        return { ...data, State: getState(data.UUID) };
+      }
+    );
+ *
+ * @param {Object} client - AWS Service client
+ * @returns {Function} - function taking a client method name and a dataHandler function
+ * to be called upon completion of the client method with return value of the client
+ * method and the original parameters passed into the client method
+ */
 const awsServiceInterfaceMethodWrapper = (client) => {
   const originalFunctions = {};
 
@@ -162,6 +185,10 @@ function localStackAwsClient(Service, options) {
  */
 function testAwsClient(Service, options) {
   if (Service.serviceIdentifier === 'lambda') {
+    // This is all a workaround for a Localstack bug where the Lambda event source mapping state
+    // is not respected and is always 'Enabled'. To work around this, we keep the state of each
+    // event source mapping internally and override the event source mapping functions to set
+    // and use the internal states. This can be removed when the Localstack issue is fixed.
     const lambdaClient = localStackAwsClient(Service, options);
 
     const eventSourceMappingStates = {};

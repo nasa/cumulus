@@ -39,6 +39,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1193**
   - Moved reindex CLI functionality to an API endpoint
 
+- **CUMULUS-1207**
+  - Rules no longer share the same lambda event source, a new one will be created for each rule
+
 ### Fixed
 - **CUMULUS-1203**
   - Fixes IAM template's use of intrinsic functions such that IAM template overrides now work with kes
