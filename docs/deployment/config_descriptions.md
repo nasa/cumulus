@@ -233,7 +233,9 @@ sns:
         protocol: lambda
 ```
 
-The above code is an example of configuration for an SNS topic that will be called `sftrackerSns` in the resulting `cloudformation.yml` file. More information for each of the individual attributes can be found in [AWS SNS Topic Documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-sns-topic.html).
+The above code is an example of configuration for an SNS topic that will be called `sftrackerSns` in the resulting `cloudformation.yml` file. Upon deployment, this configuration creates an SNS topic named `<stackname>-sftracker` and subscribes the resource named `sns2elasticsearchLambdaFunction` to that topic so that it will be triggered when any messages are added to that topic.
+
+More information for each of the individual attributes can be found in [AWS SNS Topic Documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-sns-topic.html).
 
 ```yaml
 # sns: ...
@@ -250,7 +252,9 @@ The above code is an example of configuration for an SNS topic that will be call
         protocol: lambda
 ```
 
-This snippet is an example of configuration for a list of SNS Subscriptions. The main difference between this and the previous example is the inclusion of the `sns.arn` attribute - this tells our deployment/compiling step that we're configuring subscriptions, not a new topic. More information for each of the individual attributes can be found in [AWS SNS Subscription Documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-sns-subscription.html).
+This snippet is an example of configuration for a list of SNS Subscriptions. We are adding an existing lambda function (`someOtherLambdaFunction`) as a subscriber to an existing SNS Topic (`sfTrackerSns`). That is, this configuration assumes that the `sftrackerSns` Topic is configured elsewhere (as shown above) and that the definition of a lambda function, `someOtherLambdaFunction`, is in your configuration.
+
+The main difference between this and the previous example is the inclusion of the `sns.arn` attribute - this tells our deployment/compiling step that we're configuring subscriptions, not a new topic. More information for each of the individual attributes can be found in [AWS SNS Subscription Documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-sns-subscription.html).
 
 ## buckets
 
