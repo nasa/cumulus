@@ -34,8 +34,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Unifies duplicate handling in `ingest/granule.handleDuplicateFile` for maintainability.
   - Changed `ingest/granule.ingestFile` and `move-granules/index.moveFileRequest` to use new function.
   - Moved file versioning code to `ingest/granule.moveGranuleFileWithVersioning`
-  - `ingest/granule.verifyFile` now falls back to `fileSize` for verification if checksum is not available in input and throws `UnexpectedFileSize` error for fileSize not matching input.
-  - `ingest/granule.verifyFile` logs warning if neither checksum nor fileSize are available.
+  - `ingest/granule.verifyFile` now also tests `fileSize` for verification if it is in the file record and throws
+    `UnexpectedFileSize` error for    fileSize not matching input.
+  - `ingest/granule.verifyFile` logs warnings if checksum and/or fileSize are not available.
 
 - **CUMULUS-1223**
   - Adds unauthenticated access for public bucket files to the Distribution API.  Public files should be requested the same way as protected files, but for public files a redirect to a self-signed S3 URL will happen without requiring authentication with Earthdata login.
