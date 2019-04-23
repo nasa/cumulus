@@ -141,6 +141,33 @@ lf:
       name: lf-dashboard
       type: shared
 
+lf-test-2:
+  prefix: lf-test-2
+  stackName: lf-test-2-iam
+
+  buckets:
+    internal:
+      name: lf-internal
+      type: internal
+    private:
+      name: lf-private
+      type: private
+    protected:
+      name: lf-protected
+      type: protected
+    public:
+      name: lf-cumulus-public
+      type: public
+    protected-2:
+      name: lf-protected-2
+      type: protected
+    dashboard:
+      name: cumulus-dashboard-sandbox
+      type: shared
+    dashboard-2:
+      name: lf-dashboard
+      type: shared
+
 lf-int-test:
   prefix: lf-int-test
   stackName: lf-int-test-iam

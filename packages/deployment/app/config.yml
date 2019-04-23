@@ -77,9 +77,10 @@ default:
 
   # this whole section has to be updated in each deployment section
   vpc:
-    vpcId: xxxxxx #change-me
+    vpcId: '{{VPC_ID}}'         # this has to be set in .env
     subnets:
-      - subnet-xxxxx #change me
+      - '{{AWS_SUBNET}}'        # this has to be set in .env
+    cidrIp: '{{VPC_CIDR_IP}}'   # this has to be set in .env
 
   ecs:
     restartTasksOnDeploy: false
@@ -113,7 +114,7 @@ default:
       storageDriver: overlay2
 
   es:
-    name: es5
+    name: es5vpc
     elasticSearchMapping: 8
     version: 5.3
     instanceCount: 1
