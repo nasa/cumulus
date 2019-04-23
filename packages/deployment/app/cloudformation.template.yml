@@ -437,8 +437,8 @@ Resources:
               - Outputs.{{this}}DynamoDB
         {{/each}}
       {{# if this.useDistributionApi}}
-        {{# if ../parent.api_distribution_url}}
-          DISTRIBUTION_ENDPOINT: {{../parent.api_distribution_url}}
+        {{# if ../api_distribution_url}}
+          DISTRIBUTION_ENDPOINT: {{../api_distribution_url}}
         {{else}}
           DISTRIBUTION_ENDPOINT:
             Fn::GetAtt:
