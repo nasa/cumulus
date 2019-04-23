@@ -1,7 +1,7 @@
 version: '3'
 services:
   ftp:
-    image: cumuluss/vsftpd:2
+    image: cumuluss/vsftpd:3
     network_mode: "service:build_env"
     volumes:
       - ../packages/test-data:/srv:ro
@@ -25,7 +25,7 @@ services:
       - ../packages/test-data/keys/ssh_client_rsa_key.pub:/etc/authorized_keys/user
       - ../packages/test-data:/data
     environment:
-      - SSH_USERS=user:2000:2000
+      - SSH_USERS
       - SFTP_MODE=true
   elasticsearch:
     image: elasticsearch:5.6
@@ -43,6 +43,7 @@ services:
       - ../:/source/cumulus
     environment:
       - LOCALSTACK_HOST=127.0.0.1
+      - LOCAL_ES_HOST=127.0.0.1
       - CI_UID
     ports:
       - "127.0.0.1:2222:2222"
@@ -50,5 +51,5 @@ services:
       - "127.0.0.1:21:21"
       - "127.0.0.1:9200:9200"
       - "127.0.0.1:4574:4574"
-      - "127.0.0.1:4559-4564:4559-4564"
+      - "127.0.0.1:4550-4570:4550-4570"
     command: tail -f /dev/null
