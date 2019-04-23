@@ -365,33 +365,31 @@ class Granule {
    */
   async verifyFile(file, bucket, key, options = {}) {
     const [type, value] = await this.retrieveSuppliedFileChecksumInformation(file);
-    if (!type || !value) {
-      log.warn(
-        `Could not verify ${file.name} with checksum ${value}`
-        + ` of type ${type}, falling back to fileSize.`
-      );
-      if (file.fileSize) {
-        const ingestedSize = await aws.getObjectSize(bucket, key);
-        if (ingestedSize !== file.fileSize) {
-          throw new errors.UnexpectedFileSize(
-            `verifyFile failed: Actual filesize ${ingestedSize}`
-            + ` did not match expected fileSize ${file.fileSize}`
-          );
-        }
-      } else {
-        log.warn(`No fileSize found to verify file ${file.name}. File cannot be verified.`);
-      }
-      return [null, null];
+    let output = [type, value];
+    if (type && value) {
+      await aws.validateS3ObjectChecksum({
+        algorithm: type,
+        bucket,
+        key,
+        expectedSum: value,
+        options
+      });
+    } else {
+      log.warn(`Could not verify ${file.name} expected checksum: ${value} of type ${type}.`);
+      output = [null, null];
     }
-
-    await aws.validateS3ObjectChecksum({
-      algorithm: type,
-      bucket,
-      key,
-      expectedSum: value,
-      options
-    });
-    return [type, value];
+    if (file.fileSize) {
+      const ingestedSize = await aws.getObjectSize(bucket, key);
+      if (ingestedSize !== file.fileSize) {
+        throw new errors.UnexpectedFileSize(
+          `verifyFile failed: Actual filesize ${ingestedSize}`
+          + ` did not match expected fileSize ${file.fileSize}`
+        );
+      }
+    } else {
+      log.warn(`Could not verify ${file.name} expected fileSize: ${file.fileSize}.`);
+    }
+    return output;
   }
 
   /**
@@ -720,11 +718,11 @@ async function moveGranuleFileWithVersioning(source, target, sourceChecksumObjec
  * Called as `await checksumFunction(bucket, key);`, expected to return array where:
  * array[0] - string - checksum type
  * array[1] - string - checksum value
- * Should be partially applied with expected values if needed as used in `ingestFile` in this module.
+ * For example of partial application of expected values see `ingestFile` in this module.
  * @param {Function} [params.syncFileFunction] - optional function to sync file from non-s3 source.
  * Syncs to temporary source location for `version` case and to target location for `replace` case.
- * Should be partially applied if needed to allow calling as `await syncFileFunction(bucket, key);`.
- * An example of this is used in the `ingestFile` function in this module.
+ * Called as `await syncFileFunction(bucket, key);`, expected to create file on S3.
+ * For example of function prepared with partial application see `ingestFile` in this module.
  * @throws {DuplicateFile} DuplicateFile error in `error` case.
  * @returns {Array<Object>} List of file version S3 Objects in `version` case, otherwise empty.
  */
