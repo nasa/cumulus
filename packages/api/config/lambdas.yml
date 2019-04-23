@@ -141,6 +141,19 @@ messageConsumer:
       function: Fn::Sub
       value: '${kinesisFallbackSns}'
 
+CreateReconciliationReport:
+  handler: index.createReconciliationReport
+  source: 'node_modules/@cumulus/api/dist/'
+  useDistributionApi: true
+  tables:
+    - CollectionsTable
+    - GranulesTable
+    - FilesTable
+  envs:
+    system_bucket: '{{system_bucket}}'
+    cmr_provider: '{{cmr.provider}}'
+    cmr_client_id: '{{cmr.clientId}}'
+
 ScheduleSF:
   description: 'This lambda function is invoked by scheduled rules created via cumulus API'
   handler: index.scheduler

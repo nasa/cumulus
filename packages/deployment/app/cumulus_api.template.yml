@@ -26,6 +26,9 @@ Parameters:
   BulkDeleteLambdaFunctionArn:
     Type: String
     Description: 'BulkDelete Lambda function ARN'
+  CreateReconciliationReportLambdaFunctionArn:
+    Type: String
+    Description: 'CreateReconciliationReport Lambda function ARN'
   messageConsumerLambdaFunctionArn:
     Type: String
     Description: 'messageConsumer Lambda function ARN'
@@ -186,7 +189,13 @@ Resources:
           TOKEN_REDIRECT_ENDPOINT: {{../parent.api_backend_url}}token
         {{else}}
           TOKEN_REDIRECT_ENDPOINT:
-            Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}/token"]]
+            Fn::Join:
+              - ""
+              - - "https://"
+                - Ref: backendRestApi
+                - ".execute-api."
+                - {"Fn::Sub": "${AWS::Region}"}
+                - ".amazonaws.com/{{../parent.apiStage}}/token"
         {{/if}}
       {{/ifEquals}}
       {{# ifEquals this.urs_redirect "distribution"}}
@@ -194,7 +203,13 @@ Resources:
           DISTRIBUTION_REDIRECT_ENDPOINT: {{../parent.api_distribution_url}}redirect
         {{else}}
           DISTRIBUTION_REDIRECT_ENDPOINT:
-            Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}/redirect"]]
+            Fn::Join:
+              - ""
+              - - "https://"
+                - Ref: distributionRestApi
+                - ".execute-api."
+                - {"Fn::Sub": "${AWS::Region}"}
+                - ".amazonaws.com/{{../parent.apiStage}}/redirect"
         {{/if}}
       {{/ifEquals}}
       {{# if this.useDistributionApi}}
@@ -202,7 +217,13 @@ Resources:
           DISTRIBUTION_ENDPOINT: {{../parent.api_distribution_url}}
         {{else}}
           DISTRIBUTION_ENDPOINT:
-            Fn::Join: ["", [ "https://", {"Ref": "distributionRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}"]]
+            Fn::Join:
+              - ""
+              - - "https://"
+                - Ref: distributionRestApi
+                - ".execute-api."
+                - {"Fn::Sub": "${AWS::Region}"}
+                - ".amazonaws.com/{{../parent.apiStage}}"
         {{/if}}
       {{/if}}
     {{#each this.envs}}
@@ -303,4 +324,13 @@ Outputs:
   {{name}}RestApiResource:
     Value:
       Ref: {{name}}RestApi
+  {{name}}RestApiResourceUrl:
+    Value:
+      Fn::Join:
+        - ""
+        - - "https://"
+          - Ref: {{name}}RestApi
+          - ".execute-api."
+          - {"Fn::Sub": "${AWS::Region}"}
+          - ".amazonaws.com/{{parent.apiStage}}"
   {{/each}}

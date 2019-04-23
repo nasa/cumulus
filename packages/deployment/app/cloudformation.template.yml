@@ -78,6 +78,10 @@ Resources:
           Fn::GetAtt:
             - BulkDeleteLambdaFunction
             - Arn
+        CreateReconciliationReportLambdaFunctionArn:
+          Fn::GetAtt:
+            - CreateReconciliationReportLambdaFunction
+            - Arn
         messageConsumerLambdaFunctionArn:
           Fn::GetAtt:
             - messageConsumerLambdaFunction
@@ -432,6 +436,16 @@ Resources:
               - DataStorageNestedStack
               - Outputs.{{this}}DynamoDB
         {{/each}}
+      {{# if this.useDistributionApi}}
+        {{# if ../parent.api_distribution_url}}
+          DISTRIBUTION_ENDPOINT: {{../parent.api_distribution_url}}
+        {{else}}
+          DISTRIBUTION_ENDPOINT:
+            Fn::GetAtt:
+              - CumulusApiDistributionNestedStack
+              - Outputs.distributionRestApiResourceUrl
+        {{/if}}
+      {{/if}}
     {{#each this.envs}}
       {{# if this.function}}
         {{#if this.array}}
@@ -1244,15 +1258,9 @@ Outputs:
     Value: {{api_backend_url}}
   {{else}}
     Value:
-      Fn::Join:
-        - ""
-        - - "https://"
-          - Fn::GetAtt:
-            - CumulusApiBackendNestedStack
-            - Outputs.backendRestApiResource
-          - ".execute-api."
-          - {"Fn::Sub": "${AWS::Region}"}
-          - ".amazonaws.com/{{apiStage}}/"
+      Fn::GetAtt:
+        - CumulusApiBackendNestedStack
+        - Outputs.backendRestApiResourceUrl
   {{/if}}
 
   Distribution:
@@ -1260,15 +1268,9 @@ Outputs:
     Value: {{api_distribution_url}}
   {{else}}
     Value:
-      Fn::Join:
-        - ""
-        - - "https://"
-          - Fn::GetAtt:
-            - CumulusApiDistributionNestedStack
-            - Outputs.distributionRestApiResource
-          - ".execute-api."
-          - {"Fn::Sub": "${AWS::Region}"}
-          - ".amazonaws.com/{{apiStage}}/"
+      Fn::GetAtt:
+        - CumulusApiDistributionNestedStack
+        - Outputs.distributionRestApiResourceUrl
   {{/if}}
 
   ApiId:
