@@ -573,6 +573,11 @@ jk2:
   stackName: jk2
   stackNameNoDash: jk2
 
+jk3:
+  stackName: jk3
+  stackNameNoDash: jk3
+
+
 mboyd-test:
   stackName: mboyd-test
   stackNameNoDash: mboydTest
