@@ -1,4 +1,6 @@
 {
     "high": true,
-    "whitelist": ["tar"]
+    "advisories": [],
+    "whitelist": [],
+    "show-not-found": "false"
 }
