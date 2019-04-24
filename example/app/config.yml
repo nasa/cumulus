@@ -80,6 +80,7 @@ default:
     vpcId: '{{VPC_ID}}'
     subnets:
       - '{{AWS_SUBNET}}'
+    cidrIp: '{{VPC_CIDR_IP}}'
 
   ecs:
     instanceType: t2.medium
@@ -256,9 +257,6 @@ cumulus-sit:
 # -------------------------------
 # CUMULUS individual deployments.
 # -------------------------------
-aj:
-  stackName: aj-integration
-  stackNameNoDash: AjIntegration
 
 aimee:
   stackName: aimee
@@ -270,6 +268,27 @@ lf:
 
   es:
     name: estest
+
+  buckets:
+    internal:
+      name: lf-internal
+      type: internal
+    private:
+      name: lf-private
+      type: private
+    protected:
+      name: lf-protected
+      type: protected
+    public:
+      name: lf-cumulus-public
+      type: public
+    protected-2:
+      name: lf-protected-2
+      type: protected
+
+lf-test-2:
+  stackName: lf-test-2
+  stackNameNoDash: lfTest2
 
   buckets:
     internal:
