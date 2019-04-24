@@ -1,10 +1,17 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### PLEASE NOTE
+
+**CUMULUS-802** added some additional IAM permissions to support ECS autoscaling, so **you will have to redeploy your IAM stack.**
+
+As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must delete your existing stacks (except IAM) before deploying this version of Cumulus.**
 
 ### BREAKING CHANGES
 
@@ -18,6 +25,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - Then, verify synced S3 file size if `fileSize` is in the file record (throws `UnexpectedFileSize` on fail),
       else log warning that no fileSize is available.
     - Pass the step.
+- **CUMULUS-1264**
+  - The Cloudformation templating and deployment configuration has been substantially refactored.
+    - `CumulusApiDefault` nested stack resource has been renamed to `CumulusApiDistribution`
+    - `CumulusApiV1` nested stack resource has been renamed to `CumulusApiBackend`
+    - `DataStorage` nested stack resource has been added for managing resources related to data persistence (DynamoDB and Elasticsearch)
+  - The `urs: true` config option for when defining your lambdas (e.g. in `lambdas.yml`) has been deprecated. There are two new options to replace it:
+    - `urs_redirect: 'token'`: This will expose a `TOKEN_REDIRECT_ENDPOINT` environment variable to your lambda that references the `/token` endpoint on the Cumulus backend API
+    - `urs_redirect: 'distribution'`: This will expose a `DISTRIBUTION_REDIRECT_ENDPOINT` environment variable to your lambda that references the `/redirect` endpoint on the Cumulus distribution API
+- **CUMULUS-1193**
+  - The elasticsearch instance is moved behind the VPC.
+  - Your account will need an Elasticsearch Service Linked role. This is a one-time setup for the account. You can follow the instructions to use the AWS console or AWS CLI [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/using-service-linked-roles.html) or use the following Cloudformation yaml in your `app` or `iam` `cloudformation.template.yml`, deploy one time, and remove:
+  ```yaml
+  ESServiceLinkedRole:
+      Type: 'AWS::IAM::ServiceLinkedRole'
+      Properties:
+        AWSServiceName: es.amazonaws.com
+  ```
+  - You will need to populate `VPC_CIDR_IP` in your `app/.env` file. The IPv4 CIDR can be found in your AWS Console in your VPC settings.
 
 ## Added
 
@@ -45,6 +70,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Moved reindex CLI functionality to an API endpoint
 
 ### Fixed
+
 - **CUMULUS-1203**
   - Fixes IAM template's use of intrinsic functions such that IAM template overrides now work with kes
 

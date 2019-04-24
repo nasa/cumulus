@@ -28,15 +28,18 @@ default:
   processDefaultDeadLetterQueues: true
 
   nested_templates:
-    CumulusApiDefault:
+    CumulusApiDistribution:
       cfFile: node_modules/@cumulus/deployment/app/cumulus_api.template.yml
-      configFile: node_modules/@cumulus/deployment/app/cumulus_api_default.config.yml
-    CumulusApiV1:
+      configFile: node_modules/@cumulus/deployment/app/cumulus_api_distribution.config.yml
+    CumulusApiBackend:
       cfFile: node_modules/@cumulus/deployment/app/cumulus_api.template.yml
-      configFile: node_modules/@cumulus/deployment/app/cumulus_api_v1.config.yml
+      configFile: node_modules/@cumulus/deployment/app/cumulus_api_backend.config.yml
     WorkflowLambdaVersions:
       cfFile: node_modules/@cumulus/deployment/app/workflow_lambda_versions.template.yml
       configFile: node_modules/@cumulus/deployment/app/workflow_lambda_versions.config.yml
+    DataStorage:
+      cfFile: node_modules/@cumulus/deployment/app/data_storage.template.yml
+      configFile: node_modules/@cumulus/deployment/app/data_storage.config.yml
 
   # if not specified the value of the apigatewy backend endpoint is used
   # api_backend_url: https://apigateway-url-to-api-backend/
@@ -77,9 +80,10 @@ default:
 
   # this whole section has to be updated in each deployment section
   vpc:
-    vpcId: xxxxxx #change-me
+    vpcId: '{{VPC_ID}}'         # this has to be set in .env
     subnets:
-      - subnet-xxxxx #change me
+      - '{{AWS_SUBNET}}'        # this has to be set in .env
+    cidrIp: '{{VPC_CIDR_IP}}'   # this has to be set in .env
 
   ecs:
     restartTasksOnDeploy: false
@@ -113,7 +117,7 @@ default:
       storageDriver: overlay2
 
   es:
-    name: es5
+    name: es5vpc
     elasticSearchMapping: 8
     version: 5.3
     instanceCount: 1
@@ -130,6 +134,18 @@ default:
   apiStage: dev
 
   dynamos: !!files ['node_modules/@cumulus/api/config/tables.yml']
+
+  dynamo2ElasticSearch:
+    batchSize: 10
+    startingPosition: TRIM_HORIZON
+    lambda: dbIndexer
+    tables:
+      - CollectionsTable
+      - RulesTable
+      - ProvidersTable
+      - GranulesTable
+      - PdrsTable
+      - ExecutionsTable
 
   # set to true to activate pointInTime on all tables
   enablePointInTime: false
@@ -164,7 +180,7 @@ default:
           protocol: lambda
 
   apis:
-    - name: download
+    - name: distribution
     - name: backend
 
   sqs_consumer_rate: 500
