@@ -222,6 +222,8 @@ class Rule extends Manager {
           name: item.name,
           rule: {
             arn: mappingExists.UUID,
+            // This is needed for the query to determine if the event source is shared
+            logEventArn: mappingExists.UUID,
             type: item.rule.type
           }
         }, lambda.eventType);
