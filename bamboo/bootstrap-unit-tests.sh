@@ -4,9 +4,9 @@ set -e
 export SSH_USERS=user:$(id -u):$(id -u)
 
 ## Setup the compose stack
-docker-compose down
-docker-compose rm -f
-docker-compose up -d
+docker-compose -p $bamboo_planKey down
+docker-compose -p $bamboo_planKey rm -f
+docker-compose -p $bamboo_planKey up -d
 docker ps -a
 
 while ! docker container inspect bamboo_build_env_1; do
