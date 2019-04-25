@@ -94,7 +94,7 @@ default:
     availabilityZone: 'us-east-1b'
     minInstances: 1
     desiredInstances: 1
-    maxInstances: 1
+    maxInstances: 2
     clusterAutoscaling:
       scaleInThresholdPercent: 25
       scaleInAdjustmentPercent: -5

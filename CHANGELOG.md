@@ -44,6 +44,9 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
   ```
   - You will need to populate `VPC_CIDR_IP` in your `app/.env` file. The IPv4 CIDR can be found in your AWS Console in your VPC settings.
 
+- **CUMULUS-802**
+  - ECS `maxInstances` must be greater than `minInstances`. If you use defaults, no change is required.
+
 ## Added
 
 - **CUMULUS-802**
