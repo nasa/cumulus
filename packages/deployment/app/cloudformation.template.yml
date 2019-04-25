@@ -983,7 +983,7 @@ Resources:
     Type: AWS::AutoScaling::AutoScalingGroup
     UpdatePolicy:
       AutoScalingRollingUpdate:
-        MinInstancesInService: 0
+        MinInstancesInService: '{{ ecs.minInstances }}'
     Properties:
       AvailabilityZones:
 {{# if ecs.availabilityZones }}

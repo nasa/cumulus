@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   ```
   - You will need to populate `VPC_CIDR_IP` in your `app/.env` file. The IPv4 CIDR can be found in your AWS Console in your VPC settings.
 
+- **CUMULUS-802**
+  - ECS `maxInstances` must be greater than `minInstances`. If you use defaults, no change is required.
+
 ## Added
 
 - **CUMULUS-802**
