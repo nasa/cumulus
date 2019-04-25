@@ -17,6 +17,14 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
 
 - **CUMULUS-1212**
   - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
+- **CUMULUS-1232**
+  - `@cumulus/sync-granule` will no longer silently pass if no checksum data is provided. It will use input
+  from the granule object to:
+    - Verify checksum if `checksumType` and `checksumValue` are in the file record OR a checksum file is provided
+      (throws `InvalidChecksum` on fail), else log warning that no checksum is available.
+    - Then, verify synced S3 file size if `fileSize` is in the file record (throws `UnexpectedFileSize` on fail),
+      else log warning that no fileSize is available.
+    - Pass the step.
 - **CUMULUS-1264**
   - The Cloudformation templating and deployment configuration has been substantially refactored.
     - `CumulusApiDefault` nested stack resource has been renamed to `CumulusApiDistribution`
@@ -46,6 +54,14 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
 
 - **CUMULUS-1236**
   - Moves access to public files behind the distribution endpoint.  Authentication is not required, but direct http access has been disallowed.
+
+- **CUMULUS-1232**
+  - Unifies duplicate handling in `ingest/granule.handleDuplicateFile` for maintainability.
+  - Changed `ingest/granule.ingestFile` and `move-granules/index.moveFileRequest` to use new function.
+  - Moved file versioning code to `ingest/granule.moveGranuleFileWithVersioning`
+  - `ingest/granule.verifyFile` now also tests `fileSize` for verification if it is in the file record and throws
+    `UnexpectedFileSize` error for    fileSize not matching input.
+  - `ingest/granule.verifyFile` logs warnings if checksum and/or fileSize are not available.
 
 - **CUMULUS-1223**
   - Adds unauthenticated access for public bucket files to the Distribution API.  Public files should be requested the same way as protected files, but for public files a redirect to a self-signed S3 URL will happen without requiring authentication with Earthdata login.
