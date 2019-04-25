@@ -1,5 +1,0 @@
-# Resources:
-#   ESServiceLinkedRole:
-#       Type: 'AWS::IAM::ServiceLinkedRole'
-#       Properties:
-#         AWSServiceName: es.amazonaws.com
