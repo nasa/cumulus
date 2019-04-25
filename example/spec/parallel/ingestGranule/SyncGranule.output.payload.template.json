@@ -10,7 +10,7 @@
           "name": "replace-me-granuleId.hdf",
           "bucket": "",
           "filename": "",
-          "fileSize": 17865615,
+          "fileSize": 1098034,
           "fileType": "data",
           "path": "replace-me-path",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
@@ -19,7 +19,7 @@
           "name": "replace-me-granuleId.hdf.met",
           "bucket": "",
           "filename": "",
-          "fileSize": 44118,
+          "fileSize": 21708,
           "fileType": "metadata",
           "path": "replace-me-path",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
@@ -28,7 +28,7 @@
           "name": "replace-me-granuleId_ndvi.jpg",
           "bucket": "",
           "filename": "",
-          "fileSize": 44118,
+          "fileSize": 9728,
           "fileType": "browse",
           "path": "replace-me-path",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
