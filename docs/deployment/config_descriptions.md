@@ -205,6 +205,7 @@ and 10 seconds.
 ## es
 Configuration for the Amazon Elasticsearch Service (ES) instance.  You can update `es` properties and add additional ES alarms. For example:
 
+```yaml
     es:
       instanceCount: 2
       alarms:
@@ -213,6 +214,49 @@ Configuration for the Amazon Elasticsearch Service (ES) instance.  You can updat
           comparison_operator: GreaterThanThreshold
           threshold: '{{es.instanceCount}}'
           metric: Nodes
+```
+
+## sns
+
+Cumulus supports configuration and deployment of SNS topics and subscribers using `app/config.yml`. In the following code snippets we'll see an example topic and subscriber configuration.
+
+```yaml
+sns:
+  # this topic receives all the updates from
+  # step functions
+  sftracker:
+    subscriptions:
+      lambda:
+        endpoint:
+          function: Fn::GetAtt
+          array:
+            - sns2elasticsearchLambdaFunction
+            - Arn
+        protocol: lambda
+```
+
+The above code is an example of configuration for an SNS topic that will be called `sftrackerSns` in the resulting `cloudformation.yml` file. Upon deployment, this configuration creates an SNS topic named `<stackname>-sftracker` and subscribes the resource named `sns2elasticsearchLambdaFunction` to that topic so that it will be triggered when any messages are added to that topic.
+
+More information for each of the individual attributes can be found in [AWS SNS Topic Documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-sns-topic.html).
+
+```yaml
+# sns: ...
+  sftrackerSubscription:
+    arn:
+      Fn::GetAtt:
+        - sftrackerSns
+        - Arn
+      endpoint:
+        function: Fn::GetAtt
+          array:
+            - someOtherLambdaFunction
+            - Arn
+        protocol: lambda
+```
+
+This snippet is an example of configuration for a list of SNS Subscriptions. We are adding an existing lambda function (`someOtherLambdaFunction`) as a subscriber to an existing SNS Topic (`sfTrackerSns`). That is, this configuration assumes that the `sftrackerSns` Topic is configured elsewhere (as shown above) and that the definition of a lambda function, `someOtherLambdaFunction`, is in your configuration.
+
+The main difference between this and the previous example is the inclusion of the `sns.arn` attribute - this tells our deployment/compiling step that we're configuring subscriptions, not a new topic. More information for each of the individual attributes can be found in [AWS SNS Subscription Documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-sns-subscription.html).
 
 ## buckets
 
