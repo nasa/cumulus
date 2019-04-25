@@ -109,12 +109,12 @@ module.exports.s3Mixin = (superclass) => class extends superclass {
     log.info('sync params:', params);
     const startTime = new Date();
 
-    await aws.s3().copyObject(params).promise();
+    await aws.s3CopyObject(params);
 
     const syncTimeSecs = (new Date() - startTime) / 1000.0;
     log.info(`s3 Upload completed in ${syncTimeSecs} secs`, s3uri);
-    const objectData = await aws.headObject(params.Bucket, params.Key);
-    log.info(`synced ${objectData.ContentLength} bytes`);
+    const syncedBytes = await aws.getObjectSize(params.Bucket, params.Key);
+    log.info(`synced ${syncedBytes} bytes`);
     return s3uri;
   }
 };
