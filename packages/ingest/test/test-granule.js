@@ -619,15 +619,15 @@ test('ingestFile keeps both new and old data when duplicateHandling is version',
   );
 
   const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
-  t.is(oldfiles[0].duplicate_found, undefined);
   t.is(oldfiles.length, 1);
+  t.is(oldfiles[0].duplicate_found, undefined);
 
   // update the source file with different content and ingest again
   params.Body = randomString();
   await s3PutObject(params);
   const newfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
-  t.true(oldfiles[0].duplicate_found);
   t.is(newfiles.length, 2);
+  t.true(newfiles[0].duplicate_found);
 });
 
 test('ingestFile throws error when configured to handle duplicates with error', async (t) => {
@@ -664,6 +664,193 @@ test('ingestFile throws error when configured to handle duplicates with error', 
   const destFileKey = path.join(fileStagingDir, testGranule.collectionId, file.name);
   t.true(error instanceof errors.DuplicateFile);
   t.is(error.message, `${destFileKey} already exists in ${destBucket} bucket`);
+});
+
+test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
+  const sourceBucket = t.context.internalBucket;
+  const destBucket = t.context.destBucket;
+  const file = {
+    path: randomString(),
+    name: 'test.txt'
+  };
+  const key = path.join(file.path, file.name);
+  const params = { Bucket: sourceBucket, Key: key, Body: randomString(30) };
+  await s3PutObject(params);
+
+  const duplicateHandling = 'skip';
+  const fileStagingDir = 'file-staging';
+  const testGranule = new TestS3Granule(
+    {},
+    collectionConfig,
+    {
+      host: sourceBucket
+    },
+    fileStagingDir,
+    false,
+    duplicateHandling,
+  );
+
+  const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  t.is(oldfiles.length, 1);
+  t.is(oldfiles[0].duplicate_found, undefined);
+  t.is(oldfiles[0].fileSize, params.Body.length);
+
+  // update the source file with different content and ingest again
+  params.Body = randomString(100);
+  await s3PutObject(params);
+  const newfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  t.is(newfiles.length, 1);
+  t.true(newfiles[0].duplicate_found);
+  t.is(newfiles[0].fileSize, oldfiles[0].fileSize);
+  t.not(newfiles[0].fileSize, params.Body.length);
+});
+
+test('ingestFile replaces file when duplicateHandling is replace', async (t) => {
+  const sourceBucket = t.context.internalBucket;
+  const destBucket = t.context.destBucket;
+  const file = {
+    path: randomString(),
+    name: 'test.txt'
+  };
+  const key = path.join(file.path, file.name);
+  const params = { Bucket: sourceBucket, Key: key, Body: randomString(30) };
+  await s3PutObject(params);
+
+  const duplicateHandling = 'replace';
+  const fileStagingDir = 'file-staging';
+  const testGranule = new TestS3Granule(
+    {},
+    collectionConfig,
+    {
+      host: sourceBucket
+    },
+    fileStagingDir,
+    false,
+    duplicateHandling,
+  );
+
+  const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  t.is(oldfiles.length, 1);
+  t.is(oldfiles[0].duplicate_found, undefined);
+  t.is(oldfiles[0].fileSize, params.Body.length);
+
+  // update the source file with different content and ingest again
+  params.Body = randomString(100);
+  await s3PutObject(params);
+  const newfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
+  t.is(newfiles.length, 1);
+  t.true(newfiles[0].duplicate_found);
+  t.not(newfiles[0].fileSize, oldfiles[0].fileSize);
+  t.is(newfiles[0].fileSize, params.Body.length);
+});
+
+test('ingestFile throws an error when invalid checksum is provided', async (t) => {
+  const sourceBucket = t.context.internalBucket;
+  const destBucket = t.context.destBucket;
+
+  const file = {
+    path: '',
+    name: 'test.txt',
+    checksumType: 'md5',
+    checksumValue: 'badchecksum'
+  };
+
+  const Key = path.join(file.path, file.name);
+  const params = { Bucket: sourceBucket, Key, Body: randomString(30) };
+  await s3PutObject(params);
+
+  const duplicateHandling = 'replace';
+  const fileStagingDir = 'file-staging';
+  const testGranule = new TestS3Granule(
+    {},
+    collectionConfig,
+    {
+      host: sourceBucket
+    },
+    fileStagingDir,
+    false,
+    duplicateHandling,
+  );
+
+  const stagingPath = path.join(testGranule.fileStagingDir, testGranule.collectionId);
+  // This test needs to use a unique bucket for each test (or remove the object
+  // added to the destination bucket). Otherwise, it will throw an error on the
+  // first attempt to ingest the file.
+  const error = await t.throws(testGranule.ingestFile(file, destBucket, duplicateHandling));
+  t.true(error instanceof errors.InvalidChecksum);
+  t.is(error.message, `Invalid checksum for S3 object s3://${destBucket}/${stagingPath}/${file.name}`
+    + ` with type ${file.checksumType} and expected sum ${file.checksumValue}`);
+});
+
+test('ingestFile throws an error when no checksum is provided and the fileSize is not as expected', async (t) => {
+  const sourceBucket = t.context.internalBucket;
+  const destBucket = t.context.destBucket;
+
+  const file = {
+    path: '',
+    name: 'test.txt',
+    fileSize: 123456789
+  };
+
+  const Key = path.join(file.path, file.name);
+  const params = { Bucket: sourceBucket, Key, Body: randomString(30) };
+  await s3PutObject(params);
+
+  const duplicateHandling = 'replace';
+  const fileStagingDir = 'file-staging';
+  const testGranule = new TestS3Granule(
+    {},
+    collectionConfig,
+    {
+      host: sourceBucket
+    },
+    fileStagingDir,
+    false,
+    duplicateHandling,
+  );
+
+  // This test needs to use a unique bucket for each test (or remove the object
+  // added to the destination bucket). Otherwise, it will throw an error on the
+  // first attempt to ingest the file.
+  const error = await t.throws(testGranule.ingestFile(file, destBucket, duplicateHandling));
+  t.true(error instanceof errors.UnexpectedFileSize);
+  t.is(error.message, `verifyFile ${file.name} failed: Actual filesize ${params.Body.length}`
+    + ` did not match expected fileSize ${file.fileSize}`);
+});
+
+test('verifyFile returns type and value when file is verified', async (t) => {
+  const sourceBucket = t.context.internalBucket;
+
+  const content = 'test-string';
+
+  const file = {
+    path: '',
+    name: 'test.txt',
+    checksumType: 'md5',
+    checksumValue: '661f8009fa8e56a9d0e94a0a644397d7',
+    fileSize: content.length
+  };
+
+  const Key = path.join(file.path, file.name);
+  const params = { Bucket: sourceBucket, Key, Body: content };
+  await s3PutObject(params);
+
+  const duplicateHandling = 'replace';
+  const fileStagingDir = 'file-staging';
+  const testGranule = new TestS3Granule(
+    {},
+    collectionConfig,
+    {
+      host: sourceBucket
+    },
+    fileStagingDir,
+    false,
+    duplicateHandling,
+  );
+
+  const [type, value] = await testGranule.verifyFile(file, sourceBucket, Key);
+  t.is(type, file.checksumType);
+  t.is(value, file.checksumValue);
 });
 
 test('unversionFilename returns original filename if it has no timestamp', (t) => {

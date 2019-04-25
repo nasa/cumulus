@@ -10,6 +10,7 @@ const {
   fileExists,
   recursivelyDeleteS3Bucket,
   s3,
+  s3PutObject,
   headObject
 } = require('@cumulus/common/aws');
 const {
@@ -45,11 +46,11 @@ test.before(async () => {
 
   const privKey = fs.readFileSync(`../test-data/keys/${privateKey}`, 'utf-8');
 
-  await s3().putObject({
+  await s3PutObject({
     Bucket: bucket,
     Key: `${stackName}/crypto/${privateKey}`,
     Body: privKey
-  }).promise();
+  });
 });
 
 test.after.always(async () => {
