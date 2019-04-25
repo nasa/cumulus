@@ -99,7 +99,7 @@ test('Semaphore.up() cannot increment the count beyond the maximum', async (t) =
     await Promise.all([
       semaphore.up(key, maximum),
       semaphore.up(key, maximum),
-      semaphore.up(key, maximum),
+      semaphore.up(key, maximum)
     ]);
     t.fail('expected error to be thrown');
   } catch (err) {

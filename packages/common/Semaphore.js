@@ -7,14 +7,13 @@ class Semaphore {
     this.tableName = tableName;
   }
 
-  async create(key, max) {
+  async create(key) {
     try {
       const params = {
         TableName: this.tableName,
         Item: {
           key,
-          semvalue: 0,
-          max
+          semvalue: 0
         },
         ConditionExpression: '#key <> :key',
         ExpressionAttributeNames: { '#key': 'key' },
@@ -62,7 +61,7 @@ class Semaphore {
 
   async add(key, count, max) {
     // Create the semaphore if it doesn't exist.
-    await this.create(key, max);
+    await this.create(key);
 
     const updateParams = {
       TableName: this.tableName,
