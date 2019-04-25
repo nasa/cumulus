@@ -1,12 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'stack: {{stackName}} | deployed by Kes'
 Parameters:
-  KinesisInboundEventLoggerLambdaFunction:
-    Type: String
-    Description: 'Arn for KinesisInboundEventLogger Lambda Function'
-  KinesisOutboundEventLoggerLambdaFunction:
-    Type: String
-    Description: 'Arn for KinesisOutboundEventLogger Lambda Function'
   CmrPassword:
     Type: String
     Description: 'Password used to publish CMR records. This is encrypted by Custom::Cumulus'
@@ -20,44 +14,39 @@ Parameters:
     Type: String
     Description: 'Security Group ID'
     Default: 'noValue'
-  log2elasticsearchLambdaFunction:
+  log2elasticsearchLambdaFunctionArn:
     Type: String
-    Description: 'logToElasticsearch Lambda function arn'
-  ScheduleSFLambdaFunction:
-    Type: String
-    Description: 'ScheduleSF lambda function arn'
-  dbIndexerLambdaFunction:
-    Type: String
-    Description: 'Arn for dbIndexer lambda function'
-  messageConsumerLambdaFunction:
-    Type: String
-    Description: 'messageConsumer lambda function arn'
-  CreateReconciliationReportLambdaFunction:
-    Type: String
-    Description: 'CreateReconciliationReport lambda function arn'
-  BulkDeleteLambdaFunction:
+    Description: 'logToElasticsearch Lambda function ARN'
+{{#each apis}}
+  {{#ifEquals name "backend" }}
+  EcsCluster:
     Type: String
   AsyncOperationTaskDefinition:
     Type: String
-  EcsCluster:
+  BulkDeleteLambdaFunctionArn:
     Type: String
-{{#each parent.apis}}
-  {{name}}RestApi:
+    Description: 'BulkDelete Lambda function ARN'
+  CreateReconciliationReportLambdaFunctionArn:
     Type: String
-    Description: restAPI id
-  {{name}}RestApiRootId:
+    Description: 'CreateReconciliationReport Lambda function ARN'
+  messageConsumerLambdaFunctionArn:
     Type: String
-    Description: restAPI root resource id
+    Description: 'messageConsumer Lambda function ARN'
+  ScheduleSFLambdaFunctionArn:
+    Type: String
+    Description: 'ScheduleSF Lambda function ARN'
+  KinesisInboundEventLoggerLambdaFunctionArn:
+    Type: String
+    Description: 'KinesisInboundEventLogger Lambda function ARN'
+  distributionRestApi:
+    Type: String
+    Description: Distribution REST API ID
+  {{/ifEquals}}
 {{/each}}
 {{# each parent.dynamos}}
   {{@key}}DynamoDB:
     Type: String
     Description: '{{@key}} Table name'
-{{/each}}
-{{# each parent.dynamos}}
-  {{@key}}DynamoDBStreamArn:
-    Type: String
-    Description: '{{@key}} Table Stream Arns'
 {{/each}}
 
 Resources:
@@ -65,9 +54,16 @@ Resources:
   #################################################
   # APIGateway config BEGIN
   #################################################
+{{#each apis}}
+  {{name}}RestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: {{../stackName}}-{{name}}
+{{/each}}
+
 {{# if apiMethods}}
 {{# each apiDependencies}}
-  {{# if apiDeploy }}
+  {{# if ../apiDeploy }}
   ApiGatewayDeployment{{../parent.apiStage}}{{name}}:
     DependsOn:
   {{#each methods}}
@@ -147,7 +143,9 @@ Resources:
     Properties:
       ParentId:
     {{# if firstParent}}
-        Ref: {{api}}RestApiRootId
+        Fn::GetAtt:
+          - {{api}}RestApi
+          - RootResourceId
     {{else}}
       {{#each parents}}
         {{this}}
@@ -180,21 +178,52 @@ Resources:
           stackName: {{../stackName}}
           public_buckets: {{{collectBuckets ../parent.buckets "public"}}}
           protected_buckets: {{{collectBuckets ../parent.buckets "protected"}}}
-      {{# if this.urs}}
+        {{#if this.useElasticSearch }}
+        {{#if ../parent.es.name}}
+          ES_HOST:
+            Ref: ElasticSearchDomain
+        {{/if}}
+        {{/if}}
+      {{# ifEquals this.urs_redirect "token"}}
         {{# if ../parent.api_backend_url}}
           TOKEN_REDIRECT_ENDPOINT: {{../parent.api_backend_url}}token
         {{else}}
           TOKEN_REDIRECT_ENDPOINT:
-            Fn::Join: ["", [ "https://", {"Ref": "backendRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}/token"]]
+            Fn::Join:
+              - ""
+              - - "https://"
+                - Ref: backendRestApi
+                - ".execute-api."
+                - {"Fn::Sub": "${AWS::Region}"}
+                - ".amazonaws.com/{{../parent.apiStage}}/token"
         {{/if}}
+      {{/ifEquals}}
+      {{# ifEquals this.urs_redirect "distribution"}}
         {{# if ../parent.api_distribution_url}}
-          DISTRIBUTION_ENDPOINT: {{../parent.api_distribution_url}}
           DISTRIBUTION_REDIRECT_ENDPOINT: {{../parent.api_distribution_url}}redirect
         {{else}}
-          DISTRIBUTION_ENDPOINT:
-            Fn::Join: ["", [ "https://", {"Ref": "downloadRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}"]]
           DISTRIBUTION_REDIRECT_ENDPOINT:
-            Fn::Join: ["", [ "https://", {"Ref": "downloadRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/{{../parent.apiStage}}/redirect"]]
+            Fn::Join:
+              - ""
+              - - "https://"
+                - Ref: distributionRestApi
+                - ".execute-api."
+                - {"Fn::Sub": "${AWS::Region}"}
+                - ".amazonaws.com/{{../parent.apiStage}}/redirect"
+        {{/if}}
+      {{/ifEquals}}
+      {{# if this.useDistributionApi}}
+        {{# if ../parent.api_distribution_url}}
+          DISTRIBUTION_ENDPOINT: {{../parent.api_distribution_url}}
+        {{else}}
+          DISTRIBUTION_ENDPOINT:
+            Fn::Join:
+              - ""
+              - - "https://"
+                - Ref: distributionRestApi
+                - ".execute-api."
+                - {"Fn::Sub": "${AWS::Region}"}
+                - ".amazonaws.com/{{../parent.apiStage}}"
         {{/if}}
       {{/if}}
     {{#each this.envs}}
@@ -265,40 +294,43 @@ Resources:
       - {{@key}}LogGroup
     Properties:
       DestinationArn:
-        Ref: log2elasticsearchLambdaFunction
+        Ref: log2elasticsearchLambdaFunctionArn
       LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
       FilterPattern: ""
-{{/if}}
 
   {{@key}}LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
       RetentionInDays: 30
+{{/if}}
+
+{{# if this.addLogGroup }}
+  {{@key}}LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
+      RetentionInDays: 30
+{{/if}}
+
 {{/each}}
 
   #################################################
   # Lambda config END
   #################################################
 
-{{# if dynamo2ElasticSearch}}
-  #################################################
-  # DynamoDB Event Source Mapping BEGIN
-  #################################################
-
-  {{#each dynamo2ElasticSearch.tables}}
-  {{this}}EventSourceMapping:
-    Type: AWS::Lambda::EventSourceMapping
-    Properties:
-      EventSourceArn:
-        Ref: {{this}}DynamoDBStreamArn
-      FunctionName:
-        Ref: {{../dynamo2ElasticSearch.lambda}}LambdaFunction
-      BatchSize: {{../dynamo2ElasticSearch.batchSize}}
-      StartingPosition: {{../dynamo2ElasticSearch.startingPosition}}
+Outputs:
+  {{#each apis}}
+  {{name}}RestApiResource:
+    Value:
+      Ref: {{name}}RestApi
+  {{name}}RestApiResourceUrl:
+    Value:
+      Fn::Join:
+        - ""
+        - - "https://"
+          - Ref: {{name}}RestApi
+          - ".execute-api."
+          - {"Fn::Sub": "${AWS::Region}"}
+          - ".amazonaws.com/{{../parent.apiStage}}/"
   {{/each}}
-
-  #################################################
-  # DynamoDB Event Source Mapping END
-  #################################################
-{{/if}}
