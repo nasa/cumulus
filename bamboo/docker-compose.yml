@@ -45,6 +45,7 @@ services:
       - LOCALSTACK_HOST=127.0.0.1
       - LOCAL_ES_HOST=127.0.0.1
       - CI_UID
+      - bamboo_planKey
     ports:
       - "127.0.0.1:2222:2222"
       - "127.0.0.1:3030:3030"
