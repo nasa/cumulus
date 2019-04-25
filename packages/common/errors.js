@@ -88,6 +88,8 @@ module.exports = {
 
   DuplicateFile: createErrorType('DuplicateFile'),
 
+  UnexpectedFileSize: createErrorType('UnexpectedFileSize'),
+
   // Error thrown when system encounters a conflicting request.
   InvalidArgument: createErrorType('InvalidArgument'),
 
