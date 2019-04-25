@@ -47,6 +47,7 @@ const {
   deleteFolder,
   getExecutionUrl,
   loadConfig,
+  uploadTestDataToBucket,
   updateAndUploadTestDataToBucket
 } = require('../../helpers/testUtils');
 
@@ -61,7 +62,10 @@ const origPdrFilename = 'MOD09GQ_1granule_v3.PDR';
 let pdrFilename;
 
 const s3data = [
-  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR',
+  '@cumulus/test-data/pdrs/MOD09GQ_1granule_v3.PDR'
+];
+
+const unmodifiedS3Data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
@@ -99,6 +103,11 @@ describe('Ingesting from PDR', () => {
           { old: 'cumulus-test-data/pdrs', new: testDataFolder },
           { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` }
         ]
+      ),
+      uploadTestDataToBucket(
+        config.bucket,
+        unmodifiedS3Data,
+        testDataFolder
       ),
       addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
@@ -239,7 +248,7 @@ describe('Ingesting from PDR', () => {
             parsePdrExecutionArn,
             'ParsePdr'
           );
-          expect(parseLambdaOutput.payload.granules.length).toEqual(1);
+          expect(parseLambdaOutput.payload.granules).toEqual(expectedParsePdrOutput.granules);
         });
       });
 
