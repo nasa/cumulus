@@ -31,11 +31,12 @@ test.after.always(async () => {
 
 test('Semaphore.add() can increase the count up to the maximum', async (t) => {
   const { semaphore, key } = t.context;
+  const maximum = 2;
 
   try {
     await Promise.all([
-      semaphore.add(key, 1, 2),
-      semaphore.add(key, 1, 2)
+      semaphore.add(key, 1, maximum),
+      semaphore.add(key, 1, maximum)
     ]);
   } catch (err) {
     console.log(err);
@@ -47,12 +48,25 @@ test('Semaphore.add() can increase the count up to the maximum', async (t) => {
 
 test('Semaphore.add() cannot increment the count beyond the maximum', async (t) => {
   const { semaphore, key } = t.context;
+  const maximum = 1;
 
   try {
     await Promise.all([
-      semaphore.add(key, 1, 1),
-      semaphore.add(key, 1, 1)
+      semaphore.add(key, 1, maximum),
+      semaphore.add(key, 1, maximum)
     ]);
+    t.fail('expected error to be thrown');
+  } catch (err) {
+    t.pass();
+  }
+});
+
+test('Semaphore.add() cannot increment when maximum is 0', async (t) => {
+  const { semaphore, key } = t.context;
+  const maximum = 0;
+
+  try {
+    await semaphore.add(key, 1, maximum);
     t.fail('expected error to be thrown');
   } catch (err) {
     t.pass();
@@ -61,11 +75,12 @@ test('Semaphore.add() cannot increment the count beyond the maximum', async (t) 
 
 test('Semaphore.up() can increment the count to the maximum', async (t) => {
   const { semaphore, key } = t.context;
+  const maximum = 2;
 
   try {
     await Promise.all([
-      semaphore.up(key, 2),
-      semaphore.up(key, 2)
+      semaphore.up(key, maximum),
+      semaphore.up(key, maximum)
     ]);
   } catch (err) {
     console.log(err);
@@ -77,17 +92,16 @@ test('Semaphore.up() can increment the count to the maximum', async (t) => {
 
 test('Semaphore.up() cannot increment the count beyond the maximum', async (t) => {
   const { semaphore, key } = t.context;
+  const maximum = 2;
 
   try {
     await Promise.all([
-      semaphore.up(key, 2),
-      semaphore.up(key, 2),
-      semaphore.up(key, 2)
+      semaphore.up(key, maximum),
+      semaphore.up(key, maximum),
+      semaphore.up(key, maximum)
     ]);
     t.fail('expected error to be thrown');
   } catch (err) {
     t.pass();
   }
 });
-
-test.todo('Use 0 as max');

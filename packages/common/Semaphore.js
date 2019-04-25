@@ -96,7 +96,7 @@ class Semaphore {
       ReturnValues: 'UPDATED_NEW'
     };
 
-    if (count > 0 && max > 0) {
+    if (count > 0 && max >= 0) {
       // Determine the effective maximum for this operation and prevent
       // semaphore value from exceeding overall maximum.
       //
