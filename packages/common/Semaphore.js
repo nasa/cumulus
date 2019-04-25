@@ -31,19 +31,19 @@ class Semaphore {
     }
   }
 
-  up(key) {
-    return this.add(key, 1);
+  up(key, maximum) {
+    return this.add(key, 1, maximum);
   }
 
-  down(key) {
-    return this.add(key, -1);
+  down(key, maximum) {
+    return this.add(key, -1, maximum);
   }
 
-  async checkout(key, count, fn) {
+  async checkout(key, count, max, fn) {
     let result = null;
     log.info(`Incrementing ${key} by ${count}`);
     try {
-      await this.add(key, count);
+      await this.add(key, count, max);
     } catch (e) {
       if (e.message === 'The conditional request failed') {
         throw new ResourcesLockedError(`Could not increment ${key} by ${count}`);
@@ -60,17 +60,9 @@ class Semaphore {
     return result;
   }
 
-  async add(key, count) {
-    const getParams = {
-      TableName: this.tableName,
-      Key: {
-        key
-      }
-    };
-    const getResponse = await this.docClient.get(getParams).promise();
-    if (!getResponse.Item) {
-      throw new Error(`Semaphore ${key} does not exist`);
-    }
+  async add(key, count, max) {
+    // Create the semaphore if it doesn't exist.
+    await this.create(key, max);
 
     const updateParams = {
       TableName: this.tableName,
@@ -79,15 +71,26 @@ class Semaphore {
       },
       UpdateExpression: 'set #semvalue = #semvalue + :val',
       ExpressionAttributeNames: {
-        '#semvalue': 'semvalue',
-        '#max': 'max'
+        '#semvalue': 'semvalue'
       },
       ExpressionAttributeValues: {
         ':val': count
       },
-      ReturnValues: 'UPDATED_NEW',
-      ConditionExpression: '#semvalue < #max'
+      ReturnValues: 'UPDATED_NEW'
     };
+
+    if (count > 0 && max >= 0) {
+      // Determine the effective maximum for this operation and prevent
+      // semaphore value from exceeding overall maximum.
+      //
+      // If we are incrementing the semaphore by 1 and the maximum is 1,
+      // then the effective maximum for this operation is that the semaphore
+      // value should not already exceed 0 (1 - 1 = 0). If it does already
+      // exceed 0, then incrementing the semaphore by one would exceed the
+      // maximum (1 + 1 > 1);
+      updateParams.ExpressionAttributeValues[':max'] = max - count;
+      updateParams.ConditionExpression = '#semvalue <= :max';
+    }
 
     return this.docClient.update(updateParams).promise();
   }
