@@ -814,7 +814,7 @@ test('ingestFile throws an error when no checksum is provided and the fileSize i
   // first attempt to ingest the file.
   const error = await t.throws(testGranule.ingestFile(file, destBucket, duplicateHandling));
   t.true(error instanceof errors.UnexpectedFileSize);
-  t.is(error.message, `verifyFile failed: Actual filesize ${params.Body.length}`
+  t.is(error.message, `verifyFile ${file.name} failed: Actual filesize ${params.Body.length}`
     + ` did not match expected fileSize ${file.fileSize}`);
 });
 
