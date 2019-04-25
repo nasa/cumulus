@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 container_id=${bamboo_planKey,,}
-container_id=$(container_id/-/)
+container_id=${container_id/-/}
 docker ps -a ## Show running containers for output logs
 
 # Run unit tests, excluding integration/api tests

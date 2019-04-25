@@ -3,7 +3,7 @@ set -e
 
 SSH_USERS=user:$(id -u):$(id -u)
 container_id=${bamboo_planKey,,}
-container_id=$(container_id/-/)
+container_id=${container_id/-/}
 
 ## Setup the compose stack
 docker-compose -p ${container_id} down
