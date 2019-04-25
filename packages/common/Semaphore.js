@@ -22,7 +22,9 @@ class Semaphore {
       };
       await this.docClient.put(params).promise();
     } catch (e) {
-      // If condition fails, then row already exists, which is good and we can continue
+      // Only re-throw errors that are not conditional check failures. A
+      // conditional check failure here means that a row tracking the semaphore
+      // for this key already exists, which is expected after the first operation.
       if (e.code !== 'ConditionalCheckFailedException') {
         throw e;
       }
@@ -72,7 +74,9 @@ class Semaphore {
       };
       await this.docClient.put(params).promise();
     } catch (e) {
-      // If condition fails, then row already exists, which is good and we can continue
+      // Only re-throw errors that are not conditional check failures. A
+      // conditional check failure here means that a row tracking the semaphore
+      // for this key already exists, which is expected after the first operation.
       if (e.code !== 'ConditionalCheckFailedException') {
         throw e;
       }
@@ -93,7 +97,18 @@ class Semaphore {
     };
 
     if (count > 0 && max > 0) {
+      // Determine the effective maximum for this operation and prevent
+      // semaphore value from exceeding overall maximum.
+      //
+      // If we are incrementing the semaphore by 1 and the maximum is 1,
+      // then the effective maximum for this operation is that the semaphore
+      // value should not already exceed 0 (1 - 1 = 0). If it does already
+      // exceed 0, then incrementing the semaphore by one would exceed the
+      // maximum (1 + 1 > 1);
       updateParams.ExpressionAttributeValues[':max'] = max - count;
+      updateParams.ConditionExpression = '#semvalue <= :max';
+
+      // updateParams.ExpressionAttributeValues[':max'] = max;
       // updateParams.ConditionExpression = '#semvalue <= #max';
     }
 
