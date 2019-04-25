@@ -6,7 +6,7 @@ const path = require('path');
 const { PassThrough } = require('stream');
 const Crawler = require('simplecrawler');
 const got = require('got');
-const { log, aws: { buildS3Uri, s3 } } = require('@cumulus/common');
+const { log, aws: { buildS3Uri, promiseS3Upload } } = require('@cumulus/common');
 const { isValidHostname } = require('@cumulus/common/string');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const errors = require('@cumulus/common/errors');
@@ -147,12 +147,12 @@ module.exports.httpMixin = (superclass) => class extends superclass {
     const pass = new PassThrough();
     got.stream(remoteUrl).pipe(pass);
 
-    await s3().upload({
+    await promiseS3Upload({
       Bucket: bucket,
       Key: key,
       Body: pass,
       ContentType: contentType
-    }).promise();
+    });
 
     log.info('Uploading to s3 is complete (http)', s3uri);
     return s3uri;

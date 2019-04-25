@@ -1,0 +1,7 @@
+default:
+
+  apiDeploy: true
+  apis:
+    - name: backend
+
+  lambdas: !!files [ 'node_modules/@cumulus/api/config/backend_api_lambdas.yml' ]

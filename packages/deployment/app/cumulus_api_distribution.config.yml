@@ -1,0 +1,10 @@
+default:
+
+  apiDeploy: true
+
+  apis:
+    - name: distribution
+
+  lambdas: !!files [
+    'node_modules/@cumulus/api/config/distribution_api_lambdas.yml'
+  ]
