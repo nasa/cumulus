@@ -28,15 +28,18 @@ default:
   processDefaultDeadLetterQueues: true
 
   nested_templates:
-    CumulusApiDefault:
+    CumulusApiDistribution:
       cfFile: node_modules/@cumulus/deployment/app/cumulus_api.template.yml
-      configFile: node_modules/@cumulus/deployment/app/cumulus_api_default.config.yml
-    CumulusApiV1:
+      configFile: node_modules/@cumulus/deployment/app/cumulus_api_distribution.config.yml
+    CumulusApiBackend:
       cfFile: node_modules/@cumulus/deployment/app/cumulus_api.template.yml
-      configFile: node_modules/@cumulus/deployment/app/cumulus_api_v1.config.yml
+      configFile: node_modules/@cumulus/deployment/app/cumulus_api_backend.config.yml
     WorkflowLambdaVersions:
       cfFile: node_modules/@cumulus/deployment/app/workflow_lambda_versions.template.yml
       configFile: node_modules/@cumulus/deployment/app/workflow_lambda_versions.config.yml
+    DataStorage:
+      cfFile: node_modules/@cumulus/deployment/app/data_storage.template.yml
+      configFile: node_modules/@cumulus/deployment/app/data_storage.config.yml
 
   # if not specified the value of the apigatewy backend endpoint is used
   # api_backend_url: https://apigateway-url-to-api-backend/
@@ -91,7 +94,7 @@ default:
     availabilityZone: 'us-east-1b'
     minInstances: 1
     desiredInstances: 1
-    maxInstances: 1
+    maxInstances: 2
     clusterAutoscaling:
       scaleInThresholdPercent: 25
       scaleInAdjustmentPercent: -5
@@ -132,6 +135,18 @@ default:
 
   dynamos: !!files ['node_modules/@cumulus/api/config/tables.yml']
 
+  dynamo2ElasticSearch:
+    batchSize: 10
+    startingPosition: TRIM_HORIZON
+    lambda: dbIndexer
+    tables:
+      - CollectionsTable
+      - RulesTable
+      - ProvidersTable
+      - GranulesTable
+      - PdrsTable
+      - ExecutionsTable
+
   # set to true to activate pointInTime on all tables
   enablePointInTime: false
 
@@ -165,7 +180,7 @@ default:
           protocol: lambda
 
   apis:
-    - name: download
+    - name: distribution
     - name: backend
 
   sqs_consumer_rate: 500
