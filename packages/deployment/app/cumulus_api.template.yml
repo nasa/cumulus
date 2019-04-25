@@ -59,6 +59,9 @@ Resources:
     Type: AWS::ApiGateway::RestApi
     Properties:
       Name: {{../stackName}}-{{name}}
+      EndpointConfiguration:
+        Types:
+          - 'PRIVATE'
 {{/each}}
 
 {{# if apiMethods}}
