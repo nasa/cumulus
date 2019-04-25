@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
 export SSH_USERS=user:$(id -u):$(id -u)
