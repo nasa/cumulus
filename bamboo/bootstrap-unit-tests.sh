@@ -9,13 +9,13 @@ docker-compose -p $bamboo_planKey rm -f
 docker-compose -p $bamboo_planKey up -d
 docker ps -a
 
-while ! docker container inspect bamboo_build_env_1; do
+while ! docker container inspect $bamboo_planKey\_build_env_1; do
   echo 'Waiting for build env to be available';
   sleep 5;
 done
 
 ## Setup the build env container once it's started
-docker exec -t bamboo_build_env_1 /bin/bash -c 'npm install --silent --no-progress -g nyc; cd /source/cumulus; npm install --silent  --no-progress; npm run bootstrap-silent'
+docker exec -t $bamboo_planKey\_build_env_1 /bin/bash -c 'npm install --silent --no-progress -g nyc; cd /source/cumulus; npm install --silent  --no-progress; npm run bootstrap-silent'
 
 # Wait for the FTP server to be available
 while ! curl --connect-timeout 5 -sS -o /dev/null ftp://testuser:testpass@127.0.0.1/README.md; do
