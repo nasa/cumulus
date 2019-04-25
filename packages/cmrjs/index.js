@@ -42,6 +42,8 @@ async function getMetadata(cmrLink) {
 
   if (response.statusCode !== 200) {
     return null;
+
+
   }
 
   const body = JSON.parse(response.body);
