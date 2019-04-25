@@ -1,5 +1,5 @@
-const aws = require('./aws');
-const ResourcesLockedError = require('./errors').ResourcesLockedError;
+const { ResourcesLockedError } = require('./errors');
+const log = require('./log');
 
 class Semaphore {
   constructor(docClient, tableName) {
@@ -7,12 +7,34 @@ class Semaphore {
     this.tableName = tableName;
   }
 
-  up(key) {
-    return this.add(key, 1);
+  async create(key, max) {
+    try {
+      const params = {
+        TableName: this.tableName,
+        Item: {
+          key: key,
+          semvalue: 0,
+          max
+        },
+        ConditionExpression: '#key <> :key',
+        ExpressionAttributeNames: { '#key': 'key' },
+        ExpressionAttributeValues: { ':key': key }
+      };
+      await this.docClient.put(params).promise();
+    } catch (e) {
+      // If condition fails, then row already exists, which is good and we can continue
+      if (e.code !== 'ConditionalCheckFailedException') {
+        throw e;
+      }
+    }
   }
 
-  down(key) {
-    return this.add(key, -1);
+  up(key, max) {
+    return this.add(key, 1, max);
+  }
+
+  down(key, max) {
+    return this.add(key, -1, max);
   }
 
   async checkout(key, count, max, fn) {
@@ -48,10 +70,9 @@ class Semaphore {
         ExpressionAttributeNames: { '#key': 'key' },
         ExpressionAttributeValues: { ':key': key }
       };
-      debugger;
-      await aws.improveStackTrace(this.docClient.put(params).promise());
+      await this.docClient.put(params).promise();
     } catch (e) {
-      debugger;
+      // If condition fails, then row already exists, which is good and we can continue
       if (e.code !== 'ConditionalCheckFailedException') {
         throw e;
       }
@@ -60,22 +81,22 @@ class Semaphore {
     const updateParams = {
       TableName: this.tableName,
       Key: { key: key },
-      UpdateExpression: 'set #semvalue = if_not_exists(#semvalue, :zero) + :val',
+      UpdateExpression: 'set #semvalue = #semvalue + :val',
       ExpressionAttributeNames: {
         '#semvalue': 'semvalue'
+        // '#max': 'max'
       },
       ExpressionAttributeValues: {
-        ':val': count,
-        ':zero': 0
+        ':val': count
       },
       ReturnValues: 'UPDATED_NEW'
     };
 
     if (count > 0 && max > 0) {
       updateParams.ExpressionAttributeValues[':max'] = max - count;
-      updateParams.ConditionExpression = '#semvalue <= :max';
+      // updateParams.ConditionExpression = '#semvalue <= #max';
     }
-    debugger;
+
     return this.docClient.update(updateParams).promise();
   }
 }
