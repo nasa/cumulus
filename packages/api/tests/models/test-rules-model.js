@@ -28,7 +28,7 @@ const kinesisRule = {
     type: 'kinesis',
     value: 'my-kinesis-arn'
   },
-  state: 'DISABLED'
+  state: 'ENABLED'
 };
 
 const onetimeRule = {
