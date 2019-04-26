@@ -30,7 +30,7 @@ test.after.always(async () => {
   await manager.deleteTable();
 });
 
-test('Semaphore.add() can increase the count up to the maximum', async (t) => {
+test('Semaphore.add() can increase the semaphore value up to the maximum', async (t) => {
   const { semaphore, key } = t.context;
   const maximum = 2;
 
@@ -47,7 +47,7 @@ test('Semaphore.add() can increase the count up to the maximum', async (t) => {
   t.pass();
 });
 
-test('Semaphore.add() cannot increment the count beyond the maximum', async (t) => {
+test('Semaphore.add() cannot increment the semaphore value beyond the maximum', async (t) => {
   const { semaphore, key } = t.context;
   const maximum = 1;
 
@@ -62,7 +62,7 @@ test('Semaphore.add() cannot increment the count beyond the maximum', async (t) 
   }
 });
 
-test('Semaphore.add() cannot increment when maximum is 0', async (t) => {
+test('Semaphore.add() cannot increment the semaphore value when maximum is 0', async (t) => {
   const { semaphore, key } = t.context;
   const maximum = 0;
 
@@ -74,7 +74,16 @@ test('Semaphore.add() cannot increment when maximum is 0', async (t) => {
   }
 });
 
-test('Semaphore.up() can increment the count to the maximum', async (t) => {
+test('Semaphore.up() increments the semaphore value', async (t) => {
+  const { semaphore, key } = t.context;
+  const maximum = 1;
+
+  await semaphore.up(key, maximum);
+  const response = await semaphore.get(key);
+  t.is(response.Item.semvalue, 1);
+});
+
+test('Semaphore.up() can increment the semaphore value to the maximum', async (t) => {
   const { semaphore, key } = t.context;
   const maximum = 2;
 
@@ -91,7 +100,7 @@ test('Semaphore.up() can increment the count to the maximum', async (t) => {
   t.pass();
 });
 
-test('Semaphore.up() cannot increment the count beyond the maximum', async (t) => {
+test('Semaphore.up() cannot increment the semaphore value beyond the maximum', async (t) => {
   const { semaphore, key } = t.context;
   const maximum = 2;
 
@@ -107,19 +116,36 @@ test('Semaphore.up() cannot increment the count beyond the maximum', async (t) =
   }
 });
 
+test('Semaphore.down() cannot decrement the semaphore value below 0', async (t) => {
+  const { semaphore, key } = t.context;
+  const maximum = 1;
+
+  try {
+    await semaphore.down(key, maximum);
+    t.fail('expected error to be thrown');
+  } catch (err) {
+    t.pass();
+  }
+});
+
+test('Semaphore.down() decrements the semaphore value', async (t) => {
+  const { semaphore, key } = t.context;
+  const maximum = 1;
+
+  await semaphore.up(key, maximum);
+  await semaphore.down(key, maximum);
+  const response = await semaphore.get(key);
+  t.is(response.Item.semvalue, 0);
+});
+
 test('Semaphore.up() and Semaphore.down() properly update semaphore value', async (t) => {
   const { semaphore, key } = t.context;
   const maximum = 2;
 
-  try {
-    await semaphore.up(key, maximum);
-    await semaphore.up(key, maximum);
-    await semaphore.down(key, maximum);
-    await semaphore.up(key, maximum);
-  } catch (err) {
-    console.log(err);
-    t.fail();
-  }
-
-  t.pass();
+  await semaphore.up(key, maximum);
+  await semaphore.up(key, maximum);
+  await semaphore.down(key, maximum);
+  await semaphore.up(key, maximum);
+  const response = await semaphore.get(key);
+  t.is(response.Item.semvalue, 2);
 });

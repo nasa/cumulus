@@ -30,6 +30,15 @@ class Semaphore {
     }
   }
 
+  get(key) {
+    return this.docClient.get({
+      TableName: this.tableName,
+      Key: {
+        key
+      }
+    }).promise();
+  }
+
   up(key, maximum) {
     return this.add(key, 1, maximum);
   }
@@ -78,7 +87,7 @@ class Semaphore {
       ReturnValues: 'UPDATED_NEW'
     };
 
-    if (count > 0 && max >= 0) {
+    if (count >= 0 && max >= 0) {
       // Determine the effective maximum for this operation and prevent
       // semaphore value from exceeding overall maximum.
       //
@@ -87,8 +96,17 @@ class Semaphore {
       // value should not already exceed 0 (1 - 1 = 0). If it does already
       // exceed 0, then incrementing the semaphore by one would exceed the
       // maximum (1 + 1 > 1);
-      updateParams.ExpressionAttributeValues[':max'] = max - count;
+      const effectiveMax = max - count;
+      updateParams.ExpressionAttributeValues[':max'] = effectiveMax;
       updateParams.ConditionExpression = '#semvalue <= :max';
+    } else if (count < 0) {
+      // Semaphore value should not go below 0. if this operation is
+      // decrementing the semaphore value, ensure that the current
+      // semaphore value is large enough to not go below 0 after
+      // the decrement operation.
+      const effectiveMin = 0 - count;
+      updateParams.ExpressionAttributeValues[':min'] = effectiveMin;
+      updateParams.ConditionExpression = '#semvalue >= :min';
     }
 
     return this.docClient.update(updateParams).promise();
