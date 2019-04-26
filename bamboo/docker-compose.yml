@@ -16,7 +16,6 @@ services:
       - ../packages/test-data:/usr/local/apache2/htdocs:ro
       - ./httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
   sftp:
-    # image: panubo/sshd:latest
     image: nsidc/panubo_sshd:latest
     command: /bootstrap-sftp.sh
     network_mode: "service:build_env"
