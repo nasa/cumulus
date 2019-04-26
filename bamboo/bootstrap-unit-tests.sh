@@ -6,7 +6,6 @@ export SSH_USERS=user:$(id -u):$(id -u)
 ## Set container_id for docker-compose to use to identify the compose stack per planKey
 container_id=${bamboo_planKey,,}
 container_id=${container_id/-/}
-container_id=bamboo
 docker_command='docker exec -t ${container_id}\_build_env_1 /bin/bash -c'
 
 docker ps -a
@@ -77,7 +76,6 @@ echo 'Elasticsearch status is green'
 
 # Update Elasticsearch config to stop complaining about running out of disk space
 $docker_command 'curl -XPUT "http://127.0.0.1:9200/_cluster/settings" -d @/source/cumulus/bamboo/elasticsearch.config'
-
 
 # Lambda seems to be the last service that's started up by Localstack
 while ! $docker_command 'nc -z 127.0.0.1 4574'; do
