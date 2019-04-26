@@ -9,7 +9,7 @@ docker ps -a
 ## Setup the compose stack
 docker-compose -p ${container_id} down
 docker-compose -p ${container_id} rm -f
-docker-compose -p ${container_id} up -d
+docker-compose -p ${container_id} up &
 docker ps -a
 
 while ! docker container inspect ${container_id}\_build_env_1; do
