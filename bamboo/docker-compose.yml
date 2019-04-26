@@ -37,7 +37,7 @@ services:
     environment:
       SERVICES: 'kinesis,lambda,s3,sns,sqs,dynamodb,dynamodbstreams'
   build_env:
-    image: node:8.10
+    image: jlkovarik/cumulus_build_env:1
     volumes:
       - ../:/source/cumulus
     environment:
@@ -45,11 +45,4 @@ services:
       - LOCAL_ES_HOST=127.0.0.1
       - CI_UID
       - bamboo_planKey
-    ports:
-      - "127.0.0.1:2222:2222"
-      - "127.0.0.1:3030:3030"
-      - "127.0.0.1:21:21"
-      - "127.0.0.1:9200:9200"
-      - "127.0.0.1:4574:4574"
-      - "127.0.0.1:4550-4570:4550-4570"
     command: tail -f /dev/null
