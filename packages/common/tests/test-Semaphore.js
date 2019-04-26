@@ -83,39 +83,6 @@ test('Semaphore.up() increments the semaphore value', async (t) => {
   t.is(response.Item.semvalue, 1);
 });
 
-test('Semaphore.up() can increment the semaphore value to the maximum', async (t) => {
-  const { semaphore, key } = t.context;
-  const maximum = 2;
-
-  try {
-    await Promise.all([
-      semaphore.up(key, maximum),
-      semaphore.up(key, maximum)
-    ]);
-  } catch (err) {
-    console.log(err);
-    t.fail();
-  }
-
-  t.pass();
-});
-
-test('Semaphore.up() cannot increment the semaphore value beyond the maximum', async (t) => {
-  const { semaphore, key } = t.context;
-  const maximum = 2;
-
-  try {
-    await Promise.all([
-      semaphore.up(key, maximum),
-      semaphore.up(key, maximum),
-      semaphore.up(key, maximum)
-    ]);
-    t.fail('expected error to be thrown');
-  } catch (err) {
-    t.pass();
-  }
-});
-
 test('Semaphore.down() cannot decrement the semaphore value below 0', async (t) => {
   const { semaphore, key } = t.context;
   const maximum = 1;
