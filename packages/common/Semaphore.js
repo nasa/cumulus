@@ -39,6 +39,12 @@ class Semaphore {
     }).promise();
   }
 
+  scan() {
+    return this.docClient.scan({
+      TableName: this.tableName
+    }).promise();
+  }
+
   up(key, maximum) {
     return this.add(key, 1, maximum);
   }

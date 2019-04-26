@@ -14,57 +14,50 @@ const {
  * @returns {Promise} object with response from the three indexer
  */
 async function updatePrioritySemaphore(event) {
-  const payload = JSON.parse(get(event, 'Sns.Message'));
-  const priorityInfo = get(payload, 'cumulus_meta.priorityInfo', null);
-  const executionName = get(payload, 'cumulus_meta.execution_name');
-  const status = get(payload, 'meta.status');
+  const message = JSON.parse(get(event, 'Sns.Message'));
+  const priorityInfo = get(message, 'cumulus_meta.priorityInfo', {});
+  const executionName = get(message, 'cumulus_meta.execution_name');
+  const status = get(message, 'meta.status');
 
-  if (!priorityInfo) {
-    log.info(`Execution ${executionName} does not have any priority, skipping`);
+  if (!status) {
+    log.error(`Could determine execution status for ${executionName}. Skipping`);
     return Promise.resolve();
   }
 
-  const { level, maxExecutions } = priorityInfo;
-  const semaphoreKey = `${level}-executions`;
+  const { key, maxExecutions } = priorityInfo;
+  if (!key || !maxExecutions) {
+    log.info(`Execution ${executionName} does not have any priority. Skipping`);
+    return Promise.resolve();
+  }
 
   const semaphore = new Semaphore(
     aws.dynamodbDocClient(),
     process.env.semaphoreTable
   );
 
-  debugger;
-
   if (['failed', 'completed'].includes(status)) {
-    debugger;
-    return semaphore.down(semaphoreKey, maxExecutions);
+    return semaphore.down(key, maxExecutions);
   }
 
-  debugger;
-
-  return semaphore.up(semaphoreKey, maxExecutions);
+  return semaphore.up(key, maxExecutions);
 }
 
 /**
  * Lambda function handler for sfPriorityTracker
  *
- * @param  {Object} event - incoming message sns
+ * @param  {Object} event - incoming message from SNS
  * @param  {Object} context - aws lambda context object
- * @param  {function} cb - aws lambda callback function
  * @returns {Promise}
  */
-function handler(event, _context, cb) {
+async function handler(event, _context) {
   const records = get(event, 'Records');
   if (!records) {
     return cb();
   }
 
-  debugger;
-
   const jobs = records.map(updatePrioritySemaphore);
 
-  return Promise.all(jobs)
-    .then(() => cb(null))
-    .catch(cb);
+  return Promise.all(jobs);
 }
 
 module.exports = {

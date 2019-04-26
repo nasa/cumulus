@@ -7,25 +7,25 @@ const {
   },
   aws,
   testUtils: {
-    randomId
+    randomId,
+    randomString
   }
 } = require('@cumulus/common');
 const { Manager } = require('../../models');
 const { handler } = require('../../lambdas/sf-priority-tracker');
 
-const createSnsWorkflowMessage = (status, priorityLevel, maxExecutions = 5) => ({
+const createSnsWorkflowMessage = ({
+  status,
+  priorityInfo
+}) => ({
   Sns: {
     Message: JSON.stringify({
       cumulus_meta: {
-        priorityInfo: {
-          level: priorityLevel,
-          maxExecutions
-        }
+        execution_name: randomString(),
+        priorityInfo
       },
-      payload: {
-        meta: {
-          status
-        }
+      meta: {
+        status
       }
     })
   }
@@ -53,18 +53,98 @@ test.after.always(async () => {
   await manager.deleteTable();
 });
 
-test.cb('increments priority semaphore info for running workflow message', (t) => {
+test('does nothing for a workflow message with no priority info', async (t) => {
   const { semaphore } = t.context;
-  const priorityLevel = 'low';
 
-  t.plan(1);
-  handler({
+  await handler({
     Records: [
-      createSnsWorkflowMessage('running', priorityLevel)
+      createSnsWorkflowMessage({
+        status: 'running'
+      })
     ]
-  }, {}, async () => {
-    const response = await semaphore.get(`${priorityLevel}-executions`);
-    t.is(response.Item.semvalue, 1);
-    t.end();
   });
+
+  const response = await semaphore.scan();
+  t.is(response.Items.length, 0);
+});
+
+test('does nothing for a workflow message with no status', async (t) => {
+  const { semaphore } = t.context;
+
+  await handler({
+    Records: [
+      createSnsWorkflowMessage({})
+    ]
+  });
+
+  const response = await semaphore.scan();
+  t.is(response.Items.length, 0);
+});
+
+test('increments priority semaphore for running workflow message', async (t) => {
+  const { semaphore } = t.context;
+  const key = randomId('low');
+
+  await handler({
+    Records: [
+      createSnsWorkflowMessage({
+        status: 'running',
+        priorityInfo: {
+          key,
+          maxExecutions: 1
+        }
+      })
+    ]
+  });
+
+  const response = await semaphore.get(key);
+  t.is(response.Item.semvalue, 1);
+});
+
+test('decrements priority semaphore for completed workflow message', async (t) => {
+  const { semaphore } = t.context;
+  const key = randomId('low');
+  const maxExecutions = 1;
+
+  // arbitrarily increment semaphore so it can be decremented
+  await semaphore.up(key, maxExecutions);
+
+  await handler({
+    Records: [
+      createSnsWorkflowMessage({
+        status: 'completed',
+        priorityInfo: {
+          key,
+          maxExecutions
+        }
+      })
+    ]
+  });
+
+  const response = await semaphore.get(key);
+  t.is(response.Item.semvalue, 0);
+});
+
+test('decrements priority semaphore for failed workflow message', async (t) => {
+  const { semaphore } = t.context;
+  const key = randomId('low');
+  const maxExecutions = 1;
+
+  // arbitrarily increment semaphore so it can be decremented
+  await semaphore.up(key, maxExecutions);
+
+  await handler({
+    Records: [
+      createSnsWorkflowMessage({
+        status: 'failed',
+        priorityInfo: {
+          key,
+          maxExecutions
+        }
+      })
+    ]
+  });
+
+  const response = await semaphore.get(key);
+  t.is(response.Item.semvalue, 0);
 });
