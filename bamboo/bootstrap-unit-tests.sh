@@ -1,15 +1,19 @@
 #!/bin/bash
 set -e
-
+# Export user information for sshd container
 export SSH_USERS=user:$(id -u):$(id -u)
+
+## Set container_id for docker-compose to use to identify the compose stack per planKey
 container_id=${bamboo_planKey,,}
 container_id=${container_id/-/}
 
 docker ps -a
+
 ## Setup the compose stack
 docker-compose -p ${container_id} down
 docker-compose -p ${container_id} rm -f
 docker-compose -p ${container_id} up -d
+
 docker ps -a
 
 while ! docker container inspect ${container_id}\_build_env_1; do
