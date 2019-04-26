@@ -1,6 +1,11 @@
 const get = require('lodash.get');
-const Semaphore = require('@cumulus/common/Semaphore');
-const aws = require('@cumulus/common/aws');
+const {
+  concurrency: {
+    Semaphore
+  },
+  aws,
+  log
+} = require('@cumulus/common');
 
 /**
  * Update semaphore for executions with priority
@@ -10,27 +15,33 @@ const aws = require('@cumulus/common/aws');
  */
 async function updatePrioritySemaphore(event) {
   const payload = JSON.parse(get(event, 'Sns.Message'));
-  const priorityInfo = get(payload, 'throttle_executions', null);
+  const priorityInfo = get(payload, 'cumulus_meta.priorityInfo', null);
+  const executionName = get(payload, 'cumulus_meta.execution_name');
+  const status = get(payload, 'meta.status');
 
   if (!priorityInfo) {
+    log.info(`Execution ${executionName} does not have any priority, skipping`);
     return Promise.resolve();
   }
 
-  const { priorityLevel, maxExecutions } = priorityInfo;
-  const semaphoreKey = `${priorityLevel}-executions`;
+  const { level, maxExecutions } = priorityInfo;
+  const semaphoreKey = `${level}-executions`;
 
   const semaphore = new Semaphore(
     aws.dynamodbDocClient(),
     process.env.semaphoreTable
   );
 
-  if (['failed', 'completed'].includes(payload.meta.status)) {
-    semaphore.down(semaphoreKey, maxExecutions);
-  } else {
-    semaphore.up(semaphoreKey, maxExecutions);
+  debugger;
+
+  if (['failed', 'completed'].includes(status)) {
+    debugger;
+    return semaphore.down(semaphoreKey, maxExecutions);
   }
 
-  return;
+  debugger;
+
+  return semaphore.up(semaphoreKey, maxExecutions);
 }
 
 /**
@@ -39,16 +50,17 @@ async function updatePrioritySemaphore(event) {
  * @param  {Object} event - incoming message sns
  * @param  {Object} context - aws lambda context object
  * @param  {function} cb - aws lambda callback function
- * @returns {Promise} undefined
+ * @returns {Promise}
  */
-function handler(event, context, cb) {
-  log.debug(JSON.stringify(event));
+function handler(event, _context, cb) {
   const records = get(event, 'Records');
-  let jobs = [];
-
-  if (records) {
-    jobs = records.map(updatePrioritySemaphore);
+  if (!records) {
+    return cb();
   }
+
+  debugger;
+
+  const jobs = records.map(updatePrioritySemaphore);
 
   return Promise.all(jobs)
     .then(() => cb(null))

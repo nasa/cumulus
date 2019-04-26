@@ -6,6 +6,7 @@ const https = require('follow-redirects').https;
 const url = require('url');
 const pLimit = require('p-limit');
 const log = require('./log');
+const Semaphore = require('./Semaphore');
 
 /**
  * Wrap a function to limit how many instances can be run in parallel
@@ -132,6 +133,7 @@ class Mutex {
 
 module.exports = {
   Mutex: Mutex,
+  Semaphore,
   limit: limit,
   mapTolerant: mapTolerant,
   promiseUrl: promiseUrl,
