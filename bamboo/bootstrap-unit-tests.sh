@@ -9,7 +9,7 @@ docker ps -a
 ## Setup the compose stack
 docker-compose -p ${container_id} down
 docker-compose -p ${container_id} rm -f
-docker-compose -p ${container_id} up &
+docker-compose -p ${container_id} up -d
 docker ps -a
 
 while ! docker container inspect ${container_id}\_build_env_1; do
@@ -23,6 +23,7 @@ done
 # Wait for the FTP server to be available
 while ! curl --connect-timeout 5 -sS -o /dev/null ftp://testuser:testpass@127.0.0.1/README.md; do
   echo 'Waiting for FTP to start'
+  docker ps -a
   sleep 2
 done
 echo 'FTP service is available'
@@ -30,6 +31,7 @@ echo 'FTP service is available'
 # Wait for the HTTP server to be available
 while ! curl --connect-timeout 5 -sS -o /dev/null http://127.0.0.1:3030/README.md; do
   echo 'Waiting for HTTP to start'
+  docker ps -a
   sleep 2
 done
 echo 'HTTP service is available'
@@ -55,6 +57,7 @@ echo 'SFTP service is available'
 # Wait for the Elasticsearch service to be available
 while ! nc -z 127.0.0.1 9200; do
   echo 'Waiting for Elasticsearch to start'
+  docker ps -a
   sleep 2
 done
 echo 'Elasticsearch service is started'
@@ -79,6 +82,7 @@ curl -XPUT "http://127.0.0.1:9200/_cluster/settings" -d '
 # Lambda seems to be the last service that's started up by Localstack
 while ! nc -z 127.0.0.1 4574; do
   echo 'Waiting for Localstack Lambda service to start'
+  docker ps -a
   sleep 2
 done
 echo 'Localstack Lambda service is started'
