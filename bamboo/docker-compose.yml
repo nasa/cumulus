@@ -40,6 +40,7 @@ services:
     image: node:8.10
     volumes:
       - ../:/source/cumulus
+      - ./bootstrap-build.sh:/bootstrap-build.sh
     environment:
       - LOCALSTACK_HOST=127.0.0.1
       - LOCAL_ES_HOST=127.0.0.1
@@ -52,4 +53,4 @@ services:
       - "127.0.0.1:9200:9200"
       - "127.0.0.1:4574:4574"
       - "127.0.0.1:4550-4570:4550-4570"
-    command: tail -f /dev/null
+    command: /bootstrap-build.sh

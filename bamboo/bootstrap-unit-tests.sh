@@ -2,6 +2,7 @@
 set -e
 # Export user information for sshd container
 export SSH_USERS=user:$(id -u):$(id -u)
+export CU_UID=$(id -u)
 
 ## Set container_id for docker-compose to use to identify the compose stack per planKey
 container_id=${bamboo_planKey,,}
