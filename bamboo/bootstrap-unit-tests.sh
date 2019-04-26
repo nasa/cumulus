@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-SSH_USERS=user:$(id -u):$(id -u)
+export SSH_USERS=user:$(id -u):$(id -u)
 container_id=${bamboo_planKey,,}
 container_id=${container_id/-/}
 
