@@ -47,6 +47,7 @@ while ! sftp \
   -o "PreferredAuthentications=publickey" \
   user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null; do
   echo 'Waiting for SFTP to start'
+  docker ps -a
   sleep 2
 done
 echo 'SFTP service is available'
