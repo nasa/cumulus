@@ -91,8 +91,6 @@ class Rule extends Manager {
         await this.deleteKinesisEventSources(original);
         await this.addKinesisEventSources(original);
         updated.rule.arn = original.rule.arn;
-      } else {
-        await this.updateKinesisEventSources(original);
       }
       break;
     case 'sns': {
@@ -206,28 +204,25 @@ class Rule extends Manager {
    */
   async addKinesisEventSource(item, lambda) {
     // use the existing event source mapping if it already exists and is enabled
-    const listParams = { FunctionName: lambda.name };
-    const listData = await aws.lambda(listParams).listEventSourceMappings().promise();
+    const listParams = {
+      FunctionName: lambda.name,
+      EventSourceArn: item.rule.value
+    };
+    const listData = await aws.lambda().listEventSourceMappings(listParams).promise();
     if (listData.EventSourceMappings && listData.EventSourceMappings.length > 0) {
-      const mappingExists = listData.EventSourceMappings
-        .find((mapping) => { // eslint-disable-line arrow-body-style
-          return (mapping.EventSourceArn === item.rule.value
-                  && mapping.FunctionArn.includes(lambda.name));
-        });
-      if (mappingExists) {
-        if (mappingExists.State === 'Enabled') {
-          return mappingExists;
-        }
-        await this.deleteKinesisEventSource({
-          name: item.name,
-          rule: {
-            arn: mappingExists.UUID,
-            // This is needed for the query to determine if the event source is shared
-            logEventArn: mappingExists.UUID,
-            type: item.rule.type
-          }
-        }, lambda.eventType);
+      const mappingExists = listData.EventSourceMappings[0];
+      if (mappingExists.State === 'Enabled') {
+        return mappingExists;
       }
+      await this.deleteKinesisEventSource({
+        name: item.name,
+        rule: {
+          arn: mappingExists.UUID,
+          // This is needed for the query to determine if the event source is shared
+          logEventArn: mappingExists.UUID,
+          type: item.rule.type
+        }
+      }, lambda.eventType);
     }
 
     // create event source mapping
@@ -235,39 +230,11 @@ class Rule extends Manager {
       EventSourceArn: item.rule.value,
       FunctionName: lambda.name,
       StartingPosition: 'TRIM_HORIZON',
-      Enabled: item.state === 'ENABLED'
+      Enabled: true
     };
     const data = await aws.lambda().createEventSourceMapping(params).promise();
     return data;
   }
-
-  /**
-   * Update event sources for all mappings in the kinesisSourceEvents
-   * @param {*} item - the rule item
-   * @returns {Promise<Array>} array of responses from the event source update
-   */
-  async updateKinesisEventSources(item) {
-    const updateEvent = this.kinesisSourceEvents.map(
-      (lambda) => this.updateKinesisEventSource(item, lambda.eventType)
-    );
-    return Promise.all(updateEvent);
-  }
-
-  /**
-   * update an event source, only the state can be updated
-   *
-   * @param {Object} item - the rule item
-   * @param {string} eventType - kinesisSourceEvent Type
-   * @returns {Promise} the response from event source update
-   */
-  updateKinesisEventSource(item, eventType) {
-    const params = {
-      UUID: item.rule[this.eventMapping[eventType]],
-      Enabled: item.state === 'ENABLED'
-    };
-    return aws.lambda().updateEventSourceMapping(params).promise();
-  }
-
 
   /**
    * Delete event source mappings for all mappings in the kinesisSourceEvents
@@ -328,6 +295,7 @@ class Rule extends Manager {
       filter: `#nm <> :name AND #rl.#tp = :ruleType AND ${arnClause}`,
       values: queryValues
     });
+
     return (kinesisRules.Count && kinesisRules.Count > 0);
   }
 

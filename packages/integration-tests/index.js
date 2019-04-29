@@ -11,6 +11,10 @@ const fs = require('fs-extra');
 const pLimit = require('p-limit');
 
 const {
+  stringUtils: { globalReplace }
+} = require('@cumulus/common');
+
+const {
   dynamodb,
   ecs,
   s3,
@@ -502,22 +506,47 @@ async function cleanupProviders(stackName, bucket, providersDirectory, postfix) 
  *
  * @param {string} config - Test config used to set environment variables and template rules data
  * @param {string} dataDirectory - the directory of rules json files
- * @param {string} overrides - override rule fields
+ * @param {Object} overrides - override rule fields
+ * @param {string} postfix - string to append to rule name, collection, and provider
  * @returns {Promise.<Array>} array of Rules added
  */
-async function addRules(config, dataDirectory, overrides) {
+async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
   const { stackName, bucket } = config;
   const rules = await setupSeedData(stackName, bucket, dataDirectory);
 
-  const promises = rules.map((rule) => limit(() => {
+  // Rules should be added in serial because in the case of SNS and Kinesis rule types
+  // they may share an event source mapping and running them in parallel will cause a
+  // race conditions
+  const ruleLimit = pLimit(1);
+
+  const promises = rules.map((rule) => ruleLimit(() => {
+    if (postfix) {
+      rule.name += globalReplace(postfix, '-', '_'); // rule cannot have dashes
+      rule.collection.name += postfix;
+      rule.provider += postfix;
+    }
+
     rule = Object.assign(rule, overrides);
     const ruleTemplate = Handlebars.compile(JSON.stringify(rule));
     const templatedRule = JSON.parse(ruleTemplate(config));
+
     const r = new Rule();
-    console.log(`adding rule ${templatedRule.name}`);
+    console.log(`adding rule ${JSON.stringify(templatedRule)}`);
     return r.create(templatedRule);
   }));
   return Promise.all(promises);
+}
+
+/**
+ * add rules to database
+ *
+ * @param {string} config - Test config used to set environment variables and template rules data
+ * @param {string} dataDirectory - the directory of rules json files
+ * @param {Object} overrides - override rule fields
+ * @returns {Promise.<Array>} array of Rules added
+ */
+function addRules(config, dataDirectory, overrides) {
+  return addRulesWithPostfix(config, dataDirectory, overrides, null);
 }
 
 /**
@@ -794,6 +823,7 @@ module.exports = {
   generateCmrFilesForGranules: cmr.generateCmrFilesForGranules,
   generateCmrXml: cmr.generateCmrXml,
   addRules,
+  addRulesWithPostfix,
   deleteRules,
   removeRuleAddedParams,
   isWorkflowTriggeredByRule,
