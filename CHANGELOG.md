@@ -72,6 +72,9 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
 - **CUMULUS-1193**
   - Moved reindex CLI functionality to an API endpoint
 
+- **CUMULUS-1207**
+  - No longer disable lambda event source mappings
+
 ### Fixed
 
 - **CUMULUS-1203**
