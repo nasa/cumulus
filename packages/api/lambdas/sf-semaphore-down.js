@@ -8,12 +8,12 @@ const {
 } = require('@cumulus/common');
 
 /**
- * Update semaphore for executions with priority
+ * Decrement semaphore value for executions with priority
  *
  * @param  {Object} event - incoming cumulus message
  * @returns {Promise} Result of semaphore update operation
  */
-async function updatePrioritySemaphore(event) {
+async function decrementPrioritySemaphore(event) {
   const message = JSON.parse(get(event, 'Sns.Message'));
   const priorityInfo = get(message, 'cumulus_meta.priorityInfo', {});
   const executionName = get(message, 'cumulus_meta.execution_name');
@@ -45,13 +45,13 @@ async function updatePrioritySemaphore(event) {
  * @param  {Object} context - aws lambda context object
  * @returns {Promise}
  */
-async function handler(event, _context) {
+async function handler(event) {
   const records = get(event, 'Records');
   if (!records) {
     return cb();
   }
 
-  const jobs = records.map(updatePrioritySemaphore);
+  const jobs = records.map(decrementPrioritySemaphore);
 
   return Promise.all(jobs);
 }

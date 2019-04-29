@@ -12,7 +12,7 @@ const {
   }
 } = require('@cumulus/common');
 const { Manager } = require('../../models');
-const { handler } = require('../../lambdas/sf-priority-tracker');
+const { handler } = require('../../lambdas/sf-semaphore-down');
 
 const createSnsWorkflowMessage = ({
   status,
@@ -33,12 +33,12 @@ const createSnsWorkflowMessage = ({
 
 let manager;
 
-const setSemaphoreValue = async (key, max) => {
+const setSemaphoreValue = async (key, value) => {
   return aws.dynamodbDocClient().put({
     TableName: process.env.semaphoreTable,
     Item: {
       key,
-      semvalue: max
+      semvalue: value
     }
   }).promise();
 }
