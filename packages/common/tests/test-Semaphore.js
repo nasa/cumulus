@@ -110,9 +110,8 @@ test('Semaphore.up() and Semaphore.down() properly update semaphore value', asyn
   const maximum = 2;
 
   await semaphore.up(key, maximum);
-  await semaphore.up(key, maximum);
   await semaphore.down(key, maximum);
   await semaphore.up(key, maximum);
   const response = await semaphore.get(key);
-  t.is(response.Item.semvalue, 2);
+  t.is(response.Item.semvalue, 1);
 });

@@ -110,9 +110,9 @@ class Semaphore {
       // decrementing the semaphore value, ensure that the current
       // semaphore value is large enough to not go below 0 after
       // the decrement operation.
-      // const effectiveMin = 0 - count;
-      // updateParams.ExpressionAttributeValues[':min'] = effectiveMin;
-      // updateParams.ConditionExpression = '#semvalue >= :min';
+      const effectiveMin = 0 - count;
+      updateParams.ExpressionAttributeValues[':min'] = effectiveMin;
+      updateParams.ConditionExpression = '#semvalue >= :min';
     }
 
     return this.docClient.update(updateParams).promise();
