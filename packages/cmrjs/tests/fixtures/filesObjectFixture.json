@@ -2,7 +2,7 @@
   {
     "name": "MOD09GQ.A6391489.a3Odk1.006.3900731509248.hdf",
     "filepath": "MOD09GQ___006/2016/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248.hdf",
-    "fileType": "data",
+    "type": "data",
     "bucket": "cumulus-test-sandbox-protected",
     "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ___006/2016/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248.hdf",
     "fileSize": 17865615,
@@ -12,7 +12,7 @@
   {
     "name": "MOD09GQ.A6391489.a3Odk1.006.3900731509248.hdf.met",
     "filepath": "MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248.hdf.met",
-    "fileType": "metadata",
+    "type": "metadata",
     "bucket": "cumulus-test-sandbox-private",
     "filename": "s3://cumulus-test-sandbox-private/MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248.hdf.met",
     "fileSize": 44118,
@@ -22,7 +22,7 @@
   {
     "name": "MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg",
     "filepath": "MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg",
-    "fileType": "browse",
+    "type": "browse",
     "bucket": "cumulus-test-sandbox-public",
     "filename": "s3://cumulus-test-sandbox-public/MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248_ndvi.jpg",
     "fileSize": 44118,
@@ -32,7 +32,7 @@
   {
     "name": "MOD09GQ.A6391489.a3Odk1.006.3900731509248.cmr.json",
     "filepath": "MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248.cmr.json",
-    "fileType": "metadata",
+    "type": "metadata",
     "bucket": "cumulus-test-sandbox-protected-2",
     "filename": "s3://cumulus-test-sandbox-protected-2/MOD09GQ___006/TESTFIXTUREDIR/MOD09GQ.A6391489.a3Odk1.006.3900731509248.cmr.json",
     "url_path": "{cmrMetadata.CollectionReference.ShortName}___{cmrMetadata.CollectionReference.Version}/{substring(file.name, 0, 3)}"

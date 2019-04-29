@@ -67,7 +67,7 @@ class Discover {
       this.regexes[f.regex] = {
         collection: this.collection.name,
         bucket: this.buckets[f.bucket].name,
-        fileType: f.fileType
+        type: f.type
       };
     });
   }
@@ -77,7 +77,7 @@ class Discover {
    *
    * @param {Object} file - the file object
    * @returns {Object} Updated file with granuleId, bucket,
-   *                   filetype, and url_path information
+   *                   file type, and url_path information
    */
   setGranuleInfo(file) {
     const granuleIdMatch = file.name.match(this.collection.granuleIdExtraction);
@@ -92,7 +92,7 @@ class Discover {
         granuleId,
         bucket: this.buckets[fileTypeConfig.bucket].name,
         url_path: fileTypeConfig.url_path || this.collection.url_path || '',
-        fileType: fileTypeConfig.fileType || ''
+        type: fileTypeConfig.type || ''
       }
     );
   }

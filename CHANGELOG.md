@@ -43,6 +43,7 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
 
 - **CUMULUS-1269**
   - Brought Cumulus data models in line with CNM JSON schema:
+    - Renamed file object `fileType` field to `type`
 
 ## Added
 

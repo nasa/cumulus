@@ -49,7 +49,7 @@ function updateCmrFileType(payload) {
   payload.input.granules.forEach(
     (g) => {
       g.files.filter(isCMRFile).forEach((cmrFile) => {
-        cmrFile.fileType = 'userSetType';
+        cmrFile.type = 'userSetType';
       });
     }
   );
@@ -222,7 +222,7 @@ test.serial('Should add metadata type to CMR granule files.', async (t) => {
   const outputFiles = output.granules[0].files;
   const cmrOutputFiles = outputFiles.filter((f) => f.filename.includes('.cmr.xml'));
   cmrOutputFiles.forEach((file) => {
-    t.is('metadata', file.fileType);
+    t.is('metadata', file.type);
   });
   t.is(1, cmrOutputFiles.length);
 });
@@ -241,7 +241,7 @@ test.serial('Should update filenames with updated S3 URLs.', async (t) => {
 });
 
 
-test.serial('Should not overwrite CMR fileType if already explicitly set', async (t) => {
+test.serial('Should not overwrite CMR file type if already explicitly set', async (t) => {
   const newPayload = buildPayload(t);
   updateCmrFileType(newPayload);
   const filesToUpload = clonedeep(t.context.filesToUpload);
@@ -250,7 +250,7 @@ test.serial('Should not overwrite CMR fileType if already explicitly set', async
 
   const output = await moveGranules(newPayload);
   const cmrFile = output.granules[0].files.filter((file) => file.filename.includes('.cmr.xml'));
-  t.is('userSetType', cmrFile[0].fileType);
+  t.is('userSetType', cmrFile[0].type);
 });
 
 test.serial('Should preserve object tags.', async (t) => {

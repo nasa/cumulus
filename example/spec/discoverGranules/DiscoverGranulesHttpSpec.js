@@ -85,7 +85,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
       expect(lambdaOutput.payload.granules.length).toEqual(3);
       expect(lambdaOutput.payload.granules[0].granuleId).toEqual('granule-1');
       expect(lambdaOutput.payload.granules[0].files.length).toEqual(2);
-      expect(lambdaOutput.payload.granules[0].files[0].fileType).toEqual('data');
+      expect(lambdaOutput.payload.granules[0].files[0].type).toEqual('data');
     });
   });
 

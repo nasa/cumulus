@@ -15,13 +15,13 @@
           "path": "replace-me-path",
           "fileSize": 1098034,
           "name": "replace-me-granuleId.hdf",
-          "fileType": "data"
+          "type": "data"
         },
         {
           "path": "replace-me-path",
           "fileSize": 21708,
           "name": "replace-me-granuleId.hdf.met",
-          "fileType": "metadata"
+          "type": "metadata"
         }
       ],
       "version": "006",

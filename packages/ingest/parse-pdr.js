@@ -91,7 +91,7 @@ function parseSpec(pdrName, spec) {
     path,
     fileSize,
     name: filename,
-    fileType: pdrToCnmMap[fileType]
+    type: pdrToCnmMap[fileType]
   };
   if (checksumType) parsedSpec.checksumType = checksumType;
   if (checksumValue) parsedSpec.checksumValue = checksumValue;

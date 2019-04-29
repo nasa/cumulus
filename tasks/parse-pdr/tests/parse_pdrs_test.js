@@ -53,7 +53,7 @@ const testGranule = {
 };
 
 const testHdfFile = {
-  fileType: 'data',
+  type: 'data',
   path: '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA',
   fileSize: 17865615,
   checksumType: 'CKSUM',
@@ -63,7 +63,7 @@ const testHdfFile = {
 const testMetFile = {
   path: '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA',
   fileSize: 44118,
-  fileType: 'metadata'
+  type: 'metadata'
 };
 
 test.afterEach(async (t) => {

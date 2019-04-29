@@ -143,9 +143,9 @@ module.exports.collection = {
                          + 'Defaults to the collection url path',
             type: 'string'
           },
-          fileType: {
+          type: {
             title: 'File Type',
-            description: 'CNM file type.  Cumulus uses this for CMR submission.  Non-CNM file types will be treated as "data" fileType',
+            description: 'CNM file type.  Cumulus uses this for CMR submission.  Non-CNM file types will be treated as "data" type',
             type: 'string'
           }
         },
@@ -266,7 +266,7 @@ module.exports.granule = {
           fileSize: { type: 'integer' },
           fileName: { type: 'string' },
           source: { type: 'string' },
-          fileType: { type: 'string' }
+          type: { type: 'string' }
         }
       }
     },

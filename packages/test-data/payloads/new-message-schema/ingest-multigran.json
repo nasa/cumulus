@@ -87,7 +87,7 @@
             "path": "/granules",
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
             "fileSize": 1098034,
-            "fileType": "data",
+            "type": "data",
             "checksumType": "CKSUM",
             "checksumValue": 1435712144
           },
@@ -95,7 +95,7 @@
             "path": "/granules",
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
             "fileSize": 21708,
-            "fileType": "metadata"
+            "type": "metadata"
           }
         ]
       },
@@ -108,7 +108,7 @@
             "path": "/granules",
             "name": "MOD09GQ.A2017224.h27v08.006.2017227165029.hdf",
             "fileSize": 1098034,
-            "fileType": "data",
+            "type": "data",
             "checksumType": "CKSUM",
             "checksumValue": 1435712144
           },
@@ -116,7 +116,7 @@
             "path": "/granules",
             "name": "MOD09GQ.A2017224.h27v08.006.2017227165029.hdf.met",
             "fileSize": 20165,
-            "fileType": "metadata"
+            "type": "metadata"
           }
         ]
       },
@@ -129,7 +129,7 @@
             "path": "/granules",
             "name": "MYD13Q1.A2002185.h00v09.006.2015149071135.hdf",
             "fileSize": 5192514,
-            "fileType": "data",
+            "type": "data",
             "checksumType": "CKSUM",
             "checksumValue": 862302916
           },
@@ -137,19 +137,19 @@
             "path": "/granules",
             "name": "MYD13Q1.A2002185.h00v09.006.2015149071135.hdf.met",
             "fileSize": 46419,
-            "fileType": "metadata"
+            "type": "metadata"
           },
           {
             "path": "/granules",
             "name": "BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.hdf",
             "fileSize": 32795,
-            "fileType": "data"
+            "type": "data"
           },
           {
             "path": "/granules",
             "name": "BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.1.jpg",
             "fileSize": 15797,
-            "fileType": "browse"
+            "type": "browse"
           }
         ]
       }
