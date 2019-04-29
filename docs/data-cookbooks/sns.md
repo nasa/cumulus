@@ -10,6 +10,8 @@ On deployment, an sftracker (Step function tracker) [SNS](https://aws.amazon.com
 
 Workflows can be configured to send SNS messages containing the Cumulus message throughout the workflow by using the [SF-SNS-Report lambda function](https://www.npmjs.com/package/@cumulus/sf-sns-report).
 
+More information on configuring an SNS topic or subscription in Cumulus can be found in our [developer documentation](../deployment/config_descriptions#sns).
+
 ## Pre-Deployment Configuration
 
 ### Workflow Configuration

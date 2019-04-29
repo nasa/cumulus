@@ -2,7 +2,7 @@
 
 const test = require('ava');
 const {
-  createQueue, sqs, s3, recursivelyDeleteS3Bucket
+  createQueue, sqs, s3, s3PutObject, recursivelyDeleteS3Bucket
 } = require('@cumulus/common/aws');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const queue = require('../queue');
@@ -24,11 +24,11 @@ test.beforeEach(async (t) => {
 
   const messageTemplateKey = `${randomString()}/template.json`;
   t.context.messageTemplateKey = messageTemplateKey;
-  await s3().putObject({
+  await s3PutObject({
     Bucket: t.context.templateBucket,
     Key: messageTemplateKey,
     Body: JSON.stringify(t.context.messageTemplate)
-  }).promise();
+  });
 
   t.context.template = `s3://${t.context.templateBucket}/${messageTemplateKey}`;
 });
