@@ -263,7 +263,7 @@ module.exports.granule = {
           checksumType: { type: 'string' },
           checksum: { type: 'string' },
           key: { type: 'string' },
-          fileSize: { type: 'integer' },
+          size: { type: 'integer' },
           fileName: { type: 'string' },
           source: { type: 'string' },
           type: { type: 'string' }

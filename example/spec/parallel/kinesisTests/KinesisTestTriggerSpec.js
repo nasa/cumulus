@@ -82,7 +82,7 @@ const expectedTranslatePayload = {
           bucket: record.bucket,
           path: testDataFolder,
           url_path: recordFile.uri,
-          fileSize: recordFile.size
+          size: recordFile.size
         }
       ]
     }

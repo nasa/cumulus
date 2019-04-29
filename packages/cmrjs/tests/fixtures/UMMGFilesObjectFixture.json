@@ -5,7 +5,7 @@
         "type": "data",
         "bucket": "cumulus-test-sandbox-protected",
         "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ___006/2016/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.hdf",
-        "fileSize": 17865615,
+        "size": 17865615,
         "path": "fixture-IngestUMMGSuccess-1551945983640-test-data/files",
         "url_path": "{cmrMetadata.CollectionReference.ShortName}___{cmrMetadata.CollectionReference.Version}/{extractYear(cmrMetadata.TemporalExtent.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
       },
@@ -15,7 +15,7 @@
         "type": "metadata",
         "bucket": "cumulus-test-sandbox-private",
         "filename": "s3://cumulus-test-sandbox-private/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314.hdf.met",
-        "fileSize": 44118,
+        "size": 44118,
         "path": "fixture-IngestUMMGSuccess-1551945983640-test-data/files",
         "url_path": "{cmrMetadata.CollectionReference.ShortName}___{cmrMetadata.CollectionReference.Version}/{substring(file.name, 0, 3)}"
       },
@@ -25,7 +25,7 @@
         "type": "browse",
         "bucket": "cumulus-test-sandbox-public",
         "filename": "s3://cumulus-test-sandbox-public/MOD09GQ___006/MOD/MOD09GQ.A3411593.1itJ_e.006.9747594822314_ndvi.jpg",
-        "fileSize": 44118,
+        "size": 44118,
         "path": "fixture-IngestUMMGSuccess-1551945983640-test-data/files",
         "url_path": "{cmrMetadata.CollectionReference.ShortName}___{cmrMetadata.CollectionReference.Version}/{substring(file.name, 0, 3)}"
       },
