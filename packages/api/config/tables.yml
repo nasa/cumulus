@@ -109,3 +109,12 @@ AsyncOperationsTable:
     - name: id
       type: S
       schema: HASH
+
+SemaphoresTable:
+  read: 5
+  write: 10
+  pointInTime: '{{enablePointInTime}}'
+  attributes:
+    - name: key
+      type: S
+      schema: HASH
