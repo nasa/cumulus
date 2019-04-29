@@ -24,8 +24,8 @@ async function updatePrioritySemaphore(event) {
     return Promise.resolve();
   }
 
-  const { key, maxExecutions } = priorityInfo;
-  if (!key || !maxExecutions) {
+  const { key } = priorityInfo;
+  if (!key) {
     log.info(`Execution ${executionName} does not have any priority. Skipping`);
     return Promise.resolve();
   }
@@ -35,7 +35,7 @@ async function updatePrioritySemaphore(event) {
     process.env.semaphoreTable
   );
 
-  return semaphore.down(key, maxExecutions);
+  return semaphore.down(key);
 }
 
 /**

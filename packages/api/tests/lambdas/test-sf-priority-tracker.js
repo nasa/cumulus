@@ -91,7 +91,6 @@ test.skip('does nothing for a workflow message with no status', async (t) => {
 
 test('throws error when attempting to decrement semaphore below 0', async (t) => {
   const key = randomId('low');
-  const maxExecutions = 1;
 
   try {
     await handler({
@@ -99,8 +98,7 @@ test('throws error when attempting to decrement semaphore below 0', async (t) =>
         createSnsWorkflowMessage({
           status: 'completed',
           priorityInfo: {
-            key,
-            maxExecutions
+            key
           }
         })
       ]
@@ -114,18 +112,16 @@ test('throws error when attempting to decrement semaphore below 0', async (t) =>
 test('decrements priority semaphore for completed workflow message', async (t) => {
   const { semaphore } = t.context;
   const key = randomId('low');
-  const maxExecutions = 1;
 
   // arbitrarily set semaphore so it can be decremented
-  await setSemaphoreValue(key, maxExecutions);
+  await setSemaphoreValue(key, 1);
 
   await handler({
     Records: [
       createSnsWorkflowMessage({
         status: 'completed',
         priorityInfo: {
-          key,
-          maxExecutions
+          key
         }
       })
     ]
@@ -138,18 +134,16 @@ test('decrements priority semaphore for completed workflow message', async (t) =
 test('decrements priority semaphore for failed workflow message', async (t) => {
   const { semaphore } = t.context;
   const key = randomId('low');
-  const maxExecutions = 1;
 
   // arbitrarily set semaphore so it can be decremented
-  await setSemaphoreValue(key, maxExecutions);
+  await setSemaphoreValue(key, 1);
 
   await handler({
     Records: [
       createSnsWorkflowMessage({
         status: 'failed',
         priorityInfo: {
-          key,
-          maxExecutions
+          key
         }
       })
     ]
@@ -162,25 +156,22 @@ test('decrements priority semaphore for failed workflow message', async (t) => {
 test('handles multiple updates to a single semaphore', async (t) => {
   const { semaphore } = t.context;
   const key = randomId('low');
-  const maxExecutions = 3;
 
   // Arbitrarily set semaphore value so it can be decremented
-  await setSemaphoreValue(key, maxExecutions);
+  await setSemaphoreValue(key, 3);
 
   await handler({
     Records: [
       createSnsWorkflowMessage({
         status: 'failed',
         priorityInfo: {
-          key,
-          maxExecutions
+          key
         }
       }),
       createSnsWorkflowMessage({
         status: 'completed',
         priorityInfo: {
-          key,
-          maxExecutions
+          key
         }
       })
     ]

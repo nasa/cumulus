@@ -49,8 +49,8 @@ class Semaphore {
     return this.add(key, 1, maximum);
   }
 
-  down(key, maximum) {
-    return this.add(key, -1, maximum);
+  down(key) {
+    return this.add(key, -1);
   }
 
   async checkout(key, count, max, fn) {
