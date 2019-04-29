@@ -39,7 +39,7 @@ For more information, see the [ancillary metadata](../features/ancillary_metadat
 
 ### CMR Metadata
 
-When updating granule CMR metadata, the `MoveGranules` task will add the external facing URLs to the CMR metadata file based on the fileType.
+When updating granule CMR metadata, the `MoveGranules` task will add the external facing URLs to the CMR metadata file based on the file type.
 The table below shows how the CNM data types map to CMR metadata updates. Non-CNM file types are handled as 'data' file types.
 The UMM-G column reflects the `RelatedURL`'s `Type` derived from the CNM type, whereas the ECHO10 column shows how the CNM type affects the destination element.
 
@@ -63,7 +63,7 @@ Configuring browse imagery:
   "bucket": "public",
   "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\_[\\d]{1}.jpg$",
   "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_1.jpg",
-  "fileType": "browse"
+  "type": "browse"
 }  
 ```
 
@@ -74,17 +74,17 @@ Configuring a documentation entry:
   "bucket": "protected",
   "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\_README.pdf$",
   "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_README.pdf",
-  "fileType": "metadata"
+  "type": "metadata"
 }
 ```
 
-Configuring other associated files (use fileTypes `metadata` or `qa` as appropriate):
+Configuring other associated files (use types `metadata` or `qa` as appropriate):
 
 ```json
 {
   "bucket": "protected",
   "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\_QA.txt$",
   "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_QA.txt",
-  "fileType": "qa"
+  "type": "qa"
 }
 ```

@@ -32,7 +32,7 @@
               "properties": {
                 "path": { "type": "string" },
                 "name": { "type": "string" },
-                "fileType": { "type": "string" },
+                "type": { "type": "string" },
                 "fileSize": { "type": "number" },
                 "checksumType": { "type": "string" },
                 "checksumValue": { "type": ["string", "number"] }

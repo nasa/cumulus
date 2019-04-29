@@ -78,7 +78,7 @@ const expectedTranslatePayload = {
       files: [
         {
           name: recordFile.name,
-          fileType: recordFile.type,
+          type: recordFile.type,
           bucket: record.bucket,
           path: testDataFolder,
           url_path: recordFile.uri,

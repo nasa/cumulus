@@ -8,19 +8,19 @@
           {
             "path": "/granules",
             "fileSize": 1098034,
-            "fileType": "data",
+            "type": "data",
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf"
           },
           {
             "path": "/granules",
             "fileSize": 21708,
-            "fileType": "metadata",
+            "type": "metadata",
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"
           },
           {
             "path": "/granules",
             "fileSize": 9728,
-            "fileType": "browse",
+            "type": "browse",
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg"
           }
         ]

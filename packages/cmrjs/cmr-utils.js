@@ -316,7 +316,7 @@ function getS3CredentialsObject(s3CredsUrl) {
 }
 
 /**
- * Returns UMM/ECHO10 resource type mapping for CNM fileType
+ * Returns UMM/ECHO10 resource type mapping for CNM file type
  *
  * @param {string} type - CNM resource type to convert to UMM/ECHO10 type
  * @returns {string} type - UMM/ECHO10 resource type
@@ -358,7 +358,7 @@ function constructOnlineAccessUrl({
       URL: urljoin(distEndpoint, extension),
       URLDescription: 'File to download', // used by ECHO10
       Description: 'File to download', // used by UMMG
-      Type: mapCNMTypeToCMRType(file.fileType) // used by UMMG
+      Type: mapCNMTypeToCMRType(file.type) // used by UMMG
     };
   }
   return null;
