@@ -45,8 +45,10 @@ The UMM-G column reflects the `RelatedURL`'s `Type` derived from the CNM type, w
 
 |CNM Type |UMM-G `RelatedUrl.Type` |ECHO10 Location |
 | ------  | ------ | ------ |
+| `ancillary` | `'VIEW RELATED INFORMATION'` | `OnlineResource` |
 | `data` | `'GET DATA'` | `OnlineAccessURL` |
 | `browse` | `'GET RELATED VISUALIZATION'` | `AssociatedBrowseImage` |
+| `linkage` | `'EXTENDED METADATA'` | `OnlineResource` |
 | `metadata` | `'EXTENDED METADATA'` | `OnlineResource` |
 | `qa` | `'EXTENDED METADATA'` | `OnlineResource` |
 
