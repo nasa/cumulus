@@ -136,7 +136,6 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
       expect(workflowExecutions.length).toEqual(1);
 
       const taskInput = await lambdaStep.getStepInput(workflowExecutions[0].executionArn, 'SfSnsReport');
-      console.log(taskInput);
 
       expect(taskInput.meta.collection.name).toEqual(`L2_HR_PIXC${testSuffix}`);
     });
