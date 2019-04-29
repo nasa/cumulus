@@ -32,7 +32,7 @@ async function decrementPrioritySemaphore(event) {
 
   const semaphore = new Semaphore(
     aws.dynamodbDocClient(),
-    process.env.semaphoreTable
+    process.env.SemaphoresTable
   );
 
   return semaphore.down(key);

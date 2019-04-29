@@ -10,9 +10,9 @@ const { Manager } = require('../../api/models');
 let manager;
 
 test.before(async () => {
-  process.env.semaphoreTable = randomString();
+  process.env.SemaphoresTable = randomString();
   manager = new Manager({
-    tableName: process.env.semaphoreTable,
+    tableName: process.env.SemaphoresTable,
     tableHash: { name: 'key', type: 'S' }
   });
   await manager.createTable();
@@ -21,7 +21,7 @@ test.before(async () => {
 test.beforeEach(async (t) => {
   t.context.semaphore = new Semaphore(
     dynamodbDocClient(),
-    process.env.semaphoreTable
+    process.env.SemaphoresTable
   );
   t.context.key = randomId('key');
 });

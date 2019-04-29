@@ -35,7 +35,7 @@ let manager;
 
 const setSemaphoreValue = async (key, value) => {
   return aws.dynamodbDocClient().put({
-    TableName: process.env.semaphoreTable,
+    TableName: process.env.SemaphoresTable,
     Item: {
       key,
       semvalue: value
@@ -44,9 +44,9 @@ const setSemaphoreValue = async (key, value) => {
 }
 
 test.before(async () => {
-  process.env.semaphoreTable = randomId('semaphoreTable');
+  process.env.SemaphoresTable = randomId('semaphoreTable');
   manager = new Manager({
-    tableName: process.env.semaphoreTable,
+    tableName: process.env.SemaphoresTable,
     tableHash: { name: 'key', type: 'S' }
   });
   await manager.createTable();
@@ -55,7 +55,7 @@ test.before(async () => {
 test.beforeEach(async (t) => {
   t.context.semaphore = new Semaphore(
     aws.dynamodbDocClient(),
-    process.env.semaphoreTable
+    process.env.SemaphoresTable
   );
 });
 
