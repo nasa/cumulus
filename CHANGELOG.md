@@ -41,6 +41,9 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
 - **CUMULUS-802**
   - ECS `maxInstances` must be greater than `minInstances`. If you use defaults, no change is required.
 
+- **CUMULUS-1269**
+  - Brought Cumulus data models in line with CNM JSON schema:
+
 ## Added
 
 - **CUMULUS-802**
