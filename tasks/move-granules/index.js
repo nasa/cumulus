@@ -171,7 +171,7 @@ async function moveFileRequest(
       name: path.basename(f.Key),
       filename: buildS3Uri(f.Bucket, f.Key),
       filepath: f.Key,
-      fileSize: f.fileSize,
+      size: f.size,
       url_path: file.url_path
     })));
 }

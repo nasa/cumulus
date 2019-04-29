@@ -13,13 +13,13 @@
       "files": [
         {
           "path": "replace-me-path",
-          "fileSize": 1098034,
+          "size": 1098034,
           "name": "replace-me-granuleId.hdf",
           "type": "data"
         },
         {
           "path": "replace-me-path",
-          "fileSize": 21708,
+          "size": 21708,
           "name": "replace-me-granuleId.hdf.met",
           "type": "metadata"
         }

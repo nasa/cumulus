@@ -103,7 +103,7 @@ async function getFilesMetadata(files) {
 
     return {
       filename: f.filename,
-      fileSize: s3object[0].Size,
+      size: s3object[0].Size,
       LastModified: s3object[0].LastModified
     };
   });
@@ -579,7 +579,7 @@ async function granuleFilesOverwrittenTest(t, newPayload) {
   const currentFilesMetadata = await getFilesMetadata(output.granules[0].files);
 
   const currentHdfFileMeta = currentFilesMetadata.filter((f) => f.filename === outputHdfFile)[0];
-  t.is(currentHdfFileMeta.fileSize, updatedBody.length);
+  t.is(currentHdfFileMeta.size, updatedBody.length);
 
   // check timestamps are updated
   currentFilesMetadata.forEach((f) => {

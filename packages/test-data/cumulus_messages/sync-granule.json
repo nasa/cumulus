@@ -158,14 +158,14 @@
           {
             "path": "/TEST_B/Cumulus/DATA/ID1802151325",
             "name": "pg-PR1A0000-2018021501_001_009",
-            "fileSize": 116511229,
+            "size": 116511229,
             "checksumType": "CKSUM",
             "checksumValue": 2852751863
           },
           {
             "path": "/TEST_B/Cumulus/DATA/ID1802151325",
             "name": "pg-BR1A0000-2018021501_001_009",
-            "fileSize": 171347,
+            "size": 171347,
             "checksumType": "CKSUM",
             "checksumValue": 1536677884
           }

@@ -52,7 +52,7 @@ test.serial('parse-pdr properly parses a simple PDR file', async (t) => {
   const hdfFile = result.granules[0].files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
   t.truthy(hdfFile);
   t.is(hdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
-  t.is(hdfFile.fileSize, 17865615);
+  t.is(hdfFile.size, 17865615);
   t.is(hdfFile.checksumType, 'CKSUM');
   t.is(hdfFile.checksumValue, 4208254019);
   t.is(hdfFile.type, 'data');
@@ -60,7 +60,7 @@ test.serial('parse-pdr properly parses a simple PDR file', async (t) => {
   const metFile = result.granules[0].files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
   t.truthy(metFile);
   t.is(metFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
-  t.is(metFile.fileSize, 44118);
+  t.is(metFile.size, 44118);
   t.is(metFile.type, 'metadata');
 });
 
@@ -98,7 +98,7 @@ test.serial('parse-pdr properly parses PDR with granules of different data-types
   const mod09HdfFile = mod09Granule.files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
   t.truthy(mod09HdfFile);
   t.is(mod09HdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
-  t.is(mod09HdfFile.fileSize, 17865615);
+  t.is(mod09HdfFile.size, 17865615);
   t.is(mod09HdfFile.checksumType, 'CKSUM');
   t.is(mod09HdfFile.checksumValue, 4208254019);
   t.is(mod09HdfFile.type, 'data');
@@ -106,7 +106,7 @@ test.serial('parse-pdr properly parses PDR with granules of different data-types
   const mod09MetFile = mod09Granule.files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
   t.truthy(mod09MetFile);
   t.is(mod09MetFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
-  t.is(mod09MetFile.fileSize, 44118);
+  t.is(mod09MetFile.size, 44118);
   t.is(mod09MetFile.type, 'metadata');
 
   const mod87Granule = result.granules.find((granule) => granule.dataType === 'MOD87GQ');
@@ -118,7 +118,7 @@ test.serial('parse-pdr properly parses PDR with granules of different data-types
   const mod87HdfFile = mod87Granule.files.find((file) => file.name === 'PENS-MOD87GQ.A2017224.h09v02.006.2017227165020.hdf');
   t.truthy(mod87HdfFile);
   t.is(mod87HdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
-  t.is(mod87HdfFile.fileSize, 17865615);
+  t.is(mod87HdfFile.size, 17865615);
   t.is(mod87HdfFile.checksumType, 'CKSUM');
   t.is(mod87HdfFile.checksumValue, 4208254019);
   t.is(mod87HdfFile.type, 'data');
@@ -127,7 +127,7 @@ test.serial('parse-pdr properly parses PDR with granules of different data-types
   const mod87MetFile = mod87Granule.files.find((file) => file.name === 'PENS-MOD87GQ.A2017224.h09v02.006.2017227165020.hdf.met');
   t.truthy(mod87MetFile);
   t.is(mod87MetFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
-  t.is(mod87MetFile.fileSize, 44118);
+  t.is(mod87MetFile.size, 44118);
   t.is(mod87MetFile.type, 'metadata');
 });
 

@@ -77,7 +77,7 @@ async function getFilesMetadata(files) {
 
     return {
       filename: f.filename,
-      fileSize: s3object[0].Size,
+      size: s3object[0].Size,
       LastModified: s3object[0].LastModified
     };
   });
@@ -597,7 +597,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
       Body: newContent
     });
 
-    t.context.event.input.granules[0].files[0].fileSize = newContent.length;
+    t.context.event.input.granules[0].files[0].size = newContent.length;
     t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
       algorithm: t.context.event.input.granules[0].files[0].checksumType,
       bucket: t.context.event.config.provider.host,
@@ -632,7 +632,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
       Body: newerContent
     });
 
-    t.context.event.input.granules[0].files[0].fileSize = newerContent.length;
+    t.context.event.input.granules[0].files[0].size = newerContent.length;
     t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
       algorithm: t.context.event.input.granules[0].files[0].checksumType,
       bucket: t.context.event.config.provider.host,
@@ -685,7 +685,7 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
       Body: newContent
     });
 
-    t.context.event.input.granules[0].files[0].fileSize = newContent.length;
+    t.context.event.input.granules[0].files[0].size = newContent.length;
     t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
       algorithm: t.context.event.input.granules[0].files[0].checksumType,
       bucket: t.context.event.config.provider.host,
@@ -741,7 +741,7 @@ async function granuleFilesOverwrittenTest(t) {
       Body: newContent
     });
 
-    t.context.event.input.granules[0].files[0].fileSize = newContent.length;
+    t.context.event.input.granules[0].files[0].size = newContent.length;
     t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
       algorithm: t.context.event.input.granules[0].files[0].checksumType,
       bucket: t.context.event.config.provider.host,
@@ -755,7 +755,7 @@ async function granuleFilesOverwrittenTest(t) {
     t.true(output.granules[0].files[0].duplicate_found);
 
     const currentFileInfo = (await getFilesMetadata(output.granules[0].files))[0];
-    t.is(currentFileInfo.fileSize, randomString().length);
+    t.is(currentFileInfo.size, randomString().length);
     t.true(currentFileInfo.LastModified > existingFileInfo.LastModified);
 
     t.true(output.granules[0].files[0].duplicate_found);

@@ -55,14 +55,14 @@ const testGranule = {
 const testHdfFile = {
   type: 'data',
   path: '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA',
-  fileSize: 17865615,
+  size: 17865615,
   checksumType: 'CKSUM',
   checksumValue: 4208254019
 };
 
 const testMetFile = {
   path: '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA',
-  fileSize: 44118,
+  size: 44118,
   type: 'metadata'
 };
 

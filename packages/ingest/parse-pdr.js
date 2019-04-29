@@ -89,7 +89,7 @@ function parseSpec(pdrName, spec) {
 
   const parsedSpec = {
     path,
-    fileSize,
+    size: fileSize,
     name: filename,
     type: pdrToCnmMap[fileType]
   };
@@ -172,7 +172,7 @@ async function granuleFromFileGroup(fileGroup, pdrName, collectionConfigStore) {
     version,
     files,
     granuleId: extractGranuleId(files[0].name, collectionConfig.granuleIdExtraction),
-    granuleSize: files.reduce((total, file) => total + file.fileSize, 0)
+    granuleSize: files.reduce((total, file) => total + file.size, 0)
   };
 }
 
