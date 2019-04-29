@@ -323,8 +323,10 @@ function getS3CredentialsObject(s3CredsUrl) {
  */
 function mapCNMTypeToCMRType(type) {
   const mapping = {
+    ancillary: 'VIEW RELATED INFORMATION',
     data: 'GET DATA',
     browse: 'GET RELATED VISUALIZATION',
+    linkage: 'EXTENDED METADATA',
     metadata: 'EXTENDED METADATA',
     qa: 'EXTENDED METADATA'
   };

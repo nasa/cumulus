@@ -45,6 +45,7 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
   - Brought Cumulus data models in line with CNM JSON schema:
     - Renamed file object `fileType` field to `type`
     - Renamed file object `fileSize` field to `size`
+    - Added `ancillary` and `linkage` type support to file objects.
 
 ## Added
 
