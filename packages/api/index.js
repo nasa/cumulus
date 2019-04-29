@@ -14,6 +14,7 @@ exports.logger = require('./lambdas/payload-logger').handler;
 exports.messageConsumer = require('./lambdas/message-consumer').handler;
 exports.scheduler = require('./lambdas/sf-scheduler');
 exports.starter = require('./lambdas/sf-starter');
+exports.sfSemaphoreDown = require('./lambdas/sf-semaphore-down');
 
 exports.bulkDeleteLambda = require('./lambdas/bulk-delete').handler;
 
