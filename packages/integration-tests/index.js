@@ -516,7 +516,7 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
 
   // Rules should be added in serial because in the case of SNS and Kinesis rule types
   // they may share an event source mapping and running them in parallel will cause a
-  // race conditions
+  // race condition
   const ruleLimit = pLimit(1);
 
   const promises = rules.map((rule) => ruleLimit(() => {
