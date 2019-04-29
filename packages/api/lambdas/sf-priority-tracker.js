@@ -11,7 +11,7 @@ const {
  * Update semaphore for executions with priority
  *
  * @param  {Object} event - incoming cumulus message
- * @returns {Promise} object with response from the three indexer
+ * @returns {Promise} Result of semaphore update operation
  */
 async function updatePrioritySemaphore(event) {
   const message = JSON.parse(get(event, 'Sns.Message'));
@@ -19,8 +19,8 @@ async function updatePrioritySemaphore(event) {
   const executionName = get(message, 'cumulus_meta.execution_name');
   const status = get(message, 'meta.status');
 
-  if (!status) {
-    log.error(`Could determine execution status for ${executionName}. Skipping`);
+  if (!['failed', 'completed'].includes(status)) {
+    log.error(`Execution ${executionName} with status ${status} is not a completed/failed state. Skipping`);
     return Promise.resolve();
   }
 
@@ -35,11 +35,7 @@ async function updatePrioritySemaphore(event) {
     process.env.semaphoreTable
   );
 
-  if (['failed', 'completed'].includes(status)) {
-    return semaphore.down(key, maxExecutions);
-  }
-
-  return semaphore.up(key, maxExecutions);
+  return semaphore.down(key, maxExecutions);
 }
 
 /**

@@ -33,6 +33,16 @@ const createSnsWorkflowMessage = ({
 
 let manager;
 
+const setSemaphoreValue = async (key, max) => {
+  return aws.dynamodbDocClient().put({
+    TableName: process.env.semaphoreTable,
+    Item: {
+      key,
+      semvalue: max
+    }
+  }).promise();
+}
+
 test.before(async () => {
   process.env.semaphoreTable = randomId('semaphoreTable');
   manager = new Manager({
@@ -79,24 +89,26 @@ test.skip('does nothing for a workflow message with no status', async (t) => {
   // how to verify that nothing was updated?
 });
 
-test('increments priority semaphore for running workflow message', async (t) => {
-  const { semaphore } = t.context;
+test('throws error when attempting to decrement semaphore below 0', async (t) => {
   const key = randomId('low');
+  const maxExecutions = 1;
 
-  await handler({
-    Records: [
-      createSnsWorkflowMessage({
-        status: 'running',
-        priorityInfo: {
-          key,
-          maxExecutions: 1
-        }
-      })
-    ]
-  });
-
-  const response = await semaphore.get(key);
-  t.is(response.Item.semvalue, 1);
+  try {
+    await handler({
+      Records: [
+        createSnsWorkflowMessage({
+          status: 'completed',
+          priorityInfo: {
+            key,
+            maxExecutions
+          }
+        })
+      ]
+    });
+    t.fail();
+  } catch (err) {
+    t.pass();
+  }
 });
 
 test('decrements priority semaphore for completed workflow message', async (t) => {
@@ -104,8 +116,8 @@ test('decrements priority semaphore for completed workflow message', async (t) =
   const key = randomId('low');
   const maxExecutions = 1;
 
-  // arbitrarily increment semaphore so it can be decremented
-  await semaphore.up(key, maxExecutions);
+  // arbitrarily set semaphore so it can be decremented
+  await setSemaphoreValue(key, maxExecutions);
 
   await handler({
     Records: [
@@ -128,8 +140,8 @@ test('decrements priority semaphore for failed workflow message', async (t) => {
   const key = randomId('low');
   const maxExecutions = 1;
 
-  // arbitrarily increment semaphore so it can be decremented
-  await semaphore.up(key, maxExecutions);
+  // arbitrarily set semaphore so it can be decremented
+  await setSemaphoreValue(key, maxExecutions);
 
   await handler({
     Records: [
@@ -152,29 +164,11 @@ test('handles multiple updates to a single semaphore', async (t) => {
   const key = randomId('low');
   const maxExecutions = 3;
 
+  // Arbitrarily set semaphore value so it can be decremented
+  await setSemaphoreValue(key, maxExecutions);
+
   await handler({
     Records: [
-      createSnsWorkflowMessage({
-        status: 'running',
-        priorityInfo: {
-          key,
-          maxExecutions
-        }
-      }),
-      createSnsWorkflowMessage({
-        status: 'running',
-        priorityInfo: {
-          key,
-          maxExecutions
-        }
-      }),
-      createSnsWorkflowMessage({
-        status: 'running',
-        priorityInfo: {
-          key,
-          maxExecutions
-        }
-      }),
       createSnsWorkflowMessage({
         status: 'failed',
         priorityInfo: {
@@ -203,24 +197,29 @@ test('updates multiple semaphores', async (t) => {
   const medPriorityKey = randomId('med');
   const medPriorityMax = 3;
 
+  await Promise.all([
+    setSemaphoreValue(lowPriorityKey, lowPriorityMax),
+    setSemaphoreValue(medPriorityKey, medPriorityMax)
+  ]);
+
   await handler({
     Records: [
       createSnsWorkflowMessage({
-        status: 'running',
+        status: 'completed',
         priorityInfo: {
           key: lowPriorityKey,
           maxExecutions: lowPriorityMax
         }
       }),
       createSnsWorkflowMessage({
-        status: 'running',
+        status: 'failed',
         priorityInfo: {
           key: lowPriorityKey,
           maxExecutions: lowPriorityMax
         }
       }),
       createSnsWorkflowMessage({
-        status: 'running',
+        status: 'completed',
         priorityInfo: {
           key: medPriorityKey,
           maxExecutions: medPriorityMax
@@ -230,10 +229,8 @@ test('updates multiple semaphores', async (t) => {
   });
 
   let response = await semaphore.get(lowPriorityKey);
-  t.is(response.Item.semvalue, 2);
+  t.is(response.Item.semvalue, 1);
 
   response = await semaphore.get(medPriorityKey);
-  t.is(response.Item.semvalue, 1);
+  t.is(response.Item.semvalue, 2);
 });
-
-test.todo('throws error when trying to exceed maximum');
