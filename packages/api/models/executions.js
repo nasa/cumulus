@@ -123,6 +123,15 @@ class Execution extends Manager {
     doc.duration = (doc.timestamp - doc.createdAt) / 1000;
     return this.create(doc);
   }
+
+  /**
+   * Scan all items in a provider table
+   * Note: Only used for tests. Should not be used for large datatables
+   */
+  async scan() {
+    const scanResults = await super.scan();
+    return scanResults.Items;
+  }
 }
 
 module.exports = Execution;

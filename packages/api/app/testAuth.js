@@ -4,7 +4,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const get = require('lodash.get');
 const { verifyJwtToken } = require('../lib/token');
 
-const token = randomString();
+let token = randomString();
 
 /**
  * performs OAuth against an OAuth provider
@@ -16,6 +16,7 @@ const token = randomString();
 async function tokenEndpoint(req, res) {
   const code = get(req, 'query.code');
   const state = get(req, 'query.state');
+  if (token == '') token = randomString();
 
   if (code) {
     if (state) {
@@ -65,6 +66,7 @@ async function refreshEndpoint(req, res) {
  * @returns {Promise<Object>} a promise of an express response
  */
 async function deleteTokenEndpoint(req, res) {
+  token = '';
   return res.send({ message: 'Token record was deleted' });
 }
 
@@ -85,9 +87,8 @@ async function ensureAuthorized(req, res, next) {
   }
   const jwtToken = req.headers.authorization.trim().split(/\s+/)[1];
 
-  const parsed = verifyJwtToken(jwtToken);
   if (jwtToken === token) {
-    req.authorizedMetadata = { userName: parsed.username };
+    req.authorizedMetadata = { userName: 'testUser' };
     return next();
   }
   return res.boom.unauthorized('User not authorized');

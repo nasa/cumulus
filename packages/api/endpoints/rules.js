@@ -4,6 +4,7 @@ const router = require('express-promise-router')();
 const models = require('../models');
 const { RecordDoesNotExist } = require('../lib/errors');
 const { Search } = require('../es/search');
+const { inTestMode } = require('@cumulus/common/test-utils');
 
 /**
  * List all rules.
@@ -12,12 +13,28 @@ const { Search } = require('../es/search');
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function list(req, res) {
+async function list(req, res, next) {
+  if (inTestMode) {
+    return next();
+  }
   const search = new Search({
     queryStringParameters: req.query
   }, 'rule');
   const response = await search.query();
   return res.send(response);
+}
+
+async function dynamoList(req, res) {
+  if (!inTestMode) return;
+
+  const rulesModel = new models.Rule();
+  let results;
+  try {
+    results = await rulesModel.scan();
+  } catch (error) {
+    return res.boom.notFound(error.message);
+  }
+  return res.send({results});
 }
 
 /**
@@ -127,7 +144,7 @@ async function del(req, res) {
 }
 
 router.get('/:name', get);
-router.get('/', list);
+router.get('/', list, dynamoList);
 router.put('/:name', put);
 router.post('/', post);
 router.delete('/:name', del);

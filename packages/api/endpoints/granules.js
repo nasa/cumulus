@@ -6,6 +6,7 @@ const log = require('@cumulus/common/log');
 const Search = require('../es/search').Search;
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
+const { inTestMode } = require('@cumulus/common/test-utils');
 
 /**
  * List all granules for a given collection.
@@ -14,12 +15,31 @@ const { deconstructCollectionId } = require('../lib/utils');
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function list(req, res) {
+async function list(req, res, next) {
+  if (inTestMode) {
+    return next();
+  }
   const result = await (new Search({
     queryStringParameters: req.query
   }, 'granule')).query();
 
   return res.send(result);
+}
+
+async function dynamoList(req, res) {
+  if (!inTestMode) return;
+
+  const granuleModel = new models.Granule();
+  let results;
+  try {
+    results = await granuleModel.scan();
+  } catch (error) {
+    return res.boom.notFound(error.message);
+  }
+  const meta = {
+    count: results.Count
+  };
+  return res.send({results: results.Items, meta});
 }
 
 /**
@@ -166,7 +186,7 @@ async function get(req, res) {
 }
 
 router.get('/:granuleName', get);
-router.get('/', list);
+router.get('/', list, dynamoList);
 router.put('/:granuleName', put);
 router.delete('/:granuleName', del);
 

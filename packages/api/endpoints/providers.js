@@ -7,6 +7,7 @@ const {
   RecordDoesNotExist
 } = require('../lib/errors');
 const { Search } = require('../es/search');
+const { inTestMode } = require('@cumulus/common/test-utils');
 
 /**
  * List all providers
@@ -15,12 +16,29 @@ const { Search } = require('../es/search');
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function list(req, res) {
+async function list(req, res, next) {
+  if (inTestMode) {
+    return next();
+  }
   const search = new Search({
     queryStringParameters: req.query
   }, 'provider');
   const response = await search.query();
   return res.send(response);
+}
+
+async function dynamoList(req, res) {
+  if (!inTestMode) return;
+
+  const providerModel = new models.Provider();
+  let results;
+  try {
+    results = await providerModel.scan();
+    // results = await providerModel.deleteProviders();
+  } catch (error) {
+    return res.boom.notFound(error.message);
+  }
+  return res.send({results});
 }
 
 /**
@@ -121,6 +139,6 @@ router.get('/:id', get);
 router.put('/:id', put);
 router.delete('/:id', del);
 router.post('/', post);
-router.get('/', list);
+router.get('/', list, dynamoList);
 
 module.exports = router;
