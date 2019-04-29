@@ -653,14 +653,14 @@ Resources:
 
               {{# if ecs.efs.mount }}
               AZ=$(curl http://169.254.169.254/latest/meta-data/placement/availability-zone)
-              yum install -y nfs-utils
+
+              if ! rpm -q nfs-utils >/dev/null 2>&1; then
+                yum install -y nfs-utils
+              fi
 
               mkdir -p {{ecs.efs.mount}}
               mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${!AZ}.${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}}
               chmod 777 {{ecs.efs.mount}}
-
-              echo "${!AZ}.${EFSFileSystemId}.efs.${AWS::Region}.amazonaws.com:/ {{ecs.efs.mount}} nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0" | tee -a /etc/fstab
-              mount -a
 
               service docker restart
               {{/if}}
@@ -676,11 +676,13 @@ Resources:
               echo 'ECS_ENGINE_AUTH_DATA={"https://index.docker.io/v1/":{"username":"{{ecs.docker.username}}","password": "${DockerPassword}","email":"${DockerEmail}"}}' >> /etc/ecs/ecs.config
               {{/ifEquals}}
 
-              yum install -y jq unzip
-              curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
-              unzip awscli-bundle.zip
-              ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
-              rm -rf ./awscli-bundle awscli-bundle.zip
+              if ! which aws >/dev/null 2>&1; then
+                yum install -y jq unzip
+                curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
+                unzip awscli-bundle.zip
+                ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+                rm -rf ./awscli-bundle awscli-bundle.zip
+              fi
 
               aws s3 cp s3://{{bucket}}/{{stackName}}/deployment-staging/task-reaper.sh /usr/local/bin/task-reaper.sh
               chmod +x /usr/local/bin/task-reaper.sh

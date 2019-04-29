@@ -88,7 +88,7 @@ default:
   ecs:
     restartTasksOnDeploy: false
     container_stop_timeout: 2m
-    amiid: ami-007571470797b8ffa
+    amiid: ami-03e7dd4efa9b91eda
     instanceType: change-ecs-instanceType
     volumeSize: 50
     availabilityZone: 'us-east-1b'

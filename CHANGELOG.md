@@ -15,6 +15,12 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
 
 ### BREAKING CHANGES
 
+- **CUMULUS-1228**
+  - The default AMI used by ECS instances is now an NGAP-compliant AMI. This
+    will be a breaking change for non-NGAP deployments. If you do not deploy to
+    NGAP, you will need to find the AMI ID of the
+    [most recent Amazon ECS-optimized AMI](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html),
+    and set the `ecs.amiid` property in your config.
 - **CUMULUS-1212**
   - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
 - **CUMULUS-1264**
