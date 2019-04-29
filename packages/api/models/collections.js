@@ -130,6 +130,20 @@ class Collection extends Manager {
       '#name, #version'
     ).then((result) => result.Items);
   }
+
+  async deleteCollections() {
+    console.log('in delete collections');
+    const collections = await this.getAllCollections();
+    console.log('before delete length:', collections.length);
+    for (const collection of collections) {
+      console.log('deleting collection', collection.name);
+      const name = collection.name;
+      const version = collection.version;
+      await this.delete({ name, version });
+    }
+    const collections1 = await this.getAllCollections();
+    console.log('after delete length:', collections1.length);
+  }
 }
 
 module.exports = Collection;
