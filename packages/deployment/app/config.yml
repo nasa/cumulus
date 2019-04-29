@@ -167,7 +167,7 @@ default:
               - sns2elasticsearchLambdaFunction
               - Arn
           protocol: lambda
-        lambda:
+        semaphoreDown:
           endpoint:
             function: Fn::GetAtt
             array:
