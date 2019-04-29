@@ -35,13 +35,7 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
     - `urs_redirect: 'distribution'`: This will expose a `DISTRIBUTION_REDIRECT_ENDPOINT` environment variable to your lambda that references the `/redirect` endpoint on the Cumulus distribution API
 - **CUMULUS-1193**
   - The elasticsearch instance is moved behind the VPC.
-  - Your account will need an Elasticsearch Service Linked role. This is a one-time setup for the account. You can follow the instructions to use the AWS console or AWS CLI [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/using-service-linked-roles.html) or use the following Cloudformation yaml in your `app` or `iam` `cloudformation.template.yml`, deploy one time, and remove:
-  ```yaml
-  ESServiceLinkedRole:
-      Type: 'AWS::IAM::ServiceLinkedRole'
-      Properties:
-        AWSServiceName: es.amazonaws.com
-  ```
+  - Your account will need an Elasticsearch Service Linked role. This is a one-time setup for the account. You can follow the instructions to use the AWS console or AWS CLI [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/using-service-linked-roles.html) or use the following AWS CLI command: `aws iam create-service-linked-role --aws-service-name es.amazonaws.com`
   - You will need to populate `VPC_CIDR_IP` in your `app/.env` file. The IPv4 CIDR can be found in your AWS Console in your VPC settings.
 
 - **CUMULUS-802**
