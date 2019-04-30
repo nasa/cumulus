@@ -107,7 +107,7 @@
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
             "bucket": "cumulus-devseed-protected",
-            "checksumValue": null,
+            "checksum": null,
             "filename": "s3://cumulus-devseed-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
             "size": 17865615,
             "path": "granules",
@@ -117,7 +117,7 @@
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
             "bucket": "cumulus-devseed-private",
-            "checksumValue": null,
+            "checksum": null,
             "filename": "s3://cumulus-devseed-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
             "size": 44118,
             "path": "granules",
@@ -214,7 +214,7 @@
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
             "bucket": "cumulus-devseed-protected",
-            "checksumValue": null,
+            "checksum": null,
             "filename": "s3://cumulus-devseed-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
             "size": 17865615,
             "path": "granules",
@@ -224,7 +224,7 @@
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
             "bucket": "cumulus-devseed-private",
-            "checksumValue": null,
+            "checksum": null,
             "filename": "s3://cumulus-devseed-private/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
             "size": 44118,
             "path": "granules",

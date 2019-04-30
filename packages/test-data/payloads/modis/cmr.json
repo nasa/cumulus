@@ -105,7 +105,7 @@
           {
             "checksumType": "CKSUM",
             "bucket": "cumulus-protected",
-            "checksumValue": 1690464450,
+            "checksum": 1690464450,
             "filename": "s3://cumulus-protected/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
             "size": 6703247,
             "path": "/TEST_B/Cumulus/MODIS/DATA",
@@ -115,7 +115,7 @@
           {
             "checksumType": "CKSUM",
             "bucket": "cumulus-private",
-            "checksumValue": 2689375276,
+            "checksum": 2689375276,
             "filename": "s3://cumulus-private/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met",
             "size": 20659,
             "path": "/TEST_B/Cumulus/MODIS/DATA",
@@ -125,7 +125,7 @@
           {
             "checksumType": "CKSUM",
             "bucket": "cumulus-private",
-            "checksumValue": 4026661056,
+            "checksum": 4026661056,
             "filename": "s3://cumulus-private/BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
             "size": 59849,
             "path": "/TEST_B/Cumulus/MODIS/DATA",

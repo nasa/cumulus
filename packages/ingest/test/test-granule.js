@@ -115,7 +115,7 @@ Object.keys(sums).forEach((key) => {
     });
 
     try {
-      const file = { checksumType: key, checksumValue: sums[key] };
+      const file = { checksumType: key, checksum: sums[key] };
       await granule.verifyFile(file, t.context.internalBucket, key);
       await granule.verifyFile(key, t.context.internalBucket, key);
       t.pass();
@@ -752,7 +752,7 @@ test('ingestFile throws an error when invalid checksum is provided', async (t) =
     path: '',
     name: 'test.txt',
     checksumType: 'md5',
-    checksumValue: 'badchecksum'
+    checksum: 'badchecksum'
   };
 
   const Key = path.join(file.path, file.name);
@@ -779,7 +779,7 @@ test('ingestFile throws an error when invalid checksum is provided', async (t) =
   const error = await t.throws(testGranule.ingestFile(file, destBucket, duplicateHandling));
   t.true(error instanceof errors.InvalidChecksum);
   t.is(error.message, `Invalid checksum for S3 object s3://${destBucket}/${stagingPath}/${file.name}`
-    + ` with type ${file.checksumType} and expected sum ${file.checksumValue}`);
+    + ` with type ${file.checksumType} and expected sum ${file.checksum}`);
 });
 
 test('ingestFile throws an error when no checksum is provided and the size is not as expected', async (t) => {
@@ -827,7 +827,7 @@ test('verifyFile returns type and value when file is verified', async (t) => {
     path: '',
     name: 'test.txt',
     checksumType: 'md5',
-    checksumValue: '661f8009fa8e56a9d0e94a0a644397d7',
+    checksum: '661f8009fa8e56a9d0e94a0a644397d7',
     size: content.length
   };
 
@@ -850,7 +850,7 @@ test('verifyFile returns type and value when file is verified', async (t) => {
 
   const [type, value] = await testGranule.verifyFile(file, sourceBucket, Key);
   t.is(type, file.checksumType);
-  t.is(value, file.checksumValue);
+  t.is(value, file.checksum);
 });
 
 test('unversionFilename returns original filename if it has no timestamp', (t) => {
