@@ -1,19 +1,20 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const { inTestMode } = require('@cumulus/common/test-utils');
 const models = require('../models');
 const {
   AssociatedRulesError,
   RecordDoesNotExist
 } = require('../lib/errors');
 const { Search } = require('../es/search');
-const { inTestMode } = require('@cumulus/common/test-utils');
 
 /**
  * List all providers
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
+ * @param {*} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res, next) {
@@ -38,7 +39,7 @@ async function dynamoList(req, res, next) {
   } catch (error) {
     return res.boom.notFound(error.message);
   }
-  return res.send({results});
+  return res.send({ results });
 }
 
 /**

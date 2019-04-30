@@ -2,7 +2,6 @@
 
 const { randomString } = require('@cumulus/common/test-utils');
 const get = require('lodash.get');
-const { verifyJwtToken } = require('../lib/token');
 
 let token = randomString();
 
@@ -16,7 +15,7 @@ let token = randomString();
 async function tokenEndpoint(req, res) {
   const code = get(req, 'query.code');
   const state = get(req, 'query.state');
-  if (token == '') token = randomString();
+  if (token === '') token = randomString();
 
   if (code) {
     if (state) {

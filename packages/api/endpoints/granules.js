@@ -3,16 +3,17 @@
 const router = require('express-promise-router')();
 const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
+const { inTestMode } = require('@cumulus/common/test-utils');
 const Search = require('../es/search').Search;
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
-const { inTestMode } = require('@cumulus/common/test-utils');
 
 /**
  * List all granules for a given collection.
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
+ * @param {*} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res, next) {
@@ -39,7 +40,7 @@ async function dynamoList(req, res, next) {
   const meta = {
     count: results.Count
   };
-  return res.send({results: results.Items, meta});
+  return res.send({ results: results.Items, meta });
 }
 
 /**

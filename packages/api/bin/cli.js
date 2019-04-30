@@ -83,7 +83,7 @@ program
     serveDistributionApi(process.env.stackName).catch(console.error);
   });
 
-  program
+program
   .command('reset-tables')
   .description('Resets dynamodb tables for testing')
   .action(() => {
