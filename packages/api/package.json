@@ -117,7 +117,7 @@
     "lodash.range": "^3.2.0",
     "lodash.sample": "4.2.1",
     "nock": "^10.0.0",
-    "nyc": "^13.3.0",
+    "nyc": "^14.0.0",
     "rewire": "^4.0.1",
     "sinon": "^7.1.1",
     "supertest": "^3.3.0",

@@ -133,11 +133,22 @@ describe('When accessing an S3 bucket directly', () => {
         redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
         requestOrigin: process.env.DISTRIBUTION_ENDPOINT,
         userParams: { username }
+      }).catch((err) => {
+        console.log(err);
+        throw err;
       });
+
       accessToken = accessTokenResponse.accessToken;
 
-      const response = await invokeApiDistributionLambda('/s3credentials', accessToken);
-      creds = JSON.parse(response.body);
+      let response;
+      try {
+        response = await invokeApiDistributionLambda('/s3credentials', accessToken);
+        creds = JSON.parse(response.body);
+      } catch (e) {
+        console.log(e);
+        console.log(`Distribution API response: ${JSON.stringify(response, null, 2)}`);
+        throw e;
+      }
     });
 
     it('the expected user can assume same region access', async () => {
@@ -192,8 +203,7 @@ describe('When accessing an S3 bucket directly', () => {
       executeTestsAgainst(protectedBucketName);
     });
 
-    // TODO [MHS, 2019-04-08] enable public test when bucket policy is applied to public buckets.
-    xdescribe('against public buckets', () => {
+    describe('against public buckets', () => {
       executeTestsAgainst(publicBucketName);
     });
 

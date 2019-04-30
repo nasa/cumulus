@@ -19,7 +19,6 @@ const {
   errors
 } = require('@cumulus/common');
 const { buildURL } = require('@cumulus/common/URLUtils');
-const { deprecate } = require('@cumulus/common/util');
 
 const { sftpMixin } = require('./sftp');
 const { ftpMixin } = require('./ftp');
@@ -351,24 +350,9 @@ class Granule {
   }
 
   /**
-   * Validate a file's checksum and throw an exception if it's invalid
-   *
-   * @param {Object} file - the file object to be checked
-   * @param {string} bucket - s3 bucket name of the file
-   * @param {string} key - s3 key of the file
-   * @param {Object} [options={}] - options for the this._hash method
-   * @returns {Array<string>} returns array where first item is the checksum algorithm,
-   * and the second item is the value of the checksum.
-   * Throws an error if the checksum is invalid.
-   * @memberof Granule
-   */
-  async validateChecksum(file, bucket, key, options = {}) {
-    deprecate('@cumulus/ingest/Granule.validateChecksum', '1.11.2', '@cumulus/ingest/Granule.verifyFile');
-    return this.verifyFile(file, bucket, key, options);
-  }
-
-  /**
-   * Verify a file's integrity using its checksum and throw an exception if it's invalid
+   * Verify a file's integrity using its checksum and throw an exception if it's invalid.
+   * Verify file's filesize if checksum type or value is not available.
+   * Logs warning if neither check is possible.
    *
    * @param {Object} file - the file object to be checked
    * @param {string} bucket - s3 bucket name of the file
@@ -381,16 +365,31 @@ class Granule {
    */
   async verifyFile(file, bucket, key, options = {}) {
     const [type, value] = await this.retrieveSuppliedFileChecksumInformation(file);
-    if (!type || !value) return [null, null];
-
-    await aws.validateS3ObjectChecksum({
-      algorithm: type,
-      bucket,
-      key,
-      expectedSum: value,
-      options
-    });
-    return [type, value];
+    let output = [type, value];
+    if (type && value) {
+      await aws.validateS3ObjectChecksum({
+        algorithm: type,
+        bucket,
+        key,
+        expectedSum: value,
+        options
+      });
+    } else {
+      log.warn(`Could not verify ${file.name} expected checksum: ${value} of type ${type}.`);
+      output = [null, null];
+    }
+    if (file.fileSize) {
+      const ingestedSize = await aws.getObjectSize(bucket, key);
+      if (ingestedSize !== file.fileSize) {
+        throw new errors.UnexpectedFileSize(
+          `verifyFile ${file.name} failed: Actual filesize ${ingestedSize}`
+          + ` did not match expected fileSize ${file.fileSize}`
+        );
+      }
+    } else {
+      log.warn(`Could not verify ${file.name} expected fileSize: ${file.fileSize}.`);
+    }
+    return output;
   }
 
   /**
@@ -463,7 +462,7 @@ class Granule {
    *
    * @private
    * @param {Object} file - file to download
-   * @param {string} bucket - bucket to put file in
+   * @param {string} destinationBucket - bucket to put file in
    * @param {string} duplicateHandling - how to handle duplicate files
    * value can be
    * 'error' to throw an error,
@@ -472,99 +471,63 @@ class Granule {
    * 'version' to keep both files if they have different checksums
    * @returns {Array<Object>} returns the staged file and the renamed existing duplicates if any
    */
-  async ingestFile(file, bucket, duplicateHandling) {
+  async ingestFile(file, destinationBucket, duplicateHandling) {
+    const fileRemotePath = path.join(file.path, file.name);
     // place files in the <collectionId> subdirectory
     const stagingPath = path.join(this.fileStagingDir, this.collectionId);
-    // Check if the file exists
     const destinationKey = path.join(stagingPath, file.name);
 
-    const s3ObjAlreadyExists = await aws.s3ObjectExists({
-      Bucket: bucket,
-      Key: destinationKey
-    });
-
     // the staged file expected
-    const stagedFile = Object.assign(file,
+    const stagedFile = Object.assign(cloneDeep(file),
       {
-        filename: aws.buildS3Uri(bucket, destinationKey),
+        filename: aws.buildS3Uri(destinationBucket, destinationKey),
         fileStagingDir: stagingPath,
         url_path: this.getUrlPath(file),
-        bucket
+        bucket: destinationBucket
       });
-    if (s3ObjAlreadyExists) stagedFile.duplicate_found = true;
+    // bind arguments to sync function
+    const syncFileFunction = this.sync.bind(this, fileRemotePath);
 
-    log.debug(`file ${destinationKey} exists in ${bucket}: ${s3ObjAlreadyExists}`);
-    // Have to throw DuplicateFile and not WorkflowError, because the latter
-    // is not treated as a failure by the message adapter.
-    if (s3ObjAlreadyExists && duplicateHandling === 'error') {
-      throw new errors.DuplicateFile(`${destinationKey} already exists in ${bucket} bucket`);
+    const s3ObjAlreadyExists = await aws.s3ObjectExists(
+      { Bucket: destinationBucket, Key: destinationKey }
+    );
+    log.debug(`file ${destinationKey} exists in ${destinationBucket}: ${s3ObjAlreadyExists}`);
+
+    let versionedFiles = [];
+    if (s3ObjAlreadyExists) {
+      stagedFile.duplicate_found = true;
+      const stagedFileKey = `${destinationKey}.${uuidv4()}`;
+      // returns renamed files for 'version', otherwise empty array
+      versionedFiles = await exports.handleDuplicateFile({
+        source: { Bucket: destinationBucket, Key: stagedFileKey },
+        target: { Bucket: destinationBucket, Key: destinationKey },
+        duplicateHandling,
+        checksumFunction: this.verifyFile.bind(this, file),
+        syncFileFunction
+      });
+    } else {
+      log.debug(`await sync file ${fileRemotePath} to s3://${destinationBucket}/${destinationKey}`);
+      await syncFileFunction(destinationBucket, destinationKey);
+      // Verify file integrity
+      log.debug(`await verifyFile ${JSON.stringify(file)}, s3://${destinationBucket}/${destinationKey}`);
+      await this.verifyFile(file, destinationBucket, destinationKey);
     }
 
-    // Exit early if we can
-    if (s3ObjAlreadyExists && duplicateHandling === 'skip') {
-      return [Object.assign(stagedFile,
-        { fileSize: (await aws.headObject(bucket, destinationKey)).ContentLength })];
-    }
-
-    // Either the file does not exist yet, or it does but
-    // we are replacing it with a more recent one or
-    // renaming the existing file
-
-    const fileRemotePath = path.join(file.path, file.name);
-
-    // check if renaming file is necessary
-    const renamingFile = (s3ObjAlreadyExists && duplicateHandling === 'version') === true;
-
-    // if the file already exists, and duplicateHandling is 'version',
-    // we download file to a different name first
-    const stagedFileKey = renamingFile ? `${destinationKey}.${uuidv4()}` : destinationKey;
-
-    // stream the source file to s3
-    log.debug(`await sync file to s3 ${fileRemotePath}, ${bucket}, ${stagedFileKey}`);
-    await this.sync(fileRemotePath, bucket, stagedFileKey);
-
-    // Verify file integrity
-    log.debug(`await verifyFile ${JSON.stringify(file)}, ${bucket}, ${stagedFileKey}`);
-    const [checksumType, checksumValue] = await this.verifyFile(file, bucket, stagedFileKey);
-
-    // compare the checksum of the existing file and new file, and handle them accordingly
-    if (renamingFile) {
-      const existingFileSum = await
-      aws.calculateS3ObjectChecksum({ algorithm: (checksumType || 'CKSUM'), bucket, key: destinationKey });
-
-      const stagedFileSum = checksumValue
-      || await aws.calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket, key: stagedFileKey });
-
-      // if the checksum of the existing file is the same as the new one, keep the existing file,
-      // else rename the existing file, and both files are part of the granule.
-      if (existingFileSum === stagedFileSum) {
-        await aws.deleteS3Object(bucket, stagedFileKey);
-      } else {
-        log.debug(`Renaming file to ${destinationKey}`);
-        await exports.renameS3FileWithTimestamp(bucket, destinationKey);
-        await exports.moveGranuleFile(
-          { Bucket: bucket, Key: stagedFileKey }, { Bucket: bucket, Key: destinationKey }
-        );
-      }
-    }
-
-    const renamedFiles = (duplicateHandling === 'version')
-      ? await exports.getRenamedS3File(bucket, destinationKey) : [];
-
-    // return all files, the renamed files don't have the same properties(name, fileSize, checksum)
-    // from input file
-    return renamedFiles.concat({ Bucket: bucket, Key: destinationKey }).map((f) => {
-      if (f.Key === destinationKey) return stagedFile;
-      return {
+    // Set final filesize
+    stagedFile.fileSize = await aws.getObjectSize(destinationBucket, destinationKey);
+    // return all files, the renamed files don't have the same properties
+    // (name, fileSize, checksum) as input file
+    log.debug(`returning ${JSON.stringify(stagedFile)}`);
+    return [stagedFile].concat(versionedFiles.map((f) => (
+      {
+        bucket: destinationBucket,
         name: path.basename(f.Key),
         path: file.path,
         filename: aws.buildS3Uri(f.Bucket, f.Key),
         fileSize: f.fileSize,
         fileStagingDir: stagingPath,
-        url_path: this.getUrlPath(file),
-        bucket
-      };
-    });
+        url_path: this.getUrlPath(file)
+      })));
   }
 }
 exports.Granule = Granule; // exported to support testing
@@ -672,7 +635,7 @@ function copyGranuleFile(source, target, options) {
     Key: target.Key
   }, (options || {}));
 
-  return aws.s3().copyObject(params).promise()
+  return aws.s3CopyObject(params)
     .catch((error) => {
       log.error(`Failed to copy s3://${CopySource} to s3://${target.Bucket}/${target.Key}: ${error.message}`);
       throw error;
@@ -690,11 +653,119 @@ function copyGranuleFile(source, target, options) {
 * @param {string} target.Key - target
 * @param {Object} options - optional object with properties as defined by AWS API:
 * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-prop
-* @returns {Promise} returms a promise that is resolved when the file is moved
+* @returns {Promise} returns a promise that is resolved when the file is moved
 **/
 async function moveGranuleFile(source, target, options) {
   await copyGranuleFile(source, target, options);
-  return aws.s3().deleteObject(source).promise();
+  return aws.deleteS3Object(source.Bucket, source.Key);
+}
+
+/**
+* Move granule file from one s3 bucket & keypath to another,
+* creating a versioned copy of any file already existing at the target location
+* and returning an array of the moved file and all versioned filenames.
+*
+* @param {Object} source - source
+* @param {string} source.Bucket - source
+* @param {string} source.Key - source
+* @param {Object} target - target
+* @param {string} target.Bucket - target
+* @param {string} target.Key - target
+* @param {Object} sourceChecksumObject - source checksum information
+* @param {string} sourceChecksumObject.checksumType - checksum type, e.g. 'md5'
+* @param {Object} sourceChecksumObject.checksumValue - checksum value
+* @param {Object} copyOptions - optional object with properties as defined by AWS API:
+* https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-prop
+* @returns {Promise<Array>} returns a promise that resolves to a list of s3 version file objects.
+**/
+async function moveGranuleFileWithVersioning(source, target, sourceChecksumObject, copyOptions) {
+  const { checksumType, checksumValue } = sourceChecksumObject;
+  // compare the checksum of the existing file and new file, and handle them accordingly
+  const targetFileSum = await aws.calculateS3ObjectChecksum(
+    { algorithm: (checksumType || 'CKSUM'), bucket: target.Bucket, key: target.Key }
+  );
+  const sourceFileSum = checksumValue || await aws.calculateS3ObjectChecksum(
+    { algorithm: 'CKSUM', bucket: source.Bucket, key: source.Key }
+  );
+
+  // if the checksum of the existing file is the same as the new one, keep the existing file,
+  // else rename the existing file, and both files are part of the granule.
+  if (targetFileSum === sourceFileSum) {
+    await aws.deleteS3Object(source.Bucket, source.Key);
+  } else {
+    log.debug(`Renaming ${target.Key}...`);
+    await exports.renameS3FileWithTimestamp(target.Bucket, target.Key);
+    await exports.moveGranuleFile(
+      { Bucket: source.Bucket, Key: source.Key },
+      { Bucket: target.Bucket, Key: target.Key },
+      copyOptions
+    );
+  }
+  // return renamed files
+  return exports.getRenamedS3File(target.Bucket, target.Key);
+}
+
+/**
+ * handle duplicate file in S3 syncs and moves
+ *
+ * @param {Object} params - params object
+ * @param {Object} params.source - source object: { Bucket, Key }
+ * @param {Object} params.target - target object: { Bucket, Key }
+ * @param {Object} params.copyOptions - s3 CopyObject() options
+ * @param {string} params.duplicateHandling - duplicateHandling config string
+ * One of [`error`, `skip`, `replace`, `version`].
+ * @param {Function} [params.checksumFunction] - optional function to verify source & target:
+ * Called as `await checksumFunction(bucket, key);`, expected to return array where:
+ * array[0] - string - checksum type
+ * array[1] - string - checksum value
+ * For example of partial application of expected values see `ingestFile` in this module.
+ * @param {Function} [params.syncFileFunction] - optional function to sync file from non-s3 source.
+ * Syncs to temporary source location for `version` case and to target location for `replace` case.
+ * Called as `await syncFileFunction(bucket, key);`, expected to create file on S3.
+ * For example of function prepared with partial application see `ingestFile` in this module.
+ * @throws {DuplicateFile} DuplicateFile error in `error` case.
+ * @returns {Array<Object>} List of file version S3 Objects in `version` case, otherwise empty.
+ */
+async function handleDuplicateFile({
+  source,
+  target,
+  copyOptions,
+  duplicateHandling,
+  checksumFunction,
+  syncFileFunction
+}) {
+  if (duplicateHandling === 'error') {
+    // Have to throw DuplicateFile and not WorkflowError, because the latter
+    // is not treated as a failure by the message adapter.
+    throw new errors.DuplicateFile(`${target.Key} already exists in ${target.Bucket} bucket`);
+  } else if (duplicateHandling === 'version') {
+    // sync to staging location if required
+    if (syncFileFunction) await syncFileFunction(source.Bucket, source.Key);
+    let sourceChecksumObject = {};
+    if (checksumFunction) {
+      // verify integrity
+      const [checksumType, checksumValue] = await checksumFunction(source.Bucket, source.Key);
+      sourceChecksumObject = { checksumType, checksumValue };
+    }
+    // return list of renamed files
+    return moveGranuleFileWithVersioning(
+      source,
+      target,
+      sourceChecksumObject,
+      copyOptions
+    );
+  } else if (duplicateHandling === 'replace') {
+    if (syncFileFunction) {
+      // sync directly to target location
+      await syncFileFunction(target.Bucket, target.Key);
+    } else {
+      await moveGranuleFile(source, target, copyOptions);
+    }
+    // verify integrity after sync/move
+    if (checksumFunction) await checksumFunction(target.Bucket, target.Key);
+  }
+  // 'skip' and 'replace' returns
+  return [];
 }
 
 /**
@@ -894,6 +965,7 @@ module.exports.S3DiscoverGranules = S3DiscoverGranules;
 module.exports.SftpDiscoverGranules = SftpDiscoverGranules;
 module.exports.SftpGranule = SftpGranule;
 module.exports.getRenamedS3File = getRenamedS3File;
+module.exports.handleDuplicateFile = handleDuplicateFile;
 module.exports.copyGranuleFile = copyGranuleFile;
 module.exports.unversionFilename = unversionFilename;
 module.exports.moveGranuleFile = moveGranuleFile;
