@@ -78,11 +78,11 @@ const expectedTranslatePayload = {
       files: [
         {
           name: recordFile.name,
-          type: recordFile.type,
+          fileType: recordFile.type, // change when CnmToGranule outputs 'type' instead
           bucket: record.bucket,
           path: testDataFolder,
           url_path: recordFile.uri,
-          size: recordFile.size
+          fileSize: recordFile.size // change when CnmToGranule outputs 'size' instead
         }
       ]
     }
