@@ -16,7 +16,7 @@
           "path": "cumulus-test-data/pdrs",
           "size": 21708,
           "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-          "typemetadata",
+          "type": "metadata",
           "url_path": "{cmrMetadata.Granule.GranuleUR}/{file.name}"
         }
       ]
