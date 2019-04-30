@@ -378,12 +378,12 @@ class Granule {
       log.warn(`Could not verify ${file.name} expected checksum: ${value} of type ${type}.`);
       output = [null, null];
     }
-    if (file.size) {
+    if (file.size || file.fileSize) { // file.fileSize to be removed after CnmToGranule update
       const ingestedSize = await aws.getObjectSize(bucket, key);
-      if (ingestedSize !== file.size) {
+      if (ingestedSize !== (file.size || file.fileSize)) { // file.fileSize to be removed
         throw new errors.UnexpectedFileSize(
           `verifyFile ${file.name} failed: Actual file size ${ingestedSize}`
-          + ` did not match expected file size ${file.size}`
+          + ` did not match expected file size ${(file.size || file.fileSize)}`
         );
       }
     } else {
