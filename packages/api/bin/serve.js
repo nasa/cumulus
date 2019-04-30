@@ -129,7 +129,6 @@ async function createDBRecords(stackName, user) {
   c.name = `${stackName}-collection`;
   const cm = new models.Collection();
   await cm.create(c);
-  console.log(`Created collection ${c.name}`);
 
   // add granule records
   const g = testUtils.fakeGranuleFactory();
@@ -142,7 +141,6 @@ async function createDBRecords(stackName, user) {
   p.id = `${stackName}-provider`;
   const pm = new models.Provider();
   await pm.create(p);
-  console.log(`Created provider ${p.id}`);
 
   // add rule records
   const r = testUtils.fakeRuleFactoryV2();
@@ -155,7 +153,6 @@ async function createDBRecords(stackName, user) {
   };
   const rm = new models.Rule();
   await rm.create(r);
-  console.log(`Created rule ${r.name}`);
 
   // add fake execution records
   const e = testUtils.fakeExecutionFactory();
@@ -259,16 +256,18 @@ async function serveDistributionApi(stackName = 'localrun', done) {
 }
 
 /**
- * ONLY FOR TEST MODE
+ * Removes all additional data from tables and repopulates with original data.
+ *
+ * @param {string} user - defaults to local user, testUser
+ * @param {string} stackName - defaults to local stack, localrun
  */
 async function resetTables(user = 'testUser', stackName = 'localrun') {
-  console.log('in reset tables');
   if (inTestMode()) {
     setTableEnvVariables(stackName);
     process.env.system_bucket = 'localbucket';
     process.env.stackName = stackName;
+
     // Remove all data from tables
-    console.log('in test mode');
     const providerModel = new models.Provider();
     const collectionModel = new models.Collection();
     const rulesModel = new models.Rule();
@@ -277,7 +276,6 @@ async function resetTables(user = 'testUser', stackName = 'localrun') {
       await collectionModel.deleteCollections();
       await providerModel.deleteProviders();
     } catch (error) {
-      console.log('There was an error in one of the deletes');
       console.log(error);
       return error;
     }

@@ -127,16 +127,11 @@ class Provider extends Manager {
   }
 
   async deleteProviders() {
-    console.log('in delete prov');
     const providers = await this.scan();
-    console.log('before delete length:', providers.length);
     const providerIds = providers.map((p) => p.id);
     for (const provId of providerIds) {
-      console.log('deleting provider', provId);
       await this.delete({id: provId});
     }
-    const providers1 = await this.scan();
-    console.log('after delete length:', providers1.length);
   }
 
   /**

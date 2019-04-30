@@ -17,7 +17,7 @@ const { inTestMode } = require('@cumulus/common/test-utils');
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res, next) {
-  if (inTestMode) {
+  if (inTestMode()) {
     return next();
   }
   const search = new Search({
@@ -27,8 +27,8 @@ async function list(req, res, next) {
   return res.send(response);
 }
 
-async function dynamoList(req, res) {
-  if (!inTestMode) return;
+async function dynamoList(req, res, next) {
+  if (!inTestMode()) return next();
 
   const providerModel = new models.Provider();
   let results;
@@ -139,6 +139,6 @@ router.get('/:id', get);
 router.put('/:id', put);
 router.delete('/:id', del);
 router.post('/', post);
-router.get('/', list, dynamoList);
+router.get('/', dynamoList, list);
 
 module.exports = router;
