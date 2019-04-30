@@ -55,9 +55,9 @@ const setKey = simpleFieldAdder('key', getKey);
 const setS3FileSize = async (file) => {
   if (isInteger(file.size)) return file;
   if (isInteger(file.fileSize)) {
-    const size = file.fileSize;
-    delete file.fileSize;
-    return { ...file, size };
+    const newFileObj = { ...file, size: file.fileSize };
+    delete newFileObj.fileSize;
+    return newFileObj;
   }
 
   try {
