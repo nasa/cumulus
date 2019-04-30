@@ -35,27 +35,11 @@ class Rule extends Manager {
     return r.RuleArn;
   }
 
-  /**
-   * Scan all items in a table
-   * Note: Only used for tests. Should not be used for large datatables
-   */
-  async scan(query) {
-    const scanResults = await super.scan(query);
-    // console.log('back in rules model scn');
-    // console.log(scanResults.Items);
-    return scanResults;
-  }
-
   async deleteRules() {
-    console.log('in delete rules');
     const rules = await this.scan();
-    console.log('before delete length:', rules.Items.length);
     for (const rule of rules.Items) {
-      console.log('deleting rule', rule.name);
       await this.delete(rule);
     }
-    const rules1 = await this.scan();
-    console.log('after delete length:', rules1.Items.length);
   }
 
   async delete(item) {

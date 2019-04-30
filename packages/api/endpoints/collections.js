@@ -17,7 +17,7 @@ const { inTestMode } = require('@cumulus/common/test-utils');
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res, next) {
-  if (inTestMode) {
+  if (inTestMode()) {
     return next();
   }
   const collection = new Collection({
@@ -27,9 +27,10 @@ async function list(req, res, next) {
   return res.send(result);
 }
 
-async function dynamoList(req, res) {
-  if (!inTestMode) return;
-
+async function dynamoList(req, res, next) {
+  if (!inTestMode()) {
+    return next();
+  }
   const collectionModel = new models.Collection();
   let results;
   try {
@@ -69,13 +70,11 @@ async function get(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
-  // console.log('gets into the post functions');
   try {
     const data = req.body;
-    // console.log(data);
     const name = data.name;
     const version = data.version;
-    // console.log('gets name and version ', name, version);
+
     // make sure primary key is included
     if (!name || !version) {
       return res.boom.notFound('Field name and/or version is missing');
@@ -84,20 +83,15 @@ async function post(req, res) {
 
     try {
       await c.get({ name, version });
-      // console.log('it already exists');
       return res.boom.badRequest(`A record already exists for ${name} version: ${version}`);
     } catch (e) {
       if (e instanceof RecordDoesNotExist) {
-        // console.log('yay its going t omake it now');
         await c.create(data);
-        // console.log('it was created');
         return res.send({ message: 'Record saved', record: data });
       }
-      // console.log('there was a bad error');
       throw e;
     }
   } catch (e) {
-    console.log('bad implementation error');
     return res.boom.badImplementation(e.message);
   }
 }
@@ -167,6 +161,6 @@ router.get('/:name/:version', get);
 router.put('/:name/:version', put);
 router.delete('/:name/:version', del);
 router.post('/', post);
-router.get('/', list, dynamoList);
+router.get('/', dynamoList, list);
 
 module.exports = router;
