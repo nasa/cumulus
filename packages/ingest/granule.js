@@ -515,6 +515,7 @@ class Granule {
 
     // Set final file size
     stagedFile.size = await aws.getObjectSize(destinationBucket, destinationKey);
+    delete stagedFile.fileSize; // CUMULUS-1269: delete obsolete field until CnmToGranule is patched
     // return all files, the renamed files don't have the same properties
     // (name, size, checksum) as input file
     log.debug(`returning ${JSON.stringify(stagedFile)}`);
