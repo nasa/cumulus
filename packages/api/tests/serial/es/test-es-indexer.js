@@ -31,7 +31,7 @@ const granuleFileToRecord = (granuleFile) => {
     ...granuleFile,
     key: aws.parseS3Uri(granuleFile.filename).Key,
     fileName: granuleFile.name,
-    checksum: granuleFile.checksumValue
+    checksum: granuleFile.checksum
   };
 
   if (granuleFile.path) {

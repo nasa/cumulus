@@ -54,7 +54,7 @@ test.serial('parse-pdr properly parses a simple PDR file', async (t) => {
   t.is(hdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
   t.is(hdfFile.size, 17865615);
   t.is(hdfFile.checksumType, 'CKSUM');
-  t.is(hdfFile.checksumValue, 4208254019);
+  t.is(hdfFile.checksum, 4208254019);
   t.is(hdfFile.type, 'data');
 
   const metFile = result.granules[0].files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
@@ -100,7 +100,7 @@ test.serial('parse-pdr properly parses PDR with granules of different data-types
   t.is(mod09HdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
   t.is(mod09HdfFile.size, 17865615);
   t.is(mod09HdfFile.checksumType, 'CKSUM');
-  t.is(mod09HdfFile.checksumValue, 4208254019);
+  t.is(mod09HdfFile.checksum, 4208254019);
   t.is(mod09HdfFile.type, 'data');
 
   const mod09MetFile = mod09Granule.files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf.met');
@@ -120,7 +120,7 @@ test.serial('parse-pdr properly parses PDR with granules of different data-types
   t.is(mod87HdfFile.path, '/MODOPS/MODAPS/EDC/CUMULUS/FPROC/DATA');
   t.is(mod87HdfFile.size, 17865615);
   t.is(mod87HdfFile.checksumType, 'CKSUM');
-  t.is(mod87HdfFile.checksumValue, 4208254019);
+  t.is(mod87HdfFile.checksum, 4208254019);
   t.is(mod87HdfFile.type, 'data');
 
 

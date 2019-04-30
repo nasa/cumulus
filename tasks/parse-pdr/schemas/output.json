@@ -35,7 +35,7 @@
                 "type": { "type": "string" },
                 "size": { "type": "number" },
                 "checksumType": { "type": "string" },
-                "checksumValue": { "type": ["string", "number"] }
+                "checksum": { "type": ["string", "number"] }
               }
             }
           }

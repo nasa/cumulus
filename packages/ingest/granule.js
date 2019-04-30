@@ -420,8 +420,8 @@ class Granule {
    */
   async retrieveSuppliedFileChecksumInformation(file) {
     // try to get filespec checksum data
-    if (file.checksumType && file.checksumValue) {
-      return [file.checksumType, file.checksumValue];
+    if (file.checksumType && file.checksum) {
+      return [file.checksumType, file.checksum];
     }
     // read checksum from checksum file
     if (this.checksumFiles[file.name]) {
@@ -673,18 +673,18 @@ async function moveGranuleFile(source, target, options) {
 * @param {string} target.Key - target
 * @param {Object} sourceChecksumObject - source checksum information
 * @param {string} sourceChecksumObject.checksumType - checksum type, e.g. 'md5'
-* @param {Object} sourceChecksumObject.checksumValue - checksum value
+* @param {Object} sourceChecksumObject.checksum - checksum value
 * @param {Object} copyOptions - optional object with properties as defined by AWS API:
 * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-prop
 * @returns {Promise<Array>} returns a promise that resolves to a list of s3 version file objects.
 **/
 async function moveGranuleFileWithVersioning(source, target, sourceChecksumObject, copyOptions) {
-  const { checksumType, checksumValue } = sourceChecksumObject;
+  const { checksumType, checksum } = sourceChecksumObject;
   // compare the checksum of the existing file and new file, and handle them accordingly
   const targetFileSum = await aws.calculateS3ObjectChecksum(
     { algorithm: (checksumType || 'CKSUM'), bucket: target.Bucket, key: target.Key }
   );
-  const sourceFileSum = checksumValue || await aws.calculateS3ObjectChecksum(
+  const sourceFileSum = checksum || await aws.calculateS3ObjectChecksum(
     { algorithm: 'CKSUM', bucket: source.Bucket, key: source.Key }
   );
 
@@ -744,8 +744,8 @@ async function handleDuplicateFile({
     let sourceChecksumObject = {};
     if (checksumFunction) {
       // verify integrity
-      const [checksumType, checksumValue] = await checksumFunction(source.Bucket, source.Key);
-      sourceChecksumObject = { checksumType, checksumValue };
+      const [checksumType, checksum] = await checksumFunction(source.Bucket, source.Key);
+      sourceChecksumObject = { checksumType, checksum };
     }
     // return list of renamed files
     return moveGranuleFileWithVersioning(

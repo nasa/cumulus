@@ -17,7 +17,7 @@
           {
             "checksumType": "CKSUM",
             "bucket": "cumulus-protected",
-            "checksumValue": 1690464450,
+            "checksum": 1690464450,
             "type": "data",
             "filename": "s3://cumulus-protected/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
             "size": 6703247,
@@ -29,7 +29,7 @@
           {
             "checksumType": "CKSUM",
             "bucket": "cumulus-private",
-            "checksumValue": 2689375276,
+            "checksum": 2689375276,
             "type": "metadata",
             "filename": "s3://cumulus-private/MOD11A1.A2017200.h19v04.006.2017201090724.hdf.met",
             "size": 20659,
@@ -41,7 +41,7 @@
           {
             "checksumType": "CKSUM",
             "bucket": "cumulus-private",
-            "checksumValue": 4026661056,
+            "checksum": 4026661056,
             "type": "browse",
             "filename": "s3://cumulus-private/BROWSE.MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
             "size": 59849,
@@ -54,7 +54,7 @@
             "checksumType": "CKSUM",
             "bucket": "cumulus-post-public",
             "type": "metadata",
-            "checksumValue": 4026661056,
+            "checksum": 4026661056,
             "filename": "s3://cumulus-post-public/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
             "name": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml"
           }

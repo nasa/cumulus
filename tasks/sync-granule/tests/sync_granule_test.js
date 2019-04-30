@@ -395,8 +395,8 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
 test.serial('download granule with bad checksum in file from HTTP endpoint throws', async (t) => {
   const granuleChecksumValue = 8675309;
 
-  // Give it a bogus checksumValue to prompt a failure in verifyFile
-  t.context.event.input.granules[0].files[0].checksumValue = granuleChecksumValue;
+  // Give it a bogus checksum to prompt a failure in verifyFile
+  t.context.event.input.granules[0].files[0].checksum = granuleChecksumValue;
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
@@ -598,7 +598,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     });
 
     t.context.event.input.granules[0].files[0].size = newContent.length;
-    t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
+    t.context.event.input.granules[0].files[0].checksum = await calculateS3ObjectChecksum({
       algorithm: t.context.event.input.granules[0].files[0].checksumType,
       bucket: t.context.event.config.provider.host,
       key
@@ -633,7 +633,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     });
 
     t.context.event.input.granules[0].files[0].size = newerContent.length;
-    t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
+    t.context.event.input.granules[0].files[0].checksum = await calculateS3ObjectChecksum({
       algorithm: t.context.event.input.granules[0].files[0].checksumType,
       bucket: t.context.event.config.provider.host,
       key
@@ -686,7 +686,7 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
     });
 
     t.context.event.input.granules[0].files[0].size = newContent.length;
-    t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
+    t.context.event.input.granules[0].files[0].checksum = await calculateS3ObjectChecksum({
       algorithm: t.context.event.input.granules[0].files[0].checksumType,
       bucket: t.context.event.config.provider.host,
       key
@@ -742,7 +742,7 @@ async function granuleFilesOverwrittenTest(t) {
     });
 
     t.context.event.input.granules[0].files[0].size = newContent.length;
-    t.context.event.input.granules[0].files[0].checksumValue = await calculateS3ObjectChecksum({
+    t.context.event.input.granules[0].files[0].checksum = await calculateS3ObjectChecksum({
       algorithm: t.context.event.input.granules[0].files[0].checksumType,
       bucket: t.context.event.config.provider.host,
       key

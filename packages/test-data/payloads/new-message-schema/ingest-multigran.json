@@ -89,7 +89,7 @@
             "size": 1098034,
             "type": "data",
             "checksumType": "CKSUM",
-            "checksumValue": 1435712144
+            "checksum": 1435712144
           },
           {
             "path": "/granules",
@@ -110,7 +110,7 @@
             "size": 1098034,
             "type": "data",
             "checksumType": "CKSUM",
-            "checksumValue": 1435712144
+            "checksum": 1435712144
           },
           {
             "path": "/granules",
@@ -131,7 +131,7 @@
             "size": 5192514,
             "type": "data",
             "checksumType": "CKSUM",
-            "checksumValue": 862302916
+            "checksum": 862302916
           },
           {
             "path": "/granules",
