@@ -277,7 +277,6 @@ async function resetTables(user = 'testUser', stackName = 'localrun') {
       await providerModel.deleteProviders();
     } catch (error) {
       console.log(error);
-      return error;
     }
 
     // Populate tables with original test data
