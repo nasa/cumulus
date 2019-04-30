@@ -1,4 +1,5 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
@@ -6,21 +7,39 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### PLEASE NOTE
+
+**CUMULUS-802** added some additional IAM permissions to support ECS autoscaling, so **you will have to redeploy your IAM stack.**
+
+As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must delete your existing stacks (except IAM) before deploying this version of Cumulus.**
+
 ### BREAKING CHANGES
 
 - **CUMULUS-1212**
   - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
-
+- **CUMULUS-1232**
+  - `@cumulus/sync-granule` will no longer silently pass if no checksum data is provided. It will use input
+  from the granule object to:
+    - Verify checksum if `checksumType` and `checksumValue` are in the file record OR a checksum file is provided
+      (throws `InvalidChecksum` on fail), else log warning that no checksum is available.
+    - Then, verify synced S3 file size if `fileSize` is in the file record (throws `UnexpectedFileSize` on fail),
+      else log warning that no fileSize is available.
+    - Pass the step.
+- **CUMULUS-1264**
+  - The Cloudformation templating and deployment configuration has been substantially refactored.
+    - `CumulusApiDefault` nested stack resource has been renamed to `CumulusApiDistribution`
+    - `CumulusApiV1` nested stack resource has been renamed to `CumulusApiBackend`
+    - `DataStorage` nested stack resource has been added for managing resources related to data persistence (DynamoDB and Elasticsearch)
+  - The `urs: true` config option for when defining your lambdas (e.g. in `lambdas.yml`) has been deprecated. There are two new options to replace it:
+    - `urs_redirect: 'token'`: This will expose a `TOKEN_REDIRECT_ENDPOINT` environment variable to your lambda that references the `/token` endpoint on the Cumulus backend API
+    - `urs_redirect: 'distribution'`: This will expose a `DISTRIBUTION_REDIRECT_ENDPOINT` environment variable to your lambda that references the `/redirect` endpoint on the Cumulus distribution API
 - **CUMULUS-1193**
-  - The elasticsearch instance is moved behind the VPC. **You should recreate your stack when taking these changes**
-  - Your account will need an Elasticsearch Service Linked role. This is a one-time setup for the account. You can follow the instructions to use the AWS console or AWS CLI [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/using-service-linked-roles.html) or use the following Cloudformation yaml in your `app` or `iam` `cloudformation.template.yml`, deploy one time, and remove:
-  ```yaml
-  ESServiceLinkedRole:
-      Type: 'AWS::IAM::ServiceLinkedRole'
-      Properties:
-        AWSServiceName: es.amazonaws.com
-  ```
+  - The elasticsearch instance is moved behind the VPC.
+  - Your account will need an Elasticsearch Service Linked role. This is a one-time setup for the account. You can follow the instructions to use the AWS console or AWS CLI [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/using-service-linked-roles.html) or use the following AWS CLI command: `aws iam create-service-linked-role --aws-service-name es.amazonaws.com`
   - You will need to populate `VPC_CIDR_IP` in your `app/.env` file. The IPv4 CIDR can be found in your AWS Console in your VPC settings.
+
+- **CUMULUS-802**
+  - ECS `maxInstances` must be greater than `minInstances`. If you use defaults, no change is required.
 
 ## Added
 
@@ -33,6 +52,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1236**
   - Moves access to public files behind the distribution endpoint.  Authentication is not required, but direct http access has been disallowed.
 
+- **CUMULUS-1232**
+  - Unifies duplicate handling in `ingest/granule.handleDuplicateFile` for maintainability.
+  - Changed `ingest/granule.ingestFile` and `move-granules/index.moveFileRequest` to use new function.
+  - Moved file versioning code to `ingest/granule.moveGranuleFileWithVersioning`
+  - `ingest/granule.verifyFile` now also tests `fileSize` for verification if it is in the file record and throws
+    `UnexpectedFileSize` error for    fileSize not matching input.
+  - `ingest/granule.verifyFile` logs warnings if checksum and/or fileSize are not available.
+
 - **CUMULUS-1223**
   - Adds unauthenticated access for public bucket files to the Distribution API.  Public files should be requested the same way as protected files, but for public files a redirect to a self-signed S3 URL will happen without requiring authentication with Earthdata login.
 
@@ -40,6 +67,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Moved reindex CLI functionality to an API endpoint
 
 ### Fixed
+
 - **CUMULUS-1203**
   - Fixes IAM template's use of intrinsic functions such that IAM template overrides now work with kes
 

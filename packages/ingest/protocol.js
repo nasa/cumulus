@@ -60,11 +60,11 @@ module.exports.baseProtocol = (superclass) => class extends superclass {
       fullKey = fullKey.substr(1);
     }
 
-    await aws.s3().putObject({
+    await aws.s3PutObject({
       Bucket: bucket,
       Key: fullKey,
       Body: fs.createReadStream(tempFile)
-    }).promise();
+    });
 
     const s3Uri = `s3://${bucket}/${fullKey}`;
     log.info(`uploaded ${s3Uri}`);
