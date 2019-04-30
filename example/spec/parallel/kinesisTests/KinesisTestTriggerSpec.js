@@ -97,8 +97,10 @@ const fileDataWithFilename = {
   filename: `s3://${testConfig.buckets.private.name}/${filePrefix}/${recordFile.name}`,
   bucket: testConfig.buckets.private.name,
   url_path: '',
-  fileStagingDir: filePrefix
+  fileStagingDir: filePrefix,
+  size: fileData.fileSize
 };
+delete fileDataWithFilename.fileSize;
 
 const expectedSyncGranulesPayload = {
   granules: [
