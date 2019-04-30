@@ -59,7 +59,6 @@ const setS3FileSize = async (file) => {
     delete newFileObj.fileSize;
     return newFileObj;
   }
-
   try {
     const size = await getObjectSize(file.bucket, file.key);
     return { ...file, size };
@@ -90,15 +89,19 @@ const buildDatabaseFile = (providerURL, file) =>
     setChecksum,
     setFileName,
     partial(setSource, providerURL),
-    filterDatabaseProperties,
-    removeNilProperties,
     setS3FileSize // This one is last because it returns a Promise
+  ])(file);
+
+const cleanDatabaseFile = (file) =>
+  flow([
+    filterDatabaseProperties,
+    removeNilProperties
   ])(file);
 
 const buildDatabaseFiles = async ({ providerURL, files }) =>
   Promise.all(
     files.map(partial(buildDatabaseFile, providerURL))
-  );
+  ).then((newFiles) => newFiles.map(cleanDatabaseFile));
 
 module.exports = {
   setSource,
@@ -106,5 +109,6 @@ module.exports = {
   buildFileSourceURL,
   filterDatabaseProperties,
   getChecksum,
-  getFileName
+  getFileName,
+  setS3FileSize
 };
