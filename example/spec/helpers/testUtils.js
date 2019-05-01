@@ -249,7 +249,7 @@ async function getFileMetadata(file) {
 
   return {
     filename: file.filename,
-    fileSize: headObjectResponse.ContentLength,
+    size: headObjectResponse.ContentLength,
     LastModified: headObjectResponse.LastModified
   };
 }

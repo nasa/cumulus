@@ -79,7 +79,7 @@ test('discover granules using FTP', async (t) => {
     await validateOutput(t, output);
     t.is(output.granules.length, 3);
     t.is(output.granules[0].files.length, 2);
-    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].fileType));
+    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].type));
   } catch (e) {
     if (e.message.includes('getaddrinfo ENOTFOUND')) {
       t.pass('Ignoring this test. Test server seems to be down');
@@ -114,7 +114,7 @@ test('discover granules using SFTP', async (t) => {
     await validateOutput(t, output);
     t.is(output.granules.length, 3);
     t.is(output.granules[0].files.length, 2);
-    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].fileType));
+    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].type));
   } catch (err) {
     if (err.code === 'ECONNREFUSED') {
       t.pass('Ignoring this test. Remote host seems to be down.');
@@ -144,7 +144,7 @@ test('discover granules using HTTP', async (t) => {
     await validateOutput(t, output);
     t.is(output.granules.length, 3);
     t.is(output.granules[0].files.length, 2);
-    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].fileType));
+    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].type));
   } catch (err) {
     if (err.message === 'Connection Refused') {
       t.pass('Ignoring this test. Remote host seems to be down.');
@@ -194,7 +194,7 @@ test('discover granules using S3', async (t) => {
     await validateOutput(t, output);
     t.is(output.granules.length, 3);
     t.is(output.granules[0].files.length, 2);
-    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].fileType));
+    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].type));
   } finally {
     // Clean up
     await Promise.all([

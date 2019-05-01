@@ -6,7 +6,7 @@ hide_title: true
 
 # Browse Generation
 
-This entry documents how to setup a workflow that utilizes Cumulus's built-in granule file fileType configuration such that on ingest the browse data is exported to CMR.
+This entry documents how to setup a workflow that utilizes Cumulus's built-in granule file type configuration such that on ingest the browse data is exported to CMR.
 
 We will discuss how to run a processing workflow against an inbound granule that has data but no browse generated.  The workflow will generate a browse file and add the appropriate output values to the Cumulus message so that the built-in post-to-cmr task will publish the data appropriately.
 
@@ -258,14 +258,14 @@ Navigate to the 'Collection' tab on the interface and add a collection.  Note th
 			"bucket": "protected",
 			"regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
 			"sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
-			"fileType": "data",
+			"type": "data",
 			"url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
 		},
 		{
 			"bucket": "private",
 			"regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$",
 			"sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met",
-			"fileType": "metadata"
+			"type": "metadata"
 		},
 		{
 			"bucket": "protected-2",
@@ -354,7 +354,7 @@ and you should see in the payload from the workflow something similar to:
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
             "filepath": "MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-            "fileType": "data",
+            "type": "data",
             "bucket": "cumulus-test-sandbox-protected",
             "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
             "time": 1553027415000,
@@ -366,7 +366,7 @@ and you should see in the payload from the workflow something similar to:
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
             "filepath": "MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-            "fileType": "metadata",
+            "type": "metadata",
             "bucket": "cumulus-test-sandbox-private",
             "filename": "s3://cumulus-test-sandbox-private/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
             "time": 1553027412000,
@@ -378,7 +378,7 @@ and you should see in the payload from the workflow something similar to:
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
             "filepath": "MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
-            "fileType": "browse",
+            "type": "browse",
             "bucket": "cumulus-test-sandbox-protected",
             "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
             "time": 1553027415000,
@@ -390,7 +390,7 @@ and you should see in the payload from the workflow something similar to:
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
             "filepath": "MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
-            "fileType": "metadata",
+            "type": "metadata",
             "bucket": "cumulus-test-sandbox-protected-2",
             "filename": "s3://cumulus-test-sandbox-protected-2/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
             "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
@@ -437,7 +437,7 @@ The incoming message to the task defined in the  ```ProcessingStep``` as configu
 
 The 'payload' from the previous task is accessible via event.input.    The expected payload output schema from SyncGranules can be viewed [here](https://github.com/nasa/cumulus/blob/master/tasks/move-granules/schemas/output.json).
 
-In our example, the payload would look like the following.  **Note**: The fileTypes are set per-file based on what we configured in our collection, and were initially added as part of the ```DiscoverGranules``` step in the ```DiscoverGranulesBrowseExample``` workflow.
+In our example, the payload would look like the following.  **Note**: The types are set per-file based on what we configured in our collection, and were initially added as part of the ```DiscoverGranules``` step in the ```DiscoverGranulesBrowseExample``` workflow.
 
 ```
  "payload": {
@@ -450,7 +450,7 @@ In our example, the payload would look like the following.  **Note**: The fileTy
         "files": [
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-            "fileType": "data",
+            "type": "data",
             "bucket": "cumulus-test-sandbox-internal",
             "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
             "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
@@ -461,7 +461,7 @@ In our example, the payload would look like the following.  **Note**: The fileTy
           },
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-            "fileType": "metadata",
+            "type": "metadata",
             "bucket": "cumulus-test-sandbox-internal",
             "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
             "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
@@ -483,7 +483,7 @@ The provided example script used in the example goes through all granules and ad
 The processing lambda you construct will need to do the following:
 
 * Create a browse image file based on the input data, and stage it to a location accessible to both this task and the ```FilesToGranules``` and ```MoveGranules``` tasks in a S3 bucket.
-* Add the browse file to the input granule files, making sure to set the granule fileType to ```browse```.
+* Add the browse file to the input granule files, making sure to set the granule file's type to ```browse```.
 * Update meta.input_granules with the updated granules list, as well as provide the files to be integrated by ```FilesToGranules``` as output from the task.
 
 
@@ -540,7 +540,7 @@ The ```FilesToGranules``` task utilizes the incoming payload to chose which file
         "files": [
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-            "fileType": "data",
+            "type": "data",
             "bucket": "cumulus-test-sandbox-internal",
             "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
             "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
@@ -552,7 +552,7 @@ The ```FilesToGranules``` task utilizes the incoming payload to chose which file
           },
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-            "fileType": "metadata",
+            "type": "metadata",
             "bucket": "cumulus-test-sandbox-internal",
             "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
             "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
@@ -564,7 +564,7 @@ The ```FilesToGranules``` task utilizes the incoming payload to chose which file
           },
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
-            "fileType": "browse",
+            "type": "browse",
             "bucket": "cumulus-test-sandbox-internal",
             "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
             "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
