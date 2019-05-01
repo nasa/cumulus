@@ -1,6 +1,8 @@
 const { ResourcesLockedError } = require('./errors');
 const log = require('./log');
 
+const isConditionalCheckException = (error) => error.code === 'ConditionalCheckFailedException';
+
 class Semaphore {
   constructor(docClient, tableName) {
     this.docClient = docClient;
@@ -20,12 +22,12 @@ class Semaphore {
         ExpressionAttributeValues: { ':key': key }
       };
       await this.docClient.put(params).promise();
-    } catch (e) {
+    } catch (error) {
       // Only re-throw errors that are not conditional check failures. A
       // conditional check failure here means that a row tracking the semaphore
       // for this key already exists, which is expected after the first operation.
-      if (e.code !== 'ConditionalCheckFailedException') {
-        throw e;
+      if (!isConditionalCheckException(error)) {
+        throw error;
       }
     }
   }
@@ -58,12 +60,12 @@ class Semaphore {
     log.info(`Incrementing ${key} by ${count}`);
     try {
       await this.add(key, count, max);
-    } catch (e) {
-      if (e.message === 'The conditional request failed') {
+    } catch (error) {
+      if (isConditionalCheckException(error)) {
         throw new ResourcesLockedError(`Could not increment ${key} by ${count}`);
       }
-      log.error(e.message, e.stack);
-      throw e;
+      log.error(error.message, error.stack);
+      throw error;
     }
     try {
       result = await fn();
