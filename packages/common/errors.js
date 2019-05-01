@@ -33,10 +33,19 @@ const WorkflowError = createErrorType('WorkflowError');
  */
 const isWorkflowError = (error) => error.name.includes('WorkflowError');
 
+/**
+ * Returns true if the error is a DynamoDB conditional check exception.
+ *
+ * @param {Error} error
+ * @returns {boolean}
+ */
+const isConditionalCheckException = (error) => error.code === 'ConditionalCheckFailedException';
+
 module.exports = {
 
   createErrorType: createErrorType,
 
+  isConditionalCheckException,
   isWorkflowError,
 
   // WorkflowError should be bubbled out to the overall workflow in the 'exception'

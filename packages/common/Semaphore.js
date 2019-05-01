@@ -1,13 +1,8 @@
-const { ResourcesLockedError } = require('./errors');
+const {
+  isConditionalCheckException,
+  ResourcesLockedError
+} = require('./errors');
 const log = require('./log');
-
-/**
- * Returns true if the error is a DynamoDB conditional check exception.
- *
- * @param {Error} error
- * @returns {boolean}
- */
-const isConditionalCheckException = (error) => error.code === 'ConditionalCheckFailedException';
 
 class Semaphore {
   constructor(docClient, tableName) {
@@ -93,7 +88,7 @@ class Semaphore {
       ReturnValues: 'UPDATED_NEW'
     };
 
-    if (count >= 0 && max >= 0) {
+    if (count > 0 && max >= 0) {
       // Determine the effective maximum for this operation and prevent
       // semaphore value from exceeding overall maximum.
       //
@@ -118,8 +113,16 @@ class Semaphore {
     try {
       await this.docClient.update(updateParams).promise();
     } catch (error) {
-      if (isConditionalCheckException(error)) {
-        throw new ResourcesLockedError(`Could not update ${key} by ${count}`);
+      // If count > 0 and this is a conditional check exception, then the
+      // operation failed because it would have exceeded the maximum, so
+      // throw a ResourcesLockedError.
+      //
+      // A conditional check exception where count < 0 is simply an invalid
+      // operation attempting to decrement the semaphore count below 0 and
+      // is symptomatic of a bug elsewhere attempting to decrement
+      // semaphores before they have been created/incremented.
+      if (count > 0 && isConditionalCheckException(error)) {
+        throw new ResourcesLockedError(`Could not add ${key} to ${count}`);
       }
       log.error(error.message, error.stack);
       throw error;

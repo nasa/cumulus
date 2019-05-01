@@ -3,7 +3,10 @@
 const test = require('ava');
 const { dynamodb, dynamodbDocClient } = require('../aws');
 const Semaphore = require('../Semaphore');
-const { ResourcesLockedError } = require('../errors');
+const {
+  isConditionalCheckException,
+  ResourcesLockedError
+} = require('../errors');
 const { randomId } = require('../test-utils');
 
 test.before(async () => {
@@ -93,7 +96,8 @@ test('Semaphore.down() cannot decrement the semaphore value below 0', async (t) 
   const { semaphore, key } = t.context;
 
   const error = await t.throws(semaphore.down(key));
-  t.true(error instanceof ResourcesLockedError);
+  t.false(error instanceof ResourcesLockedError);
+  t.true(isConditionalCheckException(error));
 });
 
 test('Semaphore.down() decrements the semaphore value', async (t) => {
