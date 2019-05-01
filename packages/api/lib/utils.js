@@ -73,7 +73,7 @@ function extractDate(payload, dateField) {
  */
 function getGranuleProductVolume(granuleFiles = []) {
   return granuleFiles
-    .map((f) => f.fileSize)
+    .map((f) => f.size)
     .filter(isInteger)
     .reduce((x, y) => x + y, 0);
 }

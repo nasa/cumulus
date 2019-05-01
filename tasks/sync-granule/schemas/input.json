@@ -25,7 +25,7 @@
                 "filename": {
                   "type": "string"
                 },
-                "fileType": {
+                "type": {
                   "type": "string"
                 },
                 "bucket": {
