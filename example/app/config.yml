@@ -389,9 +389,12 @@ mth:
       name: '{{stackName}}-public'
       type: public
   ecs:
+    # amiid: ami-0bc08634af113cccb
     maxInstances: 3
     ssh: true
     keyPairName: mhuffnag
+    # efs:
+    #   mount: /efs
 
 jl:
   stackName: jl-test-integration
