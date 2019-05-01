@@ -71,7 +71,7 @@ test('does nothing for non-SNS message', async (t) => {
   await handler({});
 
   const response = await semaphore.get(key);
-  t.is(response.Item.semvalue, 1);  
+  t.is(response.Item.semvalue, 1);
 });
 
 test('does nothing for a workflow message with no priority info', async (t) => {
@@ -82,13 +82,13 @@ test('does nothing for a workflow message with no priority info', async (t) => {
   await handler({
     Records: [
       createSnsWorkflowMessage({
-        status: 'running'
+        status: 'completed'
       })
     ]
   });
 
   const response = await semaphore.get(key);
-  t.is(response.Item.semvalue, 1);  
+  t.is(response.Item.semvalue, 1);
 });
 
 test('does nothing for a workflow message with no status', async (t) => {
@@ -103,7 +103,27 @@ test('does nothing for a workflow message with no status', async (t) => {
   });
 
   const response = await semaphore.get(key);
-  t.is(response.Item.semvalue, 1);  
+  t.is(response.Item.semvalue, 1);
+});
+
+test('does nothing for a workflow message for a running workflow', async (t) => {
+  const { semaphore } = t.context;
+  const key = randomId('low');
+
+  await setSemaphoreValue(key, 1);
+  await handler({
+    Records: [
+      createSnsWorkflowMessage({
+        status: 'running',
+        priorityInfo: {
+          key
+        }
+      })
+    ]
+  });
+
+  const response = await semaphore.get(key);
+  t.is(response.Item.semvalue, 1);
 });
 
 test('throws error when attempting to decrement semaphore below 0', async (t) => {

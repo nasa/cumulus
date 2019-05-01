@@ -1,4 +1,5 @@
 const get = require('lodash.get');
+const has = require('lodash.has');
 const {
   concurrency: {
     Semaphore
@@ -10,33 +11,17 @@ const {
 /**
  * Decrement semaphore value for executions with priority
  *
- * @param  {Object} event - incoming cumulus message
+ * @param {string} key - Key for a semaphore tracking running executions
  * @returns {Promise} A promise indicating function completion
  * @throws {Error} Error from semaphore.down() operation
  */
-async function decrementPrioritySemaphore(event) {
-  const message = JSON.parse(get(event, 'Sns.Message'));
-  const priorityInfo = get(message, 'cumulus_meta.priorityInfo', {});
-  const executionName = get(message, 'cumulus_meta.execution_name');
-  const status = get(message, 'meta.status');
-
-  if (!['failed', 'completed'].includes(status)) {
-    log.error(`Execution ${executionName} with status ${status} is not a completed/failed state. Skipping`);
-    return Promise.resolve();
-  }
-
-  const { key } = priorityInfo;
-  if (!key) {
-    log.info(`Execution ${executionName} does not have any priority. Skipping`);
-    return Promise.resolve();
-  }
-
+async function decrementPrioritySemaphore(key) {
   const semaphore = new Semaphore(
     aws.dynamodbDocClient(),
     process.env.SemaphoresTable
   );
 
-  // Error should only be thrown if we are attempting to decrement the 
+  // Error should only be thrown if we are attempting to decrement the
   // count below 0. If so, catch the error so it can be logged.
   try {
     await semaphore.down(key);
@@ -49,17 +34,38 @@ async function decrementPrioritySemaphore(event) {
 /**
  * Lambda function handler for sfSemaphoreDown
  *
- * @param  {Object} event - incoming message from SNS
- * @param  {Object} context - aws lambda context object
+ * @param {Object} event - incoming message from SNS
  * @returns {Promise}
  */
 async function handler(event) {
-  const records = get(event, 'Records');
-  if (!records) {
-    return;
-  }
+  const records = get(event, 'Records', []);
 
-  const jobs = records.map(decrementPrioritySemaphore);
+  const jobs = records.reduce((jobsArray, record) => {
+    // Skip if this record is not from SNS.
+    if (!has(record, 'Sns.Message')) {
+      return jobsArray;
+    }
+
+    // Skip if:
+    //   - Message has no priority level
+    //   - Message has no workflow status
+    //   - Workflow status is not failed/completed
+    const workflowMessage = JSON.parse(record.Sns.Message);
+    const priorityKey = get(workflowMessage, 'cumulus_meta.priorityInfo.key');
+    const status = get(workflowMessage, 'meta.status');
+    if (
+      !priorityKey ||
+      !['failed', 'completed'].includes(status)
+    ) {
+      return jobsArray;
+    }
+
+    jobsArray.push(
+      decrementPrioritySemaphore(priorityKey)
+    );
+
+    return jobsArray;
+  }, [])
 
   return Promise.all(jobs);
 }
