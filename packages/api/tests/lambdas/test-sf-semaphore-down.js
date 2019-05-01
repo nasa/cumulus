@@ -221,13 +221,13 @@ test('handles multiple updates to a single semaphore', async (t) => {
 test('updates multiple semaphores', async (t) => {
   const { semaphore } = t.context;
   const lowPriorityKey = randomId('low');
-  const lowPriorityMax = 3;
+  const lowPriorityValue = 3;
   const medPriorityKey = randomId('med');
-  const medPriorityMax = 3;
+  const medPriorityValue = 3;
 
   await Promise.all([
-    setSemaphoreValue(lowPriorityKey, lowPriorityMax),
-    setSemaphoreValue(medPriorityKey, medPriorityMax)
+    setSemaphoreValue(lowPriorityKey, lowPriorityValue),
+    setSemaphoreValue(medPriorityKey, medPriorityValue)
   ]);
 
   await handler({
