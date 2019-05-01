@@ -79,6 +79,9 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
 - **CUMULUS-1203**
   - Fixes IAM template's use of intrinsic functions such that IAM template overrides now work with kes
 
+- **CUMULUS-1268**
+  - Deployment will not fail if there are no ES alarms or ECS services
+
 ## [v1.12.1] - 2019-4-8
 
 ## [v1.12.0] - 2019-4-4
