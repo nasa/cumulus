@@ -11,7 +11,8 @@ const {
  * Decrement semaphore value for executions with priority
  *
  * @param  {Object} event - incoming cumulus message
- * @returns {Promise} Result of semaphore update operation
+ * @returns {Promise} A promise indicating function completion
+ * @throws {Error} Error from semaphore.down() operation
  */
 async function decrementPrioritySemaphore(event) {
   const message = JSON.parse(get(event, 'Sns.Message'));
@@ -35,12 +36,18 @@ async function decrementPrioritySemaphore(event) {
     process.env.SemaphoresTable
   );
 
-  return semaphore.down(key);
+  // Error should only be thrown if we are attempting to decrement the 
+  // count below 0. If so, catch the error so it can be logged.
+  try {
+    await semaphore.down(key);
+  } catch (err) {
+    log.error(`Attempted to decrement semaphore for key ${key} below 0`);
+    throw err;
+  }
 }
-exports.decrementPrioritySemaphore = decrementPrioritySemaphore;
 
 /**
- * Lambda function handler for sfPriorityTracker
+ * Lambda function handler for sfSemaphoreDown
  *
  * @param  {Object} event - incoming message from SNS
  * @param  {Object} context - aws lambda context object
@@ -52,13 +59,9 @@ async function handler(event) {
     return;
   }
 
-  const jobs = records.map(exports.decrementPrioritySemaphore);
+  const jobs = records.map(decrementPrioritySemaphore);
 
   return Promise.all(jobs);
 }
-exports.handler = handler;
 
-// module.exports = {
-//   handler,
-//   decrementPrioritySemaphore
-// };
+module.exports = handler;

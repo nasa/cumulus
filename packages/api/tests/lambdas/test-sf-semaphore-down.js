@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const sinon = require('sinon');
 const {
   concurrency: {
     Semaphore
@@ -13,10 +12,7 @@ const {
   }
 } = require('@cumulus/common');
 const { Manager } = require('../../models');
-const sfSemaphoreDown = require('../../lambdas/sf-semaphore-down');
-
-const semaphoreHandlerSpy = sinon.spy(sfSemaphoreDown, 'decrementPrioritySemaphore');
-const semaphoreDownSpy = sinon.spy(Semaphore.prototype, 'down');
+const handler = require('../../lambdas/sf-semaphore-down');
 
 const createSnsWorkflowMessage = ({
   status,
@@ -67,13 +63,23 @@ test.after.always(async () => {
   await manager.deleteTable();
 });
 
-test.serial('does nothing for non-SNS message', async (t) => {
-  await sfSemaphoreDown.handler({});
-  t.false(semaphoreHandlerSpy.called);
+test('does nothing for non-SNS message', async (t) => {
+  const { semaphore } = t.context;
+  const key = randomId('low');
+
+  await setSemaphoreValue(key, 1);
+  await handler({});
+
+  const response = await semaphore.get(key);
+  t.is(response.Item.semvalue, 1);  
 });
 
-test.serial('does nothing for a workflow message with no priority info', async (t) => {
-  await sfSemaphoreDown.handler({
+test('does nothing for a workflow message with no priority info', async (t) => {
+  const { semaphore } = t.context;
+  const key = randomId('low');
+
+  await setSemaphoreValue(key, 1);
+  await handler({
     Records: [
       createSnsWorkflowMessage({
         status: 'running'
@@ -81,24 +87,30 @@ test.serial('does nothing for a workflow message with no priority info', async (
     ]
   });
 
-  t.false(semaphoreDownSpy.called);
+  const response = await semaphore.get(key);
+  t.is(response.Item.semvalue, 1);  
 });
 
-test.serial('does nothing for a workflow message with no status', async (t) => {
-  await sfSemaphoreDown.handler({
+test('does nothing for a workflow message with no status', async (t) => {
+  const { semaphore } = t.context;
+  const key = randomId('low');
+
+  await setSemaphoreValue(key, 1);
+  await handler({
     Records: [
       createSnsWorkflowMessage({})
     ]
   });
 
-  t.false(semaphoreDownSpy.called);
+  const response = await semaphore.get(key);
+  t.is(response.Item.semvalue, 1);  
 });
 
 test('throws error when attempting to decrement semaphore below 0', async (t) => {
   const key = randomId('low');
 
   try {
-    await sfSemaphoreDown.handler({
+    await handler({
       Records: [
         createSnsWorkflowMessage({
           status: 'completed',
@@ -112,8 +124,6 @@ test('throws error when attempting to decrement semaphore below 0', async (t) =>
   } catch (err) {
     t.pass();
   }
-
-  t.true(semaphoreDownSpy.called);
 });
 
 test('decrements priority semaphore for completed workflow message', async (t) => {
@@ -123,7 +133,7 @@ test('decrements priority semaphore for completed workflow message', async (t) =
   // arbitrarily set semaphore so it can be decremented
   await setSemaphoreValue(key, 1);
 
-  await sfSemaphoreDown.handler({
+  await handler({
     Records: [
       createSnsWorkflowMessage({
         status: 'completed',
@@ -145,7 +155,7 @@ test('decrements priority semaphore for failed workflow message', async (t) => {
   // arbitrarily set semaphore so it can be decremented
   await setSemaphoreValue(key, 1);
 
-  await sfSemaphoreDown.handler({
+  await handler({
     Records: [
       createSnsWorkflowMessage({
         status: 'failed',
@@ -167,7 +177,7 @@ test('handles multiple updates to a single semaphore', async (t) => {
   // Arbitrarily set semaphore value so it can be decremented
   await setSemaphoreValue(key, 3);
 
-  await sfSemaphoreDown.handler({
+  await handler({
     Records: [
       createSnsWorkflowMessage({
         status: 'failed',
@@ -200,7 +210,7 @@ test('updates multiple semaphores', async (t) => {
     setSemaphoreValue(medPriorityKey, medPriorityMax)
   ]);
 
-  await sfSemaphoreDown.handler({
+  await handler({
     Records: [
       createSnsWorkflowMessage({
         status: 'completed',
