@@ -1,6 +1,12 @@
 const { ResourcesLockedError } = require('./errors');
 const log = require('./log');
 
+/**
+ * Returns true if the error is a DynamoDB conditional check exception.
+ *
+ * @param {Error} error
+ * @returns {boolean}
+ */
 const isConditionalCheckException = (error) => error.code === 'ConditionalCheckFailedException';
 
 class Semaphore {
@@ -58,15 +64,7 @@ class Semaphore {
   async checkout(key, count, max, fn) {
     let result = null;
     log.info(`Incrementing ${key} by ${count}`);
-    try {
-      await this.add(key, count, max);
-    } catch (error) {
-      if (isConditionalCheckException(error)) {
-        throw new ResourcesLockedError(`Could not increment ${key} by ${count}`);
-      }
-      log.error(error.message, error.stack);
-      throw error;
-    }
+    await this.add(key, count, max);
     try {
       result = await fn();
     } finally {
@@ -108,7 +106,7 @@ class Semaphore {
       updateParams.ExpressionAttributeValues[':max'] = effectiveMax;
       updateParams.ConditionExpression = '#semvalue <= :max';
     } else if (count < 0) {
-      // Semaphore value should not go below 0. if this operation is
+      // Semaphore value should not go below 0. If this operation is
       // decrementing the semaphore value, ensure that the current
       // semaphore value is large enough to not go below 0 after
       // the decrement operation.
@@ -117,7 +115,15 @@ class Semaphore {
       updateParams.ConditionExpression = '#semvalue >= :min';
     }
 
-    return this.docClient.update(updateParams).promise();
+    try {
+      await this.docClient.update(updateParams).promise();
+    } catch (error) {
+      if (isConditionalCheckException(error)) {
+        throw new ResourcesLockedError(`Could not update ${key} by ${count}`);
+      }
+      log.error(error.message, error.stack);
+      throw error;
+    }
   }
 }
 
