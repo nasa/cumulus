@@ -37,6 +37,7 @@ async function decrementPrioritySemaphore(event) {
 
   return semaphore.down(key);
 }
+exports.decrementPrioritySemaphore = decrementPrioritySemaphore;
 
 /**
  * Lambda function handler for sfPriorityTracker
@@ -48,14 +49,16 @@ async function decrementPrioritySemaphore(event) {
 async function handler(event) {
   const records = get(event, 'Records');
   if (!records) {
-    return cb();
+    return;
   }
 
-  const jobs = records.map(decrementPrioritySemaphore);
+  const jobs = records.map(exports.decrementPrioritySemaphore);
 
   return Promise.all(jobs);
 }
+exports.handler = handler;
 
-module.exports = {
-  handler
-};
+// module.exports = {
+//   handler,
+//   decrementPrioritySemaphore
+// };

@@ -6,7 +6,7 @@ const Semaphore = require('../Semaphore');
 const { randomId } = require('../test-utils');
 
 test.before(async () => {
-  process.env.SemaphoresTable = randomId('SemaphoresTAble');
+  process.env.SemaphoresTable = randomId('SemaphoresTable');
 
   await dynamodb().createTable({
     TableName: process.env.SemaphoresTable,
