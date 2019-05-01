@@ -10,27 +10,37 @@ const fs = require('fs-extra');
 const { isNil } = require('./util');
 
 /**
- * Wrapper around an AWS method to allow calling a function
- * after the AWS function
+ * Create a function which will allow methods of an AWS service interface object
+ * to be wrapped.
  *
- * Example:
- * // Initialize wrapper for AWS Lambda
- * const lambdaWrapper = awsServiceInterfaceMethodWrapper(lambdaClient);
-
-  // Wrap the Lambda createEventSourceMapping function so that upon completion
-  // it updates internal state
-    lambdaWrapper(
-      'createEventSourceMapping',
-      (data, params) => {
-        setState((isNil(params.Enabled) || params.Enabled) ? 'Enabled' : 'Disabled', data.UUID);
-        return { ...data, State: getState(data.UUID) };
-      }
-    );
+ * When invoked, this returned function will take two arguments:
+ * - methodName - the name of the service interface object method to wrap
+ * - dataHandler - a handler function which will be used to process the result
+ *     of invoking `methodName`
  *
- * @param {Object} client - AWS Service client
- * @returns {Function} - function taking a client method name and a dataHandler function
- * to be called upon completion of the client method with return value of the client
- * method and the original parameters passed into the client method
+ * @param {Object} client - AWS Service interface object
+ * @returns {Function} function taking a client method name and a dataHandler
+ *   function to be called upon completion of the client method with return
+ *   value of the client method and the original parameters passed into the
+ *   client method
+ *
+ * @example
+ * const s3 = new AWS.S3();
+ *
+ * // Initialize wrapper for AWS S3 service interface object
+ * const s3Wrapper = awsServiceInterfaceMethodWrapper(s3);
+ *
+ * // Add a "RequestParams" property to the result, which shows what params were
+ * // used in the `listObjects` request.  This is, obviously, a very contrived
+ * // example.
+ * s3Wrapper(
+ *   'listObjects',
+ *   (data, params) => ({ ...data, RequestParams: params })
+ * );
+ *
+ * const result = await s3().listObjects({ Bucket: 'my-bucket' }).promise();
+ *
+ * assert(result.RequestParams.Bucket === 'my-bucket');
  */
 const awsServiceInterfaceMethodWrapper = (client) => {
   const originalFunctions = {};
