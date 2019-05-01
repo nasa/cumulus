@@ -1,21 +1,26 @@
 'use strict';
 
 const test = require('ava');
-const { dynamodbDocClient } = require('../aws');
+const { dynamodb, dynamodbDocClient } = require('../aws');
 const Semaphore = require('../Semaphore');
-const { randomId, randomString } = require('../test-utils');
-// TODO: import from the package instead of relative path?
-const { Manager } = require('../../api/models');
-
-let manager;
+const { randomId } = require('../test-utils');
 
 test.before(async () => {
-  process.env.SemaphoresTable = randomString();
-  manager = new Manager({
-    tableName: process.env.SemaphoresTable,
-    tableHash: { name: 'key', type: 'S' }
-  });
-  await manager.createTable();
+  process.env.SemaphoresTable = randomId('SemaphoresTAble');
+
+  await dynamodb().createTable({
+    TableName: process.env.SemaphoresTable,
+    AttributeDefinitions: [
+      { AttributeName: 'key', AttributeType: 'S' }
+    ],
+    KeySchema: [
+      { AttributeName: 'key', KeyType: 'HASH' }
+    ],
+    ProvisionedThroughput: {
+      ReadCapacityUnits: 5,
+      WriteCapacityUnits: 5
+    }
+  }).promise();
 });
 
 test.beforeEach(async (t) => {
@@ -27,7 +32,7 @@ test.beforeEach(async (t) => {
 });
 
 test.after.always(async () => {
-  await manager.deleteTable();
+  await dynamodb().deleteTable({ TableName: process.env.SemaphoresTable }).promise();
 });
 
 test('Semaphore.add() can increase the semaphore value up to the maximum', async (t) => {
