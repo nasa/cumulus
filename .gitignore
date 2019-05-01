@@ -31,6 +31,7 @@ search_index.json
 **/.tern-port
 /.tern-project
 /queries
+/example/app/efs-cf.yml
 /example/app/sandbox.env
 /example/app/nsidc.env
 /jsconfig.json
