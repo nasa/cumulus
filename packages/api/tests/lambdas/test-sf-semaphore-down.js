@@ -126,7 +126,7 @@ test('does nothing for a workflow message for a running workflow', async (t) => 
   t.is(response.Item.semvalue, 1);
 });
 
-test('throws error when attempting to decrement semaphore below 0', async (t) => {
+test('throws error when attempting to decrement empty semaphore', async (t) => {
   const key = randomId('low');
 
   await t.throws(handler({
