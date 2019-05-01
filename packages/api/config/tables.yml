@@ -113,7 +113,6 @@ AsyncOperationsTable:
 SemaphoresTable:
   read: 5
   write: 10
-  pointInTime: '{{enablePointInTime}}'
   attributes:
     - name: key
       type: S
