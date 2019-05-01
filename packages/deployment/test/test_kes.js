@@ -314,7 +314,7 @@ test('addLambdaDeadLetterQueues adds dead letter queue to the sqs configuration'
   t.is(expected, actual);
 });
 
-test.only('buildCWDashboard creates alarm widgets', (t) => {
+test('buildCWDashboard creates alarm widgets', (t) => {
   const kes = t.context.kes;
   // each ECS service has a default alarm
   const ecsDefaultAlarmCount = Object.keys(kes.config.ecs.services).length;
