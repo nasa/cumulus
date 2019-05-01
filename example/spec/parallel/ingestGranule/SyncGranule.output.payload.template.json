@@ -20,7 +20,7 @@
           "bucket": "",
           "filename": "",
           "size": 21708,
-          "typemetadata",
+          "type": "metadata",
           "path": "replace-me-path",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
         },
@@ -29,7 +29,7 @@
           "bucket": "",
           "filename": "",
           "size": 9728,
-          "typebrowse",
+          "type": "browse",
           "path": "replace-me-path",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
         }
