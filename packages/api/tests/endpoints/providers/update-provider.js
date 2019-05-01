@@ -113,7 +113,7 @@ test.serial('PUT updates an existing provider and returns it in listing', async 
   const { results } = response.body;
   stub.restore();
   t.is(results.length, 1);
-  t.deepEqual(results[0], updatedProvider);
+  t.deepEqual(results[0].globalConnectionLimit, updateParams.globalConnectionLimit);
 });
 
 test('PUT without an Authorization header returns an Authorization Missing response and does not update an existing provider', async (t) => {

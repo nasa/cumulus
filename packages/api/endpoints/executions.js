@@ -33,7 +33,7 @@ async function dynamoList(req, res, next) {
   } catch (error) {
     return res.boom.notFound(error.message);
   }
-  return res.send({ results });
+  return res.send({ results: results.Items });
 }
 
 /**

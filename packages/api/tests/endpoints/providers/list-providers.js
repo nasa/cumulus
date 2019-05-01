@@ -49,11 +49,6 @@ test.before(async () => {
   esClient = await Search.es('fakehost');
 });
 
-test.beforeEach(async (t) => {
-  t.context.testProvider = fakeProviderFactory();
-  await providerModel.create(t.context.testProvider);
-});
-
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await providerModel.deleteTable();
@@ -83,6 +78,9 @@ test('CUMULUS-912 GET without pathParameters and with an invalid access token re
 test.todo('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('default returns list of providerModel', async (t) => {
+  t.context.testProvider = fakeProviderFactory();
+  await providerModel.create(t.context.testProvider);
+
   const stub = sinon.stub(Search.prototype, 'query').resolves({
     results: [t.context.testProvider]
   });
