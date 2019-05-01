@@ -76,7 +76,10 @@ cmr:
 Configuration for the Amazon EC2 Container Service (ECS) instance.  Update `availabilityZone` (or `availabilityZones` if using multiple AZs) with information from [VPC Dashboard](https://console.aws.amazon.com/vpc/home?region=us-east-1#)
 note `instanceType` and `desiredInstances` have been selected for a sample install.  You will have to specify appropriate values to deploy and use ECS machines.   See [EC2 Instance Types](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html) for more information.
 
-Also note, if you dont specify the `amiid`, it will try to use a default, which may or may not exist.
+Also note, if you dont specify the `amiid`, it will try to use a default, which
+may or may not exist. The default AMI is an NGAP-approved AMI. The most recent
+NGAP AMI can be found using
+[these instructions](https://wiki.earthdata.nasa.gov/display/ESKB/Select+an+NGAP+Created+AMI).
 
 For each service, a TaskCountLowAlarm alarm is added to check the RUNNING Task Count against the service configuration.  You can update `ecs` properties and add additional ECS alarms to your service.  For example,
 
