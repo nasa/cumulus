@@ -26,7 +26,7 @@ async function decrementPrioritySemaphore(key) {
   try {
     await semaphore.down(key);
   } catch (err) {
-    log.error(`Attempted to decrement semaphore for key ${key} below 0`);
+    log.error(`Failure: attempted to decrement semaphore for key ${key} below 0`);
     throw err;
   }
 }

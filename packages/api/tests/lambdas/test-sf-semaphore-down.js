@@ -129,21 +129,16 @@ test('does nothing for a workflow message for a running workflow', async (t) => 
 test('throws error when attempting to decrement semaphore below 0', async (t) => {
   const key = randomId('low');
 
-  try {
-    await handler({
-      Records: [
-        createSnsWorkflowMessage({
-          status: 'completed',
-          priorityInfo: {
-            key
-          }
-        })
-      ]
-    });
-    t.fail();
-  } catch (err) {
-    t.pass();
-  }
+  await t.throws(handler({
+    Records: [
+      createSnsWorkflowMessage({
+        status: 'completed',
+        priorityInfo: {
+          key
+        }
+      })
+    ]
+  }));
 });
 
 test('decrements priority semaphore for completed workflow message', async (t) => {
