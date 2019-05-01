@@ -210,19 +210,13 @@ class Rule extends Manager {
     };
     const listData = await aws.lambda().listEventSourceMappings(listParams).promise();
     if (listData.EventSourceMappings && listData.EventSourceMappings.length > 0) {
-      const mappingExists = listData.EventSourceMappings[0];
-      if (mappingExists.State === 'Enabled') {
-        return mappingExists;
+      const currentMapping = listData.EventSourceMappings[0];
+
+      // This is for backwards compatibility. Mappings should no longer be disabled.
+      if (currentMapping.State === 'Enabled') {
+        return currentMapping;
       }
-      await this.deleteKinesisEventSource({
-        name: item.name,
-        rule: {
-          arn: mappingExists.UUID,
-          // This is needed for the query to determine if the event source is shared
-          logEventArn: mappingExists.UUID,
-          type: item.rule.type
-        }
-      }, lambda.eventType);
+      return aws.lambda().updateEventSourceMapping({ Enabled: true }).promise();
     }
 
     // create event source mapping
@@ -232,8 +226,7 @@ class Rule extends Manager {
       StartingPosition: 'TRIM_HORIZON',
       Enabled: true
     };
-    const data = await aws.lambda().createEventSourceMapping(params).promise();
-    return data;
+    return aws.lambda().createEventSourceMapping(params).promise();
   }
 
   /**

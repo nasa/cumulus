@@ -9,6 +9,7 @@ const Handlebars = require('handlebars');
 const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
+const pMap = require('p-map');
 
 const {
   stringUtils: { globalReplace }
@@ -502,7 +503,11 @@ async function cleanupProviders(stackName, bucket, providersDirectory, postfix) 
 }
 
 /**
- * add rules to database
+ * add rules to database. Add a suffix to collection, rule, and provider if specified.
+ *
+ * NOTE: The postfix will be applied BEFORE the overrides, so if you specify a postfix and
+ * an override for collection, provider, or rule, the postfix will not be applied to whatever
+ * is specified in the override.
  *
  * @param {string} config - Test config used to set environment variables and template rules data
  * @param {string} dataDirectory - the directory of rules json files
@@ -514,27 +519,28 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
   const { stackName, bucket } = config;
   const rules = await setupSeedData(stackName, bucket, dataDirectory);
 
-  // Rules should be added in serial because in the case of SNS and Kinesis rule types
+  // Rules should be added in serial because, in the case of SNS and Kinesis rule types,
   // they may share an event source mapping and running them in parallel will cause a
   // race condition
-  const ruleLimit = pLimit(1);
+  return pMap(
+    rules,
+    (rule) => {
+      if (postfix) {
+        rule.name += globalReplace(postfix, '-', '_'); // rule cannot have dashes
+        rule.collection.name += postfix;
+        rule.provider += postfix;
+      }
 
-  const promises = rules.map((rule) => ruleLimit(() => {
-    if (postfix) {
-      rule.name += globalReplace(postfix, '-', '_'); // rule cannot have dashes
-      rule.collection.name += postfix;
-      rule.provider += postfix;
-    }
+      rule = Object.assign(rule, overrides);
+      const ruleTemplate = Handlebars.compile(JSON.stringify(rule));
+      const templatedRule = JSON.parse(ruleTemplate(config));
 
-    rule = Object.assign(rule, overrides);
-    const ruleTemplate = Handlebars.compile(JSON.stringify(rule));
-    const templatedRule = JSON.parse(ruleTemplate(config));
-
-    const r = new Rule();
-    console.log(`adding rule ${JSON.stringify(templatedRule)}`);
-    return r.create(templatedRule);
-  }));
-  return Promise.all(promises);
+      const r = new Rule();
+      console.log(`adding rule ${JSON.stringify(templatedRule)}`);
+      return r.create(templatedRule);
+    },
+    { concurrency: 1 }
+  );
 }
 
 /**
