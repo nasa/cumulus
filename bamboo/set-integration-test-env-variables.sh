@@ -31,7 +31,7 @@ else
   export VPC_CIDR_IP="$bamboo_SECRET_VPC_CIDR_IP"
   export AWS_REGION="$bamboo_AWS_REGION"
   export CMR_PASSWORD="$bamboo_CMR_PASSWORD"
-  export CMR_USER="$bamboo_CMR_USER"
+  export CMR_USERNAME="$bamboo_CMR_USERNAME"
   export TOKEN_SECRET="$bamboo_TOKEN_SECRET"
   export EARTHDATA_USERNAME="$bamboo_SECRET_EARTHDATA_USERNAME"
   export EARTHDATA_PASSWORD="$bamboo_SECRET_EARTHDATA_PASSWORD"
