@@ -49,6 +49,7 @@ let userModel;
 test.before(async () => {
   // create esClient
   esClient = await Search.es('fakehost');
+  process.env.esIndex = esIndex;
 
   // add fake elasticsearch index
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
@@ -190,7 +191,8 @@ test('GET fails if pdr is not found', async (t) => {
 test('DELETE a pdr', async (t) => {
   const newPdr = fakePdrFactory('completed');
   // create a new pdr
-  await pdrModel.create(newPdr);
+  const record = await pdrModel.create(newPdr);
+  await indexer.indexPdr(esClient, record, esIndex);
 
   const key = `${process.env.stackName}/pdrs/${newPdr.pdrName}`;
   await aws.s3().putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' }).promise();
@@ -215,6 +217,7 @@ test('DELETE handles the case where the PDR exists in S3 but not in DynamoDb', a
     pdrName,
     'This is the PDR body'
   );
+  process.env.notInDb = true;
 
   const response = await request(app)
     .delete(`/pdrs/${pdrName}`)
@@ -230,7 +233,8 @@ test('DELETE handles the case where the PDR exists in S3 but not in DynamoDb', a
 
 test('DELETE handles the case where the PDR exists in DynamoDb but not in S3', async (t) => {
   const newPdr = fakePdrFactory('completed');
-  await pdrModel.create(newPdr);
+  const record = await pdrModel.create(newPdr);
+  await indexer.indexPdr(esClient, record, esIndex);
 
   const response = await request(app)
     .delete(`/pdrs/${newPdr.pdrName}`)

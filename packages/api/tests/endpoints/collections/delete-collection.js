@@ -13,6 +13,7 @@ const {
   createFakeJwtAuthToken
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
+const indexer = require('../../../es/indexer');
 const assertions = require('../../../lib/assertions');
 const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 
@@ -26,7 +27,7 @@ process.env.TOKEN_SECRET = randomString();
 // import the express app after setting the env variables
 const { app } = require('../../../app');
 
-const esIndex = randomString();
+const esIndex = 'localrun-es';
 let esClient;
 
 let jwtAuthToken;
@@ -65,7 +66,8 @@ test.before(async () => {
 
 test.beforeEach(async (t) => {
   t.context.testCollection = fakeCollectionFactory();
-  await collectionModel.create(t.context.testCollection);
+  const collection = await collectionModel.create(t.context.testCollection);
+  indexer.indexCollection(esClient, collection, esIndex);
 });
 
 test.after.always(async () => {
@@ -108,6 +110,7 @@ test.todo('Attempting to delete a collection with an unauthorized user returns a
 test('Deleting a collection removes it', async (t) => {
   const collection = fakeCollectionFactory();
   await collectionModel.create(collection);
+  indexer.indexCollection(esClient, collection, esIndex);
 
   await request(app)
     .delete(`/collections/${collection.name}/${collection.version}`)

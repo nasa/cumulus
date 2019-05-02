@@ -5,37 +5,21 @@ const { inTestMode } = require('@cumulus/common/test-utils');
 const models = require('../models');
 const { RecordDoesNotExist } = require('../lib/errors');
 const { Search } = require('../es/search');
+const indexer = require('../es/indexer');
 
 /**
  * List all rules.
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @param {*} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function list(req, res, next) {
-  if (inTestMode()) {
-    return next();
-  }
+async function list(req, res) {
   const search = new Search({
     queryStringParameters: req.query
   }, 'rule');
   const response = await search.query();
   return res.send(response);
-}
-
-async function dynamoList(req, res, next) {
-  if (!inTestMode()) return next();
-
-  const rulesModel = new models.Rule();
-  let results;
-  try {
-    results = await rulesModel.scan();
-  } catch (error) {
-    return res.boom.notFound(error.message);
-  }
-  return res.send({ results: results.Items });
 }
 
 /**
@@ -68,7 +52,7 @@ async function get(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function post(req, res) {
+async function post(req, res, next) {
   const data = req.body;
   const name = data.name;
 
@@ -80,6 +64,9 @@ async function post(req, res) {
   } catch (e) {
     if (e instanceof RecordDoesNotExist) {
       const r = await model.create(data);
+      req.rulesRecord = r;
+      req.returnMessage = { message: 'Record saved', record: r };
+      if (inTestMode()) return next();
       return res.send({ message: 'Record saved', record: r });
     }
     throw e;
@@ -93,7 +80,7 @@ async function post(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function put(req, res) {
+async function put(req, res, next) {
   const name = req.params.name;
 
   const data = req.body;
@@ -117,6 +104,8 @@ async function put(req, res) {
   }
 
   const d = await model.update(originalData, data);
+  req.rulesRecord = d;
+  if (inTestMode()) return next();
   return res.send(d);
 }
 
@@ -127,7 +116,7 @@ async function put(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function del(req, res) {
+async function del(req, res, next) {
   const name = (req.params.name || '').replace(/%20/g, ' ');
   const model = new models.Rule();
 
@@ -141,13 +130,34 @@ async function del(req, res) {
     throw e;
   }
   await model.delete(record);
+  if (inTestMode()) return next();
+  return res.send({ message: 'Record deleted' });
+}
+
+async function addToES(req, res) {
+  const rule = req.rulesRecord;
+
+  if (inTestMode()) {
+    const esClient = await Search.es('fakehost');
+    indexer.indexRule(esClient, rule, 'localrun-es');
+  }
+  if (req.returnMessage) return res.send(req.returnMessage);
+  return res.send(req.rulesRecord);
+}
+
+async function removeFromES(req, res) {
+  const name = (req.params.name || '').replace(/%20/g, ' ');
+  if (inTestMode()) {
+    const esClient = await Search.es('fakehost');
+    esClient.delete({ id: name, index: 'localrun-es', type: 'rule' });
+  }
   return res.send({ message: 'Record deleted' });
 }
 
 router.get('/:name', get);
-router.get('/', dynamoList, list);
-router.put('/:name', put);
-router.post('/', post);
-router.delete('/:name', del);
+router.get('/', list);
+router.put('/:name', put, addToES);
+router.post('/', post, addToES);
+router.delete('/:name', del, removeFromES);
 
 module.exports = router;

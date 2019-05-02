@@ -12,6 +12,7 @@ const {
   fakeProviderFactory
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
+const indexer = require('../../../es/indexer');
 const assertions = require('../../../lib/assertions');
 const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 
@@ -24,9 +25,9 @@ process.env.TOKEN_SECRET = randomString();
 // import the express app after setting the env variables
 const { app } = require('../../../app');
 
-let providerModel;
-const esIndex = randomString();
+let esIndex;
 let esClient;
+let providerModel;
 
 let jwtAuthToken;
 let accessTokenModel;
@@ -49,6 +50,7 @@ test.before(async () => {
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 
   esClient = await Search.es('fakehost');
+  esIndex = 'localrun-es';
 
   process.env.RulesTable = randomString();
   ruleModel = new models.Rule();
@@ -62,7 +64,8 @@ test.before(async () => {
 
 test.beforeEach(async (t) => {
   t.context.testProvider = fakeProviderFactory();
-  await providerModel.create(t.context.testProvider);
+  const newProvider = await providerModel.create(t.context.testProvider);
+  indexer.indexProvider(esClient, newProvider, esIndex);
 });
 
 test.after.always(async () => {

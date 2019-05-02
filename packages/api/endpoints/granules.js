@@ -5,6 +5,7 @@ const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const Search = require('../es/search').Search;
+const indexer = require('../es/indexer');
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
 
@@ -13,34 +14,14 @@ const { deconstructCollectionId } = require('../lib/utils');
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @param {*} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function list(req, res, next) {
-  if (inTestMode()) {
-    return next();
-  }
+async function list(req, res) {
   const result = await (new Search({
     queryStringParameters: req.query
   }, 'granule')).query();
 
   return res.send(result);
-}
-
-async function dynamoList(req, res, next) {
-  if (!inTestMode()) return next();
-
-  const granuleModel = new models.Granule();
-  let results;
-  try {
-    results = await granuleModel.scan();
-  } catch (error) {
-    return res.boom.notFound(error.message);
-  }
-  const meta = {
-    count: results.Count
-  };
-  return res.send({ results: results.Items, meta });
 }
 
 /**
@@ -133,9 +114,10 @@ async function put(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
+ * @param {function} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function del(req, res) {
+async function del(req, res, next) {
   const granuleId = req.params.granuleName;
   log.info(`granules.del ${granuleId}`);
 
@@ -160,6 +142,8 @@ async function del(req, res) {
   }));
 
   await granuleModelClient.delete({ granuleId });
+  req.collectionId = granule.collectionId;
+  if (inTestMode()) return next();
 
   return res.send({ detail: 'Record deleted' });
 }
@@ -186,9 +170,19 @@ async function get(req, res) {
   return res.send(result);
 }
 
+async function removeFromES(req, res) {
+  const granuleId = req.params.granuleName;
+  if (inTestMode()) {
+    const esClient = await Search.es('fakehost');
+    const esIndex = process.env.esIndex || 'localrun-es';
+    await indexer.deleteRecord(esClient, granuleId, 'granule', req.collectionId, esIndex);
+  }
+  return res.send({ detail: 'Record deleted' });
+}
+
 router.get('/:granuleName', get);
-router.get('/', dynamoList, list);
+router.get('/', list);
 router.put('/:granuleName', put);
-router.delete('/:granuleName', del);
+router.delete('/:granuleName', del, removeFromES);
 
 module.exports = router;

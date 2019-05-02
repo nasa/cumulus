@@ -388,6 +388,17 @@ class Granule extends Manager {
 
     return new GranuleSearchQueue(params, 'query');
   }
+
+  /**
+   * Only used for tests
+   */
+  async deleteGranules() {
+    const granules = await this.scan();
+    granules.Items.forEach(async (granule) => {
+      await super.delete({ granuleId: granule.granuleId });
+    });
+    
+  }
 }
 
 module.exports = Granule;
