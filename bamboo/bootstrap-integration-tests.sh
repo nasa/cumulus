@@ -2,7 +2,7 @@
 
 set -e
 
-npm install
+npm install --unsafe-perm
 
 . ./bamboo/set-integration-test-env-variables.sh
 echo "Overriding deployment $DEPLOYMENT with jk for ci development"
