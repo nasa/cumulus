@@ -102,9 +102,9 @@
           {
             "bucket": "cumulus-devseed-protected",
             "path": "/TEST_B/Cumulus/MODIS/DATA",
-            "checksumValue": 3461876482,
+            "checksum": 3461876482,
             "filename": "s3://cumulus-devseed-protected/MYD09A1.A2016105.h12v09.006.2016234195422.hdf",
-            "fileSize": 79335737,
+            "size": 79335737,
             "checksumType": "CKSUM",
             "name": "MYD09A1.A2016105.h12v09.006.2016234195422.hdf",
             "url_path": ""
@@ -112,9 +112,9 @@
           {
             "bucket": "cumulus-devseed-protected",
             "path": "/TEST_B/Cumulus/MODIS/DATA",
-            "checksumValue": 2154528319,
+            "checksum": 2154528319,
             "filename": "s3://cumulus-devseed-protected/MYD09A1.A2016105.h12v09.006.2016234195422.hdf.met",
-            "fileSize": 34455,
+            "size": 34455,
             "checksumType": "CKSUM",
             "name": "MYD09A1.A2016105.h12v09.006.2016234195422.hdf.met",
             "url_path": ""
@@ -122,9 +122,9 @@
           {
             "bucket": "cumulus-devseed-protected",
             "path": "/TEST_B/Cumulus/MODIS/DATA",
-            "checksumValue": 4146296907,
+            "checksum": 4146296907,
             "filename": "s3://cumulus-devseed-protected/BROWSE.MYD09A1.A2016105.h12v09.006.2016234195422.hdf",
-            "fileSize": 40442,
+            "size": 40442,
             "checksumType": "CKSUM",
             "name": "BROWSE.MYD09A1.A2016105.h12v09.006.2016234195422.hdf",
             "url_path": ""

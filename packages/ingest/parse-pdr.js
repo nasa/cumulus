@@ -24,7 +24,7 @@ const pdrToCnmMap = {
   PRODHIST: 'qa',
   QA: 'metadata',
   TGZ: 'data',
-  LINKAGE: 'data'
+  LINKAGE: 'linkage'
 };
 
 function getItem(spec, pdrName, name, must = true) {
@@ -59,7 +59,7 @@ function parseSpec(pdrName, spec) {
   const fileType = get('FILE_TYPE');
 
   const checksumType = get('FILE_CKSUM_TYPE', false);
-  const checksumValue = get('FILE_CKSUM_VALUE', false);
+  const checksum = get('FILE_CKSUM_VALUE', false);
 
   // Validate fileType is in the mapping
   if (fileType) {
@@ -68,33 +68,33 @@ function parseSpec(pdrName, spec) {
     }
   }
 
-  if (checksumType || checksumValue) {
-    // Make sure that both checksumType and checksumValue are set
+  if (checksumType || checksum) {
+    // Make sure that both checksumType and checksum are set
     if (!checksumType) throw new PDRParsingError('MISSING FILE_CKSUM_TYPE PARAMETER');
-    if (!checksumValue) throw new PDRParsingError('MISSING FILE_CKSUM_VALUE PARAMETER');
+    if (!checksum) throw new PDRParsingError('MISSING FILE_CKSUM_VALUE PARAMETER');
 
     // Make sure that the checksumType is valid
     if (!['CKSUM', 'MD5'].includes(checksumType)) {
       throw new PDRParsingError(`UNSUPPORTED CHECKSUM TYPE: ${checksumType}`);
     }
 
-    // Make sure that the checksumValue is valid
-    if ((checksumType === 'CKSUM') && (!isNumber(checksumValue))) {
-      throw new PDRParsingError(`Expected CKSUM value to be a number: ${checksumValue}`);
+    // Make sure that the checksum is valid
+    if ((checksumType === 'CKSUM') && (!isNumber(checksum))) {
+      throw new PDRParsingError(`Expected CKSUM value to be a number: ${checksum}`);
     }
-    if ((checksumType === 'MD5') && (!isString(checksumValue))) {
-      throw new PDRParsingError(`Expected MD5 value to be a string: ${checksumValue}`);
+    if ((checksumType === 'MD5') && (!isString(checksum))) {
+      throw new PDRParsingError(`Expected MD5 value to be a string: ${checksum}`);
     }
   }
 
   const parsedSpec = {
     path,
-    fileSize,
+    size: fileSize,
     name: filename,
-    fileType: pdrToCnmMap[fileType]
+    type: pdrToCnmMap[fileType]
   };
   if (checksumType) parsedSpec.checksumType = checksumType;
-  if (checksumValue) parsedSpec.checksumValue = checksumValue;
+  if (checksum) parsedSpec.checksum = checksum;
   return parsedSpec;
 }
 module.exports.parseSpec = parseSpec;
@@ -172,7 +172,7 @@ async function granuleFromFileGroup(fileGroup, pdrName, collectionConfigStore) {
     version,
     files,
     granuleId: extractGranuleId(files[0].name, collectionConfig.granuleIdExtraction),
-    granuleSize: files.reduce((total, file) => total + file.fileSize, 0)
+    granuleSize: files.reduce((total, file) => total + file.size, 0)
   };
 }
 
