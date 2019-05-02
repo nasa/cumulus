@@ -4,7 +4,7 @@ set -e
 
 npm install
 
-. ./bamboo/set-env-vars.sh
+. ./bamboo/set-integration-test-env-variables.sh
 echo "Overriding deployment $DEPLOYMENT with jk for ci development"
 export DEPLOYMENT="jk"
 

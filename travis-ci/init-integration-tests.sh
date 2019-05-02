@@ -4,7 +4,7 @@ set -e
 
 npm install
 
-. ./travis-ci/set-integration-test-env-variables.sh
+. ./travis-ci/set-env-vars.sh
 
 if [ "$USE_NPM_PACKAGES" = "true" ]; then
   (cd example && npm install)
