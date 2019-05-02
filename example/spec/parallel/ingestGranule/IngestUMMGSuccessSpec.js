@@ -216,13 +216,13 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
           { expectedMime: mime.lookup(fileObject.filepath) || 'application/octet-stream' })));
     });
 
-    it('has a payload with correct buckets, filenames, filesizes', () => {
+    it('has a payload with correct buckets, filenames, sizes', () => {
       movedFiles.forEach((file) => {
         const expectedFile = expectedPayload.granules[0].files.find((f) => f.name === file.name);
         expect(file.filename).toEqual(expectedFile.filename);
         expect(file.bucket).toEqual(expectedFile.bucket);
-        if (file.fileSize) {
-          expect(file.fileSize).toEqual(expectedFile.fileSize);
+        if (file.size) {
+          expect(file.size).toEqual(expectedFile.size);
         }
       });
     });

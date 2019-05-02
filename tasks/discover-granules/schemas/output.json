@@ -23,7 +23,7 @@
                 "name": { "type": "string" },
                 "path": { "type": "string" },
                 "size": { "type": "integer" },
-                "fileType": { "type": "string" },
+                "type": { "type": "string" },
                 "time": {
                   "description": "The number of milliseconds since January 1, 1970, 00:00:00 UTC",
                   "type": "integer"
