@@ -577,39 +577,39 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
   const matchingFilesInDb = [{
     bucket: 'testbucket-protected',
     key: 'MOD09GQ___006/2017/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf',
-    fileSize: 17865615,
+    size: 17865615,
     fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf'
   },
   {
     bucket: 'testbucket-public',
     key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg',
-    fileSize: 44118,
+    size: 44118,
     fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg'
   },
   {
     bucket: 'testbucket-protected-2',
     key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml',
-    fileSize: 2708,
+    size: 2708,
     fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml'
   }];
 
   const privateFilesInDb = [{
     bucket: 'testbucket-private',
     key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf.met',
-    fileSize: 44118,
+    size: 44118,
     fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf.met'
   }];
 
   const filesOnlyInDb = [{
     bucket: 'testbucket-public',
     key: 'MOD09GQ___006/MOD/extra123.jpg',
-    fileSize: 44118,
+    size: 44118,
     fileName: 'extra123.jpg'
   },
   {
     bucket: 'testbucket-protected',
     key: 'MOD09GQ___006/MOD/extra456.jpg',
-    fileSize: 44118,
+    size: 44118,
     fileName: 'extra456.jpg'
   }];
 

@@ -57,7 +57,7 @@ function validateMatch(match, bucketsConfig, file) {
 /**
  * Update the granule metadata where each granule has its files replaced with
  * file objects that contain the desired final locations based on the
- * `collection.files.regexp`.  CMR metadata files have a fileType added.
+ * `collection.files.regexp`.  CMR metadata files have a file type added.
  *
  * @param {Object} granulesObject - an object of granules where the key is the granuleId
  * @param {Object} collection - configuration object defining a collection
@@ -81,8 +81,8 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
 
     granulesObject[granuleId].files.forEach((file) => {
       const cmrFileTypeObject = {};
-      if (cmrFileNames.includes(file.name) && !file.fileType) {
-        cmrFileTypeObject.fileType = 'metadata';
+      if (cmrFileNames.includes(file.name) && !file.type) {
+        cmrFileTypeObject.type = 'metadata';
       }
 
       const match = fileSpecs.filter((cf) => unversionFilename(file.name).match(cf.regex));
@@ -99,7 +99,7 @@ async function updateGranuleMetadata(granulesObject, collection, cmrFiles, bucke
 
       updatedFiles.push({
         ...file, // keeps old info like "name" and "fileStagingDir"
-        ...cmrFileTypeObject, // Add fileType if the file is a CMR file
+        ...cmrFileTypeObject, // Add type if the file is a CMR file
         ...{
           bucket: bucketName,
           filepath,
@@ -171,7 +171,7 @@ async function moveFileRequest(
       name: path.basename(f.Key),
       filename: buildS3Uri(f.Bucket, f.Key),
       filepath: f.Key,
-      fileSize: f.fileSize,
+      size: f.size,
       url_path: file.url_path
     })));
 }

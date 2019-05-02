@@ -170,7 +170,7 @@ describe('When the Sync Granule workflow is configured', () => {
         };
 
         await s3().putObject(updateParams).promise();
-        inputPayload.granules[0].files[0].fileSize = content.length;
+        inputPayload.granules[0].files[0].size = content.length;
 
         workflowExecution = await buildAndExecuteWorkflow(
           config.stackName, config.bucket, workflowName, collection, provider, inputPayload
@@ -189,8 +189,8 @@ describe('When the Sync Granule workflow is configured', () => {
         const renamedFiles = files.filter((f) => f.name.startsWith(`${fileUpdated}.v`));
         expect(renamedFiles.length).toEqual(1);
 
-        const expectedRenamedFileSize = existingfiles.filter((f) => f.filename.endsWith(fileUpdated))[0].fileSize;
-        expect(renamedFiles[0].fileSize).toEqual(expectedRenamedFileSize);
+        const expectedRenamedFileSize = existingfiles.filter((f) => f.filename.endsWith(fileUpdated))[0].size;
+        expect(renamedFiles[0].size).toEqual(expectedRenamedFileSize);
       });
 
       it('captures both files', async () => {
@@ -217,7 +217,7 @@ describe('When the Sync Granule workflow is configured', () => {
         };
 
         await s3().putObject(updateParams).promise();
-        inputPayload.granules[0].files[0].fileSize = content.length;
+        inputPayload.granules[0].files[0].size = content.length;
 
         workflowExecution = await buildAndExecuteWorkflow(
           config.stackName, config.bucket, workflowName, collection, provider, inputPayload
