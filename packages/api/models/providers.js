@@ -118,7 +118,7 @@ class Provider extends Manager {
 
   async deleteProviders() {
     const providers = await this.scan();
-    return Promise.all(providers.Items.map((p) => this.delete({id: p.id})));
+    return Promise.all(providers.Items.map((p) => this.delete({ id: p.id })));
   }
 
   /**

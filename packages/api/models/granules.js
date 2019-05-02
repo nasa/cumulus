@@ -397,7 +397,6 @@ class Granule extends Manager {
     granules.Items.forEach(async (granule) => {
       await super.delete({ granuleId: granule.granuleId });
     });
-    
   }
 }
 

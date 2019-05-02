@@ -127,10 +127,10 @@ class Execution extends Manager {
   /**
    * Only used for testing
    */
-  async deleteExecutions () {
+  async deleteExecutions() {
     const executions = await this.scan();
     executions.Items.forEach(async (execution) => {
-      await super.delete({arn: execution.arn});
+      await super.delete({ arn: execution.arn });
     });
   }
 }
