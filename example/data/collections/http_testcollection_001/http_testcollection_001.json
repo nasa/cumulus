@@ -12,13 +12,13 @@
       "regex": ".*.nc$",
       "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
       "bucket": "internal",
-      "fileType": "data"
+      "type": "data"
     },
     {
       "regex": ".*.nc.md5$",
       "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5",
       "bucket": "internal",
-      "fileType": "metadata"
+      "type": "metadata"
     }
   ]
 }
