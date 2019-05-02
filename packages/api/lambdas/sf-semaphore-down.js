@@ -54,8 +54,8 @@ async function handler(event) {
     const priorityKey = get(workflowMessage, 'cumulus_meta.priorityInfo.key');
     const status = get(workflowMessage, 'meta.status');
     if (
-      !priorityKey ||
-      !['failed', 'completed'].includes(status)
+      !priorityKey
+      || !['failed', 'completed'].includes(status)
     ) {
       return jobsArray;
     }
@@ -65,7 +65,7 @@ async function handler(event) {
     );
 
     return jobsArray;
-  }, [])
+  }, []);
 
   return Promise.all(jobs);
 }

@@ -33,15 +33,14 @@ const createSnsWorkflowMessage = ({
 
 let manager;
 
-const setSemaphoreValue = async (key, value) => {
-  return aws.dynamodbDocClient().put({
+const setSemaphoreValue = async (key, value) =>
+  aws.dynamodbDocClient().put({
     TableName: process.env.SemaphoresTable,
     Item: {
       key,
       semvalue: value
     }
   }).promise();
-}
 
 test.before(async () => {
   process.env.SemaphoresTable = randomId('semaphoreTable');
@@ -209,20 +208,20 @@ test('handles multiple updates to a single semaphore', async (t) => {
     ]
   });
 
-  let response = await semaphore.get(key);
+  const response = await semaphore.get(key);
   t.is(response.Item.semvalue, 1);
 });
 
 test('updates multiple semaphores', async (t) => {
   const { semaphore } = t.context;
   const lowPriorityKey = randomId('low');
-  const lowPriorityValue = 3;
+  const lowPriorityMax = 3;
   const medPriorityKey = randomId('med');
-  const medPriorityValue = 3;
+  const medPriorityMax = 3;
 
   await Promise.all([
-    setSemaphoreValue(lowPriorityKey, lowPriorityValue),
-    setSemaphoreValue(medPriorityKey, medPriorityValue)
+    setSemaphoreValue(lowPriorityKey, 3),
+    setSemaphoreValue(medPriorityKey, 3)
   ]);
 
   await handler({
