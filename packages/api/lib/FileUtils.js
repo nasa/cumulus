@@ -53,11 +53,15 @@ const setFileName = simpleFieldAdder('fileName', getFileName);
 const setKey = simpleFieldAdder('key', getKey);
 
 const setS3FileSize = async (file) => {
-  if (isInteger(file.fileSize)) return file;
-
+  if (isInteger(file.size)) return file;
+  if (isInteger(file.fileSize)) {
+    const newFileObj = { ...file, size: file.fileSize };
+    delete newFileObj.fileSize;
+    return newFileObj;
+  }
   try {
-    const fileSize = await getObjectSize(file.bucket, file.key);
-    return { ...file, fileSize };
+    const size = await getObjectSize(file.bucket, file.key);
+    return { ...file, size };
   } catch (error) {
     return file;
   }
@@ -85,15 +89,19 @@ const buildDatabaseFile = (providerURL, file) =>
     setChecksum,
     setFileName,
     partial(setSource, providerURL),
-    filterDatabaseProperties,
-    removeNilProperties,
     setS3FileSize // This one is last because it returns a Promise
+  ])(file);
+
+const cleanDatabaseFile = (file) =>
+  flow([
+    filterDatabaseProperties,
+    removeNilProperties
   ])(file);
 
 const buildDatabaseFiles = async ({ providerURL, files }) =>
   Promise.all(
     files.map(partial(buildDatabaseFile, providerURL))
-  );
+  ).then((newFiles) => newFiles.map(cleanDatabaseFile));
 
 module.exports = {
   setSource,
@@ -101,5 +109,6 @@ module.exports = {
   buildFileSourceURL,
   filterDatabaseProperties,
   getChecksum,
-  getFileName
+  getFileName,
+  setS3FileSize
 };
