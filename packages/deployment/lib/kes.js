@@ -193,24 +193,26 @@ class UpdatedKes extends Kes {
 
     // build ECS alarm widgets
     const ecsAlarmNames = [];
-    Object.keys(ecs.services).forEach((serviceName) => {
-      // default alarm
-      const defaultAlarmName = `${stackName}-${serviceName}-TaskCountLowAlarm`;
-      ecsAlarmNames.push(defaultAlarmName);
-      // custom alarm
-      if (ecs.services[serviceName].alarms) {
-        Object.keys(ecs.services[serviceName].alarms).forEach((alarmName) => {
-          const name = `${stackName}-${serviceName}-${alarmName}Alarm`;
-          ecsAlarmNames.push(name);
-        });
-      }
-    });
+    if (ecs && ecs.services) {
+      Object.keys(ecs.services).forEach((serviceName) => {
+        // default alarm
+        const defaultAlarmName = `${stackName}-${serviceName}-TaskCountLowAlarm`;
+        ecsAlarmNames.push(defaultAlarmName);
+        // custom alarm
+        if (ecs.services[serviceName].alarms) {
+          Object.keys(ecs.services[serviceName].alarms).forEach((alarmName) => {
+            const name = `${stackName}-${serviceName}-${alarmName}Alarm`;
+            ecsAlarmNames.push(name);
+          });
+        }
+      });
+    }
 
     const ecsAlarms = this.buildAlarmWidgets(ecsAlarmNames, alarmTemplate);
 
     // build ES alarm widgets
     let esWidgets = [];
-    if (es) {
+    if (es && es.alarms) {
       const esAlarmNames = Object.keys(es.alarms).map((alarmName) =>
         `${stackName}-${es.name}-${alarmName}Alarm`);
       const esAlarms = this.buildAlarmWidgets(esAlarmNames, alarmTemplate);
