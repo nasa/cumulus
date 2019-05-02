@@ -113,6 +113,7 @@ AsyncOperationsTable:
 SemaphoresTable:
   read: 5
   write: 10
+  pointInTime: false
   attributes:
     - name: key
       type: S
