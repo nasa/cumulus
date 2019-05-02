@@ -1,8 +1,8 @@
 #!/bin/bash
 
 set -e
-
-npm install --unsafe-perm
+npm config set unsafe-perm true
+npm install
 
 . ./bamboo/set-integration-test-env-variables.sh
 echo "Overriding deployment $DEPLOYMENT with jk for ci development"
