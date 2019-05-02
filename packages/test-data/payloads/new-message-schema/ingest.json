@@ -86,10 +86,10 @@
           {
             "path": "/granules",
             "name": "MOD09GQ.A2017224.h27v08.006.2017227165029.hdf",
-            "fileSize": 1098034,
-            "fileType": "data",
+            "size": 1098034,
+            "type": "data",
             "checksumType": "CKSUM",
-            "checksumValue": 1435712144
+            "checksum": 1435712144
           }
         ]
       }

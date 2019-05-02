@@ -10,8 +10,8 @@
           "name": "replace-me-granuleId.hdf",
           "bucket": "",
           "filename": "",
-          "fileSize": 1098034,
-          "fileType": "data",
+          "size": 1098034,
+          "type": "data",
           "path": "replace-me-path",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
         },
@@ -19,8 +19,8 @@
           "name": "replace-me-granuleId.hdf.met",
           "bucket": "",
           "filename": "",
-          "fileSize": 21708,
-          "fileType": "metadata",
+          "size": 21708,
+          "type": "metadata",
           "path": "replace-me-path",
           "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
         }

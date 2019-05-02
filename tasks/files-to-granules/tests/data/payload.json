@@ -9,7 +9,7 @@
             "name": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
             "bucket": "cumulus-internal",
             "filename": "s3://cumulus-internal/file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
-            "fileType": "data",
+            "type": "data",
             "fileStagingDir": "file-staging/subdir"
           }
         ]

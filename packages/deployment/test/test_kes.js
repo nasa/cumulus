@@ -341,4 +341,20 @@ test('buildCWDashboard creates alarm widgets', (t) => {
   const widgetsNoEs = JSON.parse(dashboardNoEs).widgets;
   const alarmWidgetsNoEs = widgetsNoEs.filter((widget) => get(widget, 'properties.annotations.alarms'));
   t.is(alarmWidgetsNoEs.length, ecsDefaultAlarmCount + ecsCustomAlarmCount);
+
+  // test no ES alarms
+  const esNoAlarms = clonedeep(kes.config.es);
+  esNoAlarms.alarms = null;
+  const dashboardNoEsAlarms = kes.buildCWDashboard(kes.config.dashboard, kes.config.ecs, esNoAlarms, 'mystack');
+  const widgetsNoEsAlarms = JSON.parse(dashboardNoEsAlarms).widgets;
+  const alarmWidgetsNoEsAlarms = widgetsNoEsAlarms.filter((widget) => get(widget, 'properties.annotations.alarms'));
+  t.is(alarmWidgetsNoEsAlarms.length, ecsDefaultAlarmCount + ecsCustomAlarmCount);
+
+  // test no ECS services
+  const ecsNoServices = clonedeep(kes.config.ecs);
+  ecsNoServices.services = null;
+  const dashboardNoEcsServices = kes.buildCWDashboard(kes.config.dashboard, ecsNoServices, kes.config.es, 'mystack');
+  const widgetsNoEcsServices = JSON.parse(dashboardNoEcsServices).widgets;
+  const alarmWidgetsNoEcsServices = widgetsNoEcsServices.filter((widget) => get(widget, 'properties.annotations.alarms'));
+  t.is(alarmWidgetsNoEcsServices.length, esAlarmsCount);
 });

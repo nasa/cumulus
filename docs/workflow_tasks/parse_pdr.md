@@ -24,7 +24,7 @@ The purpose of this task is to do the following with the incoming PDR object:
 
 The constructed granules object is created using PDR metadata to determine values like data type and version, collection definitions to determine a file storage location based on the extracted data type and version number.
 
-Granule file fileTypes are converted from the PDR spec types to CNM types according to the following translation table:
+Granule file types are converted from the PDR spec types to CNM types according to the following translation table:
 
 ```
   HDF: 'data',

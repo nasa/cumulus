@@ -14,8 +14,8 @@
           "name": "replace-me-granuleId.hdf",
           "bucket": "this-should-be-replaced-with-protected-bucket-name-in-the-test",
           "filename": "s3://this-should-be-replaced-with-protected-bucket-name-in-the-test/MOD09GQ/2016/MOD/replace-me-granuleId.hdf",
-          "fileSize": 1098034,
-          "fileType": "data",
+          "size": 1098034,
+          "type": "data",
           "path": "replace-me-path",
           "url_path": "{cmrMetadata.CollectionReference.ShortName}___{cmrMetadata.CollectionReference.Version}/{extractYear(cmrMetadata.TemporalExtent.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
           "filepath": "MOD09GQ___006/2016/MOD/replace-me-granuleId.hdf"
@@ -24,9 +24,9 @@
           "name": "replace-me-granuleId.hdf.met",
           "bucket": "this-should-be-replaced-with-private-bucket-name-in-the-test",
           "filename": "s3://this-should-be-replaced-with-private-bucket-name-in-the-test/MOD09GQ/MOD/replace-me-granuleId.hdf.met",
-          "fileSize": 21708,
+          "size": 21708,
           "path": "replace-me-path",
-          "fileType": "metadata",
+          "type": "metadata",
           "url_path": "{cmrMetadata.CollectionReference.ShortName}___{cmrMetadata.CollectionReference.Version}/{substring(file.name, 0, 3)}",
           "filepath": "MOD09GQ___006/MOD/replace-me-granuleId.hdf.met"
         },
@@ -34,8 +34,8 @@
           "name": "replace-me-granuleId_ndvi.jpg",
           "bucket": "this-should-be-replaced-with-public-bucket-name-in-the-test",
           "filename": "s3://this-should-be-replaced-with-public-bucket-name-in-the-test/MOD09GQ/MOD/replace-me-granuleId_ndvi.jpg",
-          "fileSize": 9728,
-          "fileType": "browse",
+          "size": 9728,
+          "type": "browse",
           "path": "replace-me-path",
           "url_path": "{cmrMetadata.CollectionReference.ShortName}___{cmrMetadata.CollectionReference.Version}/{substring(file.name, 0, 3)}",
           "filepath": "MOD09GQ___006/MOD/replace-me-granuleId_ndvi.jpg"
@@ -45,7 +45,7 @@
           "url_path": "{cmrMetadata.CollectionReference.ShortName}___{cmrMetadata.CollectionReference.Version}/{substring(file.name, 0, 3)}",
           "bucket": "this-should-be-replaced-with-protected-2-bucket-name-in-the-test",
           "name": "replace-me-granuleId.cmr.json",
-          "fileType": "metadata",
+          "type": "metadata",
           "filepath": "MOD09GQ___006/MOD/replace-me-granuleId.cmr.json"
         }
       ]
