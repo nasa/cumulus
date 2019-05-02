@@ -4,6 +4,8 @@ const pLimit = require('p-limit');
 const { s3, promiseS3Upload } = require('@cumulus/common/aws');
 const { randomString, randomId, inTestMode } = require('@cumulus/common/test-utils');
 const bootstrap = require('../lambdas/bootstrap');
+const indexer = require('../es/indexer');
+const { Search } = require('../es/search');
 const models = require('../models');
 const testUtils = require('../lib/testUtils');
 const workflowList = require('../app/data/workflow_list.json');
@@ -118,6 +120,14 @@ function checkEnvVariablesAreSet(moreRequiredEnvVars) {
 }
 
 async function createDBRecords(stackName, user) {
+  const esClient = await Search.es('fakehost');
+  const esIndex = 'localrun-es';
+  process.env.esIndex = esIndex;
+  // Resets the ES client
+  await esClient.indices.delete({ index: esIndex });
+  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
+
+
   if (user) {
     // add authorized user to the user table
     const u = new models.User();
@@ -128,19 +138,23 @@ async function createDBRecords(stackName, user) {
   const c = testUtils.fakeCollectionFactory();
   c.name = `${stackName}-collection`;
   const cm = new models.Collection();
-  await cm.create(c);
+  const collection = await cm.create(c);
+  indexer.indexCollection(esClient, collection, esIndex);
 
   // add granule records
   const g = testUtils.fakeGranuleFactory();
   g.granuleId = `${stackName}-granule`;
   const gm = new models.Granule();
-  await gm.create(g);
+  // gm.published = false;
+  const granule = await gm.create(g);
+  indexer.indexGranule(esClient, granule, esIndex);
 
   // add provider records
   const p = testUtils.fakeProviderFactory();
   p.id = `${stackName}-provider`;
   const pm = new models.Provider();
-  await pm.create(p);
+  const provider = await pm.create(p);
+  indexer.indexProvider(esClient, provider, esIndex);
 
   // add rule records
   const r = testUtils.fakeRuleFactoryV2();
@@ -152,13 +166,15 @@ async function createDBRecords(stackName, user) {
     version: '0.0.0'
   };
   const rm = new models.Rule();
-  await rm.create(r);
+  const rule = await rm.create(r);
+  indexer.indexRule(esClient, rule, esIndex);
 
   // add fake execution records
   const e = testUtils.fakeExecutionFactory();
   e.arn = `${stackName}-fake-arn`;
   const em = new models.Execution();
-  await em.create(e);
+  const execution = await em.create(e);
+  indexer.indexExecution(esClient, execution, esIndex);
 
   // add pdrs records
   const pd = testUtils.fakePdrFactory();
@@ -271,10 +287,17 @@ async function resetTables(user = 'testUser', stackName = 'localrun') {
     const providerModel = new models.Provider();
     const collectionModel = new models.Collection();
     const rulesModel = new models.Rule();
+    const executionModel = new models.Execution();
+    const granulesModel = new models.Granule();
+    const pdrsModel = new models.Pdr();
+
     try {
       await rulesModel.deleteRules();
       await collectionModel.deleteCollections();
       await providerModel.deleteProviders();
+      await executionModel.deleteExecutions();
+      await granulesModel.deleteGranules();
+      await pdrsModel.deletePdrs();
     } catch (error) {
       console.log(error);
     }

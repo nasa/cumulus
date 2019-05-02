@@ -116,22 +116,9 @@ class Provider extends Manager {
     await super.delete({ id });
   }
 
-
-  /**
-   * Scan all items in a provider table
-   * Note: Only used for tests. Should not be used for large datatables
-   */
-  async scan() {
-    const scanResults = await super.scan();
-    return scanResults.Items;
-  }
-
   async deleteProviders() {
     const providers = await this.scan();
-    const providerIds = providers.map((p) => p.id);
-    providerIds.forEach(async (provId) => {
-      await this.delete({ id: provId });
-    });
+    return Promise.all(providers.Items.map((p) => this.delete({id: p.id})));
   }
 
   /**

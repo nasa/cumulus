@@ -123,6 +123,16 @@ class Execution extends Manager {
     doc.duration = (doc.timestamp - doc.createdAt) / 1000;
     return this.create(doc);
   }
+
+  /**
+   * Only used for testing
+   */
+  async deleteExecutions () {
+    const executions = await this.scan();
+    executions.Items.forEach(async (execution) => {
+      await super.delete({arn: execution.arn});
+    });
+  }
 }
 
 module.exports = Execution;

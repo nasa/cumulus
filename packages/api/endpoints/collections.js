@@ -2,8 +2,11 @@
 
 const router = require('express-promise-router')();
 const { inTestMode } = require('@cumulus/common/test-utils');
+const { constructCollectionId } = require('@cumulus/common');
 const models = require('../models');
 const Collection = require('../es/collections');
+const { Search } = require('../es/search');
+const indexer = require('../es/indexer');
 const {
   AssociatedRulesError,
   RecordDoesNotExist
@@ -14,32 +17,14 @@ const {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @param {*} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function list(req, res, next) {
-  if (inTestMode()) {
-    return next();
-  }
+async function list(req, res) {
   const collection = new Collection({
     queryStringParameters: req.query
   });
   const result = await collection.query();
   return res.send(result);
-}
-
-async function dynamoList(req, res, next) {
-  if (!inTestMode()) {
-    return next();
-  }
-  const collectionModel = new models.Collection();
-  let results;
-  try {
-    results = await collectionModel.getAllCollections();
-  } catch (error) {
-    return res.boom.notFound(error.message);
-  }
-  return res.send({ results });
 }
 
 /**
@@ -68,9 +53,10 @@ async function get(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
+ * @param {function} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function post(req, res) {
+async function post(req, res, next) {
   try {
     const data = req.body;
     const name = data.name;
@@ -88,6 +74,9 @@ async function post(req, res) {
     } catch (e) {
       if (e instanceof RecordDoesNotExist) {
         await c.create(data);
+        req.collectionRecord = data;
+        req.returnMessage = { message: 'Record saved', record: data };
+        if (inTestMode()) return next();
         return res.send({ message: 'Record saved', record: data });
       }
       throw e;
@@ -102,9 +91,10 @@ async function post(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
+ * @param {function} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function put(req, res) {
+async function put(req, res, next) {
   const pname = req.params.name;
   const pversion = req.params.version;
 
@@ -124,6 +114,8 @@ async function put(req, res) {
     const originalData = await c.get({ name, version });
     data = Object.assign({}, originalData, data);
     const result = await c.create(data);
+    req.collectionRecord = result;
+    if (inTestMode()) return next();
     return res.send(result);
   } catch (err) {
     if (err instanceof RecordDoesNotExist) {
@@ -138,15 +130,17 @@ async function put(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
+ * @param {function} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function del(req, res) {
+async function del(req, res, next) {
   const { name, version } = req.params;
 
   const collectionModel = new models.Collection();
 
   try {
     await collectionModel.delete({ name, version });
+    if (inTestMode()) return next();
     return res.send({ message: 'Record deleted' });
   } catch (err) {
     if (err instanceof AssociatedRulesError) {
@@ -157,11 +151,32 @@ async function del(req, res) {
   }
 }
 
+async function addToES(req, res) {
+  const collection = req.collectionRecord;
+
+  if (inTestMode()) {
+    const esClient = await Search.es('fakehost');
+    indexer.indexCollection(esClient, collection, 'localrun-es');
+  }
+  if (req.returnMessage) return res.send(req.returnMessage);
+  return res.send(collection);
+}
+
+async function removeFromES(req, res) {
+  const { name, version } = req.params;
+  if (inTestMode()) {
+    const collectionId = constructCollectionId(name, version);
+    const esClient = await Search.es('fakehost');
+    esClient.delete({ id: collectionId, index: 'localrun-es', type: 'collection' });
+  }
+  return res.send({ message: 'Record deleted' });
+}
+
 // express routes
 router.get('/:name/:version', get);
-router.put('/:name/:version', put);
-router.delete('/:name/:version', del);
-router.post('/', post);
-router.get('/', dynamoList, list);
+router.put('/:name/:version', put, addToES);
+router.delete('/:name/:version', del, removeFromES);
+router.post('/', post, addToES);
+router.get('/', list);
 
 module.exports = router;

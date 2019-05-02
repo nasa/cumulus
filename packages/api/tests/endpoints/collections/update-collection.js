@@ -96,6 +96,6 @@ test('PUT updates an existing collection', async (t) => {
     })
     .expect(200);
 
-  const { provider_path } = response.body; // eslint-disable-line camelcase
+    const { provider_path } = response.body; // eslint-disable-line camelcase
   t.is(provider_path, newPath);
 });

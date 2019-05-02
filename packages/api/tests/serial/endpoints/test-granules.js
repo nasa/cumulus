@@ -113,6 +113,7 @@ let userModel;
 
 test.before(async () => {
   esIndex = randomId('esindex');
+  process.env.esIndex = esIndex;
 
   // create esClient
   esClient = await Search.es('fakehost');
@@ -472,7 +473,7 @@ test.serial('DELETE deleting an existing granule that is published will fail', a
   );
 });
 
-test.serial('DELETE deleting an existing unpublished granule', async (t) => {
+test('DELETE deleting an existing unpublished granule', async (t) => {
   const buckets = {
     protected: {
       name: randomId('protected'),
@@ -518,7 +519,9 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   }
 
   // create a new unpublished granule
-  await granuleModel.create(newGranule);
+  const granuleRecord = await granuleModel.create(newGranule);
+  await indexer.indexGranule(esClient, granuleRecord, esIndex);
+
 
   const response = await request(app)
     .delete(`/granules/${newGranule.granuleId}`)

@@ -2,6 +2,7 @@
 
 const router = require('express-promise-router')();
 const aws = require('@cumulus/common/aws');
+const { inTestMode } = require('@cumulus/common/test-utils');
 const Search = require('../es/search').Search;
 const models = require('../models');
 const { RecordDoesNotExist } = require('../lib/errors');
@@ -51,9 +52,10 @@ const isRecordDoesNotExistError = (e) => e.message.includes('RecordDoesNotExist'
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
+ * @param {function} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function del(req, res) {
+async function del(req, res, next) {
   const pdrName = req.params.pdrName;
 
   const pdrS3Key = `${process.env.stackName}/pdrs/${pdrName}`;
@@ -64,6 +66,7 @@ async function del(req, res) {
 
   try {
     await pdrModel.delete({ pdrName });
+    if (inTestMode()) return next();
   } catch (err) {
     if (!isRecordDoesNotExistError(err)) throw err;
   }
@@ -71,8 +74,18 @@ async function del(req, res) {
   return res.send({ detail: 'Record deleted' });
 }
 
+async function removeFromES(req, res) {
+  const pdrName = req.params.pdrName;
+  if (inTestMode() && !process.env.notInDb) {
+    const esClient = await Search.es('fakehost');
+    const esIndex = process.env.esIndex || 'localrun-es';
+    await esClient.delete({ id: pdrName, index: esIndex, type: 'pdr' });
+  }
+  return res.send({ detail: 'Record deleted' });
+}
+
 router.get('/:pdrName', get);
 router.get('/', list);
-router.delete('/:pdrName', del);
+router.delete('/:pdrName', del, removeFromES);
 
 module.exports = router;
