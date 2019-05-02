@@ -113,17 +113,17 @@ test('returns an array of correct url objects given a list of moved files.', (t)
     {
       key: 'hidden/secretfile.gpg',
       bucket: t.context.bucketConfig.private.name,
-      fileType: 'data'
+      type: 'data'
     },
     {
       key: 'path/publicfile.jpg',
       bucket: t.context.bucketConfig.public.name,
-      fileType: 'browse'
+      type: 'browse'
     },
     {
       key: 'another/path/protected.hdf',
       bucket: t.context.bucketConfig.protected.name,
-      fileType: 'data'
+      type: 'data'
     }
   ];
 
