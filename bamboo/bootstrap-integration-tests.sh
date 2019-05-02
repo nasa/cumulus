@@ -5,8 +5,8 @@ npm config set unsafe-perm true
 npm install
 
 . ./bamboo/set-integration-test-env-variables.sh
-echo "Overriding deployment $DEPLOYMENT with jk for ci development"
-export DEPLOYMENT="jk"
+echo "Overriding deployment $DEPLOYMENT with jk2 for ci development"
+export DEPLOYMENT="jk2"
 
 
 if [ "$USE_NPM_PACKAGES" = "true" ]; then
