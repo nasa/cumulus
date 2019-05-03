@@ -12,17 +12,20 @@ const {
   }
 } = require('@cumulus/common');
 const { Manager } = require('../../models');
-const handler = require('../../lambdas/sf-semaphore-down');
+const {
+  getSemaphoreDecrementTasks,
+  handler
+}  = require('../../lambdas/sf-semaphore-down');
 
 const createSnsWorkflowMessage = ({
   status,
-  priorityInfo
+  priorityKey
 }) => ({
   Sns: {
     Message: JSON.stringify({
       cumulus_meta: {
         execution_name: randomString(),
-        priorityInfo
+        priorityKey
       },
       meta: {
         status
@@ -62,33 +65,43 @@ test.after.always(async () => {
   await manager.deleteTable();
 });
 
-test('does nothing for non-SNS message', async (t) => {
-  const { semaphore } = t.context;
-  const key = randomId('low');
-
-  await setSemaphoreValue(key, 1);
-  await handler({});
-
-  const response = await semaphore.get(key);
-  t.is(response.Item.semvalue, 1);
+test('getSemaphoreDecrementTasks() returns empty array for non-SNS message', async (t) => {
+  const tasks = getSemaphoreDecrementTasks({});
+  t.is(tasks.length, 0);
 });
 
-test('does nothing for an SNS message with an empty record', async (t) => {
-  const { semaphore } = t.context;
-  const key = randomId('low');
+test('getSemaphoreDecrementTasks() returns empty array for SNS message without records', async (t) => {
+  const tasks = getSemaphoreDecrementTasks({
+    Records: [
+      null
+    ]
+  });
+  t.is(tasks.length, 0);
+});
 
-  await setSemaphoreValue(key, 1);
-  await handler({
+test('getSemaphoreDecrementTasks() returns empty array for SNS message with empty record objects', async (t) => {
+  let tasks = getSemaphoreDecrementTasks({
     Records: [
       {}
     ]
   });
-
-  const response = await semaphore.get(key);
-  t.is(response.Item.semvalue, 1);
+  t.is(tasks.length, 0);
 });
 
-test('does nothing for a workflow message with no priority info', async (t) => {
+test('getSemaphoreDecrementTasks() returns empty array for SNS message with empty message body', async (t) => {
+  const tasks = getSemaphoreDecrementTasks({
+    Records: [
+      {
+        Sns: {
+          Message: null
+        }
+      }
+    ]
+  });
+  t.is(tasks.length, 0);
+});
+
+test('sfSemaphoreDown lambda does nothing for a workflow message with no priority info', async (t) => {
   const { semaphore } = t.context;
   const key = randomId('low');
 
@@ -112,7 +125,9 @@ test('does nothing for a workflow message with no status', async (t) => {
   await setSemaphoreValue(key, 1);
   await handler({
     Records: [
-      createSnsWorkflowMessage({})
+      createSnsWorkflowMessage({
+        priorityKey: key
+      })
     ]
   });
 
@@ -129,9 +144,7 @@ test('does nothing for a workflow message for a running workflow', async (t) => 
     Records: [
       createSnsWorkflowMessage({
         status: 'running',
-        priorityInfo: {
-          key
-        }
+        priorityKey: key
       })
     ]
   });
@@ -147,9 +160,7 @@ test('throws error when attempting to decrement empty semaphore', async (t) => {
     Records: [
       createSnsWorkflowMessage({
         status: 'completed',
-        priorityInfo: {
-          key
-        }
+        priorityKey: key
       })
     ]
   }));
@@ -166,9 +177,7 @@ test('decrements priority semaphore for completed workflow message', async (t) =
     Records: [
       createSnsWorkflowMessage({
         status: 'completed',
-        priorityInfo: {
-          key
-        }
+        priorityKey: key
       })
     ]
   });
@@ -188,9 +197,7 @@ test('decrements priority semaphore for failed workflow message', async (t) => {
     Records: [
       createSnsWorkflowMessage({
         status: 'failed',
-        priorityInfo: {
-          key
-        }
+        priorityKey: key
       })
     ]
   });
@@ -210,15 +217,11 @@ test('handles multiple updates to a single semaphore', async (t) => {
     Records: [
       createSnsWorkflowMessage({
         status: 'failed',
-        priorityInfo: {
-          key
-        }
+        priorityKey: key
       }),
       createSnsWorkflowMessage({
         status: 'completed',
-        priorityInfo: {
-          key
-        }
+        priorityKey: key
       })
     ]
   });
@@ -230,9 +233,7 @@ test('handles multiple updates to a single semaphore', async (t) => {
 test('updates multiple semaphores', async (t) => {
   const { semaphore } = t.context;
   const lowPriorityKey = randomId('low');
-  const lowPriorityMax = 3;
   const medPriorityKey = randomId('med');
-  const medPriorityMax = 3;
 
   await Promise.all([
     setSemaphoreValue(lowPriorityKey, 3),
@@ -243,24 +244,15 @@ test('updates multiple semaphores', async (t) => {
     Records: [
       createSnsWorkflowMessage({
         status: 'completed',
-        priorityInfo: {
-          key: lowPriorityKey,
-          maxExecutions: lowPriorityMax
-        }
+        priorityKey: lowPriorityKey
       }),
       createSnsWorkflowMessage({
         status: 'failed',
-        priorityInfo: {
-          key: lowPriorityKey,
-          maxExecutions: lowPriorityMax
-        }
+        priorityKey: lowPriorityKey
       }),
       createSnsWorkflowMessage({
         status: 'completed',
-        priorityInfo: {
-          key: medPriorityKey,
-          maxExecutions: medPriorityMax
-        }
+        priorityKey: medPriorityKey
       })
     ]
   });

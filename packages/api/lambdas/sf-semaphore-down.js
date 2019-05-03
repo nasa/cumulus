@@ -1,5 +1,6 @@
 const get = require('lodash.get');
 const has = require('lodash.has');
+const { isNil } = require('@cumulus/common/util');
 const {
   concurrency: {
     Semaphore
@@ -7,6 +8,31 @@ const {
   aws,
   log
 } = require('@cumulus/common');
+
+/**
+ * Determine if workflow is in a terminal state.
+ *
+ * @param {Object} message - A workflow message object
+ * @returns {boolean} - True if workflow is in terminal state.
+ */
+const isTerminalMessage = (message) =>
+  message.meta.status === 'failed' || message.meta.status === 'completed';
+
+/**
+ * Determine if workflow needs a semaphore decrement.
+ *
+ * Skip if:
+ *   - Message has no priority level
+ *   - Message has no workflow status
+ *   - Workflow is not in a terminal state (failed/completed)
+ *
+ * @param {Object} message - A workflow message object
+ * @returns {boolean} True if workflow semaphore should be decremented.
+ */
+const isDecrementMessage = (message) =>
+  has(message, 'cumulus_meta.priorityKey') &&
+  has(message, 'meta.status') &&
+  isTerminalMessage(message);
 
 /**
  * Decrement semaphore value for executions with priority
@@ -32,42 +58,33 @@ async function decrementPrioritySemaphore(key) {
 }
 
 /**
+ * Filter workflow messages from SNS to prepare array of semaphore decrement tasks.
+ *
+ * @param {Object} event - incoming message from SNS
+ * @returns {Array<Promise>} - Array of promises for semaphore decrement operations
+ */
+function getSemaphoreDecrementTasks(event) {
+  return get(event, 'Records', [])
+    // Skip if this record is not from SNS or if the SNS message is empty
+    .filter((record) => has(record, 'Sns.Message') && !isNil(record.Sns.Message))
+    .map((record) => JSON.parse(record.Sns.Message))
+    .filter((message) => isDecrementMessage(message))
+    .map((message) => decrementPrioritySemaphore(message.cumulus_meta.priorityKey));
+}
+
+/**
  * Lambda function handler for sfSemaphoreDown
  *
  * @param {Object} event - incoming message from SNS
  * @returns {Promise}
  */
 async function handler(event) {
-  const records = get(event, 'Records', []);
-
-  const jobs = records.reduce((jobsArray, record) => {
-    // Skip if this record is not from SNS.
-    if (!has(record, 'Sns.Message')) {
-      return jobsArray;
-    }
-
-    // Skip if:
-    //   - Message has no priority level
-    //   - Message has no workflow status
-    //   - Workflow status is not failed/completed
-    const workflowMessage = JSON.parse(record.Sns.Message);
-    const priorityKey = get(workflowMessage, 'cumulus_meta.priorityInfo.key');
-    const status = get(workflowMessage, 'meta.status');
-    if (
-      !priorityKey
-      || !['failed', 'completed'].includes(status)
-    ) {
-      return jobsArray;
-    }
-
-    jobsArray.push(
-      decrementPrioritySemaphore(priorityKey)
-    );
-
-    return jobsArray;
-  }, []);
-
-  return Promise.all(jobs);
+  return Promise.all(
+    getSemaphoreDecrementTasks(event)
+  );
 }
 
-module.exports = handler;
+module.exports = {
+  getSemaphoreDecrementTasks,
+  handler
+};
