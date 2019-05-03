@@ -14,7 +14,7 @@ testOutputDir=scripts/test_output
 rm -r -f $testOutputDir
 mkdir -p $testOutputDir
 
-echo -e "\n" | ./node_modules/.bin/parallel -j 6 sh scripts/run_test.sh  $testOutputDir ::: $TESTS
+echo "" | ./node_modules/.bin/parallel -j 6 sh scripts/run_test.sh  $testOutputDir ::: $TESTS
 result=$?
 echo parallel tests complete: $result suite failures
 
