@@ -266,6 +266,8 @@ lf:
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus
 
+  api_backend_url: https://gs814t9ui8.execute-api.us-east-1.amazonaws.com:8000/dev/
+
   es:
     name: estest
 
