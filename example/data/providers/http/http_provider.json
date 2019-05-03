@@ -1,7 +1,7 @@
 {
     "id": "http_provider",
     "protocol": "http",
-    "host": "10.0.214.168",
+    "host": "10.0.214.37",
     "port": 3030,
     "globalConnectionLimit": 10
 }
