@@ -73,6 +73,21 @@ test('does nothing for non-SNS message', async (t) => {
   t.is(response.Item.semvalue, 1);
 });
 
+test('does nothing for an SNS message with an empty record', async (t) => {
+  const { semaphore } = t.context;
+  const key = randomId('low');
+
+  await setSemaphoreValue(key, 1);
+  await handler({
+    Records: [
+      {}
+    ]
+  });
+
+  const response = await semaphore.get(key);
+  t.is(response.Item.semvalue, 1);
+});
+
 test('does nothing for a workflow message with no priority info', async (t) => {
   const { semaphore } = t.context;
   const key = randomId('low');
