@@ -86,12 +86,12 @@
           {
             "path": "/granules",
             "name": "20160115-MODIS_T-JPL-L2P-T2016015000000.L2_LAC_GHRSST_N-v01.nc.bz2",
-            "fileSize": 25895363
+            "size": 25895363
           },
           {
             "path": "/granules",
             "name": "20160115-MODIS_T-JPL-L2P-T2016015000000.L2_LAC_GHRSST_N-v01.nc.bz2.md5",
-            "fileSize": 101
+            "size": 101
           }
         ]
       }

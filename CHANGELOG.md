@@ -30,8 +30,8 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
   from the granule object to:
     - Verify checksum if `checksumType` and `checksumValue` are in the file record OR a checksum file is provided
       (throws `InvalidChecksum` on fail), else log warning that no checksum is available.
-    - Then, verify synced S3 file size if `fileSize` is in the file record (throws `UnexpectedFileSize` on fail),
-      else log warning that no fileSize is available.
+    - Then, verify synced S3 file size if `file.size` is in the file record (throws `UnexpectedFileSize` on fail),
+      else log warning that no file size is available.
     - Pass the step.
 - **CUMULUS-1264**
   - The Cloudformation templating and deployment configuration has been substantially refactored.
@@ -49,6 +49,13 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
 - **CUMULUS-802**
   - ECS `maxInstances` must be greater than `minInstances`. If you use defaults, no change is required.
 
+- **CUMULUS-1269**
+  - Brought Cumulus data models in line with CNM JSON schema:
+    - Renamed file object `fileType` field to `type`
+    - Renamed file object `fileSize` field to `size`
+    - Renamed file object `checksumValue` field to `checksum` where not already done.
+    - Added `ancillary` and `linkage` type support to file objects.
+
 ## Added
 
 - **CUMULUS-802**
@@ -64,9 +71,9 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
   - Unifies duplicate handling in `ingest/granule.handleDuplicateFile` for maintainability.
   - Changed `ingest/granule.ingestFile` and `move-granules/index.moveFileRequest` to use new function.
   - Moved file versioning code to `ingest/granule.moveGranuleFileWithVersioning`
-  - `ingest/granule.verifyFile` now also tests `fileSize` for verification if it is in the file record and throws
-    `UnexpectedFileSize` error for    fileSize not matching input.
-  - `ingest/granule.verifyFile` logs warnings if checksum and/or fileSize are not available.
+  - `ingest/granule.verifyFile` now also tests `file.size` for verification if it is in the file record and throws
+    `UnexpectedFileSize` error for file size not matching input.
+  - `ingest/granule.verifyFile` logs warnings if checksum and/or file size are not available.
 
 - **CUMULUS-1223**
   - Adds unauthenticated access for public bucket files to the Distribution API.  Public files should be requested the same way as protected files, but for public files a redirect to a self-signed S3 URL will happen without requiring authentication with Earthdata login.
@@ -74,10 +81,16 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
 - **CUMULUS-1193**
   - Moved reindex CLI functionality to an API endpoint
 
+- **CUMULUS-1207**
+  - No longer disable lambda event source mappings
+
 ### Fixed
 
 - **CUMULUS-1203**
   - Fixes IAM template's use of intrinsic functions such that IAM template overrides now work with kes
+
+- **CUMULUS-1268**
+  - Deployment will not fail if there are no ES alarms or ECS services
 
 ## [v1.12.1] - 2019-4-8
 

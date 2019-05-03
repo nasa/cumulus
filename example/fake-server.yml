@@ -118,12 +118,12 @@ Resources:
   FakeProviderEc2Instance:
     Type: "AWS::EC2::Instance"
     Properties:
-      ImageId: ami-aff65ad2
+      ImageId: ami-03e7dd4efa9b91eda
       InstanceType: t2.micro
       AvailabilityZone: !Ref AZone
       IamInstanceProfile:
         Ref: InstanceProfile
-      # KeyName: uncomment and give a value if access to the instance is needed
+      KeyName: mhuffnag
       NetworkInterfaces:
         - AssociatePublicIpAddress: false
           DeleteOnTermination: true
@@ -136,10 +136,10 @@ Resources:
           SubnetId: !Ref SubnetId
       UserData:
         Fn::Base64:
-          Fn::Join:
-            - ""
-            - - "#!/bin/bash\n"
-              - Fn::Sub: "echo ECS_CLUSTER=${FakeProvider} >> /etc/ecs/ecs.config"
+          Fn::Sub: |
+            #!/bin/bash
+            service iptables stop
+            echo ECS_CLUSTER=${FakeProvider} >> /etc/ecs/ecs.config
       Tags:
         - Key: Name
           Value: "FakeProvider Instance for ftp/sftp/http"

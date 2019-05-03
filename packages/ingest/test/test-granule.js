@@ -115,7 +115,7 @@ Object.keys(sums).forEach((key) => {
     });
 
     try {
-      const file = { checksumType: key, checksumValue: sums[key] };
+      const file = { checksumType: key, checksum: sums[key] };
       await granule.verifyFile(file, t.context.internalBucket, key);
       await granule.verifyFile(key, t.context.internalBucket, key);
       t.pass();
@@ -693,7 +693,7 @@ test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
   const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
   t.is(oldfiles.length, 1);
   t.is(oldfiles[0].duplicate_found, undefined);
-  t.is(oldfiles[0].fileSize, params.Body.length);
+  t.is(oldfiles[0].size, params.Body.length);
 
   // update the source file with different content and ingest again
   params.Body = randomString(100);
@@ -701,8 +701,8 @@ test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
   const newfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
   t.is(newfiles.length, 1);
   t.true(newfiles[0].duplicate_found);
-  t.is(newfiles[0].fileSize, oldfiles[0].fileSize);
-  t.not(newfiles[0].fileSize, params.Body.length);
+  t.is(newfiles[0].size, oldfiles[0].size);
+  t.not(newfiles[0].size, params.Body.length);
 });
 
 test('ingestFile replaces file when duplicateHandling is replace', async (t) => {
@@ -732,7 +732,7 @@ test('ingestFile replaces file when duplicateHandling is replace', async (t) => 
   const oldfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
   t.is(oldfiles.length, 1);
   t.is(oldfiles[0].duplicate_found, undefined);
-  t.is(oldfiles[0].fileSize, params.Body.length);
+  t.is(oldfiles[0].size, params.Body.length);
 
   // update the source file with different content and ingest again
   params.Body = randomString(100);
@@ -740,8 +740,8 @@ test('ingestFile replaces file when duplicateHandling is replace', async (t) => 
   const newfiles = await testGranule.ingestFile(file, destBucket, duplicateHandling);
   t.is(newfiles.length, 1);
   t.true(newfiles[0].duplicate_found);
-  t.not(newfiles[0].fileSize, oldfiles[0].fileSize);
-  t.is(newfiles[0].fileSize, params.Body.length);
+  t.not(newfiles[0].size, oldfiles[0].size);
+  t.is(newfiles[0].size, params.Body.length);
 });
 
 test('ingestFile throws an error when invalid checksum is provided', async (t) => {
@@ -752,7 +752,7 @@ test('ingestFile throws an error when invalid checksum is provided', async (t) =
     path: '',
     name: 'test.txt',
     checksumType: 'md5',
-    checksumValue: 'badchecksum'
+    checksum: 'badchecksum'
   };
 
   const Key = path.join(file.path, file.name);
@@ -779,17 +779,17 @@ test('ingestFile throws an error when invalid checksum is provided', async (t) =
   const error = await t.throws(testGranule.ingestFile(file, destBucket, duplicateHandling));
   t.true(error instanceof errors.InvalidChecksum);
   t.is(error.message, `Invalid checksum for S3 object s3://${destBucket}/${stagingPath}/${file.name}`
-    + ` with type ${file.checksumType} and expected sum ${file.checksumValue}`);
+    + ` with type ${file.checksumType} and expected sum ${file.checksum}`);
 });
 
-test('ingestFile throws an error when no checksum is provided and the fileSize is not as expected', async (t) => {
+test('ingestFile throws an error when no checksum is provided and the size is not as expected', async (t) => {
   const sourceBucket = t.context.internalBucket;
   const destBucket = t.context.destBucket;
 
   const file = {
     path: '',
     name: 'test.txt',
-    fileSize: 123456789
+    size: 123456789
   };
 
   const Key = path.join(file.path, file.name);
@@ -814,8 +814,8 @@ test('ingestFile throws an error when no checksum is provided and the fileSize i
   // first attempt to ingest the file.
   const error = await t.throws(testGranule.ingestFile(file, destBucket, duplicateHandling));
   t.true(error instanceof errors.UnexpectedFileSize);
-  t.is(error.message, `verifyFile ${file.name} failed: Actual filesize ${params.Body.length}`
-    + ` did not match expected fileSize ${file.fileSize}`);
+  t.is(error.message, `verifyFile ${file.name} failed: Actual file size ${params.Body.length}`
+    + ` did not match expected file size ${file.size}`);
 });
 
 test('verifyFile returns type and value when file is verified', async (t) => {
@@ -827,8 +827,8 @@ test('verifyFile returns type and value when file is verified', async (t) => {
     path: '',
     name: 'test.txt',
     checksumType: 'md5',
-    checksumValue: '661f8009fa8e56a9d0e94a0a644397d7',
-    fileSize: content.length
+    checksum: '661f8009fa8e56a9d0e94a0a644397d7',
+    size: content.length
   };
 
   const Key = path.join(file.path, file.name);
@@ -850,7 +850,7 @@ test('verifyFile returns type and value when file is verified', async (t) => {
 
   const [type, value] = await testGranule.verifyFile(file, sourceBucket, Key);
   t.is(type, file.checksumType);
-  t.is(value, file.checksumValue);
+  t.is(value, file.checksum);
 });
 
 test('unversionFilename returns original filename if it has no timestamp', (t) => {

@@ -67,7 +67,7 @@ class Discover {
       this.regexes[f.regex] = {
         collection: this.collection.name,
         bucket: this.buckets[f.bucket].name,
-        fileType: f.fileType
+        type: f.type
       };
     });
   }
@@ -77,7 +77,7 @@ class Discover {
    *
    * @param {Object} file - the file object
    * @returns {Object} Updated file with granuleId, bucket,
-   *                   filetype, and url_path information
+   *                   file type, and url_path information
    */
   setGranuleInfo(file) {
     const granuleIdMatch = file.name.match(this.collection.granuleIdExtraction);
@@ -92,7 +92,7 @@ class Discover {
         granuleId,
         bucket: this.buckets[fileTypeConfig.bucket].name,
         url_path: fileTypeConfig.url_path || this.collection.url_path || '',
-        fileType: fileTypeConfig.fileType || ''
+        type: fileTypeConfig.type || ''
       }
     );
   }
@@ -351,7 +351,7 @@ class Granule {
 
   /**
    * Verify a file's integrity using its checksum and throw an exception if it's invalid.
-   * Verify file's filesize if checksum type or value is not available.
+   * Verify file's size if checksum type or value is not available.
    * Logs warning if neither check is possible.
    *
    * @param {Object} file - the file object to be checked
@@ -378,16 +378,16 @@ class Granule {
       log.warn(`Could not verify ${file.name} expected checksum: ${value} of type ${type}.`);
       output = [null, null];
     }
-    if (file.fileSize) {
+    if (file.size || file.fileSize) { // file.fileSize to be removed after CnmToGranule update
       const ingestedSize = await aws.getObjectSize(bucket, key);
-      if (ingestedSize !== file.fileSize) {
+      if (ingestedSize !== (file.size || file.fileSize)) { // file.fileSize to be removed
         throw new errors.UnexpectedFileSize(
-          `verifyFile ${file.name} failed: Actual filesize ${ingestedSize}`
-          + ` did not match expected fileSize ${file.fileSize}`
+          `verifyFile ${file.name} failed: Actual file size ${ingestedSize}`
+          + ` did not match expected file size ${(file.size || file.fileSize)}`
         );
       }
     } else {
-      log.warn(`Could not verify ${file.name} expected fileSize: ${file.fileSize}.`);
+      log.warn(`Could not verify ${file.name} expected file size: ${file.size}.`);
     }
     return output;
   }
@@ -420,8 +420,8 @@ class Granule {
    */
   async retrieveSuppliedFileChecksumInformation(file) {
     // try to get filespec checksum data
-    if (file.checksumType && file.checksumValue) {
-      return [file.checksumType, file.checksumValue];
+    if (file.checksumType && file.checksum) {
+      return [file.checksumType, file.checksum];
     }
     // read checksum from checksum file
     if (this.checksumFiles[file.name]) {
@@ -513,10 +513,11 @@ class Granule {
       await this.verifyFile(file, destinationBucket, destinationKey);
     }
 
-    // Set final filesize
-    stagedFile.fileSize = await aws.getObjectSize(destinationBucket, destinationKey);
+    // Set final file size
+    stagedFile.size = await aws.getObjectSize(destinationBucket, destinationKey);
+    delete stagedFile.fileSize; // CUMULUS-1269: delete obsolete field until CnmToGranule is patched
     // return all files, the renamed files don't have the same properties
-    // (name, fileSize, checksum) as input file
+    // (name, size, checksum) as input file
     log.debug(`returning ${JSON.stringify(stagedFile)}`);
     return [stagedFile].concat(versionedFiles.map((f) => (
       {
@@ -524,7 +525,7 @@ class Granule {
         name: path.basename(f.Key),
         path: file.path,
         filename: aws.buildS3Uri(f.Bucket, f.Key),
-        fileSize: f.fileSize,
+        size: f.size,
         fileStagingDir: stagingPath,
         url_path: this.getUrlPath(file)
       })));
@@ -673,18 +674,18 @@ async function moveGranuleFile(source, target, options) {
 * @param {string} target.Key - target
 * @param {Object} sourceChecksumObject - source checksum information
 * @param {string} sourceChecksumObject.checksumType - checksum type, e.g. 'md5'
-* @param {Object} sourceChecksumObject.checksumValue - checksum value
+* @param {Object} sourceChecksumObject.checksum - checksum value
 * @param {Object} copyOptions - optional object with properties as defined by AWS API:
 * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#copyObject-prop
 * @returns {Promise<Array>} returns a promise that resolves to a list of s3 version file objects.
 **/
 async function moveGranuleFileWithVersioning(source, target, sourceChecksumObject, copyOptions) {
-  const { checksumType, checksumValue } = sourceChecksumObject;
+  const { checksumType, checksum } = sourceChecksumObject;
   // compare the checksum of the existing file and new file, and handle them accordingly
   const targetFileSum = await aws.calculateS3ObjectChecksum(
     { algorithm: (checksumType || 'CKSUM'), bucket: target.Bucket, key: target.Key }
   );
-  const sourceFileSum = checksumValue || await aws.calculateS3ObjectChecksum(
+  const sourceFileSum = checksum || await aws.calculateS3ObjectChecksum(
     { algorithm: 'CKSUM', bucket: source.Bucket, key: source.Key }
   );
 
@@ -744,8 +745,8 @@ async function handleDuplicateFile({
     let sourceChecksumObject = {};
     if (checksumFunction) {
       // verify integrity
-      const [checksumType, checksumValue] = await checksumFunction(source.Bucket, source.Key);
-      sourceChecksumObject = { checksumType, checksumValue };
+      const [checksumType, checksum] = await checksumFunction(source.Bucket, source.Key);
+      sourceChecksumObject = { checksumType, checksum };
     }
     // return list of renamed files
     return moveGranuleFileWithVersioning(
@@ -905,7 +906,7 @@ async function renameS3FileWithTimestamp(bucket, key) {
   */
 async function getRenamedS3File(bucket, key) {
   const s3list = await aws.listS3ObjectsV2({ Bucket: bucket, Prefix: `${key}.v` });
-  return s3list.map((c) => ({ Bucket: bucket, Key: c.Key, fileSize: c.Size }));
+  return s3list.map((c) => ({ Bucket: bucket, Key: c.Key, size: c.Size }));
 }
 
 /**
