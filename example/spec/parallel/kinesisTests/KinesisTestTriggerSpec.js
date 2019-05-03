@@ -49,7 +49,7 @@ const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestTrigger
 const testSuffix = createTestSuffix(testId);
 const testDataFolder = createTestDataPath(testId);
 const ruleSuffix = globalReplace(testSuffix, '-', '_');
-
+const testWorkflow = 'KinesisTriggerTest';
 
 const record = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154.json`));
 
@@ -78,11 +78,11 @@ const expectedTranslatePayload = {
       files: [
         {
           name: recordFile.name,
-          fileType: recordFile.type,
+          fileType: recordFile.type, // change when CnmToGranule outputs 'type' instead
           bucket: record.bucket,
           path: testDataFolder,
           url_path: recordFile.uri,
-          fileSize: recordFile.size
+          fileSize: recordFile.size // change when CnmToGranule outputs 'size' instead
         }
       ]
     }
@@ -97,8 +97,10 @@ const fileDataWithFilename = {
   filename: `s3://${testConfig.buckets.private.name}/${filePrefix}/${recordFile.name}`,
   bucket: testConfig.buckets.private.name,
   url_path: '',
-  fileStagingDir: filePrefix
+  fileStagingDir: filePrefix,
+  size: fileData.fileSize
 };
+delete fileDataWithFilename.fileSize;
 
 const expectedSyncGranulesPayload = {
   granules: [
@@ -212,7 +214,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         await putRecordOnStream(streamName, record);
 
         console.log('Waiting for step function to start...');
-        workflowExecution = await waitForTestSf(recordIdentifier, maxWaitForSFExistSecs);
+        workflowExecution = await waitForTestSf(recordIdentifier, testWorkflow, maxWaitForSFExistSecs);
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}`);
         executionStatus = await waitForCompletedExecution(workflowExecution.executionArn, maxWaitForExecutionSecs);
@@ -318,7 +320,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         await putRecordOnStream(streamName, badRecord);
 
         console.log('Waiting for step function to start...');
-        workflowExecution = await waitForTestSf(badRecordIdentifier, maxWaitForSFExistSecs);
+        workflowExecution = await waitForTestSf(badRecordIdentifier, testWorkflow, maxWaitForSFExistSecs);
 
         console.log(`Waiting for completed execution of ${workflowExecution.executionArn}.`);
         executionStatus = await waitForCompletedExecution(workflowExecution.executionArn, maxWaitForExecutionSecs);

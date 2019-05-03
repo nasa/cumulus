@@ -27,11 +27,11 @@ const pdrSuccess = require('../../data/pdr_success.json');
 
 const granuleFileToRecord = (granuleFile) => {
   const granuleRecord = {
-    fileSize: 12345,
+    size: 12345,
     ...granuleFile,
     key: aws.parseS3Uri(granuleFile.filename).Key,
     fileName: granuleFile.name,
-    checksum: granuleFile.checksumValue
+    checksum: granuleFile.checksum
   };
 
   if (granuleFile.path) {

@@ -91,7 +91,7 @@ describe('The Sync Granules workflow', () => {
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
-    inputPayload.granules[0].files[0] = Object.assign(inputPayload.granules[0].files[0], { checksumValue: '8d1ec5c0463e59d26adee87cdbbee816', checksumType: 'md5' });
+    inputPayload.granules[0].files[0] = Object.assign(inputPayload.granules[0].files[0], { checksum: '8d1ec5c0463e59d26adee87cdbbee816', checksumType: 'md5' });
     const newGranuleId = inputPayload.granules[0].granuleId;
     expectedS3TagSet = [{ Key: 'granuleId', Value: newGranuleId }];
     await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
@@ -99,7 +99,7 @@ describe('The Sync Granules workflow', () => {
 
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, newGranuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
-    expectedPayload.granules[0].files[0] = Object.assign(expectedPayload.granules[0].files[0], { checksumValue: '8d1ec5c0463e59d26adee87cdbbee816', checksumType: 'md5' });
+    expectedPayload.granules[0].files[0] = Object.assign(expectedPayload.granules[0].files[0], { checksum: '8d1ec5c0463e59d26adee87cdbbee816', checksumType: 'md5' });
 
 
     workflowExecution = await buildAndExecuteWorkflow(
@@ -121,7 +121,7 @@ describe('The Sync Granules workflow', () => {
   });
 
   it('has a checksum to test', () => {
-    expect(inputPayload.granules[0].files[0].checksumValue).toBeDefined();
+    expect(inputPayload.granules[0].files[0].checksum).toBeDefined();
     expect(inputPayload.granules[0].files[0].checksumType).toBeDefined();
   });
 
@@ -180,7 +180,7 @@ describe('The Sync Granules workflow', () => {
     });
 
     it('maintains tested checksums', () => {
-      expect(lambdaOutput.payload.granules[0].files[0].checksumValue).toBeDefined();
+      expect(lambdaOutput.payload.granules[0].files[0].checksum).toBeDefined();
       expect(lambdaOutput.payload.granules[0].files[0].checksumType).toBeDefined();
     });
   });
@@ -275,7 +275,7 @@ describe('The Sync Granules workflow', () => {
     let failingExecution = null;
 
     beforeAll(async () => {
-      inputPayload.granules[0].files[0].checksumValue = 'badCheckSum01';
+      inputPayload.granules[0].files[0].checksum = 'badCheckSum01';
       failingExecution = await buildAndExecuteWorkflow(
         config.stackName, config.bucket, workflowName, collection, provider, inputPayload
       );
