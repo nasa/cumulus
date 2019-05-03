@@ -7,6 +7,29 @@ if [ -z $NGAP_ENV ]; then
   NGAP_ENV=SANDBOX
 fi
 
+declare -a array=(
+  "bamboo_SECRET_AWS_ACCESS_KEY_ID"
+  "bamboo_SECRET_AWS_SECRET_ACCESS_KEY"
+  "bamboo_SECRET_AWS_DEFAULT_REGION"
+  "bamboo_SECRET_AWS_ACCOUNT_ID"
+  "$bamboo_SECRET_VPC_ID"
+  "$bamboo_SECRET_AWS_SUBNET"
+  "$bamboo_SECRET_PROVIDER_HOST"
+  "$bamboo_SECRET_PROVIDER_HTTP_PORT"
+  "$bamboo_SECRET_PROVIDER_FTP_PORT"
+  "$bamboo_SECRET_VPC_CIDR_IP"
+  "$bamboo_AWS_REGION"
+  "$bamboo_CMR_PASSWORD"
+  "$bamboo_CMR_USERNAME"
+  "$bamboo_TOKEN_SECRET"
+  "bamboo_SECRET_EARTHDATA_USERNAME"
+  "bamboo_SECRET_EARTHDATA_PASSWORD"
+  "bamboo_SECRET_EARTHDATA_CLIENT_ID"
+
+
+
+)
+
 echo Setting variables for environment: $NGAP_ENV
 
 if [ $NGAP_ENV = "SIT" ]; then
@@ -36,7 +59,7 @@ else
   export EARTHDATA_USERNAME="$bamboo_SECRET_EARTHDATA_USERNAME"
   export EARTHDATA_PASSWORD="$bamboo_SECRET_EARTHDATA_PASSWORD"
   export EARTHDATA_CLIENT_ID="$bamboo_SECRET_EARTHDATA_CLIENT_ID"
-  export EARTHDATA_CLIENT_PASSWORD="$.bamboo_SECRET_EARTHDATA_CLIENT_PASSWORD"
+  export EARTHDATA_CLIENT_PASSWORD="$bamboo_SECRET_EARTHDATA_CLIENT_PASSWORD"
 fi
 
 if [ -z "$DEPLOYMENT" ]; then
