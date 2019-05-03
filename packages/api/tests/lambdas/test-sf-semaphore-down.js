@@ -36,7 +36,7 @@ const createSnsWorkflowMessage = ({
 
 let manager;
 
-const setSemaphoreValue = async (key, value) =>
+const setSemaphoreValue = (key, value) =>
   aws.dynamodbDocClient().put({
     TableName: process.env.SemaphoresTable,
     Item: {
@@ -61,9 +61,7 @@ test.beforeEach(async (t) => {
   );
 });
 
-test.after.always(async () => {
-  await manager.deleteTable();
-});
+test.after.always(() => manager.deleteTable());
 
 test('getSemaphoreDecrementTasks() returns empty array for non-SNS message', async (t) => {
   const tasks = getSemaphoreDecrementTasks({});
@@ -118,7 +116,7 @@ test('sfSemaphoreDown lambda does nothing for a workflow message with no priorit
   t.is(response.Item.semvalue, 1);
 });
 
-test('does nothing for a workflow message with no status', async (t) => {
+test('sfSemaphoreDown lambda does nothing for a workflow message with no status', async (t) => {
   const { semaphore } = t.context;
   const key = randomId('low');
 
@@ -135,7 +133,7 @@ test('does nothing for a workflow message with no status', async (t) => {
   t.is(response.Item.semvalue, 1);
 });
 
-test('does nothing for a workflow message for a running workflow', async (t) => {
+test('sfSemaphoreDown lambda does nothing for a workflow message for a running workflow', async (t) => {
   const { semaphore } = t.context;
   const key = randomId('low');
 
@@ -153,7 +151,7 @@ test('does nothing for a workflow message for a running workflow', async (t) => 
   t.is(response.Item.semvalue, 1);
 });
 
-test('throws error when attempting to decrement empty semaphore', async (t) => {
+test('sfSemaphoreDown lambda throws error when attempting to decrement empty semaphore', async (t) => {
   const key = randomId('low');
 
   await t.throws(handler({
@@ -166,7 +164,7 @@ test('throws error when attempting to decrement empty semaphore', async (t) => {
   }));
 });
 
-test('decrements priority semaphore for completed workflow message', async (t) => {
+test('sfSemaphoreDown lambda decrements priority semaphore for completed workflow message', async (t) => {
   const { semaphore } = t.context;
   const key = randomId('low');
 
@@ -186,7 +184,7 @@ test('decrements priority semaphore for completed workflow message', async (t) =
   t.is(response.Item.semvalue, 0);
 });
 
-test('decrements priority semaphore for failed workflow message', async (t) => {
+test('sfSemaphoreDown lambda decrements priority semaphore for failed workflow message', async (t) => {
   const { semaphore } = t.context;
   const key = randomId('low');
 
@@ -206,7 +204,7 @@ test('decrements priority semaphore for failed workflow message', async (t) => {
   t.is(response.Item.semvalue, 0);
 });
 
-test('handles multiple updates to a single semaphore', async (t) => {
+test('sfSemaphoreDown lambda handles multiple updates to a single semaphore', async (t) => {
   const { semaphore } = t.context;
   const key = randomId('low');
 
@@ -230,7 +228,7 @@ test('handles multiple updates to a single semaphore', async (t) => {
   t.is(response.Item.semvalue, 1);
 });
 
-test('updates multiple semaphores', async (t) => {
+test('sfSemaphoreDown lambda updates multiple semaphores', async (t) => {
   const { semaphore } = t.context;
   const lowPriorityKey = randomId('low');
   const medPriorityKey = randomId('med');
