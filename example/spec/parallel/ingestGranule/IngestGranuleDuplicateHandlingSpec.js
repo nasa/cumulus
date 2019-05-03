@@ -121,7 +121,7 @@ describe('When the Ingest Granules workflow is configured\n', () => {
         fileNotUpdated = inputPayload.granules[0].files[1].name;
 
         await s3().putObject(updateParams).promise();
-        inputPayload.granules[0].files[0].fileSize = content.length;
+        inputPayload.granules[0].files[0].size = content.length;
 
         workflowExecution = await buildAndExecuteWorkflow(
           config.stackName, config.bucket, workflowName, collection, provider, inputPayload
@@ -143,8 +143,8 @@ describe('When the Ingest Granules workflow is configured\n', () => {
           const renamedFiles = currentFiles.filter((f) => path.basename(parseS3Uri(f.filename).Key).startsWith(`${fileUpdated}.v`));
           expect(renamedFiles.length).toEqual(1);
 
-          const expectedRenamedFileSize = existingFiles.filter((f) => f.filename.endsWith(fileUpdated))[0].fileSize;
-          expect(renamedFiles[0].fileSize).toEqual(expectedRenamedFileSize);
+          const expectedRenamedFileSize = existingFiles.filter((f) => f.filename.endsWith(fileUpdated))[0].size;
+          expect(renamedFiles[0].size).toEqual(expectedRenamedFileSize);
         });
 
         // There is a delay between workflow completion and the granule appears in dynamodb (sns->dbindexer),
@@ -182,7 +182,7 @@ describe('When the Ingest Granules workflow is configured\n', () => {
         };
 
         await s3().putObject(updateParams).promise();
-        inputPayload.granules[0].files[0].fileSize = content.length;
+        inputPayload.granules[0].files[0].size = content.length;
 
         workflowExecution = await buildAndExecuteWorkflow(
           config.stackName, config.bucket, workflowName, collection, provider, inputPayload
