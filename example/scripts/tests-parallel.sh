@@ -15,18 +15,22 @@ testOutputDir=scripts/test_output
 rm -r -f $testOutputDir
 mkdir -p $testOutputDir
 
-./node_modules/.bin/parallel -j 4 sh scripts/run_test.sh  $testOutputDir ::: $TESTS
+./node_modules/.bin/parallel -j 1 sh scripts/run_test.sh  $testOutputDir ::: $TESTS
 
 result=$?
 
 echo parallel tests complete: $result suite failures
 
+echo "Echoing TestOutputDirFiles"
 # print test output to console
 for testFile in $testOutputDir/*; do
   cat $testFile
 done
 
+echo "Removing testOutputDir"
+
 rm -rf $testOutputDir
 
+echo "Killing PID"
 kill "$DOT_PID"
 exit $result
