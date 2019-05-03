@@ -9,7 +9,6 @@ echo Running parallel integration tests
 DOT_PID="$!"
 
 TESTS=$(find spec/parallel -type f -name '*spec.js' -or -name '*Spec.js')
-TESTS="spec/parallel/ingest/ingestFromPdrSpec.js" #debugging
 testOutputDir=scripts/test_output
 
 rm -r -f $testOutputDir
@@ -20,6 +19,7 @@ result=$?
 echo parallel tests complete: $result suite failures
 
 echo "Echoing TestOutputDirFiles"
+ls $testOutputDir
 # print test output to console
 for testFile in $testOutputDir/*; do
 cat $testFile
