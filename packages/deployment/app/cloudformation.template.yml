@@ -37,19 +37,7 @@ Resources:
       TemplateURL: {{this.url}}
 {{/ifEquals}}
 {{/ifEquals}}
-{{#ifEquals @key "DataStorage"}}
-  {{@key}}NestedStack:
-    Type: "AWS::CloudFormation::Stack"
-    Properties:
-      Parameters:
-        SecurityGroupId:
-          Fn::GetAtt:
-            - SecurityGroup
-            - GroupId
-      TemplateURL: {{this.url}}
-{{/ifEquals}}
 {{#ifNotEquals @key "WorkflowLambdaVersions"}}
-{{#ifNotEquals @key "DataStorage"}}
   {{@key}}NestedStack:
     Type: "AWS::CloudFormation::Stack"
     Properties:
@@ -60,9 +48,8 @@ Resources:
             - CmrPassword
       {{#if ../es.name}}
         ElasticSearchDomain:
-          Fn::GetAtt:
-            - DataStorageNestedStack
-            - Outputs.{{../es.name}}DomainEndpoint
+          Fn::ImportValue:
+            {{../stackName}}-ESDomainEndpoint
       {{/if}}
         log2elasticsearchLambdaFunctionArn:
           Fn::GetAtt:
@@ -104,18 +91,15 @@ Resources:
         {{/ifEquals}}
       {{# each ../dynamos}}
         {{@key}}DynamoDB:
-          Fn::GetAtt:
-            - DataStorageNestedStack
-            - Outputs.{{@key}}DynamoDB
+          Fn::ImportValue:
+            {{../../stackName}}-{{@key}}DynamoDB
       {{/each}}
       {{# if ../vpc }}
         SecurityGroupId:
-          Fn::GetAtt:
-            - SecurityGroup
-            - GroupId
+          Fn::ImportValue:
+            {{../stackName}}-EcsSecurityGroup
       {{/if}}
       TemplateURL: {{this.url}}
-{{/ifNotEquals}}
 {{/ifNotEquals}}
 {{/each}}
 
@@ -139,26 +123,23 @@ Resources:
     {{# if es.name}}
       ElasticSearch:
         host:
-          Fn::GetAtt:
-            - DataStorageNestedStack
-            - Outputs.{{es.name}}DomainEndpoint
+          Fn::ImportValue:
+            {{stackName}}-ESDomainEndpoint
         version: {{es.elasticSearchMapping}}
     {{/if}}
     {{# if dynamos}}
       DynamoDBTables:
       {{#each dynamos}}
         - name:
-            Fn::GetAtt:
-              - DataStorageNestedStack
-              - Outputs.{{@key}}DynamoDB
+            Fn::ImportValue:
+              {{../stackName}}-{{@key}}DynamoDB
           pointInTime: {{this.pointInTime}}
       {{/each}}
     {{/if}}
       Users:
         table:
-          Fn::GetAtt:
-            - DataStorageNestedStack
-            - Outputs.UsersTableDynamoDB
+          Fn::ImportValue:
+            {{stackName}}-UsersTableDynamoDB
         records:
         {{# each users}}
           - username: {{username}}
@@ -394,9 +375,8 @@ Resources:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       EventSourceArn:
-        Fn::GetAtt:
-          - DataStorageNestedStack
-          - Outputs.{{this}}DynamoDBStreamArn
+        Fn::ImportValue:
+          {{../stackName}}-{{this}}DynamoDBStreamArn
       FunctionName:
         Ref: {{../dynamo2ElasticSearch.lambda}}LambdaFunction
       BatchSize: {{../dynamo2ElasticSearch.batchSize}}
@@ -425,16 +405,14 @@ Resources:
         {{#if this.useElasticSearch }}
         {{#if ../es.name}}
           ES_HOST:
-            Fn::GetAtt:
-              - DataStorageNestedStack
-              - Outputs.{{../es.name}}DomainEndpoint
+            Fn::ImportValue:
+              {{../stackName}}-ESDomainEndpoint
         {{/if}}
         {{/if}}
         {{#each this.tables}}
           {{this}}:
-            Fn::GetAtt:
-              - DataStorageNestedStack
-              - Outputs.{{this}}DynamoDB
+            Fn::ImportValue:
+              {{../../stackName}}-{{this}}DynamoDB
         {{/each}}
       {{# if this.useDistributionApi}}
         {{# if ../api_distribution_url}}
@@ -494,9 +472,8 @@ Resources:
     {{# if ../vpc }}
       VpcConfig:
         SecurityGroupIds:
-          - Fn::GetAtt:
-            - SecurityGroup
-            - GroupId
+          - Fn::ImportValue:
+              {{../stackName}}-EcsSecurityGroup
         SubnetIds:
         {{#each ../vpc.subnets}}
           - {{this}}
@@ -572,26 +549,13 @@ Resources:
   # ECS config BEGIN
   #################################################
 {{# if vpc }}
-  SecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security Group for ECS containter instances of {{stackName}}
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          CidrIp: {{vpc.cidrIp}}
-          FromPort: '443'
-          ToPort: '443'
-      Tags:
-        - Key: Name
-          Value: "{{stackName}}"
-      VpcId: {{vpc.vpcId}}
-
   {{#if ecs.ssh}}
   SecurityGroupSSHinbound:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId:
-        Ref: 'SecurityGroup'
+        Fn::ImportValue:
+          {{stackName}}-EcsSecurityGroup
       IpProtocol: tcp
       FromPort: '22'
       ToPort: '22'
@@ -610,9 +574,8 @@ Resources:
       AssociatePublicIpAddress: {{#if ecs.publicIp}}{{ecs.publicIp}}{{else}}false{{/if}}
     {{/if}}
       SecurityGroups:
-        - Fn::GetAtt:
-          - SecurityGroup
-          - GroupId
+        - Fn::ImportValue:
+            {{stackName}}-EcsSecurityGroup
        {{# if ecs.efs.mount}}
         - Fn::ImportValue:
             "{{stackName}}-EFSSecurityGroup"
@@ -1302,14 +1265,6 @@ Outputs:
       Ref: {{@key}}SQS
 {{/each}}
 
-{{# if es.name}}
-  {{es.name}}Domain:
-    Value:
-      Fn::GetAtt:
-        - DataStorageNestedStack
-        - Outputs.{{es.name}}DomainEndpoint
-{{/if}}
-
 {{#each sns}}
   {{#if this.arn}}
   {{@key}}:
@@ -1326,12 +1281,3 @@ Outputs:
       Fn::GetAtt:
         - CumulusCustomResource
         - CmrPassword
-
-{{#if vpc}}
-  EcsSecurityGroup:
-    Description: ECS security group
-    Value:
-      Ref: SecurityGroup
-    Export:
-      Name: "{{stackName}}-EcsSecurityGroup"
-{{/if}}
