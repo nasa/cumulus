@@ -30,9 +30,9 @@ const isTerminalMessage = (message) =>
  * @returns {boolean} True if workflow semaphore should be decremented.
  */
 const isDecrementMessage = (message) =>
-  has(message, 'cumulus_meta.priorityKey') &&
-  has(message, 'meta.status') &&
-  isTerminalMessage(message);
+  has(message, 'cumulus_meta.priorityKey')
+  && has(message, 'meta.status')
+  && isTerminalMessage(message);
 
 /**
  * Decrement semaphore value for executions with priority

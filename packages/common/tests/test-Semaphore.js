@@ -35,9 +35,9 @@ test.beforeEach(async (t) => {
   t.context.key = randomId('key');
 });
 
-test.after.always(async () => {
-  await dynamodb().deleteTable({ TableName: process.env.SemaphoresTable }).promise();
-});
+test.after.always(
+  () => dynamodb().deleteTable({ TableName: process.env.SemaphoresTable }).promise()
+);
 
 test('Semaphore.create() initializes semaphore', async (t) => {
   const { semaphore, key } = t.context;

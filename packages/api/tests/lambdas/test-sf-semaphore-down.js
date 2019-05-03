@@ -15,7 +15,7 @@ const { Manager } = require('../../models');
 const {
   getSemaphoreDecrementTasks,
   handler
-}  = require('../../lambdas/sf-semaphore-down');
+} = require('../../lambdas/sf-semaphore-down');
 
 const createSnsWorkflowMessage = ({
   status,
@@ -78,7 +78,7 @@ test('getSemaphoreDecrementTasks() returns empty array for SNS message without r
 });
 
 test('getSemaphoreDecrementTasks() returns empty array for SNS message with empty record objects', async (t) => {
-  let tasks = getSemaphoreDecrementTasks({
+  const tasks = getSemaphoreDecrementTasks({
     Records: [
       {}
     ]
