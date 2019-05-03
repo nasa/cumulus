@@ -1,6 +1,7 @@
 'use strict';
 
 const pRetry = require('p-retry');
+const moment = require('moment');
 
 const { Kinesis } = require('aws-sdk');
 const { receiveSQSMessages } = require('@cumulus/common/aws');
@@ -213,39 +214,61 @@ async function putRecordOnStream(streamName, record) {
   }).promise();
 }
 
-
 /**
- * Wait for test stepfunction execution to exist.
+ * Wait for a certain number of test stepfunction executions to exist.
  *
  * @param {string} recordIdentifier - random string identifying correct execution for test
+ * @param {string} workflowName - name of the workflow to wait for
  * @param {integer} maxWaitTimeSecs - maximum time to wait for the correct execution in seconds
+ * @param {integer} numExecutions - The number of executions to wait for
  * @param {string} firstStep - The name of the first step of the workflow, used to query if the workflow has started.
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  * @throws {Error} - any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
  */
-async function waitForTestSf(recordIdentifier, maxWaitTimeSecs, firstStep = 'SfSnsReport') {
+async function waitForAllTestSf(recordIdentifier, workflowName, maxWaitTimeSecs, numExecutions, firstStep = 'SfSnsReport') {
   let timeWaitedSecs = 0;
-  let workflowExecution;
+  const workflowExecutions = [];
+  const startTime = moment();
 
   /* eslint-disable no-await-in-loop */
-  while (timeWaitedSecs < maxWaitTimeSecs && workflowExecution === undefined) {
+  while (timeWaitedSecs < maxWaitTimeSecs && workflowExecutions.length < numExecutions) {
     await sleep(waitPeriodMs);
-    timeWaitedSecs += (waitPeriodMs / 1000);
-    const executions = await getExecutions('KinesisTriggerTest', testConfig.stackName, testConfig.bucket, maxExecutionResults);
+    timeWaitedSecs = (moment.duration(moment().diff(startTime)).asSeconds());
+    const executions = await getExecutions(workflowName, testConfig.stackName, testConfig.bucket, maxExecutionResults);
     // Search all recent executions for target recordIdentifier
     for (let ctr = 0; ctr < executions.length; ctr += 1) {
       const execution = executions[ctr];
-      const taskInput = await lambdaStep.getStepInput(execution.executionArn, firstStep);
-      if (taskInput !== null && taskInput.payload.identifier === recordIdentifier) {
-        workflowExecution = execution;
-        break;
+      if (!workflowExecutions.find((e) => e.executionArn === execution.executionArn)) {
+        const taskInput = await lambdaStep.getStepInput(execution.executionArn, firstStep);
+        if (taskInput !== null && taskInput.payload.identifier === recordIdentifier) {
+          workflowExecutions.push(execution);
+          if (workflowExecutions.length === numExecutions) {
+            break;
+          }
+        }
       }
     }
   }
   /* eslint-enable no-await-in-loop */
 
-  if (timeWaitedSecs < maxWaitTimeSecs) return workflowExecution;
+  if (workflowExecutions.length > 0) return workflowExecutions;
   throw new Error('Never found started workflow.');
+}
+
+/**
+ * Wait for test stepfunction execution to exist.
+ *
+ * @param {string} recordIdentifier - random string identifying correct execution for test
+ * @param {string} workflowName - name of the workflow to wait for
+ * @param {integer} maxWaitTimeSecs - maximum time to wait for the correct execution in seconds
+ * @param {string} firstStep - The name of the first step of the workflow, used to query if the workflow has started.
+ * @returns {Object} - {executionArn: <arn>, status: <status>}
+ * @throws {Error} - any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
+ */
+async function waitForTestSf(recordIdentifier, workflowName, maxWaitTimeSecs, firstStep = 'SfSnsReport') {
+  const workflowExecutions = await waitForAllTestSf(recordIdentifier, workflowName, maxWaitTimeSecs, 1, firstStep);
+
+  return workflowExecutions[0];
 }
 
 /**
@@ -342,6 +365,7 @@ module.exports = {
   putRecordOnStream,
   tryCatchExit,
   waitForActiveStream,
+  waitForAllTestSf,
   waitForQueuedRecord,
   waitForTestSf
 };

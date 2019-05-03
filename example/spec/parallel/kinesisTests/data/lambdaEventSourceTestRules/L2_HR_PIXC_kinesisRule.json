@@ -1,0 +1,14 @@
+{
+  "collection": {
+    "name": "L2_HR_PIXC",
+    "version": "000"
+  },
+  "name": "L2_HR_PIXC_kinesisRule",
+  "provider": "PODAAC_SWOT",
+  "rule": {
+    "type": "kinesis",
+    "value": "arn:aws:kinesis:{{awsRegion}}:{{awsAccountId}}:stream/{{streamName}}"
+  },
+  "state": "ENABLED",
+  "workflow": "HelloWorldWorkflow"
+}
