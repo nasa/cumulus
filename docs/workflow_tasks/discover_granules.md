@@ -48,7 +48,7 @@ A list of buckets with types that will be used to assign bucket targets based on
 
 #### Collection
 
-A Cumulus [collection](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) object.    Used to define granule file groupings and granule metadata for discovered files.   The collection object utilizes the collection fileType key to generate fileTypes in the output object on discovery.
+A Cumulus [collection](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) object.    Used to define granule file groupings and granule metadata for discovered files.   The collection object utilizes the collection type key to generate types in the output object on discovery.
 
 ## Task Outputs
 
