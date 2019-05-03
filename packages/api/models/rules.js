@@ -216,7 +216,10 @@ class Rule extends Manager {
       if (currentMapping.State === 'Enabled') {
         return currentMapping;
       }
-      return aws.lambda().updateEventSourceMapping({ Enabled: true }).promise();
+      return aws.lambda().updateEventSourceMapping({
+        UUID: currentMapping.UUID,
+        Enabled: true
+      }).promise();
     }
 
     // create event source mapping
