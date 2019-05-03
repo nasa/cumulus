@@ -244,9 +244,6 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
       createEventSourceMapping: () => ({
         promise: () => Promise.resolve({ UUID: randomString() })
       }),
-      updateEventSourceMapping: () => ({
-        promise: () => Promise.resolve()
-      }),
       deleteEventSourceMapping: () => ({
         promise: () => Promise.resolve()
       }),
