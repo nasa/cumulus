@@ -4,9 +4,9 @@ const get = require('lodash.get');
 const Ajv = require('ajv');
 const aws = require('@cumulus/common/aws');
 const pWaitFor = require('p-wait-for');
+const DynamoDb = require('@cumulus/common/DynamoDb');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { errorify } = require('../lib/utils');
-const DynamoDb = require('@cumulus/common/DynamoDb');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 
 async function enableStream(tableName) {
