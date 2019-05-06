@@ -4,6 +4,7 @@ const test = require('ava');
 const aws = require('../aws');
 const { randomId } = require('../test-utils');
 const DynamoDb = require('../DynamoDb');
+const { RecordDoesNotExist } = require('../errors');
 
 test.before(async () => {
   process.env.tableName = randomId('table');
@@ -11,10 +12,10 @@ test.before(async () => {
   await aws.dynamodb().createTable({
     TableName: process.env.tableName,
     AttributeDefinitions: [
-      { AttributeName: 'key', AttributeType: 'S' }
+      { AttributeName: 'hash', AttributeType: 'S' }
     ],
     KeySchema: [
-      { AttributeName: 'key', KeyType: 'HASH' }
+      { AttributeName: 'hash', KeyType: 'HASH' }
     ],
     ProvisionedThroughput: {
       ReadCapacityUnits: 5,
@@ -23,20 +24,54 @@ test.before(async () => {
   }).promise();
 });
 
-// test.beforeEach(async (t) => {
-//   t.context.semaphore = new Semaphore(
-//     dynamodbDocClient(),
-//     process.env.SemaphoresTable
-//   );
-//   t.context.key = randomId('key');
-// });
+test.beforeEach(async (t) => {
+  t.context.client = aws.dynamodbDocClient();
+});
 
 test.after.always(
   () => aws.dynamodb().deleteTable({ TableName: process.env.tableName }).promise()
 );
 
-test('DynamoDb.scan() properly returns all paginated results', async (t) => {
-  const client = aws.dynamodbDocClient();
+test('DynamoDb.get() returns an existing item', async (t) => {
+  const { client } = t.context;
+  const hash = randomId('hash');
+  const item = {
+    hash,
+    foo: 'bar'
+  };
+
+  await client.put({
+    TableName: process.env.tableName,
+    Item: item
+  }).promise();
+
+  const response = await DynamoDb.getItem({
+    tableName: process.env.tableName,
+    client,
+    item: {
+      hash
+    }
+  });
+
+  t.deepEqual(response, item);
+});
+
+test('DynamoDb.get() throws RecordDoesNotExist when item does not exist', async (t) => {
+  const { client } = t.context;
+
+  const error = await t.throws(DynamoDb.getItem({
+    tableName: process.env.tableName,
+    client,
+    item: {
+      hash: randomId('hash')
+    }
+  }));
+
+  t.true(error instanceof RecordDoesNotExist);
+});
+
+test.serial('DynamoDb.scan() properly returns all paginated results', async (t) => {
+  const { client } = t.context;
   let count = 0;
   const total = 3;
 
@@ -45,7 +80,7 @@ test('DynamoDb.scan() properly returns all paginated results', async (t) => {
     await client.put({
       TableName: process.env.tableName,
       Item: {
-        key: randomId('test'),
+        hash: randomId('hash'),
         foo: 'bar'
       }
     }).promise();
