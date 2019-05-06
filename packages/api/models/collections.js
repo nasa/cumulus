@@ -133,11 +133,11 @@ class Collection extends Manager {
 
   async deleteCollections() {
     const collections = await this.getAllCollections();
-    collections.forEach(async (collection) => {
+    return Promise.all(collections.map((collection) => {
       const name = collection.name;
       const version = collection.version;
-      await this.delete({ name, version });
-    });
+      this.delete({ name, version });
+    }));
   }
 }
 

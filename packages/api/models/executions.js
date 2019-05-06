@@ -129,9 +129,9 @@ class Execution extends Manager {
    */
   async deleteExecutions() {
     const executions = await this.scan();
-    executions.Items.forEach(async (execution) => {
-      await super.delete({ arn: execution.arn });
-    });
+    return Promise.all(executions.Items.map((execution) => {
+      super.delete({ arn: execution.arn });
+    }));
   }
 }
 

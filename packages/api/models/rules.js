@@ -38,7 +38,7 @@ class Rule extends Manager {
   async deleteRules() {
     const rules = await this.scan();
     const deletePromises = rules.Items.map((r) => this.delete(r));
-    await Promise.all(deletePromises);
+    return Promise.all(deletePromises);
   }
 
   async delete(item) {

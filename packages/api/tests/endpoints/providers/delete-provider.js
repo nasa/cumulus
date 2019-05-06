@@ -50,7 +50,7 @@ test.before(async () => {
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 
   esClient = await Search.es('fakehost');
-  esIndex = 'localrun-es';
+  esIndex = randomString();
 
   process.env.RulesTable = randomString();
   ruleModel = new models.Rule();

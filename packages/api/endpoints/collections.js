@@ -156,7 +156,13 @@ async function addToES(req, res) {
 
   if (inTestMode()) {
     const esClient = await Search.es('fakehost');
-    indexer.indexCollection(esClient, collection, 'localrun-es');
+    const esIndex = process.env.esIndex;
+    if (!esIndex) {
+      console.log('was NONE');
+    } else {
+      console.log('it exists', esIndex);
+    }
+    indexer.indexCollection(esClient, collection, esIndex);
   }
   if (req.returnMessage) return res.send(req.returnMessage);
   return res.send(collection);
@@ -167,7 +173,8 @@ async function removeFromES(req, res) {
   if (inTestMode()) {
     const collectionId = constructCollectionId(name, version);
     const esClient = await Search.es('fakehost');
-    esClient.delete({ id: collectionId, index: 'localrun-es', type: 'collection' });
+    const esIndex = process.env.esIndex;
+    esClient.delete({ id: collectionId, index: esIndex, type: 'collection' });
   }
   return res.send({ message: 'Record deleted' });
 }

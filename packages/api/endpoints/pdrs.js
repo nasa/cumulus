@@ -78,7 +78,7 @@ async function removeFromES(req, res) {
   const pdrName = req.params.pdrName;
   if (inTestMode() && !process.env.notInDb) {
     const esClient = await Search.es('fakehost');
-    const esIndex = process.env.esIndex || 'localrun-es';
+    const esIndex = process.env.esIndex;
     await esClient.delete({ id: pdrName, index: esIndex, type: 'pdr' });
   }
   return res.send({ detail: 'Record deleted' });

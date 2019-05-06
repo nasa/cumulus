@@ -293,11 +293,13 @@ async function resetTables(user = 'testUser', stackName = 'localrun') {
 
     try {
       await rulesModel.deleteRules();
-      await collectionModel.deleteCollections();
-      await providerModel.deleteProviders();
-      await executionModel.deleteExecutions();
-      await granulesModel.deleteGranules();
-      await pdrsModel.deletePdrs();
+      await Promise.all ([
+        collectionModel.deleteCollections(),
+        providerModel.deleteProviders(),
+        executionModel.deleteExecutions(),
+        granulesModel.deleteGranules(),
+        pdrsModel.deletePdrs()
+      ]);
     } catch (error) {
       console.log(error);
     }

@@ -174,7 +174,7 @@ async function removeFromES(req, res) {
   const granuleId = req.params.granuleName;
   if (inTestMode()) {
     const esClient = await Search.es('fakehost');
-    const esIndex = process.env.esIndex || 'localrun-es';
+    const esIndex = process.env.esIndex;
     await indexer.deleteRecord(esClient, granuleId, 'granule', req.collectionId, esIndex);
   }
   return res.send({ detail: 'Record deleted' });
