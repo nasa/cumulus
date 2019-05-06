@@ -106,9 +106,9 @@ class Pdr extends Manager {
    */
   async deletePdrs() {
     const pdrs = await this.scan();
-    pdrs.Items.forEach(async (pdr) => {
-      await super.delete({ pdrName: pdr.pdrName });
-    });
+    return Promise.all(pdrs.Items.map((pdr) => {
+      super.delete({ pdrName: pdr.pdrName });
+    }));
   }
 }
 

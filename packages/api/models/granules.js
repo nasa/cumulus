@@ -394,9 +394,9 @@ class Granule extends Manager {
    */
   async deleteGranules() {
     const granules = await this.scan();
-    granules.Items.forEach(async (granule) => {
-      await super.delete({ granuleId: granule.granuleId });
-    });
+    return Promise.all(granules.Items.map((granule) => {
+      super.delete({ granuleId: granule.granuleId });
+    }));
   }
 }
 
