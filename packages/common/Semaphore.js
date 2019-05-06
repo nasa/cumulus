@@ -1,3 +1,4 @@
+const DynamoDb = require('./DynamoDb');
 const {
   isConditionalCheckException,
   ResourcesLockedError
@@ -34,18 +35,19 @@ class Semaphore {
   }
 
   get(key) {
-    return this.docClient.get({
-      TableName: this.tableName,
-      Key: {
+    return DynamoDb.getItem({
+      tableName: this.tableName,
+      item: {
         key
-      }
-    }).promise();
+      },
+      client: this.docClient
+    });
   }
 
   scan() {
-    return this.docClient.scan({
-      TableName: this.tableName
-    }).promise();
+    return DynamoDb.scan({
+      tableName: this.tableName
+    });
   }
 
   up(key, maximum) {

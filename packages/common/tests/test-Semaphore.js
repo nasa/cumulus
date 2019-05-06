@@ -44,7 +44,7 @@ test('Semaphore.create() initializes semaphore', async (t) => {
 
   await semaphore.create(key);
   const response = await semaphore.get(key);
-  t.is(response.Item.semvalue, 0);
+  t.is(response.semvalue, 0);
 });
 
 test('Semaphore.create() on existing semaphore does not throw an error', async (t) => {
@@ -89,7 +89,7 @@ test('Semaphore.up() increments the semaphore value', async (t) => {
 
   await semaphore.up(key, maximum);
   const response = await semaphore.get(key);
-  t.is(response.Item.semvalue, 1);
+  t.is(response.semvalue, 1);
 });
 
 test('Semaphore.down() cannot decrement the semaphore value below 0', async (t) => {
@@ -107,7 +107,7 @@ test('Semaphore.down() decrements the semaphore value', async (t) => {
   await semaphore.up(key, maximum);
   await semaphore.down(key);
   const response = await semaphore.get(key);
-  t.is(response.Item.semvalue, 0);
+  t.is(response.semvalue, 0);
 });
 
 test('Semaphore.up() and Semaphore.down() properly update semaphore value', async (t) => {
@@ -118,7 +118,7 @@ test('Semaphore.up() and Semaphore.down() properly update semaphore value', asyn
   await semaphore.down(key);
   await semaphore.up(key, maximum);
   const response = await semaphore.get(key);
-  t.is(response.Item.semvalue, 1);
+  t.is(response.semvalue, 1);
 });
 
 test('Semaphore.checkout() properly increments and then decrements semaphore value', async (t) => {
@@ -129,7 +129,7 @@ test('Semaphore.checkout() properly increments and then decrements semaphore val
   await semaphore.checkout(key, 1, maximum, asyncFn);
 
   const response = await semaphore.get(key);
-  t.is(response.Item.semvalue, 0);
+  t.is(response.semvalue, 0);
 });
 
 test('Semaphore.checkout() throws error when trying to increment beyond the maximum', async (t) => {

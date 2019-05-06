@@ -106,5 +106,8 @@ module.exports = {
   MismatchPdrCollection: createErrorType('MismatchPdrCollection'),
 
   // Error class for file locations that are unparsable
-  UnparsableFileLocationError: createErrorType('UnparsableFileLocationError')
+  UnparsableFileLocationError: createErrorType('UnparsableFileLocationError'),
+
+  // if a record cannot be found
+  RecordDoesNotExist: createErrorType('RecordDoesNotExist')
 };
