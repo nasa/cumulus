@@ -2,11 +2,9 @@ const get = require('lodash.get');
 const has = require('lodash.has');
 const { isNil } = require('@cumulus/common/util');
 const {
-  concurrency: {
-    Semaphore
-  },
   aws,
-  log
+  log,
+  Semaphore
 } = require('@cumulus/common');
 
 /**

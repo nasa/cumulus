@@ -6,7 +6,7 @@ const aws = require('@cumulus/common/aws');
 const pWaitFor = require('p-wait-for');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { errorify } = require('../lib/utils');
-const { RecordDoesNotExist } = require('../lib/errors');
+const { RecordDoesNotExist } = require('@cumulus/common/errors');
 
 async function enableStream(tableName) {
   const params = {
