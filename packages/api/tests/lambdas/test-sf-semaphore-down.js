@@ -2,10 +2,8 @@
 
 const test = require('ava');
 const {
-  concurrency: {
-    Semaphore
-  },
   aws,
+  Semaphore,
   testUtils: {
     randomId,
     randomString
@@ -113,7 +111,7 @@ test('sfSemaphoreDown lambda does nothing for a workflow message with no priorit
   });
 
   const response = await semaphore.get(key);
-  t.is(response.Item.semvalue, 1);
+  t.is(response.semvalue, 1);
 });
 
 test('sfSemaphoreDown lambda does nothing for a workflow message with no status', async (t) => {
@@ -130,7 +128,7 @@ test('sfSemaphoreDown lambda does nothing for a workflow message with no status'
   });
 
   const response = await semaphore.get(key);
-  t.is(response.Item.semvalue, 1);
+  t.is(response.semvalue, 1);
 });
 
 test('sfSemaphoreDown lambda does nothing for a workflow message for a running workflow', async (t) => {
@@ -148,7 +146,7 @@ test('sfSemaphoreDown lambda does nothing for a workflow message for a running w
   });
 
   const response = await semaphore.get(key);
-  t.is(response.Item.semvalue, 1);
+  t.is(response.semvalue, 1);
 });
 
 test('sfSemaphoreDown lambda throws error when attempting to decrement empty semaphore', async (t) => {
@@ -181,7 +179,7 @@ test('sfSemaphoreDown lambda decrements priority semaphore for completed workflo
   });
 
   const response = await semaphore.get(key);
-  t.is(response.Item.semvalue, 0);
+  t.is(response.semvalue, 0);
 });
 
 test('sfSemaphoreDown lambda decrements priority semaphore for failed workflow message', async (t) => {
@@ -201,7 +199,7 @@ test('sfSemaphoreDown lambda decrements priority semaphore for failed workflow m
   });
 
   const response = await semaphore.get(key);
-  t.is(response.Item.semvalue, 0);
+  t.is(response.semvalue, 0);
 });
 
 test('sfSemaphoreDown lambda handles multiple updates to a single semaphore', async (t) => {
@@ -225,7 +223,7 @@ test('sfSemaphoreDown lambda handles multiple updates to a single semaphore', as
   });
 
   const response = await semaphore.get(key);
-  t.is(response.Item.semvalue, 1);
+  t.is(response.semvalue, 1);
 });
 
 test('sfSemaphoreDown lambda updates multiple semaphores', async (t) => {
@@ -256,8 +254,8 @@ test('sfSemaphoreDown lambda updates multiple semaphores', async (t) => {
   });
 
   let response = await semaphore.get(lowPriorityKey);
-  t.is(response.Item.semvalue, 1);
+  t.is(response.semvalue, 1);
 
   response = await semaphore.get(medPriorityKey);
-  t.is(response.Item.semvalue, 2);
+  t.is(response.semvalue, 2);
 });
