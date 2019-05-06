@@ -1,6 +1,7 @@
 default:
-  stackName: change-me-cumulus
-  stackNameNoDash: ChangeMeCumulus
+  prefix: change-me-cumulus
+  stackName: '{{prefix}}'
+  prefixNoDash: ChangeMeCumulus
 
   urs_url: https://uat.urs.earthdata.nasa.gov/
 
@@ -45,8 +46,9 @@ default:
   # api_distribution_url: https://apigateway-url-to-distribution-app/
 
   params:
-    - name: CmrPassword
-      value: '{{CMR_PASSWORD}}' # this has to be set in .env
+    app:
+      - name: CmrPassword
+        value: '{{CMR_PASSWORD}}' # this has to be set in .env
 
   shared_data_bucket: 'cumulus-data-shared'
 
@@ -65,6 +67,16 @@ default:
     public:
       name: change-me
       type: public
+
+  iams:
+    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-ecs'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-processing'
+    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-steprole'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-scaling-role'
+    migrationRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-migration-processing'
 
   cmr:
     username: devseed

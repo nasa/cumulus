@@ -1,6 +1,6 @@
 <cumulus-deployment-name>:
   stackName: <prefix>-cumulus         # stackName must match the prefix for your IAM stack
-  stackNameNoDash: <Prefix>Cumulus
+  prefixNoDash: <Prefix>Cumulus
 
   apiStage: dev
 

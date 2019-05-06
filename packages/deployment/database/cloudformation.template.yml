@@ -10,7 +10,7 @@ Resources:
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security Group for ECS containter instances of {{prefix}}
+      GroupDescription: Security Group for ECS container instances of {{prefix}}
       SecurityGroupIngress:
         - IpProtocol: tcp
           CidrIp: {{vpc.cidrIp}}

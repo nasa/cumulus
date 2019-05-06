@@ -12,10 +12,12 @@
     "parallel-tests": "sh scripts/tests-parallel.sh",
     "redeploy-test": "jasmine spec/standalone/redeployment/*.js",
     "all-tests": "npm run parallel-tests && jasmine && npm run redeploy-test",
-    "cf-compile": "./node_modules/.bin/kes cf compile --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/app --profile $AWS_PROFILE",
-    "cf-compile-iam": "./node_modules/.bin/kes cf compile --kes-folder iam --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/iam --profile $AWS_PROFILE",
-    "deploy": "./node_modules/.bin/kes cf deploy --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/app --profile $AWS_PROFILE",
-    "deploy-iam": "./node_modules/.bin/kes cf deploy --kes-folder iam --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/iam  --profile $AWS_PROFILE"
+    "compile-app": "kes cf compile --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/app --profile $AWS_PROFILE",
+    "compile-iam": "kes cf compile --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/iam --profile $AWS_PROFILE",
+    "compile-db": "kes cf compile --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/database  --profile $AWS_PROFILE",
+    "deploy-app": "kes cf deploy --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/app --profile $AWS_PROFILE",
+    "deploy-iam": "kes cf deploy --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/iam  --profile $AWS_PROFILE",
+    "deploy-db": "kes cf deploy --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/database  --profile $AWS_PROFILE"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
