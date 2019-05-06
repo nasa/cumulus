@@ -35,7 +35,7 @@ class Semaphore {
   }
 
   get(key) {
-    return DynamoDb.getItem({
+    return DynamoDb.get({
       tableName: this.tableName,
       item: {
         key

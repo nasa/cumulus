@@ -6,6 +6,7 @@ const aws = require('@cumulus/common/aws');
 const pWaitFor = require('p-wait-for');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { errorify } = require('../lib/utils');
+const DynamoDb = require('@cumulus/common/DynamoDb');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 
 async function enableStream(tableName) {
@@ -219,22 +220,11 @@ class Manager {
    * @returns {Promise} The record found
    */
   async get(item) {
-    const params = {
-      TableName: this.tableName,
-      Key: item
-    };
-
-    try {
-      const getResponse = await this.dynamodbDocClient.get(params).promise();
-      if (!getResponse.Item) {
-        throw new RecordDoesNotExist();
-      }
-      return getResponse.Item;
-    } catch (e) {
-      throw new RecordDoesNotExist(
-        `No record found for ${JSON.stringify(item)} in ${this.tableName}`
-      );
-    }
+    return DynamoDb.get({
+      tableName: this.tableName,
+      item,
+      client: this.dynamodbDocClient
+    });
   }
 
   async batchGet(items, attributes = null) {
@@ -339,49 +329,15 @@ class Manager {
   }
 
   async scan(query, fields, limit, select, startKey) {
-    const params = {
-      TableName: this.tableName
-    };
-
-    if (query) {
-      if (query.filter && query.values) {
-        params.FilterExpression = query.filter;
-        params.ExpressionAttributeValues = query.values;
-      }
-
-      if (query.names) {
-        params.ExpressionAttributeNames = query.names;
-      }
-    }
-
-    if (fields) {
-      params.ProjectionExpression = fields;
-    }
-
-    if (limit) {
-      params.Limit = limit;
-    }
-
-    if (select) {
-      params.Select = select;
-    }
-
-    if (startKey) {
-      params.ExclusiveStartKey = startKey;
-    }
-
-    const resp = await this.dynamodbDocClient.scan(params).promise();
-
-    // recursively go through all the records
-    if (resp.LastEvaluatedKey) {
-      const more = await this.scan(query, fields, limit, select, resp.LastEvaluatedKey);
-      if (more.Items) {
-        resp.Items = more.Items.concat(more.Items);
-      }
-      resp.Count += more.Count;
-    }
-
-    return resp;
+    return DynamoDb.scan({
+      tableName: this.tableName,
+      client: this.dynamodbDocClient,
+      query,
+      fields,
+      limit,
+      select,
+      startKey
+    });
   }
 
   async delete(item) {

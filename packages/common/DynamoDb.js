@@ -14,9 +14,9 @@ const { RecordDoesNotExist } = require('./errors');
 // Exported functions
 
 /**
- * Call DynamoDb getItem
+ * Call DynamoDb get
  *
- * See [DynamoDb.getItem()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#getItem-property)
+ * See [DynamoDb.get()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#getItem-property)
  * for descriptions of `params` and the return data.
  *
  * @param {Object} params
@@ -26,7 +26,7 @@ const { RecordDoesNotExist } = require('./errors');
  * @static
  * @kind function
  */
-const getItem = aws.improveStackTrace(
+const get = aws.improveStackTrace(
   async ({
     tableName,
     item,
@@ -128,6 +128,6 @@ const scan = aws.improveStackTrace(
 );
 
 module.exports = {
-  getItem,
+  get,
   scan
 };

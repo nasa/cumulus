@@ -45,7 +45,7 @@ test('DynamoDb.get() returns an existing item', async (t) => {
     Item: item
   }).promise();
 
-  const response = await DynamoDb.getItem({
+  const response = await DynamoDb.get({
     tableName: process.env.tableName,
     client,
     item: {
@@ -59,7 +59,7 @@ test('DynamoDb.get() returns an existing item', async (t) => {
 test('DynamoDb.get() throws RecordDoesNotExist when item does not exist', async (t) => {
   const { client } = t.context;
 
-  const error = await t.throws(DynamoDb.getItem({
+  const error = await t.throws(DynamoDb.get({
     tableName: process.env.tableName,
     client,
     item: {
