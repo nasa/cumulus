@@ -62,7 +62,7 @@ test('Download remote file to s3 with correct content-type', async (t) => {
 
 test('returns files with provider path', async (t) => {
   const stubLink = 'file.txt ';
-  setupCrawler(stubLink)
+  setupCrawler(stubLink);
 
   const actualFiles = await myTestHttpDiscoveryClass.list();
   const expectedFiles = [{ name: stubLink, path: myTestHttpDiscoveryClass.path }];
@@ -72,7 +72,7 @@ test('returns files with provider path', async (t) => {
 
 test('strips trailing spaces from name', async (t) => {
   const stubLink = ' fileWithSpaces.txt ';
-  setupCrawler(stubLink)
+  setupCrawler(stubLink);
 
   const actualFiles = await myTestHttpDiscoveryClass.list();
   const expectedFiles = [{ name: stubLink.trimRight(), path: myTestHttpDiscoveryClass.path }];
