@@ -1,4 +1,11 @@
 default:
+  prefix: test-cumulus-integration
+  stackName: '{{prefix}}-db'
+
+  iams:
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-scaling-role'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-processing'
 
   vpc:
     vpcId: '{{VPC_ID}}'         # this has to be set in .env

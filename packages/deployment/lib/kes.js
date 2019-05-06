@@ -393,6 +393,24 @@ class UpdatedKes extends Kes {
     return fsWriteFile(destPath, cf);
   }
 
+  /**
+   * Calls CloudFormation's update-stack or create-stack methods
+   * Changed to support multi-template configs by checking for params sub-objects, i.e.:
+   * params:
+   *   app:
+   *     - name: someName
+   *       value: someValue
+   *
+   * @returns {Promise} returns the promise of an AWS response object
+   */
+  cloudFormation() {
+    if (!Array.isArray(this.config.params)) {
+      if (this.config.params.app) this.config.params = this.config.params.app;
+      else this.config.params = [];
+    }
+    return super.cloudFormation();
+  }
+
 
   /**
    * Updates lambda/sqs configuration to include an sqs dead letter queue

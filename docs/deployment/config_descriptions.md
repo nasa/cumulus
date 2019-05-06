@@ -38,9 +38,9 @@ The name (e.g. dev) of the the 'deployment' - this key tells kes which configura
 
 The name of this stack in CloudFormation. **This value must start with the `prefix` used in the [IAM](deployment/deployment-readme#configure-and-deploy-the-iam-stack) deployment or the deployment will not work correctly.**
 
-## stackNameNoDash
+## prefixNoDash
 
-A representation of the stack name that has dashes removed. This will be used for components that should be associated with the stack but do not allow dashes in the identifier.
+A representation of the stack name prefix that has dashes removed. This will be used for components that should be associated with the stack but do not allow dashes in the identifier.
 
 ## vpc
 

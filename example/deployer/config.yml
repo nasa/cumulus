@@ -1,7 +1,7 @@
 default:
   prefix: test-cumulus-integration
   stackName: test-cumulus-integration-deployer
-  stackNameNoDash: testCumulusIntgDeployer
+  prefixNoDash: testCumulusIntgDeployer
   buckets:
     internal: cumulus-test-sandbox-internal
   capabilities:
@@ -11,19 +11,19 @@ default:
     - name: Prefix
       value: '{{prefix}}'
     - name: StateMachinePrefix
-      value: '{{stackNameNoDash}}'
+      value: '{{prefixNoDash}}'
     - name: InternalBucketName
       value: '{{buckets.internal}}'
 
 mth-cum-test:
   prefix: mth-cum-test
   stackName: '{{prefix}}-deployer'
-  stackNameNoDash: mthCumTestDeployer
+  prefixNoDash: mthCumTestDeployer
   buckets:
     internal: '{{prefix}}-internal'
 
 jl:
   prefix: jl-test-integration
   stackName: jl-test-integration-deployer
-  stackNameNoDash: jlTestIntgDeployer
+  prefixNoDash: jlTestIntgDeployer
 

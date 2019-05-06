@@ -211,8 +211,8 @@ Descriptions of the fields can be found in [App Configuration Descriptions](depl
 
 ```yaml
 dev:                            # deployment name
-  stackName: dev-cumulus        # Required. See note below
-  stackNameNoDash: DevCumulus   # Required.
+  prefix: dev-cumulus        # Required. See note below
+  prefixNoDash: DevCumulus   # Required.
 
   apiStage: dev                 # Optional
 

@@ -4,42 +4,26 @@
  *
  * Specifically, this module changes the default Kes Deployment in the following ways:
  *
- * - Adds a custom handlebar helper for filtering buckets of a certain type
- * - Adds checking for this.config.params.iam and using it for cloudFormation parameters
- *   intended for the iam deployment
+ * - Adds checking for this.config.params.db and using it for cloudFormation parameters
+ *   intended for the db deployment
  *
  */
 
 'use strict';
 
 const { Kes } = require('kes');
-const Handlebars = require('handlebars');
 
 /**
- * A subclass of Kes class that overrides parseCF and cloudFormation methods
+ * A subclass of Kes class that overrides cloudFormation method
  *
  * @class UpdatedKes
  */
 class UpdatedKes extends Kes {
-  parseCF(cfFile) {
-    Handlebars.registerHelper('BucketIsType', (bucket, type, options) => {
-      const fnTrue = options.fn;
-      const fnFalse = options.inverse;
-      const types = type.split(',');
-
-      if (types.includes(bucket.type)) return fnTrue(bucket);
-
-      return fnFalse(bucket);
-    });
-
-    return super.parseCF(cfFile);
-  }
-
   /**
    * Calls CloudFormation's update-stack or create-stack methods
    * Changed to support multi-template configs by checking for params sub-objects, i.e.:
    * params:
-   *   iam:
+   *   db:
    *     - name: someName
    *       value: someValue
    *
@@ -47,7 +31,7 @@ class UpdatedKes extends Kes {
    */
   cloudFormation() {
     if (!Array.isArray(this.config.params)) {
-      if (this.config.params.iam) this.config.params = this.config.params.iam;
+      if (this.config.params.db) this.config.params = this.config.params.db;
       else this.config.params = [];
     }
     return super.cloudFormation();

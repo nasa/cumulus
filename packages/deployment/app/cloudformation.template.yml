@@ -232,7 +232,7 @@ Resources:
 {{/each}}
 
 {{#each stepFunctions}}
-  {{../stackNameNoDash}}{{@key}}StateMachine:
+  {{../prefixNoDash}}{{@key}}StateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
       DefinitionString:
@@ -1256,7 +1256,7 @@ Outputs:
 {{#each stepFunctions}}
   {{@key}}StateMachine:
     Value:
-      Ref: {{../stackNameNoDash}}{{@key}}StateMachine
+      Ref: {{../prefixNoDash}}{{@key}}StateMachine
 {{/each}}
 
 {{#each sqs}}

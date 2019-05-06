@@ -1,5 +1,5 @@
 default:
-  prefix: '{{stackName}}'
+  stackName: '{{prefix}}-db'
 
   iams:
     ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-ecs'
@@ -13,8 +13,6 @@ default:
 
 mvd:
   prefix: mvd
-  stackName: mvd-db
-  stackNameNoDash: mvdDb
   buckets:
     internal:
       name: 'mvd-internal'
