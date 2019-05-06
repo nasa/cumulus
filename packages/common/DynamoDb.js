@@ -14,9 +14,9 @@ const { RecordDoesNotExist } = require('./errors');
 // Exported functions
 
 /**
- * Call DynamoDb get
+ * Call DynamoDb client get
  *
- * See [DynamoDb.get()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#getItem-property)
+ * See [DocumentClient.get()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#get-property)
  * for descriptions of `params` and the return data.
  *
  * @param {Object} params
@@ -52,9 +52,9 @@ const get = aws.improveStackTrace(
 );
 
 /**
- * Call DynamoDb scan
+ * Call DynamoDb client scan
  *
- * See [DynamoDb.scan()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#scan-property)
+ * See [DocumentClient.scan()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#scan-property)
  * for descriptions of `params` and the return data.
  *
  * @param {Object} params
