@@ -66,6 +66,7 @@ const getItem = aws.improveStackTrace(
 const scan = aws.improveStackTrace(
   async ({
     tableName,
+    client,
     query,
     fields,
     limit,
@@ -103,13 +104,21 @@ const scan = aws.improveStackTrace(
       params.ExclusiveStartKey = startKey;
     }
 
-    const response = await this.dynamodbDocClient.scan(params).promise();
+    const response = await client.scan(params).promise();
 
     // recursively go through all the records
     if (response.LastEvaluatedKey) {
-      const more = await this.scan(query, fields, limit, select, response.LastEvaluatedKey);
+      const more = await scan({
+        tableName,
+        client,
+        query,
+        fields,
+        limit,
+        select,
+        startKey: response.LastEvaluatedKey
+      });
       if (more.Items) {
-        response.Items = more.Items.concat(more.Items);
+        response.Items = response.Items.concat(more.Items);
       }
       response.Count += more.Count;
     }
