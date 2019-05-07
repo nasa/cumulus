@@ -25,7 +25,7 @@ process.env.TOKEN_SECRET = randomString();
 // import the express app after setting the env variables
 const { app } = require('../../../app');
 
-let esIndex = randomString();
+const esIndex = randomString();
 let esClient;
 let providerModel;
 

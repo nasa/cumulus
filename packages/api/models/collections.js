@@ -136,7 +136,7 @@ class Collection extends Manager {
     return Promise.all(collections.map((collection) => {
       const name = collection.name;
       const version = collection.version;
-      this.delete({ name, version });
+      return this.delete({ name, version });
     }));
   }
 }

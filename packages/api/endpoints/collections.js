@@ -157,11 +157,6 @@ async function addToES(req, res) {
   if (inTestMode()) {
     const esClient = await Search.es('fakehost');
     const esIndex = process.env.esIndex;
-    if (!esIndex) {
-      console.log('was NONE');
-    } else {
-      console.log('it exists', esIndex);
-    }
     indexer.indexCollection(esClient, collection, esIndex);
   }
   if (req.returnMessage) return res.send(req.returnMessage);

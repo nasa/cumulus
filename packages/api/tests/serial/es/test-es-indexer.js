@@ -77,7 +77,7 @@ test.before(async () => {
 
   // create the elasticsearch index and add mapping
   await bootstrapElasticSearch('fakehost', esIndex);
-  process.env.esIndex = esIndex; 
+  process.env.esIndex = esIndex;
   esClient = await Search.es();
 
   // create buckets
