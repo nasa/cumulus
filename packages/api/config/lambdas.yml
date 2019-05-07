@@ -3,6 +3,8 @@ sqs2sf:
   timeout: 200
   memory: 512
   source: 'node_modules/@cumulus/api/dist/'
+  tables:
+    - SemaphoresTable
 
 sns2elasticsearch:
   handler: index.indexer
