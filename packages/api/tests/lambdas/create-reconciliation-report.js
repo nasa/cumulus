@@ -625,7 +625,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     Description: 'File to download'
   },
   {
-    URL: `https://${buckets.public.name}.s3.amazonaws.com/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg`,
+    URL: `https://${process.env.DISTRIBUTION_ENDPOINT}testbucket-public/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg`,
     Type: 'GET DATA',
     Description: 'File to download'
   },
