@@ -23,6 +23,17 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
     and set the `ecs.amiid` property in your config. Instructions for finding
     the most recent NGAP AMI can be found using
     [these instructions](https://wiki.earthdata.nasa.gov/display/ESKB/Select+an+NGAP+Created+AMI).
+
+- **CUMULUS-1310**
+  - Database resources (DynamoDB, ElasticSearch) have been moved to an independent `db` stack.
+    This will require user-managed migration if preservation of data is desired.
+    See `Changed` section for more details.
+  - All stacks can now be deployed using a single `config.yml` file. Backwards-compatible.
+  - `stackName` and `stackNameNoDash` have been retired as user-facing config parameters.
+    Use `prefix` and `prefixNoDash` instead.
+  - The `iams` section in `app/config.yml` IAM roles has been retired as a user-facing parameter,
+    *unless* your IAM role ARNs do not match the convention shown in `@cumulus/deployment/app/config.yml`
+
 - **CUMULUS-1212**
   - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
 - **CUMULUS-1232**
@@ -37,7 +48,6 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
   - The Cloudformation templating and deployment configuration has been substantially refactored.
     - `CumulusApiDefault` nested stack resource has been renamed to `CumulusApiDistribution`
     - `CumulusApiV1` nested stack resource has been renamed to `CumulusApiBackend`
-    - `DataStorage` nested stack resource has been added for managing resources related to data persistence (DynamoDB and Elasticsearch)
   - The `urs: true` config option for when defining your lambdas (e.g. in `lambdas.yml`) has been deprecated. There are two new options to replace it:
     - `urs_redirect: 'token'`: This will expose a `TOKEN_REDIRECT_ENDPOINT` environment variable to your lambda that references the `/token` endpoint on the Cumulus backend API
     - `urs_redirect: 'distribution'`: This will expose a `DISTRIBUTION_REDIRECT_ENDPOINT` environment variable to your lambda that references the `/redirect` endpoint on the Cumulus distribution API
@@ -63,6 +73,21 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
   - Adds autoscaling of ECS services that are handling StepFunction activities
 
 ## Changed
+
+- **CUMULUS-1310**
+  - Database resources (DynamoDB, ElasticSearch) have been moved to an independent `db` stack.
+    This will enable future updates to avoid affecting database resources or requiring migrations.
+    Migrations for this version will need to be user-managed.
+    (e.g. [elasticsearch](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-version-migration.html#snapshot-based-migration) and [dynamoDB](https://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/dp-template-exports3toddb.html)).
+  - All stacks can now be deployed using a single `config.yml` file. Backwards-compatible.
+  - `stackName` and `stackNameNoDash` have been retired as user-facing config parameters. Use `prefix` and `prefixNoDash` instead.
+    This will be used to create stack names for all stacks in a single-config use case.
+    `stackName` may still be used as an override in multi-config usage, although this is discouraged.
+  - The `iams` section in `app/config.yml` IAM roles has been retired as a user-facing parameter,
+    *unless* your IAM role ARNs do not match the convention shown in `@cumulus/deployment/app/config.yml`
+    In that case, overriding `iams` in your own config is recommended.
+  - `iam` and `db` `cloudformation.yml` file names will have respective prefixes (e.g `iam.cloudformation.yml`).
+  - Deployment docs have been updated with examples for the new deployment model.
 
 - **CUMULUS-1236**
   - Moves access to public files behind the distribution endpoint.  Authentication is not required, but direct http access has been disallowed.

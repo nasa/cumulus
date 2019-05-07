@@ -21,6 +21,7 @@ The process involves:
 * Creating [AWS S3 Buckets](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html).
 * Using [Kes](http://devseed.com/kes/) to transform kes templates (`cloudformation.template.yml`) into [AWS CloudFormation](https://aws.amazon.com/cloudformation/getting-started/) stack templates (`cloudformation.yml`) that are then deployed to AWS.
 * Before deploying the Cumulus software, a CloudFormation stack is deployed that creates necessary [IAM roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) via the `iams` stack.
+* Database resources are configured and deployed via the `db` stack.
 * The Cumulus software is configured and deployed via the `app` stack.
 
 --------------
@@ -132,7 +133,7 @@ These buckets do not need any non-default permissions to function with Cumulus, 
 
 ## Configure and Deploy the IAM stack
 
-### Configure deployment with `<daac>-deploy/iam/config.yml`
+### Configure deployment with `<daac>-deploy/app/config.yml`
 
 The `iam` configuration creates 7 [roles](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) and an [instance profile](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html) used internally by the Cumulus stack.
 
@@ -144,8 +145,7 @@ Descriptions of the fields can be found in [IAM Configuration Descriptions](depl
 
 ```yaml
 dev:                                # deployment name
-  prefix: dev-cumulus               # prefixes CloudFormation-created IAM resources and permissions
-  stackName: dev-cumulus-iams       # name of this IAM stack in CloudFormation (e.g. <prefix>-iams)
+  prefix: dev-cumulus               # prefixes stack name and CloudFormation-created IAM resources and permissions
   useNgapPermissionBoundary: true   # for NASA NGAP accounts
 
   buckets:
@@ -192,6 +192,31 @@ The same information can be obtained from the AWS CLI command: `aws iam list-rol
 The `iam` deployment also creates an instance profile named `<stack-name>-ecs` that can be viewed from the AWS CLI command: `aws iam list-instance-profiles`.
 
 --------------
+## Configure and Deploy the Database stack
+
+This section will cover deploying the DynamoDB and ElasticSearch resources.
+ElasticSearch is optional and can be disabled using `es: null`.
+
+### Sample config.yml
+
+```yaml
+dev:                                # deployment name
+  prefix: dev-cumulus               # Required
+
+es:
+  name: myES5Domain                 # Optional
+```
+
+**Deploy `db` stack**
+
+```bash
+  $ DEPLOYMENT=<cumulus-deployment-name> \
+      AWS_REGION=<region> \ # e.g. us-east-1
+      AWS_PROFILE=<profile> \
+      npm run deploy-db
+```
+
+--------------
 
 ## Configure and Deploy the Cumulus stack
 
@@ -236,17 +261,6 @@ dev:                            # deployment name
     internal:
         name: dev-internal
         type: internal
-
-  # Required. <iams-prefix> = prefix from IAM stack above.
-  iams:
-    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-ecs'
-    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-lambda-api-gateway'
-    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-lambda-processing'
-    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-steprole'
-    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/<iams-prefix>-ecs'
-    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-distribution-api-lambda'
-    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-scaling-role'
-    migrationRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-migration-processing'
 
   # Optional
   urs_url: https://uat.urs.earthdata.nasa.gov/ # make sure to include the trailing slash
@@ -309,7 +323,7 @@ Once the preceding configuration steps have completed, run the following to depl
   $ DEPLOYMENT=<cumulus-deployment-name> \
       AWS_REGION=<region> \ # e.g. us-east-1
       AWS_PROFILE=<profile> \
-      npm run deploy
+      npm run deploy-app
 ```
 
 You can monitor the progess of the stack deployment from the [AWS CloudFormation Console](https://console.aws.amazon.com/cloudformation/home); this step takes a few minutes.
@@ -320,7 +334,7 @@ A successful completion will result in output similar to:
   $ DEPLOYMENT=<cumulus-deployment-name> \
       AWS_REGION=<region> \ # e.g. us-east-1
       AWS_PROFILE=<profile> \
-      npm run deploy
+      npm run deploy-app
   Generating keys. It might take a few seconds!
   Keys Generated
   keys uploaded to S3
@@ -473,26 +487,35 @@ You should be able to visit the dashboard website at `http://<prefix>-dashboard.
 
 Once deployed for the first time, any future updates to the role/stack configuration files/version of Cumulus can be deployed and will update the appropriate portions of the stack as needed.
 
+## Cumulus Versioning
+
+Cumulus uses a global versioning approach, meaning version numbers are consistent across all packages and tasks, and semantic versioning to track major, minor, and patch version (i.e. 1.0.0). We use Lerna to manage versioning.
+
 ## Update roles
 
 ```bash
-  $ DEPLOYMENT=<iam-deployment-name> \
+  $ DEPLOYMENT=<deployment-name> \
       AWS_REGION=<region> \ # e.g. us-east-1
       AWS_PROFILE=<profile> \
       npm run deploy-iam
 ```
 
-## Cumulus Versioning
+## Update database
 
-Cumulus uses a global versioning approach, meaning version numbers are consistent across all packages and tasks, and semantic versioning to track major, minor, and patch version (i.e. 1.0.0). We use Lerna to manage versioning.
+```bash
+  $ DEPLOYMENT=<deployment-name> \
+      AWS_REGION=<region> \ # e.g. us-east-1
+      AWS_PROFILE=<profile> \
+      npm run deploy-db
+```
 
 ## Update Cumulus
 
 ```bash
-  $ DEPLOYMENT=<cumulus-deployment-name> \
+  $ DEPLOYMENT=<deployment-name> \
       AWS_REGION=<region> \ # e.g. us-east-1
       AWS_PROFILE=<profile> \
-      npm run deploy
+      npm run deploy-app
 ```
 
 ### Footnotes

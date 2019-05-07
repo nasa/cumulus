@@ -12,9 +12,11 @@
     "parallel-tests": "sh scripts/tests-parallel.sh",
     "redeploy-test": "jasmine spec/standalone/redeployment/*.js",
     "all-tests": "npm run parallel-tests && jasmine && npm run redeploy-test",
+    "compile-all": "npm run compile-iam && npm run compile-db && npm run compile-app",
     "compile-app": "kes cf compile --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/app --profile $AWS_PROFILE",
     "compile-iam": "kes cf compile --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/iam --profile $AWS_PROFILE",
     "compile-db": "kes cf compile --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/db  --profile $AWS_PROFILE",
+    "deploy-all": "npm run deploy-iam && npm run deploy-db && npm run deploy-app",
     "deploy-app": "kes cf deploy --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/app --profile $AWS_PROFILE",
     "deploy-iam": "kes cf deploy --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/iam  --profile $AWS_PROFILE",
     "deploy-db": "kes cf deploy --kes-folder app --region us-east-1 --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/db  --profile $AWS_PROFILE"
