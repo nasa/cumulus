@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 npm install
 . ./bamboo/set-integration-test-env-variables.sh
