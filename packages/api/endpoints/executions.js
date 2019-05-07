@@ -1,9 +1,9 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const Search = require('../es/search').Search;
 const models = require('../models');
-const { RecordDoesNotExist } = require('../lib/errors');
 
 /**
  * List and search executions
