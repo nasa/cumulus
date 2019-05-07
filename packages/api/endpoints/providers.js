@@ -132,7 +132,8 @@ async function addToES(req, res) {
 
   if (inTestMode()) {
     const esClient = await Search.es('fakehost');
-    indexer.indexProvider(esClient, provider, 'localrun-es');
+    const esIndex = process.env.esIndex;
+    indexer.indexProvider(esClient, provider, esIndex);
   }
   if (req.returnMessage) return res.send(req.returnMessage);
   return res.send(provider);
@@ -142,7 +143,8 @@ async function removeFromES(req, res) {
   const id = req.params.id;
   if (inTestMode()) {
     const esClient = await Search.es('fakehost');
-    esClient.delete({ id, index: 'localrun-es', type: 'provider' });
+    const esIndex = process.env.esIndex;
+    esClient.delete({ id, index: esIndex, type: 'provider' });
   }
   return res.send({ message: 'Record deleted' });
 }
