@@ -49,7 +49,7 @@ Resources:
       {{#if ../es.name}}
         ElasticSearchDomain:
           Fn::ImportValue:
-            {{../stackName}}-ESDomainEndpoint
+            {{../prefix}}-ESDomainEndpoint
       {{/if}}
         log2elasticsearchLambdaFunctionArn:
           Fn::GetAtt:
@@ -92,12 +92,12 @@ Resources:
       {{# each ../dynamos}}
         {{@key}}DynamoDB:
           Fn::ImportValue:
-            {{../../stackName}}-{{@key}}DynamoDB
+            {{../../prefix}}-{{@key}}DynamoDB
       {{/each}}
       {{# if ../vpc }}
         SecurityGroupId:
           Fn::ImportValue:
-            {{../stackName}}-EcsSecurityGroup
+            {{../prefix}}-EcsSecurityGroup
       {{/if}}
       TemplateURL: {{this.url}}
 {{/ifNotEquals}}
@@ -124,7 +124,7 @@ Resources:
       ElasticSearch:
         host:
           Fn::ImportValue:
-            {{stackName}}-ESDomainEndpoint
+            {{prefix}}-ESDomainEndpoint
         version: {{es.elasticSearchMapping}}
     {{/if}}
     {{# if dynamos}}
@@ -132,14 +132,14 @@ Resources:
       {{#each dynamos}}
         - name:
             Fn::ImportValue:
-              {{../stackName}}-{{@key}}DynamoDB
+              {{../prefix}}-{{@key}}DynamoDB
           pointInTime: {{this.pointInTime}}
       {{/each}}
     {{/if}}
       Users:
         table:
           Fn::ImportValue:
-            {{stackName}}-UsersTableDynamoDB
+            {{prefix}}-UsersTableDynamoDB
         records:
         {{# each users}}
           - username: {{username}}
@@ -177,7 +177,7 @@ Resources:
   {{@key}}Sns:
     Type: "AWS::SNS::Topic"
     Properties:
-      DisplayName: {{../stackName}}-{{@key}}
+      DisplayName: {{../prefix}}-{{@key}}
       Subscription:
       {{#each this.subscriptions}}
         {{# if this.endpoint.function}}
@@ -228,7 +228,7 @@ Resources:
   {{name}}Activity:
     Type: AWS::StepFunctions::Activity
     Properties:
-      Name: {{../stackName}}-{{name}}-Activity
+      Name: {{../prefix}}-{{name}}-Activity
 {{/each}}
 
 {{#each stepFunctions}}
@@ -267,7 +267,7 @@ Resources:
   {{@key}}SQS:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: {{../stackName}}-{{@key}}
+      QueueName: {{../prefix}}-{{@key}}
       ReceiveMessageWaitTimeSeconds: 20
     {{#if this.retry}}
       RedrivePolicy:
@@ -283,7 +283,7 @@ Resources:
   {{@key}}FailedSQS:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: {{../stackName}}-{{@key}}-failed
+      QueueName: {{../prefix}}-{{@key}}-failed
 
 {{/if}}
 
@@ -376,7 +376,7 @@ Resources:
     Properties:
       EventSourceArn:
         Fn::ImportValue:
-          {{../stackName}}-{{this}}DynamoDBStreamArn
+          {{../prefix}}-{{this}}DynamoDBStreamArn
       FunctionName:
         Ref: {{../dynamo2ElasticSearch.lambda}}LambdaFunction
       BatchSize: {{../dynamo2ElasticSearch.batchSize}}
@@ -398,7 +398,7 @@ Resources:
       Code:
         S3Bucket: {{this.bucket}}
         S3Key: {{this.remote}}
-      FunctionName: {{../stackName}}-{{@key}}
+      FunctionName: {{../prefix}}-{{@key}}
       Environment:
         Variables:
           stackName: {{../stackName}}
@@ -406,13 +406,13 @@ Resources:
         {{#if ../es.name}}
           ES_HOST:
             Fn::ImportValue:
-              {{../stackName}}-ESDomainEndpoint
+              {{../prefix}}-ESDomainEndpoint
         {{/if}}
         {{/if}}
         {{#each this.tables}}
           {{this}}:
             Fn::ImportValue:
-              {{../../stackName}}-{{this}}DynamoDB
+              {{../../prefix}}-{{this}}DynamoDB
         {{/each}}
       {{# if this.useDistributionApi}}
         {{# if ../api_distribution_url}}
@@ -466,14 +466,14 @@ Resources:
     {{/if}}
       Tags:
         - Key: Project
-          Value: {{../stackName}}
+          Value: {{../prefix}}
 
   {{# if this.launchInVpc }}
     {{# if ../vpc }}
       VpcConfig:
         SecurityGroupIds:
           - Fn::ImportValue:
-              {{../stackName}}-EcsSecurityGroup
+              {{../prefix}}-EcsSecurityGroup
         SubnetIds:
         {{#each ../vpc.subnets}}
           - {{this}}
@@ -504,13 +504,13 @@ Resources:
         Fn::GetAtt:
           - log2elasticsearchLambdaFunction
           - Arn
-      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
+      LogGroupName: '/aws/lambda/{{../prefix}}-{{@key}}'
       FilterPattern: ""
 
   {{@key}}LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
+      LogGroupName: '/aws/lambda/{{../prefix}}-{{@key}}'
       RetentionInDays: 30
 {{/if}}
 
@@ -555,7 +555,7 @@ Resources:
     Properties:
       GroupId:
         Fn::ImportValue:
-          {{stackName}}-EcsSecurityGroup
+          {{prefix}}-EcsSecurityGroup
       IpProtocol: tcp
       FromPort: '22'
       ToPort: '22'
@@ -575,10 +575,10 @@ Resources:
     {{/if}}
       SecurityGroups:
         - Fn::ImportValue:
-            {{stackName}}-EcsSecurityGroup
+            {{prefix}}-EcsSecurityGroup
        {{# if ecs.efs.mount}}
         - Fn::ImportValue:
-            "{{stackName}}-EFSSecurityGroup"
+            "{{prefix}}-EFSSecurityGroup"
         {{/if}}
 
       ImageId: {{ecs.amiid}}
@@ -660,7 +660,7 @@ Resources:
               --==BOUNDARY==--
             {{# if ecs.efs.mount }}
             - EFSFileSystemId:
-                Fn::ImportValue: "{{stackName}}-EFSFileSystemId"
+                Fn::ImportValue: "{{prefix}}-EFSFileSystemId"
             {{else}}
             # This is necessary because, if we are not setting a mount,
             # the Fn::Sub function still requires a variable map
@@ -695,7 +695,7 @@ Resources:
       MaxSize: '{{ ecs.maxInstances }}'
       Tags:
       - Key: Name
-        Value: "{{stackName}}-cumulus-ecs"
+        Value: "{{prefix}}-cumulus-ecs"
         PropagateAtLaunch: true
 
   CumulusECSAutoScalingLifeCycleHook:
@@ -901,7 +901,7 @@ Resources:
   {{@key}}EcsLogs:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+      LogGroupName: {{../prefix}}-{{@key}}EcsLogs
 
   {{@key}}EcsLogSubscription:
     Type: AWS::Logs::SubscriptionFilter
@@ -913,7 +913,7 @@ Resources:
         Fn::GetAtt:
           - log2elasticsearchLambdaFunction
           - Arn
-      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+      LogGroupName: {{../prefix}}-{{@key}}EcsLogs
       FilterPattern: ""
 
   {{@key}}ECSService:
@@ -955,7 +955,7 @@ Resources:
     DependsOn:
       - {{@key}}ECSServiceScalableTarget
     Properties:
-      PolicyName: {{../stackName}}{{@key}}ECSServiceScalingInPolicy
+      PolicyName: {{../prefix}}{{@key}}ECSServiceScalingInPolicy
       PolicyType: StepScaling
       ScalingTargetId:
         Ref:
@@ -973,7 +973,7 @@ Resources:
   {{@key}}ECSServiceScalingOutPolicy:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
-      PolicyName: {{../stackName}}{{@key}}ECSServiceScalingOutPolicy
+      PolicyName: {{../prefix}}{{@key}}ECSServiceScalingOutPolicy
       PolicyType: StepScaling
       ScalingTargetId:
         Ref:
@@ -1054,7 +1054,7 @@ Resources:
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmDescription: There are less tasks running than the desired
-      AlarmName: {{../stackName}}-{{@key}}-TaskCountLowAlarm
+      AlarmName: {{../prefix}}-{{@key}}-TaskCountLowAlarm
       ComparisonOperator: LessThanThreshold
       EvaluationPeriods: 1
       MetricName: MemoryUtilization
@@ -1081,7 +1081,7 @@ Resources:
     {{#if alarm_description}}
       AlarmDescription: {{ alarm_description }}
     {{/if}}
-      AlarmName: {{../../stackName}}-{{@../key}}-{{@key}}Alarm
+      AlarmName: {{../../prefix}}-{{@../key}}-{{@key}}Alarm
       ComparisonOperator: {{ comparison_operator }}
       EvaluationPeriods: {{#if evaluation_periods }}{{ evaluation_periods }}{{ else }}5{{/if}}
       MetricName: {{ metric }}
@@ -1184,7 +1184,7 @@ Resources:
   {{@key}}EcsLogs:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+      LogGroupName: {{../prefix}}-{{@key}}EcsLogs
 
   {{@key}}EcsLogSubscription:
     Type: AWS::Logs::SubscriptionFilter
@@ -1196,7 +1196,7 @@ Resources:
         Fn::GetAtt:
           - log2elasticsearchLambdaFunction
           - Arn
-      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+      LogGroupName: {{../prefix}}-{{@key}}EcsLogs
       FilterPattern: ""
 {{/each}}
 {{/if}}
@@ -1210,8 +1210,8 @@ Resources:
   CumulusCloudWatchDashboard:
     Type: AWS::CloudWatch::Dashboard
     Properties:
-      DashboardName: {{stackName}}-CloudWatch-Dashboard
-      DashboardBody: '{{#buildCWDashboard dashboard ecs es stackName}}{{/buildCWDashboard}}'
+      DashboardName: {{prefix}}-CloudWatch-Dashboard
+      DashboardBody: '{{#buildCWDashboard dashboard ecs es prefix}}{{/buildCWDashboard}}'
   #################################################
   # CloudWatch Dashboard END
   #################################################

@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'stack: {{prefix}} | deployed by Kes'
+Description: 'stack: {{stackName}} | deployed by Kes'
 
 Resources:
 
@@ -53,7 +53,7 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: {{this.read}}
         WriteCapacityUnits: {{this.write}}
-      TableName: {{../stackName}}-{{@key}}
+      TableName: {{../prefix}}-{{@key}}
       StreamSpecification:
         StreamViewType: "NEW_AND_OLD_IMAGES"
     {{#if this.GlobalSecondaryIndexes}}
@@ -104,7 +104,7 @@ Resources:
       MaxCapacity: 10
     {{/if}}
       ResourceId:
-        Fn::Sub: table/{{../../stackName}}-{{@key}}
+        Fn::Sub: table/{{../../prefix}}-{{@key}}
       RoleARN: {{../../iams.scalingRoleArn}}
       ScalableDimension: "dynamodb:table:ReadCapacityUnits"
       ServiceNamespace: dynamodb
@@ -137,7 +137,7 @@ Resources:
       MaxCapacity: 2
     {{/if}}
       ResourceId:
-        Fn::Sub: table/{{../../stackName}}-{{@key}}
+        Fn::Sub: table/{{../../prefix}}-{{@key}}
       RoleARN: {{../../iams.scalingRoleArn}}
       ScalableDimension: "dynamodb:table:WriteCapacityUnits"
       ServiceNamespace: dynamodb
@@ -216,7 +216,7 @@ Resources:
     {{#if alarm_description}}
       AlarmDescription: {{ alarm_description }}
     {{/if}}
-      AlarmName: {{../stackName}}-{{../es.name}}-{{@key}}Alarm
+      AlarmName: {{../prefix}}-{{../es.name}}-{{@key}}Alarm
       ComparisonOperator: {{ comparison_operator }}
       EvaluationPeriods: {{#if evaluation_periods }}{{ evaluation_periods }}{{ else }}5{{/if}}
       MetricName: {{ metric }}
