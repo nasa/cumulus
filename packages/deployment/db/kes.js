@@ -20,6 +20,18 @@ const { Kes } = require('kes');
  */
 class UpdatedKes extends Kes {
   /**
+   * Overrides the default constructor.
+   * Sets the cf_template_name to have a prefix.
+   *
+   * @param {Object} config - kes config object
+   */
+  constructor(config) {
+    super(config);
+    this.cf_template_name = `db.${this.cf_template_name}`;
+    this.templateUrl = `https://s3.amazonaws.com/${this.bucket}/${this.stack}/${this.cf_template_name}`;
+  }
+
+  /**
    * Calls CloudFormation's update-stack or create-stack methods
    * Changed to support multi-template configs by checking for params sub-objects, i.e.:
    * params:
@@ -35,21 +47,6 @@ class UpdatedKes extends Kes {
       else this.config.params = [];
     }
     return super.cloudFormation();
-  }
-
-  /**
-   * Compiles a CloudFormation template in Yaml format.
-   *
-   * Overridden to prepend `iam.` to output cloudformation yml file name.
-   *
-   * @returns {Promise} returns the promise of an AWS response object
-   */
-  compileCF() {
-    const originalName = this.cf_template_name;
-    this.cf_template_name = `db.${originalName}`;
-    return super.compileCF().then(() => {
-      this.cf_template_name = originalName;
-    });
   }
 }
 
