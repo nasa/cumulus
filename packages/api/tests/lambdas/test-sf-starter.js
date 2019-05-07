@@ -16,14 +16,14 @@ const ruleInput = {
   timeLimit: 60
 };
 
-test.serial('throws error when queueUrl is undefined', (t) => {
-  const errCb = (err, _data) => t.is(err.message, 'queueUrl is missing');
-  handler(ruleInput, {}, errCb);
+test.serial('throws error when queueUrl is undefined', async (t) => {
+  const error = await t.throws(handler(ruleInput));
+  t.is(error.message, 'queueUrl is missing');
 });
 
 test.serial('calls cb with number of messages received', async (t) => {
   ruleInput.queueUrl = 'queue';
   handler.__set__('Consumer', stubConsumer);
-  const cb = (_err, data) => t.is(data, 9);
-  handler(ruleInput, {}, cb);
+  const data = await handler(ruleInput);
+  t.is(data, 9);
 });
