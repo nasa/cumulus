@@ -25,7 +25,7 @@ process.env.TOKEN_SECRET = randomString();
 // import the express app after setting the env variables
 const { app } = require('../../../app');
 
-let esIndex;
+let esIndex = randomString();
 let esClient;
 let providerModel;
 
@@ -36,7 +36,7 @@ let userModel;
 
 test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
-
+  process.env.esIndex = esIndex;
   providerModel = new models.Provider();
   await providerModel.createTable();
 
@@ -50,7 +50,6 @@ test.before(async () => {
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 
   esClient = await Search.es('fakehost');
-  esIndex = randomString();
 
   process.env.RulesTable = randomString();
   ruleModel = new models.Rule();

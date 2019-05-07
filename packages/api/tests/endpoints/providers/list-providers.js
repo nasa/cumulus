@@ -33,6 +33,7 @@ let userModel;
 
 test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
+  process.env.esIndex = esIndex;
 
   providerModel = new models.Provider();
   await providerModel.createTable();

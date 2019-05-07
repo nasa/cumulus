@@ -129,6 +129,7 @@ test.before(async () => {
   // bootstrap the esIndex
   esClient = await Search.es();
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
+  process.env.esIndex = esIndex;
 });
 
 test.after.always(async () => {
@@ -146,6 +147,7 @@ test.serial('create, update and delete a collection in dynamodb and es', async (
   const c = fakeCollectionFactory();
   const collections = new models.Collection();
   await collections.create(c);
+  
 
   // get records from the stream
   let records = await getDyanmoDBStreamRecords(process.env.CollectionsTable);
