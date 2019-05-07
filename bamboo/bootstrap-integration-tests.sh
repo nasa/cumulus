@@ -1,13 +1,9 @@
 #!/bin/bash
-
 set -e
 npm config set unsafe-perm true
 npm install
 
 . ./bamboo/set-integration-test-env-variables.sh
-echo "Overriding deployment $DEPLOYMENT with jk2 for ci development"
-export DEPLOYMENT="jk"
-
 
 if [ "$USE_NPM_PACKAGES" = "true" ]; then
   (cd example && npm install)
