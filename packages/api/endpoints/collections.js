@@ -2,15 +2,13 @@
 
 const router = require('express-promise-router')();
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { constructCollectionId } = require('@cumulus/common');
-const models = require('../models');
-const Collection = require('../es/collections');
+const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const { Search } = require('../es/search');
 const indexer = require('../es/indexer');
-const {
-  AssociatedRulesError,
-  RecordDoesNotExist
-} = require('../lib/errors');
+const models = require('../models');
+const Collection = require('../es/collections');
+const { AssociatedRulesError } = require('../lib/errors');
+
 
 /**
  * List all collections.

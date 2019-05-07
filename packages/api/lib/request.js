@@ -1,3 +1,4 @@
+const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const log = require('@cumulus/common/log');
 
 const { User } = require('../models');
@@ -33,7 +34,7 @@ async function verifyJwtAuthorization(requestJwtToken, params = {}) {
   try {
     await userModel.get({ userName: username });
   } catch (err) {
-    if (err.name === 'RecordDoesNotExist') {
+    if (err instanceof RecordDoesNotExist) {
       throw new TokenUnauthorizedUserError();
     }
   }
