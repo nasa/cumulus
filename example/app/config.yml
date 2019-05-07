@@ -167,6 +167,14 @@ default:
     'workflows/browseExample.yml'
   ]
 
+  apiConfigs:
+    backend:
+      private: true
+      port: 8000
+    distribution:
+      private: true
+      port: 7000
+
   iams:
     ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-ecs'
     lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-lambda-api-gateway'
@@ -265,8 +273,6 @@ aimee:
 lf:
   stackName: lf-cumulus
   stackNameNoDash: lfCumulus
-
-  api_backend_url: https://gs814t9ui8.execute-api.us-east-1.amazonaws.com:8000/dev/
 
   es:
     name: estest
