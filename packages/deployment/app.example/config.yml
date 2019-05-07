@@ -1,5 +1,5 @@
 <cumulus-deployment-name>:
-  stackName: <prefix>-cumulus         # stackName must match the prefix for your IAM stack
+  prefix: <prefix>-cumulus         # stackName must match the prefix for your IAM stack
   prefixNoDash: <Prefix>Cumulus
 
   apiStage: dev
@@ -29,16 +29,6 @@
     public:
       name: <prefix>-public
       type: public
-
-  iams:
-    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-ecs'
-    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-lambda-api-gateway'
-    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-lambda-processing'
-    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-steprole'
-    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/<iams-prefix>-ecs'
-    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-distribution-api-lambda'
-    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-scaling-role'
-    migrationRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-migration-processing'
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ # make sure to include the trailing slash
 
