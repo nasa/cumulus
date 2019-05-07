@@ -3,6 +3,7 @@
 const router = require('express-promise-router')();
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
+const { constructCollectionId } = require('@cumulus/common');
 const { Search } = require('../es/search');
 const indexer = require('../es/indexer');
 const models = require('../models');
