@@ -16,7 +16,7 @@ const { Kes } = require('kes');
 const Handlebars = require('handlebars');
 
 /**
- * A subclass of Kes class that overrides parseCF and cloudFormation methods
+ * A subclass of Kes class that overrides parseCF, compileCF and cloudFormation methods
  *
  * @class UpdatedKes
  */
@@ -33,6 +33,21 @@ class UpdatedKes extends Kes {
     });
 
     return super.parseCF(cfFile);
+  }
+
+  /**
+   * Compiles a CloudFormation template in Yaml format.
+   *
+   * Overridden to prepend `iam.` to output cloudformation yml file name.
+   *
+   * @returns {Promise} returns the promise of an AWS response object
+   */
+  compileCF() {
+    const originalName = this.cf_template_name;
+    this.cf_template_name = `iam.${originalName}`;
+    return super.compileCF().then(() => {
+      this.cf_template_name = originalName;
+    });
   }
 
   /**
