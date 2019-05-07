@@ -38,9 +38,10 @@ if [[ $(git describe --exact-match HEAD 2>/dev/null |sed -n '1p') =~ ^v[0-9]+.* 
   VERSION_TAG=true
 fi
 echo "Version Tag: $VERSION_TAG"
-if [ -z "$PULL_REQUEST"] then
+if [[ -z "$PULL_REQUEST" ]]; then
   PULL_REQUEST=$(node ./bamboo/detect-pr.js)
 fi
+
 echo "Pull request: $PULL_REQUEST"
 
 if [ -z "$DEPLOYMENT" ]; then
