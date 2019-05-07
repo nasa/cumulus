@@ -3,6 +3,9 @@ cloudformation.yml
 dist
 /app/.env
 /app/cloudformation.yml
+/app/app.cloudformation.yml
+/app/iam.cloudformation.yml
+/app/db.cloudformation.yml
 /app/WorkflowLambdaVersions.yml
 app/build
 app/dist

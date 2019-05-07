@@ -36,6 +36,21 @@ class UpdatedKes extends Kes {
     }
     return super.cloudFormation();
   }
+
+  /**
+   * Compiles a CloudFormation template in Yaml format.
+   *
+   * Overridden to prepend `iam.` to output cloudformation yml file name.
+   *
+   * @returns {Promise} returns the promise of an AWS response object
+   */
+  compileCF() {
+    const originalName = this.cf_template_name;
+    this.cf_template_name = `db.${originalName}`;
+    return super.compileCF().then(() => {
+      this.cf_template_name = originalName;
+    });
+  }
 }
 
 module.exports = UpdatedKes;

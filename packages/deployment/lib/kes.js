@@ -387,7 +387,7 @@ class UpdatedKes extends Kes {
     } else {
       cf = this.parseCF(this.config.cfFile);
     }
-    const destPath = path.join(this.config.kesFolder, this.cf_template_name);
+    const destPath = path.join(this.config.kesFolder, `app.${this.cf_template_name}`);
 
     console.log(`Template saved to ${destPath}`);
     return fsWriteFile(destPath, cf);
