@@ -8,6 +8,7 @@ declare -a param_list=(
   "bamboo_SECRET_AWS_ACCOUNT_ID"
   "bamboo_SECRET_VPC_ID"
   "bamboo_SECRET_AWS_SUBNET"
+  "bamboo_SECRET_GITHUB_TOKEN"
   "bamboo_SECRET_PROVIDER_HOST"
   "bamboo_SECRET_PROVIDER_HTTP_PORT"
   "bamboo_SECRET_PROVIDER_FTP_PORT"
