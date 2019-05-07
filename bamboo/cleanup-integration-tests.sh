@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 npm install
-. ./bamboo/set-env-vars.sh
+. ./bamboo/set-integration-test-env-variables.sh
 
 set +e
 (

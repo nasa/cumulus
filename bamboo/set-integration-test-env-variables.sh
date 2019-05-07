@@ -37,6 +37,7 @@ COMMIT_MSG=$(git log --pretty='format:%Creset%s' -1)
 if [[ $(git describe --exact-match HEAD 2>/dev/null |sed -n '1p') =~ ^v[0-9]+.* ]]; then
   VERSION_TAG=true
 fi
+echo "Version Tag: $VERSION_TAG"
 if [ -z "$PULL_REQUEST"] then
   PULL_REQUEST=$(node ./bamboo/detect-pr.js)
 fi
