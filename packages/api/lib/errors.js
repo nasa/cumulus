@@ -2,7 +2,6 @@
 
 const { createErrorType } = require('@cumulus/common/errors');
 
-module.exports.RecordDoesNotExist = createErrorType('RecordDoesNotExist');
 module.exports.TokenUnauthorizedUserError = createErrorType('TokenUnauthorizedUserError');
 
 class AssociatedRulesError extends Error {
