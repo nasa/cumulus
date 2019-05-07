@@ -18,17 +18,11 @@ echo "" | ./node_modules/.bin/parallel -j 6 sh scripts/run_test.sh  $testOutputD
 result=$?
 echo parallel tests complete: $result suite failures
 
-echo "Echoing TestOutputDirFiles"
-ls $testOutputDir
 # print test output to console
 for testFile in $testOutputDir/*; do
-cat $testFile
 done
-
-echo "Removing testOutputDir"
 
 rm -rf $testOutputDir
 
-echo "Killing PID"
 kill "$DOT_PID"
 exit $result
