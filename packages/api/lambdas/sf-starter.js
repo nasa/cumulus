@@ -31,23 +31,30 @@ function dispatch(message) {
   }).promise();
 }
 
-async function incrementPrioritySemaphore(key) {
+function incrementPrioritySemaphore(key, maximum) {
   const semaphore = new Semaphore(
     dynamodbDocClient(),
     process.env.SemaphoresTable
   );
-  await semaphore.up(key);
+  return semaphore.up(key, maximum);
 }
 
-async function incrementAndDispatch(message) {
+async function incrementAndDispatch(queueMessage) {
+  const message = get(queueMessage, 'Body', {});
   if (!has(message, 'cumulus_meta.priorityKey')) {
     return dispatch(message);
   }
 
   const priorityKey = get(message, 'cumulus_meta.priorityKey');
+  const priorityLevelInfo = get(message, `cumulus_meta.priorityLevels.${priorityKey}`, {});
+
+  const { maxExecutions } = priorityLevelInfo;
+  if (!maxExecutions) {
+    throw new Error(`Could not determine maximum executions for priority ${priorityKey}`);
+  }
 
   try {
-    await incrementPrioritySemaphore(priorityKey);
+    await incrementPrioritySemaphore(priorityKey, maxExecutions);
   } catch (err) {
     if (err instanceof ResourcesLockedError) {
       log.info(`The maximum number of executions for ${priorityKey} are already running. Could not start a new execution.`)
@@ -73,9 +80,8 @@ async function incrementAndDispatch(message) {
  *   this execution (default 1)
  * @param {string} event.timeLimit - how many seconds the lambda function will
  *   remain active and query the queue (default 240 s)
- * @param {Object} _context - lambda context
- * @param {function} cb - lambda callback
- * @returns {undefined} - undefined
+ * @returns {Promise} - A promise resolving to how many executions were started
+ * @throws {Error}
  */
 async function handler(event) {
   const messageLimit = event.messageLimit || 1;
@@ -88,8 +94,6 @@ async function handler(event) {
   const consumer = new Consumer(event.queueUrl, messageLimit, timeLimit);
   // consumer.consume(dispatch)
   return consumer.consume(incrementAndDispatch);
-    // .then((r) => cb(null, r))
-    // .catch(cb);
 
 }
 module.exports = handler;
