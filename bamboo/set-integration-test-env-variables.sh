@@ -32,14 +32,15 @@ for key in ${param_list[@]}; do
   export $update_key=${!key}
 done
 
-COMMIT_MSG=$(git log --pretty='format:%Creset%s' -1)
+export COMMIT_MSG=$(git log --pretty='format:%Creset%s' -1)
+export GIT_SHA=$(git rev-parse HEAD)
 
 if [[ $(git describe --exact-match HEAD 2>/dev/null |sed -n '1p') =~ ^v[0-9]+.* ]]; then
-  VERSION_TAG=true
+  export VERSION_TAG=true
 fi
 echo "Version Tag: $VERSION_TAG"
 if [[ -z "$PULL_REQUEST" ]]; then
-  PULL_REQUEST=$(node ./bamboo/detect-pr.js)
+  export PULL_REQUEST=$(node ./bamboo/detect-pr.js $GIT_SHA)
 fi
 
 echo "Pull request: $PULL_REQUEST"
