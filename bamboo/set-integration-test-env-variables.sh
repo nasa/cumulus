@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 declare -a param_list=(
   "bamboo_SECRET_AWS_ACCESS_KEY_ID"
@@ -30,6 +31,16 @@ for key in ${param_list[@]}; do
   update_key=${BASH_REMATCH[2]}
   export $update_key=${!key}
 done
+
+COMMIT_MSG=$(git log --pretty='format:%Creset%s' -1)
+
+if [[ $(git describe --exact-match HEAD 2>/dev/null |sed -n '1p') =~ ^v[0-9]+.* ]]; then
+  VERSION_TAG=true
+fi
+if [ -z "$PULL_REQUEST"] then
+  PULL_REQUEST=$(node ./bamboo/detect-pr.js)
+fi
+echo "Pull request: $PULL_REQUEST"
 
 if [ -z "$DEPLOYMENT" ]; then
   DEPLOYMENT=$(node ./bamboo/select-stack.js)
