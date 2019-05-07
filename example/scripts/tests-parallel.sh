@@ -20,6 +20,7 @@ echo parallel tests complete: $result suite failures
 
 # print test output to console
 for testFile in $testOutputDir/*; do
+  cat $testFile
 done
 
 rm -rf $testOutputDir
