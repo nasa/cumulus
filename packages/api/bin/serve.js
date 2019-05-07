@@ -293,7 +293,7 @@ async function resetTables(user = 'testUser', stackName = 'localrun') {
 
     try {
       await rulesModel.deleteRules();
-      await Promise.all ([
+      await Promise.all([
         collectionModel.deleteCollections(),
         providerModel.deleteProviders(),
         executionModel.deleteExecutions(),
