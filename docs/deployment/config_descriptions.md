@@ -6,33 +6,91 @@ hide_title: true
 
 # Cumulus Configuration
 
-## Deployment name (key)
+## Overview
+
+### config.yml Explained
+
+| field | default     | description
+| ----- | ----------- | -----------
+| prefix | (required) | the name used as a prefix in all aws resources
+| prefixNoDash | (required) | prefix with no dash
+| urs_url | uat.urs | urs url used for OAuth
+| api_backend_url | apigateway backend url | the API backend url
+| api_distribution_url | apigateway dist url | the API url used for file distribution
+| shared_data_bucket | cumulus-data-shared | the bucket has the shared data artifacts
+| system_bucket | (required) | the bucket used for storing deployment artifacts
+| buckets | N/A | Configuration of buckets with key, bucket name, and type (i.e. internal, public private)
+| cmr.username | devseed | the username used for posting metadata to CMR
+| cmr.provider | CUMULUS | the provider used for posting metadata to CMR
+| cmr.clientId | CUMULUS | the clientId used to authenticate with the CMR
+| cmr.password | (required) | the password used to authenticate with the CMR
+| ems.provider | CUMULUS | the provider used for sending reports to EMS
+| vpc.vpcId | (required if ecs is used) | the vpcId used with the deployment
+| vpc.subnets | (required) | the subnets used
+| vpc.cidrIp | (required) | the IPv4 CIDR of the VPC
+| ecs.amiid | ami-9eb4b1e5 | amiid of an optimized ecs instance (differnet for each region)
+| ecs.instanceType | (required) | the instance type of the ec2 machine used for running ecs tasks
+| ecs.volumeSize | 50 | the storage on ec2 instance running the ecs tasks
+| ecs.availabilityZone | us-east-1a | the availibity zone used for launching ec2 machines
+| ecs.minInstances | 1 | min number of ec2 instances to launch in an autoscaling group
+| ecs.desiredInstances | 1 | desired number of ec2 instances needed in an autoscaling group
+| ecs.maxInstances | 2 | max number of ec2 instances to launch in an autoscaling group
+| es.name | es5 | name of the elasticsearch cluster
+| es.elasticSearchMapping | 4 | version number of the elasticsearch mapping used
+| es.version | 5.3 | elasticsearch software version
+| es.instanceCount | 1 | number of elasticsearch nodes
+| es.instanceType | t2.small.elasticsearch | size of the ec2 instance used for the elasticsearch
+| es.volumeSize | 35 | the storage used in each elasticsearch node
+| sns.\<name\> | N/A | name of the sns topic
+| sns.\<name\>.subscriptions.lambda.endpoint | sns2elasticsearch | lambda function triggered for each message in the topic
+| apis.\<name\> | N/A | name of the apigateway application
+| apiStage | dev | stage name used for each api gateway deployment stage
+| dynamos.\<name\> | N/A | name of the dynamoDB table
+| dynamos.\<name\>.read | 5 | number of reads per second
+| dynamos.\<name\>.write | 1 | number of writes per second
+| dynamos.\<name\>.attributes | N/A | list of attributes
+| sqs.\<name\> | N/A | name of the queue
+| sqs.\<name\>.visibilityTimeout | 20 | # of seconds the message returns to the queue after it is read by a consumer
+| sqs.\<name\>.retry | 30 | number of time the message is returned to the queue before being discarded
+| sqs.\<name\>.consumer | N/A | list of lambda function queue consumers
+| rules.\<name\> | N/A | list of cloudwathch rules
+| rules.\<name\>.schedule | N/A | rule's schedule
+| rules.\<name\>.state | ENABLED | state of the rule
+| rules.\<name\>.targets | N/A | list of lambda functions to be invoked
+| stepFunctions | N/A | list of step functions
+| lambdas | N/A | list of lambda functions
+| iams | N/A | Override for IAM roles if ARNs do not match conventions (See [below](config_descriptions#iams)).
+| params | N/A | Override for parameters provided to Cumulus CloudFormation templates.
+
+## Detailed Field Descriptions
+
+### Deployment name (key)
 
 The name (e.g. `dev:`) of the the 'deployment' - this key tells kes which configuration set (in addition to the default values) to use when creating the cloud formation template[^1]
 
-## prefix
+### prefix
 
 This value (e.g. `prefix: myPrefix`) will prefix CloudFormation-created resources and permissions.
 
-## prefixNoDash
+### prefixNoDash
 
 A representation of the stack name prefix that has dashes removed. This will be used for components that should be associated with the stack but do not allow dashes in the identifier.
 
-## buckets
+### buckets
 
-The buckets should map to the same names you used when creating buckets in the [Create S3 Buckets](README#create-s3-buckets) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured. A key is used for the buckets to allow for swapping out the bucket names easily.
+The buckets should map to the same names you used when creating buckets in the [Create S3 Buckets](deployment-readme#create-s3-buckets) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured. A key is used for the buckets to allow for swapping out the bucket names easily.
 
-## useNgapPermissionBoundary
+### useNgapPermissionBoundary
 
 If deploying to a NASA NGAP account, set `useNgapPermissionBoundary: true`.
 
-## vpc
+### vpc
 
 Configure your virtual private cloud.  You can find the VPC Id, subnets, and IPv4 CIDR values on the [VPC Dashboard](https://console.aws.amazon.com/vpc/home?region=us-east-1#). `vpcId` from [Your VPCs](https://console.aws.amazon.com/vpc/home?region=us-east-1#vpcs:), and `subnets` [here](https://console.aws.amazon.com/vpc/home?region=us-east-1#subnets:). When you choose a subnet, be sure to also note its availability zone, which is used to configure `ecs`.
 
 Note: The console links are specific to `us-east-1`. Use the corresponding links for your region.
 
-## cmr
+### cmr
 
 Configuration is required for Cumulus integration with CMR services. The most obvious example of this integration is the `PostToCmr` Cumulus [task](https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr).
 
@@ -55,11 +113,11 @@ cmr:
 
 `clientId` and `provider` should be configured to point to a user specified CMR `clientId` and `provider`. We use the `CUMULUS` provider in our configurations, but users can specify their own.
 
-## users
+### users
 
 List of EarthData users you wish to have access to your dashboard application. These users will be populated in your `<stackname>-UsersTable` [DynamoDb](https://console.aws.amazon.com/dynamodb/) table.
 
-## ecs
+### ecs
 
 Configuration for the Amazon EC2 Container Service (ECS) instance.  Update `availabilityZone` (or `availabilityZones` if using multiple AZs) with information from [VPC Dashboard](https://console.aws.amazon.com/vpc/home?region=us-east-1#)
 note `instanceType` and `desiredInstances` have been selected for a sample install.  You will have to specify appropriate values to deploy and use ECS machines.   See [EC2 Instance Types](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html) for more information.
@@ -83,7 +141,7 @@ For each service, a TaskCountLowAlarm alarm is added to check the RUNNING Task C
               statistic: SampleCount
               threshold: '{{ecs.services.EcsTaskHelloWorld.count}}'
 
-### Cluster AutoScaling
+#### Cluster AutoScaling
 
 Cumulus ECS clusters have the ability to scale out and in based on
 [CPU and memory reservations](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/cloudwatch-metrics.html#cluster_reservation).
@@ -122,7 +180,7 @@ has been reserved, the size of the cluster will be increased by 10%. (There is a
 minimum change of 1 instance.) If _both_ CPU and memory reservation for the
 cluster are under 25%, then the cluster size will be reduced by 5%.
 
-### Service AutoScaling
+#### Service AutoScaling
 
 Cumulus supports automatically scaling the number of tasks configured for an ECS
 service. The scaling of tasks is based on the `ActivityScheduleTime` metric,
@@ -193,7 +251,7 @@ the number of tasks configured for the service will be increased by 10%.
 Eventually, the average time that a task takes to start should hover between 5
 and 10 seconds.
 
-## es
+### es
 Configuration for the Amazon Elasticsearch Service (ES) instance. Optional. Set `es: null` to disable ElasticSearch.
 If desired, you can update `es` properties and add additional ES alarms. For example:
 
@@ -208,7 +266,7 @@ If desired, you can update `es` properties and add additional ES alarms. For exa
           metric: Nodes
 ```
 
-## sns
+### sns
 
 Cumulus supports configuration and deployment of SNS topics and subscribers using `app/config.yml`. In the following code snippets we'll see an example topic and subscriber configuration.
 
@@ -250,7 +308,7 @@ This snippet is an example of configuration for a list of SNS Subscriptions. We 
 
 The main difference between this and the previous example is the inclusion of the `sns.arn` attribute - this tells our deployment/compiling step that we're configuring subscriptions, not a new topic. More information for each of the individual attributes can be found in [AWS SNS Subscription Documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-sns-subscription.html).
 
-## iams
+### iams
 
 Optional. Overrides allowed if your IAM role ARNs do not match the following convention used in `@cumulus/deployment/app/config.yml`:
 
