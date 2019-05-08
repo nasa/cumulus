@@ -76,11 +76,20 @@ async function del(req, res, next) {
 
 async function removeFromES(req, res) {
   const pdrName = req.params.pdrName;
-  if (inTestMode() && !process.env.notInDb) {
-    const esClient = await Search.es('fakehost');
+
+  if (inTestMode()) {
+    const esClient = await Search.es(process.env.ES_HOST);
     const esIndex = process.env.esIndex;
-    await esClient.delete({ id: pdrName, index: esIndex, type: 'pdr' });
+    try {
+      await esClient.delete({ id: pdrName, index: esIndex, type: 'pdr' });
+    }
+    catch (err) {
+      if (err.statusCode !== 404) {
+        throw err;
+      }
+    }
   }
+
   return res.send({ detail: 'Record deleted' });
 }
 
