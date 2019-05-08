@@ -89,8 +89,14 @@ async function checkOrCreateTables(stackName) {
   await Promise.all(promises);
 }
 
+function setLocalEsVariables(stackName) {
+  process.env.ES_HOST = 'fakehost';
+  process.env.esIndex = `${stackName}-es`;
+}
+
 async function prepareServices(stackName, bucket) {
-  await bootstrap.bootstrapElasticSearch('fakehost', `${stackName}-es`);
+  setLocalEsVariables(stackName);
+  await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, process.env.esIndex);
   await s3().createBucket({ Bucket: bucket }).promise();
 }
 
@@ -120,13 +126,12 @@ function checkEnvVariablesAreSet(moreRequiredEnvVars) {
 }
 
 async function createDBRecords(stackName, user) {
-  const esClient = await Search.es('fakehost');
-  const esIndex = 'localrun-es';
-  process.env.esIndex = esIndex;
+  setLocalEsVariables(stackName);
+  const esClient = await Search.es(process.env.ES_HOST);
+  const esIndex = process.env.esIndex;
   // Resets the ES client
   await esClient.indices.delete({ index: esIndex });
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
-
+  await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, esIndex);
 
   if (user) {
     // add authorized user to the user table
