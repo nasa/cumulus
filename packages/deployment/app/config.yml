@@ -46,12 +46,8 @@ default:
   # api_distribution_url: https://apigateway-url-to-distribution-app/
 
   params:
-    iam:
-      - name: ResourcePrefix
-        value: '{{prefix}}'
-    app:
-      - name: CmrPassword
-        value: '{{CMR_PASSWORD}}' # this has to be set in .env
+    - name: CmrPassword
+      value: '{{CMR_PASSWORD}}' # this has to be set in .env
 
   shared_data_bucket: 'cumulus-data-shared'
 

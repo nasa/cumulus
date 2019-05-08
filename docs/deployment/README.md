@@ -229,6 +229,14 @@ dev:                            # deployment name
     name: myES5Domain               # Optional. Defaults to 'es5vpc'.
     elasticSearchMapping: 2         # Optional, triggers elasticSearch re-bootstrap.
                                     # Useful when e.g. mappings are updated.
+
+  params:                           # Optional override.
+    app:                            # Used for app stack when 'npm run deploy-app' or 'kes cf deploy --kes-folder app --template ./node_modules/@cumulus/deployment/app [...]' is used.
+      - name: myAppStackParam
+        value: SomeValue
+    iam:                            # Used for iam stack when 'npm run deploy-iam' or 'kes cf deploy --kes-folder app --template ./node_modules/@cumulus/deployment/iam [...]' is used.
+      - name: myIamStackParam
+        value: SomeOtherValue
 ```
 
 --------------
