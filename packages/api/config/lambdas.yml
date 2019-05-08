@@ -181,3 +181,11 @@ KinesisOutboundEventLogger:
   timeout: 300
   memory: 512
   source: 'node_modules/@cumulus/api/dist/payloadLogger/'
+
+sfSemaphoreDown:
+  handler: index.handler
+  timeout: 100
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist/sfSemaphoreDown/'
+  tables:
+    - SemaphoresTable
