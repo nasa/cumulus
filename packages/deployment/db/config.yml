@@ -2,6 +2,8 @@ default:
   prefix: test-cumulus-integration
   stackName: '{{prefix}}-db'
 
+  system_bucket: '{{buckets.internal.name}}'
+
   iams:
     scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-scaling-role'
     lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'

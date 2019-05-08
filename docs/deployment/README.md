@@ -129,6 +129,12 @@ These buckets do not need any non-default permissions to function with Cumulus, 
 
 **Note**: s3 bucket object names are global and must be unique across all accounts/locations/etc.
 
+## Earthdata Application
+
+### Configure EarthData application
+
+The Cumulus stack is expected to authenticate with [Earthdata Login](https://urs.earthdata.nasa.gov/documentation). You must create and register a new application. Use the [User Acceptance Tools (UAT) site](https://uat.urs.earthdata.nasa.gov) unless you intend use a different URS environment (which will require updating the `urs_url` value shown below). Follow the directions on [how to register an application.](https://wiki.earthdata.nasa.gov/display/EL/How+To+Register+An+Application).  Use any url for the `Redirect URL`, it will be deleted in a later step. Also note the password in step 3 and client ID in step 4 use these to replace `EARTHDATA_CLIENT_ID` and `EARTHDATA_CLIENT_PASSWORD` in the `.env` file in the next step.
+
 --------------
 
 ## Configure the Cumulus instance
@@ -156,7 +162,7 @@ The `TOKEN_SECRET` is a string value used for signing and verifying [JSON Web To
 
 Note that the `.env.sample` file may be hidden, so if you do not see it, show hidden files.
 
-For security it is highly recommended that you prevent `apps/.env` from being accidentally committed to the repository by keeping it in the `.gitignore` file at the root of this repository.
+For security it is highly recommended that you prevent `app/.env` from being accidentally committed to the repository by keeping it in the `.gitignore` file at the root of this repository.
 
 ### Configure deployment with `<daac>-deploy/app/config.yml`
 
@@ -213,7 +219,7 @@ dev:                            # deployment name
   # if not specified, the value of the API gateway distribution endpoint is used
   # api_distribution_url: https://apigateway-url-to-distribution-app/ # make sure to include the trailing slash
 
-  # Required. URS users who should have access to the dashboard application.
+  # Required. URS users who should have access to the dashboard application and Cumulus API.
   users:
     - username: <user>
     - username: <user2>
@@ -230,13 +236,10 @@ dev:                            # deployment name
     elasticSearchMapping: 2         # Optional, triggers elasticSearch re-bootstrap.
                                     # Useful when e.g. mappings are updated.
 
-  params:                           # Optional override.
-    app:                            # Used for app stack when 'npm run deploy-app' or 'kes cf deploy --kes-folder app --template ./node_modules/@cumulus/deployment/app [...]' is used.
+  app:                              # Override params to be passed to the app stack ('iam' and 'db' also allowed)
+    params:
       - name: myAppStackParam
         value: SomeValue
-    iam:                            # Used for iam stack when 'npm run deploy-iam' or 'kes cf deploy --kes-folder app --template ./node_modules/@cumulus/deployment/iam [...]' is used.
-      - name: myIamStackParam
-        value: SomeOtherValue
 ```
 
 --------------
@@ -290,9 +293,7 @@ Reminder: ElasticSearch is optional and can be disabled using `es: null` in your
 
 ## Deploy the Cumulus stack
 
-### Configure EarthData application
-
-The Cumulus stack is expected to authenticate with [Earthdata Login](https://urs.earthdata.nasa.gov/documentation). You must create and register a new application. Use the [User Acceptance Tools (UAT) site](https://uat.urs.earthdata.nasa.gov) unless you changed `urs_url` above. Follow the directions on [how to register an application.](https://wiki.earthdata.nasa.gov/display/EL/How+To+Register+An+Application).  Use any url for the `Redirect URL`, it will be deleted in a later step. Also note the password in step 3 and client ID in step 4 use these to replace `EARTHDATA_CLIENT_ID` and `EARTHDATA_CLIENT_PASSWORD` in the `.env` file in the next step.
+This section will cover deploying the primary Cumulus stack, containing compute resources, workflows and all other AWS resources not covered in the two stacks above.
 
 ### Deploy
 
