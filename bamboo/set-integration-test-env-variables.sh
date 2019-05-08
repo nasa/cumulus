@@ -25,8 +25,7 @@ declare -a param_list=(
 regex='bamboo(_SECRET)?_(.*)'
 
 ## Strip 'bamboo_SECRET_' from secret keys
-## Translate bamboo_ keys to expected
-## stack keys
+## Translate bamboo_ keys to expected stack keys
 for key in ${param_list[@]}; do
   [[ $key =~ bamboo(_SECRET)?_(.*) ]]
   update_key=${BASH_REMATCH[2]}
