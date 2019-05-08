@@ -52,7 +52,7 @@ async function get(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @param {function} next - Calls the next middleware function
+ * @param {function} next - calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res, next) {
