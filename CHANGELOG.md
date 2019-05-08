@@ -58,6 +58,9 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
 
 ## Added
 
+- **CUMULUS-1263**
+  - Added `apiConfigs` configuration option to configure API Gateway to be private
+
 - **CUMULUS-802**
   - Adds autoscaling of ECS clusters
   - Adds autoscaling of ECS services that are handling StepFunction activities
