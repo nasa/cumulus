@@ -131,16 +131,6 @@ default:
   es:
     name: es5vpc
     elasticSearchMapping: 8
-    version: 5.3
-    instanceCount: 1
-    instanceType: t2.small.elasticsearch
-    volumeSize: 35
-    alarms:
-      NodesLow:
-        alarm_description: 'There are less instances running than the desired'
-        comparison_operator: LessThanThreshold
-        threshold: '{{es.instanceCount}}'
-        metric: Nodes
 
   # defining the APIs. Each item will include a separate endpoint
   apiStage: dev
