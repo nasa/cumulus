@@ -17,7 +17,7 @@ echo "Locking stack for deployment $DEPLOYMENT"
   set +e
 
   # Wait for the stack to be available
-  $(node ./scripts/lock-stack.js true $DEPLOYMENT)
+  /bin/bash -c "node ./scripts/lock-stack.js true $DEPLOYMENT"
   LOCK_EXISTS_STATUS=$?
   echo "Locking status $LOCK_EXISTS_STATUS"
 
@@ -27,7 +27,7 @@ echo "Locking stack for deployment $DEPLOYMENT"
     $(node ./scripts/lock-stack.js true $DEPLOYMENT)
     LOCK_EXISTS_STATUS=$?
   done
-  if [ "$LOCK_EXIST_STATUS" > 0 ]; then
+  if [[ $LOCK_EXIST_STATUS > 0 ]]; then
     exit 1;
   fi
   set -e
