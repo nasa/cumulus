@@ -131,24 +131,63 @@ These buckets do not need any non-default permissions to function with Cumulus, 
 
 --------------
 
-## Configure and Deploy the IAM stack
+## Configure the Cumulus instance
+
+### Set up an environment file
+
+_If you're adding a new deployment to an existing configuration repository or re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus Stack](deployment-readme#deploy), as these values should already be configured._
+
+Copy `app/.env.sample` to `app/.env` and add CMR/earthdata client [credentials](deployment-readme#credentials):
+
+```shell
+  CMR_USERNAME=cmrusername
+  CMR_PASSWORD=cmrpassword
+  EARTHDATA_CLIENT_ID=clientid
+  EARTHDATA_CLIENT_PASSWORD=clientpassword
+  VPC_ID=someid
+  VPC_CIDR_IP=0.0.0.0/0
+  AWS_SUBNET=somesubnet
+  AWS_ACCOUNT_ID=0000000
+  AWS_REGION=awsregion
+  TOKEN_SECRET=tokensecret
+```
+
+The `TOKEN_SECRET` is a string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is strongly recommended that this be a 32-character string.
+
+Note that the `.env.sample` file may be hidden, so if you do not see it, show hidden files.
+
+For security it is highly recommended that you prevent `apps/.env` from being accidentally committed to the repository by keeping it in the `.gitignore` file at the root of this repository.
 
 ### Configure deployment with `<daac>-deploy/app/config.yml`
 
-The `iam` configuration creates 7 [roles](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) and an [instance profile](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html) used internally by the Cumulus stack.
-
---------------
-
 **Sample new deployment added to config.yml**:
 
-Descriptions of the fields can be found in [IAM Configuration Descriptions](deployment/config_descriptions.md#iam-configuration).
+Descriptions of the fields can be found in [Configuration Descriptions](deployment/config_descriptions.md).
 
 ```yaml
-dev:                                # deployment name
-  prefix: dev-cumulus               # prefixes stack name and CloudFormation-created IAM resources and permissions
+dev:                            # deployment name
+  prefix: dev-cumulus           # Required. prefixes stack name and CloudFormation-created resources and permissions
+  prefixNoDash: DevCumulus      # Required.
   useNgapPermissionBoundary: true   # for NASA NGAP accounts
 
-  buckets:
+  apiStage: dev                 # Optional
+
+  vpc:                          # Required for NGAP environments
+    vpcId: '{{VPC_ID}}'         # this has to be set in .env
+    subnets:
+      - '{{AWS_SUBNET}}'        # this has to be set in .env
+    cidrIp: '{{VPC_CIDR_IP}}'   # this has to be set in .env
+
+  ecs:                          # Required
+    instanceType: t2.micro
+    desiredInstances: 0
+    availabilityZone: <subnet-id-zone>
+    amiid: <some-ami-id>
+
+  # Required. You can specify a different bucket for the system_bucket
+  system_bucket: '{{buckets.internal.name}}'
+
+  buckets:                          # Bucket configuration. Required.
     internal:
       name: dev-internal            # internal bucket name
       type: internal
@@ -164,7 +203,39 @@ dev:                                # deployment name
     otherpublic:                    # Can have more than one of each type of bucket
       name: dev-default
       type: public
+
+  # Optional
+  urs_url: https://uat.urs.earthdata.nasa.gov/ # make sure to include the trailing slash
+
+  # if not specified, the value of the API gateway backend endpoint is used
+  # api_backend_url: https://apigateway-url-to-api-backend/ # make sure to include the trailing slash
+
+  # if not specified, the value of the API gateway distribution endpoint is used
+  # api_distribution_url: https://apigateway-url-to-distribution-app/ # make sure to include the trailing slash
+
+  # Required. URS users who should have access to the dashboard application.
+  users:
+    - username: <user>
+    - username: <user2>
+  
+  # Optional. Only necessary if you have workflows that integrate with CMR
+  cmr:
+    username: '{{CMR_USERNAME}}'
+    password: '{{CMR_PASSWORD}}'
+    clientId: '<replace-with-daac-name>-{{stackName}}'
+    provider: CUMULUS
+
+  es:                               # Optional. Set to 'null' to disable elasticsearch.
+    name: myES5Domain               # Optional.
+    elasticSearchMapping: 2         # Optional, triggers elasticSearch re-bootstrap.
+                                    # Useful when e.g. mappings are changed.
 ```
+
+--------------
+
+## Deploy the IAM stack
+
+The `iam` deployment creates 7 [roles](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) and an [instance profile](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html) used internally by the Cumulus stack.
 
 **Deploy `iam` stack**[^1]
 
@@ -192,20 +263,11 @@ The same information can be obtained from the AWS CLI command: `aws iam list-rol
 The `iam` deployment also creates an instance profile named `<stack-name>-ecs` that can be viewed from the AWS CLI command: `aws iam list-instance-profiles`.
 
 --------------
-## Configure and Deploy the Database stack
+
+## Deploy the Database stack
 
 This section will cover deploying the DynamoDB and ElasticSearch resources.
-ElasticSearch is optional and can be disabled using `es: null`.
-
-### Sample config.yml
-
-```yaml
-dev:                                # deployment name
-  prefix: dev-cumulus               # Required
-
-es:
-  name: myES5Domain                 # Optional
-```
+Reminder: ElasticSearch is optional and can be disabled using `es: null` in your `config.yml`.
 
 **Deploy `db` stack**
 
@@ -218,102 +280,11 @@ es:
 
 --------------
 
-## Configure and Deploy the Cumulus stack
-
-These updates configure the [copied template](deployment-readme#copy-the-sample-template-into-your-repository) from the cumulus repository for your DAAC.
-
-You should either add a new root-level key for your configuration or modify the existing default configuration key to whatever you'd like your new deployment to be.
-
-If you're re-deploying based on an existing configuration you can skip this configuration step unless values have been updated *or* you'd like to add a new deployment to your deployment configuration file.
-
-**Edit the  `<daac>-deploy/app/config.yml` file**
-
---------------
-
-### Sample config.yml
-
-Descriptions of the fields can be found in [App Configuration Descriptions](deployment/config_descriptions.md#app-configuration).
-
-```yaml
-dev:                            # deployment name
-  prefix: dev-cumulus        # Required. See note below
-  prefixNoDash: DevCumulus   # Required.
-
-  apiStage: dev                 # Optional
-
-  vpc:                          # Required for NGAP environments
-    vpcId: '{{VPC_ID}}'         # this has to be set in .env
-    subnets:
-      - '{{AWS_SUBNET}}'        # this has to be set in .env
-    cidrIp: '{{VPC_CIDR_IP}}'   # this has to be set in .env
-
-  ecs:                          # Required
-    instanceType: t2.micro
-    desiredInstances: 0
-    availabilityZone: <subnet-id-zone>
-    amiid: <some-ami-id>
-
-  # Required. You can specify a different bucket for the system_bucket
-  system_bucket: '{{buckets.internal.name}}'
-
-  # Required. Should be the same as in IAM deployment config.yml
-  buckets:
-    internal:
-        name: dev-internal
-        type: internal
-
-  # Optional
-  urs_url: https://uat.urs.earthdata.nasa.gov/ # make sure to include the trailing slash
-
-  # if not specified, the value of the API gateway backend endpoint is used
-  # api_backend_url: https://apigateway-url-to-api-backend/ # make sure to include the trailing slash
-
-  # if not specified, the value of the API gateway distribution endpoint is used
-  # api_distribution_url: https://apigateway-url-to-distribution-app/ # make sure to include the trailing slash
-
-  # Required. URS users who should have access to the dashboard application.
-  users:
-    - username: <user>
-    - username: <user2>
-  
-  # Optional. Only necessary if you have workflows that integrate with CMR
-  cmr:
-    username: '{{CMR_USERNAME}}'
-    password: '{{CMR_PASSWORD}}'
-    clientId: '<replace-with-daac-name>-{{stackName}}'
-    provider: CUMULUS
-```
-
-**IMPORTANT NOTE** - The `stackName` for this config **must start with** the value of the resource prefix for the IAM stack. By default, this means that the `stackName` should start with the value of the [`prefix` set for the IAM stack above](#configure-and-deploy-the-iam-stack). However, if you changed the value of the `ResourcePrefix` param in your IAM stack `config.yml`, you would use that value instead.
+## Deploy the Cumulus stack
 
 ### Configure EarthData application
 
 The Cumulus stack is expected to authenticate with [Earthdata Login](https://urs.earthdata.nasa.gov/documentation). You must create and register a new application. Use the [User Acceptance Tools (UAT) site](https://uat.urs.earthdata.nasa.gov) unless you changed `urs_url` above. Follow the directions on [how to register an application.](https://wiki.earthdata.nasa.gov/display/EL/How+To+Register+An+Application).  Use any url for the `Redirect URL`, it will be deleted in a later step. Also note the password in step 3 and client ID in step 4 use these to replace `EARTHDATA_CLIENT_ID` and `EARTHDATA_CLIENT_PASSWORD` in the `.env` file in the next step.
-
-### Set up an environment file
-
-_If you're adding a new deployment to an existing configuration repository or re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus Stack](deployment-readme#deploy), as these values should already be configured._
-
-Copy `app/.env.sample` to `app/.env` and add CMR/earthdata client [credentials](deployment-readme#credentials):
-
-```shell
-  CMR_USERNAME=cmrusername
-  CMR_PASSWORD=cmrpassword
-  EARTHDATA_CLIENT_ID=clientid
-  EARTHDATA_CLIENT_PASSWORD=clientpassword
-  VPC_ID=someid
-  VPC_CIDR_IP=0.0.0.0/0
-  AWS_SUBNET=somesubnet
-  AWS_ACCOUNT_ID=0000000
-  AWS_REGION=awsregion
-  TOKEN_SECRET=tokensecret
-```
-
-The `TOKEN_SECRET` is a string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is strongly recommended that this be a 32-character string.
-
-Note that the `.env.sample` file may be hidden, so if you do not see it, show hidden files.
-
-For security it is highly recommended that you prevent `apps/.env` from being accidentally committed to the repository by keeping it in the `.gitignore` file at the root of this repository.
 
 ### Deploy
 
