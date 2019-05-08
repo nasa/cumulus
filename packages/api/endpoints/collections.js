@@ -73,10 +73,15 @@ async function post(req, res, next) {
     } catch (e) {
       if (e instanceof RecordDoesNotExist) {
         await c.create(data);
-        req.collectionRecord = data;
-        req.returnMessage = { message: 'Record saved', record: data };
-        if (inTestMode()) return next();
-        return res.send({ message: 'Record saved', record: data });
+        const returnMessage = { message: 'Record saved', record: data };
+
+        if (inTestMode()) {
+          req.collectionRecord = data;
+          req.returnMessage = returnMessage;
+          return next();
+        }
+
+        return res.send(returnMessage);
       }
       throw e;
     }
@@ -113,8 +118,12 @@ async function put(req, res, next) {
     const originalData = await c.get({ name, version });
     data = Object.assign({}, originalData, data);
     const result = await c.create(data);
-    req.collectionRecord = result;
-    if (inTestMode()) return next();
+
+    if (inTestMode()) {
+      req.collectionRecord = result;
+      return next();
+    }
+
     return res.send(result);
   } catch (err) {
     if (err instanceof RecordDoesNotExist) {
@@ -154,22 +163,25 @@ async function addToES(req, res) {
   const collection = req.collectionRecord;
 
   if (inTestMode()) {
-    const esClient = await Search.es('fakehost');
+    const esClient = await Search.es(process.env.ES_HOST);
     const esIndex = process.env.esIndex;
     indexer.indexCollection(esClient, collection, esIndex);
   }
+
   if (req.returnMessage) return res.send(req.returnMessage);
   return res.send(collection);
 }
 
 async function removeFromES(req, res) {
   const { name, version } = req.params;
+
   if (inTestMode()) {
     const collectionId = constructCollectionId(name, version);
-    const esClient = await Search.es('fakehost');
+    const esClient = await Search.es(process.env.ES_HOST);
     const esIndex = process.env.esIndex;
     esClient.delete({ id: collectionId, index: esIndex, type: 'collection' });
   }
+
   return res.send({ message: 'Record deleted' });
 }
 
