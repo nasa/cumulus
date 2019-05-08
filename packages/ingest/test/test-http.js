@@ -61,7 +61,7 @@ test('Download remote file to s3 with correct content-type', async (t) => {
 });
 
 test('returns files with provider path', async (t) => {
-  const stubLink = 'file.txt ';
+  const stubLink = 'file.txt';
   setupCrawler(stubLink);
 
   const actualFiles = await myTestHttpDiscoveryClass.list();
@@ -69,12 +69,20 @@ test('returns files with provider path', async (t) => {
   t.deepEqual(actualFiles, expectedFiles);
 });
 
-
 test('strips trailing spaces from name', async (t) => {
-  const stubLink = ' fileWithSpaces.txt ';
+  const stubLink = 'fileWithTrailingSpaces.txt  ';
   setupCrawler(stubLink);
 
   const actualFiles = await myTestHttpDiscoveryClass.list();
-  const expectedFiles = [{ name: stubLink.trimRight(), path: myTestHttpDiscoveryClass.path }];
+  const expectedFiles = [{ name: 'fileWithTrailingSpaces.txt', path: myTestHttpDiscoveryClass.path }];
+  t.deepEqual(actualFiles, expectedFiles);
+});
+
+test('does not strip leading spaces from name', async (t) => {
+  const stubLink = ' fileWithSpaces.txt';
+  setupCrawler(stubLink);
+
+  const actualFiles = await myTestHttpDiscoveryClass.list();
+  const expectedFiles = [{ name: stubLink, path: myTestHttpDiscoveryClass.path }];
   t.deepEqual(actualFiles, expectedFiles);
 });
