@@ -141,7 +141,7 @@ async function addToES(req, res) {
   const rule = req.rulesRecord;
 
   if (inTestMode()) {
-    const esClient = await Search.es('fakehost');
+    const esClient = await Search.es(process.env.ES_HOST);
     const esIndex = process.env.esIndex;
     indexer.indexRule(esClient, rule, esIndex);
   }
@@ -152,7 +152,7 @@ async function addToES(req, res) {
 async function removeFromES(req, res) {
   const name = (req.params.name || '').replace(/%20/g, ' ');
   if (inTestMode()) {
-    const esClient = await Search.es('fakehost');
+    const esClient = await Search.es(process.env.ES_HOST);
     const esIndex = process.env.esIndex;
     esClient.delete({ id: name, index: esIndex, type: 'rule' });
   }

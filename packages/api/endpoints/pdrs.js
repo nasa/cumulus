@@ -82,8 +82,7 @@ async function removeFromES(req, res) {
     const esIndex = process.env.esIndex;
     try {
       await esClient.delete({ id: pdrName, index: esIndex, type: 'pdr' });
-    }
-    catch (err) {
+    } catch (err) {
       if (err.statusCode !== 404) {
         throw err;
       }
