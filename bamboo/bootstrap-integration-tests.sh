@@ -26,7 +26,7 @@ echo "Locking stack for deployment $DEPLOYMENT"
   LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
 
   echo "START LOCK STATUS"
-  echo "Locking status $LOCK_EXISTS_STATUS"
+  echo "Locking status ((((($LOCK_EXISTS_STATUS)))))"
 
   echo "END LOCK STATUS"
 
