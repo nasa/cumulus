@@ -1,5 +1,4 @@
 /* eslint-disable node/no-unpublished-require */
-/* eslint-disable no-process-exit */
 /* eslint-disable no-console */
 
 'use strict';
@@ -37,5 +36,5 @@ async function getAllPrShas(currentSha) {
 getAllPrShas(process.argv[2]).catch((e) => {
   console.log('Error matching PR SHAs:');
   console.log(e);
-  process.exit(1);
+  process.exitCode = 1;
 });
