@@ -27,7 +27,7 @@ echo "Locking stack for deployment $DEPLOYMENT"
     fi
     echo "Another build is using the ${DEPLOYMENT} stack."
     sleep 30
-    "node ./scripts/lock-stack.js true $DEPLOYMENT"
+    node ./scripts/lock-stack.js true $DEPLOYMENT
     LOCK_EXISTS_STATUS=$?
   done
   if [[ $LOCK_EXIST_STATUS -gt 0 ]]; then
