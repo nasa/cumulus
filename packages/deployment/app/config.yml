@@ -78,7 +78,7 @@ default:
     migrationRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-migration-processing'
 
   cmr:
-    username: devseed
+    username: CmrUser
     provider: CUMULUS
     clientId: CUMULUS
     password: '{{CMR_PASSWORD}}'

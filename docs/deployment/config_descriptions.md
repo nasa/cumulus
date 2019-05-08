@@ -8,22 +8,33 @@ hide_title: true
 
 ## Overview
 
+The table below provides an overview of the `config.yml` variables.
+Note that entries delimited as \<name\> are intended to be read as objects where `name` is the key, not the value, e.g.:
+
+```yaml
+# Config for 'dynamos.\<name\>.read' where `name = UsersTable`
+dynamos:
+  UsersTable:
+    read: 5
+```
+
 ### config.yml Explained
 
 | field | default     | description
 | ----- | ----------- | -----------
 | prefix | (required) | the name used as a prefix in all aws resources
 | prefixNoDash | (required) | prefix with no dash
-| urs_url | uat.urs | urs url used for OAuth
-| api_backend_url | apigateway backend url | the API backend url
-| api_distribution_url | apigateway dist url | the API url used for file distribution
-| shared_data_bucket | cumulus-data-shared | the bucket has the shared data artifacts
-| system_bucket | (required) | the bucket used for storing deployment artifacts
-| buckets | N/A | Configuration of buckets with key, bucket name, and type (i.e. internal, public private)
-| cmr.username | devseed | the username used for posting metadata to CMR
+| users | | List of URS usernames permitted to access the Cumulus dashboard/API
+| urs_url | `https://uat.urs.earthdata.nasa.gov/` | URS url used for OAuth
+| useNgapPermissionBoundary | false | Required to be `true` when deploying to the NGAP platform
+| useWorkflowLambdaVersions | true | Version deployed lambdas when they are updated.
+| cmr.username | (required) | the username used for posting metadata to CMR
 | cmr.provider | CUMULUS | the provider used for posting metadata to CMR
 | cmr.clientId | CUMULUS | the clientId used to authenticate with the CMR
 | cmr.password | (required) | the password used to authenticate with the CMR
+| buckets | (required) | Configuration of buckets with key, bucket name, and type (i.e. internal, public private)
+| system_bucket | `buckets.internal.name` | the bucket used for storing deployment artifacts
+| shared_data_bucket | cumulus-data-shared | bucket containing shared data artifacts e.g. Cumulus message adapter
 | ems.provider | CUMULUS | the provider used for sending reports to EMS
 | vpc.vpcId | (required if ecs is used) | the vpcId used with the deployment
 | vpc.subnets | (required) | the subnets used
@@ -41,26 +52,28 @@ hide_title: true
 | es.instanceCount | 1 | number of elasticsearch nodes
 | es.instanceType | t2.small.elasticsearch | size of the ec2 instance used for the elasticsearch
 | es.volumeSize | 35 | the storage used in each elasticsearch node
-| sns.\<name\> | N/A | name of the sns topic
-| sns.\<name\>.subscriptions.lambda.endpoint | sns2elasticsearch | lambda function triggered for each message in the topic
-| apis.\<name\> | N/A | name of the apigateway application
+| sns.\<name\> | | name of the sns topic
+| sns.\<name\>.subscriptions.\<subscription_name\>.endpoint | | lambda function triggered for each message in the topic
+| apis.\<name\> | | name of the apigateway application
 | apiStage | dev | stage name used for each api gateway deployment stage
-| dynamos.\<name\> | N/A | name of the dynamoDB table
+| api_backend_url | | (Override) Alternate API backend url
+| api_distribution_url | | (Override) Alternate API url used for file distribution
+| dynamos.\<name\> | | name of the dynamoDB table
 | dynamos.\<name\>.read | 5 | number of reads per second
 | dynamos.\<name\>.write | 1 | number of writes per second
-| dynamos.\<name\>.attributes | N/A | list of attributes
-| sqs.\<name\> | N/A | name of the queue
+| dynamos.\<name\>.attributes | | list of attributes
+| sqs.\<name\> | | name of the queue
 | sqs.\<name\>.visibilityTimeout | 20 | # of seconds the message returns to the queue after it is read by a consumer
 | sqs.\<name\>.retry | 30 | number of time the message is returned to the queue before being discarded
-| sqs.\<name\>.consumer | N/A | list of lambda function queue consumers
-| rules.\<name\> | N/A | list of cloudwathch rules
-| rules.\<name\>.schedule | N/A | rule's schedule
+| sqs.\<name\>.consumer | | list of lambda function queue consumer objects (see `@cumulus/deployment/app/config.yml` for examples of core usage)
+| rules.\<name\> | | list of cloudwathch rules
+| rules.\<name\>.schedule | | rule's schedule
 | rules.\<name\>.state | ENABLED | state of the rule
-| rules.\<name\>.targets | N/A | list of lambda functions to be invoked
-| stepFunctions | N/A | list of step functions
-| lambdas | N/A | list of lambda functions
-| iams | N/A | Override for IAM roles if ARNs do not match conventions (See [below](config_descriptions#iams)).
-| params | N/A | Override for parameters provided to Cumulus CloudFormation templates.
+| rules.\<name\>.targets | | list of lambda functions to be invoked (e.g. `- lambda: myFunctionName`)
+| stepFunctions | | list of step functions
+| lambdas | | list of lambda functions
+| iams | | (Override) IAM roles if ARNs do not match conventions (See [below](config_descriptions#iams)).
+| \<stack\>.params | | (Override) Parameters provided to Cumulus CloudFormation templates.
 
 ## Detailed Field Descriptions
 
