@@ -20,7 +20,7 @@ The process involves:
 
 * Creating [AWS S3 Buckets](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html).
 * Using [Kes](http://devseed.com/kes/) to transform kes templates (`cloudformation.template.yml`) into [AWS CloudFormation](https://aws.amazon.com/cloudformation/getting-started/) stack templates (`cloudformation.yml`) that are then deployed to AWS.
-* Before deploying the Cumulus software, a CloudFormation stack is deployed that creates necessary [IAM roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) via the `iams` stack.
+* Before deploying the Cumulus software, a CloudFormation stack is deployed that creates necessary [IAM roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) via the `iam` stack.
 * Database resources are configured and deployed via the `db` stack.
 * The Cumulus software is configured and deployed via the `app` stack.
 
@@ -315,29 +315,29 @@ A successful completion will result in output similar to:
       AWS_REGION=<region> \ # e.g. us-east-1
       AWS_PROFILE=<profile> \
       npm run deploy-app
+
+  Nested templates are found!
+
+  Compiling nested template for CumulusApiDistribution
+  Zipping app/build/cumulus_api/0000UUID-ApiDistribution.zip for ApiDistribution
+  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/lambdas/0000UUID-ApiDistribution.zip
+  Template saved to app/CumulusApiDistribution.yml
+  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/CumulusApiDistribution.yml
+
+  Compiling nested template for CumulusApiBackend
+  Zipping app/build/cumulus_api/0000UUID-ApiEndpoints.zip for ApiEndpoints
+  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/0000UUID-ApiEndpoints.zip
+  Template saved to app/CumulusApiBackend.yml
+  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/CumulusApiBackend.yml
+
+  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/lambdas/0000UUID-HelloWorld.zip
+  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/lambdas/0000UUID-sqs2sf.zip
+  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/lambdas/0000UUID-KinesisOutboundEventLogger.zip
+
   Generating keys. It might take a few seconds!
   Keys Generated
   keys uploaded to S3
 
-    adding: sf-starter/ (stored 0%)
-    adding: sf-starter/index.js (deflated 85%)
-
-
-    adding: daac-ops-api/ (stored 0%)
-    adding: daac-ops-api/index.js (deflated 85%)
-
-
-    adding: sf-sns-broadcast/ (stored 0%)
-    adding: sf-sns-broadcast/index.js (deflated 85%)
-
-
-    adding: hello-world/ (stored 0%)
-    adding: hello-world/index.js (deflated 85%)
-
-  Uploaded: s3://daac-internal/daac-cumulus/lambdas/<HASHNUMBERS>/hello-world.zip
-  Uploaded: s3://daac-internal/daac-cumulus/lambdas/<HASHNUMBERS>/sf-starter.zip
-  Uploaded: s3://daac-internal/daac-cumulus/lambdas/<HASHNUMBERS>/sf-sns-broadcast.zip
-  Uploaded: s3://daac-internal/daac-cumulus/lambdas/<HASHNUMBERS>/daac-ops-api.zip
   Template saved to app/cloudformation.yml
   Uploaded: s3://<prefix>-internal/<prefix>-cumulus/cloudformation.yml
   Waiting for the CF operation to complete
