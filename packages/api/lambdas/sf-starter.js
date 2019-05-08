@@ -53,9 +53,11 @@ async function incrementAndDispatch(queueMessage) {
     throw new Error(`Could not determine maximum executions for priority ${priorityKey}`);
   }
 
+  debugger;
   try {
     await incrementPrioritySemaphore(priorityKey, maxExecutions);
   } catch (err) {
+    debugger;
     if (err instanceof ResourcesLockedError) {
       log.info(`The maximum number of executions for ${priorityKey} are already running. Could not start a new execution.`)
     }
@@ -92,8 +94,10 @@ async function handler(event) {
   }
 
   const consumer = new Consumer(event.queueUrl, messageLimit, timeLimit);
-  // consumer.consume(dispatch)
   return consumer.consume(incrementAndDispatch);
-
 }
-module.exports = handler;
+
+module.exports = {
+  incrementAndDispatch,
+  handler
+};

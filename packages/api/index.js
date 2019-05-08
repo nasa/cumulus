@@ -13,7 +13,7 @@ exports.jobs = require('./lambdas/jobs');
 exports.logger = require('./lambdas/payload-logger').handler;
 exports.messageConsumer = require('./lambdas/message-consumer').handler;
 exports.scheduler = require('./lambdas/sf-scheduler');
-exports.starter = require('./lambdas/sf-starter');
+exports.starter = require('./lambdas/sf-starter').handler;
 exports.sfSemaphoreDown = require('./lambdas/sf-semaphore-down').handler;
 
 exports.bulkDeleteLambda = require('./lambdas/bulk-delete').handler;

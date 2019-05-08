@@ -140,7 +140,7 @@ const scan = aws.improveStackTrace(
  * @kind function
  */
 const put = aws.improveStackTrace(
-  async ({
+  ({
     tableName,
     item,
     client

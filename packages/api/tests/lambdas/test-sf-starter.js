@@ -2,12 +2,22 @@
 
 const rewire = require('rewire');
 const test = require('ava');
-const aws = require('@cumulus/common/aws');
-const Semaphore = require('@cumulus/common/Semaphore');
-const { randomId } = require('@cumulus/common/test-utils');
+const {
+  aws,
+  DynamoDb,
+  errors: {
+    ResourcesLockedError
+  },
+  Semaphore,
+  testUtils: {
+    randomId
+  }
+} = require('@cumulus/common');
 
-const handler = rewire('../../lambdas/sf-starter');
+const sfStarter = rewire('../../lambdas/sf-starter');
 const { Manager } = require('../../models');
+
+const { incrementAndDispatch, handler } = sfStarter;
 
 class stubConsumer {
   async consume() {
@@ -16,14 +26,14 @@ class stubConsumer {
 }
 
 let manager;
-const ruleInput = {
-  queueUrl: undefined,
+const createRuleInput = (queueUrl) => ({
+  queueUrl,
   messageLimit: 50,
   timeLimit: 60
-};
+});
 
 // Set dispatch to noop so nothing is attempting to start executions.
-handler.__set__('dispatch', () => {});
+sfStarter.__set__('dispatch', () => {});
 
 test.before(async () => {
   process.env.SemaphoresTable = randomId('semaphoreTable');
@@ -41,6 +51,7 @@ test.beforeEach(async (t) => {
     aws.dynamodbDocClient(),
     process.env.SemaphoresTable
   );
+  t.context.client = aws.dynamodbDocClient();
 });
 
 test.after.always(async (t) => {
@@ -50,14 +61,15 @@ test.after.always(async (t) => {
   ]);
 });
 
-test.serial('throws error when queueUrl is undefined', async (t) => {
+test('throws error when queueUrl is undefined', async (t) => {
+  const ruleInput = createRuleInput();
   const error = await t.throws(handler(ruleInput));
   t.is(error.message, 'queueUrl is missing');
 });
 
-test.serial('calls cb with number of messages received', async (t) => {
-  ruleInput.queueUrl = 'queue';
-  const revert = handler.__set__('Consumer', stubConsumer);
+test.serial('returns the number of messages consumed', async (t) => {
+  const revert = sfStarter.__set__('Consumer', stubConsumer);
+  const ruleInput = createRuleInput('queue');
   let data;
   try {
     data = await handler(ruleInput);
@@ -86,10 +98,47 @@ test('sf-starter lambda increments priority semaphore', async (t) => {
     }
   );
 
-  await handler({
-    queueUrl
-  });
+  await handler({ queueUrl });
 
   const response = await semaphore.get(key);
   t.is(response.semvalue, 1);
+});
+
+
+test('incrementAndDispatch throws error when trying to increment priority semaphore beyond maximum', async (t) => {
+  const { client } = t.context;
+  const { queueUrl } = process.env;
+  const key = randomId('low');
+  const maxExecutions = 5;
+
+  // Set semaphore value to the maximum.
+  await DynamoDb.put({
+    tableName: process.env.SemaphoresTable,
+    item: {
+      key,
+      semvalue: maxExecutions
+    },
+    client
+  });
+
+  const message = {
+    cumulus_meta: {
+      priorityKey: key,
+      priorityLevels: {
+        [key]: {
+          maxExecutions
+        }
+      }
+    }
+  };
+
+  await aws.sendSQSMessage(
+    queueUrl,
+    message
+  );
+
+  const error = await t.throws(incrementAndDispatch({
+    Body: message
+  }));
+  t.true(error instanceof ResourcesLockedError);
 });
