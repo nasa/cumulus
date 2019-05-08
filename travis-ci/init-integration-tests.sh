@@ -14,22 +14,25 @@ fi
 
 echo "Locking stack for deployment $DEPLOYMENT"
 (
-  set -e
-
   cd example
-
+  set +e
   # Wait for the stack to be available
-  LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
-
+  $(node ./scripts/lock-stack.js true $DEPLOYMENT)
+  LOCK_EXISTS_STATUS=$?
   echo "Locking status $LOCK_EXISTS_STATUS"
-
-  while [ "$LOCK_EXISTS_STATUS" = 1 ]; do
+  while [ "$LOCK_EXISTS_STATUS" = 100 ]; do
     echo "Another build is using the ${DEPLOYMENT} stack."
     sleep 30
 
-    LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
+    $(node ./scripts/lock-stack.js true $DEPLOYMENT)
+    LOCK_EXISTS_STATUS=$?
   done
 
+  if [ "$LOCK_EXIST_STATUS" > 0 ]; then
+    exit 1;
+  fi
+
+  set -e
   ./node_modules/.bin/kes cf deploy \
     --kes-folder iam \
     --region us-east-1 \
