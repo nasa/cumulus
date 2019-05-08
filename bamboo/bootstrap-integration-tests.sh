@@ -4,11 +4,6 @@ npm config set unsafe-perm true
 npm install
 
 . ./bamboo/set-bamboo-env-variables.sh
-if [[ $PULL_REQUEST = "false" ]]; then
-  echo "******Skipping integration tests as this commit is not a PR"
-  exit 0
-fi
-
 
 if [ "$USE_NPM_PACKAGES" = "true" ]; then
   (cd example && npm install)
@@ -23,7 +18,8 @@ echo "Locking stack for deployment $DEPLOYMENT"
   cd example
 
   # Wait for the stack to be available
-  LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
+  $(node ./scripts/lock-stack.js true $DEPLOYMENT)
+  LOCK_EXISTS_STATUS = $?
 
   echo "START LOCK STATUS"
   echo "Locking status ((((($LOCK_EXISTS_STATUS)))))"

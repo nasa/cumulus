@@ -18,41 +18,30 @@ const aws = require('@cumulus/common/aws');
 const LOCK_TABLE_NAME = 'cumulus-int-test-lock';
 const STACK_EXPIRATION_MS = 120 * 60 * 1000; // 2 hours
 
-async function performLock(mutex, deployment, cb) {
-  try {
-    await mutex.writeLock(deployment, STACK_EXPIRATION_MS);
-
-    return cb(0);
-  } catch (e) {
-    return cb(1);
-  }
+function performLock(mutex, deployment) {
+  return mutex.writeLock(deployment, STACK_EXPIRATION_MS);
 }
 
-async function removeLock(mutex, deployment, cb) {
-  try {
-    await mutex.unlock(deployment);
-
-    return cb(0);
-  } catch (e) {
-    return cb(1);
-  }
+function removeLock(mutex, deployment) {
+  return mutex.unlock(deployment);
 }
 
-async function updateLock(lockFile, deployment, cb) {
+function updateLock(lockFile, deployment) {
   const dynamodbDocClient = aws.dynamodbDocClient({
     convertEmptyValues: true
   });
-
   const mutex = new concurrency.Mutex(dynamodbDocClient, LOCK_TABLE_NAME);
 
   if (lockFile === 'true') {
-    return performLock(mutex, deployment, cb);
+    return performLock(mutex, deployment);
   }
-
-  return removeLock(mutex, deployment, cb);
+  return removeLock(mutex, deployment);
 }
 
 // Assuming this is run as:
 // node lock-stack.js (true|false) deployment-name
 // true to lock, false to unlock
-updateLock(process.argv[2], process.argv[3], console.log);
+updateLock(process.argv[2], process.argv[3]).catch((e) => {
+  console.log(e);
+  process.exit(1);
+});
