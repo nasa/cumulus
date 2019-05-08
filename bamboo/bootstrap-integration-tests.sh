@@ -28,7 +28,7 @@ echo "Locking stack for deployment $DEPLOYMENT"
     fi
     echo "Another build is using the ${DEPLOYMENT} stack."
     sleep 30
-    ((counter++))
+    ((COUNTER++))
     /bin/bash -c "node ./scripts/lock-stack.js true $DEPLOYMENT"
     LOCK_EXISTS_STATUS=$?
   done
