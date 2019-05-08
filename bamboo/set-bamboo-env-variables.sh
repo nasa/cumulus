@@ -34,6 +34,7 @@ done
 
 export COMMIT_MSG=$(git log --pretty='format:%Creset%s' -1)
 export GIT_SHA=$(git rev-parse HEAD)
+echo GIT_SHA is $GIT_SHA
 
 if [[ $(git describe --exact-match HEAD 2>/dev/null |sed -n '1p') =~ ^v[0-9]+.* ]]; then
   export VERSION_TAG=true
