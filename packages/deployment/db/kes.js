@@ -42,10 +42,7 @@ class UpdatedKes extends Kes {
    * @returns {Promise} returns the promise of an AWS response object
    */
   cloudFormation() {
-    if (!Array.isArray(this.config.params)) {
-      if (this.config.params.db) this.config.params = this.config.params.db;
-      else this.config.params = [];
-    }
+    if (this.config.db && this.config.db.params) this.config.params = this.config.db.params;
     return super.cloudFormation();
   }
 }

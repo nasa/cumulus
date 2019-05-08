@@ -67,11 +67,12 @@ default:
   shared_data_bucket: cumulus-data-shared
   api_distribution_url: https://example.com/
   api_lambda_memory: 756
-  params:
-    iam:
+  iam:
+    params:
       - name: ResourcePrefix
         value: '{{prefix}}'
-    app:
+  app:
+    params:
       - name: CmrPassword
         value: '{{CMR_PASSWORD}}'
       - name: DockerEmail
