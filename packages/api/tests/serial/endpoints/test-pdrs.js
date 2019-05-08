@@ -68,7 +68,7 @@ test.before(async () => {
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 
-  // create fake granule records
+  // create fake PDR records
   fakePdrs = ['completed', 'failed'].map(fakePdrFactory);
   await Promise.all(
     fakePdrs.map(
@@ -217,7 +217,6 @@ test('DELETE handles the case where the PDR exists in S3 but not in DynamoDb', a
     pdrName,
     'This is the PDR body'
   );
-  process.env.notInDb = true;
 
   const response = await request(app)
     .delete(`/pdrs/${pdrName}`)
