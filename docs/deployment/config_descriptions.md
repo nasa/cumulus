@@ -4,43 +4,27 @@ title: Configuration Descriptions
 hide_title: true
 ---
 
-# IAM Configuration
+# Cumulus Configuration
 
-## iam-deployment-name
+## Deployment name (key)
 
-The name (e.g. dev) of the the 'deployment' - this key tells kes which configuration set (in addition to the default values) to use when creating the cloud formation template[^1]
+The name (e.g. `dev:`) of the the 'deployment' - this key tells kes which configuration set (in addition to the default values) to use when creating the cloud formation template[^1]
 
 ## prefix
 
-This value will prefix CloudFormation-created IAM resources and permissions. **The `stackName` used in the [app](deployment/deployment-readme#configure-and-deploy-the-cumulus-stack) deployment must start with this prefix or the deployment will not work correctly.**
-
-## stackName
-
-The name of this iam stack in CloudFormation (e.g. <prefix>-iam).
-
-**The cumulus stack name must start with `<prefix>`** [^2]
-
-## buckets
-
-The buckets created in the [Create S3 Buckets](#create-s3-buckets) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured. A key is used for the buckets to allow for swapping out the bucket names easily.
-
-## useNgapPermissionBoundary
-
-If deploying to a NASA NGAP account, set `useNgapPermissionBoundary: true`.
-
-# App Configuration
-
-## cumulus-deployment-name
-
-The name (e.g. dev) of the the 'deployment' - this key tells kes which configuration set (in addition to the default values) to use when creating the cloud formation template[^1]
-
-## stackName
-
-The name of this stack in CloudFormation. **This value must start with the `prefix` used in the [IAM](deployment/deployment-readme#configure-and-deploy-the-iam-stack) deployment or the deployment will not work correctly.**
+This value (e.g. `prefix: myPrefix`) will prefix CloudFormation-created resources and permissions.
 
 ## prefixNoDash
 
 A representation of the stack name prefix that has dashes removed. This will be used for components that should be associated with the stack but do not allow dashes in the identifier.
+
+## buckets
+
+The buckets should map to the same names you used when creating buckets in the [Create S3 Buckets](README#create-s3-buckets) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured. A key is used for the buckets to allow for swapping out the bucket names easily.
+
+## useNgapPermissionBoundary
+
+If deploying to a NASA NGAP account, set `useNgapPermissionBoundary: true`.
 
 ## vpc
 
@@ -70,6 +54,10 @@ cmr:
 ```
 
 `clientId` and `provider` should be configured to point to a user specified CMR `clientId` and `provider`. We use the `CUMULUS` provider in our configurations, but users can specify their own.
+
+## users
+
+List of EarthData users you wish to have access to your dashboard application. These users will be populated in your `<stackname>-UsersTable` [DynamoDb](https://console.aws.amazon.com/dynamodb/) table.
 
 ## ecs
 
@@ -206,7 +194,8 @@ Eventually, the average time that a task takes to start should hover between 5
 and 10 seconds.
 
 ## es
-Configuration for the Amazon Elasticsearch Service (ES) instance.  You can update `es` properties and add additional ES alarms. For example:
+Configuration for the Amazon Elasticsearch Service (ES) instance. Optional. Set `es: null` to disable ElasticSearch.
+If desired, you can update `es` properties and add additional ES alarms. For example:
 
 ```yaml
     es:
@@ -261,24 +250,29 @@ This snippet is an example of configuration for a list of SNS Subscriptions. We 
 
 The main difference between this and the previous example is the inclusion of the `sns.arn` attribute - this tells our deployment/compiling step that we're configuring subscriptions, not a new topic. More information for each of the individual attributes can be found in [AWS SNS Subscription Documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-sns-subscription.html).
 
-## buckets
-
-The config buckets should map to the same names you used when creating buckets in the [Prepare AWS](#prepare-aws-configuration) step. Buckets are defined in the config.yml with a key, name, and type. Types should be one of: internal, public, private, or protected. Multiple buckets of each type can be configured.
-
 ## iams
 
-Add the ARNs for each of the seven roles and one instanceProfile created in the [Create IAM Roles](create-iam-roles) step. You can retrieve the ARNs from:
+Optional. Overrides allowed if your IAM role ARNs do not match the following convention used in `@cumulus/deployment/app/config.yml`:
+
+```yaml
+  iams:
+    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-ecs'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-processing'
+    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-steprole'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-scaling-role'
+    migrationRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-migration-processing'
+```
+
+To override, add the ARNs for each of the seven roles and one instanceProfile created in the [Create IAM Roles](create-iam-roles) step. You can retrieve the ARNs from:
 
     $ aws iam list-roles | grep Arn
     $ aws iam list-instance-profiles | grep Arn
 
 For information on how to locate them in the Console see [Locating Cumulus IAM Roles](iam_roles.md).
 
-## users
-
-List of EarthData users you wish to have access to your dashboard application. These users will be populated in your `<stackname>-UsersTable` [DynamoDb](https://console.aws.amazon.com/dynamodb/) table.
-
 # Footnotes
 
 [^1]: This value is used by kes only to identify the configuration set to use and should not appear in any AWS object
-[^2]: For more on the AWS objects this impacts, you can look through iam/cloudformation.template.yml
