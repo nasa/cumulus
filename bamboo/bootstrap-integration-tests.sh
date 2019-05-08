@@ -34,18 +34,21 @@ echo "Locking stack for deployment $DEPLOYMENT"
     LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
   done
 
+  echo "Deploying IAM stack to $DEPLOYMENT"
   ./node_modules/.bin/kes cf deploy \
     --kes-folder iam \
     --region us-east-1 \
     --deployment "$DEPLOYMENT" \
     --template node_modules/@cumulus/deployment/iam
 
+  echo "Deploying APP stack to $DEPLOYMENT"
   ./node_modules/.bin/kes cf deploy \
     --kes-folder app \
     --region us-east-1 \
     --deployment "$DEPLOYMENT" \
     --template node_modules/@cumulus/deployment/app
 
+  echo "Deploying S3AccessTest lambda to $DEPLOYMENT"
   ./node_modules/.bin/kes lambda S3AccessTest deploy \
     --kes-folder app \
     --template node_modules/@cumulus/deployment/app \
