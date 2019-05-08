@@ -166,7 +166,7 @@ Descriptions of the fields can be found in [Configuration Descriptions](deployme
 
 ```yaml
 dev:                            # deployment name
-  prefix: dev-cumulus           # Required. prefixes stack name and CloudFormation-created resources and permissions
+  prefix: dev-cumulus           # Required. Prefixes stack names and CloudFormation-created resources and permissions
   prefixNoDash: DevCumulus      # Required.
   useNgapPermissionBoundary: true   # for NASA NGAP accounts
 
@@ -222,13 +222,13 @@ dev:                            # deployment name
   cmr:
     username: '{{CMR_USERNAME}}'
     password: '{{CMR_PASSWORD}}'
-    clientId: '<replace-with-daac-name>-{{stackName}}'
-    provider: CUMULUS
+    clientId: '<replace-with-daac-name>-{{stackName}}' # Client-ID submitted to CMR to identify origin of requests.
+    provider: CUMULUS                                  # Target provider in CMR
 
   es:                               # Optional. Set to 'null' to disable elasticsearch.
-    name: myES5Domain               # Optional.
+    name: myES5Domain               # Optional. Defaults to 'es5vpc'.
     elasticSearchMapping: 2         # Optional, triggers elasticSearch re-bootstrap.
-                                    # Useful when e.g. mappings are changed.
+                                    # Useful when e.g. mappings are updated.
 ```
 
 --------------
