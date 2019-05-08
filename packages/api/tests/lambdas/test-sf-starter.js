@@ -31,6 +31,16 @@ const createRuleInput = (queueUrl) => ({
   messageLimit: 50,
   timeLimit: 60
 });
+const createWorkflowMessage = (key, maxExecutions) => ({
+  cumulus_meta: {
+    priorityKey: key,
+    priorityLevels: {
+      [key]: {
+        maxExecutions
+      }
+    }
+  }
+});
 
 // Set dispatch to noop so nothing is attempting to start executions.
 sfStarter.__set__('dispatch', () => {});
@@ -42,8 +52,6 @@ test.before(async () => {
     tableHash: { name: 'key', type: 'S' }
   });
   await manager.createTable();
-
-  process.env.queueUrl = await aws.createQueue(randomId('queue'));
 });
 
 test.beforeEach(async (t) => {
@@ -52,14 +60,14 @@ test.beforeEach(async (t) => {
     process.env.SemaphoresTable
   );
   t.context.client = aws.dynamodbDocClient();
+  t.context.queueUrl = await aws.createQueue(randomId('queue'));
 });
 
-test.after.always(async (t) => {
-  await Promise.all([
-    manager.deleteTable(),
-    aws.sqs().deleteQueue({ QueueUrl: process.env.queueUrl }).promise()
-  ]);
-});
+test.afterEach.always((t) =>
+  aws.sqs().deleteQueue({ QueueUrl: t.context.queueUrl }).promise()
+);
+
+test.after.always(() => manager.deleteTable());
 
 test('throws error when queueUrl is undefined', async (t) => {
   const ruleInput = createRuleInput();
@@ -79,35 +87,25 @@ test.serial('returns the number of messages consumed', async (t) => {
   t.is(data, 9);
 });
 
-test('sf-starter lambda increments priority semaphore', async (t) => {
-  const { semaphore } = t.context;
-  const { queueUrl } = process.env;
+test('incrementAndDispatch increments priority semaphore', async (t) => {
+  const { queueUrl, semaphore } = t.context;
 
   const key = randomId('low');
+  const message = createWorkflowMessage(key, 5);
+
   await aws.sendSQSMessage(
     queueUrl,
-    {
-      cumulus_meta: {
-        priorityKey: key,
-        priorityLevels: {
-          [key]: {
-            maxExecutions: 5
-          }
-        }
-      }
-    }
+    message
   );
 
-  await handler({ queueUrl });
+  await incrementAndDispatch({ Body: message });
 
   const response = await semaphore.get(key);
   t.is(response.semvalue, 1);
 });
 
-
 test('incrementAndDispatch throws error when trying to increment priority semaphore beyond maximum', async (t) => {
-  const { client } = t.context;
-  const { queueUrl } = process.env;
+  const { client, queueUrl } = t.context;
   const key = randomId('low');
   const maxExecutions = 5;
 
@@ -121,24 +119,93 @@ test('incrementAndDispatch throws error when trying to increment priority semaph
     client
   });
 
-  const message = {
-    cumulus_meta: {
-      priorityKey: key,
-      priorityLevels: {
-        [key]: {
-          maxExecutions
-        }
-      }
-    }
-  };
+  const message = createWorkflowMessage(key, maxExecutions);
 
   await aws.sendSQSMessage(
     queueUrl,
     message
   );
 
-  const error = await t.throws(incrementAndDispatch({
-    Body: message
-  }));
+  const error = await t.throws(
+    incrementAndDispatch({ Body: message })
+  );
   t.true(error instanceof ResourcesLockedError);
+});
+
+test('sf-starter lambda starts 0 executions when priority semaphore is at maximum', async (t) => {
+  const { client, queueUrl } = t.context;
+  const key = randomId('low');
+  const maxExecutions = 5;
+
+  // Set semaphore value to the maximum.
+  await DynamoDb.put({
+    tableName: process.env.SemaphoresTable,
+    item: {
+      key,
+      semvalue: maxExecutions
+    },
+    client
+  });
+
+  const message = createWorkflowMessage(key, maxExecutions);
+
+  await aws.sendSQSMessage(
+    queueUrl,
+    message
+  );
+
+  const result = await handler({ queueUrl });
+  t.is(result, 0);
+});
+
+test.skip('sf-starter lambda starts MAX - N executions for messages with priority', async (t) => {
+  const { client, queueUrl } = t.context;
+  const key = randomId('low');
+  const maxExecutions = 5;
+  const messageLimit = 5;
+  const initialSemValue = 2;
+
+  // Set semaphore value to the maximum.
+  await DynamoDb.put({
+    tableName: process.env.SemaphoresTable,
+    item: {
+      key,
+      semvalue: initialSemValue
+    },
+    client
+  });
+
+  const message = createWorkflowMessage(key, maxExecutions);
+
+  // Create 4 messages in the queue.
+  await Promise.all([
+    aws.sendSQSMessage(
+      queueUrl,
+      message
+    ),
+    aws.sendSQSMessage(
+      queueUrl,
+      message
+    ),
+    aws.sendSQSMessage(
+      queueUrl,
+      message
+    ),
+    aws.sendSQSMessage(
+      queueUrl,
+      message
+    )
+  ]);
+
+  const result = await handler({ queueUrl, messageLimit });
+  // Only 3 executions should have been started, even though 4 messages are in the queue
+  // 5 (max) - 2 (initial value) = 3
+  t.is(result, 3);
+
+  // All but one of the SQS messages should have been deleted.
+  const messages = await aws.receiveSQSMessages(queueUrl, {
+    numOfMessages: messageLimit,
+    timeout: 0
+  });
+  t.is(messages.length, 1);
 });
