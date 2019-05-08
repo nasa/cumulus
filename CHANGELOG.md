@@ -29,8 +29,8 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
     This will require user-managed migration if preservation of data is desired.
     See `Changed` section for more details.
   - All stacks can now be deployed using a single `config.yml` file. Backwards-compatible.
-  - `params` fields can now have keys (i.e. `app`, `db`, or `iam`) to provide Parameters for a particular stack's cloudformation template,
-    for use with single-config instances. Backwards-compatible with multi-config setups.
+  - `params` fields should now be nested under the stack key (i.e. `app`, `db` or `iam`) to provide Parameters for a
+    particular stack's cloudformation template, for use with single-config instances. Backwards-compatible with multi-config setups.
   - `stackName` and `stackNameNoDash` have been retired as user-facing config parameters.
     Use `prefix` and `prefixNoDash` instead.
   - The `iams` section in `app/config.yml` IAM roles has been retired as a user-facing parameter,
@@ -82,8 +82,8 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
     Migrations for this version will need to be user-managed.
     (e.g. [elasticsearch](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-version-migration.html#snapshot-based-migration) and [dynamoDB](https://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/dp-template-exports3toddb.html)).
   - All stacks can now be deployed using a single `config.yml` file. Backwards-compatible.
-  - `params` fields can now have keys (e.g. `app` or `iam`) to provide Parameters for a particular stack's cloudformation template,
-    for use with single-config instances. Keys must match the name of the deployment package folder (`app`, `db`, or `iam`).
+  - `params` fields should now be nested under the stack key (i.e. `app`, `db` or `iam`) to provide Parameters for a particular stack's cloudformation template,
+    for use with single-config instances. Keys *must* match the name of the deployment package folder (`app`, `db`, or `iam`).
     Backwards-compatible with multi-config setups.
   - `stackName` and `stackNameNoDash` have been retired as user-facing config parameters. Use `prefix` and `prefixNoDash` instead.
     This will be used to create stack names for all stacks in a single-config use case.
