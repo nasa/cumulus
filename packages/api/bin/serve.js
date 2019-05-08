@@ -10,6 +10,8 @@ const models = require('../models');
 const testUtils = require('../lib/testUtils');
 const workflowList = require('../app/data/workflow_list.json');
 
+const defaultLocalStackName = 'localrun';
+
 async function createTable(Model, tableName) {
   try {
     const model = new Model({
@@ -194,7 +196,7 @@ async function createDBRecords(stackName, user) {
  * @param {string} user - A username to add as an authorized user for the API.
  * @param {string} stackName - The name of local stack. Used to prefix stack resources.
  */
-async function serveApi(user, stackName = 'localrun') {
+async function serveApi(user, stackName = defaultLocalStackName) {
   const port = process.env.PORT || 5001;
   const requiredEnvVars = [
     'stackName',
@@ -239,7 +241,7 @@ async function serveApi(user, stackName = 'localrun') {
  * @param {string} stackName - The name of local stack. Used to prefix stack resources.
  * @param {function} done - Optional callback to fire when app has started listening.
  */
-async function serveDistributionApi(stackName = 'localrun', done) {
+async function serveDistributionApi(stackName = defaultLocalStackName, done) {
   const port = process.env.PORT || 5002;
   const requiredEnvVars = [
     'DISTRIBUTION_REDIRECT_ENDPOINT',
@@ -282,7 +284,7 @@ async function serveDistributionApi(stackName = 'localrun', done) {
  * @param {string} user - defaults to local user, testUser
  * @param {string} stackName - defaults to local stack, localrun
  */
-async function resetTables(user = 'testUser', stackName = 'localrun') {
+async function resetTables(user = 'testUser', stackName = defaultLocalStackName) {
   if (inTestMode()) {
     setTableEnvVariables(stackName);
     process.env.system_bucket = 'localbucket';
