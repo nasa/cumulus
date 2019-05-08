@@ -173,7 +173,7 @@ async function get(req, res) {
 async function removeFromES(req, res) {
   const granuleId = req.params.granuleName;
   if (inTestMode()) {
-    const esClient = await Search.es('fakehost');
+    const esClient = await Search.es(process.env.ES_HOST);
     const esIndex = process.env.esIndex;
     await indexer.deleteRecord(esClient, granuleId, 'granule', req.collectionId, esIndex);
   }
