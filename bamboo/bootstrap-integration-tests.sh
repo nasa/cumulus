@@ -25,7 +25,10 @@ echo "Locking stack for deployment $DEPLOYMENT"
   # Wait for the stack to be available
   LOCK_EXISTS_STATUS=$(node ./scripts/lock-stack.js true $DEPLOYMENT)
 
+  echo "START LOCK STATUS"
   echo "Locking status $LOCK_EXISTS_STATUS"
+
+  echo "END LOCK STATUS"
 
   while [ "$LOCK_EXISTS_STATUS" = 1 ]; do
     echo "Another build is using the ${DEPLOYMENT} stack."
