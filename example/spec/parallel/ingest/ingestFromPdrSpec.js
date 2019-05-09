@@ -124,15 +124,6 @@ describe('Ingesting from PDR', () => {
     }).promise();
 
     await deleteS3Object(config.bucket, `${testDataFolder}/${origPdrFilename}`);
-
-    // const arn = "arn:aws:states:us-east-1:000000000000:execution:lfIntTestParsePdrStateMachine-PMbO5v9qZuAD:e55cc79e-5cf7-4323-ab3a-452120ef0a21";
-
-    // const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
-    //   prefix: config.stackName,
-    //   arn
-    // });
-    // console.log(executionStatusResponse);
-    // const executionStatus = JSON.parse(executionStatusResponse.body);
   });
 
   afterAll(async () => {
@@ -147,12 +138,6 @@ describe('Ingesting from PDR', () => {
       })
     ]);
   });
-
-  // describe('test', () => {
-  //   it('test', () => {
-  //     expect(1, 1);
-  //   });
-  // });
 
   describe('The Discover and Queue PDRs workflow', () => {
     let workflowExecution;
@@ -402,9 +387,14 @@ describe('Ingesting from PDR', () => {
             prefix: config.stackName,
             arn: parsePdrExecutionArn
           });
-          console.log(executionStatusResponse);
+          console.log(`Execution status request status: ${executionStatusResponse.status}`);
 
-          executionStatus = JSON.parse(executionStatusResponse.body);
+          try {
+            executionStatus = JSON.parse(executionStatusResponse.body);
+          } catch (e) {
+            console.log(`Error parsing JSON ${executionStatusResponse}`);
+            throw e;
+          }
         });
 
         it('branches according to the CMA output', async () => {
