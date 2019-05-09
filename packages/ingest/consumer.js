@@ -4,9 +4,15 @@ const { log } = require('@cumulus/common');
 const { receiveSQSMessages, deleteSQSMessage } = require('@cumulus/common/aws');
 
 class Consumer {
-  constructor(queueUrl, messageLimit = 1, timeLimit = 90) {
+  constructor({
+    queueUrl,
+    messageLimit = 1,
+    timeLimit = 90,
+    visibilityTimeout
+  }) {
     this.queueUrl = queueUrl;
     this.messageLimit = messageLimit;
+    this.visibilityTimeout = visibilityTimeout;
     this.timeLimit = timeLimit * 1000;
     this.now = Date.now();
     this.timeLapsed = false;
@@ -23,13 +29,13 @@ class Consumer {
     }
   }
 
-  async processMessages(fn, messageLimit) {
+  async processMessages(fn, messageLimit, visibilityTimeout) {
     if (messageLimit > 10) throw new Error(`Cannot process more than 10 messages per function call. Received limit: ${messageLimit}`);
 
     let counter = 0;
     const messages = await receiveSQSMessages(
       this.queueUrl,
-      { numOfMessages: messageLimit }
+      { numOfMessages: messageLimit, visibilityTimeout }
     );
     if (messages.length > 0) {
       const processes = messages.map((message) => this.processMessage(message, fn));
@@ -49,10 +55,10 @@ class Consumer {
     while (messageLimit > 0 && !this.timeLapsed) {
       let results;
       if (messageLimit > 10) {
-        results = await this.processMessages(fn, 10);
+        results = await this.processMessages(fn, 10, this.visibilityTimeout);
         messageLimit -= 10;
       } else if (messageLimit > 0) {
-        results = await this.processMessages(fn, messageLimit);
+        results = await this.processMessages(fn, messageLimit, this.visibilityTimeout);
         messageLimit -= messageLimit;
       }
       sum += results;

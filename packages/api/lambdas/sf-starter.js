@@ -80,6 +80,8 @@ async function incrementAndDispatch(queueMessage) {
  *   this execution (default 1)
  * @param {string} event.timeLimit - how many seconds the lambda function will
  *   remain active and query the queue (default 240 s)
+ * @param {string} event.visibilityTimeout - how many seconds messages received from
+ *   the queue will be invisible before they can be read again (default undefined)
  * @returns {Promise} - A promise resolving to how many executions were started
  * @throws {Error}
  */
@@ -91,7 +93,12 @@ async function handler(event) {
     throw new Error('queueUrl is missing')
   }
 
-  const consumer = new Consumer(event.queueUrl, messageLimit, timeLimit);
+  const consumer = new Consumer({
+    queueUrl: event.queueUrl,
+    messageLimit,
+    timeLimit,
+    visibilityTimeout: event.visibilityTimeout
+  });
   return consumer.consume(incrementAndDispatch);
 }
 

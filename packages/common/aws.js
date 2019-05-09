@@ -16,7 +16,12 @@ const log = require('./log');
 const string = require('./string');
 const { inTestMode, randomString, testAwsClient } = require('./test-utils');
 const concurrency = require('./concurrency');
-const { deprecate, setErrorStack, noop } = require('./util');
+const {
+  deprecate,
+  isNil,
+  setErrorStack,
+  noop
+} = require('./util');
 const { UnparsableFileLocationError } = require('./errors');
 
 /**
@@ -855,7 +860,8 @@ exports.sendSQSMessage = (queueUrl, message) => {
  * @param {string} queueUrl - url of the SQS queue
  * @param {Object} options - options object
  * @param {integer} [options.numOfMessages=1] - number of messages to read from the queue
- * @param {integer} [options.timeout=30] - seconds it takes for a message to timeout
+ * @param {integer} [options.visibilityTimeout=30] - number of seconds a message is invisible
+ *   after read
  * @param {integer} [options.waitTimeSeconds=0] - number of seconds to poll SQS queue (long polling)
  * @returns {Promise.<Array>} an array of messages
  */
@@ -863,7 +869,8 @@ exports.receiveSQSMessages = async (queueUrl, options) => {
   const params = {
     QueueUrl: queueUrl,
     AttributeNames: ['All'],
-    VisibilityTimeout: options.timeout || 30,
+    // 0 is a valid value for VisibilityTimeout
+    VisibilityTimeout: !isNil(options.visibilityTimeout) ? options.visibilityTimeout : 30,
     WaitTimeSeconds: options.waitTimeSeconds || 0,
     MaxNumberOfMessages: options.numOfMessages || 1
   };
