@@ -26,11 +26,13 @@ class stubConsumer {
 }
 
 let manager;
+
 const createRuleInput = (queueUrl) => ({
   queueUrl,
   messageLimit: 50,
   timeLimit: 60
 });
+
 const createWorkflowMessage = (key, maxExecutions) => ({
   cumulus_meta: {
     priorityKey: key,
@@ -41,6 +43,19 @@ const createWorkflowMessage = (key, maxExecutions) => ({
     }
   }
 });
+
+const createSendMessageTasks = (queueUrl, message, total) => {
+  let count = 0;
+  const tasks = [];
+  while (count < total) {
+    tasks.push(aws.sendSQSMessage(
+      queueUrl,
+      message
+    ));
+    count += 1;
+  }
+  return tasks;
+}
 
 // Set dispatch to noop so nothing is attempting to start executions.
 sfStarter.__set__('dispatch', () => {});
@@ -160,10 +175,12 @@ test('sf-starter lambda starts 0 executions when priority semaphore is at maximu
 
 test('sf-starter lambda starts MAX - N executions for messages with priority', async (t) => {
   const { client, queueUrl } = t.context;
+
   const key = randomId('low');
   const maxExecutions = 5;
-  const messageLimit = 5;
   const initialSemValue = 2;
+  const numOfMessages = 4;
+  const messageLimit = numOfMessages;
 
   // Set semaphore value to the maximum.
   await DynamoDb.put({
@@ -178,24 +195,8 @@ test('sf-starter lambda starts MAX - N executions for messages with priority', a
   const message = createWorkflowMessage(key, maxExecutions);
 
   // Create 4 messages in the queue.
-  await Promise.all([
-    aws.sendSQSMessage(
-      queueUrl,
-      message
-    ),
-    aws.sendSQSMessage(
-      queueUrl,
-      message
-    ),
-    aws.sendSQSMessage(
-      queueUrl,
-      message
-    ),
-    aws.sendSQSMessage(
-      queueUrl,
-      message
-    )
-  ]);
+  const sendMessageTasks = createSendMessageTasks(queueUrl, message, numOfMessages);
+  await Promise.all(sendMessageTasks);
 
   const result = await handler({
     queueUrl,
@@ -205,12 +206,81 @@ test('sf-starter lambda starts MAX - N executions for messages with priority', a
   });
   // Only 3 executions should have been started, even though 4 messages are in the queue
   //   5 (semaphore max )- 2 (initial value) = 3 available executions
-  t.is(result, 3);
+  t.is(result, maxExecutions - initialSemValue);
 
   // There should be 1 message left in the queue.
   //   4 initial messages - 3 messages read/deleted = 1 message
   const messages = await aws.receiveSQSMessages(queueUrl, {
     numOfMessages: messageLimit
   });
-  t.is(messages.length, 1);
+  t.is(messages.length, numOfMessages - result);
+});
+
+test('sf-starter lambda respects maximum executions for multiple priority levels', async (t) => {
+  const { client, queueUrl } = t.context;
+
+  const lowPriorityKey = randomId('low');
+  const lowMaxExecutions = 3;
+  const lowInitialValue = 2;
+  const lowMessageCount = 2;
+
+  const medPriorityKey = randomId('med');
+  const medMaxExecutions = 5;
+  const medInitialValue = 3;
+  const medMessageCount = 4;
+
+  const messageLimit = lowMessageCount + medMessageCount;
+
+  // Set semaphore value to the maximum.
+  await Promise.all([
+    DynamoDb.put({
+      tableName: process.env.SemaphoresTable,
+      item: {
+        key: lowPriorityKey,
+        semvalue: lowInitialValue
+      },
+      client
+    }),
+    DynamoDb.put({
+      tableName: process.env.SemaphoresTable,
+      item: {
+        key: medPriorityKey,
+        semvalue: medInitialValue
+      },
+      client
+    })
+  ]);
+
+  const lowPriorityMessage = createWorkflowMessage(lowPriorityKey, lowMaxExecutions);
+  const lowMessageTasks = createSendMessageTasks(queueUrl, lowPriorityMessage, lowMessageCount);
+
+  const medPriorityMessage = createWorkflowMessage(medPriorityKey, medMaxExecutions);
+  const medMessageTasks = createSendMessageTasks(queueUrl, medPriorityMessage, medMessageCount);
+
+  await Promise.all([
+    ...lowMessageTasks,
+    ...medMessageTasks
+  ]);
+
+  const result = await handler({
+    queueUrl,
+    messageLimit,
+    visibilityTimeout: 0
+  });
+
+  // Max - initial value = Number of executions started
+  const expectedLowResult = lowMaxExecutions - lowInitialValue;
+  const expectedMedResult = medMaxExecutions - medInitialValue;
+  const expectedResult = expectedLowResult + expectedMedResult;
+  t.is(result, expectedResult);
+
+  const messages = await aws.receiveSQSMessages(queueUrl, {
+    numOfMessages: messageLimit
+  });
+
+  // Number of messages - number of messages read/deleted = number of messages left
+  const expectedLowCount = (lowMessageCount - expectedLowResult);
+  const expectedMedCount = (medMessageCount - expectedMedResult);
+  const expectedMessageCount = expectedLowCount + expectedMedCount;
+  t.is(messages.length, expectedMessageCount);
 });
