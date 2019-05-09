@@ -34,15 +34,15 @@ dynamos:
 | cmr.password | (required) | the password used to authenticate with the CMR
 | buckets | (required) | Configuration of buckets with key, bucket name, and type (i.e. internal, public private)
 | system_bucket | `buckets.internal.name` | the bucket used for storing deployment artifacts
-| shared_data_bucket | cumulus-data-shared | bucket containing shared data artifacts e.g. Cumulus message adapter
+| shared_data_bucket | cumulus-data-shared | bucket containing shared data artifacts
 | ems.provider | CUMULUS | the provider used for sending reports to EMS
 | vpc.vpcId | (required if ecs is used) | the vpcId used with the deployment
 | vpc.subnets | (required) | the subnets used
 | vpc.cidrIp | (required) | the IPv4 CIDR of the VPC
-| ecs.amiid | ami-9eb4b1e5 | amiid of an optimized ecs instance (differnet for each region)
+| ecs.amiid | ami-9eb4b1e5 | amiid of an optimized ecs instance (different for each region)
 | ecs.instanceType | (required) | the instance type of the ec2 machine used for running ecs tasks
 | ecs.volumeSize | 50 | the storage on ec2 instance running the ecs tasks
-| ecs.availabilityZone | us-east-1a | the availibity zone used for launching ec2 machines
+| ecs.availabilityZone | us-east-1a | the availability zone used for launching ec2 machines
 | ecs.minInstances | 1 | min number of ec2 instances to launch in an autoscaling group
 | ecs.desiredInstances | 1 | desired number of ec2 instances needed in an autoscaling group
 | ecs.maxInstances | 2 | max number of ec2 instances to launch in an autoscaling group
@@ -53,7 +53,7 @@ dynamos:
 | es.instanceType | t2.small.elasticsearch | size of the ec2 instance used for the elasticsearch
 | es.volumeSize | 35 | the storage used in each elasticsearch node
 | sns.\<name\> | | name of the sns topic
-| sns.\<name\>.subscriptions.\<subscription_name\>.endpoint | | lambda function triggered for each message in the topic
+| sns.\<name\>.subscriptions.\<subscription_name\>.endpoint | | lambda function triggered for each message in the topic (see `@cumulus/deployment/app/config.yml` for examples of core usage)
 | apis.\<name\> | | name of the apigateway application
 | apiStage | dev | stage name used for each api gateway deployment stage
 | api_backend_url | | (Override) Alternate API backend url
@@ -119,8 +119,8 @@ These values will be imported via kes in your configuration file.   You should e
 ```yaml
 cmr:
   username: '{{CMR_USERNAME}}'
-  provider: CUMULUS
-  clientId: '<replace-with-daac-name>-{{stackName}}'
+  provider: myCmrProvider
+  clientId: '<replace-with-daac-name>-{{prefix}}'
   password: '{{CMR_PASSWORD}}'
 ```
 
@@ -128,7 +128,7 @@ cmr:
 
 ### users
 
-List of EarthData users you wish to have access to your dashboard application. These users will be populated in your `<stackname>-UsersTable` [DynamoDb](https://console.aws.amazon.com/dynamodb/) table.
+List of EarthData users you wish to have access to your dashboard application. These users will be populated in your `<prefix>-UsersTable` [DynamoDb](https://console.aws.amazon.com/dynamodb/) table.
 
 ### ecs
 
@@ -266,17 +266,18 @@ and 10 seconds.
 
 ### es
 Configuration for the Amazon Elasticsearch Service (ES) instance. Optional. Set `es: null` to disable ElasticSearch.
-If desired, you can update `es` properties and add additional ES alarms. For example:
+
+You can update `es` properties and add additional ES alarms. For example:
 
 ```yaml
-    es:
-      instanceCount: 2
-      alarms:
-        NodesHigh:
-          alarm_description: 'There are more instances running than the desired'
-          comparison_operator: GreaterThanThreshold
-          threshold: '{{es.instanceCount}}'
-          metric: Nodes
+  es:
+    instanceCount: 2
+    alarms:
+      NodesHigh:
+        alarm_description: 'There are more instances running than the desired'
+        comparison_operator: GreaterThanThreshold
+        threshold: '{{es.instanceCount}}'
+        metric: Nodes
 ```
 
 ### sns
@@ -298,7 +299,7 @@ sns:
         protocol: lambda
 ```
 
-The above code is an example of configuration for an SNS topic that will be called `sftrackerSns` in the resulting `cloudformation.yml` file. Upon deployment, this configuration creates an SNS topic named `<stackname>-sftracker` and subscribes the resource named `sns2elasticsearchLambdaFunction` to that topic so that it will be triggered when any messages are added to that topic.
+The above code is an example of configuration for an SNS topic that will be called `sftrackerSns` in the resulting `cloudformation.yml` file. Upon deployment, this configuration creates an SNS topic named `<prefix>-sftracker` and subscribes the resource named `sns2elasticsearchLambdaFunction` to that topic so that it will be triggered when any messages are added to that topic.
 
 More information for each of the individual attributes can be found in [AWS SNS Topic Documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-sns-topic.html).
 
