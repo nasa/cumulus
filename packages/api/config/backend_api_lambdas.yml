@@ -1,8 +1,8 @@
 ApiEndpoints:
-  handler: index.appHandler
+  handler: index.handler
   timeout: 20
   memory: '{{parent.api_lambda_memory}}'
-  source: 'node_modules/@cumulus/api/dist/'
+  source: 'node_modules/@cumulus/api/dist/app/'
   apiRole: true
   urs_redirect: 'token'
   useDistributionApi: true

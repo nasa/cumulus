@@ -56,4 +56,4 @@ function handler(event, _context, cb) {
       .catch(cb);
   } else cb(new Error('queueUrl is missing'));
 }
-module.exports = handler;
+module.exports = { handler };
