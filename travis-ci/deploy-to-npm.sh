@@ -13,4 +13,5 @@ lerna publish \
   --no-push \
   --yes \
   --force-publish=* \
-  --dist-tag=${NPM_TAG}
+  --dist-tag=${NPM_TAG} \
+  --exact
