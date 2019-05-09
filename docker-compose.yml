@@ -43,7 +43,7 @@ services:
       - locales
 
   localstack:
-    image: localstack/localstack:0.8.7
+    image: localstack/localstack:0.9.2
     environment:
       SERVICES: 'kinesis,dynamodb,dynamodbstreams,lambda,s3,sns,sqs'
     ports:
@@ -51,7 +51,7 @@ services:
       - 4567-4570:4567-4570
       - 4572-4582:4572-4582
       - 8080:8080
-  
+
   locales:
     image: elasticsearch:5.6
     environment:
