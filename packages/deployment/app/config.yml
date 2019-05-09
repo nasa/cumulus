@@ -2,6 +2,7 @@ default:
   prefix: change-me-cumulus
   stackName: '{{prefix}}'
   prefixNoDash: ChangeMeCumulus
+  dbStackName: '{{prefix}}-db'
 
   urs_url: https://uat.urs.earthdata.nasa.gov/
 

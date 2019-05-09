@@ -241,30 +241,20 @@ Resources:
 
 
 Outputs:
-  {{#each dynamos}}
-  {{@key}}DynamoDB:
-    Value:
-      Ref: {{@key}}DynamoDB
-    Export:
-      Name: {{../prefix}}-{{@key}}DynamoDB
-
+{{#each dynamos}}
   {{@key}}DynamoDBStreamArn:
     Value:
       Fn::GetAtt:
         - {{@key}}DynamoDB
         - StreamArn
-    Export:
-      Name: {{../prefix}}-{{@key}}DynamoDBStreamArn
-  {{/each}}
+{{/each}}
 
-{{# if es.name}}
+{{#if es.name}}
   {{es.name}}DomainEndpoint:
     Value:
       Fn::GetAtt:
         - {{es.name}}Domain
         - DomainEndpoint
-    Export:
-      Name: {{prefix}}-ESDomainEndpoint
 {{/if}}
 
 {{#if vpc}}
@@ -272,6 +262,4 @@ Outputs:
     Description: ECS security group
     Value:
       Ref: SecurityGroup
-    Export:
-      Name: {{prefix}}-EcsSecurityGroup
 {{/if}}
