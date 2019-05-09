@@ -64,6 +64,17 @@ describe('The SNS-type rule', () => {
 
   afterAll(async () => {
     await SNS.deleteTopic({ TopicArn: snsTopicArn }).promise();
+
+    try {
+      const permissionParams = {
+        FunctionName: consumerName,
+        StatementId: `${ruleName}Permission`
+      };
+      await lambda().removePermission(permissionParams).promise();
+    } catch (err) {
+      // If the deletion test passed, this _should_ fail.  This is just handling
+      // the case where the deletion test did not properly clean this up.
+    }
   });
 
   describe('on creation', () => {
@@ -77,11 +88,18 @@ describe('The SNS-type rule', () => {
       expect(postRule.record.state).toEqual('ENABLED');
     });
 
-    it('creates a subscription and policy when it is created in an enabled state', async () => {
+    it('creates a subscription when it is created in an enabled state', async () => {
       expect(await getNumberOfTopicSubscriptions(snsTopicArn)).toBe(1);
-      const { Policy } = await lambda().getPolicy({ FunctionName: consumerName }).promise();
-      const statement = JSON.parse(Policy).Statement[0];
-      expect(statement.Sid).toEqual(`${ruleName}Permission`);
+    });
+
+    it('creates a policy when it is created in an enabled state', async () => {
+      const { Policy } = await lambda().getPolicy({
+        FunctionName: consumerName
+      }).promise();
+
+      const statementSids = JSON.parse(Policy).Statement.map((s) => s.Sid);
+
+      expect(statementSids).toContain(`${ruleName}Permission`);
     });
   });
 
