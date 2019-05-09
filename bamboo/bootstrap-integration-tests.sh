@@ -23,7 +23,8 @@ echo "Locking stack for deployment $DEPLOYMENT"
 
   COUNTER=0;
   while [[ $LOCK_EXISTS_STATUS = 100 ]]; do
-    if [[ $COUNTER -gt 80 ]]; then
+    if [[ $COUNTER -gt $TIMEOUT_PERIODS ]]; then
+      echo "Timed out waiting for stack to become available"
       exit 1;
     fi
     echo "Another build is using the ${DEPLOYMENT} stack."
@@ -33,7 +34,6 @@ echo "Locking stack for deployment $DEPLOYMENT"
     LOCK_EXISTS_STATUS=$?
   done
   if [[ $LOCK_EXIST_STATUS -gt 0 ]]; then
-    echo "Timed out waiting for stack to become available"
     exit 1;
   fi
   set -e

@@ -41,7 +41,11 @@ if [[ $(git describe --exact-match HEAD 2>/dev/null |sed -n '1p') =~ ^v[0-9]+.* 
 fi
 echo "Version Tag: $VERSION_TAG"
 
-if [[ -z "$PULL_REQUEST" ]]; then
+if [ -z $TIMEOUT_PERIODS ]; then
+  TIMEOUT_PERIODS=80
+fi
+
+if [ -z "$PULL_REQUEST" ]; then
   export PULL_REQUEST=$(node ./bamboo/detect-pr.js $GIT_SHA)
 fi
 echo "Pull request: $PULL_REQUEST"
