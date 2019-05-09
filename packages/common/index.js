@@ -9,6 +9,7 @@ exports.CollectionConfigStore = require('./collection-config-store').CollectionC
 exports.constructCollectionId = require('./collection-config-store').constructCollectionId;
 exports.http = require('./http');
 exports.log = require('./log');
+exports.sftp = require('./sftp');
 exports.stepFunctions = require('./step-functions');
 exports.stringUtils = require('./string');
 exports.testUtils = require('./test-utils');

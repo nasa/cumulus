@@ -95,6 +95,11 @@ EmsReport:
   envs:
     system_bucket: '{{system_bucket}}'
     ems_provider: '{{ems.provider}}'
+    ems_username: '{{ems.username}}'
+    ems_privateKey: '{{ems.privateKey}}'
+    ems_host: '{{ems.host}}'
+    ems_port: '{{ems.port}}'
+    ems_dataSource: '{{ems.dataSource}}'
   namedLambdaDeadLetterQueue: true
 
 EmsDistributionReport:
@@ -106,6 +111,12 @@ EmsDistributionReport:
     LOGS_BUCKET: '{{system_bucket}}'
     REPORTS_BUCKET: '{{system_bucket}}'
     STACK_NAME: '{{stackName}}'
+    ems_provider: '{{ems.provider}}'
+    ems_username: '{{ems.username}}'
+    ems_privateKey: '{{ems.privateKey}}'
+    ems_host: '{{ems.host}}'
+    ems_port: '{{ems.port}}'
+    ems_dataSource: '{{ems.dataSource}}'
 
 executeMigrations:
   handler: index.executeMigrations
