@@ -67,7 +67,6 @@
     "eslint-plugin-unicorn": "^4.0.3",
     "lerna": "^3.13.2",
     "nyc": "^14.0.0",
-    "@octokit/graphql": "2.1.1",
     "simple-git": "^1.96.0"
   },
   "dependencies": {
