@@ -1,6 +1,6 @@
 <cumulus-deployment-name>:
-  prefix: <prefix>-cumulus         # stackName must match the prefix for your IAM stack
-  prefixNoDash: <Prefix>Cumulus
+  prefix: <prefix>-cumulus        # Prefixes created AWS resources
+  prefixNoDash: <Prefix>Cumulus   # Prefixes created AWS resources that do not allow hyphens
 
   apiStage: dev
 
