@@ -158,7 +158,7 @@ test('sf-starter lambda starts 0 executions when priority semaphore is at maximu
   t.is(result, 0);
 });
 
-test.skip('sf-starter lambda starts MAX - N executions for messages with priority', async (t) => {
+test('sf-starter lambda starts MAX - N executions for messages with priority', async (t) => {
   const { client, queueUrl } = t.context;
   const key = randomId('low');
   const maxExecutions = 5;
@@ -197,15 +197,20 @@ test.skip('sf-starter lambda starts MAX - N executions for messages with priorit
     )
   ]);
 
-  const result = await handler({ queueUrl, messageLimit });
+  const result = await handler({
+    queueUrl,
+    messageLimit,
+    // Keep messages visible after initial read for subsequent reads
+    visibilityTimeout: 0
+  });
   // Only 3 executions should have been started, even though 4 messages are in the queue
-  // 5 (max) - 2 (initial value) = 3
+  //   5 (semaphore max )- 2 (initial value) = 3 available executions
   t.is(result, 3);
 
-  // All but one of the SQS messages should have been deleted.
+  // There should be 1 message left in the queue.
+  //   4 initial messages - 3 messages read/deleted = 1 message
   const messages = await aws.receiveSQSMessages(queueUrl, {
-    numOfMessages: messageLimit,
-    timeout: 0
+    numOfMessages: messageLimit
   });
   t.is(messages.length, 1);
 });
