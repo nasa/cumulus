@@ -45,11 +45,6 @@ if [ -z $TIMEOUT_PERIODS ]; then
   TIMEOUT_PERIODS=80
 fi
 
-if [ -z "$PULL_REQUEST" ]; then
-  export PULL_REQUEST=$(node ./bamboo/detect-pr.js $GIT_SHA)
-fi
-echo "Pull request: $PULL_REQUEST"
-
 if [ -z "$DEPLOYMENT" ]; then
   DEPLOYMENT=$(node ./bamboo/select-stack.js)
   echo deployment "$DEPLOYMENT"
