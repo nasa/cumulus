@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 **CUMULUS-802** added some additional IAM permissions to support ECS autoscaling, so **you will have to redeploy your IAM stack.**
 
-As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must delete your existing stacks (except IAM) before deploying this version of Cumulus.**
+As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS-1310**, **you must delete your existing stacks (except IAM) before deploying this version of Cumulus.**
 
 ### BREAKING CHANGES
 
@@ -26,14 +26,11 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
 
 - **CUMULUS-1310**
   - Database resources (DynamoDB, ElasticSearch) have been moved to an independent `db` stack.
-    This will require user-managed migration if preservation of data is desired.
-    See `Changed` section for more details.
+    Migrations for this version will need to be user-managed. (e.g. [elasticsearch](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-version-migration.html#snapshot-based-migration) and [dynamoDB](https://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/dp-template-exports3toddb.html)).
   - All stacks can now be deployed using a single `config.yml` file. Backwards-compatible.
-  - `params` fields should now be nested under the stack key (i.e. `app`, `db` or `iam`) to provide Parameters for a
-    particular stack's cloudformation template, for use with single-config instances. Backwards-compatible with multi-config setups.
-  - `stackName` and `stackNameNoDash` have been retired as user-facing config parameters.
-    Use `prefix` and `prefixNoDash` instead.
-  - The `iams` section in `app/config.yml` IAM roles has been retired as a user-facing parameter,
+  - `params` have been moved: Nest `params` fields under `app`, `db` or `iam` to override all Parameters for a particular stack's cloudformation template. Backwards-compatible with multi-config setups.
+  - `stackName` and `stackNameNoDash` have been retired. Use `prefix` and `prefixNoDash` instead.
+  - The `iams` section in `app/config.yml` IAM roles has been deprecated as a user-facing parameter,
     *unless* your IAM role ARNs do not match the convention shown in `@cumulus/deployment/app/config.yml`
 
 - **CUMULUS-1212**
