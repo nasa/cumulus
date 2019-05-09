@@ -1,4 +1,4 @@
-const sfSchedule = require('../lambdas/sf-scheduler');
+const { schedule } = require('../lambdas/sf-scheduler');
 const Rule = require('../models/rules');
 
 /**
@@ -20,7 +20,7 @@ async function queueMessageForRule(rule, eventObject) {
 
   const payload = await Rule.buildPayload(item);
 
-  return new Promise((resolve, reject) => sfSchedule(payload, {}, (err, result) => {
+  return new Promise((resolve, reject) => schedule(payload, {}, (err, result) => {
     if (err) reject(err);
     resolve(result);
   }));
