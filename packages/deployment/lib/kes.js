@@ -405,7 +405,17 @@ class UpdatedKes extends Kes {
    */
   cloudFormation() {
     if (this.config.app && this.config.app.params) this.config.params = this.config.app.params;
-    return super.cloudFormation();
+    // Fetch db stack outputs to retrieve DynamoDBStreamARNs and ESDomainEndpoint
+    return this.describeStack(this.config.dbStackName).then((r) => {
+      if (r && r.Stacks[0] && r.Stacks[0].Outputs) {
+        r.Stacks[0].Outputs.forEach((o) => this.config.params.push({
+          name: o.OutputKey,
+          value: o.OutputValue
+        }));
+      } else {
+        throw new Error(`Failed to fetch outputs for db stack ${this.config.dbStackName}`);
+      }
+    }).then(() => super.cloudFormation());
   }
 
 

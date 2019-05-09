@@ -8,13 +8,31 @@ Parameters:
   DockerPassword:
     Type: String
     Description: 'Password used to access a private docker repository (not required)'
-    Default: NoValue
+    Default: ""
     NoEcho: true
   DockerEmail:
     Type: String
     Description: 'Email used to login to a private docker repository (not required)'
-    Default: NoValue
+    Default: ""
     NoEcho: true
+{{#if vpc}}
+  EcsSecurityGroup:
+    Type: String
+    Description: 'Security Group deployed by the db stack'
+    NoEcho: true
+{{/if}}
+{{#if es.name}}
+  {{es.name}}DomainEndpoint:
+    Type: String
+    Description: 'ElasticSearch domain endpoint'
+    NoEcho: true
+{{/if}}
+{{#each dynamos}}
+  {{@key}}DynamoDBStreamArn:
+    Type: String
+    Description: 'DynamoDBStreamArn for {{@key}}'
+    NoEcho: true
+{{/each}}
 
 Resources:
 
@@ -48,8 +66,7 @@ Resources:
             - CmrPassword
       {{#if ../es.name}}
         ElasticSearchDomain:
-          Fn::ImportValue:
-            {{../prefix}}-ESDomainEndpoint
+          Ref: {{../es.name}}DomainEndpoint
       {{/if}}
         log2elasticsearchLambdaFunctionArn:
           Fn::GetAtt:
@@ -90,14 +107,11 @@ Resources:
             - Outputs.distributionRestApiResource
         {{/ifEquals}}
       {{# each ../dynamos}}
-        {{@key}}DynamoDB:
-          Fn::ImportValue:
-            {{../../prefix}}-{{@key}}DynamoDB
+        {{@key}}DynamoDB: {{../../prefix}}-{{@key}}
       {{/each}}
       {{# if ../vpc }}
         SecurityGroupId:
-          Fn::ImportValue:
-            {{../prefix}}-EcsSecurityGroup
+          Ref: EcsSecurityGroup
       {{/if}}
       TemplateURL: {{this.url}}
 {{/ifNotEquals}}
@@ -123,23 +137,18 @@ Resources:
     {{# if es.name}}
       ElasticSearch:
         host:
-          Fn::ImportValue:
-            {{prefix}}-ESDomainEndpoint
+          Ref: {{es.name}}DomainEndpoint
         version: {{es.elasticSearchMapping}}
     {{/if}}
     {{# if dynamos}}
       DynamoDBTables:
       {{#each dynamos}}
-        - name:
-            Fn::ImportValue:
-              {{../prefix}}-{{@key}}DynamoDB
+        - name: {{../prefix}}-{{@key}}
           pointInTime: {{this.pointInTime}}
       {{/each}}
     {{/if}}
       Users:
-        table:
-          Fn::ImportValue:
-            {{prefix}}-UsersTableDynamoDB
+        table: {{prefix}}-UsersTable
         records:
         {{# each users}}
           - username: {{username}}
@@ -375,8 +384,8 @@ Resources:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       EventSourceArn:
-        Fn::ImportValue:
-          {{../prefix}}-{{this}}DynamoDBStreamArn
+        Ref:
+          {{this}}DynamoDBStreamArn
       FunctionName:
         Ref: {{../dynamo2ElasticSearch.lambda}}LambdaFunction
       BatchSize: {{../dynamo2ElasticSearch.batchSize}}
@@ -405,14 +414,11 @@ Resources:
         {{#if this.useElasticSearch }}
         {{#if ../es.name}}
           ES_HOST:
-            Fn::ImportValue:
-              {{../prefix}}-ESDomainEndpoint
+            Ref: {{../es.name}}DomainEndpoint
         {{/if}}
         {{/if}}
         {{#each this.tables}}
-          {{this}}:
-            Fn::ImportValue:
-              {{../../prefix}}-{{this}}DynamoDB
+          {{this}}: {{../../prefix}}-{{this}}
         {{/each}}
       {{# if this.useDistributionApi}}
         {{# if ../api_distribution_url}}
@@ -472,8 +478,7 @@ Resources:
     {{# if ../vpc }}
       VpcConfig:
         SecurityGroupIds:
-          - Fn::ImportValue:
-              {{../prefix}}-EcsSecurityGroup
+          - Ref: EcsSecurityGroup
         SubnetIds:
         {{#each ../vpc.subnets}}
           - {{this}}
@@ -554,8 +559,7 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId:
-        Fn::ImportValue:
-          {{prefix}}-EcsSecurityGroup
+        Ref: EcsSecurityGroup
       IpProtocol: tcp
       FromPort: '22'
       ToPort: '22'
@@ -574,8 +578,7 @@ Resources:
       AssociatePublicIpAddress: {{#if ecs.publicIp}}{{ecs.publicIp}}{{else}}false{{/if}}
     {{/if}}
       SecurityGroups:
-        - Fn::ImportValue:
-            {{prefix}}-EcsSecurityGroup
+        - Ref: EcsSecurityGroup
        {{# if ecs.efs.mount}}
         - Fn::ImportValue:
             "{{prefix}}-EFSSecurityGroup"

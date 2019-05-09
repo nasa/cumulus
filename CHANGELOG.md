@@ -88,6 +88,8 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
   - `stackName` and `stackNameNoDash` have been retired as user-facing config parameters. Use `prefix` and `prefixNoDash` instead.
     This will be used to create stack names for all stacks in a single-config use case.
     `stackName` may still be used as an override in multi-config usage, although this is discouraged.
+    Warning: overriding the `db` stack's `stackName` will require you to set `dbStackName` in your `app/config.yml`.
+    This parameter is required to fetch outputs from the `db` stack to reference in the `app` stack.
   - The `iams` section in `app/config.yml` IAM roles has been retired as a user-facing parameter,
     *unless* your IAM role ARNs do not match the convention shown in `@cumulus/deployment/app/config.yml`
     In that case, overriding `iams` in your own config is recommended.
