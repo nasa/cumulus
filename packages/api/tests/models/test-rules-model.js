@@ -28,7 +28,7 @@ const kinesisRule = {
     type: 'kinesis',
     value: 'my-kinesis-arn'
   },
-  state: 'DISABLED'
+  state: 'ENABLED'
 };
 
 const onetimeRule = {
@@ -246,6 +246,9 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
       }),
       deleteEventSourceMapping: () => ({
         promise: () => Promise.resolve()
+      }),
+      updateEventSourceMapping: () => ({
+        promise: () => Promise.resolve({ UUID: randomString() })
       }),
       listEventSourceMappings: () => ({
         promise: () => Promise.resolve({

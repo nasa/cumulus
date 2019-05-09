@@ -2,6 +2,7 @@
 
 const get = require('lodash.get');
 const log = require('@cumulus/common/log');
+const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const { google } = require('googleapis');
 const {
   JsonWebTokenError,
@@ -129,7 +130,7 @@ async function refreshAccessToken(request, oAuth2Provider, response) {
   try {
     accessTokenRecord = await accessTokenModel.get({ accessToken });
   } catch (err) {
-    if (err.name === 'RecordDoesNotExist') {
+    if (err instanceof RecordDoesNotExist) {
       return response.boom.forbidden('Invalid access token');
     }
   }
