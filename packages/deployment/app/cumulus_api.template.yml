@@ -201,7 +201,7 @@ Resources:
                 - ".execute-api."
                 - {"Fn::Sub": "${AWS::Region}"}
                 - ".amazonaws.com"
-                - {{{getApiPortSuffix ../parent.apiConfigs name}}}
+                - {{{getApiPortSuffix ../parent.apiConfigs "backend"}}}
                 - "{{../parent.apiStage}}/token"
         {{/if}}
       {{/ifEquals}}
@@ -217,7 +217,7 @@ Resources:
                 - ".execute-api."
                 - {"Fn::Sub": "${AWS::Region}"}
                 - ".amazonaws.com"
-                - {{{getApiPortSuffix ../parent.apiConfigs name}}}
+                - {{{getApiPortSuffix ../parent.apiConfigs "distribution"}}}
                 - "{{../parent.apiStage}}/redirect"
         {{/if}}
       {{/ifEquals}}
@@ -233,7 +233,7 @@ Resources:
                 - ".execute-api."
                 - {"Fn::Sub": "${AWS::Region}"}
                 - ".amazonaws.com"
-                - {{{getApiPortSuffix ../parent.apiConfigs name}}}
+                - {{{getApiPortSuffix ../parent.apiConfigs "distribution"}}}
                 - "{{../parent.apiStage}}"
         {{/if}}
       {{/if}}
