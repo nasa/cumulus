@@ -415,6 +415,17 @@ jl:
     shared-2:
       name: rvl-internal
       type: shared
+  ecs:
+     ssh: true
+     keyPairName: jl
+  ems:
+    provider: CUMULUS
+    host: s-51625e6606b046448.server.transfer.us-east-1.amazonaws.com
+    port: 22
+    path: 'tmpNat'
+    username: cumulus
+    privateKey: ems-private.pem
+    dataSource: UAT
 
 mhs2:
   prefix: mhs2

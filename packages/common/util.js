@@ -15,6 +15,7 @@ const isNil = require('lodash.isnil');
 const omitBy = require('lodash.omitby');
 const os = require('os');
 const path = require('path');
+const mime = require('mime-types');
 const log = require('./log');
 
 /**
@@ -168,3 +169,11 @@ exports.renameProperty = (from, to, obj) => {
  *   properties removed
  */
 exports.removeNilProperties = (obj) => omitBy(obj, isNil);
+
+/**
+ * Return mime-type based on input url or filename
+ *
+ * @param {string} key
+ * @returns {string} mimeType or null
+ */
+exports.lookupMimeType = (key) => mime.lookup(key) || null;

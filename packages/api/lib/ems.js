@@ -6,6 +6,7 @@ const os = require('os');
 const path = require('path');
 const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
+const { Sftp } = require('@cumulus/common/sftp');
 
 const { deconstructCollectionId } = require('../es/indexer');
 const { Search, defaultIndexAlias } = require('../es/search');
@@ -16,6 +17,12 @@ const { Search, defaultIndexAlias } = require('../es/search');
  * process.env.ES_SCROLL_SIZE: default to defaultESScrollSize
  * process.env.ES_INDEX: set for testing purpose, default to defaultIndexAlias
  * process.env.ems_provider: default to 'cumulus'
+ * process.env.ems_host: ems server host
+ * process.env.ems_port: ems server host port
+ * process.env.ems_path: ems server report directory path
+ * process.env.ems_username: provider login name in ems server
+ * process.env.ems_privateKey: privateKey filename in s3://system_bucket/stackName/crypto
+ *   default to 'ems.private.pem'
  * process.env.stackName: it's used as part of the report filename
  * process.env.system_bucket: the bucket to store the generated reports
  */
@@ -216,7 +223,7 @@ function buildReportFileName(reportType, startTime) {
   // DataSource: designates the database table name or data source file/table name
   // use stackname as DataSource for now
   const provider = process.env.ems_provider || 'cumulus';
-  const dataSource = process.env.stackName;
+  const dataSource = process.env.ems_dataSource || process.env.stackName;
   const datestring = moment.utc(startTime).format('YYYYMMDD');
   let fileType = 'Ing';
   if (reportType === 'archive') fileType = 'Arch';
@@ -274,20 +281,78 @@ async function generateReport(reportType, startTime, endTime) {
 }
 
 /**
- * generate all EMS reports given the time range of the records
+ * generate all EMS reports given the time range of the records and submit to ems
  *
  * @param {string} startTime - start time of the records
  * @param {string} endTime - end time of the records
  * @returns {Array<Object>} - list of report type and its file path {reportType, file}
  */
-function generateReports(startTime, endTime) {
-  const jobs = Object.keys(emsMappings)
-    .map((reportType) => generateReport(reportType, startTime, endTime));
-  return Promise.all(jobs);
+async function generateReports(startTime, endTime) {
+  return Promise.all(Object.keys(emsMappings)
+    .map((reportType) => generateReport(reportType, startTime, endTime)));
+}
+
+/**
+ * generate and submit EMS reports
+ * @param {string} startTime - start time of the records
+ * @param {string} endTime - end time of the records
+ * @returns {undefined} - no return value
+ */
+async function generateAndSubmitReports(startTime, endTime) {
+  const reports = await Promise.all(Object.keys(emsMappings)
+    .map((reportType) => generateReport(reportType, startTime, endTime)));
+  await exports.submitReports(reports.map((report) => report.file));
+}
+/**
+ * submit reports to ems
+ *
+ * @param {Array<Object>} reports - list of s3 reports
+ */
+async function submitReports(reports) {
+  const emsConfig = {
+    username: process.env.ems_username,
+    host: process.env.ems_host,
+    port: process.env.ems_port,
+    privateKey: process.env.ems_privateKey || 'ems-private.pem'
+  };
+
+  if (!emsConfig.username || !emsConfig.host) return;
+
+  const sftpClient = new Sftp(emsConfig);
+
+  // submit files one by one using the same connection
+  for (let i = 0; i < reports.length; i += 1) {
+    const parsed = aws.parseS3Uri(reports[i]);
+    const keyfields = parsed.Key.split('/');
+    const fileName = keyfields.pop();
+    // eslint-disable-next-line no-await-in-loop
+    await sftpClient.uploadFromS3(
+      { Bucket: parsed.Bucket, Key: parsed.Key },
+      path.join(process.env.ems_path || '', fileName)
+    );
+    log.debug(`EMS report ${reports[i]} is sent`);
+
+    // move to sent folder
+    const newKey = path.join(keyfields.join('/'), 'sent', fileName);
+
+    // eslint-disable-next-line no-await-in-loop
+    await aws.s3CopyObject({
+      CopySource: `${parsed.Bucket}/${parsed.Key}`,
+      Bucket: parsed.Bucket,
+      Key: newKey
+    });
+
+    // eslint-disable-next-line no-await-in-loop
+    await aws.deleteS3Object(parsed.Bucket, parsed.Key);
+  }
+
+  await sftpClient.end();
 }
 
 module.exports = {
   emsMappings,
   generateReport,
-  generateReports
+  generateReports,
+  generateAndSubmitReports,
+  submitReports
 };

@@ -2,6 +2,8 @@
 
 const fs = require('fs');
 const sinon = require('sinon');
+const os = require('os');
+const path = require('path');
 const proxyquire = require('proxyquire');
 const test = require('ava');
 const JSFtp = require('jsftp');
@@ -13,6 +15,7 @@ const {
   s3PutObject,
   headObject
 } = require('@cumulus/common/aws');
+const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
   randomString
 } = require('@cumulus/common/test-utils');
@@ -86,4 +89,28 @@ test('Download remote file to s3 with correct content-type', async (t) => {
 
   const s3HeadResponse = await headObject(bucket, key);
   t.is(expectedContentType, s3HeadResponse.ContentType);
+});
+
+test('Download remote file to local disk', async (t) => {
+  class MyTestSftpDiscoveryClass extends TestSftpMixin(MyTestDiscoveryClass) {}
+  const myTestSftpDiscoveryClass = new MyTestSftpDiscoveryClass(true);
+
+  const localPath = path.join(os.tmpdir(), `delete-me-${randomString()}.txt`);
+  await myTestSftpDiscoveryClass.download(
+    '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf', localPath
+  );
+
+  const sum = await generateChecksumFromStream('CKSUM', fs.createReadStream(localPath));
+  t.is(sum, 1435712144);
+  fs.unlinkSync(localPath);
+});
+
+test('Write data to remote file', async (t) => {
+  class MyTestSftpDiscoveryClass extends TestSftpMixin(MyTestDiscoveryClass) {}
+  const myTestSftpDiscoveryClass = new MyTestSftpDiscoveryClass(true);
+
+  await myTestSftpDiscoveryClass.write(
+    '/granules', 'delete-me-test-file', 'mytestdata'
+  );
+  t.pass();
 });
