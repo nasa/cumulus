@@ -1,12 +1,10 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const models = require('../models');
 const Collection = require('../es/collections');
-const {
-  AssociatedRulesError,
-  RecordDoesNotExist
-} = require('../lib/errors');
+const { AssociatedRulesError } = require('../lib/errors');
 
 /**
  * List all collections.
