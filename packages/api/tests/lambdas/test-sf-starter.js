@@ -17,7 +17,7 @@ const {
 const sfStarter = rewire('../../lambdas/sf-starter');
 const { Manager } = require('../../models');
 
-const { incrementAndDispatch, sqs2sfHandler, sqs2sfThrottleHandler } = sfStarter;
+const { incrementAndDispatch, sqs2sfHandler, handleThrottledEvent } = sfStarter;
 
 class stubConsumer {
   async consume() {
@@ -107,6 +107,8 @@ test('incrementAndDispatch throws error for message without priority key', async
   await t.throws(incrementAndDispatch({ Body: message }));
 });
 
+test.todo('incrementAndDispatch throws error for no max');
+
 test('incrementAndDispatch increments priority semaphore', async (t) => {
   const { semaphore } = t.context;
 
@@ -142,7 +144,7 @@ test('incrementAndDispatch throws error when trying to increment priority semaph
   t.true(error instanceof ResourcesLockedError);
 });
 
-test('sqs2sfThrottleHandler starts 0 executions when priority semaphore is at maximum', async (t) => {
+test('handleThrottledEvent starts 0 executions when priority semaphore is at maximum', async (t) => {
   const { client, queueUrl } = t.context;
   const key = randomId('low');
   const maxExecutions = 5;
@@ -164,11 +166,11 @@ test('sqs2sfThrottleHandler starts 0 executions when priority semaphore is at ma
     message
   );
 
-  const result = await sqs2sfThrottleHandler({ queueUrl });
+  const result = await handleThrottledEvent({ queueUrl });
   t.is(result, 0);
 });
 
-test('sqs2sfThrottleHandler starts MAX - N executions for messages with priority', async (t) => {
+test('handleThrottledEvent starts MAX - N executions for messages with priority', async (t) => {
   const { client, queueUrl } = t.context;
 
   const key = randomId('low');
@@ -193,12 +195,10 @@ test('sqs2sfThrottleHandler starts MAX - N executions for messages with priority
   const sendMessageTasks = createSendMessageTasks(queueUrl, message, numOfMessages);
   await Promise.all(sendMessageTasks);
 
-  const result = await sqs2sfThrottleHandler({
+  const result = await handleThrottledEvent({
     queueUrl,
-    messageLimit,
-    // Keep messages visible after initial read for subsequent reads
-    visibilityTimeout: 0
-  });
+    messageLimit
+  }, 0);
   // Only 3 executions should have been started, even though 4 messages are in the queue
   //   5 (semaphore max )- 2 (initial value) = 3 available executions
   t.is(result, maxExecutions - initialSemValue);
@@ -211,7 +211,7 @@ test('sqs2sfThrottleHandler starts MAX - N executions for messages with priority
   t.is(messages.length, numOfMessages - result);
 });
 
-test('sqs2sfThrottleHandler respects maximum executions for multiple priority levels', async (t) => {
+test('handleThrottledEvent respects maximum executions for multiple priority levels', async (t) => {
   const { client, queueUrl } = t.context;
 
   const lowPriorityKey = randomId('low');
@@ -257,11 +257,10 @@ test('sqs2sfThrottleHandler respects maximum executions for multiple priority le
     ...medMessageTasks
   ]);
 
-  const result = await sqs2sfThrottleHandler({
+  const result = await handleThrottledEvent({
     queueUrl,
-    messageLimit,
-    visibilityTimeout: 0
-  });
+    messageLimit
+  }, 0);
 
   // Max - initial value = Number of executions started
   const expectedLowResult = lowMaxExecutions - lowInitialValue;
