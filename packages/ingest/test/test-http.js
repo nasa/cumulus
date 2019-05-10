@@ -21,7 +21,7 @@ const setupCrawler = (stubLink) => {
     }
   }
   http.__set__('Crawler', TestEmitter);
-}
+};
 
 class MyTestDiscoveryClass {
   constructor(useList) {
