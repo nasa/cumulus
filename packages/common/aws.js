@@ -870,7 +870,7 @@ exports.receiveSQSMessages = async (queueUrl, options) => {
     QueueUrl: queueUrl,
     AttributeNames: ['All'],
     // 0 is a valid value for VisibilityTimeout
-    VisibilityTimeout: !isNil(options.visibilityTimeout) ? options.visibilityTimeout : 30,
+    VisibilityTimeout: isNil(options.visibilityTimeout) ? 30 : options.visibilityTimeout,
     WaitTimeSeconds: options.waitTimeSeconds || 0,
     MaxNumberOfMessages: options.numOfMessages || 1
   };
