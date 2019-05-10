@@ -4,7 +4,7 @@ Description: 'stack: {{stackName}} | deployed by Kes'
 Resources:
 
   #################################################
-  # DynamoDB config BEGIN
+  # SecurityGroup config BEGIN
   #################################################
 {{# if vpc }}
   SecurityGroup:
@@ -23,7 +23,7 @@ Resources:
 {{/if}}
 
   #################################################
-  # DynamoDB config END
+  # SecurityGroup config END
   #################################################
 
   #################################################
@@ -261,5 +261,7 @@ Outputs:
   EcsSecurityGroup:
     Description: ECS security group
     Value:
-      Ref: SecurityGroup
+      Fn::GetAtt: 
+        - SecurityGroup
+        - GroupId
 {{/if}}
