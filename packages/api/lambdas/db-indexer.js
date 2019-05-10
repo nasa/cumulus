@@ -207,4 +207,4 @@ function handler(event, context, cb) {
   return indexRecords(records).then((r) => cb(null, r)).catch(cb);
 }
 
-module.exports = handler;
+module.exports = { handler };

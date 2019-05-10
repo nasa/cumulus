@@ -130,5 +130,4 @@ function end(event, context, cb) {
   return publish(event, true).then((r) => cb(null, r)).catch((e) => cb(e));
 }
 
-module.exports.start = start;
-module.exports.end = end;
+module.exports = { start, end };
