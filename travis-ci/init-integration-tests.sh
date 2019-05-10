@@ -22,9 +22,6 @@ echo "Locking stack for deployment $DEPLOYMENT"
   echo "Locking status $LOCK_EXISTS_STATUS"
 
   while [[ $LOCK_EXISTS_STATUS = 100 ]]; do
-    if [[ $COUNTER -gt 80 ]]; then
-      exit 1;
-    fi
     echo "Another build is using the ${DEPLOYMENT} stack."
     sleep 30
     node ./scripts/lock-stack.js true $DEPLOYMENT
