@@ -16,7 +16,7 @@ Parameters:
     Default: ""
     NoEcho: true
 {{#if vpc}}
-  EcsSecurityGroup:
+  DBSecurityGroup:
     Type: String
     Description: 'Security Group deployed by the db stack'
     NoEcho: true
@@ -111,7 +111,9 @@ Resources:
       {{/each}}
       {{# if ../vpc }}
         SecurityGroupId:
-          Ref: EcsSecurityGroup
+          Fn::GetAtt: 
+            - SecurityGroup
+            - GroupId
       {{/if}}
       TemplateURL: {{this.url}}
 {{/ifNotEquals}}
@@ -478,7 +480,9 @@ Resources:
     {{# if ../vpc }}
       VpcConfig:
         SecurityGroupIds:
-          - Ref: EcsSecurityGroup
+          - Fn::GetAtt: 
+            - SecurityGroup
+            - GroupId
         SubnetIds:
         {{#each ../vpc.subnets}}
           - {{this}}
@@ -554,12 +558,42 @@ Resources:
   # ECS config BEGIN
   #################################################
 {{# if vpc }}
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for ECS Container instances of {{prefix}}
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          CidrIp: {{vpc.cidrIp}}
+          FromPort: '443'
+          ToPort: '443'
+      Tags:
+        - Key: Name
+          Value: '{{stackName}}'
+      VpcId: {{vpc.vpcId}}
+
+  DBSecurityGroupInbound:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow all traffic from App SG to DB SG
+      GroupId:
+        Ref: DBSecurityGroup
+      IpProtocol: -1
+      SourceSecurityGroupId:
+        Fn::GetAtt:
+          - SecurityGroup
+          - GroupId
+      SourceSecurityGroupOwnerId:
+        Fn::Sub: ${AWS::AccountId}
+
   {{#if ecs.ssh}}
   SecurityGroupSSHinbound:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId:
-        Ref: EcsSecurityGroup
+        Fn::GetAtt: 
+          - SecurityGroup
+          - GroupId
       IpProtocol: tcp
       FromPort: '22'
       ToPort: '22'
@@ -578,7 +612,9 @@ Resources:
       AssociatePublicIpAddress: {{#if ecs.publicIp}}{{ecs.publicIp}}{{else}}false{{/if}}
     {{/if}}
       SecurityGroups:
-        - Ref: EcsSecurityGroup
+        - Fn::GetAtt:
+          - SecurityGroup
+          - GroupId
        {{# if ecs.efs.mount}}
         - Fn::ImportValue:
             "{{prefix}}-EFSSecurityGroup"

@@ -10,7 +10,7 @@ Resources:
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security Group for ECS container instances of {{prefix}}
+      GroupDescription: Database Security Group for {{prefix}}
       SecurityGroupIngress:
         - IpProtocol: tcp
           CidrIp: {{vpc.cidrIp}}
@@ -18,7 +18,7 @@ Resources:
           ToPort: '443'
       Tags:
         - Key: Name
-          Value: "{{prefix}}"
+          Value: '{{stackName}}'
       VpcId: {{vpc.vpcId}}
 {{/if}}
 
@@ -258,8 +258,8 @@ Outputs:
 {{/if}}
 
 {{#if vpc}}
-  EcsSecurityGroup:
-    Description: ECS security group
+  DBSecurityGroup:
+    Description: Database security group
     Value:
       Fn::GetAtt: 
         - SecurityGroup
