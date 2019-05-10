@@ -43,7 +43,7 @@ function updateLock(lockFile, deployment) {
 // true to lock, false to unlock
 updateLock(process.argv[2], process.argv[3]).catch((e) => {
   process.exitCode = 100;
-  if (! e.code === 'ConditionalCheckFailedException') {
+  if (!e.code === 'ConditionalCheckFailedException') {
     console.log(e);
     process.exitCode = 1;
   }
