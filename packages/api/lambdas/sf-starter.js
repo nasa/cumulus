@@ -81,13 +81,13 @@ async function incrementAndDispatch(queueMessage) {
  *   this execution (default 1)
  * @param {string} event.timeLimit - how many seconds the lambda function will
  *   remain active and query the queue (default 240 s)
- * @param {string} event.visibilityTimeout - how many seconds messages received from
- *   the queue will be invisible before they can be read again (default undefined)
  * @param {function} dispatchFn - the function to dispatch to process each message
+ * @param {number} visibilityTimeout - how many seconds messages received from
+ *   the queue will be invisible before they can be read again
  * @returns {Promise} - A promise resolving to how many executions were started
  * @throws {Error}
  */
-async function handler(event, dispatchFn) {
+async function handleEvent(event, dispatchFn, visibilityTimeout) {
   const messageLimit = event.messageLimit || 1;
   const timeLimit = event.timeLimit || 240;
 
@@ -99,21 +99,53 @@ async function handler(event, dispatchFn) {
     queueUrl: event.queueUrl,
     messageLimit,
     timeLimit,
-    visibilityTimeout: event.visibilityTimeout
+    visibilityTimeout
   });
   return consumer.consume(dispatchFn);
 }
 
+/**
+ * Handler for messages from normal SQS queues.
+ *
+ * @param {Object} event - Lambda input message from SQS
+ * @returns {Promise} - A promise resolving to how many executions were started
+ * @throws {Error}
+ */
 async function sqs2sfHandler(event) {
-  return handler(event, dispatch);
+  return handleEvent(event, dispatch);
 }
 
+/**
+ * Wrapper for handler of priority SQS messages.
+ *
+ * Using a wrapper function allows injecting optional parameters
+ * in testing, such as the visibility timeout when reading SQS
+ * mmssages.
+ *
+ * @param {Object} event - Lambda input message from SQS
+ * @param {number} visibilityTimeout - Optional visibility timeout to use when reading
+ *   SQS messages
+ * @returns {Promise} - A promise resolving to how many executions were started
+ * @throws {Error}
+ */
+function handleThrottledEvent(event, visibilityTimeout) {
+  return handleEvent(event, incrementAndDispatch, visibilityTimeout);
+}
+
+/**
+ * Handler for messages from priority SQS queues.
+ *
+ * @param {Object} event - Lambda input message from SQS
+ * @returns {Promise} - A promise resolving to how many executions were started
+ * @throws {Error}
+ */
 async function sqs2sfThrottleHandler(event) {
-  return handler(event, incrementAndDispatch);
+  return handleThrottledEvent(event);
 }
 
 module.exports = {
   incrementAndDispatch,
   sqs2sfHandler,
-  sqs2sfThrottleHandler
+  sqs2sfThrottleHandler,
+  handleThrottledEvent
 };
