@@ -3,7 +3,6 @@
 const test = require('ava');
 const {
   aws,
-  DynamoDb,
   Semaphore,
   testUtils: {
     randomId,
@@ -94,14 +93,13 @@ test('sfSemaphoreDown lambda does nothing for a workflow message with no priorit
   const { client, semaphore } = t.context;
   const key = randomId('low');
 
-  await DynamoDb.put({
-    tableName: process.env.SemaphoresTable,
-    item: {
+  await client.put({
+    TableName: process.env.SemaphoresTable,
+    Item: {
       key,
       semvalue: 1
-    },
-    client
-  });
+    }
+  }).promise();
 
   await handler({
     Records: [
@@ -119,14 +117,13 @@ test('sfSemaphoreDown lambda does nothing for a workflow message with no status'
   const { client, semaphore } = t.context;
   const key = randomId('low');
 
-  await DynamoDb.put({
-    tableName: process.env.SemaphoresTable,
-    item: {
+  await client.put({
+    TableName: process.env.SemaphoresTable,
+    Item: {
       key,
       semvalue: 1
-    },
-    client
-  });
+    }
+  }).promise();
 
   await handler({
     Records: [
@@ -144,14 +141,13 @@ test('sfSemaphoreDown lambda does nothing for a workflow message for a running w
   const { client, semaphore } = t.context;
   const key = randomId('low');
 
-  await DynamoDb.put({
-    tableName: process.env.SemaphoresTable,
-    item: {
+  await client.put({
+    TableName: process.env.SemaphoresTable,
+    Item: {
       key,
       semvalue: 1
-    },
-    client
-  });
+    }
+  }).promise();
 
   await handler({
     Records: [
@@ -184,14 +180,13 @@ test('sfSemaphoreDown lambda decrements priority semaphore for completed workflo
   const key = randomId('low');
 
   // arbitrarily set semaphore so it can be decremented
-  await DynamoDb.put({
-    tableName: process.env.SemaphoresTable,
-    item: {
+  await client.put({
+    TableName: process.env.SemaphoresTable,
+    Item: {
       key,
       semvalue: 1
-    },
-    client
-  });
+    }
+  }).promise();
 
   await handler({
     Records: [
@@ -211,14 +206,13 @@ test('sfSemaphoreDown lambda decrements priority semaphore for failed workflow m
   const key = randomId('low');
 
   // arbitrarily set semaphore so it can be decremented
-  await DynamoDb.put({
-    tableName: process.env.SemaphoresTable,
-    item: {
+  await client.put({
+    TableName: process.env.SemaphoresTable,
+    Item: {
       key,
       semvalue: 1
-    },
-    client
-  });
+    }
+  }).promise();
 
   await handler({
     Records: [
@@ -238,14 +232,13 @@ test('sfSemaphoreDown lambda handles multiple updates to a single semaphore', as
   const key = randomId('low');
 
   // Arbitrarily set semaphore value so it can be decremented
-  await DynamoDb.put({
-    tableName: process.env.SemaphoresTable,
-    item: {
+  await client.put({
+    TableName: process.env.SemaphoresTable,
+    Item: {
       key,
       semvalue: 3
-    },
-    client
-  });
+    }
+  }).promise();
 
   await handler({
     Records: [
@@ -270,22 +263,20 @@ test('sfSemaphoreDown lambda updates multiple semaphores', async (t) => {
   const medPriorityKey = randomId('med');
 
   await Promise.all([
-    DynamoDb.put({
-      tableName: process.env.SemaphoresTable,
-      item: {
+    client.put({
+      TableName: process.env.SemaphoresTable,
+      Item: {
         key: lowPriorityKey,
         semvalue: 3
-      },
-      client
-    }),
-    DynamoDb.put({
-      tableName: process.env.SemaphoresTable,
-      item: {
+      }
+    }).promise(),
+    client.put({
+      TableName: process.env.SemaphoresTable,
+      Item: {
         key: medPriorityKey,
         semvalue: 3
-      },
-      client
-    })
+      }
+    }).promise()
   ]);
 
   await handler({

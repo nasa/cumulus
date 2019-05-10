@@ -133,14 +133,13 @@ test('incrementAndDispatch throws error when trying to increment priority semaph
   const maxExecutions = 5;
 
   // Set semaphore value to the maximum.
-  await DynamoDb.put({
-    tableName: process.env.SemaphoresTable,
-    item: {
+  await client.put({
+    TableName: process.env.SemaphoresTable,
+    Item: {
       key,
       semvalue: maxExecutions
-    },
-    client
-  });
+    }
+  }).promise();
 
   const message = createWorkflowMessage(key, maxExecutions);
 
@@ -156,14 +155,13 @@ test('handleThrottledEvent starts 0 executions when priority semaphore is at max
   const maxExecutions = 5;
 
   // Set semaphore value to the maximum.
-  await DynamoDb.put({
-    tableName: process.env.SemaphoresTable,
-    item: {
+  await client.put({
+    TableName: process.env.SemaphoresTable,
+    Item: {
       key,
       semvalue: maxExecutions
-    },
-    client
-  });
+    }
+  }).promise();
 
   const message = createWorkflowMessage(key, maxExecutions);
 
@@ -185,15 +183,14 @@ test('handleThrottledEvent starts MAX - N executions for messages with priority'
   const numOfMessages = 4;
   const messageLimit = numOfMessages;
 
-  // Set semaphore value to the maximum.
-  await DynamoDb.put({
-    tableName: process.env.SemaphoresTable,
-    item: {
+  // Set initial semaphore value.
+  await client.put({
+    TableName: process.env.SemaphoresTable,
+    Item: {
       key,
       semvalue: initialSemValue
-    },
-    client
-  });
+    }
+  }).promise();
 
   const message = createWorkflowMessage(key, maxExecutions);
 
@@ -232,24 +229,22 @@ test('handleThrottledEvent respects maximum executions for multiple priority lev
 
   const messageLimit = lowMessageCount + medMessageCount;
 
-  // Set semaphore value to the maximum.
+  // Set initial semaphore values.
   await Promise.all([
-    DynamoDb.put({
-      tableName: process.env.SemaphoresTable,
-      item: {
+    client.put({
+      TableName: process.env.SemaphoresTable,
+      Item: {
         key: lowPriorityKey,
         semvalue: lowInitialValue
-      },
-      client
-    }),
-    DynamoDb.put({
-      tableName: process.env.SemaphoresTable,
-      item: {
+      }
+    }).promise(),
+    client.put({
+      TableName: process.env.SemaphoresTable,
+      Item: {
         key: medPriorityKey,
         semvalue: medInitialValue
-      },
-      client
-    })
+      }
+    }).promise()
   ]);
 
   const lowPriorityMessage = createWorkflowMessage(lowPriorityKey, lowMaxExecutions);

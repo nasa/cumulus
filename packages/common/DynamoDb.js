@@ -127,35 +127,7 @@ const scan = aws.improveStackTrace(
   }
 );
 
-/**
- * Call DynamoDb client put
- *
- * See [DocumentClient.put()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#put-property)
- * for descriptions of `params` and the return data.
- *
- * @param {Object} params
- * @returns {Promise.<Object>}
- *
- * @static
- * @kind function
- */
-const put = aws.improveStackTrace(
-  ({
-    tableName,
-    item,
-    client
-  }) => {
-    const params = {
-      TableName: tableName,
-      Item: item
-    };
-
-    return client.put(params).promise();
-  }
-);
-
 module.exports = {
   get,
-  scan,
-  put
+  scan
 };
