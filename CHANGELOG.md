@@ -27,6 +27,7 @@ As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS
 - **CUMULUS-1310**
   - Database resources (DynamoDB, ElasticSearch) have been moved to an independent `db` stack.
     Migrations for this version will need to be user-managed. (e.g. [elasticsearch](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-version-migration.html#snapshot-based-migration) and [dynamoDB](https://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/dp-template-exports3toddb.html)).
+    Order of stack deployment is `iam` -> `db` -> `app`.
   - All stacks can now be deployed using a single `config.yml` file. Backwards-compatible.
   - `params` have been moved: Nest `params` fields under `app`, `db` or `iam` to override all Parameters for a particular stack's cloudformation template. Backwards-compatible with multi-config setups.
   - `stackName` and `stackNameNoDash` have been retired. Use `prefix` and `prefixNoDash` instead.
@@ -78,6 +79,7 @@ As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS
     This will enable future updates to avoid affecting database resources or requiring migrations.
     Migrations for this version will need to be user-managed.
     (e.g. [elasticsearch](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-version-migration.html#snapshot-based-migration) and [dynamoDB](https://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/dp-template-exports3toddb.html)).
+    Order of stack deployment is `iam` -> `db` -> `app`.
   - All stacks can now be deployed using a single `config.yml` file. Backwards-compatible.
   - `params` fields should now be nested under the stack key (i.e. `app`, `db` or `iam`) to provide Parameters for a particular stack's cloudformation template,
     for use with single-config instances. Keys *must* match the name of the deployment package folder (`app`, `db`, or `iam`).
@@ -91,6 +93,7 @@ As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS
     *unless* your IAM role ARNs do not match the convention shown in `@cumulus/deployment/app/config.yml`
     In that case, overriding `iams` in your own config is recommended.
   - `iam` and `db` `cloudformation.yml` file names will have respective prefixes (e.g `iam.cloudformation.yml`).
+  - Cumulus will no longer attempt to create reconciliation reports for `shared`-type buckets.
   - Deployment docs have been updated with examples for the new deployment model.
 
 - **CUMULUS-1236**
