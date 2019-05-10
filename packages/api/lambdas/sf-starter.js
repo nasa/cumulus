@@ -41,7 +41,7 @@ async function incrementPrioritySemaphore(key, maximum) {
     await semaphore.up(key, maximum);
   } catch (err) {
     if (err instanceof ResourcesLockedError) {
-      log.info(`The maximum number of executions for ${priorityKey} are already running. Could not start a new execution.`)
+      log.info(`The maximum number of executions for ${key} are already running. Could not start a new execution.`)
     }
     throw err;
   }
