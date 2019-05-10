@@ -157,6 +157,11 @@ default:
     clientId: 'cumulus-core-{{stackName}}'
     password: '{{CMR_PASSWORD}}'
 
+  ems:
+    provider: CUMULUS
+    dataSource: UAT
+    submitReport: false
+
   stepFunctions: !!files [
     'workflows/helloworld.yml',
     'workflows/cnm.yml',
@@ -426,6 +431,7 @@ jl:
     username: cumulus
     privateKey: ems-private.pem
     dataSource: UAT
+    submitReport: false
 
 mhs2:
   prefix: mhs2

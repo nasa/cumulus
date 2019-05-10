@@ -293,17 +293,6 @@ async function generateReports(startTime, endTime) {
 }
 
 /**
- * generate and submit EMS reports
- * @param {string} startTime - start time of the records
- * @param {string} endTime - end time of the records
- * @returns {undefined} - no return value
- */
-async function generateAndSubmitReports(startTime, endTime) {
-  const reports = await Promise.all(Object.keys(emsMappings)
-    .map((reportType) => generateReport(reportType, startTime, endTime)));
-  await exports.submitReports(reports.map((report) => report.file));
-}
-/**
  * submit reports to ems
  *
  * @param {Array<Object>} reports - list of s3 reports
@@ -347,6 +336,18 @@ async function submitReports(reports) {
   }
 
   await sftpClient.end();
+}
+
+/**
+ * generate and submit EMS reports
+ * @param {string} startTime - start time of the records
+ * @param {string} endTime - end time of the records
+ * @returns {undefined} - no return value
+ */
+async function generateAndSubmitReports(startTime, endTime) {
+  const reports = await Promise.all(Object.keys(emsMappings)
+    .map((reportType) => generateReport(reportType, startTime, endTime)));
+  await exports.submitReports(reports.map((report) => report.file));
 }
 
 module.exports = {
