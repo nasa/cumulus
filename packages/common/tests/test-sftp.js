@@ -4,6 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const test = require('ava');
+const { Readable } = require('stream');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
   calculateS3ObjectChecksum,
@@ -55,7 +56,7 @@ test.after.always(async () => {
 
 test('connect and retrieve list of files', async (t) => {
   const testSftpClient = new Sftp(sftpConfig);
-  testSftpClient.connect();
+  await testSftpClient.connect();
   const list = await testSftpClient.list('/');
   t.is(list.length > 0, true);
   await testSftpClient.end();
@@ -93,20 +94,27 @@ test('Download remote file to s3 with correct content-type', async (t) => {
 });
 
 test('Upload file from s3 to remote', async (t) => {
-  const s3object = { Bucket: bucket, Key: `delete-me-${randomString()}.txt` };
+  const s3object = { Bucket: bucket, Key: 'delete-me-test-sftp-uploads3.txt' };
   await s3PutObject({ Body: randomString(), ...s3object });
   const testSftpClient = new Sftp(sftpConfig);
-  await testSftpClient.uploadFromS3(s3object, '/granules/delete-me-test-s3-file');
-  t.pass();
+  await testSftpClient.uploadFromS3(s3object, `/${s3object.Key}`);
+  const s3sum = await calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket, key: s3object.Key });
+  const filesum = await generateChecksumFromStream('CKSUM', fs.createReadStream(`../test-data/${s3object.Key}`));
+  t.is(s3sum, filesum);
   await testSftpClient.end();
 });
 
 test('Upload data string to remote', async (t) => {
   const testSftpClient = new Sftp(sftpConfig);
-  await testSftpClient.uploadFromString(
-    `${randomString()}${randomString()}`,
-    '/granules/delete-me-test-data-file'
-  );
-  t.pass();
+  const data = `${randomString()}${randomString()}`;
+  const fileName = 'delete-me-test-sftp-uploaddata.txt';
+  await testSftpClient.uploadFromString(data, `/${fileName}`);
+
+  const dataStream = new Readable();
+  dataStream.push(data);
+  dataStream.push(null);
+  const expectedSum = await generateChecksumFromStream('CKSUM', dataStream);
+  const filesum = await generateChecksumFromStream('CKSUM', fs.createReadStream(`../test-data/${fileName}`));
+  t.is(expectedSum, filesum);
   await testSftpClient.end();
 });
