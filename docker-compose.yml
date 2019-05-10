@@ -43,7 +43,7 @@ services:
       - locales
 
   localstack:
-    image: localstack/localstack:0.9.2
+    image: localstack/localstack:0.8.7
     environment:
       SERVICES: 'kinesis,dynamodb,dynamodbstreams,lambda,s3,sns,sqs'
     ports:
