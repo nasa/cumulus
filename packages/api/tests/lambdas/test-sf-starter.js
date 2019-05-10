@@ -17,7 +17,7 @@ const {
 const sfStarter = rewire('../../lambdas/sf-starter');
 const { Manager } = require('../../models');
 
-const { incrementAndDispatch, handler } = sfStarter;
+const { incrementAndDispatch, sqs2sfHandler, sqs2sfThrottleHandler } = sfStarter;
 
 class stubConsumer {
   async consume() {
@@ -86,7 +86,7 @@ test.after.always(() => manager.deleteTable());
 
 test('throws error when queueUrl is undefined', async (t) => {
   const ruleInput = createRuleInput();
-  const error = await t.throws(handler(ruleInput));
+  const error = await t.throws(sqs2sfHandler(ruleInput));
   t.is(error.message, 'queueUrl is missing');
 });
 
@@ -95,23 +95,23 @@ test.serial('returns the number of messages consumed', async (t) => {
   const ruleInput = createRuleInput('queue');
   let data;
   try {
-    data = await handler(ruleInput);
+    data = await sqs2sfHandler(ruleInput);
   } finally {
     revert();
   }
   t.is(data, 9);
 });
 
+test('incrementAndDispatch throws error for message without priority key', async (t) => {
+  const message = createWorkflowMessage();
+  await t.throws(incrementAndDispatch({ Body: message }));
+});
+
 test('incrementAndDispatch increments priority semaphore', async (t) => {
-  const { queueUrl, semaphore } = t.context;
+  const { semaphore } = t.context;
 
   const key = randomId('low');
   const message = createWorkflowMessage(key, 5);
-
-  await aws.sendSQSMessage(
-    queueUrl,
-    message
-  );
 
   await incrementAndDispatch({ Body: message });
 
@@ -120,7 +120,7 @@ test('incrementAndDispatch increments priority semaphore', async (t) => {
 });
 
 test('incrementAndDispatch throws error when trying to increment priority semaphore beyond maximum', async (t) => {
-  const { client, queueUrl } = t.context;
+  const { client } = t.context;
   const key = randomId('low');
   const maxExecutions = 5;
 
@@ -135,11 +135,6 @@ test('incrementAndDispatch throws error when trying to increment priority semaph
   });
 
   const message = createWorkflowMessage(key, maxExecutions);
-
-  await aws.sendSQSMessage(
-    queueUrl,
-    message
-  );
 
   const error = await t.throws(
     incrementAndDispatch({ Body: message })
@@ -147,7 +142,7 @@ test('incrementAndDispatch throws error when trying to increment priority semaph
   t.true(error instanceof ResourcesLockedError);
 });
 
-test('sf-starter lambda starts 0 executions when priority semaphore is at maximum', async (t) => {
+test('sqs2sfThrottleHandler starts 0 executions when priority semaphore is at maximum', async (t) => {
   const { client, queueUrl } = t.context;
   const key = randomId('low');
   const maxExecutions = 5;
@@ -169,11 +164,11 @@ test('sf-starter lambda starts 0 executions when priority semaphore is at maximu
     message
   );
 
-  const result = await handler({ queueUrl });
+  const result = await sqs2sfThrottleHandler({ queueUrl });
   t.is(result, 0);
 });
 
-test('sf-starter lambda starts MAX - N executions for messages with priority', async (t) => {
+test('sqs2sfThrottleHandler starts MAX - N executions for messages with priority', async (t) => {
   const { client, queueUrl } = t.context;
 
   const key = randomId('low');
@@ -198,7 +193,7 @@ test('sf-starter lambda starts MAX - N executions for messages with priority', a
   const sendMessageTasks = createSendMessageTasks(queueUrl, message, numOfMessages);
   await Promise.all(sendMessageTasks);
 
-  const result = await handler({
+  const result = await sqs2sfThrottleHandler({
     queueUrl,
     messageLimit,
     // Keep messages visible after initial read for subsequent reads
@@ -216,7 +211,7 @@ test('sf-starter lambda starts MAX - N executions for messages with priority', a
   t.is(messages.length, numOfMessages - result);
 });
 
-test('sf-starter lambda respects maximum executions for multiple priority levels', async (t) => {
+test('sqs2sfThrottleHandler respects maximum executions for multiple priority levels', async (t) => {
   const { client, queueUrl } = t.context;
 
   const lowPriorityKey = randomId('low');
@@ -262,7 +257,7 @@ test('sf-starter lambda respects maximum executions for multiple priority levels
     ...medMessageTasks
   ]);
 
-  const result = await handler({
+  const result = await sqs2sfThrottleHandler({
     queueUrl,
     messageLimit,
     visibilityTimeout: 0

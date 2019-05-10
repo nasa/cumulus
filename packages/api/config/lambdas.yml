@@ -1,5 +1,5 @@
 sqs2sf:
-  handler: index.handler
+  handler: index.sqs2sfHandler
   timeout: 200
   memory: 128
   source: 'node_modules/@cumulus/api/dist/sfStarter/'
