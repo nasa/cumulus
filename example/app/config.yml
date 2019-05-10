@@ -3,7 +3,7 @@ default:
 
   # test configuration starts
   test_configs:
-    stackName: '{{stackName}}'
+    stackName: '{{prefix}}'
     bucket: '{{buckets.internal.name}}'
     DISTRIBUTION_ENDPOINT: '{{api_distribution_url}}'
     ems_provider: CUMULUS
