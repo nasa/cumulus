@@ -104,10 +104,16 @@ test.serial('returns the number of messages consumed', async (t) => {
 
 test('incrementAndDispatch throws error for message without priority key', async (t) => {
   const message = createWorkflowMessage();
-  await t.throws(incrementAndDispatch({ Body: message }));
+  const error = await t.throws(incrementAndDispatch({ Body: message }));
+  t.is(error.message, 'Could not find priority key for message');
 });
 
-test.todo('incrementAndDispatch throws error for no max');
+test('incrementAndDispatch throws error for message with no maximum executions value', async (t) => {
+  const key = randomId('key');
+  const message = createWorkflowMessage(key);
+  const error = await t.throws(incrementAndDispatch({ Body: message }));
+  t.is(error.message, `Could not determine maximum executions for priority ${key}`);
+});
 
 test('incrementAndDispatch increments priority semaphore', async (t) => {
   const { semaphore } = t.context;

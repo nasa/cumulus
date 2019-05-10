@@ -3,10 +3,20 @@
 const uuidv4 = require('uuid/v4');
 const get = require('lodash.get');
 const has = require('lodash.has');
-const { dynamodbDocClient, sfn } = require('@cumulus/common/aws');
-const { ResourcesLockedError } = require('@cumulus/common/errors');
-const log = require('@cumulus/common/log');
-const Semaphore = require('@cumulus/common/Semaphore');
+const {
+  aws: {
+    dynamodbDocClient,
+    sfn
+  },
+  errors: {
+    ResourcesLockedError
+  },
+  log,
+  Semaphore,
+  util: {
+    isNil
+  }
+} = require('@cumulus/common');
 const { Consumer } = require('@cumulus/ingest/consumer');
 
 /**
@@ -49,8 +59,12 @@ async function incrementPrioritySemaphore(key, maximum) {
 
 async function incrementAndDispatch(queueMessage) {
   const message = get(queueMessage, 'Body', {});
-  if (!has(message, 'cumulus_meta.priorityKey')) {
-    throw new Error(`Could not find priority key for message ${message.cumulus_meta}. Skipping.`);
+
+  if (!has(message, 'cumulus_meta.priorityKey') ||
+      isNil(message.cumulus_meta.priorityKey)) {
+    const errorMsg = 'Could not find priority key for message';
+    log.debug(errorMsg, message);
+    throw new Error(errorMsg);
   }
 
   const priorityKey = get(message, 'cumulus_meta.priorityKey');
@@ -120,7 +134,7 @@ async function sqs2sfHandler(event) {
  *
  * Using a wrapper function allows injecting optional parameters
  * in testing, such as the visibility timeout when reading SQS
- * mmssages.
+ * messages.
  *
  * @param {Object} event - Lambda input message from SQS
  * @param {number} visibilityTimeout - Optional visibility timeout to use when reading
