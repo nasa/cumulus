@@ -155,7 +155,7 @@ This will cause kes to export the workflows in the new file along with the other
 Ensure the following lambdas are in your deployment's lambdas.yml (reference the [example lambdas.yml](https://github.com/nasa/cumulus/blob/master/example/lambdas.yml)):
 
 ```
-DiscoverGranulesNoVpc:
+DiscoverGranules:
   handler: index.handler
   timeout: 300
   memory: 512
@@ -166,7 +166,7 @@ QueueGranules:
   timeout: 300
   source: node_modules/@cumulus/queue-granules/dist/
   useMessageAdapter: true
-SyncGranuleNoVpc:
+SyncGranule:
   handler: index.handler
   timeout: 300
   logToElasticSearch: true
