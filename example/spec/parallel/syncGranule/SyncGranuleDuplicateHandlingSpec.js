@@ -264,12 +264,12 @@ describe('When the Sync Granule workflow is configured', () => {
       });
 
       it('configured collection to handle duplicates as error', async () => {
-        const lambdaInput = await lambdaStep.getStepInput(workflowExecution.executionArn, 'SyncGranuleNoVpc');
+        const lambdaInput = await lambdaStep.getStepInput(workflowExecution.executionArn, 'SyncGranule');
         expect(lambdaInput.meta.collection.duplicateHandling).toEqual('error');
       });
 
       it('fails the SyncGranule Lambda function', async () => {
-        const lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranuleNoVpc', 'failure');
+        const lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule', 'failure');
         const { error, cause } = lambdaOutput;
         const errorCause = JSON.parse(cause);
         expect(error).toEqual('DuplicateFile');
@@ -293,12 +293,12 @@ describe('When the Sync Granule workflow is configured', () => {
       });
 
       it('configured collection to handle duplicates as error', async () => {
-        const lambdaInput = await lambdaStep.getStepInput(workflowExecution.executionArn, 'SyncGranuleNoVpc');
+        const lambdaInput = await lambdaStep.getStepInput(workflowExecution.executionArn, 'SyncGranule');
         expect(lambdaInput.meta.collection.duplicateHandling).toEqual('error');
       });
 
       it('fails the SyncGranule Lambda function', async () => {
-        const lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranuleNoVpc', 'failure');
+        const lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule', 'failure');
         const { error, cause } = lambdaOutput;
         const errorCause = JSON.parse(cause);
         expect(error).toEqual('DuplicateFile');

@@ -25,13 +25,6 @@ DiscoverGranules:
   source: node_modules/@cumulus/discover-granules/dist/
   useMessageAdapter: true
   launchInVpc: true
-DiscoverGranulesNoVpc:
-  handler: index.handler
-  timeout: 300
-  memory: 512
-  source: node_modules/@cumulus/discover-granules/dist/
-  useMessageAdapter: true
-  launchInVpc: true
 DiscoverPdrs:
   handler: index.handler
   timeout: 300
@@ -122,13 +115,6 @@ SyncGranule:
   launchInVpc: true
   envs:
     system_bucket: '{{system_bucket}}'
-SyncGranuleNoVpc:
-  handler: index.handler
-  timeout: 300
-  logToElasticSearch: true
-  source: node_modules/@cumulus/sync-granule/dist/
-  useMessageAdapter: true
-  launchInVpc: true
 S3AccessTest:
   handler: index.handler
   source: lambdas/s3AccessTest/

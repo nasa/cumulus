@@ -1,0 +1,322 @@
+{
+  "cumulus_meta": {
+    "message_source": "sfn",
+    "process": "modis",
+    "execution_name": "ac42a653-6222-4601-a657-a2b78a1015bc",
+    "state_machine": "arn:aws:states:us-east-1:596205514787:stateMachine:lfIntTestIngestAndPublishGranuleStateMachine-hfMgK9MSt2wA",
+    "workflow_start_time": 1557243326382,
+    "system_bucket": "lf-internal"
+  },
+  "meta": {
+    "templates": {
+      "RetryFailWorkflow": "s3://lf-internal/lf-int-test/workflows/RetryFailWorkflow.json",
+      "ParsePdr": "s3://lf-internal/lf-int-test/workflows/ParsePdr.json",
+      "CookbookBrowseExample": "s3://lf-internal/lf-int-test/workflows/CookbookBrowseExample.json",
+      "HelloWorldFailWorkflow": "s3://lf-internal/lf-int-test/workflows/HelloWorldFailWorkflow.json",
+      "RetryPassWorkflow": "s3://lf-internal/lf-int-test/workflows/RetryPassWorkflow.json",
+      "KinesisTriggerTest": "s3://lf-internal/lf-int-test/workflows/KinesisTriggerTest.json",
+      "HelloWorldWorkflow": "s3://lf-internal/lf-int-test/workflows/HelloWorldWorkflow.json",
+      "TestLambdaVersionWorkflow": "s3://lf-internal/lf-int-test/workflows/TestLambdaVersionWorkflow.json",
+      "IngestGranuleCatchDuplicateErrorTest": "s3://lf-internal/lf-int-test/workflows/IngestGranuleCatchDuplicateErrorTest.json",
+      "DiscoverGranules": "s3://lf-internal/lf-int-test/workflows/DiscoverGranules.json",
+      "DiscoverAndQueuePdrs": "s3://lf-internal/lf-int-test/workflows/DiscoverAndQueuePdrs.json",
+      "EcsHelloWorldWorkflow": "s3://lf-internal/lf-int-test/workflows/EcsHelloWorldWorkflow.json",
+      "WaitForDeployWorkflow": "s3://lf-internal/lf-int-test/workflows/WaitForDeployWorkflow.json",
+      "IngestAndPublishGranule": "s3://lf-internal/lf-int-test/workflows/IngestAndPublishGranule.json",
+      "SyncGranule": "s3://lf-internal/lf-int-test/workflows/SyncGranule.json",
+      "SyncGranuleCatchDuplicateErrorTest": "s3://lf-internal/lf-int-test/workflows/SyncGranuleCatchDuplicateErrorTest.json",
+      "IngestGranule": "s3://lf-internal/lf-int-test/workflows/IngestGranule.json",
+      "DiscoverGranulesBrowseExample": "s3://lf-internal/lf-int-test/workflows/DiscoverGranulesBrowseExample.json",
+      "PublishGranule": "s3://lf-internal/lf-int-test/workflows/PublishGranule.json"
+    },
+    "workflow_name": "IngestAndPublishGranule",
+    "queues": {
+      "dbIndexerDeadLetterQueue": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-dbIndexerDeadLetterQueue",
+      "jobsDeadLetterQueue": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-jobsDeadLetterQueue",
+      "log2elasticsearchDeadLetterQueue": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-log2elasticsearchDeadLetterQueue",
+      "triggerLambdaFailure": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-triggerLambdaFailure",
+      "EmsReportDeadLetterQueue": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-EmsReportDeadLetterQueue",
+      "startSF": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-startSF",
+      "cleanExecutionsDeadLetterQueue": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-cleanExecutionsDeadLetterQueue",
+      "ScheduleSFDeadLetterQueue": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-ScheduleSFDeadLetterQueue",
+      "sns2elasticsearchDeadLetterQueue": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-sns2elasticsearchDeadLetterQueue",
+      "kinesisFailure": "https://sqs.us-east-1.amazonaws.com/596205514787/lf-int-test-kinesisFailure"
+    },
+    "collection": {
+      "files": [{
+        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
+        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+        "bucket": "protected",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
+      }, {
+        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$",
+        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met",
+        "bucket": "private"
+      }, {
+        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.cmr\\.xml$",
+        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml",
+        "bucket": "protected-2"
+      }, {
+        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}_ndvi\\.jpg$",
+        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_ndvi.jpg",
+        "bucket": "public"
+      }],
+      "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
+      "name": "MOD09GQ_test-lf-int-test-IngestGranuleSuccess-1557243321911",
+      "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
+      "process": "modis",
+      "granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)",
+      "dataType": "MOD09GQ_test-lf-int-test-IngestGranuleSuccess-1557243321911",
+      "provider_path": "cumulus-test-data/pdrs",
+      "version": "006",
+      "updatedAt": 1557243324736,
+      "duplicateHandling": "error",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+      "createdAt": 1557243324736
+    },
+    "stack": "lf-int-test",
+    "topic_arn": "arn:aws:sns:us-east-1:596205514787:lf-int-test-sftrackerSns-1I3E40MLBH6OQ",
+    "workflow_tasks": {
+      "ProcessingStep": {
+        "version": "159",
+        "name": "lf-int-test-FakeProcessing",
+        "arn": "arn:aws:lambda:us-east-1:596205514787:function:lf-int-test-FakeProcessing:FakeProcessing-80adc381eeba9bd53a255e6be5b3195f32d0a4b7"
+      },
+      "FilesToGranulesStep": {
+        "version": "10",
+        "name": "lf-int-test-FilesToGranules",
+        "arn": "arn:aws:lambda:us-east-1:596205514787:function:lf-int-test-FilesToGranules:FilesToGranules-450e61e22da409e054bd48a18b59a44d7e8d3cd9"
+      },
+      "SyncGranule": {
+        "version": "98",
+        "name": "lf-int-test-SyncGranule",
+        "arn": "arn:aws:lambda:us-east-1:596205514787:function:lf-int-test-SyncGranule:SyncGranule-4ba99b3f07906b20fc92a6f84ca9338ccd6c3b36"
+      },
+      "MoveGranuleStep": {
+        "version": "106",
+        "name": "lf-int-test-MoveGranules",
+        "arn": "arn:aws:lambda:us-east-1:596205514787:function:lf-int-test-MoveGranules:MoveGranules-3d51f752d9cb9362dcd87cdc3cf88e4f54c808bd"
+      },
+      "CmrStep": {
+        "version": "102",
+        "name": "lf-int-test-PostToCmr",
+        "arn": "arn:aws:lambda:us-east-1:596205514787:function:lf-int-test-PostToCmr:PostToCmr-c2e29562477b3b118e0c98ea8ea48428c950e40f"
+      }
+    },
+    "provider": {
+      "protocol": "s3",
+      "globalConnectionLimit": 10,
+      "host": "lf-internal",
+      "updatedAt": 1557243324438,
+      "id": "s3_provider_test-lf-int-test-IngestGranuleSuccess-1557243321911",
+      "createdAt": 1557243324438
+    },
+    "buckets": {
+      "private": {
+        "type": "private",
+        "name": "lf-private"
+      },
+      "public": {
+        "type": "public",
+        "name": "lf-cumulus-public"
+      },
+      "protected-2": {
+        "type": "protected",
+        "name": "lf-protected-2"
+      },
+      "protected": {
+        "type": "protected",
+        "name": "lf-protected"
+      },
+      "shared": {
+        "type": "shared",
+        "name": "cumulus-data-shared"
+      },
+      "internal": {
+        "type": "internal",
+        "name": "lf-internal"
+      }
+    },
+    "distribution_endpoint": "https://8xryubmy5f.execute-api.us-east-1.amazonaws.com:7000/dev/",
+    "input_granules": [{
+      "granuleId": "MOD09GQ.A7288185.GRoNpe.006.8578970646028",
+      "dataType": "MOD09GQ_test-lf-int-test-IngestGranuleSuccess-1557243321911",
+      "version": "006",
+      "files": [{
+        "name": "MOD09GQ.A7288185.GRoNpe.006.8578970646028.hdf",
+        "bucket": "lf-internal",
+        "filename": "s3://lf-internal/file-staging/lf-int-test/MOD09GQ_test-lf-int-test-IngestGranuleSuccess-1557243321911___006/MOD09GQ.A7288185.GRoNpe.006.8578970646028.hdf",
+        "fileStagingDir": "file-staging/lf-int-test/MOD09GQ_test-lf-int-test-IngestGranuleSuccess-1557243321911___006",
+        "path": "lf-int-test-IngestGranuleSuccess-1557243321911-test-data/files",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
+        "type": "data",
+        "size": 1098034
+      }, {
+        "name": "MOD09GQ.A7288185.GRoNpe.006.8578970646028.hdf.met",
+        "bucket": "lf-internal",
+        "filename": "s3://lf-internal/file-staging/lf-int-test/MOD09GQ_test-lf-int-test-IngestGranuleSuccess-1557243321911___006/MOD09GQ.A7288185.GRoNpe.006.8578970646028.hdf.met",
+        "fileStagingDir": "file-staging/lf-int-test/MOD09GQ_test-lf-int-test-IngestGranuleSuccess-1557243321911___006",
+        "path": "lf-int-test-IngestGranuleSuccess-1557243321911-test-data/files",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
+        "type": "metadata",
+        "size": 21708
+      }, {
+        "name": "MOD09GQ.A7288185.GRoNpe.006.8578970646028_ndvi.jpg",
+        "bucket": "lf-internal",
+        "filename": "s3://lf-internal/file-staging/lf-int-test/MOD09GQ_test-lf-int-test-IngestGranuleSuccess-1557243321911___006/MOD09GQ.A7288185.GRoNpe.006.8578970646028_ndvi.jpg",
+        "fileStagingDir": "file-staging/lf-int-test/MOD09GQ_test-lf-int-test-IngestGranuleSuccess-1557243321911___006",
+        "path": "lf-int-test-IngestGranuleSuccess-1557243321911-test-data/files",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
+        "type": "browse",
+        "size": 9728
+      }]
+    }],
+    "cmr": {
+      "username": "lfrederick",
+      "password": "cBWWmtBAjzjaQtexSWvOkDKqI3M2IEqazHW12FoXqSoH+YiMj0b/sHiRPucfJuubL2+bWNLCL8y5OrZyPOQeWxDfZD2ttN4Szzpb+S1vrhcpgzYId3tKgiwN5i0OeB+5EvCp4ZKKczI7yfJGhtzucONDJ5ksuJq+WwfbAz64OUvIafX1c6ShlwlBNOlzFA+sB+VI/V4zIOxPt4uTFTgF/PoXmZVo3UY/08r2TezZajGZ3adW4swKuipJNff554A2rrWgV8LonNyb5qob62NN7EXguq0+EkUpK8UKLVwV/MpmNPHxnf1nEgV/TfG7laDcB6JlvoL/zYFv8TT3ns+YVg==",
+      "clientId": "cumulus-core-lf-int-test",
+      "provider": "CUMULUS"
+    }
+  },
+  "payload": {
+    "process": "modis",
+    "granules": [{
+      "files": [{
+        "name": "MOD09GQ.A7288185.GRoNpe.006.8578970646028.hdf",
+        "filepath": "MOD09GQ___006/2017/MOD/MOD09GQ.A7288185.GRoNpe.006.8578970646028.hdf",
+        "bucket": "lf-protected",
+        "filename": "s3://lf-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A7288185.GRoNpe.006.8578970646028.hdf",
+        "path": "lf-int-test-IngestGranuleSuccess-1557243321911-test-data/files",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
+        "type": "data",
+        "size": 1098034
+      }, {
+        "name": "MOD09GQ.A7288185.GRoNpe.006.8578970646028.hdf.met",
+        "filepath": "MOD09GQ___006/MOD/MOD09GQ.A7288185.GRoNpe.006.8578970646028.hdf.met",
+        "bucket": "lf-private",
+        "filename": "s3://lf-private/MOD09GQ___006/MOD/MOD09GQ.A7288185.GRoNpe.006.8578970646028.hdf.met",
+        "path": "lf-int-test-IngestGranuleSuccess-1557243321911-test-data/files",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
+        "type": "metadata",
+        "size": 21708
+      }, {
+        "name": "MOD09GQ.A7288185.GRoNpe.006.8578970646028_ndvi.jpg",
+        "filepath": "MOD09GQ___006/MOD/MOD09GQ.A7288185.GRoNpe.006.8578970646028_ndvi.jpg",
+        "bucket": "lf-cumulus-public",
+        "filename": "s3://lf-cumulus-public/MOD09GQ___006/MOD/MOD09GQ.A7288185.GRoNpe.006.8578970646028_ndvi.jpg",
+        "path": "lf-int-test-IngestGranuleSuccess-1557243321911-test-data/files",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
+        "type": "browse",
+        "size": 9728
+      }, {
+        "name": "MOD09GQ.A7288185.GRoNpe.006.8578970646028.cmr.xml",
+        "filepath": "MOD09GQ___006/MOD/MOD09GQ.A7288185.GRoNpe.006.8578970646028.cmr.xml",
+        "bucket": "lf-protected-2",
+        "filename": "s3://lf-protected-2/MOD09GQ___006/MOD/MOD09GQ.A7288185.GRoNpe.006.8578970646028.cmr.xml",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
+        "type": "metadata"
+      }],
+      "cmrLink": "https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=G1226567196-CUMULUS",
+      "cmrConceptId": "G1226567196-CUMULUS",
+      "granuleId": "MOD09GQ.A7288185.GRoNpe.006.8578970646028",
+      "cmrMetadataFormat": "echo10",
+      "dataType": "MOD09GQ_test-lf-int-test-IngestGranuleSuccess-1557243321911",
+      "version": "006",
+      "published": true
+    }]
+  },
+  "exception": "None",
+  "workflow_config": {
+    "FilesToGranulesStep": {
+      "granuleIdExtraction": "{{$.meta.collection.granuleIdExtraction}}",
+      "inputGranules": "{{$.meta.input_granules}}"
+    },
+    "StopStatus": {
+      "stateMachine": "{{$.cumulus_meta.state_machine}}",
+      "sfnEnd": true,
+      "executionName": "{{$.cumulus_meta.execution_name}}",
+      "bucket": "{{$.meta.buckets.internal.name}}",
+      "cumulus_message": {
+        "input": "{{$}}"
+      },
+      "stack": "{{$.meta.stack}}"
+    },
+    "ProcessingStep": {
+      "cmrMetadataFormat": "{{$.meta.cmrMetadataFormat}}",
+      "additionalUrls": "{{$.meta.additionalUrls}}",
+      "bucket": "{{$.meta.buckets.internal.name}}",
+      "cumulus_message": {
+        "outputs": [{
+          "source": "{{$.files}}",
+          "destination": "{{$.payload}}"
+        }]
+      },
+      "collection": "{{$.meta.collection}}"
+    },
+    "WorkflowFailed": {},
+    "SyncGranule": {
+      "buckets": "{{$.meta.buckets}}",
+      "pdr": "{{$.meta.pdr}}",
+      "collection": "{{$.meta.collection}}",
+      "cumulus_message": {
+        "outputs": [{
+          "source": "{{$.granules}}",
+          "destination": "{{$.meta.input_granules}}"
+        }, {
+          "source": "{{$}}",
+          "destination": "{{$.payload}}"
+        }, {
+          "source": "{{$.process}}",
+          "destination": "{{$.cumulus_meta.process}}"
+        }]
+      },
+      "downloadBucket": "{{$.cumulus_meta.system_bucket}}",
+      "provider": "{{$.meta.provider}}",
+      "duplicateHandling": "{{$.meta.collection.duplicateHandling}}",
+      "stack": "{{$.meta.stack}}"
+    },
+    "ChooseProcess": {},
+    "MoveGranuleStep": {
+      "duplicateHandling": "{{$.meta.collection.duplicateHandling}}",
+      "buckets": "{{$.meta.buckets}}",
+      "distribution_endpoint": "{{$.meta.distribution_endpoint}}",
+      "bucket": "{{$.meta.buckets.internal.name}}",
+      "collection": "{{$.meta.collection}}"
+    },
+    "Report": {
+      "cumulus_message": {
+        "input": "{{$}}"
+      }
+    },
+    "VpcOrNot": {},
+    "SyncGranule": {
+      "buckets": "{{$.meta.buckets}}",
+      "pdr": "{{$.meta.pdr}}",
+      "collection": "{{$.meta.collection}}",
+      "cumulus_message": {
+        "outputs": [{
+          "source": "{{$.granules}}",
+          "destination": "{{$.meta.input_granules}}"
+        }, {
+          "source": "{{$}}",
+          "destination": "{{$.payload}}"
+        }, {
+          "source": "{{$.process}}",
+          "destination": "{{$.cumulus_meta.process}}"
+        }]
+      },
+      "downloadBucket": "{{$.cumulus_meta.system_bucket}}",
+      "provider": "{{$.meta.provider}}",
+      "duplicateHandling": "{{$.meta.collection.duplicateHandling}}",
+      "stack": "{{$.meta.stack}}"
+    },
+    "CmrStep": {
+      "process": "{{$.cumulus_meta.process}}",
+      "bucket": "{{$.meta.buckets.internal.name}}",
+      "stack": "{{$.meta.stack}}",
+      "cmr": "{{$.meta.cmr}}"
+    }
+  }
+}
+
+aws apigateway update-rest-api --rest-api-id 8xryubmy5f --patch-operations op=replace,path=/endpointConfiguration/types/PRIVATE,value=EDGE
