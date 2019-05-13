@@ -266,6 +266,18 @@ class UpdatedKes extends Kes {
     Handlebars.registerHelper('buildCWDashboard', (dashboardConfig, ecs, es, stackName) =>
       this.buildCWDashboard(dashboardConfig, ecs, es, stackName));
 
+    Handlebars.registerHelper('ifPrivateApi', (configs, api, options) => {
+      const privateApi = configs && configs[api] ? configs[api].private : false;
+      return privateApi ? options.fn(this) : options.inverse(this);
+    });
+
+    Handlebars.registerHelper('getApiPortSuffix', (configs, api) => {
+      if (configs && configs[api] && configs[api].port) {
+        return `:${configs[api].port}/`;
+      }
+      return '/';
+    });
+
     return super.parseCF(cfFile);
   }
 

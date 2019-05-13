@@ -59,6 +59,11 @@ Resources:
     Type: AWS::ApiGateway::RestApi
     Properties:
       Name: {{../stackName}}-{{name}}
+      {{#ifPrivateApi ../parent.apiConfigs name}}
+      EndpointConfiguration:
+        Types:
+          - 'PRIVATE'
+      {{/ifPrivateApi}}
 {{/each}}
 
 {{# if apiMethods}}
@@ -195,7 +200,9 @@ Resources:
                 - Ref: backendRestApi
                 - ".execute-api."
                 - {"Fn::Sub": "${AWS::Region}"}
-                - ".amazonaws.com/{{../parent.apiStage}}/token"
+                - ".amazonaws.com"
+                - {{{getApiPortSuffix ../parent.apiConfigs "backend"}}}
+                - "{{../parent.apiStage}}/token"
         {{/if}}
       {{/ifEquals}}
       {{# ifEquals this.urs_redirect "distribution"}}
@@ -209,7 +216,9 @@ Resources:
                 - Ref: distributionRestApi
                 - ".execute-api."
                 - {"Fn::Sub": "${AWS::Region}"}
-                - ".amazonaws.com/{{../parent.apiStage}}/redirect"
+                - ".amazonaws.com"
+                - {{{getApiPortSuffix ../parent.apiConfigs "distribution"}}}
+                - "{{../parent.apiStage}}/redirect"
         {{/if}}
       {{/ifEquals}}
       {{# if this.useDistributionApi}}
@@ -223,7 +232,9 @@ Resources:
                 - Ref: distributionRestApi
                 - ".execute-api."
                 - {"Fn::Sub": "${AWS::Region}"}
-                - ".amazonaws.com/{{../parent.apiStage}}"
+                - ".amazonaws.com"
+                - {{{getApiPortSuffix ../parent.apiConfigs "distribution"}}}
+                - "{{../parent.apiStage}}"
         {{/if}}
       {{/if}}
     {{#each this.envs}}
@@ -332,5 +343,7 @@ Outputs:
           - Ref: {{name}}RestApi
           - ".execute-api."
           - {"Fn::Sub": "${AWS::Region}"}
-          - ".amazonaws.com/{{../parent.apiStage}}/"
+          - ".amazonaws.com"
+          - {{{getApiPortSuffix ../parent.apiConfigs name}}}
+          - "{{../parent.apiStage}}/"
   {{/each}}
