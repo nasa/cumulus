@@ -30,7 +30,7 @@ const {
 
 const config = loadConfig();
 
-const emsReportLambda = `${config.stackName}-EmsReport`;
+const emsReportLambda = `${config.stackName}-EmsIngestReport`;
 const bucket = config.bucket;
 const emsProvider = config.ems_provider;
 const stackName = config.stackName;

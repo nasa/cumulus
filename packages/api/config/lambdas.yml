@@ -85,11 +85,11 @@ CustomBootstrap:
   envs:
     system_bucket: '{{system_bucket}}'
 
-EmsReport:
+EmsIngestReport:
   handler: index.handler
   timeout: 300
   memory: 320
-  source: 'node_modules/@cumulus/api/dist/emsReport/'
+  source: 'node_modules/@cumulus/api/dist/emsIngestReport/'
   useElasticSearch: '{{es.name}}'
   launchInVpc: true
   envs:
