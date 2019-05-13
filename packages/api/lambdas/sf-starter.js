@@ -51,7 +51,7 @@ async function incrementPrioritySemaphore(key, maximum) {
     await semaphore.up(key, maximum);
   } catch (err) {
     if (err instanceof ResourcesLockedError) {
-      log.info(`The maximum number of executions for ${key} are already running. Could not start a new execution.`)
+      log.info(`The maximum number of executions for ${key} are already running. Could not start a new execution.`);
     }
     throw err;
   }
@@ -60,8 +60,8 @@ async function incrementPrioritySemaphore(key, maximum) {
 async function incrementAndDispatch(queueMessage) {
   const message = get(queueMessage, 'Body', {});
 
-  if (!has(message, 'cumulus_meta.priorityKey') ||
-      isNil(message.cumulus_meta.priorityKey)) {
+  if (!has(message, 'cumulus_meta.priorityKey')
+      || isNil(message.cumulus_meta.priorityKey)) {
     const errorMsg = 'Could not find priority key for message';
     log.debug(errorMsg, message);
     throw new Error(errorMsg);
@@ -106,7 +106,7 @@ async function handleEvent(event, dispatchFn, visibilityTimeout) {
   const timeLimit = event.timeLimit || 240;
 
   if (!event.queueUrl) {
-    throw new Error('queueUrl is missing')
+    throw new Error('queueUrl is missing');
   }
 
   const consumer = new Consumer({

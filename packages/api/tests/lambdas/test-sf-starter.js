@@ -4,13 +4,15 @@ const rewire = require('rewire');
 const test = require('ava');
 const {
   aws,
-  DynamoDb,
   errors: {
     ResourcesLockedError
   },
   Semaphore,
   testUtils: {
     randomId
+  },
+  util: {
+    noop
   }
 } = require('@cumulus/common');
 
@@ -55,10 +57,10 @@ const createSendMessageTasks = (queueUrl, message, total) => {
     count += 1;
   }
   return tasks;
-}
+};
 
 // Set dispatch to noop so nothing is attempting to start executions.
-sfStarter.__set__('dispatch', () => {});
+sfStarter.__set__('dispatch', noop);
 
 test.before(async () => {
   process.env.SemaphoresTable = randomId('semaphoreTable');
@@ -78,9 +80,7 @@ test.beforeEach(async (t) => {
   t.context.queueUrl = await aws.createQueue(randomId('queue'));
 });
 
-test.afterEach.always((t) =>
-  aws.sqs().deleteQueue({ QueueUrl: t.context.queueUrl }).promise()
-);
+test.afterEach.always((t) => aws.sqs().deleteQueue({ QueueUrl: t.context.queueUrl }).promise());
 
 test.after.always(() => manager.deleteTable());
 
