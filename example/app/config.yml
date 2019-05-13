@@ -269,7 +269,7 @@ cumulus-sit:
 # Nightly Test  SIT stack
 jk-sit:
   prefix: jk-sit
-  stackName: jk-sit-iam
+  stackName: jk-sit
   buckets:
     internal:
       name: jk-sit-internal
