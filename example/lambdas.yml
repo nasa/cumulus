@@ -25,32 +25,30 @@ DiscoverGranules:
   source: node_modules/@cumulus/discover-granules/dist/
   useMessageAdapter: true
   launchInVpc: true
-DiscoverGranulesNoVpc:
-  handler: index.handler
-  timeout: 300
-  memory: 512
-  source: node_modules/@cumulus/discover-granules/dist/
-  useMessageAdapter: true
 DiscoverPdrs:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/discover-pdrs/dist/
   useMessageAdapter: true
   logToElasticSearch: true
+  launchInVpc: true
 FakeProcessing:
   handler: index.handler
   source: node_modules/@cumulus/test-processing/dist/
   useMessageAdapter: true
+  launchInVpc: true
 FilesToGranules:
   handler: index.handler
   source: node_modules/@cumulus/files-to-granules/dist/
   useMessageAdapter: true
+  launchInVpc: true
 HelloWorld:
   handler: index.handler
   timeout: 300
   memory: 256
   source: node_modules/@cumulus/hello-world/dist/
   useMessageAdapter: true
+  launchInVpc: true
 ModisProcessing:
   handler: lambda_handler.handler
   timeout: 300
@@ -59,28 +57,33 @@ ModisProcessing:
     key: deploy/cumulus-process/modis/0.5.2.zip
     uniqueIdentifier: '0dot5dot2'
   runtime: python2.7
+  launchInVpc: true
 MoveGranules:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/move-granules/dist/
   useMessageAdapter: true
+  launchInVpc: true
 QueuePdrs:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/queue-pdrs/dist/
   useMessageAdapter: true
   logToElasticSearch: true
+  launchInVpc: true
 ParsePdr:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/parse-pdr/dist/
   useMessageAdapter: true
   logToElasticSearch: true
+  launchInVpc: true
 PdrStatusCheck:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/pdr-status-check/dist/
   useMessageAdapter: true
+  launchInVpc: true
 PostToCmr:
   handler: index.handler
   timeout: 300
@@ -88,6 +91,7 @@ PostToCmr:
   logToElasticSearch: true
   source: node_modules/@cumulus/post-to-cmr/dist/
   useMessageAdapter: true
+  launchInVpc: true
   envs:
     system_bucket: '{{system_bucket}}'
 QueueGranules:
@@ -95,11 +99,13 @@ QueueGranules:
   timeout: 300
   source: node_modules/@cumulus/queue-granules/dist/
   useMessageAdapter: true
+  launchInVpc: true
 SfSnsReport:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/sf-sns-report/dist
   useMessageAdapter: true
+  launchInVpc: true
 SyncGranule:
   handler: index.handler
   timeout: 300
@@ -109,28 +115,28 @@ SyncGranule:
   launchInVpc: true
   envs:
     system_bucket: '{{system_bucket}}'
-SyncGranuleNoVpc:
-  handler: index.handler
-  timeout: 300
-  logToElasticSearch: true
-  source: node_modules/@cumulus/sync-granule/dist/
-  useMessageAdapter: true
 S3AccessTest:
   handler: index.handler
   source: lambdas/s3AccessTest/
+  launchInVpc: true
 SnsS3Test:
   handler: index.handler
   source: lambdas/snsS3Test/
+  launchInVpc: true
 WaitForDeployment:
   handler: index.waitForDeploymentHandler
   source: node_modules/@cumulus/integration-tests/dist/
+  launchInVpc: true
 VersionUpTest:
   handler: index.handler
   memory: 128
   source: lambdas/versionUpTest
+  launchInVpc: true
 AsyncOperationSuccess:
   handler: lambdas.success
   source: 'lambdas/asyncOperations/'
+  launchInVpc: true
 AsyncOperationFail:
   handler: lambdas.fail
   source: 'lambdas/asyncOperations/'
+  launchInVpc: true

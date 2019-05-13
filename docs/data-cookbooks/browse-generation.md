@@ -155,34 +155,40 @@ This will cause kes to export the workflows in the new file along with the other
 Ensure the following lambdas are in your deployment's lambdas.yml (reference the [example lambdas.yml](https://github.com/nasa/cumulus/blob/master/example/lambdas.yml)):
 
 ```
-DiscoverGranulesNoVpc:
+DiscoverGranules:
   handler: index.handler
   timeout: 300
   memory: 512
   source: node_modules/@cumulus/discover-granules/dist/
   useMessageAdapter: true
+  launchInVpc: true
 QueueGranules:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/queue-granules/dist/
   useMessageAdapter: true
-SyncGranuleNoVpc:
+  launchInVpc: true
+SyncGranule:
   handler: index.handler
   timeout: 300
   logToElasticSearch: true
   source: node_modules/@cumulus/sync-granule/dist/
   useMessageAdapter: true
+  launchInVpc: true
 FilesToGranules:
   handler: index.handler
   source: node_modules/@cumulus/files-to-granules/dist/
+  launchInVpc: true
 FakeProcessing:
   handler: index.handler
   source: node_modules/@cumulus/test-processing/dist/
   useMessageAdapter: true
+  launchInVpc: true
 MoveGranules:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/move-granules/dist/
+  launchInVpc: true
 PostToCmr:
   handler: index.handler
   timeout: 300
@@ -190,6 +196,7 @@ PostToCmr:
   logToElasticSearch: true
   source: node_modules/@cumulus/post-to-cmr/dist/
   useMessageAdapter: true
+  launchInVpc: true
   envs:
     system_bucket: '{{system_bucket}}'
 ```
