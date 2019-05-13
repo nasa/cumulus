@@ -14,13 +14,14 @@ const {
 } = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
-const stubLink = 'file.txt';
-class TestEmitter extends EventEmitter {
-  start() {
-    this.emit('fetchcomplete', null, `<a href="${stubLink}">link</a>`);
+const setupCrawler = (stubLink) => {
+  class TestEmitter extends EventEmitter {
+    start() {
+      this.emit('fetchcomplete', null, `<a href="${stubLink}">link</a>`);
+    }
   }
-}
-http.__set__('Crawler', TestEmitter);
+  http.__set__('Crawler', TestEmitter);
+};
 
 class MyTestDiscoveryClass {
   constructor(useList) {
@@ -60,6 +61,27 @@ test('Download remote file to s3 with correct content-type', async (t) => {
 });
 
 test('returns files with provider path', async (t) => {
+  const stubLink = 'file.txt';
+  setupCrawler(stubLink);
+
+  const actualFiles = await myTestHttpDiscoveryClass.list();
+  const expectedFiles = [{ name: stubLink, path: myTestHttpDiscoveryClass.path }];
+  t.deepEqual(actualFiles, expectedFiles);
+});
+
+test('strips trailing spaces from name', async (t) => {
+  const stubLink = 'fileWithTrailingSpaces.txt  ';
+  setupCrawler(stubLink);
+
+  const actualFiles = await myTestHttpDiscoveryClass.list();
+  const expectedFiles = [{ name: 'fileWithTrailingSpaces.txt', path: myTestHttpDiscoveryClass.path }];
+  t.deepEqual(actualFiles, expectedFiles);
+});
+
+test('does not strip leading spaces from name', async (t) => {
+  const stubLink = ' fileWithSpaces.txt';
+  setupCrawler(stubLink);
+
   const actualFiles = await myTestHttpDiscoveryClass.list();
   const expectedFiles = [{ name: stubLink, path: myTestHttpDiscoveryClass.path }];
   t.deepEqual(actualFiles, expectedFiles);
