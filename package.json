@@ -52,7 +52,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "devDependencies": {
-    "audit-ci": "^1.6.0",
+    "audit-ci": "^1.7.0",
     "ava": "^0.25.0",
     "babel-eslint": "^8.2.2",
     "coveralls": "^3.0.0",
