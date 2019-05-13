@@ -9,16 +9,13 @@ echo Running parallel integration tests
 DOT_PID="$!"
 
 TESTS=$(find spec/parallel -type f -name '*spec.js' -or -name '*Spec.js')
-
 testOutputDir=scripts/test_output
 
 rm -r -f $testOutputDir
 mkdir -p $testOutputDir
 
-./node_modules/.bin/parallel -j 4 sh scripts/run_test.sh  $testOutputDir ::: $TESTS
-
+echo "" | ./node_modules/.bin/parallel -j 6 sh scripts/run_test.sh  $testOutputDir ::: $TESTS
 result=$?
-
 echo parallel tests complete: $result suite failures
 
 # print test output to console
