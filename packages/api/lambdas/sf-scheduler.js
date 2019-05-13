@@ -63,4 +63,4 @@ function schedule(event, context, cb) {
     .catch((e) => cb(e));
 }
 
-module.exports = schedule;
+module.exports = { schedule };
