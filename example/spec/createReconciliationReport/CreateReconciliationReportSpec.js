@@ -25,7 +25,6 @@ const {
   addCollections,
   addProviders,
   buildAndExecuteWorkflow,
-  cleanupCollections,
   cleanupProviders,
   generateCmrXml,
   granulesApi: granulesApiTestUtils,

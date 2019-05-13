@@ -15,6 +15,8 @@ const { generateAndSubmitReports, submitReports } = require('../lib/ems');
  * @returns {Array<Object>} - list of report type and its file path {reportType, file}
  */
 function handler(event, context, callback) {
+  // eslint-disable-next-line no-param-reassign
+  context.callbackWaitsForEmptyEventLoop = false;
   // 24-hour period ending past midnight
   let endTime = moment.utc().startOf('day').toDate().toUTCString();
   let startTime = moment.utc().subtract(1, 'days').startOf('day').toDate()
