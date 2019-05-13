@@ -387,7 +387,14 @@ describe('Ingesting from PDR', () => {
             prefix: config.stackName,
             arn: parsePdrExecutionArn
           });
-          executionStatus = JSON.parse(executionStatusResponse.body);
+          console.log(`Execution status request status: ${executionStatusResponse.status}`);
+
+          try {
+            executionStatus = JSON.parse(executionStatusResponse.body);
+          } catch (e) {
+            console.log(`Error parsing JSON ${executionStatusResponse}`);
+            throw e;
+          }
         });
 
         it('branches according to the CMA output', async () => {
