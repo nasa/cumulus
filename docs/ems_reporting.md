@@ -54,13 +54,14 @@ Upload the corresponding private key to s3, use `${system_bucket}` as bucket nam
 
 ```
 ems:
-  provider: <provider>
-  host: <EMS host>
+  provider: <provider, required>
+  host: <EMS host, required if submitReport is true>
   port: <optional, EMS host port, default is 22>
   path: <optional, EMS host directory path for reports, default is account root>
-  username: <EMS account username>
+  username: <EMS account username, required if submitReport is true>
   privateKey: <optional, privateKey file name, default is ems-private.pem>
   dataSource: <optional, EMS report DataSourcee, the stackName is used if not specified>
+  submitReport: <optional, indicates if the reports will be sent to EMS, default is false>
 ```
 
 Submitted reports will be moved to `sent` folder.

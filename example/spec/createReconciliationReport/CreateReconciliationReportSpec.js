@@ -338,7 +338,8 @@ describe('When there are granule differences and granule reconciliation is run',
         }
       }).promise(),
       deleteFolder(config.bucket, testDataFolder),
-      cleanupCollections(config.stackName, config.bucket, collectionsDir),
+      // leave collections in the table for EMS reports
+      //cleanupCollections(config.stackName, config.bucket, collectionsDir),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranule }),
       cmr.deleteGranule(cmrGranule)

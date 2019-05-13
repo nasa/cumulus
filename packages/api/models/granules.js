@@ -372,11 +372,16 @@ class Granule extends Manager {
     const params = {
       TableName: this.tableName,
       IndexName: 'collectionId-granuleId-index',
-      ExpressionAttributeNames:
-        { '#collectionId': 'collectionId', '#granuleId': 'granuleId', '#files': 'files' },
+      ExpressionAttributeNames: {
+        '#collectionId': 'collectionId',
+        '#granuleId': 'granuleId',
+        '#files': 'files',
+        '#published': 'published',
+        '#createdAt': 'createdAt'
+      },
       ExpressionAttributeValues: { ':collectionId': collectionId },
       KeyConditionExpression: '#collectionId = :collectionId',
-      ProjectionExpression: '#granuleId, #collectionId, #files'
+      ProjectionExpression: '#granuleId, #collectionId, #files, #published, #createdAt'
     };
 
     // add status filter
