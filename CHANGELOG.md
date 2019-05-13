@@ -61,6 +61,7 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
 - **CUMULUS-1265**
   - Added `apiConfigs` configuration option to configure API Gateway to be private
   - All internal lambdas configured to run inside the VPC by default
+  - Removed references to `NoVpc` lambdas from documentation and `example` folder.
 
 - **CUMULUS-802**
   - Adds autoscaling of ECS clusters
