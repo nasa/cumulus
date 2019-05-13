@@ -65,6 +65,10 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
   - Adds autoscaling of ECS clusters
   - Adds autoscaling of ECS services that are handling StepFunction activities
 
+- **CUMULUS-1245 CUMULUS-795**
+  - Added additional `ems` configuration parameters for sending the ingest reports to EMS
+  - Added functionality to send daily ingest reports to EMS
+
 ## Changed
 
 - **CUMULUS-1236**
