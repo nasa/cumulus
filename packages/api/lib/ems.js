@@ -204,7 +204,7 @@ async function uploadReportToS3(filename) {
   }).promise();
 
   fs.unlinkSync(filename);
-  const s3Uri = `s3://${bucket}/${key}`;
+  const s3Uri = aws.buildS3Uri(bucket, key);
   log.info(`uploaded ${s3Uri}`);
   return s3Uri;
 }
@@ -295,23 +295,29 @@ async function generateReports(startTime, endTime) {
 /**
  * submit reports to ems
  *
- * @param {Array<Object>} reports - list of s3 reports
+ * @param {Array<Object>} reports - list of report type and its s3 file path {reportType, file}
+ * @returns {Array<string>} - list of report type and its s3 file path {reportType, file}
  */
 async function submitReports(reports) {
   const emsConfig = {
     username: process.env.ems_username,
     host: process.env.ems_host,
     port: process.env.ems_port,
-    privateKey: process.env.ems_privateKey || 'ems-private.pem'
+    privateKey: process.env.ems_privateKey || 'ems-private.pem',
+    submitReport: process.env.ems_submitReport === 'true' || false
   };
 
-  if (!emsConfig.username || !emsConfig.host) return;
+  if (!emsConfig.submitReport) {
+    log.debug('EMS reports are not configured to be sent');
+    return reports;
+  }
 
+  const reportsSent = [];
   const sftpClient = new Sftp(emsConfig);
 
   // submit files one by one using the same connection
   for (let i = 0; i < reports.length; i += 1) {
-    const parsed = aws.parseS3Uri(reports[i]);
+    const parsed = aws.parseS3Uri(reports[i].file);
     const keyfields = parsed.Key.split('/');
     const fileName = keyfields.pop();
     // eslint-disable-next-line no-await-in-loop
@@ -333,21 +339,26 @@ async function submitReports(reports) {
 
     // eslint-disable-next-line no-await-in-loop
     await aws.deleteS3Object(parsed.Bucket, parsed.Key);
+    reportsSent.push({
+      reportType: reports[i].reportType,
+      file: aws.buildS3Uri(parsed.Bucket, newKey)
+    });
   }
 
   await sftpClient.end();
+  return reportsSent;
 }
 
 /**
  * generate and submit EMS reports
  * @param {string} startTime - start time of the records
  * @param {string} endTime - end time of the records
- * @returns {undefined} - no return value
+ * @returns {Array<Object>} - list of report type and its file path {reportType, file}
  */
 async function generateAndSubmitReports(startTime, endTime) {
   const reports = await Promise.all(Object.keys(emsMappings)
     .map((reportType) => generateReport(reportType, startTime, endTime)));
-  await exports.submitReports(reports.map((report) => report.file));
+  return submitReports(reports);
 }
 
 module.exports = {

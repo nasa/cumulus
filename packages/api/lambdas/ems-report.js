@@ -4,7 +4,7 @@ const moment = require('moment');
 const { generateAndSubmitReports, submitReports } = require('../lib/ems');
 
 /**
- * handler, generate daily report
+ * Lambda task, generate and send EMS ingest reports
  *
  * @param {Object} event - event passed to lambda
  * @param {string} event.startTime - test only, report startTime in format YYYY-MM-DDTHH:mm:ss
@@ -12,7 +12,7 @@ const { generateAndSubmitReports, submitReports } = require('../lib/ems');
  * @param {string} event.report - test only, s3 uri of the report to be sent
  * @param {Object} context - AWS Lambda context
  * @param {function} callback - callback function
- * @returns {undefined} undefined
+ * @returns {Array<Object>} - list of report type and its file path {reportType, file}
  */
 function handler(event, context, callback) {
   // 24-hour period ending past midnight

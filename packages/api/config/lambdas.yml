@@ -100,6 +100,7 @@ EmsReport:
     ems_host: '{{ems.host}}'
     ems_port: '{{ems.port}}'
     ems_dataSource: '{{ems.dataSource}}'
+    ems_submitReport: '{{ems.submitReport}}'
   namedLambdaDeadLetterQueue: true
 
 EmsDistributionReport:
@@ -117,6 +118,7 @@ EmsDistributionReport:
     ems_host: '{{ems.host}}'
     ems_port: '{{ems.port}}'
     ems_dataSource: '{{ems.dataSource}}'
+    ems_submitReport: '{{ems.submitReport}}'
 
 executeMigrations:
   handler: index.executeMigrations

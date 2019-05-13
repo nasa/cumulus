@@ -97,9 +97,9 @@ test('Upload file from s3 to remote', async (t) => {
   const s3object = { Bucket: bucket, Key: 'delete-me-test-sftp-uploads3.txt' };
   await s3PutObject({ Body: randomString(), ...s3object });
   const testSftpClient = new Sftp(sftpConfig);
-  await testSftpClient.uploadFromS3(s3object, `/${s3object.Key}`);
+  await testSftpClient.uploadFromS3(s3object, `/granules/${s3object.Key}`);
   const s3sum = await calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket, key: s3object.Key });
-  const filesum = await generateChecksumFromStream('CKSUM', fs.createReadStream(`../test-data/${s3object.Key}`));
+  const filesum = await generateChecksumFromStream('CKSUM', fs.createReadStream(`../test-data/granules/${s3object.Key}`));
   t.is(s3sum, filesum);
   await testSftpClient.end();
 });
@@ -108,13 +108,13 @@ test('Upload data string to remote', async (t) => {
   const testSftpClient = new Sftp(sftpConfig);
   const data = `${randomString()}${randomString()}`;
   const fileName = 'delete-me-test-sftp-uploaddata.txt';
-  await testSftpClient.uploadFromString(data, `/${fileName}`);
+  await testSftpClient.uploadFromString(data, `/granules/${fileName}`);
 
   const dataStream = new Readable();
   dataStream.push(data);
   dataStream.push(null);
   const expectedSum = await generateChecksumFromStream('CKSUM', dataStream);
-  const filesum = await generateChecksumFromStream('CKSUM', fs.createReadStream(`../test-data/${fileName}`));
+  const filesum = await generateChecksumFromStream('CKSUM', fs.createReadStream(`../test-data/granules/${fileName}`));
   t.is(expectedSum, filesum);
   await testSftpClient.end();
 });
