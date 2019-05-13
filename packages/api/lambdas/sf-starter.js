@@ -41,6 +41,14 @@ function dispatch(message) {
   }).promise();
 }
 
+/**
+ * Increment the priority semaphore.
+ *
+ * @param {string} key - Key for the priority semaphore
+ * @param {number} maximum - Maximum number of executions allowed for this semaphore
+ * @returns {Promise}
+ * @throws {Error}
+ */
 async function incrementPrioritySemaphore(key, maximum) {
   const semaphore = new Semaphore(
     dynamodbDocClient(),
@@ -57,6 +65,16 @@ async function incrementPrioritySemaphore(key, maximum) {
   }
 }
 
+/**
+ * Attempt to increment the priority semaphore and start a new execution.
+ *
+ * If `incrementPrioritySemaphore()` is unable to increment the priority semaphore,
+ * it throws an error and `dispatch()` is not called.
+ *
+ * @param {Object} queueMessage - SQS message
+ * @returns {Promise} - Promise returned by `dispatch()`
+ * @throws {Error}
+ */
 async function incrementAndDispatch(queueMessage) {
   const message = get(queueMessage, 'Body', {});
 
