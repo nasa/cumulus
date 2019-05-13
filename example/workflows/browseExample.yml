@@ -69,8 +69,8 @@ CookbookBrowseExample:
         cumulus_message:
           input: '{$}'
       ResultPath: null
-      Next: SyncGranuleNoVpc
-    SyncGranuleNoVpc:
+      Next: SyncGranule
+    SyncGranule:
       CumulusConfig:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
@@ -88,7 +88,7 @@ CookbookBrowseExample:
             - source: '{$.process}'
               destination: '{$.cumulus_meta.process}'
       Type: Task
-      Resource: ${SyncGranuleNoVpcLambdaFunction.Arn}
+      Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
           - ErrorEquals:
               - States.ALL
