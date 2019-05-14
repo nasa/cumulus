@@ -151,7 +151,7 @@ Copy `app/.env.sample` to `app/.env` and add CMR/earthdata client [credentials](
   EARTHDATA_CLIENT_ID=clientid
   EARTHDATA_CLIENT_PASSWORD=clientpassword
   VPC_ID=someid
-  VPC_CIDR_IP=0.0.0.0/0
+  SECURITY_GROUP=sg-0000abcd1234
   AWS_SUBNET=somesubnet
   AWS_ACCOUNT_ID=0000000
   AWS_REGION=awsregion
@@ -182,7 +182,7 @@ dev:                            # deployment name
     vpcId: '{{VPC_ID}}'         # this has to be set in .env
     subnets:
       - '{{AWS_SUBNET}}'        # this has to be set in .env
-    cidrIp: '{{VPC_CIDR_IP}}'   # this has to be set in .env
+    securityGroup: '{{SECURITY_GROUP}}'   # this has to be set in .env
 
   ecs:                          # Required
     instanceType: t2.micro

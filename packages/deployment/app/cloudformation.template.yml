@@ -15,12 +15,6 @@ Parameters:
     Description: 'Email used to login to a private docker repository (not required)'
     Default: ""
     NoEcho: true
-{{#if vpc}}
-  EcsSecurityGroup:
-    Type: String
-    Description: 'Security Group used by the ECS containers of {{prefix}}'
-    NoEcho: true
-{{/if}}
 {{#if es.name}}
   {{es.name}}DomainEndpoint:
     Type: String
@@ -110,8 +104,7 @@ Resources:
         {{@key}}DynamoDB: {{../../prefix}}-{{@key}}
       {{/each}}
       {{# if ../vpc }}
-        SecurityGroupId:
-          Ref: EcsSecurityGroup
+        SecurityGroupId: {{../vpc.securityGroup}}
       {{/if}}
       TemplateURL: {{this.url}}
 {{/ifNotEquals}}
@@ -478,7 +471,7 @@ Resources:
     {{# if ../vpc }}
       VpcConfig:
         SecurityGroupIds:
-          - Ref: EcsSecurityGroup
+          - {{../vpc.securityGroup}}
         SubnetIds:
         {{#each ../vpc.subnets}}
           - {{this}}
@@ -564,7 +557,7 @@ Resources:
       AssociatePublicIpAddress: {{#if ecs.publicIp}}{{ecs.publicIp}}{{else}}false{{/if}}
     {{/if}}
       SecurityGroups:
-        - Ref: EcsSecurityGroup
+        - {{../vpc.securityGroup}}
        {{# if ecs.efs.mount}}
         - Fn::ImportValue:
             "{{prefix}}-EFSSecurityGroup"
