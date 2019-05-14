@@ -125,7 +125,7 @@ function performDelete(esClient, tableIndex, fields, body) {
   }
 
   return indexer
-    .deleteRecord(esClient, id, type, parent)
+    .deleteRecord({ esClient, id, type, parent })
     // Important to catch this error. Uncaught errors will cause
     // the handler to fail and other records will not be updated.
     .catch((err) => log.error(err));
