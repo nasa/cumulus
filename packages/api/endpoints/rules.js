@@ -13,7 +13,7 @@ const indexer = require('../es/indexer');
  * @param {Object} record - Collection record object
  * @returns {Promise} - Promise of indexing operation
  */
-async function addToES (record) {
+async function addToES(record) {
   const esClient = await Search.es(process.env.ES_HOST);
   const esIndex = process.env.esIndex;
   return indexer.indexRule(esClient, record, esIndex);
@@ -149,7 +149,12 @@ async function del(req, res) {
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);
     const esIndex = process.env.esIndex;
-    await esClient.delete({ id: name, index: esIndex, type: 'rule', ignore: [404] });
+    await esClient.delete({
+      id: name,
+      index: esIndex,
+      type: 'rule',
+      ignore: [404]
+    });
   }
   return res.send({ message: 'Record deleted' });
 }

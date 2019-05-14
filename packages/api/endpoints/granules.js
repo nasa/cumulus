@@ -152,7 +152,7 @@ async function del(req, res) {
       parent: granule.collectionId,
       index: esIndex,
       ignore: [404]
-    })
+    });
   }
 
   return res.send({ detail: 'Record deleted' });
