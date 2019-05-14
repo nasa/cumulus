@@ -278,13 +278,13 @@ jk-sit:
       name: jk-sit-private
       type: private
     protected:
-      name: jk-sit-protected
+      name: cumulus-sit-protected
       type: protected
     public:
-      name: jk-sit-public
+      name: cumulus-sit-public
       type: public
     protected-2:
-      name: jk-sit-protected
+      name: cumulus-sit-protected
       type: protected
     dashboard:
       name: jk-sit-dashboard
