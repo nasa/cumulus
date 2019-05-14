@@ -52,10 +52,9 @@ async function get(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @param {function} next - calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function post(req, res, next) {
+async function post(req, res) {
   try {
     const data = req.body;
     const name = data.name;
@@ -73,15 +72,14 @@ async function post(req, res, next) {
     } catch (e) {
       if (e instanceof RecordDoesNotExist) {
         await c.create(data);
-        const returnMessage = { message: 'Record saved', record: data };
 
         if (inTestMode()) {
-          req.collectionRecord = data;
-          req.returnMessage = returnMessage;
-          return next();
+          const esClient = await Search.es(process.env.ES_HOST);
+          const esIndex = process.env.esIndex;
+          indexer.indexCollection(esClient, data, esIndex);
         }
 
-        return res.send(returnMessage);
+        return res.send({ message: 'Record saved', record: data });
       }
       throw e;
     }
@@ -95,10 +93,9 @@ async function post(req, res, next) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @param {function} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function put(req, res, next) {
+async function put(req, res) {
   const pname = req.params.name;
   const pversion = req.params.version;
 
@@ -120,8 +117,9 @@ async function put(req, res, next) {
     const result = await c.create(data);
 
     if (inTestMode()) {
-      req.collectionRecord = result;
-      return next();
+      const esClient = await Search.es(process.env.ES_HOST);
+      const esIndex = process.env.esIndex;
+      indexer.indexCollection(esClient, result, esIndex);
     }
 
     return res.send(result);
@@ -138,17 +136,23 @@ async function put(req, res, next) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @param {function} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function del(req, res, next) {
+async function del(req, res) {
   const { name, version } = req.params;
 
   const collectionModel = new models.Collection();
 
   try {
     await collectionModel.delete({ name, version });
-    if (inTestMode()) return next();
+
+    if (inTestMode()) {
+      const collectionId = constructCollectionId(name, version);
+      const esClient = await Search.es(process.env.ES_HOST);
+      const esIndex = process.env.esIndex;
+      esClient.delete({ id: collectionId, index: esIndex, type: 'collection' });
+    }
+
     return res.send({ message: 'Record deleted' });
   } catch (err) {
     if (err instanceof AssociatedRulesError) {
@@ -159,37 +163,11 @@ async function del(req, res, next) {
   }
 }
 
-async function addToES(req, res) {
-  const collection = req.collectionRecord;
-
-  if (inTestMode()) {
-    const esClient = await Search.es(process.env.ES_HOST);
-    const esIndex = process.env.esIndex;
-    indexer.indexCollection(esClient, collection, esIndex);
-  }
-
-  if (req.returnMessage) return res.send(req.returnMessage);
-  return res.send(collection);
-}
-
-async function removeFromES(req, res) {
-  const { name, version } = req.params;
-
-  if (inTestMode()) {
-    const collectionId = constructCollectionId(name, version);
-    const esClient = await Search.es(process.env.ES_HOST);
-    const esIndex = process.env.esIndex;
-    esClient.delete({ id: collectionId, index: esIndex, type: 'collection' });
-  }
-
-  return res.send({ message: 'Record deleted' });
-}
-
 // express routes
 router.get('/:name/:version', get);
-router.put('/:name/:version', put, addToES);
-router.delete('/:name/:version', del, removeFromES);
-router.post('/', post, addToES);
+router.put('/:name/:version', put);
+router.delete('/:name/:version', del);
+router.post('/', post);
 router.get('/', list);
 
 module.exports = router;

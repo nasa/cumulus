@@ -232,8 +232,7 @@ test('DELETE handles the case where the PDR exists in S3 but not in DynamoDb', a
 
 test('DELETE handles the case where the PDR exists in DynamoDb but not in S3', async (t) => {
   const newPdr = fakePdrFactory('completed');
-  const record = await pdrModel.create(newPdr);
-  await indexer.indexPdr(esClient, record, esIndex);
+  await pdrModel.create(newPdr);
 
   const response = await request(app)
     .delete(`/pdrs/${newPdr.pdrName}`)

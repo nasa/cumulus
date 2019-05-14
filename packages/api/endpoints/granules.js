@@ -114,10 +114,9 @@ async function put(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @param {function} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function del(req, res, next) {
+async function del(req, res) {
   const granuleId = req.params.granuleName;
   log.info(`granules.del ${granuleId}`);
 
@@ -142,8 +141,12 @@ async function del(req, res, next) {
   }));
 
   await granuleModelClient.delete({ granuleId });
-  req.collectionId = granule.collectionId;
-  if (inTestMode()) return next();
+
+  if (inTestMode()) {
+    const esClient = await Search.es(process.env.ES_HOST);
+    const esIndex = process.env.esIndex;
+    await indexer.deleteRecord(esClient, granuleId, 'granule', granule.collectionId, esIndex);
+  }
 
   return res.send({ detail: 'Record deleted' });
 }
@@ -170,19 +173,9 @@ async function get(req, res) {
   return res.send(result);
 }
 
-async function removeFromES(req, res) {
-  const granuleId = req.params.granuleName;
-  if (inTestMode()) {
-    const esClient = await Search.es(process.env.ES_HOST);
-    const esIndex = process.env.esIndex;
-    await indexer.deleteRecord(esClient, granuleId, 'granule', req.collectionId, esIndex);
-  }
-  return res.send({ detail: 'Record deleted' });
-}
-
 router.get('/:granuleName', get);
 router.get('/', list);
 router.put('/:granuleName', put);
-router.delete('/:granuleName', del, removeFromES);
+router.delete('/:granuleName', del);
 
 module.exports = router;

@@ -49,10 +49,9 @@ async function get(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @param {function} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function post(req, res, next) {
+async function post(req, res) {
   const data = req.body;
   const id = data.id;
 
@@ -65,9 +64,12 @@ async function post(req, res, next) {
   } catch (e) {
     if (e instanceof RecordDoesNotExist) {
       const record = await providerModel.create(data);
-      req.providerRecord = record;
-      req.returnMessage = { record, message: 'Record saved' };
-      if (inTestMode()) return next();
+
+      if (inTestMode()) {
+        const esClient = await Search.es(process.env.ES_HOST);
+        const esIndex = process.env.esIndex;
+        indexer.indexProvider(esClient, record, esIndex);
+      }
       return res.send({ record, message: 'Record saved' });
     }
     return res.boom.badImplementation(e.message);
@@ -79,10 +81,9 @@ async function post(req, res, next) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @param {function} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function put(req, res, next) {
+async function put(req, res) {
   const id = req.params.id;
 
   const data = req.body;
@@ -92,8 +93,12 @@ async function put(req, res, next) {
   try {
     await providerModel.get({ id });
     const record = await providerModel.update({ id }, data);
-    req.providerRecord = record;
-    if (inTestMode()) return next();
+
+    if (inTestMode()) {
+      const esClient = await Search.es(process.env.ES_HOST);
+      const esIndex = process.env.esIndex;
+      indexer.indexProvider(esClient, record, esIndex);
+    }
     return res.send(record);
   } catch (err) {
     if (err instanceof RecordDoesNotExist) return res.boom.notFound('Record does not exist');
@@ -106,15 +111,19 @@ async function put(req, res, next) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @param {function} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function del(req, res, next) {
+async function del(req, res) {
   const providerModel = new models.Provider();
 
   try {
     await providerModel.delete({ id: req.params.id });
-    if (inTestMode()) return next();
+
+    if (inTestMode()) {
+      const esClient = await Search.es(process.env.ES_HOST);
+      const esIndex = process.env.esIndex;
+      esClient.delete({ id: req.params.id, index: esIndex, type: 'provider' });
+    }
     return res.send({ message: 'Record deleted' });
   } catch (err) {
     if (err instanceof AssociatedRulesError) {
@@ -125,33 +134,11 @@ async function del(req, res, next) {
   }
 }
 
-async function addToES(req, res) {
-  const provider = req.providerRecord;
-
-  if (inTestMode()) {
-    const esClient = await Search.es(process.env.ES_HOST);
-    const esIndex = process.env.esIndex;
-    indexer.indexProvider(esClient, provider, esIndex);
-  }
-  if (req.returnMessage) return res.send(req.returnMessage);
-  return res.send(provider);
-}
-
-async function removeFromES(req, res) {
-  const id = req.params.id;
-  if (inTestMode()) {
-    const esClient = await Search.es(process.env.ES_HOST);
-    const esIndex = process.env.esIndex;
-    esClient.delete({ id, index: esIndex, type: 'provider' });
-  }
-  return res.send({ message: 'Record deleted' });
-}
-
 // express routes
 router.get('/:id', get);
-router.put('/:id', put, addToES);
-router.delete('/:id', del, removeFromES);
-router.post('/', post, addToES);
+router.put('/:id', put);
+router.delete('/:id', del);
+router.post('/', post);
 router.get('/', list);
 
 module.exports = router;
