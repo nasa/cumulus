@@ -179,6 +179,14 @@ default:
     'workflows/browseExample.yml'
   ]
 
+  apiConfigs:
+    backend:
+      private: true
+      port: 8000
+    distribution:
+      private: true
+      port: 7000
+
   sns:
     sftracker:
       subscriptions:
