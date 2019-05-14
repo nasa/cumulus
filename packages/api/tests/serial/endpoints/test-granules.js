@@ -473,7 +473,7 @@ test.serial('DELETE deleting an existing granule that is published will fail', a
   );
 });
 
-test('DELETE deleting an existing unpublished granule', async (t) => {
+test.only('DELETE deleting an existing unpublished granule', async (t) => {
   const buckets = {
     protected: {
       name: randomId('protected'),
@@ -519,9 +519,7 @@ test('DELETE deleting an existing unpublished granule', async (t) => {
   }
 
   // create a new unpublished granule
-  const granuleRecord = await granuleModel.create(newGranule);
-  await indexer.indexGranule(esClient, granuleRecord, esIndex);
-
+  await granuleModel.create(newGranule);
 
   const response = await request(app)
     .delete(`/granules/${newGranule.granuleId}`)

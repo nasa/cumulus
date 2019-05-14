@@ -145,7 +145,13 @@ async function del(req, res) {
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);
     const esIndex = process.env.esIndex;
-    await indexer.deleteRecord(esClient, granuleId, 'granule', granule.collectionId, esIndex);
+    await esClient.delete({
+      id: granuleId,
+      type: 'granule',
+      parent: granule.collectionId,
+      index: esIndex,
+      ignore: [404]
+    });
   }
 
   return res.send({ detail: 'Record deleted' });
