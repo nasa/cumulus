@@ -97,7 +97,7 @@ const lambdaEventOutput = {
   type: 'TaskStateExited',
   id: 13,
   previousEventId: 12,
-  name: 'SyncGranuleNoVpc',
+  name: 'SyncGranule',
   output: JSON.stringify(lambdaCompleteOutput)
 };
 
@@ -106,7 +106,7 @@ const lambdaFunctionEvent = {
   id: 13,
   previousEventId: 12,
   stateExitedEventDetails: {
-    name: 'SyncGranuleNoVpc',
+    name: 'SyncGranule',
     output: JSON.stringify(lambdaRemoteOutput)
   }
 };
