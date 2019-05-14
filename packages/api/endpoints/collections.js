@@ -16,7 +16,7 @@ const { AssociatedRulesError } = require('../lib/errors');
  * @param {Object} record - Collection record object
  * @returns {Promise} - Promise of indexing operation
  */
-async function addToES (record) {
+async function addToES(record) {
   const esClient = await Search.es(process.env.ES_HOST);
   const esIndex = process.env.esIndex;
   return indexer.indexCollection(esClient, record, esIndex);
@@ -157,7 +157,12 @@ async function del(req, res) {
       const collectionId = constructCollectionId(name, version);
       const esClient = await Search.es(process.env.ES_HOST);
       const esIndex = process.env.esIndex;
-      await esClient.delete({ id: collectionId, index: esIndex, type: 'collection', ignore: [404] });
+      await esClient.delete({
+        id: collectionId,
+        index: esIndex,
+        type: 'collection',
+        ignore: [404]
+      });
     }
 
     return res.send({ message: 'Record deleted' });

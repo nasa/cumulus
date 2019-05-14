@@ -14,7 +14,7 @@ const indexer = require('../es/indexer');
  * @param {Object} record - Provider record object
  * @returns {Promise} - Promise of indexing operation
  */
-async function addToES (record) {
+async function addToES(record) {
   const esClient = await Search.es(process.env.ES_HOST);
   const esIndex = process.env.esIndex;
   indexer.indexProvider(esClient, record, esIndex);
