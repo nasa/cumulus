@@ -63,8 +63,7 @@ test.before(async () => {
 
 test.beforeEach(async (t) => {
   t.context.testProvider = fakeProviderFactory();
-  const newProvider = await providerModel.create(t.context.testProvider);
-  indexer.indexProvider(esClient, newProvider, esIndex);
+  await providerModel.create(t.context.testProvider);
 });
 
 test.after.always(async () => {
