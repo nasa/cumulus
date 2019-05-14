@@ -18,7 +18,7 @@ const { CMR, CMRSearchConceptQueue, constructOnlineAccessUrl } = require('@cumul
 const { Collection, Granule, FileClass } = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
 
-const isDataBucket = (bucketConfig) => bucketConfig.type !== 'shared';
+const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includes(bucketConfig.type);
 
 /**
  * Verify that all objects in an S3 bucket contain corresponding entries in
@@ -400,7 +400,6 @@ async function createReconciliationReport(params) {
   // Fetch the bucket names to reconcile
   const bucketsConfigJson = await bucketsConfigJsonObject(systemBucket, stackName);
   const dataBuckets = Object.values(bucketsConfigJson)
-    .filter((config) => config.name !== systemBucket)
     .filter(isDataBucket).map((config) => config.name);
 
   const bucketsConfig = new BucketsConfig(bucketsConfigJson);

@@ -93,7 +93,7 @@ As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS
     *unless* your IAM role ARNs do not match the convention shown in `@cumulus/deployment/app/config.yml`
     In that case, overriding `iams` in your own config is recommended.
   - `iam` and `db` `cloudformation.yml` file names will have respective prefixes (e.g `iam.cloudformation.yml`).
-  - Cumulus will no longer attempt to create reconciliation reports for `shared`-type buckets.
+  - Cumulus will now only attempt to create reconciliation reports for buckets of the `private`, `public` and `protected` types.
   - Deployment docs have been updated with examples for the new deployment model.
 
 - **CUMULUS-1236**
