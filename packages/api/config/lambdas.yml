@@ -3,6 +3,7 @@ sqs2sf:
   timeout: 200
   memory: 128
   source: 'node_modules/@cumulus/api/dist/sfStarter/'
+  launchInVpc: true
 
 sns2elasticsearch:
   handler: index.handler
@@ -45,6 +46,7 @@ fallbackConsumer:
   memory: 256
   source: 'node_modules/@cumulus/api/dist/messageConsumer/'
   deadletterqueue: kinesisFailure
+  launchInVpc: true
   tables:
     - RulesTable
     - CollectionsTable
@@ -67,6 +69,7 @@ cleanExecutions:
   memory: 192
   source: 'node_modules/@cumulus/api/dist/cleanExecutions/'
   namedLambdaDeadLetterQueue: true
+  launchInVpc: true
   tables:
     - ExecutionsTable
   envs:
@@ -108,6 +111,7 @@ EmsDistributionReport:
   timeout: 300
   memory: 128
   source: 'node_modules/@cumulus/api/dist/emsDistributionReport/'
+  launchInVpc: true
   envs:
     LOGS_BUCKET: '{{system_bucket}}'
     REPORTS_BUCKET: '{{system_bucket}}'
@@ -144,6 +148,7 @@ messageConsumer:
   timeout: 100
   memory: 256
   source: 'node_modules/@cumulus/api/dist/messageConsumer/'
+  launchInVpc: true
   tables:
     - RulesTable
     - CollectionsTable
@@ -157,6 +162,7 @@ messageConsumer:
 CreateReconciliationReport:
   handler: index.handler
   source: 'node_modules/@cumulus/api/dist/createReconciliationReport/'
+  launchInVpc: true
   memory: 256
   useDistributionApi: true
   tables:
@@ -174,6 +180,7 @@ ScheduleSF:
   timeout: 100
   memory: 192
   source: 'node_modules/@cumulus/api/dist/sfScheduler/'
+  launchInVpc: true
   tables:
     - CollectionsTable
     - ProvidersTable
@@ -182,23 +189,27 @@ ScheduleSF:
 BulkDelete:
   handler: index.handler
   source: 'node_modules/@cumulus/api/dist/bulkDelete/'
+  launchInVpc: true
 
 KinesisInboundEventLogger:
   handler: index.handler
   timeout: 300
   memory: 128
   source: 'node_modules/@cumulus/api/dist/payloadLogger/'
+  launchInVpc: true
 
 KinesisOutboundEventLogger:
   handler: index.handler
   timeout: 300
   memory: 512
   source: 'node_modules/@cumulus/api/dist/payloadLogger/'
+  launchInVpc: true
 
 sfSemaphoreDown:
   handler: index.handler
   timeout: 100
   memory: 512
   source: 'node_modules/@cumulus/api/dist/sfSemaphoreDown/'
+  launchInVpc: true
   tables:
     - SemaphoresTable
