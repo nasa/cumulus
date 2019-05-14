@@ -55,6 +55,7 @@ if [[ $bamboo_NGAP_ENV = "SIT" ]]; then
   export VPC_ID=$bamboo_SECRET_SIT_VPC_ID
   export AWS_SUBNET=$bamboo_SECRET_SIT_AWS_SUBNET
   export VPC_CIDR_IP=$bamboo_SECRET_SIT_VPC_CIDR_IP
+  export PROVIDER_HOST=$bamboo_SECRET_SIT_PROVIDER_HOST
   DEPLOYMENT=$bamboo_SIT_DEPLOYMENT
   echo deployment "$DEPLOYMENT"
 fi
