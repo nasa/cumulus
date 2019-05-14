@@ -473,7 +473,7 @@ test.serial('DELETE deleting an existing granule that is published will fail', a
   );
 });
 
-test.only('DELETE deleting an existing unpublished granule', async (t) => {
+test('DELETE deleting an existing unpublished granule', async (t) => {
   const buckets = {
     protected: {
       name: randomId('protected'),
