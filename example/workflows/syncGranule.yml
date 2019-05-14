@@ -8,8 +8,8 @@ SyncGranuleCatchDuplicateErrorTest:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
-      Next: SyncGranuleNoVpc
-    SyncGranuleNoVpc:
+      Next: SyncGranule
+    SyncGranule:
       CumulusConfig:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
@@ -27,7 +27,7 @@ SyncGranuleCatchDuplicateErrorTest:
             - source: '{$.process}'
               destination: '{$.cumulus_meta.process}'
       Type: Task
-      Resource: ${SyncGranuleNoVpcLambdaFunction.Arn}
+      Resource: ${SyncGranuleLambdaFunction.Arn}
       Catch:
         - ErrorEquals:
           - 'DuplicateFile'
