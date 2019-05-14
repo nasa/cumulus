@@ -92,6 +92,7 @@ default:
     vpcId: '{{VPC_ID}}'         # this has to be set in .env
     subnets:
       - '{{AWS_SUBNET}}'        # this has to be set in .env
+    securityGroup: '{{SECURITY_GROUP}}'
 
   ecs:
     restartTasksOnDeploy: false

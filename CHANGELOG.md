@@ -33,6 +33,7 @@ As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS
   - `stackName` and `stackNameNoDash` have been retired. Use `prefix` and `prefixNoDash` instead.
   - The `iams` section in `app/config.yml` IAM roles has been deprecated as a user-facing parameter,
     *unless* your IAM role ARNs do not match the convention shown in `@cumulus/deployment/app/config.yml`
+  - The `vpc.securityGroup` will need to be set with a pre-existing security group ID to use Cumulus in a VPC.
 
 - **CUMULUS-1212**
   - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
@@ -54,7 +55,6 @@ As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS
 - **CUMULUS-1193**
   - The elasticsearch instance is moved behind the VPC.
   - Your account will need an Elasticsearch Service Linked role. This is a one-time setup for the account. You can follow the instructions to use the AWS console or AWS CLI [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/using-service-linked-roles.html) or use the following AWS CLI command: `aws iam create-service-linked-role --aws-service-name es.amazonaws.com`
-  - You will need to populate `VPC_CIDR_IP` in your `app/.env` file. The IPv4 CIDR can be found in your AWS Console in your VPC settings.
 
 - **CUMULUS-802**
   - ECS `maxInstances` must be greater than `minInstances`. If you use defaults, no change is required.
@@ -99,6 +99,9 @@ As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS
     In that case, overriding `iams` in your own config is recommended.
   - `iam` and `db` `cloudformation.yml` file names will have respective prefixes (e.g `iam.cloudformation.yml`).
   - Cumulus will now only attempt to create reconciliation reports for buckets of the `private`, `public` and `protected` types.
+  - Cumulus will no longer set up its own security group.
+    To pass a pre-existing security group for in-VPC deployments as a parameter to the Cumulus template,
+    populate `vpc.securityGroup` in `config.yml`.
   - Deployment docs have been updated with examples for the new deployment model.
 
 - **CUMULUS-1236**

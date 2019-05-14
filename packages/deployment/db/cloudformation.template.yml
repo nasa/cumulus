@@ -1,12 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'stack: {{stackName}} | deployed by Kes'
-{{# if vpc}}
-Parameters:
-  SecurityGroup:
-    Type: String
-    Description: 'Security Group used by the ElasticSearch instance of {{prefix}}'
-    NoEcho: true
-{{/if}}
+
 Resources:
   #################################################
   # DynamoDB config BEGIN
@@ -181,7 +175,7 @@ Resources:
     {{# if vpc }}
       VPCOptions:
         SecurityGroupIds:
-          - Ref: SecurityGroup
+          - {{vpc.securityGroup}}
         SubnetIds:
         {{#each vpc.subnets}}
           - {{this}}

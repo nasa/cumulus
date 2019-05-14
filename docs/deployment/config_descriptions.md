@@ -38,7 +38,7 @@ dynamos:
 | ems.provider | CUMULUS | the provider used for sending reports to EMS
 | vpc.vpcId | (required if ecs is used) | the vpcId used with the deployment
 | vpc.subnets | (required) | the subnets used
-| vpc.cidrIp | (required) | the IPv4 CIDR of the VPC
+| vpc.securityGroup | (required) | security group ID to be used by Cumulus resources
 | ecs.amiid | ami-9eb4b1e5 | amiid of an optimized ecs instance (different for each region)
 | ecs.instanceType | (required) | the instance type of the ec2 machine used for running ecs tasks
 | ecs.volumeSize | 50 | the storage on ec2 instance running the ecs tasks

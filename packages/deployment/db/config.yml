@@ -13,6 +13,7 @@ default:
     vpcId: '{{VPC_ID}}'         # this has to be set in .env
     subnets:
       - '{{AWS_SUBNET}}'        # this has to be set in .env
+    securityGroup: '{{SECURITY_GROUP}}'
 
   dynamos: !!files ['node_modules/@cumulus/api/config/tables.yml']
 
