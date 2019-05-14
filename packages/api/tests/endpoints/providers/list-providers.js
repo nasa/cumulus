@@ -2,7 +2,6 @@
 
 const test = require('ava');
 const request = require('supertest');
-const sinon = require('sinon');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const bootstrap = require('../../../lambdas/bootstrap');
@@ -12,6 +11,7 @@ const {
   fakeProviderFactory
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
+const indexer = require('../../../es/indexer');
 const assertions = require('../../../lib/assertions');
 
 process.env.UsersTable = randomString();
@@ -80,11 +80,8 @@ test.todo('CUMULUS-912 GET without pathParameters and with an unauthorized user 
 
 test('default returns list of providerModel', async (t) => {
   t.context.testProvider = fakeProviderFactory();
-  await providerModel.create(t.context.testProvider);
-
-  const stub = sinon.stub(Search.prototype, 'query').resolves({
-    results: [t.context.testProvider]
-  });
+  const record = await providerModel.create(t.context.testProvider);
+  indexer.indexProvider(esClient, record, esIndex);
 
   const response = await request(app)
     .get('/providers')
@@ -93,6 +90,5 @@ test('default returns list of providerModel', async (t) => {
     .expect(200);
 
   const { results } = response.body;
-  stub.restore();
   t.is(results[0].id, t.context.testProvider.id);
 });
