@@ -130,7 +130,6 @@ async function del(req, res) {
     if (inTestMode()) {
       const esClient = await Search.es(process.env.ES_HOST);
       const esIndex = process.env.esIndex;
-      // esClient.delete({ id: req.params.id, index: esIndex, type: 'provider' });
       await esClient.delete({
         id: req.params.id,
         type: 'provider',
