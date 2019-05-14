@@ -1,3 +1,4 @@
 {
-    "high": true
+    "high": true,
+    "retry-count": 15
 }
