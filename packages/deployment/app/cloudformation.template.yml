@@ -556,8 +556,10 @@ Resources:
     {{# if vpc.subnets }}
       AssociatePublicIpAddress: {{#if ecs.publicIp}}{{ecs.publicIp}}{{else}}false{{/if}}
     {{/if}}
+    {{# if vpc.securityGroup}}
       SecurityGroups:
-        - {{../vpc.securityGroup}}
+        - {{vpc.securityGroup}}
+    {{/if}}
        {{# if ecs.efs.mount}}
         - Fn::ImportValue:
             "{{prefix}}-EFSSecurityGroup"
