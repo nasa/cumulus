@@ -50,10 +50,9 @@ async function get(req, res) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @param {function} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function post(req, res, next) {
+async function post(req, res) {
   const data = req.body;
   const name = data.name;
 
@@ -65,9 +64,12 @@ async function post(req, res, next) {
   } catch (e) {
     if (e instanceof RecordDoesNotExist) {
       const r = await model.create(data);
-      req.rulesRecord = r;
-      req.returnMessage = { message: 'Record saved', record: r };
-      if (inTestMode()) return next();
+
+      if (inTestMode()) {
+        const esClient = await Search.es(process.env.ES_HOST);
+        const esIndex = process.env.esIndex;
+        indexer.indexRule(esClient, r, esIndex);
+      }
       return res.send({ message: 'Record saved', record: r });
     }
     throw e;
@@ -79,10 +81,9 @@ async function post(req, res, next) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @param {function} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function put(req, res, next) {
+async function put(req, res) {
   const name = req.params.name;
 
   const data = req.body;
@@ -106,8 +107,12 @@ async function put(req, res, next) {
   }
 
   const d = await model.update(originalData, data);
-  req.rulesRecord = d;
-  if (inTestMode()) return next();
+
+  if (inTestMode()) {
+    const esClient = await Search.es(process.env.ES_HOST);
+    const esIndex = process.env.esIndex;
+    indexer.indexRule(esClient, d, esIndex);
+  }
   return res.send(d);
 }
 
@@ -116,10 +121,9 @@ async function put(req, res, next) {
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @param {function} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function del(req, res, next) {
+async function del(req, res) {
   const name = (req.params.name || '').replace(/%20/g, ' ');
   const model = new models.Rule();
 
@@ -133,24 +137,6 @@ async function del(req, res, next) {
     throw e;
   }
   await model.delete(record);
-  if (inTestMode()) return next();
-  return res.send({ message: 'Record deleted' });
-}
-
-async function addToES(req, res) {
-  const rule = req.rulesRecord;
-
-  if (inTestMode()) {
-    const esClient = await Search.es(process.env.ES_HOST);
-    const esIndex = process.env.esIndex;
-    indexer.indexRule(esClient, rule, esIndex);
-  }
-  if (req.returnMessage) return res.send(req.returnMessage);
-  return res.send(req.rulesRecord);
-}
-
-async function removeFromES(req, res) {
-  const name = (req.params.name || '').replace(/%20/g, ' ');
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);
     const esIndex = process.env.esIndex;
@@ -161,8 +147,8 @@ async function removeFromES(req, res) {
 
 router.get('/:name', get);
 router.get('/', list);
-router.put('/:name', put, addToES);
-router.post('/', post, addToES);
-router.delete('/:name', del, removeFromES);
+router.put('/:name', put);
+router.post('/', post);
+router.delete('/:name', del);
 
 module.exports = router;

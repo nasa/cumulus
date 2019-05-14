@@ -52,10 +52,9 @@ const isRecordDoesNotExistError = (e) => e.message.includes('RecordDoesNotExist'
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
- * @param {function} next - Calls the next middleware function
  * @returns {Promise<Object>} the promise of express response object
  */
-async function del(req, res, next) {
+async function del(req, res) {
   const pdrName = req.params.pdrName;
 
   const pdrS3Key = `${process.env.stackName}/pdrs/${pdrName}`;
@@ -66,7 +65,18 @@ async function del(req, res, next) {
 
   try {
     await pdrModel.delete({ pdrName });
-    if (inTestMode()) return next();
+
+    if (inTestMode()) {
+      const esClient = await Search.es(process.env.ES_HOST);
+      const esIndex = process.env.esIndex;
+      try {
+        await esClient.delete({ id: pdrName, index: esIndex, type: 'pdr' });
+      } catch (err) {
+        if (err.statusCode !== 404) {
+          throw err;
+        }
+      }
+    }
   } catch (err) {
     if (!isRecordDoesNotExistError(err)) throw err;
   }
@@ -74,26 +84,8 @@ async function del(req, res, next) {
   return res.send({ detail: 'Record deleted' });
 }
 
-async function removeFromES(req, res) {
-  const pdrName = req.params.pdrName;
-
-  if (inTestMode()) {
-    const esClient = await Search.es(process.env.ES_HOST);
-    const esIndex = process.env.esIndex;
-    try {
-      await esClient.delete({ id: pdrName, index: esIndex, type: 'pdr' });
-    } catch (err) {
-      if (err.statusCode !== 404) {
-        throw err;
-      }
-    }
-  }
-
-  return res.send({ detail: 'Record deleted' });
-}
-
 router.get('/:pdrName', get);
 router.get('/', list);
-router.delete('/:pdrName', del, removeFromES);
+router.delete('/:pdrName', del);
 
 module.exports = router;
