@@ -71,6 +71,10 @@ default:
     params:
       - name: ResourcePrefix
         value: '{{prefix}}'
+  db:
+    params:
+      - name: SecurityGroup
+        value: '{{SECURITY_GROUP}}'
   app:
     params:
       - name: CmrPassword
@@ -79,6 +83,9 @@ default:
         value: '{{DOCKER_EMAIL}}'
       - name: DockerPassword
         value: '{{DOCKER_PASS}}'
+      - name: EcsSecurityGroup
+        value: '{{SECURITY_GROUP}}'
+
 
   apiStage: dev
 
@@ -595,3 +602,30 @@ mboyd-int:
 pq:
   prefix: pq
   prefixNoDash: pq
+
+mvd1:
+  prefix: mvd1
+  prefixNoDash: mvd1
+  buckets:
+    internal:
+      name: 'mvd-internal'
+      type: internal
+  bucket: 'mvd-internal'
+
+mvd2:
+  prefix: mvd2
+  prefixNoDash: mvd2
+  buckets:
+    internal:
+      name: 'mvd-internal'
+      type: internal
+  bucket: 'mvd-internal'
+
+mvd3:
+  prefix: mvd3
+  prefixNoDash: mvd3
+  buckets:
+    internal:
+      name: 'mvd-internal'
+      type: internal
+  bucket: 'mvd-internal'

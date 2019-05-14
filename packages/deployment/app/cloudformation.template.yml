@@ -18,7 +18,7 @@ Parameters:
 {{#if vpc}}
   EcsSecurityGroup:
     Type: String
-    Description: 'Security Group deployed by the db stack'
+    Description: 'Security Group used by the ECS containers of {{prefix}}'
     NoEcho: true
 {{/if}}
 {{#if es.name}}
@@ -553,20 +553,6 @@ Resources:
   #################################################
   # ECS config BEGIN
   #################################################
-{{# if vpc }}
-  {{#if ecs.ssh}}
-  SecurityGroupSSHinbound:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId:
-        Ref: EcsSecurityGroup
-      IpProtocol: tcp
-      FromPort: '22'
-      ToPort: '22'
-      CidrIp: 0.0.0.0/0
-  {{/if}}
-{{/if}}
-
 {{# if iams.instanceProfile}}
   CumulusECSCluster:
     Type: AWS::ECS::Cluster

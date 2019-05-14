@@ -1,31 +1,13 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'stack: {{stackName}} | deployed by Kes'
-
-Resources:
-
-  #################################################
-  # SecurityGroup config BEGIN
-  #################################################
-{{# if vpc }}
+{{# if vpc}}
+Parameters:
   SecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security Group for ECS container instances of {{prefix}}
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          CidrIp: {{vpc.cidrIp}}
-          FromPort: '443'
-          ToPort: '443'
-      Tags:
-        - Key: Name
-          Value: "{{prefix}}"
-      VpcId: {{vpc.vpcId}}
+    Type: String
+    Description: 'Security Group used by the ElasticSearch instance of {{prefix}}'
+    NoEcho: true
 {{/if}}
-
-  #################################################
-  # SecurityGroup config END
-  #################################################
-
+Resources:
   #################################################
   # DynamoDB config BEGIN
   #################################################
@@ -199,9 +181,7 @@ Resources:
     {{# if vpc }}
       VPCOptions:
         SecurityGroupIds:
-          - Fn::GetAtt:
-            - SecurityGroup
-            - GroupId
+          - Ref: SecurityGroup
         SubnetIds:
         {{#each vpc.subnets}}
           - {{this}}
@@ -255,13 +235,4 @@ Outputs:
       Fn::GetAtt:
         - {{es.name}}Domain
         - DomainEndpoint
-{{/if}}
-
-{{#if vpc}}
-  EcsSecurityGroup:
-    Description: ECS security group
-    Value:
-      Fn::GetAtt: 
-        - SecurityGroup
-        - GroupId
 {{/if}}
