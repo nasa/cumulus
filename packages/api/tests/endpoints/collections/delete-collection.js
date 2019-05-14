@@ -67,8 +67,7 @@ test.before(async () => {
 
 test.beforeEach(async (t) => {
   t.context.testCollection = fakeCollectionFactory();
-  const collection = await collectionModel.create(t.context.testCollection);
-  indexer.indexCollection(esClient, collection, esIndex);
+  await collectionModel.create(t.context.testCollection);
 });
 
 test.after.always(async () => {
@@ -111,7 +110,6 @@ test.todo('Attempting to delete a collection with an unauthorized user returns a
 test('Deleting a collection removes it', async (t) => {
   const collection = fakeCollectionFactory();
   await collectionModel.create(collection);
-  indexer.indexCollection(esClient, collection, esIndex);
 
   await request(app)
     .delete(`/collections/${collection.name}/${collection.version}`)

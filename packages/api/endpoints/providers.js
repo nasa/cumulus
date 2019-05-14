@@ -9,6 +9,18 @@ const { Search } = require('../es/search');
 const indexer = require('../es/indexer');
 
 /**
+ * Index a provider to Elasticsearch.
+ *
+ * @param {Object} record - Provider record object
+ * @returns {Promise} - Promise of indexing operation
+ */
+async function addToES (record) {
+  const esClient = await Search.es(process.env.ES_HOST);
+  const esIndex = process.env.esIndex;
+  indexer.indexProvider(esClient, record, esIndex);
+}
+
+/**
  * List all providers
  *
  * @param {Object} req - express request object
@@ -66,9 +78,7 @@ async function post(req, res) {
       const record = await providerModel.create(data);
 
       if (inTestMode()) {
-        const esClient = await Search.es(process.env.ES_HOST);
-        const esIndex = process.env.esIndex;
-        indexer.indexProvider(esClient, record, esIndex);
+        await addToES(record);
       }
       return res.send({ record, message: 'Record saved' });
     }
@@ -95,9 +105,7 @@ async function put(req, res) {
     const record = await providerModel.update({ id }, data);
 
     if (inTestMode()) {
-      const esClient = await Search.es(process.env.ES_HOST);
-      const esIndex = process.env.esIndex;
-      indexer.indexProvider(esClient, record, esIndex);
+      await addToES(record);
     }
     return res.send(record);
   } catch (err) {
@@ -122,7 +130,12 @@ async function del(req, res) {
     if (inTestMode()) {
       const esClient = await Search.es(process.env.ES_HOST);
       const esIndex = process.env.esIndex;
-      esClient.delete({ id: req.params.id, index: esIndex, type: 'provider' });
+      await esClient.delete({
+        id: req.params.id,
+        type: 'provider',
+        index: esIndex,
+        ignore: [404]
+      });
     }
     return res.send({ message: 'Record deleted' });
   } catch (err) {

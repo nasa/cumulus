@@ -69,13 +69,7 @@ async function del(req, res) {
     if (inTestMode()) {
       const esClient = await Search.es(process.env.ES_HOST);
       const esIndex = process.env.esIndex;
-      try {
-        await esClient.delete({ id: pdrName, index: esIndex, type: 'pdr' });
-      } catch (err) {
-        if (err.statusCode !== 404) {
-          throw err;
-        }
-      }
+      await esClient.delete({ id: pdrName, index: esIndex, type: 'pdr', ignore: [404] });
     }
   } catch (err) {
     if (!isRecordDoesNotExistError(err)) throw err;
