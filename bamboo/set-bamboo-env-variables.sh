@@ -47,7 +47,7 @@ if [ -z $TIMEOUT_PERIODS ]; then
   TIMEOUT_PERIODS=80
 fi
 
-## Set deployment based on env variables if SIT deploy
+## Set environment variable overrides if SIT deployment
 if [[ $bamboo_NGAP_ENV = "SIT" ]]; then
   export AWS_ACCESS_KEY_ID=$bamboo_SECRET_SIT_AWS_ACCESS_KEY_ID
   export AWS_SECRET_ACCESS_KEY=$bamboo_SECRET_SIT_AWS_SECRET_ACCESS_KEY
