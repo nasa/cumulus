@@ -79,8 +79,8 @@ test('CUMULUS-912 GET without pathParameters and with an invalid access token re
 test.todo('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('default returns list of providerModel', async (t) => {
-  t.context.testProvider = fakeProviderFactory();
-  const record = await providerModel.create(t.context.testProvider);
+  const testProvider = fakeProviderFactory();
+  const record = await providerModel.create(testProvider);
   indexer.indexProvider(esClient, record, esIndex);
 
   const response = await request(app)
@@ -90,5 +90,5 @@ test('default returns list of providerModel', async (t) => {
     .expect(200);
 
   const { results } = response.body;
-  t.is(results[0].id, t.context.testProvider.id);
+  t.is(results[0].id, testProvider.id);
 });

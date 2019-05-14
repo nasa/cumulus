@@ -80,7 +80,6 @@ test.after.always(async () => {
   await ruleModel.deleteTable();
   await userModel.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
-
   await esClient.indices.delete({ index: esIndex });
 });
 
@@ -328,8 +327,19 @@ test('PUT returns "record does not exist"', async (t) => {
 });
 
 test('DELETE deletes a rule', async (t) => {
+  const newRule = Object.assign({}, testRule, {
+    name: randomString()
+  });
+
+  await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(200);
+
   const response = await request(app)
-    .delete(`/rules/${testRule.name}`)
+    .delete(`/rules/${newRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);

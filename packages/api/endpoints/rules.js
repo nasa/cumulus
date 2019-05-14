@@ -8,6 +8,18 @@ const { Search } = require('../es/search');
 const indexer = require('../es/indexer');
 
 /**
+ * Index a rule to Elasticsearch.
+ *
+ * @param {Object} record - Collection record object
+ * @returns {Promise} - Promise of indexing operation
+ */
+async function addToES (record) {
+  const esClient = await Search.es(process.env.ES_HOST);
+  const esIndex = process.env.esIndex;
+  return indexer.indexRule(esClient, record, esIndex);
+}
+
+/**
  * List all rules.
  *
  * @param {Object} req - express request object
@@ -66,9 +78,7 @@ async function post(req, res) {
       const r = await model.create(data);
 
       if (inTestMode()) {
-        const esClient = await Search.es(process.env.ES_HOST);
-        const esIndex = process.env.esIndex;
-        indexer.indexRule(esClient, r, esIndex);
+        await addToES(r);
       }
       return res.send({ message: 'Record saved', record: r });
     }
@@ -109,10 +119,9 @@ async function put(req, res) {
   const d = await model.update(originalData, data);
 
   if (inTestMode()) {
-    const esClient = await Search.es(process.env.ES_HOST);
-    const esIndex = process.env.esIndex;
-    indexer.indexRule(esClient, d, esIndex);
+    await addToES(d);
   }
+
   return res.send(d);
 }
 
@@ -140,7 +149,8 @@ async function del(req, res) {
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);
     const esIndex = process.env.esIndex;
-    esClient.delete({ id: name, index: esIndex, type: 'rule' });
+    // esClient.delete({ id: name, index: esIndex, type: 'rule' });
+    await esClient.delete({ id: name, index: esIndex, type: 'rule', ignore: [404] });
   }
   return res.send({ message: 'Record deleted' });
 }
