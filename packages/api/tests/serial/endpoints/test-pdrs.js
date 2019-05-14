@@ -191,8 +191,7 @@ test('GET fails if pdr is not found', async (t) => {
 test('DELETE a pdr', async (t) => {
   const newPdr = fakePdrFactory('completed');
   // create a new pdr
-  const record = await pdrModel.create(newPdr);
-  await indexer.indexPdr(esClient, record, esIndex);
+  await pdrModel.create(newPdr);
 
   const key = `${process.env.stackName}/pdrs/${newPdr.pdrName}`;
   await aws.s3().putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' }).promise();
