@@ -149,7 +149,6 @@ async function del(req, res) {
   if (inTestMode()) {
     const esClient = await Search.es(process.env.ES_HOST);
     const esIndex = process.env.esIndex;
-    // esClient.delete({ id: name, index: esIndex, type: 'rule' });
     await esClient.delete({ id: name, index: esIndex, type: 'rule', ignore: [404] });
   }
   return res.send({ message: 'Record deleted' });
