@@ -777,7 +777,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(executionStatus.executionHistory).toBeTruthy();
 
         // expected 'not executed' steps
-        const expectedNotExecutedSteps = ['SyncGranule', 'WorkflowFailed'];
+        const expectedNotExecutedSteps = ['WorkflowFailed'];
 
         // expected 'executed' steps
         const expectedExecutedSteps = difference(allStates, expectedNotExecutedSteps);

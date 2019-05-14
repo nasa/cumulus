@@ -1,4 +1,4 @@
 {
     "high": true,
-    "whitelist": ["tar"]
+    "retry-count": 20
 }

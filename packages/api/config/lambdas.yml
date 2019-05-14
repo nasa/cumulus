@@ -1,16 +1,17 @@
 sqs2sf:
-  handler: index.starter
+  handler: index.handler
   timeout: 200
-  memory: 512
-  source: 'node_modules/@cumulus/api/dist/'
+  memory: 128
+  source: 'node_modules/@cumulus/api/dist/sfStarter/'
+  launchInVpc: true
 
 sns2elasticsearch:
-  handler: index.indexer
+  handler: index.handler
   timeout: 100
   useElasticSearch: '{{es.name}}'
   launchInVpc: true
-  memory: 512
-  source: 'node_modules/@cumulus/api/dist/'
+  memory: 320
+  source: 'node_modules/@cumulus/api/dist/indexer/'
   tables:
     - GranulesTable
     - ExecutionsTable
@@ -20,17 +21,17 @@ sns2elasticsearch:
 log2elasticsearch:
   handler: index.logHandler
   timeout: 100
-  memory: 512
+  memory: 320
   useElasticSearch: '{{es.name}}'
   launchInVpc: true
-  source: 'node_modules/@cumulus/api/dist/'
+  source: 'node_modules/@cumulus/api/dist/indexer/'
   namedLambdaDeadLetterQueue: true
 
 dbIndexer:
-  handler: index.dbIndexer
+  handler: index.handler
   timeout: 300
-  memory: 512
-  source: 'node_modules/@cumulus/api/dist/'
+  memory: 320
+  source: 'node_modules/@cumulus/api/dist/dbIndexer/'
   useElasticSearch: '{{es.name}}'
   tables:
     - FilesTable
@@ -40,11 +41,12 @@ dbIndexer:
   namedLambdaDeadLetterQueue: true
 
 fallbackConsumer:
-  handler: index.messageConsumer
+  handler: index.handler
   timeout: 100
-  memory: 512
-  source: 'node_modules/@cumulus/api/dist/'
+  memory: 256
+  source: 'node_modules/@cumulus/api/dist/messageConsumer/'
   deadletterqueue: kinesisFailure
+  launchInVpc: true
   tables:
     - RulesTable
     - CollectionsTable
@@ -53,20 +55,21 @@ fallbackConsumer:
     system_bucket: '{{system_bucket}}'
 
 jobs:
-  handler: index.jobs
+  handler: index.handler
   timeout: 300
-  memory: 512
+  memory: 320
   useElasticSearch: '{{es.name}}'
   launchInVpc: true
-  source: 'node_modules/@cumulus/api/dist/'
+  source: 'node_modules/@cumulus/api/dist/jobs/'
   namedLambdaDeadLetterQueue: true
 
 cleanExecutions:
-  handler: index.cleanExecutions
+  handler: index.handler
   timeout: 900
-  memory: 1024
-  source: 'node_modules/@cumulus/api/dist/'
+  memory: 192
+  source: 'node_modules/@cumulus/api/dist/cleanExecutions/'
   namedLambdaDeadLetterQueue: true
+  launchInVpc: true
   tables:
     - ExecutionsTable
   envs:
@@ -77,19 +80,19 @@ cleanExecutions:
 
 # used as custom resource for cloudformation manipulation
 CustomBootstrap:
-  handler: index.bootstrap
+  handler: index.handler
   timeout: 300
-  memory: 512
-  source: 'node_modules/@cumulus/api/dist/'
+  memory: 320
+  source: 'node_modules/@cumulus/api/dist/bootstrap/'
   launchInVpc: true
   envs:
     system_bucket: '{{system_bucket}}'
 
 EmsReport:
-  handler: index.emsReport
+  handler: index.handler
   timeout: 300
-  memory: 512
-  source: 'node_modules/@cumulus/api/dist/'
+  memory: 320
+  source: 'node_modules/@cumulus/api/dist/emsReport/'
   useElasticSearch: '{{es.name}}'
   launchInVpc: true
   envs:
@@ -98,21 +101,22 @@ EmsReport:
   namedLambdaDeadLetterQueue: true
 
 EmsDistributionReport:
-  handler: index.emsDistributionReport
+  handler: index.handler
   timeout: 300
-  memory: 512
-  source: 'node_modules/@cumulus/api/dist/'
+  memory: 128
+  source: 'node_modules/@cumulus/api/dist/emsDistributionReport/'
+  launchInVpc: true
   envs:
     LOGS_BUCKET: '{{system_bucket}}'
     REPORTS_BUCKET: '{{system_bucket}}'
     STACK_NAME: '{{stackName}}'
 
 executeMigrations:
-  handler: index.executeMigrations
+  handler: index.handler
   timeout: 300
   useElasticSearch: '{{es.name}}'
   memory: 1024
-  source: 'node_modules/@cumulus/api/dist/'
+  source: 'node_modules/@cumulus/api/dist/executeMigrations/'
   launchInVpc: true
   tables:
     - GranulesTable
@@ -127,10 +131,11 @@ executeMigrations:
     system_bucket: '{{system_bucket}}'
 
 messageConsumer:
-  handler: index.messageConsumer
+  handler: index.handler
   timeout: 100
-  memory: 512
-  source: 'node_modules/@cumulus/api/dist/'
+  memory: 256
+  source: 'node_modules/@cumulus/api/dist/messageConsumer/'
+  launchInVpc: true
   tables:
     - RulesTable
     - CollectionsTable
@@ -142,8 +147,10 @@ messageConsumer:
       value: '${kinesisFallbackSns}'
 
 CreateReconciliationReport:
-  handler: index.createReconciliationReport
-  source: 'node_modules/@cumulus/api/dist/'
+  handler: index.handler
+  source: 'node_modules/@cumulus/api/dist/createReconciliationReport/'
+  launchInVpc: true
+  memory: 256
   useDistributionApi: true
   tables:
     - CollectionsTable
@@ -156,27 +163,40 @@ CreateReconciliationReport:
 
 ScheduleSF:
   description: 'This lambda function is invoked by scheduled rules created via cumulus API'
-  handler: index.scheduler
+  handler: index.schedule
   timeout: 100
-  memory: 512
-  source: 'node_modules/@cumulus/api/dist/'
+  memory: 192
+  source: 'node_modules/@cumulus/api/dist/sfScheduler/'
+  launchInVpc: true
   tables:
     - CollectionsTable
     - ProvidersTable
   namedLambdaDeadLetterQueue: true
 
 BulkDelete:
-  handler: index.bulkDeleteLambda
-  source: 'node_modules/@cumulus/api/dist/'
+  handler: index.handler
+  source: 'node_modules/@cumulus/api/dist/bulkDelete/'
+  launchInVpc: true
 
 KinesisInboundEventLogger:
-  handler: index.logger
+  handler: index.handler
   timeout: 300
-  memory: 512
-  source: 'node_modules/@cumulus/api/dist/'
+  memory: 128
+  source: 'node_modules/@cumulus/api/dist/payloadLogger/'
+  launchInVpc: true
 
 KinesisOutboundEventLogger:
-  handler: index.logger
+  handler: index.handler
   timeout: 300
   memory: 512
-  source: 'node_modules/@cumulus/api/dist'
+  source: 'node_modules/@cumulus/api/dist/payloadLogger/'
+  launchInVpc: true
+
+sfSemaphoreDown:
+  handler: index.handler
+  timeout: 100
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist/sfSemaphoreDown/'
+  launchInVpc: true
+  tables:
+    - SemaphoresTable

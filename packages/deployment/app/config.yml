@@ -167,6 +167,13 @@ default:
               - sns2elasticsearchLambdaFunction
               - Arn
           protocol: lambda
+        semaphoreDown:
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - sfSemaphoreDownLambdaFunction
+              - Arn
+          protocol: lambda
 
     # This topic receives errored kinesis messages and tries them again.
     kinesisFallback:
@@ -178,10 +185,6 @@ default:
               - fallbackConsumerLambdaFunction
               - Arn
           protocol: lambda
-
-  apis:
-    - name: distribution
-    - name: backend
 
   sqs_consumer_rate: 500
   sqs:

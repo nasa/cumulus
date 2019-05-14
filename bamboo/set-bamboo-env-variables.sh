@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+# Bamboo envs are prefixed with bamboo_SECRET to avoid being printed
 declare -a param_list=(
   "bamboo_SECRET_AWS_ACCESS_KEY_ID"
   "bamboo_SECRET_AWS_SECRET_ACCESS_KEY"
@@ -41,14 +42,10 @@ if [[ $(git describe --exact-match HEAD 2>/dev/null |sed -n '1p') =~ ^v[0-9]+.* 
 fi
 echo "Version Tag: $VERSION_TAG"
 
+# Timeout is 40 minutes
 if [ -z $TIMEOUT_PERIODS ]; then
   TIMEOUT_PERIODS=80
 fi
-
-if [ -z "$PULL_REQUEST" ]; then
-  export PULL_REQUEST=$(node ./bamboo/detect-pr.js $GIT_SHA)
-fi
-echo "Pull request: $PULL_REQUEST"
 
 if [ -z "$DEPLOYMENT" ]; then
   DEPLOYMENT=$(node ./bamboo/select-stack.js)

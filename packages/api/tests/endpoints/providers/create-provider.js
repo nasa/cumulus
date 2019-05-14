@@ -3,6 +3,7 @@
 const test = require('ava');
 const request = require('supertest');
 const { randomString } = require('@cumulus/common/test-utils');
+const { RecordDoesNotExist } = require('@cumulus/common/errors');
 
 const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
@@ -12,7 +13,6 @@ const {
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
 const assertions = require('../../../lib/assertions');
-const { RecordDoesNotExist } = require('../../../lib/errors');
 
 process.env.AccessTokensTable = randomString();
 process.env.UsersTable = randomString();
