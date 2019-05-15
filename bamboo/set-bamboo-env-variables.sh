@@ -82,7 +82,7 @@ export DEPLOYMENT
 
 
 container_id=${bamboo_planKey,,}
-export container_id = ${container_id/-/}
+export container_id=${container_id/-/}
 
 if [[ $BRANCH == master || $VERSION_TAG || COMMIT_MESSAGE =~ '[run-redeploy-tests]' ]]; then
   export RUN_REDEPLOYMENT=true
