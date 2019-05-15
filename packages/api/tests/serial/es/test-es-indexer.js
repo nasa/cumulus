@@ -244,7 +244,13 @@ test.serial('indexing a deletedgranule record', async (t) => {
   let r = await indexer.indexGranule(esClient, granule, esIndex, granuletype);
   t.is(r.result, 'created');
 
-  r = await indexer.deleteRecord(esClient, granule.granuleId, granuletype, collectionId, esIndex);
+  r = await indexer.deleteRecord({
+    esClient,
+    id: granule.granuleId,
+    type: granuletype,
+    parent: collectionId,
+    index: esIndex
+  });
   t.is(r.result, 'deleted');
 
   // the deletedgranule record is added
@@ -289,8 +295,13 @@ test.serial('creating multiple deletedgranule records and retrieving them', asyn
   // now delete the records
   response = await Promise.all(granules
     .map((g) => indexer
-      .deleteRecord(esClient, g.granuleId, 'granule', g.collectionId, esIndex)));
-
+      .deleteRecord({
+        esClient,
+        id: g.granuleId,
+        type: 'granule',
+        parent: g.collectionId,
+        index: esIndex
+      })));
   t.is(response.length, 11);
   response.forEach((r) => t.is(r.result, 'deleted'));
 
@@ -637,13 +648,12 @@ test.serial('delete a provider record', async (t) => {
   t.is(r.result, 'created');
   t.is(r._id, testRecord.id);
 
-  r = await indexer.deleteRecord(
+  r = await indexer.deleteRecord({
     esClient,
-    testRecord.id,
+    id: testRecord.id,
     type,
-    undefined,
-    esIndex
-  );
+    index: esIndex
+  });
 
   t.is(r.result, 'deleted');
 
