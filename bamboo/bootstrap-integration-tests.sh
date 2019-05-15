@@ -5,7 +5,12 @@ npm install
 
 . ./bamboo/set-bamboo-env-variables.sh
 
-if [ "$USE_NPM_PACKAGES" = "true" ]; then
+if [[ $GIT_PR != true && $RUN_REDEPLOYMENT != true ]]; then
+  echo "******Branch HEAD is not a github PR, and this isn't a redeployment build, skipping bootstrap/deploy step"
+  exit 0
+fi
+
+if [ "$USE_NPM_PACKAGES" == "true" ]; then
   (cd example && npm install)
 else
   npm run bootstrap
@@ -22,7 +27,7 @@ LOCK_EXISTS_STATUS=$?
 echo "Locking status $LOCK_EXISTS_STATUS"
 
 COUNTER=0;
-while [[ $LOCK_EXISTS_STATUS = 100 ]]; do
+while [[ $LOCK_EXISTS_STATUS == 100 ]]; do
   if [[ $COUNTER -gt $TIMEOUT_PERIODS ]]; then
     echo "Timed out waiting for stack to become available"
     exit 1;

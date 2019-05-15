@@ -1,5 +1,12 @@
 #!/bin/bash
 set -e
+
+. ./bamboo/set-bamboo-env-variables.sh
+if [[ $GIT_PR != true ]]; then
+  echo "******Branch HEAD is not a github PR, and this isn't a redeployment build, skipping bootstrap/deploy step"
+  exit 0
+fi
+
 # Export user information for sshd container
 export SSH_USERS=user:$(id -u):$(id -u)
 

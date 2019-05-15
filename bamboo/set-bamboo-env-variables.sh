@@ -35,19 +35,27 @@ done
 
 export COMMIT_MSG=$(git log --pretty='format:%Creset%s' -1)
 export GIT_SHA=$(git rev-parse HEAD)
+
+## This should take a blank value from the global options, and
+## is intended to allow an override for a custom branch build.
+export GIT_PR=$bamboo_GIT_PR
 echo GIT_SHA is $GIT_SHA
 
-export GIT_PR=false
-set +e
-node ./bamboo/detect-pr.js $BRANCH
-PR_CODE=$?
-set -e
-if [[ PR_CODE -eq 100 ]]; then
-  export GIT_PR=true
-fi
-if [[ PR_CODE -eq 1 ]]; then
-  echo "Error detecting PR status"
-  exit 1
+source .bamboo_env_vars || true
+
+if [[ -z $GIT_PR ]]; then
+  set +e
+  node ./bamboo/detect-pr.js $BRANCH
+  PR_CODE=$?
+  set -e
+  if [[ PR_CODE -eq 100 ]]; then
+    export GIT_PR=true
+    echo export GIT_PR=true >> .bamboo_env_vars
+  fi
+  if [[ PR_CODE -eq 1 ]]; then
+    echo "Error detecting PR status"
+    exit 1
+  fi
 fi
 
 echo GIT_PR is $GIT_PR
@@ -58,16 +66,24 @@ fi
 echo "Version Tag: $VERSION_TAG"
 
 # Timeout is 40 minutes
-if [ -z $TIMEOUT_PERIODS ]; then
+if [[ -z $TIMEOUT_PERIODS ]]; then
   TIMEOUT_PERIODS=80
 fi
 
-if [ -z "$DEPLOYMENT" ]; then
+if [[ -z $DEPLOYMENT ]]; then
   DEPLOYMENT=$(node ./bamboo/select-stack.js)
   echo deployment "$DEPLOYMENT"
-  if [ "$DEPLOYMENT" = "none" ]; then
+  if [[ $DEPLOYMENT == none ]; then
     echo "Unable to determine integration stack" >&2
     exit 1
   fi
 fi
 export DEPLOYMENT
+
+
+container_id=${bamboo_planKey,,}
+export container_id = ${container_id/-/}
+
+if [[ $BRANCH == master || $VERSION_TAG || COMMIT_MESSAGE =~ '[run-redeploy-tests]' ]]; then
+  export RUN_REDEPLOYMENT=true
+fi
