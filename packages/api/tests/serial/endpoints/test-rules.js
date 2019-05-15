@@ -11,9 +11,11 @@ const {
   createFakeJwtAuthToken
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
+const indexer = require('../../../es/indexer');
 const assertions = require('../../../lib/assertions');
 
 const esIndex = randomString();
+let esClient;
 
 process.env.AccessTokensTable = randomString();
 process.env.RulesTable = randomString();
@@ -49,7 +51,8 @@ let userModel;
 
 test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
-
+  process.env.esIndex = esIndex;
+  esClient = await Search.es('fakehost');
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
   await aws.s3().putObject({
     Bucket: process.env.system_bucket,
@@ -60,7 +63,8 @@ test.before(async () => {
   ruleModel = new models.Rule();
   await ruleModel.createTable();
 
-  await ruleModel.create(testRule);
+  const ruleRecord = await ruleModel.create(testRule);
+  indexer.indexRule(esClient, ruleRecord, esIndex);
 
   userModel = new models.User();
   await userModel.createTable();
@@ -76,8 +80,6 @@ test.after.always(async () => {
   await ruleModel.deleteTable();
   await userModel.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
-
-  const esClient = await Search.es('fakehost');
   await esClient.indices.delete({ index: esIndex });
 });
 
@@ -184,7 +186,6 @@ test('CUMULUS-912 DELETE with pathParameters and with an invalid access token re
 
 test.todo('CUMULUS-912 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
 
-// TODO(aimee): Add a rule to ES. List uses ES and we don't have any rules in ES.
 test('default returns list of rules', async (t) => {
   const response = await request(app)
     .get('/rules')
@@ -193,7 +194,7 @@ test('default returns list of rules', async (t) => {
     .expect(200);
 
   const { results } = response.body;
-  t.is(results.length, 0);
+  t.is(results.length, 1);
 });
 
 test('GET gets a rule', async (t) => {
@@ -326,8 +327,19 @@ test('PUT returns "record does not exist"', async (t) => {
 });
 
 test('DELETE deletes a rule', async (t) => {
+  const newRule = Object.assign({}, testRule, {
+    name: randomString()
+  });
+
+  await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(200);
+
   const response = await request(app)
-    .delete(`/rules/${testRule.name}`)
+    .delete(`/rules/${newRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
