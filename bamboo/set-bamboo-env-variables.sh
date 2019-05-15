@@ -44,6 +44,7 @@ echo GIT_SHA is $GIT_SHA
 source .bamboo_env_vars || true
 
 if [[ -z $GIT_PR ]]; then
+  echo "Setting GIT_PR"
   set +e
   node ./bamboo/detect-pr.js $BRANCH
   PR_CODE=$?
