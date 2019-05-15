@@ -33,7 +33,7 @@ for key in ${param_list[@]}; do
   export $update_key=${!key}
 done
 
-export GIT_BRANCH=$bamboo.repository.git.branch
+export GIT_BRANCH=${bamboo.repository.git.branch}
 export COMMIT_MSG=$(git log --pretty='format:%Creset%s' -1)
 export GIT_SHA=$(git rev-parse HEAD)
 echo GIT_SHA is $GIT_SHA
