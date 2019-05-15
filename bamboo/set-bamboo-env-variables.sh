@@ -55,7 +55,7 @@ if [[ -z $GIT_PR ]]; then
   elif [[ PR_CODE -eq 0 ]]; then
     export GIT_PR=false
     echo GIT_PR=false >> .bamboo_env_vars
-  else [[ PR_CODE -eq 1 ]]; then
+  else
     echo "Error detecting PR status"
     exit 1
   fi
