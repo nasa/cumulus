@@ -2,6 +2,7 @@
 
 const router = require('express-promise-router')();
 const aws = require('@cumulus/common/aws');
+const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const Search = require('../es/search').Search;
 const models = require('../models');
@@ -64,6 +65,17 @@ async function del(req, res) {
 
   try {
     await pdrModel.delete({ pdrName });
+
+    if (inTestMode()) {
+      const esClient = await Search.es(process.env.ES_HOST);
+      const esIndex = process.env.esIndex;
+      await esClient.delete({
+        id: pdrName,
+        index: esIndex,
+        type: 'pdr',
+        ignore: [404]
+      });
+    }
   } catch (err) {
     if (!isRecordDoesNotExistError(err)) throw err;
   }

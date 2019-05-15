@@ -44,11 +44,11 @@ test.before(async () => {
   // create a fake bucket
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
-  // create fake granule table
+  // create fake execution table
   executionModel = new models.Execution();
   await executionModel.createTable();
 
-  // create fake granule records
+  // create fake execution records
   fakeExecutions.push(fakeExecutionFactory('completed'));
   fakeExecutions.push(fakeExecutionFactory('failed', 'workflow2'));
   await Promise.all(fakeExecutions.map((i) => executionModel.create(i)
