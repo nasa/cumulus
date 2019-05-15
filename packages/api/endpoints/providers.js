@@ -1,10 +1,24 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const models = require('../models');
 const { AssociatedRulesError } = require('../lib/errors');
 const { Search } = require('../es/search');
+const indexer = require('../es/indexer');
+
+/**
+ * Index a provider to Elasticsearch.
+ *
+ * @param {Object} record - Provider record object
+ * @returns {Promise} - Promise of indexing operation
+ */
+async function addToES(record) {
+  const esClient = await Search.es(process.env.ES_HOST);
+  const esIndex = process.env.esIndex;
+  indexer.indexProvider(esClient, record, esIndex);
+}
 
 /**
  * List all providers
@@ -62,6 +76,10 @@ async function post(req, res) {
   } catch (e) {
     if (e instanceof RecordDoesNotExist) {
       const record = await providerModel.create(data);
+
+      if (inTestMode()) {
+        await addToES(record);
+      }
       return res.send({ record, message: 'Record saved' });
     }
     return res.boom.badImplementation(e.message);
@@ -85,6 +103,10 @@ async function put(req, res) {
   try {
     await providerModel.get({ id });
     const record = await providerModel.update({ id }, data);
+
+    if (inTestMode()) {
+      await addToES(record);
+    }
     return res.send(record);
   } catch (err) {
     if (err instanceof RecordDoesNotExist) return res.boom.notFound('Record does not exist');
@@ -104,6 +126,17 @@ async function del(req, res) {
 
   try {
     await providerModel.delete({ id: req.params.id });
+
+    if (inTestMode()) {
+      const esClient = await Search.es(process.env.ES_HOST);
+      const esIndex = process.env.esIndex;
+      await esClient.delete({
+        id: req.params.id,
+        type: 'provider',
+        index: esIndex,
+        ignore: [404]
+      });
+    }
     return res.send({ message: 'Record deleted' });
   } catch (err) {
     if (err instanceof AssociatedRulesError) {
