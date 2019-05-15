@@ -5,7 +5,6 @@ const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const Search = require('../es/search').Search;
 const models = require('../models');
 
-
 /**
  * List and search executions
  *
