@@ -33,9 +33,25 @@ for key in ${param_list[@]}; do
   export $update_key=${!key}
 done
 
+export GIT_BRANCH=$bamboo.repository.git.branch
 export COMMIT_MSG=$(git log --pretty='format:%Creset%s' -1)
 export GIT_SHA=$(git rev-parse HEAD)
 echo GIT_SHA is $GIT_SHA
+
+export GIT_PR=false
+set +e
+node ./scripts/detect-pr.js $GIT_BRANCH
+PR_CODE=$?
+set -e
+if [[ PR_CODE -eq 100 ]]; then
+  export GIT_PR=true
+fi
+if [[ PR_CODE -eq 1 ]]
+  echo "Error detecting PR status"
+  exit 1
+fi
+
+echo GIT_PR is $GIT_PR
 
 if [[ $(git describe --exact-match HEAD 2>/dev/null |sed -n '1p') =~ ^v[0-9]+.* ]]; then
   export VERSION_TAG=true
