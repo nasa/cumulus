@@ -46,7 +46,7 @@ set -e
 if [[ PR_CODE -eq 100 ]]; then
   export GIT_PR=true
 fi
-if [[ PR_CODE -eq 1 ]]
+if [[ PR_CODE -eq 1 ]]; then
   echo "Error detecting PR status"
   exit 1
 fi
