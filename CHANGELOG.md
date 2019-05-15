@@ -28,7 +28,9 @@ As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS
   - Database resources (DynamoDB, ElasticSearch) have been moved to an independent `db` stack.
     Migrations for this version will need to be user-managed. (e.g. [elasticsearch](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-version-migration.html#snapshot-based-migration) and [dynamoDB](https://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/dp-template-exports3toddb.html)).
     Order of stack deployment is `iam` -> `db` -> `app`.
-  - All stacks can now be deployed using a single `config.yml` file. Backwards-compatible.
+  - All stacks can now be deployed using a single `config.yml` file, i.e.: `kes cf deploy --kes-folder app --template node_modules/@cumulus/deployment/[iam|db|app] [...]`
+    Backwards-compatible. Please re-run `npm run bootstrap` to build new `kes` overrides.
+    Deployment docs have been updated to show how to deploy a single-config Cumulus instance.
   - `params` have been moved: Nest `params` fields under `app`, `db` or `iam` to override all Parameters for a particular stack's cloudformation template. Backwards-compatible with multi-config setups.
   - `stackName` and `stackNameNoDash` have been retired. Use `prefix` and `prefixNoDash` instead.
   - The `iams` section in `app/config.yml` IAM roles has been deprecated as a user-facing parameter,
@@ -85,7 +87,9 @@ As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS
     Migrations for this version will need to be user-managed.
     (e.g. [elasticsearch](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-version-migration.html#snapshot-based-migration) and [dynamoDB](https://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/dp-template-exports3toddb.html)).
     Order of stack deployment is `iam` -> `db` -> `app`.
-  - All stacks can now be deployed using a single `config.yml` file. Backwards-compatible.
+  - All stacks can now be deployed using a single `config.yml` file, i.e.: `kes cf deploy --kes-folder app --template node_modules/@cumulus/deployment/[iam|db|app] [...]`
+    Backwards-compatible. Please re-run `npm run bootstrap` to build new `kes` overrides.
+    Deployment docs have been updated to show how to deploy a single-config Cumulus instance.
   - `params` fields should now be nested under the stack key (i.e. `app`, `db` or `iam`) to provide Parameters for a particular stack's cloudformation template,
     for use with single-config instances. Keys *must* match the name of the deployment package folder (`app`, `db`, or `iam`).
     Backwards-compatible with multi-config setups.
