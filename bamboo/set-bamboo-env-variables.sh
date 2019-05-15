@@ -40,7 +40,7 @@ echo GIT_SHA is $GIT_SHA
 
 export GIT_PR=false
 set +e
-node ./scripts/detect-pr.js $GIT_BRANCH
+node ./bamboo/detect-pr.js $GIT_BRANCH
 PR_CODE=$?
 set -e
 if [[ PR_CODE -eq 100 ]]; then
