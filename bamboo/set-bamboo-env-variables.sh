@@ -50,7 +50,7 @@ if [[ -z $GIT_PR ]]; then
   set -e
   if [[ PR_CODE -eq 100 ]]; then
     export GIT_PR=true
-    echo export GIT_PR=true >> .bamboo_env_vars
+    echo GIT_PR=true >> .bamboo_env_vars
   fi
   if [[ PR_CODE -eq 1 ]]; then
     echo "Error detecting PR status"
@@ -73,7 +73,7 @@ fi
 if [[ -z $DEPLOYMENT ]]; then
   DEPLOYMENT=$(node ./bamboo/select-stack.js)
   echo deployment "$DEPLOYMENT"
-  if [[ $DEPLOYMENT == none ]; then
+  if [[ $DEPLOYMENT == none ]]; then
     echo "Unable to determine integration stack" >&2
     exit 1
   fi
