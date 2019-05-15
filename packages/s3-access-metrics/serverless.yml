@@ -1,0 +1,90 @@
+service: s3-access-metrics
+
+plugins:
+  - serverless-plugin-existing-s3
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  deploymentBucket: ${file(./config.js):deploymentBucket}
+  role: LambdaRole
+  stackName: ${file(./config.js):prefix}-${self:service}
+  region: ${file(./config.yml):region, 'us-east-1'}
+  vpc: ${file(./config.js):vpcConfig}
+
+functions:
+  metricGenerator:
+    handler: index.handler
+    name: ${self:provider.stackName}-${self:provider.stage}-metric-generator
+    environment:
+      stack: ${file(./config.js):stack}
+    events:
+      - existingS3:
+          bucket: ${file(./config.js):logsBucket}
+          events:
+            - s3:ObjectCreated:*
+          rules:
+            - prefix: ${file(./config.js):logsPrefix}
+
+resources:
+  Conditions:
+    DeployToVpc:
+      'Fn::Equals':
+        - ${file(./config.js):deployToVpc}
+        - 'true'
+
+  Resources:
+    LambdaSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Condition: DeployToVpc
+      Properties:
+        GroupDescription: Security group for ${self:provider.stackName}-${self:provider.stage}-metric-generator
+        VpcId: ${file(./config.js):vpcId}
+
+    LambdaRole:
+      Type: AWS::IAM::Role
+      Properties:
+        PermissionsBoundary: ${file(./config.js):permissionsBoundary}
+        Path: /
+        RoleName: '${self:provider.stackName}-S3AccessMetricsRole'
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        # note that these rights are needed if you want your function to be able to communicate with resources within your vpc
+        # ManagedPolicyArns:
+        #   - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+        Policies:
+          - PolicyName: myPolicyName
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - ec2:CreateNetworkInterface
+                    - ec2:DescribeNetworkInterfaces
+                    - ec2:DeleteNetworkInterface
+                  Resource: '*'
+                - Effect: Allow
+                  Action: cloudwatch:PutMetricData
+                  Resource: '*'
+                - Effect: Allow
+                  Action: s3:GetObject
+                  Resource: "arn:aws:s3:::${file(./config.js):logsBucket}/${file(./config.js):logsPrefix}*"
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource:
+                    - 'Fn::Join':
+                      - ':'
+                      -
+                        - 'arn:aws:logs'
+                        - Ref: 'AWS::Region'
+                        - Ref: 'AWS::AccountId'
+                        - 'log-group:/aws/lambda/*:*:*'
