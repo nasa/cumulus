@@ -278,6 +278,23 @@ For information on how to locate them in the Console see [Locating Cumulus IAM R
 
 List of EarthData users you wish to have access to your dashboard application. These users will be populated in your `<stackname>-UsersTable` [DynamoDb](https://console.aws.amazon.com/dynamodb/) table.
 
+## apiConfigs
+
+Use the apiConfigs to configure [private endpoints in API Gateway](https://aws.amazon.com/blogs/compute/introducing-amazon-api-gateway-private-endpoints/). The key for `apiConfigs` should be `backend` or `distribution`. To deploy a private API Gateway, set `private: true`. The `port` option can be set if you would like to configure tunneling via a certain port.
+
+Example:
+```
+apiConfigs:
+  backend:
+    private: true
+    port: 8000
+  distribution:
+    private: true
+    port: 7000
+```
+
+**Note:** If you deploy a private API Gateway and you want to go back to public (Edge), that will not work via the deployment since AWS does not allow you to convert a private API Gateway to public. The easiest way is to follow the steps in [this document](https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-api-migration.html) to switch your endpoint configuration to `Regional`, then to `Edge` using either the AWS Console or the CLI. Then you can redeploy with the `private: true` option removed.
+
 # Footnotes
 
 [^1]: This value is used by kes only to identify the configuration set to use and should not appear in any AWS object
