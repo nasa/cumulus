@@ -73,6 +73,8 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
 
 ## Changed
 
+- Updated `@cumulus/ingest/http/httpMixin.list()` to trim trailing spaces on discovered filenames
+
 - **CUMULUS-1236**
   - Moves access to public files behind the distribution endpoint.  Authentication is not required, but direct http access has been disallowed.
 
@@ -94,6 +96,8 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
   - No longer disable lambda event source mappings
 
 ### Fixed
+
+- Updated Lerna publish script so that published Cumulus packages will pin their dependencies on other Cumulus packages to exact versions (e.g. `1.12.1` instead of `^1.12.1`)
 
 - **CUMULUS-1203**
   - Fixes IAM template's use of intrinsic functions such that IAM template overrides now work with kes
