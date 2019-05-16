@@ -3,7 +3,9 @@
 const router = require('express-promise-router')();
 const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
+const { inTestMode } = require('@cumulus/common/test-utils');
 const Search = require('../es/search').Search;
+const indexer = require('../es/indexer');
 const models = require('../models');
 const { deconstructCollectionId } = require('../lib/utils');
 
@@ -139,6 +141,19 @@ async function del(req, res) {
   }));
 
   await granuleModelClient.delete({ granuleId });
+
+  if (inTestMode()) {
+    const esClient = await Search.es(process.env.ES_HOST);
+    const esIndex = process.env.esIndex;
+    await indexer.deleteRecord({
+      esClient,
+      id: granuleId,
+      type: 'granule',
+      parent: granule.collectionId,
+      index: esIndex,
+      ignore: [404]
+    });
+  }
 
   return res.send({ detail: 'Record deleted' });
 }
