@@ -35,7 +35,7 @@ As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS
   - `stackName` and `stackNameNoDash` have been retired. Use `prefix` and `prefixNoDash` instead.
   - The `iams` section in `app/config.yml` IAM roles has been deprecated as a user-facing parameter,
     *unless* your IAM role ARNs do not match the convention shown in `@cumulus/deployment/app/config.yml`
-  - The `vpc.securityGroup` will need to be set with a pre-existing security group ID to use Cumulus in a VPC.
+  - The `vpc.securityGroup` will need to be set with a pre-existing security group ID to use Cumulus in a VPC. Must allow inbound HTTP(S) (Port 443).
 
 - **CUMULUS-1212**
   - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
@@ -104,8 +104,8 @@ As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS
   - `iam` and `db` `cloudformation.yml` file names will have respective prefixes (e.g `iam.cloudformation.yml`).
   - Cumulus will now only attempt to create reconciliation reports for buckets of the `private`, `public` and `protected` types.
   - Cumulus will no longer set up its own security group.
-    To pass a pre-existing security group for in-VPC deployments as a parameter to the Cumulus template,
-    populate `vpc.securityGroup` in `config.yml`.
+    To pass a pre-existing security group for in-VPC deployments as a parameter to the Cumulus template, populate `vpc.securityGroup` in `config.yml`.
+    This security group must allow inbound HTTP(S) traffic (Port 443). SSH traffic (Port 22) must be permitted for SSH access to ECS instances.
   - Deployment docs have been updated with examples for the new deployment model.
 
 - **CUMULUS-1236**
