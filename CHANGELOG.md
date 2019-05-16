@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 **CUMULUS-802** added some additional IAM permissions to support ECS autoscaling and changes were needed to run all lambdas in the VPC, so **you will have to redeploy your IAM stack.**
 
 As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS-1310**, **you must delete your existing stacks (except IAM) before deploying this version of Cumulus.**
+If running Cumulus within a VPC and extended downtime is acceptable, we recommend doing this at the end of the day to allow AWS backend resources and network interfaces to be cleaned up overnight.
 
 ### BREAKING CHANGES
 

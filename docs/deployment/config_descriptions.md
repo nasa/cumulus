@@ -99,7 +99,7 @@ If deploying to a NASA NGAP account, set `useNgapPermissionBoundary: true`.
 
 ### vpc
 
-Configure your virtual private cloud.  You can find the VPC Id, subnets, and IPv4 CIDR values on the [VPC Dashboard](https://console.aws.amazon.com/vpc/home?region=us-east-1#). `vpcId` from [Your VPCs](https://console.aws.amazon.com/vpc/home?region=us-east-1#vpcs:), and `subnets` [here](https://console.aws.amazon.com/vpc/home?region=us-east-1#subnets:). When you choose a subnet, be sure to also note its availability zone, which is used to configure `ecs`.
+Configure your virtual private cloud.  You can find the VPC Id, subnets, and security group values on the [VPC Dashboard](https://console.aws.amazon.com/vpc/home?region=us-east-1#). `vpcId` from [Your VPCs](https://console.aws.amazon.com/vpc/home?region=us-east-1#vpcs:), and `subnets` [here](https://console.aws.amazon.com/vpc/home?region=us-east-1#subnets:). When you choose a subnet, be sure to also note its availability zone, which is used to configure `ecs`. The security group MUST allow HTTP(S) traffic (port 443). Optionally, SSH traffic should be allowed to SSH into ECS instances.
 
 Note: The console links are specific to `us-east-1`. Use the corresponding links for your region.
 
