@@ -81,6 +81,8 @@ As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS
 
 ## Changed
 
+- Updated `@cumulus/ingest/http/httpMixin.list()` to trim trailing spaces on discovered filenames
+
 - **CUMULUS-1310**
   - Database resources (DynamoDB, ElasticSearch) have been moved to an independent `db` stack.
     This will enable future updates to avoid affecting database resources or requiring migrations.
@@ -129,6 +131,8 @@ As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS
   - No longer disable lambda event source mappings
 
 ### Fixed
+
+- Updated Lerna publish script so that published Cumulus packages will pin their dependencies on other Cumulus packages to exact versions (e.g. `1.12.1` instead of `^1.12.1`)
 
 - **CUMULUS-1203**
   - Fixes IAM template's use of intrinsic functions such that IAM template overrides now work with kes

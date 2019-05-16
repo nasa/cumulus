@@ -125,7 +125,7 @@ class Discover {
         // Add additional granule-related properties to the file
         .map((file) => this.setGranuleInfo(file));
     } catch (error) {
-      log.error(`discover exception ${JSON.stringify(error)}`);
+      log.error('discover exception', error);
     }
 
     // Group the files by granuleId
