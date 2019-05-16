@@ -79,6 +79,29 @@ cumulus-sit:
       name: cumulus-sit-dashboard
       type: shared
 
+jk-sit:
+  prefix: jk-sit
+  stackName: jk-sit-iam
+  buckets:
+    internal:
+      name: jk-sit-internal
+      type: internal
+    private:
+      name: jk-sit-private
+      type: private
+    protected:
+      name: cumulus-sit-protected
+      type: protected
+    public:
+      name: cumulus-sit-public
+      type: public
+    protected-2:
+      name: cumulus-sit-protected
+      type: protected
+    dashboard:
+      name: jk-sit-dashboard
+      type: shared
+
 # -------------------------------
 # CUMULUS individual deployments.
 # -------------------------------
@@ -341,7 +364,7 @@ jk:
   prefix: jk
 jk2:
   prefix: jk2
-jk3: 
+jk3:
   prefix: jk3
 
 mboyd-test:
