@@ -773,6 +773,13 @@ Resources:
                   - s3:ListAllMyBuckets
                 Resource: '*'
 
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:DeleteNetworkInterface
+                Resource: '*'
+
   ScalingRole:
     Type: 'AWS::IAM::Role'
     Properties:
