@@ -134,6 +134,8 @@ Cumulus supports operation within a VPC, but you will need to separately create 
 To configure Cumulus with these settings, populate your `app/.env` file with the relevant values, as shown in the next section, before deploying Cumulus.
 If these values are omitted Cumulus resources that require a VPC will be created in the default VPC and security group.
 
+--------------
+
 ## Earthdata Application
 
 ### Configure EarthData application
