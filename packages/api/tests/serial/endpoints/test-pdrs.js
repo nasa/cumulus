@@ -49,6 +49,7 @@ let userModel;
 test.before(async () => {
   // create esClient
   esClient = await Search.es('fakehost');
+  process.env.esIndex = esIndex;
 
   // add fake elasticsearch index
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
@@ -67,7 +68,7 @@ test.before(async () => {
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 
-  // create fake granule records
+  // create fake PDR records
   fakePdrs = ['completed', 'failed'].map(fakePdrFactory);
   await Promise.all(
     fakePdrs.map(

@@ -18,6 +18,7 @@ test.before(async () => {
   await deleteAliases();
   await bootstrapElasticSearch('fakehost', esIndex);
   esClient = await Search.es();
+  process.env.esIndex = esIndex;
 });
 
 test.after.always(async () => {
