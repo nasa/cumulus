@@ -760,7 +760,9 @@ async function getGranuleTemporalInfo(granule) {
     const endingDateTime = _get(metadata.Granule, 'Temporal.RangeDateTime.EndingDateTime');
     const productionDateTime = _get(metadata.Granule, 'DataGranule.ProductionDateTime');
     const lastUpdateDateTime = metadata.Granule.LastUpdate || metadata.Granule.InsertTime;
-    return { beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime };
+    return {
+      beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime
+    };
   }
   if (isUMMGFile(cmrFilename)) {
     const metadata = await metadataObjectFromCMRJSONFile(cmrFilename);
@@ -772,8 +774,11 @@ async function getGranuleTemporalInfo(granule) {
       updateDate = metadata.ProviderDates.filter((d) => d.Type === 'Insert');
     }
     const lastUpdateDateTime = updateDate[0].Date;
-    return { beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime };
+    return {
+      beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime
+    };
   }
+  return {};
 }
 
 module.exports = {
