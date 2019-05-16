@@ -1,9 +1,6 @@
 #!/bin/bash
-source .bamboo_env_vars || true
-if [[ $GIT_PR != true && BRANCH != master ]]; then
-  >&2 echo "******Branch HEAD is not a github PR, and this isn't master, skipping bootstrap/deploy step"
-  exit 0
-fi
+. ./abort-if-not-pr-or-master.sh
+
 commit_message_contains_skip_audit_flag=false
 commit_matches_version_tag=false
 

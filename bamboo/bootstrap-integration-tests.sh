@@ -1,10 +1,6 @@
 #!/bin/bash
 set -e
-source .bamboo_env_vars || true
-if [[ $GIT_PR != true && $RUN_REDEPLOYMENT != true ]]; then
-  >&2 echo "******Branch HEAD is not a github PR, and this isn't a redeployment build, skipping bootstrap/deploy step"
-  exit 0
-fi
+. ./abort-if-not-pr-or-redeployment.sh
 
 npm config set unsafe-perm true
 npm install
@@ -26,11 +22,11 @@ node ./scripts/lock-stack.js true $DEPLOYMENT
 LOCK_EXISTS_STATUS=$?
 echo "Locking status $LOCK_EXISTS_STATUS"
 
-COUNTER=0;
+COUNTER=0
 while [[ $LOCK_EXISTS_STATUS == 100 ]]; do
   if [[ $COUNTER -gt $TIMEOUT_PERIODS ]]; then
     echo "Timed out waiting for stack to become available"
-    exit 1;
+    exit 1
   fi
   echo "Another build is using the ${DEPLOYMENT} stack."
   sleep 30
@@ -39,7 +35,7 @@ while [[ $LOCK_EXISTS_STATUS == 100 ]]; do
   LOCK_EXISTS_STATUS=$?
 done
 if [[ $LOCK_EXIST_STATUS -gt 0 ]]; then
-  exit 1;
+  exit 1
 fi
 set -e
 
@@ -63,4 +59,3 @@ echo "Deploying S3AccessTest lambda to $DEPLOYMENT"
   --template node_modules/@cumulus/deployment/app \
   --deployment "$DEPLOYMENT" \
   --region us-west-2
-
