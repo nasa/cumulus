@@ -266,6 +266,29 @@ cumulus-sit:
 # CUMULUS individual deployments.
 # -------------------------------
 
+jk-sit:
+  stackName: jk-sit
+  stackNameNoDash: jkSit
+  buckets:
+    internal:
+      name: jk-sit-internal
+      type: internal
+    private:
+      name: jk-sit-private
+      type: private
+    protected:
+      name: cumulus-sit-protected
+      type: protected
+    public:
+      name: cumulus-sit-public
+      type: public
+    protected-2:
+      name: cumulus-sit-protected
+      type: protected
+    dashboard:
+      name: jk-sit-dashboard
+      type: shared
+
 aimee:
   stackName: aimee
   stackNameNoDash: aimee

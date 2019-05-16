@@ -73,6 +73,20 @@ if [[ -z $TIMEOUT_PERIODS ]]; then
   TIMEOUT_PERIODS=80
 fi
 
+## Set environment variable overrides if SIT deployment
+if [[ $bamboo_NGAP_ENV = "SIT" ]]; then
+  export AWS_ACCESS_KEY_ID=$bamboo_SECRET_SIT_AWS_ACCESS_KEY_ID
+  export AWS_SECRET_ACCESS_KEY=$bamboo_SECRET_SIT_AWS_SECRET_ACCESS_KEY
+  export AWS_ACCOUNT_ID=$bamboo_SECRET_SIT_AWS_ACCOUNT_ID
+  export VPC_ID=$bamboo_SECRET_SIT_VPC_ID
+  export AWS_SUBNET=$bamboo_SECRET_SIT_AWS_SUBNET
+  export VPC_CIDR_IP=$bamboo_SECRET_SIT_VPC_CIDR_IP
+  export PROVIDER_HOST=$bamboo_SECRET_SIT_PROVIDER_HOST
+  DEPLOYMENT=$bamboo_SIT_DEPLOYMENT
+  echo deployment "$DEPLOYMENT"
+fi
+
+## Set integration stack name
 if [[ -z $DEPLOYMENT ]]; then
   DEPLOYMENT=$(node ./bamboo/select-stack.js)
   echo deployment "$DEPLOYMENT"
