@@ -79,7 +79,6 @@ cumulus-sit:
       name: cumulus-sit-dashboard
       type: shared
 
-# Nightly Test  SIT stack
 jk-sit:
   prefix: jk-sit
   stackName: jk-sit-iam

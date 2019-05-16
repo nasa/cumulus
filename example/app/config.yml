@@ -266,7 +266,6 @@ cumulus-sit:
 # CUMULUS individual deployments.
 # -------------------------------
 
-# Nightly Test  SIT stack
 jk-sit:
   stackName: jk-sit
   stackNameNoDash: jkSit
