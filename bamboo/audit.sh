@@ -1,11 +1,9 @@
 #!/bin/bash
 source .bamboo_env_vars || true
-if [[ $GIT_PR != true ]]; then
-  >&2 echo "******Branch HEAD is not a github PR, and this isn't a redeployment build, skipping bootstrap/deploy step"
+if [[ $GIT_PR != true && BRANCH != master ]]; then
+  >&2 echo "******Branch HEAD is not a github PR, and this isn't master, skipping bootstrap/deploy step"
   exit 0
 fi
-. ./set-bamboo-env-variables.sh
-
 commit_message_contains_skip_audit_flag=false
 commit_matches_version_tag=false
 
@@ -19,4 +17,6 @@ fi
 if [[ $commit_message_contains_skip_audit_flag = false && $commit_matches_version_tag = false ]]; then
   npm run install-locks;
   npm run audit;
+else
+  >&2 echo "******Skipping audit due to commit message/version tag being present"
 fi
