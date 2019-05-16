@@ -1,19 +1,19 @@
-+ Figure out how to deploy this into a VPC
-+ Make the PermissionsBoundary of the role optional
-+ Make deployment bucket configurable
-+ Refactor IAM policy
-+ Figure out IAM error when deploying a single function
-+ Consider using webpack
-+ Try to only pull in S3 and Cloudwatch libraries
-+ If using statistic sets, test what happens when you publish different stats for the same minute
-+ Figure out how to publish 0 for minutes without any records
-+ Handle events from multiple log files (different buckets) for the same periods
-+ Make the bucket configurable
-+ Remove the conditional from the IAM permissions
-- Throw an exception if vpcId is set but subnetIds is not
-- Add comments or improve function names in index.js
-- Add a README
-  - what it does
-  - how it works
-  - how to configure
-  - how to deploy
+- [x] Figure out how to deploy this into a VPC
+- [x] Make the PermissionsBoundary of the role optional
+- [x] Make deployment bucket configurable
+- [x] Refactor IAM policy
+- [x] Figure out IAM error when deploying a single function
+- [x] Consider using webpack
+- [x] Try to only pull in S3 and Cloudwatch libraries
+- [x] If using statistic sets, test what happens when you publish different stats for the same minute
+- [x] Figure out how to publish 0 for minutes without any records
+- [x] Handle events from multiple log files (different buckets) for the same periods
+- [x] Make the bucket configurable
+- [x] Remove the conditional from the IAM permissions
+- [ ] Throw an exception if vpcId is set but subnetIds is not
+- [x] Add comments or improve function names in index.js
+- [x] Add a README
+  - [x] what it does
+  - [x] how it works
+  - [x] how to configure
+  - [x] how to deploy
