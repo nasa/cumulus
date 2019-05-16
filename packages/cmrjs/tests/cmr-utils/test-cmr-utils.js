@@ -12,7 +12,7 @@ const { BucketsConfig } = require('@cumulus/common');
 const { xmlParseOptions } = require('../../utils');
 
 const cmrUtil = rewire('../../cmr-utils');
-const { isCMRFile } = cmrUtil;
+const { isCMRFile, getGranuleTemporalInfo } = cmrUtil;
 const uploadEcho10CMRFile = cmrUtil.__get__('uploadEcho10CMRFile');
 const uploadUMMGJSONCMRFile = cmrUtil.__get__('uploadUMMGJSONCMRFile');
 
@@ -262,4 +262,50 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
     revertMockUpload();
   }
   t.deepEqual(actualOutput.RelatedUrls, expectedRelatedURLs);
+});
+
+test.serial('getGranuleTemporalInfo returns temporal information from granule CMR json file', async (t) => {
+  const cmrJSON = await fs.readFile('./tests/fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json', 'utf8');
+  const cmrMetadata = JSON.parse(cmrJSON);
+  const revertCmrFileObject = cmrUtil.__set__('granuleToCmrFileObject', () => ([{filename: 'test.cmr.json', granuleId: 'testGranuleId'}]));
+  const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRJSONFile', () => cmrMetadata);
+
+  const expectedTemporalInfo = {
+    beginningDateTime: '2016-01-09T11:40:45.032Z',
+    endingDateTime: '2016-01-09T11:41:12.027Z',
+    productionDateTime: '2016-01-09T11:40:45.032Z',
+    lastUpdateDateTime: '2018-12-19T17:30:31.424Z'
+  };
+
+  let temporalInfo;
+  try {
+    temporalInfo = await getGranuleTemporalInfo({ granuleId: 'testGranuleId', files: [] });
+  }finally {
+    revertCmrFileObject();
+    revertMetaObject();
+  }
+  t.deepEqual(temporalInfo, expectedTemporalInfo);
+});
+
+test.serial('getGranuleTemporalInfo returns temporal information from granule CMR xml file', async (t) => {
+  const cmrXml = await fs.readFile('./tests/fixtures/cmrFileUpdateFixture.cmr.xml', 'utf8');
+  const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
+  const revertCmrFileObject = cmrUtil.__set__('granuleToCmrFileObject', () => ([{filename: 'test.cmr.xml', granuleId: 'testGranuleId'}]));
+  const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRXMLFile', () => cmrMetadata);
+
+  const expectedTemporalInfo = {
+    beginningDateTime: '2017-10-24T00:00:00Z',
+    endingDateTime: '2017-11-08T23:59:59Z',
+    productionDateTime: '2018-07-19T12:01:01Z',
+    lastUpdateDateTime: '2018-04-25T21:45:45.524053'
+  };
+
+  let temporalInfo;
+  try {
+    temporalInfo = await getGranuleTemporalInfo({ granuleId: 'testGranuleId', files: [] });
+  }finally {
+    revertCmrFileObject();
+    revertMetaObject();
+  }
+  t.deepEqual(temporalInfo, expectedTemporalInfo);
 });

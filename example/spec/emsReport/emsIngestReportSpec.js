@@ -5,6 +5,7 @@ const AWS = require('aws-sdk');
 const {
   aws: {
     fileExists,
+    getS3Object,
     parseS3Uri,
     lambda,
     s3
@@ -16,6 +17,7 @@ const {
   addCollections,
   addProviders,
   buildAndExecuteWorkflow,
+  cleanupProviders,
   granulesApi: granulesApiTestUtils,
   waitUntilGranuleStatusIs
 } = require('@cumulus/integration-tests');
@@ -23,6 +25,7 @@ const {
 const {
   loadConfig,
   uploadTestDataToBucket,
+  deleteFolder,
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix
@@ -32,8 +35,9 @@ const config = loadConfig();
 
 const emsReportLambda = `${config.stackName}-EmsIngestReport`;
 const bucket = config.bucket;
-const emsProvider = config.ems_provider;
+const emsProvider = config.ems.provider;
 const stackName = config.stackName;
+const submitReport = config.ems.submitReport === 'true' || false;
 
 const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
 
@@ -104,29 +108,40 @@ async function deleteOldGranules() {
 describe('The EMS report', () => {
   let testDataFolder;
   let testSuffix;
+  let deletedGranuleId;
+  let ingestedGranuleIds;
 
   beforeAll(async () => {
     // in order to generate the ingest reports here and by daily cron, we need to ingest granules
     // as well as delete granules
 
-    const testId = createTimestampedTestId(config.stackName, 'CreateReconciliationReport');
+    const testId = createTimestampedTestId(config.stackName, 'emsIngestReport');
     testSuffix = createTestSuffix(testId);
     testDataFolder = createTestDataPath(testId);
 
     await setupCollectionAndTestData(testSuffix, testDataFolder);
-    // ingest one granule
-    await ingestAndPublishGranule(testSuffix, testDataFolder);
+    // ingest one granule, this will be deleted later
+    deletedGranuleId = await ingestAndPublishGranule(testSuffix, testDataFolder);
 
     // delete granules ingested for this collection, so that ArchDel report can be generated
     await deleteOldGranules();
 
     // ingest two new granules, so that Arch and Ing reports can be generated
-    await Promise.all([
+    ingestedGranuleIds = await Promise.all([
       // ingest a granule and publish it to CMR
       ingestAndPublishGranule(testSuffix, testDataFolder),
 
       // ingest a granule but not publish it to CMR
       ingestAndPublishGranule(testSuffix, testDataFolder, false)
+    ]);
+  });
+
+  afterAll(async () => {
+    await Promise.all([
+      deleteFolder(config.bucket, testDataFolder),
+      // leave collections in the table for EMS reports
+      //cleanupCollections(config.stackName, config.bucket, collectionsDir),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
     ]);
   });
 
@@ -170,7 +185,8 @@ describe('The EMS report', () => {
       const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
       AWS.config.update({ region: region });
 
-      const endTime = moment.utc().format();
+      // add a few seconds to allow records searchable in elasticsearch
+      const endTime = moment.utc().add(3, 'seconds').format();
       const startTime = moment.utc().subtract(1, 'days').format();
 
       const response = await lambda().invoke({
@@ -194,12 +210,31 @@ describe('The EMS report', () => {
     });
 
     it('generates an EMS report', async () => {
+      // generated reports should have the records just ingested or deleted
+      expect(lambdaOutput.length).toEqual(3);
       const jobs = lambdaOutput.map(async (report) => {
         const parsed = parseS3Uri(report.file);
-        return fileExists(parsed.Bucket, parsed.Key);
+        const obj = await getS3Object(parsed.Bucket, parsed.Key);
+        const reportRecords = obj.Body.toString().split('\n');
+        if (['ingest', 'archive'].includes(report.reportType)) {
+          const records = reportRecords.filter((record) =>
+            record.startsWith(ingestedGranuleIds[0]) || record.startsWith(ingestedGranuleIds[1]));
+          expect(records.length).toEqual(2);
+        }
+        if (report.reportType === 'delete') {
+          const records = reportRecords.filter((record) =>
+            record.startsWith(deletedGranuleId));
+          expect(records.length).toEqual(1);
+        }
+
+        if (submitReport) {
+          expect(parsed.Key.includes('/sent/')).toBe(true);
+        }
+
+        return true;
       });
       const results = await Promise.all(jobs);
-      results.forEach((result) => expect(result).not.toBe('false'));
+      results.forEach((result) => expect(result).not.toBe(false));
     });
   });
 });
