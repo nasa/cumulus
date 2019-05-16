@@ -6,7 +6,6 @@ default:
     stackName: '{{stackName}}'
     bucket: '{{buckets.internal.name}}'
     DISTRIBUTION_ENDPOINT: '{{api_distribution_url}}'
-    ems_provider: CUMULUS
     esHost: '{{esHost}}'
     streamName: '{{stackName}}-testStream'
     cnmResponseStream: '{{stackName}}-cnmResponseStream'

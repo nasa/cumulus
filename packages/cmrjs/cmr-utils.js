@@ -742,11 +742,45 @@ async function reconcileCMRMetadata({
   return Promise.resolve();
 }
 
+/**
+ * Extract temporal information from granule object
+ *
+ * @param {Object} granule - granule object
+ * @returns {Object} - temporal information (beginningDateTime, endingDateTime, productionDateTime,
+ * lastUpdateDateTime) of the granule if available
+ */
+async function getGranuleTemporalInfo(granule) {
+  const cmrFile = granuleToCmrFileObject(granule);
+  if (cmrFile.length === 0) return {};
+
+  const cmrFilename = cmrFile[0].filename;
+  if (isECHO10File(cmrFilename)) {
+    const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
+    const beginningDateTime = _get(metadata.Granule, 'Temporal.RangeDateTime.BeginningDateTime');
+    const endingDateTime = _get(metadata.Granule, 'Temporal.RangeDateTime.EndingDateTime');
+    const productionDateTime = _get(metadata.Granule, 'DataGranule.ProductionDateTime');
+    const lastUpdateDateTime = metadata.Granule.LastUpdate || metadata.Granule.InsertTime;
+    return { beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime };
+  }
+  if (isUMMGFile(cmrFilename)) {
+    const metadata = await metadataObjectFromCMRJSONFile(cmrFilename);
+    const beginningDateTime = _get(metadata, 'TemporalExtent.RangeDateTime.BeginningDateTime');
+    const endingDateTime = _get(metadata, 'TemporalExtent.RangeDateTime.EndingDateTime');
+    const productionDateTime = _get(metadata, 'DataGranule.ProductionDateTime');
+    let updateDate = metadata.ProviderDates.filter((d) => d.Type === 'Update');
+    if (updateDate.length === 0) {
+      updateDate = metadata.ProviderDates.filter((d) => d.Type === 'Insert');
+    }
+    const lastUpdateDateTime = updateDate[0].Date;
+    return { beginningDateTime, endingDateTime, productionDateTime, lastUpdateDateTime };
+  }
+}
 
 module.exports = {
   constructOnlineAccessUrl,
   getCmrFiles,
   getGranuleId,
+  getGranuleTemporalInfo,
   isCMRFile,
   metadataObjectFromCMRFile,
   publish2CMR,

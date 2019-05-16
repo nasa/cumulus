@@ -24,6 +24,16 @@ const sampleEcho10Granule = {
       ShortName: 'MYD13Q1',
       VersionId: '006'
     },
+    DataGranule:
+    {
+      SizeMBDataGranule: '10',
+      ReprocessingPlanned: 'The Reprocessing Planned Statement Value',
+      ReprocessingActual: 'The Reprocessing Actual Statement Value',
+      ProducerGranuleId: 'SMAP_L3_SM_P_20150407_R13080_001.h5',
+      DayNightFlag: 'UNSPECIFIED',
+      ProductionDateTime: '2018-07-19T12:01:01Z',
+      LocalVersionId: 'LocalVersionIdValue'
+    },
     Temporal: {
       RangeDateTime: {
         BeginningDateTime: '2017-10-24T00:00:00Z',

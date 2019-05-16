@@ -9,7 +9,7 @@ const aws = require('@cumulus/ingest/aws');
 const commonAws = require('@cumulus/common/aws');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const cmrjs = require('@cumulus/cmrjs');
-const { CMR, reconcileCMRMetadata } = require('@cumulus/cmrjs');
+const { CMR, getGranuleTemporalInfo, reconcileCMRMetadata } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { buildURL } = require('@cumulus/common/URLUtils');
@@ -317,6 +317,8 @@ class Granule extends Manager {
           files: granule.files
         });
 
+        const temporalInfo = await getGranuleTemporalInfo(granule);
+
         const doc = {
           granuleId: granule.granuleId,
           pdrName: get(payload, 'meta.pdr.name'),
@@ -333,24 +335,13 @@ class Granule extends Manager {
           timeToPreprocess: get(payload, 'meta.sync_granule_duration', 0) / 1000,
           timeToArchive: get(payload, 'meta.post_to_cmr_duration', 0) / 1000,
           processingStartDateTime: extractDate(payload, 'meta.sync_granule_end_time'),
-          processingEndDateTime: extractDate(payload, 'meta.post_to_cmr_start_time')
+          processingEndDateTime: extractDate(payload, 'meta.post_to_cmr_start_time'),
+          ...temporalInfo
         };
 
         doc.published = get(granule, 'published', false);
         // Duration is also used as timeToXfer for the EMS report
         doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-
-        if (granule.cmrLink) {
-          const metadata = await cmrjs.getMetadata(granule.cmrLink);
-          doc.beginningDateTime = metadata.time_start;
-          doc.endingDateTime = metadata.time_end;
-          doc.lastUpdateDateTime = metadata.updated;
-
-          const fullMetadata = await cmrjs.getFullMetadata(granule.cmrLink);
-          if (fullMetadata && fullMetadata.DataGranule) {
-            doc.productionDateTime = fullMetadata.DataGranule.ProductionDateTime;
-          }
-        }
 
         return this.create(doc);
       }
