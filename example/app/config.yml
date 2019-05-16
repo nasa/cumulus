@@ -551,6 +551,10 @@ jc:
 mhs:
   prefix: mhs
   prefixNoDash: mhs
+  ecs:
+    ssh: true
+    keyPairName: mhs
+  api_distribution_url:
 
 mhs3:
   prefix: mhs3
@@ -575,7 +579,10 @@ mhs3:
       name: cumulus-data-shared
       type: shared
   system_bucket: mhs3-internal
-  api_distribution_url: '{{API_DISTRIBUTION_URL}}'
+  api_distribution_url:
+  ecs:
+    ssh: true
+    keyPairName: mhs
 
 jk:
   prefix: jk
