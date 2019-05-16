@@ -1,7 +1,5 @@
 'use strict';
 
-// TODO Figure out why this warning is showing up
-// eslint-disable-next-line node/no-unpublished-require
 const test = require('ava');
 const index = require('..');
 
