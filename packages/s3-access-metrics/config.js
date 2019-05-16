@@ -8,7 +8,7 @@ const { promisify } = require('util');
 // eslint-disable-next-line lodash/prefer-is-nil
 const isNil = (x) => x === undefined || x === null;
 const isNotNil = (x) => !isNil(x);
-const toString = (x) => `${x}`;
+const boolToString = (x) => `${x}`;
 
 const readFile = promisify(fs.readFile);
 
@@ -66,7 +66,7 @@ module.exports = {
   permissionsBoundary,
   vpcConfig,
   deploymentBucket: configValueOrFalse('deploymentBucket'),
-  deployToVpc: () => deployToVpc().then(toString),
+  deployToVpc: () => deployToVpc().then(boolToString),
   logsBucket: configValueOrThrow('logsBucket'),
   prefix: configValueOrThrow('prefix'),
   stack: configValueOrThrow('stack'),

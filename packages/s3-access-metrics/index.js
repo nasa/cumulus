@@ -13,8 +13,6 @@ const fetchObject = async (params) => {
   return Body.toString();
 };
 
-const getBucketFromLogLine = (line) => line.split(/\s+/)[1];
-
 const getTimestampFromLogLine = (line) => {
   const rawTimestamp = line.split(/[\[\]]/)[1];
 
@@ -34,7 +32,6 @@ const getOperationFromLogLine = (line) => {
 };
 
 const logLineToLogEvent = (line) => ({
-  bucket: getBucketFromLogLine(line),
   timestamp: getTimestampFromLogLine(line),
   operation: getOperationFromLogLine(line),
   httpStatus: getHttpStatusFromLogLine(line)
@@ -51,8 +48,7 @@ const getEventTimestampAsString = (event) => `${event.timestamp}`;
 const buildMetricData = curry((MetricName, stack, logEvents) => ({
   MetricName,
   Dimensions: [
-    { Name: 'Stack', Value: stack },
-    { Name: 'Bucket', Value: logEvents[0].bucket }
+    { Name: 'Stack', Value: stack }
   ],
   StorageResolution: '60',
   Timestamp: moment.unix(logEvents[0].timestamp).toISOString(),

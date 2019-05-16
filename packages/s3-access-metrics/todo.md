@@ -11,3 +11,9 @@
 + Make the bucket configurable
 + Remove the conditional from the IAM permissions
 - Throw an exception if vpcId is set but subnetIds is not
+- Add comments or improve function names in index.js
+- Add a README
+  - what it does
+  - how it works
+  - how to configure
+  - how to deploy

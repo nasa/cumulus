@@ -12,6 +12,15 @@ provider:
   region: ${file(./config.yml):region, 'us-east-1'}
   vpc: ${file(./config.js):vpcConfig}
 
+package:
+  exclude:
+    - config.yml
+    - config.js
+    - package.json
+    - package-lock.json
+    - todo.md
+    - test/**
+
 functions:
   metricGenerator:
     handler: index.handler
@@ -59,7 +68,7 @@ resources:
         # ManagedPolicyArns:
         #   - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
         Policies:
-          - PolicyName: myPolicyName
+          - PolicyName: ${self:provider.stackName}-lambdaPolicyName
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
