@@ -1,5 +1,10 @@
 #!/bin/bash
 set -e
+if [[ $GIT_PR != true && $RUN_REDEPLOYMENT != true ]]; then
+  >&2 echo "******Branch HEAD is not a github PR, and this isn't a redeployment build, skipping step"
+  exit 0
+fi
+
 npm install
 . ./bamboo/set-bamboo-env-variables.sh
 set +e

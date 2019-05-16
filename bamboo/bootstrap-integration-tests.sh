@@ -1,14 +1,14 @@
 #!/bin/bash
 set -e
-npm config set unsafe-perm true
-npm install
-
-. ./bamboo/set-bamboo-env-variables.sh
-
+source .bamboo_env_vars || true
 if [[ $GIT_PR != true && $RUN_REDEPLOYMENT != true ]]; then
   >&2 echo "******Branch HEAD is not a github PR, and this isn't a redeployment build, skipping bootstrap/deploy step"
   exit 0
 fi
+
+npm config set unsafe-perm true
+npm install
+. ./bamboo/set-bamboo-env-variables.sh
 
 if [ "$USE_NPM_PACKAGES" == "true" ]; then
   (cd example && npm install)
