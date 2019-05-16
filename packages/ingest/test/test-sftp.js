@@ -113,4 +113,5 @@ test('Write data to remote file', async (t) => {
     '/granules', 'delete-me-test-file', 'mytestdata'
   );
   t.pass();
+  fs.unlinkSync('../test-data/granules/delete-me-test-file');
 });

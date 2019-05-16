@@ -9,7 +9,7 @@ const aws = require('@cumulus/ingest/aws');
 const commonAws = require('@cumulus/common/aws');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const cmrjs = require('@cumulus/cmrjs');
-const { CMR, getGranuleTemporalInfo, reconcileCMRMetadata } = require('@cumulus/cmrjs');
+const { CMR, reconcileCMRMetadata } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { buildURL } = require('@cumulus/common/URLUtils');
@@ -317,7 +317,7 @@ class Granule extends Manager {
           files: granule.files
         });
 
-        const temporalInfo = await getGranuleTemporalInfo(granule);
+        const temporalInfo = await cmrjs.getGranuleTemporalInfo(granule);
 
         const doc = {
           granuleId: granule.granuleId,
