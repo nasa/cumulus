@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### PLEASE NOTE
 
-**CUMULUS-802** added some additional IAM permissions to support ECS autoscaling, so **you will have to redeploy your IAM stack.**
+**CUMULUS-802** added some additional IAM permissions to support ECS autoscaling and changes were needed to run all lambdas in the VPC, so **you will have to redeploy your IAM stack.**
 
 As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must delete your existing stacks (except IAM) before deploying this version of Cumulus.**
 
@@ -77,6 +77,8 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
 
 ## Changed
 
+- Updated `@cumulus/ingest/http/httpMixin.list()` to trim trailing spaces on discovered filenames
+
 - **CUMULUS-1236**
   - Moves access to public files behind the distribution endpoint.  Authentication is not required, but direct http access has been disallowed.
 
@@ -98,6 +100,8 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
   - No longer disable lambda event source mappings
 
 ### Fixed
+
+- Updated Lerna publish script so that published Cumulus packages will pin their dependencies on other Cumulus packages to exact versions (e.g. `1.12.1` instead of `^1.12.1`)
 
 - **CUMULUS-1203**
   - Fixes IAM template's use of intrinsic functions such that IAM template overrides now work with kes
