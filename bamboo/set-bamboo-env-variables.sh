@@ -51,10 +51,10 @@ if [[ -z $GIT_PR ]]; then
   set -e
   if [[ PR_CODE -eq 100 ]]; then
     export GIT_PR=true
-    echo GIT_PR=true >> .bamboo_env_vars
+    echo export GIT_PR=true >> .bamboo_env_vars
   elif [[ PR_CODE -eq 0 ]]; then
     export GIT_PR=false
-    echo GIT_PR=false >> .bamboo_env_vars
+    echo export GIT_PR=false >> .bamboo_env_vars
   else
     echo "Error detecting PR status"
     exit 1
@@ -80,6 +80,7 @@ if [[ -z $DEPLOYMENT ]]; then
     echo "Unable to determine integration stack" >&2
     exit 1
   fi
+  echo export DEPLOYMENT=$DEPLOYMENT >> .bamboo_env_vars
 fi
 export DEPLOYMENT
 

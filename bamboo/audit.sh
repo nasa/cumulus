@@ -1,4 +1,12 @@
 #!/bin/bash
+
+. ./bamboo/set-bamboo-env-variables.sh
+
+if [[ $GIT_PR != true ]]; then
+  echo "******Branch HEAD is not a github PR, and this isn't a redeployment build, skipping bootstrap/deploy step"
+  exit 0
+fi
+
 commit_message_contains_skip_audit_flag=false
 commit_matches_version_tag=false
 
