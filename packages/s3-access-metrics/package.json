@@ -2,6 +2,7 @@
   "name": "s3-access-metrics",
   "version": "0.0.1",
   "description": "A service to write S3 Server Access Log stats to Cloudwatch metrics",
+  "private": true,
   "engines": {
     "node": ">=8.10.0"
   },
