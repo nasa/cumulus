@@ -101,9 +101,9 @@ Begin by copying the template directory to your project. You will modify it for 
 
 You can then [add/commit](https://help.github.com/articles/adding-a-file-to-a-repository-using-the-command-line/) changes as needed.
 
-### Prepare AWS configuration
+## Prepare AWS configuration
 
-#### Set Access Keys
+### Set Access Keys
 
 You need to make some AWS information available to your environment. If you don't already have the access key and secret access key of an AWS user with IAM Create-User permissions, you must [Create Access Keys](https://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html) for such a user with IAM Create-User permissions, then export the access keys:
 
@@ -129,6 +129,11 @@ These buckets do not need any non-default permissions to function with Cumulus, 
 
 **Note**: s3 bucket object names are global and must be unique across all accounts/locations/etc.
 
+### VPC, Subnets and Security Group
+Cumulus supports operation within a VPC, but you will need to separately create the VPC, subnet, and security group for the Cumulus resources to use.
+To configure Cumulus with these settings, populate your `app/.env` file with the relevant values, as shown in the next section, before deploying Cumulus.
+If these values are omitted Cumulus resources that require a VPC will be created in the default VPC and security group.
+
 ## Earthdata Application
 
 ### Configure EarthData application
@@ -146,16 +151,16 @@ _If you're adding a new deployment to an existing configuration repository or re
 Copy `app/.env.sample` to `app/.env` and add CMR/earthdata client [credentials](deployment-readme#credentials):
 
 ```shell
-  CMR_USERNAME=cmrusername
-  CMR_PASSWORD=cmrpassword
-  EARTHDATA_CLIENT_ID=clientid
-  EARTHDATA_CLIENT_PASSWORD=clientpassword
-  VPC_ID=someid
-  SECURITY_GROUP=sg-0000abcd1234
-  AWS_SUBNET=somesubnet
-  AWS_ACCOUNT_ID=0000000
-  AWS_REGION=awsregion
-  TOKEN_SECRET=tokensecret
+  CMR_USERNAME=cmrusername                    # CMR Username For CMR Ingest API
+  CMR_PASSWORD=cmrpassword                    # CMR Password
+  EARTHDATA_CLIENT_ID=clientid                # EarthData Application ClientId
+  EARTHDATA_CLIENT_PASSWORD=clientpassword    # EarthData Application Password
+  VPC_ID=someid                               # VPC ID
+  SECURITY_GROUP=sg-0000abcd1234              # Security Group ID
+  AWS_SUBNET=somesubnet                       # VPC Subnet
+  AWS_ACCOUNT_ID=0000000                      # AWS Account ID
+  AWS_REGION=awsregion                        # AWS Region
+  TOKEN_SECRET=tokensecret                    # JWT Token Secret
 ```
 
 The `TOKEN_SECRET` is a string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is strongly recommended that this be a 32-character string.
