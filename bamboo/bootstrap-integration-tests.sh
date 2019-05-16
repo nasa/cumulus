@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-. ./abort-if-not-pr-or-redeployment.sh
+. ./bamboo/abort-if-not-pr-or-redeployment.sh
 
 npm config set unsafe-perm true
 npm install

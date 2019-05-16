@@ -1,5 +1,6 @@
 #!/bin/bash
-. ./abort-if-not-pr-or-redeployment.sh
+set -e
+. ./bamboo/abort-if-not-pr-or-redeployment.sh
 
 npm install
 . ./bamboo/set-bamboo-env-variables.sh
