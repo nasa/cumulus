@@ -4,9 +4,13 @@ const pLimit = require('p-limit');
 const { s3, promiseS3Upload } = require('@cumulus/common/aws');
 const { randomString, randomId, inTestMode } = require('@cumulus/common/test-utils');
 const bootstrap = require('../lambdas/bootstrap');
+const indexer = require('../es/indexer');
+const { Search } = require('../es/search');
 const models = require('../models');
 const testUtils = require('../lib/testUtils');
 const workflowList = require('../app/data/workflow_list.json');
+
+const defaultLocalStackName = 'localrun';
 
 async function createTable(Model, tableName) {
   try {
@@ -87,8 +91,14 @@ async function checkOrCreateTables(stackName) {
   await Promise.all(promises);
 }
 
+function setLocalEsVariables(stackName) {
+  process.env.ES_HOST = 'fakehost';
+  process.env.esIndex = `${stackName}-es`;
+}
+
 async function prepareServices(stackName, bucket) {
-  await bootstrap.bootstrapElasticSearch('fakehost', `${stackName}-es`);
+  setLocalEsVariables(stackName);
+  await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, process.env.esIndex);
   await s3().createBucket({ Bucket: bucket }).promise();
 }
 
@@ -118,6 +128,13 @@ function checkEnvVariablesAreSet(moreRequiredEnvVars) {
 }
 
 async function createDBRecords(stackName, user) {
+  setLocalEsVariables(stackName);
+  const esClient = await Search.es(process.env.ES_HOST);
+  const esIndex = process.env.esIndex;
+  // Resets the ES client
+  await esClient.indices.delete({ index: esIndex });
+  await bootstrap.bootstrapElasticSearch(process.env.ES_HOST, esIndex);
+
   if (user) {
     // add authorized user to the user table
     const u = new models.User();
@@ -128,32 +145,43 @@ async function createDBRecords(stackName, user) {
   const c = testUtils.fakeCollectionFactory();
   c.name = `${stackName}-collection`;
   const cm = new models.Collection();
-  await cm.create(c);
+  const collection = await cm.create(c);
+  indexer.indexCollection(esClient, collection, esIndex);
 
   // add granule records
   const g = testUtils.fakeGranuleFactory();
   g.granuleId = `${stackName}-granule`;
   const gm = new models.Granule();
-  await gm.create(g);
+  // gm.published = false;
+  const granule = await gm.create(g);
+  indexer.indexGranule(esClient, granule, esIndex);
 
   // add provider records
   const p = testUtils.fakeProviderFactory();
   p.id = `${stackName}-provider`;
   const pm = new models.Provider();
-  await pm.create(p);
+  const provider = await pm.create(p);
+  indexer.indexProvider(esClient, provider, esIndex);
 
   // add rule records
   const r = testUtils.fakeRuleFactoryV2();
   r.name = `${stackName}_rule`;
   r.workflow = workflowList[0].name;
+  r.provider = `${stackName}-provider`;
+  r.collection = {
+    name: `${stackName}-collection`,
+    version: '0.0.0'
+  };
   const rm = new models.Rule();
-  await rm.create(r);
+  const rule = await rm.create(r);
+  indexer.indexRule(esClient, rule, esIndex);
 
   // add fake execution records
   const e = testUtils.fakeExecutionFactory();
   e.arn = `${stackName}-fake-arn`;
   const em = new models.Execution();
-  await em.create(e);
+  const execution = await em.create(e);
+  indexer.indexExecution(esClient, execution, esIndex);
 
   // add pdrs records
   const pd = testUtils.fakePdrFactory();
@@ -168,7 +196,7 @@ async function createDBRecords(stackName, user) {
  * @param {string} user - A username to add as an authorized user for the API.
  * @param {string} stackName - The name of local stack. Used to prefix stack resources.
  */
-async function serveApi(user, stackName = 'localrun') {
+async function serveApi(user, stackName = defaultLocalStackName) {
   const port = process.env.PORT || 5001;
   const requiredEnvVars = [
     'stackName',
@@ -213,7 +241,7 @@ async function serveApi(user, stackName = 'localrun') {
  * @param {string} stackName - The name of local stack. Used to prefix stack resources.
  * @param {function} done - Optional callback to fire when app has started listening.
  */
-async function serveDistributionApi(stackName = 'localrun', done) {
+async function serveDistributionApi(stackName = defaultLocalStackName, done) {
   const port = process.env.PORT || 5002;
   const requiredEnvVars = [
     'DISTRIBUTION_REDIRECT_ENDPOINT',
@@ -250,7 +278,46 @@ async function serveDistributionApi(stackName = 'localrun', done) {
   return distributionApp.listen(port, done);
 }
 
+/**
+ * Removes all additional data from tables and repopulates with original data.
+ *
+ * @param {string} user - defaults to local user, testUser
+ * @param {string} stackName - defaults to local stack, localrun
+ */
+async function resetTables(user = 'testUser', stackName = defaultLocalStackName) {
+  if (inTestMode()) {
+    setTableEnvVariables(stackName);
+    process.env.system_bucket = 'localbucket';
+    process.env.stackName = stackName;
+
+    // Remove all data from tables
+    const providerModel = new models.Provider();
+    const collectionModel = new models.Collection();
+    const rulesModel = new models.Rule();
+    const executionModel = new models.Execution();
+    const granulesModel = new models.Granule();
+    const pdrsModel = new models.Pdr();
+
+    try {
+      await rulesModel.deleteRules();
+      await Promise.all([
+        collectionModel.deleteCollections(),
+        providerModel.deleteProviders(),
+        executionModel.deleteExecutions(),
+        granulesModel.deleteGranules(),
+        pdrsModel.deletePdrs()
+      ]);
+    } catch (error) {
+      console.log(error);
+    }
+
+    // Populate tables with original test data
+    await createDBRecords(stackName, user);
+  }
+}
+
 module.exports = {
   serveApi,
-  serveDistributionApi
+  serveDistributionApi,
+  resetTables
 };

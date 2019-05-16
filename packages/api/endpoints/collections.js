@@ -1,10 +1,26 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
+const { constructCollectionId } = require('@cumulus/common');
+const { Search } = require('../es/search');
+const indexer = require('../es/indexer');
 const models = require('../models');
 const Collection = require('../es/collections');
 const { AssociatedRulesError } = require('../lib/errors');
+
+/**
+ * Index a collection to Elasticsearch.
+ *
+ * @param {Object} record - Collection record object
+ * @returns {Promise} - Promise of indexing operation
+ */
+async function addToES(record) {
+  const esClient = await Search.es(process.env.ES_HOST);
+  const esIndex = process.env.esIndex;
+  return indexer.indexCollection(esClient, record, esIndex);
+}
 
 /**
  * List all collections.
@@ -67,6 +83,11 @@ async function post(req, res) {
     } catch (e) {
       if (e instanceof RecordDoesNotExist) {
         await c.create(data);
+
+        if (inTestMode()) {
+          await addToES(data);
+        }
+
         return res.send({ message: 'Record saved', record: data });
       }
       throw e;
@@ -103,6 +124,11 @@ async function put(req, res) {
     const originalData = await c.get({ name, version });
     data = Object.assign({}, originalData, data);
     const result = await c.create(data);
+
+    if (inTestMode()) {
+      await addToES(result);
+    }
+
     return res.send(result);
   } catch (err) {
     if (err instanceof RecordDoesNotExist) {
@@ -126,6 +152,19 @@ async function del(req, res) {
 
   try {
     await collectionModel.delete({ name, version });
+
+    if (inTestMode()) {
+      const collectionId = constructCollectionId(name, version);
+      const esClient = await Search.es(process.env.ES_HOST);
+      const esIndex = process.env.esIndex;
+      await esClient.delete({
+        id: collectionId,
+        index: esIndex,
+        type: 'collection',
+        ignore: [404]
+      });
+    }
+
     return res.send({ message: 'Record deleted' });
   } catch (err) {
     if (err instanceof AssociatedRulesError) {

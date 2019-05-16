@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### PLEASE NOTE
 
-**CUMULUS-802** added some additional IAM permissions to support ECS autoscaling, so **you will have to redeploy your IAM stack.**
+**CUMULUS-802** added some additional IAM permissions to support ECS autoscaling and changes were needed to run all lambdas in the VPC, so **you will have to redeploy your IAM stack.**
 
 As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must delete your existing stacks (except IAM) before deploying this version of Cumulus.**
 
