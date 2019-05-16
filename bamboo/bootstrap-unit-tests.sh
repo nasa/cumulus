@@ -1,18 +1,17 @@
 #!/bin/bash
 set -e
 
-. ./set-bamboo-env-variables.sh
-if [[ $GIT_PR != true ]]; then
-  echo "******Branch HEAD is not a github PR, and this isn't a redeployment build, skipping bootstrap/deploy step"
+source .bamboo_env_vars || true
+if [[ $GIT_PR != true && BRANCH != master ]]; then
+  echo "******Branch HEAD is not a github PR, and this isn't a redeployment build, skipping step"
   exit 0
 fi
+. ./set-bamboo-env-variables.sh
 
 # Export user information for sshd container
 export SSH_USERS=user:$(id -u):$(id -u)
 
 ## Set container_id for docker-compose to use to identify the compose stack per planKey
-container_id=${bamboo_planKey,,}
-container_id=${container_id/-/}
 docker_command="docker exec -t ${container_id}_build_env_1 /bin/bash -c"
 
 docker ps -a

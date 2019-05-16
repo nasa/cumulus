@@ -1,11 +1,12 @@
 #!/bin/bash
 set -e
-. ./set-bamboo-env-variables.sh
-if [[ $GIT_PR != true ]]; then
-  echo "******Branch HEAD is not a github PR, and this isn't a redeployment build, skipping bootstrap/deploy step"
+source .bamboo_env_vars || true
+if [[ $GIT_PR != true && BRANCH != master ]]; then
+  echo "******Branch HEAD is not a github PR, and this isn't a redeployment build, skipping step"
   exit 0
 fi
 
+. ./set-bamboo-env-variables.sh
 docker ps -a ## Show running containers for output logs
 
 # Run unit tests (excluding integration/api tests)
