@@ -2,7 +2,7 @@
 set -e
 . ./bamboo/set-bamboo-env-variables.sh
 if [[ $RUN_REDEPLOYMENT != true ]]; then
-  echo "***Skipping redeploy tests***"
+  >&2 echo "***Skipping redeploy tests***"
   exit 0
 fi
 

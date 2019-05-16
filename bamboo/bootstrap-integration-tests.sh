@@ -6,7 +6,7 @@ npm install
 . ./bamboo/set-bamboo-env-variables.sh
 
 if [[ $GIT_PR != true && $RUN_REDEPLOYMENT != true ]]; then
-  echo "******Branch HEAD is not a github PR, and this isn't a redeployment build, skipping bootstrap/deploy step"
+  >&2 echo "******Branch HEAD is not a github PR, and this isn't a redeployment build, skipping bootstrap/deploy step"
   exit 0
 fi
 
