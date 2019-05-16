@@ -267,7 +267,7 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule f
 test.serial('getGranuleTemporalInfo returns temporal information from granule CMR json file', async (t) => {
   const cmrJSON = await fs.readFile('./tests/fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314.cmr.json', 'utf8');
   const cmrMetadata = JSON.parse(cmrJSON);
-  const revertCmrFileObject = cmrUtil.__set__('granuleToCmrFileObject', () => ([{filename: 'test.cmr.json', granuleId: 'testGranuleId'}]));
+  const revertCmrFileObject = cmrUtil.__set__('granuleToCmrFileObject', () => ([{ filename: 'test.cmr.json', granuleId: 'testGranuleId' }]));
   const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRJSONFile', () => cmrMetadata);
 
   const expectedTemporalInfo = {
@@ -280,7 +280,7 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   let temporalInfo;
   try {
     temporalInfo = await getGranuleTemporalInfo({ granuleId: 'testGranuleId', files: [] });
-  }finally {
+  } finally {
     revertCmrFileObject();
     revertMetaObject();
   }
@@ -290,7 +290,7 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
 test.serial('getGranuleTemporalInfo returns temporal information from granule CMR xml file', async (t) => {
   const cmrXml = await fs.readFile('./tests/fixtures/cmrFileUpdateFixture.cmr.xml', 'utf8');
   const cmrMetadata = await (promisify(xml2js.parseString))(cmrXml, xmlParseOptions);
-  const revertCmrFileObject = cmrUtil.__set__('granuleToCmrFileObject', () => ([{filename: 'test.cmr.xml', granuleId: 'testGranuleId'}]));
+  const revertCmrFileObject = cmrUtil.__set__('granuleToCmrFileObject', () => ([{ filename: 'test.cmr.xml', granuleId: 'testGranuleId' }]));
   const revertMetaObject = cmrUtil.__set__('metadataObjectFromCMRXMLFile', () => cmrMetadata);
 
   const expectedTemporalInfo = {
@@ -303,7 +303,7 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   let temporalInfo;
   try {
     temporalInfo = await getGranuleTemporalInfo({ granuleId: 'testGranuleId', files: [] });
-  }finally {
+  } finally {
     revertCmrFileObject();
     revertMetaObject();
   }
