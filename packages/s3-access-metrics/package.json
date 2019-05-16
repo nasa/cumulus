@@ -8,7 +8,7 @@
   },
   "main": "index.js",
   "scripts": {
-    "test": "true"
+    "test": "ava"
   },
   "repository": {
     "type": "git",
@@ -20,10 +20,12 @@
     "lodash.chunk": "^4.2.0",
     "lodash.curry": "^4.1.1",
     "lodash.flatten": "^4.4.0",
+    "lodash.flowright": "^3.5.0",
     "lodash.groupby": "^4.6.0",
     "moment": "^2.24.0"
   },
   "devDependencies": {
+    "ava": "^1.4.1",
     "aws-sdk": "^2.452.0",
     "js-yaml": "^3.13.1",
     "serverless": "^1.42.0",

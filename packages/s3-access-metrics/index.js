@@ -3,6 +3,7 @@
 // eslint-disable-next-line node/no-unpublished-require
 const AWS = require('aws-sdk');
 const chunk = require('lodash.chunk');
+const compose = require('lodash.flowright');
 const curry = require('lodash.curry');
 const flatten = require('lodash.flatten');
 const groupBy = require('lodash.groupby');
@@ -46,20 +47,11 @@ const logLineToLogEvent = (line) => ({
   httpStatus: getHttpStatusFromLogLine(line)
 });
 
-// Given an s3Params object containing Bucket and Key properties, fetch the
-// referenced S3 Server Access Log from S3 and parse it into an array of
-// log event objects.
-const fetchLogEvents = (s3Params) =>
-  fetchObject(s3Params)
-    .then((obj) => obj.trim())
-    .then((obj) => obj.split('\n'))
-    .then((lines) => lines.map(logLineToLogEvent));
-
 const getEventTimestampAsString = (event) => `${event.timestamp}`;
 
 // Given a metric name, stack name, and list of log events, return a metric
 // data object as documented here: https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatch.html#putMetricData-property
-const buildMetricData = curry((MetricName, stack, logEvents) => ({
+const buildMetricDataObject = curry((MetricName, stack, logEvents) => ({
   MetricName,
   Dimensions: [
     { Name: 'Stack', Value: stack }
@@ -70,20 +62,22 @@ const buildMetricData = curry((MetricName, stack, logEvents) => ({
   Value: logEvents.length
 }));
 
-const buildSuccessMetricData = buildMetricData('SuccessCount');
-const buildFailureMetricData = buildMetricData('FailureCount');
+const buildSuccessMetricData = buildMetricDataObject('SuccessCount');
+const buildFailureMetricData = buildMetricDataObject('FailureCount');
 
 const isSuccessLogEvent = (event) => event.httpStatus === 200;
 const isNotSuccessLogEvent = (event) => !isSuccessLogEvent(event);
 
 const isGetObjectLogEvent = (event) => event.operation.endsWith('.GET.OBJECT');
 
-const selectGetObjectEvents = (logEvents) =>
-  logEvents.filter(isGetObjectLogEvent);
+const filter = curry((predicate, coll) => coll.filter(predicate));
 
-// Given a stack name and a list of log events, return a list of metric data
-// objects for successful requests
-const getSuccessMetricData = (stack, logEvents) => {
+// Given a list of log events, return the ones that are for GET.OBJECT
+const selectGetObjectLogEvents = filter(isGetObjectLogEvent);
+
+// Given a stack name and a list of GET.OBJECT log events, return a list of
+// metric data objects for successful requests
+const getSuccessMetricDataObjects = (stack, logEvents) => {
   const groupedSuccessEvents = groupBy(
     logEvents.filter(isSuccessLogEvent),
     getEventTimestampAsString
@@ -92,9 +86,9 @@ const getSuccessMetricData = (stack, logEvents) => {
     .map(buildSuccessMetricData(stack));
 };
 
-// Given a stack name and a list of log events, return a list of metric data
-// objects for failed requests
-const getFailureMetricData = (stack, logEvents) => {
+// Given a stack name and a list of GET.OBJECT log events, return a list of
+// metric data objects for failure requests
+const getFailureMetricDataObjects = (stack, logEvents) => {
   const groupedFailureEvents = groupBy(
     logEvents.filter(isNotSuccessLogEvent),
     getEventTimestampAsString
@@ -103,20 +97,35 @@ const getFailureMetricData = (stack, logEvents) => {
     .map(buildFailureMetricData(stack));
 };
 
+const trim = (x) => x.trim();
+const splitLines = (x) => x.split('\n');
+const map = curry((fn, coll) => coll.map(fn));
+
+// Convert a list of log lines to a list of log events
+const logLinesToLogEvents = map(logLineToLogEvent);
+
+// Given an access log, return a list of log events
+const logEventsFromAccessLog = compose([logLinesToLogEvents, splitLines, trim]);
+
+// Given a stack name and an access log, return a list of metric data objects
+const metricDataObjectsFromAccessLog = curry((stack, accessLog) => {
+  const logEvents = logEventsFromAccessLog(accessLog);
+  const getObjectLogEvents = selectGetObjectLogEvents(logEvents);
+  return flatten([
+    getSuccessMetricDataObjects(stack, getObjectLogEvents),
+    getFailureMetricDataObjects(stack, getObjectLogEvents)
+  ]);
+});
+
 // Given a stack name and a logLocation object with Bucket and Key properties,
 // fetch that S3 Server Access Log from S3 and return a list of metric data
 // objects to be uploaded to Cloudwatch Metrics
-const getMetricDataFromAccessLog = curry((stack, logLocation) =>
-  fetchLogEvents(logLocation)
-    .then(selectGetObjectEvents)
-    .then((logEvents) => [
-      getSuccessMetricData(stack, logEvents),
-      getFailureMetricData(stack, logEvents)
-    ])
-    .then(flatten));
+const getMetricDataObjectsFromAccessLog = curry((stack, logLocation) =>
+  fetchObject(logLocation)
+    .then(metricDataObjectsFromAccessLog(stack)));
 
 // Given a list of Cloudwatch Metric Data, upload that data to Cloudwatc
-const putMetricData = (metricData) => {
+const putMetricDataObjects = (metricDataObjects) => {
   const cloudwatch = new AWS.CloudWatch();
 
   const performPut = (MetricData) =>
@@ -125,7 +134,7 @@ const putMetricData = (metricData) => {
       MetricData
     }).promise();
 
-  const promisedPuts = chunk(metricData, 20).map(performPut);
+  const promisedPuts = chunk(metricDataObjects, 20).map(performPut);
 
   return Promise.all(promisedPuts);
 };
@@ -133,7 +142,7 @@ const putMetricData = (metricData) => {
 // Given a stack name and a list of S3 Server Access log locations, fetch the
 // logs and build metric data objects from the logs.
 const getMetricDataFromAccessLogs = (stack, logLocations) =>
-  Promise.all(logLocations.map(getMetricDataFromAccessLog(stack)))
+  Promise.all(logLocations.map(getMetricDataObjectsFromAccessLog(stack)))
     .then(flatten);
 
 // Given an event record, return the S3 Bucket and Key that the event record
@@ -148,8 +157,20 @@ const handleEvent = (event, stack) => {
   const logLocations = event.Records.map(s3ParamsFromRecord);
 
   return getMetricDataFromAccessLogs(stack, logLocations)
-    .then(putMetricData);
+    .then(putMetricDataObjects);
 };
 
-// Handle an S3 object upload event
-exports.handler = async (event) => handleEvent(event, process.env.stack);
+module.exports = {
+  handler: async (event) => handleEvent(event, process.env.stack),
+
+  // Exported to support testing
+  buildMetricDataObject,
+  getHttpStatusFromLogLine,
+  getSuccessMetricDataObjects,
+  getOperationFromLogLine,
+  getTimestampFromLogLine,
+  getFailureMetricDataObjects,
+  logLineToLogEvent,
+  metricDataObjectsFromAccessLog,
+  s3ParamsFromRecord
+};
