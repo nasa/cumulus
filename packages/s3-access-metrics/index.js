@@ -8,6 +8,14 @@ const curry = require('lodash.curry');
 const flatten = require('lodash.flatten');
 const groupBy = require('lodash.groupby');
 const moment = require('moment');
+const {
+  filter,
+  map,
+  splitLines,
+  trim
+} = require('./utils');
+
+// Business logic
 
 const fetchObject = async (params) => {
   const { Body } = await (new AWS.S3()).getObject(params).promise();
@@ -70,8 +78,6 @@ const isNotSuccessLogEvent = (event) => !isSuccessLogEvent(event);
 
 const isGetObjectLogEvent = (event) => event.operation.endsWith('.GET.OBJECT');
 
-const filter = curry((predicate, coll) => coll.filter(predicate));
-
 // Given a list of log events, return the ones that are for GET.OBJECT
 const selectGetObjectLogEvents = filter(isGetObjectLogEvent);
 
@@ -96,10 +102,6 @@ const getFailureMetricDataObjects = (stack, logEvents) => {
   return Object.values(groupedFailureEvents)
     .map(buildFailureMetricData(stack));
 };
-
-const trim = (x) => x.trim();
-const splitLines = (x) => x.split('\n');
-const map = curry((fn, coll) => coll.map(fn));
 
 // Convert a list of log lines to a list of log events
 const logLinesToLogEvents = map(logLineToLogEvent);

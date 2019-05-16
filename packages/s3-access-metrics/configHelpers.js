@@ -1,9 +1,6 @@
 'use strict';
 
-const negate = (fn) => (...args) => !fn(...args);
-// eslint-disable-next-line lodash/prefer-is-nil
-const isNil = (x) => x === undefined || x === null;
-const isNotNil = negate(isNil);
+const { isNil, isNotNil } = require('./utils');
 
 // Fetch a config value from the config, returning false if it is not set
 const configValueOrFalse = (key) =>

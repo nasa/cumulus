@@ -17,3 +17,4 @@
   - [x] how it works
   - [x] how to configure
   - [x] how to deploy
+- [ ] Add type validation for config values
