@@ -144,7 +144,7 @@ The Cumulus stack is expected to authenticate with [Earthdata Login](https://urs
 
 --------------
 
-## Configure the Cumulus instance
+## Configuring the Cumulus instance
 
 ### Set up an environment file
 
@@ -251,7 +251,17 @@ dev:                            # deployment name
 
 --------------
 
-## Deploy the IAM stack
+## Deploying the Cumulus Instance
+
+The `template-deploy` repository contains a script named `deploy-all` to assist with deploying Cumulus.
+
+```bash
+  $ DEPLOYMENT=<replace-with-deployment-name> AWS_PROFILE=<replace-wth-profile-name> npm run deploy-all
+```
+
+This script will run each stack's deploy script, in order. The subsections here cover deploying each stack in detail.
+
+### Deploy the Cumulus IAM stack
 
 The `iam` deployment creates 7 [roles](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) and an [instance profile](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html) used internally by the Cumulus stack.
 
@@ -280,9 +290,7 @@ The same information can be obtained from the AWS CLI command: `aws iam list-rol
 
 The `iam` deployment also creates an instance profile named `<stack-name>-ecs` that can be viewed from the AWS CLI command: `aws iam list-instance-profiles`.
 
---------------
-
-## Deploy the Database stack
+### Deploy the Cumulus database stack
 
 This section will cover deploying the DynamoDB and ElasticSearch resources.
 Reminder: ElasticSearch is optional and can be disabled using `es: null` in your `config.yml`.
@@ -296,13 +304,10 @@ Reminder: ElasticSearch is optional and can be disabled using `es: null` in your
       npm run deploy-db
 ```
 
---------------
 
-## Deploy the Cumulus stack
+### Deploy the Cumulus application stack
 
 This section will cover deploying the primary Cumulus stack, containing compute resources, workflows and all other AWS resources not covered in the two stacks above.
-
-### Deploy
 
 Once the preceding configuration steps have completed, run the following to deploy Cumulus from your `<daac>-deploy` root directory:
 

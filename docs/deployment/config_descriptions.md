@@ -119,7 +119,7 @@ These values will be imported via kes in your configuration file.   You should e
 ```yaml
 cmr:
   username: '{{CMR_USERNAME}}'
-  provider: myCmrProvider
+  provider: '<replace-with-cmr-provider>'
   clientId: '<replace-with-daac-name>-{{prefix}}'
   password: '{{CMR_PASSWORD}}'
 ```
