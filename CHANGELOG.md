@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 **CUMULUS-802** added some additional IAM permissions to support ECS autoscaling and changes were needed to run all lambdas in the VPC, so **you will have to redeploy your IAM stack.**
 
-As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must delete your existing stacks (except IAM) before deploying this version of Cumulus.**
+As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS-1310**, **you must delete your existing stacks (except IAM) before deploying this version of Cumulus.**
+If running Cumulus within a VPC and extended downtime is acceptable, we recommend doing this at the end of the day to allow AWS backend resources and network interfaces to be cleaned up overnight.
 
 ### BREAKING CHANGES
 
@@ -23,6 +24,20 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
     and set the `ecs.amiid` property in your config. Instructions for finding
     the most recent NGAP AMI can be found using
     [these instructions](https://wiki.earthdata.nasa.gov/display/ESKB/Select+an+NGAP+Created+AMI).
+
+- **CUMULUS-1310**
+  - Database resources (DynamoDB, ElasticSearch) have been moved to an independent `db` stack.
+    Migrations for this version will need to be user-managed. (e.g. [elasticsearch](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-version-migration.html#snapshot-based-migration) and [dynamoDB](https://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/dp-template-exports3toddb.html)).
+    Order of stack deployment is `iam` -> `db` -> `app`.
+  - All stacks can now be deployed using a single `config.yml` file, i.e.: `kes cf deploy --kes-folder app --template node_modules/@cumulus/deployment/[iam|db|app] [...]`
+    Backwards-compatible. Please re-run `npm run bootstrap` to build new `kes` overrides.
+    Deployment docs have been updated to show how to deploy a single-config Cumulus instance.
+  - `params` have been moved: Nest `params` fields under `app`, `db` or `iam` to override all Parameters for a particular stack's cloudformation template. Backwards-compatible with multi-config setups.
+  - `stackName` and `stackNameNoDash` have been retired. Use `prefix` and `prefixNoDash` instead.
+  - The `iams` section in `app/config.yml` IAM roles has been deprecated as a user-facing parameter,
+    *unless* your IAM role ARNs do not match the convention shown in `@cumulus/deployment/app/config.yml`
+  - The `vpc.securityGroup` will need to be set with a pre-existing security group ID to use Cumulus in a VPC. Must allow inbound HTTP(S) (Port 443).
+
 - **CUMULUS-1212**
   - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
 - **CUMULUS-1232**
@@ -37,14 +52,12 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
   - The Cloudformation templating and deployment configuration has been substantially refactored.
     - `CumulusApiDefault` nested stack resource has been renamed to `CumulusApiDistribution`
     - `CumulusApiV1` nested stack resource has been renamed to `CumulusApiBackend`
-    - `DataStorage` nested stack resource has been added for managing resources related to data persistence (DynamoDB and Elasticsearch)
   - The `urs: true` config option for when defining your lambdas (e.g. in `lambdas.yml`) has been deprecated. There are two new options to replace it:
     - `urs_redirect: 'token'`: This will expose a `TOKEN_REDIRECT_ENDPOINT` environment variable to your lambda that references the `/token` endpoint on the Cumulus backend API
     - `urs_redirect: 'distribution'`: This will expose a `DISTRIBUTION_REDIRECT_ENDPOINT` environment variable to your lambda that references the `/redirect` endpoint on the Cumulus distribution API
 - **CUMULUS-1193**
   - The elasticsearch instance is moved behind the VPC.
   - Your account will need an Elasticsearch Service Linked role. This is a one-time setup for the account. You can follow the instructions to use the AWS console or AWS CLI [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/using-service-linked-roles.html) or use the following AWS CLI command: `aws iam create-service-linked-role --aws-service-name es.amazonaws.com`
-  - You will need to populate `VPC_CIDR_IP` in your `app/.env` file. The IPv4 CIDR can be found in your AWS Console in your VPC settings.
 
 - **CUMULUS-802**
   - ECS `maxInstances` must be greater than `minInstances`. If you use defaults, no change is required.
@@ -78,6 +91,33 @@ As a result of the changes for **CUMULUS-1193** and **CUMULUS-1264**, **you must
 ## Changed
 
 - Updated `@cumulus/ingest/http/httpMixin.list()` to trim trailing spaces on discovered filenames
+
+- **CUMULUS-1310**
+  - Database resources (DynamoDB, ElasticSearch) have been moved to an independent `db` stack.
+    This will enable future updates to avoid affecting database resources or requiring migrations.
+    Migrations for this version will need to be user-managed.
+    (e.g. [elasticsearch](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-version-migration.html#snapshot-based-migration) and [dynamoDB](https://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/dp-template-exports3toddb.html)).
+    Order of stack deployment is `iam` -> `db` -> `app`.
+  - All stacks can now be deployed using a single `config.yml` file, i.e.: `kes cf deploy --kes-folder app --template node_modules/@cumulus/deployment/[iam|db|app] [...]`
+    Backwards-compatible. Please re-run `npm run bootstrap` to build new `kes` overrides.
+    Deployment docs have been updated to show how to deploy a single-config Cumulus instance.
+  - `params` fields should now be nested under the stack key (i.e. `app`, `db` or `iam`) to provide Parameters for a particular stack's cloudformation template,
+    for use with single-config instances. Keys *must* match the name of the deployment package folder (`app`, `db`, or `iam`).
+    Backwards-compatible with multi-config setups.
+  - `stackName` and `stackNameNoDash` have been retired as user-facing config parameters. Use `prefix` and `prefixNoDash` instead.
+    This will be used to create stack names for all stacks in a single-config use case.
+    `stackName` may still be used as an override in multi-config usage, although this is discouraged.
+    Warning: overriding the `db` stack's `stackName` will require you to set `dbStackName` in your `app/config.yml`.
+    This parameter is required to fetch outputs from the `db` stack to reference in the `app` stack.
+  - The `iams` section in `app/config.yml` IAM roles has been retired as a user-facing parameter,
+    *unless* your IAM role ARNs do not match the convention shown in `@cumulus/deployment/app/config.yml`
+    In that case, overriding `iams` in your own config is recommended.
+  - `iam` and `db` `cloudformation.yml` file names will have respective prefixes (e.g `iam.cloudformation.yml`).
+  - Cumulus will now only attempt to create reconciliation reports for buckets of the `private`, `public` and `protected` types.
+  - Cumulus will no longer set up its own security group.
+    To pass a pre-existing security group for in-VPC deployments as a parameter to the Cumulus template, populate `vpc.securityGroup` in `config.yml`.
+    This security group must allow inbound HTTP(S) traffic (Port 443). SSH traffic (Port 22) must be permitted for SSH access to ECS instances.
+  - Deployment docs have been updated with examples for the new deployment model.
 
 - **CUMULUS-1236**
   - Moves access to public files behind the distribution endpoint.  Authentication is not required, but direct http access has been disallowed.

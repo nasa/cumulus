@@ -111,7 +111,7 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
       aliasedIndex = Object.keys(indices)[0];
 
       if (indices.length > 1) {
-        log.info(`Multiple indices found for alias ${alias}, using index ${index}.`);
+        log.info(`Multiple indices found for alias ${alias}, using index ${aliasedIndex}.`);
       }
     }
 
