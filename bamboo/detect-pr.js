@@ -38,8 +38,7 @@ async function getPrsForRef(headRefName) {
     }
   });
   const edges = queryResponse.repository.ref.target.history.nodes[0].associatedPullRequests.edges;
-  let nodes = edges.map((x) => x.node);
-  nodes.filter((node) => node.headRefName === headRefName)
+  const nodes = edges.map((x) => x.node).filter((node) => node.headRefName === headRefName);
 
   if (nodes.length > 0) {
     console.log(`Current commit is associated with a PR: ${JSON.stringify(nodes)}`);
