@@ -80,7 +80,7 @@ async function incrementAndDispatch(queueMessage) {
 
   if (!has(message, 'cumulus_meta.priorityKey')
       || isNil(message.cumulus_meta.priorityKey)) {
-    throw new Error('Could not find priority key for message');
+    throw new Error('cumulus_meta.priorityKey not set in message');
   }
 
   const priorityKey = get(message, 'cumulus_meta.priorityKey');
