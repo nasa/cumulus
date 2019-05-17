@@ -73,7 +73,8 @@ class FileClass extends Manager {
       .map((file) => ({
         bucket: file.bucket,
         key: file.key
-      }));
+      }))
+      .filter((file) => file.bucket && file.key);
 
     const chunked = chunk(fileRecords, 25);
     return Promise.all(chunked.map((c) => this.batchWrite(c)));
