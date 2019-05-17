@@ -23,9 +23,9 @@ Look for the green check mark in the PR.
 
 ## Reviewing PRs from Forked Repos
 
-Upon submission of a pull request, the Cumulus development team will review the code
+Upon submission of a pull request, the Cumulus development team will review the code.
 
-The request will then either be merged, declined, or an adjustment to the code will be requested
+The request will then either be merged, declined, or an adjustment to the code will be requested.
 
 PRs from forked repos cannot directly merged to master. Cumulus reviews must follow the following steps before completing the review process:
 
@@ -33,12 +33,12 @@ PRs from forked repos cannot directly merged to master. Cumulus reviews must fol
 
      $ git checkout -b from-<name-of-the-branch> master
 
-2. Push the new branch to github
+1. Push the new branch to github
 
-3. Change the destination of the forked PR to the new branch that was just pushed
+1. Change the destination of the forked PR to the new branch that was just pushed
 
 ![screenshot 2018-10-12 14 37 49](https://user-images.githubusercontent.com/1933118/46869547-80d31480-ce2c-11e8-9d2f-b8e1ea01fdb6.png)
 
-5. If the travis tests passed merge the forked PR to the new branch
+1. Merge the forked PR to the new branch
 
-6. Merge the new branch to master
+1. If the travis tests, merge the new branch to master
