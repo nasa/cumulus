@@ -100,7 +100,7 @@ export DEPLOYMENT
 
 if [[ -z $COMMIT_MESSAGE ]]; then
   export COMMIT_MSG=$(git log --pretty='format:%Creset%s' -1)
-  echo export COMMIT_MSG=$(git log --pretty='format:%Creset%s' -1) >> .bamboo_env_vars
+  echo export COMMIT_MSG=$COMMIT_MSG >> .bamboo_env_vars
 fi
 
 if [[ $BRANCH == master || $VERSION_TAG || COMMIT_MESSAGE =~ '[run-redeploy-tests]' ]]; then
