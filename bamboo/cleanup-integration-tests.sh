@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+. ./bamboo/abort-if-skip-integration-tests.sh
 . ./bamboo/abort-if-not-pr-or-redeployment.sh
 
 npm install

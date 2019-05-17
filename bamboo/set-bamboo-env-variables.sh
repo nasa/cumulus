@@ -33,13 +33,14 @@ for key in ${param_list[@]}; do
   export $update_key=${!key}
 done
 
-export COMMIT_MSG=$(git log --pretty='format:%Creset%s' -1)
 export GIT_SHA=$(git rev-parse HEAD)
 
 ## This should take a blank value from the global options, and
 ## is intended to allow an override for a custom branch build.
 export GIT_PR=$bamboo_GIT_PR
-echo GIT_SHA is $GIT_SHA
+
+container_id=${bamboo_planKey,,}
+export container_id=${container_id/-/}
 
 source .bamboo_env_vars || true
 
@@ -83,7 +84,6 @@ if [[ $bamboo_NGAP_ENV = "SIT" ]]; then
   export VPC_CIDR_IP=$bamboo_SECRET_SIT_VPC_CIDR_IP
   export PROVIDER_HOST=$bamboo_SECRET_SIT_PROVIDER_HOST
   DEPLOYMENT=$bamboo_SIT_DEPLOYMENT
-  echo deployment "$DEPLOYMENT"
 fi
 
 ## Set integration stack name
@@ -98,9 +98,10 @@ if [[ -z $DEPLOYMENT ]]; then
 fi
 export DEPLOYMENT
 
-
-container_id=${bamboo_planKey,,}
-export container_id=${container_id/-/}
+if [[ -z $COMMIT_MESSAGE ]]; then
+  export COMMIT_MSG=$(git log --pretty='format:%Creset%s' -1)
+  echo export COMMIT_MSG=$(git log --pretty='format:%Creset%s' -1) >> .bamboo_env_vars
+fi
 
 if [[ $BRANCH == master || $VERSION_TAG || COMMIT_MESSAGE =~ '[run-redeploy-tests]' ]]; then
   export RUN_REDEPLOYMENT=true
