@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+
 source .bamboo_env_vars || true
 if [[ $GIT_PR != true && BRANCH != master ]]; then
   echo "******Branch HEAD is not a github PR, and this isn't a redeployment build, skipping step"
