@@ -19,6 +19,12 @@ test('deploymentBucket() returns false if not set', (t) => {
   t.false(configHelpers.deploymentBucket(t.context.serverless, config));
 });
 
+test('deploymentBucket() throws an error if the configured value is not a string', (t) => {
+  const config = { deploymentBucket: ['a'] };
+
+  t.throws(() => configHelpers.deploymentBucket(t.context.serverless, config));
+});
+
 test('deployToVpc() returns true if both vpcId and subnetIds are set', (t) => {
   const config = {
     vpcId: 'asdf',
@@ -52,6 +58,12 @@ test('logsBucket() throws an exception if not set', (t) => {
   t.throws(() => configHelpers.logsBucket(t.context.serverless, config));
 });
 
+test('logsBucket() throws an error if the configured value is not a string', (t) => {
+  const config = { logsBucket: 5 };
+
+  t.throws(() => configHelpers.logsBucket(t.context.serverless, config));
+});
+
 test('logsPrefix() returns the configured value if set', (t) => {
   const config = { logsPrefix: 'asdf' };
 
@@ -62,6 +74,12 @@ test('logsPrefix() returns space if logsPrefix is not set', (t) => {
   const config = {};
 
   t.is(configHelpers.logsPrefix(t.context.serverless, config), '');
+});
+
+test('logsPrefix() throws an error if the configured value is not a string', (t) => {
+  const config = { logsPrefix: 5 };
+
+  t.throws(() => configHelpers.logsPrefix(t.context.serverless, config));
 });
 
 test('permissionsBoundary() returns the configured value if set', (t) => {
@@ -79,6 +97,12 @@ test('permissionsBoundary() returns AWS::NoValue if logsPrefix is not set', (t) 
   );
 });
 
+test('permissionsBoundary() throws an error if the configured value is not a string', (t) => {
+  const config = { permissionsBoundary: {} };
+
+  t.throws(() => configHelpers.permissionsBoundary(t.context.serverless, config));
+});
+
 test('prefix() returns the configured value if set', (t) => {
   const config = { prefix: 'asdf' };
 
@@ -87,6 +111,12 @@ test('prefix() returns the configured value if set', (t) => {
 
 test('prefix() throws an exception if not set', (t) => {
   const config = {};
+
+  t.throws(() => configHelpers.prefix(t.context.serverless, config));
+});
+
+test('prefix() throws an error if the configured value is not a string', (t) => {
+  const config = { prefix: {} };
 
   t.throws(() => configHelpers.prefix(t.context.serverless, config));
 });
@@ -103,8 +133,17 @@ test('stack() throws an exception if not set', (t) => {
   t.throws(() => configHelpers.stack(t.context.serverless, config));
 });
 
+test('stack() throws an error if the configured value is not a string', (t) => {
+  const config = { stack: 5 };
+
+  t.throws(() => configHelpers.stack(t.context.serverless, config));
+});
+
 test('subnetIds() returns the configured value if set', (t) => {
-  const config = { subnetIds: ['asdf'] };
+  const config = {
+    subnetIds: ['asdf'],
+    vpcId: 'v-123'
+  };
 
   t.deepEqual(configHelpers.subnetIds(t.context.serverless, config), ['asdf']);
 });
@@ -113,6 +152,21 @@ test('subnetIds() returns false if not set', (t) => {
   const config = {};
 
   t.false(configHelpers.subnetIds(t.context.serverless, config));
+});
+
+test('subnetIds() throws an error if the configured value is not an array', (t) => {
+  const config = {
+    vpcId: 'v-123',
+    subnetIds: 5
+  };
+
+  t.throws(() => configHelpers.subnetIds(t.context.serverless, config));
+});
+
+test('subnetIds() throws an error if it is set but vpcId is not', (t) => {
+  const config = { subnetIds: ['s-123'] };
+
+  t.throws(() => configHelpers.subnetIds(t.context.serverless, config));
 });
 
 test('vpcConfig() returns the correct value if deployToVpc returns true', (t) => {
@@ -142,7 +196,10 @@ test('vpcConfig() returns AWS::NoValue if deployToVpc returns false', (t) => {
 });
 
 test('vpcId() returns the configured value if set', (t) => {
-  const config = { vpcId: 'asdf' };
+  const config = {
+    subnetIds: ['s-123'],
+    vpcId: 'asdf'
+  };
 
   t.deepEqual(configHelpers.vpcId(t.context.serverless, config), 'asdf');
 });
@@ -151,4 +208,16 @@ test('vpcId() returns false if not set', (t) => {
   const config = {};
 
   t.false(configHelpers.vpcId(t.context.serverless, config));
+});
+
+test('vpcId() throws an error if the configured value is not a string', (t) => {
+  const config = { vpcId: 5 };
+
+  t.throws(() => configHelpers.vpcId(t.context.serverless, config));
+});
+
+test('vpcId() throws an error if it is set but subnetIds is not', (t) => {
+  const config = { vpcId: 5 };
+
+  t.throws(() => configHelpers.vpcId(t.context.serverless, config));
 });
