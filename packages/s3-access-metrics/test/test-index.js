@@ -61,7 +61,6 @@ test('getFailureMetricDataObjects() returns the expected result', (t) => {
   const firstPeriod = metricDataObjects.find(
     (o) => o.Timestamp === '2019-02-06T00:00:00.000Z'
   );
-  console.log(JSON.stringify(firstPeriod));
   t.not(firstPeriod, undefined);
   t.is(firstPeriod.MetricName, 'FailureCount');
   t.is(firstPeriod.Value, 2);
@@ -99,7 +98,6 @@ test('getSuccessMetricDataObjects() returns the expected result', (t) => {
   const firstPeriod = metricDataObjects.find(
     (o) => o.Timestamp === '2019-02-06T00:00:00.000Z'
   );
-  console.log(JSON.stringify(firstPeriod));
   t.not(firstPeriod, undefined);
   t.is(firstPeriod.MetricName, 'SuccessCount');
   t.is(firstPeriod.Value, 2);

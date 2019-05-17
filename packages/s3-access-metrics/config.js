@@ -1,7 +1,11 @@
+// Allow use of packages from devDependencies, since this file is not part of
+// the deployed code.
+
+/* eslint-disable node/no-unpublished-require */
+
 'use strict';
 
 const fs = require('fs');
-// eslint-disable-next-line node/no-unpublished-require
 const yaml = require('js-yaml');
 const { promisify } = require('util');
 const configHelpers = require('./configHelpers');
@@ -11,7 +15,7 @@ const readFile = promisify(fs.readFile);
 // Load config.yml into a Javscript object
 const loadConfig = () => readFile('./config.yml', 'utf8').then(yaml.safeLoad);
 
-const invokeHelper = (name) =>
+const getConfigValue = (name) =>
   (serverless) =>
     loadConfig()
       .then((config) => configHelpers[name](serverless, config));
@@ -26,13 +30,13 @@ const deployToVpc = (serverless) =>
 // using ${file(./config.js):propNameHere}
 module.exports = {
   deployToVpc,
-  logsPrefix: invokeHelper('logsPrefix'),
-  permissionsBoundary: invokeHelper('permissionsBoundary'),
-  vpcConfig: invokeHelper('vpcConfig'),
-  deploymentBucket: invokeHelper('deploymentBucket'),
-  logsBucket: invokeHelper('logsBucket'),
-  prefix: invokeHelper('prefix'),
-  stack: invokeHelper('stack'),
-  subnetIds: invokeHelper('subnetIds'),
-  vpcId: invokeHelper('vpcId')
+  logsPrefix: getConfigValue('logsPrefix'),
+  permissionsBoundary: getConfigValue('permissionsBoundary'),
+  vpcConfig: getConfigValue('vpcConfig'),
+  deploymentBucket: getConfigValue('deploymentBucket'),
+  logsBucket: getConfigValue('logsBucket'),
+  prefix: getConfigValue('prefix'),
+  stack: getConfigValue('stack'),
+  subnetIds: getConfigValue('subnetIds'),
+  vpcId: getConfigValue('vpcId')
 };

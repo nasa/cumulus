@@ -42,12 +42,27 @@ Before deployment, a `config.yml` must be created.
 * `subnetIds` - a list of subnets to deploy Lambda functions to. If this is set,
   `vpcId` must also be set
 
+**Example config.yml**
+
+```yaml
+prefix: my-prefix
+logsBucket: my-logs-bucket
+logsPrefix: path/to/my/logs/
+stack: my-cumulus-stack
+deploymentBucket: my-deployment-bucket
+permissionsBoundary: arn:aws:iam::123456789012:policy/SomeRoleBoundary
+vpcId: vpc-123
+subnetIds:
+  - subnet-123
+  - subnet-456
+```
+
 ## Deployment
 
 The `s3-access-metrics` package is deployed using the
 [Serverless Framework](https://serverless.com/framework/docs/providers/aws/guide/).
 
-Deployment has been tested using Node 8.10.
+Deployment has only been tested using Node 8.10.
 
 These instructions assume that you have [Node.js](https://nodejs.org/)
 installed. If you don't, the easiest way to install it is typically to use the [Node Version Manager](https://github.com/nvm-sh/nvm).
@@ -65,3 +80,8 @@ config file, deployment should be as simple as running:
 1. `npm install`
 1. `./node_modules/.bin/sls deploy`
 1. `./node_modules/.bin/sls s3deploy`
+
+The output of the `sls deploy` command should display the name of the Lambda
+function. If you view that Lambda function in the AWS Console, you should see an
+"S3" trigger in the Designer view. Clicking on S3 will display the bucket and
+prefix that the function is configured to trigger off of.
