@@ -57,7 +57,7 @@ If the deployment failed on nested stacks (CumulusApiDefaultNestedStack, Cumulus
 ```yaml
 <your deployment>:
   nested_template: null
-  stackName: <stackname>
+  prefix: <replace-with-stack-prefix>
 ```
 
 When the main stack is in 'CREATE_COMPLETE' state from the AWS console (ignore the kes error { BadRequestException: The REST API doesn't contain any methods}), remove the 'nested_template' line and redeploy again.  Then the nested stacks will stay, and you can debug the errors.
