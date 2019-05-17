@@ -2,7 +2,6 @@
 
 const uuidv4 = require('uuid/v4');
 const get = require('lodash.get');
-const has = require('lodash.has');
 const {
   aws: {
     dynamodbDocClient,
