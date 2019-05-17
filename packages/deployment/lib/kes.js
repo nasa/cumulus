@@ -266,6 +266,18 @@ class UpdatedKes extends Kes {
     Handlebars.registerHelper('buildCWDashboard', (dashboardConfig, ecs, es, stackName) =>
       this.buildCWDashboard(dashboardConfig, ecs, es, stackName));
 
+    Handlebars.registerHelper('ifPrivateApi', (configs, api, options) => {
+      const privateApi = configs && configs[api] ? configs[api].private : false;
+      return privateApi ? options.fn(this) : options.inverse(this);
+    });
+
+    Handlebars.registerHelper('getApiPortSuffix', (configs, api) => {
+      if (configs && configs[api] && configs[api].port) {
+        return `:${configs[api].port}/`;
+      }
+      return '/';
+    });
+
     return super.parseCF(cfFile);
   }
 
@@ -391,6 +403,31 @@ class UpdatedKes extends Kes {
 
     console.log(`Template saved to ${destPath}`);
     return fsWriteFile(destPath, cf);
+  }
+
+  /**
+   * Calls CloudFormation's update-stack or create-stack methods
+   * Changed to support multi-template configs by checking for params sub-objects, i.e.:
+   * params:
+   *   app:
+   *     - name: someName
+   *       value: someValue
+   *
+   * @returns {Promise} returns the promise of an AWS response object
+   */
+  cloudFormation() {
+    if (this.config.app && this.config.app.params) this.config.params = this.config.app.params;
+    // Fetch db stack outputs to retrieve DynamoDBStreamARNs and ESDomainEndpoint
+    return this.describeStack(this.config.dbStackName).then((r) => {
+      if (r && r.Stacks[0] && r.Stacks[0].Outputs) {
+        r.Stacks[0].Outputs.forEach((o) => this.config.params.push({
+          name: o.OutputKey,
+          value: o.OutputValue
+        }));
+      } else {
+        throw new Error(`Failed to fetch outputs for db stack ${this.config.dbStackName}`);
+      }
+    }).then(() => super.cloudFormation());
   }
 
 

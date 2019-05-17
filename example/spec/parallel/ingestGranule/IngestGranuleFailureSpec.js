@@ -116,7 +116,7 @@ describe('The Ingest Granule failure workflow', () => {
       expect(executionStatus.executionHistory).toBeTruthy();
       const events = executionStatus.executionHistory.events;
 
-      const syncGranuleNoVpcTaskName = 'SyncGranuleNoVpc';
+      const syncGranuleTaskName = 'SyncGranule';
       const stopStatusTaskName = 'StopStatus';
 
       let choiceVerified = false;
@@ -124,7 +124,7 @@ describe('The Ingest Granule failure workflow', () => {
         const currentEvent = events[i];
 
         if (currentEvent.type === 'TaskStateExited' &&
-          currentEvent.name === syncGranuleNoVpcTaskName) {
+          currentEvent.name === syncGranuleTaskName) {
           syncGranStepOutput = JSON.parse(currentEvent.output);
           expect(syncGranStepOutput.exception).toBeTruthy();
 

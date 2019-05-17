@@ -8,8 +8,8 @@ IngestGranuleCatchDuplicateErrorTest:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
-      Next: SyncGranuleNoVpc
-    SyncGranuleNoVpc:
+      Next: SyncGranule
+    SyncGranule:
       CumulusConfig:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
@@ -27,7 +27,7 @@ IngestGranuleCatchDuplicateErrorTest:
             - source: '{$.process}'
               destination: '{$.cumulus_meta.process}'
       Type: Task
-      Resource: ${SyncGranuleNoVpcLambdaFunction.Arn}
+      Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
           - ErrorEquals:
               - States.ALL
