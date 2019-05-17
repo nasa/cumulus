@@ -8,7 +8,7 @@
     "envs": {},
     "bucket": "cumulus-devseed-internal",
     "stackName": "lpdaac-cumulus",
-    "stackNameNoDash": "LpdaacCumulus",
+    "prefixNoDash": "LpdaacCumulus",
     "urs_url": "https://uat.urs.earthdata.nasa.gov",
     "repo_owner": "nasa",
     "message_adapter_repo": "cumulus-message-adapter",

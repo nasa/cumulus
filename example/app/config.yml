@@ -3,16 +3,16 @@ default:
 
   # test configuration starts
   test_configs:
-    stackName: '{{stackName}}'
+    stackName: '{{prefix}}'
     bucket: '{{buckets.internal.name}}'
     DISTRIBUTION_ENDPOINT: '{{api_distribution_url}}'
     esHost: '{{esHost}}'
-    streamName: '{{stackName}}-testStream'
-    cnmResponseStream: '{{stackName}}-cnmResponseStream'
+    streamName: '{{prefix}}-testStream'
+    cnmResponseStream: '{{prefix}}-cnmResponseStream'
     awsAccountId: '{{AWS_ACCOUNT_ID}}'
     awsRegion: us-east-1
-    AsyncOperationsTable: '{{stackName}}-AsyncOperationsTable'
-    asyncOperationRunnerRole: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-lambda-api-gateway'
+    AsyncOperationsTable: '{{prefix}}-AsyncOperationsTable'
+    asyncOperationRunnerRole: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
     sqs_consumer_rate: 300
     IngestAndPublishGranule:
       IngestGranuleOutput:
@@ -41,37 +41,44 @@ default:
         granules:
           - files:
             - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/replace-me-collectionId/replace-me-granuleId.hdf'
-              fileStagingDir: 'file-staging/{{stackName}}/replace-me-collectionId'
+              filename: 's3://{{buckets.internal.name}}/file-staging/{{prefix}}/replace-me-collectionId/replace-me-granuleId.hdf'
+              fileStagingDir: 'file-staging/{{prefix}}/replace-me-collectionId'
             - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/replace-me-collectionId/replace-me-granuleId.hdf.met'
-              fileStagingDir: 'file-staging/{{stackName}}/replace-me-collectionId'
+              filename: 's3://{{buckets.internal.name}}/file-staging/{{prefix}}/replace-me-collectionId/replace-me-granuleId.hdf.met'
+              fileStagingDir: 'file-staging/{{prefix}}/replace-me-collectionId'
             - bucket: '{{buckets.internal.name}}'
-              filename: 's3://{{buckets.internal.name}}/file-staging/{{stackName}}/replace-me-collectionId/replace-me-granuleId_ndvi.jpg'
-              fileStagingDir: 'file-staging/{{stackName}}/replace-me-collectionId'
+              filename: 's3://{{buckets.internal.name}}/file-staging/{{prefix}}/replace-me-collectionId/replace-me-granuleId_ndvi.jpg'
+              fileStagingDir: 'file-staging/{{prefix}}/replace-me-collectionId'
     SyncGranule:
       granules:
         - files:
           - bucket: '{{buckets.internal.name}}'
-            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/replace-me-collectionId/replace-me-granuleId.hdf'
-            fileStagingDir: 'custom-staging-dir/{{stackName}}/replace-me-collectionId'
+            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{prefix}}/replace-me-collectionId/replace-me-granuleId.hdf'
+            fileStagingDir: 'custom-staging-dir/{{prefix}}/replace-me-collectionId'
           - bucket: '{{buckets.internal.name}}'
-            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{stackName}}/replace-me-collectionId/replace-me-granuleId.hdf.met'
-            fileStagingDir: 'custom-staging-dir/{{stackName}}/replace-me-collectionId'
+            filename: 's3://{{buckets.internal.name}}/custom-staging-dir/{{prefix}}/replace-me-collectionId/replace-me-granuleId.hdf.met'
+            fileStagingDir: 'custom-staging-dir/{{prefix}}/replace-me-collectionId'
   # test configuration ends
 
-  stackName: 'change-me'
-  # stackNameNoDash: TestCumulusIntegration
+  prefix: 'test-cumulus-integration'
+  prefixNoDash: TestCumulusIntegration
+  useNgapPermissionBoundary: true
   shared_data_bucket: cumulus-data-shared
   api_distribution_url: https://example.com/
   api_lambda_memory: 756
-  params:
-    - name: CmrPassword
-      value: '{{CMR_PASSWORD}}'
-    - name: DockerEmail
-      value: '{{DOCKER_EMAIL}}'
-    - name: DockerPassword
-      value: '{{DOCKER_PASS}}'
+  iam:
+    params:
+      - name: ResourcePrefix
+        value: '{{prefix}}'
+  app:
+    params:
+      - name: CmrPassword
+        value: '{{CMR_PASSWORD}}'
+      - name: DockerEmail
+        value: '{{DOCKER_EMAIL}}'
+      - name: DockerPassword
+        value: '{{DOCKER_PASS}}'
+
 
   apiStage: dev
 
@@ -79,7 +86,7 @@ default:
     vpcId: '{{VPC_ID}}'
     subnets:
       - '{{AWS_SUBNET}}'
-    cidrIp: '{{VPC_CIDR_IP}}'
+    securityGroup: '{{SECURITY_GROUP}}'
 
   ecs:
     instanceType: t2.medium
@@ -149,11 +156,17 @@ default:
     shared:
       name: cumulus-data-shared
       type: shared
+    sandbox-dashboard:
+      name: cumulus-dashboard-sandbox
+      type: shared
+    sit-dashboard:
+      name: cumulus-dashboard-sit
+      type: shared
 
   cmr:
     username: '{{CMR_USERNAME}}'
     provider: CUMULUS
-    clientId: 'cumulus-core-{{stackName}}'
+    clientId: 'cumulus-core-{{prefix}}'
     password: '{{CMR_PASSWORD}}'
 
   ems:
@@ -178,16 +191,6 @@ default:
     distribution:
       private: true
       port: 7000
-
-  iams:
-    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-ecs'
-    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-lambda-api-gateway'
-    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-lambda-processing'
-    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-steprole'
-    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{stackName}}-ecs'
-    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-distribution-api-lambda'
-    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-scaling-role'
-    migrationRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{stackName}}-migration-processing'
 
   sns:
     sftracker:
@@ -230,24 +233,24 @@ default:
 # CUMULUS team deployments
 # ------------------------
 cumulus-from-npm:
-  stackName: test-npm-integration # used by the integration repo
-  stackNameNoDash: TestNpmIntegration
+  prefix: test-npm-integration # used by the integration repo
+  prefixNoDash: TestNpmIntegration
 
 cumulus-from-source:
-  stackName: test-src-integration # used by the cumulus repo
-  stackNameNoDash: TestSourceIntegration
+  prefix: test-src-integration # used by the cumulus repo
+  prefixNoDash: TestSourceIntegration
 
 cumulus-from-pr:
-  stackName: test-pr-integration # used by the PR
-  stackNameNoDash: TestPrIntegration
+  prefix: test-pr-integration # used by the PR
+  prefixNoDash: TestPrIntegration
 
 cumulus-nightly:
-  stackName: nightly # used by the nightly cron job
-  stackNameNoDash: Nightly
+  prefix: nightly # used by the nightly cron job
+  prefixNoDash: Nightly
 
 cumulus-sit:
-  stackName: cumulus-sit
-  stackNameNoDash: cumulusSit
+  prefix: cumulus-sit
+  prefixNoDash: cumulusSit
 
   buckets:
     internal:
@@ -271,12 +274,12 @@ cumulus-sit:
 # -------------------------------
 
 aimee:
-  stackName: aimee
-  stackNameNoDash: aimee
+  prefix: aimee
+  prefixNoDash: aimee
 
 lf:
-  stackName: lf-cumulus
-  stackNameNoDash: lfCumulus
+  prefix: lf-cumulus
+  prefixNoDash: lfCumulus
 
   es:
     name: estest
@@ -299,8 +302,8 @@ lf:
       type: protected
 
 lf-test-2:
-  stackName: lf-test-2
-  stackNameNoDash: lfTest2
+  prefix: lf-test-2
+  prefixNoDash: lfTest2
 
   buckets:
     internal:
@@ -320,8 +323,8 @@ lf-test-2:
       type: protected
 
 lf-int-test:
-  stackName: lf-int-test
-  stackNameNoDash: lfIntTest
+  prefix: lf-int-test
+  prefixNoDash: lfIntTest
 
   buckets:
     internal:
@@ -341,8 +344,8 @@ lf-int-test:
       type: protected
 
 lf-sit:
-  stackName: lf-sit
-  stackNameNoDash: lfSit
+  prefix: lf-sit
+  prefixNoDash: lfSit
 
   buckets:
     internal:
@@ -362,43 +365,43 @@ lf-sit:
       type: protected
 
 kk:
-  stackName: kk-test
-  stackNameNoDash: KkTest
+  prefix: kk-test
+  prefixNoDash: KkTest
   esHost: https://search-kk-test-es5-bk24w6blilunzp4fc4ma3xwtqu.us-east-1.es.amazonaws.com
-  system_bucket: '{{stackName}}-internal'
+  system_bucket: '{{prefix}}-internal'
   buckets:
     internal:
-      name: '{{stackName}}-internal'
+      name: '{{prefix}}-internal'
       type: internal
     private:
-      name: '{{stackName}}-private'
+      name: '{{prefix}}-private'
       type: private
     protected:
-      name: '{{stackName}}-protected'
+      name: '{{prefix}}-protected'
       type: protected
     public:
-      name: '{{stackName}}-public'
+      name: '{{prefix}}-public'
       type: public
 
 mth:
-  stackName: mth
-  stackNameNoDash: Mth
+  prefix: mth
+  prefixNoDash: Mth
   useWorkflowLambdaVersions: false
   buckets:
     internal:
-      name: '{{stackName}}-internal'
+      name: '{{prefix}}-internal'
       type: internal
     private:
-      name: '{{stackName}}-private'
+      name: '{{prefix}}-private'
       type: private
     protected:
-      name: '{{stackName}}-protected'
+      name: '{{prefix}}-protected'
       type: protected
     protected-2:
-      name: '{{stackName}}-protected'
+      name: '{{prefix}}-protected'
       type: protected
     public:
-      name: '{{stackName}}-public'
+      name: '{{prefix}}-public'
       type: public
   ecs:
     # amiid: ami-0bc08634af113cccb
@@ -409,8 +412,8 @@ mth:
     #   mount: /efs
 
 jl:
-  stackName: jl-test-integration
-  stackNameNoDash: JlTestIntegration
+  prefix: jl-test-integration
+  prefixNoDash: JlTestIntegration
   buckets:
     private:
       name: jl-test-integration-private
@@ -442,8 +445,7 @@ jl:
 
 mhs2:
   prefix: mhs2
-  stackName: mhs2
-  stackNameNoDash: mhs2
+  prefixNoDash: mhs2
   buckets:
     internal:
       name: mhs-internal
@@ -477,8 +479,7 @@ mhs2:
 
 gitc:
   prefix: {{PREFIX}}
-  stackName: {{stackName}}
-  stackNameNoDash: {{stackNameNoDash}}
+  prefixNoDash: {{prefixNoDash}}
 
   iams:
     ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{PREFIX}}-ecs'
@@ -520,17 +521,17 @@ gitc:
     enableAutoScaling: false
 
 mvd:
-  stackName: mvd
-  stackNameNoDash: mvd
+  prefix: mvd
+  prefixNoDash: mvd
   buckets:
     internal:
-      name: '{{stackName}}-internal'
+      name: '{{prefix}}-internal'
       type: internal
-  bucket: '{{stackName}}-internal'
+  bucket: '{{prefix}}-internal'
 
 mvd-dev:
-  stackName: mvd-dev
-  stackNameNoDash: mvdDev
+  prefix: mvd-dev
+  prefixNoDash: mvdDev
   buckets:
     internal:
       name: 'mvd-internal'
@@ -538,8 +539,8 @@ mvd-dev:
   bucket: 'mvd-internal'
 
 jc:
-  stackName: jc
-  stackNameNoDash: jc
+  prefix: jc
+  prefixNoDash: jc
   # ecs:
   #  services:
   #    EcsTaskHelloWorld:
@@ -564,12 +565,12 @@ jc:
   #    registry: ecr
 
 mhs:
-  stackName: mhs
-  stackNameNoDash: mhs
+  prefix: mhs
+  prefixNoDash: mhs
 
 mhs3:
-  stackName: mhs3
-  stackNameNoDash: mhs3
+  prefix: mhs3
+  prefixNoDash: mhs3
   buckets:
     internal:
       name: mhs3-internal
@@ -593,21 +594,21 @@ mhs3:
   api_distribution_url: '{{API_DISTRIBUTION_URL}}'
 
 jk:
-  stackName: jk
-  stackNameNoDash: jk
+  prefix: jk
+  prefixNoDash: jk
 
 jk2:
-  stackName: jk2
-  stackNameNoDash: jk2
+  prefix: jk2
+  prefixNoDash: jk2
 
 mboyd-test:
-  stackName: mboyd-test
-  stackNameNoDash: mboydTest
+  prefix: mboyd-test
+  prefixNoDash: mboydTest
 
 mboyd-int:
-  stackName: mboyd-int
-  stackNameNoDash: mboydInt
+  prefix: mboyd-int
+  prefixNoDash: mboydInt
 
 pq:
-  stackName: pq
-  stackNameNoDash: pq
+  prefix: pq
+  prefixNoDash: pq
