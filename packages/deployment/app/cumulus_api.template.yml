@@ -64,6 +64,17 @@ Resources:
         Types:
           - 'PRIVATE'
       {{/ifPrivateApi}}
+      # Needed for deploy, but in an NGAP account, this will get overwritten
+      Policy:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS:
+                Fn::Sub: "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "execute-api:Invoke"
+            Resource: "execute-api:/*"
 {{/each}}
 
 {{# if apiMethods}}
