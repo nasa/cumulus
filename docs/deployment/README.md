@@ -20,7 +20,8 @@ The process involves:
 
 * Creating [AWS S3 Buckets](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html).
 * Using [Kes](http://devseed.com/kes/) to transform kes templates (`cloudformation.template.yml`) into [AWS CloudFormation](https://aws.amazon.com/cloudformation/getting-started/) stack templates (`cloudformation.yml`) that are then deployed to AWS.
-* Before deploying the Cumulus software, a CloudFormation stack is deployed that creates necessary [IAM roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) via the `iams` stack.
+* Before deploying the Cumulus software, a CloudFormation stack is deployed that creates necessary [IAM roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) via the `iam` stack.
+* Database resources are configured and deployed via the `db` stack.
 * The Cumulus software is configured and deployed via the `app` stack.
 
 --------------
@@ -100,9 +101,9 @@ Begin by copying the template directory to your project. You will modify it for 
 
 You can then [add/commit](https://help.github.com/articles/adding-a-file-to-a-repository-using-the-command-line/) changes as needed.
 
-### Prepare AWS configuration
+## Prepare AWS configuration
 
-#### Set Access Keys
+### Set Access Keys
 
 You need to make some AWS information available to your environment. If you don't already have the access key and secret access key of an AWS user with IAM Create-User permissions, you must [Create Access Keys](https://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html) for such a user with IAM Create-User permissions, then export the access keys:
 
@@ -128,27 +129,78 @@ These buckets do not need any non-default permissions to function with Cumulus, 
 
 **Note**: s3 bucket object names are global and must be unique across all accounts/locations/etc.
 
---------------
-
-## Configure and Deploy the IAM stack
-
-### Configure deployment with `<daac>-deploy/iam/config.yml`
-
-The `iam` configuration creates 7 [roles](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) and an [instance profile](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html) used internally by the Cumulus stack.
+### VPC, Subnets and Security Group
+Cumulus supports operation within a VPC, but you will need to separately create the VPC, subnet, and security group for the Cumulus resources to use.
+To configure Cumulus with these settings, populate your `app/.env` file with the relevant values, as shown in the next section, before deploying Cumulus.
+If these values are omitted Cumulus resources that require a VPC will be created in the default VPC and security group.
 
 --------------
+
+## Earthdata Application
+
+### Configure EarthData application
+
+The Cumulus stack is expected to authenticate with [Earthdata Login](https://urs.earthdata.nasa.gov/documentation). You must create and register a new application. Use the [User Acceptance Tools (UAT) site](https://uat.urs.earthdata.nasa.gov) unless you intend use a different URS environment (which will require updating the `urs_url` value shown below). Follow the directions on [how to register an application.](https://wiki.earthdata.nasa.gov/display/EL/How+To+Register+An+Application).  Use any url for the `Redirect URL`, it will be deleted in a later step. Also note the password in step 3 and client ID in step 4 use these to replace `EARTHDATA_CLIENT_ID` and `EARTHDATA_CLIENT_PASSWORD` in the `.env` file in the next step.
+
+--------------
+
+## Configuring the Cumulus instance
+
+### Set up an environment file
+
+_If you're adding a new deployment to an existing configuration repository or re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus Stack](deployment-readme#deploy), as these values should already be configured._
+
+Copy `app/.env.sample` to `app/.env` and add CMR/earthdata client [credentials](deployment-readme#credentials):
+
+```shell
+  CMR_USERNAME=cmrusername                    # CMR Username For CMR Ingest API
+  CMR_PASSWORD=cmrpassword                    # CMR Password
+  EARTHDATA_CLIENT_ID=clientid                # EarthData Application ClientId
+  EARTHDATA_CLIENT_PASSWORD=clientpassword    # EarthData Application Password
+  VPC_ID=someid                               # VPC ID
+  SECURITY_GROUP=sg-0000abcd1234              # Security Group ID
+  AWS_SUBNET=somesubnet                       # VPC Subnet
+  AWS_ACCOUNT_ID=0000000                      # AWS Account ID
+  AWS_REGION=awsregion                        # AWS Region
+  TOKEN_SECRET=tokensecret                    # JWT Token Secret
+```
+
+The `TOKEN_SECRET` is a string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is strongly recommended that this be a 32-character string.
+
+Note that the `.env.sample` file may be hidden, so if you do not see it, show hidden files.
+
+For security it is highly recommended that you prevent `app/.env` from being accidentally committed to the repository by keeping it in the `.gitignore` file at the root of this repository.
+
+### Configure deployment with `<daac>-deploy/app/config.yml`
 
 **Sample new deployment added to config.yml**:
 
-Descriptions of the fields can be found in [IAM Configuration Descriptions](deployment/config_descriptions.md#iam-configuration).
+Descriptions of the fields can be found in [Configuration Descriptions](deployment/config_descriptions.md).
 
 ```yaml
-dev:                                # deployment name
-  prefix: dev-cumulus               # prefixes CloudFormation-created IAM resources and permissions
-  stackName: dev-cumulus-iams       # name of this IAM stack in CloudFormation (e.g. <prefix>-iams)
+dev:                            # deployment name
+  prefix: dev-cumulus           # Required. Prefixes stack names and CloudFormation-created resources and permissions
+  prefixNoDash: DevCumulus      # Required.
   useNgapPermissionBoundary: true   # for NASA NGAP accounts
 
-  buckets:
+  apiStage: dev                 # Optional
+
+  vpc:                          # Required for NGAP environments
+    vpcId: '{{VPC_ID}}'         # this has to be set in .env
+    subnets:
+      - '{{AWS_SUBNET}}'        # this has to be set in .env
+    securityGroup: '{{SECURITY_GROUP}}'   # this has to be set in .env
+
+  ecs:                          # Required
+    instanceType: t2.micro
+    desiredInstances: 0
+    availabilityZone: <subnet-id-zone>
+    amiid: <some-ami-id>
+
+  # Required. You can specify a different bucket for the system_bucket
+  system_bucket: '{{buckets.internal.name}}'
+
+  buckets:                          # Bucket configuration. Required.
     internal:
       name: dev-internal            # internal bucket name
       type: internal
@@ -164,7 +216,54 @@ dev:                                # deployment name
     otherpublic:                    # Can have more than one of each type of bucket
       name: dev-default
       type: public
+
+  # Optional
+  urs_url: https://uat.urs.earthdata.nasa.gov/ # make sure to include the trailing slash
+
+  # if not specified, the value of the API gateway backend endpoint is used
+  # api_backend_url: https://apigateway-url-to-api-backend/ # make sure to include the trailing slash
+
+  # if not specified, the value of the API gateway distribution endpoint is used
+  # api_distribution_url: https://apigateway-url-to-distribution-app/ # make sure to include the trailing slash
+
+  # Required. URS users who should have access to the dashboard application and Cumulus API.
+  users:
+    - username: <user>
+    - username: <user2>
+  
+  # Optional. Only necessary if you have workflows that integrate with CMR
+  cmr:
+    username: '{{CMR_USERNAME}}'
+    password: '{{CMR_PASSWORD}}'
+    clientId: '<replace-with-daac-name>-{{stackName}}' # Client-ID submitted to CMR to identify origin of requests.
+    provider: CUMULUS                                  # Target provider in CMR
+
+  es:                               # Optional. Set to 'null' to disable elasticsearch.
+    name: myES5Domain               # Optional. Defaults to 'es5vpc'.
+    elasticSearchMapping: 2         # Optional, triggers elasticSearch re-bootstrap.
+                                    # Useful when e.g. mappings are updated.
+
+  app:                              # Override params to be passed to the app stack ('iam' and 'db' also allowed)
+    params:
+      - name: myAppStackParam
+        value: SomeValue
 ```
+
+--------------
+
+## Deploying the Cumulus Instance
+
+The `template-deploy` repository contains a script named `deploy-all` to assist with deploying Cumulus.
+
+```bash
+  $ DEPLOYMENT=<replace-with-deployment-name> AWS_PROFILE=<replace-wth-profile-name> npm run deploy-all
+```
+
+This script will run each stack's deploy script, in order. The subsections here cover deploying each stack in detail.
+
+### Deploy the Cumulus IAM stack
+
+The `iam` deployment creates 7 [roles](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) and an [instance profile](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html) used internally by the Cumulus stack.
 
 **Deploy `iam` stack**[^1]
 
@@ -191,117 +290,24 @@ The same information can be obtained from the AWS CLI command: `aws iam list-rol
 
 The `iam` deployment also creates an instance profile named `<stack-name>-ecs` that can be viewed from the AWS CLI command: `aws iam list-instance-profiles`.
 
---------------
+### Deploy the Cumulus database stack
 
-## Configure and Deploy the Cumulus stack
+This section will cover deploying the DynamoDB and ElasticSearch resources.
+Reminder: ElasticSearch is optional and can be disabled using `es: null` in your `config.yml`.
 
-These updates configure the [copied template](deployment-readme#copy-the-sample-template-into-your-repository) from the cumulus repository for your DAAC.
+**Deploy `db` stack**
 
-You should either add a new root-level key for your configuration or modify the existing default configuration key to whatever you'd like your new deployment to be.
-
-If you're re-deploying based on an existing configuration you can skip this configuration step unless values have been updated *or* you'd like to add a new deployment to your deployment configuration file.
-
-**Edit the  `<daac>-deploy/app/config.yml` file**
-
---------------
-
-### Sample config.yml
-
-Descriptions of the fields can be found in [App Configuration Descriptions](deployment/config_descriptions.md#app-configuration).
-
-```yaml
-dev:                            # deployment name
-  stackName: dev-cumulus        # Required. See note below
-  stackNameNoDash: DevCumulus   # Required.
-
-  apiStage: dev                 # Optional
-
-  vpc:                          # Required for NGAP environments
-    vpcId: '{{VPC_ID}}'         # this has to be set in .env
-    subnets:
-      - '{{AWS_SUBNET}}'        # this has to be set in .env
-    cidrIp: '{{VPC_CIDR_IP}}'   # this has to be set in .env
-
-  ecs:                          # Required
-    instanceType: t2.micro
-    desiredInstances: 0
-    availabilityZone: <subnet-id-zone>
-    amiid: <some-ami-id>
-
-  # Required. You can specify a different bucket for the system_bucket
-  system_bucket: '{{buckets.internal.name}}'
-
-  # Required. Should be the same as in IAM deployment config.yml
-  buckets:
-    internal:
-        name: dev-internal
-        type: internal
-
-  # Required. <iams-prefix> = prefix from IAM stack above.
-  iams:
-    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-ecs'
-    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-lambda-api-gateway'
-    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-lambda-processing'
-    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-steprole'
-    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/<iams-prefix>-ecs'
-    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-distribution-api-lambda'
-    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-scaling-role'
-    migrationRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-migration-processing'
-
-  # Optional
-  urs_url: https://uat.urs.earthdata.nasa.gov/ # make sure to include the trailing slash
-
-  # if not specified, the value of the API gateway backend endpoint is used
-  # api_backend_url: https://apigateway-url-to-api-backend/ # make sure to include the trailing slash
-
-  # if not specified, the value of the API gateway distribution endpoint is used
-  # api_distribution_url: https://apigateway-url-to-distribution-app/ # make sure to include the trailing slash
-
-  # Required. URS users who should have access to the dashboard application.
-  users:
-    - username: <user>
-    - username: <user2>
-  
-  # Optional. Only necessary if you have workflows that integrate with CMR
-  cmr:
-    username: '{{CMR_USERNAME}}'
-    password: '{{CMR_PASSWORD}}'
-    clientId: '<replace-with-daac-name>-{{stackName}}'
-    provider: CUMULUS
+```bash
+  $ DEPLOYMENT=<cumulus-deployment-name> \
+      AWS_REGION=<region> \ # e.g. us-east-1
+      AWS_PROFILE=<profile> \
+      npm run deploy-db
 ```
 
-**IMPORTANT NOTE** - The `stackName` for this config **must start with** the value of the resource prefix for the IAM stack. By default, this means that the `stackName` should start with the value of the [`prefix` set for the IAM stack above](#configure-and-deploy-the-iam-stack). However, if you changed the value of the `ResourcePrefix` param in your IAM stack `config.yml`, you would use that value instead.
 
-### Configure EarthData application
+### Deploy the Cumulus application stack
 
-The Cumulus stack is expected to authenticate with [Earthdata Login](https://urs.earthdata.nasa.gov/documentation). You must create and register a new application. Use the [User Acceptance Tools (UAT) site](https://uat.urs.earthdata.nasa.gov) unless you changed `urs_url` above. Follow the directions on [how to register an application.](https://wiki.earthdata.nasa.gov/display/EL/How+To+Register+An+Application).  Use any url for the `Redirect URL`, it will be deleted in a later step. Also note the password in step 3 and client ID in step 4 use these to replace `EARTHDATA_CLIENT_ID` and `EARTHDATA_CLIENT_PASSWORD` in the `.env` file in the next step.
-
-### Set up an environment file
-
-_If you're adding a new deployment to an existing configuration repository or re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus Stack](deployment-readme#deploy), as these values should already be configured._
-
-Copy `app/.env.sample` to `app/.env` and add CMR/earthdata client [credentials](deployment-readme#credentials):
-
-```shell
-  CMR_USERNAME=cmrusername
-  CMR_PASSWORD=cmrpassword
-  EARTHDATA_CLIENT_ID=clientid
-  EARTHDATA_CLIENT_PASSWORD=clientpassword
-  VPC_ID=someid
-  VPC_CIDR_IP=0.0.0.0/0
-  AWS_SUBNET=somesubnet
-  AWS_ACCOUNT_ID=0000000
-  AWS_REGION=awsregion
-  TOKEN_SECRET=tokensecret
-```
-
-The `TOKEN_SECRET` is a string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is strongly recommended that this be a 32-character string.
-
-Note that the `.env.sample` file may be hidden, so if you do not see it, show hidden files.
-
-For security it is highly recommended that you prevent `apps/.env` from being accidentally committed to the repository by keeping it in the `.gitignore` file at the root of this repository.
-
-### Deploy
+This section will cover deploying the primary Cumulus stack, containing compute resources, workflows and all other AWS resources not covered in the two stacks above.
 
 Once the preceding configuration steps have completed, run the following to deploy Cumulus from your `<daac>-deploy` root directory:
 
@@ -309,7 +315,7 @@ Once the preceding configuration steps have completed, run the following to depl
   $ DEPLOYMENT=<cumulus-deployment-name> \
       AWS_REGION=<region> \ # e.g. us-east-1
       AWS_PROFILE=<profile> \
-      npm run deploy
+      npm run deploy-app
 ```
 
 You can monitor the progess of the stack deployment from the [AWS CloudFormation Console](https://console.aws.amazon.com/cloudformation/home); this step takes a few minutes.
@@ -320,30 +326,30 @@ A successful completion will result in output similar to:
   $ DEPLOYMENT=<cumulus-deployment-name> \
       AWS_REGION=<region> \ # e.g. us-east-1
       AWS_PROFILE=<profile> \
-      npm run deploy
+      npm run deploy-app
+
+  Nested templates are found!
+
+  Compiling nested template for CumulusApiDistribution
+  Zipping app/build/cumulus_api/0000UUID-ApiDistribution.zip for ApiDistribution
+  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/lambdas/0000UUID-ApiDistribution.zip
+  Template saved to app/CumulusApiDistribution.yml
+  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/CumulusApiDistribution.yml
+
+  Compiling nested template for CumulusApiBackend
+  Zipping app/build/cumulus_api/0000UUID-ApiEndpoints.zip for ApiEndpoints
+  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/0000UUID-ApiEndpoints.zip
+  Template saved to app/CumulusApiBackend.yml
+  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/CumulusApiBackend.yml
+
+  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/lambdas/0000UUID-HelloWorld.zip
+  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/lambdas/0000UUID-sqs2sf.zip
+  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/lambdas/0000UUID-KinesisOutboundEventLogger.zip
+
   Generating keys. It might take a few seconds!
   Keys Generated
   keys uploaded to S3
 
-    adding: sf-starter/ (stored 0%)
-    adding: sf-starter/index.js (deflated 85%)
-
-
-    adding: daac-ops-api/ (stored 0%)
-    adding: daac-ops-api/index.js (deflated 85%)
-
-
-    adding: sf-sns-broadcast/ (stored 0%)
-    adding: sf-sns-broadcast/index.js (deflated 85%)
-
-
-    adding: hello-world/ (stored 0%)
-    adding: hello-world/index.js (deflated 85%)
-
-  Uploaded: s3://daac-internal/daac-cumulus/lambdas/<HASHNUMBERS>/hello-world.zip
-  Uploaded: s3://daac-internal/daac-cumulus/lambdas/<HASHNUMBERS>/sf-starter.zip
-  Uploaded: s3://daac-internal/daac-cumulus/lambdas/<HASHNUMBERS>/sf-sns-broadcast.zip
-  Uploaded: s3://daac-internal/daac-cumulus/lambdas/<HASHNUMBERS>/daac-ops-api.zip
   Template saved to app/cloudformation.yml
   Uploaded: s3://<prefix>-internal/<prefix>-cumulus/cloudformation.yml
   Waiting for the CF operation to complete
@@ -473,26 +479,35 @@ You should be able to visit the dashboard website at `http://<prefix>-dashboard.
 
 Once deployed for the first time, any future updates to the role/stack configuration files/version of Cumulus can be deployed and will update the appropriate portions of the stack as needed.
 
+## Cumulus Versioning
+
+Cumulus uses a global versioning approach, meaning version numbers are consistent across all packages and tasks, and semantic versioning to track major, minor, and patch version (i.e. 1.0.0). We use Lerna to manage versioning.
+
 ## Update roles
 
 ```bash
-  $ DEPLOYMENT=<iam-deployment-name> \
+  $ DEPLOYMENT=<deployment-name> \
       AWS_REGION=<region> \ # e.g. us-east-1
       AWS_PROFILE=<profile> \
       npm run deploy-iam
 ```
 
-## Cumulus Versioning
+## Update database
 
-Cumulus uses a global versioning approach, meaning version numbers are consistent across all packages and tasks, and semantic versioning to track major, minor, and patch version (i.e. 1.0.0). We use Lerna to manage versioning.
+```bash
+  $ DEPLOYMENT=<deployment-name> \
+      AWS_REGION=<region> \ # e.g. us-east-1
+      AWS_PROFILE=<profile> \
+      npm run deploy-db
+```
 
 ## Update Cumulus
 
 ```bash
-  $ DEPLOYMENT=<cumulus-deployment-name> \
+  $ DEPLOYMENT=<deployment-name> \
       AWS_REGION=<region> \ # e.g. us-east-1
       AWS_PROFILE=<profile> \
-      npm run deploy
+      npm run deploy-app
 ```
 
 ### Footnotes

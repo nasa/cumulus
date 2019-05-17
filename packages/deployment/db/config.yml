@@ -1,0 +1,32 @@
+default:
+  prefix: test-cumulus-integration
+  stackName: '{{prefix}}-db'
+
+  system_bucket: '{{buckets.internal.name}}'
+
+  iams:
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-scaling-role'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-processing'
+
+  vpc:
+    vpcId: '{{VPC_ID}}'         # this has to be set in .env
+    subnets:
+      - '{{AWS_SUBNET}}'        # this has to be set in .env
+    securityGroup: '{{SECURITY_GROUP}}'
+
+  dynamos: !!files ['node_modules/@cumulus/api/config/tables.yml']
+
+  es:
+    name: es5vpc
+    elasticSearchMapping: 8
+    version: 5.3
+    instanceCount: 1
+    instanceType: t2.small.elasticsearch
+    volumeSize: 35
+    alarms:
+      NodesLow:
+        alarm_description: 'There are less instances running than the desired'
+        comparison_operator: LessThanThreshold
+        threshold: '{{es.instanceCount}}'
+        metric: Nodes
