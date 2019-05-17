@@ -19,7 +19,7 @@ const {
 const sfStarter = rewire('../../lambdas/sf-starter');
 const { Manager } = require('../../models');
 
-const { incrementAndDispatch, sqs2sfHandler, handleThrottledEvent } = sfStarter;
+const { incrementAndDispatch, handleEvent, handleThrottledEvent } = sfStarter;
 
 class stubConsumer {
   async consume() {
@@ -29,10 +29,10 @@ class stubConsumer {
 
 let manager;
 
-const createRuleInput = (queueUrl) => ({
+const createRuleInput = (queueUrl, timeLimit = 60) => ({
   queueUrl,
   messageLimit: 50,
-  timeLimit: 60
+  timeLimit
 });
 
 const createWorkflowMessage = (key, maxExecutions) => ({
@@ -84,18 +84,28 @@ test.afterEach.always((t) => aws.sqs().deleteQueue({ QueueUrl: t.context.queueUr
 
 test.after.always(() => manager.deleteTable());
 
-test('throws error when queueUrl is undefined', async (t) => {
+test('handleEvent throws error when queueUrl is undefined', async (t) => {
   const ruleInput = createRuleInput();
-  const error = await t.throws(sqs2sfHandler(ruleInput));
+  const error = await t.throws(handleEvent(ruleInput));
   t.is(error.message, 'queueUrl is missing');
 });
 
-test.serial('returns the number of messages consumed', async (t) => {
+test('handleEvent throws error when timeLimit is <= 0', async (t) => {
+  let ruleInput = createRuleInput('test', 0);
+  let error = await t.throws(handleEvent(ruleInput));
+  t.is(error.message, 'timeLimit must be greater than 0');
+
+  ruleInput = createRuleInput('test', -1);
+  error = await t.throws(handleEvent(ruleInput));
+  t.is(error.message, 'timeLimit must be greater than 0');
+});
+
+test.serial('handleEvent returns the number of messages consumed', async (t) => {
   const revert = sfStarter.__set__('Consumer', stubConsumer);
   const ruleInput = createRuleInput('queue');
   let data;
   try {
-    data = await sqs2sfHandler(ruleInput);
+    data = await handleEvent(ruleInput);
   } finally {
     revert();
   }

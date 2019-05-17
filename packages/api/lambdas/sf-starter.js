@@ -117,10 +117,14 @@ async function incrementAndDispatch(queueMessage) {
  */
 async function handleEvent(event, dispatchFn, visibilityTimeout) {
   const messageLimit = event.messageLimit || 1;
-  const timeLimit = event.timeLimit || 240;
+  const timeLimit = get(event, 'timeLimit', 240);
 
   if (!event.queueUrl) {
     throw new Error('queueUrl is missing');
+  }
+
+  if (timeLimit <= 0) {
+    throw new Error('timeLimit must be greater than 0');
   }
 
   const consumer = new Consumer({
@@ -175,5 +179,6 @@ module.exports = {
   incrementAndDispatch,
   sqs2sfHandler,
   sqs2sfThrottleHandler,
+  handleEvent,
   handleThrottledEvent
 };
