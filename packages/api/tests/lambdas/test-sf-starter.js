@@ -27,6 +27,14 @@ class stubConsumer {
   }
 }
 
+// Mock startExecution so nothing attempts to start executions.
+const stubSFN = () => ({
+  startExecution: () => ({
+    promise: noop
+  })
+});
+sfStarter.__set__('sfn', stubSFN);
+
 let manager;
 
 const createRuleInput = (queueUrl, timeLimit = 60) => ({
@@ -58,9 +66,6 @@ const createSendMessageTasks = (queueUrl, message, total) => {
   }
   return tasks;
 };
-
-// Set dispatch to noop so nothing is attempting to start executions.
-sfStarter.__set__('dispatch', noop);
 
 test.before(async () => {
   process.env.SemaphoresTable = randomId('semaphoreTable');

@@ -76,8 +76,7 @@ async function incrementPrioritySemaphore(key, maximum) {
  * @throws {Error}
  */
 async function incrementAndDispatch(queueMessage) {
-  const message = get(queueMessage, 'Body');
-  const cumulusMeta = get(message, 'cumulus_meta', {});
+  const cumulusMeta = get(queueMessage, 'Body.cumulus_meta', {});
 
   const priorityKey = cumulusMeta.priorityKey;
   if (isNil(priorityKey)) {
@@ -91,7 +90,7 @@ async function incrementAndDispatch(queueMessage) {
 
   await incrementPrioritySemaphore(priorityKey, maxExecutions);
 
-  return dispatch(message);
+  return dispatch(queueMessage);
 }
 
 /**
