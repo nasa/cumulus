@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Cumulus Framework for ingesting and processing NASA Earth data streams",
   "scripts": {
-    "audit": "audit-ci --config ./audit-ci.json && lerna exec -- audit-ci --config $(pwd)/audit-ci.json",
+    "audit": "audit-ci --config ./audit-ci.json && lerna exec -- audit-ci --concurrency=3 --config $(pwd)/audit-ci.json",
     "docs-build-tasks": "./bin/build-tasks-doc.js",
     "docs-install": "(cd website && npm install)",
     "docs-build": "npm run docs-build-tasks && (cd website && npm run build)",
