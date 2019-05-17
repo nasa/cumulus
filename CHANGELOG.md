@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.13.0] - 2019-5-17
+
 ### PLEASE NOTE
 
 **CUMULUS-802** added some additional IAM permissions to support ECS autoscaling and changes were needed to run all lambdas in the VPC, so **you will have to redeploy your IAM stack.**
@@ -30,7 +32,7 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
     Migrations for this version will need to be user-managed. (e.g. [elasticsearch](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-version-migration.html#snapshot-based-migration) and [dynamoDB](https://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/dp-template-exports3toddb.html)).
     Order of stack deployment is `iam` -> `db` -> `app`.
   - All stacks can now be deployed using a single `config.yml` file, i.e.: `kes cf deploy --kes-folder app --template node_modules/@cumulus/deployment/[iam|db|app] [...]`
-    Backwards-compatible. Please re-run `npm run bootstrap` to build new `kes` overrides.
+    Backwards-compatible. For development, please re-run `npm run bootstrap` to build new `kes` overrides.
     Deployment docs have been updated to show how to deploy a single-config Cumulus instance.
   - `params` have been moved: Nest `params` fields under `app`, `db` or `iam` to override all Parameters for a particular stack's cloudformation template. Backwards-compatible with multi-config setups.
   - `stackName` and `stackNameNoDash` have been retired. Use `prefix` and `prefixNoDash` instead.
@@ -40,6 +42,7 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
 
 - **CUMULUS-1212**
   - `@cumulus/post-to-cmr` will now fail if any granules being processed are missing a metadata file. You can set the new config option `skipMetaCheck` to `true` to pass post-to-cmr without a metadata file.
+
 - **CUMULUS-1232**
   - `@cumulus/sync-granule` will no longer silently pass if no checksum data is provided. It will use input
   from the granule object to:
@@ -48,6 +51,7 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
     - Then, verify synced S3 file size if `file.size` is in the file record (throws `UnexpectedFileSize` on fail),
       else log warning that no file size is available.
     - Pass the step.
+
 - **CUMULUS-1264**
   - The Cloudformation templating and deployment configuration has been substantially refactored.
     - `CumulusApiDefault` nested stack resource has been renamed to `CumulusApiDistribution`
@@ -55,6 +59,7 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
   - The `urs: true` config option for when defining your lambdas (e.g. in `lambdas.yml`) has been deprecated. There are two new options to replace it:
     - `urs_redirect: 'token'`: This will expose a `TOKEN_REDIRECT_ENDPOINT` environment variable to your lambda that references the `/token` endpoint on the Cumulus backend API
     - `urs_redirect: 'distribution'`: This will expose a `DISTRIBUTION_REDIRECT_ENDPOINT` environment variable to your lambda that references the `/redirect` endpoint on the Cumulus distribution API
+
 - **CUMULUS-1193**
   - The elasticsearch instance is moved behind the VPC.
   - Your account will need an Elasticsearch Service Linked role. This is a one-time setup for the account. You can follow the instructions to use the AWS console or AWS CLI [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/using-service-linked-roles.html) or use the following AWS CLI command: `aws iam create-service-linked-role --aws-service-name es.amazonaws.com`
@@ -114,6 +119,9 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
 - **CUMULUS-1236**
   - Moves access to public files behind the distribution endpoint.  Authentication is not required, but direct http access has been disallowed.
 
+- **CUMULUS-1223**
+  - Adds unauthenticated access for public bucket files to the Distribution API.  Public files should be requested the same way as protected files, but for public files a redirect to a self-signed S3 URL will happen without requiring authentication with Earthdata login.
+
 - **CUMULUS-1232**
   - Unifies duplicate handling in `ingest/granule.handleDuplicateFile` for maintainability.
   - Changed `ingest/granule.ingestFile` and `move-granules/index.moveFileRequest` to use new function.
@@ -122,14 +130,11 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
     `UnexpectedFileSize` error for file size not matching input.
   - `ingest/granule.verifyFile` logs warnings if checksum and/or file size are not available.
 
-- **CUMULUS-1223**
-  - Adds unauthenticated access for public bucket files to the Distribution API.  Public files should be requested the same way as protected files, but for public files a redirect to a self-signed S3 URL will happen without requiring authentication with Earthdata login.
-
 - **CUMULUS-1193**
-  - Moved reindex CLI functionality to an API endpoint
+  - Moved reindex CLI functionality to an API endpoint. See [API docs](https://nasa.github.io/cumulus-api/#elasticsearch-1)
 
 - **CUMULUS-1207**
-  - No longer disable lambda event source mappings
+  - No longer disable lambda event source mappings when disabling a rule
 
 ### Fixed
 
@@ -1110,7 +1115,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.12.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.13.0...HEAD
+[v1.13.0]: https://github.com/nasa/cumulus/compare/v1.12.1...v1.13.0
 [v1.12.1]: https://github.com/nasa/cumulus/compare/v1.12.0...v1.12.1
 [v1.12.0]: https://github.com/nasa/cumulus/compare/v1.11.3...v1.12.0
 [v1.11.3]: https://github.com/nasa/cumulus/compare/v1.11.2...v1.11.3
