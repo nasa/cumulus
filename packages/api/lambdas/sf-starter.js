@@ -76,18 +76,16 @@ async function incrementPrioritySemaphore(key, maximum) {
  * @throws {Error}
  */
 async function incrementAndDispatch(queueMessage) {
-  const message = get(queueMessage, 'Body', {});
+  const message = get(queueMessage, 'Body');
+  const cumulusMeta = get(message, 'cumulus_meta', {});
 
-  if (!has(message, 'cumulus_meta.priorityKey')
-      || isNil(message.cumulus_meta.priorityKey)) {
+  const priorityKey = cumulusMeta.priorityKey;
+  if (isNil(priorityKey)) {
     throw new Error('cumulus_meta.priorityKey not set in message');
   }
 
-  const priorityKey = get(message, 'cumulus_meta.priorityKey');
-  const priorityLevelInfo = get(message, `cumulus_meta.priorityLevels.${priorityKey}`, {});
-
-  const { maxExecutions } = priorityLevelInfo;
-  if (!maxExecutions) {
+  const maxExecutions = get(cumulusMeta, `priorityLevels.${priorityKey}.maxExecutions`);
+  if (isNil(maxExecutions)) {
     throw new Error(`Could not determine maximum executions for priority ${priorityKey}`);
   }
 
