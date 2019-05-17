@@ -235,7 +235,7 @@ dev:                            # deployment name
   cmr:
     username: '{{CMR_USERNAME}}'
     password: '{{CMR_PASSWORD}}'
-    clientId: '<replace-with-daac-name>-{{stackName}}' # Client-ID submitted to CMR to identify origin of requests.
+    clientId: '<replace-with-daac-name>-{{prefix}}' # Client-ID submitted to CMR to identify origin of requests.
     provider: CUMULUS                                  # Target provider in CMR
 
   es:                               # Optional. Set to 'null' to disable elasticsearch.
