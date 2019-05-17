@@ -36,6 +36,12 @@ test('getOperationFromLogLine() returns the S3 operation of the log event', (t) 
   t.is(index.getOperationFromLogLine(logLine), 'REST.GET.VERSIONING');
 });
 
+test('getOperationFromLogLine() returns the S3 operation for a REST.GET.LOGGING_STATUS log event', (t) => {
+  const logLine = '79a59df900b949e55d96a1e698fbacedfd6e09d98eacf8f8d5218e7cd47ef2be awsexamplebucket [06/Feb/2019:00:00:00 +0000] 192.0.2.3 79a59df900b949e55d96a1e698fbacedfd6e09d98eacf8f8d5218e7cd47ef2be 3E57427F3EXAMPLE REST.GET.LOGGING_STATUS - "GET /awsexamplebucket?versioning HTTP/1.1" 200 - 113 - 7 - "-" "S3Console/0.4" - s9lzHYrFp76ZVxRcpX9+5cjAnEH2ROuNkd2BHfIa6UkFVdtjf5mKR3/eTPFvsiP/XV/VLi31234= SigV2 ECDHE-RSA-AES128-GCM-SHA256 AuthHeader awsexamplebucket.s3.amazonaws.com TLSV1.1';
+
+  t.is(index.getOperationFromLogLine(logLine), 'REST.GET.LOGGING_STATUS');
+});
+
 test('getFailureMetricDataObjects() returns the expected result', (t) => {
   const logEvents = [
     // Should be included in period 1

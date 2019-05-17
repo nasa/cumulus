@@ -42,7 +42,7 @@ const getHttpStatusFromLogLine = (line) =>
 
 // Given an S3 Server Access Log line, return the S3 operation of the request
 const getOperationFromLogLine = (line) => {
-  const result = line.match(/\s+([A-Z]+\.[A-Z]+\.[A-Z]+)\s+/);
+  const result = line.match(/\s+([A-Z]+\.[A-Z]+\.[A-Z_]+)\s+/);
 
   return result ? result[1] : null;
 };
