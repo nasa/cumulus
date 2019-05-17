@@ -71,6 +71,10 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
 
 ## Added
 
+- **CUMULUS-799**
+  - Added an S3 Access Metrics package which will take S3 Server Access Logs and
+    write access metrics to CloudWatch
+
 - **CUMULUS-1265**
   - Added `apiConfigs` configuration option to configure API Gateway to be private
   - All internal lambdas configured to run inside the VPC by default
