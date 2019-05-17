@@ -41,7 +41,7 @@ You should be able to quickly use the "Create Data Stream" button on the [Kinesi
 
 ![](assets/cnm_create_kinesis_stream.jpg)
 
-Please bear in mind that your `${stackname}-lambda-processing` IAM role will need permissions to write to the response stream for this workflow to succeed if you create the Kinesis stream with a dashboard user.   If you are using the example deployment (or a deployment based on it), the IAM permissions should be set properly.
+Please bear in mind that your `{{prefix}}-lambda-processing` IAM role will need permissions to write to the response stream for this workflow to succeed if you create the Kinesis stream with a dashboard user.   If you are using the example deployment (or a deployment based on it), the IAM permissions should be set properly.
 
 If not, the most straightforward approach is to attach the `AmazonKinesisFullAccess` policy for the stream resource to whatever role your lambdas are using, however your environment/security policies may require an approach specific to your deployment environment.
 
@@ -580,7 +580,7 @@ This system ensures when `messageConsumer` fails to process a record and trigger
 
 The Kinesis error handling system - the `kinesisFallback` SNS topic, `messageConsumer` lambda, and `kinesisFailure` SQS queue - come with the API package and do not need to be configured by the operator.
 
-To examine records that were unable to be processed at any step you need to go look at the dead letter queue `{{stackname}}-kinesisFailure`.
+To examine records that were unable to be processed at any step you need to go look at the dead letter queue `{{prefix}}-kinesisFailure`.
 Check the [Simple Queue Service (SQS) console](https://console.aws.amazon.com/sqs/home). Select your queue, and under the `Queue Actions` tab, you can choose `View/Delete Messages`. `Start polling` for messages and you will see records that failed to process through the `messageConsumer`.
 
 Note, these are only records that occurred when processing records from Kinesis streams. Workflow failures are handled differently.
