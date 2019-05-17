@@ -34,15 +34,6 @@ const createSnsWorkflowMessage = ({
 
 let manager;
 
-const setSemaphoreValue = (key, value) =>
-  aws.dynamodbDocClient().put({
-    TableName: process.env.SemaphoresTable,
-    Item: {
-      key,
-      semvalue: value
-    }
-  }).promise();
-
 test.before(async () => {
   process.env.SemaphoresTable = randomId('semaphoreTable');
   manager = new Manager({
@@ -57,6 +48,7 @@ test.beforeEach(async (t) => {
     aws.dynamodbDocClient(),
     process.env.SemaphoresTable
   );
+  t.context.client = aws.dynamodbDocClient();
 });
 
 test.after.always(() => manager.deleteTable());
@@ -98,10 +90,17 @@ test('getSemaphoreDecrementTasks() returns empty array for SNS message with empt
 });
 
 test('sfSemaphoreDown lambda does nothing for a workflow message with no priority info', async (t) => {
-  const { semaphore } = t.context;
+  const { client, semaphore } = t.context;
   const key = randomId('low');
 
-  await setSemaphoreValue(key, 1);
+  await client.put({
+    TableName: process.env.SemaphoresTable,
+    Item: {
+      key,
+      semvalue: 1
+    }
+  }).promise();
+
   await handler({
     Records: [
       createSnsWorkflowMessage({
@@ -115,10 +114,17 @@ test('sfSemaphoreDown lambda does nothing for a workflow message with no priorit
 });
 
 test('sfSemaphoreDown lambda does nothing for a workflow message with no status', async (t) => {
-  const { semaphore } = t.context;
+  const { client, semaphore } = t.context;
   const key = randomId('low');
 
-  await setSemaphoreValue(key, 1);
+  await client.put({
+    TableName: process.env.SemaphoresTable,
+    Item: {
+      key,
+      semvalue: 1
+    }
+  }).promise();
+
   await handler({
     Records: [
       createSnsWorkflowMessage({
@@ -132,10 +138,17 @@ test('sfSemaphoreDown lambda does nothing for a workflow message with no status'
 });
 
 test('sfSemaphoreDown lambda does nothing for a workflow message for a running workflow', async (t) => {
-  const { semaphore } = t.context;
+  const { client, semaphore } = t.context;
   const key = randomId('low');
 
-  await setSemaphoreValue(key, 1);
+  await client.put({
+    TableName: process.env.SemaphoresTable,
+    Item: {
+      key,
+      semvalue: 1
+    }
+  }).promise();
+
   await handler({
     Records: [
       createSnsWorkflowMessage({
@@ -163,11 +176,17 @@ test('sfSemaphoreDown lambda throws error when attempting to decrement empty sem
 });
 
 test('sfSemaphoreDown lambda decrements priority semaphore for completed workflow message', async (t) => {
-  const { semaphore } = t.context;
+  const { client, semaphore } = t.context;
   const key = randomId('low');
 
   // arbitrarily set semaphore so it can be decremented
-  await setSemaphoreValue(key, 1);
+  await client.put({
+    TableName: process.env.SemaphoresTable,
+    Item: {
+      key,
+      semvalue: 1
+    }
+  }).promise();
 
   await handler({
     Records: [
@@ -183,11 +202,17 @@ test('sfSemaphoreDown lambda decrements priority semaphore for completed workflo
 });
 
 test('sfSemaphoreDown lambda decrements priority semaphore for failed workflow message', async (t) => {
-  const { semaphore } = t.context;
+  const { client, semaphore } = t.context;
   const key = randomId('low');
 
   // arbitrarily set semaphore so it can be decremented
-  await setSemaphoreValue(key, 1);
+  await client.put({
+    TableName: process.env.SemaphoresTable,
+    Item: {
+      key,
+      semvalue: 1
+    }
+  }).promise();
 
   await handler({
     Records: [
@@ -203,11 +228,17 @@ test('sfSemaphoreDown lambda decrements priority semaphore for failed workflow m
 });
 
 test('sfSemaphoreDown lambda handles multiple updates to a single semaphore', async (t) => {
-  const { semaphore } = t.context;
+  const { client, semaphore } = t.context;
   const key = randomId('low');
 
   // Arbitrarily set semaphore value so it can be decremented
-  await setSemaphoreValue(key, 3);
+  await client.put({
+    TableName: process.env.SemaphoresTable,
+    Item: {
+      key,
+      semvalue: 3
+    }
+  }).promise();
 
   await handler({
     Records: [
@@ -227,13 +258,25 @@ test('sfSemaphoreDown lambda handles multiple updates to a single semaphore', as
 });
 
 test('sfSemaphoreDown lambda updates multiple semaphores', async (t) => {
-  const { semaphore } = t.context;
+  const { client, semaphore } = t.context;
   const lowPriorityKey = randomId('low');
   const medPriorityKey = randomId('med');
 
   await Promise.all([
-    setSemaphoreValue(lowPriorityKey, 3),
-    setSemaphoreValue(medPriorityKey, 3)
+    client.put({
+      TableName: process.env.SemaphoresTable,
+      Item: {
+        key: lowPriorityKey,
+        semvalue: 3
+      }
+    }).promise(),
+    client.put({
+      TableName: process.env.SemaphoresTable,
+      Item: {
+        key: medPriorityKey,
+        semvalue: 3
+      }
+    }).promise()
   ]);
 
   await handler({

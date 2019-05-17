@@ -1,9 +1,18 @@
 sqs2sf:
-  handler: index.handler
+  handler: index.sqs2sfHandler
   timeout: 200
   memory: 128
   source: 'node_modules/@cumulus/api/dist/sfStarter/'
   launchInVpc: true
+
+sqs2sfThrottle:
+  handler: index.sqs2sfThrottleHandler
+  timeout: 200
+  memory: 128
+  source: 'node_modules/@cumulus/api/dist/sfStarter/'
+  launchInVpc: true
+  tables:
+    - SemaphoresTable
 
 sns2elasticsearch:
   handler: index.handler
