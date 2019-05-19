@@ -78,11 +78,11 @@ const expectedTranslatePayload = {
       files: [
         {
           name: recordFile.name,
-          fileType: recordFile.type, // change when CnmToGranule outputs 'type' instead
+          type: recordFile.type,
           bucket: record.bucket,
           path: testDataFolder,
           url_path: recordFile.uri,
-          fileSize: recordFile.size // change when CnmToGranule outputs 'size' instead
+          size: recordFile.size
         }
       ]
     }
@@ -98,9 +98,8 @@ const fileDataWithFilename = {
   bucket: testConfig.buckets.private.name,
   url_path: '',
   fileStagingDir: filePrefix,
-  size: fileData.fileSize
+  size: fileData.size
 };
-delete fileDataWithFilename.fileSize;
 
 const expectedSyncGranulesPayload = {
   granules: [
