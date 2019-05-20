@@ -1,5 +1,0 @@
-default:
-
-  # prevent this stack from referencing the step function config
-  # of the parent stack
-  stepFunctions: null

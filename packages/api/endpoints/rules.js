@@ -1,9 +1,23 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const models = require('../models');
 const { Search } = require('../es/search');
+const indexer = require('../es/indexer');
+
+/**
+ * Index a rule to Elasticsearch.
+ *
+ * @param {Object} record - Collection record object
+ * @returns {Promise} - Promise of indexing operation
+ */
+async function addToES(record) {
+  const esClient = await Search.es(process.env.ES_HOST);
+  const esIndex = process.env.esIndex;
+  return indexer.indexRule(esClient, record, esIndex);
+}
 
 /**
  * List all rules.
@@ -62,6 +76,10 @@ async function post(req, res) {
   } catch (e) {
     if (e instanceof RecordDoesNotExist) {
       const r = await model.create(data);
+
+      if (inTestMode()) {
+        await addToES(r);
+      }
       return res.send({ message: 'Record saved', record: r });
     }
     throw e;
@@ -99,6 +117,11 @@ async function put(req, res) {
   }
 
   const d = await model.update(originalData, data);
+
+  if (inTestMode()) {
+    await addToES(d);
+  }
+
   return res.send(d);
 }
 
@@ -123,6 +146,16 @@ async function del(req, res) {
     throw e;
   }
   await model.delete(record);
+  if (inTestMode()) {
+    const esClient = await Search.es(process.env.ES_HOST);
+    const esIndex = process.env.esIndex;
+    await esClient.delete({
+      id: name,
+      index: esIndex,
+      type: 'rule',
+      ignore: [404]
+    });
+  }
   return res.send({ message: 'Record deleted' });
 }
 

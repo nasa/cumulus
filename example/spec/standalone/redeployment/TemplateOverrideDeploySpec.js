@@ -9,7 +9,7 @@ const {
 
 const { loadYmlFile } = require('../../helpers/configUtils');
 
-describe('When an iam override template is in the IAM directory ', () => {
+xdescribe('When an iam override template is in the IAM directory ', () => {
   let config;
   let cloudFormation;
   beforeAll(async () => {

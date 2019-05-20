@@ -19,7 +19,7 @@ module.exports = {
     payloadLogger: './lambdas/payload-logger.js',
     sfScheduler: './lambdas/sf-scheduler.js',
     sfSnsBroadcast: './lambdas/sf-sns-broadcast.js',
-    sfSemaphoreDown: './lambdas/sf-semaphore-down',
+    sfSemaphoreDown: './lambdas/sf-semaphore-down.js',
     sfStarter: './lambdas/sf-starter.js'
   },
   output: {
