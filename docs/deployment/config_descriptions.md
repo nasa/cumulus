@@ -67,7 +67,7 @@ dynamos:
 | sqs.\<name\> | | name of the queue
 | sqs.\<name\>.visibilityTimeout | 20 | # of seconds the message returns to the queue after it is read by a consumer
 | sqs.\<name\>.retry | 30 | number of time the message is returned to the queue before being discarded
-| sqs.\<name\>.priority | | name of a priority level to attach to workflow messages in this queue. this value must match a key in the `priority` config
+| sqs.\<name\>.priority | | name of a priority level to attach to workflow messages in this queue. this value must match one of the priority level names defined via the `priority.<name>` config.
 | sqs.\<name\>.consumer | | list of lambda function queue consumer objects (see `@cumulus/deployment/app/config.yml` for examples of core usage)
 | rules.\<name\> | | list of cloudwathch rules
 | rules.\<name\>.schedule | | rule's schedule
