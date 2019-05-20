@@ -99,7 +99,7 @@ module.exports.vpcConfig = (_serverless, config) => {
 };
 
 // Return the configured vpcId or false
-module.exports.vpcId = (_severless, config) => {
+module.exports.vpcId = (_serverless, config) => {
   if (isNil(config.vpcId)) return false;
 
   if (isNil(config.subnetIds)) throw new Error('Both vpcId and subnetIds must be set');
