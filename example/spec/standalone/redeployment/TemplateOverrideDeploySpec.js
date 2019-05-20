@@ -9,7 +9,7 @@ const {
 
 const { loadYmlFile } = require('../../helpers/configUtils');
 
-describe('When an iam override template is in the IAM directory ', () => {
+describe('When an iam override template is in the APP directory and IAMs are deployed', () => {
   let config;
   let cloudFormation;
   beforeAll(async () => {
@@ -18,9 +18,9 @@ describe('When an iam override template is in the IAM directory ', () => {
     try {
       await fs.mkdir('test_iam_override');
       await fs.copy('spec/standalone/redeployment/iam_override_template.yml', 'test_iam_override/cloudformation.template.yml');
-      let fileList = await fs.readdir('iam');
+      let fileList = await fs.readdir('app');
       fileList = fileList.filter((x) => x !== 'build');
-      const promiseList = fileList.map((filename) => fs.copy(`iam/${filename}`, `test_iam_override/${filename}`));
+      const promiseList = fileList.map((filename) => fs.copy(`app/${filename}`, `test_iam_override/${filename}`));
       await Promise.all(promiseList);
       await runKes(config, {
         kesCommand: 'compile',
@@ -28,7 +28,7 @@ describe('When an iam override template is in the IAM directory ', () => {
         kesFolder: 'test_iam_override',
         template: 'node_modules/@cumulus/deployment/iam'
       });
-      cloudFormation = loadYmlFile('test_iam_override/cloudformation.yml');
+      cloudFormation = loadYmlFile('test_iam_override/iam.cloudformation.yml');
     } finally {
       await fs.remove('test_iam_override');
     }
