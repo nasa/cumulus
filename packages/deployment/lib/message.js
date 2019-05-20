@@ -105,11 +105,18 @@ function generateWorkflowTemplate(name, workflow, config, outputs) {
 
   // add queues
   const queues = {};
+  const priorityQueues = {};
   if (config.sqs) {
     const queueArns = outputs.filter((o) => o.OutputKey.includes('SQSOutput'));
 
     queueArns.forEach((queue) => {
-      queues[queue.OutputKey.replace('SQSOutput', '')] = queue.OutputValue;
+      const queueName = queue.OutputKey.replace('SQSOutput', '');
+      queues[queueName] = queue.OutputValue;
+
+      const priorityLevel = get(config.sqs, `${queueName}.priority`);
+      if (priorityLevel) {
+        priorityQueues[queueName] = priorityLevel;
+      }
     });
   }
 
@@ -150,7 +157,8 @@ function generateWorkflowTemplate(name, workflow, config, outputs) {
       collection: {},
       provider: {},
       templates: templatesUris,
-      queues
+      queues,
+      priorityQueues
     },
     workflow_config: workflowConfig,
     payload: {},
