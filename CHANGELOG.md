@@ -71,6 +71,14 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
 
 ## Added
 
+- **CUMULUS-1242** - Added `sqs2sfThrottle` lambda. The lambda reads SQS messages for queued executions and uses semaphores to only start new executions if the maximum number of executions defined for the priority key (`cumulus_meta.priorityKey`) has not been reached. Any SQS messages that are read but not used to start executions remain in the queue.
+
+- **CUMULUS-1240**
+  - Added `sfSemaphoreDown` lambda. This lambda receives SNS messages and for each message it decrements the semaphore used to track the number of running executions if:
+    - the message is for a completed/failed workflow AND
+    - the message contains a level of priority (`cumulus_meta.priorityKey`)
+  - Added `sfSemaphoreDown` lambda as a subscriber to the `sfTracker` SNS topic
+
 - **CUMULUS-1265**
   - Added `apiConfigs` configuration option to configure API Gateway to be private
   - All internal lambdas configured to run inside the VPC by default
