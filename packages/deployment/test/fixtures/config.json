@@ -227,6 +227,11 @@
             "name": "backend"
         }
     ],
+    "priority": {
+        "low": {
+            "maxExecutions": 5
+        }
+    },
     "sqs": {
         "startSF": {
             "visibilityTimeout": 20,
@@ -887,7 +892,7 @@
         }
     },
     "distribution_endpoint": "https://example.execute-api.us-east-1.amazonaws.com/dev/",
-    "dashboard": 
+    "dashboard":
     {
         "alarmTemplate": {
             "type": "metric",
