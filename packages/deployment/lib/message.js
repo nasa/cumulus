@@ -135,7 +135,7 @@ function generateWorkflowTemplate(name, workflow, config, outputs) {
   });
 
   // Add information about configured priority levels, if any.
-  const priorityLevels = get(config, 'priority', null);
+  const priorityLevels = get(config, 'priority', {});
 
   const template = {
     cumulus_meta: {
