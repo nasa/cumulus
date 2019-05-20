@@ -41,18 +41,13 @@ fi
 set -e
 
 echo "Deploying IAM stack to $DEPLOYMENT"
-./node_modules/.bin/kes cf deploy \
-  --kes-folder iam \
-  --region us-east-1 \
-  --deployment "$DEPLOYMENT" \
-  --template node_modules/@cumulus/deployment/iam
+npm run deploy-iam
+
+echo "Deploying DB stack to $DEPLOYMENT"
+npm run deploy-db
 
 echo "Deploying APP stack to $DEPLOYMENT"
-./node_modules/.bin/kes cf deploy \
-  --kes-folder app \
-  --region us-east-1 \
-  --deployment "$DEPLOYMENT" \
-  --template node_modules/@cumulus/deployment/app
+npm run deploy-app
 
 echo "Deploying S3AccessTest lambda to $DEPLOYMENT"
 ./node_modules/.bin/kes lambda S3AccessTest deploy \
