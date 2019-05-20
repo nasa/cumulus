@@ -41,4 +41,4 @@ PRs from forked repos cannot directly merged to master. Cumulus reviews must fol
 
 1. After code review and approval, merge the forked PR to the new branch.
 
-1. If the travis tests, merge the new branch to master
+1. If the continuous integration tests pass, merge the new branch to master
