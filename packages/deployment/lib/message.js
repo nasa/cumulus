@@ -91,7 +91,7 @@ function findOutputValue(outputs, key) {
  *
  * @returns {Object} a Cumulus Message template
  */
-function template(name, workflow, config, outputs) {
+function generateWorkflowTemplate(name, workflow, config, outputs) {
   // get cmr password from outputs
   const cmrPassword = findOutputValue(outputs, 'EncryptedCmrPassword');
   const cmr = Object.assign({}, config.cmr, { password: cmrPassword });
@@ -127,13 +127,17 @@ function template(name, workflow, config, outputs) {
     templatesUris[sf] = `s3://${bucket}/${config.stack}/workflows/${sf}.json`;
   });
 
-  const t = {
+  // Add information about configured priority levels, if any.
+  const priorityLevels = get(config, 'priority', null);
+
+  const template = {
     cumulus_meta: {
       message_source: 'sfn',
       system_bucket: bucket,
       state_machine: stateMachineArn,
       execution_name: null,
-      workflow_start_time: null
+      workflow_start_time: null,
+      priorityLevels
     },
     meta: {
       workflow_name: name,
@@ -153,7 +157,7 @@ function template(name, workflow, config, outputs) {
     exception: null
   };
 
-  return t;
+  return template;
 }
 
 /**
@@ -172,7 +176,7 @@ async function generateTemplates(config, outputs, uploader) {
     const bucket = config.system_bucket;
     const stack = config.stackName;
     const templates = Object.keys(config.stepFunctions)
-      .map((name) => template(name, config.stepFunctions[name], config, outputs));
+      .map((name) => generateWorkflowTemplate(name, config.stepFunctions[name], config, outputs));
 
     // uploads the generated templates to S3
     const workflows = [];
@@ -203,6 +207,6 @@ module.exports = {
   fixCumulusMessageSyntax,
   extractCumulusConfigFromSF,
   findOutputValue,
-  template,
+  generateWorkflowTemplate,
   generateTemplates
 };
