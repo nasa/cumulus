@@ -2,6 +2,7 @@
 
 const get = require('lodash.get');
 const has = require('lodash.has');
+const isObject = require('lodash.isObject');
 
 /**
  * @param  {Object} config kes configuration object
@@ -57,7 +58,8 @@ function validatePriorityQueueConfig(config) {
 /**
  * Validate config for priority levels.
  *
- * Throws an error if no maximum executions is set for a priority level.
+ * Throws an error if priority level config is not an object or if no maximum executions
+ * is set for the priority level.
  *
  * @param {Object} config kes configuration object
  * @throws {Error}
@@ -66,7 +68,11 @@ function validatePriorityLevelConfig(config) {
   if (!config.priority) return;
   const priorityLevels = Object.keys(config.priority);
   priorityLevels.forEach((priorityLevel) => {
-    if (!config.priority[priorityLevel].maxExecutions) {
+    const priorityConfig = config.priority[priorityLevel];
+    if (!isObject(priorityConfig)) {
+      throw new Error(`Priority configuration for ${priorityLevel} must be an object`);
+    }
+    if (!priorityConfig.maxExecutions) {
       throw new Error(`Priority configuration for ${priorityLevel} must include a maxExecutions value`);
     }
   });

@@ -67,6 +67,15 @@ test('validatePriorityQueueConfig does not throw an exception when priority conf
   await t.notThrows(() => validatePriorityQueueConfig(config));
 });
 
+test('validatePriorityLevelConfig throws an exception when priority config is not an object', async (t) => {
+  const config = t.context.config;
+  config.priority = {
+    test: 5
+  };
+  const error = await t.throws(() => validatePriorityLevelConfig(config));
+  t.is(error.message, 'Priority configuration for test must be an object');
+});
+
 test('validatePriorityLevelConfig throws an exception when priority config is missing maxExecutions', async (t) => {
   const config = t.context.config;
   config.priority = {
