@@ -62,9 +62,12 @@ dynamos:
 | dynamos.\<name\>.read | 5 | number of reads per second
 | dynamos.\<name\>.write | 1 | number of writes per second
 | dynamos.\<name\>.attributes | | list of attributes
+| priority.\<name\> | | name of a priority level
+| priority.\<name\>.maxExecutions | | the maximum number of concurrent executions allowed for this priority level
 | sqs.\<name\> | | name of the queue
 | sqs.\<name\>.visibilityTimeout | 20 | # of seconds the message returns to the queue after it is read by a consumer
 | sqs.\<name\>.retry | 30 | number of time the message is returned to the queue before being discarded
+| sqs.\<name\>.priority | | name of a priority level to attach to workflow messages in this queue. this value must match a key in the `priority` config
 | sqs.\<name\>.consumer | | list of lambda function queue consumer objects (see `@cumulus/deployment/app/config.yml` for examples of core usage)
 | rules.\<name\> | | list of cloudwathch rules
 | rules.\<name\>.schedule | | rule's schedule
@@ -229,7 +232,7 @@ defined for a specific service.
     task is waiting for more than this amount of time before being started, then
     the number of tasks configured for the service will be increased
 
-**Notes**
+##### Notes
 
 * `minTasks` and `maxTasks` are required for autoscaling to be enabled
 * `scaleInActivityScheduleTime` and `scaleInAdjustmentPercent` are required for
@@ -240,7 +243,7 @@ defined for a specific service.
   by at least 1, even if the number that would be changed based on the
   configured adjustment percent is less than 1.
 
-**Example**
+##### Example
 
 Only auto scaling-related fields are shown in this example config.
 
@@ -265,6 +268,7 @@ Eventually, the average time that a task takes to start should hover between 5
 and 10 seconds.
 
 ### es
+
 Configuration for the Amazon Elasticsearch Service (ES) instance. Optional. Set `es: null` to disable ElasticSearch.
 
 You can update `es` properties and add additional ES alarms. For example:
@@ -304,7 +308,7 @@ The above code is an example of configuration for an SNS topic that will be call
 More information for each of the individual attributes can be found in [AWS SNS Topic Documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-sns-topic.html).
 
 ```yaml
-# sns: ...
+sns: ...
   sftrackerSubscription:
     arn:
       Fn::GetAtt:
