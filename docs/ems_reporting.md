@@ -33,7 +33,7 @@ A scheduled Lambda task will run nightly that collects distribution events and b
 
 Information about requesting EMS account can be found on EMS website.  Here are basic steps in order to submit reports to EMS.
 
-1. Get a provider account on EMS file server, and obtain access to their UAT or OPS environment.
+1. Get a provider account on the EMS file server and obtain access to their UAT or OPS environment.
 
 Provide IP addresses, data provider name , contact information (primary and secondary) to EMS, and EMS will set up account and firewall rules to allow applications to send files to EMS.
 For Cumulus instances running on NGAP, the IP address should be the Elastic IP (IPv4 Public IP field) of the `NGAP NAT Instance` in EC2, and that should be the IP that EMS firewall sees for any instance in that account.
