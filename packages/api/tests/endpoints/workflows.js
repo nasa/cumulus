@@ -93,7 +93,6 @@ test('GET with no path parameters and an authorized user returns a list of workf
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  // console.log('hi', response.body)
   t.is(response.status, 200);
   t.deepEqual(response.body, workflowList);
 });

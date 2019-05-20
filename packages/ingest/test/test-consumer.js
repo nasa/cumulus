@@ -27,7 +27,7 @@ let messageSpy;
 
 test.beforeEach(() => {
   // need to reinstantiate because this.now = Date.now()
-  testConsumer = new Consumer();
+  testConsumer = new Consumer({});
   testConsumer.messageLimit = 40; // initial messagelimit
   batchSpy = sandbox.spy(testConsumer, 'processMessages');
   messageSpy = sandbox.spy(testConsumer, 'processMessage');

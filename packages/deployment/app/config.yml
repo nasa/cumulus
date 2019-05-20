@@ -1,6 +1,8 @@
 default:
-  stackName: change-me-cumulus
-  stackNameNoDash: ChangeMeCumulus
+  prefix: change-me-cumulus
+  stackName: '{{prefix}}'
+  prefixNoDash: ChangeMeCumulus
+  dbStackName: '{{prefix}}-db'
 
   urs_url: https://uat.urs.earthdata.nasa.gov/
 
@@ -37,9 +39,6 @@ default:
     WorkflowLambdaVersions:
       cfFile: node_modules/@cumulus/deployment/app/workflow_lambda_versions.template.yml
       configFile: node_modules/@cumulus/deployment/app/workflow_lambda_versions.config.yml
-    DataStorage:
-      cfFile: node_modules/@cumulus/deployment/app/data_storage.template.yml
-      configFile: node_modules/@cumulus/deployment/app/data_storage.config.yml
 
   # if not specified the value of the apigatewy backend endpoint is used
   # api_backend_url: https://apigateway-url-to-api-backend/
@@ -69,8 +68,18 @@ default:
       name: change-me
       type: public
 
+  iams:
+    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-ecs'
+    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-api-gateway'
+    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-lambda-processing'
+    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-steprole'
+    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/{{prefix}}-ecs'
+    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-distribution-api-lambda'
+    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-scaling-role'
+    migrationRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-migration-processing'
+
   cmr:
-    username: devseed
+    username: CmrUser
     provider: CUMULUS
     clientId: CUMULUS
     password: '{{CMR_PASSWORD}}'
@@ -83,7 +92,7 @@ default:
     vpcId: '{{VPC_ID}}'         # this has to be set in .env
     subnets:
       - '{{AWS_SUBNET}}'        # this has to be set in .env
-    cidrIp: '{{VPC_CIDR_IP}}'   # this has to be set in .env
+    securityGroup: '{{SECURITY_GROUP}}'
 
   ecs:
     restartTasksOnDeploy: false
@@ -119,16 +128,6 @@ default:
   es:
     name: es5vpc
     elasticSearchMapping: 8
-    version: 5.3
-    instanceCount: 1
-    instanceType: t2.small.elasticsearch
-    volumeSize: 35
-    alarms:
-      NodesLow:
-        alarm_description: 'There are less instances running than the desired'
-        comparison_operator: LessThanThreshold
-        threshold: '{{es.instanceCount}}'
-        metric: Nodes
 
   # defining the APIs. Each item will include a separate endpoint
   apiStage: dev

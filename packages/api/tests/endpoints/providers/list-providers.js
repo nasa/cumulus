@@ -2,7 +2,6 @@
 
 const test = require('ava');
 const request = require('supertest');
-const sinon = require('sinon');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const bootstrap = require('../../../lambdas/bootstrap');
@@ -12,6 +11,7 @@ const {
   fakeProviderFactory
 } = require('../../../lib/testUtils');
 const { Search } = require('../../../es/search');
+const indexer = require('../../../es/indexer');
 const assertions = require('../../../lib/assertions');
 
 process.env.UsersTable = randomString();
@@ -33,6 +33,7 @@ let userModel;
 
 test.before(async () => {
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
+  process.env.esIndex = esIndex;
 
   providerModel = new models.Provider();
   await providerModel.createTable();
@@ -47,11 +48,6 @@ test.before(async () => {
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 
   esClient = await Search.es('fakehost');
-});
-
-test.beforeEach(async (t) => {
-  t.context.testProvider = fakeProviderFactory();
-  await providerModel.create(t.context.testProvider);
 });
 
 test.after.always(async () => {
@@ -83,9 +79,9 @@ test('CUMULUS-912 GET without pathParameters and with an invalid access token re
 test.todo('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('default returns list of providerModel', async (t) => {
-  const stub = sinon.stub(Search.prototype, 'query').resolves({
-    results: [t.context.testProvider]
-  });
+  const testProvider = fakeProviderFactory();
+  const record = await providerModel.create(testProvider);
+  indexer.indexProvider(esClient, record, esIndex);
 
   const response = await request(app)
     .get('/providers')
@@ -94,6 +90,5 @@ test('default returns list of providerModel', async (t) => {
     .expect(200);
 
   const { results } = response.body;
-  stub.restore();
-  t.is(results[0].id, t.context.testProvider.id);
+  t.is(results[0].id, testProvider.id);
 });

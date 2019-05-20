@@ -1,6 +1,6 @@
 <cumulus-deployment-name>:
-  stackName: <prefix>-cumulus         # stackName must match the prefix for your IAM stack
-  stackNameNoDash: <Prefix>Cumulus
+  prefix: <prefix>-cumulus        # Prefixes created AWS resources
+  prefixNoDash: <Prefix>Cumulus   # Prefixes created AWS resources that do not allow hyphens
 
   apiStage: dev
 
@@ -8,7 +8,7 @@
     vpcId: '{{VPC_ID}}'         # this has to be set in .env
     subnets:
       - '{{AWS_SUBNET}}'        # this has to be set in .env
-    cidrIp: '{{VPC_CIDR_IP}}'   # this has to be set in .env
+    securityGroup: '{{SECURITY_GROUP}}'   # this has to be set in .env
 
   ecs:
     instanceType: t2.micro
@@ -29,16 +29,6 @@
     public:
       name: <prefix>-public
       type: public
-
-  iams:
-    ecsRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-ecs'
-    lambdaApiGatewayRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-lambda-api-gateway'
-    lambdaProcessingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-lambda-processing'
-    stepRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-steprole'
-    instanceProfile: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:instance-profile/<iams-prefix>-ecs'
-    distributionRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-distribution-api-lambda'
-    scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-scaling-role'
-    migrationRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/<iams-prefix>-migration-processing'
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ # make sure to include the trailing slash
 
