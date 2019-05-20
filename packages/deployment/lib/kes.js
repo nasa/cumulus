@@ -405,6 +405,31 @@ class UpdatedKes extends Kes {
     return fsWriteFile(destPath, cf);
   }
 
+  /**
+   * Calls CloudFormation's update-stack or create-stack methods
+   * Changed to support multi-template configs by checking for params sub-objects, i.e.:
+   * params:
+   *   app:
+   *     - name: someName
+   *       value: someValue
+   *
+   * @returns {Promise} returns the promise of an AWS response object
+   */
+  cloudFormation() {
+    if (this.config.app && this.config.app.params) this.config.params = this.config.app.params;
+    // Fetch db stack outputs to retrieve DynamoDBStreamARNs and ESDomainEndpoint
+    return this.describeStack(this.config.dbStackName).then((r) => {
+      if (r && r.Stacks[0] && r.Stacks[0].Outputs) {
+        r.Stacks[0].Outputs.forEach((o) => this.config.params.push({
+          name: o.OutputKey,
+          value: o.OutputValue
+        }));
+      } else {
+        throw new Error(`Failed to fetch outputs for db stack ${this.config.dbStackName}`);
+      }
+    }).then(() => super.cloudFormation());
+  }
+
 
   /**
    * Updates lambda/sqs configuration to include an sqs dead letter queue

@@ -129,6 +129,7 @@ test.before(async () => {
   // bootstrap the esIndex
   esClient = await Search.es();
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
+  process.env.esIndex = esIndex;
 });
 
 test.after.always(async () => {

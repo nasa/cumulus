@@ -69,7 +69,7 @@ To run the distribution API locally using your deployed stack with Earthdata aut
     npm run serve-dist-remote
 ```
 
-In order for the locally running API to interact with your deployed stack, you must set the `stackName` environment variable for this command, which should match the value of `stackName` for your app deployment in config.yml.
+In order for the locally running API to interact with your deployed stack, you must set the `stackName` environment variable for this command, which should match the stack name in Cloudformation for your app deployment. (default: `prefix` in config.yml)
 
 ### Config
 

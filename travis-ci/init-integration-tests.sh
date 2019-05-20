@@ -34,10 +34,16 @@ echo "Locking stack for deployment $DEPLOYMENT"
 
   set -e
   ./node_modules/.bin/kes cf deploy \
-    --kes-folder iam \
+    --kes-folder app \
     --region us-east-1 \
     --deployment "$DEPLOYMENT" \
     --template node_modules/@cumulus/deployment/iam
+
+  ./node_modules/.bin/kes cf deploy \
+    --kes-folder app \
+    --region us-east-1 \
+    --deployment "$DEPLOYMENT" \
+    --template node_modules/@cumulus/deployment/db
 
   ./node_modules/.bin/kes cf deploy \
     --kes-folder app \

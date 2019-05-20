@@ -282,14 +282,23 @@ function granule(payload) {
 /**
  * delete a record from ElasticSearch
  *
- * @param  {Object} esClient - ElasticSearch Connection object
- * @param  {string} id       - id of the Elasticsearch record
- * @param  {string} type     - Elasticsearch type (default: execution)
- * @param  {strint} parent   - id of the parent (optional)
- * @param  {string} index    - Elasticsearch index (default: cumulus)
+ * @param  {Object} params
+ * @param  {Object} params.esClient - ElasticSearch Connection object
+ * @param  {string} params.id       - id of the Elasticsearch record
+ * @param  {string} params.type     - Elasticsearch type (default: execution)
+ * @param  {strint} params.parent   - id of the parent (optional)
+ * @param  {string} params.index    - Elasticsearch index (default: cumulus)
+ * @param  {Array}  params.ignore   - Response codes to ignore (optional)
  * @returns {Promise} elasticsearch delete response
  */
-async function deleteRecord(esClient, id, type, parent, index = defaultIndexAlias) {
+async function deleteRecord({
+  esClient,
+  id,
+  type,
+  parent,
+  index = defaultIndexAlias,
+  ignore
+}) {
   const params = {
     index,
     type,
@@ -298,6 +307,7 @@ async function deleteRecord(esClient, id, type, parent, index = defaultIndexAlia
   };
 
   if (parent) params.parent = parent;
+  if (ignore) params.ignore = ignore;
 
   const actualEsClient = esClient || (await Search.es());
 

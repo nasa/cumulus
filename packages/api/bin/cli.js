@@ -7,7 +7,7 @@ const { lambda } = require('@cumulus/common/aws');
 const pckg = require('../package.json');
 const backup = require('./backup');
 const restore = require('./restore');
-const { serveApi, serveDistributionApi } = require('./serve');
+const { serveApi, serveDistributionApi, resetTables } = require('./serve');
 
 program.version(pckg.version);
 
@@ -81,6 +81,13 @@ program
   .description('Serves the local version of the distribution API')
   .action(() => {
     serveDistributionApi(process.env.stackName).catch(console.error);
+  });
+
+program
+  .command('reset-tables')
+  .description('Resets dynamodb tables for testing')
+  .action(() => {
+    resetTables(process.env.USERNAME).catch(console.error);
   });
 
 program

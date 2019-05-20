@@ -1,16 +1,11 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'stack: {{stackName}} | deployed by Kes'
-Parameters:
-  SecurityGroupId:
-    Type: String
-    Description: 'Security group ID'
 
 Resources:
-
   #################################################
   # DynamoDB config BEGIN
   #################################################
-{{#each parent.dynamos}}
+{{#each dynamos}}
   {{@key}}DynamoDB:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -34,7 +29,7 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: {{this.read}}
         WriteCapacityUnits: {{this.write}}
-      TableName: {{../stackName}}-{{@key}}
+      TableName: {{../prefix}}-{{@key}}
       StreamSpecification:
         StreamViewType: "NEW_AND_OLD_IMAGES"
     {{#if this.GlobalSecondaryIndexes}}
@@ -68,8 +63,7 @@ Resources:
   # Cumulus DynamoDB Auto Scaling START
   #################################################
 
-{{# each parent.dynamos}}
-  {{#with (lookup ../parent @key)}}
+{{# each dynamos}}
   {{#if this.enableAutoScaling}}
   ### Read scaling policy
   {{@key}}ReadCapacityScalableTarget:
@@ -86,8 +80,8 @@ Resources:
       MaxCapacity: 10
     {{/if}}
       ResourceId:
-        Fn::Sub: table/{{../../stackName}}-{{@key}}
-      RoleARN: {{../../parent.iams.scalingRoleArn}}
+        Fn::Sub: table/{{../../prefix}}-{{@key}}
+      RoleARN: {{../../iams.scalingRoleArn}}
       ScalableDimension: "dynamodb:table:ReadCapacityUnits"
       ServiceNamespace: dynamodb
   {{@key}}TableReadScalingPolicy:
@@ -98,9 +92,9 @@ Resources:
       ScalingTargetId:
         Ref: {{@key}}ReadCapacityScalableTarget
       TargetTrackingScalingPolicyConfiguration:
-        TargetValue: {{ ../../parent.AutoScalingPolicyConfiguration.targetValue }}
-        ScaleInCooldown: {{ ../../parent.AutoScalingPolicyConfiguration.scaleInCooldown }}
-        ScaleOutCooldown: {{ ../../parent.AutoScalingPolicyConfiguration.scaleOutCooldown }}
+        TargetValue: {{ ../../AutoScalingPolicyConfiguration.targetValue }}
+        ScaleInCooldown: {{ ../../AutoScalingPolicyConfiguration.scaleInCooldown }}
+        ScaleOutCooldown: {{ ../../AutoScalingPolicyConfiguration.scaleOutCooldown }}
         PredefinedMetricSpecification:
           PredefinedMetricType: DynamoDBReadCapacityUtilization
 
@@ -119,8 +113,8 @@ Resources:
       MaxCapacity: 2
     {{/if}}
       ResourceId:
-        Fn::Sub: table/{{../../stackName}}-{{@key}}
-      RoleARN: {{../../parent.iams.scalingRoleArn}}
+        Fn::Sub: table/{{../../prefix}}-{{@key}}
+      RoleARN: {{../../iams.scalingRoleArn}}
       ScalableDimension: "dynamodb:table:WriteCapacityUnits"
       ServiceNamespace: dynamodb
   {{@key}}TableWriteScalingPolicy:
@@ -131,37 +125,36 @@ Resources:
       ScalingTargetId:
         Ref: {{@key}}WriteCapacityScalableTarget
       TargetTrackingScalingPolicyConfiguration:
-        TargetValue: {{ ../../parent.AutoScalingPolicyConfiguration.targetValue }}
-        ScaleInCooldown: {{ ../../parent.AutoScalingPolicyConfiguration.scaleInCooldown }}
-        ScaleOutCooldown: {{ ../../parent.AutoScalingPolicyConfiguration.scaleOutCooldown }}
+        TargetValue: {{ ../../AutoScalingPolicyConfiguration.targetValue }}
+        ScaleInCooldown: {{ ../../AutoScalingPolicyConfiguration.scaleInCooldown }}
+        ScaleOutCooldown: {{ ../../AutoScalingPolicyConfiguration.scaleOutCooldown }}
         PredefinedMetricSpecification:
           PredefinedMetricType: DynamoDBWriteCapacityUtilization
   {{/if}}
-  {{/with}}
 {{/each}}
 
   #################################################
   # Cumulus DynamoDB Auto Scaling END
   #################################################
 
-{{# if parent.es.name}}
+{{# if es.name}}
   #################################################
   # ElasticSearch config BEGIN
   #################################################
-  {{parent.es.name}}Domain:
+  {{es.name}}Domain:
     Type: "AWS::Elasticsearch::Domain"
     Properties:
-      DomainName: {{stackName}}-{{parent.es.name}}
-      ElasticsearchVersion: {{# if parent.es.version}}{{parent.es.version}}{{ else }}'5.3'{{/if}}
+      DomainName: {{prefix}}-{{es.name}}
+      ElasticsearchVersion: {{# if es.version}}{{es.version}}{{ else }}'5.3'{{/if}}
       ElasticsearchClusterConfig:
-        InstanceCount: {{# if parent.es.instanceCount}}{{parent.es.instanceCount}}{{ else }}1{{/if}}
-        InstanceType: {{# if parent.es.instanceType}}{{parent.es.instanceType}}{{ else }}"t2.small.elasticsearch"{{/if}}
+        InstanceCount: {{# if es.instanceCount}}{{es.instanceCount}}{{ else }}1{{/if}}
+        InstanceType: {{# if es.instanceType}}{{es.instanceType}}{{ else }}"t2.small.elasticsearch"{{/if}}
       SnapshotOptions:
         AutomatedSnapshotStartHour: 0
       EBSOptions:
         EBSEnabled: true
         VolumeType: gp2
-        VolumeSize: {{parent.es.volumeSize}}
+        VolumeSize: {{es.volumeSize}}
       AdvancedOptions:
         rest.action.multi.allow_explicit_index: "true"
       AccessPolicies:
@@ -169,35 +162,35 @@ Resources:
         Statement:
           - Effect: "Allow"
             Principal:
-              AWS: {{parent.iams.lambdaProcessingRoleArn}}
+              AWS: {{iams.lambdaProcessingRoleArn}}
             Action: "es:*"
             Resource:
-              - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{parent.es.name}}/*"
+              - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{prefix}}-{{es.name}}/*"
           - Effect: "Allow"
             Principal:
-              AWS: {{parent.iams.lambdaApiGatewayRoleArn}}
+              AWS: {{iams.lambdaApiGatewayRoleArn}}
             Action: "es:*"
             Resource:
-              - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{parent.es.name}}/*"
-    {{# if parent.vpc }}
+              - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{prefix}}-{{es.name}}/*"
+    {{# if vpc }}
       VPCOptions:
         SecurityGroupIds:
-          - Ref: SecurityGroupId
+          - {{vpc.securityGroup}}
         SubnetIds:
-        {{#each parent.vpc.subnets}}
+        {{#each vpc.subnets}}
           - {{this}}
         {{/each}}
     {{/if}}
 
-  {{#if parent.es.alarms}}
-  {{# each parent.es.alarms}}
-  {{../parent.es.name}}{{@key}}Alarm:
+  {{#if es.alarms}}
+  {{# each es.alarms}}
+  {{../es.name}}{{@key}}Alarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
     {{#if alarm_description}}
       AlarmDescription: {{ alarm_description }}
     {{/if}}
-      AlarmName: {{../stackName}}-{{../parent.es.name}}-{{@key}}Alarm
+      AlarmName: {{../prefix}}-{{../es.name}}-{{@key}}Alarm
       ComparisonOperator: {{ comparison_operator }}
       EvaluationPeriods: {{#if evaluation_periods }}{{ evaluation_periods }}{{ else }}5{{/if}}
       MetricName: {{ metric }}
@@ -211,7 +204,7 @@ Resources:
             Fn::Sub: ${AWS::AccountId}
         - Name: DomainName
           Value:
-            Ref: {{../parent.es.name}}Domain
+            Ref: {{../es.name}}Domain
   {{/each}}
   {{/if}}
 
@@ -222,22 +215,18 @@ Resources:
 
 
 Outputs:
-  {{#each parent.dynamos}}
-  {{@key}}DynamoDB:
-    Value:
-      Ref: {{@key}}DynamoDB
-
+{{#each dynamos}}
   {{@key}}DynamoDBStreamArn:
     Value:
       Fn::GetAtt:
         - {{@key}}DynamoDB
         - StreamArn
-  {{/each}}
+{{/each}}
 
-{{# if parent.es.name}}
-  {{parent.es.name}}DomainEndpoint:
+{{#if es.name}}
+  {{es.name}}DomainEndpoint:
     Value:
       Fn::GetAtt:
-        - {{parent.es.name}}Domain
+        - {{es.name}}Domain
         - DomainEndpoint
 {{/if}}

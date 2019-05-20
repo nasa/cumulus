@@ -100,6 +100,14 @@ class Pdr extends Manager {
 
     return this.create(doc);
   }
+
+  /**
+   * Only used for testing
+   */
+  async deletePdrs() {
+    const pdrs = await this.scan();
+    return Promise.all(pdrs.Items.map((pdr) => super.delete({ pdrName: pdr.pdrName })));
+  }
 }
 
 module.exports = Pdr;

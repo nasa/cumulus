@@ -8,13 +8,25 @@ Parameters:
   DockerPassword:
     Type: String
     Description: 'Password used to access a private docker repository (not required)'
-    Default: NoValue
+    Default: ""
     NoEcho: true
   DockerEmail:
     Type: String
     Description: 'Email used to login to a private docker repository (not required)'
-    Default: NoValue
+    Default: ""
     NoEcho: true
+{{#if es.name}}
+  {{es.name}}DomainEndpoint:
+    Type: String
+    Description: 'ElasticSearch domain endpoint'
+    NoEcho: true
+{{/if}}
+{{#each dynamos}}
+  {{@key}}DynamoDBStreamArn:
+    Type: String
+    Description: 'DynamoDBStreamArn for {{@key}}'
+    NoEcho: true
+{{/each}}
 
 Resources:
 
@@ -37,19 +49,7 @@ Resources:
       TemplateURL: {{this.url}}
 {{/ifEquals}}
 {{/ifEquals}}
-{{#ifEquals @key "DataStorage"}}
-  {{@key}}NestedStack:
-    Type: "AWS::CloudFormation::Stack"
-    Properties:
-      Parameters:
-        SecurityGroupId:
-          Fn::GetAtt:
-            - SecurityGroup
-            - GroupId
-      TemplateURL: {{this.url}}
-{{/ifEquals}}
 {{#ifNotEquals @key "WorkflowLambdaVersions"}}
-{{#ifNotEquals @key "DataStorage"}}
   {{@key}}NestedStack:
     Type: "AWS::CloudFormation::Stack"
     Properties:
@@ -60,9 +60,7 @@ Resources:
             - CmrPassword
       {{#if ../es.name}}
         ElasticSearchDomain:
-          Fn::GetAtt:
-            - DataStorageNestedStack
-            - Outputs.{{../es.name}}DomainEndpoint
+          Ref: {{../es.name}}DomainEndpoint
       {{/if}}
         log2elasticsearchLambdaFunctionArn:
           Fn::GetAtt:
@@ -103,19 +101,12 @@ Resources:
             - Outputs.distributionRestApiResource
         {{/ifEquals}}
       {{# each ../dynamos}}
-        {{@key}}DynamoDB:
-          Fn::GetAtt:
-            - DataStorageNestedStack
-            - Outputs.{{@key}}DynamoDB
+        {{@key}}DynamoDB: {{../../prefix}}-{{@key}}
       {{/each}}
       {{# if ../vpc }}
-        SecurityGroupId:
-          Fn::GetAtt:
-            - SecurityGroup
-            - GroupId
+        SecurityGroupId: {{../vpc.securityGroup}}
       {{/if}}
       TemplateURL: {{this.url}}
-{{/ifNotEquals}}
 {{/ifNotEquals}}
 {{/each}}
 
@@ -139,26 +130,18 @@ Resources:
     {{# if es.name}}
       ElasticSearch:
         host:
-          Fn::GetAtt:
-            - DataStorageNestedStack
-            - Outputs.{{es.name}}DomainEndpoint
+          Ref: {{es.name}}DomainEndpoint
         version: {{es.elasticSearchMapping}}
     {{/if}}
     {{# if dynamos}}
       DynamoDBTables:
       {{#each dynamos}}
-        - name:
-            Fn::GetAtt:
-              - DataStorageNestedStack
-              - Outputs.{{@key}}DynamoDB
+        - name: {{../prefix}}-{{@key}}
           pointInTime: {{this.pointInTime}}
       {{/each}}
     {{/if}}
       Users:
-        table:
-          Fn::GetAtt:
-            - DataStorageNestedStack
-            - Outputs.UsersTableDynamoDB
+        table: {{prefix}}-UsersTable
         records:
         {{# each users}}
           - username: {{username}}
@@ -196,7 +179,7 @@ Resources:
   {{@key}}Sns:
     Type: "AWS::SNS::Topic"
     Properties:
-      DisplayName: {{../stackName}}-{{@key}}
+      DisplayName: {{../prefix}}-{{@key}}
       Subscription:
       {{#each this.subscriptions}}
         {{# if this.endpoint.function}}
@@ -247,11 +230,11 @@ Resources:
   {{name}}Activity:
     Type: AWS::StepFunctions::Activity
     Properties:
-      Name: {{../stackName}}-{{name}}-Activity
+      Name: {{../prefix}}-{{name}}-Activity
 {{/each}}
 
 {{#each stepFunctions}}
-  {{../stackNameNoDash}}{{@key}}StateMachine:
+  {{../prefixNoDash}}{{@key}}StateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
       DefinitionString:
@@ -286,7 +269,7 @@ Resources:
   {{@key}}SQS:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: {{../stackName}}-{{@key}}
+      QueueName: {{../prefix}}-{{@key}}
       ReceiveMessageWaitTimeSeconds: 20
     {{#if this.retry}}
       RedrivePolicy:
@@ -302,7 +285,7 @@ Resources:
   {{@key}}FailedSQS:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: {{../stackName}}-{{@key}}-failed
+      QueueName: {{../prefix}}-{{@key}}-failed
 
 {{/if}}
 
@@ -394,9 +377,8 @@ Resources:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       EventSourceArn:
-        Fn::GetAtt:
-          - DataStorageNestedStack
-          - Outputs.{{this}}DynamoDBStreamArn
+        Ref:
+          {{this}}DynamoDBStreamArn
       FunctionName:
         Ref: {{../dynamo2ElasticSearch.lambda}}LambdaFunction
       BatchSize: {{../dynamo2ElasticSearch.batchSize}}
@@ -418,23 +400,18 @@ Resources:
       Code:
         S3Bucket: {{this.bucket}}
         S3Key: {{this.remote}}
-      FunctionName: {{../stackName}}-{{@key}}
+      FunctionName: {{../prefix}}-{{@key}}
       Environment:
         Variables:
           stackName: {{../stackName}}
         {{#if this.useElasticSearch }}
         {{#if ../es.name}}
           ES_HOST:
-            Fn::GetAtt:
-              - DataStorageNestedStack
-              - Outputs.{{../es.name}}DomainEndpoint
+            Ref: {{../es.name}}DomainEndpoint
         {{/if}}
         {{/if}}
         {{#each this.tables}}
-          {{this}}:
-            Fn::GetAtt:
-              - DataStorageNestedStack
-              - Outputs.{{this}}DynamoDB
+          {{this}}: {{../../prefix}}-{{this}}
         {{/each}}
       {{# if this.useDistributionApi}}
         {{# if ../api_distribution_url}}
@@ -488,15 +465,13 @@ Resources:
     {{/if}}
       Tags:
         - Key: Project
-          Value: {{../stackName}}
+          Value: {{../prefix}}
 
   {{# if this.launchInVpc }}
     {{# if ../vpc }}
       VpcConfig:
         SecurityGroupIds:
-          - Fn::GetAtt:
-            - SecurityGroup
-            - GroupId
+          - {{../vpc.securityGroup}}
         SubnetIds:
         {{#each ../vpc.subnets}}
           - {{this}}
@@ -527,13 +502,13 @@ Resources:
         Fn::GetAtt:
           - log2elasticsearchLambdaFunction
           - Arn
-      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
+      LogGroupName: '/aws/lambda/{{../prefix}}-{{@key}}'
       FilterPattern: ""
 
   {{@key}}LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
+      LogGroupName: '/aws/lambda/{{../prefix}}-{{@key}}'
       RetentionInDays: 30
 {{/if}}
 
@@ -571,34 +546,6 @@ Resources:
   #################################################
   # ECS config BEGIN
   #################################################
-{{# if vpc }}
-  SecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security Group for ECS containter instances of {{stackName}}
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          CidrIp: {{vpc.cidrIp}}
-          FromPort: '443'
-          ToPort: '443'
-      Tags:
-        - Key: Name
-          Value: "{{stackName}}"
-      VpcId: {{vpc.vpcId}}
-
-  {{#if ecs.ssh}}
-  SecurityGroupSSHinbound:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId:
-        Ref: 'SecurityGroup'
-      IpProtocol: tcp
-      FromPort: '22'
-      ToPort: '22'
-      CidrIp: 0.0.0.0/0
-  {{/if}}
-{{/if}}
-
 {{# if iams.instanceProfile}}
   CumulusECSCluster:
     Type: AWS::ECS::Cluster
@@ -609,13 +556,13 @@ Resources:
     {{# if vpc.subnets }}
       AssociatePublicIpAddress: {{#if ecs.publicIp}}{{ecs.publicIp}}{{else}}false{{/if}}
     {{/if}}
+    {{# if vpc.securityGroup}}
       SecurityGroups:
-        - Fn::GetAtt:
-          - SecurityGroup
-          - GroupId
+        - {{vpc.securityGroup}}
+    {{/if}}
        {{# if ecs.efs.mount}}
         - Fn::ImportValue:
-            "{{stackName}}-EFSSecurityGroup"
+            "{{prefix}}-EFSSecurityGroup"
         {{/if}}
 
       ImageId: {{ecs.amiid}}
@@ -697,7 +644,7 @@ Resources:
               --==BOUNDARY==--
             {{# if ecs.efs.mount }}
             - EFSFileSystemId:
-                Fn::ImportValue: "{{stackName}}-EFSFileSystemId"
+                Fn::ImportValue: "{{prefix}}-EFSFileSystemId"
             {{else}}
             # This is necessary because, if we are not setting a mount,
             # the Fn::Sub function still requires a variable map
@@ -732,7 +679,7 @@ Resources:
       MaxSize: '{{ ecs.maxInstances }}'
       Tags:
       - Key: Name
-        Value: "{{stackName}}-cumulus-ecs"
+        Value: "{{prefix}}-cumulus-ecs"
         PropagateAtLaunch: true
 
   CumulusECSAutoScalingLifeCycleHook:
@@ -938,7 +885,7 @@ Resources:
   {{@key}}EcsLogs:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+      LogGroupName: {{../prefix}}-{{@key}}EcsLogs
 
   {{@key}}EcsLogSubscription:
     Type: AWS::Logs::SubscriptionFilter
@@ -950,7 +897,7 @@ Resources:
         Fn::GetAtt:
           - log2elasticsearchLambdaFunction
           - Arn
-      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+      LogGroupName: {{../prefix}}-{{@key}}EcsLogs
       FilterPattern: ""
 
   {{@key}}ECSService:
@@ -992,7 +939,7 @@ Resources:
     DependsOn:
       - {{@key}}ECSServiceScalableTarget
     Properties:
-      PolicyName: {{../stackName}}{{@key}}ECSServiceScalingInPolicy
+      PolicyName: {{../prefix}}{{@key}}ECSServiceScalingInPolicy
       PolicyType: StepScaling
       ScalingTargetId:
         Ref:
@@ -1010,7 +957,7 @@ Resources:
   {{@key}}ECSServiceScalingOutPolicy:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
-      PolicyName: {{../stackName}}{{@key}}ECSServiceScalingOutPolicy
+      PolicyName: {{../prefix}}{{@key}}ECSServiceScalingOutPolicy
       PolicyType: StepScaling
       ScalingTargetId:
         Ref:
@@ -1091,7 +1038,7 @@ Resources:
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmDescription: There are less tasks running than the desired
-      AlarmName: {{../stackName}}-{{@key}}-TaskCountLowAlarm
+      AlarmName: {{../prefix}}-{{@key}}-TaskCountLowAlarm
       ComparisonOperator: LessThanThreshold
       EvaluationPeriods: 1
       MetricName: MemoryUtilization
@@ -1118,7 +1065,7 @@ Resources:
     {{#if alarm_description}}
       AlarmDescription: {{ alarm_description }}
     {{/if}}
-      AlarmName: {{../../stackName}}-{{@../key}}-{{@key}}Alarm
+      AlarmName: {{../../prefix}}-{{@../key}}-{{@key}}Alarm
       ComparisonOperator: {{ comparison_operator }}
       EvaluationPeriods: {{#if evaluation_periods }}{{ evaluation_periods }}{{ else }}5{{/if}}
       MetricName: {{ metric }}
@@ -1221,7 +1168,7 @@ Resources:
   {{@key}}EcsLogs:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+      LogGroupName: {{../prefix}}-{{@key}}EcsLogs
 
   {{@key}}EcsLogSubscription:
     Type: AWS::Logs::SubscriptionFilter
@@ -1233,7 +1180,7 @@ Resources:
         Fn::GetAtt:
           - log2elasticsearchLambdaFunction
           - Arn
-      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+      LogGroupName: {{../prefix}}-{{@key}}EcsLogs
       FilterPattern: ""
 {{/each}}
 {{/if}}
@@ -1247,8 +1194,8 @@ Resources:
   CumulusCloudWatchDashboard:
     Type: AWS::CloudWatch::Dashboard
     Properties:
-      DashboardName: {{stackName}}-CloudWatch-Dashboard
-      DashboardBody: '{{#buildCWDashboard dashboard ecs es stackName}}{{/buildCWDashboard}}'
+      DashboardName: {{prefix}}-CloudWatch-Dashboard
+      DashboardBody: '{{#buildCWDashboard dashboard ecs es prefix}}{{/buildCWDashboard}}'
   #################################################
   # CloudWatch Dashboard END
   #################################################
@@ -1293,7 +1240,7 @@ Outputs:
 {{#each stepFunctions}}
   {{@key}}StateMachine:
     Value:
-      Ref: {{../stackNameNoDash}}{{@key}}StateMachine
+      Ref: {{../prefixNoDash}}{{@key}}StateMachine
 {{/each}}
 
 {{#each sqs}}
@@ -1301,14 +1248,6 @@ Outputs:
     Value:
       Ref: {{@key}}SQS
 {{/each}}
-
-{{# if es.name}}
-  {{es.name}}Domain:
-    Value:
-      Fn::GetAtt:
-        - DataStorageNestedStack
-        - Outputs.{{es.name}}DomainEndpoint
-{{/if}}
 
 {{#each sns}}
   {{#if this.arn}}
@@ -1326,12 +1265,3 @@ Outputs:
       Fn::GetAtt:
         - CumulusCustomResource
         - CmrPassword
-
-{{#if vpc}}
-  EcsSecurityGroup:
-    Description: ECS security group
-    Value:
-      Ref: SecurityGroup
-    Export:
-      Name: "{{stackName}}-EcsSecurityGroup"
-{{/if}}

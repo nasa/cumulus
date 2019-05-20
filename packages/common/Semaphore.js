@@ -124,7 +124,7 @@ class Semaphore {
       // is symptomatic of a bug elsewhere attempting to decrement
       // semaphores before they have been created/incremented.
       if (count > 0 && isConditionalCheckException(error)) {
-        throw new ResourcesLockedError(`Could not add ${key} to ${count}`);
+        throw new ResourcesLockedError(`Could not add ${count} to key ${key}`);
       }
       log.error(error.message, error.stack);
       throw error;
