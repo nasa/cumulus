@@ -78,8 +78,8 @@ config file, deployment should be as simple as running:
 1. `git clone https://github.com/nasa/cumulus.git`
 1. `cd cumulus/packages/s3-access-metrics`
 1. `npm install`
-1. `./node_modules/.bin/sls deploy`
-1. `./node_modules/.bin/sls s3deploy`
+1. `npx sls deploy`
+1. `npx sls s3deploy`
 
 The output of the `sls deploy` command should display the name of the Lambda
 function. If you view that Lambda function in the AWS Console, you should see an
