@@ -51,7 +51,7 @@ services:
       - 4567-4570:4567-4570
       - 4572-4582:4572-4582
       - 8080:8080
-  
+
   locales:
     image: elasticsearch:5.6
     environment:
