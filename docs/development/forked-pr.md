@@ -33,7 +33,7 @@ PRs from forked repos cannot directly merged to master. Cumulus reviews must fol
 
      $ git checkout -b from-<name-of-the-branch> master
 
-2. Push the new branch to github
+2. Push the new branch to GitHub
 
 3. Change the destination of the forked PR to the new branch that was just pushed
 
