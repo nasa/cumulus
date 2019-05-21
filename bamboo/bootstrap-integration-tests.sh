@@ -40,6 +40,7 @@ if [[ $LOCK_EXIST_STATUS -gt 0 ]]; then
 fi
 set -e
 
+PROFILE=$DEPLOYMENT
 echo "Deploying IAM stack to $DEPLOYMENT"
 npm run deploy-iam
 
