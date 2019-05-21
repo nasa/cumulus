@@ -105,7 +105,7 @@ function generateWorkflowTemplate(name, workflow, config, outputs) {
 
   // add queues
   const queues = {};
-  const priorityQueues = {};
+  const queuePriorities = {};
   if (config.sqs) {
     const queueArns = outputs.filter((o) => o.OutputKey.includes('SQSOutput'));
 
@@ -115,7 +115,7 @@ function generateWorkflowTemplate(name, workflow, config, outputs) {
 
       const priorityLevel = get(config.sqs, `${queueName}.priority`);
       if (priorityLevel) {
-        priorityQueues[queueName] = priorityLevel;
+        queuePriorities[queueName] = priorityLevel;
       }
     });
   }
@@ -158,7 +158,7 @@ function generateWorkflowTemplate(name, workflow, config, outputs) {
       provider: {},
       templates: templatesUris,
       queues,
-      priorityQueues
+      queuePriorities
     },
     workflow_config: workflowConfig,
     payload: {},
