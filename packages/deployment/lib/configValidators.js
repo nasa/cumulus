@@ -45,6 +45,7 @@ function validateWorkflowDefinedLambdas(config) {
  * @throws {Error}
  */
 function validatePriorityQueueConfig(config) {
+  if (!config.sqs) return;
   const queueNames = Object.keys(config.sqs);
 
   queueNames.forEach((queueName) => {
