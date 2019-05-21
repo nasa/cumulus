@@ -9,4 +9,4 @@ curl -H\
  -d "{\"state\":\"$1\", \"target_url\": \"$2\", \"description\": \"$3\", \"context\": \"continuous-integration/earthdata-bamboo\"}"\
  -H "Content-Type: application/json"\
  -X POST\
- https://api.github.com/repos/nasa/cumulus/statuses/$4
+ https://api.github.com/repos/nasa/cumulus/statuses/$GIT_SHA
