@@ -66,7 +66,7 @@ function loadConfig(type = 'app') {
     },
     iam: {
       deployment: process.env.DEPLOYMENT,
-      configFile: './iam/config.yml',
+      configFile: './app/config.yml',
       kesFolder: './iam',
       stackName: '{{prefix}}}-iam'
     }
