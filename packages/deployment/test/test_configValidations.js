@@ -73,7 +73,7 @@ test('validatePriorityLevelConfig throws an exception when priority config is no
     test: 5
   };
   const error = await t.throws(() => validatePriorityLevelConfig(config));
-  t.is(error.message, 'Priority configuration for test must be an object');
+  t.is(error.message, 'Priority configuration for priority level test must be an object');
 });
 
 test('validatePriorityLevelConfig throws an exception when priority config is missing maxExecutions', async (t) => {
@@ -82,7 +82,7 @@ test('validatePriorityLevelConfig throws an exception when priority config is mi
     test: {}
   };
   const error = await t.throws(() => validatePriorityLevelConfig(config));
-  t.is(error.message, 'Priority configuration for test must include a maxExecutions value');
+  t.is(error.message, 'Priority configuration for priority level test must include a maxExecutions value');
 });
 
 test('validatePriorityLevelConfig does not throw an exception when priority config is correct', async (t) => {

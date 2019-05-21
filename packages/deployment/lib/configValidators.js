@@ -2,7 +2,7 @@
 
 const get = require('lodash.get');
 const has = require('lodash.has');
-const isObject = require('lodash.isObject');
+const isObject = require('lodash.isobject');
 
 /**
  * @param  {Object} config kes configuration object
@@ -45,7 +45,10 @@ function validateWorkflowDefinedLambdas(config) {
  * @throws {Error}
  */
 function validatePriorityQueueConfig(config) {
-  if (!config.sqs) return;
+  if (!config.sqs) {
+    return;
+  }
+
   const queueNames = Object.keys(config.sqs);
 
   queueNames.forEach((queueName) => {
@@ -66,15 +69,19 @@ function validatePriorityQueueConfig(config) {
  * @throws {Error}
  */
 function validatePriorityLevelConfig(config) {
-  if (!config.priority) return;
+  if (!config.priority) {
+    return;
+  }
+
   const priorityLevels = Object.keys(config.priority);
   priorityLevels.forEach((priorityLevel) => {
-    const priorityConfig = config.priority[priorityLevel];
+    const priorityConfig = get(config.priority, priorityLevel, {});
+
     if (!isObject(priorityConfig)) {
-      throw new Error(`Priority configuration for ${priorityLevel} must be an object`);
+      throw new Error(`Priority configuration for priority level ${priorityLevel} must be an object`);
     }
     if (!priorityConfig.maxExecutions) {
-      throw new Error(`Priority configuration for ${priorityLevel} must include a maxExecutions value`);
+      throw new Error(`Priority configuration for priority level ${priorityLevel} must include a maxExecutions value`);
     }
   });
 }
