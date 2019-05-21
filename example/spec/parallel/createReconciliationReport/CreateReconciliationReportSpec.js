@@ -25,6 +25,7 @@ const {
   addCollections,
   addProviders,
   buildAndExecuteWorkflow,
+  cleanupCollections,
   cleanupProviders,
   generateCmrXml,
   granulesApi: granulesApiTestUtils,
@@ -39,8 +40,8 @@ const {
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix
-} = require('../helpers/testUtils');
-const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
+} = require('../../helpers/testUtils');
+const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
 const reportsPrefix = (stackName) => `${stackName}/reconciliation-reports/`;
 const filesTableName = (stackName) => `${stackName}-FilesTable`;
@@ -48,7 +49,7 @@ const collectionsTableName = (stackName) => `${stackName}-CollectionsTable`;
 
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MYD13Q1_006';
-const inputPayloadFilename = './spec/createReconciliationReport/IngestGranule.MYD13Q1_006.input.payload.json';
+const inputPayloadFilename = './spec/parallel/createReconciliationReport/IngestGranule.MYD13Q1_006.input.payload.json';
 const collection = { name: 'MYD13Q1', version: '006' };
 const collectionId = constructCollectionId(collection.name, collection.version);
 const granuleRegex = '^MYD13Q1\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
@@ -337,8 +338,7 @@ describe('When there are granule differences and granule reconciliation is run',
         }
       }).promise(),
       deleteFolder(config.bucket, testDataFolder),
-      // leave collections in the table for EMS reports
-      //cleanupCollections(config.stackName, config.bucket, collectionsDir),
+      cleanupCollections(config.stackName, config.bucket, collectionsDir),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
       granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranule }),
       cmr.deleteGranule(cmrGranule)

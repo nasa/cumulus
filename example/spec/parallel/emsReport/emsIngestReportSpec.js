@@ -29,7 +29,7 @@ const {
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix
-} = require('../helpers/testUtils');
+} = require('../../helpers/testUtils');
 
 const config = loadConfig();
 
@@ -39,25 +39,23 @@ const emsProvider = config.ems.provider;
 const stackName = config.stackName;
 const submitReport = config.ems.submitReport === 'true' || false;
 
-const { setupTestGranuleForIngest } = require('../helpers/granuleUtils');
+const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
 const providersDir = './data/providers/s3/';
-const collectionsDir = './data/collections/s3_MYD13Q1_006';
-const inputPayloadFilename = './spec/createReconciliationReport/IngestGranule.MYD13Q1_006.input.payload.json';
-const collection = { name: 'MYD13Q1', version: '006' };
+const collectionsDir = './data/collections/s3_MOD14A1_006';
+const inputPayloadFilename = './spec/parallel/emsReport/IngestGranule.MOD14A1_006.input.payload.json';
+const collection = { name: 'MOD14A1', version: '006' };
 const collectionId = constructCollectionId(collection.name, collection.version);
-const granuleRegex = '^MYD13Q1\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
+const granuleRegex = '^MOD14A1\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
 process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
 process.env.GranulesTable = `${config.stackName}-GranulesTable`;
 
-// add MYD13Q1___006 collection
+// add MOD14A1___006 collection
 async function setupCollectionAndTestData(testSuffix, testDataFolder) {
   const s3data = [
-    '@cumulus/test-data/granules/MYD13Q1.A2002185.h00v09.006.2015149071135.hdf.met',
-    '@cumulus/test-data/granules/MYD13Q1.A2002185.h00v09.006.2015149071135.hdf',
-    '@cumulus/test-data/granules/BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.hdf',
-    '@cumulus/test-data/granules/BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.1.jpg'
+    '@cumulus/test-data/granules/MOD14A1.A2000049.h00v10.006.2015041132152.hdf.met',
+    '@cumulus/test-data/granules/MOD14A1.A2000049.h00v10.006.2015041132152.hdf'
   ];
 
   // populate collections, providers and test data

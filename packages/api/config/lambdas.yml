@@ -111,6 +111,7 @@ EmsIngestReport:
     ems_privateKey: '{{ems.privateKey}}'
     ems_host: '{{ems.host}}'
     ems_port: '{{ems.port}}'
+    ems_path: '{{ems.path}}'
     ems_dataSource: '{{ems.dataSource}}'
     ems_submitReport: '{{ems.submitReport}}'
   namedLambdaDeadLetterQueue: true
@@ -130,6 +131,7 @@ EmsDistributionReport:
     ems_privateKey: '{{ems.privateKey}}'
     ems_host: '{{ems.host}}'
     ems_port: '{{ems.port}}'
+    ems_path: '{{ems.path}}'
     ems_dataSource: '{{ems.dataSource}}'
     ems_submitReport: '{{ems.submitReport}}'
 

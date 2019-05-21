@@ -1,0 +1,29 @@
+{
+  "granules": [
+    {
+      "granuleId": "MOD14A1.A2000049.h00v10.006.2015041132152",
+      "dataType": "MOD14A1",
+      "version": "006",
+      "files": [
+        {
+          "path": "cumulus-test-data/pdrs",
+          "size": 233840,
+          "type": "data",
+          "name": "MOD14A1.A2000049.h00v10.006.2015041132152.hdf"
+        },
+        {
+          "path": "cumulus-test-data/pdrs",
+          "type": "metadata",
+          "size": 14297,
+          "name": "MOD14A1.A2000049.h00v10.006.2015041132152.hdf.met"
+        }
+      ]
+    }
+  ],
+  "pdr": {
+    "path": "cumulus-test-data/pdrs",
+    "size": 728,
+    "name": "MOD14A1.A2000049.h00v10.006.2015041132152.hdf.PDR",
+    "time": 1520873050000
+  }
+}

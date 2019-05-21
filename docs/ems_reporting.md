@@ -50,20 +50,9 @@ Upload the corresponding private key to s3, use `${system_bucket}` as bucket nam
 
 5. Create a data collection to send to EMS.  The report will be automatically generated and submit to EMS, and this step will be deleted after CUMULUS-1273(https://bugs.earthdata.nasa.gov/browse/CUMULUS-1273) is completed.
 
-6. Adding the following configuration in `app/config.yml`:
+6. Configure the `ems` configuration parameters in `app/config.yml`.
 
-```
-ems:
-  provider: <provider, required>
-  host: <EMS host, required if submitReport is true>
-  port: <optional, EMS host port, default is 22>
-  path: <optional, EMS host directory path for reports, default is account root>
-  username: <EMS account username, required if submitReport is true>
-  privateKey: <optional, privateKey file name, default is ems-private.pem>
-  dataSource: <optional, EMS report DataSourcee, the stackName is used if not specified>
-  submitReport: <optional, indicates if the reports will be sent to EMS, default is false>
-```
+If the username and host are not provided in the configuration, the reports are still generated in `s3://{{buckets.internal.name}${stackName}/ems/${filename}`, but won't be submitted to EMS.
 
 Submitted reports will be moved to `sent` folder.
 
-If the username and host are not provided in the configuration, the reports are still generated, but won't be submitted to EMS.

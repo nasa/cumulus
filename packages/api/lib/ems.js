@@ -323,9 +323,9 @@ async function submitReports(reports) {
     // eslint-disable-next-line no-await-in-loop
     await sftpClient.uploadFromS3(
       { Bucket: parsed.Bucket, Key: parsed.Key },
-      path.join(process.env.ems_path || '', fileName)
+      path.join(process.env.ems_path || '', fileName).replace(/^\/+/g, '')
     );
-    log.debug(`EMS report ${reports[i]} is sent`);
+    log.debug(`EMS report ${fileName} is sent`);
 
     // move to sent folder
     const newKey = path.join(keyfields.join('/'), 'sent', fileName);
