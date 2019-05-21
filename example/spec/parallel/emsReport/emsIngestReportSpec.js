@@ -12,6 +12,7 @@ const {
   },
   constructCollectionId
 } = require('@cumulus/common');
+const { sleep } = require('@cumulus/common/util');
 const { Granule } = require('@cumulus/api/models');
 const {
   addCollections,
@@ -184,7 +185,8 @@ describe('The EMS report', () => {
       AWS.config.update({ region: region });
 
       // add a few seconds to allow records searchable in elasticsearch
-      const endTime = moment.utc().add(3, 'seconds').format();
+      await sleep(5 * 1000);
+      const endTime = moment.utc().add(5, 'seconds').format();
       const startTime = moment.utc().subtract(1, 'days').format();
 
       const response = await lambda().invoke({
