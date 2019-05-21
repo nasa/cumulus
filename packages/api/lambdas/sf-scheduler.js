@@ -8,8 +8,9 @@ const { SQS } = require('@cumulus/ingest/aws');
 const { Provider, Collection } = require('../models');
 
 /**
- * Builds a cumulus-compatible message and adds it to the startSF queue
- * startSF queue will then start a stepfunction for the given message
+ * Builds a cumulus-compatible message and adds it to the queue specified
+ * by meta.queueName. This queue will then start a stepfunction for the
+ * given message
  *
  * @param   {Object} event   - lambda input message
  * @param   {Object} context - lambda context
@@ -22,6 +23,7 @@ function schedule(event, context, cb) {
   const cumulusMeta = get(event, 'cumulus_meta', {});
   const collection = get(event, 'collection', null);
   const payload = get(event, 'payload', {});
+  const queueName = get(meta, 'queueName', 'startSF');
   let message;
 
   const parsed = parseS3Uri(template);
@@ -33,6 +35,8 @@ function schedule(event, context, cb) {
       message.meta = merge(message.meta, meta);
       message.payload = payload;
       message.cumulus_meta.execution_name = uuidv4();
+      message.cumulus_meta.priority_key = 
+        message.meta.queuePriorities[queueName];
       message.cumulus_meta = merge(message.cumulus_meta, cumulusMeta);
     })
     .then(() => {
@@ -57,7 +61,7 @@ function schedule(event, context, cb) {
       if (c) message.meta.collection = c;
     })
     .then(() => {
-      SQS.sendMessage(message.meta.queues.startSF, message);
+      SQS.sendMessage(message.meta.queues[queueName], message);
     })
     .then((r) => cb(null, r))
     .catch((e) => cb(e));
