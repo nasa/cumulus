@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 source .bamboo_env_vars || true
-. ./bamboo/set-bamboo_env_vars.sh
+. ./bamboo/set-bamboo-env-variables.sh
 
 ### Post status to github.  Requires set-bamboo-env-varaibles to have been set.
 curl -H\
