@@ -33,7 +33,7 @@ describe('When an iam override template is in the APP directory and IAMs are dep
       await fs.remove('test_iam_override');
     }
   });
-  it('added a parameter', () => {
+  it('has overridden the stack description', () => {
     expect(cloudFormation.Description).toEqual('Overridden IAM Stack Description');
   });
 });
