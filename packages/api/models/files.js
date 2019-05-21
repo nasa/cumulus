@@ -97,8 +97,10 @@ class FileClass extends Manager {
     let oldFiles = (oldGranule.files || []);
 
     // all we need is the bucket and key
-    oldFiles = oldFiles.map((file) => this.getBucketAndKey(file));
-    newFiles = newFiles.map((file) => this.getBucketAndKey(file));
+    oldFiles = oldFiles.map((file) => this.getBucketAndKey(file))
+      .filter((file) => file.bucket && file.key);
+    newFiles = newFiles.map((file) => this.getBucketAndKey(file))
+      .filter((file) => file.bucket && file.key);
 
     const newFilesIds = newFiles.map((f) => buildFileId(f));
 
