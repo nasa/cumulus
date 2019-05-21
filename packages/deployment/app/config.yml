@@ -86,6 +86,13 @@ default:
 
   ems:
     provider: CUMULUS
+    host: change-ems-host
+    port: 22
+    path: /
+    username: cumulus
+    privateKey: ems-private.pem
+    dataSource: UAT
+    submitReport: false
 
   # this whole section has to be updated in each deployment section
   vpc:

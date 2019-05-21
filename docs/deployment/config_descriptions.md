@@ -36,6 +36,13 @@ dynamos:
 | system_bucket | `buckets.internal.name` | the bucket used for storing deployment artifacts
 | shared_data_bucket | cumulus-data-shared | bucket containing shared data artifacts
 | ems.provider | CUMULUS | the provider used for sending reports to EMS
+| ems.submitReport | false | indicates if the reports will be sent to EMS
+| ems.host | (required if ems.submitReport is true) | EMS host
+| ems.port | 22 | EMS host port
+| ems.path | / | EMS host directory path for reports
+| ems.username | (required if ems.submitReport is true) | the username used for sending reports to EMS
+| ems.privateKey | ems-private.pem | the private key file used for sending reports to EMS
+| ems.dataSource | UAT | the data source of EMS reports
 | vpc.vpcId | (required if ecs is used) | the vpcId used with the deployment
 | vpc.subnets | (required) | the subnets used
 | vpc.securityGroup | (required) | security group ID to be used by Cumulus resources, must allow inbound HTTP(S) access (Port 443), optionally may allow SSH to access ECS instances.

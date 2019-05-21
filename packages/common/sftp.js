@@ -2,6 +2,7 @@
 
 const { Client } = require('ssh2');
 const { PassThrough, Readable } = require('stream');
+const path = require('path');
 const { lookupMimeType } = require('./util');
 const log = require('./log');
 const {
@@ -99,7 +100,7 @@ class Sftp {
   async download(remotePath, localPath) {
     if (!this.connected) await this.connect();
 
-    const remoteUrl = `sftp://${this.options.host}/${remotePath}`;
+    const remoteUrl = `sftp://${this.options.host}${path.join('/', remotePath)}`;
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
 
     return new Promise((resolve, reject) => {
@@ -122,7 +123,7 @@ class Sftp {
    * @returns {Promise} s3 uri of destination file
    */
   async downloadToS3(remotePath, bucket, key) {
-    const remoteUrl = `sftp://${this.host}/${remotePath}`;
+    const remoteUrl = `sftp://${this.options.host}${path.join('/', remotePath)}`;
     const s3uri = buildS3Uri(bucket, key);
     log.info(`Sync ${remoteUrl} to ${s3uri}`);
 
@@ -203,7 +204,7 @@ class Sftp {
       return Promise.reject(new Error(`Sftp.uploadFromS3 ${s3uri} does not exist`));
     }
 
-    const remoteUrl = `sftp://${this.options.host}/${remotePath}`;
+    const remoteUrl = `sftp://${this.options.host}${path.join('/', remotePath)}`;
     log.info(`Uploading ${s3uri} to ${remoteUrl}`);
 
     const readStream = await getS3ObjectReadStream(s3object.Bucket, s3object.Key);
@@ -224,7 +225,7 @@ class Sftp {
     readStream.push(data);
     readStream.push(null);
 
-    const remoteUrl = `sftp://${this.options.host}/${remotePath}`;
+    const remoteUrl = `sftp://${this.options.host}${path.join('/', remotePath)}`;
     log.info(`Uploading string to ${remoteUrl}`);
     return this.uploadFromStream(readStream, remotePath);
   }

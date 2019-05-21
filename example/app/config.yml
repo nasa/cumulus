@@ -171,8 +171,6 @@ default:
 
   ems:
     provider: CUMULUS
-    dataSource: UAT
-    submitReport: false
 
   stepFunctions: !!files [
     'workflows/helloworld.yml',
@@ -239,6 +237,13 @@ cumulus-from-npm:
 cumulus-from-source:
   prefix: test-src-integration # used by the cumulus repo
   prefixNoDash: TestSourceIntegration
+  ems:
+    provider: CUMULUS
+    host: fs1.ems.eosdis.nasa.gov
+    path: tmpNat
+    username: cumulus
+    dataSource: UAT
+    submitReport: true
 
 cumulus-from-pr:
   prefix: test-pr-integration # used by the PR
@@ -431,17 +436,15 @@ jl:
       name: rvl-internal
       type: shared
   ecs:
-     ssh: true
-     keyPairName: jl
+    ssh: true
+    keyPairName: jl
   ems:
     provider: CUMULUS
-    host: s-51625e6606b046448.server.transfer.us-east-1.amazonaws.com
-    port: 22
-    path: 'tmpNat'
+    host: fs1.ems.eosdis.nasa.gov
+    path: tmpNat
     username: cumulus
-    privateKey: ems-private.pem
     dataSource: UAT
-    submitReport: false
+    submitReport: true
 
 mhs2:
   prefix: mhs2
