@@ -40,15 +40,18 @@ if [[ $LOCK_EXIST_STATUS -gt 0 ]]; then
 fi
 set -e
 
-PROFILE=$DEPLOYMENT
+
 echo "Deploying IAM stack to $DEPLOYMENT"
-npm run deploy-iam
+npx kes cf deploy --kes-folder app --region us-east-1\
+ --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/iam
 
 echo "Deploying DB stack to $DEPLOYMENT"
-npm run deploy-db
+npx kes cf deploy --kes-folder app --region us-east-1\
+ --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/db
 
 echo "Deploying APP stack to $DEPLOYMENT"
-npm run deploy-app
+npx kes cf deploy --kes-folder app --region us-east-1\
+ --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/app
 
 echo "Deploying S3AccessTest lambda to $DEPLOYMENT"
 ./node_modules/.bin/kes lambda S3AccessTest deploy \
