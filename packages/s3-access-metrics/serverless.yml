@@ -6,7 +6,6 @@ plugins:
 provider:
   name: aws
   runtime: nodejs8.10
-  deploymentBucket: ${file(./config.js):deploymentBucket}
   role: LambdaRole
   stackName: ${file(./config.js):prefix}-${self:service}
   region: ${file(./config.yml):region, 'us-east-1'}

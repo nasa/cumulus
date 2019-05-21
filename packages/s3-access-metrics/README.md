@@ -33,8 +33,6 @@ Before deployment, a `config.yml` must be created.
 **Optional Parameters**
 
 * `logsPrefix` - the S3 key prefix of the S3 AccessLogs
-* `deploymentBucket` - the bucket to store deployment artifacts in. If not
-  specified, a bucket will be created and used
 * `permissionsBoundary` - an IAM permissions boundary to be used when managing
   IAM resources during deployment
 * `vpcId` - the VPC to deploy Lambda functions to. If this is set, `subnetIds`
@@ -49,7 +47,6 @@ prefix: my-prefix
 logsBucket: my-logs-bucket
 logsPrefix: path/to/my/logs/
 stack: my-cumulus-stack
-deploymentBucket: my-deployment-bucket
 permissionsBoundary: arn:aws:iam::123456789012:policy/SomeRoleBoundary
 vpcId: vpc-123
 subnetIds:

@@ -7,6 +7,8 @@ const {
   isNotString
 } = require('./utils');
 
+const noValue = () => ({ Ref: 'AWS::NoValue' });
+
 const validateIsArrayOfStrings = (name, value) => {
   if (isNotArrayOfStrings(value)) {
     throw new Error(`${name} must be an array of strings`);
@@ -52,7 +54,6 @@ const validateVpcId = ({ subnetIds, vpcId }) => {
 };
 
 const validateConfig = (config) => {
-  validateOptionalString('deploymentBucket', config.deploymentBucket);
   validateRequiredString('logsBucket', config.logsBucket);
   validateOptionalString('logsPrefix', config.logsPrefix);
   validateOptionalString('permissionsBoundary', config.permissionsBoundary);
@@ -69,43 +70,12 @@ const configFetcher = (key, defaultValue) =>
     return isNil(config[key]) ? defaultValue : config[key];
   };
 
-// Return the configured deployment bucket or false
-module.exports.deploymentBucket = configFetcher('deploymentBucket', false);
-
-// Return a boolean indicating whether the Lambda functions should be deployed
-// to a VPC.  Returns true if both `vpcId` and `subnetIds` are set.
-module.exports.deployToVpc = (_serverless, config) =>
-  (isNotNil(config.vpcId) && isNotNil(config.subnetIds));
-
-// Return the configured logsBucket or throw an exception
-module.exports.logsBucket = configFetcher('logsBucket');
-
-// Return the configured logsPrefix or an empty string
-module.exports.logsPrefix = configFetcher('logsPrefix', '');
-
-// Return the configured `permissionsBoundary` or Cloudformation's
-// `AWS::NoValue`
-module.exports.permissionsBoundary = configFetcher(
-  'permissionsBoundary',
-  { Ref: 'AWS::NoValue' }
+const deployToVpc = (_serverless, config) => (
+  isNotNil(config.vpcId)
+  && isNotNil(config.subnetIds)
 );
 
-// Return the configured prefix or throw an exception
-module.exports.prefix = configFetcher('prefix');
-
-// Return the configured stack or throw an exception
-module.exports.stack = configFetcher('stack');
-
-// Return the configured subnetIds or false
-module.exports.subnetIds = (_serverless, config) => {
-  validateConfig(config);
-
-  return isNil(config.subnetIds) ? false : config.subnetIds;
-};
-
-// If both `vpcId` and `subnetIds` are set, return a VPC config.  Otherwise,
-// return CloudFormation's `AWS::NoValue`
-module.exports.vpcConfig = (_serverless, config) => {
+const vpcConfig = (_serverless, config) => {
   validateConfig(config);
 
   if (module.exports.deployToVpc(_serverless, config)) {
@@ -117,8 +87,17 @@ module.exports.vpcConfig = (_serverless, config) => {
     };
   }
 
-  return { Ref: 'AWS::NoValue' };
+  return noValue();
 };
 
-// Return the configured vpcId or false
-module.exports.vpcId = configFetcher('vpcId', false);
+module.exports = {
+  deployToVpc,
+  vpcConfig,
+  logsBucket: configFetcher('logsBucket'),
+  logsPrefix: configFetcher('logsPrefix', ''),
+  permissionsBoundary: configFetcher('permissionsBoundary', noValue()),
+  prefix: configFetcher('prefix'),
+  stack: configFetcher('stack'),
+  subnetIds: configFetcher('subnetIds', false),
+  vpcId: configFetcher('vpcId', false)
+};

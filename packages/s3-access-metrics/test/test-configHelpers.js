@@ -12,31 +12,6 @@ test.beforeEach((t) => {
   t.context.serverless = {};
 });
 
-test('deploymentBucket() returns the configured value if set', (t) => {
-  const config = {
-    ...t.context.config,
-    deploymentBucket: 'asdf'
-  };
-
-  t.is(configHelpers.deploymentBucket(t.context.serverless, config), 'asdf');
-});
-
-test('deploymentBucket() returns false if not set', (t) => {
-  t.false(configHelpers.deploymentBucket(t.context.serverless, t.context.config));
-});
-
-test('deploymentBucket() throws an error if the configured value is not a string', (t) => {
-  const config = {
-    ...t.context.config,
-    deploymentBucket: ['a']
-  };
-
-  t.throws(
-    () => configHelpers.deploymentBucket(t.context.serverless, config),
-    'deploymentBucket must be a string'
-  );
-});
-
 test('deployToVpc() returns true if both vpcId and subnetIds are set', (t) => {
   const config = {
     ...t.context.config,

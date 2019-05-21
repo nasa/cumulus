@@ -33,7 +33,6 @@ module.exports = {
   logsPrefix: getConfigValue('logsPrefix'),
   permissionsBoundary: getConfigValue('permissionsBoundary'),
   vpcConfig: getConfigValue('vpcConfig'),
-  deploymentBucket: getConfigValue('deploymentBucket'),
   logsBucket: getConfigValue('logsBucket'),
   prefix: getConfigValue('prefix'),
   stack: getConfigValue('stack'),
