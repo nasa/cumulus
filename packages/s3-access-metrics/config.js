@@ -16,14 +16,12 @@ const readFile = promisify(fs.readFile);
 const loadConfig = () => readFile('./config.yml', 'utf8').then(yaml.safeLoad);
 
 const getConfigValue = (name) =>
-  (serverless) =>
-    loadConfig()
-      .then((config) => configHelpers[name](serverless, config));
+  (_serverless) => loadConfig().then(configHelpers[name]);
 
 // Return deployToVpc as a string
-const deployToVpc = (serverless) =>
+const deployToVpc = (_serverless) =>
   loadConfig()
-    .then((config) => configHelpers.deployToVpc(serverless, config))
+    .then(configHelpers.deployToVpc)
     .then((x) => `${x}`);
 
 // The result of evaluating these functions is available in `serverless.yml` by
