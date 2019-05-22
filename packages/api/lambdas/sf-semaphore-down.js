@@ -7,6 +7,8 @@ const {
   Semaphore
 } = require('@cumulus/common');
 
+const { hasQueueName, hasExecutionLimit } = require('../lib/queue');
+
 /**
  * Determine if workflow is in a terminal state.
  *
@@ -15,16 +17,6 @@ const {
  */
 const isTerminalMessage = (message) =>
   message.meta.status === 'failed' || message.meta.status === 'completed';
-
-/**
- * Determine if there is a maximum execution limit for a queue.
- *
- * @param {Object} message - A workflow message object
- * @param {string} queueName - A queue name
- * @returns {boolean} - True if queue has an execution limit.
- */
-const hasExecutionLimit = (message, queueName) =>
-  has(message, `meta.queueExecutionLimits.${queueName}`);
 
 /**
  * Determine if workflow needs a semaphore decrement.
@@ -39,19 +31,19 @@ const hasExecutionLimit = (message, queueName) =>
  * @returns {boolean} True if workflow semaphore should be decremented.
  */
 const isDecrementMessage = (message) =>
-  has(message, 'cumulus_meta.queueName')
-  && hasExecutionLimit(message, get(message, 'cumulus_meta.queueName'))
+  hasQueueName(message)
+  && hasExecutionLimit(message)
   && has(message, 'meta.status')
   && isTerminalMessage(message);
 
 /**
- * Decrement semaphore value for executions with priority
+ * Decrement semaphore value for executions started from a queue
  *
- * @param {string} key - Key for a semaphore tracking running executions
+ * @param {string} queueName - Queue name used as key for semaphore tracking running executions
  * @returns {Promise} A promise indicating function completion
  * @throws {Error} Error from semaphore.down() operation
  */
-async function decrementPrioritySemaphore(key) {
+async function decrementQueueSemaphore(queueName) {
   const semaphore = new Semaphore(
     aws.dynamodbDocClient(),
     process.env.SemaphoresTable
@@ -60,9 +52,9 @@ async function decrementPrioritySemaphore(key) {
   // Error should only be thrown if we are attempting to decrement the
   // count below 0. If so, catch the error so it can be logged.
   try {
-    await semaphore.down(key);
+    await semaphore.down(queueName);
   } catch (err) {
-    log.error(`Failure: attempted to decrement semaphore for key ${key} below 0`);
+    log.error(`Failure: attempted to decrement semaphore for queue ${queueName} below 0`);
     throw err;
   }
 }
@@ -79,7 +71,7 @@ function getSemaphoreDecrementTasks(event) {
     .filter((record) => has(record, 'Sns.Message') && !isNil(record.Sns.Message))
     .map((record) => JSON.parse(record.Sns.Message))
     .filter((message) => isDecrementMessage(message))
-    .map((message) => decrementPrioritySemaphore(message.cumulus_meta.queueName));
+    .map((message) => decrementQueueSemaphore(message.cumulus_meta.queueName));
 }
 
 /**
