@@ -3,6 +3,7 @@
 set -e
 source .bamboo_env_vars || true
 . ./bamboo/set-bamboo-env-variables.sh
+. ./bamboo/abort-if-not-pr-or-master.sh
 
 ### Post status to github.  Requires set-bamboo-env-varaibles to have been set.
 curl -H\
