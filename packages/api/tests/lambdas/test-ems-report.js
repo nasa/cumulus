@@ -40,7 +40,6 @@ const formatMappings = {
   ingest: [
     granuleIdRegx, // dbID
     '^[a-zA-Z0-9-_]+$', // product
-    '^\\d+$', // versionID
     '^\\d+$', // productVolume
     '^(Successful|Failed)$', // productState
     '^[a-zA-Z0-9\\.-_]+$', // externalDataProvider
