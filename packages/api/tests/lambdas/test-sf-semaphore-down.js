@@ -17,14 +17,12 @@ const {
 
 const createSnsWorkflowMessage = ({
   status,
-  // priorityKey,
   queueName
 }) => ({
   Sns: {
     Message: JSON.stringify({
       cumulus_meta: {
         execution_name: randomString(),
-        // priorityKey
         queueName
       },
       meta: {
@@ -94,7 +92,7 @@ test('getSemaphoreDecrementTasks() returns empty array for SNS message with empt
   t.is(tasks.length, 0);
 });
 
-test('sfSemaphoreDown lambda does nothing for a workflow message with no priority info', async (t) => {
+test('sfSemaphoreDown lambda does nothing for a workflow message with no queue name', async (t) => {
   const { client, semaphore } = t.context;
   const queueName = randomId('low');
 
