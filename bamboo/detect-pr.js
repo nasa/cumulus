@@ -42,10 +42,10 @@ async function getPrsForRef(headRefName, baseRefName) {
   const nodes = edges.map((x) => x.node).filter((node) => node.headRefName === headRefName && node.baseRefName === baseRefName);
 
   if (nodes.length > 0) {
-    console.log(`Current commit is associated with a PR to master: ${JSON.stringify(nodes)}`);
+    console.log(`Current commit is associated with a PR to ${baseRefName}: ${JSON.stringify(nodes)}`);
     process.exitCode = 100;
   } else {
-    console.log('Current commit is not associated with a PR to master');
+    console.log(`Current commit is not associated with a PR to ${baseRefName}`);
   }
 }
 
