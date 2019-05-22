@@ -64,21 +64,21 @@ const validateConfig = (config) => {
 };
 
 const configFetcher = (key, defaultValue) =>
-  (_serverless, config) => {
+  (config) => {
     validateConfig(config);
 
     return isNil(config[key]) ? defaultValue : config[key];
   };
 
-const deployToVpc = (_serverless, config) => (
+const deployToVpc = (config) => (
   isNotNil(config.vpcId)
   && isNotNil(config.subnetIds)
 );
 
-const vpcConfig = (_serverless, config) => {
+const vpcConfig = (config) => {
   validateConfig(config);
 
-  if (module.exports.deployToVpc(_serverless, config)) {
+  if (module.exports.deployToVpc(config)) {
     return {
       securityGroupIds: [
         { 'Fn::GetAtt': ['LambdaSecurityGroup', 'GroupId'] }

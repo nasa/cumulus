@@ -9,7 +9,6 @@ test.beforeEach((t) => {
     prefix: 'asdf',
     stack: 'asdf'
   };
-  t.context.serverless = {};
 });
 
 test('deployToVpc() returns true if both vpcId and subnetIds are set', (t) => {
@@ -19,7 +18,7 @@ test('deployToVpc() returns true if both vpcId and subnetIds are set', (t) => {
     subnetIds: ['asdf']
   };
 
-  t.true(configHelpers.deployToVpc(t.context.serverless, config));
+  t.true(configHelpers.deployToVpc(config));
 });
 
 test('deployToVpc() returns false if vpcId is set but subnetIds is not', (t) => {
@@ -28,7 +27,7 @@ test('deployToVpc() returns false if vpcId is set but subnetIds is not', (t) => 
     vpcId: 'asdf'
   };
 
-  t.false(configHelpers.deployToVpc(t.context.serverless, config));
+  t.false(configHelpers.deployToVpc(config));
 });
 
 test('deployToVpc() returns false if subnetIds is set but vpcId is not', (t) => {
@@ -37,7 +36,7 @@ test('deployToVpc() returns false if subnetIds is set but vpcId is not', (t) => 
     subnetIds: ['asdf']
   };
 
-  t.false(configHelpers.deployToVpc(t.context.serverless, config));
+  t.false(configHelpers.deployToVpc(config));
 });
 
 test('logsBucket() returns the configured value if set', (t) => {
@@ -46,7 +45,7 @@ test('logsBucket() returns the configured value if set', (t) => {
     logsBucket: 'asdf'
   };
 
-  t.is(configHelpers.logsBucket(t.context.serverless, config), 'asdf');
+  t.is(configHelpers.logsBucket(config), 'asdf');
 });
 
 test('logsBucket() throws an exception if not set', (t) => {
@@ -54,7 +53,7 @@ test('logsBucket() throws an exception if not set', (t) => {
   delete config.logsBucket;
 
   t.throws(
-    () => configHelpers.logsBucket(t.context.serverless, config),
+    () => configHelpers.logsBucket(config),
     'logsBucket must be set'
   );
 });
@@ -66,7 +65,7 @@ test('logsBucket() throws an error if the configured value is not a string', (t)
   };
 
   t.throws(
-    () => configHelpers.logsBucket(t.context.serverless, config),
+    () => configHelpers.logsBucket(config),
     'logsBucket must be a string'
   );
 });
@@ -77,11 +76,11 @@ test('logsPrefix() returns the configured value if set', (t) => {
     logsPrefix: 'asdf'
   };
 
-  t.is(configHelpers.logsPrefix(t.context.serverless, config), 'asdf');
+  t.is(configHelpers.logsPrefix(config), 'asdf');
 });
 
 test('logsPrefix() returns space if logsPrefix is not set', (t) => {
-  t.is(configHelpers.logsPrefix(t.context.serverless, t.context.config), '');
+  t.is(configHelpers.logsPrefix(t.context.config), '');
 });
 
 test('logsPrefix() throws an error if the configured value is not a string', (t) => {
@@ -91,7 +90,7 @@ test('logsPrefix() throws an error if the configured value is not a string', (t)
   };
 
   t.throws(
-    () => configHelpers.logsPrefix(t.context.serverless, config),
+    () => configHelpers.logsPrefix(config),
     'logsPrefix must be a string'
   );
 });
@@ -102,12 +101,12 @@ test('permissionsBoundary() returns the configured value if set', (t) => {
     permissionsBoundary: 'asdf'
   };
 
-  t.is(configHelpers.permissionsBoundary(t.context.serverless, config), 'asdf');
+  t.is(configHelpers.permissionsBoundary(config), 'asdf');
 });
 
 test('permissionsBoundary() returns AWS::NoValue if logsPrefix is not set', (t) => {
   t.deepEqual(
-    configHelpers.permissionsBoundary({}, t.context.config),
+    configHelpers.permissionsBoundary(t.context.config),
     { Ref: 'AWS::NoValue' }
   );
 });
@@ -119,7 +118,7 @@ test('permissionsBoundary() throws an error if the configured value is not a str
   };
 
   t.throws(
-    () => configHelpers.permissionsBoundary(t.context.serverless, config),
+    () => configHelpers.permissionsBoundary(config),
     'permissionsBoundary must be a string'
   );
 });
@@ -130,7 +129,7 @@ test('prefix() returns the configured value if set', (t) => {
     prefix: 'asdf'
   };
 
-  t.is(configHelpers.prefix(t.context.serverless, config), 'asdf');
+  t.is(configHelpers.prefix(config), 'asdf');
 });
 
 test('prefix() throws an exception if not set', (t) => {
@@ -138,7 +137,7 @@ test('prefix() throws an exception if not set', (t) => {
   delete config.prefix;
 
   t.throws(
-    () => configHelpers.prefix(t.context.serverless, config),
+    () => configHelpers.prefix(config),
     'prefix must be set'
   );
 });
@@ -150,7 +149,7 @@ test('prefix() throws an error if the configured value is not a string', (t) => 
   };
 
   t.throws(
-    () => configHelpers.prefix(t.context.serverless, config),
+    () => configHelpers.prefix(config),
     'prefix must be a string'
   );
 });
@@ -161,7 +160,7 @@ test('stack() returns the configured value if set', (t) => {
     stack: 'asdf'
   };
 
-  t.is(configHelpers.stack(t.context.serverless, config), 'asdf');
+  t.is(configHelpers.stack(config), 'asdf');
 });
 
 test('stack() throws an exception if not set', (t) => {
@@ -169,7 +168,7 @@ test('stack() throws an exception if not set', (t) => {
   delete config.stack;
 
   t.throws(
-    () => configHelpers.stack(t.context.serverless, config),
+    () => configHelpers.stack(config),
     'stack must be set'
   );
 });
@@ -181,7 +180,7 @@ test('stack() throws an error if the configured value is not a string', (t) => {
   };
 
   t.throws(
-    () => configHelpers.stack(t.context.serverless, config),
+    () => configHelpers.stack(config),
     'stack must be a string'
   );
 });
@@ -193,11 +192,11 @@ test('subnetIds() returns the configured value if set', (t) => {
     vpcId: 'v-123'
   };
 
-  t.deepEqual(configHelpers.subnetIds(t.context.serverless, config), ['asdf']);
+  t.deepEqual(configHelpers.subnetIds(config), ['asdf']);
 });
 
 test('subnetIds() returns false if not set', (t) => {
-  t.false(configHelpers.subnetIds(t.context.serverless, t.context.config));
+  t.false(configHelpers.subnetIds(t.context.config));
 });
 
 test('subnetIds() throws an error if the configured value is not an array', (t) => {
@@ -208,7 +207,7 @@ test('subnetIds() throws an error if the configured value is not an array', (t) 
   };
 
   t.throws(
-    () => configHelpers.subnetIds(t.context.serverless, config),
+    () => configHelpers.subnetIds(config),
     'subnetIds must be an array of strings'
   );
 });
@@ -221,7 +220,7 @@ test('subnetIds() throws an error if the configured value is not an array of str
   };
 
   t.throws(
-    () => configHelpers.subnetIds(t.context.serverless, config),
+    () => configHelpers.subnetIds(config),
     'subnetIds must be an array of strings'
   );
 });
@@ -232,7 +231,7 @@ test('subnetIds() throws an error if it is set but vpcId is not', (t) => {
     subnetIds: ['s-123']
   };
 
-  t.throws(() => configHelpers.subnetIds(t.context.serverless, config));
+  t.throws(() => configHelpers.subnetIds(config));
 });
 
 test('vpcConfig() returns the correct value if deployToVpc returns true', (t) => {
@@ -243,7 +242,7 @@ test('vpcConfig() returns the correct value if deployToVpc returns true', (t) =>
   };
 
   t.deepEqual(
-    configHelpers.vpcConfig(t.context.serverless, config),
+    configHelpers.vpcConfig(config),
     {
       securityGroupIds: [
         { 'Fn::GetAtt': ['LambdaSecurityGroup', 'GroupId'] }
@@ -255,7 +254,7 @@ test('vpcConfig() returns the correct value if deployToVpc returns true', (t) =>
 
 test('vpcConfig() returns AWS::NoValue if deployToVpc returns false', (t) => {
   t.deepEqual(
-    configHelpers.vpcConfig(t.context.serverless, t.context.config),
+    configHelpers.vpcConfig(t.context.config),
     { Ref: 'AWS::NoValue' }
   );
 });
@@ -267,7 +266,7 @@ test('vpcConfig() throws an error if vpcId is set but subnetIds is not', (t) => 
   };
 
   t.throws(
-    () => configHelpers.vpcConfig(t.context.serverless, config),
+    () => configHelpers.vpcConfig(config),
     'Both vpcId and subnetIds must be set'
   );
 });
@@ -279,7 +278,7 @@ test('vpcConfig() throws an error if subnetIds is set but vpcId is not', (t) => 
   };
 
   t.throws(
-    () => configHelpers.vpcConfig(t.context.serverless, config),
+    () => configHelpers.vpcConfig(config),
     'Both vpcId and subnetIds must be set'
   );
 });
@@ -291,21 +290,31 @@ test('vpcId() returns the configured value if set', (t) => {
     vpcId: 'asdf'
   };
 
-  t.deepEqual(configHelpers.vpcId(t.context.serverless, config), 'asdf');
+  t.deepEqual(configHelpers.vpcId(config), 'asdf');
 });
 
 test('vpcId() returns false if not set', (t) => {
-  t.false(configHelpers.vpcId(t.context.serverless, t.context.config));
+  t.false(configHelpers.vpcId(t.context.config));
 });
 
 test('vpcId() throws an error if the configured value is not a string', (t) => {
-  const config = { ...t.context.config, vpcId: 5 };
+  const config = {
+    ...t.context.config,
+    vpcId: 5,
+    subnetIds: ['s-123']
+  };
 
-  t.throws(() => configHelpers.vpcId(t.context.serverless, config));
+  t.throws(
+    () => configHelpers.vpcId(config),
+    'vpcId must be a string'
+  );
 });
 
 test('vpcId() throws an error if it is set but subnetIds is not', (t) => {
-  const config = { ...t.context.config, vpcId: 5 };
+  const config = { ...t.context.config, vpcId: 'asdf' };
 
-  t.throws(() => configHelpers.vpcId(t.context.serverless, config));
+  t.throws(
+    () => configHelpers.vpcId(config),
+    'Both vpcId and subnetIds must be set'
+  );
 });
