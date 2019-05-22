@@ -68,9 +68,6 @@
     "lerna": "^3.13.2",
     "nyc": "^14.0.0",
     "@octokit/graphql": "2.1.1",
-    "@octokit/rest": "16.26.0",
-    "@octokit/plugin-retry": "2.2.0",
-    "@octokit/plugin-throttling": "2.6.0",
     "simple-git": "^1.96.0"
   },
   "dependencies": {
