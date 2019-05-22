@@ -37,7 +37,6 @@ const emsMappings = {
   ingest: {
     dbID: 'granuleId',
     product: 'collectionId', // shortName part
-    versionID: 'collectionId', // versionID part
     productVolume: 'productVolume',
     productState: 'status',
     externalDataProvider: 'provider',
@@ -327,7 +326,8 @@ async function submitReports(reports) {
     );
     log.debug(`EMS report ${fileName} is sent`);
 
-    // move to sent folder
+    // copy to sent folder, the file is also in original location so that a .rev file
+    // can be generated
     const newKey = path.join(keyfields.join('/'), 'sent', fileName);
 
     // eslint-disable-next-line no-await-in-loop
