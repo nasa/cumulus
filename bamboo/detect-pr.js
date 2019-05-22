@@ -5,7 +5,8 @@
 
 const graphql = require('@octokit/graphql');
 // Query Github API for first commit on target ref and see if it has an associated pull request
-async function getPrsForRef(headRefName) {
+
+async function getPrsForRef(headRefName, baseRefName) {
   const queryResponse = await graphql(`{
     repository(owner:"nasa", name:"cumulus") {
         name
@@ -38,15 +39,17 @@ async function getPrsForRef(headRefName) {
     }
   });
   const edges = queryResponse.repository.ref.target.history.nodes[0].associatedPullRequests.edges;
-  const nodes = edges.map((x) => x.node).filter((node) => node.headRefName === headRefName);
+  const nodes = edges.map((x) => x.node).filter((node) => node.headRefName === headRefName && node.baseRefName === baseRefName);
 
   if (nodes.length > 0) {
-    console.log(`Current commit is associated with a PR: ${JSON.stringify(nodes)}`);
+    console.log(`Current commit is associated with a PR to master: ${JSON.stringify(nodes)}`);
     process.exitCode = 100;
+  } else {
+    console.log('Current commit is not associated with a PR to master');
   }
 }
 
-getPrsForRef(process.argv[2]).catch((e) => {
+getPrsForRef(process.argv[2], process.argv[3]).catch((e) => {
   console.log('Error querying API');
   console.log(e);
   process.exitCode = 1;

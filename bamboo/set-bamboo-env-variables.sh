@@ -34,6 +34,7 @@ for key in ${param_list[@]}; do
   export $update_key=${!key}
 done
 
+## Get the current git SHA
 export GIT_SHA=$(git rev-parse HEAD)
 
 ## This should take a blank value from the global options, and
@@ -42,6 +43,7 @@ if [[ ! -z $bamboo_GIT_PR ]]; then
   export GIT_PR=$bamboo_GIT_PR
   echo export GIT_PR=$GIT_PR >> .bamboo_env_vars
 fi
+
 ## Set container IDs for docker-compose stack identification
 container_id=${bamboo_planKey,,}
 export container_id=${container_id/-/}
@@ -54,7 +56,7 @@ source .bamboo_env_vars || true
 if [[ -z $GIT_PR ]]; then
   echo "Setting GIT_PR"
   set +e
-  node ./bamboo/detect-pr.js $BRANCH
+  node ./bamboo/detect-pr.js $BRANCH master
   PR_CODE=$?
   set -e
   if [[ PR_CODE -eq 100 ]]; then
