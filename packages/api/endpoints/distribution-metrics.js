@@ -98,15 +98,9 @@ const buildGetMetricParamsFromListMetricsResult = (listMetricsResult) => {
   const EndTime = new Date(new Date(Date.now()).setSeconds(0, 0));
   const StartTime = new Date(EndTime - oneDayInMs);
 
-  try {
-    return listMetricsResult.Metrics.map(
-      buildGetMetricParams(StartTime, EndTime)
-    );
-  } catch (error) {
-    log.error('getMetricsParams', error);
-    log.error('input listMetricsResult', listMetricsResult);
-    return [];
-  }
+  return listMetricsResult.Metrics.map(
+    buildGetMetricParams(StartTime, EndTime)
+  );
 };
 
 /**
