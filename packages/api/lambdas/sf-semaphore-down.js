@@ -20,7 +20,8 @@ const isTerminalMessage = (message) =>
  * Determine if workflow needs a semaphore decrement.
  *
  * Skip if:
- *   - Message has no priority level
+ *   - Message has no specified queue name
+ *   - Queue name for message has no maximum execution limit
  *   - Message has no workflow status
  *   - Workflow is not in a terminal state (failed/completed)
  *
@@ -28,7 +29,9 @@ const isTerminalMessage = (message) =>
  * @returns {boolean} True if workflow semaphore should be decremented.
  */
 const isDecrementMessage = (message) =>
-  has(message, 'cumulus_meta.priorityKey')
+  // has(message, 'cumulus_meta.priorityKey')
+  has(message, 'cumulus_meta.queueName')
+  && has(message, `meta.queueExecutionLimits.${get(message, 'cumulus_meta.queueName')}`)
   && has(message, 'meta.status')
   && isTerminalMessage(message);
 
@@ -67,7 +70,7 @@ function getSemaphoreDecrementTasks(event) {
     .filter((record) => has(record, 'Sns.Message') && !isNil(record.Sns.Message))
     .map((record) => JSON.parse(record.Sns.Message))
     .filter((message) => isDecrementMessage(message))
-    .map((message) => decrementPrioritySemaphore(message.cumulus_meta.priorityKey));
+    .map((message) => decrementPrioritySemaphore(message.cumulus_meta.queueName));
 }
 
 /**

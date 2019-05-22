@@ -17,16 +17,21 @@ const {
 
 const createSnsWorkflowMessage = ({
   status,
-  priorityKey
+  // priorityKey,
+  queueName
 }) => ({
   Sns: {
     Message: JSON.stringify({
       cumulus_meta: {
         execution_name: randomString(),
-        priorityKey
+        // priorityKey
+        queueName
       },
       meta: {
-        status
+        status,
+        queueExecutionLimits: {
+          [queueName]: 5
+        }
       }
     })
   }
@@ -91,12 +96,12 @@ test('getSemaphoreDecrementTasks() returns empty array for SNS message with empt
 
 test('sfSemaphoreDown lambda does nothing for a workflow message with no priority info', async (t) => {
   const { client, semaphore } = t.context;
-  const key = randomId('low');
+  const queueName = randomId('low');
 
   await client.put({
     TableName: process.env.SemaphoresTable,
     Item: {
-      key,
+      key: queueName,
       semvalue: 1
     }
   }).promise();
@@ -109,18 +114,18 @@ test('sfSemaphoreDown lambda does nothing for a workflow message with no priorit
     ]
   });
 
-  const response = await semaphore.get(key);
+  const response = await semaphore.get(queueName);
   t.is(response.semvalue, 1);
 });
 
 test('sfSemaphoreDown lambda does nothing for a workflow message with no status', async (t) => {
   const { client, semaphore } = t.context;
-  const key = randomId('low');
+  const queueName = randomId('low');
 
   await client.put({
     TableName: process.env.SemaphoresTable,
     Item: {
-      key,
+      key: queueName,
       semvalue: 1
     }
   }).promise();
@@ -128,23 +133,23 @@ test('sfSemaphoreDown lambda does nothing for a workflow message with no status'
   await handler({
     Records: [
       createSnsWorkflowMessage({
-        priorityKey: key
+        queueName
       })
     ]
   });
 
-  const response = await semaphore.get(key);
+  const response = await semaphore.get(queueName);
   t.is(response.semvalue, 1);
 });
 
-test('sfSemaphoreDown lambda does nothing for a workflow message for a running workflow', async (t) => {
+test('sfSemaphoreDown lambda does nothing for a running workflow message', async (t) => {
   const { client, semaphore } = t.context;
-  const key = randomId('low');
+  const queueName = randomId('low');
 
   await client.put({
     TableName: process.env.SemaphoresTable,
     Item: {
-      key,
+      key: queueName,
       semvalue: 1
     }
   }).promise();
@@ -153,23 +158,23 @@ test('sfSemaphoreDown lambda does nothing for a workflow message for a running w
     Records: [
       createSnsWorkflowMessage({
         status: 'running',
-        priorityKey: key
+        queueName
       })
     ]
   });
 
-  const response = await semaphore.get(key);
+  const response = await semaphore.get(queueName);
   t.is(response.semvalue, 1);
 });
 
 test('sfSemaphoreDown lambda throws error when attempting to decrement empty semaphore', async (t) => {
-  const key = randomId('low');
+  const queueName = randomId('low');
 
   await t.throws(handler({
     Records: [
       createSnsWorkflowMessage({
         status: 'completed',
-        priorityKey: key
+        queueName
       })
     ]
   }));
@@ -177,13 +182,13 @@ test('sfSemaphoreDown lambda throws error when attempting to decrement empty sem
 
 test('sfSemaphoreDown lambda decrements priority semaphore for completed workflow message', async (t) => {
   const { client, semaphore } = t.context;
-  const key = randomId('low');
+  const queueName = randomId('low');
 
   // arbitrarily set semaphore so it can be decremented
   await client.put({
     TableName: process.env.SemaphoresTable,
     Item: {
-      key,
+      key: queueName,
       semvalue: 1
     }
   }).promise();
@@ -192,24 +197,24 @@ test('sfSemaphoreDown lambda decrements priority semaphore for completed workflo
     Records: [
       createSnsWorkflowMessage({
         status: 'completed',
-        priorityKey: key
+        queueName
       })
     ]
   });
 
-  const response = await semaphore.get(key);
+  const response = await semaphore.get(queueName);
   t.is(response.semvalue, 0);
 });
 
 test('sfSemaphoreDown lambda decrements priority semaphore for failed workflow message', async (t) => {
   const { client, semaphore } = t.context;
-  const key = randomId('low');
+  const queueName = randomId('low');
 
   // arbitrarily set semaphore so it can be decremented
   await client.put({
     TableName: process.env.SemaphoresTable,
     Item: {
-      key,
+      key: queueName,
       semvalue: 1
     }
   }).promise();
@@ -218,24 +223,24 @@ test('sfSemaphoreDown lambda decrements priority semaphore for failed workflow m
     Records: [
       createSnsWorkflowMessage({
         status: 'failed',
-        priorityKey: key
+        queueName
       })
     ]
   });
 
-  const response = await semaphore.get(key);
+  const response = await semaphore.get(queueName);
   t.is(response.semvalue, 0);
 });
 
 test('sfSemaphoreDown lambda handles multiple updates to a single semaphore', async (t) => {
   const { client, semaphore } = t.context;
-  const key = randomId('low');
+  const queueName = randomId('low');
 
   // Arbitrarily set semaphore value so it can be decremented
   await client.put({
     TableName: process.env.SemaphoresTable,
     Item: {
-      key,
+      key: queueName,
       semvalue: 3
     }
   }).promise();
@@ -244,36 +249,36 @@ test('sfSemaphoreDown lambda handles multiple updates to a single semaphore', as
     Records: [
       createSnsWorkflowMessage({
         status: 'failed',
-        priorityKey: key
+        queueName
       }),
       createSnsWorkflowMessage({
         status: 'completed',
-        priorityKey: key
+        queueName
       })
     ]
   });
 
-  const response = await semaphore.get(key);
+  const response = await semaphore.get(queueName);
   t.is(response.semvalue, 1);
 });
 
 test('sfSemaphoreDown lambda updates multiple semaphores', async (t) => {
   const { client, semaphore } = t.context;
-  const lowPriorityKey = randomId('low');
-  const medPriorityKey = randomId('med');
+  const lowPriorityQueue = randomId('low');
+  const medPriorityQueue = randomId('med');
 
   await Promise.all([
     client.put({
       TableName: process.env.SemaphoresTable,
       Item: {
-        key: lowPriorityKey,
+        key: lowPriorityQueue,
         semvalue: 3
       }
     }).promise(),
     client.put({
       TableName: process.env.SemaphoresTable,
       Item: {
-        key: medPriorityKey,
+        key: medPriorityQueue,
         semvalue: 3
       }
     }).promise()
@@ -283,22 +288,22 @@ test('sfSemaphoreDown lambda updates multiple semaphores', async (t) => {
     Records: [
       createSnsWorkflowMessage({
         status: 'completed',
-        priorityKey: lowPriorityKey
+        queueName: lowPriorityQueue
       }),
       createSnsWorkflowMessage({
         status: 'failed',
-        priorityKey: lowPriorityKey
+        queueName: lowPriorityQueue
       }),
       createSnsWorkflowMessage({
         status: 'completed',
-        priorityKey: medPriorityKey
+        queueName: medPriorityQueue
       })
     ]
   });
 
-  let response = await semaphore.get(lowPriorityKey);
+  let response = await semaphore.get(lowPriorityQueue);
   t.is(response.semvalue, 1);
 
-  response = await semaphore.get(medPriorityKey);
+  response = await semaphore.get(medPriorityQueue);
   t.is(response.semvalue, 2);
 });
