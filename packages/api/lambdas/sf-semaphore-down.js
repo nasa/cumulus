@@ -17,6 +17,16 @@ const isTerminalMessage = (message) =>
   message.meta.status === 'failed' || message.meta.status === 'completed';
 
 /**
+ * Determine if there is a maximum execution limit for a queue.
+ *
+ * @param {Object} message - A workflow message object
+ * @param {string} queueName - A queue name
+ * @returns {boolean} - True if queue has an execution limit.
+ */
+const hasExecutionLimit = (message, queueName) =>
+  has(message, `meta.queueExecutionLimits.${queueName}`);
+
+/**
  * Determine if workflow needs a semaphore decrement.
  *
  * Skip if:
@@ -29,9 +39,8 @@ const isTerminalMessage = (message) =>
  * @returns {boolean} True if workflow semaphore should be decremented.
  */
 const isDecrementMessage = (message) =>
-  // has(message, 'cumulus_meta.priorityKey')
   has(message, 'cumulus_meta.queueName')
-  && has(message, `meta.queueExecutionLimits.${get(message, 'cumulus_meta.queueName')}`)
+  && hasExecutionLimit(message, get(message, 'cumulus_meta.queueName'))
   && has(message, 'meta.status')
   && isTerminalMessage(message);
 
