@@ -237,10 +237,10 @@ const getDistributionMetrics = async (stackName) => {
 };
 
 async function get(req, res) {
-  const stackName = req.query.stackName || process.env.stackName;
+  const stackName = req.params.stackName || process.env.stackName;
   const metrics = await getDistributionMetrics(stackName);
   return res.send(metrics);
 }
 
-router.get('/', get);
+router.get('/:stackName', get);
 module.exports = router;
