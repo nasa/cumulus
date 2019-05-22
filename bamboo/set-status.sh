@@ -5,7 +5,7 @@ source .bamboo_env_vars || true
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr-or-master.sh
 
-### Post status to github.  Requires set-bamboo-env-varaibles to have been set.
+### Post status to github.  Requires set-bamboo-env-variables to have been set.
 curl -H\
 "Authorization: token $GITHUB_TOKEN"\
  -d "{\"state\":\"$1\", \"target_url\": \"$2\", \"description\": \"$3\", \"context\": \"earthdata-bamboo\"}"\
