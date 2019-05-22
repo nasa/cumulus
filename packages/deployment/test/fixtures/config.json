@@ -227,11 +227,6 @@
             "name": "backend"
         }
     ],
-    "priority": {
-        "low": {
-            "maxExecutions": 5
-        }
-    },
     "sqs": {
         "startSF": {
             "visibilityTimeout": 20,
@@ -248,7 +243,7 @@
         "startSFLowPriority": {
             "visibilityTimeout": 20,
             "retry": 30,
-            "priority": "low",
+            "maxExecutions": 5,
             "consumer": [
                 {
                     "lambda": "sqs2sfThrottle",
