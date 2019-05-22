@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e
 source .bamboo_env_vars || true
 . ./bamboo/set-bamboo-env-variables.sh
