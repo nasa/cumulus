@@ -7,7 +7,11 @@ const {
   Semaphore
 } = require('@cumulus/common');
 
-const { hasQueueName, hasExecutionLimit } = require('../lib/queue');
+const {
+  getQueueName,
+  hasQueueName,
+  hasExecutionLimit
+} = require('../lib/queue');
 
 /**
  * Determine if workflow is in a terminal state.
@@ -71,7 +75,8 @@ function getSemaphoreDecrementTasks(event) {
     .filter((record) => has(record, 'Sns.Message') && !isNil(record.Sns.Message))
     .map((record) => JSON.parse(record.Sns.Message))
     .filter((message) => isDecrementMessage(message))
-    .map((message) => decrementQueueSemaphore(message.cumulus_meta.queueName));
+    .map((message) => getQueueName(message))
+    .map((queueName) => decrementQueueSemaphore(queueName));
 }
 
 /**
