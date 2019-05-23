@@ -21,7 +21,7 @@ const { Consumer } = require('@cumulus/ingest/consumer');
 const {
   getQueueName,
   getMaximumExecutions
-} = require('../lib/queue');
+} = require('../lib/message');
 
 /**
  * Starts a new stepfunction with the given payload
@@ -86,14 +86,7 @@ async function incrementAndDispatch(queueMessage) {
   const workflowMessage = get(queueMessage, 'Body', {});
 
   const queueName = getQueueName(workflowMessage);
-  if (isNil(queueName)) {
-    throw new Error('cumulus_meta.queueName not set in message');
-  }
-
   const maxExecutions = getMaximumExecutions(workflowMessage, queueName);
-  if (isNil(maxExecutions)) {
-    throw new Error(`Could not determine maximum executions for queue ${queueName}`);
-  }
 
   await incrementQueueSemaphore(queueName, maxExecutions);
 

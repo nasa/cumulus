@@ -11,7 +11,7 @@ const {
   getQueueName,
   hasQueueName,
   hasExecutionLimit
-} = require('../lib/queue');
+} = require('../lib/message');
 
 /**
  * Determine if workflow is in a terminal state.
