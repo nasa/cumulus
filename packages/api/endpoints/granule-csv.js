@@ -36,8 +36,6 @@ async function list(req, res) {
   try {
     const parser = new Parser({ fields });
     csv = parser.parse(granuleArray);
-    console.log(csv);
-
   } catch (error) {
     console.log(error);
   }
