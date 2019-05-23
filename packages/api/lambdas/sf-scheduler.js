@@ -23,7 +23,7 @@ function schedule(event, context, cb) {
   const cumulusMeta = get(event, 'cumulus_meta', {});
   const collection = get(event, 'collection', null);
   const payload = get(event, 'payload', {});
-  const queueName = get(meta, 'queueName', 'startSF');
+  const queueName = get(event, 'queueName', 'startSF');
   let message;
 
   const parsed = parseS3Uri(template);
@@ -35,8 +35,7 @@ function schedule(event, context, cb) {
       message.meta = merge(message.meta, meta);
       message.payload = payload;
       message.cumulus_meta.execution_name = uuidv4();
-      message.cumulus_meta.priority_key = 
-        message.meta.queuePriorities[queueName];
+      message.cumulus_meta.priority_key = message.meta.queuePriorities[queueName];
       message.cumulus_meta = merge(message.cumulus_meta, cumulusMeta);
     })
     .then(() => {

@@ -136,7 +136,8 @@ class Rule extends Manager {
       collection: item.collection,
       meta: get(item, 'meta', {}),
       cumulus_meta: get(item, 'cumulus_meta', {}),
-      payload: get(item, 'payload', {})
+      payload: get(item, 'payload', {}),
+      queueName: get(item, 'queueName', null)
     };
   }
 
