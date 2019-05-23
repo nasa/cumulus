@@ -135,7 +135,7 @@ class Granule extends Manager {
   }
 
   /**
-   * Removes a give granule from CMR
+   * Removes a given granule from CMR
    *
    * @param {string} granuleId - the granule ID
    * @param {string} collectionId - the collection ID
