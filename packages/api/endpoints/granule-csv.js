@@ -25,10 +25,10 @@ async function list(req, res) {
     const endDate = granule.endingDateTime || '';
 
     const granuleObject = {
-      'granuleUr': granuleUr,
-      'collectionId': collectionId,
-      'startDateTime': startDate,
-      'endDateTime': endDate
+      granuleUr: granuleUr,
+      collectionId: collectionId,
+      startDateTime: startDate,
+      endDateTime: endDate
     };
     granuleArray.push(granuleObject);
   });
@@ -37,7 +37,7 @@ async function list(req, res) {
     const parser = new Parser({ fields });
     csv = parser.parse(granuleArray);
   } catch (error) {
-    console.log(error);
+    throw error;
   }
 
   return res.send(csv);
