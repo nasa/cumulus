@@ -62,12 +62,10 @@ dynamos:
 | dynamos.\<name\>.read | 5 | number of reads per second
 | dynamos.\<name\>.write | 1 | number of writes per second
 | dynamos.\<name\>.attributes | | list of attributes
-| priority.\<name\> | | name of a priority level
-| priority.\<name\>.maxExecutions | | the maximum number of concurrent executions allowed for this priority level
 | sqs.\<name\> | | name of the queue
 | sqs.\<name\>.visibilityTimeout | 20 | # of seconds the message returns to the queue after it is read by a consumer
 | sqs.\<name\>.retry | 30 | number of time the message is returned to the queue before being discarded
-| sqs.\<name\>.priority | | name of a priority level to attach to workflow messages in this queue. this value must match one of the priority level names defined via the `priority.<name>` config.
+| sqs.\<name\>.maxExecutions | | the maximum number of executions started from this queue that can run concurrently
 | sqs.\<name\>.consumer | | list of lambda function queue consumer objects (see `@cumulus/deployment/app/config.yml` for examples of core usage)
 | rules.\<name\> | | list of cloudwathch rules
 | rules.\<name\>.schedule | | rule's schedule
