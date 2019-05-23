@@ -1,8 +1,12 @@
 #!/bin/bash
 set -e
-. ./bamboo/set-bamboo-env-variables.sh
-if [[ $BRANCH == master || $VERSION_TAG || COMMIT_MESSAGE =~ '[run-redeploy-tests]' ]]; then
-  (cd example && npm run redeploy-test)
-else
-  echo "***Skipping redeploy tests***"
+. ./bamboo/abort-if-skip-integration-tests.sh
+source .bamboo_env_vars || true
+if [[ $RUN_REDEPLOYMENT != true ]]; then
+  >&2 echo "***Skipping redeploy tests***"
+  exit 0
 fi
+
+. ./bamboo/set-bamboo-env-variables.sh
+
+(cd example && npm run redeploy-test)

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
-container_id=${bamboo_planKey,,}
-container_id=${container_id/-/}
+. ./abort-if-not-pr-or-master.sh
+. ./set-bamboo-env-variables.sh
 docker ps -a ## Show running containers for output logs
 
 # Run unit tests (excluding integration/api tests)
