@@ -141,8 +141,11 @@ function getEmsFieldFromGranField(granule, emsField, granField) {
   case 'productState':
     result = (metadata === 'completed') ? 'Successful' : 'Failed';
     break;
-  // datetime format YYYY-MM-DD HH:MMAMorPM GMT
+  // deleteEffectiveDate format YYYYMMDD
   case 'deleteEffectiveDate':
+    result = (metadata) ? moment.utc(new Date(metadata)).format('YYYYMMDD') : metadata;
+    break;
+  // datetime format YYYY-MM-DD HH:MMAMorPM GMT
   case 'insertTime':
     // milliseconds to string
     result = (metadata) ? moment.utc(new Date(metadata)).format('YYYY-MM-DD hh:mmA') : metadata;
