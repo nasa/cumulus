@@ -9,8 +9,7 @@ const {
 
 const {
   getQueueName,
-  hasQueueName,
-  hasExecutionLimit
+  hasQueueAndExecutionLimit
 } = require('../lib/message');
 
 /**
@@ -35,8 +34,7 @@ const isTerminalMessage = (message) =>
  * @returns {boolean} True if workflow semaphore should be decremented.
  */
 const isDecrementMessage = (message) =>
-  hasQueueName(message)
-  && hasExecutionLimit(message)
+  hasQueueAndExecutionLimit(message)
   && has(message, 'meta.status')
   && isTerminalMessage(message);
 
