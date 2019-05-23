@@ -273,3 +273,15 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
     lambdaStub.reset();
   }
 });
+
+test.only('Creating a rule with a queueName parameter', async (t) => {
+  const ruleItem = Object.assign({ queueName: 'testQueue' }, onetimeRule);
+
+  const response = await ruleModel.create(ruleItem);
+  console.log(response);
+
+  const payload = models.Rule.buildPayload(ruleItem);
+
+  t.is(response.queueName, ruleItem.queuename);
+  t.is(payload.queueName, ruleItem.queueName);
+});
