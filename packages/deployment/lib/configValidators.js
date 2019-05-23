@@ -1,8 +1,6 @@
 'use strict';
 
 const get = require('lodash.get');
-const has = require('lodash.has');
-const isObject = require('lodash.isobject');
 
 /**
  * @param  {Object} config kes configuration object
