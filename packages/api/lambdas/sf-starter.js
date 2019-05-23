@@ -11,10 +11,7 @@ const {
     ResourcesLockedError
   },
   log,
-  Semaphore,
-  util: {
-    isNil
-  }
+  Semaphore
 } = require('@cumulus/common');
 const { Consumer } = require('@cumulus/ingest/consumer');
 
