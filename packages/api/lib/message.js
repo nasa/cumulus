@@ -13,12 +13,13 @@ const getQueueName = (message) => {
     throw new Error('cumulus_meta.queueName not set in message');
   }
   return queueName;
-}
+};
 
 /**
  * Get the maximum executions for a queue.
  *
  * @param {Object} message - A workflow message object
+ * @param {string} queueName - A queue name
  * @returns {number} - Count of the maximum executions for the queue
  */
 const getMaximumExecutions = (message, queueName) => {
@@ -27,7 +28,7 @@ const getMaximumExecutions = (message, queueName) => {
     throw new Error(`Could not determine maximum executions for queue ${queueName}`);
   }
   return maxExecutions;
-}
+};
 
 /**
  * Determine if there is a queue and queue execution limit in the message.
@@ -43,7 +44,7 @@ const hasQueueAndExecutionLimit = (message) => {
     return false;
   }
   return true;
-}
+};
 
 module.exports = {
   getQueueName,

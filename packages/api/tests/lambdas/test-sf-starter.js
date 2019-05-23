@@ -45,7 +45,7 @@ const createRuleInput = (queueUrl, timeLimit = 60) => ({
 
 const createWorkflowMessage = (queueName, maxExecutions) => ({
   cumulus_meta: {
-    queueName,
+    queueName
   },
   meta: {
     queueExecutionLimits: {
