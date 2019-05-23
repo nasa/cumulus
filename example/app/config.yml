@@ -382,6 +382,10 @@ kk:
     ssh: true
     keyPairName: kakelly2-cumulus-sandbox
 
+kk-int-test:
+  prefix: kk-int-test
+  prefixNoDash: KkIntTest
+
 mth:
   prefix: mth
   prefixNoDash: Mth
