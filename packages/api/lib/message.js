@@ -36,14 +36,13 @@ const getMaximumExecutions = (message, queueName) => {
  * @returns {boolean} - True if there is a queue and execution limit.
  */
 const hasQueueAndExecutionLimit = (message) => {
-  let executionLimit;
   try {
     const queueName = getQueueName(message);
-    executionLimit = getMaximumExecutions(message, queueName);
+    getMaximumExecutions(message, queueName);
   } catch (err) {
     return false;
   }
-  return !isNil(executionLimit);
+  return true;
 }
 
 module.exports = {
