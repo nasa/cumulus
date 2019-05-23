@@ -36,57 +36,6 @@ function validateWorkflowDefinedLambdas(config) {
 }
 
 /**
- * Validate config for SQS queues with a priority level defined.
- *
- * Throws an error if no corresponding priority config exists for a configured SQS
- * priority level.
- *
- * @param {Object} config kes configuration object
- * @throws {Error}
- */
-function validatePriorityQueueConfig(config) {
-  if (!config.sqs) {
-    return;
-  }
-
-  const queueNames = Object.keys(config.sqs);
-
-  queueNames.forEach((queueName) => {
-    const queueConfig = config.sqs[queueName];
-    if (queueConfig.priority && !has(config, `priority.${queueConfig.priority}`)) {
-      throw new Error(`Config for ${queueName} references undefined priority ${queueConfig.priority}`);
-    }
-  });
-}
-
-/**
- * Validate config for priority levels.
- *
- * Throws an error if priority level config is not an object or if no maximum executions
- * is set for the priority level.
- *
- * @param {Object} config kes configuration object
- * @throws {Error}
- */
-function validatePriorityLevelConfig(config) {
-  if (!config.priority) {
-    return;
-  }
-
-  const priorityLevels = Object.keys(config.priority);
-  priorityLevels.forEach((priorityLevel) => {
-    const priorityConfig = get(config.priority, priorityLevel, {});
-
-    if (!isObject(priorityConfig)) {
-      throw new Error(`Priority configuration for priority level ${priorityLevel} must be an object`);
-    }
-    if (!priorityConfig.maxExecutions) {
-      throw new Error(`Priority configuration for priority level ${priorityLevel} must include a maxExecutions value`);
-    }
-  });
-}
-
-/**
  * Validate deployment configuration.
  *
  * @param {Object} config kes configuration object
@@ -94,13 +43,9 @@ function validatePriorityLevelConfig(config) {
  */
 function validateConfig(config) {
   validateWorkflowDefinedLambdas(config);
-  validatePriorityLevelConfig(config);
-  validatePriorityQueueConfig(config);
 }
 
 module.exports = {
   validateWorkflowDefinedLambdas,
-  validatePriorityLevelConfig,
-  validatePriorityQueueConfig,
   validateConfig
 };

@@ -4,9 +4,7 @@
 
 const test = require('ava');
 const {
-  validateWorkflowDefinedLambdas,
-  validatePriorityQueueConfig,
-  validatePriorityLevelConfig
+  validateWorkflowDefinedLambdas
 } = require('../lib/configValidators');
 
 test.beforeEach((t) => {
@@ -39,58 +37,4 @@ test('validateWorkflowDefinedLambdas throws an exception when lambda is undefine
 
 test('validateWorkflowDefinedLambdas does not throw an exception when configuration is correct', async (t) => {
   await t.notThrows(() => validateWorkflowDefinedLambdas(t.context.config));
-});
-
-test('validatePriorityQueueConfig throws an exception when no priority config is defined for SQS priority level', async (t) => {
-  const config = t.context.config;
-  config.sqs = {
-    testQueue: {
-      priority: 'test'
-    }
-  };
-  const error = await t.throws(() => validatePriorityQueueConfig(config));
-  t.is(error.message, 'Config for testQueue references undefined priority test');
-});
-
-test('validatePriorityQueueConfig does not throw an exception when priority config is defined for SQS priority level', async (t) => {
-  const config = t.context.config;
-  config.sqs = {
-    testQueue: {
-      priority: 'test'
-    }
-  };
-  config.priority = {
-    test: {
-      maxExecutions: 5
-    }
-  };
-  await t.notThrows(() => validatePriorityQueueConfig(config));
-});
-
-test('validatePriorityLevelConfig throws an exception when priority config is not an object', async (t) => {
-  const config = t.context.config;
-  config.priority = {
-    test: 5
-  };
-  const error = await t.throws(() => validatePriorityLevelConfig(config));
-  t.is(error.message, 'Priority configuration for priority level test must be an object');
-});
-
-test('validatePriorityLevelConfig throws an exception when priority config is missing maxExecutions', async (t) => {
-  const config = t.context.config;
-  config.priority = {
-    test: {}
-  };
-  const error = await t.throws(() => validatePriorityLevelConfig(config));
-  t.is(error.message, 'Priority configuration for priority level test must include a maxExecutions value');
-});
-
-test('validatePriorityLevelConfig does not throw an exception when priority config is correct', async (t) => {
-  const config = t.context.config;
-  config.priority = {
-    test: {
-      maxExecutions: 5
-    }
-  };
-  await t.notThrows(() => validatePriorityLevelConfig(config));
 });
