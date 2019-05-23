@@ -93,9 +93,7 @@ test('generate a workflow template', (t) => {
   );
   t.truthy(tt.meta.queues.startSF);
   t.truthy(tt.workflow_config.DiscoverPdrs);
-  t.truthy(tt.cumulus_meta.priorityLevels);
-  t.is(tt.cumulus_meta.priorityLevels.low.maxExecutions, 5);
-  t.is(tt.meta.queuePriorities.startSFLowPriority, 'low');
+  t.is(tt.meta.queueExecutionLimits.startSFLowPriority, 5);
 });
 
 test('generate template for a step function', async (t) => {

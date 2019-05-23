@@ -198,6 +198,16 @@ default:
               - Arn
           protocol: lambda
 
+  sqs:
+    startSFLowPriority:
+      visibilityTimeout: 60
+      retry: 30
+      maxExecutions: 5
+      consumer:
+        - lambda: sqs2sfThrottle
+          schedule: rate(1 minute)
+          messageLimit: '{{sqs_consumer_rate}}'
+          state: ENABLED
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
@@ -591,21 +601,6 @@ mboyd-test:
   ecs:
     ssh: true
     keyPairName: mboyd
-
-  priority:
-    low:
-      maxExecutions: 5
-
-  sqs:
-    startSFLowPriority:
-      visibilityTimeout: 60
-      retry: 30
-      priority: 'low'
-      consumer:
-        - lambda: sqs2sfThrottle
-          schedule: rate(1 minute)
-          messageLimit: '{{sqs_consumer_rate}}'
-          state: ENABLED
 
 mboyd-int:
   prefix: mboyd-int

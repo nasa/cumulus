@@ -105,7 +105,7 @@ function generateWorkflowTemplate(name, workflow, config, outputs) {
 
   // add queues
   const queues = {};
-  const queuePriorities = {};
+  const queueExecutionLimits = {};
   if (config.sqs) {
     const queueArns = outputs.filter((o) => o.OutputKey.includes('SQSOutput'));
 
@@ -113,9 +113,9 @@ function generateWorkflowTemplate(name, workflow, config, outputs) {
       const queueName = queue.OutputKey.replace('SQSOutput', '');
       queues[queueName] = queue.OutputValue;
 
-      const priorityLevel = get(config.sqs, `${queueName}.priority`);
-      if (priorityLevel) {
-        queuePriorities[queueName] = priorityLevel;
+      const maxExecutions = get(config.sqs, `${queueName}.maxExecutions`);
+      if (maxExecutions) {
+        queueExecutionLimits[queueName] = maxExecutions;
       }
     });
   }
@@ -134,17 +134,13 @@ function generateWorkflowTemplate(name, workflow, config, outputs) {
     templatesUris[sf] = `s3://${bucket}/${config.stack}/workflows/${sf}.json`;
   });
 
-  // Add information about configured priority levels, if any.
-  const priorityLevels = get(config, 'priority', {});
-
   const template = {
     cumulus_meta: {
       message_source: 'sfn',
       system_bucket: bucket,
       state_machine: stateMachineArn,
       execution_name: null,
-      workflow_start_time: null,
-      priorityLevels
+      workflow_start_time: null
     },
     meta: {
       workflow_name: name,
@@ -158,7 +154,7 @@ function generateWorkflowTemplate(name, workflow, config, outputs) {
       provider: {},
       templates: templatesUris,
       queues,
-      queuePriorities
+      queueExecutionLimits
     },
     workflow_config: workflowConfig,
     payload: {},
