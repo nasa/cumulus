@@ -131,6 +131,9 @@ These buckets do not need any non-default permissions to function with Cumulus, 
 
 ### VPC, Subnets and Security Group
 Cumulus supports operation within a VPC, but you will need to separately create the VPC, subnet, and security group for the Cumulus resources to use.
+You will need to set up VPC endpoints for the various services used by Cumulus if you wish to route traffic through the VPC.
+Note: Amazon ElasticSearch Service does not use a VPC Endpoint. To use it, run `aws iam create-service-linked-role --aws-service-name es.amazonaws.com` before deploying.
+
 To configure Cumulus with these settings, populate your `app/.env` file with the relevant values, as shown in the next section, before deploying Cumulus.
 If these values are omitted Cumulus resources that require a VPC will be created in the default VPC and security group.
 
