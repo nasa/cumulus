@@ -14,6 +14,7 @@ const {
 
 const { loadConfig } = require('../../helpers/testUtils');
 const config = loadConfig();
+const sleepTimeInMs = 180 * 1000; // 2:00 wait
 const oneHourInMs = 60 * 60 * 1000;
 const oneMinuteInMs = 60 * 1000;
 const aRandomNumber = () => Math.floor(Math.random() * 990) + 10;
@@ -38,14 +39,7 @@ const putMetricDataObject = (MetricData) =>
     })
     .promise();
 
-const listMetricData = (params) => {
-  console.log(`${new Date(Date.now())}`);
-  console.log(
-    'calling listMetrics with params:',
-    JSON.stringify(params, null, 2)
-  );
-  return cloudwatch.listMetrics(params).promise();
-};
+const listMetricData = (params) => cloudwatch.listMetrics(params).promise();
 
 const getMetricData = (params) => cloudwatch.getMetricData(params).promise();
 
@@ -90,7 +84,7 @@ const validateMetricDataResults = (metricDataResult, metricDataObject) => {
 /**
  * Throws error if expected MetricData is not found in cloudwatch api
  */
-const metricExists = async (metricDataObject) => {
+const metricDataExists = async (metricDataObject) => {
   const params = {
     MetricName: metricDataObject.MetricName,
     Dimensions: metricDataObject.Dimensions,
@@ -98,20 +92,17 @@ const metricExists = async (metricDataObject) => {
   };
 
   const metrics = await listMetricData(params);
-  console.log(`${new Date(Date.now())}`);
-  console.log(`listMetrics returned ${JSON.stringify(metrics, null, 2)}`);
   if (metrics.Metrics.length === 0) {
     throw new Error('Metric not found...retry');
   }
-
   const metricData = await getMetricData(
     buildGetMetricDataParam(metrics.Metrics[0])
   );
   return validateMetricDataResults(metricData, metricDataObject);
 };
 
-const metricIsAvailableInCloudwatch = async (metricDataObject) => {
-  await pRetry(() => metricExists(metricDataObject), {
+const waitForMetricToBeAvailableInCloudwatch = async (metricDataObject) => {
+  await pRetry(() => metricDataExists(metricDataObject), {
     retries: 10,
     minTimeout: 30 * 1000,
     onFailedAttempt: (error) => {
@@ -171,10 +162,10 @@ describe('The distributionMetrics endpoint', () => {
         twoHourErrors
       );
       await Promise.all([
-        metricIsAvailableInCloudwatch(successMetrics),
-        metricIsAvailableInCloudwatch(errorMetrics)
+        waitForMetricToBeAvailableInCloudwatch(successMetrics),
+        waitForMetricToBeAvailableInCloudwatch(errorMetrics)
       ]);
-      await sleep(30000);
+      await sleep(sleepTimeInMs);
     });
 
     it('finds metrics from the previous 24 hours', async () => {
@@ -208,10 +199,10 @@ describe('The distributionMetrics endpoint', () => {
         successMetrics.Value = twoHourSuccesses + newSuccesses;
         errorMetrics.Value = twoHourErrors + newErrors;
         await Promise.all([
-          metricIsAvailableInCloudwatch(successMetrics),
-          metricIsAvailableInCloudwatch(errorMetrics)
+          waitForMetricToBeAvailableInCloudwatch(successMetrics),
+          waitForMetricToBeAvailableInCloudwatch(errorMetrics)
         ]);
-        await sleep(30000);
+        await sleep(sleepTimeInMs);
       });
 
       it('computes sums of metrics', async () => {
