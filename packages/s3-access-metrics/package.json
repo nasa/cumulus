@@ -1,0 +1,37 @@
+{
+  "name": "s3-access-metrics",
+  "version": "0.0.1",
+  "description": "A service to write S3 Server Access Log stats to Cloudwatch metrics",
+  "private": true,
+  "engines": {
+    "node": ">=8.10.0"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "ava"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "lodash.chunk": "^4.2.0",
+    "lodash.curry": "^4.1.1",
+    "lodash.every": "^4.6.0",
+    "lodash.flatten": "^4.4.0",
+    "lodash.flowright": "^3.5.0",
+    "lodash.groupby": "^4.6.0",
+    "lodash.isarray": "^4.0.0",
+    "lodash.isstring": "^4.0.1",
+    "moment": "^2.24.0"
+  },
+  "devDependencies": {
+    "ava": "^1.4.1",
+    "aws-sdk": "^2.452.0",
+    "js-yaml": "^3.13.1",
+    "serverless": "^1.42.0",
+    "serverless-plugin-existing-s3": "^2.3.3"
+  }
+}
