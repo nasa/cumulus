@@ -65,9 +65,9 @@ This table describes the fields that must be present in `config.yml` to successf
 | ecs.publicIp | false | assign public IP(s) to ECS instance(s)
 | ecs.restartTasksOnDeploy | false | whether kes should restart ECS tasks on deploy
 | ecs.docker.username | (empty string) | Username to pull images from registry
-| ecs.docker.registry | dockerhub | container registry to fetch from
-| ecs.services | | ECS service configurations
-| ecs.tasks | | ECS task configurations
+| ecs.docker.registry | dockerhub | container registry to fetch from (currently supports `dockerhub` and `ecr`)
+| ecs.services | | ECS service configurations (see `@cumulus/deployment/app/config.yml` for examples of core usage)
+| ecs.tasks | | ECS task configurations (see `@cumulus/deployment/app/config.yml` for examples of core usage)
 | activities | | list of activities
 | es.name | es5 | name of the elasticsearch cluster
 | es.elasticSearchMapping | 4 | version number of the elasticsearch mapping used
@@ -299,6 +299,7 @@ and 10 seconds.
 
 ### es
 Configuration for the Amazon Elasticsearch Service (ES) instance. Optional. Set `es: null` to disable ElasticSearch.
+
 VPC note: When using Amazon ElasticSearch Service in a VPC run `aws iam create-service-linked-role --aws-service-name es.amazonaws.com` before deploying.
 
 You can update `es` properties and add additional ES alarms. For example:
