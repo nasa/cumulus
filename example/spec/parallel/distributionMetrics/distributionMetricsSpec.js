@@ -2,10 +2,10 @@
 
 const AWS = require('aws-sdk');
 const pRetry = require('p-retry');
+const isEqual = require('lodash.isequal');
 
 const {
-  testUtils: { randomId },
-  util: { sleep }
+  testUtils: { randomId }
 } = require('@cumulus/common');
 
 const {
@@ -14,7 +14,6 @@ const {
 
 const { loadConfig } = require('../../helpers/testUtils');
 const config = loadConfig();
-const sleepTimeInMs = 180 * 1000; // 2:00 wait
 const oneHourInMs = 60 * 60 * 1000;
 const oneMinuteInMs = 60 * 1000;
 const aRandomNumber = () => Math.floor(Math.random() * 990) + 10;
@@ -30,7 +29,7 @@ const buildMetricDataObject = (MetricName, stack, aDate, numberOfEvents) => ({
   Value: numberOfEvents
 });
 
-// Given a list of Cloudwatch Metric Data, upload that data to Cloudwatc
+// Upload a list of Metric Data to CloudWatch
 const putMetricDataObject = (MetricData) =>
   cloudwatch
     .putMetricData({
@@ -38,82 +37,6 @@ const putMetricDataObject = (MetricData) =>
       MetricData
     })
     .promise();
-
-const listMetricData = (params) => cloudwatch.listMetrics(params).promise();
-
-const getMetricData = (params) => cloudwatch.getMetricData(params).promise();
-
-const buildGetMetricDataParam = (Metric) => {
-  const EndTime = new Date(new Date(Date.now()).setSeconds(0, 0));
-  const StartTime = new Date(EndTime - 24 * oneHourInMs);
-
-  return {
-    MetricDataQueries: [
-      {
-        Id: randomId('id'),
-        MetricStat: {
-          Metric,
-          Period: 60 * 60 * 24, // 3 hours in seconds
-          Stat: 'Sum',
-          Unit: 'Count'
-        }
-      }
-    ],
-    ScanBy: 'TimestampDescending',
-    StartTime,
-    EndTime
-  };
-};
-
-const add = (a, b) => a + b;
-/**
- * Throw error if the retrieved metrics count don't match the expected metrics count.
- */
-const validateMetricDataResults = (metricDataResult, metricDataObject) => {
-  const expectedCount = metricDataObject.Value;
-  const actualCount = metricDataResult.MetricDataResults[0].Values.reduce(
-    add,
-    0
-  );
-  if (expectedCount !== actualCount) {
-    throw new Error('All Metrics not settled...retry');
-  }
-  console.log(`METRICS SETTLED ${metricDataObject.MetricName}`);
-};
-
-/**
- * Throws error if expected MetricData is not found in cloudwatch api
- */
-const metricDataExists = async (metricDataObject) => {
-  const params = {
-    MetricName: metricDataObject.MetricName,
-    Dimensions: metricDataObject.Dimensions,
-    Namespace: 'CumulusDistribution'
-  };
-
-  const metrics = await listMetricData(params);
-  if (metrics.Metrics.length === 0) {
-    throw new Error('Metric not found...retry');
-  }
-  const metricData = await getMetricData(
-    buildGetMetricDataParam(metrics.Metrics[0])
-  );
-  return validateMetricDataResults(metricData, metricDataObject);
-};
-
-const waitForMetricToBeAvailableInCloudwatch = async (metricDataObject) => {
-  await pRetry(() => metricDataExists(metricDataObject), {
-    retries: 10,
-    minTimeout: 30 * 1000,
-    onFailedAttempt: (error) => {
-      console.log(
-        `Attempt ${error.attemptNumber} failed. There are ${
-          error.attemptsLeft
-        } attempts left.`
-      );
-    }
-  });
-};
 
 const putCloudwatchMetrics = async (whenDate, successCounts, errorCounts) => {
   const successMetric = buildMetricDataObject(
@@ -133,8 +56,38 @@ const putCloudwatchMetrics = async (whenDate, successCounts, errorCounts) => {
     putMetricDataObject([successMetric]),
     putMetricDataObject([errorMetric])
   ]);
-  return [successMetric, errorMetric];
 };
+
+/**
+ * Because the cloudwatch metrics are eventually consistent, we have to try to
+ * get them with a retry until we get the results we expect.
+ *
+ * @param {Object} expected - expected API results from previous test setup.
+ * @returns {Object} Api result matching the expected input.
+ */
+const callApiUntilWeGetTheCorrectValue = async (expected) =>
+  pRetry(
+    async () => {
+      const response = await distributionMetrics({
+        prefix: config.stackName,
+        stackName
+      });
+      const result = JSON.parse(response.body);
+      if (!isEqual(expected, result)) {
+        throw new Error('Metric not constent...Retry');
+      }
+      return result;
+    },
+    {
+      retries: 10,
+      onFailedAttempt: (error) =>
+        console.log(
+          `Waiting for CloudWatch metrics consistency ${
+            error.attemptsLeft
+          } remaining`
+        )
+    }
+  );
 
 describe('The distributionMetrics endpoint', () => {
   it('retrieves no errors or successes on a "new stack" when no metrics have been published yet', async () => {
@@ -148,24 +101,13 @@ describe('The distributionMetrics endpoint', () => {
   });
 
   describe('Retrieves expected Metrics.', () => {
-    let twoHoursAgo;
-    const twoHoursInMs = 2 * oneHourInMs;
     const twoHourSuccesses = aRandomNumber();
     const twoHourErrors = aRandomNumber();
 
     beforeAll(async () => {
       const now = new Date(new Date(Date.now()).setSeconds(0, 0));
-      twoHoursAgo = new Date(now - twoHoursInMs);
-      const [successMetrics, errorMetrics] = await putCloudwatchMetrics(
-        twoHoursAgo,
-        twoHourSuccesses,
-        twoHourErrors
-      );
-      await Promise.all([
-        waitForMetricToBeAvailableInCloudwatch(successMetrics),
-        waitForMetricToBeAvailableInCloudwatch(errorMetrics)
-      ]);
-      await sleep(sleepTimeInMs);
+      const twoHoursAgo = new Date(now - 2 * oneHourInMs);
+      await putCloudwatchMetrics(twoHoursAgo, twoHourSuccesses, twoHourErrors);
     });
 
     it('finds metrics from the previous 24 hours', async () => {
@@ -173,36 +115,19 @@ describe('The distributionMetrics endpoint', () => {
         errors: String(twoHourErrors),
         successes: String(twoHourSuccesses)
       };
-      const response = await distributionMetrics({
-        prefix: config.stackName,
-        stackName
-      });
-      const result = JSON.parse(response.body);
+
+      const result = await callApiUntilWeGetTheCorrectValue(expected);
       expect(result).toEqual(expected);
     });
 
-    describe('multiple metrics values in cloudwatch.', () => {
+    describe('correctly interprets multiple metrics values.', () => {
       const newSuccesses = aRandomNumber();
       const newErrors = aRandomNumber();
 
       beforeAll(async () => {
         const now = new Date(new Date(Date.now()).setSeconds(0, 0));
         const tenMinutesAgo = new Date(now - 10 * oneMinuteInMs);
-
-        const [successMetrics, errorMetrics] = await putCloudwatchMetrics(
-          tenMinutesAgo,
-          newSuccesses,
-          newErrors
-        );
-
-        // we want to validate the total metrics are available.
-        successMetrics.Value = twoHourSuccesses + newSuccesses;
-        errorMetrics.Value = twoHourErrors + newErrors;
-        await Promise.all([
-          waitForMetricToBeAvailableInCloudwatch(successMetrics),
-          waitForMetricToBeAvailableInCloudwatch(errorMetrics)
-        ]);
-        await sleep(sleepTimeInMs);
+        await putCloudwatchMetrics(tenMinutesAgo, newSuccesses, newErrors);
       });
 
       it('computes sums of metrics', async () => {
@@ -210,11 +135,7 @@ describe('The distributionMetrics endpoint', () => {
           errors: String(twoHourErrors + newErrors),
           successes: String(twoHourSuccesses + newSuccesses)
         };
-        const response = await distributionMetrics({
-          prefix: config.stackName,
-          stackName
-        });
-        const result = JSON.parse(response.body);
+        const result = await callApiUntilWeGetTheCorrectValue(expected);
         expect(result).toEqual(expected);
       });
     });
