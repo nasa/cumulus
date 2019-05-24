@@ -17,6 +17,7 @@ declare -a param_list=(
   "bamboo_AWS_REGION"
   "bamboo_CMR_PASSWORD"
   "bamboo_CMR_USERNAME"
+  "bamboo_DEPLOYMENT"
   "bamboo_SECRET_TOKEN_SECRET"
   "bamboo_SECRET_EARTHDATA_USERNAME"
   "bamboo_SECRET_EARTHDATA_PASSWORD"
