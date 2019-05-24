@@ -8,9 +8,6 @@ const {
   aws: { cloudwatch },
   testUtils: { randomId }
 } = require('@cumulus/common');
-const Logger = require('@cumulus/logger');
-
-const log = new Logger({ sender: 'distributionMetrics' });
 
 /**
  * @param {Array<numbers>} array
@@ -242,5 +239,5 @@ async function get(req, res) {
   return res.send(metrics);
 }
 
-router.get('/:stackName', get);
+router.get('/:stackName?', get);
 module.exports = router;
