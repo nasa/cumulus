@@ -4,7 +4,8 @@ const AWS = require('aws-sdk');
 const pRetry = require('p-retry');
 
 const {
-  testUtils: { randomId }
+  testUtils: { randomId },
+  util: { sleep }
 } = require('@cumulus/common');
 
 const {
@@ -13,9 +14,11 @@ const {
 
 const { loadConfig } = require('../../helpers/testUtils');
 const config = loadConfig();
-
+const oneHourInMs = 60 * 60 * 1000;
+const oneMinuteInMs = 60 * 1000;
+const aRandomNumber = () => Math.floor(Math.random() * 990) + 10;
 const cloudwatch = new AWS.CloudWatch();
-const stackName = randomId('stack');
+const stackName = randomId('ZZZ');
 
 const buildMetricDataObject = (MetricName, stack, aDate, numberOfEvents) => ({
   MetricName,
@@ -35,31 +38,111 @@ const putMetricDataObject = (MetricData) =>
     })
     .promise();
 
-const listMetricData = (params) => cloudwatch.listMetrics({ params }).promise();
+const listMetricData = (params) => {
+  console.log(`${new Date(Date.now())}`);
+  console.log(
+    'calling listMetrics with params:',
+    JSON.stringify(params, null, 2)
+  );
+  return cloudwatch.listMetrics(params).promise();
+};
 
-const getMetricData = (MetricData) =>
-  cloudwatch.getMetricData({ MetricData }).promise();
+const getMetricData = (params) => cloudwatch.getMetricData(params).promise();
 
-const metricExists = async (params) => {
+const buildGetMetricDataParam = (Metric) => {
+  const EndTime = new Date(new Date(Date.now()).setSeconds(0, 0));
+  const StartTime = new Date(EndTime - 24 * oneHourInMs);
+
+  return {
+    MetricDataQueries: [
+      {
+        Id: randomId('id'),
+        MetricStat: {
+          Metric,
+          Period: 60 * 60 * 24, // 3 hours in seconds
+          Stat: 'Sum',
+          Unit: 'Count'
+        }
+      }
+    ],
+    ScanBy: 'TimestampDescending',
+    StartTime,
+    EndTime
+  };
+};
+
+const add = (a, b) => a + b;
+/**
+ * Throw error if the retrieved metrics count don't match the expected metrics count.
+ */
+const validateMetricDataResults = (metricDataResult, metricDataObject) => {
+  const expectedCount = metricDataObject.Value;
+  const actualCount = metricDataResult.MetricDataResults[0].Values.reduce(
+    add,
+    0
+  );
+  if (expectedCount !== actualCount) {
+    throw new Error('All Metrics not settled...retry');
+  }
+  console.log(`METRICS SETTLED ${metricDataObject.MetricName}`);
+};
+
+/**
+ * Throws error if expected MetricData is not found in cloudwatch api
+ */
+const metricExists = async (metricDataObject) => {
+  const params = {
+    MetricName: metricDataObject.MetricName,
+    Dimensions: metricDataObject.Dimensions,
+    Namespace: 'CumulusDistribution'
+  };
+
   const metrics = await listMetricData(params);
+  console.log(`${new Date(Date.now())}`);
+  console.log(`listMetrics returned ${JSON.stringify(metrics, null, 2)}`);
   if (metrics.Metrics.length === 0) {
     throw new Error('Metric not found...retry');
   }
-  return true;
+
+  const metricData = await getMetricData(
+    buildGetMetricDataParam(metrics.Metrics[0])
+  );
+  return validateMetricDataResults(metricData, metricDataObject);
 };
 
-const metricAvailableInCloudwatch = (metricDataObject) => {
-  // Waits until you can see it in cloudwatch
-  const MetricName = metricDataObject.MetricName;
-  const Dimensions = metricDataObject.Dimensions;
-  const params = {
-    MetricName,
-    Dimensions,
-    Namespace: 'CumulusDistribution'
-  };
-  pRetry(() => metricExists(params), {
-    retries: 10
+const metricIsAvailableInCloudwatch = async (metricDataObject) => {
+  await pRetry(() => metricExists(metricDataObject), {
+    retries: 10,
+    minTimeout: 30 * 1000,
+    onFailedAttempt: (error) => {
+      console.log(
+        `Attempt ${error.attemptNumber} failed. There are ${
+          error.attemptsLeft
+        } attempts left.`
+      );
+    }
   });
+};
+
+const putCloudwatchMetrics = async (whenDate, successCounts, errorCounts) => {
+  const successMetric = buildMetricDataObject(
+    'SuccessCount',
+    stackName,
+    whenDate,
+    successCounts
+  );
+  const errorMetric = buildMetricDataObject(
+    'FailureCount',
+    stackName,
+    whenDate,
+    errorCounts
+  );
+
+  await Promise.all([
+    putMetricDataObject([successMetric]),
+    putMetricDataObject([errorMetric])
+  ]);
+  return [successMetric, errorMetric];
 };
 
 describe('The distributionMetrics endpoint', () => {
@@ -73,52 +156,76 @@ describe('The distributionMetrics endpoint', () => {
     expect(result).toEqual(expected);
   });
 
-  describe('Ignores custom metrics older than one day.', () => {
-    let now;
-    let twelveHoursAgo;
-    let twoDaysAgo;
-    let twentyFiveHoursAgo;
-    const errorsTwentyFiveHoursAgo = Math.floor(Math.random() * 10);
-    const successesTwentyFiveHoursAgo = Math.floor(Math.random() * 10);
-    const twentyFiveHoursInMs = 25 * 60 * 60 * 1000;
-    const twelveHoursInMs = 12 * 60 * 60 * 1000;
-    const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
+  describe('Retrieves expected Metrics.', () => {
+    let twoHoursAgo;
+    const twoHoursInMs = 2 * oneHourInMs;
+    const twoHourSuccesses = aRandomNumber();
+    const twoHourErrors = aRandomNumber();
 
     beforeAll(async () => {
-      now = new Date(new Date(Date.now()).setSeconds(0, 0));
-      twentyFiveHoursAgo = new Date(now - twentyFiveHoursInMs);
-      const successMetric = buildMetricDataObject(
-        'SuccessCount',
-        stackName,
-        twentyFiveHoursAgo,
-        successesTwentyFiveHoursAgo
+      const now = new Date(new Date(Date.now()).setSeconds(0, 0));
+      twoHoursAgo = new Date(now - twoHoursInMs);
+      const [successMetrics, errorMetrics] = await putCloudwatchMetrics(
+        twoHoursAgo,
+        twoHourSuccesses,
+        twoHourErrors
       );
-      const errorMetric = buildMetricDataObject(
-        'ErrorCount',
-        stackName,
-        twentyFiveHoursAgo,
-        errorsTwentyFiveHoursAgo
-      );
-
       await Promise.all([
-        putMetricDataObject([successMetric]),
-        putMetricDataObject([errorMetric])
+        metricIsAvailableInCloudwatch(successMetrics),
+        metricIsAvailableInCloudwatch(errorMetrics)
       ]);
-
-      await Promise.all([
-        metricAvailableInCloudwatch(successMetric),
-        metricAvailableInCloudwatch(errorMetric)
-      ]);
+      await sleep(30000);
     });
 
-    it('ignores old Metrics', async () => {
-      const expected = { errors: '0', successes: '0' };
+    it('finds metrics from the previous 24 hours', async () => {
+      const expected = {
+        errors: String(twoHourErrors),
+        successes: String(twoHourSuccesses)
+      };
       const response = await distributionMetrics({
         prefix: config.stackName,
         stackName
       });
       const result = JSON.parse(response.body);
       expect(result).toEqual(expected);
+    });
+
+    describe('multiple metrics values in cloudwatch.', () => {
+      const newSuccesses = aRandomNumber();
+      const newErrors = aRandomNumber();
+
+      beforeAll(async () => {
+        const now = new Date(new Date(Date.now()).setSeconds(0, 0));
+        const tenMinutesAgo = new Date(now - 10 * oneMinuteInMs);
+
+        const [successMetrics, errorMetrics] = await putCloudwatchMetrics(
+          tenMinutesAgo,
+          newSuccesses,
+          newErrors
+        );
+
+        // we want to validate the total metrics are available.
+        successMetrics.Value = twoHourSuccesses + newSuccesses;
+        errorMetrics.Value = twoHourErrors + newErrors;
+        await Promise.all([
+          metricIsAvailableInCloudwatch(successMetrics),
+          metricIsAvailableInCloudwatch(errorMetrics)
+        ]);
+        await sleep(30000);
+      });
+
+      it('computes sums of metrics', async () => {
+        const expected = {
+          errors: String(twoHourErrors + newErrors),
+          successes: String(twoHourSuccesses + newSuccesses)
+        };
+        const response = await distributionMetrics({
+          prefix: config.stackName,
+          stackName
+        });
+        const result = JSON.parse(response.body);
+        expect(result).toEqual(expected);
+      });
     });
   });
 });
