@@ -8,7 +8,7 @@ hide_title: true
 
 ## Overview
 
-The tables below provides overviews of the minimally required `config.yml` variables and all variables, respectively.
+The tables below provide overviews of the minimally required `config.yml` variables and all variables, respectively.
 Note that entries delimited as \<name\> are intended to be read as objects where `name` is the key, not the value, e.g.:
 
 ```yaml
@@ -48,7 +48,7 @@ This table describes the fields that must be present in `config.yml` to successf
 | cmr.provider | CUMULUS | the provider used for posting metadata to CMR
 | cmr.clientId | CUMULUS | the clientId used to authenticate with the CMR
 | cmr.password | (required) | the password used to authenticate with the CMR
-| buckets | (required) | Configuration of buckets with key, bucket name, and type (i.e. internal, public, private)
+| buckets | (required) | Configuration of buckets with key, bucket name, and type (i.e. internal, public, private, protected)
 | system_bucket | `buckets.internal.name` | the bucket used for storing deployment artifacts
 | shared_data_bucket | cumulus-data-shared | bucket containing shared data artifacts
 | ems.provider | CUMULUS | the provider used for sending reports to EMS
@@ -302,7 +302,7 @@ and 10 seconds.
 
 Configuration for the Amazon Elasticsearch Service (ES) instance. Optional. Set `es: null` to disable ElasticSearch.
 
-VPC note: When using Amazon ElasticSearch Service in a VPC run `aws iam create-service-linked-role --aws-service-name es.amazonaws.com` before deploying.
+VPC note: When using Amazon ElasticSearch Service in a VPC run `aws iam create-service-linked-role --aws-service-name es.amazonaws.com` before deploying. This operation only needs to be done once per account.
 
 You can update `es` properties and add additional ES alarms. For example:
 

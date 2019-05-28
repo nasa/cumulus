@@ -130,10 +130,19 @@ These buckets do not need any non-default permissions to function with Cumulus, 
 **Note**: s3 bucket object names are global and must be unique across all accounts/locations/etc.
 
 ### VPC, Subnets and Security Group
-Cumulus supports operation within a VPC, but you will need to separately create the VPC, subnet, and security group for the Cumulus resources to use.
-You will need to set up VPC endpoints for the various services used by Cumulus if you wish to route traffic through the VPC.
 
-Note: Amazon ElasticSearch Service does not use a VPC Endpoint. To use ES within a VPC, run `aws iam create-service-linked-role --aws-service-name es.amazonaws.com` before deploying.
+Cumulus supports operation within a VPC, but you will need to separately create:
+
+* VPC
+* Subnet
+* Security group
+* VPC endpoints for the various services used by Cumulus if you wish to route traffic through the VPC
+
+These resources only need to be created once per account.
+
+If you are deploying to an NGAP environment (a NASA managed AWS environment), the VPC, subnet, security group, and VPC endpoints should already be created for you.
+
+Note: Amazon ElasticSearch Service does not use a VPC Endpoint. To use ES within a VPC, run `aws iam create-service-linked-role --aws-service-name es.amazonaws.com` before deploying. This operation only needs to be done once per account, but it must be done for both NGAP and regular AWS environments.
 
 To configure Cumulus with these settings, populate your `app/.env` file with the relevant values, as shown in the next section, before deploying Cumulus.
 If these values are omitted Cumulus resources that require a VPC will be created in the default VPC and security group.
@@ -234,7 +243,7 @@ dev:                            # deployment name
   users:
     - username: <user>
     - username: <user2>
-  
+
   # Optional. Only necessary if you have workflows that integrate with CMR
   cmr:
     username: '{{CMR_USERNAME}}'
