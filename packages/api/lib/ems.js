@@ -72,6 +72,23 @@ const emsMappings = {
 };
 
 /**
+ * return fileType based on report type
+ *
+ * @param {string} reportType - report type
+ * @returns {string} fileType used as part of the report file name
+ */
+const reportToFileType = (reportType) => {
+  const type = {
+    ingest: 'Ing',
+    archive: 'Arch',
+    delete: 'ArchDel',
+    distribution: 'DistCustom',
+    metadata: 'Meta'
+  };
+  return type[reportType];
+};
+
+/**
  * build and elasticsearch query parameters
  *
  * @param {string} esIndex - es index to search on
@@ -216,7 +233,7 @@ async function uploadReportToS3(filename) {
  * The report filename is in format:
  * <YYYYMMDD> _<Provider>_<FileType>_<DataSource>.flt.rev<1-n>
  *
- * @param {string} reportType - report type (ingest, archive, delete)
+ * @param {string} reportType - report type (ingest, archive, delete, distribution, metadata etc.)
  * @param {string} startTime - start time of the report in a format that moment
  *   can parse
  * @returns {string} - report file name
@@ -227,9 +244,7 @@ function buildReportFileName(reportType, startTime) {
   const provider = process.env.ems_provider || 'cumulus';
   const dataSource = process.env.ems_dataSource || process.env.stackName;
   const datestring = moment.utc(startTime).format('YYYYMMDD');
-  let fileType = 'Ing';
-  if (reportType === 'archive') fileType = 'Arch';
-  else if (reportType === 'delete') fileType = 'ArchDel';
+  const fileType = reportToFileType(reportType);
   return `${datestring}_${provider}_${fileType}_${dataSource}.flt`;
 }
 
@@ -365,6 +380,7 @@ async function generateAndSubmitReports(startTime, endTime) {
 }
 
 module.exports = {
+  buildReportFileName,
   emsMappings,
   generateReport,
   generateReports,

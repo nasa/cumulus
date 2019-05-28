@@ -7,8 +7,32 @@ const test = require('ava');
 const { aws } = require('@cumulus/common');
 const { testUtils: { randomString } } = require('@cumulus/common');
 const { generateAndStoreDistributionReport } = require('../../lambdas/ems-distribution-report');
+const models = require('../../models');
+const { fakeGranuleFactory, fakeFileFactory } = require('../../lib/testUtils');
+
+process.env.system_bucket = 'test-bucket';
+process.env.stackName = 'test-stack';
+process.env.ems_provider = 'testEmsProvider';
+
+const fileModel = new models.FileClass();
+const granuleModel = new models.Granule();
 
 test.beforeEach(async (t) => {
+  process.env.GranulesTable = randomString();
+  process.env.FilesTable = randomString();
+
+  await granuleModel.createTable();
+  await fileModel.createTable();
+
+  // add file and granule
+  const bucket = 'my-dist-bucket';
+  const key = 'my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR';
+  const granule = fakeGranuleFactory();
+  granule.files = [fakeFileFactory({ bucket, key })];
+
+  await granuleModel.create(granule);
+  await fileModel.createFilesFromGranule(granule);
+
   // Create the internal bucket
   t.context.internalBucket = randomString();
   await aws.s3().createBucket({ Bucket: t.context.internalBucket }).promise();
@@ -30,7 +54,10 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
-  await aws.recursivelyDeleteS3Bucket(t.context.internalBucket);
+  Promise.all([
+    granuleModel.deleteTable(),
+    fileModel.deleteTable(),
+    aws.recursivelyDeleteS3Bucket(t.context.internalBucket)]);
 });
 
 test.serial('emsDistributionReport writes a correct report out to S3 when no previous reports exist', async (t) => {
@@ -43,11 +70,11 @@ test.serial('emsDistributionReport writes a correct report out to S3 when no pre
   const provider = randomString();
   const stackName = randomString();
 
-  const reportStartTime = moment('1981-06-01T01:00:00Z');
-  const reportEndTime = moment('1981-06-01T15:00:00Z');
+  const reportStartTime = moment.utc('1981-06-01T01:00:00Z');
+  const reportEndTime = moment.utc('1981-06-01T15:00:00Z');
 
   // Generate the distribution report
-  await generateAndStoreDistributionReport({
+  const report = await generateAndStoreDistributionReport({
     reportStartTime,
     reportEndTime,
     logsBucket,
@@ -58,12 +85,10 @@ test.serial('emsDistributionReport writes a correct report out to S3 when no pre
     provider
   });
 
-  const reportName = `${reportStartTime.format('YYYYMMDD')}_${provider}_DistCustom_${stackName}.flt`;
-
   // Fetch the distribution report from S3
   const getObjectResponse = await aws.s3().getObject({
     Bucket: reportsBucket,
-    Key: aws.s3Join([reportsPrefix, reportName])
+    Key: aws.parseS3Uri(report.file).Key
   }).promise();
   const logLines = getObjectResponse.Body.toString().split('\n');
 
@@ -71,9 +96,9 @@ test.serial('emsDistributionReport writes a correct report out to S3 when no pre
   t.deepEqual(
     logLines,
     [
-      '01-JUN-81 01.01.13.000000 AM|&|cbrown|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR|&|807|&|S',
-      '01-JUN-81 01.02.13.000000 AM|&|amalkin|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR|&|807|&|F',
-      '01-JUN-81 02.03.13.000000 PM|&|tjefferson|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR|&|807|&|S'
+      '01-JUN-81 01.01.13.000000 AM|&|cbrown|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR|&|807|&|S|&|fakeCollection|&|v1',
+      '01-JUN-81 01.02.13.000000 AM|&|amalkin|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR|&|807|&|F|&|fakeCollection|&|v1',
+      '01-JUN-81 02.03.13.000000 PM|&|tjefferson|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR|&|807|&|S|&|fakeCollection|&|v1'
     ]
   );
 });
@@ -88,10 +113,10 @@ test.serial('emsDistributionReport writes a correct report out to S3 when one re
   const provider = randomString();
   const stackName = randomString();
 
-  const reportStartTime = moment('1981-06-01T01:00:00Z');
-  const reportEndTime = moment('1981-06-01T15:00:00Z');
+  const reportStartTime = moment.utc('1981-06-01T01:00:00Z');
+  const reportEndTime = moment.utc('1981-06-01T15:00:00Z');
 
-  const reportName = `${reportStartTime.format('YYYYMMDD')}_${provider}_DistCustom_${stackName}.flt`;
+  const reportName = `${reportStartTime.format('YYYYMMDD')}_${process.env.ems_provider}_DistCustom_${process.env.stackName}.flt`;
 
   await aws.s3().putObject({
     Bucket: reportsBucket,
@@ -122,9 +147,9 @@ test.serial('emsDistributionReport writes a correct report out to S3 when one re
   t.deepEqual(
     logLines,
     [
-      '01-JUN-81 01.01.13.000000 AM|&|cbrown|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR|&|807|&|S',
-      '01-JUN-81 01.02.13.000000 AM|&|amalkin|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR|&|807|&|F',
-      '01-JUN-81 02.03.13.000000 PM|&|tjefferson|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR|&|807|&|S'
+      '01-JUN-81 01.01.13.000000 AM|&|cbrown|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR|&|807|&|S|&|fakeCollection|&|v1',
+      '01-JUN-81 01.02.13.000000 AM|&|amalkin|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR|&|807|&|F|&|fakeCollection|&|v1',
+      '01-JUN-81 02.03.13.000000 PM|&|tjefferson|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR|&|807|&|S|&|fakeCollection|&|v1'
     ]
   );
 });
@@ -139,10 +164,10 @@ test.serial('emsDistributionReport writes a correct report out to S3 when two re
   const provider = randomString();
   const stackName = randomString();
 
-  const reportStartTime = moment('1981-06-01T01:00:00Z');
-  const reportEndTime = moment('1981-06-01T15:00:00Z');
+  const reportStartTime = moment.utc('1981-06-01T01:00:00Z');
+  const reportEndTime = moment.utc('1981-06-01T15:00:00Z');
 
-  const reportName = `${reportStartTime.format('YYYYMMDD')}_${provider}_DistCustom_${stackName}.flt`;
+  const reportName = `${reportStartTime.format('YYYYMMDD')}_${process.env.ems_provider}_DistCustom_${process.env.stackName}.flt`;
 
   await Promise.all([
     aws.s3().putObject({
@@ -180,9 +205,9 @@ test.serial('emsDistributionReport writes a correct report out to S3 when two re
   t.deepEqual(
     logLines,
     [
-      '01-JUN-81 01.01.13.000000 AM|&|cbrown|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR|&|807|&|S',
-      '01-JUN-81 01.02.13.000000 AM|&|amalkin|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR|&|807|&|F',
-      '01-JUN-81 02.03.13.000000 PM|&|tjefferson|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR|&|807|&|S'
+      '01-JUN-81 01.01.13.000000 AM|&|cbrown|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR|&|807|&|S|&|fakeCollection|&|v1',
+      '01-JUN-81 01.02.13.000000 AM|&|amalkin|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR|&|807|&|F|&|fakeCollection|&|v1',
+      '01-JUN-81 02.03.13.000000 PM|&|tjefferson|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-bucket/pdrs/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.PDR|&|807|&|S|&|fakeCollection|&|v1'
     ]
   );
 });

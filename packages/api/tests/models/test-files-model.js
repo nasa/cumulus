@@ -11,13 +11,19 @@ const { fakeGranuleFactory, fakeFileFactory } = require('../../lib/testUtils');
 
 process.env.stackName = randomString();
 process.env.FilesTable = randomString();
+process.env.GranulesTable = randomString();
 const fileModel = new models.FileClass();
+const granuleModel = new models.Granule();
 
 test.before(async () => {
   await fileModel.createTable();
+  await granuleModel.createTable();
 });
 
-test.after.always(() => fileModel.deleteTable());
+test.after.always(async () => {
+  await fileModel.deleteTable();
+  await granuleModel.deleteTable();
+});
 
 test.serial('create files records from a granule and then delete them', async (t) => {
   const bucket = randomString();
@@ -133,4 +139,37 @@ test('getBucketAndKey returns correct bucket and key when file does not have a b
   };
 
   t.deepEqual(fileModel.getBucketAndKey(file), { bucket: 'fake-source-bucket', key: 'fake-key' });
+});
+
+test.serial('getCollectionIdForFile returns collectionId of the file', async (t) => {
+  const bucket = randomString();
+  const granule = fakeGranuleFactory();
+  granule.files = [];
+  for (let i = 0; i < 4; i += 1) {
+    granule.files.push(fakeFileFactory({ bucket }));
+  }
+
+  await granuleModel.create(granule);
+  await fileModel.createFilesFromGranule(granule);
+
+  // collectionId can be retrieved for each file
+  const validateCollIds = async (file) => {
+    const collectionId = await fileModel.getCollectionIdForFile(file.bucket, file.key);
+    t.is(collectionId, granule.collectionId);
+  };
+
+  await Promise.all(granule.files.map(validateCollIds));
+
+  // return null if the file doesn't exist
+  const collId = await fileModel.getCollectionIdForFile(randomString(), randomString());
+  t.falsy(collId);
+
+  // return null if the granule doesn't exist
+  await granuleModel.delete({ granuleId: granule.granuleId });
+  const validates = async (file) => {
+    const collectionId = await fileModel.getCollectionIdForFile(file.bucket, file.key);
+    t.falsy(collectionId);
+  };
+
+  await Promise.all(granule.files.map(validates));
 });
