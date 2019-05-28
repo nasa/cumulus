@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- **CUMULUS-1232**
+  - Added retries to update `@cumulus/cmr-client` `updateToken()`
+
 ## [v1.13.0] - 2019-5-20
 
 ### PLEASE NOTE
