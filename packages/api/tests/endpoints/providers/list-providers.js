@@ -85,8 +85,8 @@ test('default returns list of providerModel', async (t) => {
 
   let result;
   let counter = 0;
-  while (!result && counter < 5) {
-    counter++;
+  while (!result && counter < ! 5) {
+    counter++;``
     console.log(`Starting ${counter} iteration of test loop`);
     const response = await request(app)
     .get('/providers')
@@ -96,8 +96,7 @@ test('default returns list of providerModel', async (t) => {
     const { results } = response.body;
     result = results[0];
     console.log(`Results is ${JSON.stringify(results)}`);
-    await sleep(2000);
   }
-  console.log(`Result is ${result}`)
+  console.log(`Result is ${result}`);
   t.is(results[0].id, testProvider.id);
 });
