@@ -13,24 +13,25 @@ const { Granule } = require('../models');
  * @returns {Object} the csv file of granules
  */
 async function list(req, res) {
-  const granuleModel = new Granule();
-  const allDbGranules = await granuleModel.scan();
-  const fields = ['granuleUr', 'collectionId', 'startDateTime', 'endDateTime'];
-  const granuleArray = [];
-  allDbGranules.Items.forEach((granule) => {
+  const granuleScanner = new Granule().granuleAttributeScan();
+  await granuleScanner.fetchItems();
+  const allDbGranules = granuleScanner.items.filter(n => n);
+
+  const fields = ['granuleUr', 'collectionId', 'createdAt', 'startDateTime', 'endDateTime'];
+  const granuleArray = allDbGranules.map((granule) => {
     const granuleUr = granule.granuleId;
     const collectionId = granule.collectionId;
-    // Only granules in cmr will only have beginningDateTime/endingDateTime
+    const createDate = new Date(granule.createdAt);
     const startDate = granule.beginningDateTime || '';
     const endDate = granule.endingDateTime || '';
 
-    const granuleObject = {
+    return {
       granuleUr: granuleUr,
       collectionId: collectionId,
+      createdAt: createDate.toISOString(),
       startDateTime: startDate,
       endDateTime: endDate
     };
-    granuleArray.push(granuleObject);
   });
   let csv;
   try {

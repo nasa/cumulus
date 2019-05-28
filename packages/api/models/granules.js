@@ -389,6 +389,23 @@ class Granule extends Manager {
     return new GranuleSearchQueue(params, 'query');
   }
 
+  granuleAttributeScan() {
+    const params = {
+      TableName: this.tableName,
+      ExpressionAttributeNames:
+        {
+          '#granuleId': 'granuleId',
+          '#collectionId': 'collectionId',
+          '#beginningDateTime': 'beginningDateTime',
+          '#endingDateTime': 'endingDateTime',
+          '#createdAt': 'createdAt'
+        },
+      ProjectionExpression: '#granuleId, #collectionId, #createdAt, #beginningDateTime, #endingDateTime' // eslint-disable-line max-len
+    }
+
+    return new GranuleSearchQueue(params);
+  }
+
   /**
    * Only used for tests
    */
