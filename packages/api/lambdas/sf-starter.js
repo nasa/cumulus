@@ -11,12 +11,14 @@ const {
     ResourcesLockedError
   },
   log,
-  Semaphore,
-  util: {
-    isNil
-  }
+  Semaphore
 } = require('@cumulus/common');
 const { Consumer } = require('@cumulus/ingest/consumer');
+
+const {
+  getQueueName,
+  getMaximumExecutions
+} = require('../lib/message');
 
 /**
  * Starts a new stepfunction with the given payload
@@ -41,33 +43,36 @@ function dispatch(message) {
 }
 
 /**
- * Increment the priority semaphore.
+ * Increment the semaphore for executions started from a queue.
  *
- * @param {string} key - Key for the priority semaphore
+ * Throws `ResourcesLockedError` if maximum number of executions are already
+ * running.
+ *
+ * @param {string} queueName - Queue name which is used as the semaphore key
  * @param {number} maximum - Maximum number of executions allowed for this semaphore
  * @returns {Promise}
  * @throws {Error}
  */
-async function incrementPrioritySemaphore(key, maximum) {
+async function incrementQueueSemaphore(queueName, maximum) {
   const semaphore = new Semaphore(
     dynamodbDocClient(),
     process.env.SemaphoresTable
   );
 
   try {
-    await semaphore.up(key, maximum);
+    await semaphore.up(queueName, maximum);
   } catch (err) {
     if (err instanceof ResourcesLockedError) {
-      log.info(`Unable to start new execution: the maximum number of executions for ${key} are already running.`);
+      log.info(`Unable to start new execution: the maximum number of executions for ${queueName} are already running.`);
     }
     throw err;
   }
 }
 
 /**
- * Attempt to increment the priority semaphore and start a new execution.
+ * Attempt to increment the queue semaphore and start a new execution.
  *
- * If `incrementPrioritySemaphore()` is unable to increment the priority semaphore,
+ * If `incrementQueueSemaphore()` is unable to increment the semaphore,
  * it throws an error and `dispatch()` is not called.
  *
  * @param {Object} queueMessage - SQS message
@@ -75,19 +80,12 @@ async function incrementPrioritySemaphore(key, maximum) {
  * @throws {Error}
  */
 async function incrementAndDispatch(queueMessage) {
-  const cumulusMeta = get(queueMessage, 'Body.cumulus_meta', {});
+  const workflowMessage = get(queueMessage, 'Body', {});
 
-  const priorityKey = cumulusMeta.priorityKey;
-  if (isNil(priorityKey)) {
-    throw new Error('cumulus_meta.priorityKey not set in message');
-  }
+  const queueName = getQueueName(workflowMessage);
+  const maxExecutions = getMaximumExecutions(workflowMessage, queueName);
 
-  const maxExecutions = get(cumulusMeta, `priorityLevels.${priorityKey}.maxExecutions`);
-  if (isNil(maxExecutions)) {
-    throw new Error(`Could not determine maximum executions for priority ${priorityKey}`);
-  }
-
-  await incrementPrioritySemaphore(priorityKey, maxExecutions);
+  await incrementQueueSemaphore(queueName, maxExecutions);
 
   return dispatch(queueMessage);
 }
