@@ -122,10 +122,11 @@ EmsDistributionReport:
   memory: 128
   source: 'node_modules/@cumulus/api/dist/emsDistributionReport/'
   launchInVpc: true
+  tables:
+    - GranulesTable
+    - FilesTable
   envs:
-    LOGS_BUCKET: '{{system_bucket}}'
-    REPORTS_BUCKET: '{{system_bucket}}'
-    STACK_NAME: '{{stackName}}'
+    system_bucket: '{{system_bucket}}'
     ems_provider: '{{ems.provider}}'
     ems_username: '{{ems.username}}'
     ems_privateKey: '{{ems.privateKey}}'

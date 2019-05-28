@@ -11,6 +11,9 @@ const {
   },
   log
 } = require('@cumulus/common');
+const { buildReportFileName, submitReports } = require('../lib/ems');
+const { deconstructCollectionId } = require('../lib/utils');
+const { FileClass } = require('../models');
 
 /**
  * This class takes an S3 Server Log line and parses it for EMS Distribution Logs
@@ -134,11 +137,23 @@ class DistributionEvent {
   }
 
   /**
+   * Get the product name and version
+   *
+   * @returns {Array<string>} product name and version
+   */
+  get product() {
+    const fileModel = new FileClass();
+    return fileModel.getCollectionIdForFile(this.bucket, this.key)
+      .then((collectionId) =>
+        ((collectionId) ? Object.values(deconstructCollectionId(collectionId)) : new Array(2).fill('')));
+  }
+
+  /**
    * Return the event in an EMS-parsable format
    *
    * @returns {string} an EMS distribution log entry
    */
-  toString() {
+  async toString() {
     const upperCasedMonth = this.time.format('MMM').toUpperCase();
 
     return [
@@ -148,7 +163,9 @@ class DistributionEvent {
       `s3://${this.bucket}/${this.key}`,
       this.bytesSent,
       this.transferStatus
-    ].join('|&|');
+    ]
+      .concat(await this.product)
+      .join('|&|');
   }
 }
 
@@ -222,7 +239,10 @@ async function generateDistributionReport(params) {
   log.info(`Found ${allDistributionEvents.length} distribution events between `
     + `${reportStartTime.toString()} and ${reportEndTime.toString()}`);
 
-  return distributionEventsInReportPeriod.sort(sortByTime).join('\n');
+  return (await Promise.all(distributionEventsInReportPeriod
+    .sort(sortByTime)
+    .map((event) => event.toString())))
+    .join('\n');
 }
 
 /**
@@ -245,7 +265,7 @@ async function determineReportKey(params) {
     stackName
   } = params;
 
-  let reportName = `${reportStartTime.format('YYYYMMDD')}_${provider}_DistCustom_${stackName}.flt`;
+  let reportName = buildReportFileName('distribution', reportStartTime);
 
   const revisionNumber = (await aws.listS3ObjectsV2({
     Bucket: reportsBucket,
@@ -298,14 +318,15 @@ async function generateAndStoreDistributionReport(params) {
     stackName
   });
 
-  log.info(`Uploading report to s3://${reportsBucket}/${reportKey}`);
+  const s3Uri = aws.buildS3Uri(reportsBucket, reportKey);
+  log.info(`Uploading report to ${s3Uri}`);
 
   return aws.s3().putObject({
     Bucket: reportsBucket,
     Key: reportKey,
     Body: distributionReport
   }).promise()
-    .then(() => null);
+    .then(() => ({ reportType: 'distribution', file: s3Uri }));
 }
 // Export to support testing
 exports.generateAndStoreDistributionReport = generateAndStoreDistributionReport;
@@ -314,23 +335,35 @@ exports.generateAndStoreDistributionReport = generateAndStoreDistributionReport;
  * A lambda task for generating and EMS Distribution Report
  *
  * @param {Object} _event - an AWS Lambda event
+ * @param {string} _event.startTime - test only, report startTime in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} _event.endTime - test only, report endTime in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} _event.report - test only, s3 uri of the report to be sent
  * @param {Object} _context - an AWS Lambda execution context (not used)
  * @param {function} cb - an AWS Lambda callback function
  * @returns {Promise} resolves when the report has been generated and stored
  */
 function handler(_event, _context, cb) {
-  const now = moment.utc();
+  // eslint-disable-next-line no-param-reassign
+  _context.callbackWaitsForEmptyEventLoop = false;
+  // 24-hour period ending past midnight
+  let endTime = moment.utc().startOf('day').toDate().toUTCString();
+  let startTime = moment.utc().subtract(1, 'days').startOf('day').toDate()
+    .toUTCString();
+
+  endTime = _event.endTime || endTime;
+  startTime = _event.startTime || startTime;
 
   return generateAndStoreDistributionReport({
-    reportStartTime: moment(now).startOf('day').subtract(1, 'day'),
-    reportEndTime: moment(now).startOf('day'),
-    logsBucket: process.env.LOGS_BUCKET,
-    logsPrefix: `${process.env.STACK_NAME}/ems-distribution/s3-server-access-logs/`,
-    reportsBucket: process.env.REPORTS_BUCKET,
-    reportsPrefix: `${process.env.STACK_NAME}/ems-distribution/reports/`,
+    reportStartTime: moment.utc(startTime),
+    reportEndTime: moment.utc(endTime),
+    logsBucket: process.env.system_bucket,
+    logsPrefix: `${process.env.stackName}/ems-distribution/s3-server-access-logs/`,
+    reportsBucket: process.env.system_bucket,
+    reportsPrefix: `${process.env.stackName}/ems-distribution/reports/`,
     provider: process.env.ems_provider || 'cumulus',
-    stackName: process.env.STACK_NAME
+    stackName: process.env.stackName
   })
+    .then((report) => submitReports([report]))
     .catch(cb);
 }
 exports.handler = handler;

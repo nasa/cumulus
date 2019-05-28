@@ -6,7 +6,7 @@ hide_title: true
 
 # S3 Server Access Logging
 
-To enable [EMS Reporting](../ems_reporting.md), you need to enable [S3 server access logging][awslogging] on all protected buckets.
+To enable [EMS Reporting](../ems_reporting.md), you need to enable [S3 server access logging][awslogging] on all protected and public buckets.
 
 
 ### Via AWS Console
@@ -25,14 +25,14 @@ To enable [EMS Reporting](../ems_reporting.md), you need to enable [S3 server ac
 		}
 	}
 	```
-2. Add the logging policy to your protected buckets by calling this command on each protected bucket.
+2. Add the logging policy to your protected and public buckets by calling this command on each bucket.
 
 	```sh
-	aws s3api put-bucket-logging --bucket <protected-bucket-name> --bucket-logging-status file://logging.json
+	aws s3api put-bucket-logging --bucket <protected/public-bucket-name> --bucket-logging-status file://logging.json
 	```
-3. Verify the logging policy exists on your protected buckets..
+3. Verify the logging policy exists on your buckets..
 	```sh
-	aws s3api get-bucket-logging --bucket <protected-bucket-name>
+	aws s3api get-bucket-logging --bucket <protected/public-bucket-name>
 	```
 
 [cli]: https://aws.amazon.com/cli/ "Amazon command line interface"
