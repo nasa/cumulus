@@ -15,7 +15,7 @@ const { Granule } = require('../models');
 async function list(req, res) {
   const granuleScanner = new Granule().granuleAttributeScan();
   await granuleScanner.fetchItems();
-  const allDbGranules = granuleScanner.items.filter(n => n);
+  const allDbGranules = granuleScanner.items.filter((n) => n);
 
   const fields = ['granuleUr', 'collectionId', 'createdAt', 'startDateTime', 'endDateTime'];
   const granuleArray = allDbGranules.map((granule) => {

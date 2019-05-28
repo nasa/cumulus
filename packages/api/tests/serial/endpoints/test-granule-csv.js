@@ -92,7 +92,7 @@ test('GET returns a cvs file of all granules', async (t) => {
 
   const granuleIds = t.context.fakeGranules.map((g) => g.granuleId);
   t.is(response.status, 200);
-  t.true(response.text.includes('"granuleUr","collectionId","startDateTime","endDateTime"'));
+  t.true(response.text.includes('"granuleUr","collectionId","createdAt","startDateTime","endDateTime"'));
   granuleIds.forEach((gId) => {
     t.true(response.text.includes(gId));
   });

@@ -400,8 +400,8 @@ class Granule extends Manager {
           '#endingDateTime': 'endingDateTime',
           '#createdAt': 'createdAt'
         },
-      ProjectionExpression: '#granuleId, #collectionId, #createdAt, #beginningDateTime, #endingDateTime' // eslint-disable-line max-len
-    }
+      ProjectionExpression: '#granuleId, #collectionId, #createdAt, #beginningDateTime, #endingDateTime'
+    };
 
     return new GranuleSearchQueue(params);
   }
