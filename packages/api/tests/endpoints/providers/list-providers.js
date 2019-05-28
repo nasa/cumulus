@@ -83,13 +83,21 @@ test('default returns list of providerModel', async (t) => {
   const record = await providerModel.create(testProvider);
   indexer.indexProvider(esClient, record, esIndex);
 
-  const response = await request(app)
+  let result;
+  let counter = 0;
+  while (!result && counter != < 5) {
+    counter++;
+    console.log(`Starting ${counter} iteration of test loop`);
+    const response = await request(app)
     .get('/providers')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
-
-  const { results } = response.body;
-  console.log(`Results is ${JSON.stringify(results)}`);
+    const { results } = response.body;
+    result = results[0];
+    console.log(`Results is ${JSON.stringify(results)}`);
+    await sleep(2000);
+  }
+  console.log(`Result is ${result}`)
   t.is(results[0].id, testProvider.id);
 });
