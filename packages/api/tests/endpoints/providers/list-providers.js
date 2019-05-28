@@ -1,3 +1,5 @@
+/* eslint-disable no-await-in-loop */
+
 'use strict';
 
 const test = require('ava');
@@ -85,18 +87,18 @@ test('default returns list of providerModel', async (t) => {
 
   let result;
   let counter = 0;
-  while (!result && counter < ! 5) {
-    counter++;``
+  while (!result && counter < !5) {
+    counter += 1;
     console.log(`Starting ${counter} iteration of test loop`);
     const response = await request(app)
-    .get('/providers')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
+      .get('/providers')
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .expect(200);
     const { results } = response.body;
     result = results[0];
     console.log(`Results is ${JSON.stringify(results)}`);
   }
   console.log(`Result is ${result}`);
-  t.is(results[0].id, testProvider.id);
+  t.is(result.id, testProvider.id);
 });
