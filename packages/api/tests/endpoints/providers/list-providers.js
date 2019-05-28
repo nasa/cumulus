@@ -85,7 +85,7 @@ test('default returns list of providerModel', async (t) => {
 
   let result;
   let counter = 0;
-  while (!result && counter != < 5) {
+  while (!result && counter < 5) {
     counter++;
     console.log(`Starting ${counter} iteration of test loop`);
     const response = await request(app)
