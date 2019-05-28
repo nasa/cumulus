@@ -3,7 +3,9 @@
 'use strict';
 
 const test = require('ava');
-const validateWorkflowDefinedLambdas = require('../lib/configValidators');
+const {
+  validateWorkflowDefinedLambdas
+} = require('../lib/configValidators');
 
 test.beforeEach((t) => {
   t.context.config = {};
