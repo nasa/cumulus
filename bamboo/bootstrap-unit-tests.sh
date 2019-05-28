@@ -28,6 +28,14 @@ done
 ## Setup the build env container once it's started
 $docker_command 'npm install --error --no-progress -g nyc; cd /source/cumulus; npm install --error  --no-progress; npm run bootstrap-quiet'
 
+# Wait for the Elasticsearch service to be available
+while ! $docker_command  'nc -z 127.0.0.1 9200'; do
+  echo 'Waiting for Elasticsearch to start'
+  docker ps -a
+  sleep 2
+done
+echo 'Elasticsearch service is started'
+
 # Wait for the FTP server to be available
 while ! $docker_command  'curl --connect-timeout 5 -sS -o /dev/null ftp://testuser:testpass@127.0.0.1/README.md'; do
   echo 'Waiting for FTP to start'
@@ -61,14 +69,6 @@ while ! $docker_command 'sftp\
   sleep 2
 done
 echo 'SFTP service is available'
-
-# Wait for the Elasticsearch service to be available
-while ! $docker_command  'nc -z 127.0.0.1 9200'; do
-  echo 'Waiting for Elasticsearch to start'
-  docker ps -a
-  sleep 2
-done
-echo 'Elasticsearch service is started'
 
 while ! $docker_command 'curl --connect-timeout 5 -sS http://127.0.0.1:9200/_cluster/health | grep green > /dev/null 2>&1'; do
   echo 'Waiting for Elasticsearch status to be green'
