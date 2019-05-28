@@ -76,6 +76,10 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
 
 ## Added
 
+- **CUMULUS-799**
+  - Added an S3 Access Metrics package which will take S3 Server Access Logs and
+    write access metrics to CloudWatch
+
 - **CUMULUS-1242** - Added `sqs2sfThrottle` lambda. The lambda reads SQS messages for queued executions and uses semaphores to only start new executions if the maximum number of executions defined for the priority key (`cumulus_meta.priorityKey`) has not been reached. Any SQS messages that are read but not used to start executions remain in the queue.
 
 - **CUMULUS-1240**
