@@ -3,6 +3,7 @@
 const got = require('got');
 const get = require('lodash.get');
 const publicIp = require('public-ip');
+const pRetry = require('p-retry');
 const Logger = require('@cumulus/logger');
 
 const searchConcept = require('./searchConcept');
@@ -89,27 +90,27 @@ async function updateToken(cmrProvider, clientId, username, password) {
 
   // Update the saved ECHO token
   // for info on how to add collections to CMR: https://cmr.earthdata.nasa.gov/ingest/site/ingest_api_docs.html#validate-collection
-  let response;
-
-  try {
-    response = await got.post(getUrl('token'), {
-      json: true,
-      body: {
-        token: {
-          username: username,
-          password: password,
-          client_id: clientId,
-          user_ip_address: await publicIp.v4({ timeout: IP_TIMEOUT_MS }).catch((_) => '127.0.0.1'),
-          provider: cmrProvider
+  const response = await pRetry(async () => {
+    try {
+      return got.post(getUrl('token'), {
+        json: true,
+        body: {
+          token: {
+            username: username,
+            password: password,
+            client_id: clientId,
+            user_ip_address: await publicIp.v4({ timeout: IP_TIMEOUT_MS }).catch((_) => '127.0.0.1'),
+            provider: cmrProvider
+          }
         }
-      }
-    });
-  } catch (err) {
-    if (err.response.body.errors) throw new Error(`CMR Error: ${err.response.body.errors[0]}`);
-    throw err;
-  }
+      });
+    } catch (err) {
+      if (err.response.body.errors) log.error(`CMR error: ${err.response.body.errors[0]}. Retrying.`);
+      throw err;
+    }
+  }, { retries: 3 });
 
-  if (!response.body.token) throw new Error('Authentication with CMR failed');
+  if (!response || !response.body || !response.body.token) throw new Error('Authentication with CMR failed');
 
   return response.body.token.id;
 }
