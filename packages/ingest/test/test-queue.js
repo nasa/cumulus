@@ -11,6 +11,7 @@ test.beforeEach(async (t) => {
   t.context.templateBucket = randomString();
   await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
 
+  t.context.queueName = randomId('queue');
   t.context.queueUrl = await createQueue();
 
   t.context.stateMachineArn = randomString();
@@ -19,7 +20,11 @@ test.beforeEach(async (t) => {
     cumulus_meta: {
       state_machine: t.context.stateMachineArn
     },
-    meta: { queues: { startSF: t.context.queueUrl } }
+    meta: {
+      queues: {
+        [t.context.queueName]: t.context.queueUrl
+      }
+    }
   };
 
   const messageTemplateKey = `${randomString()}/template.json`;
@@ -85,8 +90,14 @@ test.serial('the queue receives a correctly formatted workflow message without a
 
 test.serial('the queue receives a correctly formatted workflow message with a PDR', async (t) => {
   const granule = { granuleId: '1', files: [] };
-  const { queueUrl } = t.context;
-  const templateUri = `s3://${t.context.templateBucket}/${t.context.messageTemplateKey}`;
+  const {
+    queueName,
+    queueUrl,
+    stateMachineArn,
+    templateBucket,
+    templateBucket
+  } = t.context;
+  const templateUri = `s3://${templateBucket}/${templateBucket}`;
   const collection = { name: 'test-collection', version: '0.0.0' };
   const provider = { id: 'test-provider' };
   const pdr = { name: randomString(), path: randomString() };
@@ -100,7 +111,7 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
       granule, queueUrl, templateUri, provider, collection, pdr, arn
     );
     receiveMessageResponse = await sqs().receiveMessage({
-      QueueUrl: t.context.queueUrl,
+      QueueUrl: queueUrl,
       MaxNumberOfMessages: 10,
       WaitTimeSeconds: 1
     }).promise();
@@ -113,11 +124,11 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
   const actualMessage = JSON.parse(receiveMessageResponse.Messages[0].Body);
   const expectedMessage = {
     cumulus_meta: {
-      state_machine: t.context.stateMachineArn,
+      state_machine: stateMachineArn,
       parentExecutionArn: arn
     },
     meta: {
-      queues: { startSF: t.context.queueUrl },
+      queues: { [queueName]: queueUrl },
       provider: provider,
       collection: collection,
       pdr: pdr

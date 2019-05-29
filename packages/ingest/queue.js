@@ -1,6 +1,7 @@
 'use strict';
 
 const uuidv4 = require('uuid/v4');
+const findKey = require('lodash.findkey');
 
 const {
   getS3Object,
@@ -19,6 +20,29 @@ async function getMessageFromTemplate(templateUri) {
   const parsedS3Uri = parseS3Uri(templateUri);
   const data = await getS3Object(parsedS3Uri.Bucket, parsedS3Uri.Key);
   return JSON.parse(data.Body);
+}
+
+/**
+ * Prepare a SQS message for queueing executions.
+ *
+ * @param {Object} message - Object for SQS message
+ * @param {Object} params
+ * @param {Object} params.provider - A provider object
+ * @param {Object} params.collection - A collection object
+ * @param {Object} params.parentExecutionArn - ARN for parent execution
+ * @param {Object} params.queueUrl - SQS queue URL
+ */
+function prepareQueueMessage(message, {
+  provider,
+  collection,
+  parentExecutionArn,
+  queueUrl
+}) {
+  message.meta.provider = provider;
+  message.meta.collection = collection;
+  if (parentExecutionArn) message.cumulus_meta.parentExecutionArn = parentExecutionArn;
+  message.cumulus_meta.queueName = findKey(message.meta.queues, queueUrl);
+  message.cumulus_meta.execution_name = uuidv4();
 }
 
 /**
@@ -94,11 +118,8 @@ async function enqueueGranuleIngestMessage(
   };
   if (pdr) message.meta.pdr = pdr;
 
-  message.meta.provider = provider;
-  message.meta.collection = collection;
-  if (parentExecutionArn) message.cumulus_meta.parentExecutionArn = parentExecutionArn;
+  prepareQueueMessage(message, { provider, collection, parentExecutionArn });
 
-  message.cumulus_meta.execution_name = uuidv4();
   const arn = getExecutionArn(
     message.cumulus_meta.state_machine,
     message.cumulus_meta.execution_name
