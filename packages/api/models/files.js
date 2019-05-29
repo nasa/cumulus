@@ -131,17 +131,16 @@ class FileClass extends Manager {
   }
 
   /**
-   * return the collectionId associated with a given file
+   * return the granule associated with a given file
    *
    * @param {string} bucket - bucket name
    * @param {string} key - bucket key
-   * @returns {string} the collectionId associated with the file,
+   * @returns {Object} the granule associated with the file,
    * null if file or granule is not found
    */
-  getCollectionIdForFile(bucket, key) {
+  getGranuleForFile(bucket, key) {
     return super.get({ bucket, key })
       .then((file) => new Granule().get({ granuleId: file.granuleId }))
-      .then((granule) => granule.collectionId)
       .catch((e) => {
         if (e.message.startsWith('No record found')) return null;
         throw e;

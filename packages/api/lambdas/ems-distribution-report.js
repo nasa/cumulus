@@ -137,15 +137,17 @@ class DistributionEvent {
   }
 
   /**
-   * Get the product name and version
+   * Get the product name, version, and granuleId
    *
-   * @returns {Array<string>} product name and version
+   * @returns {Array<string>} product name, version and granuleId
    */
   get product() {
     const fileModel = new FileClass();
-    return fileModel.getCollectionIdForFile(this.bucket, this.key)
-      .then((collectionId) =>
-        ((collectionId) ? Object.values(deconstructCollectionId(collectionId)) : new Array(2).fill('')));
+    return fileModel.getGranuleForFile(this.bucket, this.key)
+      .then((granule) =>
+        ((granule)
+          ? Object.values(deconstructCollectionId(granule.collectionId)).concat([granule.granuleId])
+          : new Array(3).fill('')));
   }
 
   /**
