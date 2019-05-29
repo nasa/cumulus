@@ -1,6 +1,9 @@
 const fs = require('fs-extra');
 const moment = require('moment');
 const AWS = require('aws-sdk');
+const got = require('got');
+const path = require('path');
+const os = require('os');
 
 const {
   aws: {
@@ -13,12 +16,17 @@ const {
   constructCollectionId
 } = require('@cumulus/common');
 const { sleep } = require('@cumulus/common/util');
-const { Granule } = require('@cumulus/api/models');
+const { Granule, AccessToken } = require('@cumulus/api/models');
 const {
   addCollections,
   addProviders,
   buildAndExecuteWorkflow,
   cleanupProviders,
+  distributionApi: {
+    getDistributionApiRedirect
+  },
+  EarthdataLogin: { getEarthdataAccessToken },
+  getOnlineResources,
   granulesApi: granulesApiTestUtils,
   waitUntilGranuleStatusIs
 } = require('@cumulus/integration-tests');
@@ -31,6 +39,7 @@ const {
   createTestDataPath,
   createTestSuffix
 } = require('../../helpers/testUtils');
+const { setDistributionApiEnvVars } = require('../../helpers/apiUtils');
 
 const config = loadConfig();
 
@@ -38,6 +47,7 @@ const emsReportLambda = `${config.stackName}-EmsIngestReport`;
 const bucket = config.bucket;
 const emsProvider = config.ems.provider;
 const stackName = config.stackName;
+process.env.stackName = config.stackName;
 const submitReport = config.ems.submitReport === 'true' || false;
 
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
@@ -51,6 +61,8 @@ const granuleRegex = '^MOD14A1\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
 process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
 process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
+const accessTokensModel = new AccessToken();
 
 // add MOD14A1___006 collection
 async function setupCollectionAndTestData(testSuffix, testDataFolder) {
@@ -102,6 +114,15 @@ async function deleteOldGranules() {
     await dbGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
     nextDbItem = await dbGranulesIterator.peek(); // eslint-disable-line no-await-in-loop
   }
+}
+
+// return granule files which can be downloaded
+async function getGranuleFilesForDownload(granuleId) {
+  const granuleResponse = await granulesApiTestUtils.getGranule({ prefix: config.stackName, granuleId });
+  const granule = JSON.parse(granuleResponse.body);
+  const cmrResource = await getOnlineResources({ cmrMetadataFormat: 'echo10', ...granule });
+  return granule.files
+    .filter((file) => (cmrResource.filter((resource) => resource.href.endsWith(file.fileName)).length > 0));
 }
 
 describe('The EMS report', () => {
@@ -235,6 +256,37 @@ describe('The EMS report', () => {
       });
       const results = await Promise.all(jobs);
       results.forEach((result) => expect(result).not.toBe(false));
+    });
+  });
+
+  describe('submits distribution requests', () => {
+    let accessToken;
+
+    beforeAll(async () => {
+      setDistributionApiEnvVars();
+      const accessTokenResponse = await getEarthdataAccessToken({
+        redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
+        requestOrigin: process.env.DISTRIBUTION_ENDPOINT
+      });
+      accessToken = accessTokenResponse.accessToken;
+    });
+
+    afterAll(async () => {
+      await accessTokensModel.delete({ accessToken });
+    });
+
+    it('downloads the files of the published granule for generating nightly distribution report', async () => {
+      const files = await getGranuleFilesForDownload(ingestedGranuleIds[0]);
+      for (let i = 0; i < files.length; i += 1) {
+        const filePath = `/${files[i].bucket}/${files[i].key}`;
+        const downloadedFile = path.join(os.tmpdir(), files[i].fileName);
+        console.log(filePath, downloadedFile);
+        // eslint-disable-next-line no-await-in-loop
+        const s3SignedUrl = await getDistributionApiRedirect(filePath, accessToken);
+        // eslint-disable-next-line no-await-in-loop
+        await got.stream(s3SignedUrl).pipe(fs.createWriteStream(downloadedFile));
+        fs.unlinkSync(downloadedFile);
+      }
     });
   });
 });

@@ -141,7 +141,7 @@ test('getBucketAndKey returns correct bucket and key when file does not have a b
   t.deepEqual(fileModel.getBucketAndKey(file), { bucket: 'fake-source-bucket', key: 'fake-key' });
 });
 
-test.serial('getCollectionIdForFile returns collectionId of the file', async (t) => {
+test.serial('getGranuleForFile returns granule of the file', async (t) => {
   const bucket = randomString();
   const granule = fakeGranuleFactory();
   granule.files = [];
@@ -152,23 +152,23 @@ test.serial('getCollectionIdForFile returns collectionId of the file', async (t)
   await granuleModel.create(granule);
   await fileModel.createFilesFromGranule(granule);
 
-  // collectionId can be retrieved for each file
+  // granule can be retrieved for each file
   const validateCollIds = async (file) => {
-    const collectionId = await fileModel.getCollectionIdForFile(file.bucket, file.key);
-    t.is(collectionId, granule.collectionId);
+    const associatedGranule = await fileModel.getGranuleForFile(file.bucket, file.key);
+    t.deepEqual(associatedGranule, granule);
   };
 
   await Promise.all(granule.files.map(validateCollIds));
 
   // return null if the file doesn't exist
-  const collId = await fileModel.getCollectionIdForFile(randomString(), randomString());
-  t.falsy(collId);
+  const associatedGran = await fileModel.getGranuleForFile(randomString(), randomString());
+  t.falsy(associatedGran);
 
   // return null if the granule doesn't exist
   await granuleModel.delete({ granuleId: granule.granuleId });
   const validates = async (file) => {
-    const collectionId = await fileModel.getCollectionIdForFile(file.bucket, file.key);
-    t.falsy(collectionId);
+    const associatedGranule = await fileModel.getGranuleForFile(file.bucket, file.key);
+    t.falsy(associatedGranule);
   };
 
   await Promise.all(granule.files.map(validates));
