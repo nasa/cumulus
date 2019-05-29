@@ -85,6 +85,9 @@ test('default returns list of providerModel', async (t) => {
   const record = await providerModel.create(testProvider);
   indexer.indexProvider(esClient, record, esIndex);
 
+  console.log(`*******Mode is : ${process.env.NODE_ENV}`);
+  await esClient.reindex();
+
   let result;
   let counter = 0;
   while (!result && counter < 5) {
