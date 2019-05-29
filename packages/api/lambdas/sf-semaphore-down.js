@@ -7,6 +7,11 @@ const {
   Semaphore
 } = require('@cumulus/common');
 
+const {
+  getQueueName,
+  hasQueueAndExecutionLimit
+} = require('../lib/message');
+
 /**
  * Determine if workflow is in a terminal state.
  *
@@ -20,7 +25,8 @@ const isTerminalMessage = (message) =>
  * Determine if workflow needs a semaphore decrement.
  *
  * Skip if:
- *   - Message has no priority level
+ *   - Message has no specified queue name
+ *   - Queue name for message has no maximum execution limit
  *   - Message has no workflow status
  *   - Workflow is not in a terminal state (failed/completed)
  *
@@ -28,18 +34,18 @@ const isTerminalMessage = (message) =>
  * @returns {boolean} True if workflow semaphore should be decremented.
  */
 const isDecrementMessage = (message) =>
-  has(message, 'cumulus_meta.priorityKey')
+  hasQueueAndExecutionLimit(message)
   && has(message, 'meta.status')
   && isTerminalMessage(message);
 
 /**
- * Decrement semaphore value for executions with priority
+ * Decrement semaphore value for executions started from a queue
  *
- * @param {string} key - Key for a semaphore tracking running executions
+ * @param {string} queueName - Queue name used as key for semaphore tracking running executions
  * @returns {Promise} A promise indicating function completion
  * @throws {Error} Error from semaphore.down() operation
  */
-async function decrementPrioritySemaphore(key) {
+async function decrementQueueSemaphore(queueName) {
   const semaphore = new Semaphore(
     aws.dynamodbDocClient(),
     process.env.SemaphoresTable
@@ -48,9 +54,9 @@ async function decrementPrioritySemaphore(key) {
   // Error should only be thrown if we are attempting to decrement the
   // count below 0. If so, catch the error so it can be logged.
   try {
-    await semaphore.down(key);
+    await semaphore.down(queueName);
   } catch (err) {
-    log.error(`Failure: attempted to decrement semaphore for key ${key} below 0`);
+    log.error(`Failure: attempted to decrement semaphore for queue ${queueName} below 0`);
     throw err;
   }
 }
@@ -67,7 +73,8 @@ function getSemaphoreDecrementTasks(event) {
     .filter((record) => has(record, 'Sns.Message') && !isNil(record.Sns.Message))
     .map((record) => JSON.parse(record.Sns.Message))
     .filter((message) => isDecrementMessage(message))
-    .map((message) => decrementPrioritySemaphore(message.cumulus_meta.priorityKey));
+    .map((message) => getQueueName(message))
+    .map((queueName) => decrementQueueSemaphore(queueName));
 }
 
 /**
