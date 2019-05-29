@@ -36,20 +36,20 @@ test.beforeEach(async (t) => {
   ]);
 
   const queueName = randomId('queue');
+  t.context.queueName = queueName;
   const queueUrl = await createQueue();
 
-  t.context.messageTemplateCumulusMeta = {
-    state_machine: t.context.stateMachineArn,
-    queueName
-  };
-  t.context.messageTemplateMeta = {
-    queues: {
-      [queueName]: queueUrl
-    }
+  t.context.queues = {
+    [queueName]: queueUrl
   };
   t.context.messageTemplate = {
-    cumulus_meta: t.context.messageTemplateCumulusMeta,
-    meta: t.context.messageTemplateMeta
+    cumulus_meta: {
+      state_machine: t.context.stateMachineArn,
+      queueName
+    },
+    meta: {
+      queues: t.context.queues
+    }
   };
   const messageTemplateKey = `${randomString()}/template.json`;
   await s3().putObject({
@@ -189,8 +189,9 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
   const {
     collectionConfigStore,
     event,
-    messageTemplateCumulusMeta,
-    messageTemplateMeta
+    queueName,
+    queues,
+    stateMachineArn
   } = t.context;
 
   const granule1 = {
@@ -241,12 +242,13 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
     message1,
     {
       cumulus_meta: {
-        ...messageTemplateCumulusMeta,
+        queueName,
         // The execution name is randomly generated, so we don't care what the value is here
-        execution_name: message1.cumulus_meta.execution_name
+        execution_name: message1.cumulus_meta.execution_name,
+        state_machine: stateMachineArn
       },
       meta: {
-        ...messageTemplateMeta,
+        queues,
         collection: collectionConfig1,
         provider: { name: 'provider-name' }
       },
@@ -270,12 +272,13 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
     message2,
     {
       cumulus_meta: {
-        ...messageTemplateCumulusMeta,
+        queueName,
         // The execution name is randomly generated, so we don't care what the value is here
-        execution_name: message2.cumulus_meta.execution_name
+        execution_name: message2.cumulus_meta.execution_name,
+        state_machine: stateMachineArn
       },
       meta: {
-        ...messageTemplateMeta,
+        queues,
         collection: collectionConfig2,
         provider: { name: 'provider-name' }
       },
@@ -297,8 +300,9 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
   const {
     collectionConfigStore,
     event,
-    messageTemplateCumulusMeta,
-    messageTemplateMeta
+    queueName,
+    queues,
+    stateMachineArn
   } = t.context;
 
   // if the event.cumulus_config has 'state_machine' and 'execution_name', the enqueued message
@@ -361,13 +365,14 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     message1,
     {
       cumulus_meta: {
-        ...messageTemplateCumulusMeta,
+        queueName,
         // The execution name is randomly generated, so we don't care what the value is here
         execution_name: message1.cumulus_meta.execution_name,
-        parentExecutionArn: arn
+        parentExecutionArn: arn,
+        state_machine: stateMachineArn
       },
       meta: {
-        ...messageTemplateMeta,
+        queues,
         pdr: event.input.pdr,
         collection: collectionConfig1,
         provider: { name: 'provider-name' }
@@ -392,13 +397,14 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     message2,
     {
       cumulus_meta: {
-        ...messageTemplateCumulusMeta,
+        queueName,
         // The execution name is randomly generated, so we don't care what the value is here
         execution_name: message2.cumulus_meta.execution_name,
-        parentExecutionArn: arn
+        parentExecutionArn: arn,
+        state_machine: stateMachineArn
       },
       meta: {
-        ...messageTemplateMeta,
+        queues,
         pdr: event.input.pdr,
         collection: collectionConfig2,
         provider: { name: 'provider-name' }
