@@ -239,6 +239,19 @@
                     "state": "ENABLED"
                 }
             ]
+        },
+        "startSFLowPriority": {
+            "visibilityTimeout": 20,
+            "retry": 30,
+            "maxExecutions": 5,
+            "consumer": [
+                {
+                    "lambda": "sqs2sfThrottle",
+                    "schedule": "rate(1 minute)",
+                    "messageLimit": 10,
+                    "state": "ENABLED"
+                }
+            ]
         }
     },
     "rules": {
@@ -887,7 +900,7 @@
         }
     },
     "distribution_endpoint": "https://example.execute-api.us-east-1.amazonaws.com/dev/",
-    "dashboard": 
+    "dashboard":
     {
         "alarmTemplate": {
             "type": "metric",

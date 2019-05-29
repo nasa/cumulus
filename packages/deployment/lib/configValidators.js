@@ -33,4 +33,17 @@ function validateWorkflowDefinedLambdas(config) {
   });
 }
 
-module.exports = validateWorkflowDefinedLambdas;
+/**
+ * Validate deployment configuration.
+ *
+ * @param {Object} config kes configuration object
+ * @throws {Error}
+ */
+function validateConfig(config) {
+  validateWorkflowDefinedLambdas(config);
+}
+
+module.exports = {
+  validateWorkflowDefinedLambdas,
+  validateConfig
+};
