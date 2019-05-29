@@ -5,7 +5,7 @@ const test = require('ava');
 const {
   extractCumulusConfigFromSF,
   fixCumulusMessageSyntax,
-  template,
+  generateWorkflowTemplate,
   generateTemplates
 } = require('../lib/message');
 const exampleConfig = require('./fixtures/config.json');
@@ -75,8 +75,8 @@ test('handing CumulusConfig in workflows', (t) => {
   );
 });
 
-test('generate a template', (t) => {
-  const tt = template(
+test('generate a workflow template', (t) => {
+  const tt = generateWorkflowTemplate(
     'DiscoverPdrs',
     exampleConfig.stepFunctions.DiscoverPdrs,
     exampleConfig,
@@ -93,6 +93,7 @@ test('generate a template', (t) => {
   );
   t.truthy(tt.meta.queues.startSF);
   t.truthy(tt.workflow_config.DiscoverPdrs);
+  t.is(tt.meta.queueExecutionLimits.startSFLowPriority, 5);
 });
 
 test('generate template for a step function', async (t) => {
