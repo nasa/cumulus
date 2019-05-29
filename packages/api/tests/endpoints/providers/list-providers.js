@@ -86,7 +86,7 @@ test('default returns list of providerModel', async (t) => {
   indexer.indexProvider(esClient, record, esIndex);
 
   console.log(`*******Mode is : ${process.env.NODE_ENV}`);
-  await esClient.reindex();
+  await esClient.indices.refresh();
 
   let result;
   let counter = 0;
