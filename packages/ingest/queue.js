@@ -42,7 +42,7 @@ function prepareExecutionQueueMessage({
   message.meta.provider = provider;
   message.meta.collection = collection;
   if (parentExecutionArn) message.cumulus_meta.parentExecutionArn = parentExecutionArn;
-  message.cumulus_meta.queueName = findKey(message.meta.queues, queueUrl);
+  message.cumulus_meta.queueName = findKey(message.meta.queues, (value) => value === queueUrl);
   message.cumulus_meta.execution_name = uuidv4();
 }
 
@@ -76,7 +76,8 @@ async function enqueueParsePdrMessage({
     message,
     provider,
     collection,
-    parentExecutionArn
+    parentExecutionArn,
+    queueUrl
   });
 
   const arn = getExecutionArn(
@@ -126,7 +127,8 @@ async function enqueueGranuleIngestMessage({
     message,
     provider,
     collection,
-    parentExecutionArn
+    parentExecutionArn,
+    queueUrl
   });
 
   const arn = getExecutionArn(
