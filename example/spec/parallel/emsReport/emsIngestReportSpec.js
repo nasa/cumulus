@@ -18,6 +18,7 @@ const {
   addCollections,
   addProviders,
   buildAndExecuteWorkflow,
+  cleanupCollections,
   cleanupProviders,
   granulesApi: granulesApiTestUtils,
   waitUntilGranuleStatusIs
@@ -125,7 +126,7 @@ describe('The EMS report', () => {
     // delete granules ingested for this collection, so that ArchDel report can be generated
     await deleteOldGranules();
 
-    // ingest two new granules, so that Arch and Ing reports can be generated
+    // ingest two new granules, so that Archive and Ingest reports can be generated
     ingestedGranuleIds = await Promise.all([
       // ingest a granule and publish it to CMR
       ingestAndPublishGranule(testSuffix, testDataFolder),
@@ -138,8 +139,7 @@ describe('The EMS report', () => {
   afterAll(async () => {
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
-      // leave collections in the table for EMS reports
-      //cleanupCollections(config.stackName, config.bucket, collectionsDir),
+      cleanupCollections(config.stackName, config.bucket, collectionsDir),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
     ]);
   });
@@ -155,7 +155,7 @@ describe('The EMS report', () => {
       const lastUpdate = lambdaConfig.LastModified;
 
       // Compare lambda function's lastUpdate with the time 24 hours before now.
-      // If the lambda is created 24 hours ago, it must have been invoked
+      // If the lambda is modified less than 24 hours ago, it must have been invoked
       // and generated EMS reports for the previous day.
       if (new Date(lastUpdate).getTime() < moment.utc().subtract(24, 'hours').toDate().getTime()) {
         expectReports = true;

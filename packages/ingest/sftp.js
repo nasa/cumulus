@@ -71,7 +71,7 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
   }
 
   /**
-   * Download the remote file to a given s3 location
+   * Transfer the remote file to a given s3 location
    *
    * @param {string} remotePath - the full path to the remote file to be fetched
    * @param {string} bucket - destination s3 bucket of the file
@@ -79,6 +79,6 @@ module.exports.sftpMixin = (superclass) => class extends superclass {
    * @returns {Promise} s3 uri of destination file
    */
   async sync(remotePath, bucket, key) {
-    return this.sftpClient.downloadToS3(remotePath, bucket, key);
+    return this.sftpClient.syncToS3(remotePath, bucket, key);
   }
 };
