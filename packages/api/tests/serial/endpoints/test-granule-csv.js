@@ -67,8 +67,8 @@ test.before(async () => {
 
   // create fake granule records
   fakeGranules = [
-    fakeGranuleFactoryV2({ status: 'completed', beginningDateTime: '177204' , endingDateTime: '132948'}),
-    fakeGranuleFactoryV2({ status: 'failed', beginningDateTime: '177205' , endingDateTime: '132949' })
+    fakeGranuleFactoryV2({ status: 'completed', beginningDateTime: '177204', endingDateTime: '132948' }),
+    fakeGranuleFactoryV2({ status: 'failed', beginningDateTime: '177205', endingDateTime: '132949' })
   ];
 
   await Promise.all(fakeGranules.map((granule) =>
