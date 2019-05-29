@@ -76,12 +76,12 @@ test('Download remote file to local disk', async (t) => {
   await testSftpClient.end();
 });
 
-test('Download remote file to s3 with correct content-type', async (t) => {
+test('Transfer remote file to s3 with correct content-type', async (t) => {
   const testSftpClient = new Sftp(sftpConfig);
   const expectedContentType = 'application/x-hdf';
 
   const key = `${randomString()}.hdf`;
-  await testSftpClient.downloadToS3(
+  await testSftpClient.syncToS3(
     '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf', bucket, key
   );
   t.truthy(fileExists(bucket, key));
@@ -97,7 +97,7 @@ test('Upload file from s3 to remote', async (t) => {
   const s3object = { Bucket: bucket, Key: 'delete-me-test-sftp-uploads3.txt' };
   await s3PutObject({ Body: randomString(), ...s3object });
   const testSftpClient = new Sftp(sftpConfig);
-  await testSftpClient.uploadFromS3(s3object, `/granules/${s3object.Key}`);
+  await testSftpClient.syncFromS3(s3object, `/granules/${s3object.Key}`);
   const s3sum = await calculateS3ObjectChecksum({ algorithm: 'CKSUM', bucket, key: s3object.Key });
   const filesum = await generateChecksumFromStream('CKSUM', fs.createReadStream(`../test-data/granules/${s3object.Key}`));
   t.is(s3sum, filesum);
