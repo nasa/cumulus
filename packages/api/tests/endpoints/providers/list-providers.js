@@ -50,6 +50,7 @@ test.before(async () => {
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 
   esClient = await Search.es('fakehost');
+  console.log('Finished Before');
 });
 
 test.after.always(async () => {
@@ -59,7 +60,7 @@ test.after.always(async () => {
   await esClient.indices.delete({ index: esIndex });
 });
 
-test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .get('/providers')
     .set('Accept', 'application/json')
@@ -68,7 +69,7 @@ test('CUMULUS-911 GET without pathParameters and without an Authorization header
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test('CUMULUS-912 GET without pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
+test.serial('CUMULUS-912 GET without pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const response = await request(app)
     .get('/providers')
     .set('Accept', 'application/json')
@@ -80,28 +81,16 @@ test('CUMULUS-912 GET without pathParameters and with an invalid access token re
 
 test.todo('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response');
 
-test('default returns list of providerModel', async (t) => {
+test.serial('default returns list of providerModel', async (t) => {
+  console.log('Starting Test');
   const testProvider = fakeProviderFactory();
   const record = await providerModel.create(testProvider);
-  indexer.indexProvider(esClient, record, esIndex);
-
-  console.log(`*******Mode is : ${process.env.NODE_ENV}`);
-  await esClient.indices.refresh();
-
-  let result;
-  let counter = 0;
-  while (!result && counter < 5) {
-    counter += 1;
-    console.log(`Starting ${counter} iteration of test loop`);
-    const response = await request(app)
-      .get('/providers')
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .expect(200);
-    const { results } = response.body;
-    result = results[0];
-    console.log(`Results is ${JSON.stringify(results)}`);
-  }
-  console.log(`Result is ${result}`);
-  t.is(result.id, testProvider.id);
+  await indexer.indexProvider(esClient, record, esIndex);
+  const response = await request(app)
+    .get('/providers')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+  const { results } = response.body;
+  t.is(results[0].id, testProvider.id);
 });
