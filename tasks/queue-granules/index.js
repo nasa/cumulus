@@ -28,15 +28,15 @@ async function queueGranules(event) {
     granules.map(async (granule) => {
       const collectionConfig = await collectionConfigStore.get(granule.dataType, granule.version);
 
-      return enqueueGranuleIngestMessage(
+      return enqueueGranuleIngestMessage({
         granule,
-        event.config.queueUrl,
-        event.config.granuleIngestMessageTemplateUri,
-        event.config.provider,
-        collectionConfig,
-        event.input.pdr,
+        queueUrl: event.config.queueUrl,
+        granuleIngestMessageTemplateUri: event.config.granuleIngestMessageTemplateUri,
+        provider: event.config.provider,
+        collection: collectionConfig,
+        pdr: event.input.pdr,
         arn
-      );
+      });
     })
   );
 

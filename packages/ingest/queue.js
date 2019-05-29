@@ -25,14 +25,15 @@ async function getMessageFromTemplate(templateUri) {
 /**
  * Prepare a SQS message for queueing executions.
  *
- * @param {Object} message - Object for SQS message
  * @param {Object} params
+ * @param {Object} params.message - Object for SQS message
  * @param {Object} params.provider - A provider object
  * @param {Object} params.collection - A collection object
  * @param {Object} params.parentExecutionArn - ARN for parent execution
  * @param {Object} params.queueUrl - SQS queue URL
  */
-function prepareQueueMessage(message, {
+function prepareExecutionQueueMessage({
+  message,
   provider,
   collection,
   parentExecutionArn,
@@ -68,14 +69,15 @@ async function enqueueParsePdrMessage(
 ) {
   const message = await getMessageFromTemplate(parsePdrMessageTemplateUri);
 
-  message.meta.provider = provider;
-  message.meta.collection = collection;
-
   message.payload = { pdr };
 
-  if (parentExecutionArn) message.cumulus_meta.parentExecutionArn = parentExecutionArn;
+  prepareExecutionQueueMessage({
+    message,
+    provider,
+    collection,
+    parentExecutionArn
+  });
 
-  message.cumulus_meta.execution_name = uuidv4();
   const arn = getExecutionArn(
     message.cumulus_meta.state_machine,
     message.cumulus_meta.execution_name
@@ -88,18 +90,19 @@ module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
 /**
  * Enqueue a granule to be ingested
  *
- * @param {Object} granule - the granule to be enqueued for ingest
- * @param {string} queueUrl - the SQS queue to add the message to
- * @param {string} granuleIngestMessageTemplateUri - the S3 URI of template for
+ * @param {Object} params
+ * @param {Object} params.granule - the granule to be enqueued for ingest
+ * @param {string} params.queueUrl - the SQS queue to add the message to
+ * @param {string} params.granuleIngestMessageTemplateUri - the S3 URI of template for
  * a granule ingest message
- * @param {Object} provider - the provider config to be attached to the message
- * @param {Object} collection - the collection config to be attached to the
+ * @param {Object} params.provider - the provider config to be attached to the message
+ * @param {Object} params.collection - the collection config to be attached to the
  *   message
- * @param {Object} pdr - an optional PDR to be configured in the message payload
- * @param {string} parentExecutionArn - parent workflow execution arn to add to the message
+ * @param {Object} params.pdr - an optional PDR to be configured in the message payload
+ * @param {string} params.parentExecutionArn - parent workflow execution arn to add to the message
  * @returns {Promise} - resolves when the message has been enqueued
  */
-async function enqueueGranuleIngestMessage(
+async function enqueueGranuleIngestMessage({
   granule,
   queueUrl,
   granuleIngestMessageTemplateUri,
@@ -107,7 +110,7 @@ async function enqueueGranuleIngestMessage(
   collection,
   pdr,
   parentExecutionArn
-) {
+}) {
   // Build the message from a template
   const message = await getMessageFromTemplate(granuleIngestMessageTemplateUri);
 
@@ -118,7 +121,12 @@ async function enqueueGranuleIngestMessage(
   };
   if (pdr) message.meta.pdr = pdr;
 
-  prepareQueueMessage(message, { provider, collection, parentExecutionArn });
+  prepareExecutionQueueMessage({
+    message,
+    provider,
+    collection,
+    parentExecutionArn
+  });
 
   const arn = getExecutionArn(
     message.cumulus_meta.state_machine,

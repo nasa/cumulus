@@ -47,8 +47,14 @@ test.afterEach(async (t) => {
 
 test.serial('the queue receives a correctly formatted workflow message without a PDR', async (t) => {
   const granule = { granuleId: '1', files: [] };
-  const { queueUrl } = t.context;
-  const templateUri = `s3://${t.context.templateBucket}/${t.context.messageTemplateKey}`;
+  const {
+    queueName,
+    queueUrl,
+    stateMachineArn,
+    templateBucket,
+    messageTemplateKey
+  } = t.context;
+  const templateUri = `s3://${templateBucket}/${messageTemplateKey}`;
   const collection = { name: 'test-collection', version: '0.0.0' };
   const provider = { id: 'test-provider' };
 
@@ -56,11 +62,15 @@ test.serial('the queue receives a correctly formatted workflow message without a
   let receiveMessageResponse;
 
   try {
-    output = await queue.enqueueGranuleIngestMessage(
-      granule, queueUrl, templateUri, provider, collection
-    );
+    output = await queue.enqueueGranuleIngestMessage({
+      granule,
+      queueUrl,
+      granuleIngestMessageTemplateUri: templateUri,
+      provider,
+      collection
+    });
     receiveMessageResponse = await sqs().receiveMessage({
-      QueueUrl: t.context.queueUrl,
+      QueueUrl: queueUrl,
       MaxNumberOfMessages: 10,
       WaitTimeSeconds: 1
     }).promise();
@@ -73,10 +83,13 @@ test.serial('the queue receives a correctly formatted workflow message without a
   const actualMessage = JSON.parse(receiveMessageResponse.Messages[0].Body);
   const expectedMessage = {
     cumulus_meta: {
-      state_machine: t.context.stateMachineArn
+      state_machine: stateMachineArn,
+      queueName
     },
     meta: {
-      queues: { startSF: t.context.queueUrl },
+      queues: {
+        [queueName]: queueUrl
+      },
       provider: provider,
       collection: collection
     },
@@ -95,9 +108,9 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
     queueUrl,
     stateMachineArn,
     templateBucket,
-    templateBucket
+    messageTemplateKey
   } = t.context;
-  const templateUri = `s3://${templateBucket}/${templateBucket}`;
+  const templateUri = `s3://${templateBucket}/${messageTemplateKey}`;
   const collection = { name: 'test-collection', version: '0.0.0' };
   const provider = { id: 'test-provider' };
   const pdr = { name: randomString(), path: randomString() };
@@ -107,9 +120,15 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
   let receiveMessageResponse;
 
   try {
-    output = await queue.enqueueGranuleIngestMessage(
-      granule, queueUrl, templateUri, provider, collection, pdr, arn
-    );
+    output = await queue.enqueueGranuleIngestMessage({
+      granule,
+      queueUrl,
+      granuleIngestMessageTemplateUri: templateUri,
+      provider,
+      collection,
+      pdr,
+      parentExecutionArn: arn
+    });
     receiveMessageResponse = await sqs().receiveMessage({
       QueueUrl: queueUrl,
       MaxNumberOfMessages: 10,
@@ -125,10 +144,13 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
   const expectedMessage = {
     cumulus_meta: {
       state_machine: stateMachineArn,
-      parentExecutionArn: arn
+      parentExecutionArn: arn,
+      queueName
     },
     meta: {
-      queues: { [queueName]: queueUrl },
+      queues: {
+        [queueName]: queueUrl
+      },
       provider: provider,
       collection: collection,
       pdr: pdr
@@ -163,9 +185,13 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
   let response;
 
   try {
-    await queue.enqueueGranuleIngestMessage(
-      granule, queueUrl, templateUri, provider, collection
-    );
+    await queue.enqueueGranuleIngestMessage({
+      granule,
+      queueUrl,
+      granuleIngestMessageTemplateUri: templateUri,
+      provider,
+      collection
+    });
     response = await sqs().receiveMessage({
       QueueUrl: queueUrl,
       MaxNumberOfMessages: 10,
