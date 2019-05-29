@@ -313,7 +313,7 @@ async function generateReports(startTime, endTime) {
  * submit reports to ems
  *
  * @param {Array<Object>} reports - list of report type and its s3 file path {reportType, file}
- * @returns {Array<string>} - list of report type and its s3 file path {reportType, file}
+ * @returns {Array<Object>} - list of report type and its s3 file path {reportType, file}
  */
 async function submitReports(reports) {
   const emsConfig = {
@@ -338,7 +338,7 @@ async function submitReports(reports) {
     const keyfields = parsed.Key.split('/');
     const fileName = keyfields.pop();
     // eslint-disable-next-line no-await-in-loop
-    await sftpClient.uploadFromS3(
+    await sftpClient.syncFromS3(
       { Bucket: parsed.Bucket, Key: parsed.Key },
       path.join(process.env.ems_path || '', fileName).replace(/^\/+/g, '')
     );

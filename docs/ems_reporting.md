@@ -40,11 +40,11 @@ For Cumulus instances running on NGAP, the IP address should be the Elastic IP (
 
 2. Request updates on NGAP NACL.
 
-For Cumulus instances running on NGAP, submit a NGAP service desk ticket, and specify "Exception / Enhancement” request for “Network / Whitelist” changes to the account, that will add EMS host IP to the NACL (Network Access Control List) to allow outbound traffic from NGAP Application VPCs to EMS host.
+For Cumulus instances running on NGAP, submit a [NGAP service desk ticket](https://bugs.earthdata.nasa.gov/servicedesk/customer/portals), and specify "Exception / Enhancement” request for “Network / Whitelist” changes to the account, that will add EMS host IP to the NACL (Network Access Control List) to allow outbound traffic from NGAP Application VPCs to EMS host.
 
 3. Send public key to EMS. Lambda will provide private key when sftp files to EMS.
 
-Upload the corresponding private key to s3, use `${system_bucket}` as bucket name and `${stackName}/crypto/ems-private.pem` as key,  `${system_bucket}` and `${stackName}` are configured in `app/config.yml`.  If a different private key file name other than `ems-private.pem` is used, specify it in the `ems` configuration in `app/config.yml`.
+Upload the corresponding private key to s3, use `{{system_bucket}}` as bucket name and `{{prefix}}/crypto/ems-private.pem` as key,  `{{system_bucket}}` and `{{prefix}}` are configured in `app/config.yml`.  If a different private key file name other than `ems-private.pem` is used, specify it in the `ems` configuration in `app/config.yml`.
 
 4. Create a data manifest file manually and send it to EMS team, and EMS team will configure the data provider on their side.  _Example configuration of the data manifest file can be found in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/data/ems)_
 
@@ -52,7 +52,6 @@ Upload the corresponding private key to s3, use `${system_bucket}` as bucket nam
 
 6. Configure the `ems` configuration parameters in `app/config.yml`.
 
-If the username and host are not provided in the configuration, the reports are still generated in `s3://{{buckets.internal.name}${stackName}/ems/${filename}`, but won't be submitted to EMS.
+If the `submitReport` is not set to `true` in the configuration, the reports are still generated in `s3://{{buckets.internal.name}/{{prefix}}/ems/{{filename}}`, but won't be submitted to EMS.
 
-Submitted reports will be moved to `sent` folder.
-
+Submitted reports will be saved to `sent` folder.

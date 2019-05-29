@@ -91,7 +91,7 @@ function findOutputValue(outputs, key) {
  *
  * @returns {Object} a Cumulus Message template
  */
-function template(name, workflow, config, outputs) {
+function generateWorkflowTemplate(name, workflow, config, outputs) {
   // get cmr password from outputs
   const cmrPassword = findOutputValue(outputs, 'EncryptedCmrPassword');
   const cmr = Object.assign({}, config.cmr, { password: cmrPassword });
@@ -105,11 +105,18 @@ function template(name, workflow, config, outputs) {
 
   // add queues
   const queues = {};
+  const queueExecutionLimits = {};
   if (config.sqs) {
     const queueArns = outputs.filter((o) => o.OutputKey.includes('SQSOutput'));
 
     queueArns.forEach((queue) => {
-      queues[queue.OutputKey.replace('SQSOutput', '')] = queue.OutputValue;
+      const queueName = queue.OutputKey.replace('SQSOutput', '');
+      queues[queueName] = queue.OutputValue;
+
+      const maxExecutions = get(config.sqs, `${queueName}.maxExecutions`);
+      if (maxExecutions) {
+        queueExecutionLimits[queueName] = maxExecutions;
+      }
     });
   }
 
@@ -127,7 +134,7 @@ function template(name, workflow, config, outputs) {
     templatesUris[sf] = `s3://${bucket}/${config.stack}/workflows/${sf}.json`;
   });
 
-  const t = {
+  const template = {
     cumulus_meta: {
       message_source: 'sfn',
       system_bucket: bucket,
@@ -146,14 +153,15 @@ function template(name, workflow, config, outputs) {
       collection: {},
       provider: {},
       templates: templatesUris,
-      queues
+      queues,
+      queueExecutionLimits
     },
     workflow_config: workflowConfig,
     payload: {},
     exception: null
   };
 
-  return t;
+  return template;
 }
 
 /**
@@ -172,7 +180,7 @@ async function generateTemplates(config, outputs, uploader) {
     const bucket = config.system_bucket;
     const stack = config.stackName;
     const templates = Object.keys(config.stepFunctions)
-      .map((name) => template(name, config.stepFunctions[name], config, outputs));
+      .map((name) => generateWorkflowTemplate(name, config.stepFunctions[name], config, outputs));
 
     // uploads the generated templates to S3
     const workflows = [];
@@ -203,6 +211,6 @@ module.exports = {
   fixCumulusMessageSyntax,
   extractCumulusConfigFromSF,
   findOutputValue,
-  template,
+  generateWorkflowTemplate,
   generateTemplates
 };

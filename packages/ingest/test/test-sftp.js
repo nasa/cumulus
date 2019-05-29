@@ -112,6 +112,7 @@ test('Write data to remote file', async (t) => {
   await myTestSftpDiscoveryClass.write(
     '/granules', 'delete-me-test-file', 'mytestdata'
   );
-  t.pass();
-  fs.unlinkSync('../test-data/granules/delete-me-test-file');
+  const remotePath = '../test-data/granules/delete-me-test-file';
+  t.true(fs.existsSync(remotePath));
+  fs.unlinkSync(remotePath);
 });

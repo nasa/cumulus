@@ -91,6 +91,16 @@ class Sftp {
   }
 
   /**
+   * build remote url
+   *
+   * @param {string} remotePath - the full path to the remote file to be fetched
+   * @returns {string} - remote url
+   */
+  buildRemoteUrl(remotePath) {
+    return `sftp://${path.join(this.options.host, '/', remotePath)}`;
+  }
+
+  /**
    * Download a remote file to disk
    *
    * @param {string} remotePath - the full path to the remote file to be fetched
@@ -100,7 +110,7 @@ class Sftp {
   async download(remotePath, localPath) {
     if (!this.connected) await this.connect();
 
-    const remoteUrl = `sftp://${this.options.host}${path.join('/', remotePath)}`;
+    const remoteUrl = this.buildRemoteUrl(remotePath);
     log.info(`Downloading ${remoteUrl} to ${localPath}`);
 
     return new Promise((resolve, reject) => {
@@ -115,15 +125,15 @@ class Sftp {
   }
 
   /**
-   * Download the remote file to a given s3 location
+   * Transfer the remote file to a given s3 location
    *
    * @param {string} remotePath - the full path to the remote file to be fetched
    * @param {string} bucket - destination s3 bucket of the file
    * @param {string} key - destination s3 key of the file
    * @returns {Promise} s3 uri of destination file
    */
-  async downloadToS3(remotePath, bucket, key) {
-    const remoteUrl = `sftp://${this.options.host}${path.join('/', remotePath)}`;
+  async syncToS3(remotePath, bucket, key) {
+    const remoteUrl = this.buildRemoteUrl(remotePath);
     const s3uri = buildS3Uri(bucket, key);
     log.info(`Sync ${remoteUrl} to ${s3uri}`);
 
@@ -188,7 +198,7 @@ class Sftp {
   }
 
   /**
-   * Upload a s3 file to remote path
+   * Transfer an s3 file to remote path
    *
    * @param {Object} s3object
    * @param {string} s3object.Bucket - S3 bucket
@@ -196,15 +206,15 @@ class Sftp {
    * @param {string} remotePath - the full remote destination file path
    * @returns {Promise}
    */
-  async uploadFromS3(s3object, remotePath) {
+  async syncFromS3(s3object, remotePath) {
     if (!this.connected) await this.connect();
 
     const s3uri = buildS3Uri(s3object.Bucket, s3object.Key);
     if (!(await s3ObjectExists(s3object))) {
-      return Promise.reject(new Error(`Sftp.uploadFromS3 ${s3uri} does not exist`));
+      return Promise.reject(new Error(`Sftp.syncFromS3 ${s3uri} does not exist`));
     }
 
-    const remoteUrl = `sftp://${this.options.host}${path.join('/', remotePath)}`;
+    const remoteUrl = this.buildRemoteUrl(remotePath);
     log.info(`Uploading ${s3uri} to ${remoteUrl}`);
 
     const readStream = await getS3ObjectReadStream(s3object.Bucket, s3object.Key);
@@ -225,7 +235,7 @@ class Sftp {
     readStream.push(data);
     readStream.push(null);
 
-    const remoteUrl = `sftp://${this.options.host}${path.join('/', remotePath)}`;
+    const remoteUrl = this.buildRemoteUrl(remotePath);
     log.info(`Uploading string to ${remoteUrl}`);
     return this.uploadFromStream(readStream, remotePath);
   }

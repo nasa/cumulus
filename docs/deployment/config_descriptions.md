@@ -8,7 +8,7 @@ hide_title: true
 
 ## Overview
 
-The table below provides an overview of the `config.yml` variables.
+The tables below provide overviews of the minimally required `config.yml` variables and all variables, respectively.
 Note that entries delimited as \<name\> are intended to be read as objects where `name` is the key, not the value, e.g.:
 
 ```yaml
@@ -17,6 +17,22 @@ dynamos:
   UsersTable:
     read: 5
 ```
+
+### config.yml Requirements
+
+This table describes the fields that must be present in `config.yml` to successfully deploy our cloudformation template, and under what conditions. For descriptions, see the complete table below or each item's entry in the invidivual listings on the rest of this page.
+
+| field | condition
+| ----- | -----------
+| prefix | always required
+| prefixNoDash | always required for `app` stack
+| buckets | at least an `internal` bucket always required
+| vpc | must be present as either `vpc: null` for no VPC or as `.env` values, see the [vpc section](config_descriptions#vpc)
+| users | at least one user required
+| ecs.amiid | required on non-NGAP deployments (latest AWS ECS-Optimized AMI recommended)
+| ecs.instanceType | always required
+| cmr.username | always required
+| cmr.password | always required
 
 ### config.yml Explained
 
@@ -32,7 +48,7 @@ dynamos:
 | cmr.provider | CUMULUS | the provider used for posting metadata to CMR
 | cmr.clientId | CUMULUS | the clientId used to authenticate with the CMR
 | cmr.password | (required) | the password used to authenticate with the CMR
-| buckets | (required) | Configuration of buckets with key, bucket name, and type (i.e. internal, public private)
+| buckets | (required) | Configuration of buckets with key, bucket name, and type (i.e. internal, public, private, protected)
 | system_bucket | `buckets.internal.name` | the bucket used for storing deployment artifacts
 | shared_data_bucket | cumulus-data-shared | bucket containing shared data artifacts
 | ems.provider | CUMULUS | the provider used for sending reports to EMS
@@ -49,10 +65,17 @@ dynamos:
 | ecs.amiid | ami-9eb4b1e5 | amiid of an optimized ecs instance (different for each region)
 | ecs.instanceType | (required) | the instance type of the ec2 machine used for running ecs tasks
 | ecs.volumeSize | 50 | the storage on ec2 instance running the ecs tasks
-| ecs.availabilityZone | us-east-1a | the availability zone used for launching ec2 machines
+| ecs.availabilityZone | us-east-1a | the availability zone used for launching ec2 machines. If using `vpc`, must match AZ of `vpc.subnets`
 | ecs.minInstances | 1 | min number of ec2 instances to launch in an autoscaling group
 | ecs.desiredInstances | 1 | desired number of ec2 instances needed in an autoscaling group
 | ecs.maxInstances | 2 | max number of ec2 instances to launch in an autoscaling group
+| ecs.publicIp | false | assign public IP(s) to ECS instance(s)
+| ecs.restartTasksOnDeploy | false | whether kes should restart ECS tasks on deploy
+| ecs.docker.username | (empty string) | Username to pull images from registry
+| ecs.docker.registry | dockerhub | container registry to fetch from (currently supports `dockerhub` and `ecr`)
+| ecs.services | | ECS service configurations (see `@cumulus/deployment/app/config.yml` for examples of core usage)
+| ecs.tasks | | ECS task configurations (see `@cumulus/deployment/app/config.yml` for examples of core usage)
+| activities | | list of activities
 | es.name | es5 | name of the elasticsearch cluster
 | es.elasticSearchMapping | 4 | version number of the elasticsearch mapping used
 | es.version | 5.3 | elasticsearch software version
@@ -63,6 +86,7 @@ dynamos:
 | sns.\<name\>.subscriptions.\<subscription_name\>.endpoint | | lambda function triggered for each message in the topic (see `@cumulus/deployment/app/config.yml` for examples of core usage)
 | apis.\<name\> | | name of the apigateway application
 | apiStage | dev | stage name used for each api gateway deployment stage
+| api_lambda_memory | 756 | API Lambda function allocated memory in MB
 | api_backend_url | | (Override) Alternate API backend url
 | api_distribution_url | | (Override) Alternate API url used for file distribution
 | dynamos.\<name\> | | name of the dynamoDB table
@@ -72,7 +96,9 @@ dynamos:
 | sqs.\<name\> | | name of the queue
 | sqs.\<name\>.visibilityTimeout | 20 | # of seconds the message returns to the queue after it is read by a consumer
 | sqs.\<name\>.retry | 30 | number of time the message is returned to the queue before being discarded
+| sqs.\<name\>.maxExecutions | | the maximum number of executions started from this queue that can run concurrently
 | sqs.\<name\>.consumer | | list of lambda function queue consumer objects (see `@cumulus/deployment/app/config.yml` for examples of core usage)
+| sqs_consumer_rate | 500 | maximum number of workflow start messages the SQS consumer processes per execution
 | rules.\<name\> | | list of cloudwathch rules
 | rules.\<name\>.schedule | | rule's schedule
 | rules.\<name\>.state | ENABLED | state of the rule
@@ -109,6 +135,14 @@ If deploying to a NASA NGAP account, set `useNgapPermissionBoundary: true`.
 Configure your virtual private cloud.  You can find the VPC Id, subnets, and security group values on the [VPC Dashboard](https://console.aws.amazon.com/vpc/home?region=us-east-1#). `vpcId` from [Your VPCs](https://console.aws.amazon.com/vpc/home?region=us-east-1#vpcs:), and `subnets` [here](https://console.aws.amazon.com/vpc/home?region=us-east-1#subnets:). When you choose a subnet, be sure to also note its availability zone, which is used to configure `ecs`. The security group MUST allow HTTP(S) traffic (port 443). Optionally, SSH traffic should be allowed to SSH into ECS instances.
 
 Note: The console links are specific to `us-east-1`. Use the corresponding links for your region.
+
+```yaml
+  vpc:
+    vpcId: '{{VPC_ID}}'                 # this has to be set in .env
+    subnets:
+      - '{{AWS_SUBNET}}'                # this has to be set in .env
+    securityGroup: '{{SECURITY_GROUP}}' # this has to be set in .env
+```
 
 ### cmr
 
@@ -236,7 +270,7 @@ defined for a specific service.
     task is waiting for more than this amount of time before being started, then
     the number of tasks configured for the service will be increased
 
-**Notes**
+##### Notes
 
 * `minTasks` and `maxTasks` are required for autoscaling to be enabled
 * `scaleInActivityScheduleTime` and `scaleInAdjustmentPercent` are required for
@@ -247,7 +281,7 @@ defined for a specific service.
   by at least 1, even if the number that would be changed based on the
   configured adjustment percent is less than 1.
 
-**Example**
+##### Example
 
 Only auto scaling-related fields are shown in this example config.
 
@@ -272,7 +306,10 @@ Eventually, the average time that a task takes to start should hover between 5
 and 10 seconds.
 
 ### es
+
 Configuration for the Amazon Elasticsearch Service (ES) instance. Optional. Set `es: null` to disable ElasticSearch.
+
+VPC note: When using Amazon ElasticSearch Service in a VPC run `aws iam create-service-linked-role --aws-service-name es.amazonaws.com` before deploying. This operation only needs to be done once per account.
 
 You can update `es` properties and add additional ES alarms. For example:
 
@@ -311,7 +348,7 @@ The above code is an example of configuration for an SNS topic that will be call
 More information for each of the individual attributes can be found in [AWS SNS Topic Documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-sns-topic.html).
 
 ```yaml
-# sns: ...
+sns: ...
   sftrackerSubscription:
     arn:
       Fn::GetAtt:
