@@ -81,7 +81,7 @@ test.todo('CUMULUS-912 GET without pathParameters and with an unauthorized user 
 test('default returns list of providerModel', async (t) => {
   const testProvider = fakeProviderFactory();
   const record = await providerModel.create(testProvider);
-  indexer.indexProvider(esClient, record, esIndex);
+  await indexer.indexProvider(esClient, record, esIndex);
 
   const response = await request(app)
     .get('/providers')
