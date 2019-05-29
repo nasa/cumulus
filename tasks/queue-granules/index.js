@@ -35,7 +35,7 @@ async function queueGranules(event) {
         provider: event.config.provider,
         collection: collectionConfig,
         pdr: event.input.pdr,
-        arn
+        parentExecutionArn: arn
       });
     })
   );

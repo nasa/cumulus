@@ -49,24 +49,25 @@ function prepareExecutionQueueMessage({
 /**
  * Enqueue a PDR to be parsed
  *
- * @param {Object} pdr - the PDR to be enqueued for parsing
- * @param {string} queueUrl - the SQS queue to add the message to
- * @param {string} parsePdrMessageTemplateUri - the S3 URI of template for
- * a granule ingest message
- * @param {Object} provider - the provider config to be attached to the message
- * @param {Object} collection - the collection config to be attached to the
+ * @param {Object} params
+ * @param {Object} params.pdr - the PDR to be enqueued for parsing
+ * @param {string} params.queueUrl - the SQS queue to add the message to
+ * @param {string} params.parsePdrMessageTemplateUri - the S3 URI of template for
+ * a PDR parse message
+ * @param {Object} params.provider - the provider config to be attached to the message
+ * @param {Object} params.collection - the collection config to be attached to the
  *   message
- * @param {string} parentExecutionArn - parent workflow execution arn to add to the message
+ * @param {string} params.parentExecutionArn - parent workflow execution arn to add to the message
  * @returns {Promise} - resolves when the message has been enqueued
  */
-async function enqueueParsePdrMessage(
+async function enqueueParsePdrMessage({
   pdr,
   queueUrl,
   parsePdrMessageTemplateUri,
   provider,
   collection,
   parentExecutionArn
-) {
+}) {
   const message = await getMessageFromTemplate(parsePdrMessageTemplateUri);
 
   message.payload = { pdr };
