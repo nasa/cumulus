@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### PLEASE NOTE
-**CUMULUS-799** added some additional IAM permissions to support reading cloudwatch and apigateway, so **you will have to redeploy your IAM stack.**
+**CUMULUS-799** added some additional IAM permissions to support reading CloudWatch and API Gateway, so **you will have to redeploy your IAM stack.**
 
 ## Added
 **CUMULUS-799**
