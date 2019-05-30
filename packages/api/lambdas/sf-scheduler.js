@@ -8,8 +8,8 @@ const { SQS } = require('@cumulus/ingest/aws');
 const { Provider, Collection } = require('../models');
 
 const buildCumulusMeta = (queueName) => ({
-    execution_name: uuidv4(),
-    queueName
+  execution_name: uuidv4(),
+  queueName
 });
 
 function getProvider(provider) {
@@ -52,10 +52,8 @@ function buildMessage(event, baseMessage) {
  * given message
  *
  * @param   {Object} event   - lambda input message
- * @param   {Object} context - lambda context
- * @param   {function} cb    - lambda callback
  */
-async function schedule(event, context, cb) {
+async function schedule(event) {
   const template = get(event, 'template');
 
   const parsed = parseS3Uri(template);
