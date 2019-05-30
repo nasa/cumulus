@@ -10,6 +10,7 @@ const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
 const pMap = require('p-map');
+const pWaitFor = require('p-wait-for');
 
 const {
   stringUtils: { globalReplace }
@@ -136,6 +137,19 @@ function getWorkflowArn(stackName, bucketName, workflowName) {
  */
 async function getExecutionStatus(executionArn) {
   return (await StepFunctions.describeExecution({ executionArn })).status;
+}
+
+async function waitForRunningExecution(arn) {
+  const interval = 15 * 1000;
+  const timeout = 1000 * 60;
+
+  await pWaitFor(
+    async () => await getExecutionStatus(arn) === 'RUNNING',
+    {
+      interval,
+      timeout
+    }
+  );
 }
 
 /**
@@ -666,6 +680,7 @@ async function buildWorkflow(
   template.payload = payload || {};
   return template;
 }
+
 /**
  * build workflow message and execute the workflow
  *
@@ -804,11 +819,13 @@ module.exports = {
   buildWorkflow,
   testWorkflow,
   executeWorkflow,
+  getExecutionStatus,
   buildAndExecuteWorkflow,
   buildAndStartWorkflow,
   getWorkflowTemplate,
   waitForCompletedExecution,
   waitForTestExecutionStart,
+  waitForRunningExecution,
   ActivityStep: sfnStep.ActivityStep,
   LambdaStep: sfnStep.LambdaStep,
   /**
