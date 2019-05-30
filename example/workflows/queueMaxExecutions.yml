@@ -1,0 +1,59 @@
+QueueGranulesMax:
+  Comment: 'Ensure max executions are not exceeded for workflows from queue-granules'
+  StartAt: StatusReport
+  States:
+    StatusReport:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
+      Next: DiscoverGranules
+    DiscoverGranules:
+      CumulusConfig:
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        buckets: '{$.meta.buckets}'
+        stack: '{$.meta.stack}'
+      Type: Task
+      Resource: ${DiscoverGranulesLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: QueueGranules
+    QueueGranules:
+      CumulusConfig:
+        provider: '{$.meta.provider}'
+        internalBucket: '{$.meta.buckets.internal.name}'
+        stackName: '{$.meta.stack}'
+        granuleIngestMessageTemplateUri: '{$.meta.templates.HelloWorldWorkflow}'
+        queueUrl: '{$.meta.queueName}'
+      Type: Task
+      Resource: ${QueueGranulesLambdaFunction.Arn}
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          ResultPath: '$.exception'
+          Next: StopStatus
+      Next: StopStatus
+    StopStatus:
+      Type: Task
+      Resource: ${SfSnsReportLambdaFunction.Arn}
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
+      Catch:
+        - ErrorEquals:
+          - States.ALL
+          Next: WorkflowFailed
+      End: true
+    WorkflowFailed:
+      Type: Fail
+      Cause: 'Workflow failed'
