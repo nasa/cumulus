@@ -18,7 +18,10 @@ const {
 } = require('@cumulus/common');
 const {
   api: apiTestUtils,
-  buildAndExecuteWorkflow
+  buildAndExecuteWorkflow,
+  LambdaStep,
+  getExecutionStatus,
+  waitForRunningExecution
 } = require('@cumulus/integration-tests');
 
 const {
@@ -64,7 +67,10 @@ describe('Queues with maximum executions defined', () => {
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
   const provider = { id: `s3_provider${testSuffix}` };
 
+  const maxExecutions = 5;
   const numberOfGranules = 6;
+
+  const lambdaStep = new LambdaStep();
 
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
   const collectionModel = new Collection();
@@ -116,5 +122,32 @@ describe('Queues with maximum executions defined', () => {
 
   it('executes successfully', () => {
     expect(workflowExecution.status).toEqual('SUCCEEDED');
+  });
+
+  describe('respects the maximum amount of executions for the queue', () => {
+    let queueGranulesOutput;
+    let executionArns;
+
+    beforeAll(async () => {
+      queueGranulesOutput = await lambdaStep.getStepOutput(
+        workflowExecution.executionArn,
+        'QueueGranules'
+      );
+      executionArns = queueGranulesOutput.payload.running;
+    });
+
+    it('has expected count of queued executions', () => {
+      expect(executionArns.length).toEqual(numberOfGranules);
+    });
+
+    it('is only running the maximum number of executions', async () => {
+      await waitForRunningExecution(executionArns[0]);
+
+      const executionStatuses = await Promise.all(
+        executionArns.map((arn) => getExecutionStatus(arn))
+      );
+      const runningExecutions = executionStatuses.filter((status) => status === 'RUNNING');
+      expect(runningExecutions.length).toEqual(maxExecutions);
+    });
   });
 });
