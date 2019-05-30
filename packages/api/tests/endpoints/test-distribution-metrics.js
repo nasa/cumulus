@@ -138,6 +138,7 @@ test.afterEach((t) => {
 });
 
 test.skip('GET returns expected metadata', async (t) => {
+  // [MHS, 2019-05-30] skipping because I can't get localstack to properly publish a custom metric.
   const ag = apigateway();
   const original = ag.getStages;
   ag.getStages = ({ restApiId } = {}) => ({
