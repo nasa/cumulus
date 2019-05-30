@@ -19,14 +19,14 @@ const {
 const {
   api: apiTestUtils,
   buildAndExecuteWorkflow
-  // waitForCompletedExecution
 } = require('@cumulus/integration-tests');
 
 const {
   loadConfig,
   createTimestampedTestId,
   createTestSuffix,
-  createTestDataPath
+  createTestDataPath,
+  deleteFolder
 } = require('../../helpers/testUtils');
 
 const config = loadConfig();
@@ -43,11 +43,16 @@ const stageTestData = (key, bucket, prefix) =>
     Body: ''
   }).promise();
 
-const uploadGranulesData = async (numberOfGranules, granuleRegex) => {
+const uploadGranulesData = async ({
+  numberOfGranules,
+  granuleRegex,
+  bucket,
+  prefix
+}) => {
   const granuleUploadPromises = new Array(numberOfGranules)
     .fill()
     .map(() => `${randomStringFromRegex(granuleRegex)}.hdf`)
-    .map((key) => stageTestData(key, config.bucket, testDataFolder));
+    .map((key) => stageTestData(key, bucket, prefix));
   await Promise.all(granuleUploadPromises);
 };
 
@@ -71,7 +76,8 @@ describe('Queues with maximum executions defined', () => {
     const granuleRegex = collectionJson.granuleId;
     const collectionData = Object.assign({}, collectionJson, {
       name: collection.name,
-      dataType: collectionJson.dataType + testSuffix
+      dataType: collectionJson.dataType + testSuffix,
+      provider_path: testDataFolder
     });
 
     const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
@@ -80,10 +86,13 @@ describe('Queues with maximum executions defined', () => {
       host: config.bucket
     });
 
-    // await uploadGranulesData(numberOfGranules, granuleRegex);
-
     await Promise.all([
-      uploadGranulesData(numberOfGranules, granuleRegex),
+      uploadGranulesData({
+        numberOfGranules,
+        granuleRegex,
+        bucket: config.bucket,
+        prefix: testDataFolder
+      }),
       apiTestUtils.addCollectionApi({ prefix: config.stackName, collection: collectionData }),
       apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData })
     ]);
@@ -98,12 +107,10 @@ describe('Queues with maximum executions defined', () => {
   });
 
   afterAll(async () => {
-    // clean up stack state added by test
     await Promise.all([
-      // cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-      // cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
       collectionModel.delete(collection),
-      providerModel.delete(provider)
+      providerModel.delete(provider),
+      deleteFolder(config.bucket, testDataFolder)
     ]);
   });
 

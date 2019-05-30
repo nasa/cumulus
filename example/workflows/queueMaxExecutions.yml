@@ -29,7 +29,7 @@ QueueGranulesMax:
         internalBucket: '{$.meta.buckets.internal.name}'
         stackName: '{$.meta.stack}'
         granuleIngestMessageTemplateUri: '{$.meta.templates.HelloWorldWorkflow}'
-        queueUrl: '{$.meta.queueName}'
+        queueUrl: '{$.meta.queues.startSFLowPriority}'
       Type: Task
       Resource: ${QueueGranulesLambdaFunction.Arn}
       Catch:
