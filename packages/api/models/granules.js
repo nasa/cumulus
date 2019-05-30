@@ -135,7 +135,7 @@ class Granule extends Manager {
   }
 
   /**
-   * Removes a give granule from CMR
+   * Removes a given granule from CMR
    *
    * @param {string} granuleId - the granule ID
    * @param {string} collectionId - the collection ID
@@ -387,6 +387,23 @@ class Granule extends Manager {
     }
 
     return new GranuleSearchQueue(params, 'query');
+  }
+
+  granuleAttributeScan() {
+    const params = {
+      TableName: this.tableName,
+      ExpressionAttributeNames:
+        {
+          '#granuleId': 'granuleId',
+          '#collectionId': 'collectionId',
+          '#beginningDateTime': 'beginningDateTime',
+          '#endingDateTime': 'endingDateTime',
+          '#createdAt': 'createdAt'
+        },
+      ProjectionExpression: '#granuleId, #collectionId, #createdAt, #beginningDateTime, #endingDateTime'
+    };
+
+    return new GranuleSearchQueue(params);
   }
 
   /**
