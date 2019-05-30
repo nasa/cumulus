@@ -6,7 +6,7 @@ const request = require('supertest');
 const rewire = require('rewire');
 
 const {
-  aws: { APIGateway, cloudwatch },
+  aws: { apigateway, cloudwatch },
   testUtils: { randomId }
 } = require('@cumulus/common');
 
