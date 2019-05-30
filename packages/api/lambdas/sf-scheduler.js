@@ -65,45 +65,6 @@ async function schedule(event, context, cb) {
 
   const queueName = message.cumulus_meta.queueName;
   await SQS.sendMessage(message.meta.queues[queueName], message);
-
-  /*getS3Object(parsed.Bucket, parsed.Key)
-    .then((data) => {
-      message = JSON.parse(data.Body);
-      message.meta.provider = {};
-      message.meta.collection = {};
-      message.meta = merge(message.meta, meta);
-      message.payload = payload;
-      message.cumulus_meta.execution_name = uuidv4();
-      message.cumulus_meta.queueName = queueName;
-      message.cumulus_meta = merge(message.cumulus_meta, cumulusMeta);
-    })
-    .then(() => {
-      if (provider) {
-        const p = new Provider();
-        return p.get({ id: provider });
-      }
-      return null;
-    })
-    .then((p) => {
-      if (p) {
-        message.meta.provider = p;
-      }
-
-      if (collection) {
-        const c = new Collection();
-        return c.get({ name: collection.name, version: collection.version });
-      }
-      return null;
-    })
-    .then((c) => {
-      if (c) message.meta.collection = c;
-    })
-    .then(() => {
-      SQS.sendMessage(message.meta.queues[queueName], message);
-    })
-    .then((r) => cb(null, r))
-    .catch((e) => cb(e));
-    */
 }
 
 module.exports = { schedule };
