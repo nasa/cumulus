@@ -2,11 +2,18 @@
 
 const test = require('ava');
 const sinon = require('sinon');
+const request = require('supertest');
 const rewire = require('rewire');
 
 const {
+  aws: { APIGateway, cloudwatch },
   testUtils: { randomId }
 } = require('@cumulus/common');
+
+const models = require('../../models');
+const assertions = require('../../lib/assertions');
+const { createFakeJwtAuthToken } = require('../../lib/testUtils');
+const { createJwtToken } = require('../../lib/token');
 
 const distributionMetrics = rewire('../../endpoints/distribution-metrics');
 
@@ -21,7 +28,56 @@ const buildGetMetricParamsFromListMetricsResult = distributionMetrics.__get__(
   'buildGetMetricParamsFromListMetricsResult'
 );
 
-const sandbox = sinon.createSandbox();
+process.env.UsersTable = randomId('UsersTable');
+process.env.AccessTokensTable = randomId('AccessTokensTable');
+process.env.ProvidersTable = randomId('ProvidersTable');
+process.env.stackName = randomId('stackName');
+process.env.distributionApiId = randomId('distributionApiId');
+process.env.TOKEN_SECRET = randomId('TOKEN_SECRET');
+const { app } = require('../../app');
+
+const cw = cloudwatch();
+
+const oneMinuteinMs = 1000 * 60;
+
+const createFakeAuth = async () => {
+  const userModel = new models.User();
+  await userModel.createTable();
+
+  const accessTokenModel = new models.AccessToken();
+  await accessTokenModel.createTable();
+
+  const jwtAuthToken = await createFakeJwtAuthToken({
+    accessTokenModel,
+    userModel
+  });
+  const tenMinutesInMs = oneMinuteinMs * 10;
+  const unauthorizedToken = createJwtToken({
+    accessToken: randomId('access'),
+    expirationTime: new Date(Date.now() + tenMinutesInMs),
+    username: randomId('user')
+  });
+
+  return {
+    jwtAuthToken,
+    unauthorizedToken,
+    userModel,
+    accessTokenModel,
+    async cleanup() {
+      await this.userModel.deleteTable();
+      await this.accessTokenModel.deleteTable();
+    }
+  };
+};
+
+let auth;
+test.before(async () => {
+  auth = await createFakeAuth();
+});
+
+test.after.always(async () => {
+  await auth.cleanup();
+});
 
 test.beforeEach((t) => {
   t.context.originalDateNow = Date.now;
@@ -30,7 +86,33 @@ test.beforeEach((t) => {
 
 test.afterEach((t) => {
   Date.now = t.context.originalDateNow;
-  sandbox.restore();
+});
+test('GET with invalid access token returns an invalid token response', async (t) => {
+  const response = await request(app)
+    .get('/distributionMetrics')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(403);
+
+  assertions.isInvalidAccessTokenResponse(t, response);
+});
+
+test('GET with unauthorized user token returns an unauthorized user response', async (t) => {
+  const response = await request(app)
+    .get('/distributionMetrics')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${auth.unauthorizedToken}`)
+    .expect(401);
+
+  assertions.isInvalidAuthorizationResponse(t, response);
+});
+
+test('GET without an Authorization header returns an Authorization Missing response', async (t) => {
+  const response = await request(app)
+    .get('/distributionMetrics')
+    .set('Accept', 'application/json')
+    .expect(401);
+  assertions.isAuthorizationMissingResponse(t, response);
 });
 
 test('sumArray returns sum of an array', (t) => {
@@ -83,6 +165,7 @@ test('listAllStages returns list of api stages present', async (t) => {
   t.true(callGetStagesFake.calledOnceWith(process.env.distributionApiId));
 
   resetDouble();
+  sinon.restore();
 });
 
 test('getStageName throws if cumulus has multiple stages defined', async (t) => {

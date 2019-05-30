@@ -1,11 +1,10 @@
 'use strict';
 
-const AWS = require('aws-sdk');
 const flatten = require('lodash.flatten');
 const router = require('express-promise-router')();
 
 const {
-  aws: { cloudwatch },
+  aws: { cloudwatch, apigateway },
   testUtils: { randomId }
 } = require('@cumulus/common');
 
@@ -15,10 +14,10 @@ const {
  */
 const sumArray = (array) => array.reduce((accum, cur) => accum + cur, 0);
 
-const callGetStages = (restApiId) => {
-  const apiGateway = new AWS.APIGateway();
-  return apiGateway.getStages({ restApiId }).promise();
-};
+const callGetStages = (restApiId) =>
+  apigateway()
+    .getStages({ restApiId })
+    .promise();
 
 /**
  *
