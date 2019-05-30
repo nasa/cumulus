@@ -36,9 +36,58 @@ process.env.distributionApiId = randomId('distributionApiId');
 process.env.TOKEN_SECRET = randomId('TOKEN_SECRET');
 const { app } = require('../../app');
 
-const cw = cloudwatch();
-
+const cloudwatchclient = cloudwatch();
 const oneMinuteinMs = 1000 * 60;
+
+const randomCounts = () => Math.floor(Math.random() * 990) + 10;
+
+const buildMetricDataObject = (MetricName, stack, aDate, numberOfEvents) => ({
+  MetricName,
+  Dimensions: [{ Name: 'Stack', Value: stack }],
+  StorageResolution: 60,
+  Timestamp: aDate.toISOString(),
+  Unit: 'Count',
+  Value: numberOfEvents
+});
+
+const putMetricDataObject = (MetricData) =>
+  cloudwatchclient
+    .putMetricData({
+      Namespace: 'CumulusDistribution',
+      MetricData
+    })
+    .promise()
+    .catch((e) => {
+      console.log('caught error');
+      console.error(e);
+    });
+
+const uploadMetricsToLocalstack = async ({ stackName }) => {
+  const metricTime = new Date(Date.now() - 15 * oneMinuteinMs);
+  const successCounts = randomCounts();
+  const errorCounts = randomCounts();
+
+  const successMetric = buildMetricDataObject(
+    'SuccessCount',
+    stackName,
+    metricTime,
+    successCounts
+  );
+  const errorMetric = buildMetricDataObject(
+    'FailureCount',
+    stackName,
+    metricTime,
+    errorCounts
+  );
+
+  await putMetricDataObject([successMetric]);
+  await putMetricDataObject([errorMetric]);
+
+  return {
+    errors: String(errorCounts),
+    successes: String(successCounts)
+  };
+};
 
 const createFakeAuth = async () => {
   const userModel = new models.User();
@@ -87,6 +136,36 @@ test.beforeEach((t) => {
 test.afterEach((t) => {
   Date.now = t.context.originalDateNow;
 });
+
+test.skip('GET returns expected metadata', async (t) => {
+  const ag = apigateway();
+  const original = ag.getStages;
+  ag.getStages = ({ restApiId } = {}) => ({
+    promise: () =>
+      Promise.resolve({
+        item: [
+          {
+            stageName: 'dev',
+            apiunused: restApiId
+          }
+        ]
+      })
+  });
+
+  const loadedData = await uploadMetricsToLocalstack({
+    stackName: process.env.stackName
+  });
+
+  const response = await request(app)
+    .get('/distributionMetrics')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${auth.jwtAuthToken}`)
+    .expect(200);
+
+  t.deepEqual(loadedData, response.body);
+  ag.getStages = original;
+});
+
 test('GET with invalid access token returns an invalid token response', async (t) => {
   const response = await request(app)
     .get('/distributionMetrics')
