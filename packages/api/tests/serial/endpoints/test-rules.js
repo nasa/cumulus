@@ -64,7 +64,7 @@ test.before(async () => {
   await ruleModel.createTable();
 
   const ruleRecord = await ruleModel.create(testRule);
-  indexer.indexRule(esClient, ruleRecord, esIndex);
+  await indexer.indexRule(esClient, ruleRecord, esIndex);
 
   userModel = new models.User();
   await userModel.createTable();
