@@ -176,7 +176,8 @@ default:
     'workflows/sips.yml',
     'workflows/ingestGranule.yml',
     'workflows/syncGranule.yml',
-    'workflows/browseExample.yml'
+    'workflows/browseExample.yml',
+    'workflows/queueMaxExecutions.yml'
   ]
 
   apiConfigs:
