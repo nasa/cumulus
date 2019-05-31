@@ -86,6 +86,13 @@ default:
 
   ems:
     provider: CUMULUS
+    host: change-ems-host
+    port: 22
+    path: /
+    username: cumulus
+    privateKey: ems-private.pem
+    dataSource: UAT
+    submitReport: false
 
   # this whole section has to be updated in each deployment section
   vpc:
@@ -214,7 +221,7 @@ default:
       schedule: cron(0 5 * * ? *)
       state: ENABLED
       targets:
-        - lambda: EmsReport
+        - lambda: EmsIngestReport
     dailyEmsDistributionReport:
       schedule: cron(0 8 * * ? *)
       state: ENABLED
