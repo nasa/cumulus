@@ -274,16 +274,13 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
   }
 });
 
-// This test currently fails because queueName is not an acceptable top
-// level parameter in the rule schema. When the work is done to change
-// the dashboard, that should be updated.
-test.skip('Creating a rule with a queueName parameter', async (t) => {
-  const ruleItem = Object.assign({ queueName: 'testQueue' }, onetimeRule);
+test.serial('Creating a rule with a queueName parameter', async (t) => {
+  const ruleItem = Object.assign({}, onetimeRule, { queueName: 'testQueue' });
 
   const response = await ruleModel.create(ruleItem);
 
-  const payload = models.Rule.buildPayload(ruleItem);
+  const payload = await models.Rule.buildPayload(ruleItem);
 
-  t.is(response.queueName, ruleItem.queuename);
+  t.is(response.queueName, ruleItem.queueName);
   t.is(payload.queueName, ruleItem.queueName);
 });
