@@ -36,12 +36,14 @@ function buildMessage(event, messageTemplate) {
   const payload = get(event, 'payload', {});
   const queueName = get(event, 'queueName', 'startSF');
 
-  messageTemplate.meta.provider = getProvider(provider);
-  messageTemplate.meta.collection = getCollection(collection);
+  const defaultCollectionAndProvider = {
+    provider: getProvider(provider),
+    collection: getCollection(collection)
+  };
 
   return {
     ...messageTemplate,
-    meta: merge(messageTemplate.meta, meta),
+    meta: merge(messageTemplate.meta, meta, defaultCollectionAndProvider),
     payload,
     cumulus_meta: merge(messageTemplate.cumulus_meta, cumulusMeta, buildCumulusMeta(queueName))
   };
