@@ -16,12 +16,12 @@ const {
     randomStringFromRegex
   }
 } = require('@cumulus/common');
+const StepFunctions = require('@cumulus/common/StepFunctions');
 const {
   api: apiTestUtils,
   buildAndExecuteWorkflow,
   LambdaStep,
-  getExecutionStatus,
-  waitForRunningExecution
+  waitForExecutionExists
 } = require('@cumulus/integration-tests');
 
 const {
@@ -141,12 +141,17 @@ describe('Queues with maximum executions defined', () => {
     });
 
     it('is only running the maximum number of executions', async () => {
-      await waitForRunningExecution(executionArns[0]);
+      // Wait until at least one of the executions has started
+      // TODO: can't rely on first execution ARN being started first
+      await waitForExecutionExists(executionArns[0], 5, 60);
 
-      const executionStatuses = await Promise.all(
-        executionArns.map((arn) => getExecutionStatus(arn))
-      );
-      const runningExecutions = executionStatuses.filter((status) => status === 'RUNNING');
+      // Get the state for all of the queued execution ARNs.
+      const getExecutionStates = executionArns
+        .map((arn) => StepFunctions.executionExists(arn));
+      const executionStates = await Promise.all(getExecutionStates);
+
+      // Only the maximum number of executions for the queue should exist.
+      const runningExecutions = executionStates.filter(Boolean);
       expect(runningExecutions.length).toEqual(maxExecutions);
     });
   });
