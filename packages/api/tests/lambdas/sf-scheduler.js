@@ -9,7 +9,7 @@ const schedule = rewire('../../lambdas/sf-scheduler');
 
 const queueName = 'userDefinedQueueName';
 const keyedItem = 'userDefinedQueueUrl';
-const fakeS3Response = {
+const fakeMessageResponse = {
   meta: {
     queues: {
       [queueName]: keyedItem,
@@ -18,12 +18,7 @@ const fakeS3Response = {
   }
 };
 
-const Bucket = 'my-bucket';
-const Key = 'my-key';
-const restoreParseS3Uri = schedule.__set__('parseS3Uri', () => ({ Bucket, Key }));
-const restoreGetS3Object = schedule.__set__('getS3Object', () => Promise.resolve({
-  Body: JSON.stringify(fakeS3Response)
-}));
+const restoreGetMessageFromTemplate = schedule.__set__('getMessageFromTemplate', () => Promise.resolve(fakeMessageResponse));
 
 const scheduleEventTemplate = {
   meta: {},
@@ -39,8 +34,7 @@ test.afterEach(() => {
 });
 
 test.after.always(() => {
-  restoreParseS3Uri();
-  restoreGetS3Object();
+  restoreGetMessageFromTemplate();
 
   sqsStub.restore();
 });
@@ -52,7 +46,7 @@ test.serial('Sends a message to SQS with queueName if queueName is defined', asy
   t.is(sqsStub.calledOnce, true);
 
   const [targetQueueUrl] = sqsStub.getCall(0).args;
-  t.is(targetQueueUrl, fakeS3Response.meta.queues[queueName]);
+  t.is(targetQueueUrl, fakeMessageResponse.meta.queues[queueName]);
 });
 
 test.serial('Sends a message to SQS with startSF if queueName is not defined', async (t) => {
@@ -62,5 +56,5 @@ test.serial('Sends a message to SQS with startSF if queueName is not defined', a
   t.is(sqsStub.calledOnce, true);
 
   const [targetQueueUrl] = sqsStub.getCall(0).args;
-  t.is(targetQueueUrl, fakeS3Response.meta.queues.startSF);
+  t.is(targetQueueUrl, fakeMessageResponse.meta.queues.startSF);
 });
