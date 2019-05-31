@@ -3,7 +3,7 @@
 const get = require('lodash.get');
 const merge = require('lodash.merge');
 const uuidv4 = require('uuid/v4');
-const { getMessageFromTemplate } = requrie('@cumulus/ingest/queue');
+const { getMessageFromTemplate } = require('@cumulus/ingest/queue');
 const { SQS } = require('@cumulus/ingest/aws');
 const { Provider, Collection } = require('../models');
 
@@ -57,7 +57,7 @@ function buildMessage(event, baseMessage) {
 async function schedule(event) {
   const template = get(event, 'template');
 
-  const data = getMessageFromTemplate(template);
+  const data = await getMessageFromTemplate(template);
   const message = buildMessage(event, data);
 
   const queueName = message.cumulus_meta.queueName;
