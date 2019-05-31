@@ -115,10 +115,12 @@ const localStackPorts = {
   cloudformation: 4581,
   cloudwatch: 4582,
   cloudwatchevents: 4582,
+  cloudwatchlogs: 4586,
   dynamodb: 4569,
   dynamodbstreams: 4570,
   es: 4571,
   firehose: 4573,
+  iam: 4593,
   kinesis: 4568,
   lambda: 4574,
   redshift: 4577,
@@ -127,7 +129,8 @@ const localStackPorts = {
   ses: 4579,
   sns: 4575,
   sqs: 4576,
-  ssm: 4583
+  ssm: 4583,
+  sts: 4592
 };
 
 /**
