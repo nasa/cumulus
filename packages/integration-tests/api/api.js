@@ -151,6 +151,18 @@ async function deletePdr({ prefix, pdr }) {
   return verifyCumulusApiResponse(response);
 }
 
+async function distributionMetrics({ prefix, stackName }) {
+  const response = await callCumulusApi({
+    prefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: `/distributionMetrics/${stackName}`
+    }
+  });
+  return verifyCumulusApiResponse(response);
+}
+
 /**
  * Fetch logs from the API
  *
@@ -413,6 +425,7 @@ module.exports = {
   callCumulusApi,
   getAsyncOperation,
   deletePdr,
+  distributionMetrics,
   getExecutionLogs,
   addCollectionApi,
   addProviderApi,
