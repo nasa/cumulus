@@ -73,7 +73,8 @@ class FileClass extends Manager {
       .map((file) => ({
         bucket: file.bucket,
         key: file.key
-      }));
+      }))
+      .filter((file) => file.bucket && file.key);
 
     const chunked = chunk(fileRecords, 25);
     return Promise.all(chunked.map((c) => this.batchWrite(c)));
@@ -96,8 +97,10 @@ class FileClass extends Manager {
     let oldFiles = (oldGranule.files || []);
 
     // all we need is the bucket and key
-    oldFiles = oldFiles.map((file) => this.getBucketAndKey(file));
-    newFiles = newFiles.map((file) => this.getBucketAndKey(file));
+    oldFiles = oldFiles.map((file) => this.getBucketAndKey(file))
+      .filter((file) => file.bucket && file.key);
+    newFiles = newFiles.map((file) => this.getBucketAndKey(file))
+      .filter((file) => file.bucket && file.key);
 
     const newFilesIds = newFiles.map((f) => buildFileId(f));
 
