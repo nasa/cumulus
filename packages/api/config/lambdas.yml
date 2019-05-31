@@ -97,16 +97,23 @@ CustomBootstrap:
   envs:
     system_bucket: '{{system_bucket}}'
 
-EmsReport:
+EmsIngestReport:
   handler: index.handler
   timeout: 300
   memory: 320
-  source: 'node_modules/@cumulus/api/dist/emsReport/'
+  source: 'node_modules/@cumulus/api/dist/emsIngestReport/'
   useElasticSearch: '{{es.name}}'
   launchInVpc: true
   envs:
     system_bucket: '{{system_bucket}}'
     ems_provider: '{{ems.provider}}'
+    ems_username: '{{ems.username}}'
+    ems_privateKey: '{{ems.privateKey}}'
+    ems_host: '{{ems.host}}'
+    ems_port: '{{ems.port}}'
+    ems_path: '{{ems.path}}'
+    ems_dataSource: '{{ems.dataSource}}'
+    ems_submitReport: '{{ems.submitReport}}'
   namedLambdaDeadLetterQueue: true
 
 EmsDistributionReport:
@@ -119,6 +126,14 @@ EmsDistributionReport:
     LOGS_BUCKET: '{{system_bucket}}'
     REPORTS_BUCKET: '{{system_bucket}}'
     STACK_NAME: '{{stackName}}'
+    ems_provider: '{{ems.provider}}'
+    ems_username: '{{ems.username}}'
+    ems_privateKey: '{{ems.privateKey}}'
+    ems_host: '{{ems.host}}'
+    ems_port: '{{ems.port}}'
+    ems_path: '{{ems.path}}'
+    ems_dataSource: '{{ems.dataSource}}'
+    ems_submitReport: '{{ems.submitReport}}'
 
 executeMigrations:
   handler: index.handler
