@@ -33,7 +33,7 @@ const util = require('util');
 const { sleep } = require('@cumulus/common/util');
 
 const Lambda = require('./lambda');
-const validateWorkflowDefinedLambdas = require('./configValidators');
+const { validateConfig } = require('./configValidators');
 const { crypto } = require('./crypto');
 const { fetchMessageAdapter } = require('./adapter');
 const { extractCumulusConfigFromSF, generateTemplates } = require('./message');
@@ -63,10 +63,9 @@ class UpdatedKes extends Kes {
   constructor(config) {
     super(config);
     this.Lambda = Lambda;
-    validateWorkflowDefinedLambdas(config);
+    validateConfig(config);
     this.messageAdapterGitPath = `${config.repo_owner}/${config.message_adapter_repo}`;
   }
-
 
   /**
    * Redeploy the given api gateway (more info: https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api.html)

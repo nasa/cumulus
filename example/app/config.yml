@@ -65,7 +65,6 @@ default:
   prefixNoDash: TestCumulusIntegration
   useNgapPermissionBoundary: true
   shared_data_bucket: cumulus-data-shared
-  api_distribution_url: https://example.com/
   api_lambda_memory: 756
   iam:
     params:
@@ -199,6 +198,16 @@ default:
               - Arn
           protocol: lambda
 
+  sqs:
+    startSFLowPriority:
+      visibilityTimeout: 60
+      retry: 30
+      maxExecutions: 5
+      consumer:
+        - lambda: sqs2sfThrottle
+          schedule: rate(1 minute)
+          messageLimit: '{{sqs_consumer_rate}}'
+          state: ENABLED
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
@@ -378,6 +387,13 @@ kk:
     public:
       name: '{{prefix}}-public'
       type: public
+  ecs:
+    ssh: true
+    keyPairName: kakelly2-cumulus-sandbox
+
+kk-int-test:
+  prefix: kk-int-test
+  prefixNoDash: KkIntTest
 
 mth:
   prefix: mth
@@ -589,9 +605,16 @@ mboyd-test:
   prefix: mboyd-test
   prefixNoDash: mboydTest
 
+  ecs:
+    ssh: true
+    keyPairName: mboyd
+
 mboyd-int:
   prefix: mboyd-int
   prefixNoDash: mboydInt
+  ecs:
+    ssh: true
+    keyPairName: mboyd
 
 pq:
   prefix: pq
