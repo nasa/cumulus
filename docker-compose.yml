@@ -43,13 +43,13 @@ services:
       - locales
 
   localstack:
-    image: localstack/localstack:0.8.7
+    image: localstack/localstack:0.8.10
     environment:
-      SERVICES: 'kinesis,dynamodb,dynamodbstreams,lambda,s3,sns,sqs'
+      SERVICES: 'kinesis,dynamodb,dynamodbstreams,lambda,s3,sns,sqs,cloudwatch,cloudwatchlogs'
     ports:
       # skipping 4571 that belongs to elasticsearch
       - 4567-4570:4567-4570
-      - 4572-4582:4572-4582
+      - 4572-4586:4572-4586
       - 8080:8080
 
   locales:
