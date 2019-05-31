@@ -22,6 +22,26 @@ async function getMessageFromTemplate(templateUri) {
   return JSON.parse(data.Body);
 }
 
+const buildExecutionCumulusMeta = ({
+  message,
+  parentExecutionArn
+}) => {
+  const cumulusMeta = {
+    queueName: findKey(message.meta.queues, (value) => value === queueUrl),
+    execution_name: uuidv4()
+  };
+  if (parentExecutionArn) cumulusMeta.parentExecutionArn = parentExecutionArn;
+  return cumulusMeta;
+}
+
+const buildExecutionMeta = ({
+  provider,
+  collection
+}) => {
+  provider,
+  collection
+};
+
 /**
  * Prepare a SQS message for queueing executions.
  *
