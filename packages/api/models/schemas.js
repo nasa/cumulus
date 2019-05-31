@@ -365,7 +365,7 @@ module.exports.rule = {
       additionalProperties: true
     },
     queueName: {
-      title: 'Optional Queue used to kick off executions for this rule',
+      title: 'Optional queue used to schedule executions for this rule',
       type: 'string'
     },
     rule: {
