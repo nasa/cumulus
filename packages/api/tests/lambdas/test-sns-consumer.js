@@ -173,7 +173,6 @@ test.serial('it should enqueue a message for each associated workflow', async (t
     payload: JSON.parse(messageBody)
   };
   t.is(actualMessage.cumulus_meta.state_machine, expectedMessage.cumulus_meta.state_machine);
-  t.is(actualMessage.meta.snsSourceArn, expectedMessage.meta.snsSourceArn);
-  t.deepEqual(actualMessage.meta.queues, expectedMessage.meta.queues);
+  t.deepEqual(actualMessage.meta, expectedMessage.meta);
   t.deepEqual(actualMessage.payload, expectedMessage.payload);
 });

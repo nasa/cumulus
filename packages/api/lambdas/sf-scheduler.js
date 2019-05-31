@@ -17,7 +17,7 @@ function getProvider(providerId) {
     const p = new Provider();
     return p.get({ id: providerId });
   }
-  return null;
+  return {};
 }
 
 function getCollection(collection) {
@@ -25,7 +25,7 @@ function getCollection(collection) {
     const c = new Collection();
     return c.get({ name: collection.name, version: collection.version });
   }
-  return null;
+  return {};
 }
 
 function buildMessage(event, messageTemplate) {
@@ -36,10 +36,11 @@ function buildMessage(event, messageTemplate) {
   const payload = get(event, 'payload', {});
   const queueName = get(event, 'queueName', 'startSF');
 
+  messageTemplate.meta.provider = getProvider(provider);
+  messageTemplate.meta.collection = getCollection(collection);
+
   return {
     ...messageTemplate,
-    provider: getProvider(provider),
-    collection: getCollection(collection),
     meta: merge(messageTemplate.meta, meta),
     payload,
     cumulus_meta: merge(messageTemplate.cumulus_meta, cumulusMeta, buildCumulusMeta(queueName))
@@ -48,7 +49,6 @@ function buildMessage(event, messageTemplate) {
 
 /**
  * Add a Cumulus workflow message to the queue specified by event.queueName.
- * 
  * A consumer should be configured for this queue to start executions for
  * the queued message.
  *
