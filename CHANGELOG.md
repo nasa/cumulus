@@ -11,13 +11,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 **CUMULUS-799** added some additional IAM permissions to support reading CloudWatch and API Gateway, so **you will have to redeploy your IAM stack.**
 
 ## Added
-**CUMULUS-799**
+- **CUMULUS-799**
   - Adds new BackendApi endpoint `distributionMetrics` that returns a summary of successful s3 accesses as well as a summary of distribution errors -- including s3 access errors, 4XX and 5XX errors.
 
 ### Changed
 
 - **CUMULUS-1232**
   - Added retries to update `@cumulus/cmr-client` `updateToken()`
+
+- **CUMULUS-1245 CUMULUS-795**
+  - Added additional `ems` configuration parameters for sending the ingest reports to EMS
+  - Added functionality to send daily ingest reports to EMS
 
 ## [v1.13.0] - 2019-5-20
 
@@ -107,7 +111,6 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
 - **CUMULUS-802**
   - Adds autoscaling of ECS clusters
   - Adds autoscaling of ECS services that are handling StepFunction activities
-
 
 ## Changed
 
