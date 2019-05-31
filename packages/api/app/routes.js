@@ -6,6 +6,7 @@ const log = require('@cumulus/common/log');
 
 const collections = require('../endpoints/collections');
 const granules = require('../endpoints/granules');
+const granuleCsv = require('../endpoints/granule-csv');
 const providers = require('../endpoints/providers');
 const pdrs = require('../endpoints/pdrs');
 const rules = require('../endpoints/rules');
@@ -35,6 +36,9 @@ router.use('/collections', ensureAuthorized, collections);
 
 // granules endpoints
 router.use('/granules', ensureAuthorized, granules);
+
+// granule csv endpoints
+router.use('/granule-csv', ensureAuthorized, granuleCsv);
 
 // provider endpoints
 router.use('/providers', ensureAuthorized, providers);
