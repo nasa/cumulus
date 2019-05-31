@@ -7,12 +7,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### PLEASE NOTE
+**CUMULUS-799** added some additional IAM permissions to support reading CloudWatch and API Gateway, so **you will have to redeploy your IAM stack.**
+
+## Added
+- **CUMULUS-799**
+  - Adds new BackendApi endpoint `distributionMetrics` that returns a summary of successful s3 accesses as well as a summary of distribution errors -- including s3 access errors, 4XX and 5XX errors.
+
+- **CUMULUS-1245 CUMULUS-795**
+  - Added additional `ems` configuration parameters for sending the ingest reports to EMS
+  - Added functionality to send daily ingest reports to EMS
+
 ## [v1.13.0] - 2019-5-20
 
 ### PLEASE NOTE
 
-**CUMULUS-802** added some additional IAM permissions to support ECS autoscaling and changes were needed to run all lambdas in the VPC, so **you will have to redeploy your IAM stack.**
-
+**CUMULUS-802** added some additional IAM permissions to support ECS autoscaling, so **you will have to redeploy your IAM stack.**
 As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS-1310**, **you must delete your existing stacks (except IAM) before deploying this version of Cumulus.**
 If running Cumulus within a VPC and extended downtime is acceptable, we recommend doing this at the end of the day to allow AWS backend resources and network interfaces to be cleaned up overnight.
 
@@ -96,10 +106,6 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
 - **CUMULUS-802**
   - Adds autoscaling of ECS clusters
   - Adds autoscaling of ECS services that are handling StepFunction activities
-
-- **CUMULUS-1245 CUMULUS-795**
-  - Added additional `ems` configuration parameters for sending the ingest reports to EMS
-  - Added functionality to send daily ingest reports to EMS
 
 ## Changed
 

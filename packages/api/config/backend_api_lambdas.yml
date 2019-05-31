@@ -74,6 +74,9 @@ ApiEndpoints:
       function: "Ref"
       value: "CmrPassword"
     TOKEN_SECRET: '{{TOKEN_SECRET}}'
+    distributionApiId:
+      function: Ref
+      value: distributionRestApi
   apiGateway:
     - api: backend
       path: '{proxy+}'
