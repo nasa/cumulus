@@ -84,24 +84,13 @@ test.before(async () => {
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
   const fakeMetadata = {
-    time_start: '2017-10-24T00:00:00.000Z',
-    time_end: '2018-10-24T00:00:00.000Z',
-    updated: '2018-04-20T21:45:45.524Z',
-    dataset_id: 'MODIS/Terra Surface Reflectance Daily L2G Global 250m SIN Grid V006',
-    data_center: 'CUMULUS',
-    title: 'MOD09GQ.A2016358.h13v04.006.2016360104606'
+    beginningDateTime: '2017-10-24T00:00:00.000Z',
+    endingDateTime: '2018-10-24T00:00:00.000Z',
+    lastUpdateDateTime: '2018-04-20T21:45:45.524Z',
+    productionDateTime: '2018-04-25T21:45:45.524Z'
   };
 
-  sinon.stub(cmrjs, 'getMetadata').callsFake(() => fakeMetadata);
-
-  const fakeXmlMetadata = {
-    GranuleUR: 'MOD09GQ.A2016358.h13v04.006.2016360104606',
-    DataGranule: {
-      ProductionDateTime: '2018-04-25T21:45:45.524Z'
-    }
-  };
-
-  sinon.stub(cmrjs, 'getFullMetadata').callsFake(() => fakeXmlMetadata);
+  sinon.stub(cmrjs, 'getGranuleTemporalInfo').callsFake(() => fakeMetadata);
 });
 
 test.after.always(async () => {
@@ -113,8 +102,7 @@ test.after.always(async () => {
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 
-  cmrjs.getMetadata.restore();
-  cmrjs.getFullMetadata.restore();
+  cmrjs.getGranuleTemporalInfo.restore();
 });
 
 test.serial('creating a successful granule record', async (t) => {
