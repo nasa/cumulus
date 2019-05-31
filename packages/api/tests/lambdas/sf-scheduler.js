@@ -58,6 +58,6 @@ test.serial('Sends a message to SQS with startSF if queueName is not defined', a
   t.is(sqsStub.calledOnce, true);
 
   const [targetQueueUrl, targetMessage] = sqsStub.getCall(0).args;
-  t.is(targetQueueUrl, fakeMessageResponse.meta.queues.startSF);
+  t.is(targetQueueUrl, fakeMessageResponse.meta.queues[defaultQueueName]);
   t.is(targetMessage.cumulus_meta.queueName, defaultQueueName);
 });
