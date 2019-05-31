@@ -71,6 +71,15 @@ async function validateUMMG(ummMetadata, identifier, provider) {
   );
 }
 
+async function retrieveCmrToken(tokenParams) {
+  return got.post(getUrl('token'), {
+    json: true,
+    body: {
+      token: tokenParams
+    }
+  });
+}
+
 /**
  * Returns a valid a CMR token
  *
@@ -88,24 +97,22 @@ async function updateToken(cmrProvider, clientId, username, password) {
   if (!username) throw new Error('username is required.');
   if (!password) throw new Error('password is required.');
 
+  const tokenParams = {
+    username: username,
+    password: password,
+    client_id: clientId,
+    user_ip_address: await publicIp.v4({ timeout: IP_TIMEOUT_MS }).catch((_) => '127.0.0.1'),
+    provider: cmrProvider
+  };
+
   // Update the saved ECHO token
   // for info on how to add collections to CMR: https://cmr.earthdata.nasa.gov/ingest/site/ingest_api_docs.html#validate-collection
   const response = await pRetry(async () => {
     try {
-      return got.post(getUrl('token'), {
-        json: true,
-        body: {
-          token: {
-            username: username,
-            password: password,
-            client_id: clientId,
-            user_ip_address: await publicIp.v4({ timeout: IP_TIMEOUT_MS }).catch((_) => '127.0.0.1'),
-            provider: cmrProvider
-          }
-        }
-      });
+      return await retrieveCmrToken(tokenParams);
     } catch (err) {
       if (err.response.body.errors) log.error(`CMR error: ${err.response.body.errors[0]}. Retrying.`);
+      else log.error(`Error retrieving token from CMR. Retrying. ${JSON.stringify(err, null, 2)}`);
       throw err;
     }
   }, { retries: 3 });
