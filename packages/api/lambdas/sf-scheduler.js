@@ -17,7 +17,7 @@ function getProvider(providerId) {
     const p = new Provider();
     return p.get({ id: providerId });
   }
-  return {};
+  return null;
 }
 
 function getCollection(collection) {
@@ -25,10 +25,10 @@ function getCollection(collection) {
     const c = new Collection();
     return c.get({ name: collection.name, version: collection.version });
   }
-  return {};
+  return null;
 }
 
-function buildMessage(event, baseMessage) {
+function buildMessage(event, messageTemplate) {
   const provider = get(event, 'provider', null);
   const meta = get(event, 'meta', {});
   const cumulusMeta = get(event, 'cumulus_meta', {});
@@ -37,12 +37,12 @@ function buildMessage(event, baseMessage) {
   const queueName = get(event, 'queueName', 'startSF');
 
   return {
-    ...baseMessage,
+    ...messageTemplate,
     provider: getProvider(provider),
     collection: getCollection(collection),
-    meta: merge(baseMessage.meta, meta),
+    meta: merge(messageTemplate.meta, meta),
     payload,
-    cumulus_meta: merge(baseMessage.cumulus_meta, cumulusMeta, buildCumulusMeta(queueName))
+    cumulus_meta: merge(messageTemplate.cumulus_meta, cumulusMeta, buildCumulusMeta(queueName))
   };
 }
 
@@ -55,10 +55,10 @@ function buildMessage(event, baseMessage) {
  * @param {Object} event - lambda input message
  */
 async function schedule(event) {
-  const template = get(event, 'template');
+  const templateUri = get(event, 'template');
 
-  const data = await getMessageFromTemplate(template);
-  const message = buildMessage(event, data);
+  const messageTemplate = await getMessageFromTemplate(templateUri);
+  const message = buildMessage(event, messageTemplate);
 
   const queueName = message.cumulus_meta.queueName;
   await SQS.sendMessage(message.meta.queues[queueName], message);
