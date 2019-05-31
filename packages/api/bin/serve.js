@@ -152,7 +152,6 @@ async function createDBRecords(stackName, user) {
   const g = testUtils.fakeGranuleFactory();
   g.granuleId = `${stackName}-granule`;
   const gm = new models.Granule();
-  // gm.published = false;
   const granule = await gm.create(g);
   indexer.indexGranule(esClient, granule, esIndex);
 
