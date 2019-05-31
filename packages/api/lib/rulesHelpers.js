@@ -20,7 +20,7 @@ async function queueMessageForRule(rule, eventObject) {
 
   const payload = await Rule.buildPayload(item);
 
-  return await schedule(payload);
+  return schedule(payload);
 }
 
 module.exports = {
