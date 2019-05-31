@@ -51,7 +51,7 @@ function buildMessage(event, baseMessage) {
  * by meta.queueName. This queue will then start a stepfunction for the
  * given message
  *
- * @param   {Object} event   - lambda input message
+ * @param {Object} event   - lambda input message
  */
 async function schedule(event) {
   const template = get(event, 'template');
