@@ -11,7 +11,7 @@ module.exports = {
     dbIndexer: './lambdas/db-indexer.js',
     distribution: './app/distribution.js',
     emsDistributionReport: './lambdas/ems-distribution-report.js',
-    emsReport: './lambdas/ems-report.js',
+    emsIngestReport: './lambdas/ems-ingest-report.js',
     executeMigrations: './lambdas/executeMigrations.js',
     indexer: './es/indexer.js',
     jobs: './lambdas/jobs.js',

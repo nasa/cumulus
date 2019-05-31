@@ -328,7 +328,7 @@ function handler(_event, _context, cb) {
     logsPrefix: `${process.env.STACK_NAME}/ems-distribution/s3-server-access-logs/`,
     reportsBucket: process.env.REPORTS_BUCKET,
     reportsPrefix: `${process.env.STACK_NAME}/ems-distribution/reports/`,
-    provider: 'cumulus',
+    provider: process.env.ems_provider || 'cumulus',
     stackName: process.env.STACK_NAME
   })
     .catch(cb);
