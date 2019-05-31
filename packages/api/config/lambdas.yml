@@ -114,12 +114,13 @@ EmsIngestReport:
     ems_path: '{{ems.path}}'
     ems_dataSource: '{{ems.dataSource}}'
     ems_submitReport: '{{ems.submitReport}}'
+    ems_retentionInDays: '{{ems.retentionInDays}}'
   namedLambdaDeadLetterQueue: true
 
 EmsDistributionReport:
   handler: index.handler
   timeout: 300
-  memory: 128
+  memory: 320
   source: 'node_modules/@cumulus/api/dist/emsDistributionReport/'
   launchInVpc: true
   tables:
@@ -135,6 +136,7 @@ EmsDistributionReport:
     ems_path: '{{ems.path}}'
     ems_dataSource: '{{ems.dataSource}}'
     ems_submitReport: '{{ems.submitReport}}'
+    ems_retentionInDays: '{{ems.retentionInDays}}'
 
 executeMigrations:
   handler: index.handler

@@ -93,6 +93,7 @@ default:
     privateKey: ems-private.pem
     dataSource: UAT
     submitReport: false
+    retentionInDays: 30
 
   # this whole section has to be updated in each deployment section
   vpc:

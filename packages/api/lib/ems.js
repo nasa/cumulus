@@ -23,14 +23,35 @@ const { Search, defaultIndexAlias } = require('../es/search');
  * process.env.ems_username: provider login name in ems server
  * process.env.ems_privateKey: privateKey filename in s3://system_bucket/stackName/crypto
  *   default to 'ems.private.pem'
+ * process.env.ems_retentionInDays: the retention in days for reports and s3 server access logs
  * process.env.stackName: it's used as part of the report filename
  * process.env.system_bucket: the bucket to store the generated reports
  */
 
 const defaultESScrollSize = 1000;
 
+const DISTRIBUTION_REPORT = 'distribution';
+const METADATA_REPORT = 'metadata';
+
 /**
- * For each EMS report type (ingest, archive, delete),
+ * return fileType based on report type
+ *
+ * @param {string} reportType - report type
+ * @returns {string} fileType used as part of the report file name
+ */
+const reportToFileType = (reportType) => {
+  const type = {
+    ingest: 'Ing',
+    archive: 'Arch',
+    delete: 'ArchDel',
+    distribution: 'DistCustom',
+    metadata: 'Meta'
+  };
+  return type[reportType];
+};
+
+/**
+ * For each EMS ingest report type (ingest, archive, delete),
  * map the EMS fields to CUMULUS granule/deletedgranule record fields,
  */
 const emsMappings = {
@@ -72,21 +93,17 @@ const emsMappings = {
 };
 
 /**
- * return fileType based on report type
+ * return the report key prefix
  *
  * @param {string} reportType - report type
- * @returns {string} fileType used as part of the report file name
+ * @returns {string} prefix of the report files
  */
-const reportToFileType = (reportType) => {
-  const type = {
-    ingest: 'Ing',
-    archive: 'Arch',
-    delete: 'ArchDel',
-    distribution: 'DistCustom',
-    metadata: 'Meta'
-  };
-  return type[reportType];
-};
+const getReportPrefix = (reportType) =>
+  ((reportType === DISTRIBUTION_REPORT)
+    ? `${process.env.stackName}/ems-distribution/reports/` : `${process.env.stackName}/ems/`);
+
+/** prefix of access logs */
+const accessLogPrefix = `${process.env.stackName}/ems-distribution/s3-server-access-logs/`;
 
 /**
  * build and elasticsearch query parameters
@@ -249,6 +266,73 @@ function buildReportFileName(reportType, startTime) {
 }
 
 /**
+ * Determine the S3 key where the report should be stored
+ *
+ * @param {string} reportType - report type (ingest, archive, delete, distribution, metadata etc.)
+ * @param {string} reportStartTime - the timestamp of the report in a format that moment can parse
+ *
+ * @returns {string} the S3 key where the report should be stored
+ */
+async function determineReportKey(reportType, reportStartTime) {
+  let reportName = buildReportFileName(reportType, reportStartTime);
+  const reportsPrefix = getReportPrefix(reportType);
+
+  const revisionNumber = (await aws.listS3ObjectsV2({
+    Bucket: process.env.system_bucket,
+    Prefix: aws.s3Join([reportsPrefix, reportName])
+  })).length;
+
+  if (revisionNumber > 0) reportName = `${reportName}.rev${revisionNumber}`;
+
+  return aws.s3Join([reportsPrefix, reportName]);
+}
+
+
+async function getExpiredS3Objects(bucket, prefix, retentionInDays) {
+  const retentionFilter = (s3Object) =>
+    s3Object.LastModified <= moment.utc().subtract(retentionInDays, 'days');
+
+  return (await aws.listS3ObjectsV2({ Bucket: bucket, Prefix: prefix }))
+    .filter(retentionFilter)
+    .filter((s3Object) => !s3Object.Key.endsWith('/'))
+    .map((s3Object) => ({ Bucket: bucket, Key: s3Object.Key }));
+}
+
+/**
+ * cleanup old report files and s3 access logs
+ *
+ * @param {string} reportType - report type (ingest, archive, delete, distribution, metadata etc.)
+ */
+async function cleanup(reportType) {
+  const reportPrefix = getReportPrefix(reportType);
+  // filter the corresponding report files
+  const reportFilter = (s3Object) => {
+    if ([DISTRIBUTION_REPORT, METADATA_REPORT].includes(reportType)) {
+      return s3Object.Key.includes(`_${reportToFileType(reportType)}_`);
+    }
+
+    return (!s3Object.Key.includes(`_${reportToFileType(DISTRIBUTION_REPORT)}_`)
+        && !s3Object.Key.includes(`_${reportToFileType(METADATA_REPORT)}_`));
+  };
+
+  // delete reports
+  const reports = (await getExpiredS3Objects(
+    process.env.system_bucket, reportPrefix, process.env.ems_retentionInDays
+  ))
+    .filter(reportFilter);
+
+  await aws.deleteS3Files(reports);
+
+  // delete s3 access logs
+  if (reportType === DISTRIBUTION_REPORT) {
+    const accessLogs = await getExpiredS3Objects(
+      process.env.system_bucket, accessLogPrefix, process.env.ems_retentionInDays
+    );
+    await aws.deleteS3Files(accessLogs);
+  }
+}
+
+/**
  * generate an EMS report
  *
  * @param {string} reportType - report type (ingest, archive, delete)
@@ -380,10 +464,12 @@ async function generateAndSubmitReports(startTime, endTime) {
 }
 
 module.exports = {
-  buildReportFileName,
+  cleanup,
+  determineReportKey,
   emsMappings,
   generateReport,
   generateReports,
   generateAndSubmitReports,
+  getExpiredS3Objects,
   submitReports
 };
