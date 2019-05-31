@@ -42,7 +42,7 @@ function buildMessage(event, baseMessage) {
     collection: getCollection(collection),
     meta: merge(baseMessage.meta, meta),
     payload,
-    cumulus_meta: merge(cumulusMeta, buildCumulusMeta(queueName))
+    cumulus_meta: merge(baseMessage.cumulus_meta, cumulusMeta, buildCumulusMeta(queueName))
   };
 }
 
