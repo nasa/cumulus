@@ -27,8 +27,14 @@ const scheduleEventTemplate = {
   template: 's3://somewhere/nice'
 };
 
-const fakeCollection = { name: 'fakeCollection', version: '000' };
-const fakeProvider = { id: 'fakeProviderId', host: 'fakeHost' };
+const fakeCollection = {
+  name: 'fakeCollection',
+  version: '000'
+};
+const fakeProvider = {
+  id: 'fakeProviderId',
+  host: 'fakeHost'
+};
 
 const restoreGetMessageFromTemplate = schedule.__set__('getMessageFromTemplate', () => Promise.resolve(fakeMessageResponse));
 const restoreCollectionModel = schedule.__set__('getCollection', () => Promise.resolve(fakeCollection));
