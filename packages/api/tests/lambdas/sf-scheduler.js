@@ -18,7 +18,6 @@ const fakeMessageResponse = {
     }
   }
 };
-
 const scheduleEventTemplate = {
   collection: 'fakeCollection',
   provider: 'fakeProvider',
@@ -26,7 +25,6 @@ const scheduleEventTemplate = {
   payload: {},
   template: 's3://somewhere/nice'
 };
-
 const fakeCollection = {
   name: 'fakeCollection',
   version: '000'

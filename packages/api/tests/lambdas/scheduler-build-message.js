@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 const test = require('ava');
 const rewire = require('rewire');
@@ -36,7 +36,7 @@ test.serial('event has valid collection and provider', async (t) => {
     ...eventTemplate,
     provider: 'fakeProvider',
     collection: 'fakeCollection'
-  }
+  };
 
   const response = await buildMessage(buildMessageEventInput, fakeMessageTemplate);
 
@@ -54,7 +54,7 @@ test.serial('event.meta is not overwritten by invalid event.collection|provider'
       collection: fakeCollection,
       provider: fakeProvider
     }
-  }
+  };
 
   const response = await buildMessage(buildMessageEventInput, fakeMessageTemplate);
 
