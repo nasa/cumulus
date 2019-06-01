@@ -12,23 +12,23 @@ const buildCumulusMeta = (queueName) => ({
   queueName
 });
 
-function getProvider(providerId) {
+async function getProvider(providerId) {
   if (providerId) {
     const p = new Provider();
     return p.get({ id: providerId });
   }
-  return {};
+  return undefined;
 }
 
-function getCollection(collection) {
+async function getCollection(collection) {
   if (collection) {
     const c = new Collection();
     return c.get({ name: collection.name, version: collection.version });
   }
-  return {};
+  return undefined;
 }
 
-function buildMessage(event, messageTemplate) {
+async function buildMessage(event, messageTemplate) {
   const provider = get(event, 'provider', null);
   const meta = get(event, 'meta', {});
   const cumulusMeta = get(event, 'cumulus_meta', {});
@@ -37,8 +37,8 @@ function buildMessage(event, messageTemplate) {
   const queueName = get(event, 'queueName', 'startSF');
 
   const defaultCollectionAndProvider = {
-    provider: getProvider(provider),
-    collection: getCollection(collection)
+    provider: await getProvider(provider),
+    collection: await getCollection(collection)
   };
 
   return {
@@ -60,7 +60,7 @@ async function schedule(event) {
   const templateUri = get(event, 'template');
 
   const messageTemplate = await getMessageFromTemplate(templateUri);
-  const message = buildMessage(event, messageTemplate);
+  const message = await buildMessage(event, messageTemplate);
 
   const queueName = message.cumulus_meta.queueName;
   await SQS.sendMessage(message.meta.queues[queueName], message);
