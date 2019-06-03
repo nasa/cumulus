@@ -20,10 +20,7 @@ async function queueMessageForRule(rule, eventObject) {
 
   const payload = await Rule.buildPayload(item);
 
-  return new Promise((resolve, reject) => schedule(payload, {}, (err, result) => {
-    if (err) reject(err);
-    resolve(result);
-  }));
+  return schedule(payload);
 }
 
 module.exports = {
