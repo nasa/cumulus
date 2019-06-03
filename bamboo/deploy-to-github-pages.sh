@@ -2,10 +2,7 @@
 
 set -e
 
-rm -rf website/build
-npm run docs-install
-npm run docs-build
-
+if [[ ! -z $DEPLOYMENT ]]; then
 git clone --depth=50 --branch=gh-pages "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/nasa/cumulus.git" gh-pages
 (
   set -e

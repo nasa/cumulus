@@ -2,7 +2,7 @@
 set -e
 . ./bamboo/set-bamboo-env-variables.sh
 
-if [[ -z $DEPLOYMENT ]]; then
+if [[ ! -z $DEPLOYMENT ]]; then
   VERSION=$(jq --raw-output .version lerna.json)
   NPM_TAG=$(node ./bamboo/npm-tag.js);
 
