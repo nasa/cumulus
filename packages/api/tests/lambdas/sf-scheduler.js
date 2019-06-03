@@ -38,6 +38,18 @@ const buildMessage = schedule.__get__('buildMessage');
 const restoreMessageFromTemplate = schedule.__set__('getMessageFromTemplate', () => Promise.resolve(fakeMessageResponse));
 const sqsStub = sinon.stub(SQS, 'sendMessage');
 
+class FakeCollection {
+  async get(item) {
+    return { response: fakeCollection, args: item };
+  }
+}
+
+class FakeProvider {
+  async get(item) {
+    return { response: fakeProvider, args: item };
+  }
+}
+
 // restore functions returned from rewire.__set__ commands to be called in afterEach
 let restoreList;
 
@@ -105,7 +117,7 @@ test.serial('event has valid collection and provider', async (t) => {
   t.deepEqual(response.meta.provider, fakeProvider);
 });
 
-test.serial('event.meta is not overwritten by undefined event.collection|provider', async (t) => {
+test.serial('event.meta is not overwritten by undefined return from getProvider|Collection', async (t) => {
   restoreList = [
     schedule.__set__('getCollection', () => Promise.resolve(undefined)),
     schedule.__set__('getProvider', () => Promise.resolve(undefined))
@@ -123,4 +135,49 @@ test.serial('event.meta is not overwritten by undefined event.collection|provide
 
   t.deepEqual(response.meta.collection, fakeCollection);
   t.deepEqual(response.meta.provider, fakeProvider);
+});
+
+test.serial('getProvider returns undefined when input is falsey', async (t) => {
+  const getProvider = schedule.__get__('getProvider');
+
+  const response = await getProvider(undefined);
+
+  t.is(response, undefined);
+});
+
+test.serial('getProvider returns provider when input is a providerId', async (t) => {
+  const getProvider = schedule.__get__('getProvider');
+  const restoreProvider = schedule.__set__('Provider', FakeProvider);
+
+  restoreList = [restoreProvider];
+
+  const { response, args } = await getProvider(fakeProvider.id);
+
+  t.deepEqual(response, fakeProvider);
+  t.is(args.id, fakeProvider.id);
+});
+
+test.serial('getCollection returns undefined when input is falsey', async (t) => {
+  const getCollection = schedule.__get__('getCollection');
+
+  const response = await getCollection(undefined);
+
+  t.is(response, undefined);
+});
+
+test.serial('getCollection returns collection when input is a collection name/version', async (t) => {
+  const getCollection = schedule.__get__('getCollection');
+  const restoreCollection = schedule.__set__('Collection', FakeCollection);
+
+  restoreList = [restoreCollection];
+
+  const collectionInput = {
+    name: fakeCollection.name,
+    version: fakeCollection.version
+  };
+
+  const { response, args } = await getCollection(collectionInput);
+
+  t.deepEqual(response, fakeCollection);
+  t.deepEqual(args, collectionInput);
 });
