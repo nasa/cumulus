@@ -21,6 +21,7 @@ async function getMessageFromTemplate(templateUri) {
   const data = await getS3Object(parsedS3Uri.Bucket, parsedS3Uri.Key);
   return JSON.parse(data.Body);
 }
+module.exports.getMessageFromTemplate = getMessageFromTemplate;
 
 const buildExecutionCumulusMeta = ({
   message,

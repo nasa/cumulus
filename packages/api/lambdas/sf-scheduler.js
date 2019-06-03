@@ -3,64 +3,72 @@
 const get = require('lodash.get');
 const merge = require('lodash.merge');
 const uuidv4 = require('uuid/v4');
-const { getS3Object, parseS3Uri } = require('@cumulus/common/aws');
+const { getMessageFromTemplate } = require('@cumulus/ingest/queue');
 const { SQS } = require('@cumulus/ingest/aws');
 const { Provider, Collection } = require('../models');
 
-/**
- * Builds a cumulus-compatible message and adds it to the startSF queue
- * startSF queue will then start a stepfunction for the given message
- *
- * @param   {Object} event   - lambda input message
- * @param   {Object} context - lambda context
- * @param   {function} cb    - lambda callback
- */
-function schedule(event, context, cb) {
-  const template = get(event, 'template');
-  const provider = get(event, 'provider', null);
+const buildCumulusMeta = (queueName) => ({
+  execution_name: uuidv4(),
+  queueName
+});
+
+async function getProvider(providerId) {
+  if (providerId) {
+    const p = new Provider();
+    return p.get({ id: providerId });
+  }
+  return undefined;
+}
+
+async function getCollection(collection) {
+  if (collection) {
+    const c = new Collection();
+    return c.get({ name: collection.name, version: collection.version });
+  }
+  return undefined;
+}
+
+async function buildMessage(event, messageTemplate) {
+  const providerId = get(event, 'provider', null);
   const meta = get(event, 'meta', {});
   const cumulusMeta = get(event, 'cumulus_meta', {});
   const collection = get(event, 'collection', null);
   const payload = get(event, 'payload', {});
-  let message;
+  const queueName = get(event, 'queueName', 'startSF');
 
-  const parsed = parseS3Uri(template);
-  getS3Object(parsed.Bucket, parsed.Key)
-    .then((data) => {
-      message = JSON.parse(data.Body);
-      message.meta.provider = {};
-      message.meta.collection = {};
-      message.meta = merge(message.meta, meta);
-      message.payload = payload;
-      message.cumulus_meta.execution_name = uuidv4();
-      message.cumulus_meta = merge(message.cumulus_meta, cumulusMeta);
-    })
-    .then(() => {
-      if (provider) {
-        const p = new Provider();
-        return p.get({ id: provider });
-      }
-      return null;
-    })
-    .then((p) => {
-      if (p) {
-        message.meta.provider = p;
-      }
+  const providerResponse = await getProvider(providerId);
+  if (providerResponse) {
+    meta.provider = providerResponse;
+  }
 
-      if (collection) {
-        const c = new Collection();
-        return c.get({ name: collection.name, version: collection.version });
-      }
-      return null;
-    })
-    .then((c) => {
-      if (c) message.meta.collection = c;
-    })
-    .then(() => {
-      SQS.sendMessage(message.meta.queues.startSF, message);
-    })
-    .then((r) => cb(null, r))
-    .catch((e) => cb(e));
+  const collectionResponse = await getCollection(collection);
+  if (collectionResponse) {
+    meta.collection = collectionResponse;
+  }
+
+  return {
+    ...messageTemplate,
+    meta: merge(messageTemplate.meta, meta),
+    payload,
+    cumulus_meta: merge(messageTemplate.cumulus_meta, cumulusMeta, buildCumulusMeta(queueName))
+  };
+}
+
+/**
+ * Add a Cumulus workflow message to the queue specified by event.queueName.
+ * A consumer should be configured for this queue to start executions for
+ * the queued message.
+ *
+ * @param {Object} event - lambda input message
+ */
+async function schedule(event) {
+  const templateUri = get(event, 'template');
+
+  const messageTemplate = await getMessageFromTemplate(templateUri);
+  const message = await buildMessage(event, messageTemplate);
+
+  const queueName = message.cumulus_meta.queueName;
+  await SQS.sendMessage(message.meta.queues[queueName], message);
 }
 
 module.exports = { schedule };

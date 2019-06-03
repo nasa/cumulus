@@ -140,6 +140,19 @@ Resources:
                 Resource:
                   Fn::Sub: "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:${ResourcePrefix}-*"
 
+              - Effect: Allow
+                Action:
+                  - cloudwatch:List*
+                  - cloudwatch:Get*
+                  - cloudwatch:Describe*
+                Resource: '*'
+
+              - Effect: Allow
+                Action:
+                  - apigateway:GET
+                Resource:
+                  Fn::Sub: "arn:aws:apigateway:${AWS::Region}::/restapis/*/stages"
+
               # allow adding/editing/deleting of rules associated with this deployment
               - Effect: Allow
                 Action:
