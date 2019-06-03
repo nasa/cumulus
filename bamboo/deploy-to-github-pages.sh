@@ -14,3 +14,4 @@ git clone --depth=50 --branch=gh-pages "https://${GITHUB_USER}:${GITHUB_TOKEN}@g
   echo "Push disabled as we don't want to use bamboo to publish, yet"
   #git push
 )
+fi
