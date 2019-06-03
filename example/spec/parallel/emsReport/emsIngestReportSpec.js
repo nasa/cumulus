@@ -73,7 +73,8 @@ const accessTokensModel = new AccessToken();
 async function setupCollectionAndTestData(testSuffix, testDataFolder) {
   const s3data = [
     '@cumulus/test-data/granules/MOD14A1.A2000049.h00v10.006.2015041132152.hdf.met',
-    '@cumulus/test-data/granules/MOD14A1.A2000049.h00v10.006.2015041132152.hdf'
+    '@cumulus/test-data/granules/MOD14A1.A2000049.h00v10.006.2015041132152.hdf',
+    '@cumulus/test-data/granules/BROWSE.MOD14A1.A2000049.h00v10.006.2015041132152.1.jpg'
   ];
 
   // populate collections, providers and test data
@@ -136,40 +137,40 @@ describe('The EMS report', () => {
   let deletedGranuleId;
   let ingestedGranuleIds;
 
-  // beforeAll(async () => {
-  //   // in order to generate the ingest reports here and by daily cron, we need to ingest granules
-  //   // as well as delete granules
+  beforeAll(async () => {
+    // in order to generate the ingest reports here and by daily cron, we need to ingest granules
+    // as well as delete granules
 
-  //   const testId = createTimestampedTestId(config.stackName, 'emsIngestReport');
-  //   testSuffix = createTestSuffix(testId);
-  //   testDataFolder = createTestDataPath(testId);
+    const testId = createTimestampedTestId(config.stackName, 'emsIngestReport');
+    testSuffix = createTestSuffix(testId);
+    testDataFolder = createTestDataPath(testId);
 
-  //   await setupCollectionAndTestData(testSuffix, testDataFolder);
-  //   // ingest one granule, this will be deleted later
-  //   deletedGranuleId = await ingestAndPublishGranule(testSuffix, testDataFolder);
+    await setupCollectionAndTestData(testSuffix, testDataFolder);
+    // ingest one granule, this will be deleted later
+    deletedGranuleId = await ingestAndPublishGranule(testSuffix, testDataFolder);
 
-  //   // delete granules ingested for this collection, so that ArchDel report can be generated
-  //   await deleteOldGranules();
+    // delete granules ingested for this collection, so that ArchDel report can be generated
+    await deleteOldGranules();
 
-  //   // ingest two new granules, so that Archive and Ingest reports can be generated
-  //   ingestedGranuleIds = await Promise.all([
-  //     // ingest a granule and publish it to CMR
-  //     ingestAndPublishGranule(testSuffix, testDataFolder),
+    // ingest two new granules, so that Archive and Ingest reports can be generated
+    ingestedGranuleIds = await Promise.all([
+      // ingest a granule and publish it to CMR
+      ingestAndPublishGranule(testSuffix, testDataFolder),
 
-  //     // ingest a granule but not publish it to CMR
-  //     ingestAndPublishGranule(testSuffix, testDataFolder, false)
-  //   ]);
-  // });
+      // ingest a granule but not publish it to CMR
+      ingestAndPublishGranule(testSuffix, testDataFolder, false)
+    ]);
+  });
 
-  // afterAll(async () => {
-  //   await Promise.all([
-  //     deleteFolder(config.bucket, testDataFolder),
-  //     cleanupCollections(config.stackName, config.bucket, collectionsDir),
-  //     cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
-  //   ]);
-  // });
+  afterAll(async () => {
+    await Promise.all([
+      deleteFolder(config.bucket, testDataFolder),
+      cleanupCollections(config.stackName, config.bucket, collectionsDir),
+      cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
+    ]);
+  });
 
-  xdescribe('When run automatically', () => {
+  describe('When run automatically', () => {
     let expectReports = false;
     beforeAll(async () => {
       const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
@@ -204,7 +205,7 @@ describe('The EMS report', () => {
     });
   });
 
-  xdescribe('After execution of EmsIngestReport lambda', () => {
+  describe('After execution of EmsIngestReport lambda', () => {
     let lambdaOutput;
     beforeAll(async () => {
       const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
@@ -284,8 +285,7 @@ describe('The EMS report', () => {
     // so we are not able to generate the distribution report immediately after submitting distribution requests,
     // the distribution requests submitted here are for nightly distribution report.
     it('downloads the files of the published granule for generating nightly distribution report', async () => {
-      //const files = await getGranuleFilesForDownload(ingestedGranuleIds[0]);
-      const files = await getGranuleFilesForDownload('MOD14A1.A6178853.SBl1B1.006.0017123534385');
+      const files = await getGranuleFilesForDownload(ingestedGranuleIds[0]);
       for (let i = 0; i < files.length; i += 1) {
         const filePath = `/${files[i].bucket}/${files[i].key}`;
         const downloadedFile = path.join(os.tmpdir(), files[i].fileName);
@@ -332,7 +332,7 @@ describe('The EMS report', () => {
         expect(lambdaOutput.length).toEqual(1);
         const jobs = lambdaOutput.map(async (report) => {
           const parsed = parseS3Uri(report.file);
-          expect(await fileExists(parsed.Bucket, parsed.Key)).toBe(true);
+          expect(await fileExists(parsed.Bucket, parsed.Key)).not.toBe(false);
 
           if (submitReport) {
             expect(parsed.Key.includes('/sent/')).toBe(true);

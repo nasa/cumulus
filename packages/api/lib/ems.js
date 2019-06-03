@@ -1,37 +1,10 @@
 'use strict';
 
-const fs = require('fs');
 const moment = require('moment');
-const os = require('os');
 const path = require('path');
 const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
 const { Sftp } = require('@cumulus/common/sftp');
-
-const { deconstructCollectionId } = require('../es/indexer');
-const { Search, defaultIndexAlias } = require('../es/search');
-
-/**
- * This module provides functionalities to generate EMS reports.
- * The following environment variables are used:
- * process.env.ES_SCROLL_SIZE: default to defaultESScrollSize
- * process.env.ES_INDEX: set for testing purpose, default to defaultIndexAlias
- * process.env.ems_provider: default to 'cumulus'
- * process.env.ems_host: ems server host
- * process.env.ems_port: ems server host port
- * process.env.ems_path: ems server report directory path
- * process.env.ems_username: provider login name in ems server
- * process.env.ems_privateKey: privateKey filename in s3://system_bucket/stackName/crypto
- *   default to 'ems.private.pem'
- * process.env.ems_retentionInDays: the retention in days for reports and s3 server access logs
- * process.env.stackName: it's used as part of the report filename
- * process.env.system_bucket: the bucket to store the generated reports
- */
-
-const defaultESScrollSize = 1000;
-
-const DISTRIBUTION_REPORT = 'distribution';
-const METADATA_REPORT = 'metadata';
 
 /**
  * return fileType based on report type
@@ -49,201 +22,6 @@ const reportToFileType = (reportType) => {
   };
   return type[reportType];
 };
-
-/**
- * For each EMS ingest report type (ingest, archive, delete),
- * map the EMS fields to CUMULUS granule/deletedgranule record fields,
- */
-const emsMappings = {
-  ingest: {
-    dbID: 'granuleId',
-    product: 'collectionId', // shortName part
-    productVolume: 'productVolume',
-    productState: 'status',
-    externalDataProvider: 'provider',
-    processingStartDateTime: 'processingStartDateTime',
-    processingEndDateTime: 'processingEndDateTime',
-    timeToArchive: 'timeToArchive',
-    timeToPreprocess: 'timeToPreprocess',
-    timeToXfer: 'duration'
-  },
-
-  archive: {
-    dbID: 'granuleId',
-    product: 'collectionId', // shortName part
-    productVolume: 'productVolume',
-    totalFiles: 'files', // total # files
-    insertTime: 'createdAt',
-    beginningDateTime: 'beginningDateTime',
-    endingDateTime: 'endingDateTime',
-    productionDateTime: 'productionDateTime',
-    localGranuleID: 'granuleId',
-    versionID: 'collectionId', // versionID part
-    // since we have separate 'delete' report,
-    // deleteFromArchive shall have value 'N', deleteEffectiveDate shall be left blank
-    deleteFromArchive: 'deleteFromArchive', // N
-    deleteEffectiveDate: 'deleteEffectiveDate', // null
-    lastUpdate: 'lastUpdateDateTime'
-  },
-
-  delete: {
-    dbID: 'granuleId',
-    deleteEffectiveDate: 'deletedAt'
-  }
-};
-
-/**
- * return the report key prefix
- *
- * @param {string} reportType - report type
- * @returns {string} prefix of the report files
- */
-const getReportPrefix = (reportType) =>
-  ((reportType === DISTRIBUTION_REPORT)
-    ? `${process.env.stackName}/ems-distribution/reports/` : `${process.env.stackName}/ems/`);
-
-/** prefix of access logs */
-const accessLogPrefix = `${process.env.stackName}/ems-distribution/s3-server-access-logs/`;
-
-/**
- * build and elasticsearch query parameters
- *
- * @param {string} esIndex - es index to search on
- * @param {string} type - es document type to search on
- * @param {string} startTime - startTime of the records
- * @param {string} endTime - endTime of the records
- * @returns {Object} query parameters
- */
-function buildSearchQuery(esIndex, type, startTime, endTime) {
-  // types are 'granule' or 'deletedgranule'
-  const timeFieldName = (type === 'granule') ? 'createdAt' : 'deletedAt';
-  const params = {
-    index: esIndex,
-    type: type,
-    scroll: '30s',
-    size: process.env.ES_SCROLL_SIZE || defaultESScrollSize,
-    body: {
-      query: {
-        bool: {
-          must: [
-            {
-              range: {
-                [`${timeFieldName}`]: {
-                  gte: moment.utc(startTime).toDate().getTime(),
-                  lt: moment.utc(endTime).toDate().getTime()
-                }
-              }
-            },
-            {
-              terms: {
-                // filter out 'running' status
-                status: ['failed', 'completed']
-              }
-            }]
-        }
-      }
-    }
-  };
-  if (type === 'deletedgranule') params._source = ['granuleId', 'deletedAt'];
-  return params;
-}
-
-/**
- * get the value of EMS record field from corresponding field of the  granule record
- *
- * @param {Object} granule - es granule record
- * @param {string} emsField - EMS field
- * @param {string} granField - granule field
- * @returns {string} granule metadata for EMS
- */
-function getEmsFieldFromGranField(granule, emsField, granField) {
-  const metadata = granule[granField];
-  let result = metadata;
-  switch (emsField) {
-  case 'product':
-    result = deconstructCollectionId(metadata).name;
-    break;
-  case 'versionID':
-    result = parseInt(deconstructCollectionId(metadata).version, 10);
-    break;
-  case 'deleteFromArchive':
-    result = 'N';
-    break;
-  case 'totalFiles':
-    result = (metadata) ? metadata.length : 0;
-    break;
-  case 'productState':
-    result = (metadata === 'completed') ? 'Successful' : 'Failed';
-    break;
-  // deleteEffectiveDate format YYYYMMDD
-  case 'deleteEffectiveDate':
-    result = (metadata) ? moment.utc(new Date(metadata)).format('YYYYMMDD') : metadata;
-    break;
-  // datetime format YYYY-MM-DD HH:MMAMorPM GMT
-  case 'insertTime':
-    // milliseconds to string
-    result = (metadata) ? moment.utc(new Date(metadata)).format('YYYY-MM-DD hh:mmA') : metadata;
-    break;
-  case 'lastUpdate':
-  case 'processingStartDateTime':
-  case 'processingEndDateTime':
-  case 'beginningDateTime':
-  case 'endingDateTime':
-  case 'productionDateTime':
-    // string to different format string
-    result = (metadata) ? moment.utc(Date.parse(metadata)).format('YYYY-MM-DD hh:mmA') : metadata;
-    break;
-  default:
-    break;
-  }
-  return result;
-}
-
-/**
- * build EMS records from es granules
- *
- * @param {Object} mapping - mapping of EMS fields to granule fields
- * @param {Object} granules - es granules
- * @returns {Array<string>} EMS records
- */
-function buildEMSRecords(mapping, granules) {
-  const records = granules.map((granule) => {
-    const record = Object.keys(mapping)
-      .map((emsField) => getEmsFieldFromGranField(granule, emsField, mapping[emsField]));
-    return record.join('|&|');
-  });
-  return records;
-}
-
-/**
- * upload a report to s3, a rev file is created if the report already exists in s3
- *
- * @param {string} filename - file to be upload to s3
- * @returns {string} - uploaded file in s3
- */
-async function uploadReportToS3(filename) {
-  const bucket = process.env.system_bucket;
-  const originalKey = `${process.env.stackName}/ems/${path.basename(filename)}`;
-  let key = originalKey;
-  let exists = await aws.fileExists(bucket, key);
-  let i = 1;
-  while (exists) {
-    key = `${originalKey}.rev${i}`;
-    exists = await aws.fileExists(bucket, key); // eslint-disable-line no-await-in-loop
-    i += 1;
-  }
-
-  await aws.s3().putObject({
-    Bucket: bucket,
-    Key: key,
-    Body: fs.createReadStream(filename)
-  }).promise();
-
-  fs.unlinkSync(filename);
-  const s3Uri = aws.buildS3Uri(bucket, key);
-  log.info(`uploaded ${s3Uri}`);
-  return s3Uri;
-}
 
 /**
  * build report file name
@@ -270,12 +48,12 @@ function buildReportFileName(reportType, startTime) {
  *
  * @param {string} reportType - report type (ingest, archive, delete, distribution, metadata etc.)
  * @param {string} reportStartTime - the timestamp of the report in a format that moment can parse
+ * @param {string} reportsPrefix - the S3 prefix where the reports are located
  *
  * @returns {string} the S3 key where the report should be stored
  */
-async function determineReportKey(reportType, reportStartTime) {
+async function determineReportKey(reportType, reportStartTime, reportsPrefix) {
   let reportName = buildReportFileName(reportType, reportStartTime);
-  const reportsPrefix = getReportPrefix(reportType);
 
   const revisionNumber = (await aws.listS3ObjectsV2({
     Bucket: process.env.system_bucket,
@@ -287,7 +65,13 @@ async function determineReportKey(reportType, reportStartTime) {
   return aws.s3Join([reportsPrefix, reportName]);
 }
 
-
+/**
+ * get list of expired s3 objects
+ * @param {string} bucket - the s3 bucket
+ * @param {string} prefix - the S3 prefix where the objects are located
+ * @param {string} retentionInDays - the retention in days for the s3 objects
+ * @returns {Array<Object>} - list of s3 objects
+ */
 async function getExpiredS3Objects(bucket, prefix, retentionInDays) {
   const retentionFilter = (s3Object) =>
     s3Object.LastModified <= moment.utc().subtract(retentionInDays, 'days');
@@ -296,101 +80,6 @@ async function getExpiredS3Objects(bucket, prefix, retentionInDays) {
     .filter(retentionFilter)
     .filter((s3Object) => !s3Object.Key.endsWith('/'))
     .map((s3Object) => ({ Bucket: bucket, Key: s3Object.Key }));
-}
-
-/**
- * cleanup old report files and s3 access logs
- *
- * @param {string} reportType - report type (ingest, archive, delete, distribution, metadata etc.)
- */
-async function cleanup(reportType) {
-  const reportPrefix = getReportPrefix(reportType);
-  // filter the corresponding report files
-  const reportFilter = (s3Object) => {
-    if ([DISTRIBUTION_REPORT, METADATA_REPORT].includes(reportType)) {
-      return s3Object.Key.includes(`_${reportToFileType(reportType)}_`);
-    }
-
-    return (!s3Object.Key.includes(`_${reportToFileType(DISTRIBUTION_REPORT)}_`)
-        && !s3Object.Key.includes(`_${reportToFileType(METADATA_REPORT)}_`));
-  };
-
-  // delete reports
-  const reports = (await getExpiredS3Objects(
-    process.env.system_bucket, reportPrefix, process.env.ems_retentionInDays
-  ))
-    .filter(reportFilter);
-
-  await aws.deleteS3Files(reports);
-
-  // delete s3 access logs
-  if (reportType === DISTRIBUTION_REPORT) {
-    const accessLogs = await getExpiredS3Objects(
-      process.env.system_bucket, accessLogPrefix, process.env.ems_retentionInDays
-    );
-    await aws.deleteS3Files(accessLogs);
-  }
-}
-
-/**
- * generate an EMS report
- *
- * @param {string} reportType - report type (ingest, archive, delete)
- * @param {string} startTime - start time of the records
- * @param {string} endTime - end time of the records
- * @returns {Object} - report type and its file path {reportType, file}
- */
-async function generateReport(reportType, startTime, endTime) {
-  log.debug(`ems.generateReport ${reportType} startTime: ${startTime} endTime: ${endTime}`);
-
-  if (!Object.keys(emsMappings).includes(reportType)) {
-    throw new Error(`ems.generateReport report type not supported: ${reportType}`);
-  }
-
-  // create a temporary file for the report
-  const name = buildReportFileName(reportType, startTime);
-  const filename = path.join(os.tmpdir(), name);
-  const stream = fs.createWriteStream(filename);
-
-  // retrieve granule/deletedgranule records in batches, and generate EMS records for each batch
-  const esClient = await Search.es();
-  const type = (reportType !== 'delete') ? 'granule' : 'deletedgranule';
-
-  const esIndex = process.env.ES_INDEX || defaultIndexAlias;
-  const searchQuery = buildSearchQuery(esIndex, type, startTime, endTime);
-  let response = await esClient.search(searchQuery);
-  let granules = response.hits.hits.map((s) => s._source);
-  let numRetrieved = granules.length;
-  stream.write(buildEMSRecords(emsMappings[reportType], granules).join('\n'));
-
-  while (response.hits.total !== numRetrieved) {
-    response = await esClient.scroll({ // eslint-disable-line no-await-in-loop
-      scrollId: response._scroll_id,
-      scroll: '30s'
-    });
-    granules = response.hits.hits.map((s) => s._source);
-    stream.write('\n');
-    stream.write(buildEMSRecords(emsMappings[reportType], granules).join('\n'));
-    numRetrieved += granules.length;
-  }
-  stream.end();
-  log.debug(`EMS ${reportType} generated with ${numRetrieved} records: ${filename}`);
-
-  // upload to s3
-  const s3Uri = await uploadReportToS3(filename);
-  return { reportType, file: s3Uri };
-}
-
-/**
- * generate all EMS reports given the time range of the records and submit to ems
- *
- * @param {string} startTime - start time of the records
- * @param {string} endTime - end time of the records
- * @returns {Array<Object>} - list of report type and its file path {reportType, file}
- */
-async function generateReports(startTime, endTime) {
-  return Promise.all(Object.keys(emsMappings)
-    .map((reportType) => generateReport(reportType, startTime, endTime)));
 }
 
 /**
@@ -451,25 +140,10 @@ async function submitReports(reports) {
   return reportsSent;
 }
 
-/**
- * generate and submit EMS reports
- * @param {string} startTime - start time of the records
- * @param {string} endTime - end time of the records
- * @returns {Array<Object>} - list of report type and its file path {reportType, file}
- */
-async function generateAndSubmitReports(startTime, endTime) {
-  const reports = await Promise.all(Object.keys(emsMappings)
-    .map((reportType) => generateReport(reportType, startTime, endTime)));
-  return submitReports(reports);
-}
-
 module.exports = {
-  cleanup,
+  buildReportFileName,
   determineReportKey,
-  emsMappings,
-  generateReport,
-  generateReports,
-  generateAndSubmitReports,
   getExpiredS3Objects,
-  submitReports
+  submitReports,
+  reportToFileType
 };

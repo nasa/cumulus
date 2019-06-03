@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added additional `ems` configuration parameters for sending the ingest reports to EMS
   - Added functionality to send daily ingest reports to EMS
 
+- **CUMULUS-796**
+  - Added production information (collection ShortName and Version, granuleId) to EMS distribution report
+  - Added functionality to send daily distribution reports to EMS
+
 ## [v1.13.0] - 2019-5-20
 
 ### PLEASE NOTE

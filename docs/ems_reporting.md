@@ -52,6 +52,6 @@ Upload the corresponding private key to s3, use `{{system_bucket}}` as bucket na
 
 6. Configure the `ems` configuration parameters in `app/config.yml`.
 
-If the `submitReport` is not set to `true` in the configuration, the reports are still generated in `s3://{{buckets.internal.name}/{{prefix}}/ems/{{filename}}`, but won't be submitted to EMS.
+If the `submitReport` is not set to `true` in the configuration, the reports are still generated in `s3://{{buckets.internal.name}/{{prefix}}/ems/{{filename}}` for Ingest reports and `s3://{{buckets.internal.name}/{{prefix}}/ems-distribution/reports/{{filename}}` for Distribution reports, but won't be submitted to EMS.
 
 Submitted reports will be saved to `sent` folder.
