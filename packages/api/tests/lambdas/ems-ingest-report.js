@@ -8,7 +8,7 @@ const aws = require('@cumulus/common/aws');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const { Search } = require('../../es/search');
 const { deleteAliases } = require('../../lib/testUtils');
-const { emsMappings, generateReports } = require('../../lib/ems');
+const { emsMappings, generateReports } = require('../../lambdas/ems-ingest-report');
 
 const granule = {
   granuleId: randomString(),
