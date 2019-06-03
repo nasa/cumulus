@@ -35,6 +35,7 @@ const fakeProvider = {
 };
 
 const buildMessage = schedule.__get__('buildMessage');
+const restoreMessageFromTemplate = schedule.__set__('getMessageFromTemplate', () => Promise.resolve(fakeMessageResponse));
 const sqsStub = sinon.stub(SQS, 'sendMessage');
 
 // restore functions returned from rewire.__set__ commands to be called in afterEach
@@ -46,12 +47,12 @@ test.afterEach(() => {
 });
 
 test.after.always(() => {
+  restoreMessageFromTemplate();
   sqsStub.restore();
 });
 
 test.serial('Sends a message to SQS with queueName if queueName is defined', async (t) => {
   restoreList = [
-    schedule.__set__('getMessageFromTemplate', () => Promise.resolve(fakeMessageResponse)),
     schedule.__set__('getCollection', () => Promise.resolve(fakeCollection)),
     schedule.__set__('getProvider', () => Promise.resolve(fakeProvider))
   ];
@@ -70,7 +71,6 @@ test.serial('Sends a message to SQS with queueName if queueName is defined', asy
 
 test.serial('Sends a message to SQS with startSF if queueName is not defined', async (t) => {
   restoreList = [
-    schedule.__set__('getMessageFromTemplate', () => Promise.resolve(fakeMessageResponse)),
     schedule.__set__('getCollection', () => Promise.resolve(fakeCollection)),
     schedule.__set__('getProvider', () => Promise.resolve(fakeProvider))
   ];

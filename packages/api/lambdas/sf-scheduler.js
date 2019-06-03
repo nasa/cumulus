@@ -29,21 +29,26 @@ async function getCollection(collection) {
 }
 
 async function buildMessage(event, messageTemplate) {
-  const provider = get(event, 'provider', null);
+  const providerId = get(event, 'provider', null);
   const meta = get(event, 'meta', {});
   const cumulusMeta = get(event, 'cumulus_meta', {});
   const collection = get(event, 'collection', null);
   const payload = get(event, 'payload', {});
   const queueName = get(event, 'queueName', 'startSF');
 
-  const defaultCollectionAndProvider = {
-    provider: await getProvider(provider),
-    collection: await getCollection(collection)
-  };
+  const providerResponse = await getProvider(providerId);
+  if (providerResponse) {
+    meta.provider = providerResponse;
+  }
+
+  const collectionResponse = await getCollection(collection);
+  if (collectionResponse) {
+    meta.collection = collectionResponse;
+  }
 
   return {
     ...messageTemplate,
-    meta: merge(messageTemplate.meta, meta, defaultCollectionAndProvider),
+    meta: merge(messageTemplate.meta, meta),
     payload,
     cumulus_meta: merge(messageTemplate.cumulus_meta, cumulusMeta, buildCumulusMeta(queueName))
   };
