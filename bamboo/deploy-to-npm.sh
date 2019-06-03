@@ -3,8 +3,8 @@ set -e
 . ./bamboo/set-bamboo-env-variables.sh
 
 if [[ $PUBLISH_FLAG == true ]]; then
-  VERSION=$(jq --raw-output .version lerna.json)
-  NPM_TAG=$(node ./bamboo/npm-tag.js);
+  export VERSION=$(jq --raw-output .version lerna.json)
+  export NPM_TAG=$(node ./bamboo/npm-tag.js);
 
   echo "Publishing packages to NPM with version=${VERSION} and tag=${NPM_TAG}"
   echo "Would run
