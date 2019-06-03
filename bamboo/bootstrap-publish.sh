@@ -2,7 +2,7 @@
 set -e
 
 . ./bamboo/set-bamboo-env-variables.sh
-if [[ ! -z $DEPLOYMENT ]]; then
+if [[ $PUBLISH_FLAG == true ]]; then
   npm install -g npm
   npm install
   rm -rf website/build
