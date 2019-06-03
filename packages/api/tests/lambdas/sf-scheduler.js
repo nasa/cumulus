@@ -105,10 +105,10 @@ test.serial('event has valid collection and provider', async (t) => {
   t.deepEqual(response.meta.provider, fakeProvider);
 });
 
-test.serial('event.meta is not overwritten by invalid event.collection|provider', async (t) => {
+test.serial('event.meta is not overwritten by undefined event.collection|provider', async (t) => {
   restoreList = [
-    schedule.__set__('getCollection', () => Promise.resolve(fakeCollection)),
-    schedule.__set__('getProvider', () => Promise.resolve(fakeProvider))
+    schedule.__set__('getCollection', () => Promise.resolve(undefined)),
+    schedule.__set__('getProvider', () => Promise.resolve(undefined))
   ];
 
   const buildMessageEventInput = {
