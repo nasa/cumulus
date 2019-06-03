@@ -18,6 +18,8 @@ declare -a param_list=(
   "bamboo_CMR_PASSWORD"
   "bamboo_CMR_USERNAME"
   "bamboo_DEPLOYMENT"
+  "bamboo_REPORT_BUILD_STATUS"
+  "bamboo_SECRET_NPM_TOKEN"
   "bamboo_SECRET_TOKEN_SECRET"
   "bamboo_SECRET_EARTHDATA_USERNAME"
   "bamboo_SECRET_EARTHDATA_PASSWORD"
@@ -42,6 +44,7 @@ export GIT_SHA=$(git rev-parse HEAD)
 ## is intended to allow an override for a custom branch build.
 if [[ ! -z $bamboo_GIT_PR ]]; then
   export GIT_PR=$bamboo_GIT_PR
+  export REPORT_BUILD_STATUS=true
   echo export GIT_PR=$GIT_PR >> .bamboo_env_vars
 fi
 
@@ -76,7 +79,7 @@ echo GIT_PR is $GIT_PR
 
 ## If tag matching the current ref is a version tag, set
 if [[ $(git describe --exact-match HEAD 2>/dev/null |sed -n '1p') =~ ^v[0-9]+.* ]]; then
-  export VERSION_FLAG=true
+  export VERSION_FLAG=${BASH_REMATCH[0]}
 fi
 
 # Timeout is 40 minutes, can be overridden by setting bamboo env variable on build
@@ -114,7 +117,6 @@ if [[ -z $COMMIT_MESSAGE ]]; then
   export COMMIT_MESSAGE=$(git log --pretty='format:%Creset%s' -1)
   echo export COMMIT_MESSAGE=\"$COMMIT_MESSAGE\" >> .bamboo_env_vars
 fi
-
 
 ## Branch if branch is master, or a version tag is set, or the commit
 ## message explicitly calls for running redeploy tests
