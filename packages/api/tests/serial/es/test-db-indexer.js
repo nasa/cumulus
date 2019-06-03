@@ -4,10 +4,7 @@ const test = require('ava');
 const drop = require('lodash.drop');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const {
-  constructCollectionId,
-  util: { noop }
-} = require('@cumulus/common');
+const { constructCollectionId } = require('@cumulus/common');
 
 const models = require('../../../models');
 const { Search } = require('../../../es/search');
@@ -152,7 +149,7 @@ test.serial('create, update and delete a collection in dynamodb and es', async (
   let records = await getDyanmoDBStreamRecords(process.env.CollectionsTable);
 
   // fake the lambda trigger
-  await handler(records, {}, noop);
+  await handler(records);
 
   const collectionIndex = new Search({}, 'collection');
   let indexedRecord = await collectionIndex.get(constructCollectionId(c.name, c.version));
@@ -167,7 +164,7 @@ test.serial('create, update and delete a collection in dynamodb and es', async (
   records = await getDyanmoDBStreamRecords(process.env.CollectionsTable);
 
   // fake the lambda trigger
-  await handler(records, {}, noop);
+  await handler(records);
 
   indexedRecord = await collectionIndex.get(constructCollectionId(c.name, c.version));
   t.is(indexedRecord.dataType, 'testing');
@@ -179,7 +176,7 @@ test.serial('create, update and delete a collection in dynamodb and es', async (
   records = await getDyanmoDBStreamRecords(process.env.CollectionsTable);
 
   // fake the lambda trigger
-  await handler(records, {}, noop);
+  await handler(records);
 
   const response = await collectionIndex.get(constructCollectionId(c.name, c.version));
   t.is(response.detail, 'Record not found');
@@ -199,7 +196,7 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
   let records = await getDyanmoDBStreamRecords(process.env.GranulesTable);
 
   // fake the lambda trigger
-  await handler(records, {}, noop);
+  await handler(records);
 
   const granuleIndex = new Search({}, 'granule');
   let indexedRecord = await granuleIndex.get(fakeGranule.granuleId);
@@ -223,7 +220,7 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
   records = await getDyanmoDBStreamRecords(process.env.GranulesTable);
 
   // fake the lambda trigger
-  await handler(records, {}, noop);
+  await handler(records);
 
   indexedRecord = await granuleIndex.get(fakeGranule.granuleId);
   t.is(indexedRecord.status, 'failed');
@@ -235,7 +232,7 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
   records = await getDyanmoDBStreamRecords(process.env.GranulesTable);
 
   // fake the lambda trigger
-  await handler(records, {}, noop);
+  await handler(records);
 
   indexedRecord = await granuleIndex.get(fakeGranule.granuleId);
   t.is(indexedRecord.detail, 'Record not found');
@@ -261,7 +258,7 @@ test.serial('create, update and delete an execution in dynamodb and es', async (
   let records = await getDyanmoDBStreamRecords(process.env.ExecutionsTable);
 
   // fake the lambda trigger
-  await handler(records, {}, noop);
+  await handler(records);
 
   const recordIndex = new Search({}, 'execution');
   let indexedRecord = await recordIndex.get(fakeRecord.arn);
@@ -276,7 +273,7 @@ test.serial('create, update and delete an execution in dynamodb and es', async (
   records = await getDyanmoDBStreamRecords(process.env.ExecutionsTable);
 
   // fake the lambda trigger
-  await handler(records, {}, noop);
+  await handler(records);
 
   indexedRecord = await recordIndex.get(fakeRecord.arn);
   t.is(indexedRecord.status, 'failed');
@@ -288,8 +285,32 @@ test.serial('create, update and delete an execution in dynamodb and es', async (
   records = await getDyanmoDBStreamRecords(process.env.ExecutionsTable);
 
   // fake the lambda trigger
-  await handler(records, {}, noop);
+  await handler(records);
 
   indexedRecord = await recordIndex.get(fakeRecord.arn);
   t.is(indexedRecord.detail, 'Record not found');
+});
+
+test.serial.only('The db-indexer does not throw an exception when execution fails', async (t) => {
+  const esHostBefore = process.env.LOCAL_ES_HOST;
+
+  try {
+    process.env.LOCAL_ES_HOST = '127.0.0.2';
+
+    const fakeRecord = fakeExecutionFactory();
+    const model = new models.Execution();
+    await model.create(fakeRecord);
+
+    // get records from the stream
+    const records = await getDyanmoDBStreamRecords(process.env.ExecutionsTable);
+
+    // fake the lambda trigger
+    await handler(records);
+
+    t.pass();
+  } catch (err) {
+    t.fail('An exception should not have been thrown');
+  } finally {
+    process.env.LOCAL_ES_HOST = esHostBefore;
+  }
 });
