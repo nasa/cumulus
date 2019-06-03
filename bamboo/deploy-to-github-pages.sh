@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
+. ./bamboo/set-bamboo-env-variables.sh
 
 if [[ $PUBLISH_FLAG == true ]]; then
 git clone --depth=50 --branch=gh-pages "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/nasa/cumulus.git" gh-pages
-echo "Push disabled as we don't want to use bamboo to publish, yet"
 (
   set -e
   cd gh-pages
@@ -11,6 +11,7 @@ echo "Push disabled as we don't want to use bamboo to publish, yet"
   rsync -av ../website/build/Cumulus/ .
   git add .
   git commit -m "Automated build in Bamboo CI"
+  echo "Push disabled as we don't want to use bamboo to publish, yet"
   #git push
 )
 fi
