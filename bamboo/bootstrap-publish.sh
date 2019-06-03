@@ -9,6 +9,7 @@ if [[ $PUBLISH_FLAG == true ]]; then
   npm run docs-install
   npm run docs-build
   npm run bootstrap-no-build
-  apt-get update; apt-get install jq
+  set +e; apt-get update; set -e;
+  apt-get install jq
   echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
 fi
