@@ -14,6 +14,9 @@ const {
   },
   testUtils: {
     randomStringFromRegex
+  },
+  util: {
+    sleep
   }
 } = require('@cumulus/common');
 const StepFunctions = require('@cumulus/common/StepFunctions');
@@ -141,18 +144,20 @@ describe('Queues with maximum executions defined', () => {
     });
 
     it('is only running the maximum number of executions', async () => {
-      // Wait until at least one of the executions has started
-      // TODO: can't rely on first execution ARN being started first
-      await waitForExecutionExists(executionArns[0], 5, 60);
+      let runningExecutions = 0;
 
       // Get the state for all of the queued execution ARNs.
-      const getExecutionStates = executionArns
-        .map((arn) => StepFunctions.executionExists(arn));
-      const executionStates = await Promise.all(getExecutionStates);
+      while (runningExecutions < maxExecutions) {
+        const getExecutionStates = executionArns
+          .map((arn) => StepFunctions.executionExists(arn));
+        // eslint-disable-next-line no-await-in-loop
+        const executionStates = await Promise.all(getExecutionStates);
+        runningExecutions = executionStates.filter(Boolean).length;
+        // eslint-disable-next-line no-await-in-loop
+        await sleep(3000);
+      }
 
-      // Only the maximum number of executions for the queue should exist.
-      const runningExecutions = executionStates.filter(Boolean);
-      expect(runningExecutions.length).toEqual(maxExecutions);
+      expect(runningExecutions).toEqual(maxExecutions);
     });
   });
 });
