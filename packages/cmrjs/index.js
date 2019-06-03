@@ -20,6 +20,7 @@ const {
 const {
   constructOnlineAccessUrl,
   getGranuleId,
+  getGranuleTemporalInfo,
   getCmrFiles,
   isCMRFile,
   metadataObjectFromCMRFile,
@@ -84,6 +85,7 @@ module.exports = {
   deleteConcept,
   getCmrFiles,
   getFullMetadata,
+  getGranuleTemporalInfo,
   getGranuleId,
   getHost,
   getMetadata,
