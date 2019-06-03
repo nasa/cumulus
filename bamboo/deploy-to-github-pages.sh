@@ -2,7 +2,7 @@
 
 set -e
 
-if [[ ! -z $DEPLOYMENT ]]; then
+if [[ $PUBLISH_FLAG == true ]]; then
 git clone --depth=50 --branch=gh-pages "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/nasa/cumulus.git" gh-pages
 (
   set -e
