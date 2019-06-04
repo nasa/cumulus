@@ -123,7 +123,6 @@ fi
 
 ## Branch if branch is master, or a version tag is set, or the commit
 ## message explicitly calls for running redeploy tests
-if [[ $BRANCH == master || $VERSION_FLAG || COMMIT_MESSAGE =~ '[run-redeploy-tests]' ]]; then
+if [[ $BRANCH == CUMULUS-1158 || $VERSION_FLAG || COMMIT_MESSAGE =~ '[run-redeploy-tests]' ]]; then
   export RUN_REDEPLOYMENT=true
-  echo export RUN_DEPLOYMENT=$RUN_DEPLOYMENT
 fi
