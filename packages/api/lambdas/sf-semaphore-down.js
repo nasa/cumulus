@@ -21,7 +21,7 @@ const isSfExecutionEvent = (event) => event.source === 'aws.states';
 /**
  * Determine if workflow is in a terminal state.
  *
- * @param {Object} message - A workflow message object
+ * @param {Object} status - A Step Function execution status
  * @returns {boolean} - True if workflow is in terminal state.
  */
 const isTerminalMessage = (status) =>
@@ -40,6 +40,7 @@ const isTerminalMessage = (status) =>
  *   - Workflow is not in a terminal state
  *
  * @param {Object} message - A workflow message object
+ * @param {string} status - A Step Function execution status
  * @returns {boolean} True if workflow semaphore should be decremented.
  */
 const isDecrementMessage = (message, status) =>
@@ -77,7 +78,7 @@ async function decrementQueueSemaphore(queueName) {
  */
 async function handleSemaphoreDecrementTask(event) {
   if (!isSfExecutionEvent(event)) {
-    return;
+    return Promise.resolve();
   }
 
   const status = get(event, 'detail.status');
@@ -85,7 +86,7 @@ async function handleSemaphoreDecrementTask(event) {
   const message = JSON.parse(output);
 
   if (!isDecrementMessage(message, status)) {
-    return;
+    return Promise.resolve();
   }
 
   const queueName = getQueueName(message);

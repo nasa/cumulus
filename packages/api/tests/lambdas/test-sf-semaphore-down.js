@@ -198,4 +198,3 @@ test('sfSemaphoreDown lambda decrements semaphore for timed out event message', 
 test('sfSemaphoreDown lambda decrements semaphore for aborted event message', async (t) => {
   await testTerminalEventMessage(t, 'ABORTED');
 });
-
