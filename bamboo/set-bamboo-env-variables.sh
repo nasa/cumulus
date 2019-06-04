@@ -125,4 +125,5 @@ fi
 ## message explicitly calls for running redeploy tests
 if [[ $BRANCH == CUMULUS-1158 || $VERSION_FLAG || COMMIT_MESSAGE =~ '[run-redeploy-tests]' ]]; then
   export RUN_REDEPLOYMENT=true
+  echo export RUN_REDPLOUMENT=true >> .bamboo_env_vars
 fi
