@@ -76,7 +76,7 @@ Fetch step function config determines what current task is being executed. Note 
 
 #### Preparation Step 3: Load nested event
 
-Using the config returned from the previous step, load nested event resolves templates for the final config and input to send to the task's application code. Read more on URL Templating in the [Protocol section](protocol.html#url-templating).
+Using the config returned from the previous step, load nested event resolves templates for the final config and input to send to the task's application code.
 
 ## Task Application Code
 

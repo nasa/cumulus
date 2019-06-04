@@ -51,7 +51,7 @@ The above error was being thrown by cumulus lambda function invocation. The KMS 
 On a lambda level, this error can be resolved by updating the KMS Key to `aws/lambda`. We've done this through the management console. Unfortunately, this approach doesn't scale well.
 
 The other resolution (that scales but takes some time) that was found is as follows:
-1. Delete the whole `{{#each newsted_templates}}` section from `@cumulus/deployment/app/cloudformation.template.yml` and redeploy the primary stack.
+1. Delete the whole `{{#each nested_templates}}` section from `@cumulus/deployment/app/cloudformation.template.yml` and redeploy the primary stack.
 2. Reinstall dependencies via `npm`.
 3. Re-deploy the stack.
 
