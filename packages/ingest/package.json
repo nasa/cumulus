@@ -46,7 +46,6 @@
     "jsftp": "https://github.com/yjpa7145/jsftp.git#Fix-partial-file-issue",
     "json-loader": "~0.5.7",
     "lodash.clonedeep": "^4.5.0",
-    "lodash.findkey": "^4.6.0",
     "lodash.flatten": "^4.4.0",
     "lodash.get": "^4.4.2",
     "lodash.groupby": "^4.6.0",

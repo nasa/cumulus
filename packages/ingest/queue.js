@@ -1,70 +1,37 @@
 'use strict';
 
-const uuidv4 = require('uuid/v4');
-const findKey = require('lodash.findkey');
+const merge = require('lodash.merge');
 
 const {
-  getS3Object,
   sendSQSMessage,
-  parseS3Uri,
   getExecutionArn
 } = require('@cumulus/common/aws');
 
-/**
- * Create a message from a template stored on S3
- *
- * @param {string} templateUri - S3 uri to the workflow template
- * @returns {Promise} message object
- **/
-async function getMessageFromTemplate(templateUri) {
-  const parsedS3Uri = parseS3Uri(templateUri);
-  const data = await getS3Object(parsedS3Uri.Bucket, parsedS3Uri.Key);
-  return JSON.parse(data.Body);
-}
-module.exports.getMessageFromTemplate = getMessageFromTemplate;
+const {
+  buildExecutionMessage,
+  getMessageFromTemplate
+} = require('@cumulus/common/message');
 
-const buildExecutionCumulusMeta = ({
-  message,
-  parentExecutionArn
-}) => {
-  const cumulusMeta = {
-    queueName: findKey(message.meta.queues, (value) => value === queueUrl),
-    execution_name: uuidv4()
-  };
-  if (parentExecutionArn) cumulusMeta.parentExecutionArn = parentExecutionArn;
-  return cumulusMeta;
-}
-
-const buildExecutionMeta = ({
-  provider,
-  collection
-}) => {
-  provider,
-  collection
-};
-
-/**
- * Prepare a SQS message for queueing executions.
- *
- * @param {Object} params
- * @param {Object} params.message - Object for SQS message
- * @param {Object} params.provider - A provider object
- * @param {Object} params.collection - A collection object
- * @param {Object} params.parentExecutionArn - ARN for parent execution
- * @param {Object} params.queueUrl - SQS queue URL
- */
-function prepareExecutionQueueMessage({
-  message,
+async function buildMessageFromTemplate({
   provider,
   collection,
   parentExecutionArn,
-  queueUrl
+  queueUrl,
+  templateUri
 }) {
-  message.meta.provider = provider;
-  message.meta.collection = collection;
-  if (parentExecutionArn) message.cumulus_meta.parentExecutionArn = parentExecutionArn;
-  message.cumulus_meta.queueName = findKey(message.meta.queues, (value) => value === queueUrl);
-  message.cumulus_meta.execution_name = uuidv4();
+  const messageTemplate = await getMessageFromTemplate(templateUri);
+  const message = buildExecutionMessage({
+    provider,
+    collection,
+    parentExecutionArn,
+    queueUrl
+  });
+
+  return {
+    ...messageTemplate,
+    meta: merge(messageTemplate.meta, message.meta),
+    cumulus_meta: merge(messageTemplate.cumulus_meta, message.cumulus_meta)
+  };
 }
 
 /**
@@ -89,23 +56,24 @@ async function enqueueParsePdrMessage({
   collection,
   parentExecutionArn
 }) {
-  const message = await getMessageFromTemplate(parsePdrMessageTemplateUri);
-
-  message.payload = { pdr };
-
-  prepareExecutionQueueMessage({
-    message,
+  // const message = await getMessageFromTemplate(parsePdrMessageTemplateUri);
+  const message = buildMessageFromTemplate({
+    queueUrl,
     provider,
     collection,
     parentExecutionArn,
-    queueUrl
+    templateUri: parsePdrMessageTemplateUri
   });
+
+  message.payload = { pdr };
 
   const arn = getExecutionArn(
     message.cumulus_meta.state_machine,
     message.cumulus_meta.execution_name
   );
+
   await sendSQSMessage(queueUrl, message);
+
   return arn;
 }
 module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
@@ -135,7 +103,14 @@ async function enqueueGranuleIngestMessage({
   parentExecutionArn
 }) {
   // Build the message from a template
-  const message = await getMessageFromTemplate(granuleIngestMessageTemplateUri);
+  // const message = await getMessageFromTemplate(granuleIngestMessageTemplateUri);
+  const message = buildMessageFromTemplate({
+    queueUrl,
+    provider,
+    collection,
+    parentExecutionArn,
+    templateUri: granuleIngestMessageTemplateUri
+  });
 
   message.payload = {
     granules: [
@@ -144,19 +119,13 @@ async function enqueueGranuleIngestMessage({
   };
   if (pdr) message.meta.pdr = pdr;
 
-  prepareExecutionQueueMessage({
-    message,
-    provider,
-    collection,
-    parentExecutionArn,
-    queueUrl
-  });
-
   const arn = getExecutionArn(
     message.cumulus_meta.state_machine,
     message.cumulus_meta.execution_name
   );
+
   await sendSQSMessage(queueUrl, message);
+
   return arn;
 }
 exports.enqueueGranuleIngestMessage = enqueueGranuleIngestMessage;

@@ -2,15 +2,13 @@
 
 const get = require('lodash.get');
 const merge = require('lodash.merge');
-const uuidv4 = require('uuid/v4');
-const { getMessageFromTemplate } = require('@cumulus/ingest/queue');
+
+const {
+  buildCumulusMeta,
+  getMessageFromTemplate
+} = require('@cumulus/common/message');
 const { SQS } = require('@cumulus/ingest/aws');
 const { Provider, Collection } = require('../models');
-
-const buildCumulusMeta = (queueName) => ({
-  execution_name: uuidv4(),
-  queueName
-});
 
 async function getProvider(providerId) {
   if (providerId) {
