@@ -200,5 +200,3 @@ test.serial('The correct message is enqueued', async (t) => {
     t.deepEqual(message, expectedMessages[pdrName]);
   });
 });
-
-test.todo('An appropriate error is thrown if the message template could not be fetched');

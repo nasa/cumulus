@@ -422,5 +422,3 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     }
   );
 });
-
-test.todo('An appropriate error is thrown if the message template could not be fetched');
