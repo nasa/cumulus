@@ -20,6 +20,7 @@ declare -a param_list=(
   "bamboo_CMR_USERNAME"
   "bamboo_DEPLOYMENT"
   "bamboo_PUBLISH_FLAG"
+  "bamboo_USE_NPM_PACKAGES"
   "bamboo_SECRET_NPM_TOKEN"
   "bamboo_SECRET_TOKEN_SECRET"
   "bamboo_SECRET_EARTHDATA_USERNAME"
