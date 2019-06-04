@@ -112,7 +112,6 @@ if [[ -z $DEPLOYMENT ]]; then
   fi
   echo export DEPLOYMENT=$DEPLOYMENT >> .bamboo_env_vars
 fi
-export DEPLOYMENT
 
 ## Exporting the commit message as an env variable to be brought in
 ## for yes/no toggles on build
