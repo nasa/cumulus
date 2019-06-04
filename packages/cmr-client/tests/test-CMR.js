@@ -3,6 +3,8 @@
 const test = require('ava');
 const nock = require('nock');
 const some = require('lodash.some');
+const sinon = require('sinon');
+const got = require('got');
 
 const CMR = require('../CMR');
 
@@ -70,4 +72,26 @@ test('getHeaders returns correct Content-type for xml metadata by default', (t) 
   t.is(headers['Content-type'], 'application/echo10+xml');
   t.is(headers['Client-Id'], 'clientID');
   t.is(headers.Accept, undefined);
+});
+
+test('updateToken retries when fails', async (t) => {
+  const postSpy = sinon.spy(() => {
+    throw new Error('error');
+  });
+
+  sinon.stub(got, 'post').callsFake(postSpy);
+
+  const cmr = new CMR({
+    clientId: 'fakeClientId',
+    username: 'fakeUsername',
+    password: 'fakePassword',
+    provider: 'fakeProvider'
+  });
+
+  await cmr.getToken()
+    .catch(() => { }); // eslint-disable-line lodash/prefer-noop
+
+  t.is(postSpy.callCount, 4);
+
+  sinon.restore();
 });
