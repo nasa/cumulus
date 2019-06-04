@@ -84,8 +84,6 @@ if [[ $GIT_TAG =~ ^v[0-9]+.* ]]; then
   export VERSION_FLAG=${BASH_REMATCH[0]}
 fi
 
-
-
 # Timeout is 40 minutes, can be overridden by setting bamboo env variable on build
 if [[ -z $TIMEOUT_PERIODS ]]; then
   TIMEOUT_PERIODS=80
@@ -123,7 +121,7 @@ fi
 
 ## Branch if branch is master, or a version tag is set, or the commit
 ## message explicitly calls for running redeploy tests
-if [[ $BRANCH == CUMULUS-1158 || $VERSION_FLAG || COMMIT_MESSAGE =~ '[run-redeploy-tests]' ]]; then
+if [[ $BRANCH == master || $VERSION_FLAG || COMMIT_MESSAGE =~ '[run-redeploy-tests]' ]]; then
   export RUN_REDEPLOYMENT=true
   echo "Setting RUN_REDEPLOYMENT to true"
   echo export RUN_REDEPLOYMENT="true" >> .bamboo_env_vars
