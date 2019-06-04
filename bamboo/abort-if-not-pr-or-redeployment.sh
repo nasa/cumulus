@@ -3,6 +3,7 @@ set -e
 
 echo "PWD is $(pwd)"
 ls -ltra
+printenv
 source .bamboo_env_vars || true
 echo "Run redeployment is $RUN_REDEPLOYMENT"
 if [[ $GIT_PR != true && $RUN_REDEPLOYMENT != true ]]; then
