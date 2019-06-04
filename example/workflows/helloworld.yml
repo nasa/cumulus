@@ -8,6 +8,15 @@ HelloWorldWorkflow:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
+      Retry:
+        - &LambdaServiceExceptionRetry
+          ErrorEquals:
+          - Lambda.ServiceException
+          - Lambda.AWSLambdaException
+          - Lambda.SdkClientException
+          IntervalSeconds: 2
+          MaxAttempts: 6
+          BackoffRate: 2
       Next: HelloWorld
     HelloWorld:
       CumulusConfig:
@@ -16,6 +25,8 @@ HelloWorldWorkflow:
         collection: '{$.meta.collection}'
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Next: StopStatus
     StopStatus:
       Type: Task
@@ -28,6 +39,8 @@ HelloWorldWorkflow:
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -47,6 +60,8 @@ EcsHelloWorldWorkflow:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Next: EcsTaskHelloWorld
     EcsTaskHelloWorld:
       CumulusConfig:
@@ -72,6 +87,8 @@ EcsHelloWorldWorkflow:
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL

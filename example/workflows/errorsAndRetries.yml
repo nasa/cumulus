@@ -8,6 +8,15 @@ RetryPassWorkflow:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
+      Retry:
+        - &LambdaServiceExceptionRetry
+          ErrorEquals:
+          - Lambda.ServiceException
+          - Lambda.AWSLambdaException
+          - Lambda.SdkClientException
+          IntervalSeconds: 2
+          MaxAttempts: 6
+          BackoffRate: 2
       Next: HelloWorld
     HelloWorld:
       CumulusConfig:
@@ -19,10 +28,10 @@ RetryPassWorkflow:
       Resource: ${HelloWorldLambdaFunction.Arn}
       Next: StopStatus
       Retry:
-          - ErrorEquals:
-              - States.ALL
-            IntervalSeconds: 2
-            MaxAttempts: 3
+        - ErrorEquals:
+            - States.ALL
+          IntervalSeconds: 2
+          MaxAttempts: 3
     StopStatus:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
@@ -34,6 +43,8 @@ RetryPassWorkflow:
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -53,12 +64,16 @@ HelloWorldFailWorkflow:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Next: HelloWorld
     HelloWorld:
       CumulusConfig:
         fail: true
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Next: StopStatus
     StopStatus:
       Type: Task
@@ -71,6 +86,8 @@ HelloWorldFailWorkflow:
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -90,6 +107,8 @@ RetryFailWorkflow:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Next: HelloWorld
     HelloWorld:
       CumulusConfig:
@@ -98,11 +117,11 @@ RetryFailWorkflow:
       Resource: ${HelloWorldLambdaFunction.Arn}
       Next: StopStatus
       Retry:
-          - ErrorEquals:
-              - States.ALL
-            IntervalSeconds: 2
-            BackoffRate: 2
-            MaxAttempts: 3
+        - ErrorEquals:
+            - States.ALL
+          IntervalSeconds: 2
+          BackoffRate: 2
+          MaxAttempts: 3
     StopStatus:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
@@ -114,6 +133,8 @@ RetryFailWorkflow:
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
