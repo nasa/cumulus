@@ -151,9 +151,9 @@ function describeExecutionStatus(executionArn) {
  *   Function executions related to a PDR
  */
 async function checkPdrStatuses(event) {
-  const runningExecutionArns = event.input.running || [];
+  const executionArns = event.input.queued || [];
 
-  return Promise.all(runningExecutionArns.map(describeExecutionStatus))
+  return Promise.all(executionArns.map(describeExecutionStatus))
     .then(groupExecutionsByStatus)
     .then((groupedExecutions) => {
       const counter = getCounterFromEvent(event) + 1;
