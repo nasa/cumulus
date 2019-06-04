@@ -364,6 +364,10 @@ module.exports.rule = {
       type: 'object',
       additionalProperties: true
     },
+    queueName: {
+      title: 'Optional queue used to schedule executions for this rule',
+      type: 'string'
+    },
     rule: {
       title: 'Ingest Rule',
       type: 'object',
