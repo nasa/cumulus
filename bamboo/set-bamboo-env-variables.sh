@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-echo "Setting env variables"
-
 # Bamboo envs are prefixed with bamboo_SECRET to avoid being printed
 declare -a param_list=(
   "bamboo_SECRET_AWS_ACCESS_KEY_ID"
@@ -127,5 +125,5 @@ fi
 if [[ $BRANCH == CUMULUS-1158 || $VERSION_FLAG || COMMIT_MESSAGE =~ '[run-redeploy-tests]' ]]; then
   export RUN_REDEPLOYMENT=true
   echo "Setting RUN_REDEPLOYMENT to true"
-  echo export RUN_REDPLOUMENT=true >> .bamboo_env_vars
+  echo export RUN_REDPLOUMENT="true" >> .bamboo_env_vars
 fi
