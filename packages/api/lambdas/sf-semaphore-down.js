@@ -16,7 +16,7 @@ const {
  * @param {Object} event - A Cloudwatch event object
  * @returns {boolean} - True if event is a Step Function state update.
  */
-const isSfExecutionMessage = (event) => event.source === 'aws.states';
+const isSfExecutionEvent = (event) => event.source === 'aws.states';
 
 /**
  * Determine if workflow is in a terminal state.
@@ -76,7 +76,7 @@ async function decrementQueueSemaphore(queueName) {
  * @returns {Promise}
  */
 async function handleSemaphoreDecrementTask(event) {
-  if (!isSfExecutionMessage(event)) {
+  if (!isSfExecutionEvent(event)) {
     return;
   }
 
