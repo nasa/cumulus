@@ -139,20 +139,6 @@ async function getExecutionStatus(executionArn) {
   return (await StepFunctions.describeExecution({ executionArn })).status;
 }
 
-async function waitForExecutionExists(executionArn, interval, timeout = 10) {
-  // eslint made me do it
-  interval *= 1000;
-  timeout *= 1000;
-
-  await pWaitFor(
-    async () => StepFunctions.executionExists(executionArn),
-    {
-      interval,
-      timeout
-    }
-  );
-}
-
 /**
  * Wait for a given execution to complete, then return the status
  *
@@ -826,7 +812,6 @@ module.exports = {
   getWorkflowTemplate,
   waitForCompletedExecution,
   waitForTestExecutionStart,
-  waitForExecutionExists,
   ActivityStep: sfnStep.ActivityStep,
   LambdaStep: sfnStep.LambdaStep,
   /**

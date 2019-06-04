@@ -23,8 +23,7 @@ const StepFunctions = require('@cumulus/common/StepFunctions');
 const {
   api: apiTestUtils,
   buildAndExecuteWorkflow,
-  LambdaStep,
-  waitForExecutionExists
+  LambdaStep
 } = require('@cumulus/integration-tests');
 
 const {
