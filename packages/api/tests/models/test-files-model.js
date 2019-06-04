@@ -3,6 +3,7 @@
 const test = require('ava');
 const drop = require('lodash.drop');
 const clone = require('lodash.clonedeep');
+const omit = require('lodash.omit');
 const { randomString } = require('@cumulus/common/test-utils');
 const { parseS3Uri } = require('@cumulus/common/aws');
 
@@ -155,7 +156,7 @@ test.serial('getGranuleForFile returns granule of the file', async (t) => {
   // granule can be retrieved for each file
   const validateCollIds = async (file) => {
     const associatedGranule = await fileModel.getGranuleForFile(file.bucket, file.key);
-    t.deepEqual(associatedGranule, granule);
+    t.deepEqual(omit(associatedGranule, ['updatedAt']), omit(granule, ['updatedAt']));
   };
 
   await Promise.all(granule.files.map(validateCollIds));
