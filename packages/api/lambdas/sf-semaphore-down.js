@@ -18,8 +18,11 @@ const {
  * @param {Object} message - A workflow message object
  * @returns {boolean} - True if workflow is in terminal state.
  */
-const isTerminalMessage = (message) =>
-  message.meta.status === 'failed' || message.meta.status === 'completed';
+const isTerminalMessage = (status) =>
+  status === 'FAILED'
+  || status === 'COMPLETED'
+  || status === 'TIMED_OUT'
+  || status === 'ABORTED';
 
 /**
  * Determine if workflow needs a semaphore decrement.
@@ -33,10 +36,9 @@ const isTerminalMessage = (message) =>
  * @param {Object} message - A workflow message object
  * @returns {boolean} True if workflow semaphore should be decremented.
  */
-const isDecrementMessage = (message) =>
+const isDecrementMessage = (message, status) =>
   hasQueueAndExecutionLimit(message)
-  && has(message, 'meta.status')
-  && isTerminalMessage(message);
+  && isTerminalMessage(status);
 
 /**
  * Decrement semaphore value for executions started from a queue
@@ -68,13 +70,16 @@ async function decrementQueueSemaphore(queueName) {
  * @returns {Array<Promise>} - Array of promises for semaphore decrement operations
  */
 function getSemaphoreDecrementTasks(event) {
-  return get(event, 'Records', [])
-    // Skip if this record is not from SNS or if the SNS message is empty
-    .filter((record) => has(record, 'Sns.Message') && !isNil(record.Sns.Message))
-    .map((record) => JSON.parse(record.Sns.Message))
-    .filter((message) => isDecrementMessage(message))
-    .map((message) => getQueueName(message))
-    .map((queueName) => decrementQueueSemaphore(queueName));
+  const status = get(event, 'detail.status');
+  const output = get(event, 'detail.output', '{}');
+  const message = JSON.parse(output);
+
+  if (!isDecrementMessage(message, status)) {
+    return Promise.resolve();
+  }
+
+  const queueName = getQueueName(message);
+  return decrementQueueSemaphore(queueName);
 }
 
 /**
@@ -84,9 +89,7 @@ function getSemaphoreDecrementTasks(event) {
  * @returns {Promise}
  */
 async function handler(event) {
-  return Promise.all(
-    getSemaphoreDecrementTasks(event)
-  );
+  return getSemaphoreDecrementTasks(event);
 }
 
 module.exports = {
