@@ -1,6 +1,4 @@
 const get = require('lodash.get');
-const has = require('lodash.has');
-const { isNil } = require('@cumulus/common/util');
 const {
   aws,
   log,
@@ -11,6 +9,14 @@ const {
   getQueueName,
   hasQueueAndExecutionLimit
 } = require('../lib/message');
+
+/**
+ * Determine if Cloudwatch event is a Step Function state update.
+ *
+ * @param {Object} event - A Cloudwatch event object
+ * @returns {boolean} - True if event is a Step Function state update.
+ */
+const isSfExecutionMessage = (event) => event.source === 'aws.states';
 
 /**
  * Determine if workflow is in a terminal state.
@@ -31,7 +37,7 @@ const isTerminalMessage = (status) =>
  *   - Message has no specified queue name
  *   - Queue name for message has no maximum execution limit
  *   - Message has no workflow status
- *   - Workflow is not in a terminal state (failed/completed)
+ *   - Workflow is not in a terminal state
  *
  * @param {Object} message - A workflow message object
  * @returns {boolean} True if workflow semaphore should be decremented.
@@ -64,18 +70,22 @@ async function decrementQueueSemaphore(queueName) {
 }
 
 /**
- * Filter workflow messages from SNS to prepare array of semaphore decrement tasks.
+ * Handle Cloudwatch event and decrement semaphore, if necessary.
  *
- * @param {Object} event - incoming message from SNS
- * @returns {Array<Promise>} - Array of promises for semaphore decrement operations
+ * @param {Object} event - incoming event from Cloudwatch
+ * @returns {Promise}
  */
-function getSemaphoreDecrementTasks(event) {
+async function handleSemaphoreDecrementTask(event) {
+  if (!isSfExecutionMessage(event)) {
+    return;
+  }
+
   const status = get(event, 'detail.status');
   const output = get(event, 'detail.output', '{}');
   const message = JSON.parse(output);
 
   if (!isDecrementMessage(message, status)) {
-    return Promise.resolve();
+    return;
   }
 
   const queueName = getQueueName(message);
@@ -85,14 +95,14 @@ function getSemaphoreDecrementTasks(event) {
 /**
  * Lambda function handler for sfSemaphoreDown
  *
- * @param {Object} event - incoming message from SNS
+ * @param {Object} event - incoming message from Cloudwatch
  * @returns {Promise}
  */
 async function handler(event) {
-  return getSemaphoreDecrementTasks(event);
+  return handleSemaphoreDecrementTask(event);
 }
 
 module.exports = {
-  getSemaphoreDecrementTasks,
+  handleSemaphoreDecrementTask,
   handler
 };
