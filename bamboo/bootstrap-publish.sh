@@ -10,6 +10,6 @@ if [[ $PUBLISH_FLAG == true ]]; then
   npm run docs-build
   npm run bootstrap-no-build
   set +e; apt-get update; set -e;
-  apt-get install jq
+  apt-get install jq rsync
   echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
 fi
