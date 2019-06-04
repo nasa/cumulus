@@ -1,6 +1,7 @@
 # Issuing PR From Forked Repos
 
 ## Fork the Repo
+
 * Fork the Cumulus repo
 * Create a new branch from the branch you'd like to contribute to
 * If an issue does't already exist, submit one (see above)
@@ -31,7 +32,9 @@ PRs from forked repos cannot directly merged to master. Cumulus reviews must fol
 
 1. Create a new branch:
 
-     $ git checkout -b from-<name-of-the-branch> master
+```bash
+  $ git checkout -b from-<name-of-the-branch> master
+```
 
 2. Push the new branch to GitHub
 
@@ -41,4 +44,6 @@ PRs from forked repos cannot directly merged to master. Cumulus reviews must fol
 
 4. After code review and approval, merge the forked PR to the new branch.
 
-5. If the continuous integration tests pass, merge the new branch to master
+5. Create a PR for the new branch to master.
+
+6. If the continuous integration tests pass, merge the new branch to master

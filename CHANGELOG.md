@@ -7,12 +7,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### PLEASE NOTE
+**CUMULUS-799** added some additional IAM permissions to support reading CloudWatch and API Gateway, so **you will have to redeploy your IAM stack.**
+
+## Added
+- **CUMULUS-799**
+  - Adds new BackendApi endpoint `distributionMetrics` that returns a summary of successful s3 accesses as well as a summary of distribution errors -- including s3 access errors, 4XX and 5XX errors.
+
+- **CUMULUS-1245 CUMULUS-795**
+  - Added additional `ems` configuration parameters for sending the ingest reports to EMS
+  - Added functionality to send daily ingest reports to EMS
+
 ## [v1.13.0] - 2019-5-20
 
 ### PLEASE NOTE
 
-**CUMULUS-802** added some additional IAM permissions to support ECS autoscaling and changes were needed to run all lambdas in the VPC, so **you will have to redeploy your IAM stack.**
-
+**CUMULUS-802** added some additional IAM permissions to support ECS autoscaling, so **you will have to redeploy your IAM stack.**
 As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS-1310**, **you must delete your existing stacks (except IAM) before deploying this version of Cumulus.**
 If running Cumulus within a VPC and extended downtime is acceptable, we recommend doing this at the end of the day to allow AWS backend resources and network interfaces to be cleaned up overnight.
 
@@ -75,6 +85,10 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
     - Added `ancillary` and `linkage` type support to file objects.
 
 ## Added
+
+- **CUMULUS-799**
+  - Added an S3 Access Metrics package which will take S3 Server Access Logs and
+    write access metrics to CloudWatch
 
 - **CUMULUS-1242** - Added `sqs2sfThrottle` lambda. The lambda reads SQS messages for queued executions and uses semaphores to only start new executions if the maximum number of executions defined for the priority key (`cumulus_meta.priorityKey`) has not been reached. Any SQS messages that are read but not used to start executions remain in the queue.
 

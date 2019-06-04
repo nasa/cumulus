@@ -6,7 +6,6 @@ default:
     stackName: '{{prefix}}'
     bucket: '{{buckets.internal.name}}'
     DISTRIBUTION_ENDPOINT: '{{api_distribution_url}}'
-    ems_provider: CUMULUS
     esHost: '{{esHost}}'
     streamName: '{{prefix}}-testStream'
     cnmResponseStream: '{{prefix}}-cnmResponseStream'
@@ -65,7 +64,6 @@ default:
   prefixNoDash: TestCumulusIntegration
   useNgapPermissionBoundary: true
   shared_data_bucket: cumulus-data-shared
-  api_distribution_url: https://example.com/
   api_lambda_memory: 756
   iam:
     params:
@@ -170,6 +168,9 @@ default:
     clientId: 'cumulus-core-{{prefix}}'
     password: '{{CMR_PASSWORD}}'
 
+  ems:
+    provider: CUMULUS
+
   stepFunctions: !!files [
     'workflows/helloworld.yml',
     'workflows/cnm.yml',
@@ -199,6 +200,16 @@ default:
               - Arn
           protocol: lambda
 
+  sqs:
+    startSFLowPriority:
+      visibilityTimeout: 60
+      retry: 30
+      maxExecutions: 5
+      consumer:
+        - lambda: sqs2sfThrottle
+          schedule: rate(1 minute)
+          messageLimit: '{{sqs_consumer_rate}}'
+          state: ENABLED
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
@@ -235,6 +246,13 @@ cumulus-from-npm:
 cumulus-from-source:
   prefix: test-src-integration # used by the cumulus repo
   prefixNoDash: TestSourceIntegration
+  ems:
+    provider: CUMULUS
+    host: fs1.ems.eosdis.nasa.gov
+    path: tmpNat
+    username: cumulus
+    dataSource: UAT
+    submitReport: true
 
 cumulus-from-pr:
   prefix: test-pr-integration # used by the PR
@@ -378,6 +396,13 @@ kk:
     public:
       name: '{{prefix}}-public'
       type: public
+  ecs:
+    ssh: true
+    keyPairName: kakelly2-cumulus-sandbox
+
+kk-int-test:
+  prefix: kk-int-test
+  prefixNoDash: KkIntTest
 
 mth:
   prefix: mth
@@ -426,6 +451,16 @@ jl:
     shared-2:
       name: rvl-internal
       type: shared
+  ecs:
+    ssh: true
+    keyPairName: jl
+  ems:
+    provider: CUMULUS
+    host: fs1.ems.eosdis.nasa.gov
+    path: tmpNat
+    username: cumulus
+    dataSource: UAT
+    submitReport: true
 
 mhs2:
   prefix: mhs2
@@ -551,6 +586,10 @@ jc:
 mhs:
   prefix: mhs
   prefixNoDash: mhs
+  ecs:
+    ssh: true
+    keyPairName: mhs
+  api_distribution_url:
 
 mhs3:
   prefix: mhs3
@@ -575,7 +614,10 @@ mhs3:
       name: cumulus-data-shared
       type: shared
   system_bucket: mhs3-internal
-  api_distribution_url: '{{API_DISTRIBUTION_URL}}'
+  api_distribution_url:
+  ecs:
+    ssh: true
+    keyPairName: mhs
 
 jk:
   prefix: jk
@@ -589,9 +631,16 @@ mboyd-test:
   prefix: mboyd-test
   prefixNoDash: mboydTest
 
+  ecs:
+    ssh: true
+    keyPairName: mboyd
+
 mboyd-int:
   prefix: mboyd-int
   prefixNoDash: mboydInt
+  ecs:
+    ssh: true
+    keyPairName: mboyd
 
 pq:
   prefix: pq

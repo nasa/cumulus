@@ -38,6 +38,7 @@ function setConfig(config) {
   updatedConfig.test_configs.buckets = updatedConfig.buckets;
   updatedConfig.test_configs.deployment = updatedConfig.deployment;
   updatedConfig.test_configs.cmr = updatedConfig.cmr;
+  updatedConfig.test_configs.ems = updatedConfig.ems;
 
   return updatedConfig.test_configs;
 }

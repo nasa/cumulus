@@ -135,7 +135,7 @@ class Granule extends Manager {
   }
 
   /**
-   * Removes a give granule from CMR
+   * Removes a given granule from CMR
    *
    * @param {string} granuleId - the granule ID
    * @param {string} collectionId - the collection ID
@@ -317,6 +317,8 @@ class Granule extends Manager {
           files: granule.files
         });
 
+        const temporalInfo = await cmrjs.getGranuleTemporalInfo(granule);
+
         const doc = {
           granuleId: granule.granuleId,
           pdrName: get(payload, 'meta.pdr.name'),
@@ -333,24 +335,13 @@ class Granule extends Manager {
           timeToPreprocess: get(payload, 'meta.sync_granule_duration', 0) / 1000,
           timeToArchive: get(payload, 'meta.post_to_cmr_duration', 0) / 1000,
           processingStartDateTime: extractDate(payload, 'meta.sync_granule_end_time'),
-          processingEndDateTime: extractDate(payload, 'meta.post_to_cmr_start_time')
+          processingEndDateTime: extractDate(payload, 'meta.post_to_cmr_start_time'),
+          ...temporalInfo
         };
 
         doc.published = get(granule, 'published', false);
         // Duration is also used as timeToXfer for the EMS report
         doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-
-        if (granule.cmrLink) {
-          const metadata = await cmrjs.getMetadata(granule.cmrLink);
-          doc.beginningDateTime = metadata.time_start;
-          doc.endingDateTime = metadata.time_end;
-          doc.lastUpdateDateTime = metadata.updated;
-
-          const fullMetadata = await cmrjs.getFullMetadata(granule.cmrLink);
-          if (fullMetadata && fullMetadata.DataGranule) {
-            doc.productionDateTime = fullMetadata.DataGranule.ProductionDateTime;
-          }
-        }
 
         return this.create(doc);
       }
@@ -372,11 +363,16 @@ class Granule extends Manager {
     const params = {
       TableName: this.tableName,
       IndexName: 'collectionId-granuleId-index',
-      ExpressionAttributeNames:
-        { '#collectionId': 'collectionId', '#granuleId': 'granuleId', '#files': 'files' },
+      ExpressionAttributeNames: {
+        '#collectionId': 'collectionId',
+        '#granuleId': 'granuleId',
+        '#files': 'files',
+        '#published': 'published',
+        '#createdAt': 'createdAt'
+      },
       ExpressionAttributeValues: { ':collectionId': collectionId },
       KeyConditionExpression: '#collectionId = :collectionId',
-      ProjectionExpression: '#granuleId, #collectionId, #files'
+      ProjectionExpression: '#granuleId, #collectionId, #files, #published, #createdAt'
     };
 
     // add status filter
@@ -387,6 +383,23 @@ class Granule extends Manager {
     }
 
     return new GranuleSearchQueue(params, 'query');
+  }
+
+  granuleAttributeScan() {
+    const params = {
+      TableName: this.tableName,
+      ExpressionAttributeNames:
+        {
+          '#granuleId': 'granuleId',
+          '#collectionId': 'collectionId',
+          '#beginningDateTime': 'beginningDateTime',
+          '#endingDateTime': 'endingDateTime',
+          '#createdAt': 'createdAt'
+        },
+      ProjectionExpression: '#granuleId, #collectionId, #createdAt, #beginningDateTime, #endingDateTime'
+    };
+
+    return new GranuleSearchQueue(params);
   }
 
   /**
