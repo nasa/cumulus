@@ -12,4 +12,6 @@ if [[ $PUBLISH_FLAG == true ]]; then
   set +e; apt-get update; set -e;
   apt-get install -y jq rsync
   echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+
+  git config --global user.name "Bamboo CI"
 fi
