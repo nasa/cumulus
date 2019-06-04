@@ -11,8 +11,7 @@ if [[ $USE_NPM_PACKAGES == true ]]; then
   echo "***Deploying stack with NPM packages"
   (cd example && npm install)
 else
-  echo "***Deploying stack with bootstrapped packages"
-
+  echo "***Deploying stack with built packages"
   npm run bootstrap && npm run build
 fi
 
