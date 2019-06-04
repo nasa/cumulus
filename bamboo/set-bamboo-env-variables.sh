@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+echo "Setting env variables"
+
 # Bamboo envs are prefixed with bamboo_SECRET to avoid being printed
 declare -a param_list=(
   "bamboo_SECRET_AWS_ACCESS_KEY_ID"
