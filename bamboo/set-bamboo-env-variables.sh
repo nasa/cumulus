@@ -120,6 +120,7 @@ if [[ -z $COMMIT_MESSAGE ]]; then
   echo export COMMIT_MESSAGE=\"$COMMIT_MESSAGE\" >> .bamboo_env_vars
 fi
 
+echo "Branch is $BRANCH"
 ## Branch if branch is master, or a version tag is set, or the commit
 ## message explicitly calls for running redeploy tests
 if [[ $BRANCH == CUMULUS-1158 || $VERSION_FLAG || COMMIT_MESSAGE =~ '[run-redeploy-tests]' ]]; then
