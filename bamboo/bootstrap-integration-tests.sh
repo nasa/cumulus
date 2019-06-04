@@ -8,9 +8,12 @@ npm install
 . ./bamboo/set-bamboo-env-variables.sh
 
 if [[ $USE_NPM_PACKAGES == true ]]; then
+  echo "***Deploying stack with NPM packages"
   (cd example && npm install)
 else
-  npm run bootstrap
+  echo "***Deploying stack with bootstrapped packages"
+
+  npm run bootstrap && npm run build
 fi
 
 echo "Locking stack for deployment $DEPLOYMENT"

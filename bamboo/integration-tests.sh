@@ -5,9 +5,10 @@ set -e
 . ./bamboo/set-bamboo-env-variables.sh
 
 if [[ $USE_NPM_PACKAGES == true ]]; then
-  echo "Running package install"
+  echo "***Running integration tests from NPM packages"
   (cd example && npm install)
 else
+  echo "***Running integration tests from bootstrapped packages"
   npm install && npm run bootstrap
 fi
 cd example && npm test
