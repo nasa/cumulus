@@ -21,6 +21,8 @@ async function getMessageFromTemplate(templateUri) {
   return JSON.parse(data.Body);
 }
 
+exports.getMessageFromTemplate = getMessageFromTemplate;
+
 /**
  * Enqueue a PDR to be parsed
  *
