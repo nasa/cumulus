@@ -3,12 +3,19 @@
 const test = require('ava');
 const nock = require('nock');
 const some = require('lodash.some');
-const sinon = require('sinon');
-const got = require('got');
 
 const CMR = require('../CMR');
 
-test('CMR.searchCollection handles paging correctly.', async (t) => {
+test.beforeEach(() => {
+  nock.disableNetConnect();
+});
+
+test.afterEach.always(() => {
+  nock.cleanAll();
+  nock.enableNetConnect();
+});
+
+test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
   const headers = { 'cmr-hits': 6 };
   const body1 = '{"feed":{"updated":"sometime","id":"someurl","title":"fake Cmr Results","entry":[{"cmrEntry1":"data1"}, {"cmrEntry2":"data2"}]}}';
   const body2 = '{"feed":{"updated":"anothertime","id":"another url","title":"more Results","entry":[{"cmrEntry3":"data3"}, {"cmrEntry4":"data4"}]}}';
@@ -74,13 +81,7 @@ test('getHeaders returns correct Content-type for xml metadata by default', (t) 
   t.is(headers.Accept, undefined);
 });
 
-test('updateToken retries when fails', async (t) => {
-  const postSpy = sinon.spy(() => {
-    throw new Error('error');
-  });
-
-  sinon.stub(got, 'post').callsFake(postSpy);
-
+test.serial('updateToken retries when fails', async (t) => {
   const cmr = new CMR({
     clientId: 'fakeClientId',
     username: 'fakeUsername',
@@ -88,10 +89,13 @@ test('updateToken retries when fails', async (t) => {
     provider: 'fakeProvider'
   });
 
-  await cmr.getToken()
-    .catch(() => { }); // eslint-disable-line lodash/prefer-noop
+  nock('https://api-test.echo.nasa.gov')
+    .post('/echo-rest/tokens/')
+    .reply(404);
 
-  t.is(postSpy.callCount, 4);
+  nock('https://api-test.echo.nasa.gov')
+    .post('/echo-rest/tokens/')
+    .reply(200, { token: { id: 'asdf' } });
 
-  sinon.restore();
+  t.is(await cmr.getToken(), 'asdf');
 });
