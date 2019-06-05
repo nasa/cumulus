@@ -3,7 +3,7 @@ set -e
 . ./bamboo/set-bamboo-env-variables.sh
 
 if [[ ! $PUBLISH_FLAG == true ]]; then
-  echo "******Skipping publish step as PUBLISH_FLAG is not set"
+  >&2 echo "******Skipping publish step as PUBLISH_FLAG is not set"
   exit 0
 fi
 
