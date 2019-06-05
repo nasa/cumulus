@@ -2,7 +2,11 @@
 set -e
 . ./bamboo/set-bamboo-env-variables.sh
 
-if [[ $PUBLISH_FLAG == true ]]; then
+if [[ ! $PUBLISH_FLAG == true ]]; then
+  echo "******Skipping publish step as PUBLISH_FLAG is not set"
+  exit 0
+fi
+
 git clone --depth=50 --branch=gh-pages "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/nasa/cumulus.git" gh-pages
 (
   set -e
@@ -13,4 +17,3 @@ git clone --depth=50 --branch=gh-pages "https://${GITHUB_USER}:${GITHUB_TOKEN}@g
   git commit -m "Automated build in Bamboo CI"
   git push
 )
-fi
