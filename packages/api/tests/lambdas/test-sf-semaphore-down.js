@@ -61,6 +61,9 @@ const testTerminalEventMessage = async (t, status) => {
   t.is(response.semvalue, 0);
 };
 
+const assertInvalidDecrementEvent = (t, output) =>
+  t.is(output, 'Not a valid decrement event, no operation performed');
+
 let manager;
 
 test.before(async () => {
@@ -83,18 +86,9 @@ test.beforeEach(async (t) => {
 test.after.always(() => manager.deleteTable());
 
 test('sfSemaphoreDown lambda does nothing for an event with the wrong source', async (t) => {
-  const { client, semaphore } = t.context;
   const queueName = randomId('low');
 
-  await client.put({
-    TableName: process.env.SemaphoresTable,
-    Item: {
-      key: queueName,
-      semvalue: 1
-    }
-  }).promise();
-
-  await handleSemaphoreDecrementTask(
+  const output = await handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
       status: 'COMPLETED',
       queueName,
@@ -102,98 +96,53 @@ test('sfSemaphoreDown lambda does nothing for an event with the wrong source', a
     })
   );
 
-  const response = await semaphore.get(queueName);
-  t.is(response.semvalue, 1);
+  assertInvalidDecrementEvent(t, output);
 });
 
 test('sfSemaphoreDown lambda does nothing for a workflow message with no queue name', async (t) => {
-  const { client, semaphore } = t.context;
-  const queueName = randomId('low');
-
-  await client.put({
-    TableName: process.env.SemaphoresTable,
-    Item: {
-      key: queueName,
-      semvalue: 1
-    }
-  }).promise();
-
-  await handleSemaphoreDecrementTask(
+  const output = await handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
       status: 'COMPLETED'
     })
   );
 
-  const response = await semaphore.get(queueName);
-  t.is(response.semvalue, 1);
+  assertInvalidDecrementEvent(t, output);
 });
 
 test('sfSemaphoreDown lambda does nothing for an event with no status', async (t) => {
-  const { client, semaphore } = t.context;
   const queueName = randomId('low');
 
-  await client.put({
-    TableName: process.env.SemaphoresTable,
-    Item: {
-      key: queueName,
-      semvalue: 1
-    }
-  }).promise();
-
-  await handleSemaphoreDecrementTask(
+  const output = await handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
       queueName
     })
   );
 
-  const response = await semaphore.get(queueName);
-  t.is(response.semvalue, 1);
+  assertInvalidDecrementEvent(t, output);
 });
 
 test('sfSemaphoreDown lambda does nothing for an event with a RUNNING status', async (t) => {
-  const { client, semaphore } = t.context;
   const queueName = randomId('low');
 
-  await client.put({
-    TableName: process.env.SemaphoresTable,
-    Item: {
-      key: queueName,
-      semvalue: 1
-    }
-  }).promise();
-
-  await handleSemaphoreDecrementTask(
+  const output = await handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
       status: 'RUNNING',
       queueName
     })
   );
 
-  const response = await semaphore.get(queueName);
-  t.is(response.semvalue, 1);
+  assertInvalidDecrementEvent(t, output);
 });
 
 test('sfSemaphoreDown lambda does nothing for an event with no message', async (t) => {
-  const { client, semaphore } = t.context;
-  const queueName = randomId('low');
-
-  await client.put({
-    TableName: process.env.SemaphoresTable,
-    Item: {
-      key: queueName,
-      semvalue: 1
-    }
-  }).promise();
-
-  await t.throws(handleSemaphoreDecrementTask({
+  const output = await handleSemaphoreDecrementTask({
     source: sfEventSource,
     detail: {
       status: 'COMPLETED'
     }
-  }));
+  });
 
-  const response = await semaphore.get(queueName);
-  t.is(response.semvalue, 1);
+  assertInvalidDecrementEvent(t, output);
 });
 
 test('sfSemaphoreDown lambda throws error when attempting to decrement empty semaphore', async (t) => {

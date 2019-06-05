@@ -83,7 +83,6 @@ async function decrementQueueSemaphore(queueName) {
  * Handle Cloudwatch event and decrement semaphore, if necessary.
  *
  * @param {Object} event - incoming event from Cloudwatch
- * @returns {Promise}
  */
 async function handleSemaphoreDecrementTask(event) {
   if (isDecrementEvent(event)) {
@@ -91,6 +90,7 @@ async function handleSemaphoreDecrementTask(event) {
     const queueName = getQueueName(message);
     return decrementQueueSemaphore(queueName);
   }
+  return 'Not a valid decrement event, no operation performed';
 }
 
 /**
