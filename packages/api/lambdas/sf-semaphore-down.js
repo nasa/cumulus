@@ -1,9 +1,12 @@
+'use strict';
+
 const get = require('lodash.get');
 const {
   aws,
   log,
   Semaphore
 } = require('@cumulus/common');
+const { isOneOf } = require('@cumulus/common/util');
 
 const {
   getQueueName,
@@ -24,11 +27,12 @@ const isSfExecutionEvent = (event) => event.source === 'aws.states';
  * @param {Object} status - A Step Function execution status
  * @returns {boolean} - True if workflow is in terminal state.
  */
-const isTerminalMessage = (status) =>
-  status === 'FAILED'
-  || status === 'COMPLETED'
-  || status === 'TIMED_OUT'
-  || status === 'ABORTED';
+const isTerminalStatus = isOneOf([
+  'ABORTED',
+  'COMPLETED',
+  'FAILED',
+  'TIMED_OUT'
+]);
 
 /**
  * Determine if workflow needs a semaphore decrement.
@@ -45,7 +49,7 @@ const isTerminalMessage = (status) =>
  */
 const isDecrementMessage = (message, status) =>
   hasQueueAndExecutionLimit(message)
-  && isTerminalMessage(status);
+  && isTerminalStatus(status);
 
 /**
  * Decrement semaphore value for executions started from a queue
