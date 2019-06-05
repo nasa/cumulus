@@ -291,7 +291,7 @@ test.serial('create, update and delete an execution in dynamodb and es', async (
   t.is(indexedRecord.detail, 'Record not found');
 });
 
-test.serial.only('The db-indexer does not throw an exception when execution fails', async (t) => {
+test.serial('The db-indexer does not throw an exception when execution fails', async (t) => {
   const esHostBefore = process.env.LOCAL_ES_HOST;
 
   try {
