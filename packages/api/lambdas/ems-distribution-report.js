@@ -132,6 +132,26 @@ class DistributionEvent {
   }
 
   /**
+   * get file type
+   *
+   * @param {string} bucket - s3 bucket of the file
+   * @param {string} key - s3 key of the file
+   * @param {Object} granule - granule object of the file
+   * @returns {string} EMS file type
+   */
+  getFileType(bucket, key, granule) {
+    // EMS dpFiletype field possible values: PH, QA, METADATA, BROWSE, SCIENCE, OTHER, DOC
+    // Cumulus granule file.type
+    const fileTypes = granule.files
+      .filter((file) => (file.bucket === bucket && file.key === key))
+      .map((file) => {
+        const fileType = file.type || 'OTHER';
+        return ((fileType === 'data') ? 'SCIENCE' : fileType.toUpperCase());
+      });
+    return fileTypes[0] || 'OTHER';
+  }
+
+  /**
    * Get the product name, version, and granuleId
    *
    * @returns {Array<string>} product name, version and granuleId
@@ -141,8 +161,10 @@ class DistributionEvent {
     return fileModel.getGranuleForFile(this.bucket, this.key)
       .then((granule) =>
         ((granule)
-          ? Object.values(deconstructCollectionId(granule.collectionId)).concat([granule.granuleId])
-          : new Array(3).fill('')));
+          ? Object.values(deconstructCollectionId(granule.collectionId))
+            .concat([granule.granuleId])
+            .concat(this.getFileType(this.bucket, this.key, granule))
+          : new Array(4).fill('')));
   }
 
   /**
@@ -154,7 +176,7 @@ class DistributionEvent {
     const upperCasedMonth = this.time.format('MMM').toUpperCase();
 
     return [
-      this.time.format(`DD-[${upperCasedMonth}]-YY hh.mm.ss.SSSSSS A`),
+      this.time.format(`DD-[${upperCasedMonth}]-YY hh:mm:ss A`),
       this.username,
       this.remoteIP,
       `s3://${this.bucket}/${this.key}`,

@@ -29,7 +29,7 @@ test.before(async () => {
   const bucket = 'my-dist-bucket';
   const key = 'my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf';
   const granule = fakeGranuleFactory();
-  granule.files = [fakeFileFactory({ bucket, key })];
+  granule.files = [fakeFileFactory({ bucket, key, type: 'data' })];
   granuleId = granule.granuleId;
 
   await granuleModel.create(granule);
@@ -91,9 +91,9 @@ test.serial('emsDistributionReport writes a correct report out to S3 when no pre
   t.deepEqual(
     logLines,
     [
-      `01-JUN-81 01.01.13.000000 AM|&|cbrown|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|fakeCollection|&|v1|&|${granuleId}`,
-      `01-JUN-81 01.02.13.000000 AM|&|amalkin|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|F|&|fakeCollection|&|v1|&|${granuleId}`,
-      `01-JUN-81 02.03.13.000000 PM|&|tjefferson|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|fakeCollection|&|v1|&|${granuleId}`
+      `01-JUN-81 01:01:13 AM|&|cbrown|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|fakeCollection|&|v1|&|${granuleId}|&|SCIENCE`,
+      `01-JUN-81 01:02:13 AM|&|amalkin|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|F|&|fakeCollection|&|v1|&|${granuleId}|&|SCIENCE`,
+      `01-JUN-81 02:03:13 PM|&|tjefferson|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|fakeCollection|&|v1|&|${granuleId}|&|SCIENCE`
     ]
   );
 });
@@ -128,9 +128,9 @@ test.serial('emsDistributionReport writes a correct report out to S3 when one re
   t.deepEqual(
     logLines,
     [
-      `01-JUN-81 01.01.13.000000 AM|&|cbrown|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|fakeCollection|&|v1|&|${granuleId}`,
-      `01-JUN-81 01.02.13.000000 AM|&|amalkin|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|F|&|fakeCollection|&|v1|&|${granuleId}`,
-      `01-JUN-81 02.03.13.000000 PM|&|tjefferson|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|fakeCollection|&|v1|&|${granuleId}`
+      `01-JUN-81 01:01:13 AM|&|cbrown|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|fakeCollection|&|v1|&|${granuleId}|&|SCIENCE`,
+      `01-JUN-81 01:02:13 AM|&|amalkin|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|F|&|fakeCollection|&|v1|&|${granuleId}|&|SCIENCE`,
+      `01-JUN-81 02:03:13 PM|&|tjefferson|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|fakeCollection|&|v1|&|${granuleId}|&|SCIENCE`
     ]
   );
 });
@@ -173,9 +173,9 @@ test.serial('emsDistributionReport writes a correct report out to S3 when two re
   t.deepEqual(
     logLines,
     [
-      `01-JUN-81 01.01.13.000000 AM|&|cbrown|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|fakeCollection|&|v1|&|${granuleId}`,
-      `01-JUN-81 01.02.13.000000 AM|&|amalkin|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|F|&|fakeCollection|&|v1|&|${granuleId}`,
-      `01-JUN-81 02.03.13.000000 PM|&|tjefferson|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|fakeCollection|&|v1|&|${granuleId}`
+      `01-JUN-81 01:01:13 AM|&|cbrown|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|fakeCollection|&|v1|&|${granuleId}|&|SCIENCE`,
+      `01-JUN-81 01:02:13 AM|&|amalkin|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|F|&|fakeCollection|&|v1|&|${granuleId}|&|SCIENCE`,
+      `01-JUN-81 02:03:13 PM|&|tjefferson|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|fakeCollection|&|v1|&|${granuleId}|&|SCIENCE`
     ]
   );
 });
