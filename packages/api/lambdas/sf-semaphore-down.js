@@ -34,27 +34,32 @@ const isTerminalStatus = isOneOf([
   'TIMED_OUT'
 ]);
 
+const getEventStatus = (event) => get(event, 'detail.status');
+
+const getEventMessage = (event) => JSON.parse(get(event, 'detail.output', {}));
+
 /**
  * Determine if workflow needs a semaphore decrement.
  *
  * Skip if:
- *   - Message has no specified queue name
- *   - Queue name for message has no maximum execution limit
- *   - Message has no workflow status
+ *   - Event has no specified queue name
+ *   - Queue name for event has no maximum execution limit
+ *   - Event has no workflow status
  *   - Workflow is not in a terminal state
  *
- * @param {Object} message - A workflow message object
- * @param {string} status - A Step Function execution status
- * @returns {boolean} True if workflow semaphore should be decremented.
+ * @param {Object} event - A workflow execution event
+ * @returns {boolean} True if workflow execution semaphore should be decremented
  */
-const isDecrementMessage = (message, status) =>
-  hasQueueAndExecutionLimit(message)
-  && isTerminalStatus(status);
+const isDecrementEvent = (event) =>
+  isSfExecutionEvent(event)
+  && hasQueueAndExecutionLimit(getEventMessage(event))
+  && isTerminalStatus(getEventStatus(event));
 
 /**
  * Decrement semaphore value for executions started from a queue
  *
- * @param {string} queueName - Queue name used as key for semaphore tracking running executions
+ * @param {string} queueName - Queue name used as key for semaphore tracking
+ *   running executions
  * @returns {Promise} A promise indicating function completion
  * @throws {Error} Error from semaphore.down() operation
  */
@@ -81,20 +86,11 @@ async function decrementQueueSemaphore(queueName) {
  * @returns {Promise}
  */
 async function handleSemaphoreDecrementTask(event) {
-  if (!isSfExecutionEvent(event)) {
-    return Promise.resolve();
+  if (isDecrementEvent(event)) {
+    const message = getEventMessage(event);
+    const queueName = getQueueName(message);
+    await decrementQueueSemaphore(queueName);
   }
-
-  const status = get(event, 'detail.status');
-  const output = get(event, 'detail.output', '{}');
-  const message = JSON.parse(output);
-
-  if (!isDecrementMessage(message, status)) {
-    return Promise.resolve();
-  }
-
-  const queueName = getQueueName(message);
-  return decrementQueueSemaphore(queueName);
 }
 
 /**
