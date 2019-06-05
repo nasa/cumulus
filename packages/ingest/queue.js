@@ -9,7 +9,8 @@ const {
 
 const {
   buildExecutionMessage,
-  getMessageFromTemplate
+  getMessageFromTemplate,
+  getQueueNameByUrl
 } = require('@cumulus/common/message');
 
 async function buildMessageFromTemplate({
@@ -20,11 +21,12 @@ async function buildMessageFromTemplate({
   templateUri
 }) {
   const messageTemplate = await getMessageFromTemplate(templateUri);
+  const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
   const message = buildExecutionMessage({
     provider,
     collection,
     parentExecutionArn,
-    queueUrl
+    queueName
   });
 
   return {
@@ -57,7 +59,7 @@ async function enqueueParsePdrMessage({
   parentExecutionArn
 }) {
   // const message = await getMessageFromTemplate(parsePdrMessageTemplateUri);
-  const message = buildMessageFromTemplate({
+  const message = await buildMessageFromTemplate({
     queueUrl,
     provider,
     collection,
@@ -104,7 +106,7 @@ async function enqueueGranuleIngestMessage({
 }) {
   // Build the message from a template
   // const message = await getMessageFromTemplate(granuleIngestMessageTemplateUri);
-  const message = buildMessageFromTemplate({
+  const message = await buildMessageFromTemplate({
     queueUrl,
     provider,
     collection,

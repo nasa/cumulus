@@ -15,6 +15,7 @@ const buildCumulusMeta = ({
     queueName
   };
   if (parentExecutionArn) cumulusMeta.parentExecutionArn = parentExecutionArn;
+  return cumulusMeta;
 };
 
 const getQueueNameByUrl = (message, queueUrl) =>
@@ -35,9 +36,8 @@ function buildExecutionMessage({
   provider,
   collection,
   parentExecutionArn,
-  queueUrl
+  queueName
 }) {
-  const queueName = getQueueNameByUrl(queueUrl);
   return {
     cumulus_meta: buildCumulusMeta({
       queueName,
