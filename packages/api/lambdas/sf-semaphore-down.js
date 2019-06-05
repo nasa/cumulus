@@ -36,7 +36,7 @@ const isTerminalStatus = isOneOf([
 
 const getEventStatus = (event) => get(event, 'detail.status');
 
-const getEventMessage = (event) => JSON.parse(get(event, 'detail.output', {}));
+const getEventMessage = (event) => JSON.parse(get(event, 'detail.output', '{}'));
 
 /**
  * Determine if workflow needs a semaphore decrement.
@@ -89,7 +89,7 @@ async function handleSemaphoreDecrementTask(event) {
   if (isDecrementEvent(event)) {
     const message = getEventMessage(event);
     const queueName = getQueueName(message);
-    await decrementQueueSemaphore(queueName);
+    return decrementQueueSemaphore(queueName);
   }
 }
 
@@ -104,6 +104,7 @@ async function handler(event) {
 }
 
 module.exports = {
+  isDecrementEvent,
   handleSemaphoreDecrementTask,
   handler
 };

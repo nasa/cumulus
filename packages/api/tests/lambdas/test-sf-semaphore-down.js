@@ -14,10 +14,11 @@ const {
   handleSemaphoreDecrementTask
 } = require('../../lambdas/sf-semaphore-down');
 
+const sfEventSource = 'aws.states';
 const createCloudwatchEventMessage = ({
   status,
   queueName,
-  source = 'aws.states'
+  source = sfEventSource
 }) => ({
   source,
   detail: {
@@ -172,6 +173,29 @@ test('sfSemaphoreDown lambda does nothing for an event with a RUNNING status', a
   t.is(response.semvalue, 1);
 });
 
+test('sfSemaphoreDown lambda does nothing for an event with no message', async (t) => {
+  const { client, semaphore } = t.context;
+  const queueName = randomId('low');
+
+  await client.put({
+    TableName: process.env.SemaphoresTable,
+    Item: {
+      key: queueName,
+      semvalue: 1
+    }
+  }).promise();
+
+  await t.throws(handleSemaphoreDecrementTask({
+    source: sfEventSource,
+    detail: {
+      status: 'COMPLETED'
+    }
+  }));
+
+  const response = await semaphore.get(queueName);
+  t.is(response.semvalue, 1);
+});
+
 test('sfSemaphoreDown lambda throws error when attempting to decrement empty semaphore', async (t) => {
   const queueName = randomId('low');
 
@@ -181,6 +205,16 @@ test('sfSemaphoreDown lambda throws error when attempting to decrement empty sem
       queueName
     })
   ));
+});
+
+test('sfSemaphoreDown lambda throws error for invalid event message', async (t) => {
+  await t.throws(handleSemaphoreDecrementTask({
+    source: sfEventSource,
+    detail: {
+      status: 'COMPLETED',
+      output: 'invalid message'
+    }
+  }));
 });
 
 test('sfSemaphoreDown lambda decrements semaphore for completed event message', async (t) => {
