@@ -21,6 +21,7 @@ declare -a param_list=(
   "bamboo_DEPLOYMENT"
   "bamboo_PUBLISH_FLAG"
   "bamboo_USE_NPM_PACKAGES"
+  "bamboo_REPORT_BUILD_STATUS"
   "bamboo_SECRET_NPM_TOKEN"
   "bamboo_SECRET_TOKEN_SECRET"
   "bamboo_SECRET_EARTHDATA_USERNAME"
@@ -46,6 +47,7 @@ export GIT_SHA=$(git rev-parse HEAD)
 ## is intended to allow an override for a custom branch build.
 if [[ ! -z $bamboo_GIT_PR ]]; then
   export GIT_PR=$bamboo_GIT_PR
+  export REPORT_BUILD_STATUS=true
   echo export GIT_PR=$GIT_PR >> .bamboo_env_vars
 fi
 

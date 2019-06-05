@@ -34,13 +34,13 @@ const deletedgranule = Object.assign(clone(granule), { deletedAt: Date.now() });
 
 // report type and its regex for each field
 const datetimeRegx = '^(\\d{4})-(\\d{2})-(\\d{2}) (\\d{2}):(\\d{2})(A|P)M$';
+const dateRegx = '^(\\d{4})(\\d{2})(\\d{2})$';
 const decimalIntRegx = '^-?\\d+\\.?\\d*$';
 const granuleIdRegx = '^[a-zA-Z0-9\\.-_]+$';
 const formatMappings = {
   ingest: [
     granuleIdRegx, // dbID
     '^[a-zA-Z0-9-_]+$', // product
-    '^\\d+$', // versionID
     '^\\d+$', // productVolume
     '^(Successful|Failed)$', // productState
     '^[a-zA-Z0-9\\.-_]+$', // externalDataProvider
@@ -69,7 +69,7 @@ const formatMappings = {
 
   delete: [
     granuleIdRegx, // dbID
-    datetimeRegx // deleteEffectiveDate
+    dateRegx // deleteEffectiveDate
   ]
 };
 

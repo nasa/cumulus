@@ -7,6 +7,15 @@
     <ShortName>ShortName</ShortName>
     <VersionId>001</VersionId>
   </Collection>
+  <DataGranule>
+    <SizeMBDataGranule>10</SizeMBDataGranule>
+    <ReprocessingPlanned>The Reprocessing Planned Statement Value</ReprocessingPlanned>
+    <ReprocessingActual>The Reprocessing Actual Statement Value</ReprocessingActual>
+    <ProducerGranuleId>SMAP_L3_SM_P_20150407_R13080_001.h5</ProducerGranuleId>
+    <DayNightFlag>UNSPECIFIED</DayNightFlag>
+    <ProductionDateTime>2018-07-19T12:01:01Z</ProductionDateTime>
+    <LocalVersionId>LocalVersionIdValue</LocalVersionId>
+  </DataGranule>
   <Temporal>
     <RangeDateTime>
       <BeginningDateTime>2017-10-24T00:00:00Z</BeginningDateTime>
