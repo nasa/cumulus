@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-799**
   - Adds new BackendApi endpoint `distributionMetrics` that returns a summary of successful s3 accesses as well as a summary of distribution errors -- including s3 access errors, 4XX and 5XX errors.
 
+### Changed
+
+- **CUMULUS-1232**
+  - Added retries to update `@cumulus/cmr-client` `updateToken()`
+
 - **CUMULUS-1245 CUMULUS-795**
   - Added additional `ems` configuration parameters for sending the ingest reports to EMS
   - Added functionality to send daily ingest reports to EMS
