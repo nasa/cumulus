@@ -351,7 +351,6 @@ exports.generateAndStoreDistributionReport = generateAndStoreDistributionReport;
  * @param {Object} _event - an AWS Lambda event
  * @param {string} _event.startTime - test only, report startTime in format YYYY-MM-DDTHH:mm:ss
  * @param {string} _event.endTime - test only, report endTime in format YYYY-MM-DDTHH:mm:ss
- * @param {string} _event.report - test only, s3 uri of the report to be sent
  * @param {Object} _context - an AWS Lambda execution context (not used)
  * @param {function} cb - an AWS Lambda callback function
  * @returns {Promise} resolves when the report has been generated and stored

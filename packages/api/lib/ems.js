@@ -128,8 +128,6 @@ async function submitReports(reports) {
       Key: newKey
     });
 
-    // eslint-disable-next-line no-await-in-loop
-    await aws.deleteS3Object(parsed.Bucket, parsed.Key);
     reportsSent.push({
       reportType: reports[i].reportType,
       file: aws.buildS3Uri(parsed.Bucket, newKey)
