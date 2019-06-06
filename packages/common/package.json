@@ -65,6 +65,7 @@
     "lodash.isstring": "^4.0.1",
     "lodash.isundefined": "^3.0.1",
     "lodash.kebabcase": "^4.1.1",
+    "lodash.merge": "^4.6.1",
     "lodash.omitby": "^4.6.0",
     "lodash.range": "^3.2.0",
     "mime-types": "^2.1.22",
@@ -86,6 +87,7 @@
     "jsdoc-to-markdown": "^4.0.1",
     "nock": "^10.0.0",
     "nyc": "^14.0.0",
+    "rewire": "^4.0.1",
     "sinon": "^7.1.1"
   }
 }

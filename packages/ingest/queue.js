@@ -1,40 +1,15 @@
 'use strict';
 
-const merge = require('lodash.merge');
-
 const {
   sendSQSMessage,
   getExecutionArn
 } = require('@cumulus/common/aws');
 
 const {
-  buildExecutionMessage,
+  buildQueueMessageFromTemplate,
   getMessageFromTemplate,
   getQueueNameByUrl
 } = require('@cumulus/common/message');
-
-async function buildMessageFromTemplate({
-  provider,
-  collection,
-  parentExecutionArn,
-  queueUrl,
-  templateUri
-}) {
-  const messageTemplate = await getMessageFromTemplate(templateUri);
-  const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
-  const message = buildExecutionMessage({
-    provider,
-    collection,
-    parentExecutionArn,
-    queueName
-  });
-
-  return {
-    ...messageTemplate,
-    meta: merge(messageTemplate.meta, message.meta),
-    cumulus_meta: merge(messageTemplate.cumulus_meta, message.cumulus_meta)
-  };
-}
 
 /**
  * Enqueue a PDR to be parsed
@@ -58,13 +33,14 @@ async function enqueueParsePdrMessage({
   collection,
   parentExecutionArn
 }) {
-  // const message = await getMessageFromTemplate(parsePdrMessageTemplateUri);
-  const message = await buildMessageFromTemplate({
-    queueUrl,
+  const messageTemplate = await getMessageFromTemplate(parsePdrMessageTemplateUri);
+  const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
+  const message = buildQueueMessageFromTemplate({
+    queueName,
     provider,
     collection,
     parentExecutionArn,
-    templateUri: parsePdrMessageTemplateUri
+    messageTemplate
   });
 
   message.payload = { pdr };
@@ -104,14 +80,16 @@ async function enqueueGranuleIngestMessage({
   pdr,
   parentExecutionArn
 }) {
-  // Build the message from a template
-  // const message = await getMessageFromTemplate(granuleIngestMessageTemplateUri);
-  const message = await buildMessageFromTemplate({
-    queueUrl,
+  const messageTemplate = await getMessageFromTemplate(granuleIngestMessageTemplateUri);
+  // Should this throw? Probably not because it would prevent all the other messages
+  // from being queued, since this function is invoked via Promise.all in queue-granules
+  const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
+  const message = buildQueueMessageFromTemplate({
+    queueName,
     provider,
     collection,
     parentExecutionArn,
-    templateUri: granuleIngestMessageTemplateUri
+    messageTemplate
   });
 
   message.payload = {
