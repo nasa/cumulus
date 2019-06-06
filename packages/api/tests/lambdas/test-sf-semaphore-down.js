@@ -11,22 +11,24 @@ const {
 } = require('@cumulus/common');
 const { Manager } = require('../../models');
 const {
-  getSemaphoreDecrementTasks,
-  handler
+  handleSemaphoreDecrementTask
 } = require('../../lambdas/sf-semaphore-down');
 
-const createSnsWorkflowMessage = ({
+const sfEventSource = 'aws.states';
+const createCloudwatchEventMessage = ({
   status,
-  queueName
+  queueName,
+  source = sfEventSource
 }) => ({
-  Sns: {
-    Message: JSON.stringify({
+  source,
+  detail: {
+    status,
+    output: JSON.stringify({
       cumulus_meta: {
         execution_name: randomString(),
         queueName
       },
       meta: {
-        status,
         queueExecutionLimits: {
           [queueName]: 5
         }
@@ -34,6 +36,33 @@ const createSnsWorkflowMessage = ({
     })
   }
 });
+
+const testTerminalEventMessage = async (t, status) => {
+  const { client, semaphore } = t.context;
+  const queueName = randomId('low');
+
+  // arbitrarily set semaphore so it can be decremented
+  await client.put({
+    TableName: process.env.SemaphoresTable,
+    Item: {
+      key: queueName,
+      semvalue: 1
+    }
+  }).promise();
+
+  await handleSemaphoreDecrementTask(
+    createCloudwatchEventMessage({
+      status,
+      queueName
+    })
+  );
+
+  const response = await semaphore.get(queueName);
+  t.is(response.semvalue, 0);
+};
+
+const assertInvalidDecrementEvent = (t, output) =>
+  t.is(output, 'Not a valid decrement event, no operation performed');
 
 let manager;
 
@@ -56,252 +85,99 @@ test.beforeEach(async (t) => {
 
 test.after.always(() => manager.deleteTable());
 
-test('getSemaphoreDecrementTasks() returns empty array for non-SNS message', async (t) => {
-  const tasks = getSemaphoreDecrementTasks({});
-  t.is(tasks.length, 0);
-});
+test('sfSemaphoreDown lambda does nothing for an event with the wrong source', async (t) => {
+  const queueName = randomId('low');
 
-test('getSemaphoreDecrementTasks() returns empty array for SNS message without records', async (t) => {
-  const tasks = getSemaphoreDecrementTasks({
-    Records: [
-      null
-    ]
-  });
-  t.is(tasks.length, 0);
-});
+  const output = await handleSemaphoreDecrementTask(
+    createCloudwatchEventMessage({
+      status: 'COMPLETED',
+      queueName,
+      source: 'fake-source'
+    })
+  );
 
-test('getSemaphoreDecrementTasks() returns empty array for SNS message with empty record objects', async (t) => {
-  const tasks = getSemaphoreDecrementTasks({
-    Records: [
-      {}
-    ]
-  });
-  t.is(tasks.length, 0);
-});
-
-test('getSemaphoreDecrementTasks() returns empty array for SNS message with empty message body', async (t) => {
-  const tasks = getSemaphoreDecrementTasks({
-    Records: [
-      {
-        Sns: {
-          Message: null
-        }
-      }
-    ]
-  });
-  t.is(tasks.length, 0);
+  assertInvalidDecrementEvent(t, output);
 });
 
 test('sfSemaphoreDown lambda does nothing for a workflow message with no queue name', async (t) => {
-  const { client, semaphore } = t.context;
-  const queueName = randomId('low');
+  const output = await handleSemaphoreDecrementTask(
+    createCloudwatchEventMessage({
+      status: 'COMPLETED'
+    })
+  );
 
-  await client.put({
-    TableName: process.env.SemaphoresTable,
-    Item: {
-      key: queueName,
-      semvalue: 1
-    }
-  }).promise();
-
-  await handler({
-    Records: [
-      createSnsWorkflowMessage({
-        status: 'completed'
-      })
-    ]
-  });
-
-  const response = await semaphore.get(queueName);
-  t.is(response.semvalue, 1);
+  assertInvalidDecrementEvent(t, output);
 });
 
-test('sfSemaphoreDown lambda does nothing for a workflow message with no status', async (t) => {
-  const { client, semaphore } = t.context;
+test('sfSemaphoreDown lambda does nothing for an event with no status', async (t) => {
   const queueName = randomId('low');
 
-  await client.put({
-    TableName: process.env.SemaphoresTable,
-    Item: {
-      key: queueName,
-      semvalue: 1
-    }
-  }).promise();
+  const output = await handleSemaphoreDecrementTask(
+    createCloudwatchEventMessage({
+      queueName
+    })
+  );
 
-  await handler({
-    Records: [
-      createSnsWorkflowMessage({
-        queueName
-      })
-    ]
-  });
-
-  const response = await semaphore.get(queueName);
-  t.is(response.semvalue, 1);
+  assertInvalidDecrementEvent(t, output);
 });
 
-test('sfSemaphoreDown lambda does nothing for a running workflow message', async (t) => {
-  const { client, semaphore } = t.context;
+test('sfSemaphoreDown lambda does nothing for an event with a RUNNING status', async (t) => {
   const queueName = randomId('low');
 
-  await client.put({
-    TableName: process.env.SemaphoresTable,
-    Item: {
-      key: queueName,
-      semvalue: 1
-    }
-  }).promise();
+  const output = await handleSemaphoreDecrementTask(
+    createCloudwatchEventMessage({
+      status: 'RUNNING',
+      queueName
+    })
+  );
 
-  await handler({
-    Records: [
-      createSnsWorkflowMessage({
-        status: 'running',
-        queueName
-      })
-    ]
+  assertInvalidDecrementEvent(t, output);
+});
+
+test('sfSemaphoreDown lambda does nothing for an event with no message', async (t) => {
+  const output = await handleSemaphoreDecrementTask({
+    source: sfEventSource,
+    detail: {
+      status: 'COMPLETED'
+    }
   });
 
-  const response = await semaphore.get(queueName);
-  t.is(response.semvalue, 1);
+  assertInvalidDecrementEvent(t, output);
 });
 
 test('sfSemaphoreDown lambda throws error when attempting to decrement empty semaphore', async (t) => {
   const queueName = randomId('low');
 
-  await t.throws(handler({
-    Records: [
-      createSnsWorkflowMessage({
-        status: 'completed',
-        queueName
-      })
-    ]
+  await t.throws(handleSemaphoreDecrementTask(
+    createCloudwatchEventMessage({
+      status: 'COMPLETED',
+      queueName
+    })
+  ));
+});
+
+test('sfSemaphoreDown lambda throws error for invalid event message', async (t) => {
+  await t.throws(handleSemaphoreDecrementTask({
+    source: sfEventSource,
+    detail: {
+      status: 'COMPLETED',
+      output: 'invalid message'
+    }
   }));
 });
 
-test('sfSemaphoreDown lambda decrements priority semaphore for completed workflow message', async (t) => {
-  const { client, semaphore } = t.context;
-  const queueName = randomId('low');
-
-  // arbitrarily set semaphore so it can be decremented
-  await client.put({
-    TableName: process.env.SemaphoresTable,
-    Item: {
-      key: queueName,
-      semvalue: 1
-    }
-  }).promise();
-
-  await handler({
-    Records: [
-      createSnsWorkflowMessage({
-        status: 'completed',
-        queueName
-      })
-    ]
-  });
-
-  const response = await semaphore.get(queueName);
-  t.is(response.semvalue, 0);
+test('sfSemaphoreDown lambda decrements semaphore for completed event message', async (t) => {
+  await testTerminalEventMessage(t, 'COMPLETED');
 });
 
-test('sfSemaphoreDown lambda decrements priority semaphore for failed workflow message', async (t) => {
-  const { client, semaphore } = t.context;
-  const queueName = randomId('low');
-
-  // arbitrarily set semaphore so it can be decremented
-  await client.put({
-    TableName: process.env.SemaphoresTable,
-    Item: {
-      key: queueName,
-      semvalue: 1
-    }
-  }).promise();
-
-  await handler({
-    Records: [
-      createSnsWorkflowMessage({
-        status: 'failed',
-        queueName
-      })
-    ]
-  });
-
-  const response = await semaphore.get(queueName);
-  t.is(response.semvalue, 0);
+test('sfSemaphoreDown lambda decrements semaphore for failed event message', async (t) => {
+  await testTerminalEventMessage(t, 'FAILED');
 });
 
-test('sfSemaphoreDown lambda handles multiple updates to a single semaphore', async (t) => {
-  const { client, semaphore } = t.context;
-  const queueName = randomId('low');
-
-  // Arbitrarily set semaphore value so it can be decremented
-  await client.put({
-    TableName: process.env.SemaphoresTable,
-    Item: {
-      key: queueName,
-      semvalue: 3
-    }
-  }).promise();
-
-  await handler({
-    Records: [
-      createSnsWorkflowMessage({
-        status: 'failed',
-        queueName
-      }),
-      createSnsWorkflowMessage({
-        status: 'completed',
-        queueName
-      })
-    ]
-  });
-
-  const response = await semaphore.get(queueName);
-  t.is(response.semvalue, 1);
+test('sfSemaphoreDown lambda decrements semaphore for timed out event message', async (t) => {
+  await testTerminalEventMessage(t, 'TIMED_OUT');
 });
 
-test('sfSemaphoreDown lambda updates multiple semaphores', async (t) => {
-  const { client, semaphore } = t.context;
-  const lowPriorityQueue = randomId('low');
-  const medPriorityQueue = randomId('med');
-
-  await Promise.all([
-    client.put({
-      TableName: process.env.SemaphoresTable,
-      Item: {
-        key: lowPriorityQueue,
-        semvalue: 3
-      }
-    }).promise(),
-    client.put({
-      TableName: process.env.SemaphoresTable,
-      Item: {
-        key: medPriorityQueue,
-        semvalue: 3
-      }
-    }).promise()
-  ]);
-
-  await handler({
-    Records: [
-      createSnsWorkflowMessage({
-        status: 'completed',
-        queueName: lowPriorityQueue
-      }),
-      createSnsWorkflowMessage({
-        status: 'failed',
-        queueName: lowPriorityQueue
-      }),
-      createSnsWorkflowMessage({
-        status: 'completed',
-        queueName: medPriorityQueue
-      })
-    ]
-  });
-
-  let response = await semaphore.get(lowPriorityQueue);
-  t.is(response.semvalue, 1);
-
-  response = await semaphore.get(medPriorityQueue);
-  t.is(response.semvalue, 2);
+test('sfSemaphoreDown lambda decrements semaphore for aborted event message', async (t) => {
+  await testTerminalEventMessage(t, 'ABORTED');
 });

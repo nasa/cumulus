@@ -173,13 +173,6 @@ default:
               - sns2elasticsearchLambdaFunction
               - Arn
           protocol: lambda
-        semaphoreDown:
-          endpoint:
-            function: Fn::GetAtt
-            array:
-              - sfSemaphoreDownLambdaFunction
-              - Arn
-          protocol: lambda
 
     # This topic receives errored kinesis messages and tries them again.
     kinesisFallback:
@@ -233,6 +226,21 @@ default:
       state: ENABLED
       targets:
         - lambda: cleanExecutions
+    sfSemaphoreDown:
+      eventPattern:
+        source:
+          - aws.states
+        detail-type:
+          - "Step Functions Execution Status Change"
+        detail:
+          status:
+            - "ABORTED"
+            - "FAILED"
+            - "SUCCEEDED"
+            - "TIMED_OUT"
+      state: ENABLED
+      targets:
+        - lambda: sfSemaphoreDown
 
   useWorkflowLambdaVersions: true
 
