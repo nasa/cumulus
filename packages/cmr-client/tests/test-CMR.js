@@ -6,7 +6,16 @@ const some = require('lodash.some');
 
 const CMR = require('../CMR');
 
-test('CMR.searchCollection handles paging correctly.', async (t) => {
+test.beforeEach(() => {
+  nock.disableNetConnect();
+});
+
+test.afterEach.always(() => {
+  nock.cleanAll();
+  nock.enableNetConnect();
+});
+
+test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
   const headers = { 'cmr-hits': 6 };
   const body1 = '{"feed":{"updated":"sometime","id":"someurl","title":"fake Cmr Results","entry":[{"cmrEntry1":"data1"}, {"cmrEntry2":"data2"}]}}';
   const body2 = '{"feed":{"updated":"anothertime","id":"another url","title":"more Results","entry":[{"cmrEntry3":"data3"}, {"cmrEntry4":"data4"}]}}';
@@ -70,4 +79,23 @@ test('getHeaders returns correct Content-type for xml metadata by default', (t) 
   t.is(headers['Content-type'], 'application/echo10+xml');
   t.is(headers['Client-Id'], 'clientID');
   t.is(headers.Accept, undefined);
+});
+
+test.serial('updateToken retries when fails', async (t) => {
+  const cmr = new CMR({
+    clientId: 'fakeClientId',
+    username: 'fakeUsername',
+    password: 'fakePassword',
+    provider: 'fakeProvider'
+  });
+
+  nock('https://api-test.echo.nasa.gov')
+    .post('/echo-rest/tokens/')
+    .reply(404);
+
+  nock('https://api-test.echo.nasa.gov')
+    .post('/echo-rest/tokens/')
+    .reply(200, { token: { id: 'asdf' } });
+
+  t.is(await cmr.getToken(), 'asdf');
 });
