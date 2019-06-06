@@ -2,16 +2,14 @@
 
 const test = require('ava');
 const rewire = require('rewire');
-
 const message = rewire('../message');
-const {
-  buildCumulusMeta,
-  buildQueueMessageFromTemplate,
-  getQueueNameByUrl,
-  getMessageFromTemplate
-} = message;
 
 const { randomId, randomString } = require('../test-utils');
+
+const buildCumulusMeta = message.__get__('buildCumulusMeta');
+const buildQueueMessageFromTemplate = message.__get__('buildQueueMessageFromTemplate');
+const getQueueNameByUrl = message.__get__('getQueueNameByUrl');
+const getMessageFromTemplate = message.__get__('getMessageFromTemplate');
 
 const executionName = randomString();
 message.__set__('createExecutionName', () => executionName);
@@ -70,7 +68,7 @@ test('getMessageTemplate throws error if non-existent S3 URI is provided', async
   await t.throws(getMessageFromTemplate('s3://some-bucket/some-key'));
 });
 
-test('buildQueueMessageFromTemplate returns expected message', (t) => {
+test('buildQueueMessageFromTemplate does not overwrite contents from message template', (t) => {
   const messageTemplate = {
     foo: 'bar',
     meta: {
@@ -85,15 +83,17 @@ test('buildQueueMessageFromTemplate returns expected message', (t) => {
   const provider = randomId('provider');
   const collection = randomId('collection');
   const queueName = randomId('queue');
+  const payload = {};
 
-  let actualMessage = buildQueueMessageFromTemplate({
+  const actualMessage = buildQueueMessageFromTemplate({
     provider,
     collection,
     queueName,
-    messageTemplate
+    messageTemplate,
+    payload
   });
 
-  let expectedMessage = {
+  const expectedMessage = {
     foo: 'bar',
     meta: {
       provider,
@@ -106,10 +106,133 @@ test('buildQueueMessageFromTemplate returns expected message', (t) => {
       message_source: 'sfn',
       execution_name: executionName,
       queueName
+    },
+    payload
+  };
+
+  t.deepEqual(actualMessage, expectedMessage);
+});
+
+test('buildQueueMessageFromTemplate returns message with correct payload', (t) => {
+  const messageTemplate = {};
+  const provider = randomId('provider');
+  const collection = randomId('collection');
+  const queueName = randomId('queue');
+
+  const granules = [{
+    granule1: 'granule1'
+  }];
+  const payload = {
+    foo: 'bar',
+    granules: granules
+  };
+
+  const actualMessage = buildQueueMessageFromTemplate({
+    provider,
+    collection,
+    queueName,
+    messageTemplate,
+    payload
+  });
+
+  const expectedMessage = {
+    meta: {
+      provider,
+      collection,
+    },
+    cumulus_meta: {
+      execution_name: executionName,
+      queueName
+    },
+    payload: {
+      foo: 'bar',
+      granules
     }
   };
 
   t.deepEqual(actualMessage, expectedMessage);
+});
+
+test('buildQueueMessageFromTemplate returns expected message with undefined collection/provider', (t) => {
+  const collection = {
+    name: 'test_collection',
+    version: '001'
+  };
+  const provider = {
+    id: 'test_provider'
+  };
+  const messageTemplate = {
+    meta: {
+      collection,  // should not be overridden
+      provider  // should not be overridden
+    }
+  };
+  const queueName = randomId('queue');
+  const payload = {};
+
+  const actualMessage = buildQueueMessageFromTemplate({
+    provider: undefined,
+    collection: undefined,
+    queueName,
+    messageTemplate,
+    payload
+  });
+
+  const expectedMessage = {
+    meta: {
+      provider,
+      collection,
+    },
+    cumulus_meta: {
+      execution_name: executionName,
+      queueName
+    },
+    payload
+  };
+
+  t.deepEqual(actualMessage, expectedMessage);
+});
+
+test('buildQueueMessageFromTemplate returns expected message with defined collection/provider', (t) => {
+  const messageTemplate = {
+    meta: {
+      provider: 'fake-provider', // should get overridden
+      collection: 'fake-collection', // should get overriden
+    }
+  };
+  const provider = randomId('provider');
+  const collection = randomId('collection');
+  const queueName = randomId('queue');
+  const payload = {};
+
+  const actualMessage = buildQueueMessageFromTemplate({
+    provider,
+    collection,
+    queueName,
+    messageTemplate,
+    payload
+  });
+
+  const expectedMessage = {
+    meta: {
+      provider,
+      collection,
+    },
+    cumulus_meta: {
+      execution_name: executionName,
+      queueName
+    },
+    payload
+  };
+
+  t.deepEqual(actualMessage, expectedMessage);
+});
+
+test('buildQueueMessageFromTemplate returns expected message with custom cumulus_meta and meta', (t) => {
+  const messageTemplate = {};
+  const provider = randomId('provider');
+  const collection = randomId('collection');
+  const queueName = randomId('queue');
 
   const customCumulusMeta = {
     foo: 'bar',
@@ -126,17 +249,19 @@ test('buildQueueMessageFromTemplate returns expected message', (t) => {
       key: 'value'
     }
   };
-  actualMessage = buildQueueMessageFromTemplate({
+  const payload = {};
+
+  const actualMessage = buildQueueMessageFromTemplate({
     provider,
     collection,
     queueName,
     messageTemplate,
     customCumulusMeta,
-    customMeta
+    customMeta,
+    payload
   });
 
-  expectedMessage = {
-    foo: 'bar',
+  const expectedMessage = {
     meta: {
       provider,
       collection,
@@ -144,19 +269,16 @@ test('buildQueueMessageFromTemplate returns expected message', (t) => {
       object: {
         key: 'value'
       },
-      workflows: {
-        workflow1: 'workflow1Template'
-      }
     },
     cumulus_meta: {
-      message_source: 'sfn',
       execution_name: executionName,
       queueName,
       foo: 'bar',
       object: {
         key: 'value'
       }
-    }
+    },
+    payload
   };
 
   t.deepEqual(actualMessage, expectedMessage);

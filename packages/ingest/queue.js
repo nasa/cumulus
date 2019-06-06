@@ -35,15 +35,16 @@ async function enqueueParsePdrMessage({
 }) {
   const messageTemplate = await getMessageFromTemplate(parsePdrMessageTemplateUri);
   const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
-  const message = buildQueueMessageFromTemplate({
-    queueName,
-    provider,
-    collection,
-    parentExecutionArn,
-    messageTemplate
-  });
+  const payload = { pdr };
 
-  message.payload = { pdr };
+  const message = buildQueueMessageFromTemplate({
+    collection,
+    messageTemplate,
+    parentExecutionArn,
+    payload,
+    provider,
+    queueName
+  });
 
   const arn = getExecutionArn(
     message.cumulus_meta.state_machine,
@@ -84,19 +85,21 @@ async function enqueueGranuleIngestMessage({
   // Should this throw? Probably not because it would prevent all the other messages
   // from being queued, since this function is invoked via Promise.all in queue-granules
   const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
-  const message = buildQueueMessageFromTemplate({
-    queueName,
-    provider,
-    collection,
-    parentExecutionArn,
-    messageTemplate
-  });
-
-  message.payload = {
+  const payload = {
     granules: [
       granule
     ]
   };
+
+  const message = buildQueueMessageFromTemplate({
+    collection,
+    messageTemplate,
+    parentExecutionArn,
+    payload,
+    provider,
+    queueName
+  });
+
   if (pdr) message.meta.pdr = pdr;
 
   const arn = getExecutionArn(

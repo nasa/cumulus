@@ -11,7 +11,7 @@ const {
 const createExecutionName = () => uuidv4();
 
 /**
- * Build message.cumulus_meta for an execution.
+ * Build base message.cumulus_meta for a queued execution.
  *
  * @param {Object} params
  * @param {string} params.queueName - An SQS queue name
@@ -28,6 +28,28 @@ const buildCumulusMeta = ({
   };
   if (parentExecutionArn) cumulusMeta.parentExecutionArn = parentExecutionArn;
   return cumulusMeta;
+};
+
+/**
+ * Build base message.meta for a queued execution.
+ *
+ * @param {Object} params
+ * @param {string} params.queueName - An SQS queue name
+ * @param {Object} params.parentExecutionArn - Parent execution ARN
+ * @returns {Object}
+ */
+const buildMeta = ({
+  collection,
+  provider
+}) => {
+  const meta = {};
+  if (collection) {
+    meta.collection = collection;
+  }
+  if (provider) {
+    meta.provider = provider;
+  }
+  return meta;
 };
 
 /**
@@ -63,6 +85,7 @@ async function getMessageFromTemplate(templateUri) {
  * @param {string} params.parentExecutionArn - ARN for parent execution
  * @param {string} params.queueName - SQS queue name
  * @param {Object} params.messageTemplate - Message template for the workflow
+ * @param {Object} params.payload - Payload for the workflow
  * @param {Object} params.customCumulusMeta - Custom data for message.cumulus_meta
  * @param {Object} params.customMeta - Custom data for message.meta
  *
@@ -74,6 +97,7 @@ function buildQueueMessageFromTemplate({
   parentExecutionArn,
   queueName,
   messageTemplate,
+  payload,
   customCumulusMeta = {},
   customMeta = {}
 }) {
@@ -82,16 +106,19 @@ function buildQueueMessageFromTemplate({
     queueName
   });
 
-  const meta = {
+  const meta = buildMeta({
     provider,
     collection
-  };
+  });
 
-  return {
+  const message = {
     ...messageTemplate,
     meta: merge(messageTemplate.meta, customMeta, meta),
-    cumulus_meta: merge(messageTemplate.cumulus_meta, customCumulusMeta, cumulusMeta)
+    cumulus_meta: merge(messageTemplate.cumulus_meta, customCumulusMeta, cumulusMeta),
+    payload
   };
+
+  return message;
 }
 
 module.exports = {

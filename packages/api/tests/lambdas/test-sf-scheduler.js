@@ -34,7 +34,6 @@ const fakeProvider = {
   host: 'fakeHost'
 };
 
-const buildMessage = schedule.__get__('buildMessage');
 const restoreMessageFromTemplate = schedule.__set__('getMessageFromTemplate', () => Promise.resolve(fakeMessageResponse));
 const sqsStub = sinon.stub(SQS, 'sendMessage');
 
@@ -70,7 +69,7 @@ test.serial('Sends a message to SQS with queueName if queueName is defined', asy
   ];
 
   const scheduleInput = { ...scheduleEventTemplate, queueName };
-  await schedule.schedule(scheduleInput);
+  await schedule.handleScheduleEvent(scheduleInput);
 
   t.is(sqsStub.calledOnce, true);
 
@@ -88,7 +87,7 @@ test.serial('Sends a message to SQS with startSF if queueName is not defined', a
   ];
 
   const scheduleInput = { ...scheduleEventTemplate };
-  await schedule.schedule(scheduleInput);
+  await schedule.handleScheduleEvent(scheduleInput);
 
   t.is(sqsStub.calledOnce, true);
 
@@ -97,44 +96,6 @@ test.serial('Sends a message to SQS with startSF if queueName is not defined', a
   t.is(targetMessage.cumulus_meta.queueName, defaultQueueName);
   t.deepEqual(targetMessage.meta.collection, fakeCollection);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
-});
-
-test.serial('event has valid collection and provider', async (t) => {
-  restoreList = [
-    schedule.__set__('getCollection', () => Promise.resolve(fakeCollection)),
-    schedule.__set__('getProvider', () => Promise.resolve(fakeProvider))
-  ];
-
-  const buildMessageEventInput = {
-    ...scheduleEventTemplate,
-    provider: 'fakeProvider',
-    collection: 'fakeCollection'
-  };
-
-  const response = await buildMessage(buildMessageEventInput, fakeMessageResponse);
-
-  t.deepEqual(response.meta.collection, fakeCollection);
-  t.deepEqual(response.meta.provider, fakeProvider);
-});
-
-test.serial('event.meta is not overwritten by undefined return from getProvider|Collection', async (t) => {
-  restoreList = [
-    schedule.__set__('getCollection', () => Promise.resolve(undefined)),
-    schedule.__set__('getProvider', () => Promise.resolve(undefined))
-  ];
-
-  const buildMessageEventInput = {
-    ...scheduleEventTemplate,
-    meta: {
-      collection: fakeCollection,
-      provider: fakeProvider
-    }
-  };
-
-  const response = await buildMessage(buildMessageEventInput, fakeMessageResponse);
-
-  t.deepEqual(response.meta.collection, fakeCollection);
-  t.deepEqual(response.meta.provider, fakeProvider);
 });
 
 test.serial('getProvider returns undefined when input is falsey', async (t) => {

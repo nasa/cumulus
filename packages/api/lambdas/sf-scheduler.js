@@ -1,11 +1,10 @@
 'use strict';
 
 const get = require('lodash.get');
-const merge = require('lodash.merge');
 
 const {
-  buildCumulusMeta,
-  getMessageFromTemplate
+  getMessageFromTemplate,
+  buildQueueMessageFromTemplate
 } = require('@cumulus/common/message');
 const { SQS } = require('@cumulus/ingest/aws');
 const { Provider, Collection } = require('../models');
@@ -26,47 +25,57 @@ async function getCollection(collection) {
   return undefined;
 }
 
-async function buildMessage(event, messageTemplate) {
-  const providerId = get(event, 'provider', null);
-  const meta = get(event, 'meta', {});
-  const cumulusMeta = get(event, 'cumulus_meta', {});
-  const collection = get(event, 'collection', null);
-  const payload = get(event, 'payload', {});
-  const queueName = get(event, 'queueName', 'startSF');
-
-  const providerResponse = await getProvider(providerId);
-  if (providerResponse) {
-    meta.provider = providerResponse;
-  }
-
-  const collectionResponse = await getCollection(collection);
-  if (collectionResponse) {
-    meta.collection = collectionResponse;
-  }
-
-  return {
-    ...messageTemplate,
-    meta: merge(messageTemplate.meta, meta),
-    payload,
-    cumulus_meta: merge(messageTemplate.cumulus_meta, cumulusMeta, buildCumulusMeta(queueName))
-  };
-}
-
 /**
  * Add a Cumulus workflow message to the queue specified by event.queueName.
+ *
  * A consumer should be configured for this queue to start executions for
  * the queued message.
  *
  * @param {Object} event - lambda input message
+ * @returns {Promise}
  */
-async function schedule(event) {
+async function handleScheduleEvent(event) {
+  const collectionData = get(event, 'collection', null);
+  const providerId = get(event, 'provider', null);
+  const customMeta = get(event, 'meta', {});
+  const customCumulusMeta = get(event, 'cumulus_meta', {});
+  const payload = get(event, 'payload', {});
+  const queueName = get(event, 'queueName', 'startSF');
   const templateUri = get(event, 'template');
 
   const messageTemplate = await getMessageFromTemplate(templateUri);
-  const message = await buildMessage(event, messageTemplate);
+  const provider = await getProvider(providerId);
+  const collection = await getCollection(collectionData);
+
+  const message = buildQueueMessageFromTemplate({
+    messageTemplate,
+    payload,
+    queueName,
+    customMeta,
+    customCumulusMeta,
+    collection,
+    provider
+  });
 
   const queueName = message.cumulus_meta.queueName;
-  await SQS.sendMessage(message.meta.queues[queueName], message);
+  return SQS.sendMessage(message.meta.queues[queueName], message);
 }
 
-module.exports = { schedule };
+/**
+ * Handler for sf-scheduler lambda.
+ *
+ * @param {Object} event - lambda input message
+ */
+async function schedule(event) {
+  // const templateUri = get(event, 'template');
+  // const messageTemplate = await getMessageFromTemplate(templateUri);
+  // const message = await buildMessage(event, messageTemplate);
+  // const queueName = message.cumulus_meta.queueName;
+  // await SQS.sendMessage(message.meta.queues[queueName], message);
+  return handleScheduleEvent(event);
+}
+
+module.exports = {
+  handleScheduleEvent,
+  schedule
+};
