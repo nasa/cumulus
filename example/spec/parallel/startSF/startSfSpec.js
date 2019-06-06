@@ -1,12 +1,33 @@
 'use strict';
 
-const { lambda, sfn, sqs } = require('@cumulus/common/aws');
+const fs = require('fs-extra');
+
+const {
+  lambda,
+  sfn,
+  sqs,
+  s3PutObject,
+  receiveSQSMessages
+} = require('@cumulus/common/aws');
 const StepFunctions = require('@cumulus/common/StepFunctions');
-const { loadConfig, createTimestampedTestId, timestampedName } = require('../../helpers/testUtils');
+const {
+  api: apiTestUtils
+} = require('@cumulus/integration-tests');
+
+const {
+  loadConfig,
+  createTimestampedTestId,
+  timestampedName,
+  createTestSuffix,
+  createTestDataPath,
+  deleteFolder
+} = require('../../helpers/testUtils');
 
 const config = loadConfig();
 
 const testName = createTimestampedTestId(config.stackName, 'testStartSf');
+const testSuffix = createTestSuffix(testName);
+const testDataFolder = createTestDataPath(testName);
 
 const passSfName = timestampedName('passTestSf');
 const passSfDef = {
@@ -110,6 +131,84 @@ describe('the sf-starter lambda function', () => {
     it('to trigger workflows', async () => {
       const { executions } = await StepFunctions.listExecutions({ stateMachineArn: passSfArn });
       expect(executions.length).toBe(messagesConsumed);
+    });
+  });
+
+  describe('when provided a queue with a maximum number of executions', () => {
+    let maxQueueUrl;
+    let maxQueueName;
+    let templateUri;
+    let templateKey;
+
+    const collectionsDir = './data/collections/s3_MOD09GQ_006';
+    const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+    const collectionJson = JSON.parse(fs.readFileSync(`${collectionsDir}/s3_MOD09GQ_006.json`, 'utf8'));
+    const collectionData = Object.assign({}, collectionJson, {
+      name: collection.name,
+      dataType: collectionJson.dataType + testSuffix,
+      provider_path: testDataFolder
+    });
+
+    beforeAll(async () => {
+      maxQueueName = `${testName}MaxQueue`;
+
+      const { QueueUrl } = await sqs().createQueue({
+        QueueName: maxQueueName
+      }).promise();
+      maxQueueUrl = QueueUrl;
+
+      templateKey = `${testDataFolder}/test.json`;
+      templateUri = `s3://${config.bucket}/${templateKey}`;
+
+      await Promise.all([
+        s3PutObject({
+          Bucket: config.bucket,
+          Key: templateKey,
+          Body: JSON.stringify({
+            meta: {
+              queues: {
+                [maxQueueName]: maxQueueUrl
+              }
+            }
+          })
+        }),
+        apiTestUtils.addCollectionApi({ prefix: config.stackName, collection: collectionData })
+      ]);
+    });
+
+    afterAll(async () => {
+      await Promise.all([
+        sqs().deleteQueue({
+          QueueUrl: maxQueueUrl
+        }).promise(),
+        deleteFolder(config.bucket, testDataFolder)
+      ]);
+    });
+
+    it('has the right amount messages', async () => {
+      const { Payload } = await lambda().invoke({
+        FunctionName: `${config.stackName}-QueueGranules`,
+        InvocationType: 'RequestResponse',
+        Payload: JSON.stringify({
+          config: {
+            granuleIngestMessageTemplateUri: templateUri,
+            queueUrl
+          },
+          input: {
+            granules: [{
+              granuleId: 'granule1',
+              dataType: collectionData.dataType,
+              version: collectionData.version
+            }]
+          }
+        })
+      }).promise();
+      expect(Payload.queued.length).toEqual(1);
+
+      const messages = receiveSQSMessages(maxQueueUrl, {
+        visibilityTimeout: 0
+      });
+      expect(messages.length).toEqual(1);
     });
   });
 });
