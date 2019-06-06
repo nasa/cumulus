@@ -9,6 +9,7 @@ declare -a param_list=(
   "bamboo_SECRET_AWS_ACCOUNT_ID"
   "bamboo_SECRET_VPC_ID"
   "bamboo_SECRET_AWS_SUBNET"
+  "bamboo_SECRET_GITHUB_USER"
   "bamboo_SECRET_GITHUB_TOKEN"
   "bamboo_SECRET_PROVIDER_HOST"
   "bamboo_SECRET_PROVIDER_HTTP_PORT"
@@ -18,6 +19,8 @@ declare -a param_list=(
   "bamboo_CMR_PASSWORD"
   "bamboo_CMR_USERNAME"
   "bamboo_DEPLOYMENT"
+  "bamboo_PUBLISH_FLAG"
+  "bamboo_USE_NPM_PACKAGES"
   "bamboo_REPORT_BUILD_STATUS"
   "bamboo_SECRET_NPM_TOKEN"
   "bamboo_SECRET_TOKEN_SECRET"
@@ -78,7 +81,8 @@ fi
 echo GIT_PR is $GIT_PR
 
 ## If tag matching the current ref is a version tag, set
-if [[ $(git describe --exact-match HEAD 2>/dev/null |sed -n '1p') =~ ^v[0-9]+.* ]]; then
+export GIT_TAG=$(git describe --exact-match HEAD 2>/dev/null | sed -n '1p')
+if [[ $GIT_TAG =~ ^v[0-9]+.* ]]; then
   export VERSION_FLAG=${BASH_REMATCH[0]}
 fi
 
@@ -109,7 +113,6 @@ if [[ -z $DEPLOYMENT ]]; then
   fi
   echo export DEPLOYMENT=$DEPLOYMENT >> .bamboo_env_vars
 fi
-export DEPLOYMENT
 
 ## Exporting the commit message as an env variable to be brought in
 ## for yes/no toggles on build
@@ -122,5 +125,6 @@ fi
 ## message explicitly calls for running redeploy tests
 if [[ $BRANCH == master || $VERSION_FLAG || COMMIT_MESSAGE =~ '[run-redeploy-tests]' ]]; then
   export RUN_REDEPLOYMENT=true
-  echo export RUN_DEPLOYMENT=$RUN_DEPLOYMENT
+  echo "Setting RUN_REDEPLOYMENT to true"
+  echo export RUN_REDEPLOYMENT="true" >> .bamboo_env_vars
 fi

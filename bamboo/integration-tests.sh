@@ -4,4 +4,4 @@ set -e
 . ./bamboo/abort-if-skip-integration-tests.sh
 . ./bamboo/set-bamboo-env-variables.sh
 
-(cd example && npm install && npm test)
+cd example && npm test
