@@ -3,6 +3,7 @@
 const got = require('got');
 const get = require('lodash.get');
 const publicIp = require('public-ip');
+const pRetry = require('p-retry');
 const Logger = require('@cumulus/logger');
 
 const searchConcept = require('./searchConcept');
@@ -70,6 +71,26 @@ async function validateUMMG(ummMetadata, identifier, provider) {
   );
 }
 
+const retrieveCmrToken = async (tokenParams) => {
+  try {
+    return await got.post(
+      getUrl('token'),
+      {
+        json: true,
+        body: { token: tokenParams }
+      }
+    );
+  } catch (err) {
+    log.error(`Failed to update token: ${JSON.stringify(err)}`);
+
+    throw err;
+  }
+};
+
+const getClientIp = () =>
+  publicIp.v4({ timeout: IP_TIMEOUT_MS })
+    .catch(() => '127.0.0.1');
+
 /**
  * Returns a valid a CMR token
  *
@@ -87,31 +108,26 @@ async function updateToken(cmrProvider, clientId, username, password) {
   if (!username) throw new Error('username is required.');
   if (!password) throw new Error('password is required.');
 
+  const tokenParams = {
+    username,
+    password,
+    client_id: clientId,
+    user_ip_address: await getClientIp(),
+    provider: cmrProvider
+  };
+
   // Update the saved ECHO token
   // for info on how to add collections to CMR: https://cmr.earthdata.nasa.gov/ingest/site/ingest_api_docs.html#validate-collection
-  let response;
+  const response = await pRetry(
+    () => retrieveCmrToken(tokenParams),
+    { retries: 3 }
+  );
 
-  try {
-    response = await got.post(getUrl('token'), {
-      json: true,
-      body: {
-        token: {
-          username: username,
-          password: password,
-          client_id: clientId,
-          user_ip_address: await publicIp.v4({ timeout: IP_TIMEOUT_MS }).catch((_) => '127.0.0.1'),
-          provider: cmrProvider
-        }
-      }
-    });
-  } catch (err) {
-    if (err.response.body.errors) throw new Error(`CMR Error: ${err.response.body.errors[0]}`);
-    throw err;
-  }
+  const tokenId = get(response, 'body.token.id');
 
-  if (!response.body.token) throw new Error('Authentication with CMR failed');
+  if (!tokenId) throw new Error('Authentication with CMR failed');
 
-  return response.body.token.id;
+  return tokenId;
 }
 
 /**
