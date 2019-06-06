@@ -332,7 +332,14 @@ Resources:
   {{@key}}Rule:
     Type: AWS::Events::Rule
     Properties:
+    {{# if this.schedule}}
       ScheduleExpression: {{this.schedule}}
+    {{/if}}
+    {{# if this.eventPattern}}
+      EventPattern:
+        Fn::Sub: |
+          {{{ToJson this.eventPattern}}}
+    {{/if}}
       State: {{# if this.state}}{{this.state}}{{ else }}DISABLED{{/if}}
       Targets:
         {{# each this.targets}}
