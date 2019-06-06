@@ -64,7 +64,7 @@ const getStageName = async () => {
  * @param {Date} EndTime - Endting Date for Metric Query
  * param {Object} Metric - Single item from the Metric array of a successful
  *                          CloudWatch.listMetrics call
- * @returns {<Object>} - metricDataQuery object
+ * @returns {Object} - metricDataQuery object
  */
 const buildGetMetricParams = (StartTime, EndTime) => (Metric) => ({
   MetricDataQueries: [
@@ -161,12 +161,12 @@ const customSuccessListMetricsParam = (stackName) =>
   customListMetricsParam(stackName, 'SuccessCount');
 
 /**
- *  Return an object suitable for querying cloudwatch.listMetrics
+ * Return an object suitable for querying cloudwatch.listMetrics
  *
  * @param {string} stackName - Stack name
  * @param {string} stageName - apiStage name
  * @param {string} MetricName - desired metric
- * @returns {<Object>} listMetric input parameter object
+ * @returns {Object} listMetric input parameter object
  */
 const buildListMetricsParams = (stackName, stageName, MetricName) => ({
   MetricName,
