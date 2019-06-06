@@ -1,11 +1,8 @@
 #!/bin/bash
 set -e
 . ./bamboo/set-bamboo-env-variables.sh
+. ./bamboo/abort-if-not-publish.sh
 
-if [[ ! $PUBLISH_FLAG == true ]]; then
-  >&2 echo "******Skipping publish step as PUBLISH_FLAG is not set"
-  exit 0
-fi
 
 git clone --depth=50 --branch=gh-pages "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/nasa/cumulus.git" gh-pages
 (

@@ -1,11 +1,7 @@
 #!/bin/bash
 set -e
 . ./bamboo/set-bamboo-env-variables.sh
-
-if [[ ! $PUBLISH_FLAG == true ]]; then
-  >&2 echo "******Skipping publish step as PUBLISH_FLAG is not set"
-  exit 0
-fi
+. ./bamboo/abort-if-not-publish.sh
 
 export VERSION=$(jq --raw-output .version lerna.json)
 export NPM_TAG=$(node ./bamboo/npm-tag.js);

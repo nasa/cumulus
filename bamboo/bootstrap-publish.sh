@@ -2,11 +2,8 @@
 set -e
 
 . ./bamboo/set-bamboo-env-variables.sh
+. ./bamboo/abort-if-not-publish.sh
 
-if [[ ! $PUBLISH_FLAG == true ]]; then
-  >&2 echo "******Skipping publish step as PUBLISH_FLAG is not set"
-  exit 0
-fi
 npm install -g npm
 npm install
 rm -rf website/build
