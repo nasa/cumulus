@@ -13,12 +13,11 @@ const {
   log,
   Semaphore
 } = require('@cumulus/common');
-const { Consumer } = require('@cumulus/ingest/consumer');
-
 const {
   getQueueName,
   getMaximumExecutions
-} = require('../lib/message');
+} = require('@cumulus/common/message');
+const { Consumer } = require('@cumulus/ingest/consumer');
 
 /**
  * Starts a new stepfunction with the given payload

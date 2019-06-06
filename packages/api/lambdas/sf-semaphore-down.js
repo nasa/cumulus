@@ -6,12 +6,11 @@ const {
   log,
   Semaphore
 } = require('@cumulus/common');
-const { isOneOf } = require('@cumulus/common/util');
-
 const {
   getQueueName,
   hasQueueAndExecutionLimit
-} = require('../lib/message');
+} = require('@cumulus/common/message');
+const { isOneOf } = require('@cumulus/common/util');
 
 /**
  * Determine if Cloudwatch event is a Step Function state update.
