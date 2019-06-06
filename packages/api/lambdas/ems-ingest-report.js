@@ -319,7 +319,9 @@ function handler(event, context, callback) {
   startTime = event.startTime || startTime;
 
   if (event.report) {
-    return submitReports([event.report]).then((r) => callback(null, r)).catch(callback);
+    return submitReports([{ reportType: 'ingest', file: event.report }])
+      .then((r) => callback(null, r))
+      .catch(callback);
   }
 
   return cleanup()

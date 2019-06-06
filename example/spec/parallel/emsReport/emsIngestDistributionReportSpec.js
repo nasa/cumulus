@@ -9,8 +9,7 @@ const {
     fileExists,
     getS3Object,
     parseS3Uri,
-    lambda,
-    s3
+    lambda
   },
   constructCollectionId,
   http: {
@@ -228,14 +227,6 @@ describe('The EMS report', () => {
       lambdaOutput = JSON.parse(response.Payload);
     });
 
-    afterAll(async () => {
-      const jobs = lambdaOutput.map(async (report) => {
-        const parsed = parseS3Uri(report.file);
-        return s3().deleteObject({ Bucket: parsed.Bucket, Key: parsed.Key }).promise();
-      });
-      await Promise.all(jobs);
-    });
-
     it('generates EMS ingest reports', async () => {
       // generated reports should have the records just ingested or deleted
       expect(lambdaOutput.length).toEqual(3);
@@ -316,14 +307,6 @@ describe('The EMS report', () => {
           .catch((err) => console.log('invoke err', err));
 
         lambdaOutput = JSON.parse(response.Payload);
-      });
-
-      afterAll(async () => {
-        const jobs = lambdaOutput.map(async (report) => {
-          const parsed = parseS3Uri(report.file);
-          return s3().deleteObject({ Bucket: parsed.Bucket, Key: parsed.Key }).promise();
-        });
-        await Promise.all(jobs);
       });
 
       it('generates an EMS distribution report', async () => {
