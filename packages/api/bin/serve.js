@@ -146,21 +146,21 @@ async function createDBRecords(stackName, user) {
   c.name = `${stackName}-collection`;
   const cm = new models.Collection();
   const collection = await cm.create(c);
-  indexer.indexCollection(esClient, collection, esIndex);
+  await indexer.indexCollection(esClient, collection, esIndex);
 
   // add granule records
   const g = testUtils.fakeGranuleFactory();
   g.granuleId = `${stackName}-granule`;
   const gm = new models.Granule();
   const granule = await gm.create(g);
-  indexer.indexGranule(esClient, granule, esIndex);
+  await indexer.indexGranule(esClient, granule, esIndex);
 
   // add provider records
   const p = testUtils.fakeProviderFactory();
   p.id = `${stackName}-provider`;
   const pm = new models.Provider();
   const provider = await pm.create(p);
-  indexer.indexProvider(esClient, provider, esIndex);
+  await indexer.indexProvider(esClient, provider, esIndex);
 
   // add rule records
   const r = testUtils.fakeRuleFactoryV2();
@@ -173,14 +173,14 @@ async function createDBRecords(stackName, user) {
   };
   const rm = new models.Rule();
   const rule = await rm.create(r);
-  indexer.indexRule(esClient, rule, esIndex);
+  await indexer.indexRule(esClient, rule, esIndex);
 
   // add fake execution records
   const e = testUtils.fakeExecutionFactory();
   e.arn = `${stackName}-fake-arn`;
   const em = new models.Execution();
   const execution = await em.create(e);
-  indexer.indexExecution(esClient, execution, esIndex);
+  await indexer.indexExecution(esClient, execution, esIndex);
 
   // add pdrs records
   const pd = testUtils.fakePdrFactory();
