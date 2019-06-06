@@ -57,7 +57,6 @@ async function handleScheduleEvent(event) {
     provider
   });
 
-  const queueName = message.cumulus_meta.queueName;
   return SQS.sendMessage(message.meta.queues[queueName], message);
 }
 
@@ -67,11 +66,6 @@ async function handleScheduleEvent(event) {
  * @param {Object} event - lambda input message
  */
 async function schedule(event) {
-  // const templateUri = get(event, 'template');
-  // const messageTemplate = await getMessageFromTemplate(templateUri);
-  // const message = await buildMessage(event, messageTemplate);
-  // const queueName = message.cumulus_meta.queueName;
-  // await SQS.sendMessage(message.meta.queues[queueName], message);
   return handleScheduleEvent(event);
 }
 

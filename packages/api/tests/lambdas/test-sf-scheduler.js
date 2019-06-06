@@ -34,41 +34,84 @@ const fakeProvider = {
   host: 'fakeHost'
 };
 
-const restoreMessageFromTemplate = schedule.__set__('getMessageFromTemplate', () => Promise.resolve(fakeMessageResponse));
 const sqsStub = sinon.stub(SQS, 'sendMessage');
 
 class FakeCollection {
   async get(item) {
-    return { response: fakeCollection, args: item };
+    if (item.name !== fakeCollection.name
+        || item.version !== fakeCollection.version) {
+      throw new Error();
+    }
+    return fakeCollection;
   }
 }
 
 class FakeProvider {
-  async get(item) {
-    return { response: fakeProvider, args: item };
+  async get({ id }) {
+    if (id !== fakeProvider.id) {
+      throw new Error();
+    }
+    return fakeProvider;
   }
 }
 
-// restore functions returned from rewire.__set__ commands to be called in afterEach
-let restoreList;
+const getProvider = schedule.__get__('getProvider');
+const getCollection = schedule.__get__('getCollection');
 
-test.afterEach(() => {
-  restoreList.map((restoreFn) => restoreFn());
+const restoreMessageFromTemplate = schedule.__set__(
+  'getMessageFromTemplate',
+  () => Promise.resolve(fakeMessageResponse)
+);
+const resetProvider = schedule.__set__('Provider', FakeProvider);
+const resetCollection = schedule.__set__('Collection', FakeCollection);
+
+test.afterEach.always(() => {
   sqsStub.resetHistory();
 });
 
 test.after.always(() => {
+  resetProvider();
+  resetCollection();
   restoreMessageFromTemplate();
   sqsStub.restore();
 });
 
-test.serial('Sends a message to SQS with queueName if queueName is defined', async (t) => {
-  restoreList = [
-    schedule.__set__('getCollection', () => Promise.resolve(fakeCollection)),
-    schedule.__set__('getProvider', () => Promise.resolve(fakeProvider))
-  ];
+test.serial('getProvider returns undefined when input is falsey', async (t) => {
+  const response = await getProvider(undefined);
+  t.is(response, undefined);
+});
 
-  const scheduleInput = { ...scheduleEventTemplate, queueName };
+test.serial('getProvider returns provider when input is a valid provider ID', async (t) => {
+  const response = await getProvider(fakeProvider.id);
+  t.deepEqual(response, fakeProvider);
+});
+
+test.serial('getCollection returns undefined when input is falsey', async (t) => {
+  const response = await getCollection(undefined);
+  t.is(response, undefined);
+});
+
+test.serial('getCollection returns collection when input is a valid collection name/version', async (t) => {
+  const collectionInput = {
+    name: fakeCollection.name,
+    version: fakeCollection.version
+  };
+
+  const response = await getCollection(collectionInput);
+
+  t.deepEqual(response, fakeCollection);
+});
+
+test.serial('Sends a message to SQS with queueName if queueName is defined', async (t) => {
+  const scheduleInput = {
+    ...scheduleEventTemplate,
+    queueName,
+    provider: fakeProvider.id,
+    collection: {
+      name: fakeCollection.name,
+      version: fakeCollection.version
+    }
+  };
   await schedule.handleScheduleEvent(scheduleInput);
 
   t.is(sqsStub.calledOnce, true);
@@ -81,12 +124,15 @@ test.serial('Sends a message to SQS with queueName if queueName is defined', asy
 });
 
 test.serial('Sends a message to SQS with startSF if queueName is not defined', async (t) => {
-  restoreList = [
-    schedule.__set__('getCollection', () => Promise.resolve(fakeCollection)),
-    schedule.__set__('getProvider', () => Promise.resolve(fakeProvider))
-  ];
+  const scheduleInput = {
+    ...scheduleEventTemplate,
+    provider: fakeProvider.id,
+    collection: {
+      name: fakeCollection.name,
+      version: fakeCollection.version
+    }
+  };
 
-  const scheduleInput = { ...scheduleEventTemplate };
   await schedule.handleScheduleEvent(scheduleInput);
 
   t.is(sqsStub.calledOnce, true);
@@ -96,49 +142,4 @@ test.serial('Sends a message to SQS with startSF if queueName is not defined', a
   t.is(targetMessage.cumulus_meta.queueName, defaultQueueName);
   t.deepEqual(targetMessage.meta.collection, fakeCollection);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
-});
-
-test.serial('getProvider returns undefined when input is falsey', async (t) => {
-  const getProvider = schedule.__get__('getProvider');
-
-  const response = await getProvider(undefined);
-
-  t.is(response, undefined);
-});
-
-test.serial('getProvider returns provider when input is a providerId', async (t) => {
-  const getProvider = schedule.__get__('getProvider');
-  const restoreProvider = schedule.__set__('Provider', FakeProvider);
-
-  restoreList = [restoreProvider];
-
-  const { response, args } = await getProvider(fakeProvider.id);
-
-  t.deepEqual(response, fakeProvider);
-  t.is(args.id, fakeProvider.id);
-});
-
-test.serial('getCollection returns undefined when input is falsey', async (t) => {
-  const getCollection = schedule.__get__('getCollection');
-
-  const response = await getCollection(undefined);
-
-  t.is(response, undefined);
-});
-
-test.serial('getCollection returns collection when input is a collection name/version', async (t) => {
-  const getCollection = schedule.__get__('getCollection');
-  const restoreCollection = schedule.__set__('Collection', FakeCollection);
-
-  restoreList = [restoreCollection];
-
-  const collectionInput = {
-    name: fakeCollection.name,
-    version: fakeCollection.version
-  };
-
-  const { response, args } = await getCollection(collectionInput);
-
-  t.deepEqual(response, fakeCollection);
-  t.deepEqual(args, collectionInput);
 });
