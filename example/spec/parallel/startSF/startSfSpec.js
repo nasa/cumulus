@@ -1,7 +1,5 @@
 'use strict';
 
-const fs = require('fs-extra');
-
 const {
   lambda,
   sfn,
@@ -11,7 +9,8 @@ const {
 } = require('@cumulus/common/aws');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const {
-  api: apiTestUtils
+  addCollections,
+  deleteCollections
 } = require('@cumulus/integration-tests');
 
 const {
@@ -143,14 +142,15 @@ describe('the sf-starter lambda function', () => {
     let templateUri;
     let templateKey;
 
+    const queueMaxExecutions = 5;
+    const numberOfMessages = 6;
+
     const collectionsDir = './data/collections/s3_MOD09GQ_006';
-    const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-    const collectionJson = JSON.parse(fs.readFileSync(`${collectionsDir}/s3_MOD09GQ_006.json`, 'utf8'));
-    const collectionData = Object.assign({}, collectionJson, {
-      name: collection.name,
-      dataType: collectionJson.dataType + testSuffix,
-      provider_path: testDataFolder
-    });
+    const collection = {
+      name: `MOD09GQ${testSuffix}`,
+      dataType: `MOD09GQ${testSuffix}`,
+      version: '006'
+    };
 
     beforeAll(async () => {
       maxQueueName = `${testName}MaxQueue`;
@@ -174,11 +174,14 @@ describe('the sf-starter lambda function', () => {
             meta: {
               queues: {
                 [maxQueueName]: maxQueueUrl
+              },
+              queueExecutionLimits: {
+                [maxQueueName]: queueMaxExecutions
               }
             }
           })
         }),
-        apiTestUtils.addCollectionApi({ prefix: config.stackName, collection: collectionData })
+        addCollections(config.stackName, config.bucket, collectionsDir, testSuffix)
       ]);
     });
 
@@ -187,11 +190,21 @@ describe('the sf-starter lambda function', () => {
         sqs().deleteQueue({
           QueueUrl: maxQueueUrl
         }).promise(),
+        deleteCollections(config.stackName, config.bucket, [collection]),
         deleteFolder(config.bucket, testDataFolder)
       ]);
     });
 
-    it('has the right amount messages', async () => {
+    it('queue-granules returns the correct amount of queued executions', async () => {
+      const granules = new Array(numberOfMessages)
+        .fill()
+        .map((value) => ({
+          granuleId: `granule${value}`,
+          dataType: collection.dataType,
+          version: collection.version,
+          files: []
+        }));
+
       const { Payload } = await lambda().invoke({
         FunctionName: `${config.stackName}-QueueGranules`,
         InvocationType: 'RequestResponse',
@@ -210,7 +223,7 @@ describe('the sf-starter lambda function', () => {
               }
             },
             templates: {
-              testWorkflow: templateUri
+              [passSfName]: templateUri
             },
             provider: {},
             queues: {
@@ -221,28 +234,39 @@ describe('the sf-starter lambda function', () => {
             QueueGranules: {
               stackName: '{{$.meta.stack}}',
               queueUrl: `{{$.meta.queues.${maxQueueName}}}`,
-              granuleIngestMessageTemplateUri: '{{$.meta.templates.testWorkflow}}',
+              granuleIngestMessageTemplateUri: `{{$.meta.templates.${passSfName}}}`,
               provider: '{{$.meta.provider}}',
               internalBucket: '{{$.meta.buckets.internal.name}}'
             }
           },
           payload: {
-            granules: [{
-              granuleId: 'granule1',
-              dataType: collectionData.dataType,
-              version: collectionData.version,
-              files: []
-            }]
+            granules: granules
           }
         })
       }).promise();
       const { payload } = JSON.parse(Payload);
-      expect(payload.queued.length).toEqual(1);
+      expect(payload.queued.length).toEqual(numberOfMessages);
+    });
 
+    it('has the right amount of messages in the queue', async () => {
       const messages = await receiveSQSMessages(maxQueueUrl, {
-        visibilityTimeout: 0
+        visibilityTimeout: 0,
+        numOfMessages: numberOfMessages
       });
-      expect(messages.length).toEqual(1);
+      expect(messages.length).toBeLessThanOrEqual(numberOfMessages);
+    });
+
+    it('consumes the right amount of messages', async () => {
+      const { Payload } = await lambda().invoke({
+        FunctionName: `${config.stackName}-sqs2sfThrottle`,
+        InvocationType: 'RequestResponse',
+        Payload: JSON.stringify({
+          queueUrl: maxQueueUrl,
+          messageLimit: numberOfMessages
+        })
+      }).promise();
+      const payload = parseInt(Payload, 10);
+      expect(payload).toEqual(queueMaxExecutions);
     });
   });
 });
