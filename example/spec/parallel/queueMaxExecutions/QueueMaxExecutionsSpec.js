@@ -61,7 +61,7 @@ const uploadGranulesData = async ({
   await Promise.all(granuleUploadPromises);
 };
 
-describe('Queues with maximum executions defined', () => {
+xdescribe('Queues with maximum executions defined', () => {
   let workflowExecution;
 
   const providersDir = './data/providers/s3/';

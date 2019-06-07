@@ -61,6 +61,7 @@ function generateStartSfMessages(num, workflowArn) {
 
 describe('the sf-starter lambda function', () => {
   let queueUrl;
+  let passSfArn;
 
   beforeAll(async () => {
     const { QueueUrl } = await sqs().createQueue({
@@ -80,10 +81,9 @@ describe('the sf-starter lambda function', () => {
     expect(messageLimit).toBe(300);
   });
 
-  describe('when provided a queue', () => {
+  xdescribe('when provided a queue', () => {
     const initialMessageCount = 30;
     const testMessageLimit = 25;
-    let passSfArn;
     let qAttrParams;
     let messagesConsumed;
 
@@ -95,7 +95,10 @@ describe('the sf-starter lambda function', () => {
       const { stateMachineArn } = await sfn().createStateMachine(passSfParams).promise();
       passSfArn = stateMachineArn;
       const msgs = generateStartSfMessages(initialMessageCount, passSfArn);
-      await Promise.all(msgs.map((msg) => sqs().sendMessage({ QueueUrl: queueUrl, MessageBody: JSON.stringify(msg) }).promise()));
+      await Promise.all(
+        msgs.map((msg) =>
+          sqs().sendMessage({ QueueUrl: queueUrl, MessageBody: JSON.stringify(msg) }).promise())
+      );
     });
 
     afterAll(async () => {
@@ -157,7 +160,7 @@ describe('the sf-starter lambda function', () => {
       }).promise();
       maxQueueUrl = QueueUrl;
 
-      templateKey = `${testDataFolder}/test.json`;
+      templateKey = `${testDataFolder}/${passSfName}.json`;
       templateUri = `s3://${config.bucket}/${templateKey}`;
 
       await Promise.all([
@@ -165,6 +168,9 @@ describe('the sf-starter lambda function', () => {
           Bucket: config.bucket,
           Key: templateKey,
           Body: JSON.stringify({
+            cumulus_meta: {
+              state_machine: `${config.stackName}-${passSfName}`
+            },
             meta: {
               queues: {
                 [maxQueueName]: maxQueueUrl
@@ -190,22 +196,50 @@ describe('the sf-starter lambda function', () => {
         FunctionName: `${config.stackName}-QueueGranules`,
         InvocationType: 'RequestResponse',
         Payload: JSON.stringify({
-          config: {
-            granuleIngestMessageTemplateUri: templateUri,
-            queueUrl
+          cumulus_meta: {
+            message_source: 'local',
+            execution_name: 'test-execution',
+            stateMachineArn: passSfArn,
+            task: 'QueueGranules'
           },
-          input: {
+          meta: {
+            stack: config.stackName,
+            buckets: {
+              internal: {
+                name: config.bucket
+              }
+            },
+            templates: {
+              testWorkflow: templateUri
+            },
+            provider: {},
+            queues: {
+              [maxQueueName]: maxQueueUrl
+            }
+          },
+          workflow_config: {
+            QueueGranules: {
+              stackName: '{{$.meta.stack}}',
+              queueUrl: `{{$.meta.queues.${maxQueueName}}}`,
+              granuleIngestMessageTemplateUri: '{{$.meta.templates.testWorkflow}}',
+              provider: '{{$.meta.provider}}',
+              internalBucket: '{{$.meta.buckets.internal.name}}'
+            }
+          },
+          payload: {
             granules: [{
               granuleId: 'granule1',
               dataType: collectionData.dataType,
-              version: collectionData.version
+              version: collectionData.version,
+              files: []
             }]
           }
         })
       }).promise();
-      expect(Payload.queued.length).toEqual(1);
+      const { payload } = JSON.parse(Payload);
+      expect(payload.queued.length).toEqual(1);
 
-      const messages = receiveSQSMessages(maxQueueUrl, {
+      const messages = await receiveSQSMessages(maxQueueUrl, {
         visibilityTimeout: 0
       });
       expect(messages.length).toEqual(1);
