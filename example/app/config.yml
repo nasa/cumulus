@@ -201,17 +201,6 @@ default:
               - Arn
           protocol: lambda
 
-  sqs:
-    startSFLowPriority:
-      visibilityTimeout: 60
-      retry: 30
-      maxExecutions: 5
-      consumer:
-        - lambda: sqs2sfThrottle
-          schedule: rate(1 minute)
-          messageLimit: '{{sqs_consumer_rate}}'
-          state: ENABLED
-
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
     # if not specified the value of the apigateway backend endpoint is used
