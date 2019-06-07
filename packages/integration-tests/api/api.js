@@ -63,7 +63,12 @@ async function callCumulusApi({ prefix, payload: userPayload, userParams = {} })
     await accessTokenModel.delete({ accessToken });
   }
 
-  return JSON.parse(apiOutput.Payload);
+  const parsedOutput = JSON.parse(apiOutput.Payload);
+  if (parsedOutput.errorMessage) {
+    console.log(`Error coming from Cumulus API call: ${JSON.stringify(apiOutput, null, 2)}`);
+  }
+
+  return parsedOutput;
 }
 
 /**
