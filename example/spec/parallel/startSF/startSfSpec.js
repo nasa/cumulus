@@ -67,12 +67,16 @@ describe('the sf-starter lambda function', () => {
       QueueName: `${testName}Queue`
     }).promise();
     queueUrl = QueueUrl;
+
+    const sfResponse = await sfn().createStateMachine(passSfParams).promise();
+    passSfArn = sfResponse.stateMachineArn;
   });
 
   afterAll(async () => {
     await sqs().deleteQueue({
       QueueUrl: queueUrl
     }).promise();
+    await sfn().deleteStateMachine({ stateMachineArn: passSfArn }).promise();
   });
 
   it('has a configurable message limit', () => {
@@ -80,7 +84,7 @@ describe('the sf-starter lambda function', () => {
     expect(messageLimit).toBe(300);
   });
 
-  xdescribe('when provided a queue', () => {
+  describe('when provided a queue', () => {
     const initialMessageCount = 30;
     const testMessageLimit = 25;
     let qAttrParams;
@@ -91,8 +95,8 @@ describe('the sf-starter lambda function', () => {
         QueueUrl: queueUrl,
         AttributeNames: ['ApproximateNumberOfMessages', 'ApproximateNumberOfMessagesNotVisible']
       };
-      const { stateMachineArn } = await sfn().createStateMachine(passSfParams).promise();
-      passSfArn = stateMachineArn;
+      // const { stateMachineArn } = await sfn().createStateMachine(passSfParams).promise();
+      // passSfArn = stateMachineArn;
       const msgs = generateStartSfMessages(initialMessageCount, passSfArn);
       await Promise.all(
         msgs.map((msg) =>
@@ -100,9 +104,9 @@ describe('the sf-starter lambda function', () => {
       );
     });
 
-    afterAll(async () => {
-      await sfn().deleteStateMachine({ stateMachineArn: passSfArn }).promise();
-    });
+    // afterAll(async () => {
+    //   await sfn().deleteStateMachine({ stateMachineArn: passSfArn }).promise();
+    // });
 
     it('that has messages', async () => {
       pending('until SQS provides a reliable getNumberOfMessages function');
@@ -169,7 +173,7 @@ describe('the sf-starter lambda function', () => {
           Key: templateKey,
           Body: JSON.stringify({
             cumulus_meta: {
-              state_machine: `${config.stackName}-${passSfName}`
+              state_machine: passSfArn
             },
             meta: {
               queues: {
@@ -212,7 +216,6 @@ describe('the sf-starter lambda function', () => {
           cumulus_meta: {
             message_source: 'local',
             execution_name: 'test-execution',
-            stateMachineArn: passSfArn,
             task: 'QueueGranules'
           },
           meta: {
