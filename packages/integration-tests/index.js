@@ -10,7 +10,6 @@ const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
 const pMap = require('p-map');
-const pWaitFor = require('p-wait-for');
 
 const {
   stringUtils: { globalReplace }
