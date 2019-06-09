@@ -11,6 +11,7 @@ const aws = require('aws-sdk');
 const httpAwsEs = require('http-aws-es');
 const elasticsearch = require('elasticsearch');
 const { inTestMode } = require('@cumulus/common/test-utils');
+const { promisify } = require('util');
 const queries = require('./queries');
 const aggs = require('./aggregations');
 
@@ -21,58 +22,46 @@ const logDetails = {
 
 const defaultIndexAlias = 'cumulus-alias';
 
+const getCredentials = promisify(aws.config.getCredentials);
+
+/**
+ * returns the local address of elasticsearch based on
+ * the environment variables set
+ *
+ * @returns {string} elasticsearch local address
+ */
+const getLocalEsHost = () => {
+  if (process.env.LOCAL_ES_HOST) return `${process.env.LOCAL_ES_HOST}:9200`;
+  if (process.env.LOCALSTACK_HOST) return `${process.env.LOCALSTACK_HOST}:4571`;
+  return 'localhost:9200';
+};
+
+const esTestConfig = () => ({
+  host: getLocalEsHost(),
+  requestTimeout: 5000
+});
+
+const esProdConfig = async (host) => {
+  if (!aws.config.credentials) await getCredentials();
+
+  return {
+    host: process.env.ES_HOST || host || 'localhost:9200',
+    connectionClass: httpAwsEs,
+    amazonES: {
+      region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
+      credentials: aws.config.credentials
+    },
+
+    // Note that this doesn't abort the query.
+    requestTimeout: 50000 // milliseconds
+  };
+};
+
+const esConfig = (host) => (inTestMode() ? esTestConfig() : esProdConfig(host));
+
 class BaseSearch {
-  /**
-   * returns the local address of elasticsearch based on
-   * the environment variables set
-   *
-   * @returns {string} elasticsearch local address
-   */
-  static getLocalEsHost() {
-    if (process.env.LOCAL_ES_HOST) {
-      return `${process.env.LOCAL_ES_HOST}:9200`;
-    }
-    if (process.env.LOCALSTACK_HOST) {
-      return `${process.env.LOCALSTACK_HOST}:4571`;
-    }
-
-    return 'localhost:9200';
-  }
-
   static async es(host) {
-    let esConfig;
-
-    // this is needed for getting temporary credentials from IAM role
-    if (inTestMode()) {
-      if (!process.env.LOCALSTACK_HOST) {
-        throw new Error('The LOCALSTACK_HOST environment variable is not set.');
-      }
-
-      esConfig = {
-        host: BaseSearch.getLocalEsHost()
-      };
-    } else {
-      if (!aws.config.credentials) {
-        await new Promise((resolve, reject) => aws.config.getCredentials((err) => {
-          if (err) return reject(err);
-          return resolve();
-        }));
-      }
-
-      esConfig = {
-        host: process.env.ES_HOST || host || 'localhost:9200',
-        connectionClass: httpAwsEs,
-        amazonES: {
-          region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
-          credentials: aws.config.credentials
-        },
-
-        // Note that this doesn't abort the query.
-        requestTimeout: 50000 // milliseconds
-      };
-    }
-
-    return new elasticsearch.Client(esConfig);
+    return new elasticsearch.Client(await esConfig(host));
   }
 
   constructor(event, type = null, index) {
@@ -328,5 +317,6 @@ class Search extends BaseSearch {}
 module.exports = {
   BaseSearch,
   Search,
-  defaultIndexAlias
+  defaultIndexAlias,
+  getLocalEsHost
 };
