@@ -2,19 +2,12 @@
 
 const rewire = require('rewire');
 const test = require('ava');
-const {
-  aws,
-  errors: {
-    ResourcesLockedError
-  },
-  Semaphore,
-  testUtils: {
-    randomId
-  },
-  util: {
-    noop
-  }
-} = require('@cumulus/common');
+
+const aws = require('@cumulus/common/aws');
+const { ResourcesLockedError } = require('@cumulus/common/errors');
+const Semaphore = require('@cumulus/common/Semaphore');
+const { randomId } = require('@cumulus/common/test-utils');
+const { noop } = require('@cumulus/common/util');
 
 const sfStarter = rewire('../../lambdas/sf-starter');
 const { Manager } = require('../../models');
@@ -140,6 +133,33 @@ test('incrementAndDispatch increments priority semaphore', async (t) => {
 
   const response = await semaphore.get(queueName);
   t.is(response.semvalue, 1);
+});
+
+test.serial('incrementAndDispatch decrements priority semaphore if dispatch() throws error', async (t) => {
+  const { semaphore } = t.context;
+
+  const queueName = randomId('low');
+  const message = createWorkflowMessage(queueName, 5);
+
+  const stubSFNThrowError = () => ({
+    startExecution: () => ({
+      promise: async () => {
+        const response = await semaphore.get(queueName);
+        t.is(response.semvalue, 1);
+        throw new Error('testing');
+      }
+    })
+  });
+  const revert = sfStarter.__set__('sfn', stubSFNThrowError);
+
+  try {
+    await incrementAndDispatch({ Body: message });
+  } catch (err) {
+    const response = await semaphore.get(queueName);
+    t.is(response.semvalue, 0);
+  } finally {
+    revert();
+  }
 });
 
 test('incrementAndDispatch throws error when trying to increment priority semaphore beyond maximum', async (t) => {

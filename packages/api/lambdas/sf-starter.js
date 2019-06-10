@@ -2,22 +2,19 @@
 
 const uuidv4 = require('uuid/v4');
 const get = require('lodash.get');
-const {
-  aws: {
-    dynamodbDocClient,
-    sfn
-  },
-  errors: {
-    ResourcesLockedError
-  },
-  log,
-  Semaphore
-} = require('@cumulus/common');
+
+const { sfn } = require('@cumulus/common/aws');
+const log = require('@cumulus/common/log');
 const {
   getQueueName,
   getMaximumExecutions
 } = require('@cumulus/common/message');
 const { Consumer } = require('@cumulus/ingest/consumer');
+
+const {
+  decrementQueueSemaphore,
+  incrementQueueSemaphore
+} = require('../lib/semaphore');
 
 /**
  * Starts a new stepfunction with the given payload
@@ -42,33 +39,6 @@ function dispatch(message) {
 }
 
 /**
- * Increment the semaphore for executions started from a queue.
- *
- * Throws `ResourcesLockedError` if maximum number of executions are already
- * running.
- *
- * @param {string} queueName - Queue name which is used as the semaphore key
- * @param {number} maximum - Maximum number of executions allowed for this semaphore
- * @returns {Promise}
- * @throws {Error}
- */
-async function incrementQueueSemaphore(queueName, maximum) {
-  const semaphore = new Semaphore(
-    dynamodbDocClient(),
-    process.env.SemaphoresTable
-  );
-
-  try {
-    await semaphore.up(queueName, maximum);
-  } catch (err) {
-    if (err instanceof ResourcesLockedError) {
-      log.info(`Unable to start new execution: the maximum number of executions for ${queueName} are already running.`);
-    }
-    throw err;
-  }
-}
-
-/**
  * Attempt to increment the queue semaphore and start a new execution.
  *
  * If `incrementQueueSemaphore()` is unable to increment the semaphore,
@@ -84,9 +54,20 @@ async function incrementAndDispatch(queueMessage) {
   const queueName = getQueueName(workflowMessage);
   const maxExecutions = getMaximumExecutions(workflowMessage, queueName);
 
+  log.info('queueName', queueName);
+  log.info('maxExecutions', maxExecutions);
+
   await incrementQueueSemaphore(queueName, maxExecutions);
 
-  return dispatch(queueMessage);
+  // If dispatch() fails, execution is not started and thus semaphore will
+  // never be decremented for the above increment, so we decrement it
+  // manually.
+  try {
+    return await dispatch(queueMessage);
+  } catch (err) {
+    await decrementQueueSemaphore(queueName);
+    throw err;
+  }
 }
 
 /**
