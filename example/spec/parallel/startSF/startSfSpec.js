@@ -4,7 +4,8 @@ const {
   lambda,
   sfn,
   sqs,
-  s3PutObject
+  s3PutObject,
+  dynamodbDocClient
 } = require('@cumulus/common/aws');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const {
@@ -222,7 +223,13 @@ describe('the sf-starter lambda function', () => {
         }).promise(),
         deleteCollections(config.stackName, config.bucket, [collection]),
         deleteFolder(config.bucket, testDataFolder),
-        sfn().deleteStateMachine({ stateMachineArn: waitPassSfArn }).promise()
+        sfn().deleteStateMachine({ stateMachineArn: waitPassSfArn }).promise(),
+        dynamodbDocClient().delete({
+          TableName: `${config.stackName}-SemaphoresTable`,
+          Key: {
+            key: maxQueueName
+          }
+        }).promise()
       ]);
     });
 
