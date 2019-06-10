@@ -63,7 +63,7 @@ if [[ -z $BRANCH ]]; then
   echo "Branch is not set, this is required for Bamboo CI.  Exiting"
   exit 1
 fi
-echo export BRANCH="$BRANCH" >> .bamboo_env_vars
+echo export BRANCH=$BRANCH >> .bamboo_env_vars
 
 
 ## Run detect-pr script and set flag to true/false
