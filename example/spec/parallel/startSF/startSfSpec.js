@@ -27,7 +27,6 @@ const testName = createTimestampedTestId(config.stackName, 'testStartSf');
 const testSuffix = createTestSuffix(testName);
 const testDataFolder = createTestDataPath(testName);
 
-const passSfName = timestampedName('passTestSf');
 const passSfDef = {
   Comment: 'Pass-only step function',
   StartAt: 'PassState',
@@ -41,11 +40,11 @@ const passSfDef = {
 };
 const passSfRoleArn = `arn:aws:iam::${config.awsAccountId}:role/${config.stackName}-steprole`;
 
-const passSfParams = {
+const generatePassSfParams = (passSfName) => ({
   name: passSfName,
   definition: JSON.stringify(passSfDef),
   roleArn: passSfRoleArn
-};
+});
 
 const sfStarterName = `${config.stackName}-sqs2sf`;
 
@@ -59,23 +58,18 @@ function generateStartSfMessages(num, workflowArn) {
 
 describe('the sf-starter lambda function', () => {
   let queueUrl;
-  let passSfArn;
 
   beforeAll(async () => {
     const { QueueUrl } = await sqs().createQueue({
       QueueName: `${testName}Queue`
     }).promise();
     queueUrl = QueueUrl;
-
-    const sfResponse = await sfn().createStateMachine(passSfParams).promise();
-    passSfArn = sfResponse.stateMachineArn;
   });
 
   afterAll(async () => {
     await sqs().deleteQueue({
       QueueUrl: queueUrl
     }).promise();
-    await sfn().deleteStateMachine({ stateMachineArn: passSfArn }).promise();
   });
 
   it('has a configurable message limit', () => {
@@ -88,14 +82,19 @@ describe('the sf-starter lambda function', () => {
     const testMessageLimit = 25;
     let qAttrParams;
     let messagesConsumed;
+    let passSfArn;
 
     beforeAll(async () => {
       qAttrParams = {
         QueueUrl: queueUrl,
         AttributeNames: ['ApproximateNumberOfMessages', 'ApproximateNumberOfMessagesNotVisible']
       };
-      // const { stateMachineArn } = await sfn().createStateMachine(passSfParams).promise();
-      // passSfArn = stateMachineArn;
+
+      const passSfName = timestampedName('passTestSf');
+      const passSfParams = generatePassSfParams(passSfName);
+      const { stateMachineArn } = await sfn().createStateMachine(passSfParams).promise();
+      passSfArn = stateMachineArn;
+
       const msgs = generateStartSfMessages(initialMessageCount, passSfArn);
       await Promise.all(
         msgs.map((msg) =>
@@ -103,9 +102,9 @@ describe('the sf-starter lambda function', () => {
       );
     });
 
-    // afterAll(async () => {
-    //   await sfn().deleteStateMachine({ stateMachineArn: passSfArn }).promise();
-    // });
+    afterAll(async () => {
+      await sfn().deleteStateMachine({ stateMachineArn: passSfArn }).promise();
+    });
 
     it('that has messages', async () => {
       pending('until SQS provides a reliable getNumberOfMessages function');
@@ -143,11 +142,12 @@ describe('the sf-starter lambda function', () => {
     let maxQueueUrl;
     let maxQueueName;
     let templateUri;
-    let templateKey;
     let messagesConsumed;
+    let passSfName;
+    let passSfArn;
 
     const queueMaxExecutions = 5;
-    const numberOfMessages = 6;
+    const numberOfMessages = 20;
 
     const collectionsDir = './data/collections/s3_MOD09GQ_006';
     const collection = {
@@ -164,8 +164,14 @@ describe('the sf-starter lambda function', () => {
       }).promise();
       maxQueueUrl = QueueUrl;
 
-      templateKey = `${testDataFolder}/${passSfName}.json`;
+      passSfName = timestampedName('passTestSf');
+      const passSfParams = generatePassSfParams(passSfName);
+
+      const templateKey = `${testDataFolder}/${passSfName}.json`;
       templateUri = `s3://${config.bucket}/${templateKey}`;
+
+      const { stateMachineArn } = await sfn().createStateMachine(passSfParams).promise();
+      passSfArn = stateMachineArn;
 
       await Promise.all([
         s3PutObject({
@@ -195,7 +201,8 @@ describe('the sf-starter lambda function', () => {
           QueueUrl: maxQueueUrl
         }).promise(),
         deleteCollections(config.stackName, config.bucket, [collection]),
-        deleteFolder(config.bucket, testDataFolder)
+        deleteFolder(config.bucket, testDataFolder),
+        sfn().deleteStateMachine({ stateMachineArn: passSfArn }).promise()
       ]);
     });
 
@@ -265,6 +272,11 @@ describe('the sf-starter lambda function', () => {
       // were queued because of eventual consistency in SQS
       expect(messagesConsumed).toBeGreaterThan(0);
       expect(messagesConsumed).toBeLessThanOrEqual(queueMaxExecutions);
+    });
+
+    it('to trigger workflows', async () => {
+      const { executions } = await StepFunctions.listExecutions({ stateMachineArn: passSfArn });
+      expect(executions.length).toBe(messagesConsumed);
     });
   });
 });
