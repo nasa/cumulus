@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
-. ./abort-if-not-pr-or-master.sh
-. ./set-bamboo-env-variables.sh
+. ./bamboo/abort-if-not-pr-or-master.sh
+. ./bamboo/set-bamboo-env-variables.sh
 docker ps -a ## Show running containers for output logs
 
 # Run unit tests (excluding integration/api tests)
