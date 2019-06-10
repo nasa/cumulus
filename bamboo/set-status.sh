@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -ex
 source .bamboo_env_vars || true
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr-or-master.sh

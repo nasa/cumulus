@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 . ./bamboo/abort-if-not-pr-or-master.sh
 
 container_id=${bamboo_planKey,,}

@@ -1,18 +1,17 @@
 #!/bin/bash
-set -e
+set -ex
 
 . ./bamboo/abort-if-not-pr-or-master.sh
 . ./bamboo/set-bamboo-env-variables.sh
 
 # Export user information for sshd container
 export SSH_USERS=user:$(id -u):$(id -u)
+export COMPOSE_FILE=./bamboo/docker-compose.yml
 
 ## Set container_id for docker-compose to use to identify the compose stack per planKey
 docker_command="docker exec -t ${container_id}_build_env_1 /bin/bash -c"
 
 docker ps -a
-
-export COMPOSE_FILE=./bamboo/docker-compose.yml
 
 ## Setup the compose stack
 docker-compose -p ${container_id} down
