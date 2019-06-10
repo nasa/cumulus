@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 . ./bamboo/abort-if-skip-integration-tests.sh
 . ./bamboo/abort-if-not-pr-or-redeployment.sh
 

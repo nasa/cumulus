@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 . ./bamboo/abort-if-not-pr-or-master.sh
 . ./bamboo/set-bamboo-env-variables.sh
 docker ps -a ## Show running containers for output logs

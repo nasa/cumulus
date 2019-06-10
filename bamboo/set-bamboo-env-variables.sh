@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 
 # Bamboo envs are prefixed with bamboo_SECRET to avoid being printed
 declare -a param_list=(
