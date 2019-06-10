@@ -3,22 +3,12 @@
 const fs = require('fs-extra');
 
 const {
-  models: {
-    Collection,
-    Provider
-  }
-} = require('@cumulus/api');
-const {
-  aws: {
-    s3
-  },
-  testUtils: {
-    randomStringFromRegex
-  },
-  util: {
-    sleep
-  }
-} = require('@cumulus/common');
+  Collection,
+  Provider
+} = require('@cumulus/api/models');
+const { s3 } = require('@cumulus/common/aws');
+const { randomStringFromRegex } = require('@cumulus/common/test-utils');
+const { sleep } = require('@cumulus/common/util');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const {
   api: apiTestUtils,
