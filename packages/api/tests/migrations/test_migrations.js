@@ -3,7 +3,7 @@
 const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
 const { s3, recursivelyDeleteS3Bucket } = require('@cumulus/common/aws');
-const { Search } = require('../../es/search');
+const { Search, getLocalEsHost } = require('../../es/search');
 const indexer = require('../../es/indexer');
 const bootstrap = require('../../lambdas/bootstrap');
 const models = require('../../models');
@@ -107,7 +107,7 @@ test.serial('migrate records from ES to DynamoDB', async (t) => {
       granulesTable,
       executionsTable
     ],
-    elasticsearch_host: Search.getLocalEsHost(),
+    elasticsearch_host: getLocalEsHost(),
     elasticsearch_index: esIndex
   });
 
