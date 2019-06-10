@@ -1,6 +1,5 @@
 'use strict';
 
-const { log } = require('@cumulus/common');
 const { receiveSQSMessages, deleteSQSMessage } = require('@cumulus/common/aws');
 
 class Consumer {

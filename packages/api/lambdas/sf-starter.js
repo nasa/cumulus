@@ -54,9 +54,6 @@ async function incrementAndDispatch(queueMessage) {
   const queueName = getQueueName(workflowMessage);
   const maxExecutions = getMaximumExecutions(workflowMessage, queueName);
 
-  log.info('queueName', queueName);
-  log.info('maxExecutions', maxExecutions);
-
   await incrementQueueSemaphore(queueName, maxExecutions);
 
   // If dispatch() fails, execution is not started and thus semaphore will
