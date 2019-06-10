@@ -90,7 +90,7 @@ test('sfSemaphoreDown lambda does nothing for an event with the wrong source', a
 
   const output = await handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
-      status: 'COMPLETED',
+      status: 'SUCCEEDED',
       queueName,
       source: 'fake-source'
     })
@@ -102,7 +102,7 @@ test('sfSemaphoreDown lambda does nothing for an event with the wrong source', a
 test('sfSemaphoreDown lambda does nothing for a workflow message with no queue name', async (t) => {
   const output = await handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
-      status: 'COMPLETED'
+      status: 'SUCCEEDED'
     })
   );
 
@@ -138,7 +138,7 @@ test('sfSemaphoreDown lambda does nothing for an event with no message', async (
   const output = await handleSemaphoreDecrementTask({
     source: sfEventSource,
     detail: {
-      status: 'COMPLETED'
+      status: 'SUCCEEDED'
     }
   });
 
@@ -150,7 +150,7 @@ test('sfSemaphoreDown lambda throws error when attempting to decrement empty sem
 
   await t.throws(handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
-      status: 'COMPLETED',
+      status: 'SUCCEEDED',
       queueName
     })
   ));
@@ -160,14 +160,14 @@ test('sfSemaphoreDown lambda throws error for invalid event message', async (t) 
   await t.throws(handleSemaphoreDecrementTask({
     source: sfEventSource,
     detail: {
-      status: 'COMPLETED',
+      status: 'SUCCEEDED',
       output: 'invalid message'
     }
   }));
 });
 
 test('sfSemaphoreDown lambda decrements semaphore for completed event message', async (t) => {
-  await testTerminalEventMessage(t, 'COMPLETED');
+  await testTerminalEventMessage(t, 'SUCCEEDED');
 });
 
 test('sfSemaphoreDown lambda decrements semaphore for failed event message', async (t) => {

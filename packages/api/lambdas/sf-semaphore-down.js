@@ -26,7 +26,7 @@ const isSfExecutionEvent = (event) => event.source === 'aws.states';
  */
 const isTerminalStatus = isOneOf([
   'ABORTED',
-  'COMPLETED',
+  'SUCCEEDED',
   'FAILED',
   'TIMED_OUT'
 ]);
