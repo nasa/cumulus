@@ -587,43 +587,6 @@ test.serial('creaging a failed step function', async (t) => {
   t.is(record.createdAt, newPayload.cumulus_meta.workflow_start_time);
 });
 
-test.serial('partially updating a provider record', async (t) => {
-  const testRecord = {
-    id: randomString()
-  };
-  const type = 'provider';
-
-  let r = await indexer.indexProvider(esClient, testRecord, esIndex, type);
-
-  // make sure record is created
-  t.is(r.result, 'created');
-  t.is(r._id, testRecord.id);
-
-  // now partially update it
-  const updatedRecord = {
-    host: 'example.com'
-  };
-  r = await indexer.partialRecordUpdate(
-    esClient,
-    testRecord.id,
-    type,
-    updatedRecord,
-    undefined,
-    esIndex
-  );
-
-  t.is(r.result, 'updated');
-  // check the record exists
-  const record = await esClient.get({
-    index: esIndex,
-    type,
-    id: testRecord.id
-  });
-
-  t.is(record._id, testRecord.id);
-  t.is(record._source.host, updatedRecord.host);
-});
-
 test.serial('delete a provider record', async (t) => {
   const testRecord = {
     id: randomString()
