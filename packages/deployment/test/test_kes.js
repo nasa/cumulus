@@ -292,7 +292,7 @@ test('setParentOverrideConfigValues ignores missing parent configuration', (t) =
 
 test('addLambdaDeadLetterQueues adds dead letter queue to the sqs configuration', (t) => {
   const kes = t.context.kes;
-  kes.config.lambdas.jobs.namedLambdaDeadLetterQueue = true;
+  kes.config.lambdas.CustomBootstrap.namedLambdaDeadLetterQueue = true;
   kes.config.DLQDefaultTimeout = 60;
   kes.config.DLQDefaultMessageRetentionPeriod = 5;
   kes.addLambdaDeadLetterQueues();
@@ -301,16 +301,16 @@ test('addLambdaDeadLetterQueues adds dead letter queue to the sqs configuration'
     MessageRetentionPeriod: 5,
     visibilityTimeout: 60
   };
-  const actual = kes.config.sqs.jobsDeadLetterQueue;
+  const actual = kes.config.sqs.CustomBootstrapDeadLetterQueue;
   t.deepEqual(expected, actual);
 });
 
 test('addLambdaDeadLetterQueues adds dead letter queue to the sqs configuration', (t) => {
   const kes = t.context.kes;
-  kes.config.lambdas.jobs.namedLambdaDeadLetterQueue = true;
+  kes.config.lambdas.CustomBootstrap.namedLambdaDeadLetterQueue = true;
   kes.addLambdaDeadLetterQueues();
-  const actual = kes.config.lambdas.jobs.deadletterqueue;
-  const expected = 'jobsDeadLetterQueue';
+  const actual = kes.config.lambdas.CustomBootstrap.deadletterqueue;
+  const expected = 'CustomBootstrapDeadLetterQueue';
   t.is(expected, actual);
 });
 

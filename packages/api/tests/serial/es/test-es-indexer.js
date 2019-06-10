@@ -556,10 +556,10 @@ test.serial('creating a step function with missing arn', async (t) => {
   const newPayload = clone(granuleSuccess);
   delete newPayload.cumulus_meta.state_machine;
 
-  const e = new models.Execution();
-  const promise = e.createExecutionFromSns(newPayload);
-  const error = await t.throws(promise);
-  t.is(error.message, 'State Machine Arn is missing. Must be included in the cumulus_meta');
+  await t.throwsAsync(
+    () => (new models.Execution()).createExecutionFromSns(newPayload),
+    'State Machine Arn is missing. Must be included in the cumulus_meta'
+  );
 });
 
 test.serial('creating a successful step function', async (t) => {
@@ -645,14 +645,10 @@ test.serial('delete a provider record', async (t) => {
 
   t.is(r.result, 'deleted');
 
-  // check the record exists
-  const promise = esClient.get({
-    index: esIndex,
-    type,
-    id: testRecord.id
-  });
-  const error = await t.throws(promise);
-  t.is(error.message, 'Not Found');
+  await t.throwsAsync(
+    () => esClient.get({ index: esIndex, type, id: testRecord.id }),
+    'Not Found'
+  );
 });
 
 // This needs to be serial because it is stubbing aws.sfn's responses
