@@ -5,6 +5,7 @@ const {
   getQueueName,
   hasQueueAndExecutionLimit
 } = require('@cumulus/common/message');
+const log = require('@cumulus/common/log');
 const { isOneOf } = require('@cumulus/common/util');
 
 const { decrementQueueSemaphore } = require('../lib/semaphore');
@@ -57,6 +58,7 @@ const isDecrementEvent = (event) =>
  * @param {Object} event - incoming event from Cloudwatch
  */
 async function handleSemaphoreDecrementTask(event) {
+  log.info('event', event);
   if (isDecrementEvent(event)) {
     const message = getEventMessage(event);
     const queueName = getQueueName(message);

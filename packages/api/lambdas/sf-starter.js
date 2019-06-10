@@ -4,7 +4,6 @@ const uuidv4 = require('uuid/v4');
 const get = require('lodash.get');
 
 const { sfn } = require('@cumulus/common/aws');
-const log = require('@cumulus/common/log');
 const {
   getQueueName,
   getMaximumExecutions
