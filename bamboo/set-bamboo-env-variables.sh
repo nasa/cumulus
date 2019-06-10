@@ -57,6 +57,15 @@ export container_id=${container_id/-/}
 
 source .bamboo_env_vars || true
 
+## Branch should be set in the .bamboo_env_vars *or* the
+## configured bamboo Environment variables.
+if [[ -z $BRANCH ]]; then
+  echo "Branch is not set, this is required for Bamboo CI.  Exiting"
+  exit 1
+fi
+echo export BRANCH="$BRANCH" >> .bamboo_env_vars
+
+
 ## Run detect-pr script and set flag to true/false
 ## depending on if there is a PR associated with the
 ## current ref from the current branch
