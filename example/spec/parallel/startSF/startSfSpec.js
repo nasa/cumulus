@@ -33,7 +33,7 @@ const passSfDef = {
   States: {
     PassState: {
       Type: 'Pass',
-      Result: '$.payload',
+      ResultPath: '$.payload',
       End: true
     }
   }
