@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-. ./abort-if-not-pr-or-master.sh
-. ./set-bamboo-env-variables.sh
+. ./bamboo/abort-if-not-pr-or-master.sh
+. ./bamboo/set-bamboo-env-variables.sh
 
 # Export user information for sshd container
 export SSH_USERS=user:$(id -u):$(id -u)
@@ -11,6 +11,8 @@ export SSH_USERS=user:$(id -u):$(id -u)
 docker_command="docker exec -t ${container_id}_build_env_1 /bin/bash -c"
 
 docker ps -a
+
+export COMPOSE_FILE=./bamboo/docker-compose.yml
 
 ## Setup the compose stack
 docker-compose -p ${container_id} down
@@ -45,7 +47,7 @@ done
 echo 'HTTP service is available'
 
 # Set permissions on sftp credentials
-chmod 0400 ../packages/test-data/keys/ssh_client_rsa_key
+chmod 0400 ./packages/test-data/keys/ssh_client_rsa_key
 
 # Wait for the SFTP server to be available
 while ! $docker_command 'sftp\
