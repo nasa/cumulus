@@ -27,6 +27,9 @@ const testName = createTimestampedTestId(config.stackName, 'testStartSf');
 const testSuffix = createTestSuffix(testName);
 const testDataFolder = createTestDataPath(testName);
 
+const passSfRoleArn = `arn:aws:iam::${config.awsAccountId}:role/${config.stackName}-steprole`;
+
+const passSfName = timestampedName('passTestSf');
 const passSfDef = {
   Comment: 'Pass-only step function',
   StartAt: 'PassState',
@@ -38,13 +41,36 @@ const passSfDef = {
     }
   }
 };
-const passSfRoleArn = `arn:aws:iam::${config.awsAccountId}:role/${config.stackName}-steprole`;
 
-const generatePassSfParams = (passSfName) => ({
+const passSfParams = {
   name: passSfName,
   definition: JSON.stringify(passSfDef),
   roleArn: passSfRoleArn
-});
+};
+
+const waitPassSfName = timestampedName('waitPassTestSf');
+const waitPassSfDef = {
+  Comment: 'Pass-only step function',
+  StartAt: 'WaitState',
+  States: {
+    WaitState: {
+      Type: 'Wait',
+      Seconds: 5,
+      Next: 'PassState'
+    },
+    PassState: {
+      Type: 'Pass',
+      ResultPath: '$.payload',
+      End: true
+    }
+  }
+};
+
+const waitPassSfParams = {
+  name: waitPassSfName,
+  definition: JSON.stringify(waitPassSfDef),
+  roleArn: passSfRoleArn
+};
 
 const sfStarterName = `${config.stackName}-sqs2sf`;
 
@@ -90,8 +116,6 @@ describe('the sf-starter lambda function', () => {
         AttributeNames: ['ApproximateNumberOfMessages', 'ApproximateNumberOfMessagesNotVisible']
       };
 
-      const passSfName = timestampedName('passTestSf');
-      const passSfParams = generatePassSfParams(passSfName);
       const { stateMachineArn } = await sfn().createStateMachine(passSfParams).promise();
       passSfArn = stateMachineArn;
 
@@ -143,8 +167,7 @@ describe('the sf-starter lambda function', () => {
     let maxQueueName;
     let templateUri;
     let messagesConsumed;
-    let passSfName;
-    let passSfArn;
+    let waitPassSfArn;
 
     const queueMaxExecutions = 5;
     const numberOfMessages = 20;
@@ -164,14 +187,11 @@ describe('the sf-starter lambda function', () => {
       }).promise();
       maxQueueUrl = QueueUrl;
 
-      passSfName = timestampedName('passTestSf');
-      const passSfParams = generatePassSfParams(passSfName);
-
-      const templateKey = `${testDataFolder}/${passSfName}.json`;
+      const templateKey = `${testDataFolder}/${waitPassSfName}.json`;
       templateUri = `s3://${config.bucket}/${templateKey}`;
 
-      const { stateMachineArn } = await sfn().createStateMachine(passSfParams).promise();
-      passSfArn = stateMachineArn;
+      const { stateMachineArn } = await sfn().createStateMachine(waitPassSfParams).promise();
+      waitPassSfArn = stateMachineArn;
 
       await Promise.all([
         s3PutObject({
@@ -179,7 +199,7 @@ describe('the sf-starter lambda function', () => {
           Key: templateKey,
           Body: JSON.stringify({
             cumulus_meta: {
-              state_machine: passSfArn
+              state_machine: waitPassSfArn
             },
             meta: {
               queues: {
@@ -202,7 +222,7 @@ describe('the sf-starter lambda function', () => {
         }).promise(),
         deleteCollections(config.stackName, config.bucket, [collection]),
         deleteFolder(config.bucket, testDataFolder),
-        sfn().deleteStateMachine({ stateMachineArn: passSfArn }).promise()
+        sfn().deleteStateMachine({ stateMachineArn: waitPassSfArn }).promise()
       ]);
     });
 
@@ -233,7 +253,7 @@ describe('the sf-starter lambda function', () => {
               }
             },
             templates: {
-              [passSfName]: templateUri
+              [waitPassSfName]: templateUri
             },
             provider: {},
             queues: {
@@ -244,7 +264,7 @@ describe('the sf-starter lambda function', () => {
             QueueGranules: {
               stackName: '{{$.meta.stack}}',
               queueUrl: `{{$.meta.queues.${maxQueueName}}}`,
-              granuleIngestMessageTemplateUri: `{{$.meta.templates.${passSfName}}}`,
+              granuleIngestMessageTemplateUri: `{{$.meta.templates.${waitPassSfName}}}`,
               provider: '{{$.meta.provider}}',
               internalBucket: '{{$.meta.buckets.internal.name}}'
             }
@@ -275,7 +295,7 @@ describe('the sf-starter lambda function', () => {
     });
 
     it('to trigger workflows', async () => {
-      const { executions } = await StepFunctions.listExecutions({ stateMachineArn: passSfArn });
+      const { executions } = await StepFunctions.listExecutions({ stateMachineArn: waitPassSfArn });
       expect(executions.length).toBe(messagesConsumed);
     });
   });
