@@ -364,7 +364,7 @@ describe('The S3 Ingest Granules workflow', () => {
       await accessTokensModel.delete({ accessToken });
     });
 
-    xit('has expected payload', () => {
+    it('has expected payload', () => {
       expect(granule.cmrLink).toEqual(`${getUrl('search')}granules.json?concept_id=${granule.cmrConceptId}`);
 
       const updatedGranule = {
