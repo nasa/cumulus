@@ -25,6 +25,11 @@ We have encountered transient lambda service errors in our integration testing. 
   - Added additional `ems` configuration parameters for sending the ingest reports to EMS
   - Added functionality to send daily ingest reports to EMS
 
+### Fixed
+
+- **CUMULUS-1319**
+  - Fixed a bug where granule ingest times were not being stored to the database
+
 ## [v1.13.0] - 2019-5-20
 
 ### PLEASE NOTE
