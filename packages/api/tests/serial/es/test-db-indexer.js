@@ -239,9 +239,10 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
 
   // make sure the file records are deleted
   await Promise.all(fakeGranule.files.map(async (file) => {
-    const p = fileModel.get({ bucket, key: file.key });
-    const e = await t.throws(p);
-    t.true(e.message.includes('No record'));
+    await t.throwsAsync(
+      () => fileModel.get({ bucket, key: file.key }),
+      /No record/
+    );
   }));
 
   const deletedGranIndex = new Search({}, 'deletedgranule');
