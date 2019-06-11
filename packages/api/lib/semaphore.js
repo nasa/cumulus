@@ -57,4 +57,4 @@ async function decrementQueueSemaphore(queueName) {
 module.exports = {
   decrementQueueSemaphore,
   incrementQueueSemaphore
-}
+};

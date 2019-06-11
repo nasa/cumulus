@@ -40,7 +40,7 @@ class FakeCollection {
   async get(item) {
     if (item.name !== fakeCollection.name
         || item.version !== fakeCollection.version) {
-      throw new Error();
+      throw new Error('Collection could not be found');
     }
     return fakeCollection;
   }
@@ -49,7 +49,7 @@ class FakeCollection {
 class FakeProvider {
   async get({ id }) {
     if (id !== fakeProvider.id) {
-      throw new Error();
+      throw new Error('Provider could not be found');
     }
     return fakeProvider;
   }

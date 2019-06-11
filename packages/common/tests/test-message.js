@@ -138,7 +138,7 @@ test('buildQueueMessageFromTemplate returns message with correct payload', (t) =
   const expectedMessage = {
     meta: {
       provider,
-      collection,
+      collection
     },
     cumulus_meta: {
       execution_name: executionName,
@@ -163,8 +163,8 @@ test('buildQueueMessageFromTemplate returns expected message with undefined coll
   };
   const messageTemplate = {
     meta: {
-      collection,  // should not be overridden
-      provider  // should not be overridden
+      collection, // should not be overridden
+      provider // should not be overridden
     }
   };
   const queueName = randomId('queue');
@@ -181,7 +181,7 @@ test('buildQueueMessageFromTemplate returns expected message with undefined coll
   const expectedMessage = {
     meta: {
       provider,
-      collection,
+      collection
     },
     cumulus_meta: {
       execution_name: executionName,
@@ -197,7 +197,7 @@ test('buildQueueMessageFromTemplate returns expected message with defined collec
   const messageTemplate = {
     meta: {
       provider: 'fake-provider', // should get overridden
-      collection: 'fake-collection', // should get overriden
+      collection: 'fake-collection' // should get overriden
     }
   };
   const provider = randomId('provider');
@@ -216,7 +216,7 @@ test('buildQueueMessageFromTemplate returns expected message with defined collec
   const expectedMessage = {
     meta: {
       provider,
-      collection,
+      collection
     },
     cumulus_meta: {
       execution_name: executionName,
@@ -268,7 +268,7 @@ test('buildQueueMessageFromTemplate returns expected message with custom cumulus
       foo: 'bar',
       object: {
         key: 'value'
-      },
+      }
     },
     cumulus_meta: {
       execution_name: executionName,
