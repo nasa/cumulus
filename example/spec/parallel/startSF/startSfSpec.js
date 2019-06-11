@@ -5,6 +5,7 @@ const {
   sfn,
   sqs,
   s3PutObject,
+  deleteS3Object,
   dynamodbDocClient
 } = require('@cumulus/common/aws');
 const StepFunctions = require('@cumulus/common/StepFunctions');
@@ -12,21 +13,23 @@ const {
   addCollections,
   deleteCollections
 } = require('@cumulus/integration-tests');
+// const {
+//   deleteRule,
+//   postRule,
+//   rerunRule
+// } = require('@cumulus/integration-tests/api/rules');
 
 const {
   loadConfig,
   createTimestampedTestId,
   timestampedName,
-  createTestSuffix,
-  createTestDataPath,
-  deleteFolder
+  createTestSuffix
 } = require('../../helpers/testUtils');
 
 const config = loadConfig();
 
 const testName = createTimestampedTestId(config.stackName, 'testStartSf');
 const testSuffix = createTestSuffix(testName);
-const testDataFolder = createTestDataPath(testName);
 
 const passSfRoleArn = `arn:aws:iam::${config.awsAccountId}:role/${config.stackName}-steprole`;
 
@@ -158,6 +161,7 @@ describe('the sf-starter lambda function', () => {
     });
 
     it('to trigger workflows', async () => {
+      console.log(passSfArn);
       const { executions } = await StepFunctions.listExecutions({ stateMachineArn: passSfArn });
       expect(executions.length).toBe(messagesConsumed);
     });
@@ -166,9 +170,11 @@ describe('the sf-starter lambda function', () => {
   describe('when provided a queue with a maximum number of executions', () => {
     let maxQueueUrl;
     let maxQueueName;
+    let templateKey;
     let templateUri;
     let messagesConsumed;
     let waitPassSfArn;
+    let doStateMachineDelete = true;
 
     const queueMaxExecutions = 5;
     const numberOfMessages = 20;
@@ -180,6 +186,8 @@ describe('the sf-starter lambda function', () => {
       version: '006'
     };
 
+    // const ruleName = timestampedName('waitPassRule');
+
     beforeAll(async () => {
       maxQueueName = `${testName}MaxQueue`;
 
@@ -188,42 +196,68 @@ describe('the sf-starter lambda function', () => {
       }).promise();
       maxQueueUrl = QueueUrl;
 
-      const templateKey = `${testDataFolder}/${waitPassSfName}.json`;
+      templateKey = `${config.stackName}/workflows/${waitPassSfName}.json`;
       templateUri = `s3://${config.bucket}/${templateKey}`;
 
       const { stateMachineArn } = await sfn().createStateMachine(waitPassSfParams).promise();
       waitPassSfArn = stateMachineArn;
 
-      await Promise.all([
-        s3PutObject({
-          Bucket: config.bucket,
-          Key: templateKey,
-          Body: JSON.stringify({
-            cumulus_meta: {
-              state_machine: waitPassSfArn
+      await s3PutObject({
+        Bucket: config.bucket,
+        Key: templateKey,
+        Body: JSON.stringify({
+          cumulus_meta: {
+            state_machine: waitPassSfArn
+          },
+          meta: {
+            queues: {
+              [maxQueueName]: maxQueueUrl
             },
-            meta: {
-              queues: {
-                [maxQueueName]: maxQueueUrl
-              },
-              queueExecutionLimits: {
-                [maxQueueName]: queueMaxExecutions
-              }
+            queueExecutionLimits: {
+              [maxQueueName]: queueMaxExecutions
             }
-          })
-        }),
+          }
+        })
+      });
+
+      await Promise.all([
+        // postRule({
+        //   prefix: config.stackName,
+        //   rule: {
+        //     name: ruleName,
+        //     workflow: waitPassSfName,
+        //     collection: {
+        //       name: collection.name,
+        //       version: collection.version
+        //     },
+        //     state: 'ENABLED',
+        //     rule: {
+        //       type: 'onetime'
+        //     }
+        //   }
+        // }),
         addCollections(config.stackName, config.bucket, collectionsDir, testSuffix)
       ]);
     });
 
     afterAll(async () => {
+      const deleteStateMachine = doStateMachineDelete ?
+        sfn().deleteStateMachine({ stateMachineArn: waitPassSfArn }).promise() :
+        Promise.resolve();
+
+      // Have to delete rule before associated collection
+      // await deleteRule({
+      //   prefix: config.stackName,
+      //   ruleName
+      // });
+
       await Promise.all([
+        deleteS3Object(config.bucket, templateKey),
         sqs().deleteQueue({
           QueueUrl: maxQueueUrl
         }).promise(),
         deleteCollections(config.stackName, config.bucket, [collection]),
-        deleteFolder(config.bucket, testDataFolder),
-        sfn().deleteStateMachine({ stateMachineArn: waitPassSfArn }).promise(),
+        deleteStateMachine,
         dynamodbDocClient().delete({
           TableName: `${config.stackName}-SemaphoresTable`,
           Key: {
@@ -291,18 +325,24 @@ describe('the sf-starter lambda function', () => {
         InvocationType: 'RequestResponse',
         Payload: JSON.stringify({
           queueUrl: maxQueueUrl,
-          messageLimit: numberOfMessages
+          messageLimit: numberOfMessages,
+          timeLimit: 5
         })
       }).promise();
       messagesConsumed = parseInt(Payload, 10);
-      // Can't test that the messages consumed is exactly the number that
-      // were queued because of eventual consistency in SQS
+      // Can't test that the messages consumed is exactly the number the
+      // maximum allowed because of eventual consistency in SQS
       expect(messagesConsumed).toBeGreaterThan(0);
       expect(messagesConsumed).toBeLessThanOrEqual(queueMaxExecutions);
     });
 
     it('to trigger workflows', async () => {
+      console.log(waitPassSfArn);
       const { executions } = await StepFunctions.listExecutions({ stateMachineArn: waitPassSfArn });
+      if (executions.length !== messagesConsumed) {
+        doStateMachineDelete = false;
+        console.log(executions.map((execution) => execution.name));
+      }
       expect(executions.length).toBe(messagesConsumed);
     });
   });
