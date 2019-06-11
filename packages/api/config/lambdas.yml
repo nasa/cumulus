@@ -63,15 +63,6 @@ fallbackConsumer:
   envs:
     system_bucket: '{{system_bucket}}'
 
-jobs:
-  handler: index.handler
-  timeout: 300
-  memory: 320
-  useElasticSearch: '{{es.name}}'
-  launchInVpc: true
-  source: 'node_modules/@cumulus/api/dist/jobs/'
-  namedLambdaDeadLetterQueue: true
-
 cleanExecutions:
   handler: index.handler
   timeout: 900
