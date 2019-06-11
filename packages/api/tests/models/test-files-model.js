@@ -78,10 +78,10 @@ test.serial('create a granule wth 4 files, then remove one of the files', async 
   // make sure all the records are added
   await Promise.all(newGranule.files.map(validateFile));
 
-  // make sure the droppedFile is deleted
-  const promise = fileModel.get({ bucket: bucket, key: droppedFile.key });
-  const err = await t.throws(promise);
-  t.true(err.message.includes('No record'));
+  await t.throwsAsync(
+    () => fileModel.get({ bucket: bucket, key: droppedFile.key }),
+    /No record/
+  );
 });
 
 test.serial('create a granule wth 4 files with just a source, then remove one of the files', async (t) => {
@@ -111,10 +111,10 @@ test.serial('create a granule wth 4 files with just a source, then remove one of
   // make sure all the records are added
   await Promise.all(newGranule.files.map(validateFile));
 
-  // make sure the droppedFile is deleted
-  const promise = fileModel.get({ bucket: bucket, key: droppedFile.key });
-  const err = await t.throws(promise);
-  t.true(err.message.includes('No record'));
+  await t.throwsAsync(
+    () => fileModel.get({ bucket: bucket, key: droppedFile.key }),
+    /No record/
+  );
 });
 
 test('getBucketAndKey returns correct bucket and key when file has a bucket and key', (t) => {

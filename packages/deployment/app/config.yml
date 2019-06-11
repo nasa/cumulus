@@ -204,11 +204,6 @@ default:
       visibilityTimeout: 20
 
   rules:
-    backgroundJobs:
-      schedule: rate(10 minutes)
-      state: ENABLED
-      targets:
-        - lambda: jobs
     dailyEmsIngestReport:
       # run at 5:00am GMT daily
       schedule: cron(0 5 * * ? *)

@@ -148,22 +148,26 @@ test('sfSemaphoreDown lambda does nothing for an event with no message', async (
 test('sfSemaphoreDown lambda throws error when attempting to decrement empty semaphore', async (t) => {
   const queueName = randomId('low');
 
-  await t.throws(handleSemaphoreDecrementTask(
-    createCloudwatchEventMessage({
-      status: 'SUCCEEDED',
-      queueName
-    })
-  ));
+  await t.throwsAsync(
+    () => handleSemaphoreDecrementTask(
+      createCloudwatchEventMessage({
+        status: 'SUCCEEDED',
+        queueName
+      })
+    )
+  );
 });
 
 test('sfSemaphoreDown lambda throws error for invalid event message', async (t) => {
-  await t.throws(handleSemaphoreDecrementTask({
-    source: sfEventSource,
-    detail: {
-      status: 'SUCCEEDED',
-      output: 'invalid message'
-    }
-  }));
+  await t.throwsAsync(
+    () => handleSemaphoreDecrementTask({
+      source: sfEventSource,
+      detail: {
+        status: 'SUCCEEDED',
+        output: 'invalid message'
+      }
+    })
+  );
 });
 
 test('sfSemaphoreDown lambda decrements semaphore for completed event message', async (t) => {

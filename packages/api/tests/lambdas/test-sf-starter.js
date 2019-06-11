@@ -82,20 +82,25 @@ test.afterEach.always((t) => aws.sqs().deleteQueue({ QueueUrl: t.context.queueUr
 
 test.after.always(() => manager.deleteTable());
 
-test('handleEvent throws error when queueUrl is undefined', async (t) => {
-  const ruleInput = createRuleInput();
-  const error = await t.throws(handleEvent(ruleInput));
-  t.is(error.message, 'queueUrl is missing');
-});
+test(
+  'handleEvent throws error when queueUrl is undefined',
+  (t) =>
+    t.throwsAsync(
+      () => handleEvent(createRuleInput()),
+      'queueUrl is missing'
+    )
+);
 
 test('handleEvent throws error when timeLimit is <= 0', async (t) => {
-  let ruleInput = createRuleInput('test', 0);
-  let error = await t.throws(handleEvent(ruleInput));
-  t.is(error.message, 'timeLimit must be greater than 0');
+  await t.throwsAsync(
+    () => handleEvent(createRuleInput('test', 0)),
+    'timeLimit must be greater than 0'
+  );
 
-  ruleInput = createRuleInput('test', -1);
-  error = await t.throws(handleEvent(ruleInput));
-  t.is(error.message, 'timeLimit must be greater than 0');
+  await t.throwsAsync(
+    () => handleEvent(createRuleInput('test', -1)),
+    'timeLimit must be greater than 0'
+  );
 });
 
 test.serial('handleEvent returns the number of messages consumed', async (t) => {
@@ -111,16 +116,19 @@ test.serial('handleEvent returns the number of messages consumed', async (t) => 
 });
 
 test('incrementAndDispatch throws error for message without queue name', async (t) => {
-  const message = createWorkflowMessage();
-  const error = await t.throws(incrementAndDispatch({ Body: message }));
-  t.is(error.message, 'cumulus_meta.queueName not set in message');
+  await t.throwsAsync(
+    () => incrementAndDispatch({ Body: createWorkflowMessage() }),
+    'cumulus_meta.queueName not set in message'
+  );
 });
 
 test('incrementAndDispatch throws error for message with no maximum executions value', async (t) => {
   const queueName = randomId('queue');
-  const message = createWorkflowMessage(queueName);
-  const error = await t.throws(incrementAndDispatch({ Body: message }));
-  t.is(error.message, `Could not determine maximum executions for queue ${queueName}`);
+
+  await t.throwsAsync(
+    () => incrementAndDispatch({ Body: createWorkflowMessage(queueName) }),
+    `Could not determine maximum executions for queue ${queueName}`
+  );
 });
 
 test('incrementAndDispatch increments priority semaphore', async (t) => {
@@ -176,12 +184,10 @@ test('incrementAndDispatch throws error when trying to increment priority semaph
     }
   }).promise();
 
-  const message = createWorkflowMessage(queueName, maxExecutions);
-
-  const error = await t.throws(
-    incrementAndDispatch({ Body: message })
+  await t.throwsAsync(
+    () => incrementAndDispatch({ Body: createWorkflowMessage(queueName, maxExecutions) }),
+    ResourcesLockedError
   );
-  t.true(error instanceof ResourcesLockedError);
 });
 
 test('handleThrottledEvent starts 0 executions when priority semaphore is at maximum', async (t) => {
