@@ -58,10 +58,10 @@ const isDecrementEvent = (event) =>
  * @param {Object} event - incoming event from Cloudwatch
  */
 async function handleSemaphoreDecrementTask(event) {
-  log.info('event', event);
   if (isDecrementEvent(event)) {
     const message = getEventMessage(event);
     const queueName = getQueueName(message);
+    log.info('queueName', queueName);
     return decrementQueueSemaphore(queueName);
   }
   return 'Not a valid decrement event, no operation performed';

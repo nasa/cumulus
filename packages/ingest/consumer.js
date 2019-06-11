@@ -38,6 +38,7 @@ class Consumer {
       { numOfMessages: messageLimit, visibilityTimeout }
     );
     if (messages.length > 0) {
+      log.info(`processing ${messages.length} messages`);
       const processes = messages.map((message) => this.processMessage(message, fn));
       const results = await Promise.all(processes);
       counter = results.reduce((s, v) => s + v, 0);
@@ -62,6 +63,7 @@ class Consumer {
         messageLimit -= messageLimit;
       }
       sum += results;
+      log.debug(`current sum: ${sum}`);
       // if the function is running for longer than the timeLimit, stop it
       const timeSpent = (Date.now() - this.now);
       if (timeSpent > this.timeLimit) {
