@@ -2,6 +2,7 @@
 
 const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
+const isString = require('lodash.isstring');
 const partial = require('lodash.partial');
 const path = require('path');
 
@@ -13,7 +14,7 @@ const { CMR, reconcileCMRMetadata } = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { buildURL } = require('@cumulus/common/URLUtils');
-const { deprecate } = require('@cumulus/common/util');
+const { deprecate, removeNilProperties } = require('@cumulus/common/util');
 const {
   generateMoveFileParams,
   moveGranuleFiles
@@ -28,8 +29,7 @@ const { buildDatabaseFiles } = require('../lib/FileUtils');
 const {
   parseException,
   deconstructCollectionId,
-  getGranuleProductVolume,
-  extractDate
+  getGranuleProductVolume
 } = require('../lib/utils');
 const Rule = require('./rules');
 const granuleSchema = require('./schemas').granule;
@@ -283,72 +283,69 @@ class Granule extends Manager {
   /**
    * Create new granule records from incoming sns messages
    *
-   * @param {Object} payload - sns message containing the output of a Cumulus Step Function
+   * @param {Object} cumulusMessage - a Cumulus Message
    * @returns {Promise<Array>} granule records
    */
-  async createGranulesFromSns(payload) {
-    const granules = get(payload, 'payload.granules', get(payload, 'meta.input_granules'));
+  async createGranulesFromSns(cumulusMessage) {
+    const executionName = get(cumulusMessage, 'cumulus_meta.execution_name');
+    if (!isString(executionName)) throw new Error('cumulus_meta.execution_name is required');
 
-    if (!granules) return Promise.resolve();
+    const stateMachine = get(cumulusMessage, 'cumulus_meta.state_machine');
+    if (!isString(stateMachine)) throw new Error('cumulus_meta.state_machine is required');
 
-    const executionName = get(payload, 'cumulus_meta.execution_name');
-    const arn = aws.getExecutionArn(
-      get(payload, 'cumulus_meta.state_machine'),
-      executionName
+    const executionArn = aws.getExecutionArn(stateMachine, executionName);
+    const executionUrl = aws.getExecutionUrl(executionArn);
+
+    const collection = get(cumulusMessage, 'meta.collection');
+
+    const granules = get(cumulusMessage, 'payload.granules') || get(cumulusMessage.meta.input_granules) || [];
+
+    return Promise.all(
+      granules
+        .filter((g) => g.granuleId)
+        .map(async (granule) => {
+          const granuleFiles = await buildDatabaseFiles({
+            providerURL: buildURL({
+              protocol: cumulusMessage.meta.provider.protocol,
+              host: cumulusMessage.meta.provider.host,
+              port: cumulusMessage.meta.provider.port
+            }),
+            files: granule.files
+          });
+
+          const temporalInfo = await cmrjs.getGranuleTemporalInfo(granule);
+
+          const doc = {
+            granuleId: granule.granuleId,
+            pdrName: get(cumulusMessage, 'meta.pdr.name'),
+            collectionId: constructCollectionId(collection.name, collection.version),
+            status: get(cumulusMessage, 'meta.status'),
+            provider: get(cumulusMessage, 'meta.provider.id'),
+            execution: executionUrl,
+            cmrLink: granule.cmrLink,
+            files: granuleFiles,
+            error: parseException(cumulusMessage.exception),
+            createdAt: get(cumulusMessage, 'cumulus_meta.workflow_start_time'),
+            timestamp: Date.now(),
+            productVolume: getGranuleProductVolume(granuleFiles),
+            timeToPreprocess: get(granule, 'sync_granule_duration', 0) / 1000,
+            timeToArchive: get(granule, 'post_to_cmr_duration', 0) / 1000,
+            processingStartDateTime: granule.sync_granule_end_time
+              ? (new Date(granule.sync_granule_end_time)).toISOString()
+              : undefined,
+            processingEndDateTime: granule.post_to_cmr_start_time
+              ? (new Date(granule.post_to_cmr_start_time)).toISOString()
+              : undefined,
+            ...temporalInfo
+          };
+
+          doc.published = get(granule, 'published', false);
+          // Duration is also used as timeToXfer for the EMS report
+          doc.duration = (doc.timestamp - doc.createdAt) / 1000;
+
+          return this.create(removeNilProperties(doc));
+        })
     );
-
-    if (!arn) return Promise.resolve();
-
-    const execution = aws.getExecutionUrl(arn);
-
-    const collection = get(payload, 'meta.collection');
-    const exception = parseException(payload.exception);
-
-    const collectionId = constructCollectionId(collection.name, collection.version);
-
-    const done = granules.map(async (granule) => {
-      if (granule.granuleId) {
-        const granuleFiles = await buildDatabaseFiles({
-          providerURL: buildURL({
-            protocol: payload.meta.provider.protocol,
-            host: payload.meta.provider.host,
-            port: payload.meta.provider.port
-          }),
-          files: granule.files
-        });
-
-        const temporalInfo = await cmrjs.getGranuleTemporalInfo(granule);
-
-        const doc = {
-          granuleId: granule.granuleId,
-          pdrName: get(payload, 'meta.pdr.name'),
-          collectionId,
-          status: get(payload, 'meta.status'),
-          provider: get(payload, 'meta.provider.id'),
-          execution,
-          cmrLink: get(granule, 'cmrLink'),
-          files: granuleFiles,
-          error: exception,
-          createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
-          timestamp: Date.now(),
-          productVolume: getGranuleProductVolume(granuleFiles),
-          timeToPreprocess: get(payload, 'meta.sync_granule_duration', 0) / 1000,
-          timeToArchive: get(payload, 'meta.post_to_cmr_duration', 0) / 1000,
-          processingStartDateTime: extractDate(payload, 'meta.sync_granule_end_time'),
-          processingEndDateTime: extractDate(payload, 'meta.post_to_cmr_start_time'),
-          ...temporalInfo
-        };
-
-        doc.published = get(granule, 'published', false);
-        // Duration is also used as timeToXfer for the EMS report
-        doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-
-        return this.create(doc);
-      }
-      return Promise.resolve();
-    });
-
-    return Promise.all(done);
   }
 
   /**
