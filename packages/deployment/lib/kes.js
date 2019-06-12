@@ -277,6 +277,11 @@ class UpdatedKes extends Kes {
       return '/';
     });
 
+    Handlebars.registerHelper('ifLog2CloudWatch', (configs, api, options) => {
+      const log2cloudwatch = configs && configs[api] ? configs[api].log2cloudwatch : false;
+      return log2cloudwatch ? options.fn(this) : options.inverse(this);
+    });
+
     return super.parseCF(cfFile);
   }
 

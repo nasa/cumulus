@@ -188,6 +188,7 @@ default:
     distribution:
       private: true
       port: 7000
+      log2cloudwatch: true
 
   sns:
     sftracker:

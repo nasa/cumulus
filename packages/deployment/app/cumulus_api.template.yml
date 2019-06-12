@@ -84,14 +84,14 @@ Resources:
       RestApiId:
         Ref: {{name}}RestApi
       StageName: {{../parent.apiStage}}
-      {{#ifEquals name "distribution" }}
+      {{#ifLog2CloudWatch ../parent.apiConfigs name}}
       MethodSettings:
         - DataTraceEnabled: true
           HttpMethod: "*"
           LoggingLevel: INFO
           ResourcePath: "/*"
           MetricsEnabled: false
-      {{/ifEquals}}
+      {{/ifLog2CloudWatch}}
       DeploymentId:
         Ref: ApiGatewayDeployment{{../parent.apiStage}}{{name}}
 {{/each}}
