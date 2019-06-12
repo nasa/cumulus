@@ -77,6 +77,26 @@ Resources:
       {{/ifPrivateApi}}
 {{/each}}
 
+{{#each apis}}
+  {{name}}ApiGatewayStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId:
+        Ref: {{name}}RestApi
+      StageName: {{../parent.apiStage}}
+      {{#ifEquals name "distribution" }}
+      MethodSettings:
+        - DataTraceEnabled: true
+          HttpMethod: "*"
+          LoggingLevel: INFO
+          ResourcePath: "/*"
+          MetricsEnabled: false
+      {{/ifEquals}}
+      DeploymentId:
+        Ref: ApiGatewayDeployment{{../parent.apiStage}}{{name}}
+{{/each}}
+
+
 {{# if apiMethods}}
 {{# each apiDependencies}}
   {{# if ../apiDeploy }}
@@ -89,7 +109,6 @@ Resources:
     Properties:
       RestApiId:
         Ref: {{name}}RestApi
-      StageName: {{../parent.apiStage}}
   {{/if}}
 {{/each}}
 
