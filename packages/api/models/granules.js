@@ -287,18 +287,21 @@ class Granule extends Manager {
    * @returns {Promise<Array>} granule records
    */
   async createGranulesFromSns(cumulusMessage) {
+    const granules = get(cumulusMessage, 'payload.granules')
+      || get(cumulusMessage, 'meta.input_granules');
+
+    if (!granules) return null;
+
     const executionName = get(cumulusMessage, 'cumulus_meta.execution_name');
-    if (!isString(executionName)) throw new Error('cumulus_meta.execution_name is required');
+    if (!isString(executionName)) return null;
 
     const stateMachine = get(cumulusMessage, 'cumulus_meta.state_machine');
-    if (!isString(stateMachine)) throw new Error('cumulus_meta.state_machine is required');
+    if (!isString(stateMachine)) return null;
 
     const executionArn = aws.getExecutionArn(stateMachine, executionName);
     const executionUrl = aws.getExecutionUrl(executionArn);
 
     const collection = get(cumulusMessage, 'meta.collection');
-
-    const granules = get(cumulusMessage, 'payload.granules') || get(cumulusMessage.meta.input_granules) || [];
 
     return Promise.all(
       granules

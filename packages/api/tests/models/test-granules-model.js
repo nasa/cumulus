@@ -665,7 +665,7 @@ test(
 );
 
 test(
-  'createGranulesFromSns() returns an empty array if no granules are present in the cumulus message',
+  'createGranulesFromSns() returns null if no granules are present in the cumulus message',
   async (t) => {
     const { granuleModel } = t.context;
 
@@ -675,36 +675,30 @@ test(
 
     const result = await granuleModel.createGranulesFromSns(cumulusMessage);
 
-    t.deepEqual(result, []);
+    t.is(result, null);
   }
 );
 
 test(
-  'createGranulesFromSns() throws an exception if cumulus_meta.execution_name is not set',
+  'createGranulesFromSns() returns null if cumulus_meta.execution_name is not set',
   async (t) => {
     const { granuleModel } = t.context;
 
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     delete cumulusMessage.cumulus_meta.execution_name;
 
-    await t.throwsAsync(
-      () => granuleModel.createGranulesFromSns(cumulusMessage),
-      'cumulus_meta.execution_name is required'
-    );
+    t.is(await granuleModel.createGranulesFromSns(cumulusMessage), null);
   }
 );
 
 test(
-  'createGranulesFromSns() throws an exception if cumulus_meta.state_machine is not set',
+  'createGranulesFromSns() returns null if cumulus_meta.state_machine is not set',
   async (t) => {
     const { granuleModel } = t.context;
 
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     delete cumulusMessage.cumulus_meta.state_machine;
 
-    await t.throwsAsync(
-      () => granuleModel.createGranulesFromSns(cumulusMessage),
-      'cumulus_meta.state_machine is required'
-    );
+    t.is(await granuleModel.createGranulesFromSns(cumulusMessage), null);
   }
 );
