@@ -6,6 +6,7 @@ const https = require('follow-redirects').https;
 const url = require('url');
 const pLimit = require('p-limit');
 const log = require('./log');
+const { deprecate } = require('./util');
 
 /**
  * Wrap a function to limit how many instances can be run in parallel
@@ -17,7 +18,15 @@ const log = require('./log');
  * @param {Function} fn - the function to limit
  * @returns {Function} a version of `fn` that limits concurrency
  */
-const limit = (n, fn) => pLimit(n).bind(null, fn);
+const limit = (n, fn) => {
+  deprecate(
+    '@cumulus/common/concurrency.limit',
+    '1.13.0',
+    'https://www.npmjs.com/package/p-map'
+  );
+
+  return pLimit(n).bind(null, fn);
+};
 
 const mapTolerant = (arr, fn) => {
   const errors = [];
@@ -42,9 +51,16 @@ const mapTolerant = (arr, fn) => {
     });
 };
 
-const toPromise = (fn, ...args) =>
-  new Promise((resolve, reject) =>
+const toPromise = (fn, ...args) => {
+  deprecate(
+    '@cumulus/common/concurrency.limit',
+    '1.13.0',
+    'https://nodejs.org/dist/latest-v10.x/docs/api/util.html#util_util_promisify_original'
+  );
+
+  return new Promise((resolve, reject) =>
     fn(...args, (err, data) => (err ? reject(err) : resolve(data))));
+};
 
 /**
  * Returns a promise that resolves to the result of calling the given function if
@@ -55,11 +71,19 @@ const toPromise = (fn, ...args) =>
  * @param {*} args - Arguments to pass to calls to both condition and fn
  * @returns {Promise<*>} - A promise that resolves to either null or the result of fn
 */
-const unless = (condition, fn, ...args) =>
-  Promise.resolve((condition(...args) ? null : fn(...args)));
+const unless = (condition, fn, ...args) => {
+  deprecate(
+    '@cumulus/common/concurrency.limit',
+    '1.13.0'
+  );
 
-const promiseUrl = (urlstr) =>
-  new Promise((resolve, reject) => {
+  return Promise.resolve((condition(...args) ? null : fn(...args)));
+};
+
+const promiseUrl = (urlstr) => {
+  deprecate('@cumulus/common/aws.promiseUrl', '1.13.0');
+
+  return new Promise((resolve, reject) => {
     const client = urlstr.startsWith('https') ? https : http;
     const urlopts = url.parse(urlstr);
     const options = {
@@ -77,6 +101,7 @@ const promiseUrl = (urlstr) =>
       }
     }).on('error', reject);
   });
+};
 
 class Mutex {
   constructor(docClient, tableName) {
@@ -131,10 +156,10 @@ class Mutex {
 }
 
 module.exports = {
-  Mutex: Mutex,
-  limit: limit,
-  mapTolerant: mapTolerant,
-  promiseUrl: promiseUrl,
-  toPromise: toPromise,
-  unless: unless
+  Mutex,
+  limit,
+  mapTolerant,
+  promiseUrl,
+  toPromise,
+  unless
 };

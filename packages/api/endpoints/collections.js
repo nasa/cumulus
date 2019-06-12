@@ -51,7 +51,6 @@ async function get(req, res) {
   try {
     const c = new models.Collection();
     const result = await c.get({ name, version });
-    // const stats = await collection.getStats([res], [res.name]);
     return res.send(result);
   } catch (e) {
     return res.boom.notFound(e.message);

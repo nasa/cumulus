@@ -732,11 +732,15 @@ class DynamoDbSearchQueue {
 exports.DynamoDbSearchQueue = DynamoDbSearchQueue;
 
 exports.syncUrl = async (uri, bucket, destKey) => {
+  deprecate('@cumulus/common/aws.syncUrl', '1.13.0');
+
   const response = await concurrency.promiseUrl(uri);
   await exports.promiseS3Upload({ Bucket: bucket, Key: destKey, Body: response });
 };
 
 exports.getQueueUrl = (sourceArn, queueName) => {
+  deprecate('@cumulus/common/aws.getQueueUrl', '1.13.0');
+
   const arnParts = sourceArn.split(':');
   return `https://sqs.${arnParts[3]}.amazonaws.com/${arnParts[4]}/${queueName}`;
 };
@@ -844,6 +848,7 @@ exports.createQueue = createQueue;
 * @returns {Promise} - resolves when the messsage has been sent
 **/
 exports.sendSQSMessage = (queueUrl, message) => {
+  // TODO Deprecate this and use ./SQS.sendMessage instead
   let messageBody;
   if (isString(message)) messageBody = message;
   else if (isObject(message)) messageBody = JSON.stringify(message);

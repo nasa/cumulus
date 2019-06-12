@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- The `@cumulus/common/aws.getQueueUrl` function has been deprecated.
+- The `@cumulus/common/aws.syncUrl` function has been deprecated.
+- The `@cumulus/common/concurrency.limit` function has been deprecated. Use
+  [p-map](https://www.npmjs.com/package/p-map) instead.
+- The `@cumulus/common/concurrency.promiseUrl` function has been deprecated.
+- The `@cumulus/common/concurrency.toPromise` function has been deprecated. Use
+  [promisify](https://nodejs.org/dist/latest-v10.x/docs/api/util.html#util_util_promisify_original)
+  instead.
+- The `@cumulus/common/concurrency.unless` function has been deprecated.
+
 ### PLEASE NOTE
 **CUMULUS-799** added some additional IAM permissions to support reading CloudWatch and API Gateway, so **you will have to redeploy your IAM stack.**
 
