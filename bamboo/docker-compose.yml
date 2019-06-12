@@ -32,10 +32,10 @@ services:
     environment:
       ES_JAVA_OPTS: "-Xms750m -Xmx750m"
   localstack:
-    image: localstack/localstack:0.8.7
+    image: localstack/localstack:0.8.10
     network_mode: "service:build_env"
     environment:
-      SERVICES: 'kinesis,lambda,s3,sns,sqs,dynamodb,dynamodbstreams'
+      SERVICES: 'kinesis,lambda,s3,sns,sqs,dynamodb,dynamodbstreams,cloudwatch,cloudwatchlogs'
   build_env:
     image: jlkovarik/cumulus_build_env:1
     volumes:
