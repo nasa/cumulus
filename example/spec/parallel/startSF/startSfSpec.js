@@ -161,7 +161,7 @@ describe('the sf-starter lambda function', () => {
     });
 
     it('to trigger workflows', async () => {
-      console.log(passSfArn);
+      console.log(`Pass SF arn: ${passSfArn}`);
       const { executions } = await StepFunctions.listExecutions({ stateMachineArn: passSfArn });
       expect(executions.length).toBe(messagesConsumed);
     });
@@ -189,7 +189,10 @@ describe('the sf-starter lambda function', () => {
     // const ruleName = timestampedName('waitPassRule');
 
     beforeAll(async () => {
+      console.log('testName', testName);
+
       maxQueueName = `${testName}MaxQueue`;
+      console.log(`max queue name: ${maxQueueName}`);
 
       const { QueueUrl } = await sqs().createQueue({
         QueueName: maxQueueName
@@ -199,8 +202,12 @@ describe('the sf-starter lambda function', () => {
       templateKey = `${config.stackName}/workflows/${waitPassSfName}.json`;
       templateUri = `s3://${config.bucket}/${templateKey}`;
 
+      console.log('expected template URI', templateUri);
+
       const { stateMachineArn } = await sfn().createStateMachine(waitPassSfParams).promise();
       waitPassSfArn = stateMachineArn;
+
+      console.log(`expected waitPass state machine ARN: ${waitPassSfArn}`);
 
       await s3PutObject({
         Bucket: config.bucket,
@@ -326,10 +333,11 @@ describe('the sf-starter lambda function', () => {
         Payload: JSON.stringify({
           queueUrl: maxQueueUrl,
           messageLimit: numberOfMessages,
-          timeLimit: 5
+          timeLimit: 1
         })
       }).promise();
       messagesConsumed = parseInt(Payload, 10);
+      console.log('messages consumed', messagesConsumed);
       // Can't test that the messages consumed is exactly the number the
       // maximum allowed because of eventual consistency in SQS
       expect(messagesConsumed).toBeGreaterThan(0);

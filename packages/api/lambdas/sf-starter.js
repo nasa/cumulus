@@ -31,6 +31,7 @@ function dispatch(message) {
     input.cumulus_meta.execution_name = uuidv4();
   }
 
+  log.debug('state machine ARN', message.Body.cumulus_meta.state_machine);
   log.debug('execution name', input.cumulus_meta.execution_name);
 
   return sfn().startExecution({
@@ -93,6 +94,8 @@ async function incrementAndDispatch(queueMessage) {
 async function handleEvent(event, dispatchFn, visibilityTimeout) {
   const messageLimit = event.messageLimit || 1;
   const timeLimit = get(event, 'timeLimit', 240);
+
+  log('starting new execution');
 
   if (!event.queueUrl) {
     throw new Error('queueUrl is missing');

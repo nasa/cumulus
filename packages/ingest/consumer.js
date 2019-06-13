@@ -20,7 +20,9 @@ class Consumer {
 
   async processMessage(message, fn) {
     try {
+      log.debug('processing message');
       await fn(message);
+      log.debug('deleting message');
       await deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
       return 1;
     } catch (e) {
