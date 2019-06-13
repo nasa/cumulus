@@ -86,7 +86,7 @@ function generateStartSfMessages(num, workflowArn) {
   return arr;
 }
 
-describe('the sf-starter lambda function', () => {
+xdescribe('the sf-starter lambda function', () => {
   let queueUrl;
 
   beforeAll(async () => {
