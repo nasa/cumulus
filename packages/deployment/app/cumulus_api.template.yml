@@ -192,6 +192,36 @@ Resources:
 
 {{/each}}
 
+# Add cloudwatch filters to enabled api gateways
+{{#each apis}}
+{{#ifLog2CloudWatch ../parent.apiConfigs name }}
+
+  # create log group
+  ApiGatewayCloudWatchLogGroup{{../name}}:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Join:
+          - ""
+          - - "API-Gateway-Execution-Logs_"
+            - Ref: {{name}}RestApi
+            - "/{{../parent.apiStage}}"
+      RetentionInDays: 30
+  # create subscriptionfilter
+  ApiGatewayLogSubscription{{../name}}:
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn:
+      - ApiGatewayCloudWatchLogGroup{{../name}}
+    Properties:
+      DestinationArn: "arn:aws:kinesis:us-east-1:{{AWS_ACCOUNT_ID}}:stream/mhs-test-RecipientStream"
+      FilterPattern: ""
+      LogGroupName:
+        Ref: ApiGatewayCloudWatchLogGroup{{../name}}
+      RoleArn: {{../parent.iams.cloudwatchLogsToKinesisRoleArn}}
+
+{{/ifLog2CloudWatch}}
+{{/each}}
+
 {{/if}}
   #################################################
   # APIGateway config END

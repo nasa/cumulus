@@ -914,3 +914,8 @@ Outputs:
       Fn::GetAtt:
         - ScalingRole
         - Arn
+  CloudwatchLogsToKinesisRoleArn:
+    Value:
+      Fn::GetAtt:
+        - CloudwatchLogsToKinesisRole
+        - Arn
