@@ -7,7 +7,7 @@ ApiDistribution:
   distributionRole: true
   urs_redirect: 'distribution'
   useDistributionApi: true
-  addLogGroup: true
+  logToSharedDestination: true
   launchInVpc: true
   envs:
     EARTHDATA_BASE_URL: '{{parent.urs_url}}'

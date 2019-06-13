@@ -375,6 +375,23 @@ Resources:
       RetentionInDays: 30
 {{/if}}
 
+{{# if this.logToSharedDestination }}
+  {{@key}}LogSubscriptionToSharedDestination:
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn:
+      - {{@key}}LogGroup
+    Properties:
+      DestinationArn: "{{../parent.sharedLogDestinationArn}}"
+      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
+      FilterPattern: ""
+
+  {{@key}}LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
+      RetentionInDays: 30
+{{/if}}
+
 {{# if this.addLogGroup }}
   {{@key}}LogGroup:
     Type: AWS::Logs::LogGroup
