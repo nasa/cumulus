@@ -27,7 +27,7 @@
     "serve-dist-remote": "lerna run --stream serve-dist-remote --scope @cumulus/api",
     "coverage": "nyc report --reporter text-summary --reporter html",
     "coveralls": "nyc report --reporter=text-lcov --temp-direcotry=\"./.final_nyc_output\" | coveralls",
-    "start-unit-test-stack": "SSH_USERS=user:$(id -u):$(id -u) && docker-compose -f ./bamboo/docker-compose.yml -f ./bamboo/docker-compose-local.yml -p cumulusstack up",
+    "start-unit-test-stack": "export SSH_USERS=user:$(id -u):$(id -u) && docker-compose -f ./bamboo/docker-compose.yml -f ./bamboo/docker-compose-local.yml -p cumulusstack up",
     "stop-unit-test-stack": "docker-compose -f ./bamboo/docker-compose.yml -f ./bamboo/docker-compose-local.yml -p cumulusstack down"
   },
   "repository": {
@@ -38,7 +38,7 @@
     "node": ">=8.10.0"
   },
   "bin": {
-    "build-tasks-doc": "./bin/build-tasks-doc.js"
+    "build-tasks-doc": "./bin/build-tasks-doc.js
   },
   "nyc": {
     "exclude": [
