@@ -38,7 +38,7 @@
     "node": ">=8.10.0"
   },
   "bin": {
-    "build-tasks-doc": "./bin/build-tasks-doc.js
+    "build-tasks-doc": "./bin/build-tasks-doc.js"
   },
   "nyc": {
     "exclude": [
