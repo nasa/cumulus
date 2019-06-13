@@ -4,7 +4,6 @@ const {
   sendSQSMessage,
   getExecutionArn
 } = require('@cumulus/common/aws');
-const log = require('@cumulus/common/log');
 
 const {
   buildQueueMessageFromTemplate,
@@ -82,16 +81,11 @@ async function enqueueGranuleIngestMessage({
   pdr,
   parentExecutionArn
 }) {
-  log.debug('message template URI', granuleIngestMessageTemplateUri);
   const messageTemplate = await getMessageFromTemplate(granuleIngestMessageTemplateUri);
-
-  log.debug('message template', messageTemplate);
 
   // Should this throw? Probably not because it would prevent all the other messages
   // from being queued, since this function is invoked via Promise.all in queue-granules
   const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
-
-  log.debug('queue name', queueName);
 
   const payload = {
     granules: [
@@ -116,8 +110,6 @@ async function enqueueGranuleIngestMessage({
   );
 
   await sendSQSMessage(queueUrl, message);
-
-  log.debug('execution ARN', arn);
 
   return arn;
 }

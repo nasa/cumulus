@@ -68,6 +68,7 @@ class Consumer {
       log.debug(`current sum: ${sum}`);
       // if the function is running for longer than the timeLimit, stop it
       const timeSpent = (Date.now() - this.now);
+      log.debug('time spent', timeSpent);
       if (timeSpent > this.timeLimit) {
         this.timeLapsed = true;
         log.warn(`${this.timeLimit / 1000}-second time limit reached, exiting...`);

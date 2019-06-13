@@ -95,8 +95,6 @@ async function handleEvent(event, dispatchFn, visibilityTimeout) {
   const messageLimit = event.messageLimit || 1;
   const timeLimit = get(event, 'timeLimit', 240);
 
-  log('starting new execution');
-
   if (!event.queueUrl) {
     throw new Error('queueUrl is missing');
   }
