@@ -141,7 +141,7 @@ xdescribe('the sf-starter lambda function', () => {
     });
 
     it('consumes the messages', async () => {
-      const { Payload } = await lambda().invoke({
+      const response = await lambda().invoke({
         FunctionName: sfStarterName,
         InvocationType: 'RequestResponse',
         Payload: JSON.stringify({
@@ -149,6 +149,10 @@ xdescribe('the sf-starter lambda function', () => {
           messageLimit: testMessageLimit
         })
       }).promise();
+      console.log('time', new Date());
+      console.log('response', response);
+      const { Payload } = response;
+      console.log(`request ID: ${response.$response.requestId}`);
       messagesConsumed = parseInt(Payload, 10);
       expect(messagesConsumed).toBeGreaterThan(0);
     });
@@ -284,7 +288,7 @@ xdescribe('the sf-starter lambda function', () => {
           files: []
         }));
 
-      const { Payload } = await lambda().invoke({
+      const response = await lambda().invoke({
         FunctionName: `${config.stackName}-QueueGranules`,
         InvocationType: 'RequestResponse',
         Payload: JSON.stringify({
@@ -322,12 +326,19 @@ xdescribe('the sf-starter lambda function', () => {
           }
         })
       }).promise();
+
+      console.log('time', new Date());
+
+      const { Payload } = response;
+
+      console.log(`request ID: ${response.$response.requestId}`);
+
       const { payload } = JSON.parse(Payload);
       expect(payload.queued.length).toEqual(numberOfMessages);
     });
 
     it('consumes the right amount of messages', async () => {
-      const { Payload } = await lambda().invoke({
+      const response = await lambda().invoke({
         FunctionName: `${config.stackName}-sqs2sfThrottle`,
         InvocationType: 'RequestResponse',
         Payload: JSON.stringify({
@@ -336,6 +347,10 @@ xdescribe('the sf-starter lambda function', () => {
           timeLimit: 1
         })
       }).promise();
+
+      console.log(response);
+      const { Payload } = response;
+
       messagesConsumed = parseInt(Payload, 10);
       console.log('messages consumed', messagesConsumed);
       // Can't test that the messages consumed is exactly the number the
@@ -351,7 +366,9 @@ xdescribe('the sf-starter lambda function', () => {
         doStateMachineDelete = false;
         console.log(executions.map((execution) => execution.name));
       }
-      expect(executions.length).toBe(messagesConsumed);
+      // There can be delays starting up executions, but there shouldn't be any
+      // more executions than messages consumed
+      expect(executions.length).toBeLessThanOrEqual(messagesConsumed);
     });
   });
 });
