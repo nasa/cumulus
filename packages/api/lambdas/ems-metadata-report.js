@@ -66,7 +66,7 @@ const instrument = (collection) =>
 
 const emsMapping = {
   product: (collection) => collection.ShortName,
-  metaDataLongName: (collection) => collection.LongName,
+  metaDataLongName: (collection) => collection.DataSetId,
   productLevel: (collection) => collection.ProcessingLevelId.replace(/^Level\s?/i, ''), // optional field
   discipline: discipline, // optional field
   processingCenter: (collection) => collection.ProcessingCenter || collection.ArchiveCenter,
@@ -107,7 +107,7 @@ async function getCmrCollections() {
       nextCmrItem.Collection.ShortName, nextCmrItem.Collection.VersionId
     );
     const lastUpdate = nextCmrItem.Collection.LastUpdate || nextCmrItem.Collection.InsertTime;
-    // console.log('cmrCollection', { collectionId, lastUpdate, emsRecord });
+    console.log('cmrCollection', { collectionId, lastUpdate, emsRecord });
     // if (['A2_SI25_NRT___0', 'MUR-JPL-L4-GLOB-v4.1___1', 'MYD13Q1___006', 'MOD11A1___006']
     //   .includes(collectionId)) {
     //   console.log('writing json file');
@@ -120,21 +120,35 @@ async function getCmrCollections() {
   return collections;
 }
 
+/**
+ * convert milliseconds elapsed to UTC string
+ *
+ * @param {number} timeElapsed - milliseconds elapsed since January 1, 1970
+ * @returns {string} - datetime string
+ */
+const millisecondsToUTCString = (timeElapsed) =>
+  moment.utc(new Date(timeElapsed)).format();
+
 const getDbCollections = async () =>
   (await new Collection().getAllCollections())
     .map((collection) => ({
       collectionId: constructCollectionId(collection.name, collection.version),
-      lastUpdate: (collection.updatedAt || collection.createdAt)
+      lastUpdate: millisecondsToUTCString(
+        collection.updatedAt || collection.createdAt || Date.now()
+      )
     }));
 
 /**
  * get collections in both CMR and CUmulus
  *
+ * @param {string} startTime - start time of the records
+ * @param {string} endTime - end time of the records
+ *
  * @returns {Array<Object>} list of collections containing 'collectionId'
    *   and 'emsRecord' properties
  * onlyInCmr
  */
-async function getCollectionsForEms() {
+async function getCollectionsForEms(startTime, endTime) {
   // get collections in both CMR and CUMULUS
   //   Get list of collections from CMR
   //   Get list of collections from CUMULUS
@@ -163,37 +177,46 @@ async function getCollectionsForEms() {
       cmrCollections.shift();
     } else {
       // Found an item that is in both cmr and database
-      emsCollections.push(cmrCollections.shift());
-      dbCollections.shift();
+      const cmrCollection = cmrCollections.shift();
+      const dbCollection = dbCollections.shift();
+      emsCollections.push({ ...cmrCollection, dbLastUpdate: dbCollection.lastUpdate });
     }
 
     nextDbCollectionId = (dbCollections.length !== 0) ? dbCollections[0].collectionId : null;
     nextCmrCollectionId = (cmrCollections.length !== 0) ? cmrCollections[0].collectionId : null;
   }
 
+  // only the collections updated in CMR or CUMULUS within the time range are included
+  const lastUpdateFilter = (collection) =>
+    ((moment.utc(collection.lastUpdate) >= startTime
+      && moment.utc(collection.lastUpdate) < endTime)
+    || (moment.utc(collection.dbLastUpdate) >= startTime
+      && moment.utc(collection.dbLastUpdate) < endTime));
+
   console.log('getCollectionsForEms', emsCollections);
-  return emsCollections;
+  console.log('filtered ems collection', emsCollections.filter(lastUpdateFilter));
+  return emsCollections.filter(lastUpdateFilter);
 }
 
 /**
  * generate an EMS report
  *
- * @param {string} reportType - report type (ingest, archive, delete)
  * @param {string} startTime - start time of the records
  * @param {string} endTime - end time of the records
  * @returns {Object} - report type and its file path {reportType, file}
  */
-async function generateReport(reportType, startTime, endTime) {
-  log.debug(`ems-ingest-report.generateReport ${reportType} startTime: ${startTime} endTime: ${endTime}`);
+async function generateReport(startTime, endTime) {
+  log.debug(`ems-metadata-report.generateReport startTime: ${startTime} endTime: ${endTime}`);
+  const reportType = 'metadata';
 
-  const emsCollections = await getCollectionsForEms();
+  const emsCollections = await getCollectionsForEms(startTime, endTime);
 
   const report = emsCollections
     .map((collection) => Object.values(collection.emsRecord).join('|&|'))
     .join('\n');
 
   const { reportsBucket, reportsPrefix } = bucketsPrefixes();
-  const reportKey = await determineReportKey('metadata', startTime, reportsPrefix);
+  const reportKey = await determineReportKey(reportType, startTime, reportsPrefix);
 
   const s3Uri = buildS3Uri(reportsBucket, reportKey);
   log.info(`Uploading report to ${s3Uri}`);
@@ -203,7 +226,7 @@ async function generateReport(reportType, startTime, endTime) {
     Key: reportKey,
     Body: report
   }).promise()
-    .then(() => ({ reportType: 'metadata', file: s3Uri }));
+    .then(() => ({ reportType, file: s3Uri }));
 }
 
 exports.generateReport = generateReport;
@@ -226,8 +249,8 @@ async function cleanup() {
  * Lambda task, generate and send EMS metadata report
  *
  * @param {Object} event - event passed to lambda
- * @param {string} event.startTime - test only, report startTime in format YYYY-MM-DDTHH:mm:ss
- * @param {string} event.endTime - test only, report endTime in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} event.startTime - report startTime in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} event.endTime - report endTime in format YYYY-MM-DDTHH:mm:ss
  * @param {Object} context - AWS Lambda context
  * @param {function} callback - callback function
  * @returns {Array<Object>} - list of report type and its file path {reportType, file}
@@ -241,15 +264,14 @@ function handler(event, context, callback) {
   process.env.CMR_PAGE_SIZE = process.env.CMR_PAGE_SIZE || 50;
 
   // 24-hour period ending past midnight
-  let endTime = moment.utc().startOf('day').toDate().toUTCString();
-  let startTime = moment.utc().subtract(1, 'days').startOf('day').toDate()
-    .toUTCString();
+  let endTime = moment.utc().startOf('day').format();
+  let startTime = moment.utc().subtract(1, 'days').startOf('day').format();
 
   endTime = event.endTime || endTime;
   startTime = event.startTime || startTime;
 
   return cleanup()
-    .then(() => generateReport('metadata', startTime, endTime))
+    .then(() => generateReport(moment.utc(startTime), moment.utc(endTime)))
     .then((reports) => submitReports(reports))
     .then((r) => callback(null, r))
     .catch(callback);
@@ -267,10 +289,10 @@ process.env.stackName = 'jl-test-integration';
 process.env.system_bucket = 'cumulus-test-sandbox-internal';
 process.env.DISTRIBUTION_ENDPOINT = 'https://example.com/';
 
-async function test() {
-  return getCollectionsForEms();
+async function test(startTime, endTime) {
+  return getCollectionsForEms(startTime, endTime);
 }
-//test();
+//test(moment.utc('2019-01-20T09:38:21.508Z'), moment.utc('2019-06-14'));
 
 // MYD13Q1___006 single ScienceKeywords.ScienceKeyword
 //MUR-JPL-L4-GLOB-v4.1___1 single ScienceKeywords.ScienceKeyword, multiple platform and instrument
