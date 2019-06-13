@@ -10,6 +10,7 @@
  * isNil(undefined); // => true
  */
 
+const curry = require('lodash.curry');
 const fs = require('fs');
 const isNil = require('lodash.isnil');
 const omitBy = require('lodash.omitby');
@@ -177,3 +178,17 @@ exports.removeNilProperties = (obj) => omitBy(obj, isNil);
  * @returns {string} mimeType or null
  */
 exports.lookupMimeType = (key) => mime.lookup(key) || null;
+
+/**
+ * Test if a value is included in a list of items
+ *
+ * This is a curried function - https://lodash.com/docs/4.17.11#curry
+ *
+ * @param {Array} collection - the list of items to check against
+ * @param {Object} val - the item to check for in the collection
+ * @returns {boolean}
+ *
+ * @static
+ * @kind function
+ */
+exports.isOneOf = curry((collection, val) => collection.includes(val));

@@ -8,6 +8,15 @@ SyncGranule:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
+      Retry:
+        - &LambdaServiceExceptionRetry
+          ErrorEquals:
+          - Lambda.ServiceException
+          - Lambda.AWSLambdaException
+          - Lambda.SdkClientException
+          IntervalSeconds: 2
+          MaxAttempts: 6
+          BackoffRate: 2
       Next: SyncGranule
     SyncGranule:
       CumulusConfig:
@@ -28,6 +37,8 @@ SyncGranule:
               destination: '{$.cumulus_meta.process}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -45,6 +56,8 @@ SyncGranule:
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -65,6 +78,8 @@ IngestAndPublishGranule:
         cumulus_message:
           input: '{$}'
       ResultPath: null
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Next: SyncGranule
     SyncGranule:
       CumulusConfig:
@@ -132,6 +147,8 @@ IngestAndPublishGranule:
         granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
       Type: Task
       Resource: ${FilesToGranulesLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -147,6 +164,8 @@ IngestAndPublishGranule:
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
       Type: Task
       Resource: ${MoveGranulesLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -161,6 +180,8 @@ IngestAndPublishGranule:
         process: '{$.cumulus_meta.process}'
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -178,6 +199,8 @@ IngestAndPublishGranule:
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -198,6 +221,8 @@ IngestGranule:
         cumulus_message:
           input: '{$}'
       ResultPath: null
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Next: SyncGranule
     SyncGranule:
       CumulusConfig:
@@ -263,6 +288,8 @@ IngestGranule:
         granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
       Type: Task
       Resource: ${FilesToGranulesLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -278,6 +305,8 @@ IngestGranule:
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
       Type: Task
       Resource: ${MoveGranulesLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -295,6 +324,8 @@ IngestGranule:
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -314,6 +345,8 @@ PublishGranule:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Next: CmrStep
     CmrStep:
       CumulusConfig:
@@ -323,6 +356,8 @@ PublishGranule:
         process: 'N/A'
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -340,6 +375,8 @@ PublishGranule:
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -359,6 +396,8 @@ ParsePdr:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Next: ParsePdr
     ParsePdr:
       CumulusConfig:
@@ -367,6 +406,8 @@ ParsePdr:
         stack: '{$.meta.stack}'
       Type: Task
       Resource: ${ParsePdrLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -382,6 +423,8 @@ ParsePdr:
         queueUrl: '{$.meta.queues.startSF}'
       Type: Task
       Resource: ${QueueGranulesLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -391,6 +434,8 @@ ParsePdr:
     CheckStatus:
       Type: Task
       Resource: ${PdrStatusCheckLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -414,6 +459,8 @@ ParsePdr:
       ResultPath: null
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -435,6 +482,8 @@ ParsePdr:
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -455,6 +504,8 @@ DiscoverGranules:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Next: DiscoverGranules
     DiscoverGranules:
       CumulusConfig:
@@ -464,6 +515,8 @@ DiscoverGranules:
         stack: '{$.meta.stack}'
       Type: Task
       Resource: ${DiscoverGranulesLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -479,6 +532,8 @@ DiscoverGranules:
         queueUrl: '{$.meta.queues.startSF}'
       Type: Task
       Resource: ${QueueGranulesLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -496,6 +551,8 @@ DiscoverGranules:
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -515,6 +572,8 @@ DiscoverAndQueuePdrs:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Next: DiscoverPdrs
     DiscoverPdrs:
       CumulusConfig:
@@ -524,6 +583,8 @@ DiscoverAndQueuePdrs:
         collection: '{$.meta.collection}'
       Type: Task
       Resource: ${DiscoverPdrsLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -538,6 +599,8 @@ DiscoverAndQueuePdrs:
         collection: '{$.meta.collection}'
       Type: Task
       Resource: ${QueuePdrsLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -555,6 +618,8 @@ DiscoverAndQueuePdrs:
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
