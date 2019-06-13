@@ -8,15 +8,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### PLEASE NOTE
-**CUMULUS-799** added some additional IAM permissions to support reading CloudWatch and API Gateway, so **you will have to redeploy your IAM stack.**
+- **CUMULUS-799** added some additional IAM permissions to support reading CloudWatch and API Gateway, so **you will have to redeploy your IAM stack.**
+- **CUMULUS-800** Adds `logApiGatewayToCloudWatch` to `apiConfig.api` options.  **Note** In order for API Gateway logging to work, each AWS account must have configured the API Gateway account level settings with a CloudWatch log role ARN that implements the AmazonAPIGatewayPushToCloudWatchLogs policy.
+
 
 We have encountered transient lambda service errors in our integration testing. Please handle transient service errors following [these guidelines](https://docs.aws.amazon.com/step-functions/latest/dg/bp-lambda-serviceexception.html). The workflows in the `example/workflows` folder have been updated with retries configured for these errors.
 
 ## Added
+
 - **CUMULUS-799**
   - Adds new BackendApi endpoint `distributionMetrics` that returns a summary of successful s3 accesses as well as a summary of distribution errors -- including s3 access errors, 4XX and 5XX errors.
 - **CUMULUS-1273**
   - Added lambda function EmsProductMetadataReport to generate EMS Product Metadata report
+
+- **CUMULUS-800**
+  - Adds `logApiGatewayToCloudWatch` to `apiConfig.api` options.
+  - Enables Api Gateway logging for Cumulus distribution API in the default example configuration.
+  - Adds `sharedLogDestinationArn` to default example options, this must reference an AWS:Logs::Destination to which your account can write.
+  - Adds `logToSharedDestination` option to lambda configuration.  If `true` will create a subscription filter ship off the cloudwatch logs to the shared AWS::Logs::Destination defined in `sharedLogDestinationArn`
+  - TODO [MHS, 2019-06-12]
+
 
 ### Changed
 

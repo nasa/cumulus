@@ -84,14 +84,14 @@ Resources:
       RestApiId:
         Ref: {{name}}RestApi
       StageName: {{../parent.apiStage}}
-      {{#ifLog2CloudWatch ../parent.apiConfigs name}}
+      {{#ifLogApiGatewayToCloudWatch ../parent.apiConfigs name}}
       MethodSettings:
         - DataTraceEnabled: true
           HttpMethod: "*"
           LoggingLevel: INFO
           ResourcePath: "/*"
           MetricsEnabled: false
-      {{/ifLog2CloudWatch}}
+      {{/ifLogApiGatewayToCloudWatch}}
       DeploymentId:
         Ref: ApiGatewayDeployment{{../parent.apiStage}}{{name}}
 {{/each}}
@@ -194,7 +194,7 @@ Resources:
 
 # Add cloudwatch filters to enabled api gateways
 {{#each apis}}
-{{#ifLog2CloudWatch ../parent.apiConfigs name }}
+{{#ifLogApiGatewayToCloudWatch ../parent.apiConfigs name }}
 
   # create log group
   ApiGatewayCloudWatchLogGroup{{../name}}:
@@ -218,7 +218,7 @@ Resources:
       LogGroupName:
         Ref: ApiGatewayCloudWatchLogGroup{{../name}}
 
-{{/ifLog2CloudWatch}}
+{{/ifLogApiGatewayToCloudWatch}}
 {{/each}}
 
 {{/if}}

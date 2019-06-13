@@ -188,7 +188,7 @@ default:
     distribution:
       private: true
       port: 7000
-      log2cloudwatch: true
+      logApiGatewayToCloudWatch: true
   sharedLogDestinationArn: '{{SHARED_LOG_DESTINATION_ARN}}'
 
   sns:

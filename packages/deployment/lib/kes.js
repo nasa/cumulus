@@ -277,10 +277,18 @@ class UpdatedKes extends Kes {
       return '/';
     });
 
-    Handlebars.registerHelper('ifLog2CloudWatch', function ifLog2CloudWatch(configs, api, options) {
-      const log2cloudwatch = configs && configs[api] ? configs[api].log2cloudwatch : false;
-      return log2cloudwatch ? options.fn(this) : options.inverse(this);
-    });
+    Handlebars.registerHelper(
+      'ifLogApiGatewayToCloudWatch',
+      function ifLogApiGatewayToCloudWatch(configs, api, options) {
+        const logApiGatewayToCloudWatch =
+          configs && configs[api]
+            ? configs[api].logApiGatewayToCloudWatch
+            : false;
+        return logApiGatewayToCloudWatch
+          ? options.fn(this)
+          : options.inverse(this);
+      }
+    );
 
     return super.parseCF(cfFile);
   }
