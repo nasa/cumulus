@@ -217,6 +217,11 @@ default:
       state: ENABLED
       targets:
         - lambda: jobs
+    dailyEmsProductMetadataReport:
+      schedule: cron(0 4 * * ? *)
+      state: ENABLED
+      targets:
+        - lambda: EmsProductMetadataReport
     dailyEmsIngestReport:
       # run at 5:00am GMT daily
       schedule: cron(0 5 * * ? *)

@@ -138,6 +138,28 @@ EmsDistributionReport:
     ems_submitReport: '{{ems.submitReport}}'
     ems_retentionInDays: '{{ems.retentionInDays}}'
 
+EmsProductMetadataReport:
+  handler: index.handler
+  timeout: 300
+  memory: 320
+  source: 'node_modules/@cumulus/api/dist/emsProductMetadataReport/'
+  launchInVpc: true
+  tables:
+    - CollectionsTable
+  envs:
+    system_bucket: '{{system_bucket}}'
+    cmr_provider: '{{cmr.provider}}'
+    cmr_client_id: '{{cmr.clientId}}'
+    ems_provider: '{{ems.provider}}'
+    ems_username: '{{ems.username}}'
+    ems_privateKey: '{{ems.privateKey}}'
+    ems_host: '{{ems.host}}'
+    ems_port: '{{ems.port}}'
+    ems_path: '{{ems.path}}'
+    ems_dataSource: '{{ems.dataSource}}'
+    ems_submitReport: '{{ems.submitReport}}'
+    ems_retentionInDays: '{{ems.retentionInDays}}'
+
 executeMigrations:
   handler: index.handler
   timeout: 300

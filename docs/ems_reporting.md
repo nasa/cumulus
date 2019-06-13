@@ -9,15 +9,21 @@ Cumulus reports usage statistics to the [ESDIS Metrics System (EMS)](https://ear
 
 ## Types of reports
 
+### Product Metadata
+
+Cumulus creates Product Metadata report.  The Product Metadata report provides ancillary information about the products(collections) in Cumulus, and these information are required before EMS can process ingest and distribution reports.
+
+A product can only be removed manually by the EMS team.
+
 ### Ingest
 
 Cumulus creates three ingest related reports for EMS: Ingest, Archive and Archive Delete.
 
-The Ingest report contains records of all granules, products, or files that have been ingested into Cumulus.
+The Ingest report contains records of all granules that have been ingested into Cumulus.
 
-The Archive report contains records of all granules, products, or files that have been archived into Cumulus.  It's similar to Ingest report.
+The Archive report contains records of all granules that have been archived into Cumulus.  It's similar to Ingest report.
 
-The Archive Delete report lists granules, products, or files that were reported to the EMS and now have been deleted from Cumulus.
+The Archive Delete report lists granules that were reported to the EMS and now have been deleted from Cumulus.
 
 A scheduled Lambda task will run nightly that generates Ingest, Archive and Archive Delete reports.
 
@@ -52,6 +58,6 @@ Upload the corresponding private key to s3, use `{{system_bucket}}` as bucket na
 
 6. Configure the `ems` configuration parameters in `app/config.yml`.
 
-If the `submitReport` is not set to `true` in the configuration, the reports are still generated in `s3://{{buckets.internal.name}/{{prefix}}/ems/{{filename}}` for Ingest reports and `s3://{{buckets.internal.name}/{{prefix}}/ems-distribution/reports/{{filename}}` for Distribution reports, but won't be submitted to EMS.
+If the `submitReport` is not set to `true` in the configuration, the reports are still generated in `s3://{{buckets.internal.name}/{{prefix}}/ems/{{filename}}` for Product Metadata and Ingest reports, and `s3://{{buckets.internal.name}/{{prefix}}/ems-distribution/reports/{{filename}}` for Distribution reports, but they won't be submitted to EMS.
 
 Submitted reports will be saved to `sent` folder.
