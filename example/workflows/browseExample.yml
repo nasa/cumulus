@@ -9,6 +9,15 @@ DiscoverGranulesBrowseExample:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
+      Retry:
+        - &LambdaServiceExceptionRetry
+          ErrorEquals:
+          - Lambda.ServiceException
+          - Lambda.AWSLambdaException
+          - Lambda.SdkClientException
+          IntervalSeconds: 2
+          MaxAttempts: 6
+          BackoffRate: 2
       Next: DiscoverGranules
     DiscoverGranules:
       CumulusConfig:
@@ -18,6 +27,8 @@ DiscoverGranulesBrowseExample:
         stack: '{$.meta.stack}'
       Type: Task
       Resource: ${DiscoverGranulesLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -33,6 +44,8 @@ DiscoverGranulesBrowseExample:
         queueUrl: '{$.meta.queues.startSF}'
       Type: Task
       Resource: ${QueueGranulesLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -50,6 +63,8 @@ DiscoverGranulesBrowseExample:
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -69,6 +84,8 @@ CookbookBrowseExample:
         cumulus_message:
           input: '{$}'
       ResultPath: null
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Next: SyncGranule
     SyncGranule:
       CumulusConfig:
@@ -132,6 +149,8 @@ CookbookBrowseExample:
         granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
       Type: Task
       Resource: ${FilesToGranulesLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -147,6 +166,8 @@ CookbookBrowseExample:
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
       Type: Task
       Resource: ${MoveGranulesLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -163,6 +184,8 @@ CookbookBrowseExample:
         granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -180,6 +203,8 @@ CookbookBrowseExample:
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
