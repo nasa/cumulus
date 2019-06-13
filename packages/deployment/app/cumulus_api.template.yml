@@ -213,11 +213,10 @@ Resources:
     DependsOn:
       - ApiGatewayCloudWatchLogGroup{{../name}}
     Properties:
-      DestinationArn: "arn:aws:kinesis:us-east-1:{{AWS_ACCOUNT_ID}}:stream/mhs-test-RecipientStream"
+      DestinationArn: "{{../parent.sharedLogDestinationArn}}"
       FilterPattern: ""
       LogGroupName:
         Ref: ApiGatewayCloudWatchLogGroup{{../name}}
-      RoleArn: {{../parent.iams.cloudwatchLogsToKinesisRoleArn}}
 
 {{/ifLog2CloudWatch}}
 {{/each}}

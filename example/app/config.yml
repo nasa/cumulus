@@ -189,6 +189,7 @@ default:
       private: true
       port: 7000
       log2cloudwatch: true
+  sharedLogDestinationArn: '{{SHARED_LOG_DESTINATION_ARN}}'
 
   sns:
     sftracker:
