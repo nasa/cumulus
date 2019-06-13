@@ -33,8 +33,10 @@ let accessTokenModel;
 let userModel;
 
 const providerDoesNotExist = async (t, providerId) => {
-  const error = await t.throws(providerModel.get({ id: providerId }));
-  t.true(error instanceof RecordDoesNotExist);
+  await t.throwsAsync(
+    () => providerModel.get({ id: providerId }),
+    RecordDoesNotExist
+  );
 };
 
 test.before(async () => {

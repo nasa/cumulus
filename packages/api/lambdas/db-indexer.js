@@ -1,7 +1,7 @@
 'use strict';
 
 const get = require('lodash.get');
-const pLimit = require('p-limit');
+const pMap = require('p-map');
 const { AttributeValue } = require('dynamodb-data-types');
 const { log } = require('@cumulus/common');
 const { FileClass } = require('../models');
@@ -130,10 +130,7 @@ function performDelete(esClient, tableIndex, fields, body) {
       id,
       type,
       parent
-    })
-    // Important to catch this error. Uncaught errors will cause
-    // the handler to fail and other records will not be updated.
-    .catch((err) => log.error(err));
+    });
 }
 
 /**
@@ -147,17 +144,13 @@ function performDelete(esClient, tableIndex, fields, body) {
  */
 async function indexRecord(esClient, record) {
   // only process if the source is dynamoDB
-  if (record.eventSource !== 'aws:dynamodb') {
-    return {};
-  }
+  if (record.eventSource !== 'aws:dynamodb') return {};
 
   // get list of indexers
   const indexers = getIndexers();
   const table = getTablename(record.eventSourceARN, indexers);
 
-  if (!table) {
-    return {};
-  }
+  if (!table) return {};
 
   // get the hash and range (if any) and use them as id key for ES
   const fields = unwrap(get(record, 'dynamodb.Keys'));
@@ -187,29 +180,21 @@ async function indexRecord(esClient, record) {
  * @returns {Promise<Array>} array of records indexed
  */
 async function indexRecords(records) {
-  const concurrencyLimit = process.env.CONCURRENCY || 3;
-  const limit = pLimit(concurrencyLimit);
   const esClient = await Search.es();
 
-  const promises = records.map((record) => limit(() => indexRecord(esClient, record)));
-  return Promise.all(promises);
+  return pMap(
+    records,
+    (record) => indexRecord(esClient, record).catch(log.error),
+    { concurrency: process.env.CONCURRENCY || 3 }
+  );
 }
 
 /**
  * The main handler for the lambda function
  *
  * @param {Object} event - aws lambda event object.
- * @param {Object} context - aws context object
- * @param {Function} cb - aws callback
- * @returns {undefined} undefined
  */
-function handler(event, context, cb) {
-  const records = event.Records;
-  if (!records) {
-    return cb(null, 'No records found in event');
-  }
-
-  return indexRecords(records).then((r) => cb(null, r)).catch(cb);
-}
+const handler = async ({ Records }) =>
+  (Records ? indexRecords(Records) : 'No records found in event');
 
 module.exports = { handler };

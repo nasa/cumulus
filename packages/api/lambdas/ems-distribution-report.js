@@ -152,9 +152,9 @@ class DistributionEvent {
   }
 
   /**
-   * Get the product name, version, and granuleId
+   * Get the product name, version, granuleId and file type
    *
-   * @returns {Array<string>} product name, version and granuleId
+   * @returns {Array<string>} product name, version, granuleId and file type
    */
   get product() {
     const fileModel = new FileClass();
@@ -177,13 +177,14 @@ class DistributionEvent {
 
     return [
       this.time.format(`DD-[${upperCasedMonth}]-YY hh:mm:ss A`),
-      this.username,
+      this.username.replace('unauthenticated user', '-'),
       this.remoteIP,
       `s3://${this.bucket}/${this.key}`,
       this.bytesSent,
       this.transferStatus
     ]
-      .concat(await this.product)
+      .concat(await this.product) // product name, version, granuleId and file type
+      .concat(['HTTPS']) // protocol
       .join('|&|');
   }
 }

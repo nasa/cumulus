@@ -390,6 +390,8 @@ class StepFunction {
   }
 
   static async stop(arn, cause, error) {
+    deprecate('@cumulus/ingest/aws StepFunction.stop', '1.13.0');
+
     const stepfunctions = new AWS.StepFunctions();
     return stepfunctions.stopExecution({
       executionArn: arn,
