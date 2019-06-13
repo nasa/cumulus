@@ -253,11 +253,11 @@ test('getStageName throws if cumulus has multiple stages defined', async (t) => 
   const listAllStagesFake = () => Promise.resolve(['dev', 'prod']);
   distributionMetrics.__set__('listAllStages', listAllStagesFake);
 
-  const error = await t.throws(getStageName());
-  console.log(error.message);
-  t.true(
-    error.message.includes('cumulus configured with wrong number of stages: 2')
+  await t.throwsAsync(
+    getStageName,
+    /cumulus configured with wrong number of stages: 2/
   );
+
   distributionMetrics.__set__('listAllStages', original);
 });
 

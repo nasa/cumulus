@@ -124,7 +124,8 @@ async function ingestAndPublishGranule(testSuffix, testDataFolder, publish = tru
 }
 
 // ingest a granule xml to CMR
-async function ingestGranuleToCMR(granuleId) {
+async function ingestGranuleToCMR() {
+  const granuleId = randomStringFromRegex(granuleRegex);
   console.log(`\ningestGranuleToCMR granule id: ${granuleId}`);
   const xml = generateCmrXml({ granuleId }, collection);
   await cmr.ingestGranule(xml);
@@ -208,8 +209,6 @@ describe('When there are granule differences and granule reconciliation is run',
 
     await setupCollectionAndTestData(testSuffix, testDataFolder);
 
-    cmrGranule = randomStringFromRegex(granuleRegex);
-
     const ingestResults = await Promise.all([
       // ingest a granule and publish it to CMR
       ingestAndPublishGranule(testSuffix, testDataFolder),
@@ -218,10 +217,10 @@ describe('When there are granule differences and granule reconciliation is run',
       ingestAndPublishGranule(testSuffix, testDataFolder, false),
 
       // ingest a granule to CMR only
-      ingestGranuleToCMR(cmrGranule)
+      ingestGranuleToCMR()
     ]);
 
-    [publishedGranule, dbGranule] = ingestResults;
+    [publishedGranule, dbGranule, cmrGranule] = ingestResults;
 
     // update one of the granule files in database so that that file won't match with CMR
     const granuleResponse = await granulesApiTestUtils.getGranule({
@@ -230,7 +229,6 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranule, JSON.parse(granuleResponse.body).files, /jpg$/, 'jpg2'));
-
 
     console.log(`invoke ${config.stackName}-CreateReconciliationReport`);
 

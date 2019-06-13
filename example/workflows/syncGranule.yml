@@ -8,6 +8,15 @@ SyncGranuleCatchDuplicateErrorTest:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
+      Retry:
+        - &LambdaServiceExceptionRetry
+          ErrorEquals:
+          - Lambda.ServiceException
+          - Lambda.AWSLambdaException
+          - Lambda.SdkClientException
+          IntervalSeconds: 2
+          MaxAttempts: 6
+          BackoffRate: 2
       Next: SyncGranule
     SyncGranule:
       CumulusConfig:
@@ -28,6 +37,8 @@ SyncGranuleCatchDuplicateErrorTest:
               destination: '{$.cumulus_meta.process}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - 'DuplicateFile'
@@ -49,6 +60,8 @@ SyncGranuleCatchDuplicateErrorTest:
         executionName: '{$.cumulus_meta.execution_name}'
         cumulus_message:
           input: '{$}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - ErrorEquals:
           - States.ALL
