@@ -254,17 +254,6 @@
             ]
         }
     },
-    "rules": {
-        "backgroundJobs": {
-            "schedule": "rate(10 minutes)",
-            "state": "ENABLED",
-            "targets": [
-                {
-                    "lambda": "jobs"
-                }
-            ]
-        }
-    },
     "stepFunctions": {
         "IngestGranule": {
             "Comment": "Ingest Granule",
@@ -747,27 +736,6 @@
             },
             "name": "ScheduleSF",
             "fullName": "lpdaac-cumulus-ScheduleSF",
-            "hash": "7f0f6d58b5bfb46ec0d42fa41345ae8ec75dc133",
-            "bucket": "cumulus-devseed-internal",
-            "local": "app/build/cloudformation/7f0f6d58b5bfb46ec0d42fa41345ae8ec75dc133-ApiDistribution.zip",
-            "remote": "lpdaac-cumulus/lambdas/7f0f6d58b5bfb46ec0d42fa41345ae8ec75dc133-ApiDistribution.zip"
-        },
-        "jobs": {
-            "handler": "index.jobs",
-            "timeout": 300,
-            "memory": 512,
-            "envs": {
-                "ES_HOST": {
-                    "function": "Fn::GetAtt",
-                    "array": [
-                        "es5Domain",
-                        "DomainEndpoint"
-                    ]
-                }
-            },
-            "source": "node_modules/@cumulus/api/dist/",
-            "name": "jobs",
-            "fullName": "lpdaac-cumulus-jobs",
             "hash": "7f0f6d58b5bfb46ec0d42fa41345ae8ec75dc133",
             "bucket": "cumulus-devseed-internal",
             "local": "app/build/cloudformation/7f0f6d58b5bfb46ec0d42fa41345ae8ec75dc133-ApiDistribution.zip",
