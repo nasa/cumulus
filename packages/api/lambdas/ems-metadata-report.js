@@ -30,40 +30,67 @@ exports.bucketsPrefixes = bucketsPrefixes;
 
 /**
  * Get discipline
+ *
  * @param {Object} collection - CMR collection object
- * @returns {string} discpline
+ * @returns {string} comma-separated discplines
  */
 const discipline = (collection) => {
   let scienceKeywords = get(collection, 'ScienceKeywords.ScienceKeyword', []);
-  console.log('scienceKeywords', scienceKeywords);
   scienceKeywords = (Array.isArray(scienceKeywords))
     ? scienceKeywords : [scienceKeywords];
 
   return scienceKeywords
     .map((scienceKeyword) => scienceKeyword.TopicKeyword)
     .filter((elem, pos, arr) => arr.indexOf(elem) === pos)
-    .join(', ');
+    .join(',');
 };
 
+/**
+ * Get platforms
+ *
+ * @param {Object} collection - CMR collection object
+ * @returns {Array<Object>} list of platform object
+ */
 const platforms = (collection) => {
   const platform = get(collection, 'Platforms.Platform', []);
   return Array.isArray(platform) ? platform : [platform];
 };
 
+/**
+ * Get mission
+ *
+ * @param {Object} collection - CMR collection object
+ * @returns {string} missions separated by semi-colon
+ */
 const mission = (collection) =>
   platforms(collection).map((platform) => platform.ShortName).join(';');
 
+/**
+ * instruments for a platform
+ *
+ * @param {Object} platform - platform object
+ * @returns {string} comma-separated instruments
+ */
 function buildInstrumentsString(platform) {
   let instruments = get(platform, 'Instruments.Instrument', []);
   instruments = (Array.isArray(instruments)) ? instruments : [instruments];
   return instruments.map((instrument) => instrument.ShortName).join(',');
 }
 
+/**
+ * instruments for a collection
+ *
+ * @param {Object} collection - CMR collection object
+ * @returns {string} instruments grouped by platform
+ */
 const instrument = (collection) =>
   platforms(collection)
     .map((platform) => buildInstrumentsString(platform))
     .join(';');
 
+/**
+ * map each ems field with CMR collection fields
+ */
 const emsMapping = {
   product: (collection) => collection.ShortName,
   metaDataLongName: (collection) => collection.DataSetId,
@@ -80,7 +107,7 @@ const emsMapping = {
 /**
  * get collections from CMR
  *
- * @returns {Array<Object>} - list of collections containing 'collectionId'
+ * @returns {Array<Object>} - list of collections containing 'collectionId', 'lastUpdate'
    *   and 'emsRecord' properties
  */
 async function getCmrCollections() {
@@ -107,12 +134,6 @@ async function getCmrCollections() {
       nextCmrItem.Collection.ShortName, nextCmrItem.Collection.VersionId
     );
     const lastUpdate = nextCmrItem.Collection.LastUpdate || nextCmrItem.Collection.InsertTime;
-    console.log('cmrCollection', { collectionId, lastUpdate, emsRecord });
-    // if (['A2_SI25_NRT___0', 'MUR-JPL-L4-GLOB-v4.1___1', 'MYD13Q1___006', 'MOD11A1___006']
-    //   .includes(collectionId)) {
-    //   console.log('writing json file');
-    //   fs.writeFileSync(`${collectionId}.json`, JSON.stringify(nextCmrItem));
-    // }
     collections.push({ collectionId, lastUpdate, emsRecord });
     nextCmrItem = await cmrCollectionsIterator.peek(); // eslint-disable-line no-await-in-loop
   }
@@ -129,6 +150,12 @@ async function getCmrCollections() {
 const millisecondsToUTCString = (timeElapsed) =>
   moment.utc(new Date(timeElapsed)).format();
 
+/**
+ * get collections from database
+ *
+ * @returns {Array<Object>} - list of collections containing 'collectionId',
+   *   and 'lastUpdate' properties
+ */
 const getDbCollections = async () =>
   (await new Collection().getAllCollections())
     .map((collection) => ({
@@ -139,13 +166,13 @@ const getDbCollections = async () =>
     }));
 
 /**
- * get collections in both CMR and CUmulus
+ * get collections in both CMR and CUMULUS
  *
  * @param {string} startTime - start time of the records
  * @param {string} endTime - end time of the records
  *
- * @returns {Array<Object>} list of collections containing 'collectionId'
-   *   and 'emsRecord' properties
+ * @returns {Array<Object>} list of collections containing 'collectionId', 'lastUpdate',
+   *   'dbLastUpdate' and 'emsRecord' properties
  * onlyInCmr
  */
 async function getCollectionsForEms(startTime, endTime) {
@@ -160,7 +187,6 @@ async function getCollectionsForEms(startTime, endTime) {
 
   // get all collections from database and sort them, since the scan result is not ordered
   const dbCollections = sortBy((await getDbCollections()), ['collectionId']);
-  console.log(dbCollections);
 
   // collections exist in both CMR and Cumulus
   const emsCollections = [];
@@ -193,8 +219,6 @@ async function getCollectionsForEms(startTime, endTime) {
     || (moment.utc(collection.dbLastUpdate) >= startTime
       && moment.utc(collection.dbLastUpdate) < endTime));
 
-  console.log('getCollectionsForEms', emsCollections);
-  console.log('filtered ems collection', emsCollections.filter(lastUpdateFilter));
   return emsCollections.filter(lastUpdateFilter);
 }
 
@@ -272,29 +296,9 @@ function handler(event, context, callback) {
 
   return cleanup()
     .then(() => generateReport(moment.utc(startTime), moment.utc(endTime)))
-    .then((reports) => submitReports(reports))
+    .then((report) => submitReports([report]))
     .then((r) => callback(null, r))
     .catch(callback);
 }
 
 exports.handler = handler;
-
-process.env.ems_provider = 'CUMULUS';
-process.env.CMR_PAGE_SIZE = 1;
-process.env.CMR_LIMIT = 1;
-process.env.cmr_provider = 'CUMULUS';
-process.env.cmr_client_id = 'cumulus-core-jl-test-integration';
-process.env.CollectionsTable = 'jl-test-integration-CollectionsTable';
-process.env.stackName = 'jl-test-integration';
-process.env.system_bucket = 'cumulus-test-sandbox-internal';
-process.env.DISTRIBUTION_ENDPOINT = 'https://example.com/';
-
-async function test(startTime, endTime) {
-  return getCollectionsForEms(startTime, endTime);
-}
-//test(moment.utc('2019-01-20T09:38:21.508Z'), moment.utc('2019-06-14'));
-
-// MYD13Q1___006 single ScienceKeywords.ScienceKeyword
-//MUR-JPL-L4-GLOB-v4.1___1 single ScienceKeywords.ScienceKeyword, multiple platform and instrument
-// A2_SI25_NRT___0 multiple ScienceKeywords.ScienceKeyword.TopicKeyword
-// MOD11A1___006 multiple ScienceKeywords.ScienceKeyword
