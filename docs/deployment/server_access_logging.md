@@ -25,7 +25,7 @@ To enable [EMS Reporting](../ems_reporting.md), you need to enable [S3 server ac
 		}
 	}
 	```
-2. Add the logging policy to your protected and public buckets by calling this command on each bucket.
+2. Add the logging policy to each of your protected and public buckets by calling this command on each bucket.
 
 	```sh
 	aws s3api put-bucket-logging --bucket <protected/public-bucket-name> --bucket-logging-status file://logging.json

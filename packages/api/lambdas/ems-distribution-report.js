@@ -140,13 +140,16 @@ class DistributionEvent {
    * @returns {string} EMS file type
    */
   getFileType(bucket, key, granule) {
-    // EMS dpFiletype field possible values: PH, QA, METADATA, BROWSE, SCIENCE, OTHER, DOC
-    // Cumulus granule file.type
+    // EMS dpFiletype field possible values
+    const emsTypes = ['PH', 'QA', 'METADATA', 'BROWSE', 'SCIENCE', 'OTHER', 'DOC'];
+
+    // convert Cumulus granule file.type (CNM file type) to EMS file type
     const fileTypes = granule.files
       .filter((file) => (file.bucket === bucket && file.key === key))
       .map((file) => {
-        const fileType = file.type || 'OTHER';
-        return ((fileType === 'data') ? 'SCIENCE' : fileType.toUpperCase());
+        let fileType = file.type || 'OTHER';
+        fileType = (fileType === 'data') ? 'SCIENCE' : fileType.toUpperCase();
+        return (emsTypes.includes(fileType)) ? fileType : 'OTHER';
       });
     return fileTypes[0] || 'OTHER';
   }
@@ -154,13 +157,13 @@ class DistributionEvent {
   /**
    * Get the product name, version, granuleId and file type
    *
-   * @returns {Array<string>} product name, version, granuleId and file type
+   * @returns {Promise<Array<string>>} product name, version, granuleId and file type
    */
   get product() {
     const fileModel = new FileClass();
     return fileModel.getGranuleForFile(this.bucket, this.key)
       .then((granule) =>
-        ((granule)
+        (granule
           ? Object.values(deconstructCollectionId(granule.collectionId))
             .concat([granule.granuleId])
             .concat(this.getFileType(this.bucket, this.key, granule))
@@ -226,9 +229,12 @@ async function cleanup() {
 
   const { reportsPrefix, reportsSentPrefix, logsPrefix } = bucketsPrefixes();
   const jobs = [reportsPrefix, reportsSentPrefix, logsPrefix]
-    .map((prefix) =>
-      getExpiredS3Objects(process.env.system_bucket, prefix, process.env.ems_retentionInDays)
-        .then((s3objects) => aws.deleteS3Files(s3objects)));
+    .map(async (prefix) => {
+      const expiredS3Objects = await getExpiredS3Objects(
+        process.env.system_bucket, prefix, process.env.ems_retentionInDays
+      );
+      return aws.deleteS3Files(expiredS3Objects);
+    });
   return Promise.all(jobs);
 }
 
@@ -274,14 +280,15 @@ async function generateDistributionReport(params) {
     reportEndTime
   } = params;
 
-  log.info(`generateDistributionReport for access records between ${reportStartTime.toString()} and ${reportEndTime.toString()}`);
+  log.info(`generateDistributionReport for access records between ${reportStartTime.format()} and ${reportEndTime.format()}`);
 
   // A few utility functions that we'll be using below
   const eventTimeFilter = (event) => event.time >= reportStartTime && event.time < reportEndTime;
   const sortByTime = (eventA, eventB) => (eventA.time < eventB.time ? -1 : 1);
   // most s3 server access log records are delivered within a few hours of the time
   // that they are recorded
-  const s3ObjectTimeFilter = (s3Object) => s3Object.LastModified >= reportStartTime;
+  const s3ObjectTimeFilter = (s3Object) =>
+    s3Object.LastModified.getTime() >= reportStartTime.toDate().getTime();
 
   const { logsBucket, logsPrefix } = bucketsPrefixes();
   // Get the list of S3 objects containing Server Access logs
@@ -303,7 +310,7 @@ async function generateDistributionReport(params) {
   const distributionEventsInReportPeriod = allDistributionEvents.filter(eventTimeFilter);
 
   log.info(`Found ${allDistributionEvents.length} distribution events between `
-    + `${reportStartTime.toString()} and ${reportEndTime.toString()}`);
+    + `${reportStartTime.format()} and ${reportEndTime.format()}`);
 
   return (await Promise.all(distributionEventsInReportPeriod
     .sort(sortByTime)
@@ -360,9 +367,8 @@ function handler(_event, _context, cb) {
   // eslint-disable-next-line no-param-reassign
   _context.callbackWaitsForEmptyEventLoop = false;
   // 24-hour period ending past midnight
-  let endTime = moment.utc().startOf('day').toDate().toUTCString();
-  let startTime = moment.utc().subtract(1, 'days').startOf('day').toDate()
-    .toUTCString();
+  let endTime = moment.utc().startOf('day').format();
+  let startTime = moment.utc().subtract(1, 'days').startOf('day').format();
 
   endTime = _event.endTime || endTime;
   startTime = _event.startTime || startTime;
