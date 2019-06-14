@@ -3,6 +3,7 @@
 const test = require('ava');
 const drop = require('lodash.drop');
 const clone = require('lodash.clonedeep');
+const omit = require('lodash.omit');
 const { randomString } = require('@cumulus/common/test-utils');
 const { parseS3Uri } = require('@cumulus/common/aws');
 
@@ -11,13 +12,19 @@ const { fakeGranuleFactory, fakeFileFactory } = require('../../lib/testUtils');
 
 process.env.stackName = randomString();
 process.env.FilesTable = randomString();
+process.env.GranulesTable = randomString();
 const fileModel = new models.FileClass();
+const granuleModel = new models.Granule();
 
 test.before(async () => {
   await fileModel.createTable();
+  await granuleModel.createTable();
 });
 
-test.after.always(() => fileModel.deleteTable());
+test.after.always(async () => {
+  await fileModel.deleteTable();
+  await granuleModel.deleteTable();
+});
 
 test.serial('create files records from a granule and then delete them', async (t) => {
   const bucket = randomString();
@@ -133,4 +140,37 @@ test('getBucketAndKey returns correct bucket and key when file does not have a b
   };
 
   t.deepEqual(fileModel.getBucketAndKey(file), { bucket: 'fake-source-bucket', key: 'fake-key' });
+});
+
+test.serial('getGranuleForFile returns granule of the file', async (t) => {
+  const bucket = randomString();
+  const granule = fakeGranuleFactory();
+  granule.files = [];
+  for (let i = 0; i < 4; i += 1) {
+    granule.files.push(fakeFileFactory({ bucket }));
+  }
+
+  await granuleModel.create(granule);
+  await fileModel.createFilesFromGranule(granule);
+
+  // granule can be retrieved for each file
+  const validateCollIds = async (file) => {
+    const associatedGranule = await fileModel.getGranuleForFile(file.bucket, file.key);
+    t.deepEqual(omit(associatedGranule, ['updatedAt']), omit(granule, ['updatedAt']));
+  };
+
+  await Promise.all(granule.files.map(validateCollIds));
+
+  // return null if the file doesn't exist
+  const associatedGran = await fileModel.getGranuleForFile(randomString(), randomString());
+  t.falsy(associatedGran);
+
+  // return null if the granule doesn't exist
+  await granuleModel.delete({ granuleId: granule.granuleId });
+  const validates = async (file) => {
+    const associatedGranule = await fileModel.getGranuleForFile(file.bucket, file.key);
+    t.falsy(associatedGranule);
+  };
+
+  await Promise.all(granule.files.map(validates));
 });

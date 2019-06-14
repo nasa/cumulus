@@ -82,6 +82,7 @@ test('default returns list of providerModel', async (t) => {
   const testProvider = fakeProviderFactory();
   const record = await providerModel.create(testProvider);
   await indexer.indexProvider(esClient, record, esIndex);
+  await esClient.indices.refresh();
 
   const response = await request(app)
     .get('/providers')
