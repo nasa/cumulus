@@ -135,7 +135,7 @@ class FileClass extends Manager {
    *
    * @param {string} bucket - bucket name
    * @param {string} key - bucket key
-   * @returns {Object} the granule associated with the file,
+   * @returns {Promise<Object>} the granule associated with the file,
    * null if file or granule is not found
    */
   getGranuleForFile(bucket, key) {
