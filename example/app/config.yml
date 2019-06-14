@@ -484,6 +484,7 @@ jl:
     username: cumulus
     dataSource: UAT
     submitReport: true
+    retentionInDays: 20
 
 mhs2:
   prefix: mhs2

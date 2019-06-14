@@ -105,18 +105,20 @@ EmsIngestReport:
     ems_path: '{{ems.path}}'
     ems_dataSource: '{{ems.dataSource}}'
     ems_submitReport: '{{ems.submitReport}}'
+    ems_retentionInDays: '{{ems.retentionInDays}}'
   namedLambdaDeadLetterQueue: true
 
 EmsDistributionReport:
   handler: index.handler
   timeout: 300
-  memory: 128
+  memory: 320
   source: 'node_modules/@cumulus/api/dist/emsDistributionReport/'
   launchInVpc: true
+  tables:
+    - GranulesTable
+    - FilesTable
   envs:
-    LOGS_BUCKET: '{{system_bucket}}'
-    REPORTS_BUCKET: '{{system_bucket}}'
-    STACK_NAME: '{{stackName}}'
+    system_bucket: '{{system_bucket}}'
     ems_provider: '{{ems.provider}}'
     ems_username: '{{ems.username}}'
     ems_privateKey: '{{ems.privateKey}}'
@@ -125,6 +127,7 @@ EmsDistributionReport:
     ems_path: '{{ems.path}}'
     ems_dataSource: '{{ems.dataSource}}'
     ems_submitReport: '{{ems.submitReport}}'
+    ems_retentionInDays: '{{ems.retentionInDays}}'
 
 executeMigrations:
   handler: index.handler
