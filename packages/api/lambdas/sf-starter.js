@@ -4,7 +4,6 @@ const uuidv4 = require('uuid/v4');
 const get = require('lodash.get');
 
 const { sfn } = require('@cumulus/common/aws');
-const log = require('@cumulus/common/log');
 const {
   getQueueName,
   getMaximumExecutions
@@ -30,9 +29,6 @@ function dispatch(message) {
   if (!input.cumulus_meta.execution_name) {
     input.cumulus_meta.execution_name = uuidv4();
   }
-
-  log.debug('state machine ARN', message.Body.cumulus_meta.state_machine);
-  log.debug('execution name', input.cumulus_meta.execution_name);
 
   return sfn().startExecution({
     stateMachineArn: message.Body.cumulus_meta.state_machine,
