@@ -16,6 +16,8 @@ const mime = require('mime-types');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const config = loadConfig();
 const workflowName = 'IngestGranule';
+const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
+const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 
 describe('The FTP Ingest Granules workflow', () => {
   const testId = createTimestampedTestId(config.stackName, 'IngestGranuleFtpSuccess');
@@ -41,6 +43,10 @@ describe('The FTP Ingest Granules workflow', () => {
     console.log('\nStarting ingest test');
     inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
     inputPayload.granules[0].dataType += testSuffix;
+    inputPayload.granules[0].granuleId = randomStringFromRegex(granuleRegex);
+
+    console.log(`Granule id is ${inputPayload.granules[0].granuleId}`)
+
     // delete the granule record from DynamoDB if exists
     await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
 
