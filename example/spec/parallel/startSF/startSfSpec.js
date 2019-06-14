@@ -86,7 +86,7 @@ function generateStartSfMessages(num, workflowArn) {
   return arr;
 }
 
-xdescribe('the sf-starter lambda function', () => {
+describe('the sf-starter lambda function', () => {
   let queueUrl;
 
   beforeAll(async () => {
@@ -149,10 +149,7 @@ xdescribe('the sf-starter lambda function', () => {
           messageLimit: testMessageLimit
         })
       }).promise();
-      console.log('time', new Date());
-      console.log('response', response);
       const { Payload } = response;
-      console.log(`request ID: ${response.$response.requestId}`);
       messagesConsumed = parseInt(Payload, 10);
       expect(messagesConsumed).toBeGreaterThan(0);
     });
@@ -165,13 +162,12 @@ xdescribe('the sf-starter lambda function', () => {
     });
 
     it('to trigger workflows', async () => {
-      console.log(`Pass SF arn: ${passSfArn}`);
       const { executions } = await StepFunctions.listExecutions({ stateMachineArn: passSfArn });
       expect(executions.length).toBe(messagesConsumed);
     });
   });
 
-  describe('when provided a queue with a maximum number of executions', () => {
+  xdescribe('when provided a queue with a maximum number of executions', () => {
     let maxQueueUrl;
     let maxQueueName;
     let templateKey;
@@ -326,9 +322,6 @@ xdescribe('the sf-starter lambda function', () => {
           }
         })
       }).promise();
-
-      console.log('time', new Date());
-
       const { Payload } = response;
 
       console.log(`request ID: ${response.$response.requestId}`);
