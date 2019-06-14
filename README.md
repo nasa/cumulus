@@ -92,10 +92,11 @@ Stop localstack/unit test services:
 #### Run tests
 
 Run the test commands next
+```
     $ export LOCAL_ES_HOST=127.0.0.1
     $ export LOCALSTACK_HOST=localhost
     $ npm test
-
+```
 ### Integration Tests
 
 For more information please [read this](docs/development/integration-tests.md).
