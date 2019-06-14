@@ -74,7 +74,7 @@ async function determineReportKey(reportType, reportStartTime, reportsPrefix) {
  */
 async function getExpiredS3Objects(bucket, prefix, retentionInDays) {
   const retentionFilter = (s3Object) =>
-    s3Object.LastModified <= moment.utc().subtract(retentionInDays, 'days').toDate();
+    s3Object.LastModified.getTime() <= moment.utc().subtract(retentionInDays, 'days').toDate().getTime();
 
   return (await aws.listS3ObjectsV2({ Bucket: bucket, Prefix: prefix }))
     .filter(retentionFilter)
