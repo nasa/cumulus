@@ -287,7 +287,8 @@ async function generateDistributionReport(params) {
   const sortByTime = (eventA, eventB) => (eventA.time < eventB.time ? -1 : 1);
   // most s3 server access log records are delivered within a few hours of the time
   // that they are recorded
-  const s3ObjectTimeFilter = (s3Object) => s3Object.LastModified >= reportStartTime.toDate();
+  const s3ObjectTimeFilter = (s3Object) =>
+    s3Object.LastModified.getTime() >= reportStartTime.toDate().getTime();
 
   const { logsBucket, logsPrefix } = bucketsPrefixes();
   // Get the list of S3 objects containing Server Access logs

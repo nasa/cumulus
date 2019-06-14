@@ -311,9 +311,8 @@ function handler(event, context, callback) {
   // eslint-disable-next-line no-param-reassign
   context.callbackWaitsForEmptyEventLoop = false;
   // 24-hour period ending past midnight
-  let endTime = moment.utc().startOf('day').toDate().toUTCString();
-  let startTime = moment.utc().subtract(1, 'days').startOf('day').toDate()
-    .toUTCString();
+  let endTime = moment.utc().startOf('day').format();
+  let startTime = moment.utc().subtract(1, 'days').startOf('day').format();
 
   endTime = event.endTime || endTime;
   startTime = event.startTime || startTime;
