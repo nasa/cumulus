@@ -84,11 +84,11 @@ test('default returns list of providerModel', async (t) => {
   await indexer.indexProvider(esClient, record, esIndex);
 
   const response = await request(app)
-    .get('/providers')
+    .get('/providers/testProvider.id')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
   const { results } = response.body;
-  t.is(results[0].id, testProvider.id);
+  t.is(results.filter(r => r.id === testProvider.id).length, 1);
 });
