@@ -4,6 +4,7 @@ const fs = require('fs-extra');
 
 const { models: { Granule } } = require('@cumulus/api');
 const { aws: { headObject } } = require('@cumulus/common');
+const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const {
   addCollections,
   addProviders,
@@ -17,7 +18,6 @@ const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../..
 const config = loadConfig();
 const workflowName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
-const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 
 describe('The FTP Ingest Granules workflow', () => {
   const testId = createTimestampedTestId(config.stackName, 'IngestGranuleFtpSuccess');
@@ -45,7 +45,7 @@ describe('The FTP Ingest Granules workflow', () => {
     inputPayload.granules[0].dataType += testSuffix;
     inputPayload.granules[0].granuleId = randomStringFromRegex(granuleRegex);
 
-    console.log(`Granule id is ${inputPayload.granules[0].granuleId}`)
+    console.log(`Granule id is ${inputPayload.granules[0].granuleId}`);
 
     // delete the granule record from DynamoDB if exists
     await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
