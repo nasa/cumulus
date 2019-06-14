@@ -273,7 +273,7 @@ describe('Ingesting from PDR', () => {
 
         it('has expected output', () => {
           const payload = lambdaOutput.payload;
-          expect(payload.queued.concat(payload.completed, payload.failed).length).toEqual(1);
+          expect(payload.running.concat(payload.completed, payload.failed).length).toEqual(1);
 
           expect(payload.pdr.path).toEqual(expectedParsePdrOutput.pdr.path);
           expect(payload.pdr.name).toEqual(expectedParsePdrOutput.pdr.name);
