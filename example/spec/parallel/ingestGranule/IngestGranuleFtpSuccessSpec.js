@@ -92,6 +92,7 @@ describe('The FTP Ingest Granules workflow', () => {
     });
 
     it('uploaded the granules with correct ContentType', async () => {
+      console.log(`File object on intermittently failing test: ${JSON.stringify(granule.files)}`);
       const headObjects = await Promise.all(granule.files.map(async (fileObject) =>
         Object.assign({},
           fileObject,
