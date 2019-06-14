@@ -38,32 +38,32 @@ nvm use
 
 We use Lerna to manage multiple Cumulus packages in the same repo. You need to install lerna as a global module first:
 
-    $ npm install -g lerna
+    ```$ npm install -g lerna```
 
 ### Install Local Dependencies
 
 We use npm for local package management
 
-    $ npm install
-    $ npm run bootstrap
+    ```$ npm install```
+    ```$ npm run bootstrap```
 
 Building All packages:
 
-    $ npm run build
+    ```$ npm run build```
 
 Build and watch packages:
 
-    $ npm run watch
+    ```$ npm run watch```
 
 ## Running the Cumulus APIs locally
 
 Start the API:
 
-    $ npm run serve
+    ```$ npm run serve```
 
 Or start the distribution API:
 
-    $ npm run serve-dist
+    ```$ npm run serve-dist```
 
 See the [API package documentation](packages/api/README.md#running-the-api-locally) for more options.
 
@@ -83,19 +83,20 @@ Localstack is included in the docker-compose file. You only need to run the dock
 
 Turn on the docker containers first:
 
-    $ npm run start-unit-test-stack
+    ```$ npm run start-unit-test-stack```
 
 Stop localstack/unit test services:
 
-    $ npm run stop-unit-test-stack
+    ```$ npm run stop-unit-test-stack```
 
 #### Run tests
 
 Run the test commands next
-    $ export LOCAL_ES_HOST=127.0.0.1
+```
+    $ export LOCAL_ES_HOST=localhost
     $ export LOCALSTACK_HOST=localhost
     $ npm test
-
+```
 ### Integration Tests
 
 For more information please [read this](docs/development/integration-tests.md).
@@ -112,11 +113,11 @@ Make sure to name the package as `@cumulus/package-name`.
 
 ## Running command in all package folders
 
-    $ lerna exec -- rm -rf ./package-lock.json
+   ``` $ lerna exec -- rm -rf ./package-lock.json```
 
 ## Cleaning Up all the repos
 
-    $ npm run clean
+   ```$ npm run clean```
 
 ## Contribution
 
