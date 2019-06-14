@@ -50,8 +50,16 @@ Upload the corresponding private key to s3, use `{{system_bucket}}` as bucket na
 
 5. Create a data collection to send to EMS.  The report will be automatically generated and submit to EMS, and this step will be deleted after CUMULUS-1273(https://bugs.earthdata.nasa.gov/browse/CUMULUS-1273) is completed.
 
-6. Configure the `ems` configuration parameters in `app/config.yml`.
+6. Configure the `ems` configuration parameters in `app/config.yml`. _Example configuration of the `ems` can be found in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/app/config.yml)_
 
 If the `submitReport` is not set to `true` in the configuration, the reports are still generated in `s3://{{buckets.internal.name}/{{prefix}}/ems/{{filename}}` for Ingest reports and `s3://{{buckets.internal.name}/{{prefix}}/ems-distribution/reports/{{filename}}` for Distribution reports, but won't be submitted to EMS.
 
 Submitted reports will be saved to `sent` folder.
+
+## Report Status
+
+1. EMS processes the reports and generates error reports which it sends to the provider's point of contacts.
+
+2. APEX EMS Reporting system allows users access to ingest, archive, distribution, and error metrics.  The user with 'power user' privilege can also view the `Data Provider Status` and the status of flat files.
+
+The operator can submit an IdMAX request in [NASA Access Management System (NAMS)](https://idmax.nasa.gov/nams) to get access to `GSFC ESDIS Metric System (EMS)`.

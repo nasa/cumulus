@@ -14,7 +14,7 @@ let granuleId;
 
 test.before(async () => {
   process.env.system_bucket = randomString();
-  process.env.stackName = 'test-stack';
+  process.env.stackName = randomString();
   process.env.ems_provider = 'testEmsProvider';
 
   process.env.GranulesTable = randomString();
