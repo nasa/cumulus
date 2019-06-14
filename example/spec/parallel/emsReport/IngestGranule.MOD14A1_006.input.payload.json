@@ -16,6 +16,12 @@
           "type": "metadata",
           "size": 14297,
           "name": "MOD14A1.A2000049.h00v10.006.2015041132152.hdf.met"
+        },
+        {
+          "path": "cumulus-test-data/pdrs",
+          "size": 5812,
+          "type": "browse",
+          "name": "BROWSE.MOD14A1.A2000049.h00v10.006.2015041132152.1.jpg"
         }
       ]
     }
