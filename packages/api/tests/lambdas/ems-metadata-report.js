@@ -83,7 +83,7 @@ test.serial('generateReport creates flat file for collections in both CUMULUS an
 
   const expectedRecords = [
     'A2_SI25_NRT|&|NRT AMSR2 DAILY L3 25 KM TB AND SEA ICE CONCENTRATION POLAR GRIDS V0|&|'
-    + '3|&|SPECTRAL/ENGINEERING, CRYOSPHERE, OCEANS|&|NASA/MSFC/GHRC|&|testEmsProvider|&|GCOM-W1|&|AMSR2|&|E|&|1',
+    + '3|&|SPECTRAL/ENGINEERING,CRYOSPHERE,OCEANS|&|NASA/MSFC/GHRC|&|testEmsProvider|&|GCOM-W1|&|AMSR2|&|E|&|1',
 
     'MUR-JPL-L4-GLOB-v4.1|&|PODAAC-GHGMR-4FJ04|&|'
     + '4|&|Oceans|&|Jet Propulsion Laboratory|&|testEmsProvider|&|'
