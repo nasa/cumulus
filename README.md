@@ -57,10 +57,6 @@ Build and watch packages:
 
 ## Running the Cumulus APIs locally
 
-Start localstack:
-
-    $ docker-compose up local
-
 Start the API:
 
     $ npm run serve
@@ -87,19 +83,20 @@ Localstack is included in the docker-compose file. You only need to run the dock
 
 Turn on the docker containers first:
 
-    $ docker-compose up local
+    $ npm run start-unit-test-stack
 
-If you prefer to run docker in detached mode (i.e. run containers in the background), run:
+Stop localstack/unit test services:
 
-    $ docker-compose up -d local
+    $ npm run stop-unit-test-stack
 
 #### Run tests
 
 Run the test commands next
-
-    $ export LOCALSTACK_HOST=localhost
+```
+    $ export LOCAL_ES_HOST=127.0.0.1
+    $ export LOCALSTACK_HOST=127.0.0.1
     $ npm test
-
+```
 ### Integration Tests
 
 For more information please [read this](docs/development/integration-tests.md).
