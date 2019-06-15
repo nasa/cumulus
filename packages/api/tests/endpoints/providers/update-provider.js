@@ -2,7 +2,6 @@
 
 const test = require('ava');
 const request = require('supertest');
-const sinon = require('sinon');
 const { randomString } = require('@cumulus/common/test-utils');
 const pick = require('lodash.pick');
 
@@ -108,7 +107,7 @@ test.serial('PUT updates an existing provider and returns it in listing', async 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
   let results = response.body;
-  results = pick(results, Object.keys(results).filter(key => !['createdAt', 'updatedAt'].includes(key)));
+  results = pick(results, Object.keys(results).filter((key) => !['createdAt', 'updatedAt'].includes(key)));
   t.deepEqual(results, updatedProvider);
 });
 
