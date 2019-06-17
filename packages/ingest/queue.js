@@ -82,9 +82,6 @@ async function enqueueGranuleIngestMessage({
   parentExecutionArn
 }) {
   const messageTemplate = await getMessageFromTemplate(granuleIngestMessageTemplateUri);
-
-  // Should this throw? Probably not because it would prevent all the other messages
-  // from being queued, since this function is invoked via Promise.all in queue-granules
   const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
 
   const payload = {
