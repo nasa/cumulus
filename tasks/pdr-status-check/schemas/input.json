@@ -2,10 +2,10 @@
   "title": "PdrStatusCheckInput",
   "description": "Describes the input expected by the pdr-status-check task",
   "type": "object",
-  "required": ["queued", "pdr"],
+  "required": ["running", "pdr"],
   "properties": {
-    "queued": {
-      "description": "List of execution arns which were queued",
+    "running": {
+      "description": "List of execution arns which are queued or running",
       "type": "array",
       "items": {
         "type": "string"

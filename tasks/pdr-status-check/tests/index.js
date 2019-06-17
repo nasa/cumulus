@@ -14,7 +14,7 @@ const { checkPdrStatuses } = require('..');
 test('valid output when no running executions', async (t) => {
   const event = {
     input: {
-      queued: [],
+      running: [],
       pdr: { name: 'test.PDR', path: 'test-path' }
     }
   };
@@ -38,7 +38,7 @@ test('valid output when no running executions', async (t) => {
 test.serial('error thrown when limit exceeded', async (t) => {
   const event = {
     input: {
-      queued: ['arn:123'],
+      running: ['arn:123'],
       counter: 2,
       limit: 3,
       pdr: { name: 'test.PDR', path: 'test-path' }
@@ -68,7 +68,7 @@ test.serial('error thrown when limit exceeded', async (t) => {
 test.serial('returns the correct results in the nominal case', async (t) => {
   const event = {
     input: {
-      queued: ['arn:1', 'arn:2', 'arn:3', 'arn:4', 'arn:7'],
+      running: ['arn:1', 'arn:2', 'arn:3', 'arn:4', 'arn:7'],
       completed: ['arn:5'],
       failed: [{ arn: 'arn:6', reason: 'OutOfCheese' }],
       counter: 5,
