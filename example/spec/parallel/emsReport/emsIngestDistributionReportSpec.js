@@ -1,25 +1,34 @@
 const fs = require('fs-extra');
 const moment = require('moment');
 const AWS = require('aws-sdk');
+const path = require('path');
+const os = require('os');
 
 const {
   aws: {
     fileExists,
     getS3Object,
     parseS3Uri,
-    lambda,
-    s3
+    lambda
   },
-  constructCollectionId
+  constructCollectionId,
+  http: {
+    download
+  }
 } = require('@cumulus/common');
 const { sleep } = require('@cumulus/common/util');
-const { Granule } = require('@cumulus/api/models');
+const { Granule, AccessToken } = require('@cumulus/api/models');
 const {
   addCollections,
   addProviders,
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
+  distributionApi: {
+    getDistributionApiRedirect
+  },
+  EarthdataLogin: { getEarthdataAccessToken },
+  getOnlineResources,
   granulesApi: granulesApiTestUtils,
   waitUntilGranuleStatusIs
 } = require('@cumulus/integration-tests');
@@ -32,14 +41,18 @@ const {
   createTestDataPath,
   createTestSuffix
 } = require('../../helpers/testUtils');
+const { setDistributionApiEnvVars } = require('../../helpers/apiUtils');
 
 const config = loadConfig();
 
-const emsReportLambda = `${config.stackName}-EmsIngestReport`;
+process.env.stackName = config.stackName;
+
+const emsIngestReportLambda = `${config.stackName}-EmsIngestReport`;
+const emsDistributionReportLambda = `${config.stackName}-EmsDistributionReport`;
 const bucket = config.bucket;
 const emsProvider = config.ems.provider;
-const stackName = config.stackName;
 const submitReport = config.ems.submitReport === 'true' || false;
+const dataSource = config.ems.dataSource || config.stackName;
 
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 
@@ -52,12 +65,15 @@ const granuleRegex = '^MOD14A1\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
 process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
 process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
+const accessTokensModel = new AccessToken();
 
 // add MOD14A1___006 collection
 async function setupCollectionAndTestData(testSuffix, testDataFolder) {
   const s3data = [
     '@cumulus/test-data/granules/MOD14A1.A2000049.h00v10.006.2015041132152.hdf.met',
-    '@cumulus/test-data/granules/MOD14A1.A2000049.h00v10.006.2015041132152.hdf'
+    '@cumulus/test-data/granules/MOD14A1.A2000049.h00v10.006.2015041132152.hdf',
+    '@cumulus/test-data/granules/BROWSE.MOD14A1.A2000049.h00v10.006.2015041132152.1.jpg'
   ];
 
   // populate collections, providers and test data
@@ -105,6 +121,15 @@ async function deleteOldGranules() {
   }
 }
 
+// return granule files which can be downloaded
+async function getGranuleFilesForDownload(granuleId) {
+  const granuleResponse = await granulesApiTestUtils.getGranule({ prefix: config.stackName, granuleId });
+  const granule = JSON.parse(granuleResponse.body);
+  const cmrResource = await getOnlineResources({ cmrMetadataFormat: 'echo10', ...granule });
+  return granule.files
+    .filter((file) => (cmrResource.filter((resource) => resource.href.endsWith(file.fileName)).length > 0));
+}
+
 describe('The EMS report', () => {
   let testDataFolder;
   let testSuffix;
@@ -150,26 +175,27 @@ describe('The EMS report', () => {
       const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
       AWS.config.update({ region: region });
 
-      const lambdaConfig = await lambda().getFunctionConfiguration({ FunctionName: emsReportLambda })
+      const lambdaConfig = await lambda().getFunctionConfiguration({ FunctionName: emsIngestReportLambda })
         .promise();
       const lastUpdate = lambdaConfig.LastModified;
 
       // Compare lambda function's lastUpdate with the time 24 hours before now.
-      // If the lambda is modified less than 24 hours ago, it must have been invoked
+      // If the lambda is created/modified more than 24 hours ago, it must have been invoked
       // and generated EMS reports for the previous day.
       if (new Date(lastUpdate).getTime() < moment.utc().subtract(24, 'hours').toDate().getTime()) {
         expectReports = true;
       }
     });
 
-    it('generates an EMS report every 24 hours', async () => {
+    it('generates EMS reports every 24 hours', async () => {
       if (expectReports) {
         const datestring = moment.utc().format('YYYYMMDD');
-        const types = ['Ing', 'Arch', 'ArchDel'];
+        const types = ['Ing', 'Arch', 'ArchDel', 'DistCustom'];
         const jobs = types.map((type) => {
-          const filename = `${datestring}_${emsProvider}_${type}_${stackName}.flt`;
-          const key = `${stackName}/ems/${filename}`;
-          const sentKey = `${stackName}/ems/sent/${filename}`;
+          const filename = `${datestring}_${emsProvider}_${type}_${dataSource}.flt`;
+          const reportFolder = (type === 'DistCustom') ? 'ems-distribution/reports' : 'ems';
+          const key = `${config.stackName}/${reportFolder}/${filename}`;
+          const sentKey = `${config.stackName}/${reportFolder}/sent/${filename}`;
           return fileExists(bucket, key) || fileExists(bucket, sentKey);
         });
         const results = await Promise.all(jobs);
@@ -178,7 +204,7 @@ describe('The EMS report', () => {
     });
   });
 
-  describe('After execution', () => {
+  describe('After execution of EmsIngestReport lambda', () => {
     let lambdaOutput;
     beforeAll(async () => {
       const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
@@ -190,7 +216,7 @@ describe('The EMS report', () => {
       const startTime = moment.utc().subtract(1, 'days').format();
 
       const response = await lambda().invoke({
-        FunctionName: emsReportLambda,
+        FunctionName: emsIngestReportLambda,
         Payload: JSON.stringify({
           startTime,
           endTime
@@ -201,15 +227,7 @@ describe('The EMS report', () => {
       lambdaOutput = JSON.parse(response.Payload);
     });
 
-    afterAll(async () => {
-      const jobs = lambdaOutput.map(async (report) => {
-        const parsed = parseS3Uri(report.file);
-        return s3().deleteObject({ Bucket: parsed.Bucket, Key: parsed.Key }).promise();
-      });
-      await Promise.all(jobs);
-    });
-
-    it('generates an EMS report', async () => {
+    it('generates EMS ingest reports', async () => {
       // generated reports should have the records just ingested or deleted
       expect(lambdaOutput.length).toEqual(3);
       const jobs = lambdaOutput.map(async (report) => {
@@ -235,6 +253,79 @@ describe('The EMS report', () => {
       });
       const results = await Promise.all(jobs);
       results.forEach((result) => expect(result).not.toBe(false));
+    });
+  });
+
+  describe('When there are distribution requests', () => {
+    let accessToken;
+
+    beforeAll(async () => {
+      setDistributionApiEnvVars();
+      const accessTokenResponse = await getEarthdataAccessToken({
+        redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
+        requestOrigin: process.env.DISTRIBUTION_ENDPOINT
+      });
+      accessToken = accessTokenResponse.accessToken;
+    });
+
+    afterAll(async () => {
+      await accessTokensModel.delete({ accessToken });
+    });
+
+    // the s3 server access log records are delivered within a few hours of the time that they are recorded,
+    // so we are not able to generate the distribution report immediately after submitting distribution requests,
+    // the distribution requests submitted here are for nightly distribution report.
+    it('downloads the files of the published granule for generating nightly distribution report', async () => {
+      const files = await getGranuleFilesForDownload(ingestedGranuleIds[0]);
+      for (let i = 0; i < files.length; i += 1) {
+        const filePath = `/${files[i].bucket}/${files[i].key}`;
+        const downloadedFile = path.join(os.tmpdir(), files[i].fileName);
+        // eslint-disable-next-line no-await-in-loop
+        const s3SignedUrl = await getDistributionApiRedirect(filePath, accessToken);
+        // eslint-disable-next-line no-await-in-loop
+        await download(s3SignedUrl, downloadedFile);
+        fs.unlinkSync(downloadedFile);
+      }
+    });
+
+    describe('After execution of EmsDistributionReport lambda', () => {
+      let lambdaOutput;
+      beforeAll(async () => {
+        const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
+        AWS.config.update({ region: region });
+
+        const endTime = moment.utc().format();
+        const startTime = moment.utc().subtract(1, 'days').format();
+
+        const response = await lambda().invoke({
+          FunctionName: emsDistributionReportLambda,
+          Payload: JSON.stringify({
+            startTime,
+            endTime
+          })
+        }).promise()
+          .catch((err) => console.log('invoke err', err));
+
+        lambdaOutput = JSON.parse(response.Payload);
+      });
+
+      it('generates an EMS distribution report', async () => {
+        // verify report is generated, but can't verify the content since the s3 server access log
+        // won't have recent access records until hours or minutes later
+        expect(lambdaOutput.length).toEqual(1);
+        const jobs = lambdaOutput.map(async (report) => {
+          const parsed = parseS3Uri(report.file);
+          expect(await fileExists(parsed.Bucket, parsed.Key)).not.toBe(false);
+
+          if (submitReport) {
+            expect(parsed.Key.includes('/sent/')).toBe(true);
+          }
+
+          return true;
+        });
+        const results = await Promise.all(jobs);
+        results.forEach((result) => expect(result).not.toBe(false));
+      });
     });
   });
 });
