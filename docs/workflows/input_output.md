@@ -203,35 +203,3 @@ The Cumulus Message Adapter would output the following Cumulus Message:
 #### 4. Validate task input, output and configuration messages against the schemas provided.
 
 The Cumulus Message Adapter has the capability to validate task input, output and configuration messages against their schemas.  The default location of the schemas is the schemas folder in the top level of the task and the default filenames are input.json, output.json, and config.json. The task can also configure a different schema location.  If no schema can be found, the Cumulus Message Adapter will not validate the messages.
-
-## Common Data Types
-
-### Remote Urls
-
-Input to: sync-http-urls
-
-Returned by: discover-http-tiles, sync-wms
-
-    // Array of remote URLs
-    {
-         "url": "<string>",     // A single remote URL
-         "version": "<string>"  // An opaque string that identifies the remote file version.
-                                // This can be used to allow re-fetching of remote resources if
-                                // the change but still have the same URL
-    },
-    ...                         // Potentially more URLs
-
-### S3 Objects
-
-Produced by: sync-http-urls
-
-Input to: generate-mrf
-
-    // Array of S3 objects
-    {
-        "Bucket": "<string>",  // The S3 bucket. The key's case convention is broken to
-                               // maintain consistency with the S3 SDK/API. These objects
-                               // can (and should) be passed verbatim to the SDK.
-        "Key": "<string>"      // The S3 object's key.
-    }
-    ...                        // Potentially more objects
