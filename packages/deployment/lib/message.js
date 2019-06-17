@@ -80,7 +80,6 @@ function findOutputValue(outputs, key) {
   return undefined;
 }
 
-
 /**
  * Generates a Cumulus Message template for a Cumulus Workflow
  *
@@ -111,7 +110,9 @@ function generateWorkflowTemplate(name, workflow, config, outputs) {
 
     queueArns.forEach((queue) => {
       const queueName = queue.OutputKey.replace('SQSOutput', '');
-      queues[queueName] = queue.OutputValue;
+      const queueUrl = queue.OutputValue;
+
+      queues[queueName] = queueUrl;
 
       const maxExecutions = get(config.sqs, `${queueName}.maxExecutions`);
       if (maxExecutions) {
