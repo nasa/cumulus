@@ -28,7 +28,7 @@ async function queuePdrs(event) {
     }))
   );
 
-  return { queued: executionArns, pdrs_queued: pdrs.length };
+  return { running: executionArns, pdrs_queued: pdrs.length };
 }
 exports.queuePdrs = queuePdrs;
 

@@ -81,7 +81,7 @@ test.serial('The correct output is returned when PDRs are queued', async (t) => 
 
   await validateOutput(t, output);
   t.is(output.pdrs_queued, 2);
-  t.is(output.queued.length, 2);
+  t.is(output.running.length, 2);
 });
 
 test.serial('The correct output is returned when no PDRs are queued', async (t) => {
@@ -95,7 +95,7 @@ test.serial('The correct output is returned when no PDRs are queued', async (t) 
 
   await validateOutput(t, output);
   t.deepEqual(output.pdrs_queued, 0);
-  t.falsy(output.queued.length, 0);
+  t.falsy(output.running.length, 0);
 });
 
 test.serial('PDRs are added to the queue', async (t) => {
