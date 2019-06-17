@@ -12,21 +12,13 @@
 * Also read Github's documentation on how to work with forks [here](https://help.github.com/articles/working-with-forks/).
 * Be sure to [mention the corresponding issue number](https://help.github.com/articles/closing-issues-using-keywords/) in the PR description, i.e. "Fixes Issue #10"
 
-## Run Builds
-
-When a new Pull Request from a forked repository is created, we will run the tests in the circleci environment.
-
-You PRs tests must pass on circleci before we can review it.
-
-Look for the green check mark in the PR.
-
-![screenshot 2018-10-12 13 22 48](https://user-images.githubusercontent.com/1933118/46869548-80d31480-ce2c-11e8-81fc-10096e701189.png)
-
 ## Reviewing PRs from Forked Repos
 
 Upon submission of a pull request, the Cumulus development team will review the code.
 
-The request will then either be merged, declined, or an adjustment to the code will be requested.
+Once the code passes an initial review, the team will run the CI tests against the proposed update.
+
+The request will then either be merged, declined, or an adjustment to the code will be requested via the issue opened with the original PR request.
 
 PRs from forked repos cannot directly merged to master. Cumulus reviews must follow the following steps before completing the review process:
 
@@ -46,4 +38,4 @@ PRs from forked repos cannot directly merged to master. Cumulus reviews must fol
 
 5. Create a PR for the new branch to master.
 
-6. If the continuous integration tests pass, merge the new branch to master
+6. If the CI tests pass, merge the new branch to master and close the issue.   If the CI tests do not pass, request an amended PR from the original author/ or resolve failures as appropriate.
