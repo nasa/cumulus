@@ -45,6 +45,8 @@ test.serial('error thrown when limit exceeded', async (t) => {
     }
   };
 
+  await validateInput(t, event.input);
+
   const sfn = aws.sfn();
   try {
     sfn.describeExecution = () => ({
