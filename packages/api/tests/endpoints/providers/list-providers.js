@@ -91,5 +91,5 @@ test('default returns list of providerModel', async (t) => {
     .expect(200);
 
   const { results } = response.body;
-  t.is(results.filter((r) => r.id === testProvider.id).length, 1);
+  t.truthy(results.find((r) => r.id === testProvider.id));
 });
