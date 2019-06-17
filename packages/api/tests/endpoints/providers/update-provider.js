@@ -3,7 +3,6 @@
 const test = require('ava');
 const request = require('supertest');
 const { randomString } = require('@cumulus/common/test-utils');
-const pick = require('lodash.pick');
 
 const bootstrap = require('../../../lambdas/bootstrap');
 const models = require('../../../models');
@@ -91,7 +90,6 @@ test('PUT updates an existing provider, and that update is returned from the API
   const updateParams = {
     globalConnectionLimit: t.context.testProvider.globalConnectionLimit + 1
   };
-  const updatedProvider = Object.assign(t.context.testProvider, updateParams);
 
   await request(app)
     .put(`/providers/${t.context.testProvider.id}`)
@@ -100,14 +98,21 @@ test('PUT updates an existing provider, and that update is returned from the API
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const response = await request(app)
+
+  const { body: actualProvider } = await request(app)
     .get(`/providers/${t.context.testProvider.id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
-  let results = response.body;
-  results = pick(results, Object.keys(results).filter((key) => !['createdAt', 'updatedAt'].includes(key)));
-  t.deepEqual(results, updatedProvider);
+
+  const expectedProvider = {
+    ...t.context.testProvider,
+    ...updateParams,
+    createdAt: actualProvider.createdAt,
+    updatedAt: actualProvider.updatedAt
+  };
+
+  t.deepEqual(actualProvider, expectedProvider);
 });
 
 test('PUT without an Authorization header returns an Authorization Missing response and does not update an existing provider', async (t) => {
