@@ -72,20 +72,6 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
 
 test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test('PUT updates an existing provider', async (t) => {
-  const updatedLimit = 2;
-
-  const response = await request(app)
-    .put(`/providers/${t.context.testProvider.id}`)
-    .send({ globalConnectionLimit: updatedLimit })
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const { globalConnectionLimit } = response.body;
-  t.is(globalConnectionLimit, updatedLimit);
-});
-
 test('PUT updates an existing provider, and that update is returned from the API', async (t) => {
   const updateParams = {
     globalConnectionLimit: t.context.testProvider.globalConnectionLimit + 1
