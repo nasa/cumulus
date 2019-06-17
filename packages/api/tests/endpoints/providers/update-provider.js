@@ -87,7 +87,7 @@ test('PUT updates an existing provider', async (t) => {
   t.is(globalConnectionLimit, updatedLimit);
 });
 
-test.serial('PUT updates an existing provider and returns it in listing', async (t) => {
+test('PUT updates an existing provider, and that update is returned from the API', async (t) => {
   const updateParams = {
     globalConnectionLimit: t.context.testProvider.globalConnectionLimit + 1
   };
@@ -100,7 +100,6 @@ test.serial('PUT updates an existing provider and returns it in listing', async 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.plan(1);
   const response = await request(app)
     .get(`/providers/${t.context.testProvider.id}`)
     .set('Accept', 'application/json')
