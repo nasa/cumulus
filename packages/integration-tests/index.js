@@ -666,6 +666,7 @@ async function buildWorkflow(
   template.payload = payload || {};
   return template;
 }
+
 /**
  * build workflow message and execute the workflow
  *

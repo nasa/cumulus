@@ -5,6 +5,7 @@ const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
 const { CollectionConfigStore } = require('@cumulus/common');
 const { getExecutionArn } = require('@cumulus/common/aws');
+
 /**
 * See schemas/input.json and schemas/config.json for detailed event description
 *
@@ -28,15 +29,15 @@ async function queueGranules(event) {
     granules.map(async (granule) => {
       const collectionConfig = await collectionConfigStore.get(granule.dataType, granule.version);
 
-      return enqueueGranuleIngestMessage(
+      return enqueueGranuleIngestMessage({
         granule,
-        event.config.queueUrl,
-        event.config.granuleIngestMessageTemplateUri,
-        event.config.provider,
-        collectionConfig,
-        event.input.pdr,
-        arn
-      );
+        queueUrl: event.config.queueUrl,
+        granuleIngestMessageTemplateUri: event.config.granuleIngestMessageTemplateUri,
+        provider: event.config.provider,
+        collection: collectionConfig,
+        pdr: event.input.pdr,
+        parentExecutionArn: arn
+      });
     })
   );
 
