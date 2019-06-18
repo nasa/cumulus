@@ -21,7 +21,7 @@ while [ true ]
 do
   outputPath="$2/$specName-$(date "+%Y%m%d-%H:%M:%S")"
 
-  jasmine "$1" > "$outputPath" 2>&1
+  npx jasmine "$1" > "$outputPath" 2>&1
   result=$?
 
   count=`expr $count + 1`
