@@ -98,7 +98,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
   describe('QueueGranules lambda function', () => {
     it('has expected arns output', () => {
-      expect(queueGranulesOutput.payload.queued.length).toEqual(3);
+      expect(queueGranulesOutput.payload.running.length).toEqual(3);
     });
   });
 
@@ -111,7 +111,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
     let ingestGranuleExecutionStatus;
 
     beforeAll(async () => {
-      ingestGranuleWorkflowArn = queueGranulesOutput.payload.queued[0];
+      ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
       console.log('\nwait for ingestGranuleWorkflow', ingestGranuleWorkflowArn);
       ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
     });

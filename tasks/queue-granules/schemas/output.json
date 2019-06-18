@@ -2,9 +2,9 @@
   "title": "QueueGranulesOutput",
   "description": "Describes the output produced by the queue-granules task",
   "type": "object",
-  "required": [ "queued" ],
+  "required": [ "running" ],
   "properties": {
-    "queued": {
+    "running": {
       "type": "array",
       "description": "a list of step function execution arns of granules queued",
       "items": {

@@ -102,7 +102,7 @@ test.serial('The correct output is returned when granules are queued without a P
   const output = await queueGranules(event);
 
   await validateOutput(t, output);
-  t.is(output.queued.length, 2);
+  t.is(output.running.length, 2);
   t.falsy(output.pdr);
 });
 
@@ -129,7 +129,7 @@ test.serial('The correct output is returned when granules are queued with a PDR'
   const output = await queueGranules(event);
 
   await validateOutput(t, output);
-  t.is(output.queued.length, 2);
+  t.is(output.running.length, 2);
   t.deepEqual(output.pdr, event.input.pdr);
 });
 
@@ -148,7 +148,7 @@ test.serial('The correct output is returned when no granules are queued', async 
   const output = await queueGranules(event);
 
   await validateOutput(t, output);
-  t.is(output.queued.length, 0);
+  t.is(output.running.length, 0);
 });
 
 test.serial('Granules are added to the queue', async (t) => {

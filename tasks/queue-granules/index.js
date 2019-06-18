@@ -41,7 +41,7 @@ async function queueGranules(event) {
     })
   );
 
-  const result = { queued: executionArns };
+  const result = { running: executionArns };
   if (event.input.pdr) result.pdr = event.input.pdr;
   return result;
 }
