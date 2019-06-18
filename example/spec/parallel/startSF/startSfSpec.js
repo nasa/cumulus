@@ -338,8 +338,7 @@ describe('the sf-starter lambda function', () => {
         InvocationType: 'RequestResponse',
         Payload: JSON.stringify({
           queueUrl: maxQueueUrl,
-          messageLimit: numberOfMessages,
-          timeLimit: 1
+          messageLimit: numberOfMessages
         })
       }).promise();
 
