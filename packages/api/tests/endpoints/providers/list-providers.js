@@ -82,6 +82,7 @@ test('default returns list of providerModel', async (t) => {
   const testProvider = fakeProviderFactory();
   const record = await providerModel.create(testProvider);
   await indexer.indexProvider(esClient, record, esIndex);
+  await esClient.indices.refresh();
 
   const response = await request(app)
     .get('/providers')
@@ -90,5 +91,5 @@ test('default returns list of providerModel', async (t) => {
     .expect(200);
 
   const { results } = response.body;
-  t.is(results[0].id, testProvider.id);
+  t.truthy(results.find((r) => r.id === testProvider.id));
 });
