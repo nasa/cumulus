@@ -178,7 +178,7 @@ describe('Ingesting from PDR', () => {
     describe('the QueuePdrs Lambda', () => {
       it('has expected output', () => {
         expect(queuePdrsOutput.payload.pdrs_queued).toEqual(1);
-        expect(queuePdrsOutput.payload.running.length).toEqual(1);
+        expect(queuePdrsOutput.payload.queued.length).toEqual(1);
       });
     });
 
@@ -199,7 +199,7 @@ describe('Ingesting from PDR', () => {
       const collectionId = 'MOD09GQ___006';
 
       beforeAll(async () => {
-        parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
+        parsePdrExecutionArn = queuePdrsOutput.payload.queued[0];
         console.log(`Wait for execution ${parsePdrExecutionArn}`);
 
         try {
@@ -229,7 +229,7 @@ describe('Ingesting from PDR', () => {
           parsePdrExecutionArn,
           'QueueGranules'
         );
-        await Promise.all(queueGranulesOutput.payload.running.map(async (arn) => {
+        await Promise.all(queueGranulesOutput.payload.queued.map(async (arn) => {
           await waitForCompletedExecution(arn);
         }));
         await granulesApiTestUtils.deleteGranule({
@@ -254,7 +254,7 @@ describe('Ingesting from PDR', () => {
 
       describe('QueueGranules lambda function', () => {
         it('has expected pdr and arns output', () => {
-          expect(queueGranulesOutput.payload.running.length).toEqual(1);
+          expect(queueGranulesOutput.payload.queued.length).toEqual(1);
 
           expect(queueGranulesOutput.payload.pdr.path).toEqual(expectedParsePdrOutput.pdr.path);
           expect(queueGranulesOutput.payload.pdr.name).toEqual(expectedParsePdrOutput.pdr.name);
@@ -273,7 +273,7 @@ describe('Ingesting from PDR', () => {
 
         it('has expected output', () => {
           const payload = lambdaOutput.payload;
-          expect(payload.running.concat(payload.completed, payload.failed).length).toEqual(1);
+          expect(payload.queued.concat(payload.completed, payload.failed).length).toEqual(1);
 
           expect(payload.pdr.path).toEqual(expectedParsePdrOutput.pdr.path);
           expect(payload.pdr.name).toEqual(expectedParsePdrOutput.pdr.name);
@@ -306,7 +306,7 @@ describe('Ingesting from PDR', () => {
 
         beforeAll(async () => {
           // wait for IngestGranule execution to complete
-          ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
+          ingestGranuleWorkflowArn = queueGranulesOutput.payload.queued[0];
           console.log(`Waiting for workflow to complete: ${ingestGranuleWorkflowArn}`);
           ingestGranuleExecutionStatus = await waitForCompletedExecution(ingestGranuleWorkflowArn);
         });
@@ -343,7 +343,7 @@ describe('Ingesting from PDR', () => {
       /** This test relies on the previous 'IngestGranule workflow' to complete */
       describe('When accessing an execution via the API that was triggered from a parent step function', () => {
         it('displays a link to the parent', async () => {
-          const ingestGranuleWorkflowArn = queueGranulesOutput.payload.running[0];
+          const ingestGranuleWorkflowArn = queueGranulesOutput.payload.queued[0];
           const ingestGranuleExecutionResponse = await executionsApiTestUtils.getExecution({
             prefix: config.stackName,
             arn: ingestGranuleWorkflowArn
@@ -444,7 +444,7 @@ describe('Ingesting from PDR', () => {
     /** This test relies on the previous 'ParsePdr workflow' to complete */
     describe('When accessing an execution via the API that was triggered from a parent step function', () => {
       it('displays a link to the parent', async () => {
-        parsePdrExecutionArn = queuePdrsOutput.payload.running[0];
+        parsePdrExecutionArn = queuePdrsOutput.payload.queued[0];
         const parsePdrExecutionResponse = await executionsApiTestUtils.getExecution({
           prefix: config.stackName,
           arn: parsePdrExecutionArn

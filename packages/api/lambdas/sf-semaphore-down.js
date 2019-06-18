@@ -5,6 +5,7 @@ const {
   getQueueName,
   hasQueueAndExecutionLimit
 } = require('@cumulus/common/message');
+const log = require('@cumulus/common/log');
 const { isOneOf } = require('@cumulus/common/util');
 
 const { decrementQueueSemaphore } = require('../lib/semaphore');
@@ -60,6 +61,7 @@ async function handleSemaphoreDecrementTask(event) {
   if (isDecrementEvent(event)) {
     const message = getEventMessage(event);
     const queueName = getQueueName(message);
+    log.info('queueName', queueName);
     return decrementQueueSemaphore(queueName);
   }
   return 'Not a valid decrement event, no operation performed';

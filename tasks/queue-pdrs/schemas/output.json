@@ -2,10 +2,10 @@
   "title": "QueuePdrsOutput",
   "description": "Describes the output produced by the queue-pdrs task",
   "type": "object",
-  "required": [ "running", "pdrs_queued" ],
+  "required": [ "queued", "pdrs_queued" ],
   "additionalProperties": false,
   "properties": {
-    "running": {
+    "queued": {
       "type": "array",
       "description": "a list of step function execution arns of pdrs queued",
       "items": {

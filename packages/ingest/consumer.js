@@ -20,7 +20,9 @@ class Consumer {
 
   async processMessage(message, fn) {
     try {
+      log.debug('processing message');
       await fn(message);
+      log.debug('deleting message');
       await deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
       return 1;
     } catch (e) {
@@ -38,6 +40,7 @@ class Consumer {
       { numOfMessages: messageLimit, visibilityTimeout }
     );
     if (messages.length > 0) {
+      log.info(`processing ${messages.length} messages`);
       const processes = messages.map((message) => this.processMessage(message, fn));
       const results = await Promise.all(processes);
       counter = results.reduce((s, v) => s + v, 0);
@@ -62,8 +65,10 @@ class Consumer {
         messageLimit -= messageLimit;
       }
       sum += results;
+      log.debug(`current sum: ${sum}`);
       // if the function is running for longer than the timeLimit, stop it
       const timeSpent = (Date.now() - this.now);
+      log.debug('time spent', timeSpent);
       if (timeSpent > this.timeLimit) {
         this.timeLapsed = true;
         log.warn(`${this.timeLimit / 1000}-second time limit reached, exiting...`);

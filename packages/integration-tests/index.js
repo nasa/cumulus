@@ -805,6 +805,7 @@ module.exports = {
   buildWorkflow,
   testWorkflow,
   executeWorkflow,
+  getExecutionStatus,
   buildAndExecuteWorkflow,
   buildAndStartWorkflow,
   getWorkflowTemplate,
