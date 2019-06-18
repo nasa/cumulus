@@ -93,14 +93,14 @@ Resources:
           MetricsEnabled: false
       {{/ifLogApiGatewayToCloudWatch}}
       DeploymentId:
-        Ref: ApiGatewayDeployment{{../parent.apiStage}}{{name}}
+        Ref: ApiGatewayDeployment1{{../parent.apiStage}}{{name}}
 {{/each}}
 
 
 {{# if apiMethods}}
 {{# each apiDependencies}}
   {{# if ../apiDeploy }}
-  ApiGatewayDeployment{{../parent.apiStage}}{{name}}:
+  ApiGatewayDeployment1{{../parent.apiStage}}{{name}}:
     DependsOn:
   {{#each methods}}
     - {{name}}
