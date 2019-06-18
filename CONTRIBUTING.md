@@ -43,7 +43,13 @@ configuration:
 
 ### Tests
 
-All of the automated tests for this project need to pass before your submission will be accepted. You can run `npm test` in the command line after making changes to verify that the tests pass. If you add new functionality, please consider adding tests for that functionality as well.
+All of the automated tests for this project need to pass before your submission will be accepted.
+
+To run the localized unit tests, follow the instructions in [the README](README.md)
+
+To run the lint/audit checks, please [read this](docs/development/quality-and-coverage.md).
+
+If you add new functionality, please consider adding tests for that functionality as well.
 
 ### Commits
 

@@ -93,6 +93,7 @@ default:
     privateKey: ems-private.pem
     dataSource: UAT
     submitReport: false
+    retentionInDays: 30
 
   # this whole section has to be updated in each deployment section
   vpc:
@@ -204,11 +205,6 @@ default:
       visibilityTimeout: 20
 
   rules:
-    backgroundJobs:
-      schedule: rate(10 minutes)
-      state: ENABLED
-      targets:
-        - lambda: jobs
     dailyEmsIngestReport:
       # run at 5:00am GMT daily
       schedule: cron(0 5 * * ? *)

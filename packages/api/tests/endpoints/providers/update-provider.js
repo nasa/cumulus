@@ -2,7 +2,6 @@
 
 const test = require('ava');
 const request = require('supertest');
-const sinon = require('sinon');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const bootstrap = require('../../../lambdas/bootstrap');
@@ -73,25 +72,10 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
 
 test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test('PUT updates an existing provider', async (t) => {
-  const updatedLimit = 2;
-
-  const response = await request(app)
-    .put(`/providers/${t.context.testProvider.id}`)
-    .send({ globalConnectionLimit: updatedLimit })
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const { globalConnectionLimit } = response.body;
-  t.is(globalConnectionLimit, updatedLimit);
-});
-
-test.serial('PUT updates an existing provider and returns it in listing', async (t) => {
+test('PUT updates an existing provider, and that update is returned from the API', async (t) => {
   const updateParams = {
     globalConnectionLimit: t.context.testProvider.globalConnectionLimit + 1
   };
-  const updatedProvider = Object.assign(t.context.testProvider, updateParams);
 
   await request(app)
     .put(`/providers/${t.context.testProvider.id}`)
@@ -100,21 +84,21 @@ test.serial('PUT updates an existing provider and returns it in listing', async 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.plan(2);
-  const stub = sinon.stub(Search.prototype, 'query').resolves({
-    results: [updatedProvider]
-  });
 
-  const response = await request(app)
-    .get('/providers')
+  const { body: actualProvider } = await request(app)
+    .get(`/providers/${t.context.testProvider.id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const { results } = response.body;
-  stub.restore();
-  t.is(results.length, 1);
-  t.deepEqual(results[0], updatedProvider);
+  const expectedProvider = {
+    ...t.context.testProvider,
+    ...updateParams,
+    createdAt: actualProvider.createdAt,
+    updatedAt: actualProvider.updatedAt
+  };
+
+  t.deepEqual(actualProvider, expectedProvider);
 });
 
 test('PUT without an Authorization header returns an Authorization Missing response and does not update an existing provider', async (t) => {

@@ -13,6 +13,7 @@
     "test": "nyc lerna run --ignore cumulus-integration-tests test",
     "bootstrap": "lerna bootstrap --no-ci --force-local",
     "bootstrap-no-build": "lerna bootstrap --no-ci --force-local --ignore-scripts",
+    "bootstrap-quiet": "lerna bootstrap --loglevel=error --no-ci --force-local",
     "update": "lerna version --exact --force-publish --no-git-tag-version --no-push",
     "publish": "lerna publish --skip-git --yes --exact",
     "clean": "lerna clean && rm -rf ./node_modules",
@@ -25,7 +26,9 @@
     "serve-dist-oauth": "lerna run --stream serve-dist-oauth --scope @cumulus/api",
     "serve-dist-remote": "lerna run --stream serve-dist-remote --scope @cumulus/api",
     "coverage": "nyc report --reporter text-summary --reporter html",
-    "coveralls": "nyc report --reporter=text-lcov --temp-direcotry=\"./.final_nyc_output\" | coveralls"
+    "coveralls": "nyc report --reporter=text-lcov --temp-direcotry=\"./.final_nyc_output\" | coveralls",
+    "start-unit-test-stack": "export SSH_USERS=user:$(id -u):$(id -u) && docker-compose -f ./bamboo/docker-compose.yml -f ./bamboo/docker-compose-local.yml -p cumulusstack up -d",
+    "stop-unit-test-stack": "docker-compose -f ./bamboo/docker-compose.yml -f ./bamboo/docker-compose-local.yml -p cumulusstack down"
   },
   "repository": {
     "type": "git",
@@ -66,6 +69,7 @@
     "eslint-plugin-unicorn": "^4.0.3",
     "lerna": "^3.13.2",
     "nyc": "^14.0.0",
+    "@octokit/graphql": "2.1.1",
     "simple-git": "^1.96.0"
   },
   "dependencies": {
