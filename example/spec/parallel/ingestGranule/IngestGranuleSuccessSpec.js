@@ -299,7 +299,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  xdescribe('the PostToCmr task', () => {
+  describe('the PostToCmr task', () => {
     let cmrResource;
     let ummCmrResource;
     let files;
@@ -345,14 +345,14 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(postToCmrOutput.payload).toEqual(updatedExpectedPayload);
     });
 
-    xit('publishes the granule metadata to CMR', () => {
+    it('publishes the granule metadata to CMR', () => {
       const result = conceptExists(granule.cmrLink);
 
       expect(granule.published).toEqual(true);
       expect(result).not.toEqual(false);
     });
 
-    xit('updates the CMR metadata online resources with the final metadata location', () => {
+    it('updates the CMR metadata online resources with the final metadata location', () => {
       const scienceFileUrl = getDistributionFileUrl({ bucket: files[0].bucket, key: files[0].filepath });
       const s3BrowseImageUrl = getDistributionFileUrl({ bucket: files[2].bucket, key: files[2].filepath });
       const s3CredsUrl = resolve(process.env.DISTRIBUTION_ENDPOINT, 's3credentials');
@@ -365,7 +365,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(resourceURLs.includes(s3CredsUrl)).toBe(true);
     });
 
-    xit('updates the CMR metadata "online resources" with the proper types and urls', () => {
+    it('updates the CMR metadata "online resources" with the proper types and urls', () => {
       const resource = ummCmrResource;
       const distributionUrl = getDistributionFileUrl({
         bucket: files[0].bucket,
@@ -387,14 +387,14 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(expectedTypes).toEqual(resource.map((r) => r.Type));
     });
 
-    xit('includes the Earthdata login ID for requests to protected science files', async () => {
+    it('includes the Earthdata login ID for requests to protected science files', async () => {
       const filepath = `/${files[0].bucket}/${files[0].filepath}`;
       const s3SignedUrl = await getDistributionApiRedirect(filepath, accessToken);
       const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('x-EarthdataLoginUsername');
       expect(earthdataLoginParam).toEqual(process.env.EARTHDATA_USERNAME);
     });
 
-    xit('downloads the requested science file for authorized requests', async () => {
+    it('downloads the requested science file for authorized requests', async () => {
       const scienceFileUrls = resourceURLs
         .filter((url) =>
           (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) ||
@@ -427,7 +427,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  xdescribe('an SNS message', () => {
+  describe('an SNS message', () => {
     let existCheck = [];
 
     beforeAll(async () => {
@@ -500,7 +500,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(granule.cmrLink).not.toBeUndefined();
       });
 
-      xdescribe('when a reingest granule is triggered via the API', () => {
+      describe('when a reingest granule is triggered via the API', () => {
         let oldExecution;
         let oldUpdatedAt;
         let reingestResponse;
@@ -571,7 +571,7 @@ describe('The S3 Ingest Granules workflow', () => {
         });
       });
 
-      xit('removeFromCMR removes the ingested granule from CMR', async () => {
+      it('removeFromCMR removes the ingested granule from CMR', async () => {
         const existsInCMR = await conceptExists(cmrLink);
 
         expect(existsInCMR).toEqual(true);
@@ -588,7 +588,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(doesExist).toEqual(false);
       });
 
-      xit('applyWorkflow PublishGranule publishes the granule to CMR', async () => {
+      it('applyWorkflow PublishGranule publishes the granule to CMR', async () => {
         const existsInCMR = await conceptExists(cmrLink);
         expect(existsInCMR).toEqual(false);
 
@@ -687,7 +687,7 @@ describe('The S3 Ingest Granules workflow', () => {
         });
 
         // Delete the granule
-        const deleteGranuleResponse = await granulesApiTestUtils.deleteGranule({
+        await granulesApiTestUtils.deleteGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
@@ -698,11 +698,6 @@ describe('The S3 Ingest Granules workflow', () => {
           granuleId: inputPayload.granules[0].granuleId
         });
         const resp = JSON.parse(granuleResponse.body);
-
-        if (!resp.message) {
-          console.log(`Delete granule response: ${JSON.stringify(deleteGranuleResponse, null, 2)}`);
-          console.log(`Remove from CMR response: ${JSON.stringify(removeFromCmrResponse, null, 2)}`);
-        }
 
         expect(resp.message).toEqual('Granule not found');
       });
@@ -801,7 +796,7 @@ describe('The S3 Ingest Granules workflow', () => {
         // expected 'executed' steps
         const expectedExecutedSteps = difference(allStates, expectedNotExecutedSteps);
 
-        // steps with *EventDetails will have the input/output, and also stepname when state is entered/exited
+        // steps with *EventDetails will have the input/output, and also stepname when state is entered/eited
         const stepNames = [];
         executionStatus.executionHistory.events.forEach((event) => {
           // expect timing information for each step
@@ -810,7 +805,7 @@ describe('The S3 Ingest Granules workflow', () => {
           // protect against "undefined": TaskStateEntered has "input" but not "name"
           if (event.name && intersection(eventKeys, ['input', 'output']).length === 1) {
             // each step should contain status information
-            if (event.type === 'TaskStateExited') {
+            if (event.type === 'TaskStateEited') {
               const prevEvent = executionStatus.executionHistory.events[event.previousEventId - 1];
               expect(['LambdaFunctionSucceeded', 'LambdaFunctionFailed']).toContain(prevEvent.type);
             }
