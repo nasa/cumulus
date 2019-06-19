@@ -13,11 +13,11 @@ const {
   addCollections,
   deleteCollections
 } = require('@cumulus/integration-tests');
-// const {
-//   deleteRule,
-//   postRule,
-//   rerunRule
-// } = require('@cumulus/integration-tests/api/rules');
+const {
+  deleteRule,
+  postRule,
+  rerunRule
+} = require('@cumulus/integration-tests/api/rules');
 
 const {
   loadConfig,
@@ -188,7 +188,7 @@ describe('the sf-starter lambda function', () => {
       version: '006'
     };
 
-    // const ruleName = timestampedName('waitPassRule');
+    const ruleName = timestampedName('waitPassRule');
 
     beforeAll(async () => {
       console.log('testName', testName);
@@ -230,23 +230,33 @@ describe('the sf-starter lambda function', () => {
       });
 
       await Promise.all([
-        // postRule({
-        //   prefix: config.stackName,
-        //   rule: {
-        //     name: ruleName,
-        //     workflow: waitPassSfName,
-        //     collection: {
-        //       name: collection.name,
-        //       version: collection.version
-        //     },
-        //     state: 'ENABLED',
-        //     rule: {
-        //       type: 'onetime'
-        //     }
-        //   }
-        // }),
+        postRule({
+          prefix: config.stackName,
+          rule: {
+            name: ruleName,
+            workflow: waitPassSfName,
+            collection: {
+              name: collection.name,
+              version: collection.version
+            },
+            state: 'ENABLED',
+            rule: {
+              type: 'onetime'
+            },
+            queueName: maxQueueName
+          }
+        }),
         addCollections(config.stackName, config.bucket, collectionsDir, testSuffix)
       ]);
+
+      const runRules = new Array(8)
+        .fill()
+        .map(() => rerunRule({
+          prefix: config.stackName,
+          ruleName
+        }));
+
+      await Promise.all(runRules);
     });
 
     afterAll(async () => {
@@ -255,10 +265,10 @@ describe('the sf-starter lambda function', () => {
         Promise.resolve();
 
       // Have to delete rule before associated collection
-      // await deleteRule({
-      //   prefix: config.stackName,
-      //   ruleName
-      // });
+      await deleteRule({
+        prefix: config.stackName,
+        ruleName
+      });
 
       await Promise.all([
         deleteS3Object(config.bucket, templateKey),
@@ -276,7 +286,7 @@ describe('the sf-starter lambda function', () => {
       ]);
     });
 
-    it('queue-granules returns the correct amount of queued executions', async () => {
+    xit('queue-granules returns the correct amount of queued executions', async () => {
       const granules = new Array(numberOfMessages)
         .fill()
         .map((value) => ({
@@ -333,6 +343,7 @@ describe('the sf-starter lambda function', () => {
     });
 
     it('consumes the right amount of messages', async () => {
+      console.log('test');
       const response = await lambda().invoke({
         FunctionName: `${config.stackName}-sqs2sfThrottle`,
         InvocationType: 'RequestResponse',
@@ -350,7 +361,6 @@ describe('the sf-starter lambda function', () => {
       // Can't test that the messages consumed is exactly the number the
       // maximum allowed because of eventual consistency in SQS
       expect(messagesConsumed).toBeGreaterThan(0);
-      // expect(messagesConsumed).toBeLessThanOrEqual(queueMaxExecutions);
     });
 
     it('to trigger workflows', async () => {
