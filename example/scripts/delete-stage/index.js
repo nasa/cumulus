@@ -1,4 +1,4 @@
-#! /usr/bin/env node
+#!/usr/bin/env node
 
 'use strict';
 
@@ -20,25 +20,17 @@ program.option(
 
 program.option(
   '--doit',
-  'execute the commands to delete the stage from your prefixed stacks.',
+  ('EXECUTE the commands to delete the stage from your prefixed stacks. Without'
+   + ' this flag, the script only describes the actions that would be taken.'),
   false
 );
 
 program.parse(process.argv);
 
-const filterResponse = (response) => {
-  return response.items.filter(thisPrefix);
-};
+const thisPrefix = (obj) => obj.name.startsWith(`${program.prefix}-`);
 
-const thisPrefix = (obj) => {
-  return obj.name.startsWith(`${program.prefix}-`);
-};
+const filterResponse = (response) => response.items.filter(thisPrefix);
 
-const trace = (str) => (obj) => {
-  console.log(str);
-  console.log(JSON.stringify(obj, 2, null));
-  return obj;
-};
 
 const removeStage = (restApi) => {
   const param = {
