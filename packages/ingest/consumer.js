@@ -20,9 +20,7 @@ class Consumer {
 
   async processMessage(message, fn) {
     try {
-      log.debug('processing message');
       await fn(message);
-      log.debug('deleting message');
       await deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
       return 1;
     } catch (e) {
@@ -65,10 +63,8 @@ class Consumer {
         messageLimit -= messageLimit;
       }
       sum += results;
-      log.debug(`current sum: ${sum}`);
       // if the function is running for longer than the timeLimit, stop it
       const timeSpent = (Date.now() - this.now);
-      log.debug('time spent', timeSpent);
       if (timeSpent > this.timeLimit) {
         this.timeLapsed = true;
         log.warn(`${this.timeLimit / 1000}-second time limit reached, exiting...`);
