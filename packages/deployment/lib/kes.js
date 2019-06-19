@@ -280,10 +280,9 @@ class UpdatedKes extends Kes {
     Handlebars.registerHelper(
       'ifLogApiGatewayToCloudWatch',
       function ifLogApiGatewayToCloudWatch(configs, api, options) {
-        const logApiGatewayToCloudWatch =
-          configs && configs[api]
-            ? configs[api].logApiGatewayToCloudWatch
-            : false;
+        const logApiGatewayToCloudWatch = configs && configs[api]
+          ? configs[api].logApiGatewayToCloudWatch
+          : false;
         return logApiGatewayToCloudWatch
           ? options.fn(this)
           : options.inverse(this);
