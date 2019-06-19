@@ -681,7 +681,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
       it('can delete the ingested granule from the API', async () => {
         // pre-delete: Remove the granule from CMR
-        const removeFromCmrResponse = await granulesApiTestUtils.removeFromCMR({
+        await granulesApiTestUtils.removeFromCMR({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
         });
@@ -752,15 +752,7 @@ describe('The S3 Ingest Granules workflow', () => {
           arn: executionArn
         });
 
-        try {
-          executionStatus = JSON.parse(executionStatusResponse.body);
-        }
-        catch (e) {
-          console.log('error getting execution status');
-          console.log(e);
-          console.log(JSON.stringify(executionStatusResponse, null, 2));
-          throw e;
-        }
+        executionStatus = JSON.parse(executionStatusResponse.body);
 
         allStates = Object.keys(workflowConfig.States);
       });
@@ -796,7 +788,7 @@ describe('The S3 Ingest Granules workflow', () => {
         // expected 'executed' steps
         const expectedExecutedSteps = difference(allStates, expectedNotExecutedSteps);
 
-        // steps with *EventDetails will have the input/output, and also stepname when state is entered/eited
+        // steps with *EventDetails will have the input/output, and also stepname when state is entered/exited
         const stepNames = [];
         executionStatus.executionHistory.events.forEach((event) => {
           // expect timing information for each step
@@ -805,7 +797,7 @@ describe('The S3 Ingest Granules workflow', () => {
           // protect against "undefined": TaskStateEntered has "input" but not "name"
           if (event.name && intersection(eventKeys, ['input', 'output']).length === 1) {
             // each step should contain status information
-            if (event.type === 'TaskStateEited') {
+            if (event.type === 'TaskStateExited') {
               const prevEvent = executionStatus.executionHistory.events[event.previousEventId - 1];
               expect(['LambdaFunctionSucceeded', 'LambdaFunctionFailed']).toContain(prevEvent.type);
             }
