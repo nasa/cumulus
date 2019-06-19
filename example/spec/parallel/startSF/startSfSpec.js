@@ -176,10 +176,11 @@ describe('the sf-starter lambda function', () => {
     let templateUri;
     let messagesConsumed;
     let waitPassSfArn;
-    const doStateMachineDelete = true;
 
     const queueMaxExecutions = 5;
-    const numberOfMessages = 20;
+    const numRuleMessages = 10;
+    const numGranuleMessages = 10;
+    const totalNumMessages = numRuleMessages + numGranuleMessages;
 
     const collectionsDir = './data/collections/s3_MOD09GQ_006';
     const collection = {
@@ -191,8 +192,6 @@ describe('the sf-starter lambda function', () => {
     const ruleName = timestampedName('waitPassRule');
 
     beforeAll(async () => {
-      console.log('testName', testName);
-
       maxQueueName = `${testName}MaxQueue`;
       console.log(`max queue name: ${maxQueueName}`);
 
@@ -204,12 +203,8 @@ describe('the sf-starter lambda function', () => {
       templateKey = `${config.stackName}/workflows/${waitPassSfName}.json`;
       templateUri = `s3://${config.bucket}/${templateKey}`;
 
-      console.log('expected template URI', templateUri);
-
       const { stateMachineArn } = await sfn().createStateMachine(waitPassSfParams).promise();
       waitPassSfArn = stateMachineArn;
-
-      console.log(`expected waitPass state machine ARN: ${waitPassSfArn}`);
 
       await s3PutObject({
         Bucket: config.bucket,
@@ -249,7 +244,7 @@ describe('the sf-starter lambda function', () => {
         addCollections(config.stackName, config.bucket, collectionsDir, testSuffix)
       ]);
 
-      const runRules = new Array(8)
+      const runRules = new Array(numRuleMessages)
         .fill()
         .map(() => rerunRule({
           prefix: config.stackName,
@@ -260,10 +255,6 @@ describe('the sf-starter lambda function', () => {
     });
 
     afterAll(async () => {
-      const deleteStateMachine = doStateMachineDelete ?
-        sfn().deleteStateMachine({ stateMachineArn: waitPassSfArn }).promise() :
-        Promise.resolve();
-
       // Have to delete rule before associated collection
       await deleteRule({
         prefix: config.stackName,
@@ -276,7 +267,7 @@ describe('the sf-starter lambda function', () => {
           QueueUrl: maxQueueUrl
         }).promise(),
         deleteCollections(config.stackName, config.bucket, [collection]),
-        deleteStateMachine,
+        sfn().deleteStateMachine({ stateMachineArn: waitPassSfArn }).promise(),
         dynamodbDocClient().delete({
           TableName: `${config.stackName}-SemaphoresTable`,
           Key: {
@@ -286,17 +277,18 @@ describe('the sf-starter lambda function', () => {
       ]);
     });
 
-    xit('queue-granules returns the correct amount of queued executions', async () => {
-      const granules = new Array(numberOfMessages)
+    it('queue-granules returns the correct amount of queued executions', async () => {
+      // Create granule records
+      const granules = new Array(numGranuleMessages)
         .fill()
-        .map((value) => ({
-          granuleId: `granule${value}`,
+        .map((_, index) => ({
+          granuleId: `granule${index}`,
           dataType: collection.dataType,
           version: collection.version,
           files: []
         }));
 
-      const response = await lambda().invoke({
+      const { Payload } = await lambda().invoke({
         FunctionName: `${config.stackName}-QueueGranules`,
         InvocationType: 'RequestResponse',
         Payload: JSON.stringify({
@@ -334,28 +326,20 @@ describe('the sf-starter lambda function', () => {
           }
         })
       }).promise();
-      const { Payload } = response;
-
-      console.log(`request ID: ${response.$response.requestId}`);
 
       const { payload } = JSON.parse(Payload);
-      expect(payload.running.length).toEqual(numberOfMessages);
+      expect(payload.running.length).toEqual(numGranuleMessages);
     });
 
     it('consumes the right amount of messages', async () => {
-      console.log('test');
-      const response = await lambda().invoke({
+      const { Payload } = await lambda().invoke({
         FunctionName: `${config.stackName}-sqs2sfThrottle`,
         InvocationType: 'RequestResponse',
         Payload: JSON.stringify({
           queueUrl: maxQueueUrl,
-          messageLimit: numberOfMessages
+          messageLimit: totalNumMessages
         })
       }).promise();
-
-      console.log(response);
-      const { Payload } = response;
-
       messagesConsumed = parseInt(Payload, 10);
       console.log('messages consumed', messagesConsumed);
       // Can't test that the messages consumed is exactly the number the
@@ -367,13 +351,6 @@ describe('the sf-starter lambda function', () => {
       console.log(waitPassSfArn);
       const { executions } = await StepFunctions.listExecutions({ stateMachineArn: waitPassSfArn });
       const runningExecutions = executions.filter((execution) => execution.status === 'RUNNING');
-      // if (executions.length !== messagesConsumed) {
-      //   doStateMachineDelete = false;
-      //   console.log(executions.map((execution) => execution.name));
-      // }
-      // There can be delays starting up executions, but there shouldn't be any
-      // more executions than messages consumed
-      // expect(executions.length).toBeLessThanOrEqual(messagesConsumed);
       console.log(`all executions: ${executions.length}`);
       console.log('running executions', runningExecutions);
       expect(runningExecutions.length).toBeLessThanOrEqual(queueMaxExecutions);
