@@ -404,3 +404,42 @@ test.serial('Change index and delete source index', async (t) => {
 
   await esClient.indices.delete({ index: destIndex });
 });
+
+test.serial('Create index', async (t) => {
+  const indexName = randomString();
+
+  await request(app)
+    .post('/elasticsearch/create-index')
+    .send({
+      indexName
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const indexExists = await esClient.indices.exists({ index: indexName });
+
+  t.true(indexExists);
+
+  await esClient.indices.delete({ index: indexName });
+});
+
+test.serial('Create index - index already exists', async (t) => {
+  const indexName = randomString();
+
+  await esClient.indices.create({ index: indexName });
+
+  const response = await request(app)
+    .post('/elasticsearch/create-index')
+    .send({
+      indexName
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  t.is(response.body.message,
+    `Error creating index ${indexName}: Index ${indexName} exists and cannot be created.`);
+
+  await esClient.indices.delete({ index: indexName });
+});

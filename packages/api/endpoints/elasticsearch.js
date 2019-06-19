@@ -4,8 +4,9 @@ const router = require('express-promise-router')();
 
 const log = require('@cumulus/common/log');
 
-const mappings = require('../models/mappings.json');
+const { IndexExistsError } = require('../lib/errors');
 const { defaultIndexAlias, Search } = require('../es/search');
+const { createIndex } = require('../es/indexer');
 
 // const snapshotRepoName = 'cumulus-es-snapshots';
 
@@ -80,17 +81,15 @@ async function reindex(req, res) {
     destIndex = `cumulus-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
   }
 
-  const destExists = await esClient.indices.exists({ index: destIndex });
+  try {
+    await createIndex(esClient, destIndex);
+  } catch (err) {
+    if (err instanceof IndexExistsError) {
+      return res.boom.badRequest(`Destination index ${destIndex} exists. Please specify an index name that does not exist.`);
+    }
 
-  if (destExists) {
-    return res.boom.badRequest(`Destination index ${destIndex} exists. Please specify an index name that does not exist.`);
+    return res.boom.badRequest(`Error creating index ${destIndex}: ${err.message}`);
   }
-
-  // create destination index
-  await esClient.indices.create({
-    index: destIndex,
-    body: { mappings }
-  });
 
   log.info(`Created destination index ${destIndex}.`);
 
@@ -177,10 +176,28 @@ async function changeIndex(req, res) {
   return res.send({ message });
 }
 
+async function createEsIndex(req, res) {
+  const esClient = await Search.es();
+
+  try {
+    await createIndex(esClient, req.body.indexName);
+  } catch (err) {
+    return res.boom.badRequest(`Error creating index ${req.body.indexName}: ${err.message}`);
+  }
+
+  return res.send({ message: `Index ${req.body.inbdexName} created.` });
+}
+
+async function indexFromDatabase(req, res) {
+  return res.boom.badRequest('Functionality not yet implemented');
+}
+
 // express routes
 router.put('/create-snapshot', createEsSnapshot);
 router.post('/reindex', reindex);
 router.get('/reindex-status', reindexStatus);
 router.post('/change-index', changeIndex);
+router.post('/create-index', createEsIndex);
+router.post('/indexFromDatabase', indexFromDatabase);
 
 module.exports = router;

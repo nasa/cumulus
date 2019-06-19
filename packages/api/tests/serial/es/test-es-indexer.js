@@ -19,6 +19,7 @@ const { Search } = require('../../../es/search');
 const models = require('../../../models');
 const { fakeGranuleFactory, fakeCollectionFactory, deleteAliases } = require('../../../lib/testUtils');
 const { filterDatabaseProperties } = require('../../../lib/FileUtils');
+const { IndexExistsError } = require('../../../lib/errors');
 const { bootstrapElasticSearch } = require('../../../lambdas/bootstrap');
 const granuleSuccess = require('../../data/granule_success.json');
 const granuleFailure = require('../../data/granule_failed.json');
@@ -718,4 +719,30 @@ test.serial('pass a sns message to main handler with discoverpdr info', async (t
   t.truthy(resp[0].sf);
   t.falsy(resp[0].granule);
   t.falsy(resp[0].pdr);
+});
+
+test.serial('Create new index', async (t) => {
+  const newIndex = randomString();
+
+  await indexer.createIndex(esClient, newIndex);
+
+  const indexExists = await esClient.indices.exists({ index: newIndex });
+
+  t.true(indexExists);
+
+  await esClient.indices.delete({ index: newIndex });
+});
+
+test.serial('Create new index - index already exists', async (t) => {
+  const newIndex = randomString();
+
+  await indexer.createIndex(esClient, newIndex);
+
+  await t.throwsAsync(
+    () => indexer.createIndex(esClient, newIndex),
+    IndexExistsError,
+    `Index ${newIndex} exists and cannot be created.`
+  );
+
+  await esClient.indices.delete({ index: newIndex });
 });
