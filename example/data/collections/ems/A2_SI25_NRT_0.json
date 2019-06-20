@@ -1,0 +1,16 @@
+{
+  "name": "A2_SI25_NRT",
+  "version": "0",
+  "dataType": "A2_SI25_NRT",
+  "provider_path": "ignored-provider-path/test-data",
+  "granuleId": "^.*$",
+  "granuleIdExtraction": "^(.*)(\\.h5|\\.cmr)",
+  "sampleFileName": "A2_SI25_NRT_product_0001-of-4154.h5",
+  "files": [
+    {
+      "bucket": "private",
+      "regex": ".*.h5$",
+      "sampleFileName": "A2_SI25_NRT_product_0001-of-4154.h5"
+    }
+  ]
+}

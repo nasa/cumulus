@@ -23,7 +23,7 @@ test.before(async () => {
 
 // Skipping this test for because LocalStack version 0.8.6 does not support pointInTime
 // When this test is back in, make sure to delete the table
-test.skip.serial('bootstrap dynamoDb activates pointInTime on a given table', async (t) => {
+test.serial.skip('bootstrap dynamoDb activates pointInTime on a given table', async (t) => {
   const resp = await bootstrapDynamoDbTables([{ name: tableName, pointInTime: true }]);
 
   t.is(

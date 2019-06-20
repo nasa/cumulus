@@ -10,6 +10,7 @@ const {
   recursivelyDeleteS3Bucket
 } = require('@cumulus/common/aws');
 const {
+  randomId,
   randomString,
   validateConfig,
   validateInput,
@@ -34,11 +35,21 @@ test.beforeEach(async (t) => {
     s3().createBucket({ Bucket: t.context.templateBucket }).promise()
   ]);
 
+  const queueName = randomId('queue');
+  t.context.queueName = queueName;
+  const queueUrl = await createQueue();
+
+  t.context.queues = {
+    [queueName]: queueUrl
+  };
   t.context.messageTemplate = {
     cumulus_meta: {
-      state_machine: t.context.stateMachineArn
+      state_machine: t.context.stateMachineArn,
+      queueName
     },
-    meta: {}
+    meta: {
+      queues: t.context.queues
+    }
   };
   const messageTemplateKey = `${randomString()}/template.json`;
   await s3().putObject({
@@ -52,7 +63,7 @@ test.beforeEach(async (t) => {
       internalBucket: t.context.internalBucket,
       stackName: t.context.stackName,
       provider: { name: 'provider-name' },
-      queueUrl: await createQueue(),
+      queueUrl,
       granuleIngestMessageTemplateUri: `s3://${t.context.templateBucket}/${messageTemplateKey}`
     },
     input: {
@@ -175,7 +186,13 @@ test.serial('Granules are added to the queue', async (t) => {
 });
 
 test.serial('The correct message is enqueued without a PDR', async (t) => {
-  const event = t.context.event;
+  const {
+    collectionConfigStore,
+    event,
+    queueName,
+    queues,
+    stateMachineArn
+  } = t.context;
 
   const granule1 = {
     dataType: `data-type-${randomString().slice(0, 6)}`,
@@ -196,8 +213,8 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
   event.input.granules = [granule1, granule2];
 
   await Promise.all([
-    t.context.collectionConfigStore.put(granule1.dataType, granule1.version, collectionConfig1),
-    t.context.collectionConfigStore.put(granule2.dataType, granule2.version, collectionConfig2)
+    collectionConfigStore.put(granule1.dataType, granule1.version, collectionConfig1),
+    collectionConfigStore.put(granule2.dataType, granule2.version, collectionConfig2)
   ]);
 
   await validateConfig(t, event.config);
@@ -209,7 +226,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
 
   // Get messages from the queue
   const receiveMessageResponse = await sqs().receiveMessage({
-    QueueUrl: t.context.event.config.queueUrl,
+    QueueUrl: event.config.queueUrl,
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1
   }).promise();
@@ -225,11 +242,13 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
     message1,
     {
       cumulus_meta: {
+        queueName,
         // The execution name is randomly generated, so we don't care what the value is here
         execution_name: message1.cumulus_meta.execution_name,
-        state_machine: t.context.stateMachineArn
+        state_machine: stateMachineArn
       },
       meta: {
+        queues,
         collection: collectionConfig1,
         provider: { name: 'provider-name' }
       },
@@ -253,11 +272,13 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
     message2,
     {
       cumulus_meta: {
+        queueName,
         // The execution name is randomly generated, so we don't care what the value is here
         execution_name: message2.cumulus_meta.execution_name,
-        state_machine: t.context.stateMachineArn
+        state_machine: stateMachineArn
       },
       meta: {
+        queues,
         collection: collectionConfig2,
         provider: { name: 'provider-name' }
       },
@@ -276,7 +297,13 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
 });
 
 test.serial('The correct message is enqueued with a PDR', async (t) => {
-  const event = t.context.event;
+  const {
+    collectionConfigStore,
+    event,
+    queueName,
+    queues,
+    stateMachineArn
+  } = t.context;
 
   // if the event.cumulus_config has 'state_machine' and 'execution_name', the enqueued message
   // will have 'parentExecutionArn'
@@ -309,8 +336,8 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
   event.input.granules = [granule1, granule2];
 
   await Promise.all([
-    t.context.collectionConfigStore.put(granule1.dataType, granule1.version, collectionConfig1),
-    t.context.collectionConfigStore.put(granule2.dataType, granule2.version, collectionConfig2)
+    collectionConfigStore.put(granule1.dataType, granule1.version, collectionConfig1),
+    collectionConfigStore.put(granule2.dataType, granule2.version, collectionConfig2)
   ]);
 
   await validateConfig(t, event.config);
@@ -322,7 +349,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
 
   // Get messages from the queue
   const receiveMessageResponse = await sqs().receiveMessage({
-    QueueUrl: t.context.event.config.queueUrl,
+    QueueUrl: event.config.queueUrl,
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1
   }).promise();
@@ -338,12 +365,14 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     message1,
     {
       cumulus_meta: {
+        queueName,
         // The execution name is randomly generated, so we don't care what the value is here
         execution_name: message1.cumulus_meta.execution_name,
-        state_machine: t.context.stateMachineArn,
-        parentExecutionArn: arn
+        parentExecutionArn: arn,
+        state_machine: stateMachineArn
       },
       meta: {
+        queues,
         pdr: event.input.pdr,
         collection: collectionConfig1,
         provider: { name: 'provider-name' }
@@ -368,12 +397,14 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     message2,
     {
       cumulus_meta: {
+        queueName,
         // The execution name is randomly generated, so we don't care what the value is here
         execution_name: message2.cumulus_meta.execution_name,
-        state_machine: t.context.stateMachineArn,
-        parentExecutionArn: arn
+        parentExecutionArn: arn,
+        state_machine: stateMachineArn
       },
       meta: {
+        queues,
         pdr: event.input.pdr,
         collection: collectionConfig2,
         provider: { name: 'provider-name' }
@@ -391,5 +422,3 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     }
   );
 });
-
-test.todo('An appropriate error is thrown if the message template could not be fetched');

@@ -59,6 +59,7 @@ This table describes the fields that must be present in `config.yml` to successf
 | ems.username | (required if ems.submitReport is true) | the username used for sending reports to EMS
 | ems.privateKey | ems-private.pem | the private key file used for sending reports to EMS
 | ems.dataSource | UAT | the data source of EMS reports
+| ems.retentionInDays | 30 | the retention in days for reports and s3 server access logs
 | vpc.vpcId | (required if ecs is used) | the vpcId used with the deployment
 | vpc.subnets | (required) | the subnets used
 | vpc.securityGroup | (required) | security group ID to be used by Cumulus resources, must allow inbound HTTP(S) access (Port 443), optionally may allow SSH to access ECS instances.

@@ -8,6 +8,15 @@ KinesisTriggerTest:
       CumulusConfig:
         cumulus_message:
           input: '{$}'
+      Retry:
+        - &LambdaServiceExceptionRetry
+          ErrorEquals:
+          - Lambda.ServiceException
+          - Lambda.AWSLambdaException
+          - Lambda.SdkClientException
+          IntervalSeconds: 2
+          MaxAttempts: 6
+          BackoffRate: 2
       Catch:
         - &ErrorEqualDefaults
           ErrorEquals:
@@ -25,6 +34,8 @@ KinesisTriggerTest:
               destination: '{$.meta.cnm}'
             - source: '{$}'
               destination: '{$.payload}'
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - <<: *ErrorEqualDefaults
       Next: SyncGranule
@@ -65,6 +76,8 @@ KinesisTriggerTest:
               destination: '{$.payload}'
       Type: Task
       Resource: ${CnmResponseLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Catch:
         - <<: *ErrorEqualDefaults
           Next: StopStatus
@@ -78,6 +91,8 @@ KinesisTriggerTest:
     StopStatus: &StopStatusDefaults
       Type: Task
       Resource: ${sf2snsEndLambdaFunction.Arn}
+      Retry:
+        - <<: *LambdaServiceExceptionRetry
       Next: WorkflowSucceeded
     StopStatusFail:
       <<: *StopStatusDefaults
