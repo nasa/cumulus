@@ -4,7 +4,7 @@
 # Run like this:
 # DEPLOYMENT=<deployment> scripts/repeat-test.sh spec/parallel/ingestGranule/IngestGranuleSuccessSpec.js test-output/<resultsFolder>
 # The console output will show how many total runs and how many failed runs
-# Test output for failed tests will be saved to the <resultsFolder>
+# Test output for failed tests will be saved to the test-output/<resultsFolder>
 # <resultsFolder> will be cleaned out when the test is started
 
 set +e
