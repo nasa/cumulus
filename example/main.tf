@@ -9,7 +9,8 @@ module "thin_egress_app" {
   bucketname_prefix          = ""
   config_bucket              = var.tea_config_bucket
   domain_name                = var.tea_domain_name
-  permissions_boundary_name  = var.permissions_boundary
+  permissions_boundary_name  = var.permissions_boundary_name
+  private_vpc                = var.vpc_id
   stack_name                 = var.tea_stack_name
   stage_name                 = var.tea_stage_name
   vpc_subnet_ids             = var.tea_subnet_ids

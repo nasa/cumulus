@@ -151,7 +151,6 @@ deployment:
 
 **terraform.tfvars**
 ```hcl
-permissions_boundary           = "NGAPShNonProdRoleBoundary"
 tea_config_bucket              = "my-internal"
 tea_stack_name                 = "my-thin-egress-app"
 tea_subnet_ids                 = ["subnet-1234567890"]
@@ -187,7 +186,6 @@ Make sure to:
 
 **terraform.tfvars**
 ```hcl
-permissions_boundary           = "NGAPShNonProdRoleBoundary"
 tea_config_bucket              = "my-internal"
 tea_domain_name                = "abc123.execute-api.us-east-1.amazonaws.com:7000/DEV"
 tea_stack_name                 = "my-thin-egress-app"
@@ -199,7 +197,6 @@ vpc_id                         = "vpc-1234567890"
 Re-deploy the Thin Egress App:
 
 ```shell
-$ terraform init
 $ terraform apply
 
 ...
