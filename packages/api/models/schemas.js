@@ -109,6 +109,12 @@ module.exports.collection = {
       description: 'The regex used to extract the granule id from granule id filenames',
       type: 'string'
     },
+    reportToEms: {
+      title: 'Report to EMS',
+      description: 'Indicates whether the collection will be reported to EMS',
+      type: 'boolean',
+      default: false
+    },
     sampleFileName: {
       title: 'Sample Filename',
       description: 'Is used to validate to test granule id '
