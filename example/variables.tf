@@ -12,6 +12,11 @@ variable "vpc_id" {
   type = string
 }
 
+variable "tea_bucket_map_file" {
+  type    = string
+  default = null
+}
+
 variable "tea_bucketname_prefix" {
   type    = string
   default = ""
