@@ -5,7 +5,8 @@ const path = require('path');
 const { Collection } = require('@cumulus/api/models');
 const {
   aws: { parseS3Uri, s3 },
-  testUtils: { randomString }
+  testUtils: { randomString },
+  log
 } = require('@cumulus/common');
 const {
   addCollections,
@@ -23,6 +24,7 @@ const {
   createTimestampedTestId,
   createTestDataPath,
   createTestSuffix,
+  getFileMetadata, // temporarily added for logging
   getFilesMetadata
 } = require('../../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
@@ -134,7 +136,18 @@ describe('When the Ingest Granules workflow is configured\n', () => {
 
       it('MoveGranules outputs', async () => {
         lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
-        currentFiles = await getFilesMetadata(lambdaOutput.payload.granules[0].files);
+        // Logging to catch intermittent failures
+        const outputGranule = lambdaOutput.payload.granules[0];
+        currentFiles = await Promise.all(outputGranule.files.map((file) => {
+          log.info(`Getting metadata of ${file.bucket}/${file.filename} in s3`);
+          try {
+            return getFileMetadata(file);
+          } catch (err) {
+            log.error(`Failed to get metadata of ${file.bucket}/${file.filename} in s3`);
+            throw(err);
+          }
+        }));
+        // currentFiles = await getFilesMetadata(lambdaOutput.payload.granules[0].files);
         expect(currentFiles.length).toEqual(5);
       });
 
