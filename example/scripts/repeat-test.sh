@@ -2,7 +2,7 @@
 
 # This is a script for running a certain test repeatedly to debug intermittent test fails
 # Run like this:
-# DEPLOYMENT=<deployment> scripts/repeat-test.sh spec/parallel/ingestGranule/IngestGranuleSuccessSpec.js <resultsFolder>
+# DEPLOYMENT=<deployment> scripts/repeat-test.sh spec/parallel/ingestGranule/IngestGranuleSuccessSpec.js test-output/<resultsFolder>
 # The console output will show how many total runs and how many failed runs
 # Test output for failed tests will be saved to the <resultsFolder>
 # <resultsFolder> will be cleaned out when the test is started
