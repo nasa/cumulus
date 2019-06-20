@@ -22,7 +22,6 @@ async function incrementQueueSemaphore(queueName, maximum) {
 
   try {
     await semaphore.up(queueName, maximum);
-    log.debug(`incremented semaphore for queue ${queueName}`);
   } catch (err) {
     if (err instanceof ResourcesLockedError) {
       log.info(`Unable to start new execution: the maximum number of executions (${maximum}) allowed for ${queueName} are already running.`);
@@ -49,7 +48,6 @@ async function decrementQueueSemaphore(queueName) {
   // count below 0. If so, catch the error so it can be logged.
   try {
     await semaphore.down(queueName);
-    log.debug(`decremented semaphore for queue ${queueName}`);
   } catch (err) {
     log.error(`Failure: attempted to decrement semaphore for queue ${queueName} below 0`);
     throw err;

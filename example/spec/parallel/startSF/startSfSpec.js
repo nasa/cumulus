@@ -253,18 +253,14 @@ describe('the sf-starter lambda function', () => {
         })
       }).promise();
       messagesConsumed = parseInt(Payload, 10);
-      console.log('messages consumed', messagesConsumed);
       // Can't test that the messages consumed is exactly the number the
       // maximum allowed because of eventual consistency in SQS
       expect(messagesConsumed).toBeGreaterThan(0);
     });
 
     it('to trigger workflows', async () => {
-      console.log(waitPassSfArn);
       const { executions } = await StepFunctions.listExecutions({ stateMachineArn: waitPassSfArn });
       const runningExecutions = executions.filter((execution) => execution.status === 'RUNNING');
-      console.log(`all executions: ${executions.length}`);
-      console.log('running executions', runningExecutions);
       expect(runningExecutions.length).toBeLessThanOrEqual(queueMaxExecutions);
     });
   });
