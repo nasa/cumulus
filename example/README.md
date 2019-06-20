@@ -99,7 +99,7 @@ PUBLIC_BUCKETS:
 Upload `bucket_map.yaml` to your stack's internal bucket:
 
 ```shell
-$ aws s3 cp s3://my-internal/bucket_map.yaml
+$ aws s3 cp ./bucket_map.yaml s3://my-internal/bucket_map.yaml
 ```
 
 The Thin Egress App stores its Earthdata Login credentials in AWS Secrets
