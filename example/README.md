@@ -29,18 +29,24 @@ NOTE: For this to work you need your default credentials to be credentials for t
 
 ### Deploying the Thin Egress App
 
-The [Thin Egress App](https://github.com/asfadmin/thin-egress-app) is deployed using [Terraform](https://terraform.io).
+The [Thin Egress App](https://github.com/asfadmin/thin-egress-app) is deployed
+using [Terraform](https://terraform.io).
 
-If you are using a Mac and [Homebrew](https://brew.sh), installing Terraform is as simple as:
+If you are using a Mac and [Homebrew](https://brew.sh), installing Terraform is
+as simple as:
 
 ```shell
 $ brew update
 $ brew install terraform
 ```
 
-For other cases, [installation instructions](https://learn.hashicorp.com/terraform/getting-started/install.html) are available.
+For other cases,
+[installation instructions](https://learn.hashicorp.com/terraform/getting-started/install.html)
+are available.
 
-The state of the Terraform deployment is stored in S3.  In the following examples, it will be assumed that state is being stored in a bucket called `my-tf-state`. You can also use an existing bucket, if desired.
+The state of the Terraform deployment is stored in S3. In the following
+examples, it will be assumed that state is being stored in a bucket called
+`my-tf-state`. You can also use an existing bucket, if desired.
 
 Create the state bucket:
 
@@ -48,7 +54,8 @@ Create the state bucket:
 $ aws s3api create-bucket --bucket my-tf-state
 ```
 
-In order to help prevent loss of state information, it is recommended that versioning be enabled on the state bucket:
+In order to help prevent loss of state information, it is recommended that
+versioning be enabled on the state bucket:
 
 ```shell
 $ aws s3api put-bucket-versioning \
@@ -56,7 +63,9 @@ $ aws s3api put-bucket-versioning \
     --versioning-configuration Status=Enabled
 ```
 
-Terraform uses a lock stored in DynamoDB in order to prevent multiple simultaneous updates.  In the following examples, that table will be called `my-tf-locks`.
+Terraform uses a lock stored in DynamoDB in order to prevent multiple
+simultaneous updates. In the following examples, that table will be called
+`my-tf-locks`.
 
 Create the locks table:
 
@@ -68,7 +77,9 @@ $ aws dynamodb create-table \
     --billing-mode PAY_PER_REQUEST
 ```
 
-The Thin Egress App uses a `bucket_map.yaml` file to determine what buckets to serve. Documentation of the file format is available [here](https://github.com/asfadmin/thin-egress-app#bucket-map). For Cumulus integration tests, a simple config could look like this:
+The Thin Egress App uses a `bucket_map.yaml` file to determine what buckets to
+serve. Documentation of the file format is available [here](https://github.com/asfadmin/thin-egress-app#bucket-map).
+For Cumulus integration tests, a simple config could look like this:
 
 ```yaml
 MAP:
@@ -84,15 +95,20 @@ Upload `bucket_map.yaml` to your stack's internal bucket:
 $ aws s3 cp s3://my-internal/bucket_map.yaml
 ```
 
-The Thin Egress App stores its Earthdata Login credentials in AWS Secrets Manager. These are the `EARTHDATA_CLIENT_ID` and `EARTHDATA_CLIENT_PASSWORD` values from your `example/app/.env` file. The client id and password need to be `base64` encoded. You can get the value by running:
+The Thin Egress App stores its Earthdata Login credentials in AWS Secrets
+Manager. These are the `EARTHDATA_CLIENT_ID` and `EARTHDATA_CLIENT_PASSWORD`
+values from your `example/app/.env` file. The client id and password need to be
+`base64` encoded. You can get the value by running:
 
 ```shell
 $ echo -n 'user:pass' | base64
 ```
 
-⚠️ **Note:** All `aws` and `terraform` commands for the rest of this deployment _must_ be run using `NGAPShNonProd` credentials.
+⚠️ **Note:** All `aws` and `terraform` commands for the rest of this deployment
+_must_ be run using `NGAPShNonProd` credentials.
 
-Store the secrets to Secrets Manager, substituting the appropriate values for `UrsId` and `UrsAuth`.
+Store the secrets to Secrets Manager, substituting the appropriate values for
+`UrsId` and `UrsAuth`.
 
 ```shell
 aws secretsmanager create-secret \
@@ -103,7 +119,8 @@ aws secretsmanager create-secret \
 
 If you have not done so already, change to the `example` directory.
 
-Create the `terraform.tf` file, substituting the appropriate values for `bucket` and `dynamodb_table`:
+Create the `terraform.tf` file, substituting the appropriate values for `bucket`
+and `dynamodb_table`:
 
 ```hcl
 terraform {
@@ -115,7 +132,8 @@ terraform {
 }
 ```
 
-Create the `terraform.tfvars` file, using values appropriate for your deployment:
+Create the `terraform.tfvars` file, using values appropriate for your
+deployment:
 
 ```hcl
 permissions_boundary           = "NGAPShNonProdRoleBoundary"
@@ -176,11 +194,17 @@ tea_api_endpoint = https://abc123.execute-api.us-east-1.amazonaws.com:7000/DEV/
 tea_urs_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com:7000/DEV/login
 ```
 
-Copy the value of `tea_urs_redirect_uri` and add it to the list of Redirect URIs configured for your app in URS.
+Copy the value of `tea_urs_redirect_uri` and add it to the list of Redirect URIs
+configured for your app in URS.
 
-As documented [here](https://wiki.earthdata.nasa.gov/display/CUMULUS/Using+Cumulus+with+Private+APIs), update your `/etc/hosts` and `~/.ssh/config` files with the new distribution hostname.
+As documented
+[here](https://wiki.earthdata.nasa.gov/display/CUMULUS/Using+Cumulus+with+Private+APIs),
+update your `/etc/hosts` and `~/.ssh/config` files with the new distribution
+hostname.
 
-Login to the VPN, start up an ssh tunnel through the bastion host, and then browse to https://abc123.execute-api.us-east-1.amazonaws.com:7000/DEV/my-protected/path/to/some/object
+Login to the VPN, start up an ssh tunnel through the bastion host, and then
+browse to
+https://abc123.execute-api.us-east-1.amazonaws.com:7000/DEV/my-protected/path/to/some/object
 
 ### Additional deployment steps
 
