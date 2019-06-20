@@ -50,17 +50,21 @@ test.serial('generateReport creates flat file for collections in both CUMULUS an
   //    multiple platforms and instruments
   // A2_SI25_NRT___0 has multiple ScienceKeywords.ScienceKeyword
   // MOD11A1___006 has multiple ScienceKeywords.ScienceKeyword
+  // MOD14A1___006 has multiple ScienceKeywords.ScienceKeyword
 
   // Create collections that are in both CUMULUS and CMR
   // the MOD11A1___006 is in CMR only
+  // set collection's reportToEms to true except MOD14A1___006
   const matchingColls = cmrCollections.map((cmrCollection) =>
     fakeCollectionFactory({
-      name: cmrCollection.Collection.ShortName, version: cmrCollection.Collection.VersionId
+      name: cmrCollection.Collection.ShortName,
+      version: cmrCollection.Collection.VersionId,
+      reportToEms: (cmrCollection.Collection.ShortName !== 'MOD14A1')
     }))
     .filter((collection) => (collection.name !== 'MOD11A1'));
 
   // collection only in cumulus
-  const extraDbColls = fakeCollectionFactory({ name: 'TEST', version: '0' });
+  const extraDbColls = fakeCollectionFactory({ name: 'TEST', version: '0', reportToEms: true });
 
   await new models.Collection().create(matchingColls.concat(extraDbColls));
 
@@ -76,7 +80,7 @@ test.serial('generateReport creates flat file for collections in both CUMULUS an
   const endTime = moment.utc().add(1, 'days').startOf('day');
   const report = await generateReport(startTime, endTime);
   const parsed = aws.parseS3Uri(report.file);
-  console.log(report);
+
   // file exists
   const exists = await aws.fileExists(parsed.Bucket, parsed.Key);
   t.truthy(exists);
@@ -95,6 +99,5 @@ test.serial('generateReport creates flat file for collections in both CUMULUS an
   // check the number of records for each report
   const content = (await aws.getS3Object(parsed.Bucket, parsed.Key)).Body.toString();
   const records = content.split('\n');
-  t.is(records.length, 3);
   t.deepEqual(records, expectedRecords);
 });

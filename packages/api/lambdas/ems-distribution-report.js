@@ -6,7 +6,9 @@ const moment = require('moment');
 const { aws } = require('@cumulus/common');
 const { URL } = require('url');
 const { log } = require('@cumulus/common');
-const { determineReportKey, getExpiredS3Objects, submitReports } = require('../lib/ems');
+const {
+  determineReportKey, getEmsEnabledCollections, getExpiredS3Objects, submitReports
+} = require('../lib/ems');
 const { deconstructCollectionId } = require('../lib/utils');
 const { FileClass } = require('../models');
 
@@ -128,7 +130,7 @@ class DistributionEvent {
   get username() {
     const requestUri = this.rawLine.split('"')[1].split(' ')[1];
     const parsedUri = (new URL(requestUri, 'http://localhost'));
-    return parsedUri.searchParams.get('x-EarthdataLoginUsername');
+    return parsedUri.searchParams.get('x-EarthdataLoginUsername') || '-';
   }
 
   /**
@@ -155,19 +157,40 @@ class DistributionEvent {
   }
 
   /**
+   * Get the product information (name, version, granuleId and file type) of the file
+   *
+   * @returns {Object} product object
+   */
+  async getProductInfo() {
+    if (this.productInfo) return this.productInfo;
+
+    const fileModel = new FileClass();
+    this.productInfo = await fileModel.getGranuleForFile(this.bucket, this.key)
+      .then((granule) =>
+        (granule
+          ? {
+            collectionId: granule.collectionId,
+            ...deconstructCollectionId(granule.collectionId),
+            granuleId: granule.granuleId,
+            fileType: this.getFileType(this.bucket, this.key, granule)
+          }
+          : {}));
+    return this.productInfo;
+  }
+
+  /**
    * Get the product name, version, granuleId and file type
    *
    * @returns {Promise<Array<string>>} product name, version, granuleId and file type
    */
   get product() {
-    const fileModel = new FileClass();
-    return fileModel.getGranuleForFile(this.bucket, this.key)
-      .then((granule) =>
-        (granule
-          ? Object.values(deconstructCollectionId(granule.collectionId))
-            .concat([granule.granuleId])
-            .concat(this.getFileType(this.bucket, this.key, granule))
-          : new Array(4).fill('')));
+    return this.getProductInfo()
+      .then((productInfo) => [
+        productInfo.name,
+        productInfo.version,
+        productInfo.granuleId,
+        productInfo.fileType
+      ]);
   }
 
   /**
@@ -283,8 +306,8 @@ async function generateDistributionReport(params) {
   log.info(`generateDistributionReport for access records between ${reportStartTime.format()} and ${reportEndTime.format()}`);
 
   // A few utility functions that we'll be using below
-  const eventTimeFilter = (event) => event.time >= reportStartTime && event.time < reportEndTime;
-  const sortByTime = (eventA, eventB) => (eventA.time < eventB.time ? -1 : 1);
+  const eventTimeFilter = (event) => event.time.isBetween(reportStartTime, reportEndTime, null, '[)');
+  const sortByTime = (eventA, eventB) => (eventA.time.isBefore(eventB.time) ? -1 : 1);
   // most s3 server access log records are delivered within a few hours of the time
   // that they are recorded
   const s3ObjectTimeFilter = (s3Object) =>
@@ -296,7 +319,7 @@ async function generateDistributionReport(params) {
     .filter(s3ObjectTimeFilter)
     .map((s3Object) => ({ Bucket: logsBucket, Key: s3Object.Key }));
 
-  log.info(`Found ${s3Objects.length} log files in S3`);
+  log.info(`Found ${s3Objects.length} log files in S3 after ${reportStartTime.format()}`);
 
   // Fetch all distribution events from S3
   const allDistributionEvents = flatten(await pMap(
@@ -309,10 +332,22 @@ async function generateDistributionReport(params) {
 
   const distributionEventsInReportPeriod = allDistributionEvents.filter(eventTimeFilter);
 
-  log.info(`Found ${allDistributionEvents.length} distribution events between `
+  log.info(`Found ${distributionEventsInReportPeriod.length} distribution events between `
     + `${reportStartTime.format()} and ${reportEndTime.format()}`);
 
-  return (await Promise.all(distributionEventsInReportPeriod
+  const emsCollections = await getEmsEnabledCollections();
+
+  // populate event.productInfo and filter only event for EMS enabled collections
+  const distributionEventsForEms = (await Promise.all(distributionEventsInReportPeriod
+    .map(async (event) => {
+      await event.getProductInfo();
+      return event;
+    })))
+    .filter((event) => emsCollections.includes(event.productInfo.collectionId));
+
+  log.info(`Found ${distributionEventsForEms.length} distribution events for EMS`);
+
+  return (await Promise.all(distributionEventsForEms
     .sort(sortByTime)
     .map((event) => event.toString())))
     .join('\n');

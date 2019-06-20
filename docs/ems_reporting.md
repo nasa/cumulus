@@ -11,7 +11,7 @@ Cumulus reports usage statistics to the [ESDIS Metrics System (EMS)](https://ear
 
 ### Product Metadata
 
-Cumulus creates Product Metadata report.  The Product Metadata report provides ancillary information about the products(collections) in Cumulus, and these information are required before EMS can process ingest and distribution reports.
+Cumulus creates a nightly Product Metadata report.  The Product Metadata report provides ancillary information about the products (collections) in Cumulus, and this information is required before EMS can process ingest and distribution reports.
 
 A product can only be removed manually by the EMS team.
 

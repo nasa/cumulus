@@ -6,7 +6,12 @@ const os = require('os');
 const path = require('path');
 const { aws, log } = require('@cumulus/common');
 const {
-  buildReportFileName, determineReportKey, getExpiredS3Objects, reportToFileType, submitReports
+  buildReportFileName,
+  determineReportKey,
+  getEmsEnabledCollections,
+  getExpiredS3Objects,
+  reportToFileType,
+  submitReports
 } = require('../lib/ems');
 const { deconstructCollectionId } = require('../es/indexer');
 const { Search, defaultIndexAlias } = require('../es/search');
@@ -120,7 +125,7 @@ function buildSearchQuery(esIndex, type, startTime, endTime) {
       }
     }
   };
-  if (type === 'deletedgranule') params._source = ['granuleId', 'deletedAt'];
+  if (type === 'deletedgranule') params._source = ['granuleId', 'collectionId', 'deletedAt'];
   return params;
 }
 
@@ -202,14 +207,17 @@ function getEmsFieldFromGranField(granule, emsField, granField) {
  *
  * @param {Object} mapping - mapping of EMS fields to granule fields
  * @param {Object} granules - es granules
+ * @param {Array<string>} collections - list of EMS enabled collections
  * @returns {Array<string>} EMS records
  */
-function buildEMSRecords(mapping, granules) {
-  const records = granules.map((granule) => {
-    const record = Object.keys(mapping)
-      .map((emsField) => getEmsFieldFromGranField(granule, emsField, mapping[emsField]));
-    return record.join('|&|');
-  });
+function buildEMSRecords(mapping, granules, collections) {
+  const records = granules
+    .filter((granule) => collections.includes(granule.collectionId))
+    .map((granule) => {
+      const record = Object.keys(mapping)
+        .map((emsField) => getEmsFieldFromGranField(granule, emsField, mapping[emsField]));
+      return record.join('|&|');
+    });
   return records;
 }
 
@@ -219,9 +227,10 @@ function buildEMSRecords(mapping, granules) {
  * @param {string} reportType - report type (ingest, archive, delete)
  * @param {string} startTime - start time of the records
  * @param {string} endTime - end time of the records
+ * @param {Array<string>} collections - list of EMS enabled collections
  * @returns {Object} - report type and its file path {reportType, file}
  */
-async function generateReport(reportType, startTime, endTime) {
+async function generateReport(reportType, startTime, endTime, collections) {
   log.debug(`ems-ingest-report.generateReport ${reportType} startTime: ${startTime} endTime: ${endTime}`);
 
   if (!Object.keys(emsMappings).includes(reportType)) {
@@ -241,8 +250,10 @@ async function generateReport(reportType, startTime, endTime) {
   const searchQuery = buildSearchQuery(esIndex, type, startTime, endTime);
   let response = await esClient.search(searchQuery);
   let granules = response.hits.hits.map((s) => s._source);
+  let records = buildEMSRecords(emsMappings[reportType], granules, collections);
+  stream.write(records.length ? records.join('\n') : '');
   let numRetrieved = granules.length;
-  stream.write(buildEMSRecords(emsMappings[reportType], granules).join('\n'));
+  let numRecords = records.length;
 
   while (response.hits.total !== numRetrieved) {
     response = await esClient.scroll({ // eslint-disable-line no-await-in-loop
@@ -250,12 +261,13 @@ async function generateReport(reportType, startTime, endTime) {
       scroll: '30s'
     });
     granules = response.hits.hits.map((s) => s._source);
-    stream.write('\n');
-    stream.write(buildEMSRecords(emsMappings[reportType], granules).join('\n'));
+    records = buildEMSRecords(emsMappings[reportType], granules, collections);
+    stream.write(records.length ? `\n${records.join('\n')}` : '');
     numRetrieved += granules.length;
+    numRecords += records.length;
   }
   stream.end();
-  log.debug(`EMS ${reportType} generated with ${numRetrieved} records: ${filename}`);
+  log.debug(`EMS ${reportType} generated with ${numRecords} records from ${numRetrieved} granules: ${filename}`);
 
   // upload to s3
   const reportKey = await determineReportKey(
@@ -273,8 +285,9 @@ async function generateReport(reportType, startTime, endTime) {
  * @returns {Array<Object>} - list of report type and its file path {reportType, file}
  */
 async function generateReports(startTime, endTime) {
+  const collections = await getEmsEnabledCollections();
   return Promise.all(Object.keys(emsMappings)
-    .map((reportType) => generateReport(reportType, startTime, endTime)));
+    .map((reportType) => generateReport(reportType, startTime, endTime, collections)));
 }
 
 /**
