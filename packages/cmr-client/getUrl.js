@@ -47,14 +47,15 @@ function getHost(cmrEnvironment, cmrHost) {
  */
 function getUrl(type, cmrProvider, cmrEnvironment, cmrHost) {
   let url;
-  const host = getHost(cmrEnvironment, cmrHost);
+  const cmrEnv = cmrEnvironment || process.env.CMR_ENVIRONMENT || null;
+  const host = getHost(cmrEnv, cmrHost);
   const provider = cmrProvider;
 
   switch (type) {
   case 'token':
-    if (cmrEnvironment === 'OPS') {
+    if (cmrEnv === 'OPS') {
       url = 'https://api.echo.nasa.gov/echo-rest/tokens/';
-    } else if (cmrEnvironment === 'SIT') {
+    } else if (cmrEnv === 'SIT') {
       url = 'https://testbed.echo.nasa.gov/echo-rest/tokens/';
     } else {
       url = 'https://api-test.echo.nasa.gov/echo-rest/tokens/';
