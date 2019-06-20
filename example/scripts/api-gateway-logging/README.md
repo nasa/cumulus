@@ -2,6 +2,22 @@
 
 Instructions for enabling account level logging from API Gateway to CloudWatch.
 
+## Create a policy document
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "apigateway.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
+```
 
 ## Create an account role to act as ApiGateway and write to CloudWatchLogs
 
@@ -22,6 +38,7 @@ aws iam attach-role-policy \
 --policy-arn "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
 ```
 
+## Update Account Api Gateway settings with correct permissions.
 
 ```sh
 aws apigateway update-account \
