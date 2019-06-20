@@ -1,0 +1,16 @@
+{
+  "name": "MUR-JPL-L4-GLOB-v4.1",
+  "version": "1",
+  "dataType": "MUR-JPL-L4-GLOB-v4.1",
+  "provider_path": "ignored-provider-path/test-data",
+  "granuleId": "^.*$",
+  "granuleIdExtraction": "^(.*)(\\.h5|\\.cmr)",
+  "sampleFileName": "MUR-JPL-L4-GLOB-v4.1_product_0001-of-4154.h5",
+  "files": [
+    {
+      "bucket": "private",
+      "regex": ".*.h5$",
+      "sampleFileName": "MUR-JPL-L4-GLOB-v4.1_product_0001-of-4154.h5"
+    }
+  ]
+}
