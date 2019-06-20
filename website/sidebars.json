@@ -34,6 +34,9 @@
       "deployment/config_descriptions",
       "deployment/troubleshoot_deployment"
     ],
+    "Additional Deployment Options":[
+      "additional-deployment-options/additional-deployment-options-readme"
+    ],
     "Additional Features": [
       "data_in_dynamodb",
       "features/dead_letter_queues",

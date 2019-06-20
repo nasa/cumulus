@@ -8,8 +8,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### PLEASE NOTE
-- **CUMULUS-799** added some additional IAM permissions to support reading CloudWatch and API Gateway, so **you will have to redeploy your IAM stack.**
-- **CUMULUS-800** Adds `logApiGatewayToCloudWatch` to `apiConfig.api` options.  **Note** In order for API Gateway logging to work, each AWS account must have configured the API Gateway account level settings with a CloudWatch log role ARN that implements the AmazonAPIGatewayPushToCloudWatchLogs policy.
+- **CUMULUS-799** added additional IAM permissions to support reading CloudWatch and API Gateway, so **you will have to redeploy your IAM stack.**
+- **CUMULUS-800** Several items:
+    - To enable CloudWatch Logs, you must grant API Gateway permission to read and write logs to CloudWatch for your account. The AmazonAPIGatewayPushToCloudWatchLogs managed policy (with an ARN of arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs) has all the required permissions. To grant these permissions to your account, create an IAM role with apigateway.amazonaws.com as its trusted entity, attach the preceding policy to the IAM role, and set the IAM role ARN on the cloudWatchRoleArn property on your Account.  You can find a simple walkthrough in the [docs.](https://nasa.github.io/cumulus/docs/additional-deployment-options/additional-deployment-options-readme)
+
+	- To enable metrics from the Distribution API,
+
+	- For NASA deployments in NGAP, you can enable logging. ...TODO [MHS, 2019-06-20]
+
+	- [MHS, 2019-06-20] TODO: configure aws server access logs on public and protected buckets to write to Metrics buckets.
 
 
 We have encountered transient lambda service errors in our integration testing. Please handle transient service errors following [these guidelines](https://docs.aws.amazon.com/step-functions/latest/dg/bp-lambda-serviceexception.html). The workflows in the `example/workflows` folder have been updated with retries configured for these errors.
