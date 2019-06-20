@@ -10,13 +10,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### PLEASE NOTE
 **CUMULUS-799** added some additional IAM permissions to support reading CloudWatch and API Gateway, so **you will have to redeploy your IAM stack.**
 
+We have encountered transient lambda service errors in our integration testing. Please handle transient service errors following [these guidelines](https://docs.aws.amazon.com/step-functions/latest/dg/bp-lambda-serviceexception.html). The workflows in the `example/workflows` folder have been updated with retries configured for these errors.
+
 ## Added
 - **CUMULUS-799**
   - Adds new BackendApi endpoint `distributionMetrics` that returns a summary of successful s3 accesses as well as a summary of distribution errors -- including s3 access errors, 4XX and 5XX errors.
+- **CUMULUS-1273**
+  - Added lambda function EmsProductMetadataReport to generate EMS Product Metadata report
+
+### Changed
+
+- **CUMULUS-1232**
+  - Added retries to update `@cumulus/cmr-client` `updateToken()`
 
 - **CUMULUS-1245 CUMULUS-795**
   - Added additional `ems` configuration parameters for sending the ingest reports to EMS
   - Added functionality to send daily ingest reports to EMS
+
+- **CUMULUS-796**
+  - Added production information (collection ShortName and Version, granuleId) to EMS distribution report
+  - Added functionality to send daily distribution reports to EMS
 
 ## [v1.13.0] - 2019-5-20
 

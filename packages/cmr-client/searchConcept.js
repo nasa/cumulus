@@ -2,6 +2,7 @@
 
 const got = require('got');
 const getUrl = require('./getUrl');
+const { parseXMLString } = require('./Utils');
 
 /**
  *
@@ -12,7 +13,7 @@ const getUrl = require('./getUrl');
  * @param {Array} [params.previousResults=[]] - array of results returned in previous recursive
  * calls to be included in the results returned
  * @param {Object} [params.headers={}] - the CMR headers
- * @param {string} [params.format] - format of the response
+ * @param {string} [params.format] - format of the response, supports umm_json, json, echo10
  * @param {boolean} [params.recursive] - indicate whether search recursively to get all the result
  * @param {number} params.cmrLimit - the CMR limit
  * @param {number} params.cmrPageSize - the CMR page size
@@ -39,8 +40,12 @@ async function searchConcept({
 
   // if requested, recursively retrieve all the search results for collections or granules
   const query = Object.assign({}, defaultParams, searchParams, { page_num: pageNum });
-  const response = await got.get(url, { json: true, query, headers });
-  const responseItems = (format === 'umm_json') ? response.body.items : response.body.feed.entry;
+  const response = await got.get(url, { json: format.endsWith('json'), query, headers });
+
+  const responseItems = (format === 'echo10')
+    ? (await parseXMLString(response.body)).results.result || []
+    : (response.body.items || response.body.feed.entry);
+
   const fetchedResults = previousResults.concat(responseItems || []);
 
   const numRecordsCollected = fetchedResults.length;

@@ -1,0 +1,212 @@
+{
+    "Collection": {
+        "ShortName": "A2_SI25_NRT",
+        "VersionId": "0",
+        "InsertTime": "2015-10-01T00:00:00Z",
+        "LastUpdate": "2017-06-05T13:14:00Z",
+        "LongName": "NRT AMSR2 DAILY L3 25 KM TB AND SEA ICE CONCENTRATION POLAR GRIDS",
+        "DataSetId": "NRT AMSR2 DAILY L3 25 KM TB AND SEA ICE CONCENTRATION POLAR GRIDS V0",
+        "Description": "The Advanced Microwave Scanning Radiometer 2 (AMSR2) instrument on the Global Change Observation Mission - Water 1 (GCOM-W1) provides global passive microwave measurements of terrestrial, oceanic, and atmospheric parameters for the investigation of global water and energy cycles.  Near real-time (NRT) products are generated within 3 hours of the last observations in the file, by the Land Atmosphere Near real-time Capability for EOS (LANCE) at the AMSR Science Investigator-led Processing System (AMSR SIPS), which is collocated with the Global Hydrology Resource Center (GHRC) DAAC.  The NRT AMSR2 Daily Level-3 gridded 25 km sea ice product includes brightness temperatures at 6.9 through 89.0 GHz and sea ice concentrations.  Data are mapped to a polar stereographic grid at 25 km spatial resolution.  Sea ice concentration and brightness temperatures include daily ascending averages, daily descending averages, and daily averages.  Data are stored in HDF-EOS5 format and are available via HTTP from the EOSDIS LANCE system at https://lance.nsstc.nasa.gov/amsr2-science/data/level3/seaice25.  If data latency is not a primary concern, please consider using science quality products.  Science products are created using the best available ancillary, calibration and ephemeris information.  Science quality products are an internally consistent, well-calibrated record of the Earth's geophysical properties to support science.  The AMSR SIPS plans to start producing initial AMSR2 standard science quality data products in 2016 and they will be available from the NSIDC DAAC.  Notice: All LANCE AMSR2 data should be used with the understanding that these are preliminary products.  Cross calibration with AMSR-E products has not been performed.  As updates are made to the L1R data set, those changes will be reflected in this higher level product.",
+        "CollectionDataType": "NEAR_REAL_TIME",
+        "Orderable": "false",
+        "Visible": "true",
+        "ProcessingLevelId": "3",
+        "ArchiveCenter": "NASA/MSFC/GHRC",
+        "CitationForExternalPublication": "Markus, Thorsten, Josefino C Comiso, Donald J Cavalieri and Alvaro Ivanoff.2015. NRT AMSR2 DAILY L3 25 KM TB AND SEA ICE CONCENTRATION POLAR GRIDS [indicate subset used]. Dataset available online from the NASA Global Hydrology Resource Center DAAC, Huntsville, Alabama, U.S.A. DOI: http://dx.doi.org/10.5067/AMSR2/A2_SI25_NRT",
+        "CollectionState": "IN WORK",
+        "Price": "0.0",
+        "SpatialKeywords": {
+            "Keyword": "POLAR REGIONS"
+        },
+        "TemporalKeywords": {
+            "Keyword": "DAILY"
+        },
+        "Temporal": {
+            "RangeDateTime": {
+                "BeginningDateTime": "2017-05-22T23:05:14Z"
+            }
+        },
+        "Contacts": {
+            "Contact": {
+                "Role": "DISTRIBUTOR",
+                "OrganizationName": "Global Hydrology Resource Center, Marshall Space Flight Center, NASA",
+                "OrganizationAddresses": {
+                    "Address": {
+                        "StreetAddress": "320 Sparkman Drive",
+                        "City": "Huntsville",
+                        "StateProvince": "Alabama",
+                        "PostalCode": "35805",
+                        "Country": "USA"
+                    }
+                },
+                "OrganizationPhones": {
+                    "Phone": [
+                        {
+                            "Number": "+1 256-961-7932",
+                            "Type": "Telephone"
+                        },
+                        {
+                            "Number": "+1 256-824-5149",
+                            "Type": "Fax"
+                        }
+                    ]
+                },
+                "OrganizationEmails": {
+                    "Email": "support-ghrc@earthdata.nasa.gov"
+                }
+            }
+        },
+        "ScienceKeywords": {
+            "ScienceKeyword": [
+                {
+                    "CategoryKeyword": "EARTH SCIENCE",
+                    "TopicKeyword": "SPECTRAL/ENGINEERING",
+                    "TermKeyword": "MICROWAVE",
+                    "VariableLevel1Keyword": {
+                        "Value": "BRIGHTNESS TEMPERATURE"
+                    }
+                },
+                {
+                    "CategoryKeyword": "EARTH SCIENCE",
+                    "TopicKeyword": "CRYOSPHERE",
+                    "TermKeyword": "SEA ICE",
+                    "VariableLevel1Keyword": {
+                        "Value": "SEA ICE CONCENTRATION"
+                    }
+                },
+                {
+                    "CategoryKeyword": "EARTH SCIENCE",
+                    "TopicKeyword": "OCEANS",
+                    "TermKeyword": "SEA ICE",
+                    "VariableLevel1Keyword": {
+                        "Value": "SEA ICE CONCENTRATION"
+                    }
+                }
+            ]
+        },
+        "Platforms": {
+            "Platform": {
+                "ShortName": "GCOM-W1",
+                "LongName": "Global Change Observation Mission 1st-Water",
+                "Type": "Earth Observation Satellites",
+                "Instruments": {
+                    "Instrument": {
+                        "ShortName": "AMSR2",
+                        "Sensors": {
+                            "Sensor": {
+                                "ShortName": "AMSR2"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "AdditionalAttributes": {
+            "AdditionalAttribute": [
+                {
+                    "Name": "identifier_product_doi",
+                    "DataType": "STRING",
+                    "Description": "product DOI",
+                    "Value": "10.5067/AMSR2/A2_SI25_NRT"
+                },
+                {
+                    "Name": "identifier_product_doi_authority",
+                    "DataType": "STRING",
+                    "Description": "DOI authority",
+                    "Value": "http://dx.doi.org/"
+                },
+                {
+                    "Name": "AscendingDescendingFlg",
+                    "DataType": "STRING",
+                    "Description": "flag to indicate ascending or descending",
+                    "Value": "Ascending and Descending"
+                }
+            ]
+        },
+        "Campaigns": {
+            "Campaign": {
+                "ShortName": "LANCE"
+            }
+        },
+        "OnlineAccessURLs": {
+            "OnlineAccessURL": {
+                "URL": "https://lance.nsstc.nasa.gov/amsr2-science/data/level3/seaice25/R00/hdfeos5/",
+                "URLDescription": "Files may be downloaded directly to your workstation from this link"
+            }
+        },
+        "OnlineResources": {
+            "OnlineResource": [
+                {
+                    "URL": "https://ghrc.nsstc.nasa.gov/pub/browse_sample/lance/AMSR_2_L3_SeaIce25km_R00_20160623_S_CON.png",
+                    "Description": "Sample browse image",
+                    "Type": "BROWSE SAMPLE"
+                },
+                {
+                    "URL": "https://ghrc.nsstc.nasa.gov/pub/browse_sample/lance/AMSR_2_L3_SeaIce25km_R00_20160623_S_CON.png",
+                    "Description": "Sample browse image",
+                    "Type": "BROWSE"
+                },
+                {
+                    "URL": "https://ghrc.nsstc.nasa.gov/pub/browse_sample/lance/AMSR_2_L3_SeaIce25km_P00_20160705_N_CON.png",
+                    "Description": "Sample browse image",
+                    "Type": "BROWSE SAMPLE"
+                },
+                {
+                    "URL": "https://ghrc.nsstc.nasa.gov/pub/browse_sample/lance/AMSR_2_L3_SeaIce25km_R00_20160623_N_CON.png",
+                    "Description": "Sample browse image",
+                    "Type": "BROWSE SAMPLE"
+                },
+                {
+                    "URL": "https://lance.itsc.uah.edu/amsr2-science/data/level3/seaice25/R00/hdfeos5/",
+                    "Description": "Files may be downloaded directly to your workstation from this link",
+                    "Type": "ALTERNATE ACCESS"
+                },
+                {
+                    "URL": "https://lance.nsstc.nasa.gov/amsr2-science/browse_png/level3/seaice25/R00/",
+                    "Description": "Browse images illustrate the nature and coverage of the data",
+                    "Type": "VIEW IMAGES"
+                },
+                {
+                    "URL": "http://lance.nsstc.nasa.gov/amsr2-science/doc/LANCE_A2_SeaIce25_NRT_dataset.pdf",
+                    "Description": "The guide document contains detailed information about the dataset",
+                    "Type": "USER'S GUIDE"
+                },
+                {
+                    "URL": "https://worldview.earthdata.nasa.gov/",
+                    "Description": "Interactively browse imagery in EOSDIS Worldview",
+                    "Type": "WORLDVIEW"
+                },
+                {
+                    "URL": "https://earthdata.nasa.gov/earth-observation-data/near-real-time",
+                    "Description": "The home page for the project or program which sponsored the dataset",
+                    "Type": "VIEW PROJECT HOME PAGE"
+                },
+                {
+                    "URL": "https://ghrc.nsstc.nasa.gov/home/about-ghrc/citing-ghrc-daac-data",
+                    "Description": "Instructions for citing GHRC data",
+                    "Type": "Citing GHRC data"
+                }
+            ]
+        },
+        "AssociatedDIFs": {
+            "DIF": {
+                "EntryId": "A2_SI25_NRT"
+            }
+        },
+        "Spatial": {
+            "SpatialCoverageType": "Horizontal",
+            "HorizontalSpatialDomain": {
+                "Geometry": {
+                    "CoordinateSystem": "CARTESIAN",
+                    "BoundingRectangle": {
+                        "WestBoundingCoordinate": "-180",
+                        "NorthBoundingCoordinate": "89",
+                        "EastBoundingCoordinate": "180",
+                        "SouthBoundingCoordinate": "-89"
+                    }
+                }
+            },
+            "GranuleSpatialRepresentation": "CARTESIAN"
+        }
+    }
+}

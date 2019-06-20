@@ -24,7 +24,6 @@
   },
   "rules": {
     "indent": [ "error", 2 ],
-
     "require-jsdoc": "off",
     "valid-jsdoc": [ "warn", {
       "prefer": {

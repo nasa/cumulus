@@ -10,6 +10,7 @@ const {
   recursivelyDeleteS3Bucket
 } = require('@cumulus/common/aws');
 const {
+  randomId,
   randomString,
   validateConfig,
   validateInput,
@@ -24,11 +25,20 @@ test.beforeEach(async (t) => {
 
   t.context.stateMachineArn = randomString();
 
+  const queueName = randomId('queue');
+  t.context.queueName = queueName;
+  const queueUrl = await createQueue();
+
+  t.context.queues = {
+    [queueName]: queueUrl
+  };
   t.context.messageTemplate = {
     cumulus_meta: {
       state_machine: t.context.stateMachineArn
     },
-    meta: {}
+    meta: {
+      queues: t.context.queues
+    }
   };
   const messageTemplateKey = `${randomString()}/template.json`;
   await s3().putObject({
@@ -41,7 +51,7 @@ test.beforeEach(async (t) => {
     config: {
       collection: { name: 'collection-name' },
       provider: { name: 'provider-name' },
-      queueUrl: await createQueue(),
+      queueUrl,
       parsePdrMessageTemplateUri: `s3://${t.context.templateBucket}/${messageTemplateKey}`
     },
     input: {
@@ -114,7 +124,13 @@ test.serial('PDRs are added to the queue', async (t) => {
 });
 
 test.serial('The correct message is enqueued', async (t) => {
-  const event = t.context.event;
+  const {
+    event,
+    queueName,
+    queues,
+    stateMachineArn
+  } = t.context;
+
   // if event.cumulus_config has 'state_machine' and 'execution_name', the enqueued message
   // will have 'parentExecutionArn'
   event.cumulus_config = { state_machine: randomString(), execution_name: randomString() };
@@ -141,7 +157,7 @@ test.serial('The correct message is enqueued', async (t) => {
 
   // Get messages from the queue
   const receiveMessageResponse = await sqs().receiveMessage({
-    QueueUrl: t.context.event.config.queueUrl,
+    QueueUrl: event.config.queueUrl,
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1
   }).promise();
@@ -158,10 +174,12 @@ test.serial('The correct message is enqueued', async (t) => {
   event.input.pdrs.forEach((pdr) => {
     expectedMessages[pdr.name] = {
       cumulus_meta: {
-        state_machine: t.context.stateMachineArn,
-        parentExecutionArn: arn
+        state_machine: stateMachineArn,
+        parentExecutionArn: arn,
+        queueName
       },
       meta: {
+        queues,
         collection: { name: 'collection-name' },
         provider: { name: 'provider-name' }
       },
@@ -182,5 +200,3 @@ test.serial('The correct message is enqueued', async (t) => {
     t.deepEqual(message, expectedMessages[pdrName]);
   });
 });
-
-test.todo('An appropriate error is thrown if the message template could not be fetched');
