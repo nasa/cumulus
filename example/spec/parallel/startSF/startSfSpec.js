@@ -130,7 +130,6 @@ describe('the sf-starter lambda function', () => {
 
     beforeAll(async () => {
       queueName = `${testName}Queue`;
-      console.log(`queue name: ${queueName}`);
 
       const { QueueUrl } = await sqs().createQueue({
         QueueName: queueName
@@ -189,9 +188,7 @@ describe('the sf-starter lambda function', () => {
     });
 
     it('to trigger workflows', async () => {
-      console.log(`Pass SF arn: ${passSfArn}`);
       const { executions } = await StepFunctions.listExecutions({ stateMachineArn: passSfArn });
-      console.log(`Pass SF executions length: ${executions.length}`);
       expect(executions.length).toBe(messagesConsumed);
     });
   });
@@ -203,9 +200,7 @@ describe('the sf-starter lambda function', () => {
     let waitPassSfArn;
 
     const queueMaxExecutions = 5;
-    const numRuleMessages = 10;
-    const numGranuleMessages = 10;
-    const totalNumMessages = numRuleMessages + numGranuleMessages;
+    const totalNumMessages = 20;
 
     beforeAll(async () => {
       maxQueueName = `${testName}MaxQueue`;
