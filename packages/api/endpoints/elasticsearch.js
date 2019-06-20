@@ -4,6 +4,7 @@ const router = require('express-promise-router')();
 
 const log = require('@cumulus/common/log');
 
+const { AsyncOperation } = require('../models');
 const { IndexExistsError } = require('../lib/errors');
 const { defaultIndexAlias, Search } = require('../es/search');
 const { createIndex } = require('../es/indexer');
@@ -189,6 +190,26 @@ async function createEsIndex(req, res) {
 }
 
 async function indexFromDatabase(req, res) {
+  const asyncOperationModel = new AsyncOperation({
+    stackName: process.env.stackName,
+    systemBucket: process.env.system_bucket,
+    tableName: process.env.AsyncOperationsTable
+  });
+
+  let asyncOperation;
+  try {
+    asyncOperation = await asyncOperationModel.start({
+      asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+      cluster: process.env.EcsCluster,
+      lambdaName: process.env.IndexFromDatabaseLambda,
+      payload: { granuleIds: req.body.granuleIds }
+    });
+  } catch (err) {
+    if (err.name !== 'EcsStartTaskError') throw err;
+
+    return res.boom.serverUnavailable(`Failed to run ECS task: ${err.message}`);
+  }
+
   return res.boom.badRequest('Functionality not yet implemented');
 }
 
@@ -198,6 +219,6 @@ router.post('/reindex', reindex);
 router.get('/reindex-status', reindexStatus);
 router.post('/change-index', changeIndex);
 router.post('/create-index', createEsIndex);
-router.post('/indexFromDatabase', indexFromDatabase);
+router.post('/index-from-database', indexFromDatabase);
 
 module.exports = router;
