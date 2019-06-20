@@ -76,6 +76,10 @@ simultaneous updates. In the following examples, that table will be called
 
 Create the locks table:
 
+⚠️ **Note:** The `--billing-mode` option was recently added to the AWS CLI. You
+may need to upgrade your version of the AWS CLI if you get an error about
+provisioned throughput when creating the table.
+
 ```shell
 $ aws dynamodb create-table \
     --table-name my-tf-locks \
@@ -88,6 +92,7 @@ The Thin Egress App uses a `bucket_map.yaml` file to determine what buckets to
 serve. Documentation of the file format is available [here](https://github.com/asfadmin/thin-egress-app#bucket-map).
 For Cumulus integration tests, a simple config could look like this:
 
+**bucket_map.yaml**
 ```yaml
 MAP:
   my-protected: my-protected
@@ -129,9 +134,11 @@ If you have not done so already, change to the `example` directory.
 Create the `terraform.tf` file, substituting the appropriate values for `bucket`
 and `dynamodb_table`:
 
+**terraform.tf**
 ```hcl
 terraform {
   backend "s3" {
+    region         = "us-east-1"
     bucket         = "my-tf-state"
     key            = "terraform.tfstate"
     dynamodb_table = "my-tf-locks"
@@ -142,6 +149,7 @@ terraform {
 Create the `terraform.tfvars` file, using values appropriate for your
 deployment:
 
+**terraform.tfvars**
 ```hcl
 permissions_boundary           = "NGAPShNonProdRoleBoundary"
 tea_config_bucket              = "my-internal"
@@ -169,12 +177,15 @@ tea_urs_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/lo
 
 When the deployment finishes, it should display two outputs: `tea_api_endpoint`
 and `tea_urs_redirect_url`. Take the hostname from one of those values and store
-it as the `domain_name` in `terraform.tfvars`.  Make sure to:
+it as the `domain_name` in `terraform.tfvars`.
+
+Make sure to:
 
 1. Not include `https://`
 2. Add the tunnel port to the hostname
 3. Not include a trailing slash
 
+**terraform.tfvars**
 ```hcl
 permissions_boundary           = "NGAPShNonProdRoleBoundary"
 tea_config_bucket              = "my-internal"
