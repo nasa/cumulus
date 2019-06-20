@@ -6,28 +6,50 @@ const {
   DynamoDbSearchQueue
 } = require('@cumulus/common/aws');
 
-async function indexModel(tableName) {
+const { Search } = require('../es/search');
+const indexer = require('../es/indexer');
+
+async function indexModel(esClient, tableName, esIndex, indexFn) {
   const scanQueue = new DynamoDbSearchQueue({
-    TableName: tableName,
-    Limit: 1
+    TableName: tableName
   });
 
-  await scanQueue.fetchItems();
+  let itemsComplete = false;
 
-  console.log(scanQueue.items);
+  /* eslint-disable no-await-in-loop */
+  while (itemsComplete === false) {
+    await scanQueue.fetchItems();
+
+    itemsComplete = scanQueue.items[scanQueue.items.length - 1] === null;
+
+    if (itemsComplete) {
+      // pop the null item off
+      scanQueue.items.pop();
+    }
+
+    await Promise.all(scanQueue.items.map((item) => indexFn(esClient, item, esIndex)));
+  }
+  /* eslint-enable no-await-in-loop */
 }
 
-async function testIndex() {
-  await indexModel(process.env.ExecutionsTable);
+async function indexFromDatabase(esIndex) {
+  const esClient = await Search.es();
+
+  await Promise.all([
+    indexModel(esClient, process.env.ExecutionsTable, esIndex, indexer.indexExecution),
+    indexModel(esClient, process.env.CollectionsTable, esIndex, indexer.indexCollection)
+  ]);
 }
 
-function handler(event) {
-  log.info('Start reindex from database');
+async function handler(event) {
+  log.info('Starting index from database');
+
+  await indexFromDatabase(event.index);
 
   return 'done';
 }
 
 module.exports = {
   handler,
-  testIndex
+  indexFromDatabase
 };
