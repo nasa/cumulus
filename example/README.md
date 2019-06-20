@@ -27,6 +27,161 @@ DEPLOYMENT=cumulus-from-source jasmine spec/ingestGranule/IngestGranuleSuccessSp
 
 NOTE: For this to work you need your default credentials to be credentials for the `cumulus-sndbx` AWS account.
 
+### Deploying the Thin Egress App
+
+The [Thin Egress App](https://github.com/asfadmin/thin-egress-app) is deployed using [Terraform](https://terraform.io).
+
+If you are using a Mac and [Homebrew](https://brew.sh), installing Terraform is as simple as:
+
+```shell
+$ brew update
+$ brew install terraform
+```
+
+For other cases, [installation instructions](https://learn.hashicorp.com/terraform/getting-started/install.html) are available.
+
+The state of the Terraform deployment is stored in S3.  In the following examples, it will be assumed that state is being stored in a bucket called `my-tf-state`. You can also use an existing bucket, if desired.
+
+Create the state bucket:
+
+```shell
+$ aws s3api create-bucket --bucket my-tf-state
+```
+
+In order to help prevent loss of state information, it is recommended that versioning be enabled on the state bucket:
+
+```shell
+$ aws s3api put-bucket-versioning \
+    --bucket my-tf-state \
+    --versioning-configuration Status=Enabled
+```
+
+Terraform uses a lock stored in DynamoDB in order to prevent multiple simultaneous updates.  In the following examples, that table will be called `my-tf-locks`.
+
+Create the locks table:
+
+```shell
+$ aws dynamodb create-table \
+    --table-name my-tf-locks \
+    --attribute-definitions AttributeName=LockID,AttributeType=S \
+    --key-schema AttributeName=LockID,KeyType=HASH \
+    --billing-mode PAY_PER_REQUEST
+```
+
+The Thin Egress App uses a `bucket_map.yaml` file to determine what buckets to serve. Documentation of the file format is available [here](https://github.com/asfadmin/thin-egress-app#bucket-map). For Cumulus integration tests, a simple config could look like this:
+
+```yaml
+MAP:
+  my-protected: my-protected
+
+PUBLIC_BUCKETS:
+  - my-public
+```
+
+Upload `bucket_map.yaml` to your stack's internal bucket:
+
+```shell
+$ aws s3 cp s3://my-internal/bucket_map.yaml
+```
+
+The Thin Egress App stores its Earthdata Login credentials in AWS Secrets Manager. These are the `EARTHDATA_CLIENT_ID` and `EARTHDATA_CLIENT_PASSWORD` values from your `example/app/.env` file. The client id and password need to be `base64` encoded. You can get the value by running:
+
+```shell
+$ echo -n 'user:pass' | base64
+```
+
+⚠️ **Note:** All `aws` and `terraform` commands for the rest of this deployment _must_ be run using `NGAPShNonProd` credentials.
+
+Store the secrets to Secrets Manager, substituting the appropriate values for `UrsId` and `UrsAuth`.
+
+```shell
+aws secretsmanager create-secret \
+    --name my-tea-urs-creds \
+    --secret-string '{"UrsId": "client-id","UrsAuth": "base64-encoded-value"}' \
+    --description 'URS Credentials for My TEA Distribution App'
+```
+
+If you have not done so already, change to the `example` directory.
+
+Create the `terraform.tf` file, substituting the appropriate values for `bucket` and `dynamodb_table`:
+
+```hcl
+terraform {
+  backend "s3" {
+    bucket         = "my-tf-state"
+    key            = "terraform.tfstate"
+    dynamodb_table = "my-tf-locks"
+  }
+}
+```
+
+Create the `terraform.tfvars` file, using values appropriate for your deployment:
+
+```hcl
+permissions_boundary           = "NGAPShNonProdRoleBoundary"
+tea_config_bucket              = "my-internal"
+tea_stack_name                 = "my-thin-egress-app"
+tea_subnet_ids                 = ["subnet-1234567890"]
+tea_urs_auth_creds_secret_name = "my-tea-urs-creds"
+vpc_id                         = "vpc-1234567890"
+```
+
+Initialize and deploy the Thin Egress App:
+
+```shell
+$ terraform init
+$ terraform apply
+
+...
+
+Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+tea_api_endpoint = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
+tea_urs_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/login
+```
+
+When the deployment finishes, it should display two outputs: `tea_api_endpoint`
+and `tea_urs_redirect_url`. Take the hostname from one of those values and store
+it as the `domain_name` in `terraform.tfvars`.  Make sure to:
+
+1. Not include `https://`
+2. Add the tunnel port to the hostname
+3. Not include a trailing slash
+
+```hcl
+permissions_boundary           = "NGAPShNonProdRoleBoundary"
+tea_config_bucket              = "my-internal"
+tea_domain_name                = "abc123.execute-api.us-east-1.amazonaws.com:7000/DEV"
+tea_stack_name                 = "my-thin-egress-app"
+tea_subnet_ids                 = ["subnet-1234567890"]
+tea_urs_auth_creds_secret_name = "my-tea-urs-creds"
+vpc_id                         = "vpc-1234567890"
+```
+
+Re-deploy the Thin Egress App:
+
+```shell
+$ terraform init
+$ terraform apply
+
+...
+
+Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+tea_api_endpoint = https://abc123.execute-api.us-east-1.amazonaws.com:7000/DEV/
+tea_urs_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com:7000/DEV/login
+```
+
+Copy the value of `tea_urs_redirect_uri` and add it to the list of Redirect URIs configured for your app in URS.
+
+As documented [here](https://wiki.earthdata.nasa.gov/display/CUMULUS/Using+Cumulus+with+Private+APIs), update your `/etc/hosts` and `~/.ssh/config` files with the new distribution hostname.
+
+Login to the VPN, start up an ssh tunnel through the bastion host, and then browse to https://abc123.execute-api.us-east-1.amazonaws.com:7000/DEV/my-protected/path/to/some/object
+
 ### Additional deployment steps
 
 An S3 Access lambda is needed in the us-west-2 region to run the integration tests. To initially create the lambda, run:
