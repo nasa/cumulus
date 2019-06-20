@@ -44,6 +44,13 @@ For other cases,
 [installation instructions](https://learn.hashicorp.com/terraform/getting-started/install.html)
 are available.
 
+Verify that the version of Terraform installed is at least v0.12.0.
+
+```shell
+$ terraform --version
+Terraform v0.12.2
+```
+
 The state of the Terraform deployment is stored in S3. In the following
 examples, it will be assumed that state is being stored in a bucket called
 `my-tf-state`. You can also use an existing bucket, if desired.
