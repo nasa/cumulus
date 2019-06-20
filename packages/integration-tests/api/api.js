@@ -29,6 +29,7 @@ function invokeApi(prefix, payload) {
       return outputPayload;
     },
     {
+      retries: 3,
       onFailedAttempt: (error) => console.log(`API invoke error: ${error.message}. Retrying.`)
     }
   );
