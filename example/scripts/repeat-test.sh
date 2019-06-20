@@ -11,17 +11,19 @@ set +e
 
 specName=$(echo $1 | rev | cut -d'/' -f 1 | cut -d'.' -f 2 | rev)
 
-echo Running test $specName on repeat and logging to directory $2
+outputDir="test-output/$2"
 
-rm -r -f $2
-mkdir -p $2
+echo Running test $specName on repeat and logging to directory $outputDir
+
+rm -r -f $outputDir
+mkdir -p $outputDir
 
 count=0
 failureCount=0
 
 while [ true ]
 do
-  outputPath="$2/$specName-$(date "+%Y%m%d-%H:%M:%S")"
+  outputPath="$outputDir/$specName-$(date "+%Y%m%d-%H:%M:%S")"
 
   npx jasmine "$1" > "$outputPath" 2>&1
   result=$?
