@@ -3,9 +3,8 @@
 'use strict';
 
 /**
- * one time script to remove deployed stage in order to upgrade beyond cumulus
- *  v1.13.
- *  to use just run `node index --stage dev --prefix <prefix>`
+ * Two time script to remove deployed stage in order to upgrade beyond cumulus
+ * v1.13.
  */
 const program = require('commander');
 const AWS = require('aws-sdk');

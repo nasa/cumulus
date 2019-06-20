@@ -10,9 +10,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### PLEASE NOTE
 - **CUMULUS-799** added additional IAM permissions to support reading CloudWatch and API Gateway, so **you will have to redeploy your IAM stack.**
 - **CUMULUS-800** Several items:
+    - To configure APIGateway logging, Cumulus now creates and manages a Stage resource during deployment. Before upgrading Cumulus, it is necessary to delete the API Gateway stages on both the Backend API and the Distribution API.  An operator can do this easily through the [API Gateway Console](https://console.aws.amazon.com/apigateway/) selecting each of the deployed APIs [`stackname-backend` and `stackname-distribution`] and then `stages`, finally selecting the deployed stage and then using the `Delete Stage` button.  The same action can be accomplished from the command line with a script that has been added to the deployment package, `delete-stage`.  From your Cumulus install directly, run `node_modules/.bin/delete-stage --prefix <prefix> --stage <apiStage> --doit` where `<prefix>` and `<apiStage>` are replaced with the values from your `config.yml`.
+
+
     - To enable CloudWatch Logs, you must grant API Gateway permission to read and write logs to CloudWatch for your account. The AmazonAPIGatewayPushToCloudWatchLogs managed policy (with an ARN of arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs) has all the required permissions. To grant these permissions to your account, create an IAM role with apigateway.amazonaws.com as its trusted entity, attach the preceding policy to the IAM role, and set the IAM role ARN on the cloudWatchRoleArn property on your Account.  You can find a simple walkthrough in the [docs.](https://nasa.github.io/cumulus/docs/additional-deployment-options/additional-deployment-options-readme)
 
-	- To enable metrics from the Distribution API,
+
+- To enable metrics from the Distribution API,
 
 	- For NASA deployments in NGAP, you can enable logging. ...TODO [MHS, 2019-06-20]
 
