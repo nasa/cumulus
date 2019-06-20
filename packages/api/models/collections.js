@@ -126,8 +126,12 @@ class Collection extends Manager {
    */
   async getAllCollections() {
     return this.scan(
-      { names: { '#name': 'name', '#version': 'version' } },
-      '#name, #version'
+      {
+        names: {
+          '#name': 'name', '#version': 'version', '#createdAt': 'createdAt', '#updatedAt': 'updatedAt'
+        }
+      },
+      '#name, #version, #createdAt, #updatedAt'
     ).then((result) => result.Items);
   }
 
