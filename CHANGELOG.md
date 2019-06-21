@@ -21,6 +21,8 @@ We have encountered transient lambda service errors in our integration testing. 
   - Added lambda function EmsProductMetadataReport to generate EMS Product Metadata report
 - **CUMULUS-1241**
   - Added information about queues with maximum execution limits defined to default workflow templates (`meta.queueExecutionLimits`)
+- **CUMULUS-1311**
+  -
 
 ### Changed
 
@@ -41,11 +43,17 @@ We have encountered transient lambda service errors in our integration testing. 
     - Queue name is read from `cumulus_meta.queueName`
     - Maximum executions for the queue is read from `meta.queueExecutionLimits[queueName]`, where `queueName` is `cumulus_meta.queueName`
   - Changed `sfSemaphoreDown` lambda to only attempt decrementing semaphores when:
+    - the message is for a completed/failed/aborted/timed out workflow AND
     - `cumulus_meta.queueName` exists on the Cumulus message AND
     - An entry for the queue name (`cumulus_meta.queueName`) exists in the the object `meta.queueExecutionLimits` on the Cumulus message
 
 - **CUMULUS-1338**
   - Updated `sfSemaphoreDown` lambda to be triggered via AWS Step Function Cloudwatch events instead of subscription to `sfTracker` SNS topic
+
+- **CUMULUS-1311**
+  - Updated `@cumulus/queue-granules` to set `cumulus_meta.queueName` for queued execution messages
+  - Updated `@cumulus/queue-pdrs` to set `cumulus_meta.queueName` for queued execution messages
+  - Updated `sqs2sfThrottle` lambda to immediately decrement queue semaphore value if dispatching Step Function execution throws an error
 
 ## [v1.13.0] - 2019-5-20
 
