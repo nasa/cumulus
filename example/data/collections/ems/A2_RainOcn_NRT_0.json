@@ -1,17 +1,16 @@
 {
-  "name": "A2_SI25_NRT",
+  "name": "A2_RainOcn_NRT",
   "version": "0",
-  "dataType": "A2_SI25_NRT",
+  "dataType": "A2_RainOcn_NRT",
   "provider_path": "ignored-provider-path/test-data",
   "granuleId": "^.*$",
   "granuleIdExtraction": "^(.*)(\\.h5|\\.cmr)",
-  "reportToEms": true,
-  "sampleFileName": "A2_SI25_NRT_product_0001-of-4154.h5",
+  "sampleFileName": "A2_RainOcn_NRT_product_0001-of-4154.h5",
   "files": [
     {
       "bucket": "private",
       "regex": ".*.h5$",
-      "sampleFileName": "A2_SI25_NRT_product_0001-of-4154.h5"
+      "sampleFileName": "A2_RainOcn_NRT_product_0001-of-4154.h5"
     }
   ]
 }
