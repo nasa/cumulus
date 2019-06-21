@@ -18,14 +18,14 @@ async function queuePdrs(event) {
     get(event, 'cumulus_config.state_machine'), get(event, 'cumulus_config.execution_name')
   );
   const executionArns = await Promise.all(
-    pdrs.map((pdr) => enqueueParsePdrMessage(
+    pdrs.map((pdr) => enqueueParsePdrMessage({
       pdr,
-      event.config.queueUrl,
-      event.config.parsePdrMessageTemplateUri,
-      event.config.provider,
-      event.config.collection,
-      arn
-    ))
+      queueUrl: event.config.queueUrl,
+      parsePdrMessageTemplateUri: event.config.parsePdrMessageTemplateUri,
+      provider: event.config.provider,
+      collection: event.config.collection,
+      parentExecutionArn: arn
+    }))
   );
 
   return { running: executionArns, pdrs_queued: pdrs.length };

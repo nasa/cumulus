@@ -2,16 +2,12 @@
 
 const get = require('lodash.get');
 const {
-  aws,
-  log,
-  Semaphore
-} = require('@cumulus/common');
-const { isOneOf } = require('@cumulus/common/util');
-
-const {
   getQueueName,
   hasQueueAndExecutionLimit
-} = require('../lib/message');
+} = require('@cumulus/common/message');
+const { isOneOf } = require('@cumulus/common/util');
+
+const { decrementQueueSemaphore } = require('../lib/semaphore');
 
 /**
  * Determine if Cloudwatch event is a Step Function state update.
@@ -29,7 +25,7 @@ const isSfExecutionEvent = (event) => event.source === 'aws.states';
  */
 const isTerminalStatus = isOneOf([
   'ABORTED',
-  'COMPLETED',
+  'SUCCEEDED',
   'FAILED',
   'TIMED_OUT'
 ]);
@@ -54,30 +50,6 @@ const isDecrementEvent = (event) =>
   isSfExecutionEvent(event)
   && hasQueueAndExecutionLimit(getEventMessage(event))
   && isTerminalStatus(getEventStatus(event));
-
-/**
- * Decrement semaphore value for executions started from a queue
- *
- * @param {string} queueName - Queue name used as key for semaphore tracking
- *   running executions
- * @returns {Promise} A promise indicating function completion
- * @throws {Error} Error from semaphore.down() operation
- */
-async function decrementQueueSemaphore(queueName) {
-  const semaphore = new Semaphore(
-    aws.dynamodbDocClient(),
-    process.env.SemaphoresTable
-  );
-
-  // Error should only be thrown if we are attempting to decrement the
-  // count below 0. If so, catch the error so it can be logged.
-  try {
-    await semaphore.down(queueName);
-  } catch (err) {
-    log.error(`Failure: attempted to decrement semaphore for queue ${queueName} below 0`);
-    throw err;
-  }
-}
 
 /**
  * Handle Cloudwatch event and decrement semaphore, if necessary.
