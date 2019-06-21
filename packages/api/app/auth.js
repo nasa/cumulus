@@ -5,6 +5,7 @@ const {
   JsonWebTokenError,
   TokenExpiredError
 } = require('jsonwebtoken');
+const log = require('@cumulus/common/log');
 const { User, AccessToken } = require('../models');
 const { verifyJwtToken } = require('../lib/token');
 
@@ -49,6 +50,8 @@ async function ensureAuthorized(req, res, next) {
     req.authorizedMetadata = { userName };
     return next();
   } catch (error) {
+    log.error(error);
+
     if (error instanceof TokenExpiredError) {
       return res.boom.unauthorized('Access token has expired');
     }
