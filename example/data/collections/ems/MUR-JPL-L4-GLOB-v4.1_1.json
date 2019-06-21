@@ -5,6 +5,7 @@
   "provider_path": "ignored-provider-path/test-data",
   "granuleId": "^.*$",
   "granuleIdExtraction": "^(.*)(\\.h5|\\.cmr)",
+  "reportToEms": true,
   "sampleFileName": "MUR-JPL-L4-GLOB-v4.1_product_0001-of-4154.h5",
   "files": [
     {
