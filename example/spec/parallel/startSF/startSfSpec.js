@@ -88,15 +88,13 @@ async function sendStartSfMessages({
     };
   }
 
-  const messages = new Array(numOfMessages)
+  const sendMessages = new Array(numOfMessages)
     .fill()
-    .map(() => message);
-  return Promise.all(
-    messages.map(
-      (msg) =>
-        sqs().sendMessage({ QueueUrl: queueUrl, MessageBody: JSON.stringify(msg) }).promise()
-    )
-  );
+    .map(
+      () =>
+        sqs().sendMessage({ QueueUrl: queueUrl, MessageBody: JSON.stringify(message) }).promise()
+    );
+  return Promise.all(sendMessages);
 }
 
 describe('the sf-starter lambda function', () => {
