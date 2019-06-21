@@ -19,6 +19,8 @@ We have encountered transient lambda service errors in our integration testing. 
   - Adds new BackendApi endpoint `distributionMetrics` that returns a summary of successful s3 accesses as well as a summary of distribution errors -- including s3 access errors, 4XX and 5XX errors.
 - **CUMULUS-1273**
   - Added lambda function EmsProductMetadataReport to generate EMS Product Metadata report
+- **CUMULUS-1241**
+  - Added information about queues with maximum execution limits defined to default workflow templates (`meta.queueExecutionLimits`)
 
 ### Changed
 
@@ -35,9 +37,9 @@ We have encountered transient lambda service errors in our integration testing. 
 
 - **CUMULUS-1241**
   - Removed the concept of "priority levels" and added ability to define a number of maximum concurrent executions per SQS queue
-  - Changed mapping of Cumulus message properties for the `sqs2sfThrottle` lambd:
-    - Queue name from `cumulus_meta.queueName`
-    - Maximum executions for the queue from `meta.queueExecutionLimits[queueName]`, where `queueName` is `cumulus_meta.queueName`
+  - Changed mapping of Cumulus message properties for the `sqs2sfThrottle` lambda:
+    - Queue name is read from `cumulus_meta.queueName`
+    - Maximum executions for the queue is read from `meta.queueExecutionLimits[queueName]`, where `queueName` is `cumulus_meta.queueName`
   - Changed `sfSemaphoreDown` lambda to only attempt decrementing semaphores when:
     - `cumulus_meta.queueName` exists on the Cumulus message AND
     - An entry for the queue name (`cumulus_meta.queueName`) exists in the the object `meta.queueExecutionLimits` on the Cumulus message
