@@ -1,37 +1,52 @@
 'use strict';
 
 const test = require('ava');
+
+const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const indexFromDatabase = require('../../lambdas/index-from-database');
 
 const models = require('../../models');
 const {
-  fakeCollectionFactoryV2,
+  fakeCollectionFactory,
+  fakeExecutionFactoryV2,
   fakeGranuleFactoryV2,
-  fakeExecutionFactoryV2
+  fakePdrFactoryV2,
+  fakeProviderFactory,
+  fakeRuleFactoryV2
 } = require('../../lib/testUtils');
 const bootstrap = require('../../lambdas/bootstrap');
-const indexer = require('../../es/indexer');
 const { Search } = require('../../es/search');
+const workflowList = require('../../app/data/workflow_list.json');
 
 // create all the variables needed across this test
 let esClient;
 let esIndex;
-const fakeExecutions = [];
+
+process.env.system_bucket = randomString();
+process.env.stackName = randomString();
 
 process.env.ExecutionsTable = randomString();
 process.env.CollectionsTable = randomString();
+process.env.GranulesTable = randomString();
+process.env.PdrsTable = randomString();
+process.env.ProvidersTable = randomString();
+process.env.RulesTable = randomString();
 
 const executionModel = new models.Execution();
 const collectionModel = new models.Collection();
+const granuleModel = new models.Granule();
+const pdrModel = new models.Pdr();
+const providersModel = new models.Provider();
+const rulesModel = new models.Rule();
 
-async function addFakeData(numItems, factory, model) {
+async function addFakeData(numItems, factory, model, factoryParams = {}) {
   const items = [];
 
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < numItems; i += 1) {
-    const item = factory();
+    const item = factory(factoryParams);
     items.push(item);
     await model.create(item);
   }
@@ -53,27 +68,69 @@ test.before(async () => {
   // add fake elasticsearch index
   await bootstrap.bootstrapElasticSearch('fakehost', esIndex);
 
+  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+
   await executionModel.createTable();
   await collectionModel.createTable();
+  await granuleModel.createTable();
+  await pdrModel.createTable();
+  await providersModel.createTable();
+  await rulesModel.createTable();
+
+  // upload workflow lists
+  const workflowsListKey = `${process.env.stackName}/workflows/list.json`;
+  await aws.promiseS3Upload({
+    Bucket: process.env.system_bucket,
+    Key: workflowsListKey,
+    Body: JSON.stringify(workflowList)
+  });
+
+  const workflow = `${process.env.stackName}/workflows/${workflowList[0].name}.json`;
+  await aws.promiseS3Upload({
+    Bucket: process.env.system_bucket,
+    Key: workflow,
+    Body: JSON.stringify(workflowList[0])
+  });
 });
 
 test.after.always(async () => {
   await esClient.indices.delete({ index: esIndex });
 
   await executionModel.deleteTable();
+  await collectionModel.deleteTable();
+  await granuleModel.deleteTable();
+  await pdrModel.deleteTable();
+  await providersModel.deleteTable();
+  await rulesModel.deleteTable();
+
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
-test('index executions', async (t) => {
+test('No error is thrown if nothing is in the database', async (t) => {
+  t.notThrows(async () => indexFromDatabase.indexFromDatabase(esIndex));
+});
+
+test.only('index executions', async (t) => {
   const numItems = 10;
 
   const fakeData = await Promise.all([
-    addFakeData(numItems, fakeExecutionFactoryV2, executionModel)
+    addFakeData(numItems, fakeCollectionFactory, collectionModel),
+    addFakeData(numItems, fakeExecutionFactoryV2, executionModel),
+    addFakeData(numItems, fakeGranuleFactoryV2, granuleModel),
+    addFakeData(numItems, fakePdrFactoryV2, pdrModel),
+    addFakeData(numItems, fakeProviderFactory, providersModel),
+    addFakeData(numItems, fakeRuleFactoryV2, rulesModel, { workflow: workflowList[0].name })
   ]);
 
   await indexFromDatabase.indexFromDatabase(esIndex);
 
   const searchResults = await Promise.all([
-    searchEs('execution')
+    searchEs('collection'),
+    searchEs('execution'),
+    searchEs('granule'),
+    searchEs('pdr'),
+    searchEs('provider'),
+    searchEs('rule')
   ]);
 
   searchResults.map((res) => t.is(res.meta.count, numItems));
