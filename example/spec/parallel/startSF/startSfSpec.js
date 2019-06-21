@@ -90,20 +90,7 @@ async function sendStartSfMessages({
 
   const messages = new Array(numOfMessages)
     .fill()
-    .map(() => ({
-      cumulus_meta: {
-        queueName,
-        state_machine: workflowArn
-      },
-      meta: {
-        queues: {
-          [queueName]: queueUrl
-        },
-        queueExecutionLimits: {
-          [queueName]: queueMaxExecutions
-        }
-      }
-    }));
+    .map(() => message);
   return Promise.all(
     messages.map(
       (msg) =>
