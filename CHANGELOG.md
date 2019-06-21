@@ -44,6 +44,9 @@ We have encountered transient lambda service errors in our integration testing. 
     - `cumulus_meta.queueName` exists on the Cumulus message AND
     - An entry for the queue name (`cumulus_meta.queueName`) exists in the the object `meta.queueExecutionLimits` on the Cumulus message
 
+- **CUMULUS-1338**
+  - Updated `sfSemaphoreDown` lambda to be triggered via AWS Step Function Cloudwatch events instead of subscription to `sfTracker` SNS topic
+
 ## [v1.13.0] - 2019-5-20
 
 ### PLEASE NOTE
