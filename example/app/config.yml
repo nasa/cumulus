@@ -200,17 +200,6 @@ default:
               - Arn
           protocol: lambda
 
-  sqs:
-    startSFLowPriority:
-      visibilityTimeout: 60
-      retry: 30
-      maxExecutions: 5
-      consumer:
-        - lambda: sqs2sfThrottle
-          schedule: rate(1 minute)
-          messageLimit: '{{sqs_consumer_rate}}'
-          state: ENABLED
-
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
     # if not specified the value of the apigateway backend endpoint is used
@@ -286,6 +275,29 @@ cumulus-sit:
 # -------------------------------
 # CUMULUS individual deployments.
 # -------------------------------
+
+jk-sit:
+  stackName: jk-sit
+  stackNameNoDash: jkSit
+  buckets:
+    internal:
+      name: jk-sit-internal
+      type: internal
+    private:
+      name: jk-sit-private
+      type: private
+    protected:
+      name: cumulus-sit-protected
+      type: protected
+    public:
+      name: cumulus-sit-public
+      type: public
+    protected-2:
+      name: cumulus-sit-protected
+      type: protected
+    dashboard:
+      name: jk-sit-dashboard
+      type: shared
 
 aimee:
   prefix: aimee
@@ -461,6 +473,7 @@ jl:
     username: cumulus
     dataSource: UAT
     submitReport: true
+    retentionInDays: 20
 
 mhs2:
   prefix: mhs2
@@ -626,6 +639,11 @@ jk:
 jk2:
   prefix: jk2
   prefixNoDash: jk2
+
+jk3:
+  stackName: jk3
+  stackNameNoDash: jk3
+
 
 mboyd-test:
   prefix: mboyd-test

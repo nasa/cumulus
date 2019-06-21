@@ -5,6 +5,7 @@ const {
   DynamoDbSearchQueue,
   parseS3Uri
 } = require('@cumulus/common/aws');
+const Granule = require('./granules');
 const Manager = require('./base');
 const schemas = require('./schemas');
 
@@ -127,6 +128,23 @@ class FileClass extends Manager {
     };
 
     return new DynamoDbSearchQueue(params, 'scan');
+  }
+
+  /**
+   * return the granule associated with a given file
+   *
+   * @param {string} bucket - bucket name
+   * @param {string} key - bucket key
+   * @returns {Promise<Object>} the granule associated with the file,
+   * null if file or granule is not found
+   */
+  getGranuleForFile(bucket, key) {
+    return super.get({ bucket, key })
+      .then((file) => new Granule().get({ granuleId: file.granuleId }))
+      .catch((e) => {
+        if (e.message.startsWith('No record found')) return null;
+        throw e;
+      });
   }
 }
 
