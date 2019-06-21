@@ -1,0 +1,307 @@
+{
+    "Collection": {
+        "ShortName": "MOD11A1",
+        "VersionId": "006",
+        "InsertTime": "2013-07-17T10:10:38.733Z",
+        "LastUpdate": "2015-09-30T10:47:37.333Z",
+        "LongName": "MODIS/Terra Land Surface Temperature/Emissivity Daily L3 Global 1km SIN Grid",
+        "DataSetId": "MODIS/Terra Land Surface Temperature/Emissivity Daily L3 Global 1km SIN Grid V006",
+        "Description": "The MOD11A1 version 6 product provides daily, per-pixel land surface temperature (LST) in a 1200 x 1200 kilometer grid.  The pixel temperature value is derived from the MOD11_L2 swath product.  Above 30 degrees latitude, some pixels may have multiple observations where the criteria for clear-sky are met. When this occurs, the pixel value is a result of the average of all qualifying observations.  Provided along with both the day- and night-time surface temperature bands and their quality indicator layers, are MODIS bands 31 and 32 and six observation layers.  Validation at stage 2 has been achieved for all MODIS LST/Emissivity products.",
+        "Orderable": "false",
+        "Visible": "true",
+        "RevisionDate": "2015-08-26T00:00:00Z",
+        "SuggestedUsage": "Science Research",
+        "ProcessingCenter": "MODAPS",
+        "ProcessingLevelId": "3",
+        "ProcessingLevelDescription": "Sensor Measurements",
+        "ArchiveCenter": "DEVSEED",
+        "VersionDescription": "Collection Version 6 Processing and Reprocessing",
+        "CitationForExternalPublication": "This data set was provided by the NASA EOS Project.",
+        "CollectionState": "In Work",
+        "MaintenanceAndUpdateFrequency": "As Needed",
+        "RestrictionComment": "None",
+        "Temporal": {
+            "TimeType": "UTC",
+            "DateType": "Gregorian",
+            "TemporalRangeType": "Continuous Range",
+            "PrecisionOfSeconds": "4",
+            "EndsAtPresentFlag": "true",
+            "RangeDateTime": {
+                "BeginningDateTime": "1999-12-18T00:00:00Z"
+            }
+        },
+        "Contacts": {
+            "Contact": [
+                {
+                    "Role": "Archive",
+                    "HoursOfService": "M-F, 8 a.m. to 4 p.m. Central Time",
+                    "Instructions": "None",
+                    "OrganizationName": "LP DAAC User Services",
+                    "OrganizationAddresses": {
+                        "Address": {
+                            "StreetAddress": "U.S. Geological Survey, Earth Resources Observation and Science (EROS) Center",
+                            "City": "Sioux Falls",
+                            "StateProvince": "South Dakota",
+                            "PostalCode": "57198",
+                            "Country": "USA"
+                        }
+                    },
+                    "OrganizationPhones": {
+                        "Phone": [
+                            {
+                                "Number": "605-594-6116",
+                                "Type": "phone"
+                            },
+                            {
+                                "Number": "605-594-6963",
+                                "Type": "fax"
+                            }
+                        ]
+                    },
+                    "OrganizationEmails": {
+                        "Email": "lpdaac@usgs.gov"
+                    }
+                },
+                {
+                    "Role": "Producer",
+                    "Instructions": "Contact for data content concerns",
+                    "OrganizationName": "MODIS Science Data Support Team",
+                    "OrganizationAddresses": {
+                        "Address": {
+                            "StreetAddress": "NASA/GSFC Code 922",
+                            "City": "GREENBELT",
+                            "StateProvince": "MD",
+                            "PostalCode": "20771",
+                            "Country": "USA"
+                        }
+                    },
+                    "OrganizationPhones": {
+                        "Phone": {
+                            "Number": "301-614-5515",
+                            "Type": "phone"
+                        }
+                    },
+                    "OrganizationEmails": {
+                        "Email": "Edward.J.Masuoka@nasa.gov"
+                    }
+                }
+            ]
+        },
+        "ScienceKeywords": {
+            "ScienceKeyword": [
+                {
+                    "CategoryKeyword": "EARTH SCIENCE",
+                    "TopicKeyword": "LAND SURFACE",
+                    "TermKeyword": "SURFACE THERMAL PROPERTIES",
+                    "VariableLevel1Keyword": {
+                        "Value": "LAND SURFACE TEMPERATURE"
+                    }
+                },
+                {
+                    "CategoryKeyword": "EARTH SCIENCE",
+                    "TopicKeyword": "LAND SURFACE",
+                    "TermKeyword": "SURFACE RADIATIVE PROPERTIES",
+                    "VariableLevel1Keyword": {
+                        "Value": "EMISSIVITY"
+                    }
+                }
+            ]
+        },
+        "Platforms": {
+            "Platform": {
+                "ShortName": "Terra",
+                "LongName": "Earth Observing System, TERRA (AM-1)",
+                "Type": "Spacecraft",
+                "Characteristics": {
+                    "Characteristic": {
+                        "Name": "EquatorCrossingTime",
+                        "Description": "Local time of the equator crossing and direction (ascending or descending)",
+                        "DataType": "varchar",
+                        "Unit": "Local Mean Time",
+                        "Value": "10:30, descending"
+                    }
+                },
+                "Instruments": {
+                    "Instrument": {
+                        "ShortName": "MODIS",
+                        "LongName": "Moderate-Resolution Imaging Spectroradiometer",
+                        "Technique": "Imaging Spectroradiometry",
+                        "Sensors": {
+                            "Sensor": {
+                                "ShortName": "MODIS",
+                                "LongName": "Cross-track Scanning Radiometer",
+                                "Technique": "Radiometry"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "AdditionalAttributes": {
+            "AdditionalAttribute": [
+                {
+                    "Name": "HORIZONTALTILENUMBER",
+                    "DataType": "INT",
+                    "Description": "Horizontal tile number of a grid, which increases from left to right."
+                },
+                {
+                    "Name": "N_GRAN_POINTERS",
+                    "DataType": "INT",
+                    "Description": "Total number of input granule files used to create this tile; number of elements in the InputGranulePointer archive metadata field."
+                },
+                {
+                    "Name": "QAFRACTIONGOODQUALITY",
+                    "DataType": "FLOAT",
+                    "Description": "Fraction of pixels with good quality of product"
+                },
+                {
+                    "Name": "QAFRACTIONNOTPRODUCEDCLOUD",
+                    "DataType": "FLOAT",
+                    "Description": "Fraction of pixels without product due to cloud"
+                },
+                {
+                    "Name": "QAFRACTIONNOTPRODUCEDOTHER",
+                    "DataType": "FLOAT",
+                    "Description": "Fraction of pixels without product due to reasons other than cloud"
+                },
+                {
+                    "Name": "QAFRACTIONOTHERQUALITY",
+                    "DataType": "FLOAT",
+                    "Description": "Fraction of pixels with not so good quality of product"
+                },
+                {
+                    "Name": "QAPERCENTGOODQUALITY",
+                    "DataType": "INT",
+                    "Description": "Percent of pixels with good quality"
+                },
+                {
+                    "Name": "QAPERCENTNOTPRODUCEDCLOUD",
+                    "DataType": "INT",
+                    "Description": "Percent of pixels under cloud"
+                },
+                {
+                    "Name": "QAPERCENTNOTPRODUCEDOTHER",
+                    "DataType": "INT",
+                    "Description": "Percent of pixels not produced due to some reason other than cloud"
+                },
+                {
+                    "Name": "QAPERCENTOTHERQUALITY",
+                    "DataType": "INT",
+                    "Description": "Percent of pixels with not so good quality"
+                },
+                {
+                    "Name": "VERTICALTILENUMBER",
+                    "DataType": "INT",
+                    "Description": "Vertical tile number of a grid, which increases from top to bottom."
+                },
+                {
+                    "Name": "TileID",
+                    "DataType": "INT",
+                    "Description": "MODIS Land tile identification number which represents a geographical area on the surface of the Earth bounded by latitude and longitude coordinates."
+                },
+                {
+                    "Name": "PROCESSVERSION",
+                    "DataType": "STRING",
+                    "Description": "Version of the process software that generated the product."
+                },
+                {
+                    "Name": "CLOUD_CONTAMINATED_LST_SCREENED",
+                    "DataType": "STRING",
+                    "Description": "Indicator of whether cloud-contaminated Land Surface Temperature values are screened off."
+                },
+                {
+                    "Name": "identifier_product_doi",
+                    "DataType": "STRING",
+                    "Description": "Digital object identifier that uniquely identifies this data product",
+                    "Value": "10.5067/MODIS/MOD11A1.006"
+                },
+                {
+                    "Name": "identifier_product_doi_authority",
+                    "DataType": "STRING",
+                    "Description": "URL of the digital object identifier resolving authority",
+                    "Value": "http://dx.doi.org"
+                }
+            ]
+        },
+        "CSDTDescriptions": {
+            "CSDTDescription": {
+                "PrimaryCSDT": "Structured Grid",
+                "Implementation": "HDF-EOS",
+                "CSDTComments": "None",
+                "IndirectReference": "N/A"
+            }
+        },
+        "TwoDCoordinateSystems": {
+            "TwoDCoordinateSystem": {
+                "TwoDCoordinateSystemName": "MODIS Tile SIN",
+                "Coordinate1": {
+                    "MinimumValue": "0.0",
+                    "MaximumValue": "35.0"
+                },
+                "Coordinate2": {
+                    "MinimumValue": "0.0",
+                    "MaximumValue": "17.0"
+                }
+            }
+        },
+        "OnlineResources": {
+            "OnlineResource": [
+                {
+                    "URL": "http://landweb.nascom.nasa.gov/cgi-bin/QA_WWW/qaFlagPage.cgi?sat=terra&ver=C6",
+                    "Type": "DatasetDisclaimer"
+                },
+                {
+                    "URL": "http://dx.doi.org/10.5067/MODIS/MOD11A1.006",
+                    "Description": "Data set landing page at the LP DAAC",
+                    "Type": "MiscInformation"
+                },
+                {
+                    "URL": "http://reverb.echo.nasa.gov/reverb/",
+                    "Description": "         Interface to search, discover, and access EOS data products, and invoke available data services.      ",
+                    "Type": "Type:GET DATA Subtype:REVERB"
+                },
+                {
+                    "URL": "https://lpdaac.usgs.gov/data_access/data_pool/",
+                    "Description": "         LP DAAC Data Pool provides direct access to all currently available MODIS products and the ability to download them via HTTP.      ",
+                    "Type": "Type:GET DATA Subtype:ON-LINE ARCHIVE"
+                },
+                {
+                    "URL": "http://mrtweb.cr.usgs.gov/",
+                    "Description": "         The MODIS Reprojection Tool on the Web (MRTWeb) is available for selected MODIS land products.  MRTWeb’s capabilities include reprojecting to alternate map projections, spatial and spectral subsetting, resampling, and alternate output format options.      ",
+                    "Type": "Type:GET DATA"
+                },
+                {
+                    "URL": "http://earthexplorer.usgs.gov/",
+                    "Description": "         USGS EarthExplorer (EE) provides users the ability to query, search and order archived ASTER and MODIS products available from the LP DAAC.  Registered users of EE have access to additional features than guest users.      ",
+                    "Type": "Type:GET DATA"
+                },
+                {
+                    "URL": "http://glovis.usgs.gov/",
+                    "Description": "         The USGS Global Visualization Viewer (GloVis) is an online search and order tool driven by browse images.  Users may select any geographical area of interest (for any given product) and view all available browse images for that area before deciding to order those products.      ",
+                    "Type": "Type:GET DATA"
+                },
+                {
+                    "URL": "https://lpdaac.usgs.gov/",
+                    "Description": "         The Land Processes Distributed Active Archive Center (LP DAAC) is one of several discipline-specific data centers within the NASA Earth Observing System Data and Information System (EOSDIS).  The LP DAAC Web page provides information about available data products, services, documentation, order interfaces, and tools.      ",
+                    "Type": "Type:VIEW PROJECT HOME PAGE"
+                }
+            ]
+        },
+        "Spatial": {
+            "SpatialCoverageType": "Horizontal",
+            "HorizontalSpatialDomain": {
+                "ZoneIdentifier": "Universal Transverse Mercator (UTM)",
+                "Geometry": {
+                    "CoordinateSystem": "CARTESIAN",
+                    "BoundingRectangle": {
+                        "WestBoundingCoordinate": "-180.0",
+                        "NorthBoundingCoordinate": "90.0",
+                        "EastBoundingCoordinate": "180.0",
+                        "SouthBoundingCoordinate": "-90.0"
+                    }
+                }
+            },
+            "GranuleSpatialRepresentation": "GEODETIC"
+        }
+    }
+}
