@@ -11,6 +11,11 @@ const { createIndex } = require('../es/indexer');
 
 // const snapshotRepoName = 'cumulus-es-snapshots';
 
+function timestampedIndexName() {
+  const date = new Date();
+  return `cumulus-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+}
+
 async function createEsSnapshot(req, res) {
   return res.boom.badRequest('Functionality not yet implemented');
 
@@ -78,8 +83,7 @@ async function reindex(req, res) {
   }
 
   if (!destIndex) {
-    const date = new Date();
-    destIndex = `cumulus-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+    destIndex = timestampedIndexName();
   }
 
   try {
@@ -177,11 +181,17 @@ async function changeIndex(req, res) {
   return res.send({ message });
 }
 
+async function indices(req, res) {
+  const esClient = await Search.es();
+
+  return res.send(await esClient.cat.indices({}));
+}
+
 async function createEsIndex(req, res) {
   const esClient = await Search.es();
 
   try {
-    await createIndex(esClient, req.body.indexName);
+    await createIndex(esClient, req.body.indexName)
   } catch (err) {
     return res.boom.badRequest(`Error creating index ${req.body.indexName}: ${err.message}`);
   }
@@ -190,6 +200,14 @@ async function createEsIndex(req, res) {
 }
 
 async function indexFromDatabase(req, res) {
+  const esClient = await Search.es();
+  const indexName = req.body.indexName || timestampedIndexName();
+
+  await createIndex(esClient, indexName)
+    .catch((e) => {
+      if (!(e instanceof IndexExistsError)) throw e;
+    });
+
   const asyncOperationModel = new AsyncOperation({
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
@@ -210,7 +228,7 @@ async function indexFromDatabase(req, res) {
     return res.boom.serverUnavailable(`Failed to run ECS task: ${err.message}`);
   }
 
-  return res.boom.badRequest('Functionality not yet implemented');
+  return res.send({ message: `Indexing database to ${indexName}. Operation id: ${asyncOperation.id}` });
 }
 
 // express routes
@@ -220,5 +238,6 @@ router.get('/reindex-status', reindexStatus);
 router.post('/change-index', changeIndex);
 router.post('/create-index', createEsIndex);
 router.post('/index-from-database', indexFromDatabase);
+router.get('/indices', indices);
 
 module.exports = router;

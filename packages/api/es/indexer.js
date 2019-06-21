@@ -35,6 +35,8 @@ async function createIndex(esClient, indexName) {
     index: indexName,
     body: { mappings }
   });
+
+  log.info(`Created esIndex ${indexName}`);
 }
 
 /**
