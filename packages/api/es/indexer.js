@@ -76,51 +76,6 @@ async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'l
 }
 
 /**
- * Partially updates an existing ElasticSearch record
- *
- * @param  {Object} esClient - ElasticSearch Connection object
- * @param  {string} id       - id of the Elasticsearch record
- * @param  {string} type     - Elasticsearch type (default: execution)
- * @param  {Object} doc      - Partial updated document
- * @param  {string} parent   - id of the parent (optional)
- * @param  {string} index    - Elasticsearch index alias (default defined in search.js)
- * @param  {boolean} upsert  - whether to upsert the document
- * @returns {Promise} elasticsearch update response
- */
-async function partialRecordUpdate(
-  esClient,
-  id,
-  type,
-  doc,
-  parent,
-  index = defaultIndexAlias,
-  upsert = false
-) {
-  if (!doc) throw new Error('Nothing to update. Make sure doc argument has a value');
-
-  const docWithTimestamp = Object.assign(
-    cloneDeep(doc),
-    { timestamp: Date.now }
-  );
-
-  const params = {
-    index,
-    type,
-    id,
-    refresh: inTestMode(),
-    body: {
-      doc: docWithTimestamp
-    }
-  };
-
-  if (parent) params.parent = parent;
-  if (upsert) params.body.doc_as_upsert = upsert;
-
-  const actualEsClient = esClient || (await Search.es());
-  return actualEsClient.update(params);
-}
-
-/**
  * Indexes a given record to the specified ElasticSearch index and type
  *
  * @param  {Object} esClient - ElasticSearch Connection object
@@ -444,7 +399,6 @@ module.exports = {
   indexPdr,
   indexExecution,
   handlePayload,
-  partialRecordUpdate,
   deleteRecord,
   reingest,
   granule,
