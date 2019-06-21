@@ -6,7 +6,6 @@ const {
   URL,
   resolve
 } = require('url');
-const cloneDeep = require('lodash.clonedeep');
 const mime = require('mime-types');
 
 const {
