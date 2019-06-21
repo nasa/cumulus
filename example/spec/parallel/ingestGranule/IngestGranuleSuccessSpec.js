@@ -4,7 +4,6 @@ const fs = require('fs-extra');
 const isNumber = require('lodash.isnumber');
 const isString = require('lodash.isstring');
 const path = require('path');
-const pick = require('lodash.pick');
 const { URL, resolve } = require('url');
 const difference = require('lodash.difference');
 const includes = require('lodash.includes');
@@ -367,27 +366,22 @@ describe('The S3 Ingest Granules workflow', () => {
     it('has expected payload', () => {
       expect(granule.cmrLink).toEqual(`${getUrl('search')}granules.json?concept_id=${granule.cmrConceptId}`);
 
-      const updatedGranule = {
-        ...expectedPayload.granules[0],
-        ...pick(
-          granule,
-          [
-            'cmrConceptId',
-            'cmrLink',
-            'processingEndDateTime',
-            'processingStartDateTime',
-            'timeToArchive',
-            'timeToPreprocess'
-          ]
-        )
-      };
-
-      const updatedExpectedPayload = {
+      const thisExpectedPayload = {
         ...expectedPayload,
-        granules: [updatedGranule]
+        granules: [
+          {
+            ...expectedPayload.granules[0],
+            cmrConceptId: postToCmrOutput.payload.granules[0].cmrConceptId,
+            cmrLink: postToCmrOutput.payload.granules[0].cmrLink,
+            post_to_cmr_duration: postToCmrOutput.payload.granules[0].post_to_cmr_duration,
+            post_to_cmr_start_time: postToCmrOutput.payload.granules[0].post_to_cmr_start_time,
+            sync_granule_duration: postToCmrOutput.payload.granules[0].sync_granule_duration,
+            sync_granule_end_time: postToCmrOutput.payload.granules[0].sync_granule_end_time
+          }
+        ]
       };
 
-      expect(postToCmrOutput.payload).toEqual(updatedExpectedPayload);
+      expect(postToCmrOutput.payload).toEqual(thisExpectedPayload);
     });
 
     it('publishes the granule metadata to CMR', () => {
