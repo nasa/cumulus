@@ -315,7 +315,6 @@ module.exports = {
   createTimestampedTestId,
   deleteFolder,
   getExecutionUrl,
-  getFileMetadata,
   getFilesMetadata,
   getPublicS3FileUrl,
   isCumulusLogEntry,
