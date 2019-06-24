@@ -6,7 +6,6 @@ const {
   URL,
   resolve
 } = require('url');
-const cloneDeep = require('lodash.clonedeep');
 const mime = require('mime-types');
 
 const {
@@ -272,14 +271,22 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
 
     it('has expected payload', () => {
-      expect(granule.published).toBe(true);
       expect(granule.cmrLink).toEqual(`${getUrl('search')}granules.json?concept_id=${granule.cmrConceptId}`);
 
-      // Set the expected CMR values since they're going to be different
-      // every time this is run.
-      const updatedExpectedPayload = cloneDeep(expectedPayload);
-      updatedExpectedPayload.granules[0].cmrLink = granule.cmrLink;
-      updatedExpectedPayload.granules[0].cmrConceptId = granule.cmrConceptId;
+      const updatedExpectedPayload = {
+        ...expectedPayload,
+        granules: [
+          {
+            ...expectedPayload.granules[0],
+            cmrConceptId: granule.cmrConceptId,
+            cmrLink: granule.cmrLink,
+            post_to_cmr_duration: granule.post_to_cmr_duration,
+            post_to_cmr_start_time: granule.post_to_cmr_start_time,
+            sync_granule_duration: granule.sync_granule_duration,
+            sync_granule_end_time: granule.sync_granule_end_time
+          }
+        ]
+      };
 
       expect(postToCmrOutput.payload).toEqual(updatedExpectedPayload);
     });

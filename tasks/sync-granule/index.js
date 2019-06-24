@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const pMap = require('p-map');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const errors = require('@cumulus/common/errors');
 const lock = require('@cumulus/ingest/lock');
@@ -20,8 +21,6 @@ const log = require('@cumulus/common/log');
  * @returns {Promise.<Array>} - the list of successfully ingested granules
  */
 async function download(ingest, bucket, provider, granules) {
-  const updatedGranules = [];
-
   log.debug(`awaiting lock.proceed in download() bucket: ${bucket}, `
             + `provider: ${JSON.stringify(provider)}, granuleID: ${granules[0].granuleId}`);
   const proceed = await lock.proceed(bucket, provider, granules[0].granuleId);
@@ -32,26 +31,28 @@ async function download(ingest, bucket, provider, granules) {
     throw err;
   }
 
-  /* eslint-disable no-await-in-loop */
-  for (let ctr = 0; ctr < granules.length; ctr += 1) {
-    const granule = granules[ctr];
-
+  const ingestGranule = async (granule) => {
     try {
-      log.debug(`await ingest.ingest(${JSON.stringify(granule)}, ${bucket})`);
+      const startTime = Date.now();
       const r = await ingest.ingest(granule, bucket);
-      updatedGranules.push(r);
+      const endTime = Date.now();
+
+      return {
+        ...r,
+        sync_granule_duration: endTime - startTime,
+        sync_granule_end_time: endTime
+      };
     } catch (e) {
-      log.debug(`Error caught, await lock.removeLock(${bucket}, ${provider.id}, ${granule.granuleId})`);
-      await lock.removeLock(bucket, provider.id, granule.granuleId);
       log.error(e);
       throw e;
     }
-  }
-  /* eslint-enable no-await-in-loop */
+  };
 
-  log.debug(`finshed, await lock.removeLock(${bucket}, ${provider.id}, ${granules[0].granuleId})`);
-  await lock.removeLock(bucket, provider.id, granules[0].granuleId);
-  return updatedGranules;
+  try {
+    return await pMap(granules, ingestGranule, { concurrency: 1 });
+  } finally {
+    await lock.removeLock(bucket, provider.id, granules[0].granuleId);
+  }
 }
 
 /**
@@ -127,19 +128,10 @@ exports.syncGranule = function syncGranule(event) {
  * @returns {undefined} - does not return a value
  */
 exports.handler = function handler(event, context, callback) {
-  const startTime = Date.now();
-
-  cumulusMessageAdapter.runCumulusTask(exports.syncGranule, event, context, (err, data) => {
-    if (err) {
-      callback(err);
-    } else {
-      const endTime = Date.now();
-      const additionalMetaFields = {
-        sync_granule_duration: endTime - startTime,
-        sync_granule_end_time: endTime
-      };
-      const meta = Object.assign({}, data.meta, additionalMetaFields);
-      callback(null, Object.assign({}, data, { meta }));
-    }
-  });
+  cumulusMessageAdapter.runCumulusTask(
+    exports.syncGranule,
+    event,
+    context,
+    callback
+  );
 };
