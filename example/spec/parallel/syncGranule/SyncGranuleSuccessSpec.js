@@ -154,11 +154,30 @@ describe('The Sync Granules workflow', () => {
     });
 
     it('receives payload with file objects updated to include file staging location', () => {
-      expect(lambdaOutput.payload).toEqual(expectedPayload);
+      const thisExpectedPayload = {
+        ...expectedPayload,
+        granules: [
+          {
+            ...expectedPayload.granules[0],
+            sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration,
+            sync_granule_end_time: lambdaOutput.payload.granules[0].sync_granule_end_time
+          }
+        ]
+      };
+
+      expect(lambdaOutput.payload).toEqual(thisExpectedPayload);
     });
 
     it('receives meta.input_granules with files objects updated to include file staging location', () => {
-      expect(lambdaOutput.meta.input_granules).toEqual(expectedPayload.granules);
+      const thisExpectedGranules = [
+        {
+          ...expectedPayload.granules[0],
+          sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration,
+          sync_granule_end_time: lambdaOutput.payload.granules[0].sync_granule_end_time
+        }
+      ];
+
+      expect(lambdaOutput.meta.input_granules).toEqual(thisExpectedGranules);
     });
 
     it('receives files with custom staging directory', () => {
