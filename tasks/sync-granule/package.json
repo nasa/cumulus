@@ -40,7 +40,8 @@
   "dependencies": {
     "@cumulus/common": "1.13.0",
     "@cumulus/cumulus-message-adapter-js": "^1.0.7",
-    "@cumulus/ingest": "1.13.0"
+    "@cumulus/ingest": "1.13.0",
+    "p-map": "^2.1.0"
   },
   "devDependencies": {
     "@cumulus/test-data": "1.13.0",
