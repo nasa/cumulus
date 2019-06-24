@@ -4,7 +4,6 @@ const fs = require('fs-extra');
 const isNumber = require('lodash.isnumber');
 const isString = require('lodash.isstring');
 const path = require('path');
-const pick = require('lodash.pick');
 const { URL, resolve } = require('url');
 const difference = require('lodash.difference');
 const includes = require('lodash.includes');
@@ -181,18 +180,6 @@ describe('The S3 Ingest Granules workflow', () => {
         distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT
       }
     );
-
-    console.log('Start FailingExecution');
-    failingWorkflowExecution = await buildAndExecuteWorkflow(
-      config.stackName,
-      config.bucket,
-      workflowName,
-      collection,
-      provider,
-      {}
-    );
-    failedExecutionArn = failingWorkflowExecution.executionArn.split(':');
-    failedExecutionName = failedExecutionArn.pop();
   });
 
   afterAll(async () => {
@@ -202,7 +189,6 @@ describe('The S3 Ingest Granules workflow', () => {
       collectionModel.delete(collection),
       providerModel.delete(provider),
       executionModel.delete({ arn: workflowExecution.executionArn }),
-      executionModel.delete({ arn: failingWorkflowExecution.executionArn }),
       granulesApiTestUtils.removePublishedGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
@@ -367,27 +353,22 @@ describe('The S3 Ingest Granules workflow', () => {
     it('has expected payload', () => {
       expect(granule.cmrLink).toEqual(`${getUrl('search')}granules.json?concept_id=${granule.cmrConceptId}`);
 
-      const updatedGranule = {
-        ...expectedPayload.granules[0],
-        ...pick(
-          granule,
-          [
-            'cmrConceptId',
-            'cmrLink',
-            'processingEndDateTime',
-            'processingStartDateTime',
-            'timeToArchive',
-            'timeToPreprocess'
-          ]
-        )
-      };
-
-      const updatedExpectedPayload = {
+      const thisExpectedPayload = {
         ...expectedPayload,
-        granules: [updatedGranule]
+        granules: [
+          {
+            ...expectedPayload.granules[0],
+            cmrConceptId: postToCmrOutput.payload.granules[0].cmrConceptId,
+            cmrLink: postToCmrOutput.payload.granules[0].cmrLink,
+            post_to_cmr_duration: postToCmrOutput.payload.granules[0].post_to_cmr_duration,
+            post_to_cmr_start_time: postToCmrOutput.payload.granules[0].post_to_cmr_start_time,
+            sync_granule_duration: postToCmrOutput.payload.granules[0].sync_granule_duration,
+            sync_granule_end_time: postToCmrOutput.payload.granules[0].sync_granule_end_time
+          }
+        ]
       };
 
-      expect(postToCmrOutput.payload).toEqual(updatedExpectedPayload);
+      expect(postToCmrOutput.payload).toEqual(thisExpectedPayload);
     });
 
     it('publishes the granule metadata to CMR', () => {
@@ -476,11 +457,27 @@ describe('The S3 Ingest Granules workflow', () => {
     let existCheck = [];
 
     beforeAll(async () => {
+      console.log('Start FailingExecution');
+      failingWorkflowExecution = await buildAndExecuteWorkflow(
+        config.stackName,
+        config.bucket,
+        workflowName,
+        collection,
+        provider,
+        {}
+      );
+      failedExecutionArn = failingWorkflowExecution.executionArn.split(':');
+      failedExecutionName = failedExecutionArn.pop();
+
       executionName = postToCmrOutput.cumulus_meta.execution_name;
       existCheck = await Promise.all([
         s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }),
         s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` })
       ]);
+    });
+
+    afterAll(async () => {
+      await executionModel.delete({ arn: failingWorkflowExecution.executionArn });
     });
 
     it('is published on a successful workflow completion', () => {
@@ -679,6 +676,7 @@ describe('The S3 Ingest Granules workflow', () => {
             }];
           } catch (err) {
             console.error('Error in beforeAll() block:', err);
+            console.log(`File errored on: ${JSON.stringify(file, null, 2)}`);
           }
         });
 
@@ -742,6 +740,7 @@ describe('The S3 Ingest Granules workflow', () => {
           granuleId: inputPayload.granules[0].granuleId
         });
         const resp = JSON.parse(granuleResponse.body);
+
         expect(resp.message).toEqual('Granule not found');
       });
     });
@@ -794,6 +793,7 @@ describe('The S3 Ingest Granules workflow', () => {
           prefix: config.stackName,
           arn: executionArn
         });
+
         executionStatus = JSON.parse(executionStatusResponse.body);
 
         allStates = Object.keys(workflowConfig.States);

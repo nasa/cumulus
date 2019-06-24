@@ -11,6 +11,7 @@ const {
 } = require('@cumulus/common/aws');
 const {
   randomId,
+  randomNumber,
   randomString,
   validateConfig,
   validateInput,
@@ -32,12 +33,16 @@ test.beforeEach(async (t) => {
   t.context.queues = {
     [queueName]: queueUrl
   };
+  t.context.queueExecutionLimits = {
+    [queueName]: randomNumber()
+  };
   t.context.messageTemplate = {
     cumulus_meta: {
       state_machine: t.context.stateMachineArn
     },
     meta: {
-      queues: t.context.queues
+      queues: t.context.queues,
+      queueExecutionLimits: t.context.queueExecutionLimits
     }
   };
   const messageTemplateKey = `${randomString()}/template.json`;
@@ -126,6 +131,7 @@ test.serial('PDRs are added to the queue', async (t) => {
 test.serial('The correct message is enqueued', async (t) => {
   const {
     event,
+    queueExecutionLimits,
     queueName,
     queues,
     stateMachineArn
@@ -180,6 +186,7 @@ test.serial('The correct message is enqueued', async (t) => {
       },
       meta: {
         queues,
+        queueExecutionLimits,
         collection: { name: 'collection-name' },
         provider: { name: 'provider-name' }
       },

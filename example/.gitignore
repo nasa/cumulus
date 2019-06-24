@@ -21,3 +21,4 @@ scripts/test_output/
 /terraform.tfvars
 /terraform.tf
 /.terraform/
+test-output
