@@ -108,12 +108,31 @@ $ aws s3 cp ./bucket_map.yaml s3://my-internal/bucket_map.yaml
 ```
 
 The Thin Egress App stores its Earthdata Login credentials in AWS Secrets
-Manager. These are the `EARTHDATA_CLIENT_ID` and `EARTHDATA_CLIENT_PASSWORD`
-values from your `example/app/.env` file. The client id and password need to be
-`base64` encoded. You can get the value by running:
+Manager. There are two values stored in the secret: `UrsId` and `UrsAuth`.
+
+The `UrsId` is the URS client id. If you're unsure what that value is, it's
+stored as `EARTHDATA_CLIENT_ID` in your `example/app/.env` file.
+
+The value of `UrsAuth` is going to be your Earthdata Client ID joined to your
+Earthdata Client password by a `:`, then base64-encoded. Your Earthdata Client
+password is stored as `EARTHDATA_CLIENT_PASSWORD` in `example/app/.env`.
+
+This is pretty confusing, so an example should help. Let's say that we're using
+this `.env` file:
+
+**example/app/.env**
+```
+EARTHDATA_CLIENT_ID=my-client-id
+EARTHDATA_CLIENT_PASSWORD=my-client-password
+```
+
+In this case, `UrsId` would be just "my-client-id".
+
+`UrsAuth` would be be the output of running:
 
 ```shell
-$ echo -n 'user:pass' | base64
+$ echo -n 'my-client-id:my-client-password' | base64
+bXktY2xpZW50LWlkOm15LWNsaWVudC1wYXNzd29yZA==
 ```
 
 ⚠️ **Note:** All `aws` and `terraform` commands for the rest of this deployment
