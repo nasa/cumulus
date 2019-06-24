@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### PLEASE NOTE
 - **CUMULUS-799** added additional IAM permissions to support reading CloudWatch and API Gateway, so **you will have to redeploy your IAM stack.**
 - **CUMULUS-800** Several items:
-    - To configure APIGateway logging, Cumulus now creates and manages a Stage resource during deployment. Before upgrading Cumulus, it is necessary to delete the API Gateway stages on both the Backend API and the Distribution API.  An operator can do this easily through the [API Gateway Console](https://console.aws.amazon.com/apigateway/) selecting each of the deployed APIs [`stackname-backend` and `stackname-distribution`] and then `stages`, finally selecting the deployed stage and then using the `Delete Stage` button.  The same action can be accomplished from the command line with a script that has been added to the deployment package, `delete-stage`.  From the directory where `@cumulus/deployment` is installed, run `node_modules/.bin/delete-stage --prefix <prefix> --stage <apiStage> --doit` where `<prefix>` and `<apiStage>` are replaced with the correct values from your `config.yml`.
+    - To enable APIGateway logging, Cumulus now creates and manages a Stage resource during deployment. Before upgrading Cumulus, it is necessary to delete the API Gateway stages on both the Backend API and the Distribution API.  An operator can do this easily through the [API Gateway Console](https://console.aws.amazon.com/apigateway/) selecting each of the deployed APIs [`stackname-backend` and `stackname-distribution`] and then `stages`, finally selecting the deployed stage and then using the `Delete Stage` button.  The same action can be accomplished from the command line with a script that has been added to the deployment package, `delete-stage`.  From the directory where `@cumulus/deployment` is installed, run `node_modules/.bin/delete-stage --prefix <prefix> --stage <apiStage> --doit` where `<prefix>` and `<apiStage>` are replaced with the correct values from your `config.yml`.
 
 
     - To enable CloudWatch Logs for API Gateway, you must first grant API Gateway permission to read and write logs to CloudWatch for your account. The AmazonAPIGatewayPushToCloudWatchLogs managed policy (with an ARN of arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs) has all the required permissions. To grant these permissions to your account, create an IAM role with apigateway.amazonaws.com as its trusted entity, attach the AmazonAPIGatewayPushToCloudWatchLogs policy to the IAM role, and set the IAM role ARN on the `cloudWatchRoleArn` property on your API Gateway Account settings.  You can find a simple walkthrough in the [docs.](https://nasa.github.io/cumulus/docs/additional-deployment-options/additional-deployment-options-readme)
@@ -36,9 +36,10 @@ We have encountered transient lambda service errors in our integration testing. 
 
 - **CUMULUS-800**
   - Adds `logApiGatewayToCloudWatch` to `apiConfig.api` options.
-  - Enables Api Gateway logging for Cumulus distribution API in the default example configuration.
+  - Enables API Gateway logging for Cumulus distribution API in the default example configuration.
   - Adds `sharedLogDestinationArn` to default example options, this must reference an AWS:Logs::Destination to which your account can write.
-  - Adds `logToSharedDestination` option to lambda configuration.  If `true` will create a subscription filter ship off the cloudwatch logs to the shared AWS::Logs::Destination defined in `sharedLogDestinationArn`
+  - Adds `logToSharedDestination` option to lambda configuration.  If `true` will create a subscription filter that passes cloudwatch logs to the shared AWS::Logs::Destination defined in `sharedLogDestinationArn`
+  - Adds
   - TODO [MHS, 2019-06-12]
 
 
