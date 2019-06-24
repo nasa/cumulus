@@ -157,7 +157,7 @@ class DistributionEvent {
   }
 
   /**
-   * Get the product information (name, version, granuleId and file type) of the file
+   * Get the product information (collectionId, name, version, granuleId and file type) of the file
    *
    * @returns {Object} product object
    */
