@@ -10,7 +10,7 @@ For a workflow to run, it needs to be associated with a rule (see [rule configur
 
 There are three lambda functions in the API package responsible for scheduling and starting workflows: `SF scheduler`, `message consumer`, and `SF starter`. Each Cumulus instance comes with a Start SF [SQS queue](https://aws.amazon.com/sqs/).
 
-The `SF scheduler` lambda puts a message onto the `start SF` queue. This message is picked up the `Start SF` lambda and an execution is started with the body of the message as the input.
+The `SF scheduler` lambda puts a message onto the `Start SF` queue. This message is picked up the `Start SF` lambda and an execution is started with the body of the message as the input.
 
 When a one time rule is created, the `schedule SF` lambda is triggered. Rules that are not one time are associated with a [CloudWatch event](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/WhatIsCloudWatchEvents.html) which will manage the trigger of the lambdas that trigger the workflows.
 
