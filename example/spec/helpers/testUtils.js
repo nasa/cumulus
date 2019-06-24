@@ -14,7 +14,8 @@ const yaml = require('js-yaml');
 
 const {
   aws: { s3, headObject, parseS3Uri },
-  stringUtils: { globalReplace }
+  stringUtils: { globalReplace },
+  log
 } = require('@cumulus/common');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
@@ -246,13 +247,17 @@ async function getFileMetadata(file) {
     throw new Error(`Unable to determine file location: ${JSON.stringify(file)}`);
   }
 
-  const headObjectResponse = await headObject(Bucket, Key);
-
-  return {
-    filename: file.filename,
-    size: headObjectResponse.ContentLength,
-    LastModified: headObjectResponse.LastModified
-  };
+  try {
+    const headObjectResponse = await headObject(Bucket, Key);
+    return {
+      filename: file.filename,
+      size: headObjectResponse.ContentLength,
+      LastModified: headObjectResponse.LastModified
+    };
+  } catch (err) {
+    log.error(`Failed to headObject the object at ${Bucket}/${Key} in s3.`);
+    throw (err);
+  }
 }
 
 /**
