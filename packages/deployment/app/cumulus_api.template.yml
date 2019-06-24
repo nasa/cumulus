@@ -85,6 +85,12 @@ Resources:
         Ref: {{name}}RestApi
       StageName: {{../parent.apiStage}}
       {{#ifLogApiGatewayToCloudWatch ../parent.apiConfigs name}}
+      AccessLogSetting:
+        DestinationArn:
+          Fn::GetAtt:
+            - ApiGatewayCloudWatchLogGroup{{name}}
+            - Arn
+        Format: '{ "requestId":"$context.requestId", "ip": "$context.identity.sourceIp", "caller":"$context.identity.caller",  "user":"$context.identity.user", "requestTime":"$context.requestTime", "httpMethod":"$context.httpMethod", "resourcePath":"$context.resourcePath", "status":"$context.status", "protocol":"$context.protocol", "responseLength":"$context.responseLength" }'
       MethodSettings:
         - DataTraceEnabled: true
           HttpMethod: "*"
@@ -197,7 +203,7 @@ Resources:
 {{#ifLogApiGatewayToCloudWatch ../parent.apiConfigs name }}
 
   # create log group
-  ApiGatewayCloudWatchLogGroup{{../name}}:
+  ApiGatewayCloudWatchLogGroup{{name}}:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName:
@@ -207,16 +213,17 @@ Resources:
             - Ref: {{name}}RestApi
             - "/{{../parent.apiStage}}"
       RetentionInDays: 30
+
   # create subscriptionfilter
   ApiGatewayLogSubscription{{../name}}:
     Type: AWS::Logs::SubscriptionFilter
     DependsOn:
-      - ApiGatewayCloudWatchLogGroup{{../name}}
+      - ApiGatewayCloudWatchLogGroup{{name}}
     Properties:
       DestinationArn: "{{../parent.sharedLogDestinationArn}}"
       FilterPattern: ""
       LogGroupName:
-        Ref: ApiGatewayCloudWatchLogGroup{{../name}}
+        Ref: ApiGatewayCloudWatchLogGroup{{name}}
 
 {{/ifLogApiGatewayToCloudWatch}}
 {{/each}}
