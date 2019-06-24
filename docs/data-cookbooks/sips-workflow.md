@@ -5,22 +5,23 @@ hide_title: true
 ---
 
 # Science Investigator-led Processing Systems (SIPS)
+
 The Cumulus ingest workflow supports the SIPS workflow. In the following document, we'll discuss what a SIPS workflow is and how to set one up in a Cumulus instance.
 
 In this document, we assume the user already has a provider endpoint configured and ready with some data to ingest. We'll be using an S3 provider and ingesting from a MOD09GQ collection.
 
-
 ## Setup
 
-#### Provider
+### Provider
 
 We need to have a [provider](data-cookbooks/setup.md#providers) from whom data can be ingested. Our provider is an S3 provider hosted in the `cumulus-test-internal` bucket.
 
-![](assets/sips-provider.png)
+![Screenshot of Cumulus dashboard screen configuring a SIPS provider](assets/sips-provider.png)
 
-#### Collection
+### Collection
 
 We need to build a collection. Details on collections can be found [here](data-cookbooks/setup.md#collections). The following collection will have `MOD09GQ` as a collection name, `006` as a version, and is configured to pull PDRs from `${bucket}/cumulus-test-data/pdrs` in S3 (where `${bucket}` is configured in the provider).
+
 ```json
 {
     "queriedAt": "2018-08-03T16:44:25.919Z",
@@ -34,27 +35,27 @@ We need to build a collection. Details on collections can be found [here](data-c
     "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
     "provider_path": "cumulus-test-data/pdrs",
     "files": [
-  	    {
-  	        "bucket": "protected",
-  	        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
-  	        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
-  	        "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
-  	    },
-  	    {
-  	        "bucket": "private",
-  	        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$",
-  	        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met"
-  	    },
-  	    {
-  	        "bucket": "protected-2",
-  	        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.cmr\\.xml$",
-  	        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml"
-  	    },
-  	    {
-  	        "bucket": "public",
-  	        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}_ndvi\\.jpg$",
-  	        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_ndvi.jpg"
-  	    }
+      {
+        "bucket": "protected",
+        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
+        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
+      },
+      {
+        "bucket": "private",
+        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$",
+        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met"
+      },
+      {
+        "bucket": "protected-2",
+        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.cmr\\.xml$",
+        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml"
+      },
+      {
+        "bucket": "public",
+        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}_ndvi\\.jpg$",
+        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_ndvi.jpg"
+      }
     ],
     "duplicateHandling": "replace",
     "updatedAt": 1533313794693,
@@ -69,9 +70,9 @@ We need to build a collection. Details on collections can be found [here](data-c
 }
 ```
 
-#### Rule
+### Rule
 
-Finally, let's create a [rule](data-cookbooks/setup.md#rules). In this example we're just going to create a `onetime` throw-away rule that will be easy to test with. This rule will kick off the `DiscoverAndParsePdrs` workflow, which is the beginning of a Cumulus SIPS workflow.
+Finally, let's create a [rule](data-cookbooks/setup.md#rules). In this example we're just going to create a `onetime` throw-away rule that will be easy to test with. This rule will kick off the `DiscoverAndQueuePdrs` workflow, which is the beginning of a Cumulus SIPS workflow.
 
 ```json
 {
@@ -94,7 +95,6 @@ Finally, let's create a [rule](data-cookbooks/setup.md#rules). In this example w
 
 **Note:** A list of configured workflows exists under the "Workflows" in the navigation bar on the Cumulus dashboard. Additionally, one can find a list of executions and their respective status in the "Executions" tab in the navigation bar.
 
-
 ## DiscoverAndQueuePdrs Workflow
 
 This workflow will (as the name might suggest) discover PDRs and queue them to be processed. Duplicate PDRs will be dealt with according to the configured duplicate handling setting in the collection.
@@ -102,10 +102,9 @@ This workflow will (as the name might suggest) discover PDRs and queue them to b
 1. DiscoverPdrs - [npm package](https://www.npmjs.com/package/@cumulus/discover-pdrs), [source](https://github.com/nasa/cumulus/tree/master/tasks/discover-pdrs)
 2. QueuePdrs - [npm package](https://www.npmjs.com/package/@cumulus/queue-pdrs), [source](https://github.com/nasa/cumulus/tree/master/tasks/queue-pdrs)
 
-![](assets/sips-discover-and-queue-pdrs-execution.png)
+![Screenshot of execution graph for DiscoverAndQueuePdrs workflow in the AWS Step Functions console](assets/sips-discover-and-queue-pdrs-execution.png)
 
 _Example configuration for this workflow can be found in the `DiscoverAndQueuePdrs` object defined in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/workflows/sips.yml)_
-
 
 ## ParsePdr Workflow
 
@@ -115,10 +114,9 @@ The ParsePdr workflow will parse a PDR, queue the specified granules (duplicates
 2. QueueGranules - [npm package](https://www.npmjs.com/package/@cumulus/queue-granules), [source](https://github.com/nasa/cumulus/tree/master/tasks/queue-granules)
 3. CheckStatus - [npm package](https://www.npmjs.com/package/@cumulus/pdr-status-check), [source](https://github.com/nasa/cumulus/tree/master/tasks/pdr-status-check)
 
-![](assets/sips-parse-pdr.png)
+![Screenshot of execution graph for SIPS Parse PDR workflow in AWS Step Functions console](assets/sips-parse-pdr.png)
 
 _Example configuration for this workflow can be found in the `ParsePdr` object defined in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/workflows/sips.yml)_
-
 
 ## IngestGranule Workflow
 
@@ -130,7 +128,7 @@ The IngestGranule workflow processes and ingests a granule and posts the granule
 
 **Note:** Hitting CmrStep is not required and can be left out of the processing trajectory if desired (for example, in testing situations).
 
-![](assets/sips-ingest-granule.png)
+![Screenshot of execution graph for SIPS IngestGranule workflow in AWS Step Functions console](assets/sips-ingest-granule.png)
 
 _Example configuration for this workflow can be found in the `IngestGranule` object defined in Cumulus core's [example](https://github.com/nasa/cumulus/blob/master/example/workflows/sips.yml)_
 

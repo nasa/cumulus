@@ -10,14 +10,13 @@ This entry documents how to setup a workflow that utilizes Cumulus's built-in gr
 
 We will discuss how to run a processing workflow against an inbound granule that has data but no browse generated.  The workflow will generate a browse file and add the appropriate output values to the Cumulus message so that the built-in post-to-cmr task will publish the data appropriately.
 
-## Sections:
+## Sections
 
 * [Prerequisites](#prerequisites)
 * [Configure Cumulus](#configure-cumulus)
 * [Configure Ingest](#configure-ingest)
 * [Run Workflows](#run-workflows)
 * [Build Processing Lambda](#build-processing-lambda)
-
 
 ## Prerequisites
 
@@ -65,7 +64,6 @@ For this example, you are going to be adding two workflows to your Cumulus deplo
 
   This workflow will run the ```DiscoverGranules``` task, targeting the S3 bucket/folder mentioned in the prerequisites.    The output of that task will be passed into QueueGranules, which will trigger the second workflow for each granule to be ingested.   The example presented here will be a single granule with a .hdf data file and a .met metadata file only, however your setup may result in more granules, or different files.
 
-
 * CookbookBrowseExample
 
   This workflow will be triggered for each granule in the previous workflow.    It will utilize the SyncGranule task, which brings the files into a staging location in the Cumulus buckets.
@@ -84,52 +82,52 @@ Add the following to a new file ```browseExample.yml``` in your deployment's mai
 
 A few things to note about tasks in the workflow being added:
 
-*  The CMR step in CookbookBrowseExample:
+* The CMR step in CookbookBrowseExample:
 
-```
+```yaml
  CmrStep:
-      CumulusConfig:
-        bucket: '{$.meta.buckets.internal.name}'
-        stack: '{$.meta.stack}'
-        cmr: '{$.meta.cmr}'
-        process: '{$.cumulus_meta.process}'
-        input_granules: '{$.meta.input_granules}'
-        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
-      Type: Task
-      Resource: ${PostToCmrLambdaFunction.Arn}
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          ResultPath: '$.exception'
-          Next: StopStatus
-      Next: StopStatus
+    CumulusConfig:
+      bucket: '{$.meta.buckets.internal.name}'
+      stack: '{$.meta.stack}'
+      cmr: '{$.meta.cmr}'
+      process: '{$.cumulus_meta.process}'
+      input_granules: '{$.meta.input_granules}'
+      granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+    Type: Task
+    Resource: ${PostToCmrLambdaFunction.Arn}
+    Catch:
+      - ErrorEquals:
+        - States.ALL
+        ResultPath: '$.exception'
+        Next: StopStatus
+    Next: StopStatus
 ```
 
 Note that in the task, the event.config.cmr will contain the values you configured in the ```cmr``` configuration section above.
 
 * The Processing step in CookbookBrowseExample:
 
-```
-    ProcessingStep:
-      CumulusConfig:
-        bucket: '{$.meta.buckets.internal.name}'
-        collection: '{$.meta.collection}'
-        cmrMetadataFormat: '{$.meta.cmrMetadataFormat}'
-        additionalUrls: '{$.meta.additionalUrls}'
-        generateFakeBrowse: true
-      Type: Task
-      Resource: ${FakeProcessingLambdaFunction.Arn}
-      Catch:
-        - ErrorEquals:
+```yaml
+  ProcessingStep:
+    CumulusConfig:
+      bucket: '{$.meta.buckets.internal.name}'
+      collection: '{$.meta.collection}'
+      cmrMetadataFormat: '{$.meta.cmrMetadataFormat}'
+      additionalUrls: '{$.meta.additionalUrls}'
+      generateFakeBrowse: true
+    Type: Task
+    Resource: ${FakeProcessingLambdaFunction.Arn}
+    Catch:
+      - ErrorEquals:
+        - States.ALL
+        ResultPath: '$.exception'
+        Next: StopStatus
+    Retry:
+      - ErrorEquals:
           - States.ALL
-          ResultPath: '$.exception'
-          Next: StopStatus
-      Retry:
-        - ErrorEquals:
-            - States.ALL
-          IntervalSeconds: 2
-          MaxAttempts: 3
-      Next: FilesToGranulesStep
+        IntervalSeconds: 2
+        MaxAttempts: 3
+    Next: FilesToGranulesStep
 ```
 
 **Please note**: ```FakeProcessing``` is the core provided browse/cmr generation we're using for the example in this entry.
@@ -140,7 +138,7 @@ Note that in the task, the event.config.cmr will contain the values you configur
 
 In an editor, open app/config.yml and modify your stepFunctions key to contain the file you just created:
 
-```
+```yaml
 stepFunctions: !!files [
   {some list of workflows},
   'browseExample.yml'
@@ -149,12 +147,11 @@ stepFunctions: !!files [
 
 This will cause kes to export the workflows in the new file along with the other workflows configured for your deployment.
 
-
 #### Lambdas
 
 Ensure the following lambdas are in your deployment's lambdas.yml (reference the [example lambdas.yml](https://github.com/nasa/cumulus/blob/master/example/lambdas.yml)):
 
-```
+```yaml
 DiscoverGranules:
   handler: index.handler
   timeout: 300
@@ -205,7 +202,6 @@ PostToCmr:
 
  If you're not ingesting mock data matching the example, or would like to use this entry to ingest your own data please see the [build-lambda](#build-lambda) section below.    You will need to configure a different lambda entry for your lambda and utilize it in place of the ```Resource``` defined in the example workflow.
 
-
 #### Redeploy
 
 Once you've configured your CMR credentials, updated your workflow configuration, and updated your lambda configuration you should be able to redeploy your cumulus instance:
@@ -214,7 +210,7 @@ Once you've configured your CMR credentials, updated your workflow configuration
 
 You should expect to see a successful deployment message similar to:
 
-```
+```shell
 Template saved to app/cloudformation.yml
 Uploaded: s3://<bucket and key>/cloudformation.yml
 Waiting for the CF operation to complete
@@ -248,43 +244,43 @@ Now that the Cumulus stacks for your deployment have been updated with the new w
 
 Navigate to the 'Collection' tab on the interface and add a collection.  Note that you need to set the "provider_path" to the path on your bucket (e.g. "/data") that you've staged your mock/test data.
 
-```
+```json
 {
-	"name": "MOD09GQ",
-	"version": "006",
-	"dataType": "MOD09GQ",
-	"process": "modis",
-	"provider_path": "{{path_to_data}}",
-	"url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
-	"duplicateHandling": "replace",
-	"granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
-	"granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg|\\.jpg)",
-	"sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
-	"files": [
-		{
-			"bucket": "protected",
-			"regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
-			"sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
-			"type": "data",
-			"url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
-		},
-		{
-			"bucket": "private",
-			"regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$",
-			"sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met",
-			"type": "metadata"
-		},
-		{
-			"bucket": "protected-2",
-			"regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.cmr\\.xml$",
-			"sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml"
-		},
-		{
-			"bucket": "protected",
-			"regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.jpg$",
-			"sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.jpg"
-		}
-	],
+  "name": "MOD09GQ",
+  "version": "006",
+  "dataType": "MOD09GQ",
+  "process": "modis",
+  "provider_path": "{{path_to_data}}",
+  "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
+  "duplicateHandling": "replace",
+  "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
+  "granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg|\\.jpg)",
+  "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+  "files": [
+    {
+      "bucket": "protected",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+      "type": "data",
+      "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
+    },
+    {
+      "bucket": "private",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met",
+      "type": "metadata"
+    },
+    {
+      "bucket": "protected-2",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.cmr\\.xml$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml"
+    },
+    {
+      "bucket": "protected",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.jpg$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.jpg"
+    }
+  ],
 }
 ```
 
@@ -294,7 +290,7 @@ Navigate to the 'Collection' tab on the interface and add a collection.  Note th
 
 Next navigate to the Provider tab and create a provider with the following values, using whatever name you wish, and the bucket the data was staged to as the host:
 
-```
+```shell
 Name:
 Protocol: S3
 Host: {{data_source_bucket}}
@@ -304,21 +300,21 @@ Host: {{data_source_bucket}}
 
 Once you have your provider and rule added, go to the Rules tab, and add a rule with the following values (using whatever name you wish, populating the workflow and provider keys with the previously entered values:
 
-```
+```json
 {
-	"name": "TestBrowseGeneration",
-	"workflow": "DiscoverGranulesBrowseExample",
-	"provider": {{provider_from_previous_step}},
-	"collection": {
-		"name": "MOD09GQ",
-		"version": "006"
-	},
-	"meta": {},
-	"rule": {
-		"type": "onetime"
-	},
-	"state": "ENABLED",
-	"updatedAt": 1553053438767
+  "name": "TestBrowseGeneration",
+  "workflow": "DiscoverGranulesBrowseExample",
+  "provider": "{{provider_from_previous_step}}",
+  "collection": {
+    "name": "MOD09GQ",
+    "version": "006"
+  },
+  "meta": {},
+  "rule": {
+    "type": "onetime"
+  },
+  "state": "ENABLED",
+  "updatedAt": 1553053438767
 }
 ```
 
