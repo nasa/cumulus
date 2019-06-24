@@ -189,7 +189,9 @@ default:
       private: true
       port: 7000
       logApiGatewayToCloudWatch: true
+  logToSharedDestination: true
   sharedLogDestinationArn: '{{SHARED_LOG_DESTINATION_ARN}}'
+
 
   sns:
     sftracker:

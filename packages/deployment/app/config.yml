@@ -140,6 +140,7 @@ default:
 
   # defining the APIs. Each item will include a separate endpoint
   apiStage: dev
+  logToSharedDestination: false
 
   dynamos: !!files ['node_modules/@cumulus/api/config/tables.yml']
 

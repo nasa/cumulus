@@ -9,20 +9,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### PLEASE NOTE
 - **CUMULUS-799** added additional IAM permissions to support reading CloudWatch and API Gateway, so **you will have to redeploy your IAM stack.**
+
 - **CUMULUS-800** Several items:
-    - To enable APIGateway logging, Cumulus now creates and manages a Stage resource during deployment. Before upgrading Cumulus, it is necessary to delete the API Gateway stages on both the Backend API and the Distribution API.  An operator can do this easily through the [API Gateway Console](https://console.aws.amazon.com/apigateway/) selecting each of the deployed APIs [`stackname-backend` and `stackname-distribution`] and then `stages`, finally selecting the deployed stage and then using the `Delete Stage` button.  The same action can be accomplished from the command line with a script that has been added to the deployment package, `delete-stage`.  From the directory where `@cumulus/deployment` is installed, run `node_modules/.bin/delete-stage --prefix <prefix> --stage <apiStage> --doit` where `<prefix>` and `<apiStage>` are replaced with the correct values from your `config.yml`.
+
+    - **Delete existing API Gateway stages**: To enable APIGateway logging, Cumulus now creates and manages a Stage resource during deployment. Before upgrading Cumulus, it is necessary to delete the API Gateway stages on both the Backend API and the Distribution API.  An operator can do this easily through the [API Gateway Console](https://console.aws.amazon.com/apigateway/) selecting each of the deployed APIs [`stackname-backend` and `stackname-distribution`] and then `stages`, finally selecting the deployed stage and then using the `Delete Stage` button.  The same action can be accomplished from the command line with a script that has been added to the deployment package, `delete-stage`.  From the directory where `@cumulus/deployment` is installed, run `node_modules/.bin/delete-stage --prefix <prefix> --stage <apiStage> --doit` where `<prefix>` and `<apiStage>` are replaced with the correct values from your `config.yml`.
 
 
-    - To enable CloudWatch Logs for API Gateway, you must first grant API Gateway permission to read and write logs to CloudWatch for your account. The AmazonAPIGatewayPushToCloudWatchLogs managed policy (with an ARN of arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs) has all the required permissions. To grant these permissions to your account, create an IAM role with apigateway.amazonaws.com as its trusted entity, attach the AmazonAPIGatewayPushToCloudWatchLogs policy to the IAM role, and set the IAM role ARN on the `cloudWatchRoleArn` property on your API Gateway Account settings.  You can find a simple walkthrough in the [docs.](https://nasa.github.io/cumulus/docs/additional-deployment-options/additional-deployment-options-readme)
+    - **Set up permissions for API Gateway to write to CloudWatch**: In order to enable CloudWatch Logs for API Gateway, you must first grant the API Gateway permission to read and write logs to CloudWatch for your account. The `AmazonAPIGatewayPushToCloudWatchLogs` managed policy (with an ARN of `arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs`) has all the required permissions. To grant these permissions to your account, create an IAM role with `apigateway.amazonaws.com` as its trusted entity. Next attach the `AmazonAPIGatewayPushToCloudWatchLogs` policy to the IAM role. Finally, set the IAM role ARN on the `cloudWatchRoleArn` property on your API Gateway Account settings.  You can find a simple walkthrough in the [docs.](https://nasa.github.io/cumulus/docs/additional-deployment-options/additional-deployment-options-readme)
 
-	- To enable execution logging for an API set the `config.yaml`'s `apiConfigs.<API>.logApigatewayToCloudwatch` value to `true` where `<API>` can be either `backend` or `distribution`.  The example project has enabled this for the `distribution` api endpoint.
+	- **Configure API Gateway to write logs to CloudWatch** To enable execution logging for the distribution API set `config.yaml` `apiConfigs.distribution.logApigatewayToCloudwatch` value to `true`.  The example project has enabled this for the `distribution` api endpoint.  (The same could be configured for the `backend` API if desired).
 
+    - **Configure CloudWatch log delivery**: It is possible to deliver CloudWatch logs to a cross-account shared Logs::Destination.   An operator does this by adding two keys to the `config.yml` default level.
+         +  `logToSharedDestination: true`
+         +  `sharedLogDestinationArn: '{{SHARED_LOG_DESTINATION_ARN}}'`
+		 The `SHARED_LOG_DESTINATION_ARN` must be an an AWS::Logs::Destination to which your account can write.
+		 For NGAP deployments an operator can request permission for and the location of the ESDIS Metrics shared Logs destination for further processing in their [ELK](https://www.elastic.co/elk-stack) stack.
 
-- To enable metrics from the Distribution API,
-
-	- For NASA deployments in NGAP, you can enable logging. ...TODO [MHS, 2019-06-20]
-
-	- [MHS, 2019-06-20] TODO: configure aws server access logs on public and protected buckets to write to Metrics buckets.
+	- **Configure S3 Server Access Logs**:[MHS, 2019-06-20] TODO: configure aws server access logs on public and protected buckets to write to Metrics buckets.
 
 
 We have encountered transient lambda service errors in our integration testing. Please handle transient service errors following [these guidelines](https://docs.aws.amazon.com/step-functions/latest/dg/bp-lambda-serviceexception.html). The workflows in the `example/workflows` folder have been updated with retries configured for these errors.
@@ -33,15 +36,6 @@ We have encountered transient lambda service errors in our integration testing. 
   - Adds new BackendApi endpoint `distributionMetrics` that returns a summary of successful s3 accesses as well as a summary of distribution errors -- including s3 access errors, 4XX and 5XX errors.
 - **CUMULUS-1273**
   - Added lambda function EmsProductMetadataReport to generate EMS Product Metadata report
-
-- **CUMULUS-800**
-  - Adds `logApiGatewayToCloudWatch` to `apiConfig.api` options.
-  - Enables API Gateway logging for Cumulus distribution API in the default example configuration.
-  - Adds `sharedLogDestinationArn` to default example options, this must reference an AWS:Logs::Destination to which your account can write.
-  - Adds `logToSharedDestination` option to lambda configuration.  If `true` will create a subscription filter that passes cloudwatch logs to the shared AWS::Logs::Destination defined in `sharedLogDestinationArn`
-  - Adds
-  - TODO [MHS, 2019-06-12]
-
 
 ### Changed
 
