@@ -77,11 +77,23 @@ test.serial('postToCMR succeeds with correct payload', async (t) => {
       Key: key,
       Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml'))
     });
+
     const output = await postToCMR(newPayload);
+
+    t.is(output.granules.length, 1);
+
     t.is(
       output.granules[0].cmrLink,
       `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
     );
+
+    output.granules.forEach((g) => {
+      t.true(Number.isInteger(g.post_to_cmr_duration));
+      t.true(g.post_to_cmr_duration >= 0);
+
+      t.true(Number.isInteger(g.post_to_cmr_start_time));
+      t.true(g.post_to_cmr_start_time > 0);
+    });
   } finally {
     cmrjs.CMR.prototype.ingestGranule.restore();
   }
