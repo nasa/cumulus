@@ -24,49 +24,49 @@ We need to build a collection. Details on collections can be found [here](data-c
 
 ```json
 {
-    "queriedAt": "2018-08-03T16:44:25.919Z",
-    "name": "MOD09GQ",
-    "version": "006",
-    "process": "modis",
-    "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
-    "dataType": "MOD09GQ",
-    "granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)",
-    "createdAt": 1531324194001,
-    "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
-    "provider_path": "cumulus-test-data/pdrs",
-    "files": [
-      {
-        "bucket": "protected",
-        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
-        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
-        "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
-      },
-      {
-        "bucket": "private",
-        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$",
-        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met"
-      },
-      {
-        "bucket": "protected-2",
-        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.cmr\\.xml$",
-        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml"
-      },
-      {
-        "bucket": "public",
-        "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}_ndvi\\.jpg$",
-        "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_ndvi.jpg"
-      }
-    ],
-    "duplicateHandling": "replace",
-    "updatedAt": 1533313794693,
-    "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}",
-    "timestamp": 1533313798525,
-    "stats": {
-        "running": 0,
-        "completed": 0,
-        "failed": 2,
-        "total": 2
+  "queriedAt": "2018-08-03T16:44:25.919Z",
+  "name": "MOD09GQ",
+  "version": "006",
+  "process": "modis",
+  "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+  "dataType": "MOD09GQ",
+  "granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg)",
+  "createdAt": 1531324194001,
+  "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
+  "provider_path": "cumulus-test-data/pdrs",
+  "files": [
+    {
+      "bucket": "protected",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+      "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
+    },
+    {
+      "bucket": "private",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met"
+    },
+    {
+      "bucket": "protected-2",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.cmr\\.xml$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml"
+    },
+    {
+      "bucket": "public",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}_ndvi\\.jpg$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104_ndvi.jpg"
     }
+  ],
+  "duplicateHandling": "replace",
+  "updatedAt": 1533313794693,
+  "url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}",
+  "timestamp": 1533313798525,
+  "stats": {
+    "running": 0,
+    "completed": 0,
+    "failed": 2,
+    "total": 2
+  }
 }
 ```
 
@@ -76,20 +76,20 @@ Finally, let's create a [rule](data-cookbooks/setup.md#rules). In this example w
 
 ```json
 {
-    "name": "s3_provider_rule",
-    "workflow": "DiscoverAndQueuePdrs",
-    "provider": "s3_provider",
-    "collection": {
-        "name": "MOD09GQ",
-        "version": "006"
-    },
-    "rule": {
-        "type": "onetime"
-    },
-    "state": "ENABLED",
-    "tags": [
-        "test"
-    ]
+  "name": "s3_provider_rule",
+  "workflow": "DiscoverAndQueuePdrs",
+  "provider": "s3_provider",
+  "collection": {
+    "name": "MOD09GQ",
+    "version": "006"
+  },
+  "rule": {
+    "type": "onetime"
+  },
+  "state": "ENABLED",
+  "tags": [
+    "test"
+  ]
 }
 ```
 
