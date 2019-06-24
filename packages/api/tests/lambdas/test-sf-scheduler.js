@@ -7,14 +7,18 @@ const test = require('ava');
 const { SQS } = require('@cumulus/ingest/aws');
 const schedule = rewire('../../lambdas/sf-scheduler');
 
-const queueName = 'userDefinedQueueName';
-const keyedItem = 'userDefinedQueueUrl';
 const defaultQueueName = 'startSF';
+const customQueueName = 'userDefinedQueueName';
+const customQueueUrl = 'userDefinedQueueUrl';
+
 const fakeMessageResponse = {
   meta: {
     queues: {
-      [queueName]: keyedItem,
+      [customQueueName]: customQueueUrl,
       [defaultQueueName]: 'startSFQueueUrl'
+    },
+    queueExecutionLimits: {
+      [customQueueName]: 5
     }
   }
 };
@@ -102,10 +106,10 @@ test.serial('getCollection returns collection when input is a valid collection n
   t.deepEqual(response, fakeCollection);
 });
 
-test.serial('Sends a message to SQS with queueName if queueName is defined', async (t) => {
+test.serial('Sends a message to SQS with a custom queue name if queueName is defined', async (t) => {
   const scheduleInput = {
     ...scheduleEventTemplate,
-    queueName,
+    queueName: customQueueName,
     provider: fakeProvider.id,
     collection: {
       name: fakeCollection.name,
@@ -117,13 +121,14 @@ test.serial('Sends a message to SQS with queueName if queueName is defined', asy
   t.is(sqsStub.calledOnce, true);
 
   const [targetQueueUrl, targetMessage] = sqsStub.getCall(0).args;
-  t.is(targetQueueUrl, fakeMessageResponse.meta.queues[queueName]);
-  t.is(targetMessage.cumulus_meta.queueName, queueName);
+  t.is(targetQueueUrl, fakeMessageResponse.meta.queues[customQueueName]);
+  t.is(targetMessage.cumulus_meta.queueName, customQueueName);
+  t.is(targetMessage.meta.queueExecutionLimits[customQueueName], 5);
   t.deepEqual(targetMessage.meta.collection, fakeCollection);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
 });
 
-test.serial('Sends a message to SQS with startSF if queueName is not defined', async (t) => {
+test.serial('Sends a message to SQS with the startSF queue if queueName is not defined', async (t) => {
   const scheduleInput = {
     ...scheduleEventTemplate,
     provider: fakeProvider.id,
@@ -140,6 +145,7 @@ test.serial('Sends a message to SQS with startSF if queueName is not defined', a
   const [targetQueueUrl, targetMessage] = sqsStub.getCall(0).args;
   t.is(targetQueueUrl, fakeMessageResponse.meta.queues[defaultQueueName]);
   t.is(targetMessage.cumulus_meta.queueName, defaultQueueName);
+  t.is(targetMessage.meta.queueExecutionLimits[customQueueName], 5);
   t.deepEqual(targetMessage.meta.collection, fakeCollection);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
 });
