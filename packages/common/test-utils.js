@@ -101,6 +101,16 @@ exports.randomString = (numBytes = 20) => crypto.randomBytes(numBytes).toString(
 exports.randomId = (id, numBytes = 5) => `${id}${exports.randomString(numBytes)}`;
 
 /**
+ * Generate a random for the given scale.
+ *
+ * Defaults to a number between 1 and 10.
+ *
+ * @param {number} scale - scale for the random number. Defaults to 10.
+ * @returns {number} - a random number
+ */
+exports.randomNumber = (scale = 10) => Math.ceil(Math.random() * scale);
+
+/**
  * Create a random granule id from the regular expression
  *
  * @param {string} regex - regular expression string
