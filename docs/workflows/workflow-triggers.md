@@ -20,4 +20,4 @@ For a kinesis rule, when data is added to the kinesis stream, the Cloudwatch eve
 
 For an sns rule, when a message is published to the SNS topic, the `message consumer` receives the SNS message (JSON expected), parses it into an object, starts a new execution of the workflow associated with the rule and passes the object in the `payload` field of the Cumulus message.
 
-![](assets/schedule-workflows.png)
+![Diagram showing how workflows are scheduled via rules](assets/schedule-workflows.png)
