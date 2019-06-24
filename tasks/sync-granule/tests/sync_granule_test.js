@@ -174,25 +174,19 @@ test.serial('download Granule from FTP endpoint', async (t) => {
   await validateConfig(t, t.context.event.config);
   await validateInput(t, t.context.event.input);
 
-  try {
-    const output = await syncGranule(t.context.event);
+  const output = await syncGranule(t.context.event);
 
-    await validateOutput(t, output);
+  await validateOutput(t, output);
 
-    t.is(output.granules.length, 1);
-    t.is(output.granules[0].files.length, 1);
-    const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
-    t.is(
-      output.granules[0].files[0].filename,
-      `s3://${t.context.internalBucketName}/${keypath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`
-    );
-    t.truthy(output.granules[0].files[0].url_path);
-  } catch (e) {
-    if (e instanceof errors.RemoteResourceError) {
-      t.pass('ignoring this test. Test server seems to be down');
-    } else throw e;
-  }
+  t.is(output.granules.length, 1);
+  t.is(output.granules[0].files.length, 1);
+  const config = t.context.event.config;
+  const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
+  t.is(
+    output.granules[0].files[0].filename,
+    `s3://${t.context.internalBucketName}/${keypath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`
+  );
+  t.truthy(output.granules[0].files[0].url_path);
 });
 
 test.serial('download Granule from HTTP endpoint', async (t) => {
@@ -207,27 +201,47 @@ test.serial('download Granule from HTTP endpoint', async (t) => {
   await validateConfig(t, t.context.event.config);
   await validateInput(t, t.context.event.input);
 
-  // await fs.mkdir(localGranulePath);
-  try {
-    const granuleFilename = t.context.event.input.granules[0].files[0].name;
+  const granuleFilename = t.context.event.input.granules[0].files[0].name;
 
-    const output = await syncGranule(t.context.event);
+  const output = await syncGranule(t.context.event);
 
-    await validateOutput(t, output);
+  await validateOutput(t, output);
 
-    t.is(output.granules.length, 1);
-    t.is(output.granules[0].files.length, 1);
-    const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
-    t.is(
-      output.granules[0].files[0].filename,
-      `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
-    );
-  } catch (e) {
-    if (e instanceof errors.RemoteResourceError) {
-      t.pass('ignoring this test. Test server seems to be down');
-    } else throw e;
-  }
+  t.is(output.granules.length, 1);
+  t.is(output.granules[0].files.length, 1);
+  const config = t.context.event.config;
+  const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
+  t.is(
+    output.granules[0].files[0].filename,
+    `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
+  );
+});
+
+test.serial('verify that all returned granules have sync_granule_duration and sync_granule_end_time set', async (t) => {
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 3030
+  };
+  t.context.event.input.granules[0].files[0].path = '/granules';
+
+  await validateConfig(t, t.context.event.config);
+  await validateInput(t, t.context.event.input);
+
+  const output = await syncGranule(t.context.event);
+
+  await validateOutput(t, output);
+
+  t.is(output.granules.length, 1);
+
+  output.granules.forEach((g) => {
+    t.true(Number.isInteger(g.sync_granule_duration));
+    t.true(g.sync_granule_duration >= 0);
+
+    t.true(Number.isInteger(g.sync_granule_end_time));
+    t.true(g.sync_granule_end_time > 0);
+  });
 });
 
 test.serial('download Granule from SFTP endpoint', async (t) => {
@@ -245,33 +259,27 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
   await validateConfig(t, t.context.event.config);
   await validateInput(t, t.context.event.input);
 
-  try {
-    const granuleFilename = t.context.event.input.granules[0].files[0].name;
+  const granuleFilename = t.context.event.input.granules[0].files[0].name;
 
-    const output = await syncGranule(t.context.event);
+  const output = await syncGranule(t.context.event);
 
-    await validateOutput(t, output);
+  await validateOutput(t, output);
 
-    t.is(output.granules.length, 1);
-    t.is(output.granules[0].files.length, 1);
-    const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
-    t.is(
-      output.granules[0].files[0].filename,
-      `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
-    );
-    t.is(
-      true,
-      await s3ObjectExists({
-        Bucket: t.context.internalBucketName,
-        Key: `${keypath}/${granuleFilename}`
-      })
-    );
-  } catch (e) {
-    if (e instanceof errors.RemoteResourceError) {
-      t.pass('ignoring this test. Test server seems to be down');
-    } else throw e;
-  }
+  t.is(output.granules.length, 1);
+  t.is(output.granules[0].files.length, 1);
+  const config = t.context.event.config;
+  const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
+  t.is(
+    output.granules[0].files[0].filename,
+    `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
+  );
+  t.is(
+    true,
+    await s3ObjectExists({
+      Bucket: t.context.internalBucketName,
+      Key: `${keypath}/${granuleFilename}`
+    })
+  );
 });
 
 test.serial('download granule from S3 provider', async (t) => {
@@ -362,34 +370,28 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
   await validateConfig(t, event.config);
   await validateInput(t, event.input);
 
-  try {
-    // Stage the files to be downloaded
-    const granuleFilename = event.input.granules[0].files[0].name;
+  // Stage the files to be downloaded
+  const granuleFilename = event.input.granules[0].files[0].name;
 
-    const output = await syncGranule(event);
+  const output = await syncGranule(event);
 
-    await validateOutput(t, output);
+  await validateOutput(t, output);
 
-    t.is(output.granules.length, 1);
-    t.is(output.granules[0].files.length, 1);
-    const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
-    t.is(
-      output.granules[0].files[0].filename,
-      `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
-    );
-    t.is(
-      true,
-      await s3ObjectExists({
-        Bucket: t.context.internalBucketName,
-        Key: `${keypath}/${granuleFilename}`
-      })
-    );
-  } catch (e) {
-    if (e instanceof errors.RemoteResourceError) {
-      t.pass('ignoring this test. Test server seems to be down');
-    } else throw e;
-  }
+  t.is(output.granules.length, 1);
+  t.is(output.granules[0].files.length, 1);
+  const config = t.context.event.config;
+  const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
+  t.is(
+    output.granules[0].files[0].filename,
+    `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
+  );
+  t.is(
+    true,
+    await s3ObjectExists({
+      Bucket: t.context.internalBucketName,
+      Key: `${keypath}/${granuleFilename}`
+    })
+  );
 });
 
 test.serial('download granule with bad checksum in file from HTTP endpoint throws', async (t) => {
@@ -437,26 +439,20 @@ test.serial('validate file properties', async (t) => {
   await validateConfig(t, t.context.event.config);
   await validateInput(t, t.context.event.input);
 
-  try {
-    const granuleFilename = t.context.event.input.granules[0].files[0].name;
-    const output = await syncGranule(t.context.event);
+  const granuleFilename = t.context.event.input.granules[0].files[0].name;
+  const output = await syncGranule(t.context.event);
 
-    await validateOutput(t, output);
-    t.is(output.granules.length, 1);
-    t.is(output.granules[0].files.length, 2);
-    const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
-    t.is(
-      output.granules[0].files[0].filename,
-      `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
-    );
-    t.is(output.granules[0].files[0].url_path, 'file-example/');
-    t.is(output.granules[0].files[1].url_path, 'collection-example/');
-  } catch (e) {
-    if (e instanceof errors.RemoteResourceError) {
-      t.pass('ignoring this test. Test server seems to be down');
-    } else throw e;
-  }
+  await validateOutput(t, output);
+  t.is(output.granules.length, 1);
+  t.is(output.granules[0].files.length, 2);
+  const config = t.context.event.config;
+  const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
+  t.is(
+    output.granules[0].files[0].filename,
+    `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
+  );
+  t.is(output.granules[0].files[0].url_path, 'file-example/');
+  t.is(output.granules[0].files[1].url_path, 'collection-example/');
 });
 
 test.serial('attempt to download file from non-existent path - throw error', async (t) => {

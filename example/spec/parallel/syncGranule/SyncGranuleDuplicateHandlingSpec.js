@@ -146,8 +146,19 @@ describe('When the Sync Granule workflow is configured', () => {
         const files = lambdaOutput.payload.granules[0].files;
         const currentFiles = await getFilesMetadata(files);
 
+        const updatedGranule = {
+          ...expectedPayload.granules[0],
+          sync_granule_end_time: lambdaOutput.payload.granules[0].sync_granule_end_time,
+          sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration
+        };
+
+        const updatedExpectedPayload = {
+          ...expectedPayload,
+          granules: [updatedGranule]
+        };
+
         expect(currentFiles).toEqual(existingfiles);
-        expect(lambdaOutput.payload).toEqual(expectedPayload);
+        expect(lambdaOutput.payload).toEqual(updatedExpectedPayload);
       });
     });
 
