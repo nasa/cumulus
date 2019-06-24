@@ -212,8 +212,8 @@ describe('The EMS report', () => {
 
       // add a few seconds to allow records searchable in elasticsearch
       await sleep(5 * 1000);
-      const endTime = moment.utc().add(5, 'seconds').format();
-      const startTime = moment.utc().subtract(1, 'days').format();
+      const endTime = moment.utc().add(1, 'days').startOf('day').format();
+      const startTime = moment.utc().startOf('day').format();
 
       const response = await lambda().invoke({
         FunctionName: emsIngestReportLambda,
@@ -294,8 +294,8 @@ describe('The EMS report', () => {
         const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
         AWS.config.update({ region: region });
 
-        const endTime = moment.utc().format();
-        const startTime = moment.utc().subtract(1, 'days').format();
+        const endTime = moment.utc().add(1, 'days').startOf('day').format();
+        const startTime = moment.utc().startOf('day').format();
 
         const response = await lambda().invoke({
           FunctionName: emsDistributionReportLambda,
