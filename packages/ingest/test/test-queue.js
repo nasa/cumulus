@@ -4,7 +4,7 @@ const test = require('ava');
 const {
   createQueue, sqs, s3, s3PutObject, recursivelyDeleteS3Bucket
 } = require('@cumulus/common/aws');
-const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { randomString, randomId, randomNumber } = require('@cumulus/common/test-utils');
 const queue = require('../queue');
 
 test.beforeEach(async (t) => {
@@ -13,6 +13,7 @@ test.beforeEach(async (t) => {
 
   t.context.queueName = randomId('queue');
   t.context.queueUrl = await createQueue();
+  t.context.queueExecutionLimit = randomNumber();
 
   t.context.stateMachineArn = randomString();
 
@@ -23,6 +24,9 @@ test.beforeEach(async (t) => {
     meta: {
       queues: {
         [t.context.queueName]: t.context.queueUrl
+      },
+      queueExecutionLimits: {
+        [t.context.queueName]: t.context.queueExecutionLimit
       }
     }
   };
@@ -48,6 +52,7 @@ test.afterEach(async (t) => {
 test.serial('the queue receives a correctly formatted workflow message without a PDR', async (t) => {
   const granule = { granuleId: '1', files: [] };
   const {
+    queueExecutionLimit,
     queueName,
     queueUrl,
     stateMachineArn,
@@ -90,6 +95,9 @@ test.serial('the queue receives a correctly formatted workflow message without a
       queues: {
         [queueName]: queueUrl
       },
+      queueExecutionLimits: {
+        [queueName]: queueExecutionLimit
+      },
       provider: provider,
       collection: collection
     },
@@ -104,6 +112,7 @@ test.serial('the queue receives a correctly formatted workflow message without a
 test.serial('the queue receives a correctly formatted workflow message with a PDR', async (t) => {
   const granule = { granuleId: '1', files: [] };
   const {
+    queueExecutionLimit,
     queueName,
     queueUrl,
     stateMachineArn,
@@ -150,6 +159,9 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
     meta: {
       queues: {
         [queueName]: queueUrl
+      },
+      queueExecutionLimits: {
+        [queueName]: queueExecutionLimit
       },
       provider: provider,
       collection: collection,
