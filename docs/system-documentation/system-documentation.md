@@ -30,7 +30,7 @@ Visual representations of executed workflows can be found in the Cumulus dashboa
 
 If a workflow errors, the error will be handled according to the [error handling configuration](data-cookbooks/error-handling.md). The task that fails will have the `exception` field populated in the output, giving information about the error. Further information can be found in the CloudWatch logs for the task.
 
-![](assets/workflow-fail.png)
+![Graph of AWS Step Function execution showing a failing workflow](assets/workflow-fail.png)
 
 ### Workflow Did Not Start
 
@@ -51,24 +51,27 @@ The above error was being thrown by cumulus lambda function invocation. The KMS 
 On a lambda level, this error can be resolved by updating the KMS Key to `aws/lambda`. We've done this through the management console. Unfortunately, this approach doesn't scale well.
 
 The other resolution (that scales but takes some time) that was found is as follows:
+
 1. Delete the whole `{{#each newsted_templates}}` section from `@cumulus/deployment/app/cloudformation.template.yml` and redeploy the primary stack.
 2. Reinstall dependencies via `npm`.
 3. Re-deploy the stack.
 
-
 [Discussed in the Earthdata Wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/KMS+Exception%3A+AccessDeniedException).
-
 
 ### Error: Unable to import module 'index': Error
 
-This error is shown in the CloudWatch logs for a lambda function. The cause is a lambda defined in `lambdas.yml` that is pointing to an `index.js` source file. In order to resolve this issue, update the lambda source (in `lambdas.yml`, to point to the parent directory of the `index.js` file.
+This error is shown in the CloudWatch logs for a Lambda function.
 
-```
+One possible cause is that the Lambda definition in `lambdas.yml` is not pointing to the directory for the `index.js` source file. In order to resolve this issue, update the lambda definition in `lambdas.yml` to point to the parent directory of the `index.js` file.
+
+```yaml
 DiscoverGranules:
   handler: index.handler
   timeout: 300
   source: 'node_modules/@cumulus/discover-granules/dist/'
   useMessageAdapter: true
 ```
+
+If you are seeing this error when using the Lambda as a step in a Cumulus workflow, then inspect the output for this Lambda step in the AWS Step Function console. If you see the error `Cannot find module 'node_modules/@cumulus/cumulus-message-adapter-js'`, then you need to set `useMessageAdapter: true` in the Lambda definition in `lambdas.yml`.
 
 [Discussed in the Earthdata Wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/Troubleshooting).

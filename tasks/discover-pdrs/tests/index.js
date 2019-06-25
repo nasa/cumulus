@@ -5,7 +5,6 @@ const path = require('path');
 const fs = require('fs-extra');
 const { FTPError, RemoteResourceError } = require('@cumulus/common/errors');
 
-const { discoverPdrs } = require('..');
 
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
 const {
@@ -14,6 +13,7 @@ const {
   validateConfig,
   validateOutput
 } = require('@cumulus/common/test-utils');
+const { discoverPdrs } = require('..');
 
 test.beforeEach(async (t) => {
   const inputPath = path.join(__dirname, 'fixtures', 'input.json');
