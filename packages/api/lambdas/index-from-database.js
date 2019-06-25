@@ -18,8 +18,6 @@ async function indexModel(esClient, tableName, esIndex, indexFn) {
 
   /* eslint-disable no-await-in-loop */
   while (itemsComplete === false) {
-    log.info(`Indexing ${scanQueue.items.length} records from ${tableName}`);
-
     await scanQueue.fetchItems();
 
     itemsComplete = scanQueue.items[scanQueue.items.length - 1] === null;
@@ -29,30 +27,36 @@ async function indexModel(esClient, tableName, esIndex, indexFn) {
       scanQueue.items.pop();
     }
 
+    log.info(`Indexing ${scanQueue.items.length} records from ${tableName}`);
+
     await Promise.all(scanQueue.items.map((item) => indexFn(esClient, item, esIndex)));
+
+    log.info(`Completed index of ${scanQueue.items.length} records from ${tableName}`);
   }
   /* eslint-enable no-await-in-loop */
 }
 
-async function indexFromDatabase(esIndex) {
-  const esClient = await Search.es();
+async function indexFromDatabase(esIndex, tables, esHost) {
+  const esClient = await Search.es(esHost);
 
   await Promise.all([
-    indexModel(esClient, process.env.CollectionsTable, esIndex, indexer.indexCollection),
-    indexModel(esClient, process.env.ExecutionsTable, esIndex, indexer.indexExecution),
-    indexModel(esClient, process.env.GranulesTable, esIndex, indexer.indexGranule),
-    indexModel(esClient, process.env.PdrsTable, esIndex, indexer.indexPdr),
-    indexModel(esClient, process.env.ProvidersTable, esIndex, indexer.indexProvider),
-    indexModel(esClient, process.env.RulesTable, esIndex, indexer.indexRule)
+    indexModel(esClient, tables.collectionsTable, esIndex, indexer.indexCollection),
+    indexModel(esClient, tables.executionsTable, esIndex, indexer.indexExecution),
+    indexModel(esClient, tables.granulesTable, esIndex, indexer.indexGranule),
+    indexModel(esClient, tables.pdrsTable, esIndex, indexer.indexPdr),
+    indexModel(esClient, tables.providersTable, esIndex, indexer.indexProvider),
+    indexModel(esClient, tables.rulesTable, esIndex, indexer.indexRule)
   ]);
 }
 
 async function handler(event) {
-  log.info(`Starting index from database for index ${event.index}`);
+  log.info(`Starting index from database for index ${event.indexName}`);
 
-  await indexFromDatabase(event.index);
+  await indexFromDatabase(event.indexName, event.tables, event.esHost || process.env.ES_HOST);
 
   log.info('Index from database complete');
+
+  return 'Index from database complete';
 }
 
 module.exports = {

@@ -34,6 +34,15 @@ process.env.PdrsTable = randomString();
 process.env.ProvidersTable = randomString();
 process.env.RulesTable = randomString();
 
+const tables = {
+  collectionsTable: process.env.CollectionsTable,
+  executionsTable: process.env.ExecutionsTable,
+  granulesTable: process.env.GranulesTable,
+  pdrsTable: process.env.PdrsTable,
+  providersTable: process.env.ProvidersTable,
+  rulesTable: process.env.RulesTable
+};
+
 const executionModel = new models.Execution();
 const collectionModel = new models.Collection();
 const granuleModel = new models.Granule();
@@ -107,7 +116,7 @@ test.after.always(async () => {
 });
 
 test('No error is thrown if nothing is in the database', async (t) => {
-  t.notThrows(async () => indexFromDatabase.indexFromDatabase(esIndex));
+  t.notThrows(async () => indexFromDatabase.indexFromDatabase(esIndex, tables));
 });
 
 test.only('index executions', async (t) => {
@@ -122,7 +131,7 @@ test.only('index executions', async (t) => {
     addFakeData(numItems, fakeRuleFactoryV2, rulesModel, { workflow: workflowList[0].name })
   ]);
 
-  await indexFromDatabase.indexFromDatabase(esIndex);
+  await indexFromDatabase.indexFromDatabase(esIndex, tables);
 
   const searchResults = await Promise.all([
     searchEs('collection'),
