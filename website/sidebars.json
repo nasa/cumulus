@@ -68,6 +68,7 @@
       "data-cookbooks/cloudwatch-retention",
       "data-cookbooks/browse-generation",
       "data-cookbooks/tracking-files",
+      "data-cookbooks/run-tasks-in-lambda-or-docker",
       "data-cookbooks/throttling-queued-executions"
     ]
   },
