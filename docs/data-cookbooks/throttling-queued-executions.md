@@ -6,26 +6,13 @@ hide_title: true
 
 # Throttling queued executions
 
-In this entry, we will walkthrough how to create an SQS queue for scheduling executions which will be limit those executions to a maximum concurrency. And we will see how to configure our Cumulus workflows/rules to use this queue.
+In this entry, we will walkthrough how to create an SQS queue for scheduling executions which will be used to limit those executions to a maximum concurrency. And we will see how to configure our Cumulus workflows/rules to use this queue.
 
-## Why
+We will also review the architecture of this feature and highlight some implementation notes.
 
 Limiting the number of executions that can be running from a given queue is useful for controlling the cloud resource usage of workflows that may be lower priority, such as granule reingestion or reprocessing campaigns.
 
-Using separate queues to schedule lower priority work versus a single queue prevents the consumption of lower priority messages from being a bottleneck for higher priority messages and their workflows.
-
-## How it works
-
-![Architecture diagram showing how queued execution throttling works](assets/queued-execution-throttling.png)
-
-Execution throttling based on the queue works by manually keeping a count of how many executions are running for the queue at a time. The key operation that prevents the number of executions from exceeding the maximum for the queue is that before starting new executions, the `sqs2sfThrottle` lambda attempts to increment the semaphore and responds as follows:
-
-- If the increment operation is successful, then the count was not at the maximum and an execution is started
-- If the increment operation fails, then the count was already at the maximum so no execution is started
-
-Using a semaphore allows the maximum number of executions to be **based on the queue, not the workflow for a given execution message**. Thus, the number of executions that are running for a given queue will be limited to the maximum for that queue regardless of which workflow(s) are started.
-
-## Implementing a queue for throttling executions
+## Implementing the queue
 
 ### Create and deploy the queue
 
@@ -116,3 +103,20 @@ Create or update a rule definition to include a `queueName` property that refers
 ```
 
 After creating/updating the rule, any subsequent invocations of the rule should respect the maximum number of executions when starting workflows from the queue.
+
+## Architecture
+
+![Architecture diagram showing how queued execution throttling works](assets/queued-execution-throttling.png)
+
+Execution throttling based on the queue works by manually keeping a count (semaphore) of how many executions are running for the queue at a time. The key operation that prevents the number of executions from exceeding the maximum for the queue is that before starting new executions, the `sqs2sfThrottle` lambda attempts to increment the semaphore and responds as follows:
+
+- If the increment operation is successful, then the count was not at the maximum and an execution is started
+- If the increment operation fails, then the count was already at the maximum so no execution is started
+
+## Final notes
+
+This implementation of limiting the number of concurrent executions based on the queue has several consequences worth noting:
+
+- The number of executions that are running for a given queue will be limited to the maximum for that queue regardless of which workflow(s) are started.
+- If you use the same queue to schedule executions across multiple workflows/rules, then the limit on the total number of executions running concurrently **will be applied to all of the executions scheduled across all of those workflows/rules**.
+- If you are scheduling the same workflow both via a queue with a `maxExecutions` value and a queue without a `maxExecutions` value, **only the executions scheduled via the queue with the `maxExecutions` value will be limited to the maximum**.
