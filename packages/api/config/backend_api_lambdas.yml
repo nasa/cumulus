@@ -77,6 +77,7 @@ ApiEndpoints:
     distributionApiId:
       function: Ref
       value: distributionRestApi
+    backwardProcessingQueueName: '{{parent.backwardProcessingQueueName}}SQS'
   apiGateway:
     - api: backend
       path: '{proxy+}'
