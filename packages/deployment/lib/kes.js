@@ -253,11 +253,8 @@ class UpdatedKes extends Kes {
     // Arrow functions cannot be used when registering Handlebars helpers
     // https://stackoverflow.com/questions/43932566/handlebars-block-expression-do-not-work
 
-    Handlebars.registerHelper('ifEquals', function ifEquals(arg1, arg2, options) {
-      return (arg1 === arg2) ? options.fn(this) : options.inverse(this);
-    });
-    Handlebars.registerHelper('ifNotEquals', function ifNotEquals(arg1, arg2, options) {
-      return (arg1 !== arg2) ? options.fn(this) : options.inverse(this);
+    Handlebars.registerHelper('ifEqualsString', function ifEquals(arg1, arg2, options) {
+      return (String(arg1) === String(arg2)) ? options.fn(this) : options.inverse(this);
     });
 
     Handlebars.registerHelper('collectBuckets', (buckets, bucketType) => this.collectBuckets(buckets, bucketType));

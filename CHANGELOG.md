@@ -14,18 +14,28 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
     - **Delete existing API Gateway stages**: To enable APIGateway logging, Cumulus now creates and manages a Stage resource during deployment. Before upgrading Cumulus, it is necessary to delete the API Gateway stages on both the Backend API and the Distribution API.  An operator can do this easily through the [API Gateway Console](https://console.aws.amazon.com/apigateway/) selecting each of the deployed APIs [`stackname-backend` and `stackname-distribution`] and then `stages`, finally selecting the deployed stage and then using the `Delete Stage` button.  The same action can be accomplished from the command line with a script that has been added to the deployment package, `delete-stage`.  From the directory where `@cumulus/deployment` is installed, run `node_modules/.bin/delete-stage --prefix <prefix> --stage <apiStage> --doit` where `<prefix>` and `<apiStage>` are replaced with the correct values from your `config.yml`.
 
-
     - **Set up permissions for API Gateway to write to CloudWatch**: In order to enable CloudWatch Logs for API Gateway, you must first grant the API Gateway permission to read and write logs to CloudWatch for your account. The `AmazonAPIGatewayPushToCloudWatchLogs` managed policy (with an ARN of `arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs`) has all the required permissions. To grant these permissions to your account, create an IAM role with `apigateway.amazonaws.com` as its trusted entity. Next attach the `AmazonAPIGatewayPushToCloudWatchLogs` policy to the IAM role. Finally, set the IAM role ARN on the `cloudWatchRoleArn` property on your API Gateway Account settings.  You can find a simple walkthrough in the [docs.](https://nasa.github.io/cumulus/docs/additional-deployment-options/additional-deployment-options-readme)
 
-	- **Configure API Gateway to write logs to CloudWatch** To enable execution logging for the distribution API set `config.yaml` `apiConfigs.distribution.logApigatewayToCloudwatch` value to `true`.  The example project has enabled this for the `distribution` api endpoint.  (The same could be configured for the `backend` API if desired).
+    - **Configure API Gateway to write logs to CloudWatch** To enable execution logging for the distribution API set `config.yaml` `apiConfigs.distribution.logApigatewayToCloudwatch` value to `true`.  The example project has enabled this for the `distribution` api endpoint.  (The same could be configured for the `backend` API if desired).
 
     - **Configure CloudWatch log delivery**: It is possible to deliver CloudWatch logs to a cross-account shared Logs::Destination.   An operator does this by adding two keys to the `config.yml` default level.
          +  `logToSharedDestination: true`
          +  `sharedLogDestinationArn: '{{SHARED_LOG_DESTINATION_ARN}}'`
-		 The `SHARED_LOG_DESTINATION_ARN` must be an an AWS::Logs::Destination to which your account can write.
-		 For NGAP deployments an operator can request permission for and the location of the ESDIS Metrics shared Logs destination for further processing in their [ELK](https://www.elastic.co/elk-stack) stack.
+         The `SHARED_LOG_DESTINATION_ARN` must be an an AWS::Logs::Destination to which your account can write.
+         For NGAP deployments an operator can request permission for and the location of the ESDIS Metrics shared Logs destination for further processing in their [ELK](https://www.elastic.co/elk-stack) stack.
 
-	- **Configure S3 Server Access Logs**:[MHS, 2019-06-20] TODO: configure aws server access logs on public and protected buckets to write to Metrics buckets.
+    - **Additional Lambda Logging**: It is now possible to configure any lambda to deliver logs to a shared subscription by setting  `logToSharedDestination` to true on any lambda config. This will configure CloudFormation to create the LogGroup and SubscriptionFilter pointing the the `sharedLogDestinationArn` to a Logs::Destination and setting `logToSharedDestination` to `true` on a lambda configuration.
+
+    *Example config:*
+    ```yml
+    HelloWorld:
+        handler: index.handler
+        source: node_modules/@cumulus/hello-world/dist/
+        logToSharedDestination: true
+    ```
+
+    - **Configure S3 Server Access Logs**:  If you are in an NGAP environment you may configure S3 Server Access Logs to be delivered to a shared bucket where the Metrics Team will ingest the logs into their ELK stack.
+
 
 
 We have encountered transient lambda service errors in our integration testing. Please handle transient service errors following [these guidelines](https://docs.aws.amazon.com/step-functions/latest/dg/bp-lambda-serviceexception.html). The workflows in the `example/workflows` folder have been updated with retries configured for these errors.
@@ -34,6 +44,7 @@ We have encountered transient lambda service errors in our integration testing. 
 
 - **CUMULUS-799**
   - Adds new BackendApi endpoint `distributionMetrics` that returns a summary of successful s3 accesses as well as a summary of distribution errors -- including s3 access errors, 4XX and 5XX errors.
+
 - **CUMULUS-1273**
   - Added lambda function EmsProductMetadataReport to generate EMS Product Metadata report
 

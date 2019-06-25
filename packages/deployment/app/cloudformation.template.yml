@@ -519,7 +519,7 @@ Resources:
       RetentionInDays: 30
 {{/if}}
 
-{{# ifEquals this.logToSharedDestination "true" }}
+{{# ifEqualsString this.logToSharedDestination true }}
   # Configure Lambda log subscription to shareLogDestination
   {{@key}}LogSubscriptionToSharedDestination:
     Type: AWS::Logs::SubscriptionFilter
@@ -535,7 +535,7 @@ Resources:
     Properties:
       LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
       RetentionInDays: 30
-{{/ifEquals}}
+{{/ifEqualsString}}
 
 
   {{#ifEquals @key "ScheduleSF"}}
