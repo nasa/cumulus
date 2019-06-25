@@ -1,9 +1,10 @@
 'use strict';
 
 const fs = require('fs-extra');
+const isNumber = require('lodash.isnumber');
+const isString = require('lodash.isstring');
 const path = require('path');
 const { URL, resolve } = require('url');
-const cloneDeep = require('lodash.clonedeep');
 const difference = require('lodash.difference');
 const includes = require('lodash.includes');
 const intersection = require('lodash.intersection');
@@ -179,18 +180,6 @@ describe('The S3 Ingest Granules workflow', () => {
         distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT
       }
     );
-
-    console.log('Start FailingExecution');
-    failingWorkflowExecution = await buildAndExecuteWorkflow(
-      config.stackName,
-      config.bucket,
-      workflowName,
-      collection,
-      provider,
-      {}
-    );
-    failedExecutionArn = failingWorkflowExecution.executionArn.split(':');
-    failedExecutionName = failedExecutionArn.pop();
   });
 
   afterAll(async () => {
@@ -200,7 +189,6 @@ describe('The S3 Ingest Granules workflow', () => {
       collectionModel.delete(collection),
       providerModel.delete(provider),
       executionModel.delete({ arn: workflowExecution.executionArn }),
-      executionModel.delete({ arn: failingWorkflowExecution.executionArn }),
       granulesApiTestUtils.removePublishedGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
@@ -259,11 +247,28 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('output includes the ingested granule with file staging location paths', () => {
-      expect(lambdaOutput.payload).toEqual(expectedSyncGranulePayload);
+      const updatedGranule = {
+        ...expectedSyncGranulePayload.granules[0],
+        sync_granule_end_time: lambdaOutput.meta.input_granules[0].sync_granule_end_time,
+        sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration
+      };
+
+      const updatedPayload = {
+        ...expectedSyncGranulePayload,
+        granules: [updatedGranule]
+      };
+
+      expect(lambdaOutput.payload).toEqual(updatedPayload);
     });
 
     it('updates the meta object with input_granules', () => {
-      expect(lambdaOutput.meta.input_granules).toEqual(expectedSyncGranulePayload.granules);
+      const updatedGranule = {
+        ...expectedSyncGranulePayload.granules[0],
+        sync_granule_end_time: lambdaOutput.meta.input_granules[0].sync_granule_end_time,
+        sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration
+      };
+
+      expect(lambdaOutput.meta.input_granules).toEqual([updatedGranule]);
     });
   });
 
@@ -346,16 +351,24 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('has expected payload', () => {
-      expect(granule.published).toBe(true);
       expect(granule.cmrLink).toEqual(`${getUrl('search')}granules.json?concept_id=${granule.cmrConceptId}`);
 
-      // Set the expected CMR values since they're going to be different
-      // every time this is run.
-      const updatedExpectedPayload = cloneDeep(expectedPayload);
-      updatedExpectedPayload.granules[0].cmrLink = granule.cmrLink;
-      updatedExpectedPayload.granules[0].cmrConceptId = granule.cmrConceptId;
+      const thisExpectedPayload = {
+        ...expectedPayload,
+        granules: [
+          {
+            ...expectedPayload.granules[0],
+            cmrConceptId: postToCmrOutput.payload.granules[0].cmrConceptId,
+            cmrLink: postToCmrOutput.payload.granules[0].cmrLink,
+            post_to_cmr_duration: postToCmrOutput.payload.granules[0].post_to_cmr_duration,
+            post_to_cmr_start_time: postToCmrOutput.payload.granules[0].post_to_cmr_start_time,
+            sync_granule_duration: postToCmrOutput.payload.granules[0].sync_granule_duration,
+            sync_granule_end_time: postToCmrOutput.payload.granules[0].sync_granule_end_time
+          }
+        ]
+      };
 
-      expect(postToCmrOutput.payload).toEqual(updatedExpectedPayload);
+      expect(postToCmrOutput.payload).toEqual(thisExpectedPayload);
     });
 
     it('publishes the granule metadata to CMR', () => {
@@ -444,11 +457,27 @@ describe('The S3 Ingest Granules workflow', () => {
     let existCheck = [];
 
     beforeAll(async () => {
+      console.log('Start FailingExecution');
+      failingWorkflowExecution = await buildAndExecuteWorkflow(
+        config.stackName,
+        config.bucket,
+        workflowName,
+        collection,
+        provider,
+        {}
+      );
+      failedExecutionArn = failingWorkflowExecution.executionArn.split(':');
+      failedExecutionName = failedExecutionArn.pop();
+
       executionName = postToCmrOutput.cumulus_meta.execution_name;
       existCheck = await Promise.all([
         s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${executionName}.output` }),
         s3ObjectExists({ Bucket: config.bucket, Key: `${config.stackName}/test-output/${failedExecutionName}.output` })
       ]);
+    });
+
+    afterAll(async () => {
+      await executionModel.delete({ arn: failingWorkflowExecution.executionArn });
     });
 
     it('is published on a successful workflow completion', () => {
@@ -493,8 +522,24 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
       });
 
-      it('has the granule with a CMR link', () => {
+      it('returns the granule with a CMR link', () => {
         expect(granule.cmrLink).not.toBeUndefined();
+      });
+
+      it('returns the granule with a timeToPreprocess', () => {
+        expect(isNumber(granule.timeToPreprocess)).toBe(true);
+      });
+
+      it('returns the granule with a timeToArchive', () => {
+        expect(isNumber(granule.timeToArchive)).toBe(true);
+      });
+
+      it('returns the granule with a processingStartDateTime', () => {
+        expect(isString(granule.processingStartDateTime)).toBe(true);
+      });
+
+      it('returns the granule with a processingEndDateTime', () => {
+        expect(isString(granule.processingEndDateTime)).toBe(true);
       });
 
       describe('when a reingest granule is triggered via the API', () => {
@@ -631,6 +676,7 @@ describe('The S3 Ingest Granules workflow', () => {
             }];
           } catch (err) {
             console.error('Error in beforeAll() block:', err);
+            console.log(`File errored on: ${JSON.stringify(file, null, 2)}`);
           }
         });
 
@@ -694,6 +740,7 @@ describe('The S3 Ingest Granules workflow', () => {
           granuleId: inputPayload.granules[0].granuleId
         });
         const resp = JSON.parse(granuleResponse.body);
+
         expect(resp.message).toEqual('Granule not found');
       });
     });
@@ -746,6 +793,7 @@ describe('The S3 Ingest Granules workflow', () => {
           prefix: config.stackName,
           arn: executionArn
         });
+
         executionStatus = JSON.parse(executionStatusResponse.body);
 
         allStates = Object.keys(workflowConfig.States);

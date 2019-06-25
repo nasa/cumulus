@@ -188,7 +188,7 @@ test.serial('creating a granule record without state_machine info', async (t) =>
   delete newPayload.cumulus_meta.state_machine;
 
   const r = await indexer.granule(newPayload);
-  t.is(r, undefined);
+  t.is(r, null);
 });
 
 test.serial('creating a granule record without a granule', async (t) => {
@@ -197,7 +197,7 @@ test.serial('creating a granule record without a granule', async (t) => {
   delete newPayload.meta;
 
   const r = await indexer.granule(newPayload);
-  t.is(r, undefined);
+  t.is(r, null);
 });
 
 test.serial('creating a granule record in meta section', async (t) => {
@@ -689,7 +689,7 @@ test.serial('pass a sns message to main handler with parse info', async (t) => {
 
   t.is(resp.length, 1);
   t.truthy(resp[0].sf);
-  t.falsy(resp[0].granule);
+  t.is(resp[0].granule, null);
   t.truthy(resp[0].pdr);
 
   // fake pdr index to elasticsearch (this is done in a lambda function)
@@ -713,11 +713,12 @@ test.serial('pass a sns message to main handler with discoverpdr info', async (t
   ), 'utf8');
 
   const event = JSON.parse(JSON.parse(txt.toString()));
+
   const resp = await indexer.handler(event, {}, noop);
 
   t.is(resp.length, 1);
   t.truthy(resp[0].sf);
-  t.falsy(resp[0].granule);
+  t.is(resp[0].granule, null);
   t.falsy(resp[0].pdr);
 });
 
