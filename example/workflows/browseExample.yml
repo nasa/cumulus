@@ -162,6 +162,7 @@ CookbookBrowseExample:
         bucket: '{$.meta.buckets.internal.name}'
         buckets: '{$.meta.buckets}'
         distribution_endpoint: '{$.meta.distribution_endpoint}'
+        cmr: '{$.meta.cmr}'
         collection: '{$.meta.collection}'
         duplicateHandling: '{$.meta.collection.duplicateHandling}'
       Type: Task
