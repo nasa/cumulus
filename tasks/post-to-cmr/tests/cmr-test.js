@@ -127,6 +127,33 @@ test.serial('postToCMR returns SIT url when CMR_ENVIRONMENT=="SIT"', async (t) =
   }
 });
 
+test.serial('postToCMR sets CMR_ENVIRONMENT when it exists in event', async (t) => {
+  const newPayload = t.context.payload;
+  newPayload.config.cmr.cmrEnvironment = 'SIT';
+
+  sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
+    result
+  }));
+  const granuleId = newPayload.input.granules[0].granuleId;
+  const key = `${granuleId}.cmr.xml`;
+
+  try {
+    await aws.promiseS3Upload({
+      Bucket: t.context.bucket,
+      Key: key,
+      Body: fs.createReadStream('tests/data/meta.xml')
+    });
+    const output = await postToCMR(newPayload);
+    t.is(
+      output.granules[0].cmrLink,
+      `https://cmr.sit.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+    );
+  } finally {
+    cmrjs.CMR.prototype.ingestGranule.restore();
+    delete process.env.CMR_ENVIRONMENT;
+  }
+});
+
 test.serial('postToCMR throws an error if there is no CMR metadata file', async (t) => {
   const newPayload = t.context.payload;
 
