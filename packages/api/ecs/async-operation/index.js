@@ -175,7 +175,7 @@ function updateAsyncOperation(status, output) {
     },
     ExpressionAttributeValues: {
       ':s': { S: status },
-      ':o': { S: JSON.stringify(actualOutput) },
+      ':o': { S: actualOutput ? JSON.stringify(actualOutput) : 'none' },
       ':u': { N: (Number(Date.now())).toString() }
     },
     UpdateExpression: 'SET #S = :s, #O = :o, #U = :u'

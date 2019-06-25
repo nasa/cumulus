@@ -247,3 +247,4 @@ IndexFromDatabase:
   memory: 512
   source: 'node_modules/@cumulus/api/dist/indexFromDatabase/'
   launchInVpc: true
+  useElasticSearch: '{{es.name}}'

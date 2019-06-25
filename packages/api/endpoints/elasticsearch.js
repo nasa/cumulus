@@ -17,6 +17,8 @@ function timestampedIndexName() {
 }
 
 async function createEsSnapshot(req, res) {
+  console.log(req.body);
+
   return res.boom.badRequest('Functionality not yet implemented');
 
   // *** Currently blocked on NGAP ****
@@ -181,26 +183,15 @@ async function changeIndex(req, res) {
   return res.send({ message });
 }
 
-async function indices(req, res) {
+async function indicesStatus(req, res) {
   const esClient = await Search.es();
 
   return res.send(await esClient.cat.indices({}));
 }
 
-async function createEsIndex(req, res) {
-  const esClient = await Search.es();
-
-  try {
-    await createIndex(esClient, req.body.indexName)
-  } catch (err) {
-    return res.boom.badRequest(`Error creating index ${req.body.indexName}: ${err.message}`);
-  }
-
-  return res.send({ message: `Index ${req.body.inbdexName} created.` });
-}
-
 async function indexFromDatabase(req, res) {
   const esClient = await Search.es();
+
   const indexName = req.body.indexName || timestampedIndexName();
 
   await createIndex(esClient, indexName)
@@ -220,7 +211,18 @@ async function indexFromDatabase(req, res) {
       asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
       cluster: process.env.EcsCluster,
       lambdaName: process.env.IndexFromDatabaseLambda,
-      payload: { granuleIds: req.body.granuleIds }
+      payload: {
+        indexName,
+        tables: {
+          collectionsTable: process.env.CollectionsTable,
+          executionsTable: process.env.ExecutionsTable,
+          granulesTable: process.env.GranulesTable,
+          pdrsTable: process.env.PdrsTable,
+          providersTable: process.env.ProvidersTable,
+          rulesTable: process.env.RulesTable
+        },
+        esHost: process.env.ES_HOST
+      }
     });
   } catch (err) {
     if (err.name !== 'EcsStartTaskError') throw err;
@@ -236,8 +238,7 @@ router.put('/create-snapshot', createEsSnapshot);
 router.post('/reindex', reindex);
 router.get('/reindex-status', reindexStatus);
 router.post('/change-index', changeIndex);
-router.post('/create-index', createEsIndex);
 router.post('/index-from-database', indexFromDatabase);
-router.get('/indices', indices);
+router.get('/indices-status', indicesStatus);
 
 module.exports = router;
