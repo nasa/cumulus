@@ -1,6 +1,7 @@
 'use strict';
 
 const cloneDeep = require('lodash.clonedeep');
+const pRetry = require('p-retry');
 const {
   aws: { lambda }
 } = require('@cumulus/common');
@@ -9,6 +10,30 @@ const {
   testUtils: { fakeAccessTokenFactory, fakeUserFactory },
   tokenUtils: { createJwtToken }
 } = require('@cumulus/api');
+
+function invokeApi(prefix, payload) {
+  return pRetry(
+    async () => {
+      const apiOutput = await lambda().invoke({
+        Payload: JSON.stringify(payload),
+        FunctionName: `${prefix}-ApiEndpoints`
+      }).promise();
+
+      const outputPayload = JSON.parse(apiOutput.Payload);
+
+      if (outputPayload.errorMessage
+          && outputPayload.errorMessage.includes('Task timed out')) {
+        throw new Error(`Error calling ${payload.path}: ${outputPayload.errorMessage}`);
+      }
+
+      return outputPayload;
+    },
+    {
+      retries: 3,
+      onFailedAttempt: (error) => console.log(`API invoke error: ${error.message}. Retrying.`)
+    }
+  );
+}
 
 /**
  * Call the Cumulus API by invoking the Lambda function that backs the API
@@ -53,17 +78,14 @@ async function callCumulusApi({ prefix, payload: userPayload, userParams = {} })
 
   let apiOutput;
   try {
-    apiOutput = await lambda().invoke({
-      Payload: JSON.stringify(payload),
-      FunctionName: `${prefix}-ApiEndpoints`
-    }).promise();
+    apiOutput = await invokeApi(prefix, payload);
   } finally {
     // Delete the user created for this request
     await userModel.delete(userName);
     await accessTokenModel.delete({ accessToken });
   }
 
-  return JSON.parse(apiOutput.Payload);
+  return apiOutput;
 }
 
 /**

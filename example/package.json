@@ -78,6 +78,8 @@
     "lodash.get": "^4.4.2",
     "lodash.includes": "^4.3.0",
     "lodash.intersection": "^4.4.0",
+    "lodash.isnumber": "^3.0.3",
+    "lodash.isstring": "^4.0.1",
     "lodash.merge": "^4.6.1",
     "lodash.unset": "^4.5.2",
     "mime-types": "^2.1.22",
