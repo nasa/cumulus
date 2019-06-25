@@ -17,8 +17,6 @@ function timestampedIndexName() {
 }
 
 async function createEsSnapshot(req, res) {
-  console.log(req.body);
-
   return res.boom.badRequest('Functionality not yet implemented');
 
   // *** Currently blocked on NGAP ****
