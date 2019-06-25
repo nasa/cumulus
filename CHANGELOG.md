@@ -22,7 +22,9 @@ We have encountered transient lambda service errors in our integration testing. 
 - **CUMULUS-1241**
   - Added information about queues with maximum execution limits defined to default workflow templates (`meta.queueExecutionLimits`)
 - **CUMULUS-1311**
-  -
+  - Added `@cumulus/common/message` with various message parsing/preparation helpers
+- **CUMULUS-812**
+  - Added support for limiting the number of concurrent executions started from a queue. [See the data cookbook](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions) for more information.
 
 ### Changed
 
@@ -32,15 +34,6 @@ We have encountered transient lambda service errors in our integration testing. 
 - **CUMULUS-1245 CUMULUS-795**
   - Added additional `ems` configuration parameters for sending the ingest reports to EMS
   - Added functionality to send daily ingest reports to EMS
-
-### Fixed
-
-- **CUMULUS-1319**
-  - Fixed a bug where granule ingest times were not being stored to the database
-
-- **CUMULUS-796**
-  - Added production information (collection ShortName and Version, granuleId) to EMS distribution report
-  - Added functionality to send daily distribution reports to EMS
 
 - **CUMULUS-1241**
   - Removed the concept of "priority levels" and added ability to define a number of maximum concurrent executions per SQS queue
@@ -59,6 +52,15 @@ We have encountered transient lambda service errors in our integration testing. 
   - Updated `@cumulus/queue-granules` to set `cumulus_meta.queueName` for queued execution messages
   - Updated `@cumulus/queue-pdrs` to set `cumulus_meta.queueName` for queued execution messages
   - Updated `sqs2sfThrottle` lambda to immediately decrement queue semaphore value if dispatching Step Function execution throws an error
+
+### Fixed
+
+- **CUMULUS-1319**
+  - Fixed a bug where granule ingest times were not being stored to the database
+
+- **CUMULUS-796**
+  - Added production information (collection ShortName and Version, granuleId) to EMS distribution report
+  - Added functionality to send daily distribution reports to EMS
 
 ## [v1.13.0] - 2019-5-20
 
