@@ -13,7 +13,7 @@ const assertions = require('../../../lib/assertions');
 const {
   createFakeJwtAuthToken
 } = require('../../../lib/testUtils');
-const { Search } = require('../../../es/search');
+const { Search, defaultIndexAlias } = require('../../../es/search');
 const { bootstrapElasticSearch } = require('../../../lambdas/bootstrap');
 const mappings = require('../../../models/mappings.json');
 
@@ -472,4 +472,33 @@ test.serial('Indices status', async (t) => {
 
   await esClient.indices.delete({ index: indexName });
   await esClient.indices.delete({ index: otherIndexName });
+});
+
+test.serial('Current index - default alias', async (t) => {
+  const indexName = randomString();
+  await createIndex(indexName, defaultIndexAlias);
+
+  const response = await request(app)
+    .get('/elasticsearch/current-index')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.true(response.body.includes(indexName));
+
+  await esClient.indices.delete({ index: indexName });
+});
+
+test.serial('Current index - custom alias', async (t) => {
+  const indexName = randomString();
+  const customAlias = randomString();
+  await createIndex(indexName, customAlias);
+
+  const response = await request(app)
+    .get(`/elasticsearch/current-index/${customAlias}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.deepEqual(response.body, [indexName]);
+
+  await esClient.indices.delete({ index: indexName });
 });
