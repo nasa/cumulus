@@ -7,7 +7,7 @@ hide_title: true
 # Lambda logging subscriptions
 
 
-It is now possible to configure any lambda to deliver logs to a shared subscription by setting  `logToSharedDestination` to the ARN of a writable location (either an AWS::Logs::Destination or a Kinesis Stream) on any lambda config. This will configure CloudFormation to create the LogGroup and SubscriptionFilter pointing to the `logToSharedDestination` value.
+It is now possible to configure any lambda to deliver logs to a shared subscription by updating the lambda's config with a `logToSharedDestination` key whose value is a writable location (either an AWS::Logs::Destination or a Kinesis Stream). This will configure CloudFormation to create the LogGroup and SubscriptionFilter pointing to the `logToSharedDestination` value.
 
 *Example config:*
 ```yml

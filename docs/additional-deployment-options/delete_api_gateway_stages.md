@@ -8,7 +8,7 @@ hide_title: true
 
 
 ### via console
-An operator can do this easily through the [API Gateway Console](https://console.aws.amazon.com/apigateway/) for each of the deployed APIs `<stackname>-backend` and `<stackname>-distribution`, select and then select `stages`, finally selecting the deployed stage and then using the `Delete Stage` button.
+An operator can easily delete an existing API Gateway stage through the [API Gateway Console](https://console.aws.amazon.com/apigateway/). For each of the deployed APIs `<stackname>-backend` and `<stackname>-distribution`, select the API and then select `stages`, finally select the deployed stage and use the `Delete Stage` button.
 
 ![Sample image of API Gateway Console](assets/APIGateway-Delete-Stage.png)
 
@@ -19,4 +19,4 @@ The same action can be accomplished from the command line with a script that has
 ```sh
 node_modules/.bin/delete-stage --prefix <prefix> --stage <apiStage> --doit
 ```
-where `<prefix>` and `<apiStage>` are replaced with the correct values from your `config.yml`.
+Where `<prefix>` and `<apiStage>` are replaced with the correct values from your `config.yml`.  In the example above, those would be `jc` and `dev`.

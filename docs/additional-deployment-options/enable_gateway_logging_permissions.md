@@ -6,11 +6,12 @@ hide_title: true
 
 # Configure Permissions for API Gateway Logging to CloudWatch
 
-The `AmazonAPIGatewayPushToCloudWatchLogs` managed policy (with an ARN of `arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs`) has all the required permissions. To grant these permissions to your account, create an IAM role with `apigateway.amazonaws.com` as its trusted entity. Next attach the `AmazonAPIGatewayPushToCloudWatchLogs` policy to the IAM role. Finally, set the IAM role ARN on the `cloudWatchRoleArn` property on your API Gateway Account settings.
-
-Instructions for enabling account level logging from API Gateway to CloudWatch.
+## Instructions for enabling account level logging from API Gateway to CloudWatch.
 
 ### Create a policy document
+
+The `AmazonAPIGatewayPushToCloudWatchLogs` managed policy, with an ARN of `arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs`, has all the required permissions to enable API Gateway logging to CloudWatch.  To grant these permissions to your account, first create an IAM role with `apigateway.amazonaws.com` as its trusted entity.
+
 Save this snippet as `apigateway-policy.json`
 ```json
 {
@@ -43,6 +44,8 @@ Note the Arn of the returned role for the last step.
 
 ### Attatch correct permissions to role.
 
+Next attach the `AmazonAPIGatewayPushToCloudWatchLogs` policy to the IAM role.
+
 ```sh
 aws iam attach-role-policy \
 --role-name ApiGatewayToCloudWatchLogs \
@@ -50,6 +53,8 @@ aws iam attach-role-policy \
 ```
 
 ### Update Account Api Gateway settings with correct permissions.
+
+Finally, set the IAM role ARN on the `cloudWatchRoleArn` property on your API Gateway Account settings.
 
 ```sh
 aws apigateway update-account \

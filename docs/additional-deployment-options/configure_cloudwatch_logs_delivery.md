@@ -6,7 +6,7 @@ hide_title: true
 
 # Configure API Gateway CloudWatch Logs Delivery
 
-It is possible to deliver CloudWatch API execution and access logs to a cross-account shared AWS::Logs::Destination. An operator does this by adding the key `logToSharedDestination` to the `config.yml` at the default level with a value of a writable log destination.
+It is possible to deliver CloudWatch API execution and access logs to a cross-account shared AWS::Logs::Destination. An operator does this by adding the key `logToSharedDestination` whose value is a writable log destination to the default level of the Cumulus `config.yml`.
 
 ```yaml
 default:

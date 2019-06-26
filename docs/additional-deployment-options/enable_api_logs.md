@@ -6,9 +6,9 @@ hide_title: true
 
 # Enable API Gateway Logs
 
-In order to log API Access and Execution logging, configure the deployment `config.yml` by setting `logApigatewayToCloudwatch` on `apiConfig` for the appropriate API.
+In order to enable API Access and Execution logging, configure the Cumulus deployment by setting `logApigatewayToCloudwatch` on the `apiConfig`'s API.
 
-For example to enable api logging on the Distribution API:
+For example to enable API logging on the Distribution API:
 
 ```yml
   apiConfigs:
