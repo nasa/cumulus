@@ -27,6 +27,7 @@
     ],
     "Deployment": [
       "deployment/deployment-readme",
+      "deployment/components",
       "deployment/create_bucket",
       "deployment/server_access_logging",
       "deployment/iam_roles",
