@@ -94,6 +94,7 @@ This table describes the fields that must be present in `config.yml` to successf
 | dynamos.\<name\>.read | 5 | number of reads per second
 | dynamos.\<name\>.write | 1 | number of writes per second
 | dynamos.\<name\>.attributes | | list of attributes
+| backgroundQueueName | `backgroundProcessing` | Name of the queue to use for jobs that should be subject to execution limits. By default, this queue is used for scheduling granule reingest executions. See `@cumulus/deployment/app/config.yml` for configuration of `backgroundProcessing` queue.
 | sqs.\<name\> | | name of the queue
 | sqs.\<name\>.visibilityTimeout | 20 | # of seconds the message returns to the queue after it is read by a consumer
 | sqs.\<name\>.retry | 30 | number of time the message is returned to the queue before being discarded
