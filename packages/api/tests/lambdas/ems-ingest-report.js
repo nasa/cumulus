@@ -14,12 +14,12 @@ const models = require('../../models');
 const collections = [
   fakeCollectionFactory({
     name: 'MOD09GQ',
-    version: '006',
-    reportToEms: true
+    version: '006'
   }),
   fakeCollectionFactory({
     name: 'MOD14A1',
-    version: '006'
+    version: '006',
+    reportToEms: false
   })];
 
 const granule = {
