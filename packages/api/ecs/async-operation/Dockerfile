@@ -1,6 +1,7 @@
 FROM node:8.10
 
 USER root
+RUN sed -i -e '/jessie-updates/d' /etc/apt/sources.list
 RUN apt-get update && apt-get install -y unzip
 
 RUN groupadd -r task -g 433
