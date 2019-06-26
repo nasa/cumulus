@@ -250,12 +250,11 @@ class UpdatedKes extends Kes {
    * @returns {string}        - Contents of cfFile templated using Handlebars
    */
   parseCF(cfFile) {
+    // Parent kes deployed into packages/deployment contains
+    // Original registered helpers 'ifEquals', 'ifNotEquals', and 'ToJson'
+
     // Arrow functions cannot be used when registering Handlebars helpers
     // https://stackoverflow.com/questions/43932566/handlebars-block-expression-do-not-work
-
-    Handlebars.registerHelper('ifEqualsString', function ifEquals(arg1, arg2, options) {
-      return (String(arg1) === String(arg2)) ? options.fn(this) : options.inverse(this);
-    });
 
     Handlebars.registerHelper('collectBuckets', (buckets, bucketType) => this.collectBuckets(buckets, bucketType));
 
