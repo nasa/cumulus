@@ -11,7 +11,7 @@ function hostId(env) {
   return get(
     { OPS: '', SIT: 'sit', UAT: 'uat' },
     env,
-    'uat'
+    'sit'
   );
 }
 
