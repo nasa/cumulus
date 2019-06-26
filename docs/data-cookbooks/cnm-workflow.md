@@ -19,6 +19,7 @@ Prior to working through this entry you should be familiar with the [Cloud Notif
 * [Kinesis Record Error Handling](#kinesis-record-error-handling)
 
 ------------
+
 ## Prerequisites
 
 #### Cumulus
