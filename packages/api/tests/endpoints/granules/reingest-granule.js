@@ -52,7 +52,7 @@ test('put request with reingest action calls the granuleModel.reingest function 
     new Promise((resolve) => resolve(fakeCollection))
   );
 
-  const expectedQueueName = process.env.backwardProcessingQueueName;
+  const expectedQueueName = process.env.backgroundQueueName;
   const body = {
     action: 'reingest'
   };
@@ -64,10 +64,11 @@ test('put request with reingest action calls the granuleModel.reingest function 
     .send(body)
     .expect(200);
 
+  t.is(granuleReingestStub.calledOnce, true);
+
   const reingestArgs = granuleReingestStub.args[0];
   const { queueName } = reingestArgs[0];
-
-  t.is(granuleReingestStub.calledOnce, true);
+  t.truthy(queueName);
   t.is(queueName, expectedQueueName);
 
   granuleGetStub.restore();
