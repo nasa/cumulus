@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 We have encountered transient lambda service errors in our integration testing. Please handle transient service errors following [these guidelines](https://docs.aws.amazon.com/step-functions/latest/dg/bp-lambda-serviceexception.html). The workflows in the `example/workflows` folder have been updated with retries configured for these errors.
 
 ## Added
+- **CUMULUS-1345**
+  - Adds new variables to the app deployment under `cmr`.
+  - `cmrEnvironment` values are `SIT`, `UAT`, or `OPS` with `UAT` as the default.
+  - `cmrLimit` and `cmrPageSize` have been added as configurable options.
 - **CUMULUS-799**
   - Adds new BackendApi endpoint `distributionMetrics` that returns a summary of successful s3 accesses as well as a summary of distribution errors -- including s3 access errors, 4XX and 5XX errors.
 - **CUMULUS-1273**
