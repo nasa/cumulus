@@ -105,6 +105,11 @@ terraform {
 }
 ```
 
+## Example
+
+An example of using Terraform to deploy components can be found in the [`example` directory](https://github.com/nasa/cumulus/tree/master/example)
+of the Cumulus repo.
+
 ## Available Cumulus Components
 
 * [Thin Egress App](https://github.com/asfadmin/thin-egress-app) - an app
