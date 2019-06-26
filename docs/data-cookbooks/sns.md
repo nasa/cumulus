@@ -134,8 +134,6 @@ First it determines whether the workflow has finished by looking for the `sfnEnd
 
 This means that subscribers to the sftracker SNS Topic can expect to find the published message by parsing the JSON string representation of the message found in the [SNS event](https://docs.aws.amazon.com/lambda/latest/dg/eventsources.html#eventsources-sns) at `Records[].Sns.Message` and examining the `meta.status` value.  The value found at `Records[0].Sns.Message` will be a stringified version of the workflow's Cumulus message with the status metadata attached.
 
-
-
 ## Summary
 
 The workflows can be configured to send SNS messages at any point. Additional listeners can be easily configured to trigger when a message is sent to the SNS topic.

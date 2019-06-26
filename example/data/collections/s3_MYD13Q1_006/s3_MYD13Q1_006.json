@@ -7,6 +7,7 @@
     "provider_path": "cumulus-test-data/pdrs",
     "granuleId": "^MYD13Q1\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
     "granuleIdExtraction": "(MYD13Q1\\..*)(\\.hdf|\\.cmr|_1.jpg|_2.jpg)",
+    "reportToEms": false,
     "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
     "sampleFileName": "MYD13Q1.A2017025.h21v00.006.2017034065104.hdf",
     "files": [

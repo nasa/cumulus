@@ -1,5 +1,6 @@
 'use strict';
 
+const get = require('lodash.get');
 const moment = require('moment');
 const path = require('path');
 const aws = require('@cumulus/common/aws');
@@ -74,7 +75,7 @@ async function determineReportKey(reportType, reportStartTime, reportsPrefix) {
  */
 const getEmsEnabledCollections = async () =>
   (await new Collection().getAllCollections())
-    .filter((collection) => collection.reportToEms)
+    .filter((collection) => get(collection, 'reportToEms', true))
     .map((collection) => constructCollectionId(collection.name, collection.version));
 
 /**
