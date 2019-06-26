@@ -113,7 +113,7 @@ module.exports.collection = {
       title: 'Report to EMS',
       description: 'Indicates whether the collection will be reported to EMS',
       type: 'boolean',
-      default: false
+      default: true
     },
     sampleFileName: {
       title: 'Sample Filename',

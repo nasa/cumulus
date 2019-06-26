@@ -160,7 +160,7 @@ const getDbCollections = async () =>
   (await new Collection().getAllCollections())
     .map((collection) => ({
       collectionId: constructCollectionId(collection.name, collection.version),
-      reportToEms: collection.reportToEms || false,
+      reportToEms: get(collection, 'reportToEms', true),
       lastUpdate: millisecondsToUTCString(
         collection.updatedAt || collection.createdAt || Date.now()
       )
@@ -206,7 +206,7 @@ async function getCollectionsForEms(startTime, endTime) {
       // Found an item that is in both cmr and database
       const cmrCollection = cmrCollections.shift();
       const dbCollection = dbCollections.shift();
-      if (dbCollection.reportToEms) {
+      if (get(dbCollection, 'reportToEms', true)) {
         emsCollections.push({ ...cmrCollection, dbLastUpdate: dbCollection.lastUpdate });
       }
     }
