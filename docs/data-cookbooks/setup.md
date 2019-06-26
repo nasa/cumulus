@@ -6,19 +6,17 @@ hide_title: true
 
 # Setup
 
-### Getting setup to work with data-cookboooks
+## Getting setup to work with data-cookboooks
 
 In the following data cookbooks we'll go through things like setting up workflows, making configuration changes, and interacting with CNM. The point of this section is to set up, or at least better understand, collections, providers, and rules and how they are configured.
 
-
-### Schemas
+## Schemas
 
 Looking at our api schema [definitions](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) can provide us with some insight into collections, providers, rules, and their attributes (and whether those are required or not). The schema for different concepts will be reference throughout this document.
 
 **Note:** The schemas are _extremely_ useful for understanding what attributes are configurable and which of those are required. Indeed, they are what the Cumulus code validates definitions (whether that be collection, provider, or others) against. Much of this document is simply providing some context to the information in the schemas.
 
-
-### Collections
+## Collections
 
 Collections are logical sets of data objects of the same data type and version. A collection provides contextual information used by Cumulus ingest. We have a few [test collections](https://github.com/nasa/cumulus/tree/master/example/data/collections) configured in Cumulus source for integration testing. Collections can be viewed, edited, added, and removed from the Cumulus dashboard under the "Collections" navigation tab. Additionally, they can be managed via the [collections api](https://nasa.github.io/cumulus-api/?language=Python#list-collections).
 
@@ -41,8 +39,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |meta|`<JSON Object>` of MetaData for the collection|No|MetaData for the collection. This metadata will be available to workflows for this collection via the [Cumulus Message Adapter](workflows/input_output.md).
 |url_path|`"{cmrMetadata.Granule.Collection.ShortName}/`<br/>`{substring(file.name, 0, 3)}"`|No|Filename without extension|
 
-
-#### files-object
+### files-object
 |Key  |Value  |Required  |Description|
 |:---:|:-----:|:--------:|-----------|
 |regex|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$"`|Yes|Regex used to identify the file|
@@ -51,8 +48,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 |bucket|`"internal"`|Yes|Name of the bucket where the file will be stored|
 |url_path|`"${collectionShortName}/{substring(file.name, 0, 3)}"`|No|Folder used to save the granule in the bucket. Defaults to the collection url_path|
 
-
-### Providers
+## Providers
 
 Providers generate and distribute input data that Cumulus obtains and sends to workflows. Schema for providers can be found [here](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) in the object assigned to `module.exports.provider`. A few example provider configurations can be found [here](https://github.com/nasa/cumulus/tree/master/example/data/providers). Providers can be viewed, edited, added, and removed from the Cumulus dashboard under the "Providers" navigation tab. Additionally, they can be managed via the [providers api](https://nasa.github.io/cumulus-api/?language=Python#list-providers).
 
@@ -70,8 +66,7 @@ Providers generate and distribute input data that Cumulus obtains and sends to w
 
 _The above optional attributes are not shown in the example provided, but they have been included in this document for completeness_
 
-
-### Rules
+## Rules
 
 Rules are used by to start processing workflows and the transformation process. Rules can be invoked manually, based on a schedule, or can be configured to be triggered by either events in [Kinesis](data-cookbooks/cnm-workflow.md) or SNS messages. The current best way to understand rules is to take a look at the [schema](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) (specifically the object assigned to `module.exports.rule`). Rules can be viewed, edited, added, and removed from the Cumulus dashboard under the "Rules" navigation tab. Additionally, they can be managed via the [rules api](https://nasa.github.io/cumulus-api/?language=Python#list-rules).
 
@@ -88,22 +83,25 @@ An example of an SNS rule configuration is [here](https://github.com/nasa/cumulu
 |state|`"ENABLED"`|No|<code>("ENABLED"&#124;"DISABLED")</code> whether or not the rule will be active. Defaults to `"ENABLED"`.|
 |tags|`["kinesis", "podaac"]`|No|An array of strings that can be used to simplify search|
 
-#### collection-object
+### collection-object
+
 |Key  |Value  |Required|Description|
 |:---:|:-----:|:------:|-----------|
 |name|`"L2_HR_PIXC"`|Yes|Name of a collection defined/configured in the Collections dashboard page|
 |version|`"000"`|Yes|Version number of a collection defined/configured in the Collections dashboard page|
 
-#### rule-object
+### rule-object
+
 |Key|Value|Required|Description|
 |:---:|:-----:|:------:|-----------|
 |type|`"kinesis"`|Yes|<code>("onetime"&#124;"scheduled"&#124;"kinesis"&#124;"sns")</code> type of scheduling/workflow kick-off desired|
 |value|`<String> Object`|Depends|Discussion of valid values is [below](#rule-value)|
 
+### rule-value
 
-#### rule-value
 The `rule - value` entry depends on the type of run:
-  * If this is a onetime rule this can be left blank. [Example](data-cookbooks/hello-world.md/#execution)
-  * If this is a scheduled rule this field must hold a valid [cron-type expression or rate expression](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html).
-  * If this is a kinesis rule, this must be a configured `${Kinesis_stream_ARN}`. [Example](data-cookbooks/cnm-workflow.md#rule-configuration)
-  * If this is an sns rule, this must be an existing `${SNS_Topic_Arn}`. [Example](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/snsRuleDef.json)
+
+* If this is a onetime rule this can be left blank. [Example](data-cookbooks/hello-world.md/#execution)
+* If this is a scheduled rule this field must hold a valid [cron-type expression or rate expression](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html).
+* If this is a kinesis rule, this must be a configured `${Kinesis_stream_ARN}`. [Example](data-cookbooks/cnm-workflow.md#rule-configuration)
+* If this is an sns rule, this must be an existing `${SNS_Topic_Arn}`. [Example](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/snsRuleDef.json)
