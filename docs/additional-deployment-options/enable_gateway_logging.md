@@ -1,5 +1,5 @@
 ---
-id: additional-deployment-options-readme
+id: enable-gateway-logging
 title: Enable API Gateway Logging
 hide_title: true
 ---

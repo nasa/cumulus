@@ -35,7 +35,10 @@
       "deployment/troubleshoot_deployment"
     ],
     "Additional Deployment Options":[
-      "additional-deployment-options/additional-deployment-options-readme"
+      "additional-deployment-options/enable-gateway-logging",
+      "additional-deployment-options/delete-api-gateway-stages",
+      "additional-deployment-options/configure-cloudwatch-logs-delivery",
+      "additional-deployment-options/additional-lambda-logging"
     ],
     "Additional Features": [
       "data_in_dynamodb",
