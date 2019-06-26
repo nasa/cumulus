@@ -1,11 +1,10 @@
 ---
 id: configure-cloudwatch-logs-delivery
-title: Configure CloudWatch Logs Delivery
+title: API Gateway Logs Delivery
 hide_title: true
 ---
 
-# Configure CloudWatch Logs Delivery
-
+# Configure API Gateway CloudWatch Logs Delivery
 
 It is possible to deliver CloudWatch API execution and access logs to a cross-account shared AWS::Logs::Destination. An operator does this by adding the key `logToSharedDestination` to the `config.yml` at the default level with a value of a writable log destination.
 
