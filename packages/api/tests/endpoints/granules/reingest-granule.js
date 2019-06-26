@@ -12,7 +12,7 @@ const models = require('../../../models');
 const { app } = require('../../../app');
 
 process.env.AccessTokensTable = randomString();
-process.env.backwardProcessingQueueName = randomString();
+process.env.backgroundQueueName = randomString();
 process.env.CollectionsTable = randomString();
 process.env.GranulesTable = randomString();
 process.env.TOKEN_SECRET = randomString();
