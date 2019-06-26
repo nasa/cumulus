@@ -268,7 +268,6 @@ async function moveGranules(event) {
   // we have to post the meta-xml file of all output granules
   // first we check if there is an output file
   const config = event.config;
-  process.env.CMR_ENVIRONMENT = process.env.CMR_ENVIRONMENT || config.cmr.cmrEnvironment;
   const bucketsConfig = new BucketsConfig(config.buckets);
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
 
