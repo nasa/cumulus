@@ -8,7 +8,9 @@ const aws = require('@cumulus/common/aws');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const { Search } = require('../../es/search');
 const { deleteAliases, fakeCollectionFactory } = require('../../lib/testUtils');
-const { emsMappings, generateReports } = require('../../lambdas/ems-ingest-report');
+const {
+  emsMappings, generateReports, generateReportsForEachDay
+} = require('../../lambdas/ems-ingest-report');
 const models = require('../../models');
 
 const collections = [
@@ -198,9 +200,9 @@ test.serial('generate reports for the previous day', async (t) => {
   await Promise.all(requests);
 });
 
-test.serial('generate reports for the past two days, and run multiple times', async (t) => {
+test.serial('generate reports for the one day, and run multiple times', async (t) => {
   // 2-day period ending past midnight utc
-  const endTime = moment.utc().startOf('day').format();
+  const endTime = moment.utc().subtract(1, 'days').startOf('day').format();
   const startTime = moment.utc().subtract(2, 'days').startOf('day').format();
   let reports;
   for (let i = 0; i < 5; i += 1) {
@@ -219,7 +221,30 @@ test.serial('generate reports for the past two days, and run multiple times', as
 
     // check the number of records for each report
     const records = (await aws.getS3Object(parsed.Bucket, parsed.Key)).Body.toString();
-    const expectedNumRecords = (report.reportType === 'delete') ? 8 : 16;
+    const expectedNumRecords = (report.reportType === 'delete') ? 4 : 8;
+    t.is(records.split('\n').length, expectedNumRecords);
+  });
+  await Promise.all(requests);
+});
+
+test.serial('generate reports for the past two days', async (t) => {
+  // 2-day period ending past midnight utc
+  const endTime = moment.utc().startOf('day').format();
+  const startTime = moment.utc().subtract(2, 'days').startOf('day').format();
+  const reports = await generateReportsForEachDay(startTime, endTime);
+
+  t.is(reports.length, 6);
+
+  const requests = reports.map(async (report) => {
+    const parsed = aws.parseS3Uri(report.file);
+
+    // file exists
+    const exists = await aws.fileExists(parsed.Bucket, parsed.Key);
+    t.truthy(exists);
+
+    // check the number of records for each report
+    const records = (await aws.getS3Object(parsed.Bucket, parsed.Key)).Body.toString();
+    const expectedNumRecords = (report.reportType === 'delete') ? 4 : 8;
     t.is(records.split('\n').length, expectedNumRecords);
   });
   await Promise.all(requests);
