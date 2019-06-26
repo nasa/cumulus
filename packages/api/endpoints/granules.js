@@ -49,7 +49,7 @@ async function put(req, res) {
     const collectionModelClient = new models.Collection();
     const collection = await collectionModelClient.get({ name, version });
 
-    await granuleModelClient.reingest({ ...granule, queueName: process.env.backwardProcessingQueueName });
+    await granuleModelClient.reingest({ ...granule, queueName: process.env.backgroundQueueName });
 
     const warning = 'The granule files may be overwritten';
 
