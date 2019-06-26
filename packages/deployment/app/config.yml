@@ -186,7 +186,7 @@ default:
               - Arn
           protocol: lambda
 
-  backwardProcessingQueueName: backwardProcessing
+  backgroundQueueName: backgroundProcessing
   sqs_consumer_rate: 500
   sqs:
     startSF:
@@ -198,7 +198,7 @@ default:
           messageLimit: '{{sqs_consumer_rate}}'
           state: ENABLED
 
-    backwardProcessing:
+    backgroundProcessing:
       visibilityTimeout: 60
       retry: 30
       maxExecutions: 5
