@@ -10,7 +10,7 @@ In this entry, we will walkthrough how to create an SQS queue for scheduling exe
 
 We will also review the architecture of this feature and highlight some implementation notes.
 
-Limiting the number of executions that can be running from a given queue is useful for controlling the cloud resource usage of workflows that may be lower priority, such as granule reingestion or reprocessing campaigns.
+Limiting the number of executions that can be running from a given queue is useful for controlling the cloud resource usage of workflows that may be lower priority, such as granule reingestion or reprocessing campaigns. It could also be useful for preventing workflows from exceeding known resource limits, such as a maximum number of open connections to a data provider.
 
 ## Implementing the queue
 
@@ -33,7 +33,7 @@ In your `app/config.yml`, define a new queue with a `maxExecutions` value:
           state: ENABLED
 ```
 
-**Please note that you must use the `sqs2sfThrottle` lambda as the consumer for this queue** or else the execution throttling will not work correctly.
+**Please note that you must use the `sqs2sfThrottle` lambda as the consumer for any queue with a `maxExecutions` value** or else the execution throttling will not work correctly.
 
 #### Re-deploy your Cumulus app
 
@@ -115,7 +115,7 @@ Execution throttling based on the queue works by manually keeping a count (semap
 
 ## Final notes
 
-This implementation of limiting the number of concurrent executions based on the queue has several consequences worth noting:
+Limiting the number of concurrent executions for work scheduled via a queue has several consequences worth noting:
 
 - The number of executions that are running for a given queue will be limited to the maximum for that queue regardless of which workflow(s) are started.
 - If you use the same queue to schedule executions across multiple workflows/rules, then the limit on the total number of executions running concurrently **will be applied to all of the executions scheduled across all of those workflows/rules**.
