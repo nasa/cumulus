@@ -214,18 +214,18 @@ Resources:
             - "/{{../parent.apiStage}}"
       RetentionInDays: 30
 
- {{#ifEqualsString ../parent.logToSharedDestination "true"}}
+ {{#if ../parent.logToSharedDestination }}
   # create API Subscription Filter
   ApiGatewayLogSubscription{{name}}:
     Type: AWS::Logs::SubscriptionFilter
     DependsOn:
       - ApiGatewayCloudWatchLogGroup{{name}}
     Properties:
-      DestinationArn: "{{../parent.sharedLogDestinationArn}}"
+      DestinationArn: "{{../parent.logToSharedDestination}}"
       FilterPattern: ""
       LogGroupName:
         Ref: ApiGatewayCloudWatchLogGroup{{name}}
-  {{/ifEqualsString}}
+  {{/if}}
  {{/ifLogApiGatewayToCloudWatch}}
 
 
@@ -386,14 +386,14 @@ Resources:
       RetentionInDays: 30
 {{/if}}
 
-{{#ifEqualsString this.logToSharedDestination "true" }}
+{{#if this.logToSharedDestination }}
   # Configure Lambda log subscription to shareLogDestination for API lambdas
   {{@key}}LogSubscriptionToSharedDestination:
     Type: AWS::Logs::SubscriptionFilter
     DependsOn:
       - {{@key}}LogGroup
     Properties:
-      DestinationArn: "{{../parent.sharedLogDestinationArn}}"
+      DestinationArn: "{{this.logToSharedDestination}}"
       LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
       FilterPattern: ""
 
@@ -402,7 +402,7 @@ Resources:
     Properties:
       LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
       RetentionInDays: 30
-{{/ifEqualsString}}
+{{/if}}
 
 {{# if this.addLogGroup }}
   {{@key}}LogGroup:
