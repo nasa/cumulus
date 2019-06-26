@@ -14,12 +14,12 @@ const { fakeCollectionFactory, fakeGranuleFactoryV2, fakeFileFactory } = require
 const collections = [
   fakeCollectionFactory({
     name: 'MYD13Q1',
-    version: '006',
-    reportToEms: true
+    version: '006'
   }),
   fakeCollectionFactory({
     name: 'MOD14A1',
-    version: '006'
+    version: '006',
+    reportToEms: false
   })];
 
 function fakeGranules() {
