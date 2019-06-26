@@ -7,12 +7,12 @@ hide_title: true
 # Lambda logging subscriptions
 
 
-It is now possible to configure any lambda to deliver logs to a subscription location by setting the `logToSharedDestination` to `true` on the lambda config. This will configure CloudFormation to create the corrrect Log Group and Subscription Filter that will point to the defined `sharedLogDestinationArn`.   **Note** `logToSharedDestination` to `true` on a lambda configuration.
+It is now possible to configure any lambda to deliver logs to a shared subscription by setting  `logToSharedDestination` to the ARN of a writable location (either an AWS::Logs::Destination or a Kinesis Stream) on any lambda config. This will configure CloudFormation to create the LogGroup and SubscriptionFilter pointing to the `logToSharedDestination` value.
 
 *Example config:*
 ```yml
 HelloWorld:
     handler: index.handler
     source: node_modules/@cumulus/hello-world/dist/
-    logToSharedDestination: true
+    logToSharedDestination: arn:aws:logs:us-east-1:123456789012:destination:CumulusLogDestination
 ```
