@@ -19,9 +19,9 @@ You should use AWS Lambda whenever all of the following are true:
 * The task runs on one of the supported [Lambda Runtimes](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html). At time of this writing, supported runtimes include versions of python, Java, Ruby, node.js, Go and .NET.
 * The lambda package is less than 50 MB in size, zipped.
 * The task consumes less than each of the following resources:
-    * 3008 MB memory allocation
-    * 512 MB disk storage (must be written to `/tmp`)
-    * 15 minutes of execution time
+  * 3008 MB memory allocation
+  * 512 MB disk storage (must be written to `/tmp`)
+  * 15 minutes of execution time
 
 See [this page](https://docs.aws.amazon.com/lambda/latest/dg/limits.html) for a complete and up-to-date list of AWS Lambda limits.
 
@@ -101,10 +101,9 @@ When deploying AWS Lambdas and AWS Activities as detailed above, note the follow
 
 * `QueueGranules` in `lambdas.yml`: When kes generates the final cloudformation file, it will define a resource called `QueueGranulesLambdaFunction`. A valid lambda function resource name, such as `QueueGranulesLambdaFunction`, must be used in `app/config.yml` when passed as a command argument to `cumulus-ecs-task`.
 * `QueueGranules` in `app/config.yml`: The string `QueueGranules` exists twice in the `app/config.yml` above.
-    * The first occurrence is as a key under `services`. This key provides a descriptive prefix when naming the corresponding ECS Service. It will be included in final cloudformation YAML as an `AWS::ECS::Service` resource with the name `QueueGranulesECSService`. This ECS Service name prefix (`QueueGranules` in this example) can be anything since the service is not referenced in any other part of the deployment at this time.
-    * The second occurrence of `QueueGranules` is as a value under `activities: - name:`. The value of `activites: - name:` can be anything, but the `--activityArn` command argument passed to `cumulus-ecs-task` must use this value plus `Activity` as a suffix (`QueueGranulesActivity` in this example).
+  * The first occurrence is as a key under `services`. This key provides a descriptive prefix when naming the corresponding ECS Service. It will be included in final cloudformation YAML as an `AWS::ECS::Service` resource with the name `QueueGranulesECSService`. This ECS Service name prefix (`QueueGranules` in this example) can be anything since the service is not referenced in any other part of the deployment at this time.
+  * The second occurrence of `QueueGranules` is as a value under `activities: - name:`. The value of `activites: - name:` can be anything, but the `--activityArn` command argument passed to `cumulus-ecs-task` must use this value plus `Activity` as a suffix (`QueueGranulesActivity` in this example).
 
 ## Final Note
 
 Step Function Activities and AWS Lambda are not the only ways to run tasks in an AWS Step Function. Learn more about other service integrations, including direct ECS integration via the [AWS Service Integrations](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-connectors.html) page.
-

@@ -8,15 +8,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### PLEASE NOTE
+
 **CUMULUS-799** added some additional IAM permissions to support reading CloudWatch and API Gateway, so **you will have to redeploy your IAM stack.**
 
 We have encountered transient lambda service errors in our integration testing. Please handle transient service errors following [these guidelines](https://docs.aws.amazon.com/step-functions/latest/dg/bp-lambda-serviceexception.html). The workflows in the `example/workflows` folder have been updated with retries configured for these errors.
 
 ## Added
+
 - **CUMULUS-799**
   - Adds new BackendApi endpoint `distributionMetrics` that returns a summary of successful s3 accesses as well as a summary of distribution errors -- including s3 access errors, 4XX and 5XX errors.
 - **CUMULUS-1273**
   - Added lambda function EmsProductMetadataReport to generate EMS Product Metadata report
+- **CUMULUS-1241**
+  - Added information about queues with maximum execution limits defined to default workflow templates (`meta.queueExecutionLimits`)
+- **CUMULUS-1311**
+  - Added `@cumulus/common/message` with various message parsing/preparation helpers
+- **CUMULUS-812**
+  - Added support for limiting the number of concurrent executions started from a queue. [See the data cookbook](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions) for more information.
 
 ### Changed
 
@@ -26,6 +34,24 @@ We have encountered transient lambda service errors in our integration testing. 
 - **CUMULUS-1245 CUMULUS-795**
   - Added additional `ems` configuration parameters for sending the ingest reports to EMS
   - Added functionality to send daily ingest reports to EMS
+
+- **CUMULUS-1241**
+  - Removed the concept of "priority levels" and added ability to define a number of maximum concurrent executions per SQS queue
+  - Changed mapping of Cumulus message properties for the `sqs2sfThrottle` lambda:
+    - Queue name is read from `cumulus_meta.queueName`
+    - Maximum executions for the queue is read from `meta.queueExecutionLimits[queueName]`, where `queueName` is `cumulus_meta.queueName`
+  - Changed `sfSemaphoreDown` lambda to only attempt decrementing semaphores when:
+    - the message is for a completed/failed/aborted/timed out workflow AND
+    - `cumulus_meta.queueName` exists on the Cumulus message AND
+    - An entry for the queue name (`cumulus_meta.queueName`) exists in the the object `meta.queueExecutionLimits` on the Cumulus message
+
+- **CUMULUS-1338**
+  - Updated `sfSemaphoreDown` lambda to be triggered via AWS Step Function Cloudwatch events instead of subscription to `sfTracker` SNS topic
+
+- **CUMULUS-1311**
+  - Updated `@cumulus/queue-granules` to set `cumulus_meta.queueName` for queued execution messages
+  - Updated `@cumulus/queue-pdrs` to set `cumulus_meta.queueName` for queued execution messages
+  - Updated `sqs2sfThrottle` lambda to immediately decrement queue semaphore value if dispatching Step Function execution throws an error
 
 ### Fixed
 
