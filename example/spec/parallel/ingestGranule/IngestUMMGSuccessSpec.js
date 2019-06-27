@@ -1,6 +1,5 @@
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
 const fs = require('fs-extra');
 const path = require('path');
 const {

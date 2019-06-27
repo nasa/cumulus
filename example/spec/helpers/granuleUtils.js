@@ -10,7 +10,7 @@ const path = require('path');
 const cloneDeep = require('lodash.clonedeep');
 
 function addUrlPathToGranuleFiles(files, testId, collectionUrlPath) {
-  let updatedFiles = cloneDeep(files);
+  const updatedFiles = cloneDeep(files);
   return updatedFiles.map((file) => {
     const fileUpdate = cloneDeep(file);
     const updatedUrlPath = Object.is(file.url_path, undefined) ? collectionUrlPath : `${file.url_path}/`;
@@ -21,7 +21,7 @@ function addUrlPathToGranuleFiles(files, testId, collectionUrlPath) {
 
 function addUniqueGranuleFilePathToGranuleFiles(granules, filePath) {
   const updatedGranules = granules.map((originalGranule) => {
-    const granule = cloneDeep(originalGranule)
+    const granule = cloneDeep(originalGranule);
     granule.files = granule.files.map((file) => {
       const { Bucket, Key } = parseS3Uri(file.filename);
       const { base, dir } = path.parse(Key);

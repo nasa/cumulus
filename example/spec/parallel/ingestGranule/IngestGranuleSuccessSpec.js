@@ -1,6 +1,5 @@
 'use strict';
 
-const cloneDeep = require('lodash.clonedeep');
 const fs = require('fs-extra');
 const isNumber = require('lodash.isnumber');
 const isString = require('lodash.isstring');
@@ -164,7 +163,7 @@ describe('The S3 Ingest Granules workflow', () => {
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
     expectedPayload.granules = addUniqueGranuleFilePathToGranuleFiles(expectedPayload.granules, testId);
-    expectedPayload.granules[0].files =  addUrlPathToGranuleFiles(expectedPayload.granules[0].files, testId, collectionUrlString);
+    expectedPayload.granules[0].files = addUrlPathToGranuleFiles(expectedPayload.granules[0].files, testId, collectionUrlString);
     // process.env.DISTRIBUTION_ENDPOINT needs to be set for below
     setDistributionApiEnvVars();
 
