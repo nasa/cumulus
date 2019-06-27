@@ -102,7 +102,7 @@ $ aws dynamodb create-table \
 
 Terraform can be configured to use the S3 backend by adding the following to
 your deployment's Terraform config. If following the file layout [described above](#adding-terraform-to-your-deployment),
-this will be added to your **terraform.tf** file.
+this should be added to your **terraform.tf** file.
 
 ```hcl
 terraform {
