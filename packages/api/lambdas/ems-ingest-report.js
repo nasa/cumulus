@@ -280,16 +280,13 @@ async function generateReport(reportType, startTime, endTime, collections) {
  *
  * @param {string} startTime - start time of the records
  * @param {string} endTime - end time of the records
- * @param {string} collectionId - collectionId of the records if defined
+ * @param {string} emsCollections - optional, collectionIds of the records
  * @returns {Array<Object>} - list of report type and its file path {reportType, file}
  */
-async function generateReports(startTime, endTime, collectionId) {
-  let emsCollections = await getEmsEnabledCollections();
-  if (collectionId && emsCollections.includes(collectionId)) {
-    emsCollections = [collectionId];
-  }
+async function generateReports(startTime, endTime, emsCollections) {
+  const collections = emsCollections || await getEmsEnabledCollections();
   return Promise.all(Object.keys(emsMappings)
-    .map((reportType) => generateReport(reportType, startTime, endTime, emsCollections)));
+    .map((reportType) => generateReport(reportType, startTime, endTime, collections)));
 }
 
 /**
@@ -303,19 +300,34 @@ async function generateReports(startTime, endTime, collectionId) {
 async function generateReportsForEachDay(startTime, endTime, collectionId) {
   // ICD Section 3.4 Data Files Interface section describes that each file should contain one day's
   // worth of data. Data within the file will correspond to the datestamp in the filename.
-  // Exceptions to this rule include Ingest data.
+  // Exceptions to this rule include Ingest data where processingEndDateTime could be after
+  // the datestamp.
 
   // The updated ingest and archive data flat files only need to contain the corrected records.
   // Previous records will be updated and/or appended (i.e., merged) with revision file content.
+
+  let emsCollections = await getEmsEnabledCollections();
+  if (collectionId) {
+    emsCollections = (emsCollections.includes(collectionId)) ? [collectionId] : [];
+  }
+
+  // no report should be generated if the collection is not EMS enabled
+  if (emsCollections.length === 0) {
+    return [];
+  }
 
   // each startEndTimes element represents one day
   const startEndTimes = [];
   const reportStartTime = moment.utc(startTime);
   while (reportStartTime.isBefore(endTime)) {
-    startEndTimes.push({ startTime: reportStartTime.format(), endTime: reportStartTime.add(1, 'days').format() });
+    startEndTimes.push({
+      startTime: reportStartTime.format(),
+      endTime: moment(reportStartTime).add(1, 'days').format()
+    });
+    reportStartTime.add(1, 'days');
   }
   return flatten(await Promise.all(startEndTimes.map((startEndTime) =>
-    generateReports(startEndTime.startTime, startEndTime.endTime, collectionId))));
+    generateReports(startEndTime.startTime, startEndTime.endTime, emsCollections))));
 }
 
 /**
@@ -355,8 +367,8 @@ function handler(event, context, callback) {
   let endTime = moment.utc().startOf('day').format();
   let startTime = moment.utc().subtract(1, 'days').startOf('day').format();
 
-  endTime = event.endTime || endTime;
-  startTime = event.startTime || startTime;
+  endTime = event.endTime || endTime.startOf('day').add(1, 'days').format();
+  startTime = event.startTime || startTime.startOf('day').format();
 
   // catch up run to generate reports for each day
   if (event.startTime && event.endTime) {

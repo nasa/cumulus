@@ -412,7 +412,11 @@ async function generateAndStoreReportsForEachDay(params) {
 
   const startEndTimes = [];
   while (reportStartTime.isBefore(reportEndTime)) {
-    startEndTimes.push({ reportStartTime, reportEndTime: reportStartTime.add(1, 'days') });
+    startEndTimes.push({
+      reportStartTime: moment(reportStartTime),
+      reportEndTime: moment(reportStartTime).add(1, 'days')
+    });
+    reportStartTime.add(1, 'days');
   }
 
   return Promise.all(startEndTimes.map((startEndTime) =>
@@ -441,6 +445,8 @@ function handler(event, context, cb) {
 
   endTime = event.endTime || endTime;
   startTime = event.startTime || startTime;
+  endTime = event.endTime || endTime.startOf('day').add(1, 'days').format();
+  startTime = event.startTime || startTime.startOf('day').format();
 
   const params = {
     reportStartTime: moment.utc(startTime),

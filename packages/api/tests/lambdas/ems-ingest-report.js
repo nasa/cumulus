@@ -19,6 +19,10 @@ const collections = [
     version: '006'
   }),
   fakeCollectionFactory({
+    name: 'MOD11A1',
+    version: '006'
+  }),
+  fakeCollectionFactory({
     name: 'MOD14A1',
     version: '006',
     reportToEms: false
@@ -114,6 +118,7 @@ test.before(async () => {
     if (i % 10 === 2) newgran.status = 'failed';
     if (i % 10 === 3) newgran.status = 'running';
     if (i % 10 === 4) newgran.collectionId = 'MOD14A1___006';
+    if (i % 10 === 5) newgran.collectionId = 'MOD11A1___006';
     granules.push(newgran);
   }
 
@@ -135,7 +140,8 @@ test.before(async () => {
     newgran.granuleId = randomString();
     newgran.deletedAt = moment.utc().subtract(Math.floor(i / 5), 'days').toDate().getTime();
     if (i % 5 === 2) newgran.status = 'failed';
-    if (i % 5 === 4) newgran.collectionId = 'MOD14A1___006';
+    if (i % 5 === 3) newgran.collectionId = 'MOD14A1___006';
+    if (i % 5 === 4) newgran.collectionId = 'MOD11A1___006';
     deletedgrans.push(newgran);
   }
   const deletedgranjobs = deletedgrans.map((g) => esClient.update({
@@ -248,4 +254,36 @@ test.serial('generate reports for the past two days', async (t) => {
     t.is(records.split('\n').length, expectedNumRecords);
   });
   await Promise.all(requests);
+});
+
+test.serial('generate reports for the past two days for a given collection', async (t) => {
+  // 2-day period ending past midnight utc
+  const endTime = moment.utc().startOf('day').format();
+  const startTime = moment.utc().subtract(2, 'days').startOf('day').format();
+  const reports = await generateReportsForEachDay(startTime, endTime, 'MOD09GQ___006');
+
+  t.is(reports.length, 6);
+
+  const requests = reports.map(async (report) => {
+    const parsed = aws.parseS3Uri(report.file);
+
+    // file exists
+    const exists = await aws.fileExists(parsed.Bucket, parsed.Key);
+    t.truthy(exists);
+
+    // check the number of records for each report
+    const records = (await aws.getS3Object(parsed.Bucket, parsed.Key)).Body.toString();
+    const expectedNumRecords = (report.reportType === 'delete') ? 3 : 7;
+    t.is(records.split('\n').length, expectedNumRecords);
+  });
+  await Promise.all(requests);
+});
+
+test.serial('no report should be generated if the given collection is configured not to report to EMS', async (t) => {
+  // 2-day period ending past midnight utc
+  const endTime = moment.utc().startOf('day').format();
+  const startTime = moment.utc().subtract(2, 'days').startOf('day').format();
+  const reports = await generateReportsForEachDay(startTime, endTime, 'MOD14A1___006');
+
+  t.is(reports.length, 0);
 });
