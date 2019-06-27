@@ -7,8 +7,20 @@ const { randomString } = require('@cumulus/common/test-utils');
 const aws = require('@cumulus/common/aws');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const { Search } = require('../../es/search');
-const { deleteAliases } = require('../../lib/testUtils');
+const { deleteAliases, fakeCollectionFactory } = require('../../lib/testUtils');
 const { emsMappings, generateReports } = require('../../lambdas/ems-ingest-report');
+const models = require('../../models');
+
+const collections = [
+  fakeCollectionFactory({
+    name: 'MOD09GQ',
+    version: '006'
+  }),
+  fakeCollectionFactory({
+    name: 'MOD14A1',
+    version: '006',
+    reportToEms: false
+  })];
 
 const granule = {
   granuleId: randomString(),
@@ -34,7 +46,6 @@ const deletedgranule = Object.assign(clone(granule), { deletedAt: Date.now() });
 
 // report type and its regex for each field
 const datetimeRegx = '^(\\d{4})-(\\d{2})-(\\d{2}) (\\d{2}):(\\d{2})(A|P)M$';
-const dateRegx = '^(\\d{4})(\\d{2})(\\d{2})$';
 const decimalIntRegx = '^-?\\d+\\.?\\d*$';
 const granuleIdRegx = '^[a-zA-Z0-9\\.-_]+$';
 const formatMappings = {
@@ -69,7 +80,7 @@ const formatMappings = {
 
   delete: [
     granuleIdRegx, // dbID
-    dateRegx // deleteEffectiveDate
+    datetimeRegx // deleteEffectiveDate
   ]
 };
 
@@ -92,6 +103,7 @@ test.before(async () => {
   // add 30 granules to es, 10 from 1 day ago, 10 from 2 day ago, 10 from today.
   // one granule from each day is 'running', and should not be included in report.
   // one granule from each day is 'failed' and should be included in report.
+  // one granule from each day is from collection which has reportToEms set to false
   const granules = [];
   for (let i = 0; i < 30; i += 1) {
     const newgran = clone(granule);
@@ -99,6 +111,7 @@ test.before(async () => {
     newgran.createdAt = moment.utc().subtract(Math.floor(i / 10), 'days').toDate().getTime();
     if (i % 10 === 2) newgran.status = 'failed';
     if (i % 10 === 3) newgran.status = 'running';
+    if (i % 10 === 4) newgran.collectionId = 'MOD14A1___006';
     granules.push(newgran);
   }
 
@@ -120,6 +133,7 @@ test.before(async () => {
     newgran.granuleId = randomString();
     newgran.deletedAt = moment.utc().subtract(Math.floor(i / 5), 'days').toDate().getTime();
     if (i % 5 === 2) newgran.status = 'failed';
+    if (i % 5 === 4) newgran.collectionId = 'MOD14A1___006';
     deletedgrans.push(newgran);
   }
   const deletedgranjobs = deletedgrans.map((g) => esClient.update({
@@ -132,6 +146,7 @@ test.before(async () => {
       doc_as_upsert: true
     }
   }));
+
   await Promise.all(granjobs.concat(deletedgranjobs));
   return esClient.indices.refresh();
 });
@@ -142,17 +157,20 @@ test.after.always(async () => {
 
 test.beforeEach(async () => {
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  process.env.CollectionsTable = randomString();
+  await new models.Collection().createTable();
+  await new models.Collection().create(collections);
 });
 
 test.afterEach.always(async () => {
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await new models.Collection().deleteTable();
 });
 
 test.serial('generate reports for the previous day', async (t) => {
   // 24-hour period ending past midnight utc
-  const endTime = moment.utc().startOf('day').toDate().toUTCString();
-  const startTime = moment.utc().subtract(1, 'days').startOf('day').toDate()
-    .toUTCString();
+  const endTime = moment.utc().startOf('day').format();
+  const startTime = moment.utc().subtract(1, 'days').startOf('day').format();
   const reports = await generateReports(startTime, endTime);
   const requests = reports.map(async (report) => {
     const parsed = aws.parseS3Uri(report.file);
@@ -163,7 +181,7 @@ test.serial('generate reports for the previous day', async (t) => {
     // check the number of records for each report
     const content = (await aws.getS3Object(parsed.Bucket, parsed.Key)).Body.toString();
     const records = content.split('\n');
-    const expectedNumRecords = (report.reportType === 'delete') ? 5 : 9;
+    const expectedNumRecords = (report.reportType === 'delete') ? 4 : 8;
     t.is(records.length, expectedNumRecords);
 
     // check the number of fields for each record
@@ -182,9 +200,8 @@ test.serial('generate reports for the previous day', async (t) => {
 
 test.serial('generate reports for the past two days, and run multiple times', async (t) => {
   // 2-day period ending past midnight utc
-  const endTime = moment.utc().startOf('day').toDate().toUTCString();
-  const startTime = moment.utc().subtract(2, 'days').startOf('day').toDate()
-    .toUTCString();
+  const endTime = moment.utc().startOf('day').format();
+  const startTime = moment.utc().subtract(2, 'days').startOf('day').format();
   let reports;
   for (let i = 0; i < 5; i += 1) {
     reports = await generateReports(startTime, endTime); // eslint-disable-line no-await-in-loop
@@ -202,7 +219,7 @@ test.serial('generate reports for the past two days, and run multiple times', as
 
     // check the number of records for each report
     const records = (await aws.getS3Object(parsed.Bucket, parsed.Key)).Body.toString();
-    const expectedNumRecords = (report.reportType === 'delete') ? 10 : 18;
+    const expectedNumRecords = (report.reportType === 'delete') ? 8 : 16;
     t.is(records.split('\n').length, expectedNumRecords);
   });
   await Promise.all(requests);
