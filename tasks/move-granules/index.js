@@ -257,8 +257,6 @@ async function updateEachCmrFileAccessURLs(
  * @param {string} event.config.distribution_endpoint - distribution endpoint for the api
  * @param {Object} event.config.collection - collection configuration
  *                     https://nasa.github.io/cumulus/docs/data-cookbooks/setup#collections
- * @param {Object} event.config.cmr - the cmr object containing user/pass and
- *   provider
  * @param {boolean} [event.config.moveStagedFiles=true] - set to false to skip moving files
  *                                 from staging to final bucket. Mostly useful for testing.
  * @param {Object} event.input - a granules object containing an array of granules

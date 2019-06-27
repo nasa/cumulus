@@ -92,7 +92,6 @@ function checkForMetadata(granules, cmrFiles) {
  * @returns {Promise<Object>} the promise of an updated event object
  */
 async function postToCMR(event) {
-  process.env.CMR_ENVIRONMENT = process.env.CMR_ENVIRONMENT || event.config.cmr.cmrEnvironment;
   // get cmr files and metadata
   const cmrFiles = granulesToCmrFileObjects(event.input.granules);
   log.debug(`Found ${cmrFiles.length} CMR files.`);

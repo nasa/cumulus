@@ -63,7 +63,6 @@ function granulesToFileURIs(granules) {
 function buildPayload(t) {
   const newPayload = t.context.payload;
 
-  newPayload.config.cmr = {};
   newPayload.config.bucket = t.context.stagingBucket;
   newPayload.config.buckets.internal.name = t.context.stagingBucket;
   newPayload.config.buckets.public.name = t.context.publicBucket;
