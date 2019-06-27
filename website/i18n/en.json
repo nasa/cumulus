@@ -50,6 +50,9 @@
       "data-cookbooks/sns": {
         "title": "SNS Notification in Workflows"
       },
+      "data-cookbooks/throttling-queued-executions": {
+        "title": "Throttling queued executions"
+      },
       "data-cookbooks/tracking-files": {
         "title": "Tracking Ancillary Files"
       },
