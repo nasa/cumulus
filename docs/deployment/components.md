@@ -20,6 +20,13 @@ working with Terraform, the following links should bring you up to speed:
 * [Getting Started with Terraform and AWS](https://learn.hashicorp.com/terraform/?track=getting-started#getting-started)
 * [Terraform Configuration Language](https://www.terraform.io/docs/configuration/index.html)
 
+⚠️ Cumulus Terraform modules are targetted at Terraform v0.12.0 and higher.  To verify that the version of Terraform installed is at least v0.12.0, run:
+
+```shell
+$ terraform --version
+Terraform v0.12.2
+```
+
 ## Adding Terraform to your deployment
 
 Although Terraform can be configured using a single file, it is recommended to
@@ -51,6 +58,9 @@ This file will contain environment-specific values, so it should be added to
 **.gitignore**. Unfortunately, `terraform` blocks
 [can only contain constant values](https://www.terraform.io/docs/configuration/terraform.html#terraform-block-syntax);
 they cannot reference variables defined in **terraform.tfvars**.
+
+An example of using Terraform to deploy components can be found in the [`example` directory](https://github.com/nasa/cumulus/tree/master/example)
+of the Cumulus repo.
 
 ## Remote State
 
@@ -105,13 +115,7 @@ terraform {
 }
 ```
 
-## Example
-
-An example of using Terraform to deploy components can be found in the [`example` directory](https://github.com/nasa/cumulus/tree/master/example)
-of the Cumulus repo.
-
 ## Available Cumulus Components
 
-* [Thin Egress App](https://github.com/asfadmin/thin-egress-app) - an app
-  running in lambda that creates temporary S3 links and provides URS
-  integration.
+* [Thin Egress App](./thin_egress_app) - an app running in lambda that creates
+  temporary S3 links and provides URS integration.

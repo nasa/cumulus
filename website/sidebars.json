@@ -33,7 +33,8 @@
       "deployment/iam_roles",
       "deployment/obtain_cumulus_packages",
       "deployment/config_descriptions",
-      "deployment/troubleshoot_deployment"
+      "deployment/troubleshoot_deployment",
+      "deployment/thin_egress_app"
     ],
     "Additional Features": [
       "data_in_dynamodb",

@@ -74,6 +74,9 @@
       "deployment/server_access_logging": {
         "title": "S3 Server Access Logging"
       },
+      "deployment/thin_egress_app": {
+        "title": "Thin Egress App"
+      },
       "deployment/troubleshoot_deployment": {
         "title": "Troubleshooting Cumulus Deployment"
       },
