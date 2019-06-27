@@ -6,7 +6,9 @@ const path = require('path');
 const test = require('ava');
 const { aws } = require('@cumulus/common');
 const { testUtils: { randomString } } = require('@cumulus/common');
-const { bucketsPrefixes, generateAndStoreDistributionReport } = require('../../lambdas/ems-distribution-report');
+const {
+  bucketsPrefixes, generateAndStoreDistributionReport, generateAndStoreReportsForEachDay
+} = require('../../lambdas/ems-distribution-report');
 const models = require('../../models');
 const { fakeCollectionFactory, fakeGranuleFactoryV2, fakeFileFactory } = require('../../lib/testUtils');
 
@@ -59,12 +61,14 @@ function fakeGranules() {
   return granules;
 }
 
-let expectedReportContent;
+let expectedReportContentByTime;
+let myd13GranId;
 
 test.before(async () => {
   process.env.system_bucket = randomString();
   process.env.stackName = randomString();
   process.env.ems_provider = 'testEmsProvider';
+  process.env.ems_retentionInDays = 100000;
 
   process.env.CollectionsTable = randomString();
   process.env.GranulesTable = randomString();
@@ -90,10 +94,10 @@ test.beforeEach(async (t) => {
   const granules = fakeGranules();
 
   // MYD13Q1___006 granuleId
-  const myd13GranId = granules[0].granuleId;
+  myd13GranId = granules[0].granuleId;
 
   // only MYD13Q1___006 should be reported
-  expectedReportContent = [
+  expectedReportContentByTime = [
     `01-JUN-81 01:01:13 AM|&|cbrown|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|SCIENCE|&|HTTPS`,
     `01-JUN-81 01:02:13 AM|&|amalkin|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.cmr.xml|&|807|&|F|&|MYD13Q1|&|006|&|${myd13GranId}|&|METADATA|&|HTTPS`,
     `01-JUN-81 02:03:13 PM|&|-|&|192.0.2.3|&|s3://my-public-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.jpg|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|OTHER|&|HTTPS`
@@ -148,7 +152,7 @@ test.serial('emsDistributionReport writes a correct report out to S3 when no pre
   const logLines = getObjectResponse.Body.toString().split('\n');
 
   // Verify that the correct report was generated
-  t.deepEqual(logLines, expectedReportContent);
+  t.deepEqual(logLines, expectedReportContentByTime);
 });
 
 test.serial('emsDistributionReport writes a correct report out to S3 when one report already exists', async (t) => {
@@ -178,7 +182,7 @@ test.serial('emsDistributionReport writes a correct report out to S3 when one re
   const logLines = getObjectResponse.Body.toString().split('\n');
 
   // Verify that the correct report was generated
-  t.deepEqual(logLines, expectedReportContent);
+  t.deepEqual(logLines, expectedReportContentByTime);
 });
 
 test.serial('emsDistributionReport writes a correct report out to S3 when two reports already exist', async (t) => {
@@ -216,5 +220,47 @@ test.serial('emsDistributionReport writes a correct report out to S3 when two re
   const logLines = getObjectResponse.Body.toString().split('\n');
 
   // Verify that the correct report was generated
-  t.deepEqual(logLines, expectedReportContent);
+  t.deepEqual(logLines, expectedReportContentByTime);
+});
+
+test.serial('emsDistributionReport writes multiple reports', async (t) => {
+  const reportsBucket = t.context.internalBucket;
+
+  // two days
+  const reportStartTime = moment.utc('1981-06-01T00:00:00Z');
+  const reportEndTime = moment.utc('1981-06-03T00:00:00Z');
+
+  // Generate the distribution report
+  const reports = await generateAndStoreReportsForEachDay({
+    reportStartTime,
+    reportEndTime
+  });
+
+  t.is(reports.length, 2);
+
+  const expectedContents = [
+    [
+      `01-JUN-81 12:02:13 AM|&|scrosby|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|SCIENCE|&|HTTPS`,
+      `01-JUN-81 01:01:13 AM|&|cbrown|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|SCIENCE|&|HTTPS`,
+      `01-JUN-81 01:02:13 AM|&|amalkin|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.cmr.xml|&|807|&|F|&|MYD13Q1|&|006|&|${myd13GranId}|&|METADATA|&|HTTPS`,
+      `01-JUN-81 02:03:13 PM|&|-|&|192.0.2.3|&|s3://my-public-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf.jpg|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|OTHER|&|HTTPS`,
+      `01-JUN-81 04:02:13 PM|&|amurray|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|SCIENCE|&|HTTPS`
+    ],
+    [
+      `02-JUN-81 12:02:13 AM|&|mike|&|192.0.2.3|&|s3://my-dist-bucket/my-dist-folder/data/MYD13Q1.A2017297.h19v10.006.2017313221229.hdf|&|807|&|S|&|MYD13Q1|&|006|&|${myd13GranId}|&|SCIENCE|&|HTTPS`
+    ]
+  ];
+
+  // Fetch the distribution reports from S3
+  const reportContents = await Promise.all(
+    reports.map(async (report) => {
+      const getObjectResponse = await aws.s3().getObject({
+        Bucket: reportsBucket,
+        Key: aws.parseS3Uri(report.file).Key
+      }).promise();
+      return getObjectResponse.Body.toString().split('\n');
+    })
+  );
+
+  t.deepEqual(reportContents, expectedContents);
 });
