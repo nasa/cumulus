@@ -56,7 +56,6 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "audit-ci": "^2.0.1",
-    "ava": "^0.25.0",
     "babel-eslint": "^8.2.2",
     "coveralls": "^3.0.0",
     "eslint": "^5.5.0",

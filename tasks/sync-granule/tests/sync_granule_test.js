@@ -416,7 +416,10 @@ test.serial('download granule with bad checksum in file from HTTP endpoint throw
   const keypath = `file-staging/${config.stack}/${config.collection.dataType}___${parseInt(config.collection.version, 10)}`;
   const errorMessage = `Invalid checksum for S3 object s3://${t.context.internalBucketName}/${keypath}/${granuleFilename} with type ${granuleChecksumType} and expected sum ${granuleChecksumValue}`;
 
-  await t.throws(syncGranule(t.context.event), errorMessage);
+  await t.throwsAsync(
+    () => syncGranule(t.context.event),
+    errorMessage
+  );
 });
 
 test.serial('validate file properties', async (t) => {
@@ -475,7 +478,11 @@ test.serial('attempt to download file from non-existent path - throw error', asy
   await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
 
   try {
-    await t.throws(syncGranule(t.context.event), null, 'Source file not found');
+    await t.throwsAsync(
+      () => syncGranule(t.context.event),
+      null,
+      'Source file not found'
+    );
   } finally {
     // Clean up
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);

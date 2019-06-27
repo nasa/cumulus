@@ -223,10 +223,14 @@ test('validateS3ObjectChecksum throws InvalidChecksum error on bad checksum', as
   await aws.s3().putObject({ Bucket, Key, Body }).promise();
 
   const cksum = 11111111111;
-  const errMsg = `Invalid checksum for S3 object s3://${Bucket}/${Key} with type cksum and expected sum ${cksum}`;
-  await t.throws(aws.validateS3ObjectChecksum({
-    algorithm: 'cksum', bucket: Bucket, key: Key, expectedSum: cksum
-  }), errMsg);
+
+  await t.throwsAsync(
+    () => aws.validateS3ObjectChecksum({
+      algorithm: 'cksum', bucket: Bucket, key: Key, expectedSum: cksum
+    }),
+    `Invalid checksum for S3 object s3://${Bucket}/${Key} with type cksum and expected sum ${cksum}`
+  );
+
   return aws.recursivelyDeleteS3Bucket(Bucket);
 });
 
@@ -242,9 +246,8 @@ test('getFileBucketAndKey parses bucket and key', (t) => {
 test('getFileBucketAndKey throws UnparsableFileLocationError if location cannot be parsed', (t) => {
   const pathParams = 'test-bucket';
 
-  try {
-    aws.getFileBucketAndKey(pathParams);
-  } catch (err) {
-    t.true((err instanceof UnparsableFileLocationError));
-  }
+  t.throws(
+    () => aws.getFileBucketAndKey(pathParams),
+    UnparsableFileLocationError
+  );
 });
