@@ -36,6 +36,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1273**
   - Added lambda function EmsProductMetadataReport to generate EMS Product Metadata report
+- **CUMULUS-824**
+  - Added new Collection parameter `reportToEms` to configure whether the collection is reported to EMS
 - **CUMULUS-1241**
   - Added information about queues with maximum execution limits defined to default workflow templates (`meta.queueExecutionLimits`)
 - **CUMULUS-1311**

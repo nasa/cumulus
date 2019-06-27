@@ -7,13 +7,15 @@ hide_title: true
 # EMS Reporting
 Cumulus reports usage statistics to the [ESDIS Metrics System (EMS)](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/esdis-metrics-system-ems).
 
-## Types of reports
+## Collection Configuration
+
+By default, a collection and its related records (Ingest, Distribution etc.) will be reported to EMS if the collection exists in both Cumulus and CMR.  We can also configure to not report a collection to EMS by setting the collection configuration parameter `reportToEms` set to `false`.  If the collection has been reported to EMS, it can only be removed manually by the EMS team.
+
+## Types of Reports
 
 ### Product Metadata
 
-Cumulus creates Product Metadata report.  The Product Metadata report provides ancillary information about the products(collections) in Cumulus, and these information are required before EMS can process ingest and distribution reports.
-
-A product can only be removed manually by the EMS team.
+Cumulus creates a nightly Product Metadata report.  The Product Metadata report provides ancillary information about the products (collections) in Cumulus, and this information is required before EMS can process ingest and distribution reports.
 
 ### Ingest
 
