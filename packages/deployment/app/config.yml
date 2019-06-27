@@ -188,6 +188,7 @@ default:
               - Arn
           protocol: lambda
 
+  backgroundQueueName: backgroundProcessing
   sqs_consumer_rate: 500
   sqs:
     startSF:
@@ -195,6 +196,16 @@ default:
       retry: 30
       consumer:
         - lambda: sqs2sf
+          schedule: rate(1 minute)
+          messageLimit: '{{sqs_consumer_rate}}'
+          state: ENABLED
+
+    backgroundProcessing:
+      visibilityTimeout: 60
+      retry: 30
+      maxExecutions: 5
+      consumer:
+        - lambda: sqs2sfThrottle
           schedule: rate(1 minute)
           messageLimit: '{{sqs_consumer_rate}}'
           state: ENABLED
