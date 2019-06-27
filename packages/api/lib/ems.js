@@ -1,10 +1,13 @@
 'use strict';
 
+const get = require('lodash.get');
 const moment = require('moment');
 const path = require('path');
 const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
+const { constructCollectionId } = require('@cumulus/common');
 const { Sftp } = require('@cumulus/common/sftp');
+const { Collection } = require('../models');
 
 /**
  * return fileType based on report type
@@ -64,6 +67,16 @@ async function determineReportKey(reportType, reportStartTime, reportsPrefix) {
 
   return aws.s3Join([reportsPrefix, reportName]);
 }
+
+/**
+ * get list of EMS enabled collections from database
+ *
+ * @returns {Array<string>} - list of collectionIds
+ */
+const getEmsEnabledCollections = async () =>
+  (await new Collection().getAllCollections())
+    .filter((collection) => get(collection, 'reportToEms', true))
+    .map((collection) => constructCollectionId(collection.name, collection.version));
 
 /**
  * get list of expired s3 objects
@@ -141,6 +154,7 @@ async function submitReports(reports) {
 module.exports = {
   buildReportFileName,
   determineReportKey,
+  getEmsEnabledCollections,
   getExpiredS3Objects,
   submitReports,
   reportToFileType
