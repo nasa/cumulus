@@ -45,8 +45,6 @@ describe('The FTP Ingest Granules workflow', () => {
     inputPayload.granules[0].dataType += testSuffix;
     inputPayload.granules[0].granuleId = randomStringFromRegex(granuleRegex);
 
-    debugger;
-
     console.log(`Granule id is ${inputPayload.granules[0].granuleId}`);
 
     // delete the granule record from DynamoDB if exists
@@ -95,7 +93,7 @@ describe('The FTP Ingest Granules workflow', () => {
 
     it('uploaded the granules with correct ContentType', async () => {
       console.log(`File object on intermittently failing test: ${JSON.stringify(granule.files)}`);
-      console.log(`Granule object on intermittently failing test: ${JSON.stringify(granule)}`)
+      console.log(`Granule object on intermittently failing test: ${JSON.stringify(granule)}`);
       const headObjects = await Promise.all(granule.files.map(async (fileObject) =>
         Object.assign({},
           fileObject,

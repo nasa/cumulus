@@ -13,19 +13,19 @@ const cloneDeep = require('lodash.clonedeep');
 function addUniqueGranuleFilePathToGranuleFiles(granules, filePath) {
   let updatedGranules = cloneDeep(granules);
   updatedGranules = updatedGranules.map((granule) => {
-    granule.files = granule.files.map((file) => {
-      let { Bucket, Key } = parseS3Uri(file.filename);
+    granule.files = granule.files.map((file) => { //eslint-disable-line no-param-reassign
+      const { Bucket, Key } = parseS3Uri(file.filename);
       const { base, dir } = path.parse(Key);
-      Key = `${dir}/${filePath}/${base}`;
-      const filename = buildS3Uri(Bucket, Key);
-      file.filename = filename;
-      file.filepath = Key;
+      const updateKey = `${dir}/${filePath}/${base}`;
+      const filename = buildS3Uri(Bucket, updateKey);
+      file.filename = filename; //eslint-disable-line no-param-reassign
+      file.filepath = updateKey; //eslint-disable-line no-param-reassign
       return file;
     });
     return granule;
   });
   return updatedGranules;
-};
+}
 
 /**
  * Create test granule files by copying current granule files and renaming

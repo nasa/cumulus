@@ -7,6 +7,7 @@ const isString = require('lodash.isstring');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
 const pump = require('pump');
+const path = require('path');
 const url = require('url');
 const { generateChecksumFromStream, validateChecksumFromStream } = require('@cumulus/checksum');
 

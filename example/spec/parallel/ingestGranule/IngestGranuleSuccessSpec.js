@@ -1,5 +1,6 @@
 'use strict';
 
+const cloneDeep = require('lodash.clonedeep');
 const fs = require('fs-extra');
 const isNumber = require('lodash.isnumber');
 const isString = require('lodash.isstring');
@@ -242,16 +243,17 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('output includes the ingested granule with file staging location paths', () => {
-      let updatedGranule = {
+      const updatedGranule = {
         ...expectedSyncGranulePayload.granules[0],
         sync_granule_end_time: lambdaOutput.meta.input_granules[0].sync_granule_end_time,
         sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration
       };
 
       updatedGranule.files = updatedGranule.files.map((file) => {
-        let updatedUrlPath = Object.is(file.url_path, undefined) ? '' : `${file.url_path}/`;
-        file.url_path = `${updatedUrlPath}${testId}/`;
-        return file;
+        const fileUpdate = cloneDeep(file);
+        const updatedUrlPath = Object.is(file.url_path, undefined) ? '' : `${file.url_path}/`;
+        fileUpdate.url_path = `${updatedUrlPath}${testId}/`;
+        return fileUpdate;
       });
 
       const updatedPayload = {
@@ -355,9 +357,10 @@ describe('The S3 Ingest Granules workflow', () => {
       const updatedGranule = expectedPayload.granules[0];
       const collectionUrString = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
       updatedGranule.files = updatedGranule.files.map((file) => {
-        let updatedUrlPath = Object.is(file.url_path, undefined) ? collectionUrString : `${file.url_path}/`;
-        file.url_path = `${updatedUrlPath}${testId}/`;
-        return file;
+        const fileUpdate = cloneDeep(file);
+        const updatedUrlPath = Object.is(file.url_path, undefined) ? collectionUrString : `${file.url_path}/`;
+        fileUpdate.url_path = `${updatedUrlPath}${testId}/`;
+        return fileUpdate;
       });
 
 
