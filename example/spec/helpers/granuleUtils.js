@@ -2,10 +2,30 @@
 
 const fs = require('fs-extra');
 const {
-  aws: { s3 },
+  aws: { buildS3Uri, parseS3Uri, s3 },
   stringUtils: { globalReplace },
   testUtils: { randomStringFromRegex }
 } = require('@cumulus/common');
+const path = require('path');
+const cloneDeep = require('lodash.clonedeep');
+
+
+function addUniqueGranuleFilePathToGranuleFiles(granules, filePath) {
+  let updatedGranules = cloneDeep(granules);
+  updatedGranules = updatedGranules.map((granule) => {
+    granule.files = granule.files.map((file) => {
+      let { Bucket, Key } = parseS3Uri(file.filename);
+      const { base, dir } = path.parse(Key);
+      Key = `${dir}/${filePath}/${base}`;
+      const filename = buildS3Uri(Bucket, Key);
+      file.filename = filename;
+      file.filepath = Key;
+      return file;
+    });
+    return granule;
+  });
+  return updatedGranules;
+};
 
 /**
  * Create test granule files by copying current granule files and renaming
@@ -87,5 +107,6 @@ function loadFileWithUpdatedGranuleIdPathAndCollection(file, newGranuleId, newPa
 
 module.exports = {
   loadFileWithUpdatedGranuleIdPathAndCollection,
+  addUniqueGranuleFilePathToGranuleFiles,
   setupTestGranuleForIngest
 };

@@ -36,7 +36,7 @@ describe('The FTP Ingest Granules workflow', () => {
   beforeAll(async () => {
     // populate collections, providers and test data
     await Promise.all([
-      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
       addProviders(config.stackName, config.bucket, providersDir, null, testSuffix)
     ]);
 
@@ -44,6 +44,8 @@ describe('The FTP Ingest Granules workflow', () => {
     inputPayload = JSON.parse(fs.readFileSync(inputPayloadFilename, 'utf8'));
     inputPayload.granules[0].dataType += testSuffix;
     inputPayload.granules[0].granuleId = randomStringFromRegex(granuleRegex);
+
+    debugger;
 
     console.log(`Granule id is ${inputPayload.granules[0].granuleId}`);
 
@@ -93,6 +95,7 @@ describe('The FTP Ingest Granules workflow', () => {
 
     it('uploaded the granules with correct ContentType', async () => {
       console.log(`File object on intermittently failing test: ${JSON.stringify(granule.files)}`);
+      console.log(`Granule object on intermittently failing test: ${JSON.stringify(granule)}`)
       const headObjects = await Promise.all(granule.files.map(async (fileObject) =>
         Object.assign({},
           fileObject,

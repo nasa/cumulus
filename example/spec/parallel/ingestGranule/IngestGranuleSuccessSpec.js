@@ -28,6 +28,7 @@ const {
 } = require('@cumulus/common');
 const { getUrl } = require('@cumulus/cmrjs');
 const {
+  addCollections,
   api: apiTestUtils,
   executionsApi: executionsApiTestUtils,
   buildAndExecuteWorkflow,
@@ -63,7 +64,8 @@ const {
 } = require('../../helpers/apiUtils');
 const {
   setupTestGranuleForIngest,
-  loadFileWithUpdatedGranuleIdPathAndCollection
+  loadFileWithUpdatedGranuleIdPathAndCollection,
+  addUniqueGranuleFilePathToGranuleFiles
 } = require('../../helpers/granuleUtils');
 
 const { isReingestExecutionForGranuleId } = require('../../helpers/workflowUtils');
@@ -108,6 +110,7 @@ describe('The S3 Ingest Granules workflow', () => {
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
   const newCollectionId = constructCollectionId(collection.name, collection.version);
   const provider = { id: `s3_provider${testSuffix}` };
+  const collectionDupeHandling = 'error';
 
   let workflowExecution = null;
   let failingWorkflowExecution;
@@ -132,13 +135,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let executionName;
 
   beforeAll(async () => {
-    const collectionJson = JSON.parse(fs.readFileSync(`${collectionsDir}/s3_MOD09GQ_006.json`, 'utf8'));
-    collectionJson.duplicateHandling = 'error';
-    const collectionData = Object.assign({}, collectionJson, {
-      name: collection.name,
-      dataType: collectionJson.dataType + testSuffix
-    });
-
     const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
     const providerData = Object.assign({}, providerJson, {
       id: provider.id,
@@ -148,10 +144,9 @@ describe('The S3 Ingest Granules workflow', () => {
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-      apiTestUtils.addCollectionApi({ prefix: config.stackName, collection: collectionData }),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId, collectionDupeHandling),
       apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData })
     ]);
-
     const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
@@ -164,7 +159,7 @@ describe('The S3 Ingest Granules workflow', () => {
     expectedSyncGranulePayload.granules[0].dataType += testSuffix;
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
-
+    expectedPayload.granules = addUniqueGranuleFilePathToGranuleFiles(expectedPayload.granules, testId);
     // process.env.DISTRIBUTION_ENDPOINT needs to be set for below
     setDistributionApiEnvVars();
 
@@ -247,17 +242,22 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('output includes the ingested granule with file staging location paths', () => {
-      const updatedGranule = {
+      let updatedGranule = {
         ...expectedSyncGranulePayload.granules[0],
         sync_granule_end_time: lambdaOutput.meta.input_granules[0].sync_granule_end_time,
         sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration
       };
 
+      updatedGranule.files = updatedGranule.files.map((file) => {
+        let updatedUrlPath = Object.is(file.url_path, undefined) ? '' : `${file.url_path}/`;
+        file.url_path = `${updatedUrlPath}${testId}/`;
+        return file;
+      });
+
       const updatedPayload = {
         ...expectedSyncGranulePayload,
         granules: [updatedGranule]
       };
-
       expect(lambdaOutput.payload).toEqual(updatedPayload);
     });
 
@@ -267,7 +267,6 @@ describe('The S3 Ingest Granules workflow', () => {
         sync_granule_end_time: lambdaOutput.meta.input_granules[0].sync_granule_end_time,
         sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration
       };
-
       expect(lambdaOutput.meta.input_granules).toEqual([updatedGranule]);
     });
   });
@@ -353,11 +352,20 @@ describe('The S3 Ingest Granules workflow', () => {
     it('has expected payload', () => {
       expect(granule.cmrLink).toEqual(`${getUrl('search')}granules.json?concept_id=${granule.cmrConceptId}`);
 
+      const updatedGranule = expectedPayload.granules[0];
+      const collectionUrString = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
+      updatedGranule.files = updatedGranule.files.map((file) => {
+        let updatedUrlPath = Object.is(file.url_path, undefined) ? collectionUrString : `${file.url_path}/`;
+        file.url_path = `${updatedUrlPath}${testId}/`;
+        return file;
+      });
+
+
       const thisExpectedPayload = {
         ...expectedPayload,
         granules: [
           {
-            ...expectedPayload.granules[0],
+            ...updatedGranule,
             cmrConceptId: postToCmrOutput.payload.granules[0].cmrConceptId,
             cmrLink: postToCmrOutput.payload.granules[0].cmrLink,
             post_to_cmr_duration: postToCmrOutput.payload.granules[0].post_to_cmr_duration,
@@ -367,7 +375,6 @@ describe('The S3 Ingest Granules workflow', () => {
           }
         ]
       };
-
       expect(postToCmrOutput.payload).toEqual(thisExpectedPayload);
     });
 

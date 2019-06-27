@@ -25,6 +25,7 @@ const {
 } = require('@cumulus/common');
 const { getUrl } = require('@cumulus/cmrjs');
 const {
+  addCollections,
   api: apiTestUtils,
   buildAndExecuteWorkflow,
   LambdaStep,
