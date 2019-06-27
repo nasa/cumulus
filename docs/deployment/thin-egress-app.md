@@ -70,8 +70,9 @@ base64 hash.
 
 ## Permissions boundaries
 
-When storing the secret in Secrets Manager, and when performing a Terraform
-deployment, you _must_ be run using `NGAPShNonProd` credentials.
+For NASA NGAP users, When storing the secret in Secrets Manager, and when
+performing a Terraform deployment, you _must_ be run using `NGAPShNonProd`
+credentials.
 
 ## Outputs
 
@@ -89,14 +90,16 @@ output "tea_urs_redirect_uri" {
 }
 ```
 
-Once you've run the Terraform deployment, you should get an output something like this:
+Once you've run the Terraform deployment, you should get an output something
+like this:
 
 ```text
 tea_api_endpoint = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
 tea_urs_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/login
 ```
 
-Set `DISTRIBUTION_ENDPOINT` in your `app/config.yml` to the value of `tea_api_endpoint`.
+Set `api_distribution_url` in your `app/config.yml` to the value of
+`tea_api_endpoint`.
 
 You will also need to configure the `tea_urs_redirect_uri` value as a Redirect
 URI in your app's URS configuration.
