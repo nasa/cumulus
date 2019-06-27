@@ -56,6 +56,9 @@
       "data-cookbooks/tracking-files": {
         "title": "Tracking Ancillary Files"
       },
+      "deployment/components": {
+        "title": "Cumulus Components"
+      },
       "deployment/config_descriptions": {
         "title": "Configuration Descriptions"
       },
@@ -73,6 +76,9 @@
       },
       "deployment/server_access_logging": {
         "title": "S3 Server Access Logging"
+      },
+      "deployment/thin_egress_app": {
+        "title": "Thin Egress App"
       },
       "deployment/troubleshoot_deployment": {
         "title": "Troubleshooting Cumulus Deployment"
