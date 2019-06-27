@@ -6,7 +6,11 @@ hide_title: true
 
 # Configure Permissions for API Gateway Logging to CloudWatch
 
+
+
 ## Instructions for enabling account level logging from API Gateway to CloudWatch.
+
+This is a one time operation that must be performed on each AWS account to allow API Gateway to push logs to CloudWatch.
 
 ### Create a policy document
 
