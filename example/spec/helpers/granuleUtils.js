@@ -9,11 +9,20 @@ const {
 const path = require('path');
 const cloneDeep = require('lodash.clonedeep');
 
+function addUrlPathToGranuleFiles(files, testId, collectionUrlPath) {
+  let updatedFiles = cloneDeep(files);
+  return updatedFiles.map((file) => {
+    const fileUpdate = cloneDeep(file);
+    const updatedUrlPath = Object.is(file.url_path, undefined) ? collectionUrlPath : `${file.url_path}/`;
+    fileUpdate.url_path = `${updatedUrlPath}${testId}/`;
+    return fileUpdate;
+  });
+}
 
 function addUniqueGranuleFilePathToGranuleFiles(granules, filePath) {
-  let updatedGranules = cloneDeep(granules);
-  updatedGranules = updatedGranules.map((granule) => {
-    granule.files = granule.files.map((file) => { //eslint-disable-line no-param-reassign
+  const updatedGranules = granules.map((originalGranule) => {
+    const granule = cloneDeep(originalGranule)
+    granule.files = granule.files.map((file) => {
       const { Bucket, Key } = parseS3Uri(file.filename);
       const { base, dir } = path.parse(Key);
       const updateKey = `${dir}/${filePath}/${base}`;
@@ -106,7 +115,8 @@ function loadFileWithUpdatedGranuleIdPathAndCollection(file, newGranuleId, newPa
 }
 
 module.exports = {
-  loadFileWithUpdatedGranuleIdPathAndCollection,
   addUniqueGranuleFilePathToGranuleFiles,
+  addUrlPathToGranuleFiles,
+  loadFileWithUpdatedGranuleIdPathAndCollection,
   setupTestGranuleForIngest
 };

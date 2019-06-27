@@ -54,9 +54,10 @@ const {
   setDistributionApiEnvVars
 } = require('../../helpers/apiUtils');
 const {
+  addUniqueGranuleFilePathToGranuleFiles,
+  addUrlPathToGranuleFiles,
   setupTestGranuleForIngest,
-  loadFileWithUpdatedGranuleIdPathAndCollection,
-  addUniqueGranuleFilePathToGranuleFiles
+  loadFileWithUpdatedGranuleIdPathAndCollection
 } = require('../../helpers/granuleUtils');
 
 const config = loadConfig();
@@ -115,12 +116,12 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const providerModel = new Provider();
 
   beforeAll(async () => {
+    const collectionUrlPath = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
     const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
     const providerData = Object.assign({}, providerJson, {
       id: provider.id,
       host: config.bucket
     });
-
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
@@ -132,11 +133,10 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     const granuleId = inputPayload.granules[0].granuleId;
-
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
     expectedPayload.granules = addUniqueGranuleFilePathToGranuleFiles(expectedPayload.granules, testId);
-
+    expectedPayload.granules[0].files = addUrlPathToGranuleFiles(expectedPayload.granules[0].files, testId, collectionUrlPath);
 
     // process.env.DISTRIBUTION_ENDPOINT needs to be set for below
     setDistributionApiEnvVars();
@@ -272,15 +272,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       expect(granule.cmrLink).toEqual(`${getUrl('search')}granules.json?concept_id=${granule.cmrConceptId}`);
 
       const updatedGranule = expectedPayload.granules[0];
-      const collectionUrString = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
-      updatedGranule.files = updatedGranule.files.map((file) => {
-        const fileUpdate = cloneDeep(file);
-        const updatedUrlPath = Object.is(file.url_path, undefined) ? collectionUrString : `${file.url_path}/`;
-        fileUpdate.url_path = `${updatedUrlPath}${testId}/`;
-        return fileUpdate;
-      });
-
-
       const updatedExpectedPayload = {
         ...expectedPayload,
         granules: [

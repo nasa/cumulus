@@ -64,9 +64,10 @@ const {
   setDistributionApiEnvVars
 } = require('../../helpers/apiUtils');
 const {
+  addUniqueGranuleFilePathToGranuleFiles,
+  addUrlPathToGranuleFiles,
   setupTestGranuleForIngest,
-  loadFileWithUpdatedGranuleIdPathAndCollection,
-  addUniqueGranuleFilePathToGranuleFiles
+  loadFileWithUpdatedGranuleIdPathAndCollection
 } = require('../../helpers/granuleUtils');
 
 const { isReingestExecutionForGranuleId } = require('../../helpers/workflowUtils');
@@ -156,11 +157,14 @@ describe('The S3 Ingest Granules workflow', () => {
     await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
       s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
 
+    const collectionUrlString = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
     expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, newCollectionId);
     expectedSyncGranulePayload.granules[0].dataType += testSuffix;
+    expectedSyncGranulePayload.granules[0].files = addUrlPathToGranuleFiles(expectedSyncGranulePayload.granules[0].files, testId, '');
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
     expectedPayload.granules = addUniqueGranuleFilePathToGranuleFiles(expectedPayload.granules, testId);
+    expectedPayload.granules[0].files =  addUrlPathToGranuleFiles(expectedPayload.granules[0].files, testId, collectionUrlString);
     // process.env.DISTRIBUTION_ENDPOINT needs to be set for below
     setDistributionApiEnvVars();
 
@@ -248,13 +252,6 @@ describe('The S3 Ingest Granules workflow', () => {
         sync_granule_end_time: lambdaOutput.meta.input_granules[0].sync_granule_end_time,
         sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration
       };
-
-      updatedGranule.files = updatedGranule.files.map((file) => {
-        const fileUpdate = cloneDeep(file);
-        const updatedUrlPath = Object.is(file.url_path, undefined) ? '' : `${file.url_path}/`;
-        fileUpdate.url_path = `${updatedUrlPath}${testId}/`;
-        return fileUpdate;
-      });
 
       const updatedPayload = {
         ...expectedSyncGranulePayload,
@@ -353,16 +350,8 @@ describe('The S3 Ingest Granules workflow', () => {
 
     it('has expected payload', () => {
       expect(granule.cmrLink).toEqual(`${getUrl('search')}granules.json?concept_id=${granule.cmrConceptId}`);
-
       const updatedGranule = expectedPayload.granules[0];
-      const collectionUrString = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
-      updatedGranule.files = updatedGranule.files.map((file) => {
-        const fileUpdate = cloneDeep(file);
-        const updatedUrlPath = Object.is(file.url_path, undefined) ? collectionUrString : `${file.url_path}/`;
-        fileUpdate.url_path = `${updatedUrlPath}${testId}/`;
-        return fileUpdate;
-      });
-
+      //updatedGranule.files = addUrlPathToGranuleFiles(updatedGranule.files, testId, collectionUrlString)
 
       const thisExpectedPayload = {
         ...expectedPayload,
