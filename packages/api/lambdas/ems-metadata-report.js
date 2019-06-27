@@ -160,6 +160,7 @@ const getDbCollections = async () =>
   (await new Collection().getAllCollections())
     .map((collection) => ({
       collectionId: constructCollectionId(collection.name, collection.version),
+      reportToEms: get(collection, 'reportToEms', true),
       lastUpdate: millisecondsToUTCString(
         collection.updatedAt || collection.createdAt || Date.now()
       )
@@ -205,7 +206,9 @@ async function getCollectionsForEms(startTime, endTime) {
       // Found an item that is in both cmr and database
       const cmrCollection = cmrCollections.shift();
       const dbCollection = dbCollections.shift();
-      emsCollections.push({ ...cmrCollection, dbLastUpdate: dbCollection.lastUpdate });
+      if (get(dbCollection, 'reportToEms', true)) {
+        emsCollections.push({ ...cmrCollection, dbLastUpdate: dbCollection.lastUpdate });
+      }
     }
 
     nextDbCollectionId = (dbCollections.length !== 0) ? dbCollections[0].collectionId : null;
@@ -214,10 +217,8 @@ async function getCollectionsForEms(startTime, endTime) {
 
   // only the collections updated in CMR or CUMULUS within the time range are included
   const lastUpdateFilter = (collection) =>
-    ((moment.utc(collection.lastUpdate) >= startTime
-      && moment.utc(collection.lastUpdate) < endTime)
-    || (moment.utc(collection.dbLastUpdate) >= startTime
-      && moment.utc(collection.dbLastUpdate) < endTime));
+    (moment.utc(collection.lastUpdate).isBetween(startTime, endTime, null, '[)')
+    || moment.utc(collection.dbLastUpdate).isBetween(startTime, endTime, null, '[)'));
 
   return emsCollections.filter(lastUpdateFilter);
 }
