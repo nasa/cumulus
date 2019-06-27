@@ -49,7 +49,7 @@ This table describes the fields that must be present in `config.yml` to successf
 | cmr.clientId | CUMULUS | the clientId used to authenticate with the CMR
 | cmr.password | (required) | the password used to authenticate with the CMR
 | cmr.cmrEnvironment | UAT | the cmr environment
-| cmr.cmrLimit | 50 | the CMR limit
+| cmr.cmrLimit | 50 | the limit for CMR records returned from a search
 | cmr.cmrPageSize | 100 | the CMR page size
 | buckets | (required) | Configuration of buckets with key, bucket name, and type (i.e. internal, public, private, protected)
 | system_bucket | `buckets.internal.name` | the bucket used for storing deployment artifacts
