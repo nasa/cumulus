@@ -10,7 +10,11 @@ hide_title: true
 
 This is a guide for deploying a new instance of Cumulus.
 
-The deployment documentation is current for the following component versions:
+**Note:** Cumulus is in the process of moving from a monolithic deployment to
+a more modular deployment process. This document describes the current process.
+Instructions for deploying Cumulus components can be found [here](deployment/components.md).
+
+This deployment document is current for the following component versions:
 
 * [Cumulus](https://github.com/nasa/cumulus)
 * [Deployment Template](https://github.com/nasa/template-deploy)
