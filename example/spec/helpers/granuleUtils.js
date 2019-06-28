@@ -35,13 +35,14 @@ function addUrlPathToGranuleFiles(files, testId, collectionUrlPath) {
 function addUniqueGranuleFilePathToGranuleFiles(granules, filePath) {
   const updatedGranules = granules.map((originalGranule) => {
     const granule = cloneDeep(originalGranule);
-    granule.files = granule.files.map((file) => {
+    granule.files = granule.files.map((originalFile) => {
+      const file = cloneDeep(originalFile);
       const { Bucket, Key } = parseS3Uri(file.filename);
       const { base, dir } = path.parse(Key);
       const updateKey = `${dir}/${filePath}/${base}`;
       const filename = buildS3Uri(Bucket, updateKey);
-      file.filename = filename; //eslint-disable-line no-param-reassign
-      file.filepath = updateKey; //eslint-disable-line no-param-reassign
+      file.filename = filename;
+      file.filepath = updateKey;
       return file;
     });
     return granule;
