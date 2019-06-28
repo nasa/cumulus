@@ -11,7 +11,6 @@ const aws = require('aws-sdk');
 const httpAwsEs = require('http-aws-es');
 const elasticsearch = require('elasticsearch');
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { promisify } = require('util');
 const queries = require('./queries');
 const aggs = require('./aggregations');
 
@@ -22,7 +21,11 @@ const logDetails = {
 
 const defaultIndexAlias = 'cumulus-alias';
 
-const getCredentials = promisify(aws.config.getCredentials);
+const getCredentials = () =>
+  new Promise((resolve, reject) => aws.config.getCredentials((err) => {
+    if (err) return reject(err);
+    return resolve();
+  }));
 
 /**
  * returns the local address of elasticsearch based on
