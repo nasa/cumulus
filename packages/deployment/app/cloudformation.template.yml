@@ -331,6 +331,12 @@ Resources:
 {{# each rules }}
   {{@key}}Rule:
     Type: AWS::Events::Rule
+    {{# if this.eventPattern}}
+    DependsOn:
+    {{#each ../stepFunctions}}
+      - {{../../prefixNoDash}}{{@key}}StateMachine
+    {{/each}}
+    {{/if}}
     Properties:
     {{# if this.schedule}}
       ScheduleExpression: {{this.schedule}}
@@ -338,7 +344,13 @@ Resources:
     {{# if this.eventPattern}}
       EventPattern:
         Fn::Sub: |
-          {{{ToJson this.eventPattern}}}
+          - |
+              {{{handleEventPattern this.eventPattern ../stepFunctions ../prefixNoDash}}}
+          -
+            {{#each ../stepFunctions}}
+            {{../../prefixNoDash}}{{@key}}StateMachineArn:
+              Ref: {{../../prefixNoDash}}{{@key}}StateMachine
+            {{/each}}
     {{/if}}
       State: {{# if this.state}}{{this.state}}{{ else }}DISABLED{{/if}}
       Targets:

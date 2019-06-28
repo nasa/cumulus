@@ -277,6 +277,17 @@ class UpdatedKes extends Kes {
       return '/';
     });
 
+    Handlebars.registerHelper('handleEventPattern', (eventPattern, stepFunctions, prefix) => {
+      if (eventPattern.source && eventPattern.source.includes('aws.states')) {
+        const stateMachineArns = Object.keys(stepFunctions)
+          .map((stateMachine) => `\$\{${prefix}${stateMachine}StateMachineArn\}`);
+        // eslint-disable-next-line no-param-reassign
+        eventPattern.detail.stateMachineArn = stateMachineArns;
+        console.log(eventPattern);
+      }
+      return JSON.stringify(eventPattern);
+    });
+
     return super.parseCF(cfFile);
   }
 
