@@ -55,6 +55,9 @@ We have encountered transient lambda service errors in our integration testing. 
   - Updated `@cumulus/queue-pdrs` to set `cumulus_meta.queueName` for queued execution messages
   - Updated `sqs2sfThrottle` lambda to immediately decrement queue semaphore value if dispatching Step Function execution throws an error
 
+- **CUMULUS-1362**
+  - Granule `processingStartTime` and `processingEndTime` will be set to the execution start time and end time respectively when there is no sync granule or post to cmr task present in the workflow
+
 ### Fixed
 
 - **CUMULUS-1319**
