@@ -343,7 +343,6 @@ function addCustomUrlPathToCollectionFiles(collection, customFilePath) {
  * @param {string} postfix - string to append to collection name
  * @returns {Promise.<number>} number of collections added
  */
-//TODO: Change path variable name
 async function addCollections(stackName, bucketName, dataDirectory, postfix,
   customFilePath, duplicateHandling) {
   const collections = await setupSeedData(stackName, bucketName, dataDirectory);
