@@ -119,7 +119,7 @@ test('No error is thrown if nothing is in the database', async (t) => {
   t.notThrows(async () => indexFromDatabase.indexFromDatabase(esIndex, tables));
 });
 
-test.only('index executions', async (t) => {
+test('index executions', async (t) => {
   const numItems = 10;
 
   const fakeData = await Promise.all([
