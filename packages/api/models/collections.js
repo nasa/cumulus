@@ -128,10 +128,14 @@ class Collection extends Manager {
     return this.scan(
       {
         names: {
-          '#name': 'name', '#version': 'version', '#createdAt': 'createdAt', '#updatedAt': 'updatedAt'
+          '#name': 'name',
+          '#version': 'version',
+          '#reportToEms': 'reportToEms',
+          '#createdAt': 'createdAt',
+          '#updatedAt': 'updatedAt'
         }
       },
-      '#name, #version, #createdAt, #updatedAt'
+      '#name, #version, #reportToEms, #createdAt, #updatedAt'
     ).then((result) => result.Items);
   }
 

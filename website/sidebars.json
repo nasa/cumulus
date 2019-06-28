@@ -27,12 +27,14 @@
     ],
     "Deployment": [
       "deployment/deployment-readme",
+      "deployment/components",
       "deployment/create_bucket",
       "deployment/server_access_logging",
       "deployment/iam_roles",
       "deployment/obtain_cumulus_packages",
       "deployment/config_descriptions",
-      "deployment/troubleshoot_deployment"
+      "deployment/troubleshoot_deployment",
+      "deployment/thin_egress_app"
     ],
     "Additional Features": [
       "data_in_dynamodb",
@@ -67,7 +69,9 @@
       "data-cookbooks/choice-states",
       "data-cookbooks/cloudwatch-retention",
       "data-cookbooks/browse-generation",
-      "data-cookbooks/tracking-files"
+      "data-cookbooks/tracking-files",
+      "data-cookbooks/run-tasks-in-lambda-or-docker",
+      "data-cookbooks/throttling-queued-executions"
     ]
   },
   "Operator Docs": {
