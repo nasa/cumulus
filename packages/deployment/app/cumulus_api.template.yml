@@ -38,6 +38,9 @@ Parameters:
   KinesisInboundEventLoggerLambdaFunctionArn:
     Type: String
     Description: 'KinesisInboundEventLogger Lambda function ARN'
+  IndexFromDatabaseLambdaFunctionArn:
+    Type: String
+    Description: 'IndexFromDatabaseLambda Lambda function ARN'
   distributionRestApi:
     Type: String
     Description: Distribution REST API ID
