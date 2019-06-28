@@ -13,6 +13,7 @@ const {
   util: { noop }
 } = require('@cumulus/common');
 const { removeNilProperties } = require('@cumulus/common/util');
+const StepFunctions = require('@cumulus/common/StepFunctions');
 
 const indexer = require('../../../es/indexer');
 const { Search } = require('../../../es/search');
@@ -55,6 +56,11 @@ let collectionModel;
 let executionModel;
 let granuleModel;
 let pdrModel;
+let stepFunctionsStub;
+
+const input = JSON.stringify(granuleSuccess);
+const payload = JSON.parse(input);
+
 test.before(async () => {
   await deleteAliases();
 
@@ -91,6 +97,12 @@ test.before(async () => {
   };
 
   sinon.stub(cmrjs, 'getGranuleTemporalInfo').callsFake(() => fakeMetadata);
+
+  stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').returns({
+    input,
+    startDate: new Date(),
+    endDate: new Date()
+  });
 });
 
 test.after.always(async () => {
@@ -103,6 +115,7 @@ test.after.always(async () => {
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 
   cmrjs.getGranuleTemporalInfo.restore();
+  stepFunctionsStub.restore();
 });
 
 test.serial('creating a successful granule record', async (t) => {
@@ -616,9 +629,6 @@ test.serial('delete a provider record', async (t) => {
 
 // This needs to be serial because it is stubbing aws.sfn's responses
 test.serial('reingest a granule', async (t) => {
-  const input = JSON.stringify(granuleSuccess);
-
-  const payload = JSON.parse(input);
   const key = `${process.env.stackName}/workflows/${payload.meta.workflow_name}.json`;
   await aws.s3().putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' }).promise();
 
@@ -628,17 +638,7 @@ test.serial('reingest a granule', async (t) => {
 
   t.is(record.status, 'completed');
 
-  const sfn = aws.sfn();
-
-  try {
-    sfn.describeExecution = () => ({
-      promise: () => Promise.resolve({ input })
-    });
-
-    await indexer.reingest(record);
-  } finally {
-    delete sfn.describeExecution;
-  }
+  await indexer.reingest(record);
 
   const g = new models.Granule();
   const newRecord = await g.get({ granuleId: record.granuleId });
