@@ -38,6 +38,9 @@
       "data-cookbooks/hello-world": {
         "title": "HelloWorld Workflow"
       },
+      "data-cookbooks/run-tasks-in-lambda-or-docker": {
+        "title": "Run Step Function Tasks in Lambda or Docker"
+      },
       "data-cookbooks/setup": {
         "title": "Data Cookbooks Setup"
       },
@@ -47,8 +50,14 @@
       "data-cookbooks/sns": {
         "title": "SNS Notification in Workflows"
       },
+      "data-cookbooks/throttling-queued-executions": {
+        "title": "Throttling queued executions"
+      },
       "data-cookbooks/tracking-files": {
         "title": "Tracking Ancillary Files"
+      },
+      "deployment/components": {
+        "title": "Cumulus Components"
       },
       "deployment/config_descriptions": {
         "title": "Configuration Descriptions"
@@ -67,6 +76,9 @@
       },
       "deployment/server_access_logging": {
         "title": "S3 Server Access Logging"
+      },
+      "deployment/thin_egress_app": {
+        "title": "Thin Egress App"
       },
       "deployment/troubleshoot_deployment": {
         "title": "Troubleshooting Cumulus Deployment"
@@ -130,18 +142,6 @@
       },
       "team": {
         "title": "Team"
-      },
-      "upgrade/1.11.0": {
-        "title": "Upgrading to Cumulus 1.11.0"
-      },
-      "upgrade/1.6.0": {
-        "title": "Upgrading to Cumulus 1.6.0"
-      },
-      "upgrade/1.7.0": {
-        "title": "Upgrading to Cumulus 1.7.0"
-      },
-      "upgrade/1.9.0": {
-        "title": "Upgrading to Cumulus 1.9.0"
       },
       "upgrade/upgrade-readme": {
         "title": "Upgrading Cumulus"
@@ -238,6 +238,69 @@
       },
       "version-1.11.0/workflows/version-1.11.0-workflow-triggers": {
         "title": "Workflow Triggers"
+      },
+      "version-1.12.0/data-cookbooks/version-1.12.0-browse-generation": {
+        "title": "Ingest Browse Generation"
+      },
+      "version-1.12.0/data-cookbooks/version-1.12.0-run-tasks-in-lambda-or-docker": {
+        "title": "Run Step Function Tasks in Lambda or Docker"
+      },
+      "version-1.12.0/data-cookbooks/version-1.12.0-setup": {
+        "title": "Data Cookbooks Setup"
+      },
+      "version-1.12.0/data-cookbooks/version-1.12.0-tracking-files": {
+        "title": "Tracking Ancillary Files"
+      },
+      "version-1.12.0/deployment/version-1.12.0-config_descriptions": {
+        "title": "Configuration Descriptions"
+      },
+      "version-1.12.0/deployment/version-1.12.0-create_bucket": {
+        "title": "Creating an S3 Bucket"
+      },
+      "version-1.12.0/deployment/version-1.12.0-obtain_cumulus_packages": {
+        "title": "Obtaining Cumulus Packages"
+      },
+      "version-1.12.0/deployment/version-1.12.0-deployment-readme": {
+        "title": "How to Deploy Cumulus"
+      },
+      "version-1.12.0/deployment/version-1.12.0-server_access_logging": {
+        "title": "S3 Server Access Logging"
+      },
+      "version-1.12.0/deployment/version-1.12.0-troubleshoot_deployment": {
+        "title": "Troubleshooting Cumulus Deployment"
+      },
+      "version-1.12.0/version-1.12.0-ems_reporting": {
+        "title": "EMS Reporting"
+      },
+      "version-1.12.0/features/version-1.12.0-ancillary_metadata": {
+        "title": "Ancillary Metadata Export"
+      },
+      "version-1.12.0/version-1.12.0-interfaces": {
+        "title": "Cumulus Interfaces"
+      },
+      "version-1.12.0/operator-docs/version-1.12.0-locating-access-logs": {
+        "title": "Locating S3 Access Logs"
+      },
+      "version-1.12.0/operator-docs/version-1.12.0-update-cumulus-dependencies": {
+        "title": "Update Cumulus Dependencies"
+      },
+      "version-1.12.0/version-1.12.0-cumulus-docs-readme": {
+        "title": "Cumulus Description"
+      },
+      "version-1.12.0/version-1.12.0-tasks": {
+        "title": "Cumulus Tasks"
+      },
+      "version-1.12.0/workflow_tasks/version-1.12.0-discover_granules": {
+        "title": "Discover Granules"
+      },
+      "version-1.12.0/workflow_tasks/version-1.12.0-files_to_granules": {
+        "title": "Files To Granules"
+      },
+      "version-1.12.0/workflow_tasks/version-1.12.0-move_granules": {
+        "title": "Move Granules"
+      },
+      "version-1.12.0/workflow_tasks/version-1.12.0-parse_pdr": {
+        "title": "Parse PDR"
       },
       "version-v1.10.1/version-v1.10.1-adding-a-task": {
         "title": "Contributing a Task"
@@ -442,6 +505,42 @@
       },
       "version-v1.11.2/workflows/version-v1.11.2-workflows-readme": {
         "title": "Workflows"
+      },
+      "version-v1.13.0/data-cookbooks/version-v1.13.0-browse-generation": {
+        "title": "Ingest Browse Generation"
+      },
+      "version-v1.13.0/data-cookbooks/version-v1.13.0-cnm-workflow": {
+        "title": "CNM Workflow"
+      },
+      "version-v1.13.0/data-cookbooks/version-v1.13.0-setup": {
+        "title": "Data Cookbooks Setup"
+      },
+      "version-v1.13.0/data-cookbooks/version-v1.13.0-sns": {
+        "title": "SNS Notification in Workflows"
+      },
+      "version-v1.13.0/data-cookbooks/version-v1.13.0-tracking-files": {
+        "title": "Tracking Ancillary Files"
+      },
+      "version-v1.13.0/deployment/version-v1.13.0-config_descriptions": {
+        "title": "Configuration Descriptions"
+      },
+      "version-v1.13.0/deployment/version-v1.13.0-deployment-readme": {
+        "title": "How to Deploy Cumulus"
+      },
+      "version-v1.13.0/deployment/version-v1.13.0-troubleshoot_deployment": {
+        "title": "Troubleshooting Cumulus Deployment"
+      },
+      "version-v1.13.0/features/version-v1.13.0-ancillary_metadata": {
+        "title": "Ancillary Metadata Export"
+      },
+      "version-v1.13.0/workflow_tasks/version-v1.13.0-discover_granules": {
+        "title": "Discover Granules"
+      },
+      "version-v1.13.0/workflow_tasks/version-v1.13.0-move_granules": {
+        "title": "Move Granules"
+      },
+      "version-v1.13.0/workflow_tasks/version-v1.13.0-parse_pdr": {
+        "title": "Parse PDR"
       }
     },
     "links": {
@@ -457,13 +556,14 @@
       "Tasks": "Tasks",
       "Deployment": "Deployment",
       "Additional Features": "Additional Features",
-      "Cumulus Versions": "Cumulus Versions",
+      "Upgrading Cumulus": "Upgrading Cumulus",
       "Troubleshooting": "Troubleshooting",
       "Cumulus Development": "Cumulus Development",
       "About Cookbooks": "About Cookbooks",
       "Cookbooks": "Cookbooks",
       "About Operator Docs": "About Operator Docs",
       "Configuration": "Configuration",
+      "Cumulus Versions": "Cumulus Versions",
       "Operating and Contributing": "Operating and Contributing"
     }
   },

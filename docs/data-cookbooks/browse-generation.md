@@ -10,14 +10,13 @@ This entry documents how to setup a workflow that utilizes Cumulus's built-in gr
 
 We will discuss how to run a processing workflow against an inbound granule that has data but no browse generated.  The workflow will generate a browse file and add the appropriate output values to the Cumulus message so that the built-in post-to-cmr task will publish the data appropriately.
 
-## Sections:
+## Sections
 
 * [Prerequisites](#prerequisites)
 * [Configure Cumulus](#configure-cumulus)
 * [Configure Ingest](#configure-ingest)
 * [Run Workflows](#run-workflows)
 * [Build Processing Lambda](#build-processing-lambda)
-
 
 ## Prerequisites
 
@@ -65,7 +64,6 @@ For this example, you are going to be adding two workflows to your Cumulus deplo
 
   This workflow will run the ```DiscoverGranules``` task, targeting the S3 bucket/folder mentioned in the prerequisites.    The output of that task will be passed into QueueGranules, which will trigger the second workflow for each granule to be ingested.   The example presented here will be a single granule with a .hdf data file and a .met metadata file only, however your setup may result in more granules, or different files.
 
-
 * CookbookBrowseExample
 
   This workflow will be triggered for each granule in the previous workflow.    It will utilize the SyncGranule task, which brings the files into a staging location in the Cumulus buckets.
@@ -84,52 +82,52 @@ Add the following to a new file ```browseExample.yml``` in your deployment's mai
 
 A few things to note about tasks in the workflow being added:
 
-*  The CMR step in CookbookBrowseExample:
+* The CMR step in CookbookBrowseExample:
 
-```
+```yaml
  CmrStep:
-      CumulusConfig:
-        bucket: '{$.meta.buckets.internal.name}'
-        stack: '{$.meta.stack}'
-        cmr: '{$.meta.cmr}'
-        process: '{$.cumulus_meta.process}'
-        input_granules: '{$.meta.input_granules}'
-        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
-      Type: Task
-      Resource: ${PostToCmrLambdaFunction.Arn}
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          ResultPath: '$.exception'
-          Next: StopStatus
-      Next: StopStatus
+    CumulusConfig:
+      bucket: '{$.meta.buckets.internal.name}'
+      stack: '{$.meta.stack}'
+      cmr: '{$.meta.cmr}'
+      process: '{$.cumulus_meta.process}'
+      input_granules: '{$.meta.input_granules}'
+      granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+    Type: Task
+    Resource: ${PostToCmrLambdaFunction.Arn}
+    Catch:
+      - ErrorEquals:
+        - States.ALL
+        ResultPath: '$.exception'
+        Next: StopStatus
+    Next: StopStatus
 ```
 
 Note that in the task, the event.config.cmr will contain the values you configured in the ```cmr``` configuration section above.
 
 * The Processing step in CookbookBrowseExample:
 
-```
-    ProcessingStep:
-      CumulusConfig:
-        bucket: '{$.meta.buckets.internal.name}'
-        collection: '{$.meta.collection}'
-        cmrMetadataFormat: '{$.meta.cmrMetadataFormat}'
-        additionalUrls: '{$.meta.additionalUrls}'
-        generateFakeBrowse: true
-      Type: Task
-      Resource: ${FakeProcessingLambdaFunction.Arn}
-      Catch:
-        - ErrorEquals:
+```yaml
+  ProcessingStep:
+    CumulusConfig:
+      bucket: '{$.meta.buckets.internal.name}'
+      collection: '{$.meta.collection}'
+      cmrMetadataFormat: '{$.meta.cmrMetadataFormat}'
+      additionalUrls: '{$.meta.additionalUrls}'
+      generateFakeBrowse: true
+    Type: Task
+    Resource: ${FakeProcessingLambdaFunction.Arn}
+    Catch:
+      - ErrorEquals:
+        - States.ALL
+        ResultPath: '$.exception'
+        Next: StopStatus
+    Retry:
+      - ErrorEquals:
           - States.ALL
-          ResultPath: '$.exception'
-          Next: StopStatus
-      Retry:
-        - ErrorEquals:
-            - States.ALL
-          IntervalSeconds: 2
-          MaxAttempts: 3
-      Next: FilesToGranulesStep
+        IntervalSeconds: 2
+        MaxAttempts: 3
+    Next: FilesToGranulesStep
 ```
 
 **Please note**: ```FakeProcessing``` is the core provided browse/cmr generation we're using for the example in this entry.
@@ -140,7 +138,7 @@ Note that in the task, the event.config.cmr will contain the values you configur
 
 In an editor, open app/config.yml and modify your stepFunctions key to contain the file you just created:
 
-```
+```yaml
 stepFunctions: !!files [
   {some list of workflows},
   'browseExample.yml'
@@ -149,12 +147,11 @@ stepFunctions: !!files [
 
 This will cause kes to export the workflows in the new file along with the other workflows configured for your deployment.
 
-
 #### Lambdas
 
 Ensure the following lambdas are in your deployment's lambdas.yml (reference the [example lambdas.yml](https://github.com/nasa/cumulus/blob/master/example/lambdas.yml)):
 
-```
+```yaml
 DiscoverGranules:
   handler: index.handler
   timeout: 300
@@ -205,7 +202,6 @@ PostToCmr:
 
  If you're not ingesting mock data matching the example, or would like to use this entry to ingest your own data please see the [build-lambda](#build-lambda) section below.    You will need to configure a different lambda entry for your lambda and utilize it in place of the ```Resource``` defined in the example workflow.
 
-
 #### Redeploy
 
 Once you've configured your CMR credentials, updated your workflow configuration, and updated your lambda configuration you should be able to redeploy your cumulus instance:
@@ -214,7 +210,7 @@ Once you've configured your CMR credentials, updated your workflow configuration
 
 You should expect to see a successful deployment message similar to:
 
-```
+```shell
 Template saved to app/cloudformation.yml
 Uploaded: s3://<bucket and key>/cloudformation.yml
 Waiting for the CF operation to complete
@@ -248,43 +244,43 @@ Now that the Cumulus stacks for your deployment have been updated with the new w
 
 Navigate to the 'Collection' tab on the interface and add a collection.  Note that you need to set the "provider_path" to the path on your bucket (e.g. "/data") that you've staged your mock/test data.
 
-```
+```json
 {
-	"name": "MOD09GQ",
-	"version": "006",
-	"dataType": "MOD09GQ",
-	"process": "modis",
-	"provider_path": "{{path_to_data}}",
-	"url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
-	"duplicateHandling": "replace",
-	"granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
-	"granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg|\\.jpg)",
-	"sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
-	"files": [
-		{
-			"bucket": "protected",
-			"regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
-			"sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
-			"type": "data",
-			"url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
-		},
-		{
-			"bucket": "private",
-			"regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$",
-			"sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met",
-			"type": "metadata"
-		},
-		{
-			"bucket": "protected-2",
-			"regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.cmr\\.xml$",
-			"sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml"
-		},
-		{
-			"bucket": "protected",
-			"regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.jpg$",
-			"sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.jpg"
-		}
-	],
+  "name": "MOD09GQ",
+  "version": "006",
+  "dataType": "MOD09GQ",
+  "process": "modis",
+  "provider_path": "{{path_to_data}}",
+  "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
+  "duplicateHandling": "replace",
+  "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",
+  "granuleIdExtraction": "(MOD09GQ\\..*)(\\.hdf|\\.cmr|_ndvi\\.jpg|\\.jpg)",
+  "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+  "files": [
+    {
+      "bucket": "protected",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf",
+      "type": "data",
+      "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}"
+    },
+    {
+      "bucket": "private",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf\\.met$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.met",
+      "type": "metadata"
+    },
+    {
+      "bucket": "protected-2",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.cmr\\.xml$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.cmr.xml"
+    },
+    {
+      "bucket": "protected",
+      "regex": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.jpg$",
+      "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.jpg"
+    }
+  ],
 }
 ```
 
@@ -294,7 +290,7 @@ Navigate to the 'Collection' tab on the interface and add a collection.  Note th
 
 Next navigate to the Provider tab and create a provider with the following values, using whatever name you wish, and the bucket the data was staged to as the host:
 
-```
+```shell
 Name:
 Protocol: S3
 Host: {{data_source_bucket}}
@@ -304,21 +300,21 @@ Host: {{data_source_bucket}}
 
 Once you have your provider and rule added, go to the Rules tab, and add a rule with the following values (using whatever name you wish, populating the workflow and provider keys with the previously entered values:
 
-```
+```json
 {
-	"name": "TestBrowseGeneration",
-	"workflow": "DiscoverGranulesBrowseExample",
-	"provider": {{provider_from_previous_step}},
-	"collection": {
-		"name": "MOD09GQ",
-		"version": "006"
-	},
-	"meta": {},
-	"rule": {
-		"type": "onetime"
-	},
-	"state": "ENABLED",
-	"updatedAt": 1553053438767
+  "name": "TestBrowseGeneration",
+  "workflow": "DiscoverGranulesBrowseExample",
+  "provider": "{{provider_from_previous_step}}",
+  "collection": {
+    "name": "MOD09GQ",
+    "version": "006"
+  },
+  "meta": {},
+  "rule": {
+    "type": "onetime"
+  },
+  "state": "ENABLED",
+  "updatedAt": 1553053438767
 }
 ```
 
@@ -330,95 +326,94 @@ Once you've configured the Collection and Provider and added a onetime rule, you
 
 Go to the Rules tab, click the rule you just created:
 
-![Image Missing](../../assets/browse_processing_1.png)
+![Screenshot of the Rules overview page in the Cumulus dashboard](../../assets/browse_processing_1.png)
 
 Then click the gear in the upper right corner and click "ReRun":
 
-![Image Missing](../../assets/browse_processing_2.png)
+![Screenshot of a rule edit page in the Cumulus dashboard with a pop-up menu open](../../assets/browse_processing_2.png)
 
 Tab over to executions and you should see the ```DiscoverGranulesBrowseExample``` workflow fire, succeed and then moments later the ```CookbookBrowseExample```.
 
-![Image Missing](../../assets/browse_processing_3.png)
+![Screenshot of page listing executions in the Cumulus dashboard](../../assets/browse_processing_3.png)
 
 ### Results
 
 You can verify your data has ingested by clicking the successful workflow entry:
 
-![Image Missing](../../assets/browse_processing_4.png)
+![Screenshot of entry from table listing executions in the Cumulus dashboard](../../assets/browse_processing_4.png)
 
 Select "Show Output" on the next page
 
-![Image Missing](../../assets/browse_processing_5.png)
+![Screenshot of show output button from individual execution page in the Cumulus dashboard](../../assets/browse_processing_5.png)
 
 and you should see in the payload from the workflow something similar to:
 
-```
+```json
 "payload": {
-    "process": "modis",
-    "granules": [
-      {
-        "files": [
-          {
-            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-            "filepath": "MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-            "type": "data",
-            "bucket": "cumulus-test-sandbox-protected",
-            "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-            "time": 1553027415000,
-            "path": "data",
-            "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
-            "duplicate_found": true,
-            "size": 1908635
-          },
-          {
-            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-            "filepath": "MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-            "type": "metadata",
-            "bucket": "cumulus-test-sandbox-private",
-            "filename": "s3://cumulus-test-sandbox-private/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-            "time": 1553027412000,
-            "path": "data",
-            "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
-            "duplicate_found": true,
-            "size": 21708
-          },
-          {
-            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
-            "filepath": "MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
-            "type": "browse",
-            "bucket": "cumulus-test-sandbox-protected",
-            "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
-            "time": 1553027415000,
-            "path": "data",
-            "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
-            "duplicate_found": true,
-            "size": 1908635
-          },
-          {
-            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
-            "filepath": "MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
-            "type": "metadata",
-            "bucket": "cumulus-test-sandbox-protected-2",
-            "filename": "s3://cumulus-test-sandbox-protected-2/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
-            "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
-          }
-        ],
-        "cmrLink": "https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=G1222231611-CUMULUS",
-        "cmrConceptId": "G1222231611-CUMULUS",
-        "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606",
-        "cmrMetadataFormat": "echo10",
-        "dataType": "MOD09GQ",
-        "version": "006",
-        "published": true
-      }
-    ]
+  "process": "modis",
+  "granules": [
+    {
+      "files": [
+        {
+          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+          "filepath": "MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+          "type": "data",
+          "bucket": "cumulus-test-sandbox-protected",
+          "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+          "time": 1553027415000,
+          "path": "data",
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
+          "duplicate_found": true,
+          "size": 1908635
+        },
+        {
+          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+          "filepath": "MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+          "type": "metadata",
+          "bucket": "cumulus-test-sandbox-private",
+          "filename": "s3://cumulus-test-sandbox-private/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+          "time": 1553027412000,
+          "path": "data",
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
+          "duplicate_found": true,
+          "size": 21708
+        },
+        {
+          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
+          "filepath": "MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
+          "type": "browse",
+          "bucket": "cumulus-test-sandbox-protected",
+          "filename": "s3://cumulus-test-sandbox-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
+          "time": 1553027415000,
+          "path": "data",
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
+          "duplicate_found": true,
+          "size": 1908635
+        },
+        {
+          "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
+          "filepath": "MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
+          "type": "metadata",
+          "bucket": "cumulus-test-sandbox-protected-2",
+          "filename": "s3://cumulus-test-sandbox-protected-2/MOD09GQ___006/MOD/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
+          "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}"
+        }
+      ],
+      "cmrLink": "https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=G1222231611-CUMULUS",
+      "cmrConceptId": "G1222231611-CUMULUS",
+      "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606",
+      "cmrMetadataFormat": "echo10",
+      "dataType": "MOD09GQ",
+      "version": "006",
+      "published": true
+    }
+  ]
+}
 ```
 
 You can verify the granules exist within your cumulus instance (search using the Granules interface, check the S3 buckets, etc) and validate that the above CMR entry
 
-
------
-
+-----------
 
 ## Build Processing Lambda
 
@@ -436,17 +431,17 @@ The incoming message to the task defined in the  ```ProcessingStep``` as configu
 
 * event.config.bucket -- the bucket configured in config.yml as your 'internal' bucket.
 
-* event.config.collection -- The full collection object we will configure in the (Configure Ingest)[#configure-ingest] section.   You can view the expected collection schema in the docs (here)[/data-cookbooks/setup] or in the source code (on github)[https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js]  You need this as available input *and* output so you can update as needed.
+* event.config.collection -- The full collection object we will configure in the [Configure Ingest](#configure-ingest) section. You can view the expected collection schema in the docs [here](data-cookbooks/setup.md) or in the source code [on github](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js). You need this as available input *and* output so you can update as needed.
 
 ```event.config.additionalUrls```, ```generateFakeBrowse```  and ```event.config.cmrMetadataFormat``` from the example can be ignored as they're configuration flags for the provided example script.
 
 #### Payload
 
-The 'payload' from the previous task is accessible via event.input.    The expected payload output schema from SyncGranules can be viewed [here](https://github.com/nasa/cumulus/blob/master/tasks/move-granules/schemas/output.json).
+The 'payload' from the previous task is accessible via event.input. The expected payload output schema from SyncGranules can be viewed [here](https://github.com/nasa/cumulus/blob/master/tasks/move-granules/schemas/output.json).
 
-In our example, the payload would look like the following.  **Note**: The types are set per-file based on what we configured in our collection, and were initially added as part of the ```DiscoverGranules``` step in the ```DiscoverGranulesBrowseExample``` workflow.
+In our example, the payload would look like the following. **Note**: The types are set per-file based on what we configured in our collection, and were initially added as part of the ```DiscoverGranules``` step in the ```DiscoverGranulesBrowseExample``` workflow.
 
-```
+```json
  "payload": {
     "process": "modis",
     "granules": [
@@ -493,7 +488,6 @@ The processing lambda you construct will need to do the following:
 * Add the browse file to the input granule files, making sure to set the granule file's type to ```browse```.
 * Update meta.input_granules with the updated granules list, as well as provide the files to be integrated by ```FilesToGranules``` as output from the task.
 
-
 ### Generating/updating CMR metadata
 
 If you do not already have a CMR file in the granules list, you will need to generate one for valid export.   This example's processing script generates and adds it to the ```FilesToGranules``` file list via the payload  but it can be present in the InputGranules from the DiscoverGranules task as well if you'd prefer to pre-generate it.
@@ -506,7 +500,7 @@ In the above example, the critical portion of the output to ```FilesToGranules``
 
 In the example provided, the processing task is setup to return an object with the keys "files" and "granules".   In the cumulus_message configuration, the outputs are mapped in the configuration to the payload, granules to meta.input_granules:
 
-```
+```yaml
             - source: '{$.granules}'
               destination: '{$.meta.input_granules}'
             - source: '{$.files}'
@@ -521,7 +515,7 @@ The payload includes a full list of files to be 'moved' into the cumulus archive
 
 In the provided example, a payload being passed to the  ```FilesToGranules``` task should be expected to look like:
 
-```
+```json
   "payload": [
     "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
     "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
@@ -538,50 +532,49 @@ The pathing is generated from sync-granules, but in principle the files can be s
 
 The ```FilesToGranules``` task utilizes the incoming payload to chose which files to move, but pulls all other metadata from meta.input_granules.  As such, the output payload in the example would look like:
 
-```
+```json
 "input_granules": [
+  {
+    "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606",
+    "dataType": "MOD09GQ",
+    "version": "006",
+    "files": [
       {
-        "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606",
-        "dataType": "MOD09GQ",
-        "version": "006",
-        "files": [
-          {
-            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-            "type": "data",
-            "bucket": "cumulus-test-sandbox-internal",
-            "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
-            "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
-            "time": 1553027415000,
-            "path": "data",
-            "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
-            "duplicate_found": true,
-            "size": 1908635
-          },
-          {
-            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-            "type": "metadata",
-            "bucket": "cumulus-test-sandbox-internal",
-            "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
-            "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
-            "time": 1553027412000,
-            "path": "data",
-            "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
-            "duplicate_found": true,
-            "size": 21708
-          },
-          {
-            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
-            "type": "browse",
-            "bucket": "cumulus-test-sandbox-internal",
-            "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
-            "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
-            "time": 1553027415000,
-            "path": "data",
-            "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
-            "duplicate_found": true,
-          }
-        ]
+        "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+        "type": "data",
+        "bucket": "cumulus-test-sandbox-internal",
+        "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+        "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
+        "time": 1553027415000,
+        "path": "data",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
+        "duplicate_found": true,
+        "size": 1908635
+      },
+      {
+        "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+        "type": "metadata",
+        "bucket": "cumulus-test-sandbox-internal",
+        "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+        "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
+        "time": 1553027412000,
+        "path": "data",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}",
+        "duplicate_found": true,
+        "size": 21708
+      },
+      {
+        "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
+        "type": "browse",
+        "bucket": "cumulus-test-sandbox-internal",
+        "filename": "s3://cumulus-test-sandbox-internal/file-staging/jk2/MOD09GQ___006/MOD09GQ.A2016358.h13v04.006.2016360104606.jpg",
+        "fileStagingDir": "file-staging/jk2/MOD09GQ___006",
+        "time": 1553027415000,
+        "path": "data",
+        "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/{substring(file.name, 0, 3)}",
+        "duplicate_found": true,
       }
-    ],
+    ]
+  }
+],
 ```
-

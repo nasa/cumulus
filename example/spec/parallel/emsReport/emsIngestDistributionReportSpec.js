@@ -22,7 +22,6 @@ const {
   addCollections,
   addProviders,
   buildAndExecuteWorkflow,
-  cleanupCollections,
   cleanupProviders,
   distributionApi: {
     getDistributionApiRedirect
@@ -102,18 +101,26 @@ async function ingestAndPublishGranule(testSuffix, testDataFolder, publish = tru
   return inputPayload.granules[0].granuleId;
 }
 
-// delete old granules
-async function deleteOldGranules() {
+/**
+ * delete old granules
+ *
+ * @param {number} retentionInDays - granules are deleted if older than specified days
+ * @param {Array<string>} additionalGranuleIds - additional granules to delete
+ */
+async function deleteOldGranules(retentionInDays, additionalGranuleIds) {
   const dbGranulesIterator = new Granule().getGranulesForCollection(collectionId, 'completed');
   let nextDbItem = await dbGranulesIterator.peek();
   while (nextDbItem) {
     const nextDbGranuleId = nextDbItem.granuleId;
-    if (nextDbItem.published) {
-      // eslint-disable-next-line no-await-in-loop
-      await granulesApiTestUtils.removePublishedGranule({ prefix: config.stackName, granuleId: nextDbGranuleId });
-    } else {
-      // eslint-disable-next-line no-await-in-loop
-      await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: nextDbGranuleId });
+    const offset = Date.now() - retentionInDays * 24 * 3600 * 1000;
+    if (nextDbItem.createdAt <= offset || additionalGranuleIds.includes(nextDbGranuleId)) {
+      if (nextDbItem.published) {
+        // eslint-disable-next-line no-await-in-loop
+        await granulesApiTestUtils.removePublishedGranule({ prefix: config.stackName, granuleId: nextDbGranuleId });
+      } else {
+        // eslint-disable-next-line no-await-in-loop
+        await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: nextDbGranuleId });
+      }
     }
 
     await dbGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
@@ -148,8 +155,10 @@ describe('The EMS report', () => {
     // ingest one granule, this will be deleted later
     deletedGranuleId = await ingestAndPublishGranule(testSuffix, testDataFolder);
 
-    // delete granules ingested for this collection, so that ArchDel report can be generated
-    await deleteOldGranules();
+    // delete granules ingested for this collection, so that ArchDel report can be generated.
+    // leave some granules for distribution report since the granule and collection information
+    // is needed for distributed files.
+    await deleteOldGranules(2, [deletedGranuleId]);
 
     // ingest two new granules, so that Archive and Ingest reports can be generated
     ingestedGranuleIds = await Promise.all([
@@ -164,7 +173,7 @@ describe('The EMS report', () => {
   afterAll(async () => {
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
-      cleanupCollections(config.stackName, config.bucket, collectionsDir),
+      // leave collection in the table for daily reports
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
     ]);
   });
@@ -212,8 +221,8 @@ describe('The EMS report', () => {
 
       // add a few seconds to allow records searchable in elasticsearch
       await sleep(5 * 1000);
-      const endTime = moment.utc().add(5, 'seconds').format();
-      const startTime = moment.utc().subtract(1, 'days').format();
+      const endTime = moment.utc().add(1, 'days').startOf('day').format();
+      const startTime = moment.utc().startOf('day').format();
 
       const response = await lambda().invoke({
         FunctionName: emsIngestReportLambda,
@@ -294,8 +303,8 @@ describe('The EMS report', () => {
         const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
         AWS.config.update({ region: region });
 
-        const endTime = moment.utc().format();
-        const startTime = moment.utc().subtract(1, 'days').format();
+        const endTime = moment.utc().add(1, 'days').startOf('day').format();
+        const startTime = moment.utc().startOf('day').format();
 
         const response = await lambda().invoke({
           FunctionName: emsDistributionReportLambda,
