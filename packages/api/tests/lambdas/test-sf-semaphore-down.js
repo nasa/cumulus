@@ -62,7 +62,7 @@ const createCloudwatchPackagedEventMessage = ({
 });
 
 
-const packagedEventReturn = ((queueName) => (
+const createExecutionMessage = ((queueName) => (
   {
     cumulus_meta: {
       execution_name: randomString(),
@@ -223,17 +223,18 @@ test('sfSemaphoreDown lambda decrements semaphore for s3-stored event message', 
     }
   }).promise();
 
-  const cloudwatchConfig = { status, queueName };
-  const stubReturn = packagedEventReturn(queueName);
+  const stubReturn = createExecutionMessage(queueName);
   const pullStepFunctionStub = sinon.stub(commonAws, 'pullStepFunctionEvent');
   const proxiedFunction = proxyquire('../../lambdas/sf-semaphore-down', { pullStepFunctionEvent: pullStepFunctionStub }).handleSemaphoreDecrementTask;
   pullStepFunctionStub.returns(stubReturn);
   await proxiedFunction(
-    createCloudwatchPackagedEventMessage(cloudwatchConfig)
+    createCloudwatchPackagedEventMessage({ status, queueName })
   );
 
   const response = await semaphore.get(queueName);
   t.is(response.semvalue, 0);
+
+  pullStepFunctionStub.restore;
 });
 
 

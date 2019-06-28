@@ -46,13 +46,13 @@ const getEventMessage = (event) => JSON.parse(get(event, 'detail.output', '{}'))
  *   - Workflow is not in a terminal state
  *
  * @param {Object} event - A workflow execution event
- * @param {Object} eventMessage - A cumulus event message
+ * @param {Object} executionMessage - A cumulus event message
  * @returns {boolean} True if workflow execution semaphore should be decremented
  */
-const isDecrementEvent = (event, eventMessage) =>
+const isDecrementEvent = (event, executionMessage) =>
   isSfExecutionEvent(event)
-  && hasQueueAndExecutionLimit(eventMessage)
-  && isTerminalStatus(getEventStatus(event));
+  && isTerminalStatus(getEventStatus(event))
+  && hasQueueAndExecutionLimit(executionMessage);
 
 /**
  * Handle Cloudwatch event and decrement semaphore, if necessary.
@@ -61,8 +61,8 @@ const isDecrementEvent = (event, eventMessage) =>
  */
 async function handleSemaphoreDecrementTask(event) {
   const eventMessage = getEventMessage(event);
-  const parsedEvent = await pullStepFunctionEvent(eventMessage);
-  if (isDecrementEvent(event, parsedEvent)) {
+  const executionMessage = await pullStepFunctionEvent(eventMessage);
+  if (isDecrementEvent(event, executionMessage)) {
     const queueName = getQueueName(eventMessage);
     return decrementQueueSemaphore(queueName);
   }
