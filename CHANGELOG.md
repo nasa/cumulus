@@ -8,8 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### PLEASE NOTE
-
-**CUMULUS-799** added some additional IAM permissions to support reading CloudWatch and API Gateway, so **you will have to redeploy your IAM stack.**
+**CUMULUS-799** added some additional IAM permissions to support reading CloudWatch and API Gateway and permissions were added to support indexing to Elasticsearch from the database, so **you will have to redeploy your IAM stack.**
 
 We have encountered transient lambda service errors in our integration testing. Please handle transient service errors following [these guidelines](https://docs.aws.amazon.com/step-functions/latest/dg/bp-lambda-serviceexception.html). The workflows in the `example/workflows` folder have been updated with retries configured for these errors.
 
@@ -22,6 +21,8 @@ We have encountered transient lambda service errors in our integration testing. 
   - Adds new BackendApi endpoint `distributionMetrics` that returns a summary of successful s3 accesses as well as a summary of distribution errors -- including s3 access errors, 4XX and 5XX errors.
 - **CUMULUS-1273**
   - Added lambda function EmsProductMetadataReport to generate EMS Product Metadata report
+- **CUMULUS-1226**
+  - Added API endpoint `elasticsearch/index-from-database` to index to an Elasticsearch index from the database for recovery purposes and `elasticsearch/indices-status` to check the status of Elasticsearch indices via the API.
 - **CUMULUS-824**
   - Added new Collection parameter `reportToEms` to configure whether the collection is reported to EMS
 - **CUMULUS-1241**

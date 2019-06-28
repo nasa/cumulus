@@ -247,3 +247,11 @@ sfSemaphoreDown:
   launchInVpc: true
   tables:
     - SemaphoresTable
+
+IndexFromDatabase:
+  handler: index.handler
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist/indexFromDatabase/'
+  launchInVpc: true
+  useElasticSearch: '{{es.name}}'
