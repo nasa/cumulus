@@ -15,6 +15,7 @@ module.exports = {
     emsProductMetadataReport: './lambdas/ems-metadata-report.js',
     executeMigrations: './lambdas/executeMigrations.js',
     indexer: './es/indexer.js',
+    indexFromDatabase: './lambdas/index-from-database.js',
     messageConsumer: './lambdas/message-consumer.js',
     payloadLogger: './lambdas/payload-logger.js',
     sfScheduler: './lambdas/sf-scheduler.js',
