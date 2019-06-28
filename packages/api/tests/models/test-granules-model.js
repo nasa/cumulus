@@ -56,8 +56,8 @@ test.before(async () => {
 
   fakeExecution = async () => ({
     input: JSON.stringify(testCumulusMessage),
-    startDate: new Date(2019, 6, 28),
-    endDate: new Date(2019, 6, 28, 1)
+    startDate: new Date(Date.UTC(2019, 6, 28)),
+    endDate: new Date(Date.UTC(2019, 6, 28, 1))
   });
   stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').callsFake(fakeExecution);
 });
@@ -626,7 +626,7 @@ test(
     const result = await granuleModel.createGranulesFromSns(cumulusMessage);
 
     t.is(result.length, 1);
-    t.is(result[0].processingStartDateTime, '2019-07-28T04:00:00.000Z');
+    t.is(result[0].processingStartDateTime, '2019-07-28T00:00:00.000Z');
   }
 );
 
@@ -656,7 +656,7 @@ test(
     const result = await granuleModel.createGranulesFromSns(cumulusMessage);
 
     t.is(result.length, 1);
-    t.is(result[0].processingEndDateTime, '2019-07-28T05:00:00.000Z');
+    t.is(result[0].processingEndDateTime, '2019-07-28T01:00:00.000Z');
   }
 );
 
