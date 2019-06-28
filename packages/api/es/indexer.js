@@ -21,6 +21,23 @@ const { constructCollectionId } = require('@cumulus/common');
 const { Search, defaultIndexAlias } = require('./search');
 const { deconstructCollectionId } = require('../lib/utils');
 const { Granule, Pdr, Execution } = require('../models');
+const { IndexExistsError } = require('../lib/errors');
+const mappings = require('../models/mappings.json');
+
+async function createIndex(esClient, indexName) {
+  const indexExists = await esClient.indices.exists({ index: indexName });
+
+  if (indexExists) {
+    throw new IndexExistsError(`Index ${indexName} exists and cannot be created.`);
+  }
+
+  await esClient.indices.create({
+    index: indexName,
+    body: { mappings }
+  });
+
+  log.info(`Created esIndex ${indexName}`);
+}
 
 /**
  * Extracts info from a stepFunction message and indexes it to
@@ -388,6 +405,7 @@ function handler(event, context, cb) {
 
 module.exports = {
   constructCollectionId,
+  createIndex,
   deconstructCollectionId,
   handler,
   logHandler,

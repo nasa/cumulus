@@ -15,3 +15,13 @@ The Docker container expects a number of environment variables to be set:
 
 The built image is deployed to
 https://hub.docker.com/r/cumuluss/async-operation/
+
+## Building and Deploying
+
+Run the following commands. Replace <build-number> with the next build number.
+
+`docker build -t cumuluss/async-operation:<build-number> .`
+
+`docker push cumuluss/async-operation:<build-number>`
+
+To use the new version of the image, you must update the configuration for the AsyncOperation ECS task to point to the new version.

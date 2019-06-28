@@ -92,6 +92,10 @@ Resources:
           Fn::GetAtt:
             - KinesisInboundEventLoggerLambdaFunction
             - Arn
+        IndexFromDatabaseLambdaFunctionArn:
+          Fn::GetAtt:
+            - IndexFromDatabaseLambdaFunction
+            - Arn
         # The backend API needs a reference to the distributionRestApi so
         # it can construct values for the DISTRIBUTION_REDIRECT_ENDPOINT
         # environment variable. The /granules endpoint uses this variable.
