@@ -36,6 +36,13 @@
       "deployment/troubleshoot_deployment",
       "deployment/thin_egress_app"
     ],
+    "Deployment Options":[
+      "additional-deployment-options/delete-api-gateway-stages",
+      "additional-deployment-options/enable-gateway-logging-permissions",
+      "additional-deployment-options/enable-api-logs",
+      "additional-deployment-options/configure-cloudwatch-logs-delivery",
+      "additional-deployment-options/additional-lambda-logging"
+    ],
     "Additional Features": [
       "data_in_dynamodb",
       "features/dead_letter_queues",
