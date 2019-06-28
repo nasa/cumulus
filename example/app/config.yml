@@ -79,7 +79,6 @@ default:
         value: '{{DOCKER_PASS}}'
 
 
-  apiStage: dev
 
   vpc:
     vpcId: '{{VPC_ID}}'
@@ -181,6 +180,7 @@ default:
     'workflows/browseExample.yml'
   ]
 
+  apiStage: dev
   apiConfigs:
     backend:
       private: true
@@ -188,6 +188,8 @@ default:
     distribution:
       private: true
       port: 7000
+      logApiGatewayToCloudWatch: true
+  logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
 
   sns:
     sftracker:

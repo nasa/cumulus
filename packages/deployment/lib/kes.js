@@ -250,15 +250,11 @@ class UpdatedKes extends Kes {
    * @returns {string}        - Contents of cfFile templated using Handlebars
    */
   parseCF(cfFile) {
+    // Parent kes deployed into packages/deployment contains
+    // Original registered helpers 'ifEquals', 'ifNotEquals', and 'ToJson'
+
     // Arrow functions cannot be used when registering Handlebars helpers
     // https://stackoverflow.com/questions/43932566/handlebars-block-expression-do-not-work
-
-    Handlebars.registerHelper('ifEquals', function ifEquals(arg1, arg2, options) {
-      return (arg1 === arg2) ? options.fn(this) : options.inverse(this);
-    });
-    Handlebars.registerHelper('ifNotEquals', function ifNotEquals(arg1, arg2, options) {
-      return (arg1 !== arg2) ? options.fn(this) : options.inverse(this);
-    });
 
     Handlebars.registerHelper('collectBuckets', (buckets, bucketType) => this.collectBuckets(buckets, bucketType));
 
@@ -276,6 +272,18 @@ class UpdatedKes extends Kes {
       }
       return '/';
     });
+
+    Handlebars.registerHelper(
+      'ifLogApiGatewayToCloudWatch',
+      function ifLogApiGatewayToCloudWatch(configs, api, options) {
+        const logApiGatewayToCloudWatch = configs && configs[api]
+          ? configs[api].logApiGatewayToCloudWatch
+          : false;
+        return logApiGatewayToCloudWatch
+          ? options.fn(this)
+          : options.inverse(this);
+      }
+    );
 
     return super.parseCF(cfFile);
   }
