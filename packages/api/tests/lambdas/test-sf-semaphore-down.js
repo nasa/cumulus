@@ -1,5 +1,8 @@
 'use strict';
 
+const sinon = require('sinon');
+const commonAws = require('@cumulus/common/aws');
+const proxyquire = require('proxyquire');
 const test = require('ava');
 const {
   aws,
@@ -36,6 +39,43 @@ const createCloudwatchEventMessage = ({
     })
   }
 });
+
+const createCloudwatchPackagedEventMessage = ({
+  status,
+  queueName,
+  source = sfEventSource
+}) => ({
+  source,
+  detail: {
+    status,
+    output: JSON.stringify({
+      cumulus_meta: {
+        execution_name: randomString(),
+        queueName
+      },
+      replace: {
+        Bucket: 'cumulus-sandbox-testing',
+        Key: 'stubbedKey'
+      }
+    })
+  }
+});
+
+
+const createExecutionMessage = ((queueName) => (
+  {
+    cumulus_meta: {
+      execution_name: randomString(),
+      queueName
+    },
+    meta: {
+      queueExecutionLimits: {
+        [queueName]: 5
+      }
+    }
+  }
+));
+
 
 const testTerminalEventMessage = async (t, status) => {
   const { client, semaphore } = t.context;
@@ -169,6 +209,36 @@ test('sfSemaphoreDown lambda throws error for invalid event message', async (t) 
     })
   );
 });
+
+test('sfSemaphoreDown lambda decrements semaphore for s3-stored event message', async (t) => {
+  const status = 'SUCCEEDED';
+  const { client, semaphore } = t.context;
+  const queueName = randomId('low');
+  // arbitrarily set semaphore so it can be decremented
+  await client.put({
+    TableName: process.env.SemaphoresTable,
+    Item: {
+      key: queueName,
+      semvalue: 1
+    }
+  }).promise();
+
+  const stubReturn = createExecutionMessage(queueName);
+  const pullStepFunctionStub = sinon.stub(commonAws, 'pullStepFunctionEvent');
+  try {
+    const proxiedFunction = proxyquire('../../lambdas/sf-semaphore-down', { pullStepFunctionEvent: pullStepFunctionStub }).handleSemaphoreDecrementTask;
+    pullStepFunctionStub.returns(stubReturn);
+    await proxiedFunction(
+      createCloudwatchPackagedEventMessage({ status, queueName })
+    );
+    const response = await semaphore.get(queueName);
+    t.is(response.semvalue, 0);
+  }
+  finally {
+    pullStepFunctionStub.restore();
+  }
+});
+
 
 test('sfSemaphoreDown lambda decrements semaphore for completed event message', async (t) => {
   await testTerminalEventMessage(t, 'SUCCEEDED');
