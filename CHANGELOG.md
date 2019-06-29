@@ -21,6 +21,8 @@ We have encountered transient lambda service errors in our integration testing. 
   - Added lambda function EmsProductMetadataReport to generate EMS Product Metadata report
 - **CUMULUS-824**
   - Added new Collection parameter `reportToEms` to configure whether the collection is reported to EMS
+- **CUMULUS-1357**
+  - Added new BackendApi endpoint `ems` that generates EMS reports.
 - **CUMULUS-1241**
   - Added information about queues with maximum execution limits defined to default workflow templates (`meta.queueExecutionLimits`)
 - **CUMULUS-1311**

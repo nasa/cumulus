@@ -298,6 +298,13 @@ async function generateReports(startTime, endTime, emsCollections) {
  * @returns {Array<Object>} - list of report type and its file path {reportType, file}
  */
 async function generateReportsForEachDay(startTime, endTime, collectionId) {
+  log.info(`ems-ingest-report.generateReportsForEachDay for access records between ${startTime} and ${endTime}`);
+
+  const nextDate = moment.utc().add(1, 'days').startOf('day').format();
+  const reportStartTime = moment.utc(startTime).startOf('day');
+  let reportEndTime = moment.utc(endTime).startOf('day');
+  reportEndTime = (reportEndTime.isAfter(nextDate)) ? nextDate : reportEndTime;
+
   // ICD Section 3.4 Data Files Interface section describes that each file should contain one day's
   // worth of data. Data within the file will correspond to the datestamp in the filename.
   // Exceptions to this rule include Ingest data where processingEndDateTime could be after
@@ -318,8 +325,7 @@ async function generateReportsForEachDay(startTime, endTime, collectionId) {
 
   // each startEndTimes element represents one day
   const startEndTimes = [];
-  const reportStartTime = moment.utc(startTime);
-  while (reportStartTime.isBefore(endTime)) {
+  while (reportStartTime.isBefore(reportEndTime)) {
     startEndTimes.push({
       startTime: reportStartTime.format(),
       endTime: moment(reportStartTime).add(1, 'days').format()
@@ -367,8 +373,8 @@ function handler(event, context, callback) {
   let endTime = moment.utc().startOf('day').format();
   let startTime = moment.utc().subtract(1, 'days').startOf('day').format();
 
-  endTime = event.endTime || endTime.startOf('day').add(1, 'days').format();
-  startTime = event.startTime || startTime.startOf('day').format();
+  endTime = event.endTime || endTime;
+  startTime = event.startTime || startTime;
 
   // catch up run to generate reports for each day
   if (event.startTime && event.endTime) {
