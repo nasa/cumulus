@@ -78,6 +78,7 @@ default:
     scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-scaling-role'
     migrationRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-migration-processing'
 
+
   cmr:
     username: CmrUser
     provider: CUMULUS
@@ -139,6 +140,7 @@ default:
 
   # defining the APIs. Each item will include a separate endpoint
   apiStage: dev
+  logToSharedDestination:
 
   dynamos: !!files ['node_modules/@cumulus/api/config/tables.yml']
 
