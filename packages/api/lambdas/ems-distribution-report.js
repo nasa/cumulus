@@ -397,8 +397,13 @@ exports.generateAndStoreDistributionReport = generateAndStoreDistributionReport;
  * @returns {Promise} resolves when the report has been generated
  */
 async function generateAndStoreReportsForEachDay(params) {
-  let reportStartTime = params.reportStartTime;
-  const reportEndTime = params.reportEndTime;
+  log.info('generateAndStoreReportsForEachDay for access records between'
+    + `${params.reportStartTime.format()} and ${params.reportEndTime.format()}`);
+
+  const nextDate = moment.utc().add(1, 'days').startOf('day').format();
+  let reportStartTime = params.reportStartTime.startOf('day');
+  let reportEndTime = params.reportEndTime.startOf('day');
+  reportEndTime = (reportEndTime.isAfter(nextDate)) ? nextDate : reportEndTime;
 
   // Each file should contain one day's worth of data.
   // Data within the file will correspond to the datestamp in the filename.
@@ -445,8 +450,6 @@ function handler(event, context, cb) {
 
   endTime = event.endTime || endTime;
   startTime = event.startTime || startTime;
-  endTime = event.endTime || endTime.startOf('day').add(1, 'days').format();
-  startTime = event.startTime || startTime.startOf('day').format();
 
   const params = {
     reportStartTime: moment.utc(startTime),
