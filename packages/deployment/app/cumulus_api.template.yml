@@ -47,6 +47,9 @@ Parameters:
   KinesisInboundEventLoggerLambdaFunctionArn:
     Type: String
     Description: 'KinesisInboundEventLogger Lambda function ARN'
+  IndexFromDatabaseLambdaFunctionArn:
+    Type: String
+    Description: 'IndexFromDatabaseLambda Lambda function ARN'
   distributionRestApi:
     Type: String
     Description: Distribution REST API ID
@@ -86,10 +89,36 @@ Resources:
       {{/ifPrivateApi}}
 {{/each}}
 
+{{#each apis}}
+  {{name}}ApiGatewayStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId:
+        Ref: {{name}}RestApi
+      StageName: {{../parent.apiStage}}
+      {{#ifLogApiGatewayToCloudWatch ../parent.apiConfigs name}}
+      AccessLogSetting:
+        DestinationArn:
+          Fn::GetAtt:
+            - ApiGatewayCloudWatchLogGroup{{name}}
+            - Arn
+        Format: '{ "requestId":"$context.requestId", "ip": "$context.identity.sourceIp", "caller":"$context.identity.caller",  "user":"$context.identity.user", "requestTime":"$context.requestTime", "httpMethod":"$context.httpMethod", "resourcePath":"$context.resourcePath", "status":"$context.status", "protocol":"$context.protocol", "responseLength":"$context.responseLength" }'
+      MethodSettings:
+        - DataTraceEnabled: true
+          HttpMethod: "*"
+          LoggingLevel: INFO
+          ResourcePath: "/*"
+          MetricsEnabled: false
+      {{/ifLogApiGatewayToCloudWatch}}
+      DeploymentId:
+        Ref: ApiGatewayDeployment1{{../parent.apiStage}}{{name}}
+{{/each}}
+
+
 {{# if apiMethods}}
 {{# each apiDependencies}}
   {{# if ../apiDeploy }}
-  ApiGatewayDeployment{{../parent.apiStage}}{{name}}:
+  ApiGatewayDeployment1{{../parent.apiStage}}{{name}}:
     DependsOn:
   {{#each methods}}
     - {{name}}
@@ -98,7 +127,6 @@ Resources:
     Properties:
       RestApiId:
         Ref: {{name}}RestApi
-      StageName: {{../parent.apiStage}}
   {{/if}}
 {{/each}}
 
@@ -179,6 +207,40 @@ Resources:
       PathPart: '{{pathPart}}'
       RestApiId:
         Ref: {{api}}RestApi
+
+{{/each}}
+
+
+{{#each apis}}
+ {{#ifLogApiGatewayToCloudWatch ../parent.apiConfigs name }}
+  # Add cloudwatch filters to enabled api gateways
+  # create log group
+  ApiGatewayCloudWatchLogGroup{{name}}:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Join:
+          - ""
+          - - "API-Gateway-Execution-Logs_"
+            - Ref: {{name}}RestApi
+            - "/{{../parent.apiStage}}"
+      RetentionInDays: 30
+
+ {{#if ../parent.logToSharedDestination }}
+  # create API Subscription Filter
+  ApiGatewayLogSubscription{{name}}:
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn:
+      - ApiGatewayCloudWatchLogGroup{{name}}
+    Properties:
+      DestinationArn: "{{../parent.logToSharedDestination}}"
+      FilterPattern: ""
+      LogGroupName:
+        Ref: ApiGatewayCloudWatchLogGroup{{name}}
+  {{/if}}
+ {{/ifLogApiGatewayToCloudWatch}}
+
+
 
 {{/each}}
 
@@ -326,6 +388,24 @@ Resources:
     Properties:
       DestinationArn:
         Ref: log2elasticsearchLambdaFunctionArn
+      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
+      FilterPattern: ""
+
+  {{@key}}LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
+      RetentionInDays: 30
+{{/if}}
+
+{{#if this.logToSharedDestination }}
+  # Configure Lambda log subscription to shareLogDestination for API lambdas
+  {{@key}}LogSubscriptionToSharedDestination:
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn:
+      - {{@key}}LogGroup
+    Properties:
+      DestinationArn: "{{this.logToSharedDestination}}"
       LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
       FilterPattern: ""
 
