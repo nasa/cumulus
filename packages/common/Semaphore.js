@@ -75,6 +75,8 @@ class Semaphore {
     // Create the semaphore if it doesn't exist.
     await this.create(key);
 
+    log.info(`Updating ${key} by ${count} in ${this.tableName}`);
+
     const updateParams = {
       TableName: this.tableName,
       Key: {

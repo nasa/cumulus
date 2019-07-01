@@ -15,6 +15,8 @@ const Semaphore = require('@cumulus/common/Semaphore');
  * @throws {Error}
  */
 async function incrementQueueSemaphore(queueName, maximum) {
+  log.debug('semaphores table', process.env.SemaphoresTable);
+
   const semaphore = new Semaphore(
     dynamodbDocClient(),
     process.env.SemaphoresTable
@@ -39,6 +41,8 @@ async function incrementQueueSemaphore(queueName, maximum) {
  * @throws {Error} Error from semaphore.down() operation
  */
 async function decrementQueueSemaphore(queueName) {
+  log.debug('semaphores table', process.env.SemaphoresTable);
+
   const semaphore = new Semaphore(
     dynamodbDocClient(),
     process.env.SemaphoresTable
