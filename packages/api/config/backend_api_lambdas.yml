@@ -75,6 +75,9 @@ ApiEndpoints:
     KinesisInboundEventLogger:
       function: Ref
       value: KinesisInboundEventLoggerLambdaFunctionArn
+    IndexFromDatabaseLambda:
+      function: Ref
+      value: IndexFromDatabaseLambdaFunctionArn
     STSCredentialsLambda: '{{parent.sts_credentials_lambda}}'
     cmr_provider: '{{parent.cmr.provider}}'
     cmr_client_id: '{{parent.cmr.clientId}}'
