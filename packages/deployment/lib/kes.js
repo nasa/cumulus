@@ -276,9 +276,9 @@ class UpdatedKes extends Kes {
     Handlebars.registerHelper('handleEventPattern', (eventPattern, stepFunctions, prefix) => {
       if (eventPattern.source && eventPattern.source.includes('aws.states')) {
         const stateMachineArns = Object.keys(stepFunctions)
-          .map((stateMachine) => `\$\{${prefix}${stateMachine}StateMachineArn\}`);
+          .map((stateMachine) => `\$\{${prefix}${stateMachine}StateMachine\}`);
         // eslint-disable-next-line no-param-reassign
-        eventPattern.detail.stateMachineArn = stateMachineArns;
+        // eventPattern.detail.stateMachineArn = stateMachineArns;
         console.log(eventPattern);
       }
       return JSON.stringify(eventPattern);
