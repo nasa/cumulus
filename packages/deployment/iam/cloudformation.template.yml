@@ -833,7 +833,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - application-autoscaling:*"
+                  - "application-autoscaling:*"
                   - cloudwatch:DeleteAlarms
                   - cloudwatch:DescribeAlarms
                   - cloudwatch:GetMetricStatistics
@@ -844,6 +844,7 @@ Resources:
                   - ecs:DescribeServices
                   - ecs:UpdateService
                 Resource: '*'
+
 
   CumulusInstanceProfile:
     Type: AWS::IAM::InstanceProfile

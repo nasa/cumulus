@@ -5,6 +5,8 @@ const {
   getQueueName,
   hasQueueAndExecutionLimit
 } = require('@cumulus/common/message');
+
+const { pullStepFunctionEvent } = require('@cumulus/common/aws');
 const { isOneOf } = require('@cumulus/common/util');
 
 const { decrementQueueSemaphore } = require('../lib/semaphore');
@@ -44,12 +46,13 @@ const getEventMessage = (event) => JSON.parse(get(event, 'detail.output', '{}'))
  *   - Workflow is not in a terminal state
  *
  * @param {Object} event - A workflow execution event
+ * @param {Object} executionMessage - A cumulus event message
  * @returns {boolean} True if workflow execution semaphore should be decremented
  */
-const isDecrementEvent = (event) =>
+const isDecrementEvent = (event, executionMessage) =>
   isSfExecutionEvent(event)
-  && hasQueueAndExecutionLimit(getEventMessage(event))
-  && isTerminalStatus(getEventStatus(event));
+  && isTerminalStatus(getEventStatus(event))
+  && hasQueueAndExecutionLimit(executionMessage);
 
 /**
  * Handle Cloudwatch event and decrement semaphore, if necessary.
@@ -57,9 +60,10 @@ const isDecrementEvent = (event) =>
  * @param {Object} event - incoming event from Cloudwatch
  */
 async function handleSemaphoreDecrementTask(event) {
-  if (isDecrementEvent(event)) {
-    const message = getEventMessage(event);
-    const queueName = getQueueName(message);
+  const eventMessage = getEventMessage(event);
+  const executionMessage = await pullStepFunctionEvent(eventMessage);
+  if (isDecrementEvent(event, executionMessage)) {
+    const queueName = getQueueName(eventMessage);
     return decrementQueueSemaphore(queueName);
   }
   return 'Not a valid decrement event, no operation performed';
