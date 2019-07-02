@@ -99,10 +99,14 @@ Resources:
         # The backend API needs a reference to the distributionRestApi so
         # it can construct values for the DISTRIBUTION_REDIRECT_ENDPOINT
         # environment variable. The /granules endpoint uses this variable.
+        {{#if ../api_distribution_id}}
+        distributionRestApi: {{../api_distribution_id}}
+        {{else if ../deploy_distribution}}
         distributionRestApi:
           Fn::GetAtt:
             - CumulusApiDistributionNestedStack
             - Outputs.distributionRestApiResource
+        {{/if}}
         {{/ifEquals}}
       {{# each ../dynamos}}
         {{@key}}DynamoDB: {{../../prefix}}-{{@key}}
@@ -1260,9 +1264,15 @@ Outputs:
 
   DistributionId:
     Value:
+    {{#if ../api_distribution_id}}
+      {{../api_distribution_id}}
+    {{else if ../deploy_distribution}}
       Fn::GetAtt:
         - CumulusApiDistributionNestedStack
         - Outputs.distributionRestApiResource
+    {{else}}
+      AWS::NoValue
+    {{/if}}
 
   ApiStage:
     Value: {{apiStage}}
