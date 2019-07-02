@@ -25,6 +25,7 @@
 
 const cloneDeep = require('lodash.clonedeep');
 const zipObject = require('lodash.zipobject');
+const get = require('lodash.get');
 const { Kes, utils } = require('kes');
 const fs = require('fs-extra');
 const Handlebars = require('handlebars');
@@ -276,9 +277,12 @@ class UpdatedKes extends Kes {
     Handlebars.registerHelper('handleEventPattern', (eventPattern, stepFunctions, prefix) => {
       if (eventPattern.source && eventPattern.source.includes('aws.states')) {
         const stateMachineArns = Object.keys(stepFunctions)
-          .map((stateMachine) => `\$\{${prefix}${stateMachine}StateMachine\}`);
+          .map((stateMachine) => {
+            const stateMachineRef = `$\{${prefix}${stateMachine}StateMachine\}`;
+            return `arn:aws:states:us-east-1:123456789012:stateMachine:${stateMachineRef}-1234578`;
+          });
         // eslint-disable-next-line no-param-reassign
-        // eventPattern.detail.stateMachineArn = stateMachineArns;
+        eventPattern.detail.stateMachineArn = stateMachineArns;
         console.log(eventPattern);
       }
       return JSON.stringify(eventPattern);
@@ -313,6 +317,8 @@ class UpdatedKes extends Kes {
     const src = path.join(process.cwd(), kesBuildFolder, filename);
     const dest = path.join(process.cwd(), kesBuildFolder, 'adapter', unzipFolderName);
 
+    // this.updateRulesConfig();
+
     // If custom compile configuration flag not set, skip custom compilation
     if (!customCompile) return super.compileCF();
 
@@ -331,6 +337,52 @@ class UpdatedKes extends Kes {
     });
   }
 
+  updateRulesConfig() {
+    if (!this.config.rules || !this.config.stepFunctions) {
+      return;
+    }
+
+    const rules = cloneDeep(this.config.rules);
+    const updatedRules = {};
+
+    Object.keys(rules).forEach((ruleName) => {
+      const rule = rules[ruleName];
+      const eventSource = get(rule, 'eventPattern.source', []);
+
+      if (!eventSource.includes('aws.states')) {
+        updatedRules[ruleName] = rule;
+        return;
+      }
+
+      const newRule = cloneDeep(rule);
+      const stateMachineNames = [];
+      const stateMachineRefs = [];
+      const stepFunctionNames = Object.keys(this.config.stepFunctions);
+
+      stepFunctionNames.forEach((sfName, index) => {
+        // const newRule = cloneDeep(rule);
+        const stateMachineName = `${sfName}StateMachine`;
+        const nextSfName = stepFunctionNames[index + 1];
+
+        // newRule.stateMachines = newRule.stateMachines || [];
+        stateMachineNames.push(stateMachineName);
+        stateMachineRefs.push(`\$\{${stateMachineName}\}`);
+
+        // newRule.eventPattern.detail.stateMachineArn = [`\$\{${stateMachineName}\}`];
+        // console.log(JSON.stringify(newRule.eventPattern).length);
+        // updatedRules[`${sfName}-${ruleName}`] = newRule;
+      });
+
+      newRule.stateMachines = stateMachineNames;
+      newRule.eventPattern.detail.stateMachineArn = stateMachineRefs;
+      updatedRules['testing'] = newRule;
+
+      delete updatedRules[ruleName];
+    });
+
+    console.log(updatedRules);
+    this.config.rules = updatedRules;
+  }
 
   /**
    * setParentConfigvalues - Overrides nested stack template with parent values
