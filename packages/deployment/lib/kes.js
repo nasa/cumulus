@@ -343,10 +343,10 @@ class UpdatedKes extends Kes {
       return;
     }
 
-    const rules = this.config.rules;
+    const { prefixNoDash, rules, stepFunctions } = this.config;
     const updatedRules = {};
 
-    const initiatlizeNewRule = (rule) => {
+    const initializeNewRule = (rule) => {
       const newRule = cloneDeep(rule);
       newRule.stateMachines = [];
       newRule.eventPattern.detail.stateMachineArn = [];
@@ -363,15 +363,15 @@ class UpdatedKes extends Kes {
         return;
       }
 
-      let newRule = initiatlizeNewRule(rule);
+      let newRule = initializeNewRule(rule);
 
       const initialPatternLength = JSON.stringify(rule.eventPattern).length;
       let eventPatternLength = initialPatternLength;
       let ruleCount = 1;
 
-      const stepFunctionNames = Object.keys(this.config.stepFunctions);
+      const stepFunctionNames = Object.keys(stepFunctions);
       stepFunctionNames.forEach((sfName) => {
-        const stateMachineName = `${sfName}StateMachine`;
+        const stateMachineName = `${prefixNoDash}${sfName}StateMachine`;
         const stateMachineArnRef = `\$\{${stateMachineName}\}`;
 
         // 64 covers the rest of the characters in an actual ARN
@@ -384,7 +384,7 @@ class UpdatedKes extends Kes {
         if ((eventPatternLength + stateMachineArnLength) > 2048) {
           eventPatternLength = initialPatternLength;
           ruleCount += 1;
-          newRule = initiatlizeNewRule(rule);
+          newRule = initializeNewRule(rule);
         } else {
           eventPatternLength += stateMachineArnLength;
         }
