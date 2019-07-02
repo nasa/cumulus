@@ -363,36 +363,19 @@ class UpdatedKes extends Kes {
         return;
       }
 
-      let newRule = initializeNewRule(rule);
-
-      const initialPatternLength = JSON.stringify(rule.eventPattern).length;
-      let eventPatternLength = initialPatternLength;
       let ruleCount = 1;
 
       const stepFunctionNames = Object.keys(stepFunctions);
       stepFunctionNames.forEach((sfName) => {
+        const newRule = initializeNewRule(rule);
         const stateMachineName = `${prefixNoDash}${sfName}StateMachine`;
         const stateMachineArnRef = `\$\{${stateMachineName}\}`;
-
-        // 64 covers the rest of the characters in an actual ARN
-        // e.g. arn:aws:states:us-east-1:123456789101:stateMachine:<stateMachineName>-abcdef123456
-        const stateMachineArnLength = stateMachineArnRef.length + 64 + 2;
-
-        // There is a hard limit of 2048 for eventPattern JSON strings, so if adding the
-        // stateMachine to rule's eventPattern would exceed the limit, then initialize a
-        // new rule
-        if ((eventPatternLength + stateMachineArnLength) > 2048) {
-          eventPatternLength = initialPatternLength;
-          ruleCount += 1;
-          newRule = initializeNewRule(rule);
-        } else {
-          eventPatternLength += stateMachineArnLength;
-        }
 
         newRule.stateMachines.push(stateMachineName);
         newRule.eventPattern.detail.stateMachineArn.push(stateMachineArnRef);
 
         updatedRules[`${ruleName}${ruleCount}`] = newRule;
+        ruleCount += 1;
       });
 
       delete updatedRules[ruleName];
