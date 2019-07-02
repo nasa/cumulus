@@ -4,9 +4,12 @@ const {
   lambda,
   sfn,
   sqs,
-  dynamodbDocClient
+  dynamodbDocClient,
+  cloudwatchevents
 } = require('@cumulus/common/aws');
+const Semaphore = require('@cumulus/common/Semaphore');
 const StepFunctions = require('@cumulus/common/StepFunctions');
+const { waitForCompletedExecution } = require('@cumulus/integration-tests');
 
 const {
   loadConfig,
@@ -183,6 +186,7 @@ describe('the sf-starter lambda function', () => {
     let maxQueueName;
     let messagesConsumed;
     let waitPassSfArn;
+    let executionArns;
 
     const queueMaxExecutions = 5;
     const totalNumMessages = 20;
@@ -198,6 +202,31 @@ describe('the sf-starter lambda function', () => {
 
       const { stateMachineArn } = await sfn().createStateMachine(waitPassSfParams).promise();
       waitPassSfArn = stateMachineArn;
+      console.log(waitPassSfArn);
+
+      await cloudwatchevents.putRule({
+        Name: timestampedName('waitPassSfRule'),
+        State: 'ENABLED',
+        EventPattern: JSON.stringify({
+          source: [
+            'aws.states'
+          ],
+          'detail-type': [
+            'Step Functions Execution Status Change'
+          ],
+          detail: {
+            status: [
+              'ABORTED',
+              'FAILED',
+              'SUCCEEDED',
+              'TIMED_OUT'
+            ],
+            stateMachineArn: [
+              waitPassSfArn
+            ]
+          }
+        })
+      });
 
       await sendStartSfMessages({
         numOfMessages: totalNumMessages,
@@ -240,8 +269,21 @@ describe('the sf-starter lambda function', () => {
 
     it('to trigger workflows', async () => {
       const { executions } = await StepFunctions.listExecutions({ stateMachineArn: waitPassSfArn });
+      executionArns = executions.map((execution) => execution.executionArn);
       const runningExecutions = executions.filter((execution) => execution.status === 'RUNNING');
       expect(runningExecutions.length).toBeLessThanOrEqual(queueMaxExecutions);
+    });
+
+    it('to decrement the semaphore correctly', async () => {
+      await Promise.all(
+        executionArns.map((executionArn) => waitForCompletedExecution(executionArn))
+      );
+      const semaphore = new Semaphore(
+        dynamodbDocClient(),
+        `${config.stackName}-SemaphoresTable`
+      );
+      const response = await semaphore.get(maxQueueName);
+      expect(response.semvalue).toEqual(0);
     });
   });
 });
