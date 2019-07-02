@@ -14,29 +14,32 @@ const { Granule } = require('../models');
  */
 async function list(req, res) {
   const granuleScanner = new Granule().granuleAttributeScan();
-  await granuleScanner.fetchItems();
-  const allDbGranules = granuleScanner.items.filter((n) => n);
+  let nextGranule = await granuleScanner.peek();
 
-  const fields = ['granuleUr', 'collectionId', 'createdAt', 'startDateTime', 'endDateTime'];
-  const granuleArray = allDbGranules.map((granule) => {
-    const granuleUr = granule.granuleId;
-    const collectionId = granule.collectionId;
-    const createDate = new Date(granule.createdAt);
-    const startDate = granule.beginningDateTime || '';
-    const endDate = granule.endingDateTime || '';
+  const granulesArray = [];
+  while (nextGranule) {
+    const granuleUr = nextGranule.granuleId;
+    const collectionId = nextGranule.collectionId;
+    const createDate = new Date(nextGranule.createdAt);
+    const startDate = nextGranule.beginningDateTime || '';
+    const endDate = nextGranule.endingDateTime || '';
 
-    return {
+    granulesArray.push({
       granuleUr: granuleUr,
       collectionId: collectionId,
       createdAt: createDate.toISOString(),
       startDateTime: startDate,
       endDateTime: endDate
-    };
-  });
+    });
+    await granuleScanner.shift();
+    nextGranule = await granuleScanner.peek();
+  }
+
+  const fields = ['granuleUr', 'collectionId', 'createdAt', 'startDateTime', 'endDateTime'];
   let csv;
   try {
     const parser = new Parser({ fields });
-    csv = parser.parse(granuleArray);
+    csv = parser.parse(granulesArray);
   } catch (error) {
     throw error;
   }
