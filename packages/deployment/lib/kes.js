@@ -275,17 +275,18 @@ class UpdatedKes extends Kes {
     });
 
     Handlebars.registerHelper('handleEventPattern', (eventPattern, stepFunctions, prefix) => {
-      if (eventPattern.source && eventPattern.source.includes('aws.states')) {
+      const updatedPattern = cloneDeep(eventPattern);
+      if (updatedPattern.source && updatedPattern.source.includes('aws.states')) {
         const stateMachineArns = Object.keys(stepFunctions)
           .map((stateMachine) => {
             const stateMachineRef = `$\{${prefix}${stateMachine}StateMachine\}`;
             return `arn:aws:states:us-east-1:123456789012:stateMachine:${stateMachineRef}-1234578`;
           });
         // eslint-disable-next-line no-param-reassign
-        eventPattern.detail.stateMachineArn = stateMachineArns;
-        console.log(eventPattern);
+        updatedPattern.detail.stateMachineArn = stateMachineArns;
+        // console.log(updatedPattern);
       }
-      return JSON.stringify(eventPattern);
+      return JSON.stringify(updatedPattern);
     });
 
     Handlebars.registerHelper(
@@ -317,7 +318,7 @@ class UpdatedKes extends Kes {
     const src = path.join(process.cwd(), kesBuildFolder, filename);
     const dest = path.join(process.cwd(), kesBuildFolder, 'adapter', unzipFolderName);
 
-    // this.updateRulesConfig();
+    this.updateRulesConfig();
 
     // If custom compile configuration flag not set, skip custom compilation
     if (!customCompile) return super.compileCF();
@@ -342,45 +343,61 @@ class UpdatedKes extends Kes {
       return;
     }
 
-    const rules = cloneDeep(this.config.rules);
+    const rules = this.config.rules;
     const updatedRules = {};
+
+    const initiatlizeNewRule = (rule) => {
+      const newRule = cloneDeep(rule);
+      newRule.stateMachines = [];
+      newRule.eventPattern.detail.stateMachineArn = [];
+      return newRule;
+    };
 
     Object.keys(rules).forEach((ruleName) => {
       const rule = rules[ruleName];
       const eventSource = get(rule, 'eventPattern.source', []);
 
+      // If this rule doesn't use Step Functions as a source, stop processing.
       if (!eventSource.includes('aws.states')) {
         updatedRules[ruleName] = rule;
         return;
       }
 
-      const newRule = cloneDeep(rule);
-      const stateMachineNames = [];
-      const stateMachineRefs = [];
+      let newRule = initiatlizeNewRule(rule);
+
+      const initialPatternLength = JSON.stringify(rule.eventPattern).length;
+      let eventPatternLength = initialPatternLength;
+      let ruleCount = 1;
+
       const stepFunctionNames = Object.keys(this.config.stepFunctions);
-
-      stepFunctionNames.forEach((sfName, index) => {
-        // const newRule = cloneDeep(rule);
+      stepFunctionNames.forEach((sfName) => {
         const stateMachineName = `${sfName}StateMachine`;
-        const nextSfName = stepFunctionNames[index + 1];
+        const stateMachineArnRef = `\$\{${stateMachineName}\}`;
 
-        // newRule.stateMachines = newRule.stateMachines || [];
-        stateMachineNames.push(stateMachineName);
-        stateMachineRefs.push(`\$\{${stateMachineName}\}`);
+        // 64 covers the rest of the characters in an actual ARN
+        // e.g. arn:aws:states:us-east-1:123456789101:stateMachine:<stateMachineName>-abcdef123456
+        const stateMachineArnLength = stateMachineArnRef.length + 64 + 2;
 
-        // newRule.eventPattern.detail.stateMachineArn = [`\$\{${stateMachineName}\}`];
-        // console.log(JSON.stringify(newRule.eventPattern).length);
-        // updatedRules[`${sfName}-${ruleName}`] = newRule;
+        // There is a hard limit of 2048 for eventPattern JSON strings, so if adding the
+        // stateMachine to rule's eventPattern would exceed the limit, then initialize a
+        // new rule
+        if ((eventPatternLength + stateMachineArnLength) > 2048) {
+          eventPatternLength = initialPatternLength;
+          ruleCount += 1;
+          newRule = initiatlizeNewRule(rule);
+        } else {
+          eventPatternLength += stateMachineArnLength;
+        }
+
+        newRule.stateMachines.push(stateMachineName);
+        newRule.eventPattern.detail.stateMachineArn.push(stateMachineArnRef);
+
+        updatedRules[`${ruleName}${ruleCount}`] = newRule;
       });
-
-      newRule.stateMachines = stateMachineNames;
-      newRule.eventPattern.detail.stateMachineArn = stateMachineRefs;
-      updatedRules['testing'] = newRule;
 
       delete updatedRules[ruleName];
     });
 
-    console.log(updatedRules);
     this.config.rules = updatedRules;
   }
 
