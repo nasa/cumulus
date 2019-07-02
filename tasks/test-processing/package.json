@@ -19,6 +19,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "lodash": "4.17.11",
     "@cumulus/common": "1.13.0",
     "@cumulus/cumulus-message-adapter-js": "^1.0.7",
     "@cumulus/integration-tests": "1.13.0",
