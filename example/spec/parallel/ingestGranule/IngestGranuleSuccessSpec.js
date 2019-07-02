@@ -350,8 +350,6 @@ describe('The S3 Ingest Granules workflow', () => {
     it('has expected payload', () => {
       expect(granule.cmrLink).toEqual(`${getUrl('search')}granules.json?concept_id=${granule.cmrConceptId}`);
       const updatedGranule = expectedPayload.granules[0];
-      //updatedGranule.files = addUrlPathToGranuleFiles(updatedGranule.files, testId, collectionUrlString)
-
       const thisExpectedPayload = {
         ...expectedPayload,
         granules: [
