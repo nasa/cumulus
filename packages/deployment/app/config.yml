@@ -30,9 +30,6 @@ default:
   processDefaultDeadLetterQueues: true
 
   nested_templates:
-    CumulusApiDistribution:
-      cfFile: node_modules/@cumulus/deployment/app/cumulus_api.template.yml
-      configFile: node_modules/@cumulus/deployment/app/cumulus_api_distribution.config.yml
     CumulusApiBackend:
       cfFile: node_modules/@cumulus/deployment/app/cumulus_api.template.yml
       configFile: node_modules/@cumulus/deployment/app/cumulus_api_backend.config.yml

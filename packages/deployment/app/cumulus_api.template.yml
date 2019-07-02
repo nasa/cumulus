@@ -44,6 +44,7 @@ Parameters:
   distributionRestApi:
     Type: String
     Description: Distribution REST API ID
+    Default: 'noValue'
   {{/ifEquals}}
 {{/each}}
 {{# each parent.dynamos}}

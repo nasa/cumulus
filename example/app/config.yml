@@ -226,6 +226,11 @@ default:
     - username: mboyd
     - username: jmcampbell
 
+  nested_templates:
+    CumulusApiDistribution:
+      cfFile: node_modules/@cumulus/deployment/app/cumulus_api.template.yml
+      configFile: node_modules/@cumulus/deployment/app/cumulus_api_distribution.config.yml
+
 
 # ------------------------
 # CUMULUS team deployments
@@ -311,6 +316,9 @@ lf:
 
   es:
     name: estest
+
+  api_distribution_url: '{{API_DISTRIBUTION_URL}}'
+  api_distribution_id: '{{API_DISTRIBUTION_ID}}'
 
   buckets:
     internal:
