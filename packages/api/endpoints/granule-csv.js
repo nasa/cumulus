@@ -31,8 +31,8 @@ async function list(req, res) {
       startDateTime: startDate,
       endDateTime: endDate
     });
-    await granuleScanner.shift();
-    nextGranule = await granuleScanner.peek();
+    await granuleScanner.shift(); // eslint-disable-line no-await-in-loop
+    nextGranule = await granuleScanner.peek(); // eslint-disable-line no-await-in-loop
   }
 
   const fields = ['granuleUr', 'collectionId', 'createdAt', 'startDateTime', 'endDateTime'];
