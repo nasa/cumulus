@@ -363,19 +363,37 @@ class UpdatedKes extends Kes {
         return;
       }
 
-      let ruleCount = 1;
+      const initialPatternLength = JSON.stringify(rule.eventPattern).length;
+      // Pessimistically assume longest possible state machine ARN:
+      //    80 = max state machine length
+      //    64 = length of other ARN characters
+      //    2 = two double quotes
+      const arnLength = 80 + 64 + 2;
+      // Determine how many state machines can be added as conditions to the eventPattern
+      // before it would exceed the maximum allowed length of 2048 characters.
+      const stateMachinesPerRule = Math.ceil((2048 - initialPatternLength) / arnLength);
+
+      let stateMachinesCount = 0;
+      let newRule = initializeNewRule(rule);
+      let ruleNumber = 1;
 
       const stepFunctionNames = Object.keys(stepFunctions);
       stepFunctionNames.forEach((sfName) => {
-        const newRule = initializeNewRule(rule);
+        stateMachinesCount += 1;
+
+        if (stateMachinesCount >= stateMachinesPerRule) {
+          stateMachinesCount = 0;
+          newRule = initializeNewRule(rule);
+          ruleNumber += 1;
+        }
+
         const stateMachineName = `${prefixNoDash}${sfName}StateMachine`;
         const stateMachineArnRef = `\$\{${stateMachineName}\}`;
 
         newRule.stateMachines.push(stateMachineName);
         newRule.eventPattern.detail.stateMachineArn.push(stateMachineArnRef);
 
-        updatedRules[`${ruleName}${ruleCount}`] = newRule;
-        ruleCount += 1;
+        updatedRules[`${ruleName}${ruleNumber}`] = newRule;
       });
 
       delete updatedRules[ruleName];
