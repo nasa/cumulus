@@ -2,7 +2,7 @@
 
 const test = require('ava');
 const request = require('supertest');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const assertions = require('../../lib/assertions');
 const models = require('../../models');
 const {
@@ -15,9 +15,11 @@ const {
 
 const CMR_ENVIRONMENT = randomString();
 const CMR_PROVIDER = randomString();
+const STACKNAME = randomId('stack');
 process.env.CMR_ENVIRONMENT = CMR_ENVIRONMENT;
 process.env.cmr_provider = CMR_PROVIDER;
 process.env.TOKEN_SECRET = randomString();
+process.env.stackName = STACKNAME;
 let accessTokenModel;
 let userModel;
 let jwtAuthToken;
@@ -53,6 +55,9 @@ test('GET returns expected metadata', async (t) => {
     cmr: {
       provider: CMR_PROVIDER,
       environment: CMR_ENVIRONMENT
+    },
+    cumulus: {
+      stackName: STACKNAME
     }
   });
 });
