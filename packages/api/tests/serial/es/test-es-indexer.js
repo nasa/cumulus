@@ -102,7 +102,7 @@ test.before(async () => {
   stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').returns({
     input,
     startDate: new Date(Date.UTC(2019, 6, 28)),
-    endDate: new Date(Date.UTC(2019, 6, 28, 1))
+    stopDate: new Date(Date.UTC(2019, 6, 28, 1))
   });
 });
 
