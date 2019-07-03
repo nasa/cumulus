@@ -701,8 +701,24 @@ Resources:
 
               - Effect: Allow
                 Action:
+                  - dynamodb:Scan
+                Resource:
+                  Fn::Sub: "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ResourcePrefix}-*"
+
+              - Effect: Allow
+                Action:
                   - s3:ListAllMyBuckets
                 Resource: '*'
+
+              - Effect: Allow
+                Action:
+                  - es:ESHttpDelete
+                  - es:ESHttpGet
+                  - es:ESHttpHead
+                  - es:ESHttpPost
+                  - es:ESHttpPut
+                Resource:
+                  Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${ResourcePrefix}-*"
 
   DistributionApiRole:
     Type: AWS::IAM::Role
@@ -817,7 +833,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - application-autoscaling:*"
+                  - "application-autoscaling:*"
                   - cloudwatch:DeleteAlarms
                   - cloudwatch:DescribeAlarms
                   - cloudwatch:GetMetricStatistics
@@ -828,6 +844,7 @@ Resources:
                   - ecs:DescribeServices
                   - ecs:UpdateService
                 Resource: '*'
+
 
   CumulusInstanceProfile:
     Type: AWS::IAM::InstanceProfile
