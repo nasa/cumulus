@@ -27,7 +27,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
     - **Configure S3 Server Access Logs**:  If you are running Cumulus in an NGAP environment you may [configure S3 Server Access Logs](https://nasa.github.io/cumulus/docs/next/deployment/server_access_logging) to be delivered to a shared bucket where the Metrics Team will ingest the logs into their ELK stack.  Contact the Metrics team for permission and location.
 
+- **CUMULUS-1368** The Cumulus distribution API has been deprecated and is being replaced by ASF's Thin Egress App. By default, the distribution API will not deploy. Please follow [the instructions for deploying and configuring Thin Egress](https://nasa.github.io/cumulus/docs/deployment/thin_egress_app).
 
+To instead continue to deploy and use the legacy Cumulus distribution app, add the following to your `config.yml`:
+
+```
+nested_templates:
+  CumulusApiDistribution:
+    cfFile: node_modules/@cumulus/deployment/app/cumulus_api.template.yml
+    configFile: node_modules/@cumulus/deployment/app/cumulus_api_distribution.config.yml
+```
 
 ## Added
 
