@@ -57,7 +57,7 @@ test.before(async () => {
   fakeExecution = async () => ({
     input: JSON.stringify(testCumulusMessage),
     startDate: new Date(Date.UTC(2019, 6, 28)),
-    endDate: new Date(Date.UTC(2019, 6, 28, 1))
+    stopDate: new Date(Date.UTC(2019, 6, 28, 1))
   });
   stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').callsFake(fakeExecution);
 });
@@ -615,7 +615,7 @@ test(
 );
 
 test(
-  'createGranulesFromSns() sets processingEndDateTime to execution endDate',
+  'createGranulesFromSns() sets processingEndDateTime to execution stopDate',
   async (t) => {
     const { granuleModel } = t.context;
 

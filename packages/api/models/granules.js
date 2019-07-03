@@ -336,7 +336,8 @@ class Granule extends Manager {
             timeToPreprocess: get(granule, 'sync_granule_duration', 0) / 1000,
             timeToArchive: get(granule, 'post_to_cmr_duration', 0) / 1000,
             processingStartDateTime: executionDescription.startDate.toISOString(),
-            processingEndDateTime: executionDescription.endDate.toISOString(),
+            processingEndDateTime: executionDescription.stopDate
+              ? executionDescription.stopDate.toISOString() : new Date().toISOString(),
             ...temporalInfo
           };
 
