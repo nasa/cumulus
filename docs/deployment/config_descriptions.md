@@ -90,6 +90,7 @@ This table describes the fields that must be present in `config.yml` to successf
 | api_lambda_memory | 756 | API Lambda function allocated memory in MB
 | api_backend_url | | (Override) Alternate API backend url
 | api_distribution_url | | (Override) Alternate API url used for file distribution
+| api_distribution_id | | (Override) Alternate API Gateway Id used for file distribution
 | dynamos.\<name\> | | name of the dynamoDB table
 | dynamos.\<name\>.read | 5 | number of reads per second
 | dynamos.\<name\>.write | 1 | number of writes per second

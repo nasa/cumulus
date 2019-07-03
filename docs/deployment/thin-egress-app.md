@@ -99,7 +99,7 @@ tea_urs_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/lo
 ```
 
 Set `api_distribution_url` in your `app/config.yml` to the value of
-`tea_api_endpoint`.
+`tea_api_endpoint` and `api_distribution_id` to the id of your API gateway (`abc123` in the example above).
 
 You will also need to configure the `tea_urs_redirect_uri` value as a Redirect
 URI in your app's URS configuration.
