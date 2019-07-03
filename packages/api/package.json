@@ -63,7 +63,7 @@
     "cookie-parser": "^1.4.3",
     "cors": "^2.8.5",
     "dynamodb-data-types": "^3.0.0",
-    "elasticsearch": "^16.1.1",
+    "elasticsearch": "^14.2.2",
     "express": "^4.16.4",
     "express-boom": "^3.0.0",
     "express-promise-router": "^3.0.3",
