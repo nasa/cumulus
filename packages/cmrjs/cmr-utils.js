@@ -347,6 +347,7 @@ function mapCNMTypeToCMRType(type) {
  * @param {BucketsConfig} params.buckets -  stack BucketConfig instance
  * @returns {Object} online access url object
  */
+// LAUREN TO DO
 function constructOnlineAccessUrl({
   file,
   distEndpoint,
@@ -379,9 +380,15 @@ function constructOnlineAccessUrl({
 function constructOnlineAccessUrls({
   files,
   distEndpoint,
-  buckets
+  buckets,
+  cmrGranuleUrlType = 'distribution'
 }) {
-  const urlList = files.map((file) => constructOnlineAccessUrl({ file, distEndpoint, buckets }));
+  const urlList = files.map((file) => constructOnlineAccessUrl({
+    file,
+    distEndpoint,
+    buckets,
+    cmrGranuleUrlType
+  }));
 
   return urlList.filter((urlObj) => !(urlObj == null));
 }
@@ -609,7 +616,8 @@ async function updateEcho10XMLMetadata({
   files,
   distEndpoint,
   buckets,
-  s3CredsEndpoint = 's3credentials'
+  s3CredsEndpoint = 's3credentials',
+  cmrGranuleUrlType = 'distribution'
 }) {
   // add/replace the OnlineAccessUrls
   const filename = getS3UrlOfFile(cmrFile);
@@ -625,7 +633,7 @@ async function updateEcho10XMLMetadata({
     'AssociatedBrowseImageUrls.ProviderBrowseUrl', []));
 
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
-  const newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets })
+  const newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets, cmrGranuleUrlType })
     .concat(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
 
   const mergedOnlineResources = buildMergedEchoURLObject(newURLs, originalOnlineResourceURLs,
@@ -666,7 +674,8 @@ async function updateCMRMetadata({
   files,
   distEndpoint,
   published,
-  inBuckets = null
+  inBuckets = null,
+  cmrGranuleUrlType = 'distribution'
 }) {
   const filename = getS3UrlOfFile(cmrFile);
 
@@ -682,12 +691,14 @@ async function updateCMRMetadata({
     cmrFile,
     files,
     distEndpoint,
-    buckets
+    buckets,
+    cmrGranuleUrlType
   };
 
   if (isECHO10File(filename)) {
     theMetadata = await updateEcho10XMLMetadata(params);
   } else if (isUMMGFile(filename)) {
+    // LAUREN TO DO
     theMetadata = await updateUMMGMetadata(params);
   } else {
     throw new errors.CMRMetaFileNotFound('Invalid CMR filetype passed to updateCMRMetadata');
