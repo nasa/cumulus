@@ -14,6 +14,9 @@ function instanceMetadata(req, res) {
     cmr: {
       provider: process.env.cmr_provider,
       environment: process.env.CMR_ENVIRONMENT || 'UAT'
+    },
+    cumulus: {
+      stackName: process.env.stackName
     }
   });
 }
