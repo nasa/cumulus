@@ -601,27 +601,11 @@ test.serial(
 );
 
 test(
-  'createGranulesFromSns() properly sets processingStartDateTime when sync_granule_end_time is present for a granule',
+  'createGranulesFromSns() sets processingStartDateTime to execution startDate',
   async (t) => {
     const { granuleModel } = t.context;
 
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    cumulusMessage.payload.granules[0].sync_granule_end_time = 100000;
-
-    const result = await granuleModel.createGranulesFromSns(cumulusMessage);
-
-    t.is(result.length, 1);
-    t.is(result[0].processingStartDateTime, '1970-01-01T00:01:40.000Z');
-  }
-);
-
-test(
-  'createGranulesFromSns() sets processingStartDateTime to execution startDate when sync_granule_end_time is not present for a granule',
-  async (t) => {
-    const { granuleModel } = t.context;
-
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    delete cumulusMessage.payload.granules[0].sync_granule_end_time;
 
     const result = await granuleModel.createGranulesFromSns(cumulusMessage);
 
@@ -631,27 +615,11 @@ test(
 );
 
 test(
-  'createGranulesFromSns() properly sets processingEndDateTime when sync_granule_end_time is present for a granule',
+  'createGranulesFromSns() sets processingEndDateTime to execution endDate',
   async (t) => {
     const { granuleModel } = t.context;
 
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    cumulusMessage.payload.granules[0].post_to_cmr_start_time = 100000;
-
-    const result = await granuleModel.createGranulesFromSns(cumulusMessage);
-
-    t.is(result.length, 1);
-    t.is(result[0].processingEndDateTime, '1970-01-01T00:01:40.000Z');
-  }
-);
-
-test(
-  'createGranulesFromSns() sets processingEndDateTime to execution endDatewhen post_to_cmr_start_time is not present for a granule',
-  async (t) => {
-    const { granuleModel } = t.context;
-
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    delete cumulusMessage.payload.granules[0].post_to_cmr_start_time;
 
     const result = await granuleModel.createGranulesFromSns(cumulusMessage);
 
