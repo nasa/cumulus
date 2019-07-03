@@ -3,6 +3,8 @@
 const request = require('supertest');
 const test = require('ava');
 const get = require('lodash.get');
+const sinon = require('sinon');
+const aws = require('@cumulus/common/aws');
 
 const { randomString } = require('@cumulus/common/test-utils');
 
@@ -11,7 +13,7 @@ const assertions = require('../../../lib/assertions');
 const {
   createFakeJwtAuthToken
 } = require('../../../lib/testUtils');
-const { Search } = require('../../../es/search');
+const { Search, defaultIndexAlias } = require('../../../es/search');
 const { bootstrapElasticSearch } = require('../../../lambdas/bootstrap');
 const mappings = require('../../../models/mappings.json');
 
@@ -19,8 +21,11 @@ const esIndex = 'cumulus-1';
 
 process.env.AccessTokensTable = randomString();
 process.env.UsersTable = randomString();
+process.env.AsyncOperationsTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 process.env.ES_INDEX = esIndex;
+process.env.stackName = randomString();
+process.env.system_bucket = randomString();
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
@@ -28,6 +33,7 @@ const { app } = require('../../../app');
 let jwtAuthToken;
 let accessTokenModel;
 let userModel;
+let asyncOperationsModel;
 
 const indexAlias = 'cumulus-1-alias';
 let esClient;
@@ -75,6 +81,15 @@ test.before(async () => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
+  asyncOperationsModel = new models.AsyncOperation({
+    stackName: process.env.stackName,
+    systemBucket: process.env.system_bucket,
+    tableName: process.env.AsyncOperationsTable
+  });
+  await asyncOperationsModel.createTable();
+
+  await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
 
   // create the elasticsearch index and add mapping
@@ -85,8 +100,10 @@ test.before(async () => {
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
+  await asyncOperationsModel.deleteTable();
   await userModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
+  await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test('PUT snapshot without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -403,4 +420,85 @@ test.serial('Change index and delete source index', async (t) => {
   t.is(await esClient.indices.exists({ index: sourceIndex }), false);
 
   await esClient.indices.delete({ index: destIndex });
+});
+
+test.serial('Reindex from database - create new index', async (t) => {
+  const indexName = randomString();
+  const id = randomString();
+
+  sinon.stub(models.AsyncOperation.prototype, 'start').returns({ id });
+
+  const response = await request(app)
+    .post('/elasticsearch/index-from-database')
+    .send({
+      indexName
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.body.message,
+    `Indexing database to ${indexName}. Operation id: ${id}`);
+
+  const indexExists = await esClient.indices.exists({ index: indexName });
+
+  t.true(indexExists);
+
+  await esClient.indices.delete({ index: indexName });
+  sinon.restore();
+});
+
+test.serial('Indices status', async (t) => {
+  const indexName = `z-${randomString()}`;
+  const otherIndexName = `a-${randomString()}`;
+
+  await esClient.indices.create({
+    index: indexName,
+    body: { mappings }
+  });
+
+  await esClient.indices.create({
+    index: otherIndexName,
+    body: { mappings }
+  });
+
+  const response = await request(app)
+    .get('/elasticsearch/indices-status')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.true(response.text.includes(indexName));
+  t.true(response.text.includes(otherIndexName));
+
+  await esClient.indices.delete({ index: indexName });
+  await esClient.indices.delete({ index: otherIndexName });
+});
+
+test.serial('Current index - default alias', async (t) => {
+  const indexName = randomString();
+  await createIndex(indexName, defaultIndexAlias);
+
+  const response = await request(app)
+    .get('/elasticsearch/current-index')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.true(response.body.includes(indexName));
+
+  await esClient.indices.delete({ index: indexName });
+});
+
+test.serial('Current index - custom alias', async (t) => {
+  const indexName = randomString();
+  const customAlias = randomString();
+  await createIndex(indexName, customAlias);
+
+  const response = await request(app)
+    .get(`/elasticsearch/current-index/${customAlias}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.deepEqual(response.body, [indexName]);
+
+  await esClient.indices.delete({ index: indexName });
 });
