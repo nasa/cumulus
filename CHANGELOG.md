@@ -55,6 +55,9 @@ nested_templates:
   - Added `@cumulus/common/message` with various message parsing/preparation helpers
 - **CUMULUS-812**
   - Added support for limiting the number of concurrent executions started from a queue. [See the data cookbook](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions) for more information.
+- **CUMULUS-1337**
+  - Adds `cumulus.stackName` value to the `instanceMetadata` endpoint.
+
 
 ### Changed
 
