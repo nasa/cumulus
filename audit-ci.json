@@ -1,5 +1,5 @@
 {
     "high": true,
-    "retry-count": 5,
+    "retry-count": 20,
     "whitelist": "lodash"
 }
