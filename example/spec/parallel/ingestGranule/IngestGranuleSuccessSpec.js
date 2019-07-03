@@ -249,7 +249,6 @@ describe('The S3 Ingest Granules workflow', () => {
     it('output includes the ingested granule with file staging location paths', () => {
       const updatedGranule = {
         ...expectedSyncGranulePayload.granules[0],
-        sync_granule_end_time: lambdaOutput.meta.input_granules[0].sync_granule_end_time,
         sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration
       };
 
@@ -264,7 +263,6 @@ describe('The S3 Ingest Granules workflow', () => {
     it('updates the meta object with input_granules', () => {
       const updatedGranule = {
         ...expectedSyncGranulePayload.granules[0],
-        sync_granule_end_time: lambdaOutput.meta.input_granules[0].sync_granule_end_time,
         sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration
       };
 
@@ -361,9 +359,7 @@ describe('The S3 Ingest Granules workflow', () => {
             cmrConceptId: postToCmrOutput.payload.granules[0].cmrConceptId,
             cmrLink: postToCmrOutput.payload.granules[0].cmrLink,
             post_to_cmr_duration: postToCmrOutput.payload.granules[0].post_to_cmr_duration,
-            post_to_cmr_start_time: postToCmrOutput.payload.granules[0].post_to_cmr_start_time,
-            sync_granule_duration: postToCmrOutput.payload.granules[0].sync_granule_duration,
-            sync_granule_end_time: postToCmrOutput.payload.granules[0].sync_granule_end_time
+            sync_granule_duration: postToCmrOutput.payload.granules[0].sync_granule_duration
           }
         ]
       };

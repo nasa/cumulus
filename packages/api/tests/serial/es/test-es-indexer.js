@@ -101,8 +101,8 @@ test.before(async () => {
 
   stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').returns({
     input,
-    startDate: new Date(),
-    endDate: new Date()
+    startDate: new Date(Date.UTC(2019, 6, 28)),
+    endDate: new Date(Date.UTC(2019, 6, 28, 1))
   });
 });
 
@@ -151,8 +151,8 @@ test.serial('creating a successful granule record', async (t) => {
   t.is(record.lastUpdateDateTime, '2018-04-20T21:45:45.524Z');
   t.is(record.timeToArchive, 100 / 1000);
   t.is(record.timeToPreprocess, 120 / 1000);
-  t.is(record.processingStartDateTime, '2018-05-03T14:23:12.010Z');
-  t.is(record.processingEndDateTime, '2018-05-03T17:11:33.007Z');
+  t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
+  t.is(record.processingEndDateTime, '2019-07-28T01:00:00.000Z');
 
   const { name: deconstructed } = indexer.deconstructCollectionId(record.collectionId);
   t.is(deconstructed, collection.name);

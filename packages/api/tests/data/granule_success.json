@@ -208,8 +208,6 @@
         "version": "6",
         "sync_granule_duration": 120,
         "post_to_cmr_duration": 100,
-        "post_to_cmr_start_time": 1525367493007,
-        "sync_granule_end_time": 1525357392010,
         "files": [
           {
             "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",

@@ -335,12 +335,8 @@ class Granule extends Manager {
             productVolume: getGranuleProductVolume(granuleFiles),
             timeToPreprocess: get(granule, 'sync_granule_duration', 0) / 1000,
             timeToArchive: get(granule, 'post_to_cmr_duration', 0) / 1000,
-            processingStartDateTime: granule.sync_granule_end_time
-              ? (new Date(granule.sync_granule_end_time)).toISOString()
-              : executionDescription.startDate.toISOString(),
-            processingEndDateTime: granule.post_to_cmr_start_time
-              ? (new Date(granule.post_to_cmr_start_time)).toISOString()
-              : executionDescription.endDate.toISOString(),
+            processingStartDateTime: executionDescription.startDate.toISOString(),
+            processingEndDateTime: executionDescription.endDate.toISOString(),
             ...temporalInfo
           };
 
