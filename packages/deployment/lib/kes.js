@@ -274,21 +274,6 @@ class UpdatedKes extends Kes {
       return '/';
     });
 
-    Handlebars.registerHelper('handleEventPattern', (eventPattern, stepFunctions, prefix) => {
-      const updatedPattern = cloneDeep(eventPattern);
-      if (updatedPattern.source && updatedPattern.source.includes('aws.states')) {
-        const stateMachineArns = Object.keys(stepFunctions)
-          .map((stateMachine) => {
-            const stateMachineRef = `$\{${prefix}${stateMachine}StateMachine\}`;
-            return `arn:aws:states:us-east-1:123456789012:stateMachine:${stateMachineRef}-1234578`;
-          });
-        // eslint-disable-next-line no-param-reassign
-        updatedPattern.detail.stateMachineArn = stateMachineArns;
-        // console.log(updatedPattern);
-      }
-      return JSON.stringify(updatedPattern);
-    });
-
     Handlebars.registerHelper(
       'ifLogApiGatewayToCloudWatch',
       function ifLogApiGatewayToCloudWatch(configs, api, options) {
