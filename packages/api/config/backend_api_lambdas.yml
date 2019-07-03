@@ -80,7 +80,7 @@ ApiEndpoints:
     distributionApiId:
       function: Ref
       value: distributionRestApi
-    backgroundQueueName : '{{parent.backgroundQueueName}}'
+    backgroundQueueName : '{{parent.stackName}}-{{parent.backgroundQueueName}}'
   apiGateway:
     - api: backend
       path: '{proxy+}'
