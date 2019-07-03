@@ -323,6 +323,15 @@ class UpdatedKes extends Kes {
     });
   }
 
+  /**
+   * Preprocess/update rules config to avoid deployment issues.
+   *
+   * Cloudwatch rules that are triggered by Cloudwatch Step Function events
+   * should be restricted to run only for Step Functions within the current
+   * deployment. Due to character limits for Cloudwatch rule definitions, we
+   * may need to split up a rule into multiple rules so that we can ensure it
+   * is only triggered by Step Functions in this deployment.
+   */
   updateRulesConfig() {
     if (!this.config.rules || !this.config.stepFunctions) {
       return;
