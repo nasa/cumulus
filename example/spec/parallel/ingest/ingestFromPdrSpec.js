@@ -109,7 +109,7 @@ describe('Ingesting from PDR', () => {
         unmodifiedS3Data,
         testDataFolder
       ),
-      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
       addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
 
