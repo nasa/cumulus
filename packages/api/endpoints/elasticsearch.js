@@ -231,7 +231,7 @@ async function indexFromDatabase(req, res) {
   return res.send({ message: `Indexing database to ${indexName}. Operation id: ${asyncOperation.id}` });
 }
 
-async function currentIndex(req, res) {
+async function getCurrentIndex(req, res) {
   const esClient = await Search.es();
   const alias = req.params.alias || defaultIndexAlias;
 
@@ -247,7 +247,7 @@ router.get('/reindex-status', reindexStatus);
 router.post('/change-index', changeIndex);
 router.post('/index-from-database', indexFromDatabase);
 router.get('/indices-status', indicesStatus);
-router.get('/current-index/:alias', currentIndex);
-router.get('/current-index', currentIndex);
+router.get('/current-index/:alias', getCurrentIndex);
+router.get('/current-index', getCurrentIndex);
 
 module.exports = router;
