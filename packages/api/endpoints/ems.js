@@ -3,6 +3,7 @@
 const pick = require('lodash.pick');
 const router = require('express-promise-router')();
 const { lambda } = require('@cumulus/common/aws');
+const log = require('@cumulus/common/log');
 
 /**
  * Creates a new report
@@ -22,6 +23,8 @@ async function post(req, res) {
   if (!Object.keys(typeToLambda).includes(reportType)) {
     return res.boom.badRequest(`Must specify reportType as one of ${Object.keys(typeToLambda).join(',')}`);
   }
+
+  log.info(`ems.post invoke ${typeToLambda[reportType]}`);
 
   const invocationType = req.body.invocationType || 'Event';
   const inputPayload = pick(req.body, ['startTime', 'endTime', 'collectionId']);

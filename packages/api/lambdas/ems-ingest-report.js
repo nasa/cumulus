@@ -8,7 +8,9 @@ const path = require('path');
 const { aws, log } = require('@cumulus/common');
 const {
   buildReportFileName,
+  buildStartEndTimes,
   determineReportKey,
+  determineReportsStartEndTime,
   getEmsEnabledCollections,
   getExpiredS3Objects,
   reportToFileType,
@@ -278,32 +280,36 @@ async function generateReport(reportType, startTime, endTime, collections) {
 /**
  * generate all EMS reports given the time range of the records
  *
- * @param {string} startTime - start time of the records
- * @param {string} endTime - end time of the records
- * @param {string} emsCollections - optional, collectionIds of the records
+ * @param {Object} params - params
+ * @param {string} params.startTime - start time of the reports in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} params.endTime - end time of the reports in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} params.emsCollections - optional, collectionIds of the records
  * @returns {Array<Object>} - list of report type and its file path {reportType, file}
  */
-async function generateReports(startTime, endTime, emsCollections) {
-  const collections = emsCollections || await getEmsEnabledCollections();
+async function generateReports(params) {
+  const collections = params.emsCollections || await getEmsEnabledCollections();
   return Promise.all(Object.keys(emsMappings)
-    .map((reportType) => generateReport(reportType, startTime, endTime, collections)));
+    .map((reportType) => generateReport(
+      reportType, params.startTime, params.endTime, collections
+    )));
 }
 
 /**
  * generate all EMS reports for each day given the date time range of the reports
  *
- * @param {string} startTime - start time of the reports
- * @param {string} endTime - end time of the reports
- * @param {string} collectionId - collectionId of the records if defined
+ * @param {Object} params - params
+ * @param {string} params.startTime - start time of the reports in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} params.endTime - end time of the reports in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} params.collectionId - collectionId of the records if defined
  * @returns {Array<Object>} - list of report type and its file path {reportType, file}
  */
-async function generateReportsForEachDay(startTime, endTime, collectionId) {
-  log.info(`ems-ingest-report.generateReportsForEachDay for access records between ${startTime} and ${endTime}`);
+async function generateReportsForEachDay(params) {
+  log.info(`ems-ingest-report.generateReportsForEachDay for access records between ${params.startTime} and ${params.endTime}`);
 
-  const nextDate = moment.utc().add(1, 'days').startOf('day').format();
-  const reportStartTime = moment.utc(startTime).startOf('day');
-  let reportEndTime = moment.utc(endTime).startOf('day');
-  reportEndTime = (reportEndTime.isAfter(nextDate)) ? nextDate : reportEndTime;
+  const {
+    reportStartTime,
+    reportEndTime
+  } = determineReportsStartEndTime(params.startTime, params.endTime);
 
   // ICD Section 3.4 Data Files Interface section describes that each file should contain one day's
   // worth of data. Data within the file will correspond to the datestamp in the filename.
@@ -314,6 +320,7 @@ async function generateReportsForEachDay(startTime, endTime, collectionId) {
   // Previous records will be updated and/or appended (i.e., merged) with revision file content.
 
   let emsCollections = await getEmsEnabledCollections();
+  const collectionId = params.collectionId;
   if (collectionId) {
     emsCollections = (emsCollections.includes(collectionId)) ? [collectionId] : [];
   }
@@ -324,16 +331,10 @@ async function generateReportsForEachDay(startTime, endTime, collectionId) {
   }
 
   // each startEndTimes element represents one day
-  const startEndTimes = [];
-  while (reportStartTime.isBefore(reportEndTime)) {
-    startEndTimes.push({
-      startTime: reportStartTime.format(),
-      endTime: moment(reportStartTime).add(1, 'days').format()
-    });
-    reportStartTime.add(1, 'days');
-  }
+  const startEndTimes = buildStartEndTimes(reportStartTime, reportEndTime);
+
   return flatten(await Promise.all(startEndTimes.map((startEndTime) =>
-    generateReports(startEndTime.startTime, startEndTime.endTime, emsCollections))));
+    generateReports({ ...startEndTime, emsCollections }))));
 }
 
 /**
@@ -378,7 +379,7 @@ function handler(event, context, callback) {
 
   // catch up run to generate reports for each day
   if (event.startTime && event.endTime) {
-    return generateReportsForEachDay(startTime, endTime, event.collectionId)
+    return generateReportsForEachDay({ startTime, endTime, collectionId: event.collectionId })
       .then((reports) => submitReports(reports))
       .then((r) => callback(null, r))
       .catch(callback);
@@ -386,7 +387,7 @@ function handler(event, context, callback) {
 
   // daily report generation
   return cleanup()
-    .then(() => generateReports(startTime, endTime))
+    .then(() => generateReports({ startTime, endTime }))
     .then((reports) => submitReports(reports))
     .then((r) => callback(null, r))
     .catch(callback);
