@@ -7,7 +7,12 @@ const { aws } = require('@cumulus/common');
 const { URL } = require('url');
 const { log } = require('@cumulus/common');
 const {
-  determineReportKey, getEmsEnabledCollections, getExpiredS3Objects, submitReports
+  buildStartEndTimes,
+  determineReportKey,
+  determineReportsStartEndTime,
+  getEmsEnabledCollections,
+  getExpiredS3Objects,
+  submitReports
 } = require('../lib/ems');
 const { deconstructCollectionId } = require('../lib/utils');
 const { FileClass } = require('../models');
@@ -357,23 +362,25 @@ async function generateDistributionReport(params) {
  * Generate and store an EMS Distribution Report
  *
  * @param {Object} params - params
- * @param {Moment} params.reportStartTime - the earliest time to return events from (inclusive)
- * @param {Moment} params.reportEndTime - the latest time to return events from (exclusive)
+ * @param {string} params.startTime - the earliest time to return events from (inclusive)
+ * in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} params.endTime - the latest time to return events from (exclusive)
+ * in format YYYY-MM-DDTHH:mm:ss
  * @returns {Promise} resolves when the report has been generated
  */
 async function generateAndStoreDistributionReport(params) {
   const {
-    reportStartTime,
-    reportEndTime
+    startTime,
+    endTime
   } = params;
 
   const distributionReport = await generateDistributionReport({
-    reportStartTime,
-    reportEndTime
+    reportStartTime: moment.utc(startTime),
+    reportEndTime: moment.utc(endTime)
   });
 
   const { reportsBucket, reportsPrefix } = bucketsPrefixes();
-  const reportKey = await determineReportKey(DISTRIBUTION_REPORT, reportStartTime, reportsPrefix);
+  const reportKey = await determineReportKey(DISTRIBUTION_REPORT, startTime, reportsPrefix);
 
   const s3Uri = aws.buildS3Uri(reportsBucket, reportKey);
   log.info(`Uploading report to ${s3Uri}`);
@@ -392,18 +399,19 @@ exports.generateAndStoreDistributionReport = generateAndStoreDistributionReport;
  * Generate and store EMS Distribution Reports for each day
  *
  * @param {Object} params - params
- * @param {Moment} params.reportStartTime - the earliest time to return events from (inclusive)
- * @param {Moment} params.reportEndTime - the latest time to return events from (exclusive)
+ * @param {string} params.startTime - the earliest time to return events from (inclusive)
+ * in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} params.endTime - the latest time to return events from (exclusive)
+ * in format YYYY-MM-DDTHH:mm:ss
  * @returns {Promise} resolves when the report has been generated
  */
 async function generateAndStoreReportsForEachDay(params) {
   log.info('generateAndStoreReportsForEachDay for access records between'
-    + `${params.reportStartTime.format()} and ${params.reportEndTime.format()}`);
+    + `${params.startTime} and ${params.endTime}`);
 
-  const nextDate = moment.utc().add(1, 'days').startOf('day').format();
-  let reportStartTime = params.reportStartTime.startOf('day');
-  let reportEndTime = params.reportEndTime.startOf('day');
-  reportEndTime = (reportEndTime.isAfter(nextDate)) ? nextDate : reportEndTime;
+  const reportTimes = determineReportsStartEndTime(params.startTime, params.endTime);
+  let reportStartTime = reportTimes.reportStartTime;
+  const reportEndTime = reportTimes.reportEndTime;
 
   // Each file should contain one day's worth of data.
   // Data within the file will correspond to the datestamp in the filename.
@@ -415,14 +423,7 @@ async function generateAndStoreReportsForEachDay(params) {
 
   if (reportStartTime.isBefore(earliestReportStartDate)) reportStartTime = earliestReportStartDate;
 
-  const startEndTimes = [];
-  while (reportStartTime.isBefore(reportEndTime)) {
-    startEndTimes.push({
-      reportStartTime: moment(reportStartTime),
-      reportEndTime: moment(reportStartTime).add(1, 'days')
-    });
-    reportStartTime.add(1, 'days');
-  }
+  const startEndTimes = buildStartEndTimes(reportStartTime, reportEndTime);
 
   return Promise.all(startEndTimes.map((startEndTime) =>
     generateAndStoreDistributionReport({ ...params, ...startEndTime })));
@@ -452,8 +453,8 @@ function handler(event, context, cb) {
   startTime = event.startTime || startTime;
 
   const params = {
-    reportStartTime: moment.utc(startTime),
-    reportEndTime: moment.utc(endTime),
+    startTime,
+    endTime,
     logsBucket: process.env.system_bucket,
     logsPrefix: `${process.env.stackName}/ems-distribution/s3-server-access-logs/`,
     reportsBucket: process.env.system_bucket,

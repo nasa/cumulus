@@ -163,23 +163,24 @@ test.after.always(async () => {
   await esClient.indices.delete({ index: esIndex });
 });
 
-test.beforeEach(async () => {
+test.beforeEach(async (t) => {
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
   process.env.CollectionsTable = randomString();
-  await new models.Collection().createTable();
-  await new models.Collection().create(collections);
+  t.context.collectionModel = new models.Collection();
+  await t.context.collectionModel.createTable();
+  await t.context.collectionModel.create(collections);
 });
 
-test.afterEach.always(async () => {
+test.afterEach.always(async (t) => {
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await new models.Collection().deleteTable();
+  await t.context.collectionModel.deleteTable();
 });
 
 test.serial('generate reports for the previous day', async (t) => {
   // 24-hour period ending past midnight utc
   const endTime = moment.utc().startOf('day').format();
   const startTime = moment.utc().subtract(1, 'days').startOf('day').format();
-  const reports = await generateReports(startTime, endTime);
+  const reports = await generateReports({ startTime, endTime });
   const requests = reports.map(async (report) => {
     const parsed = aws.parseS3Uri(report.file);
     // file exists
@@ -212,7 +213,7 @@ test.serial('generate reports for the one day, and run multiple times', async (t
   const startTime = moment.utc().subtract(2, 'days').startOf('day').format();
   let reports;
   for (let i = 0; i < 5; i += 1) {
-    reports = await generateReports(startTime, endTime); // eslint-disable-line no-await-in-loop
+    reports = await generateReports({ startTime, endTime }); // eslint-disable-line no-await-in-loop
   }
 
   const requests = reports.map(async (report) => {
@@ -237,7 +238,7 @@ test.serial('generate reports for the past two days', async (t) => {
   // 2-day period ending past midnight utc
   const endTime = moment.utc().startOf('day').format();
   const startTime = moment.utc().subtract(2, 'days').startOf('day').format();
-  const reports = await generateReportsForEachDay(startTime, endTime);
+  const reports = await generateReportsForEachDay({ startTime, endTime });
 
   t.is(reports.length, 6);
 
@@ -260,7 +261,8 @@ test.serial('generate reports for the past two days for a given collection', asy
   // 2-day period ending past midnight utc
   const endTime = moment.utc().startOf('day').format();
   const startTime = moment.utc().subtract(2, 'days').startOf('day').format();
-  const reports = await generateReportsForEachDay(startTime, endTime, 'MOD09GQ___006');
+  const collectionId = 'MOD09GQ___006';
+  const reports = await generateReportsForEachDay({ startTime, endTime, collectionId });
 
   t.is(reports.length, 6);
 
@@ -283,7 +285,8 @@ test.serial('no report should be generated if the given collection is configured
   // 2-day period ending past midnight utc
   const endTime = moment.utc().startOf('day').format();
   const startTime = moment.utc().subtract(2, 'days').startOf('day').format();
-  const reports = await generateReportsForEachDay(startTime, endTime, 'MOD14A1___006');
+  const collectionId = 'MOD14A1___006';
+  const reports = await generateReportsForEachDay({ startTime, endTime, collectionId });
 
   t.is(reports.length, 0);
 });

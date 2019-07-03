@@ -54,14 +54,15 @@ async function addTestCollections() {
   await new models.Collection().create(matchingColls.concat(extraDbColls));
 }
 
-test.beforeEach(async () => {
+test.beforeEach(async (t) => {
   process.env.system_bucket = randomString();
   process.env.stackName = 'test-stack';
   process.env.ems_provider = 'testEmsProvider';
   process.env.CollectionsTable = randomString();
 
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
-  await new models.Collection().createTable();
+  t.context.collectionModel = new models.Collection();
+  await t.context.collectionModel.createTable();
   sinon.stub(CMR.prototype, 'searchCollections').callsFake(() => []);
   sinon.stub(CMRSearchConceptQueue.prototype, 'peek').callsFake(() => null);
   sinon.stub(CMRSearchConceptQueue.prototype, 'shift').callsFake(() => null);
@@ -69,10 +70,10 @@ test.beforeEach(async () => {
   await addTestCollections();
 });
 
-test.afterEach.always(() => {
+test.afterEach.always((t) => {
   Promise.all([
     aws.recursivelyDeleteS3Bucket(process.env.system_bucket),
-    new models.Collection().deleteTable()]);
+    t.context.collectionModel.deleteTable()]);
   CMR.prototype.searchCollections.restore();
   CMRSearchConceptQueue.prototype.peek.restore();
   CMRSearchConceptQueue.prototype.shift.restore();

@@ -81,15 +81,15 @@ test.beforeEach(async (t) => {
 
   await aws.s3().createBucket({ Bucket: t.context.internalBucket }).promise();
 
-  const collectionModel = new models.Collection();
-  const granuleModel = new models.Granule();
-  const fileModel = new models.FileClass();
+  t.context.collectionModel = new models.Collection();
+  t.context.granuleModel = new models.Granule();
+  t.context.fileModel = new models.FileClass();
 
-  await collectionModel.createTable();
-  await collectionModel.create(collections);
+  await t.context.collectionModel.createTable();
+  await t.context.collectionModel.create(collections);
 
-  await granuleModel.createTable();
-  await fileModel.createTable();
+  await t.context.granuleModel.createTable();
+  await t.context.fileModel.createTable();
 
   const granules = fakeGranules();
 
@@ -104,8 +104,8 @@ test.beforeEach(async (t) => {
   ];
 
   await Promise.all(granules.map(async (granule) => {
-    await granuleModel.create(granule);
-    await fileModel.createFilesFromGranule(granule);
+    await t.context.granuleModel.create(granule);
+    await t.context.fileModel.createFilesFromGranule(granule);
   }));
 
   // Read in all of the server logs from the fixtures files
@@ -125,9 +125,9 @@ test.beforeEach(async (t) => {
 
 test.afterEach.always(async (t) => {
   Promise.all([
-    new models.FileClass().deleteTable(),
-    new models.Granule().deleteTable(),
-    new models.Collection().deleteTable()
+    t.context.fileModel.deleteTable(),
+    t.context.granuleModel.deleteTable(),
+    t.context.collectionModel.deleteTable()
   ]);
   await aws.recursivelyDeleteS3Bucket(t.context.internalBucket);
 });
@@ -135,14 +135,11 @@ test.afterEach.always(async (t) => {
 test.serial('emsDistributionReport writes a correct report out to S3 when no previous reports exist', async (t) => {
   const reportsBucket = t.context.internalBucket;
 
-  const reportStartTime = moment.utc('1981-06-01T01:00:00Z');
-  const reportEndTime = moment.utc('1981-06-01T15:00:00Z');
+  const startTime = '1981-06-01T01:00:00Z';
+  const endTime = '1981-06-01T15:00:00Z';
 
   // Generate the distribution report
-  const report = await generateAndStoreDistributionReport({
-    reportStartTime,
-    reportEndTime
-  });
+  const report = await generateAndStoreDistributionReport({ startTime, endTime });
 
   // Fetch the distribution report from S3
   const getObjectResponse = await aws.s3().getObject({
@@ -156,10 +153,10 @@ test.serial('emsDistributionReport writes a correct report out to S3 when no pre
 });
 
 test.serial('emsDistributionReport writes a correct report out to S3 when one report already exists', async (t) => {
-  const reportStartTime = moment.utc('1981-06-01T01:00:00Z');
-  const reportEndTime = moment.utc('1981-06-01T15:00:00Z');
+  const startTime = '1981-06-01T01:00:00Z';
+  const endTime = '1981-06-01T15:00:00Z';
 
-  const reportName = `${reportStartTime.format('YYYYMMDD')}_${process.env.ems_provider}_DistCustom_${process.env.stackName}.flt`;
+  const reportName = `${moment.utc(startTime).format('YYYYMMDD')}_${process.env.ems_provider}_DistCustom_${process.env.stackName}.flt`;
 
   const { reportsBucket, reportsPrefix } = bucketsPrefixes();
   await aws.s3().putObject({
@@ -169,10 +166,7 @@ test.serial('emsDistributionReport writes a correct report out to S3 when one re
   }).promise();
 
   // Generate the distribution report
-  await generateAndStoreDistributionReport({
-    reportStartTime,
-    reportEndTime
-  });
+  await generateAndStoreDistributionReport({ startTime, endTime });
 
   // Fetch the distribution report from S3
   const getObjectResponse = await aws.s3().getObject({
@@ -186,12 +180,12 @@ test.serial('emsDistributionReport writes a correct report out to S3 when one re
 });
 
 test.serial('emsDistributionReport writes a correct report out to S3 when two reports already exist', async (t) => {
-  const reportStartTime = moment.utc('1981-06-01T01:00:00Z');
-  const reportEndTime = moment.utc('1981-06-01T15:00:00Z');
+  const startTime = '1981-06-01T01:00:00Z';
+  const endTime = '1981-06-01T15:00:00Z';
 
   const { reportsBucket, reportsPrefix } = bucketsPrefixes();
 
-  const reportName = `${reportStartTime.format('YYYYMMDD')}_${process.env.ems_provider}_DistCustom_${process.env.stackName}.flt`;
+  const reportName = `${moment.utc(startTime).format('YYYYMMDD')}_${process.env.ems_provider}_DistCustom_${process.env.stackName}.flt`;
 
   await Promise.all([
     aws.s3().putObject({
@@ -207,10 +201,7 @@ test.serial('emsDistributionReport writes a correct report out to S3 when two re
   ]);
 
   // Generate the distribution report
-  await generateAndStoreDistributionReport({
-    reportStartTime,
-    reportEndTime
-  });
+  await generateAndStoreDistributionReport({ startTime, endTime });
 
   // Fetch the distribution report from S3
   const getObjectResponse = await aws.s3().getObject({
@@ -223,18 +214,15 @@ test.serial('emsDistributionReport writes a correct report out to S3 when two re
   t.deepEqual(logLines, expectedReportContentByTime);
 });
 
-test.serial('emsDistributionReport writes multiple reports', async (t) => {
+test.serial('emsDistributionReport writes multiple reports when report spans multiple days', async (t) => {
   const reportsBucket = t.context.internalBucket;
 
   // two days
-  const reportStartTime = moment.utc('1981-06-01T00:00:00Z');
-  const reportEndTime = moment.utc('1981-06-03T00:00:00Z');
+  const startTime = '1981-06-01T00:00:00Z';
+  const endTime = '1981-06-03T00:00:00Z';
 
   // Generate the distribution report
-  const reports = await generateAndStoreReportsForEachDay({
-    reportStartTime,
-    reportEndTime
-  });
+  const reports = await generateAndStoreReportsForEachDay({ startTime, endTime });
 
   t.is(reports.length, 2);
 
