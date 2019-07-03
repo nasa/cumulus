@@ -2,10 +2,53 @@
 
 const fs = require('fs-extra');
 const {
-  aws: { s3 },
+  aws: { buildS3Uri, parseS3Uri, s3 },
   stringUtils: { globalReplace },
   testUtils: { randomStringFromRegex }
 } = require('@cumulus/common');
+const path = require('path');
+const cloneDeep = require('lodash.clonedeep');
+
+/**
+ * Adds updated url_path to a granule files object
+ *
+ * @param  {Array<object>} files - array of granule files
+ * @param  {string} testId - Test ID to insert into url_path per-granule
+ * @param  {string} collectionUrlPath - collection
+ */
+function addUrlPathToGranuleFiles(files, testId, collectionUrlPath) {
+  const updatedFiles = cloneDeep(files);
+  return updatedFiles.map((file) => {
+    const fileUpdate = cloneDeep(file);
+    const updatedUrlPath = Object.is(file.url_path, undefined) ? collectionUrlPath : `${file.url_path}/`;
+    fileUpdate.url_path = `${updatedUrlPath}${testId}/`;
+    return fileUpdate;
+  });
+}
+
+/**
+ * Add test-unique filepath to granule file filepath/filenames
+ *
+ * @param  {Array<Object>} granules - Array of granules with files to be updated
+ * @param  {string} filePath - Filepath to add
+ */
+function addUniqueGranuleFilePathToGranuleFiles(granules, filePath) {
+  const updatedGranules = granules.map((originalGranule) => {
+    const granule = cloneDeep(originalGranule);
+    granule.files = granule.files.map((originalFile) => {
+      const file = cloneDeep(originalFile);
+      const { Bucket, Key } = parseS3Uri(file.filename);
+      const { base, dir } = path.parse(Key);
+      const updateKey = `${dir}/${filePath}/${base}`;
+      const filename = buildS3Uri(Bucket, updateKey);
+      file.filename = filename;
+      file.filepath = updateKey;
+      return file;
+    });
+    return granule;
+  });
+  return updatedGranules;
+}
 
 /**
  * Create test granule files by copying current granule files and renaming
@@ -86,6 +129,8 @@ function loadFileWithUpdatedGranuleIdPathAndCollection(file, newGranuleId, newPa
 }
 
 module.exports = {
+  addUniqueGranuleFilePathToGranuleFiles,
+  addUrlPathToGranuleFiles,
   loadFileWithUpdatedGranuleIdPathAndCollection,
   setupTestGranuleForIngest
 };
