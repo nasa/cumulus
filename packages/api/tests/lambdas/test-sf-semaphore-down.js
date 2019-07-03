@@ -233,8 +233,7 @@ test('sfSemaphoreDown lambda decrements semaphore for s3-stored event message', 
     );
     const response = await semaphore.get(queueName);
     t.is(response.semvalue, 0);
-  }
-  finally {
+  } finally {
     pullStepFunctionStub.restore();
   }
 });
