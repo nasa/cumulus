@@ -623,3 +623,17 @@ test.serial('when duplicateHandling is specified as "replace" via collection, do
   const payload = setupDuplicateHandlingCollection(t, 'replace');
   await granuleFilesOverwrittenTest(t, payload);
 });
+
+test.only('Move granules throws an error when cmr file type is distribution and no distribution endpoint is set', async (t) => {
+  const newPayload = buildPayload(t);
+  delete newPayload.config.distribution_endpoint;
+
+  const filesToUpload = clonedeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  const error = await t.throwsAsync(
+    () => moveGranules(newPayload)
+  );
+
+  t.is(error.message, 'cmrGranuleUrlType is distribution, but no distribution endpoint is configured.');
+});
