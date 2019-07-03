@@ -705,7 +705,7 @@ test.serial(
   'reingest pushes a message with the correct queueName',
   async (t) => {
     const { granuleModel } = t.context;
-    const updateStatusStub = sinon.stub(granuleModel, "updateStatus");
+    const updateStatusStub = sinon.stub(granuleModel, 'updateStatus');
     const queueName = 'testQueueName';
     const granule = {
       execution: 'some/execution',
@@ -733,4 +733,4 @@ test.serial(
       updateStatusStub.restore();
     }
   }
-)
+);
