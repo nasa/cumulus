@@ -13,7 +13,8 @@ async function handler(event, context) {
     return s3.copyObject({
         CopySource: `${srcBucket}/${srcKey}`,
         Bucket: process.env.TARGET_BUCKET,
-        Key: `${process.env.TARGET_PREFIX}/${path.basename(srcKey)}`
+        Key: `${process.env.TARGET_PREFIX}/${path.basename(srcKey)}`,
+        ACL: 'bucket-owner-full-control'
     }).promise();
 }
 
