@@ -13,7 +13,6 @@ if [[ $(git describe --exact-match HEAD 2>/dev/null |sed -n '1p') =~ ^v[0-9]+.* 
 fi
 
 if [[ $commit_message_contains_skip_audit_flag = false && $commit_matches_version_tag = false ]]; then
-  npm run bootstrap;
   npm run install-locks;
   npm run audit;
 else
