@@ -100,64 +100,6 @@ async function sendStartSfMessages({
   return Promise.all(sendMessages);
 }
 
-const createCloudwatchRuleWithTarget = async ({
-  ruleName,
-  stateMachineArn,
-  functionName,
-  ruleTargetId
-}) => {
-  await cloudwatchevents().putRule({
-    Name: ruleName,
-    State: 'ENABLED',
-    EventPattern: JSON.stringify({
-      source: [
-        'aws.states'
-      ],
-      'detail-type': [
-        'Step Functions Execution Status Change'
-      ],
-      detail: {
-        status: [
-          'ABORTED',
-          'FAILED',
-          'SUCCEEDED',
-          'TIMED_OUT'
-        ],
-        stateMachineArn: [
-          stateMachineArn
-        ]
-      }
-    })
-  }).promise();
-
-  const { Configuration } = await lambda().getFunction({
-    FunctionName: functionName
-  }).promise();
-
-  return cloudwatchevents().putTargets({
-    Rule: ruleName,
-    Targets: [{
-      Id: ruleTargetId,
-      Arn: Configuration.FunctionArn
-    }]
-  }).promise();
-};
-
-const deleteCloudwatchRuleWithTargets = async ({
-  ruleName,
-  ruleTargetId
-}) => {
-  await cloudwatchevents().removeTargets({
-    Ids: [
-      ruleTargetId
-    ],
-    Rule: ruleName
-  }).promise();
-  return cloudwatchevents().deleteRule({
-    Name: ruleName
-  }).promise();
-};
-
 describe('the sf-starter lambda function', () => {
   it('has a configurable message limit', () => {
     const messageLimit = config.sqs_consumer_rate;
@@ -244,9 +186,6 @@ describe('the sf-starter lambda function', () => {
     let maxQueueName;
     let messagesConsumed;
     let waitPassSfArn;
-    let executionArns;
-    let ruleName;
-    let ruleTargetId;
 
     const queueMaxExecutions = 5;
     const totalNumMessages = 20;
@@ -262,17 +201,6 @@ describe('the sf-starter lambda function', () => {
 
       const { stateMachineArn } = await sfn().createStateMachine(waitPassSfParams).promise();
       waitPassSfArn = stateMachineArn;
-      console.log(waitPassSfArn);
-
-      ruleName = timestampedName('waitPassSfRule');
-      ruleTargetId = timestampedName('waitPassSfRuleTarget');
-
-      await createCloudwatchRuleWithTarget({
-        ruleName,
-        stateMachineArn: waitPassSfArn,
-        functionName: `${config.stackName}-sfSemaphoreDown`,
-        ruleTargetId
-      });
 
       await sendStartSfMessages({
         numOfMessages: totalNumMessages,
@@ -284,11 +212,6 @@ describe('the sf-starter lambda function', () => {
     });
 
     afterAll(async () => {
-      await deleteCloudwatchRuleWithTargets({
-        ruleName,
-        ruleTargetId
-      });
-
       await Promise.all([
         sqs().deleteQueue({
           QueueUrl: maxQueueUrl
@@ -320,21 +243,8 @@ describe('the sf-starter lambda function', () => {
 
     it('to trigger workflows', async () => {
       const { executions } = await StepFunctions.listExecutions({ stateMachineArn: waitPassSfArn });
-      executionArns = executions.map((execution) => execution.executionArn);
       const runningExecutions = executions.filter((execution) => execution.status === 'RUNNING');
       expect(runningExecutions.length).toBeLessThanOrEqual(queueMaxExecutions);
-    });
-
-    it('to decrement the semaphore correctly', async () => {
-      await Promise.all(
-        executionArns.map((executionArn) => waitForCompletedExecution(executionArn))
-      );
-      const semaphore = new Semaphore(
-        dynamodbDocClient(),
-        `${config.stackName}-SemaphoresTable`
-      );
-      const response = await semaphore.get(maxQueueName);
-      expect(response.semvalue).toEqual(0);
     });
   });
 });
