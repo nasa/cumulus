@@ -4,12 +4,9 @@ const {
   lambda,
   sfn,
   sqs,
-  dynamodbDocClient,
-  cloudwatchevents
+  dynamodbDocClient
 } = require('@cumulus/common/aws');
-const Semaphore = require('@cumulus/common/Semaphore');
 const StepFunctions = require('@cumulus/common/StepFunctions');
-const { waitForCompletedExecution } = require('@cumulus/integration-tests');
 
 const {
   loadConfig,
@@ -192,7 +189,6 @@ describe('the sf-starter lambda function', () => {
 
     beforeAll(async () => {
       maxQueueName = `${testName}MaxQueue`;
-      console.log(`max queue name: ${maxQueueName}`);
 
       const { QueueUrl } = await sqs().createQueue({
         QueueName: maxQueueName
