@@ -15,8 +15,6 @@ const Semaphore = require('@cumulus/common/Semaphore');
  * @throws {Error}
  */
 async function incrementQueueSemaphore(queueName, maximum) {
-  log.debug('semaphores table', process.env.SemaphoresTable);
-
   const semaphore = new Semaphore(
     dynamodbDocClient(),
     process.env.SemaphoresTable
@@ -24,6 +22,7 @@ async function incrementQueueSemaphore(queueName, maximum) {
 
   try {
     await semaphore.up(queueName, maximum);
+    log.info(`incremented queue semaphore for queue ${queueName}`);
   } catch (err) {
     if (err instanceof ResourcesLockedError) {
       log.info(`Unable to start new execution: the maximum number of executions (${maximum}) allowed for ${queueName} are already running.`);
@@ -41,8 +40,6 @@ async function incrementQueueSemaphore(queueName, maximum) {
  * @throws {Error} Error from semaphore.down() operation
  */
 async function decrementQueueSemaphore(queueName) {
-  log.debug('semaphores table', process.env.SemaphoresTable);
-
   const semaphore = new Semaphore(
     dynamodbDocClient(),
     process.env.SemaphoresTable
@@ -52,6 +49,7 @@ async function decrementQueueSemaphore(queueName) {
   // count below 0. If so, catch the error so it can be logged.
   try {
     await semaphore.down(queueName);
+    log.info(`decremented queue semaphore for queue ${queueName}`);
   } catch (err) {
     log.error(`Failure: attempted to decrement semaphore for queue ${queueName} below 0`);
     throw err;

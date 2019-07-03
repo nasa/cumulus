@@ -7,6 +7,7 @@ const {
 } = require('@cumulus/common/message');
 
 const { pullStepFunctionEvent } = require('@cumulus/common/aws');
+const log = require('@cumulus/common/log');
 const { isOneOf } = require('@cumulus/common/util');
 
 const { decrementQueueSemaphore } = require('../lib/semaphore');
@@ -60,6 +61,7 @@ const isDecrementEvent = (event, executionMessage) =>
  * @param {Object} event - incoming event from Cloudwatch
  */
 async function handleSemaphoreDecrementTask(event) {
+  log.info('event', event);
   const eventMessage = getEventMessage(event);
   const executionMessage = await pullStepFunctionEvent(eventMessage);
   if (isDecrementEvent(event, executionMessage)) {
