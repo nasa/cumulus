@@ -7,11 +7,13 @@ const {
     getS3Object,
     parseS3Uri,
     lambda
-  }
+  },
+  constructCollectionId
 } = require('@cumulus/common');
 const {
   addCollections,
-  cleanupCollections
+  cleanupCollections,
+  emsApi
 } = require('@cumulus/integration-tests');
 
 const { loadConfig } = require('../../helpers/testUtils');
@@ -85,6 +87,33 @@ describe('The EMS product metadata report', () => {
       if (submitReport) {
         expect(parsed.Key.includes('/sent/')).toBe(true);
       }
+    });
+
+    it('generates EMS product metadata reports through the Cumulus API', async () => {
+      const collection = { name: 'A2_SI25_NRT', version: '0' };
+      const inputPayload = {
+        reportType: 'metadata',
+        startTime: moment.utc().subtract(1, 'days').startOf('day').format(),
+        endTime: moment.utc().add(1, 'days').startOf('day').format(),
+        collectionId: constructCollectionId(collection.name, collection.version),
+        invocationType: 'RequestResponse'
+      };
+
+      const response = await emsApi.createEmsReports({
+        prefix: config.stackName,
+        request: inputPayload
+      });
+
+      // verify the report has the specified collection
+      const reports = JSON.parse(response.body).reports;
+      expect(reports.length).toEqual(1);
+
+      const parsed = parseS3Uri(reports[0].file);
+      expect(await fileExists(parsed.Bucket, parsed.Key)).not.toBe(false);
+      const obj = await getS3Object(parsed.Bucket, parsed.Key);
+      const reportRecords = obj.Body.toString().split('\n');
+      expect(reportRecords.length).toEqual(1);
+      expect(reportRecords[0].split('|&|')[0]).toEqual(collection.name);
     });
   });
 });
