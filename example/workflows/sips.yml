@@ -450,9 +450,6 @@ ParsePdr:
           Next: StopStatus
       Next: CheckAgainChoice
     CheckAgainChoice:
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
       Type: Choice
       Choices:
         - Variable: $.cumulus_meta.isPdrFinished
