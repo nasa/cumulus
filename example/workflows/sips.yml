@@ -432,6 +432,13 @@ ParsePdr:
           Next: StopStatus
       Next: CheckStatus
     CheckStatus:
+      CumulusConfig:
+        cumulus_message:
+          outputs:
+            - source: '{$}'
+              destination: '{$.payload}'
+            - source: '{$.isFinished}'
+              destination: '{$.cumulus_meta.isPdrFinished}'
       Type: Task
       Resource: ${PdrStatusCheckLambdaFunction.Arn}
       Retry:
@@ -443,12 +450,15 @@ ParsePdr:
           Next: StopStatus
       Next: CheckAgainChoice
     CheckAgainChoice:
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
       Type: Choice
       Choices:
-        - Variable: $.payload.isFinished
+        - Variable: $.cumulus_meta.isPdrFinished
           BooleanEquals: false
           Next: PdrStatusReport
-        - Variable: $.payload.isFinished
+        - Variable: $.cumulus_meta.isPdrFinished
           BooleanEquals: true
           Next: StopStatus
       Default: StopStatus
