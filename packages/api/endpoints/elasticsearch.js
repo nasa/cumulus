@@ -4,10 +4,17 @@ const router = require('express-promise-router')();
 
 const log = require('@cumulus/common/log');
 
-const mappings = require('../models/mappings.json');
+const { AsyncOperation } = require('../models');
+const { IndexExistsError } = require('../lib/errors');
 const { defaultIndexAlias, Search } = require('../es/search');
+const { createIndex } = require('../es/indexer');
 
 // const snapshotRepoName = 'cumulus-es-snapshots';
+
+function timestampedIndexName() {
+  const date = new Date();
+  return `cumulus-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+}
 
 async function createEsSnapshot(req, res) {
   return res.boom.badRequest('Functionality not yet implemented');
@@ -76,21 +83,18 @@ async function reindex(req, res) {
   }
 
   if (!destIndex) {
-    const date = new Date();
-    destIndex = `cumulus-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+    destIndex = timestampedIndexName();
   }
 
-  const destExists = await esClient.indices.exists({ index: destIndex });
+  try {
+    await createIndex(esClient, destIndex);
+  } catch (err) {
+    if (err instanceof IndexExistsError) {
+      return res.boom.badRequest(`Destination index ${destIndex} exists. Please specify an index name that does not exist.`);
+    }
 
-  if (destExists) {
-    return res.boom.badRequest(`Destination index ${destIndex} exists. Please specify an index name that does not exist.`);
+    return res.boom.badRequest(`Error creating index ${destIndex}: ${err.message}`);
   }
-
-  // create destination index
-  await esClient.indices.create({
-    index: destIndex,
-    body: { mappings }
-  });
 
   log.info(`Created destination index ${destIndex}.`);
 
@@ -177,10 +181,73 @@ async function changeIndex(req, res) {
   return res.send({ message });
 }
 
+async function indicesStatus(req, res) {
+  const esClient = await Search.es();
+
+  return res.send(await esClient.cat.indices({}));
+}
+
+async function indexFromDatabase(req, res) {
+  const esClient = await Search.es();
+
+  const indexName = req.body.indexName || timestampedIndexName();
+
+  await createIndex(esClient, indexName)
+    .catch((e) => {
+      if (!(e instanceof IndexExistsError)) throw e;
+    });
+
+  const asyncOperationModel = new AsyncOperation({
+    stackName: process.env.stackName,
+    systemBucket: process.env.system_bucket,
+    tableName: process.env.AsyncOperationsTable
+  });
+
+  let asyncOperation;
+  try {
+    asyncOperation = await asyncOperationModel.start({
+      asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+      cluster: process.env.EcsCluster,
+      lambdaName: process.env.IndexFromDatabaseLambda,
+      payload: {
+        indexName,
+        tables: {
+          collectionsTable: process.env.CollectionsTable,
+          executionsTable: process.env.ExecutionsTable,
+          granulesTable: process.env.GranulesTable,
+          pdrsTable: process.env.PdrsTable,
+          providersTable: process.env.ProvidersTable,
+          rulesTable: process.env.RulesTable
+        },
+        esHost: process.env.ES_HOST
+      }
+    });
+  } catch (err) {
+    if (err.name !== 'EcsStartTaskError') throw err;
+
+    return res.boom.serverUnavailable(`Failed to run ECS task: ${err.message}`);
+  }
+
+  return res.send({ message: `Indexing database to ${indexName}. Operation id: ${asyncOperation.id}` });
+}
+
+async function getCurrentIndex(req, res) {
+  const esClient = await Search.es();
+  const alias = req.params.alias || defaultIndexAlias;
+
+  const aliasIndices = await esClient.indices.getAlias({ name: alias });
+
+  return res.send(Object.keys(aliasIndices));
+}
+
 // express routes
 router.put('/create-snapshot', createEsSnapshot);
 router.post('/reindex', reindex);
 router.get('/reindex-status', reindexStatus);
 router.post('/change-index', changeIndex);
+router.post('/index-from-database', indexFromDatabase);
+router.get('/indices-status', indicesStatus);
+router.get('/current-index/:alias', getCurrentIndex);
+router.get('/current-index', getCurrentIndex);
 
 module.exports = router;

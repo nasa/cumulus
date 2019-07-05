@@ -22,6 +22,7 @@ declare -a param_list=(
   "bamboo_PUBLISH_FLAG"
   "bamboo_USE_NPM_PACKAGES"
   "bamboo_REPORT_BUILD_STATUS"
+  "bamboo_SHARED_LOG_DESTINATION_ARN"
   "bamboo_SECRET_NPM_TOKEN"
   "bamboo_SECRET_TOKEN_SECRET"
   "bamboo_SECRET_EARTHDATA_USERNAME"
