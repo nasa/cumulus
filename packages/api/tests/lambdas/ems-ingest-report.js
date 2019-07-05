@@ -8,12 +8,18 @@ const aws = require('@cumulus/common/aws');
 const { bootstrapElasticSearch } = require('../../lambdas/bootstrap');
 const { Search } = require('../../es/search');
 const { deleteAliases, fakeCollectionFactory } = require('../../lib/testUtils');
-const { emsMappings, generateReports } = require('../../lambdas/ems-ingest-report');
+const {
+  emsMappings, generateReports, generateReportsForEachDay
+} = require('../../lambdas/ems-ingest-report');
 const models = require('../../models');
 
 const collections = [
   fakeCollectionFactory({
     name: 'MOD09GQ',
+    version: '006'
+  }),
+  fakeCollectionFactory({
+    name: 'MOD11A1',
     version: '006'
   }),
   fakeCollectionFactory({
@@ -112,6 +118,7 @@ test.before(async () => {
     if (i % 10 === 2) newgran.status = 'failed';
     if (i % 10 === 3) newgran.status = 'running';
     if (i % 10 === 4) newgran.collectionId = 'MOD14A1___006';
+    if (i % 10 === 5) newgran.collectionId = 'MOD11A1___006';
     granules.push(newgran);
   }
 
@@ -133,7 +140,8 @@ test.before(async () => {
     newgran.granuleId = randomString();
     newgran.deletedAt = moment.utc().subtract(Math.floor(i / 5), 'days').toDate().getTime();
     if (i % 5 === 2) newgran.status = 'failed';
-    if (i % 5 === 4) newgran.collectionId = 'MOD14A1___006';
+    if (i % 5 === 3) newgran.collectionId = 'MOD14A1___006';
+    if (i % 5 === 4) newgran.collectionId = 'MOD11A1___006';
     deletedgrans.push(newgran);
   }
   const deletedgranjobs = deletedgrans.map((g) => esClient.update({
@@ -155,23 +163,24 @@ test.after.always(async () => {
   await esClient.indices.delete({ index: esIndex });
 });
 
-test.beforeEach(async () => {
+test.beforeEach(async (t) => {
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
   process.env.CollectionsTable = randomString();
-  await new models.Collection().createTable();
-  await new models.Collection().create(collections);
+  t.context.collectionModel = new models.Collection();
+  await t.context.collectionModel.createTable();
+  await t.context.collectionModel.create(collections);
 });
 
-test.afterEach.always(async () => {
+test.afterEach.always(async (t) => {
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await new models.Collection().deleteTable();
+  await t.context.collectionModel.deleteTable();
 });
 
 test.serial('generate reports for the previous day', async (t) => {
   // 24-hour period ending past midnight utc
   const endTime = moment.utc().startOf('day').format();
   const startTime = moment.utc().subtract(1, 'days').startOf('day').format();
-  const reports = await generateReports(startTime, endTime);
+  const reports = await generateReports({ startTime, endTime });
   const requests = reports.map(async (report) => {
     const parsed = aws.parseS3Uri(report.file);
     // file exists
@@ -198,13 +207,13 @@ test.serial('generate reports for the previous day', async (t) => {
   await Promise.all(requests);
 });
 
-test.serial('generate reports for the past two days, and run multiple times', async (t) => {
+test.serial('generate reports for the one day, and run multiple times', async (t) => {
   // 2-day period ending past midnight utc
-  const endTime = moment.utc().startOf('day').format();
+  const endTime = moment.utc().subtract(1, 'days').startOf('day').format();
   const startTime = moment.utc().subtract(2, 'days').startOf('day').format();
   let reports;
   for (let i = 0; i < 5; i += 1) {
-    reports = await generateReports(startTime, endTime); // eslint-disable-line no-await-in-loop
+    reports = await generateReports({ startTime, endTime }); // eslint-disable-line no-await-in-loop
   }
 
   const requests = reports.map(async (report) => {
@@ -219,8 +228,65 @@ test.serial('generate reports for the past two days, and run multiple times', as
 
     // check the number of records for each report
     const records = (await aws.getS3Object(parsed.Bucket, parsed.Key)).Body.toString();
-    const expectedNumRecords = (report.reportType === 'delete') ? 8 : 16;
+    const expectedNumRecords = (report.reportType === 'delete') ? 4 : 8;
     t.is(records.split('\n').length, expectedNumRecords);
   });
   await Promise.all(requests);
+});
+
+test.serial('generate reports for the past two days', async (t) => {
+  // 2-day period ending past midnight utc
+  const endTime = moment.utc().startOf('day').format();
+  const startTime = moment.utc().subtract(2, 'days').startOf('day').format();
+  const reports = await generateReportsForEachDay({ startTime, endTime });
+
+  t.is(reports.length, 6);
+
+  const requests = reports.map(async (report) => {
+    const parsed = aws.parseS3Uri(report.file);
+
+    // file exists
+    const exists = await aws.fileExists(parsed.Bucket, parsed.Key);
+    t.truthy(exists);
+
+    // check the number of records for each report
+    const records = (await aws.getS3Object(parsed.Bucket, parsed.Key)).Body.toString();
+    const expectedNumRecords = (report.reportType === 'delete') ? 4 : 8;
+    t.is(records.split('\n').length, expectedNumRecords);
+  });
+  await Promise.all(requests);
+});
+
+test.serial('generate reports for the past two days for a given collection', async (t) => {
+  // 2-day period ending past midnight utc
+  const endTime = moment.utc().startOf('day').format();
+  const startTime = moment.utc().subtract(2, 'days').startOf('day').format();
+  const collectionId = 'MOD09GQ___006';
+  const reports = await generateReportsForEachDay({ startTime, endTime, collectionId });
+
+  t.is(reports.length, 6);
+
+  const requests = reports.map(async (report) => {
+    const parsed = aws.parseS3Uri(report.file);
+
+    // file exists
+    const exists = await aws.fileExists(parsed.Bucket, parsed.Key);
+    t.truthy(exists);
+
+    // check the number of records for each report
+    const records = (await aws.getS3Object(parsed.Bucket, parsed.Key)).Body.toString();
+    const expectedNumRecords = (report.reportType === 'delete') ? 3 : 7;
+    t.is(records.split('\n').length, expectedNumRecords);
+  });
+  await Promise.all(requests);
+});
+
+test.serial('no report should be generated if the given collection is configured not to report to EMS', async (t) => {
+  // 2-day period ending past midnight utc
+  const endTime = moment.utc().startOf('day').format();
+  const startTime = moment.utc().subtract(2, 'days').startOf('day').format();
+  const collectionId = 'MOD14A1___006';
+  const reports = await generateReportsForEachDay({ startTime, endTime, collectionId });
+
+  t.is(reports.length, 0);
 });
