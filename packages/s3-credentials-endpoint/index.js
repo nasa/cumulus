@@ -33,7 +33,6 @@ const log = new Logger({ sender: 's3credentials' });
  */
 async function requestTemporaryCredentialsFromNgap(username) {
   const FunctionName = process.env.STSCredentialsLambda;
-  console.log('MADE IT HERE');
   const Payload = JSON.stringify({
     accesstype: 'sameregion',
     returntype: 'lowerCamel',
@@ -42,7 +41,6 @@ async function requestTemporaryCredentialsFromNgap(username) {
     userid: username // <- used by NGAP
   });
 
-  console.log('AND HERE!');
   return lambda().invoke({
     FunctionName,
     Payload
@@ -198,7 +196,6 @@ function isPublicRequest(path) {
  * @returns {Promise<Object>} - promise of an express response object
  */
 async function ensureAuthorizedOrRedirect(req, res, next) {
-  console.log('AAAAA');
   // Skip authentication for debugging purposes.
   // TODO Really should remove this
   if (process.env.FAKE_AUTH) {
@@ -206,15 +203,11 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
     return next();
   }
 
-  console.log('BBBBB');
-
   // Public data doesn't need authentication
   if (isPublicRequest(req.path)) {
     req.authorizedMetadata = { userName: 'unauthenticated user' };
     return next();
   }
-
-  console.log('CCCCC');
 
   const {
     accessTokenModel,
@@ -222,35 +215,22 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   } = getConfigurations();
 
   const redirectURLForAuthorizationCode = authClient.getAuthorizationUrl(req.path);
-  console.log('redirectURLForAuthorizationCode', redirectURLForAuthorizationCode);
-
   const accessToken = req.cookies.accessToken;
-  console.log('accessToken', accessToken);
-
   if (!accessToken) return res.redirect(307, redirectURLForAuthorizationCode);
-
-  console.log('DDDDD');
 
   let accessTokenRecord;
   try {
     accessTokenRecord = await accessTokenModel.get({ accessToken });
   } catch (err) {
     if (err instanceof RecordDoesNotExist) {
-      console.log('EEEEE');
       return res.redirect(307, redirectURLForAuthorizationCode);
     }
-
-    console.log('FFFFF');
     throw err;
   }
-
-  console.log('GGGGG');
 
   if (isAccessTokenExpired(accessTokenRecord)) {
     return res.redirect(307, redirectURLForAuthorizationCode);
   }
-
-  console.log('HHHHH');
 
   req.authorizedMetadata = { userName: accessTokenRecord.username };
   return next();
@@ -291,17 +271,13 @@ distributionApp.use((req, res) => {
 
 // catch all error handling
 distributionApp.use((err, req, res, _next) => {
-  console.log(err);
   res.error = JSON.stringify(err, Object.getOwnPropertyNames(err));
   return res.boom.badImplementation('Something broke!');
 });
 
 const server = awsServerlessExpress.createServer(distributionApp, null);
 
-const handler = async (event, context) => {
-  console.log(JSON.stringify(event, null, 2));
-  return awsServerlessExpress.proxy(server, event, context);
-};
+const handler = (event, context) => awsServerlessExpress.proxy(server, event, context);
 
 module.exports = {
   distributionApp,
