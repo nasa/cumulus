@@ -155,6 +155,24 @@ function fakePdrFactory(status = 'completed') {
 }
 
 /**
+ * creates fake pdr records
+ *
+ * @param {Object} params - overrides
+ * @returns {Object} fake pdr object
+ */
+function fakePdrFactoryV2(params = {}) {
+  const pdr = {
+    pdrName: randomId('pdr'),
+    collectionId: 'fakeCollection___v1',
+    provider: 'fakeProvider',
+    status: 'completed',
+    createdAt: Date.now()
+  };
+
+  return { ...pdr, ...params };
+}
+
+/**
  * creates fake execution records
  *
  * @param {Object} params - overrides
@@ -288,6 +306,7 @@ module.exports = {
   fakeGranuleFactory,
   fakeGranuleFactoryV2,
   fakePdrFactory,
+  fakePdrFactoryV2,
   fakeCollectionFactory,
   fakeExecutionFactory,
   fakeExecutionFactoryV2,
