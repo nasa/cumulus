@@ -28,18 +28,17 @@ module "thin_egress_app" {
 module "s3_credentials_endpoint" {
   source = "../packages/s3-credentials-endpoint"
 
-  prefix               = "mth-2"
+  prefix               = var.prefix
   permissions_boundary = var.permissions_boundary
+  subnet_ids           = var.tea_subnet_ids
+  ngap_sgs             = var.ngap_sgs
 
   rest_api   = module.thin_egress_app.rest_api
   stage_name = module.thin_egress_app.rest_api_stage_name
 
-  sts_credentials_lambda_arn = "asdf"
+  sts_credentials_lambda_arn = var.sts_credentials_lambda_arn
 
-  # TODO Don't hard-code
-  urs_client_id = "asdf"
-  # TODO Don't hard-code
-  urs_client_password = "asdf"
-  # TODO Don't hard-code
-  urs_url = "https://uat.urs.earthdata.nasa.gov"
+  urs_client_id       = var.urs_client_id
+  urs_client_password = var.urs_client_password
+  urs_url             = var.urs_url
 }

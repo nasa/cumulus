@@ -30,7 +30,8 @@ let accessTokenModel;
 let authorizationUrl;
 
 // import the express app after setting the env variables
-const { distributionApp } = require('../distribution');
+// const { distributionApp } = require('../distribution');
+const { distributionApp } = require('..');
 
 
 test.before(async () => {
