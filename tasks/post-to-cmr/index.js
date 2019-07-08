@@ -119,8 +119,7 @@ async function postToCMR(event) {
       event.input.granules
     ).map((g) => ({
       ...g,
-      post_to_cmr_duration: endTime - startTime,
-      post_to_cmr_start_time: startTime
+      post_to_cmr_duration: endTime - startTime
     }))
   };
 }
