@@ -38,6 +38,8 @@ nested_templates:
     configFile: node_modules/@cumulus/deployment/app/cumulus_api_distribution.config.yml
 ```
 
+If you deploy with no distribution app your deployment will succeed but you may encounter errors in your workflows, particularly in the `MoveGranule` task.
+
 ## Added
 - **CUMULUS-1345**
   - Adds new variables to the app deployment under `cmr`.
