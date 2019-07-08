@@ -29,6 +29,15 @@ Parameters:
   CreateReconciliationReportLambdaFunctionArn:
     Type: String
     Description: 'CreateReconciliationReport Lambda function ARN'
+  EmsIngestReportLambdaFunctionArn:
+    Type: String
+    Description: 'EmsIngestReport Lambda function ARN'
+  EmsDistributionReportLambdaFunctionArn:
+    Type: String
+    Description: 'EmsDistributionReport Lambda function ARN'
+  EmsProductMetadataReportLambdaFunctionArn:
+    Type: String
+    Description: 'EmsProductMetadataReport Lambda function ARN'
   messageConsumerLambdaFunctionArn:
     Type: String
     Description: 'messageConsumer Lambda function ARN'

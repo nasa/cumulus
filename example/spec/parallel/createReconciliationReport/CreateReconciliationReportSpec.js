@@ -160,6 +160,7 @@ describe('When there are granule differences and granule reconciliation is run',
   let testDataFolder;
   let testSuffix;
 
+  process.env.CMR_ENVIRONMENT = 'UAT';
   // granuleIds of the granules in both Cumulus and CMR, only in Cumulus, only in CMR
   let publishedGranule;
   let dbGranule;
