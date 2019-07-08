@@ -81,6 +81,9 @@ default:
     provider: CUMULUS
     clientId: CUMULUS
     password: '{{CMR_PASSWORD}}'
+    cmrEnvironment: UAT
+    cmrLimit: 100
+    cmrPageSize: 50
 
   ems:
     provider: CUMULUS

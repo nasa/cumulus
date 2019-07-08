@@ -80,6 +80,18 @@ Resources:
           Fn::GetAtt:
             - CreateReconciliationReportLambdaFunction
             - Arn
+        EmsIngestReportLambdaFunctionArn:
+          Fn::GetAtt:
+            - EmsIngestReportLambdaFunction
+            - Arn
+        EmsDistributionReportLambdaFunctionArn:
+          Fn::GetAtt:
+            - EmsDistributionReportLambdaFunction
+            - Arn
+        EmsProductMetadataReportLambdaFunctionArn:
+          Fn::GetAtt:
+            - EmsProductMetadataReportLambdaFunction
+            - Arn
         messageConsumerLambdaFunctionArn:
           Fn::GetAtt:
             - messageConsumerLambdaFunction
@@ -419,6 +431,7 @@ Resources:
       Environment:
         Variables:
           stackName: {{../stackName}}
+          CMR_ENVIRONMENT: {{../cmr.cmrEnvironment}}
         {{#if this.useElasticSearch }}
         {{#if ../es.name}}
           ES_HOST:
