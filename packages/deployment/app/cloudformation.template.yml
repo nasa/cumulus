@@ -433,6 +433,7 @@ Resources:
       Environment:
         Variables:
           stackName: {{../stackName}}
+          CMR_ENVIRONMENT: {{../cmr.cmrEnvironment}}
         {{#if this.useElasticSearch }}
         {{#if ../es.name}}
           ES_HOST:

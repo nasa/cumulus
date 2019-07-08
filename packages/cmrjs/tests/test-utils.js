@@ -94,6 +94,7 @@ test('validateUMMG calls post with correct metadata version when metadata versio
     .post(`/ingest/providers/${provider}/validate/granule/${identifier}`)
     .reply(200);
 
+  process.env.CMR_ENVIRONMENT = 'UAT';
   try {
     const actual = await validateUMMG(metadata, identifier, provider);
     t.true(actual);
@@ -119,6 +120,7 @@ test('validateUMMG calls post with default version (1.4) when metadata version u
     .post(`/ingest/providers/${provider}/validate/granule/${identifier}`)
     .reply(200);
 
+  process.env.CMR_ENVIRONMENT = 'UAT';
   try {
     const actual = await validateUMMG(metadata, identifier, provider);
     t.true(actual);

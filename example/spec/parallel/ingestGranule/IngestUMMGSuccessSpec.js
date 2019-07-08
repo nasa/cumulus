@@ -246,7 +246,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
       granule = postToCmrOutput.payload.granules[0];
       files = granule.files;
-
+      process.env.CMR_ENVIRONMENT = 'UAT';
       const result = await Promise.all([
         getOnlineResources(granule),
         // Login with Earthdata and get access token.

@@ -323,6 +323,7 @@ describe('The S3 Ingest Granules workflow', () => {
     let accessToken;
 
     beforeAll(async () => {
+      process.env.CMR_ENVIRONMENT = 'UAT';
       postToCmrOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
       if (postToCmrOutput === null) throw new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
       granule = postToCmrOutput.payload.granules[0];
@@ -348,7 +349,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('has expected payload', () => {
-      expect(granule.cmrLink).toEqual(`${getUrl('search')}granules.json?concept_id=${granule.cmrConceptId}`);
+      expect(granule.cmrLink).toEqual(`${getUrl('search', null, 'UAT')}granules.json?concept_id=${granule.cmrConceptId}`);
       const updatedGranule = expectedPayload.granules[0];
       const thisExpectedPayload = {
         ...expectedPayload,
