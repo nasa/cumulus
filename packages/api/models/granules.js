@@ -301,6 +301,7 @@ class Granule extends Manager {
 
     const executionArn = aws.getExecutionArn(stateMachine, executionName);
     const executionUrl = aws.getExecutionUrl(executionArn);
+    const executionDescription = await StepFunctions.describeExecution({ executionArn });
 
     const collection = get(cumulusMessage, 'meta.collection');
 
@@ -334,12 +335,9 @@ class Granule extends Manager {
             productVolume: getGranuleProductVolume(granuleFiles),
             timeToPreprocess: get(granule, 'sync_granule_duration', 0) / 1000,
             timeToArchive: get(granule, 'post_to_cmr_duration', 0) / 1000,
-            processingStartDateTime: granule.sync_granule_end_time
-              ? (new Date(granule.sync_granule_end_time)).toISOString()
-              : undefined,
-            processingEndDateTime: granule.post_to_cmr_start_time
-              ? (new Date(granule.post_to_cmr_start_time)).toISOString()
-              : undefined,
+            processingStartDateTime: executionDescription.startDate.toISOString(),
+            processingEndDateTime: executionDescription.stopDate
+              ? executionDescription.stopDate.toISOString() : new Date().toISOString(),
             ...temporalInfo
           };
 
