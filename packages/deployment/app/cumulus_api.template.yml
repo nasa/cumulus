@@ -291,7 +291,7 @@ Resources:
       {{# ifEquals this.urs_redirect "distribution"}}
         {{# if ../parent.api_distribution_url}}
           DISTRIBUTION_REDIRECT_ENDPOINT: {{../parent.api_distribution_url}}redirect
-        {{else}}
+        {{else ifDeployDistribution ../parent.nested_templates}}
           DISTRIBUTION_REDIRECT_ENDPOINT:
             Fn::Join:
               - ""
@@ -307,7 +307,7 @@ Resources:
       {{# if this.useDistributionApi}}
         {{# if ../parent.api_distribution_url}}
           DISTRIBUTION_ENDPOINT: {{../parent.api_distribution_url}}
-        {{else}}
+        {{else ifDeployDistribution ../parent.nested_templates}}
           DISTRIBUTION_ENDPOINT:
             Fn::Join:
               - ""
