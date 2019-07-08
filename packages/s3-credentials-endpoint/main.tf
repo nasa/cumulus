@@ -34,12 +34,25 @@ data "aws_iam_policy_document" "s3_credentials_lambda" {
   }
 
   statement {
+    actions   = ["dynamodb:GetItem"]
+    resources = [aws_dynamodb_table.access_tokens.arn]
+  }
+
+  statement {
     actions = [
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents"
     ]
     resources = ["arn:aws:logs:*:*:*"]
+  }
+  statement {
+    actions = [
+      "ec2:CreateNetworkInterface",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DeleteNetworkInterface"
+    ]
+    resources = ["*"]
   }
 }
 
@@ -58,6 +71,10 @@ resource "aws_lambda_function" "s3_credentials" {
   runtime          = "nodejs8.10"
   timeout          = 10
   memory_size      = 320
+  vpc_config {
+    subnet_ids = var.subnet_ids
+    security_group_ids = var.ngap_sgs
+  }
   environment {
     variables = {
       DISTRIBUTION_REDIRECT_ENDPOINT = "https://${var.rest_api.id}.execute-api.${var.region}.amazonaws.com/${var.stage_name}/${var.redirect_path}"
