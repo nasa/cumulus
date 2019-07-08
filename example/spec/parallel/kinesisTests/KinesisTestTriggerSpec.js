@@ -265,7 +265,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
           granules: [
             {
               ...expectedSyncGranulesPayload.granules[0],
-              sync_granule_end_time: lambdaOutput.payload.granules[0].sync_granule_end_time,
               sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration
             }
           ]
