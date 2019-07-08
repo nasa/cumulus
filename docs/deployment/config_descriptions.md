@@ -48,6 +48,9 @@ This table describes the fields that must be present in `config.yml` to successf
 | cmr.provider | CUMULUS | the provider used for posting metadata to CMR
 | cmr.clientId | CUMULUS | the clientId used to authenticate with the CMR
 | cmr.password | (required) | the password used to authenticate with the CMR
+| cmr.cmrEnvironment | UAT | the cmr environment
+| cmr.cmrLimit | 50 | the limit for CMR records returned from a search
+| cmr.cmrPageSize | 100 | the CMR page size
 | buckets | (required) | Configuration of buckets with key, bucket name, and type (i.e. internal, public, private, protected)
 | system_bucket | `buckets.internal.name` | the bucket used for storing deployment artifacts
 | shared_data_bucket | cumulus-data-shared | bucket containing shared data artifacts
@@ -90,7 +93,6 @@ This table describes the fields that must be present in `config.yml` to successf
 | api_lambda_memory | 756 | API Lambda function allocated memory in MB
 | api_backend_url | | (Override) Alternate API backend url
 | api_distribution_url | | (Override) Alternate API url used for file distribution
-| api_distribution_id | | (Override) Alternate API Gateway Id used for file distribution
 | dynamos.\<name\> | | name of the dynamoDB table
 | dynamos.\<name\>.read | 5 | number of reads per second
 | dynamos.\<name\>.write | 1 | number of writes per second

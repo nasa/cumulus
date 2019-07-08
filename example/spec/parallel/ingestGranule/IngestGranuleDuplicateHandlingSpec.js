@@ -63,7 +63,7 @@ describe('When the Ingest Granules workflow is configured\n', () => {
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
       addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix)
     ]);
 
