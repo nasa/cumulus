@@ -32,6 +32,7 @@ const {
 const sfnStep = require('./sfnStep');
 const api = require('./api/api');
 const rulesApi = require('./api/rules');
+const emsApi = require('./api/ems');
 const executionsApi = require('./api/executions');
 const granulesApi = require('./api/granules');
 const EarthdataLogin = require('./api/EarthdataLogin');
@@ -316,6 +317,24 @@ async function setupSeedData(stackName, bucketName, dataDirectory) {
   return seedItems;
 }
 
+
+function addCustomUrlPathToCollectionFiles(collection, customFilePath) {
+  const updatedCollectionFiles = collection.files.map((file) => {
+    let urlPath;
+    if (Object.is(file.url_path, undefined)) {
+      urlPath = '';
+      if (!Object.is(collection.url_path, undefined)) {
+        urlPath = `${collection.url_path}/`;
+      }
+    } else {
+      urlPath = `${file.url_path}/`;
+    }
+    file.url_path = `${urlPath}${customFilePath}/`;
+    return file;
+  });
+  return updatedCollectionFiles;
+}
+
 /**
  * add collections to database
  *
@@ -325,17 +344,24 @@ async function setupSeedData(stackName, bucketName, dataDirectory) {
  * @param {string} postfix - string to append to collection name
  * @returns {Promise.<number>} number of collections added
  */
-async function addCollections(stackName, bucketName, dataDirectory, postfix) {
+async function addCollections(stackName, bucketName, dataDirectory, postfix,
+  customFilePath, duplicateHandling) {
   const collections = await setupSeedData(stackName, bucketName, dataDirectory);
   const promises = collections.map((collection) => limit(() => {
     if (postfix) {
       collection.name += postfix;
       collection.dataType += postfix;
     }
+    if (customFilePath) {
+      collection.files = addCustomUrlPathToCollectionFiles(collection, customFilePath);
+    }
+    if (duplicateHandling) {
+      collection.duplicateHandling = duplicateHandling;
+    }
     const c = new Collection();
     console.log(`\nadding collection ${collection.name}___${collection.version}`);
     return c.delete({ name: collection.name, version: collection.version })
-      .then(() => c.create(collection));
+      .then(() => api.addCollectionApi({ prefix: stackName, collection }));
   }));
   return Promise.all(promises).then((cs) => cs.length);
 }
@@ -799,6 +825,7 @@ module.exports = {
   api,
   rulesApi,
   granulesApi,
+  emsApi,
   executionsApi,
   distributionApi,
   EarthdataLogin,
@@ -818,6 +845,7 @@ module.exports = {
    */
   getLambdaOutput: new sfnStep.LambdaStep().getStepOutput,
   addCollections,
+  addCustomUrlPathToCollectionFiles,
   listCollections,
   deleteCollections,
   cleanupCollections,

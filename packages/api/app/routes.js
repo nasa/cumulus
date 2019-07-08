@@ -24,6 +24,7 @@ const version = require('../endpoints/version');
 const workflows = require('../endpoints/workflows');
 const dashboard = require('../endpoints/dashboard');
 const elasticsearch = require('../endpoints/elasticsearch');
+const ems = require('../endpoints/ems');
 
 let token = require('../endpoints/token');
 let { ensureAuthorized } = require('./auth');
@@ -92,6 +93,8 @@ router.post('/refresh', token.refreshEndpoint);
 router.use('/dashboard', dashboard);
 
 router.use('/elasticsearch', ensureAuthorized, elasticsearch);
+
+router.use('/ems', ensureAuthorized, ems);
 
 // Catch and send the error message down (instead of just 500: internal server error)
 // Need all 4 params, because that's how express knows this is the error handler
