@@ -80,6 +80,18 @@ Resources:
           Fn::GetAtt:
             - CreateReconciliationReportLambdaFunction
             - Arn
+        EmsIngestReportLambdaFunctionArn:
+          Fn::GetAtt:
+            - EmsIngestReportLambdaFunction
+            - Arn
+        EmsDistributionReportLambdaFunctionArn:
+          Fn::GetAtt:
+            - EmsDistributionReportLambdaFunction
+            - Arn
+        EmsProductMetadataReportLambdaFunctionArn:
+          Fn::GetAtt:
+            - EmsProductMetadataReportLambdaFunction
+            - Arn
         messageConsumerLambdaFunctionArn:
           Fn::GetAtt:
             - messageConsumerLambdaFunction
@@ -99,14 +111,12 @@ Resources:
         # The backend API needs a reference to the distributionRestApi so
         # it can construct values for the DISTRIBUTION_REDIRECT_ENDPOINT
         # environment variable. The /granules endpoint uses this variable.
-        {{#if ../api_distribution_id}}
-        distributionRestApi: {{../api_distribution_id}}
-        {{else if ../deploy_distribution}}
+        {{#ifDeployDistribution ../nested_templates}}
         distributionRestApi:
           Fn::GetAtt:
             - CumulusApiDistributionNestedStack
             - Outputs.distributionRestApiResource
-        {{/if}}
+        {{/ifDeployDistribution}}
         {{/ifEquals}}
       {{# each ../dynamos}}
         {{@key}}DynamoDB: {{../../prefix}}-{{@key}}
@@ -419,6 +429,7 @@ Resources:
       Environment:
         Variables:
           stackName: {{../stackName}}
+          CMR_ENVIRONMENT: {{../cmr.cmrEnvironment}}
         {{#if this.useElasticSearch }}
         {{#if ../es.name}}
           ES_HOST:
@@ -431,7 +442,7 @@ Resources:
       {{# if this.useDistributionApi}}
         {{# if ../api_distribution_url}}
           DISTRIBUTION_ENDPOINT: {{../api_distribution_url}}
-        {{else}}
+        {{else ifDeployDistribution ../nested_templates}}
           DISTRIBUTION_ENDPOINT:
             Fn::GetAtt:
               - CumulusApiDistributionNestedStack
@@ -1246,10 +1257,11 @@ Outputs:
         - Outputs.backendRestApiResourceUrl
   {{/if}}
 
-  Distribution:
   {{# if api_distribution_url}}
+  Distribution:
     Value: {{api_distribution_url}}
-  {{else}}
+  {{else ifDeployDistribution nested_templates}}
+  Distribution:
     Value:
       Fn::GetAtt:
         - CumulusApiDistributionNestedStack
@@ -1262,17 +1274,13 @@ Outputs:
         - CumulusApiBackendNestedStack
         - Outputs.backendRestApiResource
 
+  {{#ifDeployDistribution nested_templates}}
   DistributionId:
     Value:
-    {{#if ../api_distribution_id}}
-      {{../api_distribution_id}}
-    {{else if ../deploy_distribution}}
       Fn::GetAtt:
         - CumulusApiDistributionNestedStack
         - Outputs.distributionRestApiResource
-    {{else}}
-      AWS::NoValue
-    {{/if}}
+  {{/ifDeployDistribution}}
 
   ApiStage:
     Value: {{apiStage}}

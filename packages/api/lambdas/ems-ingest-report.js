@@ -1,13 +1,16 @@
 'use strict';
 
 const fs = require('fs');
+const flatten = require('lodash.flatten');
 const moment = require('moment');
 const os = require('os');
 const path = require('path');
 const { aws, log } = require('@cumulus/common');
 const {
   buildReportFileName,
+  buildStartEndTimes,
   determineReportKey,
+  determineReportsStartEndTime,
   getEmsEnabledCollections,
   getExpiredS3Objects,
   reportToFileType,
@@ -275,16 +278,63 @@ async function generateReport(reportType, startTime, endTime, collections) {
 }
 
 /**
- * generate all EMS reports given the time range of the records and submit to ems
+ * generate all EMS reports given the time range of the records
  *
- * @param {string} startTime - start time of the records
- * @param {string} endTime - end time of the records
+ * @param {Object} params - params
+ * @param {string} params.startTime - start time of the reports in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} params.endTime - end time of the reports in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} params.emsCollections - optional, collectionIds of the records
  * @returns {Array<Object>} - list of report type and its file path {reportType, file}
  */
-async function generateReports(startTime, endTime) {
-  const collections = await getEmsEnabledCollections();
+async function generateReports(params) {
+  const collections = params.emsCollections || await getEmsEnabledCollections();
   return Promise.all(Object.keys(emsMappings)
-    .map((reportType) => generateReport(reportType, startTime, endTime, collections)));
+    .map((reportType) => generateReport(
+      reportType, params.startTime, params.endTime, collections
+    )));
+}
+
+/**
+ * generate all EMS reports for each day given the date time range of the reports
+ *
+ * @param {Object} params - params
+ * @param {string} params.startTime - start time of the reports in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} params.endTime - end time of the reports in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} params.collectionId - collectionId of the records if defined
+ * @returns {Array<Object>} - list of report type and its file path {reportType, file}
+ */
+async function generateReportsForEachDay(params) {
+  log.info(`ems-ingest-report.generateReportsForEachDay for access records between ${params.startTime} and ${params.endTime}`);
+
+  const {
+    reportStartTime,
+    reportEndTime
+  } = determineReportsStartEndTime(params.startTime, params.endTime);
+
+  // ICD Section 3.4 Data Files Interface section describes that each file should contain one day's
+  // worth of data. Data within the file will correspond to the datestamp in the filename.
+  // Exceptions to this rule include Ingest data where processingEndDateTime could be after
+  // the datestamp.
+
+  // The updated ingest and archive data flat files only need to contain the corrected records.
+  // Previous records will be updated and/or appended (i.e., merged) with revision file content.
+
+  let emsCollections = await getEmsEnabledCollections();
+  const collectionId = params.collectionId;
+  if (collectionId) {
+    emsCollections = (emsCollections.includes(collectionId)) ? [collectionId] : [];
+  }
+
+  // no report should be generated if the collection is not EMS enabled
+  if (emsCollections.length === 0) {
+    return [];
+  }
+
+  // each startEndTimes element represents one day
+  const startEndTimes = buildStartEndTimes(reportStartTime, reportEndTime);
+
+  return flatten(await Promise.all(startEndTimes.map((startEndTime) =>
+    generateReports({ ...startEndTime, emsCollections }))));
 }
 
 /**
@@ -310,9 +360,9 @@ async function cleanup() {
  * Lambda task, generate and send EMS ingest reports
  *
  * @param {Object} event - event passed to lambda
- * @param {string} event.startTime - test only, report startTime in format YYYY-MM-DDTHH:mm:ss
- * @param {string} event.endTime - test only, report endTime in format YYYY-MM-DDTHH:mm:ss
- * @param {string} event.report - test only, s3 uri of the report to be sent
+ * @param {string} event.startTime - optional, report startTime in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} event.endTime - optional, report endTime in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} event.collectionId - optional, report collectionId
  * @param {Object} context - AWS Lambda context
  * @param {function} callback - callback function
  * @returns {Array<Object>} - list of report type and its file path {reportType, file}
@@ -327,14 +377,17 @@ function handler(event, context, callback) {
   endTime = event.endTime || endTime;
   startTime = event.startTime || startTime;
 
-  if (event.report) {
-    return submitReports([{ reportType: 'ingest', file: event.report }])
+  // catch up run to generate reports for each day
+  if (event.startTime && event.endTime) {
+    return generateReportsForEachDay({ startTime, endTime, collectionId: event.collectionId })
+      .then((reports) => submitReports(reports))
       .then((r) => callback(null, r))
       .catch(callback);
   }
 
+  // daily report generation
   return cleanup()
-    .then(() => generateReports(startTime, endTime))
+    .then(() => generateReports({ startTime, endTime }))
     .then((reports) => submitReports(reports))
     .then((r) => callback(null, r))
     .catch(callback);
@@ -343,5 +396,6 @@ function handler(event, context, callback) {
 module.exports = {
   emsMappings,
   generateReports,
+  generateReportsForEachDay,
   handler
 };

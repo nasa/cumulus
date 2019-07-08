@@ -25,6 +25,7 @@ const {
 } = require('@cumulus/common');
 const { getUrl } = require('@cumulus/cmrjs');
 const {
+  addCollections,
   api: apiTestUtils,
   buildAndExecuteWorkflow,
   LambdaStep,
@@ -52,6 +53,8 @@ const {
   setDistributionApiEnvVars
 } = require('../../helpers/apiUtils');
 const {
+  addUniqueGranuleFilePathToGranuleFiles,
+  addUrlPathToGranuleFiles,
   setupTestGranuleForIngest,
   loadFileWithUpdatedGranuleIdPathAndCollection
 } = require('../../helpers/granuleUtils');
@@ -112,23 +115,16 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const providerModel = new Provider();
 
   beforeAll(async () => {
-    const collectionJson = JSON.parse(fs.readFileSync(`${collectionsDir}/s3_MOD09GQ_006.json`, 'utf8'));
-    collectionJson.duplicateHandling = 'error';
-    const collectionData = Object.assign({}, collectionJson, {
-      name: collection.name,
-      dataType: collectionJson.dataType + testSuffix
-    });
-
+    const collectionUrlPath = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.name, 0, 3)}/';
     const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
     const providerData = Object.assign({}, providerJson, {
       id: provider.id,
       host: config.bucket
     });
-
     // populate collections, providers and test data
     await Promise.all([
       uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
-      apiTestUtils.addCollectionApi({ prefix: config.stackName, collection: collectionData }),
+      addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
       apiTestUtils.addProviderApi({ prefix: config.stackName, provider: providerData })
     ]);
 
@@ -136,9 +132,10 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     // update test data filepaths
     inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
     const granuleId = inputPayload.granules[0].granuleId;
-
     expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
     expectedPayload.granules[0].dataType += testSuffix;
+    expectedPayload.granules = addUniqueGranuleFilePathToGranuleFiles(expectedPayload.granules, testId);
+    expectedPayload.granules[0].files = addUrlPathToGranuleFiles(expectedPayload.granules[0].files, testId, collectionUrlPath);
 
     // process.env.DISTRIBUTION_ENDPOINT needs to be set for below
     setDistributionApiEnvVars();
@@ -249,7 +246,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
       granule = postToCmrOutput.payload.granules[0];
       files = granule.files;
-
+      process.env.CMR_ENVIRONMENT = 'UAT';
       const result = await Promise.all([
         getOnlineResources(granule),
         // Login with Earthdata and get access token.
@@ -273,11 +270,12 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     it('has expected payload', () => {
       expect(granule.cmrLink).toEqual(`${getUrl('search')}granules.json?concept_id=${granule.cmrConceptId}`);
 
+      const updatedGranule = expectedPayload.granules[0];
       const updatedExpectedPayload = {
         ...expectedPayload,
         granules: [
           {
-            ...expectedPayload.granules[0],
+            ...updatedGranule,
             cmrConceptId: granule.cmrConceptId,
             cmrLink: granule.cmrLink,
             post_to_cmr_duration: granule.post_to_cmr_duration,
@@ -287,7 +285,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
           }
         ]
       };
-
       expect(postToCmrOutput.payload).toEqual(updatedExpectedPayload);
     });
 

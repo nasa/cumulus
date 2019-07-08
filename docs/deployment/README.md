@@ -242,7 +242,6 @@ dev:                            # deployment name
 
   # if not specified, the value of the API gateway distribution endpoint is used
   # api_distribution_url: https://apigateway-url-to-distribution-app/ # make sure to include the trailing slash
-  # api_distribution_id: {{API_DISTRIBUTION_ID}} # would be abc123 from https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
 
   # Required. URS users who should have access to the dashboard application and Cumulus API.
   users:
