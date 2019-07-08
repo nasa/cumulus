@@ -4,10 +4,10 @@ const AWS = require('aws-sdk');
 const fs = require('fs');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
-const path = require('path');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
 const pump = require('pump');
+const path = require('path');
 const url = require('url');
 const { generateChecksumFromStream, validateChecksumFromStream } = require('@cumulus/checksum');
 
