@@ -144,6 +144,7 @@ EmsProductMetadataReport:
     system_bucket: '{{system_bucket}}'
     cmr_provider: '{{cmr.provider}}'
     cmr_client_id: '{{cmr.clientId}}'
+    CMR_ENVIRONMENT: '{{cmr.cmrEnvironment}}'
     ems_provider: '{{ems.provider}}'
     ems_username: '{{ems.username}}'
     ems_privateKey: '{{ems.privateKey}}'
@@ -203,6 +204,9 @@ CreateReconciliationReport:
     system_bucket: '{{system_bucket}}'
     cmr_provider: '{{cmr.provider}}'
     cmr_client_id: '{{cmr.clientId}}'
+    CMR_ENVIRONMENT: '{{cmr.cmrEnvironment}}'
+    CMR_LIMIT: '{{cmr.cmrLimit}}'
+    CMR_PAGE_SIZE: '{{cmr.cmrPageSize}}'
 
 ScheduleSF:
   description: 'This lambda function is invoked by scheduled rules created via cumulus API'

@@ -33,7 +33,7 @@ test('CMRSearchConceptQueue handles paging correctly.', async (t) => {
     { cmrEntry5: 'data5' },
     { cmrEntry6: 'data6' }
   ];
-
+  process.env.CMR_ENVIRONMENT = 'UAT';
   const cmrSearchQueue = new CMRSearchConceptQueue({
     provider: 'CUMULUS',
     clientId: 'fakeClient',
