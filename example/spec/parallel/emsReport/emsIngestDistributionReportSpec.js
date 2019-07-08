@@ -27,6 +27,7 @@ const {
     getDistributionApiRedirect
   },
   EarthdataLogin: { getEarthdataAccessToken },
+  emsApi,
   getOnlineResources,
   granulesApi: granulesApiTestUtils,
   waitUntilGranuleStatusIs
@@ -263,6 +264,44 @@ describe('The EMS report', () => {
       const results = await Promise.all(jobs);
       results.forEach((result) => expect(result).not.toBe(false));
     });
+
+    it('generates EMS ingest reports through the Cumulus API', async () => {
+      const inputPayload = {
+        reportType: 'ingest',
+        startTime: moment.utc().subtract(1, 'days').startOf('day').format(),
+        endTime: moment.utc().add(1, 'days').startOf('day').format(),
+        collectionId,
+        invocationType: 'RequestResponse'
+      };
+
+      const response = await emsApi.createEmsReports({
+        prefix: config.stackName,
+        request: inputPayload
+      });
+
+      const reports = JSON.parse(response.body).reports;
+      expect(reports.length).toEqual(6);
+
+      const jobs = reports.slice(3).map(async (report) => {
+        const parsed = parseS3Uri(report.file);
+        const obj = await getS3Object(parsed.Bucket, parsed.Key);
+        const reportRecords = obj.Body.toString().split('\n');
+        if (['ingest', 'archive'].includes(report.reportType)) {
+          const records = reportRecords.filter((record) =>
+            record.startsWith(ingestedGranuleIds[0]) || record.startsWith(ingestedGranuleIds[1]));
+          expect(records.length).toEqual(2);
+        }
+        if (report.reportType === 'delete') {
+          const records = reportRecords.filter((record) =>
+            record.startsWith(deletedGranuleId));
+          expect(records.length).toEqual(1);
+        }
+
+        return true;
+      });
+      const results = await Promise.all(jobs);
+      results.forEach((result) => expect(result).not.toBe(false));
+    });
   });
 
   describe('When there are distribution requests', () => {
@@ -334,6 +373,25 @@ describe('The EMS report', () => {
         });
         const results = await Promise.all(jobs);
         results.forEach((result) => expect(result).not.toBe(false));
+      });
+
+      it('generates EMS distribution reports through the Cumulus API', async () => {
+        // it could take long to generate distribution reports (greater than ApiEndpoints timeout),
+        // so use async call
+        const inputPayload = {
+          reportType: 'distribution',
+          startTime: moment.utc().subtract(1, 'days').startOf('day').format(),
+          endTime: moment.utc().add(1, 'days').startOf('day').format(),
+          collectionId
+        };
+
+        const response = await emsApi.createEmsReports({
+          prefix: config.stackName,
+          request: inputPayload
+        });
+
+        const message = JSON.parse(response.body).message;
+        expect(message === 'Reports are being generated').toBe(true);
       });
     });
   });
