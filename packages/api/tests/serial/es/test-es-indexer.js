@@ -499,8 +499,8 @@ test.serial('updating a collection record', async (t) => {
 });
 
 test.serial('creating a failed pdr record', async (t) => {
-  const payload = pdrFailure.payload;
-  payload.pdr.name = randomString();
+  const pdrFailurePayload = pdrFailure.payload;
+  pdrFailurePayload.pdr.name = randomString();
   const collection = pdrFailure.meta.collection;
   const record = await indexer.pdr(pdrFailure);
 
@@ -508,7 +508,7 @@ test.serial('creating a failed pdr record', async (t) => {
 
   t.is(record.status, 'failed');
   t.is(record.collectionId, collectionId);
-  t.is(record.pdrName, payload.pdr.name);
+  t.is(record.pdrName, pdrFailurePayload.pdr.name);
 
   // check stats
   const stats = record.stats;
