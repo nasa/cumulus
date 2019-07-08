@@ -43,6 +43,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added API endpoint `elasticsearch/index-from-database` to index to an Elasticsearch index from the database for recovery purposes and `elasticsearch/indices-status` to check the status of Elasticsearch indices via the API.
 - **CUMULUS-824**
   - Added new Collection parameter `reportToEms` to configure whether the collection is reported to EMS
+- **CUMULUS-1357**
+  - Added new BackendApi endpoint `ems` that generates EMS reports.
 - **CUMULUS-1241**
   - Added information about queues with maximum execution limits defined to default workflow templates (`meta.queueExecutionLimits`)
 - **CUMULUS-1311**

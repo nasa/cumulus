@@ -32,6 +32,7 @@ const {
 const sfnStep = require('./sfnStep');
 const api = require('./api/api');
 const rulesApi = require('./api/rules');
+const emsApi = require('./api/ems');
 const executionsApi = require('./api/executions');
 const granulesApi = require('./api/granules');
 const EarthdataLogin = require('./api/EarthdataLogin');
@@ -824,6 +825,7 @@ module.exports = {
   api,
   rulesApi,
   granulesApi,
+  emsApi,
   executionsApi,
   distributionApi,
   EarthdataLogin,

@@ -80,6 +80,18 @@ Resources:
           Fn::GetAtt:
             - CreateReconciliationReportLambdaFunction
             - Arn
+        EmsIngestReportLambdaFunctionArn:
+          Fn::GetAtt:
+            - EmsIngestReportLambdaFunction
+            - Arn
+        EmsDistributionReportLambdaFunctionArn:
+          Fn::GetAtt:
+            - EmsDistributionReportLambdaFunction
+            - Arn
+        EmsProductMetadataReportLambdaFunctionArn:
+          Fn::GetAtt:
+            - EmsProductMetadataReportLambdaFunction
+            - Arn
         messageConsumerLambdaFunctionArn:
           Fn::GetAtt:
             - messageConsumerLambdaFunction
