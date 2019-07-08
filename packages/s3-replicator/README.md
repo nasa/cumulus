@@ -3,6 +3,16 @@
 This package includes a simple lambda functions and associated permissions to replicate create-object events from one S3 bucket to another.
 It was developed to enable same-region cross-account object replication.
 
+## Deployment
+
+Copy the .tfvars sample file.
+`cp cfg.tfvars.sample cfg.tfvars`
+Populate the sample file with values that apply to your AWS environment (see configuration variables section, below).
+
+Deploy this module with `terraform apply -var-file=cfg.tfvars`
+
+NOTE: Terraform will ignore the `aws_profile` config variable if you have static credentials or environment variables set, see the [AWS Provider page](https://www.terraform.io/docs/providers/aws/index.html#authentication).
+
 ## Configuration
 
 Configuration variables are shown in `cfg.tfvars.sample`, and are explained below:
