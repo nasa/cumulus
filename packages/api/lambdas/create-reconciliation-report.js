@@ -177,6 +177,7 @@ async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bu
       // filename in both cumulus and CMR
       if (granuleFiles[urlFileName] && bucketsConfig.key(granuleFiles[urlFileName].bucket)) {
         // not all files should be in CMR
+        // LAUREN TO DO
         const accessUrl = constructOnlineAccessUrl({
           file: granuleFiles[urlFileName],
           distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
