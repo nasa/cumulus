@@ -35,7 +35,7 @@ data "aws_iam_policy_document" "replicator_policy_document" {
   statement {
     actions = [
       "s3:GetObject*",
-      "s3:Putobject*"
+      "s3:PutObject*"
     ]
     resources = [
       "arn:aws:s3:::${var.source_bucket}/${var.source_prefix}/*",
