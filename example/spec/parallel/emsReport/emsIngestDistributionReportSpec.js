@@ -248,6 +248,8 @@ describe('The EMS report', () => {
           const records = reportRecords.filter((record) =>
             record.startsWith(ingestedGranuleIds[0]) || record.startsWith(ingestedGranuleIds[1]));
           expect(records.length).toEqual(2);
+          records.forEach((record) =>
+            expect(record.split('|&|').find((field) => field.length === 0)).toBeFalsy());
         }
         if (report.reportType === 'delete') {
           const records = reportRecords.filter((record) =>

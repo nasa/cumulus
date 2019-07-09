@@ -21,6 +21,7 @@ const result = {
 };
 
 test.beforeEach(async (t) => {
+  process.env.CMR_ENVIRONMENT = 'UAT';
   t.context.bucket = randomString();
 
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
@@ -90,9 +91,6 @@ test.serial('postToCMR succeeds with correct payload', async (t) => {
     output.granules.forEach((g) => {
       t.true(Number.isInteger(g.post_to_cmr_duration));
       t.true(g.post_to_cmr_duration >= 0);
-
-      t.true(Number.isInteger(g.post_to_cmr_start_time));
-      t.true(g.post_to_cmr_start_time > 0);
     });
   } finally {
     cmrjs.CMR.prototype.ingestGranule.restore();
