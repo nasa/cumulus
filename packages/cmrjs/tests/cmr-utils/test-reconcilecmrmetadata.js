@@ -146,6 +146,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata but not publishECHO10XM
     cmrFile: updatedFiles[1],
     files: updatedFiles,
     distEndpoint,
+    cmrGranuleUrlType: 'distribution',
     buckets: new BucketsConfig(fakeBuckets)
   };
 
@@ -204,6 +205,7 @@ test('reconcileCMRMetadata calls updateEcho10XMLMetadata and publishECHO10XML2CM
     cmrFile: updatedFiles[1],
     files: updatedFiles,
     distEndpoint,
+    cmrGranuleUrlType: 'distribution',
     buckets: new BucketsConfig(fakeBuckets)
   };
 
@@ -262,6 +264,7 @@ test('reconcileCMRMetadata calls updateUMMGMetadata and publishUMMGJSON2CMR if i
     cmrFile: updatedFiles[1],
     files: updatedFiles,
     distEndpoint,
+    cmrGranuleUrlType: 'distribution',
     buckets
   };
 

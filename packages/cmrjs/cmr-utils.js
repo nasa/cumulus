@@ -337,6 +337,18 @@ function mapCNMTypeToCMRType(type) {
   return mapping[type];
 }
 
+function generateFileUrl(file, distEndpoint, cmrGranuleUrlType = 'distribution') {
+  if (cmrGranuleUrlType === 'distribution') {
+    const extension = urljoin(file.bucket, getS3KeyOfFile(file));
+    return urljoin(distEndpoint, extension);
+  }
+
+  if (cmrGranuleUrlType === 's3') {
+    return file.filename;
+  }
+
+  return null;
+}
 
 /**
  * Construct online access url for a given file.
@@ -347,18 +359,18 @@ function mapCNMTypeToCMRType(type) {
  * @param {BucketsConfig} params.buckets -  stack BucketConfig instance
  * @returns {Object} online access url object
  */
-// LAUREN TO DO
 function constructOnlineAccessUrl({
   file,
   distEndpoint,
-  buckets
+  buckets,
+  cmrGranuleUrlType = 'distribution'
 }) {
   const bucketType = buckets.type(file.bucket);
   const distributionApiBuckets = ['protected', 'public'];
-  if (distributionApiBuckets.includes(bucketType)) {
-    const extension = urljoin(file.bucket, getS3KeyOfFile(file));
+  const fileUrl = generateFileUrl(file, distEndpoint, cmrGranuleUrlType);
+  if (fileUrl && distributionApiBuckets.includes(bucketType)) {
     return {
-      URL: urljoin(distEndpoint, extension),
+      URL: fileUrl,
       URLDescription: 'File to download', // used by ECHO10
       Description: 'File to download', // used by UMMG
       Type: mapCNMTypeToCMRType(file.type) // used by UMMG
@@ -633,8 +645,12 @@ async function updateEcho10XMLMetadata({
     'AssociatedBrowseImageUrls.ProviderBrowseUrl', []));
 
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
-  const newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets, cmrGranuleUrlType })
-    .concat(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
+  const newURLs = constructOnlineAccessUrls({
+    files,
+    distEndpoint,
+    buckets,
+    cmrGranuleUrlType
+  }).concat(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
 
   const mergedOnlineResources = buildMergedEchoURLObject(newURLs, originalOnlineResourceURLs,
     removedURLs, ['EXTENDED METADATA', 'VIEW RELATED INFORMATION'], ['URLDescription']);
