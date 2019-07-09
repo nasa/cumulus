@@ -286,13 +286,10 @@ class UpdatedKes extends Kes {
     );
 
     Handlebars.registerHelper(
-      'ifDeployDistribution', (configs, options) => {
-        console.log('configs');
-        console.log(JSON.stringify(configs));
-        return (Object.keys(configs).includes('CumulusApiDistribution')
+      'ifDeployDistribution', (configs, apiUrl, options) =>
+        ((Object.keys(configs).includes('CumulusApiDistribution') && !apiUrl)
           ? options.fn(this)
-          : options.inverse(this));
-      }
+          : options.inverse(this))
     );
 
     return super.parseCF(cfFile);
