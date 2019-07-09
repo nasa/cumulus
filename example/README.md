@@ -170,11 +170,16 @@ deployment:
 
 **terraform.tfvars**
 ```hcl
+prefix                         = "pre"
+sts_credentials_lambda_arn     = "sts_credentials_lambda_arn"
 tea_config_bucket              = "my-internal"
 tea_stack_name                 = "my-thin-egress-app"
 tea_subnet_ids                 = ["subnet-1234567890"]
 tea_urs_auth_creds_secret_name = "my-tea-urs-creds"
+urs_client_id                  = "some-client-id"
+urs_client_password            = "some-client-password"
 vpc_id                         = "vpc-1234567890"
+ngap_sgs                       = ["list", "of", "security-group-arns"]
 ```
 
 Initialize and deploy the Thin Egress App:
@@ -205,12 +210,17 @@ Make sure to:
 
 **terraform.tfvars**
 ```hcl
+prefix                         = "pre"
+sts_credentials_lambda_arn     = "sts_credentials_lambda_arn"
 tea_config_bucket              = "my-internal"
 tea_domain_name                = "abc123.execute-api.us-east-1.amazonaws.com:7000/DEV"
 tea_stack_name                 = "my-thin-egress-app"
 tea_subnet_ids                 = ["subnet-1234567890"]
 tea_urs_auth_creds_secret_name = "my-tea-urs-creds"
+urs_client_id                  = "some-client-id"
+urs_client_password            = "some-client-password"
 vpc_id                         = "vpc-1234567890"
+ngap_sgs                       = ["list", "of", "security-group-arns"]
 ```
 
 Re-deploy the Thin Egress App:
