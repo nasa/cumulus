@@ -30,7 +30,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## Added
-
+- **CUMULUS-1345**
+  - Adds new variables to the app deployment under `cmr`.
+  - `cmrEnvironment` values are `SIT`, `UAT`, or `OPS` with `UAT` as the default.
+  - `cmrLimit` and `cmrPageSize` have been added as configurable options.
 - **CUMULUS-799**
   - Adds new BackendApi endpoint `distributionMetrics` that returns a summary of successful s3 accesses as well as a summary of distribution errors -- including s3 access errors, 4XX and 5XX errors.
 
@@ -78,6 +81,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Updated `@cumulus/queue-granules` to set `cumulus_meta.queueName` for queued execution messages
   - Updated `@cumulus/queue-pdrs` to set `cumulus_meta.queueName` for queued execution messages
   - Updated `sqs2sfThrottle` lambda to immediately decrement queue semaphore value if dispatching Step Function execution throws an error
+
+- **CUMULUS-1362**
+  - Granule `processingStartTime` and `processingEndTime` will be set to the execution start time and end time respectively when there is no sync granule or post to cmr task present in the workflow
 
 ### Fixed
 
