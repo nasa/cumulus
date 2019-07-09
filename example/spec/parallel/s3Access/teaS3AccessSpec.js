@@ -110,7 +110,7 @@ describe('When accessing an S3 bucket directly', () => {
     await Promise.all([
       s3().deleteObject({ Bucket: protectedBucketName, Key: testFileKey }).promise(),
       s3().deleteObject({ Bucket: publicBucketName, Key: testFileKey }).promise(),
-      // accessTokensModel.delete({ accessToken })
+      accessTokensModel.delete({ accessToken })
     ]);
   });
 
