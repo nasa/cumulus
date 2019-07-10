@@ -1,7 +1,5 @@
 # @cumulus/discover-pdrs
 
-[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
-
 Discover PDRs in FTP/HTTP/HTTPS/SFTP/S3 endpoints
 ## Message Configuration
 ### Config
