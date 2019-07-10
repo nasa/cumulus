@@ -1,7 +1,5 @@
 # @cumulus/queue-granules
 
-[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
-
 Adds discovered granules to the queue
 
 ## What is Cumulus?
