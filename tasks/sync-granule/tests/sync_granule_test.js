@@ -217,7 +217,7 @@ test.serial('download Granule from HTTP endpoint', async (t) => {
   );
 });
 
-test.serial('verify that all returned granules have sync_granule_duration and sync_granule_end_time set', async (t) => {
+test.serial('verify that all returned granules have sync_granule_duration set', async (t) => {
   t.context.event.config.provider = {
     id: 'MODAPS',
     protocol: 'http',
@@ -238,9 +238,6 @@ test.serial('verify that all returned granules have sync_granule_duration and sy
   output.granules.forEach((g) => {
     t.true(Number.isInteger(g.sync_granule_duration));
     t.true(g.sync_granule_duration >= 0);
-
-    t.true(Number.isInteger(g.sync_granule_end_time));
-    t.true(g.sync_granule_end_time > 0);
   });
 });
 

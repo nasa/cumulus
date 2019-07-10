@@ -1,10 +1,13 @@
 'use strict';
 
+const get = require('lodash.get');
 const moment = require('moment');
 const path = require('path');
 const aws = require('@cumulus/common/aws');
 const log = require('@cumulus/common/log');
+const { constructCollectionId } = require('@cumulus/common');
 const { Sftp } = require('@cumulus/common/sftp');
+const { Collection } = require('../models');
 
 /**
  * return fileType based on report type
@@ -64,6 +67,16 @@ async function determineReportKey(reportType, reportStartTime, reportsPrefix) {
 
   return aws.s3Join([reportsPrefix, reportName]);
 }
+
+/**
+ * get list of EMS enabled collections from database
+ *
+ * @returns {Array<string>} - list of collectionIds
+ */
+const getEmsEnabledCollections = async () =>
+  (await new Collection().getAllCollections())
+    .filter((collection) => get(collection, 'reportToEms', true))
+    .map((collection) => constructCollectionId(collection.name, collection.version));
 
 /**
  * get list of expired s3 objects
@@ -138,9 +151,49 @@ async function submitReports(reports) {
   return reportsSent;
 }
 
+/**
+ * determine actual reports' start and end time given the time range
+ *
+ * @param {string} startTime - start time of the reports
+ * @param {string} endTime - end time of the reports
+ * @returns {Object.<moment, moment>} report start and end time {reportStartTime, reportEndTime}
+ */
+function determineReportsStartEndTime(startTime, endTime) {
+  // the reports start at the beginning of the day (inclusive)
+  // and end at the beginning of the another day (exclusive)
+  const nextDate = moment.utc().add(1, 'days').startOf('day').format();
+  const reportStartTime = moment.utc(startTime).startOf('day');
+  let reportEndTime = moment.utc(endTime).startOf('day');
+  reportEndTime = (reportEndTime.isAfter(nextDate)) ? nextDate : reportEndTime;
+  return ({ reportStartTime, reportEndTime });
+}
+
+/**
+ * build list of objects representing start and end time of each day
+ *
+ * @param {moment} reportStartTime - the beginning of the day reports start (inclusive)
+ * @param {moment} reportEndTime - the beginning of the day reports end (exclusive)
+ * @returns {Array<Object.<string, string>>} list of objects including {startTime, endTime}
+ */
+function buildStartEndTimes(reportStartTime, reportEndTime) {
+  // each startEndTimes element represents one day
+  const startEndTimes = [];
+  while (reportStartTime.isBefore(reportEndTime)) {
+    startEndTimes.push({
+      startTime: moment(reportStartTime).format(),
+      endTime: moment(reportStartTime).add(1, 'days').format()
+    });
+    reportStartTime.add(1, 'days');
+  }
+  return startEndTimes;
+}
+
 module.exports = {
   buildReportFileName,
+  buildStartEndTimes,
   determineReportKey,
+  determineReportsStartEndTime,
+  getEmsEnabledCollections,
   getExpiredS3Objects,
   submitReports,
   reportToFileType

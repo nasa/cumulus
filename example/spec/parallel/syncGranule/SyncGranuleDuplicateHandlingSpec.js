@@ -148,7 +148,6 @@ describe('When the Sync Granule workflow is configured', () => {
 
         const updatedGranule = {
           ...expectedPayload.granules[0],
-          sync_granule_end_time: lambdaOutput.payload.granules[0].sync_granule_end_time,
           sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration
         };
 

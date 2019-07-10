@@ -1,12 +1,20 @@
 'use strict';
 
 const fs = require('fs');
+const flatten = require('lodash.flatten');
 const moment = require('moment');
 const os = require('os');
 const path = require('path');
 const { aws, log } = require('@cumulus/common');
 const {
-  buildReportFileName, determineReportKey, getExpiredS3Objects, reportToFileType, submitReports
+  buildReportFileName,
+  buildStartEndTimes,
+  determineReportKey,
+  determineReportsStartEndTime,
+  getEmsEnabledCollections,
+  getExpiredS3Objects,
+  reportToFileType,
+  submitReports
 } = require('../lib/ems');
 const { deconstructCollectionId } = require('../es/indexer');
 const { Search, defaultIndexAlias } = require('../es/search');
@@ -120,7 +128,7 @@ function buildSearchQuery(esIndex, type, startTime, endTime) {
       }
     }
   };
-  if (type === 'deletedgranule') params._source = ['granuleId', 'deletedAt'];
+  if (type === 'deletedgranule') params._source = ['granuleId', 'collectionId', 'deletedAt'];
   return params;
 }
 
@@ -172,11 +180,8 @@ function getEmsFieldFromGranField(granule, emsField, granField) {
   case 'productState':
     result = (metadata === 'completed') ? 'Successful' : 'Failed';
     break;
-  // deleteEffectiveDate format YYYYMMDD
+  // datetime format YYYY-MM-DD HH:MMAMorPM
   case 'deleteEffectiveDate':
-    result = (metadata) ? moment.utc(new Date(metadata)).format('YYYYMMDD') : metadata;
-    break;
-  // datetime format YYYY-MM-DD HH:MMAMorPM GMT
   case 'insertTime':
     // milliseconds to string
     result = (metadata) ? moment.utc(new Date(metadata)).format('YYYY-MM-DD hh:mmA') : metadata;
@@ -202,14 +207,17 @@ function getEmsFieldFromGranField(granule, emsField, granField) {
  *
  * @param {Object} mapping - mapping of EMS fields to granule fields
  * @param {Object} granules - es granules
+ * @param {Array<string>} collections - list of EMS enabled collections
  * @returns {Array<string>} EMS records
  */
-function buildEMSRecords(mapping, granules) {
-  const records = granules.map((granule) => {
-    const record = Object.keys(mapping)
-      .map((emsField) => getEmsFieldFromGranField(granule, emsField, mapping[emsField]));
-    return record.join('|&|');
-  });
+function buildEMSRecords(mapping, granules, collections) {
+  const records = granules
+    .filter((granule) => collections.includes(granule.collectionId))
+    .map((granule) => {
+      const record = Object.keys(mapping)
+        .map((emsField) => getEmsFieldFromGranField(granule, emsField, mapping[emsField]));
+      return record.join('|&|');
+    });
   return records;
 }
 
@@ -219,9 +227,10 @@ function buildEMSRecords(mapping, granules) {
  * @param {string} reportType - report type (ingest, archive, delete)
  * @param {string} startTime - start time of the records
  * @param {string} endTime - end time of the records
+ * @param {Array<string>} collections - list of EMS enabled collections
  * @returns {Object} - report type and its file path {reportType, file}
  */
-async function generateReport(reportType, startTime, endTime) {
+async function generateReport(reportType, startTime, endTime, collections) {
   log.debug(`ems-ingest-report.generateReport ${reportType} startTime: ${startTime} endTime: ${endTime}`);
 
   if (!Object.keys(emsMappings).includes(reportType)) {
@@ -241,8 +250,10 @@ async function generateReport(reportType, startTime, endTime) {
   const searchQuery = buildSearchQuery(esIndex, type, startTime, endTime);
   let response = await esClient.search(searchQuery);
   let granules = response.hits.hits.map((s) => s._source);
+  let records = buildEMSRecords(emsMappings[reportType], granules, collections);
+  stream.write(records.length ? records.join('\n') : '');
   let numRetrieved = granules.length;
-  stream.write(buildEMSRecords(emsMappings[reportType], granules).join('\n'));
+  let numRecords = records.length;
 
   while (response.hits.total !== numRetrieved) {
     response = await esClient.scroll({ // eslint-disable-line no-await-in-loop
@@ -250,12 +261,13 @@ async function generateReport(reportType, startTime, endTime) {
       scroll: '30s'
     });
     granules = response.hits.hits.map((s) => s._source);
-    stream.write('\n');
-    stream.write(buildEMSRecords(emsMappings[reportType], granules).join('\n'));
+    records = buildEMSRecords(emsMappings[reportType], granules, collections);
+    stream.write(records.length ? `\n${records.join('\n')}` : '');
     numRetrieved += granules.length;
+    numRecords += records.length;
   }
   stream.end();
-  log.debug(`EMS ${reportType} generated with ${numRetrieved} records: ${filename}`);
+  log.debug(`EMS ${reportType} generated with ${numRecords} records from ${numRetrieved} granules: ${filename}`);
 
   // upload to s3
   const reportKey = await determineReportKey(
@@ -266,15 +278,63 @@ async function generateReport(reportType, startTime, endTime) {
 }
 
 /**
- * generate all EMS reports given the time range of the records and submit to ems
+ * generate all EMS reports given the time range of the records
  *
- * @param {string} startTime - start time of the records
- * @param {string} endTime - end time of the records
+ * @param {Object} params - params
+ * @param {string} params.startTime - start time of the reports in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} params.endTime - end time of the reports in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} params.emsCollections - optional, collectionIds of the records
  * @returns {Array<Object>} - list of report type and its file path {reportType, file}
  */
-async function generateReports(startTime, endTime) {
+async function generateReports(params) {
+  const collections = params.emsCollections || await getEmsEnabledCollections();
   return Promise.all(Object.keys(emsMappings)
-    .map((reportType) => generateReport(reportType, startTime, endTime)));
+    .map((reportType) => generateReport(
+      reportType, params.startTime, params.endTime, collections
+    )));
+}
+
+/**
+ * generate all EMS reports for each day given the date time range of the reports
+ *
+ * @param {Object} params - params
+ * @param {string} params.startTime - start time of the reports in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} params.endTime - end time of the reports in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} params.collectionId - collectionId of the records if defined
+ * @returns {Array<Object>} - list of report type and its file path {reportType, file}
+ */
+async function generateReportsForEachDay(params) {
+  log.info(`ems-ingest-report.generateReportsForEachDay for access records between ${params.startTime} and ${params.endTime}`);
+
+  const {
+    reportStartTime,
+    reportEndTime
+  } = determineReportsStartEndTime(params.startTime, params.endTime);
+
+  // ICD Section 3.4 Data Files Interface section describes that each file should contain one day's
+  // worth of data. Data within the file will correspond to the datestamp in the filename.
+  // Exceptions to this rule include Ingest data where processingEndDateTime could be after
+  // the datestamp.
+
+  // The updated ingest and archive data flat files only need to contain the corrected records.
+  // Previous records will be updated and/or appended (i.e., merged) with revision file content.
+
+  let emsCollections = await getEmsEnabledCollections();
+  const collectionId = params.collectionId;
+  if (collectionId) {
+    emsCollections = (emsCollections.includes(collectionId)) ? [collectionId] : [];
+  }
+
+  // no report should be generated if the collection is not EMS enabled
+  if (emsCollections.length === 0) {
+    return [];
+  }
+
+  // each startEndTimes element represents one day
+  const startEndTimes = buildStartEndTimes(reportStartTime, reportEndTime);
+
+  return flatten(await Promise.all(startEndTimes.map((startEndTime) =>
+    generateReports({ ...startEndTime, emsCollections }))));
 }
 
 /**
@@ -300,9 +360,9 @@ async function cleanup() {
  * Lambda task, generate and send EMS ingest reports
  *
  * @param {Object} event - event passed to lambda
- * @param {string} event.startTime - test only, report startTime in format YYYY-MM-DDTHH:mm:ss
- * @param {string} event.endTime - test only, report endTime in format YYYY-MM-DDTHH:mm:ss
- * @param {string} event.report - test only, s3 uri of the report to be sent
+ * @param {string} event.startTime - optional, report startTime in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} event.endTime - optional, report endTime in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} event.collectionId - optional, report collectionId
  * @param {Object} context - AWS Lambda context
  * @param {function} callback - callback function
  * @returns {Array<Object>} - list of report type and its file path {reportType, file}
@@ -317,14 +377,17 @@ function handler(event, context, callback) {
   endTime = event.endTime || endTime;
   startTime = event.startTime || startTime;
 
-  if (event.report) {
-    return submitReports([{ reportType: 'ingest', file: event.report }])
+  // catch up run to generate reports for each day
+  if (event.startTime && event.endTime) {
+    return generateReportsForEachDay({ startTime, endTime, collectionId: event.collectionId })
+      .then((reports) => submitReports(reports))
       .then((r) => callback(null, r))
       .catch(callback);
   }
 
+  // daily report generation
   return cleanup()
-    .then(() => generateReports(startTime, endTime))
+    .then(() => generateReports({ startTime, endTime }))
     .then((reports) => submitReports(reports))
     .then((r) => callback(null, r))
     .catch(callback);
@@ -333,5 +396,6 @@ function handler(event, context, callback) {
 module.exports = {
   emsMappings,
   generateReports,
+  generateReportsForEachDay,
   handler
 };

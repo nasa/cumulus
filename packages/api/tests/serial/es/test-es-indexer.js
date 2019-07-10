@@ -13,12 +13,14 @@ const {
   util: { noop }
 } = require('@cumulus/common');
 const { removeNilProperties } = require('@cumulus/common/util');
+const StepFunctions = require('@cumulus/common/StepFunctions');
 
 const indexer = require('../../../es/indexer');
 const { Search } = require('../../../es/search');
 const models = require('../../../models');
 const { fakeGranuleFactory, fakeCollectionFactory, deleteAliases } = require('../../../lib/testUtils');
 const { filterDatabaseProperties } = require('../../../lib/FileUtils');
+const { IndexExistsError } = require('../../../lib/errors');
 const { bootstrapElasticSearch } = require('../../../lambdas/bootstrap');
 const granuleSuccess = require('../../data/granule_success.json');
 const granuleFailure = require('../../data/granule_failed.json');
@@ -55,6 +57,11 @@ let collectionModel;
 let executionModel;
 let granuleModel;
 let pdrModel;
+let stepFunctionsStub;
+
+const input = JSON.stringify(granuleSuccess);
+const payload = JSON.parse(input);
+
 test.before(async () => {
   await deleteAliases();
 
@@ -91,6 +98,12 @@ test.before(async () => {
   };
 
   sinon.stub(cmrjs, 'getGranuleTemporalInfo').callsFake(() => fakeMetadata);
+
+  stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').returns({
+    input,
+    startDate: new Date(Date.UTC(2019, 6, 28)),
+    stopDate: new Date(Date.UTC(2019, 6, 28, 1))
+  });
 });
 
 test.after.always(async () => {
@@ -103,6 +116,7 @@ test.after.always(async () => {
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 
   cmrjs.getGranuleTemporalInfo.restore();
+  stepFunctionsStub.restore();
 });
 
 test.serial('creating a successful granule record', async (t) => {
@@ -137,8 +151,8 @@ test.serial('creating a successful granule record', async (t) => {
   t.is(record.lastUpdateDateTime, '2018-04-20T21:45:45.524Z');
   t.is(record.timeToArchive, 100 / 1000);
   t.is(record.timeToPreprocess, 120 / 1000);
-  t.is(record.processingStartDateTime, '2018-05-03T14:23:12.010Z');
-  t.is(record.processingEndDateTime, '2018-05-03T17:11:33.007Z');
+  t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
+  t.is(record.processingEndDateTime, '2019-07-28T01:00:00.000Z');
 
   const { name: deconstructed } = indexer.deconstructCollectionId(record.collectionId);
   t.is(deconstructed, collection.name);
@@ -485,8 +499,8 @@ test.serial('updating a collection record', async (t) => {
 });
 
 test.serial('creating a failed pdr record', async (t) => {
-  const payload = pdrFailure.payload;
-  payload.pdr.name = randomString();
+  const pdrFailurePayload = pdrFailure.payload;
+  pdrFailurePayload.pdr.name = randomString();
   const collection = pdrFailure.meta.collection;
   const record = await indexer.pdr(pdrFailure);
 
@@ -494,7 +508,7 @@ test.serial('creating a failed pdr record', async (t) => {
 
   t.is(record.status, 'failed');
   t.is(record.collectionId, collectionId);
-  t.is(record.pdrName, payload.pdr.name);
+  t.is(record.pdrName, pdrFailurePayload.pdr.name);
 
   // check stats
   const stats = record.stats;
@@ -616,9 +630,6 @@ test.serial('delete a provider record', async (t) => {
 
 // This needs to be serial because it is stubbing aws.sfn's responses
 test.serial('reingest a granule', async (t) => {
-  const input = JSON.stringify(granuleSuccess);
-
-  const payload = JSON.parse(input);
   const key = `${process.env.stackName}/workflows/${payload.meta.workflow_name}.json`;
   await aws.s3().putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' }).promise();
 
@@ -628,17 +639,7 @@ test.serial('reingest a granule', async (t) => {
 
   t.is(record.status, 'completed');
 
-  const sfn = aws.sfn();
-
-  try {
-    sfn.describeExecution = () => ({
-      promise: () => Promise.resolve({ input })
-    });
-
-    await indexer.reingest(record);
-  } finally {
-    delete sfn.describeExecution;
-  }
+  await indexer.reingest(record);
 
   const g = new models.Granule();
   const newRecord = await g.get({ granuleId: record.granuleId });
@@ -719,4 +720,30 @@ test.serial('pass a sns message to main handler with discoverpdr info', async (t
   t.truthy(resp[0].sf);
   t.is(resp[0].granule, null);
   t.falsy(resp[0].pdr);
+});
+
+test.serial('Create new index', async (t) => {
+  const newIndex = randomString();
+
+  await indexer.createIndex(esClient, newIndex);
+
+  const indexExists = await esClient.indices.exists({ index: newIndex });
+
+  t.true(indexExists);
+
+  await esClient.indices.delete({ index: newIndex });
+});
+
+test.serial('Create new index - index already exists', async (t) => {
+  const newIndex = randomString();
+
+  await indexer.createIndex(esClient, newIndex);
+
+  await t.throwsAsync(
+    () => indexer.createIndex(esClient, newIndex),
+    IndexExistsError,
+    `Index ${newIndex} exists and cannot be created.`
+  );
+
+  await esClient.indices.delete({ index: newIndex });
 });

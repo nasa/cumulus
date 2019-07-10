@@ -78,11 +78,15 @@ default:
     scalingRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-scaling-role'
     migrationRoleArn: 'arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/{{prefix}}-migration-processing'
 
+
   cmr:
     username: CmrUser
     provider: CUMULUS
     clientId: CUMULUS
     password: '{{CMR_PASSWORD}}'
+    cmrEnvironment: UAT
+    cmrLimit: 100
+    cmrPageSize: 50
 
   ems:
     provider: CUMULUS
@@ -120,7 +124,7 @@ default:
 
     tasks:
       AsyncOperation:
-        image: cumuluss/async-operation:25
+        image: cumuluss/async-operation:26
         cpu: 400
         memory: 700
         count: 1
@@ -139,6 +143,7 @@ default:
 
   # defining the APIs. Each item will include a separate endpoint
   apiStage: dev
+  logToSharedDestination:
 
   dynamos: !!files ['node_modules/@cumulus/api/config/tables.yml']
 

@@ -17,15 +17,15 @@ const range = require('lodash.range');
 const { Granule } = require('../../models');
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 
+let fakeExecution;
+let stepFunctionsStub;
+let testCumulusMessage;
+
 test.before(async () => {
   process.env.GranulesTable = randomString();
   await new Granule().createTable();
-});
 
-test.beforeEach((t) => {
-  t.context.granuleModel = new Granule();
-
-  t.context.cumulusMessage = {
+  testCumulusMessage = {
     cumulus_meta: {
       execution_name: randomString(),
       state_machine: 'arn:aws:states:us-east-1:123456789012:stateMachine:HelloStateMachine',
@@ -53,10 +53,23 @@ test.beforeEach((t) => {
       ]
     }
   };
+
+  fakeExecution = async () => ({
+    input: JSON.stringify(testCumulusMessage),
+    startDate: new Date(Date.UTC(2019, 6, 28)),
+    stopDate: new Date(Date.UTC(2019, 6, 28, 1))
+  });
+  stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').callsFake(fakeExecution);
+});
+
+test.beforeEach((t) => {
+  t.context.granuleModel = new Granule();
+  t.context.cumulusMessage = testCumulusMessage;
 });
 
 test.after.always(async () => {
   await new Granule().deleteTable();
+  stepFunctionsStub.restore();
   sinon.reset();
 });
 
@@ -588,62 +601,30 @@ test.serial(
 );
 
 test(
-  'createGranulesFromSns() properly sets processingStartDateTime when sync_granule_end_time is present for a granule',
+  'createGranulesFromSns() sets processingStartDateTime to execution startDate',
   async (t) => {
     const { granuleModel } = t.context;
 
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    cumulusMessage.payload.granules[0].sync_granule_end_time = 100000;
 
     const result = await granuleModel.createGranulesFromSns(cumulusMessage);
 
     t.is(result.length, 1);
-    t.is(result[0].processingStartDateTime, '1970-01-01T00:01:40.000Z');
+    t.is(result[0].processingStartDateTime, '2019-07-28T00:00:00.000Z');
   }
 );
 
 test(
-  'createGranulesFromSns() does not set processingStartDateTime when sync_granule_end_time is not present for a granule',
+  'createGranulesFromSns() sets processingEndDateTime to execution stopDate',
   async (t) => {
     const { granuleModel } = t.context;
 
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    delete cumulusMessage.payload.granules[0].sync_granule_end_time;
 
     const result = await granuleModel.createGranulesFromSns(cumulusMessage);
 
     t.is(result.length, 1);
-    t.false(Object.keys(result[0]).includes('processingStartDateTime'));
-  }
-);
-
-test(
-  'createGranulesFromSns() properly sets processingEndDateTime when sync_granule_end_time is present for a granule',
-  async (t) => {
-    const { granuleModel } = t.context;
-
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    cumulusMessage.payload.granules[0].post_to_cmr_start_time = 100000;
-
-    const result = await granuleModel.createGranulesFromSns(cumulusMessage);
-
-    t.is(result.length, 1);
-    t.is(result[0].processingEndDateTime, '1970-01-01T00:01:40.000Z');
-  }
-);
-
-test(
-  'createGranulesFromSns() does not set processingEndDateTime when post_to_cmr_start_time is not present for a granule',
-  async (t) => {
-    const { granuleModel } = t.context;
-
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    delete cumulusMessage.payload.granules[0].post_to_cmr_start_time;
-
-    const result = await granuleModel.createGranulesFromSns(cumulusMessage);
-
-    t.is(result.length, 1);
-    t.false(Object.keys(result[0]).includes('processingEndDateTime'));
+    t.is(result[0].processingEndDateTime, '2019-07-28T01:00:00.000Z');
   }
 );
 
@@ -705,7 +686,7 @@ test.serial(
   'reingest pushes a message with the correct queueName',
   async (t) => {
     const { granuleModel } = t.context;
-    const updateStatusStub = sinon.stub(granuleModel, "updateStatus");
+    const updateStatusStub = sinon.stub(granuleModel, 'updateStatus');
     const queueName = 'testQueueName';
     const granule = {
       execution: 'some/execution',
@@ -717,10 +698,6 @@ test.serial(
     const fileExistsStub = sinon.stub(aws, 'fileExists').callsFake(fileExists);
     const invokeStub = sinon.stub(ingestAws, 'invoke');
 
-    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
-    const fakeExecution = async () => ({ input: JSON.stringify(cumulusMessage) });
-    const stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').callsFake(fakeExecution);
-
     try {
       await granuleModel.reingest(granule);
       const invokeArgs = invokeStub.args[0];
@@ -729,8 +706,7 @@ test.serial(
     } finally {
       fileExistsStub.restore();
       invokeStub.restore();
-      stepFunctionsStub.restore();
       updateStatusStub.restore();
     }
   }
-)
+);

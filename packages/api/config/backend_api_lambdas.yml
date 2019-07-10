@@ -51,6 +51,15 @@ ApiEndpoints:
     BulkDeleteLambda:
       function: Ref
       value: BulkDeleteLambdaFunctionArn
+    EmsIngestReport:
+      function: Ref
+      value: EmsIngestReportLambdaFunctionArn
+    EmsDistributionReport:
+      function: Ref
+      value: EmsDistributionReportLambdaFunctionArn
+    EmsProductMetadataReport:
+      function: Ref
+      value: EmsProductMetadataReportLambdaFunctionArn
     invoke:
       function: Ref
       value: ScheduleSFLambdaFunctionArn
@@ -66,6 +75,9 @@ ApiEndpoints:
     KinesisInboundEventLogger:
       function: Ref
       value: KinesisInboundEventLoggerLambdaFunctionArn
+    IndexFromDatabaseLambda:
+      function: Ref
+      value: IndexFromDatabaseLambdaFunctionArn
     STSCredentialsLambda: '{{parent.sts_credentials_lambda}}'
     cmr_provider: '{{parent.cmr.provider}}'
     cmr_client_id: '{{parent.cmr.clientId}}'
@@ -73,6 +85,7 @@ ApiEndpoints:
     cmr_password:
       function: "Ref"
       value: "CmrPassword"
+    CMR_ENVIRONMENT: '{{parent.cmr.cmrEnvironment}}'
     TOKEN_SECRET: '{{TOKEN_SECRET}}'
     distributionApiId:
       function: Ref

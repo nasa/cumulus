@@ -95,6 +95,8 @@ EmsIngestReport:
   source: 'node_modules/@cumulus/api/dist/emsIngestReport/'
   useElasticSearch: '{{es.name}}'
   launchInVpc: true
+  tables:
+    - CollectionsTable
   envs:
     system_bucket: '{{system_bucket}}'
     ems_provider: '{{ems.provider}}'
@@ -115,6 +117,7 @@ EmsDistributionReport:
   source: 'node_modules/@cumulus/api/dist/emsDistributionReport/'
   launchInVpc: true
   tables:
+    - CollectionsTable
     - GranulesTable
     - FilesTable
   envs:
@@ -141,6 +144,7 @@ EmsProductMetadataReport:
     system_bucket: '{{system_bucket}}'
     cmr_provider: '{{cmr.provider}}'
     cmr_client_id: '{{cmr.clientId}}'
+    CMR_ENVIRONMENT: '{{cmr.cmrEnvironment}}'
     ems_provider: '{{ems.provider}}'
     ems_username: '{{ems.username}}'
     ems_privateKey: '{{ems.privateKey}}'
@@ -200,6 +204,9 @@ CreateReconciliationReport:
     system_bucket: '{{system_bucket}}'
     cmr_provider: '{{cmr.provider}}'
     cmr_client_id: '{{cmr.clientId}}'
+    CMR_ENVIRONMENT: '{{cmr.cmrEnvironment}}'
+    CMR_LIMIT: '{{cmr.cmrLimit}}'
+    CMR_PAGE_SIZE: '{{cmr.cmrPageSize}}'
 
 ScheduleSF:
   description: 'This lambda function is invoked by scheduled rules created via cumulus API'
@@ -240,3 +247,11 @@ sfSemaphoreDown:
   launchInVpc: true
   tables:
     - SemaphoresTable
+
+IndexFromDatabase:
+  handler: index.handler
+  timeout: 300
+  memory: 512
+  source: 'node_modules/@cumulus/api/dist/indexFromDatabase/'
+  launchInVpc: true
+  useElasticSearch: '{{es.name}}'

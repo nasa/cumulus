@@ -22,12 +22,12 @@ const {
   addCollections,
   addProviders,
   buildAndExecuteWorkflow,
-  cleanupCollections,
   cleanupProviders,
   distributionApi: {
     getDistributionApiRedirect
   },
   EarthdataLogin: { getEarthdataAccessToken },
+  emsApi,
   getOnlineResources,
   granulesApi: granulesApiTestUtils,
   waitUntilGranuleStatusIs
@@ -102,18 +102,26 @@ async function ingestAndPublishGranule(testSuffix, testDataFolder, publish = tru
   return inputPayload.granules[0].granuleId;
 }
 
-// delete old granules
-async function deleteOldGranules() {
+/**
+ * delete old granules
+ *
+ * @param {number} retentionInDays - granules are deleted if older than specified days
+ * @param {Array<string>} additionalGranuleIds - additional granules to delete
+ */
+async function deleteOldGranules(retentionInDays, additionalGranuleIds) {
   const dbGranulesIterator = new Granule().getGranulesForCollection(collectionId, 'completed');
   let nextDbItem = await dbGranulesIterator.peek();
   while (nextDbItem) {
     const nextDbGranuleId = nextDbItem.granuleId;
-    if (nextDbItem.published) {
-      // eslint-disable-next-line no-await-in-loop
-      await granulesApiTestUtils.removePublishedGranule({ prefix: config.stackName, granuleId: nextDbGranuleId });
-    } else {
-      // eslint-disable-next-line no-await-in-loop
-      await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: nextDbGranuleId });
+    const offset = Date.now() - retentionInDays * 24 * 3600 * 1000;
+    if (nextDbItem.createdAt <= offset || additionalGranuleIds.includes(nextDbGranuleId)) {
+      if (nextDbItem.published) {
+        // eslint-disable-next-line no-await-in-loop
+        await granulesApiTestUtils.removePublishedGranule({ prefix: config.stackName, granuleId: nextDbGranuleId });
+      } else {
+        // eslint-disable-next-line no-await-in-loop
+        await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: nextDbGranuleId });
+      }
     }
 
     await dbGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
@@ -148,8 +156,10 @@ describe('The EMS report', () => {
     // ingest one granule, this will be deleted later
     deletedGranuleId = await ingestAndPublishGranule(testSuffix, testDataFolder);
 
-    // delete granules ingested for this collection, so that ArchDel report can be generated
-    await deleteOldGranules();
+    // delete granules ingested for this collection, so that ArchDel report can be generated.
+    // leave some granules for distribution report since the granule and collection information
+    // is needed for distributed files.
+    await deleteOldGranules(2, [deletedGranuleId]);
 
     // ingest two new granules, so that Archive and Ingest reports can be generated
     ingestedGranuleIds = await Promise.all([
@@ -164,7 +174,7 @@ describe('The EMS report', () => {
   afterAll(async () => {
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
-      cleanupCollections(config.stackName, config.bucket, collectionsDir),
+      // leave collection in the table for daily reports
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)
     ]);
   });
@@ -212,8 +222,8 @@ describe('The EMS report', () => {
 
       // add a few seconds to allow records searchable in elasticsearch
       await sleep(5 * 1000);
-      const endTime = moment.utc().add(5, 'seconds').format();
-      const startTime = moment.utc().subtract(1, 'days').format();
+      const endTime = moment.utc().add(1, 'days').startOf('day').format();
+      const startTime = moment.utc().startOf('day').format();
 
       const response = await lambda().invoke({
         FunctionName: emsIngestReportLambda,
@@ -238,6 +248,8 @@ describe('The EMS report', () => {
           const records = reportRecords.filter((record) =>
             record.startsWith(ingestedGranuleIds[0]) || record.startsWith(ingestedGranuleIds[1]));
           expect(records.length).toEqual(2);
+          records.forEach((record) =>
+            expect(record.split('|&|').find((field) => field.length === 0)).toBeFalsy());
         }
         if (report.reportType === 'delete') {
           const records = reportRecords.filter((record) =>
@@ -247,6 +259,44 @@ describe('The EMS report', () => {
 
         if (submitReport) {
           expect(parsed.Key.includes('/sent/')).toBe(true);
+        }
+
+        return true;
+      });
+      const results = await Promise.all(jobs);
+      results.forEach((result) => expect(result).not.toBe(false));
+    });
+
+    it('generates EMS ingest reports through the Cumulus API', async () => {
+      const inputPayload = {
+        reportType: 'ingest',
+        startTime: moment.utc().subtract(1, 'days').startOf('day').format(),
+        endTime: moment.utc().add(1, 'days').startOf('day').format(),
+        collectionId,
+        invocationType: 'RequestResponse'
+      };
+
+      const response = await emsApi.createEmsReports({
+        prefix: config.stackName,
+        request: inputPayload
+      });
+
+      const reports = JSON.parse(response.body).reports;
+      expect(reports.length).toEqual(6);
+
+      const jobs = reports.slice(3).map(async (report) => {
+        const parsed = parseS3Uri(report.file);
+        const obj = await getS3Object(parsed.Bucket, parsed.Key);
+        const reportRecords = obj.Body.toString().split('\n');
+        if (['ingest', 'archive'].includes(report.reportType)) {
+          const records = reportRecords.filter((record) =>
+            record.startsWith(ingestedGranuleIds[0]) || record.startsWith(ingestedGranuleIds[1]));
+          expect(records.length).toEqual(2);
+        }
+        if (report.reportType === 'delete') {
+          const records = reportRecords.filter((record) =>
+            record.startsWith(deletedGranuleId));
+          expect(records.length).toEqual(1);
         }
 
         return true;
@@ -294,8 +344,8 @@ describe('The EMS report', () => {
         const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
         AWS.config.update({ region: region });
 
-        const endTime = moment.utc().format();
-        const startTime = moment.utc().subtract(1, 'days').format();
+        const endTime = moment.utc().add(1, 'days').startOf('day').format();
+        const startTime = moment.utc().startOf('day').format();
 
         const response = await lambda().invoke({
           FunctionName: emsDistributionReportLambda,
@@ -325,6 +375,25 @@ describe('The EMS report', () => {
         });
         const results = await Promise.all(jobs);
         results.forEach((result) => expect(result).not.toBe(false));
+      });
+
+      it('generates EMS distribution reports through the Cumulus API', async () => {
+        // it could take long to generate distribution reports (greater than ApiEndpoints timeout),
+        // so use async call
+        const inputPayload = {
+          reportType: 'distribution',
+          startTime: moment.utc().subtract(1, 'days').startOf('day').format(),
+          endTime: moment.utc().add(1, 'days').startOf('day').format(),
+          collectionId
+        };
+
+        const response = await emsApi.createEmsReports({
+          prefix: config.stackName,
+          request: inputPayload
+        });
+
+        const message = JSON.parse(response.body).message;
+        expect(message === 'Reports are being generated').toBe(true);
       });
     });
   });

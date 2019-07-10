@@ -160,6 +160,7 @@ const getDbCollections = async () =>
   (await new Collection().getAllCollections())
     .map((collection) => ({
       collectionId: constructCollectionId(collection.name, collection.version),
+      reportToEms: get(collection, 'reportToEms', true),
       lastUpdate: millisecondsToUTCString(
         collection.updatedAt || collection.createdAt || Date.now()
       )
@@ -205,7 +206,9 @@ async function getCollectionsForEms(startTime, endTime) {
       // Found an item that is in both cmr and database
       const cmrCollection = cmrCollections.shift();
       const dbCollection = dbCollections.shift();
-      emsCollections.push({ ...cmrCollection, dbLastUpdate: dbCollection.lastUpdate });
+      if (get(dbCollection, 'reportToEms', true)) {
+        emsCollections.push({ ...cmrCollection, dbLastUpdate: dbCollection.lastUpdate });
+      }
     }
 
     nextDbCollectionId = (dbCollections.length !== 0) ? dbCollections[0].collectionId : null;
@@ -214,10 +217,8 @@ async function getCollectionsForEms(startTime, endTime) {
 
   // only the collections updated in CMR or CUMULUS within the time range are included
   const lastUpdateFilter = (collection) =>
-    ((moment.utc(collection.lastUpdate) >= startTime
-      && moment.utc(collection.lastUpdate) < endTime)
-    || (moment.utc(collection.dbLastUpdate) >= startTime
-      && moment.utc(collection.dbLastUpdate) < endTime));
+    (moment.utc(collection.lastUpdate).isBetween(startTime, endTime, null, '[)')
+    || moment.utc(collection.dbLastUpdate).isBetween(startTime, endTime, null, '[)'));
 
   return emsCollections.filter(lastUpdateFilter);
 }
@@ -227,13 +228,18 @@ async function getCollectionsForEms(startTime, endTime) {
  *
  * @param {string} startTime - start time of the records
  * @param {string} endTime - end time of the records
+ * @param {string} collectionId - collectionId of the records if defined
  * @returns {Object} - report type and its file path {reportType, file}
  */
-async function generateReport(startTime, endTime) {
+async function generateReport(startTime, endTime, collectionId) {
   log.debug(`ems-metadata-report.generateReport startTime: ${startTime} endTime: ${endTime}`);
   const reportType = 'metadata';
 
-  const emsCollections = await getCollectionsForEms(startTime, endTime);
+  let emsCollections = await getCollectionsForEms(startTime, endTime);
+  if (collectionId) {
+    emsCollections = emsCollections
+      .filter((collection) => collection.collectionId === collectionId);
+  }
 
   const report = emsCollections
     .map((collection) => Object.values(collection.emsRecord).join('|&|'))
@@ -273,8 +279,9 @@ async function cleanup() {
  * Lambda task, generate and send EMS metadata report
  *
  * @param {Object} event - event passed to lambda
- * @param {string} event.startTime - report startTime in format YYYY-MM-DDTHH:mm:ss
- * @param {string} event.endTime - report endTime in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} event.startTime - optional, report startTime in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} event.endTime - optional, report endTime in format YYYY-MM-DDTHH:mm:ss
+ * @param {string} event.collectionId - optional, report collectionId
  * @param {Object} context - AWS Lambda context
  * @param {function} callback - callback function
  * @returns {Array<Object>} - list of report type and its file path {reportType, file}
@@ -291,11 +298,13 @@ function handler(event, context, callback) {
   let endTime = moment.utc().startOf('day').format();
   let startTime = moment.utc().subtract(1, 'days').startOf('day').format();
 
+  // product metadata records don't contain timestamp and don't need to match the
+  // datestamp in the filename, there is no need to have separate reports for each day
   endTime = event.endTime || endTime;
   startTime = event.startTime || startTime;
 
   return cleanup()
-    .then(() => generateReport(moment.utc(startTime), moment.utc(endTime)))
+    .then(() => generateReport(moment.utc(startTime), moment.utc(endTime), event.collectionId))
     .then((report) => submitReports([report]))
     .then((r) => callback(null, r))
     .catch(callback);

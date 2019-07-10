@@ -80,6 +80,18 @@ Resources:
           Fn::GetAtt:
             - CreateReconciliationReportLambdaFunction
             - Arn
+        EmsIngestReportLambdaFunctionArn:
+          Fn::GetAtt:
+            - EmsIngestReportLambdaFunction
+            - Arn
+        EmsDistributionReportLambdaFunctionArn:
+          Fn::GetAtt:
+            - EmsDistributionReportLambdaFunction
+            - Arn
+        EmsProductMetadataReportLambdaFunctionArn:
+          Fn::GetAtt:
+            - EmsProductMetadataReportLambdaFunction
+            - Arn
         messageConsumerLambdaFunctionArn:
           Fn::GetAtt:
             - messageConsumerLambdaFunction
@@ -91,6 +103,10 @@ Resources:
         KinesisInboundEventLoggerLambdaFunctionArn:
           Fn::GetAtt:
             - KinesisInboundEventLoggerLambdaFunction
+            - Arn
+        IndexFromDatabaseLambdaFunctionArn:
+          Fn::GetAtt:
+            - IndexFromDatabaseLambdaFunction
             - Arn
         # The backend API needs a reference to the distributionRestApi so
         # it can construct values for the DISTRIBUTION_REDIRECT_ENDPOINT
@@ -411,6 +427,7 @@ Resources:
       Environment:
         Variables:
           stackName: {{../stackName}}
+          CMR_ENVIRONMENT: {{../cmr.cmrEnvironment}}
         {{#if this.useElasticSearch }}
         {{#if ../es.name}}
           ES_HOST:
@@ -518,6 +535,25 @@ Resources:
       LogGroupName: '/aws/lambda/{{../prefix}}-{{@key}}'
       RetentionInDays: 30
 {{/if}}
+
+{{#if this.logToSharedDestination }}
+  # Configure Lambda log subscription to shareLogDestination
+  {{@key}}LogSubscriptionToSharedDestination:
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn:
+      - {{@key}}LogGroup
+    Properties:
+      DestinationArn: "{{this.logToSharedDestination}}"
+      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
+      FilterPattern: ""
+
+  {{@key}}LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: '/aws/lambda/{{../stackName}}-{{@key}}'
+      RetentionInDays: 30
+{{/if}}
+
 
   {{#ifEquals @key "ScheduleSF"}}
   ## Generic lambda permission for custom rules
