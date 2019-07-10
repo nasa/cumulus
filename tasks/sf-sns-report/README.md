@@ -1,7 +1,5 @@
 # @cumulus/sf-sns-report
 
-[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
-
 Broadcast an incoming Cumulus message to SNS.  This lambda function works with Cumulus Message Adapter, and it can be used anywhere in a step function workflow to report granule and PDR status.
 
 If the task's input includes a `payload` key, the value of the key is returned as the output of the task, otherwise the output will be an empty object.
