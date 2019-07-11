@@ -48,8 +48,8 @@ test('has understandable error messages for bad bucket name', async (t) => {
   process.env.stackName = context.stackName;
   const location = `bad-bucket/${context.stackName}/workflows/buckets.json`;
 
-  await t.throws(
-    bucketsConfigJsonObject(),
+  await t.throwsAsync(
+    () => bucketsConfigJsonObject(),
     `Unable to read bucketsConfiguration from ${location}: The specified bucket does not exist`
   );
 });
@@ -60,8 +60,8 @@ test('has understandable error messages for bad key', async (t) => {
 
   const location = `${context.systemBucket}/wrong-stackname/workflows/buckets.json`;
 
-  await t.throws(
-    bucketsConfigJsonObject(),
+  await t.throwsAsync(
+    () => bucketsConfigJsonObject(),
     `Unable to read bucketsConfiguration from ${location}: The specified key does not exist.`
   );
 });

@@ -11,7 +11,6 @@
     "test-coverage": "nyc ava"
   },
   "ava": {
-    "files": "test/**/*.js",
     "serial": true
   },
   "nyc": {
@@ -36,7 +35,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "devDependencies": {
-    "ava": "^0.25.0",
+    "ava": "^2.1.0",
     "nyc": "^14.0.0"
   }
 }

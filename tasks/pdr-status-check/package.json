@@ -27,7 +27,6 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "ava": {
-    "files": "tests",
     "serial": true
   },
   "nyc": {
@@ -43,7 +42,7 @@
   },
   "devDependencies": {
     "@cumulus/test-data": "1.13.0",
-    "ava": "^0.25.0",
+    "ava": "^2.1.0",
     "lodash.isequal": "^4.5.0",
     "lodash.some": "^4.6.0",
     "nyc": "^14.0.0",

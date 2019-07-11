@@ -59,15 +59,16 @@ test('DynamoDb.get() returns an existing item', async (t) => {
 test('DynamoDb.get() throws RecordDoesNotExist when item does not exist', async (t) => {
   const { client } = t.context;
 
-  const error = await t.throws(DynamoDb.get({
-    tableName: process.env.tableName,
-    client,
-    item: {
-      hash: randomId('hash')
-    }
-  }));
-
-  t.true(error instanceof RecordDoesNotExist);
+  await t.throwsAsync(
+    () => DynamoDb.get({
+      tableName: process.env.tableName,
+      client,
+      item: {
+        hash: randomId('hash')
+      }
+    }),
+    RecordDoesNotExist
+  );
 });
 
 test.serial('DynamoDb.scan() properly returns all paginated results', async (t) => {
