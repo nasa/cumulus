@@ -1,7 +1,5 @@
 # @cumulus/test-data
 
-[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
-
 @cumulus/test-data provides a collection of example data for use in testing Cumulus modules.
 
 ## What is Cumulus?

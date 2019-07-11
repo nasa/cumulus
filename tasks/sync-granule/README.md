@@ -1,7 +1,5 @@
 # @cumulus/sync-granule
 
-[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
-
 Download a given granule from a given provider to S3
 
 ## Message Configuration

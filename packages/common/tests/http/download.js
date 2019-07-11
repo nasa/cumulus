@@ -41,7 +41,9 @@ test('http.download returns a rejected Promise if the file does not exist', asyn
     .get('/hello.txt')
     .reply(404);
 
-  const error = await t.throws(http.download('http://www.example.com/hello.txt', t.context.destination));
+  const error = await t.throwsAsync(
+    () => http.download('http://www.example.com/hello.txt', t.context.destination)
+  );
 
   t.is(error.name, 'HTTPError');
   t.is(error.statusCode, 404);
@@ -52,7 +54,9 @@ test('http.download returns a rejected Promise if an internal server error is re
     .get('/hello.txt')
     .reply(500, 'Internal Server Error');
 
-  const error = await t.throws(http.download('http://www.example.com/hello.txt', t.context.destination));
+  const error = await t.throwsAsync(
+    () => http.download('http://www.example.com/hello.txt', t.context.destination)
+  );
 
   t.is(error.name, 'HTTPError');
   t.is(error.statusCode, 500);
