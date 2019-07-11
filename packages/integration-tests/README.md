@@ -1,7 +1,5 @@
 # @cumulus/integration-tests
 
-[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
-
 @cumulus/integration-tests provides a CLI and functions for testing Cumulus workflow executions in a Cumulus deployment.
 
 ## What is Cumulus?
