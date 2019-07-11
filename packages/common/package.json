@@ -30,7 +30,7 @@
     "test-ci": "npm run lint && npm run mocha-junit"
   },
   "ava": {
-    "files": "tests"
+    "files": ["tests/**"]
   },
   "nyc": {
     "exclude": [
@@ -84,7 +84,7 @@
   },
   "devDependencies": {
     "@cumulus/test-data": "1.13.0",
-    "ava": "^0.25.0",
+    "ava": "^2.1.0",
     "jsdoc-to-markdown": "^4.0.1",
     "nock": "^10.0.0",
     "nyc": "^14.0.0",

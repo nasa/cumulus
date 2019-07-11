@@ -136,13 +136,13 @@ test('EarthdataLogin.getAccessToken() throws a TypeError if authorizationCode is
     redirectUri: 'http://www.example.com/cb'
   });
 
-  try {
-    await earthdataLogin.getAccessToken();
-    t.fail('Expected getAccessToken to throw an error');
-  } catch (err) {
-    t.true(err instanceof TypeError);
-    t.is(err.message, 'authorizationCode is required');
-  }
+  await t.throwsAsync(
+    () => earthdataLogin.getAccessToken(),
+    {
+      instanceOf: TypeError,
+      message: 'authorizationCode is required'
+    }
+  );
 });
 
 test.serial('EarthdataLogin.getAccessToken() sends a correct request to the token endpoint', async (t) => {
@@ -243,12 +243,10 @@ test.serial('EarthdataLogin.getAccessToken() throws an OAuth2AuthenticationFailu
     .post('/oauth/token')
     .reply(400);
 
-  try {
-    await earthdataLogin.getAccessToken('authorization-code');
-    t.fail('Expected a OAuth2AuthenticationFailure error');
-  } catch (err) {
-    t.true(err instanceof OAuth2AuthenticationFailure);
-  }
+  await t.throwsAsync(
+    () => earthdataLogin.getAccessToken('authorization-code'),
+    OAuth2AuthenticationFailure
+  );
 
   t.true(tokenRequest.isDone());
 });
@@ -265,12 +263,10 @@ test.serial('EarthdataLogin.getAccessToken() throws an OAuth2AuthenticationError
     .post('/oauth/token')
     .reply(500);
 
-  try {
-    await earthdataLogin.getAccessToken('authorization-code');
-    t.fail('Expected a OAuth2AuthenticationError error');
-  } catch (err) {
-    t.true(err instanceof OAuth2AuthenticationError);
-  }
+  await t.throwsAsync(
+    () => earthdataLogin.getAccessToken('authorization-code'),
+    OAuth2AuthenticationError
+  );
 
   t.true(tokenRequest.isDone());
 });
@@ -283,13 +279,13 @@ test('EarthdataLogin.refreshAccessToken() throws a TypeError if refreshToken is 
     redirectUri: 'http://www.example.com/cb'
   });
 
-  try {
-    await earthdataLogin.refreshAccessToken();
-    t.fail('Expected refreshAccessToken to throw an error');
-  } catch (err) {
-    t.true(err instanceof TypeError);
-    t.is(err.message, 'refreshToken is required');
-  }
+  await t.throwsAsync(
+    () => earthdataLogin.refreshAccessToken(),
+    {
+      instanceOf: TypeError,
+      message: 'refreshToken is required'
+    }
+  );
 });
 
 test.serial('EarthdataLogin.refreshAccessToken() sends a correct request to the token endpoint', async (t) => {
@@ -389,12 +385,10 @@ test.serial('EarthdataLogin.refreshAccessToken() throws an OAuth2AuthenticationF
     .post('/oauth/token')
     .reply(400);
 
-  try {
-    await earthdataLogin.refreshAccessToken('invalid-refresh-token');
-    t.fail('Expected a OAuth2AuthenticationFailure error');
-  } catch (err) {
-    t.true(err instanceof OAuth2AuthenticationFailure);
-  }
+  await t.throwsAsync(
+    () => earthdataLogin.refreshAccessToken('invalid-refresh-token'),
+    OAuth2AuthenticationFailure
+  );
 
   t.true(tokenRequest.isDone());
 });
@@ -411,12 +405,10 @@ test.serial('EarthdataLogin.refreshAccessToken() throws an OAuth2AuthenticationE
     .post('/oauth/token')
     .reply(500);
 
-  try {
-    await earthdataLogin.refreshAccessToken('refresh-token');
-    t.fail('Expected a OAuth2AuthenticationError error');
-  } catch (err) {
-    t.true(err instanceof OAuth2AuthenticationError);
-  }
+  await t.throwsAsync(
+    () => earthdataLogin.refreshAccessToken('refresh-token'),
+    OAuth2AuthenticationError
+  );
 
   t.true(tokenRequest.isDone());
 });
