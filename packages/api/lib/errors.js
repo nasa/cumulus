@@ -4,7 +4,7 @@ const { createErrorType } = require('@cumulus/common/errors');
 
 module.exports.TokenUnauthorizedUserError = createErrorType('TokenUnauthorizedUserError');
 module.exports.IndexExistsError = createErrorType('IndexExistsError');
-module.exports.InvalidDataError = createErrorType('InvalidDataError');
+module.exports.BadRequestError = createErrorType('BadRequestError');
 
 class AssociatedRulesError extends Error {
   constructor(message, rules = []) {
