@@ -8,7 +8,7 @@ const { Search } = require('../es/search');
 const indexer = require('../es/indexer');
 const models = require('../models');
 const Collection = require('../es/collections');
-const { AssociatedRulesError } = require('../lib/errors');
+const { AssociatedRulesError, InvalidDataError } = require('../lib/errors');
 
 /**
  * Index a collection to Elasticsearch.
@@ -93,6 +93,9 @@ async function post(req, res) {
       throw e;
     }
   } catch (e) {
+    if (e instanceof InvalidDataError) {
+      return res.boom.badRequest(e.message);
+    }
     return res.boom.badImplementation(e.message);
   }
 }
