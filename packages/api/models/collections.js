@@ -10,7 +10,7 @@ function checkRegex(regex, sampleFileName) {
   const validation = new RegExp(regex);
   const match = validation.test(sampleFileName);
 
-  if (!match) throw new BadRequestError(`regex cannot validate ${sampleFileName}`);
+  if (!match) throw new BadRequestError(`regex ${regex} cannot validate ${sampleFileName}`);
 }
 
 class Collection extends Manager {

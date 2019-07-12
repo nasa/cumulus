@@ -93,6 +93,9 @@ async function post(req, res) {
       throw e;
     }
   } catch (e) {
+    if (e.name === 'SchemaValidationError') {
+      return res.boom.badRequest(e.message);
+    }
     if (e instanceof BadRequestError) {
       return res.boom.badRequest(e.message);
     }
