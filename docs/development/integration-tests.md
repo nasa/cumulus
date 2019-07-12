@@ -30,16 +30,5 @@ will be used.
 
 If you create a new stack and want to be able to run integration tests against
 it in CI, you will need to add it to
-[travis-ci/select-stack.js](travis-ci/select-stack.js).
+[bamboo/select-stack.js](bamboo/select-stack.js).
 
-In order to prevent multiple instances of the integration tests from running
-against a stack at the same time, a lock file is created in S3 for each stack.
-Before integration tests start they will wait until that lock file is not
-present. They will then create that lock file, run the tests, and delete the
-lock file. The lock file will be located at
-`s3://${CACHE_BUCKET}/travis-ci-integration-tests/${DEPLOYMENT}.lock`. The lock
-file will contain a link to the Travis CI job that created the lock file. If
-your tests seem to be hung waiting for that lock file, check to see if the job
-that created the lock file is still running or has crashed. If it has crashed
-then the lock file should be deleted. You should also figure out why the lock
-file was not cleaned up and fix that for next time.

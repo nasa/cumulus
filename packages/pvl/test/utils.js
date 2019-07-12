@@ -1,23 +1,23 @@
-const test = require('ava').test;
+const test = require('ava');
 const pvlToJS = require('../t').pvlToJS;
 const PVLTextString = require('../lib/models').PVLTextString;
 
 test('accessing aggregates', (t) => {
   const input = pvlToJS(
-    'GROUP = THAT;\n' +
-    '  OBJECT = THOSE;\n' +
-    '    HERE = THERE;\n' +
-    '  END_OBJECT;\n' +
-    '  OBJECT = THOSE;\n' +
-    '    HERE = WHERE;\n' +
-    '  END_OBJECT;\n' +
-    'END_GROUP;\n' +
-    'GROUP = FOO;\n' +
-    '  BAR = BAZ;\n' +
-    'END_GROUP;\n' +
-    'OBJECT = THOSE;\n' +
-    '  BAR = BAZ;\n' +
-    'END_OBJECT;'
+    'GROUP = THAT;\n'
+    + '  OBJECT = THOSE;\n'
+    + '    HERE = THERE;\n'
+    + '  END_OBJECT;\n'
+    + '  OBJECT = THOSE;\n'
+    + '    HERE = WHERE;\n'
+    + '  END_OBJECT;\n'
+    + 'END_GROUP;\n'
+    + 'GROUP = FOO;\n'
+    + '  BAR = BAZ;\n'
+    + 'END_GROUP;\n'
+    + 'OBJECT = THOSE;\n'
+    + '  BAR = BAZ;\n'
+    + 'END_OBJECT;'
   );
 
   t.is(input.aggregates().length, 3);
@@ -34,8 +34,8 @@ test('accessing aggregates', (t) => {
 
 test('parsing non-nested items', (t) => {
   const input = pvlToJS(
-    'THIS = THAT;\n' +
-    'HERE = THERE;'
+    'THIS = THAT;\n'
+    + 'HERE = THERE;'
   );
 
   t.deepEqual(input.get('HERE'), new PVLTextString('THERE'));

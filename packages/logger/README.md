@@ -1,4 +1,4 @@
-# @cumulus/logger [![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
+# @cumulus/logger
 
 > A logging library for use on the Cumulus project.
 

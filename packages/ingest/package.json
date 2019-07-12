@@ -14,7 +14,9 @@
     "access": "public"
   },
   "ava": {
-    "files": "test"
+    "files": [
+      "!test/fixtures/**/*"
+    ]
   },
   "nyc": {
     "exclude": [
@@ -66,7 +68,7 @@
   "devDependencies": {
     "@cumulus/test-data": "1.13.0",
     "@cumulus/checksum": "1.13.0",
-    "ava": "^0.25.0",
+    "ava": "^2.1.0",
     "nyc": "^14.0.0",
     "proxyquire": "^2.0.0",
     "sinon": "^7.1.1"
