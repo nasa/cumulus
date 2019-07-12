@@ -1,7 +1,5 @@
 # @cumulus/test-processing
 
-[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
-
 Fake processing task to be used for integration tests.
 
 ## What is Cumulus?

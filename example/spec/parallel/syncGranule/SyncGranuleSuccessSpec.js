@@ -159,8 +159,7 @@ describe('The Sync Granules workflow', () => {
         granules: [
           {
             ...expectedPayload.granules[0],
-            sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration,
-            sync_granule_end_time: lambdaOutput.payload.granules[0].sync_granule_end_time
+            sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration
           }
         ]
       };
@@ -172,8 +171,7 @@ describe('The Sync Granules workflow', () => {
       const thisExpectedGranules = [
         {
           ...expectedPayload.granules[0],
-          sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration,
-          sync_granule_end_time: lambdaOutput.payload.granules[0].sync_granule_end_time
+          sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration
         }
       ];
 

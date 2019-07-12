@@ -124,7 +124,7 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
-  Promise.all([
+  await Promise.all([
     t.context.fileModel.deleteTable(),
     t.context.granuleModel.deleteTable(),
     t.context.collectionModel.deleteTable()

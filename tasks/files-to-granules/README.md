@@ -1,7 +1,5 @@
 # @cumulus/files-to-granules
 
-[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
-
 This lambda function converts array-of-files input payloads into granule object output payloads.
 It is primarily intended to support compatibility with the standard output of a [cumulus-process](https://github.com/nasa/cumulus-process-py) task,
 and convert that output into a granule object accepted as input by the majority of other Cumulus tasks.

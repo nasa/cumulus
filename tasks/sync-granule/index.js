@@ -39,8 +39,7 @@ async function download(ingest, bucket, provider, granules) {
 
       return {
         ...r,
-        sync_granule_duration: endTime - startTime,
-        sync_granule_end_time: endTime
+        sync_granule_duration: endTime - startTime
       };
     } catch (e) {
       log.error(e);
