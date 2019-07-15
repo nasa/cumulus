@@ -344,7 +344,11 @@ function generateFileUrl(file, distEndpoint, cmrGranuleUrlType = 'distribution')
   }
 
   if (cmrGranuleUrlType === 's3') {
-    return file.filename;
+    if (file.filename) {
+      return file.filename;
+    }
+
+    return aws.buildS3Uri(file.bucket, file.key);
   }
 
   return null;
@@ -420,14 +424,16 @@ function constructRelatedUrls({
   files,
   distEndpoint,
   buckets,
-  s3CredsEndpoint = 's3credentials'
+  s3CredsEndpoint = 's3credentials',
+  cmrGranuleUrlType = 'distribution'
 }) {
   const credsUrl = urljoin(distEndpoint, s3CredsEndpoint);
   const s3CredentialsObject = getS3CredentialsObject(credsUrl);
   const cmrUrlObjects = constructOnlineAccessUrls({
     files,
     distEndpoint,
-    buckets
+    buckets,
+    cmrGranuleUrlType
   });
 
   const relatedUrls = cmrUrlObjects.concat(s3CredentialsObject);
@@ -532,12 +538,14 @@ async function updateUMMGMetadata({
   cmrFile,
   files,
   distEndpoint,
-  buckets
+  buckets,
+  cmrGranuleUrlType = 'distribution'
 }) {
   const newURLs = constructRelatedUrls({
     files,
     distEndpoint,
-    buckets
+    buckets,
+    cmrGranuleUrlType
   });
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
   const filename = getS3UrlOfFile(cmrFile);
@@ -714,7 +722,6 @@ async function updateCMRMetadata({
   if (isECHO10File(filename)) {
     theMetadata = await updateEcho10XMLMetadata(params);
   } else if (isUMMGFile(filename)) {
-    // LAUREN TO DO
     theMetadata = await updateUMMGMetadata(params);
   } else {
     throw new errors.CMRMetaFileNotFound('Invalid CMR filetype passed to updateCMRMetadata');
