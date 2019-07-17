@@ -1,5 +1,9 @@
 data "aws_caller_identity" "current" {}
 
+locals {
+  dist_dir = "${path.module}/dist"
+}
+
 resource "aws_dynamodb_table" "access_tokens" {
   name         = "${var.prefix}-s3-credentials-access-tokens"
   billing_mode = "PAY_PER_REQUEST"
@@ -61,11 +65,16 @@ resource "aws_iam_role_policy" "s3_credentials_lambda" {
   role   = aws_iam_role.s3_credentials_lambda.id
 }
 
+data "archive_file" "s3_credentials_endpoint_package" {
+  type = "zip"
+  source_file = "${dist_dir}/index.js"
+  output_path = "${dist_dir}/src.zip"
+}
+
 resource "aws_lambda_function" "s3_credentials" {
-  function_name = "${var.prefix}-s3-credentials-endpoint"
-  # TODO Fetch this from ... somewhere. Or package it with the module zip file? Probably the better option
-  filename         = "${path.module}/dist/src.zip"
-  source_code_hash = filebase64sha256("${path.module}/dist/src.zip")
+  function_name    = "${var.prefix}-s3-credentials-endpoint"
+  filename         = "${local.dist_dir}/index.js"
+  source_code_hash = data.archive_file.s3_credentials_endpoint_package.output_base64sha256
   handler          = "index.handler"
   role             = aws_iam_role.s3_credentials_lambda.arn
   runtime          = "nodejs8.10"
@@ -78,8 +87,7 @@ resource "aws_lambda_function" "s3_credentials" {
   environment {
     variables = {
       DISTRIBUTION_REDIRECT_ENDPOINT = "https://${var.rest_api.id}.execute-api.${var.region}.amazonaws.com/${var.stage_name}/${var.redirect_path}"
-      # TODO Remove this stub value
-      # public_buckets            = ""
+      public_buckets            = var.public_buckets
       EARTHDATA_BASE_URL        = var.urs_url
       EARTHDATA_CLIENT_ID       = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD = var.urs_client_password
@@ -101,7 +109,6 @@ resource "aws_lambda_permission" "lambda_permission" {
 }
 
 # GET /s3credentials
-
 resource "aws_api_gateway_resource" "s3_credentials" {
   rest_api_id = var.rest_api.id
   parent_id   = var.rest_api.root_resource_id
@@ -125,7 +132,6 @@ resource "aws_api_gateway_integration" "s3_credentials" {
 }
 
 # GET /redirect
-
 resource "aws_api_gateway_resource" "s3_credentials_redirect" {
   rest_api_id = var.rest_api.id
   parent_id   = var.rest_api.root_resource_id
@@ -149,7 +155,6 @@ resource "aws_api_gateway_integration" "s3_credentials_redirect" {
 }
 
 # API deployment
-
 resource "aws_api_gateway_deployment" "s3_credentials" {
   depends_on = [
     "aws_api_gateway_integration.s3_credentials_redirect",
