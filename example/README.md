@@ -210,6 +210,7 @@ Make sure to:
 
 **terraform.tfvars**
 ```hcl
+permissions_boundary           = "arn:aws:iam::AWS_ACCOUNT_ID:policy/SomeBoundary"
 prefix                         = "pre"
 sts_credentials_lambda_arn     = "sts_credentials_lambda_arn"
 tea_config_bucket              = "my-internal"

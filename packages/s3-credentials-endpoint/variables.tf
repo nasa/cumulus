@@ -4,6 +4,11 @@ variable "prefix" {
   type = string
 }
 
+variable "public_buckets" {
+  default = ""
+  description = "A comma separated string of public bucket names."
+}
+
 variable "region" {
   type    = string
   default = "us-east-1"
