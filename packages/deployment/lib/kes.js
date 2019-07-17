@@ -389,8 +389,6 @@ class UpdatedKes extends Kes {
 
         updatedRules[`${ruleName}${ruleNumber}`] = newRule;
       });
-
-      delete updatedRules[ruleName];
     });
 
     this.config.rules = updatedRules;
