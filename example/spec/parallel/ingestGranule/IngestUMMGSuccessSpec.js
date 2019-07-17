@@ -246,7 +246,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
       granule = postToCmrOutput.payload.granules[0];
       files = granule.files;
-
+      process.env.CMR_ENVIRONMENT = 'UAT';
       const result = await Promise.all([
         getOnlineResources(granule),
         // Login with Earthdata and get access token.
@@ -279,9 +279,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
             cmrConceptId: granule.cmrConceptId,
             cmrLink: granule.cmrLink,
             post_to_cmr_duration: granule.post_to_cmr_duration,
-            post_to_cmr_start_time: granule.post_to_cmr_start_time,
-            sync_granule_duration: granule.sync_granule_duration,
-            sync_granule_end_time: granule.sync_granule_end_time
+            sync_granule_duration: granule.sync_granule_duration
           }
         ]
       };

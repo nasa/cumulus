@@ -1,10 +1,9 @@
 # @cumulus/checksum
 
-[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
 
 ## What is Cumulus?
 
-Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's 
+Cumulus is a cloud-based data ingest, archive, distribution and management prototype for NASA's
 future Earth science data streams.
 
 [Cumulus Documentation](https://nasa.github.io/cumulus)

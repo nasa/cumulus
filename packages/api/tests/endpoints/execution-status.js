@@ -75,8 +75,7 @@ const lambdaCommonOutput = {
     system_bucket: 'test-sandbox-internal'
   },
   meta: {
-    sync_granule_duration: 2872,
-    sync_granule_end_time: 1536
+    sync_granule_duration: 2872
   }
 };
 

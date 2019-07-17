@@ -26,8 +26,8 @@ async function searchConcept({
   headers = {},
   format = 'json',
   recursive = true,
-  cmrLimit,
-  cmrPageSize
+  cmrLimit = process.env.CMR_LIMIT,
+  cmrPageSize = process.env.CMR_PAGE_SIZE
 }) {
   const recordsLimit = cmrLimit || 100;
   const pageSize = searchParams.pageSize || cmrPageSize || 50;
