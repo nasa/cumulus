@@ -332,8 +332,8 @@ Ideally the test can run in parallel with other tests and should be put in the `
 
 ## Using your AWS CF stack in Travis CI
 
-To use your own CF stack for running integration tests in Travis CI builds, add
-your stack name [here](../travis-ci/select-stack.js).
+To use your own CF stack for running integration tests in bamboo, add
+your stack name [here](../bamboo/select-stack.js).
 
 ## Additional Notes
 

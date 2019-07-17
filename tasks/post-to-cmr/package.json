@@ -26,9 +26,7 @@
     "prepare": "npm run build"
   },
   "ava": {
-    "files": "tests",
-    "serial": true,
-    "color": false
+    "serial": true
   },
   "nyc": {
     "exclude": [
@@ -46,7 +44,7 @@
   "devDependencies": {
     "@cumulus/cmr-client": "1.13.0",
     "@cumulus/test-data": "1.13.0",
-    "ava": "^0.25.0",
+    "ava": "^2.1.0",
     "nyc": "^14.0.0",
     "sinon": "^4.5.0",
     "webpack": "~4.5.0",
