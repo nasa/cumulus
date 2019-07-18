@@ -1,7 +1,5 @@
 # @cumulus/hello-world
 
-[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
-
 `@cumulus/hello-world` contains code for a lambda function returning javascript object:
 
 ```javascript
