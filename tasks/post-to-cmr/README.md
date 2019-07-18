@@ -1,7 +1,5 @@
 # @cumulus/post-to-cmr
 
-[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
-
 This lambda function posts granule metadata to [CMR (Common Metadata Repository)](https://cmr.earthdata.nasa.gov/search/).
 
 It will use the information contained in a metadata file on S3 and post that information to the CMR service.

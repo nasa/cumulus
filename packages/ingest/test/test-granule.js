@@ -173,11 +173,10 @@ test('addBucketToFile throws an exception if no config matches', (t) => {
 
   const file = { name: 'right-file' };
 
-  try {
-    testGranule.addBucketToFile(file);
-  } catch (e) {
-    t.is(e.message, 'Unable to update file. Cannot find file config for file right-file');
-  }
+  t.throws(
+    () => testGranule.addBucketToFile(file),
+    'Unable to update file. Cannot find file config for file right-file'
+  );
 });
 
 test('addBucketToFile adds the correct bucket when a config is found', (t) => {
@@ -660,10 +659,16 @@ test('ingestFile throws error when configured to handle duplicates with error', 
   // added to the destination bucket). Otherwise, it will throw an error on the
   // first attempt to ingest the file.
   await testGranule.ingestFile(file, destBucket, duplicateHandling);
-  const error = await t.throws(testGranule.ingestFile(file, destBucket, duplicateHandling));
+
   const destFileKey = path.join(fileStagingDir, testGranule.collectionId, file.name);
-  t.true(error instanceof errors.DuplicateFile);
-  t.is(error.message, `${destFileKey} already exists in ${destBucket} bucket`);
+
+  await t.throwsAsync(
+    () => testGranule.ingestFile(file, destBucket, duplicateHandling),
+    {
+      instanceOf: errors.DuplicateFile,
+      message: `${destFileKey} already exists in ${destBucket} bucket`
+    }
+  );
 });
 
 test('ingestFile skips ingest when duplicateHandling is skip', async (t) => {
@@ -776,10 +781,14 @@ test('ingestFile throws an error when invalid checksum is provided', async (t) =
   // This test needs to use a unique bucket for each test (or remove the object
   // added to the destination bucket). Otherwise, it will throw an error on the
   // first attempt to ingest the file.
-  const error = await t.throws(testGranule.ingestFile(file, destBucket, duplicateHandling));
-  t.true(error instanceof errors.InvalidChecksum);
-  t.is(error.message, `Invalid checksum for S3 object s3://${destBucket}/${stagingPath}/${file.name}`
-    + ` with type ${file.checksumType} and expected sum ${file.checksum}`);
+
+  await t.throwsAsync(
+    () => testGranule.ingestFile(file, destBucket, duplicateHandling),
+    {
+      instanceOf: errors.InvalidChecksum,
+      message: `Invalid checksum for S3 object s3://${destBucket}/${stagingPath}/${file.name} with type ${file.checksumType} and expected sum ${file.checksum}`
+    }
+  );
 });
 
 test('ingestFile throws an error when no checksum is provided and the size is not as expected', async (t) => {
@@ -812,10 +821,13 @@ test('ingestFile throws an error when no checksum is provided and the size is no
   // This test needs to use a unique bucket for each test (or remove the object
   // added to the destination bucket). Otherwise, it will throw an error on the
   // first attempt to ingest the file.
-  const error = await t.throws(testGranule.ingestFile(file, destBucket, duplicateHandling));
-  t.true(error instanceof errors.UnexpectedFileSize);
-  t.is(error.message, `verifyFile ${file.name} failed: Actual file size ${params.Body.length}`
-    + ` did not match expected file size ${file.size}`);
+  await t.throwsAsync(
+    () => testGranule.ingestFile(file, destBucket, duplicateHandling),
+    {
+      instanceOf: errors.UnexpectedFileSize,
+      message: `verifyFile ${file.name} failed: Actual file size ${params.Body.length} did not match expected file size ${file.size}`
+    }
+  );
 });
 
 test('verifyFile returns type and value when file is verified', async (t) => {

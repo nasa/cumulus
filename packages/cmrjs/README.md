@@ -1,7 +1,5 @@
 # @cumulus/cmrjs
 
-[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
-
 A Node.js client to read from, write to, and delete from NASA's Common Metadata Repository (CMR) API.
 
 ## What is Cumulus?

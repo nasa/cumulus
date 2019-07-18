@@ -5,8 +5,8 @@ global.__isDebug = true;
 
 const log = require('@cumulus/common/log');
 const program = require('commander');
-const workflow = require('./workflow');
 const local = require('@cumulus/common/local-helpers');
+const workflow = require('./workflow');
 
 const increaseVerbosity = (_v, total) => total + 1;
 
