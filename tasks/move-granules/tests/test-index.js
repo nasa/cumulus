@@ -624,7 +624,7 @@ test.serial('when duplicateHandling is specified as "replace" via collection, do
   await granuleFilesOverwrittenTest(t, payload);
 });
 
-test.only('Move granules throws an error when cmr file type is distribution and no distribution endpoint is set', async (t) => {
+test.serial('Move granules throws an error when cmr file type is distribution and no distribution endpoint is set', async (t) => {
   const newPayload = buildPayload(t);
   delete newPayload.config.distribution_endpoint;
 
