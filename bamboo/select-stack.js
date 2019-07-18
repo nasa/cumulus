@@ -5,12 +5,12 @@
 const git = require('simple-git');
 
 function determineIntegrationTestStackName(cb) {
-  const branch = process.env.TRAVIS_PULL_REQUEST_BRANCH || process.env.TRAVIS_BRANCH;
+  const branch = process.env.BRANCH
 
   if (!branch) return cb('none');
 
   // Nightly cron job
-  if (process.env.TRAVIS_EVENT_TYPE === 'cron') return cb('cumulus-nightly');
+  //if (process.env.TRAVIS_EVENT_TYPE === 'cron') return cb('cumulus-nightly');
 
   if (branch === 'master') return cb('cumulus-from-source');
 
@@ -19,15 +19,15 @@ function determineIntegrationTestStackName(cb) {
     'Jenny Liu': 'jl',
     jennyhliu: 'jl',
     kkelly51: 'kk',
-    'Lauren Frederick': 'lf',
-    laurenfrederick: 'lf',
+    'Lauren Frederick': 'lf-int-test',
+    laurenfrederick: 'lf-int-test',
     'Mark Boyd': 'mboyd-int',
     Marc: 'mth',
     yjpa7145: 'mth',
     mhuffnagle: 'mth',
     'Marc Huffnagle': 'mth',
     'Matt Savoie': 'mhs',
-    'Jonathan Kovarik': 'jk',
+    'Jonathan Kovarik': 'jk2',
     'Menno Van Diermen': 'mvd',
     'Jacob Campbell': 'jc'
   };

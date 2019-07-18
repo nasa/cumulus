@@ -1,10 +1,10 @@
-#!/bin/sh
-
-set -e
+#!/bin/bash
+set -ex
+. ./bamboo/abort-if-skip-integration-tests.sh
+. ./bamboo/abort-if-not-pr-or-redeployment.sh
 
 npm install
-. ./travis-ci/set-env-vars.sh
-
+. ./bamboo/set-bamboo-env-variables.sh
 set +e
 (
   set -e
@@ -19,15 +19,23 @@ set +e
     ./node_modules/.bin/kes cf delete \
       --kes-folder app \
       --region us-east-1 \
-      --deployment "$DEPLOYMENT" \
+      --stack nightly
+      --yes
+
+    echo Delete db deployment
+
+    ./node_modules/.bin/kes cf delete \
+      --kes-folder app \
+      --region us-east-1 \
+      --stack nightly-db
       --yes
 
     echo Delete iam deployment
 
     ./node_modules/.bin/kes cf delete \
-      --kes-folder iam \
+      --kes-folder app \
       --region us-east-1 \
-      --deployment "$DEPLOYMENT" \
+      --stack nightly-iam
       --yes
 
     echo Delete app deployment

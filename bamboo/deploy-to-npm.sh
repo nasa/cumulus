@@ -1,10 +1,10 @@
-#!/bin/sh
+#!/bin/bash
+set -ex
+. ./bamboo/set-bamboo-env-variables.sh
+. ./bamboo/abort-if-not-publish.sh
 
-set -e
-
-echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-VERSION=$(jq --raw-output .version lerna.json)
-NPM_TAG=$(node ./travis-ci/npm-tag.js);
+export VERSION=$(jq --raw-output .version lerna.json)
+export NPM_TAG=$(node ./bamboo/npm-tag.js);
 
 echo "Publishing packages to NPM with version=${VERSION} and tag=${NPM_TAG}"
 lerna publish \
@@ -15,3 +15,4 @@ lerna publish \
   --force-publish=* \
   --dist-tag=${NPM_TAG} \
   --exact
+

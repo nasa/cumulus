@@ -6,7 +6,7 @@ const fs = require('fs-extra');
 const getLatestVersion = require('latest-version');
 const semver = require('semver');
 
-// Given a git tag (process.env.TRAVIS_TAG), this function determines what NPM
+// Given a git tag (process.env.GIT_TAG), this function determines what NPM
 // tag to apply to a new release.  More simply, this determines if the NPM tag
 // should be "latest", or just the value of the git tag.  Tags other than
 // "latest" will be prefixed with "release-", since NPM tags are not allowed to
@@ -26,8 +26,8 @@ const semver = require('semver');
 //   tagged "latest" in NPM then this is a new "latest" release, and "latest" is
 //   returned.
 async function getNpmTag() {
-  const thisTag = process.env.TRAVIS_TAG;
-  if (!thisTag) throw new Error('TRAVIS_TAG is not set');
+  const thisTag = process.env.GIT_TAG;
+  if (!thisTag) throw new Error('Version is not set');
 
   const lernaConfig = JSON.parse(await fs.readFile('lerna.json', 'utf8'));
   const thisVersion = lernaConfig.version;
