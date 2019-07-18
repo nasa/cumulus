@@ -1,7 +1,5 @@
 # @cumulus/parse-pdr
 
-[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
-
 `@cumulus/parse-pdr` parses a pdr file.
 
 ## Message Configuration

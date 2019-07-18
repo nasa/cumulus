@@ -1,7 +1,5 @@
 # @cumulus/move-granules
 
-[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
-
 This lambda function is responsible for moving granule files from a file staging location to their final location.
 
 ## Message Configuration

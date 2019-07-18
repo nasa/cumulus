@@ -289,20 +289,20 @@ test('updateCMRMetadata file throws error if incorrect cmrfile provided', async 
   } = t.context;
   const updateCMRMetadata = cmrUtils.__get__('updateCMRMetadata');
 
-  const error = await t.throws(
-    // updateCMRMetadata(granId, badCMRFile, updatedFiles, distEndpoint, published, 'fakebucket')
-    updateCMRMetadata({
+  await t.throwsAsync(
+    () => updateCMRMetadata({
       granuleId: granId,
       cmrFile: badCMRFile,
       files: updatedFiles,
       distEndpoint,
       published,
       inBuckets: 'fakebucket'
-    })
+    }),
+    {
+      name: 'CMRMetaFileNotFound',
+      message: 'Invalid CMR filetype passed to updateCMRMetadata'
+    }
   );
-
-  t.is(error.name, 'CMRMetaFileNotFound');
-  t.is(error.message, 'Invalid CMR filetype passed to updateCMRMetadata');
 });
 
 test('publishUMMGJSON2CMR calls ingestUMMGranule with ummgMetadata via valid CMR object', async (t) => {

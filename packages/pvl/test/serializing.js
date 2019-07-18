@@ -1,4 +1,4 @@
-const test = require('ava').test;
+const test = require('ava');
 const jsToPVL = require('../t').jsToPVL;
 const PVLRoot = require('../lib/models').PVLRoot;
 const PVLObject = require('../lib/models').PVLObject;
@@ -19,40 +19,34 @@ test('write multiple attributes', (t) => {
     .add('FOO', new PVLTextString('BAR'))
     .add('BAZ', new PVLTextString('QUX'))
     .add('BAZ', new PVLTextString('FIZZ'));
-  const expected =
-    'FOO = "BAR";\n' +
-    'BAZ = "QUX";\n' +
-    'BAZ = "FIZZ";\n';
+  const expected =    'FOO = "BAR";\n'
+    + 'BAZ = "QUX";\n'
+    + 'BAZ = "FIZZ";\n';
   t.deepEqual(jsToPVL(input), expected);
 });
 
 test('write one group', (t) => {
   const input = new PVLRoot()
     .addAggregate(new PVLGroup('FOO')
-      .add('BAR', new PVLTextString('BAZ'))
-    );
-  const expected =
-    'GROUP = FOO;\n' +
-    '  BAR = "BAZ";\n' +
-    'END_GROUP = FOO;\n';
+      .add('BAR', new PVLTextString('BAZ')));
+  const expected =    'GROUP = FOO;\n'
+    + '  BAR = "BAZ";\n'
+    + 'END_GROUP = FOO;\n';
   t.deepEqual(jsToPVL(input), expected);
 });
 
 test('write multiple groups', (t) => {
   const input = new PVLRoot()
     .addAggregate(new PVLGroup('FOO')
-      .add('BAR', new PVLTextString('BAZ'))
-    )
+      .add('BAR', new PVLTextString('BAZ')))
     .addAggregate(new PVLGroup('QUX')
-      .add('BAR', new PVLTextString('FIZZ'))
-    );
-  const expected =
-    'GROUP = FOO;\n' +
-    '  BAR = "BAZ";\n' +
-    'END_GROUP = FOO;\n' +
-    'GROUP = QUX;\n' +
-    '  BAR = "FIZZ";\n' +
-    'END_GROUP = QUX;\n';
+      .add('BAR', new PVLTextString('FIZZ')));
+  const expected =    'GROUP = FOO;\n'
+    + '  BAR = "BAZ";\n'
+    + 'END_GROUP = FOO;\n'
+    + 'GROUP = QUX;\n'
+    + '  BAR = "FIZZ";\n'
+    + 'END_GROUP = QUX;\n';
   t.deepEqual(jsToPVL(input), expected);
 });
 
@@ -60,15 +54,12 @@ test('write nested groups', (t) => {
   const input = new PVLRoot()
     .addAggregate(new PVLGroup('FOO')
       .addAggregate(new PVLObject('QUX')
-        .add('BAR', new PVLTextString('BAZ'))
-      )
-    );
-  const expected =
-    'GROUP = FOO;\n' +
-    '  OBJECT = QUX;\n' +
-    '    BAR = "BAZ";\n' +
-    '  END_OBJECT = QUX;\n' +
-    'END_GROUP = FOO;\n';
+        .add('BAR', new PVLTextString('BAZ'))));
+  const expected =    'GROUP = FOO;\n'
+    + '  OBJECT = QUX;\n'
+    + '    BAR = "BAZ";\n'
+    + '  END_OBJECT = QUX;\n'
+    + 'END_GROUP = FOO;\n';
   t.deepEqual(jsToPVL(input), expected);
 });
 
