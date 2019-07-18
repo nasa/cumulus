@@ -44,11 +44,11 @@
       "additional-deployment-options/additional-lambda-logging"
     ],
     "Additional Features": [
-      "data_in_dynamodb",
+      "features/data_in_dynamodb",
       "features/dead_letter_queues",
-      "ems_reporting",
+      "features/ems_reporting",
       "features/execution_payload_retention",
-      "lambda_versioning",
+      "features/lambda_versioning",
       "features/ancillary_metadata"
     ],
     "Upgrading Cumulus": [
