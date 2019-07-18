@@ -585,6 +585,10 @@ jk2:
   prefix: jk2
   prefixNoDash: jk2
 
+jk3:
+  prefix: jk3
+  prefixNoDash: jk3
+
 mboyd-test:
   prefix: mboyd-test
   prefixNoDash: mboydTest
