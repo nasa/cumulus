@@ -61,11 +61,11 @@ test('getQueueNameByUrl returns correct value', (t) => {
 });
 
 test('getMessageTemplate throws error if invalid S3 URI is provided', async (t) => {
-  await t.throws(getMessageFromTemplate('fake-uri'));
+  await t.throwsAsync(() => getMessageFromTemplate('fake-uri'));
 });
 
 test('getMessageTemplate throws error if non-existent S3 URI is provided', async (t) => {
-  await t.throws(getMessageFromTemplate('s3://some-bucket/some-key'));
+  await t.throwsAsync(() => getMessageFromTemplate('s3://some-bucket/some-key'));
 });
 
 test('buildQueueMessageFromTemplate does not overwrite contents from message template', (t) => {

@@ -99,8 +99,8 @@ test.serial('The correct output is returned when no PDRs are queued', async (t) 
   const output = await queuePdrs(event);
 
   await validateOutput(t, output);
-  t.deepEqual(output.pdrs_queued, 0);
-  t.falsy(output.running.length, 0);
+  t.is(output.pdrs_queued, 0);
+  t.is(output.running.length, 0);
 });
 
 test.serial('PDRs are added to the queue', async (t) => {

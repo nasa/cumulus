@@ -227,15 +227,13 @@ test.serial('An SNS fallback retry, should throw an error if message does not in
     Records: [{ kinesis: { data: Buffer.from(invalidMessage).toString('base64') } }]
   };
   const snsEvent = wrapKinesisRecord(kinesisEvent.Records[0]);
-  try {
-    await handler(snsEvent, {}, testCallback);
-    t.fail('testCallback should have thrown an error');
-  } catch (error) {
-    console.log(error);
-    t.pass('Callback called with error');
-    t.is(error.message, 'validation failed');
-    t.is(error.errors[0].message, 'should have required property \'collection\'');
-  }
+
+  const error = await t.throwsAsync(
+    () => handler(snsEvent, {}, testCallback),
+    'validation failed'
+  );
+
+  t.is(error.errors[0].message, 'should have required property \'collection\'');
 });
 
 test.serial('A kinesis message, should publish the invalid records to fallbackSNS if the message collection has wrong data type', async (t) => {
@@ -256,14 +254,14 @@ test.serial('An SNS Fallback retry, should throw an error if message collection 
     Records: [{ kinesis: { data: Buffer.from(invalidMessage).toString('base64') } }]
   };
   const snsEvent = wrapKinesisRecord(kinesisEvent.Records[0]);
-  try {
-    await handler(snsEvent, {}, testCallback);
-    t.fail('testCallback should have thrown an error');
-  } catch (error) {
-    t.is(error.message, 'validation failed');
-    t.is(error.errors[0].dataPath, '.collection');
-    t.is(error.errors[0].message, 'should be string');
-  }
+
+  const error = await t.throwsAsync(
+    () => handler(snsEvent, {}, testCallback),
+    'validation failed'
+  );
+
+  t.is(error.errors[0].dataPath, '.collection');
+  t.is(error.errors[0].message, 'should be string');
 });
 
 test.serial('A kinesis message, should publish the invalid record to fallbackSNS if message is invalid json', async (t) => {
@@ -284,11 +282,11 @@ test.serial('An SNS Fallback retry, should throw an error if message is invalid 
     Records: [{ kinesis: { data: Buffer.from(invalidMessage).toString('base64') } }]
   };
   const snsEvent = wrapKinesisRecord(kinesisEvent.Records[0]);
-  try {
-    await handler(snsEvent, {}, testCallback);
-  } catch (error) {
-    t.is(error.message, 'Unexpected end of JSON input');
-  }
+
+  await t.throws(
+    () => handler(snsEvent, {}, testCallback),
+    'Unexpected end of JSON input'
+  );
 });
 
 test.serial('A kinesis message should not publish record to fallbackSNS if it processes.', (t) => {

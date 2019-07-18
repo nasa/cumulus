@@ -1,7 +1,5 @@
 # @cumulus/common
 
-[![Build Status](https://travis-ci.org/nasa/cumulus.svg?branch=master)](https://travis-ci.org/nasa/cumulus)
-
 Common libraries used in Cumulus.
 
 ## Usage

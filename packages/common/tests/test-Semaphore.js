@@ -3,10 +3,7 @@
 const test = require('ava');
 const { dynamodb, dynamodbDocClient } = require('../aws');
 const Semaphore = require('../Semaphore');
-const {
-  isConditionalCheckException,
-  ResourcesLockedError
-} = require('../errors');
+const { ResourcesLockedError } = require('../errors');
 const { randomId } = require('../test-utils');
 
 test.before(async () => {
@@ -51,36 +48,43 @@ test('Semaphore.create() on existing semaphore does not throw an error', async (
   const { semaphore, key } = t.context;
 
   await semaphore.create(key);
-  await t.notThrows(semaphore.create(key));
+
+  await t.notThrowsAsync(() => semaphore.create(key));
 });
 
 test('Semaphore.add() can increase the semaphore value up to the maximum', async (t) => {
   const { semaphore, key } = t.context;
   const maximum = 2;
 
-  await t.notThrows(Promise.all([
-    semaphore.add(key, 1, maximum),
-    semaphore.add(key, 1, maximum)
-  ]));
+  await t.notThrowsAsync(
+    () => Promise.all([
+      semaphore.add(key, 1, maximum),
+      semaphore.add(key, 1, maximum)
+    ])
+  );
 });
 
 test('Semaphore.add() cannot increment the semaphore value beyond the maximum', async (t) => {
   const { semaphore, key } = t.context;
   const maximum = 1;
 
-  const error = await t.throws(Promise.all([
-    semaphore.add(key, 1, maximum),
-    semaphore.add(key, 1, maximum)
-  ]));
-  t.true(error instanceof ResourcesLockedError);
+  await t.throwsAsync(
+    () => Promise.all([
+      semaphore.add(key, 1, maximum),
+      semaphore.add(key, 1, maximum)
+    ]),
+    ResourcesLockedError
+  );
 });
 
 test('Semaphore.add() cannot increment the semaphore value when maximum is 0', async (t) => {
   const { semaphore, key } = t.context;
   const maximum = 0;
 
-  const error = await t.throws(semaphore.add(key, 1, maximum));
-  t.true(error instanceof ResourcesLockedError);
+  await t.throwsAsync(
+    () => semaphore.add(key, 1, maximum),
+    ResourcesLockedError
+  );
 });
 
 test('Semaphore.up() increments the semaphore value', async (t) => {
@@ -95,9 +99,12 @@ test('Semaphore.up() increments the semaphore value', async (t) => {
 test('Semaphore.down() cannot decrement the semaphore value below 0', async (t) => {
   const { semaphore, key } = t.context;
 
-  const error = await t.throws(semaphore.down(key));
+  const error = await t.throwsAsync(
+    () => semaphore.down(key),
+    { code: 'ConditionalCheckFailedException' }
+  );
+
   t.false(error instanceof ResourcesLockedError);
-  t.true(isConditionalCheckException(error));
 });
 
 test('Semaphore.down() decrements the semaphore value', async (t) => {
@@ -137,7 +144,8 @@ test('Semaphore.checkout() throws error when trying to increment beyond the maxi
   const maximum = 1;
   const asyncFn = async () => {};
 
-  const error = await t.throws(semaphore.checkout(key, 2, maximum, asyncFn));
-
-  t.true(error instanceof ResourcesLockedError);
+  await t.throwsAsync(
+    () => semaphore.checkout(key, 2, maximum, asyncFn),
+    ResourcesLockedError
+  );
 });

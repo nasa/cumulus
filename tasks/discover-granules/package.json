@@ -26,8 +26,7 @@
     "access": "public"
   },
   "ava": {
-    "files": "tests",
-    "color": false
+    "files": ["!tests/fixtures/**/*"]
   },
   "nyc": {
     "exclude": [
@@ -44,7 +43,7 @@
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {
-    "ava": "^0.25.0",
+    "ava": "^2.1.0",
     "fs-extra": "^5.0.0",
     "nyc": "^14.0.0",
     "webpack": "~4.5.0",

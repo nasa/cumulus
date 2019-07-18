@@ -28,7 +28,7 @@
     "moment": "^2.24.0"
   },
   "devDependencies": {
-    "ava": "^1.4.1",
+    "ava": "^2.1.0",
     "aws-sdk": "^2.452.0",
     "js-yaml": "^3.13.1",
     "serverless": "^1.42.0",
