@@ -104,7 +104,8 @@ async function callCumulusApi({ prefix, payload: userPayload, userParams = {} })
 function verifyCumulusApiResponse(response, acceptedCodes = []) {
   const successCodes = [200].concat(acceptedCodes);
   if (!successCodes.includes(response.statusCode)) {
-    throw new Error(response.body);
+    const errorText = response.body ? response.body : response.errorMessage;
+    throw new Error(errorText);
   }
   return response;
 }
