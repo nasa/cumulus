@@ -23,7 +23,7 @@ async function getAsyncOperation(req, res) {
   try {
     asyncOperation = await asyncOperationModel.get({ id: req.params.id });
   } catch (err) {
-    if (err.message.startsWith('No record found')) return res.boom.notFound('No Found');
+    if (err.message.startsWith('No record found')) return res.boom.notFound('Record Not Found');
     throw err;
   }
 
