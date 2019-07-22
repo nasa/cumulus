@@ -1,5 +1,9 @@
 data "aws_caller_identity" "current" {}
 
+locals {
+  dist_dir = "${path.module}/dist"
+}
+
 resource "aws_dynamodb_table" "access_tokens" {
   name         = "${var.prefix}-s3-credentials-access-tokens"
   billing_mode = "PAY_PER_REQUEST"
@@ -108,7 +112,6 @@ resource "aws_lambda_permission" "lambda_permission" {
 }
 
 # GET /s3credentials
-
 resource "aws_api_gateway_resource" "s3_credentials" {
   rest_api_id = var.rest_api.id
   parent_id   = var.rest_api.root_resource_id
@@ -132,7 +135,6 @@ resource "aws_api_gateway_integration" "s3_credentials" {
 }
 
 # GET /redirect
-
 resource "aws_api_gateway_resource" "s3_credentials_redirect" {
   rest_api_id = var.rest_api.id
   parent_id   = var.rest_api.root_resource_id
@@ -156,7 +158,6 @@ resource "aws_api_gateway_integration" "s3_credentials_redirect" {
 }
 
 # API deployment
-
 resource "aws_api_gateway_deployment" "s3_credentials" {
   depends_on = [
     "aws_api_gateway_integration.s3_credentials_redirect",
