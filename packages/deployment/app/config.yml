@@ -109,6 +109,7 @@ default:
     amiid: ami-03e7dd4efa9b91eda
     instanceType: change-ecs-instanceType
     volumeSize: 50
+    volumePath: /work
     availabilityZone: 'us-east-1b'
     minInstances: 1
     desiredInstances: 1
