@@ -17,13 +17,13 @@ The metrics team has taken care of setting up logstash to ingest the files that 
 
 ## Kibana Index
 
-Once cumulus has been configured to deliver Cloudwatch logs to the NGAP Metrics team, and you have run at least one request that has been logged, you can create a Kibana index associated with your Cumulus stack.  The metrics team has worked out a convention with the Cumulus devlopers to ensure access to your stack's logs.  The important piece is that the Kibana index is created with the name of the prefix (stackName) cumulus was deployed with.
+Once cumulus has been configured to deliver Cloudwatch logs to the NGAP Metrics team, you can create a Kibana index pattern associated with your Cumulus stack.  The metrics team has worked out a convention with the Cumulus devlopers to ensure access to your stack's logs.  The important piece is that the Kibana index pattern is created with the exact name of the prefix (stackName) with which cumulus was deployed.
 
 
-Before creating the Kibana index, verify that the Elasticsearch instance has been populated with at least one record[^1].  Do this by vititing the Kibana endpoint and selecting `Management` => Elasticsearch `Index Management` and type the stack's prefix into the search bar.  When you see an index with `<prefix>-cloudwatch-YYY.MM.dd` you are ready to continue.  If you don't see at least one index for your stack, check to make sure you are delivering your logs to this Elasticsearch instance and work with the metrics team to guarantee this.
+Before creating the Kibana index, verify that the Elasticsearch instance has been populated with at least one record[^1].  Do this by vititing the Kibana endpoint and selecting `Management`, Elasticsearch `Index Management` and type the stack's prefix into the search bar.  When you see an index with `<prefix>-cloudwatch-YYY.MM.dd` you are ready to continue.  If you don't see at least one index for your stack, check to make sure you are delivering your logs to this Elasticsearch instance and work with the metrics team to guarantee this.
 
 
-Step 1: create the index by selecting `Management` => Kibana `Index Patterns`.  Use an index pattern of `<prefix>-*` and continue to the `Next step`.
+Step 1: create the index by selecting `Management`, Kibana `Index Patterns`.  Use an index pattern of `<prefix>-*` and continue to the `Next step`.
 
 ![Image of Step 2 configuring kibana console](assets/kibana-step1.png)
 
