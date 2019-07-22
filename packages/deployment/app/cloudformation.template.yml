@@ -412,6 +412,10 @@ Resources:
         S3Bucket: {{this.bucket}}
         S3Key: {{this.remote}}
       FunctionName: {{../prefix}}-{{@key}}
+    {{# if this.layers}}
+      Layers:
+        - {{this.layers}}
+    {{/if}}
       Environment:
         Variables:
           stackName: {{../stackName}}
