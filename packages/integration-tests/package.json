@@ -35,7 +35,7 @@
     "got": "^8.3.0",
     "handlebars": "^4.0.11",
     "lodash.clonedeep": "^4.5.0",
-    "lodash.merge": "^4.6.0",
+    "lodash.merge": "^4.6.2",
     "lodash.orderby": "^4.6.0",
     "p-limit": "^1.2.0",
     "p-map": "^2.1.0",
