@@ -4,6 +4,7 @@
   },
   "scripts": {
     "build": "webpack && (cd dist && rm -f package.zip && zip src.zip index.js)",
+    "prepare": "npm run build",
     "test": "ava"
   },
   "dependencies": {

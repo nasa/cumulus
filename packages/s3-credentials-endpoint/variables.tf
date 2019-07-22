@@ -1,20 +1,15 @@
 # Required
 
-variable "prefix" {
+variable "vpc_id" {
   type = string
 }
 
-variable "region" {
-  type    = string
-  default = "us-east-1"
-}
-
-variable "ngap_sgs" {
-  default = []
-}
-
 variable "subnet_ids" {
-  default = []
+  type = array(string)
+}
+
+variable "prefix" {
+  type = string
 }
 
 variable "urs_client_id" {
@@ -36,11 +31,22 @@ variable "rest_api" {
   })
 }
 
-variable "sts_credentials_lambda_arn" {
-  type = string
+# Optional
+
+variable "public_buckets" {
+  type = list(string)
+  default = []
 }
 
-# Optional
+variable "region" {
+  type    = string
+  default = "us-east-1"
+}
+
+variable "sts_credentials_lambda_name" {
+  type    = string
+  default = "gsfc-ngap-sh-s3-sts-get-keys"
+}
 
 variable "permissions_boundary" {
   type    = string

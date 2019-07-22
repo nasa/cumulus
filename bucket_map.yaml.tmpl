@@ -1,0 +1,19 @@
+%{ if (length(public_buckets) + length(protected_buckets)) > 0 ~}
+MAP:
+%{ if length(public_buckets) > 0 ~}
+%{ for bucket in protected_buckets ~}
+  ${bucket}: ${bucket}
+%{ endfor ~}
+%{ endif ~}
+%{ if length(public_buckets) > 0 ~}
+%{ for bucket in public_buckets ~}
+  ${bucket}: ${bucket}
+%{ endfor ~}
+%{ endif ~}
+%{ endif ~}
+%{ if length(public_buckets) > 0 ~}
+PUBLIC_BUCKETS:
+%{ for bucket in public_buckets ~}
+  - ${bucket}
+%{ endfor ~}
+%{ endif ~}
