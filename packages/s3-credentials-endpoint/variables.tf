@@ -34,7 +34,7 @@ variable "rest_api" {
 # Optional
 
 variable "public_buckets" {
-  type = list(string)
+  type    = list(string)
   default = []
 }
 

@@ -1,4 +1,6 @@
 {
+  "name": "@cumulus/s3-credentials-endpoint",
+  "version": "1.13.1",
   "engines": {
     "node": ">=8.10.0"
   },
@@ -6,6 +8,9 @@
     "build": "webpack && (cd dist && rm -f package.zip && zip src.zip index.js)",
     "prepare": "npm run build",
     "test": "ava"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "@cumulus/api": "^1.13.0",
