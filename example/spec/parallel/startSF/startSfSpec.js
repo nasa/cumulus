@@ -4,7 +4,8 @@ const {
   lambda,
   sfn,
   sqs,
-  dynamodbDocClient
+  dynamodbDocClient,
+  cloudwatchevents
 } = require('@cumulus/common/aws');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 
@@ -97,6 +98,81 @@ async function sendStartSfMessages({
   return Promise.all(sendMessages);
 }
 
+const createCloudwatchRuleWithTarget = async ({
+  stateMachineArn,
+  functionName,
+  ruleName,
+  ruleTargetId,
+  rulePermissionId
+}) => {
+  const { RuleArn } = await cloudwatchevents().putRule({
+    Name: ruleName,
+    State: 'ENABLED',
+    EventPattern: JSON.stringify({
+      source: [
+        'aws.states'
+      ],
+      'detail-type': [
+        'Step Functions Execution Status Change'
+      ],
+      detail: {
+        status: [
+          'ABORTED',
+          'FAILED',
+          'SUCCEEDED',
+          'TIMED_OUT'
+        ],
+        stateMachineArn: [
+          stateMachineArn
+        ]
+      }
+    })
+  }).promise();
+
+  const { Configuration } = await lambda().getFunction({
+    FunctionName: functionName
+  }).promise();
+
+  await cloudwatchevents().putTargets({
+    Rule: ruleName,
+    Targets: [{
+      Id: ruleTargetId,
+      Arn: Configuration.FunctionArn
+    }]
+  }).promise();
+
+  return lambda().addPermission({
+    Action: 'lambda:InvokeFunction',
+    FunctionName: functionName,
+    Principal: 'events.amazonaws.com',
+    StatementId: rulePermissionId,
+    SourceArn: RuleArn
+  }).promise();
+};
+
+const deleteCloudwatchRuleWithTargets = async ({
+  functionName,
+  ruleName,
+  rulePermissionId,
+  ruleTargetId
+}) => {
+  await cloudwatchevents().removeTargets({
+    Ids: [
+      ruleTargetId
+    ],
+    Rule: ruleName
+  }).promise();
+
+  await lambda().removePermission({
+    FunctionName: functionName,
+    StatementId: rulePermissionId
+  }).promise();
+
+  return cloudwatchevents().deleteRule({
+    Name: ruleName
+  }).promise();
+};
+
 describe('the sf-starter lambda function', () => {
   it('has a configurable message limit', () => {
     const messageLimit = config.sqs_consumer_rate;
@@ -183,13 +259,16 @@ describe('the sf-starter lambda function', () => {
     let maxQueueName;
     let messagesConsumed;
     let waitPassSfArn;
+    let ruleName;
+    let ruleTargetId;
+    let rulePermissionId;
 
     const queueMaxExecutions = 5;
     const totalNumMessages = 20;
+    const semaphoreDownLambda = `${config.stackName}-sfSemaphoreDown`;
 
     beforeAll(async () => {
       maxQueueName = `${testName}MaxQueue`;
-      console.log(`max queue name: ${maxQueueName}`);
 
       const { QueueUrl } = await sqs().createQueue({
         QueueName: maxQueueName
@@ -198,6 +277,18 @@ describe('the sf-starter lambda function', () => {
 
       const { stateMachineArn } = await sfn().createStateMachine(waitPassSfParams).promise();
       waitPassSfArn = stateMachineArn;
+
+      ruleName = timestampedName('waitPassSfRule');
+      ruleTargetId = timestampedName('waitPassSfRuleTarget');
+      rulePermissionId = timestampedName('waitPassSfRulePermission');
+
+      await createCloudwatchRuleWithTarget({
+        stateMachineArn: waitPassSfArn,
+        functionName: semaphoreDownLambda,
+        ruleName,
+        ruleTargetId,
+        rulePermissionId
+      });
 
       await sendStartSfMessages({
         numOfMessages: totalNumMessages,
@@ -209,6 +300,13 @@ describe('the sf-starter lambda function', () => {
     });
 
     afterAll(async () => {
+      await deleteCloudwatchRuleWithTargets({
+        functionName: semaphoreDownLambda,
+        ruleName,
+        rulePermissionId,
+        ruleTargetId
+      });
+
       await Promise.all([
         sqs().deleteQueue({
           QueueUrl: maxQueueUrl

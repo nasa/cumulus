@@ -87,6 +87,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
+- **CUMULUS-1374**
+  - Addressed audit concerns (https://www.npmjs.com/advisories/782) in api package
+
 - **CUMULUS-1319**
   - Fixed a bug where granule ingest times were not being stored to the database
 
