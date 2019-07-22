@@ -286,8 +286,8 @@ class UpdatedKes extends Kes {
     );
 
     Handlebars.registerHelper(
-      'ifDeployDistribution', (configs, apiUrl, options) =>
-        ((Object.keys(configs).includes('CumulusApiDistribution') && !apiUrl)
+      'ifDeployApi', (templateKey, deployDistribution, options) =>
+        ((templateKey !== 'CumulusApiDistribution' || deployDistribution)
           ? options.fn(this)
           : options.inverse(this))
     );
