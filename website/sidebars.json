@@ -41,7 +41,8 @@
       "additional-deployment-options/enable-gateway-logging-permissions",
       "additional-deployment-options/enable-api-logs",
       "additional-deployment-options/configure-cloudwatch-logs-delivery",
-      "additional-deployment-options/additional-lambda-logging"
+      "additional-deployment-options/additional-lambda-logging",
+      "additional-deployment-options/share-s3-access-logs"
     ],
     "Additional Features": [
       "features/data_in_dynamodb",
@@ -49,7 +50,8 @@
       "features/ems_reporting",
       "features/execution_payload_retention",
       "features/lambda_versioning",
-      "features/ancillary_metadata"
+      "features/ancillary_metadata",
+      "features/distribution-metrics"
     ],
     "Upgrading Cumulus": [
       "upgrade/upgrade-readme"
