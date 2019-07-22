@@ -29,7 +29,12 @@ default:
   DLQDefaultMessageRetentionPeriod: 1209600 ## 14 days, the maximum currently allowed for SQS
   processDefaultDeadLetterQueues: true
 
+  deployDistributionApi: false
+
   nested_templates:
+    CumulusApiDistribution:
+      cfFile: node_modules/@cumulus/deployment/app/cumulus_api.template.yml
+      configFile: node_modules/@cumulus/deployment/app/cumulus_api_distribution.config.yml
     CumulusApiBackend:
       cfFile: node_modules/@cumulus/deployment/app/cumulus_api.template.yml
       configFile: node_modules/@cumulus/deployment/app/cumulus_api_backend.config.yml

@@ -32,10 +32,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 To instead continue to deploy and use the legacy Cumulus distribution app, add the following to your `config.yml`:
 
 ```
-nested_templates:
-  CumulusApiDistribution:
-    cfFile: node_modules/@cumulus/deployment/app/cumulus_api.template.yml
-    configFile: node_modules/@cumulus/deployment/app/cumulus_api_distribution.config.yml
+deployDistributionApi: true
 ```
 
 If you deploy with no distribution app your deployment will succeed but you may encounter errors in your workflows, particularly in the `MoveGranule` task.
