@@ -27,10 +27,14 @@ resource "aws_iam_role" "s3_credentials_lambda" {
   permissions_boundary = var.permissions_boundary
 }
 
+data "aws_lambda_function" "sts_credentials" {
+  function_name = var.sts_credentials_lambda_name
+}
+
 data "aws_iam_policy_document" "s3_credentials_lambda" {
   statement {
     actions   = ["lambda:InvokeFunction"]
-    resources = [var.sts_credentials_lambda_arn]
+    resources = [data.aws_lambda_function.sts_credentials.arn]
   }
 
   statement {
@@ -61,9 +65,12 @@ resource "aws_iam_role_policy" "s3_credentials_lambda" {
   role   = aws_iam_role.s3_credentials_lambda.id
 }
 
+resource "aws_security_group" "s3_credentials_lambda" {
+  vpc_id = var.vpc_id
+}
+
 resource "aws_lambda_function" "s3_credentials" {
-  function_name = "${var.prefix}-s3-credentials-endpoint"
-  # TODO Fetch this from ... somewhere. Or package it with the module zip file? Probably the better option
+  function_name    = "${var.prefix}-s3-credentials-endpoint"
   filename         = "${path.module}/dist/src.zip"
   source_code_hash = filebase64sha256("${path.module}/dist/src.zip")
   handler          = "index.handler"
@@ -72,19 +79,19 @@ resource "aws_lambda_function" "s3_credentials" {
   timeout          = 10
   memory_size      = 320
   vpc_config {
-    subnet_ids = var.subnet_ids
-    security_group_ids = var.ngap_sgs
+    subnet_ids         = var.subnet_ids
+    security_group_ids = [aws_security_group.s3_credentials_lambda.id]
   }
   environment {
     variables = {
+      DISTRIBUTION_ENDPOINT          = "https://${var.rest_api.id}.execute-api.${var.region}.amazonaws.com/${var.stage_name}"
       DISTRIBUTION_REDIRECT_ENDPOINT = "https://${var.rest_api.id}.execute-api.${var.region}.amazonaws.com/${var.stage_name}/${var.redirect_path}"
-      # TODO Remove this stub value
-      # public_buckets            = ""
-      EARTHDATA_BASE_URL        = var.urs_url
-      EARTHDATA_CLIENT_ID       = var.urs_client_id
-      EARTHDATA_CLIENT_PASSWORD = var.urs_client_password
-      AccessTokensTable         = aws_dynamodb_table.access_tokens.id
-      STSCredentialsLambda      = var.sts_credentials_lambda_arn
+      public_buckets                 = join(",", var.public_buckets)
+      EARTHDATA_BASE_URL             = var.urs_url
+      EARTHDATA_CLIENT_ID            = var.urs_client_id
+      EARTHDATA_CLIENT_PASSWORD      = var.urs_client_password
+      AccessTokensTable              = aws_dynamodb_table.access_tokens.id
+      STSCredentialsLambda           = data.aws_lambda_function.sts_credentials.arn
     }
   }
 }
