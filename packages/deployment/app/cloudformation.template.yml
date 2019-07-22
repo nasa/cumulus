@@ -453,6 +453,8 @@ Resources:
     {{/each}}
       Handler: {{this.handler}}
       MemorySize: {{this.memory}}
+      TracingConfig:
+        Mode: Active
 {{# if this.apiRole }}
       Role: {{../iams.lambdaApiGatewayRoleArn}}
 {{else if this.distributionRole}}
