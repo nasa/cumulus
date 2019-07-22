@@ -244,45 +244,6 @@ Resources:
   #################################################
 
   #################################################
-  # Step Functions config BEGIN
-  #################################################
-{{#each activities}}
-  {{name}}Activity:
-    Type: AWS::StepFunctions::Activity
-    Properties:
-      Name: {{../prefix}}-{{name}}-Activity
-{{/each}}
-
-{{#each stepFunctions}}
-  {{../prefixNoDash}}{{@key}}StateMachine:
-    Type: AWS::StepFunctions::StateMachine
-    Properties:
-      DefinitionString:
-    {{#ifEquals ../useWorkflowLambdaVersions true}}
-        Fn::Sub:
-          - |
-              {{{ToJson this}}}
-          -
-            {{#each ../workflowLambdas}}
-            {{@key}}LambdaAliasOutput:
-              Fn::GetAtt:
-                - WorkflowLambdaVersionsNestedStack
-                - Outputs.{{@key}}LambdaAliasOutput
-            {{/each}}
-            stackName: {{../stackName}}
-    {{/ifEquals}}
-    {{#ifNotEquals ../useWorkflowLambdaVersions true}}
-        Fn::Sub: |
-          {{{ToJson this}}}
-    {{/ifNotEquals}}
-      RoleArn: {{../iams.stepRoleArn}}
-
-{{/each}}
-  #################################################
-  # Step Functions config END
-  #################################################
-
-  #################################################
   # SQS config BEGIN
   #################################################
 {{#each sqs}}
@@ -345,12 +306,57 @@ Resources:
   #################################################
 
   #################################################
+  # Step Functions config BEGIN
+  #################################################
+{{#each activities}}
+  {{name}}Activity:
+    Type: AWS::StepFunctions::Activity
+    Properties:
+      Name: {{../prefix}}-{{name}}-Activity
+{{/each}}
+
+{{#each stepFunctions}}
+  {{../prefixNoDash}}{{@key}}StateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString:
+    {{#ifEquals ../useWorkflowLambdaVersions true}}
+        Fn::Sub:
+          - |
+              {{{ToJson this}}}
+          -
+            {{#each ../workflowLambdas}}
+            {{@key}}LambdaAliasOutput:
+              Fn::GetAtt:
+                - WorkflowLambdaVersionsNestedStack
+                - Outputs.{{@key}}LambdaAliasOutput
+            {{/each}}
+            stackName: {{../stackName}}
+    {{/ifEquals}}
+    {{#ifNotEquals ../useWorkflowLambdaVersions true}}
+        Fn::Sub: |
+          {{{ToJson this}}}
+    {{/ifNotEquals}}
+      RoleArn: {{../iams.stepRoleArn}}
+
+{{/each}}
+  #################################################
+  # Step Functions config END
+  #################################################
+
+  #################################################
   # CloudWatch RULE config BEGIN
   #################################################
 
 {{# each rules }}
   {{@key}}Rule:
     Type: AWS::Events::Rule
+    {{# if this.stateMachines}}
+    DependsOn:
+    {{#each this.stateMachines}}
+      - {{this}}
+    {{/each}}
+    {{/if}}
     Properties:
     {{# if this.schedule}}
       ScheduleExpression: {{this.schedule}}
