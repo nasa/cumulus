@@ -292,7 +292,7 @@ Resources:
         {{# if ../parent.api_distribution_url}}
           DISTRIBUTION_REDIRECT_ENDPOINT: {{../parent.api_distribution_url}}redirect
         {{/if}}
-        {{#if ../deployDistributionApi}}
+        {{#if ../parent.deployDistributionApi}}
           DISTRIBUTION_REDIRECT_ENDPOINT:
             Fn::Join:
               - ""
