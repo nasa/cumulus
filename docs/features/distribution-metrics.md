@@ -18,7 +18,7 @@ Once Cumulus has been configured to deliver Cloudwatch logs to the ESDIS Metrics
 
 ## Kibana Index
 
-Before creating the Kibana index, verify that the Elasticsearch instance has been populated with at least one record[^1].  Do this by vititing the Kibana endpoint and selecting `Management`, Elasticsearch `Index Management` and type the stack's prefix into the search bar.  When you see an index with `<prefix>-cloudwatch-YYY.MM.dd` you are ready to continue.  If you don't see at least one index for your stack, check to make sure you are delivering your logs to this Elasticsearch instance.
+Before creating the Kibana index, verify that the Elasticsearch instance has been populated with at least one record[^1].  Do this by visiting the Kibana endpoint and selecting `Management`, Elasticsearch `Index Management` and type the stack's prefix into the search bar.  When you see an index with `<prefix>-cloudwatch-YYY.MM.dd` you are ready to continue.  If you don't see at least one index for your stack, check to make sure you are delivering your logs to this Elasticsearch instance.
 
 Step 1: create the index by selecting `Management`, Kibana `Index Patterns`.  Use an index pattern of `<prefix>-*` and continue to the `Next step`.
 
