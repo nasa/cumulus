@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [v.13.1] - 2019-07-22
+## [v.1.13.1] - 2019-07-22
 
 - **CUMULUS-1374** - Resolve audit compliance with lodash version for api package subdependency
 - **CUMULUS-1412** - Resolve audit complaince with googleapi package
