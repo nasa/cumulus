@@ -134,7 +134,11 @@ fi
 
 ## Branch if branch is master, or a version tag is set, or the commit
 ## message explicitly calls for running redeploy tests
+<<<<<<< HEAD
 if [[ $BRANCH == master || $VERSION_FLAG || COMMIT_MESSAGE =~ '\[run-redeploy-tests\]' ]]; then
+=======
+if [[ $BRANCH == master || $VERSION_FLAG || $COMMIT_MESSAGE =~ run-redeploy-tests ]]; then
+>>>>>>> master
   export RUN_REDEPLOYMENT=true
   echo "Setting RUN_REDEPLOYMENT to true"
   echo export RUN_REDEPLOYMENT="true" >> .bamboo_env_vars
