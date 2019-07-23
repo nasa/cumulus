@@ -23,6 +23,7 @@ As a result of the changes for **CUMULUS-1193**, **CUMULUS-1264**, and **CUMULUS
 If running Cumulus within a VPC and extended downtime is acceptable, we recommend doing this at the end of the day to allow AWS backend resources and network interfaces to be cleaned up overnight.
 
 ### BREAKING CHANGES
+
 - **CUMULUS-1228**
   - The default AMI used by ECS instances is now an NGAP-compliant AMI. This
     will be a breaking change for non-NGAP deployments. If you do not deploy to
