@@ -26,19 +26,3 @@ variable "security_groups" {
   type    = list(string)
   default = []
 }
-
-variable "target_bucket" {
-  type = string
-}
-
-variable "target_prefix" {
-  type = string
-}
-
-variable "source_bucket" {
-  type = string
-}
-
-variable "source_prefix" {
-  type = string
-}

@@ -4,7 +4,7 @@ provider "aws" {
   profile = var.aws_profile
 }
 
-data "archive_file" "replicator_package" {
+data "archive_file" "report_executions_package" {
   type        = "zip"
   source_file = "index.js"
   output_path = "build/report_executions.zip"
@@ -12,13 +12,13 @@ data "archive_file" "replicator_package" {
 
 resource "aws_lambda_function" "report_executions" {
   filename         = "build/report_executions.zip"
-  function_name    = "${var.prefix}-report-executions"
-  role             = "${aws_iam_role.replicator_lambda_role.arn}"
+  function_name    = "${var.prefix}-reportExecutions"
+  role             = "${aws_iam_role.report_executions_lambda_role.arn}"
   handler          = "index.handler"
   runtime          = "nodejs10.x"
   timeout          = 300
 
-  source_code_hash = "${data.archive_file.replicator_package.output_base64sha256}"
+  source_code_hash = "${data.archive_file.report_executions_package.output_base64sha256}"
 
   vpc_config {
     subnet_ids         = var.subnet_ids
@@ -27,7 +27,7 @@ resource "aws_lambda_function" "report_executions" {
 
   environment {
     variables = {
-      EXECUTIONS_TABLE = "${var.prefix}-ExecutionsTable"
+      ExecutionsTable = "${var.prefix}-ExecutionsTable"
     }
   }
 }
