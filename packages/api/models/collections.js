@@ -39,6 +39,11 @@ class Collection extends Manager {
       tableRange: { name: 'version', type: 'S' },
       schema: collectionSchema
     });
+
+    this.collectionConfigStore = new CollectionConfigStore(
+      process.env.system_bucket,
+      process.env.stackName
+    );
   }
 
   /**
@@ -52,32 +57,43 @@ class Collection extends Manager {
     return super.exists({ name, version });
   }
 
+  /**
+   * Creates a collection and puts it into a collection configuration store.
+   * Uses the item's `dataType` (if specified, otherwise, it's `name`) and
+   * `version` as the key for putting the item in a config store specific to
+   * the S3 bucket and stack given by the environment variables `system_bucket`
+   * and `stackName`, respectively.
+   *
+   * @param {Object} item - the collection configuration
+   * @param {string} [item.dataType] - the collection's data type
+   * @param {string} item.name - the collection name
+   * @param {string} item.version - the collection version
+   * @see Manager#create
+   * @see CollectionConfigStore#put
+   * @returns {Promise<Object>} the created record
+   */
   async create(item) {
-    const collectionConfigStore = new CollectionConfigStore(
-      process.env.system_bucket,
-      process.env.stackName
-    );
-
-    let dataType = item.dataType;
-    if (!dataType) {
-      dataType = item.name;
-    }
-
-    await collectionConfigStore.put(dataType, item.version, item);
+    const { dataType, name, version } = item;
+    await this.collectionConfigStore.put(dataType || name, version, item);
 
     return super.create(item);
   }
 
   /**
-   * Delete a collection
+   * Deletes a collection and removes it from the corresponding collection
+   * configuration store that was used during {@link #create creation}.
    *
-   * @param {Object} params
+   * @param {Object} params - the collection configuration
    * @param {string} params.name - the collection name
    * @param {string} params.version - the collection version
+   * @throws {AssociatedRulesError} if the collection has associated rules
+   * @returns {Promise<Object>} the de-serialized data returned from the request
+   * @see #create
+   * @see Manager#delete
+   * @see CollectionConfigStore#delete
    */
   async delete(params = {}) {
     const { name, version } = params;
-
     const associatedRuleNames = (await this.getAssociatedRules(name, version))
       .map((rule) => rule.name);
 
@@ -88,7 +104,15 @@ class Collection extends Manager {
       );
     }
 
-    await super.delete({ name, version });
+    // Since the `create` method uses the collection's `dataType` when calling
+    // `CollectionConfigStore.put`, we must also use `dataType` to delete it
+    // from the store.  However, we have only the collection's name and version,
+    // so we need to retrieve the full collection object in order to retrieve
+    // its dataType.
+    const { dataType } = await super.get({ name, version });
+    await this.collectionConfigStore.delete(dataType || name, version);
+
+    return super.delete({ name, version });
   }
 
   /**
