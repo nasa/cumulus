@@ -7,10 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [v.13.1] - 2019-07-22
+## [v1.13.2] - 2019-07-25
+
+- Re-release of v1.13.1 to fix broken npm packages.
+
+## [v1.13.1] - 2019-07-22
 
 - **CUMULUS-1374** - Resolve audit compliance with lodash version for api package subdependency
-- **CUMULUS-1412** - Resolve audit complaince with googleapi package
+- **CUMULUS-1412** - Resolve audit compliance with googleapi package
 - **CUMULUS-1345** - Backported CMR environment setting in getUrl to address immediate user need.   CMR_ENVIRONMENT can now be used to set the CMR environment to OPS/SIT
 
 ## [v1.13.0] - 2019-5-20
