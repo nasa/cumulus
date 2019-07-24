@@ -97,6 +97,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added production information (collection ShortName and Version, granuleId) to EMS distribution report
   - Added functionality to send daily distribution reports to EMS
 
+## [v.1.13.1] - 2019-07-22
+
+- **CUMULUS-1374** - Resolve audit compliance with lodash version for api package subdependency
+- **CUMULUS-1412** - Resolve audit complaince with googleapi package
+- **CUMULUS-1345** - Backported CMR environment setting in getUrl to address immediate user need.   CMR_ENVIRONMENT can now be used to set the CMR environment to OPS/SIT
+
 ## [v1.13.0] - 2019-5-20
 
 ### PLEASE NOTE
@@ -1216,7 +1222,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.13.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.13.1...HEAD
+[v1.13.1]: https://github.com/nasa/cumulus/compare/v1.13.0...v1.13.1
 [v1.13.0]: https://github.com/nasa/cumulus/compare/v1.12.1...v1.13.0
 [v1.12.1]: https://github.com/nasa/cumulus/compare/v1.12.0...v1.12.1
 [v1.12.0]: https://github.com/nasa/cumulus/compare/v1.11.3...v1.12.0
