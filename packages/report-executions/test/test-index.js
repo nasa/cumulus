@@ -3,24 +3,19 @@
 const test = require('ava');
 
 const { Execution } = require('@cumulus/api/models');
-const { parseException } = require('@cumulus/api/lib/utils');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { getExecutionArn } = require('@cumulus/common/aws');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 
 const { getReportExecutionMessages, handler } = require('..');
 
-const fakeCollection = {
-  name: 'fake-collection',
-  version: '001'
-};
-
 const createExecutionMessage = ({
   status,
   stateMachine,
   executionName,
-  startTime
+  startTime,
+  payload,
+  collection
 }) => ({
   cumulus_meta: {
     state_machine: stateMachine,
@@ -28,16 +23,19 @@ const createExecutionMessage = ({
     workflow_start_time: startTime
   },
   meta: {
-    collection: fakeCollection,
+    collection,
     status
-  }
+  },
+  payload
 });
 
 const createExecutionSnsMessage = ({
   status,
   stateMachine,
   executionName,
-  startTime
+  startTime,
+  payload,
+  collection
 }) => ({
   Sns: {
     Message: JSON.stringify(
@@ -45,7 +43,9 @@ const createExecutionSnsMessage = ({
         status,
         stateMachine,
         executionName,
-        startTime
+        startTime,
+        payload,
+        collection
       })
     )
   }
@@ -57,6 +57,23 @@ test.before(async () => {
   process.env.ExecutionsTable = randomId('executionsTable');
   executionsModel = new Execution();
   await executionsModel.createTable();
+});
+
+test.beforeEach((t) => {
+  t.context.stateMachine = randomId('stateMachine');
+  t.context.executionName = randomString();
+  t.context.arn = getExecutionArn(t.context.stateMachine, t.context.executionName);
+  t.context.startTime = Date.now();
+  t.context.collection = {
+    name: 'fake-collection',
+    version: '001'
+  };
+  t.context.originalPayload = {
+    foo: 'bar'
+  };
+  t.context.finalPayload = {
+    test: randomString()
+  };
 });
 
 test.after.always(async () => {
@@ -155,18 +172,25 @@ test('handler throws error for update to non-existent execution', async (t) => {
 });
 
 test('handler correctly updates completed execution record', async (t) => {
-  const stateMachine = randomId('stateMachine');
-  const executionName = randomString();
-  const arn = getExecutionArn(stateMachine, executionName);
-  const startTime = Date.now();
+  const {
+    arn,
+    collection,
+    executionName,
+    finalPayload,
+    originalPayload,
+    startTime,
+    stateMachine
+  } = t.context;
 
   const status = 'completed';
 
   const executionMessage = createExecutionMessage({
-    stateMachine,
+    collection,
     executionName,
-    status: 'running',
-    startTime
+    payload: originalPayload,
+    startTime,
+    stateMachine,
+    status: 'running'
   });
 
   await executionsModel.createExecutionFromSns(executionMessage);
@@ -175,9 +199,11 @@ test('handler correctly updates completed execution record', async (t) => {
   await handler({
     Records: [
       createExecutionSnsMessage({
-        stateMachine,
+        collection,
         executionName,
+        payload: finalPayload,
         startTime,
+        stateMachine,
         status
       })
     ]
@@ -186,6 +212,7 @@ test('handler correctly updates completed execution record', async (t) => {
   const updatedExecution = await executionsModel.get({ arn });
   const expectedResponse = {
     ...originalExecution,
+    finalPayload,
     status,
     duration: updatedExecution.duration,
     timestamp: updatedExecution.timestamp,
@@ -196,19 +223,26 @@ test('handler correctly updates completed execution record', async (t) => {
 });
 
 test('handler correctly updates failed execution record', async (t) => {
-  const stateMachine = randomId('stateMachine');
-  const executionName = randomString();
-  const arn = getExecutionArn(stateMachine, executionName);
+  const {
+    arn,
+    collection,
+    executionName,
+    finalPayload,
+    originalPayload,
+    startTime,
+    stateMachine
+  } = t.context;
 
-  const startTime = Date.now();
   const status = 'failed';
 
   await executionsModel.createExecutionFromSns(
     createExecutionMessage({
-      stateMachine,
+      collection,
       executionName,
-      status: 'running',
-      startTime
+      payload: originalPayload,
+      startTime,
+      stateMachine,
+      status: 'running'
     })
   );
   const originalExecution = await executionsModel.get({ arn });
@@ -216,9 +250,11 @@ test('handler correctly updates failed execution record', async (t) => {
   await handler({
     Records: [
       createExecutionSnsMessage({
-        stateMachine,
+        collection,
         executionName,
+        payload: finalPayload,
         startTime,
+        stateMachine,
         status
       })
     ]
@@ -227,6 +263,7 @@ test('handler correctly updates failed execution record', async (t) => {
   const updatedExecution = await executionsModel.get({ arn });
   const expectedResponse = {
     ...originalExecution,
+    finalPayload,
     status,
     duration: updatedExecution.duration,
     timestamp: updatedExecution.timestamp,
