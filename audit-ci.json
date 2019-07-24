@@ -1,5 +1,4 @@
 {
     "high": true,
-    "retry-count": 20,
-    "whitelist": [ "lodash", "googleapis" ]
+    "retry-count": 20
 }

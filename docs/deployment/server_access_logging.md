@@ -6,7 +6,7 @@ hide_title: true
 
 # S3 Server Access Logging
 
-To enable [EMS Reporting](../ems_reporting.md), you need to enable [S3 server access logging][awslogging] on all protected and public buckets.
+Note: to support [EMS Reporting](../features/ems_reporting), you need to enable [Amazon S3 server access logging][awslogging] on all protected and public buckets.
 
 
 ### Via AWS Console
