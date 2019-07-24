@@ -286,6 +286,13 @@ class UpdatedKes extends Kes {
       }
     );
 
+    Handlebars.registerHelper(
+      'ifDeployApi', (templateKey, deployDistribution, options) =>
+        ((templateKey !== 'CumulusApiDistribution' || deployDistribution)
+          ? options.fn(this)
+          : options.inverse(this))
+    );
+
     return super.parseCF(cfFile);
   }
 

@@ -53,6 +53,7 @@ Parameters:
   distributionRestApi:
     Type: String
     Description: Distribution REST API ID
+    Default: 'noValue'
   {{/ifEquals}}
 {{/each}}
 {{# each parent.dynamos}}
@@ -290,7 +291,8 @@ Resources:
       {{# ifEquals this.urs_redirect "distribution"}}
         {{# if ../parent.api_distribution_url}}
           DISTRIBUTION_REDIRECT_ENDPOINT: {{../parent.api_distribution_url}}redirect
-        {{else}}
+        {{/if}}
+        {{#if ../parent.deployDistributionApi}}
           DISTRIBUTION_REDIRECT_ENDPOINT:
             Fn::Join:
               - ""
@@ -306,7 +308,8 @@ Resources:
       {{# if this.useDistributionApi}}
         {{# if ../parent.api_distribution_url}}
           DISTRIBUTION_ENDPOINT: {{../parent.api_distribution_url}}
-        {{else}}
+        {{/if}}
+        {{#if ../deployDistributionApi}}
           DISTRIBUTION_ENDPOINT:
             Fn::Join:
               - ""
