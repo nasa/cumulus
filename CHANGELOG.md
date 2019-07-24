@@ -32,10 +32,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 To instead continue to deploy and use the legacy Cumulus distribution app, add the following to your `config.yml`:
 
 ```
-nested_templates:
-  CumulusApiDistribution:
-    cfFile: node_modules/@cumulus/deployment/app/cumulus_api.template.yml
-    configFile: node_modules/@cumulus/deployment/app/cumulus_api_distribution.config.yml
+deployDistributionApi: true
 ```
 
 If you deploy with no distribution app your deployment will succeed but you may encounter errors in your workflows, particularly in the `MoveGranule` task.
@@ -98,6 +95,9 @@ If you deploy with no distribution app your deployment will succeed but you may 
   - Granule `processingStartTime` and `processingEndTime` will be set to the execution start time and end time respectively when there is no sync granule or post to cmr task present in the workflow
 
 ### Fixed
+
+- **CUMULUS-1374**
+  - Addressed audit concerns (https://www.npmjs.com/advisories/782) in api package
 
 - **CUMULUS-1319**
   - Fixed a bug where granule ingest times were not being stored to the database

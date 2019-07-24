@@ -292,7 +292,7 @@ Resources:
         {{# if ../parent.api_distribution_url}}
           DISTRIBUTION_REDIRECT_ENDPOINT: {{../parent.api_distribution_url}}redirect
         {{/if}}
-        {{#ifDeployDistribution ../parent.nested_templates ../parent.api_distribution_url}}
+        {{#if ../parent.deployDistributionApi}}
           DISTRIBUTION_REDIRECT_ENDPOINT:
             Fn::Join:
               - ""
@@ -303,13 +303,13 @@ Resources:
                 - ".amazonaws.com"
                 - {{{getApiPortSuffix ../parent.apiConfigs "distribution"}}}
                 - "{{../parent.apiStage}}/redirect"
-        {{/ifDeployDistribution}}
+        {{/if}}
       {{/ifEquals}}
       {{# if this.useDistributionApi}}
         {{# if ../parent.api_distribution_url}}
           DISTRIBUTION_ENDPOINT: {{../parent.api_distribution_url}}
         {{/if}}
-        {{#ifDeployDistribution ../parent.nested_templates ../parent.api_distribution_url}}
+        {{#if ../deployDistributionApi}}
           DISTRIBUTION_ENDPOINT:
             Fn::Join:
               - ""
@@ -320,7 +320,7 @@ Resources:
                 - ".amazonaws.com"
                 - {{{getApiPortSuffix ../parent.apiConfigs "distribution"}}}
                 - "{{../parent.apiStage}}"
-        {{/ifDeployDistribution}}
+        {{/if}}
       {{/if}}
     {{#each this.envs}}
       {{# if this.function}}

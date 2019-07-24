@@ -25,6 +25,7 @@
 
 const cloneDeep = require('lodash.clonedeep');
 const zipObject = require('lodash.zipobject');
+const get = require('lodash.get');
 const { Kes, utils } = require('kes');
 const fs = require('fs-extra');
 const Handlebars = require('handlebars');
@@ -286,8 +287,8 @@ class UpdatedKes extends Kes {
     );
 
     Handlebars.registerHelper(
-      'ifDeployDistribution', (configs, apiUrl, options) =>
-        ((Object.keys(configs).includes('CumulusApiDistribution') && !apiUrl)
+      'ifDeployApi', (templateKey, deployDistribution, options) =>
+        ((templateKey !== 'CumulusApiDistribution' || deployDistribution)
           ? options.fn(this)
           : options.inverse(this))
     );
@@ -309,6 +310,8 @@ class UpdatedKes extends Kes {
     const src = path.join(process.cwd(), kesBuildFolder, filename);
     const dest = path.join(process.cwd(), kesBuildFolder, 'adapter', unzipFolderName);
 
+    this.updateRulesConfig();
+
     // If custom compile configuration flag not set, skip custom compilation
     if (!customCompile) return super.compileCF();
 
@@ -327,6 +330,76 @@ class UpdatedKes extends Kes {
     });
   }
 
+  /**
+   * Preprocess/update rules config to avoid deployment issues.
+   *
+   * Cloudwatch rules that are triggered by Cloudwatch Step Function events
+   * should be restricted to run only for Step Functions within the current
+   * deployment. Due to character limits for Cloudwatch rule definitions, we
+   * may need to split up a rule into multiple rules so that we can ensure it
+   * is only triggered by Step Functions in this deployment.
+   */
+  updateRulesConfig() {
+    if (!this.config.rules || !this.config.stepFunctions) {
+      return;
+    }
+
+    const { prefixNoDash, rules, stepFunctions } = this.config;
+    const updatedRules = {};
+
+    const initializeNewRule = (rule) => {
+      const newRule = cloneDeep(rule);
+      newRule.stateMachines = [];
+      newRule.eventPattern.detail.stateMachineArn = [];
+      return newRule;
+    };
+
+    Object.keys(rules).forEach((ruleName) => {
+      const rule = rules[ruleName];
+      const eventSource = get(rule, 'eventPattern.source', []);
+
+      // If this rule doesn't use Step Functions as a source, stop processing.
+      if (!eventSource.includes('aws.states')) {
+        updatedRules[ruleName] = rule;
+        return;
+      }
+
+      const initialPatternLength = JSON.stringify(rule.eventPattern).length;
+      // Pessimistically assume longest possible state machine ARN:
+      //    80 = max state machine length
+      //    64 = length of other ARN characters
+      //    2 = two double quotes
+      const arnLength = 80 + 64 + 2;
+      // Determine how many state machines can be added as conditions to the eventPattern
+      // before it would exceed the maximum allowed length of 2048 characters.
+      const stateMachinesPerRule = Math.ceil((2048 - initialPatternLength) / arnLength);
+
+      let stateMachinesCount = 0;
+      let newRule = initializeNewRule(rule);
+      let ruleNumber = 1;
+
+      const stepFunctionNames = Object.keys(stepFunctions);
+      stepFunctionNames.forEach((sfName) => {
+        stateMachinesCount += 1;
+
+        if (stateMachinesCount >= stateMachinesPerRule) {
+          stateMachinesCount = 0;
+          newRule = initializeNewRule(rule);
+          ruleNumber += 1;
+        }
+
+        const stateMachineName = `${prefixNoDash}${sfName}StateMachine`;
+        const stateMachineArnRef = `\$\{${stateMachineName}\}`;
+
+        newRule.stateMachines.push(stateMachineName);
+        newRule.eventPattern.detail.stateMachineArn.push(stateMachineArnRef);
+
+        updatedRules[`${ruleName}${ruleNumber}`] = newRule;
+      });
+    });
+
+    this.config.rules = updatedRules;
+  }
 
   /**
    * setParentConfigvalues - Overrides nested stack template with parent values
