@@ -27,9 +27,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
     - **Configure S3 Server Access Logs**:  If you are running Cumulus in an NGAP environment you may [configure S3 Server Access Logs](https://nasa.github.io/cumulus/docs/next/deployment/server_access_logging) to be delivered to a shared bucket where the Metrics Team will ingest the logs into their ELK stack.  Contact the Metrics team for permission and location.
 
-
-
 ## Added
+
 - **CUMULUS-1345**
   - Adds new variables to the app deployment under `cmr`.
   - `cmrEnvironment` values are `SIT`, `UAT`, or `OPS` with `UAT` as the default.
@@ -53,7 +52,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added support for limiting the number of concurrent executions started from a queue. [See the data cookbook](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions) for more information.
 - **CUMULUS-1337**
   - Adds `cumulus.stackName` value to the `instanceMetadata` endpoint.
-
 
 ### Changed
 
@@ -84,6 +82,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1362**
   - Granule `processingStartTime` and `processingEndTime` will be set to the execution start time and end time respectively when there is no sync granule or post to cmr task present in the workflow
+
+- **CUMULUS-1400**
+  - Deprecated `@cumulus/ingest/aws/getExecutionArn`. Use `@cumulus/common/aws/getExecutionArn` instead.
 
 ### Fixed
 
@@ -432,6 +433,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.11.2] - 2019-2-15
 
 ### Added
+
 - CUMULUS-1169
   - Added a `@cumulus/common/StepFunctions` module. It contains functions for querying the AWS
     StepFunctions API. These functions have the ability to retry when a ThrottlingException occurs.
@@ -461,10 +463,12 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 - **CUMULUS-673** Added `@cumulus/common/file/getFileChecksumFromStream` to get file checksum from a readable stream
 
 ### Fixed
+
 - CUMULUS-1123
   - Cloudformation template overrides now work as expected
 
 ### Changed
+
 - CUMULUS-1169
   - Deprecated the `@cumulus/common/step-functions` module.
   - Updated code that queries the StepFunctions API to use the retry-enabled functions from
@@ -496,6 +500,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
   - Renamed `API_ENDPOINT` environment variable to `TOKEN_REDIRECT_ENDPOINT`
 
 ### Removed
+
 - Functions deprecated before 1.11.0:
   - @cumulus/api/models/base: static Manager.createTable() and static Manager.deleteTable()
   - @cumulus/ingest/aws/S3
@@ -505,11 +510,10 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
   - @cumulus/ingest/granule/Ingest.getBucket()
 
 ### Deprecated
+
 `@cmrjs/ingestConcept`, instead use the CMR object methods. `@cmrjs/CMR.ingestGranule` or `@cmrjs/CMR.ingestCollection`
 `@cmrjs/searchConcept`, instead use the CMR object methods. `@cmrjs/CMR.searchGranules` or `@cmrjs/CMR.searchCollections`
 `@cmrjs/deleteConcept`, instead use the CMR object methods. `@cmrjs/CMR.deleteGranule` or `@cmrjs/CMR.deleteCollection`
-
-
 
 ## [v1.11.1] - 2018-12-18
 
