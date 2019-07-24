@@ -1,5 +1,9 @@
 # Required
 
+variable "distribution_url" {
+  type = string
+}
+
 variable "vpc_id" {
   type = string
 }

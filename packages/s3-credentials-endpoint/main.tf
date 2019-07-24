@@ -1,9 +1,5 @@
 data "aws_caller_identity" "current" {}
 
-locals {
-  dist_dir = "${path.module}/dist"
-}
-
 resource "aws_dynamodb_table" "access_tokens" {
   name         = "${var.prefix}-s3-credentials-access-tokens"
   billing_mode = "PAY_PER_REQUEST"
@@ -42,7 +38,10 @@ data "aws_iam_policy_document" "s3_credentials_lambda" {
   }
 
   statement {
-    actions   = ["dynamodb:GetItem"]
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem"
+    ]
     resources = [aws_dynamodb_table.access_tokens.arn]
   }
 
@@ -71,6 +70,13 @@ resource "aws_iam_role_policy" "s3_credentials_lambda" {
 
 resource "aws_security_group" "s3_credentials_lambda" {
   vpc_id = var.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
 resource "aws_lambda_function" "s3_credentials" {
@@ -88,8 +94,8 @@ resource "aws_lambda_function" "s3_credentials" {
   }
   environment {
     variables = {
-      DISTRIBUTION_ENDPOINT          = "https://${var.rest_api.id}.execute-api.${var.region}.amazonaws.com/${var.stage_name}"
-      DISTRIBUTION_REDIRECT_ENDPOINT = "https://${var.rest_api.id}.execute-api.${var.region}.amazonaws.com/${var.stage_name}/${var.redirect_path}"
+      DISTRIBUTION_ENDPOINT          = var.distribution_url
+      DISTRIBUTION_REDIRECT_ENDPOINT = "${var.distribution_url}${var.redirect_path}"
       public_buckets                 = join(",", var.public_buckets)
       EARTHDATA_BASE_URL             = var.urs_url
       EARTHDATA_CLIENT_ID            = var.urs_client_id
