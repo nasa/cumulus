@@ -8,7 +8,7 @@ test('handler returns immediately on non-create event', async (t) => {
     Records: [{
       eventName: 'ObjectRemoved:Delete'
     }]
-  }
+  };
   const output = await handler(event, {});
   t.deepEqual(output, [null]);
 });
