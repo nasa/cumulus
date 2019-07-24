@@ -53,7 +53,7 @@ variable "thin_egress_app_deployment_stage" {
   default = "DEV"
 }
 
-variable "thin_egress_app_domain_name" {
+variable "distribution_domain_name" {
   type    = string
   default = null
 }

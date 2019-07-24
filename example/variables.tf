@@ -17,8 +17,6 @@ variable "public_buckets" {
   default = []
 }
 
-
-
 variable "subnet_ids" {
   type = list(string)
 }
@@ -39,13 +37,12 @@ variable "vpc_id" {
   type = string
 }
 
-
 variable "permissions_boundary" {
   type    = string
   default = "NGAPShNonProdRoleBoundary"
 }
 
-variable "thin_egress_app_domain_name" {
+variable "distribution_domain_name" {
   type    = string
   default = null
 }
