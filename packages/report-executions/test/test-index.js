@@ -2,7 +2,10 @@
 
 const test = require('ava');
 
-const { getReportExecutionTasks, handler } = require('..');
+const { randomId } = require('@cumulus/common/test-utils');
+const { Execution } = require('@cumulus/api/models');
+
+const { getReportExecutionMessages, handler } = require('..');
 
 const createExecutionSnsMessage = ({
   status,
@@ -22,18 +25,30 @@ const createExecutionSnsMessage = ({
   }
 });
 
-test('getReportExecutionTasks returns no tasks for non-execution messages', (t) => {
-  let messages = getReportExecutionTasks([{}]);
+let executionModel;
+
+test.before(async () => {
+  process.env.ExecutionsTable = randomId('executionsTable');
+  executionModel = new Execution();
+  await executionModel.createTable();
+});
+
+test.after.always(async () => {
+  await executionModel.deleteTable();
+});
+
+test('getReportExecutionMessages returns no tasks for non-execution messages', (t) => {
+  let messages = getReportExecutionMessages([{}]);
   t.is(messages.length, 0);
 
-  messages = getReportExecutionTasks([{
+  messages = getReportExecutionMessages([{
     Records: [{
       Sns: {}
     }]
   }]);
   t.is(messages.length, 0);
 
-  messages = getReportExecutionTasks([{
+  messages = getReportExecutionMessages([{
     Records: [{
       Sns: {
         Message: 'message'
@@ -42,7 +57,7 @@ test('getReportExecutionTasks returns no tasks for non-execution messages', (t) 
   }]);
   t.is(messages.length, 0);
 
-  messages = getReportExecutionTasks([{
+  messages = getReportExecutionMessages([{
     Records: [{
       Sns: {
         Message: JSON.stringify({
@@ -54,11 +69,22 @@ test('getReportExecutionTasks returns no tasks for non-execution messages', (t) 
   t.is(messages.length, 0);
 });
 
-test('getReportExecutionTasks returns correct number of tasks', (t) => {
-  const tasks = getReportExecutionTasks({
+test('getReportExecutionMessages returns correct number of tasks', (t) => {
+  const stateMachine = randomId('stateMachine');
+  const executionName = randomId('execution');
+
+  const tasks = getReportExecutionMessages({
     Records: [
-      createExecutionSnsMessage({ status: 'completed' }),
-      createExecutionSnsMessage({ status: 'failed' }),
+      createExecutionSnsMessage({
+        stateMachine,
+        executionName,
+        status: 'completed'
+      }),
+      createExecutionSnsMessage({
+        stateMachine,
+        executionName,
+        status: 'failed'
+      }),
       { }
     ]
   });

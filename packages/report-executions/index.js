@@ -36,17 +36,16 @@ async function handleExecutionMessage(message) {
 }
 
 /**
- * Filter and map SNS records to get report execution tasks.
+ * Filter and map SNS records to get report execution messages.
  *
  * @param {Object} event - Incoming event from SNS
- * @returns {Array<Promise>} - Array of promises for report execution tasks.
+ * @returns {Array<Object>} - Array of execution messages
  */
-function getReportExecutionTasks(event) {
+function getReportExecutionMessages(event) {
   const records = get(event, 'Records', []);
   return records
     .map(getSnsMessage)
-    .filter(isExecutionMessage)
-    .map(handleExecutionMessage);
+    .filter(isExecutionMessage);
 }
 
 /**
@@ -56,11 +55,13 @@ function getReportExecutionTasks(event) {
  * @returns {Promise}
  */
 async function handler(event) {
-  const tasks = getReportExecutionTasks(event);
-  return Promise.all(tasks);
+  const messages = getReportExecutionMessages(event);
+  return Promise.all(
+    messages.map(handleExecutionMessage)
+  );
 }
 
 module.exports = {
-  getReportExecutionTasks,
+  getReportExecutionMessages,
   handler
 };

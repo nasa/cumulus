@@ -17,6 +17,7 @@
     "lodash.has": "^4.5.2"
   },
   "devDependencies": {
+    "@cumulus/common": "1.13.0",
     "ava": "^2.1.0"
   }
 }
