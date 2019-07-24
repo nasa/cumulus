@@ -1,23 +1,25 @@
+'use strict';
+
 const test = require('ava');
 
-const { getReportExecutionTasks } = require('..');
+const { getReportExecutionTasks, handler } = require('..');
 
-const createExecutionSnsMessage = (status) => ({
+const createExecutionSnsMessage = ({
+  status,
+  stateMachine,
+  executionName
+}) => ({
   Sns: {
     Message: JSON.stringify({
       cumulus_meta: {
-        state_machine: 'fake-state-machine',
-        execution_name: 'fake-execution-name'
+        state_machine: stateMachine,
+        execution_name: executionName
       },
       meta: {
         status
       }
     })
   }
-});
-
-test.before(async () => {
-  process.env.ExecutionsTable = 'test-executionsTable';
 });
 
 test('getReportExecutionTasks returns no tasks for non-execution messages', (t) => {
@@ -55,10 +57,30 @@ test('getReportExecutionTasks returns no tasks for non-execution messages', (t) 
 test('getReportExecutionTasks returns correct number of tasks', (t) => {
   const tasks = getReportExecutionTasks({
     Records: [
-      createExecutionSnsMessage('completed'),
-      createExecutionSnsMessage('failed'),
+      createExecutionSnsMessage({ status: 'completed' }),
+      createExecutionSnsMessage({ status: 'failed' }),
       { }
     ]
   });
   t.is(tasks.length, 2);
+});
+
+test.skip('handler correctly creates execution record', async (t) => {
+  const stateMachine = 'stateMachine';
+  const executionName = 'execution1';
+  const arn = `${stateMachine}:${executionName}`;
+
+  const response = await executionsModel.exists({ arn });
+  debugger;
+
+  await handler({
+    Records: [
+      createExecutionSnsMessage({
+        stateMachine,
+        executionName
+      })
+    ]
+  });
+
+  t.true(await executionsModel.exists({ arn }));
 });
