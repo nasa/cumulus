@@ -30,7 +30,9 @@
     "test-ci": "npm run lint && npm run mocha-junit"
   },
   "ava": {
-    "files": ["tests/**"]
+    "files": [
+      "tests/**"
+    ]
   },
   "nyc": {
     "exclude": [
@@ -66,7 +68,7 @@
     "lodash.isstring": "^4.0.1",
     "lodash.isundefined": "^3.0.1",
     "lodash.kebabcase": "^4.1.1",
-    "lodash.merge": "^4.6.1",
+    "lodash.merge": "^4.6.2",
     "lodash.omitby": "^4.6.0",
     "lodash.range": "^3.2.0",
     "mime-types": "^2.1.22",
