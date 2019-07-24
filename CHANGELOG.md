@@ -108,7 +108,7 @@ If you deploy with no distribution app your deployment will succeed but you may 
 ## [v1.13.1] - 2019-07-22
 
 - **CUMULUS-1374** - Resolve audit compliance with lodash version for api package subdependency
-- **CUMULUS-1412** - Resolve audit complaince with googleapi package
+- **CUMULUS-1412** - Resolve audit compliance with googleapi package
 - **CUMULUS-1345** - Backported CMR environment setting in getUrl to address immediate user need.   CMR_ENVIRONMENT can now be used to set the CMR environment to OPS/SIT
 
 ## [v1.13.0] - 2019-5-20
