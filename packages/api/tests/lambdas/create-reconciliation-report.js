@@ -663,3 +663,204 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
   t.is(report.onlyInCmr.length, filesOnlyInCmr.length);
   t.deepEqual(map(report.onlyInCmr, 'URL').sort(), map(filesOnlyInCmr, 'URL').sort());
 });
+
+test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule file holdings in CUMULUS and CMR that have S3 links', async (t) => {
+  process.env.DISTRIBUTION_ENDPOINT = 'https://example.com/';
+  const buckets = {
+    internal: { name: 'cumulus-test-sandbox-internal', type: 'internal' },
+    private: { name: 'testbucket-private', type: 'private' },
+    protected: { name: 'testbucket-protected', type: 'protected' },
+    public: { name: 'testbucket-public', type: 'public' },
+    'protected-2': { name: 'testbucket-protected-2', type: 'protected' }
+  };
+  const bucketsConfig = new BucketsConfig(buckets);
+
+  const matchingFilesInDb = [{
+    bucket: 'testbucket-protected',
+    key: 'MOD09GQ___006/2017/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf',
+    size: 17865615,
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf'
+  },
+  {
+    bucket: 'testbucket-public',
+    key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg',
+    size: 44118,
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg'
+  },
+  {
+    bucket: 'testbucket-protected-2',
+    key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml',
+    size: 2708,
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml'
+  }];
+
+  const privateFilesInDb = [{
+    bucket: 'testbucket-private',
+    key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf.met',
+    size: 44118,
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf.met'
+  }];
+
+  const filesOnlyInDb = [{
+    bucket: 'testbucket-public',
+    key: 'MOD09GQ___006/MOD/extra123.jpg',
+    size: 44118,
+    fileName: 'extra123.jpg'
+  },
+  {
+    bucket: 'testbucket-protected',
+    key: 'MOD09GQ___006/MOD/extra456.jpg',
+    size: 44118,
+    fileName: 'extra456.jpg'
+  }];
+
+  const granInDb = {
+    granuleId: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
+    collectionId: 'MOD09GQ___006',
+    files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb)
+  };
+
+  const matchingFilesInCmr = [{
+    URL: 's3://testbucket-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf',
+    Type: 'GET DATA',
+    Description: 'File to download'
+  },
+  {
+    URL: 's3://testbucket-public/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg',
+    Type: 'GET DATA',
+    Description: 'File to download'
+  },
+  {
+    URL: `${process.env.DISTRIBUTION_ENDPOINT}testbucket-protected-2/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml`,
+    Type: 'GET DATA',
+    Description: 'File to download'
+  }];
+
+  const filesOnlyInCmr = [{
+    URL: 'https://enjo7p7os7.execute-api.us-east-1.amazonaws.com/dev/MYD13Q1.A2017297.h19v10.006.2017313221202.hdf',
+    Type: 'GET DATA',
+    Description: 'File to download'
+  }];
+
+  const urlsShouldOnlyInCmr = [{
+    URL: `${process.env.DISTRIBUTION_ENDPOINT}s3credentials`,
+    Type: 'VIEW RELATED INFORMATION',
+    Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access'
+  }];
+
+  const granInCmr = {
+    GranuleUR: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
+    ShortName: 'MOD09GQ',
+    Version: '006',
+    RelatedUrls: matchingFilesInCmr.concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr)
+  };
+
+  const report = await reconciliationReportForGranuleFiles(granInDb, granInCmr, bucketsConfig);
+  t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
+
+  t.is(report.onlyInCumulus.length, filesOnlyInDb.length);
+  t.deepEqual(map(report.onlyInCumulus, 'fileName').sort(), map(filesOnlyInDb, 'fileName').sort());
+
+  t.is(report.onlyInCmr.length, filesOnlyInCmr.length);
+  t.deepEqual(map(report.onlyInCmr, 'URL').sort(), map(filesOnlyInCmr, 'URL').sort());
+});
+
+test.serial('reconciliationReportForGranuleFiles does not fail if no distribution endpoint is defined', async (t) => {
+  const buckets = {
+    internal: { name: 'cumulus-test-sandbox-internal', type: 'internal' },
+    private: { name: 'testbucket-private', type: 'private' },
+    protected: { name: 'testbucket-protected', type: 'protected' },
+    public: { name: 'testbucket-public', type: 'public' },
+    'protected-2': { name: 'testbucket-protected-2', type: 'protected' }
+  };
+  const bucketsConfig = new BucketsConfig(buckets);
+
+  const matchingFilesInDb = [{
+    bucket: 'testbucket-protected',
+    key: 'MOD09GQ___006/2017/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf',
+    size: 17865615,
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf'
+  },
+  {
+    bucket: 'testbucket-public',
+    key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg',
+    size: 44118,
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg'
+  },
+  {
+    bucket: 'testbucket-protected-2',
+    key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml',
+    size: 2708,
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml'
+  }];
+
+  const privateFilesInDb = [{
+    bucket: 'testbucket-private',
+    key: 'MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf.met',
+    size: 44118,
+    fileName: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf.met'
+  }];
+
+  const filesOnlyInDb = [{
+    bucket: 'testbucket-public',
+    key: 'MOD09GQ___006/MOD/extra123.jpg',
+    size: 44118,
+    fileName: 'extra123.jpg'
+  },
+  {
+    bucket: 'testbucket-protected',
+    key: 'MOD09GQ___006/MOD/extra456.jpg',
+    size: 44118,
+    fileName: 'extra456.jpg'
+  }];
+
+  const granInDb = {
+    granuleId: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
+    collectionId: 'MOD09GQ___006',
+    files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb)
+  };
+
+  const matchingFilesInCmr = [{
+    URL: 's3://testbucket-protected/MOD09GQ___006/2017/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.hdf',
+    Type: 'GET DATA',
+    Description: 'File to download'
+  },
+  {
+    URL: 's3://testbucket-public/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190_ndvi.jpg',
+    Type: 'GET DATA',
+    Description: 'File to download'
+  },
+  {
+    URL: 's3://testbucket-protected-2/MOD09GQ___006/MOD/MOD09GQ.A4675287.SWPE5_.006.7310007729190.cmr.xml',
+    Type: 'GET DATA',
+    Description: 'File to download'
+  }];
+
+  const filesOnlyInCmr = [{
+    URL: 'https://enjo7p7os7.execute-api.us-east-1.amazonaws.com/dev/MYD13Q1.A2017297.h19v10.006.2017313221202.hdf',
+    Type: 'GET DATA',
+    Description: 'File to download'
+  }];
+
+  const urlsShouldOnlyInCmr = [{
+    URL: `${process.env.DISTRIBUTION_ENDPOINT}s3credentials`,
+    Type: 'VIEW RELATED INFORMATION',
+    Description: 'api endpoint to retrieve temporary credentials valid for same-region direct s3 access'
+  }];
+
+  const granInCmr = {
+    GranuleUR: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
+    ShortName: 'MOD09GQ',
+    Version: '006',
+    RelatedUrls: matchingFilesInCmr.concat(filesOnlyInCmr).concat(urlsShouldOnlyInCmr)
+  };
+
+  const report = await reconciliationReportForGranuleFiles(granInDb, granInCmr, bucketsConfig);
+  t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
+
+  t.is(report.onlyInCumulus.length, filesOnlyInDb.length);
+  t.deepEqual(map(report.onlyInCumulus, 'fileName').sort(), map(filesOnlyInDb, 'fileName').sort());
+
+  t.is(report.onlyInCmr.length, filesOnlyInCmr.length);
+  t.deepEqual(map(report.onlyInCmr, 'URL').sort(), map(filesOnlyInCmr, 'URL').sort());
+});
