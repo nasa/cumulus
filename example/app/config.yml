@@ -481,39 +481,6 @@ jl:
     submitReport: true
     retentionInDays: 20
 
-mhs2:
-  prefix: mhs2
-  prefixNoDash: mhs2
-  buckets:
-    internal:
-      name: mhs-internal
-      type: internal
-    private:
-      name: mhs-private
-      type: private
-    protected:
-      name: mhs-protected
-      type: protected
-    public:
-      name: mhs-public
-      type: public
-    protected-2:
-      name: mhs-protected-2
-      type: protected
-    shared:
-      name: cumulus-data-shared
-      type: shared
-  api_distribution_url: '{{API_DISTRIBUTION_URL}}'
-  system_bucket: '{{buckets.internal.name}}'
-
-  users:
-    - username: '{{EARTHDATA_LOGIN_USERNAME}}'
-
-  AutoScalingPolicyConfiguration:
-  GranulesTable:
-    enableAutoScaling: false
-  FilesTable:
-    enableAutoScaling: false
 
 gitc:
   prefix: {{PREFIX}}
@@ -637,6 +604,53 @@ mhs3:
   ecs:
     ssh: true
     keyPairName: mhs
+  apiConfigs:
+    backend:
+      private: true
+      port: 8003
+    distribution:
+      private: true
+      port: 7003
+      logApiGatewayToCloudWatch: true
+  logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
+
+mhs4:
+  prefix: mhs4
+  prefixNoDash: mhs4
+  buckets:
+    internal:
+      name: mhs4-internal
+      type: internal
+    private:
+      name: mhs4-private
+      type: private
+    protected:
+      name: mhs4-protected
+      type: protected
+    public:
+      name: mhs4-public
+      type: public
+    protected-2:
+      name: mhs4-protected-2
+      type: protected
+    shared:
+      name: cumulus-data-shared
+      type: shared
+  system_bucket: mhs4-internal
+  api_distribution_url:
+  ecs:
+    ssh: true
+    keyPairName: mhs
+  apiConfigs:
+    backend:
+      private: true
+      port: 8004
+    distribution:
+      private: true
+      port: 7004
+      logApiGatewayToCloudWatch: true
+  logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
+
 
 jk:
   prefix: jk
