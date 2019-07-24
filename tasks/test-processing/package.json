@@ -21,7 +21,7 @@
   "dependencies": {
     "@cumulus/common": "1.13.0",
     "@cumulus/cumulus-message-adapter-js": "^1.0.7",
-    "@cumulus/integration-tests": "1.13.0",
+    "@cumulus/integration-tests": "1.13.1",
     "lodash.clonedeep": "^4.5.0"
   },
   "devDependencies": {
