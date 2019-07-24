@@ -27,7 +27,8 @@ Configuration variables are shown in `cfg.tfvars.sample`, and are explained belo
 
 ```bash
 prefix               = "myprefix"                                         # prefix to name created replicator resources
-aws_profile          = "myawscliprofile"                                  # AWS profile used for deployment
+aws_profile          = "myawscliprofile"                                  # AWS profile used for deployment (default: 'default')
+aws_region           = "us-east-1"                                        # AWS region in which to deploy resources (default: 'us-east-1')
 permissions_boundary = "arn:aws:iam::1234567890:policy/YourRoleBoundary"  # IAM permissions boundary ARN
 vpc_id               = "vpc-123456"                                       # VPC ID (for Lambda)
 subnet_ids           = ["subnet-123456"]                                  # Subnet IDs (for Lambda)
