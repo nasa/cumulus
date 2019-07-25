@@ -15,7 +15,7 @@
     "bootstrap-quiet": "lerna bootstrap --loglevel=error --no-ci --force-local",
     "bootstrap-no-build": "lerna bootstrap --no-ci --force-local --ignore-scripts",
     "update": "lerna version --exact --force-publish --no-git-tag-version --no-push",
-    "publish": "lerna publish --skip-git --yes --exact",
+    "publish": "echo 'publish disabled on main project",
     "clean": "lerna clean && rm -rf ./node_modules",
     "build": "lerna run --ignore cumulus-integration-tests build",
     "watch": "lerna run --parallel --no-sort watch",
