@@ -202,3 +202,101 @@ test('constructRelatedUrls returns expected array when called with an empty file
 
   t.deepEqual(actual, expected);
 });
+
+test.serial('returns correct links with s3 cmrGranuleUrlType', (t) => {
+  const movedFiles = [
+    {
+      key: 'path/publicfile.jpg',
+      bucket: t.context.bucketConfig.public.name,
+      filename: `s3://${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
+      type: 'browse'
+    }
+  ];
+
+  const expected = [
+    {
+      URL: `s3://${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
+      Description: 'File to download',
+      URLDescription: 'File to download',
+      Type: 'GET RELATED VISUALIZATION'
+    }
+  ];
+
+  const actual = constructOnlineAccessUrls({
+    files: movedFiles,
+    distEndpoint,
+    buckets: t.context.buckets,
+    cmrGranuleUrlType: 's3'
+  });
+
+  t.deepEqual(actual, expected.sort(sortByURL));
+});
+
+test.serial('returns no links when cmrGranuleUrlType is none', (t) => {
+  const movedFiles = [
+    {
+      key: 'path/publicfile.jpg',
+      bucket: t.context.bucketConfig.public.name,
+      filename: `s3://${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
+      type: 'browse'
+    }
+  ];
+
+  const actual = constructOnlineAccessUrls({
+    files: movedFiles,
+    distEndpoint,
+    buckets: t.context.buckets,
+    cmrGranuleUrlType: 'none'
+  });
+
+  t.deepEqual(actual, []);
+});
+
+test('constructRelatedUrls returns s3 urls when cmrGranuleUrlType is s3', (t) => {
+  const movedFiles = [
+    {
+      key: 'path/publicfile.jpg',
+      bucket: t.context.bucketConfig.public.name,
+      filename: `s3://${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
+      type: 'browse'
+    }
+  ];
+
+  const expected = [
+    {
+      URL: `s3://${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
+      Description: 'File to download',
+      Type: 'GET RELATED VISUALIZATION'
+    },
+    omit(s3CredentialsEndpointObject, 'URLDescription')
+  ];
+
+  const actual = constructRelatedUrls({
+    files: movedFiles,
+    distEndpoint,
+    buckets: t.context.buckets,
+    cmrGranuleUrlType: 's3'
+  });
+
+  t.deepEqual(actual, expected);
+});
+
+test('constructRelatedUrls returns just s3 credentials url when cmrGranuleUrlType is s3', (t) => {
+  const movedFiles = [
+    {
+      key: 'path/publicfile.jpg',
+      bucket: t.context.bucketConfig.public.name,
+      filename: `s3://${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
+      type: 'browse'
+    }
+  ];
+
+  const actual = constructRelatedUrls({
+    files: movedFiles,
+    distEndpoint,
+    buckets: t.context.buckets,
+    cmrGranuleUrlType: 'none'
+  });
+
+  t.deepEqual(actual, [omit(s3CredentialsEndpointObject, 'URLDescription')]);
+});
