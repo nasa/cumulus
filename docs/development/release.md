@@ -82,7 +82,7 @@ Create and push a new git tag:
 ```
 ### 8. Running the deployment
 
-Publishing of new releases is handled by a Bamboo release plan and is manually triggerd.
+Publishing of new releases is handled by a Bamboo release plan and is manually triggered.
 
 If you created a new release plan in step one, you will need to create a new bamboo deployment plan
 
@@ -96,7 +96,9 @@ If you created a new release plan in step one, you will need to create a new bam
 
 * Add the values in that list.   Choose a display name that makes it *very* clear this is a deployment branch plan.    `Release (branch name)` seems to work well.    *Make sure* you select the correct branch
 
-* **Important** Deselect Enable Branch - if you do not do this, it will immediately fire off a build.
+* **Important** Deselect Enable Branch - if you do not do this, it will immediately fire off a build
+
+* **Immediately** go to plan configuration on the `Branch Details` tab, and enable `Change trigger`.  Set the `Trigger type` to manual, this will prevent commits to the branch from triggering the build plan
 
 * Go to the branch plan and set GIT_PR, USE_NPM_PACKAGES and PUBLISH_FLAG to true.  Select a DEPLOYMENT appropriate for the release (otherwise it will use the default last committer)
 
@@ -104,7 +106,7 @@ Bamboo will build and run lint, audit and unit tests against that tagged release
 
 ### 9. Updating master
 
-Once the relase is done, you will need to submit a PR from the feature branch to master with the CHANGELOG updates.
+Once the release is done, you will need to submit a PR from the feature branch to master with the CHANGELOG updates.
 
 ## Troubleshooting
 
