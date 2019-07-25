@@ -283,14 +283,12 @@ async function serveDistributionApi(stackName = defaultLocalStackName, done) {
  * @param {string} user - defaults to local user, testUser
  * @param {string} stackName - defaults to local stack, localrun
  * @param {string} systemBucket - defaults to 'localbucket', localrun
- * @param {string} repopulateOriginalData - update tables with test data; defaults to 'true'
  * @param {bool} runIt - Override check to prevent accidental AWS run.  default: 'false'.
  */
 async function resetTables(
   user = 'testUser',
   stackName = defaultLocalStackName,
   systemBucket = 'localbucket',
-  repopulateOriginalData = true,
   runIt = false
 ) {
   if (inTestMode() || runIt) {
@@ -319,8 +317,8 @@ async function resetTables(
       console.log(error);
     }
 
-    // Populate tables with original test data
-    if (repopulateOriginalData) {
+    // Populate tables with original test data (localstack)
+    if (inTestMode()) {
       await createDBRecords(stackName, user);
     }
   }

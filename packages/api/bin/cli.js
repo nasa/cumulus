@@ -88,7 +88,6 @@ program
   .option('--username <username>', 'username [default: process.env.USERNAME]', process.env.USERNAME)
   .option('--stack-name <stackName>', 'Name of stack', 'localrun')
   .option('--system-bucket <systemBucket>', 'Name of systemBucket', 'localbucket')
-  .option('--no-repopulate', 'skip repopulating tables with test data. (for cleaning AWS tables)')
   .option('--run-it', 'Override check for TestMode and run commands.')
   .description('Resets dynamodb tables for testing')
   .action((cmd) => {
