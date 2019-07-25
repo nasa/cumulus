@@ -137,11 +137,11 @@ Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
 Outputs:
 
 s3_credentials_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/redirect
-thin_egress_app_endpoint = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
+distribution_url = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
 thin_egress_app_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/login
 ```
 
-Copy the output value of `thin_egress_app_domain_name` and add it as the value of `distribution_url` in `terraform.tfvars`, adding your configured tunneling port.
+Copy the output value of `distribution_url` and add it as the value of `distribution_url` in `terraform.tfvars`, adding your configured tunneling port.
 
 **terraform.tfvars**
 ```hcl
@@ -168,7 +168,7 @@ Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
 Outputs:
 
 s3_credentials_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com:7000/DEV/redirect
-thin_egress_app_endpoint = https://abc123.execute-api.us-east-1.amazonaws.com:7000/DEV/
+distribution_url = https://abc123.execute-api.us-east-1.amazonaws.com:7000/DEV/
 thin_egress_app_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com:7000/DEV/login
 ```
 
