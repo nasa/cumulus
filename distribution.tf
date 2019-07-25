@@ -22,8 +22,8 @@ module "thin_egress_app" {
   bucket_map_file            = aws_s3_bucket_object.bucket_map_yaml.key
   bucketname_prefix          = ""
   config_bucket              = var.system_bucket
-  domain_name                = var.distribution_domain_name
-  permissions_boundary_name  = var.permissions_boundary == null ? null : reverse(split("/", var.permissions_boundary))[0]
+  domain_name                = var.distribution_url == null ? null : replace(replace(var.distribution_url, "/^https?:///", ""), "//$/", "")
+  permissions_boundary_name  = var.permissions_boundary_arn == null ? null : reverse(split("/", var.permissions_boundary_arn))[0]
   private_vpc                = var.vpc_id
   stack_name                 = "${var.prefix}-thin-egress-app"
   stage_name                 = var.thin_egress_app_deployment_stage
@@ -32,10 +32,10 @@ module "thin_egress_app" {
 }
 
 module "s3_credentials_endpoint" {
-  source = "./packages/s3-credentials-endpoint"
+  source = "./tf-modules/s3-credentials-endpoint"
 
   distribution_url     = module.thin_egress_app.api_endpoint
-  permissions_boundary = var.permissions_boundary
+  permissions_boundary = var.permissions_boundary_arn
   prefix               = var.prefix
   public_buckets       = var.public_buckets
   region               = var.region
