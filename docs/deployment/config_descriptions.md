@@ -117,7 +117,7 @@ This table describes the fields that must be present in `config.yml` to successf
 
 ### Deployment name (key)
 
-The name (e.g. `dev:`) of the the 'deployment' - this key tells kes which configuration set (in addition to the default values) to use when creating the cloud formation template[^2]
+The name (e.g. `dev:`) of the the 'deployment' - this key tells kes which configuration set (in addition to the default values) to use when creating the cloud formation template[^1]
 
 ### prefix
 
@@ -413,4 +413,4 @@ apiConfigs:
 
 # Footnotes
 
-[^2]: This value is used by kes only to identify the configuration set to use and should not appear in any AWS object
+[^1]: This value is used by kes only to identify the configuration set to use and should not appear in any AWS object
