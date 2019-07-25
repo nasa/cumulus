@@ -10,13 +10,13 @@ echo "Publishing packages to NPM with version=${VERSION} and tag=${NPM_TAG}"
 
 # Added to mitigate build environment concerns in bamboo
 export npm_config_unsafe_perm=true
-#temp disable publish due to script issue
-# npx lerna publish \
-#   ${VERSION} \
-#   --no-git-tag-version \
-#   --no-push \
-#   --yes \
-#   --force-publish=* \
-#   --dist-tag=${NPM_TAG} \
-#   --exact
+
+npx lerna publish \
+  ${VERSION} \
+  --no-git-tag-version \
+  --no-push \
+  --yes \
+  --force-publish=* \
+  --dist-tag=${NPM_TAG} \
+  --exact
 
