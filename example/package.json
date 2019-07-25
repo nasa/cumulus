@@ -36,7 +36,7 @@
     ]
   },
   "dependencies": {
-    "@cumulus/api": "1.13.0",
+    "@cumulus/api": "1.13.1",
     "@cumulus/checksum": "1.13.0",
     "@cumulus/cmrjs": "1.13.0",
     "@cumulus/common": "1.13.0",
@@ -45,7 +45,7 @@
     "@cumulus/discover-pdrs": "1.13.0",
     "@cumulus/files-to-granules": "1.13.0",
     "@cumulus/hello-world": "1.13.0",
-    "@cumulus/integration-tests": "1.13.0",
+    "@cumulus/integration-tests": "1.13.1",
     "@cumulus/move-granules": "1.13.0",
     "@cumulus/parse-pdr": "1.13.0",
     "@cumulus/pdr-status-check": "1.13.0",
@@ -54,7 +54,7 @@
     "@cumulus/queue-pdrs": "1.13.0",
     "@cumulus/sf-sns-report": "1.13.0",
     "@cumulus/sync-granule": "1.13.0",
-    "@cumulus/test-processing": "1.13.0",
+    "@cumulus/test-processing": "1.13.1",
     "aws-sdk": "^2.227.1",
     "child-process-promise": "^2.2.1",
     "lodash.differencewith": "^4.5.0",
