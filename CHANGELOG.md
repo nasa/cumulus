@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
     - **Delete existing API Gateway stages**: To allow enabling of API Gateway logging, Cumulus now creates and manages a Stage resource during deployment. Before upgrading Cumulus, it is necessary to delete the API Gateway stages on both the Backend API and the Distribution API.  Instructions are included in the documenation under [Delete API Gateway Stages](https://nasa.github.io/cumulus/docs/additional-deployment-options/delete-api-gateway-stages).
 
-    - **Set up account permissions for API Gateway to write to CloudWatch**: In a one time operation for your AWS account, to enable CloudWatch Logs for API Gateway, you must first grant the API Gateway permission to read and write logs to CloudWatch for your account. The `AmazonAPIGatewayPushToCloudWatchLogs` managed policy (with an ARN of `arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs`) has all the required permissions. You can find a simple how to in the documentation under [Enable API Gateway Logging.](https://nasa.github.io/cumulus/docs/additional-deployment-options/enable-gateway-logging-permissions)
+    - **Set up account permissions for API Gateway to write to CloudWatch**: In a one time operation for your AWS account, to enable CloudWatch Logs for API Gateway, you must first grant the API Gateway permission to read1nd write logs to CloudWatch for your account. The `AmazonAPIGatewayPushToCloudWatchLogs` managed policy (with an ARN of `arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs`) has all the required permissions. You can find a simple how to in the documentation under [Enable API Gateway Logging.](https://nasa.github.io/cumulus/docs/additional-deployment-options/enable-gateway-logging-permissions)
 
     - **Configure API Gateway to write logs to CloudWatch** To enable execution logging for the distribution API set `config.yaml` `apiConfigs.distribution.logApigatewayToCloudwatch` value to `true`.  More information [Enable API Gateway Logs](https://nasa.github.io/cumulus/docs/additional-deployment-options/enable-api-logs)
 
@@ -116,6 +116,15 @@ If you deploy with no distribution app your deployment will succeed but you may 
 - **CUMULUS-1337**
   - Removes the S3 Access Metrics package added in CUMULUS-799
 
+## [v1.13.2] - 2019-07-25
+
+- Re-release of v1.13.1 to fix broken npm packages.
+
+## [v1.13.1] - 2019-07-22 -- **NOTE**: 1.13.1 should not be used, please upgrade to 1.13.2 instead
+
+- **CUMULUS-1374** - Resolve audit compliance with lodash version for api package subdependency
+- **CUMULUS-1412** - Resolve audit compliance with googleapi package
+- **CUMULUS-1345** - Backported CMR environment setting in getUrl to address immediate user need.   CMR_ENVIRONMENT can now be used to set the CMR environment to OPS/SIT
 
 ## [v1.13.0] - 2019-5-20
 
