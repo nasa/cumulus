@@ -5,8 +5,8 @@ provider "aws" {
 module "cumulus" {
   source = "../"
 
-  distribution_domain_name = var.distribution_domain_name
-  permissions_boundary     = var.permissions_boundary
+  distribution_url         = var.distribution_url
+  permissions_boundary_arn = var.permissions_boundary_arn
   prefix                   = var.prefix
   protected_buckets        = var.protected_buckets
   public_buckets           = var.public_buckets

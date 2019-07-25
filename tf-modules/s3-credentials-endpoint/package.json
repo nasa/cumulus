@@ -1,5 +1,6 @@
 {
   "name": "@cumulus/s3-credentials-endpoint",
+  "private": true,
   "version": "1.13.1",
   "engines": {
     "node": ">=8.10.0"
