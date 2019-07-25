@@ -6,5 +6,5 @@ rm -f dist/terraform-aws-cumulus.zip
 
 zip dist/terraform-aws-cumulus.zip \
   ./*.tf \
-  packages/s3-credentials-endpoint/*.tf \
-  packages/s3-credentials-endpoint/dist/src.zip
+  ./tf-modules/s3-credentials-endpoint/*.tf \
+  ./tf-modules/s3-credentials-endpoint/dist/src.zip

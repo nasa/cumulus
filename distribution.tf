@@ -12,7 +12,7 @@ resource "aws_secretsmanager_secret" "thin_egress_urs_creds" {
 
 resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
   secret_id     = aws_secretsmanager_secret.thin_egress_urs_creds.id
-  secret_string = "{\"UrsId\": \"${var.urs_client_id}=\",\"UrsAuth\": \"${base64encode("${var.urs_client_id}:${var.urs_client_password}")}\"}"
+  secret_string = "{\"UrsId\": \"${var.urs_client_id}\",\"UrsAuth\": \"${base64encode("${var.urs_client_id}:${var.urs_client_password}")}\"}"
 }
 
 module "thin_egress_app" {
@@ -22,8 +22,8 @@ module "thin_egress_app" {
   bucket_map_file            = aws_s3_bucket_object.bucket_map_yaml.key
   bucketname_prefix          = ""
   config_bucket              = var.system_bucket
-  domain_name                = var.thin_egress_app_domain_name
-  permissions_boundary_name  = var.permissions_boundary == null ? null : reverse(split("/", var.permissions_boundary))[0]
+  domain_name                = var.distribution_url == null ? null : replace(replace(var.distribution_url, "/^https?:///", ""), "//$/", "")
+  permissions_boundary_name  = var.permissions_boundary_arn == null ? null : reverse(split("/", var.permissions_boundary_arn))[0]
   private_vpc                = var.vpc_id
   stack_name                 = "${var.prefix}-thin-egress-app"
   stage_name                 = var.thin_egress_app_deployment_stage
@@ -32,17 +32,18 @@ module "thin_egress_app" {
 }
 
 module "s3_credentials_endpoint" {
-  source = "./packages/s3-credentials-endpoint"
+  source = "./tf-modules/s3-credentials-endpoint"
 
-  public_buckets       = var.public_buckets
+  distribution_url     = module.thin_egress_app.api_endpoint
+  permissions_boundary = var.permissions_boundary_arn
   prefix               = var.prefix
+  public_buckets       = var.public_buckets
   region               = var.region
   rest_api             = module.thin_egress_app.rest_api
+  stage_name           = var.thin_egress_app_deployment_stage
   subnet_ids           = var.subnet_ids
-  urs_url              = var.urs_url
   urs_client_id        = var.urs_client_id
   urs_client_password  = var.urs_client_password
-  permissions_boundary = var.permissions_boundary
-  stage_name           = var.thin_egress_app_deployment_stage
+  urs_url              = var.urs_url
   vpc_id               = var.vpc_id
 }
