@@ -13,6 +13,11 @@ variable "aws_region" {
   default = "default"
 }
 
+variable "executions_table" {
+  type    = string
+  default = "default"
+}
+
 variable "permissions_boundary" {
   type = string
 }

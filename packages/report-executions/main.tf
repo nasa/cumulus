@@ -27,7 +27,7 @@ resource "aws_lambda_function" "report_executions" {
 
   environment {
     variables = {
-      ExecutionsTable = "${var.prefix}-ExecutionsTable"
+      ExecutionsTable = "${var.executions_table}"
     }
   }
 }

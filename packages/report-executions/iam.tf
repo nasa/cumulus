@@ -33,7 +33,7 @@ data "aws_iam_policy_document" "report_executions_policy_document" {
       "dynamoDb:putItem"
     ]
     resources = [
-      "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.prefix}-ExecutionsTable"
+      "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.executions_table}"
     ]
   }
 }
