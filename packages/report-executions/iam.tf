@@ -17,20 +17,12 @@ resource "aws_iam_role" "report_executions_lambda_role" {
 data "aws_iam_policy_document" "report_executions_policy_document" {
   statement {
     actions = [
-      "ec2:CreateNetworkInterface",
-      "ec2:DescribeNetworkInterfaces",
-      "ec2:DeleteNetworkInterface"
+      "dynamoDb:getItem",
+      "dynamoDb:putItem"
     ]
-    resources = ["*"]
-  }
-  statement {
-    actions = [
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:DescribeLogStreams",
-      "logs:PutLogEvents"
+    resources = [
+      "arn:aws:dynamodb:${aws:region}:${aws:userid}:table/${var.prefix}-ExecutionsTable"
     ]
-    resources = ["*"]
   }
 }
 
