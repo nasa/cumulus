@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Re-release of v1.13.1 to fix broken npm packages.
 
-## [v1.13.1] - 2019-07-22
+## [v1.13.1] - 2019-07-22 -- **NOTE**: 1.13.1 should not be used, please upgrade to 1.13.2 instead
 
 - **CUMULUS-1374** - Resolve audit compliance with lodash version for api package subdependency
 - **CUMULUS-1412** - Resolve audit compliance with googleapi package
