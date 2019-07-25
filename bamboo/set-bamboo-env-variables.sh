@@ -20,6 +20,7 @@ declare -a param_list=(
   "bamboo_CMR_USERNAME"
   "bamboo_DEPLOYMENT"
   "bamboo_PUBLISH_FLAG"
+  "bamboo_SKIP_AUDIT"
   "bamboo_USE_NPM_PACKAGES"
   "bamboo_REPORT_BUILD_STATUS"
   "bamboo_SHARED_LOG_DESTINATION_ARN"
