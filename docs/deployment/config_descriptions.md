@@ -413,6 +413,4 @@ apiConfigs:
 
 # Footnotes
 
-[^1]: The distribution-metrics endpoint assumes the Distribution API is deployed to a single stage.
-
 [^2]: This value is used by kes only to identify the configuration set to use and should not appear in any AWS object
