@@ -15,7 +15,7 @@ resource "aws_lambda_function" "report_executions" {
   function_name    = "${var.prefix}-reportExecutions"
   role             = "${aws_iam_role.report_executions_lambda_role.arn}"
   handler          = "index.handler"
-  runtime          = "nodejs8.x"
+  runtime          = "nodejs8.10"
   timeout          = 300
 
   source_code_hash = "${data.archive_file.report_executions_package.output_base64sha256}"

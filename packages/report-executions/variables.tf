@@ -8,6 +8,11 @@ variable "aws_profile" {
   default = "default"
 }
 
+variable "aws_region" {
+  type    = string
+  default = "default"
+}
+
 variable "permissions_boundary" {
   type = string
 }

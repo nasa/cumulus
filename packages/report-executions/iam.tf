@@ -1,3 +1,5 @@
+data "aws_caller_identity" "current" { }
+
 data "aws_iam_policy_document" "assume_lambda_role" {
   statement {
     principals {
@@ -17,11 +19,21 @@ resource "aws_iam_role" "report_executions_lambda_role" {
 data "aws_iam_policy_document" "report_executions_policy_document" {
   statement {
     actions = [
+      "ec2:CreateNetworkInterface",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DeleteNetworkInterface"
+    ]
+    resources = [
+      "*"
+    ]
+  }
+  statement {
+    actions = [
       "dynamoDb:getItem",
       "dynamoDb:putItem"
     ]
     resources = [
-      "arn:aws:dynamodb:${aws:region}:${aws:userid}:table/${var.prefix}-ExecutionsTable"
+      "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.prefix}-ExecutionsTable"
     ]
   }
 }
