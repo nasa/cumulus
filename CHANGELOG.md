@@ -27,7 +27,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
     - **Configure S3 Server Access Logs**:  If you are running Cumulus in an NGAP environment you may [configure S3 Server Access Logs](https://nasa.github.io/cumulus/docs/next/deployment/server_access_logging) to be delivered to a shared bucket where the Metrics Team will ingest the logs into their ELK stack.  Contact the Metrics team for permission and location.
 
+- **CUMULUS-1368** The Cumulus distribution API has been deprecated and is being replaced by ASF's Thin Egress App. By default, the distribution API will not deploy. Please follow [the instructions for deploying and configuring Thin Egress](https://nasa.github.io/cumulus/docs/deployment/thin_egress_app).
 
+To instead continue to deploy and use the legacy Cumulus distribution app, add the following to your `config.yml`:
+
+```
+deployDistributionApi: true
+```
+
+If you deploy with no distribution app your deployment will succeed but you may encounter errors in your workflows, particularly in the `MoveGranule` task.
 
 ## Added
 - **CUMULUS-1345**
@@ -53,6 +61,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added support for limiting the number of concurrent executions started from a queue. [See the data cookbook](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions) for more information.
 - **CUMULUS-1337**
   - Adds `cumulus.stackName` value to the `instanceMetadata` endpoint.
+
+- **CUMULUS-1368**
+  - Added `cmrGranuleUrlType` to the `@cumulus/move-granules` task. This determines what kind of links go in the CMR files. The options are `distribution`, `s3`, or `none`, with the default being distribution. If there is no distribution API being used with Cumulus, you must set the value to `s3` or `none`.
+
+- Added `packages/s3-replicator` terraform module to allow same-region s3 replication to metrics bucket.
 
 
 ### Changed

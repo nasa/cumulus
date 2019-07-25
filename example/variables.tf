@@ -2,23 +2,6 @@ variable "prefix" {
   type = string
 }
 
-variable "region" {
-  type    = string
-  default = "us-east-1"
-}
-
-variable "protected_buckets" {
-  type    = list(string)
-  default = []
-}
-
-variable "public_buckets" {
-  type    = list(string)
-  default = []
-}
-
-
-
 variable "subnet_ids" {
   type = list(string)
 }
@@ -39,13 +22,27 @@ variable "vpc_id" {
   type = string
 }
 
-
-variable "permissions_boundary" {
+variable "region" {
   type    = string
-  default = "NGAPShNonProdRoleBoundary"
+  default = "us-east-1"
 }
 
-variable "thin_egress_app_domain_name" {
+variable "protected_buckets" {
+  type    = list(string)
+  default = []
+}
+
+variable "public_buckets" {
+  type    = list(string)
+  default = []
+}
+
+variable "permissions_boundary_arn" {
+  type    = string
+  default = null
+}
+
+variable "distribution_url" {
   type    = string
   default = null
 }

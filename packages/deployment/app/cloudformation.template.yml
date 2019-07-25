@@ -50,6 +50,7 @@ Resources:
 {{/ifEquals}}
 {{/ifEquals}}
 {{#ifNotEquals @key "WorkflowLambdaVersions"}}
+{{#ifDeployApi @key ../deployDistributionApi}}
   {{@key}}NestedStack:
     Type: "AWS::CloudFormation::Stack"
     Properties:
@@ -58,9 +59,9 @@ Resources:
           Fn::GetAtt:
             - CumulusCustomResource
             - CmrPassword
-      {{#if ../es.name}}
+      {{#if ../../es.name}}
         ElasticSearchDomain:
-          Ref: {{../es.name}}DomainEndpoint
+          Ref: {{../../es.name}}DomainEndpoint
       {{/if}}
         log2elasticsearchLambdaFunctionArn:
           Fn::GetAtt:
@@ -111,18 +112,21 @@ Resources:
         # The backend API needs a reference to the distributionRestApi so
         # it can construct values for the DISTRIBUTION_REDIRECT_ENDPOINT
         # environment variable. The /granules endpoint uses this variable.
+        {{#ifEquals ../../deployDistributionApi true}}
         distributionRestApi:
           Fn::GetAtt:
             - CumulusApiDistributionNestedStack
             - Outputs.distributionRestApiResource
         {{/ifEquals}}
-      {{# each ../dynamos}}
-        {{@key}}DynamoDB: {{../../prefix}}-{{@key}}
+        {{/ifEquals}}
+      {{# each ../../dynamos}}
+        {{@key}}DynamoDB: {{../../../prefix}}-{{@key}}
       {{/each}}
-      {{# if ../vpc }}
-        SecurityGroupId: {{../vpc.securityGroup}}
+      {{# if ../../vpc }}
+        SecurityGroupId: {{../../vpc.securityGroup}}
       {{/if}}
-      TemplateURL: {{this.url}}
+      TemplateURL: {{../this.url}}
+{{/ifDeployApi}}
 {{/ifNotEquals}}
 {{/each}}
 
@@ -446,7 +450,8 @@ Resources:
       {{# if this.useDistributionApi}}
         {{# if ../api_distribution_url}}
           DISTRIBUTION_ENDPOINT: {{../api_distribution_url}}
-        {{else}}
+        {{/if}}
+        {{#if ../deployDistributionApi}}
           DISTRIBUTION_ENDPOINT:
             Fn::GetAtt:
               - CumulusApiDistributionNestedStack
@@ -1261,10 +1266,12 @@ Outputs:
         - Outputs.backendRestApiResourceUrl
   {{/if}}
 
-  Distribution:
   {{# if api_distribution_url}}
+  Distribution:
     Value: {{api_distribution_url}}
-  {{else}}
+  {{/if}}
+  {{#if deployDistributionApi}}
+  Distribution:
     Value:
       Fn::GetAtt:
         - CumulusApiDistributionNestedStack
@@ -1277,11 +1284,13 @@ Outputs:
         - CumulusApiBackendNestedStack
         - Outputs.backendRestApiResource
 
+  {{#if deployDistributionApi}}
   DistributionId:
     Value:
       Fn::GetAtt:
         - CumulusApiDistributionNestedStack
         - Outputs.distributionRestApiResource
+  {{/if}}
 
   ApiStage:
     Value: {{apiStage}}

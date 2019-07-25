@@ -1,64 +1,75 @@
-# TODO Add descriptions
-
 # Required variables
 
 variable "prefix" {
-  type = string
+  type        = string
+  description = "Resource prefix unique to this deployment"
 }
 
 variable "subnet_ids" {
-  type = list(string)
+  type        = list(string)
+  description = "VPC subnets used by Lambda functions"
 }
 
 variable "system_bucket" {
-  type = string
+  type        = string
+  description = "A bucket to be used for staging deployment files"
 }
 
 variable "urs_client_id" {
-  type = string
+  type        = string
+  description = "The URS app ID"
 }
 
 variable "urs_client_password" {
-  type = string
+  type        = string
+  description = "The URS app password"
 }
 
 variable "vpc_id" {
-  type = string
+  type        = string
+  description = "VPC used by Lambda functions"
 }
 
 # Optional variables
 
-variable "permissions_boundary" {
-  type    = string
-  default = null
+variable "permissions_boundary_arn" {
+  type        = string
+  default     = null
+  description = "The ARN of an IAM permissions boundary to use when creating IAM policies"
 }
 
 variable "protected_buckets" {
-  type    = list(string)
-  default = []
+  type        = list(string)
+  default     = []
+  description = "A list of protected buckets"
 }
 
 variable "public_buckets" {
-  type    = list(string)
-  default = []
+  type        = list(string)
+  default     = []
+  description = "A list of public buckets"
 }
 
 variable "region" {
-  type    = string
-  default = "us-east-1"
+  type        = string
+  default     = "us-east-1"
+  description = "The AWS region to deploy to"
 }
 
 variable "thin_egress_app_deployment_stage" {
-  type    = string
-  default = "DEV"
+  type        = string
+  default     = "DEV"
+  description = "The API Gateway stage to create"
 }
 
-variable "thin_egress_app_domain_name" {
-  type    = string
-  default = null
+variable "distribution_url" {
+  type        = string
+  default     = null
+  description = "An alternative URL used for distribution"
 }
 
 variable "urs_url" {
-  type    = string
-  default = "https://urs.earthdata.nasa.gov"
+  type        = string
+  default     = "https://urs.earthdata.nasa.gov"
+  description = "The URL of the Earthdata Login site"
 }

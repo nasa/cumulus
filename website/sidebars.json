@@ -34,6 +34,7 @@
       "deployment/obtain_cumulus_packages",
       "deployment/config_descriptions",
       "deployment/troubleshoot_deployment",
+      "deployment/cumulus_component",
       "deployment/thin_egress_app"
     ],
     "Deployment Options":[
@@ -41,15 +42,17 @@
       "additional-deployment-options/enable-gateway-logging-permissions",
       "additional-deployment-options/enable-api-logs",
       "additional-deployment-options/configure-cloudwatch-logs-delivery",
-      "additional-deployment-options/additional-lambda-logging"
+      "additional-deployment-options/additional-lambda-logging",
+      "additional-deployment-options/share-s3-access-logs"
     ],
     "Additional Features": [
-      "data_in_dynamodb",
+      "features/data_in_dynamodb",
       "features/dead_letter_queues",
-      "ems_reporting",
+      "features/ems_reporting",
       "features/execution_payload_retention",
-      "lambda_versioning",
-      "features/ancillary_metadata"
+      "features/lambda_versioning",
+      "features/ancillary_metadata",
+      "features/distribution-metrics"
     ],
     "Upgrading Cumulus": [
       "upgrade/upgrade-readme"
