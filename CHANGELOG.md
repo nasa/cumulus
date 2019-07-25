@@ -7,10 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [v.13.1] - 2019-07-22
+## [v1.13.2] - 2019-07-25
+
+- Re-release of v1.13.1 to fix broken npm packages.
+
+## [v1.13.1] - 2019-07-22 -- **NOTE**: 1.13.1 should not be used, please upgrade to 1.13.2 instead
 
 - **CUMULUS-1374** - Resolve audit compliance with lodash version for api package subdependency
-- **CUMULUS-1412** - Resolve audit complaince with googleapi package
+- **CUMULUS-1412** - Resolve audit compliance with googleapi package
 - **CUMULUS-1345** - Backported CMR environment setting in getUrl to address immediate user need.   CMR_ENVIRONMENT can now be used to set the CMR environment to OPS/SIT
 
 ## [v1.13.0] - 2019-5-20
@@ -1129,7 +1133,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.13.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.13.2...HEAD
+[v1.13.1]: https://github.com/nasa/cumulus/compare/v1.13.1...v1.13.2
 [v1.13.1]: https://github.com/nasa/cumulus/compare/v1.13.0...v1.13.1
 [v1.13.0]: https://github.com/nasa/cumulus/compare/v1.12.1...v1.13.0
 [v1.12.1]: https://github.com/nasa/cumulus/compare/v1.12.0...v1.12.1
