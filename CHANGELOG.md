@@ -37,7 +37,7 @@ deployDistributionApi: true
 
 If you deploy with no distribution app your deployment will succeed but you may encounter errors in your workflows, particularly in the `MoveGranule` task.
 
-## Added
+### Added
 - **CUMULUS-1345**
   - Adds new variables to the app deployment under `cmr`.
   - `cmrEnvironment` values are `SIT`, `UAT`, or `OPS` with `UAT` as the default.
@@ -56,6 +56,7 @@ If you deploy with no distribution app your deployment will succeed but you may 
   - Added `@cumulus/common/message` with various message parsing/preparation helpers
 - **CUMULUS-812**
   - Added support for limiting the number of concurrent executions started from a queue. [See the data cookbook](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions) for more information.
+
 - **CUMULUS-1337**
   - Adds `cumulus.stackName` value to the `instanceMetadata` endpoint.
 
@@ -65,7 +66,7 @@ If you deploy with no distribution app your deployment will succeed but you may 
 - Added `packages/s3-replicator` terraform module to allow same-region s3 replication to metrics bucket.
 
 
-### Changed
+## Changed
 
 - **CUMULUS-1232**
   - Added retries to update `@cumulus/cmr-client` `updateToken()`
@@ -106,6 +107,15 @@ If you deploy with no distribution app your deployment will succeed but you may 
 - **CUMULUS-796**
   - Added production information (collection ShortName and Version, granuleId) to EMS distribution report
   - Added functionality to send daily distribution reports to EMS
+
+
+### BREAKING CHANGES
+
+### Removed
+
+- **CUMULUS-1337**
+  - Removes the S3 Access Metrics package added in CUMULUS-799
+
 
 ## [v1.13.0] - 2019-5-20
 
@@ -173,7 +183,7 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
     - Renamed file object `checksumValue` field to `checksum` where not already done.
     - Added `ancillary` and `linkage` type support to file objects.
 
-## Added
+### Added
 
 - **CUMULUS-799**
   - Added an S3 Access Metrics package which will take S3 Server Access Logs and
