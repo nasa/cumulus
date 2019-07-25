@@ -6,7 +6,7 @@ provider "aws" {
 
 data "archive_file" "report_executions_package" {
   type        = "zip"
-  source_file = "index.js"
+  source_file = "dist/index.js"
   output_path = "build/report_executions.zip"
 }
 

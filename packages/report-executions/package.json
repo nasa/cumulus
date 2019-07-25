@@ -7,7 +7,10 @@
     "node": ">=8.10.0"
   },
   "scripts": {
-    "test": "ava"
+    "test": "ava",
+    "build": "rm -rf dist && mkdir dist && webpack",
+    "watch": "rm -rf dist && mkdir dist && webpack --progress -w",
+    "prepare": "npm run build"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
@@ -18,6 +21,8 @@
   },
   "devDependencies": {
     "@cumulus/common": "1.13.0",
-    "ava": "^2.1.0"
+    "ava": "^2.1.0",
+    "webpack": "^4.37.0",
+    "webpack-cli": "^3.3.6"
   }
 }
