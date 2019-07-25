@@ -177,13 +177,23 @@ async function reconciliationReportForGranuleFiles(granuleInDb, granuleInCmr, bu
       // filename in both cumulus and CMR
       if (granuleFiles[urlFileName] && bucketsConfig.key(granuleFiles[urlFileName].bucket)) {
         // not all files should be in CMR
-        const accessUrl = constructOnlineAccessUrl({
+        const distributionAccessUrl = constructOnlineAccessUrl({
           file: granuleFiles[urlFileName],
           distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
-          buckets: bucketsConfig
+          buckets: bucketsConfig,
+          cmrGranuleUrlType: 'distribution'
         });
 
-        if (accessUrl && relatedUrl.URL === accessUrl.URL) {
+        const s3AccessUrl = constructOnlineAccessUrl({
+          file: granuleFiles[urlFileName],
+          distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
+          buckets: bucketsConfig,
+          cmrGranuleUrlType: 's3'
+        });
+
+        if (distributionAccessUrl && relatedUrl.URL === distributionAccessUrl.URL) {
+          okCount += 1;
+        } else if (s3AccessUrl && relatedUrl.URL === s3AccessUrl.URL) {
           okCount += 1;
         } else if (cmrGetDataTypes.includes(relatedUrl.Type)) {
           // ignore any URL which is not for getting data

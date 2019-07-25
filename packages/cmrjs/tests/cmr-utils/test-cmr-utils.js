@@ -15,6 +15,7 @@ const cmrUtil = rewire('../../cmr-utils');
 const { isCMRFile, getGranuleTemporalInfo } = cmrUtil;
 const uploadEcho10CMRFile = cmrUtil.__get__('uploadEcho10CMRFile');
 const uploadUMMGJSONCMRFile = cmrUtil.__get__('uploadUMMGJSONCMRFile');
+const generateFileUrl = cmrUtil.__get__('generateFileUrl');
 
 
 test('isCMRFile returns truthy if fileobject has valid xml name', (t) => {
@@ -308,4 +309,63 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
     revertMetaObject();
   }
   t.deepEqual(temporalInfo, expectedTemporalInfo);
+});
+
+test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distribution', (t) => {
+  const filename = 's3://fake-bucket/folder/key.txt';
+  const distEndpoint = 'www.example.com/';
+
+  const file = {
+    filename,
+    bucket: 'fake-bucket',
+    key: 'folder/key.txt'
+  };
+
+  const url = generateFileUrl(file, distEndpoint, 'distribution');
+
+  t.is(url, 'www.example.com/fake-bucket/folder/key.txt');
+});
+
+test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3', (t) => {
+  const filename = 's3://fake-bucket/folder/key.txt';
+  const distEndpoint = 'www.example.com/';
+
+  const file = {
+    filename,
+    bucket: 'fake-bucket',
+    key: 'folder/key.txt'
+  };
+
+  const url = generateFileUrl(file, distEndpoint, 's3');
+
+  t.is(url, filename);
+});
+
+test.serial('generateFileUrl generates correct url for cmrGranuleUrlType s3 with no filename', (t) => {
+  const filename = 's3://fake-bucket/folder/key.txt';
+  const distEndpoint = 'www.example.com/';
+
+  const file = {
+    bucket: 'fake-bucket',
+    key: 'folder/key.txt'
+  };
+
+  const url = generateFileUrl(file, distEndpoint, 's3');
+
+  t.is(url, filename);
+});
+
+test.serial('generateFileUrl returns null for cmrGranuleUrlType none', (t) => {
+  const filename = 's3://fake-bucket/folder/key.txt';
+  const distEndpoint = 'www.example.com/';
+
+  const file = {
+    filename,
+    bucket: 'fake-bucket',
+    key: 'folder/key.txt'
+  };
+
+  const url = generateFileUrl(file, distEndpoint, 'none');
+
+  t.is(url, null);
 });
