@@ -109,20 +109,9 @@ terraform {
 
 #### Configure the Cumulus deployment
 
-In the `example` directory, create a `terraform.tfvars` file using values
-appropriate for your deployment:
-
-**terraform.tfvars**
-```hcl
-prefix              = "my-prefix"
-protected_buckets   = ["protected-1", "protected-2"]
-public_buckets      = ["public-1", "public-2"]
-subnet_ids          = ["subnet-123", "subnet-456"]
-system_bucket       = "my-internal-bucket"
-urs_client_id       = "abc123"
-urs_client_password = "password"
-vpc_id              = "vpc-123"
-```
+In the `example` directory, copy `terraform.tfvars.example` to
+`terraform.tfvars` and update all of the parameters using values appropriate for
+your deployment:
 
 #### Deploy Cumulus
 
@@ -141,20 +130,8 @@ distribution_url = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
 thin_egress_app_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/login
 ```
 
-Copy the output value of `distribution_url` and add it as the value of `distribution_url` in `terraform.tfvars`, adding your configured tunneling port.
-
-**terraform.tfvars**
-```hcl
-prefix              = "my-prefix"
-protected_buckets   = ["protected-1", "protected-2"]
-public_buckets      = ["public-1", "public-2"]
-subnet_ids          = ["subnet-123", "subnet-456"]
-system_bucket       = "my-internal-bucket"
-urs_client_id       = "abc123"
-urs_client_password = "password"
-vpc_id              = "vpc-123"
-distribution_url    = "https://abc123.execute-api.us-east-1.amazonaws.com:7000/DEV/"
-```
+Copy the output value of `distribution_url` and add it as the value of
+`distribution_url` in `terraform.tfvars`, adding your configured tunneling port.
 
 Re-deploy Cumulus:
 
