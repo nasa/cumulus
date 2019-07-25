@@ -282,11 +282,18 @@ async function serveDistributionApi(stackName = defaultLocalStackName, done) {
  *
  * @param {string} user - defaults to local user, testUser
  * @param {string} stackName - defaults to local stack, localrun
+ * @param {string} systemBucket - defaults to 'localbucket', localrun
+ * @param {bool} runIt - Override check to prevent accidental AWS run.  default: 'false'.
  */
-async function resetTables(user = 'testUser', stackName = defaultLocalStackName) {
-  if (inTestMode()) {
+async function resetTables(
+  user = 'testUser',
+  stackName = defaultLocalStackName,
+  systemBucket = 'localbucket',
+  runIt = false
+) {
+  if (inTestMode() || runIt) {
     setTableEnvVariables(stackName);
-    process.env.system_bucket = 'localbucket';
+    process.env.system_bucket = systemBucket;
     process.env.stackName = stackName;
 
     // Remove all data from tables
@@ -310,8 +317,10 @@ async function resetTables(user = 'testUser', stackName = defaultLocalStackName)
       console.log(error);
     }
 
-    // Populate tables with original test data
-    await createDBRecords(stackName, user);
+    // Populate tables with original test data (localstack)
+    if (inTestMode()) {
+      await createDBRecords(stackName, user);
+    }
   }
 }
 
