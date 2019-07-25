@@ -227,6 +227,7 @@ async function moveFilesForAllGranules(
 async function updateEachCmrFileAccessURLs(
   cmrFiles,
   granulesObject,
+  cmrGranuleUrlType,
   distEndpoint,
   bucketsConfig
 ) {
@@ -241,7 +242,8 @@ async function updateEachCmrFileAccessURLs(
       files: granule.files,
       distEndpoint,
       publish,
-      inBuckets: bucketsConfig
+      inBuckets: bucketsConfig,
+      cmrGranuleUrlType
     });
   }));
 }
@@ -268,6 +270,7 @@ async function moveGranules(event) {
   const config = event.config;
   const bucketsConfig = new BucketsConfig(config.buckets);
   const moveStagedFiles = get(config, 'moveStagedFiles', true);
+  const cmrGranuleUrlType = get(config, 'cmrGranuleUrlType', 'distribution');
 
   const duplicateHandling = duplicateHandlingType(event);
 
@@ -276,6 +279,11 @@ async function moveGranules(event) {
   const granulesByGranuleId = keyBy(granulesInput, 'granuleId');
 
   let movedGranules;
+
+  if (cmrGranuleUrlType === 'distribution' && !config.distribution_endpoint) {
+    throw new Error('cmrGranuleUrlType is distribution, but no distribution endpoint is configured.');
+  }
+
   // allows us to disable moving the files
   if (moveStagedFiles) {
     // update allGranules with aspirational metadata (where the file should end up after moving.)
@@ -291,6 +299,7 @@ async function moveGranules(event) {
     await updateEachCmrFileAccessURLs(
       cmrFiles,
       movedGranules,
+      cmrGranuleUrlType,
       config.distribution_endpoint,
       bucketsConfig
     );

@@ -5,7 +5,6 @@ const router = require('express-promise-router')();
 const log = require('@cumulus/common/log');
 
 const collections = require('../endpoints/collections');
-const distributionMetrics = require('../endpoints/distribution-metrics');
 const granules = require('../endpoints/granules');
 const granuleCsv = require('../endpoints/granule-csv');
 const providers = require('../endpoints/providers');
@@ -35,8 +34,6 @@ if (process.env.FAKE_AUTH === 'true') {
 
 // collections endpoints
 router.use('/collections', ensureAuthorized, collections);
-
-router.use('/distributionMetrics', ensureAuthorized, distributionMetrics);
 
 // granules endpoints
 router.use('/granules', ensureAuthorized, granules);

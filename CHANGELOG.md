@@ -27,16 +27,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
     - **Configure S3 Server Access Logs**:  If you are running Cumulus in an NGAP environment you may [configure S3 Server Access Logs](https://nasa.github.io/cumulus/docs/next/deployment/server_access_logging) to be delivered to a shared bucket where the Metrics Team will ingest the logs into their ELK stack.  Contact the Metrics team for permission and location.
 
+- **CUMULUS-1368** The Cumulus distribution API has been deprecated and is being replaced by ASF's Thin Egress App. By default, the distribution API will not deploy. Please follow [the instructions for deploying and configuring Thin Egress](https://nasa.github.io/cumulus/docs/deployment/thin_egress_app).
 
+To instead continue to deploy and use the legacy Cumulus distribution app, add the following to your `config.yml`:
 
-## Added
+```
+deployDistributionApi: true
+```
+
+If you deploy with no distribution app your deployment will succeed but you may encounter errors in your workflows, particularly in the `MoveGranule` task.
+
+### Added
 - **CUMULUS-1345**
   - Adds new variables to the app deployment under `cmr`.
   - `cmrEnvironment` values are `SIT`, `UAT`, or `OPS` with `UAT` as the default.
   - `cmrLimit` and `cmrPageSize` have been added as configurable options.
-- **CUMULUS-799**
-  - Adds new BackendApi endpoint `distributionMetrics` that returns a summary of successful s3 accesses as well as a summary of distribution errors -- including s3 access errors, 4XX and 5XX errors.
-
 - **CUMULUS-1273**
   - Added lambda function EmsProductMetadataReport to generate EMS Product Metadata report
 - **CUMULUS-1226**
@@ -51,11 +56,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Added `@cumulus/common/message` with various message parsing/preparation helpers
 - **CUMULUS-812**
   - Added support for limiting the number of concurrent executions started from a queue. [See the data cookbook](https://nasa.github.io/cumulus/docs/data-cookbooks/throttling-queued-executions) for more information.
+
 - **CUMULUS-1337**
   - Adds `cumulus.stackName` value to the `instanceMetadata` endpoint.
 
+- **CUMULUS-1368**
+  - Added `cmrGranuleUrlType` to the `@cumulus/move-granules` task. This determines what kind of links go in the CMR files. The options are `distribution`, `s3`, or `none`, with the default being distribution. If there is no distribution API being used with Cumulus, you must set the value to `s3` or `none`.
 
-### Changed
+- Added `packages/s3-replicator` terraform module to allow same-region s3 replication to metrics bucket.
+
+
+## Changed
 
 - **CUMULUS-1232**
   - Added retries to update `@cumulus/cmr-client` `updateToken()`
@@ -96,6 +107,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-796**
   - Added production information (collection ShortName and Version, granuleId) to EMS distribution report
   - Added functionality to send daily distribution reports to EMS
+
+
+### BREAKING CHANGES
+
+### Removed
+
+- **CUMULUS-1337**
+  - Removes the S3 Access Metrics package added in CUMULUS-799
+
 
 ## [v1.13.0] - 2019-5-20
 
@@ -163,7 +183,7 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
     - Renamed file object `checksumValue` field to `checksum` where not already done.
     - Added `ancillary` and `linkage` type support to file objects.
 
-## Added
+### Added
 
 - **CUMULUS-799**
   - Added an S3 Access Metrics package which will take S3 Server Access Logs and

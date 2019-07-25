@@ -85,9 +85,14 @@ program
 
 program
   .command('reset-tables')
+  .option('--username <username>', 'username [default: process.env.USERNAME]', process.env.USERNAME)
+  .option('--stack-name <stackName>', 'Name of stack', 'localrun')
+  .option('--system-bucket <systemBucket>', 'Name of systemBucket', 'localbucket')
+  .option('--run-it', 'Override check for TestMode and run commands.')
   .description('Resets dynamodb tables for testing')
-  .action(() => {
-    resetTables(process.env.USERNAME).catch(console.error);
+  .action((cmd) => {
+    resetTables(cmd.username, cmd.stackName, cmd.systemBucket, cmd.repopulate, cmd.runIt)
+      .catch(console.error);
   });
 
 program
