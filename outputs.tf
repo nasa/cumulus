@@ -1,4 +1,4 @@
-output "thin_egress_app_domain_name" {
+output "distribution_url" {
   value = module.thin_egress_app.api_endpoint
 }
 

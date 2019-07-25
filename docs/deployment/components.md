@@ -117,5 +117,7 @@ terraform {
 
 ## Available Cumulus Components
 
+* [Cumulus](./cumulus_component) - for ease of deployment, this pacakges
+  commonly-used components into a single module
 * [Thin Egress App](./thin_egress_app) - an app running in lambda that creates
   temporary S3 links and provides URS integration.
