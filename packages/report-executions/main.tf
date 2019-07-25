@@ -32,8 +32,19 @@ resource "aws_lambda_function" "report_executions" {
   }
 }
 
+resource "aws_sns_topic" "report_executions_topic" {
+  name = "${var.prefix}-report-executions-topic"
+}
+
 resource "aws_lambda_permission" "report_executions_permission" {
-  action = "lambda:InvokeFunction"
-  function_name = "${aws_lambda_function.report_executions.arn}"
-  principal = "s3.amazonaws.com"
+  action        = "lambda:InvokeFunction"
+  function_name = "${aws_lambda_function.report_executions.function_name}"
+  principal     = "sns.amazonaws.com"
+  source_arn    = "${aws_sns_topic.report_executions_topic.arn}"
+}
+
+resource "aws_sns_topic_subscription" "report_executions_subscription" {
+  topic_arn = "${aws_sns_topic.report_executions_topic.arn}"
+  protocol  = "lambda"
+  endpoint  = "${aws_lambda_function.report_executions.arn}"
 }
