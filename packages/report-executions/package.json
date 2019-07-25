@@ -1,5 +1,6 @@
 {
   "name": "report-executions",
+  "private": true,
   "version": "1.0.0",
   "description": "Store workflow execution information to database",
   "main": "index.js",
