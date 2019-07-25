@@ -337,6 +337,22 @@ function mapCNMTypeToCMRType(type) {
   return mapping[type];
 }
 
+function generateFileUrl(file, distEndpoint, cmrGranuleUrlType = 'distribution') {
+  if (cmrGranuleUrlType === 'distribution') {
+    const extension = urljoin(file.bucket, getS3KeyOfFile(file));
+    return urljoin(distEndpoint, extension);
+  }
+
+  if (cmrGranuleUrlType === 's3') {
+    if (file.filename) {
+      return file.filename;
+    }
+
+    return aws.buildS3Uri(file.bucket, file.key);
+  }
+
+  return null;
+}
 
 /**
  * Construct online access url for a given file.
@@ -350,14 +366,15 @@ function mapCNMTypeToCMRType(type) {
 function constructOnlineAccessUrl({
   file,
   distEndpoint,
-  buckets
+  buckets,
+  cmrGranuleUrlType = 'distribution'
 }) {
   const bucketType = buckets.type(file.bucket);
   const distributionApiBuckets = ['protected', 'public'];
-  if (distributionApiBuckets.includes(bucketType)) {
-    const extension = urljoin(file.bucket, getS3KeyOfFile(file));
+  const fileUrl = generateFileUrl(file, distEndpoint, cmrGranuleUrlType);
+  if (fileUrl && distributionApiBuckets.includes(bucketType)) {
     return {
-      URL: urljoin(distEndpoint, extension),
+      URL: fileUrl,
       URLDescription: 'File to download', // used by ECHO10
       Description: 'File to download', // used by UMMG
       Type: mapCNMTypeToCMRType(file.type) // used by UMMG
@@ -379,9 +396,15 @@ function constructOnlineAccessUrl({
 function constructOnlineAccessUrls({
   files,
   distEndpoint,
-  buckets
+  buckets,
+  cmrGranuleUrlType = 'distribution'
 }) {
-  const urlList = files.map((file) => constructOnlineAccessUrl({ file, distEndpoint, buckets }));
+  const urlList = files.map((file) => constructOnlineAccessUrl({
+    file,
+    distEndpoint,
+    buckets,
+    cmrGranuleUrlType
+  }));
 
   return urlList.filter((urlObj) => !(urlObj == null));
 }
@@ -401,14 +424,16 @@ function constructRelatedUrls({
   files,
   distEndpoint,
   buckets,
-  s3CredsEndpoint = 's3credentials'
+  s3CredsEndpoint = 's3credentials',
+  cmrGranuleUrlType = 'distribution'
 }) {
   const credsUrl = urljoin(distEndpoint, s3CredsEndpoint);
   const s3CredentialsObject = getS3CredentialsObject(credsUrl);
   const cmrUrlObjects = constructOnlineAccessUrls({
     files,
     distEndpoint,
-    buckets
+    buckets,
+    cmrGranuleUrlType
   });
 
   const relatedUrls = cmrUrlObjects.concat(s3CredentialsObject);
@@ -513,12 +538,14 @@ async function updateUMMGMetadata({
   cmrFile,
   files,
   distEndpoint,
-  buckets
+  buckets,
+  cmrGranuleUrlType = 'distribution'
 }) {
   const newURLs = constructRelatedUrls({
     files,
     distEndpoint,
-    buckets
+    buckets,
+    cmrGranuleUrlType
   });
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
   const filename = getS3UrlOfFile(cmrFile);
@@ -609,7 +636,8 @@ async function updateEcho10XMLMetadata({
   files,
   distEndpoint,
   buckets,
-  s3CredsEndpoint = 's3credentials'
+  s3CredsEndpoint = 's3credentials',
+  cmrGranuleUrlType = 'distribution'
 }) {
   // add/replace the OnlineAccessUrls
   const filename = getS3UrlOfFile(cmrFile);
@@ -625,8 +653,12 @@ async function updateEcho10XMLMetadata({
     'AssociatedBrowseImageUrls.ProviderBrowseUrl', []));
 
   const removedURLs = onlineAccessURLsToRemove(files, buckets);
-  const newURLs = constructOnlineAccessUrls({ files, distEndpoint, buckets })
-    .concat(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
+  const newURLs = constructOnlineAccessUrls({
+    files,
+    distEndpoint,
+    buckets,
+    cmrGranuleUrlType
+  }).concat(getS3CredentialsObject(urljoin(distEndpoint, s3CredsEndpoint)));
 
   const mergedOnlineResources = buildMergedEchoURLObject(newURLs, originalOnlineResourceURLs,
     removedURLs, ['EXTENDED METADATA', 'VIEW RELATED INFORMATION'], ['URLDescription']);
@@ -666,7 +698,8 @@ async function updateCMRMetadata({
   files,
   distEndpoint,
   published,
-  inBuckets = null
+  inBuckets = null,
+  cmrGranuleUrlType = 'distribution'
 }) {
   const filename = getS3UrlOfFile(cmrFile);
 
@@ -682,7 +715,8 @@ async function updateCMRMetadata({
     cmrFile,
     files,
     distEndpoint,
-    buckets
+    buckets,
+    cmrGranuleUrlType
   };
 
   if (isECHO10File(filename)) {
