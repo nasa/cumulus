@@ -414,7 +414,9 @@ Resources:
       FunctionName: {{../prefix}}-{{@key}}
     {{# if this.layers}}
       Layers:
-        - {{this.layers}}
+        {{#each this.layers}}
+         - {{this}}
+        {{/each}}
     {{/if}}
       Environment:
         Variables:
