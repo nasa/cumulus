@@ -96,6 +96,7 @@ Run the test commands next
     $ export LOCALSTACK_HOST=127.0.0.1
     $ npm test
 ```
+
 ### Integration Tests
 
 For more information please [read this](docs/development/integration-tests.md).
