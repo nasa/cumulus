@@ -81,10 +81,7 @@ describe('The Ingest Granule failure workflow', () => {
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      granulesApiTestUtils.deleteGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
-      })
+      granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId })
     ]);
   });
 

@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { Granule } = require('@cumulus/api/models');
 const {
   aws: { s3 },
   constructCollectionId,
@@ -50,6 +51,9 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
 
+process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+const granulesModel = new Granule();
+
 describe('When the Sync Granule workflow is configured', () => {
   const testId = createTimestampedTestId(config.stackName, 'SyncGranuleDuplicateHandling');
   const testSuffix = createTestSuffix(testId);
@@ -66,6 +70,7 @@ describe('When the Sync Granule workflow is configured', () => {
   let inputPayload;
   let expectedPayload;
   let workflowExecution;
+
 
   beforeAll(async () => {
     // populate collections, providers and test data
@@ -95,10 +100,7 @@ describe('When the Sync Granule workflow is configured', () => {
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      granulesApiTestUtils.deleteGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
-      })
+      granulesModel.delete({ granuleId: inputPayload.granules[0].granuleId })
     ]);
   });
 

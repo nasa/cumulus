@@ -13,7 +13,7 @@ const {
   waitForTestExecutionStart,
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
-const { Collection, Execution } = require('@cumulus/api/models');
+const { Collection, Execution, Granule } = require('@cumulus/api/models');
 const {
   aws: {
     s3,
@@ -55,6 +55,9 @@ const s3data = [
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
   '@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf'
 ];
+
+process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+const granuleModel = new Granule();
 
 describe('The Sync Granules workflow', () => {
   const testId = createTimestampedTestId(config.stackName, 'SyncGranuleSuccess');
@@ -113,10 +116,7 @@ describe('The Sync Granules workflow', () => {
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      granulesApiTestUtils.deleteGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
-      })
+      granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId })
     ]);
   });
 
