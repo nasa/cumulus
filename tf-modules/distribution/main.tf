@@ -1,3 +1,36 @@
+resource "aws_s3_bucket_object" "bucket_map_yaml" {
+  bucket  = var.system_bucket
+  key     = "${var.prefix}/thin-egress-app/bucket_map.yaml"
+  content = templatefile("${path.module}/bucket_map.yaml.tmpl", { protected_buckets = var.protected_buckets, public_buckets = var.public_buckets })
+  etag    = md5(templatefile("${path.module}/bucket_map.yaml.tmpl", { protected_buckets = var.protected_buckets, public_buckets = var.public_buckets }))
+}
+
+resource "aws_secretsmanager_secret" "thin_egress_urs_creds" {
+  name        = "${var.prefix}-tea-urs-creds"
+  description = "URS credentials for the ${var.prefix} Thin Egress App"
+}
+
+resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
+  secret_id     = aws_secretsmanager_secret.thin_egress_urs_creds.id
+  secret_string = "{\"UrsId\": \"${var.urs_client_id}\",\"UrsAuth\": \"${base64encode("${var.urs_client_id}:${var.urs_client_password}")}\"}"
+}
+
+module "thin_egress_app" {
+  source = "https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.18.zip"
+
+  auth_base_url              = var.urs_url
+  bucket_map_file            = aws_s3_bucket_object.bucket_map_yaml.key
+  bucketname_prefix          = ""
+  config_bucket              = var.system_bucket
+  domain_name                = var.distribution_url == null ? null : replace(replace(var.distribution_url, "/^https?:///", ""), "//$/", "")
+  permissions_boundary_name  = var.permissions_boundary_arn == null ? null : reverse(split("/", var.permissions_boundary_arn))[0]
+  private_vpc                = var.vpc_id
+  stack_name                 = "${var.prefix}-thin-egress-app"
+  stage_name                 = var.api_gateway_stage
+  vpc_subnet_ids             = var.subnet_ids
+  urs_auth_creds_secret_name = aws_secretsmanager_secret.thin_egress_urs_creds.name
+}
+
 data "aws_caller_identity" "current" {}
 
 resource "aws_dynamodb_table" "access_tokens" {
@@ -24,7 +57,7 @@ data "aws_iam_policy_document" "assume_lambda_role" {
 resource "aws_iam_role" "s3_credentials_lambda" {
   name                 = "${var.prefix}-S3CredentialsLambda"
   assume_role_policy   = data.aws_iam_policy_document.assume_lambda_role.json
-  permissions_boundary = var.permissions_boundary
+  permissions_boundary = var.permissions_boundary_arn
 }
 
 data "aws_lambda_function" "sts_credentials" {
@@ -94,8 +127,8 @@ resource "aws_lambda_function" "s3_credentials" {
   }
   environment {
     variables = {
-      DISTRIBUTION_ENDPOINT          = var.distribution_url
-      DISTRIBUTION_REDIRECT_ENDPOINT = "${var.distribution_url}${var.redirect_path}"
+      DISTRIBUTION_ENDPOINT          = module.thin_egress_app.api_endpoint
+      DISTRIBUTION_REDIRECT_ENDPOINT = "${module.thin_egress_app.api_endpoint}redirect"
       public_buckets                 = join(",", var.public_buckets)
       EARTHDATA_BASE_URL             = var.urs_url
       EARTHDATA_CLIENT_ID            = var.urs_client_id
@@ -113,26 +146,25 @@ resource "aws_lambda_permission" "lambda_permission" {
 
   # The /*/*/* part allows invocation from any stage, method and resource path
   # within API Gateway REST API.
-  source_arn = "arn:aws:execute-api:${var.region}:${data.aws_caller_identity.current.account_id}:${var.rest_api.id}/*/*/*"
-  # source_arn = aws_api_gateway_deployment.s3_credentials.execution_arn
+  source_arn = "arn:aws:execute-api:${var.region}:${data.aws_caller_identity.current.account_id}:${module.thin_egress_app.rest_api.id}/*/*/*"
 }
 
 # GET /s3credentials
 resource "aws_api_gateway_resource" "s3_credentials" {
-  rest_api_id = var.rest_api.id
-  parent_id   = var.rest_api.root_resource_id
-  path_part   = var.s3credentials_path
+  rest_api_id = module.thin_egress_app.rest_api.id
+  parent_id   = module.thin_egress_app.rest_api.root_resource_id
+  path_part   = "s3credentials"
 }
 
 resource "aws_api_gateway_method" "s3_credentials" {
-  rest_api_id   = var.rest_api.id
+  rest_api_id   = module.thin_egress_app.rest_api.id
   resource_id   = aws_api_gateway_resource.s3_credentials.id
   http_method   = "GET"
   authorization = "NONE"
 }
 
 resource "aws_api_gateway_integration" "s3_credentials" {
-  rest_api_id             = var.rest_api.id
+  rest_api_id             = module.thin_egress_app.rest_api.id
   resource_id             = aws_api_gateway_resource.s3_credentials.id
   http_method             = aws_api_gateway_method.s3_credentials.http_method
   integration_http_method = "POST"
@@ -142,20 +174,20 @@ resource "aws_api_gateway_integration" "s3_credentials" {
 
 # GET /redirect
 resource "aws_api_gateway_resource" "s3_credentials_redirect" {
-  rest_api_id = var.rest_api.id
-  parent_id   = var.rest_api.root_resource_id
-  path_part   = var.redirect_path
+  rest_api_id = module.thin_egress_app.rest_api.id
+  parent_id   = module.thin_egress_app.rest_api.root_resource_id
+  path_part   = "redirect"
 }
 
 resource "aws_api_gateway_method" "s3_credentials_redirect" {
-  rest_api_id   = var.rest_api.id
+  rest_api_id   = module.thin_egress_app.rest_api.id
   resource_id   = aws_api_gateway_resource.s3_credentials_redirect.id
   http_method   = "GET"
   authorization = "NONE"
 }
 
 resource "aws_api_gateway_integration" "s3_credentials_redirect" {
-  rest_api_id             = var.rest_api.id
+  rest_api_id             = module.thin_egress_app.rest_api.id
   resource_id             = aws_api_gateway_resource.s3_credentials_redirect.id
   http_method             = aws_api_gateway_method.s3_credentials_redirect.http_method
   integration_http_method = "POST"
@@ -170,6 +202,6 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
     "aws_api_gateway_integration.s3_credentials"
   ]
 
-  rest_api_id = var.rest_api.id
-  stage_name  = var.stage_name
+  rest_api_id = module.thin_egress_app.rest_api.id
+  stage_name  = var.api_gateway_stage
 }
