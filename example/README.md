@@ -111,9 +111,13 @@ terraform {
 
 In the `example` directory, copy `terraform.tfvars.example` to
 `terraform.tfvars` and update all of the parameters using values appropriate for
-your deployment:
+your deployment.
+
+⚠️ **Note:** When deploying to NGAP, the `permissions_boundary_arn` should refer to `NGAPShNonProdRoleBoundary`.
 
 #### Deploy Cumulus
+
+⚠️ **Note:** These deployment steps must be performed using the `NGAPShNonProdDeveloper` role.
 
 ```shell
 $ terraform init
