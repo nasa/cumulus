@@ -12,12 +12,15 @@ const { Execution } = require('@cumulus/api/models');
 const getSnsMessage = (record) => JSON.parse(get(record, 'Sns.Message', '{}'));
 
 /**
- * Determine if SNS message is an execution message.
+ * Determine if SNS message has an execution status.
+ *
+ * Note: Assuming CUMULUS-1394 will ensure `meta.status` is always set. Currently
+ * it is not set for running executions.
  *
  * @param {Object} message - Message from SNS record
- * @returns {boolean} - true if message is an execution message
+ * @returns {boolean} - true if message has an execution status
  */
-const isExecutionMessage = (message) => has(message, 'meta.status');
+const hasExecutionStatus = (message) => has(message, 'meta.status');
 
 /**
  * Create/update execution record from SNS message.
@@ -45,7 +48,7 @@ function getReportExecutionMessages(event) {
   const records = get(event, 'Records', []);
   return records
     .map(getSnsMessage)
-    .filter(isExecutionMessage);
+    .filter(hasExecutionStatus);
 }
 
 /**
