@@ -39,7 +39,7 @@ class Collection extends Manager {
    * by collection `name`, with `version` as the sort key, both of which are of
    * type `S`.  The table schema is defined by the
    * {@link collectionSchema collection schema}.
-   * </p>
+   *
    * Collections created by this model are also put into a
    * {@link CollectionConfigStore} upon {@link #create creation} and removed
    * from it when {@link #delete deleted}.  The store is
