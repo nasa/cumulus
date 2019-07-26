@@ -3,6 +3,9 @@
 const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
 const { recursivelyDeleteS3Bucket, s3 } = require('@cumulus/common/aws');
+const {
+  constructCollectionId
+} = require('@cumulus/common/collection-config-store');
 const { AssociatedRulesError } = require('../../lib/errors');
 const { Collection, Rule } = require('../../models');
 const {
@@ -84,14 +87,21 @@ test('Collection.delete() throws an exception if the collection has associated r
 test('Collection.delete() deletes a collection', async (t) => {
   const name = randomString();
   const version = randomString();
-  const cache = collectionsModel.collectionConfigStore.cache;
-  const initialCacheSize = Object.keys(cache).length;
+  const item = fakeCollectionFactory({ name, version });
+  const { dataType } = item;
+  const collectionConfigStore = collectionsModel.collectionConfigStore;
+  const collectionId = constructCollectionId(dataType, version);
 
-  await collectionsModel.create(fakeCollectionFactory({ name, version }));
+  await collectionsModel.create(item);
   t.true(await collectionsModel.exists(name, version));
-  t.is(Object.keys(cache).length, initialCacheSize + 1);
+  t.truthy(await collectionConfigStore.get(dataType, version));
 
   await collectionsModel.delete({ name, version });
   t.false(await collectionsModel.exists(name, version));
-  t.is(Object.keys(cache).length, initialCacheSize);
+  // If the collection was successfully deleted from the config store, we
+  // expect attempting to get it from the config store to throw an exception.
+  await t.throwsAsync(
+    async () => collectionConfigStore.get(dataType, version),
+    { message: new RegExp(`${collectionId}`) }
+  );
 });
