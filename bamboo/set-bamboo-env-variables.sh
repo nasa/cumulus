@@ -30,6 +30,8 @@ declare -a param_list=(
   "bamboo_SECRET_EARTHDATA_CLIENT_ID"
   "bamboo_SECRET_EARTHDATA_CLIENT_PASSWORD"
   "bamboo_SECRET_SECURITY_GROUP"
+  "bamboo_SECRET_DOCSEARCH_INDEX_NAME"
+  "bamboo_SECRET_DOCSEARCH_API_KEY"
 )
 regex='bamboo(_SECRET)?_(.*)'
 
