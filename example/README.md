@@ -27,10 +27,10 @@ DEPLOYMENT=cumulus-from-source jasmine spec/ingestGranule/IngestGranuleSuccessSp
 
 NOTE: For this to work you need your default credentials to be credentials for the `cumulus-sndbx` AWS account.
 
-### Deploying the distribution API
+### Deploying Cumulus Distribution
 
-The distribution API uses the [Thin Egress App](https://github.com/asfadmin/thin-egress-app), and is deployed
-using [Terraform](https://terraform.io).
+The distribution API uses the [Thin Egress App](https://github.com/asfadmin/thin-egress-app),
+and is deployed using [Terraform](https://terraform.io).
 
 #### Install Terraform
 
