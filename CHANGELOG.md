@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.13.3] - 2019-07-26
+
+- **CUMULUS-1345** Full backport of CUMULUS-1345 features
+	  - Adds new variables to the app deployment under `cmr`.
+    - `cmrEnvironment` values are `SIT`, `UAT`, or `OPS` with `UAT` as the default.
+    - `cmrLimit` and `cmrPageSize` have been added as configurable options.
+
 ## [v1.13.2] - 2019-07-25
 
 - Re-release of v1.13.1 to fix broken npm packages.
