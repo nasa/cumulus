@@ -91,7 +91,7 @@ program
   .option('--run-it', 'Override check for TestMode and run commands.')
   .description('Resets dynamodb tables for testing')
   .action((cmd) => {
-    resetTables(cmd.username, cmd.stackName, cmd.systemBucket, cmd.repopulate, cmd.runIt)
+    resetTables(cmd.username, cmd.stackName, cmd.systemBucket, cmd.runIt)
       .catch(console.error);
   });
 
