@@ -1,3 +1,5 @@
+# Required
+
 variable "prefix" {
   type = string
 }
@@ -21,6 +23,8 @@ variable "urs_client_password" {
 variable "vpc_id" {
   type = string
 }
+
+# Optional
 
 variable "region" {
   type    = string
