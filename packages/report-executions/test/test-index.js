@@ -128,10 +128,19 @@ test('getReportExecutionMessages returns correct number of messages', (t) => {
         executionName,
         status: 'failed'
       }),
+      createExecutionSnsMessage({
+        stateMachine,
+        executionName,
+        status: 'running'
+      }),
+      createExecutionSnsMessage({
+        stateMachine,
+        executionName
+      }),
       { }
     ]
   });
-  t.is(tasks.length, 2);
+  t.is(tasks.length, 3);
 });
 
 test('handler correctly creates execution record', async (t) => {
@@ -171,7 +180,7 @@ test('handler throws error for update to non-existent execution', async (t) => {
   );
 });
 
-test('handler correctly updates completed execution record', async (t) => {
+const testExecutionUpdate = async (t, status) => {
   const {
     arn,
     collection,
@@ -181,59 +190,6 @@ test('handler correctly updates completed execution record', async (t) => {
     startTime,
     stateMachine
   } = t.context;
-
-  const status = 'completed';
-
-  const executionMessage = createExecutionMessage({
-    collection,
-    executionName,
-    payload: originalPayload,
-    startTime,
-    stateMachine,
-    status: 'running'
-  });
-
-  await executionsModel.createExecutionFromSns(executionMessage);
-  const originalExecution = await executionsModel.get({ arn });
-
-  await handler({
-    Records: [
-      createExecutionSnsMessage({
-        collection,
-        executionName,
-        payload: finalPayload,
-        startTime,
-        stateMachine,
-        status
-      })
-    ]
-  });
-
-  const updatedExecution = await executionsModel.get({ arn });
-  const expectedResponse = {
-    ...originalExecution,
-    finalPayload,
-    status,
-    duration: updatedExecution.duration,
-    timestamp: updatedExecution.timestamp,
-    updatedAt: updatedExecution.updatedAt
-  };
-
-  t.deepEqual(updatedExecution, expectedResponse);
-});
-
-test('handler correctly updates failed execution record', async (t) => {
-  const {
-    arn,
-    collection,
-    executionName,
-    finalPayload,
-    originalPayload,
-    startTime,
-    stateMachine
-  } = t.context;
-
-  const status = 'failed';
 
   await executionsModel.createExecutionFromSns(
     createExecutionMessage({
@@ -271,81 +227,90 @@ test('handler correctly updates failed execution record', async (t) => {
   };
 
   t.deepEqual(updatedExecution, expectedResponse);
+};
+
+test('handler correctly updates completed execution record', async (t) => {
+  const status = 'completed';
+  await testExecutionUpdate(t, status);
+});
+
+test('handler correctly updates failed execution record', async (t) => {
+  const status = 'failed';
+  await testExecutionUpdate(t, status);
 });
 
 test('handler correctly updates multiple records', async (t) => {
-  const stateMachine1 = randomId('stateMachine');
-  const executionName1 = randomString();
-  const arn1 = getExecutionArn(stateMachine1, executionName1);
+  const completedStateMachine = randomId('stateMachine');
+  const completedExecutionName = randomString();
+  const completedExecutionArn = getExecutionArn(completedStateMachine, completedExecutionName);
+  const completedExecutionStatus = 'completed';
 
-  const stateMachine2 = randomId('stateMachine');
-  const executionName2 = randomString();
-  const arn2 = getExecutionArn(stateMachine2, executionName2);
+  const failedExecutionStateMachine = randomId('stateMachine');
+  const failedExecutionName = randomString();
+  const failedExecutionArn = getExecutionArn(failedExecutionStateMachine, failedExecutionName);
+  const failedExecutionStatus = 'failed';
 
   const startTime = Date.now();
-
-  const status1 = 'failed';
-  const status2 = 'completed';
 
   await Promise.all([
     executionsModel.createExecutionFromSns(
       createExecutionMessage({
-        stateMachine: stateMachine1,
-        executionName: executionName1,
+        stateMachine: completedStateMachine,
+        executionName: completedExecutionName,
         status: 'running',
         startTime
       })
     ),
     executionsModel.createExecutionFromSns(
       createExecutionMessage({
-        stateMachine: stateMachine2,
-        executionName: executionName2,
+        stateMachine: failedExecutionStateMachine,
+        executionName: failedExecutionName,
         status: 'running',
         startTime
       })
     )
   ]);
 
-  const originalExecution1 = await executionsModel.get({ arn: arn1 });
-  const originalExecution2 = await executionsModel.get({ arn: arn2 });
+  const originalCompletedExecution = await executionsModel.get({ arn: completedExecutionArn });
+  const originalFailedExecution = await executionsModel.get({ arn: failedExecutionArn });
 
   await handler({
     Records: [
       createExecutionSnsMessage({
-        stateMachine: stateMachine1,
-        executionName: executionName1,
+        stateMachine: completedStateMachine,
+        executionName: completedExecutionName,
         startTime,
-        status: status1
+        status: completedExecutionStatus
       }),
       createExecutionSnsMessage({
-        stateMachine: stateMachine2,
-        executionName: executionName2,
+        stateMachine: failedExecutionStateMachine,
+        executionName: failedExecutionName,
         startTime,
-        status: status2
+        status: failedExecutionStatus
       })
     ]
   });
 
-  const updatedExecution1 = await executionsModel.get({ arn: arn1 });
+  const updatedCompletedExecution = await executionsModel.get({ arn: completedExecutionArn });
 
-  const expectedResponse1 = {
-    ...originalExecution1,
-    status: status1,
-    duration: updatedExecution1.duration,
-    timestamp: updatedExecution1.timestamp,
-    updatedAt: updatedExecution1.updatedAt
+  const expectedCompletedExecutionResponse = {
+    ...originalCompletedExecution,
+    status: completedExecutionStatus,
+    duration: updatedCompletedExecution.duration,
+    timestamp: updatedCompletedExecution.timestamp,
+    updatedAt: updatedCompletedExecution.updatedAt
   };
 
-  t.deepEqual(updatedExecution1, expectedResponse1);
+  t.deepEqual(updatedCompletedExecution, expectedCompletedExecutionResponse);
 
-  const updatedExecution2 = await executionsModel.get({ arn: arn2 });
-  const expectedResponse2 = {
-    ...originalExecution2,
-    status: status2,
-    duration: updatedExecution2.duration,
-    timestamp: updatedExecution2.timestamp,
-    updatedAt: updatedExecution2.updatedAt
+  const updatedFailedExecution = await executionsModel.get({ arn: failedExecutionArn });
+  const expectedFailedExecutionResponse = {
+    ...originalFailedExecution,
+    status: failedExecutionStatus,
+    duration: updatedFailedExecution.duration,
+    timestamp: updatedFailedExecution.timestamp,
+    updatedAt: updatedFailedExecution.updatedAt
   };
 
-  t.deepEqual(updatedExecution2, expectedResponse2);
+  t.deepEqual(updatedFailedExecution, expectedFailedExecutionResponse);
 });
