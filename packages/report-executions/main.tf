@@ -17,6 +17,7 @@ resource "aws_lambda_function" "report_executions" {
   handler          = "index.handler"
   runtime          = "nodejs8.10"
   timeout          = 300
+  memory_size      = 256
 
   source_code_hash = "${data.archive_file.report_executions_package.output_base64sha256}"
 
@@ -30,6 +31,13 @@ resource "aws_lambda_function" "report_executions" {
       ExecutionsTable = "${var.executions_table}"
     }
   }
+
+  depends_on    = ["aws_cloudwatch_log_group.report_executions_logs"]
+}
+
+resource "aws_cloudwatch_log_group" "report_executions_logs" {
+  name              = "/aws/lambda/${var.prefix}-reportExecutions"
+  retention_in_days = 14
 }
 
 resource "aws_sns_topic" "report_executions_topic" {

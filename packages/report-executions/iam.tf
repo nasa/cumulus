@@ -19,6 +19,15 @@ resource "aws_iam_role" "report_executions_lambda_role" {
 data "aws_iam_policy_document" "report_executions_policy_document" {
   statement {
     actions = [
+      "dynamoDb:getItem",
+      "dynamoDb:putItem"
+    ]
+    resources = [
+      "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.executions_table}"
+    ]
+  }
+  statement {
+    actions = [
       "ec2:CreateNetworkInterface",
       "ec2:DescribeNetworkInterfaces",
       "ec2:DeleteNetworkInterface"
@@ -29,12 +38,12 @@ data "aws_iam_policy_document" "report_executions_policy_document" {
   }
   statement {
     actions = [
-      "dynamoDb:getItem",
-      "dynamoDb:putItem"
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:DescribeLogStreams",
+      "logs:PutLogEvents"
     ]
-    resources = [
-      "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.executions_table}"
-    ]
+    resources = ["*"]
   }
 }
 
