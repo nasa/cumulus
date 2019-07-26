@@ -21,6 +21,7 @@ const result = {
 };
 
 test.beforeEach(async (t) => {
+  process.env.CMR_ENVIRONMENT = 'UAT';
   t.context.bucket = randomString();
 
   const payloadPath = path.join(__dirname, 'data', 'payload.json');
