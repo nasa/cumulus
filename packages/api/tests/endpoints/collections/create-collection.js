@@ -110,3 +110,42 @@ test('POST creates a new collection', async (t) => {
   t.is(message, 'Record saved');
   t.is(record.name, newCollection.name);
 });
+
+test('POST with invalid granuleIdExtraction returns correct error', async (t) => {
+  const newCollection = fakeCollectionFactory();
+
+  newCollection.granuleIdExtraction = 'badregex';
+  newCollection.sampleFileName = 'filename.txt';
+
+  const res = await request(app)
+    .post('/collections')
+    .send(newCollection)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  t.is(res.status, 400);
+  t.is(res.body.message, 'granuleIdExtraction regex returns null when applied to sampleFileName');
+});
+
+test('POST with invalid file regex returns correct error', async (t) => {
+  const newCollection = fakeCollectionFactory();
+  const filename = 'filename.txt';
+  const regex = 'badregex';
+
+  newCollection.files = [{
+    regex,
+    sampleFileName: filename,
+    bucket: randomString()
+  }];
+
+  const res = await request(app)
+    .post('/collections')
+    .send(newCollection)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  t.is(res.status, 400);
+  t.is(res.body.message, `regex ${regex} cannot validate ${filename}`);
+});
