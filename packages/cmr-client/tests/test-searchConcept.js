@@ -42,6 +42,5 @@ test.serial('searchConcept uses env variables', async (t) => {
   });
   t.is(response.length, 2);
   t.is(request.headers['Client-Id'], clientId);
-
-   stub.restore();
+  stub.restore();
 });
