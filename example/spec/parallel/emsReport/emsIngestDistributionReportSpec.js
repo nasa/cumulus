@@ -347,6 +347,8 @@ describe('The EMS report', () => {
         const endTime = moment.utc().add(1, 'days').startOf('day').format();
         const startTime = moment.utc().startOf('day').format();
 
+        await lambda().updateFunctionConfiguration({ Timeout: 900 });
+
         const response = await lambda().invoke({
           FunctionName: emsDistributionReportLambda,
           Payload: JSON.stringify({
