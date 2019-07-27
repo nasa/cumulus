@@ -4,13 +4,13 @@ const { CollectionConfigStore } = require('@cumulus/common');
 const Manager = require('./base');
 const collectionSchema = require('./schemas').collection;
 const Rule = require('./rules');
-const { AssociatedRulesError } = require('../lib/errors');
+const { AssociatedRulesError, BadRequestError } = require('../lib/errors');
 
 function checkRegex(regex, sampleFileName) {
   const validation = new RegExp(regex);
   const match = validation.test(sampleFileName);
 
-  if (!match) throw new Error(`regex cannot validate ${sampleFileName}`);
+  if (!match) throw new BadRequestError(`regex ${regex} cannot validate ${sampleFileName}`);
 }
 
 class Collection extends Manager {
@@ -23,7 +23,7 @@ class Collection extends Manager {
     const match = item.sampleFileName.match(extraction);
 
     if (!match) {
-      throw new Error('granuleIdExtraction regex returns null when applied to sampleFileName');
+      throw new BadRequestError('granuleIdExtraction regex returns null when applied to sampleFileName');
     }
 
     checkRegex(item.granuleId, match[1]);

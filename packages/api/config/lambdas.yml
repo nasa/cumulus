@@ -112,7 +112,7 @@ EmsIngestReport:
 
 EmsDistributionReport:
   handler: index.handler
-  timeout: 300
+  timeout: 900
   memory: 320
   source: 'node_modules/@cumulus/api/dist/emsDistributionReport/'
   launchInVpc: true
