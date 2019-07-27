@@ -8,7 +8,7 @@ const { Search } = require('../es/search');
 const indexer = require('../es/indexer');
 const models = require('../models');
 const Collection = require('../es/collections');
-const { AssociatedRulesError } = require('../lib/errors');
+const { AssociatedRulesError, BadRequestError } = require('../lib/errors');
 
 /**
  * Index a collection to Elasticsearch.
@@ -93,6 +93,12 @@ async function post(req, res) {
       throw e;
     }
   } catch (e) {
+    if (e.name === 'SchemaValidationError') {
+      return res.boom.badRequest(e.message);
+    }
+    if (e instanceof BadRequestError) {
+      return res.boom.badRequest(e.message);
+    }
     return res.boom.badImplementation(e.message);
   }
 }
