@@ -169,6 +169,9 @@ default:
     provider: CUMULUS
     clientId: 'cumulus-core-{{prefix}}'
     password: '{{CMR_PASSWORD}}'
+    cmrEnvironment: UAT
+    cmrLimit: 100
+    cmrPageSize: 50
 
   stepFunctions: !!files [
     'workflows/helloworld.yml',

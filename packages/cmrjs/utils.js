@@ -26,21 +26,21 @@ function hostId(env) {
   return _get(
     { OPS: '', SIT: 'sit', UAT: 'uat' },
     env,
-    'uat'
+    'sit'
   );
 }
 
 /**
  * Determines the appropriate CMR host endpoint based on a given
  * value for CMR_ENVIRONMENT environment variable. Defaults
- * to the uat cmr
+ * to the sit cmr
  *
  * @deprecated
  *
  * @param {Object} environment - process env like object
  * @param {string} environment.CMR_ENVIRONMENT - [optional] CMR environment to
  *              use valid arguments are ['OPS', 'SIT', 'UAT'], anything that is
- *              not 'OPS' or 'SIT' will be interpreted as 'UAT'
+ *              not 'OPS' or 'UAT' will be interpreted as 'sit'
  * @param {string} environment.CMR_HOST [optional] explicit host to return, if
  *              this has a value, it overrides any values for CMR_ENVIRONMENT
  * @returns {string} the cmr host address
