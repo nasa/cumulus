@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v1.13.3] - 2019-07-26
+
+- **CUMULUS-1345** Full backport of CUMULUS-1345 features
+	  - Adds new variables to the app deployment under `cmr`.
+    - `cmrEnvironment` values are `SIT`, `UAT`, or `OPS` with `UAT` as the default.
+    - `cmrLimit` and `cmrPageSize` have been added as configurable options.
+
 ## [v1.13.2] - 2019-07-25
 
 - Re-release of v1.13.1 to fix broken npm packages.
@@ -1133,8 +1140,9 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.13.2...HEAD
-[v1.13.1]: https://github.com/nasa/cumulus/compare/v1.13.1...v1.13.2
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.13.3...HEAD
+[v1.13.3]: https://github.com/nasa/cumulus/compare/v1.13.1...v1.13.3
+[v1.13.2]: https://github.com/nasa/cumulus/compare/v1.13.1...v1.13.2
 [v1.13.1]: https://github.com/nasa/cumulus/compare/v1.13.0...v1.13.1
 [v1.13.0]: https://github.com/nasa/cumulus/compare/v1.12.1...v1.13.0
 [v1.12.1]: https://github.com/nasa/cumulus/compare/v1.12.0...v1.12.1
