@@ -11,8 +11,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 -  We have encountered transient lambda service errors in our integration testing. Please handle transient service errors following [these guidelines](https://docs.aws.amazon.com/step-functions/latest/dg/bp-lambda-serviceexception.html). The workflows in the `example/workflows` folder have been updated with retries configured for these errors.
 
-- **1012** - Adds support for lambda layers
-
 -  **CUMULUS-799** added additional IAM permissions to support reading CloudWatch and API Gateway, so **you will have to redeploy your IAM stack.**
 
 -  **CUMULUS-800** Several items:
@@ -66,6 +64,8 @@ If you deploy with no distribution app your deployment will succeed but you may 
   - Added `cmrGranuleUrlType` to the `@cumulus/move-granules` task. This determines what kind of links go in the CMR files. The options are `distribution`, `s3`, or `none`, with the default being distribution. If there is no distribution API being used with Cumulus, you must set the value to `s3` or `none`.
 
 - Added `packages/s3-replicator` terraform module to allow same-region s3 replication to metrics bucket.
+
+- **1012** - Adds support for lambda layers
 
 
 ## Changed
