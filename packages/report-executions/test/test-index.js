@@ -37,6 +37,7 @@ const createExecutionSnsMessage = ({
   payload,
   collection
 }) => ({
+  EventSource: 'aws.sns',
   Sns: {
     Message: JSON.stringify(
       createExecutionMessage({
