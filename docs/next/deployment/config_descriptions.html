@@ -79,6 +79,9 @@ Note that entries delimited as &lt;name&gt; are intended to be read as objects w
 <tr><td>cmr.provider</td><td>CUMULUS</td><td>the provider used for posting metadata to CMR</td></tr>
 <tr><td>cmr.clientId</td><td>CUMULUS</td><td>the clientId used to authenticate with the CMR</td></tr>
 <tr><td>cmr.password</td><td>(required)</td><td>the password used to authenticate with the CMR</td></tr>
+<tr><td>cmr.cmrEnvironment</td><td>UAT</td><td>the cmr environment</td></tr>
+<tr><td>cmr.cmrLimit</td><td>50</td><td>the limit for CMR records returned from a search</td></tr>
+<tr><td>cmr.cmrPageSize</td><td>100</td><td>the CMR page size</td></tr>
 <tr><td>buckets</td><td>(required)</td><td>Configuration of buckets with key, bucket name, and type (i.e. internal, public private)</td></tr>
 <tr><td>system_bucket</td><td><code>buckets.internal.name</code></td><td>the bucket used for storing deployment artifacts</td></tr>
 <tr><td>shared_data_bucket</td><td>cumulus-data-shared</td><td>bucket containing shared data artifacts</td></tr>
@@ -369,8 +372,8 @@ $ aws iam list-instance-profiles | grep Arn
               </script><script>
               var search = docsearch({
                 
-                apiKey: 'undefined',
-                indexName: 'undefined',
+                apiKey: 'f7e0be879553661f9043322d119069c8',
+                indexName: 'nasa_cumulus',
                 inputSelector: '#search_input_react'
               });
             </script></body></html>
