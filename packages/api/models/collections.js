@@ -133,11 +133,12 @@ class Collection extends Manager {
 
     // Since the `create` method uses the collection's `dataType` when calling
     // `CollectionConfigStore.put`, we must also use `dataType` to delete it
-    // from the store.  However, we have may only the collection's name and
+    // from the store.  However, we may only have the collection's name and
     // version, so in that case we need to retrieve the full collection object
-    // in order to retrieve its `dataType`.
+    // in order to retrieve its `dataType`.  If the item does not exist, then
+    // fall back to using the specified name.
     const dataType = item.dataType
-      || (await this.get({ name, version })).dataType;
+      || (await this.get(item).catch(() => ({}))).dataType;
     await this.collectionConfigStore.delete(dataType || name, version);
 
     return super.delete({ name, version });
