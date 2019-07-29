@@ -50,3 +50,8 @@ variable "distribution_url" {
   type    = string
   default = null
 }
+
+variable "aws_profile" {
+  type = string
+  default = null
+}
