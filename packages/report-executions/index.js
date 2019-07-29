@@ -4,6 +4,14 @@ const has = require('lodash.has');
 const { Execution } = require('@cumulus/api/models');
 
 /**
+ * Determine if event is an SNS event
+ *
+ * @param {Object} event - A Cloudwatch event object
+ * @returns {boolean} - True if event is an SNS event
+ */
+const isSnsEvent = (event) => event.EventSource === 'aws.sns';
+
+/**
  * Get message from SNS record.
  *
  * @param {Object} record - Record from SNS event
@@ -47,6 +55,7 @@ async function handleExecutionMessage(message) {
 function getReportExecutionMessages(event) {
   const records = get(event, 'Records', []);
   return records
+    .filter(isSnsEvent)
     .map(getSnsMessage)
     .filter(hasExecutionStatus);
 }
