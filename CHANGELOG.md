@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v1.13.4] - 2019-07-29
 
-- Fix deployment issue when using a template override
+- **CUMULUS-1411** - Fix deployment issue when using a template override
 
 ## [v1.13.3] - 2019-07-26
 
