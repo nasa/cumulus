@@ -51,7 +51,7 @@ function getEndpoint(local = false, port = 8000) {
 function getExecutionArn(stateMachineArn, executionName) {
   deprecate(
     '@cumulus/ingest/aws/getExecutionArn()',
-    '1.13.0',
+    '1.13.4',
     '@cumulus/common/aws/getExecutionArn()'
   );
 
