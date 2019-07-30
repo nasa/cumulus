@@ -81,7 +81,7 @@ test.after.always(async () => {
   await executionsModel.deleteTable();
 });
 
-test('getReportExecutionMessages returns no tasks for non-execution messages', (t) => {
+test('getReportExecutionMessages returns no messages for non-execution messages', (t) => {
   let messages = getReportExecutionMessages([{}]);
   t.is(messages.length, 0);
 
@@ -117,7 +117,7 @@ test('getReportExecutionMessages returns correct number of messages', (t) => {
   const stateMachine = randomId('stateMachine');
   const executionName = randomId('execution');
 
-  const tasks = getReportExecutionMessages({
+  const messages = getReportExecutionMessages({
     Records: [
       createExecutionSnsMessage({
         stateMachine,
@@ -141,7 +141,7 @@ test('getReportExecutionMessages returns correct number of messages', (t) => {
       { }
     ]
   });
-  t.is(tasks.length, 3);
+  t.is(messages.length, 3);
 });
 
 test('handler correctly creates execution record', async (t) => {
@@ -160,7 +160,8 @@ test('handler correctly creates execution record', async (t) => {
     ]
   });
 
-  t.true(await executionsModel.exists({ arn }));
+  const record = await executionsModel.get({ arn });
+  t.is(record.status, 'running');
 });
 
 test('handler throws error for update to non-existent execution', async (t) => {
