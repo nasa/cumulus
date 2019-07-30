@@ -477,7 +477,7 @@ Resources:
     {{/each}}
       Handler: {{this.handler}}
       MemorySize: {{this.memory}}
-      {{# if ../xray}}
+      {{# if ../useXray}}
       TracingConfig:
         Mode: Active
       {{/if}}
