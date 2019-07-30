@@ -130,3 +130,88 @@ resource "aws_dynamodb_table" "granules_table" {
     enabled = var.enable_point_in_time_recovery
   }
 }
+
+resource "aws_dynamodb_table" "pdrs_table" {
+  name             = "${var.prefix}-PdrsTable"
+  read_capacity    = 5
+  write_capacity   = 2
+  hash_key         = "pdrName"
+  stream_view_type = "NEW_AND_OLD_IMAGES"
+
+  attribute {
+    name = "pdrName"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_point_in_time_recovery
+  }
+}
+
+resource "aws_dynamodb_table" "providers_table" {
+  name             = "${var.prefix}-ProvidersTable"
+  read_capacity    = 5
+  write_capacity   = 1
+  hash_key         = "id"
+  stream_view_type = "NEW_AND_OLD_IMAGES"
+
+  attribute {
+    name = "id"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_point_in_time_recovery
+  }
+}
+
+resource "aws_dynamodb_table" "rules_table" {
+  name             = "${var.prefix}-RulesTable"
+  read_capacity    = 5
+  write_capacity   = 1
+  hash_key         = "name"
+  stream_view_type = "NEW_AND_OLD_IMAGES"
+
+  attribute {
+    name = "name"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_point_in_time_recovery
+  }
+}
+
+resource "aws_dynamodb_table" "semaphores_table" {
+  name             = "${var.prefix}-SemaphoresTable"
+  read_capacity    = 5
+  write_capacity   = 10
+  hash_key         = "name"
+  stream_view_type = "NEW_AND_OLD_IMAGES"
+
+  attribute {
+    name = "name"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = false
+  }
+}
+
+resource "aws_dynamodb_table" "users_table" {
+  name             = "${var.prefix}-UsersTable"
+  read_capacity    = 5
+  write_capacity   = 1
+  hash_key         = "userName"
+  stream_view_type = "NEW_AND_OLD_IMAGES"
+
+  attribute {
+    name = "userName"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_point_in_time_recovery
+  }
+}
