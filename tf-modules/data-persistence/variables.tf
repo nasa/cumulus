@@ -1,7 +1,10 @@
+# Required
 
 variable "prefix" {
-  type = string
+  type    = string
 }
+
+# Optional
 
 variable "aws_profile" {
   type    = string
@@ -13,8 +16,9 @@ variable "aws_region" {
   default = "us-east-1"
 }
 
-variable "permissions_boundary" {
-  type = string
+variable "enable_point_in_time_recovery" {
+  type    = bool
+  default = false
 }
 
 variable "vpc_id" {

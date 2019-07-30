@@ -14,6 +14,10 @@ resource "aws_dynamodb_table" "access_tokens_table" {
     name = "accessToken"
     type = "S"
   }
+
+  point_in_time_recovery {
+    enabled = var.enable_point_in_time_recovery
+  }
 }
 
 resource "aws_dynamodb_table" "async_operations_table" {
@@ -26,6 +30,10 @@ resource "aws_dynamodb_table" "async_operations_table" {
   attribute {
     name = "id"
     type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_point_in_time_recovery
   }
 }
 
@@ -45,5 +53,9 @@ resource "aws_dynamodb_table" "collections_table" {
   attribute {
     name = "version"
     type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_point_in_time_recovery
   }
 }
