@@ -137,8 +137,8 @@ class Collection extends Manager {
     // version, so in that case we need to retrieve the full collection object
     // in order to retrieve its `dataType`.  If the item does not exist, then
     // fall back to using the specified name.
-    const dataType = item.dataType
-      || (await this.get(item).catch(() => ({}))).dataType;
+    const { dataType } = item.dataType
+      ? item : await this.get(item).catch(() => item);
     await this.collectionConfigStore.delete(dataType || name, version);
 
     return super.delete({ name, version });

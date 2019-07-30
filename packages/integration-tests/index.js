@@ -59,7 +59,7 @@ const lambdaStep = new sfnStep.LambdaStep();
  *   table
  * @param {string} params.id - the id of the AsyncOperation
  * @param {string} params.status - the status to wait for
- * @param {integer} params.retries - the number of times to retry Default: 5
+ * @param {number} params.retries - the number of times to retry Default: 5
  * @returns {Promise<Object>} - the AsyncOperation object
  */
 async function waitForAsyncOperationStatus({
@@ -194,7 +194,7 @@ async function waitForCompletedExecution(executionArn, timeout = 600) {
  * Kick off a workflow execution
  *
  * @param {string} workflowArn - ARN for the workflow
- * @param {string} workflowMsg - workflow message
+ * @param {Object} workflowMsg - workflow message
  * @returns {Promise.<Object>} execution details: {executionArn, startDate}
  */
 async function startWorkflowExecution(workflowArn, workflowMsg) {
@@ -219,14 +219,14 @@ async function startWorkflowExecution(workflowArn, workflowMsg) {
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} workflowName - workflow name
- * @param {string} workflowMsg - workflow message
+ * @param {Object} workflowMsg - workflow message
  * @returns {string} - executionArn
  */
 async function startWorkflow(stackName, bucketName, workflowName, workflowMsg) {
   const workflowArn = await getWorkflowArn(stackName, bucketName, workflowName);
   const { executionArn } = await startWorkflowExecution(workflowArn, workflowMsg);
 
-  console.log(`\nStarting workflow: ${workflowName}. Execution ARN ${executionArn}`);
+  console.log(`Starting workflow: ${workflowName}. Execution ARN ${executionArn}`);
 
   return executionArn;
 }
@@ -239,7 +239,7 @@ async function startWorkflow(stackName, bucketName, workflowName, workflowMsg) {
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} workflowName - workflow name
- * @param {string} workflowMsg - workflow message
+ * @param {Object} workflowMsg - workflow message
  * @param {number} [timeout=600] - number of seconds to wait for execution to complete
  * @returns {Object} - {executionArn: <arn>, status: <status>}
  */
@@ -319,7 +319,7 @@ async function setupSeedData(stackName, bucketName, dataDirectory) {
 
 
 function addCustomUrlPathToCollectionFiles(collection, customFilePath) {
-  const updatedCollectionFiles = collection.files.map((file) => {
+  return collection.files.map((file) => {
     let urlPath;
     if (Object.is(file.url_path, undefined)) {
       urlPath = '';
@@ -332,7 +332,6 @@ function addCustomUrlPathToCollectionFiles(collection, customFilePath) {
     file.url_path = `${urlPath}${customFilePath}/`;
     return file;
   });
-  return updatedCollectionFiles;
 }
 
 /**
@@ -342,6 +341,8 @@ function addCustomUrlPathToCollectionFiles(collection, customFilePath) {
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} dataDirectory - the directory of collection json files
  * @param {string} postfix - string to append to collection name
+ * @param {string} customFilePath
+ * @param {boolean} duplicateHandling
  * @returns {Promise.<number>} number of collections added
  */
 async function addCollections(stackName, bucketName, dataDirectory, postfix,
@@ -359,8 +360,8 @@ async function addCollections(stackName, bucketName, dataDirectory, postfix,
       collection.duplicateHandling = duplicateHandling;
     }
     const c = new Collection();
-    console.log(`\nadding collection ${collection.name}___${collection.version}`);
-    return c.delete({ name: collection.name, version: collection.version })
+    console.log(`Adding collection ${collection.name}___${collection.version}`);
+    return c.delete(collection)
       .then(() => api.addCollectionApi({ prefix: stackName, collection }));
   }));
   return Promise.all(promises).then((cs) => cs.length);
@@ -396,8 +397,8 @@ async function deleteCollections(stackName, bucketName, collections, postfix) {
       collection.dataType += postfix;
     }
     const c = new Collection();
-    console.log(`\nDeleting collection ${collection.name}__${collection.version}`);
-    return c.delete({ name: collection.name, version: collection.version });
+    console.log(`Deleting collection ${collection.name}___${collection.version}`);
+    return c.delete(collection);
   });
 
   return Promise.all(promises).then((cs) => cs.length);
@@ -433,7 +434,7 @@ const getProviderHost = ({ host }) => process.env.PROVIDER_HOST || host;
  * Otherwise set it to the environment variable, if set.
  *
  * @param {Object} provider - provider object
- * @returns provider port
+ * @returns {number} provider port
  */
 function getProviderPort({ protocol, port }) {
   if (protocol === 'ftp') {
@@ -449,13 +450,13 @@ function getProviderPort({ protocol, port }) {
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} dataDirectory - the directory of provider json files
- * @param {string} s3Host - bucket name to be used as the provider host for
+ * @param {string} [s3Host] - bucket name to be used as the provider host for
  * S3 providers. This will override the host from the seed data. Defaults to null,
  * meaning no override.
- * @param {string} postfix - string to append to provider id
+ * @param {string} [postfix] - string to append to provider id
  * @returns {Promise.<number>} number of providers added
  */
-async function addProviders(stackName, bucketName, dataDirectory, s3Host = null, postfix) {
+async function addProviders(stackName, bucketName, dataDirectory, s3Host, postfix) {
   const providers = await setupSeedData(stackName, bucketName, dataDirectory);
 
   const promises = providers.map((provider) => limit(() => {
@@ -473,7 +474,7 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host = null,
     provider.port = getProviderPort(provider);
 
     console.log(`adding provider ${provider.id}`);
-    return p.delete({ id: provider.id }).then(() => p.create(provider)).catch(console.log);
+    return p.delete(provider).then(() => p.create(provider)).catch(console.log);
   }));
   return Promise.all(promises).then((ps) => ps.length);
 }
@@ -507,8 +508,8 @@ async function deleteProviders(stackName, bucketName, providers, postfix) {
       provider.id += postfix;
     }
     const p = new Provider();
-    console.log(`\nDeleting provider ${provider.id}`);
-    return p.delete({ id: provider.id });
+    console.log(`Deleting provider ${provider.id}`);
+    return p.delete(provider);
   });
 
   return Promise.all(promises).then((ps) => ps.length);
@@ -538,7 +539,7 @@ async function cleanupProviders(stackName, bucket, providersDirectory, postfix) 
  * @param {string} config - Test config used to set environment variables and template rules data
  * @param {string} dataDirectory - the directory of rules json files
  * @param {Object} overrides - override rule fields
- * @param {string} postfix - string to append to rule name, collection, and provider
+ * @param {string} [postfix] - string to append to rule name, collection, and provider
  * @returns {Promise.<Array>} array of Rules added
  */
 async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
@@ -578,7 +579,7 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
  * @returns {Promise.<Array>} array of Rules added
  */
 function addRules(config, dataDirectory, overrides) {
-  return addRulesWithPostfix(config, dataDirectory, overrides, null);
+  return addRulesWithPostfix(config, dataDirectory, overrides);
 }
 
 /**
@@ -589,7 +590,7 @@ function addRules(config, dataDirectory, overrides) {
  */
 async function _deleteOneRule(name) {
   const r = new Rule();
-  return r.get({ name: name }).then((item) => r.delete(item));
+  return r.get({ name }).then((item) => r.delete(item));
 }
 
 /**
@@ -664,7 +665,7 @@ async function deleteRules(stackName, bucketName, rules, postfix) {
  * @param {Object} provider.id - provider id
  * @param {Object} payload - payload information
  * @param {Object} meta - additional keys to add to meta field
- * @returns {Promise.<string>} workflow message
+ * @returns {Object} workflow message
  */
 async function buildWorkflow(
   stackName,
@@ -676,20 +677,16 @@ async function buildWorkflow(
   meta
 ) {
   setProcessEnvironment(stackName, bucketName);
+
   const template = await getWorkflowTemplate(stackName, bucketName, workflowName);
-  let collectionInfo = {};
-  if (collection) {
-    collectionInfo = await new Collection()
-      .get({ name: collection.name, version: collection.version });
-  }
-  let providerInfo = {};
-  if (provider) {
-    providerInfo = await new Provider().get({ id: provider.id });
-  }
+  const collectionInfo = collection ? await new Collection().get(collection) : {};
+  const providerInfo = provider ? await new Provider().get(provider) : {};
+
   template.meta.collection = collectionInfo;
   template.meta.provider = providerInfo;
   template.meta = merge(template.meta, meta);
   template.payload = payload || {};
+
   return template;
 }
 
@@ -767,7 +764,7 @@ async function buildAndStartWorkflow(
  * @param {string} workflowName - name of the workflow to get executions for
  * @param {string} stackName - stack name
  * @param {string} bucket - S3 internal bucket name
- * @param {Integer} maxExecutionResults - max results to return
+ * @param {number} maxExecutionResults - max results to return
  * @returns {Array<Object>} array of state function executions.
  */
 async function getExecutions(workflowName, stackName, bucket, maxExecutionResults = 10) {
@@ -776,7 +773,7 @@ async function getExecutions(workflowName, stackName, bucket, maxExecutionResult
     stateMachineArn: kinesisTriggerTestStpFnArn,
     maxResults: maxExecutionResults
   });
-  return (orderBy(data.executions, 'startDate', 'desc'));
+  return (orderBy(data.executions, ['startDate'], ['desc']));
 }
 
 /**
@@ -791,8 +788,9 @@ async function getExecutions(workflowName, stackName, bucket, maxExecutionResult
  * findExecutionFnParams and returns a boolean indicating whether or not this is the correct
  * instance of the workflow
  * @param {Object} options.findExecutionFnParams - params to be passed into findExecutionFn
- * @param {integer} options.maxWaitSeconds - an optional custom wait time in seconds
+ * @param {number} [options.maxWaitSeconds] - an optional custom wait time in seconds
  * @returns {undefined} - none
+ * @throws {Error} if workflow was never started
  */
 async function waitForTestExecutionStart({
   workflowName,
@@ -800,11 +798,11 @@ async function waitForTestExecutionStart({
   bucket,
   findExecutionFn,
   findExecutionFnParams,
-  maxWaitSeconds
+  maxWaitSeconds = maxWaitForStartedExecutionSecs
 }) {
   let timeWaitedSecs = 0;
   /* eslint-disable no-await-in-loop */
-  while (timeWaitedSecs < maxWaitSeconds ? maxWaitSeconds : maxWaitForStartedExecutionSecs) {
+  while (timeWaitedSecs < maxWaitSeconds) {
     await sleep(waitPeriodMs);
     timeWaitedSecs += (waitPeriodMs / 1000);
     const executions = await getExecutions(workflowName, stackName, bucket);
