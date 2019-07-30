@@ -10,6 +10,7 @@ const uuidv4 = require('uuid/v4');
 const fs = require('fs-extra');
 const pLimit = require('p-limit');
 const pMap = require('p-map');
+const { constructCollectionId } = require('@cumulus/common');
 
 const {
   stringUtils: { globalReplace }
@@ -360,7 +361,8 @@ async function addCollections(stackName, bucketName, dataDirectory, postfix,
       collection.duplicateHandling = duplicateHandling;
     }
     const c = new Collection();
-    console.log(`Adding collection ${collection.name}___${collection.version}`);
+    const id = constructCollectionId(collection.name, collection.version);
+    console.log(`Adding collection ${id}`);
     return c.delete(collection)
       .then(() => api.addCollectionApi({ prefix: stackName, collection }));
   }));
@@ -397,7 +399,8 @@ async function deleteCollections(stackName, bucketName, collections, postfix) {
       collection.dataType += postfix;
     }
     const c = new Collection();
-    console.log(`Deleting collection ${collection.name}___${collection.version}`);
+    const id = constructCollectionId(collection.name, collection.version);
+    console.log(`Deleting collection ${id}`);
     return c.delete(collection);
   });
 
