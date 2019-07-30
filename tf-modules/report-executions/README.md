@@ -15,10 +15,14 @@ NOTE: Terraform will ignore the `aws_profile` config variable if you have static
 Configuration variables are shown in `cfg.tfvars.sample`, and are explained below:
 
 ```text
-prefix               = "myprefix"             # prefix to name created resources
-aws_profile          = "ngap"                 # AWS profile used for deployment
-permissions_boundary = "NGAPShRoleBoundaryArn" # IAM permissions boundary
-vpc_id               = "vpc-123456"           # VPC ID (for Lambda)
-subnet_ids           = ["subnet-123456"]      # Subnet IDs (for Lambda)
-security_groups      = ["sg-123456"]          # Security Group IDs (for Lambda)
+# Required
+executions_table      = "ExecutionsTableName"  # name of DynamoDB table to store executions data
+prefix                = "myprefix"             # prefix to use for naming created resources
+
+# Optional
+aws_profile           = "ngap"                 # AWS profile used for deployment
+aws_region            = "us-east-1"            # AWS region used for deployment
+permissions_boundary  = "arn:aws:iam::1234567890:policy/YourRoleBoundary" # IAM permissions boundary
+security_groups       = ["sg-123456"]          # Security Group IDs (for Lambda)
+subnet_ids            = ["subnet-123456"]      # Subnet IDs (for Lambda)
 ```
