@@ -66,6 +66,16 @@ If you deploy with no distribution app your deployment will succeed but you may 
 
 - Added `packages/s3-replicator` terraform module to allow same-region s3 replication to metrics bucket.
 
+- **CUMULUS-1400**
+  - Added `tf-modules/report-executions` terraform module which processes workflow execution information received via SNS and stores it to a database. The module includes:
+    - SNS topic for publishing execution data
+    - Lambda to process and store execution data
+    - IAM permissions for the Lambda
+    - Subscription for the Lambda to the SNS topic
+  - Added `@cumulus/common/sns-event` which contains helpers for SNS events:
+    - `isSnsEvent()` returns true if event is from SNS
+    - `getSnsMessage()` extracts and parses the message from an SNS event
+
 ## Changed
 
 - **CUMULUS-1232**
