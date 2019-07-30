@@ -1,40 +1,18 @@
 'use strict';
 
-const get = require('lodash.get');
+const { pullStepFunctionEvent } = require('@cumulus/common/aws');
+const {
+  getSfEventMessage,
+  getSfEventStatus,
+  isSfExecutionEvent,
+  isTerminalSfStatus
+} = require('@cumulus/common/cloudwatch-event');
 const {
   getQueueName,
   hasQueueAndExecutionLimit
 } = require('@cumulus/common/message');
 
-const { pullStepFunctionEvent } = require('@cumulus/common/aws');
-const { isOneOf } = require('@cumulus/common/util');
-
 const { decrementQueueSemaphore } = require('../lib/semaphore');
-
-/**
- * Determine if Cloudwatch event is a Step Function state update.
- *
- * @param {Object} event - A Cloudwatch event object
- * @returns {boolean} - True if event is a Step Function state update.
- */
-const isSfExecutionEvent = (event) => event.source === 'aws.states';
-
-/**
- * Determine if workflow is in a terminal state.
- *
- * @param {Object} status - A Step Function execution status
- * @returns {boolean} - True if workflow is in terminal state.
- */
-const isTerminalStatus = isOneOf([
-  'ABORTED',
-  'SUCCEEDED',
-  'FAILED',
-  'TIMED_OUT'
-]);
-
-const getEventStatus = (event) => get(event, 'detail.status');
-
-const getEventMessage = (event) => JSON.parse(get(event, 'detail.output', '{}'));
 
 /**
  * Determine if workflow needs a semaphore decrement.
@@ -51,7 +29,7 @@ const getEventMessage = (event) => JSON.parse(get(event, 'detail.output', '{}'))
  */
 const isDecrementEvent = (event, executionMessage) =>
   isSfExecutionEvent(event)
-  && isTerminalStatus(getEventStatus(event))
+  && isTerminalSfStatus(getSfEventStatus(event))
   && hasQueueAndExecutionLimit(executionMessage);
 
 /**
@@ -60,7 +38,7 @@ const isDecrementEvent = (event, executionMessage) =>
  * @param {Object} event - incoming event from Cloudwatch
  */
 async function handleSemaphoreDecrementTask(event) {
-  const eventMessage = getEventMessage(event);
+  const eventMessage = getSfEventMessage(event);
   const executionMessage = await pullStepFunctionEvent(eventMessage);
   if (isDecrementEvent(event, executionMessage)) {
     const queueName = getQueueName(eventMessage);
