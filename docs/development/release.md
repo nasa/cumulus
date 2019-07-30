@@ -106,7 +106,7 @@ Bamboo will build and run lint, audit and unit tests against that tagged release
 
 ### 9. Updating master
 
-Once the release is done, you will need to submit a PR from the feature branch to master with the CHANGELOG updates.
+Once the release is done, you will need to submit a PR from the feature branch to master with the CHANGELOG and package version updates.
 
 ## Troubleshooting
 
