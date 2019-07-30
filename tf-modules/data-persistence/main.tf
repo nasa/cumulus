@@ -3,7 +3,44 @@ provider "aws" {
   profile = var.aws_profile
 }
 
-resource "aws_dynamodb_table" "data_tables" {
-  count          = length(var.table_names)
-  name           = var.table_names[count.index]
+resource "aws_dynamodb_table" "access_tokens_table" {
+  name           = "${var.prefix}-AccessTokensTable"
+  read_capacity  = 5
+  write_capacity = 1
+  hash_key       = "accessToken"
+
+  attribute {
+    name = "accessToken"
+    type = "S"
+  }
+}
+
+resource "aws_dynamodb_table" "async_operations_table" {
+  name           = "${var.prefix}-AsyncOperationsTable"
+  read_capacity  = 5
+  write_capacity = 1
+  hash_key       = "id"
+
+  attribute {
+    name = "id"
+    type = "S"
+  }
+}
+
+resource "aws_dynamodb_table" "collections_table" {
+  name           = "${var.prefix}-CollectionsTable"
+  read_capacity  = 5
+  write_capacity = 1
+  hash_key       = "name"
+  range_key      = "version"
+
+  attribute {
+    name = "name"
+    type = "S"
+  }
+
+  attribute {
+    name = "version"
+    type = "S"
+  }
 }
