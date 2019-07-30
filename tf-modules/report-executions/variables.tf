@@ -1,7 +1,14 @@
+# Required
 
 variable "prefix" {
-  type = string
+  type    = string
 }
+
+variable "executions_table" {
+  type    = string
+}
+
+# Optional
 
 variable "aws_profile" {
   type    = string
@@ -13,26 +20,17 @@ variable "aws_region" {
   default = "default"
 }
 
-variable "executions_table" {
-  type    = string
-  default = "default"
-}
-
 variable "permissions_boundary" {
-  type = string
-}
-
-variable "vpc_id" {
   type    = string
-  default = ""
+  default = null
 }
 
-variable "subnet_ids" {
+variable "security_groups" {
   type    = list(string)
   default = []
 }
 
-variable "security_groups" {
+variable "subnet_ids" {
   type    = list(string)
   default = []
 }
