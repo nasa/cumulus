@@ -5,7 +5,7 @@ let devtool = 'inline-source-map';
 
 if(process.env.PRODUCTION) {
   mode = 'production',
-  devtool = false  
+  devtool = false
 }
 
 module.exports = {
