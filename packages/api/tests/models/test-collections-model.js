@@ -105,3 +105,13 @@ test('Collection.delete() deletes a collection', async (t) => {
     { message: new RegExp(`${collectionId}`) }
   );
 });
+
+test('Collection.delete() does not throw exception when attempting to delete'
+  + ' a collection that does not exist', async (t) => {
+  const name = randomString();
+  const version = randomString();
+
+  t.false(await collectionsModel.exists(name, version));
+  await collectionsModel.delete({ name, version });
+  t.false(await collectionsModel.exists(name, version));
+});
