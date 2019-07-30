@@ -16,7 +16,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api": "^1.13.1",
+    "@cumulus/api": "1.13.4",
     "lodash.get": "^4.4.2",
     "lodash.has": "^4.5.2"
   },
