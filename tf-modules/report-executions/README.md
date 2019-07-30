@@ -15,7 +15,7 @@ NOTE: Terraform will ignore the `aws_profile` config variable if you have static
 Configuration variables are shown in `cfg.tfvars.sample`, and are explained below:
 
 ```text
-prefix               = "myprefix"             # prefix to name created replicator resources
+prefix               = "myprefix"             # prefix to name created resources
 aws_profile          = "ngap"                 # AWS profile used for deployment
 permissions_boundary = "NGAPShRoleBoundaryArn" # IAM permissions boundary
 vpc_id               = "vpc-123456"           # VPC ID (for Lambda)
