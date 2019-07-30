@@ -75,6 +75,11 @@ If you deploy with no distribution app your deployment will succeed but you may 
   - Added `@cumulus/common/sns-event` which contains helpers for SNS events:
     - `isSnsEvent()` returns true if event is from SNS
     - `getSnsMessage()` extracts and parses the message from an SNS event
+  - Added `@cumulus/common/cloudwatch-event` which contains helpers for Cloudwatch events:
+    - `isSfExecutionEvent()` returns true if event is from Step Functions
+    - `isTerminalSfStatus()` determines if a Step Function status from a Cloudwatch event is a terminal status
+    - `getSfEventStatus()` gets the Step Function status from a Cloudwatch event
+    - `getSfEventMessage()` extracts and parses the Step Function output messsage from a Cloudwatch event
 
 ## Changed
 
