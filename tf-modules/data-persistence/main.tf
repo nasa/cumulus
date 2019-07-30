@@ -4,10 +4,11 @@ provider "aws" {
 }
 
 resource "aws_dynamodb_table" "access_tokens_table" {
-  name           = "${var.prefix}-AccessTokensTable"
-  read_capacity  = 5
-  write_capacity = 1
-  hash_key       = "accessToken"
+  name             = "${var.prefix}-AccessTokensTable"
+  read_capacity    = 5
+  write_capacity   = 1
+  hash_key         = "accessToken"
+  stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
     name = "accessToken"
@@ -16,10 +17,11 @@ resource "aws_dynamodb_table" "access_tokens_table" {
 }
 
 resource "aws_dynamodb_table" "async_operations_table" {
-  name           = "${var.prefix}-AsyncOperationsTable"
-  read_capacity  = 5
-  write_capacity = 1
-  hash_key       = "id"
+  name             = "${var.prefix}-AsyncOperationsTable"
+  read_capacity    = 5
+  write_capacity   = 1
+  hash_key         = "id"
+  stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
     name = "id"
@@ -28,11 +30,12 @@ resource "aws_dynamodb_table" "async_operations_table" {
 }
 
 resource "aws_dynamodb_table" "collections_table" {
-  name           = "${var.prefix}-CollectionsTable"
-  read_capacity  = 5
-  write_capacity = 1
-  hash_key       = "name"
-  range_key      = "version"
+  name             = "${var.prefix}-CollectionsTable"
+  read_capacity    = 5
+  write_capacity   = 1
+  hash_key         = "name"
+  range_key        = "version"
+  stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
     name = "name"
