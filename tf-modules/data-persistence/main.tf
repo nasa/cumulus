@@ -99,3 +99,34 @@ resource "aws_dynamodb_table" "files_table" {
     enabled = var.enable_point_in_time_recovery
   }
 }
+
+resource "aws_dynamodb_table" "granules_table" {
+  name             = "${var.prefix}-GranulesTable"
+  read_capacity    = 5
+  write_capacity   = 10
+  hash_key         = "granuleId"
+  stream_view_type = "NEW_AND_OLD_IMAGES"
+
+  attribute {
+    name = "granuleId"
+    type = "S"
+  }
+
+  attribute {
+    name = "collectionId"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name               = "collectionId-granuleId-index"
+    hash_key           = "collectionId"
+    range_key          = "granuleId"
+    read_capacity      = 5
+    write_capacity     = 10
+    projection_type    = "ALL"
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_point_in_time_recovery
+  }
+}
