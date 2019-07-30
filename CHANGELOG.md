@@ -9,23 +9,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### PLEASE NOTE
 
--  We have encountered transient lambda service errors in our integration testing. Please handle transient service errors following [these guidelines](https://docs.aws.amazon.com/step-functions/latest/dg/bp-lambda-serviceexception.html). The workflows in the `example/workflows` folder have been updated with retries configured for these errors.
+- We have encountered transient lambda service errors in our integration testing. Please handle transient service errors following [these guidelines](https://docs.aws.amazon.com/step-functions/latest/dg/bp-lambda-serviceexception.html). The workflows in the `example/workflows` folder have been updated with retries configured for these errors.
 
--  **CUMULUS-799** added additional IAM permissions to support reading CloudWatch and API Gateway, so **you will have to redeploy your IAM stack.**
+- **CUMULUS-799** added additional IAM permissions to support reading CloudWatch and API Gateway, so **you will have to redeploy your IAM stack.**
 
--  **CUMULUS-800** Several items:
+- **CUMULUS-800** Several items:
 
-    - **Delete existing API Gateway stages**: To allow enabling of API Gateway logging, Cumulus now creates and manages a Stage resource during deployment. Before upgrading Cumulus, it is necessary to delete the API Gateway stages on both the Backend API and the Distribution API.  Instructions are included in the documenation under [Delete API Gateway Stages](https://nasa.github.io/cumulus/docs/additional-deployment-options/delete-api-gateway-stages).
+  - **Delete existing API Gateway stages**: To allow enabling of API Gateway logging, Cumulus now creates and manages a Stage resource during deployment. Before upgrading Cumulus, it is necessary to delete the API Gateway stages on both the Backend API and the Distribution API.  Instructions are included in the documenation under [Delete API Gateway Stages](https://nasa.github.io/cumulus/docs/additional-deployment-options/delete-api-gateway-stages).
 
-    - **Set up account permissions for API Gateway to write to CloudWatch**: In a one time operation for your AWS account, to enable CloudWatch Logs for API Gateway, you must first grant the API Gateway permission to read and write logs to CloudWatch for your account. The `AmazonAPIGatewayPushToCloudWatchLogs` managed policy (with an ARN of `arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs`) has all the required permissions. You can find a simple how to in the documentation under [Enable API Gateway Logging.](https://nasa.github.io/cumulus/docs/additional-deployment-options/enable-gateway-logging-permissions)
+  - **Set up account permissions for API Gateway to write to CloudWatch**: In a one time operation for your AWS account, to enable CloudWatch Logs for API Gateway, you must first grant the API Gateway permission to read and write logs to CloudWatch for your account. The `AmazonAPIGatewayPushToCloudWatchLogs` managed policy (with an ARN of `arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs`) has all the required permissions. You can find a simple how to in the documentation under [Enable API Gateway Logging.](https://nasa.github.io/cumulus/docs/additional-deployment-options/enable-gateway-logging-permissions)
 
-    - **Configure API Gateway to write logs to CloudWatch** To enable execution logging for the distribution API set `config.yaml` `apiConfigs.distribution.logApigatewayToCloudwatch` value to `true`.  More information [Enable API Gateway Logs](https://nasa.github.io/cumulus/docs/additional-deployment-options/enable-api-logs)
+  - **Configure API Gateway to write logs to CloudWatch** To enable execution logging for the distribution API set `config.yaml` `apiConfigs.distribution.logApigatewayToCloudwatch` value to `true`.  More information [Enable API Gateway Logs](https://nasa.github.io/cumulus/docs/additional-deployment-options/enable-api-logs)
 
-    - **Configure CloudWatch log delivery**: It is possible to deliver CloudWatch API execution and access logs to a cross-account shared AWS::Logs::Destination. An operator does this by adding the key `logToSharedDestination` to the `config.yml` at the default level with a value of a writable log destination.  More information in the documenation under [Configure CloudWatch Logs Delivery.](https://nasa.github.io/cumulus/docs/additional-deployment-options/configure-cloudwatch-logs-delivery)
+  - **Configure CloudWatch log delivery**: It is possible to deliver CloudWatch API execution and access logs to a cross-account shared AWS::Logs::Destination. An operator does this by adding the key `logToSharedDestination` to the `config.yml` at the default level with a value of a writable log destination.  More information in the documenation under [Configure CloudWatch Logs Delivery.](https://nasa.github.io/cumulus/docs/additional-deployment-options/configure-cloudwatch-logs-delivery)
 
-    - **Additional Lambda Logging**: It is now possible to configure any lambda to deliver logs to a shared subscriptions by setting  `logToSharedDestination` to the ARN of a writable location (either an AWS::Logs::Destination or a Kinesis Stream) on any lambda config. Documentation for [Lambda Log Subscriptions](https://nasa.github.io/cumulus/docs/additional-deployment-options/additional-lambda-logging)
+  - **Additional Lambda Logging**: It is now possible to configure any lambda to deliver logs to a shared subscriptions by setting  `logToSharedDestination` to the ARN of a writable location (either an AWS::Logs::Destination or a Kinesis Stream) on any lambda config. Documentation for [Lambda Log Subscriptions](https://nasa.github.io/cumulus/docs/additional-deployment-options/additional-lambda-logging)
 
-    - **Configure S3 Server Access Logs**:  If you are running Cumulus in an NGAP environment you may [configure S3 Server Access Logs](https://nasa.github.io/cumulus/docs/next/deployment/server_access_logging) to be delivered to a shared bucket where the Metrics Team will ingest the logs into their ELK stack.  Contact the Metrics team for permission and location.
+  - **Configure S3 Server Access Logs**:  If you are running Cumulus in an NGAP environment you may [configure S3 Server Access Logs](https://nasa.github.io/cumulus/docs/next/deployment/server_access_logging) to be delivered to a shared bucket where the Metrics Team will ingest the logs into their ELK stack.  Contact the Metrics team for permission and location.
 
 - **CUMULUS-1368** The Cumulus distribution API has been deprecated and is being replaced by ASF's Thin Egress App. By default, the distribution API will not deploy. Please follow [the instructions for deploying and configuring Thin Egress](https://nasa.github.io/cumulus/docs/deployment/thin_egress_app).
 
@@ -81,6 +81,8 @@ If you deploy with no distribution app your deployment will succeed but you may 
     - `getSfEventStatus()` gets the Step Function status from a Cloudwatch event
     - `getSfEventMessage()` extracts and parses the Step Function output messsage from a Cloudwatch event
 
+- **1012** - Adds support for lambda layers
+
 ## Changed
 
 - **CUMULUS-1232**
@@ -126,7 +128,6 @@ If you deploy with no distribution app your deployment will succeed but you may 
   - Added production information (collection ShortName and Version, granuleId) to EMS distribution report
   - Added functionality to send daily distribution reports to EMS
 
-
 ### BREAKING CHANGES
 
 ### Removed
@@ -134,6 +135,26 @@ If you deploy with no distribution app your deployment will succeed but you may 
 - **CUMULUS-1337**
   - Removes the S3 Access Metrics package added in CUMULUS-799
 
+## [v1.13.4] - 2019-07-29
+
+- **CUMULUS-1411** - Fix deployment issue when using a template override
+
+## [v1.13.3] - 2019-07-26
+
+- **CUMULUS-1345** Full backport of CUMULUS-1345 features
+	  - Adds new variables to the app deployment under `cmr`.
+    - `cmrEnvironment` values are `SIT`, `UAT`, or `OPS` with `UAT` as the default.
+    - `cmrLimit` and `cmrPageSize` have been added as configurable options.
+
+## [v1.13.2] - 2019-07-25
+
+- Re-release of v1.13.1 to fix broken npm packages.
+
+## [v1.13.1] - 2019-07-22
+
+- **CUMULUS-1374** - Resolve audit compliance with lodash version for api package subdependency
+- **CUMULUS-1412** - Resolve audit compliance with googleapi package
+- **CUMULUS-1345** - Backported CMR environment setting in getUrl to address immediate user need.   CMR_ENVIRONMENT can now be used to set the CMR environment to OPS/SIT
 
 ## [v1.13.0] - 2019-5-20
 
@@ -1257,7 +1278,11 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.13.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.13.4...HEAD
+[v1.13.4]: https://github.com/nasa/cumulus/compare/v1.13.3...v1.13.4
+[v1.13.3]: https://github.com/nasa/cumulus/compare/v1.13.2...v1.13.3
+[v1.13.2]: https://github.com/nasa/cumulus/compare/v1.13.1...v1.13.2
+[v1.13.1]: https://github.com/nasa/cumulus/compare/v1.13.0...v1.13.1
 [v1.13.0]: https://github.com/nasa/cumulus/compare/v1.12.1...v1.13.0
 [v1.12.1]: https://github.com/nasa/cumulus/compare/v1.12.0...v1.12.1
 [v1.12.0]: https://github.com/nasa/cumulus/compare/v1.11.3...v1.12.0
