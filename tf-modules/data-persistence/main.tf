@@ -23,7 +23,7 @@ resource "aws_dynamodb_table" "access_tokens_table" {
 resource "aws_dynamodb_table" "async_operations_table" {
   name             = "${var.prefix}-AsyncOperationsTable"
   read_capacity    = 5
-  write_capacity   = 1
+  write_capacity   = 10
   hash_key         = "id"
   stream_view_type = "NEW_AND_OLD_IMAGES"
 
@@ -52,6 +52,46 @@ resource "aws_dynamodb_table" "collections_table" {
 
   attribute {
     name = "version"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_point_in_time_recovery
+  }
+}
+
+resource "aws_dynamodb_table" "executions_table" {
+  name             = "${var.prefix}-ExecutionsTable"
+  read_capacity    = 5
+  write_capacity   = 10
+  hash_key         = "arn"
+  stream_view_type = "NEW_AND_OLD_IMAGES"
+
+  attribute {
+    name = "arn"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_point_in_time_recovery
+  }
+}
+
+resource "aws_dynamodb_table" "files_table" {
+  name             = "${var.prefix}-FilesTable"
+  read_capacity    = 5
+  write_capacity   = 10
+  hash_key         = "bucket"
+  range_key        = "key"
+  stream_view_type = "NEW_AND_OLD_IMAGES"
+
+  attribute {
+    name = "bucket"
+    type = "S"
+  }
+
+  attribute {
+    name = "key"
     type = "S"
   }
 

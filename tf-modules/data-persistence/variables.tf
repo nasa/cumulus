@@ -35,20 +35,3 @@ variable "security_groups" {
   type    = list(string)
   default = []
 }
-
-variable "table_names" {
-  type    = list(string)
-  default = [
-    "AccessTokensTable",
-    "AsyncOperationsTable",
-    "CollectionsTable",
-    "ExecutionsTable",
-    "FilesTable",
-    "GranulesTable",
-    "PdrsTable",
-    "ProvidersTable",
-    "RulesTable",
-    "SemaphoresTable",
-    "UsersTable"
-  ]
-}
