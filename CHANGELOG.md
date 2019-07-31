@@ -65,6 +65,8 @@ If you deploy with no distribution app your deployment will succeed but you may 
 
 - Added `packages/s3-replicator` terraform module to allow same-region s3 replication to metrics bucket.
 
+- **1012** - Adds support for lambda layers
+
 
 ## Changed
 
