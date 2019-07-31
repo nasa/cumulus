@@ -60,7 +60,8 @@ const {
   getFilesMetadata
 } = require('../../helpers/testUtils');
 const {
-  setDistributionApiEnvVars
+  setDistributionApiEnvVars,
+  waitForModelStatus
 } = require('../../helpers/apiUtils');
 const {
   addUniqueGranuleFilePathToGranuleFiles,
@@ -487,7 +488,11 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('triggers the execution record being added to DynamoDB', async () => {
-      const record = await executionModel.get({ arn: workflowExecution.executionArn });
+      const record = await waitForModelStatus(
+        executionModel,
+        { arn: workflowExecution.executionArn },
+        'completed'
+      );
       expect(record.status).toEqual('completed');
     });
   });
