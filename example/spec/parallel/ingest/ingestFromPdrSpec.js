@@ -55,6 +55,8 @@ const {
   loadFileWithUpdatedGranuleIdPathAndCollection
 } = require('../../helpers/granuleUtils');
 
+const { waitForModelStatus } = require('../../helpers/apiUtils');
+
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const taskName = 'DiscoverAndQueuePdrs';
@@ -368,13 +370,21 @@ describe('Ingesting from PDR', () => {
 
       describe('the sf-sns-report task has published a sns message and', () => {
         it('the pdr record is added to DynamoDB', async () => {
-          const record = await pdrModel.get({ pdrName: pdrFilename });
+          const record = await waitForModelStatus(
+            pdrModel,
+            { pdrName: pdrFilename },
+            'completed'
+          );
           expect(record.execution).toEqual(getExecutionUrl(parsePdrExecutionArn));
           expect(record.status).toEqual('completed');
         });
 
         it('the execution record is added to DynamoDB', async () => {
-          const record = await executionModel.get({ arn: parsePdrExecutionArn });
+          const record = await waitForModelStatus(
+            executionModel,
+            { arn: parsePdrExecutionArn },
+            'completed'
+          );
           expect(record.status).toEqual('completed');
         });
       });
@@ -470,7 +480,11 @@ describe('Ingesting from PDR', () => {
 
     describe('the sf-sns-report task has published a sns message and', () => {
       it('the execution record is added to DynamoDB', async () => {
-        const record = await executionModel.get({ arn: parsePdrExecutionArn });
+        const record = await waitForModelStatus(
+          executionModel,
+          { arn: parsePdrExecutionArn },
+          'completed'
+        );
         expect(record.status).toEqual('completed');
       });
     });

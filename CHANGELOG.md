@@ -39,6 +39,8 @@ If you deploy with no distribution app your deployment will succeed but you may 
 
 ### Added
 
+- **1012** - Adds `layers` config option to support deploying Lambdas with layers
+- **1098** - Added `useXRay` config option to enable AWS X-Ray for Lambdas.
 - **CUMULUS-1345**
   - Adds new variables to the app deployment under `cmr`.
   - `cmrEnvironment` values are `SIT`, `UAT`, or `OPS` with `UAT` as the default.
@@ -80,8 +82,6 @@ If you deploy with no distribution app your deployment will succeed but you may 
     - `isTerminalSfStatus()` determines if a Step Function status from a Cloudwatch event is a terminal status
     - `getSfEventStatus()` gets the Step Function status from a Cloudwatch event
     - `getSfEventMessage()` extracts and parses the Step Function output messsage from a Cloudwatch event
-
-- **1012** - Adds support for lambda layers
 
 ## Changed
 
@@ -134,6 +134,13 @@ If you deploy with no distribution app your deployment will succeed but you may 
 
 - **CUMULUS-1337**
   - Removes the S3 Access Metrics package added in CUMULUS-799
+
+- **PR1130**
+  - Removed code deprecated since v1.11.1:
+    - Removed `@cumulus/common/step-functions`. Use `@cumulus/common/StepFunctions` instead.
+    - Removed `@cumulus/api/lib/testUtils.fakeFilesFactory`. Use `@cumulus/api/lib/testUtils.fakeFileFactory` instead.
+    - Removed `@cumulus/cmrjs/cmr` functions: `searchConcept`, `ingestConcept`, `deleteConcept`. Use the functions in `@cumulus/cmr-client` instead.
+    - Removed `@cumulus/ingest/aws.getExecutionHistory`. Use `@cumulus/common/StepFunctions.getExecutionHistory` instead.
 
 ## [v1.13.4] - 2019-07-29
 
