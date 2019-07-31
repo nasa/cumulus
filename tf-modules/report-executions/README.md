@@ -4,15 +4,15 @@ This package includes a Lambda function to process workflow execution informatio
 
 ## Deployment
 
-1. Copy the .tfvars sample file: `cp cfg.tfvars.sample cfg.tfvars`
+1. Copy the .tfvars sample file: `cp terraform.tfvars.sample terraform.tfvars`
 2. Populate the sample file with values that apply to your AWS environment (see configuration variables section below).
-3. Deploy this module: `terraform apply -var-file=cfg.tfvars`
+3. Deploy this module: `terraform apply`
 
 NOTE: Terraform will ignore the `aws_profile` config variable if you have static credentials or environment variables set, see the [AWS Provider page](https://www.terraform.io/docs/providers/aws/index.html#authentication).
 
 ## Configuration
 
-Configuration variables are shown in `cfg.tfvars.sample`, and are explained below:
+Configuration variables are shown in `terraform.tfvars.sample`, and are explained below:
 
 ```text
 # Required
