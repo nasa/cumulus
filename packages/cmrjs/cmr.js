@@ -8,7 +8,6 @@ const readFile = promisify(fs.readFile);
 
 // searchConcept is being imported for backwards compat,
 // but is not part of the cmr-client public API
-const _searchConcept = require('@cumulus/cmr-client/searchConcept');
 const { deprecate } = require('@cumulus/common/util');
 
 
@@ -210,7 +209,6 @@ class CMRSearchConceptQueue {
 }
 
 module.exports = {
-  _searchConcept,
   CMR,
   CMRSearchConceptQueue
 };
