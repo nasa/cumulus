@@ -9,6 +9,7 @@ const {
     randomString
   }
 } = require('@cumulus/common');
+const { models: { Granule } } = require('@cumulus/api');
 const {
   addCollections,
   addProviders,
@@ -33,6 +34,7 @@ const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
   setupTestGranuleForIngest
 } = require('../../helpers/granuleUtils');
+const { waitForModelStatus } = require('../../helpers/apiUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const workflowName = 'SyncGranule';
@@ -66,6 +68,9 @@ describe('When the Sync Granule workflow is configured', () => {
   let inputPayload;
   let expectedPayload;
   let workflowExecution;
+
+  process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+  const granuleModel = new Granule();
 
   beforeAll(async () => {
     // populate collections, providers and test data
@@ -204,6 +209,15 @@ describe('When the Sync Granule workflow is configured', () => {
       });
 
       it('captures both files', async () => {
+        // This assertion is to check that the granule has been updated in dynamo
+        // before performing further checks
+        const record = await waitForModelStatus(
+          granuleModel,
+          { granuleId: inputPayload.granules[0].granuleId },
+          'completed'
+        );
+        expect(record.status).toEqual('completed');
+
         const granuleResponse = await granulesApiTestUtils.getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
