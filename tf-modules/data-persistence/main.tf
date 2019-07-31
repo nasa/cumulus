@@ -1,4 +1,5 @@
 provider "aws" {
+  version = "~> 2.17"
   region  = var.aws_region
   profile = var.aws_profile
 }
@@ -8,7 +9,6 @@ resource "aws_dynamodb_table" "access_tokens_table" {
   read_capacity    = 5
   write_capacity   = 1
   hash_key         = "accessToken"
-  stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
     name = "accessToken"
@@ -25,7 +25,6 @@ resource "aws_dynamodb_table" "async_operations_table" {
   read_capacity    = 5
   write_capacity   = 10
   hash_key         = "id"
-  stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
     name = "id"
@@ -43,6 +42,7 @@ resource "aws_dynamodb_table" "collections_table" {
   write_capacity   = 1
   hash_key         = "name"
   range_key        = "version"
+  stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
@@ -65,6 +65,7 @@ resource "aws_dynamodb_table" "executions_table" {
   read_capacity    = 5
   write_capacity   = 10
   hash_key         = "arn"
+  stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
@@ -83,6 +84,7 @@ resource "aws_dynamodb_table" "files_table" {
   write_capacity   = 10
   hash_key         = "bucket"
   range_key        = "key"
+  stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
@@ -105,6 +107,7 @@ resource "aws_dynamodb_table" "granules_table" {
   read_capacity    = 5
   write_capacity   = 10
   hash_key         = "granuleId"
+  stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
@@ -136,6 +139,7 @@ resource "aws_dynamodb_table" "pdrs_table" {
   read_capacity    = 5
   write_capacity   = 2
   hash_key         = "pdrName"
+  stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
@@ -153,6 +157,7 @@ resource "aws_dynamodb_table" "providers_table" {
   read_capacity    = 5
   write_capacity   = 1
   hash_key         = "id"
+  stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
@@ -170,6 +175,7 @@ resource "aws_dynamodb_table" "rules_table" {
   read_capacity    = 5
   write_capacity   = 1
   hash_key         = "name"
+  stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
@@ -187,7 +193,6 @@ resource "aws_dynamodb_table" "semaphores_table" {
   read_capacity    = 5
   write_capacity   = 10
   hash_key         = "name"
-  stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
     name = "name"
@@ -204,6 +209,7 @@ resource "aws_dynamodb_table" "users_table" {
   read_capacity    = 5
   write_capacity   = 1
   hash_key         = "userName"
+  stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
