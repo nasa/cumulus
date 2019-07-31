@@ -2,7 +2,8 @@ const get = require('lodash.get');
 const has = require('lodash.has');
 
 const { getSnsMessage, isSnsEvent } = require('@cumulus/common/sns-event');
-const { Execution } = require('@cumulus/api/models');
+// const { Execution } = require('@cumulus/api/models');
+const Execution = require('@cumulus/api/models/executions');
 
 /**
  * Determine if SNS message has an execution status.
