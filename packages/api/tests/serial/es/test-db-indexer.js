@@ -14,7 +14,7 @@ const {
   fakeCollectionFactory,
   fakeGranuleFactory,
   fakeExecutionFactory,
-  fakeFilesFactory,
+  fakeFileFactory,
   deleteAliases
 } = require('../../../lib/testUtils');
 
@@ -187,7 +187,7 @@ test.serial('create, update and delete a granule in dynamodb and es', async (t) 
   fakeGranule.files = [];
   const bucket = randomString();
   for (let i = 0; i < 4; i += 1) {
-    fakeGranule.files.push(fakeFilesFactory(bucket));
+    fakeGranule.files.push(fakeFileFactory({ bucket }));
   }
 
   await granuleModel.create(fakeGranule);

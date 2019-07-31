@@ -350,16 +350,6 @@ class StepFunction {
     return { execution, executionHistory, stateMachine };
   }
 
-  static async getExecutionHistory(executionArn) {
-    deprecate(
-      '@cumulus/ingest/aws/StepFunction.getExecutionHistory()',
-      '1.11.1',
-      '@cumulus/common/StepFunctions.getExecutionHistory()'
-    );
-
-    return StepFunctions.getExecutionHistory({ executionArn });
-  }
-
   /**
    * Push an event to S3 if the length of the event is greater than 32000 bytes
    *
