@@ -1,8 +1,7 @@
 const get = require('lodash.get');
 const has = require('lodash.has');
 
-const { getSnsMessage, isSnsEvent } = require('@cumulus/common/sns-event');
-// const { Execution } = require('@cumulus/api/models');
+const { getSnsEventMessageObject, isSnsEvent } = require('@cumulus/common/sns-event');
 const Execution = require('@cumulus/api/models/executions');
 
 /**
@@ -42,7 +41,7 @@ function getReportExecutionMessages(event) {
   const records = get(event, 'Records', []);
   return records
     .filter(isSnsEvent)
-    .map(getSnsMessage)
+    .map(getSnsEventMessageObject)
     .filter(hasExecutionStatus);
 }
 

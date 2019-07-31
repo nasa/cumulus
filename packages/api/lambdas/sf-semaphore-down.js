@@ -2,7 +2,7 @@
 
 const { pullStepFunctionEvent } = require('@cumulus/common/aws');
 const {
-  getSfEventMessage,
+  getSfEventMessageObject,
   getSfEventStatus,
   isSfExecutionEvent,
   isTerminalSfStatus
@@ -38,7 +38,7 @@ const isDecrementEvent = (event, executionMessage) =>
  * @param {Object} event - incoming event from Cloudwatch
  */
 async function handleSemaphoreDecrementTask(event) {
-  const eventMessage = getSfEventMessage(event);
+  const eventMessage = getSfEventMessageObject(event);
   const executionMessage = await pullStepFunctionEvent(eventMessage);
   if (isDecrementEvent(event, executionMessage)) {
     const queueName = getQueueName(eventMessage);

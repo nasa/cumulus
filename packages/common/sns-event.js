@@ -9,14 +9,24 @@ const get = require('lodash.get');
 const isSnsEvent = (event) => event.EventSource === 'aws:sns';
 
 /**
- * Get message from SNS record.
+ * Get message from SNS event.
  *
- * @param {Object} record - Record from SNS event
- * @returns {Object} - Message object from SNS record
+ * @param {var} event - SNS event
+ * @param {any} [defaultValue] - Default value to use for message, if none exists.
+ * @returns {any} - Message from SNS event
  */
-const getSnsMessage = (record) => JSON.parse(get(record, 'Sns.Message', '{}'));
+const getSnsEventMessage = (event, defaultValue) => get(event, 'Sns.Message', defaultValue);
+
+/**
+ * Get message object from SNS event.
+ *
+ * @param {Object} event - SNS event
+ * @returns {Object} - Message object from SNS event
+ */
+const getSnsEventMessageObject = (event) => JSON.parse(getSnsEventMessage(event, '{}'));
 
 module.exports = {
-  isSnsEvent,
-  getSnsMessage
+  getSnsEventMessage,
+  getSnsEventMessageObject,
+  isSnsEvent
 };
