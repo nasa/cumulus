@@ -1,4 +1,4 @@
-# Required variables
+# Required
 
 variable "prefix" {
   type        = string
@@ -30,7 +30,19 @@ variable "vpc_id" {
   description = "VPC used by Lambda functions"
 }
 
-# Optional variables
+# Optional
+
+variable "api_gateway_stage" {
+  type        = string
+  default     = "DEV"
+  description = "The API Gateway stage to create"
+}
+
+variable "distribution_url" {
+  type        = string
+  default     = null
+  description = "An alternative URL used for distribution"
+}
 
 variable "permissions_boundary_arn" {
   type        = string
@@ -56,16 +68,9 @@ variable "region" {
   description = "The AWS region to deploy to"
 }
 
-variable "thin_egress_app_deployment_stage" {
-  type        = string
-  default     = "DEV"
-  description = "The API Gateway stage to create"
-}
-
-variable "distribution_url" {
-  type        = string
-  default     = null
-  description = "An alternative URL used for distribution"
+variable "sts_credentials_lambda_name" {
+  type    = string
+  default = "gsfc-ngap-sh-s3-sts-get-keys"
 }
 
 variable "urs_url" {
