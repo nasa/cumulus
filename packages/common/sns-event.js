@@ -6,7 +6,7 @@ const get = require('lodash.get');
  * @param {Object} event - A Cloudwatch event object
  * @returns {boolean} - True if event is an SNS event
  */
-const isSnsEvent = (event) => event.EventSource === 'aws.sns';
+const isSnsEvent = (event) => event.EventSource === 'aws:sns';
 
 /**
  * Get message from SNS record.
