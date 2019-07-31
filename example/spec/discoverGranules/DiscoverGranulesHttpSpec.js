@@ -19,6 +19,8 @@ const {
   isCumulusLogEntry
 } = require('../helpers/testUtils');
 
+const { waitForModelStatus } = require('../helpers/apiUtils');
+
 const config = loadConfig();
 const testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
 const testSuffix = createTestSuffix(testId);
@@ -91,7 +93,11 @@ describe('The Discover Granules workflow with http Protocol', () => {
 
   describe('the sf-sns-report task has published a sns message and', () => {
     it('the execution record is added to DynamoDB', async () => {
-      const record = await executionModel.get({ arn: httpWorkflowExecution.executionArn });
+      const record = await waitForModelStatus(
+        executionModel,
+        { arn: httpWorkflowExecution.executionArn },
+        'completed'
+      );
       expect(record.status).toEqual('completed');
     });
   });
