@@ -39,6 +39,7 @@ If you deploy with no distribution app your deployment will succeed but you may 
 
 ### Added
 
+- **1012** - Adds `layers` config option to support deploying Lambdas with layers
 - **1098** - Added `useXRay` config option to enable AWS X-Ray for Lambdas.
 - **CUMULUS-1345**
   - Adds new variables to the app deployment under `cmr`.
@@ -109,7 +110,6 @@ If you deploy with no distribution app your deployment will succeed but you may 
   - Added production information (collection ShortName and Version, granuleId) to EMS distribution report
   - Added functionality to send daily distribution reports to EMS
 
-
 ### BREAKING CHANGES
 
 ### Removed
@@ -117,6 +117,26 @@ If you deploy with no distribution app your deployment will succeed but you may 
 - **CUMULUS-1337**
   - Removes the S3 Access Metrics package added in CUMULUS-799
 
+## [v1.13.4] - 2019-07-29
+
+- **CUMULUS-1411** - Fix deployment issue when using a template override
+
+## [v1.13.3] - 2019-07-26
+
+- **CUMULUS-1345** Full backport of CUMULUS-1345 features
+	  - Adds new variables to the app deployment under `cmr`.
+    - `cmrEnvironment` values are `SIT`, `UAT`, or `OPS` with `UAT` as the default.
+    - `cmrLimit` and `cmrPageSize` have been added as configurable options.
+
+## [v1.13.2] - 2019-07-25
+
+- Re-release of v1.13.1 to fix broken npm packages.
+
+## [v1.13.1] - 2019-07-22
+
+- **CUMULUS-1374** - Resolve audit compliance with lodash version for api package subdependency
+- **CUMULUS-1412** - Resolve audit compliance with googleapi package
+- **CUMULUS-1345** - Backported CMR environment setting in getUrl to address immediate user need.   CMR_ENVIRONMENT can now be used to set the CMR environment to OPS/SIT
 
 ## [v1.13.0] - 2019-5-20
 
@@ -1237,7 +1257,11 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.13.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.13.4...HEAD
+[v1.13.4]: https://github.com/nasa/cumulus/compare/v1.13.3...v1.13.4
+[v1.13.3]: https://github.com/nasa/cumulus/compare/v1.13.2...v1.13.3
+[v1.13.2]: https://github.com/nasa/cumulus/compare/v1.13.1...v1.13.2
+[v1.13.1]: https://github.com/nasa/cumulus/compare/v1.13.0...v1.13.1
 [v1.13.0]: https://github.com/nasa/cumulus/compare/v1.12.1...v1.13.0
 [v1.12.1]: https://github.com/nasa/cumulus/compare/v1.12.0...v1.12.1
 [v1.12.0]: https://github.com/nasa/cumulus/compare/v1.11.3...v1.12.0
