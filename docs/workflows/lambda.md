@@ -80,6 +80,8 @@ Other configurable options for Lambdas:
   useMessageAdapter: true   # necessary if this Lambda is included as part of a Cumulus workflow
   envs:                     # Add named environment variables for your Lambda.
     - foo: 'bar'
+  layers:                   # Optional to use Lambda Layers
+    - <layer1-arn>
 ```
 
 To deploy all changes to `/tasks/` and `lambdas.yml`:
