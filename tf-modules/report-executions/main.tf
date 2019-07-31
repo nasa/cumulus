@@ -1,9 +1,3 @@
-provider "aws" {
-  version = "~> 2.17"
-  region  = var.aws_region
-  profile = var.aws_profile
-}
-
 data "archive_file" "report_executions_package" {
   type        = "zip"
   source_file = "dist/index.js"

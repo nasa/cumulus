@@ -1,5 +1,3 @@
-data "aws_caller_identity" "current" { }
-
 data "aws_iam_policy_document" "assume_lambda_role" {
   statement {
     principals {
@@ -16,7 +14,7 @@ resource "aws_iam_role" "report_executions_lambda_role" {
   permissions_boundary = var.permissions_boundary
 }
 
-data "aws_dynamodb_table" "table" {
+data "aws_dynamodb_table" "executions_table" {
   name = var.executions_table
 }
 
@@ -27,7 +25,7 @@ data "aws_iam_policy_document" "report_executions_policy_document" {
       "dynamoDb:putItem"
     ]
     resources = [
-      data.aws_dynamodb_table
+      data.aws_dynamodb_table.executions_table.arn
     ]
   }
   statement {
@@ -47,7 +45,9 @@ data "aws_iam_policy_document" "report_executions_policy_document" {
       "logs:DescribeLogStreams",
       "logs:PutLogEvents"
     ]
-    resources = ["*"]
+    resources = [
+      "*"
+    ]
   }
 }
 
