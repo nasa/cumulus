@@ -1,5 +1,20 @@
 # Required
 
+variable "log_to_shared_destination" {
+  type    = bool
+  default = false
+}
+
+variable "log_destination_arn" {
+  type    = string
+  default = ""
+}
+
+variable "s3_access_log_replication" {
+  type    = bool
+  default = true
+}
+
 variable "prefix" {
   type        = string
   description = "Resource prefix unique to this deployment"

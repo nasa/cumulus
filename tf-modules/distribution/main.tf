@@ -1,3 +1,9 @@
+locals {
+  thin_egress_stack_name = "${var.prefix}-thin-egress-app"
+  // log_group_name         = "API-Gateway-Execution-Logs_DistributionRestApi/${var.thin_egress_app_deployment_stage}"
+  lambda_log_group_name  = "/aws/lambda/${local.thin_egress_stack_name}-EgressLambda"
+}
+
 resource "aws_s3_bucket_object" "bucket_map_yaml" {
   bucket  = var.system_bucket
   key     = "${var.prefix}/thin-egress-app/bucket_map.yaml"
@@ -6,7 +12,7 @@ resource "aws_s3_bucket_object" "bucket_map_yaml" {
 }
 
 resource "aws_secretsmanager_secret" "thin_egress_urs_creds" {
-  name        = "${var.prefix}-tea-urs-creds"
+  name        = "${var.prefix}-tea-urs-creds4"
   description = "URS credentials for the ${var.prefix} Thin Egress App"
 }
 
@@ -16,7 +22,8 @@ resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
 }
 
 module "thin_egress_app" {
-  source = "https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.18.zip"
+  // source = "https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.18.zip"
+  source = "../../../thin-egress-app/terraform"
 
   auth_base_url              = var.urs_url
   bucket_map_file            = aws_s3_bucket_object.bucket_map_yaml.key
@@ -25,7 +32,7 @@ module "thin_egress_app" {
   domain_name                = var.distribution_url == null ? null : replace(replace(var.distribution_url, "/^https?:///", ""), "//$/", "")
   permissions_boundary_name  = var.permissions_boundary_arn == null ? null : reverse(split("/", var.permissions_boundary_arn))[0]
   private_vpc                = var.vpc_id
-  stack_name                 = "${var.prefix}-thin-egress-app"
+  stack_name                 = local.thin_egress_stack_name
   stage_name                 = var.api_gateway_stage
   vpc_subnet_ids             = var.subnet_ids
   urs_auth_creds_secret_name = aws_secretsmanager_secret.thin_egress_urs_creds.name
@@ -204,4 +211,22 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
 
   rest_api_id = module.thin_egress_app.rest_api.id
   stage_name  = var.api_gateway_stage
+}
+
+# Egress Lambda Log Group
+resource "aws_cloudwatch_log_group" "egress_lambda_log_group" {
+  count             = var.log_to_shared_destination == true ? 1 : 0
+  name              = local.lambda_log_group_name
+  // "/aws/lambda/${local.thin_egress_stack_name}-EgressLambda"
+  retention_in_days = 30
+}
+
+# Egress Lambda Log Group Filter
+resource "aws_cloudwatch_log_subscription_filter" "egress_lambda_log_subscription_filter" {
+  count           = var.log_to_shared_destination == true ? 1 : 0
+  name            = "EgressLambdaLogSubscriptionToSharedDestination"
+  destination_arn = var.log_destination_arn
+  filter_pattern  = ""
+  log_group_name  = local.lambda_log_group_name
+  // "/aws/lambda/${local.thin_egress_stack_name}-EgressLambda"
 }

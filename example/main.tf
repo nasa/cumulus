@@ -23,3 +23,19 @@ module "distribution" {
   vpc_id     = var.vpc_id
   subnet_ids = var.subnet_ids
 }
+
+module "s3-replicator" {
+  # count  = var.s3_access_log_replication == true ? 1 : 0
+  source = "../tf-modules/s3-replicator"
+
+  prefix               = var.prefix
+  permissions_boundary = var.permissions_boundary_arn
+
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.subnet_ids
+
+  source_bucket = "cumulus-sandbox-testing"
+  source_prefix = "cross-account-replication-testing/files"
+  target_bucket = "esdis-metrics-shared-data-sandbox"
+  target_prefix = "cross-account-replication-testing/files"
+}

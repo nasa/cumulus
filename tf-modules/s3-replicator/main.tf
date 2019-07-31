@@ -5,12 +5,23 @@ provider "aws" {
 
 data "archive_file" "replicator_package" {
   type        = "zip"
-  source_file = "index.js"
-  output_path = "build/replicator.zip"
+  source_file = "${path.module}/index.js"
+  output_path = "${path.module}/build/replicator.zip"
+}
+
+resource "aws_security_group" "s3_replicator_lambda" {
+  vpc_id = var.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
 resource "aws_lambda_function" "s3_replicator" {
-  filename         = "build/replicator.zip"
+  filename         = "${path.module}/build/replicator.zip"
   function_name    = "${var.prefix}-s3-replicator"
   role             = "${aws_iam_role.replicator_lambda_role.arn}"
   handler          = "index.handler"
@@ -21,7 +32,7 @@ resource "aws_lambda_function" "s3_replicator" {
 
   vpc_config {
     subnet_ids         = var.subnet_ids
-    security_group_ids = var.security_groups
+    security_group_ids = [aws_security_group.s3_replicator_lambda.id]
   }
 
   environment {

@@ -27,11 +27,6 @@ variable "subnet_ids" {
   default = []
 }
 
-variable "security_groups" {
-  type    = list(string)
-  default = []
-}
-
 variable "target_bucket" {
   type = string
 }
