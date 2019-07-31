@@ -1,3 +1,5 @@
+# Required
+
 variable "prefix" {
   type = string
 }
@@ -22,6 +24,8 @@ variable "vpc_id" {
   type = string
 }
 
+# Optional
+
 variable "region" {
   type    = string
   default = "us-east-1"
@@ -44,5 +48,10 @@ variable "permissions_boundary_arn" {
 
 variable "distribution_url" {
   type    = string
+  default = null
+}
+
+variable "aws_profile" {
+  type = string
   default = null
 }

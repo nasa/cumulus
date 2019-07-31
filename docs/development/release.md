@@ -74,14 +74,15 @@ Travis will build and run tests against that tagged release, publish the new pac
 
 ### 8. Create a new Cumulus release on github
 
-The Cumulus Terraform module can be created by running:
+The Cumulus Distribution Terraform module can be created by running:
 
 ```bash
-$ ./bin/build-tf-module.sh
+$ (cd tf-modules/distribution && ./bin/build-tf-module.sh)
 ```
 
-This will generate a file called `dist/terraform-aws-cumulus.zip`, which should
-be uploaded as an asset of the Github release.
+This will generate a file called
+`tf-modules/distribution/dist/terraform-aws-cumulus-distribution.zip`, which
+should be uploaded as an asset of the Github release.
 
 ## Backporting to a previous release
 
