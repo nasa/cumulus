@@ -30,12 +30,12 @@ resource "aws_elasticsearch_domain_policy" "es_domain_policy" {
   access_policies = data.aws_iam_policy_document.es_access_policy.json
 }
 
-resource "aws_iam_service_linked_role" "default" {
+resource "aws_iam_service_linked_role" "es" {
   count            = var.include_elasticsearch && local.deploy_to_vpc ? 1 : 0
   aws_service_name = "es.amazonaws.com"
 }
 
-resource "aws_elasticsearch_domain" "default" {
+resource "aws_elasticsearch_domain" "es" {
   count                 = var.include_elasticsearch ? 1 : 0
   domain_name           = local.es_domain_name
   elasticsearch_version = var.elasticsearch_config.version
@@ -62,4 +62,8 @@ resource "aws_elasticsearch_domain" "default" {
   snapshot_options {
     automated_snapshot_start_hour = 0
   }
+
+  depends_on = [
+    "aws_iam_service_linked_role.es"
+  ]
 }
