@@ -483,7 +483,11 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('triggers the granule record being added to DynamoDB', async () => {
-      const record = await granuleModel.get({ granuleId: inputPayload.granules[0].granuleId });
+      const record = await waitForModelStatus(
+        granuleModel,
+        { granuleId: inputPayload.granules[0].granuleId },
+        'completed'
+      );
       expect(record.execution).toEqual(getExecutionUrl(workflowExecution.executionArn));
     });
 

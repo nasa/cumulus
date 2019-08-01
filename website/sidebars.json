@@ -34,6 +34,7 @@
       "deployment/obtain_cumulus_packages",
       "deployment/config_descriptions",
       "deployment/troubleshoot_deployment",
+      "deployment/distribution_component",
       "deployment/thin_egress_app"
     ],
     "Deployment Options":[
