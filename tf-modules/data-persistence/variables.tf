@@ -6,9 +6,18 @@ variable "prefix" {
 
 # Optional
 
-variable "enable_point_in_time_recovery" {
-  type    = bool
-  default = false
+variable "enable_point_in_time_tables" {
+  type    = list(string)
+  default = [
+    "CollectionsTable",
+    "ExecutionsTable",
+    "FilesTable",
+    "GranulesTable",
+    "PdrsTable",
+    "ProvidersTable",
+    "RulesTable",
+    "UsersTable"
+  ]
 }
 
 variable "vpc_id" {

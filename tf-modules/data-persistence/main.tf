@@ -1,5 +1,22 @@
+locals {
+  enable_point_in_time_table_names = [for x in var.enable_point_in_time_tables : "${var.prefix}-${x}"]
+  table_names = {
+    access_tokens_table    = "${var.prefix}-AccessTokensTable"
+    async_operations_table = "${var.prefix}-AsyncOperationsTable"
+    collections_table      = "${var.prefix}-CollectionsTable"
+    executions_table       = "${var.prefix}-ExecutionsTable"
+    files_table            = "${var.prefix}-FilesTable"
+    granules_table         = "${var.prefix}-GranulesTable"
+    pdrs_table             = "${var.prefix}-PdrsTable"
+    providers_table        = "${var.prefix}-ProvidersTable"
+    rules_table            = "${var.prefix}-RulesTable"
+    semaphores_table       = "${var.prefix}-SemaphoresTable"
+    users_table            = "${var.prefix}-UsersTable"
+  }
+}
+
 resource "aws_dynamodb_table" "access_tokens_table" {
-  name             = "${var.prefix}-AccessTokensTable"
+  name             = local.table_names.access_tokens_table
   read_capacity    = 5
   write_capacity   = 1
   hash_key         = "accessToken"
@@ -10,12 +27,12 @@ resource "aws_dynamodb_table" "access_tokens_table" {
   }
 
   point_in_time_recovery {
-    enabled = var.enable_point_in_time_recovery
+    enabled = contains(local.enable_point_in_time_table_names, local.table_names.access_tokens_table)
   }
 }
 
 resource "aws_dynamodb_table" "async_operations_table" {
-  name             = "${var.prefix}-AsyncOperationsTable"
+  name             = local.table_names.async_operations_table
   read_capacity    = 5
   write_capacity   = 10
   hash_key         = "id"
@@ -26,7 +43,7 @@ resource "aws_dynamodb_table" "async_operations_table" {
   }
 
   point_in_time_recovery {
-    enabled = var.enable_point_in_time_recovery
+    enabled = contains(local.enable_point_in_time_table_names, local.table_names.async_operations_table)
   }
 }
 
@@ -50,12 +67,12 @@ resource "aws_dynamodb_table" "collections_table" {
   }
 
   point_in_time_recovery {
-    enabled = var.enable_point_in_time_recovery
+    enabled = contains(local.enable_point_in_time_table_names, local.table_names.collections_table)
   }
 }
 
 resource "aws_dynamodb_table" "executions_table" {
-  name             = "${var.prefix}-ExecutionsTable"
+  name             = local.table_names.executions_table
   read_capacity    = 5
   write_capacity   = 10
   hash_key         = "arn"
@@ -68,12 +85,12 @@ resource "aws_dynamodb_table" "executions_table" {
   }
 
   point_in_time_recovery {
-    enabled = var.enable_point_in_time_recovery
+    enabled = contains(local.enable_point_in_time_table_names, local.table_names.executions_table)
   }
 }
 
 resource "aws_dynamodb_table" "files_table" {
-  name             = "${var.prefix}-FilesTable"
+  name             = local.table_names.files_table
   read_capacity    = 5
   write_capacity   = 10
   hash_key         = "bucket"
@@ -92,12 +109,12 @@ resource "aws_dynamodb_table" "files_table" {
   }
 
   point_in_time_recovery {
-    enabled = var.enable_point_in_time_recovery
+    enabled = contains(local.enable_point_in_time_table_names, local.table_names.files_table)
   }
 }
 
 resource "aws_dynamodb_table" "granules_table" {
-  name             = "${var.prefix}-GranulesTable"
+  name             = local.table_names.granules_table
   read_capacity    = 5
   write_capacity   = 10
   hash_key         = "granuleId"
@@ -124,12 +141,12 @@ resource "aws_dynamodb_table" "granules_table" {
   }
 
   point_in_time_recovery {
-    enabled = var.enable_point_in_time_recovery
+    enabled = contains(local.enable_point_in_time_table_names, local.table_names.granules_table)
   }
 }
 
 resource "aws_dynamodb_table" "pdrs_table" {
-  name             = "${var.prefix}-PdrsTable"
+  name             = local.table_names.pdrs_table
   read_capacity    = 5
   write_capacity   = 2
   hash_key         = "pdrName"
@@ -142,12 +159,12 @@ resource "aws_dynamodb_table" "pdrs_table" {
   }
 
   point_in_time_recovery {
-    enabled = var.enable_point_in_time_recovery
+    enabled = contains(local.enable_point_in_time_table_names, local.table_names.pdrs_table)
   }
 }
 
 resource "aws_dynamodb_table" "providers_table" {
-  name             = "${var.prefix}-ProvidersTable"
+  name             = local.table_names.providers_table
   read_capacity    = 5
   write_capacity   = 1
   hash_key         = "id"
@@ -160,12 +177,12 @@ resource "aws_dynamodb_table" "providers_table" {
   }
 
   point_in_time_recovery {
-    enabled = var.enable_point_in_time_recovery
+    enabled = contains(local.enable_point_in_time_table_names, local.table_names.providers_table)
   }
 }
 
 resource "aws_dynamodb_table" "rules_table" {
-  name             = "${var.prefix}-RulesTable"
+  name             = local.table_names.rules_table
   read_capacity    = 5
   write_capacity   = 1
   hash_key         = "name"
@@ -178,12 +195,12 @@ resource "aws_dynamodb_table" "rules_table" {
   }
 
   point_in_time_recovery {
-    enabled = var.enable_point_in_time_recovery
+    enabled = contains(local.enable_point_in_time_table_names, local.table_names.rules_table)
   }
 }
 
 resource "aws_dynamodb_table" "semaphores_table" {
-  name             = "${var.prefix}-SemaphoresTable"
+  name             = local.table_names.semaphores_table
   read_capacity    = 5
   write_capacity   = 10
   hash_key         = "name"
@@ -194,12 +211,12 @@ resource "aws_dynamodb_table" "semaphores_table" {
   }
 
   point_in_time_recovery {
-    enabled = false
+    enabled = contains(local.enable_point_in_time_table_names, local.table_names.semaphores_table)
   }
 }
 
 resource "aws_dynamodb_table" "users_table" {
-  name             = "${var.prefix}-UsersTable"
+  name             = local.table_names.users_table
   read_capacity    = 5
   write_capacity   = 1
   hash_key         = "userName"
@@ -212,6 +229,6 @@ resource "aws_dynamodb_table" "users_table" {
   }
 
   point_in_time_recovery {
-    enabled = var.enable_point_in_time_recovery
+    enabled = contains(local.enable_point_in_time_table_names, local.table_names.users_table)
   }
 }
