@@ -1,9 +1,3 @@
-provider "aws" {
-  version = "~> 2.17"
-  region  = var.aws_region
-  profile = var.aws_profile
-}
-
 resource "aws_dynamodb_table" "access_tokens_table" {
   name             = "${var.prefix}-AccessTokensTable"
   read_capacity    = 5
