@@ -24,24 +24,51 @@ data "aws_iam_policy_document" "es_access_policy" {
   }
 }
 
-resource "aws_elasticsearch_domain_policy" "es_domain_policy" {
-  count           = var.include_elasticsearch ? 1 : 0
-  domain_name     = local.es_domain_name
-  access_policies = data.aws_iam_policy_document.es_access_policy.json
-}
-
 resource "aws_iam_service_linked_role" "es" {
   count            = var.include_elasticsearch && local.deploy_to_vpc ? 1 : 0
   aws_service_name = "es.amazonaws.com"
 }
 
 resource "aws_elasticsearch_domain" "es" {
-  count                 = var.include_elasticsearch ? 1 : 0
+  count                 = var.include_elasticsearch && local.deploy_to_vpc == false ? 1 : 0
   domain_name           = local.es_domain_name
   elasticsearch_version = var.elasticsearch_config.version
 
   cluster_config {
-    instance_type = var.elasticsearch_config.instance_type
+    instance_count = var.elasticsearch_config.instance_count
+    instance_type  = var.elasticsearch_config.instance_type
+  }
+
+  ebs_options {
+    ebs_enabled = true
+    volume_type = "gp2"
+    volume_size = var.elasticsearch_config.volume_size
+  }
+
+  advanced_options = {
+    "rest.action.multi.allow_explicit_index" = "true"
+  }
+
+  snapshot_options {
+    automated_snapshot_start_hour = 0
+  }
+}
+
+resource "aws_elasticsearch_domain_policy" "es_domain_policy" {
+  count           = var.include_elasticsearch && local.deploy_to_vpc == false ? 1 : 0
+  domain_name     = aws_elasticsearch_domain.es[0].domain_name
+  access_policies = data.aws_iam_policy_document.es_access_policy.json
+  depends_on      = ["aws_elasticsearch_domain.es"]
+}
+
+resource "aws_elasticsearch_domain" "es_vpc" {
+  count                 = var.include_elasticsearch && local.deploy_to_vpc ? 1 : 0
+  domain_name           = "${local.es_domain_name}-vpc"
+  elasticsearch_version = var.elasticsearch_config.version
+
+  cluster_config {
+    instance_count = var.elasticsearch_config.instance_count
+    instance_type  = var.elasticsearch_config.instance_type
   }
 
   ebs_options {
@@ -55,8 +82,8 @@ resource "aws_elasticsearch_domain" "es" {
   }
 
   vpc_options {
-    subnet_ids         = local.deploy_to_vpc ? null : var.subnet_ids
-    security_group_ids = local.deploy_to_vpc ? null : var.security_groups
+    subnet_ids         = var.subnet_ids
+    security_group_ids = var.security_groups
   }
 
   snapshot_options {
@@ -66,4 +93,11 @@ resource "aws_elasticsearch_domain" "es" {
   depends_on = [
     "aws_iam_service_linked_role.es"
   ]
+}
+
+resource "aws_elasticsearch_domain_policy" "es_vpc_domain_policy" {
+  count           = var.include_elasticsearch && local.deploy_to_vpc ? 1 : 0
+  domain_name     = aws_elasticsearch_domain.es_vpc[0].domain_name
+  access_policies = data.aws_iam_policy_document.es_access_policy.json
+  depends_on      = ["aws_elasticsearch_domain.es_vpc"]
 }
