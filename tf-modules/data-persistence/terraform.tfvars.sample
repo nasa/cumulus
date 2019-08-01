@@ -1,4 +1,7 @@
+# Required
 prefix               = "myprefix"
+
+# Optional
 vpc_id               = "vpc-123456"
 subnet_ids           = ["subnet-123456"]
 security_groups      = ["sg-123456"]
