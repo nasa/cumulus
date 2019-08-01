@@ -232,3 +232,17 @@ resource "aws_dynamodb_table" "users_table" {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.users_table)
   }
 }
+
+resource "aws_elasticsearch_domain" "data_search" {
+  count                 = var.elasticsearch_config.domain_name ? 1 : 0
+  domain_name           = "${var.prefix}-${var.elasticsearch_config.domain_name}"
+  elasticsearch_version = var.elasticsearch_config.version
+
+  cluster_config {
+    instance_type = var.elasticsearch_config.instance_type
+  }
+
+  snapshot_options {
+    automated_snapshot_start_hour = 0
+  }
+}
