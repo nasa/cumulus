@@ -1,7 +1,22 @@
 # Required
+
 prefix               = "myprefix"
+es_trusted_role_arns = ["arn:aws:iam::12345678:role/role-name"]
 
 # Optional
-vpc_id               = "vpc-123456"
-subnet_ids           = ["subnet-123456"]
-security_groups      = ["sg-123456"]
+
+elasticsearch_config = {
+  domain_name    = "es"
+  instance_count = 1
+  instance_type  = "t2.small.elasticsearch"
+  version        = "5.3"
+  volume_size    = 10
+}
+enable_point_in_time_tables = [
+  "CollectionsTable",
+  "ExecutionsTable"
+]
+include_elasticsearch  = true # or false
+vpc_id                 = "vpc-123456"
+subnet_ids             = ["subnet-123456"]
+security_groups        = ["sg-123456"]

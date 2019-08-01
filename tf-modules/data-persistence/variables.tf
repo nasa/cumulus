@@ -4,6 +4,10 @@ variable "prefix" {
   type    = string
 }
 
+variable "es_trusted_role_arns" {
+  type    = list(string)
+}
+
 # Optional
 
 variable "include_elasticsearch" {
@@ -13,16 +17,18 @@ variable "include_elasticsearch" {
 
 variable "elasticsearch_config" {
   type = object({
-    domain_name   = string
-    instance_type = string
-    version       = string
-    volume_size   = number
+    domain_name    = string
+    instance_count = number
+    instance_type  = string
+    version        = string
+    volume_size    = number
   })
   default = {
-    domain_name   = "es"
-    instance_type = "t2.small.elasticsearch"
-    version       = "5.3"
-    volume_size   = 5
+    domain_name    = "es"
+    instance_count = 1
+    instance_type  = "t2.small.elasticsearch"
+    version        = "5.3"
+    volume_size    = 10
   }
 }
 
@@ -38,11 +44,6 @@ variable "enable_point_in_time_tables" {
     "RulesTable",
     "UsersTable"
   ]
-}
-
-variable "es_trusted_role_arns" {
-  type    = list(string)
-  default = []
 }
 
 variable "subnet_ids" {
