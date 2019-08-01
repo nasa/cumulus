@@ -262,6 +262,13 @@ describe('When the Sync Granule workflow is configured', () => {
       });
 
       it('captures all files', async () => {
+        const record = await waitForModelStatus(
+          granuleModel,
+          { granuleId: inputPayload.granules[0].granuleId },
+          'completed'
+        );
+        expect(record.status).toEqual('completed');
+
         const granuleResponse = await granulesApiTestUtils.getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId

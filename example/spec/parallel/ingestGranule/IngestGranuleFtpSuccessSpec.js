@@ -69,6 +69,14 @@ describe('The FTP Ingest Granules workflow', () => {
     let granuleResponse;
 
     beforeAll(async () => {
+      // Check that the granule has been updated in dynamo
+      // before performing further checks
+      await waitForModelStatus(
+        granuleModel,
+        { granuleId: inputPayload.granules[0].granuleId },
+        'completed'
+      );
+
       granuleResponse = await granulesApiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
@@ -89,15 +97,6 @@ describe('The FTP Ingest Granules workflow', () => {
     });
 
     it('makes the granule available through the Cumulus API', async () => {
-      // This assertion is to check that the granule has been updated in dynamo
-      // before performing further checks
-      const record = await waitForModelStatus(
-        granuleModel,
-        { granuleId: inputPayload.granules[0].granuleId },
-        'completed'
-      );
-      expect(record.status).toEqual('completed');
-
       expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
     });
 
