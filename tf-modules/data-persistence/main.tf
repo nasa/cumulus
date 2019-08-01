@@ -1,5 +1,6 @@
 locals {
   enable_point_in_time_table_names = [for x in var.enable_point_in_time_tables : "${var.prefix}-${x}"]
+  es_domain_name = "${var.prefix}-${var.elasticsearch_config.domain_name}"
   table_names = {
     access_tokens_table    = "${var.prefix}-AccessTokensTable"
     async_operations_table = "${var.prefix}-AsyncOperationsTable"
@@ -233,10 +234,32 @@ resource "aws_dynamodb_table" "users_table" {
   }
 }
 
-resource "aws_elasticsearch_domain" "data_search" {
-  count                 = var.elasticsearch_config.domain_name == null ? 0 : 1
-  domain_name           = "${var.prefix}-${var.elasticsearch_config.domain_name}"
+data "aws_region" "current" {}
+
+data "aws_caller_identity" "current" {}
+
+data "aws_iam_policy_document" "es_access_policy" {
+  statement {
+    actions = [
+      "es:*"
+    ]
+
+    principals {
+      type        = "AWS"
+      identifiers = var.es_role_arns
+    }
+
+    resources = [
+      "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${local.es_domain_name}/*"
+    ]
+  }
+}
+
+resource "aws_elasticsearch_domain" "es" {
+  count                 = var.include_elasticsearch ? 1 : 0
+  domain_name           = local.es_domain_name
   elasticsearch_version = var.elasticsearch_config.version
+  access_policies       = data.aws_iam_policy_document.es_access_policy.json
 
   cluster_config {
     instance_type = var.elasticsearch_config.instance_type
