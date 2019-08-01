@@ -1,5 +1,11 @@
 # Required
 
+variable "log_destination_arn" {
+  type        = string
+  default     = ""
+  description = "Remote kinesis/destination arn for delivering logs."
+}
+
 variable "prefix" {
   type = string
 }

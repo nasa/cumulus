@@ -13,6 +13,11 @@ module "distribution" {
 
   distribution_url = var.distribution_url
 
+  # Additional Logging Settings
+  log_api_gateway_to_cloudwatch = true
+  log_to_shared_destination     = true
+  log_destination_arn           = var.log_destination_arn
+
   protected_buckets = var.protected_buckets
   public_buckets    = var.public_buckets
 
@@ -25,14 +30,13 @@ module "distribution" {
 }
 
 module "s3-replicator" {
-  # count  = var.s3_access_log_replication == true ? 1 : 0
   source = "../tf-modules/s3-replicator"
 
   prefix               = var.prefix
   permissions_boundary = var.permissions_boundary_arn
 
-  vpc_id          = var.vpc_id
-  subnet_ids      = var.subnet_ids
+  vpc_id     = var.vpc_id
+  subnet_ids = var.subnet_ids
 
   source_bucket = "cumulus-sandbox-testing"
   source_prefix = "cross-account-replication-testing/files"

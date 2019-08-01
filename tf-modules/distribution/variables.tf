@@ -1,5 +1,10 @@
 # Required
 
+variable "log_api_gateway_to_cloudwatch" {
+  type    = bool
+  default = false
+}
+
 variable "log_to_shared_destination" {
   type    = bool
   default = false
@@ -8,11 +13,6 @@ variable "log_to_shared_destination" {
 variable "log_destination_arn" {
   type    = string
   default = ""
-}
-
-variable "s3_access_log_replication" {
-  type    = bool
-  default = true
 }
 
 variable "prefix" {
