@@ -6,16 +6,6 @@ variable "prefix" {
 
 # Optional
 
-variable "aws_profile" {
-  type    = string
-  default = "default"
-}
-
-variable "aws_region" {
-  type    = string
-  default = "us-east-1"
-}
-
 variable "enable_point_in_time_recovery" {
   type    = bool
   default = false
