@@ -10,16 +10,6 @@ variable "executions_table" {
 
 # Optional
 
-variable "aws_profile" {
-  type    = string
-  default = "default"
-}
-
-variable "aws_region" {
-  type    = string
-  default = "default"
-}
-
 variable "permissions_boundary" {
   type    = string
   default = null

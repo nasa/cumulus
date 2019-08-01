@@ -20,8 +20,6 @@ executions_table      = "ExecutionsTableName"  # name of DynamoDB table to store
 prefix                = "myprefix"             # prefix to use for naming created resources
 
 # Optional
-aws_profile           = "ngap"                 # AWS profile used for deployment
-aws_region            = "us-east-1"            # AWS region used for deployment
 permissions_boundary  = "arn:aws:iam::1234567890:policy/YourRoleBoundary" # IAM permissions boundary
 security_groups       = ["sg-123456"]          # Security Group IDs (for Lambda)
 subnet_ids            = ["subnet-123456"]      # Subnet IDs (for Lambda)
