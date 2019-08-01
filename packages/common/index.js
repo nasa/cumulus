@@ -8,6 +8,7 @@ exports.CloudFormationGateway = require('./CloudFormationGateway');
 exports.CollectionConfigStore = require('./collection-config-store').CollectionConfigStore;
 exports.constructCollectionId = require('./collection-config-store').constructCollectionId;
 exports.http = require('./http');
+exports.LaunchpadToken = require('./launchpad-token').LaunchpadToken;
 exports.log = require('./log');
 exports.sftp = require('./sftp');
 exports.stepFunctions = require('./step-functions');
