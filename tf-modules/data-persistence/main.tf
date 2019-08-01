@@ -234,12 +234,22 @@ resource "aws_dynamodb_table" "users_table" {
 }
 
 resource "aws_elasticsearch_domain" "data_search" {
-  count                 = var.elasticsearch_config.domain_name ? 1 : 0
+  count                 = var.elasticsearch_config.domain_name == null ? 0 : 1
   domain_name           = "${var.prefix}-${var.elasticsearch_config.domain_name}"
   elasticsearch_version = var.elasticsearch_config.version
 
   cluster_config {
     instance_type = var.elasticsearch_config.instance_type
+  }
+
+  ebs_options {
+    ebs_enabled = true
+    volume_type = "gp2"
+    volume_size = var.elasticsearch_config.volume_size
+  }
+
+  advanced_options = {
+    "rest.action.multi.allow_explicit_index" = "true"
   }
 
   snapshot_options {
