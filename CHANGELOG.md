@@ -39,8 +39,8 @@ If you deploy with no distribution app your deployment will succeed but you may 
 
 ### Added
 
-- **1012** - Adds `layers` config option to support deploying Lambdas with layers
-- **1098** - Added `useXRay` config option to enable AWS X-Ray for Lambdas.
+- **PR1125** - Adds `layers` config option to support deploying Lambdas with layers
+- **PR1128** - Added `useXRay` config option to enable AWS X-Ray for Lambdas.
 - **CUMULUS-1345**
   - Adds new variables to the app deployment under `cmr`.
   - `cmrEnvironment` values are `SIT`, `UAT`, or `OPS` with `UAT` as the default.
