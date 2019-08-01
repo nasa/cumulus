@@ -39,8 +39,8 @@ If you deploy with no distribution app your deployment will succeed but you may 
 
 ### Added
 
-- **1012** - Adds `layers` config option to support deploying Lambdas with layers
-- **1098** - Added `useXRay` config option to enable AWS X-Ray for Lambdas.
+- **PR1125** - Adds `layers` config option to support deploying Lambdas with layers
+- **PR1128** - Added `useXRay` config option to enable AWS X-Ray for Lambdas.
 - **CUMULUS-1345**
   - Adds new variables to the app deployment under `cmr`.
   - `cmrEnvironment` values are `SIT`, `UAT`, or `OPS` with `UAT` as the default.
@@ -67,6 +67,21 @@ If you deploy with no distribution app your deployment will succeed but you may 
   - Added `cmrGranuleUrlType` to the `@cumulus/move-granules` task. This determines what kind of links go in the CMR files. The options are `distribution`, `s3`, or `none`, with the default being distribution. If there is no distribution API being used with Cumulus, you must set the value to `s3` or `none`.
 
 - Added `packages/s3-replicator` terraform module to allow same-region s3 replication to metrics bucket.
+
+- **CUMULUS-1400**
+  - Added `tf-modules/report-executions` terraform module which processes workflow execution information received via SNS and stores it to a database. The module includes:
+    - SNS topic for publishing execution data
+    - Lambda to process and store execution data
+    - IAM permissions for the Lambda
+    - Subscription for the Lambda to the SNS topic
+  - Added `@cumulus/common/sns-event` which contains helpers for SNS events:
+    - `isSnsEvent()` returns true if event is from SNS
+    - `getSnsMessage()` extracts and parses the message from an SNS event
+  - Added `@cumulus/common/cloudwatch-event` which contains helpers for Cloudwatch events:
+    - `isSfExecutionEvent()` returns true if event is from Step Functions
+    - `isTerminalSfStatus()` determines if a Step Function status from a Cloudwatch event is a terminal status
+    - `getSfEventStatus()` gets the Step Function status from a Cloudwatch event
+    - `getSfEventMessage()` extracts and parses the Step Function output messsage from a Cloudwatch event
 
 ## Changed
 
@@ -97,6 +112,9 @@ If you deploy with no distribution app your deployment will succeed but you may 
 
 - **CUMULUS-1362**
   - Granule `processingStartTime` and `processingEndTime` will be set to the execution start time and end time respectively when there is no sync granule or post to cmr task present in the workflow
+
+- **CUMULUS-1400**
+  - Deprecated `@cumulus/ingest/aws/getExecutionArn`. Use `@cumulus/common/aws/getExecutionArn` instead.
 
 ### Fixed
 
@@ -485,6 +503,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.11.2] - 2019-2-15
 
 ### Added
+
 - CUMULUS-1169
   - Added a `@cumulus/common/StepFunctions` module. It contains functions for querying the AWS
     StepFunctions API. These functions have the ability to retry when a ThrottlingException occurs.
@@ -514,10 +533,12 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 - **CUMULUS-673** Added `@cumulus/common/file/getFileChecksumFromStream` to get file checksum from a readable stream
 
 ### Fixed
+
 - CUMULUS-1123
   - Cloudformation template overrides now work as expected
 
 ### Changed
+
 - CUMULUS-1169
   - Deprecated the `@cumulus/common/step-functions` module.
   - Updated code that queries the StepFunctions API to use the retry-enabled functions from
@@ -549,6 +570,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
   - Renamed `API_ENDPOINT` environment variable to `TOKEN_REDIRECT_ENDPOINT`
 
 ### Removed
+
 - Functions deprecated before 1.11.0:
   - @cumulus/api/models/base: static Manager.createTable() and static Manager.deleteTable()
   - @cumulus/ingest/aws/S3
@@ -558,11 +580,10 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
   - @cumulus/ingest/granule/Ingest.getBucket()
 
 ### Deprecated
+
 `@cmrjs/ingestConcept`, instead use the CMR object methods. `@cmrjs/CMR.ingestGranule` or `@cmrjs/CMR.ingestCollection`
 `@cmrjs/searchConcept`, instead use the CMR object methods. `@cmrjs/CMR.searchGranules` or `@cmrjs/CMR.searchCollections`
 `@cmrjs/deleteConcept`, instead use the CMR object methods. `@cmrjs/CMR.deleteGranule` or `@cmrjs/CMR.deleteCollection`
-
-
 
 ## [v1.11.1] - 2018-12-18
 
