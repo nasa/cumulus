@@ -6,6 +6,19 @@ variable "prefix" {
 
 # Optional
 
+variable "elasticsearch_config" {
+  type    = object({
+    domain_name = string
+    instance_type = string
+    version = string
+  })
+  default = {
+    domain_name = null
+    instance_type = "t2.small.elasticsearch"
+    version = "5.3"
+  }
+}
+
 variable "enable_point_in_time_tables" {
   type    = list(string)
   default = [
