@@ -13,16 +13,16 @@ variable "include_elasticsearch" {
 
 variable "elasticsearch_config" {
   type = object({
-    domain_name = string
+    domain_name   = string
     instance_type = string
-    version = string
-    volume_size = number
+    version       = string
+    volume_size   = number
   })
   default = {
-    domain_name = "es"
+    domain_name   = "es"
     instance_type = "t2.small.elasticsearch"
-    version = "5.3"
-    volume_size = 5
+    version       = "5.3"
+    volume_size   = 5
   }
 }
 
@@ -40,7 +40,7 @@ variable "enable_point_in_time_tables" {
   ]
 }
 
-variable "es_role_arns" {
+variable "es_trusted_role_arns" {
   type    = list(string)
   default = []
 }
@@ -57,5 +57,5 @@ variable "security_groups" {
 
 variable "vpc_id" {
   type    = string
-  default = ""
+  default = null
 }
