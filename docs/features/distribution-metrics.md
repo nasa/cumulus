@@ -16,6 +16,9 @@ The metrics team has taken care of setting up logstash to ingest the files that 
 
 Once Cumulus has been configured to deliver Cloudwatch logs to the ESDIS Metrics team, you can create a Kibana index pattern associated with your Cumulus stack.  The metrics team has worked out a convention with the Cumulus devlopers to ensure access to your stack's logs.  The important piece is that the Kibana index pattern is created with the exact name of the prefix (stackName) with which cumulus was deployed.
 
+### Cumulus / ESDIS Metrics distribution system.
+![Configuration of Cumulus/Metrics coordination](assets/AWS-Cross-account-log-delivery-and-metrics.png)
+
 ## Kibana Index
 
 Before creating the Kibana index, verify that the Elasticsearch instance has been populated with at least one record[^1].  Do this by visiting the Kibana endpoint and selecting `Management`, Elasticsearch `Index Management` and type the stack's prefix into the search bar.  When you see an index with `<prefix>-cloudwatch-YYY.MM.dd` you are ready to continue.  If you don't see at least one index for your stack, check to make sure you are delivering your logs to this Elasticsearch instance.
