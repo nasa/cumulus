@@ -1,12 +1,17 @@
 'use strict';
 
 const get = require('lodash.get');
+const has = require('lodash.has');
 
 const {
   isSnsEvent,
-  getSnsMessage
+  getSnsEventMessageObject
 } = require('@cumulus/common/sns-event');
-const { Granule } = require('@cumulus/api/models');
+const Granule = require('@cumulus/api/models/granules');
+
+function containsGranules(message) {
+  return (has(message, 'payload.granules') || has(message, 'meta.input_granules'));
+}
 
 async function handleGranuleMessage(message) {
   const granuleModel = new Granule();
@@ -17,8 +22,8 @@ function getReportGranuleMessages(event) {
   const records = get(event, 'Records', []);
   return records
     .filter(isSnsEvent)
-    .map(getSnsMessage)
-    .filter();
+    .map(getSnsEventMessageObject)
+    .filter(containsGranules);
 }
 
 async function handler(event) {
@@ -29,5 +34,6 @@ async function handler(event) {
 }
 
 module.exports = {
-  handler
+  handler,
+  getReportGranuleMessages
 };
