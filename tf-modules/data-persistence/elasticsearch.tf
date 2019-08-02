@@ -1,6 +1,6 @@
 locals {
   deploy_to_vpc  = length(var.subnet_ids) > 0 ? true : false
-  es_domain_name = "${var.prefix}-${var.elasticsearch_config.domain_name}"
+  es_domain_name = "${var.prefix}-${var.elasticsearch_config.domain_name}${local.deploy_to_vpc ? "-vpc" : ""}"
 }
 
 data "aws_region" "current" {}
@@ -56,14 +56,14 @@ resource "aws_elasticsearch_domain" "es" {
 
 resource "aws_elasticsearch_domain_policy" "es_domain_policy" {
   count           = var.include_elasticsearch && local.deploy_to_vpc == false ? 1 : 0
-  domain_name     = aws_elasticsearch_domain.es[0].domain_name
+  domain_name     = local.es_domain_name
   access_policies = data.aws_iam_policy_document.es_access_policy.json
   depends_on      = ["aws_elasticsearch_domain.es"]
 }
 
 resource "aws_elasticsearch_domain" "es_vpc" {
   count                 = var.include_elasticsearch && local.deploy_to_vpc ? 1 : 0
-  domain_name           = "${local.es_domain_name}-vpc"
+  domain_name           = local.es_domain_name
   elasticsearch_version = var.elasticsearch_config.version
 
   cluster_config {
@@ -97,7 +97,19 @@ resource "aws_elasticsearch_domain" "es_vpc" {
 
 resource "aws_elasticsearch_domain_policy" "es_vpc_domain_policy" {
   count           = var.include_elasticsearch && local.deploy_to_vpc ? 1 : 0
-  domain_name     = aws_elasticsearch_domain.es_vpc[0].domain_name
+  domain_name     = local.es_domain_name
   access_policies = data.aws_iam_policy_document.es_access_policy.json
   depends_on      = ["aws_elasticsearch_domain.es_vpc"]
+}
+
+resource "aws_cloudwatch_metric_alarm" "es_nodes_low" {
+  alarm_name                = "${local.es_domain_name}-NodesLowAlarm"
+  comparison_operator       = "LessThanThreshold"
+  namespace                 = "AWS/ES"
+  evaluation_periods        = "5"
+  metric_name               = "Nodes"
+  period                    = "60"
+  statistic                 = "Average"
+  threshold                 = var.elasticsearch_config.instance_count
+  alarm_description         = "There are less instances running than the desired"
 }
