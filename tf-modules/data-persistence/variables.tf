@@ -10,6 +10,11 @@ variable "es_trusted_role_arns" {
 
 # Optional
 
+variable "create_service_linked_role" {
+  type = bool
+  default = true
+}
+
 variable "include_elasticsearch" {
   type    = bool
   default = true
