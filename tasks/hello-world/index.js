@@ -2,7 +2,6 @@
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { log } = require('@cumulus/common');
-
 const {
   deleteS3Object,
   s3ObjectExists,
