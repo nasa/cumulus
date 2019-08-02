@@ -25,7 +25,7 @@ data "aws_iam_policy_document" "es_access_policy" {
 }
 
 resource "aws_iam_service_linked_role" "es" {
-  count            = var.include_elasticsearch && local.deploy_to_vpc ? 1 : 0
+  count            = var.include_elasticsearch && local.deploy_to_vpc && var.create_service_linked_role ? 1 : 0
   aws_service_name = "es.amazonaws.com"
 }
 
