@@ -38,8 +38,8 @@ module "s3-replicator" {
   vpc_id     = var.vpc_id
   subnet_ids = var.subnet_ids
 
-  source_bucket = "cumulus-sandbox-testing"
-  source_prefix = "cross-account-replication-testing/files"
-  target_bucket = "esdis-metrics-shared-data-sandbox"
-  target_prefix = "cross-account-replication-testing/files"
+  source_bucket = var.s3_replicator_source_bucket
+  source_prefix = var.s3_replicator_source_prefix
+  target_bucket = var.s3_replicator_target_bucket
+  target_prefix = var.s3_replicator_target_prefix
 }
