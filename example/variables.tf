@@ -1,5 +1,25 @@
 # Required
 
+variable "cmr_client_id" {
+  type = string
+}
+
+variable "cmr_environment" {
+  type = string
+}
+
+variable "cmr_password" {
+  type = string
+}
+
+variable "cmr_provider" {
+  type = string
+}
+
+variable "cmr_username" {
+  type = string
+}
+
 variable "prefix" {
   type = string
 }
@@ -26,9 +46,19 @@ variable "vpc_id" {
 
 # Optional
 
+variable "key_name" {
+  type    = string
+  default = null
+}
+
 variable "region" {
   type    = string
   default = "us-east-1"
+}
+
+variable "private_buckets" {
+  type    = list(string)
+  default = []
 }
 
 variable "protected_buckets" {
@@ -52,6 +82,6 @@ variable "distribution_url" {
 }
 
 variable "aws_profile" {
-  type = string
+  type    = string
   default = null
 }
