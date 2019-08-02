@@ -17,7 +17,6 @@ enable_point_in_time_tables = [
   "CollectionsTable",
   "ExecutionsTable"
 ]
-include_elasticsearch  = true # or false
-vpc_id                 = "vpc-123456"
+include_elasticsearch  = true
 subnet_ids             = ["subnet-123456"]
 security_groups        = ["sg-123456"]

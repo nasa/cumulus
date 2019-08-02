@@ -1,5 +1,5 @@
 locals {
-  deploy_to_vpc  = var.vpc_id == null ? false : true
+  deploy_to_vpc  = length(var.subnet_ids) > 0 ? true : false
   es_domain_name = "${var.prefix}-${var.elasticsearch_config.domain_name}"
 }
 

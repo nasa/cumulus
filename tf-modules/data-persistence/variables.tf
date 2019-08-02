@@ -51,17 +51,12 @@ variable "enable_point_in_time_tables" {
   ]
 }
 
-variable "subnet_ids" {
-  type    = list(string)
-  default = []
-}
-
 variable "security_groups" {
   type    = list(string)
   default = []
 }
 
-variable "vpc_id" {
-  type    = string
-  default = null
+variable "subnet_ids" {
+  type    = list(string)
+  default = []
 }
