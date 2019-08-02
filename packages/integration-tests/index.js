@@ -91,9 +91,15 @@ async function waitForAsyncOperationStatus({
  * @returns {string|undefined} - the cluster ARN or undefined if not found
  */
 async function getClusterArn(stackName) {
-  const clusterPrefix = `${stackName}-CumulusECSCluster-`;
-  const listClustersResponse = await ecs().listClusters().promise();
-  return listClustersResponse.clusterArns.find((arn) => arn.includes(clusterPrefix));
+  const { clusterArns } = await ecs().listClusters().promise();
+
+  const matchingArns = clusterArns.filter((arn) => arn.includes(`${stackName}-CumulusECSCluster`));
+
+  if (matchingArns.length !== 1) {
+    throw new Error(`Expected to find 1 cluster but found: ${matchingArns}`);
+  }
+
+  return matchingArns[0];
 }
 
 /**

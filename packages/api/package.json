@@ -14,6 +14,7 @@
     "test-coverage": "nyc npm test",
     "build": "webpack",
     "watch": "webpack --progress -w",
+    "build-lambda-zips": "for x in app BulkDelete; do (cd dist/${x} && zip lambda.zip index.js); done",
     "serve": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve",
     "serve-oauth": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test cumulus-api serve",
     "serve-remote": "cumulus-api serve",
@@ -22,7 +23,7 @@
     "serve-dist-remote": "cumulus-api serve-dist",
     "reset-tables": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api reset-tables",
     "link-api-bin": "sh ./bin/link-api-bin.sh",
-    "prepare": "npm run build && npm run link-api-bin"
+    "prepare": "npm run build && npm run link-api-bin && npm run build-lambda-zips"
   },
   "ava": {
     "files": [
