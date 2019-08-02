@@ -5,6 +5,7 @@ es_trusted_role_arns = ["arn:aws:iam::12345678:role/role-name"]
 
 # Optional
 
+create_service_linked_role = true
 elasticsearch_config = {
   domain_name    = "es"
   instance_count = 1
