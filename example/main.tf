@@ -14,8 +14,8 @@ module "distribution" {
   distribution_url = var.distribution_url
 
   # Additional Logging Settings
-  log_api_gateway_to_cloudwatch = true
-  log_to_shared_destination     = true
+  log_api_gateway_to_cloudwatch = var.log_api_gateway_to_cloudwatch
+  log_to_shared_destination     = var.log_to_shared_destination
   log_destination_arn           = var.log_destination_arn
 
   protected_buckets = var.protected_buckets
