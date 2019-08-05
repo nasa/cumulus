@@ -162,7 +162,7 @@ test('handler correctly creates granule record', async (t) => {
   t.is(record.createdAt, timestamp);
 });
 
-test.serial('handler correctly updates granule record', async (t) => {
+test('handler correctly updates granule record', async (t) => {
   const granuleId = randomString();
   const cMetaParams = {
     execution_name: randomString()

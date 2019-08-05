@@ -16,6 +16,10 @@ resource "aws_iam_role" "report_granules_lambda_role" {
   permissions_boundary = var.permissions_boundary
 }
 
+data "aws_dynamodb_table" "granules_table" {
+  name = var.granules_table
+}
+
 data "aws_iam_policy_document" "report_granules_policy_document" {
   statement {
     actions = [
@@ -23,7 +27,7 @@ data "aws_iam_policy_document" "report_granules_policy_document" {
       "dynamoDb:putItem"
     ]
     resources = [
-      "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.granules_table}"
+      data.aws_dynamodb_table.granules_table.arn
     ]
   }
   statement {
@@ -42,6 +46,12 @@ data "aws_iam_policy_document" "report_granules_policy_document" {
       "logs:CreateLogStream",
       "logs:DescribeLogStreams",
       "logs:PutLogEvents"
+    ]
+    resources = ["*"]
+  }
+  statement {
+    actions = [
+      "states:DescribeExecution"
     ]
     resources = ["*"]
   }

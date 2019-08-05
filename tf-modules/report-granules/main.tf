@@ -1,41 +1,48 @@
-provider "aws" {
-  region  = var.aws_region
-  profile = var.aws_profile
-}
-
-data "archive_file" "granule_reporter_package" {
+data "archive_file" "report_granules_package" {
   type        = "zip"
-  source_file = "index.js"
-  output_path = "build/granule_reporter.zip"
+  source_file = "dist/index.js"
+  output_path = "build/report_granules.zip"
 }
 
-resource "aws_lambda_function" "granule_reporter" {
-  filename         = "build/granule_reporter.zip"
+resource "aws_lambda_function" "report_granules" {
+  filename         = "build/report_granules.zip"
   function_name    = "${var.prefix}-report-granules"
-  role             = "${aws_iam_role.granule_reporter_lambda_role.arn}"
+  role             = "${aws_iam_role.report_granules_lambda_role.arn}"
   handler          = "index.handler"
   runtime          = "nodejs8.10"
   timeout          = 300
+  memory_size      = 256
 
-  source_code_hash = "${data.archive_file.granule_reporter_package.output_base64sha256}"
+  source_code_hash = "${data.archive_file.report_granules_package.output_base64sha256}"
   vpc_config {
-    subnet_ids = var.subnet_ids
+    subnet_ids         = var.subnet_ids
     security_group_ids = var.security_groups
   }
-
   environment {
     variables = {
-      granulesTable = var.granules_table
+      GranulesTable = var.granules_table
     }
   }
 }
 
-resource "aws_sns_topic" "granules_topic" {
-  name = "${var.prefix}_granule_reporting_topic"
+resource "aws_cloudwatch_log_group" "report_granules_logs" {
+  name              = "/aws/lambda/${aws_lambda_function.report_granules.function_name}"
+  retention_in_days = 14
 }
 
-resource "aws_sns_topic_subscription" "granules_reporting_trigger" {
-  topic_arn = aws_sns_topic.granules_topic.arn
+resource "aws_sns_topic" "report_granules_topic" {
+  name = "${var.prefix}-report-granules-topic"
+}
+
+resource "aws_sns_topic_subscription" "report_granules_trigger" {
+  topic_arn = aws_sns_topic.report_granules_topic.arn
   protocol  = "lambda"
-  endpoint  = aws_lambda_function.granule_reporter.arn
+  endpoint  = aws_lambda_function.report_granules.arn
+}
+
+resource "aws_lambda_permission" "report_granules_permission" {
+  action        = "lambda:InvokeFunction"
+  function_name = "${aws_lambda_function.report_granules.function_name}"
+  principal     = "sns.amazonaws.com"
+  source_arn    = "${aws_sns_topic.report_granules_topic.arn}"
 }

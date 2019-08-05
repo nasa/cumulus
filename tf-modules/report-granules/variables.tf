@@ -4,23 +4,11 @@ variable "prefix" {
   type = string
 }
 
-variable granules_table {
+variable "granules_table" {
   type = string
 }
 
-
-
 # Optional
-
-variable "aws_region" {
-  type    = string
-  default = "us-east-1"
-}
-
-variable "aws_profile" {
-  type    = string
-  default = "default"
-}
 
 variable "permissions_boundary" {
   type    = string
