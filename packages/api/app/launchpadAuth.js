@@ -46,18 +46,17 @@ async function ensureAuthorized(req, res, next) {
   let accessToken = await access.get({ token });
     
   if (accessToken) {
+    const user = accessToken.username;
     if (expirationTime < Date.now()) {
       throw new TokenExpiredError;
     } else {
-      // if not expired 
       // Adds additional metadata that authorized endpoints can access.
-      req.authorizedMetadata = { userName };    
+      req.authorizedMetadata = { userName: user };    
       return next();
     }
-  }
-  else {
+  } else {
     const launchpadToken = new LaunchpadToken(); //Needs config
-    const verifyResponse = launchpadToken.validateToken(accessToken);
+    const verifyResponse = launchpadToken.validateToken(token);
 
     // "status" : "success",
 // [ "cn=GSFC-CMR_INGEST_PROD\ ,ou=252398,ou=ROLES,ou=Groups,dc=nasa,dc=gov",
