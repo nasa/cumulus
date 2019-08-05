@@ -124,6 +124,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let expectedS3TagSet;
   let postToCmrOutput;
 
+  process.env.system_bucket = config.bucket;
   process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
   const accessTokensModel = new AccessToken();
   process.env.GranulesTable = `${config.stackName}-GranulesTable`;
