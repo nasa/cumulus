@@ -58,6 +58,9 @@ For new Node.js lambdas, update `<daac>-deploy/lambdas.yml` by adding a new entr
       timeout: <s>                                  # eg:  300
       source: 'node_modules/@cumulus/<dir>/dist/'   # eg:  '../cumulus/cumulus/tasks/sample-lambda/dist/index.js'
       useMessageAdapter: true                       # necessary if this Lambda is included as part of a Cumulus workflow
+      layers:
+      - <some layer ARN>
+      - <some layer ARN>                            # e.g.: 'arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:3'
 ```
 
 For non-Node.js lambda code (e.g. python) uploaded as a .zip to an S3 bucket:

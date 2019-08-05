@@ -36,7 +36,15 @@ In order to make use of this configuration, a lambda layer can be uploaded to yo
       layers:
         - arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:{version number}
 
-In the future if you wish to update/change the CMA version you will need to update the deployed CMA, and update the layer configuration for the impacted lambdas as needed.
+In the future if you wish to update/change the CMA version you will need to update the deployed CMA, and update the layer configuration for the impacted lambdas as needed.    If you have a large number of lambdas utilizing the CMA, you can include a configuration key in your `config.yml`:
+
+    cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:{version number}
+
+and include the reference in the lambda configuration:
+
+    DiscoverPdrs:
+      layers:
+        - '{{cma_layer}}'
 
 ***Please note***: all applicable rules apply re: lambda layers.   Updating/removing a layer does not necessarily change a deployed lambda, to update the CMA you should deploy a new version and update the associated configuration.
 
