@@ -1,26 +1,31 @@
 # Required
 
 variable "prefix" {
-  type    = string
+  description = "prefix to use for naming created resources"
+  type        = string
 }
 
 variable "es_trusted_role_arns" {
-  type    = list(string)
+  description = "IAM role ARNs that should be trusted for connecting to ES"
+  type        = list(string)
 }
 
 # Optional
 
 variable "create_service_linked_role" {
-  type    = bool
-  default = true
+  description = "Whether to create an IAM service linked role for ES, which is required for putting ES in a VPC"
+  type        = bool
+  default     = true
 }
 
 variable "include_elasticsearch" {
-  type    = bool
-  default = true
+  description = "True/false for whether to deploy Elasticsearch"
+  type        = bool
+  default     = true
 }
 
 variable "elasticsearch_config" {
+  description = "Configuration object for Elasticsearch"
   type = object({
     domain_name    = string
     instance_count = number
@@ -38,8 +43,9 @@ variable "elasticsearch_config" {
 }
 
 variable "enable_point_in_time_tables" {
-  type    = list(string)
-  default = [
+  description = "DynamoDB table names that should have point in time recovery enabled"
+  type        = list(string)
+  default     = [
     "CollectionsTable",
     "ExecutionsTable",
     "FilesTable",
@@ -52,11 +58,13 @@ variable "enable_point_in_time_tables" {
 }
 
 variable "security_groups" {
-  type    = list(string)
-  default = []
+  description = "Security Group IDs (for Elasticsearch)"
+  type        = list(string)
+  default     = []
 }
 
 variable "subnet_ids" {
-  type    = list(string)
-  default = []
+  description = "Subnet IDs (for Elasticsearch)"
+  type        = list(string)
+  default     = []
 }
