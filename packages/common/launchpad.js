@@ -1,13 +1,9 @@
 'use strict';
 
 const path = require('path');
-const {
-  aws: {
-    getS3Object, s3ObjectExists, s3PutObject
-  },
-  LaunchpadToken,
-  log
-} = require('@cumulus/common');
+const { getS3Object, s3ObjectExists, s3PutObject } = require('./aws');
+const LaunchpadToken = require('./LaunchpadToken');
+const log = require('./log');
 
 /**
  * get s3 location of the Launchpad token
@@ -51,7 +47,10 @@ async function getValidLaunchpadTokenFromS3() {
 /**
  * get Launchpad token
  *
- * @param {Object} params - the configuration parameters for getting token from Launchpad
+ * @param {Object} params - the configuration parameters for creating LaunchpadToken object
+ * @param {string} params.api - the Launchpad token service api endpoint
+ * @param {string} params.passphrase - the passphrase of the Launchpad PKI certificate
+ * @param {string} params.certificate - the name of the Launchpad PKI pfx certificate
  *
  * @returns {Promise.<string>} - the Launchpad token
  */
@@ -79,3 +78,4 @@ async function getLaunchpadToken(params) {
 }
 
 module.exports.getLaunchpadToken = getLaunchpadToken;
+module.exports.launchpadTokenBucketKey = launchpadTokenBucketKey;

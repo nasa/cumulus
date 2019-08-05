@@ -44,7 +44,8 @@ The process involves:
 
 ### Credentials
 
-* [CMR](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) username and password.  Can be excluded if you are not exporting metadata to CMR. More information about CMR configuration can be found [here](./config_descriptions#cmr).
+* [CMR](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) username and password.  CMR credentials must be provided if you are exporting metadata to CMR with EarthData Client Login authentication. More information about CMR configuration can be found [here](./config_descriptions#cmr).
+* [Launchpad](https://launchpad.nasa.gov).  Launchpad credentials must be provided if you are exporting metadat to CMR with Launchpad authentication.  More information about CMR Launchpad authentication and configuration can be found [here](./config_descriptions#launchpad).
 * [EarthData Client login](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/earthdata-login) username and password. User must have the ability to administer and/or create applications in URS.  It's recommended to obtain an account in the test environment (UAT).
 
 ### Needed Git Repositories
@@ -180,6 +181,8 @@ Copy `app/.env.sample` to `app/.env` and add CMR/earthdata client [credentials](
   AWS_ACCOUNT_ID=0000000                      # AWS Account ID
   AWS_REGION=awsregion                        # AWS Region
   TOKEN_SECRET=tokensecret                    # JWT Token Secret
+  LAUNCHPAD_PASSPHRASE=launchpadpassphrase    # passphrase for Launchpad PKI certificate,
+                                              # only set if Launchpad authentication is used
 ```
 
 The `TOKEN_SECRET` is a string value used for signing and verifying [JSON Web Tokens (JWTs)](https://jwt.io/) issued by the API. For security purposes, it is strongly recommended that this be a 32-character string.
@@ -259,6 +262,21 @@ dev:                            # deployment name
     name: myES5Domain               # Optional. Defaults to 'es5vpc'.
     elasticSearchMapping: 2         # Optional, triggers elasticSearch re-bootstrap.
                                     # Useful when e.g. mappings are updated.
+
+  # Optional, only necessary if EMS reports will be submitted to EMS
+  ems:
+    provider: CUMULUS
+    host: <ems-host>
+    path: <ems-report-path>
+    username: <ems-username>
+    dataSource: <report-datasource>
+    submitReport: true
+
+  # Optional, only necessary if Launchpad authentication is used for CMR and CUMULUS API
+  useLaunchpad: true
+  launchpad:
+    api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1'
+    passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
 
   app:                              # Override params to be passed to the app stack ('iam' and 'db' also allowed)
     params:

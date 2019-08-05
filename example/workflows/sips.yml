@@ -177,6 +177,7 @@ IngestAndPublishGranule:
         bucket: '{$.meta.buckets.internal.name}'
         stack: '{$.meta.stack}'
         cmr: '{$.meta.cmr}'
+        launchpad: '{$.meta.launchpad}'
         process: '{$.cumulus_meta.process}'
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
@@ -353,6 +354,7 @@ PublishGranule:
         bucket: '{$.meta.buckets.internal.name}'
         stack: '{$.meta.stack}'
         cmr: '{$.meta.cmr}'
+        launchpad: '{$.meta.launchpad}'
         process: 'N/A'
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}

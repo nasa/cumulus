@@ -77,7 +77,8 @@ default:
         value: '{{DOCKER_EMAIL}}'
       - name: DockerPassword
         value: '{{DOCKER_PASS}}'
-
+      - name: LaunchpadPassphrase
+        value: '{{LAUNCHPAD_PASSPHRASE}}'
 
 
   vpc:
@@ -480,7 +481,13 @@ jl:
     dataSource: UAT
     submitReport: true
     retentionInDays: 20
-
+  cmr:
+    username: CmrUserNotUsed
+    password: CmrPasswordNotUsed
+  useLaunchpad: true
+  launchpad:
+    api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1'
+    passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
 
 gitc:
   prefix: {{PREFIX}}
