@@ -27,7 +27,6 @@ In the Lambda function configuration file lambdas.yml, a task Lambda function ca
       handler: index.handler
       useMessageAdapter: true
 
-
 #### Lambda Layer
 
 In order to make use of this configuration, a lambda layer can be uploaded to your account.  Due to platform restrictions, Core cannot currently support sharable public layers, however you can support deploying the appropriate version from [the release page](https://github.com/nasa/cumulus-message-adapter/releases) via the AWS [Layers Interface](https://console.aws.amazon.com/lambda/home?region=us-east-1#/layers), then including the CMA in the configured lambda layers:
