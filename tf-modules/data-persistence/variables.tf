@@ -6,14 +6,14 @@ variable "prefix" {
 }
 
 variable "es_trusted_role_arns" {
-  description = "IAM role ARNs that should be trusted for connecting to ES"
+  description = "IAM role ARNs that should be trusted for connecting to Elasticsearch"
   type        = list(string)
 }
 
 # Optional
 
 variable "create_service_linked_role" {
-  description = "Whether to create an IAM service linked role for ES, which is required for putting ES in a VPC"
+  description = "Whether to create an IAM service linked role for Elasticsearch"
   type        = bool
   default     = true
 }
