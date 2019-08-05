@@ -441,6 +441,12 @@ Resources:
         S3Bucket: {{this.bucket}}
         S3Key: {{this.remote}}
       FunctionName: {{../prefix}}-{{@key}}
+    {{# if this.layers}}
+      Layers:
+        {{#each this.layers}}
+         - {{this}}
+        {{/each}}
+    {{/if}}
       Environment:
         Variables:
           stackName: {{../stackName}}
@@ -484,6 +490,10 @@ Resources:
     {{/each}}
       Handler: {{this.handler}}
       MemorySize: {{this.memory}}
+      {{# if ../useXray}}
+      TracingConfig:
+        Mode: Active
+      {{/if}}
 {{# if this.apiRole }}
       Role: {{../iams.lambdaApiGatewayRoleArn}}
 {{else if this.distributionRole}}

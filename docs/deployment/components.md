@@ -117,5 +117,8 @@ terraform {
 
 ## Available Cumulus Components
 
+* [Cumulus Distribution](./distribution_component) - the Thin Egress App, as
+  well as the S3 credentials endpoint, with a config targeted at Cumulus and
+  NGAP.
 * [Thin Egress App](./thin_egress_app) - an app running in lambda that creates
   temporary S3 links and provides URS integration.
