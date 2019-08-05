@@ -38,7 +38,8 @@ deployDistributionApi: true
 If you deploy with no distribution app your deployment will succeed but you may encounter errors in your workflows, particularly in the `MoveGranule` task.
 
 ### Added
-
+- **CUMULUS-1418**
+  - Adds usage docs/testing of lambda layers (introduced in PR1125), updates Core example tasks to use the updated `cumulus-ecs-task` and a CMA layer instead of kes CMA injection.
 - **PR1125** - Adds `layers` config option to support deploying Lambdas with layers
 - **PR1128** - Added `useXRay` config option to enable AWS X-Ray for Lambdas.
 - **CUMULUS-1345**
