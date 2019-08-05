@@ -400,6 +400,8 @@ kk:
   prefix: kk-test
   prefixNoDash: KkTest
   esHost: https://search-kk-test-es5-bk24w6blilunzp4fc4ma3xwtqu.us-east-1.es.amazonaws.com
+  LAUNCHPAD_AUTH: true
+  cumulusUserGroup: 'GSFC-Cumulus-Dev'
   system_bucket: '{{prefix}}-internal'
   buckets:
     internal:

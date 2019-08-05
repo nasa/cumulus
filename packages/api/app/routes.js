@@ -32,6 +32,10 @@ if (process.env.FAKE_AUTH === 'true') {
   ensureAuthorized = token.ensureAuthorized;
 }
 
+if (process.env.LAUNCHPAD_AUTH === 'true') {
+  ensureAuthorized = require('./launchpadAuth');
+}
+
 // collections endpoints
 router.use('/collections', ensureAuthorized, collections);
 
