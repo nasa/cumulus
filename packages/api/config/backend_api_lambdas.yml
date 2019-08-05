@@ -85,6 +85,12 @@ ApiEndpoints:
     cmr_password:
       function: "Ref"
       value: "CmrPassword"
+    useLaunchpad: '{{parent.useLaunchpad}}'
+    launchpad_api: '{{parent.launchpad.api}}'
+    launchpad_certificate: '{{parent.launchpad.certificate}}'
+    launchpad_passphrase:
+      function: "Ref"
+      value: "LaunchpadPassphrase"
     CMR_ENVIRONMENT: '{{parent.cmr.cmrEnvironment}}'
     TOKEN_SECRET: '{{TOKEN_SECRET}}'
     distributionApiId:

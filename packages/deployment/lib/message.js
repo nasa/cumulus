@@ -94,6 +94,9 @@ function generateWorkflowTemplate(name, workflow, config, outputs) {
   // get cmr password from outputs
   const cmrPassword = findOutputValue(outputs, 'EncryptedCmrPassword');
   const cmr = Object.assign({}, config.cmr, { password: cmrPassword });
+  // get launchpad passphrase from outputs
+  const launchpadPassphrase = findOutputValue(outputs, 'EncryptedLaunchpadPassphrase');
+  const launchpad = Object.assign({}, config.launchpad, { passphrase: launchpadPassphrase });
   const bucket = get(config, 'system_bucket');
 
   // add the sns topic arn used for monitoring workflows
@@ -161,6 +164,8 @@ function generateWorkflowTemplate(name, workflow, config, outputs) {
     payload: {},
     exception: null
   };
+
+  if (config.useLaunchpad) template.meta.launchpad = launchpad;
 
   return template;
 }

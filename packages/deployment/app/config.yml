@@ -51,6 +51,8 @@ default:
   params:
     - name: CmrPassword
       value: '{{CMR_PASSWORD}}' # this has to be set in .env
+    - name: LaunchpadPassphrase
+      value: '{{LAUNCHPAD_PASSPHRASE}}' # set in .env if needed
 
   shared_data_bucket: 'cumulus-data-shared'
 
@@ -85,10 +87,16 @@ default:
     username: CmrUser
     provider: CUMULUS
     clientId: CUMULUS
-    password: '{{CMR_PASSWORD}}'
+    password: cmrPassword
     cmrEnvironment: UAT
     cmrLimit: 100
     cmrPageSize: 50
+
+  useLaunchpad: false
+  launchpad:
+    api: launchpadApi
+    certificate: launchpad.pfx
+    passphrase: launchpadPassphrase
 
   ems:
     provider: CUMULUS

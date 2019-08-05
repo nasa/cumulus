@@ -10,6 +10,7 @@ const {
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { CMRMetaFileNotFound } = require('@cumulus/common/errors');
+const { getLaunchpadToken } = require('@cumulus/common/launchpad');
 
 /**
  * Builds the output of the post-to-cmr task
@@ -84,6 +85,8 @@ function checkForMetadata(granules, cmrFiles) {
  *   keys are stored
  * @param {Object} event.config.cmr - the cmr object containing user/pass and
  *   provider
+ * @param {Object} event.config.launchpad - the launchpad object containing api
+ *   and passphrase
  * @param {string} event.config.process - the process the granules went through
  * @param {string} event.config.stack - the deployment stack name
  * @param {boolean} event.config.skipMetaCheck - option to skip Meta file check
@@ -102,11 +105,24 @@ async function postToCMR(event) {
 
   const startTime = Date.now();
 
+  const cmrCreds = {
+    provider: event.config.cmr.provider,
+    clientId: event.config.cmr.clientId
+  };
+
+  if (event.config.launchpad) {
+    const token = await getLaunchpadToken(event.config.launchpad);
+    cmrCreds.token = token;
+  } else {
+    cmrCreds.username = event.config.cmr.username;
+    cmrCreds.password = event.config.cmr.password;
+  }
+
   // post all meta files to CMR
   const results = await Promise.all(
     updatedCMRFiles.map(
       (cmrFile) =>
-        publish2CMR(cmrFile, event.config.cmr, event.config.bucket, event.config.stack)
+        publish2CMR(cmrFile, cmrCreds, event.config.bucket, event.config.stack)
     )
   );
 
