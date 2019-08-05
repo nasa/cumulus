@@ -1,7 +1,11 @@
-output "tea_api_endpoint" {
-  value = module.thin_egress_app.api_endpoint
+output "distribution_url" {
+  value = module.distribution.distribution_url
 }
 
-output "tea_urs_redirect_uri" {
-  value = module.thin_egress_app.urs_redirect_uri
+output "thin_egress_app_redirect_uri" {
+  value = module.distribution.thin_egress_app_redirect_uri
+}
+
+output "s3_credentials_redirect_uri" {
+  value = module.distribution.s3_credentials_redirect_uri
 }
