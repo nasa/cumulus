@@ -60,7 +60,7 @@ For new Node.js lambdas, update `<daac>-deploy/lambdas.yml` by adding a new entr
       useMessageAdapter: true                       # necessary if this Lambda is included as part of a Cumulus workflow
       layers:
       - <some layer ARN>
-      - <some layer ARN>                            # e.g.: 'arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:3'
+      - <some layer ARN>                            # Optional. e.g.: 'arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:3'
 ```
 
 For non-Node.js lambda code (e.g. python) uploaded as a .zip to an S3 bucket:
@@ -73,6 +73,8 @@ For non-Node.js lambda code (e.g. python) uploaded as a .zip to an S3 bucket:
       bucket: '{{buckets.internal.name}}'       # refers to bucket set in config.yml
       key: deploy/cumulus-process/<dir>/<file>  # eg: deploy/cumulus-process/modis/0.3.0b3.zip
     runtime: python2.7                          # Node is default, otherwise specify.
+    layers:
+      - <some layer ARN>
 ```
 
 To deploy all changes to `/tasks/` and `lambdas.yml`:
