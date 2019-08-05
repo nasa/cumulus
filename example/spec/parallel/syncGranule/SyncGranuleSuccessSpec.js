@@ -38,6 +38,7 @@ const {
   loadFileWithUpdatedGranuleIdPathAndCollection
 } = require('../../helpers/granuleUtils');
 const { isReingestExecutionForGranuleId } = require('../../helpers/workflowUtils');
+const { waitForModelStatus } = require('../../helpers/apiUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
@@ -204,7 +205,11 @@ describe('The Sync Granules workflow', () => {
 
   describe('the sf-sns-report task has published a sns message and', () => {
     it('the execution record is added to DynamoDB', async () => {
-      const record = await executionModel.get({ arn: workflowExecution.executionArn });
+      const record = await waitForModelStatus(
+        executionModel,
+        { arn: workflowExecution.executionArn },
+        'completed'
+      );
       expect(record.status).toEqual('completed');
     });
   });

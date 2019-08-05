@@ -40,6 +40,41 @@ async function invokeApiDistributionLambda(path, accessToken = '') {
 }
 
 /**
+ * Invoke s3-credentials-endpoint lambda directly to get s3 credentials. This
+ * is used in integration testing so that we use the lambda's IAM
+ * role/permissions when accessing resources.
+ *
+ * @param {string} path
+ *   path to file requested.  This is just "/bucket/keytofile"
+ * @param {string} accessToken
+ *   Access token from OAuth provider or nothing.
+ * @returns {string}
+ *   signed s3 URL for the requested file.
+ */
+async function invokeS3CredentialsLambda(path, accessToken = '') {
+  const lambda = new Lambda();
+  const FunctionName = `${process.env.stackName}-s3-credentials-endpoint`;
+
+  const event = {
+    method: 'GET',
+    path
+  };
+
+  if (accessToken) {
+    event.headers = { cookie: [`accessToken=${accessToken}`] };
+  }
+
+  const data = await lambda.invoke({
+    FunctionName,
+    Payload: JSON.stringify(event)
+  }).promise();
+
+  const payload = JSON.parse(data.Payload);
+
+  return payload;
+}
+
+/**
  * Invoke the ApiDistributionLambda and return the headers location
  * @param {filepath} filepath - request.path parameter
  * @param {string} accessToken - authenticiation cookie (can be undefined).
@@ -89,5 +124,6 @@ module.exports = {
   getDistributionApiFileStream,
   getDistributionApiRedirect,
   getDistributionFileUrl,
-  invokeApiDistributionLambda
+  invokeApiDistributionLambda,
+  invokeS3CredentialsLambda
 };
