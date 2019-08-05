@@ -423,14 +423,6 @@ Resources:
   #################################################
 {{/if}}
 
-  MessageAdapter:
-    Type: "AWS::Lambda::LayerVersion"
-    Properties:
-      Content:
-        S3Bucket: cumulus-test-sandbox-protected
-        S3Key: cumulus-message-adapter.zip
-      Description: "Cumulus Message Adapter Layer"
-      LayerName: Cumulus_Message_Adapter
 
   #################################################
   # Lambda config BEGIN

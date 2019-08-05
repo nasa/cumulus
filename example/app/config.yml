@@ -60,6 +60,7 @@ default:
             fileStagingDir: 'custom-staging-dir/{{prefix}}/replace-me-collectionId'
   # test configuration ends
 
+  cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:3
   prefix: 'test-cumulus-integration'
   prefixNoDash: TestCumulusIntegration
   useNgapPermissionBoundary: true
