@@ -1,5 +1,5 @@
 # Required
-granules_table     = "granulesTableName"
+granules_table       = "granulesTableName"
 prefix               = "myprefix"
 
 # Optional
