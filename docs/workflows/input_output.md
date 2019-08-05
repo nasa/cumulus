@@ -16,11 +16,37 @@ The Cumulus Message Adapter and Cumulus Message Adapter libraries help task deve
 
 The Cumulus Message Adapter libraries are called by the tasks with a callback function containing the business logic of the task as a parameter. They first adapt the incoming message to a format more easily consumable by Cumulus tasks, then invoke the task, and then adapt the task response back to the Cumulus message protocol to be sent to the next task.
 
-A task's Lambda function can be configured to include a Cumulus Message Adapter library which constructs input/output messages and resolves task configurations. In the Lambda function configuration file lambdas.yml, a task Lambda function can be configured to use Cumulus Message Adapter, for example:
+A task's Lambda function can be configured to include a Cumulus Message Adapter library which constructs input/output messages and resolves task configurations.     The CMA can then be included in one of three ways:
+
+
+#### Kes injection
+
+In the Lambda function configuration file lambdas.yml, a task Lambda function can be configured to include the latest CMA via kes.  Kes will download and include the latest CMA package in the lambda that's uploaded to AWS:
 
     DiscoverPdrs:
       handler: index.handler
       useMessageAdapter: true
+
+
+#### Lambda Layer
+
+In order to make use of this configuration, a lambda layer can be uploaded to your account.  Due to platform restrictions, Core cannot currently support sharable public layers, however you can support deploying the appropriate version from [the release page](https://github.com/nasa/cumulus-message-adapter/releases) via the AWS [Layers Interface](https://console.aws.amazon.com/lambda/home?region=us-east-1#/layers), then including the CMA in the configured lambda layers:
+
+    DiscoverPdrs:
+      layers:
+        - arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:{version number}
+
+In the future if you wish to update/change the CMA version you will need to update the deployed CMA, and update the layer configuration for the impacted lambdas as needed.
+
+***Please note***: all applicable rules apply re: lambda layers.   Updating/removing a layer does not necessarily change a deployed lambda, to update the CMA you should deploy a new version and update the associated configuration.
+
+This method will be supported more fully once migration to Terraform Deployments has been completed.
+
+#### Manual Addition
+
+You can include the CMA package in the lambda code in the `cumulus-message-adapter` sub-directory, this will achieve a similar result to kes injection, but  will require manual updates to update the CMA code.
+
+### CMA Input/Output
 
 Input to the task application code is a json object with keys:
 * `input`: By default, the incoming payload is the payload output from the previous task, or it can be a portion of the payload as configured for the task in the corresponding `.yml` file in the `workflows` directory.
