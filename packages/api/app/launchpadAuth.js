@@ -3,6 +3,7 @@
 
 const { AccessToken } = require('../models');
 const LaunchpadToken = require('@cumulus/common/LaunchpadToken');
+const { RecordDoesNotExist } = require('@cumulus/common/errors');
 
 function checkUserGroups(userGroups) {
   const cumulusGroup = process.env.cumulusUserGroup;
@@ -14,7 +15,7 @@ function checkUserGroups(userGroups) {
 
 /**
  * An express middleware that checks if an incoming express
- * request is authenticated
+ * request is authenticated via Launchpad
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
@@ -38,46 +39,55 @@ async function ensureAuthorized(req, res, next) {
   if (!token) {
     return res.boom.unauthorized('Missing token');
   }
-
-  const userModel = new User();
   const access = new AccessToken();
+  let accessToken;
+  try {
+    accessToken = await access.get({ accessToken: token });
 
-  // await userModel.get({ userName });
-  let accessToken = await access.get({ token });
-    
-  if (accessToken) {
-    const user = accessToken.username;
-    if (expirationTime < Date.now()) {
-      throw new TokenExpiredError;
-    } else {
-      // Adds additional metadata that authorized endpoints can access.
-      req.authorizedMetadata = { userName: user };    
-      return next();
-    }
-  } else {
-    const launchpadToken = new LaunchpadToken(); //Needs config
-    const verifyResponse = launchpadToken.validateToken(token);
-
-    // "status" : "success",
-// [ "cn=GSFC-CMR_INGEST_PROD\ ,ou=252398,ou=ROLES,ou=Groups,dc=nasa,dc=gov",
-// "cn=CMR_INGEST_UAT,ou=252397,ou=ROLES,ou=Groups,dc=nasa,dc=gov" ]
-// cn=GSFC-Cumulus-Dev
-
-    if (verifyResponse.status === "success") {
-      if (checkUserGroups(verifyResponse.owner_groups)) {
-        await accessTokenModel.create({
-          accessToken,
-          expirationTime: Date.now() + 3600,
-          username: owner_auid
-        });
-
+    if (accessToken) {
+      const userName = accessToken.username;
+      if (Date.now() > accessToken.expirationTime) { //need the 1000?
+        return res.boom.unauthorized('Access token has expired');
+      } else {
+        // Adds additional metadata that authorized endpoints can access.
+        req.authorizedMetadata = { userName };    
         return next();
       }
-      return res.boom.forbidden('User not authorized');
-    } else {
-      return res.boom.forbidden('Invalid access token');
     }
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      const config = {
+        api: process.env.launchpad_api,
+        passphrase: process.env.launchpad_passphrase,
+        certificate: process.env.launchpad_certificate
+      };
+  
+      const launchpadToken = new LaunchpadToken(config);
+      const verifyResponse = await launchpadToken.validateToken(token);
+      // const verifyResponse = {
+      //   owner_auid: 'kakelly2',
+      //   session_maxtimeout: 3600
+      // }
+      if (verifyResponse.status === "success") {
+        if (checkUserGroups(verifyResponse.owner_groups)) {
+          // const starttime = (Date.now() / 1000);
+          await access.create({
+            accessToken: token,
+            expirationTime: Date.now() + (verifyResponse.session_maxtimeout * 1000),
+            username: verifyResponse.owner_auid
+          });
+  
+          req.authorizedMetadata = { userName: verifyResponse.owner_auid };
+          return next();
+        }
+        return res.boom.forbidden('User not authorized');
+      } else {
+        return res.boom.forbidden('Invalid access token');
+      }
+    }
+    console.log(error);
   }
+  return res.boom.unauthorized('User not authorized');
 }
 
 module.exports = {
