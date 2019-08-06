@@ -324,7 +324,7 @@ class Granule extends Manager {
             granuleId: granule.granuleId,
             pdrName: get(cumulusMessage, 'meta.pdr.name'),
             collectionId: constructCollectionId(collection.name, collection.version),
-            status: get(cumulusMessage, 'meta.status'),
+            status: get(cumulusMessage, 'meta.status', get(granule, 'status')),
             provider: get(cumulusMessage, 'meta.provider.id'),
             execution: executionUrl,
             cmrLink: granule.cmrLink,

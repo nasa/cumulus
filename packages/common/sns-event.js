@@ -1,5 +1,7 @@
 const get = require('lodash.get');
 
+const log = require('./log');
+
 /**
  * Determine if event is an SNS event
  *
@@ -23,7 +25,15 @@ const getSnsEventMessage = (event, defaultValue) => get(event, 'Sns.Message', de
  * @param {Object} event - SNS event
  * @returns {Object} - Message object from SNS event
  */
-const getSnsEventMessageObject = (event) => JSON.parse(getSnsEventMessage(event, '{}'));
+const getSnsEventMessageObject = (event) => {
+  const message = getSnsEventMessage(event, '{}');
+  try {
+    return JSON.parse(message);
+  } catch (e) {
+    log.error(`Could not parse ${message}`);
+    return null;
+  }
+};
 
 module.exports = {
   getSnsEventMessage,
