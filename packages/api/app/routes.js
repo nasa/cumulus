@@ -24,6 +24,7 @@ const workflows = require('../endpoints/workflows');
 const dashboard = require('../endpoints/dashboard');
 const elasticsearch = require('../endpoints/elasticsearch');
 const ems = require('../endpoints/ems');
+const launchpadAuth = require('./launchpadAuth');
 
 let token = require('../endpoints/token');
 let { ensureAuthorized } = require('./auth');
@@ -33,7 +34,7 @@ if (process.env.FAKE_AUTH === 'true') {
 }
 
 if (process.env.LAUNCHPAD_AUTH === 'true') {
-  ensureAuthorized = require('./launchpadAuth');
+  ensureAuthorized = launchpadAuth.ensureAuthorized;
 }
 
 // collections endpoints
