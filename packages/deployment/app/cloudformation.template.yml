@@ -451,7 +451,10 @@ Resources:
             Ref: {{../es.name}}DomainEndpoint
         {{/if}}
         {{#ifNotEquals ../useMessageAdapter "true"}}
-          CUMULUS_MESSAGE_ADAPTER_DIR: {{cmaDir}}
+        {{#if this.envs.CUMULUS_MESSAGE_ADAPTER_DIR}}
+        {{else}}
+          CUMULUS_MESSAGE_ADAPTER_DIR: {{../cmaDir}}
+        {{/if}}
         {{/ifNotEquals}}
         {{/if}}
         {{#each this.tables}}
