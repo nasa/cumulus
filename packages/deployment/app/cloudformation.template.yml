@@ -450,13 +450,13 @@ Resources:
           ES_HOST:
             Ref: {{../es.name}}DomainEndpoint
         {{/if}}
-        {{#ifNotEquals ../useMessageAdapter "true"}}
+        {{/if}}
+        {{#ifNotEquals this.useMessageAdapter "true"}}
         {{#if this.envs.CUMULUS_MESSAGE_ADAPTER_DIR}}
         {{else}}
           CUMULUS_MESSAGE_ADAPTER_DIR: {{../cmaDir}}
         {{/if}}
         {{/ifNotEquals}}
-        {{/if}}
         {{#each this.tables}}
           {{this}}: {{../../prefix}}-{{this}}
         {{/each}}
