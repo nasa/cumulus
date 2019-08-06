@@ -5,7 +5,7 @@
 const git = require('simple-git');
 
 function determineIntegrationTestStackName(cb) {
-  const branch = process.env.BRANCH
+  const branch = process.env.BRANCH;
 
   if (!branch) return cb('none');
 
@@ -27,7 +27,7 @@ function determineIntegrationTestStackName(cb) {
     mhuffnagle: 'mth',
     'Marc Huffnagle': 'mth',
     'Matt Savoie': 'mhs',
-    'Jonathan Kovarik': 'jk2',
+    'Jonathan Kovarik': 'jk',
     'Menno Van Diermen': 'mvd',
     'Jacob Campbell': 'jc'
   };
