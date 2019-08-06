@@ -29,13 +29,18 @@ In the Lambda function configuration file lambdas.yml, a task Lambda function ca
 
 #### Lambda Layer
 
-In order to make use of this configuration, a lambda layer can be uploaded to your account.  Due to platform restrictions, Core cannot currently support sharable public layers, however you can support deploying the appropriate version from [the release page](https://github.com/nasa/cumulus-message-adapter/releases) via the AWS [Layers Interface](https://console.aws.amazon.com/lambda/home?region=us-east-1#/layers), then including the CMA in the configured lambda layers:
+In order to make use of this configuration, a lambda layer can be uploaded to your account.  Due to platform restrictions, Core cannot currently support sharable public layers, however you can support deploying the appropriate version from [the release page](https://github.com/nasa/cumulus-message-adapter/releases) via the AWS [Layers Interface](https://console.aws.amazon.com/lambda/home?region=us-east-1#/layers), *or* the provided CMA [Terraform](https://www.terraform.io/) module located at [tf-modules/cumulus-message-adapter](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-message-adapter).
+
+Once you've deployed the layer, include the CMA in the configured lambda layers:
 
     DiscoverPdrs:
       layers:
         - arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:{version number}
 
-In the future if you wish to update/change the CMA version you will need to update the deployed CMA, and update the layer configuration for the impacted lambdas as needed.    If you have a large number of lambdas utilizing the CMA, you can include a configuration key in your `config.yml`:
+
+
+
+In the future if you wish to update/change the CMA version you will need to update the deployed CMA, and update the layer configuration for the impacted lambdas as needed, or re-run the Terraform module.     If you have a large number of lambdas utilizing the CMA, you can include a configuration key in your `config.yml`:
 
     cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:{version number}
 
