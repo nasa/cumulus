@@ -3,7 +3,7 @@ resource "aws_cloudwatch_log_group" "async_operation" {
 }
 
 resource "aws_ecs_task_definition" "async_operation" {
-  family                = "${var.prefix}-async-operation"
+  family                = "${var.prefix}-AsyncOperationTaskDefinition"
   container_definitions = <<EOS
 [
   {
