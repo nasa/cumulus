@@ -131,6 +131,7 @@ describe('The S3 Ingest Granules workflow', () => {
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
   const executionModel = new Execution();
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+  process.env.system_bucket = config.bucket;
   const collectionModel = new Collection();
   process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
   const providerModel = new Provider();
@@ -320,27 +321,43 @@ describe('The S3 Ingest Granules workflow', () => {
     let granule;
     let resourceURLs;
     let accessToken;
+    let beforeAllError;
 
     beforeAll(async () => {
       process.env.CMR_ENVIRONMENT = 'UAT';
-      postToCmrOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
-      if (postToCmrOutput === null) throw new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
-      granule = postToCmrOutput.payload.granules[0];
-      const ummGranule = Object.assign({}, granule, { cmrMetadataFormat: 'umm_json_v5' });
-      files = granule.files;
-      const result = await Promise.all([
-        getOnlineResources(granule),
-        getOnlineResources(ummGranule),
-        // Login with Earthdata and get access token.
-        getEarthdataAccessToken({
-          redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
-          requestOrigin: process.env.DISTRIBUTION_ENDPOINT
-        })
-      ]);
-      cmrResource = result[0];
-      ummCmrResource = result[1];
-      resourceURLs = cmrResource.map((resource) => resource.href);
-      accessToken = result[2].accessToken;
+      postToCmrOutput = await lambdaStep.getStepOutput(
+        workflowExecution.executionArn, 'PostToCmr');
+
+      if (postToCmrOutput === null) {
+        beforeAllError = new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
+      }
+
+      try {
+        granule = postToCmrOutput.payload.granules[0];
+        files = granule.files;
+
+        const ummGranule = { ...granule, cmrMetadataFormat: 'umm_json_v5' };
+        const result = await Promise.all([
+          getOnlineResources(granule),
+          getOnlineResources(ummGranule),
+          // Login with Earthdata and get access token.
+          getEarthdataAccessToken({
+            redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
+            requestOrigin: process.env.DISTRIBUTION_ENDPOINT
+          })
+        ]);
+
+        cmrResource = result[0];
+        ummCmrResource = result[1];
+        resourceURLs = cmrResource.map((resource) => resource.href);
+        accessToken = result[2].accessToken;
+      } catch (e) {
+        beforeAllError = e;
+      }
+    });
+
+    beforeEach(() => {
+      if (beforeAllError) fail(beforeAllError);
     });
 
     afterAll(async () => {

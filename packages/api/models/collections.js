@@ -2,7 +2,7 @@
 
 const { CollectionConfigStore } = require('@cumulus/common');
 const Manager = require('./base');
-const collectionSchema = require('./schemas').collection;
+const { collection: collectionSchema } = require('./schemas');
 const Rule = require('./rules');
 const { AssociatedRulesError, BadRequestError } = require('../lib/errors');
 
@@ -32,6 +32,23 @@ class Collection extends Manager {
     item.files.forEach((file) => checkRegex(file.regex, file.sampleFileName));
   }
 
+  /**
+   * Creates a new Collection model for managing storage and retrieval of
+   * collections against a DynamoDB table. The name of the table is specified
+   * by the environment variable `CollectionsTable`.  The table is partitioned
+   * by collection `name`, with `version` as the sort key, both of which are of
+   * type `S`.  The table schema is defined by the
+   * {@link collectionSchema collection schema}.
+   *
+   * Collections created by this model are also put into a
+   * {@link CollectionConfigStore} upon {@link #create creation} and removed
+   * from it when {@link #delete deleted}.  The store is
+   * {@link CollectionConfigStore#constructor created} by using the S3 bucket
+   * name and CloudFormation stack name given by the values of the environment
+   * variables `system_bucket` and `stackName`, respectively.
+   *
+   * @see Manager#constructor
+   */
   constructor() {
     super({
       tableName: process.env.CollectionsTable,
@@ -39,45 +56,71 @@ class Collection extends Manager {
       tableRange: { name: 'version', type: 'S' },
       schema: collectionSchema
     });
+
+    this.collectionConfigStore = new CollectionConfigStore(
+      process.env.system_bucket,
+      process.env.stackName
+    );
   }
 
   /**
-   * Check if a given collection exists
+   * Returns `true` if the collection with the specified name and version
+   * exists; `false` otherwise.
    *
    * @param {string} name - collection name
    * @param {string} version - collection version
-   * @returns {boolean}
+   * @returns {boolean} `true` if the collection with the specified name and
+   *    version exists; `false` otherwise
    */
   async exists(name, version) {
     return super.exists({ name, version });
   }
 
+  /**
+   * Creates the specified collection and puts it into the collection
+   * configuration store that was specified during this model's construction.
+   * Uses the specified item's `dataType` (if specified, otherwise, it's `name`)
+   * and `version` as the key for putting the item in the config store.
+   *
+   * @param {Object} item - the collection configuration
+   * @param {string} [item.dataType] - the collection's data type
+   * @param {string} item.name - the collection name
+   * @param {string} item.version - the collection version
+   * @returns {Promise<Object>} the created record
+   * @see #constructor
+   * @see Manager#create
+   * @see CollectionConfigStore#put
+   */
   async create(item) {
-    const collectionConfigStore = new CollectionConfigStore(
-      process.env.system_bucket,
-      process.env.stackName
-    );
-
-    let dataType = item.dataType;
-    if (!dataType) {
-      dataType = item.name;
-    }
-
-    await collectionConfigStore.put(dataType, item.version, item);
+    const { dataType, name, version } = item;
+    await this.collectionConfigStore.put(dataType || name, version, item);
 
     return super.create(item);
   }
 
   /**
-   * Delete a collection
+   * Deletes the specified collection and removes it from the corresponding
+   * collection configuration store that was specified during this model's
+   * construction, where it was stored upon {@link #create creation}, unless
+   * the collection has associated rules.
    *
-   * @param {Object} params
-   * @param {string} params.name - the collection name
-   * @param {string} params.version - the collection version
+   * @param {Object} item - collection parameters
+   * @param {string} [item.dataType] - the collection data type; if not
+   *    specified, the collection is retrieved in order to determine its data
+   *    type, and if there is no data type, the name is used instead when
+   *    deleting the collection from the collection store
+   * @param {string} item.name - the collection name
+   * @param {string} item.version - the collection version
+   * @returns {Promise<Object>} promise that resolves to the de-serialized data
+   *    returned from the request
+   * @throws {AssociatedRulesError} if the collection has associated rules
+   * @see #constructor
+   * @see #create
+   * @see Manager#delete
+   * @see CollectionConfigStore#delete
    */
-  async delete(params = {}) {
-    const { name, version } = params;
-
+  async delete(item) {
+    const { name, version } = item;
     const associatedRuleNames = (await this.getAssociatedRules(name, version))
       .map((rule) => rule.name);
 
@@ -88,7 +131,17 @@ class Collection extends Manager {
       );
     }
 
-    await super.delete({ name, version });
+    // Since the `create` method uses the collection's `dataType` when calling
+    // `CollectionConfigStore.put`, we must also use `dataType` to delete it
+    // from the store.  However, we may only have the collection's name and
+    // version, so in that case we need to retrieve the full collection object
+    // in order to retrieve its `dataType`.  If the item does not exist, then
+    // fall back to using the specified name.
+    const { dataType } = item.dataType
+      ? item : await this.get(item).catch(() => item);
+    await this.collectionConfigStore.delete(dataType || name, version);
+
+    return super.delete({ name, version });
   }
 
   /**
