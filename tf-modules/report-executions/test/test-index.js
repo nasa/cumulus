@@ -82,34 +82,37 @@ test.after.always(async () => {
 });
 
 test('getReportExecutionMessages returns no messages for non-execution messages', (t) => {
-  let messages = getReportExecutionMessages([{}]);
+  let messages = getReportExecutionMessages({});
   t.is(messages.length, 0);
 
-  messages = getReportExecutionMessages([{
+  messages = getReportExecutionMessages({
+    EventSource: 'aws:sns',
     Records: [{
       Sns: {}
     }]
-  }]);
+  });
   t.is(messages.length, 0);
 
-  messages = getReportExecutionMessages([{
+  messages = getReportExecutionMessages({
     Records: [{
+      EventSource: 'aws:sns',
       Sns: {
         Message: 'message'
       }
     }]
-  }]);
+  });
   t.is(messages.length, 0);
 
-  messages = getReportExecutionMessages([{
+  messages = getReportExecutionMessages({
     Records: [{
+      EventSource: 'aws:sns',
       Sns: {
         Message: JSON.stringify({
           meta: {}
         })
       }
     }]
-  }]);
+  });
   t.is(messages.length, 0);
 });
 
@@ -138,6 +141,12 @@ test('getReportExecutionMessages returns correct number of messages', (t) => {
         stateMachine,
         executionName
       }),
+      {
+        EventSource: 'aws:sns',
+        Sns: {
+          Message: 'message'
+        }
+      },
       { }
     ]
   });

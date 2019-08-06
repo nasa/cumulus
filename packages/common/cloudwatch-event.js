@@ -1,5 +1,6 @@
 const get = require('lodash.get');
 
+const log = require('./log');
 const { isOneOf } = require('./util');
 
 /**
@@ -46,7 +47,15 @@ const getSfEventMessage = (event, defaultValue) => get(event, 'detail.output', d
  * @param {Object} event - A Cloudwatch event
  * @returns {Object} - Output message object from Step Function
  */
-const getSfEventMessageObject = (event) => JSON.parse(getSfEventMessage(event, '{}'));
+const getSfEventMessageObject = (event) => {
+  const message = getSfEventMessage(event, '{}');
+  try {
+    return JSON.parse(message);
+  } catch (e) {
+    log.error(`Could not parse ${message}`);
+    return null;
+  }
+};
 
 module.exports = {
   getSfEventMessage,
