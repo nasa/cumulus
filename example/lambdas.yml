@@ -38,6 +38,7 @@ FakeProcessing:
   handler: index.handler
   source: node_modules/@cumulus/test-processing/dist/
   layers:
+    - '{{cma_layer}}'
   launchInVpc: true
 FilesToGranules:
   handler: index.handler
