@@ -1,6 +1,6 @@
 # Report Executions
 
-This package includes a Lambda function to process granule ingest notifications received via SNS and store it to a database.
+This package includes a Lambda function to process granule ingest notifications received via SNS and store granule data to a database.
 
 ## Deployment
 
@@ -16,7 +16,7 @@ Configuration variables are shown in `terraform.tfvars.sample`, and are explaine
 
 ```text
 # Required
-granules_table        = "ExecutionsTableName"  # name of DynamoDB table to store granules data
+granules_table        = "GranulesTableName"  # name of DynamoDB table to store granules data
 prefix                = "myprefix"             # prefix to use for naming created resources
 
 # Optional

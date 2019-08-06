@@ -69,9 +69,9 @@ If you deploy with no distribution app your deployment will succeed but you may 
 - Added `packages/s3-replicator` terraform module to allow same-region s3 replication to metrics bucket.
 
 - **CUMULUS-1392**
-  - Added `tf-modules/report-granules` terraform module which processes granule ingest notifications received via SNS and stores it to a database. The module includes:
+  - Added `tf-modules/report-granules` terraform module which processes granule ingest notifications received via SNS and stores granule data to a database. The module includes:
     - SNS topic for publishing granule ingest notifications
-    - Lambda to process and store granule notification data
+    - Lambda to process granule notifications and store data
     - IAM permissions for the Lambda
     - Subscription for the Lambda to the SNS topic
 
