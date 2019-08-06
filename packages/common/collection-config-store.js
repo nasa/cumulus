@@ -35,7 +35,7 @@ class CollectionConfigStore {
    * Fetch a collection config from S3 (or cache if available)
    *
    * @param {string} dataType - the name of the collection config to fetch
-   * @param {number} dataVersion - the version of the collection config to fetch
+   * @param {string} dataVersion - the version of the collection config to fetch
    * @returns {Object} the fetched collection config
    */
   async get(dataType, dataVersion) {
@@ -52,7 +52,7 @@ class CollectionConfigStore {
         }).promise();
       } catch (err) {
         if (err.code === 'NoSuchKey') {
-          throw new Error(`A collection config for data type "${dataType}__${dataVersion}" was not found.`);
+          throw new Error(`A collection config for data type "${collectionId}" was not found.`);
         }
 
         if (err.code === 'NoSuchBucket') {
