@@ -17,8 +17,7 @@ locals {
 
 resource "aws_dynamodb_table" "access_tokens_table" {
   name             = local.table_names.access_tokens_table
-  read_capacity    = 5
-  write_capacity   = 1
+  billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "accessToken"
 
   attribute {
@@ -33,8 +32,7 @@ resource "aws_dynamodb_table" "access_tokens_table" {
 
 resource "aws_dynamodb_table" "async_operations_table" {
   name             = local.table_names.async_operations_table
-  read_capacity    = 5
-  write_capacity   = 10
+  billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "id"
 
   attribute {
@@ -49,8 +47,7 @@ resource "aws_dynamodb_table" "async_operations_table" {
 
 resource "aws_dynamodb_table" "collections_table" {
   name             = "${var.prefix}-CollectionsTable"
-  read_capacity    = 5
-  write_capacity   = 1
+  billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "name"
   range_key        = "version"
   stream_enabled   = true
@@ -73,8 +70,7 @@ resource "aws_dynamodb_table" "collections_table" {
 
 resource "aws_dynamodb_table" "executions_table" {
   name             = local.table_names.executions_table
-  read_capacity    = 5
-  write_capacity   = 10
+  billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "arn"
   stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
@@ -91,8 +87,7 @@ resource "aws_dynamodb_table" "executions_table" {
 
 resource "aws_dynamodb_table" "files_table" {
   name             = local.table_names.files_table
-  read_capacity    = 5
-  write_capacity   = 10
+  billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "bucket"
   range_key        = "key"
   stream_enabled   = true
@@ -115,8 +110,7 @@ resource "aws_dynamodb_table" "files_table" {
 
 resource "aws_dynamodb_table" "granules_table" {
   name             = local.table_names.granules_table
-  read_capacity    = 5
-  write_capacity   = 10
+  billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "granuleId"
   stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
@@ -135,8 +129,6 @@ resource "aws_dynamodb_table" "granules_table" {
     name               = "collectionId-granuleId-index"
     hash_key           = "collectionId"
     range_key          = "granuleId"
-    read_capacity      = 5
-    write_capacity     = 10
     projection_type    = "ALL"
   }
 
@@ -147,8 +139,7 @@ resource "aws_dynamodb_table" "granules_table" {
 
 resource "aws_dynamodb_table" "pdrs_table" {
   name             = local.table_names.pdrs_table
-  read_capacity    = 5
-  write_capacity   = 2
+  billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "pdrName"
   stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
@@ -165,8 +156,7 @@ resource "aws_dynamodb_table" "pdrs_table" {
 
 resource "aws_dynamodb_table" "providers_table" {
   name             = local.table_names.providers_table
-  read_capacity    = 5
-  write_capacity   = 1
+  billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "id"
   stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
@@ -183,8 +173,7 @@ resource "aws_dynamodb_table" "providers_table" {
 
 resource "aws_dynamodb_table" "rules_table" {
   name             = local.table_names.rules_table
-  read_capacity    = 5
-  write_capacity   = 1
+  billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "name"
   stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
@@ -201,8 +190,7 @@ resource "aws_dynamodb_table" "rules_table" {
 
 resource "aws_dynamodb_table" "semaphores_table" {
   name             = local.table_names.semaphores_table
-  read_capacity    = 5
-  write_capacity   = 10
+  billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "name"
 
   attribute {
@@ -217,8 +205,7 @@ resource "aws_dynamodb_table" "semaphores_table" {
 
 resource "aws_dynamodb_table" "users_table" {
   name             = local.table_names.users_table
-  read_capacity    = 5
-  write_capacity   = 1
+  billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "userName"
   stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
