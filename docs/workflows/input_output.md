@@ -18,14 +18,15 @@ The Cumulus Message Adapter libraries are called by the tasks with a callback fu
 
 A task's Lambda function can be configured to include a Cumulus Message Adapter library which constructs input/output messages and resolves task configurations.     The CMA can then be included in one of three ways:
 
-
 #### Kes injection
 
 In the Lambda function configuration file lambdas.yml, a task Lambda function can be configured to include the latest CMA via kes.  Kes will download and include the latest CMA package in the lambda that's uploaded to AWS:
 
+```yaml
     DiscoverPdrs:
       handler: index.handler
       useMessageAdapter: true
+```
 
 #### Lambda Layer
 
@@ -33,19 +34,27 @@ In order to make use of this configuration, a Lambda layer can be uploaded to yo
 
 Once you've deployed the layer, include the CMA in the configured lambda layers:
 
+```yaml
+
     DiscoverPdrs:
       layers:
         - arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:{version number}
+```
 
 In the future if you wish to update/change the CMA version you will need to update the deployed CMA, and update the layer configuration for the impacted lambdas as needed, or re-run the Terraform module.     If you have a large number of lambdas utilizing the CMA, you can include a configuration key in your `config.yml`:
 
+```yaml
+
     cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:{version number}
+```
 
 and include the reference in the lambda configuration:
 
+```yaml
     DiscoverPdrs:
       layers:
         - '{{cma_layer}}'
+```
 
 ***Please note***: all applicable rules apply re: lambda layers.   Updating/removing a layer does not necessarily change a deployed lambda, to update the CMA you should deploy a new version and update the associated configuration.
 
@@ -58,6 +67,7 @@ You can include the CMA package in the lambda code in the `cumulus-message-adapt
 ### CMA Input/Output
 
 Input to the task application code is a json object with keys:
+
 * `input`: By default, the incoming payload is the payload output from the previous task, or it can be a portion of the payload as configured for the task in the corresponding `.yml` file in the `workflows` directory.
 * `config`: Task-specific configuration object with URL templates resolved.
 
@@ -69,15 +79,18 @@ Output from the task application code is returned in and placed in the `payload`
 
 In the workflow configuration, each task has its own configuration, and it can use URL template as a value to achieve simplicity or for values only available at execution time. The Cumulus Message Adapter resolves the URL templates and then passes message to next task. For example, given a task which has the following configuration:
 
+```yaml
     Discovery:
         CumulusConfig:
           provider: '{$.meta.provider}'
           inlinestr: 'prefix{meta.foo}suffix'
           array: '[$.meta.foo]'
           object: '{$.meta}'
+```
 
 The corresponding Cumulus Message would contain:
 
+```yaml
     {
       "meta": {
         "foo": "bar",
@@ -97,9 +110,11 @@ The corresponding Cumulus Message would contain:
         ...
       }
     }
+```
 
 The message sent to the task would be:
 
+```yaml
     {
       "config" : {
         "provider: {
@@ -119,6 +134,7 @@ The message sent to the task would be:
       },
       "input":{...}
     }
+```
 
 URL template variables replace dotted paths inside curly brackets with their corresponding value. If the Cumulus Message Adapter cannot resolve a value, it will ignore the template, leaving it verbatim in the string.  While seemingly complex, this allows significant decoupling of Tasks from one another and the data that drives them. Tasks are able to easily receive runtime configuration produced by previously run tasks and domain data.
 
@@ -126,13 +142,16 @@ URL template variables replace dotted paths inside curly brackets with their cor
 
 By default, the incoming payload is the payload from the previous task.  The task can also be configured to use a portion of the payload its input message.  For example, given a task specifies cumulus_message.input:
 
+```yaml
     ExampleTask:
       CumulusConfig:
         cumulus_message:
             input: '{$.payload.foo}'
+```
 
 The task configuration in the message would be:
 
+```yaml
     {
       "workflow_config": {
         "ExampleTask": {
@@ -147,20 +166,24 @@ The task configuration in the message would be:
         }
       }
     }
+```
 
 The Cumulus Message Adapter will resolve the task input, instead of sending the whole `"payload"` as task input, the task input would be:
 
+```yaml
     {
       "input" : {
         "anykey": "anyvalue"
       },
       "config": {...}
     }
+```
 
 #### 3. Resolve task output
 
 By default, the task's return value is the next payload.  However, the workflow task configuration can specify a portion of the return value as the next payload, and can also augment values to other fields. Based on the task configuration under `cumulus_message.outputs`, the Message Adapter uses a task's return value to output a message as configured by the task-specific config defined under `workflow_config`. The Message Adapter dispatches a "source" to a "destination" as defined by URL templates stored in the task-specific `cumulus_message.outputs`. The value of the task's return value at the "source" URL is used to create or replace the value of the task's return value at the "destination" URL. For example, given a task specifies cumulus_message.output in its workflow configuration as follows:
 
+```yaml
     ExampleTask:
       CumulusConfig:
         cumulus_message:
@@ -169,9 +192,11 @@ By default, the task's return value is the next payload.  However, the workflow 
                 destination: '{$.payload}'
               - source: '{$.output.anykey}'
                 destination: '{$.meta.baz}'
+```
 
 The corresponding Cumulus Message would be:
 
+```yaml
     {
       "workflow_config": {
         "ExampleTask": {
@@ -196,17 +221,21 @@ The corresponding Cumulus Message would be:
         "anykey": "anyvalue"
       }
     }
+```
 
 Given the response from the task is:
 
+```yaml
     {
       "output": {
           "anykey": "boo"
       }
     }
+```
 
 The Cumulus Message Adapter would output the following Cumulus Message:
 
+```yaml
     {
       "workflow_config": {
         "ExampleTask": {
@@ -234,6 +263,7 @@ The Cumulus Message Adapter would output the following Cumulus Message:
         }
       }
     }
+```
 
 #### 4. Validate task input, output and configuration messages against the schemas provided.
 
