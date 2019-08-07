@@ -44,6 +44,7 @@ This table describes the fields that must be present in `config.yml` to successf
 | urs_url | `https://uat.urs.earthdata.nasa.gov/` | URS url used for OAuth
 | useNgapPermissionBoundary | false | Required to be `true` when deploying to the NGAP platform
 | useWorkflowLambdaVersions | true | Version deployed lambdas when they are updated.
+| cmr.oauthProvider | earthdata | the authentication provider used for CMR actions, possible values are 'earthdata', 'launchpad'
 | cmr.username | (required) | the username used for posting metadata to CMR
 | cmr.provider | CUMULUS | the provider used for posting metadata to CMR
 | cmr.clientId | CUMULUS | the clientId used to authenticate with the CMR
@@ -86,6 +87,10 @@ This table describes the fields that must be present in `config.yml` to successf
 | es.instanceCount | 1 | number of elasticsearch nodes
 | es.instanceType | t2.small.elasticsearch | size of the ec2 instance used for the elasticsearch
 | es.volumeSize | 35 | the storage used in each elasticsearch node
+| launchpad.api  | | launchpad API endpoint
+| launchpad.certificate  | launchpad.pfx | the Launchpad PKI certificate pfx file
+| launchpad.passphrase  | | the passphrase of the Launchpad PIK certificate
+| oauth.provider | earthdata | the authentication provider used for Cumulus API, possible values are 'earthdata', 'google', 'launchpad'
 | sns.\<name\> | | name of the sns topic
 | sns.\<name\>.subscriptions.\<subscription_name\>.endpoint | | lambda function triggered for each message in the topic (see `@cumulus/deployment/app/config.yml` for examples of core usage)
 | apis.\<name\> | | name of the apigateway application
@@ -112,10 +117,6 @@ This table describes the fields that must be present in `config.yml` to successf
 | lambdas | | list of lambda functions
 | iams | | (Override) IAM roles if ARNs do not match conventions (See [below](config_descriptions#iams)).
 | \<stack\>.params | | (Override) Parameters provided to Cumulus CloudFormation templates.
-| useLaunchpad | false | indicates if the launchpad authentication is used
-| launchpad.api  | | indicates if the launchpad authentication is used
-| launchpad.certificate  | launchpad.pfx | the Launchpad PKI certificate pfx file
-| launchpad.passphrase  | | the passphrase of the Launchpad PIK certificate
 
 ## Detailed Field Descriptions
 
@@ -180,9 +181,9 @@ cmr:
 
 ### launchpad
 
-To configure Cumulus to use Launchpad system for authentication, follow the steps [CMR Launchpad Authentication](./cmr_launchpad_authentication) to setup CMR client and configure Cumulus.
+Cumulus supports Launchpad as authentication provider for CMR authentication and Cumulus API authentication.
 
-Ensure your Launchpad Certificate passphrase is included in your `app/.env` file, as noted in the [deployment documentation](./deployment-readme):
+To use Launchpad for authentication, ensure your Launchpad Certificate passphrase is included in your `app/.env` file, as noted in the [deployment documentation](./deployment-readme):
 
 ```shell
 LAUNCHPAD_PASSPHRASE=launchpadpassphrase
@@ -191,11 +192,12 @@ LAUNCHPAD_PASSPHRASE=launchpadpassphrase
 These values will be imported via kes in your configuration file.   You should ensure your `app/config.yml` contains the following lines:
 
 ```yaml
-useLaunchpad: true
 launchpad:
   api: '<replace-with-launchpad-token-service-api>'
   passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
 ```
+
+To configure Cumulus to use Launchpad system for CMR authentication, follow the steps [CMR Launchpad Authentication](./cmr_launchpad_authentication) to setup CMR client and configure Cumulus.
 
 ### users
 

@@ -1,10 +1,16 @@
 {
   "config": {
     "cmr": {
+      "oauthProvider": "earthdata",
       "provider": "xxxxxx",
       "clientId": "xxxxxx",
       "username": "xxxxxx",
       "password": "xxxxx"
+    },
+    "launchpad": {
+      "api": "https://launchpad.com/api",
+      "certificate": "launchpad-certificate",
+      "passphrase": "launchpad-passphrase"
     },
     "bucket": "cumulus-internal",
     "stack": "myStack"
