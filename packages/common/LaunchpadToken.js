@@ -11,15 +11,31 @@ const { getS3Object, s3ObjectExists } = require('./aws');
 /**
  * A class for sending requests to Launchpad token service endpoints
  *
+ * @example
+ * const { LaunchpadToken } = require('@cumulus/common');
+ *
+ * const LaunchpadToken = new LaunchpadToken({
+ *  api: 'launchpad-token-api-endpoint',
+ *  passphrase: 'my-pki-passphrase',
+ *  certificate: 'my-pki-certificate.pfx'
+ * });
+ *
  * @class LaunchpadToken
  */
 class LaunchpadToken {
-  constructor(config) {
+  /**
+  * @param {Object} params
+  * @param {string} params.encrypted - optional, default to true
+  * @param {string} params.api - the Launchpad token service api endpoint
+  * @param {string} params.passphrase - the passphrase of the Launchpad PKI certificate
+  * @param {string} params.certificate - the name of the Launchpad PKI pfx certificate
+  */
+  constructor(params) {
     // indicate passcode provided is encrypted
-    this.encrypted = get(config, 'encrypted', true);
-    this.api = config.api;
-    this.passphrase = config.passphrase;
-    this.certificate = config.certificate;
+    this.encrypted = get(params, 'encrypted', true);
+    this.api = params.api;
+    this.passphrase = params.passphrase;
+    this.certificate = params.certificate;
   }
 
   /**
@@ -135,4 +151,4 @@ class LaunchpadToken {
   }
 }
 
-module.exports.LaunchpadToken = LaunchpadToken;
+module.exports = LaunchpadToken;

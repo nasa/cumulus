@@ -3,13 +3,15 @@
 const test = require('ava');
 const nock = require('nock');
 const {
+  deleteS3Object,
   recursivelyDeleteS3Bucket,
   s3,
   s3PutObject
 } = require('../aws');
 const { randomString } = require('../test-utils');
 
-const { LaunchpadToken } = require('../launchpad-token');
+const LaunchpadToken = require('../LaunchpadToken');
+const { getLaunchpadToken, launchpadTokenBucketKey } = require('../launchpad');
 
 const certificate = 'pki_contificate';
 const bucket = randomString();
@@ -62,7 +64,7 @@ test.after.always(async () => {
   ]);
 });
 
-test('requestToken returns token', async (t) => {
+test('LaunchpadToken.requestToken returns token', async (t) => {
   nock('https://www.example.com:12345')
     .get('/api/gettoken')
     .reply(200, JSON.stringify(getTokenResponse));
@@ -73,7 +75,7 @@ test('requestToken returns token', async (t) => {
   t.is(getTokenResponse.sm_token, response.sm_token);
 });
 
-test('valiateToken returns user info', async (t) => {
+test('LaunchpadToken.valiateToken returns user info', async (t) => {
   const token = randomString();
   nock('https://www.example.com:12345')
     .post('/api/validate')
@@ -83,4 +85,37 @@ test('valiateToken returns user info', async (t) => {
   const response = await launchpadToken.validateToken(token);
 
   t.is(validateTokenResponse.owner_auid, response.owner_auid);
+});
+
+test('getLaunchpadToken gets a new token when existing token is expired', async (t) => {
+  nock('https://www.example.com:12345')
+    .get('/api/gettoken')
+    .reply(200, JSON.stringify({ ...getTokenResponse, sm_token: randomString() }));
+
+  const firstToken = await getLaunchpadToken(config);
+
+  // when s3 token is still valid, gettoken api is not called
+  const secondToken = await getLaunchpadToken(config);
+  t.is(firstToken, secondToken);
+
+  // delete s3 token
+  const { Bucket, Key } = launchpadTokenBucketKey();
+  await deleteS3Object(Bucket, Key);
+
+  // token expires right away
+  nock('https://www.example.com:12345')
+    .get('/api/gettoken')
+    .reply(200,
+      JSON.stringify({ ...getTokenResponse, sm_token: randomString(), session_maxtimeout: 0 }));
+  nock('https://www.example.com:12345')
+    .get('/api/gettoken')
+    .reply(200,
+      JSON.stringify({ ...getTokenResponse, sm_token: randomString(), session_maxtimeout: 0 }));
+
+  const thirdToken = await getLaunchpadToken(config);
+  t.not(firstToken, thirdToken);
+
+  // get a new token when the existing token is expired
+  const fourthToken = await getLaunchpadToken(config);
+  t.not(thirdToken, fourthToken);
 });

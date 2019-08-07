@@ -112,6 +112,10 @@ This table describes the fields that must be present in `config.yml` to successf
 | lambdas | | list of lambda functions
 | iams | | (Override) IAM roles if ARNs do not match conventions (See [below](config_descriptions#iams)).
 | \<stack\>.params | | (Override) Parameters provided to Cumulus CloudFormation templates.
+| useLaunchpad | false | indicates if the launchpad authentication is used
+| launchpad.api  | | indicates if the launchpad authentication is used
+| launchpad.certificate  | launchpad.pfx | the Launchpad PKI certificate pfx file
+| launchpad.passphrase  | | the passphrase of the Launchpad PIK certificate
 
 ## Detailed Field Descriptions
 
@@ -153,7 +157,9 @@ Note: The console links are specific to `us-east-1`. Use the corresponding links
 
 Configuration is required for Cumulus integration with CMR services. The most obvious example of this integration is the `PostToCmr` Cumulus [task](https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr).
 
-Ensure your CMR username/password is included in your `app/.env` file, as noted in the [deployment documentation](./deployment-readme):
+CMR uses Earthdata Login system or Launchpad system for authentication. We can configure Cumulus to use one of the systems for CMR authentication.
+
+To configure Cumulus to use Earthdata Login system for authentication, ensure your CMR username/password is included in your `app/.env` file, as noted in the [deployment documentation](./deployment-readme):
 
 ```shell
 CMR_USERNAME=cmruser
@@ -171,6 +177,25 @@ cmr:
 ```
 
 `clientId` and `provider` should be configured to point to a user specified CMR `clientId` and `provider`. We use the `CUMULUS` provider in our configurations, but users can specify their own.
+
+### launchpad
+
+To configure Cumulus to use Launchpad system for authentication, follow the steps [CMR Launchpad Authentication](./cmr_launchpad_authentication) to setup CMR client and configure Cumulus.
+
+Ensure your Launchpad Certificate passphrase is included in your `app/.env` file, as noted in the [deployment documentation](./deployment-readme):
+
+```shell
+LAUNCHPAD_PASSPHRASE=launchpadpassphrase
+```
+
+These values will be imported via kes in your configuration file.   You should ensure your `app/config.yml` contains the following lines:
+
+```yaml
+useLaunchpad: true
+launchpad:
+  api: '<replace-with-launchpad-token-service-api>'
+  passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
+```
 
 ### users
 

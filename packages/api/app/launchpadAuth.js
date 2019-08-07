@@ -7,10 +7,11 @@ const { RecordDoesNotExist } = require('@cumulus/common/errors');
 
 function checkUserGroups(userGroups) {
   const cumulusGroup = process.env.cumulusUserGroup;
+  let included;
   userGroups.forEach((group) => {
-    if (group.includes(cumulusGroup)) return true;
+    if (group.includes(cumulusGroup)) included = true;
   });
-  return false;
+  return included;
 }
 
 /**
@@ -46,7 +47,7 @@ async function ensureAuthorized(req, res, next) {
 
     if (accessToken) {
       const userName = accessToken.username;
-      if (Date.now() > accessToken.expirationTime) { //need the 1000?
+      if (Date.now() > accessToken.expirationTime) {
         return res.boom.unauthorized('Access token has expired');
       } else {
         // Adds additional metadata that authorized endpoints can access.
@@ -64,19 +65,15 @@ async function ensureAuthorized(req, res, next) {
   
       const launchpadToken = new LaunchpadToken(config);
       const verifyResponse = await launchpadToken.validateToken(token);
-      // const verifyResponse = {
-      //   owner_auid: 'kakelly2',
-      //   session_maxtimeout: 3600
-      // }
+
       if (verifyResponse.status === "success") {
         if (checkUserGroups(verifyResponse.owner_groups)) {
-          // const starttime = (Date.now() / 1000);
           await access.create({
             accessToken: token,
             expirationTime: Date.now() + (verifyResponse.session_maxtimeout * 1000),
             username: verifyResponse.owner_auid
           });
-  
+
           req.authorizedMetadata = { userName: verifyResponse.owner_auid };
           return next();
         }
