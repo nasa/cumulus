@@ -25,7 +25,7 @@ You should use AWS Lambda whenever all of the following are true:
 
 See [this page](https://docs.aws.amazon.com/lambda/latest/dg/limits.html) for a complete and up-to-date list of AWS Lambda limits.
 
-If your task requires more than any of these resources or an unsupported runtime, creating a Docker image which can be run on ECS is the way to go. Cumulus supports running any lambda package (and it's configured layers) as a Docker container with [`cumulus-ecs-task`](https://github.com/nasa/cumulus-ecs-task).
+If your task requires more than any of these resources or an unsupported runtime, creating a Docker image which can be run on ECS is the way to go. Cumulus supports running any lambda package (and its configured layers) as a Docker container with [`cumulus-ecs-task`](https://github.com/nasa/cumulus-ecs-task).
 
 ## Step Function Activities and `cumulus-ecs-task`
 
