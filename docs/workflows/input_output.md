@@ -62,6 +62,10 @@ This method will be supported more fully once migration to Terraform Deployments
 
 You can include the CMA package in the lambda code in the `cumulus-message-adapter` sub-directory, this will achieve a similar result to kes injection, but  will require manual updates to update the CMA code.
 
+Cumulus will set a default CUMULUS_MESSAGE_ADAPTER_DIR to the `cma_dir` global configuration value, which defaults to `/opt/`.   If `useMessageAdapter: true` is set, it will set it to the `cumulus-message-adapter` directory.
+
+If you are manually adding the message adapter to your source and utilizing the CMA, you should set the lambda's CUMULUS_MESSAGE_ADAPTER_DIR to override this, or if you aren't utilizing the CMA layer, set the global cma_dir to the directory you're packaging your lambda in.
+
 ### CMA Input/Output
 
 Input to the task application code is a json object with keys:
