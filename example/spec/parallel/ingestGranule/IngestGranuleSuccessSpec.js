@@ -325,8 +325,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
     beforeAll(async () => {
       process.env.CMR_ENVIRONMENT = 'UAT';
-      postToCmrOutput = await lambdaStep.getStepOutput(
-        workflowExecution.executionArn, 'PostToCmr');
+      postToCmrOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
 
       if (postToCmrOutput === null) {
         beforeAllError = new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
