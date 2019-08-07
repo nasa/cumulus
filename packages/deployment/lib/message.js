@@ -151,7 +151,8 @@ function generateWorkflowTemplate(name, workflow, config, outputs) {
       workflow_tasks: {},
       stack: config.stackName,
       buckets: config.buckets,
-      cmr: cmr,
+      cmr,
+      launchpad,
       distribution_endpoint: config.distribution_endpoint,
       topic_arn: topicArn,
       collection: {},
@@ -164,8 +165,6 @@ function generateWorkflowTemplate(name, workflow, config, outputs) {
     payload: {},
     exception: null
   };
-
-  if (config.useLaunchpad) template.meta.launchpad = launchpad;
 
   return template;
 }

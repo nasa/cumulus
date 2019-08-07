@@ -84,6 +84,7 @@ default:
 
 
   cmr:
+    oauthProvider: earthdata
     username: CmrUser
     provider: CUMULUS
     clientId: CUMULUS
@@ -92,7 +93,6 @@ default:
     cmrLimit: 100
     cmrPageSize: 50
 
-  useLaunchpad: false
   launchpad:
     api: launchpadApi
     certificate: launchpad.pfx

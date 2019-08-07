@@ -10,7 +10,7 @@ const {
 const log = require('@cumulus/common/log');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { CMRMetaFileNotFound } = require('@cumulus/common/errors');
-const { getLaunchpadToken } = require('@cumulus/common/launchpad');
+const launchpad = require('@cumulus/common/launchpad');
 
 /**
  * Builds the output of the post-to-cmr task
@@ -110,8 +110,8 @@ async function postToCMR(event) {
     clientId: event.config.cmr.clientId
   };
 
-  if (event.config.launchpad) {
-    const token = await getLaunchpadToken(event.config.launchpad);
+  if (event.config.cmr.oauthProvider === 'launchpad') {
+    const token = await launchpad.getLaunchpadToken(event.config.launchpad);
     cmrCreds.token = token;
   } else {
     cmrCreds.username = event.config.cmr.username;
