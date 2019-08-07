@@ -5,17 +5,18 @@ variable "prefix" {
   type        = string
 }
 
-variable "es_trusted_role_arns" {
-  description = "IAM role ARNs that should be trusted for connecting to Elasticsearch"
-  type        = list(string)
-}
-
 # Optional
 
 variable "create_service_linked_role" {
   description = "Whether to create an IAM service linked role for Elasticsearch"
   type        = bool
   default     = true
+}
+
+variable "es_trusted_role_arns" {
+  description = "IAM role ARNs that should be trusted for connecting to Elasticsearch"
+  type        = list(string)
+  default     = []
 }
 
 variable "include_elasticsearch" {

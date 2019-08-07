@@ -1,6 +1,9 @@
 locals {
-  deploy_to_vpc  = length(var.subnet_ids) > 0 ? true : false
-  es_domain_name = "${var.prefix}-${var.elasticsearch_config.domain_name}${local.deploy_to_vpc ? "-vpc" : ""}"
+  inside_vpc         = length(var.subnet_ids) > 0 ? true : false
+  deploy_inside_vpc  = var.include_elasticsearch && local.inside_vpc
+  deploy_outside_vpc = var.include_elasticsearch && local.inside_vpc == false
+  include_es_policy  = length(var.es_trusted_role_arns) > 0 ? true : false
+  es_domain_name     = "${var.prefix}-${var.elasticsearch_config.domain_name}${local.inside_vpc ? "-vpc" : ""}"
 }
 
 data "aws_region" "current" {}
@@ -24,13 +27,8 @@ data "aws_iam_policy_document" "es_access_policy" {
   }
 }
 
-resource "aws_iam_service_linked_role" "es" {
-  count            = var.include_elasticsearch && local.deploy_to_vpc && var.create_service_linked_role ? 1 : 0
-  aws_service_name = "es.amazonaws.com"
-}
-
 resource "aws_elasticsearch_domain" "es" {
-  count                 = var.include_elasticsearch && local.deploy_to_vpc == false ? 1 : 0
+  count                 = local.deploy_outside_vpc ? 1 : 0
   domain_name           = local.es_domain_name
   elasticsearch_version = var.elasticsearch_config.version
 
@@ -55,14 +53,19 @@ resource "aws_elasticsearch_domain" "es" {
 }
 
 resource "aws_elasticsearch_domain_policy" "es_domain_policy" {
-  count           = var.include_elasticsearch && local.deploy_to_vpc == false ? 1 : 0
+  count           = local.deploy_outside_vpc && local.include_es_policy ? 1 : 0
   domain_name     = local.es_domain_name
   access_policies = data.aws_iam_policy_document.es_access_policy.json
   depends_on      = ["aws_elasticsearch_domain.es"]
 }
 
+resource "aws_iam_service_linked_role" "es" {
+  count            = local.deploy_inside_vpc && var.create_service_linked_role ? 1 : 0
+  aws_service_name = "es.amazonaws.com"
+}
+
 resource "aws_elasticsearch_domain" "es_vpc" {
-  count                 = var.include_elasticsearch && local.deploy_to_vpc ? 1 : 0
+  count                 = local.deploy_inside_vpc ? 1 : 0
   domain_name           = local.es_domain_name
   elasticsearch_version = var.elasticsearch_config.version
 
@@ -96,7 +99,7 @@ resource "aws_elasticsearch_domain" "es_vpc" {
 }
 
 resource "aws_elasticsearch_domain_policy" "es_vpc_domain_policy" {
-  count           = var.include_elasticsearch && local.deploy_to_vpc ? 1 : 0
+  count           = local.deploy_inside_vpc && local.include_es_policy ? 1 : 0
   domain_name     = local.es_domain_name
   access_policies = data.aws_iam_policy_document.es_access_policy.json
   depends_on      = ["aws_elasticsearch_domain.es_vpc"]
