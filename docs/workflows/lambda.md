@@ -57,10 +57,6 @@ For new Node.js lambdas, update `<daac>-deploy/lambdas.yml` by adding a new entr
       handler: <dir>.<function>                     # eg:  sample-lambda.handler (assuming file has module.exports.handler = <someFunc>)
       timeout: <s>                                  # eg:  300
       source: 'node_modules/@cumulus/<dir>/dist/'   # eg:  '../cumulus/cumulus/tasks/sample-lambda/dist/index.js'
-      useMessageAdapter: true                       # necessary if this Lambda is included as part of a Cumulus workflow
-      layers:
-      - <some layer ARN>
-      - <some layer ARN>                            # Optional. e.g.: 'arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:3'
 ```
 
 For non-Node.js lambda code (e.g. python) uploaded as a .zip to an S3 bucket:
@@ -83,10 +79,10 @@ Other configurable options for Lambdas:
   useXray: true             # Enable AWS X-Ray for the Lambda
   launchInVpc: true         # Launch the Lambda in a VPC. Requires VPC configuration for the deployment.
   logToElasticSearch: true  # Write Lambda execution logs to Elasticsearch.
-  useMessageAdapter: true   # necessary if this Lambda is included as part of a Cumulus workflow
+  useMessageAdapter: true   # Option to add/inject CMA as part of a cumulus workflow.  The CMA layer may be used instead
   envs:                     # Add named environment variables for your Lambda.
     - foo: 'bar'
-  layers:                   # Optional to use Lambda Layers
+  layers:                   # Optional. e.g.: 'arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:3'
     - <layer1-arn>
 ```
 
