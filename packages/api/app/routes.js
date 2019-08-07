@@ -33,7 +33,7 @@ if (process.env.FAKE_AUTH === 'true') {
   ensureAuthorized = token.ensureAuthorized;
 }
 
-if (process.env.LAUNCHPAD_AUTH === 'true') {
+if (process.env.oauthProvider === 'launchpad') {
   ensureAuthorized = launchpadAuth.ensureAuthorized;
 }
 

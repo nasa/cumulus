@@ -90,7 +90,7 @@ This table describes the fields that must be present in `config.yml` to successf
 | launchpad.api  | | launchpad API endpoint
 | launchpad.certificate  | launchpad.pfx | the Launchpad PKI certificate pfx file
 | launchpad.passphrase  | | the passphrase of the Launchpad PIK certificate
-| oauth.provider | earthdata | the authentication provider used for Cumulus API, possible values are 'earthdata', 'google', 'launchpad'
+| oauthProvider | earthdata | the authentication provider used for Cumulus API, possible values are 'earthdata', 'google', 'launchpad'
 | sns.\<name\> | | name of the sns topic
 | sns.\<name\>.subscriptions.\<subscription_name\>.endpoint | | lambda function triggered for each message in the topic (see `@cumulus/deployment/app/config.yml` for examples of core usage)
 | apis.\<name\> | | name of the apigateway application
