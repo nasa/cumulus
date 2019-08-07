@@ -1,9 +1,9 @@
 
 'use strict';
 
-const { AccessToken } = require('../models');
 const LaunchpadToken = require('@cumulus/common/LaunchpadToken');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
+const { AccessToken } = require('../models');
 
 function checkUserGroups(userGroups) {
   const cumulusGroup = process.env.cumulusUserGroup;
@@ -49,11 +49,10 @@ async function ensureAuthorized(req, res, next) {
       const userName = accessToken.username;
       if (Date.now() > accessToken.expirationTime) {
         return res.boom.unauthorized('Access token has expired');
-      } else {
-        // Adds additional metadata that authorized endpoints can access.
-        req.authorizedMetadata = { userName };    
-        return next();
       }
+      // Adds additional metadata that authorized endpoints can access.
+      req.authorizedMetadata = { userName };
+      return next();
     }
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
@@ -62,11 +61,11 @@ async function ensureAuthorized(req, res, next) {
         passphrase: process.env.launchpad_passphrase,
         certificate: process.env.launchpad_certificate
       };
-  
+
       const launchpadToken = new LaunchpadToken(config);
       const verifyResponse = await launchpadToken.validateToken(token);
 
-      if (verifyResponse.status === "success") {
+      if (verifyResponse.status === 'success') {
         if (checkUserGroups(verifyResponse.owner_groups)) {
           await access.create({
             accessToken: token,
@@ -78,11 +77,9 @@ async function ensureAuthorized(req, res, next) {
           return next();
         }
         return res.boom.forbidden('User not authorized');
-      } else {
-        return res.boom.forbidden('Invalid access token');
       }
+      return res.boom.forbidden('Invalid access token');
     }
-    console.log(error);
   }
   return res.boom.unauthorized('User not authorized');
 }

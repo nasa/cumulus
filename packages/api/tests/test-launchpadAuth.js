@@ -3,11 +3,11 @@
 const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
-const LaunchpadToken = require('../../common/LaunchpadToken');
+const LaunchpadToken = require('@cumulus/common/LaunchpadToken');
+const { randomString } = require('@cumulus/common/test-utils');
 const EsCollection = require('../es/collections');
 const models = require('../models');
 const assertions = require('../lib/assertions');
-const { randomString } = require('@cumulus/common/test-utils');
 process.env.cumulusUserGroup = 'GSFC-Cumulus';
 process.env.LAUNCHPAD_AUTH = 'true';
 process.env.AccessTokensTable = randomString();
@@ -45,12 +45,12 @@ test.serial('API request with an valid token stores the access token', async (t)
 
   stub.restore();
   collectionStub.restore();
-  const accessToken = await accessTokenModel.get({accessToken: 'ValidAccessToken1'});
+  const accessToken = await accessTokenModel.get({ accessToken: 'ValidAccessToken1' });
   t.is(accessToken.accessToken, 'ValidAccessToken1');
 });
 
 test.serial('API request with an invalid token returns an unauthorized response', async (t) => {
-  const stub = sinon.stub(LaunchpadToken.prototype, 'validateToken').returns({status: 'failed'});
+  const stub = sinon.stub(LaunchpadToken.prototype, 'validateToken').returns({ status: 'failed' });
 
   const response = await request(app)
     .get('/collections')
@@ -72,7 +72,7 @@ test.serial('API request with a stored non-expired token returns a successful re
     .set('Authorization', 'Bearer ValidAccessToken2')
     .expect(200);
 
-  const accessToken = await accessTokenModel.get({accessToken: 'ValidAccessToken2'});
+  const accessToken = await accessTokenModel.get({ accessToken: 'ValidAccessToken2' });
   t.is(accessToken.accessToken, 'ValidAccessToken2');
 
   await request(app)
@@ -81,8 +81,8 @@ test.serial('API request with a stored non-expired token returns a successful re
     .set('Authorization', 'Bearer ValidAccessToken2')
     .expect(200);
 
-    const accessToken1 = await accessTokenModel.get({accessToken: 'ValidAccessToken2'});
-    t.is(accessToken1.accessToken, 'ValidAccessToken2');
+  const accessToken1 = await accessTokenModel.get({ accessToken: 'ValidAccessToken2' });
+  t.is(accessToken1.accessToken, 'ValidAccessToken2');
 
   stub.restore();
   collectionStub.restore();
@@ -93,7 +93,7 @@ test.serial('API request with a stored expired token returns an expired response
     session_maxtimeout: 0,
     status: 'success',
     owner_groups: ['cn=GSFC-Cumulus,ou=252397,ou=ROLES,ou=Groups']
-  }
+  };
   const stub = sinon.stub(LaunchpadToken.prototype, 'validateToken').returns(tokenResponse);
   const collectionStub = sinon.stub(EsCollection.prototype, 'query').returns([]);
 
@@ -103,7 +103,7 @@ test.serial('API request with a stored expired token returns an expired response
     .set('Authorization', 'Bearer ValidAccessToken3')
     .expect(200);
 
-  const accessToken = await accessTokenModel.get({accessToken: 'ValidAccessToken3'});
+  const accessToken = await accessTokenModel.get({ accessToken: 'ValidAccessToken3' });
   t.is(accessToken.accessToken, 'ValidAccessToken3');
 
   const response = await request(app)
@@ -122,7 +122,7 @@ test.serial('Request returns an unauthorized response when validation response d
     session_maxtimeout: 3600,
     status: 'success',
     owner_groups: ['cn=NotCorrectGroup,ou=252397,ou=ROLES,ou=Groups']
-  }
+  };
   const stub = sinon.stub(LaunchpadToken.prototype, 'validateToken').returns(tokenResponse);
 
   const response = await request(app)
