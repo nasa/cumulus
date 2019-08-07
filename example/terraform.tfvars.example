@@ -11,7 +11,7 @@ vpc_id                   = "vpc-123"
 # CloudWatch/Distribution Lambda logging
 log_api_gateway_to_cloudwatch = false # Defaults to false.
 log_to_shared_destination     = false # Defaults to false.
-log_destination_arn           = "arn:aws:logs:us-east-1:233152672042:destination:CumulusLogDestination" # Only used (and must be set) if both log_api_gateway_to_cloudwatch and log_to_shared_destination are true.
+log_destination_arn           = "arn:aws:logs:us-east-1:8675309:destination:LogDestination" # Only used (and must be set) if both log_api_gateway_to_cloudwatch and log_to_shared_destination are true.
 
 # S3-replicator variables
 s3_replicator_source_bucket = "some-bucket"
