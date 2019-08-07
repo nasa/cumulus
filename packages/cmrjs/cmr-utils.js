@@ -591,13 +591,14 @@ async function updateUMMGMetadata({
  * @returns {Object} object to create CMR instance.
 */
 async function getCreds() {
-  if (process.env.useLaunchpad === 'true') {
+  if (process.env.cmr_oauth_provider === 'launchpad') {
     const config = {
       api: process.env.launchpad_api,
       certificate: process.env.launchpad_certificate,
       passphrase: process.env.launchpad_passphrase
     };
 
+    log.debug('cmrjs.getCreds getLaunchpadToken');
     const token = await getLaunchpadToken(config);
     return {
       provider: process.env.cmr_provider,

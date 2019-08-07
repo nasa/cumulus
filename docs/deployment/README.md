@@ -253,8 +253,9 @@ dev:                            # deployment name
 
   # Optional. Only necessary if you have workflows that integrate with CMR
   cmr:
-    username: '{{CMR_USERNAME}}'
-    password: '{{CMR_PASSWORD}}'
+    oauthProvider: <earthdata or launchpad>
+    username: '{{CMR_USERNAME}}'    # required if oauthProvider is earthdata
+    password: '{{CMR_PASSWORD}}'    # required if oauthProvider is earthdata
     clientId: '<replace-with-daac-name>-{{prefix}}' # Client-ID submitted to CMR to identify origin of requests.
     provider: CUMULUS                                  # Target provider in CMR
 
@@ -272,8 +273,7 @@ dev:                            # deployment name
     dataSource: <report-datasource>
     submitReport: true
 
-  # Optional, only necessary if Launchpad authentication is used for CMR and CUMULUS API
-  useLaunchpad: true
+  # Optional, only necessary if Launchpad authentication is used for CMR or CUMULUS API
   launchpad:
     api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1'
     passphrase: '{{LAUNCHPAD_PASSPHRASE}}'

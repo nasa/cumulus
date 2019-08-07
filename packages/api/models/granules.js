@@ -10,9 +10,9 @@ const aws = require('@cumulus/ingest/aws');
 const commonAws = require('@cumulus/common/aws');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
-const { getMetadata, getGranuleTemporalInfo, reconcileCMRMetadata } = require('@cumulus/cmrjs');
+const cmrjs = require('@cumulus/cmrjs');
 const log = require('@cumulus/common/log');
-const { getLaunchpadToken } = require('@cumulus/common/launchpad');
+const launchpad = require('@cumulus/common/launchpad');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const { deprecate, removeNilProperties } = require('@cumulus/common/util');
@@ -125,13 +125,13 @@ class Granule extends Manager {
       clientId: process.env.cmr_client_id
     };
 
-    if (process.env.useLaunchpad === 'true') {
+    if (process.env.cmr_oauth_provider === 'launchpad') {
       const config = {
         api: process.env.launchpad_api,
         passphrase: process.env.launchpad_passphrase,
         certificate: process.env.launchpad_certificate
       };
-      const token = await getLaunchpadToken(config);
+      const token = await launchpad.getLaunchpadToken(config);
       params.token = token;
     } else {
       const password = await DefaultProvider.decrypt(process.env.cmr_password);
@@ -140,7 +140,7 @@ class Granule extends Manager {
     }
 
     const cmr = new CMR(params);
-    const metadata = await getMetadata(granule.cmrLink);
+    const metadata = await cmrjs.getMetadata(granule.cmrLink);
 
     // Use granule UR to delete from CMR
     await cmr.deleteGranule(metadata.title, granule.collectionId);
@@ -244,7 +244,7 @@ class Granule extends Manager {
 
     const updatedFiles = await moveGranuleFiles(g.files, destinations);
 
-    await reconcileCMRMetadata({
+    await cmrjs.reconcileCMRMetadata({
       granuleId: g.granuleId,
       updatedFiles,
       distEndpoint,
@@ -331,7 +331,7 @@ class Granule extends Manager {
             files: granule.files
           });
 
-          const temporalInfo = await getGranuleTemporalInfo(granule);
+          const temporalInfo = await cmrjs.getGranuleTemporalInfo(granule);
 
           const doc = {
             granuleId: granule.granuleId,

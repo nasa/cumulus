@@ -85,7 +85,7 @@ ApiEndpoints:
     cmr_password:
       function: "Ref"
       value: "CmrPassword"
-    useLaunchpad: '{{parent.useLaunchpad}}'
+    cmr_oauth_provider: '{{parent.cmr.oauthProvider}}'
     launchpad_api: '{{parent.launchpad.api}}'
     launchpad_certificate: '{{parent.launchpad.certificate}}'
     launchpad_passphrase:

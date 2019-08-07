@@ -24,8 +24,9 @@
     "cmr": {
       "type": "object",
       "description": "credentials needed to post metadata to CMR",
-      "required": ["provider", "clientId", "username", "password"],
+      "required": ["oauthProvider", "provider", "clientId", "username", "password"],
       "properties": {
+        "oauthProvider": { "type": "string"},
         "provider": { "type": "string" },
         "clientId": { "type": "string" },
         "username": { "type": "string" },
