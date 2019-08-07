@@ -16,5 +16,5 @@ Configuration variables are shown in `terraform.tfvars.sample`, and are explaine
 
 ```text
 # Required
-cma_version     = "executionsTableName" #  CMA Release version to deploy.
+cma_version     = "v1.0.13" #  CMA Release version to deploy.
 ```
