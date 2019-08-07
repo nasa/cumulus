@@ -27,7 +27,7 @@ variable "s3_replicator_target_prefix" {
 variable "log_api_gateway_to_cloudwatch" {
   type        = bool
   default     = false
-  description = "Enable logging of api gateway activity to CloudWatch."
+  description = "Enable logging of API Gateway activity to CloudWatch."
 }
 
 variable "log_to_shared_destination" {
