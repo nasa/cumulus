@@ -17,7 +17,7 @@ Configuration variables are shown in [`terraform.tfvars.sample`](./terraform.tfv
 name|required|default|description
 ---|---|---|---
 prefix|yes||prefix to use for naming created resources
-es_trusted_role_arns|yes||IAM role ARNs that should be trusted for accessing Elasticsearch
+es_trusted_role_arns|no|`[]`|IAM role ARNs that should be trusted for accessing Elasticsearch
 create_service_linked_role|no|`true`|Whether to create an IAM service linked role for Elasticsearch. A service linked role is required for deploying Elasticsearch in a VPC. **However, a service linked role can only be created once per account, so you should set this variable to `false` if you already have one deloyed.**
 include_elasticsearch|no|`true`|Whether to include Elasticsearch in the deployment. `false` will exclude Elasticsearch from the deployment.
 elasticsearch_config|no|see [variables.tf](./variables.tf)|Configuration for the Elasticsearch instance
