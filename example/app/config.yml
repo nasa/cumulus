@@ -484,9 +484,9 @@ jl:
     submitReport: true
     retentionInDays: 20
   cmr:
+    oauthProvider: launchpad
     username: CmrUserNotUsed
     password: CmrPasswordNotUsed
-  useLaunchpad: true
   launchpad:
     api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1'
     passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
