@@ -15,7 +15,7 @@ data "aws_iam_policy_document" "es_access_policy" {
 
     principals {
       type        = "AWS"
-      identifiers = var.es_trusted_role_arns
+      identifiers =  distinct(compact(var.es_trusted_role_arns))
     }
 
     resources = [
