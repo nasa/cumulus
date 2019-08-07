@@ -47,6 +47,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/cmrjs": "1.13.4",
+    "@cumulus/cmr-client": "1.13.4",
     "@cumulus/common": "1.13.4",
     "@cumulus/ingest": "1.13.4",
     "@cumulus/logger": "1.13.4",
