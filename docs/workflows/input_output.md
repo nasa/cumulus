@@ -54,7 +54,7 @@ and include the reference in the lambda configuration:
         - '{{cma_layer}}'
 ```
 
-***Please note***: all applicable rules apply re: lambda layers.   Updating/removing a layer does not necessarily change a deployed lambda, to update the CMA you should deploy a new version and update the associated configuration.
+***Please note***: Updating/removing a layer does not change a deployed lambda, so to update the CMA you should deploy a new version of the CMA layer, update the associated Lambda configuration to reference the new CMA version, and re-deploy your Lambdas.
 
 This method will be supported more fully once migration to Terraform Deployments has been completed.
 
