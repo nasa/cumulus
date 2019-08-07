@@ -9,8 +9,8 @@ urs_client_password      = "password"
 vpc_id                   = "vpc-123"
 
 # CloudWatch/Distribution Lambda logging
-log_api_gateway_to_cloudwatch = false # Defaults to false.
-log_to_shared_destination     = false # Defaults to false.
+log_api_gateway_to_cloudwatch = false # Defaults to false. Boolean switch to enable/disable logging of Api Gateway distribution traffic to CloudWatch.
+log_to_shared_destination     = false # Defaults to false. Boolean switch to enable/disable propagation of Api Gateway and s3 Access Logs to a shared destination. If enabled, also use log_to_shared_destination.
 log_destination_arn           = "arn:aws:logs:us-east-1:8675309:destination:LogDestination" # Only used (and must be set) if both log_api_gateway_to_cloudwatch and log_to_shared_destination are true.
 
 # S3-replicator variables

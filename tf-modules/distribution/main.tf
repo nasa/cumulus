@@ -238,3 +238,18 @@ resource "aws_cloudwatch_log_subscription_filter" "egress_lambda_log_subscriptio
   filter_pattern  = ""
   log_group_name  = local.lambda_log_group_name
 }
+
+module "s3-replicator" {
+  source = "../s3-replicator"
+
+  prefix               = var.prefix
+  permissions_boundary = var.permissions_boundary_arn
+
+  vpc_id     = var.vpc_id
+  subnet_ids = var.subnet_ids
+
+  source_bucket = var.s3_replicator_source_bucket
+  source_prefix = var.s3_replicator_source_prefix
+  target_bucket = var.s3_replicator_target_bucket
+  target_prefix = var.s3_replicator_target_prefix
+}

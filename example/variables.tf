@@ -1,5 +1,29 @@
 # Required
 
+variable "s3_replicator_source_bucket" {
+  type        = string
+  default     = ""
+  description = "Used with the s3-replicator module."
+}
+
+variable "s3_replicator_source_prefix" {
+  type        = string
+  default     = ""
+  description = "Used with the s3-replicator module."
+}
+
+variable "s3_replicator_target_bucket" {
+  type        = string
+  default     = ""
+  description = "Used with the s3-replicator module."
+}
+
+variable "s3_replicator_target_prefix" {
+  type        = string
+  default     = ""
+  description = "Used with the s3-replicator module."
+}
+
 variable "log_api_gateway_to_cloudwatch" {
   type        = bool
   default     = false

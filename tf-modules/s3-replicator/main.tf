@@ -36,7 +36,7 @@ resource "aws_lambda_function" "s3_replicator" {
 
   vpc_config {
     subnet_ids         = var.subnet_ids
-    security_group_ids = [aws_security_group.s3_replicator_lambda.id]
+    security_group_ids = local.security_group_ids_set ? var.security_group_ids : [aws_security_group.s3_replicator_lambda[0].id]
   }
 
   environment {

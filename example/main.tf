@@ -18,6 +18,12 @@ module "distribution" {
   log_to_shared_destination     = var.log_to_shared_destination
   log_destination_arn           = var.log_destination_arn
 
+  # S3 Replicator
+  s3_replicator_source_bucket = var.s3_replicator_source_bucket
+  s3_replicator_source_prefix = var.s3_replicator_source_prefix
+  s3_replicator_target_bucket = var.s3_replicator_target_bucket
+  s3_replicator_target_prefix = var.s3_replicator_target_prefix
+
   protected_buckets = var.protected_buckets
   public_buckets    = var.public_buckets
 
@@ -27,19 +33,4 @@ module "distribution" {
 
   vpc_id     = var.vpc_id
   subnet_ids = var.subnet_ids
-}
-
-module "s3-replicator" {
-  source = "../tf-modules/s3-replicator"
-
-  prefix               = var.prefix
-  permissions_boundary = var.permissions_boundary_arn
-
-  vpc_id     = var.vpc_id
-  subnet_ids = var.subnet_ids
-
-  source_bucket = var.s3_replicator_source_bucket
-  source_prefix = var.s3_replicator_source_prefix
-  target_bucket = var.s3_replicator_target_bucket
-  target_prefix = var.s3_replicator_target_prefix
 }

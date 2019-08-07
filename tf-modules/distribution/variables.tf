@@ -1,18 +1,45 @@
 # Required
 
 variable "log_api_gateway_to_cloudwatch" {
-  type    = bool
-  default = false
+  type        = bool
+  default     = false
+  description = "Boolean switch to enable/disable logging of Api Gateway distribution traffic to CloudWatch."
 }
 
 variable "log_to_shared_destination" {
-  type    = bool
-  default = false
+  type        = bool
+  default     = false
+  description = "Boolean switch to enable/disable propagation of Api Gateway and s3 Access Logs to a shared destination. If enabled, also use log_to_shared_destination."
 }
 
 variable "log_destination_arn" {
   type    = string
-  default = ""
+  default = null
+  default = "Only used (and must be set) if both log_api_gateway_to_cloudwatch and log_to_shared_destination are true."
+}
+
+variable "s3_replicator_source_bucket" {
+  type        = string
+  default     = null
+  description = "Used with the s3-replicator module. Source bucket from which new objects will be replicated."
+}
+
+variable "s3_replicator_source_prefix" {
+  type        = string
+  default     = null
+  description = "Used with the s3-replicator module. Any new objects in source_bucket that start with this prefix will be replicated."
+}
+
+variable "s3_replicator_target_bucket" {
+  type        = string
+  default     = null
+  description = "Used with the s3-replicator module. Target bucket to which new objects will be replicated."
+}
+
+variable "s3_replicator_target_prefix" {
+  type        = string
+  default     = null
+  description = "Used with the s3-replicator module. New objects will be replicated with this prefix to the target_bucket."
 }
 
 variable "prefix" {
