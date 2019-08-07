@@ -1,11 +1,16 @@
 
+variable "security_group_ids" {
+  type    = list(string)
+  default = []
+}
+
 variable "prefix" {
   type = string
 }
 
 variable "aws_profile" {
   type    = string
-  default = "default"
+  default = null
 }
 
 variable "aws_region" {

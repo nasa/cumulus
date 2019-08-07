@@ -231,6 +231,7 @@ resource "aws_cloudwatch_log_group" "egress_lambda_log_group" {
 
 # Egress Lambda Log Group Filter
 resource "aws_cloudwatch_log_subscription_filter" "egress_lambda_log_subscription_filter" {
+  depends_on      = [ "aws_cloudwatch_log_group.egress_lambda_log_group" ]
   count           = var.log_to_shared_destination ? 1 : 0
   name            = "EgressLambdaLogSubscriptionToSharedDestination"
   destination_arn = var.log_destination_arn

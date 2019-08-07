@@ -3,6 +3,10 @@ provider "aws" {
   profile = var.aws_profile
 }
 
+locals {
+  security_group_ids_set = length(var.security_group_ids) > 0
+}
+
 data "archive_file" "replicator_package" {
   type        = "zip"
   source_file = "${path.module}/index.js"
@@ -10,8 +14,8 @@ data "archive_file" "replicator_package" {
 }
 
 resource "aws_security_group" "s3_replicator_lambda" {
+  count  = local.security_group_ids_set ? 0 : 1
   vpc_id = var.vpc_id
-
   egress {
     from_port   = 0
     to_port     = 0
