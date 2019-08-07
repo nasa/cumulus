@@ -43,6 +43,7 @@ const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const workflowName = 'SyncGranule';
 
+process.env.GranulesTable = `${config.stackName}-GranulesTable`;
 const granuleModel = new Granule();
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
