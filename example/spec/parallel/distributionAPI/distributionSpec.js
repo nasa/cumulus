@@ -48,6 +48,7 @@ async function getTestAccessToken() {
 describe('Distribution API', () => {
   const testId = createTimestampedTestId(config.stackName, 'DistributionAPITest');
   const testDataFolder = createTestDataPath(testId);
+  console.log(`Distribution API tests running in ${testDataFolder}`);
   const fileKey = `${testDataFolder}/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met`;
 
   process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
