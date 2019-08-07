@@ -20,7 +20,7 @@ A task's Lambda function can be configured to include a Cumulus Message Adapter 
 
 #### Kes injection
 
-In the Lambda function configuration file lambdas.yml, a task Lambda function can be configured to include the latest CMA via kes.  Kes will download and include the latest CMA package in the lambda that's uploaded to AWS:
+In the Lambda function configuration file lambdas.yml, a task Lambda function can be configured to include the latest CMA via kes.  Kes will download and include the latest CMA package in the Lambda that's uploaded to AWS:
 
 ```yaml
     DiscoverPdrs:
@@ -32,7 +32,7 @@ In the Lambda function configuration file lambdas.yml, a task Lambda function ca
 
 In order to make use of this configuration, a Lambda layer can be uploaded to your account.  Due to platform restrictions, Core cannot currently support sharable public layers, however you can support deploying the appropriate version from [the release page](https://github.com/nasa/cumulus-message-adapter/releases) via the AWS [Layers Interface](https://console.aws.amazon.com/lambda/home?region=us-east-1#/layers), *or* the provided CMA [Terraform](https://www.terraform.io/) module located at [tf-modules/cumulus-message-adapter](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-message-adapter).
 
-Once you've deployed the layer, include the CMA in the configured lambda layers:
+Once you've deployed the layer, include the CMA in the configured Lambda layers:
 
 ```yaml
     DiscoverPdrs:
@@ -40,13 +40,13 @@ Once you've deployed the layer, include the CMA in the configured lambda layers:
         - arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:{version number}
 ```
 
-In the future if you wish to update/change the CMA version you will need to update the deployed CMA, and update the layer configuration for the impacted lambdas as needed, or re-run the Terraform module.     If you have a large number of lambdas utilizing the CMA, you can include a configuration key in your `config.yml`:
+In the future if you wish to update/change the CMA version you will need to update the deployed CMA, and update the layer configuration for the impacted Lambdas as needed, or re-run the Terraform module.     If you have a large number of Lambdas utilizing the CMA, you can include a configuration key in your `config.yml`:
 
 ```yaml
     cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:{version number}
 ```
 
-and include the reference in the lambda configuration:
+and include the reference in the Lambda configuration:
 
 ```yaml
     DiscoverPdrs:
@@ -54,17 +54,17 @@ and include the reference in the lambda configuration:
         - '{{cma_layer}}'
 ```
 
-***Please note***: Updating/removing a layer does not change a deployed lambda, so to update the CMA you should deploy a new version of the CMA layer, update the associated Lambda configuration to reference the new CMA version, and re-deploy your Lambdas.
+***Please note***: Updating/removing a layer does not change a deployed Lambda, so to update the CMA you should deploy a new version of the CMA layer, update the associated Lambda configuration to reference the new CMA version, and re-deploy your Lambdas.
 
 This method will be supported more fully once migration to Terraform Deployments has been completed.
 
 #### Manual Addition
 
-You can include the CMA package in the lambda code in the `cumulus-message-adapter` sub-directory, this will achieve a similar result to kes injection, but  will require manual updates to update the CMA code.
+You can include the CMA package in the Lambda code in the `cumulus-message-adapter` sub-directory, this will achieve a similar result to kes injection, but  will require manual updates to update the CMA code.
 
 Cumulus will set a default CUMULUS_MESSAGE_ADAPTER_DIR to the `cmaDir` global configuration value, which defaults to `/opt/`.   If `useMessageAdapter: true` is set, it will set it to the `cumulus-message-adapter` directory.
 
-If you are manually adding the message adapter to your source and utilizing the CMA, you should set the lambda's CUMULUS_MESSAGE_ADAPTER_DIR to override this, or if you aren't utilizing the CMA layer, set the global cma_dir to the directory you're packaging your lambda in.
+If you are manually adding the message adapter to your source and utilizing the CMA, you should set the Lambda's CUMULUS_MESSAGE_ADAPTER_DIR to override this, or if you aren't utilizing the CMA layer, set the global cma_dir to the directory you're packaging your Lambda in.
 
 ### CMA Input/Output
 
