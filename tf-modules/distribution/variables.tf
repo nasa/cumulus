@@ -6,16 +6,11 @@ variable "log_api_gateway_to_cloudwatch" {
   description = "Boolean switch to enable/disable logging of Api Gateway distribution traffic to CloudWatch."
 }
 
-variable "log_to_shared_destination" {
-  type        = bool
-  default     = false
-  description = "Boolean switch to enable/disable propagation of Api Gateway and s3 Access Logs to a shared destination. If enabled, also use log_to_shared_destination."
-}
 
 variable "log_destination_arn" {
   type    = string
   default = null
-  default = "Only used (and must be set) if both log_api_gateway_to_cloudwatch and log_to_shared_destination are true."
+  description = "shared AWS:Log:Destination value. Requires log_api_gateway_to_cloudwatch set to true."
 }
 
 variable "s3_replicator_source_bucket" {

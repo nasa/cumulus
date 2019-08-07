@@ -30,16 +30,10 @@ variable "log_api_gateway_to_cloudwatch" {
   description = "Enable logging of API Gateway activity to CloudWatch."
 }
 
-variable "log_to_shared_destination" {
-  type        = bool
-  default     = false
-  description = "Enable propagation of api-gateway and TEA EgressLambda logs to a remote destination specified by log_destination_arn - only used if log_api_gateway_to_cloudwatch is enabled."
-}
-
 variable "log_destination_arn" {
   type        = string
-  default     = ""
-  description = "Remote kinesis/destination arn for delivering logs - only used if log_to_shared_destination is enabled."
+  default     = null
+  description = "Remote kinesis/destination arn for delivering logs. Requires log_api_gateway_to_cloudwatch set to true."
 }
 
 variable "prefix" {
