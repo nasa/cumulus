@@ -47,8 +47,6 @@ const {
 
 const config = loadConfig();
 
-const granuleModel = new Granule();
-
 process.env.stackName = config.stackName;
 
 const emsIngestReportLambda = `${config.stackName}-EmsIngestReport`;
@@ -71,6 +69,8 @@ process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
 process.env.GranulesTable = `${config.stackName}-GranulesTable`;
 process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
 const accessTokensModel = new AccessToken();
+
+const granuleModel = new Granule();
 
 // add MOD14A1___006 collection
 async function setupCollectionAndTestData(testSuffix, testDataFolder) {
