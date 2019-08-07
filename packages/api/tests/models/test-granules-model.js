@@ -538,7 +538,7 @@ test.serial('legacy remove granule from CMR fetches the granule and succeeds', a
 
 test.serial('removing a granule from CMR succeeds with Launchpad authentication', async (t) => {
   process.env.cmr_oauth_provider = 'launchpad';
-  sinon.stub(launchpad, 'getLaunchpadToken').callsFake(() => randomString());
+  const launchpadStub = sinon.stub(launchpad, 'getLaunchpadToken').callsFake(() => randomString());
 
   sinon.stub(
     DefaultProvider,
@@ -566,11 +566,13 @@ test.serial('removing a granule from CMR succeeds with Launchpad authentication'
 
   await granuleModel.removeGranuleFromCmrByGranule(granule);
 
-  launchpad.getLaunchpadToken.restore();
+  t.is(launchpadStub.calledOnce, true);
+
+  process.env.cmr_oauth_provider = 'earthdata';
+  launchpadStub.restore();
   CMR.prototype.deleteGranule.restore();
   DefaultProvider.decrypt.restore();
   cmrjs.getMetadata.restore();
-  process.env.cmr_oauth_provider = 'earthdata';
 });
 
 test(
