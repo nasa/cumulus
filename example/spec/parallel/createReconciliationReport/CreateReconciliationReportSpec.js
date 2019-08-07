@@ -14,8 +14,7 @@ const {
   bucketsConfigJsonObject,
   constructCollectionId,
   testUtils: {
-    randomString,
-    randomStringFromRegex
+    randomString
   }
 } = require('@cumulus/common');
 
@@ -26,7 +25,6 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  generateCmrXml,
   granulesApi: granulesApiTestUtils,
   waitForConceptExistsOutcome,
   waitUntilGranuleStatusIs
@@ -347,7 +345,7 @@ describe('When there are granule differences and granule reconciliation is run',
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
+      granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranuleId })
     ]);
 
     // need to add the cmr granule back to the table, so the granule can be removed from api
