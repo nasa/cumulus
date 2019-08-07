@@ -2,7 +2,7 @@ resource "null_resource" "get_newest_CMA" {
   triggers = {
     always_run = "${timestamp()}"
   }
-    provisioner "local-exec" {
+  provisioner "local-exec" {
     command = "curl -L -o cumulus-message-adapter.zip https://github.com/nasa/cumulus-message-adapter/releases/download/${var.cma_version}/cumulus-message-adapter.zip"
   }
 }
