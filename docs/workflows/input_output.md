@@ -64,7 +64,7 @@ You can include the CMA package in the lambda code in the `cumulus-message-adapt
 
 Cumulus will set a default CUMULUS_MESSAGE_ADAPTER_DIR to the `cmaDir` global configuration value, which defaults to `/opt/`.   If `useMessageAdapter: true` is set, it will set it to the `cumulus-message-adapter` directory.
 
-If you are manually adding the message adapter to your source and utilizing the CMA, you should set the lambda's CUMULUS_MESSAGE_ADAPTER_DIR to override this, or if you aren't utilizing the CMA layer, set the global cma_dir to the directory you're packaging your lambda in.
+If you are manually adding the message adapter to your source and utilizing the CMA, you should set the Lambda's `CUMULUS_MESSAGE_ADAPTER_DIR` environment variable to override this, or if you aren't utilizing the CMA layer, set the global `cma_dir` to the directory you're packaging your Lambda in.
 
 ### CMA Input/Output
 
