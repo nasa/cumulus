@@ -406,6 +406,9 @@ kk:
   oauthProvider: 'launchpad'
   cumulusUserGroup: 'GSFC-Cumulus-Dev'
   system_bucket: '{{prefix}}-internal'
+  launchpad:
+    api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1'
+    passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
   buckets:
     internal:
       name: '{{prefix}}-internal'
