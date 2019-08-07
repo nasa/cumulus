@@ -312,7 +312,7 @@ class Granule extends Manager {
     const stateMachine = get(cumulusMessage, 'cumulus_meta.state_machine');
     if (!isString(stateMachine)) return null;
 
-    const executionArn = aws.getExecutionArn(stateMachine, executionName);
+    const executionArn = commonAws.getExecutionArn(stateMachine, executionName);
     const executionUrl = aws.getExecutionUrl(executionArn);
     const executionDescription = await StepFunctions.describeExecution({ executionArn });
 
@@ -337,7 +337,7 @@ class Granule extends Manager {
             granuleId: granule.granuleId,
             pdrName: get(cumulusMessage, 'meta.pdr.name'),
             collectionId: constructCollectionId(collection.name, collection.version),
-            status: get(cumulusMessage, 'meta.status'),
+            status: get(cumulusMessage, 'meta.status', get(granule, 'status')),
             provider: get(cumulusMessage, 'meta.provider.id'),
             execution: executionUrl,
             cmrLink: granule.cmrLink,

@@ -1,6 +1,5 @@
 'use strict';
 
-const { deprecate } = require('@cumulus/common/util');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { Search } = require('../es/search');
 const { createJwtToken } = require('./token');
@@ -55,18 +54,6 @@ function fakeFileFactory(params = {}) {
     key: fileName,
     ...params
   };
-}
-
-/**
- * Generates fake files for a granule
- *
- * @param {string} bucket - a bucket name
- * @returns {Object} a file record
- */
-function fakeFilesFactory(bucket) {
-  deprecate('fakeFilesFactory()', '1.11.1', 'fakeFileFactory');
-
-  return fakeFileFactory({ bucket });
 }
 
 /**
@@ -312,7 +299,6 @@ module.exports = {
   fakeExecutionFactoryV2,
   fakeRuleFactory,
   fakeRuleFactoryV2,
-  fakeFilesFactory,
   fakeFileFactory,
   fakeUserFactory,
   fakeProviderFactory,

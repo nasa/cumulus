@@ -2,7 +2,7 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const { Collection } = require('@cumulus/api/models');
+const { Collection, Granule } = require('@cumulus/api/models');
 const {
   aws: { parseS3Uri, s3 },
   testUtils: { randomString }
@@ -26,6 +26,7 @@ const {
   getFilesMetadata
 } = require('../../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
+const { waitForModelStatus } = require('../../helpers/apiUtils');
 
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
@@ -58,6 +59,9 @@ describe('When the Ingest Granules workflow is configured\n', () => {
 
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
   const collectionModel = new Collection();
+
+  process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+  const granuleModel = new Granule();
 
   beforeAll(async () => {
     // populate collections, providers and test data
@@ -147,15 +151,22 @@ describe('When the Ingest Granules workflow is configured\n', () => {
           expect(renamedFiles[0].size).toEqual(expectedRenamedFileSize);
         });
 
-        // There is a delay between workflow completion and the granule appears in dynamodb (sns->dbindexer),
-        // so this check does not always work.
-        // it('captures both files', async () => {
-        //   const granule = await granulesApiTestUtils.getGranule({
-        //     prefix: config.stackName,
-        //     granuleId: inputPayload.granules[0].granuleId
-        //   });
-        //   expect(granule.files.length).toEqual(5);
-        // });
+        // Tried test with the waitFor, but still need to figure out why it's not working
+        // Will come back to this one
+        xit('captures both files', async () => {
+          const record = await waitForModelStatus(
+            granuleModel,
+            { granuleId: inputPayload.granules[0].granuleId },
+            'completed'
+          );
+          expect(record.status).toEqual('completed');
+
+          const granule = await granulesApiTestUtils.getGranule({
+            prefix: config.stackName,
+            granuleId: inputPayload.granules[0].granuleId
+          });
+          expect(granule.files.length).toEqual(5);
+        });
       });
 
       describe('encounters data with a duplicated filename with duplicate checksum', () => {
@@ -203,6 +214,13 @@ describe('When the Ingest Granules workflow is configured\n', () => {
       });
 
       it('captures all files', async () => {
+        const record = await waitForModelStatus(
+          granuleModel,
+          { granuleId: inputPayload.granules[0].granuleId },
+          'completed'
+        );
+        expect(record.status).toEqual('completed');
+
         const granuleResponse = await granulesApiTestUtils.getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId
