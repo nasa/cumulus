@@ -423,6 +423,7 @@ Resources:
   #################################################
 {{/if}}
 
+
   #################################################
   # Lambda config BEGIN
   #################################################
@@ -430,16 +431,16 @@ Resources:
   {{@key}}LambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
-      Code:
-        S3Bucket: {{this.bucket}}
-        S3Key: {{this.remote}}
-      FunctionName: {{../prefix}}-{{@key}}
     {{# if this.layers}}
       Layers:
         {{#each this.layers}}
          - {{this}}
         {{/each}}
     {{/if}}
+      Code:
+        S3Bucket: {{this.bucket}}
+        S3Key: {{this.remote}}
+      FunctionName: {{../prefix}}-{{@key}}
       Environment:
         Variables:
           stackName: {{../stackName}}
@@ -450,6 +451,12 @@ Resources:
             Ref: {{../es.name}}DomainEndpoint
         {{/if}}
         {{/if}}
+        {{#ifNotEquals this.useMessageAdapter "true"}}
+        {{#if this.envs.CUMULUS_MESSAGE_ADAPTER_DIR}}
+        {{else}}
+          CUMULUS_MESSAGE_ADAPTER_DIR: {{../cmaDir}}
+        {{/if}}
+        {{/ifNotEquals}}
         {{#each this.tables}}
           {{this}}: {{../../prefix}}-{{this}}
         {{/each}}
