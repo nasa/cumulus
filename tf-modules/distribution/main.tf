@@ -215,7 +215,7 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
 
 # Egress Api Gateway Log Group Filter
 resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscription_filter" {
-  count           = var.log_to_shared_destination && var.log_api_gateway_to_cloudwatch ? 1 : 0
+  count           = var.log_destination_arn != null && var.log_api_gateway_to_cloudwatch ? 1 : 0
   name            = "EgressApiGatewayCloudWatchLogSubscriptionToSharedDestination"
   destination_arn = var.log_destination_arn
   filter_pattern  = ""
@@ -224,7 +224,7 @@ resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscr
 
 # Egress Lambda Log Group
 resource "aws_cloudwatch_log_group" "egress_lambda_log_group" {
-  count             = var.log_to_shared_destination ? 1 : 0
+  count             = var.log_destination_arn != null ? 1 : 0
   name              = local.lambda_log_group_name
   retention_in_days = 30
 }
@@ -232,7 +232,7 @@ resource "aws_cloudwatch_log_group" "egress_lambda_log_group" {
 # Egress Lambda Log Group Filter
 resource "aws_cloudwatch_log_subscription_filter" "egress_lambda_log_subscription_filter" {
   depends_on      = [ "aws_cloudwatch_log_group.egress_lambda_log_group" ]
-  count           = var.log_to_shared_destination ? 1 : 0
+  count           = var.log_destination_arn != null ? 1 : 0
   name            = "EgressLambdaLogSubscriptionToSharedDestination"
   destination_arn = var.log_destination_arn
   filter_pattern  = ""

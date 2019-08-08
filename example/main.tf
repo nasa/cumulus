@@ -15,7 +15,6 @@ module "distribution" {
 
   # Additional Logging Settings
   log_api_gateway_to_cloudwatch = var.log_api_gateway_to_cloudwatch
-  log_to_shared_destination     = var.log_to_shared_destination
   log_destination_arn           = var.log_destination_arn
 
   # S3 Replicator
