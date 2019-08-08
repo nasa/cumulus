@@ -65,51 +65,115 @@ class Rule extends Manager {
     return super.delete({ name: item.name });
   }
 
+  setRuleState(originalRule, state) {
+    return {
+      ...originalRule,
+      state
+    };
+  }
+
+  setRuleValue(originalRule, type, value) {
+    return {
+      ...originalRule,
+      rule: {
+        ...originalRule.rule,
+        type,
+        value
+      }
+    };
+  }
+
+  setKinesisRuleArns(originaRule, ruleArns) {
+    return {
+      ...originaRule,
+      rule: {
+        ...originaRule.rule,
+        arn: ruleArns.arn,
+        logEventArn: ruleArns.logEventArn
+      }
+    };
+  }
+
+  setSnsRuleArn(originalRule, snsSubscriptionArn) {
+    return {
+      ...originalRule,
+      rule: {
+        ...originalRule.rule,
+        arn: snsSubscriptionArn
+      }
+    };
+  }
+
   /**
-   * update a rule item
+   * Update a rule item
    *
-   * @param {*} original - the original rule
-   * @param {*} updated - key/value fields for update, may not be a complete rule item
+   * @param {Object} original - the original rule
+   * @param {Object} updates - key/value fields for update, may not be a complete rule item
    * @returns {Promise} the response from database updates
    */
-  async update(original, updated) {
-    let stateChanged = false;
-    if (updated.state && updated.state !== original.state) {
-      original.state = updated.state;
-      stateChanged = true;
+  async update(original, updates) {
+    // Make a copy of the existing rule to preserve existing values
+    let updatedRule = {
+      ...original,
+      rule: {
+        ...original.rule
+      }
+    };
+
+    // let stateChanged = false;
+    // if (updated.state && updated.state !== original.state) {
+    //   original.state = updated.state;
+    //   stateChanged = true;
+    // }
+    const stateChanged = (updates.state && updates.state !== original.state);
+    if (stateChanged) {
+      updatedRule = this.setRuleState(updatedRule, updates.state);
     }
 
-    let valueUpdated = false;
-    if (updated.rule && updated.rule.value) {
-      original.rule.value = updated.rule.value;
-      if (updated.rule.type === undefined) updated.rule.type = original.rule.type;
-      valueUpdated = true;
+    // let valueUpdated = false;
+    // if (updates.rule && updates.rule.value) {
+    //   original.rule.value = updates.rule.value;
+    //   if (updates.rule.type === undefined) updates.rule.type = original.rule.type;
+    //   valueUpdated = true;
+    // }
+    const valueUpdated = (updates.rule && updates.rule.value);
+    if (valueUpdated) {
+      updatedRule = this.setRuleValue(updatedRule, updatedRule.rule.type, updates.rule.value);
     }
 
-    switch (original.rule.type) {
+    switch (updatedRule.rule.type) {
     case 'scheduled': {
-      const payload = await Rule.buildPayload(original);
-      await this.addRule(original, payload);
+      const payload = await Rule.buildPayload(updatedRule);
+      await this.addRule(updatedRule, payload);
       break;
     }
     case 'kinesis':
       if (valueUpdated) {
-        await this.deleteKinesisEventSources(original);
-        await this.addKinesisEventSources(original);
-        updated.rule.arn = original.rule.arn;
+        await this.deleteKinesisEventSources(updatedRule);
+        const updatedRuleArns = await this.addKinesisEventSources(updatedRule);
+        updatedRule = this.setKinesisRuleArns(updatedRule, updatedRuleArns);
       }
       break;
     case 'sns': {
       if (valueUpdated || stateChanged) {
-        if (original.rule.arn) {
-          await this.deleteSnsTrigger(original);
-          if (!updated.rule) updated.rule = original.rule;
-          delete updated.rule.arn;
+        if (updatedRule.rule.arn) {
+          await this.deleteSnsTrigger(updatedRule);
+          // if (!updates.rule) updates.rule = original.rule;
+          // delete updates.rule.arn;
+
+          updatedRule = {
+            ...updatedRule,
+            rule: {
+              type: updatedRule.rule.type,
+              value: updatedRule.rule.value
+            }
+          };
         }
-        if (original.state === 'ENABLED') {
-          await this.addSnsTrigger(original);
-          if (!updated.rule) updated.rule = original.rule;
-          else updated.rule.arn = original.rule.arn;
+        if (updatedRule.state === 'ENABLED') {
+          const snsSubscriptionArn = await this.addSnsTrigger(updatedRule);
+          // if (!updates.rule) updates.rule = original.rule;
+          // else updates.rule.arn = original.rule.arn;
+          updatedRule = this.setSnsRuleArn(updatedRule, snsSubscriptionArn);
         }
       }
       break;
@@ -118,7 +182,7 @@ class Rule extends Manager {
       break;
     }
 
-    return super.update({ name: original.name }, updated);
+    return super.update({ name: original.name }, updatedRule);
   }
 
   static async buildPayload(item) {
@@ -153,26 +217,36 @@ class Rule extends Manager {
       throw new Error('Names may only contain letters, numbers, and underscores.');
     }
 
-    // the default state is 'ENABLED'
-    if (!item.state) item.state = 'ENABLED';
+    // Initialize new rule object
+    let newRule = {
+      ...item
+    };
 
-    const payload = await Rule.buildPayload(item);
-    switch (item.rule.type) {
+    // the default state is 'ENABLED'
+    if (!item.state) {
+      item.state = 'ENABLED';
+      newRule = this.setRuleState(newRule, 'ENABLED');
+    }
+
+    const payload = await Rule.buildPayload(newRule);
+    switch (newRule.rule.type) {
     case 'onetime': {
       await invoke(process.env.invoke, payload);
       break;
     }
     case 'scheduled': {
-      await this.addRule(item, payload);
+      await this.addRule(newRule, payload);
       break;
     }
     case 'kinesis': {
-      await this.addKinesisEventSources(item);
+      const ruleArns = await this.addKinesisEventSources(newRule);
+      newRule = this.setKinesisRuleArns(newRule, ruleArns);
       break;
     }
     case 'sns': {
-      if (item.state === 'ENABLED') {
-        await this.addSnsTrigger(item);
+      if (newRule.state === 'ENABLED') {
+        const snsSubscriptionArn = await this.addSnsTrigger(newRule);
+        newRule = this.setSnsRuleArn(newRule, snsSubscriptionArn);
       }
       break;
     }
@@ -181,7 +255,7 @@ class Rule extends Manager {
     }
 
     // save
-    return super.create(item);
+    return super.create(newRule);
   }
 
 
@@ -195,9 +269,12 @@ class Rule extends Manager {
       (lambda) => this.addKinesisEventSource(item, lambda)
     );
     const eventAdd = await Promise.all(sourceEventPromises);
-    item.rule.arn = eventAdd[0].UUID;
-    item.rule.logEventArn = eventAdd[1].UUID;
-    return item;
+    const arn = eventAdd[0].UUID;
+    const logEventArn = eventAdd[1].UUID;
+    return { arn, logEventArn };
+    // item.rule.arn = eventAdd[0].UUID;
+    // item.rule.logEventArn = eventAdd[1].UUID;
+    // return item;
   }
 
 
@@ -349,8 +426,9 @@ class Rule extends Manager {
     };
     await aws.lambda().addPermission(permissionParams).promise();
 
-    item.rule.arn = subscriptionArn;
-    return item;
+    // item.rule.arn = subscriptionArn;
+    // return item;
+    return subscriptionArn;
   }
 
   async deleteSnsTrigger(item) {
