@@ -159,13 +159,39 @@ test.serial('update a kinesis type rule value, resulting in new event source map
   const updatedRule = await rules.update(rule, updates);
 
   t.is(updatedRule.name, rule.name);
-  t.not(updatedRule.rule.vale, rule.rule.value);
+  t.not(updatedRule.rule.value, rule.rule.value);
 
   // Event source mappings exist and have been updated
   t.truthy(updatedRule.rule.arn);
   t.not(updatedRule.rule.arn, rule.rule.arn);
   t.truthy(updatedRule.rule.logEventArn);
   t.not(updatedRule.rule.logEventArn, rule.rule.logEventArn);
+
+  await rules.delete(rule);
+});
+
+test.serial('update a kinesis type rule workflow does not affect value or event source mappings', async (t) => {
+  // create rule
+  const rules = new models.Rule();
+  await rules.create(kinesisRule);
+  const rule = await rules.get({ name: kinesisRule.name });
+
+  // update rule value
+  const updates = {
+    name: rule.name,
+    workflow: 'new-workflow'
+  };
+
+  const updatedRule = await rules.update(rule, updates);
+
+  t.is(updatedRule.name, rule.name);
+  t.is(updatedRule.rule.value, rule.rule.value);
+
+  // Event source mappings exist and have been updated
+  t.truthy(updatedRule.rule.arn);
+  t.is(updatedRule.rule.arn, rule.rule.arn);
+  t.truthy(updatedRule.rule.logEventArn);
+  t.is(updatedRule.rule.logEventArn, rule.rule.logEventArn);
 
   await rules.delete(rule);
 });
