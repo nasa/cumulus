@@ -6,14 +6,14 @@ const get = require('lodash.get');
 const { invoke, Events } = require('@cumulus/ingest/aws');
 const aws = require('@cumulus/common/aws');
 const Manager = require('./base');
-const { rule } = require('./schemas');
+const { rule: ruleSchema } = require('./schemas');
 
 class Rule extends Manager {
   constructor() {
     super({
       tableName: process.env.RulesTable,
       tableHash: { name: 'name', type: 'S' },
-      schema: rule
+      schema: ruleSchema
     });
 
     this.eventMapping = { arn: 'arn', logEventArn: 'logEventArn' };
@@ -65,42 +65,46 @@ class Rule extends Manager {
     return super.delete({ name: item.name });
   }
 
-  setRuleState(originalRule, state) {
+  setRuleState(ruleItem, state) {
     return {
-      ...originalRule,
+      ...ruleItem,
       state
     };
   }
 
-  setRuleValue(originalRule, type, value) {
+  setRuleValue(ruleItem, type, value) {
     return {
-      ...originalRule,
+      ...ruleItem,
       rule: {
-        ...originalRule.rule,
+        ...ruleItem.rule,
         type,
         value
       }
     };
   }
 
-  setKinesisRuleArns(originaRule, ruleArns) {
+  setKinesisRuleArns(ruleItem, ruleArns) {
     return {
-      ...originaRule,
+      ...ruleItem,
       rule: {
-        ...originaRule.rule,
+        ...ruleItem.rule,
         arn: ruleArns.arn,
         logEventArn: ruleArns.logEventArn
       }
     };
   }
 
-  setSnsRuleArn(originalRule, snsSubscriptionArn) {
+  setSnsRuleArn(ruleItem, snsSubscriptionArn) {
+    const rule = {
+      type: ruleItem.rule.type,
+      value: ruleItem.rule.value
+    };
+    if (snsSubscriptionArn) {
+      rule.arn = snsSubscriptionArn;
+    }
     return {
-      ...originalRule,
-      rule: {
-        ...originalRule.rule,
-        arn: snsSubscriptionArn
-      }
+      ...ruleItem,
+      rule
     };
   }
 
@@ -120,22 +124,11 @@ class Rule extends Manager {
       }
     };
 
-    // let stateChanged = false;
-    // if (updated.state && updated.state !== original.state) {
-    //   original.state = updated.state;
-    //   stateChanged = true;
-    // }
     const stateChanged = (updates.state && updates.state !== original.state);
     if (stateChanged) {
       updatedRule = this.setRuleState(updatedRule, updates.state);
     }
 
-    // let valueUpdated = false;
-    // if (updates.rule && updates.rule.value) {
-    //   original.rule.value = updates.rule.value;
-    //   if (updates.rule.type === undefined) updates.rule.type = original.rule.type;
-    //   valueUpdated = true;
-    // }
     const valueUpdated = (updates.rule && updates.rule.value);
     if (valueUpdated) {
       updatedRule = this.setRuleValue(updatedRule, updatedRule.rule.type, updates.rule.value);
@@ -158,21 +151,10 @@ class Rule extends Manager {
       if (valueUpdated || stateChanged) {
         if (updatedRule.rule.arn) {
           await this.deleteSnsTrigger(updatedRule);
-          // if (!updates.rule) updates.rule = original.rule;
-          // delete updates.rule.arn;
-
-          updatedRule = {
-            ...updatedRule,
-            rule: {
-              type: updatedRule.rule.type,
-              value: updatedRule.rule.value
-            }
-          };
+          updatedRule = this.setSnsRuleArn(updatedRule);
         }
         if (updatedRule.state === 'ENABLED') {
           const snsSubscriptionArn = await this.addSnsTrigger(updatedRule);
-          // if (!updates.rule) updates.rule = original.rule;
-          // else updates.rule.arn = original.rule.arn;
           updatedRule = this.setSnsRuleArn(updatedRule, snsSubscriptionArn);
         }
       }
@@ -272,9 +254,6 @@ class Rule extends Manager {
     const arn = eventAdd[0].UUID;
     const logEventArn = eventAdd[1].UUID;
     return { arn, logEventArn };
-    // item.rule.arn = eventAdd[0].UUID;
-    // item.rule.logEventArn = eventAdd[1].UUID;
-    // return item;
   }
 
 
@@ -425,9 +404,6 @@ class Rule extends Manager {
       StatementId: `${item.name}Permission`
     };
     await aws.lambda().addPermission(permissionParams).promise();
-
-    // item.rule.arn = subscriptionArn;
-    // return item;
     return subscriptionArn;
   }
 

@@ -361,6 +361,24 @@ test('Creating a rule with a queueName parameter', async (t) => {
   t.is(payload.queueName, ruleItem.queueName);
 });
 
+test('creating a disabled SNS rule creates no event source mapping', async (t) => {
+  const snsTopicArn = randomString();
+  const item = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sns',
+      value: snsTopicArn
+    },
+    state: 'DISABLED'
+  });
+
+  const rule = await rulesModel.create(item);
+
+  t.is(rule.state, 'DISABLED');
+  t.is(rule.rule.value, snsTopicArn);
+  t.falsy(rule.rule.arn);
+});
+
 test.serial('disabling an SNS rule removes the event source mapping', async (t) => {
   const snsTopicArn = randomString();
   const snsStub = sinon.stub(aws, 'sns')
@@ -406,6 +424,8 @@ test.serial('disabling an SNS rule removes the event source mapping', async (t) 
 
   t.is(updatedRule.name, rule.name);
   t.is(updatedRule.state, 'DISABLED');
+  t.is(updatedRule.rule.type, rule.rule.type);
+  t.is(updatedRule.rule.value, rule.rule.value);
   t.falsy(updatedRule.rule.arn);
 
   await rulesModel.delete(rule);
