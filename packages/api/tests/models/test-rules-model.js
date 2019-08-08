@@ -123,57 +123,66 @@ test.serial('deleting a kinesis style rule removes event mappings', async (t) =>
   t.is(logEventMappings.length, 0);
 });
 
-test.serial('update a kinesis type rule state, arn does not change', async (t) => {
+test.serial('update a kinesis type rule state, event source mappings do not change', async (t) => {
   // create rule
   const rules = new models.Rule();
   await rules.create(kinesisRule);
   const rule = await rules.get({ name: kinesisRule.name });
+
   // update rule state
-  const updated = { name: rule.name, state: 'ENABLED' };
+  const updates = { name: rule.name, state: 'ENABLED' };
+
   // deep copy rule
-  const newRule = Object.assign({}, rule);
-  newRule.rule = Object.assign({}, rule.rule);
-  await rules.update(newRule, updated);
-  t.true(newRule.state === 'ENABLED');
-  //arn doesn't change
-  t.is(newRule.rule.arn, rule.rule.arn);
-  t.is(newRule.rule.logEventArn, rule.rule.logEventArn);
+  const updatedRule = await rules.update(rule, updates);
+  t.true(updatedRule.state === 'ENABLED');
+
+  // Event source mapping references don't change
+  t.is(updatedRule.rule.arn, rule.rule.arn);
+  t.is(updatedRule.rule.logEventArn, rule.rule.logEventArn);
 
   // clean up
   await rules.delete(rule);
 });
 
-test.serial('update a kinesis type rule value, resulting in new arn', async (t) => {
+test.serial('update a kinesis type rule value, resulting in new event source mappings', async (t) => {
   // create rule
   const rules = new models.Rule();
   await rules.create(kinesisRule);
   const rule = await rules.get({ name: kinesisRule.name });
 
   // update rule value
-  const updated = {
+  const updates = {
     name: rule.name,
     rule: { type: rule.rule.type, value: 'my-new-kinesis-arn' }
   };
-  // deep copy rule
-  const newRule = Object.assign({}, rule);
-  newRule.rule = Object.assign({}, rule.rule);
-  await rules.update(newRule, updated);
 
-  t.is(newRule.name, rule.name);
-  t.not(newRule.rule.vale, rule.rule.value);
-  t.not(newRule.rule.arn, rule.rule.arn);
-  t.not(newRule.rule.logEventArn, rule.rule.logEventArn);
+  const updatedRule = await rules.update(rule, updates);
+
+  t.is(updatedRule.name, rule.name);
+  t.not(updatedRule.rule.vale, rule.rule.value);
+
+  // Event source mappings exist and have been updated
+  t.truthy(updatedRule.rule.arn);
+  t.not(updatedRule.rule.arn, rule.rule.arn);
+  t.truthy(updatedRule.rule.logEventArn);
+  t.not(updatedRule.rule.logEventArn, rule.rule.logEventArn);
 
   await rules.delete(rule);
-  await rules.delete(newRule);
 });
 
 test.serial('create a kinesis type rule, using the existing event source mappings', async (t) => {
   // create two rules with same value
   const rules = new models.Rule();
-  const newKinesisRule = Object.assign({}, kinesisRule);
-  newKinesisRule.rule = Object.assign({}, kinesisRule.rule);
-  newKinesisRule.name = `${kinesisRule.name}_new`;
+  // const newKinesisRule = Object.assign({}, kinesisRule);
+  // newKinesisRule.rule = Object.assign({}, kinesisRule.rule);
+  // newKinesisRule.name = `${kinesisRule.name}_new`;
+  const newKinesisRule = {
+    ...kinesisRule,
+    name: `${kinesisRule.name}_new`,
+    rule: {
+      ...kinesisRule
+    }
+  };
 
   await rules.create(kinesisRule);
   const rule = await rules.get({ name: kinesisRule.name });
