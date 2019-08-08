@@ -3,7 +3,7 @@
 variable "log_api_gateway_to_cloudwatch" {
   type        = bool
   default     = false
-  description = "Boolean switch to enable/disable logging of Api Gateway distribution traffic to CloudWatch."
+  description = "Boolean switch to enable/disable logging of API Gateway distribution traffic to CloudWatch."
 }
 
 variable "log_destination_arn" {
@@ -12,28 +12,10 @@ variable "log_destination_arn" {
   description = "shared AWS:Log:Destination value. Requires log_api_gateway_to_cloudwatch set to true."
 }
 
-variable "s3_replicator_source_bucket" {
-  type        = string
-  default     = null
-  description = "Used with the s3-replicator module. Source bucket from which new objects will be replicated."
-}
-
-variable "s3_replicator_source_prefix" {
-  type        = string
-  default     = null
-  description = "Used with the s3-replicator module. Any new objects in source_bucket that start with this prefix will be replicated."
-}
-
-variable "s3_replicator_target_bucket" {
-  type        = string
-  default     = null
-  description = "Used with the s3-replicator module. Target bucket to which new objects will be replicated."
-}
-
-variable "s3_replicator_target_prefix" {
-  type        = string
-  default     = null
-  description = "Used with the s3-replicator module. New objects will be replicated with this prefix to the target_bucket."
+variable "s3_replicator_config" {
+  type = object({ source_bucket = string, source_prefix = string, target_bucket = string, target_prefix = string })
+  default = null
+  description = "Configuration for the s3-replicator module. Items with prefix of source_prefix in the source_bucket will be replicated to the target_bucket with target_prefix."
 }
 
 variable "prefix" {

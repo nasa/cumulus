@@ -21,8 +21,7 @@ resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
 }
 
 module "thin_egress_app" {
-  // source = "https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.18.zip"
-  source = "../../../thin-egress-app/terraform"
+  source = "https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.23.zip"
 
   auth_base_url                 = var.urs_url
   bucket_map_file               = aws_s3_bucket_object.bucket_map_yaml.key
@@ -216,7 +215,7 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
 # Egress Api Gateway Log Group Filter
 resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscription_filter" {
   count           = var.log_destination_arn != null && var.log_api_gateway_to_cloudwatch ? 1 : 0
-  name            = "EgressApiGatewayCloudWatchLogSubscriptionToSharedDestination"
+  name            = "${var.prefix}-EgressApiGatewayCloudWatchLogSubscriptionToSharedDestination"
   destination_arn = var.log_destination_arn
   filter_pattern  = ""
   log_group_name  = module.thin_egress_app.egress_log_group
@@ -224,16 +223,16 @@ resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscr
 
 # Egress Lambda Log Group
 resource "aws_cloudwatch_log_group" "egress_lambda_log_group" {
-  count             = var.log_destination_arn != null ? 1 : 0
+  count             = var.log_destination_arn == null ? 0 : 1
   name              = local.lambda_log_group_name
   retention_in_days = 30
 }
 
 # Egress Lambda Log Group Filter
 resource "aws_cloudwatch_log_subscription_filter" "egress_lambda_log_subscription_filter" {
-  depends_on      = [ "aws_cloudwatch_log_group.egress_lambda_log_group" ]
-  count           = var.log_destination_arn != null ? 1 : 0
-  name            = "EgressLambdaLogSubscriptionToSharedDestination"
+  depends_on      = [ aws_cloudwatch_log_group.egress_lambda_log_group ]
+  count           = var.log_destination_arn == null ? 0 : 1
+  name            = "${var.prefix}-EgressLambdaLogSubscriptionToSharedDestination"
   destination_arn = var.log_destination_arn
   filter_pattern  = ""
   log_group_name  = local.lambda_log_group_name
@@ -248,8 +247,8 @@ module "s3-replicator" {
   vpc_id     = var.vpc_id
   subnet_ids = var.subnet_ids
 
-  source_bucket = var.s3_replicator_source_bucket
-  source_prefix = var.s3_replicator_source_prefix
-  target_bucket = var.s3_replicator_target_bucket
-  target_prefix = var.s3_replicator_target_prefix
+  source_bucket = var.s3_replicator_config.source_bucket
+  source_prefix = var.s3_replicator_config.source_prefix
+  target_bucket = var.s3_replicator_config.target_bucket
+  target_prefix = var.s3_replicator_config.target_prefix
 }

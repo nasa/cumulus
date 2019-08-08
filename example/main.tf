@@ -18,10 +18,12 @@ module "distribution" {
   log_destination_arn           = var.log_destination_arn
 
   # S3 Replicator
-  s3_replicator_source_bucket = var.s3_replicator_source_bucket
-  s3_replicator_source_prefix = var.s3_replicator_source_prefix
-  s3_replicator_target_bucket = var.s3_replicator_target_bucket
-  s3_replicator_target_prefix = var.s3_replicator_target_prefix
+  s3_replicator_config = {
+    source_bucket = var.s3_replicator_config.source_bucket
+    source_prefix = var.s3_replicator_config.source_prefix
+    target_bucket = var.s3_replicator_config.target_bucket
+    target_prefix = var.s3_replicator_config.target_prefix
+  }
 
   protected_buckets = var.protected_buckets
   public_buckets    = var.public_buckets

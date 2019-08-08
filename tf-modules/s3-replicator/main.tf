@@ -4,7 +4,7 @@ provider "aws" {
 }
 
 locals {
-  security_group_ids_set = length(var.security_group_ids) > 0
+  security_group_ids_set = var.security_group_ids != null
 }
 
 data "archive_file" "replicator_package" {
@@ -25,7 +25,7 @@ resource "aws_security_group" "s3_replicator_lambda" {
 }
 
 resource "aws_lambda_function" "s3_replicator" {
-  filename         = "${path.module}/build/replicator.zip"
+  filename         = data.archive_file.replicator_package.output_path
   function_name    = "${var.prefix}-s3-replicator"
   role             = "${aws_iam_role.replicator_lambda_role.arn}"
   handler          = "index.handler"

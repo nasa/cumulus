@@ -9,7 +9,3 @@ output "thin_egress_app_redirect_uri" {
 output "s3_credentials_redirect_uri" {
   value = "${module.thin_egress_app.api_endpoint}redirect"
 }
-
-output "egress_log_group" {
-  value = module.thin_egress_app.egress_log_group
-}
