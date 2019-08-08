@@ -105,6 +105,7 @@ test('enabling a disabled rule updates the state', async (t) => {
   const updatedRule = await rulesModel.update(rule, updates);
 
   t.is(updatedRule.name, rule.name);
+  t.is(updatedRule.type, rule.type);
   t.is(updatedRule.state, 'ENABLED');
 
   await rulesModel.delete(rule);
@@ -340,7 +341,7 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
   } catch (err) {
     t.fail(err);
   } finally {
-    lambdaStub.reset();
+    lambdaStub.restore();
   }
 });
 
@@ -358,4 +359,112 @@ test('Creating a rule with a queueName parameter', async (t) => {
 
   t.is(response.queueName, ruleItem.queueName);
   t.is(payload.queueName, ruleItem.queueName);
+});
+
+test.serial('disabling an SNS rule removes the event source mapping', async (t) => {
+  const snsTopicArn = randomString();
+  const snsStub = sinon.stub(aws, 'sns')
+    .returns({
+      listSubscriptionsByTopic: () => ({
+        promise: () => Promise.resolve({
+          Subscriptions: [{
+            Endpoint: process.env.messageConsumer,
+            SubscriptionArn: snsTopicArn
+          }]
+        })
+      }),
+      unsubscribe: () => ({
+        promise: () => Promise.resolve()
+      })
+    });
+  const lambdaStub = sinon.stub(aws, 'lambda')
+    .returns({
+      addPermission: () => ({
+        promise: () => Promise.resolve()
+      }),
+      removePermission: () => ({
+        promise: () => Promise.resolve()
+      })
+    });
+
+  const item = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sns',
+      value: snsTopicArn
+    },
+    state: 'ENABLED'
+  });
+
+  const rule = await rulesModel.create(item);
+
+  t.is(rule.rule.value, snsTopicArn);
+  t.is(rule.state, 'ENABLED');
+
+  const updates = { name: rule.name, state: 'DISABLED' };
+  const updatedRule = await rulesModel.update(rule, updates);
+
+  t.is(updatedRule.name, rule.name);
+  t.is(updatedRule.state, 'DISABLED');
+  t.falsy(updatedRule.rule.arn);
+
+  await rulesModel.delete(rule);
+  snsStub.restore();
+  lambdaStub.restore();
+});
+
+test.serial('updating an SNS rule updates the event source mapping', async (t) => {
+  const snsTopicArn = randomString();
+  const newSnsTopicArn = randomString();
+
+  const snsStub = sinon.stub(aws, 'sns')
+    .returns({
+      listSubscriptionsByTopic: () => ({
+        promise: () => Promise.resolve({
+          Subscriptions: [{
+            Endpoint: process.env.messageConsumer,
+            SubscriptionArn: snsTopicArn
+          }, {
+            Endpoint: process.env.messageConsumer,
+            SubscriptionArn: newSnsTopicArn
+          }]
+        })
+      }),
+      unsubscribe: () => ({
+        promise: () => Promise.resolve()
+      })
+    });
+  const lambdaStub = sinon.stub(aws, 'lambda')
+    .returns({
+      addPermission: () => ({
+        promise: () => Promise.resolve()
+      }),
+      removePermission: () => ({
+        promise: () => Promise.resolve()
+      })
+    });
+
+  const item = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sns',
+      value: snsTopicArn
+    },
+    state: 'ENABLED'
+  });
+
+  const rule = await rulesModel.create(item);
+
+  t.is(rule.rule.value, snsTopicArn);
+
+  const updates = { name: rule.name, rule: { value: newSnsTopicArn } };
+  const updatedRule = await rulesModel.update(rule, updates);
+
+  t.is(updatedRule.name, rule.name);
+  t.is(updatedRule.type, rule.type);
+  t.is(updatedRule.rule.arn, newSnsTopicArn);
+
+  await rulesModel.delete(rule);
+  snsStub.restore();
+  lambdaStub.restore();
 });
