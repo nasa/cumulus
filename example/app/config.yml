@@ -100,7 +100,7 @@ default:
       username: cumulususer
     services:
       EcsTaskHelloWorld:
-        image: nsidc/cumulus-ecs-task:latest
+        image: cumuluss/cumulus-ecs-task:1.3.0
         cpu: 400
         memory: 700
         minTasks: 1
@@ -132,7 +132,7 @@ default:
             statistic: SampleCount
             threshold: '{{ecs.services.EcsTaskHelloWorld.count}}'
       EcsTaskHelloWorlKesCma:
-        image: nsidc/cumulus-ecs-task:latest
+        image: cumuluss/cumulus-ecs-task:1.3.0
         cpu: 400
         memory: 700
         minTasks: 1
