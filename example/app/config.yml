@@ -60,6 +60,8 @@ default:
             fileStagingDir: 'custom-staging-dir/{{prefix}}/replace-me-collectionId'
   # test configuration ends
 
+  cmaDir: '/opt/'
+  cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:4
   prefix: 'test-cumulus-integration'
   prefixNoDash: TestCumulusIntegration
   useNgapPermissionBoundary: true
@@ -98,7 +100,7 @@ default:
       username: cumulususer
     services:
       EcsTaskHelloWorld:
-        image: cumuluss/cumulus-ecs-task:1.2.5
+        image: cumuluss/cumulus-ecs-task:1.3.0
         cpu: 400
         memory: 700
         minTasks: 1
@@ -129,9 +131,42 @@ default:
             metric: MemoryUtilization
             statistic: SampleCount
             threshold: '{{ecs.services.EcsTaskHelloWorld.count}}'
+      EcsTaskHelloWorlKesCma:
+        image: cumuluss/cumulus-ecs-task:1.3.0
+        cpu: 400
+        memory: 700
+        minTasks: 1
+        count: 1
+        maxTasks: 10
+        scaleInActivityScheduleTime: 5000
+        scaleInAdjustmentPercent: -5
+        scaleOutActivityScheduleTime: 10000
+        scaleOutAdjustmentPercent: 10
+        activityName: EcsTaskHelloWorldKesCma
+        envs:
+          AWS_DEFAULT_REGION:
+            function: Fn::Sub
+            value: '${AWS::Region}'
+        commands:
+          - cumulus-ecs-task
+          - '--activityArn'
+          - function: Ref
+            value: EcsTaskHelloWorldKesCmaActivity
+          - '--lambdaArn'
+          - function: Ref
+            value: HelloWorldKesCmaLambdaFunction
+        alarms:
+          TaskCountHigh:
+            alarm_description: 'There are more tasks running than the desired'
+            comparison_operator: GreaterThanThreshold
+            evaluation_periods: 1
+            metric: MemoryUtilization
+            statistic: SampleCount
+            threshold: '{{ecs.services.EcsTaskHelloWorlKesCma.count}}'
 
   activities:
     - name: EcsTaskHelloWorld
+    - name: EcsTaskHelloWorldKesCma
 
   system_bucket: '{{buckets.internal.name}}'
 
@@ -655,14 +690,23 @@ mhs4:
 jk:
   prefix: jk
   prefixNoDash: jk
+  ecs:
+    ssh: true
+    keyPairName: jk
 
 jk2:
   prefix: jk2
   prefixNoDash: jk2
+  ecs:
+    ssh: true
+    keyPairName: jk
 
 jk3:
   stackName: jk3
   stackNameNoDash: jk3
+  ecs:
+    ssh: true
+    keyPairName: jk
 
 
 mboyd-test:
