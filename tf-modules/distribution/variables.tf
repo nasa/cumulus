@@ -6,7 +6,6 @@ variable "log_api_gateway_to_cloudwatch" {
   description = "Boolean switch to enable/disable logging of Api Gateway distribution traffic to CloudWatch."
 }
 
-
 variable "log_destination_arn" {
   type    = string
   default = null

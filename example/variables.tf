@@ -1,29 +1,5 @@
 # Required
 
-variable "s3_replicator_source_bucket" {
-  type        = string
-  default     = ""
-  description = "Used with the s3-replicator module."
-}
-
-variable "s3_replicator_source_prefix" {
-  type        = string
-  default     = ""
-  description = "Used with the s3-replicator module."
-}
-
-variable "s3_replicator_target_bucket" {
-  type        = string
-  default     = ""
-  description = "Used with the s3-replicator module."
-}
-
-variable "s3_replicator_target_prefix" {
-  type        = string
-  default     = ""
-  description = "Used with the s3-replicator module."
-}
-
 variable "log_api_gateway_to_cloudwatch" {
   type        = bool
   default     = false
@@ -34,6 +10,30 @@ variable "log_destination_arn" {
   type        = string
   default     = null
   description = "Remote kinesis/destination arn for delivering logs. Requires log_api_gateway_to_cloudwatch set to true."
+}
+
+variable "s3_replicator_source_bucket" {
+  type        = string
+  default     = null
+  description = "Used with the s3-replicator module. Source bucket from which new objects will be replicated."
+}
+
+variable "s3_replicator_source_prefix" {
+  type        = string
+  default     = null
+  description = "Used with the s3-replicator module. Any new objects in source_bucket that start with this prefix will be replicated."
+}
+
+variable "s3_replicator_target_bucket" {
+  type        = string
+  default     = null
+  description = "Used with the s3-replicator module. Target bucket to which new objects will be replicated."
+}
+
+variable "s3_replicator_target_prefix" {
+  type        = string
+  default     = null
+  description = "Used with the s3-replicator module. New objects will be replicated with this prefix to the target_bucket."
 }
 
 variable "prefix" {
