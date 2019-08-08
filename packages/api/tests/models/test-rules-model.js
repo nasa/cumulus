@@ -170,17 +170,14 @@ test.serial('update a kinesis type rule value, resulting in new event source map
   await rules.delete(rule);
 });
 
-test.serial('create a kinesis type rule, using the existing event source mappings', async (t) => {
+test.serial('create a kinesis type rule, using existing event source mappings', async (t) => {
   // create two rules with same value
   const rules = new models.Rule();
-  // const newKinesisRule = Object.assign({}, kinesisRule);
-  // newKinesisRule.rule = Object.assign({}, kinesisRule.rule);
-  // newKinesisRule.name = `${kinesisRule.name}_new`;
   const newKinesisRule = {
     ...kinesisRule,
     name: `${kinesisRule.name}_new`,
     rule: {
-      ...kinesisRule
+      ...kinesisRule.rule
     }
   };
 
@@ -194,7 +191,7 @@ test.serial('create a kinesis type rule, using the existing event source mapping
   t.is(newRule.rule.value, rule.rule.value);
   t.false(newRule.rule.arn === undefined);
   t.false(newRule.rule.logEventArn === undefined);
-  // same event source mapping
+  // Event source mappings have not changed
   t.is(newRule.rule.arn, rule.rule.arn);
   t.is(newRule.rule.logEventArn, rule.rule.logEventArn);
 
@@ -204,12 +201,21 @@ test.serial('create a kinesis type rule, using the existing event source mapping
 
 test.serial('it does not delete event source mappings if they exist for other rules', async (t) => {
   // we have three rules to create
-  const kinesisRuleTwo = Object.assign({}, kinesisRule);
-  kinesisRuleTwo.rule = Object.assign({}, kinesisRule.rule);
-  kinesisRuleTwo.name = `${kinesisRule.name}_two`;
-  const kinesisRuleThree = Object.assign({}, kinesisRule);
-  kinesisRuleThree.rule = Object.assign({}, kinesisRule.rule);
-  kinesisRuleThree.name = `${kinesisRule.name}_three`;
+  const kinesisRuleTwo = {
+    ...kinesisRule,
+    name: `${kinesisRule.name}_two`,
+    rule: {
+      ...kinesisRule.rule
+    }
+  };
+
+  const kinesisRuleThree = {
+    ...kinesisRule,
+    name: `${kinesisRule.name}_three`,
+    rule: {
+      ...kinesisRule.rule
+    }
+  };
 
   const rules = new models.Rule();
   // create two rules with same value
@@ -284,7 +290,10 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
 });
 
 test.serial('Creating a rule with a queueName parameter', async (t) => {
-  const ruleItem = Object.assign({}, onetimeRule, { queueName: 'testQueue' });
+  const ruleItem = {
+    ...onetimeRule,
+    queueName: 'testQueue'
+  };
 
   const response = await ruleModel.create(ruleItem);
 
