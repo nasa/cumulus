@@ -76,7 +76,7 @@ If you deploy with no distribution app your deployment will succeed but you may 
     - Subscription for the Lambda to the SNS topic
 
 - **CUMULUS-1400**
-  - Added `tf-modules/report-executions` terraform module which processes workflow execution information received via SNS and stores it to a database. The module includes:
+  - Added `tf-modules/report-executions` Terraform module which processes workflow execution information received via SNS and stores it to a database. The module includes:
     - SNS topic for publishing execution data
     - Lambda to process and store execution data
     - IAM permissions for the Lambda
