@@ -6,10 +6,6 @@ locals {
   es_domain_name     = "${var.prefix}-${var.elasticsearch_config.domain_name}${local.inside_vpc ? "-vpc" : ""}"
 }
 
-data "aws_region" "current" {}
-
-data "aws_caller_identity" "current" {}
-
 data "aws_iam_policy_document" "es_access_policy" {
   statement {
     actions = [
@@ -21,9 +17,12 @@ data "aws_iam_policy_document" "es_access_policy" {
       identifiers =  distinct(compact(var.es_trusted_role_arns))
     }
 
-    resources = [
-      "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${local.es_domain_name}/*"
-    ]
+    resources = compact(
+      [
+        local.deploy_inside_vpc ? "${aws_elasticsearch_domain.es_vpc[0].arn}/*" : null,
+        local.deploy_outside_vpc ? "${aws_elasticsearch_domain.es[0].arn}/*" : null
+      ]
+    )
   }
 }
 
@@ -102,7 +101,7 @@ resource "aws_elasticsearch_domain_policy" "es_vpc_domain_policy" {
   count           = local.deploy_inside_vpc && local.include_es_policy ? 1 : 0
   domain_name     = local.es_domain_name
   access_policies = data.aws_iam_policy_document.es_access_policy.json
-  depends_on      = ["aws_elasticsearch_domain.es_vpc"]
+  depends_on      = [aws_elasticsearch_domain.es_vpc]
 }
 
 resource "aws_cloudwatch_metric_alarm" "es_nodes_low" {
