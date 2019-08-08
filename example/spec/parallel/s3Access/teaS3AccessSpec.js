@@ -95,7 +95,7 @@ async function canListObjects(region, testBucketName, credentials) {
 process.env.AccessTokensTable = `${config.stackName}-s3-credentials-access-tokens`;
 const accessTokensModel = new AccessToken();
 
-describe('When accessing an S3 bucket directly', () => {
+xdescribe('When accessing an S3 bucket directly', () => {
   let accessToken;
 
   beforeAll(async () => {
