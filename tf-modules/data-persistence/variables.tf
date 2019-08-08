@@ -13,18 +13,6 @@ variable "create_service_linked_role" {
   default     = true
 }
 
-variable "es_trusted_role_arns" {
-  description = "IAM role ARNs that should be trusted for connecting to Elasticsearch"
-  type        = list(string)
-  default     = []
-}
-
-variable "include_elasticsearch" {
-  description = "True/false for whether to deploy Elasticsearch"
-  type        = bool
-  default     = true
-}
-
 variable "elasticsearch_config" {
   description = "Configuration object for Elasticsearch"
   type = object({
@@ -56,6 +44,18 @@ variable "enable_point_in_time_tables" {
     "RulesTable",
     "UsersTable"
   ]
+}
+
+variable "es_trusted_role_arns" {
+  description = "IAM role ARNs that should be trusted for connecting to Elasticsearch"
+  type        = list(string)
+  default     = []
+}
+
+variable "include_elasticsearch" {
+  description = "True/false for whether to deploy Elasticsearch"
+  type        = bool
+  default     = true
 }
 
 variable "security_groups" {
