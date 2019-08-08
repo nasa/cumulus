@@ -56,7 +56,7 @@ resource "aws_elasticsearch_domain_policy" "es_domain_policy" {
   count           = local.deploy_outside_vpc && local.include_es_policy ? 1 : 0
   domain_name     = local.es_domain_name
   access_policies = data.aws_iam_policy_document.es_access_policy.json
-  depends_on      = ["aws_elasticsearch_domain.es"]
+  depends_on      = [aws_elasticsearch_domain.es]
 }
 
 resource "aws_iam_service_linked_role" "es" {
