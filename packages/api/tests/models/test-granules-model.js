@@ -6,10 +6,11 @@ const sinon = require('sinon');
 
 const aws = require('@cumulus/common/aws');
 const ingestAws = require('@cumulus/ingest/aws');
+const launchpad = require('@cumulus/common/launchpad');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const { randomString } = require('@cumulus/common/test-utils');
 const cmrjs = require('@cumulus/cmrjs');
-const { CMR } = require('@cumulus/cmrjs');
+const { CMR } = require('@cumulus/cmr-client');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
 const range = require('lodash.range');
@@ -530,6 +531,45 @@ test.serial('legacy remove granule from CMR fetches the granule and succeeds', a
 
   await granuleModel.removeGranuleFromCmr(granule.granuleId, granule.collectionId);
 
+  CMR.prototype.deleteGranule.restore();
+  DefaultProvider.decrypt.restore();
+  cmrjs.getMetadata.restore();
+});
+
+test.serial('removing a granule from CMR succeeds with Launchpad authentication', async (t) => {
+  process.env.cmr_oauth_provider = 'launchpad';
+  const launchpadStub = sinon.stub(launchpad, 'getLaunchpadToken').callsFake(() => randomString());
+
+  sinon.stub(
+    DefaultProvider,
+    'decrypt'
+  ).callsFake(() => Promise.resolve('fakePassword'));
+
+  sinon.stub(
+    CMR.prototype,
+    'deleteGranule'
+  ).callsFake((granuleUr) => Promise.resolve(t.is(granuleUr, 'granule-ur')));
+
+  sinon.stub(
+    cmrjs,
+    'getMetadata'
+  ).callsFake(() => Promise.resolve({ title: 'granule-ur' }));
+
+  const granule = fakeGranuleFactoryV2();
+
+  await aws.dynamodbDocClient().put({
+    TableName: process.env.GranulesTable,
+    Item: granule
+  }).promise();
+
+  const granuleModel = new Granule();
+
+  await granuleModel.removeGranuleFromCmrByGranule(granule);
+
+  t.is(launchpadStub.calledOnce, true);
+
+  process.env.cmr_oauth_provider = 'earthdata';
+  launchpadStub.restore();
   CMR.prototype.deleteGranule.restore();
   DefaultProvider.decrypt.restore();
   cmrjs.getMetadata.restore();

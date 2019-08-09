@@ -38,7 +38,9 @@ deployDistributionApi: true
 If you deploy with no distribution app your deployment will succeed but you may encounter errors in your workflows, particularly in the `MoveGranule` task.
 
 ### Added
-
+- **CUMULUS-1418**
+  - Adds usage docs/testing of lambda layers (introduced in PR1125), updates Core example tasks to use the updated `cumulus-ecs-task` and a CMA layer instead of kes CMA injection.
+  - Added Terraform module to publish CMA as layer to user account.
 - **PR1125** - Adds `layers` config option to support deploying Lambdas with layers
 - **PR1128** - Added `useXRay` config option to enable AWS X-Ray for Lambdas.
 - **CUMULUS-1345**
@@ -66,29 +68,43 @@ If you deploy with no distribution app your deployment will succeed but you may 
 - **CUMULUS-1368**
   - Added `cmrGranuleUrlType` to the `@cumulus/move-granules` task. This determines what kind of links go in the CMR files. The options are `distribution`, `s3`, or `none`, with the default being distribution. If there is no distribution API being used with Cumulus, you must set the value to `s3` or `none`.
 
-- Added `packages/s3-replicator` terraform module to allow same-region s3 replication to metrics bucket.
+- Added `packages/s3-replicator` Terraform module to allow same-region s3 replication to metrics bucket.
 
 - **CUMULUS-1392**
-  - Added `tf-modules/report-granules` terraform module which processes granule ingest notifications received via SNS and stores granule data to a database. The module includes:
+  - Added `tf-modules/report-granules` Terraform module which processes granule ingest notifications received via SNS and stores granule data to a database. The module includes:
     - SNS topic for publishing granule ingest notifications
     - Lambda to process granule notifications and store data
     - IAM permissions for the Lambda
     - Subscription for the Lambda to the SNS topic
 
 - **CUMULUS-1400**
-  - Added `tf-modules/report-executions` terraform module which processes workflow execution information received via SNS and stores it to a database. The module includes:
+  - Added `tf-modules/report-executions` Terraform module which processes workflow execution information received via SNS and stores it to a database. The module includes:
     - SNS topic for publishing execution data
     - Lambda to process and store execution data
     - IAM permissions for the Lambda
     - Subscription for the Lambda to the SNS topic
   - Added `@cumulus/common/sns-event` which contains helpers for SNS events:
     - `isSnsEvent()` returns true if event is from SNS
-    - `getSnsMessage()` extracts and parses the message from an SNS event
+    - `getSnsEventMessage()` extracts and parses the message from an SNS event
+    - `getSnsEventMessageObject()` extracts and parses message object from an SNS event
   - Added `@cumulus/common/cloudwatch-event` which contains helpers for Cloudwatch events:
     - `isSfExecutionEvent()` returns true if event is from Step Functions
     - `isTerminalSfStatus()` determines if a Step Function status from a Cloudwatch event is a terminal status
     - `getSfEventStatus()` gets the Step Function status from a Cloudwatch event
     - `getSfEventMessage()` extracts and parses the Step Function output messsage from a Cloudwatch event
+    - `getSfEventMessageObject()` extracts and parses Step Function message object from a Cloudwatch event
+
+- **CUMULUS-1429**
+  - Added `tf-modules/data-persistence` Terraform module which includes resources for data persistence in Cumulus:
+    - DynamoDB tables
+    - Elasticsearch with optional support for VPC
+    - Cloudwatch alarm for number of Elasticsearch nodes
+
+- **CUMULUS-1379** CMR Launchpad Authentication
+  - Added `launchpad` configuration to `@cumulus/deployment/app/config.yml`, and cloudformation templates, workflow message, lambda configuration, api endpoint configuration
+  - Added `@cumulus/common/LaunchpadToken` and `@cumulus/common/launchpad` to provide methods to get token and validate token
+  - Updated lambdas to use Launchpad token for CMR actions (ingest and delete granules)
+  - Updated deployment documentation and added [instructions to setup CMR client for Launchpad authentication] (https://wiki.earthdata.nasa.gov/display/CUMULUS/CMR+Launchpad+Authentication)
 
 ## Changed
 
