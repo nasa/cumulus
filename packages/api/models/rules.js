@@ -2,6 +2,7 @@
 
 'use strict';
 
+const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
 const { invoke, Events } = require('@cumulus/ingest/aws');
 const aws = require('@cumulus/common/aws');
@@ -117,21 +118,16 @@ class Rule extends Manager {
    */
   async update(original, updates) {
     // Make a copy of the existing rule to preserve existing values
-    let updatedRule = {
-      ...original,
-      rule: {
-        ...original.rule
-      }
-    };
+    const updatedRule = cloneDeep(original);
 
     const stateChanged = (updates.state && updates.state !== original.state);
     if (stateChanged) {
-      updatedRule = this.setRuleState(updatedRule, updates.state);
+      updatedRule.state = updates.state;
     }
 
     const valueUpdated = (updates.rule && updates.rule.value);
     if (valueUpdated) {
-      updatedRule = this.setRuleValue(updatedRule, updatedRule.rule.type, updates.rule.value);
+      updatedRule.rule.value = updates.rule.value;
     }
 
     switch (updatedRule.rule.type) {
@@ -144,18 +140,19 @@ class Rule extends Manager {
       if (valueUpdated) {
         await this.deleteKinesisEventSources(updatedRule);
         const updatedRuleArns = await this.addKinesisEventSources(updatedRule);
-        updatedRule = this.setKinesisRuleArns(updatedRule, updatedRuleArns);
+        updatedRule.rule.arn = updatedRuleArns.arn;
+        updatedRule.rule.logEventArn = updatedRuleArns.logEventArn;
       }
       break;
     case 'sns': {
       if (valueUpdated || stateChanged) {
         if (updatedRule.rule.arn) {
           await this.deleteSnsTrigger(updatedRule);
-          updatedRule = this.setSnsRuleArn(updatedRule);
+          delete updatedRule.rule.arn;
         }
         if (updatedRule.state === 'ENABLED') {
           const snsSubscriptionArn = await this.addSnsTrigger(updatedRule);
-          updatedRule = this.setSnsRuleArn(updatedRule, snsSubscriptionArn);
+          updatedRule.rule.arn = snsSubscriptionArn;
         }
       }
       break;
