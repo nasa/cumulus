@@ -100,6 +100,12 @@ If you deploy with no distribution app your deployment will succeed but you may 
     - Elasticsearch with optional support for VPC
     - Cloudwatch alarm for number of Elasticsearch nodes
 
+- **CUMULUS-1379** CMR Launchpad Authentication
+  - Added `launchpad` configuration to `@cumulus/deployment/app/config.yml`, and cloudformation templates, workflow message, lambda configuration, api endpoint configuration
+  - Added `@cumulus/common/LaunchpadToken` and `@cumulus/common/launchpad` to provide methods to get token and validate token
+  - Updated lambdas to use Launchpad token for CMR actions (ingest and delete granules)
+  - Updated deployment documentation and added [instructions to setup CMR client for Launchpad authentication] (https://wiki.earthdata.nasa.gov/display/CUMULUS/CMR+Launchpad+Authentication)
+
 ## Changed
 
 - **CUMULUS-1232**

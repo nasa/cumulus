@@ -44,6 +44,7 @@ This table describes the fields that must be present in `config.yml` to successf
 | urs_url | `https://uat.urs.earthdata.nasa.gov/` | URS url used for OAuth
 | useNgapPermissionBoundary | false | Required to be `true` when deploying to the NGAP platform
 | useWorkflowLambdaVersions | true | Version deployed lambdas when they are updated.
+| cmr.oauthProvider | earthdata | the authentication provider used for CMR actions, possible values are 'earthdata', 'launchpad'
 | cmr.username | (required) | the username used for posting metadata to CMR
 | cmr.provider | CUMULUS | the provider used for posting metadata to CMR
 | cmr.clientId | CUMULUS | the clientId used to authenticate with the CMR
@@ -86,6 +87,10 @@ This table describes the fields that must be present in `config.yml` to successf
 | es.instanceCount | 1 | number of elasticsearch nodes
 | es.instanceType | t2.small.elasticsearch | size of the ec2 instance used for the elasticsearch
 | es.volumeSize | 35 | the storage used in each elasticsearch node
+| launchpad.api  | | launchpad API endpoint
+| launchpad.certificate  | launchpad.pfx | the Launchpad PKI certificate pfx file
+| launchpad.passphrase  | | the passphrase of the Launchpad PIK certificate
+| oauth.provider | earthdata | the authentication provider used for Cumulus API, possible values are 'earthdata', 'google', 'launchpad'
 | sns.\<name\> | | name of the sns topic
 | sns.\<name\>.subscriptions.\<subscription_name\>.endpoint | | lambda function triggered for each message in the topic (see `@cumulus/deployment/app/config.yml` for examples of core usage)
 | apis.\<name\> | | name of the apigateway application
@@ -153,7 +158,9 @@ Note: The console links are specific to `us-east-1`. Use the corresponding links
 
 Configuration is required for Cumulus integration with CMR services. The most obvious example of this integration is the `PostToCmr` Cumulus [task](https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr).
 
-Ensure your CMR username/password is included in your `app/.env` file, as noted in the [deployment documentation](./deployment-readme):
+CMR uses Earthdata Login system or Launchpad system for authentication. We can configure Cumulus to use one of the systems for CMR authentication.
+
+To configure Cumulus to use Earthdata Login system for authentication, ensure your CMR username/password is included in your `app/.env` file, as noted in the [deployment documentation](./deployment-readme):
 
 ```shell
 CMR_USERNAME=cmruser
@@ -171,6 +178,26 @@ cmr:
 ```
 
 `clientId` and `provider` should be configured to point to a user specified CMR `clientId` and `provider`. We use the `CUMULUS` provider in our configurations, but users can specify their own.
+
+### launchpad
+
+Cumulus supports Launchpad as the authentication provider for CMR authentication and Cumulus API authentication.
+
+To use Launchpad for authentication, ensure your Launchpad Certificate passphrase is included in your `app/.env` file, as noted in the [deployment documentation](./deployment-readme):
+
+```shell
+LAUNCHPAD_PASSPHRASE=launchpadpassphrase
+```
+
+These values will be imported via kes in your configuration file.   You should ensure your `app/config.yml` contains the following lines:
+
+```yaml
+launchpad:
+  api: '<replace-with-launchpad-token-service-api>'
+  passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
+```
+
+To configure Cumulus to use Launchpad system for CMR authentication, follow the steps [CMR Launchpad Authentication](./cmr_launchpad_authentication) to setup CMR client and configure Cumulus.
 
 ### users
 
