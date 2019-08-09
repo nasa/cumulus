@@ -26,8 +26,7 @@ const {
   cleanupCollections,
   cleanupProviders,
   granulesApi: granulesApiTestUtils,
-  waitForConceptExistsOutcome,
-  waitUntilGranuleStatusIs
+  waitForConceptExistsOutcome
 } = require('@cumulus/integration-tests');
 
 const {
@@ -39,6 +38,7 @@ const {
   createTestSuffix
 } = require('../../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
+const { waitForModelStatus } = require('../../helpers/apiUtils');
 
 const reportsPrefix = (stackName) => `${stackName}/reconciliation-reports/`;
 const filesTableName = (stackName) => `${stackName}-FilesTable`;
@@ -113,7 +113,11 @@ async function ingestAndPublishGranule(testSuffix, testDataFolder, publish = tru
     config.stackName, config.bucket, workflowName, collection, provider, inputPayload
   );
 
-  await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
+  await waitForModelStatus(
+    granuleModel,
+    { granuleId: inputPayload.granules[0].granuleId },
+    'completed'
+  );
 
   return inputPayload.granules[0].granuleId;
 }
