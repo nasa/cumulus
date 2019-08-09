@@ -172,7 +172,7 @@ describe('The Ingest Granule failure workflow', () => {
       await waitForModelStatus(
         granuleModel,
         { granuleId: inputPayload.granules[0].granuleId },
-        'completed'
+        'failed'
       );
 
       const granuleResponse = await granulesApiTestUtils.getGranule({
