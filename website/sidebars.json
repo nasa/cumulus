@@ -33,6 +33,7 @@
       "deployment/iam_roles",
       "deployment/obtain_cumulus_packages",
       "deployment/config_descriptions",
+      "deployment/cmr_launchpad_authentication",
       "deployment/troubleshoot_deployment",
       "deployment/distribution_component",
       "deployment/thin_egress_app"

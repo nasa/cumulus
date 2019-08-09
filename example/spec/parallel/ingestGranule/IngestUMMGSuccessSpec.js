@@ -110,6 +110,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
   const executionModel = new Execution();
   process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
+  process.env.system_bucket = config.bucket;
   const collectionModel = new Collection();
   process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
   const providerModel = new Provider();
@@ -239,28 +240,40 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     let files;
     let resourceURLs;
     let accessToken;
+    let beforeAllError;
 
     beforeAll(async () => {
       postToCmrOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
-      if (postToCmrOutput === null) throw new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
+      if (postToCmrOutput === null) {
+        beforeAllError = new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
+        return;
+      }
 
-      granule = postToCmrOutput.payload.granules[0];
-      files = granule.files;
-      process.env.CMR_ENVIRONMENT = 'UAT';
-      const result = await Promise.all([
-        getOnlineResources(granule),
-        // Login with Earthdata and get access token.
-        getEarthdataAccessToken({
-          redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
-          requestOrigin: process.env.DISTRIBUTION_ENDPOINT
-        })
-      ]);
+      try {
+        granule = postToCmrOutput.payload.granules[0];
+        files = granule.files;
+        process.env.CMR_ENVIRONMENT = 'UAT';
+        const result = await Promise.all([
+          getOnlineResources(granule),
+          // Login with Earthdata and get access token.
+          getEarthdataAccessToken({
+            redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
+            requestOrigin: process.env.DISTRIBUTION_ENDPOINT
+          })
+        ]);
 
-      onlineResources = result[0];
-      resourceURLs = onlineResources.map((resource) => resource.URL);
+        onlineResources = result[0];
+        resourceURLs = onlineResources.map((resource) => resource.URL);
 
-      const accessTokenResponse = result[1];
-      accessToken = accessTokenResponse.accessToken;
+        const accessTokenResponse = result[1];
+        accessToken = accessTokenResponse.accessToken;
+      } catch (e) {
+        beforeAllError = e;
+      }
+    });
+
+    beforeEach(() => {
+      if (beforeAllError) fail(beforeAllError);
     });
 
     afterAll(async () => {
