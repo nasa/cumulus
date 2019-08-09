@@ -66,18 +66,49 @@ class Rule extends Manager {
     return super.delete({ name: item.name });
   }
 
+  /**
+   * Update the rule state.
+   *
+   * Avoids object mutation by cloning the original rule item.
+   *
+   * @param {Object} ruleItem - A rule item
+   * @param {string} state - rule state (ENABLED/DISABLED)
+   * @returns {Object} - Updated rule item
+   */
   updateRuleState(ruleItem, state) {
     const updatedRuleItem = cloneDeep(ruleItem);
     updatedRuleItem.state = state;
     return updatedRuleItem;
   }
 
+  /**
+   * Update the rule value.
+   *
+   * Avoids object mutation by cloning the original rule item.
+   *
+   * @param {Object} ruleItem - A rule item
+   * @param {string} value - rule value
+   * @returns {Object} - Updated rule item
+   */
   updateRuleValue(ruleItem, value) {
     const updatedRuleItem = cloneDeep(ruleItem);
     updatedRuleItem.rule.value = value;
     return updatedRuleItem;
   }
 
+  /**
+   * Update the event source mappings for Kinesis type rules.
+   *
+   * Avoids object mutation by cloning the original rule item.
+   *
+   * @param {Object} ruleItem - A rule item
+   * @param {Object} ruleArns
+   * @param {string} ruleArns.arn
+   *   UUID for event source mapping from Kinesis stream for messageConsumer Lambda
+   * @param {string} ruleArns.logEventArn
+   *   UUID for event source mapping from Kinesis stream to KinesisInboundEventLogger Lambda
+   * @returns {Object} - Updated rule item
+   */
   updateKinesisRuleArns(ruleItem, ruleArns) {
     const updatedRuleItem = cloneDeep(ruleItem);
     updatedRuleItem.rule.arn = ruleArns.arn;
@@ -85,6 +116,16 @@ class Rule extends Manager {
     return updatedRuleItem;
   }
 
+  /**
+   * Update the event source mapping for SNS type rules.
+   *
+   * Avoids object mutation by cloning the original rule item.
+   *
+   * @param {Object} ruleItem - A rule item
+   * @param {string} snsSubscriptionArn
+   *   UUID for event source mapping from SNS topic to messageConsumer Lambda
+   * @returns {Object} - Updated rule item
+   */
   updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
     const updatedRuleItem = cloneDeep(ruleItem);
     if (!snsSubscriptionArn) {
