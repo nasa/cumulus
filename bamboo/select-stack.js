@@ -5,7 +5,7 @@
 const git = require('simple-git');
 
 function determineIntegrationTestStackName(cb) {
-  const branch = process.env.BRANCH
+  const branch = process.env.BRANCH;
 
   if (!branch) return cb('none');
 

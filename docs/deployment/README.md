@@ -275,7 +275,7 @@ dev:                            # deployment name
 
   # Optional, only necessary if Launchpad authentication is used for CMR or CUMULUS API
   launchpad:
-    api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1'
+    api: <launchpad-api-endpoint>   # e.g. https://api.launchpad.nasa.gov/api/sm/v1
     passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
 
   app:                              # Override params to be passed to the app stack ('iam' and 'db' also allowed)

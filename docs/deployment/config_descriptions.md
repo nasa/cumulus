@@ -181,7 +181,7 @@ cmr:
 
 ### launchpad
 
-Cumulus supports Launchpad as authentication provider for CMR authentication and Cumulus API authentication.
+Cumulus supports Launchpad as the authentication provider for CMR authentication and Cumulus API authentication.
 
 To use Launchpad for authentication, ensure your Launchpad Certificate passphrase is included in your `app/.env` file, as noted in the [deployment documentation](./deployment-readme):
 
