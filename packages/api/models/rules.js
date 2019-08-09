@@ -66,47 +66,33 @@ class Rule extends Manager {
     return super.delete({ name: item.name });
   }
 
-  setRuleState(ruleItem, state) {
-    return {
-      ...ruleItem,
-      state
-    };
+  updateRuleState(ruleItem, state) {
+    const updatedRuleItem = cloneDeep(ruleItem);
+    updatedRuleItem.state = state;
+    return updatedRuleItem;
   }
 
-  setRuleValue(ruleItem, type, value) {
-    return {
-      ...ruleItem,
-      rule: {
-        ...ruleItem.rule,
-        type,
-        value
-      }
-    };
+  updateRuleValue(ruleItem, value) {
+    const updatedRuleItem = cloneDeep(ruleItem);
+    updatedRuleItem.rule.value = value;
+    return updatedRuleItem;
   }
 
-  setKinesisRuleArns(ruleItem, ruleArns) {
-    return {
-      ...ruleItem,
-      rule: {
-        ...ruleItem.rule,
-        arn: ruleArns.arn,
-        logEventArn: ruleArns.logEventArn
-      }
-    };
+  updateKinesisRuleArns(ruleItem, ruleArns) {
+    const updatedRuleItem = cloneDeep(ruleItem);
+    updatedRuleItem.rule.arn = ruleArns.arn;
+    updatedRuleItem.rule.logEventArn = ruleArns.logEventArn;
+    return updatedRuleItem;
   }
 
-  setSnsRuleArn(ruleItem, snsSubscriptionArn) {
-    const rule = {
-      type: ruleItem.rule.type,
-      value: ruleItem.rule.value
-    };
-    if (snsSubscriptionArn) {
-      rule.arn = snsSubscriptionArn;
+  updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
+    const updatedRuleItem = cloneDeep(ruleItem);
+    if (!snsSubscriptionArn) {
+      delete updatedRuleItem.rule.arn;
+    } else {
+      updatedRuleItem.rule.arn = snsSubscriptionArn;
     }
-    return {
-      ...ruleItem,
-      rule
-    };
+    return updatedRuleItem;
   }
 
   /**
@@ -118,42 +104,42 @@ class Rule extends Manager {
    */
   async update(original, updates) {
     // Make a copy of the existing rule to preserve existing values
-    const updatedRule = cloneDeep(original);
+    let updatedRuleItem = cloneDeep(original);
 
     const stateChanged = (updates.state && updates.state !== original.state);
     if (stateChanged) {
-      updatedRule.state = updates.state;
+      updatedRuleItem = this.updateRuleState(updatedRuleItem, updates.state);
     }
 
     const valueUpdated = (updates.rule && updates.rule.value);
     if (valueUpdated) {
-      updatedRule.rule.value = updates.rule.value;
+      updatedRuleItem = this.updateRuleValue(updatedRuleItem, updates.rule.value);
     }
 
-    switch (updatedRule.rule.type) {
+    switch (updatedRuleItem.rule.type) {
     case 'scheduled': {
-      const payload = await Rule.buildPayload(updatedRule);
-      await this.addRule(updatedRule, payload);
+      const payload = await Rule.buildPayload(updatedRuleItem);
+      await this.addRule(updatedRuleItem, payload);
       break;
     }
     case 'kinesis':
       if (valueUpdated) {
-        await this.deleteKinesisEventSources(updatedRule);
-        const updatedRuleArns = await this.addKinesisEventSources(updatedRule);
-        updatedRule.rule.arn = updatedRuleArns.arn;
-        updatedRule.rule.logEventArn = updatedRuleArns.logEventArn;
+        await this.deleteKinesisEventSources(updatedRuleItem);
+        const updatedRuleItemArns = await this.addKinesisEventSources(updatedRuleItem);
+        updatedRuleItem = this.updateKinesisRuleArns(updatedRuleItem, updatedRuleItemArns);
       }
       break;
     case 'sns': {
       if (valueUpdated || stateChanged) {
-        if (updatedRule.rule.arn) {
-          await this.deleteSnsTrigger(updatedRule);
-          delete updatedRule.rule.arn;
+        let snsSubscriptionArn;
+        if (updatedRuleItem.rule.arn) {
+          await this.deleteSnsTrigger(updatedRuleItem);
         }
-        if (updatedRule.state === 'ENABLED') {
-          const snsSubscriptionArn = await this.addSnsTrigger(updatedRule);
-          updatedRule.rule.arn = snsSubscriptionArn;
+        if (updatedRuleItem.state === 'ENABLED') {
+          snsSubscriptionArn = await this.addSnsTrigger(updatedRuleItem);
+          updatedRuleItem.rule.arn = snsSubscriptionArn;
         }
+        updatedRuleItem = this.updateSnsRuleArn(updatedRuleItem, snsSubscriptionArn);
       }
       break;
     }
@@ -161,7 +147,7 @@ class Rule extends Manager {
       break;
     }
 
-    return super.update({ name: original.name }, updatedRule);
+    return super.update({ name: original.name }, updatedRuleItem);
   }
 
   static async buildPayload(item) {
@@ -197,35 +183,33 @@ class Rule extends Manager {
     }
 
     // Initialize new rule object
-    let newRule = {
-      ...item
-    };
+    let newRuleItem = cloneDeep(item);
 
     // the default state is 'ENABLED'
     if (!item.state) {
       item.state = 'ENABLED';
-      newRule = this.setRuleState(newRule, 'ENABLED');
+      newRuleItem = this.updateRuleState(newRuleItem, 'ENABLED');
     }
 
-    const payload = await Rule.buildPayload(newRule);
-    switch (newRule.rule.type) {
+    const payload = await Rule.buildPayload(newRuleItem);
+    switch (newRuleItem.rule.type) {
     case 'onetime': {
       await invoke(process.env.invoke, payload);
       break;
     }
     case 'scheduled': {
-      await this.addRule(newRule, payload);
+      await this.addRule(newRuleItem, payload);
       break;
     }
     case 'kinesis': {
-      const ruleArns = await this.addKinesisEventSources(newRule);
-      newRule = this.setKinesisRuleArns(newRule, ruleArns);
+      const ruleArns = await this.addKinesisEventSources(newRuleItem);
+      newRuleItem = this.updateKinesisRuleArns(newRuleItem, ruleArns);
       break;
     }
     case 'sns': {
-      if (newRule.state === 'ENABLED') {
-        const snsSubscriptionArn = await this.addSnsTrigger(newRule);
-        newRule = this.setSnsRuleArn(newRule, snsSubscriptionArn);
+      if (newRuleItem.state === 'ENABLED') {
+        const snsSubscriptionArn = await this.addSnsTrigger(newRuleItem);
+        newRuleItem = this.updateSnsRuleArn(newRuleItem, snsSubscriptionArn);
       }
       break;
     }
@@ -234,7 +218,7 @@ class Rule extends Manager {
     }
 
     // save
-    return super.create(newRule);
+    return super.create(newRuleItem);
   }
 
 
