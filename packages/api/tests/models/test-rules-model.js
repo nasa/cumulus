@@ -2,6 +2,8 @@
 
 const test = require('ava');
 const sinon = require('sinon');
+const cloneDeep = require('lodash.clonedeep');
+
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const models = require('../../models');
@@ -87,15 +89,14 @@ test('create and delete a onetime rule', async (t) => {
 
   // delete rule
   await rulesModel.delete(rule);
+  t.false(await rulesModel.exists(rule));
 });
 
 test('enabling a disabled rule updates the state', async (t) => {
   const { onetimeRule } = t.context;
 
-  const ruleItem = {
-    ...onetimeRule,
-    state: 'DISABLED'
-  };
+  const ruleItem = cloneDeep(onetimeRule);
+  ruleItem.state = 'DISABLED';
 
   const rule = await rulesModel.create(ruleItem);
 
@@ -228,13 +229,8 @@ test.serial('create a kinesis type rule, using existing event source mappings', 
   const { kinesisRule } = t.context;
 
   // create two rules with same value
-  const newKinesisRule = {
-    ...kinesisRule,
-    name: `${kinesisRule.name}_new`,
-    rule: {
-      ...kinesisRule.rule
-    }
-  };
+  const newKinesisRule = cloneDeep(kinesisRule);
+  newKinesisRule.name = `${kinesisRule.name}_new`;
 
   await rulesModel.create(kinesisRule);
   const rule = await rulesModel.get({ name: kinesisRule.name });
@@ -258,21 +254,11 @@ test.serial('it does not delete event source mappings if they exist for other ru
   const { kinesisRule } = t.context;
 
   // we have three rules to create
-  const kinesisRuleTwo = {
-    ...kinesisRule,
-    name: `${kinesisRule.name}_two`,
-    rule: {
-      ...kinesisRule.rule
-    }
-  };
+  const kinesisRuleTwo = cloneDeep(kinesisRule);
+  kinesisRuleTwo.name = `${kinesisRule.name}_two`;
 
-  const kinesisRuleThree = {
-    ...kinesisRule,
-    name: `${kinesisRule.name}_three`,
-    rule: {
-      ...kinesisRule.rule
-    }
-  };
+  const kinesisRuleThree = cloneDeep(kinesisRule);
+  kinesisRuleThree.name = `${kinesisRule.name}_three`;
 
   // create two rules with same value
   await rulesModel.create(kinesisRule);
@@ -348,15 +334,14 @@ test.serial('Creating a kinesis rule where an event source mapping already exist
 test('Creating a rule with a queueName parameter', async (t) => {
   const { onetimeRule } = t.context;
 
-  const ruleItem = {
-    ...onetimeRule,
-    queueName: 'testQueue'
-  };
+  const ruleItem = cloneDeep(onetimeRule);
+  ruleItem.queueName = 'testQueue';
 
   const response = await rulesModel.create(ruleItem);
 
   const payload = await models.Rule.buildPayload(ruleItem);
 
+  t.truthy(response.queueName);
   t.is(response.queueName, ruleItem.queueName);
   t.is(payload.queueName, ruleItem.queueName);
 });
