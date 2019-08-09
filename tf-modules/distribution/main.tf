@@ -11,7 +11,7 @@ resource "aws_s3_bucket_object" "bucket_map_yaml" {
 }
 
 resource "aws_secretsmanager_secret" "thin_egress_urs_creds" {
-  name        = "${var.prefix}-tea-urs-creds"
+  name_prefix = "${var.prefix}-tea-urs-creds-"
   description = "URS credentials for the ${var.prefix} Thin Egress App"
 }
 
