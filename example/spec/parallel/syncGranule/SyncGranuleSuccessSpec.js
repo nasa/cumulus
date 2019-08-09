@@ -9,11 +9,10 @@ const {
   cleanupCollections,
   granulesApi: granulesApiTestUtils,
   LambdaStep,
-  waitUntilGranuleStatusIs,
   waitForTestExecutionStart,
   waitForCompletedExecution
 } = require('@cumulus/integration-tests');
-const { Collection, Execution } = require('@cumulus/api/models');
+const { Collection, Execution, Granule } = require('@cumulus/api/models');
 const {
   aws: {
     s3,
@@ -43,6 +42,9 @@ const { waitForModelStatus } = require('../../helpers/apiUtils');
 const config = loadConfig();
 const lambdaStep = new LambdaStep();
 const workflowName = 'SyncGranule';
+
+process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+const granuleModel = new Granule();
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
@@ -269,7 +271,12 @@ describe('The Sync Granules workflow', () => {
         expect(f.duplicate_found).toBe(true);
       });
 
-      await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
+      await waitForModelStatus(
+        granuleModel,
+        { granuleId: inputPayload.granules[0].granuleId },
+        'completed'
+      );
+
       const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
