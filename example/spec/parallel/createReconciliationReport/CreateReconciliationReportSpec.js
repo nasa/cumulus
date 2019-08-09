@@ -14,12 +14,10 @@ const {
   bucketsConfigJsonObject,
   constructCollectionId,
   testUtils: {
-    randomString,
-    randomStringFromRegex
+    randomString
   }
 } = require('@cumulus/common');
 
-const { CMR } = require('@cumulus/cmrjs');
 const { Granule } = require('@cumulus/api/models');
 const {
   addCollections,
@@ -27,7 +25,6 @@ const {
   buildAndExecuteWorkflow,
   cleanupCollections,
   cleanupProviders,
-  generateCmrXml,
   granulesApi: granulesApiTestUtils,
   waitForConceptExistsOutcome
 } = require('@cumulus/integration-tests');
@@ -59,8 +56,6 @@ const config = loadConfig();
 process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
 process.env.GranulesTable = `${config.stackName}-GranulesTable`;
 const granuleModel = new Granule();
-
-const cmr = new CMR(config.cmr.provider, config.cmr.clientId, config.cmr.username, config.cmr.password);
 
 async function findProtectedBucket(systemBucket, stackName) {
   const bucketsConfig = new BucketsConfig(await bucketsConfigJsonObject(systemBucket, stackName));
@@ -127,13 +122,20 @@ async function ingestAndPublishGranule(testSuffix, testDataFolder, publish = tru
   return inputPayload.granules[0].granuleId;
 }
 
-// ingest a granule xml to CMR
-async function ingestGranuleToCMR() {
-  const granuleId = randomStringFromRegex(granuleRegex);
+// ingest a granule to CMR and remove it from database
+// return granule object retrieved from database
+async function ingestGranuleToCMR(testSuffix, testDataFolder) {
+  const granuleId = await ingestAndPublishGranule(testSuffix, testDataFolder, true);
+
+  const response = await granulesApiTestUtils.getGranule({
+    prefix: config.stackName,
+    granuleId
+  });
+  const granule = JSON.parse(response.body);
+
+  await granuleModel.delete({ granuleId });
   console.log(`\ningestGranuleToCMR granule id: ${granuleId}`);
-  const xml = generateCmrXml({ granuleId }, collection);
-  await cmr.ingestGranule(xml);
-  return granuleId;
+  return granule;
 }
 
 // update granule file which matches the regex
@@ -165,9 +167,11 @@ describe('When there are granule differences and granule reconciliation is run',
   let testSuffix;
 
   process.env.CMR_ENVIRONMENT = 'UAT';
-  // granuleIds of the granules in both Cumulus and CMR, only in Cumulus, only in CMR
-  let publishedGranule;
-  let dbGranule;
+  // granuleIds of the granules in both Cumulus and CMR, only in Cumulus
+  let publishedGranuleId;
+  let dbGranuleId;
+
+  // granule only in CMR
   let cmrGranule;
 
   // the original file and updated file object of granule files being updated
@@ -222,18 +226,18 @@ describe('When there are granule differences and granule reconciliation is run',
       ingestAndPublishGranule(testSuffix, testDataFolder, false),
 
       // ingest a granule to CMR only
-      ingestGranuleToCMR()
+      ingestGranuleToCMR(testSuffix, testDataFolder)
     ]);
 
-    [publishedGranule, dbGranule, cmrGranule] = ingestResults;
+    [publishedGranuleId, dbGranuleId, cmrGranule] = ingestResults;
 
     // update one of the granule files in database so that that file won't match with CMR
     const granuleResponse = await granulesApiTestUtils.getGranule({
       prefix: config.stackName,
-      granuleId: publishedGranule
+      granuleId: publishedGranuleId
     });
 
-    ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranule, JSON.parse(granuleResponse.body).files, /jpg$/, 'jpg2'));
+    ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, JSON.parse(granuleResponse.body).files, /jpg$/, 'jpg2'));
 
     console.log(`invoke ${config.stackName}-CreateReconciliationReport`);
 
@@ -248,8 +252,8 @@ describe('When there are granule differences and granule reconciliation is run',
     }).promise()
       .then((response) => JSON.parse(response.Body.toString()));
 
-    console.log(`update granule files back ${publishedGranule}`);
-    await granuleModel.update({ granuleId: publishedGranule }, { files: JSON.parse(granuleResponse.body).files });
+    console.log(`update granule files back ${publishedGranuleId}`);
+    await granuleModel.update({ granuleId: publishedGranuleId }, { files: JSON.parse(granuleResponse.body).files });
   });
 
   it('generates a report showing cumulus files that are in S3 but not in the DynamoDB Files table', () => {
@@ -288,16 +292,16 @@ describe('When there are granule differences and granule reconciliation is run',
   it('generates a report showing granules that are in the Cumulus but not in CMR', () => {
     // ingested (not published) granule should only in Cumulus
     const cumulusGranuleIds = report.granulesInCumulusCmr.onlyInCumulus.map((gran) => gran.granuleId);
-    expect(cumulusGranuleIds).toContain(dbGranule);
-    expect(cumulusGranuleIds).not.toContain(publishedGranule);
+    expect(cumulusGranuleIds).toContain(dbGranuleId);
+    expect(cumulusGranuleIds).not.toContain(publishedGranuleId);
   });
 
   it('generates a report showing granules that are in the CMR but not in Cumulus', () => {
     const cmrGranuleIds = report.granulesInCumulusCmr.onlyInCmr.map((gran) => gran.GranuleUR);
     expect(cmrGranuleIds.length).toBeGreaterThanOrEqual(1);
-    expect(cmrGranuleIds).toContain(cmrGranule);
-    expect(cmrGranuleIds).not.toContain(dbGranule);
-    expect(cmrGranuleIds).not.toContain(publishedGranule);
+    expect(cmrGranuleIds).toContain(cmrGranule.granuleId);
+    expect(cmrGranuleIds).not.toContain(dbGranuleId);
+    expect(cmrGranuleIds).not.toContain(publishedGranuleId);
   });
 
   it('generates a report showing number of granule files that are in both Cumulus and CMR', () => {
@@ -310,7 +314,7 @@ describe('When there are granule differences and granule reconciliation is run',
     const fileNames = report.filesInCumulusCmr.onlyInCumulus.map((file) => file.fileName);
     expect(fileNames).toContain(updatedGranuleFile.fileName);
     expect(fileNames).not.toContain(originalGranuleFile.fileName);
-    expect(report.filesInCumulusCmr.onlyInCumulus.filter((file) => file.granuleId === publishedGranule).length)
+    expect(report.filesInCumulusCmr.onlyInCumulus.filter((file) => file.granuleId === publishedGranuleId).length)
       .toBe(1);
   });
 
@@ -320,7 +324,7 @@ describe('When there are granule differences and granule reconciliation is run',
     expect(urls.find((url) => url.URL.endsWith(updatedGranuleFile.fileName))).toBeFalsy();
     // TBD update to 1 after the s3credentials url has type 'VIEW RELATED INFORMATION' (CUMULUS-1182)
     // Cumulus 670 has a fix for the issue noted above from 1182.  Setting to 1.
-    expect(report.filesInCumulusCmr.onlyInCmr.filter((file) => file.GranuleUR === publishedGranule).length)
+    expect(report.filesInCumulusCmr.onlyInCmr.filter((file) => file.GranuleUR === publishedGranuleId).length)
       .toBe(1);
   });
 
@@ -345,17 +349,21 @@ describe('When there are granule differences and granule reconciliation is run',
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranule }),
-      cmr.deleteGranule(cmrGranule)
+      granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: dbGranuleId })
     ]);
+
+    // need to add the cmr granule back to the table, so the granule can be removed from api
+    await granuleModel.create(cmrGranule);
+    await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: cmrGranule.granuleId });
+    await waitForConceptExistsOutcome(cmrGranule.cmrLink, false);
+    await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: cmrGranule.granuleId });
 
     const granuleResponse = await granulesApiTestUtils.getGranule({
       prefix: config.stackName,
-      granuleId: publishedGranule
+      granuleId: publishedGranuleId
     });
-
-    await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: publishedGranule });
+    await granulesApiTestUtils.removeFromCMR({ prefix: config.stackName, granuleId: publishedGranuleId });
     await waitForConceptExistsOutcome(JSON.parse(granuleResponse.body).cmrLink, false);
-    await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: publishedGranule });
+    await granulesApiTestUtils.deleteGranule({ prefix: config.stackName, granuleId: publishedGranuleId });
   });
 });

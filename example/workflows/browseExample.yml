@@ -179,6 +179,7 @@ CookbookBrowseExample:
         bucket: '{$.meta.buckets.internal.name}'
         stack: '{$.meta.stack}'
         cmr: '{$.meta.cmr}'
+        launchpad: '{$.meta.launchpad}'
         process: '{$.cumulus_meta.process}'
         input_granules: '{$.meta.input_granules}'
         granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
