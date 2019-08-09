@@ -151,9 +151,7 @@ describe('When the Ingest Granules workflow is configured\n', () => {
           expect(renamedFiles[0].size).toEqual(expectedRenamedFileSize);
         });
 
-        // Tried test with the waitFor, but still need to figure out why it's not working
-        // Will come back to this one
-        xit('captures both files', async () => {
+        it('captures both files', async () => {
           const record = await waitForModelStatus(
             granuleModel,
             { granuleId: inputPayload.granules[0].granuleId },
@@ -161,10 +159,11 @@ describe('When the Ingest Granules workflow is configured\n', () => {
           );
           expect(record.status).toEqual('completed');
 
-          const granule = await granulesApiTestUtils.getGranule({
+          const granuleResponse = await granulesApiTestUtils.getGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId
           });
+          const granule = JSON.parse(granuleResponse.body);
           expect(granule.files.length).toEqual(5);
         });
       });
