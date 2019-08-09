@@ -3,7 +3,7 @@
 const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
-const LaunchpadToken = require('@cumulus/common/LaunchpadToken');
+const launchpad = require('@cumulus/common/launchpad');
 const { randomString } = require('@cumulus/common/test-utils');
 const EsCollection = require('../es/collections');
 const models = require('../models');
@@ -17,7 +17,6 @@ const { app } = require('../app');
 
 const validateTokenResponse = {
   owner_auid: randomString(),
-  owner_groups: ['cn=GSFC-Cumulus,ou=252397,ou=ROLES,ou=Groups'],
   session_maxtimeout: 3600,
   session_starttime: 1564067402,
   status: 'success'
@@ -34,7 +33,7 @@ test.after.always(async () => {
 });
 
 test.serial('API request with an valid token stores the access token', async (t) => {
-  const stub = sinon.stub(LaunchpadToken.prototype, 'validateToken').returns(validateTokenResponse);
+  const stub = sinon.stub(launchpad, 'validateLaunchpadToken').returns(validateTokenResponse);
   const collectionStub = sinon.stub(EsCollection.prototype, 'query').returns([]);
 
   await request(app)
@@ -50,7 +49,13 @@ test.serial('API request with an valid token stores the access token', async (t)
 });
 
 test.serial('API request with an invalid token returns an unauthorized response', async (t) => {
-  const stub = sinon.stub(LaunchpadToken.prototype, 'validateToken').returns({ status: 'failed' });
+  const tokenResponse = {
+    message: 'Invalid access token',
+    status: 'failed'
+  };
+
+  const stub = sinon.stub(launchpad, 'validateLaunchpadToken')
+    .resolves(tokenResponse);
 
   const response = await request(app)
     .get('/collections')
@@ -63,7 +68,7 @@ test.serial('API request with an invalid token returns an unauthorized response'
 });
 
 test.serial('API request with a stored non-expired token returns a successful response', async (t) => {
-  const stub = sinon.stub(LaunchpadToken.prototype, 'validateToken').returns(validateTokenResponse);
+  const stub = sinon.stub(launchpad, 'validateLaunchpadToken').resolves(validateTokenResponse);
   const collectionStub = sinon.stub(EsCollection.prototype, 'query').returns([]);
 
   await request(app)
@@ -90,11 +95,13 @@ test.serial('API request with a stored non-expired token returns a successful re
 
 test.serial('API request with a stored expired token returns an expired response', async (t) => {
   const tokenResponse = {
+    owner_auid: randomString(),
     session_maxtimeout: 0,
-    status: 'success',
-    owner_groups: ['cn=GSFC-Cumulus,ou=252397,ou=ROLES,ou=Groups']
+    session_starttime: 1564067402,
+    status: 'success'
   };
-  const stub = sinon.stub(LaunchpadToken.prototype, 'validateToken').returns(tokenResponse);
+
+  const stub = sinon.stub(launchpad, 'validateLaunchpadToken').resolves(tokenResponse);
   const collectionStub = sinon.stub(EsCollection.prototype, 'query').returns([]);
 
   await request(app)
@@ -119,11 +126,11 @@ test.serial('API request with a stored expired token returns an expired response
 
 test.serial('Request returns an unauthorized response when validation response does not contain user group', async (t) => {
   const tokenResponse = {
-    session_maxtimeout: 3600,
-    status: 'success',
-    owner_groups: ['cn=NotCorrectGroup,ou=252397,ou=ROLES,ou=Groups']
+    message: 'User not authorized',
+    status: 'failed'
   };
-  const stub = sinon.stub(LaunchpadToken.prototype, 'validateToken').returns(tokenResponse);
+
+  const stub = sinon.stub(launchpad, 'validateLaunchpadToken').resolves(tokenResponse);
 
   const response = await request(app)
     .get('/collections')

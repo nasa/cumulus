@@ -1,18 +1,9 @@
 
 'use strict';
 
-const LaunchpadToken = require('@cumulus/common/LaunchpadToken');
+const launchpad = require('@cumulus/common/launchpad');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const { AccessToken } = require('../models');
-
-function checkUserGroups(userGroups) {
-  const cumulusGroup = process.env.cumulusUserGroup;
-  let included;
-  userGroups.forEach((group) => {
-    if (group.includes(cumulusGroup)) included = true;
-  });
-  return included;
-}
 
 /**
  * An express middleware that checks if an incoming express
@@ -62,23 +53,20 @@ async function ensureAuthorized(req, res, next) {
         certificate: process.env.launchpad_certificate
       };
 
-      const launchpadToken = new LaunchpadToken(config);
-      const verifyResponse = await launchpadToken.validateToken(token);
+      const userGroup = process.env.oauth_user_group;
+      const verifyResponse = await launchpad.validateLaunchpadToken(config, token, userGroup);
 
       if (verifyResponse.status === 'success') {
-        if (checkUserGroups(verifyResponse.owner_groups)) {
-          await access.create({
-            accessToken: token,
-            expirationTime: Date.now() + (verifyResponse.session_maxtimeout * 1000),
-            username: verifyResponse.owner_auid
-          });
+        await access.create({
+          accessToken: token,
+          expirationTime: Date.now() + (verifyResponse.session_maxtimeout * 1000),
+          username: verifyResponse.owner_auid
+        });
 
-          req.authorizedMetadata = { userName: verifyResponse.owner_auid };
-          return next();
-        }
-        return res.boom.forbidden('User not authorized');
+        req.authorizedMetadata = { userName: verifyResponse.owner_auid };
+        return next();
       }
-      return res.boom.forbidden('Invalid access token');
+      return res.boom.forbidden(verifyResponse.message);
     }
   }
   return res.boom.unauthorized('User not authorized');
