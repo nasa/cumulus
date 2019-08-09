@@ -79,7 +79,8 @@ default:
         value: '{{DOCKER_EMAIL}}'
       - name: DockerPassword
         value: '{{DOCKER_PASS}}'
-
+      - name: LaunchpadPassphrase
+        value: '{{LAUNCHPAD_PASSPHRASE}}'
 
 
   vpc:
@@ -274,6 +275,16 @@ cumulus-from-npm:
 cumulus-from-source:
   prefix: test-src-integration # used by the cumulus repo
   prefixNoDash: TestSourceIntegration
+  app:
+    params:
+      - name: CmrPassword
+        value: CmrNoPassword
+      - name: DockerEmail
+        value: '{{DOCKER_EMAIL}}'
+      - name: DockerPassword
+        value: '{{DOCKER_PASS}}'
+      - name: LaunchpadPassphrase
+        value: '{{LAUNCHPAD_PASSPHRASE}}'
   ems:
     provider: CUMULUS
     host: fs1.ems.eosdis.nasa.gov
@@ -281,6 +292,13 @@ cumulus-from-source:
     username: cumulus
     dataSource: UAT
     submitReport: true
+  cmr:
+    oauthProvider: launchpad
+    username: CmrUserNotUsed
+    password: CmrPasswordNotUsed
+  launchpad:
+    api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1'
+    passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
 
 cumulus-from-pr:
   prefix: test-pr-integration # used by the PR
@@ -504,6 +522,16 @@ jl:
     shared-2:
       name: rvl-internal
       type: shared
+  app:
+    params:
+      - name: CmrPassword
+        value: CmrNoPassword
+      - name: DockerEmail
+        value: '{{DOCKER_EMAIL}}'
+      - name: DockerPassword
+        value: '{{DOCKER_PASS}}'
+      - name: LaunchpadPassphrase
+        value: '{{LAUNCHPAD_PASSPHRASE}}'
   ecs:
     ssh: true
     keyPairName: jl
@@ -515,7 +543,13 @@ jl:
     dataSource: UAT
     submitReport: true
     retentionInDays: 20
-
+  cmr:
+    oauthProvider: launchpad
+    username: CmrUserNotUsed
+    password: CmrPasswordNotUsed
+  launchpad:
+    api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1'
+    passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
 
 gitc:
   prefix: {{PREFIX}}
