@@ -1,6 +1,6 @@
 locals {
-  thin_egress_stack_name     = "${var.prefix}-thin-egress-app"
-  lambda_log_group_name      = "/aws/lambda/${local.thin_egress_stack_name}-EgressLambda"
+  thin_egress_stack_name = "${var.prefix}-thin-egress-app"
+  lambda_log_group_name  = "/aws/lambda/${local.thin_egress_stack_name}-EgressLambda"
 }
 
 resource "aws_s3_bucket_object" "bucket_map_yaml" {
@@ -11,7 +11,7 @@ resource "aws_s3_bucket_object" "bucket_map_yaml" {
 }
 
 resource "aws_secretsmanager_secret" "thin_egress_urs_creds" {
-  name        = "${var.prefix}-tea-urs-creds"
+  name_prefix = "${var.prefix}-tea-urs-creds-"
   description = "URS credentials for the ${var.prefix} Thin Egress App"
 }
 
@@ -216,6 +216,7 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
 resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscription_filter" {
   count           = var.log_destination_arn != null && var.log_api_gateway_to_cloudwatch ? 1 : 0
   name            = "${var.prefix}-EgressApiGatewayCloudWatchLogSubscriptionToSharedDestination"
+  distribution    = "ByLogStream"
   destination_arn = var.log_destination_arn
   filter_pattern  = ""
   log_group_name  = module.thin_egress_app.egress_log_group
@@ -230,25 +231,11 @@ resource "aws_cloudwatch_log_group" "egress_lambda_log_group" {
 
 # Egress Lambda Log Group Filter
 resource "aws_cloudwatch_log_subscription_filter" "egress_lambda_log_subscription_filter" {
-  depends_on      = [ aws_cloudwatch_log_group.egress_lambda_log_group ]
+  depends_on      = [aws_cloudwatch_log_group.egress_lambda_log_group]
   count           = var.log_destination_arn == null ? 0 : 1
   name            = "${var.prefix}-EgressLambdaLogSubscriptionToSharedDestination"
   destination_arn = var.log_destination_arn
+  distribution    = "ByLogStream"
   filter_pattern  = ""
   log_group_name  = local.lambda_log_group_name
-}
-
-module "s3-replicator" {
-  source = "../s3-replicator"
-
-  prefix               = var.prefix
-  permissions_boundary = var.permissions_boundary_arn
-
-  vpc_id     = var.vpc_id
-  subnet_ids = var.subnet_ids
-
-  source_bucket = var.s3_replicator_config.source_bucket
-  source_prefix = var.s3_replicator_config.source_prefix
-  target_bucket = var.s3_replicator_config.target_bucket
-  target_prefix = var.s3_replicator_config.target_prefix
 }

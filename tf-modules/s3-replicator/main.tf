@@ -25,12 +25,12 @@ resource "aws_security_group" "s3_replicator_lambda" {
 }
 
 resource "aws_lambda_function" "s3_replicator" {
-  filename         = data.archive_file.replicator_package.output_path
-  function_name    = "${var.prefix}-s3-replicator"
-  role             = "${aws_iam_role.replicator_lambda_role.arn}"
-  handler          = "index.handler"
-  runtime          = "nodejs10.x"
-  timeout          = 300
+  filename      = data.archive_file.replicator_package.output_path
+  function_name = "${var.prefix}-s3-replicator"
+  role          = "${aws_iam_role.replicator_lambda_role.arn}"
+  handler       = "index.handler"
+  runtime       = "nodejs10.x"
+  timeout       = 300
 
   source_code_hash = "${data.archive_file.replicator_package.output_base64sha256}"
 
@@ -48,9 +48,9 @@ resource "aws_lambda_function" "s3_replicator" {
 }
 
 resource "aws_lambda_permission" "s3_replicator_permission" {
-  action = "lambda:InvokeFunction"
+  action        = "lambda:InvokeFunction"
   function_name = "${aws_lambda_function.s3_replicator.arn}"
-  principal = "s3.amazonaws.com"
+  principal     = "s3.amazonaws.com"
 }
 
 resource "aws_s3_bucket_notification" "s3_replicator_trigger" {

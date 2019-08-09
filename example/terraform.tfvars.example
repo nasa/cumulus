@@ -15,7 +15,7 @@ log_destination_arn           = "arn:aws:logs:us-east-1:123456789012:destination
 # S3-replicator variables
 s3_replicator_config = {
   source_bucket = "some-bucket"
-  source_prefix = "some-prefix" # Optional
+  source_prefix = "some-prefix" # May be an empty string.
   target_bucket = "target-bucket"
-  target_prefix = "target-prefix" # Optional
+  target_prefix = "target-prefix" # May be an empty string.
 }
