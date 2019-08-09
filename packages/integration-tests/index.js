@@ -341,9 +341,9 @@ function addCustomUrlPathToCollectionFiles(collection, customFilePath) {
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} dataDirectory - the directory of collection json files
- * @param {string} postfix - string to append to collection name
- * @param {string} customFilePath
- * @param {boolean} duplicateHandling
+ * @param {string} [postfix] - string to append to collection name
+ * @param {string} [customFilePath]
+ * @param {string} [duplicateHandling]
  * @returns {Promise.<number>} number of collections added
  */
 async function addCollections(stackName, bucketName, dataDirectory, postfix,
@@ -682,11 +682,9 @@ async function buildWorkflow(
   setProcessEnvironment(stackName, bucketName);
 
   const template = await getWorkflowTemplate(stackName, bucketName, workflowName);
+  const { name, version } = collection || {};
   const collectionInfo = collection
-    ? await new Collection().get({
-      name: collection.name,
-      version: collection.version
-    })
+    ? await new Collection().get({ name, version })
     : {};
   const providerInfo = provider
     ? await new Provider().get({ id: provider.id })
