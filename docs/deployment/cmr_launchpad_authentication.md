@@ -9,7 +9,7 @@ Cumulus publishes granules to CMR.  CMR uses Earthdata Login system or Launchpad
 
 ## Set up CMR Client
 
-Steps for setting up the CMR Client to use Launchpad authentication can be found [CMR Launchpad Authentication] [https://wiki.earthdata.nasa.gov/display/CUMULUS/CMR+Launchpad+Authentication]
+Steps for setting up the CMR Client to use Launchpad authentication can be found at [CMR Launchpad Authentication](https://wiki.earthdata.nasa.gov/display/CUMULUS/CMR+Launchpad+Authentication) wiki page.
 
 ## CUMULUS Configuration
 
