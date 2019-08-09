@@ -246,6 +246,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       postToCmrOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
       if (postToCmrOutput === null) {
         beforeAllError = new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
+        return;
       }
 
       try {

@@ -329,6 +329,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
       if (postToCmrOutput === null) {
         beforeAllError = new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
+        return;
       }
 
       try {
