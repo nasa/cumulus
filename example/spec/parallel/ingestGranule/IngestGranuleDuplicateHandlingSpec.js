@@ -151,8 +151,6 @@ describe('When the Ingest Granules workflow is configured\n', () => {
           expect(renamedFiles[0].size).toEqual(expectedRenamedFileSize);
         });
 
-        // Tried test with the waitFor, but still need to figure out why it's not working
-        // Will come back to this one
         it('captures both files', async () => {
           const record = await waitForModelStatus(
             granuleModel,
