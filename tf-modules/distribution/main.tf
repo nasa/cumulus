@@ -216,6 +216,7 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
 resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscription_filter" {
   count           = var.log_destination_arn != null && var.log_api_gateway_to_cloudwatch ? 1 : 0
   name            = "${var.prefix}-EgressApiGatewayCloudWatchLogSubscriptionToSharedDestination"
+  distribution    = "ByLogStream"
   destination_arn = var.log_destination_arn
   filter_pattern  = ""
   log_group_name  = module.thin_egress_app.egress_log_group
@@ -234,6 +235,7 @@ resource "aws_cloudwatch_log_subscription_filter" "egress_lambda_log_subscriptio
   count           = var.log_destination_arn == null ? 0 : 1
   name            = "${var.prefix}-EgressLambdaLogSubscriptionToSharedDestination"
   destination_arn = var.log_destination_arn
+  distribution    = "ByLogStream"
   filter_pattern  = ""
   log_group_name  = local.lambda_log_group_name
 }
