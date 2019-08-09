@@ -1,5 +1,5 @@
 provider "aws" {
-  region = var.region
+  region  = var.region
   profile = var.aws_profile
 }
 
@@ -31,10 +31,10 @@ module "distribution" {
 module "s3-replicator" {
   source = "../tf-modules/s3-replicator"
 
-  prefix = var.prefix
+  prefix               = var.prefix
   permissions_boundary = var.permissions_boundary_arn
 
-  vpc_id = var.vpc_id
+  vpc_id     = var.vpc_id
   subnet_ids = var.subnet_ids
 
   source_bucket = var.s3_replicator_config.source_bucket

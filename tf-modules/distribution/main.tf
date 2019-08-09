@@ -1,6 +1,6 @@
 locals {
-  thin_egress_stack_name     = "${var.prefix}-thin-egress-app"
-  lambda_log_group_name      = "/aws/lambda/${local.thin_egress_stack_name}-EgressLambda"
+  thin_egress_stack_name = "${var.prefix}-thin-egress-app"
+  lambda_log_group_name  = "/aws/lambda/${local.thin_egress_stack_name}-EgressLambda"
 }
 
 resource "aws_s3_bucket_object" "bucket_map_yaml" {
@@ -230,7 +230,7 @@ resource "aws_cloudwatch_log_group" "egress_lambda_log_group" {
 
 # Egress Lambda Log Group Filter
 resource "aws_cloudwatch_log_subscription_filter" "egress_lambda_log_subscription_filter" {
-  depends_on      = [ aws_cloudwatch_log_group.egress_lambda_log_group ]
+  depends_on      = [aws_cloudwatch_log_group.egress_lambda_log_group]
   count           = var.log_destination_arn == null ? 0 : 1
   name            = "${var.prefix}-EgressLambdaLogSubscriptionToSharedDestination"
   destination_arn = var.log_destination_arn
