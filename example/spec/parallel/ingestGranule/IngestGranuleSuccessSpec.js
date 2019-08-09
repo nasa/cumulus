@@ -37,7 +37,6 @@ const {
   getOnlineResources,
   granulesApi: granulesApiTestUtils,
   waitForConceptExistsOutcome,
-  waitUntilGranuleStatusIs,
   waitForTestExecutionStart,
   waitForCompletedExecution,
   EarthdataLogin: { getEarthdataAccessToken },
@@ -592,7 +591,12 @@ describe('The S3 Ingest Granules workflow', () => {
           const nonCmrFiles = moveGranuleOutputFiles.filter((f) => !f.filename.endsWith('.cmr.xml'));
           nonCmrFiles.forEach((f) => expect(f.duplicate_found).toBe(true));
 
-          await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
+          await waitForModelStatus(
+            granuleModel,
+            { granuleId: inputPayload.granules[0].granuleId },
+            'completed'
+          );
+
           const updatedGranuleResponse = await granulesApiTestUtils.getGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId

@@ -39,7 +39,6 @@ const EarthdataLogin = require('./api/EarthdataLogin');
 const distributionApi = require('./api/distribution');
 const cmr = require('./cmr.js');
 const lambda = require('./lambda');
-const granule = require('./granule.js');
 const waitForDeployment = require('./lambdas/waitForDeployment');
 
 const waitPeriodMs = 1000;
@@ -870,7 +869,6 @@ module.exports = {
   getLambdaAliases: lambda.getLambdaAliases,
   getEventSourceMapping: lambda.getEventSourceMapping,
   waitForConceptExistsOutcome: cmr.waitForConceptExistsOutcome,
-  waitUntilGranuleStatusIs: granule.waitUntilGranuleStatusIs,
   getExecutions,
   waitForDeploymentHandler: waitForDeployment.handler,
   getProviderHost,
