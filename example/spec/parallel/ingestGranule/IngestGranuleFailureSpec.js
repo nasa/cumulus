@@ -13,6 +13,9 @@ const {
 } = require('@cumulus/integration-tests');
 
 const {
+  waitForModelStatus
+} = require('../../helpers/apiUtils');
+const {
   loadConfig,
   uploadTestDataToBucket,
   deleteFolder,
@@ -166,6 +169,12 @@ describe('The Ingest Granule failure workflow', () => {
     });
 
     it('fails the granule with the error message', async () => {
+      await waitForModelStatus(
+        granuleModel,
+        { granuleId: inputPayload.granules[0].granuleId },
+        'completed'
+      );
+
       const granuleResponse = await granulesApiTestUtils.getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
