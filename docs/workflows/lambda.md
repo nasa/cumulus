@@ -8,7 +8,7 @@ hide_title: true
 
 ## Develop a new Lambda
 
-To develop a new lambda from a sample, create a new folder in `cumulus/tasks/` and run `npm init`:
+To develop a new Lambda from a sample, create a new folder in `cumulus/tasks/` and run `npm init`:
 
 ```bash
   $ cd ../cumulus/tasks
@@ -17,7 +17,7 @@ To develop a new lambda from a sample, create a new folder in `cumulus/tasks/` a
   $ npm init
 ```
 
-Or copy an existing lambda function to customize:
+Or copy an existing Lambda function to customize:
 
 ```bash
   $ cd ../cumulus/tasks
@@ -34,7 +34,7 @@ Modify package.json:
 
 ## Build a Lambda
 
-To build Node.js lambda functions, use webpack to pack the Lambda code into a single `.js` file with dependencies:
+To build Node.js Lambda functions, use webpack to pack the Lambda code into a single `.js` file with dependencies:
 
 ```bash
   $ npm run build
@@ -46,11 +46,11 @@ Alternatively, to monitor for changes and auto-rebuild:
   $ npm run watch
 ```
 
-For non-node lambdas not included in Cumulus repo, upload .zip to s3 and modify lambdas.yml as previously shown.
+For non-node Lambdas not included in Cumulus repo, upload .zip to s3 and modify lambdas.yml as previously shown.
 
 ## Deploy a Lambda
 
-For new Node.js lambdas, update `<daac>-deploy/lambdas.yml` by adding a new entry.
+For new Node.js Lambdas, update `<daac>-deploy/lambdas.yml` by adding a new entry.
 
 ```yaml
     <LambdaName>:                                   # eg:  LambdaSample (does not need to conform to dirname)
@@ -59,7 +59,7 @@ For new Node.js lambdas, update `<daac>-deploy/lambdas.yml` by adding a new entr
       source: 'node_modules/@cumulus/<dir>/dist/'   # eg:  '../cumulus/cumulus/tasks/sample-lambda/dist/index.js'
 ```
 
-For non-Node.js lambda code (e.g. python) uploaded as a .zip to an S3 bucket:
+For non-Node.js Lambda code (e.g. python) uploaded as a .zip to an S3 bucket:
 
 ```yaml
   PyLambda:
@@ -69,6 +69,8 @@ For non-Node.js lambda code (e.g. python) uploaded as a .zip to an S3 bucket:
       bucket: '{{buckets.internal.name}}'       # refers to bucket set in config.yml
       key: deploy/cumulus-process/<dir>/<file>  # eg: deploy/cumulus-process/modis/0.3.0b3.zip
     runtime: python2.7                          # Node is default, otherwise specify.
+    layers:
+      - <some layer ARN>
 ```
 
 Other configurable options for Lambdas:
@@ -77,10 +79,10 @@ Other configurable options for Lambdas:
   useXray: true             # Enable AWS X-Ray for the Lambda
   launchInVpc: true         # Launch the Lambda in a VPC. Requires VPC configuration for the deployment.
   logToElasticSearch: true  # Write Lambda execution logs to Elasticsearch.
-  useMessageAdapter: true   # necessary if this Lambda is included as part of a Cumulus workflow
+  useMessageAdapter: true   # Option to add/inject CMA as part of a cumulus workflow.  The CMA layer may be used instead
   envs:                     # Add named environment variables for your Lambda.
     - foo: 'bar'
-  layers:                   # Optional to use Lambda Layers
+  layers:                   # Optional. e.g.: 'arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:3'
     - <layer1-arn>
 ```
 
@@ -90,7 +92,7 @@ To deploy all changes to `/tasks/` and `lambdas.yml`:
   $ kes cf deploy --kes-folder app --template node_modules/@cumulus/deployment/app --region <region> --deployment <deployment-name>
 ```
 
-To deploy modifications to a single lambda package:
+To deploy modifications to a single Lambda package:
 
 ```bash
   $ kes lambda <LambdaName> --kes-folder app --template node_modules/@cumulus/deployment/app --deployment <deployment-name>
