@@ -203,8 +203,6 @@ default:
     clientId: 'cumulus-core-{{prefix}}'
     password: '{{CMR_PASSWORD}}'
 
-  oauthProvider: 'earthdata'
-
   ems:
     provider: CUMULUS
 
@@ -455,12 +453,7 @@ kk:
   prefix: kk-test
   prefixNoDash: KkTest
   esHost: https://search-kk-test-es5-bk24w6blilunzp4fc4ma3xwtqu.us-east-1.es.amazonaws.com
-  oauthProvider: 'launchpad'
-  cumulusUserGroup: 'GSFC-Cumulus-Dev'
   system_bucket: '{{prefix}}-internal'
-  launchpad:
-    api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1'
-    passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
   buckets:
     internal:
       name: '{{prefix}}-internal'
@@ -477,6 +470,16 @@ kk:
   ecs:
     ssh: true
     keyPairName: kakelly2-cumulus-sandbox
+  cmr:
+    oauthProvider: launchpad
+    username: CmrUserNotUsed
+    password: CmrPasswordNotUsed
+  launchpad:
+    api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1'
+    passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
+  oauth:
+    provider: launchpad
+    userGroup: GSFC-Cumulus-Dev
 
 kk-int-test:
   prefix: kk-int-test
@@ -557,6 +560,9 @@ jl:
   launchpad:
     api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1'
     passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
+  oauth:
+    provider: launchpad
+    userGroup: GSFC-Cumulus-Dev
 
 gitc:
   prefix: {{PREFIX}}
