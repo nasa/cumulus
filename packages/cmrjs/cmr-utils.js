@@ -18,8 +18,9 @@ const {
 } = require('@cumulus/common');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const { deprecate, omit } = require('@cumulus/common/util');
+const { getLaunchpadToken } = require('@cumulus/common/launchpad');
 
-const { CMR } = require('./cmr');
+const { CMR } = require('@cumulus/cmr-client');
 const {
   getUrl,
   xmlParseOptions,
@@ -86,26 +87,39 @@ function granulesToCmrFileObjects(granules) {
  * Instantiates a CMR instance for ingest of metadata
  *
  * @param {Object} creds - credentials needed to post to the CMR
+ * @param {string} creds.provider - the name of the Provider used on the CMR side
+ * @param {string} creds.clientId - the clientId used to generate CMR token
+ * @param {string} creds.username - the CMR username, not used if creds.token is provided
+ * @param {string} creds.password - the encrypted CMR password, not used if creds.token is provided
+ * @param {string} creds.token - the CMR or Launchpad token,
+ * if not provided, CMR username and password are used to get a cmr token
  * @param {string} systemBucket - bucket containing crypto keys.
  * @param {string} stack - deployment stack name
  * @returns {CMR} CMR instance.
  */
 async function getCMRInstance(creds, systemBucket, stack) {
-  let password;
-  try {
-    password = await DefaultProvider.decrypt(creds.password, undefined, systemBucket, stack);
-  } catch (error) {
-    const reason = error.message || error.code || error.name;
-    log.error('Decrypting password failed, using unencrypted password:', reason);
-    password = creds.password;
+  const params = {
+    provider: creds.provider,
+    clientId: creds.clientId
+  };
+
+  if (creds.token) {
+    params.token = creds.token;
+  } else {
+    let password;
+    try {
+      password = await DefaultProvider.decrypt(creds.password, undefined, systemBucket, stack);
+    } catch (error) {
+      const reason = error.message || error.code || error.name;
+      log.error('Decrypting password failed, using unencrypted password:', reason);
+      password = creds.password;
+    }
+
+    params.username = creds.username;
+    params.password = password;
   }
-  const cmrInstance = new CMR(
-    creds.provider,
-    creds.clientId,
-    creds.username,
-    password
-  );
-  return cmrInstance;
+
+  return new CMR(params);
 }
 
 /**
@@ -118,8 +132,10 @@ async function getCMRInstance(creds, systemBucket, stack) {
  * @param {Object} creds - credentials needed to post to the CMR
  * @param {string} creds.provider - the name of the Provider used on the CMR side
  * @param {string} creds.clientId - the clientId used to generate CMR token
- * @param {string} creds.username - the CMR username
- * @param {string} creds.password - the encrypted CMR password
+ * @param {string} creds.username - the CMR username, not used if creds.token is provided
+ * @param {string} creds.password - the encrypted CMR password, not used if creds.token is provided
+ * @param {string} creds.token - the CMR or Launchpad token,
+ * if not provided, CMR username and password are used to get a cmr token
  * @param {string} systemBucket - the bucket name where public/private keys are stored
  * @param {string} stack - the deployment stack name
  * @returns {Object} CMR's success response which includes the concept-id
@@ -152,6 +168,12 @@ async function publishECHO10XML2CMR(cmrFile, creds, systemBucket, stack) {
  * @param {Object} cmrPublishObject.metadataObject - the UMMG JSON cmr metadata
  * @param {Object} cmrPublishObject.granuleId - the metadata's granuleId
  * @param {Object} creds - credentials needed to post to CMR service
+ * @param {string} creds.provider - the name of the Provider used on the CMR side
+ * @param {string} creds.clientId - the clientId used to generate CMR token
+ * @param {string} creds.username - the CMR username, not used if creds.token is provided
+ * @param {string} creds.password - the encrypted CMR password, not used if creds.token is provided
+ * @param {string} creds.token - the CMR or Launchpad token,
+ * if not provided, CMR username and password are used to get a cmr token
  * @param {string} systemBucket - bucket containing crypto keypair.
  * @param {string} stack - stack deployment name
  */
@@ -182,6 +204,12 @@ async function publishUMMGJSON2CMR(cmrPublishObject, creds, systemBucket, stack)
  * @param {Object} cmrPublishObject.metadataObject - the UMMG JSON cmr metadata
  * @param {Object} cmrPublishObject.granuleId - the metadata's granuleId
  * @param {Object} creds - credentials needed to post to CMR service
+ * @param {string} creds.provider - the name of the Provider used on the CMR side
+ * @param {string} creds.clientId - the clientId used to generate CMR token
+ * @param {string} creds.username - the CMR username, not used if creds.token is provided
+ * @param {string} creds.password - the encrypted CMR password, not used if creds.token is provided
+ * @param {string} creds.token - the CMR or Launchpad token,
+ * if not provided, CMR username and password are used to get a cmr token
  * @param {string} systemBucket - bucket containing crypto keypair.
  * @param {string} stack - stack deployment name
  */
@@ -562,7 +590,23 @@ async function updateUMMGMetadata({
 /** helper to build an CMR credential object
  * @returns {Object} object to create CMR instance.
 */
-function getCreds() {
+async function getCreds() {
+  if (process.env.cmr_oauth_provider === 'launchpad') {
+    const config = {
+      api: process.env.launchpad_api,
+      certificate: process.env.launchpad_certificate,
+      passphrase: process.env.launchpad_passphrase
+    };
+
+    log.debug('cmrjs.getCreds getLaunchpadToken');
+    const token = await getLaunchpadToken(config);
+    return {
+      provider: process.env.cmr_provider,
+      clientId: process.env.cmr_client_id,
+      token
+    };
+  }
+
   return {
     provider: process.env.cmr_provider,
     clientId: process.env.cmr_client_id,
@@ -708,7 +752,7 @@ async function updateCMRMetadata({
         || new BucketsConfig(
           await bucketsConfigJsonObject(process.env.system_bucket, process.env.stackName)
         );
-  const cmrCredentials = (published) ? getCreds() : {};
+  const cmrCredentials = (published) ? await getCreds() : {};
   let theMetadata;
 
   const params = {
