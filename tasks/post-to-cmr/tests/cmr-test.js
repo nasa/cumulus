@@ -6,11 +6,11 @@ const test = require('ava');
 const sinon = require('sinon');
 const { promisify } = require('util');
 
-const cmrjs = require('@cumulus/cmrjs');
 const cmrClient = require('@cumulus/cmr-client');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
 const { CMRMetaFileNotFound } = require('@cumulus/common/errors');
+const launchpad = require('@cumulus/common/launchpad');
 
 const { postToCMR } = require('..');
 
@@ -66,7 +66,7 @@ test.serial('postToCMR throws error if CMR correctly identifies the xml as inval
 test.serial('postToCMR succeeds with correct payload', async (t) => {
   const newPayload = t.context.payload;
 
-  sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(() => ({
     result
   }));
   const granuleId = newPayload.input.granules[0].granuleId;
@@ -93,7 +93,7 @@ test.serial('postToCMR succeeds with correct payload', async (t) => {
       t.true(g.post_to_cmr_duration >= 0);
     });
   } finally {
-    cmrjs.CMR.prototype.ingestGranule.restore();
+    cmrClient.CMR.prototype.ingestGranule.restore();
   }
 });
 
@@ -102,7 +102,7 @@ test.serial('postToCMR returns SIT url when CMR_ENVIRONMENT=="SIT"', async (t) =
 
   const newPayload = t.context.payload;
 
-  sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(() => ({
     result
   }));
   const granuleId = newPayload.input.granules[0].granuleId;
@@ -120,7 +120,7 @@ test.serial('postToCMR returns SIT url when CMR_ENVIRONMENT=="SIT"', async (t) =
       `https://cmr.sit.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
     );
   } finally {
-    cmrjs.CMR.prototype.ingestGranule.restore();
+    cmrClient.CMR.prototype.ingestGranule.restore();
     delete process.env.CMR_ENVIRONMENT;
   }
 });
@@ -190,7 +190,7 @@ test.serial('postToCMR continues with skipMetaCheck even if any granule is missi
   newPayload.input.granules.push(newGranule);
   newPayload.config.skipMetaCheck = true;
 
-  sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(() => ({
     result
   }));
   try {
@@ -208,7 +208,7 @@ test.serial('postToCMR continues with skipMetaCheck even if any granule is missi
   } catch (err) {
     t.fail(err);
   } finally {
-    cmrjs.CMR.prototype.ingestGranule.restore();
+    cmrClient.CMR.prototype.ingestGranule.restore();
   }
 });
 
@@ -221,7 +221,7 @@ test.serial('postToCmr identifies files with the new file schema', async (t) => 
     fileName: cmrFile.name
   }];
 
-  sinon.stub(cmrjs.CMR.prototype, 'ingestGranule').callsFake(() => ({
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(() => ({
     result
   }));
 
@@ -237,6 +237,44 @@ test.serial('postToCmr identifies files with the new file schema', async (t) => 
       `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
     );
   } finally {
-    cmrjs.CMR.prototype.ingestGranule.restore();
+    cmrClient.CMR.prototype.ingestGranule.restore();
+  }
+});
+
+test.serial('postToCMR succeeds with launchpad authentication', async (t) => {
+  const newPayload = t.context.payload;
+  newPayload.config.cmr.oauthProvider = 'launchpad';
+
+  sinon.stub(launchpad, 'getLaunchpadToken').callsFake(() => randomString());
+
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').callsFake(() => ({
+    result
+  }));
+  const granuleId = newPayload.input.granules[0].granuleId;
+  const key = `${granuleId}.cmr.xml`;
+
+  try {
+    await aws.promiseS3Upload({
+      Bucket: t.context.bucket,
+      Key: key,
+      Body: fs.createReadStream(path.join(path.dirname(__filename), 'data', 'meta.xml'))
+    });
+
+    const output = await postToCMR(newPayload);
+
+    t.is(output.granules.length, 1);
+
+    t.is(
+      output.granules[0].cmrLink,
+      `https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=${result['concept-id']}`
+    );
+
+    output.granules.forEach((g) => {
+      t.true(Number.isInteger(g.post_to_cmr_duration));
+      t.true(g.post_to_cmr_duration >= 0);
+    });
+  } finally {
+    cmrClient.CMR.prototype.ingestGranule.restore();
+    launchpad.getLaunchpadToken.restore();
   }
 });
