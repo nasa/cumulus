@@ -72,6 +72,24 @@ Create and push a new git tag:
 
 Travis will build and run tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.
 
+### 8. Create a new Cumulus release on github
+
+The Cumulus Distribution Terraform module can be created by running:
+
+```bash
+$ (cd tf-modules/distribution && ./bin/build-tf-module.sh)
+```
+
+This will generate a file called
+`tf-modules/distribution/dist/terraform-aws-cumulus-distribution.zip`, which
+should be uploaded as an asset of the Github release.
+
+Similarily, the S3 Replicator Terraform module can be created by running:
+
+```bash
+$ (cd tf-modules/s3-credentials && ./bin/build-tf-module.sh)
+```
+
 ## Backporting to a previous release
 
 Creating a new release for an older major or minor version is similar to creating any other release. Create a branch starting at the tag of the previous release, then follow the [instructions for creating a new release](#updating-cumulus-version-and-publishing-to-npm).

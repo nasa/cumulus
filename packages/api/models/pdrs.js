@@ -3,7 +3,8 @@
 const pvl = require('@cumulus/pvl');
 const get = require('lodash.get');
 const aws = require('@cumulus/ingest/aws');
-const { constructCollectionId } = require('@cumulus/common');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { getExecutionArn } = require('@cumulus/common/aws');
 
 const Manager = require('./base');
 const pdrSchema = require('./schemas').pdr;
@@ -59,7 +60,7 @@ class Pdr extends Manager {
 
     if (!pdrName) return Promise.resolve();
 
-    const arn = aws.getExecutionArn(
+    const arn = getExecutionArn(
       get(payload, 'cumulus_meta.state_machine'),
       name
     );

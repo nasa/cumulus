@@ -3,9 +3,6 @@
 const got = require('got');
 const { parseString } = require('xml2js');
 const {
-  searchConcept,
-  ingestConcept,
-  deleteConcept,
   CMR,
   CMRSearchConceptQueue
 } = require('./cmr');
@@ -82,7 +79,6 @@ module.exports = {
   CMRSearchConceptQueue,
   constructOnlineAccessUrl,
   ValidationError,
-  deleteConcept,
   getCmrFiles,
   getFullMetadata,
   getGranuleTemporalInfo,
@@ -91,13 +87,11 @@ module.exports = {
   getMetadata,
   getUrl,
   hostId,
-  ingestConcept,
   isCMRFile,
   metadataObjectFromCMRFile,
   publish2CMR,
   reconcileCMRMetadata,
   granulesToCmrFileObjects,
-  searchConcept,
   updateCMRMetadata,
   updateToken
 };
