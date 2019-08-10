@@ -5,7 +5,7 @@ const sinon = require('sinon');
 const cloneDeep = require('lodash.clonedeep');
 
 const aws = require('@cumulus/common/aws');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const models = require('../../models');
 const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
 
@@ -77,6 +77,21 @@ test.after.always(async () => {
   // cleanup table
   await rulesModel.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
+});
+
+test('create defaults rule state to ENABLED', async (t) => {
+  const { onetimeRule } = t.context;
+
+  // remove state from rule to be created
+  delete onetimeRule.state;
+
+  // create rule
+  const rule = await rulesModel.create(onetimeRule);
+
+  t.is(rule.state, 'ENABLED');
+
+  // delete rule
+  await rulesModel.delete(rule);
 });
 
 test('create and delete a onetime rule', async (t) => {
@@ -428,10 +443,7 @@ test.serial('updating an SNS rule updates the event source mapping', async (t) =
         promise: () => Promise.resolve({
           Subscriptions: [{
             Endpoint: process.env.messageConsumer,
-            SubscriptionArn: snsTopicArn
-          }, {
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: newSnsTopicArn
+            SubscriptionArn: randomString()
           }]
         })
       }),
@@ -467,9 +479,91 @@ test.serial('updating an SNS rule updates the event source mapping', async (t) =
 
   t.is(updatedRule.name, rule.name);
   t.is(updatedRule.type, rule.type);
-  t.is(updatedRule.rule.arn, newSnsTopicArn);
+  t.is(updatedRule.rule.value, newSnsTopicArn);
+  t.not(updatedRule.rule.arn, rule.rule.arn);
 
   await rulesModel.delete(rule);
   snsStub.restore();
   lambdaStub.restore();
+});
+
+test('updates rule meta object', async (t) => {
+  const { onetimeRule } = t.context;
+
+  const triggerRule = randomId('triggerRule');
+  const ruleItem = cloneDeep(onetimeRule);
+  ruleItem.meta = {
+    triggerRule
+  };
+
+  const rule = await rulesModel.create(ruleItem);
+
+  t.is(rule.meta.triggerRule, triggerRule);
+
+  const newTriggerRule = randomId('triggerRule');
+  const updates = { name: rule.name, meta: { triggerRule: newTriggerRule } };
+  const updatedRule = await rulesModel.update(rule, updates);
+
+  t.is(updatedRule.meta.triggerRule, newTriggerRule);
+});
+
+test('updates a deeply nested key', async (t) => {
+  const { onetimeRule } = t.context;
+
+  const testObject = {
+    key: randomString()
+  };
+  const ruleItem = cloneDeep(onetimeRule);
+  ruleItem.meta = {
+    testObject
+  };
+
+  const rule = await rulesModel.create(ruleItem);
+
+  t.deepEqual(rule.meta.testObject, testObject);
+
+  const newTestObject = Object.assign({}, testObject, {
+    key: randomString()
+  });
+  const updates = {
+    name: rule.name,
+    meta: {
+      testObject: newTestObject
+    }
+  };
+  const updatedRule = await rulesModel.update(rule, updates);
+
+  t.deepEqual(updatedRule.meta.testObject, newTestObject);
+});
+
+test('update preserves nested keys', async (t) => {
+  const { onetimeRule } = t.context;
+
+  const testObject = {
+    key: randomString()
+  };
+  const ruleItem = cloneDeep(onetimeRule);
+  ruleItem.meta = {
+    foo: 'bar',
+    testObject
+  };
+
+  const rule = await rulesModel.create(ruleItem);
+
+  t.is(rule.meta.foo, 'bar');
+  t.deepEqual(rule.meta.testObject, testObject);
+
+  const newTestObject = Object.assign({}, testObject, {
+    key: randomString()
+  });
+  const updates = {
+    name: rule.name,
+    meta: {
+      testObject: newTestObject
+    }
+  };
+  const updatedRule = await rulesModel.update(rule, updates);
+
+  t.is(updatedRule.meta.foo, 'bar');
+  t.deepEqual(updatedRule.meta.testObject, newTestObject);
 });

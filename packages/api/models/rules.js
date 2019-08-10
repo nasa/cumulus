@@ -4,6 +4,7 @@
 
 const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
+const merge = require('lodash.merge');
 const { invoke, Events } = require('@cumulus/ingest/aws');
 const aws = require('@cumulus/common/aws');
 const Manager = require('./base');
@@ -67,36 +68,6 @@ class Rule extends Manager {
   }
 
   /**
-   * Update the rule state.
-   *
-   * Avoids object mutation by cloning the original rule item.
-   *
-   * @param {Object} ruleItem - A rule item
-   * @param {string} state - rule state (ENABLED/DISABLED)
-   * @returns {Object} - Updated rule item
-   */
-  updateRuleState(ruleItem, state) {
-    const updatedRuleItem = cloneDeep(ruleItem);
-    updatedRuleItem.state = state;
-    return updatedRuleItem;
-  }
-
-  /**
-   * Update the rule value.
-   *
-   * Avoids object mutation by cloning the original rule item.
-   *
-   * @param {Object} ruleItem - A rule item
-   * @param {string} value - rule value
-   * @returns {Object} - Updated rule item
-   */
-  updateRuleValue(ruleItem, value) {
-    const updatedRuleItem = cloneDeep(ruleItem);
-    updatedRuleItem.rule.value = value;
-    return updatedRuleItem;
-  }
-
-  /**
    * Update the event source mappings for Kinesis type rules.
    *
    * Avoids object mutation by cloning the original rule item.
@@ -147,15 +118,11 @@ class Rule extends Manager {
     // Make a copy of the existing rule to preserve existing values
     let updatedRuleItem = cloneDeep(original);
 
-    const stateChanged = (updates.state && updates.state !== original.state);
-    if (stateChanged) {
-      updatedRuleItem = this.updateRuleState(updatedRuleItem, updates.state);
-    }
+    // Apply updates to updated rule item to be saved
+    merge(updatedRuleItem, updates);
 
+    const stateChanged = (updates.state && updates.state !== original.state);
     const valueUpdated = (updates.rule && updates.rule.value);
-    if (valueUpdated) {
-      updatedRuleItem = this.updateRuleValue(updatedRuleItem, updates.rule.value);
-    }
 
     switch (updatedRuleItem.rule.type) {
     case 'scheduled': {
@@ -178,7 +145,6 @@ class Rule extends Manager {
         }
         if (updatedRuleItem.state === 'ENABLED') {
           snsSubscriptionArn = await this.addSnsTrigger(updatedRuleItem);
-          updatedRuleItem.rule.arn = snsSubscriptionArn;
         }
         updatedRuleItem = this.updateSnsRuleArn(updatedRuleItem, snsSubscriptionArn);
       }
@@ -228,8 +194,7 @@ class Rule extends Manager {
 
     // the default state is 'ENABLED'
     if (!item.state) {
-      item.state = 'ENABLED';
-      newRuleItem = this.updateRuleState(newRuleItem, 'ENABLED');
+      newRuleItem.state = 'ENABLED';
     }
 
     const payload = await Rule.buildPayload(newRuleItem);
