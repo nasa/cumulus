@@ -1,49 +1,75 @@
-variable "region" {
-  type    = string
-  default = "us-east-1"
+# Required
+
+variable "log_api_gateway_to_cloudwatch" {
+  type        = bool
+  default     = false
+  description = "Enable logging of API Gateway activity to CloudWatch."
 }
 
-variable "permissions_boundary" {
-  type    = string
-  default = "NGAPShNonProdRoleBoundary"
+variable "log_destination_arn" {
+  type        = string
+  default     = null
+  description = "Remote kinesis/destination arn for delivering logs. Requires log_api_gateway_to_cloudwatch set to true."
+}
+
+variable "s3_replicator_config" {
+  type = object({ source_bucket = string, source_prefix = string, target_bucket = string, target_prefix = string })
+  default = null
+  description = "Configuration for the s3-replicator module. Items with prefix of source_prefix in the source_bucket will be replicated to the target_bucket with target_prefix."
+}
+
+variable "prefix" {
+  type = string
+}
+
+variable "subnet_ids" {
+  type = list(string)
+}
+
+variable "system_bucket" {
+  type = string
+}
+
+variable "urs_client_id" {
+  type = string
+}
+
+variable "urs_client_password" {
+  type = string
 }
 
 variable "vpc_id" {
   type = string
 }
 
-variable "tea_bucket_map_file" {
+# Optional
+
+variable "region" {
+  type    = string
+  default = "us-east-1"
+}
+
+variable "protected_buckets" {
+  type    = list(string)
+  default = []
+}
+
+variable "public_buckets" {
+  type    = list(string)
+  default = []
+}
+
+variable "permissions_boundary_arn" {
   type    = string
   default = null
 }
 
-variable "tea_bucketname_prefix" {
-  type    = string
-  default = ""
-}
-
-variable "tea_config_bucket" {
-  type = string
-}
-
-variable "tea_domain_name" {
+variable "distribution_url" {
   type    = string
   default = null
 }
 
-variable "tea_stack_name" {
+variable "aws_profile" {
   type = string
-}
-
-variable "tea_stage_name" {
-  type    = string
-  default = "DEV"
-}
-
-variable "tea_subnet_ids" {
-  type = list(string)
-}
-
-variable "tea_urs_auth_creds_secret_name" {
-  type = string
+  default = null
 }
