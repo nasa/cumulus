@@ -104,7 +104,7 @@ test('create and delete a onetime rule', async (t) => {
 
   // delete rule
   await rulesModel.delete(rule);
-  t.false(await rulesModel.exists(rule));
+  t.false(await rulesModel.exists({ name: rule.name }));
 });
 
 test('enabling a disabled rule updates the state', async (t) => {
@@ -155,6 +155,8 @@ test.serial('deleting a kinesis style rule removes event mappings', async (t) =>
 
   // create and delete rule
   const createdRule = await rulesModel.create(kinesisRule);
+  t.true(await rulesModel.exists({ name: createdRule.name }));
+
   await rulesModel.delete(createdRule);
 
   const kinesisEventMappings = await getKinesisEventMappings();
@@ -483,6 +485,58 @@ test.serial('updating an SNS rule updates the event source mapping', async (t) =
   t.not(updatedRule.rule.arn, rule.rule.arn);
 
   await rulesModel.delete(rule);
+  snsStub.restore();
+  lambdaStub.restore();
+});
+
+test.serial('deleting an SNS rule updates the event source mapping', async (t) => {
+  const snsTopicArn = randomString();
+
+  const snsStub = sinon.stub(aws, 'sns')
+    .returns({
+      listSubscriptionsByTopic: () => ({
+        promise: () => Promise.resolve({
+          Subscriptions: [{
+            Endpoint: process.env.messageConsumer,
+            SubscriptionArn: randomString()
+          }]
+        })
+      }),
+      unsubscribe: () => ({
+        promise: () => Promise.resolve()
+      })
+    });
+  const lambdaStub = sinon.stub(aws, 'lambda')
+    .returns({
+      addPermission: () => ({
+        promise: () => Promise.resolve()
+      }),
+      removePermission: () => ({
+        promise: () => Promise.resolve()
+      })
+    });
+  const unsubscribeSpy = sinon.spy(aws.sns(), 'unsubscribe');
+
+  const item = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sns',
+      value: snsTopicArn
+    },
+    state: 'ENABLED'
+  });
+
+  const rule = await rulesModel.create(item);
+
+  t.is(rule.rule.value, snsTopicArn);
+
+  await rulesModel.delete(rule);
+
+  t.true(unsubscribeSpy.called);
+  t.true(unsubscribeSpy.calledWith({
+    SubscriptionArn: rule.rule.arn
+  }));
+
   snsStub.restore();
   lambdaStub.restore();
 });
