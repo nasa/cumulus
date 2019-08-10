@@ -1,5 +1,3 @@
-/* eslint no-param-reassign: "off" */
-
 'use strict';
 
 const cloneDeep = require('lodash.clonedeep');
@@ -291,10 +289,7 @@ class Rule extends Manager {
     const deleteEventPromises = this.kinesisSourceEvents.map(
       (lambda) => this.deleteKinesisEventSource(item, lambda.eventType)
     );
-    const eventDelete = await Promise.all(deleteEventPromises);
-    item.rule.arn = eventDelete[0];
-    item.rule.logEventArn = eventDelete[1];
-    return item;
+    return Promise.all(deleteEventPromises);
   }
 
   /**
@@ -405,9 +400,7 @@ class Rule extends Manager {
     const subscriptionParams = {
       SubscriptionArn: item.rule.arn
     };
-    await aws.sns().unsubscribe(subscriptionParams).promise();
-
-    return item;
+    return aws.sns().unsubscribe(subscriptionParams).promise();
   }
 }
 
