@@ -35,7 +35,6 @@ const kinesisRule = {
 
 let ruleModel;
 
-
 async function getKinesisEventMappings() {
   const eventLambdas = [process.env.messageConsumer, process.env.KinesisInboundEventLogger];
   const mappingPromises = eventLambdas.map((eventLambda) => {
@@ -72,8 +71,7 @@ test.after.always(async () => {
   // cleanup table
   await ruleModel.deleteTable();
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
-  const rule = new models.Rule();
-  rule.delete(kinesisRule);
+  ruleModel.delete(kinesisRule);
 });
 
 // Disabling test because it is failing schema validation and, at this point,
@@ -116,12 +114,12 @@ test.serial.skip('migration_4 adds a logEvent mapping when missing', async (t) =
 
 test.serial('migration_4 ignores logEvent mapping when not missing', async (t) => {
   // create rule
-  const rule = new models.Rule();
-  await rule.create(kinesisRule);
+  const createdRule = await ruleModel.create(kinesisRule);
   const ruleItem = await dynamodb().getItem({
     TableName: process.env.RulesTable,
     Key: { name: { S: kinesisRule.name } }
   }).promise();
+
   await run({ bucket: process.env.system_bucket, stackName: process.env.stackName });
   const updateRuleItem = await dynamodb().getItem({
     TableName: process.env.RulesTable,
@@ -139,5 +137,5 @@ test.serial('migration_4 ignores logEvent mapping when not missing', async (t) =
   t.is(updateRuleItem.Item.rule.M.value.S, ruleItem.Item.rule.M.value.S);
   t.is(updateRuleItem.Item.rule.M.logEventArn.S, ruleItem.Item.rule.M.logEventArn.S);
 
-  await rule.delete(kinesisRule);
+  await ruleModel.delete(createdRule);
 });
