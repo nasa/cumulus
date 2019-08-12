@@ -5,6 +5,7 @@ hide_title: true
 ---
 
 # Lambda Versioning
+
 Cumulus makes use of AWS's Lambda/Alias version objects to tag and retain references to recent copies of deployed workflow lambdas.
 
 All Cumulus deployed lambdas in lambdas.yml will have an alias/version resource created. Lambdas with source coming from S3 must be expressly configured to take advantage of versioning.
@@ -17,6 +18,8 @@ This allows for workflows to automatically reference the specific version of a l
 
 **Please note** that care must be exercised to not update lambda versions and redeploy frequently enough that an in-progress workflow refers to an aged-off version of a lambda, or workflows that reference such a lambda may fail.
 
+**Please note** This feature is not currently compatible with utilizing the `layers` key in workflow lambdas, as updates/reconfiguration of lambda layers will not result in a new version being created by kes.   See [CUMULUS-1197](https://bugs.earthdata.nasa.gov/browse/CUMULUS-1197) for more information.
+
 ( See [AWS Lambda Function Versioning and Aliases](https://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html) for more on lambda versions/aliases)
 
 ## Configuration
@@ -27,7 +30,7 @@ This feature is enabled by default for all Cumulus built/deployed lambdas, as we
 
 Lambdas with s3Source defined currently require additional configuration to make use of this feature in the form of a 'uniqueIdentifier' key:
 
-```
+```yaml
 SomeLambda:
   Handler: lambda_handler.handler
   timeout: 300
@@ -68,7 +71,7 @@ Given the available limits, the following are the pratical limits on the number 
 
 This feature is enabled by default in the deployment package template, but can be disabled by adding the following key to your app/config.yml:
 
-```
+```yaml
 useWorkflowLambdaVersions: false
 ```
 
