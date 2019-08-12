@@ -3,25 +3,40 @@ provider "aws" {
   profile = var.aws_profile
 }
 
+locals {
+  security_group_ids_set = var.security_group_ids != null
+}
+
 data "archive_file" "replicator_package" {
   type        = "zip"
-  source_file = "index.js"
-  output_path = "build/replicator.zip"
+  source_file = "${path.module}/index.js"
+  output_path = "${path.module}/build/replicator.zip"
+}
+
+resource "aws_security_group" "s3_replicator_lambda" {
+  count  = local.security_group_ids_set ? 0 : 1
+  vpc_id = var.vpc_id
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
 resource "aws_lambda_function" "s3_replicator" {
-  filename         = "build/replicator.zip"
-  function_name    = "${var.prefix}-s3-replicator"
-  role             = "${aws_iam_role.replicator_lambda_role.arn}"
-  handler          = "index.handler"
-  runtime          = "nodejs10.x"
-  timeout          = 300
+  filename      = data.archive_file.replicator_package.output_path
+  function_name = "${var.prefix}-s3-replicator"
+  role          = "${aws_iam_role.replicator_lambda_role.arn}"
+  handler       = "index.handler"
+  runtime       = "nodejs10.x"
+  timeout       = 300
 
   source_code_hash = "${data.archive_file.replicator_package.output_base64sha256}"
 
   vpc_config {
     subnet_ids         = var.subnet_ids
-    security_group_ids = var.security_groups
+    security_group_ids = local.security_group_ids_set ? var.security_group_ids : [aws_security_group.s3_replicator_lambda[0].id]
   }
 
   environment {
@@ -33,9 +48,9 @@ resource "aws_lambda_function" "s3_replicator" {
 }
 
 resource "aws_lambda_permission" "s3_replicator_permission" {
-  action = "lambda:InvokeFunction"
+  action        = "lambda:InvokeFunction"
   function_name = "${aws_lambda_function.s3_replicator.arn}"
-  principal = "s3.amazonaws.com"
+  principal     = "s3.amazonaws.com"
 }
 
 resource "aws_s3_bucket_notification" "s3_replicator_trigger" {

@@ -141,15 +141,20 @@ If you deploy with no distribution app your deployment will succeed but you may 
 
 ### Fixed
 
-- **CUMULUS-1374**
-  - Addressed audit concerns (https://www.npmjs.com/advisories/782) in api package
+- **CUMULUS-796**
+  - Added production information (collection ShortName and Version, granuleId) to EMS distribution report
+  - Added functionality to send daily distribution reports to EMS
 
 - **CUMULUS-1319**
   - Fixed a bug where granule ingest times were not being stored to the database
 
-- **CUMULUS-796**
-  - Added production information (collection ShortName and Version, granuleId) to EMS distribution report
-  - Added functionality to send daily distribution reports to EMS
+- **CUMULUS-1356**
+  - The `Collection` model's `delete` method now _removes_ the specified item
+    from the collection config store that was inserted by the `create` method.
+    Previously, this behavior was missing.
+
+- **CUMULUS-1374**
+  - Addressed audit concerns (https://www.npmjs.com/advisories/782) in api package
 
 ### BREAKING CHANGES
 
