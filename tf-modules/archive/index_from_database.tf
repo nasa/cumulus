@@ -1,17 +1,16 @@
-resource "aws_lambda_function" "bulk_delete" {
-  depends_on = [aws_iam_role.lambda_processing]
-
-  function_name    = "${var.prefix}-BulkDelete"
-  filename         = "${path.module}/../../packages/api/dist/BulkDelete/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/BulkDelete/lambda.zip")
+resource "aws_lambda_function" "index_from_database" {
+  function_name    = "${var.prefix}-IndexFromDatabase"
+  filename         = "${path.module}/../../packages/api/dist/indexFromDatabase/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/indexFromDatabase/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_processing.arn
   runtime          = "nodejs8.10"
-  memory_size      = 1024
   timeout          = 300
+  memory_size      = 512
   environment {
     variables = {
       CMR_ENVIRONMENT = var.cmr_environment
+      ES_HOST         = var.elasticsearch_hostname
       stackName       = var.prefix
     }
   }

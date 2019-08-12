@@ -32,6 +32,10 @@ variable "system_bucket" {
   type = string
 }
 
+variable "token_secret" {
+  type = string
+}
+
 variable "urs_client_id" {
   type = string
 }

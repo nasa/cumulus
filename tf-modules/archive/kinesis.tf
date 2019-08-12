@@ -1,14 +1,12 @@
-resource "aws_lambda_function" "bulk_delete" {
-  depends_on = [aws_iam_role.lambda_processing]
-
-  function_name    = "${var.prefix}-BulkDelete"
-  filename         = "${path.module}/../../packages/api/dist/BulkDelete/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/BulkDelete/lambda.zip")
+resource "aws_lambda_function" "kinesis_inbound_event_logger" {
+  function_name    = "${var.prefix}-KinesisInboundEventLogger"
+  filename         = "${path.module}/../../packages/api/dist/payloadLogger/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/payloadLogger/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_processing.arn
   runtime          = "nodejs8.10"
-  memory_size      = 1024
   timeout          = 300
+  memory_size      = 128
   environment {
     variables = {
       CMR_ENVIRONMENT = var.cmr_environment
