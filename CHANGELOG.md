@@ -40,6 +40,7 @@ If you deploy with no distribution app your deployment will succeed but you may 
 - **CUMULUS-1418** Users who are packaging the CMA in their Lambdas outside of Cumulus may need to update their Lambda configuration.    Please see `BREAKING CHANGES` below for details.
 
 ### Added
+
 - **CUMULUS-1418**
   - Adds usage docs/testing of lambda layers (introduced in PR1125), updates Core example tasks to use the updated `cumulus-ecs-task` and a CMA layer instead of kes CMA injection.
   - Added Terraform module to publish CMA as layer to user account.
