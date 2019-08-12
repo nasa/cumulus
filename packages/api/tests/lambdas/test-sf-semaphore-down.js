@@ -22,44 +22,44 @@ const createCloudwatchEventMessage = ({
   status,
   queueName,
   source = sfEventSource
-}) => ({
-  source,
-  detail: {
-    status,
-    output: JSON.stringify({
-      cumulus_meta: {
-        execution_name: randomString(),
-        queueName
-      },
-      meta: {
-        queueExecutionLimits: {
-          [queueName]: 5
-        }
+}) => {
+  const message = JSON.stringify({
+    cumulus_meta: {
+      execution_name: randomString(),
+      queueName
+    },
+    meta: {
+      queueExecutionLimits: {
+        [queueName]: 5
       }
-    })
-  }
-});
+    }
+  });
+  const detail = (status === 'SUCCEEDED'
+    ? { status, output: message }
+    : { status, input: message });
+  return { source, detail };
+};
 
 const createCloudwatchPackagedEventMessage = ({
   status,
   queueName,
   source = sfEventSource
-}) => ({
-  source,
-  detail: {
-    status,
-    output: JSON.stringify({
-      cumulus_meta: {
-        execution_name: randomString(),
-        queueName
-      },
-      replace: {
-        Bucket: 'cumulus-sandbox-testing',
-        Key: 'stubbedKey'
-      }
-    })
-  }
-});
+}) => {
+  const message = JSON.stringify({
+    cumulus_meta: {
+      execution_name: randomString(),
+      queueName
+    },
+    replace: {
+      Bucket: 'cumulus-sandbox-testing',
+      Key: 'stubbedKey'
+    }
+  });
+  const detail = (status === 'SUCCEEDED'
+    ? { status, output: message }
+    : { status, input: message });
+  return { source, detail };
+};
 
 
 const createExecutionMessage = ((queueName) => (
