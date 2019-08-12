@@ -56,6 +56,10 @@ variable "system_bucket" {
   type = string
 }
 
+variable "token_secret" {
+  type = string
+}
+
 variable "urs_client_id" {
   type        = string
   description = "The URS app ID"
@@ -71,6 +75,16 @@ variable "vpc_id" {
 }
 
 # Optional
+
+variable "archive_api_port" {
+  type    = number
+  default = null
+}
+
+variable "archive_api_users" {
+  type    = list(string)
+  default = []
+}
 
 variable "ecs_container_stop_timeout" {
   type    = string

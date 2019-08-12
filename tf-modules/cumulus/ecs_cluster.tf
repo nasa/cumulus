@@ -210,7 +210,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_instance_autoscaling_group_memory_sc
 }
 
 resource "aws_cloudwatch_metric_alarm" "ecs_instance_autoscaling_group_cpu_scale_in_alarm" {
-  alarm_name          = "${aws_cloudformation_stack.ecs_instance_autoscaling_group.outputs.AutoscalingGroupName}-memory-scale-in"
+  alarm_name          = "${aws_cloudformation_stack.ecs_instance_autoscaling_group.outputs.AutoscalingGroupName}-cpu-scale-in"
   comparison_operator = "LessThanThreshold"
   alarm_actions       = [aws_autoscaling_policy.ecs_instance_autoscaling_group_scale_in.arn]
   datapoints_to_alarm = 1
@@ -255,7 +255,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_instance_autoscaling_group_memory_sc
 }
 
 resource "aws_cloudwatch_metric_alarm" "ecs_instance_autoscaling_group_cpu_scale_out_alarm" {
-  alarm_name          = "${aws_cloudformation_stack.ecs_instance_autoscaling_group.outputs.AutoscalingGroupName}-memory-scale-out"
+  alarm_name          = "${aws_cloudformation_stack.ecs_instance_autoscaling_group.outputs.AutoscalingGroupName}-cpu-scale-out"
   comparison_operator = "GreaterThanThreshold"
   alarm_actions       = [aws_autoscaling_policy.ecs_instance_autoscaling_group_scale_out.arn]
   datapoints_to_alarm = 1
