@@ -38,6 +38,7 @@ deployDistributionApi: true
 If you deploy with no distribution app your deployment will succeed but you may encounter errors in your workflows, particularly in the `MoveGranule` task.
 
 ### Added
+
 - **CUMULUS-1418**
   - Adds usage docs/testing of lambda layers (introduced in PR1125), updates Core example tasks to use the updated `cumulus-ecs-task` and a CMA layer instead of kes CMA injection.
   - Added Terraform module to publish CMA as layer to user account.
@@ -140,6 +141,9 @@ If you deploy with no distribution app your deployment will succeed but you may 
   - Deprecated `@cumulus/ingest/aws/getExecutionArn`. Use `@cumulus/common/aws/getExecutionArn` instead.
 
 ### Fixed
+
+- **CUMULUS-1439**
+  - Fix bug with rule.logEventArn deletion on Kinesis rule update and fix unit test to verify
 
 - **CUMULUS-796**
   - Added production information (collection ShortName and Version, granuleId) to EMS distribution report
