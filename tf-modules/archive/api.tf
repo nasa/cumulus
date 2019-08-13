@@ -2,6 +2,11 @@ locals {
   api_port_substring = var.api_port == null ? "" : ":${var.api_port}"
 }
 
+resource "aws_cloudwatch_log_group" "api" {
+  name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
+  retention_in_days = 30
+}
+
 resource "aws_lambda_function" "api" {
   depends_on = [aws_iam_role.lambda_api_gateway]
 
@@ -31,7 +36,7 @@ resource "aws_lambda_function" "api" {
       ExecutionsTable              = var.dynamo_tables.Executions
       GranulesTable                = var.dynamo_tables.Granules
       IndexFromDatabaseLambda      = aws_lambda_function.index_from_database.arn
-      KinesisInboundEventLogger    = aws_lambda_function.kinesis_inbound_event_logger.arn
+      KinesisInboundEventLogger    = data.aws_lambda_function.kinesis_inbound_event_logger.arn
       OAUTH_PROVIDER               = var.oauth_provider
       PdrsTable                    = var.dynamo_tables.Pdrs
       ProvidersTable               = var.dynamo_tables.Providers
@@ -72,6 +77,12 @@ resource "aws_api_gateway_rest_api" "api" {
   lifecycle {
     ignore_changes = [policy]
   }
+}
+
+resource "aws_lambda_permission" "api_endpoints_lambda_permission" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.api.arn
+  principal     = "apigateway.amazonaws.com"
 }
 
 resource "aws_api_gateway_resource" "proxy" {

@@ -44,6 +44,10 @@ variable "elasticsearch_arn" {
   type = string
 }
 
+variable "kinesis_inbound_event_logger" {
+  type = string
+}
+
 variable "lambda_subnet_ids" {
   type = list(string)
 }
