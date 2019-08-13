@@ -13,6 +13,8 @@ default:
 
   oauth:
     provider: earthdata
+    userGroup: N/A
+
   ## lambda function that returns temporary credentials
   sts_credentials_lambda: gsfc-ngap-sh-s3-sts-get-keys
 
