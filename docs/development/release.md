@@ -69,7 +69,7 @@ Where `${release_version}` corresponds to the version tag `v1.2.3`, for example.
 
 Note: This is for 1.10.3 or later.
 
-### 6. Create a pull request against the master branch
+### 6. Create a pull request against the feature branch/master
 
 Create a PR against the feature branch. Verify that the Bamboo build for the PR succeeds and then merge to the feature branch. Once merged, the release branch can be deleted.
 
@@ -104,7 +104,7 @@ If you created a new release plan in step one, you will need to create a new bam
 
 Bamboo will build and run lint, audit and unit tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.
 
-### 8. Create a new Cumulus release on github
+### 9. Create a new Cumulus release on github
 
 The Cumulus Distribution Terraform module can be created by running:
 
@@ -121,10 +121,6 @@ Similarily, the S3 Replicator Terraform module can be created by running:
 ```bash
 $ (cd tf-modules/s3-credentials && ./bin/build-tf-module.sh)
 ```
-
-### 9. Updating master
-
-Once the release is done, you will need to submit a PR from the feature branch to master with the CHANGELOG and package version updates.
 
 ## Troubleshooting
 
