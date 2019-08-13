@@ -67,7 +67,7 @@ Note: This is for 1.10.3 or later.
 
 ### 6. Create a pull request against the feature branch/master
 
-Create a PR against the feature branch. Verify that the Bamboo build for the PR succeeds and then merge to the feature branch. Once merged, the release branch can be deleted.
+Create a PR against the feature branch. Verify that the Bamboo build for the PR succeeds and then merge to the feature branch.
 
 ### 7. Create a git tag for the release
 Create and push a new git tag:
