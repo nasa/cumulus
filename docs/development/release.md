@@ -22,10 +22,6 @@ Checkout the release-1.YY.x branch, then create a release branch from it.
 
 The name is not important, but `release-x.y.z` seems like a good choice.
 
-#### From release feature branch (e.g. 1.14.x)
-
-The name is not important, but `release-x.y.z` seems like a good choice.
-
 ### 2. Update the Cumulus version number
 
 When changes are ready to be released, the Cumulus version number must be updated.
