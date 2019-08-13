@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const pick = require('lodash.pick');
 const { getS3Object, s3ObjectExists, s3PutObject } = require('./aws');
 const LaunchpadToken = require('./LaunchpadToken');
 const log = require('./log');
@@ -77,5 +78,45 @@ async function getLaunchpadToken(params) {
   return token;
 }
 
+/**
+ * validate Launchpad token
+ *
+ * @param {Object} params - the configuration parameters for creating LaunchpadToken object
+ * @param {string} params.api - the Launchpad token service api endpoint
+ * @param {string} params.passphrase - the passphrase of the Launchpad PKI certificate
+ * @param {string} params.certificate - the name of the Launchpad PKI pfx certificate
+ * @param {string} token - the token to be validated
+ * @param {string} userGroup - the cumulus user group that a valid user should belong to
+ *
+ * @returns {Promise.<Object>} - the validate result object with
+ * { status: 'success or failed', message: 'reason for failure',
+ * session_maxtimeout: number second, session_starttime: number millisecond,
+ * owner_auid: string}
+ */
+async function validateLaunchpadToken(params, token, userGroup) {
+  log.debug('validateLaunchpadToken validating launchpad token');
+  const launchpad = new LaunchpadToken(params);
+  const response = await launchpad.validateToken(token);
+  let result = { status: response.status };
+
+  if (response.status === 'success') {
+    // check if user is in the given group
+    if (userGroup && userGroup.toUpperCase() !== 'N/A'
+    && response.owner_groups.filter((group) => group.includes(userGroup)).length === 0) {
+      result.status = 'failed';
+      result.message = 'User not authorized';
+    }
+  } else {
+    result.message = 'Invalid access token';
+  }
+
+  if (result.status === 'success') {
+    const picked = pick(response, ['session_maxtimeout', 'session_starttime', 'owner_auid']);
+    result = Object.assign(result, picked);
+  }
+
+  return result;
+}
+
 module.exports.getLaunchpadToken = getLaunchpadToken;
-module.exports.launchpadTokenBucketKey = launchpadTokenBucketKey;
+module.exports.validateLaunchpadToken = validateLaunchpadToken;
