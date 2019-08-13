@@ -1,3 +1,5 @@
+/* eslint no-unused-vars: ["error", { "ignoreRestSiblings": true }] */
+
 'use strict';
 
 const flow = require('lodash.flow');
@@ -67,6 +69,21 @@ const setS3FileSize = async (file) => {
   }
 };
 
+const parseSource = (inFile) => {
+  if (!inFile.source || inFile.bucket !== null || inFile.key !== null) return inFile;
+
+  const { key, bucket, ...file } = inFile;
+  try {
+    const parsedFile = parseS3Uri(file.source);
+    return {
+      ...{ key: parsedFile.Key, bucket: parsedFile.Bucket },
+      ...file
+    };
+  } catch (error) {
+    return inFile;
+  }
+};
+
 const setSource = (providerURL, file) => {
   if (!providerURL || !file.path) return file;
 
@@ -89,6 +106,7 @@ const buildDatabaseFile = (providerURL, file) =>
     setChecksum,
     setFileName,
     partial(setSource, providerURL),
+    parseSource,
     setS3FileSize // This one is last because it returns a Promise
   ])(file);
 

@@ -11,11 +11,12 @@ const {
 } = require('@cumulus/common/aws');
 const aws = require('@cumulus/common/aws');
 const cmrjs = require('@cumulus/cmrjs');
-const { CMR } = require('@cumulus/cmrjs');
+const { CMR } = require('@cumulus/cmr-client');
 const {
   metadataObjectFromCMRFile
 } = require('@cumulus/cmrjs/cmr-utils');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
+const launchpad = require('@cumulus/common/launchpad');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 
 const assertions = require('../../../lib/assertions');
@@ -453,6 +454,49 @@ test.serial('remove a granule from CMR', async (t) => {
   t.is(updatedGranule.published, false);
   t.is(updatedGranule.cmrLink, undefined);
 
+  CMR.prototype.deleteGranule.restore();
+  DefaultProvider.decrypt.restore();
+  cmrjs.getMetadata.restore();
+});
+
+test.serial('remove a granule from CMR with launchpad authentication', async (t) => {
+  process.env.cmr_oauth_provider = 'launchpad';
+  const launchpadStub = sinon.stub(launchpad, 'getLaunchpadToken').callsFake(() => randomString());
+
+  sinon.stub(
+    DefaultProvider,
+    'decrypt'
+  ).callsFake(() => Promise.resolve('fakePassword'));
+
+  sinon.stub(
+    CMR.prototype,
+    'deleteGranule'
+  ).callsFake(() => Promise.resolve());
+
+  sinon.stub(
+    cmrjs,
+    'getMetadata'
+  ).callsFake(() => Promise.resolve({ title: t.context.fakeGranules[0].granuleId }));
+
+  const response = await request(app)
+    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${accessToken}`)
+    .send({ action: 'removeFromCmr' })
+    .expect(200);
+
+  const body = response.body;
+  t.is(body.status, 'SUCCESS');
+  t.is(body.action, 'removeFromCmr');
+
+  const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
+  t.is(updatedGranule.published, false);
+  t.is(updatedGranule.cmrLink, undefined);
+
+  t.is(launchpadStub.calledOnce, true);
+
+  process.env.cmr_oauth_provider = 'earthdata';
+  launchpadStub.restore();
   CMR.prototype.deleteGranule.restore();
   DefaultProvider.decrypt.restore();
   cmrjs.getMetadata.restore();

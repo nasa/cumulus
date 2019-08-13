@@ -49,11 +49,13 @@ function getEndpoint(local = false, port = 8000) {
  * @returns {string} Step Function Execution Arn
  */
 function getExecutionArn(stateMachineArn, executionName) {
-  if (stateMachineArn && executionName) {
-    const sfArn = stateMachineArn.replace('stateMachine', 'execution');
-    return `${sfArn}:${executionName}`;
-  }
-  return null;
+  deprecate(
+    '@cumulus/ingest/aws/getExecutionArn()',
+    '1.13.4',
+    '@cumulus/common/aws/getExecutionArn()'
+  );
+
+  return aws.getExecutionArn(stateMachineArn, executionName);
 }
 
 /**
@@ -348,16 +350,6 @@ class StepFunction {
     });
 
     return { execution, executionHistory, stateMachine };
-  }
-
-  static async getExecutionHistory(executionArn) {
-    deprecate(
-      '@cumulus/ingest/aws/StepFunction.getExecutionHistory()',
-      '1.11.1',
-      '@cumulus/common/StepFunctions.getExecutionHistory()'
-    );
-
-    return StepFunctions.getExecutionHistory({ executionArn });
   }
 
   /**

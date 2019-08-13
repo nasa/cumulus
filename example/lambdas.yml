@@ -23,30 +23,42 @@ DiscoverGranules:
   timeout: 300
   memory: 512
   source: node_modules/@cumulus/discover-granules/dist/
-  useMessageAdapter: true
+  layers:
+    - '{{cma_layer}}'
   launchInVpc: true
 DiscoverPdrs:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/discover-pdrs/dist/
-  useMessageAdapter: true
+  layers:
+    - '{{cma_layer}}'
   logToElasticSearch: true
   launchInVpc: true
 FakeProcessing:
   handler: index.handler
   source: node_modules/@cumulus/test-processing/dist/
-  useMessageAdapter: true
+  layers:
+    - '{{cma_layer}}'
   launchInVpc: true
 FilesToGranules:
   handler: index.handler
   source: node_modules/@cumulus/files-to-granules/dist/
-  useMessageAdapter: true
+  layers:
+    - '{{cma_layer}}'
   launchInVpc: true
 HelloWorld:
   handler: index.handler
   timeout: 300
   memory: 256
   source: node_modules/@cumulus/hello-world/dist/
+  layers:
+    - '{{cma_layer}}'
+  launchInVpc: true
+HelloWorldKesCma:
+  handler: index.handler
+  timeout: 300
+  memory: 256
+  source: node_modules/@cumulus/hello-world/kes_dist/
   useMessageAdapter: true
   launchInVpc: true
 ModisProcessing:
@@ -62,27 +74,31 @@ MoveGranules:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/move-granules/dist/
-  useMessageAdapter: true
+  layers:
+    - '{{cma_layer}}'
   launchInVpc: true
 QueuePdrs:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/queue-pdrs/dist/
-  useMessageAdapter: true
+  layers:
+    - '{{cma_layer}}'
   logToElasticSearch: true
   launchInVpc: true
 ParsePdr:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/parse-pdr/dist/
-  useMessageAdapter: true
+  layers:
+    - '{{cma_layer}}'
   logToElasticSearch: true
   launchInVpc: true
 PdrStatusCheck:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/pdr-status-check/dist/
-  useMessageAdapter: true
+  layers:
+    - '{{cma_layer}}'
   launchInVpc: true
 PostToCmr:
   handler: index.handler
@@ -90,7 +106,8 @@ PostToCmr:
   memory: 256
   logToElasticSearch: true
   source: node_modules/@cumulus/post-to-cmr/dist/
-  useMessageAdapter: true
+  layers:
+    - '{{cma_layer}}'
   launchInVpc: true
   envs:
     system_bucket: '{{system_bucket}}'
@@ -98,20 +115,23 @@ QueueGranules:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/queue-granules/dist/
-  useMessageAdapter: true
+  layers:
+    - '{{cma_layer}}'
   launchInVpc: true
 SfSnsReport:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/sf-sns-report/dist
-  useMessageAdapter: true
+  layers:
+    - '{{cma_layer}}'
   launchInVpc: true
 SyncGranule:
   handler: index.handler
   timeout: 300
   logToElasticSearch: true
   source: node_modules/@cumulus/sync-granule/dist/
-  useMessageAdapter: true
+  layers:
+    - '{{cma_layer}}'
   launchInVpc: true
   envs:
     system_bucket: '{{system_bucket}}'

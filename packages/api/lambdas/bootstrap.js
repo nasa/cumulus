@@ -174,6 +174,19 @@ async function bootstrapCmrProvider(password) {
 }
 
 /**
+ * Encrypt Launchpad certificate passphrase
+ *
+ * @param {string} passphrase - plain text launchpad passphrase
+ * @returns {Promise.<string>} encrypted launchpad passphrase
+ */
+async function bootstrapLaunchpad(passphrase) {
+  if (!passphrase) {
+    return new Promise((resolve) => resolve('nopassphrase'));
+  }
+  return DefaultProvider.encrypt(passphrase);
+}
+
+/**
  * converts dynamoDB backup status to boolean
  *
  * @param {string} status - backup status of the table
@@ -258,6 +271,7 @@ function handler(event, context, cb) {
   const es = get(event, 'ResourceProperties.ElasticSearch');
   const users = get(event, 'ResourceProperties.Users');
   const cmr = get(event, 'ResourceProperties.Cmr');
+  const launchpad = get(event, 'ResourceProperties.Launchpad');
   const dynamos = get(event, 'ResourceProperties.DynamoDBTables');
   const requestType = get(event, 'RequestType');
 
@@ -269,13 +283,15 @@ function handler(event, context, cb) {
     bootstrapElasticSearch(get(es, 'host')),
     bootstrapUsers(get(users, 'table'), get(users, 'records')),
     bootstrapCmrProvider(get(cmr, 'Password')),
+    bootstrapLaunchpad(get(launchpad, 'Passphrase')),
     bootstrapDynamoDbTables(dynamos)
   ];
 
   return Promise.all(actions)
     .then((results) => {
       const data = {
-        CmrPassword: results[2]
+        CmrPassword: results[2],
+        LaunchpadPassphrase: results[3]
       };
 
       // if invoked by Cloudformation ...

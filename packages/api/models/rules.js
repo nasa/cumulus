@@ -1,19 +1,19 @@
-/* eslint no-param-reassign: "off" */
-
 'use strict';
 
+const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
+const merge = require('lodash.merge');
 const { invoke, Events } = require('@cumulus/ingest/aws');
 const aws = require('@cumulus/common/aws');
 const Manager = require('./base');
-const { rule } = require('./schemas');
+const { rule: ruleSchema } = require('./schemas');
 
 class Rule extends Manager {
   constructor() {
     super({
       tableName: process.env.RulesTable,
       tableHash: { name: 'name', type: 'S' },
-      schema: rule
+      schema: ruleSchema
     });
 
     this.eventMapping = { arn: 'arn', logEventArn: 'logEventArn' };
@@ -66,51 +66,85 @@ class Rule extends Manager {
   }
 
   /**
-   * update a rule item
+   * Update the event source mappings for Kinesis type rules.
    *
-   * @param {*} original - the original rule
-   * @param {*} updated - key/value fields for update, may not be a complete rule item
+   * Avoids object mutation by cloning the original rule item.
+   *
+   * @param {Object} ruleItem - A rule item
+   * @param {Object} ruleArns
+   * @param {string} ruleArns.arn
+   *   UUID for event source mapping from Kinesis stream for messageConsumer Lambda
+   * @param {string} ruleArns.logEventArn
+   *   UUID for event source mapping from Kinesis stream to KinesisInboundEventLogger Lambda
+   * @returns {Object} - Updated rule item
+   */
+  updateKinesisRuleArns(ruleItem, ruleArns) {
+    const updatedRuleItem = cloneDeep(ruleItem);
+    updatedRuleItem.rule.arn = ruleArns.arn;
+    updatedRuleItem.rule.logEventArn = ruleArns.logEventArn;
+    return updatedRuleItem;
+  }
+
+  /**
+   * Update the event source mapping for SNS type rules.
+   *
+   * Avoids object mutation by cloning the original rule item.
+   *
+   * @param {Object} ruleItem - A rule item
+   * @param {string} snsSubscriptionArn
+   *   UUID for event source mapping from SNS topic to messageConsumer Lambda
+   * @returns {Object} - Updated rule item
+   */
+  updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
+    const updatedRuleItem = cloneDeep(ruleItem);
+    if (!snsSubscriptionArn) {
+      delete updatedRuleItem.rule.arn;
+    } else {
+      updatedRuleItem.rule.arn = snsSubscriptionArn;
+    }
+    return updatedRuleItem;
+  }
+
+  /**
+   * Update a rule item
+   *
+   * @param {Object} original - the original rule
+   * @param {Object} updates - key/value fields for update, may not be a complete rule item
    * @returns {Promise} the response from database updates
    */
-  async update(original, updated) {
-    let stateChanged = false;
-    if (updated.state && updated.state !== original.state) {
-      original.state = updated.state;
-      stateChanged = true;
-    }
+  async update(original, updates) {
+    // Make a copy of the existing rule to preserve existing values
+    let updatedRuleItem = cloneDeep(original);
 
-    let valueUpdated = false;
-    if (updated.rule && updated.rule.value) {
-      original.rule.value = updated.rule.value;
-      if (updated.rule.type === undefined) updated.rule.type = original.rule.type;
-      valueUpdated = true;
-    }
+    // Apply updates to updated rule item to be saved
+    merge(updatedRuleItem, updates);
 
-    switch (original.rule.type) {
+    const stateChanged = (updates.state && updates.state !== original.state);
+    const valueUpdated = (updates.rule && updates.rule.value);
+
+    switch (updatedRuleItem.rule.type) {
     case 'scheduled': {
-      const payload = await Rule.buildPayload(original);
-      await this.addRule(original, payload);
+      const payload = await Rule.buildPayload(updatedRuleItem);
+      await this.addRule(updatedRuleItem, payload);
       break;
     }
     case 'kinesis':
       if (valueUpdated) {
-        await this.deleteKinesisEventSources(original);
-        await this.addKinesisEventSources(original);
-        updated.rule.arn = original.rule.arn;
+        await this.deleteKinesisEventSources(updatedRuleItem);
+        const updatedRuleItemArns = await this.addKinesisEventSources(updatedRuleItem);
+        updatedRuleItem = this.updateKinesisRuleArns(updatedRuleItem, updatedRuleItemArns);
       }
       break;
     case 'sns': {
       if (valueUpdated || stateChanged) {
-        if (original.rule.arn) {
-          await this.deleteSnsTrigger(original);
-          if (!updated.rule) updated.rule = original.rule;
-          delete updated.rule.arn;
+        let snsSubscriptionArn;
+        if (updatedRuleItem.rule.arn) {
+          await this.deleteSnsTrigger(updatedRuleItem);
         }
-        if (original.state === 'ENABLED') {
-          await this.addSnsTrigger(original);
-          if (!updated.rule) updated.rule = original.rule;
-          else updated.rule.arn = original.rule.arn;
+        if (updatedRuleItem.state === 'ENABLED') {
+          snsSubscriptionArn = await this.addSnsTrigger(updatedRuleItem);
         }
+        updatedRuleItem = this.updateSnsRuleArn(updatedRuleItem, snsSubscriptionArn);
       }
       break;
     }
@@ -118,7 +152,7 @@ class Rule extends Manager {
       break;
     }
 
-    return super.update({ name: original.name }, updated);
+    return super.update({ name: original.name }, updatedRuleItem);
   }
 
   static async buildPayload(item) {
@@ -153,26 +187,33 @@ class Rule extends Manager {
       throw new Error('Names may only contain letters, numbers, and underscores.');
     }
 
-    // the default state is 'ENABLED'
-    if (!item.state) item.state = 'ENABLED';
+    // Initialize new rule object
+    let newRuleItem = cloneDeep(item);
 
-    const payload = await Rule.buildPayload(item);
-    switch (item.rule.type) {
+    // the default state is 'ENABLED'
+    if (!item.state) {
+      newRuleItem.state = 'ENABLED';
+    }
+
+    const payload = await Rule.buildPayload(newRuleItem);
+    switch (newRuleItem.rule.type) {
     case 'onetime': {
       await invoke(process.env.invoke, payload);
       break;
     }
     case 'scheduled': {
-      await this.addRule(item, payload);
+      await this.addRule(newRuleItem, payload);
       break;
     }
     case 'kinesis': {
-      await this.addKinesisEventSources(item);
+      const ruleArns = await this.addKinesisEventSources(newRuleItem);
+      newRuleItem = this.updateKinesisRuleArns(newRuleItem, ruleArns);
       break;
     }
     case 'sns': {
-      if (item.state === 'ENABLED') {
-        await this.addSnsTrigger(item);
+      if (newRuleItem.state === 'ENABLED') {
+        const snsSubscriptionArn = await this.addSnsTrigger(newRuleItem);
+        newRuleItem = this.updateSnsRuleArn(newRuleItem, snsSubscriptionArn);
       }
       break;
     }
@@ -181,7 +222,7 @@ class Rule extends Manager {
     }
 
     // save
-    return super.create(item);
+    return super.create(newRuleItem);
   }
 
 
@@ -195,9 +236,9 @@ class Rule extends Manager {
       (lambda) => this.addKinesisEventSource(item, lambda)
     );
     const eventAdd = await Promise.all(sourceEventPromises);
-    item.rule.arn = eventAdd[0].UUID;
-    item.rule.logEventArn = eventAdd[1].UUID;
-    return item;
+    const arn = eventAdd[0].UUID;
+    const logEventArn = eventAdd[1].UUID;
+    return { arn, logEventArn };
   }
 
 
@@ -248,10 +289,7 @@ class Rule extends Manager {
     const deleteEventPromises = this.kinesisSourceEvents.map(
       (lambda) => this.deleteKinesisEventSource(item, lambda.eventType)
     );
-    const eventDelete = await Promise.all(deleteEventPromises);
-    item.rule.arn = eventDelete[0];
-    item.rule.logEventArn = eventDelete[1];
-    return item;
+    return Promise.all(deleteEventPromises);
   }
 
   /**
@@ -348,9 +386,7 @@ class Rule extends Manager {
       StatementId: `${item.name}Permission`
     };
     await aws.lambda().addPermission(permissionParams).promise();
-
-    item.rule.arn = subscriptionArn;
-    return item;
+    return subscriptionArn;
   }
 
   async deleteSnsTrigger(item) {
@@ -364,9 +400,7 @@ class Rule extends Manager {
     const subscriptionParams = {
       SubscriptionArn: item.rule.arn
     };
-    await aws.sns().unsubscribe(subscriptionParams).promise();
-
-    return item;
+    return aws.sns().unsubscribe(subscriptionParams).promise();
   }
 }
 
