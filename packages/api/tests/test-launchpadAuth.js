@@ -68,7 +68,7 @@ test.serial('API request with an invalid token returns an unauthorized response'
 });
 
 test.serial('API request with a stored non-expired token returns a successful response', async (t) => {
-  const stub = sinon.stub(launchpad, 'validateLaunchpadToken').resolves(validateTokenResponse);
+  let stub = sinon.stub(launchpad, 'validateLaunchpadToken').resolves(validateTokenResponse);
   const collectionStub = sinon.stub(EsCollection.prototype, 'query').returns([]);
 
   await request(app)
@@ -79,6 +79,9 @@ test.serial('API request with a stored non-expired token returns a successful re
 
   const accessToken = await accessTokenModel.get({ accessToken: 'ValidAccessToken2' });
   t.is(accessToken.accessToken, 'ValidAccessToken2');
+
+  stub.restore();
+  stub = sinon.stub(launchpad, 'validateLaunchpadToken').resolves({status: 'failed'});
 
   await request(app)
     .get('/collections')
