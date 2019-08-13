@@ -81,7 +81,7 @@ test.serial('API request with a stored non-expired token returns a successful re
   t.is(accessToken.accessToken, 'ValidAccessToken2');
 
   stub.restore();
-  stub = sinon.stub(launchpad, 'validateLaunchpadToken').resolves({status: 'failed'});
+  stub = sinon.stub(launchpad, 'validateLaunchpadToken').resolves({ status: 'failed' });
 
   await request(app)
     .get('/collections')
