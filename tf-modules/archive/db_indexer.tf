@@ -33,3 +33,45 @@ resource "aws_lambda_function" "db_indexer" {
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
   }
 }
+
+resource "aws_lambda_event_source_mapping" "collections_table_db_indexer" {
+  event_source_arn  = data.aws_dynamodb_table.collections.stream_arn
+  function_name     = aws_lambda_function.db_indexer.arn
+  starting_position = "TRIM_HORIZON"
+  batch_size        = 10
+}
+
+resource "aws_lambda_event_source_mapping" "executions_table_db_indexer" {
+  event_source_arn  = data.aws_dynamodb_table.executions.stream_arn
+  function_name     = aws_lambda_function.db_indexer.arn
+  starting_position = "TRIM_HORIZON"
+  batch_size        = 10
+}
+
+resource "aws_lambda_event_source_mapping" "granules_table_db_indexer" {
+  event_source_arn  = data.aws_dynamodb_table.granules.stream_arn
+  function_name     = aws_lambda_function.db_indexer.arn
+  starting_position = "TRIM_HORIZON"
+  batch_size        = 10
+}
+
+resource "aws_lambda_event_source_mapping" "pdrs_table_db_indexer" {
+  event_source_arn  = data.aws_dynamodb_table.pdrs.stream_arn
+  function_name     = aws_lambda_function.db_indexer.arn
+  starting_position = "TRIM_HORIZON"
+  batch_size        = 10
+}
+
+resource "aws_lambda_event_source_mapping" "providers_table_db_indexer" {
+  event_source_arn  = data.aws_dynamodb_table.providers.stream_arn
+  function_name     = aws_lambda_function.db_indexer.arn
+  starting_position = "TRIM_HORIZON"
+  batch_size        = 10
+}
+
+resource "aws_lambda_event_source_mapping" "rules_table_db_indexer" {
+  event_source_arn  = data.aws_dynamodb_table.rules.stream_arn
+  function_name     = aws_lambda_function.db_indexer.arn
+  starting_position = "TRIM_HORIZON"
+  batch_size        = 10
+}

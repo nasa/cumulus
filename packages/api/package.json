@@ -14,7 +14,7 @@
     "test-coverage": "nyc npm test",
     "build": "webpack",
     "watch": "webpack --progress -w",
-    "build-lambda-zips": "for x in app BulkDelete emsDistributionReport emsIngestReport emsProductMetadataReport indexer dbIndexer indexFromDatabase payloadLogger createReconciliationReport bootstrap; do (cd dist/${x} && rm -f lambda.zip && zip lambda.zip index.js); done",
+    "build-lambda-zips": "for x in executeMigrations cleanExecutions app BulkDelete emsDistributionReport emsIngestReport emsProductMetadataReport indexer dbIndexer indexFromDatabase payloadLogger createReconciliationReport bootstrap; do (cd dist/${x} && rm -f lambda.zip && zip lambda.zip index.js); done",
     "serve": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve",
     "serve-oauth": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test cumulus-api serve",
     "serve-remote": "cumulus-api serve",
