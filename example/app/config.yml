@@ -299,6 +299,9 @@ cumulus-from-source:
   launchpad:
     api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1'
     passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
+  oauth:
+    provider: launchpad
+    userGroup: GSFC-Cumulus-Dev
 
 cumulus-from-pr:
   prefix: test-pr-integration # used by the PR
