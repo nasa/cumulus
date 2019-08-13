@@ -1,5 +1,17 @@
 # Required
 
+variable "log_api_gateway_to_cloudwatch" {
+  type        = bool
+  default     = false
+  description = "Boolean switch to enable/disable logging of API Gateway distribution traffic to CloudWatch."
+}
+
+variable "log_destination_arn" {
+  type    = string
+  default = null
+  description = "shared AWS:Log:Destination value. Requires log_api_gateway_to_cloudwatch set to true."
+}
+
 variable "prefix" {
   type        = string
   description = "Resource prefix unique to this deployment"

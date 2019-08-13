@@ -128,6 +128,14 @@ async function updateToken(cmrProvider, clientId, username, password) {
  *  username: 'my-username',
  *  password: 'my-password'
  * });
+ *
+ * or
+ *
+ * const cmrClient = new CMR({
+  *  provider: 'my-provider',
+  *  clientId: 'my-clientId',
+  *  token: 'cmr_or_launchpad_token'
+  * });
  */
 class CMR {
   /**
@@ -136,14 +144,17 @@ class CMR {
    * @param {Object} params
    * @param {string} params.provider - the CMR provider id
    * @param {string} params.clientId - the CMR clientId
-   * @param {string} params.username - CMR username
-   * @param {string} params.password - CMR password
+   * @param {string} params.username - CMR username, not used if token is provided
+   * @param {string} params.password - CMR password, not used if token is provided
+   * @param {string} params.token - CMR or Launchpad token,
+   * if not provided, CMR username and password are used to get a cmr token
    */
   constructor(params = {}) {
     this.clientId = params.clientId;
     this.provider = params.provider;
     this.username = params.username;
     this.password = params.password;
+    this.token = params.token;
   }
 
   /**
@@ -152,7 +163,8 @@ class CMR {
    * @returns {Promise.<string>} the token
    */
   getToken() {
-    return updateToken(this.provider, this.clientId, this.username, this.password);
+    return (this.token) ? this.token
+      : updateToken(this.provider, this.clientId, this.username, this.password);
   }
 
   /**

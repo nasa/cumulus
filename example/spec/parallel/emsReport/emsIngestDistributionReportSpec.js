@@ -29,8 +29,7 @@ const {
   EarthdataLogin: { getEarthdataAccessToken },
   emsApi,
   getOnlineResources,
-  granulesApi: granulesApiTestUtils,
-  waitUntilGranuleStatusIs
+  granulesApi: granulesApiTestUtils
 } = require('@cumulus/integration-tests');
 
 const {
@@ -41,7 +40,10 @@ const {
   createTestDataPath,
   createTestSuffix
 } = require('../../helpers/testUtils');
-const { setDistributionApiEnvVars } = require('../../helpers/apiUtils');
+const {
+  setDistributionApiEnvVars,
+  waitForModelStatus
+} = require('../../helpers/apiUtils');
 
 const config = loadConfig();
 
@@ -67,6 +69,8 @@ process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
 process.env.GranulesTable = `${config.stackName}-GranulesTable`;
 process.env.AccessTokensTable = `${config.stackName}-AccessTokensTable`;
 const accessTokensModel = new AccessToken();
+
+const granuleModel = new Granule();
 
 // add MOD14A1___006 collection
 async function setupCollectionAndTestData(testSuffix, testDataFolder) {
@@ -97,7 +101,11 @@ async function ingestAndPublishGranule(testSuffix, testDataFolder, publish = tru
     config.stackName, config.bucket, workflowName, collection, provider, inputPayload
   );
 
-  await waitUntilGranuleStatusIs(config.stackName, inputPayload.granules[0].granuleId, 'completed');
+  await waitForModelStatus(
+    granuleModel,
+    { granuleId: inputPayload.granules[0].granuleId },
+    'completed'
+  );
 
   return inputPayload.granules[0].granuleId;
 }
@@ -109,7 +117,7 @@ async function ingestAndPublishGranule(testSuffix, testDataFolder, publish = tru
  * @param {Array<string>} additionalGranuleIds - additional granules to delete
  */
 async function deleteOldGranules(retentionInDays, additionalGranuleIds) {
-  const dbGranulesIterator = new Granule().getGranulesForCollection(collectionId, 'completed');
+  const dbGranulesIterator = granuleModel.getGranulesForCollection(collectionId, 'completed');
   let nextDbItem = await dbGranulesIterator.peek();
   while (nextDbItem) {
     const nextDbGranuleId = nextDbItem.granuleId;
