@@ -4,7 +4,7 @@ data "aws_iam_policy_document" "assume_lambda_role" {
       type        = "Service"
       identifiers = ["lambda.amazonaws.com"]
     }
-    actions   = ["sts:AssumeRole"]
+    actions = ["sts:AssumeRole"]
   }
 }
 

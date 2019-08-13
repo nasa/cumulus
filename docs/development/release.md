@@ -104,6 +104,24 @@ If you created a new release plan in step one, you will need to create a new bam
 
 Bamboo will build and run lint, audit and unit tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.
 
+### 8. Create a new Cumulus release on github
+
+The Cumulus Distribution Terraform module can be created by running:
+
+```bash
+$ (cd tf-modules/distribution && ./bin/build-tf-module.sh)
+```
+
+This will generate a file called
+`tf-modules/distribution/dist/terraform-aws-cumulus-distribution.zip`, which
+should be uploaded as an asset of the Github release.
+
+Similarily, the S3 Replicator Terraform module can be created by running:
+
+```bash
+$ (cd tf-modules/s3-credentials && ./bin/build-tf-module.sh)
+```
+
 ### 9. Updating master
 
 Once the release is done, you will need to submit a PR from the feature branch to master with the CHANGELOG and package version updates.
