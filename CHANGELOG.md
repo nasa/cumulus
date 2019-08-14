@@ -38,6 +38,9 @@ deployDistributionApi: true
 If you deploy with no distribution app your deployment will succeed but you may encounter errors in your workflows, particularly in the `MoveGranule` task.
 
 ### Added
+- **CUMULUS-642**
+  - Adds Launchpad as an authentication option for the Cumulus API.
+  - Updated deployment documentation and added [instructions to setup Cumulus API Launchpad authentication] (https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication)
 - **CUMULUS-1418**
   - Adds usage docs/testing of lambda layers (introduced in PR1125), updates Core example tasks to use the updated `cumulus-ecs-task` and a CMA layer instead of kes CMA injection.
   - Added Terraform module to publish CMA as layer to user account.
