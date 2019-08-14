@@ -36,29 +36,32 @@ const getSfEventStatus = (event) => get(event, 'detail.status');
  * Get the Step Function output message from a Cloudwatch Event
  *
  * @param {Object} event - A Cloudwatch event
+ * @param {string} field - Field to pull from 'detail', i.e. 'input' or 'output'
  * @param {any} [defaultValue] - A default value for the message, if none exists
  * @returns {any} - Output message from Step Function
  */
-const getSfEventMessage = (event, defaultValue) => get(event, 'detail.output', defaultValue);
+const getSfEventDetailValue = (event, field, defaultValue) => get(event, `detail.${field}`, defaultValue);
 
 /**
  * Get the Step Function output message from a Cloudwatch Event
  *
  * @param {Object} event - A Cloudwatch event
- * @returns {Object} - Output message object from Step Function
+ * @param {string} messageSource - 'input' or 'output' from Step Function
+ * @param {string} defaultValue - defaultValue to fetch if no event message object is found
+ * @returns {Object} - Message object from Step Function
  */
-const getSfEventMessageObject = (event) => {
-  const message = getSfEventMessage(event, '{}');
+const getSfEventMessageObject = (event, messageSource, defaultValue) => {
+  const message = getSfEventDetailValue(event, messageSource, defaultValue);
   try {
     return JSON.parse(message);
   } catch (e) {
-    log.error(`Could not parse ${message}`);
+    log.error(`Could not parse '${message}'`);
     return null;
   }
 };
 
 module.exports = {
-  getSfEventMessage,
+  getSfEventDetailValue,
   getSfEventMessageObject,
   getSfEventStatus,
   isSfExecutionEvent,

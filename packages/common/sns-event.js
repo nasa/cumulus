@@ -30,7 +30,7 @@ const getSnsEventMessageObject = (event) => {
   try {
     return JSON.parse(message);
   } catch (e) {
-    log.error(`Could not parse ${message}`);
+    log.error(`Could not parse '${message}'`);
     return null;
   }
 };

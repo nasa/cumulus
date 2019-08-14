@@ -14,6 +14,7 @@ ApiEndpoints:
     EARTHDATA_CLIENT_ID: '{{EARTHDATA_CLIENT_ID}}'
     EARTHDATA_CLIENT_PASSWORD: '{{EARTHDATA_CLIENT_PASSWORD}}'
     OAUTH_PROVIDER: '{{parent.oauth.provider}}'
+    oauth_user_group: '{{parent.oauth.userGroup}}'
     AccessTokensTable:
       function: Ref
       value: AccessTokensTableDynamoDB
