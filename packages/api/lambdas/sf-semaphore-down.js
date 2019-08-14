@@ -38,7 +38,8 @@ const isDecrementEvent = (event, executionMessage) =>
  * @param {Object} event - incoming event from Cloudwatch
  */
 async function handleSemaphoreDecrementTask(event) {
-  const eventMessage = getSfEventMessageObject(event);
+  let eventMessage = getSfEventMessageObject(event, 'output');
+  if (!eventMessage) eventMessage = getSfEventMessageObject(event, 'input', '{}');
   const executionMessage = await pullStepFunctionEvent(eventMessage);
   if (isDecrementEvent(event, executionMessage)) {
     const queueName = getQueueName(eventMessage);
