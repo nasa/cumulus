@@ -34,7 +34,7 @@ variable "elasticsearch_config" {
 variable "enable_point_in_time_tables" {
   description = "DynamoDB table names that should have point in time recovery enabled"
   type        = list(string)
-  default     = [
+  default = [
     "CollectionsTable",
     "ExecutionsTable",
     "FilesTable",
@@ -56,12 +56,6 @@ variable "include_elasticsearch" {
   description = "True/false for whether to deploy Elasticsearch"
   type        = bool
   default     = true
-}
-
-variable "security_groups" {
-  description = "Security Group IDs (for Elasticsearch)"
-  type        = list(string)
-  default     = []
 }
 
 variable "subnet_ids" {

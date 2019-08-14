@@ -40,11 +40,15 @@ variable "ecs_cluster_name" {
   type = string
 }
 
-variable "elasticsearch_arn" {
+variable "elasticsearch_domain_arn" {
   type = string
 }
 
 variable "elasticsearch_hostname" {
+  type = string
+}
+
+variable "elasticsearch_security_group_id" {
   type = string
 }
 

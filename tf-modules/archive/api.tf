@@ -1,5 +1,7 @@
 locals {
   api_port_substring = var.api_port == null ? "" : ":${var.api_port}"
+  api_uri            = var.api_url == null ? "https://${aws_api_gateway_rest_api.api.id}.execute-api.${data.aws_region.current.name}.amazonaws.com${local.api_port_substring}/${var.api_gateway_stage}/" : var.api_url
+  api_redirect_uri   = "${local.api_uri}token"
 }
 
 resource "aws_cloudwatch_log_group" "api" {
@@ -42,7 +44,7 @@ resource "aws_lambda_function" "api" {
       ProvidersTable               = var.dynamo_tables.Providers
       RulesTable                   = var.dynamo_tables.Rules
       STSCredentialsLambda         = var.sts_credentials_lambda
-      TOKEN_REDIRECT_ENDPOINT      = var.api_url == null ? "https://${aws_api_gateway_rest_api.api.id}.execute-api.${data.aws_region.current.name}.amazonaws.com${local.api_port_substring}/${var.api_gateway_stage}/token" : "${var.api_url}token"
+      TOKEN_REDIRECT_ENDPOINT      = local.api_redirect_uri
       TOKEN_SECRET                 = var.token_secret
       UsersTable                   = var.dynamo_tables.Users
       backgroundQueueName          = var.background_queue_name
