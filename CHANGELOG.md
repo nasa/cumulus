@@ -148,6 +148,11 @@ If you deploy with no distribution app your deployment will succeed but you may 
   - Added production information (collection ShortName and Version, granuleId) to EMS distribution report
   - Added functionality to send daily distribution reports to EMS
 
+- **CUMULUS-1211**
+  - Errors thrown during granule discovery are no longer swallowed and ignored.
+    Rather, errors are propagated to allow for proper error-handling and
+    meaningful messaging.
+
 - **CUMULUS-1319**
   - Fixed a bug where granule ingest times were not being stored to the database
 
