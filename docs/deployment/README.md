@@ -45,7 +45,7 @@ The process involves:
 ### Credentials
 
 * [CMR](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) username and password.  CMR credentials must be provided if you are exporting metadata to CMR with EarthData Client Login authentication. More information about CMR configuration can be found [here](./config_descriptions#cmr).
-* [Launchpad](https://launchpad.nasa.gov).  Launchpad credentials must be provided if you are exporting metadat to CMR with Launchpad authentication.  More information about CMR Launchpad authentication and configuration can be found [here](./config_descriptions#launchpad).
+* [Launchpad](https://launchpad.nasa.gov).  Launchpad credentials must be provided if you are using Launchpad authentication to export metadata to CMR or to authenticate with the Cumulus API. More information about CMR and Cumulus Launchpad authentication and configuration can be found [here](./config_descriptions#launchpad).
 * [EarthData Client login](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/earthdata-login) username and password. User must have the ability to administer and/or create applications in URS.  It's recommended to obtain an account in the test environment (UAT).
 
 ### Needed Git Repositories
@@ -272,6 +272,10 @@ dev:                            # deployment name
     username: <ems-username>
     dataSource: <report-datasource>
     submitReport: true
+
+  oauth:
+    provider: launchpad     # If not provided, default authentication is Earthdata Login
+    userGroup: Cumulus-Dev  # Optional, only necessary if Launchpad authentication is used
 
   # Optional, only necessary if Launchpad authentication is used for CMR or CUMULUS API
   launchpad:
