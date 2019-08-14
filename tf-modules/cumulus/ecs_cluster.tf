@@ -99,8 +99,7 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
       "es:ESHttpPost",
       "es:ESHttpPut"
     ]
-    # TODO Get this value dynamically instead of from a variable
-    resources = [var.elasticsearch_arn]
+    resources = [var.elasticsearch_domain_arn]
   }
 }
 

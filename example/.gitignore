@@ -18,7 +18,4 @@ spec/**/*.output.payload.json
 yarn-error.log
 test_app/
 scripts/test_output/
-/terraform.tfvars
-/terraform.tf
-/.terraform/
 test-output

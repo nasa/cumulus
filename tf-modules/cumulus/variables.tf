@@ -40,7 +40,15 @@ variable "ecs_cluster_min_size" {
   type = number
 }
 
-variable "elasticsearch_arn" {
+variable "elasticsearch_domain_arn" {
+  type = string
+}
+
+variable "elasticsearch_hostname" {
+  type = string
+}
+
+variable "elasticsearch_security_group_id" {
   type = string
 }
 
@@ -88,6 +96,11 @@ variable "archive_api_port" {
 variable "archive_api_users" {
   type    = list(string)
   default = []
+}
+
+variable "distribution_url" {
+  type    = string
+  default = null
 }
 
 variable "ecs_container_stop_timeout" {
