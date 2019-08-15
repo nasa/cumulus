@@ -41,6 +41,9 @@ If you deploy with no distribution app your deployment will succeed but you may 
 
 ### Added
 
+- **CUMULUS-642**
+  - Adds Launchpad as an authentication option for the Cumulus API.
+  - Updated deployment documentation and added [instructions to setup Cumulus API Launchpad authentication] (https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication)
 - **CUMULUS-1418**
   - Adds usage docs/testing of lambda layers (introduced in PR1125), updates Core example tasks to use the updated `cumulus-ecs-task` and a CMA layer instead of kes CMA injection.
   - Added Terraform module to publish CMA as layer to user account.
@@ -94,8 +97,8 @@ If you deploy with no distribution app your deployment will succeed but you may 
     - `isSfExecutionEvent()` returns true if event is from Step Functions
     - `isTerminalSfStatus()` determines if a Step Function status from a Cloudwatch event is a terminal status
     - `getSfEventStatus()` gets the Step Function status from a Cloudwatch event
-    - `getSfEventMessage()` extracts and parses the Step Function output messsage from a Cloudwatch event
-    - `getSfEventMessageObject()` extracts and parses Step Function message object from a Cloudwatch event
+    - `getSfEventDetailValue()` extracts a Step Function event detail field from a Cloudwatch event
+    - `getSfEventMessageObject()` extracts and parses Step Function detail object from a Cloudwatch event
 
 - **CUMULUS-1429**
   - Added `tf-modules/data-persistence` Terraform module which includes resources for data persistence in Cumulus:
