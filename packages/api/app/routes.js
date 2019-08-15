@@ -24,12 +24,17 @@ const workflows = require('../endpoints/workflows');
 const dashboard = require('../endpoints/dashboard');
 const elasticsearch = require('../endpoints/elasticsearch');
 const ems = require('../endpoints/ems');
+const launchpadAuth = require('./launchpadAuth');
 
 let token = require('../endpoints/token');
 let { ensureAuthorized } = require('./auth');
 if (process.env.FAKE_AUTH === 'true') {
   token = require('./testAuth'); // eslint-disable-line global-require
   ensureAuthorized = token.ensureAuthorized;
+}
+
+if (process.env.OAUTH_PROVIDER === 'launchpad') {
+  ensureAuthorized = launchpadAuth.ensureAuthorized;
 }
 
 // collections endpoints
