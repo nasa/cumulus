@@ -18,7 +18,7 @@ The name is not important, but `release-x.y.z` seems like a good choice.
 
 #### Backporting
 
-Checkout the release-1.YY.x branch, then create a release branch from it.
+Checkout the release-major.minor.patch branch, then create a release branch from it.    If the release-major.minor.patch branch does not exist, checkout the major.0.0 release tag and create a new maintenance branch, then create a release branch from it. 
 
 The name is not important, but `release-x.y.z` seems like a good choice.
 
