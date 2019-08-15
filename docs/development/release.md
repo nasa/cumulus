@@ -64,7 +64,7 @@ Where `${release_version}` corresponds to the version tag `v1.2.3`, for example.
 
 Note: This is for 1.10.3 or later.
 
-### 6. Create a pull request against the feature branch/master
+### 6. Create a pull request against the feature branch
 
 Create a PR against the feature branch. Verify that the Bamboo build for the PR succeeds and then merge to the feature branch.
 
