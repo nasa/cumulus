@@ -37,7 +37,10 @@ deployDistributionApi: true
 
 If you deploy with no distribution app your deployment will succeed but you may encounter errors in your workflows, particularly in the `MoveGranule` task.
 
+- **CUMULUS-1418** Users who are packaging the CMA in their Lambdas outside of Cumulus may need to update their Lambda configuration.    Please see `BREAKING CHANGES` below for details.
+
 ### Added
+
 - **CUMULUS-642**
   - Adds Launchpad as an authentication option for the Cumulus API.
   - Updated deployment documentation and added [instructions to setup Cumulus API Launchpad authentication] (https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication)
@@ -160,6 +163,11 @@ If you deploy with no distribution app your deployment will succeed but you may 
   - Addressed audit concerns (https://www.npmjs.com/advisories/782) in api package
 
 ### BREAKING CHANGES
+
+### Changed
+
+- **CUMULUS-1418**
+  - Adding a default `cmaDir` key to configuration will cause `CUMULUS_MESSAGE_ADAPTER_DIR` to be set by default to `/opt` for any Lambda not setting `useCma` to true, or explicitly setting the CMA environment variable.  In lambdas that package the CMA independently of the Cumulus packaging.    Lambdas manually packaging the CMA should have their  Lambda configuration updated to set the CMA path, or alternately if not using the CMA as a Lambda layer in this deployment set `cmaDir` to `./cumulus-message-adapter`.
 
 ### Removed
 
