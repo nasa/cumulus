@@ -12,11 +12,12 @@ Read more about the semantic versioning [here](https://docs.npmjs.com/getting-st
 
 #### From Master
 
-If creating a new minor version release from master, create a branch titled `release-MAJOR.MINOR.x` (e.g. release-1.14.x) as a feature branch from master to allow us to easily backport patches to that version.  Then create a release branch from it (
+If creating a new minor version release from master, create a branch titled `release-MAJOR.MINOR.x` (e.g. release-1.14.x) as a minor version branch from master to allow us to easily backport patches to that version.  Then create a release branch from the minor version branch.
 
 #### Backporting
 
-Checkout the release-major.minor.patch branch created in the `From Master` step above, then create a release branch from it.   
+Checkout the minor version branch created in the `From Master` step above, then create a release branch from it.   
+
 ### 2. Update the Cumulus version number
 
 When changes are ready to be released, the Cumulus version number must be updated.
@@ -60,9 +61,9 @@ Where `${release_version}` corresponds to the version tag `v1.2.3`, for example.
 
 Note: This is for 1.10.3 or later.
 
-### 6. Create a pull request against the feature branch
+### 6. Create a pull request against the minor version branch
 
-Create a PR against the feature branch. Verify that the Bamboo build for the PR succeeds and then merge to the feature branch.
+Create a PR against the minor version branch. Verify that the Bamboo build for the PR succeeds and then merge to the minor version branch.
 
 ### 7. Create a git tag for the release
 Create and push a new git tag:
