@@ -10,7 +10,13 @@ Read more about the semantic versioning [here](https://docs.npmjs.com/getting-st
 
 ### 1. Create a branch for the new release
 
-The name is not important, but `release-x.y.z` seems like a good choice.
+#### From Master
+
+If creating a new minor version release from master, create a branch titled `release-MAJOR.MINOR.x` (e.g. release-1.14.x) as a minor version branch from master to allow us to easily backport patches to that version.  Then create a release branch from the minor version branch.
+
+#### Backporting
+
+Checkout the minor version branch created in the `From Master` step above, then create a release branch from it.   
 
 ### 2. Update the Cumulus version number
 
@@ -55,24 +61,42 @@ Where `${release_version}` corresponds to the version tag `v1.2.3`, for example.
 
 Note: This is for 1.10.3 or later.
 
-### 6. Create a pull request against the master branch
+### 6. Create a pull request against the minor version branch
 
-Create a PR against the `master` branch. Verify that the Travis CI build for the PR succeeds and then merge to master. Once merged, the release branch can be deleted.
+Create a PR against the minor version branch. Verify that the Bamboo build for the PR succeeds and then merge to the minor version branch.
 
 ### 7. Create a git tag for the release
-
-Publishing of new releases is handled by Travis CI and is triggered when the release tag is pushed to Github. This tag should be in the format `v1.2.3`, where `1.2.3` is the new version.
-
 Create and push a new git tag:
 
 ```bash
   $ git tag -a v1.x.x -m "Release 1.x.x"
   $ git push origin v1.x.x
 ```
+### 8. Running the deployment
 
-Travis will build and run tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.
+Publishing of new releases is handled by a Bamboo release plan and is manually triggered.
 
-### 8. Create a new Cumulus release on github
+If you created a new release plan in step one, you will need to create a new bamboo deployment plan
+
+#### Creating a Bamboo Deployment plan:
+
+* In the Cumulus Core project (https://ci.earthdata.nasa.gov/browse/CUM-CBA), click Actions -> Configure Plan
+
+* Scroll to the bottom of the branch list and click `Create Plan Branch`
+
+* Click `Create plan branch manually`
+
+* Add the values in that list.   Choose a display name that makes it *very* clear this is a deployment branch plan.    `Release (branch name)` seems to work well.    *Make sure* you select the correct branch
+
+* **Important** Deselect Enable Branch - if you do not do this, it will immediately fire off a build
+
+* **Immediately** go to plan configuration on the `Branch Details` tab, and enable `Change trigger`.  Set the `Trigger type` to manual, this will prevent commits to the branch from triggering the build plan
+
+* Go to the branch plan and set GIT_PR, USE_NPM_PACKAGES and PUBLISH_FLAG to true.  Select a DEPLOYMENT appropriate for the release (defaults to last committer). This should be `cumulus-from-npm` *except* in special cases such as incompatible backport branches.
+
+Bamboo will build and run lint, audit and unit tests against that tagged release, publish the new packages to NPM, and then run the integration tests using those newly released packages.
+
+### 9. Create a new Cumulus release on github
 
 The Cumulus Distribution Terraform module can be created by running:
 
@@ -89,12 +113,6 @@ Similarily, the S3 Replicator Terraform module can be created by running:
 ```bash
 $ (cd tf-modules/s3-credentials && ./bin/build-tf-module.sh)
 ```
-
-## Backporting to a previous release
-
-Creating a new release for an older major or minor version is similar to creating any other release. Create a branch starting at the tag of the previous release, then follow the [instructions for creating a new release](#updating-cumulus-version-and-publishing-to-npm).
-
-For example, if versions 1.7.0 and 1.8.0 had been published and you wanted to create a 1.7.1 release, you would create the release branch by running `git checkout -b release-1.7.1 v1.7.0`.
 
 ## Troubleshooting
 
