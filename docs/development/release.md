@@ -12,14 +12,13 @@ Read more about the semantic versioning [here](https://docs.npmjs.com/getting-st
 
 #### From Master
 
-If creating a new minor version release from master, create a branch titled `release-1.MINOR.x` (e.g. release-1.14.x) as a feature branch from master to allow us to easily backport patches to that version.  Then create a release branch from it.
+If creating a new minor version release from master, create a branch titled `release-MAJOR.MINOR.x` (e.g. release-1.14.x) as a feature branch from master to allow us to easily backport patches to that version.  Then create a release branch from it.
 
 The name is not important, but `release-x.y.z` seems like a good choice.
 
 #### Backporting
 
-Checkout the release-major.minor.patch branch, then create a release branch from it.    If the release-major.minor.patch branch does not exist, checkout the major.0.0 release tag and create a new maintenance branch, then create a release branch from it. 
-
+Checkout the release-major.minor.patch branch created in the `From Master` step above, then create a release branch from it.   
 The name is not important, but `release-x.y.z` seems like a good choice.
 
 ### 2. Update the Cumulus version number
