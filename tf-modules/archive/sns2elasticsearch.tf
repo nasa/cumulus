@@ -9,7 +9,7 @@ resource "aws_lambda_function" "sns2elasticsearch" {
   filename         = "${path.module}/../../packages/api/dist/indexer/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/indexer/lambda.zip")
   handler          = "index.handler"
-  role             = aws_iam_role.lambda_processing.arn
+  role             = var.lambda_processing_role_arn
   runtime          = "nodejs8.10"
   timeout          = 100
   memory_size      = 320
@@ -33,4 +33,23 @@ resource "aws_lambda_function" "sns2elasticsearch" {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
   }
+}
+
+# Step Function Tracker
+
+resource "aws_sns_topic" "sftracker" {
+  name = "${var.prefix}-sftracker"
+}
+
+resource "aws_sns_topic_subscription" "sftracker_to_sns2elasticsearch" {
+  endpoint  = aws_lambda_function.sns2elasticsearch.arn
+  protocol  = "lambda"
+  topic_arn = aws_sns_topic.sftracker.arn
+}
+
+resource "aws_lambda_permission" "sftracker_to_sns2elasticsearch" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.sns2elasticsearch.arn
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.sftracker.arn
 }

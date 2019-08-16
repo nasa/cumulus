@@ -56,7 +56,11 @@ variable "ems_host" {
   type = string
 }
 
-variable "kinesis_inbound_event_logger" {
+variable "kinesis_inbound_event_logger_function_name" {
+  type = string
+}
+
+variable "lambda_processing_role_arn" {
   type = string
 }
 

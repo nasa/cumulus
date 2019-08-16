@@ -31,5 +31,5 @@ data "aws_dynamodb_table" "rules" {
 # Lambda functions
 
 data "aws_lambda_function" "kinesis_inbound_event_logger" {
-  function_name = var.kinesis_inbound_event_logger
+  function_name = var.kinesis_inbound_event_logger_function_name
 }

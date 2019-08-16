@@ -138,7 +138,7 @@ resource "aws_lambda_function" "execute_migrations" {
       ExecutionsTable           = var.dynamo_tables.Executions
       FilesTable                = var.dynamo_tables.Files
       GranulesTable             = var.dynamo_tables.Granules
-      KinesisInboundEventLogger = var.kinesis_inbound_event_logger
+      KinesisInboundEventLogger = var.kinesis_inbound_event_logger_function_name
       PdrsTable                 = var.dynamo_tables.Pdrs
       RulesTable                = var.dynamo_tables.Rules
       stackName                 = var.prefix

@@ -15,6 +15,8 @@ module "archive" {
 
   permissions_boundary_arn = var.permissions_boundary_arn
 
+  lambda_processing_role_arn = aws_iam_role.lambda_processing.arn
+
   ecs_cluster_name = aws_ecs_cluster.default.name
 
   elasticsearch_domain_arn        = var.elasticsearch_domain_arn
@@ -47,10 +49,9 @@ module "archive" {
 
   api_port = var.archive_api_port
 
-  schedule_sf_function_arn      = data.aws_lambda_function.schedule_sf.arn
-  message_consumer_function_arn = data.aws_lambda_function.message_consumer.arn
-  # TODO This should eventually come from the ingest module
-  kinesis_inbound_event_logger = var.kinesis_inbound_event_logger
+  schedule_sf_function_arn                   = data.aws_lambda_function.schedule_sf.arn
+  message_consumer_function_arn              = data.aws_lambda_function.message_consumer.arn
+  kinesis_inbound_event_logger_function_name = module.ingest.kinesis_inbound_event_logger_function_name
 
   # TODO We need to figure out how to make this dynamic
   background_queue_name = "backgroundProcessing"

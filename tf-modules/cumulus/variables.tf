@@ -52,10 +52,6 @@ variable "elasticsearch_security_group_id" {
   type = string
 }
 
-variable "kinesis_inbound_event_logger" {
-  type = string
-}
-
 variable "lambda_subnet_ids" {
   type = list(string)
 }
