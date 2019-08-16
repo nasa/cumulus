@@ -18,7 +18,7 @@ resource "aws_lambda_function" "api" {
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
   runtime          = "nodejs8.10"
-  timeout          = 20
+  timeout          = 100
   environment {
     variables = {
       AccessTokensTable            = var.dynamo_tables.AccessTokens
