@@ -5,7 +5,7 @@ resource "aws_lambda_function" "ems_distribution_report" {
   filename         = "${path.module}/../../packages/api/dist/emsDistributionReport/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/emsDistributionReport/lambda.zip")
   handler          = "index.handler"
-  role             = aws_iam_role.lambda_processing.arn
+  role             = var.lambda_processing_role_arn
   runtime          = "nodejs8.10"
   timeout          = 900
   memory_size      = 320
@@ -60,7 +60,7 @@ resource "aws_lambda_function" "ems_product_metadata_report" {
   filename         = "${path.module}/../../packages/api/dist/emsProductMetadataReport/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/emsProductMetadataReport/lambda.zip")
   handler          = "index.handler"
-  role             = aws_iam_role.lambda_processing.arn
+  role             = var.lambda_processing_role_arn
   runtime          = "nodejs8.10"
   timeout          = 300
   memory_size      = 320
@@ -121,7 +121,7 @@ resource "aws_lambda_function" "ems_ingest_report" {
   filename         = "${path.module}/../../packages/api/dist/emsIngestReport/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/emsIngestReport/lambda.zip")
   handler          = "index.handler"
-  role             = aws_iam_role.lambda_processing.arn
+  role             = var.lambda_processing_role_arn
   runtime          = "nodejs8.10"
   timeout          = 300
   memory_size      = 320

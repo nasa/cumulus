@@ -9,7 +9,7 @@ resource "aws_lambda_function" "clean_executions" {
   filename         = "${path.module}/../../packages/api/dist/cleanExecutions/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/cleanExecutions/lambda.zip")
   handler          = "index.handler"
-  role             = aws_iam_role.lambda_processing.arn
+  role             = var.lambda_processing_role_arn
   runtime          = "nodejs8.10"
   timeout          = 900
   memory_size      = 192

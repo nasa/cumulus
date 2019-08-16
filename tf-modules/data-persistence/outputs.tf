@@ -9,6 +9,7 @@ output "dynamo_tables" {
     Pdrs            = aws_dynamodb_table.pdrs_table.name
     Providers       = aws_dynamodb_table.providers_table.name
     Rules           = aws_dynamodb_table.rules_table.name
+    Semaphores      = aws_dynamodb_table.semaphores_table.name
     Users           = aws_dynamodb_table.users_table.name
   }
 }

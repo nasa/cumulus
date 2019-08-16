@@ -3,7 +3,7 @@ resource "aws_lambda_function" "custom_bootstrap" {
   filename         = "${path.module}/../../packages/api/dist/bootstrap/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/bootstrap/lambda.zip")
   handler          = "index.handler"
-  role             = aws_iam_role.lambda_processing.arn
+  role             = var.lambda_processing_role_arn
   runtime          = "nodejs8.10"
   timeout          = 300
   memory_size      = 320

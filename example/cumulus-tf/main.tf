@@ -63,8 +63,27 @@ module "cumulus" {
     "pquinn1"
   ]
 
-  # TODO This should be coming from the ingest module
-  kinesis_inbound_event_logger = "${var.prefix}-KinesisInboundEventLogger"
-
   distribution_url = var.distribution_url
 }
+
+# TODO Add this aws_sns_topic_subscription
+# Subscribes to module.archive.aws_sns_topic.sftracker
+# - Endpoint:
+#     Fn::GetAtt:
+#       - SnsS3TestLambdaFunction
+#       - Arn
+#   Protocol: lambda
+
+# TODO Add this permission to example
+# Related to module.archive.aws_sns_topic.sftracker
+# sftracker2ndlambdaSubscriptionPermission:
+#   Type: AWS::Lambda::Permission
+#   Properties:
+#     FunctionName:
+#       Fn::GetAtt:
+#         - SnsS3TestLambdaFunction
+#         - Arn
+#     Action: lambda:InvokeFunction
+#     Principal: sns.amazonaws.com
+#     SourceArn:
+#       Ref: sftrackerSns

@@ -1,5 +1,5 @@
 resource "aws_security_group" "no_ingress_all_egress" {
-  name   = "${var.prefix}-archive-no-ingress-all-egress"
+  name   = "${var.prefix}-cumulus-no-ingress-all-egress"
   vpc_id = var.vpc_id
 
   egress {

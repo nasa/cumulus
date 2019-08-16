@@ -3,7 +3,7 @@ resource "aws_lambda_function" "index_from_database" {
   filename         = "${path.module}/../../packages/api/dist/indexFromDatabase/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/indexFromDatabase/lambda.zip")
   handler          = "index.handler"
-  role             = aws_iam_role.lambda_processing.arn
+  role             = var.lambda_processing_role_arn
   runtime          = "nodejs8.10"
   timeout          = 300
   memory_size      = 512
