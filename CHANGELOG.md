@@ -147,6 +147,9 @@ If you deploy with no distribution app your deployment will succeed but you may 
 
 ### Fixed
 
+- **CUMULUS-1439**
+  - Fix bug with rule.logEventArn deletion on Kinesis rule update and fix unit test to verify
+
 - **CUMULUS-796**
   - Added production information (collection ShortName and Version, granuleId) to EMS distribution report
   - Added functionality to send daily distribution reports to EMS
