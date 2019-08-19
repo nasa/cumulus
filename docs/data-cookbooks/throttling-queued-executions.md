@@ -34,6 +34,7 @@ In your `app/config.yml`, define a new queue with a `maxExecutions` value:
 ```
 
 **Please note that you must use the `sqs2sfThrottle` lambda as the consumer for any queue with a `maxExecutions` value** or else the execution throttling will not work correctly.
+Additionally, please allow at least 60 seconds after creation before using the queue as associated infrastructure and triggers are set up and made ready.
 
 #### Re-deploy your Cumulus app
 
