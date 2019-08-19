@@ -8,7 +8,7 @@ It was developed to enable same-region cross-account object replication.
 Copy the .tfvars sample file:
 
 ```bash
-cp cfg.tfvars.sample cfg.tfvars
+cp terraform.tfvars.sample terraform.tfvars
 ```
 
 Populate the sample file with values that apply to your AWS environment (see configuration variables section, below).
@@ -16,14 +16,14 @@ Populate the sample file with values that apply to your AWS environment (see con
 Deploy this module with:
 
 ```bash
-terraform apply -var-file=cfg.tfvars
+terraform apply
 ```
 
 NOTE: Terraform will ignore the `aws_profile` config variable if you have static credentials or environment variables set, see the [AWS Provider page](https://www.terraform.io/docs/providers/aws/index.html#authentication).
 
 ## Configuration
 
-Configuration variables are shown in `cfg.tfvars.sample`, and are explained below:
+Configuration variables are shown in `terraform.tfvars.sample`, and are explained below:
 
 ```bash
 prefix               = "myprefix"                                         # prefix to name created replicator resources
