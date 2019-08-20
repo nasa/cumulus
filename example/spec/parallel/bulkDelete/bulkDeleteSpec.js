@@ -17,7 +17,7 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
   let beforeAllSucceeded = false;
   beforeAll(async () => {
     config = loadConfig();
-
+    process.env.stackName = config.stackName;
     // Figure out what cluster we're using
     clusterArn = await getClusterArn(config.stackName);
     if (!clusterArn) throw new Error('Unable to find ECS cluster');
