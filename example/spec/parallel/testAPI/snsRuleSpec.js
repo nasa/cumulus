@@ -29,6 +29,8 @@ const snsMessage = '{"Data":{}}';
 const snsRuleDefinition = clonedeep(require('./snsRuleDef.json'));
 snsRuleDefinition.name = ruleName;
 snsRuleDefinition.meta.triggerRule = ruleName;
+process.env.stackName = config.stackName;
+process.env.system_bucket = config.buckets.internal.name;
 
 async function getNumberOfTopicSubscriptions(snsTopicArn) {
   const subs = await SNS.listSubscriptionsByTopic({ TopicArn: snsTopicArn }).promise();
