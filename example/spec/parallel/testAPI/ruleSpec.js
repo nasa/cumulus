@@ -15,7 +15,7 @@ const {
 
 const config = loadConfig();
 process.env.stackName = config.stackName;
-process.env.system_bucket = config.buckets.internal.name
+process.env.system_bucket = config.buckets.internal.name;
 
 const lambdaStep = new LambdaStep();
 
