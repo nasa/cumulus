@@ -61,7 +61,7 @@ default:
   # test configuration ends
 
   cmaDir: '/opt/'
-  cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:4
+  cma_layer: arn:aws:lambda:{{AWS_REGION}}:{{AWS_ACCOUNT_ID}}:layer:CumulusMessageAdapter:1
   prefix: 'test-cumulus-integration'
   prefixNoDash: TestCumulusIntegration
   useNgapPermissionBoundary: true
@@ -79,8 +79,6 @@ default:
         value: '{{DOCKER_EMAIL}}'
       - name: DockerPassword
         value: '{{DOCKER_PASS}}'
-      - name: LaunchpadPassphrase
-        value: '{{LAUNCHPAD_PASSPHRASE}}'
 
 
   vpc:
@@ -90,111 +88,48 @@ default:
     securityGroup: '{{SECURITY_GROUP}}'
 
   ecs:
-    instanceType: t2.medium
-    minInstances: 1
-    desiredInstances: 1
+    amiid: ami-0603d65d900b11ce5
+    instanceType: t2.micro
+    minInstances: 0
+    desiredInstances: 0
     maxInstances: 2
-    availabilityZone: us-east-1b
+    availabilityZone: us-west-2b
     publicIp: false
     restartTasksOnDeploy: true
     docker:
       username: cumulususer
-    services:
-      EcsTaskHelloWorld:
-        image: cumuluss/cumulus-ecs-task:1.3.0
-        cpu: 400
-        memory: 700
-        minTasks: 1
-        count: 1
-        maxTasks: 10
-        scaleInActivityScheduleTime: 5000
-        scaleInAdjustmentPercent: -5
-        scaleOutActivityScheduleTime: 10000
-        scaleOutAdjustmentPercent: 10
-        activityName: EcsTaskHelloWorld
-        envs:
-          AWS_DEFAULT_REGION:
-            function: Fn::Sub
-            value: '${AWS::Region}'
-        commands:
-          - cumulus-ecs-task
-          - '--activityArn'
-          - function: Ref
-            value: EcsTaskHelloWorldActivity
-          - '--lambdaArn'
-          - function: Ref
-            value: HelloWorldLambdaFunction
-        alarms:
-          TaskCountHigh:
-            alarm_description: 'There are more tasks running than the desired'
-            comparison_operator: GreaterThanThreshold
-            evaluation_periods: 1
-            metric: MemoryUtilization
-            statistic: SampleCount
-            threshold: '{{ecs.services.EcsTaskHelloWorld.count}}'
-      EcsTaskHelloWorlKesCma:
-        image: cumuluss/cumulus-ecs-task:1.3.0
-        cpu: 400
-        memory: 700
-        minTasks: 1
-        count: 1
-        maxTasks: 10
-        scaleInActivityScheduleTime: 5000
-        scaleInAdjustmentPercent: -5
-        scaleOutActivityScheduleTime: 10000
-        scaleOutAdjustmentPercent: 10
-        activityName: EcsTaskHelloWorldKesCma
-        envs:
-          AWS_DEFAULT_REGION:
-            function: Fn::Sub
-            value: '${AWS::Region}'
-        commands:
-          - cumulus-ecs-task
-          - '--activityArn'
-          - function: Ref
-            value: EcsTaskHelloWorldKesCmaActivity
-          - '--lambdaArn'
-          - function: Ref
-            value: HelloWorldKesCmaLambdaFunction
-        alarms:
-          TaskCountHigh:
-            alarm_description: 'There are more tasks running than the desired'
-            comparison_operator: GreaterThanThreshold
-            evaluation_periods: 1
-            metric: MemoryUtilization
-            statistic: SampleCount
-            threshold: '{{ecs.services.EcsTaskHelloWorlKesCma.count}}'
-
-  activities:
-    - name: EcsTaskHelloWorld
-    - name: EcsTaskHelloWorldKesCma
 
   system_bucket: '{{buckets.internal.name}}'
 
+  # buckets:
+  #   internal:
+  #     name: cumulus-test-sandbox-internal
+  #     type: internal
+  #   private:
+  #     name: cumulus-test-sandbox-private
+  #     type: private
+  #   protected:
+  #     name: cumulus-test-sandbox-protected
+  #     type: protected
+  #   public:
+  #     name: cumulus-test-sandbox-public
+  #     type: public
+  #   protected-2:
+  #     name: cumulus-test-sandbox-protected-2
+  #     type: protected
+  #   shared:
+  #     name: cumulus-data-shared
+  #     type: shared
+  #   sandbox-dashboard:
+  #     name: cumulus-dashboard-sandbox
+  #     type: shared
+  #   sit-dashboard:
+  #     name: cumulus-dashboard-sit
+  #     type: shared
+
   buckets:
-    internal:
-      name: cumulus-test-sandbox-internal
-      type: internal
-    private:
-      name: cumulus-test-sandbox-private
-      type: private
-    protected:
-      name: cumulus-test-sandbox-protected
-      type: protected
-    public:
-      name: cumulus-test-sandbox-public
-      type: public
-    protected-2:
-      name: cumulus-test-sandbox-protected-2
-      type: protected
     shared:
       name: cumulus-data-shared
-      type: shared
-    sandbox-dashboard:
-      name: cumulus-dashboard-sandbox
-      type: shared
-    sit-dashboard:
-      name: cumulus-dashboard-sit
       type: shared
 
   cmr:
@@ -202,6 +137,9 @@ default:
     provider: CUMULUS
     clientId: 'cumulus-core-{{prefix}}'
     password: '{{CMR_PASSWORD}}'
+    cmrEnvironment: UAT
+    cmrLimit: 100
+    cmrPageSize: 50
 
   ems:
     provider: CUMULUS
@@ -225,18 +163,9 @@ default:
       private: true
       port: 7000
       logApiGatewayToCloudWatch: true
-  logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
+  # logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
 
-  sns:
-    sftracker:
-      subscriptions:
-        2ndlambda:
-          endpoint:
-            function: Fn::GetAtt
-            array:
-              - SnsS3TestLambdaFunction
-              - Arn
-          protocol: lambda
+  deployDistributionApi: false
 
   urs_url: https://uat.urs.earthdata.nasa.gov/ #make sure to include the trailing slash
 
@@ -245,8 +174,6 @@ default:
 
     # if not specified the value of the apigateway distribution url is used
     # api_distribution_url: https://apigateway-url-to-distribution-app/ #make sure to include the trailing slash
-
-  deployDistributionApi: true
 
   # URS users who should have access to the dashboard application.
   users:
@@ -761,3 +688,119 @@ mboyd-int:
 pq:
   prefix: pq
   prefixNoDash: pq
+
+asdc:
+  prefix: asdc
+  prefixNoDash: asdc
+  api_distribution_url: https://38t6k0thvc.execute-api.us-west-2.amazonaws.com:7000/DEV/
+
+  # es: null
+
+  buckets:
+    internal:
+      name: 'asdc-cumulus-internal'
+      type: internal
+    private:
+      name: 'asdc-cumulus-private'
+      type: private
+    protected:
+      name: 'asdc-cumulus-protected'
+      type: protected
+    public:
+      name: 'asdc-cumulus-public'
+      type: public
+    dashboard:
+      name: 'asdc-cumulus-dashboard'
+      type: 'shared'
+
+  users:
+    - username: elkirby
+    - username: ppiatko
+
+
+ges:
+  prefix: ges
+  prefixNoDash: ges
+
+  # es: null
+
+  buckets:
+    internal:
+      name: 'ges-cumulus-internal'
+      type: internal
+    private:
+      name: 'ges-cumulus-private'
+      type: private
+    protected:
+      name: 'ges-cumulus-protected'
+      type: protected
+    public:
+      name: 'ges-cumulus-public'
+      type: public
+    dashboard:
+      name: 'ges-cumulus-dashboard'
+      type: shared
+
+  api_distribution_url: https://g9us7n0or1.execute-api.us-west-2.amazonaws.com:7000/DEV/
+
+  users:
+    - username: hzhang15
+    - username: jwysk
+
+lpdaac:
+  prefix: lpdaac
+  prefixNoDash: lpdaac
+
+  # es: null
+
+  api_distribution_url: https://29rtkr92r4.execute-api.us-west-2.amazonaws.com:7000/DEV/
+
+  buckets:
+    internal:
+      name: 'lpdaac-cumulus-internal'
+      type: internal
+    private:
+      name: 'lpdaac-cumulus-private'
+      type: private
+    protected:
+      name: 'lpdaac-cumulus-protected'
+      type: protected
+    public:
+      name: 'lpdaac-cumulus-public'
+      type: public
+    dashboard:
+      name: 'lpdaac-cumulus-dashboard'
+      type: shared
+
+  users:
+    - username: lbaatz
+    - username: rwaters1
+
+ornl:
+  prefix: ornl
+  prefixNoDash: ornl
+
+  # es: null
+
+  api_distribution_url: https://k0ojqpkn90.execute-api.us-west-2.amazonaws.com:7000/DEV/
+
+  buckets:
+    internal:
+      name: 'ornl-cumulus-internal'
+      type: internal
+    private:
+      name: 'ornl-cumulus-private'
+      type: private
+    protected:
+      name: 'ornl-cumulus-protected'
+      type: protected
+    public:
+      name: 'ornl-cumulus-public'
+      type: public
+    dashboard:
+      name: 'ornl-cumulus-dashboard'
+      type: shared
+
+  users:
+    - username: wrightdm
+    - username: lindsley

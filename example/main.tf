@@ -2,7 +2,6 @@ provider "aws" {
   region  = var.region
   profile = var.aws_profile
 }
-
 module "distribution" {
   source = "../tf-modules/distribution"
 
@@ -28,17 +27,17 @@ module "distribution" {
   subnet_ids = var.subnet_ids
 }
 
-module "s3-replicator" {
-  source = "../tf-modules/s3-replicator"
+# module "s3-replicator" {
+#   source = "../tf-modules/s3-replicator"
 
-  prefix               = var.prefix
-  permissions_boundary = var.permissions_boundary_arn
+#   prefix               = var.prefix
+#   permissions_boundary = var.permissions_boundary_arn
 
-  vpc_id     = var.vpc_id
-  subnet_ids = var.subnet_ids
+#   vpc_id     = var.vpc_id
+#   subnet_ids = var.subnet_ids
 
-  source_bucket = var.s3_replicator_config.source_bucket
-  source_prefix = var.s3_replicator_config.source_prefix
-  target_bucket = var.s3_replicator_config.target_bucket
-  target_prefix = var.s3_replicator_config.target_prefix
-}
+#   source_bucket = var.s3_replicator_config.source_bucket
+#   source_prefix = var.s3_replicator_config.source_prefix
+#   target_bucket = var.s3_replicator_config.target_bucket
+#   target_prefix = var.s3_replicator_config.target_prefix
+# }

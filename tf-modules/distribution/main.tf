@@ -1,3 +1,8 @@
+provider "aws" {
+  alias  = "useast1"
+  region = "us-east-1"
+}
+
 locals {
   thin_egress_stack_name = "${var.prefix}-thin-egress-app"
   lambda_log_group_name  = "/aws/lambda/${local.thin_egress_stack_name}-EgressLambda"
@@ -21,7 +26,12 @@ resource "aws_secretsmanager_secret_version" "thin_egress_urs_creds" {
 }
 
 module "thin_egress_app" {
-  source = "https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.25.zip"
+  source = "https://s3.amazonaws.com/lpdaac-cumulus-internal/thin-egress-app/tea-terraform-build.25.zip"
+  # source = "https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.25.zip"
+
+  providers = {
+    aws.src = "aws.useast1"
+  }
 
   auth_base_url                 = var.urs_url
   bucket_map_file               = aws_s3_bucket_object.bucket_map_yaml.key
@@ -35,6 +45,8 @@ module "thin_egress_app" {
   stage_name                    = var.api_gateway_stage
   vpc_subnet_ids                = var.subnet_ids
   urs_auth_creds_secret_name    = aws_secretsmanager_secret.thin_egress_urs_creds.name
+  lambda_code_s3_bucket         = "ges-cumulus-internal"
+  lambda_code_s3_key            = "thin-egress-app/tea-code-build.27.zip"
 }
 
 data "aws_caller_identity" "current" {}
@@ -212,30 +224,30 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
   stage_name  = var.api_gateway_stage
 }
 
-# Egress Api Gateway Log Group Filter
-resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscription_filter" {
-  count           = var.log_destination_arn != null && var.log_api_gateway_to_cloudwatch ? 1 : 0
-  name            = "${var.prefix}-EgressApiGatewayCloudWatchLogSubscriptionToSharedDestination"
-  distribution    = "ByLogStream"
-  destination_arn = var.log_destination_arn
-  filter_pattern  = ""
-  log_group_name  = module.thin_egress_app.egress_log_group
-}
+# # Egress Api Gateway Log Group Filter
+# resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscription_filter" {
+#   count           = var.log_destination_arn != null && var.log_api_gateway_to_cloudwatch ? 1 : 0
+#   name            = "${var.prefix}-EgressApiGatewayCloudWatchLogSubscriptionToSharedDestination"
+#   distribution    = "ByLogStream"
+#   destination_arn = var.log_destination_arn
+#   filter_pattern  = ""
+#   log_group_name  = module.thin_egress_app.egress_log_group
+# }
 
-# Egress Lambda Log Group
-resource "aws_cloudwatch_log_group" "egress_lambda_log_group" {
-  count             = var.log_destination_arn == null ? 0 : 1
-  name              = local.lambda_log_group_name
-  retention_in_days = 30
-}
+# # Egress Lambda Log Group
+# resource "aws_cloudwatch_log_group" "egress_lambda_log_group" {
+#   count             = var.log_destination_arn == null ? 0 : 1
+#   name              = local.lambda_log_group_name
+#   retention_in_days = 30
+# }
 
-# Egress Lambda Log Group Filter
-resource "aws_cloudwatch_log_subscription_filter" "egress_lambda_log_subscription_filter" {
-  depends_on      = [aws_cloudwatch_log_group.egress_lambda_log_group]
-  count           = var.log_destination_arn == null ? 0 : 1
-  name            = "${var.prefix}-EgressLambdaLogSubscriptionToSharedDestination"
-  destination_arn = var.log_destination_arn
-  distribution    = "ByLogStream"
-  filter_pattern  = ""
-  log_group_name  = local.lambda_log_group_name
-}
+# # Egress Lambda Log Group Filter
+# resource "aws_cloudwatch_log_subscription_filter" "egress_lambda_log_subscription_filter" {
+#   depends_on      = [aws_cloudwatch_log_group.egress_lambda_log_group]
+#   count           = var.log_destination_arn == null ? 0 : 1
+#   name            = "${var.prefix}-EgressLambdaLogSubscriptionToSharedDestination"
+#   destination_arn = var.log_destination_arn
+#   distribution    = "ByLogStream"
+#   filter_pattern  = ""
+#   log_group_name  = local.lambda_log_group_name
+# }

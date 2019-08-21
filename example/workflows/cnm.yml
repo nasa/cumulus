@@ -1,108 +1,108 @@
-KinesisTriggerTest:
-  Comment: 'Tests Workflow from Kinesis Stream'
-  StartAt: StartStatus
-  States:
-    StartStatus:
-      Type: Task
-      Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      Retry:
-        - &LambdaServiceExceptionRetry
-          ErrorEquals:
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
-          IntervalSeconds: 2
-          MaxAttempts: 6
-          BackoffRate: 2
-      Catch:
-        - &ErrorEqualDefaults
-          ErrorEquals:
-          - States.ALL
-          ResultPath: '$.exception'
-          Next: CnmResponseFail
-      Next: TranslateMessage
-    TranslateMessage:
-      Type: Task
-      Resource: ${CNMToCMALambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          outputs:
-            - source: '{$.cnm}'
-              destination: '{$.meta.cnm}'
-            - source: '{$}'
-              destination: '{$.payload}'
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Catch:
-        - <<: *ErrorEqualDefaults
-      Next: SyncGranule
-    SyncGranule:
-      Type: Task
-      Resource: ${SyncGranuleLambdaFunction.Arn}
-      CumulusConfig:
-        provider: '{$.meta.provider}'
-        buckets: '{$.meta.buckets}'
-        collection: '{$.meta.collection}'
-        downloadBucket: '{$.meta.buckets.private.name}'
-        stack: '{$.meta.stack}'
-        cumulus_message:
-          outputs:
-            - source: '{$.granules}'
-              destination: '{$.meta.input_granules}'
-            - source: '{$}'
-              destination: '{$.payload}'
-      Retry:
-        - ErrorEquals:
-            - States.ALL
-          IntervalSeconds: 10
-          MaxAttempts: 3
-      Catch:
-        - <<: *ErrorEqualDefaults
-      Next: CnmResponse
-    CnmResponse: &CnmResponseDefaults
-      CumulusConfig:
-        OriginalCNM: '{$.meta.cnm}'
-        CNMResponseStream: '{$.meta.cnmResponseStream}'
-        region: 'us-east-1'
-        WorkflowException: '{$.exception}'
-        cumulus_message:
-          outputs:
-            - source: '{$}'
-              destination: '{$.meta.cnmResponse}'
-            - source: '{$}'
-              destination: '{$.payload}'
-      Type: Task
-      Resource: ${CnmResponseLambdaFunction.Arn}
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Catch:
-        - <<: *ErrorEqualDefaults
-          Next: StopStatus
-      Next: StopStatus
-    CnmResponseFail:
-      <<: *CnmResponseDefaults
-      Catch:
-        - <<: *ErrorEqualDefaults
-          Next: StopStatusFail
-      Next: StopStatusFail
-    StopStatus: &StopStatusDefaults
-      Type: Task
-      Resource: ${sf2snsEndLambdaFunction.Arn}
-      Retry:
-        - <<: *LambdaServiceExceptionRetry
-      Next: WorkflowSucceeded
-    StopStatusFail:
-      <<: *StopStatusDefaults
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          Next: WorkflowFailed
-      Next: WorkflowFailed
-    WorkflowSucceeded:
-      Type: Succeed
-    WorkflowFailed:
-      Type: Fail
-      Cause: 'Workflow failed'
+# KinesisTriggerTest:
+#   Comment: 'Tests Workflow from Kinesis Stream'
+#   StartAt: StartStatus
+#   States:
+#     StartStatus:
+#       Type: Task
+#       Resource: ${SfSnsReportLambdaFunction.Arn}
+#       CumulusConfig:
+#         cumulus_message:
+#           input: '{$}'
+#       Retry:
+#         - &LambdaServiceExceptionRetry
+#           ErrorEquals:
+#           - Lambda.ServiceException
+#           - Lambda.AWSLambdaException
+#           - Lambda.SdkClientException
+#           IntervalSeconds: 2
+#           MaxAttempts: 6
+#           BackoffRate: 2
+#       Catch:
+#         - &ErrorEqualDefaults
+#           ErrorEquals:
+#           - States.ALL
+#           ResultPath: '$.exception'
+#           Next: CnmResponseFail
+#       Next: TranslateMessage
+#     TranslateMessage:
+#       Type: Task
+#       Resource: ${CNMToCMALambdaFunction.Arn}
+#       CumulusConfig:
+#         cumulus_message:
+#           outputs:
+#             - source: '{$.cnm}'
+#               destination: '{$.meta.cnm}'
+#             - source: '{$}'
+#               destination: '{$.payload}'
+#       Retry:
+#         - <<: *LambdaServiceExceptionRetry
+#       Catch:
+#         - <<: *ErrorEqualDefaults
+#       Next: SyncGranule
+#     SyncGranule:
+#       Type: Task
+#       Resource: ${SyncGranuleLambdaFunction.Arn}
+#       CumulusConfig:
+#         provider: '{$.meta.provider}'
+#         buckets: '{$.meta.buckets}'
+#         collection: '{$.meta.collection}'
+#         downloadBucket: '{$.meta.buckets.private.name}'
+#         stack: '{$.meta.stack}'
+#         cumulus_message:
+#           outputs:
+#             - source: '{$.granules}'
+#               destination: '{$.meta.input_granules}'
+#             - source: '{$}'
+#               destination: '{$.payload}'
+#       Retry:
+#         - ErrorEquals:
+#             - States.ALL
+#           IntervalSeconds: 10
+#           MaxAttempts: 3
+#       Catch:
+#         - <<: *ErrorEqualDefaults
+#       Next: CnmResponse
+#     CnmResponse: &CnmResponseDefaults
+#       CumulusConfig:
+#         OriginalCNM: '{$.meta.cnm}'
+#         CNMResponseStream: '{$.meta.cnmResponseStream}'
+#         region: 'us-east-1'
+#         WorkflowException: '{$.exception}'
+#         cumulus_message:
+#           outputs:
+#             - source: '{$}'
+#               destination: '{$.meta.cnmResponse}'
+#             - source: '{$}'
+#               destination: '{$.payload}'
+#       Type: Task
+#       Resource: ${CnmResponseLambdaFunction.Arn}
+#       Retry:
+#         - <<: *LambdaServiceExceptionRetry
+#       Catch:
+#         - <<: *ErrorEqualDefaults
+#           Next: StopStatus
+#       Next: StopStatus
+#     CnmResponseFail:
+#       <<: *CnmResponseDefaults
+#       Catch:
+#         - <<: *ErrorEqualDefaults
+#           Next: StopStatusFail
+#       Next: StopStatusFail
+#     StopStatus: &StopStatusDefaults
+#       Type: Task
+#       Resource: ${sf2snsEndLambdaFunction.Arn}
+#       Retry:
+#         - <<: *LambdaServiceExceptionRetry
+#       Next: WorkflowSucceeded
+#     StopStatusFail:
+#       <<: *StopStatusDefaults
+#       Catch:
+#         - ErrorEquals:
+#           - States.ALL
+#           Next: WorkflowFailed
+#       Next: WorkflowFailed
+#     WorkflowSucceeded:
+#       Type: Succeed
+#     WorkflowFailed:
+#       Type: Fail
+#       Cause: 'Workflow failed'

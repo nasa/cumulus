@@ -1,37 +1,35 @@
-CNMToCMA:
-  handler: 'gov.nasa.cumulus.CnmToGranuleHandler::handleRequestStreams'
-  timeout: 300
-  runtime: java8
-  memory: 128
-  s3Source:
-    bucket: '{{buckets.shared.name}}'
-    key: daacs/podaac/cnmToGranule-1.0.2j.zip
-  useMessageAdapter: false
-  launchInVpc: true
-CnmResponse:
-  handler: 'gov.nasa.cumulus.CNMResponse::handleRequestStreams'
-  timeout: 300
-  useMessageAdapter: false
-  runtime: java8
-  memory: 256
-  s3Source:
-    bucket: '{{buckets.shared.name}}'
-    key: daacs/podaac/cnmResponse-1539812129616.zip
-  launchInVpc: true
+# CNMToCMA:
+#   handler: 'gov.nasa.cumulus.CnmToGranuleHandler::handleRequestStreams'
+#   timeout: 300
+#   runtime: java8
+#   memory: 128
+#   s3Source:
+#     bucket: '{{buckets.shared.name}}'
+#     key: daacs/podaac/cnmToGranule-1.0.2j.zip
+#   useMessageAdapter: false
+#   launchInVpc: true
+# CnmResponse:
+#   handler: 'gov.nasa.cumulus.CNMResponse::handleRequestStreams'
+#   timeout: 300
+#   useMessageAdapter: false
+#   runtime: java8
+#   memory: 256
+#   s3Source:
+#     bucket: '{{buckets.shared.name}}'
+#     key: daacs/podaac/cnmResponse-1539812129616.zip
+#   launchInVpc: true
 DiscoverGranules:
   handler: index.handler
   timeout: 300
   memory: 512
   source: node_modules/@cumulus/discover-granules/dist/
-  layers:
-    - '{{cma_layer}}'
+  useMessageAdapter: true
   launchInVpc: true
 DiscoverPdrs:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/discover-pdrs/dist/
-  layers:
-    - '{{cma_layer}}'
+  useMessageAdapter: true
   logToElasticSearch: true
   launchInVpc: true
 FakeProcessing:
@@ -43,62 +41,49 @@ FakeProcessing:
 FilesToGranules:
   handler: index.handler
   source: node_modules/@cumulus/files-to-granules/dist/
-  layers:
-    - '{{cma_layer}}'
+  useMessageAdapter: true
   launchInVpc: true
 HelloWorld:
   handler: index.handler
   timeout: 300
   memory: 256
   source: node_modules/@cumulus/hello-world/dist/
-  layers:
-    - '{{cma_layer}}'
-  launchInVpc: true
-HelloWorldKesCma:
-  handler: index.handler
-  timeout: 300
-  memory: 256
-  source: node_modules/@cumulus/hello-world/kes_dist/
   useMessageAdapter: true
   launchInVpc: true
-ModisProcessing:
-  handler: lambda_handler.handler
-  timeout: 300
-  s3Source:
-    bucket: '{{shared_data_bucket}}'
-    key: deploy/cumulus-process/modis/0.5.2.zip
-    uniqueIdentifier: '0dot5dot2'
-  runtime: python2.7
-  launchInVpc: true
+# ModisProcessing:
+#   handler: lambda_handler.handler
+#   timeout: 300
+#   s3Source:
+#     bucket: '{{shared_data_bucket}}'
+#     key: deploy/cumulus-process/modis/0.5.2.zip
+#     uniqueIdentifier: '0dot5dot2'
+#   runtime: python2.7
+#   launchInVpc: true
 MoveGranules:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/move-granules/dist/
-  layers:
-    - '{{cma_layer}}'
+  useMessageAdapter: true
   launchInVpc: true
 QueuePdrs:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/queue-pdrs/dist/
-  layers:
-    - '{{cma_layer}}'
+  useMessageAdapter: true
   logToElasticSearch: true
   launchInVpc: true
 ParsePdr:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/parse-pdr/dist/
-  layers:
-    - '{{cma_layer}}'
+  useMessageAdapter: true
   logToElasticSearch: true
   launchInVpc: true
 PdrStatusCheck:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/pdr-status-check/dist/
-  layers:
-    - '{{cma_layer}}'
+  useMessageAdapter: true
   launchInVpc: true
 PostToCmr:
   handler: index.handler
@@ -106,8 +91,7 @@ PostToCmr:
   memory: 256
   logToElasticSearch: true
   source: node_modules/@cumulus/post-to-cmr/dist/
-  layers:
-    - '{{cma_layer}}'
+  useMessageAdapter: true
   launchInVpc: true
   envs:
     system_bucket: '{{system_bucket}}'
@@ -115,23 +99,20 @@ QueueGranules:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/queue-granules/dist/
-  layers:
-    - '{{cma_layer}}'
+  useMessageAdapter: true
   launchInVpc: true
 SfSnsReport:
   handler: index.handler
   timeout: 300
   source: node_modules/@cumulus/sf-sns-report/dist
-  layers:
-    - '{{cma_layer}}'
+  useMessageAdapter: true
   launchInVpc: true
 SyncGranule:
   handler: index.handler
   timeout: 300
   logToElasticSearch: true
   source: node_modules/@cumulus/sync-granule/dist/
-  layers:
-    - '{{cma_layer}}'
+  useMessageAdapter: true
   launchInVpc: true
   envs:
     system_bucket: '{{system_bucket}}'
