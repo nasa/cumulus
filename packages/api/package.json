@@ -69,7 +69,7 @@
     "express-boom": "^3.0.0",
     "express-promise-router": "^3.0.3",
     "form-data": "^2.1.2",
-    "googleapis": "^38.0.0",
+    "googleapis": "^39.1.0",
     "got": "^8.3.0",
     "hsts": "^2.1.0",
     "http-aws-es": "^6.0.0",
