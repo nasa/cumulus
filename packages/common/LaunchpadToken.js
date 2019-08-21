@@ -52,12 +52,15 @@ class LaunchpadToken {
     const bucket = process.env.system_bucket;
     const stackName = process.env.stackName;
     // we are assuming that the specified certificate file is in the S3 crypto directory
+
+    const cryptKey = `${stackName}/crypto/${this.certificate}`;
+
     const keyExists = await s3ObjectExists(
-      { Bucket: bucket, Key: `${stackName}/crypto/${this.certificate}` }
+      { Bucket: bucket, Key: cryptKey }
     );
 
     if (!keyExists) {
-      return Promise.reject(new Error(`${this.certificate} does not exist in S3 crypto directory`));
+      return Promise.reject(new Error(`${this.certificate} does not exist in S3 crypto directory: ${cryptKey}`));
     }
 
     log.debug(`Reading Key: ${this.certificate} bucket:${bucket},stack:${stackName}`);

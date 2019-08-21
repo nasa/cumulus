@@ -17,6 +17,8 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
   let beforeAllSucceeded = false;
   beforeAll(async () => {
     config = loadConfig();
+    process.env.stackName = config.stackName;
+    process.env.system_bucket = config.buckets.internal.name;
 
     // Figure out what cluster we're using
     clusterArn = await getClusterArn(config.stackName);

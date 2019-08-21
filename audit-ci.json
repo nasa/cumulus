@@ -1,4 +1,5 @@
 {
     "high": true,
-    "retry-count": 20
+    "retry-count": 20,
+    "whitelist": ["googleapis"]
 }
