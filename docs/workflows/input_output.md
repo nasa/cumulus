@@ -18,7 +18,7 @@ The Cumulus Message Adapter libraries are called by the tasks with a callback fu
 
 A task's Lambda function can be configured to include a Cumulus Message Adapter library which constructs input/output messages and resolves task configurations.     The CMA can then be included in one of three ways:
 
-#### Kes injection
+#### Kes Injection
 
 In the Lambda function configuration file lambdas.yml, a task Lambda function can be configured to include the latest CMA via kes.  Kes will download and include the latest CMA package in the Lambda that's uploaded to AWS:
 
@@ -55,6 +55,8 @@ and include the reference in the Lambda configuration:
 ```
 
 ***Please note***: Updating/removing a layer does not change a deployed Lambda, so to update the CMA you should deploy a new version of the CMA layer, update the associated Lambda configuration to reference the new CMA version, and re-deploy your Lambdas.
+
+**Please Note**: Updating the CMA without updating the lambda code will fail if operating with the Workflow Lambda Versions feature enabled.  If you are utilizing this option, we recommend continuing use of kes injection/manual addition for now.
 
 This method will be supported more fully once migration to Terraform Deployments has been completed.
 
