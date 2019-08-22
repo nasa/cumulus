@@ -102,7 +102,7 @@ async function callCumulusApi({ prefix, payload: userPayload, userParams = {} })
     if (provider !== 'launchpad') {
       // Delete the user created for this request
       await userModel.delete(userName);
-      await accessTokenModel.delete({ authToken });
+      await accessTokenModel.delete({ accessToken: authToken });
     }
   }
   return apiOutput;
