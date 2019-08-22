@@ -3,7 +3,8 @@
 const cloneDeep = require('lodash.clonedeep');
 const pRetry = require('p-retry');
 const {
-  aws: { lambda }
+  aws: { lambda },
+  launchpad
 } = require('@cumulus/common');
 const {
   models: { AccessToken, User },
@@ -35,6 +36,14 @@ function invokeApi(prefix, payload) {
   );
 }
 
+async function getApiOauthProvider(prefix) {
+  if (process.env.OAUTH_PROVIDER) {
+    return process.env.OAUTH_PROVIDER;
+  }
+  const config = await lambda().getFunctionConfiguration({ FunctionName: `${prefix}-ApiEndpoints` }).promise();
+  return config.Environment.Variables.OAUTH_PROVIDER;
+}
+
 /**
  * Call the Cumulus API by invoking the Lambda function that backs the API
  * Gateway endpoint.
@@ -63,28 +72,39 @@ async function callCumulusApi({ prefix, payload: userPayload, userParams = {} })
   process.env.AccessTokensTable = `${prefix}-AccessTokensTable`;
   const accessTokenModel = new AccessToken();
 
-  const {
-    accessToken,
-    refreshToken,
-    expirationTime
-  } = fakeAccessTokenFactory();
-  await accessTokenModel.create({ accessToken, refreshToken });
+  let authToken;
+  const provider = await getApiOauthProvider(prefix);
 
-  const jwtAuthToken = createJwtToken({ accessToken, username: userName, expirationTime });
-
+  if (provider === 'launchpad') {
+    authToken = await launchpad.getLaunchpadToken({
+      passphrase: process.env.LAUNCHPAD_PASSPHRASE,
+      api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1/gettoken',
+      certificate: 'launchpad.pfx',
+      encrypted: false
+    });
+  } else {
+    const {
+      accessToken,
+      refreshToken,
+      expirationTime
+    } = fakeAccessTokenFactory();
+    await accessTokenModel.create({ accessToken, refreshToken });
+    authToken = createJwtToken({ accessToken, username: userName, expirationTime });
+  }
   // Add authorization header to the request
   payload.headers = payload.headers || {};
-  payload.headers.Authorization = `Bearer ${jwtAuthToken}`;
+  payload.headers.Authorization = `Bearer ${authToken}`;
 
   let apiOutput;
   try {
     apiOutput = await invokeApi(prefix, payload);
   } finally {
-    // Delete the user created for this request
-    await userModel.delete(userName);
-    await accessTokenModel.delete({ accessToken });
+    if (provider !== 'launchpad') {
+      // Delete the user created for this request
+      await userModel.delete(userName);
+      await accessTokenModel.delete({ accessToken: authToken });
+    }
   }
-
   return apiOutput;
 }
 
