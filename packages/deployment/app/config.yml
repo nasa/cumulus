@@ -6,6 +6,7 @@ default:
 
   urs_url: https://uat.urs.earthdata.nasa.gov/
 
+  cmaDir: '/opt/'
   non_complete_execution_payload_timeout: 30 ## days
   complete_execution_payload_timeout: 10     ## days
   complete_execution_payload_disable: false
