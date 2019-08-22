@@ -1,7 +1,8 @@
 ---
-id: setup
+id: version-v1.14.0-setup
 title: Data Cookbooks Setup
 hide_title: true
+original_id: setup
 ---
 
 # Setup
