@@ -2,7 +2,7 @@
 set -e
 
 . ./bamboo/set-bamboo-env-variables.sh
-# . ./bamboo/abort-if-not-publish.sh
+. ./bamboo/abort-if-not-publish.sh
 
 npm install -g npm
 npm install
