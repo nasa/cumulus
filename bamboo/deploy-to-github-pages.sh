@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ex
 . ./bamboo/set-bamboo-env-variables.sh
-. ./bamboo/abort-if-not-publish.sh
+# . ./bamboo/abort-if-not-publish.sh
 
 
 git clone --depth=50 --branch=gh-pages "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/nasa/cumulus.git" gh-pages
