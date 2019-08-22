@@ -22,7 +22,7 @@ Collections are logical sets of data objects of the same data type and version. 
 
 The schema for collections can be found [here](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) as the object assigned to `module.exports.collection` and tells us all about what values are expected, accepted, and required in a collection object (where required attribute keys are assigned as a string to the `required` attribute).
 
-**Break down of [s3_MOD09GQ_006.json](https://github.com/nasa/cumulus/tree/master/example/data/collections/s3_MOD09GQ_006.json)**
+**Break down of [s3_MOD09GQ_006.json](https://github.com/nasa/cumulus/blob/master/example/data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json)**
 
 |Key  |Value  |Required  |Description|
 |:---:|:-----:|:--------:|-----------|
@@ -52,7 +52,7 @@ The schema for collections can be found [here](https://github.com/nasa/cumulus/t
 
 Providers generate and distribute input data that Cumulus obtains and sends to workflows. Schema for providers can be found [here](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) in the object assigned to `module.exports.provider`. A few example provider configurations can be found [here](https://github.com/nasa/cumulus/tree/master/example/data/providers). Providers can be viewed, edited, added, and removed from the Cumulus dashboard under the "Providers" navigation tab. Additionally, they can be managed via the [providers api](https://nasa.github.io/cumulus-api/?language=Python#list-providers).
 
-**Break down of [s3_provider.json](https://github.com/nasa/cumulus/tree/master/example/data/providers/s3_provider.json):**
+**Break down of [s3_provider.json](https://github.com/nasa/cumulus/blob/master/example/data/providers/s3/s3_provider.json):**
 
 |Key  |Value  |Required|Description|
 |:---:|:-----:|:------:|-----------|
