@@ -59,4 +59,7 @@ module "archive" {
   distribution_url    = module.distribution.distribution_url
 
   users = var.archive_api_users
+
+  oauth_provider   = var.oauth_provider
+  oauth_user_group = var.oauth_user_group
 }
