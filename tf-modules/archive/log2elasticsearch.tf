@@ -2,6 +2,7 @@ resource "aws_sqs_queue" "log2elasticsearch_dead_letter_queue" {
   name                       = "${var.prefix}-log2elasticsearchDeadLetterQueue"
   receive_wait_time_seconds  = 20
   visibility_timeout_seconds = 60
+  tags                       = local.default_tags
 }
 
 resource "aws_lambda_function" "log2elasticsearch" {
@@ -23,9 +24,7 @@ resource "aws_lambda_function" "log2elasticsearch" {
       stackName       = var.prefix
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]

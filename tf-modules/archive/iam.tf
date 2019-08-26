@@ -14,6 +14,8 @@ resource "aws_iam_role" "lambda_api_gateway" {
   name                 = "${var.prefix}-lambda-api-gateway"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
+  # TODO Re-enable once IAM permissions have been fixed
+  # tags                 = local.default_tags
 }
 
 data "aws_iam_policy_document" "lambda_api_gateway_policy" {
@@ -50,8 +52,7 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
       "dynamodb:Scan",
       "dynamodb:UpdateItem"
     ]
-    # TODO Refactor so this doesn't make assumptions about table name prefixes
-    resources = ["arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.prefix}-*"]
+    resources = [for k, v in var.dynamo_tables : v.arn]
   }
 
   statement {
@@ -61,8 +62,7 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
       "dynamodb:DescribeStream",
       "dynamodb:ListStreams"
     ]
-    # TODO Refactor so this doesn't make assumptions about table name prefixes
-    resources = ["arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.prefix}-*/stream/*"]
+    resources = [for k, v in var.dynamo_tables : "${v.arn}/stream/*"]
   }
 
   statement {

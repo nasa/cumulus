@@ -3,7 +3,7 @@ variable "cmr_environment" {
 }
 
 variable "dynamo_tables" {
-  type = map(string)
+  type = map(object({ name = string, arn = string }))
 }
 
 variable "lambda_processing_role_arn" {

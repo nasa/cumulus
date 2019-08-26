@@ -12,9 +12,9 @@ resource "aws_lambda_function" "ems_distribution_report" {
   environment {
     variables = {
       CMR_ENVIRONMENT     = var.cmr_environment
-      CollectionsTable    = var.dynamo_tables.Collections
-      FilesTable          = var.dynamo_tables.Files
-      GranulesTable       = var.dynamo_tables.Granules
+      CollectionsTable    = var.dynamo_tables.collections.name
+      FilesTable          = var.dynamo_tables.files.name
+      GranulesTable       = var.dynamo_tables.granules.name
       ems_dataSource      = var.ems_datasource
       ems_host            = var.ems_host
       ems_path            = var.ems_path
@@ -28,9 +28,7 @@ resource "aws_lambda_function" "ems_distribution_report" {
       system_bucket       = var.system_bucket
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
@@ -39,6 +37,7 @@ resource "aws_lambda_function" "ems_distribution_report" {
 
 resource "aws_cloudwatch_event_rule" "daily_ems_distribution_report" {
   schedule_expression = "cron(0 8 * * ? *)"
+  tags                = local.default_tags
 }
 
 resource "aws_cloudwatch_event_target" "daily_ems_distribution_report" {
@@ -67,7 +66,7 @@ resource "aws_lambda_function" "ems_product_metadata_report" {
   environment {
     variables = {
       CMR_ENVIRONMENT     = var.cmr_environment
-      CollectionsTable    = var.dynamo_tables.Collections
+      CollectionsTable    = var.dynamo_tables.collections.name
       cmr_client_id       = var.cmr_client_id
       cmr_provider        = var.cmr_provider
       ems_dataSource      = var.ems_datasource
@@ -83,9 +82,7 @@ resource "aws_lambda_function" "ems_product_metadata_report" {
       system_bucket       = var.system_bucket
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
@@ -94,6 +91,7 @@ resource "aws_lambda_function" "ems_product_metadata_report" {
 
 resource "aws_cloudwatch_event_rule" "daily_ems_product_metadata_report" {
   schedule_expression = "cron(0 4 * * ? *)"
+  tags                = local.default_tags
 }
 
 resource "aws_cloudwatch_event_target" "daily_ems_product_metadata_report" {
@@ -114,6 +112,7 @@ resource "aws_sqs_queue" "ems_ingest_report_dead_letter_queue" {
   name                       = "${var.prefix}-EmsIngestReportDeadLetterQueue"
   receive_wait_time_seconds  = 20
   visibility_timeout_seconds = 60
+  tags                       = local.default_tags
 }
 
 resource "aws_lambda_function" "ems_ingest_report" {
@@ -131,7 +130,7 @@ resource "aws_lambda_function" "ems_ingest_report" {
   environment {
     variables = {
       CMR_ENVIRONMENT     = var.cmr_environment
-      CollectionsTable    = var.dynamo_tables.Collections
+      CollectionsTable    = var.dynamo_tables.collections.name
       ES_HOST             = var.elasticsearch_hostname
       ems_dataSource      = var.ems_datasource
       ems_host            = var.ems_host
@@ -146,9 +145,7 @@ resource "aws_lambda_function" "ems_ingest_report" {
       system_bucket       = var.system_bucket
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
@@ -157,6 +154,7 @@ resource "aws_lambda_function" "ems_ingest_report" {
 
 resource "aws_cloudwatch_event_rule" "daily_ems_ingest_report" {
   schedule_expression = "cron(0 5 * * ? *)"
+  tags                = local.default_tags
 }
 
 resource "aws_cloudwatch_event_target" "daily_ems_ingest_report" {

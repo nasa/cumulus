@@ -33,7 +33,7 @@ variable "distribution_url" {
 }
 
 variable "dynamo_tables" {
-  type = map(string)
+  type = map(object({ name = string, arn = string }))
 }
 
 variable "ecs_cluster_name" {
@@ -56,7 +56,7 @@ variable "ems_host" {
   type = string
 }
 
-variable "kinesis_inbound_event_logger_function_name" {
+variable "kinesis_inbound_event_logger_lambda_function_arn" {
   type = string
 }
 

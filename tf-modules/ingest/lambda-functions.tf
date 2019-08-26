@@ -13,16 +13,14 @@ resource "aws_lambda_function" "fallback_consumer" {
   environment {
     variables = {
       CMR_ENVIRONMENT  = var.cmr_environment
-      CollectionsTable = var.dynamo_tables.Collections
-      ProvidersTable   = var.dynamo_tables.Providers
-      RulesTable       = var.dynamo_tables.Rules
+      CollectionsTable = var.dynamo_tables.collections.name
+      ProvidersTable   = var.dynamo_tables.providers.name
+      RulesTable       = var.dynamo_tables.rules.name
       stackName        = var.prefix
       system_bucket    = var.system_bucket
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
@@ -44,9 +42,7 @@ resource "aws_lambda_function" "kinesis_inbound_event_logger" {
       stackName       = var.prefix
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
@@ -68,9 +64,7 @@ resource "aws_lambda_function" "kinesis_outbound_event_logger" {
       stackName       = var.prefix
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
@@ -90,16 +84,14 @@ resource "aws_lambda_function" "message_consumer" {
     variables = {
       CMR_ENVIRONMENT  = var.cmr_environment
       stackName        = var.prefix
-      CollectionsTable = var.dynamo_tables.Collections
-      ProvidersTable   = var.dynamo_tables.Providers
-      RulesTable       = var.dynamo_tables.Rules
+      CollectionsTable = var.dynamo_tables.collections.name
+      ProvidersTable   = var.dynamo_tables.providers.name
+      RulesTable       = var.dynamo_tables.rules.name
       system_bucket    = var.system_bucket
       FallbackTopicArn = aws_sns_topic.kinesis_fallback.arn
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
@@ -122,14 +114,12 @@ resource "aws_lambda_function" "schedule_sf" {
   environment {
     variables = {
       CMR_ENVIRONMENT  = var.cmr_environment
-      CollectionsTable = var.dynamo_tables.Collections
-      ProvidersTable   = var.dynamo_tables.Providers
+      CollectionsTable = var.dynamo_tables.collections.name
+      ProvidersTable   = var.dynamo_tables.providers.name
       stackName        = var.prefix
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
@@ -151,9 +141,7 @@ resource "aws_lambda_function" "sf2snsEnd" {
       stackName       = var.prefix
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
@@ -175,9 +163,7 @@ resource "aws_lambda_function" "sf2snsStart" {
       stackName       = var.prefix
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
@@ -197,12 +183,10 @@ resource "aws_lambda_function" "sf_semaphore_down" {
     variables = {
       CMR_ENVIRONMENT = var.cmr_environment
       stackName       = var.prefix
-      SemaphoresTable = var.dynamo_tables.Semaphores
+      SemaphoresTable = var.dynamo_tables.semaphores.name
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
@@ -224,9 +208,7 @@ resource "aws_lambda_function" "sf_sns_report" {
       stackName       = var.prefix
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
@@ -248,9 +230,7 @@ resource "aws_lambda_function" "sqs2sf" {
       stackName       = var.prefix
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
@@ -270,11 +250,12 @@ resource "aws_lambda_function" "sqs2sfThrottle" {
     variables = {
       CMR_ENVIRONMENT = var.cmr_environment
       stackName       = var.prefix
-      SemaphoresTable = var.dynamo_tables.Semaphores
+      SemaphoresTable = var.dynamo_tables.semaphores.name
     }
   }
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
   }
+  tags = merge(local.default_tags, { Project = var.prefix })
 }

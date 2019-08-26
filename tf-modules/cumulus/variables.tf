@@ -21,7 +21,7 @@ variable "cmr_username" {
 }
 
 variable "dynamo_tables" {
-  type = map(string)
+  type = map(object({ name = string, arn = string }))
 }
 
 variable "ecs_cluster_desired_size" {
@@ -57,6 +57,10 @@ variable "lambda_subnet_ids" {
 }
 
 variable "prefix" {
+  type = string
+}
+
+variable "sts_credentials_lambda_function_arn" {
   type = string
 }
 
