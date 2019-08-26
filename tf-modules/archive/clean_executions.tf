@@ -19,13 +19,15 @@ resource "aws_lambda_function" "clean_executions" {
   }
   environment {
     variables = {
-      CMR_ENVIRONMENT                           = var.cmr_environment
-      ExecutionsTable                           = var.dynamo_tables.executions.name
-      stackName                                 = var.prefix
-      nonCompleteExecutionPayloadTimeout        = 30
-      completeExecutionPayloadTimeout           = 10
-      nonCompleteExecutionPayloadTimeoutDisable = false
-      completeExecutionPayloadTimeoutDisable    = false
+      CMR_ENVIRONMENT = var.cmr_environment
+      ExecutionsTable = var.dynamo_tables.Executions
+      stackName       = var.prefix
+
+      completeExecutionPayloadTimeoutDisable = var.complete_execution_payload_timeout_disable
+      completeExecutionPayloadTimeout        = var.complete_execution_payload_timeout
+
+      nonCompleteExecutionPayloadTimeoutDisable = var.non_complete_execution_payload_timeout_disable
+      nonCompleteExecutionPayloadTimeout        = var.non_complete_execution_payload_timeout
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
@@ -36,7 +38,7 @@ resource "aws_lambda_function" "clean_executions" {
 }
 
 resource "aws_cloudwatch_event_rule" "daily_execution_payload_cleanup" {
-  schedule_expression = "cron(0 4 * * ? *)"
+  schedule_expression = var.daily_execution_payload_cleanup_schedule_expression
   tags                = local.default_tags
 }
 

@@ -130,6 +130,11 @@ variable "cmr_limit" {
   default = 100
 }
 
+variable "cmr_oauth_provider" {
+  type    = string
+  default = "earthdata"
+}
+
 variable "cmr_page_size" {
   type    = number
   default = 50
@@ -175,9 +180,24 @@ variable "ems_username" {
   default = "cumulus"
 }
 
+variable "launchpad_api" {
+  type    = string
+  default = "launchpadApi"
+}
+
+variable "launchpad_certificate" {
+  type    = string
+  default = "launchpad.pfx"
+}
+
 variable "oauth_provider" {
   type    = string
   default = "earthdata"
+}
+
+variable "oauth_user_group" {
+  type    = string
+  default = "N/A"
 }
 
 variable "private_buckets" {
@@ -209,4 +229,31 @@ variable "urs_url" {
 variable "users" {
   type    = list(string)
   default = []
+}
+
+# clean_executions lambda config
+
+variable "daily_execution_payload_cleanup_schedule_expression" {
+  type    = string
+  default = "cron(0 4 * * ? *)"
+}
+
+variable "complete_execution_payload_timeout_disable" {
+  type    = bool
+  default = false
+}
+
+variable "complete_execution_payload_timeout" {
+  type    = number
+  default = 10
+}
+
+variable "non_complete_execution_payload_timeout_disable" {
+  type    = bool
+  default = false
+}
+
+variable "non_complete_execution_payload_timeout" {
+  type    = number
+  default = 30
 }
