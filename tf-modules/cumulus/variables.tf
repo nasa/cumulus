@@ -166,6 +166,16 @@ variable "key_name" {
   default = null
 }
 
+variable "oauth_provider" {
+  type    = string
+  default = "earthdata"
+}
+
+variable "oauth_user_group" {
+  type    = string
+  default = "N/A"
+}
+
 variable "permissions_boundary_arn" {
   type    = string
   default = null

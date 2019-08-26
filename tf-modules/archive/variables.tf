@@ -176,6 +176,11 @@ variable "oauth_provider" {
   default = "earthdata"
 }
 
+variable "oauth_user_group" {
+  type    = string
+  default = "N/A"
+}
+
 variable "private_buckets" {
   type    = list(string)
   default = []

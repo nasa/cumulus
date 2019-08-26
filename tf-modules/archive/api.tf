@@ -40,6 +40,7 @@ resource "aws_lambda_function" "api" {
       IndexFromDatabaseLambda      = aws_lambda_function.index_from_database.arn
       KinesisInboundEventLogger    = data.aws_lambda_function.kinesis_inbound_event_logger.arn
       OAUTH_PROVIDER               = var.oauth_provider
+      oauth_user_group             = var.oauth_user_group
       PdrsTable                    = var.dynamo_tables.Pdrs
       ProvidersTable               = var.dynamo_tables.Providers
       RulesTable                   = var.dynamo_tables.Rules
