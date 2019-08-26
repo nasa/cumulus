@@ -226,3 +226,25 @@ variable "users" {
   type    = list(string)
   default = []
 }
+
+# clean_executions lambda config
+
+variable "complete_execution_payload_timeout_disable" {
+  type    = bool
+  default = false
+}
+
+variable "complete_execution_payload_timeout" {
+  type    = number
+  default = 10
+}
+
+variable "non_complete_execution_payload_timeout_disable" {
+  type    = bool
+  default = false
+}
+
+variable "non_complete_execution_payload_timeout" {
+  type    = number
+  default = 30
+}
