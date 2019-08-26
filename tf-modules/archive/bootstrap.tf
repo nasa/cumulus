@@ -14,9 +14,7 @@ resource "aws_lambda_function" "custom_bootstrap" {
       system_bucket   = var.system_bucket
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids = var.lambda_subnet_ids
     security_group_ids = [
@@ -27,8 +25,6 @@ resource "aws_lambda_function" "custom_bootstrap" {
 }
 
 data "aws_lambda_invocation" "custom_bootstrap" {
-  depends_on = [aws_lambda_function.custom_bootstrap]
-
   function_name = aws_lambda_function.custom_bootstrap.function_name
 
   input = <<JSON
@@ -41,7 +37,7 @@ data "aws_lambda_invocation" "custom_bootstrap" {
       "Password": "${var.cmr_password}"
     },
     "Users": {
-      "table": "${var.dynamo_tables.Users}",
+      "table": "${var.dynamo_tables.users.name}",
       "records": ${jsonencode([for x in var.users : { username : x, password : "OAuth" }])}
     },
     "DynamoDBTables": []

@@ -2,6 +2,7 @@ resource "aws_sqs_queue" "sns2elasticsearch_dead_letter_queue" {
   name                       = "${var.prefix}-sns2elasticsearchDeadLetterQueue"
   receive_wait_time_seconds  = 20
   visibility_timeout_seconds = 60
+  tags                       = local.default_tags
 }
 
 resource "aws_lambda_function" "sns2elasticsearch" {
@@ -19,16 +20,14 @@ resource "aws_lambda_function" "sns2elasticsearch" {
   environment {
     variables = {
       CMR_ENVIRONMENT = var.cmr_environment
-      GranulesTable   = var.dynamo_tables.Granules
-      ExecutionsTable = var.dynamo_tables.Executions
-      PdrsTable       = var.dynamo_tables.Pdrs
+      GranulesTable   = var.dynamo_tables.granules.name
+      ExecutionsTable = var.dynamo_tables.executions.name
+      PdrsTable       = var.dynamo_tables.pdrs.name
       ES_HOST         = var.elasticsearch_hostname
       stackName       = var.prefix
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
@@ -39,6 +38,7 @@ resource "aws_lambda_function" "sns2elasticsearch" {
 
 resource "aws_sns_topic" "sftracker" {
   name = "${var.prefix}-sftracker"
+  tags = local.default_tags
 }
 
 resource "aws_sns_topic_subscription" "sftracker_to_sns2elasticsearch" {

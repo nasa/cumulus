@@ -16,9 +16,9 @@ locals {
 }
 
 resource "aws_dynamodb_table" "access_tokens_table" {
-  name             = local.table_names.access_tokens_table
-  billing_mode     = "PAY_PER_REQUEST"
-  hash_key         = "accessToken"
+  name         = local.table_names.access_tokens_table
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "accessToken"
 
   attribute {
     name = "accessToken"
@@ -28,12 +28,14 @@ resource "aws_dynamodb_table" "access_tokens_table" {
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.access_tokens_table)
   }
+
+  tags = local.default_tags
 }
 
 resource "aws_dynamodb_table" "async_operations_table" {
-  name             = local.table_names.async_operations_table
-  billing_mode     = "PAY_PER_REQUEST"
-  hash_key         = "id"
+  name         = local.table_names.async_operations_table
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "id"
 
   attribute {
     name = "id"
@@ -43,6 +45,8 @@ resource "aws_dynamodb_table" "async_operations_table" {
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.async_operations_table)
   }
+
+  tags = local.default_tags
 }
 
 resource "aws_dynamodb_table" "collections_table" {
@@ -66,6 +70,8 @@ resource "aws_dynamodb_table" "collections_table" {
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.collections_table)
   }
+
+  tags = local.default_tags
 }
 
 resource "aws_dynamodb_table" "executions_table" {
@@ -83,6 +89,8 @@ resource "aws_dynamodb_table" "executions_table" {
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.executions_table)
   }
+
+  tags = local.default_tags
 }
 
 resource "aws_dynamodb_table" "files_table" {
@@ -106,6 +114,8 @@ resource "aws_dynamodb_table" "files_table" {
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.files_table)
   }
+
+  tags = local.default_tags
 }
 
 resource "aws_dynamodb_table" "granules_table" {
@@ -126,15 +136,17 @@ resource "aws_dynamodb_table" "granules_table" {
   }
 
   global_secondary_index {
-    name               = "collectionId-granuleId-index"
-    hash_key           = "collectionId"
-    range_key          = "granuleId"
-    projection_type    = "ALL"
+    name            = "collectionId-granuleId-index"
+    hash_key        = "collectionId"
+    range_key       = "granuleId"
+    projection_type = "ALL"
   }
 
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.granules_table)
   }
+
+  tags = local.default_tags
 }
 
 resource "aws_dynamodb_table" "pdrs_table" {
@@ -152,6 +164,8 @@ resource "aws_dynamodb_table" "pdrs_table" {
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.pdrs_table)
   }
+
+  tags = local.default_tags
 }
 
 resource "aws_dynamodb_table" "providers_table" {
@@ -169,6 +183,8 @@ resource "aws_dynamodb_table" "providers_table" {
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.providers_table)
   }
+
+  tags = local.default_tags
 }
 
 resource "aws_dynamodb_table" "rules_table" {
@@ -186,12 +202,14 @@ resource "aws_dynamodb_table" "rules_table" {
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.rules_table)
   }
+
+  tags = local.default_tags
 }
 
 resource "aws_dynamodb_table" "semaphores_table" {
-  name             = local.table_names.semaphores_table
-  billing_mode     = "PAY_PER_REQUEST"
-  hash_key         = "name"
+  name         = local.table_names.semaphores_table
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "name"
 
   attribute {
     name = "name"
@@ -201,6 +219,8 @@ resource "aws_dynamodb_table" "semaphores_table" {
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.semaphores_table)
   }
+
+  tags = local.default_tags
 }
 
 resource "aws_dynamodb_table" "users_table" {
@@ -218,4 +238,6 @@ resource "aws_dynamodb_table" "users_table" {
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.users_table)
   }
+
+  tags = local.default_tags
 }

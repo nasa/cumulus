@@ -1,13 +1,3 @@
-# TODO This should end up coming from the ingest module at some point
-data "aws_lambda_function" "schedule_sf" {
-  function_name = "${var.prefix}-ScheduleSF"
-}
-
-# TODO This should end up coming from the ingest module at some point
-data "aws_lambda_function" "message_consumer" {
-  function_name = "${var.prefix}-messageConsumer"
-}
-
 module "archive" {
   source = "../archive"
 
@@ -49,9 +39,9 @@ module "archive" {
 
   api_port = var.archive_api_port
 
-  schedule_sf_function_arn                   = data.aws_lambda_function.schedule_sf.arn
-  message_consumer_function_arn              = data.aws_lambda_function.message_consumer.arn
-  kinesis_inbound_event_logger_function_name = module.ingest.kinesis_inbound_event_logger_function_name
+  schedule_sf_function_arn                         = module.ingest.schedule_sf_lambda_function_arn
+  message_consumer_function_arn                    = module.ingest.message_consumer_lambda_function_arn
+  kinesis_inbound_event_logger_lambda_function_arn = module.ingest.kinesis_inbound_event_logger_lambda_function_arn
 
   # TODO We need to figure out how to make this dynamic
   background_queue_name = "backgroundProcessing"

@@ -3,9 +3,16 @@ provider "aws" {
   profile = var.aws_profile
 }
 
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
 data "terraform_remote_state" "data_persistence" {
   backend = "s3"
   config  = var.data_persistence_remote_state_config
+}
+
+data "aws_lambda_function" "sts_credentials" {
+  function_name = "gsfc-ngap-sh-s3-sts-get-keys"
 }
 
 module "cumulus" {
@@ -44,8 +51,6 @@ module "cumulus" {
 
   dynamo_tables = data.terraform_remote_state.data_persistence.outputs.dynamo_tables
 
-  archive_api_port = 8000
-
   token_secret = var.token_secret
 
   archive_api_users = [
@@ -64,6 +69,8 @@ module "cumulus" {
   ]
 
   distribution_url = var.distribution_url
+
+  sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
 }
 
 # TODO Add this aws_sns_topic_subscription
