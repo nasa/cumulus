@@ -6,26 +6,26 @@ const {
   isSnsEvent,
   getSnsEventMessageObject
 } = require('@cumulus/common/sns-event');
-const Granule = require('@cumulus/api/models/granules');
+const Pdr = require('@cumulus/api/models/pdrs');
 
 /**
- * Process Cumulus message object and create granule database records.
+ * Process Cumulus message object and create PDR database records.
  *
  * @param {Object} message - SNS Cumulus message object
- * @returns {Promise<Array>} granule records
+ * @returns {Promise<Array>} PDR records
  */
-async function handleGranuleMessage(message) {
-  const granuleModel = new Granule();
-  return granuleModel.createGranulesFromSns(message);
+async function handlePdrMessage(message) {
+  const pdrModel = new Pdr();
+  return pdrModel.createPdrFromSns(message);
 }
 
 /**
- * Return valid Cumulus SNS messages containing granule ingest notifications.
+ * Return valid Cumulus SNS messages containing PDR ingest notifications.
  *
  * @param {Object} event - SNS Notification Event
- * @returns {Array<Object>} granule ingest notification Cumulus messages
+ * @returns {Array<Object>} PDR ingest notification Cumulus messages
  */
-function getReportGranuleMessages(event) {
+function getReportPdrMessages(event) {
   const records = get(event, 'Records', []);
   return records
     .filter(isSnsEvent)
@@ -39,13 +39,13 @@ function getReportGranuleMessages(event) {
  * @returns {Promise<Array>} granule records
  */
 async function handler(event) {
-  const messages = getReportGranuleMessages(event);
+  const messages = getReportPdrMessages(event);
   return Promise.all(
-    messages.map(handleGranuleMessage)
+    messages.map(handlePdrMessage)
   );
 }
 
 module.exports = {
   handler,
-  getReportGranuleMessages
+  getReportPdrMessages
 };
