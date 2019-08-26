@@ -126,6 +126,11 @@ variable "cmr_limit" {
   default = 100
 }
 
+variable "cmr_oauth_provider" {
+  type    = string
+  default = "earthdata"
+}
+
 variable "cmr_page_size" {
   type    = number
   default = 50
@@ -169,6 +174,16 @@ variable "ems_submit_report" {
 variable "ems_username" {
   type    = string
   default = "cumulus"
+}
+
+variable "launchpad_api" {
+  type    = string
+  default = "launchpadApi"
+}
+
+variable "launchpad_certificate" {
+  type    = string
+  default = "launchpad.pfx"
 }
 
 variable "oauth_provider" {

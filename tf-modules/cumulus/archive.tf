@@ -31,11 +31,15 @@ module "archive" {
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
 
-  cmr_client_id   = var.cmr_client_id
-  cmr_environment = var.cmr_environment
-  cmr_provider    = var.cmr_provider
-  cmr_username    = var.cmr_username
-  cmr_password    = var.cmr_password
+  cmr_client_id      = var.cmr_client_id
+  cmr_environment    = var.cmr_environment
+  cmr_oauth_provider = var.cmr_oauth_provider
+  cmr_provider       = var.cmr_provider
+  cmr_username       = var.cmr_username
+  cmr_password       = var.cmr_password
+
+  launchpad_api         = var.launchpad_api
+  launchpad_certificate = var.launchpad_certificate
 
   urs_url             = "https://uat.urs.earthdata.nasa.gov"
   urs_client_id       = var.urs_client_id

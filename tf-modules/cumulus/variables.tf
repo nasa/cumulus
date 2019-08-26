@@ -98,6 +98,11 @@ variable "archive_api_users" {
   default = []
 }
 
+variable "cmr_oauth_provider" {
+  type    = string
+  default = "earthdata"
+}
+
 variable "distribution_url" {
   type    = string
   default = null
@@ -164,6 +169,16 @@ variable "ecs_efs_config" {
 variable "key_name" {
   type    = string
   default = null
+}
+
+variable "launchpad_api" {
+  type    = string
+  default = "launchpadApi"
+}
+
+variable "launchpad_certificate" {
+  type    = string
+  default = "launchpad.pfx"
 }
 
 variable "oauth_provider" {
