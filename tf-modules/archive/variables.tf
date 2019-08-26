@@ -229,6 +229,11 @@ variable "users" {
 
 # clean_executions lambda config
 
+variable "daily_execution_payload_cleanup_schedule_expression" {
+  type    = string
+  default = "cron(0 4 * * ? *)"
+}
+
 variable "complete_execution_payload_timeout_disable" {
   type    = bool
   default = false
