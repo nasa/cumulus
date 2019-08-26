@@ -80,10 +80,6 @@ resource "aws_lambda_function" "api" {
 
 resource "aws_api_gateway_rest_api" "api" {
   name = "${var.prefix}-archive"
-
-  lifecycle {
-    ignore_changes = [policy]
-  }
 }
 
 resource "aws_lambda_permission" "api_endpoints_lambda_permission" {
