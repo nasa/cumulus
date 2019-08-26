@@ -26,7 +26,7 @@ resource "aws_lambda_function" "api" {
       BulkDeleteLambda             = aws_lambda_function.bulk_delete.arn
       CMR_ENVIRONMENT              = var.cmr_environment
       CollectionsTable             = var.dynamo_tables.collections.name
-      EARTHDATA_BASE_URL           = "${replace(var.urs_url, "//$/", "")}/" # Make sure there's a trailing slash
+      EARTHDATA_BASE_URL           = "${replace(var.urs_url, "//$/", "")}/" # Makes sure there's a trailing slash
       EARTHDATA_CLIENT_ID          = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD    = var.urs_client_password
       ES_HOST                      = var.elasticsearch_hostname
@@ -42,12 +42,14 @@ resource "aws_lambda_function" "api" {
       PdrsTable                    = var.dynamo_tables.pdrs.name
       ProvidersTable               = var.dynamo_tables.providers.name
       RulesTable                   = var.dynamo_tables.rules.name
+      oauth_user_group             = var.oauth_user_group
       STSCredentialsLambda         = var.sts_credentials_lambda
       TOKEN_REDIRECT_ENDPOINT      = local.api_redirect_uri
       TOKEN_SECRET                 = var.token_secret
       UsersTable                   = var.dynamo_tables.users.name
       backgroundQueueName          = var.background_queue_name
       cmr_client_id                = var.cmr_client_id
+      cmr_oauth_provider           = var.cmr_oauth_provider
       cmr_password                 = jsondecode(data.aws_lambda_invocation.custom_bootstrap.result).Data.CmrPassword
       cmr_provider                 = var.cmr_provider
       cmr_username                 = var.cmr_username
@@ -55,6 +57,9 @@ resource "aws_lambda_function" "api" {
       invoke                       = var.schedule_sf_function_arn
       invokeArn                    = var.schedule_sf_function_arn
       invokeReconcileLambda        = aws_lambda_function.create_reconciliation_report.arn
+      launchpad_api                = var.launchpad_api
+      launchpad_certificate        = var.launchpad_certificate
+      launchpad_passphrase         = jsondecode(data.aws_lambda_invocation.custom_bootstrap.result).Data.LaunchpadPassphrase
       messageConsumer              = var.message_consumer_function_arn
       stackName                    = var.prefix
       system_bucket                = var.system_bucket
@@ -72,10 +77,6 @@ resource "aws_lambda_function" "api" {
 
 resource "aws_api_gateway_rest_api" "api" {
   name = "${var.prefix}-archive"
-
-  lifecycle {
-    ignore_changes = [policy]
-  }
 }
 
 resource "aws_lambda_permission" "api_endpoints_lambda_permission" {
