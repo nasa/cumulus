@@ -47,7 +47,7 @@ const waitPassSfDef = {
   States: {
     WaitState: {
       Type: 'Wait',
-      Seconds: 5,
+      Seconds: 3,
       Next: 'PassState'
     },
     PassState: {
@@ -290,6 +290,12 @@ describe('the sf-starter lambda function', () => {
         rulePermissionId
       });
 
+      await new Promise((res) => {
+        // Wait 60 seconds before starting new executions to allow the Cloudwatch rule to settle.
+        // This prevents failure to decrement the semaphore.
+        setTimeout(res, 60000);
+      });
+
       await sendStartSfMessages({
         numOfMessages: totalNumMessages,
         queueMaxExecutions,
@@ -340,6 +346,29 @@ describe('the sf-starter lambda function', () => {
       const { executions } = await StepFunctions.listExecutions({ stateMachineArn: waitPassSfArn });
       const runningExecutions = executions.filter((execution) => execution.status === 'RUNNING');
       expect(runningExecutions.length).toBeLessThanOrEqual(queueMaxExecutions);
+    });
+
+    describe('and the semaphore', () => {
+      beforeAll(async () => {
+        await sqs().purgeQueue({
+          QueueUrl: maxQueueUrl
+        });
+
+        await new Promise((res) => {
+          // Wait 10 seconds to allow running executions to finish.
+          setTimeout(res, 10000);
+        });
+      });
+
+      it('is decremented to 0', async () => {
+        const semItem = await dynamodbDocClient().get({
+          TableName: `${config.stackName}-SemaphoresTable`,
+          Key: {
+            key: maxQueueName
+          }
+        }).promise();
+        expect(semItem.Item.semvalue).toBe(0);
+      });
     });
   });
 });
