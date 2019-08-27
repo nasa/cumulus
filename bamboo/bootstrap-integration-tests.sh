@@ -14,6 +14,11 @@ npm config set unsafe-perm true
 npm install
 . ./bamboo/set-bamboo-env-variables.sh
 
+# terraform hijack to avoid affecting non-tf branch plans
+if [[ $COMMIT_MESSAGE =~ terraform ]]; then
+  . ./bamboo/bootstrap-tf-deployment.sh
+fi
+
 if [[ $USE_NPM_PACKAGES == true ]]; then
   echo "***Deploying stack with NPM packages"
   (cd example && npm install)
