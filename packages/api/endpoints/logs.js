@@ -1,7 +1,16 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const log = require('@cumulus/common/log');
 const { Search } = require('../es/search');
+
+function convertLogLevelForQuery(query) {
+  if (!query.level) {
+    return query;
+  }
+
+  return Object.assign({}, query, { level: log.convertLogLevel(query.level) });
+}
 
 /**
  * list all the logs
@@ -12,7 +21,7 @@ const { Search } = require('../es/search');
  */
 async function list(req, res) {
   const search = new Search({
-    queryStringParameters: req.query
+    queryStringParameters: convertLogLevelForQuery(req.query)
   }, 'logs');
 
   const result = await search.query();
