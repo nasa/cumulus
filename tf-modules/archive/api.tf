@@ -27,7 +27,7 @@ resource "aws_lambda_function" "api" {
       BulkDeleteLambda             = aws_lambda_function.bulk_delete.arn
       CMR_ENVIRONMENT              = var.cmr_environment
       CollectionsTable             = var.dynamo_tables.Collections
-      EARTHDATA_BASE_URL           = "${replace(var.urs_url, "//$/", "")}/" # Makes sure there's a trailing slash
+      EARTHDATA_BASE_URL           = "${replace(var.urs_url, "//+$/", "")}/" # Makes sure there's not a trailing slash
       EARTHDATA_CLIENT_ID          = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD    = var.urs_client_password
       ES_HOST                      = var.elasticsearch_hostname
