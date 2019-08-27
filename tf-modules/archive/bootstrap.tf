@@ -39,8 +39,7 @@ data "aws_lambda_invocation" "custom_bootstrap" {
     "Users": {
       "table": "${var.dynamo_tables.users.name}",
       "records": ${jsonencode([for x in var.users : { username : x, password : "OAuth" }])}
-    },
-    "DynamoDBTables": []
+    }
   }
 }
 JSON
