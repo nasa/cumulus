@@ -16,7 +16,7 @@ If creating a new minor version release from master, create a branch titled `rel
 
 #### Backporting
 
-Checkout the minor version branch created in the `From Master` step above, then create a release branch from it.   
+Checkout the minor version branch created in the `From Master` step above, then create a release branch from it.
 
 ### 2. Update the Cumulus version number
 
@@ -111,7 +111,7 @@ should be uploaded as an asset of the Github release.
 Similarily, the S3 Replicator Terraform module can be created by running:
 
 ```bash
-$ (cd tf-modules/s3-credentials && ./bin/build-tf-module.sh)
+$ (cd tf-modules/s3-replicator && ./bin/build-tf-module.sh)
 ```
 
 ## Troubleshooting
