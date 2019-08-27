@@ -48,10 +48,10 @@ class Pdr extends Manager {
   }
 
   /**
-   * Create a new pdr record from incoming sns messages
+   * Create a new PDR record from incoming SNS messages
    *
-   * @param {Object} payload - sns message containing the output of a Cumulus Step Function
-   * @returns {Promise<Object>} a pdr record
+   * @param {Object} payload - SNS message containing the output of a Cumulus Step Function
+   * @returns {Promise<Object>} a PDR record
    */
   createPdrFromSns(payload) {
     const name = get(payload, 'cumulus_meta.execution_name');
