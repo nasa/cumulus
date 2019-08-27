@@ -97,25 +97,6 @@ test('getReportPdrMessages returns correct number of messages', (t) => {
   t.is(messages.length, 1);
 });
 
-test('handler correctly ignores non-PDR message', async (t) => {
-  const response = await handler({
-    Records: [{
-      EventSource: 'aws:sns',
-      Sns: {
-        Message: JSON.stringify({
-          cumulus_meta: {
-            execution_name: 'exec123',
-            state_machine: 'workflow123'
-          },
-          meta: {},
-          payload: {}
-        })
-      }
-    }]
-  });
-  t.deepEqual(response, [undefined]);
-});
-
 test('handler correctly creates PDR record', async (t) => {
   const pdrName = randomString();
   const pdrParams = {

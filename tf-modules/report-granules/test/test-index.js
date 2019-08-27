@@ -124,25 +124,6 @@ test('getReportGranuleMessages returns correct number of messages', (t) => {
   t.is(messages.length, 3);
 });
 
-test('handler correctly ignores non-granule message', async (t) => {
-  const response = await handler({
-    Records: [{
-      EventSource: 'aws:states',
-      Sns: {
-        Message: JSON.stringify({
-          cumulus_meta: {
-            execution_name: 'exec123',
-            state_machine: 'workflow123'
-          },
-          meta: {},
-          payload: {}
-        })
-      }
-    }]
-  });
-  t.deepEqual(response, []);
-});
-
 test('handler correctly creates granule record', async (t) => {
   const granuleId = randomString();
   const granuleParams = {
