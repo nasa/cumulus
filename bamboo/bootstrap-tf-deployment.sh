@@ -21,6 +21,16 @@ echo "Locking stack for deployment $DEPLOYMENT"
 cd example
 set +e
 
+# Fetch terraform binary
+if ! curl -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip ; then
+  echo "ERROR: coudn't download terraform script" >&2
+  exit 1
+else
+  unzip -u terraform_${TF_VERSION}_linux_amd64.zip
+  chmod a+x terraform
+  rm terraform_${TF_VERSION}_linux_amd64.zip
+fi
+
 # Wait for the stack to be available
 node ./scripts/lock-stack.js true $DEPLOYMENT
 LOCK_EXISTS_STATUS=$?
@@ -53,12 +63,12 @@ echo "terraform {
 }" >> backend.tf
 
 # Initialize deployment
-terraform init \
+./terraform init \
   -input=false
 
 # Deploy example via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
-terraform apply \
+./terraform apply \
   -input=false \
   -var-file="./deployments/sandbox.tfvars" \
   -var-file="./deployments/$DEPLOYMENT.tfvars" \
