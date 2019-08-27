@@ -126,7 +126,7 @@ test('getReportGranuleMessages returns no messages for non-SNS events', (t) => {
   t.is(messages.length, 0);
 });
 
-test('getReportExecutionMessages returns correct number of messages', (t) => {
+test('getReportGranuleMessages returns correct number of messages', (t) => {
   let messages = getReportGranuleMessages({
     Records: [{
       EventSource: 'aws:sns',
