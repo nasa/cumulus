@@ -6,8 +6,7 @@ const Pdr = require('@cumulus/api/models/pdrs');
 const { fakePdrFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
 const { randomId, randomString, randomNumber } = require('@cumulus/common/test-utils');
-const { getSnsEventMessageObject } = require('@cumulus/common/sns-event');
-const { handler, getReportGranuleMessages } = require('..');
+const { handler, getReportPdrMessages } = require('..');
 
 let executionName;
 let pdrsModel;
@@ -72,18 +71,18 @@ test.after.always(async () => {
   await pdrsModel.deleteTable();
 });
 
-test('getReportGranuleMessages returns no messages for non-SNS events', (t) => {
-  let messages = getReportGranuleMessages({});
+test('getReportPdrMessages returns no messages for non-SNS events', (t) => {
+  let messages = getReportPdrMessages({});
   t.is(messages.length, 0);
 
-  messages = getReportGranuleMessages({
+  messages = getReportPdrMessages({
     Records: [{
       Sns: {}
     }]
   });
   t.is(messages.length, 0);
 
-  messages = getReportGranuleMessages({
+  messages = getReportPdrMessages({
     Records: [{
       EventSource: 'aws:cloudwatch',
       CloudWatch: {
@@ -93,7 +92,7 @@ test('getReportGranuleMessages returns no messages for non-SNS events', (t) => {
   });
   t.is(messages.length, 0);
 
-  messages = getReportGranuleMessages({
+  messages = getReportPdrMessages({
     Records: [{
       EventSource: 'aws:states',
       States: {
@@ -111,8 +110,8 @@ test('getReportGranuleMessages returns no messages for non-SNS events', (t) => {
   t.is(messages.length, 0);
 });
 
-test('getReportExecutionMessages returns correct number of messages', (t) => {
-  let messages = getReportGranuleMessages({
+test('getReportPdrMessages returns correct number of messages', (t) => {
+  let messages = getReportPdrMessages({
     Records: [{
       EventSource: 'aws:sns',
       Sns: {
@@ -128,30 +127,19 @@ test('getReportExecutionMessages returns correct number of messages', (t) => {
     }]
   });
   t.is(messages.length, 1);
-  t.is(messages[0].payload.granules, undefined);
 
-  messages = getReportGranuleMessages({
+  messages = getReportPdrMessages({
     Records: [
-      createPdrSnsMessage(createPdrMessage({ numberOfGranules: 4 }))
-    ]
-  });
-  t.is(messages.length, 1);
-  t.is(messages[0].payload.granules.length, 4);
-
-  messages = getReportGranuleMessages({
-    Records: [
-      createPdrSnsMessage(createPdrMessage()),
-      createPdrSnsMessage(createPdrMessage()),
       createPdrSnsMessage(createPdrMessage())
     ]
   });
-  t.is(messages.length, 3);
+  t.is(messages.length, 1);
 });
 
-test('handler correctly ignores non-granule message', async (t) => {
+test('handler correctly ignores non-PDR message', async (t) => {
   const response = await handler({
     Records: [{
-      EventSource: 'aws:states',
+      EventSource: 'aws:sns',
       Sns: {
         Message: JSON.stringify({
           cumulus_meta: {
@@ -164,7 +152,7 @@ test('handler correctly ignores non-granule message', async (t) => {
       }
     }]
   });
-  t.deepEqual(response, []);
+  t.deepEqual(response, [undefined]);
 });
 
 test('handler correctly creates PDR record', async (t) => {
@@ -186,7 +174,6 @@ test('handler correctly creates PDR record', async (t) => {
   const record = await pdrsModel.get({ pdrName });
   t.is(typeof record.createdAt, 'number');
   t.is(record.createdAt, timestamp);
-  t.is(record.pdrName, pdrName);
 });
 
 test('handler correctly updates PDR record', async (t) => {
@@ -208,6 +195,8 @@ test('handler correctly updates PDR record', async (t) => {
     ]
   });
   const originalRecord = await pdrsModel.get({ pdrName });
+
+  t.is(originalRecord.progress, 0);
 
   const newExecution = randomString();
   cMetaParams.execution_name = newExecution;
@@ -236,7 +225,7 @@ test('handler correctly updates PDR record', async (t) => {
       total: 1
     },
     progress: 100,
-    status: 'completed',
+    status,
     duration: updatedRecord.duration,
     execution: updatedRecord.execution,
     updatedAt: updatedRecord.updatedAt,
@@ -245,55 +234,4 @@ test('handler correctly updates PDR record', async (t) => {
 
   t.deepEqual(expectedRecord, updatedRecord);
   t.true(updatedRecord.execution.includes(newExecution));
-});
-
-test('handler correctly creates multiple granule records from multi-granule message', async (t) => {
-  const event = createPdrSnsMessage(createPdrMessage(
-    { numberOfGranules: 3 }
-  ));
-  const granules = getSnsEventMessageObject(event).payload.granules;
-  const granuleIds = granules.map((g) => g.granuleId);
-  t.is(granuleIds.length, [...new Set(granuleIds)].length);
-  await handler({
-    Records: [
-      event
-    ]
-  });
-  await Promise.all(granules.map(async (g) => {
-    const record = await pdrsModel.get({ granuleId: g.granuleId });
-    t.deepEqual(g.files, record.files);
-    t.is(g.collectionId, record.collectionId);
-    t.is(g.status, record.status);
-    t.is(g.published, record.published);
-    t.is(g.cmrLink, record.cmrLink);
-    t.is(typeof record.createdAt, 'number');
-    t.is(record.createdAt, timestamp);
-  }));
-});
-
-test('handler correctly updates multiple granule records from multi-granule message', async (t) => {
-  const event = createPdrSnsMessage(createPdrMessage(
-    { numberOfGranules: 3 }
-  ));
-  const msgObj = getSnsEventMessageObject(event);
-  const granuleIds = msgObj.payload.granules.map((g) => g.granuleId);
-  t.is(granuleIds.length, [...new Set(granuleIds)].length);
-  await handler({
-    Records: [
-      event
-    ]
-  });
-  msgObj.payload.granules.forEach((g) => {
-    g.cmrLink = `http://newcmrlink.com/${g.granuleId}`;
-  });
-  event.Sns.Message = JSON.stringify(msgObj);
-  await handler({
-    Records: [
-      event
-    ]
-  });
-  await Promise.all(granuleIds.map(async (gid) => {
-    const record = await pdrsModel.get({ granuleId: gid });
-    t.is(record.cmrLink, `http://newcmrlink.com/${gid}`);
-  }));
 });
