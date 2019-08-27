@@ -15,6 +15,14 @@ const { discoverGranules } = require('..');
 
 const readFile = promisify(fs.readFile);
 
+const assertDiscoveredGranules = async (t, output) => {
+  await validateOutput(t, output);
+
+  t.is(output.granules.length, 3);
+  t.is(output.granules[0].files.length, 2);
+  t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].type));
+};
+
 test.beforeEach(async (t) => {
   const eventPath = path.join(__dirname, 'fixtures', 'mur.json');
   const rawEvent = await readFile(eventPath, 'utf8');
@@ -23,7 +31,7 @@ test.beforeEach(async (t) => {
 
 test('discover granules sets the correct dataType for granules', async (t) => {
   const { event } = t.context;
-  event.config.bucket = randomString();
+
   event.config.collection.provider_path = '/granules/fake_granules';
   event.config.provider = {
     id: 'MODAPS',
@@ -33,32 +41,25 @@ test('discover granules sets the correct dataType for granules', async (t) => {
   };
 
   await validateConfig(t, event.config);
-  await s3().createBucket({ Bucket: event.config.bucket }).promise();
 
   try {
     const output = await discoverGranules(event);
-    await validateOutput(t, output);
-
-    // Make sure that there really were granules returned
-    t.truthy(output.granules.length > 0);
+    await assertDiscoveredGranules(t, output);
 
     // Make sure we support datatype and collection name
     output.granules.forEach((granule) => {
       t.not(granule.dataType, event.config.collection.name);
     });
-  } catch (err) {
-    if (err.message === 'Connection Refused') {
+  } catch (e) {
+    if (e.message === 'Connection Refused') {
       t.pass('Ignoring this test. Remote host seems to be down.');
-    } else throw err;
-  } finally {
-    // Clean up
-    await recursivelyDeleteS3Bucket(event.config.bucket);
+    } else throw e;
   }
 });
 
 test('discover granules using FTP', async (t) => {
   const { event } = t.context;
-  event.config.bucket = randomString();
+
   event.config.collection.provider_path = '/granules/fake_granules';
   event.config.useList = true;
   event.config.provider = {
@@ -71,32 +72,18 @@ test('discover granules using FTP', async (t) => {
 
   await validateConfig(t, event.config);
 
-  await s3().createBucket({ Bucket: event.config.bucket }).promise();
-
   try {
-    const output = await discoverGranules(event);
-
-    await validateOutput(t, output);
-    t.is(output.granules.length, 3);
-    t.is(output.granules[0].files.length, 2);
-    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].type));
+    await assertDiscoveredGranules(t, await discoverGranules(event));
   } catch (e) {
     if (e.message.includes('getaddrinfo ENOTFOUND')) {
       t.pass('Ignoring this test. Test server seems to be down');
-    } else t.fail(e);
-  } finally {
-    // Clean up
-    await recursivelyDeleteS3Bucket(event.config.bucket);
+    } else throw e;
   }
 });
 
 test('discover granules using SFTP', async (t) => {
-  const internalBucketName = randomString();
-
-  // Create providerPathDirectory and internal bucket
-  await s3().createBucket({ Bucket: internalBucketName }).promise();
-
   const { event } = t.context;
+
   event.config.collection.provider_path = 'granules/fake_granules';
   event.config.provider = {
     id: 'MODAPS',
@@ -110,24 +97,17 @@ test('discover granules using SFTP', async (t) => {
   await validateConfig(t, event.config);
 
   try {
-    const output = await discoverGranules(event);
-    await validateOutput(t, output);
-    t.is(output.granules.length, 3);
-    t.is(output.granules[0].files.length, 2);
-    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].type));
-  } catch (err) {
-    if (err.code === 'ECONNREFUSED') {
+    await assertDiscoveredGranules(t, await discoverGranules(event));
+  } catch (e) {
+    if (e.code === 'ECONNREFUSED') {
       t.pass('Ignoring this test. Remote host seems to be down.');
-    } else throw err;
-  } finally {
-    // Clean up
-    await recursivelyDeleteS3Bucket(internalBucketName);
+    } else throw e;
   }
 });
 
 test('discover granules using HTTP', async (t) => {
   const { event } = t.context;
-  event.config.bucket = randomString();
+
   event.config.collection.provider_path = '/granules/fake_granules';
   event.config.provider = {
     id: 'MODAPS',
@@ -137,69 +117,66 @@ test('discover granules using HTTP', async (t) => {
   };
 
   await validateConfig(t, event.config);
-  await s3().createBucket({ Bucket: event.config.bucket }).promise();
 
   try {
-    const output = await discoverGranules(event);
-    await validateOutput(t, output);
-    t.is(output.granules.length, 3);
-    t.is(output.granules[0].files.length, 2);
-    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].type));
-  } catch (err) {
-    if (err.message === 'Connection Refused') {
+    await assertDiscoveredGranules(t, await discoverGranules(event));
+  } catch (e) {
+    if (e.message === 'Connection Refused') {
       t.pass('Ignoring this test. Remote host seems to be down.');
-    } else throw err;
-  } finally {
-    // Clean up
-    await recursivelyDeleteS3Bucket(event.config.bucket);
+    } else throw e;
   }
 });
 
-test('discover granules using S3', async (t) => {
-  const internalBucketName = randomString();
-  const sourceBucketName = randomString();
-  const providerPath = randomString();
-
-  // Create providerPathDirectory and internal bucket
-  await Promise.all([
-    s3().createBucket({ Bucket: internalBucketName }).promise(),
-    s3().createBucket({ Bucket: sourceBucketName }).promise()
-  ]);
-
+const discoverGranulesUsingS3 = (configure) => async (t) => {
+  const { event, event: { config } } = t.context;
   // State sample files
   const files = [
     'granule-1.nc', 'granule-1.nc.md5',
     'granule-2.nc', 'granule-2.nc.md5',
     'granule-3.nc', 'granule-3.nc.md5'
   ];
-  await Promise.all(files.map((file) =>
-    s3().putObject({
-      Bucket: sourceBucketName,
-      Key: `${providerPath}/${file}`,
-      Body: `This is ${file}`
-    }).promise()));
 
-  const { event } = t.context;
-  event.config.collection.provider_path = providerPath;
-  event.config.provider = {
-    id: 'MODAPS',
-    protocol: 's3',
-    host: sourceBucketName
-  };
+  config.sourceBucketName = randomString();
+  config.collection.provider_path = randomString();
 
-  await validateConfig(t, event.config);
+  configure(config);
+
+  await validateConfig(t, config);
+  await s3().createBucket({ Bucket: config.sourceBucketName }).promise();
 
   try {
-    const output = await discoverGranules(event);
-    await validateOutput(t, output);
-    t.is(output.granules.length, 3);
-    t.is(output.granules[0].files.length, 2);
-    t.truthy(['data', 'metadata'].includes(output.granules[0].files[0].type));
+    await Promise.all(files.map((file) =>
+      s3().putObject({
+        Bucket: config.sourceBucketName,
+        Key: `${config.collection.provider_path}/${file}`,
+        Body: `This is ${file}`
+      }).promise()));
+    await assertDiscoveredGranules(t, await discoverGranules(event));
   } finally {
     // Clean up
-    await Promise.all([
-      recursivelyDeleteS3Bucket(internalBucketName),
-      recursivelyDeleteS3Bucket(sourceBucketName)
-    ]);
+    await recursivelyDeleteS3Bucket(config.sourceBucketName);
   }
-});
+};
+
+test('discover granules using S3',
+  discoverGranulesUsingS3((config) => {
+    config.provider = {
+      id: 'MODAPS',
+      protocol: 's3',
+      host: config.sourceBucketName
+    };
+  }));
+
+test('discover granules using S3 throws error when discovery fails',
+  async (t) => {
+    const assert = discoverGranulesUsingS3((config) => {
+      config.provider = {
+        id: 'MODAPS',
+        protocol: 's3',
+        // Ignore config.sourceBucketName and use random bucket name to force
+        // NoSuchBucket error.
+        host: randomString()
+      };
+    });
+    await t.throwsAsync(() => assert(t), { code: 'NoSuchBucket' });
+  });
