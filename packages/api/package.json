@@ -89,7 +89,6 @@
     "lodash.isfunction": "^3.0.9",
     "lodash.isinteger": "^4.0.4",
     "lodash.isnil": "^4.0.0",
-    "lodash.isnumber": "^3.0.3",
     "lodash.isobject": "^3.0.2",
     "lodash.isstring": "^4.0.1",
     "lodash.keyby": "^4.6.0",
