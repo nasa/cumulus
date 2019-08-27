@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- **CUMULUS-1432** `logs` endpoint takes the level parameter as a string and not a number
+
 ### Fixed
+
+- **CUMULUS-1432** `logs` endpoint filter correctly filters logs by level
 
 - **CUMULUS-1211**
   - Errors thrown during granule discovery are no longer swallowed and ignored.
