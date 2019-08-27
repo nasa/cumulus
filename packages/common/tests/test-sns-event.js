@@ -1,9 +1,9 @@
 'use strict';
 
 const test = require('ava');
-const { isSnsEvent } = require('../sns-event');
+const { getSnsEventMessageObject, isSnsEvent } = require('../sns-event');
 
-test('isSnsEvent returns false for non-SNS events', async (t) => {
+test('isSnsEvent returns false for non-SNS events', (t) => {
   t.false(isSnsEvent({}));
 
   t.false(isSnsEvent({
@@ -30,4 +30,36 @@ test('isSnsEvent returns false for non-SNS events', async (t) => {
       })
     }
   }));
+});
+
+test('getSnsEventMessageObject() returns default object', (t) => {
+  const returnedObject = getSnsEventMessageObject({});
+  t.deepEqual(returnedObject, {});
+});
+
+test('getSnsEventMessageObject() returns correct object', (t) => {
+  const messageObject = {
+    foo: 'bar',
+    nested: {
+      key: 'value'
+    }
+  };
+
+  const returnedObject = getSnsEventMessageObject({
+    Sns: {
+      Message: JSON.stringify(messageObject)
+    }
+  });
+
+  t.deepEqual(returnedObject, messageObject);
+});
+
+test('getSnsEventMessageObject() returns null for non-JSON string message', (t) => {
+  const returnedObject = getSnsEventMessageObject({
+    Sns: {
+      Message: 'message'
+    }
+  });
+
+  t.is(returnedObject, null);
 });
