@@ -26,9 +26,9 @@ if ! curl -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.
   echo "ERROR: coudn't download terraform script" >&2
   exit 1
 else
-  unzip -u terraform_${TF_VERSION}_linux_amd64.zip
-  chmod a+x terraform
-  rm terraform_${TF_VERSION}_linux_amd64.zip
+  unzip -u ./terraform_${TF_VERSION}_linux_amd64.zip
+  chmod a+x ./terraform
+  rm ./terraform_${TF_VERSION}_linux_amd64.zip
 fi
 
 # Wait for the stack to be available
