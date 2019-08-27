@@ -113,7 +113,7 @@ data "aws_iam_policy_document" "lambda_processing_policy" {
       "dynamodb:UpdateContinuousBackups",
       "dynamodb:DescribeContinuousBackups",
     ]
-    resources = ["arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.prefix}-*"]
+    resources = [for k, v in var.dynamo_tables : v.arn]
   }
 
   statement {
@@ -123,7 +123,8 @@ data "aws_iam_policy_document" "lambda_processing_policy" {
       "dynamodb:DescribeStream",
       "dynamodb:ListStreams",
     ]
-    resources = ["arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.prefix}-*/stream/*"]
+    resources = [for k, v in var.dynamo_tables : "${v.arn}/stream/*"]
+
   }
 
   statement {
