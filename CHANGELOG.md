@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- **CUMULUS-1211**
+  - Errors thrown during granule discovery are no longer swallowed and ignored.
+    Rather, errors are propagated to allow for proper error-handling and
+    meaningful messaging.
+
+## [v1.14.0] - 2019-08-22
+
 ### PLEASE NOTE
 
 - We have encountered transient lambda service errors in our integration testing. Please handle transient service errors following [these guidelines](https://docs.aws.amazon.com/step-functions/latest/dg/bp-lambda-serviceexception.html). The workflows in the `example/workflows` folder have been updated with retries configured for these errors.
@@ -1327,7 +1336,8 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.13.4...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.14.0...HEAD
+[v1.14.0]: https://github.com/nasa/cumulus/compare/v1.13.4...v1.14.0
 [v1.13.4]: https://github.com/nasa/cumulus/compare/v1.13.3...v1.13.4
 [v1.13.3]: https://github.com/nasa/cumulus/compare/v1.13.2...v1.13.3
 [v1.13.2]: https://github.com/nasa/cumulus/compare/v1.13.1...v1.13.2
