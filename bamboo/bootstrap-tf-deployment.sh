@@ -1,0 +1,73 @@
+#!/bin/bash
+set -ex
+. ./bamboo/abort-if-not-pr-or-redeployment.sh
+. ./bamboo/abort-if-skip-integration-tests.sh
+. ./bamboo/abort-if-not-terraform.sh
+
+npm config set unsafe-perm true
+npm install
+. ./bamboo/set-bamboo-env-variables.sh
+
+if [[ $USE_NPM_PACKAGES == true ]]; then
+  echo "***Deploying stack with NPM packages"
+  (cd example && npm install)
+else
+  echo "***Deploying stack with built packages"
+  npm run bootstrap
+fi
+
+echo "Locking stack for deployment $DEPLOYMENT"
+
+cd example
+set +e
+
+# Wait for the stack to be available
+node ./scripts/lock-stack.js true $DEPLOYMENT
+LOCK_EXISTS_STATUS=$?
+echo "Locking status $LOCK_EXISTS_STATUS"
+
+COUNTER=0
+while [[ $LOCK_EXISTS_STATUS == 100 ]]; do
+  if [[ $COUNTER -gt $TIMEOUT_PERIODS ]]; then
+    echo "Timed out waiting for stack to become available"
+    exit 1
+  fi
+  echo "Another build is using the ${DEPLOYMENT} stack."
+  sleep 30
+  ((COUNTER++))
+  node ./scripts/lock-stack.js true $DEPLOYMENT
+  LOCK_EXISTS_STATUS=$?
+done
+if [[ $LOCK_EXIST_STATUS -gt 0 ]]; then
+  exit 1
+fi
+set -e
+
+# Ensure remote state is configured for the deployment
+echo "terraform {
+  backend \"s3\" {
+    bucket = \"$TFSTATE_BUCKET\"
+    key    = \"$DEPLOYMENT/tfstate\"
+    region = \"$AWS_REGION\"
+  }
+}" >> backend.tf
+
+# Initialize deployment
+terraform init \
+  -input=false
+
+# Deploy example via terraform
+echo "Deploying Cumulus example to $DEPLOYMENT"
+terraform apply \
+  -input=false \
+  -var-file="./deployments/sandbox.tfvars" \
+  -var-file="./deployments/$DEPLOYMENT.tfvars" \
+  -var "region=$AWS_REGION" \
+  -var "vpc_id=$VPC_ID" \
+  -var "subnet_ids="$AWS_SUBNET \
+  -var "urs_client_id=$EARTHDATA_CLIENT_ID" \
+  -var "urs_client_password=$EARTHDATA_CLIENT_PASSWORD" \
+  -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/NGAPShNonProdRoleBoundary"
+
+# Test that deployment succeded by returning exit code.
+exit $?
