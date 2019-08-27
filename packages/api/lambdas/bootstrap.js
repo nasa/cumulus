@@ -272,7 +272,7 @@ function handler(event, context, cb) {
   const users = get(event, 'ResourceProperties.Users');
   const cmr = get(event, 'ResourceProperties.Cmr');
   const launchpad = get(event, 'ResourceProperties.Launchpad');
-  const dynamos = get(event, 'ResourceProperties.DynamoDBTables');
+  const dynamos = get(event, 'ResourceProperties.DynamoDBTables', []);
   const requestType = get(event, 'RequestType');
 
   if (requestType === 'Delete') {

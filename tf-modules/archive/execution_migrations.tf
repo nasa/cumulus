@@ -76,7 +76,7 @@ data "aws_iam_policy_document" "migration_processing_policy" {
 
   statement {
     actions   = ["s3:PutBucketPolicy"]
-    resources = ["arn:aws:s3:::${var.prefix}-*"]
+    resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}"]
   }
 
   statement {
