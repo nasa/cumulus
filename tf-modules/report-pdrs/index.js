@@ -36,7 +36,7 @@ function getReportPdrMessages(event) {
  * Lambda handler for report-pdrs Lambda.
  *
  * @param {Object} event - SNS Notification Event
- * @returns {Promise<Array>} granule records
+ * @returns {Promise<Array>} PDR records
  */
 async function handler(event) {
   const messages = getReportPdrMessages(event);

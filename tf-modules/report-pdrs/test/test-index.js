@@ -1,45 +1,33 @@
 'use strict';
 
 const test = require('ava');
-const sinon = require('sinon');
 
-const Granule = require('@cumulus/api/models/granules');
-const StepFunctions = require('@cumulus/common/StepFunctions');
-const { fakeGranuleFactoryV2, fakeFileFactory } = require('@cumulus/api/lib/testUtils');
+const Pdr = require('@cumulus/api/models/pdrs');
+const { fakePdrFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
 const { randomId, randomString, randomNumber } = require('@cumulus/common/test-utils');
 const { getSnsEventMessageObject } = require('@cumulus/common/sns-event');
 const { handler, getReportGranuleMessages } = require('..');
 
-
-const startDate = new Date(Date.UTC(2019, 8, 1));
-const stopDate = new Date(Date.UTC(2019, 8, 1, 1));
-let stepFunctionsStub;
 let executionName;
-let granuleModel;
+let pdrsModel;
 let timestamp;
-const granuleTable = randomString();
 
-
-const createFakeGranule = (granuleParams = {}, fileParams = {}) => fakeGranuleFactoryV2({
-  files: [
-    fakeFileFactory(fileParams),
-    fakeFileFactory(fileParams),
-    fakeFileFactory(fileParams)
-  ],
-  ...granuleParams
-});
-
-const createGranuleMessage = ({
-  numberOfGranules = 1,
+const createPdrMessage = ({
   cMetaParams = {},
   collectionId = `${randomId('MOD')}___${randomNumber()}`,
-  granuleParams = {},
-  fileParams = {}
+  completedExecutions = [],
+  counter = 10,
+  failedExecutions = [],
+  isFinished = false,
+  limit = 30,
+  pdrParams,
+  runningExecutions = [],
+  status
 } = {}) => ({
   cumulus_meta: {
     execution_name: executionName,
-    state_machine: randomId('ingest-'),
+    state_machine: randomId('ingestPdr-'),
     workflow_start_time: timestamp,
     ...cMetaParams
   },
@@ -50,16 +38,21 @@ const createGranuleMessage = ({
       protocol: 'http',
       host: 'example.com',
       port: 443
-    }
+    },
+    status
   },
   payload: {
-    granules: [
-      ...new Array(numberOfGranules)
-    ].map(createFakeGranule.bind(null, { collectionId, ...granuleParams }, fileParams))
+    isFinished,
+    completed: completedExecutions,
+    counter,
+    pdr: fakePdrFactoryV2(pdrParams),
+    failed: failedExecutions,
+    running: runningExecutions,
+    limit
   }
 });
 
-const createGranuleSnsMessage = (messageObject) => ({
+const createPdrSnsMessage = (messageObject) => ({
   EventSource: 'aws:sns',
   Sns: {
     Message: JSON.stringify(messageObject)
@@ -68,23 +61,15 @@ const createGranuleSnsMessage = (messageObject) => ({
 
 test.before(async () => {
   timestamp = Date.now() - randomNumber(10000000);
-  process.env.GranulesTable = granuleTable;
-  granuleModel = new Granule();
-  await granuleModel.createTable();
-
+  process.env.PdrsTable = randomString();
+  pdrsModel = new Pdr();
+  await pdrsModel.createTable();
   executionName = randomString();
-  stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').returns({
-    input: {},
-    startDate,
-    stopDate
-  });
 });
 
 test.after.always(async () => {
   timestamp = undefined;
-  await granuleModel.deleteTable();
-
-  stepFunctionsStub.restore();
+  await pdrsModel.deleteTable();
 });
 
 test('getReportGranuleMessages returns no messages for non-SNS events', (t) => {
@@ -147,7 +132,7 @@ test('getReportExecutionMessages returns correct number of messages', (t) => {
 
   messages = getReportGranuleMessages({
     Records: [
-      createGranuleSnsMessage(createGranuleMessage({ numberOfGranules: 4 }))
+      createPdrSnsMessage(createPdrMessage({ numberOfGranules: 4 }))
     ]
   });
   t.is(messages.length, 1);
@@ -155,9 +140,9 @@ test('getReportExecutionMessages returns correct number of messages', (t) => {
 
   messages = getReportGranuleMessages({
     Records: [
-      createGranuleSnsMessage(createGranuleMessage()),
-      createGranuleSnsMessage(createGranuleMessage()),
-      createGranuleSnsMessage(createGranuleMessage())
+      createPdrSnsMessage(createPdrMessage()),
+      createPdrSnsMessage(createPdrMessage()),
+      createPdrSnsMessage(createPdrMessage())
     ]
   });
   t.is(messages.length, 3);
@@ -182,70 +167,80 @@ test('handler correctly ignores non-granule message', async (t) => {
   t.deepEqual(response, []);
 });
 
-test('handler correctly creates granule record', async (t) => {
-  const granuleId = randomString();
-  const granuleParams = {
-    granuleId
+test('handler correctly creates PDR record', async (t) => {
+  const pdrName = randomString();
+  const pdrParams = {
+    name: pdrName
   };
+  const status = 'running';
 
   await handler({
     Records: [
-      createGranuleSnsMessage(createGranuleMessage(
-        { granuleParams }
-      ))
+      createPdrSnsMessage(createPdrMessage({
+        pdrParams,
+        status
+      }))
     ]
   });
 
-  const record = await granuleModel.get({ granuleId });
+  const record = await pdrsModel.get({ pdrName });
   t.is(typeof record.createdAt, 'number');
   t.is(record.createdAt, timestamp);
+  t.is(record.pdrName, pdrName);
 });
 
-test('handler correctly updates granule record', async (t) => {
-  const granuleId = randomString();
+test('handler correctly updates PDR record', async (t) => {
+  const pdrName = randomString();
+  const pdrParams = {
+    name: pdrName
+  };
   const cMetaParams = {
-    execution_name: randomString()
+    execution_name: randomString
   };
-  const granuleParams = {
-    granuleId
-  };
+  let status = 'running';
 
   await handler({
     Records: [
-      createGranuleSnsMessage(createGranuleMessage(
-        { cMetaParams, granuleParams }
-      ))
+      createPdrSnsMessage(createPdrMessage({
+        pdrParams,
+        status
+      }))
     ]
   });
-  const originalRecord = await granuleModel.get({ granuleId });
+  const originalRecord = await pdrsModel.get({ pdrName });
 
   const newExecution = randomString();
   cMetaParams.execution_name = newExecution;
-  const updatedGranuleParams = {
-    ...originalRecord,
-    cmrLink: 'http://newcmrlink.com/12345'
-  };
+  status = 'completed';
 
   await handler({
     Records: [
-      createGranuleSnsMessage(createGranuleMessage(
-        {
-          collectionId: originalRecord.collectionId,
-          cMetaParams,
-          granuleParams: updatedGranuleParams
-        }
-      ))
+      createPdrSnsMessage(createPdrMessage({
+        collectionId: originalRecord.collectionId,
+        pdrParams,
+        cMetaParams,
+        status,
+        completedExecutions: [
+          randomId('execution')
+        ]
+      }))
     ]
   });
-  const updatedRecord = await granuleModel.get({ granuleId });
+  const updatedRecord = await pdrsModel.get({ pdrName });
 
   const expectedRecord = {
     ...originalRecord,
+    stats: {
+      ...originalRecord.stats,
+      completed: 1,
+      total: 1
+    },
+    progress: 100,
+    status: 'completed',
+    duration: updatedRecord.duration,
     execution: updatedRecord.execution,
     updatedAt: updatedRecord.updatedAt,
-    timestamp: updatedRecord.timestamp,
-    duration: updatedRecord.duration,
-    cmrLink: updatedGranuleParams.cmrLink
+    timestamp: updatedRecord.timestamp
   };
 
   t.deepEqual(expectedRecord, updatedRecord);
@@ -253,7 +248,7 @@ test('handler correctly updates granule record', async (t) => {
 });
 
 test('handler correctly creates multiple granule records from multi-granule message', async (t) => {
-  const event = createGranuleSnsMessage(createGranuleMessage(
+  const event = createPdrSnsMessage(createPdrMessage(
     { numberOfGranules: 3 }
   ));
   const granules = getSnsEventMessageObject(event).payload.granules;
@@ -265,7 +260,7 @@ test('handler correctly creates multiple granule records from multi-granule mess
     ]
   });
   await Promise.all(granules.map(async (g) => {
-    const record = await granuleModel.get({ granuleId: g.granuleId });
+    const record = await pdrsModel.get({ granuleId: g.granuleId });
     t.deepEqual(g.files, record.files);
     t.is(g.collectionId, record.collectionId);
     t.is(g.status, record.status);
@@ -277,7 +272,7 @@ test('handler correctly creates multiple granule records from multi-granule mess
 });
 
 test('handler correctly updates multiple granule records from multi-granule message', async (t) => {
-  const event = createGranuleSnsMessage(createGranuleMessage(
+  const event = createPdrSnsMessage(createPdrMessage(
     { numberOfGranules: 3 }
   ));
   const msgObj = getSnsEventMessageObject(event);
@@ -298,7 +293,7 @@ test('handler correctly updates multiple granule records from multi-granule mess
     ]
   });
   await Promise.all(granuleIds.map(async (gid) => {
-    const record = await granuleModel.get({ granuleId: gid });
+    const record = await pdrsModel.get({ granuleId: gid });
     t.is(record.cmrLink, `http://newcmrlink.com/${gid}`);
   }));
 });
