@@ -16,8 +16,7 @@ const Pdr = require('@cumulus/api/models/pdrs');
  */
 async function handlePdrMessage(message) {
   const pdrModel = new Pdr();
-  const test = await pdrModel.createPdrFromSns(message);
-  return test;
+  return pdrModel.createPdrFromSns(message);
 }
 
 /**

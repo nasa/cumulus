@@ -87,45 +87,6 @@ test.after.always(async () => {
   stepFunctionsStub.restore();
 });
 
-test('getReportGranuleMessages returns no messages for non-SNS events', (t) => {
-  let messages = getReportGranuleMessages({});
-  t.is(messages.length, 0);
-
-  messages = getReportGranuleMessages({
-    Records: [{
-      Sns: {}
-    }]
-  });
-  t.is(messages.length, 0);
-
-  messages = getReportGranuleMessages({
-    Records: [{
-      EventSource: 'aws:cloudwatch',
-      CloudWatch: {
-        Message: 'message'
-      }
-    }]
-  });
-  t.is(messages.length, 0);
-
-  messages = getReportGranuleMessages({
-    Records: [{
-      EventSource: 'aws:states',
-      States: {
-        Message: JSON.stringify({
-          cumulus_meta: {
-            execution_name: 'exec123',
-            state_machine: 'workflow123'
-          },
-          meta: {},
-          payload: {}
-        })
-      }
-    }]
-  });
-  t.is(messages.length, 0);
-});
-
 test('getReportGranuleMessages returns correct number of messages', (t) => {
   let messages = getReportGranuleMessages({
     Records: [{

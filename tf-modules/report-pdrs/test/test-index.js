@@ -71,45 +71,6 @@ test.after.always(async () => {
   await pdrsModel.deleteTable();
 });
 
-test('getReportPdrMessages returns no messages for non-SNS events', (t) => {
-  let messages = getReportPdrMessages({});
-  t.is(messages.length, 0);
-
-  messages = getReportPdrMessages({
-    Records: [{
-      Sns: {}
-    }]
-  });
-  t.is(messages.length, 0);
-
-  messages = getReportPdrMessages({
-    Records: [{
-      EventSource: 'aws:cloudwatch',
-      CloudWatch: {
-        Message: 'message'
-      }
-    }]
-  });
-  t.is(messages.length, 0);
-
-  messages = getReportPdrMessages({
-    Records: [{
-      EventSource: 'aws:states',
-      States: {
-        Message: JSON.stringify({
-          cumulus_meta: {
-            execution_name: 'exec123',
-            state_machine: 'workflow123'
-          },
-          meta: {},
-          payload: {}
-        })
-      }
-    }]
-  });
-  t.is(messages.length, 0);
-});
-
 test('getReportPdrMessages returns correct number of messages', (t) => {
   let messages = getReportPdrMessages({
     Records: [{
