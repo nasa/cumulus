@@ -115,32 +115,26 @@ class Discover {
    * @returns {Array<Object>} a list of discovered granules
    */
   async discover() {
-    let discoveredFiles = [];
-    try {
-      discoveredFiles = (await this.list())
-        // Make sure the file matches the granuleIdExtraction
-        .filter((file) => file.name.match(this.collection.granuleIdExtraction))
-        // Make sure there is a config for this type of file
-        .filter((file) => this.fileTypeConfigForFile(file))
-        // Add additional granule-related properties to the file
-        .map((file) => this.setGranuleInfo(file));
-    } catch (error) {
-      log.error('discover exception', error);
-    }
+    const discoveredFiles = (await this.list())
+      // Make sure the file matches the granuleIdExtraction
+      .filter((file) => file.name.match(this.collection.granuleIdExtraction))
+      // Make sure there is a config for this type of file
+      .filter((file) => this.fileTypeConfigForFile(file))
+      // Add additional granule-related properties to the file
+      .map((file) => this.setGranuleInfo(file));
 
     // Group the files by granuleId
     const filesByGranuleId = groupBy(discoveredFiles, (file) => file.granuleId);
+    const { dataType, version } = this.collection;
 
     // Build and return the granules
-    const granuleIds = Object.keys(filesByGranuleId);
-    return granuleIds
-      .map((granuleId) => ({
-        granuleId,
-        dataType: this.collection.dataType,
-        version: this.collection.version,
-        // Remove the granuleId property from each file
-        files: filesByGranuleId[granuleId].map((file) => omit(file, 'granuleId'))
-      }));
+    return Object.entries(filesByGranuleId).map(([granuleId, files]) => ({
+      granuleId,
+      dataType,
+      version,
+      // Remove the granuleId property from each file
+      files: files.map((file) => omit(file, 'granuleId'))
+    }));
   }
 }
 
