@@ -75,7 +75,7 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var-file="./deployments/$DEPLOYMENT.tfvars" \
   -var "region=$AWS_REGION" \
   -var "vpc_id=$VPC_ID" \
-  -var "subnet_ids=[$AWS_SUBNET]" \
+  -var "subnet_ids=[\"$AWS_SUBNET\"]" \
   -var "urs_client_id=$EARTHDATA_CLIENT_ID" \
   -var "urs_client_password=$EARTHDATA_CLIENT_PASSWORD" \
   -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/NGAPShNonProdRoleBoundary"
