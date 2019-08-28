@@ -21,4 +21,6 @@ scripts/test_output/
 /terraform.tfvars
 /terraform.tf
 /.terraform/
+*.tfplan
+*.tfstate*
 test-output
