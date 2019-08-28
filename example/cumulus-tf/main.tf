@@ -1,0 +1,70 @@
+provider "aws" {
+  region  = var.region
+  profile = var.aws_profile
+}
+
+data "terraform_remote_state" "data_persistence" {
+  backend = "s3"
+  config  = var.data_persistence_remote_state_config
+}
+
+module "cumulus" {
+  source = "../../tf-modules/cumulus"
+
+  prefix = var.prefix
+
+  vpc_id            = var.vpc_id
+  lambda_subnet_ids = var.subnet_ids
+
+  ecs_cluster_instance_subnet_ids = var.subnet_ids
+  ecs_cluster_min_size            = 1
+  ecs_cluster_desired_size        = 1
+  ecs_cluster_max_size            = 2
+
+  urs_url             = "https://uat.urs.earthdata.nasa.gov"
+  urs_client_id       = var.urs_client_id
+  urs_client_password = var.urs_client_password
+
+  cmr_client_id   = var.cmr_client_id
+  cmr_environment = "UAT"
+  cmr_username    = var.cmr_username
+  cmr_password    = var.cmr_password
+  cmr_provider    = var.cmr_provider
+
+  permissions_boundary_arn = var.permissions_boundary_arn
+
+  system_bucket     = var.system_bucket
+  public_buckets    = var.public_buckets
+  protected_buckets = var.protected_buckets
+  private_buckets   = var.private_buckets
+
+  elasticsearch_domain_arn        = data.terraform_remote_state.data_persistence.outputs.elasticsearch_domain_arn
+  elasticsearch_hostname          = data.terraform_remote_state.data_persistence.outputs.elasticsearch_hostname
+  elasticsearch_security_group_id = data.terraform_remote_state.data_persistence.outputs.elasticsearch_security_group_id
+
+  dynamo_tables = data.terraform_remote_state.data_persistence.outputs.dynamo_tables
+
+  archive_api_port = 8000
+
+  token_secret = var.token_secret
+
+  archive_api_users = [
+    "jennyhliu",
+    "jmcampbell",
+    "jnorton1",
+    "kbaynes",
+    "kkelly",
+    "kovarik",
+    "lfrederick",
+    "matthewsavoie",
+    "mboyd",
+    "menno.vandiermen",
+    "mhuffnagle2",
+    "pquinn1"
+  ]
+
+  # TODO This should be coming from the ingest module
+  kinesis_inbound_event_logger = "${var.prefix}-KinesisInboundEventLogger"
+
+  distribution_url = var.distribution_url
+}
