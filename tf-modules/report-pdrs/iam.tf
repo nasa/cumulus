@@ -49,12 +49,6 @@ data "aws_iam_policy_document" "report_pdrs_policy_document" {
     ]
     resources = ["*"]
   }
-  statement {
-    actions = [
-      "states:DescribeExecution"
-    ]
-    resources = ["*"]
-  }
 }
 
 resource "aws_iam_role_policy" "report_pdrs_lambda_role_policy" {
