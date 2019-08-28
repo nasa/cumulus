@@ -22,12 +22,13 @@ const createPdrMessage = ({
   collectionId = `${randomId('MOD')}___${randomNumber()}`,
   numCompletedExecutions = 0,
   numFailedExecutions = 0,
-  numRunningExecutions = 0
+  numRunningExecutions = 0,
+  timestamp = Date.now()
 } = {}) => ({
   cumulus_meta: {
     state_machine: randomId('pdr'),
     execution_name: randomId('execution'),
-    workflow_start_time: Date.now()
+    workflow_start_time: timestamp
   },
   meta: {
     collection: deconstructCollectionId(collectionId),
@@ -72,7 +73,10 @@ test('createPdrFromSns() throws error when meta.collection is missing', async (t
 
 test('createPdrFromSns() creates a PDR record when payload.pdr is set', async (t) => {
   const pdrName = randomId('pdr');
-  const message = createPdrMessage();
+  const timestamp = Date.now() - 1000;
+  const message = createPdrMessage({
+    timestamp
+  });
 
   message.payload.pdr = {
     name: pdrName
@@ -80,12 +84,16 @@ test('createPdrFromSns() creates a PDR record when payload.pdr is set', async (t
 
   await pdrsModel.createPdrFromSns(message);
 
-  t.true(await pdrsModel.exists({ pdrName }));
+  const record = await pdrsModel.get({ pdrName });
+  t.is(record.createdAt, timestamp);
 });
 
 test('createPdrFromSns() creates a PDR record when meta.pdr is set', async (t) => {
   const pdrName = randomId('pdr');
-  const message = createPdrMessage();
+  const timestamp = Date.now() - 1000;
+  const message = createPdrMessage({
+    timestamp
+  });
 
   message.meta.pdr = {
     name: pdrName
@@ -93,7 +101,8 @@ test('createPdrFromSns() creates a PDR record when meta.pdr is set', async (t) =
 
   await pdrsModel.createPdrFromSns(message);
 
-  t.true(await pdrsModel.exists({ pdrName }));
+  const record = await pdrsModel.get({ pdrName });
+  t.is(record.createdAt, timestamp);
 });
 
 test('createPdrFromSns() sets correct progress value for running PDR', async (t) => {
@@ -152,4 +161,22 @@ test('createPdrFromSns() sets correct progress value for completed PDR', async (
   t.is(record.stats.completed, 1);
   t.is(record.stats.total, 1);
   t.is(record.progress, 100);
+});
+
+test('createPdrFromSns() sets PDR properties when included', async (t) => {
+  const pdrName = randomId('pdr');
+  const message = createPdrMessage();
+  const PANmessage = 'test message';
+
+  message.payload.pdr = {
+    name: pdrName,
+    PANSent: true,
+    PANmessage
+  };
+
+  await pdrsModel.createPdrFromSns(message);
+
+  const record = await pdrsModel.get({ pdrName });
+  t.true(record.PANSent);
+  t.is(record.PANmessage, PANmessage);
 });
