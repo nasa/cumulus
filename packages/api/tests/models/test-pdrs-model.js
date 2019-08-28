@@ -60,10 +60,8 @@ test('createPdrFromSns() throws error when meta.collection is missing', async (t
   const message = createPdrMessage();
 
   delete message.meta.collection;
-  message.payload = {
-    pdr: {
-      name: randomId('pdr')
-    }
+  message.payload.pdr = {
+    name: randomId('pdr')
   };
 
   await t.throws(
@@ -111,6 +109,8 @@ test('createPdrFromSns() sets correct progress value for running PDR', async (t)
   await pdrsModel.createPdrFromSns(message);
 
   const record = await pdrsModel.get({ pdrName });
+  t.is(record.stats.processing, 3);
+  t.is(record.stats.total, 3);
   t.is(record.progress, 0);
 });
 
@@ -129,6 +129,10 @@ test('createPdrFromSns() sets correct progress value for partially complete PDR'
   await pdrsModel.createPdrFromSns(message);
 
   const record = await pdrsModel.get({ pdrName });
+  t.is(record.stats.processing, 3);
+  t.is(record.stats.failed, 2);
+  t.is(record.stats.completed, 1);
+  t.is(record.stats.total, 6);
   t.is(record.progress, 50);
 });
 
@@ -145,5 +149,7 @@ test('createPdrFromSns() sets correct progress value for completed PDR', async (
   await pdrsModel.createPdrFromSns(message);
 
   const record = await pdrsModel.get({ pdrName });
+  t.is(record.stats.completed, 1);
+  t.is(record.stats.total, 1);
   t.is(record.progress, 100);
 });
