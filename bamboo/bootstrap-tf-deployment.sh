@@ -57,10 +57,10 @@ set -e
 echo "terraform {
   backend \"s3\" {
     bucket = \"$TFSTATE_BUCKET\"
-    key    = \"$DEPLOYMENT/tfstate\"
+    key    = \"$DEPLOYMENT/terraform.tfstate\"
     region = \"$AWS_REGION\"
   }
-}" >> backend.tf
+}" >> ci_backend.tf
 
 # Initialize deployment
 ./terraform init \
