@@ -38,7 +38,7 @@ describe('The AsyncOperation task runner', () => {
     // Find the ARN of the AsyncOperationTaskDefinition
     const { taskDefinitionArns } = await ecs().listTaskDefinitions().promise();
     asyncOperationTaskDefinition = taskDefinitionArns.find(
-      (arn) => arn.includes(`${config.stackName}-AsyncOperationTaskDefinition-`)
+      (arn) => arn.includes(`${config.stackName}-AsyncOperationTaskDefinition`)
     );
   });
 
