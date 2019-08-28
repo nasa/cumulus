@@ -272,7 +272,7 @@ function handler(event, context, cb) {
   const users = get(event, 'ResourceProperties.Users');
   const cmr = get(event, 'ResourceProperties.Cmr');
   const launchpad = get(event, 'ResourceProperties.Launchpad');
-  const dynamos = get(event, 'ResourceProperties.DynamoDBTables');
+  const dynamos = get(event, 'ResourceProperties.DynamoDBTables', []);
   const requestType = get(event, 'RequestType');
 
   if (requestType === 'Delete') {
@@ -294,12 +294,21 @@ function handler(event, context, cb) {
         LaunchpadPassphrase: results[3]
       };
 
-      return sendResponse(event, 'SUCCESS', data);
+      // if invoked by Cloudformation ...
+      if (event.ResponseURL) return sendResponse(event, 'SUCCESS', data);
+
+      // if invoked by Terraform ...
+      return { Status: 'SUCCESS', Data: data };
     })
     .then((r) => cb(null, r))
     .catch((e) => {
       log.error(e);
-      return sendResponse(event, 'FAILED', null);
+
+      // if invoked by Cloudformation ...
+      if (event.ResponseURL) return sendResponse(event, 'FAILED', null);
+
+      // if invoked by Terraform ...
+      return { Status: 'FAILED', Error: e };
     })
     .then((r) => cb(null, r));
 }
