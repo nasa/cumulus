@@ -1,0 +1,10 @@
+# Required
+prefix                     = "myprefix"
+execution_sns_topic_arn    = "arn:aws:sns::1234567890:executionsTopicName"
+granule_sns_topic_arn      = "arn:aws:sns::1234567890:granulesTopicName"
+pdr_sns_topic_arn          = "arn:aws:sns::1234567890:pdrTopicName"
+
+# Optional
+permissions_boundary = "arn:aws:iam::1234567890:policy/YourRoleBoundary"
+subnet_ids           = ["subnet-123456"]
+security_groups      = ["sg-123456"]
