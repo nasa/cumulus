@@ -11,27 +11,29 @@
 <li>Also read Github's documentation on how to work with forks <a href="https://help.github.com/articles/working-with-forks/">here</a>.</li>
 <li>Be sure to <a href="https://help.github.com/articles/closing-issues-using-keywords/">mention the corresponding issue number</a> in the PR description, i.e. &quot;Fixes Issue #10&quot;</li>
 </ul>
+<h2><a class="anchor" aria-hidden="true" id="run-builds"></a><a href="#run-builds" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Run Builds</h2>
+<p>When a new Pull Request from a forked repository is created, we will run the tests in the circleci environment.</p>
+<p>You PRs tests must pass on circleci before we can review it.</p>
+<p>Look for the green check mark in the PR.</p>
+<p><img src="https://user-images.githubusercontent.com/1933118/46869548-80d31480-ce2c-11e8-81fc-10096e701189.png" alt="screenshot 2018-10-12 13 22 48"></p>
 <h2><a class="anchor" aria-hidden="true" id="reviewing-prs-from-forked-repos"></a><a href="#reviewing-prs-from-forked-repos" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Reviewing PRs from Forked Repos</h2>
-<p>Upon submission of a pull request, the Cumulus development team will review the code.</p>
-<p>Once the code passes an initial review, the team will run the CI tests against the proposed update.</p>
-<p>The request will then either be merged, declined, or an adjustment to the code will be requested via the issue opened with the original PR request.</p>
+<p>Upon submission of a pull request, the Cumulus development team will review the code</p>
+<p>The request will then either be merged, declined, or an adjustment to the code will be requested</p>
 <p>PRs from forked repos cannot directly merged to master. Cumulus reviews must follow the following steps before completing the review process:</p>
 <ol>
-<li>Create a new branch:</li>
-</ol>
-<pre><code class="hljs css language-bash">  $ git checkout -b from-&lt;name-of-the-branch&gt; master
-</code></pre>
-<ol start="2">
-<li><p>Push the new branch to GitHub</p></li>
+<li><p>Create a new branch:</p>
+<p>$ git checkout -b from-from-&lt;name-of-the-branch&gt; master</p></li>
+<li><p>Pull in the forked branch</p>
+<p>$ git pull <a href="https://github.com/">https://github.com/</a>&lt;forked-username&gt;/cumulus.git &lt;name-of-the-branch&gt;</p></li>
+<li><p>Push the new branch to github and create a new PR</p></li>
 <li><p>Change the destination of the forked PR to the new branch that was just pushed</p></li>
 </ol>
 <p><img src="https://user-images.githubusercontent.com/1933118/46869547-80d31480-ce2c-11e8-9d2f-b8e1ea01fdb6.png" alt="screenshot 2018-10-12 14 37 49"></p>
-<ol start="4">
-<li><p>After code review and approval, merge the forked PR to the new branch.</p></li>
-<li><p>Create a PR for the new branch to master.</p></li>
-<li><p>If the CI tests pass, merge the new branch to master and close the issue.   If the CI tests do not pass, request an amended PR from the original author/ or resolve failures as appropriate.</p></li>
+<ol start="5">
+<li><p>If the travis tests passed merge the forked PR to the new branch</p></li>
+<li><p>Merge the new branch to master</p></li>
 </ol>
-</span></div></article></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#fork-the-repo">Fork the Repo</a></li><li><a href="#create-a-pull-request">Create a Pull Request</a></li><li><a href="#reviewing-prs-from-forked-repos">Reviewing PRs from Forked Repos</a></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</span></div></article></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#fork-the-repo">Fork the Repo</a></li><li><a href="#create-a-pull-request">Create a Pull Request</a></li><li><a href="#run-builds">Run Builds</a></li><li><a href="#reviewing-prs-from-forked-repos">Reviewing PRs from Forked Repos</a></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;
