@@ -25,18 +25,7 @@ stack cannot be determined from the branch name then the &quot;cumulus-from-pr&q
 will be used.</p>
 <p>If you create a new stack and want to be able to run integration tests against
 it in CI, you will need to add it to
-<a href="travis-ci/select-stack.js">travis-ci/select-stack.js</a>.</p>
-<p>In order to prevent multiple instances of the integration tests from running
-against a stack at the same time, a lock file is created in S3 for each stack.
-Before integration tests start they will wait until that lock file is not
-present. They will then create that lock file, run the tests, and delete the
-lock file. The lock file will be located at
-<code>s3://${CACHE_BUCKET}/travis-ci-integration-tests/${DEPLOYMENT}.lock</code>. The lock
-file will contain a link to the Travis CI job that created the lock file. If
-your tests seem to be hung waiting for that lock file, check to see if the job
-that created the lock file is still running or has crashed. If it has crashed
-then the lock file should be deleted. You should also figure out why the lock
-file was not cleaned up and fix that for next time.</p>
+<a href="bamboo/select-stack.js">bamboo/select-stack.js</a>.</p>
 </span></div></article></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#running-integration-tests-on-aws">Running integration tests on AWS</a></li><li><a href="#running-integration-tests-on-travis-ci">Running integration tests on Travis CI</a></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
