@@ -25,9 +25,31 @@ resource "aws_cloudwatch_log_group" "publish_notifications_logs" {
   retention_in_days = 14
 }
 
+# TODO should come from a variable
+locals {
+  state_machines = []
+}
+
+resource "aws_cloudwatch_event_rule" "cloudwatch_trigger_publish_notifications" {
+  name        = "trigger-publish-notifications"
+  description = "Trigger for publish-notfications Lambda"
+
+  event_pattern = <<PATTERN
+{
+  "source": ["aws.states"],
+  "detail-type": ["Step Functions Execution Status Change"],
+  "detail": {
+    "status": ["ABORTED", "FAILED", "SUCCEEDED", "TIMED_OUT"],
+    "stateMachineArn": "${join(", ", local.state_machines)}"
+  }
+}
+PATTERN
+}
+
 resource "aws_lambda_permission" "cloudwatch_publish_notifications_permission" {
+  statement_id  = "AllowExecutionFromCloudWatch"
   action        = "lambda:InvokeFunction"
   function_name = "${aws_lambda_function.publish_notifications.function_name}"
   principal     = "events.amazonaws.com"
-  source_arn    = "${aws_sns_topic.publish_notifications_topic.arn}"
+  source_arn    = "${aws_cloudwatch_event_rule.cloudwatch_trigger_publish_notifications.arn}"
 }
