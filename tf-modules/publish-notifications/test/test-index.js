@@ -39,6 +39,12 @@ test.beforeEach((t) => {
   process.env.granule_sns_topic_arn = randomString();
   process.env.pdr_sns_topic_arn = randomString();
 
+  t.context.snsTopicArns = [
+    process.env.execution_sns_topic_arn,
+    process.env.granule_sns_topic_arn,
+    process.env.pdr_sns_topic_arn
+  ];
+
   t.context.message = {
     cumulus_meta: {
       execution_name: randomString()
@@ -52,7 +58,7 @@ test.after.always(async () => {
 });
 
 test.serial('lambda publishes successful report to all SNS topics', async (t) => {
-  const { message } = t.context;
+  const { message, snsTopicArns } = t.context;
   const cwEventMessage = createCloudwatchEventMessage({
     message,
     status: 'SUCCEEDED'
@@ -69,10 +75,13 @@ test.serial('lambda publishes successful report to all SNS topics', async (t) =>
   };
 
   t.deepEqual(JSON.parse(snsPublishSpy.args[0][0].Message), expectedMessage);
+  t.true(snsTopicArns.includes(snsPublishSpy.args[0][0].TopicArn));
+  t.true(snsTopicArns.includes(snsPublishSpy.args[1][0].TopicArn));
+  t.true(snsTopicArns.includes(snsPublishSpy.args[2][0].TopicArn));
 });
 
 test.serial('lambda publishes running report to all SNS topics', async (t) => {
-  const { message } = t.context;
+  const { message, snsTopicArns } = t.context;
   const cwEventMessage = createCloudwatchEventMessage({
     message,
     status: 'RUNNING'
@@ -89,6 +98,9 @@ test.serial('lambda publishes running report to all SNS topics', async (t) => {
   };
 
   t.deepEqual(JSON.parse(snsPublishSpy.args[0][0].Message), expectedMessage);
+  t.true(snsTopicArns.includes(snsPublishSpy.args[0][0].TopicArn));
+  t.true(snsTopicArns.includes(snsPublishSpy.args[1][0].TopicArn));
+  t.true(snsTopicArns.includes(snsPublishSpy.args[2][0].TopicArn));
 });
 
 test.serial('publish failure to executions topic does not affect publishing to other topics', async (t) => {
