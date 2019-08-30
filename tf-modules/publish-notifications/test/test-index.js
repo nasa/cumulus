@@ -13,17 +13,14 @@ let snsPublishSpy;
 const sfEventSource = 'aws.states';
 
 const createCloudwatchEventMessage = ({
+  message,
   status,
   source = sfEventSource
 }) => {
-  const message = JSON.stringify({
-    cumulus_meta: {
-      execution_name: randomString()
-    }
-  });
+  const messageString = JSON.stringify(message);
   const detail = (status === 'SUCCEEDED'
-    ? { status, output: message }
-    : { status, input: message });
+    ? { status, output: messageString }
+    : { status, input: messageString });
   return { source, detail };
 };
 
@@ -32,24 +29,65 @@ test.before(async () => {
   process.env.granule_sns_topic_arn = randomString();
   process.env.pdr_sns_topic_arn = randomString();
 
-  snsPublishSpy = sinon.spy();
-
   snsStub = sinon.stub(aws, 'sns').returns({
     publish: () => ({
-      promise: snsPublishSpy
+      promise: () => Promise.resolve()
     })
   });
+
+  snsPublishSpy = sinon.spy(aws.sns(), 'publish');
+});
+
+test.beforeEach((t) => {
+  t.context.message = {
+    cumulus_meta: {
+      execution_name: randomString()
+    }
+  };
 });
 
 test.after.always(async () => {
   snsStub.restore();
 });
 
-test('lambda publishes reports to all SNS topics', async (t) => {
+test('lambda publishes successful report to all SNS topics', async (t) => {
+  const { message } = t.context;
   const cwEventMessage = createCloudwatchEventMessage({
+    message,
     status: 'SUCCEEDED'
   });
+
   await handler(cwEventMessage);
+
   t.is(snsPublishSpy.called, true);
   t.is(snsPublishSpy.callCount, 3);
+  const expectedMessage = {
+    ...message,
+    meta: {
+      status: 'completed'
+    }
+  };
+
+  t.deepEqual(JSON.parse(snsPublishSpy.args[0][0].Message), expectedMessage);
+});
+
+test('lambda publishes running report to all SNS topics', async (t) => {
+  const { message } = t.context;
+  const cwEventMessage = createCloudwatchEventMessage({
+    message,
+    status: 'RUNNING'
+  });
+
+  await handler(cwEventMessage);
+
+  t.is(snsPublishSpy.called, true);
+  t.is(snsPublishSpy.callCount, 3);
+  const expectedMessage = {
+    ...message,
+    meta: {
+      status: 'running'
+    }
+  };
+
+  t.deepEqual(JSON.parse(snsPublishSpy.args[0][0].Message), expectedMessage);
 });

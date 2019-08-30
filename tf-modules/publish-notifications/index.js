@@ -100,17 +100,21 @@ async function publishPdrSnsMessage(
  * @returns {Promise}
  */
 async function handler(event) {
-  // TODO: if execution is a failure, this won't return anything
-  const eventMessage = getSfEventMessageObject(event, 'output');
-
   const eventStatus = getSfEventStatus(event);
-  const finished = isTerminalSfStatus(eventStatus);
-  const failed = isFailedSfStatus(eventStatus);
+  const isTerminalStatus = isTerminalSfStatus(eventStatus);
+
+  // TODO: if execution is a failure, this won't return anything
+  const eventMessage = isTerminalStatus
+    ? getSfEventMessageObject(event, 'output')
+    : getSfEventMessageObject(event, 'input', '{}');
+
+  const isFailedStatus = isFailedSfStatus(eventStatus);
+
+  eventMessage.meta = eventMessage.meta || {};
 
   // if this is the sns call at the end of the execution
-  if (finished) {
-    eventMessage.meta = eventMessage.meta || {};
-    eventMessage.meta.status = failed ? 'failed' : 'completed';
+  if (isTerminalStatus) {
+    eventMessage.meta.status = isFailedStatus ? 'failed' : 'completed';
     // TODO: What does this do?
     // const granuleId = get(eventMessage, 'meta.granuleId', null);
     // if (granuleId) {
