@@ -31,6 +31,7 @@ else
   rm ./terraform_${TF_VERSION}_linux_amd64.zip
 fi
 
+# TODO Necessary in Terraform?
 # Wait for the stack to be available
 node ./scripts/lock-stack.js true $DEPLOYMENT
 LOCK_EXISTS_STATUS=$?
@@ -53,33 +54,39 @@ if [[ $LOCK_EXIST_STATUS -gt 0 ]]; then
 fi
 set -e
 
-# Ensure remote state is configured for the deployment
-echo "terraform {
-  backend \"s3\" {
-    bucket = \"$TFSTATE_BUCKET\"
-    key    = \"$DEPLOYMENT/terraform.tfstate\"
-    region = \"$AWS_REGION\"
-  }
-}" >> ci_backend.tf
 
-# Initialize deployment
-./terraform init \
-  -input=false
+for x in $(ls -d *-tf); do
+  # Ensure remote state is configured for the deployment
+  echo "terraform {
+    backend \"s3\" {
+      bucket = \"$TFSTATE_BUCKET\"
+      key    = \"$DEPLOYMENT/$x/terraform.tfstate\"
+      region = \"$AWS_REGION\"
+    }
+  }" >> ci_backend.tf
 
-# Deploy example via terraform
-echo "Deploying Cumulus example to $DEPLOYMENT"
-./terraform plan \
-  -out=terraform.tfplan \
-  -input=false \
-  -var-file="./deployments/sandbox.tfvars" \
-  -var-file="./deployments/$DEPLOYMENT.tfvars" \
-  -var "region=$AWS_REGION" \
-  -var "vpc_id=$VPC_ID" \
-  -var "subnet_ids=[\"$AWS_SUBNET\"]" \
-  -var "urs_client_id=$EARTHDATA_CLIENT_ID" \
-  -var "urs_client_password=$EARTHDATA_CLIENT_PASSWORD" \
-  -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/NGAPShNonProdRoleBoundary"
-./terraform apply "terraform.tfplan"
+  # Initialize deployment
+  ./terraform init \
+    -input=false
 
-# Test that deployment succeded by returning exit code.
-exit $?
+  # Deploy example via terraform
+  echo "Deploying Cumulus example to $DEPLOYMENT"
+  ./terraform plan \
+    -out=terraform.tfplan \
+    -input=false \
+    -var-file="./deployments/sandbox.tfvars" \
+    -var-file="./deployments/$DEPLOYMENT.tfvars" \
+    -var "region=$AWS_REGION" \
+    -var "vpc_id=$VPC_ID" \
+    -var "subnet_ids=[\"$AWS_SUBNET\"]" \
+    -var "urs_client_id=$EARTHDATA_CLIENT_ID" \
+    -var "urs_client_password=$EARTHDATA_CLIENT_PASSWORD" \
+    -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/NGAPShNonProdRoleBoundary"
+  ./terraform apply "terraform.tfplan"
+  
+  # Test that deployment succeded by returning exit code.
+  EXIT_CODE = $?
+  if [ $EXIT_CODE -ne  0 ]; then
+    exit $EXIT_CODE
+  fi
+done
