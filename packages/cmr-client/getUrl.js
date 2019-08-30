@@ -54,11 +54,9 @@ function getUrl(type, cmrProvider, cmrEnvironment, cmrHost) {
   switch (type) {
   case 'token':
     if (cmrEnv === 'OPS') {
-      url = 'https://api.echo.nasa.gov/echo-rest/tokens/';
-    } else if (cmrEnv === 'SIT') {
-      url = 'https://testbed.echo.nasa.gov/echo-rest/tokens/';
+      url = 'https://cmr.earthdata.nasa.gov/legacy-services/rest/tokens';
     } else {
-      url = 'https://api-test.echo.nasa.gov/echo-rest/tokens/';
+      url = 'https://cmr.uat.earthdata.nasa.gov/legacy-services/rest/tokens';
     }
     break;
   case 'search':

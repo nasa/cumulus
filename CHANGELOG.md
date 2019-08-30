@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - **CUMULUS-1432** `logs` endpoint filter correctly filters logs by level
+- **CUMULUS-1455**
+  - CMR token links updated to point to CMR legacy services rather than echo
 
 - **CUMULUS-1211**
   - Errors thrown during granule discovery are no longer swallowed and ignored.
