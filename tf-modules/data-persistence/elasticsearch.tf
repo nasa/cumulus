@@ -6,26 +6,6 @@ locals {
   es_domain_name     = "${var.prefix}-${var.elasticsearch_config.domain_name}${local.inside_vpc ? "-vpc" : ""}"
 }
 
-data "aws_iam_policy_document" "es_access_policy" {
-  statement {
-    actions = [
-      "es:*"
-    ]
-
-    principals {
-      type        = "AWS"
-      identifiers =  distinct(compact(var.es_trusted_role_arns))
-    }
-
-    resources = compact(
-      [
-        local.deploy_inside_vpc ? "${aws_elasticsearch_domain.es_vpc[0].arn}/*" : null,
-        local.deploy_outside_vpc ? "${aws_elasticsearch_domain.es[0].arn}/*" : null
-      ]
-    )
-  }
-}
-
 resource "aws_elasticsearch_domain" "es" {
   count                 = local.deploy_outside_vpc ? 1 : 0
   domain_name           = local.es_domain_name
@@ -51,16 +31,57 @@ resource "aws_elasticsearch_domain" "es" {
   }
 }
 
+data "aws_iam_policy_document" "es_access_policy" {
+  count = local.deploy_outside_vpc && local.include_es_policy ? 1 : 0
+
+  statement {
+    actions = ["es:*"]
+
+    principals {
+      type        = "AWS"
+      identifiers = distinct(compact(var.es_trusted_role_arns))
+    }
+
+    resources = ["${aws_elasticsearch_domain.es[0].arn}/*"]
+  }
+}
+
 resource "aws_elasticsearch_domain_policy" "es_domain_policy" {
   count           = local.deploy_outside_vpc && local.include_es_policy ? 1 : 0
   domain_name     = local.es_domain_name
-  access_policies = data.aws_iam_policy_document.es_access_policy.json
+  access_policies = data.aws_iam_policy_document.es_access_policy[0].json
   depends_on      = [aws_elasticsearch_domain.es]
 }
 
 resource "aws_iam_service_linked_role" "es" {
   count            = local.deploy_inside_vpc && var.create_service_linked_role ? 1 : 0
   aws_service_name = "es.amazonaws.com"
+}
+
+# Elasticsearch domain in a VPC
+
+data "aws_subnet" "first_es_domain_subnet" {
+  count = local.deploy_inside_vpc ? 1 : 0
+  id    = var.subnet_ids[0]
+}
+
+resource "aws_security_group" "es_vpc" {
+  count  = local.deploy_inside_vpc ? 1 : 0
+  vpc_id = data.aws_subnet.first_es_domain_subnet[0].vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+    self      = true
+  }
 }
 
 resource "aws_elasticsearch_domain" "es_vpc" {
@@ -85,7 +106,7 @@ resource "aws_elasticsearch_domain" "es_vpc" {
 
   vpc_options {
     subnet_ids         = var.subnet_ids
-    security_group_ids = var.security_groups
+    security_group_ids = [aws_security_group.es_vpc[0].id]
   }
 
   snapshot_options {
@@ -98,20 +119,35 @@ resource "aws_elasticsearch_domain" "es_vpc" {
 }
 
 resource "aws_elasticsearch_domain_policy" "es_vpc_domain_policy" {
-  count           = local.deploy_inside_vpc && local.include_es_policy ? 1 : 0
+  count      = local.deploy_inside_vpc ? 1 : 0
+  depends_on = [aws_elasticsearch_domain.es_vpc]
+
   domain_name     = local.es_domain_name
-  access_policies = data.aws_iam_policy_document.es_access_policy.json
-  depends_on      = [aws_elasticsearch_domain.es_vpc]
+  access_policies = <<JSON
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": ["*"]
+      },
+      "Action": ["es:*"],
+      "Resource": "${aws_elasticsearch_domain.es_vpc[0].arn}/*"
+    }
+  ]
+}
+JSON
 }
 
 resource "aws_cloudwatch_metric_alarm" "es_nodes_low" {
-  alarm_name                = "${local.es_domain_name}-NodesLowAlarm"
-  comparison_operator       = "LessThanThreshold"
-  namespace                 = "AWS/ES"
-  evaluation_periods        = "5"
-  metric_name               = "Nodes"
-  period                    = "60"
-  statistic                 = "Average"
-  threshold                 = var.elasticsearch_config.instance_count
-  alarm_description         = "There are less instances running than the desired"
+  alarm_name          = "${local.es_domain_name}-NodesLowAlarm"
+  comparison_operator = "LessThanThreshold"
+  namespace           = "AWS/ES"
+  evaluation_periods  = "5"
+  metric_name         = "Nodes"
+  period              = "60"
+  statistic           = "Average"
+  threshold           = var.elasticsearch_config.instance_count
+  alarm_description   = "There are less instances running than the desired"
 }

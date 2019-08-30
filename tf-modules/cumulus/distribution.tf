@@ -1,0 +1,15 @@
+module "distribution" {
+  source = "../distribution"
+
+  distribution_url         = var.distribution_url
+  permissions_boundary_arn = var.permissions_boundary_arn
+  prefix                   = var.prefix
+  protected_buckets        = var.protected_buckets
+  public_buckets           = var.public_buckets
+  subnet_ids               = var.lambda_subnet_ids
+  system_bucket            = var.system_bucket
+  urs_client_id            = var.urs_client_id
+  urs_client_password      = var.urs_client_password
+  urs_url                  = var.urs_url
+  vpc_id                   = var.vpc_id
+}
