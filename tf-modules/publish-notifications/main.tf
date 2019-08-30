@@ -1,7 +1,14 @@
+locals {
+  default_tags = {
+    Deployment = var.prefix
+  }
+}
+
 resource "aws_sqs_queue" "publish_notifications_dead_letter_queue" {
   name                       = "${var.prefix}-publishNotificationsDeadLetterQueue"
   receive_wait_time_seconds  = 20
   visibility_timeout_seconds = 60
+  tags                       = local.default_tags
 }
 
 data "archive_file" "publish_notifications_package" {
@@ -38,9 +45,7 @@ resource "aws_lambda_function" "publish_notifications" {
     security_group_ids = var.security_groups
   }
 
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
 }
 
 resource "aws_cloudwatch_log_group" "publish_notifications_logs" {
