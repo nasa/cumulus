@@ -104,6 +104,7 @@ test.serial('lambda publishes running report to all SNS topics', async (t) => {
 });
 
 test.serial('publish failure to executions topic does not affect publishing to other topics', async (t) => {
+  // delete env var to cause failure publishing to executions topic
   delete process.env.execution_sns_topic_arn;
 
   const { message } = t.context;

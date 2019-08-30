@@ -2,6 +2,7 @@ locals {
   default_tags = {
     Deployment = var.prefix
   }
+  state_machines_map = tomap({for index, arn in var.state_machine_arns : index => arn})
 }
 
 resource "aws_sqs_queue" "publish_notifications_dead_letter_queue" {
@@ -54,24 +55,23 @@ resource "aws_cloudwatch_log_group" "publish_notifications_logs" {
 }
 
 resource "aws_cloudwatch_event_rule" "cloudwatch_trigger_publish_notifications" {
-  name        = "trigger-publish-notifications"
-  description = "Trigger for publish-notfications Lambda"
-
+  for_each      = local.state_machines_map
+  name          = "trigger-publish-notifications-${each.key}"
   event_pattern = <<PATTERN
 {
   "source": ["aws.states"],
   "detail-type": ["Step Functions Execution Status Change"],
   "detail": {
-    "stateMachineArn": "${join(", ", var.state_machines_arns)}"
+    "stateMachineArn": ["${each.value}"]
   }
 }
 PATTERN
 }
 
 resource "aws_lambda_permission" "cloudwatch_publish_notifications_permission" {
-  statement_id  = "AllowExecutionFromCloudWatch"
+  for_each      = local.state_machines_map
   action        = "lambda:InvokeFunction"
   function_name = "${aws_lambda_function.publish_notifications.function_name}"
   principal     = "events.amazonaws.com"
-  source_arn    = "${aws_cloudwatch_event_rule.cloudwatch_trigger_publish_notifications.arn}"
+  source_arn    = "${aws_cloudwatch_event_rule.cloudwatch_trigger_publish_notifications[each.key].arn}"
 }
