@@ -27,7 +27,6 @@
     "NASA"
   ],
   "dependencies": {
-    "@cumulus/api": "^1.13.4",
     "@cumulus/common": "^1.13.4",
     "lodash.get": "^4.4.2"
   },

@@ -39,7 +39,6 @@ resource "aws_cloudwatch_event_rule" "cloudwatch_trigger_publish_notifications" 
   "source": ["aws.states"],
   "detail-type": ["Step Functions Execution Status Change"],
   "detail": {
-    "status": ["ABORTED", "FAILED", "SUCCEEDED", "TIMED_OUT"],
     "stateMachineArn": "${join(", ", local.state_machines)}"
   }
 }

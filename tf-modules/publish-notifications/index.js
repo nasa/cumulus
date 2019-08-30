@@ -1,108 +1,138 @@
 'use strict';
 
-const get = require('lodash.get');
-const isObject = require('lodash.isobject');
-
-const { setGranuleStatus, sns } = require('@cumulus/common/aws');
-const errors = require('@cumulus/common/errors');
+const { sns } = require('@cumulus/common/aws');
+const {
+  getSfEventMessageObject,
+  isFailedSfStatus,
+  isTerminalSfStatus
+} = require('@cumulus/common/cloudwatch-event');
+const log = require('@cumulus/common/log');
 
 /**
- * Determines if there was a valid exception in the input message
+ * Publish SNS notification for execution reporting.
  *
- * @param {Object} event - aws event object
- * @returns {boolean} true if there was an exception, false otherwise
+ * @param {Object} eventMessage - Workflow execution message
+ * @param {string} [executionSnsTopicArn]
+ *  SNS topic ARN for reporting executions. Defaults to process.env.execution_sns_topic_arn.
+ * @returns {Promise}
+ * @throws {Error}
  */
-function eventFailed(event) {
-  // event has exception
-  // and it is needed to avoid flagging cases like "exception: {}" or "exception: 'none'"
-  if (isObject(event.exception)
-    && (Object.keys(event.exception).length > 0)) return true;
+async function publishExecutionSnsMessage(
+  eventMessage,
+  executionSnsTopicArn = process.env.execution_sns_topic_arn
+) {
+  if (!executionSnsTopicArn) {
+    throw new Error('Missing env variable for executions SNS topic ARN');
+  }
 
-  // Error and error keys are not part of the cumulus message
-  // and if they appear in the message something is seriously wrong
-  if (event.Error || event.error) return true;
-
-  return false;
+  try {
+    await sns().publish({
+      TopicArn: executionSnsTopicArn,
+      Message: JSON.stringify(eventMessage)
+    }).promise();
+  } catch (err) {
+    log.error(`Failed to post message to executions SNS topic: ${executionSnsTopicArn}`);
+    log.info('Execution message', eventMessage);
+  }
 }
 
 /**
- * Builds error object based on error type
+ * Publish SNS notification for granule reporting.
  *
- * @param {string} type - error type
- * @param {string} cause - error cause
- * @returns {Object} the error object
+ * @param {Object} eventMessage - Workflow execution message
+ * @param {string} [granuleSnsTopicArn]
+ *   SNS topic ARN for reporting granules. Defaults to process.env.granule_sns_topic_arn.
+ * @returns {Promise}
+ * @throws {Error}
  */
-function buildError(type, cause) {
-  let ErrorClass;
+async function publishGranuleSnsMessage(
+  eventMessage,
+  granuleSnsTopicArn = process.env.granule_sns_topic_arn
+) {
+  if (!granuleSnsTopicArn) {
+    throw new Error('Missing env variable for granule SNS topic ARN');
+  }
 
-  if (Object.keys(errors).includes(type)) ErrorClass = errors[type];
-  else if (type === 'TypeError') ErrorClass = TypeError;
-  else ErrorClass = Error;
-
-  return new ErrorClass(cause);
+  try {
+    await sns().publish({
+      TopicArn: granuleSnsTopicArn,
+      Message: JSON.stringify(eventMessage)
+    }).promise();
+  } catch (err) {
+    log.error(`Failed to post message to granules SNS topic: ${granuleSnsTopicArn}`);
+    log.info('Execution message', eventMessage);
+  }
 }
 
 /**
- * If the cumulus message shows that a previous step failed,
- * this function extracts the error message from the cumulus message
- * and fails the function with that information. This ensures that the
- * Step Function workflow fails with the correct error info
+ * Publish SNS notification for PDR reporting.
  *
- * @param {Object} event - aws event object
- * @returns {undefined} throws an error and does not return anything
+ * @param {Object} eventMessage - Workflow execution message
+ * @param {string} [pdrSnsTopicArn]
+ *   SNS topic ARN for reporting PDRs. Defaults to process.env.pdr_sns_topic_arn.
+ * @returns {Promise}
+ * @throws {Error}
  */
-function makeLambdaFunctionFail(event) {
-  const error = event.exception || event.error;
+async function publishPdrSnsMessage(
+  eventMessage,
+  pdrSnsTopicArn = process.env.pdr_sns_topic_arn
+) {
+  if (!pdrSnsTopicArn) {
+    throw new Error('Missing env variable for PDR SNS topic ARN');
+  }
 
-  if (error) throw buildError(error.Error, error.Cause);
-
-  throw new Error('Step Function failed for an unknown reason.');
+  try {
+    await sns().publish({
+      TopicArn: pdrSnsTopicArn,
+      Message: JSON.stringify(eventMessage)
+    }).promise();
+  } catch (err) {
+    log.error(`Failed to post message to PDRs SNS topic: ${pdrSnsTopicArn}`);
+    log.info('Execution message', eventMessage);
+  }
 }
 
 /**
  * Lambda handler for publish-notifications Lambda.
  *
- * @param {Object} event - SNS Notification Event
- * @returns {Promise<Array>} PDR records
+ * @param {Object} event - Cloudwatch event
+ * @returns {Promise}
  */
 async function handler(event) {
-  const config = get(event, 'config');
-  const message = get(event, 'input');
+  // TODO: if execution is a failure, this won't return anything
+  const eventMessage = getSfEventMessageObject(event, 'output');
 
-  const finished = get(config, 'sfnEnd', false);
-  const topicArn = get(message, 'meta.topic_arn', null);
-  const failed = eventFailed(message);
+  const finished = isTerminalSfStatus(event);
+  const failed = isFailedSfStatus(event);
 
-  if (topicArn) {
-    // if this is the sns call at the end of the execution
-    if (finished) {
-      message.meta.status = failed ? 'failed' : 'completed';
-      const granuleId = get(message, 'meta.granuleId', null);
-      if (granuleId) {
-        await setGranuleStatus(
-          granuleId,
-          config.stack,
-          config.bucket,
-          config.stateMachine,
-          config.executionName,
-          message.meta.status
-        );
-      }
-    } else {
-      message.meta.status = 'running';
-    }
-
-    await sns().publish({
-      TopicArn: topicArn,
-      Message: JSON.stringify(message)
-    }).promise();
+  // if this is the sns call at the end of the execution
+  if (finished) {
+    eventMessage.meta.status = failed ? 'failed' : 'completed';
+    // TODO: What does this do?
+    // const granuleId = get(eventMessage, 'meta.granuleId', null);
+    // if (granuleId) {
+    //   await setGranuleStatus(
+    //     granuleId,
+    //     // config.stack,
+    //     // TODO create env var
+    //     process.env.stackName,
+    //     // config.bucket,
+    //     // TODO create env var
+    //     process.env.bucket,
+    //     // config.stateMachine,
+    //     // config.executionName,
+    //     eventMessage.meta.status
+    //   );
+    // }
+  } else {
+    eventMessage.meta.status = 'running';
   }
 
-  if (failed) {
-    makeLambdaFunctionFail(message);
-  }
-
-  return get(message, 'payload', {});
+  return Promise.all([
+    publishExecutionSnsMessage(eventMessage),
+    publishGranuleSnsMessage(eventMessage),
+    publishPdrSnsMessage(eventMessage)
+  ]);
 }
 
 module.exports = {
