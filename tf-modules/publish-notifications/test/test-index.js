@@ -44,13 +44,14 @@ test.beforeEach((t) => {
       execution_name: randomString()
     }
   };
+  snsPublishSpy.resetHistory();
 });
 
 test.after.always(async () => {
   snsStub.restore();
 });
 
-test('lambda publishes successful report to all SNS topics', async (t) => {
+test.serial('lambda publishes successful report to all SNS topics', async (t) => {
   const { message } = t.context;
   const cwEventMessage = createCloudwatchEventMessage({
     message,
@@ -71,7 +72,7 @@ test('lambda publishes successful report to all SNS topics', async (t) => {
   t.deepEqual(JSON.parse(snsPublishSpy.args[0][0].Message), expectedMessage);
 });
 
-test('lambda publishes running report to all SNS topics', async (t) => {
+test.serial('lambda publishes running report to all SNS topics', async (t) => {
   const { message } = t.context;
   const cwEventMessage = createCloudwatchEventMessage({
     message,
