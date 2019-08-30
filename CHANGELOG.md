@@ -200,6 +200,8 @@ If you deploy with no distribution app your deployment will succeed but you may 
 
 ## [v1.13.5] - 2019-08-29
 
+### Fixed
+
 - **CUMULUS-1455** - CMR token links updated to point to CMR legacy services rather than echo
 
 ## [v1.13.4] - 2019-07-29
