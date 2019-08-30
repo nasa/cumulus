@@ -10,87 +10,76 @@ const {
 const log = require('@cumulus/common/log');
 
 /**
- * Publish SNS notification for execution reporting.
+ * Publish a message to an SNS topic.
+ *
+ * Catch any thrown errors and log them.
+ *
+ * @param {string} snsTopicArn - SNS topic ARN
+ * @param {Object} eventMessage - Workflow execution message
+ * @returns {Promise}
+ */
+async function publishSnsMessage(
+  snsTopicArn,
+  eventMessage
+) {
+  try {
+    if (!snsTopicArn) {
+      throw new Error('Missing SNS topic ARN');
+    }
+
+    await aws.sns().publish({
+      TopicArn: snsTopicArn,
+      Message: JSON.stringify(eventMessage)
+    }).promise();
+  } catch (err) {
+    log.error(`Failed to post message to SNS topic: ${snsTopicArn}`, err);
+    log.info('Execution message', eventMessage);
+  }
+}
+
+/**
+ * Publish SNS message for execution reporting.
  *
  * @param {Object} eventMessage - Workflow execution message
  * @param {string} [executionSnsTopicArn]
- *  SNS topic ARN for reporting executions. Defaults to process.env.execution_sns_topic_arn.
+ *  SNS topic ARN for reporting executions. Defaults to `process.env.execution_sns_topic_arn`.
  * @returns {Promise}
- * @throws {Error}
  */
 async function publishExecutionSnsMessage(
   eventMessage,
   executionSnsTopicArn = process.env.execution_sns_topic_arn
 ) {
-  if (!executionSnsTopicArn) {
-    throw new Error('Missing env variable for executions SNS topic ARN');
-  }
-
-  try {
-    await aws.sns().publish({
-      TopicArn: executionSnsTopicArn,
-      Message: JSON.stringify(eventMessage)
-    }).promise();
-  } catch (err) {
-    log.error(`Failed to post message to executions SNS topic: ${executionSnsTopicArn}`);
-    log.info('Execution message', eventMessage);
-  }
+  return publishSnsMessage(executionSnsTopicArn, eventMessage);
 }
 
 /**
- * Publish SNS notification for granule reporting.
+ * Publish SNS message for granule reporting.
  *
  * @param {Object} eventMessage - Workflow execution message
  * @param {string} [granuleSnsTopicArn]
- *   SNS topic ARN for reporting granules. Defaults to process.env.granule_sns_topic_arn.
+ *   SNS topic ARN for reporting granules. Defaults to `process.env.granule_sns_topic_arn`.
  * @returns {Promise}
- * @throws {Error}
  */
 async function publishGranuleSnsMessage(
   eventMessage,
   granuleSnsTopicArn = process.env.granule_sns_topic_arn
 ) {
-  if (!granuleSnsTopicArn) {
-    throw new Error('Missing env variable for granule SNS topic ARN');
-  }
-
-  try {
-    await aws.sns().publish({
-      TopicArn: granuleSnsTopicArn,
-      Message: JSON.stringify(eventMessage)
-    }).promise();
-  } catch (err) {
-    log.error(`Failed to post message to granules SNS topic: ${granuleSnsTopicArn}`);
-    log.info('Execution message', eventMessage);
-  }
+  return publishSnsMessage(granuleSnsTopicArn, eventMessage);
 }
 
 /**
- * Publish SNS notification for PDR reporting.
+ * Publish SNS message for PDR reporting.
  *
  * @param {Object} eventMessage - Workflow execution message
  * @param {string} [pdrSnsTopicArn]
- *   SNS topic ARN for reporting PDRs. Defaults to process.env.pdr_sns_topic_arn.
+ *   SNS topic ARN for reporting PDRs. Defaults to `process.env.pdr_sns_topic_arn`.
  * @returns {Promise}
- * @throws {Error}
  */
 async function publishPdrSnsMessage(
   eventMessage,
   pdrSnsTopicArn = process.env.pdr_sns_topic_arn
 ) {
-  if (!pdrSnsTopicArn) {
-    throw new Error('Missing env variable for PDR SNS topic ARN');
-  }
-
-  try {
-    await aws.sns().publish({
-      TopicArn: pdrSnsTopicArn,
-      Message: JSON.stringify(eventMessage)
-    }).promise();
-  } catch (err) {
-    log.error(`Failed to post message to PDRs SNS topic: ${pdrSnsTopicArn}, error: ${err}`);
-    log.info('Execution message', eventMessage);
-  }
+  return publishSnsMessage(pdrSnsTopicArn, eventMessage);
 }
 
 /**
