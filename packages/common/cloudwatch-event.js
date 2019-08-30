@@ -30,7 +30,7 @@ const isTerminalSfStatus = isOneOf([
  * @param {Object} status - A Step Function execution status from a Cloudwatch event
  * @returns {boolean} - True if Step Function is in terminal state.
  */
-const isFailedlSfStatus = isOneOf([
+const isFailedSfStatus = isOneOf([
   'ABORTED',
   'FAILED',
   'TIMED_OUT'
@@ -77,6 +77,6 @@ module.exports = {
   getSfEventMessageObject,
   getSfEventStatus,
   isSfExecutionEvent,
-  isFailedlSfStatus,
+  isFailedSfStatus,
   isTerminalSfStatus
 };
