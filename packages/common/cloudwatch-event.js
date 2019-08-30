@@ -28,7 +28,7 @@ const isTerminalSfStatus = isOneOf([
  * Determine if Step Function is in a failed state.
  *
  * @param {Object} status - A Step Function execution status from a Cloudwatch event
- * @returns {boolean} - True if Step Function is in terminal state.
+ * @returns {boolean} - True if Step Function is in failed state.
  */
 const isFailedSfStatus = isOneOf([
   'ABORTED',
