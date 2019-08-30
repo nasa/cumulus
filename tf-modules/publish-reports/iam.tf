@@ -10,13 +10,13 @@ data "aws_iam_policy_document" "assume_lambda_role" {
   }
 }
 
-resource "aws_iam_role" "publish_notifications_lambda_role" {
-  name                 = "${var.prefix}_publish_notifications_lambda_role"
+resource "aws_iam_role" "publish_reports_lambda_role" {
+  name                 = "${var.prefix}_publish_reports_lambda_role"
   assume_role_policy   = data.aws_iam_policy_document.assume_lambda_role.json
   permissions_boundary = var.permissions_boundary
 }
 
-data "aws_iam_policy_document" "publish_notifications_policy_document" {
+data "aws_iam_policy_document" "publish_reports_policy_document" {
   statement {
     actions = [
       "ec2:CreateNetworkInterface",
@@ -50,8 +50,8 @@ data "aws_iam_policy_document" "publish_notifications_policy_document" {
   }
 }
 
-resource "aws_iam_role_policy" "publish_notifications_lambda_role_policy" {
-  name   = "${var.prefix}_publish_notifications_lambda_role_policy"
-  role   = aws_iam_role.publish_notifications_lambda_role.id
-  policy = data.aws_iam_policy_document.publish_notifications_policy_document.json
+resource "aws_iam_role_policy" "publish_reports_lambda_role_policy" {
+  name   = "${var.prefix}_publish_reports_lambda_role_policy"
+  role   = aws_iam_role.publish_reports_lambda_role.id
+  policy = data.aws_iam_policy_document.publish_reports_policy_document.json
 }

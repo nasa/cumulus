@@ -83,7 +83,7 @@ async function publishPdrSnsMessage(
 }
 
 /**
- * Lambda handler for publish-notifications Lambda.
+ * Lambda handler for publish-reports Lambda.
  *
  * @param {Object} event - Cloudwatch event
  * @returns {Promise}

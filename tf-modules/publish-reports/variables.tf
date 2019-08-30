@@ -17,7 +17,8 @@ variable "pdr_sns_topic_arn" {
 }
 
 variable "state_machine_arns" {
-  type    = list(string)
+  type        = list(string)
+  description = "State machine ARNs that should trigger the report publishing Lambda"
 }
 
 # Optional

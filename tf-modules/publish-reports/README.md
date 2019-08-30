@@ -1,6 +1,6 @@
-# Publish notifications
+# Publish reports
 
-This package includes a Lambda function to publish ingest notifications for granule data, execution data, and PDR data to respective SNS topics
+This package includes a Lambda function to publish ingest reports for granule data, execution data, and PDR data to their respective SNS topics
 
 ## Deployment
 
@@ -20,6 +20,7 @@ prefix                     = "myprefix" # prefix to use for naming created resou
 execution_sns_topic_arn    = "arn:aws:sns::1234567890:executionsTopicName" # topic for publishing execution data
 granule_sns_topic_arn      = "arn:aws:sns::1234567890:granulesTopicName" # topic for publishing granule data
 pdr_sns_topic_arn          = "arn:aws:sns::1234567890:pdrTopicName" # topic for publishing PDR data
+# State machine ARNs that should trigger the report publishing Lambda
 state_machine_arns         = [
   "arn:aws:states:us-east-1:1234567890:stateMachine:stateMachineName"
 ]

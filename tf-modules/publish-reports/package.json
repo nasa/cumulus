@@ -1,7 +1,7 @@
 {
-  "name": "publish-notifications",
+  "name": "publish-reports",
   "version": "1.0.0",
-  "description": "Cumulus Workflow Publish Notifications Module",
+  "description": "Cumulus Workflow Publish Reports Module",
   "main": "index.js",
   "engines": {
     "node": ">=8.10.0"
