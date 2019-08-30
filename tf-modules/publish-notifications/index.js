@@ -1,8 +1,9 @@
 'use strict';
 
-const { sns } = require('@cumulus/common/aws');
+const aws = require('@cumulus/common/aws');
 const {
   getSfEventMessageObject,
+  getSfEventStatus,
   isFailedSfStatus,
   isTerminalSfStatus
 } = require('@cumulus/common/cloudwatch-event');
@@ -26,7 +27,7 @@ async function publishExecutionSnsMessage(
   }
 
   try {
-    await sns().publish({
+    await aws.sns().publish({
       TopicArn: executionSnsTopicArn,
       Message: JSON.stringify(eventMessage)
     }).promise();
@@ -54,7 +55,7 @@ async function publishGranuleSnsMessage(
   }
 
   try {
-    await sns().publish({
+    await aws.sns().publish({
       TopicArn: granuleSnsTopicArn,
       Message: JSON.stringify(eventMessage)
     }).promise();
@@ -82,12 +83,12 @@ async function publishPdrSnsMessage(
   }
 
   try {
-    await sns().publish({
+    await aws.sns().publish({
       TopicArn: pdrSnsTopicArn,
       Message: JSON.stringify(eventMessage)
     }).promise();
   } catch (err) {
-    log.error(`Failed to post message to PDRs SNS topic: ${pdrSnsTopicArn}`);
+    log.error(`Failed to post message to PDRs SNS topic: ${pdrSnsTopicArn}, error: ${err}`);
     log.info('Execution message', eventMessage);
   }
 }
@@ -102,11 +103,13 @@ async function handler(event) {
   // TODO: if execution is a failure, this won't return anything
   const eventMessage = getSfEventMessageObject(event, 'output');
 
-  const finished = isTerminalSfStatus(event);
-  const failed = isFailedSfStatus(event);
+  const eventStatus = getSfEventStatus(event);
+  const finished = isTerminalSfStatus(eventStatus);
+  const failed = isFailedSfStatus(eventStatus);
 
   // if this is the sns call at the end of the execution
   if (finished) {
+    eventMessage.meta = eventMessage.meta || {};
     eventMessage.meta.status = failed ? 'failed' : 'completed';
     // TODO: What does this do?
     // const granuleId = get(eventMessage, 'meta.granuleId', null);
