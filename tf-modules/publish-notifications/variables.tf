@@ -16,6 +16,10 @@ variable "pdr_sns_topic_arn" {
   type = string
 }
 
+variable "state_machine_arns" {
+  type    = list(string)
+}
+
 # Optional
 
 variable "permissions_boundary" {

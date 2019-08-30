@@ -1,3 +1,9 @@
+resource "aws_sqs_queue" "publish_notifications_dead_letter_queue" {
+  name                       = "${var.prefix}-publishNotificationsDeadLetterQueue"
+  receive_wait_time_seconds  = 20
+  visibility_timeout_seconds = 60
+}
+
 data "archive_file" "publish_notifications_package" {
   type        = "zip"
   source_file = "dist/index.js"
@@ -13,21 +19,33 @@ resource "aws_lambda_function" "publish_notifications" {
   timeout          = 300
   memory_size      = 256
 
+  dead_letter_config {
+    target_arn = aws_sqs_queue.publish_notifications_dead_letter_queue.arn
+  }
+
+  environment {
+    variables = {
+      execution_sns_topic_arn = var.execution_sns_topic_arn
+      granule_sns_topic_arn   = var.granule_sns_topic_arn
+      pdr_sns_topic_arn       = var.pdr_sns_topic_arn
+    }
+  }
+
   source_code_hash = "${data.archive_file.publish_notifications_package.output_base64sha256}"
+
   vpc_config {
     subnet_ids         = var.subnet_ids
     security_group_ids = var.security_groups
+  }
+
+  tags = {
+    Project = var.prefix
   }
 }
 
 resource "aws_cloudwatch_log_group" "publish_notifications_logs" {
   name              = "/aws/lambda/${aws_lambda_function.publish_notifications.function_name}"
   retention_in_days = 14
-}
-
-# TODO should come from a variable
-locals {
-  state_machines = []
 }
 
 resource "aws_cloudwatch_event_rule" "cloudwatch_trigger_publish_notifications" {
@@ -39,7 +57,7 @@ resource "aws_cloudwatch_event_rule" "cloudwatch_trigger_publish_notifications" 
   "source": ["aws.states"],
   "detail-type": ["Step Functions Execution Status Change"],
   "detail": {
-    "stateMachineArn": "${join(", ", local.state_machines)}"
+    "stateMachineArn": "${join(", ", var.state_machines_arns)}"
   }
 }
 PATTERN

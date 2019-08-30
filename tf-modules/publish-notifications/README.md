@@ -20,6 +20,9 @@ prefix                     = "myprefix" # prefix to use for naming created resou
 execution_sns_topic_arn    = "arn:aws:sns::1234567890:executionsTopicName" # topic for publishing execution data
 granule_sns_topic_arn      = "arn:aws:sns::1234567890:granulesTopicName" # topic for publishing granule data
 pdr_sns_topic_arn          = "arn:aws:sns::1234567890:pdrTopicName" # topic for publishing PDR data
+state_machine_arns         = [
+  "arn:aws:states:us-east-1:1234567890:stateMachine:stateMachineName"
+]
 
 # Optional
 permissions_boundary  = "arn:aws:iam::1234567890:policy/YourRoleBoundary" # IAM permissions boundary
