@@ -2,7 +2,7 @@
 
 const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
-const isString = require('lodash.isstring');
+// const isString = require('lodash.isstring');
 const partial = require('lodash.partial');
 const path = require('path');
 
@@ -20,7 +20,8 @@ const {
   generateMoveFileParams,
   moveGranuleFiles
 } = require('@cumulus/ingest/granule');
-const { constructCollectionId } = require('@cumulus/common');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { getMessageExecutionArn } = require('@cumulus/common/message');
 const { isNil, renameProperty } = require('@cumulus/common/util');
 
 const Manager = require('./base');
@@ -306,13 +307,15 @@ class Granule extends Manager {
 
     if (!granules) return null;
 
-    const executionName = get(cumulusMessage, 'cumulus_meta.execution_name');
-    if (!isString(executionName)) return null;
+    // const executionName = get(cumulusMessage, 'cumulus_meta.execution_name');
+    // if (!isString(executionName)) return null;
 
-    const stateMachine = get(cumulusMessage, 'cumulus_meta.state_machine');
-    if (!isString(stateMachine)) return null;
+    // const stateMachine = get(cumulusMessage, 'cumulus_meta.state_machine');
+    // if (!isString(stateMachine)) return null;
 
-    const executionArn = commonAws.getExecutionArn(stateMachine, executionName);
+    // const executionArn = commonAws.getExecutionArn(stateMachine, executionName);
+    const executionArn = getMessageExecutionArn(cumulusMessage);
+
     const executionUrl = aws.getExecutionUrl(executionArn);
     const executionDescription = await StepFunctions.describeExecution({ executionArn });
 

@@ -3,7 +3,8 @@ const get = require('lodash.get');
 const merge = require('lodash.merge');
 const uuidv4 = require('uuid/v4');
 
-const { isNil } = require('./util');
+const { isNil, isString } = require('./util');
+const { getExecutionArn } = require('./aws');
 
 const {
   getS3Object,
@@ -96,6 +97,16 @@ const getMaximumExecutions = (message, queueName) => {
   return maxExecutions;
 };
 
+const getMessageExecutionArn = (message) => {
+  const stateMachineArn = get(message, 'cumulus_meta.state_machine');
+  if (!isString(stateMachineArn)) return null;
+
+  const executionName = get(message, 'cumulus_meta.execution_name');
+  if (!isString(executionName)) return null;
+
+  return getExecutionArn(stateMachineArn, executionName);
+};
+
 /**
  * Determine if there is a queue and queue execution limit in the message.
  *
@@ -175,6 +186,7 @@ module.exports = {
   getQueueNameByUrl,
   getQueueName,
   getMaximumExecutions,
+  getMessageExecutionArn,
   getMessageFromTemplate,
   hasQueueAndExecutionLimit
 };
