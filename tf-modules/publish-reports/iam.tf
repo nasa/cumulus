@@ -40,7 +40,18 @@ data "aws_iam_policy_document" "publish_reports_policy_document" {
 
   statement {
     actions = [
-      "sqs:SendMessage",
+      "SNS:Publish"
+    ]
+    resources = [
+      var.execution_sns_topic_arn,
+      var.granule_sns_topic_arn,
+      var.pdr_sns_topic_arn
+    ]
+  }
+
+  statement {
+    actions = [
+      "sqs:SendMessage"
     ]
     resources = [
       aws_sqs_queue.publish_reports_dead_letter_queue.arn
