@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- **CUMULUS-1432**
+  - `logs` endpoint takes the level parameter as a string and not a number
+  - Elasticsearch term query generation no longer converts numbers to boolean
+
+### Fixed
+
+- **CUMULUS-1432** `logs` endpoint filter correctly filters logs by level
+
 ## [v1.14.1] - 2019-08-29
 
 ### Fixed

@@ -7,7 +7,6 @@
 
 'use strict';
 
-const isNumber = require('lodash.isnumber');
 const omit = require('lodash.omit');
 
 const regexes = {
@@ -59,9 +58,6 @@ const build = {
       const match = i.name.match(regex);
       fieldName = match[1];
     }
-
-    // check for boolean values
-    if (isNumber(i.value)) i.value = Boolean(i.value);
 
     return {
       term: {
