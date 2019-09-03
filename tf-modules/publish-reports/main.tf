@@ -68,7 +68,7 @@ resource "aws_cloudwatch_event_rule" "cloudwatch_trigger_publish_reports" {
 PATTERN
 }
 
-resource "aws_cloudwatch_event_target" "yada" {
+resource "aws_cloudwatch_event_target" "cloudwatch_target_publish_reports" {
   for_each      = local.state_machines_map
   rule      = "${aws_cloudwatch_event_rule.cloudwatch_trigger_publish_reports[each.key].name}"
   arn       = "${aws_lambda_function.publish_reports.arn}"
