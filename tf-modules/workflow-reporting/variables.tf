@@ -20,3 +20,10 @@ variable "state_machine_arns" {
   type        = list(string)
   description = "State machine ARNs that should trigger the report publishing Lambda"
 }
+
+# Optional
+
+variable "permissions_boundary" {
+  type    = string
+  default = null
+}
