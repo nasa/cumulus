@@ -104,22 +104,6 @@ async function handler(event) {
   // if this is the sns call at the end of the execution
   if (isTerminalStatus) {
     eventMessage.meta.status = isFailedStatus ? 'failed' : 'completed';
-    // TODO: What does this do?
-    // const granuleId = get(eventMessage, 'meta.granuleId', null);
-    // if (granuleId) {
-    //   await setGranuleStatus(
-    //     granuleId,
-    //     // config.stack,
-    //     // TODO create env var
-    //     process.env.stackName,
-    //     // config.bucket,
-    //     // TODO create env var
-    //     process.env.bucket,
-    //     // config.stateMachine,
-    //     // config.executionName,
-    //     eventMessage.meta.status
-    //   );
-    // }
   } else {
     eventMessage.meta.status = 'running';
   }
