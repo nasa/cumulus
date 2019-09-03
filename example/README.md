@@ -232,7 +232,7 @@ Jasmine supports wildcard expressions for running tests, so an entire test folde
 
 ### Running Tests on SIT
 
-In the event you are running tests outside of the cumulus sandbox environment you will need to follow the [directions](#update-providers) to update your fake data server provider or alternatively you can set the environment variable `PROVIDER_HOST` to point to the private IP address of your FakeProvider EC2 instance.
+In the event you are running tests outside of the cumulus sandbox environment you will need to follow the [directions](#update-providers) to update your fake data server providers. Alternatively, you can set the environment variable `PROVIDER_HOST` to point to the private IP address of your FakeProvider EC2 instance.
 
 ## Adding tests
 
