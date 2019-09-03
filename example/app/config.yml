@@ -773,6 +773,9 @@ mboyd-test:
   prefix: mboyd-test
   prefixNoDash: mboydTest
 
+  es:
+    volumeSize: 10
+
   ecs:
     ssh: true
     keyPairName: mboyd
