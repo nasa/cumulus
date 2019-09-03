@@ -2,7 +2,7 @@
 
 const get = require('lodash.get');
 const isObject = require('lodash.isobject');
-const { setGranuleStatus, sns } = require('@cumulus/common/aws');
+const { sns } = require('@cumulus/common/aws');
 const errors = require('@cumulus/common/errors');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 
@@ -86,17 +86,6 @@ async function publishSnsMessage(event) {
     // if this is the sns call at the end of the execution
     if (finished) {
       message.meta.status = failed ? 'failed' : 'completed';
-      const granuleId = get(message, 'meta.granuleId', null);
-      if (granuleId) {
-        await setGranuleStatus(
-          granuleId,
-          config.stack,
-          config.bucket,
-          config.stateMachine,
-          config.executionName,
-          message.meta.status
-        );
-      }
     } else {
       message.meta.status = 'running';
     }

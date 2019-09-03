@@ -925,42 +925,6 @@ exports.getStateMachineArn = (executionArn) => {
 };
 
 /**
-* Parse event metadata to get location of granule on S3
-*
-* @param {string} granuleId - the granule id
-* @param {string} stack - the deployment stackname
-* @returns {string} - s3 path
-**/
-exports.getGranuleS3Params = (granuleId, stack) => `${stack}/granules_ingested/${granuleId}`;
-
-/**
-* Set the status of a granule
-*
-* @name setGranuleStatus
-* @param {string} granuleId - granule id
-* @param {string} stack - the deployment stackname
-* @param {string} bucket - the deployment bucket name
-* @param {string} stateMachineArn - statemachine arn
-* @param {string} executionName - execution name
-* @param {string} status - granule status
-* @returns {Promise} returns the response from `S3.put` as a promise
-**/
-exports.setGranuleStatus = async (
-  granuleId,
-  stack,
-  bucket,
-  stateMachineArn,
-  executionName,
-  status
-) => {
-  const key = exports.getGranuleS3Params(granuleId, stack, bucket);
-  const executionArn = exports.getExecutionArn(stateMachineArn, executionName);
-  const params = { Bucket: bucket, Key: key };
-  params.Metadata = { executionArn, status };
-  await exports.s3().putObject(params).promise();
-};
-
-/**
  * Test to see if a given exception is an AWS Throttling Exception
  *
  * @param {Error} err

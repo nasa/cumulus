@@ -4,7 +4,6 @@ const AWS = require('aws-sdk');
 const get = require('lodash.get');
 const isObject = require('lodash.isobject');
 const { pullStepFunctionEvent } = require('@cumulus/common/aws');
-const { setGranuleStatus } = require('@cumulus/common/aws');
 const errors = require('@cumulus/common/errors');
 
 /**
@@ -74,17 +73,6 @@ async function publish(message, finished = false) {
         event.meta.status = 'failed';
       } else {
         event.meta.status = 'completed';
-      }
-      const granuleId = get(event, 'meta.granuleId', null);
-      if (granuleId) {
-        await setGranuleStatus(
-          granuleId,
-          event.meta.stack,
-          event.cumulus_meta.system_bucket,
-          event.cumulus_meta.state_machine,
-          event.cumulus_meta.execution_name,
-          event.meta.status
-        );
       }
     } else {
       event.meta.status = 'running';
