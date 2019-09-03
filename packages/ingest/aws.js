@@ -384,6 +384,5 @@ module.exports = {
   getEndpoint,
   Events,
   StepFunction,
-  getExecutionArn,
   getExecutionUrl
 };
