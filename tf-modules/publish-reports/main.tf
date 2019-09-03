@@ -24,8 +24,8 @@ resource "aws_lambda_function" "publish_reports" {
   role             = "${aws_iam_role.publish_reports_lambda_role.arn}"
   handler          = "index.handler"
   runtime          = "nodejs8.10"
-  timeout          = 300
-  memory_size      = 256
+  timeout          = 30
+  memory_size      = 64
 
   dead_letter_config {
     target_arn = aws_sqs_queue.publish_reports_dead_letter_queue.arn

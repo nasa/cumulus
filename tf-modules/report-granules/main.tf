@@ -10,7 +10,7 @@ resource "aws_lambda_function" "report_granules" {
   role             = "${aws_iam_role.report_granules_lambda_role.arn}"
   handler          = "index.handler"
   runtime          = "nodejs8.10"
-  timeout          = 300
+  timeout          = 30
   memory_size      = 256
 
   source_code_hash = "${data.archive_file.report_granules_package.output_base64sha256}"
