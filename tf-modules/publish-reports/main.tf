@@ -56,7 +56,7 @@ resource "aws_cloudwatch_log_group" "publish_reports_logs" {
 
 resource "aws_cloudwatch_event_rule" "cloudwatch_trigger_publish_reports" {
   for_each      = local.state_machines_map
-  name          = "trigger-publish-reports-${each.key}"
+  name          = "${var.prefix}-trigger-publish-reports-${each.key}"
   event_pattern = <<PATTERN
 {
   "source": ["aws.states"],
