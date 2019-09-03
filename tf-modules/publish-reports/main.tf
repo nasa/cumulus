@@ -20,7 +20,7 @@ data "archive_file" "publish_reports_package" {
 
 resource "aws_lambda_function" "publish_reports" {
   filename         = "${path.module}/build/publish_reports.zip"
-  function_name    = "${var.prefix}-publish-reports"
+  function_name    = "${var.prefix}-publishReports"
   role             = "${aws_iam_role.publish_reports_lambda_role.arn}"
   handler          = "index.handler"
   runtime          = "nodejs8.10"
@@ -56,7 +56,7 @@ resource "aws_cloudwatch_log_group" "publish_reports_logs" {
 
 resource "aws_cloudwatch_event_rule" "cloudwatch_trigger_publish_reports" {
   for_each      = local.state_machines_map
-  name          = "${var.prefix}-trigger-publish-reports-${each.key}"
+  name          = "${var.prefix}-triggerPublishReports-${each.key}"
   event_pattern = <<PATTERN
 {
   "source": ["aws.states"],
@@ -66,6 +66,12 @@ resource "aws_cloudwatch_event_rule" "cloudwatch_trigger_publish_reports" {
   }
 }
 PATTERN
+}
+
+resource "aws_cloudwatch_event_target" "yada" {
+  for_each      = local.state_machines_map
+  rule      = "${aws_cloudwatch_event_rule.cloudwatch_trigger_publish_reports[each.key].name}"
+  arn       = "${aws_lambda_function.publish_reports.arn}"
 }
 
 resource "aws_lambda_permission" "cloudwatch_publish_reports_permission" {

@@ -6,7 +6,7 @@ data "archive_file" "report_granules_package" {
 
 resource "aws_lambda_function" "report_granules" {
   filename         = "${path.module}/build/report_granules.zip"
-  function_name    = "${var.prefix}-report-granules"
+  function_name    = "${var.prefix}-reportGranules"
   role             = "${aws_iam_role.report_granules_lambda_role.arn}"
   handler          = "index.handler"
   runtime          = "nodejs8.10"

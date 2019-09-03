@@ -6,7 +6,7 @@ data "archive_file" "report_pdrs_package" {
 
 resource "aws_lambda_function" "report_pdrs" {
   filename         = "${path.module}/build/report_pdrs.zip"
-  function_name    = "${var.prefix}-report-pdrs"
+  function_name    = "${var.prefix}-reportPdrs"
   role             = "${aws_iam_role.report_pdrs_lambda_role.arn}"
   handler          = "index.handler"
   runtime          = "nodejs8.10"
