@@ -1,11 +1,11 @@
 data "archive_file" "report_pdrs_package" {
   type        = "zip"
-  source_file = "dist/index.js"
-  output_path = "build/report_pdrs.zip"
+  source_file = "${path.module}/dist/index.js"
+  output_path = "${path.module}/build/report_pdrs.zip"
 }
 
 resource "aws_lambda_function" "report_pdrs" {
-  filename         = "build/report_pdrs.zip"
+  filename         = "${path.module}/build/report_pdrs.zip"
   function_name    = "${var.prefix}-report-pdrs"
   role             = "${aws_iam_role.report_pdrs_lambda_role.arn}"
   handler          = "index.handler"

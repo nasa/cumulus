@@ -14,12 +14,12 @@ resource "aws_sqs_queue" "publish_reports_dead_letter_queue" {
 
 data "archive_file" "publish_reports_package" {
   type        = "zip"
-  source_file = "dist/index.js"
-  output_path = "build/publish_reports.zip"
+  source_file = "${path.module}/dist/index.js"
+  output_path = "${path.module}/build/publish_reports.zip"
 }
 
 resource "aws_lambda_function" "publish_reports" {
-  filename         = "build/publish_reports.zip"
+  filename         = "${path.module}/build/publish_reports.zip"
   function_name    = "${var.prefix}-publish-reports"
   role             = "${aws_iam_role.publish_reports_lambda_role.arn}"
   handler          = "index.handler"

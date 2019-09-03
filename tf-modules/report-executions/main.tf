@@ -1,11 +1,11 @@
 data "archive_file" "report_executions_package" {
   type        = "zip"
-  source_file = "dist/index.js"
-  output_path = "build/report_executions.zip"
+  source_file = "${path.module}/dist/index.js"
+  output_path = "${path.module}/build/report_executions.zip"
 }
 
 resource "aws_lambda_function" "report_executions" {
-  filename         = "build/report_executions.zip"
+  filename         = "${path.module}/build/report_executions.zip"
   function_name    = "${var.prefix}-reportExecutions"
   role             = "${aws_iam_role.report_executions_lambda_role.arn}"
   handler          = "index.handler"

@@ -1,11 +1,11 @@
 data "archive_file" "report_granules_package" {
   type        = "zip"
-  source_file = "dist/index.js"
-  output_path = "build/report_granules.zip"
+  source_file = "${path.module}/dist/index.js"
+  output_path = "${path.module}/build/report_granules.zip"
 }
 
 resource "aws_lambda_function" "report_granules" {
-  filename         = "build/report_granules.zip"
+  filename         = "${path.module}/build/report_granules.zip"
   function_name    = "${var.prefix}-report-granules"
   role             = "${aws_iam_role.report_granules_lambda_role.arn}"
   handler          = "index.handler"
