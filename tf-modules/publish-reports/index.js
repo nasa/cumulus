@@ -8,6 +8,7 @@ const {
   isTerminalSfStatus
 } = require('@cumulus/common/cloudwatch-event');
 const log = require('@cumulus/common/log');
+const StepFunctions = require('@cumulus/common/StepFunctions');
 
 /**
  * Publish a message to an SNS topic.
@@ -91,13 +92,18 @@ async function publishPdrSnsMessage(
 async function handler(event) {
   const eventStatus = getSfEventStatus(event);
   const isTerminalStatus = isTerminalSfStatus(eventStatus);
-
-  // TODO: if execution is a failure, this won't return anything
-  const eventMessage = isTerminalStatus
-    ? getSfEventMessageObject(event, 'output')
-    : getSfEventMessageObject(event, 'input', '{}');
-
   const isFailedStatus = isFailedSfStatus(eventStatus);
+  let eventMessage;
+
+  if (isFailedSfStatus) {
+    eventMessage = {};
+    // TODO: Get actual event message from execution history
+    // const executionHistory = await StepFunctions.getExecutionHistory({ executionArn });
+  } else {
+    eventMessage = isTerminalStatus
+      ? getSfEventMessageObject(event, 'output')
+      : getSfEventMessageObject(event, 'input', '{}');
+  }
 
   eventMessage.meta = eventMessage.meta || {};
 
