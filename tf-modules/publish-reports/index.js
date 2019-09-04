@@ -7,6 +7,9 @@ const {
   isFailedSfStatus,
   isTerminalSfStatus
 } = require('@cumulus/common/cloudwatch-event');
+const {
+  getMessageExecutionArn
+} = require('@cumulus/common/message');
 const log = require('@cumulus/common/log');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 
@@ -93,17 +96,20 @@ async function handler(event) {
   const eventStatus = getSfEventStatus(event);
   const isTerminalStatus = isTerminalSfStatus(eventStatus);
   const isFailedStatus = isFailedSfStatus(eventStatus);
-  let eventMessage;
 
-  if (isFailedSfStatus) {
-    eventMessage = {};
-    // TODO: Get actual event message from execution history
-    // const executionHistory = await StepFunctions.getExecutionHistory({ executionArn });
-  } else {
-    eventMessage = isTerminalStatus
-      ? getSfEventMessageObject(event, 'output')
-      : getSfEventMessageObject(event, 'input', '{}');
-  }
+  const eventMessage = isTerminalStatus && !isFailedStatus
+    ? getSfEventMessageObject(event, 'output')
+    : getSfEventMessageObject(event, 'input', '{}');
+
+  // TODO: Get event message from first failed step from execution history for failed executions
+  /*if (isFailedSfStatus) {
+    const executionArn = getMessageExecutionArn(eventMessage);
+    const executionHistory = await StepFunctions.getExecutionHistory({ executionArn });
+    for (let i = 0; i < executionHistory.events.length; i += 1) {
+      const sfEvent = executionHistory.events[i];
+      updatedEvents.push(getEventDetails(sfEvent));
+    }
+  }*/
 
   eventMessage.meta = eventMessage.meta || {};
 
