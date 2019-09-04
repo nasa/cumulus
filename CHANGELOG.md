@@ -7,7 +7,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- **CUMULUS-1432**
+  - `logs` endpoint takes the level parameter as a string and not a number
+  - Elasticsearch term query generation no longer converts numbers to boolean
+
 ### Fixed
+
+- **CUMULUS-1432** `logs` endpoint filter correctly filters logs by level
+
+## [v1.14.1] - 2019-08-29
+
+### Fixed
+
+- **CUMULUS-1455**
+  - CMR token links updated to point to CMR legacy services rather than echo
 
 - **CUMULUS-1211**
   - Errors thrown during granule discovery are no longer swallowed and ignored.
@@ -192,6 +207,12 @@ If you deploy with no distribution app your deployment will succeed but you may 
     - Removed `@cumulus/api/lib/testUtils.fakeFilesFactory`. Use `@cumulus/api/lib/testUtils.fakeFileFactory` instead.
     - Removed `@cumulus/cmrjs/cmr` functions: `searchConcept`, `ingestConcept`, `deleteConcept`. Use the functions in `@cumulus/cmr-client` instead.
     - Removed `@cumulus/ingest/aws.getExecutionHistory`. Use `@cumulus/common/StepFunctions.getExecutionHistory` instead.
+
+## [v1.13.5] - 2019-08-29
+
+### Fixed
+
+- **CUMULUS-1455** - CMR token links updated to point to CMR legacy services rather than echo
 
 ## [v1.13.4] - 2019-07-29
 
@@ -1336,8 +1357,10 @@ We may need to update the api documentation to reflect this.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v1.14.0...HEAD
-[v1.14.0]: https://github.com/nasa/cumulus/compare/v1.13.4...v1.14.0
+[Unreleased]: https://github.com/nasa/cumulus/compare/v1.14.1...HEAD
+[v1.14.1]: https://github.com/nasa/cumulus/compare/v1.14.0...v1.14.1
+[v1.14.0]: https://github.com/nasa/cumulus/compare/v1.13.5...v1.14.0
+[v1.13.5]: https://github.com/nasa/cumulus/compare/v1.13.4...v1.13.5
 [v1.13.4]: https://github.com/nasa/cumulus/compare/v1.13.3...v1.13.4
 [v1.13.3]: https://github.com/nasa/cumulus/compare/v1.13.2...v1.13.3
 [v1.13.2]: https://github.com/nasa/cumulus/compare/v1.13.1...v1.13.2
