@@ -4,7 +4,7 @@ const get = require('lodash.get');
 const pLimit = require('p-limit');
 
 const { getExecutionArn } = require('@cumulus/common/aws');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { getCollectionIdFromMessage } = require('@cumulus/common/message');
 const aws = require('@cumulus/ingest/aws');
 
 const executionSchema = require('./schemas').execution;
@@ -32,9 +32,7 @@ class Execution extends Manager {
     }
 
     const execution = aws.getExecutionUrl(arn);
-    const collectionId = constructCollectionId(
-      get(payload, 'meta.collection.name'), get(payload, 'meta.collection.version')
-    );
+    const collectionId = getCollectionIdFromMessage(payload);
 
     const doc = {
       name,
@@ -44,7 +42,7 @@ class Execution extends Manager {
       tasks: get(payload, 'meta.workflow_tasks'),
       error: parseException(payload.exception),
       type: get(payload, 'meta.workflow_name'),
-      collectionId: collectionId,
+      collectionId,
       status: get(payload, 'meta.status', 'unknown'),
       createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
       timestamp: Date.now()

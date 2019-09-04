@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('ava');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { randomId, randomNumber, randomString } = require('@cumulus/common/test-utils');
 
 const { deconstructCollectionId } = require('../../lib/utils');
@@ -55,20 +56,6 @@ const createPdrMessage = ({
 test('createPdrFromSns() returns undefined when no PDR name exists', async (t) => {
   const record = await pdrsModel.createPdrFromSns(createPdrMessage());
   t.is(record, undefined);
-});
-
-test('createPdrFromSns() throws error when meta.collection is missing', async (t) => {
-  const message = createPdrMessage();
-
-  delete message.meta.collection;
-  message.payload.pdr = {
-    name: randomId('pdr')
-  };
-
-  await t.throws(
-    () => pdrsModel.createPdrFromSns(message),
-    { instanceOf: TypeError }
-  );
 });
 
 test('createPdrFromSns() creates a PDR record when payload.pdr is set', async (t) => {
