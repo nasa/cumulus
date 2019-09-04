@@ -97,6 +97,12 @@ const getMaximumExecutions = (message, queueName) => {
   return maxExecutions;
 };
 
+/**
+ * Get the execution ARN from a workflow message.
+ *
+ * @param {Object} message - A workflow message object
+ * @returns {null|string} - A state machine execution ARN
+ */
 const getMessageExecutionArn = (message) => {
   const stateMachineArn = get(message, 'cumulus_meta.state_machine');
   if (!isString(stateMachineArn)) return null;

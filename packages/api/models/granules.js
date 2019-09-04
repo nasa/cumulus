@@ -307,15 +307,7 @@ class Granule extends Manager {
 
     if (!granules) return null;
 
-    // const executionName = get(cumulusMessage, 'cumulus_meta.execution_name');
-    // if (!isString(executionName)) return null;
-
-    // const stateMachine = get(cumulusMessage, 'cumulus_meta.state_machine');
-    // if (!isString(stateMachine)) return null;
-
-    // const executionArn = commonAws.getExecutionArn(stateMachine, executionName);
     const executionArn = getMessageExecutionArn(cumulusMessage);
-
     const executionUrl = aws.getExecutionUrl(executionArn);
     const executionDescription = await StepFunctions.describeExecution({ executionArn });
 
