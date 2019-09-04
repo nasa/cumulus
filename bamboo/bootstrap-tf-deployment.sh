@@ -61,7 +61,7 @@ cd data-persistence-tf
 echo "terraform {
   backend \"s3\" {
     bucket = \"$TFSTATE_BUCKET\"
-    key    = $DATA_PERSISTENCE_KEY
+    key    = \"$DATA_PERSISTENCE_KEY\"
     region = \"$AWS_REGION\"
   }
 }" >> ci_backend.tf
