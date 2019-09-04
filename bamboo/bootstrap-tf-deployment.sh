@@ -81,7 +81,7 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
 ../terraform apply "terraform.tfplan"
 
 # Test that deployment succeded by returning exit code.
-EXIT_CODE = $?
+EXIT_CODE=$?
 if [ $EXIT_CODE -ne  0 ]; then
   exit $EXIT_CODE
 fi
