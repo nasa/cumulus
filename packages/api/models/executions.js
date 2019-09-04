@@ -26,15 +26,6 @@ class Execution extends Manager {
   }
 
   generateDocFromPayload(payload) {
-    // const name = get(payload, 'cumulus_meta.execution_name');
-    // const arn = getExecutionArn(
-    //   get(payload, 'cumulus_meta.state_machine'),
-    //   name
-    // );
-    // if (!arn) {
-    //   throw new Error('Execution ARN is missing. Must be included in the cumulus_meta');
-    // }
-
     const executionName = getMessageExecutionName(payload);
     const stateMachineArn = getMessageStateMachineArn(payload);
     const arn = getExecutionArn(
