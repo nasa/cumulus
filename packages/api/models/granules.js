@@ -6,22 +6,28 @@ const isString = require('lodash.isstring');
 const partial = require('lodash.partial');
 const path = require('path');
 
-const aws = require('@cumulus/ingest/aws');
 const commonAws = require('@cumulus/common/aws');
-const StepFunctions = require('@cumulus/common/StepFunctions');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+
 const { CMR } = require('@cumulus/cmr-client');
 const cmrjs = require('@cumulus/cmrjs');
-const log = require('@cumulus/common/log');
-const launchpad = require('@cumulus/common/launchpad');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
+const launchpad = require('@cumulus/common/launchpad');
+const log = require('@cumulus/common/log');
+const StepFunctions = require('@cumulus/common/StepFunctions');
 const { buildURL } = require('@cumulus/common/URLUtils');
-const { deprecate, removeNilProperties } = require('@cumulus/common/util');
+const {
+  deprecate,
+  isNil,
+  removeNilProperties,
+  renameProperty
+} = require('@cumulus/common/util');
+
+const aws = require('@cumulus/ingest/aws');
 const {
   generateMoveFileParams,
   moveGranuleFiles
 } = require('@cumulus/ingest/granule');
-const { constructCollectionId } = require('@cumulus/common');
-const { isNil, renameProperty } = require('@cumulus/common/util');
 
 const Manager = require('./base');
 

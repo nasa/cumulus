@@ -1,12 +1,12 @@
 'use strict';
 
-const aws = require('@cumulus/ingest/aws');
 const get = require('lodash.get');
-
 const pLimit = require('p-limit');
 
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { getExecutionArn } = require('@cumulus/common/aws');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const aws = require('@cumulus/ingest/aws');
+
 const executionSchema = require('./schemas').execution;
 const Manager = require('./base');
 const { parseException } = require('../lib/utils');
