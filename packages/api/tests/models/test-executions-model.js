@@ -1,63 +1,91 @@
 'use strict';
 
 const test = require('ava');
-const { randomString } = require('@cumulus/common/test-utils');
-const schemas = require('../../models/schemas');
-const { Manager, Execution } = require('../../models');
+const sinon = require('sinon');
 
-let arn;
-let doc;
-let manager;
-let name;
+const { randomString } = require('@cumulus/common/test-utils');
+
+const Execution = require('../../models/executions');
+
+// let arn;
+// let doc;
+// let manager;
+// let name;
 let executionModel;
+let generateDocStub;
 
 const originalPayload = { op: 'originalPayload' };
 
-function returnDoc(docArn, status) {
+function returnDoc(status) {
   return {
-    name: name,
-    arn: docArn,
+    name: randomString(),
+    arn: randomString(),
     execution: 'testExecution',
     collectionId: 'testCollectionId',
     parentArn: 'parentArn',
     error: { test: 'error' },
     type: 'testType',
-    status: status,
+    status,
     createdAt: 123456789,
     timestamp: 123456789,
     updatedAt: 123456789
   };
 }
 
-async function setupRecord(executionStatus) {
-  arn = randomString();
-  name = randomString();
-  executionModel = new Execution();
-  doc = returnDoc(arn, executionStatus);
-  executionModel.generateDocFromPayload = (_payload) => returnDoc(arn, executionStatus);
+async function setupRecord() {
+  // arn = randomString();
+  // name = randomString();
+  // doc = returnDoc(executionStatus);
+  // executionModel.generateDocFromPayload = (_payload) => returnDoc(arn, executionStatus);
   await executionModel.createExecutionFromSns({ payload: originalPayload });
 }
 
 test.before(async () => {
   process.env.ExecutionsTable = randomString();
-  manager = new Manager({
-    tableName: process.env.ExecutionsTable,
-    tableHash: { name: 'arn', type: 'S' },
-    schema: schemas.execution
-  });
-  await manager.createTable();
+  executionModel = new Execution();
+  await executionModel.createTable();
 });
 
 test.after.always(async () => {
-  await manager.deleteTable();
+  await executionModel.deleteTable();
 });
 
-test.beforeEach(async () => {
-  await setupRecord('running');
+test.beforeEach(async (t) => {
+  t.context.doc = returnDoc('running');
+
+  generateDocStub = sinon.stub(executionModel, 'generateDocFromPayload').callsFake(() => {
+    return returnDoc('running');
+  });
+
+  // await setupRecord('running');
+  // await executionModel.createExecutionFromSns({ payload: originalPayload });
 });
 
-test.afterEach(async () => {
-  await executionModel.delete({ arn: arn });
+test.afterEach(async (t) => {
+  const { doc } = t.context;
+  await executionModel.delete({ arn: doc.arn });
+});
+
+test.serial('generateDocFromPayload using payload without cumulus_meta.state_machine throws error', (t) => {
+  generateDocStub.restore();
+  t.throws(
+    () => executionModel.generateDocFromPayload({
+      cumulus_meta: {
+        execution_name: randomString()
+      }
+    })
+  );
+});
+
+test.serial.only('generateDocFromPayload using payload without cumulus_meta.execution_name throws error', (t) => {
+  generateDocStub.restore();
+  t.throws(
+    () => executionModel.generateDocFromPayload({
+      cumulus_meta: {
+        state_machine: randomString()
+      }
+    })
+  );
 });
 
 test.serial('Creating an execution adds a record to the database with matching values', async (t) => {

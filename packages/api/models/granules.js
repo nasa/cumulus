@@ -2,7 +2,6 @@
 
 const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
-// const isString = require('lodash.isstring');
 const partial = require('lodash.partial');
 const path = require('path');
 

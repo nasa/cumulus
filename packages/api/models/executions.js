@@ -7,6 +7,10 @@ const pLimit = require('p-limit');
 
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { getExecutionArn } = require('@cumulus/common/aws');
+const {
+  getMessageExecutionName,
+  getMessageStateMachineArn
+} = require('@cumulus/common/message');
 const executionSchema = require('./schemas').execution;
 const Manager = require('./base');
 const { parseException } = require('../lib/utils');
@@ -22,14 +26,21 @@ class Execution extends Manager {
   }
 
   generateDocFromPayload(payload) {
-    const name = get(payload, 'cumulus_meta.execution_name');
+    // const name = get(payload, 'cumulus_meta.execution_name');
+    // const arn = getExecutionArn(
+    //   get(payload, 'cumulus_meta.state_machine'),
+    //   name
+    // );
+    // if (!arn) {
+    //   throw new Error('Execution ARN is missing. Must be included in the cumulus_meta');
+    // }
+
+    const executionName = getMessageExecutionName(payload);
+    const stateMachineArn = getMessageStateMachineArn(payload);
     const arn = getExecutionArn(
-      get(payload, 'cumulus_meta.state_machine'),
-      name
+      stateMachineArn,
+      executionName
     );
-    if (!arn) {
-      throw new Error('State Machine Arn is missing. Must be included in the cumulus_meta');
-    }
 
     const execution = aws.getExecutionUrl(arn);
     const collectionId = constructCollectionId(
@@ -37,7 +48,7 @@ class Execution extends Manager {
     );
 
     const doc = {
-      name,
+      name: executionName,
       arn,
       parentArn: get(payload, 'cumulus_meta.parentExecutionArn'),
       execution,
