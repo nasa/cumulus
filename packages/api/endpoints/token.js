@@ -9,6 +9,9 @@ const {
   TokenExpiredError
 } = require('jsonwebtoken');
 const {
+  OAuth2AuthenticationError
+} = require('../lib/OAuth2');
+const {
   TokenUnauthorizedUserError
 } = require('../lib/errors');
 
@@ -243,6 +246,9 @@ function buildOAuth2ProviderFromEnv() {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function tokenEndpoint(req, res) {
+  if (process.env.OAUTH_PROVIDER === 'launchpad') {
+    throw new OAuth2AuthenticationError('Retrieve token from Launchpad');
+  }
   const oAuth2Provider = buildOAuth2ProviderFromEnv();
   return login(req, oAuth2Provider, res);
 }
