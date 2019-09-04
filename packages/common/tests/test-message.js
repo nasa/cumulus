@@ -4,15 +4,19 @@ const test = require('ava');
 const rewire = require('rewire');
 const message = rewire('../message');
 
+const { getExecutionArn } = require('../aws');
 const { randomId, randomString } = require('../test-utils');
 
 const buildCumulusMeta = message.__get__('buildCumulusMeta');
 const buildQueueMessageFromTemplate = message.__get__('buildQueueMessageFromTemplate');
+const getMessageExecutionName = message.__get__('getMessageExecutionName');
+const getMessageStateMachineArn = message.__get__('getMessageStateMachineArn');
+const getMessageExecutionArn = message.__get__('getMessageExecutionArn');
 const getQueueNameByUrl = message.__get__('getQueueNameByUrl');
 const getMessageFromTemplate = message.__get__('getMessageFromTemplate');
 
-const executionName = randomString();
-message.__set__('createExecutionName', () => executionName);
+const fakeExecutionName = randomString();
+message.__set__('createExecutionName', () => fakeExecutionName);
 
 test('buildCumulusMeta returns expected object', (t) => {
   const queueName = randomId('queue');
@@ -23,7 +27,7 @@ test('buildCumulusMeta returns expected object', (t) => {
 
   t.deepEqual(cumulusMeta, {
     queueName,
-    execution_name: executionName
+    execution_name: fakeExecutionName
   });
 
   const parentExecutionArn = randomId('parentArn');
@@ -35,8 +39,39 @@ test('buildCumulusMeta returns expected object', (t) => {
   t.deepEqual(cumulusMeta, {
     queueName,
     parentExecutionArn,
-    execution_name: executionName
+    execution_name: fakeExecutionName
   });
+});
+
+test('getMessageExecutionName throws error if cumulus_meta.execution_name is missing', (t) => {
+  t.throws(
+    () => getMessageExecutionName(),
+    { message: 'cumulus_meta.execution_name not set in message' }
+  );
+});
+
+test('getMessageStateMachineArn throws error if cumulus_meta.state_machine is missing', (t) => {
+  t.throws(
+    () => getMessageStateMachineArn(),
+    { message: 'cumulus_meta.state_machine not set in message' }
+  );
+});
+
+test('getMessageExecutionArn returns correct execution ARN for valid message', (t) => {
+  const stateMachineArn = randomString();
+  const executionName = randomString();
+  const executionArn = getMessageExecutionArn({
+    cumulus_meta: {
+      state_machine: stateMachineArn,
+      execution_name: executionName
+    }
+  });
+  t.is(executionArn, getExecutionArn(stateMachineArn, executionName));
+});
+
+test('getMessageExecutionArn returns null for invalid message', (t) => {
+  const executionArn = getMessageExecutionArn();
+  t.is(executionArn, null);
 });
 
 test('getQueueNameByUrl returns correct value', (t) => {
@@ -104,7 +139,7 @@ test('buildQueueMessageFromTemplate does not overwrite contents from message tem
     },
     cumulus_meta: {
       message_source: 'sfn',
-      execution_name: executionName,
+      execution_name: fakeExecutionName,
       queueName
     },
     payload
@@ -141,7 +176,7 @@ test('buildQueueMessageFromTemplate returns message with correct payload', (t) =
       collection
     },
     cumulus_meta: {
-      execution_name: executionName,
+      execution_name: fakeExecutionName,
       queueName
     },
     payload: {
@@ -184,7 +219,7 @@ test('buildQueueMessageFromTemplate returns expected message with undefined coll
       collection
     },
     cumulus_meta: {
-      execution_name: executionName,
+      execution_name: fakeExecutionName,
       queueName
     },
     payload
@@ -219,7 +254,7 @@ test('buildQueueMessageFromTemplate returns expected message with defined collec
       collection
     },
     cumulus_meta: {
-      execution_name: executionName,
+      execution_name: fakeExecutionName,
       queueName
     },
     payload
@@ -271,7 +306,7 @@ test('buildQueueMessageFromTemplate returns expected message with custom cumulus
       }
     },
     cumulus_meta: {
-      execution_name: executionName,
+      execution_name: fakeExecutionName,
       queueName,
       foo: 'bar',
       object: {

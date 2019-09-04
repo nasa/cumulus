@@ -1,9 +1,10 @@
 const findKey = require('lodash.findkey');
 const get = require('lodash.get');
 const merge = require('lodash.merge');
+const isString = require('lodash.isstring');
 const uuidv4 = require('uuid/v4');
 
-const { isNil, isString } = require('./util');
+const { isNil } = require('./util');
 const { getExecutionArn } = require('./aws');
 
 const {
@@ -98,19 +99,52 @@ const getMaximumExecutions = (message, queueName) => {
 };
 
 /**
+ * Get the execution name from a workflow message.
+ *
+ * @param {Object} message - A workflow message object
+ * @returns {string} - An execution name
+ */
+const getMessageExecutionName = (message) => {
+  const executionName = get(message, 'cumulus_meta.execution_name');
+  if (!isString(executionName)) {
+    throw new Error('cumulus_meta.execution_name not set in message');
+  }
+  return executionName;
+};
+
+/**
+ * Get the state machine ARN from a workflow message.
+ *
+ * @param {Object} message - A workflow message object
+ * @returns {string} - A state machine ARN
+ */
+const getMessageStateMachineArn = (message) => {
+  const stateMachineArn = get(message, 'cumulus_meta.state_machine');
+  if (!isString(stateMachineArn)) {
+    throw new Error('cumulus_meta.state_machine not set in message');
+  }
+  return stateMachineArn;
+};
+
+/**
  * Get the execution ARN from a workflow message.
  *
  * @param {Object} message - A workflow message object
  * @returns {null|string} - A state machine execution ARN
  */
 const getMessageExecutionArn = (message) => {
-  const stateMachineArn = get(message, 'cumulus_meta.state_machine');
-  if (!isString(stateMachineArn)) return null;
-
-  const executionName = get(message, 'cumulus_meta.execution_name');
-  if (!isString(executionName)) return null;
-
-  return getExecutionArn(stateMachineArn, executionName);
+  let stateMachineArn;
+  let executionName;
+  try {
+    stateMachineArn = getMessageStateMachineArn(message);
+    executionName = getMessageExecutionName(message);
+  } catch (err) {
+    return null;
+  }
+  return getExecutionArn(
+    stateMachineArn,
+    executionName
+  );
 };
 
 /**
@@ -193,6 +227,8 @@ module.exports = {
   getQueueName,
   getMaximumExecutions,
   getMessageExecutionArn,
+  getMessageExecutionName,
   getMessageFromTemplate,
+  getMessageStateMachineArn,
   hasQueueAndExecutionLimit
 };
