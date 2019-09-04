@@ -61,7 +61,9 @@ default:
   # test configuration ends
 
   cmaDir: '/opt/'
-  cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:4
+  sandbox_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:4
+  sit_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:1
+  cma_layer: '{{sandbox_cma_layer}}'
   prefix: 'test-cumulus-integration'
   prefixNoDash: TestCumulusIntegration
   useNgapPermissionBoundary: true
@@ -331,6 +333,7 @@ cumulus-sit:
     protected-2:
       name: cumulus-sit-protected
       type: protected
+  cma_layer: '{{sit_cma_layer}}'
 
 # -------------------------------
 # CUMULUS individual deployments.
@@ -736,6 +739,46 @@ mhs4:
       logApiGatewayToCloudWatch: true
   logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
 
+mhs2:
+  prefix: mhs2
+  prefixNoDash: mhs2
+  buckets:
+    internal:
+      name: mhs2-internal
+      type: internal
+    private:
+      name: mhs2-private
+      type: private
+    protected:
+      name: mhs2-protected
+      type: protected
+    public:
+      name: mhs2-public
+      type: public
+    protected-2:
+      name: mhs2-protected-2
+      type: protected
+    dashboard:
+      name: mhs2-dashboard
+      type: protected
+    shared:
+      name: cumulus-data-shared
+      type: shared
+  system_bucket: mhs2-internal
+  api_distribution_url:
+  ecs:
+    ssh: true
+    keyPairName: mhs-sit
+  apiConfigs:
+    backend:
+      private: true
+      port: 8022
+    distribution:
+      private: true
+      port: 7022
+      logApiGatewayToCloudWatch: true
+  logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
+  cma_layer: '{{sit_cma_layer}}'
 
 jk:
   prefix: jk
