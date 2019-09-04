@@ -16,7 +16,7 @@ else
   npm run bootstrap
 fi
 
-echo "Locking stack for deployment $DEPLOYMENT"
+echo "Locking stack for deployment $DEPLOYMENT-tf"
 
 cd example
 set +e
@@ -33,7 +33,7 @@ fi
 
 # TODO Necessary in Terraform?
 # Wait for the stack to be available
-node ./scripts/lock-stack.js true $DEPLOYMENT
+node ./scripts/lock-stack.js true $DEPLOYMENT-tf
 LOCK_EXISTS_STATUS=$?
 echo "Locking status $LOCK_EXISTS_STATUS"
 
@@ -43,10 +43,10 @@ while [[ $LOCK_EXISTS_STATUS == 100 ]]; do
     echo "Timed out waiting for stack to become available"
     exit 1
   fi
-  echo "Another build is using the ${DEPLOYMENT} stack."
+  echo "Another build is using the ${DEPLOYMENT}-tf stack."
   sleep 30
   ((COUNTER++))
-  node ./scripts/lock-stack.js true $DEPLOYMENT
+  node ./scripts/lock-stack.js true $DEPLOYMENT-tf
   LOCK_EXISTS_STATUS=$?
 done
 if [[ $LOCK_EXIST_STATUS -gt 0 ]]; then
@@ -54,7 +54,7 @@ if [[ $LOCK_EXIST_STATUS -gt 0 ]]; then
 fi
 set -e
 
-DATA_PERSISTENCE_KEY="$DEPLOYMENT/data-persistence/terraform.tfstate"
+DATA_PERSISTENCE_KEY="$DEPLOYMENT-tf/data-persistence/terraform.tfstate"
 
 cd data-persistence-tf
 # Ensure remote state is configured for the deployment
@@ -71,11 +71,11 @@ echo "terraform {
   -input=false
 
 # Deploy data-persistence-tf via terraform
-echo "Deploying Cumulus example to $DEPLOYMENT"
+echo "Deploying Cumulus example to $DEPLOYMENT-tf"
 ../terraform plan \
   -out=terraform.tfplan \
   -input=false \
-  -var "prefix=$DEPLOYMENT" \
+  -var "prefix=$DEPLOYMENT-tf" \
   -var "aws_region=$AWS_REGION" \
   -var "subnet_ids=[\"$AWS_SUBNET\"]"
 ../terraform apply "terraform.tfplan"
@@ -91,7 +91,7 @@ cd ../cumulus-tf
 echo "terraform {
   backend \"s3\" {
     bucket = \"$TFSTATE_BUCKET\"
-    key    = \"$DEPLOYMENT/cumulus/terraform.tfstate\"
+    key    = \"$DEPLOYMENT-tf/cumulus/terraform.tfstate\"
     region = \"$AWS_REGION\"
   }
 }" >> ci_backend.tf
@@ -101,7 +101,7 @@ echo "terraform {
   -input=false
 
 # Deploy cumulus-tf via terraform
-echo "Deploying Cumulus example to $DEPLOYMENT"
+echo "Deploying Cumulus example to $DEPLOYMENT-tf"
 ../terraform plan \
   -out=terraform.tfplan \
   -input=false \
@@ -109,7 +109,7 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var-file="../deployments/$DEPLOYMENT.tfvars" \
   -var "cmr_username=$CMR_USERNAME" \
   -var "cmr_password=$CMR_PASSWORD" \
-  -var "cmr_client_id=cumulus-core-$DEPLOYMENT" \
+  -var "cmr_client_id=cumulus-core-$DEPLOYMENT-tf" \
   -var "cmr_provider=CUMULUS" \
   -var "cmr_environment=UAT" \
   -var "data_persistence_remote_state_config={ bucket: \"$TFSTATE_BUCKET\", key: \"$DATA_PERSISTENCE_KEY\" }" \

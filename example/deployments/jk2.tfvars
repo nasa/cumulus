@@ -1,1 +1,1 @@
-prefix = "jk2"
+prefix = "jk2-tf"
