@@ -107,6 +107,14 @@ If you deploy with no distribution app your deployment will succeed but you may 
     - IAM permissions for the Lambda
     - Subscription for the Lambda to the SNS topic
 
+- **CUMULUS-1393**
+  - Added `tf-modules/report-pdrs` Terraform module which processes PDR ingest notifications received via SNS and stores PDR data to a database. The module includes:
+    - SNS topic for publishing PDR ingest notifications
+    - Lambda to process PDR notifications and store data
+    - IAM permissions for the Lambda
+    - Subscription for the Lambda to the SNS topic
+  - Added unit tests for `@cumulus/api/models/pdrs.createPdrFromSns()`
+
 - **CUMULUS-1400**
   - Added `tf-modules/report-executions` Terraform module which processes workflow execution information received via SNS and stores it to a database. The module includes:
     - SNS topic for publishing execution data
