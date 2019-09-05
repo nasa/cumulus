@@ -97,11 +97,6 @@ data "aws_iam_policy_document" "lambda_processing_policy" {
   }
 
   statement {
-    actions   = ["s3:PutBucketPolicy"]
-    resources = ["arn:aws:s3:::${var.prefix}-*"]
-  }
-
-  statement {
     actions = [
       "dynamodb:DeleteItem",
       "dynamodb:GetItem",
