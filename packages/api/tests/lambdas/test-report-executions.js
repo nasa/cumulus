@@ -2,12 +2,12 @@
 
 const test = require('ava');
 
-const { Execution } = require('@cumulus/api/models');
 const { getExecutionArn } = require('@cumulus/common/aws');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 
-const { getReportExecutionMessages, handler } = require('..');
+const Execution = require('../../models/executions');
+const { getReportExecutionMessages, handler } = require('../../lambdas/report-executions');
 
 const createExecutionMessage = ({
   status,

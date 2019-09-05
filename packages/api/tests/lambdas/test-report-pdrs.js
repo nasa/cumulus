@@ -2,11 +2,12 @@
 
 const test = require('ava');
 
-const Pdr = require('@cumulus/api/models/pdrs');
-const { fakePdrFactoryV2 } = require('@cumulus/api/lib/testUtils');
-const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
 const { randomId, randomString, randomNumber } = require('@cumulus/common/test-utils');
-const { handler, getReportPdrMessages } = require('..');
+
+const Pdr = require('../../models/pdrs');
+const { handler, getReportPdrMessages } = require('../../lambdas/report-pdrs');
+const { fakePdrFactoryV2 } = require('../../lib/testUtils');
+const { deconstructCollectionId } = require('../../lib/utils');
 
 let executionName;
 let pdrsModel;

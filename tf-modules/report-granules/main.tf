@@ -1,6 +1,6 @@
 data "archive_file" "report_granules_package" {
   type        = "zip"
-  source_file = "${path.module}/dist/index.js"
+  source_file = "${path.module}/node_modules/@cumulus/api/dist/reportGranules/index.js"
   output_path = "${path.module}/build/report_granules.zip"
 }
 

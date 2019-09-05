@@ -3,14 +3,14 @@
 const test = require('ava');
 const sinon = require('sinon');
 
-const Granule = require('@cumulus/api/models/granules');
 const StepFunctions = require('@cumulus/common/StepFunctions');
-const { fakeGranuleFactoryV2, fakeFileFactory } = require('@cumulus/api/lib/testUtils');
-const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
 const { randomId, randomString, randomNumber } = require('@cumulus/common/test-utils');
 const { getSnsEventMessageObject } = require('@cumulus/common/sns-event');
-const { handler, getReportGranuleMessages } = require('..');
 
+const { handler, getReportGranuleMessages } = require('../../lambdas/report-granules');
+const { fakeGranuleFactoryV2, fakeFileFactory } = require('../../lib/testUtils');
+const { deconstructCollectionId } = require('../../lib/utils');
+const Granule = require('../../models/granules');
 
 const startDate = new Date(Date.UTC(2019, 8, 1));
 const stopDate = new Date(Date.UTC(2019, 8, 1, 1));

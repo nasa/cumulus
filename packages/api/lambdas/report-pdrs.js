@@ -6,7 +6,9 @@ const {
   isSnsEvent,
   getSnsEventMessageObject
 } = require('@cumulus/common/sns-event');
-const Pdr = require('@cumulus/api/models/pdrs');
+// Temporarily change require while this module resides in the API package
+// const Pdr = require('@cumulus/api/models/pdrs');
+const Pdr = require('../models/pdrs');
 
 /**
  * Process Cumulus message object and create PDR database records.
