@@ -67,10 +67,6 @@ function makeLambdaFunctionFail(event) {
  * Cumulus Message Adapter. See schemas/input.json for detailed input schema.
  * @param {Object} event.config - configuration object for the task
  * @param {Object} event.config.sfnEnd - indicate if it's the last step of the step function
- * @param {string} event.config.stack - the name of the deployment stack
- * @param {string} event.config.bucket - S3 bucket
- * @param {string} event.config.stateMachine - current state machine
- * @param {string} event.config.executionName - execution name
  * @returns {Promise.<Object>} - AWS SNS response or error in case of step function
  *  failure.
  */
