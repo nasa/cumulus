@@ -14,7 +14,7 @@ resource "aws_sqs_queue" "publish_reports_dead_letter_queue" {
 
 data "archive_file" "publish_reports_package" {
   type        = "zip"
-  source_file = "${path.module}/dist/index.js"
+  source_file = "${path.module}/node_modules/@cumulus/api/publishReports/index.js"
   output_path = "${path.module}/build/publish_reports.zip"
 }
 
