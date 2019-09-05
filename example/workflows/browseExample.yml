@@ -122,7 +122,7 @@ CookbookBrowseExample:
                 - source: '{$}'
                   destination: '{$.payload}'
                 - source: '{$.process}'
-                  destination: '{$.cumulus_meta.process}'
+                  destination: '{$.meta.process}'        
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -211,9 +211,9 @@ CookbookBrowseExample:
             stack: '{$.meta.stack}'
             cmr: '{$.meta.cmr}'
             launchpad: '{$.meta.launchpad}'
-            process: '{$.cumulus_meta.process}'
+            process: '{$.meta.process}'
             input_granules: '{$.meta.input_granules}'
-            granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+            granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'       
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
       Retry:

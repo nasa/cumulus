@@ -44,7 +44,8 @@ SyncGranule:
                 - source: '{$}'
                   destination: '{$.payload}'
                 - source: '{$.process}'
-                  destination: '{$.cumulus_meta.process}'
+                  destination: '{$.meta.process}'        
+      Parameters: '{$.meta}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -109,20 +110,20 @@ IngestAndPublishGranule:
             FullMessage: true
           task_config:
             buckets: '{$.meta.buckets}'
-            provider: '{$.meta.provider}'
-            collection: '{$.meta.collection}'
-            stack: '{$.meta.stack}'
-            downloadBucket: '{$.cumulus_meta.system_bucket}'
-            duplicateHandling: '{$.meta.collection.duplicateHandling}'
-            pdr: '{$.meta.pdr}'
-            cumulus_message:
-              outputs:
-                - source: '{$.granules}'
-                  destination: '{$.meta.input_granules}'
-                - source: '{$}'
-                  destination: '{$.payload}'
-                - source: '{$.process}'
-                  destination: '{$.cumulus_meta.process}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        stack: '{$.meta.stack}'
+        downloadBucket: '{$.cumulus_meta.system_bucket}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
+        pdr: '{$.meta.pdr}'
+        cumulus_message:
+          outputs:
+            - source: '{$.granules}'
+              destination: '{$.meta.input_granules}'
+            - source: '{$}'
+              destination: '{$.payload}'
+            - source: '{$.process}'
+              destination: '{$.meta.process}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -223,7 +224,7 @@ IngestAndPublishGranule:
             stack: '{$.meta.stack}'
             cmr: '{$.meta.cmr}'
             launchpad: '{$.meta.launchpad}'
-            process: '{$.cumulus_meta.process}'
+            process: '{$.meta.process}'        
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
       Retry:
@@ -303,7 +304,7 @@ IngestGranule:
                 - source: '{$}'
                   destination: '{$.payload}'
                 - source: '{$.process}'
-                  destination: '{$.meta.process}'
+                  destination: '{$.meta.process}'        
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -544,8 +545,6 @@ ParsePdr:
           Next: StopStatus
       Next: CheckStatus
     CheckStatus:
-      Type: Task
-      Resource: ${PdrStatusCheckLambdaFunction.Arn}
       Parameters:
         cma:
           event.$: '$'
@@ -557,7 +556,9 @@ ParsePdr:
                 - source: '{$}'
                   destination: '{$.payload}'
                 - source: '{$.isFinished}'
-                  destination: '{$.cumulus_meta.isPdrFinished}'
+                  destination: '{$.meta.isPdrFinished}'
+      Type: Task
+      Resource: ${PdrStatusCheckLambdaFunction.Arn}
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
