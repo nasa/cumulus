@@ -125,6 +125,16 @@ SfSnsReport:
   layers:
     - '{{cma_layer}}'
   launchInVpc: true
+  envs:
+    execution_sns_topic_arn:
+      function: Ref
+      value: reportExecutionsSns
+    granule_sns_topic_arn:
+      function: Ref
+      value: reportGranulesSns
+    pdr_sns_topic_arn:
+      function: Ref
+      value: reportPdrsSns
 SyncGranule:
   handler: index.handler
   timeout: 300
