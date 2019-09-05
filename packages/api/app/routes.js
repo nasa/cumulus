@@ -94,7 +94,7 @@ router.post('/refresh', token.refreshEndpoint);
 
 router.use('/dashboard', dashboard);
 
-router.use('/elasticsearch', ensureAuthorized, elasticsearch);
+router.use('/elasticsearch', elasticsearch);
 
 router.use('/ems', ensureAuthorized, ems);
 
