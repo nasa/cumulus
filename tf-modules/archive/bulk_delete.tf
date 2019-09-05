@@ -2,8 +2,8 @@ resource "aws_lambda_function" "bulk_delete" {
   depends_on = [aws_iam_role.lambda_processing]
 
   function_name    = "${var.prefix}-BulkDelete"
-  filename         = "${path.module}/../../packages/api/dist/bulkDelete/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/bulkDelete/lambda.zip")
+  filename         = "${path.module}/../../packages/api/dist/BulkDelete/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/BulkDelete/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_processing.arn
   runtime          = "nodejs8.10"
