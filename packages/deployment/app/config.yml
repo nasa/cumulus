@@ -204,6 +204,36 @@ default:
               - Arn
           protocol: lambda
 
+    reportExecutions:
+      subscriptions:
+        lambda:
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - reportExecutionsLambdaFunction
+              - Arn
+          protocol: lambda
+
+    reportGranules:
+      subscriptions:
+        lambda:
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - reportGranulesLambdaFunction
+              - Arn
+          protocol: lambda
+
+    reportPdrs:
+      subscriptions:
+        lambda:
+          endpoint:
+            function: Fn::GetAtt
+            array:
+              - reportPdrsLambdaFunction
+              - Arn
+          protocol: lambda
+
   backgroundQueueName: backgroundProcessing
   sqs_consumer_rate: 500
   sqs:
