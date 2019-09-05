@@ -2,7 +2,7 @@
 
 const get = require('lodash.get');
 const isObject = require('lodash.isobject');
-const { publishSnsMessages } = require('@cumulus/api/lambdas/publish-reports');
+const { publishReportSnsMessages } = require('@cumulus/api/lambdas/publish-reports');
 const errors = require('@cumulus/common/errors');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 
@@ -81,7 +81,7 @@ async function publishSnsMessage(event) {
   const finished = get(config, 'sfnEnd', false);
   const failed = eventFailed(message);
 
-  await publishSnsMessages(message, finished, failed);
+  await publishReportSnsMessages(message, finished, failed);
 
   if (failed) {
     makeLambdaFunctionFail(message);

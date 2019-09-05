@@ -88,7 +88,15 @@ async function publishPdrSnsMessage(
   return publishSnsMessage(pdrSnsTopicArn, eventMessage);
 }
 
-async function publishSnsMessages(eventMessage, isTerminalStatus, isFailedStatus) {
+/**
+ * Publish messages to SNS report topics.
+ *
+ * @param {Object} eventMessage - Workflow execution message
+ * @param {boolean} isTerminalStatus - true if workflow is in a terminal state
+ * @param {boolean} isFailedStatus - true if workflow is in a failed state
+ * @returns {Promise}
+ */
+async function publishReportSnsMessages(eventMessage, isTerminalStatus, isFailedStatus) {
   let status;
 
   if (isTerminalStatus) {
@@ -135,10 +143,10 @@ async function handler(event) {
     }
   }*/
 
-  return publishSnsMessages(eventMessage, isTerminalStatus, isFailedStatus);
+  return publishReportSnsMessages(eventMessage, isTerminalStatus, isFailedStatus);
 }
 
 module.exports = {
   handler,
-  publishSnsMessages
+  publishReportSnsMessages
 };
