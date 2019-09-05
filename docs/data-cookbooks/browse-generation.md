@@ -90,7 +90,7 @@ A few things to note about tasks in the workflow being added:
       bucket: '{$.meta.buckets.internal.name}'
       stack: '{$.meta.stack}'
       cmr: '{$.meta.cmr}'
-      process: '{$.cumulus_meta.process}'
+      process: '{$.meta.process}'
       input_granules: '{$.meta.input_granules}'
       granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
     Type: Task

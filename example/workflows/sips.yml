@@ -34,7 +34,8 @@ SyncGranule:
             - source: '{$}'
               destination: '{$.payload}'
             - source: '{$.process}'
-              destination: '{$.cumulus_meta.process}'
+              destination: '{$.meta.process}'
+      Parameters: '{$.meta}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -97,7 +98,7 @@ IngestAndPublishGranule:
             - source: '{$}'
               destination: '{$.payload}'
             - source: '{$.process}'
-              destination: '{$.cumulus_meta.process}'
+              destination: '{$.meta.process}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -114,7 +115,7 @@ IngestAndPublishGranule:
     ChooseProcess:
       Type: Choice
       Choices:
-        - Variable: $.cumulus_meta.process
+        - Variable: $.meta.process
           StringEquals: modis
           Next: ProcessingStep
       Default: StopStatus
@@ -178,7 +179,7 @@ IngestAndPublishGranule:
         stack: '{$.meta.stack}'
         cmr: '{$.meta.cmr}'
         launchpad: '{$.meta.launchpad}'
-        process: '{$.cumulus_meta.process}'
+        process: '{$.meta.process}'
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
       Retry:
@@ -241,7 +242,7 @@ IngestGranule:
             - source: '{$}'
               destination: '{$.payload}'
             - source: '{$.process}'
-              destination: '{$.cumulus_meta.process}'
+              destination: '{$.meta.process}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -258,7 +259,7 @@ IngestGranule:
     ChooseProcess:
       Type: Choice
       Choices:
-        - Variable: $.cumulus_meta.process
+        - Variable: $.meta.process
           StringEquals: modis
           Next: ProcessingStep
       Default: StopStatus
@@ -440,7 +441,7 @@ ParsePdr:
             - source: '{$}'
               destination: '{$.payload}'
             - source: '{$.isFinished}'
-              destination: '{$.cumulus_meta.isPdrFinished}'
+              destination: '{$.meta.isPdrFinished}'
       Type: Task
       Resource: ${PdrStatusCheckLambdaFunction.Arn}
       Retry:
@@ -454,10 +455,10 @@ ParsePdr:
     CheckAgainChoice:
       Type: Choice
       Choices:
-        - Variable: $.cumulus_meta.isPdrFinished
+        - Variable: $.meta.isPdrFinished
           BooleanEquals: false
           Next: PdrStatusReport
-        - Variable: $.cumulus_meta.isPdrFinished
+        - Variable: $.meta.isPdrFinished
           BooleanEquals: true
           Next: StopStatus
       Default: StopStatus
