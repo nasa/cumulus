@@ -52,15 +52,15 @@ set -e
 
 echo "Deploying IAM stack to $DEPLOYMENT"
 npx kes cf deploy --kes-folder app --region us-east-1\
- --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/iam
+ --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/iam --noRollback
 
 echo "Deploying DB stack to $DEPLOYMENT"
 npx kes cf deploy --kes-folder app --region us-east-1\
- --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/db
+ --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/db --noRollback
 
 echo "Deploying APP stack to $DEPLOYMENT"
 npx kes cf deploy --kes-folder app --region us-east-1\
- --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/app
+ --deployment $DEPLOYMENT --template node_modules/@cumulus/deployment/app --noRollback
 
 echo "Deploying S3AccessTest lambda to $DEPLOYMENT"
 ./node_modules/.bin/kes lambda S3AccessTest deploy \
