@@ -5,6 +5,7 @@ const rewire = require('rewire');
 const message = rewire('../message');
 
 const { getExecutionArn } = require('../aws');
+const { constructCollectionId } = require('../collection-config-store');
 const { randomId, randomString } = require('../test-utils');
 
 const buildCumulusMeta = message.__get__('buildCumulusMeta');
@@ -14,6 +15,7 @@ const getMessageStateMachineArn = message.__get__('getMessageStateMachineArn');
 const getMessageExecutionArn = message.__get__('getMessageExecutionArn');
 const getQueueNameByUrl = message.__get__('getQueueNameByUrl');
 const getMessageFromTemplate = message.__get__('getMessageFromTemplate');
+const getCollectionIdFromMessage = message.__get__('getCollectionIdFromMessage');
 
 const fakeExecutionName = randomString();
 message.__set__('createExecutionName', () => fakeExecutionName);
@@ -72,6 +74,25 @@ test('getMessageExecutionArn returns correct execution ARN for valid message', (
 test('getMessageExecutionArn returns null for invalid message', (t) => {
   const executionArn = getMessageExecutionArn();
   t.is(executionArn, null);
+});
+
+test('getCollectionIdFromMessage returns the correct collection ID', (t) => {
+  const name = 'test';
+  const version = '001';
+  const collectionId = getCollectionIdFromMessage({
+    meta: {
+      collection: {
+        name,
+        version
+      }
+    }
+  });
+  t.is(collectionId, constructCollectionId(name, version));
+});
+
+test('getCollectionIdFromMessage returns collection ID when meta.collection is not set', (t) => {
+  const collectionId = getCollectionIdFromMessage();
+  t.is(collectionId, constructCollectionId());
 });
 
 test('getQueueNameByUrl returns correct value', (t) => {

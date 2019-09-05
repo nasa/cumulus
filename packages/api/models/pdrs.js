@@ -1,14 +1,13 @@
 'use strict';
 
-const pvl = require('@cumulus/pvl');
 const get = require('lodash.get');
+
+const { getCollectionIdFromMessage, getMessageExecutionArn } = require('@cumulus/common/message');
 const aws = require('@cumulus/ingest/aws');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
-const { getMessageExecutionArn } = require('@cumulus/common/message');
+const pvl = require('@cumulus/pvl');
 
 const Manager = require('./base');
 const pdrSchema = require('./schemas').pdr;
-
 
 class Pdr extends Manager {
   constructor() {
@@ -62,8 +61,7 @@ class Pdr extends Manager {
     const arn = getMessageExecutionArn(payload);
     const execution = aws.getExecutionUrl(arn);
 
-    const collection = get(payload, 'meta.collection');
-    const collectionId = constructCollectionId(collection.name, collection.version);
+    const collectionId = getCollectionIdFromMessage(payload);
 
     const stats = {
       processing: get(payload, 'payload.running', []).length,
