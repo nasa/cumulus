@@ -1,5 +1,7 @@
 'use strict';
 
+const merge = require('lodash.merge');
+
 const aws = require('@cumulus/common/aws');
 const {
   getSfEventMessageObject,
@@ -7,11 +9,11 @@ const {
   isFailedSfStatus,
   isTerminalSfStatus
 } = require('@cumulus/common/cloudwatch-event');
-const {
-  getMessageExecutionArn
-} = require('@cumulus/common/message');
+// const {
+//   getMessageExecutionArn
+// } = require('@cumulus/common/message');
 const log = require('@cumulus/common/log');
-const StepFunctions = require('@cumulus/common/StepFunctions');
+// const StepFunctions = require('@cumulus/common/StepFunctions');
 
 /**
  * Publish a message to an SNS topic.
@@ -86,6 +88,28 @@ async function publishPdrSnsMessage(
   return publishSnsMessage(pdrSnsTopicArn, eventMessage);
 }
 
+async function publishSnsMessages(eventMessage, isTerminalStatus, isFailedStatus) {
+  let status;
+
+  if (isTerminalStatus) {
+    status = isFailedStatus ? 'failed' : 'completed';
+  } else {
+    status = 'running';
+  }
+
+  merge(eventMessage, {
+    meta: {
+      status
+    }
+  });
+
+  return Promise.all([
+    publishExecutionSnsMessage(eventMessage),
+    publishGranuleSnsMessage(eventMessage),
+    publishPdrSnsMessage(eventMessage)
+  ]);
+}
+
 /**
  * Lambda handler for publish-reports Lambda.
  *
@@ -111,22 +135,10 @@ async function handler(event) {
     }
   }*/
 
-  eventMessage.meta = eventMessage.meta || {};
-
-  // if this is the sns call at the end of the execution
-  if (isTerminalStatus) {
-    eventMessage.meta.status = isFailedStatus ? 'failed' : 'completed';
-  } else {
-    eventMessage.meta.status = 'running';
-  }
-
-  return Promise.all([
-    publishExecutionSnsMessage(eventMessage),
-    publishGranuleSnsMessage(eventMessage),
-    publishPdrSnsMessage(eventMessage)
-  ]);
+  return publishSnsMessages(eventMessage, isTerminalStatus, isFailedStatus);
 }
 
 module.exports = {
-  handler
+  handler,
+  publishSnsMessages
 };
