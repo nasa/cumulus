@@ -8,8 +8,6 @@ This package includes a Lambda function to process PDR ingest notifications rece
 2. Populate the sample file with values that apply to your AWS environment (see configuration variables section below).
 3. Deploy this module: `terraform apply`
 
-NOTE: Terraform will ignore the `aws_profile` config variable if you have static credentials or environment variables set, see the [AWS Provider page](https://www.terraform.io/docs/providers/aws/index.html#authentication).
-
 ## Configuration
 
 Configuration variables are shown in `terraform.tfvars.sample`, and are explained below:
