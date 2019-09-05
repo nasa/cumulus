@@ -3,6 +3,7 @@ const get = require('lodash.get');
 const merge = require('lodash.merge');
 const uuidv4 = require('uuid/v4');
 
+const { constructCollectionId } = require('./collection-config-store');
 const { isNil } = require('./util');
 
 const {
@@ -53,6 +54,17 @@ const buildMeta = ({
   }
   return meta;
 };
+
+/**
+ * Get collection ID from execution message.
+ *
+ * @param {Object} message - An execution message
+ * @returns {string} - A collection ID
+ */
+const getCollectionIdFromMessage = (message) =>
+  constructCollectionId(
+    get(message, 'meta.collection.name'), get(message, 'meta.collection.version')
+  );
 
 /**
  * Get queue name by URL from execution message.
@@ -172,6 +184,7 @@ function buildQueueMessageFromTemplate({
 module.exports = {
   buildCumulusMeta,
   buildQueueMessageFromTemplate,
+  getCollectionIdFromMessage,
   getQueueNameByUrl,
   getQueueName,
   getMaximumExecutions,
