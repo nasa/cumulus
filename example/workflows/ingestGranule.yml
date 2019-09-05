@@ -34,7 +34,7 @@ IngestGranuleCatchDuplicateErrorTest:
             - source: '{$}'
               destination: '{$.payload}'
             - source: '{$.process}'
-              destination: '{$.cumulus_meta.process}'
+              destination: '{$.meta.process}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -55,7 +55,7 @@ IngestGranuleCatchDuplicateErrorTest:
     ChooseProcess:
       Type: Choice
       Choices:
-        - Variable: $.cumulus_meta.process
+        - Variable: $.meta.process
           StringEquals: modis
           Next: ProcessingStep
       Default: StopStatus
