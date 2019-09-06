@@ -6,7 +6,7 @@ const sinon = require('sinon');
 const aws = require('@cumulus/common/aws');
 
 const { randomString } = require('@cumulus/common/test-utils');
-const { handler } = require('..');
+const { handler } = require('../../lambdas/publish-reports');
 
 let snsStub;
 let snsPublishSpy;
