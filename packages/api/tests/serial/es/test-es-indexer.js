@@ -8,8 +8,7 @@ const aws = require('@cumulus/common/aws');
 const cmrjs = require('@cumulus/cmrjs');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
-  constructCollectionId,
-  util: { noop }
+  constructCollectionId
 } = require('@cumulus/common');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 
