@@ -19,20 +19,24 @@ const models = require('../../../models');
 const { fakeGranuleFactory, fakeCollectionFactory, deleteAliases } = require('../../../lib/testUtils');
 const { IndexExistsError } = require('../../../lib/errors');
 const { bootstrapElasticSearch } = require('../../../lambdas/bootstrap');
+
 const granuleSuccess = require('../../data/granule_success.json');
 
 const esIndex = randomString();
-process.env.system_bucket = randomString();
-process.env.stackName = randomString();
 const collectionTable = randomString();
 const granuleTable = randomString();
 const executionTable = randomString();
-process.env.ES_INDEX = esIndex;
-let esClient;
+const pdrsTable = randomString();
 
+process.env.system_bucket = randomString();
+process.env.stackName = randomString();
+process.env.ES_INDEX = esIndex;
+
+let esClient;
 let collectionModel;
 let executionModel;
 let granuleModel;
+let pdrsModel;
 let stepFunctionsStub;
 
 const input = JSON.stringify(granuleSuccess);
@@ -53,6 +57,10 @@ test.before(async () => {
   process.env.GranulesTable = granuleTable;
   granuleModel = new models.Granule();
   await granuleModel.createTable();
+
+  process.env.PdrsTable = pdrsTable;
+  pdrsModel = new models.Pdr();
+  await pdrsModel.createTable();
 
   // create the elasticsearch index and add mapping
   await bootstrapElasticSearch('fakehost', esIndex);
@@ -82,6 +90,7 @@ test.after.always(async () => {
   await collectionModel.deleteTable();
   await executionModel.deleteTable();
   await granuleModel.deleteTable();
+  await pdrsModel.deleteTable();
 
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
@@ -399,27 +408,21 @@ test.serial('reingest a granule', async (t) => {
   t.is(newRecord.status, 'running');
 });
 
-test.serial.skip('pass a sns message to main handler', async (t) => {
+test.serial('indexing a granule record', async (t) => {
   const txt = fs.readFileSync(path.join(
     __dirname,
     '../../data/sns_message_granule.txt'
   ), 'utf8');
 
   const event = JSON.parse(JSON.parse(txt.toString()));
-  const resp = await indexer.handler(event, {}, noop);
-
-  t.is(resp.length, 1);
-  t.truthy(resp[0].sf);
-  t.truthy(resp[0].granule);
-  t.falsy(resp[0].pdr);
-
-  // fake granule index to elasticsearch (this is done in a lambda function)
-  await indexer.indexGranule(esClient, resp[0].granule[0]);
-
   const msg = JSON.parse(event.Records[0].Sns.Message);
-  const granule = msg.payload.granules[0];
+
+  const [granule] = await granuleModel.createGranulesFromSns(msg);
+  await indexer.indexGranule(esClient, granule);
+
   const collection = msg.meta.collection;
   const collectionId = constructCollectionId(collection.name, collection.version);
+
   // test granule record is added
   const record = await esClient.get({
     index: esIndex,
@@ -430,48 +433,28 @@ test.serial.skip('pass a sns message to main handler', async (t) => {
   t.is(record._id, granule.granuleId);
 });
 
-test.serial.skip('pass a sns message to main handler with parse info', async (t) => {
+test.serial('indexing a PDR record', async (t) => {
   const txt = fs.readFileSync(path.join(
     __dirname,
     '../../data/sns_message_parse_pdr.txt'
   ), 'utf8');
 
   const event = JSON.parse(JSON.parse(txt.toString()));
-  const resp = await indexer.handler(event, {}, noop);
+  const msg = JSON.parse(event.Records[0].Sns.Message);
 
-  t.is(resp.length, 1);
-  t.truthy(resp[0].sf);
-  t.is(resp[0].granule, null);
-  t.truthy(resp[0].pdr);
+  const pdr = await pdrsModel.createPdrFromSns(msg);
 
   // fake pdr index to elasticsearch (this is done in a lambda function)
-  await indexer.indexPdr(esClient, resp[0].pdr);
+  await indexer.indexPdr(esClient, pdr);
 
-  const msg = JSON.parse(event.Records[0].Sns.Message);
-  const pdr = msg.payload.pdr;
   // test granule record is added
   const record = await esClient.get({
     index: esIndex,
     type: 'pdr',
-    id: pdr.name
+    id: pdr.pdrName
   });
-  t.is(record._id, pdr.name);
+  t.is(record._id, pdr.pdrName);
   t.falsy(record._source.error);
-});
-
-test.serial.skip('pass a sns message to main handler with discoverpdr info', async (t) => {
-  const txt = fs.readFileSync(path.join(
-    __dirname, '../../data/sns_message_discover_pdr.txt'
-  ), 'utf8');
-
-  const event = JSON.parse(JSON.parse(txt.toString()));
-
-  const resp = await indexer.handler(event, {}, noop);
-
-  t.is(resp.length, 1);
-  t.truthy(resp[0].sf);
-  t.is(resp[0].granule, null);
-  t.falsy(resp[0].pdr);
 });
 
 test.serial('Create new index', async (t) => {
