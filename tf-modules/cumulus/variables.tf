@@ -21,7 +21,8 @@ variable "cmr_username" {
 }
 
 variable "cumulus_message_adapter_lambda_layer_arn" {
-  type = string
+  type    = string
+  default = null
 }
 
 variable "dynamo_tables" {
