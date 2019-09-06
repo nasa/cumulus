@@ -181,18 +181,6 @@ default:
     scaleOutCooldown: 0
 
   sns:
-    # this topic receives all the updates from
-    # step functions
-    sftracker:
-      subscriptions:
-        lambda:
-          endpoint:
-            function: Fn::GetAtt
-            array:
-              - sns2elasticsearchLambdaFunction
-              - Arn
-          protocol: lambda
-
     # This topic receives errored kinesis messages and tries them again.
     kinesisFallback:
       subscriptions:
