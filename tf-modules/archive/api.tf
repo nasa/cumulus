@@ -70,13 +70,20 @@ resource "aws_lambda_function" "api" {
   memory_size = 756
   tags        = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
-    subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    subnet_ids = var.lambda_subnet_ids
+    security_group_ids = [
+      aws_security_group.no_ingress_all_egress.id,
+      var.elasticsearch_security_group_id
+    ]
   }
 }
 
 resource "aws_api_gateway_rest_api" "api" {
   name = "${var.prefix}-archive"
+
+  lifecycle {
+    ignore_changes = [policy]
+  }
 }
 
 resource "aws_lambda_permission" "api_endpoints_lambda_permission" {

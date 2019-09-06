@@ -20,6 +20,10 @@ variable "cmr_username" {
   type = string
 }
 
+variable "cumulus_message_adapter_lambda_layer_arn" {
+  type = string
+}
+
 variable "dynamo_tables" {
   type = map(object({ name = string, arn = string }))
 }

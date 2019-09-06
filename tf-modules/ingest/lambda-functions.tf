@@ -193,7 +193,7 @@ resource "aws_lambda_function" "sf_semaphore_down" {
   }
 }
 
-resource "aws_lambda_function" "sf_sns_report" {
+resource "aws_lambda_function" "sf_sns_report_task" {
   function_name    = "${var.prefix}-SfSnsReport"
   filename         = "${path.module}/../../tasks/sf-sns-report/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/sf-sns-report/dist/lambda.zip")
@@ -202,10 +202,14 @@ resource "aws_lambda_function" "sf_sns_report" {
   runtime          = "nodejs8.10"
   timeout          = 300
   memory_size      = 1024
+
+  layers = [var.cumulus_message_adapter_lambda_layer_arn]
+
   environment {
     variables = {
-      CMR_ENVIRONMENT = var.cmr_environment
-      stackName       = var.prefix
+      CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
+      CMR_ENVIRONMENT             = var.cmr_environment
+      stackName                   = var.prefix
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
