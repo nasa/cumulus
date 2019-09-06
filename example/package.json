@@ -70,7 +70,7 @@
     "jasmine-console-reporter": "^2.0.1",
     "jasmine-reporters": "^2.3.2",
     "js-yaml": "^3.12.0",
-    "kes": "^2.2.5",
+    "kes": "git+https://github.com/developmentseed/kes.git#289c3741216eb203be4af080c6086d4e9fe0717f",
     "lodash.assignin": "^4.2.0",
     "lodash.chunk": "^4.2.0",
     "lodash.clonedeep": "^4.5.0",
