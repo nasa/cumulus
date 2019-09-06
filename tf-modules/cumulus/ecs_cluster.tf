@@ -88,9 +88,8 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
   }
 
   statement {
-    actions = ["dynamodb:Scan"]
-    # TODO I don't like the fact that we're making an assumption here about the names of our tables
-    resources = ["arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.prefix}-*"]
+    actions   = ["dynamodb:Scan"]
+    resources = [for k, v in var.dynamo_tables : v.arn]
   }
 
   statement {
