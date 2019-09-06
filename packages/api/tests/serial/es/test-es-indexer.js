@@ -356,16 +356,6 @@ test.serial('updating a collection record', async (t) => {
   t.is(typeof record._source.timestamp, 'number');
 });
 
-test.serial('creating a step function with missing arn', async (t) => {
-  const newPayload = clone(granuleSuccess);
-  delete newPayload.cumulus_meta.state_machine;
-
-  await t.throwsAsync(
-    () => (new models.Execution()).createExecutionFromSns(newPayload),
-    'State Machine Arn is missing. Must be included in the cumulus_meta'
-  );
-});
-
 test.serial('creating a successful step function', async (t) => {
   const newPayload = clone(pdrSuccess);
   newPayload.cumulus_meta.execution_name = randomString();
