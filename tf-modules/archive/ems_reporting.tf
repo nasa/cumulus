@@ -29,9 +29,10 @@ resource "aws_lambda_function" "ems_distribution_report" {
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
+
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
 }
 
@@ -83,9 +84,10 @@ resource "aws_lambda_function" "ems_product_metadata_report" {
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
+
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
 }
 
@@ -146,12 +148,10 @@ resource "aws_lambda_function" "ems_ingest_report" {
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
+
   vpc_config {
-    subnet_ids = var.lambda_subnet_ids
-    security_group_ids = [
-      aws_security_group.no_ingress_all_egress.id,
-      var.elasticsearch_security_group_id
-    ]
+    subnet_ids         = var.lambda_subnet_ids
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id, var.elasticsearch_security_group_id]
   }
 }
 
