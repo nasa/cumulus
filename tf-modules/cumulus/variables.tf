@@ -56,10 +56,6 @@ variable "elasticsearch_security_group_id" {
   type = string
 }
 
-variable "lambda_subnet_ids" {
-  type = list(string)
-}
-
 variable "prefix" {
   type = string
 }
@@ -84,10 +80,6 @@ variable "urs_client_id" {
 variable "urs_client_password" {
   type        = string
   description = "The URS app password"
-}
-
-variable "vpc_id" {
-  type = string
 }
 
 # Optional
@@ -175,6 +167,11 @@ variable "key_name" {
   default = null
 }
 
+variable "lambda_subnet_ids" {
+  type    = list(string)
+  default = null
+}
+
 variable "launchpad_api" {
   type    = string
   default = "launchpadApi"
@@ -219,4 +216,9 @@ variable "urs_url" {
   type        = string
   default     = "https://urs.earthdata.nasa.gov/"
   description = "The URL of the Earthdata Login site"
+}
+
+variable "vpc_id" {
+  type    = string
+  default = null
 }
