@@ -21,9 +21,10 @@ resource "aws_lambda_function" "fallback_consumer" {
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
+
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
 }
 
@@ -43,9 +44,10 @@ resource "aws_lambda_function" "kinesis_inbound_event_logger" {
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
+
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
 }
 
@@ -65,9 +67,10 @@ resource "aws_lambda_function" "kinesis_outbound_event_logger" {
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
+
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
 }
 
@@ -92,9 +95,10 @@ resource "aws_lambda_function" "message_consumer" {
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
+
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
 }
 
@@ -120,9 +124,10 @@ resource "aws_lambda_function" "schedule_sf" {
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
+
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
 }
 
@@ -142,9 +147,10 @@ resource "aws_lambda_function" "sf2snsEnd" {
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
+
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
 }
 
@@ -164,9 +170,10 @@ resource "aws_lambda_function" "sf2snsStart" {
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
+
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
 }
 
@@ -187,9 +194,10 @@ resource "aws_lambda_function" "sf_semaphore_down" {
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
+
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
 }
 
@@ -213,9 +221,10 @@ resource "aws_lambda_function" "sf_sns_report_task" {
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
+
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
 }
 
@@ -235,9 +244,10 @@ resource "aws_lambda_function" "sqs2sf" {
     }
   }
   tags = merge(local.default_tags, { Project = var.prefix })
+
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
 }
 
@@ -257,9 +267,11 @@ resource "aws_lambda_function" "sqs2sfThrottle" {
       SemaphoresTable = var.dynamo_tables.semaphores.name
     }
   }
+
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    security_group_ids = var.lambda_subnet_ids == null ? null : [aws_security_group.no_ingress_all_egress[0].id]
   }
+
   tags = merge(local.default_tags, { Project = var.prefix })
 }
