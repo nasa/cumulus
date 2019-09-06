@@ -37,4 +37,5 @@ resource "aws_cloudwatch_log_subscription_filter" "sync_granule_task" {
   destination_arn = var.log2elasticsearch_lambda_function_arn
   filter_pattern  = ""
   log_group_name  = aws_cloudwatch_log_group.sync_granule_task.name
+  distribution    = "ByLogStream"
 }

@@ -1,4 +1,6 @@
 resource "aws_security_group" "no_ingress_all_egress" {
+  count = var.vpc_id == null ? 0 : 1
+
   name   = "${var.prefix}-archive-no-ingress-all-egress"
   vpc_id = var.vpc_id
 
