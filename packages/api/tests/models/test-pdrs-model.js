@@ -1,6 +1,8 @@
 'use strict';
 
 const test = require('ava');
+
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { randomId, randomNumber, randomString } = require('@cumulus/common/test-utils');
 
 const { deconstructCollectionId } = require('../../lib/utils');
@@ -23,7 +25,8 @@ const createPdrMessage = ({
   numCompletedExecutions = 0,
   numFailedExecutions = 0,
   numRunningExecutions = 0,
-  timestamp = Date.now()
+  timestamp = Date.now(),
+  status = 'running'
 } = {}) => ({
   cumulus_meta: {
     state_machine: randomId('pdr'),
@@ -37,7 +40,7 @@ const createPdrMessage = ({
       protocol: 's3',
       host: 'random-bucket'
     },
-    status: 'running'
+    status
   },
   payload: {
     completed: [
@@ -70,8 +73,12 @@ test('createPdrFromSns() creates a PDR record when payload.pdr is set', async (t
 
   await pdrsModel.createPdrFromSns(message);
 
+  const { collection } = message.meta;
+  const collectionId = constructCollectionId(collection.name, collection.version);
+
   const record = await pdrsModel.get({ pdrName });
   t.is(record.createdAt, timestamp);
+  t.is(record.collectionId, collectionId);
 });
 
 test('createPdrFromSns() creates a PDR record when meta.pdr is set', async (t) => {
@@ -87,8 +94,12 @@ test('createPdrFromSns() creates a PDR record when meta.pdr is set', async (t) =
 
   await pdrsModel.createPdrFromSns(message);
 
+  const { collection } = message.meta;
+  const collectionId = constructCollectionId(collection.name, collection.version);
+
   const record = await pdrsModel.get({ pdrName });
   t.is(record.createdAt, timestamp);
+  t.is(record.collectionId, collectionId);
 });
 
 test('createPdrFromSns() sets correct progress value for running PDR', async (t) => {
@@ -133,8 +144,10 @@ test('createPdrFromSns() sets correct progress value for partially complete PDR'
 
 test('createPdrFromSns() sets correct progress value for completed PDR', async (t) => {
   const pdrName = randomId('pdr');
+  const status = 'completed';
   const message = createPdrMessage({
-    numCompletedExecutions: 1
+    numCompletedExecutions: 1,
+    status
   });
 
   message.payload.pdr = {
@@ -144,8 +157,33 @@ test('createPdrFromSns() sets correct progress value for completed PDR', async (
   await pdrsModel.createPdrFromSns(message);
 
   const record = await pdrsModel.get({ pdrName });
+  t.is(record.status, status);
   t.is(record.stats.completed, 1);
   t.is(record.stats.total, 1);
+  t.is(record.progress, 100);
+});
+
+test('createPdrFromSns() creates a failed PDR record', async (t) => {
+  const pdrName = randomId('pdr');
+  const status = 'failed';
+  const message = createPdrMessage({
+    numFailedExecutions: 1,
+    status
+  });
+
+  message.payload.pdr = {
+    name: pdrName
+  };
+
+  await pdrsModel.createPdrFromSns(message);
+  const record = await pdrsModel.get({ pdrName });
+
+  t.is(record.status, status);
+  const stats = record.stats;
+  t.is(stats.total, 1);
+  t.is(stats.failed, 1);
+  t.is(stats.processing, 0);
+  t.is(stats.completed, 0);
   t.is(record.progress, 100);
 });
 
