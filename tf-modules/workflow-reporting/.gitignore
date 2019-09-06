@@ -1,4 +1,0 @@
-.terraform
-build
-*.tfvars
-*.tfstate*
