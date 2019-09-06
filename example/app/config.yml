@@ -228,7 +228,7 @@ default:
   logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
 
   sns:
-    sftracker:
+    reportExecutions:
       subscriptions:
         2ndlambda:
           endpoint:
