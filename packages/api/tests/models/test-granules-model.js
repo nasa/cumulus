@@ -5,10 +5,12 @@ const test = require('ava');
 const sinon = require('sinon');
 
 const aws = require('@cumulus/common/aws');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const ingestAws = require('@cumulus/ingest/aws');
 const launchpad = require('@cumulus/common/launchpad');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const { randomString } = require('@cumulus/common/test-utils');
+const { removeNilProperties } = require('@cumulus/common/util');
 const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmr-client');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
@@ -16,11 +18,34 @@ const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const range = require('lodash.range');
 
 const { Granule } = require('../../models');
+const { filterDatabaseProperties } = require('../../lib/FileUtils');
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../lib/testUtils');
+const { deconstructCollectionId } = require('../../lib/utils');
+
+const granuleSuccess = require('../data/granule_success.json');
+const granuleFailure = require('../data/granule_failed.json');
 
 let fakeExecution;
 let stepFunctionsStub;
 let testCumulusMessage;
+
+const mockedFileSize = 12345;
+
+const granuleFileToRecord = (granuleFile) => {
+  const granuleRecord = {
+    size: mockedFileSize,
+    ...granuleFile,
+    key: aws.parseS3Uri(granuleFile.filename).Key,
+    fileName: granuleFile.name,
+    checksum: granuleFile.checksum
+  };
+
+  if (granuleFile.path) {
+    granuleRecord.source = `https://07f1bfba.ngrok.io/granules/${granuleFile.name}`;
+  }
+
+  return removeNilProperties(filterDatabaseProperties(granuleRecord));
+};
 
 test.before(async () => {
   process.env.GranulesTable = randomString();
@@ -54,6 +79,15 @@ test.before(async () => {
       ]
     }
   };
+
+  const fakeMetadata = {
+    beginningDateTime: '2017-10-24T00:00:00.000Z',
+    endingDateTime: '2018-10-24T00:00:00.000Z',
+    lastUpdateDateTime: '2018-04-20T21:45:45.524Z',
+    productionDateTime: '2018-04-25T21:45:45.524Z'
+  };
+
+  sinon.stub(cmrjs, 'getGranuleTemporalInfo').callsFake(() => fakeMetadata);
 
   fakeExecution = async () => ({
     input: JSON.stringify(testCumulusMessage),
@@ -695,6 +729,118 @@ test(
     const result = await granuleModel.createGranulesFromSns(cumulusMessage);
 
     t.is(result, null);
+  }
+);
+
+test.serial(
+  'createGranulesFromSns() creates successful granule record',
+  async (t) => {
+    const { granuleModel } = t.context;
+
+    // Stub out headobject S3 call used in api/models/granules.js,
+    // so we don't have to create artifacts
+    sinon.stub(aws, 'headObject').resolves({ ContentLength: mockedFileSize });
+
+    const granule = granuleSuccess.payload.granules[0];
+    const collection = granuleSuccess.meta.collection;
+    const records = await granuleModel.createGranulesFromSns(granuleSuccess);
+
+    const collectionId = constructCollectionId(collection.name, collection.version);
+
+    // check the record exists
+    const record = records[0];
+
+    t.deepEqual(
+      record.files,
+      granule.files.map(granuleFileToRecord)
+    );
+    t.is(record.status, 'completed');
+    t.is(record.collectionId, collectionId);
+    t.is(record.granuleId, granule.granuleId);
+    t.is(record.cmrLink, granule.cmrLink);
+    t.is(record.published, granule.published);
+    t.is(record.productVolume, 17934423);
+    t.is(record.beginningDateTime, '2017-10-24T00:00:00.000Z');
+    t.is(record.endingDateTime, '2018-10-24T00:00:00.000Z');
+    t.is(record.productionDateTime, '2018-04-25T21:45:45.524Z');
+    t.is(record.lastUpdateDateTime, '2018-04-20T21:45:45.524Z');
+    t.is(record.timeToArchive, 100 / 1000);
+    t.is(record.timeToPreprocess, 120 / 1000);
+    t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
+    t.is(record.processingEndDateTime, '2019-07-28T01:00:00.000Z');
+
+    const { name: deconstructed } = deconstructCollectionId(record.collectionId);
+    t.is(deconstructed, collection.name);
+  }
+);
+
+test.serial('createGranulesFromSns() creates multiple successful granule records', async (t) => {
+  const { granuleModel } = t.context;
+
+  const newPayload = cloneDeep(granuleSuccess);
+  const granule = newPayload.payload.granules[0];
+  granule.granuleId = randomString();
+  const granule2 = cloneDeep(granule);
+  granule2.granuleId = randomString();
+  newPayload.payload.granules.push(granule2);
+  const collection = newPayload.meta.collection;
+  const records = await granuleModel.createGranulesFromSns(newPayload);
+
+  const collectionId = constructCollectionId(collection.name, collection.version);
+
+  t.is(records.length, 2);
+
+  records.forEach((record) => {
+    t.is(record.status, 'completed');
+    t.is(record.collectionId, collectionId);
+    t.is(record.cmrLink, granule.cmrLink);
+    t.is(record.published, granule.published);
+  });
+});
+
+test.serial('createGranulesFromSns() creates a failed granule record', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = granuleFailure.payload.granules[0];
+  const records = await granuleModel.createGranulesFromSns(granuleFailure);
+
+  const record = records[0];
+  t.deepEqual(
+    record.files,
+    granule.files.map(granuleFileToRecord)
+  );
+  t.is(record.status, 'failed');
+  t.is(record.granuleId, granule.granuleId);
+  t.is(record.published, false);
+  t.is(record.error.Error, granuleFailure.exception.Error);
+  t.is(record.error.Cause, granuleFailure.exception.Cause);
+});
+
+test.serial(
+  'createGranulesFromSns() creates granule using meta.input_granules on message',
+  async (t) => {
+    const { granuleModel } = t.context;
+
+    const newPayload = cloneDeep(granuleSuccess);
+    delete newPayload.payload;
+    newPayload.meta.status = 'running';
+
+    const granule = newPayload.meta.input_granules[0];
+    newPayload.meta.input_granules[0].granuleId = randomString();
+
+    const records = await granuleModel.createGranulesFromSns(newPayload);
+    const collection = newPayload.meta.collection;
+    const collectionId = constructCollectionId(collection.name, collection.version);
+
+    const record = records[0];
+    t.deepEqual(
+      record.files,
+      granule.files.map(granuleFileToRecord)
+    );
+    t.is(record.status, 'running');
+    t.is(record.collectionId, collectionId);
+    t.is(record.granuleId, granule.granuleId);
+    t.is(record.published, false);
   }
 );
 

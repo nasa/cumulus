@@ -12,36 +12,17 @@ const {
   constructCollectionId,
   util: { noop }
 } = require('@cumulus/common');
-const { removeNilProperties } = require('@cumulus/common/util');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 
 const indexer = require('../../../es/indexer');
 const { Search } = require('../../../es/search');
 const models = require('../../../models');
 const { fakeGranuleFactory, fakeCollectionFactory, deleteAliases } = require('../../../lib/testUtils');
-const { filterDatabaseProperties } = require('../../../lib/FileUtils');
 const { IndexExistsError } = require('../../../lib/errors');
 const { bootstrapElasticSearch } = require('../../../lambdas/bootstrap');
 const granuleSuccess = require('../../data/granule_success.json');
-const granuleFailure = require('../../data/granule_failed.json');
 const pdrFailure = require('../../data/pdr_failure.json');
 const pdrSuccess = require('../../data/pdr_success.json');
-
-const granuleFileToRecord = (granuleFile) => {
-  const granuleRecord = {
-    size: 12345,
-    ...granuleFile,
-    key: aws.parseS3Uri(granuleFile.filename).Key,
-    fileName: granuleFile.name,
-    checksum: granuleFile.checksum
-  };
-
-  if (granuleFile.path) {
-    granuleRecord.source = `https://07f1bfba.ngrok.io/granules/${granuleFile.name}`;
-  }
-
-  return removeNilProperties(filterDatabaseProperties(granuleRecord));
-};
 
 const esIndex = randomString();
 process.env.system_bucket = randomString();
@@ -117,122 +98,6 @@ test.after.always(async () => {
 
   cmrjs.getGranuleTemporalInfo.restore();
   stepFunctionsStub.restore();
-});
-
-test.serial('creating a successful granule record', async (t) => {
-  const mockedFileSize = 12345;
-
-  // Stub out headobject S3 call used in api/models/granules.js,
-  // so we don't have to create artifacts
-  sinon.stub(aws, 'headObject').resolves({ ContentLength: mockedFileSize });
-
-  const granule = granuleSuccess.payload.granules[0];
-  const collection = granuleSuccess.meta.collection;
-  const records = await indexer.granule(granuleSuccess);
-
-  const collectionId = constructCollectionId(collection.name, collection.version);
-
-  // check the record exists
-  const record = records[0];
-
-  t.deepEqual(
-    record.files,
-    granule.files.map(granuleFileToRecord)
-  );
-  t.is(record.status, 'completed');
-  t.is(record.collectionId, collectionId);
-  t.is(record.granuleId, granule.granuleId);
-  t.is(record.cmrLink, granule.cmrLink);
-  t.is(record.published, granule.published);
-  t.is(record.productVolume, 17934423);
-  t.is(record.beginningDateTime, '2017-10-24T00:00:00.000Z');
-  t.is(record.endingDateTime, '2018-10-24T00:00:00.000Z');
-  t.is(record.productionDateTime, '2018-04-25T21:45:45.524Z');
-  t.is(record.lastUpdateDateTime, '2018-04-20T21:45:45.524Z');
-  t.is(record.timeToArchive, 100 / 1000);
-  t.is(record.timeToPreprocess, 120 / 1000);
-  t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
-  t.is(record.processingEndDateTime, '2019-07-28T01:00:00.000Z');
-
-  const { name: deconstructed } = indexer.deconstructCollectionId(record.collectionId);
-  t.is(deconstructed, collection.name);
-});
-
-test.serial('creating multiple successful granule records', async (t) => {
-  const newPayload = clone(granuleSuccess);
-  const granule = newPayload.payload.granules[0];
-  granule.granuleId = randomString();
-  const granule2 = clone(granule);
-  granule2.granuleId = randomString();
-  newPayload.payload.granules.push(granule2);
-  const collection = newPayload.meta.collection;
-  const records = await indexer.granule(newPayload);
-
-  const collectionId = constructCollectionId(collection.name, collection.version);
-
-  t.is(records.length, 2);
-
-  records.forEach((record) => {
-    t.is(record.status, 'completed');
-    t.is(record.collectionId, collectionId);
-    t.is(record.cmrLink, granule.cmrLink);
-    t.is(record.published, granule.published);
-  });
-});
-
-test.serial('creating a failed granule record', async (t) => {
-  const granule = granuleFailure.payload.granules[0];
-  const records = await indexer.granule(granuleFailure);
-
-  const record = records[0];
-  t.deepEqual(
-    record.files,
-    granule.files.map(granuleFileToRecord)
-  );
-  t.is(record.status, 'failed');
-  t.is(record.granuleId, granule.granuleId);
-  t.is(record.published, false);
-  t.is(record.error.Error, granuleFailure.exception.Error);
-  t.is(record.error.Cause, granuleFailure.exception.Cause);
-});
-
-test.serial('creating a granule record without state_machine info', async (t) => {
-  const newPayload = clone(granuleSuccess);
-  delete newPayload.cumulus_meta.state_machine;
-
-  const r = await indexer.granule(newPayload);
-  t.is(r, null);
-});
-
-test.serial('creating a granule record without a granule', async (t) => {
-  const newPayload = clone(granuleSuccess);
-  delete newPayload.payload;
-  delete newPayload.meta;
-
-  const r = await indexer.granule(newPayload);
-  t.is(r, null);
-});
-
-test.serial('creating a granule record in meta section', async (t) => {
-  const newPayload = clone(granuleSuccess);
-  delete newPayload.payload;
-  newPayload.meta.status = 'running';
-  const collection = newPayload.meta.collection;
-  const granule = newPayload.meta.input_granules[0];
-  granule.granuleId = randomString();
-
-  const records = await indexer.granule(newPayload);
-  const collectionId = constructCollectionId(collection.name, collection.version);
-
-  const record = records[0];
-  t.deepEqual(
-    record.files,
-    granule.files.map(granuleFileToRecord)
-  );
-  t.is(record.status, 'running');
-  t.is(record.collectionId, collectionId);
-  t.is(record.granuleId, granule.granuleId);
-  t.is(record.published, false);
 });
 
 test.serial('indexing a deletedgranule record', async (t) => {
