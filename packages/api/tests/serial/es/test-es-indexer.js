@@ -3,7 +3,6 @@
 const test = require('ava');
 const sinon = require('sinon');
 const fs = require('fs');
-const clone = require('lodash.clonedeep');
 const path = require('path');
 const aws = require('@cumulus/common/aws');
 const cmrjs = require('@cumulus/cmrjs');
@@ -21,8 +20,6 @@ const { fakeGranuleFactory, fakeCollectionFactory, deleteAliases } = require('..
 const { IndexExistsError } = require('../../../lib/errors');
 const { bootstrapElasticSearch } = require('../../../lambdas/bootstrap');
 const granuleSuccess = require('../../data/granule_success.json');
-const pdrFailure = require('../../data/pdr_failure.json');
-const pdrSuccess = require('../../data/pdr_success.json');
 
 const esIndex = randomString();
 process.env.system_bucket = randomString();
@@ -356,31 +353,6 @@ test.serial('updating a collection record', async (t) => {
   t.is(typeof record._source.timestamp, 'number');
 });
 
-test.serial('creating a successful step function', async (t) => {
-  const newPayload = clone(pdrSuccess);
-  newPayload.cumulus_meta.execution_name = randomString();
-
-  const e = new models.Execution();
-  const record = await e.createExecutionFromSns(newPayload);
-
-  t.is(record.status, 'completed');
-  t.is(record.type, newPayload.meta.workflow_name);
-  t.is(record.createdAt, newPayload.cumulus_meta.workflow_start_time);
-});
-
-test.serial('creaging a failed step function', async (t) => {
-  const newPayload = clone(pdrFailure);
-  newPayload.cumulus_meta.execution_name = randomString();
-
-  const e = new models.Execution();
-  const record = await e.createExecutionFromSns(newPayload);
-
-  t.is(record.status, 'failed');
-  t.is(record.type, newPayload.meta.workflow_name);
-  t.is(typeof record.error, 'object');
-  t.is(record.createdAt, newPayload.cumulus_meta.workflow_start_time);
-});
-
 test.serial('delete a provider record', async (t) => {
   const testRecord = {
     id: randomString()
@@ -414,7 +386,6 @@ test.serial('reingest a granule', async (t) => {
   await aws.s3().putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' }).promise();
 
   payload.payload.granules[0].granuleId = randomString();
-  // const records = await indexer.granule(payload);
   const records = await granuleModel.createGranulesFromSns(payload);
   const record = records[0];
 

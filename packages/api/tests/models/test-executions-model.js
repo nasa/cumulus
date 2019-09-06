@@ -2,10 +2,14 @@
 
 const test = require('ava');
 const sinon = require('sinon');
+const cloneDeep = require('lodash.clonedeep');
 
 const { randomString } = require('@cumulus/common/test-utils');
 
 const Execution = require('../../models/executions');
+
+const pdrSuccessFixture = require('../data/pdr_success.json');
+const pdrFailureFixture = require('../data/pdr_failure.json');
 
 let executionDoc;
 let executionModel;
@@ -52,7 +56,7 @@ test.beforeEach(async () => {
   await setupRecord('running');
 });
 
-test.afterEach(async () => {
+test.afterEach.always(async () => {
   await executionModel.delete({ arn: executionDoc.arn });
   generateDocStub.restore();
 });
@@ -77,6 +81,33 @@ test.serial('generateDocFromPayload using payload without cumulus_meta.execution
       }
     })
   );
+});
+
+test.serial('createExecutionFromSns() creates a successful execution record', async (t) => {
+  generateDocStub.restore();
+
+  const newPayload = cloneDeep(pdrSuccessFixture);
+  newPayload.cumulus_meta.execution_name = randomString();
+
+  const record = await executionModel.createExecutionFromSns(newPayload);
+
+  t.is(record.status, 'completed');
+  t.is(record.type, newPayload.meta.workflow_name);
+  t.is(record.createdAt, newPayload.cumulus_meta.workflow_start_time);
+});
+
+test.serial('createExecutionFromSns() creates a failed execution record', async (t) => {
+  generateDocStub.restore();
+
+  const newPayload = cloneDeep(pdrFailureFixture);
+  newPayload.cumulus_meta.execution_name = randomString();
+
+  const record = await executionModel.createExecutionFromSns(newPayload);
+
+  t.is(record.status, 'failed');
+  t.is(record.type, newPayload.meta.workflow_name);
+  t.is(typeof record.error, 'object');
+  t.is(record.createdAt, newPayload.cumulus_meta.workflow_start_time);
 });
 
 test.serial('Creating an execution adds a record to the database with matching values', async (t) => {
