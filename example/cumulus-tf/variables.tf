@@ -20,6 +20,10 @@ variable "cmr_username" {
   type = string
 }
 
+variable "cumulus_message_adapter_lambda_layer_arn" {
+  type = string
+}
+
 variable "data_persistence_remote_state_config" {
   type = object({ bucket = string, key = string })
 }

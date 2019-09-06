@@ -1,3 +1,9 @@
+locals {
+  default_tags = {
+    Deployment = var.prefix
+  }
+}
+
 provider "aws" {
   region  = var.region
   profile = var.aws_profile
@@ -17,6 +23,8 @@ data "aws_lambda_function" "sts_credentials" {
 
 module "cumulus" {
   source = "../../tf-modules/cumulus"
+
+  cumulus_message_adapter_lambda_layer_arn = var.cumulus_message_adapter_lambda_layer_arn
 
   prefix = var.prefix
 
@@ -74,24 +82,46 @@ module "cumulus" {
   sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
 }
 
-# TODO Add this aws_sns_topic_subscription
-# Subscribes to module.archive.aws_sns_topic.sftracker
-# - Endpoint:
-#     Fn::GetAtt:
-#       - SnsS3TestLambdaFunction
-#       - Arn
-#   Protocol: lambda
+resource "aws_security_group" "no_ingress_all_egress" {
+  name   = "${var.prefix}-cumulus-tf-no-ingress-all-egress"
+  vpc_id = var.vpc_id
 
-# TODO Add this permission to example
-# Related to module.archive.aws_sns_topic.sftracker
-# sftracker2ndlambdaSubscriptionPermission:
-#   Type: AWS::Lambda::Permission
-#   Properties:
-#     FunctionName:
-#       Fn::GetAtt:
-#         - SnsS3TestLambdaFunction
-#         - Arn
-#     Action: lambda:InvokeFunction
-#     Principal: sns.amazonaws.com
-#     SourceArn:
-#       Ref: sftrackerSns
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = local.default_tags
+}
+
+resource "aws_lambda_function" "sns_s3_test" {
+  function_name    = "${var.prefix}-SnsS3Test"
+  filename         = "${path.module}/../lambdas/snsS3Test/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../lambdas/snsS3Test/lambda.zip")
+  handler          = "index.handler"
+  role             = module.cumulus.lambda_processing_role_arn
+  runtime          = "nodejs8.10"
+
+  tags = local.default_tags
+
+  vpc_config {
+    subnet_ids         = var.subnet_ids
+    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+  }
+}
+
+resource "aws_sns_topic_subscription" "sns_s3_test" {
+  topic_arn = module.cumulus.sftracker_sns_topic_arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.sns_s3_test.arn
+}
+
+resource "aws_lambda_permission" "sns_s3_test" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.sns_s3_test.arn
+  principal     = "sns.amazonaws.com"
+  source_arn    = module.cumulus.sftracker_sns_topic_arn
+}
+

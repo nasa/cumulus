@@ -144,7 +144,7 @@ function indexExecution(esClient, payload, index = defaultIndexAlias, type = 'ex
  * @param  {Object} payload  - Cumulus Step Function message
  * @returns {Promise<Object>} Elasticsearch response
  */
-function pdr(payload) {
+function handlePdr(payload) {
   const p = new Pdr();
   return p.createPdrFromSns(payload);
 }
@@ -246,7 +246,7 @@ async function indexPdr(esClient, payload, index = defaultIndexAlias, type = 'pd
  * @param  {Object} payload  - Cumulus Step Function message
  * @returns {Promise<Array>} list of created records
  */
-function granule(payload) {
+function handleGranule(payload) {
   const g = new Granule();
   return g.createGranulesFromSns(payload);
 }
@@ -316,6 +316,14 @@ async function reingest(g) {
   return gObj.reingest(g);
 }
 
+const handleExecution = (payload) => {
+  const e = new Execution();
+
+  return (['failed', 'completed'].includes(payload.meta.status))
+    ? e.updateExecutionFromSns(payload)
+    : e.createExecutionFromSns(payload);
+};
+
 /**
  * processes the incoming cumulus message and pass it through a number
  * of indexers
@@ -324,29 +332,21 @@ async function reingest(g) {
  * @returns {Promise} object with response from the three indexer
  */
 async function handlePayload(event) {
-  let payload;
-  const source = get(event, 'EventSource');
+  const payload = (event.EventSource === 'aws:sns')
+    ? JSON.parse(get(event, 'Sns.Message'))
+    : event;
 
-  if (source === 'aws:sns') {
-    payload = get(event, 'Sns.Message');
-    payload = JSON.parse(payload);
-  } else {
-    payload = event;
-  }
+  const [
+    executionResult,
+    granuleResult,
+    pdrResult
+  ] = await Promise.all([
+    handleExecution(payload),
+    handleGranule(payload),
+    handlePdr(payload)
+  ]);
 
-  let executionPromise;
-  const e = new Execution();
-  if (['failed', 'completed'].includes(payload.meta.status)) {
-    executionPromise = e.updateExecutionFromSns(payload);
-  } else {
-    executionPromise = e.createExecutionFromSns(payload);
-  }
-
-  return {
-    sf: await executionPromise,
-    pdr: await pdr(payload),
-    granule: await granule(payload)
-  };
+  return { granule: granuleResult, pdr: pdrResult, sf: executionResult };
 }
 
 /**
@@ -384,7 +384,6 @@ function logHandler(event, context, cb) {
  */
 function handler(event, context, cb) {
   // we can handle both incoming message from SNS as well as direct payload
-  log.debug(JSON.stringify(event));
   const records = get(event, 'Records');
   let jobs = [];
 
@@ -419,6 +418,6 @@ module.exports = {
   handlePayload,
   deleteRecord,
   reingest,
-  granule,
-  pdr
+  granule: handleGranule,
+  pdr: handlePdr
 };

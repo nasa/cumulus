@@ -28,6 +28,16 @@ const createTestSuffix = (prefix) => `_test-${prefix}`;
 
 const MILLISECONDS_IN_A_MINUTE = 60 * 1000;
 
+/**
+ * Load a yml file
+ *
+ * @param {string} filePath - workflow yml filepath
+ * @returns {Object} - JS Object representation of yml file
+ */
+function loadYmlFile(filePath) {
+  return yaml.safeLoad(fs.readFileSync(filePath, 'utf8'));
+}
+
 function setConfig(config) {
   const updatedConfig = cloneDeep(config);
   if (!updatedConfig.test_configs) {
@@ -44,14 +54,7 @@ function setConfig(config) {
   return updatedConfig.test_configs;
 }
 
-/**
- * Loads and parses the configuration defined in `./app/config.yml`
- *
- * @param {string} type - type of configuration to load (iam|app)
- *
- * @returns {Object} - Configuration object
-*/
-function loadConfig(type = 'app') {
+function loadConfigFromKes(type) {
   // make sure deployment env variable is set
   if (!process.env.DEPLOYMENT) {
     throw new Error(
@@ -76,6 +79,11 @@ function loadConfig(type = 'app') {
   const config = new Config(params[type]);
   return setConfig(config);
 }
+
+const loadConfig = (type = 'app') =>
+  (fs.existsSync('./config.yml') ?
+    loadYmlFile('./config.yml') :
+    loadConfigFromKes(type));
 
 /**
  * Creates a new file using a template file and configuration object which
@@ -290,16 +298,6 @@ async function protectFile(file, fn) {
     await promisedCopyFile(backupLocation, file);
     await promisedUnlink(backupLocation);
   }
-}
-
-/**
- * Load a yml file
- *
- * @param {string} filePath - workflow yml filepath
- * @returns {Object} - JS Object representation of yml file
- */
-function loadYmlFile(filePath) {
-  return yaml.safeLoad(fs.readFileSync(filePath, 'utf8'));
 }
 
 const isLambdaStatusLogEntry = (logEntry) =>

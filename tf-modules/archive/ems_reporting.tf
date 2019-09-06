@@ -147,8 +147,11 @@ resource "aws_lambda_function" "ems_ingest_report" {
   }
   tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
-    subnet_ids         = var.lambda_subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    subnet_ids = var.lambda_subnet_ids
+    security_group_ids = [
+      aws_security_group.no_ingress_all_egress.id,
+      var.elasticsearch_security_group_id
+    ]
   }
 }
 

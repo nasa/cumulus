@@ -22,3 +22,5 @@ terraform.tfvars
 terraform.tf
 .terraform/
 test-output
+/lambdas/snsS3Test/lambda.zip
+/config.yml
