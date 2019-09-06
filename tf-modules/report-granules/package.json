@@ -7,7 +7,6 @@
     "node": ">=8.10.0"
   },
   "scripts": {
-    "test": "ava",
     "build": "rm -rf dist && mkdir dist",
     "watch": "rm -rf dist && mkdir dist",
     "prepare": "npm run build"
