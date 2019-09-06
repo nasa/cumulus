@@ -15,7 +15,8 @@ variable "lambda_processing_role_arn" {
 }
 
 variable "lambda_subnet_ids" {
-  type = list(string)
+  type    = list(string)
+  default = null
 }
 
 variable "log2elasticsearch_lambda_function_arn" {
@@ -35,5 +36,6 @@ variable "system_bucket" {
 }
 
 variable "vpc_id" {
-  type = string
+  type    = string
+  default = null
 }
