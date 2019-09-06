@@ -11,7 +11,7 @@ set -ex
 . ./bamboo/abort-if-skip-integration-tests.sh
 
 npm config set unsafe-perm true
-npm install
+npm --verbose install
 . ./bamboo/set-bamboo-env-variables.sh
 
 if [[ $USE_NPM_PACKAGES == true ]]; then
