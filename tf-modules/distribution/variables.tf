@@ -17,11 +17,6 @@ variable "prefix" {
   description = "Resource prefix unique to this deployment"
 }
 
-variable "subnet_ids" {
-  type        = list(string)
-  description = "VPC subnets used by Lambda functions"
-}
-
 variable "system_bucket" {
   type        = string
   description = "A bucket to be used for staging deployment files"
@@ -35,11 +30,6 @@ variable "urs_client_id" {
 variable "urs_client_password" {
   type        = string
   description = "The URS app password"
-}
-
-variable "vpc_id" {
-  type        = string
-  description = "VPC used by Lambda functions"
 }
 
 # Optional
@@ -84,8 +74,20 @@ variable "sts_credentials_lambda_function_arn" {
   type = string
 }
 
+variable "subnet_ids" {
+  type        = list(string)
+  description = "VPC subnets used by Lambda functions"
+  default     = null
+}
+
 variable "urs_url" {
   type        = string
   default     = "https://urs.earthdata.nasa.gov"
   description = "The URL of the Earthdata Login site"
+}
+
+variable "vpc_id" {
+  type        = string
+  description = "VPC used by Lambda functions"
+  default     = null
 }
