@@ -151,9 +151,8 @@ async function del(req, res) {
       id: granuleId,
       type: 'granule',
       parent: granule.collectionId,
-      index: esIndex,
-      ignore: [404]
-    });
+      index: esIndex
+    }, { ignore: [404] });
   }
 
   return res.send({ detail: 'Record deleted' });
