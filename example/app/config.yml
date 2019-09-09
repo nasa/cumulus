@@ -361,6 +361,7 @@ jk-sit:
     dashboard:
       name: jk-sit-dashboard
       type: shared
+  cma_layer: '{{sit_cma_layer}}'
 
 aimee:
   prefix: aimee
@@ -454,6 +455,7 @@ lf-sit:
     protected-2:
       name: lf-sit-protected
       type: protected
+  cma_layer: '{{sit_cma_layer}}'
 
 kk:
   prefix: kk-test
