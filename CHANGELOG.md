@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-1394**
+  - Added three new SNS topics for publishing granule, execution, and PDR ingest notifications.
+    - Added `reportExecutions` Lambda as SNS topic consumer for storing execution data
+    - Added `reportGranules` Lambda as SNS topic consumer for storing granule data
+    - Added `reportPdrs` Lambda as SNS topic consumer for storing PDR data
+
 ### Changed
 
 - **CUMULUS-1432**
@@ -16,6 +24,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - **CUMULUS-1432** `logs` endpoint filter correctly filters logs by level
+
+### Removed
+
+- **CUMULUS-1394** - Removed `sfTracker` SNS topic. Replaced by three new SNS topics for granule, execution, and PDR ingest notifications.
 
 ## [v1.14.1] - 2019-08-29
 
@@ -67,7 +79,7 @@ If you deploy with no distribution app your deployment will succeed but you may 
 
 - **CUMULUS-642**
   - Adds Launchpad as an authentication option for the Cumulus API.
-  - Updated deployment documentation and added [instructions to setup Cumulus API Launchpad authentication] (https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication)
+  - Updated deployment documentation and added [instructions to setup Cumulus API Launchpad authentication](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication)
 - **CUMULUS-1418**
   - Adds usage docs/testing of lambda layers (introduced in PR1125), updates Core example tasks to use the updated `cumulus-ecs-task` and a CMA layer instead of kes CMA injection.
   - Added Terraform module to publish CMA as layer to user account.
@@ -1407,4 +1419,5 @@ We may need to update the api documentation to reflect this.
 [v1.1.1]: https://github.com/nasa/cumulus/compare/v1.0.1...v1.1.1
 [v1.1.0]: https://github.com/nasa/cumulus/compare/v1.0.1...v1.1.0
 [v1.0.1]: https://github.com/nasa/cumulus/compare/v1.0.0...v1.0.1
+
 [v1.0.0]: https://github.com/nasa/cumulus/compare/pre-v1-release...v1.0.0
