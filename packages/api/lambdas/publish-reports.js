@@ -9,12 +9,15 @@ const {
   isFailedSfStatus,
   isTerminalSfStatus
 } = require('@cumulus/common/cloudwatch-event');
+const log = require('@cumulus/common/log');
 const {
   getMessageExecutionArn,
   getMessageGranules,
   getMessagePdr
 } = require('@cumulus/common/message');
-const log = require('@cumulus/common/log');
+const StepFunctions = require('@cumulus/common/StepFunctions');
+
+const Granule = require('../models/granules');
 
 /**
  * Publish a message to an SNS topic.
@@ -103,14 +106,29 @@ async function handleGranuleMessages(eventMessage) {
   }
 
   const executionArn = getMessageExecutionArn(eventMessage);
+  const executionUrl = aws.getExecutionUrl(executionArn);
+
+  let executionDescription;
+  try {
+    executionDescription = await StepFunctions.describeExecution({ executionArn });
+  } catch (err) {
+    log.error(`Could not describe execution ${executionArn}`, err);
+  }
+  const { startDate, stopDate } = executionDescription;
+
+  const granulesModel = new Granule();
 
   return Promise.all(
     granules
       .filter((granule) => granule.granuleId)
-      .map((granule) => publishGranuleSnsMessage({
-        ...granule,
-        executionArn
-      }))
+      .map((granule) => granulesModel.buildGranuleRecord(
+        granule,
+        eventMessage,
+        executionUrl,
+        startDate,
+        stopDate
+      ))
+      .map((granuleMessage) => publishGranuleSnsMessage(granuleMessage))
   );
 }
 
