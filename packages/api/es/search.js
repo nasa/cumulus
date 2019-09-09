@@ -8,8 +8,8 @@
 const has = require('lodash.has');
 const omit = require('lodash.omit');
 const aws = require('aws-sdk');
-const httpAwsEs = require('http-aws-es');
-const elasticsearch = require('elasticsearch');
+//const httpAwsEs = require('http-aws-es');
+const elasticsearch = require('@elastic/elasticsearch');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const queries = require('./queries');
 const aggs = require('./aggregations');
@@ -34,13 +34,13 @@ const getCredentials = () =>
  * @returns {string} elasticsearch local address
  */
 const getLocalEsHost = () => {
-  if (process.env.LOCAL_ES_HOST) return `${process.env.LOCAL_ES_HOST}:9200`;
-  if (process.env.LOCALSTACK_HOST) return `${process.env.LOCALSTACK_HOST}:4571`;
+  if (process.env.LOCAL_ES_HOST) return `http://${process.env.LOCAL_ES_HOST}:9200`;
+  if (process.env.LOCALSTACK_HOST) return `http://${process.env.LOCALSTACK_HOST}:4571`;
   return 'localhost:9200';
 };
 
 const esTestConfig = () => ({
-  host: getLocalEsHost(),
+  node: getLocalEsHost(),
   requestTimeout: 5000
 });
 
@@ -48,12 +48,13 @@ const esProdConfig = async (host) => {
   if (!aws.config.credentials) await getCredentials();
 
   return {
-    host: process.env.ES_HOST || host || 'localhost:9200',
-    connectionClass: httpAwsEs,
-    amazonES: {
-      region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
-      credentials: aws.config.credentials
-    },
+    node: process.env.ES_HOST || host || 'localhost:9200',
+    // LAUREN TO DO
+    // connectionClass: httpAwsEs,
+    // amazonES: {
+    //   region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
+    //   credentials: aws.config.credentials
+    // },
 
     // Note that this doesn't abort the query.
     requestTimeout: 50000 // milliseconds

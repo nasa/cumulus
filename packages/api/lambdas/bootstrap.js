@@ -37,7 +37,7 @@ const physicalId = 'cumulus-bootstraping-daac-ops-api-deployment';
 async function findMissingMappings(esClient, index, newMappings) {
   const typesResponse = await esClient.indices.getMapping({
     index
-  });
+  }).then((response) => response.body);
 
   const types = Object.keys(newMappings);
   const indexMappings = get(typesResponse, `${index}.mappings`);
@@ -74,7 +74,8 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
   const esClient = await Search.es(host);
 
   // check if the index exists
-  const exists = await esClient.indices.exists({ index });
+  const exists = await esClient.indices.exists({ index })
+    .then((response) => response.body);
 
   if (!exists) {
     // add mapping
@@ -96,7 +97,7 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
 
     const aliasExists = await esClient.indices.existsAlias({
       name: alias
-    });
+    }).then((response) => response.body);
 
     if (!aliasExists) {
       await esClient.indices.putAlias({
@@ -106,7 +107,8 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
 
       log.info(`Created alias ${alias} for index ${index}`);
     } else {
-      const indices = await esClient.indices.getAlias({ name: alias });
+      const indices = await esClient.indices.getAlias({ name: alias })
+        .then((response) => response.body);
 
       aliasedIndex = Object.keys(indices)[0];
 
