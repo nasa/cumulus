@@ -9,11 +9,11 @@ const {
   isFailedSfStatus,
   isTerminalSfStatus
 } = require('@cumulus/common/cloudwatch-event');
-// const {
-//   getMessageExecutionArn
-// } = require('@cumulus/common/message');
+const {
+  getMessageExecutionArn,
+  getMessageGranules
+} = require('@cumulus/common/message');
 const log = require('@cumulus/common/log');
-// const StepFunctions = require('@cumulus/common/StepFunctions');
 
 /**
  * Publish a message to an SNS topic.
@@ -61,16 +61,16 @@ async function publishExecutionSnsMessage(
 /**
  * Publish SNS message for granule reporting.
  *
- * @param {Object} eventMessage - Workflow execution message
+ * @param {Object} granule - A granule object
  * @param {string} [granuleSnsTopicArn]
  *   SNS topic ARN for reporting granules. Defaults to `process.env.granule_sns_topic_arn`.
  * @returns {Promise}
  */
 async function publishGranuleSnsMessage(
-  eventMessage,
+  granule,
   granuleSnsTopicArn = process.env.granule_sns_topic_arn
 ) {
-  return publishSnsMessage(granuleSnsTopicArn, eventMessage);
+  return publishSnsMessage(granuleSnsTopicArn, granule);
 }
 
 /**
@@ -86,6 +86,31 @@ async function publishPdrSnsMessage(
   pdrSnsTopicArn = process.env.pdr_sns_topic_arn
 ) {
   return publishSnsMessage(pdrSnsTopicArn, eventMessage);
+}
+
+/**
+ * Publish individual granule messages to SNS topic.
+ *
+ * @param {Object} eventMessage - Workflow execution message
+ * @returns {Promise}
+ */
+async function handleGranuleMessages(eventMessage) {
+  const granules = getMessageGranules(eventMessage);
+  if (!granules) {
+    return 'No granules to process';
+  }
+
+  const executionArn = getMessageExecutionArn(eventMessage);
+  // if (!executionArn) return null;
+
+  return Promise.all(
+    granules
+      .filter((granule) => granule.granuleId)
+      .map((granule) => publishGranuleSnsMessage({
+        ...granule,
+        executionArn
+      }))
+  );
 }
 
 /**
@@ -113,7 +138,8 @@ async function publishReportSnsMessages(eventMessage, isTerminalStatus, isFailed
 
   return Promise.all([
     publishExecutionSnsMessage(eventMessage),
-    publishGranuleSnsMessage(eventMessage),
+    handleGranuleMessages(eventMessage),
+    // publishGranuleSnsMessage(eventMessage),
     publishPdrSnsMessage(eventMessage)
   ]);
 }

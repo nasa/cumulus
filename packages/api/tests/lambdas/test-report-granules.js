@@ -20,7 +20,6 @@ let granuleModel;
 let timestamp;
 const granuleTable = randomString();
 
-
 const createFakeGranule = (granuleParams = {}, fileParams = {}) => fakeGranuleFactoryV2({
   files: [
     fakeFileFactory(fileParams),

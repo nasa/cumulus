@@ -69,6 +69,16 @@ const getCollectionIdFromMessage = (message) =>
   );
 
 /**
+ * Get granules from execution message.
+ *
+ * @param {Object} message - An execution message
+ * @returns {Array<Object>} - An array of granule objects
+ */
+const getMessageGranules = (message) =>
+  get(message, 'payload.granules')
+  || get(message, 'meta.input_granules');
+
+/**
  * Get queue name by URL from execution message.
  *
  * @param {Object} message - An execution message
@@ -242,6 +252,7 @@ module.exports = {
   getMessageExecutionArn,
   getMessageExecutionName,
   getMessageFromTemplate,
+  getMessageGranules,
   getMessageStateMachineArn,
   hasQueueAndExecutionLimit
 };
