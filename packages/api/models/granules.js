@@ -298,7 +298,7 @@ class Granule extends Manager {
     return existingFiles.filter((file) => file);
   }
 
-  async buildGranuleRecord(
+  static async buildGranuleRecord(
     granule,
     message,
     executionUrl,
