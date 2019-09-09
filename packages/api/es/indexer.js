@@ -11,6 +11,7 @@
 'use strict';
 
 const cloneDeep = require('lodash.clonedeep');
+const get = require('lodash.get');
 const isString = require('lodash.isstring');
 const zlib = require('zlib');
 const log = require('@cumulus/common/log');
@@ -18,7 +19,7 @@ const { inTestMode } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/common');
 
 const { Search, defaultIndexAlias } = require('./search');
-const { Granule } = require('../models');
+const { Granule, Pdr, Execution } = require('../models');
 const { IndexExistsError } = require('../lib/errors');
 const mappings = require('../models/mappings.json');
 
@@ -282,6 +283,28 @@ async function deleteRecord({
 }
 
 /**
+ * Extracts granule info from a stepFunction message and save it to DynamoDB
+ *
+ * @param  {Object} payload  - Cumulus Step Function message
+ * @returns {Promise<Array>} list of created records
+ */
+function granule(payload) {
+  const g = new Granule();
+  return g.createGranulesFromSns(payload);
+}
+
+/**
+ * Extracts PDR info from a StepFunction message and save it to DynamoDB
+ *
+ * @param  {Object} payload  - Cumulus Step Function message
+ * @returns {Promise<Object>} Elasticsearch response
+ */
+function pdr(payload) {
+  const p = new Pdr();
+  return p.createPdrFromSns(payload);
+}
+
+/**
  * start the re-ingest of a given granule object
  *
  * @param  {Object} g - the granule object
@@ -290,6 +313,68 @@ async function deleteRecord({
 async function reingest(g) {
   const gObj = new Granule();
   return gObj.reingest(g);
+}
+
+/**
+ * processes the incoming cumulus message and pass it through a number
+ * of indexers
+ *
+ * @param  {Object} event - incoming cumulus message
+ * @returns {Promise} object with response from the three indexer
+ */
+async function handlePayload(event) {
+  let payload;
+  const source = get(event, 'EventSource');
+
+  if (source === 'aws:sns') {
+    payload = get(event, 'Sns.Message');
+    payload = JSON.parse(payload);
+  } else {
+    payload = event;
+  }
+
+  let executionPromise;
+  const e = new Execution();
+  if (['failed', 'completed'].includes(payload.meta.status)) {
+    executionPromise = e.updateExecutionFromSns(payload);
+  } else {
+    executionPromise = e.createExecutionFromSns(payload);
+  }
+
+  return {
+    sf: await executionPromise,
+    pdr: await pdr(payload),
+    granule: await granule(payload)
+  };
+}
+
+/**
+ * Lambda function handler for sns2elasticsearch
+ *
+ * @param  {Object} event - incoming message sns
+ * @param  {Object} context - aws lambda context object
+ * @param  {function} cb - aws lambda callback function
+ * @returns {Promise} undefined
+ */
+function handler(event, context, cb) {
+  // we can handle both incoming message from SNS as well as direct payload
+  log.debug(JSON.stringify(event));
+  const records = get(event, 'Records');
+  let jobs = [];
+
+  if (records) {
+    jobs = records.map(handlePayload);
+  } else {
+    jobs.push(handlePayload(event));
+  }
+
+  return Promise.all(jobs)
+    .then((r) => {
+      log.info(`Updated ${r.length} es records`);
+      cb(null, r);
+      return r;
+    })
+    .catch(cb);
 }
 
 /**
@@ -319,6 +404,7 @@ function logHandler(event, context, cb) {
 
 module.exports = {
   createIndex,
+  handler,
   logHandler,
   indexCollection,
   indexLog,
