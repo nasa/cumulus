@@ -80,16 +80,6 @@ data "aws_iam_policy_document" "step_policy" {
     ]
     resources = ["*"]
   }
-
-  statement {
-    actions = [
-      "events:DescribeRule",
-      "events:PutRule",
-      "events:PutTargets"
-    ]
-    # TODO Where is this being created?
-    resources = ["arn:aws:events:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:rule/StepFunctionsGetEventsForECSTaskRule"]
-  }
 }
 
 resource "aws_iam_role_policy" "step" {
