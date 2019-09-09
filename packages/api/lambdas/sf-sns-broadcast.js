@@ -1,6 +1,5 @@
 'use strict';
 
-const AWS = require('aws-sdk');
 const get = require('lodash.get');
 const isObject = require('lodash.isobject');
 const { pullStepFunctionEvent } = require('@cumulus/common/aws');
