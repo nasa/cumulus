@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api",
-  "version": "1.13.4",
+  "version": "1.14.1",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
@@ -14,6 +14,7 @@
     "test-coverage": "nyc npm test",
     "build": "webpack",
     "watch": "webpack --progress -w",
+    "build-lambda-zips": "for x in $(ls dist); do (cd dist/${x} && rm -f lambda.zip && zip lambda.zip index.js); done",
     "serve": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve",
     "serve-oauth": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test cumulus-api serve",
     "serve-remote": "cumulus-api serve",
@@ -22,7 +23,7 @@
     "serve-dist-remote": "cumulus-api serve-dist",
     "reset-tables": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api reset-tables",
     "link-api-bin": "sh ./bin/link-api-bin.sh",
-    "prepare": "npm run build && npm run link-api-bin"
+    "prepare": "npm run build && npm run link-api-bin && npm run build-lambda-zips"
   },
   "ava": {
     "files": [
@@ -46,12 +47,12 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cmr-client": "1.13.4",
-    "@cumulus/cmrjs": "1.13.4",
-    "@cumulus/common": "1.13.4",
-    "@cumulus/ingest": "1.13.4",
-    "@cumulus/logger": "1.13.4",
-    "@cumulus/pvl": "1.13.4",
+    "@cumulus/cmr-client": "1.14.1",
+    "@cumulus/cmrjs": "1.14.1",
+    "@cumulus/common": "1.14.1",
+    "@cumulus/ingest": "1.14.1",
+    "@cumulus/logger": "1.14.1",
+    "@cumulus/pvl": "1.14.1",
     "@mapbox/dyno": "^1.4.2",
     "ajv": "^5.2.2",
     "archiver": "^2.1.1",
@@ -89,7 +90,6 @@
     "lodash.isfunction": "^3.0.9",
     "lodash.isinteger": "^4.0.4",
     "lodash.isnil": "^4.0.0",
-    "lodash.isnumber": "^3.0.3",
     "lodash.isobject": "^3.0.2",
     "lodash.isstring": "^4.0.1",
     "lodash.keyby": "^4.6.0",

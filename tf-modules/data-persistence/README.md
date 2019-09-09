@@ -8,8 +8,6 @@ This module deploys data persistence resources, including DynamoDB tables and an
 2. Populate the sample file with values that apply to your AWS environment (see configuration variables section below).
 3. Deploy this module: `terraform apply`
 
-NOTE: Terraform will ignore the `aws_profile` config variable if you have static credentials or environment variables set, see the [AWS Provider page](https://www.terraform.io/docs/providers/aws/index.html#authentication).
-
 ## Included resources
 
 - DynamoDB tables:
@@ -39,5 +37,4 @@ Configuration variables are shown in [`terraform.tfvars.sample`](./terraform.tfv
 - `include_elasticsearch` - Whether to include Elasticsearch in the deployment. `false` will exclude Elasticsearch from the deployment.
 - `elasticsearch_config` - Configuration for the Elasticsearch instance
 - `enable_point_in_time_tables` - Names of DynamoDB tables that should have point in time recovery enabled. Any of the table names [listed above](#included-resources) are valid (use the table name without the prefix).
-- `security_groups` - Security group IDs that should be used when deploying Elasticsearch inside of a VPC
 - `subnet_ids` - Subnet IDs that should be used when deploying Elasticsearch inside of a VPC. **If no subnet IDs are provided, Elasticsearch will not be deployed inside of a VPC.**
