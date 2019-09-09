@@ -483,6 +483,13 @@ kk:
   oauth:
     provider: launchpad
     userGroup: GSFC-Cumulus-Dev
+  samlConfig:
+    entityID: 'https://cumulus-sandbox.earthdata.nasa.gov/kk-test-integration'
+    privateKeyPath: '/Users/kakelly/Documents/Projects/serverkey.pem'
+    certPath: '/Users/kakelly/Documents/Projects/cert-file.crt'
+    assertEndpoint: 'https://cumulus-sandbox.earthdata.nasa.gov/saml/sso'
+    idpLogin: 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso'
+    launchpadCertPath: '/Users/kakelly/Documents/Projects/launchpad-sbx.crt'
 
 kk-int-test:
   prefix: kk-int-test

@@ -105,6 +105,21 @@ async function token(event, oAuth2Provider, response) {
   return response.boom.unauthorized(errorMessage);
 }
 
+async function buildLaunchpadToken(samlResponse) {
+  const accessTokenModel = new AccessToken();
+
+  const username = samlResponse.user.name_id;
+  const expirationTime = Date.now() + 3600;
+  const accessToken = samlResponse.user.session_index;
+
+  await accessTokenModel.create({
+    accessToken,
+    refreshToken: null
+  });
+
+  return createJwtToken({ accessToken, username, expirationTime });
+}
+
 /**
  * Handle refreshing tokens with OAuth provider
  *
@@ -266,6 +281,7 @@ async function refreshEndpoint(req, res) {
 }
 
 module.exports = {
+  buildLaunchpadToken,
   refreshEndpoint,
   tokenEndpoint,
   deleteTokenEndpoint

@@ -29,10 +29,10 @@ const launchpadAuth = require('./launchpadAuth');
 
 // set up SP and IdP
 const sp_options = {
-  entity_id: 'https://sp.example.com/metadata.xml', // ??
-  private_key: fs.readFileSync('/Users/kakelly/Documents/Projects/serverkey.pem').toString(),
-  certificate: fs.readFileSync('/Users/kakelly/Documents/Projects/cert-file.crt').toString(),
-  assert_endpoint: 'https://cumulus-sandbox.earthdata.nasa.gov/saml/sso', // change to just /assert
+  entity_id: process.env.ENTITY_ID,
+  private_key: fs.readFileSync(process.env.PRIV_KEY).toString(),
+  certificate: fs.readFileSync(process.env.CERT).toString(),
+  assert_endpoint: process.env.ASSERT_ENDPOINT, // change to just /assert
   force_authn: true,
   // auth_context: { comparison: "exact", class_refs: ["urn:oasis:names:tc:SAML:1.0:am:password"] },
   // nameid_format: "urn:oasis:names:tc:SAML:2.0:nameid-format:transient",
@@ -48,13 +48,13 @@ const sp = new saml2.ServiceProvider(sp_options);
 const metadata = sp.create_metadata();
 
 const idp_options = {
-  sso_login_url: 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso',
-  sso_logout_url: null,
-  certificates: [fs.readFileSync('/Users/kakelly/Documents/Projects/launchpad-sbx.crt').toString()]
+  sso_login_url: process.env.IDP_LOGIN, // 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso'
+  sso_logout_url: null, // should probably figure this out?? Does launchpad have this?
+  certificates: [fs.readFileSync(process.env.LAUNCHPAD_CERT).toString()]
 };
 const idp = new saml2.IdentityProvider(idp_options);
 
-const request_id = '12345';
+const request_id = '12345'; // Random string?
 
 let token = require('../endpoints/token');
 let { ensureAuthorized } = require('./auth');
@@ -78,21 +78,23 @@ router.get("/samlLogin", function(req, res) {
 
 // Assert endpoint for when login completes
 router.post("/saml/sso", function(req, res) { // /assert
-  var options = {request_body: req.body};
+  const state = get(event, 'query.state');
+  const options = {request_body: req.body};
   sp.post_assert(idp, options, function(err, saml_response) {
     if (err != null)
       return res.send(500);
- 
-    // Save name_id and session_index for logout
-    // Note:  In practice these should be saved in the user session, not globally.
-    name_id = saml_response.user.name_id;
-    session_index = saml_response.user.session_index;
 
-    // json web token 1 store with the user name , for some amount of time , 1 hour. 
-    // jwt to dashboard :
-    // ^ jwt 
- 
-    res.send("Hello #{saml_response.user.name_id}!");
+    // use the SAML response to build a jwtToken to return to dashboard
+    const jwtToken = token.buildLaunchpadToken(saml_response);
+
+    if (state) {
+      return res
+        .status(307)
+        .set({ Location: `${decodeURIComponent(state)}?token=${jwtToken}` })
+        .send('Redirecting');
+    }
+    const username = saml_response.user.name_id;
+    res.send('Hello', username);
   });
 });
 
