@@ -14,9 +14,8 @@ const { deconstructCollectionId } = require('../../lib/utils');
 const publishReports = rewire('../../lambdas/publish-reports');
 
 let snsStub;
-// let executionPublishSpy;
 let granulePublishSpy;
-// let pdrPublishSpy;
+let pdrPublishSpy;
 let snsPublishSpy;
 const sfEventSource = 'aws.states';
 
@@ -65,7 +64,10 @@ const createCumulusMessage = ({
   payload: {
     granules: [
       ...new Array(numberOfGranules)
-    ].map(createFakeGranule.bind(null, { collectionId, ...granuleParams }, fileParams))
+    ].map(createFakeGranule.bind(null, { collectionId, ...granuleParams }, fileParams)),
+    pdr: {
+      name: randomString()
+    }
   }
 });
 
@@ -77,6 +79,7 @@ test.before(async () => {
   });
 
   granulePublishSpy = sinon.spy();
+  pdrPublishSpy = sinon.spy();
   snsPublishSpy = sinon.spy(aws.sns(), 'publish');
 });
 
@@ -98,7 +101,7 @@ test.beforeEach((t) => {
   t.context.executionArn = getMessageExecutionArn(t.context.message);
 
   granulePublishSpy.resetHistory();
-  // pdrPublishSpy.resetHistory();
+  pdrPublishSpy.resetHistory();
   snsPublishSpy.resetHistory();
 });
 
@@ -106,7 +109,7 @@ test.after.always(async () => {
   snsStub.restore();
 });
 
-test.serial('lambda publishes successful report to all SNS topics', async (t) => {
+test.serial('lambda publishes correct report to all SNS topics', async (t) => {
   const { executionArn, message, snsTopicArns } = t.context;
 
   const cwEventMessage = createCloudwatchEventMessage(
@@ -205,6 +208,67 @@ test.serial('lambda publishes correct number of granules from meta.input_granule
 
   // revert the mocking
   granulePublishMock();
+});
+
+test.serial('lambda without PDR in message does not publish to PDR SNS topic', async (t) => {
+  const { message } = t.context;
+
+  const pdrPublishMock = publishReports.__set__('publishPdrSnsMessage', pdrPublishSpy);
+
+  delete message.payload.pdr;
+
+  const cwEventMessage = createCloudwatchEventMessage(
+    'RUNNING',
+    message
+  );
+
+  await publishReports.handler(cwEventMessage);
+
+  t.is(pdrPublishSpy.callCount, 0);
+
+  // revert the mocking
+  pdrPublishMock();
+});
+
+test.serial('lambda without valid PDR in message does not publish to PDR SNS topic', async (t) => {
+  const { message } = t.context;
+
+  const pdrPublishMock = publishReports.__set__('publishPdrSnsMessage', pdrPublishSpy);
+
+  delete message.payload.pdr.name;
+
+  const cwEventMessage = createCloudwatchEventMessage(
+    'RUNNING',
+    message
+  );
+
+  await publishReports.handler(cwEventMessage);
+
+  t.is(pdrPublishSpy.callCount, 0);
+
+  // revert the mocking
+  pdrPublishMock();
+});
+
+test.serial('lambda publishes PDR from meta.pdr to SNS topic', async (t) => {
+  const { message } = t.context;
+
+  const pdrPublishMock = publishReports.__set__('publishPdrSnsMessage', pdrPublishSpy);
+
+  const { pdr } = message.payload;
+  message.meta.pdr = pdr;
+
+  const cwEventMessage = createCloudwatchEventMessage(
+    'RUNNING',
+    message
+  );
+
+  await publishReports.handler(cwEventMessage);
+
+  t.is(pdrPublishSpy.callCount, 1);
+
+  // revert the mocking
+  pdrPublishMock();
 });
 
 test.serial('publish failure to executions topic does not affect publishing to other topics', async (t) => {

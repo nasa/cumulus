@@ -11,7 +11,8 @@ const {
 } = require('@cumulus/common/cloudwatch-event');
 const {
   getMessageExecutionArn,
-  getMessageGranules
+  getMessageGranules,
+  getMessagePdr
 } = require('@cumulus/common/message');
 const log = require('@cumulus/common/log');
 
@@ -97,11 +98,11 @@ async function publishPdrSnsMessage(
 async function handleGranuleMessages(eventMessage) {
   const granules = getMessageGranules(eventMessage);
   if (!granules) {
-    return 'No granules to process';
+    log.info('No granules to process on the message');
+    return Promise.resolve();
   }
 
   const executionArn = getMessageExecutionArn(eventMessage);
-  // if (!executionArn) return null;
 
   return Promise.all(
     granules
@@ -111,6 +112,27 @@ async function handleGranuleMessages(eventMessage) {
         executionArn
       }))
   );
+}
+
+/**
+ * Publish individual PDR messages to SNS topic.
+ *
+ * @param {Object} eventMessage - Workflow execution message
+ * @returns {Promise}
+ */
+async function handlePdrMessage(eventMessage) {
+  const pdr = getMessagePdr(eventMessage);
+  if (!pdr) {
+    log.info('No PDRs to process on the message');
+    return Promise.resolve();
+  }
+
+  if (!pdr.name) {
+    log.info('Could not find name on PDR object', pdr);
+    return Promise.resolve();
+  }
+
+  return publishPdrSnsMessage(pdr);
 }
 
 /**
@@ -139,8 +161,7 @@ async function publishReportSnsMessages(eventMessage, isTerminalStatus, isFailed
   return Promise.all([
     publishExecutionSnsMessage(eventMessage),
     handleGranuleMessages(eventMessage),
-    // publishGranuleSnsMessage(eventMessage),
-    publishPdrSnsMessage(eventMessage)
+    handlePdrMessage(eventMessage)
   ]);
 }
 
