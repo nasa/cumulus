@@ -6,6 +6,7 @@ const sinon = require('sinon');
 
 const aws = require('@cumulus/common/aws');
 const { getMessageExecutionArn } = require('@cumulus/common/message');
+const StepFunctions = require('@cumulus/common/StepFunctions');
 const { randomId, randomNumber, randomString } = require('@cumulus/common/test-utils');
 
 const { fakeGranuleFactoryV2, fakeFileFactory } = require('../../lib/testUtils');
@@ -17,6 +18,8 @@ let snsStub;
 let granulePublishSpy;
 let pdrPublishSpy;
 let snsPublishSpy;
+let stepFunctionsStub;
+
 const sfEventSource = 'aws.states';
 
 const createCloudwatchEventMessage = (
@@ -78,6 +81,12 @@ test.before(async () => {
     })
   });
 
+  const fakeExecution = async () => ({
+    startDate: new Date(Date.UTC(2019, 6, 28)),
+    stopDate: new Date(Date.UTC(2019, 6, 28, 1))
+  });
+  stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').callsFake(fakeExecution);
+
   granulePublishSpy = sinon.spy();
   pdrPublishSpy = sinon.spy();
   snsPublishSpy = sinon.spy(aws.sns(), 'publish');
@@ -107,6 +116,7 @@ test.beforeEach((t) => {
 
 test.after.always(async () => {
   snsStub.restore();
+  stepFunctionsStub.restore();
 });
 
 test.serial('lambda publishes correct report to all SNS topics', async (t) => {
@@ -133,11 +143,11 @@ test.serial('lambda publishes correct report to all SNS topics', async (t) => {
   t.true(snsTopicArns.includes(snsPublishSpy.args[0][0].TopicArn));
 
   // granules topic
-  const [granule] = message.payload.granules;
-  t.deepEqual(JSON.parse(snsPublishSpy.args[1][0].Message), {
-    ...granule,
-    executionArn
-  });
+  // const [granule] = message.payload.granules;
+  // t.deepEqual(JSON.parse(snsPublishSpy.args[1][0].Message), {
+  //   ...granule,
+  //   executionArn
+  // });
   t.true(snsTopicArns.includes(snsPublishSpy.args[1][0].TopicArn));
 
   // PDRs topic
@@ -161,6 +171,29 @@ test.serial('lambda without granules in message does not publish to granule SNS 
   await publishReports.handler(cwEventMessage);
 
   t.is(granulePublishSpy.callCount, 0);
+
+  // revert the mocking
+  granulePublishMock();
+});
+
+test.serial('lambda ignores granules without granule ID', async (t) => {
+  const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
+
+  const message = createCumulusMessage({
+    numberOfGranules: 3
+  });
+  message.payload.granules.push({});
+
+  t.is(message.payload.granules.length, 4);
+
+  const cwEventMessage = createCloudwatchEventMessage(
+    'RUNNING',
+    message
+  );
+
+  await publishReports.handler(cwEventMessage);
+
+  t.is(granulePublishSpy.callCount, 3);
 
   // revert the mocking
   granulePublishMock();

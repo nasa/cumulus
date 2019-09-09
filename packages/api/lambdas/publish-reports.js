@@ -3,6 +3,7 @@
 const merge = require('lodash.merge');
 
 const aws = require('@cumulus/common/aws');
+const { getExecutionUrl } = require('@cumulus/ingest/aws');
 const {
   getSfEventMessageObject,
   getSfEventStatus,
@@ -106,7 +107,7 @@ async function handleGranuleMessages(eventMessage) {
   }
 
   const executionArn = getMessageExecutionArn(eventMessage);
-  const executionUrl = aws.getExecutionUrl(executionArn);
+  const executionUrl = getExecutionUrl(executionArn);
 
   let executionDescription;
   try {
@@ -116,12 +117,10 @@ async function handleGranuleMessages(eventMessage) {
   }
   const { startDate, stopDate } = executionDescription;
 
-  const granulesModel = new Granule();
-
   return Promise.all(
     granules
       .filter((granule) => granule.granuleId)
-      .map((granule) => granulesModel.buildGranuleRecord(
+      .map((granule) => Granule.buildGranuleRecord(
         granule,
         eventMessage,
         executionUrl,
