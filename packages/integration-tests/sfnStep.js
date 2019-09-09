@@ -1,6 +1,6 @@
 'use strict';
 
-const { s3 } = require('@cumulus/common/aws');
+const { s3, pullStepFunctionEvent } = require('@cumulus/common/aws');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 
 /**
@@ -130,10 +130,9 @@ class SfnStep {
     let stepInput = JSON.parse(subStepExecutionDetails.input);
 
     if (stepInput.replace) {
-      // Message was too large and output was written to S3
-      console.log(`Retrieving ${stepName} input from ${JSON.stringify(stepInput.replace)}`);
-      stepInput = await s3().getObject(stepInput.replace).promise()
-        .then((response) => JSON.parse(response.Body.toString()));
+       // Message was too large and output was written to S3
+       console.log(`Retrieving ${stepName} output from ${JSON.stringify(stepInput.replace)}`);
+       stepInput = pullStepFunctionEvent(stepInput);
     }
     return stepInput;
   }
@@ -219,10 +218,8 @@ class SfnStep {
     if (stepOutput.replace) {
       // Message was too large and output was written to S3
       console.log(`Retrieving ${stepName} output from ${JSON.stringify(stepOutput.replace)}`);
-      stepOutput = await s3().getObject(stepOutput.replace).promise()
-        .then((response) => JSON.parse(response.Body.toString()));
+      stepOutput = pullStepFunctionEvent(stepOutput);
     }
-
     return stepOutput;
   }
 }

@@ -517,6 +517,13 @@ DiscoverGranules:
         - <<: *LambdaServiceExceptionRetry
       Next: DiscoverGranules
     DiscoverGranules:
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            MaxSize: 1
+            Path: '$.payload'
+            TargetPath: '$.payload'
       CumulusConfig:
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
