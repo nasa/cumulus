@@ -1,6 +1,6 @@
-# Report Executions
+# Report PDRs
 
-This package includes a Lambda function to process granule ingest notifications received via SNS and store granule data to a database.
+This package includes a Lambda function to process PDR ingest notifications received via SNS and store PDR data to a database.
 
 ## Deployment
 
@@ -14,8 +14,8 @@ Configuration variables are shown in `terraform.tfvars.sample`, and are explaine
 
 ```text
 # Required
-granules_table        = "GranulesTableName"  # name of DynamoDB table to store granules data
-prefix                = "myprefix"             # prefix to use for naming created resources
+pdrs_table            = "PdrsTableName"  # name of DynamoDB table to store PDRs data
+prefix                = "myprefix" # prefix to use for naming created resources
 
 # Optional
 permissions_boundary  = "arn:aws:iam::1234567890:policy/YourRoleBoundary" # IAM permissions boundary

@@ -1,7 +1,7 @@
 {
-  "name": "report-granules",
-  "version": "1.14.1",
-  "description": "Cumulus Workflow Granule Reporting Module",
+  "name": "report-pdrs",
+  "version": "1.0.0",
+  "description": "Cumulus Workflow PDR Reporting Module",
   "main": "index.js",
   "engines": {
     "node": ">=8.10.0"
@@ -27,8 +27,8 @@
     "NASA"
   ],
   "dependencies": {
-    "@cumulus/api": "1.14.1",
-    "@cumulus/common": "1.14.1",
+    "@cumulus/api": "^1.13.4",
+    "@cumulus/common": "^1.13.4",
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {

@@ -1,10 +1,11 @@
 'use strict';
 
-const pvl = require('@cumulus/pvl');
 const get = require('lodash.get');
-const aws = require('@cumulus/ingest/aws');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+
 const { getExecutionArn } = require('@cumulus/common/aws');
+const { getCollectionIdFromMessage } = require('@cumulus/common/message');
+const aws = require('@cumulus/ingest/aws');
+const pvl = require('@cumulus/pvl');
 
 const Manager = require('./base');
 const pdrSchema = require('./schemas').pdr;
@@ -48,10 +49,10 @@ class Pdr extends Manager {
   }
 
   /**
-   * Create a new pdr record from incoming sns messages
+   * Create a new PDR record from incoming SNS messages
    *
-   * @param {Object} payload - sns message containing the output of a Cumulus Step Function
-   * @returns {Promise<Object>} a pdr record
+   * @param {Object} payload - SNS message containing the output of a Cumulus Step Function
+   * @returns {Promise<Object>} a PDR record
    */
   createPdrFromSns(payload) {
     const name = get(payload, 'cumulus_meta.execution_name');
@@ -66,8 +67,7 @@ class Pdr extends Manager {
     );
     const execution = aws.getExecutionUrl(arn);
 
-    const collection = get(payload, 'meta.collection');
-    const collectionId = constructCollectionId(collection.name, collection.version);
+    const collectionId = getCollectionIdFromMessage(payload);
 
     const stats = {
       processing: get(payload, 'payload.running', []).length,
