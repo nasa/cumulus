@@ -63,7 +63,8 @@ test.serial('bootstrap adds alias to existing index', async (t) => {
   await bootstrap.bootstrapElasticSearch('fakehost', indexName, testAlias);
   esClient = await Search.es();
 
-  const alias = await esClient.indices.getAlias({ name: testAlias });
+  const alias = await esClient.indices.getAlias({ name: testAlias })
+    .then((response) => response.body);
 
   t.deepEqual(Object.keys(alias), [indexName]);
 
