@@ -41,6 +41,8 @@ const granuleFileToRecord = (granuleFile) => {
   };
 
   if (granuleFile.path) {
+    // This hard-coded URL comes from the provider configure in the
+    // test fixtures (e.g. data/granule_success.json)
     granuleRecord.source = `https://07f1bfba.ngrok.io/granules/${granuleFile.name}`;
   }
 
