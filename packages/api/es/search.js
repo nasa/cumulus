@@ -176,7 +176,7 @@ class BaseSearch {
         index: this.index,
         type: this.type,
         body: body
-      });
+      }).then((response) => response.body);
 
       if (result.hits.total > 1) {
         return { detail: 'More than one record was found!' };
@@ -236,7 +236,7 @@ class BaseSearch {
       completed: 0
     };
 
-    const item = ag.aggregations;
+    const item = ag.body.aggregations;
 
     const newObj = {
       averageDuration: item.averageDuration.value,
@@ -274,12 +274,12 @@ class BaseSearch {
       }
       const result = await this.client.search(searchParams);
 
-      const response = result.hits.hits.map((s) => s._source);
+      const response = result.body.hits.hits.map((s) => s._source);
 
       const meta = this._metaTemplate();
       meta.limit = this.size;
       meta.page = this.page;
-      meta.count = result.hits.total;
+      meta.count = result.body.hits.total;
 
       return {
         meta,
@@ -300,14 +300,14 @@ class BaseSearch {
       }
 
       const result = await this.client.search(searchParams);
-      const count = result.hits.total;
+      const count = result.body.hits.total;
 
       return {
         meta: {
           found: count,
           name: 'cumulus-api'
         },
-        counts: result.aggregations
+        counts: result.body.aggregations
       };
     } catch (e) {
       //log.error(e, logDetails);

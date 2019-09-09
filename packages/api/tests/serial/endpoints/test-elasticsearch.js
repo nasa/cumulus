@@ -382,7 +382,7 @@ test.serial('Change index', async (t) => {
   // Test that the only index connected to the alias is the destination index
   t.deepEqual(Object.keys(alias), [destIndex]);
 
-  t.is(await esClient.indices.exists({ index: sourceIndex }), true);
+  t.is((await esClient.indices.exists({ index: sourceIndex })).body, true);
 
   await esClient.indices.delete({ index: destIndex });
 });
@@ -419,7 +419,7 @@ test.serial('Change index and delete source index', async (t) => {
 
   t.is(response.body.message,
     `Reindex success - alias ${aliasName} now pointing to ${destIndex} and index ${sourceIndex} deleted`);
-  t.is(await esClient.indices.exists({ index: sourceIndex }), false);
+  t.is((await esClient.indices.exists({ index: sourceIndex })).body, false);
 
   await esClient.indices.delete({ index: destIndex });
 });

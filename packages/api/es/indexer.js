@@ -280,13 +280,15 @@ async function deleteRecord({
     refresh: inTestMode()
   };
 
+  let options = {};
+
   if (parent) params.parent = parent;
-  if (ignore) params.ignore = ignore;
+  if (ignore) options = { ignore };
 
   const actualEsClient = esClient || (await Search.es());
 
-  const getResponse = await actualEsClient.get(params);
-  const deleteResponse = await actualEsClient.delete(params);
+  const getResponse = await actualEsClient.get(params, options);
+  const deleteResponse = await actualEsClient.delete(params, options);
 
   if (type === 'granule' && getResponse.body.found) {
     const doc = getResponse.body._source;
