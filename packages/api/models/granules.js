@@ -6,22 +6,27 @@ const isString = require('lodash.isstring');
 const partial = require('lodash.partial');
 const path = require('path');
 
-const aws = require('@cumulus/ingest/aws');
 const commonAws = require('@cumulus/common/aws');
-const StepFunctions = require('@cumulus/common/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
 const cmrjs = require('@cumulus/cmrjs');
-const log = require('@cumulus/common/log');
-const launchpad = require('@cumulus/common/launchpad');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
+const launchpad = require('@cumulus/common/launchpad');
+const log = require('@cumulus/common/log');
+const { getCollectionIdFromMessage } = require('@cumulus/common/message');
+const StepFunctions = require('@cumulus/common/StepFunctions');
 const { buildURL } = require('@cumulus/common/URLUtils');
-const { deprecate, removeNilProperties } = require('@cumulus/common/util');
+const {
+  deprecate,
+  isNil,
+  removeNilProperties,
+  renameProperty
+} = require('@cumulus/common/util');
+
+const aws = require('@cumulus/ingest/aws');
 const {
   generateMoveFileParams,
   moveGranuleFiles
 } = require('@cumulus/ingest/granule');
-const { constructCollectionId } = require('@cumulus/common');
-const { isNil, renameProperty } = require('@cumulus/common/util');
 
 const Manager = require('./base');
 
@@ -316,7 +321,7 @@ class Granule extends Manager {
     const executionUrl = aws.getExecutionUrl(executionArn);
     const executionDescription = await StepFunctions.describeExecution({ executionArn });
 
-    const collection = get(cumulusMessage, 'meta.collection');
+    const collectionId = getCollectionIdFromMessage(cumulusMessage);
 
     return Promise.all(
       granules
@@ -336,7 +341,7 @@ class Granule extends Manager {
           const doc = {
             granuleId: granule.granuleId,
             pdrName: get(cumulusMessage, 'meta.pdr.name'),
-            collectionId: constructCollectionId(collection.name, collection.version),
+            collectionId,
             status: get(cumulusMessage, 'meta.status', get(granule, 'status')),
             provider: get(cumulusMessage, 'meta.provider.id'),
             execution: executionUrl,

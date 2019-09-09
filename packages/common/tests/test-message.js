@@ -4,12 +4,14 @@ const test = require('ava');
 const rewire = require('rewire');
 const message = rewire('../message');
 
+const { constructCollectionId } = require('../collection-config-store');
 const { randomId, randomString } = require('../test-utils');
 
 const buildCumulusMeta = message.__get__('buildCumulusMeta');
 const buildQueueMessageFromTemplate = message.__get__('buildQueueMessageFromTemplate');
 const getQueueNameByUrl = message.__get__('getQueueNameByUrl');
 const getMessageFromTemplate = message.__get__('getMessageFromTemplate');
+const getCollectionIdFromMessage = message.__get__('getCollectionIdFromMessage');
 
 const executionName = randomString();
 message.__set__('createExecutionName', () => executionName);
@@ -37,6 +39,25 @@ test('buildCumulusMeta returns expected object', (t) => {
     parentExecutionArn,
     execution_name: executionName
   });
+});
+
+test('getCollectionIdFromMessage returns the correct collection ID', (t) => {
+  const name = 'test';
+  const version = '001';
+  const collectionId = getCollectionIdFromMessage({
+    meta: {
+      collection: {
+        name,
+        version
+      }
+    }
+  });
+  t.is(collectionId, constructCollectionId(name, version));
+});
+
+test('getCollectionIdFromMessage returns collection ID when meta.collection is not set', (t) => {
+  const collectionId = getCollectionIdFromMessage();
+  t.is(collectionId, constructCollectionId());
 });
 
 test('getQueueNameByUrl returns correct value', (t) => {
