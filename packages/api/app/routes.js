@@ -2,6 +2,7 @@
 
 const router = require('express-promise-router')();
 const saml2 = require('saml2-js');
+const fs = require('fs');
 
 const log = require('@cumulus/common/log');
 
@@ -29,11 +30,11 @@ const launchpadAuth = require('./launchpadAuth');
 
 // set up SP and IdP
 const sp_options = {
-  entity_id: process.env.ENTITY_ID,
-  private_key: fs.readFileSync(process.env.PRIV_KEY).toString(),
-  certificate: fs.readFileSync(process.env.CERT).toString(),
-  assert_endpoint: process.env.ASSERT_ENDPOINT, // change to just /assert
-  force_authn: true,
+  entity_id: 'https://cumulus-sandbox.earthdata.nasa.gov/jl-test-integration', //'https://cumulus-sandbox.earthdata.nasa.gov/kk-test-integration', //process.env.ENTITY_ID,
+  // private_key: fs.readFileSync('/Users/kakelly2/Documents/Projects/serverkey.pem').toString(),// fs.readFileSync(process.env.PRIV_KEY).toString(),
+  // certificate: fs.readFileSync('/Users/kakelly2/Documents/Projects/crt-file.crt').toString(),// fs.readFileSync(process.env.CERT).toString(),
+  assert_endpoint: 'https://5hlnofihz8.execute-api.us-east-1.amazonaws.com:8000/dev/saml/auth', // 'https://cumulus-sandbox.earthdata.nasa.gov/saml/sso', //process.env.ASSERT_ENDPOINT, // change to just /assert
+  force_authn: false,
   // auth_context: { comparison: "exact", class_refs: ["urn:oasis:names:tc:SAML:1.0:am:password"] },
   // nameid_format: "urn:oasis:names:tc:SAML:2.0:nameid-format:transient",
   sign_get_request: false,
@@ -45,12 +46,17 @@ const sp = new saml2.ServiceProvider(sp_options);
 
 // Example use of service provider.
 // Call metadata to get XML metatadata used in configuration.
-const metadata = sp.create_metadata();
+// const metadata = sp.create_metadata();
+const bucket = process.env.system_bucket;
+const stackName = process.env.stackName;
+const launchpadCert = (await getS3Object(bucket, `${stackName}/crypto/launchpad-saml.pem`)).Body;
 
 const idp_options = {
-  sso_login_url: process.env.IDP_LOGIN, // 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso'
+  sso_login_url: 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso',//process.env.IDP_LOGIN, // 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso'
   sso_logout_url: null, // should probably figure this out?? Does launchpad have this?
-  certificates: [fs.readFileSync(process.env.LAUNCHPAD_CERT).toString()]
+  certificates: [launchpadCert]// [fs.readFileSync(process.env.LAUNCHPAD_CERT).toString()]
+  // certificates: [fs.readFileSync('/Users/kakelly2/Documents/Projects/launchpad-sbx.pem').toString()]// [fs.readFileSync(process.env.LAUNCHPAD_CERT).toString()]
+// {bucket}/{prefix}/crypto/launchpad-saml.pem
 };
 const idp = new saml2.IdentityProvider(idp_options);
 
@@ -81,9 +87,11 @@ router.post("/saml/sso", function(req, res) { // /assert
   const state = get(event, 'query.state');
   const options = {request_body: req.body};
   sp.post_assert(idp, options, function(err, saml_response) {
-    if (err != null)
+    if (err != null) {
+      console.log('assert error');
       return res.send(500);
-
+    }
+    console.log(saml_response);
     // use the SAML response to build a jwtToken to return to dashboard
     const jwtToken = token.buildLaunchpadToken(saml_response);
 
