@@ -298,6 +298,53 @@ class Granule extends Manager {
     return existingFiles.filter((file) => file);
   }
 
+  async buildGranuleRecord(
+    granule,
+    message,
+    executionUrl,
+    startDate,
+    stopDate
+  ) {
+    const collectionId = getCollectionIdFromMessage(message);
+    const temporalInfo = await cmrjs.getGranuleTemporalInfo(granule);
+
+    const granuleFiles = await buildDatabaseFiles({
+      providerURL: buildURL({
+        protocol: message.meta.provider.protocol,
+        host: message.meta.provider.host,
+        port: message.meta.provider.port
+      }),
+      files: granule.files
+    });
+
+    const record = {
+      granuleId: granule.granuleId,
+      pdrName: get(message, 'meta.pdr.name'),
+      collectionId,
+      status: get(message, 'meta.status', get(granule, 'status')),
+      provider: get(message, 'meta.provider.id'),
+      execution: executionUrl,
+      cmrLink: granule.cmrLink,
+      files: granuleFiles,
+      error: parseException(message.exception),
+      createdAt: get(message, 'cumulus_meta.workflow_start_time'),
+      timestamp: Date.now(),
+      productVolume: getGranuleProductVolume(granuleFiles),
+      timeToPreprocess: get(granule, 'sync_granule_duration', 0) / 1000,
+      timeToArchive: get(granule, 'post_to_cmr_duration', 0) / 1000,
+      processingStartDateTime: startDate.toISOString(),
+      processingEndDateTime: stopDate
+        ? stopDate.toISOString() : new Date().toISOString(),
+      ...temporalInfo
+    };
+
+    record.published = get(granule, 'published', false);
+    // Duration is also used as timeToXfer for the EMS report
+    record.duration = (record.timestamp - record.createdAt) / 1000;
+
+    return removeNilProperties(record);
+  }
+
   /**
    * Create new granule records from incoming sns messages
    *
