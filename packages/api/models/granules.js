@@ -381,49 +381,18 @@ class Granule extends Manager {
     const executionUrl = aws.getExecutionUrl(executionArn);
     const executionDescription = await StepFunctions.describeExecution({ executionArn });
 
-    const collectionId = getCollectionIdFromMessage(cumulusMessage);
-
     return Promise.all(
       granules
         .filter((g) => g.granuleId)
         .map(async (granule) => {
-          const granuleFiles = await buildDatabaseFiles({
-            providerURL: buildURL({
-              protocol: cumulusMessage.meta.provider.protocol,
-              host: cumulusMessage.meta.provider.host,
-              port: cumulusMessage.meta.provider.port
-            }),
-            files: granule.files
-          });
+          const granuleRecord = await Granule.generateGranuleRecord(
+            granule,
+            cumulusMessage,
+            executionUrl,
+            executionDescription
+          );
 
-          const temporalInfo = await cmrjs.getGranuleTemporalInfo(granule);
-
-          const doc = {
-            granuleId: granule.granuleId,
-            pdrName: get(cumulusMessage, 'meta.pdr.name'),
-            collectionId,
-            status: get(cumulusMessage, 'meta.status', get(granule, 'status')),
-            provider: get(cumulusMessage, 'meta.provider.id'),
-            execution: executionUrl,
-            cmrLink: granule.cmrLink,
-            files: granuleFiles,
-            error: parseException(cumulusMessage.exception),
-            createdAt: get(cumulusMessage, 'cumulus_meta.workflow_start_time'),
-            timestamp: Date.now(),
-            productVolume: getGranuleProductVolume(granuleFiles),
-            timeToPreprocess: get(granule, 'sync_granule_duration', 0) / 1000,
-            timeToArchive: get(granule, 'post_to_cmr_duration', 0) / 1000,
-            processingStartDateTime: executionDescription.startDate.toISOString(),
-            processingEndDateTime: executionDescription.stopDate
-              ? executionDescription.stopDate.toISOString() : new Date().toISOString(),
-            ...temporalInfo
-          };
-
-          doc.published = get(granule, 'published', false);
-          // Duration is also used as timeToXfer for the EMS report
-          doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-
-          return this.create(removeNilProperties(doc));
+          return this.create(granuleRecord);
         })
     );
   }
