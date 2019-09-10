@@ -737,6 +737,8 @@ test.serial(
       record.files,
       granule.files.map(granuleFileToRecord)
     );
+    t.is(record.createdAt, 1519167138335);
+    t.is(typeof record.duration, 'number');
     t.is(record.status, 'completed');
     t.is(record.collectionId, collectionId);
     t.is(record.execution, executionUrl);

@@ -66,16 +66,16 @@ async function publishExecutionSnsMessage(
 /**
  * Publish SNS message for granule reporting.
  *
- * @param {Object} granule - A granule object
+ * @param {Object} granuleRecord - A granule record
  * @param {string} [granuleSnsTopicArn]
  *   SNS topic ARN for reporting granules. Defaults to `process.env.granule_sns_topic_arn`.
  * @returns {Promise}
  */
 async function publishGranuleSnsMessage(
-  granule,
+  granuleRecord,
   granuleSnsTopicArn = process.env.granule_sns_topic_arn
 ) {
-  return publishSnsMessage(granuleSnsTopicArn, granule);
+  return publishSnsMessage(granuleSnsTopicArn, granuleRecord);
 }
 
 /**
@@ -125,7 +125,7 @@ async function handleGranuleMessages(eventMessage) {
         executionUrl,
         executionDescription
       ))
-      .map((granuleMessage) => publishGranuleSnsMessage(granuleMessage))
+      .map((granuleRecord) => publishGranuleSnsMessage(granuleRecord))
   );
 }
 

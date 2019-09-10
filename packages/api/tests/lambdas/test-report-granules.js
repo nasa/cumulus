@@ -1,61 +1,44 @@
 'use strict';
 
 const test = require('ava');
-const sinon = require('sinon');
 
-const StepFunctions = require('@cumulus/common/StepFunctions');
 const { randomId, randomString, randomNumber } = require('@cumulus/common/test-utils');
-const { getSnsEventMessageObject } = require('@cumulus/common/sns-event');
 
 const { handler, getReportGranuleMessages } = require('../../lambdas/report-granules');
 const { fakeGranuleFactoryV2, fakeFileFactory } = require('../../lib/testUtils');
-const { deconstructCollectionId } = require('../../lib/utils');
 const Granule = require('../../models/granules');
 
-const startDate = new Date(Date.UTC(2019, 8, 1));
-const stopDate = new Date(Date.UTC(2019, 8, 1, 1));
-let stepFunctionsStub;
-let executionName;
 let granuleModel;
-let timestamp;
 const granuleTable = randomString();
 
-const createFakeGranule = (granuleParams = {}, fileParams = {}) => fakeGranuleFactoryV2({
+const fakeGranuleRecord = {
+  pdrName: randomId('pdr'),
+  collectionId: randomId('collection'),
+  status: 'completed',
+  provider: randomId('provider'),
+  execution: randomString(),
+  cmrLink: 'http://cmrLink/12345',
   files: [
-    fakeFileFactory(fileParams),
-    fakeFileFactory(fileParams),
-    fakeFileFactory(fileParams)
+    fakeFileFactory(),
+    fakeFileFactory(),
+    fakeFileFactory()
   ],
-  ...granuleParams
-});
+  error: {
+    Error: 'Error',
+    Cause: 'Workflow failed'
+  },
+  createdAt: Date.now(),
+  timestamp: Date.now() - randomNumber(10000000),
+  timeToPreprocess: 0.123,
+  timeToArchive: 0.123,
+  processingStartDateTime: '2019-07-28T00:00:00.000Z',
+  processingEndDateTime: '2019-07-28T01:00:00.000Z',
+  published: true
+};
 
-const createGranuleMessage = ({
-  numberOfGranules = 1,
-  cMetaParams = {},
-  collectionId = `${randomId('MOD')}___${randomNumber()}`,
-  granuleParams = {},
-  fileParams = {}
-} = {}) => ({
-  cumulus_meta: {
-    execution_name: executionName,
-    state_machine: randomId('ingest-'),
-    workflow_start_time: timestamp,
-    ...cMetaParams
-  },
-  meta: {
-    collection: deconstructCollectionId(collectionId),
-    provider: {
-      id: 'prov1',
-      protocol: 'http',
-      host: 'example.com',
-      port: 443
-    }
-  },
-  payload: {
-    granules: [
-      ...new Array(numberOfGranules)
-    ].map(createFakeGranule.bind(null, { collectionId, ...granuleParams }, fileParams))
-  }
+const createFakeGranuleRecord = (granuleParams) => ({
+  ...fakeGranuleRecord,
+  ...granuleParams
 });
 
 const createGranuleSnsMessage = (messageObject) => ({
@@ -66,58 +49,31 @@ const createGranuleSnsMessage = (messageObject) => ({
 });
 
 test.before(async () => {
-  timestamp = Date.now() - randomNumber(10000000);
   process.env.GranulesTable = granuleTable;
   granuleModel = new Granule();
   await granuleModel.createTable();
-
-  executionName = randomString();
-  stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').returns({
-    input: {},
-    startDate,
-    stopDate
-  });
 });
 
 test.after.always(async () => {
-  timestamp = undefined;
   await granuleModel.deleteTable();
-
-  stepFunctionsStub.restore();
 });
 
 test('getReportGranuleMessages returns correct number of messages', (t) => {
   let messages = getReportGranuleMessages({
     Records: [{
-      EventSource: 'aws:sns',
+      EventSource: 'aws:states',
       Sns: {
-        Message: JSON.stringify({
-          cumulus_meta: {
-            execution_name: 'exec123',
-            state_machine: 'workflow123'
-          },
-          meta: {},
-          payload: {}
-        })
+        Message: 'message'
       }
     }]
   });
-  t.is(messages.length, 1);
-  t.is(messages[0].payload.granules, undefined);
+  t.is(messages.length, 0);
 
   messages = getReportGranuleMessages({
     Records: [
-      createGranuleSnsMessage(createGranuleMessage({ numberOfGranules: 4 }))
-    ]
-  });
-  t.is(messages.length, 1);
-  t.is(messages[0].payload.granules.length, 4);
-
-  messages = getReportGranuleMessages({
-    Records: [
-      createGranuleSnsMessage(createGranuleMessage()),
-      createGranuleSnsMessage(createGranuleMessage()),
-      createGranuleSnsMessage(createGranuleMessage())
+      createGranuleSnsMessage(createFakeGranuleRecord()),
+      createGranuleSnsMessage(createFakeGranuleRecord()),
+      createGranuleSnsMessage(createFakeGranuleRecord())
     ]
   });
   t.is(messages.length, 3);
@@ -125,59 +81,57 @@ test('getReportGranuleMessages returns correct number of messages', (t) => {
 
 test('handler correctly creates granule record', async (t) => {
   const granuleId = randomString();
+  const createdAt = Date.now();
   const granuleParams = {
-    granuleId
+    granuleId,
+    createdAt
   };
 
   await handler({
     Records: [
-      createGranuleSnsMessage(createGranuleMessage(
-        { granuleParams }
+      createGranuleSnsMessage(createFakeGranuleRecord(
+        granuleParams
       ))
     ]
   });
 
   const record = await granuleModel.get({ granuleId });
-  t.is(typeof record.createdAt, 'number');
-  t.is(record.createdAt, timestamp);
+  const expectedRecord = {
+    ...fakeGranuleRecord,
+    ...granuleParams,
+    updatedAt: record.updatedAt
+  };
+  t.deepEqual(record, expectedRecord);
 });
 
 test('handler correctly updates granule record', async (t) => {
   const granuleId = randomString();
-  const cMetaParams = {
-    execution_name: randomString()
-  };
   const granuleParams = {
     granuleId
   };
 
   await handler({
     Records: [
-      createGranuleSnsMessage(createGranuleMessage(
-        { cMetaParams, granuleParams }
-      ))
+      createGranuleSnsMessage(
+        createFakeGranuleRecord(granuleParams)
+      )
     ]
   });
   const originalRecord = await granuleModel.get({ granuleId });
 
   const newExecution = randomString();
-  cMetaParams.execution_name = newExecution;
-  const updatedGranuleParams = {
+  const updatedGranuleRecord = {
     ...originalRecord,
+    execution: newExecution,
     cmrLink: 'http://newcmrlink.com/12345'
   };
 
   await handler({
     Records: [
-      createGranuleSnsMessage(createGranuleMessage(
-        {
-          collectionId: originalRecord.collectionId,
-          cMetaParams,
-          granuleParams: updatedGranuleParams
-        }
-      ))
+      createGranuleSnsMessage(updatedGranuleRecord)
     ]
   });
+
   const updatedRecord = await granuleModel.get({ granuleId });
 
   const expectedRecord = {
@@ -185,61 +139,9 @@ test('handler correctly updates granule record', async (t) => {
     execution: updatedRecord.execution,
     updatedAt: updatedRecord.updatedAt,
     timestamp: updatedRecord.timestamp,
-    duration: updatedRecord.duration,
-    cmrLink: updatedGranuleParams.cmrLink
+    cmrLink: updatedGranuleRecord.cmrLink
   };
 
   t.deepEqual(expectedRecord, updatedRecord);
   t.true(updatedRecord.execution.includes(newExecution));
-});
-
-test('handler correctly creates multiple granule records from multi-granule message', async (t) => {
-  const event = createGranuleSnsMessage(createGranuleMessage(
-    { numberOfGranules: 3 }
-  ));
-  const granules = getSnsEventMessageObject(event).payload.granules;
-  const granuleIds = granules.map((g) => g.granuleId);
-  t.is(granuleIds.length, [...new Set(granuleIds)].length);
-  await handler({
-    Records: [
-      event
-    ]
-  });
-  await Promise.all(granules.map(async (g) => {
-    const record = await granuleModel.get({ granuleId: g.granuleId });
-    t.deepEqual(g.files, record.files);
-    t.is(g.collectionId, record.collectionId);
-    t.is(g.status, record.status);
-    t.is(g.published, record.published);
-    t.is(g.cmrLink, record.cmrLink);
-    t.is(typeof record.createdAt, 'number');
-    t.is(record.createdAt, timestamp);
-  }));
-});
-
-test('handler correctly updates multiple granule records from multi-granule message', async (t) => {
-  const event = createGranuleSnsMessage(createGranuleMessage(
-    { numberOfGranules: 3 }
-  ));
-  const msgObj = getSnsEventMessageObject(event);
-  const granuleIds = msgObj.payload.granules.map((g) => g.granuleId);
-  t.is(granuleIds.length, [...new Set(granuleIds)].length);
-  await handler({
-    Records: [
-      event
-    ]
-  });
-  msgObj.payload.granules.forEach((g) => {
-    g.cmrLink = `http://newcmrlink.com/${g.granuleId}`;
-  });
-  event.Sns.Message = JSON.stringify(msgObj);
-  await handler({
-    Records: [
-      event
-    ]
-  });
-  await Promise.all(granuleIds.map(async (gid) => {
-    const record = await granuleModel.get({ granuleId: gid });
-    t.is(record.cmrLink, `http://newcmrlink.com/${gid}`);
-  }));
 });

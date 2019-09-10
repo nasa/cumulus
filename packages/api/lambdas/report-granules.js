@@ -11,14 +11,14 @@ const {
 const Granule = require('../models/granules');
 
 /**
- * Process Cumulus message object and create granule database records.
+ * Create granule database record.
  *
- * @param {Object} message - SNS Cumulus message object
- * @returns {Promise<Array>} granule records
+ * @param {Object} granule - Granule record object
+ * @returns {Promise}
  */
-async function handleGranuleMessage(message) {
+async function createGranuleRecord(granule) {
   const granuleModel = new Granule();
-  return granuleModel.createGranulesFromSns(message);
+  return granuleModel.create(granule);
 }
 
 /**
@@ -43,7 +43,7 @@ function getReportGranuleMessages(event) {
 async function handler(event) {
   const messages = getReportGranuleMessages(event);
   return Promise.all(
-    messages.map(handleGranuleMessage)
+    messages.map(createGranuleRecord)
   );
 }
 
