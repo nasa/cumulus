@@ -974,31 +974,34 @@ exports.isThrottlingException = (err) => err.code === 'ThrottlingException';
  * Given a Cumulus step function event, if the message is on S3, pull the full message
  * from S3 and return, otherwise return the event.
  *
- * @param {Object} incomingevent - the Cumulus event
+ * @param {Object} incomingEvent - the Cumulus event
  * @returns {Object} - the full Cumulus message
  */
 exports.pullStepFunctionEvent = async (incomingEvent) => {
-  if (incomingEvent.replace) {
-    let event = cloneDeep(incomingEvent);
-    const remoteMsg = await exports.getS3Object(event.replace.Bucket, event.replace.Key)
-      .then((response) => JSON.parse(response.Body.toString()));
-    if (event.replace.TargetPath) {
-      const replaceNodeSearch = JSONPath({
-        path: event.replace.TargetPath,
-        json: event,
-        resultType: 'all'
-      });
-      if (replaceNodeSearch.length !== 1) {
-        throw new Error(`Replacement TargetPath ${event.replace.TargetPath} invalid`);
-      }
-      replaceNodeSearch[0].parent[replaceNodeSearch[0].parentProperty] = remoteMsg;
-      delete event.replace;
-    } else {
-      event = remoteMsg;
-    }
-    return event;
+  if(!incomingEvent.replace) { 
+    return incomingEvent;
   }
-  return incomingEvent;
+  let event = cloneDeep(incomingEvent);
+  const remoteMsg = await exports.getS3Object(event.replace.Bucket, event.replace.Key)
+    .then((response) => JSON.parse(response.Body.toString()));
+
+  const returnEvent = remoteMsg; 
+  if (event.replace.TargetPath) {
+    const replaceNodeSearch = JSONPath({
+      path: event.replace.TargetPath,
+      json: event,
+      resultType: 'all'
+    });
+    if (replaceNodeSearch.length !== 1) {
+      throw new Error(`Replacement TargetPath ${event.replace.TargetPath} invalid`);
+    }
+    if (replaceNodeSearch[0].parent) {
+      replaceNodeSearch[0].parent[replaceNodeSearch[0].parentProperty] = remoteMsg;
+      returnEvent = event; 
+      delete returnEvent.replace;
+    } 
+  }
+  return returnEvent;
 };
 
 const retryIfThrottlingException = (err) => {
