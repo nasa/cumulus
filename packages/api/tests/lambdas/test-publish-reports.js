@@ -114,9 +114,12 @@ test.beforeEach((t) => {
   snsPublishSpy.resetHistory();
 });
 
-test.after.always(async () => {
-  snsStub.restore();
+test.afterEach.always(() => {
   stepFunctionsStub.restore();
+});
+
+test.after.always(() => {
+  snsStub.restore();
 });
 
 test.serial('lambda publishes correct report to all SNS topics', async (t) => {
