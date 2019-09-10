@@ -115,7 +115,6 @@ async function handleGranuleMessages(eventMessage) {
   } catch (err) {
     log.error(`Could not describe execution ${executionArn}`, err);
   }
-  const { startDate, stopDate } = executionDescription;
 
   return Promise.all(
     granules
@@ -124,8 +123,7 @@ async function handleGranuleMessages(eventMessage) {
         granule,
         eventMessage,
         executionUrl,
-        startDate,
-        stopDate
+        executionDescription
       ))
       .map((granuleMessage) => publishGranuleSnsMessage(granuleMessage))
   );

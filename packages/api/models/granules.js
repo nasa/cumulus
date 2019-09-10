@@ -304,19 +304,18 @@ class Granule extends Manager {
    * @param {Object} granule - A granule object
    * @param {Object} message - A workflow execution message
    * @param {string} executionUrl - A Step Function execution URL
-   * @param {Date} startDate - Start date of the workflow execution
-   * @param {Date} stopDate - Stop date of the workflow execution
+   * @param {Object} [executionDescription={}] - Defaults to empty object
+   * @param {Date} executionDescription.startDate - Start date of the workflow execution
+   * @param {Date} executionDescription.stopDate - Stop date of the workflow execution
    * @returns {Object} - A granule record
    */
   static async buildGranuleRecord(
     granule,
     message,
     executionUrl,
-    startDate,
-    stopDate
+    executionDescription = {}
   ) {
     const collectionId = getCollectionIdFromMessage(message);
-    const temporalInfo = await cmrjs.getGranuleTemporalInfo(granule);
 
     const granuleFiles = await buildDatabaseFiles({
       providerURL: buildURL({
@@ -326,6 +325,18 @@ class Granule extends Manager {
       }),
       files: granule.files
     });
+
+    const temporalInfo = await cmrjs.getGranuleTemporalInfo(granule);
+
+    const { startDate, stopDate } = executionDescription;
+    const processingTimeInfo = {};
+    if (startDate && stopDate) {
+      processingTimeInfo.processingStartDateTime = startDate.toISOString();
+      // Should we include the stop date even if we don't have a start date?
+      processingTimeInfo.processingEndDateTime = stopDate
+        ? stopDate.toISOString()
+        : new Date().toISOString();
+    }
 
     const record = {
       granuleId: granule.granuleId,
@@ -342,9 +353,7 @@ class Granule extends Manager {
       productVolume: getGranuleProductVolume(granuleFiles),
       timeToPreprocess: get(granule, 'sync_granule_duration', 0) / 1000,
       timeToArchive: get(granule, 'post_to_cmr_duration', 0) / 1000,
-      processingStartDateTime: startDate.toISOString(),
-      processingEndDateTime: stopDate
-        ? stopDate.toISOString() : new Date().toISOString(),
+      ...processingTimeInfo,
       ...temporalInfo
     };
 

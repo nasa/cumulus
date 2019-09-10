@@ -91,12 +91,12 @@ test.before(async () => {
 
   sinon.stub(cmrjs, 'getGranuleTemporalInfo').callsFake(() => fakeMetadata);
 
-  fakeExecution = async () => ({
+  fakeExecution = {
     input: JSON.stringify(testCumulusMessage),
     startDate: new Date(Date.UTC(2019, 6, 28)),
     stopDate: new Date(Date.UTC(2019, 6, 28, 1))
-  });
-  stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').callsFake(fakeExecution);
+  };
+  stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').callsFake(() => fakeExecution);
 });
 
 test.beforeEach((t) => {
@@ -621,8 +621,7 @@ test(
     const record = await Granule.buildGranuleRecord(
       granule,
       cumulusMessage,
-      randomString(),
-      new Date()
+      randomString()
     );
 
     t.is(record.timeToPreprocess, 0.123);
@@ -639,8 +638,7 @@ test(
     const record = await Granule.buildGranuleRecord(
       granule,
       cumulusMessage,
-      randomString(),
-      new Date()
+      randomString()
     );
 
     t.is(record.timeToPreprocess, 0);
@@ -657,8 +655,7 @@ test(
     const record = await Granule.buildGranuleRecord(
       granule,
       cumulusMessage,
-      randomString(),
-      new Date()
+      randomString()
     );
 
     t.is(record.timeToArchive, 0.123);
@@ -675,8 +672,7 @@ test(
     const record = await Granule.buildGranuleRecord(
       granule,
       cumulusMessage,
-      randomString(),
-      new Date()
+      randomString()
     );
 
     t.is(record.timeToArchive, 0);
@@ -693,7 +689,7 @@ test(
       granule,
       cumulusMessage,
       randomString(),
-      new Date(Date.UTC(2019, 6, 28))
+      fakeExecution
     );
 
     t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
@@ -710,8 +706,7 @@ test(
       granule,
       cumulusMessage,
       randomString(),
-      new Date(),
-      new Date(Date.UTC(2019, 6, 28, 1))
+      fakeExecution
     );
 
     t.is(record.processingEndDateTime, '2019-07-28T01:00:00.000Z');
@@ -728,13 +723,13 @@ test.serial(
     const granule = granuleSuccess.payload.granules[0];
     const collection = granuleSuccess.meta.collection;
     const collectionId = constructCollectionId(collection.name, collection.version);
+    const executionUrl = randomString();
 
     const record = await Granule.buildGranuleRecord(
       granule,
       granuleSuccess,
-      randomString(),
-      new Date(Date.UTC(2019, 6, 28)),
-      new Date(Date.UTC(2019, 6, 28, 1))
+      executionUrl,
+      fakeExecution
     );
 
     t.deepEqual(
@@ -743,6 +738,7 @@ test.serial(
     );
     t.is(record.status, 'completed');
     t.is(record.collectionId, collectionId);
+    t.is(record.execution, executionUrl);
     t.is(record.granuleId, granule.granuleId);
     t.is(record.cmrLink, granule.cmrLink);
     t.is(record.published, granule.published);
@@ -763,12 +759,12 @@ test.serial(
 
 test('buildGranuleRecord() builds a failed granule record', async (t) => {
   const granule = granuleFailure.payload.granules[0];
+  const executionUrl = randomString();
   const record = await Granule.buildGranuleRecord(
     granule,
     granuleFailure,
-    randomString(),
-    new Date(Date.UTC(2019, 6, 28)),
-    new Date(Date.UTC(2019, 6, 28, 1))
+    executionUrl,
+    fakeExecution
   );
 
   t.deepEqual(
@@ -776,6 +772,7 @@ test('buildGranuleRecord() builds a failed granule record', async (t) => {
     granule.files.map(granuleFileToRecord)
   );
   t.is(record.status, 'failed');
+  t.is(record.execution, executionUrl);
   t.is(record.granuleId, granule.granuleId);
   t.is(record.published, false);
   t.is(record.error.Error, granuleFailure.exception.Error);

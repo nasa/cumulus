@@ -81,12 +81,6 @@ test.before(async () => {
     })
   });
 
-  const fakeExecution = async () => ({
-    startDate: new Date(Date.UTC(2019, 6, 28)),
-    stopDate: new Date(Date.UTC(2019, 6, 28, 1))
-  });
-  stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').callsFake(fakeExecution);
-
   granulePublishSpy = sinon.spy();
   pdrPublishSpy = sinon.spy();
   snsPublishSpy = sinon.spy(aws.sns(), 'publish');
@@ -108,6 +102,12 @@ test.beforeEach((t) => {
   });
 
   t.context.executionArn = getMessageExecutionArn(t.context.message);
+
+  const fakeExecution = async () => ({
+    startDate: new Date(Date.UTC(2019, 6, 28)),
+    stopDate: new Date(Date.UTC(2019, 6, 28, 1))
+  });
+  stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').callsFake(fakeExecution);
 
   granulePublishSpy.resetHistory();
   pdrPublishSpy.resetHistory();
@@ -194,6 +194,33 @@ test.serial('lambda ignores granules without granule ID', async (t) => {
   await publishReports.handler(cwEventMessage);
 
   t.is(granulePublishSpy.callCount, 3);
+
+  // revert the mocking
+  granulePublishMock();
+});
+
+test.serial('handleGranuleMessages handles failure describing step function execution gracefully', async (t) => {
+  const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
+
+  stepFunctionsStub.restore();
+  sinon.stub(StepFunctions, 'describeExecution').callsFake(() => {
+    throw new Error('error');
+  });
+
+  const message = createCumulusMessage({
+    numberOfGranules: 1
+  });
+
+  const cwEventMessage = createCloudwatchEventMessage(
+    'RUNNING',
+    message
+  );
+
+  await t.notThrowsAsync(
+    () => publishReports.handler(cwEventMessage)
+  );
+
+  t.is(granulePublishSpy.callCount, 1);
 
   // revert the mocking
   granulePublishMock();
