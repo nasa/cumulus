@@ -136,8 +136,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
       });
     });
 
-    // LAUREN TO DO
-    xdescribe('logs endpoint', () => {
+    describe('logs endpoint', () => {
       it('returns the execution logs', async () => {
         const logsResponse = await apiTestUtils.getLogs({ prefix: config.stackName });
         const logs = JSON.parse(logsResponse.body);
