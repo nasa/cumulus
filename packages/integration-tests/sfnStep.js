@@ -116,7 +116,6 @@ class SfnStep {
    */
   async getStepInput(workflowExecutionArn, stepName) {
     const stepExecutions = await this.getStepExecutions(workflowExecutionArn, stepName, this);
-
     if (stepExecutions === null || stepExecutions.length === 0) {
       console.log(`Could not find step ${stepName} in execution.`);
       return null;
@@ -128,6 +127,12 @@ class SfnStep {
 
     const subStepExecutionDetails = scheduleEvent.lambdaFunctionScheduledEventDetails;
     let stepInput = JSON.parse(subStepExecutionDetails.input);
+
+    if (stepInput.cma) {
+      stepInput = { ...stepInput, ...stepInput.cma, ...stepInput.cma.event };
+      delete stepInput.cma;
+      delete stepInput.event;
+    }
 
     if (stepInput.replace) {
        // Message was too large and output was written to S3
