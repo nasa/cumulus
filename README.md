@@ -106,7 +106,6 @@ For more information please [read this](docs/development/integration-tests.md).
 For more information please [read this](docs/development/quality-and-coverage.md).
 
 ## 📦 Adding New Packages
-
 Create a new folder under `packages` if it is a common library or create folder under `cumulus/tasks` if it is a lambda task. `cd` to the folder and run `npm init`.
 
 Make sure to name the package as `@cumulus/package-name`.
