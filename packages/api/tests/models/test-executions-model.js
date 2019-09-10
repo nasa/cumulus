@@ -4,6 +4,7 @@ const test = require('ava');
 const sinon = require('sinon');
 const cloneDeep = require('lodash.clonedeep');
 
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const Execution = require('../../models/executions');
@@ -81,6 +82,41 @@ test.serial('generateExecutionRecord using payload without cumulus_meta.executio
       }
     })
   );
+});
+
+test.serial('generateExecutionRecord() creates a successful execution record', async (t) => {
+  generateRecordStub.restore();
+
+  const newPayload = cloneDeep(pdrSuccessFixture);
+  const newExecutionName = randomString();
+  newPayload.cumulus_meta.execution_name = newExecutionName;
+
+  const record = Execution.generateExecutionRecord(newPayload);
+
+  const { collection } = newPayload.meta;
+
+  t.is(record.name, newExecutionName);
+  t.is(record.status, 'completed');
+  t.is(record.type, newPayload.meta.workflow_name);
+  t.is(record.createdAt, newPayload.cumulus_meta.workflow_start_time);
+  t.is(record.collectionId, constructCollectionId(collection.name, collection.version));
+  // Seems like this is wrong. If message.exception is "None", then record.error
+  // should be undefined or an empty object?
+  t.deepEqual(record.error, { Error: 'Unknown Error', Cause: '"None"' });
+});
+
+test.serial('generateExecutionRecord() creates a failed execution record', async (t) => {
+  generateRecordStub.restore();
+
+  const newPayload = cloneDeep(pdrFailureFixture);
+  newPayload.cumulus_meta.execution_name = randomString();
+
+  const record = Execution.generateExecutionRecord(newPayload);
+
+  t.is(record.status, 'failed');
+  t.is(record.type, newPayload.meta.workflow_name);
+  t.is(typeof record.error, 'object');
+  t.is(record.createdAt, newPayload.cumulus_meta.workflow_start_time);
 });
 
 test.serial('createExecutionFromSns() creates a successful execution record', async (t) => {
