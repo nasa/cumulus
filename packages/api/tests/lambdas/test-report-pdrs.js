@@ -6,12 +6,8 @@ const { randomId, randomString, randomNumber } = require('@cumulus/common/test-u
 
 const Pdr = require('../../models/pdrs');
 const { handler, getReportPdrMessages } = require('../../lambdas/report-pdrs');
-const { fakePdrFactoryV2 } = require('../../lib/testUtils');
-const { deconstructCollectionId } = require('../../lib/utils');
 
-let executionName;
 let pdrsModel;
-let timestamp;
 
 const fakePdrRecord = {
   pdrName: randomId('pdr'),
@@ -45,15 +41,12 @@ const createPdrSnsMessage = (messageObject) => ({
 });
 
 test.before(async () => {
-  timestamp = Date.now() - randomNumber(10000000);
   process.env.PdrsTable = randomString();
   pdrsModel = new Pdr();
   await pdrsModel.createTable();
-  executionName = randomString();
 });
 
 test.after.always(async () => {
-  timestamp = undefined;
   await pdrsModel.deleteTable();
 });
 
