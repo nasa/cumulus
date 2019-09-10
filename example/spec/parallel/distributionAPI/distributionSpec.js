@@ -72,6 +72,7 @@ describe('Distribution API', () => {
   });
 
   describe('handles requests for files over HTTPS', () => {
+    let beforeAllError;
     let fileChecksum;
     let protectedFilePath;
     let privateFilePath;
@@ -79,14 +80,22 @@ describe('Distribution API', () => {
     let accessToken;
 
     beforeAll(async () => {
-      accessToken = await getTestAccessToken();
-      fileChecksum = await generateChecksumFromStream(
-        'cksum',
-        fs.createReadStream(require.resolve(s3Data[0]))
-      );
-      publicFilePath = `/${publicBucketName}/${fileKey}`;
-      protectedFilePath = `/${protectedBucketName}/${fileKey}`;
-      privateFilePath = `/${privateBucketName}/${fileKey}`;
+      try {
+        accessToken = await getTestAccessToken();
+        fileChecksum = await generateChecksumFromStream(
+          'cksum',
+          fs.createReadStream(require.resolve(s3Data[0]))
+        );
+        publicFilePath = `/${publicBucketName}/${fileKey}`;
+        protectedFilePath = `/${protectedBucketName}/${fileKey}`;
+        privateFilePath = `/${privateBucketName}/${fileKey}`;
+      } catch (error) {
+        beforeAllError = error;
+      }
+    });
+
+    beforeEach(() => {
+      if (beforeAllError) fail(beforeAllError);
     });
 
     afterAll(async () => {

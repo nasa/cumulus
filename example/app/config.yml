@@ -775,6 +775,7 @@ mhs2:
     backend:
       private: true
       port: 8022
+      logApiGatewayToCloudWatch: true
     distribution:
       private: true
       port: 7022
