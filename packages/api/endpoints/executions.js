@@ -17,7 +17,7 @@ async function list(req, res) {
     queryStringParameters: req.query
   }, 'execution');
   const response = await search.query();
-  return res.send(response);
+  return res.send(response.body);
 }
 
 /**
