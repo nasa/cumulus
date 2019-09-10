@@ -120,7 +120,7 @@ test.after.always(async () => {
 });
 
 test.serial('lambda publishes correct report to all SNS topics', async (t) => {
-  const { executionArn, message, snsTopicArns } = t.context;
+  const { message, snsTopicArns } = t.context;
 
   const cwEventMessage = createCloudwatchEventMessage(
     'SUCCEEDED',

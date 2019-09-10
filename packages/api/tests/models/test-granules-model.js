@@ -614,13 +614,11 @@ test.serial('removing a granule from CMR succeeds with Launchpad authentication'
 test(
   'buildGranuleRecord() properly sets timeToPreprocess when sync_granule_duration is present for a granule',
   async (t) => {
-    const { granuleModel } = t.context;
-
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
     cumulusMessage.payload.granules[0].sync_granule_duration = 123;
 
-    const record = await granuleModel.buildGranuleRecord(
+    const record = await Granule.buildGranuleRecord(
       granule,
       cumulusMessage,
       randomString(),
@@ -634,13 +632,11 @@ test(
 test(
   'buildGranuleRecord() properly sets timeToPreprocess when sync_granule_duration is not present for a granule',
   async (t) => {
-    const { granuleModel } = t.context;
-
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
     cumulusMessage.payload.granules[0].sync_granule_duration = 0;
 
-    const record = await granuleModel.buildGranuleRecord(
+    const record = await Granule.buildGranuleRecord(
       granule,
       cumulusMessage,
       randomString(),
@@ -654,13 +650,11 @@ test(
 test(
   'buildGranuleRecord() properly sets timeToArchive when post_to_cmr_duration is present for a granule',
   async (t) => {
-    const { granuleModel } = t.context;
-
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
     cumulusMessage.payload.granules[0].post_to_cmr_duration = 123;
 
-    const record = await granuleModel.buildGranuleRecord(
+    const record = await Granule.buildGranuleRecord(
       granule,
       cumulusMessage,
       randomString(),
@@ -671,16 +665,14 @@ test(
   }
 );
 
-test.serial(
+test(
   'buildGranuleRecord() properly sets timeToArchive when post_to_cmr_duration is not present for a granule',
   async (t) => {
-    const { granuleModel } = t.context;
-
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
     cumulusMessage.payload.granules[0].post_to_cmr_duration = 0;
 
-    const record = await granuleModel.buildGranuleRecord(
+    const record = await Granule.buildGranuleRecord(
       granule,
       cumulusMessage,
       randomString(),
@@ -694,12 +686,10 @@ test.serial(
 test(
   'buildGranuleRecord() sets processingStartDateTime to execution startDate',
   async (t) => {
-    const { granuleModel } = t.context;
-
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
 
-    const record = await granuleModel.buildGranuleRecord(
+    const record = await Granule.buildGranuleRecord(
       granule,
       cumulusMessage,
       randomString(),
@@ -710,15 +700,13 @@ test(
   }
 );
 
-test.only(
+test(
   'buildGranuleRecord() sets processingEndDateTime to execution stopDate',
   async (t) => {
-    const { granuleModel } = t.context;
-
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
 
-    const record = await granuleModel.buildGranuleRecord(
+    const record = await Granule.buildGranuleRecord(
       granule,
       cumulusMessage,
       randomString(),
@@ -731,22 +719,23 @@ test.only(
 );
 
 test.serial(
-  'createGranulesFromSns() creates successful granule record',
+  'buildGranuleRecord() builds successful granule record',
   async (t) => {
-    const { granuleModel } = t.context;
-
     // Stub out headobject S3 call used in api/models/granules.js,
     // so we don't have to create artifacts
     sinon.stub(aws, 'headObject').resolves({ ContentLength: mockedFileSize });
 
     const granule = granuleSuccess.payload.granules[0];
     const collection = granuleSuccess.meta.collection;
-    const records = await granuleModel.createGranulesFromSns(granuleSuccess);
-
     const collectionId = constructCollectionId(collection.name, collection.version);
 
-    // check the record exists
-    const record = records[0];
+    const record = await Granule.buildGranuleRecord(
+      granule,
+      granuleSuccess,
+      randomString(),
+      new Date(Date.UTC(2019, 6, 28)),
+      new Date(Date.UTC(2019, 6, 28, 1))
+    );
 
     t.deepEqual(
       record.files,
@@ -772,37 +761,16 @@ test.serial(
   }
 );
 
-test.serial('createGranulesFromSns() creates multiple successful granule records', async (t) => {
-  const { granuleModel } = t.context;
-
-  const newPayload = cloneDeep(granuleSuccess);
-  const granule = newPayload.payload.granules[0];
-  granule.granuleId = randomString();
-  const granule2 = cloneDeep(granule);
-  granule2.granuleId = randomString();
-  newPayload.payload.granules.push(granule2);
-  const collection = newPayload.meta.collection;
-  const records = await granuleModel.createGranulesFromSns(newPayload);
-
-  const collectionId = constructCollectionId(collection.name, collection.version);
-
-  t.is(records.length, 2);
-
-  records.forEach((record) => {
-    t.is(record.status, 'completed');
-    t.is(record.collectionId, collectionId);
-    t.is(record.cmrLink, granule.cmrLink);
-    t.is(record.published, granule.published);
-  });
-});
-
-test.serial('createGranulesFromSns() creates a failed granule record', async (t) => {
-  const { granuleModel } = t.context;
-
+test('buildGranuleRecord() builds a failed granule record', async (t) => {
   const granule = granuleFailure.payload.granules[0];
-  const records = await granuleModel.createGranulesFromSns(granuleFailure);
+  const record = await Granule.buildGranuleRecord(
+    granule,
+    granuleFailure,
+    randomString(),
+    new Date(Date.UTC(2019, 6, 28)),
+    new Date(Date.UTC(2019, 6, 28, 1))
+  );
 
-  const record = records[0];
   t.deepEqual(
     record.files,
     granule.files.map(granuleFileToRecord)
@@ -814,31 +782,125 @@ test.serial('createGranulesFromSns() creates a failed granule record', async (t)
   t.is(record.error.Cause, granuleFailure.exception.Cause);
 });
 
-test.serial(
-  'createGranulesFromSns() creates granule using meta.input_granules on message',
+test(
+  'createGranulesFromSns() properly sets timeToPreprocess when sync_granule_duration is present for a granule',
   async (t) => {
     const { granuleModel } = t.context;
 
-    const newPayload = cloneDeep(granuleSuccess);
-    delete newPayload.payload;
-    newPayload.meta.status = 'running';
+    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
+    cumulusMessage.payload.granules[0].sync_granule_duration = 123;
 
-    const granule = newPayload.meta.input_granules[0];
-    newPayload.meta.input_granules[0].granuleId = randomString();
+    const result = await granuleModel.createGranulesFromSns(cumulusMessage);
 
-    const records = await granuleModel.createGranulesFromSns(newPayload);
-    const collection = newPayload.meta.collection;
-    const collectionId = constructCollectionId(collection.name, collection.version);
+    t.is(result.length, 1);
 
-    const record = records[0];
-    t.deepEqual(
-      record.files,
-      granule.files.map(granuleFileToRecord)
-    );
-    t.is(record.status, 'running');
-    t.is(record.collectionId, collectionId);
-    t.is(record.granuleId, granule.granuleId);
-    t.is(record.published, false);
+    t.is(result[0].timeToPreprocess, 0.123);
+  }
+);
+
+test(
+  'createGranulesFromSns() properly sets timeToPreprocess when sync_granule_duration is not present for a granule',
+  async (t) => {
+    const { granuleModel } = t.context;
+
+    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
+    cumulusMessage.payload.granules[0].sync_granule_duration = 0;
+
+    const result = await granuleModel.createGranulesFromSns(cumulusMessage);
+
+    t.is(result.length, 1);
+
+    t.is(result[0].timeToPreprocess, 0);
+  }
+);
+
+test(
+  'createGranulesFromSns() properly sets timeToArchive when post_to_cmr_duration is present for a granule',
+  async (t) => {
+    const { granuleModel } = t.context;
+
+    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
+    cumulusMessage.payload.granules[0].post_to_cmr_duration = 123;
+
+    const result = await granuleModel.createGranulesFromSns(cumulusMessage);
+
+    t.is(result.length, 1);
+
+    t.is(result[0].timeToArchive, 0.123);
+  }
+);
+
+test(
+  'createGranulesFromSns() properly sets timeToArchive when post_to_cmr_duration is not present for a granule',
+  async (t) => {
+    const { granuleModel } = t.context;
+
+    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
+    cumulusMessage.payload.granules[0].post_to_cmr_duration = 0;
+
+    const result = await granuleModel.createGranulesFromSns(cumulusMessage);
+
+    t.is(result.length, 1);
+
+    t.is(result[0].timeToArchive, 0);
+  }
+);
+
+test(
+  'createGranulesFromSns() sets processingStartDateTime to execution startDate',
+  async (t) => {
+    const { granuleModel } = t.context;
+
+    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
+
+    const result = await granuleModel.createGranulesFromSns(cumulusMessage);
+
+    t.is(result.length, 1);
+    t.is(result[0].processingStartDateTime, '2019-07-28T00:00:00.000Z');
+  }
+);
+
+test(
+  'createGranulesFromSns() sets processingEndDateTime to execution stopDate',
+  async (t) => {
+    const { granuleModel } = t.context;
+
+    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
+
+    const result = await granuleModel.createGranulesFromSns(cumulusMessage);
+
+    t.is(result.length, 1);
+    t.is(result[0].processingEndDateTime, '2019-07-28T01:00:00.000Z');
+  }
+);
+
+test(
+  'createGranulesFromSns() ignores granules without a granuleId set',
+  async (t) => {
+    const { granuleModel } = t.context;
+
+    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
+    cumulusMessage.payload.granules.push({});
+
+    const result = await granuleModel.createGranulesFromSns(cumulusMessage);
+
+    t.is(result.length, 1);
+    t.is(result[0].granuleId, cumulusMessage.payload.granules[0].granuleId);
+  }
+);
+
+test(
+  'createGranulesFromSns() returns null if no granules are present in the cumulus message',
+  async (t) => {
+    const { granuleModel } = t.context;
+
+    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
+    delete cumulusMessage.payload.granules;
+    delete cumulusMessage.meta.input_granules;
+
+    const result = await granuleModel.createGranulesFromSns(cumulusMessage);
+
+    t.is(result, null);
   }
 );
 
