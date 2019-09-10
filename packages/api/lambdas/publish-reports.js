@@ -19,6 +19,7 @@ const {
 const StepFunctions = require('@cumulus/common/StepFunctions');
 
 const Granule = require('../models/granules');
+const Pdr = require('../models/pdrs');
 
 /**
  * Publish a message to an SNS topic.
@@ -26,12 +27,12 @@ const Granule = require('../models/granules');
  * Catch any thrown errors and log them.
  *
  * @param {string} snsTopicArn - SNS topic ARN
- * @param {Object} eventMessage - Workflow execution message
+ * @param {Object} message - Message object
  * @returns {Promise}
  */
 async function publishSnsMessage(
   snsTopicArn,
-  eventMessage
+  message
 ) {
   try {
     if (!snsTopicArn) {
@@ -40,11 +41,11 @@ async function publishSnsMessage(
 
     await aws.sns().publish({
       TopicArn: snsTopicArn,
-      Message: JSON.stringify(eventMessage)
+      Message: JSON.stringify(message)
     }).promise();
   } catch (err) {
     log.error(`Failed to post message to SNS topic: ${snsTopicArn}`, err);
-    log.info('Execution message', eventMessage);
+    log.info('Undelivered message', message);
   }
 }
 
@@ -81,16 +82,16 @@ async function publishGranuleSnsMessage(
 /**
  * Publish SNS message for PDR reporting.
  *
- * @param {Object} eventMessage - Workflow execution message
+ * @param {Object} pdrRecord - A PDR record.
  * @param {string} [pdrSnsTopicArn]
  *   SNS topic ARN for reporting PDRs. Defaults to `process.env.pdr_sns_topic_arn`.
  * @returns {Promise}
  */
 async function publishPdrSnsMessage(
-  eventMessage,
+  pdrRecord,
   pdrSnsTopicArn = process.env.pdr_sns_topic_arn
 ) {
-  return publishSnsMessage(pdrSnsTopicArn, eventMessage);
+  return publishSnsMessage(pdrSnsTopicArn, pdrRecord);
 }
 
 /**
@@ -147,7 +148,9 @@ async function handlePdrMessage(eventMessage) {
     return Promise.resolve();
   }
 
-  return publishPdrSnsMessage(pdr);
+  const pdrRecord = Pdr.generatePdrRecord(pdr);
+
+  return publishPdrSnsMessage(pdrRecord);
 }
 
 /**
