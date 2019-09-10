@@ -24,31 +24,38 @@ class Execution extends Manager {
     });
   }
 
-  static generateExecutionRecord(payload) {
-    const executionName = getMessageExecutionName(payload);
-    const stateMachineArn = getMessageStateMachineArn(payload);
+  /**
+   * Generate an execution record from a workflow execution message.
+   *
+   * @param {Object} message - A workflow execution message
+   * @returns {Object} An execution record
+   */
+  static generateExecutionRecord(message) {
+    const executionName = getMessageExecutionName(message);
+    const stateMachineArn = getMessageStateMachineArn(message);
     const arn = getExecutionArn(
       stateMachineArn,
       executionName
     );
 
     const execution = aws.getExecutionUrl(arn);
-    const collectionId = getCollectionIdFromMessage(payload);
+    const collectionId = getCollectionIdFromMessage(message);
 
-    const doc = {
+    const record = {
       name: executionName,
       arn,
-      parentArn: get(payload, 'cumulus_meta.parentExecutionArn'),
+      parentArn: get(message, 'cumulus_meta.parentExecutionArn'),
       execution,
-      tasks: get(payload, 'meta.workflow_tasks'),
-      error: parseException(payload.exception),
-      type: get(payload, 'meta.workflow_name'),
+      tasks: get(message, 'meta.workflow_tasks'),
+      error: parseException(message.exception),
+      type: get(message, 'meta.workflow_name'),
       collectionId,
-      status: get(payload, 'meta.status', 'unknown'),
-      createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
+      status: get(message, 'meta.status', 'unknown'),
+      createdAt: get(message, 'cumulus_meta.workflow_start_time'),
       timestamp: Date.now()
     };
-    return doc;
+
+    return record;
   }
 
   /**
@@ -99,13 +106,13 @@ class Execution extends Manager {
    * Update an existing execution record, replacing all fields except originalPayload
    * adding the existing payload to the finalPayload database field
    *
-   * @param {Object} payload sns message containing the output of a Cumulus Step Function
+   * @param {Object} message - A workflow execution message
    * @returns {Promise<Object>} An execution record
    */
-  async updateExecutionFromSns(payload) {
-    const doc = Execution.generateExecutionRecord(payload);
+  async updateExecutionFromSns(message) {
+    const doc = Execution.generateExecutionRecord(message);
     const existingRecord = await this.get({ arn: doc.arn });
-    doc.finalPayload = get(payload, 'payload');
+    doc.finalPayload = get(message, 'payload');
     doc.originalPayload = existingRecord.originalPayload;
     doc.duration = (doc.timestamp - doc.createdAt) / 1000;
     return this.create(doc);
@@ -114,12 +121,12 @@ class Execution extends Manager {
   /**
    * Create a new execution record from incoming sns messages
    *
-   * @param {Object} payload - SNS message containing the output of a Cumulus Step Function
-  * @returns {Promise<Object>} An execution record
+   * @param {Object} message - A workflow execution message
+   * @returns {Promise<Object>} An execution record
    */
-  async createExecutionFromSns(payload) {
-    const doc = Execution.generateExecutionRecord(payload);
-    doc.originalPayload = get(payload, 'payload');
+  async createExecutionFromSns(message) {
+    const doc = Execution.generateExecutionRecord(message);
+    doc.originalPayload = get(message, 'payload');
     doc.duration = (doc.timestamp - doc.createdAt) / 1000;
     return this.create(doc);
   }
