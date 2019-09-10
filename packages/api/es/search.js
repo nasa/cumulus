@@ -8,7 +8,7 @@
 const has = require('lodash.has');
 const omit = require('lodash.omit');
 const aws = require('aws-sdk');
-//const httpAwsEs = require('http-aws-es');
+const connection = require('aws-elasticsearch-connector');
 const elasticsearch = require('@elastic/elasticsearch');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const queries = require('./queries');
@@ -48,13 +48,11 @@ const esProdConfig = async (host) => {
   if (!aws.config.credentials) await getCredentials();
 
   return {
-    node: process.env.ES_HOST || host || 'localhost:9200',
-    // LAUREN TO DO
-    // connectionClass: httpAwsEs,
-    // amazonES: {
-    //   region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
-    //   credentials: aws.config.credentials
-    // },
+    node: `http://${process.env.ES_HOST}` || host || 'localhost:9200',
+    Connection: connection,
+    awsConfig: {
+      credentials: aws.config.credentials
+    },
 
     // Note that this doesn't abort the query.
     requestTimeout: 50000 // milliseconds
