@@ -309,7 +309,7 @@ class Granule extends Manager {
    * @param {Date} executionDescription.stopDate - Stop date of the workflow execution
    * @returns {Object} - A granule record
    */
-  static async buildGranuleRecord(
+  static async generateGranuleRecord(
     granule,
     message,
     executionUrl,

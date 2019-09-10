@@ -612,13 +612,13 @@ test.serial('removing a granule from CMR succeeds with Launchpad authentication'
 });
 
 test(
-  'buildGranuleRecord() properly sets timeToPreprocess when sync_granule_duration is present for a granule',
+  'generateGranuleRecord() properly sets timeToPreprocess when sync_granule_duration is present for a granule',
   async (t) => {
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
     cumulusMessage.payload.granules[0].sync_granule_duration = 123;
 
-    const record = await Granule.buildGranuleRecord(
+    const record = await Granule.generateGranuleRecord(
       granule,
       cumulusMessage,
       randomString()
@@ -629,13 +629,13 @@ test(
 );
 
 test(
-  'buildGranuleRecord() properly sets timeToPreprocess when sync_granule_duration is not present for a granule',
+  'generateGranuleRecord() properly sets timeToPreprocess when sync_granule_duration is not present for a granule',
   async (t) => {
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
     cumulusMessage.payload.granules[0].sync_granule_duration = 0;
 
-    const record = await Granule.buildGranuleRecord(
+    const record = await Granule.generateGranuleRecord(
       granule,
       cumulusMessage,
       randomString()
@@ -646,13 +646,13 @@ test(
 );
 
 test(
-  'buildGranuleRecord() properly sets timeToArchive when post_to_cmr_duration is present for a granule',
+  'generateGranuleRecord() properly sets timeToArchive when post_to_cmr_duration is present for a granule',
   async (t) => {
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
     cumulusMessage.payload.granules[0].post_to_cmr_duration = 123;
 
-    const record = await Granule.buildGranuleRecord(
+    const record = await Granule.generateGranuleRecord(
       granule,
       cumulusMessage,
       randomString()
@@ -663,13 +663,13 @@ test(
 );
 
 test(
-  'buildGranuleRecord() properly sets timeToArchive when post_to_cmr_duration is not present for a granule',
+  'generateGranuleRecord() properly sets timeToArchive when post_to_cmr_duration is not present for a granule',
   async (t) => {
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
     cumulusMessage.payload.granules[0].post_to_cmr_duration = 0;
 
-    const record = await Granule.buildGranuleRecord(
+    const record = await Granule.generateGranuleRecord(
       granule,
       cumulusMessage,
       randomString()
@@ -680,12 +680,12 @@ test(
 );
 
 test(
-  'buildGranuleRecord() sets processingStartDateTime and processingEndDateTime correctly',
+  'generateGranuleRecord() sets processingStartDateTime and processingEndDateTime correctly',
   async (t) => {
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
 
-    const record = await Granule.buildGranuleRecord(
+    const record = await Granule.generateGranuleRecord(
       granule,
       cumulusMessage,
       randomString(),
@@ -698,12 +698,12 @@ test(
 );
 
 test(
-  'buildGranuleRecord() does not include processing times if execution dates are not provided',
+  'generateGranuleRecord() does not include processing times if execution dates are not provided',
   async (t) => {
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
 
-    const record = await Granule.buildGranuleRecord(
+    const record = await Granule.generateGranuleRecord(
       granule,
       cumulusMessage,
       randomString()
@@ -715,7 +715,7 @@ test(
 );
 
 test.serial(
-  'buildGranuleRecord() builds successful granule record',
+  'generateGranuleRecord() builds successful granule record',
   async (t) => {
     // Stub out headobject S3 call used in api/models/granules.js,
     // so we don't have to create artifacts
@@ -726,7 +726,7 @@ test.serial(
     const collectionId = constructCollectionId(collection.name, collection.version);
     const executionUrl = randomString();
 
-    const record = await Granule.buildGranuleRecord(
+    const record = await Granule.generateGranuleRecord(
       granule,
       granuleSuccess,
       executionUrl,
@@ -760,10 +760,10 @@ test.serial(
   }
 );
 
-test('buildGranuleRecord() builds a failed granule record', async (t) => {
+test('generateGranuleRecord() builds a failed granule record', async (t) => {
   const granule = granuleFailure.payload.granules[0];
   const executionUrl = randomString();
-  const record = await Granule.buildGranuleRecord(
+  const record = await Granule.generateGranuleRecord(
     granule,
     granuleFailure,
     executionUrl,

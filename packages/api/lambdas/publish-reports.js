@@ -119,7 +119,7 @@ async function handleGranuleMessages(eventMessage) {
   return Promise.all(
     granules
       .filter((granule) => granule.granuleId)
-      .map((granule) => Granule.buildGranuleRecord(
+      .map((granule) => Granule.generateGranuleRecord(
         granule,
         eventMessage,
         executionUrl,
