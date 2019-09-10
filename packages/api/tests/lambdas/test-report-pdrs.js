@@ -13,43 +13,28 @@ let executionName;
 let pdrsModel;
 let timestamp;
 
-const createPdrMessage = ({
-  cMetaParams = {},
-  collectionId = `${randomId('MOD')}___${randomNumber()}`,
-  completedExecutions = [],
-  counter = 10,
-  failedExecutions = [],
-  isFinished = false,
-  limit = 30,
-  pdrParams,
-  runningExecutions = [],
-  status
-} = {}) => ({
-  cumulus_meta: {
-    execution_name: executionName,
-    state_machine: randomId('ingestPdr-'),
-    workflow_start_time: timestamp,
-    ...cMetaParams
+const fakePdrRecord = {
+  pdrName: randomId('pdr'),
+  collectionId: randomId('collection'),
+  status: 'running',
+  provider: randomId('provider'),
+  execution: randomString(),
+  progress: 0,
+  stats: {
+    processing: 1,
+    completed: 0,
+    failed: 0,
+    total: 1
   },
-  meta: {
-    collection: deconstructCollectionId(collectionId),
-    provider: {
-      id: 'prov1',
-      protocol: 'http',
-      host: 'example.com',
-      port: 443
-    },
-    status
-  },
-  payload: {
-    isFinished,
-    completed: completedExecutions,
-    counter,
-    pdr: fakePdrFactoryV2(pdrParams),
-    failed: failedExecutions,
-    running: runningExecutions,
-    limit
-  }
+  PANSent: false,
+  PANmessage: 'N/A',
+  createdAt: Date.now(),
+  timestamp: Date.now() - randomNumber(10000000)
+};
+
+const createFakePdrRecord = (pdrParams) => ({
+  ...fakePdrRecord,
+  ...pdrParams
 });
 
 const createPdrSnsMessage = (messageObject) => ({
@@ -73,26 +58,9 @@ test.after.always(async () => {
 });
 
 test('getReportPdrMessages returns correct number of messages', (t) => {
-  let messages = getReportPdrMessages({
-    Records: [{
-      EventSource: 'aws:sns',
-      Sns: {
-        Message: JSON.stringify({
-          cumulus_meta: {
-            execution_name: 'exec123',
-            state_machine: 'workflow123'
-          },
-          meta: {},
-          payload: {}
-        })
-      }
-    }]
-  });
-  t.is(messages.length, 1);
-
-  messages = getReportPdrMessages({
+  const messages = getReportPdrMessages({
     Records: [
-      createPdrSnsMessage(createPdrMessage())
+      createPdrSnsMessage(createFakePdrRecord())
     ]
   });
   t.is(messages.length, 1);
@@ -100,41 +68,43 @@ test('getReportPdrMessages returns correct number of messages', (t) => {
 
 test('handler correctly creates PDR record', async (t) => {
   const pdrName = randomString();
-  const pdrParams = {
-    name: pdrName
-  };
   const status = 'running';
+  const pdrParams = {
+    pdrName,
+    status
+  };
 
   await handler({
     Records: [
-      createPdrSnsMessage(createPdrMessage({
-        pdrParams,
-        status
-      }))
+      createPdrSnsMessage(createFakePdrRecord(
+        pdrParams
+      ))
     ]
   });
 
   const record = await pdrsModel.get({ pdrName });
-  t.is(typeof record.createdAt, 'number');
-  t.is(record.createdAt, timestamp);
+  const expectedRecord = {
+    ...fakePdrRecord,
+    ...pdrParams,
+    updatedAt: record.updatedAt
+  };
+  t.deepEqual(record, expectedRecord);
 });
 
 test('handler correctly updates PDR record', async (t) => {
   const pdrName = randomString();
-  const pdrParams = {
-    name: pdrName
-  };
-  const cMetaParams = {
-    execution_name: randomString
-  };
   let status = 'running';
+
+  const pdrParams = {
+    pdrName,
+    status
+  };
 
   await handler({
     Records: [
-      createPdrSnsMessage(createPdrMessage({
-        pdrParams,
-        status
-      }))
+      createPdrSnsMessage(createFakePdrRecord(
+        pdrParams
+      ))
     ]
   });
   const originalRecord = await pdrsModel.get({ pdrName });
@@ -142,34 +112,35 @@ test('handler correctly updates PDR record', async (t) => {
   t.is(originalRecord.progress, 0);
 
   const newExecution = randomString();
-  cMetaParams.execution_name = newExecution;
   status = 'completed';
+  const updatedStats = {
+    processing: 0,
+    completed: 1,
+    failed: 0,
+    total: 1
+  };
+  const updatedPdrParams = {
+    ...pdrParams,
+    status: 'completed',
+    execution: newExecution,
+    stats: updatedStats,
+    progress: 100
+  };
 
   await handler({
     Records: [
-      createPdrSnsMessage(createPdrMessage({
-        collectionId: originalRecord.collectionId,
-        pdrParams,
-        cMetaParams,
-        status,
-        completedExecutions: [
-          randomId('execution')
-        ]
-      }))
+      createPdrSnsMessage(createFakePdrRecord(
+        updatedPdrParams
+      ))
     ]
   });
   const updatedRecord = await pdrsModel.get({ pdrName });
 
   const expectedRecord = {
     ...originalRecord,
-    stats: {
-      ...originalRecord.stats,
-      completed: 1,
-      total: 1
-    },
+    stats: updatedStats,
     progress: 100,
     status,
-    duration: updatedRecord.duration,
     execution: updatedRecord.execution,
     updatedAt: updatedRecord.updatedAt,
     timestamp: updatedRecord.timestamp

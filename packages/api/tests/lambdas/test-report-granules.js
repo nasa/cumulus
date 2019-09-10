@@ -5,7 +5,7 @@ const test = require('ava');
 const { randomId, randomString, randomNumber } = require('@cumulus/common/test-utils');
 
 const { handler, getReportGranuleMessages } = require('../../lambdas/report-granules');
-const { fakeGranuleFactoryV2, fakeFileFactory } = require('../../lib/testUtils');
+const { fakeFileFactory } = require('../../lib/testUtils');
 const Granule = require('../../models/granules');
 
 let granuleModel;
@@ -120,7 +120,7 @@ test('handler correctly updates granule record', async (t) => {
   const originalRecord = await granuleModel.get({ granuleId });
 
   const newExecution = randomString();
-  const updatedGranuleRecord = {
+  const updatedGranuleParams = {
     ...originalRecord,
     execution: newExecution,
     cmrLink: 'http://newcmrlink.com/12345'
@@ -128,7 +128,7 @@ test('handler correctly updates granule record', async (t) => {
 
   await handler({
     Records: [
-      createGranuleSnsMessage(updatedGranuleRecord)
+      createGranuleSnsMessage(updatedGranuleParams)
     ]
   });
 
@@ -139,7 +139,7 @@ test('handler correctly updates granule record', async (t) => {
     execution: updatedRecord.execution,
     updatedAt: updatedRecord.updatedAt,
     timestamp: updatedRecord.timestamp,
-    cmrLink: updatedGranuleRecord.cmrLink
+    cmrLink: updatedGranuleParams.cmrLink
   };
 
   t.deepEqual(expectedRecord, updatedRecord);
