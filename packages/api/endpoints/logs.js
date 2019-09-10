@@ -25,7 +25,7 @@ async function list(req, res) {
   }, 'logs');
 
   const result = await search.query();
-  return res.send(result.body);
+  return res.send(result);
 }
 
 /**
@@ -45,7 +45,7 @@ async function get(req, res) {
     }
   }, 'logs');
   const result = await search.query();
-  return res.send(result.body);
+  return res.send(result);
 }
 
 router.get('/:executionName', get);

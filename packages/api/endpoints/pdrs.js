@@ -19,7 +19,7 @@ async function list(req, res) {
     queryStringParameters: req.query
   }, 'pdr');
   const result = await search.query();
-  return res.send(result.body);
+  return res.send(result);
 }
 
 /**
