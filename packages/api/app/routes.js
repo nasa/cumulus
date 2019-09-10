@@ -1,7 +1,7 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const saml2 = require('saml2-js');
+const saml2 = require('saml2-js/lib-js/saml2');
 const fs = require('fs');
 
 const log = require('@cumulus/common/log');
@@ -26,6 +26,8 @@ const workflows = require('../endpoints/workflows');
 const dashboard = require('../endpoints/dashboard');
 const elasticsearch = require('../endpoints/elasticsearch');
 const ems = require('../endpoints/ems');
+// const { ServiceProvider, IdentityProvider } = require('../node_modules/saml2-js');
+// ../node_modules/saml2-js/lib-js/saml2')
 const launchpadAuth = require('./launchpadAuth');
 
 // set up SP and IdP
@@ -47,10 +49,13 @@ const sp = new saml2.ServiceProvider(sp_options);
 // Example use of service provider.
 // Call metadata to get XML metatadata used in configuration.
 // const metadata = sp.create_metadata();
-const bucket = process.env.system_bucket;
-const stackName = process.env.stackName;
-const launchpadCert = (await getS3Object(bucket, `${stackName}/crypto/launchpad-saml.pem`)).Body;
+async function getLaunchpadCert () {
+  const bucket = process.env.system_bucket;
+  const stackName = process.env.stackName;
+  return (await getS3Object(bucket, `${stackName}/crypto/launchpad-saml.pem`)).Body;
+}
 
+const launchpadCert = getLaunchpadCert();
 const idp_options = {
   sso_login_url: 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso',//process.env.IDP_LOGIN, // 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso'
   sso_logout_url: null, // should probably figure this out?? Does launchpad have this?
@@ -83,7 +88,7 @@ router.get("/samlLogin", function(req, res) {
 });
 
 // Assert endpoint for when login completes
-router.post("/saml/sso", function(req, res) { // /assert
+router.post("/saml/auth", function(req, res) { // /assert
   const state = get(event, 'query.state');
   const options = {request_body: req.body};
   sp.post_assert(idp, options, function(err, saml_response) {

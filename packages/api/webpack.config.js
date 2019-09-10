@@ -27,6 +27,9 @@ module.exports = {
     libraryTarget: 'commonjs2',
     filename: '[name]/index.js'
   },
+  node: {
+    __dirname: false
+  },
   externals: [
     'aws-sdk',
     'electron',

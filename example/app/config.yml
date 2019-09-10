@@ -570,6 +570,12 @@ jl:
   oauth:
     provider: launchpad
     userGroup: GSFC-Cumulus-Dev
+  samlConfig:
+    entityID: 'https://cumulus-sandbox.earthdata.nasa.gov/jl-test-integration'
+    assertEndpoint: 'https://5hlnofihz8.execute-api.us-east-1.amazonaws.com:8000/dev/saml/auth'
+    idpLogin: 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso'
+    launchpadCertPath: 'something'
+
 
 gitc:
   prefix: {{PREFIX}}
