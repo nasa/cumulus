@@ -130,6 +130,7 @@ test('generatePdrRecord() generates a completed PDR record', async (t) => {
   t.is(record.stats.completed, 1);
   t.is(record.stats.total, 1);
   t.is(record.progress, 100);
+  t.is(typeof record.duration, 'number');
 });
 
 test('generatePdrRecord() generates a failed PDR record', async (t) => {
@@ -165,6 +166,7 @@ test('generatePdrRecord() generates a failed PDR record', async (t) => {
   t.is(stats.processing, 0);
   t.is(stats.completed, 0);
   t.is(record.progress, 100);
+  t.is(typeof record.duration, 'number');
 });
 
 test('generatePdrRecord() sets PDR properties when included', async (t) => {
