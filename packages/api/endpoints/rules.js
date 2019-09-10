@@ -31,7 +31,7 @@ async function list(req, res) {
     queryStringParameters: req.query
   }, 'rule');
   const response = await search.query();
-  return res.send(response);
+  return res.send(response.body);
 }
 
 /**
