@@ -750,7 +750,7 @@ jk:
 jk2:
   useWorkflowLambdaVersions: false
   cmaDir: '/opt/'
-  cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:CMA_TEST:3
+  cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:CMA_TEST:10
   prefix: jk2
   prefixNoDash: jk2
   ecs:
