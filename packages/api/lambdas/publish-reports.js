@@ -18,6 +18,7 @@ const {
 } = require('@cumulus/common/message');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 
+const Execution = require('../models/executions');
 const Granule = require('../models/granules');
 const Pdr = require('../models/pdrs');
 
@@ -52,16 +53,16 @@ async function publishSnsMessage(
 /**
  * Publish SNS message for execution reporting.
  *
- * @param {Object} eventMessage - Workflow execution message
+ * @param {Object} executionRecord - An execution record
  * @param {string} [executionSnsTopicArn]
  *  SNS topic ARN for reporting executions. Defaults to `process.env.execution_sns_topic_arn`.
  * @returns {Promise}
  */
 async function publishExecutionSnsMessage(
-  eventMessage,
+  executionRecord,
   executionSnsTopicArn = process.env.execution_sns_topic_arn
 ) {
-  return publishSnsMessage(executionSnsTopicArn, eventMessage);
+  return publishSnsMessage(executionSnsTopicArn, executionRecord);
 }
 
 /**
@@ -92,6 +93,17 @@ async function publishPdrSnsMessage(
   pdrSnsTopicArn = process.env.pdr_sns_topic_arn
 ) {
   return publishSnsMessage(pdrSnsTopicArn, pdrRecord);
+}
+
+/**
+ * Publish execution record to SNS topic.
+ *
+ * @param {Object} eventMessage - Workflow execution message
+ * @returns {Promise}
+ */
+async function handleExecutionMessage(eventMessage) {
+  const executionRecord = Execution.generateExecutionRecord(eventMessage);
+  return publishExecutionSnsMessage(executionRecord);
 }
 
 /**
@@ -131,7 +143,7 @@ async function handleGranuleMessages(eventMessage) {
 }
 
 /**
- * Publish individual PDR messages to SNS topic.
+ * Publish PDR record to SNS topic.
  *
  * @param {Object} eventMessage - Workflow execution message
  * @returns {Promise}
@@ -177,7 +189,7 @@ async function publishReportSnsMessages(eventMessage, isTerminalStatus, isFailed
   });
 
   return Promise.all([
-    publishExecutionSnsMessage(eventMessage),
+    handleExecutionMessage(eventMessage),
     handleGranuleMessages(eventMessage),
     handlePdrMessage(eventMessage)
   ]);
