@@ -298,6 +298,16 @@ class Granule extends Manager {
     return existingFiles.filter((file) => file);
   }
 
+  /**
+   * Build a granule record.
+   *
+   * @param {Object} granule - A granule object
+   * @param {Object} message - A workflow execution message
+   * @param {string} executionUrl - A Step Function execution URL
+   * @param {Date} startDate - Start date of the workflow execution
+   * @param {Date} stopDate - Stop date of the workflow execution
+   * @returns {Object} - A granule record
+   */
   static async buildGranuleRecord(
     granule,
     message,
