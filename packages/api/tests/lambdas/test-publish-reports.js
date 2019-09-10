@@ -141,16 +141,7 @@ test.serial('lambda publishes correct report to all SNS topics', async (t) => {
   };
   t.deepEqual(JSON.parse(snsPublishSpy.args[0][0].Message), expectedMessage);
   t.true(snsTopicArns.includes(snsPublishSpy.args[0][0].TopicArn));
-
-  // granules topic
-  // const [granule] = message.payload.granules;
-  // t.deepEqual(JSON.parse(snsPublishSpy.args[1][0].Message), {
-  //   ...granule,
-  //   executionArn
-  // });
   t.true(snsTopicArns.includes(snsPublishSpy.args[1][0].TopicArn));
-
-  // PDRs topic
   t.true(snsTopicArns.includes(snsPublishSpy.args[2][0].TopicArn));
 });
 
