@@ -21,7 +21,7 @@ async function list(req, res) {
     queryStringParameters: req.query
   }, 'granule')).query();
 
-  return res.send(result.body);
+  return res.send(result);
 }
 
 /**

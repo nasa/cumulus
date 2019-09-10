@@ -32,7 +32,7 @@ async function list(req, res) {
     queryStringParameters: req.query
   }, 'provider');
   const response = await search.query();
-  return res.send(response.body);
+  return res.send(response);
 }
 
 /**
