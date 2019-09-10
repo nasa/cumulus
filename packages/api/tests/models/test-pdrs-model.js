@@ -25,18 +25,19 @@ const createPdrMessage = ({
   numCompletedExecutions = 0,
   numFailedExecutions = 0,
   numRunningExecutions = 0,
-  timestamp = Date.now(),
+  createdAtTime = Date.now(),
+  providerId = 'prov1',
   status = 'running'
 } = {}) => ({
   cumulus_meta: {
     state_machine: randomId('pdr'),
     execution_name: randomId('execution'),
-    workflow_start_time: timestamp
+    workflow_start_time: createdAtTime
   },
   meta: {
     collection: deconstructCollectionId(collectionId),
     provider: {
-      id: 'prov1',
+      id: providerId,
       protocol: 's3',
       host: 'random-bucket'
     },
@@ -55,6 +56,136 @@ const createPdrMessage = ({
   }
 });
 
+test('generatePdrRecord() sets correct progress value for running PDR', async (t) => {
+  const pdrName = randomId('pdr');
+  const message = createPdrMessage({
+    numRunningExecutions: 3
+  });
+
+  const pdr = {
+    name: pdrName
+  };
+
+  message.payload.pdr = pdr;
+
+  const record = Pdr.generatePdrRecord(pdr, message);
+
+  t.is(record.status, 'running');
+  t.is(record.stats.processing, 3);
+  t.is(record.stats.total, 3);
+  t.is(record.progress, 0);
+});
+
+test('generatePdrRecord() sets correct progress value for partially complete PDR', async (t) => {
+  const pdrName = randomId('pdr');
+  const message = createPdrMessage({
+    numCompletedExecutions: 1,
+    numFailedExecutions: 2,
+    numRunningExecutions: 3
+  });
+  const pdr = {
+    name: pdrName
+  };
+
+  message.payload.pdr = pdr;
+
+  const record = Pdr.generatePdrRecord(pdr, message);
+
+  t.is(record.status, 'running');
+  t.is(record.stats.processing, 3);
+  t.is(record.stats.failed, 2);
+  t.is(record.stats.completed, 1);
+  t.is(record.stats.total, 6);
+  t.is(record.progress, 50);
+});
+
+test('generatePdrRecord() generates a completed PDR record', async (t) => {
+  const collectionId = `${randomId('MOD')}___${randomNumber()}`;
+  const providerId = randomId('provider');
+  const pdrName = randomId('pdr');
+  const status = 'completed';
+  const createdAtTime = Date.now();
+
+  const message = createPdrMessage({
+    numCompletedExecutions: 1,
+    collectionId,
+    createdAtTime,
+    providerId,
+    status
+  });
+  const pdr = {
+    name: pdrName
+  };
+
+  message.payload.pdr = pdr;
+
+  const record = Pdr.generatePdrRecord(pdr, message);
+
+  t.is(record.status, status);
+  t.is(record.collectionId, collectionId);
+  t.is(record.createdAt, createdAtTime);
+  t.is(record.provider, providerId);
+  t.is(record.stats.failed, 0);
+  t.is(record.stats.processing, 0);
+  t.is(record.stats.completed, 1);
+  t.is(record.stats.total, 1);
+  t.is(record.progress, 100);
+});
+
+test('generatePdrRecord() generates a failed PDR record', async (t) => {
+  const collectionId = `${randomId('MOD')}___${randomNumber()}`;
+  const providerId = randomId('provider');
+  const pdrName = randomId('pdr');
+  const status = 'failed';
+  const createdAtTime = Date.now();
+
+  const message = createPdrMessage({
+    numFailedExecutions: 1,
+    collectionId,
+    createdAtTime,
+    providerId,
+    status
+  });
+
+  const pdr = {
+    name: pdrName
+  };
+
+  message.payload.pdr = pdr;
+
+  const record = Pdr.generatePdrRecord(pdr, message);
+
+  t.is(record.status, status);
+  t.is(record.collectionId, collectionId);
+  t.is(record.createdAt, createdAtTime);
+  t.is(record.provider, providerId);
+  const stats = record.stats;
+  t.is(stats.total, 1);
+  t.is(stats.failed, 1);
+  t.is(stats.processing, 0);
+  t.is(stats.completed, 0);
+  t.is(record.progress, 100);
+});
+
+test('generatePdrRecord() sets PDR properties when included', async (t) => {
+  const pdrName = randomId('pdr');
+  const message = createPdrMessage();
+  const PANmessage = 'test message';
+
+  const pdr = {
+    name: pdrName,
+    PANSent: true,
+    PANmessage
+  };
+
+  message.payload.pdr = pdr;
+
+  const record = Pdr.generatePdrRecord(pdr, message);
+
+  t.true(record.PANSent);
+  t.is(record.PANmessage, PANmessage);
+});
+
 test('createPdrFromSns() returns undefined when no PDR name exists', async (t) => {
   const record = await pdrsModel.createPdrFromSns(createPdrMessage());
   t.is(record, undefined);
@@ -62,9 +193,9 @@ test('createPdrFromSns() returns undefined when no PDR name exists', async (t) =
 
 test('createPdrFromSns() creates a PDR record when payload.pdr is set', async (t) => {
   const pdrName = randomId('pdr');
-  const timestamp = Date.now() - 1000;
+  const createdAtTime = Date.now() - 1000;
   const message = createPdrMessage({
-    timestamp
+    createdAtTime
   });
 
   message.payload.pdr = {
@@ -77,15 +208,15 @@ test('createPdrFromSns() creates a PDR record when payload.pdr is set', async (t
   const collectionId = constructCollectionId(collection.name, collection.version);
 
   const record = await pdrsModel.get({ pdrName });
-  t.is(record.createdAt, timestamp);
+  t.is(record.createdAt, createdAtTime);
   t.is(record.collectionId, collectionId);
 });
 
 test('createPdrFromSns() creates a PDR record when meta.pdr is set', async (t) => {
   const pdrName = randomId('pdr');
-  const timestamp = Date.now() - 1000;
+  const createdAtTime = Date.now() - 1000;
   const message = createPdrMessage({
-    timestamp
+    createdAtTime
   });
 
   message.meta.pdr = {
@@ -98,7 +229,7 @@ test('createPdrFromSns() creates a PDR record when meta.pdr is set', async (t) =
   const collectionId = constructCollectionId(collection.name, collection.version);
 
   const record = await pdrsModel.get({ pdrName });
-  t.is(record.createdAt, timestamp);
+  t.is(record.createdAt, createdAtTime);
   t.is(record.collectionId, collectionId);
 });
 

@@ -47,26 +47,22 @@ class Pdr extends Manager {
   }
 
   /**
-   * Create a new PDR record from incoming SNS messages
+   * Generate a PDR record.
    *
-   * @param {Object} payload - SNS message containing the output of a Cumulus Step Function
-   * @returns {Promise<Object>} a PDR record
+   * @param {Object} pdr - A PDR object
+   * @param {Object} message - A workflow execution message
+   * @returns {Object} - A PDR record
    */
-  createPdrFromSns(payload) {
-    const pdrObj = get(payload, 'payload.pdr', get(payload, 'meta.pdr'));
-    const pdrName = get(pdrObj, 'name');
-
-    if (!pdrName) return Promise.resolve();
-
-    const arn = getMessageExecutionArn(payload);
+  static generatePdrRecord(pdr, message) {
+    const arn = getMessageExecutionArn(message);
     const execution = aws.getExecutionUrl(arn);
 
-    const collectionId = getCollectionIdFromMessage(payload);
+    const collectionId = getCollectionIdFromMessage(message);
 
     const stats = {
-      processing: get(payload, 'payload.running', []).length,
-      completed: get(payload, 'payload.completed', []).length,
-      failed: get(payload, 'payload.failed', []).length
+      processing: get(message, 'payload.running', []).length,
+      completed: get(message, 'payload.completed', []).length,
+      failed: get(message, 'payload.failed', []).length
     };
 
     stats.total = stats.processing + stats.completed + stats.failed;
@@ -78,22 +74,38 @@ class Pdr extends Manager {
     }
 
     const doc = {
-      pdrName,
+      pdrName: pdr.name,
       collectionId,
-      status: get(payload, 'meta.status'),
-      provider: get(payload, 'meta.provider.id'),
+      status: get(message, 'meta.status'),
+      provider: get(message, 'meta.provider.id'),
       progress,
       execution,
-      PANSent: get(pdrObj, 'PANSent', false),
-      PANmessage: get(pdrObj, 'PANmessage', 'N/A'),
+      PANSent: get(pdr, 'PANSent', false),
+      PANmessage: get(pdr, 'PANmessage', 'N/A'),
       stats,
-      createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
+      createdAt: get(message, 'cumulus_meta.workflow_start_time'),
       timestamp: Date.now()
     };
 
     doc.duration = (doc.timestamp - doc.createdAt) / 1000;
+    return doc;
+  }
 
-    return this.create(doc);
+  /**
+   * Create a new PDR record from incoming SNS messages
+   *
+   * @param {Object} payload - SNS message containing the output of a Cumulus Step Function
+   * @returns {Promise<Object>} a PDR record
+   */
+  createPdrFromSns(payload) {
+    const pdrObj = get(payload, 'payload.pdr', get(payload, 'meta.pdr'));
+    const pdrName = get(pdrObj, 'name');
+
+    if (!pdrName) return Promise.resolve();
+
+    const pdrRecord = Pdr.generatePdrRecord(pdrObj, payload);
+
+    return this.create(pdrRecord);
   }
 
   /**

@@ -307,6 +307,7 @@ test.serial('lambda publishes PDR from meta.pdr to SNS topic', async (t) => {
   const pdrPublishMock = publishReports.__set__('publishPdrSnsMessage', pdrPublishSpy);
 
   const { pdr } = message.payload;
+  delete message.payload.pdr;
   message.meta.pdr = pdr;
 
   const cwEventMessage = createCloudwatchEventMessage(
