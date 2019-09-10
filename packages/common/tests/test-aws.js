@@ -141,7 +141,7 @@ test.serial('pullStepFunctionEcent returns message from S3 to target', async (t)
   };
 
   const stub = sinon.stub(aws, 'getS3Object').resolves({
-    Body: JSON.stringify({someKey: 'some data'})
+    Body: JSON.stringify({ someKey: 'some data' })
   });
   try {
     const message = await aws.pullStepFunctionEvent(event);
@@ -150,7 +150,6 @@ test.serial('pullStepFunctionEcent returns message from S3 to target', async (t)
     stub.restore();
   }
 });
-
 
 
 test.serial('pullStepFunctionEvent returns message from S3', async (t) => {

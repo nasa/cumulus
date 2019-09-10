@@ -2,7 +2,7 @@
 
 const AWS = require('aws-sdk');
 const fs = require('fs');
-const { JSONPath } = require('jsonpath-plus')
+const { JSONPath } = require('jsonpath-plus');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
 const cloneDeep = require('lodash.clonedeep');
@@ -988,7 +988,7 @@ exports.pullStepFunctionEvent = async (incomingEvent) => {
         json: event,
         resultType: 'all'
       });
-      if (replaceNodeSearch.length != 1) {
+      if (replaceNodeSearch.length !== 1) {
         throw new Error(`Replacement TargetPath ${event.replace.TargetPath} invalid`);
       }
       replaceNodeSearch[0].parent[replaceNodeSearch[0].parentProperty] = remoteMsg;

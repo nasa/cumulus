@@ -14,8 +14,7 @@ const models = require('../models');
  * @returns {string}              Cumulus Message Adapter message in JSON string
  */
 async function fetchRemote(eventMessage) {
-  let updatedEventMessage;
-  updatedEventMessage = await aws.pullStepFunctionEvent(eventMessage);
+  const updatedEventMessage = await aws.pullStepFunctionEvent(eventMessage);
   return JSON.stringify(updatedEventMessage);
 }
 
