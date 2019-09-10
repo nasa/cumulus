@@ -24,7 +24,7 @@ class Execution extends Manager {
     });
   }
 
-  generateDocFromPayload(payload) {
+  static generateExecutionRecord(payload) {
     const executionName = getMessageExecutionName(payload);
     const stateMachineArn = getMessageStateMachineArn(payload);
     const arn = getExecutionArn(
@@ -103,7 +103,7 @@ class Execution extends Manager {
    * @returns {Promise<Object>} An execution record
    */
   async updateExecutionFromSns(payload) {
-    const doc = this.generateDocFromPayload(payload);
+    const doc = Execution.generateExecutionRecord(payload);
     const existingRecord = await this.get({ arn: doc.arn });
     doc.finalPayload = get(payload, 'payload');
     doc.originalPayload = existingRecord.originalPayload;
@@ -118,7 +118,7 @@ class Execution extends Manager {
   * @returns {Promise<Object>} An execution record
    */
   async createExecutionFromSns(payload) {
-    const doc = this.generateDocFromPayload(payload);
+    const doc = Execution.generateExecutionRecord(payload);
     doc.originalPayload = get(payload, 'payload');
     doc.duration = (doc.timestamp - doc.createdAt) / 1000;
     return this.create(doc);

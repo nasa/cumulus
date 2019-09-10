@@ -13,7 +13,7 @@ const pdrFailureFixture = require('../data/pdr_failure.json');
 
 let executionDoc;
 let executionModel;
-let generateDocStub;
+let generateRecordStub;
 
 const originalPayload = { op: 'originalPayload' };
 
@@ -49,7 +49,7 @@ test.after.always(async () => {
 });
 
 test.beforeEach(async () => {
-  generateDocStub = sinon.stub(executionModel, 'generateDocFromPayload').callsFake(
+  generateRecordStub = sinon.stub(Execution, 'generateExecutionRecord').callsFake(
     () => executionDoc
   );
 
@@ -58,13 +58,13 @@ test.beforeEach(async () => {
 
 test.afterEach.always(async () => {
   await executionModel.delete({ arn: executionDoc.arn });
-  generateDocStub.restore();
+  generateRecordStub.restore();
 });
 
-test.serial('generateDocFromPayload using payload without cumulus_meta.state_machine throws error', (t) => {
-  generateDocStub.restore();
+test.serial('generateExecutionRecord using payload without cumulus_meta.state_machine throws error', (t) => {
+  generateRecordStub.restore();
   t.throws(
-    () => executionModel.generateDocFromPayload({
+    () => Execution.generateExecutionRecord({
       cumulus_meta: {
         execution_name: randomString()
       }
@@ -72,10 +72,10 @@ test.serial('generateDocFromPayload using payload without cumulus_meta.state_mac
   );
 });
 
-test.serial('generateDocFromPayload using payload without cumulus_meta.execution_name throws error', (t) => {
-  generateDocStub.restore();
+test.serial('generateExecutionRecord using payload without cumulus_meta.execution_name throws error', (t) => {
+  generateRecordStub.restore();
   t.throws(
-    () => executionModel.generateDocFromPayload({
+    () => Execution.generateExecutionRecord({
       cumulus_meta: {
         state_machine: randomString()
       }
@@ -84,7 +84,7 @@ test.serial('generateDocFromPayload using payload without cumulus_meta.execution
 });
 
 test.serial('createExecutionFromSns() creates a successful execution record', async (t) => {
-  generateDocStub.restore();
+  generateRecordStub.restore();
 
   const newPayload = cloneDeep(pdrSuccessFixture);
   newPayload.cumulus_meta.execution_name = randomString();
@@ -97,7 +97,7 @@ test.serial('createExecutionFromSns() creates a successful execution record', as
 });
 
 test.serial('createExecutionFromSns() creates a failed execution record', async (t) => {
-  generateDocStub.restore();
+  generateRecordStub.restore();
 
   const newPayload = cloneDeep(pdrFailureFixture);
   newPayload.cumulus_meta.execution_name = randomString();
