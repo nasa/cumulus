@@ -24,3 +24,16 @@ output "elasticsearch_hostname" {
 output "elasticsearch_security_group_id" {
   value = local.deploy_inside_vpc ? aws_security_group.es_vpc[0].id : null
 }
+
+output "es_alarms" {
+  value = [
+    {
+      name = aws_cloudwatch_metric_alarm.es_nodes_low.alarm_name
+      arn = aws_cloudwatch_metric_alarm.es_nodes_low.arn
+    },
+    {
+      name = aws_cloudwatch_metric_alarm.es_nodes_high.alarm_name,
+      arn = aws_cloudwatch_metric_alarm.es_nodes_high.arn
+    }
+  ]
+}
