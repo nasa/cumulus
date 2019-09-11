@@ -24,6 +24,7 @@ echo "Locking stack for deployment $DEPLOYMENT"
 cd example
 set +e
 
+TF_VERSION=$(cat .tfversion)
 # Fetch terraform binary
 if ! curl -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip ; then
   echo "ERROR: coudn't download terraform script" >&2
@@ -34,7 +35,6 @@ else
   rm ./terraform_${TF_VERSION}_linux_amd64.zip
 fi
 
-# TODO Necessary in Terraform?
 # Wait for the stack to be available
 node ./scripts/lock-stack.js true $DEPLOYMENT
 LOCK_EXISTS_STATUS=$?
