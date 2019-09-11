@@ -3,6 +3,7 @@ module "sync_granule_catch_duplicate_error_test" {
 
   prefix                                = var.prefix
   name                                  = "SyncGranuleCatchDuplicateErrorTest"
+  distribution_url                      = module.cumulus.distribution_url
   state_machine_role_arn                = module.cumulus.step_role_arn
   sf_semaphore_down_lambda_function_arn = module.cumulus.sf_semaphore_down_lambda_function_arn
   sftracker_sns_topic_arn               = module.cumulus.sftracker_sns_topic_arn
