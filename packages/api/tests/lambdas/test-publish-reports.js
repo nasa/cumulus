@@ -76,6 +76,8 @@ const createCumulusMessage = ({
 });
 
 test.before(async () => {
+  process.env.ExecutionsTable = randomString();
+
   snsStub = sinon.stub(aws, 'sns').returns({
     publish: () => ({
       promise: () => Promise.resolve()
@@ -129,7 +131,7 @@ test.serial('lambda publishes correct report to all SNS topics', async (t) => {
   const { message, snsTopicArns } = t.context;
 
   const cwEventMessage = createCloudwatchEventMessage(
-    'SUCCEEDED',
+    'RUNNING',
     message
   );
 

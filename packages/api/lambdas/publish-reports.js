@@ -1,5 +1,6 @@
 'use strict';
 
+const get = require('lodash.get');
 const merge = require('lodash.merge');
 
 const aws = require('@cumulus/common/aws');
@@ -103,10 +104,11 @@ async function publishPdrSnsMessage(
  */
 async function handleExecutionMessage(eventMessage) {
   try {
-    const executionRecord = Execution.generateExecutionRecord(eventMessage);
+    const updateExecution = ['completed', 'failed'].includes(get(eventMessage, 'meta.status'));
+    const executionRecord = await Execution.generateRecord(eventMessage, updateExecution);
     return publishExecutionSnsMessage(executionRecord);
   } catch (err) {
-    log.error('Error handling execution message:', err);
+    log.error('Error handling execution message', err);
     log.info('Execution message', eventMessage);
     return Promise.resolve();
   }

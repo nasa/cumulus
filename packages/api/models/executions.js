@@ -28,9 +28,10 @@ class Execution extends Manager {
    * Generate an execution record from a workflow execution message.
    *
    * @param {Object} message - A workflow execution message
+   * @param {boolean} updateExecution - True if this message is an update to an existing execution
    * @returns {Object} An execution record
    */
-  static generateExecutionRecord(message) {
+  static async generateRecord(message, updateExecution = false) {
     const executionName = getMessageExecutionName(message);
     const stateMachineArn = getMessageStateMachineArn(message);
     const arn = getExecutionArn(
@@ -41,6 +42,8 @@ class Execution extends Manager {
     const execution = aws.getExecutionUrl(arn);
     const collectionId = getCollectionIdFromMessage(message);
 
+    const status = get(message, 'meta.status', 'unknown');
+
     const record = {
       name: executionName,
       arn,
@@ -50,11 +53,21 @@ class Execution extends Manager {
       error: parseException(message.exception),
       type: get(message, 'meta.workflow_name'),
       collectionId,
-      status: get(message, 'meta.status', 'unknown'),
+      status,
       createdAt: get(message, 'cumulus_meta.workflow_start_time'),
       timestamp: Date.now()
     };
 
+    const currentPayload = get(message, 'payload');
+    if (updateExecution) {
+      const existingRecord = await new Execution().get({ arn });
+      record.finalPayload = currentPayload;
+      record.originalPayload = existingRecord.originalPayload;
+    } else {
+      record.originalPayload = currentPayload;
+    }
+
+    record.duration = (record.timestamp - record.createdAt) / 1000;
     return record;
   }
 
@@ -110,25 +123,19 @@ class Execution extends Manager {
    * @returns {Promise<Object>} An execution record
    */
   async updateExecutionFromSns(message) {
-    const doc = Execution.generateExecutionRecord(message);
-    const existingRecord = await this.get({ arn: doc.arn });
-    doc.finalPayload = get(message, 'payload');
-    doc.originalPayload = existingRecord.originalPayload;
-    doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-    return this.create(doc);
+    const record = await Execution.generateRecord(message, true);
+    return this.create(record);
   }
 
   /**
-   * Create a new execution record from incoming sns messages
+   * Create a new execution record from incoming SNS messages
    *
    * @param {Object} message - A workflow execution message
    * @returns {Promise<Object>} An execution record
    */
   async createExecutionFromSns(message) {
-    const doc = Execution.generateExecutionRecord(message);
-    doc.originalPayload = get(message, 'payload');
-    doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-    return this.create(doc);
+    const record = await Execution.generateRecord(message);
+    return this.create(record);
   }
 
   /**
