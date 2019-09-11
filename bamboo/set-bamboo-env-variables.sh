@@ -128,7 +128,13 @@ if [[ -z $DEPLOYMENT ]]; then
     echo "Unable to determine integration stack" >&2
     exit 1
   fi
-  echo export DEPLOYMENT=$DEPLOYMENT >> .bamboo_env_vars
+  if [[ $COMMIT_MESSAGE =~ deploy-terraform || $BRANCH =~ terraform ]]; then
+    echo "Detected terraform deployment branch or commit"
+    echo deployment "$DEPLOYMENT-tf"
+    echo export DEPLOYMENT="$DEPLOYMENT-tf" >> .bamboo_env_vars
+  else
+    echo export DEPLOYMENT=$DEPLOYMENT >> .bamboo_env_vars
+  fi
 fi
 
 ## Exporting the commit message as an env variable to be brought in
