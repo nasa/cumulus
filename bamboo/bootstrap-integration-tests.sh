@@ -14,8 +14,8 @@ npm config set unsafe-perm true
 npm install
 . ./bamboo/set-bamboo-env-variables.sh
 
-# terraform hijack to avoid affecting non-tf branch plans
-if [[ $COMMIT_MESSAGE =~ terraform ]]; then
+# drop into terraform deployment which exits, skipping kes deployment
+if [[ $COMMIT_MESSAGE =~ deploy-terraform || $BRANCH =~ terraform ]]; then
   . ./bamboo/bootstrap-tf-deployment.sh
 fi
 
