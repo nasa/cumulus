@@ -106,7 +106,8 @@ async function handleExecutionMessage(eventMessage) {
     const executionRecord = Execution.generateExecutionRecord(eventMessage);
     return publishExecutionSnsMessage(executionRecord);
   } catch (err) {
-    log.error('Error building execution record', err);
+    log.error('Error handling execution message:', err);
+    log.info('Execution message', eventMessage);
     return Promise.resolve();
   }
 }
