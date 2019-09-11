@@ -36,5 +36,10 @@ module.exports = {
     { formidable: 'url' }
   ],
   devtool: process.env.PRODUCTION ? false : 'inline-source-map',
-  target: 'node'
+  target: 'node',
+  plugins: [
+    // new webpack.ContextReplacementPlugin({
+    //   // Definitions...
+    // })
+  ]
 };
