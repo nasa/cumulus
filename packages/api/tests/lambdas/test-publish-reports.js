@@ -15,6 +15,7 @@ const { deconstructCollectionId } = require('../../lib/utils');
 const publishReports = rewire('../../lambdas/publish-reports');
 
 let snsStub;
+let executionPublishSpy;
 let granulePublishSpy;
 let pdrPublishSpy;
 let snsPublishSpy;
@@ -81,6 +82,7 @@ test.before(async () => {
     })
   });
 
+  executionPublishSpy = sinon.spy();
   granulePublishSpy = sinon.spy();
   pdrPublishSpy = sinon.spy();
   snsPublishSpy = sinon.spy(aws.sns(), 'publish');
@@ -109,6 +111,7 @@ test.beforeEach((t) => {
   });
   stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').callsFake(fakeExecution);
 
+  executionPublishSpy.resetHistory();
   granulePublishSpy.resetHistory();
   pdrPublishSpy.resetHistory();
   snsPublishSpy.resetHistory();
@@ -133,16 +136,6 @@ test.serial('lambda publishes correct report to all SNS topics', async (t) => {
   await publishReports.handler(cwEventMessage);
 
   t.is(snsPublishSpy.callCount, 3);
-
-  // executions topic
-  const expectedMessage = {
-    ...message,
-    meta: {
-      ...message.meta,
-      status: 'completed'
-    }
-  };
-  t.deepEqual(JSON.parse(snsPublishSpy.args[0][0].Message), expectedMessage);
   t.true(snsTopicArns.includes(snsPublishSpy.args[0][0].TopicArn));
   t.true(snsTopicArns.includes(snsPublishSpy.args[1][0].TopicArn));
   t.true(snsTopicArns.includes(snsPublishSpy.args[2][0].TopicArn));
@@ -323,6 +316,32 @@ test.serial('lambda publishes PDR from meta.pdr to SNS topic', async (t) => {
   t.is(pdrPublishSpy.callCount, 1);
 
   // revert the mocking
+  pdrPublishMock();
+});
+
+test.serial('error building execution record does not affect publishing to other topics', async (t) => {
+  const pdrPublishMock = publishReports.__set__('publishPdrSnsMessage', pdrPublishSpy);
+  const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
+  const executionPublishMock = publishReports.__set__('publishExecutionSnsMessage', executionPublishSpy);
+
+  const { message } = t.context;
+
+  delete message.cumulus_meta.state_machine;
+
+  const cwEventMessage = createCloudwatchEventMessage(
+    'RUNNING',
+    message
+  );
+
+  await publishReports.handler(cwEventMessage);
+
+  t.is(executionPublishSpy.callCount, 0);
+  t.is(granulePublishSpy.callCount, 1);
+  t.is(pdrPublishSpy.callCount, 1);
+
+  // revert the mocking
+  executionPublishMock();
+  granulePublishMock();
   pdrPublishMock();
 });
 

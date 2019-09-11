@@ -102,8 +102,13 @@ async function publishPdrSnsMessage(
  * @returns {Promise}
  */
 async function handleExecutionMessage(eventMessage) {
-  const executionRecord = Execution.generateExecutionRecord(eventMessage);
-  return publishExecutionSnsMessage(executionRecord);
+  try {
+    const executionRecord = Execution.generateExecutionRecord(eventMessage);
+    return publishExecutionSnsMessage(executionRecord);
+  } catch (err) {
+    log.error('Error building execution record', err);
+    return Promise.resolve();
+  }
 }
 
 /**
