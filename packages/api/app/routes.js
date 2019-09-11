@@ -57,13 +57,15 @@ const launchpadAuth = require('./launchpadAuth');
 // Example use of service provider.
 // Call metadata to get XML metatadata used in configuration.
 // const metadata = sp.create_metadata();
-// async function getLaunchpadCert () {
+// async function getMetadata () {
 //   const bucket = process.env.system_bucket;
 //   const stackName = process.env.stackName;
-//   return (await getS3Object(bucket, `${stackName}/crypto/launchpad-saml.pem`)).Body;
+//   const launchpadMetadata = (await getS3Object(bucket, `${stackName}/crypto/launchpad-sbx-metadata.xml`)).Body;
+//   const spMetadata = (await getS3Object(bucket, `${stackName}/crypto/aws-sp-metadata.xml`)).Body;
+//   return [launchpadMetadata, spMetadata];
 // }
 
-// const launchpadCert = getLaunchpadCert();
+// const metadata = getMetadata();
 // const idp_options = {
 //   sso_login_url: 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso',//process.env.IDP_LOGIN, // 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso'
 //   sso_logout_url: null, // should probably figure this out?? Does launchpad have this?
@@ -99,9 +101,11 @@ const launchpadAuth = require('./launchpadAuth');
 
 const idp = saml.IdentityProvider({
   metadata: fs.readFileSync('/Users/kakelly2/Documents/Projects/launchpad-sbx-metadata.xml')
+  // metadata: metadata[0]
 });
 const sp = saml.ServiceProvider({
   metadata: fs.readFileSync('/Users/kakelly2/Documents/Projects/sp-metadata.xml')
+  // metadata: metadata[1]
 });
 
 const request_id = '12345'; // Random string?
@@ -141,7 +145,7 @@ router.get("/samlLogin", (req, res) => {
 // Assert endpoint for when login completes
 router.post("/saml/sso", (req, res) => {
   console.log('got returned!');
-  // console.log(req);
+  console.log(req);
   sp.parseLoginResponse(idp, 'post', req)
   .then(parseResult => {
     // Use the parseResult can do customized action
