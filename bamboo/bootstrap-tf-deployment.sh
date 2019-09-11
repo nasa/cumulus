@@ -4,9 +4,6 @@ set -ex
 . ./bamboo/abort-if-skip-integration-tests.sh
 . ./bamboo/abort-if-not-terraform.sh
 
-# Append -tf for terraform deployments to avoid conflicting with current development workflows.
-export DEPLOYMENT="$DEPLOYMENT-tf"
-
 npm config set unsafe-perm true
 npm install
 . ./bamboo/set-bamboo-env-variables.sh
