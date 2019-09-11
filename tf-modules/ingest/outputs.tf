@@ -1,3 +1,7 @@
+output "discover_granules_task_lambda_function_arn" {
+  value = aws_lambda_function.discover_granules_task.arn
+}
+
 output "fake_processing_task_lambda_function_arn" {
   value = aws_lambda_function.fake_processing_task.arn
 }
@@ -20,6 +24,10 @@ output "move_granules_task_lambda_function_arn" {
 
 output "post_to_cmr_task_lambda_function_arn" {
   value = aws_lambda_function.post_to_cmr_task.arn
+}
+
+output "queue_granules_task_lambda_function_arn" {
+  value = aws_lambda_function.queue_granules_task.arn
 }
 
 output "schedule_sf_lambda_function_arn" {

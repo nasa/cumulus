@@ -153,10 +153,10 @@ VersionUpTest:
   source: lambdas/versionUpTest
   launchInVpc: true
 AsyncOperationSuccess:
-  handler: lambdas.success
+  handler: index.success
   source: 'lambdas/asyncOperations/'
   launchInVpc: true
 AsyncOperationFail:
-  handler: lambdas.fail
+  handler: index.fail
   source: 'lambdas/asyncOperations/'
   launchInVpc: true

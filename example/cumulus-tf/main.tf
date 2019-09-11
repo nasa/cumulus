@@ -96,22 +96,6 @@ resource "aws_security_group" "no_ingress_all_egress" {
   tags = local.default_tags
 }
 
-resource "aws_lambda_function" "sns_s3_test" {
-  function_name    = "${var.prefix}-SnsS3Test"
-  filename         = "${path.module}/../lambdas/snsS3Test/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../lambdas/snsS3Test/lambda.zip")
-  handler          = "index.handler"
-  role             = module.cumulus.lambda_processing_role_arn
-  runtime          = "nodejs8.10"
-
-  tags = local.default_tags
-
-  vpc_config {
-    subnet_ids         = var.subnet_ids
-    security_group_ids = [aws_security_group.no_ingress_all_egress.id]
-  }
-}
-
 resource "aws_sns_topic_subscription" "sns_s3_test" {
   topic_arn = module.cumulus.sftracker_sns_topic_arn
   protocol  = "lambda"

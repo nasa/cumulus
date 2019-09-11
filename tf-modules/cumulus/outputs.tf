@@ -28,6 +28,10 @@ output "sftracker_sns_topic_arn" {
 
 # Cumulus core task outputs
 
+output "discover_granules_task_lambda_function_arn" {
+  value = module.ingest.discover_granules_task_lambda_function_arn
+}
+
 output "fake_processing_task_lambda_function_arn" {
   value = module.ingest.fake_processing_task_lambda_function_arn
 }
@@ -38,6 +42,10 @@ output "files_to_granules_task_lambda_function_arn" {
 
 output "move_granules_task_lambda_function_arn" {
   value = module.ingest.move_granules_task_lambda_function_arn
+}
+
+output "queue_granules_task_lambda_function_arn" {
+  value = module.ingest.queue_granules_task_lambda_function_arn
 }
 
 output "sf_sns_report_task_lambda_function_arn" {

@@ -44,8 +44,8 @@ async function getTestAccessToken() {
   return accessTokenResponse.accessToken;
 }
 
-
-describe('Distribution API', () => {
+// TODO Update these tests to use TEA
+xdescribe('Distribution API', () => {
   const testId = createTimestampedTestId(config.stackName, 'DistributionAPITest');
   const testDataFolder = createTestDataPath(testId);
   console.log(`Distribution API tests running in ${testDataFolder}`);

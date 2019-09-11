@@ -1,6 +1,7 @@
 'use strict';
 
 const { ecs } = require('@cumulus/common/aws');
+const { isNil } = require('@cumulus/common/util');
 const {
   api: apiTestUtils,
   getClusterArn
@@ -17,8 +18,21 @@ describe('POST /bulkDelete with a successful bulk delete operation', () => {
   let beforeAllSucceeded = false;
   beforeAll(async () => {
     config = loadConfig();
+
+    // Make sure that all environment variables are set
+    [
+      'AWS_REGION',
+      'EARTHDATA_CLIENT_ID',
+      'EARTHDATA_CLIENT_PASSWORD',
+      'EARTHDATA_PASSWORD',
+      'EARTHDATA_USERNAME',
+      'TOKEN_SECRET'
+    ].forEach((x) => {
+      if (isNil(process.env[x])) process.env[x] = config[x];
+    });
+
     process.env.stackName = config.stackName;
-    process.env.system_bucket = config.buckets.internal.name;
+    process.env.system_bucket = config.bucket;
 
     // Figure out what cluster we're using
     clusterArn = await getClusterArn(config.stackName);
