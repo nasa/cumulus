@@ -15,7 +15,7 @@ npm install
 . ./bamboo/set-bamboo-env-variables.sh
 
 # drop into terraform deployment which exits, skipping kes deployment
-if [[ $COMMIT_MESSAGE =~ deploy-terraform || $BRANCH =~ terraform ]]; then
+if [[ $DEPLOYMENT =~ '-tf' ]]; then
   . ./bamboo/bootstrap-tf-deployment.sh
 fi
 
