@@ -17,6 +17,7 @@ const {
     randomString
   }
 } = require('@cumulus/common');
+const { isNil } = require('@cumulus/common/util');
 
 const { Granule } = require('@cumulus/api/models');
 const {
@@ -52,6 +53,17 @@ const collectionId = constructCollectionId(collection.name, collection.version);
 const granuleRegex = '^MYD13Q1\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
 const config = loadConfig();
+// Make sure that all environment variables are set
+[
+  'AWS_REGION',
+  'EARTHDATA_CLIENT_ID',
+  'EARTHDATA_CLIENT_PASSWORD',
+  'EARTHDATA_PASSWORD',
+  'EARTHDATA_USERNAME',
+  'TOKEN_SECRET'
+].forEach((x) => {
+  if (isNil(process.env[x])) process.env[x] = config[x];
+});
 
 process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
 process.env.GranulesTable = `${config.stackName}-GranulesTable`;
@@ -218,18 +230,11 @@ describe('When there are granule differences and granule reconciliation is run',
 
     await setupCollectionAndTestData(testSuffix, testDataFolder);
 
-    const ingestResults = await Promise.all([
-      // ingest a granule and publish it to CMR
+    [publishedGranuleId, dbGranuleId, cmrGranule] = await Promise.all([
       ingestAndPublishGranule(testSuffix, testDataFolder),
-
-      // ingest a granule but not publish it to CMR
       ingestAndPublishGranule(testSuffix, testDataFolder, false),
-
-      // ingest a granule to CMR only
       ingestGranuleToCMR(testSuffix, testDataFolder)
     ]);
-
-    [publishedGranuleId, dbGranuleId, cmrGranule] = ingestResults;
 
     // update one of the granule files in database so that that file won't match with CMR
     const granuleResponse = await granulesApiTestUtils.getGranule({
