@@ -978,14 +978,14 @@ exports.isThrottlingException = (err) => err.code === 'ThrottlingException';
  * @returns {Object} - the full Cumulus message
  */
 exports.pullStepFunctionEvent = async (incomingEvent) => {
-  if(!incomingEvent.replace) { 
+  if (!incomingEvent.replace) {
     return incomingEvent;
   }
-  let event = cloneDeep(incomingEvent);
+  const event = cloneDeep(incomingEvent);
   const remoteMsg = await exports.getS3Object(event.replace.Bucket, event.replace.Key)
     .then((response) => JSON.parse(response.Body.toString()));
 
-  let returnEvent = remoteMsg; 
+  let returnEvent = remoteMsg;
   if (event.replace.TargetPath) {
     const replaceNodeSearch = JSONPath({
       path: event.replace.TargetPath,
@@ -997,9 +997,9 @@ exports.pullStepFunctionEvent = async (incomingEvent) => {
     }
     if (replaceNodeSearch[0].parent) {
       replaceNodeSearch[0].parent[replaceNodeSearch[0].parentProperty] = remoteMsg;
-      returnEvent = event; 
+      returnEvent = event;
       delete returnEvent.replace;
-    } 
+    }
   }
   return returnEvent;
 };
