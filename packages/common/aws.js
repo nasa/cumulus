@@ -985,7 +985,7 @@ exports.pullStepFunctionEvent = async (incomingEvent) => {
   const remoteMsg = await exports.getS3Object(event.replace.Bucket, event.replace.Key)
     .then((response) => JSON.parse(response.Body.toString()));
 
-  const returnEvent = remoteMsg; 
+  let returnEvent = remoteMsg; 
   if (event.replace.TargetPath) {
     const replaceNodeSearch = JSONPath({
       path: event.replace.TargetPath,
