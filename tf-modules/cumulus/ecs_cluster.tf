@@ -39,6 +39,7 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
       "ecs:Submit*",
       "ecs:UpdateContainerInstancesState",
       "lambda:GetFunction",
+      "lambda:GetLayerVersion",
       "lambda:invokeFunction",
       "logs:CreateLogGroup",
       "logs:CreateLogStream",

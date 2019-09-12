@@ -10,6 +10,10 @@ output "files_to_granules_task_lambda_function_arn" {
   value = aws_lambda_function.files_to_granules_task.arn
 }
 
+output "hello_world_task_lambda_function_arn" {
+  value = aws_lambda_function.hello_world_task.arn
+}
+
 output "kinesis_inbound_event_logger_lambda_function_arn" {
   value = aws_lambda_function.kinesis_inbound_event_logger.arn
 }
@@ -48,4 +52,8 @@ output "sync_granule_task_lambda_function_arn" {
 
 output "step_role_arn" {
   value = aws_iam_role.step.arn
+}
+
+output "scaling_role_arn" {
+  value = aws_iam_role.scaling.arn
 }
