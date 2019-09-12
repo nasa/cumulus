@@ -11,6 +11,7 @@ const { randomId, randomNumber, randomString } = require('@cumulus/common/test-u
 
 const { fakeGranuleFactoryV2, fakeFileFactory } = require('../../lib/testUtils');
 const { deconstructCollectionId } = require('../../lib/utils');
+const Execution = require('../../models/executions');
 const Granule = require('../../models/granules');
 const Pdr = require('../../models/pdrs');
 
@@ -51,7 +52,8 @@ const createCumulusMessage = ({
   cMetaParams = {},
   collectionId = `${randomId('MOD')}___${randomNumber()}`,
   granuleParams = {},
-  fileParams = {}
+  fileParams = {},
+  pdrParams = {}
 } = {}) => ({
   cumulus_meta: {
     execution_name: randomId('execution'),
@@ -72,7 +74,8 @@ const createCumulusMessage = ({
       ...new Array(numberOfGranules)
     ].map(createFakeGranule.bind(null, { collectionId, ...granuleParams }, fileParams)),
     pdr: {
-      name: randomString()
+      name: randomString(),
+      ...pdrParams
     }
   }
 });
@@ -232,6 +235,10 @@ test.serial('lambda publishes correct number of granules from payload.granules t
   await publishReports.handler(cwEventMessage);
 
   t.is(granulePublishSpy.callCount, 5);
+  // Ensure that granule records are actually being passed to publish handler
+  const granuleIdsCount = granulePublishSpy.args
+    .filter((args) => args[0].granuleId);
+  t.is(granuleIdsCount.length, 5);
 
   // revert the mocking
   granulePublishMock();
@@ -256,6 +263,10 @@ test.serial('lambda publishes correct number of granules from meta.input_granule
   await publishReports.handler(cwEventMessage);
 
   t.is(granulePublishSpy.callCount, 7);
+  // Ensure that granule records are actually being passed to publish handler
+  const granuleIdsCount = granulePublishSpy.args
+    .filter((args) => args[0].granuleId);
+  t.is(granuleIdsCount.length, 7);
 
   // revert the mocking
   granulePublishMock();
@@ -301,10 +312,43 @@ test.serial('lambda without valid PDR in message does not publish to PDR SNS top
   pdrPublishMock();
 });
 
-test.serial('lambda publishes PDR from meta.pdr to SNS topic', async (t) => {
-  const { message } = t.context;
-
+test.serial('lambda publishes PDR from payload.pdr to SNS topic', async (t) => {
   const pdrPublishMock = publishReports.__set__('publishPdrSnsMessage', pdrPublishSpy);
+
+  const pdrName = randomString();
+  const pdrParams = {
+    name: pdrName
+  };
+  const message = createCumulusMessage({
+    pdrParams
+  });
+
+  const cwEventMessage = createCloudwatchEventMessage(
+    'RUNNING',
+    message
+  );
+
+  await publishReports.handler(cwEventMessage);
+
+  t.is(pdrPublishSpy.callCount, 1);
+  // Ensure that PDR record is passed to publish handler
+  t.is(pdrPublishSpy.args[0][0].pdrName, pdrName);
+
+  // revert the mocking
+  pdrPublishMock();
+});
+
+test.serial('lambda publishes PDR from meta.pdr to SNS topic', async (t) => {
+  const pdrPublishMock = publishReports.__set__('publishPdrSnsMessage', pdrPublishSpy);
+
+  const pdrName = randomString();
+  const pdrParams = {
+    name: pdrName
+  };
+  const message = createCumulusMessage({
+    numberOfGranules: 5,
+    pdrParams
+  });
 
   const { pdr } = message.payload;
   delete message.payload.pdr;
@@ -318,6 +362,8 @@ test.serial('lambda publishes PDR from meta.pdr to SNS topic', async (t) => {
   await publishReports.handler(cwEventMessage);
 
   t.is(pdrPublishSpy.callCount, 1);
+  // Ensure that PDR record is passed to publish handler
+  t.is(pdrPublishSpy.args[0][0].pdrName, pdrName);
 
   // revert the mocking
   pdrPublishMock();
@@ -330,7 +376,10 @@ test.serial('error handling execution record does not affect publishing to other
 
   const { message } = t.context;
 
-  delete message.cumulus_meta.state_machine;
+  // delete message.cumulus_meta.state_machine;
+  const generateRecordStub = sinon.stub(Execution, 'generateRecord').callsFake(() => {
+    throw new Error('error');
+  });
 
   const cwEventMessage = createCloudwatchEventMessage(
     'RUNNING',
@@ -347,6 +396,7 @@ test.serial('error handling execution record does not affect publishing to other
   executionPublishMock();
   granulePublishMock();
   pdrPublishMock();
+  generateRecordStub.restore();
 });
 
 test.serial('error handling granule records does not affect publishing to other topics', async (t) => {

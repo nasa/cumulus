@@ -115,6 +115,39 @@ async function handleExecutionMessage(eventMessage) {
 }
 
 /**
+ * Build a granule record and publish it to SNS for granule reporting.
+ *
+ * @param {Object} granule - A granule object
+ * @param {Object} eventMessage - A workflow execution message
+ * @param {string} executionUrl - A Step Function execution URL
+ * @param {Object} [executionDescription={}] - Defaults to empty object
+ * @param {Date} executionDescription.startDate - Start date of the workflow execution
+ * @param {Date} executionDescription.stopDate - Stop date of the workflow execution
+ * @returns {Promise}
+ */
+async function buildAndPublishGranule(
+  granule,
+  eventMessage,
+  executionUrl,
+  executionDescription = {}
+) {
+  try {
+    const granuleRecord = await Granule.generateGranuleRecord(
+      granule,
+      eventMessage,
+      executionUrl,
+      executionDescription
+    );
+    return publishGranuleSnsMessage(granuleRecord);
+  } catch (err) {
+    log.error('Error handling granule from message', err);
+    log.info('Granule from message', granule);
+    log.info('Execution message', eventMessage);
+    return Promise.resolve();
+  }
+}
+
+/**
  * Publish individual granule messages to SNS topic.
  *
  * @param {Object} eventMessage - Workflow execution message
@@ -141,13 +174,12 @@ async function handleGranuleMessages(eventMessage) {
     return Promise.all(
       granules
         .filter((granule) => granule.granuleId)
-        .map((granule) => Granule.generateGranuleRecord(
+        .map((granule) => buildAndPublishGranule(
           granule,
           eventMessage,
           executionUrl,
           executionDescription
         ))
-        .map((granuleRecord) => publishGranuleSnsMessage(granuleRecord))
     );
   } catch (err) {
     log.error('Error handling granule records', err);
