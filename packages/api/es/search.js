@@ -8,7 +8,7 @@
 const has = require('lodash.has');
 const omit = require('lodash.omit');
 const aws = require('aws-sdk');
-const connection = require('aws-elasticsearch-connector');
+const Connection = require('aws-elasticsearch-connector');
 const elasticsearch = require('@elastic/elasticsearch');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const queries = require('./queries');
@@ -47,9 +47,17 @@ const esTestConfig = () => ({
 const esProdConfig = async (host) => {
   if (!aws.config.credentials) await getCredentials();
 
+  let node = 'http://localhost:9200';
+
+  if (process.env.ES_HOST) {
+    node = `http://${process.env.ES_HOST}`;
+  } else if (host) {
+    node = `http://${host}`;
+  }
+
   return {
-    node: `http://${process.env.ES_HOST}` || host || 'localhost:9200',
-    Connection: connection,
+    node,
+    Connection,
     awsConfig: {
       credentials: aws.config.credentials
     },
