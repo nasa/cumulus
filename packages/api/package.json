@@ -108,7 +108,6 @@
     "p-retry": "^2.0.0",
     "p-wait-for": "^2.0.1",
     "passport": "^0.4.0",
-    "passport-saml": "^1.1.0",
     "querystring": "^0.2.0",
     "samlify": "^2.6.1",
     "split2": "^2.2.0",
