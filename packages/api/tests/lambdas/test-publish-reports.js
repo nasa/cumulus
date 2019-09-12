@@ -148,7 +148,7 @@ test.serial('lambda publishes report to all SNS topics', async (t) => {
   t.true(snsTopicArns.includes(snsPublishSpy.args[2][0].TopicArn));
 });
 
-test.serial('lambda publishes valid execution to SNS topic', async (t) => {
+test.serial('lambda publishes correct execution record to SNS topic', async (t) => {
   const executionPublishMock = publishReports.__set__('publishExecutionSnsMessage', executionPublishSpy);
 
   const executionName = randomId('execution');
@@ -249,7 +249,7 @@ test.serial('failure describing step function in handleGranuleMessages does not 
   granulePublishMock();
 });
 
-test.serial('lambda publishes correct number of granules from payload.granules to SNS topic', async (t) => {
+test.serial('lambda publishes correct granules from payload.granules to SNS topic', async (t) => {
   const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
 
   const message = createCumulusMessage({
@@ -273,7 +273,7 @@ test.serial('lambda publishes correct number of granules from payload.granules t
   granulePublishMock();
 });
 
-test.serial('lambda publishes correct number of granules from meta.input_granules to SNS topic', async (t) => {
+test.serial('lambda publishes correct granules from meta.input_granules to SNS topic', async (t) => {
   const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
 
   const message = createCumulusMessage({
