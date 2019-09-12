@@ -330,9 +330,8 @@ class Granule extends Manager {
 
     const { startDate, stopDate } = executionDescription;
     const processingTimeInfo = {};
-    if (startDate && stopDate) {
+    if (startDate) {
       processingTimeInfo.processingStartDateTime = startDate.toISOString();
-      // Should we include the stop date even if we don't have a start date?
       processingTimeInfo.processingEndDateTime = stopDate
         ? stopDate.toISOString()
         : new Date().toISOString();

@@ -680,6 +680,27 @@ test(
 );
 
 test(
+  'generateGranuleRecord() sets processingEndDateTime when execution stopDate is missing',
+  async (t) => {
+    const cumulusMessage = cloneDeep(t.context.cumulusMessage);
+    const [granule] = cumulusMessage.payload.granules;
+
+    const newFakeExecution = cloneDeep(fakeExecution);
+    delete newFakeExecution.stopDate;
+
+    const record = await Granule.generateGranuleRecord(
+      granule,
+      cumulusMessage,
+      randomString(),
+      newFakeExecution
+    );
+
+    t.is(record.processingStartDateTime, '2019-07-28T00:00:00.000Z');
+    t.is(typeof record.processingEndDateTime, 'string');
+  }
+);
+
+test(
   'generateGranuleRecord() sets processingStartDateTime and processingEndDateTime correctly',
   async (t) => {
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
@@ -698,7 +719,7 @@ test(
 );
 
 test(
-  'generateGranuleRecord() does not include processing times if execution dates are not provided',
+  'generateGranuleRecord() does not include processing times if execution startDate is not provided',
   async (t) => {
     const cumulusMessage = cloneDeep(t.context.cumulusMessage);
     const [granule] = cumulusMessage.payload.granules;
