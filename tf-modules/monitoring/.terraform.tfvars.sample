@@ -1,0 +1,13 @@
+# Required
+prefix     = "myprefix"
+
+elasticsearch_alarms = [
+  {
+    "arn" = "alarm1-arn"
+    "name" = "alarm1"
+  },
+  {
+    "arn" = "alarm2-arn"
+    "name" = "alarm2"
+  }
+]
