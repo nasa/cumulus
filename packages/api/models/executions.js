@@ -28,10 +28,9 @@ class Execution extends Manager {
    * Generate an execution record from a workflow execution message.
    *
    * @param {Object} message - A workflow execution message
-   * @param {boolean} updateExecution - True if this message is an update to an existing execution
    * @returns {Object} An execution record
    */
-  static async generateRecord(message, updateExecution = false) {
+  static async generateRecord(message) {
     const executionName = getMessageExecutionName(message);
     const stateMachineArn = getMessageStateMachineArn(message);
     const arn = getExecutionArn(
@@ -59,7 +58,7 @@ class Execution extends Manager {
     };
 
     const currentPayload = get(message, 'payload');
-    if (updateExecution) {
+    if (['failed', 'completed'].includes(status)) {
       const existingRecord = await new Execution().get({ arn });
       record.finalPayload = currentPayload;
       record.originalPayload = existingRecord.originalPayload;
@@ -123,7 +122,7 @@ class Execution extends Manager {
    * @returns {Promise<Object>} An execution record
    */
   async updateExecutionFromSns(message) {
-    const record = await Execution.generateRecord(message, true);
+    const record = await Execution.generateRecord(message);
     return this.create(record);
   }
 

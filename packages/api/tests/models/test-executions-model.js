@@ -160,11 +160,12 @@ test('generateRecord() throws error when trying to update a non-existent record'
   const { executionName } = t.context;
 
   const message = createExecutionMessage({
-    executionName
+    executionName,
+    status: 'completed'
   });
 
   await t.throwsAsync(
-    () => Execution.generateRecord(message, true),
+    () => Execution.generateRecord(message),
     { instanceOf: RecordDoesNotExist }
   );
 });
@@ -250,8 +251,6 @@ test('Updating an existing record updates the record as expected', async (t) => 
 });
 
 test.serial('RemoveOldPayloadRecords removes payload attributes from old non-completed records', async (t) => {
-  // TODO: This test seems invalid. It relies on `updateExecutionFromSns` adding a finalPayload
-  // to the execution record even when the execution is not complete.
   const { arn, executionName } = t.context;
   const message = createExecutionMessage({ executionName });
 
@@ -262,12 +261,9 @@ test.serial('RemoveOldPayloadRecords removes payload attributes from old non-com
 
   const updatedRecord = await executionModel.get({ arn });
   t.falsy(updatedRecord.originalPayload);
-  t.falsy(updatedRecord.finalPayload);
 });
 
 test.serial('RemoveOldPayloadRecords fails to remove payload attributes from non-completed records when disabled', async (t) => {
-  // TODO: This test seems invalid. It relies on `updateExecutionFromSns` adding a finalPayload
-  // to the execution record even when the execution is not complete.
   const { arn, executionName } = t.context;
   const message = createExecutionMessage({ executionName });
 
@@ -279,7 +275,6 @@ test.serial('RemoveOldPayloadRecords fails to remove payload attributes from non
 
   const updatedRecord = await executionModel.get({ arn });
   t.truthy(updatedRecord.originalPayload);
-  t.truthy(updatedRecord.finalPayload);
 });
 
 test.serial('RemoveOldPayloadRecords removes payload attributes from old completed records', async (t) => {
@@ -320,16 +315,13 @@ test.serial('RemoveOldPayloadRecords does not remove attributes from new non-com
   const { arn, executionName } = t.context;
   const message = createExecutionMessage({ executionName });
 
-  message.payload = originalPayload;
+  const payload = { test: 'payloadValue' };
+  message.payload = payload;
   await executionModel.createExecutionFromSns(message);
-  const updatePayload = { test: 'payloadValue' };
-  message.payload = updatePayload;
-  await executionModel.updateExecutionFromSns(message);
   await executionModel.removeOldPayloadRecords(1, 1, false, false);
 
   const updatedRecord = await executionModel.get({ arn });
-  t.deepEqual(originalPayload, updatedRecord.originalPayload);
-  t.deepEqual(updatePayload, updatedRecord.finalPayload);
+  t.deepEqual(updatedRecord.originalPayload, payload);
 });
 
 test.serial('RemoveOldPayloadRecords does not remove attributes from new completed records', async (t) => {
