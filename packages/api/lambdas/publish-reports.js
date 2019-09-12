@@ -1,6 +1,5 @@
 'use strict';
 
-const get = require('lodash.get');
 const merge = require('lodash.merge');
 
 const aws = require('@cumulus/common/aws');

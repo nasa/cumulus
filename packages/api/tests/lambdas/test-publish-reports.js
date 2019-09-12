@@ -132,7 +132,7 @@ test.after.always(() => {
   snsStub.restore();
 });
 
-test.serial('lambda publishes correct report to all SNS topics', async (t) => {
+test.serial('lambda publishes report to all SNS topics', async (t) => {
   const { message, snsTopicArns } = t.context;
 
   const cwEventMessage = createCloudwatchEventMessage(
@@ -146,6 +146,35 @@ test.serial('lambda publishes correct report to all SNS topics', async (t) => {
   t.true(snsTopicArns.includes(snsPublishSpy.args[0][0].TopicArn));
   t.true(snsTopicArns.includes(snsPublishSpy.args[1][0].TopicArn));
   t.true(snsTopicArns.includes(snsPublishSpy.args[2][0].TopicArn));
+});
+
+test.serial('lambda publishes valid execution to SNS topic', async (t) => {
+  const executionPublishMock = publishReports.__set__('publishExecutionSnsMessage', executionPublishSpy);
+
+  const executionName = randomId('execution');
+  const stateMachineArn = randomId('ingest-');
+  const arn = aws.getExecutionArn(stateMachineArn, executionName);
+
+  const message = createCumulusMessage({
+    cMetaParams: {
+      execution_name: executionName,
+      state_machine: stateMachineArn
+    }
+  });
+
+  const cwEventMessage = createCloudwatchEventMessage(
+    'RUNNING',
+    message
+  );
+
+  await publishReports.handler(cwEventMessage);
+
+  t.is(executionPublishSpy.callCount, 1);
+  // Ensure that execution record is passed to publish handler
+  t.is(executionPublishSpy.args[0][0].arn, arn);
+
+  // revert the mocking
+  executionPublishMock();
 });
 
 test.todo('event status is correctly converted to message status');
