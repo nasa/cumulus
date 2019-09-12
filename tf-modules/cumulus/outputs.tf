@@ -40,6 +40,10 @@ output "files_to_granules_task_lambda_function_arn" {
   value = module.ingest.files_to_granules_task_lambda_function_arn
 }
 
+output "hello_world_task_lambda_function_arn" {
+  value = module.ingest.hello_world_task_lambda_function_arn
+}
+
 output "move_granules_task_lambda_function_arn" {
   value = module.ingest.move_granules_task_lambda_function_arn
 }
@@ -66,12 +70,26 @@ output "sf_semaphore_down_lambda_function_arn" {
   value = module.ingest.sf_semaphore_down_lambda_function_arn
 }
 
+output "log2elasticsearch_lambda_function_arn" {
+  value = module.archive.log2elasticsearch_lambda_function_arn
+}
+
 # IAM outputs
 
 output "lambda_processing_role_arn" {
   value = aws_iam_role.lambda_processing.arn
 }
 
+output "scaling_role_arn" {
+  value = module.ingest.scaling_role_arn
+}
+
 output "step_role_arn" {
   value = module.ingest.step_role_arn
+}
+
+# ECS cluster
+
+output "ecs_cluster_arn" {
+  value = aws_ecs_cluster.default.arn
 }

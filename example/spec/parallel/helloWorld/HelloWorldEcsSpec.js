@@ -6,8 +6,8 @@ const { waitForModelStatus } = require('../../helpers/apiUtils');
 const awsConfig = loadConfig();
 const activityStep = new ActivityStep();
 
-
-describe('The Hello World workflow using ECS and kes CMA', () => {
+// TODO Remove this test entirely when we are no longer using kes
+xdescribe('The Hello World workflow using ECS and kes CMA', () => {
   let workflowExecution = null;
   process.env.ExecutionsTable = `${awsConfig.stackName}-ExecutionsTable`;
   const executionModel = new Execution();
