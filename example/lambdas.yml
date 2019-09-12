@@ -125,6 +125,8 @@ SfSnsReport:
   layers:
     - '{{cma_layer}}'
   launchInVpc: true
+  tables:
+    - ExecutionsTable
   envs:
     execution_sns_topic_arn:
       function: Ref
