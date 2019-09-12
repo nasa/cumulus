@@ -59,17 +59,7 @@ test.after.always(async () => {
 });
 
 test('getReportGranuleMessages returns correct number of messages', (t) => {
-  let messages = getReportGranuleMessages({
-    Records: [{
-      EventSource: 'aws:states',
-      Sns: {
-        Message: 'message'
-      }
-    }]
-  });
-  t.is(messages.length, 0);
-
-  messages = getReportGranuleMessages({
+  const messages = getReportGranuleMessages({
     Records: [
       createGranuleSnsMessage(createFakeGranuleRecord()),
       createGranuleSnsMessage(createFakeGranuleRecord()),

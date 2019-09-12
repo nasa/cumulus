@@ -4,7 +4,6 @@ const test = require('ava');
 
 const { getExecutionArn } = require('@cumulus/common/aws');
 const { randomId, randomNumber, randomString } = require('@cumulus/common/test-utils');
-const { RecordDoesNotExist } = require('@cumulus/common/errors');
 
 const Execution = require('../../models/executions');
 const { getReportExecutionMessages, handler } = require('../../lambdas/report-executions');
@@ -20,32 +19,13 @@ const fakeExecutionRecord = {
     Cause: 'Workflow failed'
   },
   createdAt: Date.now(),
+  duration: 10000000,
   timestamp: Date.now() - randomNumber(10000000)
 };
 
 const createFakeExecutionRecord = (granuleParams) => ({
   ...fakeExecutionRecord,
   ...granuleParams
-});
-
-const createExecutionMessage = ({
-  status,
-  stateMachine,
-  executionName,
-  startTime,
-  payload,
-  collection
-}) => ({
-  cumulus_meta: {
-    state_machine: stateMachine,
-    execution_name: executionName,
-    workflow_start_time: startTime
-  },
-  meta: {
-    collection,
-    status
-  },
-  payload
 });
 
 const createExecutionSnsMessage = (message) => ({
@@ -67,11 +47,8 @@ test.beforeEach((t) => {
   t.context.stateMachine = randomId('stateMachine');
   t.context.executionName = randomString();
   t.context.arn = getExecutionArn(t.context.stateMachine, t.context.executionName);
-  t.context.startTime = Date.now();
-  t.context.collection = {
-    name: 'fake-collection',
-    version: '001'
-  };
+  t.context.createdAtTime = Date.now();
+  t.context.collectionId = randomId('collection');
   t.context.originalPayload = {
     foo: 'bar'
   };
@@ -84,79 +61,25 @@ test.after.always(async () => {
   await executionsModel.deleteTable();
 });
 
-test('getReportExecutionMessages returns no messages for non-execution messages', (t) => {
-  let messages = getReportExecutionMessages({
-    EventSource: 'aws:sns',
-    Records: [{
-      Sns: {}
-    }]
-  });
-  t.is(messages.length, 0);
-
-  messages = getReportExecutionMessages({
-    Records: [{
-      EventSource: 'aws:sns',
-      Sns: {
-        Message: 'message'
-      }
-    }]
-  });
-  t.is(messages.length, 0);
-
-  messages = getReportExecutionMessages({
-    Records: [{
-      EventSource: 'aws:sns',
-      Sns: {
-        Message: JSON.stringify({
-          meta: {}
-        })
-      }
-    }]
-  });
-  t.is(messages.length, 0);
-});
-
 test('getReportExecutionMessages returns correct number of messages', (t) => {
-  const stateMachine = randomId('stateMachine');
-  const executionName = randomId('execution');
-
   const messages = getReportExecutionMessages({
     Records: [
-      createExecutionSnsMessage({
-        stateMachine,
-        executionName,
-        status: 'completed'
-      }),
-      createExecutionSnsMessage({
-        stateMachine,
-        executionName,
-        status: 'failed'
-      }),
-      createExecutionSnsMessage({
-        stateMachine,
-        executionName,
-        status: 'running'
-      }),
-      createExecutionSnsMessage({
-        stateMachine,
-        executionName
-      }),
-      {
-        EventSource: 'aws:sns',
-        Sns: {
-          Message: 'message'
-        }
-      },
-      { }
+      createExecutionSnsMessage(
+        createFakeExecutionRecord()
+      ),
+      createExecutionSnsMessage(
+        createFakeExecutionRecord()
+      ),
+      createExecutionSnsMessage(
+        createFakeExecutionRecord()
+      )
     ]
   });
   t.is(messages.length, 3);
 });
 
-test.only('handler correctly creates execution record', async (t) => {
-  const stateMachine = randomId('stateMachine');
-  const executionName = randomString();
-  const arn = getExecutionArn(stateMachine, executionName);
+test('handler correctly creates execution record', async (t) => {
+  const { arn } = t.context;
 
   await handler({
     Records: [
@@ -171,57 +94,34 @@ test.only('handler correctly creates execution record', async (t) => {
   t.is(record.status, 'running');
 });
 
-test('handler throws error for update to non-existent execution', async (t) => {
-  const stateMachine = randomId('stateMachine');
-  const executionName = randomString();
-
-  await t.throwsAsync(
-    () => handler({
-      Records: [
-        createExecutionSnsMessage({
-          stateMachine,
-          executionName,
-          status: 'completed'
-        })
-      ]
-    }),
-    { instanceOf: RecordDoesNotExist }
-  );
-});
-
 const testExecutionUpdate = async (t, status) => {
   const {
     arn,
-    collection,
+    collectionId,
     executionName,
     finalPayload,
     originalPayload,
-    startTime,
-    stateMachine
+    createdAtTime
   } = t.context;
 
-  await executionsModel.createExecutionFromSns(
-    createExecutionMessage({
-      collection,
-      executionName,
-      payload: originalPayload,
-      startTime,
-      stateMachine,
-      status: 'running'
-    })
-  );
+  const record = createFakeExecutionRecord({
+    arn,
+    collectionId,
+    name: executionName,
+    originalPayload,
+    status: 'running',
+    createdAt: createdAtTime
+  });
+
+  await executionsModel.create(record);
   const originalExecution = await executionsModel.get({ arn });
+
+  record.status = status;
+  record.finalPayload = finalPayload;
 
   await handler({
     Records: [
-      createExecutionSnsMessage({
-        collection,
-        executionName,
-        payload: finalPayload,
-        startTime,
-        stateMachine,
-        status
-      })
+      createExecutionSnsMessage(record)
     ]
   });
 
@@ -249,35 +149,28 @@ test('handler correctly updates failed execution record', async (t) => {
 });
 
 test('handler correctly updates multiple records', async (t) => {
-  const completedStateMachine = randomId('stateMachine');
-  const completedExecutionName = randomString();
-  const completedExecutionArn = getExecutionArn(completedStateMachine, completedExecutionName);
+  const completedExecutionArn = getExecutionArn(randomId('stateMachine'), randomString());
   const completedExecutionStatus = 'completed';
 
-  const failedExecutionStateMachine = randomId('stateMachine');
-  const failedExecutionName = randomString();
-  const failedExecutionArn = getExecutionArn(failedExecutionStateMachine, failedExecutionName);
+  const failedExecutionArn = getExecutionArn(randomId('stateMachine'), randomString());
   const failedExecutionStatus = 'failed';
 
   const startTime = Date.now();
+  const initialExecutionRecord = createFakeExecutionRecord({
+    arn: completedExecutionArn,
+    status: 'running',
+    createdAt: startTime
+  });
 
   await Promise.all([
-    executionsModel.createExecutionFromSns(
-      createExecutionMessage({
-        stateMachine: completedStateMachine,
-        executionName: completedExecutionName,
-        status: 'running',
-        startTime
-      })
-    ),
-    executionsModel.createExecutionFromSns(
-      createExecutionMessage({
-        stateMachine: failedExecutionStateMachine,
-        executionName: failedExecutionName,
-        status: 'running',
-        startTime
-      })
-    )
+    executionsModel.create({
+      ...initialExecutionRecord,
+      arn: completedExecutionArn
+    }),
+    executionsModel.create({
+      ...initialExecutionRecord,
+      arn: failedExecutionArn
+    })
   ]);
 
   const originalCompletedExecution = await executionsModel.get({ arn: completedExecutionArn });
@@ -286,15 +179,11 @@ test('handler correctly updates multiple records', async (t) => {
   await handler({
     Records: [
       createExecutionSnsMessage({
-        stateMachine: completedStateMachine,
-        executionName: completedExecutionName,
-        startTime,
+        ...originalCompletedExecution,
         status: completedExecutionStatus
       }),
       createExecutionSnsMessage({
-        stateMachine: failedExecutionStateMachine,
-        executionName: failedExecutionName,
-        startTime,
+        ...originalFailedExecution,
         status: failedExecutionStatus
       })
     ]
@@ -305,8 +194,6 @@ test('handler correctly updates multiple records', async (t) => {
   const expectedCompletedExecutionResponse = {
     ...originalCompletedExecution,
     status: completedExecutionStatus,
-    duration: updatedCompletedExecution.duration,
-    timestamp: updatedCompletedExecution.timestamp,
     updatedAt: updatedCompletedExecution.updatedAt
   };
 
@@ -316,8 +203,6 @@ test('handler correctly updates multiple records', async (t) => {
   const expectedFailedExecutionResponse = {
     ...originalFailedExecution,
     status: failedExecutionStatus,
-    duration: updatedFailedExecution.duration,
-    timestamp: updatedFailedExecution.timestamp,
     updatedAt: updatedFailedExecution.updatedAt
   };
 

@@ -11,14 +11,13 @@ const Execution = require('../models/executions');
  * @param {Object} executionRecord - An execution record
  * @returns {Promise}
  */
-async function handleExecutionMessage(executionRecord) {
+async function createUpdateExecutionRecord(executionRecord) {
   const executionModel = new Execution();
-  // Need to call model.update() also?
   return executionModel.create(executionRecord);
 }
 
 /**
- * Filter and map SNS records to get report execution messages.
+ * Filter and map SNS records to get execution records.
  *
  * @param {Object} event - Incoming event from SNS
  * @returns {Array<Object>} - Array of execution messages
@@ -39,7 +38,7 @@ function getReportExecutionMessages(event) {
 async function handler(event) {
   const messages = getReportExecutionMessages(event);
   return Promise.all(
-    messages.map(handleExecutionMessage)
+    messages.map(createUpdateExecutionRecord)
   );
 }
 
