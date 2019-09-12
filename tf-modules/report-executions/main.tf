@@ -1,3 +1,7 @@
+locals {
+  default_tags = { Deployment = var.prefix }
+}
+
 data "archive_file" "report_executions_package" {
   type        = "zip"
   source_file = "${path.module}/node_modules/@cumulus/api/dist/reportExecutions/index.js"
@@ -26,16 +30,20 @@ resource "aws_lambda_function" "report_executions" {
     }
   }
 
-  depends_on    = ["aws_cloudwatch_log_group.report_executions_logs"]
+  depends_on = ["aws_cloudwatch_log_group.report_executions_logs"]
+
+  tags = local.default_tags
 }
 
 resource "aws_cloudwatch_log_group" "report_executions_logs" {
   name              = "/aws/lambda/${var.prefix}-reportExecutions"
   retention_in_days = 14
+  tags              = local.default_tags
 }
 
 resource "aws_sns_topic" "report_executions_topic" {
   name = "${var.prefix}-report-executions-topic"
+  tags = local.default_tags
 }
 
 resource "aws_lambda_permission" "report_executions_permission" {

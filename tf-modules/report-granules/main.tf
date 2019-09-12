@@ -1,3 +1,7 @@
+locals {
+  default_tags = { Deployment = var.prefix }
+}
+
 data "archive_file" "report_granules_package" {
   type        = "zip"
   source_file = "${path.module}/node_modules/@cumulus/api/dist/reportGranules/index.js"
@@ -23,15 +27,19 @@ resource "aws_lambda_function" "report_granules" {
       GranulesTable = var.granules_table
     }
   }
+
+  tags = local.default_tags
 }
 
 resource "aws_cloudwatch_log_group" "report_granules_logs" {
   name              = "/aws/lambda/${aws_lambda_function.report_granules.function_name}"
   retention_in_days = 14
+  tags              = local.default_tags
 }
 
 resource "aws_sns_topic" "report_granules_topic" {
   name = "${var.prefix}-report-granules-topic"
+  tags = local.default_tags
 }
 
 resource "aws_sns_topic_subscription" "report_granules_trigger" {

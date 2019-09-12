@@ -2,6 +2,8 @@ resource "aws_iam_role" "migration_processing" {
   name                 = "${var.prefix}-migration-processing"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
+  # TODO Re-enable once IAM permissions have been fixed
+  # tags                 = local.default_tags
 }
 
 data "aws_iam_policy_document" "migration_processing_policy" {
@@ -135,19 +137,17 @@ resource "aws_lambda_function" "execute_migrations" {
     variables = {
       CMR_ENVIRONMENT           = var.cmr_environment
       ES_HOST                   = var.elasticsearch_hostname
-      ExecutionsTable           = var.dynamo_tables.Executions
-      FilesTable                = var.dynamo_tables.Files
-      GranulesTable             = var.dynamo_tables.Granules
-      KinesisInboundEventLogger = var.kinesis_inbound_event_logger
-      PdrsTable                 = var.dynamo_tables.Pdrs
-      RulesTable                = var.dynamo_tables.Rules
+      ExecutionsTable           = var.dynamo_tables.executions.name
+      FilesTable                = var.dynamo_tables.files.name
+      GranulesTable             = var.dynamo_tables.granules.name
+      KinesisInboundEventLogger = var.kinesis_inbound_event_logger_lambda_function_arn
+      PdrsTable                 = var.dynamo_tables.pdrs.name
+      RulesTable                = var.dynamo_tables.rules.name
       stackName                 = var.prefix
       system_bucket             = var.system_bucket
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
