@@ -3,9 +3,16 @@ provider "aws" {
   profile = var.aws_profile
 }
 
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
 data "terraform_remote_state" "data_persistence" {
   backend = "s3"
   config  = var.data_persistence_remote_state_config
+}
+
+data "aws_lambda_function" "sts_credentials" {
+  function_name = "gsfc-ngap-sh-s3-sts-get-keys"
 }
 
 module "cumulus" {
@@ -20,6 +27,7 @@ module "cumulus" {
   ecs_cluster_min_size            = 1
   ecs_cluster_desired_size        = 1
   ecs_cluster_max_size            = 2
+  key_name                        = var.key_name
 
   urs_url             = "https://uat.urs.earthdata.nasa.gov"
   urs_client_id       = var.urs_client_id
@@ -44,8 +52,6 @@ module "cumulus" {
 
   dynamo_tables = data.terraform_remote_state.data_persistence.outputs.dynamo_tables
 
-  archive_api_port = 8000
-
   token_secret = var.token_secret
 
   archive_api_users = [
@@ -63,8 +69,29 @@ module "cumulus" {
     "pquinn1"
   ]
 
-  # TODO This should be coming from the ingest module
-  kinesis_inbound_event_logger = "${var.prefix}-KinesisInboundEventLogger"
-
   distribution_url = var.distribution_url
+
+  sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
 }
+
+# TODO Add this aws_sns_topic_subscription
+# Subscribes to module.archive.aws_sns_topic.sftracker
+# - Endpoint:
+#     Fn::GetAtt:
+#       - SnsS3TestLambdaFunction
+#       - Arn
+#   Protocol: lambda
+
+# TODO Add this permission to example
+# Related to module.archive.aws_sns_topic.sftracker
+# sftracker2ndlambdaSubscriptionPermission:
+#   Type: AWS::Lambda::Permission
+#   Properties:
+#     FunctionName:
+#       Fn::GetAtt:
+#         - SnsS3TestLambdaFunction
+#         - Arn
+#     Action: lambda:InvokeFunction
+#     Principal: sns.amazonaws.com
+#     SourceArn:
+#       Ref: sftrackerSns
