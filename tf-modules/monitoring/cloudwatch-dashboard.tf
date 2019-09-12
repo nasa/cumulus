@@ -9,7 +9,7 @@ resource "aws_cloudwatch_dashboard" "cloudwatch_dashboard" {
         "width": 24,
         "height": 1,
         "properties": {
-          "markdown": "# Elastic Container Service"
+          "markdown": "# Elasticsearch Service"
         }
       },
       {
