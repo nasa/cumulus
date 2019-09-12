@@ -176,8 +176,10 @@ async function generateTemplates(config, outputs, uploader) {
     // of existing workflows
     const workflows = [];
     config.stepFunctions.forEach((name) => {
+      const arn = findOutputValue(outputs, `${name}StateMachine`);
       workflows.push({
         name,
+        arn,
         template: `s3://${bucket}/${key}`,
         definition: config.stepFunctions[name]
       });

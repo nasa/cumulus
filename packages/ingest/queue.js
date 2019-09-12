@@ -11,6 +11,8 @@ const {
   getQueueNameByUrl
 } = require('@cumulus/common/message');
 
+const { getWorkflowArn } = require('@cumulus/common/workflows');
+
 /**
  * Enqueue a PDR to be parsed
  *
@@ -29,12 +31,14 @@ async function enqueueParsePdrMessage({
   pdr,
   queueUrl,
   parsePdrMessageTemplateUri,
+  parsePdrWorkflow,
   provider,
   collection,
   parentExecutionArn
 }) {
   const messageTemplate = await getMessageFromTemplate(parsePdrMessageTemplateUri);
   const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
+  const workflowArn = getWorkflowArn(parsePdrWorkflow);
   const payload = { pdr };
 
   const message = buildQueueMessageFromTemplate({
@@ -43,7 +47,9 @@ async function enqueueParsePdrMessage({
     parentExecutionArn,
     payload,
     provider,
-    queueName
+    queueName,
+    workflowName: parsePdrWorkflow,
+    workflowArn
   });
 
   const arn = getExecutionArn(
@@ -76,6 +82,7 @@ async function enqueueGranuleIngestMessage({
   granule,
   queueUrl,
   granuleIngestMessageTemplateUri,
+  granuleIngestWorkflow,
   provider,
   collection,
   pdr,
@@ -83,6 +90,7 @@ async function enqueueGranuleIngestMessage({
 }) {
   const messageTemplate = await getMessageFromTemplate(granuleIngestMessageTemplateUri);
   const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
+  const workflowArn = getWorkflowArn(granuleIngestWorkflow);
 
   const payload = {
     granules: [
@@ -96,7 +104,9 @@ async function enqueueGranuleIngestMessage({
     parentExecutionArn,
     payload,
     provider,
-    queueName
+    queueName,
+    workflowName: granuleIngestWorkflow,
+    workflowArn
   });
 
   if (pdr) message.meta.pdr = pdr;

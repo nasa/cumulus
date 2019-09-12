@@ -21,7 +21,7 @@ async function queuePdrs(event) {
     pdrs.map((pdr) => enqueueParsePdrMessage({
       pdr,
       queueUrl: event.config.queueUrl,
-      parsePdrMessageTemplateUri: event.config.parsePdrMessageTemplateUri,
+      parsePdrWorkflow: event.config.parsePdrWorkflow,
       provider: event.config.provider,
       collection: event.config.collection,
       parentExecutionArn: arn

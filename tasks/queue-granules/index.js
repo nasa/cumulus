@@ -32,7 +32,7 @@ async function queueGranules(event) {
       return enqueueGranuleIngestMessage({
         granule,
         queueUrl: event.config.queueUrl,
-        granuleIngestMessageTemplateUri: event.config.granuleIngestMessageTemplateUri,
+        granuleIngestWorkflow: event.config.granuleIngestWorkflow,
         provider: event.config.provider,
         collection: collectionConfig,
         pdr: event.input.pdr,

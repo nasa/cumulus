@@ -11,6 +11,7 @@ const fs = require('fs-extra');
 const pLimit = require('p-limit');
 const pMap = require('p-map');
 const { constructCollectionId } = require('@cumulus/common');
+const { getWorkflowTemplate, getWorkflowArn } = require('@cumulus/common/workflows');
 
 const {
   stringUtils: { globalReplace }
@@ -19,7 +20,6 @@ const {
 const {
   dynamodb,
   ecs,
-  s3,
   sfn
 } = require('@cumulus/common/aws');
 const StepFunctions = require('@cumulus/common/StepFunctions');
@@ -100,34 +100,6 @@ async function getClusterArn(stackName) {
   }
 
   return matchingArns[0];
-}
-
-/**
- * Get the template JSON from S3 for the workflow
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} workflowName - workflow name
- * @returns {Promise.<Object>} template as a JSON object
- */
-function getWorkflowTemplate(stackName, bucketName, workflowName) {
-  const key = `${stackName}/workflows/${workflowName}.json`;
-  return s3().getObject({ Bucket: bucketName, Key: key }).promise()
-    .then((templateJson) => JSON.parse(templateJson.Body.toString()));
-}
-
-/**
- * Get the workflow ARN for the given workflow from the
- * template stored on S3
- *
- * @param {string} stackName - Cloud formation stack name
- * @param {string} bucketName - S3 internal bucket name
- * @param {string} workflowName - workflow name
- * @returns {Promise.<string>} - workflow arn
- */
-function getWorkflowArn(stackName, bucketName, workflowName) {
-  return getWorkflowTemplate(stackName, bucketName, workflowName)
-    .then((template) => template.cumulus_meta.state_machine);
 }
 
 /**
