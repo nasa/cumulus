@@ -104,8 +104,7 @@ async function publishPdrSnsMessage(
  */
 async function handleExecutionMessage(eventMessage) {
   try {
-    const updateExecution = ['completed', 'failed'].includes(get(eventMessage, 'meta.status'));
-    const executionRecord = await Execution.generateRecord(eventMessage, updateExecution);
+    const executionRecord = await Execution.generateRecord(eventMessage);
     return publishExecutionSnsMessage(executionRecord);
   } catch (err) {
     log.error('Error handling execution message', err);

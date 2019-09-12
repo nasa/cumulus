@@ -17,7 +17,6 @@ const Granule = require('../models/granules');
  * @returns {Promise}
  */
 async function createGranuleRecord(granule) {
-  console.log('granule', granule);
   const granuleModel = new Granule();
   return granuleModel.create(granule);
 }
@@ -42,7 +41,6 @@ function getReportGranuleMessages(event) {
  * @returns {Promise<Array>} granule records
  */
 async function handler(event) {
-  console.log('event', event);
   const messages = getReportGranuleMessages(event);
   return Promise.all(
     messages.map(createGranuleRecord)
