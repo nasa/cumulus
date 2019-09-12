@@ -17,7 +17,6 @@ declare -a param_list=(
   "bamboo_SECRET_VPC_CIDR_IP"
   "bamboo_AWS_REGION"
   "bamboo_TFSTATE_BUCKET"
-  "bamboo_TF_VERSION"
   "bamboo_CMR_PASSWORD"
   "bamboo_CMR_USERNAME"
   "bamboo_DEPLOYMENT"

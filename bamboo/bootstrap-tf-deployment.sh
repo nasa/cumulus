@@ -19,7 +19,7 @@ echo "terraform {
   -input=false
 
 # Deploy data-persistence-tf via terraform
-echo "Deploying Cumulus example to $DEPLOYMENT"
+echo "Deploying Cumulus data-persistence module to $DEPLOYMENT"
 ../terraform plan \
   -out=terraform.tfplan \
   -input=false \
@@ -27,6 +27,3 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "aws_region=$AWS_REGION" \
   -var "subnet_ids=[\"$AWS_SUBNET\"]"
 ../terraform apply "terraform.tfplan"
-
-# Test that deployment succeded by returning exit code.
-exit $?
