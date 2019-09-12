@@ -190,10 +190,10 @@ describe('The S3 Ingest Granules workflow', () => {
       collectionModel.delete(collection),
       providerModel.delete(provider),
       executionModel.delete({ arn: workflowExecutionArn }),
-      granulesApiTestUtils.removePublishedGranule({
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId
-      })
+      // granulesApiTestUtils.removePublishedGranule({
+      //   prefix: config.stackName,
+      //   granuleId: inputPayload.granules[0].granuleId
+      // })
     ]);
   });
 
@@ -255,8 +255,8 @@ describe('The S3 Ingest Granules workflow', () => {
     let lambdaOutput;
 
     beforeAll(async () => {
-      lambdaInput = await lambdaStep.getStepInput(workflowExecution.executionArn, 'SyncGranule');
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
+      lambdaInput = await lambdaStep.getStepInput(workflowExecutionArn, 'SyncGranule');
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'SyncGranule');
     });
 
     it('receives the correct collection and provider configuration', () => {
@@ -293,7 +293,7 @@ describe('The S3 Ingest Granules workflow', () => {
     let existCheck = [];
 
     beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'MoveGranules');
       files = lambdaOutput.payload.granules[0].files;
       movedTaggings = await Promise.all(lambdaOutput.payload.granules[0].files.map((file) => {
         const { Bucket, Key } = parseS3Uri(file.filename);
@@ -797,7 +797,7 @@ describe('The S3 Ingest Granules workflow', () => {
         executions = JSON.parse(executionsApiResponse.body);
         const executionApiResponse = await executionsApiTestUtils.getExecution({
           prefix: config.stackName,
-          arn: workflowExecution.executionArn
+          arn: workflowExecutionArn
         });
         executionResponse = JSON.parse(executionApiResponse.body);
       });
@@ -829,7 +829,7 @@ describe('The S3 Ingest Granules workflow', () => {
       let allStates;
 
       beforeAll(async () => {
-        const executionArn = workflowExecution.executionArn;
+        const executionArn = workflowExecutionArn;
         const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
           prefix: config.stackName,
           arn: executionArn
@@ -842,7 +842,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
       it('returns the inputs and outputs for the entire workflow', async () => {
         expect(executionStatus.execution).toBeTruthy();
-        expect(executionStatus.execution.executionArn).toEqual(workflowExecution.executionArn);
+        expect(executionStatus.execution.executionArn).toEqual(workflowExecutionArn);
         const input = JSON.parse(executionStatus.execution.input);
         const output = JSON.parse(executionStatus.execution.output);
         expect(input.payload).toEqual(inputPayload);
@@ -897,7 +897,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
     describe('logs endpoint', () => {
       it('returns logs with a specific execution name', async () => {
-        const executionARNTokens = workflowExecution.executionArn.split(':');
+        const executionARNTokens = workflowExecutionArn.split(':');
         const logsExecutionName = executionARNTokens[executionARNTokens.length - 1];
         const logsResponse = await apiTestUtils.getExecutionLogs({ prefix: config.stackName, executionName: logsExecutionName });
         const logs = JSON.parse(logsResponse.body);
