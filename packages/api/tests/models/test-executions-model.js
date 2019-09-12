@@ -4,6 +4,7 @@ const test = require('ava');
 const cloneDeep = require('lodash.clonedeep');
 
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
+const { RecordDoesNotExist } = require('@cumulus/common/errors');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const Execution = require('../../models/executions');
@@ -153,6 +154,19 @@ test('generateRecord() correctly updates an execution record', async (t) => {
   t.is(typeof updatedRecord.duration, 'number');
   t.deepEqual(updatedRecord.originalPayload, originalPayload);
   t.deepEqual(updatedRecord.finalPayload, finalPayload);
+});
+
+test('generateRecord() throws error when trying to update a non-existent record', async (t) => {
+  const { executionName } = t.context;
+
+  const message = createExecutionMessage({
+    executionName
+  });
+
+  await t.throwsAsync(
+    () => Execution.generateRecord(message, true),
+    { instanceOf: RecordDoesNotExist }
+  );
 });
 
 test('updateExecutionFromSns() updates a successful execution record', async (t) => {
