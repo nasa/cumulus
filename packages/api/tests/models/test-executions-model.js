@@ -236,6 +236,8 @@ test('Updating an existing record updates the record as expected', async (t) => 
 });
 
 test.serial('RemoveOldPayloadRecords removes payload attributes from old non-completed records', async (t) => {
+  // TODO: This test seems invalid. It relies on `updateExecutionFromSns` adding a finalPayload
+  // to the execution record even when the execution is not complete.
   const { arn, executionName } = t.context;
   const message = createExecutionMessage({ executionName });
 
@@ -250,6 +252,8 @@ test.serial('RemoveOldPayloadRecords removes payload attributes from old non-com
 });
 
 test.serial('RemoveOldPayloadRecords fails to remove payload attributes from non-completed records when disabled', async (t) => {
+  // TODO: This test seems invalid. It relies on `updateExecutionFromSns` adding a finalPayload
+  // to the execution record even when the execution is not complete.
   const { arn, executionName } = t.context;
   const message = createExecutionMessage({ executionName });
 

@@ -1,5 +1,4 @@
 const get = require('lodash.get');
-const has = require('lodash.has');
 
 const { getSnsEventMessageObject, isSnsEvent } = require('@cumulus/common/sns-event');
 // Temporarily change require while this module resides in the API package
@@ -7,30 +6,15 @@ const { getSnsEventMessageObject, isSnsEvent } = require('@cumulus/common/sns-ev
 const Execution = require('../models/executions');
 
 /**
- * Determine if SNS message has an execution status.
- *
- * Note: Assuming CUMULUS-1394 will ensure `meta.status` is always set. Currently
- * it is not set for running executions.
- *
- * @param {Object} message - Message from SNS record
- * @returns {boolean} - true if message has an execution status
- */
-const hasExecutionStatus = (message) => has(message, 'meta.status');
-
-/**
  * Create/update execution record from SNS message.
  *
- * @param {Object} message - An execution message
- * @returns {Promise} - Promise from execution create/update record operation
+ * @param {Object} executionRecord - An execution record
+ * @returns {Promise}
  */
-async function handleExecutionMessage(message) {
+async function handleExecutionMessage(executionRecord) {
   const executionModel = new Execution();
-
-  if (['failed', 'completed'].includes(message.meta.status)) {
-    return executionModel.updateExecutionFromSns(message);
-  }
-
-  return executionModel.createExecutionFromSns(message);
+  // Need to call model.update() also?
+  return executionModel.create(executionRecord);
 }
 
 /**
@@ -43,8 +27,7 @@ function getReportExecutionMessages(event) {
   const records = get(event, 'Records', []);
   return records
     .filter(isSnsEvent)
-    .map(getSnsEventMessageObject)
-    .filter(hasExecutionStatus);
+    .map(getSnsEventMessageObject);
 }
 
 /**

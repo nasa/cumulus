@@ -3,11 +3,30 @@
 const test = require('ava');
 
 const { getExecutionArn } = require('@cumulus/common/aws');
-const { randomId, randomString } = require('@cumulus/common/test-utils');
+const { randomId, randomNumber, randomString } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/common/errors');
 
 const Execution = require('../../models/executions');
 const { getReportExecutionMessages, handler } = require('../../lambdas/report-executions');
+
+const fakeExecutionRecord = {
+  name: randomString(),
+  arn: randomString(),
+  collectionId: randomId('collection'),
+  status: 'completed',
+  execution: randomString(),
+  error: {
+    Error: 'Error',
+    Cause: 'Workflow failed'
+  },
+  createdAt: Date.now(),
+  timestamp: Date.now() - randomNumber(10000000)
+};
+
+const createFakeExecutionRecord = (granuleParams) => ({
+  ...fakeExecutionRecord,
+  ...granuleParams
+});
 
 const createExecutionMessage = ({
   status,
@@ -29,26 +48,10 @@ const createExecutionMessage = ({
   payload
 });
 
-const createExecutionSnsMessage = ({
-  status,
-  stateMachine,
-  executionName,
-  startTime,
-  payload,
-  collection
-}) => ({
+const createExecutionSnsMessage = (message) => ({
   EventSource: 'aws:sns',
   Sns: {
-    Message: JSON.stringify(
-      createExecutionMessage({
-        status,
-        stateMachine,
-        executionName,
-        startTime,
-        payload,
-        collection
-      })
-    )
+    Message: JSON.stringify(message)
   }
 });
 
@@ -150,19 +153,17 @@ test('getReportExecutionMessages returns correct number of messages', (t) => {
   t.is(messages.length, 3);
 });
 
-test('handler correctly creates execution record', async (t) => {
+test.only('handler correctly creates execution record', async (t) => {
   const stateMachine = randomId('stateMachine');
   const executionName = randomString();
   const arn = getExecutionArn(stateMachine, executionName);
 
   await handler({
     Records: [
-      createExecutionSnsMessage({
-        stateMachine,
-        executionName,
-        status: 'running',
-        startTime: Date.now()
-      })
+      createExecutionSnsMessage(createFakeExecutionRecord({
+        arn,
+        status: 'running'
+      }))
     ]
   });
 
