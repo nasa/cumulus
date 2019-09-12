@@ -11,6 +11,8 @@ const { randomId, randomNumber, randomString } = require('@cumulus/common/test-u
 
 const { fakeGranuleFactoryV2, fakeFileFactory } = require('../../lib/testUtils');
 const { deconstructCollectionId } = require('../../lib/utils');
+const Granule = require('../../models/granules');
+const Pdr = require('../../models/pdrs');
 
 const publishReports = rewire('../../lambdas/publish-reports');
 
@@ -188,7 +190,7 @@ test.serial('lambda ignores granules without granule ID', async (t) => {
   granulePublishMock();
 });
 
-test.serial('handleGranuleMessages handles failure describing step function execution gracefully', async (t) => {
+test.serial('failure describing step function in handleGranuleMessages does not prevent publishing to SNS topic', async (t) => {
   const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
 
   stepFunctionsStub.restore();
@@ -321,7 +323,7 @@ test.serial('lambda publishes PDR from meta.pdr to SNS topic', async (t) => {
   pdrPublishMock();
 });
 
-test.serial('error building execution record does not affect publishing to other topics', async (t) => {
+test.serial('error handling execution record does not affect publishing to other topics', async (t) => {
   const pdrPublishMock = publishReports.__set__('publishPdrSnsMessage', pdrPublishSpy);
   const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
   const executionPublishMock = publishReports.__set__('publishExecutionSnsMessage', executionPublishSpy);
@@ -345,6 +347,64 @@ test.serial('error building execution record does not affect publishing to other
   executionPublishMock();
   granulePublishMock();
   pdrPublishMock();
+});
+
+test.serial('error handling granule records does not affect publishing to other topics', async (t) => {
+  const pdrPublishMock = publishReports.__set__('publishPdrSnsMessage', pdrPublishSpy);
+  const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
+  const executionPublishMock = publishReports.__set__('publishExecutionSnsMessage', executionPublishSpy);
+
+  const { message } = t.context;
+
+  const generateRecordStub = sinon.stub(Granule, 'generateGranuleRecord').callsFake(() => {
+    throw new Error('error');
+  });
+
+  const cwEventMessage = createCloudwatchEventMessage(
+    'RUNNING',
+    message
+  );
+
+  await publishReports.handler(cwEventMessage);
+
+  t.is(executionPublishSpy.callCount, 1);
+  t.is(granulePublishSpy.callCount, 0);
+  t.is(pdrPublishSpy.callCount, 1);
+
+  // revert the mocking
+  executionPublishMock();
+  granulePublishMock();
+  pdrPublishMock();
+  generateRecordStub.restore();
+});
+
+test.serial('error handling PDR record does not affect publishing to other topics', async (t) => {
+  const pdrPublishMock = publishReports.__set__('publishPdrSnsMessage', pdrPublishSpy);
+  const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
+  const executionPublishMock = publishReports.__set__('publishExecutionSnsMessage', executionPublishSpy);
+
+  const { message } = t.context;
+
+  const generateRecordStub = sinon.stub(Pdr, 'generatePdrRecord').callsFake(() => {
+    throw new Error('error');
+  });
+
+  const cwEventMessage = createCloudwatchEventMessage(
+    'RUNNING',
+    message
+  );
+
+  await publishReports.handler(cwEventMessage);
+
+  t.is(executionPublishSpy.callCount, 1);
+  t.is(granulePublishSpy.callCount, 1);
+  t.is(pdrPublishSpy.callCount, 0);
+
+  // revert the mocking
+  executionPublishMock();
+  granulePublishMock();
+  pdrPublishMock();
+  generateRecordStub.restore();
 });
 
 test.serial('publish failure to executions topic does not affect publishing to other topics', async (t) => {

@@ -137,17 +137,23 @@ async function handleGranuleMessages(eventMessage) {
     log.error(`Could not describe execution ${executionArn}`, err);
   }
 
-  return Promise.all(
-    granules
-      .filter((granule) => granule.granuleId)
-      .map((granule) => Granule.generateGranuleRecord(
-        granule,
-        eventMessage,
-        executionUrl,
-        executionDescription
-      ))
-      .map((granuleRecord) => publishGranuleSnsMessage(granuleRecord))
-  );
+  try {
+    return Promise.all(
+      granules
+        .filter((granule) => granule.granuleId)
+        .map((granule) => Granule.generateGranuleRecord(
+          granule,
+          eventMessage,
+          executionUrl,
+          executionDescription
+        ))
+        .map((granuleRecord) => publishGranuleSnsMessage(granuleRecord))
+    );
+  } catch (err) {
+    log.error('Error handling granule records', err);
+    log.info('Execution message', eventMessage);
+    return Promise.resolve();
+  }
 }
 
 /**
@@ -168,9 +174,14 @@ async function handlePdrMessage(eventMessage) {
     return Promise.resolve();
   }
 
-  const pdrRecord = Pdr.generatePdrRecord(pdr);
-
-  return publishPdrSnsMessage(pdrRecord);
+  try {
+    const pdrRecord = Pdr.generatePdrRecord(pdr);
+    return publishPdrSnsMessage(pdrRecord);
+  } catch (err) {
+    log.error('Error trying to generate PDR', err);
+    log.info('Execution message', eventMessage);
+    return Promise.resolve();
+  }
 }
 
 /**
