@@ -7,6 +7,7 @@ const {
   aws: { parseS3Uri, s3 },
   testUtils: { randomString }
 } = require('@cumulus/common');
+const { isNil } = require('@cumulus/common/util');
 const {
   addCollections,
   addProviders,
@@ -29,6 +30,17 @@ const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
 const config = loadConfig();
+// Make sure that all environment variables are set
+[
+  'AWS_REGION',
+  'EARTHDATA_CLIENT_ID',
+  'EARTHDATA_CLIENT_PASSWORD',
+  'EARTHDATA_PASSWORD',
+  'EARTHDATA_USERNAME',
+  'TOKEN_SECRET'
+].forEach((x) => {
+  if (isNil(process.env[x])) process.env[x] = config[x];
+});
 const lambdaStep = new LambdaStep();
 // the workflow has no cmrstep
 const workflowName = 'IngestGranuleCatchDuplicateErrorTest';
