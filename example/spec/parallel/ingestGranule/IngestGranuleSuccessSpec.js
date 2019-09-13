@@ -190,10 +190,10 @@ describe('The S3 Ingest Granules workflow', () => {
       collectionModel.delete(collection),
       providerModel.delete(provider),
       executionModel.delete({ arn: workflowExecutionArn }),
-      // granulesApiTestUtils.removePublishedGranule({
-      //   prefix: config.stackName,
-      //   granuleId: inputPayload.granules[0].granuleId
-      // })
+      granulesApiTestUtils.removePublishedGranule({
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId
+      })
     ]);
   });
 
