@@ -65,7 +65,7 @@ async function publish(message, finished = false) {
 
   const failed = eventFailed(event);
 
-  await publishReportSnsMessages(message, finished, failed);
+  await publishReportSnsMessages(event, finished, failed);
 
   if (failed) {
     makeLambdaFunctionFail(event);
