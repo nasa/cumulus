@@ -1,8 +1,17 @@
 #!/bin/bash
 set -ex
 
-DATA_PERSISTENCE_KEY="$DEPLOYMENT/data-persistence/terraform.tfstate"
+# Fetch terraform binary
+if ! curl -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip ; then
+  echo "ERROR: coudn't download terraform script" >&2
+  exit 1
+else
+  unzip -u ./terraform_${TF_VERSION}_linux_amd64.zip
+  chmod a+x ./terraform
+  rm ./terraform_${TF_VERSION}_linux_amd64.zip
+fi
 
+DATA_PERSISTENCE_KEY="$DEPLOYMENT/data-persistence/terraform.tfstate"
 cd data-persistence-tf
 # Ensure remote state is configured for the deployment
 echo "terraform {
