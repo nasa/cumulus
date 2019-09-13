@@ -1,6 +1,5 @@
 #!/bin/bash
 set -ex
-. ./bamboo/abort-if-not-terraform.sh
 
 DATA_PERSISTENCE_KEY="$DEPLOYMENT/data-persistence/terraform.tfstate"
 
