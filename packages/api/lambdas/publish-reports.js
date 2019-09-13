@@ -13,8 +13,7 @@ const {
 const log = require('@cumulus/common/log');
 const {
   getMessageExecutionArn,
-  getMessageGranules,
-  getMessagePdr
+  getMessageGranules
 } = require('@cumulus/common/message');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 
@@ -193,19 +192,9 @@ async function handleGranuleMessages(eventMessage) {
  * @returns {Promise}
  */
 async function handlePdrMessage(eventMessage) {
-  const pdr = getMessagePdr(eventMessage);
-  if (!pdr) {
-    log.info('No PDRs to process on the message');
-    return Promise.resolve();
-  }
-
-  if (!pdr.name) {
-    log.info('Could not find name on PDR object', pdr);
-    return Promise.resolve();
-  }
-
   try {
-    const pdrRecord = Pdr.generatePdrRecord(pdr, eventMessage);
+    const pdrRecord = Pdr.generatePdrRecord(eventMessage);
+    if (!pdrRecord) return Promise.resolve();
     return publishPdrSnsMessage(pdrRecord);
   } catch (err) {
     log.error('Error trying to generate PDR', err);

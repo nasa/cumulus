@@ -152,16 +152,6 @@ const getMessageGranules = (message) =>
   get(message, 'payload.granules')
   || get(message, 'meta.input_granules');
 
-
-/**
- * Get PDR from execution message.
- *
- * @param {Object} message - An execution message
- * @returns {Object} - A PDR object
- */
-const getMessagePdr = (message) =>
-  get(message, 'payload.pdr', get(message, 'meta.pdr'));
-
 /**
  * Get the state machine ARN from a workflow message.
  *

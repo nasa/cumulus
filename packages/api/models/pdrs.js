@@ -2,6 +2,7 @@
 
 const get = require('lodash.get');
 
+const log = require('@cumulus/common/log');
 const { getCollectionIdFromMessage, getMessageExecutionArn } = require('@cumulus/common/message');
 const aws = require('@cumulus/ingest/aws');
 const pvl = require('@cumulus/pvl');
@@ -49,11 +50,23 @@ class Pdr extends Manager {
   /**
    * Generate a PDR record.
    *
-   * @param {Object} pdr - A PDR object
    * @param {Object} message - A workflow execution message
    * @returns {Object} - A PDR record
    */
-  static generatePdrRecord(pdr, message) {
+  static generatePdrRecord(message) {
+    const pdr = get(message, 'payload.pdr', get(message, 'meta.pdr'));
+    let record;
+
+    if (!pdr) {
+      log.info('No PDRs to process on the message');
+      return record;
+    }
+
+    if (!pdr.name) {
+      log.info('Could not find name on PDR object', pdr);
+      return record;
+    }
+
     const arn = getMessageExecutionArn(message);
     const execution = aws.getExecutionUrl(arn);
 
@@ -73,7 +86,7 @@ class Pdr extends Manager {
       progress = 100;
     }
 
-    const doc = {
+    record = {
       pdrName: pdr.name,
       collectionId,
       status: get(message, 'meta.status'),
@@ -87,8 +100,8 @@ class Pdr extends Manager {
       timestamp: Date.now()
     };
 
-    doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-    return doc;
+    record.duration = (record.timestamp - record.createdAt) / 1000;
+    return record;
   }
 
   /**
