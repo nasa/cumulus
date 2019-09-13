@@ -51,8 +51,8 @@ set -e
 
 if [[ $DEPLOYMENT =~ '-tf' ]]; then
   echo "Running Terraform deployment $DEPLOYMENT"
-  . ./bamboo/bootstrap-tf-deployment.sh
+  . ../bamboo/bootstrap-tf-deployment.sh
 else
   echo "Running Kes deployment $DEPLOYMENT"
-  . ./bamboo/bootstrap-kes-deployment.sh
+  . ../bamboo/bootstrap-kes-deployment.sh
 fi
