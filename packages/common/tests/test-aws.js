@@ -116,7 +116,7 @@ test('pullStepFunctionEvent returns original message if message not on S3', asyn
   t.deepEqual(message, event);
 });
 
-test.serial('pullStepFunctionEcent returns message from S3 to target', async (t) => {
+test.serial('pullStepFunctionEvent returns message from S3 to target', async (t) => {
   const expectedMessage = {
     cumulus_meta: {
       state_machine: 'state machine',
