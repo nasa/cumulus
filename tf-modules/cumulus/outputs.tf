@@ -32,6 +32,10 @@ output "discover_granules_task_lambda_function_arn" {
   value = module.ingest.discover_granules_task_lambda_function_arn
 }
 
+output "discover_pdrs_task_lambda_function_arn" {
+  value = module.ingest.discover_pdrs_task_lambda_function_arn
+}
+
 output "fake_processing_task_lambda_function_arn" {
   value = module.ingest.fake_processing_task_lambda_function_arn
 }
@@ -48,8 +52,20 @@ output "move_granules_task_lambda_function_arn" {
   value = module.ingest.move_granules_task_lambda_function_arn
 }
 
+output "parse_pdr_task_lambda_function_arn" {
+  value = module.ingest.parse_pdr_task_lambda_function_arn
+}
+
+output "pdr_status_check_task_lambda_function_arn" {
+  value = module.ingest.pdr_status_check_task_lambda_function_arn
+}
+
 output "queue_granules_task_lambda_function_arn" {
   value = module.ingest.queue_granules_task_lambda_function_arn
+}
+
+output "queue_pdrs_task_lambda_function_arn" {
+  value = module.ingest.queue_pdrs_task_lambda_function_arn
 }
 
 output "sf_sns_report_task_lambda_function_arn" {
