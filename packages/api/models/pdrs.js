@@ -116,7 +116,7 @@ class Pdr extends Manager {
 
     if (!pdrName) return Promise.resolve();
 
-    const pdrRecord = Pdr.generatePdrRecord(pdrObj, payload);
+    const pdrRecord = Pdr.generatePdrRecord(payload);
 
     return this.create(pdrRecord);
   }

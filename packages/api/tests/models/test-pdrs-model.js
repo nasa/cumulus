@@ -68,7 +68,7 @@ test('generatePdrRecord() sets correct progress value for running PDR', async (t
 
   message.payload.pdr = pdr;
 
-  const record = Pdr.generatePdrRecord(pdr, message);
+  const record = Pdr.generatePdrRecord(message);
 
   t.is(record.status, 'running');
   t.is(record.stats.processing, 3);
@@ -89,7 +89,7 @@ test('generatePdrRecord() sets correct progress value for partially complete PDR
 
   message.payload.pdr = pdr;
 
-  const record = Pdr.generatePdrRecord(pdr, message);
+  const record = Pdr.generatePdrRecord(message);
 
   t.is(record.status, 'running');
   t.is(record.stats.processing, 3);
@@ -119,7 +119,7 @@ test('generatePdrRecord() generates a completed PDR record', async (t) => {
 
   message.payload.pdr = pdr;
 
-  const record = Pdr.generatePdrRecord(pdr, message);
+  const record = Pdr.generatePdrRecord(message);
 
   t.is(record.status, status);
   t.is(record.collectionId, collectionId);
@@ -154,7 +154,7 @@ test('generatePdrRecord() generates a failed PDR record', async (t) => {
 
   message.payload.pdr = pdr;
 
-  const record = Pdr.generatePdrRecord(pdr, message);
+  const record = Pdr.generatePdrRecord(message);
 
   t.is(record.status, status);
   t.is(record.collectionId, collectionId);
@@ -182,7 +182,7 @@ test('generatePdrRecord() sets PDR properties when included', async (t) => {
 
   message.payload.pdr = pdr;
 
-  const record = Pdr.generatePdrRecord(pdr, message);
+  const record = Pdr.generatePdrRecord(message);
 
   t.true(record.PANSent);
   t.is(record.PANmessage, PANmessage);
