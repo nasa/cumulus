@@ -205,7 +205,7 @@ async function handlePdrMessage(eventMessage) {
   }
 
   try {
-    const pdrRecord = Pdr.generatePdrRecord(pdr);
+    const pdrRecord = Pdr.generatePdrRecord(pdr, eventMessage);
     return publishPdrSnsMessage(pdrRecord);
   } catch (err) {
     log.error('Error trying to generate PDR', err);

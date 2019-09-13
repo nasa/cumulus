@@ -5,6 +5,7 @@ const rewire = require('rewire');
 const sinon = require('sinon');
 
 const aws = require('@cumulus/common/aws');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { getMessageExecutionArn } = require('@cumulus/common/message');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const { randomId, randomNumber, randomString } = require('@cumulus/common/test-utils');
@@ -348,8 +349,14 @@ test.serial('lambda publishes PDR from payload.pdr to SNS topic', async (t) => {
   const pdrParams = {
     name: pdrName
   };
+  const collectionId = `${randomId('MOD')}___${randomNumber()}`;
+  const createdAtTime = Date.now();
   const message = createCumulusMessage({
-    pdrParams
+    pdrParams,
+    collectionId,
+    cMetaParams: {
+      workflow_start_time: createdAtTime
+    }
   });
 
   const cwEventMessage = createCloudwatchEventMessage(
@@ -360,8 +367,13 @@ test.serial('lambda publishes PDR from payload.pdr to SNS topic', async (t) => {
   await publishReports.handler(cwEventMessage);
 
   t.is(pdrPublishSpy.callCount, 1);
-  // Ensure that PDR record is passed to publish handler
-  t.is(pdrPublishSpy.args[0][0].pdrName, pdrName);
+  // Ensure that correct PDR record is passed to publish handler
+  const publishPdrRecord = pdrPublishSpy.args[0][0];
+  t.is(publishPdrRecord.pdrName, pdrName);
+  t.is(publishPdrRecord.provider, message.meta.provider.id);
+  t.is(publishPdrRecord.collectionId, collectionId);
+  t.is(publishPdrRecord.status, 'running');
+  t.is(publishPdrRecord.createdAt, createdAtTime);
 
   // revert the mocking
   pdrPublishMock();
@@ -374,9 +386,14 @@ test.serial('lambda publishes PDR from meta.pdr to SNS topic', async (t) => {
   const pdrParams = {
     name: pdrName
   };
+  const collectionId = `${randomId('MOD')}___${randomNumber()}`;
+  const createdAtTime = Date.now();
   const message = createCumulusMessage({
-    numberOfGranules: 5,
-    pdrParams
+    pdrParams,
+    collectionId,
+    cMetaParams: {
+      workflow_start_time: createdAtTime
+    }
   });
 
   const { pdr } = message.payload;
@@ -384,15 +401,20 @@ test.serial('lambda publishes PDR from meta.pdr to SNS topic', async (t) => {
   message.meta.pdr = pdr;
 
   const cwEventMessage = createCloudwatchEventMessage(
-    'RUNNING',
+    'SUCCEEDED',
     message
   );
 
   await publishReports.handler(cwEventMessage);
 
   t.is(pdrPublishSpy.callCount, 1);
-  // Ensure that PDR record is passed to publish handler
-  t.is(pdrPublishSpy.args[0][0].pdrName, pdrName);
+  // Ensure that correct PDR record is passed to publish handler
+  const publishPdrRecord = pdrPublishSpy.args[0][0];
+  t.is(publishPdrRecord.pdrName, pdrName);
+  t.is(publishPdrRecord.provider, message.meta.provider.id);
+  t.is(publishPdrRecord.collectionId, collectionId);
+  t.is(publishPdrRecord.status, 'completed');
+  t.is(publishPdrRecord.createdAt, createdAtTime);
 
   // revert the mocking
   pdrPublishMock();
