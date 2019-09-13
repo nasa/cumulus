@@ -1,6 +1,7 @@
 #!/bin/bash
 set -ex
 
+TF_VERSION=$(cat .tfversion)	
 # Fetch terraform binary
 if ! curl -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip ; then
   echo "ERROR: coudn't download terraform script" >&2
