@@ -24,6 +24,7 @@ let granulePublishSpy;
 let pdrPublishSpy;
 let snsPublishSpy;
 let stepFunctionsStub;
+let executionModel;
 
 const sfEventSource = 'aws.states';
 
@@ -91,6 +92,9 @@ test.before(async () => {
     })
   });
 
+  executionModel = new Execution();
+  await executionModel.createTable();
+
   executionPublishSpy = sinon.spy();
   granulePublishSpy = sinon.spy();
   pdrPublishSpy = sinon.spy();
@@ -130,8 +134,9 @@ test.afterEach.always(() => {
   stepFunctionsStub.restore();
 });
 
-test.after.always(() => {
+test.after.always(async () => {
   snsStub.restore();
+  await executionModel.deleteTable();
 });
 
 test.serial('lambda publishes report to all SNS topics', async (t) => {
@@ -185,7 +190,101 @@ test.serial('lambda publishes correct execution record to SNS topic', async (t) 
   executionPublishMock();
 });
 
-test.todo('event status is correctly converted to message status');
+test.serial('lambda publishes completed execution record to SNS topic', async (t) => {
+  const executionPublishMock = publishReports.__set__('publishExecutionSnsMessage', executionPublishSpy);
+
+  const executionName = randomId('execution');
+  const stateMachineArn = randomId('ingest-');
+  const arn = aws.getExecutionArn(stateMachineArn, executionName);
+  const createdAtTime = Date.now();
+
+  const message = createCumulusMessage({
+    cMetaParams: {
+      execution_name: executionName,
+      state_machine: stateMachineArn,
+      workflow_start_time: createdAtTime
+    }
+  });
+
+  await executionModel.create({
+    arn,
+    name: executionName,
+    status: 'running',
+    createdAt: Date.now()
+  });
+
+  const failedCwEventMessage = createCloudwatchEventMessage(
+    'SUCCEEDED',
+    message
+  );
+
+  await publishReports.handler(failedCwEventMessage);
+
+  t.is(executionPublishSpy.callCount, 1);
+  // Ensure that the correct execution record is passed to publish handler
+  const executionPublishRecord = executionPublishSpy.args[0][0];
+  t.is(executionPublishRecord.status, 'completed');
+
+  // revert the mocking
+  executionPublishMock();
+});
+
+test.serial('lambda publishes failed execution record to SNS topic', async (t) => {
+  const executionPublishMock = publishReports.__set__('publishExecutionSnsMessage', executionPublishSpy);
+
+  const executionName = randomId('execution');
+  const stateMachineArn = randomId('ingest-');
+  const arn = aws.getExecutionArn(stateMachineArn, executionName);
+  const createdAtTime = Date.now();
+
+  const message = createCumulusMessage({
+    cMetaParams: {
+      execution_name: executionName,
+      state_machine: stateMachineArn,
+      workflow_start_time: createdAtTime
+    }
+  });
+
+  await executionModel.create({
+    arn,
+    name: executionName,
+    status: 'running',
+    createdAt: Date.now()
+  });
+
+  const failedCwEventMessage = createCloudwatchEventMessage(
+    'FAILED',
+    message
+  );
+
+  await publishReports.handler(failedCwEventMessage);
+
+  t.is(executionPublishSpy.callCount, 1);
+  // Ensure that the correct execution record is passed to publish handler
+  const executionPublishRecord = executionPublishSpy.args[0][0];
+  t.is(executionPublishRecord.status, 'failed');
+
+  // revert the mocking
+  executionPublishMock();
+});
+
+test.serial('lambda does not publish completed record for non-existent execution to SNS topic', async (t) => {
+  const executionPublishMock = publishReports.__set__('publishExecutionSnsMessage', executionPublishSpy);
+
+  const message = createCumulusMessage();
+
+  const cwEventMessage = createCloudwatchEventMessage(
+    'SUCCEEDED',
+    message
+  );
+
+  await publishReports.handler(cwEventMessage);
+
+  t.is(executionPublishSpy.callCount, 0);
+
+  // revert the mocking
+  executionPublishMock();
+});
 
 test.serial('lambda without granules in message does not publish to granule SNS topic', async (t) => {
   const { message } = t.context;
