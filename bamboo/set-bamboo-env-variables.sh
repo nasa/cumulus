@@ -131,10 +131,9 @@ if [[ -z $DEPLOYMENT ]]; then
   if [[ $COMMIT_MESSAGE =~ deploy-terraform || $BRANCH =~ terraform ]]; then
     echo "Detected terraform deployment branch or commit"
     echo deployment "$DEPLOYMENT-tf"
-    echo export DEPLOYMENT="$DEPLOYMENT-tf" >> .bamboo_env_vars
-  else
-    echo export DEPLOYMENT=$DEPLOYMENT >> .bamboo_env_vars
+    DEPLOYMENT="$DEPLOYMENT-tf"
   fi
+  echo export DEPLOYMENT=$DEPLOYMENT >> .bamboo_env_vars
 fi
 
 ## Exporting the commit message as an env variable to be brought in
