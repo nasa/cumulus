@@ -3,13 +3,14 @@
 const test = require('ava');
 const rewire = require('rewire');
 const sinon = require('sinon');
+const pick = require('lodash.pick');
 
 const aws = require('@cumulus/common/aws');
 const { getMessageExecutionArn } = require('@cumulus/common/message');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const { randomId, randomNumber, randomString } = require('@cumulus/common/test-utils');
 
-const { fakeGranuleFactoryV2, fakeFileFactory } = require('../../lib/testUtils');
+const { fakeFileFactory } = require('../../lib/testUtils');
 const { deconstructCollectionId } = require('../../lib/utils');
 const Execution = require('../../models/executions');
 const Granule = require('../../models/granules');
@@ -38,7 +39,8 @@ const createCloudwatchEventMessage = (
   return { source, detail };
 };
 
-const createFakeGranule = (granuleParams = {}, fileParams = {}) => fakeGranuleFactoryV2({
+const createFakeGranule = (granuleParams = {}, fileParams = {}) => ({
+  granuleId: randomId('granule'),
   files: [
     fakeFileFactory(fileParams),
     fakeFileFactory(fileParams),
@@ -258,8 +260,16 @@ test.serial('failure describing step function in handleGranuleMessages does not 
 test.serial('lambda publishes correct granules from payload.granules to SNS topic', async (t) => {
   const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
 
+  const collectionId = `${randomId('MOD')}___${randomNumber()}`;
+  const executionName = randomId('execution');
+  const createdAtTime = Date.now();
   const message = createCumulusMessage({
-    numberOfGranules: 5
+    numberOfGranules: 5,
+    collectionId,
+    cMetaParams: {
+      execution_name: executionName,
+      workflow_start_time: createdAtTime
+    }
   });
 
   const cwEventMessage = createCloudwatchEventMessage(
@@ -269,11 +279,24 @@ test.serial('lambda publishes correct granules from payload.granules to SNS topi
 
   await publishReports.handler(cwEventMessage);
 
+  t.plan(6);
   t.is(granulePublishSpy.callCount, 5);
-  // Ensure that granule records are actually being passed to publish handler
-  const granuleIdsCount = granulePublishSpy.args
-    .filter((args) => args[0].granuleId);
-  t.is(granuleIdsCount.length, 5);
+
+  // Ensure that correct granule records are actually being passed to publish handler
+  granulePublishSpy.args
+    .filter((args) => args[0].granuleId)
+    .map(([granuleRecord]) => t.deepEqual(
+      {
+        ...pick(granuleRecord, ['collectionId', 'status', 'createdAt']),
+        executionValid: granuleRecord.execution.includes(executionName)
+      },
+      {
+        collectionId,
+        status: 'running',
+        createdAt: createdAtTime,
+        executionValid: true
+      }
+    ));
 
   // revert the mocking
   granulePublishMock();
@@ -282,8 +305,16 @@ test.serial('lambda publishes correct granules from payload.granules to SNS topi
 test.serial('lambda publishes correct granules from meta.input_granules to SNS topic', async (t) => {
   const granulePublishMock = publishReports.__set__('publishGranuleSnsMessage', granulePublishSpy);
 
+  const collectionId = `${randomId('MOD')}___${randomNumber()}`;
+  const executionName = randomId('execution');
+  const createdAtTime = Date.now();
   const message = createCumulusMessage({
-    numberOfGranules: 7
+    numberOfGranules: 3,
+    collectionId,
+    cMetaParams: {
+      execution_name: executionName,
+      workflow_start_time: createdAtTime
+    }
   });
 
   const { granules } = message.payload;
@@ -297,11 +328,24 @@ test.serial('lambda publishes correct granules from meta.input_granules to SNS t
 
   await publishReports.handler(cwEventMessage);
 
-  t.is(granulePublishSpy.callCount, 7);
+  t.plan(4);
+  t.is(granulePublishSpy.callCount, 3);
+
   // Ensure that granule records are actually being passed to publish handler
-  const granuleIdsCount = granulePublishSpy.args
-    .filter((args) => args[0].granuleId);
-  t.is(granuleIdsCount.length, 7);
+  granulePublishSpy.args
+    .filter((args) => args[0].granuleId)
+    .map(([granuleRecord]) => t.deepEqual(
+      {
+        ...pick(granuleRecord, ['collectionId', 'status', 'createdAt']),
+        executionValid: granuleRecord.execution.includes(executionName)
+      },
+      {
+        collectionId,
+        status: 'running',
+        createdAt: createdAtTime,
+        executionValid: true
+      }
+    ));
 
   // revert the mocking
   granulePublishMock();
