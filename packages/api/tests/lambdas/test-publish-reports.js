@@ -5,7 +5,6 @@ const rewire = require('rewire');
 const sinon = require('sinon');
 
 const aws = require('@cumulus/common/aws');
-const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { getMessageExecutionArn } = require('@cumulus/common/message');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const { randomId, randomNumber, randomString } = require('@cumulus/common/test-utils');
@@ -155,11 +154,13 @@ test.serial('lambda publishes correct execution record to SNS topic', async (t) 
   const executionName = randomId('execution');
   const stateMachineArn = randomId('ingest-');
   const arn = aws.getExecutionArn(stateMachineArn, executionName);
+  const createdAtTime = Date.now();
 
   const message = createCumulusMessage({
     cMetaParams: {
       execution_name: executionName,
-      state_machine: stateMachineArn
+      state_machine: stateMachineArn,
+      workflow_start_time: createdAtTime
     }
   });
 
@@ -171,8 +172,12 @@ test.serial('lambda publishes correct execution record to SNS topic', async (t) 
   await publishReports.handler(cwEventMessage);
 
   t.is(executionPublishSpy.callCount, 1);
-  // Ensure that execution record is passed to publish handler
-  t.is(executionPublishSpy.args[0][0].arn, arn);
+  // Ensure that the correct execution record is passed to publish handler
+  const executionPublishRecord = executionPublishSpy.args[0][0];
+  t.is(executionPublishRecord.arn, arn);
+  t.is(executionPublishRecord.name, executionName);
+  t.is(executionPublishRecord.status, 'running');
+  t.is(executionPublishRecord.createdAt, createdAtTime);
 
   // revert the mocking
   executionPublishMock();

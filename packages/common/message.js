@@ -251,7 +251,6 @@ module.exports = {
   getMessageExecutionName,
   getMessageFromTemplate,
   getMessageGranules,
-  getMessagePdr,
   getMessageStateMachineArn,
   getQueueNameByUrl,
   getQueueName,
