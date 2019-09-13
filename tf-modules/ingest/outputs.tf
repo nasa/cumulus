@@ -2,6 +2,10 @@ output "discover_granules_task_lambda_function_arn" {
   value = aws_lambda_function.discover_granules_task.arn
 }
 
+output "discover_pdrs_task_lambda_function_arn" {
+  value = aws_lambda_function.discover_pdrs_task.arn
+}
+
 output "fake_processing_task_lambda_function_arn" {
   value = aws_lambda_function.fake_processing_task.arn
 }
@@ -26,12 +30,24 @@ output "move_granules_task_lambda_function_arn" {
   value = aws_lambda_function.move_granules_task.arn
 }
 
+output "parse_pdr_task_lambda_function_arn" {
+  value = aws_lambda_function.parse_pdr_task.arn
+}
+
+output "pdr_status_check_task_lambda_function_arn" {
+  value = aws_lambda_function.pdr_status_check_task.arn
+}
+
 output "post_to_cmr_task_lambda_function_arn" {
   value = aws_lambda_function.post_to_cmr_task.arn
 }
 
 output "queue_granules_task_lambda_function_arn" {
   value = aws_lambda_function.queue_granules_task.arn
+}
+
+output "queue_pdrs_task_lambda_function_arn" {
+  value = aws_lambda_function.queue_pdrs_task.arn
 }
 
 output "schedule_sf_lambda_function_arn" {
