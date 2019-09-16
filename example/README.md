@@ -175,7 +175,7 @@ An S3 Access lambda is needed in the us-west-2 region to run the integration tes
 aws lambda create-function --region us-west-2  --function-name <STACK>-S3AccessTest --zip-file fileb://app/build/cloudformation/<ZIP>-S3AccessTest.zip  --role arn:aws:iam::<AWS_ACCOUNT_ID>:role/<PREFIX>-lambda-processing  --handler index.handler --runtime nodejs8.10 --profile <NGAP Profile>
 ```
 
-Replace `<AWS_ACCOUNT_ID>` with your account Id, `<STACK>` with your stack name, `<PREFIX>` with your iam prefix name, and use your NGAP profile. An S3AccessTest zip file `<ZIP>` can be found under `app/build/` following a stack deployment (either in `cloudformation` or `workflow_lambda_versions` depending on your stack configuration). The version of the zip file that you upload does not matter, but you need to deploy something to us-west-2 so that travis can update it with current lambdas.
+Replace `<AWS_ACCOUNT_ID>` with your account Id, `<STACK>` with your stack name, `<PREFIX>` with your iam prefix name, and use your NGAP profile. An S3AccessTest zip file `<ZIP>` can be found under `app/build/` following a stack deployment (either in `cloudformation` or `workflow_lambda_versions` depending on your stack configuration). The version of the zip file that you upload does not matter, but you need to deploy something to us-west-2 so that Bamboo can update it with current lambdas.
 
 If you need, after the initial creation of this lambda, you can update it by running:
 
@@ -214,7 +214,7 @@ By default, the data location is the `cumulus-data-shared` S3 bucket. To use a d
 
 Tests are written and run with [jasmine](https://jasmine.github.io/setup/nodejs.html).
 
-Tests are separated into standalone and parallel folders. The `standalone` folder is for tests that cannot be run in parallel with any other tests and should be run in a separate job, for example, the redeployment tests that are only run by Travis on master.
+Tests are separated into standalone and parallel folders. The `standalone` folder is for tests that cannot be run in parallel with any other tests and should be run in a separate job, for example, the redeployment tests that are only run by Bamboo on master.
 
 The `parallel` folder holds tests that can be run in parallel.
 
@@ -250,9 +250,9 @@ A new folder should be added in the `/spec` folder for the workflow and the test
 
 Ideally the test can run in parallel with other tests and should be put in the `parallel` folder. If it cannot be, it should go in the `spec` folder. Only if the test should be run outside of the test suite should it go in the `standalone` folder.
 
-## Using your AWS CF stack in Travis CI
+## Using your AWS CF stack in Bamboo
 
-To use your own CF stack for running integration tests in bamboo, add
+To use your own CF stack for running integration tests in Bamboo, add
 your stack name [here](../bamboo/select-stack.js).
 
 ## Additional Notes
