@@ -829,10 +829,9 @@ describe('The S3 Ingest Granules workflow', () => {
       let allStates;
 
       beforeAll(async () => {
-        const executionArn = workflowExecutionArn;
         const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
           prefix: config.stackName,
-          arn: executionArn
+          arn: workflowExecutionArn
         });
 
         executionStatus = JSON.parse(executionStatusResponse.body);
