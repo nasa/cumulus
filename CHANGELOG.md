@@ -17,8 +17,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- **CUMULUS-1394**
+  - Added `Granule.generateGranuleRecord()` method to granules model to generate a granule database record from a Cumulus execution message
+  - Added `Pdr.generatePdrRecord()` method to PDRs model to generate a granule database record from a Cumulus execution message
+  - Added helpers to `@cumulus/common/message`:
+    - `getMessageExecutionName()` - Get the execution name from a Cumulus execution message
+    - `getMessageStateMachineArn()` - Get the state machine ARN from a Cumulus execution message
+    - `getMessageExecutionArn()` - Get the execution ARN for a Cumulus execution message
+    - `getMessageGranules()` - Get the granules from a Cumulus execution message, if any.
+  - Added `@cumulus/common/cloudwatch-event/isFailedSfStatus()` to determine if a Step Function status from a Cloudwatch event is a failed status
+
 ### Changed
 
+- **CUMULUS-1394**
+  - Renamed `Execution.generateDocFromPayload()` to `Execution.generateRecord()` on executions model. The method generates an execution database record from a Cumulus execution message.
 - **CUMULUS-1432**
   - `logs` endpoint takes the level parameter as a string and not a number
   - Elasticsearch term query generation no longer converts numbers to boolean
@@ -29,7 +41,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Removed
 
-- **CUMULUS-1394** - Removed `sfTracker` SNS topic. Replaced by three new SNS topics for granule, execution, and PDR ingest notifications.
+- **CUMULUS-1394**
+  - Removed `sfTracker` SNS topic. Replaced by three new SNS topics for granule, execution, and PDR ingest notifications.
+  - Removed unused functions from `@cumulus/common/aws`:
+    - `getGranuleS3Params()`
+    - `setGranuleStatus()`
 
 ## [v1.14.1] - 2019-08-29
 
