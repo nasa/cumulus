@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - **CUMULUS-1432** `logs` endpoint filter correctly filters logs by level
+- **CUMULUS-1484**  `useMessageAdapter` now does not set CUMULUS_MESSAGE_ADAPTER_DIR when `true`
 
 ### Removed
 
