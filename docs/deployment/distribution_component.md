@@ -24,11 +24,11 @@ Credentials Endpoint with a configuration targeted at Cumulus and NGAP.
 
 * **api_gateway_stage** (string) - The API Gateway stage to create, defaults to
   "DEV"
-* **distribution_url** (string) - An alternative URL used for distribution"
+* **distribution_url** (string) - An alternative URL used for distribution
 * **permissions_boundary_arn** (string) - The ARN of an IAM permissions boundary
-  to use when creating IAM policies"
-* **protected_buckets** (list(string)) - A list of protected buckets"
-* **public_buckets** (list(string)) - A list of public buckets"
+  to use when creating IAM policies
+* **protected_buckets** (list(string)) - A list of protected buckets
+* **public_buckets** (list(string)) - A list of public buckets
 * **region** (string) - The AWS region to deploy to, defaults to "us-east-1"
 * **sts_credentials_lambda_name** (string) - The name of the Lambda function for
   the S3 credentials endpoint to invoke, which whill return AWS API keys.
