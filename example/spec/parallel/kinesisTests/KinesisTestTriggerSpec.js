@@ -318,7 +318,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   });
 
   describe('Workflow fails because TranslateMessage fails', () => {
-    let workflowExecution;
     const badRecord = { ...record };
     const badRecordIdentifier = randomString();
     badRecord.identifier = badRecordIdentifier;
