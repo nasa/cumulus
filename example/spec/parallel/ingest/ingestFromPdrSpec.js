@@ -214,12 +214,11 @@ describe('Ingesting from PDR', () => {
           expectedParsePdrOutput.granules[0].dataType += testSuffix;
           expectedParsePdrOutput.pdr.name = pdrFilename;
 
-          parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrExecutionArn);
-
-          queueGranulesOutput = await lambdaStep.getStepOutput(
-            parsePdrExecutionArn,
-            'QueueGranules'
-          );
+          // parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrExecutionArn);
+          // queueGranulesOutput = await lambdaStep.getStepOutput(
+          //   parsePdrExecutionArn,
+          //   'QueueGranules'
+          // );
         } catch (error) {
           console.log(error);
         }
@@ -231,16 +230,28 @@ describe('Ingesting from PDR', () => {
           parsePdrExecutionArn,
           'QueueGranules'
         );
-        await Promise.all(queueGranulesOutput.payload.running.map(async (arn) => {
-          await waitForCompletedExecution(arn);
-        }));
+        await Promise.all(
+          queueGranulesOutput.payload.running
+            .map((arn) => waitForCompletedExecution(arn))
+        );
         await granulesApiTestUtils.deleteGranule({
           prefix: config.stackName,
           granuleId: parseLambdaOutput.payload.granules[0].granuleId
         });
       });
 
-      it('executes successfully', () => {
+      it('a running pdr record is added to DynamoDB', async () => {
+        const record = await waitForModelStatus(
+          pdrModel,
+          { pdrName: pdrFilename },
+          'running'
+        );
+        expect(record.execution).toEqual(getExecutionUrl(parsePdrExecutionArn));
+        expect(record.status).toEqual('running');
+      });
+
+      it('executes successfully', async () => {
+        parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrExecutionArn);
         expect(parsePdrExecutionStatus).toEqual('SUCCEEDED');
       });
 
@@ -255,7 +266,12 @@ describe('Ingesting from PDR', () => {
       });
 
       describe('QueueGranules lambda function', () => {
-        it('has expected pdr and arns output', () => {
+        it('has expected pdr and arns output', async () => {
+          queueGranulesOutput = await lambdaStep.getStepOutput(
+            parsePdrExecutionArn,
+            'QueueGranules'
+          );
+
           expect(queueGranulesOutput.payload.running.length).toEqual(1);
 
           expect(queueGranulesOutput.payload.pdr.path).toEqual(expectedParsePdrOutput.pdr.path);
