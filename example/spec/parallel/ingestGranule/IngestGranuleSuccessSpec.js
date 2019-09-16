@@ -26,7 +26,6 @@ const {
   },
   constructCollectionId
 } = require('@cumulus/common');
-const { isNil } = require('@cumulus/common/util');
 const { getUrl } = require('@cumulus/cmrjs');
 const {
   addCollections,
@@ -137,26 +136,12 @@ describe('The S3 Ingest Granules workflow', () => {
   const providerModel = new Provider();
   let executionName;
 
-  const loadEnvVarFromConfig = (x) => {
-    if (isNil(process.env[x])) process.env[x] = config[x];
-  };
-
   beforeAll(async () => {
     const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
     const providerData = Object.assign({}, providerJson, {
       id: provider.id,
       host: config.bucket
     });
-
-    // Make sure that all environment variables are set
-    [
-      'AWS_REGION',
-      'EARTHDATA_CLIENT_ID',
-      'EARTHDATA_CLIENT_PASSWORD',
-      'EARTHDATA_PASSWORD',
-      'EARTHDATA_USERNAME',
-      'TOKEN_SECRET'
-    ].forEach(loadEnvVarFromConfig);
 
     // populate collections, providers and test data
     await Promise.all([

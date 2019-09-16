@@ -23,7 +23,6 @@
 
 const { Collection, Execution, Pdr } = require('@cumulus/api/models');
 const { s3, deleteS3Object } = require('@cumulus/common/aws');
-const { isNil } = require('@cumulus/common/util');
 
 const {
   addCollections,
@@ -56,17 +55,6 @@ const {
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 
 const config = loadConfig();
-// Make sure that all environment variables are set
-[
-  'AWS_REGION',
-  'EARTHDATA_CLIENT_ID',
-  'EARTHDATA_CLIENT_PASSWORD',
-  'EARTHDATA_PASSWORD',
-  'EARTHDATA_USERNAME',
-  'TOKEN_SECRET'
-].forEach((x) => {
-  if (isNil(process.env[x])) process.env[x] = config[x];
-});
 const lambdaStep = new LambdaStep();
 const taskName = 'DiscoverAndQueuePdrs';
 const origPdrFilename = 'MOD09GQ_1granule_v3.PDR';
