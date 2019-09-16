@@ -17,6 +17,7 @@ const {
   stringUtils: { globalReplace },
   log
 } = require('@cumulus/common');
+const { isNil } = require('@cumulus/common/util');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000000;
 
@@ -80,9 +81,27 @@ function loadConfigFromKes(type) {
   return setConfig(config);
 }
 
+const loadConfigFromYml = () => {
+  const config = loadYmlFile('./config.yml');
+
+  // Make sure that all environment variables are set
+  [
+    'AWS_REGION',
+    'EARTHDATA_CLIENT_ID',
+    'EARTHDATA_CLIENT_PASSWORD',
+    'EARTHDATA_PASSWORD',
+    'EARTHDATA_USERNAME',
+    'TOKEN_SECRET'
+  ].forEach((x) => {
+    if (isNil(process.env[x])) process.env[x] = config[x];
+  });
+
+  return config;
+};
+
 const loadConfig = (type = 'app') =>
   (fs.existsSync('./config.yml') ?
-    loadYmlFile('./config.yml') :
+    loadConfigFromYml('./config.yml') :
     loadConfigFromKes(type));
 
 /**

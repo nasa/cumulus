@@ -1,6 +1,5 @@
 'use strict';
 
-const { isNil } = require('@cumulus/common/util');
 const { Execution } = require('@cumulus/api/models');
 const {
   api: apiTestUtils,
@@ -23,17 +22,6 @@ const {
 const { waitForModelStatus } = require('../helpers/apiUtils');
 
 const config = loadConfig();
-// Make sure that all environment variables are set
-[
-  'AWS_REGION',
-  'EARTHDATA_CLIENT_ID',
-  'EARTHDATA_CLIENT_PASSWORD',
-  'EARTHDATA_PASSWORD',
-  'EARTHDATA_USERNAME',
-  'TOKEN_SECRET'
-].forEach((x) => {
-  if (isNil(process.env[x])) process.env[x] = config[x];
-});
 const testId = createTimestampedTestId(config.stackName, 'DiscoverGranules');
 const testSuffix = createTestSuffix(testId);
 const lambdaStep = new LambdaStep();

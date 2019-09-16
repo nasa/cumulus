@@ -341,14 +341,16 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       expect(resourceURLs.includes(cumulusDocUrl)).toBe(true);
     });
 
-    it('includes the Earthdata login ID for requests to protected science files', async () => {
+    // TODO Update this to use TEA
+    xit('includes the Earthdata login ID for requests to protected science files', async () => {
       const filepath = `/${files[0].bucket}/${files[0].filepath}`;
       const s3SignedUrl = await getDistributionApiRedirect(filepath, accessToken);
       const earthdataLoginParam = new URL(s3SignedUrl).searchParams.get('x-EarthdataLoginUsername');
       expect(earthdataLoginParam).toEqual(process.env.EARTHDATA_USERNAME);
     });
 
-    it('downloads the requested science file for authorized requests', async () => {
+    // TODO Update this to use TEA
+    xit('downloads the requested science file for authorized requests', async () => {
       const scienceFileUrls = resourceURLs.filter(isUMMGScienceUrl);
       console.log('scienceFileUrls: ', scienceFileUrls);
 

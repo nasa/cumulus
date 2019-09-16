@@ -73,3 +73,7 @@ output "step_role_arn" {
 output "scaling_role_arn" {
   value = aws_iam_role.scaling.arn
 }
+
+output "sf2snsEnd_lambda_function_arn" {
+  value = aws_lambda_function.sf2snsEnd.arn
+}
