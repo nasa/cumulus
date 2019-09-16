@@ -7,13 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Added
+### PLEASE NOTE
 
-- **CUMULUS-1394**
-  - Added three new SNS topics for publishing granule, execution, and PDR ingest notifications.
-    - Added `reportExecutions` Lambda as SNS topic consumer for storing execution data
-    - Added `reportGranules` Lambda as SNS topic consumer for storing granule data
-    - Added `reportPdrs` Lambda as SNS topic consumer for storing PDR data
+- **CUMULUS-1394** - Ingest notifications are now provided via 3 separate SNS topics for executions, granules, and PDRs, instead of a single `sftracker` SNS topic. Whereas the `sftracker` SNS topic received a full Cumulus execution message, the new topics all receive generated records for the given object. The new topics are only published to if the given object exists for the current execution. For a given execution/granule/PDR, two messages will be received by each topic: one message indicating that ingest is running and another message indicating that ingest has completed or failed. The new SNS topics are:
+
+  - `reportExecutions` - Receives 1 message per execution
+  - `reportGranules` - Receives 1 message per granule in an execution
+  - `reportPdrs` - Receives 1 message per PDR
+
+### Added
 
 ### Changed
 
