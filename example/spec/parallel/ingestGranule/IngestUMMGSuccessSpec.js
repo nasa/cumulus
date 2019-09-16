@@ -23,6 +23,7 @@ const {
   },
   constructCollectionId
 } = require('@cumulus/common');
+const { isNil } = require('@cumulus/common/util');
 const { getUrl } = require('@cumulus/cmrjs');
 const {
   addCollections,
@@ -60,6 +61,17 @@ const {
 } = require('../../helpers/granuleUtils');
 
 const config = loadConfig();
+// Make sure that all environment variables are set
+[
+  'AWS_REGION',
+  'EARTHDATA_CLIENT_ID',
+  'EARTHDATA_CLIENT_PASSWORD',
+  'EARTHDATA_PASSWORD',
+  'EARTHDATA_USERNAME',
+  'TOKEN_SECRET'
+].forEach((x) => {
+  if (isNil(process.env[x])) process.env[x] = config[x];
+});
 const lambdaStep = new LambdaStep();
 const workflowName = 'IngestAndPublishGranule';
 

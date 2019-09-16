@@ -4,6 +4,7 @@ const fs = require('fs-extra');
 
 const { models: { Granule } } = require('@cumulus/api');
 const { aws: { headObject } } = require('@cumulus/common');
+const { isNil } = require('@cumulus/common/util');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const {
   addCollections,
@@ -17,6 +18,17 @@ const mime = require('mime-types');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { waitForModelStatus } = require('../../helpers/apiUtils');
 const config = loadConfig();
+// Make sure that all environment variables are set
+[
+  'AWS_REGION',
+  'EARTHDATA_CLIENT_ID',
+  'EARTHDATA_CLIENT_PASSWORD',
+  'EARTHDATA_PASSWORD',
+  'EARTHDATA_USERNAME',
+  'TOKEN_SECRET'
+].forEach((x) => {
+  if (isNil(process.env[x])) process.env[x] = config[x];
+});
 const workflowName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
