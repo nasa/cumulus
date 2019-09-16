@@ -61,8 +61,8 @@ default:
   # test configuration ends
 
   cmaDir: '/opt/'
-  sandbox_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:5
-  sit_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:1
+  sandbox_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:6
+  sit_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:2
   cma_layer: '{{sandbox_cma_layer}}'
   prefix: 'test-cumulus-integration'
   prefixNoDash: TestCumulusIntegration
