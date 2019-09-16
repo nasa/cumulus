@@ -19,31 +19,22 @@ resource "aws_cloudwatch_dashboard" "cloudwatch_dashboard" {
           "properties": {
             "markdown": "## Alarms"
         }
-      },
+      }
+      %{ for alarm in var.elasticsearch_alarms }
+      ,
       {
         "type":"metric",
         "width":6,
         "height":3,
         "properties": {
-          "title": "${var.elasticsearch_alarms[0].name}",
+          "title": "${alarm.name}",
           "annotations": {
-            "alarms": ["${var.elasticsearch_alarms[0].arn}"]
+            "alarms": ["${alarm.arn}"]
           },
           "view": "singleValue"
         }
-      },
-      {
-        "type":"metric",
-        "width":6,
-        "height":3,
-        "properties": {
-          "title": "${var.elasticsearch_alarms[1].name}",
-          "annotations": {
-            "alarms": ["${var.elasticsearch_alarms[1].arn}"]
-          },
-          "view": "singleValue"
-        }
-      }    
+      }
+      %{ endfor }
    ]
   }
   EOF

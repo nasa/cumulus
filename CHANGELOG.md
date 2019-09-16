@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-1435**
+  - Added `tf-modules/monitoring` Terraform module which includes cloudwatch dashboard
+    - Added Elasticsearch Service alarms to the cloudwatch dashboard
+
 ### Changed
 
 - **CUMULUS-1432**
