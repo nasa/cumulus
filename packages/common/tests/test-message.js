@@ -15,7 +15,9 @@ const getMessageStateMachineArn = message.__get__('getMessageStateMachineArn');
 const getMessageExecutionArn = message.__get__('getMessageExecutionArn');
 const getQueueNameByUrl = message.__get__('getQueueNameByUrl');
 const getMessageFromTemplate = message.__get__('getMessageFromTemplate');
+const getMaximumExecutions = message.__get__('getMaximumExecutions');
 const getCollectionIdFromMessage = message.__get__('getCollectionIdFromMessage');
+const getMessageGranules = message.__get__('getMessageGranules');
 
 const fakeExecutionName = randomString();
 message.__set__('createExecutionName', () => fakeExecutionName);
@@ -114,6 +116,62 @@ test('getQueueNameByUrl returns correct value', (t) => {
 
   queueNameResult = getQueueNameByUrl({}, 'queueUrl');
   t.is(queueNameResult, undefined);
+});
+
+test('getMaximumExecutions returns correct value', (t) => {
+  const queueName = randomId('queueName');
+  const testMessage = {
+    meta: {
+      queueExecutionLimits: {
+        [queueName]: 5
+      }
+    }
+  };
+  const maxExecutions = getMaximumExecutions(testMessage, queueName);
+  t.is(maxExecutions, 5);
+});
+
+test('getMaximumExecutions throw error when queue cannot be found', (t) => {
+  const testMessage = {
+    meta: {
+      queueExecutionLimits: {}
+    }
+  };
+  t.throws(
+    () => getMaximumExecutions(testMessage, 'testQueueName')
+  );
+});
+
+test('getMessageGranules returns granules from payload.granules', (t) => {
+  const granules = [{
+    granuleId: randomId('granule')
+  }];
+  const testMessage = {
+    payload: {
+      granules
+    }
+  };
+  const result = getMessageGranules(testMessage);
+  t.deepEqual(result, granules);
+});
+
+test('getMessageGranules returns granules from meta.input_granules', (t) => {
+  const granules = [{
+    granuleId: randomId('granule')
+  }];
+  const testMessage = {
+    meta: {
+      input_granules: granules
+    }
+  };
+  const result = getMessageGranules(testMessage);
+  t.deepEqual(result, granules);
+});
+
+test('getMessageGranules returns nothing when granules are absent from message', (t) => {
+  const testMessage = {};
+  const result = getMessageGranules(testMessage);
+  t.is(result, undefined);
 });
 
 test('getMessageTemplate throws error if invalid S3 URI is provided', async (t) => {
