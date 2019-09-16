@@ -836,6 +836,34 @@ async function createQueue(queueName) {
 exports.createQueue = createQueue;
 
 /**
+ * Publish a message to an SNS topic.
+ *
+ * Catch any thrown errors and log them.
+ *
+ * @param {string} snsTopicArn - SNS topic ARN
+ * @param {Object} message - Message object
+ * @returns {Promise}
+ */
+exports.publishSnsMessage = async (
+  snsTopicArn,
+  message
+) => {
+  try {
+    if (!snsTopicArn) {
+      throw new Error('Missing SNS topic ARN');
+    }
+
+    await exports.sns().publish({
+      TopicArn: snsTopicArn,
+      Message: JSON.stringify(message)
+    }).promise();
+  } catch (err) {
+    log.error(`Failed to post message to SNS topic: ${snsTopicArn}`, err);
+    log.info('Undelivered message', message);
+  }
+};
+
+/**
 * Send a message to AWS SQS
 *
 * @param {string} queueUrl - url of the SQS queue

@@ -2,7 +2,7 @@
 
 const merge = require('lodash.merge');
 
-const aws = require('@cumulus/common/aws');
+const { publishSnsMessage } = require('@cumulus/common/aws');
 const { getExecutionUrl } = require('@cumulus/ingest/aws');
 const {
   getSfEventMessageObject,
@@ -20,34 +20,6 @@ const StepFunctions = require('@cumulus/common/StepFunctions');
 const Execution = require('../models/executions');
 const Granule = require('../models/granules');
 const Pdr = require('../models/pdrs');
-
-/**
- * Publish a message to an SNS topic.
- *
- * Catch any thrown errors and log them.
- *
- * @param {string} snsTopicArn - SNS topic ARN
- * @param {Object} message - Message object
- * @returns {Promise}
- */
-async function publishSnsMessage(
-  snsTopicArn,
-  message
-) {
-  try {
-    if (!snsTopicArn) {
-      throw new Error('Missing SNS topic ARN');
-    }
-
-    await aws.sns().publish({
-      TopicArn: snsTopicArn,
-      Message: JSON.stringify(message)
-    }).promise();
-  } catch (err) {
-    log.error(`Failed to post message to SNS topic: ${snsTopicArn}`, err);
-    log.info('Undelivered message', message);
-  }
-}
 
 /**
  * Publish SNS message for execution reporting.
