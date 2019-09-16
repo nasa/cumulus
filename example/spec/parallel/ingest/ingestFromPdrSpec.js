@@ -213,12 +213,6 @@ describe('Ingesting from PDR', () => {
           );
           expectedParsePdrOutput.granules[0].dataType += testSuffix;
           expectedParsePdrOutput.pdr.name = pdrFilename;
-
-          // parsePdrExecutionStatus = await waitForCompletedExecution(parsePdrExecutionArn);
-          // queueGranulesOutput = await lambdaStep.getStepOutput(
-          //   parsePdrExecutionArn,
-          //   'QueueGranules'
-          // );
         } catch (error) {
           console.log(error);
         }
