@@ -87,46 +87,7 @@ test.after.always(async () => {
   stepFunctionsStub.restore();
 });
 
-test('getReportGranuleMessages returns no messages for non-SNS events', (t) => {
-  let messages = getReportGranuleMessages({});
-  t.is(messages.length, 0);
-
-  messages = getReportGranuleMessages({
-    Records: [{
-      Sns: {}
-    }]
-  });
-  t.is(messages.length, 0);
-
-  messages = getReportGranuleMessages({
-    Records: [{
-      EventSource: 'aws:cloudwatch',
-      CloudWatch: {
-        Message: 'message'
-      }
-    }]
-  });
-  t.is(messages.length, 0);
-
-  messages = getReportGranuleMessages({
-    Records: [{
-      EventSource: 'aws:states',
-      States: {
-        Message: JSON.stringify({
-          cumulus_meta: {
-            execution_name: 'exec123',
-            state_machine: 'workflow123'
-          },
-          meta: {},
-          payload: {}
-        })
-      }
-    }]
-  });
-  t.is(messages.length, 0);
-});
-
-test('getReportExecutionMessages returns correct number of messages', (t) => {
+test('getReportGranuleMessages returns correct number of messages', (t) => {
   let messages = getReportGranuleMessages({
     Records: [{
       EventSource: 'aws:sns',
@@ -161,25 +122,6 @@ test('getReportExecutionMessages returns correct number of messages', (t) => {
     ]
   });
   t.is(messages.length, 3);
-});
-
-test('handler correctly ignores non-granule message', async (t) => {
-  const response = await handler({
-    Records: [{
-      EventSource: 'aws:states',
-      Sns: {
-        Message: JSON.stringify({
-          cumulus_meta: {
-            execution_name: 'exec123',
-            state_machine: 'workflow123'
-          },
-          meta: {},
-          payload: {}
-        })
-      }
-    }]
-  });
-  t.deepEqual(response, []);
 });
 
 test('handler correctly creates granule record', async (t) => {

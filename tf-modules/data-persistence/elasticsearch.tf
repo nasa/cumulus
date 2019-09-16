@@ -29,6 +29,8 @@ resource "aws_elasticsearch_domain" "es" {
   snapshot_options {
     automated_snapshot_start_hour = 0
   }
+
+  tags = local.default_tags
 }
 
 data "aws_iam_policy_document" "es_access_policy" {
@@ -48,9 +50,8 @@ data "aws_iam_policy_document" "es_access_policy" {
 
 resource "aws_elasticsearch_domain_policy" "es_domain_policy" {
   count           = local.deploy_outside_vpc && local.include_es_policy ? 1 : 0
-  domain_name     = local.es_domain_name
+  domain_name     = aws_elasticsearch_domain.es[0].domain_name
   access_policies = data.aws_iam_policy_document.es_access_policy[0].json
-  depends_on      = [aws_elasticsearch_domain.es]
 }
 
 resource "aws_iam_service_linked_role" "es" {
@@ -82,6 +83,8 @@ resource "aws_security_group" "es_vpc" {
     protocol  = "-1"
     self      = true
   }
+
+  tags = local.default_tags
 }
 
 resource "aws_elasticsearch_domain" "es_vpc" {
@@ -116,11 +119,12 @@ resource "aws_elasticsearch_domain" "es_vpc" {
   depends_on = [
     "aws_iam_service_linked_role.es"
   ]
+
+  tags = local.default_tags
 }
 
 resource "aws_elasticsearch_domain_policy" "es_vpc_domain_policy" {
-  count      = local.deploy_inside_vpc ? 1 : 0
-  depends_on = [aws_elasticsearch_domain.es_vpc]
+  count = local.deploy_inside_vpc ? 1 : 0
 
   domain_name     = local.es_domain_name
   access_policies = <<JSON
@@ -150,6 +154,7 @@ resource "aws_cloudwatch_metric_alarm" "es_nodes_low" {
   statistic           = "Average"
   threshold           = var.elasticsearch_config.instance_count
   alarm_description   = "There are less instances running than the desired"
+  tags                = local.default_tags
 }
 
 resource "aws_cloudwatch_metric_alarm" "es_nodes_high" {
