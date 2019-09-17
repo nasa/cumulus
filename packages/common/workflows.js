@@ -7,10 +7,10 @@ const { s3 } = require('./aws');
  * @param {string} bucketName - S3 internal bucket name
  * @returns {Promise.<Object>} template as a JSON object
  */
-function getWorkflowTemplate(stackName, bucketName) {
+async function getWorkflowTemplate(stackName, bucketName) {
   const key = `${stackName}/workflows/template.json`;
-  return s3().getObject({ Bucket: bucketName, Key: key }).promise()
-    .then((templateJson) => JSON.parse(templateJson.Body.toString()));
+  const templateJson = await s3().getObject({ Bucket: bucketName, Key: key }).promise();
+  return JSON.parse(templateJson.Body.toString());
 }
 
 
@@ -21,10 +21,10 @@ function getWorkflowTemplate(stackName, bucketName) {
  * @param {string} bucketName - S3 internal bucket name
  * @returns {Promise.<Array>} list of workflows as a JSON array
  */
-function getWorkflowList(stackName, bucketName) {
+async function getWorkflowList(stackName, bucketName) {
   const key = `${stackName}/workflows/list.json`;
-  return s3().getObject({ Bucket: bucketName, Key: key }).promise()
-    .then((templateJson) => JSON.parse(templateJson.Body.toString()));
+  const listJson = await s3().getObject({ Bucket: bucketName, Key: key }).promise();
+  return JSON.parse(listJson.Body.toString());
 }
 
 /**
@@ -36,14 +36,12 @@ function getWorkflowList(stackName, bucketName) {
  * @param {string} workflowName - workflow name
  * @returns {Promise.<string>} - workflow arn
  */
-function getWorkflowArn(stackName, bucketName, workflowName) {
-  return getWorkflowList(stackName, bucketName)
-    .then((list) => {
-      const match = list.filter((wf) => wf.name === workflowName);
-      if (match.length > 1) throw new Error(`Found more than one workflow with name ${workflowName}!`);
-      if (match.length === 0) throw new Error(`Found no workflows with name ${workflowName}!`);
-      return match[0].arn;
-    });
+async function getWorkflowArn(stackName, bucketName, workflowName) {
+  const list = await getWorkflowList(stackName, bucketName);
+  const match = list.filter((wf) => wf.name === workflowName);
+  if (match.length > 1) throw new Error(`Found more than one workflow with name ${workflowName}!`);
+  if (match.length === 0) throw new Error(`Found no workflows with name ${workflowName}!`);
+  return match[0].arn;
 }
 
 module.exports = {
