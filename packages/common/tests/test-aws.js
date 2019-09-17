@@ -116,6 +116,42 @@ test('pullStepFunctionEvent returns original message if message not on S3', asyn
   t.deepEqual(message, event);
 });
 
+test.serial('pullStepFunctionEvent returns message from S3 to target', async (t) => {
+  const expectedMessage = {
+    cumulus_meta: {
+      state_machine: 'state machine',
+      execution_name: 'execution'
+    },
+    payload: {
+      someKey: 'some data'
+    }
+  };
+
+  const event = {
+    cumulus_meta: {
+      state_machine: 'state machine',
+      execution_name: 'execution'
+    },
+    payload: {},
+    replace: {
+      Bucket: 'test bucket',
+      Key: 'key',
+      TargetPath: '$.payload'
+    }
+  };
+
+  const stub = sinon.stub(aws, 'getS3Object').resolves({
+    Body: JSON.stringify({ someKey: 'some data' })
+  });
+  try {
+    const message = await aws.pullStepFunctionEvent(event);
+    t.deepEqual(message, expectedMessage);
+  } finally {
+    stub.restore();
+  }
+});
+
+
 test.serial('pullStepFunctionEvent returns message from S3', async (t) => {
   const fullMessage = {
     cumulus_meta: {
@@ -142,7 +178,6 @@ test.serial('pullStepFunctionEvent returns message from S3', async (t) => {
 
   try {
     const message = await aws.pullStepFunctionEvent(event);
-
     t.deepEqual(message, fullMessage);
   } finally {
     stub.restore();
