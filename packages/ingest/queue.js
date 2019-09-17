@@ -30,15 +30,16 @@ const { getWorkflowArn } = require('@cumulus/common/workflows');
 async function enqueueParsePdrMessage({
   pdr,
   queueUrl,
-  parsePdrMessageTemplateUri,
+  stackName,
+  systemBucket,
   parsePdrWorkflow,
   provider,
   collection,
   parentExecutionArn
 }) {
-  const messageTemplate = await getMessageFromTemplate(parsePdrMessageTemplateUri);
+  const messageTemplate = await getMessageFromTemplate(`s3://${systemBucket}/${stackName}/workflows/template.json`);
   const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
-  const workflowArn = getWorkflowArn(parsePdrWorkflow);
+  const workflowArn = await getWorkflowArn(stackName, systemBucket, parsePdrWorkflow);
   const payload = { pdr };
 
   const message = buildQueueMessageFromTemplate({
@@ -81,16 +82,17 @@ module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
 async function enqueueGranuleIngestMessage({
   granule,
   queueUrl,
-  granuleIngestMessageTemplateUri,
+  stackName,
+  systemBucket,
   granuleIngestWorkflow,
   provider,
   collection,
   pdr,
   parentExecutionArn
 }) {
-  const messageTemplate = await getMessageFromTemplate(granuleIngestMessageTemplateUri);
+  const messageTemplate = await getMessageFromTemplate(`s3://${systemBucket}/${stackName}/workflows/template.json`);
   const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
-  const workflowArn = getWorkflowArn(granuleIngestWorkflow);
+  const workflowArn = await getWorkflowArn(stackName, systemBucket, granuleIngestWorkflow);
 
   const payload = {
     granules: [

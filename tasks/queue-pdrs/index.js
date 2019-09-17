@@ -20,8 +20,10 @@ async function queuePdrs(event) {
   const executionArns = await Promise.all(
     pdrs.map((pdr) => enqueueParsePdrMessage({
       pdr,
+      stackName: event.config.stackName,
+      systemBucket: event.config.internalBucket,
       queueUrl: event.config.queueUrl,
-      parsePdrWorkflow: event.config.parsePdrWorkflow,
+      parsePdrWorkflow: event.config.parsePdrWorkflowName,
       provider: event.config.provider,
       collection: event.config.collection,
       parentExecutionArn: arn

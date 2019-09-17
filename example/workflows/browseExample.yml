@@ -52,8 +52,7 @@ DiscoverGranulesBrowseExample:
               provider: '{$.meta.provider}'
               internalBucket: '{$.meta.buckets.internal.name}'
               stackName: '{$.meta.stack}'
-              granuleIngestMessageTemplateUri: '{$.meta.template}'
-              granuleIngestWorkflow: 'IngestGranule'
+              granuleIngestWorkflowName: 'CookbookBrowseExample'
               queueUrl: '{$.meta.queues.startSF}'
       Type: Task
       Resource: ${QueueGranulesLambdaFunction.Arn}

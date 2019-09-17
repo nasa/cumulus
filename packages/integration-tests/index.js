@@ -658,7 +658,7 @@ async function buildWorkflow(
 ) {
   setProcessEnvironment(stackName, bucketName);
 
-  const template = await getWorkflowTemplate(stackName, bucketName, workflowName);
+  const template = await getWorkflowTemplate(stackName, bucketName);
   const { name, version } = collection || {};
   const collectionInfo = collection
     ? await new Collection().get({ name, version })

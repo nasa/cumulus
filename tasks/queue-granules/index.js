@@ -15,10 +15,14 @@ const { getExecutionArn } = require('@cumulus/common/aws');
 **/
 async function queueGranules(event) {
   const granules = event.input.granules || [];
+  const {
+    internalBucket,
+    stackName
+  } = event.config;
 
   const collectionConfigStore = new CollectionConfigStore(
-    event.config.internalBucket,
-    event.config.stackName
+    internalBucket,
+    stackName
   );
 
   const arn = getExecutionArn(
@@ -32,7 +36,9 @@ async function queueGranules(event) {
       return enqueueGranuleIngestMessage({
         granule,
         queueUrl: event.config.queueUrl,
-        granuleIngestWorkflow: event.config.granuleIngestWorkflow,
+        stackName,
+        systemBucket: internalBucket,
+        granuleIngestWorkflow: event.config.granuleIngestWorkflowName,
         provider: event.config.provider,
         collection: collectionConfig,
         pdr: event.input.pdr,

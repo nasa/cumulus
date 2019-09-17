@@ -5,16 +5,16 @@
   "required": [
     "provider",
     "queueUrl",
-    "granuleIngestMessageTemplateUri",
+    "granuleIngestWorkflowName",
     "stackName",
     "internalBucket"
   ],
   "additionalProperties": false,
   "properties": {
-    "granuleIngestMessageTemplateUri": { "type": "string" },
-    "internalBucket": { "type": "string" },
     "provider": { "type": "object" },
     "queueUrl": { "type": "string" },
-    "stackName": { "type": "string" }
+    "internalBucket": { "type": "string" },
+    "stackName": { "type": "string" },
+    "granuleIngestWorkflowName": { "type": "string" }
   }
 }
