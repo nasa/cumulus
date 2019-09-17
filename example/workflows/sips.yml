@@ -6,14 +6,13 @@ SyncGranule:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          Report:
-            cumulus_message:
-              input: '{$}'
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
       Retry:
         - &LambdaServiceExceptionRetry
           ErrorEquals:
@@ -25,30 +24,29 @@ SyncGranule:
           BackoffRate: 2
       Next: SyncGranule
     SyncGranule:
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          SyncGranule:
-            buckets: '{$.meta.buckets}'
-            provider: '{$.meta.provider}'
-            collection: '{$.meta.collection}'
-            stack: '{$.meta.stack}'
-            fileStagingDir: 'custom-staging-dir'
-            downloadBucket: '{$.cumulus_meta.system_bucket}'
-            duplicateHandling: '{$.meta.collection.duplicateHandling}'
-            cumulus_message:
-              outputs:
-                - source: '{$.granules}'
-                  destination: '{$.meta.input_granules}'
-                - source: '{$}'
-                  destination: '{$.payload}'
-                - source: '{$.process}'
-                  destination: '{$.cumulus_meta.process}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        stack: '{$.meta.stack}'
+        fileStagingDir: 'custom-staging-dir'
+        downloadBucket: '{$.cumulus_meta.system_bucket}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
+        cumulus_message:
+          outputs:
+            - source: '{$.granules}'
+              destination: '{$.meta.input_granules}'
+            - source: '{$}'
+              destination: '{$.payload}'
+            - source: '{$.process}'
+              destination: '{$.cumulus_meta.process}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -61,19 +59,18 @@ SyncGranule:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          StopStatus:
-            sfnEnd: true
-            stack: '{$.meta.stack}'
-            bucket: '{$.meta.buckets.internal.name}'
-            stateMachine: '{$.cumulus_meta.state_machine}'
-            executionName: '{$.cumulus_meta.execution_name}'
-            cumulus_message:
-              input: '{$}'
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -90,6 +87,11 @@ IngestAndPublishGranule:
   StartAt: Report
   States:
     Report:
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Parameters:
@@ -106,30 +108,29 @@ IngestAndPublishGranule:
         - <<: *LambdaServiceExceptionRetry
       Next: SyncGranule
     SyncGranule:
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          SyncGranule:
-            buckets: '{$.meta.buckets}'
-            provider: '{$.meta.provider}'
-            collection: '{$.meta.collection}'
-            stack: '{$.meta.stack}'
-            downloadBucket: '{$.cumulus_meta.system_bucket}'
-            duplicateHandling: '{$.meta.collection.duplicateHandling}'
-            pdr: '{$.meta.pdr}'
-            cumulus_message:
-              outputs:
-                - source: '{$.granules}'
-                  destination: '{$.meta.input_granules}'
-                - source: '{$}'
-                  destination: '{$.payload}'
-                - source: '{$.process}'
-                  destination: '{$.cumulus_meta.process}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        stack: '{$.meta.stack}'
+        downloadBucket: '{$.cumulus_meta.system_bucket}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
+        pdr: '{$.meta.pdr}'
+        cumulus_message:
+          outputs:
+            - source: '{$.granules}'
+              destination: '{$.meta.input_granules}'
+            - source: '{$}'
+              destination: '{$.payload}'
+            - source: '{$.process}'
+              destination: '{$.cumulus_meta.process}'
       Retry:
           - ErrorEquals:
               - States.ALL
@@ -149,23 +150,22 @@ IngestAndPublishGranule:
           Next: ProcessingStep
       Default: StopStatus
     ProcessingStep:
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          ProcessingStep:
-            bucket: '{$.meta.buckets.internal.name}'
-            collection: '{$.meta.collection}'
-            cmrMetadataFormat: '{$.meta.cmrMetadataFormat}'
-            additionalUrls: '{$.meta.additionalUrls}'
-            cumulus_message:
-              outputs:
-                - source: '{$.files}'
-                  destination: '{$.payload}'
       Type: Task
       Resource: ${FakeProcessingLambdaFunction.Arn}
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        bucket: '{$.meta.buckets.internal.name}'
+        collection: '{$.meta.collection}'
+        cmrMetadataFormat: '{$.meta.cmrMetadataFormat}'
+        additionalUrls: '{$.meta.additionalUrls}'
+        cumulus_message:
+          outputs:
+            - source: '{$.files}'
+              destination: '{$.payload}'
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -178,17 +178,16 @@ IngestAndPublishGranule:
           MaxAttempts: 3
       Next: FilesToGranulesStep
     FilesToGranulesStep:
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          FilesToGranulesStep:
-            inputGranules: '{$.meta.input_granules}'
-            granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
       Type: Task
       Resource: ${FilesToGranulesLambdaFunction.Arn}
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        inputGranules: '{$.meta.input_granules}'
+        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -198,20 +197,19 @@ IngestAndPublishGranule:
           Next: StopStatus
       Next: MoveGranuleStep
     MoveGranuleStep:
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          MoveGranuleStep:
-            bucket: '{$.meta.buckets.internal.name}'
-            buckets: '{$.meta.buckets}'
-            distribution_endpoint: '{$.meta.distribution_endpoint}'
-            collection: '{$.meta.collection}'
-            duplicateHandling: '{$.meta.collection.duplicateHandling}'
       Type: Task
       Resource: ${MoveGranulesLambdaFunction.Arn}
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        bucket: '{$.meta.buckets.internal.name}'
+        buckets: '{$.meta.buckets}'
+        distribution_endpoint: '{$.meta.distribution_endpoint}'
+        collection: '{$.meta.collection}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -221,20 +219,19 @@ IngestAndPublishGranule:
           Next: StopStatus
       Next: CmrStep
     CmrStep:
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          CmrStep:
-            bucket: '{$.meta.buckets.internal.name}'
-            stack: '{$.meta.stack}'
-            cmr: '{$.meta.cmr}'
-            launchpad: '{$.meta.launchpad}'
-            process: '{$.cumulus_meta.process}'
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        bucket: '{$.meta.buckets.internal.name}'
+        stack: '{$.meta.stack}'
+        cmr: '{$.meta.cmr}'
+        launchpad: '{$.meta.launchpad}'
+        process: '{$.cumulus_meta.process}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -247,19 +244,18 @@ IngestAndPublishGranule:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          StopStatus:
-            sfnEnd: true
-            stack: '{$.meta.stack}'
-            bucket: '{$.meta.buckets.internal.name}'
-            stateMachine: '{$.cumulus_meta.state_machine}'
-            executionName: '{$.cumulus_meta.execution_name}'
-            cumulus_message:
-              input: '{$}'
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -276,6 +272,11 @@ IngestGranule:
   StartAt: Report
   States:
     Report:
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Parameters:
@@ -293,27 +294,26 @@ IngestGranule:
       Next: SyncGranule
     SyncGranule:
       Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          SyncGranule:
-            buckets: '{$.meta.buckets}'
-            provider: '{$.meta.provider}'
-            collection: '{$.meta.collection}'
-            stack: '{$.meta.stack}'
-            downloadBucket: '{$.cumulus_meta.system_bucket}'
-            duplicateHandling: '{$.meta.collection.duplicateHandling}'
-            pdr: '{$.meta.pdr}'
-            cumulus_message:
-              outputs:
-                - source: '{$.granules}'
-                  destination: '{$.meta.input_granules}'
-                - source: '{$}'
-                  destination: '{$.payload}'
-                - source: '{$.process}'
-                  destination: '{$.cumulus_meta.process}'
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        stack: '{$.meta.stack}'
+        downloadBucket: '{$.cumulus_meta.system_bucket}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
+        pdr: '{$.meta.pdr}'
+        cumulus_message:
+          outputs:
+            - source: '{$.granules}'
+              destination: '{$.meta.input_granules}'
+            - source: '{$}'
+              destination: '{$.payload}'
+            - source: '{$.process}'
+              destination: '{$.cumulus_meta.process}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -336,18 +336,17 @@ IngestGranule:
       Default: StopStatus
     ProcessingStep:
       Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          ProcessingStep:
-            bucket: '{$.meta.buckets.internal.name}'
-            collection: '{$.meta.collection}'
-            cumulus_message:
-              outputs:
-                - source: '{$.files}'
-                  destination: '{$.payload}'
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        bucket: '{$.meta.buckets.internal.name}'
+        collection: '{$.meta.collection}'
+        cumulus_message:
+          outputs:
+            - source: '{$.files}'
+              destination: '{$.payload}'
       Type: Task
       Resource: ${FakeProcessingLambdaFunction.Arn}
       Catch:
@@ -363,14 +362,13 @@ IngestGranule:
       Next: FilesToGranulesStep
     FilesToGranulesStep:
       Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          FilesToGranulesStep:
-            inputGranules: '{$.meta.input_granules}'
-            granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        inputGranules: '{$.meta.input_granules}'
+        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
       Type: Task
       Resource: ${FilesToGranulesLambdaFunction.Arn}
       Retry:
@@ -382,20 +380,19 @@ IngestGranule:
           Next: StopStatus
       Next: MoveGranuleStep
     MoveGranuleStep:
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          MoveGranuleStep:
-            bucket: '{$.meta.buckets.internal.name}'
-            buckets: '{$.meta.buckets}'
-            distribution_endpoint: '{$.meta.distribution_endpoint}'
-            collection: '{$.meta.collection}'
-            duplicateHandling: '{$.meta.collection.duplicateHandling}'
       Type: Task
       Resource: ${MoveGranulesLambdaFunction.Arn}
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        bucket: '{$.meta.buckets.internal.name}'
+        buckets: '{$.meta.buckets}'
+        distribution_endpoint: '{$.meta.distribution_endpoint}'
+        collection: '{$.meta.collection}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -408,19 +405,18 @@ IngestGranule:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          StopStatus:
-            sfnEnd: true
-            stack: '{$.meta.stack}'
-            bucket: '{$.meta.buckets.internal.name}'
-            stateMachine: '{$.cumulus_meta.state_machine}'
-            executionName: '{$.cumulus_meta.execution_name}'
-            cumulus_message:
-              input: '{$}'
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -440,32 +436,30 @@ PublishGranule:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          Report:
-            cumulus_message:
-              input: '{$}'
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Next: CmrStep
     CmrStep:
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          CmrStep:
-            bucket: '{$.meta.buckets.internal.name}'
-            stack: '{$.meta.stack}'
-            cmr: '{$.meta.cmr}'
-            launchpad: '{$.meta.launchpad}'
-            process: 'N/A'
       Type: Task
       Resource: ${PostToCmrLambdaFunction.Arn}
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        bucket: '{$.meta.buckets.internal.name}'
+        stack: '{$.meta.stack}'
+        cmr: '{$.meta.cmr}'
+        launchpad: '{$.meta.launchpad}'
+        process: 'N/A'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -478,19 +472,18 @@ PublishGranule:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          StopStatus:
-            sfnEnd: true
-            stack: '{$.meta.stack}'
-            bucket: '{$.meta.buckets.internal.name}'
-            stateMachine: '{$.cumulus_meta.state_machine}'
-            executionName: '{$.cumulus_meta.execution_name}'
-            cumulus_message:
-              input: '{$}'
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -523,15 +516,14 @@ ParsePdr:
       Next: ParsePdr
     ParsePdr:
       Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          ParsePdr:
-            provider: '{$.meta.provider}'
-            bucket: '{$.meta.buckets.internal.name}'
-            stack: '{$.meta.stack}'
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        provider: '{$.meta.provider}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stack: '{$.meta.stack}'
       Type: Task
       Resource: ${ParsePdrLambdaFunction.Arn}
       Retry:
@@ -543,6 +535,11 @@ ParsePdr:
           Next: StopStatus
       Next: QueueGranules
     QueueGranules:
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
       CumulusConfig:
         provider: '{$.meta.provider}'
         internalBucket: '{$.meta.buckets.internal.name}'
@@ -561,21 +558,20 @@ ParsePdr:
           Next: StopStatus
       Next: CheckStatus
     CheckStatus:
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          CheckStatus:
-            cumulus_message:
-              outputs:
-                - source: '{$}'
-                  destination: '{$.payload}'
-                - source: '{$.isFinished}'
-                  destination: '{$.cumulus_meta.isPdrFinished}'
       Type: Task
       Resource: ${PdrStatusCheckLambdaFunction.Arn}
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        cumulus_message:
+          outputs:
+            - source: '{$}'
+              destination: '{$.payload}'
+            - source: '{$.isFinished}'
+              destination: '{$.cumulus_meta.isPdrFinished}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -595,18 +591,17 @@ ParsePdr:
           Next: StopStatus
       Default: StopStatus
     PdrStatusReport:
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          PdrStatusReport:
-            cumulus_message:
-              input: '{$}'
-      ResultPath: null
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
+      ResultPath: null
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -623,19 +618,18 @@ ParsePdr:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          StopStatus:
-            sfnEnd: true
-            stack: '{$.meta.stack}'
-            bucket: '{$.meta.buckets.internal.name}'
-            stateMachine: '{$.cumulus_meta.state_machine}'
-            executionName: '{$.cumulus_meta.execution_name}'
-            cumulus_message:
-              input: '{$}'
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -669,16 +663,15 @@ DiscoverGranules:
       Next: DiscoverGranules
     DiscoverGranules:
       Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          DiscoverGranules:
-            provider: '{$.meta.provider}'
-            collection: '{$.meta.collection}'
-            buckets: '{$.meta.buckets}'
-            stack: '{$.meta.stack}'
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        buckets: '{$.meta.buckets}'
+        stack: '{$.meta.stack}'
       Type: Task
       Resource: ${DiscoverGranulesLambdaFunction.Arn}
       Retry:
@@ -690,6 +683,11 @@ DiscoverGranules:
           Next: StopStatus
       Next: QueueGranules
     QueueGranules:
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
       CumulusConfig:
         provider: '{$.meta.provider}'
         internalBucket: '{$.meta.buckets.internal.name}'
@@ -711,19 +709,18 @@ DiscoverGranules:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          StopStatus:
-            sfnEnd: true
-            stack: '{$.meta.stack}'
-            bucket: '{$.meta.buckets.internal.name}'
-            stateMachine: '{$.cumulus_meta.state_machine}'
-            executionName: '{$.cumulus_meta.execution_name}'
-            cumulus_message:
-              input: '{$}'
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -755,19 +752,18 @@ DiscoverAndQueuePdrs:
         - <<: *LambdaServiceExceptionRetry
       Next: DiscoverPdrs
     DiscoverPdrs:
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          DiscoverPdrs:
-            stack: '{$.meta.stack}'
-            provider: '{$.meta.provider}'
-            bucket: '{$.meta.buckets.internal.name}'
-            collection: '{$.meta.collection}'
       Type: Task
       Resource: ${DiscoverPdrsLambdaFunction.Arn}
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        stack: '{$.meta.stack}'
+        provider: '{$.meta.provider}'
+        bucket: '{$.meta.buckets.internal.name}'
+        collection: '{$.meta.collection}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -777,14 +773,19 @@ DiscoverAndQueuePdrs:
           Next: StopStatus
       Next: QueuePdrs
     QueuePdrs:
+      Type: Task
+      Resource: ${QueuePdrsLambdaFunction.Arn}
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
       CumulusConfig:
         queueUrl: '{$.meta.queues.startSF}'
         parsePdrMessageTemplateUri: '{$.meta.templates.ParsePdr}'
         parsePdrWorkflow: 'ParsePdr'
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
-      Type: Task
-      Resource: ${QueuePdrsLambdaFunction.Arn}
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -797,19 +798,18 @@ DiscoverAndQueuePdrs:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          StopStatus:
-            sfnEnd: true
-            stack: '{$.meta.stack}'
-            bucket: '{$.meta.buckets.internal.name}'
-            stateMachine: '{$.cumulus_meta.state_machine}'
-            executionName: '{$.cumulus_meta.execution_name}'
-            cumulus_message:
-              input: '{$}'
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            FullMessage: true
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:

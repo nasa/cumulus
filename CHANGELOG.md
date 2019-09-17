@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- **CUMULUS-1447** 
+  - Consolidated all remote message handling code into @common/aws
+  - Update remote message code to handle updated CMA remote message flags 
+  - Update example SIPS workflows to utilize Parameterized CMA configuration
+
 - **CUMULUS-1432**
   - `logs` endpoint takes the level parameter as a string and not a number
   - Elasticsearch term query generation no longer converts numbers to boolean
@@ -17,6 +22,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **CUMULUS-1432** `logs` endpoint filter correctly filters logs by level
 - **CUMULUS-1484**  `useMessageAdapter` now does not set CUMULUS_MESSAGE_ADAPTER_DIR when `true`
+
+### BREAKING CHANGES
+
+- **CUMULUS-1447**
+  - The newest release of the Cumulus Message Adapter (v1.1.0) requires that parameterized configuration be used for remote message functionality.     Once released, kes will automatically bring in CMA v1.1.0 without additional configuration. 
+  
+  As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0. 
 
 ## [v1.14.1] - 2019-08-29
 
