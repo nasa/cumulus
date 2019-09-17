@@ -46,6 +46,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Update remote message code to handle updated CMA remote message flags
   - Update example SIPS workflows to utilize Parameterized CMA configuration
 
+- **CUMULUS-1449**
+  - Cumulus now uses a universal workflow template when starting workflow that contains general information specific to the deployment, but not specific to the workflow. Workflow Task configs must be defined using AWS step function parameters. See following entry.
+  - Changed the way workflow configs are defined. Task configs must now be defined under the cma.workflow_config.taskName key in the Parameters section of a step function definition. See `example/workflows/sips.yml` in the core repository for examples of how to set the Parameters.
+
+### Removed
+
+- **CUMULUS-1449**
+  - Retired `CumulusConfig` as part of step function definitions, as this is an artifact of the way Kes parses workflow definitions that was not possible to migrate to Terraform. Use AWS Parameters and the `workflow_config` key instead. See change note above.
+  - Removed individual workflow templates.
+
 ### Fixed
 
 - **CUMULUS-1432** `logs` endpoint filter correctly filters logs by level
