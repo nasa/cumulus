@@ -3,11 +3,22 @@ prefix     = "myprefix"
 
 elasticsearch_alarms = [
   {
-    "arn" = "alarm1-arn"
-    "name" = "alarm1"
+    "arn" = "es-alarm1-arn"
+    "name" = "es-alarm1"
   },
   {
     "arn" = "alarm2-arn"
     "name" = "alarm2"
+  }
+]
+
+ecs_service_alarms = [
+  {
+    "arn" = "ecs-alarm1-arn"
+    "name" = "ecs-alarm1"
+  },
+  {
+    "arn" = "ecs-alarm2-arn"
+    "name" = "ecs-alarm2"
   }
 ]
