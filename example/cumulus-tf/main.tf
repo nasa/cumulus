@@ -46,6 +46,7 @@ module "cumulus" {
   protected_buckets = var.protected_buckets
   private_buckets   = var.private_buckets
 
+  elasticsearch_alarms            = data.terraform_remote_state.data_persistence.outputs.elasticsearch_alarms
   elasticsearch_domain_arn        = data.terraform_remote_state.data_persistence.outputs.elasticsearch_domain_arn
   elasticsearch_hostname          = data.terraform_remote_state.data_persistence.outputs.elasticsearch_hostname
   elasticsearch_security_group_id = data.terraform_remote_state.data_persistence.outputs.elasticsearch_security_group_id
