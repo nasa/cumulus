@@ -113,7 +113,8 @@
     "split2": "^2.2.0",
     "tough-cookie": "^2.4.3",
     "url-join": "^4.0.0",
-    "uuid": "^3.2.1"
+    "uuid": "^3.2.1",
+    "xmlchecker": "^0.1.0"
   },
   "devDependencies": {
     "ava": "^2.1.0",

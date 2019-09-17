@@ -5,7 +5,6 @@ const router = require('express-promise-router')();
 // const passport = require('passport');
 // const passportSaml = require('passport-saml');
 const saml = require('samlify');
-const validator = require('@authenio/samlify-xsd-schema-validator');
 const xmlChecker = require('xmlChecker');
 const fs = require('fs');
 const {
@@ -77,7 +76,7 @@ const idp = new saml2.IdentityProvider(idp_options);
 // passport-saml stuff
 // passport.use(new passportSaml.Strategy(
 //   {
-//     path: 'https://cumulus-sandbox.earthdata.nasa.gov/saml/sso', //'https://5hlnofihz8.execute-api.us-east-1.amazonaws.com:8000/dev/saml/auth', // assert? 
+//     path: 'https://cumulus-sandbox.earthdata.nasa.gov/saml/sso', //'https://5hlnofihz8.execute-api.us-east-1.amazonaws.com:8000/dev/saml/auth', // assert?
 //     callbackUrl: 'https://cumulus-sandbox.earthdata.nasa.gov/saml/sso',
 //     entryPoint: 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso', //'https://auth.launchpad-sbx.nasa.gov', // IDP url
 //     issuer: 'https://cumulus-sandbox.earthdata.nasa.gov/', // entity ID
@@ -101,18 +100,19 @@ const idp = new saml2.IdentityProvider(idp_options);
 //   }
 // ));
 
-// samlify set up providers
+//samlify set up providers
 const idp = saml.IdentityProvider({
-  metadata: fs.readFileSync('/Users/kakelly2/Documents/Projects/launchpad-sbx-metadata.xml')
+  metadata: fs.readFileSync('/Users/savoie/projects/cumulus/launchpad/launchpad-sbx-metadata.xml')
   // metadata: metadata[0]
 });
 const sp = saml.ServiceProvider({
-  metadata: fs.readFileSync('/Users/kakelly2/Documents/Projects/sp-metadata.xml')
+  metadata: fs.readFileSync('/Users/savoie/projects/cumulus/launchpad/sp-metadata.xml')
   // metadata: metadata[1]
 });
 
-samlify.setSchemaValidator({
+saml.setSchemaValidator({
   validate: (response) => {
+    console.log('validator', response);
     try {
       xmlChecker.check(response);
       return Promise.resolve('valid');
@@ -188,7 +188,7 @@ router.post("/saml/sso", (req, res) => {
   })
   .catch(console.error);
 
-  /* 
+  /*
   // Passort-saml stuff
   passport.authenticate('saml', { failureRedirect: '/', failureFlash: true }, (err, resp) => {
     if (err != null) console.log('merp', err);
@@ -199,8 +199,8 @@ router.post("/saml/sso", (req, res) => {
       .send('Redirecting');
   })
   */
-  
-  /* 
+
+  /*
   //saml2-js stuff
 // function(req, res) { // /assert
   // const state = get(event, 'query.state');

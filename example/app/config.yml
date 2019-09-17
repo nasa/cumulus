@@ -747,9 +747,23 @@ mhs4:
       port: 8004
     distribution:
       private: true
-      port: 7004
+      port: 7014
       logApiGatewayToCloudWatch: true
   logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
+  launchpad:
+    api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1'
+    passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
+  # oauth:
+  #   provider: earthdata
+  #   userGroup: N/A
+  oauth:
+    provider: launchpad
+    userGroup: GSFC-Cumulus-Dev
+  samlConfig:
+    entityID: 'https://cumulus-sandbox.earthdata.nasa.gov/jl-test-integration'
+    assertEndpoint: 'https://5hlnofihz8.execute-api.us-east-1.amazonaws.com:8000/dev/saml/auth'
+    idpLogin: 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso'
+    launchpadCertPath: 'something'
 
 mhs2:
   prefix: mhs2
