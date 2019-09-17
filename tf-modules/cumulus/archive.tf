@@ -16,9 +16,9 @@ module "archive" {
   ems_host = "change-ems-host"
 
   system_bucket     = var.system_bucket
-  public_buckets    = var.public_buckets
-  protected_buckets = var.protected_buckets
-  private_buckets   = var.private_buckets
+  public_buckets    = local.public_bucket_names
+  protected_buckets = local.protected_bucket_names
+  private_buckets   = local.private_bucket_names
 
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids

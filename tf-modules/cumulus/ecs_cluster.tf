@@ -73,7 +73,7 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
       "s3:PutLifecycleConfiguration",
       "s3:PutReplicationConfiguration"
     ]
-    resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}"]
+    resources = [for b in local.all_bucket_names : "arn:aws:s3:::${b}"]
   }
 
   statement {
@@ -85,7 +85,7 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
       "s3:ListMultipartUploadParts",
       "s3:PutObject*"
     ]
-    resources = [for b in flatten([var.public_buckets, var.protected_buckets, var.private_buckets, var.system_bucket]) : "arn:aws:s3:::${b}/*"]
+    resources = [for b in local.all_bucket_names : "arn:aws:s3:::${b}/*"]
   }
 
   statement {

@@ -49,10 +49,8 @@ module "cumulus" {
 
   permissions_boundary_arn = var.permissions_boundary_arn
 
-  system_bucket     = var.system_bucket
-  public_buckets    = var.public_buckets
-  protected_buckets = var.protected_buckets
-  private_buckets   = var.private_buckets
+  system_bucket = var.system_bucket
+  buckets       = var.buckets
 
   elasticsearch_domain_arn        = data.terraform_remote_state.data_persistence.outputs.elasticsearch_domain_arn
   elasticsearch_hostname          = data.terraform_remote_state.data_persistence.outputs.elasticsearch_hostname
