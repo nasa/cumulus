@@ -18,6 +18,9 @@ spec/**/*.output.payload.json
 yarn-error.log
 test_app/
 scripts/test_output/
+*.tfplan
+*.tfstate*
+ci_backend.tf
 terraform.tfvars
 terraform.tf
 .terraform/

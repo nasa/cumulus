@@ -16,6 +16,7 @@ declare -a param_list=(
   "bamboo_SECRET_PROVIDER_FTP_PORT"
   "bamboo_SECRET_VPC_CIDR_IP"
   "bamboo_AWS_REGION"
+  "bamboo_TFSTATE_BUCKET"
   "bamboo_CMR_PASSWORD"
   "bamboo_CMR_USERNAME"
   "bamboo_DEPLOYMENT"
@@ -114,6 +115,7 @@ if [[ $bamboo_NGAP_ENV = "SIT" ]]; then
   export VPC_CIDR_IP=$bamboo_SECRET_SIT_VPC_CIDR_IP
   export PROVIDER_HOST=$bamboo_SECRET_SIT_PROVIDER_HOST
   export SECURITY_GROUP=$bamboo_SECRET_SIT_SECURITY_GROUP
+  export TFSTATE_BUCKET=$bamboo_SIT_TFSTATE_BUCKET
   export SHARED_LOG_DESTINATION_ARN=$bamboo_SIT_SHARED_LOG_DESTINATION_ARN
   DEPLOYMENT=$bamboo_SIT_DEPLOYMENT
 fi
@@ -125,6 +127,11 @@ if [[ -z $DEPLOYMENT ]]; then
   if [[ $DEPLOYMENT == none ]]; then
     echo "Unable to determine integration stack" >&2
     exit 1
+  fi
+  if [[ $COMMIT_MESSAGE =~ deploy-terraform || $BRANCH =~ terraform ]]; then
+    echo "Detected terraform deployment branch or commit"
+    echo deployment "$DEPLOYMENT-tf"
+    DEPLOYMENT="$DEPLOYMENT-tf"
   fi
   echo export DEPLOYMENT=$DEPLOYMENT >> .bamboo_env_vars
 fi
