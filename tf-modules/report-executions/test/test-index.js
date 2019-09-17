@@ -82,10 +82,7 @@ test.after.always(async () => {
 });
 
 test('getReportExecutionMessages returns no messages for non-execution messages', (t) => {
-  let messages = getReportExecutionMessages({});
-  t.is(messages.length, 0);
-
-  messages = getReportExecutionMessages({
+  let messages = getReportExecutionMessages({
     EventSource: 'aws:sns',
     Records: [{
       Sns: {}

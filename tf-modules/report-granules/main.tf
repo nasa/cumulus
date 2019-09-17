@@ -1,3 +1,7 @@
+locals {
+  default_tags = { Deployment = var.prefix }
+}
+
 data "archive_file" "report_granules_package" {
   type        = "zip"
   source_file = "dist/index.js"
@@ -5,13 +9,13 @@ data "archive_file" "report_granules_package" {
 }
 
 resource "aws_lambda_function" "report_granules" {
-  filename         = "build/report_granules.zip"
-  function_name    = "${var.prefix}-report-granules"
-  role             = "${aws_iam_role.report_granules_lambda_role.arn}"
-  handler          = "index.handler"
-  runtime          = "nodejs8.10"
-  timeout          = 300
-  memory_size      = 256
+  filename      = "build/report_granules.zip"
+  function_name = "${var.prefix}-report-granules"
+  role          = "${aws_iam_role.report_granules_lambda_role.arn}"
+  handler       = "index.handler"
+  runtime       = "nodejs8.10"
+  timeout       = 300
+  memory_size   = 256
 
   source_code_hash = "${data.archive_file.report_granules_package.output_base64sha256}"
   vpc_config {
@@ -23,15 +27,19 @@ resource "aws_lambda_function" "report_granules" {
       GranulesTable = var.granules_table
     }
   }
+
+  tags = local.default_tags
 }
 
 resource "aws_cloudwatch_log_group" "report_granules_logs" {
   name              = "/aws/lambda/${aws_lambda_function.report_granules.function_name}"
   retention_in_days = 14
+  tags              = local.default_tags
 }
 
 resource "aws_sns_topic" "report_granules_topic" {
   name = "${var.prefix}-report-granules-topic"
+  tags = local.default_tags
 }
 
 resource "aws_sns_topic_subscription" "report_granules_trigger" {

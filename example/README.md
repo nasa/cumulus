@@ -1,3 +1,4 @@
+
 #  Cumulus Deployment Example
 
 We use this deployment example for running the Cumulus integration tests. This example is tested with the latest release of the Cumulus project.
@@ -205,7 +206,7 @@ with the following parameters
 * AZone - availability zone, needs to match the subnet id's availability zone
 * Ngap - true if in an NASA NGAP environment, will add the NGAP permission boundary to the IAM role created
 
-In the outputs section of your Cloudformation deployment in the AWS console, you can find the address of the fake server created. In the provider configurations in `example/data/providers`, update the providers to use the correct host address.
+<a name="update-providers"></a>In the outputs section of your Cloudformation deployment in the AWS console, you can find the address of the fake server created. In the provider configurations in `example/data/providers`, update the providers to use the correct host address.
 
 By default, the data location is the `cumulus-data-shared` S3 bucket. To use a different bucket for test data, update `fake-server.yml` with the alternative bucket.
 
@@ -228,6 +229,10 @@ To run all of the tests, including standalone, run `DEPLOYMENT=<name-of-your-dep
 To run an individual test file, include a path to the spec file, i.e. `DEPLOYMENT=<name-of-your-deployment> node_modules/.bin/jasmine spec/helloWorld/HelloWorldSuccessSpec.js`.
 
 Jasmine supports wildcard expressions for running tests, so an entire test folder can be run using `DEPLOYMENT=<name-of-your-deployment> node_modules/.bin/jasmine spec/standalone/*`
+
+### Running Tests on SIT
+
+In the event you are running tests outside of the cumulus sandbox environment you will need to follow the [directions](#update-providers) to update your fake data server providers. Alternatively, you can set the environment variable `PROVIDER_HOST` to point to the private IP address of your FakeProvider EC2 instance.
 
 ## Adding tests
 
