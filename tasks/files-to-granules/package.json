@@ -32,7 +32,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/cumulus-message-adapter-js": "^1.0.7",
+    "@cumulus/cumulus-message-adapter-js": "^1.0.8",
     "lodash.flatten": "^4.4.0",
     "lodash.get": "^4.4.2",
     "lodash.keyby": "^4.6.0"

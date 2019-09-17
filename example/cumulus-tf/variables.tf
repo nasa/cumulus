@@ -99,3 +99,15 @@ variable "aws_profile" {
   type    = string
   default = null
 }
+
+variable "log_api_gateway_to_cloudwatch" {
+  type        = bool
+  default     = false
+  description = "Enable logging of API Gateway activity to CloudWatch."
+}
+
+variable "log_destination_arn" {
+  type        = string
+  default     = null
+  description = "Remote kinesis/destination arn for delivering logs. Requires log_api_gateway_to_cloudwatch set to true."
+}
