@@ -98,4 +98,8 @@ To deploy modifications to a single Lambda package:
   $ kes lambda <LambdaName> --kes-folder app --template node_modules/@cumulus/deployment/app --deployment <deployment-name>
 ```
 
-**Note:** By default, Cumulus workflows use versioned references to Lambdas and deploying a single Lambda does not update those references. So if you re-deploy just a single workflow Lambda, then any workflows using that Lambda will not be using the latest version of your Lambda code. You have to re-deploy your entire Cumulus application for workflows to reference the latest version of your Lambda code. Or you can disable workflow Lambda versioning by setting `useWorkflowLambdaVersions: false` for your deployment.
+**Note:** By default, Cumulus workflows use versioned references to Lambdas and deploying a single Lambda does not update those references. So if you re-deploy just a single workflow Lambda, then any workflows using that Lambda will not be using the latest version of your Lambda code. 
+
+You have to re-deploy your entire Cumulus application for workflows to reference the latest version of your Lambda code. Or you can disable workflow Lambda versioning by setting `useWorkflowLambdaVersions: false` for your deployment as a root key in your configuration.   For more information on this feature, see [the lambda version feature documentation](features/lambda_versioning.md).
+
+

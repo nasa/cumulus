@@ -1,6 +1,6 @@
 'use strict';
 
-const { s3 } = require('@cumulus/common/aws');
+const { s3, pullStepFunctionEvent } = require('@cumulus/common/aws');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 
 /**
@@ -116,7 +116,6 @@ class SfnStep {
    */
   async getStepInput(workflowExecutionArn, stepName) {
     const stepExecutions = await this.getStepExecutions(workflowExecutionArn, stepName, this);
-
     if (stepExecutions === null || stepExecutions.length === 0) {
       console.log(`Could not find step ${stepName} in execution.`);
       return null;
@@ -129,11 +128,16 @@ class SfnStep {
     const subStepExecutionDetails = scheduleEvent.lambdaFunctionScheduledEventDetails;
     let stepInput = JSON.parse(subStepExecutionDetails.input);
 
+    if (stepInput.cma) {
+      stepInput = { ...stepInput, ...stepInput.cma, ...stepInput.cma.event };
+      delete stepInput.cma;
+      delete stepInput.event;
+    }
+
     if (stepInput.replace) {
-      // Message was too large and output was written to S3
-      console.log(`Retrieving ${stepName} input from ${JSON.stringify(stepInput.replace)}`);
-      stepInput = await s3().getObject(stepInput.replace).promise()
-        .then((response) => JSON.parse(response.Body.toString()));
+       // Message was too large and output was written to S3
+       console.log(`Retrieving ${stepName} output from ${JSON.stringify(stepInput.replace)}`);
+       stepInput = pullStepFunctionEvent(stepInput);
     }
     return stepInput;
   }
@@ -219,10 +223,8 @@ class SfnStep {
     if (stepOutput.replace) {
       // Message was too large and output was written to S3
       console.log(`Retrieving ${stepName} output from ${JSON.stringify(stepOutput.replace)}`);
-      stepOutput = await s3().getObject(stepOutput.replace).promise()
-        .then((response) => JSON.parse(response.Body.toString()));
+      stepOutput = pullStepFunctionEvent(stepOutput);
     }
-
     return stepOutput;
   }
 }

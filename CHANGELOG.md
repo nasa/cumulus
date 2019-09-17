@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **CUMULUS-1447** -
+  The newest release of the Cumulus Message Adapter (v1.1.0) requires that parameterized configuration be used for remote message functionality. Once released, Kes will automatically bring in CMA v1.1.0 without additional configuration.
+
+  As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0.
+
 ### PLEASE NOTE
 
 - **CUMULUS-1394** - Ingest notifications are now provided via 3 separate SNS topics for executions, granules, and PDRs, instead of a single `sftracker` SNS topic. Whereas the `sftracker` SNS topic received a full Cumulus execution message, the new topics all receive generated records for the given object. The new topics are only published to if the given object exists for the current execution. For a given execution/granule/PDR, two messages will be received by each topic: one message indicating that ingest is running and another message indicating that ingest has completed or failed. The new SNS topics are:
@@ -34,6 +41,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1432**
   - `logs` endpoint takes the level parameter as a string and not a number
   - Elasticsearch term query generation no longer converts numbers to boolean
+- **CUMULUS-1447**
+  - Consolidated all remote message handling code into @common/aws
+  - Update remote message code to handle updated CMA remote message flags
+  - Update example SIPS workflows to utilize Parameterized CMA configuration
 
 ### Fixed
 
