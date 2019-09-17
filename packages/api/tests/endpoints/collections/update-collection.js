@@ -1,5 +1,6 @@
 'use strict';
 
+const omit = require('lodash.omit');
 const test = require('ava');
 const request = require('supertest');
 const aws = require('@cumulus/common/aws');
@@ -84,19 +85,31 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
 
 test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test('PUT updates an existing collection', async (t) => {
-  const newPath = 'new_path';
-  const response = await request(app)
-    .put(`/collections/${t.context.testCollection.name}/${t.context.testCollection.version}`)
+test('PUT replaces an existing collection', async (t) => {
+  const { testCollection, testCollection: { name, version } } = t.context;
+  const expectedCollection = {
+    ...omit(testCollection, ['dataType', 'duplicateHandling']),
+    provider_path: 'test_path'
+  };
+
+  await request(app)
+    .put(`/collections/${name}/${version}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({
-      name: t.context.testCollection.name,
-      version: t.context.testCollection.version,
-      provider_path: newPath
-    })
+    .send(expectedCollection)
     .expect(200);
 
-  const { provider_path } = response.body; // eslint-disable-line camelcase
-  t.is(provider_path, newPath);
+  const { body: actualCollection } = await request(app)
+    .get(`/collections/${name}/${version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.deepEqual(actualCollection, {
+    ...expectedCollection,
+    duplicateHandling: 'error', // Default value
+    reportToEms: true, // Default value
+    createdAt: actualCollection.createdAt,
+    updatedAt: actualCollection.updatedAt
+  });
 });
