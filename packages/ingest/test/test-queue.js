@@ -17,7 +17,7 @@ test.beforeEach(async (t) => {
   t.context.queueExecutionLimit = randomNumber();
 
   t.context.workflow = randomString();
-  t.context.stateMachineArn = randomId('stateMachine')
+  t.context.stateMachineArn = randomId('stateMachine');
 
   t.context.messageTemplate = {
     cumulus_meta: {
