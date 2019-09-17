@@ -5,15 +5,9 @@ KinesisTriggerTest:
     StartStatus:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          StartStatus:
-            cumulus_message:
-              input: '{$}'
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
       Retry:
         - &LambdaServiceExceptionRetry
           ErrorEquals:
@@ -33,19 +27,13 @@ KinesisTriggerTest:
     TranslateMessage:
       Type: Task
       Resource: ${CNMToCMALambdaFunction.Arn}
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          TranslateMessage:
-            cumulus_message:
-              outputs:
-                - source: '{$.cnm}'
-                  destination: '{$.meta.cnm}'
-                - source: '{$}'
-                  destination: '{$.payload}'
+      CumulusConfig:
+        cumulus_message:
+          outputs:
+            - source: '{$.cnm}'
+              destination: '{$.meta.cnm}'
+            - source: '{$}'
+              destination: '{$.payload}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -54,24 +42,18 @@ KinesisTriggerTest:
     SyncGranule:
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          SyncGranule:
-            provider: '{$.meta.provider}'
-            buckets: '{$.meta.buckets}'
-            collection: '{$.meta.collection}'
-            downloadBucket: '{$.meta.buckets.private.name}'
-            stack: '{$.meta.stack}'
-            cumulus_message:
-              outputs:
-                - source: '{$.granules}'
-                  destination: '{$.meta.input_granules}'
-                - source: '{$}'
-                  destination: '{$.payload}'
+      CumulusConfig:
+        provider: '{$.meta.provider}'
+        buckets: '{$.meta.buckets}'
+        collection: '{$.meta.collection}'
+        downloadBucket: '{$.meta.buckets.private.name}'
+        stack: '{$.meta.stack}'
+        cumulus_message:
+          outputs:
+            - source: '{$.granules}'
+              destination: '{$.meta.input_granules}'
+            - source: '{$}'
+              destination: '{$.payload}'
       Retry:
         - ErrorEquals:
             - States.ALL
@@ -81,23 +63,17 @@ KinesisTriggerTest:
         - <<: *ErrorEqualDefaults
       Next: CnmResponse
     CnmResponse: &CnmResponseDefaults
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          CnmResponse:
-            OriginalCNM: '{$.meta.cnm}'
-            CNMResponseStream: '{$.meta.cnmResponseStream}'
-            region: 'us-east-1'
-            WorkflowException: '{$.exception}'
-            cumulus_message:
-              outputs:
-                - source: '{$}'
-                  destination: '{$.meta.cnmResponse}'
-                - source: '{$}'
-                  destination: '{$.payload}'
+      CumulusConfig:
+        OriginalCNM: '{$.meta.cnm}'
+        CNMResponseStream: '{$.meta.cnmResponseStream}'
+        region: 'us-east-1'
+        WorkflowException: '{$.exception}'
+        cumulus_message:
+          outputs:
+            - source: '{$}'
+              destination: '{$.meta.cnmResponse}'
+            - source: '{$}'
+              destination: '{$.payload}'
       Type: Task
       Resource: ${CnmResponseLambdaFunction.Arn}
       Retry:

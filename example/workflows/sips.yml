@@ -543,19 +543,13 @@ ParsePdr:
           Next: StopStatus
       Next: QueueGranules
     QueueGranules:
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          QueueGranules:
-            provider: '{$.meta.provider}'
-            internalBucket: '{$.meta.buckets.internal.name}'
-            stackName: '{$.meta.stack}'
-            granuleIngestMessageTemplateUri: '{$.meta.template}'
-            granuleIngestWorkflow: 'IngestGranule'
-            queueUrl: '{$.meta.queues.startSF}'
+      CumulusConfig:
+        provider: '{$.meta.provider}'
+        internalBucket: '{$.meta.buckets.internal.name}'
+        stackName: '{$.meta.stack}'
+        granuleIngestMessageTemplateUri: '{$.meta.templates.IngestGranule}'
+        granuleIngestWorkflow: 'IngestGranule'
+        queueUrl: '{$.meta.queues.startSF}'
       Type: Task
       Resource: ${QueueGranulesLambdaFunction.Arn}
       Retry:
@@ -696,19 +690,13 @@ DiscoverGranules:
           Next: StopStatus
       Next: QueueGranules
     QueueGranules:
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          QueueGranules:
-            provider: '{$.meta.provider}'
-            internalBucket: '{$.meta.buckets.internal.name}'
-            stackName: '{$.meta.stack}'
-            granuleIngestMessageTemplateUri: '{$.meta.template}'
-            granuleIngestWorkflow: 'IngestGranule'
-            queueUrl: '{$.meta.queues.startSF}'
+      CumulusConfig:
+        provider: '{$.meta.provider}'
+        internalBucket: '{$.meta.buckets.internal.name}'
+        stackName: '{$.meta.stack}'
+        granuleIngestMessageTemplateUri: '{$.meta.templates.IngestGranule}'
+        granuleIngestWorkflow: 'IngestGranule'
+        queueUrl: '{$.meta.queues.startSF}'
       Type: Task
       Resource: ${QueueGranulesLambdaFunction.Arn}
       Retry:
@@ -789,18 +777,12 @@ DiscoverAndQueuePdrs:
           Next: StopStatus
       Next: QueuePdrs
     QueuePdrs:
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          QueuePdrs:
-            queueUrl: '{$.meta.queues.startSF}'
-            parsePdrMessageTemplateUri: '{$.meta.template}'
-            parsePdrWorkflow: 'ParsePdr'
-            provider: '{$.meta.provider}'
-            collection: '{$.meta.collection}'
+      CumulusConfig:
+        queueUrl: '{$.meta.queues.startSF}'
+        parsePdrMessageTemplateUri: '{$.meta.templates.ParsePdr}'
+        parsePdrWorkflow: 'ParsePdr'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
       Type: Task
       Resource: ${QueuePdrsLambdaFunction.Arn}
       Retry:

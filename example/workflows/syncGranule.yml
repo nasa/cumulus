@@ -5,15 +5,9 @@ SyncGranuleCatchDuplicateErrorTest:
     Report:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          Report:
-            cumulus_message:
-              input: '{$}'
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
       Retry:
         - &LambdaServiceExceptionRetry
           ErrorEquals:
@@ -25,28 +19,22 @@ SyncGranuleCatchDuplicateErrorTest:
           BackoffRate: 2
       Next: SyncGranule
     SyncGranule:
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          SyncGranule:
-            buckets: '{$.meta.buckets}'
-            provider: '{$.meta.provider}'
-            collection: '{$.meta.collection}'
-            stack: '{$.meta.stack}'
-            fileStagingDir: 'custom-staging-dir'
-            downloadBucket: '{$.cumulus_meta.system_bucket}'
-            duplicateHandling: '{$.meta.collection.duplicateHandling}'
-            cumulus_message:
-              outputs:
-                - source: '{$.granules}'
-                  destination: '{$.meta.input_granules}'
-                - source: '{$}'
-                  destination: '{$.payload}'
-                - source: '{$.process}'
-                  destination: '{$.cumulus_meta.process}'
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
+        stack: '{$.meta.stack}'
+        fileStagingDir: 'custom-staging-dir'
+        downloadBucket: '{$.cumulus_meta.system_bucket}'
+        duplicateHandling: '{$.meta.collection.duplicateHandling}'
+        cumulus_message:
+          outputs:
+            - source: '{$.granules}'
+              destination: '{$.meta.input_granules}'
+            - source: '{$}'
+              destination: '{$.payload}'
+            - source: '{$.process}'
+              destination: '{$.cumulus_meta.process}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -64,20 +52,14 @@ SyncGranuleCatchDuplicateErrorTest:
     StopStatus:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          StopStatus:
-            sfnEnd: true
-            stack: '{$.meta.stack}'
-            bucket: '{$.meta.buckets.internal.name}'
-            stateMachine: '{$.cumulus_meta.state_machine}'
-            executionName: '{$.cumulus_meta.execution_name}'
-            cumulus_message:
-              input: '{$}'
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:

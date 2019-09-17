@@ -7,15 +7,9 @@ TestLambdaVersionWorkflow:
     StartStatus:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          StartStatus:
-            cumulus_message:
-              input: '{$}'
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
       Next: WaitForDeployment
     WaitForDeployment:
       Type: Task
@@ -28,20 +22,14 @@ TestLambdaVersionWorkflow:
     StopStatus:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          StopStatus:
-            sfnEnd: true
-            stack: '{$.meta.stack}'
-            bucket: '{$.meta.buckets.internal.name}'
-            stateMachine: '{$.cumulus_meta.state_machine}'
-            executionName: '{$.cumulus_meta.execution_name}'
-            cumulus_message:
-              input: '{$}'
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -59,27 +47,15 @@ WaitForDeployWorkflow:
     StartStatus:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          StartStatus:
-            cumulus_message:
-              input: '{$}'
+      CumulusConfig:
+        cumulus_message:
+          input: '{$}'
       Next: HelloWorld
     HelloWorld:
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          HelloWorld:
-            buckets: '{$.meta.buckets}'
-            provider: '{$.meta.provider}'
-            collection: '{$.meta.collection}'
+      CumulusConfig:
+        buckets: '{$.meta.buckets}'
+        provider: '{$.meta.provider}'
+        collection: '{$.meta.collection}'
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Next: WaitForDeployment
@@ -94,20 +70,14 @@ WaitForDeployWorkflow:
     StopStatus:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
-      Parameters:
-        cumulus_meta: $.cumulus_meta
-        meta: $.meta
-        payload: $.payload
-        exception: $.exception
-        workflow_config:
-          StopStatus:
-            sfnEnd: true
-            stack: '{$.meta.stack}'
-            bucket: '{$.meta.buckets.internal.name}'
-            stateMachine: '{$.cumulus_meta.state_machine}'
-            executionName: '{$.cumulus_meta.execution_name}'
-            cumulus_message:
-              input: '{$}'
+      CumulusConfig:
+        sfnEnd: true
+        stack: '{$.meta.stack}'
+        bucket: '{$.meta.buckets.internal.name}'
+        stateMachine: '{$.cumulus_meta.state_machine}'
+        executionName: '{$.cumulus_meta.execution_name}'
+        cumulus_message:
+          input: '{$}'
       Catch:
         - ErrorEquals:
           - States.ALL
