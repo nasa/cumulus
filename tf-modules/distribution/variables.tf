@@ -7,8 +7,8 @@ variable "log_api_gateway_to_cloudwatch" {
 }
 
 variable "log_destination_arn" {
-  type    = string
-  default = null
+  type        = string
+  default     = null
   description = "shared AWS:Log:Destination value. Requires log_api_gateway_to_cloudwatch set to true."
 }
 
@@ -80,9 +80,8 @@ variable "region" {
   description = "The AWS region to deploy to"
 }
 
-variable "sts_credentials_lambda_name" {
-  type    = string
-  default = "gsfc-ngap-sh-s3-sts-get-keys"
+variable "sts_credentials_lambda_function_arn" {
+  type = string
 }
 
 variable "urs_url" {

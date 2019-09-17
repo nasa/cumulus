@@ -7,11 +7,10 @@ locals {
 resource "aws_cloudwatch_log_group" "api" {
   name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
   retention_in_days = 30
+  tags              = local.default_tags
 }
 
 resource "aws_lambda_function" "api" {
-  depends_on = [aws_iam_role.lambda_api_gateway]
-
   function_name    = "${var.prefix}-ApiEndpoints"
   filename         = "${path.module}/../../packages/api/dist/app/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/app/lambda.zip")
@@ -21,13 +20,13 @@ resource "aws_lambda_function" "api" {
   timeout          = 100
   environment {
     variables = {
-      AccessTokensTable            = var.dynamo_tables.AccessTokens
+      AccessTokensTable            = var.dynamo_tables.access_tokens.name
       AsyncOperationTaskDefinition = aws_ecs_task_definition.async_operation.arn
-      AsyncOperationsTable         = var.dynamo_tables.AsyncOperations
+      AsyncOperationsTable         = var.dynamo_tables.async_operations.name
       BulkDeleteLambda             = aws_lambda_function.bulk_delete.arn
       CMR_ENVIRONMENT              = var.cmr_environment
-      CollectionsTable             = var.dynamo_tables.Collections
-      EARTHDATA_BASE_URL           = "${replace(var.urs_url, "//+$/", "")}/" # Makes sure there's not a trailing slash
+      CollectionsTable             = var.dynamo_tables.collections.name
+      EARTHDATA_BASE_URL           = "${replace(var.urs_url, "//*$/", "/")}" # Makes sure there's one and only one trailing slash
       EARTHDATA_CLIENT_ID          = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD    = var.urs_client_password
       ES_HOST                      = var.elasticsearch_hostname
@@ -35,19 +34,19 @@ resource "aws_lambda_function" "api" {
       EmsDistributionReport        = aws_lambda_function.ems_distribution_report.arn
       EmsIngestReport              = aws_lambda_function.ems_ingest_report.arn
       EmsProductMetadataReport     = aws_lambda_function.ems_product_metadata_report.arn
-      ExecutionsTable              = var.dynamo_tables.Executions
-      GranulesTable                = var.dynamo_tables.Granules
+      ExecutionsTable              = var.dynamo_tables.executions.name
+      GranulesTable                = var.dynamo_tables.granules.name
       IndexFromDatabaseLambda      = aws_lambda_function.index_from_database.arn
-      KinesisInboundEventLogger    = data.aws_lambda_function.kinesis_inbound_event_logger.arn
+      KinesisInboundEventLogger    = var.kinesis_inbound_event_logger_lambda_function_arn
       OAUTH_PROVIDER               = var.oauth_provider
+      PdrsTable                    = var.dynamo_tables.pdrs.name
+      ProvidersTable               = var.dynamo_tables.providers.name
+      RulesTable                   = var.dynamo_tables.rules.name
       oauth_user_group             = var.oauth_user_group
-      PdrsTable                    = var.dynamo_tables.Pdrs
-      ProvidersTable               = var.dynamo_tables.Providers
-      RulesTable                   = var.dynamo_tables.Rules
       STSCredentialsLambda         = var.sts_credentials_lambda
       TOKEN_REDIRECT_ENDPOINT      = local.api_redirect_uri
       TOKEN_SECRET                 = var.token_secret
-      UsersTable                   = var.dynamo_tables.Users
+      UsersTable                   = var.dynamo_tables.users.name
       backgroundQueueName          = var.background_queue_name
       cmr_client_id                = var.cmr_client_id
       cmr_oauth_provider           = var.cmr_oauth_provider
@@ -69,9 +68,7 @@ resource "aws_lambda_function" "api" {
     }
   }
   memory_size = 756
-  tags = {
-    Project = var.prefix
-  }
+  tags        = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]

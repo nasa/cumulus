@@ -4,7 +4,7 @@ data "aws_iam_policy_document" "assume_lambda_role" {
       type        = "Service"
       identifiers = ["lambda.amazonaws.com"]
     }
-    actions   = ["sts:AssumeRole"]
+    actions = ["sts:AssumeRole"]
   }
 }
 
@@ -12,6 +12,8 @@ resource "aws_iam_role" "report_executions_lambda_role" {
   name                 = "${var.prefix}_report_executions_lambda_role"
   assume_role_policy   = data.aws_iam_policy_document.assume_lambda_role.json
   permissions_boundary = var.permissions_boundary
+  # TODO Re-enable once IAM permissions have been fixed
+  # tags                 = local.default_tags
 }
 
 data "aws_dynamodb_table" "executions_table" {
