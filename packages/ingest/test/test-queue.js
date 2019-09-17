@@ -1,11 +1,16 @@
 'use strict';
 
+const rewire = require('rewire');
 const test = require('ava');
 const {
   createQueue, sqs, s3, s3PutObject, recursivelyDeleteS3Bucket
 } = require('@cumulus/common/aws');
 const { randomString, randomId, randomNumber } = require('@cumulus/common/test-utils');
-const queue = require('../queue');
+const queue = rewire('../queue');
+
+const fakeGetWorkflowArn = (name) => `arn:aws:states:us-east-1:1234:stateMachine:${name}`;
+
+queue.__set__('getWorkflowArn', fakeGetWorkflowArn);
 
 test.beforeEach(async (t) => {
   t.context.templateBucket = randomString();
@@ -15,7 +20,8 @@ test.beforeEach(async (t) => {
   t.context.queueUrl = await createQueue();
   t.context.queueExecutionLimit = randomNumber();
 
-  t.context.stateMachineArn = randomString();
+  t.context.workflow = randomString();
+  t.context.stateMachineArn = fakeGetWorkflowArn(t.context.workflow);
 
   t.context.messageTemplate = {
     cumulus_meta: {
@@ -57,7 +63,8 @@ test.serial('the queue receives a correctly formatted workflow message without a
     queueUrl,
     stateMachineArn,
     templateBucket,
-    messageTemplateKey
+    messageTemplateKey,
+    workflow
   } = t.context;
   const templateUri = `s3://${templateBucket}/${messageTemplateKey}`;
   const collection = { name: 'test-collection', version: '0.0.0' };
@@ -71,6 +78,7 @@ test.serial('the queue receives a correctly formatted workflow message without a
       granule,
       queueUrl,
       granuleIngestMessageTemplateUri: templateUri,
+      granuleIngestWorkflow: workflow,
       provider,
       collection
     });
@@ -99,7 +107,8 @@ test.serial('the queue receives a correctly formatted workflow message without a
         [queueName]: queueExecutionLimit
       },
       provider: provider,
-      collection: collection
+      collection: collection,
+      workflowName: workflow
     },
     payload: { granules: [granule] }
   };
@@ -117,7 +126,8 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
     queueUrl,
     stateMachineArn,
     templateBucket,
-    messageTemplateKey
+    messageTemplateKey,
+    workflow
   } = t.context;
   const templateUri = `s3://${templateBucket}/${messageTemplateKey}`;
   const collection = { name: 'test-collection', version: '0.0.0' };
@@ -133,6 +143,7 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
       granule,
       queueUrl,
       granuleIngestMessageTemplateUri: templateUri,
+      granuleIngestWorkflow: workflow,
       provider,
       collection,
       pdr,
@@ -165,7 +176,8 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
       },
       provider: provider,
       collection: collection,
-      pdr: pdr
+      pdr: pdr,
+      workflowName: workflow
     },
     payload: { granules: [granule] }
   };
@@ -201,6 +213,7 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
       granule,
       queueUrl,
       granuleIngestMessageTemplateUri: templateUri,
+      granuleIngestWorkflow: 'IngestGranule',
       provider,
       collection
     });
