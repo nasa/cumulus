@@ -77,22 +77,19 @@ test('handing CumulusConfig in workflows', (t) => {
 
 test('generate a workflow template', (t) => {
   const tt = generateWorkflowTemplate(
-    'DiscoverPdrs',
-    exampleConfig.stepFunctions.DiscoverPdrs,
     exampleConfig,
     exampleOutputs
   );
 
   t.is(tt.cumulus_meta.message_source, 'sfn');
   t.is(tt.cumulus_meta.system_bucket, 'cumulus-devseed-internal');
-  t.is(tt.meta.workflow_name, 'DiscoverPdrs');
+  t.is(tt.meta.workflow_name, null);
   t.is(tt.meta.cmr.password, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
   t.is(
-    tt.meta.templates.DiscoverPdrs,
-    's3://cumulus-devseed-internal/lpdaac-cumulus/workflows/DiscoverPdrs.json'
+    tt.meta.template,
+    's3://cumulus-devseed-internal/lpdaac-cumulus/workflows/template.json'
   );
   t.truthy(tt.meta.queues.startSF);
-  t.truthy(tt.workflow_config.DiscoverPdrs);
   t.is(tt.meta.queueExecutionLimits.startSFLowPriority, 5);
 });
 

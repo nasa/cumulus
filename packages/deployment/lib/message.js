@@ -175,7 +175,7 @@ async function generateTemplates(config, outputs, uploader) {
     // this is used by the /workflows endpoint of the API to return list
     // of existing workflows
     const workflows = [];
-    config.stepFunctions.forEach((name) => {
+    Object.keys(config.stepFunctions).forEach((name) => {
       const arn = findOutputValue(outputs, `${name}StateMachine`);
       workflows.push({
         name,
