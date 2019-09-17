@@ -20,7 +20,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/common": "1.14.1",
-    "@cumulus/cumulus-message-adapter-js": "^1.0.7",
+    "@cumulus/cumulus-message-adapter-js": "^1.0.8",
     "@cumulus/integration-tests": "1.13.1",
     "lodash.clonedeep": "^4.5.0"
   },
