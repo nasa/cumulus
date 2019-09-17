@@ -95,6 +95,11 @@ variable "archive_api_users" {
   default = []
 }
 
+variable "buckets" {
+  type    = map(object({ name = string, type = string }))
+  default = {}
+}
+
 variable "cmr_oauth_provider" {
   type    = string
   default = "earthdata"
@@ -196,21 +201,6 @@ variable "oauth_user_group" {
 variable "permissions_boundary_arn" {
   type    = string
   default = null
-}
-
-variable "private_buckets" {
-  type    = list(string)
-  default = []
-}
-
-variable "protected_buckets" {
-  type    = list(string)
-  default = []
-}
-
-variable "public_buckets" {
-  type    = list(string)
-  default = []
 }
 
 variable "urs_url" {
