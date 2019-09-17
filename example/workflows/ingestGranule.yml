@@ -3,11 +3,15 @@ IngestGranuleCatchDuplicateErrorTest:
   StartAt: Report
   States:
     Report:
+      Parameters:
+        cma:
+          event.$: '$'
+          workflow_config:
+            Report:
+              cumulus_message:
+                input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
       Retry:
         - &LambdaServiceExceptionRetry
           ErrorEquals:
@@ -19,22 +23,26 @@ IngestGranuleCatchDuplicateErrorTest:
           BackoffRate: 2
       Next: SyncGranule
     SyncGranule:
-      CumulusConfig:
-        buckets: '{$.meta.buckets}'
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
-        stack: '{$.meta.stack}'
-        downloadBucket: '{$.cumulus_meta.system_bucket}'
-        duplicateHandling: '{$.meta.collection.duplicateHandling}'
-        pdr: '{$.meta.pdr}'
-        cumulus_message:
-          outputs:
-            - source: '{$.granules}'
-              destination: '{$.meta.input_granules}'
-            - source: '{$}'
-              destination: '{$.payload}'
-            - source: '{$.process}'
-              destination: '{$.cumulus_meta.process}'
+      Parameters:
+        cma:
+          event.$: '$'
+          workflow_config:
+            SyncGranule:
+              buckets: '{$.meta.buckets}'
+              provider: '{$.meta.provider}'
+              collection: '{$.meta.collection}'
+              stack: '{$.meta.stack}'
+              downloadBucket: '{$.cumulus_meta.system_bucket}'
+              duplicateHandling: '{$.meta.collection.duplicateHandling}'
+              pdr: '{$.meta.pdr}'
+              cumulus_message:
+                outputs:
+                  - source: '{$.granules}'
+                    destination: '{$.meta.input_granules}'
+                  - source: '{$}'
+                    destination: '{$.payload}'
+                  - source: '{$.process}'
+                    destination: '{$.cumulus_meta.process}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -60,13 +68,17 @@ IngestGranuleCatchDuplicateErrorTest:
           Next: ProcessingStep
       Default: StopStatus
     ProcessingStep:
-      CumulusConfig:
-        bucket: '{$.meta.buckets.internal.name}'
-        collection: '{$.meta.collection}'
-        cumulus_message:
-          outputs:
-            - source: '{$.files}'
-              destination: '{$.payload}'
+      Parameters:
+        cma:
+          event.$: '$'
+          workflow_config:
+            ProcessingStep:
+              bucket: '{$.meta.buckets.internal.name}'
+              collection: '{$.meta.collection}'
+              cumulus_message:
+                outputs:
+                  - source: '{$.files}'
+                    destination: '{$.payload}'
       Type: Task
       Resource: ${FakeProcessingLambdaFunction.Arn}
       Catch:
@@ -81,9 +93,13 @@ IngestGranuleCatchDuplicateErrorTest:
           MaxAttempts: 3
       Next: FilesToGranulesStep
     FilesToGranulesStep:
-      CumulusConfig:
-        inputGranules: '{$.meta.input_granules}'
-        granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
+      Parameters:
+        cma:
+          event.$: '$'
+          workflow_config:
+            FilesToGranulesStep:
+              inputGranules: '{$.meta.input_granules}'
+              granuleIdExtraction: '{$.meta.collection.granuleIdExtraction}'
       Type: Task
       Resource: ${FilesToGranulesLambdaFunction.Arn}
       Retry:
@@ -95,12 +111,16 @@ IngestGranuleCatchDuplicateErrorTest:
           Next: StopStatus
       Next: MoveGranuleStep
     MoveGranuleStep:
-      CumulusConfig:
-        bucket: '{$.meta.buckets.internal.name}'
-        buckets: '{$.meta.buckets}'
-        distribution_endpoint: '{$.meta.distribution_endpoint}'
-        collection: '{$.meta.collection}'
-        duplicateHandling: '{$.meta.collection.duplicateHandling}'
+      Parameters:
+        cma:
+          event.$: '$'
+          workflow_config:
+            MoveGranuleStep:
+              bucket: '{$.meta.buckets.internal.name}'
+              buckets: '{$.meta.buckets}'
+              distribution_endpoint: '{$.meta.distribution_endpoint}'
+              collection: '{$.meta.collection}'
+              duplicateHandling: '{$.meta.collection.duplicateHandling}'
       Type: Task
       Resource: ${MoveGranulesLambdaFunction.Arn}
       Retry:
@@ -116,16 +136,20 @@ IngestGranuleCatchDuplicateErrorTest:
           Next: StopStatus
       Next: StopStatus
     StopStatus:
+      Parameters:
+        cma:
+          event.$: '$'
+          workflow_config:
+            StopStatus:
+              sfnEnd: true
+              stack: '{$.meta.stack}'
+              bucket: '{$.meta.buckets.internal.name}'
+              stateMachine: '{$.cumulus_meta.state_machine}'
+              executionName: '{$.cumulus_meta.execution_name}'
+              cumulus_message:
+                input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
