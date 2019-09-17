@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-1449**
+  - Added `@cumulus/common/workflows.js`:
+    - `workflows.getWorkflowArn` fetches the workflow Arn from the list of workflows on S3.
+    - `workflows.getWorkflowList` fetches the workflow list from s3.
+    - `workflows.getWorkflowTemplate` fetches the universal workflow template from S3.
+
 ### Changed
 
 - **CUMULUS-1447** 
@@ -17,6 +25,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1432**
   - `logs` endpoint takes the level parameter as a string and not a number
   - Elasticsearch term query generation no longer converts numbers to boolean
+
+- **CUMULUS-1449**
+  - Cumulus now uses a universal workflow template when starting workflow that contains general information specific to the deployment, but not specific to the workflow. Workflow Task configs must be defined using AWS step function parameters. See following entry.
+  - Changed the way workflow configs are defined. Task configs must now be defined under the cma.workflow_config.taskName key in the Parameters section of a step function definition. See `example/workflows/sips.yml` in the core repository for examples of how to set the Parameters.
+
+### Removed
+
+- **CUMULUS-1449**
+  - Retired `CumulusConfig` as part of step function definitions, as this is an artifact of the way Kes parses workflow definitions that was not possible to migrate to Terraform.
+  - Removed individual workflow templates.
 
 ### Fixed
 
