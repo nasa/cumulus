@@ -1,19 +1,15 @@
 'use strict';
 
-const rewire = require('rewire');
 const test = require('ava');
 const {
   createQueue, sqs, s3, s3PutObject, recursivelyDeleteS3Bucket
 } = require('@cumulus/common/aws');
 const { randomString, randomId, randomNumber } = require('@cumulus/common/test-utils');
-const queue = rewire('../queue');
-
-const fakeGetWorkflowArn = (name) => `arn:aws:states:us-east-1:1234:stateMachine:${name}`;
-
-queue.__set__('getWorkflowArn', fakeGetWorkflowArn);
+const queue = require('../queue');
 
 test.beforeEach(async (t) => {
   t.context.templateBucket = randomString();
+  t.context.stackName = `stack-${randomString().slice(0, 6)}`;
   await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
 
   t.context.queueName = randomId('queue');
@@ -21,7 +17,7 @@ test.beforeEach(async (t) => {
   t.context.queueExecutionLimit = randomNumber();
 
   t.context.workflow = randomString();
-  t.context.stateMachineArn = fakeGetWorkflowArn(t.context.workflow);
+  t.context.stateMachineArn = randomId('stateMachine')
 
   t.context.messageTemplate = {
     cumulus_meta: {
@@ -36,14 +32,27 @@ test.beforeEach(async (t) => {
       }
     }
   };
-
-  const messageTemplateKey = `${randomString()}/template.json`;
+  const workflowListKey = `${t.context.stackName}/workflows/list.json`;
+  const messageTemplateKey = `${t.context.stackName}/workflows/template.json`;
+  const workflowList = [{
+    name: t.context.workflow,
+    arn: t.context.stateMachineArn,
+    template: `s3://${t.context.templateBucket}/${messageTemplateKey}`,
+    definition: {}
+  }];
   t.context.messageTemplateKey = messageTemplateKey;
-  await s3PutObject({
-    Bucket: t.context.templateBucket,
-    Key: messageTemplateKey,
-    Body: JSON.stringify(t.context.messageTemplate)
-  });
+  await Promise.all([
+    s3PutObject({
+      Bucket: t.context.templateBucket,
+      Key: messageTemplateKey,
+      Body: JSON.stringify(t.context.messageTemplate)
+    }),
+    s3PutObject({
+      Bucket: t.context.templateBucket,
+      Key: workflowListKey,
+      Body: JSON.stringify(workflowList)
+    })
+  ]);
 
   t.context.template = `s3://${t.context.templateBucket}/${messageTemplateKey}`;
 });
@@ -63,10 +72,9 @@ test.serial('the queue receives a correctly formatted workflow message without a
     queueUrl,
     stateMachineArn,
     templateBucket,
-    messageTemplateKey,
+    stackName,
     workflow
   } = t.context;
-  const templateUri = `s3://${templateBucket}/${messageTemplateKey}`;
   const collection = { name: 'test-collection', version: '0.0.0' };
   const provider = { id: 'test-provider' };
 
@@ -77,7 +85,8 @@ test.serial('the queue receives a correctly formatted workflow message without a
     output = await queue.enqueueGranuleIngestMessage({
       granule,
       queueUrl,
-      granuleIngestMessageTemplateUri: templateUri,
+      stackName,
+      systemBucket: templateBucket,
       granuleIngestWorkflow: workflow,
       provider,
       collection
@@ -126,10 +135,9 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
     queueUrl,
     stateMachineArn,
     templateBucket,
-    messageTemplateKey,
+    stackName,
     workflow
   } = t.context;
-  const templateUri = `s3://${templateBucket}/${messageTemplateKey}`;
   const collection = { name: 'test-collection', version: '0.0.0' };
   const provider = { id: 'test-provider' };
   const pdr = { name: randomString(), path: randomString() };
@@ -142,7 +150,8 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
     output = await queue.enqueueGranuleIngestMessage({
       granule,
       queueUrl,
-      granuleIngestMessageTemplateUri: templateUri,
+      stackName,
+      systemBucket: templateBucket,
       granuleIngestWorkflow: workflow,
       provider,
       collection,
@@ -196,7 +205,6 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
     foo: 'bar' // should not be removed or altered
   };
   const { queueUrl } = t.context;
-  const templateUri = `s3://${t.context.templateBucket}/${t.context.messageTemplateKey}`;
   const collection = { name: 'test-collection', version: '0.0.0' };
   const provider = { id: 'test-provider' };
 
@@ -212,8 +220,9 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
     await queue.enqueueGranuleIngestMessage({
       granule,
       queueUrl,
-      granuleIngestMessageTemplateUri: templateUri,
-      granuleIngestWorkflow: 'IngestGranule',
+      stackName: t.context.stackName,
+      systemBucket: t.context.templateBucket,
+      granuleIngestWorkflow: t.context.workflow,
       provider,
       collection
     });
