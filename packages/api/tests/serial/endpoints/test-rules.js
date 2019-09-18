@@ -54,11 +54,12 @@ test.before(async () => {
   process.env.esIndex = esIndex;
   esClient = await Search.es('fakehost');
   await aws.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
-  await aws.s3().putObject({
-    Bucket: process.env.system_bucket,
-    Key: workflowfile,
-    Body: 'test data'
-  }).promise();
+  const listKey = `${process.env.stackName}/workflows/list.json`;
+  const list = JSON.stringify([{ name: workflowName, arn: 'arn:fake' }]);
+  await Promise.all([
+    aws.s3().putObject({ Bucket: process.env.system_bucket, Key: workflowfile, Body: 'test data' }).promise(),
+    aws.s3().putObject({ Bucket: process.env.system_bucket, Key: listKey, Body: list }).promise()
+  ]);
 
   ruleModel = new models.Rule();
   await ruleModel.createTable();

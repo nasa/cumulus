@@ -18,6 +18,7 @@ const {
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const launchpad = require('@cumulus/common/launchpad');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
+const workflows = require('@cumulus/common/workflows');
 
 const assertions = require('../../../lib/assertions');
 const models = require('../../../models');
@@ -111,6 +112,7 @@ let granuleModel;
 let collectionModel;
 let accessToken;
 let userModel;
+let wfArnStub;
 
 test.before(async () => {
   esIndex = randomId('esindex');
@@ -141,6 +143,9 @@ test.before(async () => {
   await accessTokenModel.createTable();
 
   accessToken = await createFakeJwtAuthToken({ accessTokenModel, userModel });
+
+  // stub out getWorkflowArn function
+  wfArnStub = sinon.stub(workflows, 'getWorkflowArn').callsFake(async () => 'arn:fake');
 });
 
 test.beforeEach(async (t) => {
@@ -164,6 +169,7 @@ test.beforeEach(async (t) => {
 });
 
 test.after.always(async () => {
+  wfArnStub.restore();
   await collectionModel.deleteTable();
   await granuleModel.deleteTable();
   await accessTokenModel.deleteTable();

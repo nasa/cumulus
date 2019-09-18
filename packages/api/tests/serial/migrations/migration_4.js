@@ -48,11 +48,23 @@ test.before(async () => {
   ruleModel = new models.Rule();
   await ruleModel.createTable();
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
-  await s3().putObject({
-    Bucket: process.env.system_bucket,
-    Key: workflowfile,
-    Body: 'test data'
-  }).promise();
+  await Promise.all([
+    s3().putObject({
+      Bucket: process.env.system_bucket,
+      Key: workflowfile,
+      Body: JSON.stringify({})
+    }).promise(),
+    s3().putObject({
+      Bucket: process.env.system_bucket,
+      Key: `${process.env.stackName}/workflows/list.json`,
+      Body: JSON.stringify([{
+        name: kinesisRule.workflow,
+        arn: 'some-arn',
+        template: 's3uri',
+        definition: {}
+      }])
+    }).promise()
+  ]);
 
   const eventMappingObjects = await getKinesisEventMappings();
   const sourceMappingLists = eventMappingObjects.map((mapObject) => mapObject.EventSourceMappings);

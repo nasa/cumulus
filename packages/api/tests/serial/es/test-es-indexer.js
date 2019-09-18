@@ -631,7 +631,12 @@ test.serial('delete a provider record', async (t) => {
 // This needs to be serial because it is stubbing aws.sfn's responses
 test.serial('reingest a granule', async (t) => {
   const key = `${process.env.stackName}/workflows/template.json`;
-  await aws.s3().putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' }).promise();
+  const listKey = `${process.env.stackName}/workflows/list.json`;
+  const list = JSON.stringify([{ name: payload.meta.workflow_name, arn: 'arn:fake' }]);
+  await Promise.all([
+    aws.s3().putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' }).promise(),
+    aws.s3().putObject({ Bucket: process.env.system_bucket, Key: listKey, Body: list }).promise()
+  ]);
 
   payload.payload.granules[0].granuleId = randomString();
   const records = await indexer.granule(payload);
