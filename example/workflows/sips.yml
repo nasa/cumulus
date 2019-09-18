@@ -107,23 +107,24 @@ IngestAndPublishGranule:
         cma:
           event.$: '$'
           ReplaceConfig:
-            FullMessage: true
+            Path': '$.payload'
+            TargetPath': '$.payload'
           task_config:
             buckets: '{$.meta.buckets}'
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
-        stack: '{$.meta.stack}'
-        downloadBucket: '{$.cumulus_meta.system_bucket}'
-        duplicateHandling: '{$.meta.collection.duplicateHandling}'
-        pdr: '{$.meta.pdr}'
-        cumulus_message:
-          outputs:
-            - source: '{$.granules}'
-              destination: '{$.meta.input_granules}'
-            - source: '{$}'
-              destination: '{$.payload}'
-            - source: '{$.process}'
-              destination: '{$.meta.process}'
+            provider: '{$.meta.provider}'
+            collection: '{$.meta.collection}'
+            stack: '{$.meta.stack}'
+            downloadBucket: '{$.cumulus_meta.system_bucket}'
+            duplicateHandling: '{$.meta.collection.duplicateHandling}'
+            pdr: '{$.meta.pdr}'
+            cumulus_message:
+              outputs:
+                - source: '{$.granules}'
+                  destination: '{$.meta.input_granules}'
+                - source: '{$}'
+                  destination: '{$.payload}'
+                - source: '{$.process}'
+                  destination: '{$.meta.process}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -549,7 +550,8 @@ ParsePdr:
         cma:
           event.$: '$'
           ReplaceConfig:
-            FullMessage: true
+            Path': '$.payload'
+            TargetPath': '$.payload'
           task_config:
             cumulus_message:
               outputs:
