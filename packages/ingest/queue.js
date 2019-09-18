@@ -40,6 +40,10 @@ async function enqueueParsePdrMessage({
   const messageTemplate = await getMessageFromTemplate(`s3://${systemBucket}/${stackName}/workflows/template.json`);
   const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
   const workflowArn = await getWorkflowArn(stackName, systemBucket, parsePdrWorkflow);
+  const workflowObject = {
+    name: parsePdrWorkflow,
+    arn: workflowArn
+  };
   const payload = { pdr };
 
   const message = buildQueueMessageFromTemplate({
@@ -49,8 +53,7 @@ async function enqueueParsePdrMessage({
     payload,
     provider,
     queueName,
-    workflowName: parsePdrWorkflow,
-    workflowArn
+    workflowObject
   });
 
   const arn = getExecutionArn(
@@ -93,7 +96,10 @@ async function enqueueGranuleIngestMessage({
   const messageTemplate = await getMessageFromTemplate(`s3://${systemBucket}/${stackName}/workflows/template.json`);
   const queueName = getQueueNameByUrl(messageTemplate, queueUrl);
   const workflowArn = await getWorkflowArn(stackName, systemBucket, granuleIngestWorkflow);
-
+  const workflowObject = {
+    name: granuleIngestWorkflow,
+    arn: workflowArn
+  };
   const payload = {
     granules: [
       granule
@@ -107,8 +113,7 @@ async function enqueueGranuleIngestMessage({
     payload,
     provider,
     queueName,
-    workflowName: granuleIngestWorkflow,
-    workflowArn
+    workflowObject
   });
 
   if (pdr) message.meta.pdr = pdr;

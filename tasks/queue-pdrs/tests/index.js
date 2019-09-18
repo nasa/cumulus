@@ -207,7 +207,7 @@ test.serial('The correct message is enqueued', async (t) => {
         queueExecutionLimits,
         collection: { name: 'collection-name' },
         provider: { name: 'provider-name' },
-        workflowName: workflow
+        workflow_name: workflow
       },
       payload: {
         pdr: {

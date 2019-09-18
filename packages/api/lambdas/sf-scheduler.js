@@ -35,6 +35,8 @@ async function getCollection(collection) {
  * @returns {Promise}
  */
 async function handleScheduleEvent(event) {
+  const workflowObject = get(event, 'workflow');
+  if (!workflowObject) throw new Error('Cannot schedule workflow when no workflow is passed.');
   const collectionData = get(event, 'collection', null);
   const providerId = get(event, 'provider', null);
   const customMeta = get(event, 'meta', {});
@@ -54,7 +56,8 @@ async function handleScheduleEvent(event) {
     customMeta,
     customCumulusMeta,
     collection,
-    provider
+    provider,
+    workflowObject
   });
 
   return SQS.sendMessage(message.meta.queues[queueName], message);

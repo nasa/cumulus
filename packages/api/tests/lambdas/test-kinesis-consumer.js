@@ -1,6 +1,5 @@
 'use strict';
 
-const get = require('lodash.get');
 const sinon = require('sinon');
 const test = require('ava');
 
@@ -34,6 +33,11 @@ const collection = {
 };
 const provider = { id: 'PROV1' };
 
+const workflows = [
+  'test-workflow-1',
+  'test-workflow-2'
+];
+
 const commonRuleParams = {
   collection,
   provider: provider.id
@@ -48,19 +52,19 @@ const kinesisRuleParams = {
 
 const rule1Params = {
   name: 'testRule1',
-  workflow: 'test-workflow-1',
+  workflow: workflows[0],
   state: 'ENABLED'
 };
 
 // if the state is not provided, it will be set to default value 'ENABLED'
 const rule2Params = Object.assign({}, commonRuleParams, {
   name: 'testRule2',
-  workflow: 'test-workflow-2'
+  workflow: workflows[1]
 });
 
 const disabledRuleParams = {
   name: 'disabledRule',
-  workflow: 'test-workflow-1',
+  workflow: workflows[0],
   state: 'DISABLED'
 };
 
@@ -121,46 +125,50 @@ test.before(async () => {
 });
 
 test.beforeEach(async (t) => {
+  process.env.stackName = randomString();
+  process.env.system_bucket = randomString();
+  process.env.messageConsumer = randomString();
+
   sfSchedulerSpy = sinon.stub(SQS, 'sendMessage').returns(true);
   t.context.publishResponse = {
     ResponseMetadata: { RequestId: randomString() },
     MessageId: randomString()
   };
   publishStub = sinon.stub(snsClient, 'publish').returns({ promise: () => Promise.resolve(t.context.publishResponse) });
-  t.context.templateBucket = randomString();
-  t.context.stateMachineArn = randomString();
-  const messageTemplateKey = `${randomString()}/template.json`;
+
+  t.context.templateBucket = process.env.system_bucket;
+  const messageTemplateKey = `${process.env.stackName}/workflows/template.json`;
+  const workflowListKey = `${process.env.stackName}/workflows/list.json`;
 
   t.context.messageTemplateKey = messageTemplateKey;
   t.context.messageTemplate = {
-    cumulus_meta: {
-      state_machine: t.context.stateMachineArn
-    },
     meta: { queues: { startSF: stubQueueUrl } }
   };
+  t.context.workflowList = workflows.map((workflow) => ({
+    name: workflow,
+    arn: `arn:${workflow}`,
+    template: `s3://${t.context.templateBucket}/${messageTemplateKey}`,
+    definition: {}
+  }));
 
   await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
-  await s3().putObject({
-    Bucket: t.context.templateBucket,
-    Key: messageTemplateKey,
-    Body: JSON.stringify(t.context.messageTemplate)
-  }).promise();
+  await Promise.all([
+    s3().putObject({
+      Bucket: t.context.templateBucket,
+      Key: messageTemplateKey,
+      Body: JSON.stringify(t.context.messageTemplate)
+    }).promise(),
+    s3().putObject({
+      Bucket: t.context.templateBucket,
+      Key: workflowListKey,
+      Body: JSON.stringify(t.context.workflowList)
+    }).promise()
+  ]);
 
-  sinon.stub(Rule, 'buildPayload').callsFake((item) => Promise.resolve({
-    template: `s3://${t.context.templateBucket}/${messageTemplateKey}`,
-    provider: item.provider,
-    collection: item.collection,
-    meta: get(item, 'meta', {}),
-    payload: get(item, 'payload', {})
-  }));
   sinon.stub(Provider.prototype, 'get').returns(provider);
   sinon.stub(Collection.prototype, 'get').returns(collection);
 
   t.context.tableName = process.env.RulesTable;
-  process.env.stackName = randomString();
-  process.env.system_bucket = randomString();
-  process.env.messageConsumer = randomString();
-
   await Promise.all(rulesToCreate.map((rule) => ruleModel.create(rule)));
 });
 
@@ -168,7 +176,6 @@ test.afterEach.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.templateBucket);
   sfSchedulerSpy.restore();
   publishStub.restore();
-  Rule.buildPayload.restore();
   Provider.prototype.get.restore();
   Collection.prototype.get.restore();
 });
@@ -188,25 +195,25 @@ test.serial('it should look up kinesis-type rules which are associated with the 
 // handler tests
 test.serial('it should enqueue a message for each associated workflow', async (t) => {
   await handler(event, {}, testCallback);
+  t.is(sfSchedulerSpy.callCount, 4); // 2 records * 2 rules
   const actualQueueUrl = sfSchedulerSpy.getCall(0).args[0];
   t.is(actualQueueUrl, stubQueueUrl);
   const actualMessage = sfSchedulerSpy.getCall(0).args[1];
-  const expectedMessage = {
-    cumulus_meta: {
-      state_machine: t.context.stateMachineArn
-    },
-    meta: {
-      queues: { startSF: stubQueueUrl },
-      provider,
-      collection
-    },
-    payload: {
-      collection: testCollectionName
-    }
+  const expectedMeta = {
+    queues: { startSF: stubQueueUrl },
+    provider,
+    collection,
+    workflow_name: actualMessage.meta.workflow_name // testing separately
   };
-  t.is(actualMessage.cumulus_meta.state_machine, expectedMessage.cumulus_meta.state_machine);
-  t.deepEqual(actualMessage.meta, expectedMessage.meta);
-  t.deepEqual(actualMessage.payload, expectedMessage.payload);
+  const expectedPayload = {
+    collection: testCollectionName
+  };
+  // due to race condition, which workflow comes out in call[0] may vary.
+  const stateMachines = workflows.map((wf) => `arn:${wf}`);
+  t.true(stateMachines.includes(actualMessage.cumulus_meta.state_machine));
+  t.true(workflows.includes(actualMessage.meta.workflow_name));
+  t.deepEqual(actualMessage.meta, expectedMeta);
+  t.deepEqual(actualMessage.payload, expectedPayload);
 });
 
 test.serial('A kinesis message, should publish the invalid record to fallbackSNS if message does not include a collection', async (t) => {

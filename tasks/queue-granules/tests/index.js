@@ -266,7 +266,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
         queueExecutionLimits,
         collection: collectionConfig1,
         provider: { name: 'provider-name' },
-        workflowName: t.context.workflow
+        workflow_name: t.context.workflow
       },
       payload: {
         granules: [
@@ -298,7 +298,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
         queueExecutionLimits,
         collection: collectionConfig2,
         provider: { name: 'provider-name' },
-        workflowName: t.context.workflow
+        workflow_name: t.context.workflow
       },
       payload: {
         granules: [
@@ -397,7 +397,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
         pdr: event.input.pdr,
         collection: collectionConfig1,
         provider: { name: 'provider-name' },
-        workflowName: workflow
+        workflow_name: workflow
       },
       payload: {
         granules: [
@@ -431,7 +431,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
         pdr: event.input.pdr,
         collection: collectionConfig2,
         provider: { name: 'provider-name' },
-        workflowName: workflow
+        workflow_name: workflow
       },
       payload: {
         granules: [

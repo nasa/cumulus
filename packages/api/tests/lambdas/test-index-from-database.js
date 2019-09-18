@@ -94,7 +94,7 @@ test.before(async () => {
     Body: JSON.stringify(workflowList)
   });
 
-  const workflow = `${process.env.stackName}/workflows/${workflowList[0].name}.json`;
+  const workflow = `${process.env.stackName}/workflows/template.json`;
   await aws.promiseS3Upload({
     Bucket: process.env.system_bucket,
     Key: workflow,

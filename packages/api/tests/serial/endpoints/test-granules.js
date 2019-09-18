@@ -348,8 +348,7 @@ test.serial('reingest a granule', async (t) => {
   };
 
   // fake workflow
-  const message = JSON.parse(fakeDescribeExecutionResult.input);
-  const key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
+  const key = `${process.env.stackName}/workflows/template.json`;
   await putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' });
   const stub = sinon.stub(sfn(), 'describeExecution').returns({
     promise: () => Promise.resolve(fakeDescribeExecutionResult)
@@ -374,20 +373,8 @@ test.serial('reingest a granule', async (t) => {
 
 // This needs to be serial because it is stubbing aws.sfn's responses
 test.serial('apply an in-place workflow to an existing granule', async (t) => {
-  const fakeSFResponse = {
-    execution: {
-      input: JSON.stringify({
-        meta: {
-          workflow_name: 'inPlaceWorkflow'
-        },
-        payload: {}
-      })
-    }
-  };
-
   //fake in-place workflow
-  const message = JSON.parse(fakeSFResponse.execution.input);
-  const key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
+  const key = `${process.env.stackName}/workflows/template.json`;
   await putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'fake in-place workflow' });
 
   const fakeDescribeExecutionResult = {

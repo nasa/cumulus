@@ -49,7 +49,7 @@ const buildMeta = ({
   provider,
   workflowName
 }) => {
-  const meta = { workflowName };
+  const meta = { workflow_name: workflowName };
   if (collection) {
     meta.collection = collection;
   }
@@ -152,6 +152,7 @@ async function getMessageFromTemplate(templateUri) {
  * @param {Object} params.payload - Payload for the workflow
  * @param {Object} params.customCumulusMeta - Custom data for message.cumulus_meta
  * @param {Object} params.customMeta - Custom data for message.meta
+ * @param {Object} params.workflowObject - name & arn of planned workflow
  *
  * @returns {Object} - An SQS message object
  */
@@ -164,19 +165,18 @@ function buildQueueMessageFromTemplate({
   payload,
   provider,
   queueName,
-  workflowName,
-  workflowArn
+  workflowObject
 }) {
   const cumulusMeta = buildCumulusMeta({
     parentExecutionArn,
     queueName,
-    workflowArn
+    workflowArn: workflowObject.arn
   });
 
   const meta = buildMeta({
     collection,
     provider,
-    workflowName
+    workflowName: workflowObject.name
   });
 
   const message = {

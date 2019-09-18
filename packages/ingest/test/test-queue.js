@@ -117,7 +117,7 @@ test.serial('the queue receives a correctly formatted workflow message without a
       },
       provider: provider,
       collection: collection,
-      workflowName: workflow
+      workflow_name: workflow
     },
     payload: { granules: [granule] }
   };
@@ -186,7 +186,7 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
       provider: provider,
       collection: collection,
       pdr: pdr,
-      workflowName: workflow
+      workflow_name: workflow
     },
     payload: { granules: [granule] }
   };

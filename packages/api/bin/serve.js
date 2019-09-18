@@ -38,10 +38,10 @@ async function populateBucket(bucket, stackName) {
     Body: JSON.stringify(workflowList)
   });
 
-  const workflow = `${stackName}/workflows/${workflowList[0].name}.json`;
+  const workflowTemplate = `${stackName}/workflows/template.json`;
   await promiseS3Upload({
     Bucket: bucket,
-    Key: workflow,
+    Key: workflowTemplate,
     Body: JSON.stringify(workflowList[0])
   });
 }

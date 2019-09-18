@@ -27,7 +27,11 @@ const scheduleEventTemplate = {
   provider: 'fakeProvider',
   cumulusMeta: {},
   payload: {},
-  template: 's3://somewhere/nice'
+  template: 's3://somewhere/nice',
+  workflow: {
+    name: 'some-workflow',
+    arn: 'arn:aws:states:state-machine:ThisMachine'
+  }
 };
 const fakeCollection = {
   name: 'fakeCollection',

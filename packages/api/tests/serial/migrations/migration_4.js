@@ -15,8 +15,7 @@ process.env.messageConsumer = 'my-messageConsumer';
 process.env.KinesisInboundEventLogger = 'my-ruleInput';
 process.env.system_bucket = randomString();
 
-const workflow = 'my-workflow';
-const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
+const workflowfile = `${process.env.stackName}/workflows/template.json`;
 
 const kinesisRule = {
   name: 'my_kinesis_rule',

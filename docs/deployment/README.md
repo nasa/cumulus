@@ -402,8 +402,8 @@ A successful completion will result in output similar to:
   Api:  https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/
   Add this url to URS:  https://<czbbkscuy6>.execute-api.us-east-1.amazonaws.com/dev/token
 
-  Uploading Workflow Input Templates
-  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/workflows/HelloWorldWorkflow.json
+  Uploading Cumulus Universal Workflow Message Template ...
+  Uploaded: s3://<prefix>-internal/<prefix>-cumulus/workflows/template.json
   Uploaded: s3://<prefix>-internal/<prefix>-cumulus/workflows/list.json
 ```
 

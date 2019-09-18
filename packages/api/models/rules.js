@@ -5,6 +5,7 @@ const get = require('lodash.get');
 const merge = require('lodash.merge');
 const { invoke, Events } = require('@cumulus/ingest/aws');
 const aws = require('@cumulus/common/aws');
+const { getWorkflowArn } = require('@cumulus/common/workflows');
 const Manager = require('./base');
 const { rule: ruleSchema } = require('./schemas');
 
@@ -158,20 +159,25 @@ class Rule extends Manager {
   static async buildPayload(item) {
     // makes sure the workflow exists
     const bucket = process.env.system_bucket;
-    const key = `${process.env.stackName}/workflows/${item.workflow}.json`;
+    const key = `${process.env.stackName}/workflows/template.json`;
     const exists = await aws.fileExists(bucket, key);
+    const workflowArn = await getWorkflowArn(process.env.stackName, bucket, item.workflow);
 
-    if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${key} for ${item.name}`);
+    if (!exists) throw new Error(`Workflow template doesn\'t exist: s3://${bucket}/${key}`);
 
     const template = `s3://${bucket}/${key}`;
     return {
       template,
       provider: item.provider,
       collection: item.collection,
-      meta: get(item, 'meta', {}),
-      cumulus_meta: get(item, 'cumulus_meta', {}),
+      meta: Object.assign({ workflow_name: item.workflow }, get(item, 'meta', {})),
+      cumulus_meta: Object.assign({ state_machine: workflowArn }, get(item, 'cumulus_meta', {})),
       payload: get(item, 'payload', {}),
-      queueName: item.queueName
+      queueName: item.queueName,
+      workflow: {
+        name: item.workflow,
+        arn: workflowArn
+      }
     };
   }
 

@@ -123,7 +123,7 @@ test('Attempting to delete a provider with an associated rule returns a 409 resp
   // The workflow message template must exist in S3 before the rule can be created
   await s3().putObject({
     Bucket: process.env.system_bucket,
-    Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
+    Key: `${process.env.stackName}/workflows/template.json`,
     Body: JSON.stringify({})
   }).promise();
 
@@ -152,7 +152,7 @@ test('Attempting to delete a provider with an associated rule does not delete th
   // The workflow message template must exist in S3 before the rule can be created
   await s3().putObject({
     Bucket: process.env.system_bucket,
-    Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
+    Key: `${process.env.stackName}/workflows/template.json`,
     Body: JSON.stringify({})
   }).promise();
 
