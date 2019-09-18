@@ -4,18 +4,18 @@ locals {
 
 data "archive_file" "report_executions_package" {
   type        = "zip"
-  source_file = "dist/index.js"
-  output_path = "build/report_executions.zip"
+  source_file = "${path.module}/node_modules/@cumulus/api/dist/reportExecutions/index.js"
+  output_path = "${path.module}/build/report_executions.zip"
 }
 
 resource "aws_lambda_function" "report_executions" {
-  filename      = "build/report_executions.zip"
-  function_name = "${var.prefix}-reportExecutions"
-  role          = "${aws_iam_role.report_executions_lambda_role.arn}"
-  handler       = "index.handler"
-  runtime       = "nodejs8.10"
-  timeout       = 300
-  memory_size   = 256
+  filename         = "${path.module}/build/report_executions.zip"
+  function_name    = "${var.prefix}-reportExecutions"
+  role             = "${aws_iam_role.report_executions_lambda_role.arn}"
+  handler          = "index.handler"
+  runtime          = "nodejs8.10"
+  timeout          = 30
+  memory_size      = 128
 
   source_code_hash = "${data.archive_file.report_executions_package.output_base64sha256}"
 

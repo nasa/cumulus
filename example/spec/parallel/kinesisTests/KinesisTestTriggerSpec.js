@@ -138,6 +138,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   let s3FileHead;
   let responseStreamShardIterator;
   let logEventSourceMapping;
+  let workflowExecution;
 
   const providersDir = './data/providers/PODAAC_SWOT/';
   const collectionsDir = './data/collections/L2_HR_PIXC-000/';
@@ -147,6 +148,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   testConfig.streamName = streamName;
   testConfig.cnmResponseStream = cnmResponseStreamName;
 
+  const executionModel = new Execution();
 
   async function cleanUp() {
     // delete rule
@@ -161,6 +163,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
       deleteTestStream(streamName),
       deleteTestStream(cnmResponseStreamName),
+      executionModel.delete({ arn: workflowExecution.executionArn }),
       s3().deleteObject({
         Bucket: testConfig.buckets.private.name,
         Key: `${filePrefix}/${fileData.name}`
@@ -206,8 +209,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   });
 
   describe('Workflow executes successfully', () => {
-    let workflowExecution;
-
     beforeAll(async () => {
       await tryCatchExit(cleanUp, async () => {
         console.log(`Dropping record onto  ${streamName}, recordIdentifier: ${recordIdentifier}`);
@@ -245,8 +246,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       });
 
       it('records both the original and the final payload', async () => {
-        const execution = new Execution();
-        const executionRecord = await execution.get({ arn: workflowExecution.executionArn });
+        const executionRecord = await executionModel.get({ arn: workflowExecution.executionArn });
         expect(executionRecord.originalPayload).toEqual(startStep.payload);
         expect(executionRecord.finalPayload).toEqual(endStep.payload);
       });
@@ -318,7 +318,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   });
 
   describe('Workflow fails because TranslateMessage fails', () => {
-    let workflowExecution;
     const badRecord = { ...record };
     const badRecordIdentifier = randomString();
     badRecord.identifier = badRecordIdentifier;
