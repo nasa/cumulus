@@ -86,12 +86,18 @@ test('getQueueNameByUrl returns correct value', (t) => {
   t.is(queueNameResult, undefined);
 });
 
-test('getMessageTemplate throws error if invalid S3 URI is provided', async (t) => {
-  await t.throwsAsync(() => getMessageFromTemplate('fake-uri'));
+test('getMessageFromTemplate throws error if invalid S3 URI is provided', async (t) => {
+  await t.throwsAsync(() => getMessageFromTemplate('fake-uri'), 'uri must be a S3 uri, e.g. s3://bucketname');
 });
 
-test('getMessageTemplate throws error if non-existent S3 URI is provided', async (t) => {
+test('getMessageFromTemplate throws error if non-existent S3 URI is provided', async (t) => {
   await t.throwsAsync(() => getMessageFromTemplate('s3://some-bucket/some-key'));
+});
+
+test('getMessageTemplate throws error if message template body is not JSON', async (t) => {
+  const revert = message.__set__('getS3Object', () => ({ Body: 'this is not valid json' }));
+  await t.throwsAsync(() => getMessageFromTemplate('s3://some-bucket/some-key'));
+  revert();
 });
 
 test('buildQueueMessageFromTemplate does not overwrite contents from message template', (t) => {
@@ -119,8 +125,10 @@ test('buildQueueMessageFromTemplate does not overwrite contents from message tem
     queueName,
     messageTemplate,
     payload,
-    workflowArn,
-    workflowName
+    workflowObject: {
+      name: workflowName,
+      arn: workflowArn
+    }
   });
 
   const expectedMessage = {
@@ -128,7 +136,7 @@ test('buildQueueMessageFromTemplate does not overwrite contents from message tem
     meta: {
       provider,
       collection,
-      workflowName,
+      workflow_name: workflowName,
       workflows: {
         workflow1: 'workflow1Template'
       }
@@ -167,15 +175,17 @@ test('buildQueueMessageFromTemplate returns message with correct payload', (t) =
     queueName,
     messageTemplate,
     payload,
-    workflowArn,
-    workflowName
+    workflowObject: {
+      name: workflowName,
+      arn: workflowArn
+    }
   });
 
   const expectedMessage = {
     meta: {
       provider,
       collection,
-      workflowName
+      workflow_name: workflowName
     },
     cumulus_meta: {
       execution_name: executionName,
@@ -216,15 +226,17 @@ test('buildQueueMessageFromTemplate returns expected message with undefined coll
     queueName,
     messageTemplate,
     payload,
-    workflowArn,
-    workflowName
+    workflowObject: {
+      name: workflowName,
+      arn: workflowArn
+    }
   });
 
   const expectedMessage = {
     meta: {
       provider,
       collection,
-      workflowName
+      workflow_name: workflowName
     },
     cumulus_meta: {
       execution_name: executionName,
@@ -257,15 +269,17 @@ test('buildQueueMessageFromTemplate returns expected message with defined collec
     queueName,
     messageTemplate,
     payload,
-    workflowArn,
-    workflowName
+    workflowObject: {
+      name: workflowName,
+      arn: workflowArn
+    }
   });
 
   const expectedMessage = {
     meta: {
       provider,
       collection,
-      workflowName
+      workflow_name: workflowName
     },
     cumulus_meta: {
       execution_name: executionName,
@@ -311,15 +325,17 @@ test('buildQueueMessageFromTemplate returns expected message with custom cumulus
     customCumulusMeta,
     customMeta,
     payload,
-    workflowName,
-    workflowArn
+    workflowObject: {
+      name: workflowName,
+      arn: workflowArn
+    }
   });
 
   const expectedMessage = {
     meta: {
       provider,
       collection,
-      workflowName,
+      workflow_name: workflowName,
       foo: 'bar',
       object: {
         key: 'value'
@@ -339,5 +355,3 @@ test('buildQueueMessageFromTemplate returns expected message with custom cumulus
 
   t.deepEqual(actualMessage, expectedMessage);
 });
-
-test.todo('getMessageTemplate throws error if message template body is not JSON');
