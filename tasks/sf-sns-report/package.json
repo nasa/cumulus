@@ -33,6 +33,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cumulus/api": "1.14.1",
     "@cumulus/common": "1.14.1",
     "@cumulus/cumulus-message-adapter-js": "^1.0.8",
     "@cumulus/ingest": "1.14.1",

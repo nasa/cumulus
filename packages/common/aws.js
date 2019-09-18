@@ -838,6 +838,34 @@ async function createQueue(queueName) {
 exports.createQueue = createQueue;
 
 /**
+ * Publish a message to an SNS topic.
+ *
+ * Catch any thrown errors and log them.
+ *
+ * @param {string} snsTopicArn - SNS topic ARN
+ * @param {Object} message - Message object
+ * @returns {Promise}
+ */
+exports.publishSnsMessage = async (
+  snsTopicArn,
+  message
+) => {
+  try {
+    if (!snsTopicArn) {
+      throw new Error('Missing SNS topic ARN');
+    }
+
+    await exports.sns().publish({
+      TopicArn: snsTopicArn,
+      Message: JSON.stringify(message)
+    }).promise();
+  } catch (err) {
+    log.error(`Failed to post message to SNS topic: ${snsTopicArn}`, err);
+    log.info('Undelivered message', message);
+  }
+};
+
+/**
 * Send a message to AWS SQS
 *
 * @param {string} queueUrl - url of the SQS queue
@@ -924,42 +952,6 @@ exports.getStateMachineArn = (executionArn) => {
     return executionArn.replace('execution', 'stateMachine').split(':').slice(0, -1).join(':');
   }
   return null;
-};
-
-/**
-* Parse event metadata to get location of granule on S3
-*
-* @param {string} granuleId - the granule id
-* @param {string} stack - the deployment stackname
-* @returns {string} - s3 path
-**/
-exports.getGranuleS3Params = (granuleId, stack) => `${stack}/granules_ingested/${granuleId}`;
-
-/**
-* Set the status of a granule
-*
-* @name setGranuleStatus
-* @param {string} granuleId - granule id
-* @param {string} stack - the deployment stackname
-* @param {string} bucket - the deployment bucket name
-* @param {string} stateMachineArn - statemachine arn
-* @param {string} executionName - execution name
-* @param {string} status - granule status
-* @returns {Promise} returns the response from `S3.put` as a promise
-**/
-exports.setGranuleStatus = async (
-  granuleId,
-  stack,
-  bucket,
-  stateMachineArn,
-  executionName,
-  status
-) => {
-  const key = exports.getGranuleS3Params(granuleId, stack, bucket);
-  const executionArn = exports.getExecutionArn(stateMachineArn, executionName);
-  const params = { Bucket: bucket, Key: key };
-  params.Metadata = { executionArn, status };
-  await exports.s3().putObject(params).promise();
 };
 
 /**
