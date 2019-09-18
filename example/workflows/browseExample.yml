@@ -27,12 +27,12 @@ DiscoverGranulesBrowseExample:
       Parameters:
         cma:
           event.$: '$'
-            workflow_config:
-              DiscoverGranules:
-                provider: '{$.meta.provider}'
-                collection: '{$.meta.collection}'
-                buckets: '{$.meta.buckets}'
-                stack: '{$.meta.stack}'
+          workflow_config:
+            DiscoverGranules:
+              provider: '{$.meta.provider}'
+              collection: '{$.meta.collection}'
+              buckets: '{$.meta.buckets}'
+              stack: '{$.meta.stack}'
       Type: Task
       Resource: ${DiscoverGranulesLambdaFunction.Arn}
       Retry:
