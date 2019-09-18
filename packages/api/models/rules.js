@@ -5,7 +5,7 @@ const get = require('lodash.get');
 const merge = require('lodash.merge');
 const { invoke, Events } = require('@cumulus/ingest/aws');
 const aws = require('@cumulus/common/aws');
-const { getWorkflowArn } = require('@cumulus/common/workflows');
+const workflows = require('@cumulus/common/workflows');
 const Manager = require('./base');
 const { rule: ruleSchema } = require('./schemas');
 
@@ -161,7 +161,11 @@ class Rule extends Manager {
     const bucket = process.env.system_bucket;
     const key = `${process.env.stackName}/workflows/template.json`;
     const exists = await aws.fileExists(bucket, key);
-    const workflowArn = await getWorkflowArn(process.env.stackName, bucket, item.workflow);
+    const workflowArn = await workflows.getWorkflowArn(
+      process.env.stackName,
+      bucket,
+      item.workflow
+    );
 
     if (!exists) throw new Error(`Workflow template doesn\'t exist: s3://${bucket}/${key}`);
 

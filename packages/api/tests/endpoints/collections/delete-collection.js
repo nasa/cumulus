@@ -125,7 +125,7 @@ test('Deleting a collection removes it', async (t) => {
   t.is(response.status, 404);
 });
 
-test('Attempting to delete a collection with an associated rule returns a 409 response', async (t) => {
+test.serial('Attempting to delete a collection with an associated rule returns a 409 response', async (t) => {
   const collection = fakeCollectionFactory();
   await collectionModel.create(collection);
 
@@ -140,11 +140,23 @@ test('Attempting to delete a collection with an associated rule returns a 409 re
   });
 
   // The workflow message template must exist in S3 before the rule can be created
-  await s3().putObject({
-    Bucket: process.env.system_bucket,
-    Key: `${process.env.stackName}/workflows/template.json`,
-    Body: JSON.stringify({})
-  }).promise();
+  await Promise.all([
+    s3().putObject({
+      Bucket: process.env.system_bucket,
+      Key: `${process.env.stackName}/workflows/template.json`,
+      Body: JSON.stringify({})
+    }).promise(),
+    s3().putObject({
+      Bucket: process.env.system_bucket,
+      Key: `${process.env.stackName}/workflows/list.json`,
+      Body: JSON.stringify([{
+        name: rule.workflow,
+        arn: 'some-arn',
+        template: 's3uri',
+        definition: {}
+      }])
+    }).promise()
+  ]);
 
   await ruleModel.create(rule);
 
@@ -158,7 +170,7 @@ test('Attempting to delete a collection with an associated rule returns a 409 re
   t.is(response.body.message, `Cannot delete collection with associated rules: ${rule.name}`);
 });
 
-test('Attempting to delete a collection with an associated rule does not delete the provider', async (t) => {
+test.serial('Attempting to delete a collection with an associated rule does not delete the provider', async (t) => {
   const collection = fakeCollectionFactory();
   await collectionModel.create(collection);
 
@@ -173,11 +185,23 @@ test('Attempting to delete a collection with an associated rule does not delete 
   });
 
   // The workflow message template must exist in S3 before the rule can be created
-  await s3().putObject({
-    Bucket: process.env.system_bucket,
-    Key: `${process.env.stackName}/workflows/template.json`,
-    Body: JSON.stringify({})
-  }).promise();
+  await Promise.all([
+    s3().putObject({
+      Bucket: process.env.system_bucket,
+      Key: `${process.env.stackName}/workflows/template.json`,
+      Body: JSON.stringify({})
+    }).promise(),
+    s3().putObject({
+      Bucket: process.env.system_bucket,
+      Key: `${process.env.stackName}/workflows/list.json`,
+      Body: JSON.stringify([{
+        name: rule.workflow,
+        arn: 'some-arn',
+        template: 's3uri',
+        definition: {}
+      }])
+    }).promise()
+  ]);
 
   await ruleModel.create(rule);
 

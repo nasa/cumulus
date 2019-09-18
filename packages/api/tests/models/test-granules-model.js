@@ -8,6 +8,7 @@ const aws = require('@cumulus/common/aws');
 const ingestAws = require('@cumulus/ingest/aws');
 const launchpad = require('@cumulus/common/launchpad');
 const StepFunctions = require('@cumulus/common/StepFunctions');
+const workflows = require('@cumulus/common/workflows');
 const { randomString } = require('@cumulus/common/test-utils');
 const cmrjs = require('@cumulus/cmrjs');
 const { CMR } = require('@cumulus/cmr-client');
@@ -737,6 +738,8 @@ test.serial(
     const fileExists = async () => true;
     const fileExistsStub = sinon.stub(aws, 'fileExists').callsFake(fileExists);
     const invokeStub = sinon.stub(ingestAws, 'invoke');
+    const workflowArn = async () => 'arn:workflow';
+    const workflowArnStub = sinon.stub(workflows, 'getWorkflowArn').callsFake(workflowArn);
 
     try {
       await granuleModel.reingest(granule);
@@ -747,6 +750,7 @@ test.serial(
       fileExistsStub.restore();
       invokeStub.restore();
       updateStatusStub.restore();
+      workflowArnStub.restore();
     }
   }
 );
