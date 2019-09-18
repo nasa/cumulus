@@ -240,7 +240,6 @@ describe('Ingesting from PDR', () => {
           { pdrName: pdrFilename },
           'running'
         );
-        expect(record.execution).toEqual(getExecutionUrl(parsePdrExecutionArn));
         expect(record.status).toEqual('running');
       });
 
@@ -378,27 +377,6 @@ describe('Ingesting from PDR', () => {
         });
       });
 
-      describe('the sf-sns-report task has published a sns message and', () => {
-        it('the pdr record is added to DynamoDB', async () => {
-          const record = await waitForModelStatus(
-            pdrModel,
-            { pdrName: pdrFilename },
-            'completed'
-          );
-          expect(record.execution).toEqual(getExecutionUrl(parsePdrExecutionArn));
-          expect(record.status).toEqual('completed');
-        });
-
-        it('the execution record is added to DynamoDB', async () => {
-          const record = await waitForModelStatus(
-            executionModel,
-            { arn: parsePdrExecutionArn },
-            'completed'
-          );
-          expect(record.status).toEqual('completed');
-        });
-      });
-
       describe('When a workflow is configured to make a choice based on the output of a Cumulus task', () => {
         let executionStatus;
 
@@ -461,6 +439,27 @@ describe('Ingesting from PDR', () => {
       });
     });
 
+    describe('the sf-sns-report task has published a sns message and', () => {
+      it('the execution record is added to DynamoDB', async () => {
+        const record = await waitForModelStatus(
+          executionModel,
+          { arn: parsePdrExecutionArn },
+          'completed'
+        );
+        expect(record.status).toEqual('completed');
+      });
+
+      it('the pdr record is added to DynamoDB', async () => {
+        const record = await waitForModelStatus(
+          pdrModel,
+          { pdrName: pdrFilename },
+          'completed'
+        );
+        expect(record.execution).toEqual(getExecutionUrl(parsePdrExecutionArn));
+        expect(record.status).toEqual('completed');
+      });
+    });
+
     /** This test relies on the previous 'ParsePdr workflow' to complete */
     describe('When accessing an execution via the API that was triggered from a parent step function', () => {
       it('displays a link to the parent', async () => {
@@ -484,18 +483,6 @@ describe('Ingesting from PDR', () => {
 
         const queuePdrsExecution = JSON.parse(queuePdrsExecutionResponse.body);
         expect(queuePdrsExecution.parentArn).toBeUndefined();
-      });
-    });
-
-
-    describe('the sf-sns-report task has published a sns message and', () => {
-      it('the execution record is added to DynamoDB', async () => {
-        const record = await waitForModelStatus(
-          executionModel,
-          { arn: parsePdrExecutionArn },
-          'completed'
-        );
-        expect(record.status).toEqual('completed');
       });
     });
   });
