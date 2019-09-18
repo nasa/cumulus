@@ -45,16 +45,20 @@ Buckets specified in `app/config.yml` will become part of the `meta` object of t
 
 To use the buckets specified in your config, you can do the following:
 
-```
+```yaml
 DiscoverGranules:
+  Parameters:
+    cma:
       CumulusConfig:
-        provider: '{$.meta.provider}'
+        Provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
         buckets: '{$.meta.buckets}'
 ```
 
-```
+```yaml
 MoveGranules:
+  Parameters:
+    cma:
       CumulusConfig:
         bucket: '{$.meta.buckets.internal.name}'
         buckets: '{$.meta.buckets}'
@@ -64,8 +68,10 @@ MoveGranules:
 
 Bucket names can be hardcoded in your workflow configuration, for example:
 
-```
+```yaml
 DiscoverGranules:
+  Parameters:
+    cma:
       CumulusConfig:
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
@@ -75,8 +81,10 @@ DiscoverGranules:
 ```
 Or you can do a combination of meta buckets and hardcoded:
 
-```
+```yaml
 DiscoverGranules:
+  Parameters:
+    cma:
       CumulusConfig:
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'
@@ -89,8 +97,10 @@ DiscoverGranules:
 
 Bucket names can be configured using a mixture of hardcoded values and values from the meta. For example, to configure the bucket based on the collection name you could do something like:
 
-```
+```yaml
 DiscoverGranules:
+  Parameters:
+    cma:
       CumulusConfig:
         provider: '{$.meta.provider}'
         collection: '{$.meta.collection}'

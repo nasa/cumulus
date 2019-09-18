@@ -5,6 +5,8 @@ hide_title: true
 original_id: cnm-workflow
 ---
 
+# TODO: Fix this document
+
 # CNM Workflow
 
 This entry documents how to setup a workflow that utilizes the built-in CNM/Kinesis functionality in Cumulus.
@@ -83,25 +85,29 @@ CNMExampleWorkflow:
     StartStatus:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          input: '{$}'
-      Next: TranslateMessage
-      Catch:
-        - ErrorEquals:
-          - States.ALL
-          ResultPath: '$.exception'
-          Next: CnmResponse
+      Parameters:
+        cma:
+          CumulusConfig:
+            cumulus_message:
+              input: '{$}'
+          Next: TranslateMessage
+          Catch:
+            - ErrorEquals:
+              - States.ALL
+              ResultPath: '$.exception'
+              Next: CnmResponse
     TranslateMessage:
       Type: Task
       Resource: ${CNMToCMALambdaFunction.Arn}
-      CumulusConfig:
-        cumulus_message:
-          outputs:
-            - source: '{$.cnm}'
-              destination: '{$.meta.cnm}'
-            - source: '{$}'
-              destination: '{$.payload}'
+      Parameters:
+        cma:
+          CumulusConfig:
+            cumulus_message:
+              outputs:
+                - source: '{$.cnm}'
+                  destination: '{$.meta.cnm}'
+                - source: '{$}'
+                  destination: '{$.payload}'
       Catch:
         - ErrorEquals:
           - States.ALL
@@ -109,18 +115,20 @@ CNMExampleWorkflow:
           Next: CnmResponse
       Next: SyncGranule
     SyncGranule:
-      CumulusConfig:
-        provider: '{$.meta.provider}'
-        buckets: '{$.meta.buckets}'
-        collection: '{$.meta.collection}'
-        downloadBucket: '{$.meta.buckets.private.name}'
-        stack: '{$.meta.stack}'
-        cumulus_message:
-          outputs:
-            - source: '{$.granules}'
-              destination: '{$.meta.input_granules}'
-            - source: '{$}'
-              destination: '{$.payload}'
+      Parameters:
+        cma:
+          CumulusConfig:
+            provider: '{$.meta.provider}'
+            buckets: '{$.meta.buckets}'
+            collection: '{$.meta.collection}'
+            downloadBucket: '{$.meta.buckets.private.name}'
+            stack: '{$.meta.stack}'
+            cumulus_message:
+              outputs:
+                - source: '{$.granules}'
+                  destination: '{$.meta.input_granules}'
+                - source: '{$}'
+                  destination: '{$.payload}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -135,15 +143,17 @@ CNMExampleWorkflow:
           Next: CnmResponse
       Next: CnmResponse
     CnmResponse:
-      CumulusConfig:
-        OriginalCNM: '{$.meta.cnm}'
-        CNMResponseStream: 'ADD YOUR RESPONSE STREAM HERE'
-        region: 'us-east-1'
-        WorkflowException: '{$.exception}'
-        cumulus_message:
-          outputs:
-            - source: '{$}'
-              destination: '{$.meta.cnmResponse}'
+      Parameters:
+        cma:
+          CumulusConfig:
+            OriginalCNM: '{$.meta.cnm}'
+            CNMResponseStream: 'ADD YOUR RESPONSE STREAM HERE'
+            region: 'us-east-1'
+            WorkflowException: '{$.exception}'
+            cumulus_message:
+              outputs:
+                - source: '{$}'
+                  destination: '{$.meta.cnmResponse}'
       Type: Task
       Resource: ${CnmResponseLambdaFunction.Arn}
       Retry:
@@ -160,14 +170,16 @@ CNMExampleWorkflow:
     StopStatus:
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
-      CumulusConfig:
-        sfnEnd: true
-        stack: '{$.meta.stack}'
-        bucket: '{$.meta.buckets.internal.name}'
-        stateMachine: '{$.cumulus_meta.state_machine}'
-        executionName: '{$.cumulus_meta.execution_name}'
-        cumulus_message:
-          input: '{$}'
+      Parameters:
+        cma:
+          CumulusConfig:
+            sfnEnd: true
+            stack: '{$.meta.stack}'
+            bucket: '{$.meta.buckets.internal.name}'
+            stateMachine: '{$.cumulus_meta.state_machine}'
+            executionName: '{$.cumulus_meta.execution_name}'
+            cumulus_message:
+              input: '{$}'
       Catch:
         - ErrorEquals:
           - States.ALL
