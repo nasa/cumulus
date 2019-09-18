@@ -61,23 +61,27 @@ For any SIPS workflows using `queue-granules` or `queue-pdrs` that you want to u
 
 ```yaml
   QueueGranules:
-    CumulusConfig:
-      provider: '{$.meta.provider}'
-      internalBucket: '{$.meta.buckets.internal.name}'
-      stackName: '{$.meta.stack}'
-      granuleIngestMessageTemplateUri: '{$.meta.templates.IngestGranule}'
-      # configure the step to use your new queue
-      queueUrl: '{$.meta.queues.backgroundJobQueue}'
+    Parameters:
+      cma:
+        CumulusConfig:
+          provider: '{$.meta.provider}'
+          internalBucket: '{$.meta.buckets.internal.name}'
+          stackName: '{$.meta.stack}'
+          granuleIngestMessageTemplateUri: '{$.meta.templates.IngestGranule}'
+          # configure the step to use your new queue
+          queueUrl: '{$.meta.queues.backgroundJobQueue}'
 ```
 
 ```yaml
   QueuePdrs:
-    CumulusConfig:
-      # configure the step to use your new queue
-      queueUrl: '{$.meta.queues.backgroundJobQueue}'
-      parsePdrMessageTemplateUri: '{$.meta.templates.ParsePdr}'
-      provider: '{$.meta.provider}'
-      collection: '{$.meta.collection}'
+    Parameters:
+      cma:
+        CumulusConfig:
+          # configure the step to use your new queue
+          queueUrl: '{$.meta.queues.backgroundJobQueue}'
+          parsePdrMessageTemplateUri: '{$.meta.templates.ParsePdr}'
+          provider: '{$.meta.provider}'
+          collection: '{$.meta.collection}'
 ```
 
 After making these changes, re-deploy your Cumulus application for the execution throttling to take effect.
