@@ -91,12 +91,12 @@ test('getMessageFromTemplate throws error if invalid S3 URI is provided', async 
 });
 
 test('getMessageFromTemplate throws error if non-existent S3 URI is provided', async (t) => {
-  await t.throwsAsync(() => getMessageFromTemplate('s3://some-bucket/some-key'));
+  await t.throwsAsync(() => getMessageFromTemplate('s3://some-bucket/some-key'), 'The specified bucket does not exist');
 });
 
 test('getMessageTemplate throws error if message template body is not JSON', async (t) => {
-  const revert = message.__set__('getS3Object', () => ({ Body: 'this is not valid json' }));
-  await t.throwsAsync(() => getMessageFromTemplate('s3://some-bucket/some-key'));
+  const revert = message.__set__('getS3Object', () => ({ Body: '/this is not valid json/' }));
+  await t.throwsAsync(() => getMessageFromTemplate('s3://some-bucket/some-key'), 'Unexpected token / in JSON at position 0');
   revert();
 });
 
