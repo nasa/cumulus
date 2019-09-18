@@ -4,6 +4,8 @@ title: Workflows Input & Output
 hide_title: true
 ---
 
+##TODO: Update this doc with CMA descriptions
+
 # Ingest Inputs and Return Values
 
 ## General Structure
@@ -85,11 +87,13 @@ In the workflow configuration, each task has its own configuration, and it can u
 
 ```yaml
     Discovery:
+    Parameters:
+      cma:
         CumulusConfig:
           provider: '{$.meta.provider}'
-          inlinestr: 'prefix{meta.foo}suffix'
-          array: '[$.meta.foo]'
-          object: '{$.meta}'
+            inlinestr: 'prefix{meta.foo}suffix'
+            array: '[$.meta.foo]'
+            object: '{$.meta}'
 ```
 
 The corresponding Cumulus Message would contain:
@@ -148,9 +152,11 @@ By default, the incoming payload is the payload from the previous task.  The tas
 
 ```yaml
     ExampleTask:
-      CumulusConfig:
-        cumulus_message:
-            input: '{$.payload.foo}'
+      Parameters:
+        cma:
+          CumulusConfig:
+            cumulus_message:
+                input: '{$.payload.foo}'
 ```
 
 The task configuration in the message would be:
@@ -189,13 +195,15 @@ By default, the task's return value is the next payload.  However, the workflow 
 
 ```yaml
     ExampleTask:
-      CumulusConfig:
-        cumulus_message:
-            outputs:
-              - source: '{$}'
-                destination: '{$.payload}'
-              - source: '{$.output.anykey}'
-                destination: '{$.meta.baz}'
+      Parameters:
+        cma:
+          CumulusConfig:
+            cumulus_message:
+                outputs:
+                  - source: '{$}'
+                    destination: '{$.payload}'
+                  - source: '{$.output.anykey}'
+                    destination: '{$.meta.baz}'
 ```
 
 The corresponding Cumulus Message would be:
