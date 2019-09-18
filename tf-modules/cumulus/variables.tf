@@ -100,9 +100,19 @@ variable "buckets" {
   default = {}
 }
 
+variable "cmr_limit" {
+  type    = number
+  default = 100
+}
+
 variable "cmr_oauth_provider" {
   type    = string
   default = "earthdata"
+}
+
+variable "cmr_page_size" {
+  type    = number
+  default = 50
 }
 
 variable "distribution_url" {
@@ -201,6 +211,13 @@ variable "oauth_user_group" {
 variable "permissions_boundary_arn" {
   type    = string
   default = null
+}
+
+variable "queue_execution_limits" {
+  type = map(number)
+  default = {
+    backgroundProcessing = 5
+  }
 }
 
 variable "urs_url" {

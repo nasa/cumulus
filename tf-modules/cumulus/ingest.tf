@@ -3,6 +3,10 @@ module "ingest" {
 
   prefix = var.prefix
 
+  buckets = var.buckets
+
+  distribution_url                         = module.distribution.distribution_url
+  sftracker_sns_topic_arn                  = module.archive.sftracker_sns_topic_arn
   cumulus_message_adapter_lambda_layer_arn = var.cumulus_message_adapter_lambda_layer_arn
 
   # Buckets config
@@ -17,10 +21,24 @@ module "ingest" {
   lambda_processing_role_arn = aws_iam_role.lambda_processing.arn
 
   # CMR config
-  cmr_environment = var.cmr_environment
+  cmr_oauth_provider = var.cmr_oauth_provider
+  cmr_username       = var.cmr_username
+  cmr_provider       = var.cmr_provider
+  cmr_client_id      = var.cmr_client_id
+  cmr_password       = module.archive.encrypted_cmr_password
+  cmr_environment    = var.cmr_environment
+  cmr_limit          = var.cmr_limit
+  cmr_page_size      = var.cmr_page_size
+
+  # Launchpad config
+  launchpad_api         = var.launchpad_api
+  launchpad_certificate = var.launchpad_certificate
+  launchpad_passphrase  = module.archive.encrypted_launchpad_passphrase
 
   # DB config
   dynamo_tables = var.dynamo_tables
 
   log2elasticsearch_lambda_function_arn = module.archive.log2elasticsearch_lambda_function_arn
+
+  queue_execution_limits = var.queue_execution_limits
 }
