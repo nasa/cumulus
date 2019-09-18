@@ -11,10 +11,10 @@ const { S3 } = require('aws-sdk');
 async function handler(event) {
   const s3 = new S3();
   const messageString = event.Records[0].Sns.Message;
-  const message = JSON.parse(messageString);
+  const executionRecord = JSON.parse(messageString);
   return s3.putObject({
-    Bucket: message.cumulus_meta.system_bucket,
-    Key: `${message.meta.stack}/test-output/${message.cumulus_meta.execution_name}.output`,
+    Bucket: process.env.system_bucket,
+    Key: `${process.env.stackName}/test-output/${executionRecord.name}.output`,
     Body: JSON.stringify(event, null, 2)
   }).promise();
 }
