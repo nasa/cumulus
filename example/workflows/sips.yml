@@ -107,8 +107,8 @@ IngestAndPublishGranule:
         cma:
           event.$: '$'
           ReplaceConfig:
-            Path': '$.payload'
-            TargetPath': '$.payload'
+            Path: '$.payload'
+            TargetPath: '$.payload'
           task_config:
             buckets: '{$.meta.buckets}'
             provider: '{$.meta.provider}'
@@ -550,8 +550,8 @@ ParsePdr:
         cma:
           event.$: '$'
           ReplaceConfig:
-            Path': '$.payload'
-            TargetPath': '$.payload'
+            Path: '$.payload'
+            TargetPath: '$.payload'
           task_config:
             cumulus_message:
               outputs:

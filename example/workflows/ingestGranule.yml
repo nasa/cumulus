@@ -25,6 +25,9 @@ IngestGranuleCatchDuplicateErrorTest:
       Parameters:
         cma:
           event.$: '$'
+          ReplaceConfig:
+            Path: '$.payload'
+            TargetPath: '$.payload'
           task_config:
             buckets: '{$.meta.buckets}'
             provider: '{$.meta.provider}'
