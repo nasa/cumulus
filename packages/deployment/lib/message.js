@@ -134,7 +134,7 @@ function generateWorkflowTemplate(config, outputs) {
       distribution_endpoint: config.distribution_endpoint,
       collection: {},
       provider: {},
-      template: `s3://${bucket}/${config.stack}/workflows/template.json`,
+      template: `s3://${bucket}/${config.stack}/workflow_template.json`,
       queues,
       queueExecutionLimits
     },
@@ -164,21 +164,22 @@ async function generateTemplates(config, outputs, uploader) {
     // generate workflow message template and upload it to s3.
     const template = generateWorkflowTemplate(config, outputs);
     console.log('Uploading Cumulus Universal Workflow Message Template ...');
-    const key = `${stack}/workflows/template.json`;
+    const key = `${stack}/workflow_template.json`;
     await uploader(bucket, key, JSON.stringify(template));
 
     // generate list of workflows and upload it to S3
     // this is used by the /workflows endpoint of the API to return list
     // of existing workflows
-    const workflows = [];
+    const workflowUploads = [];
     config.stepFunctions.forEach((name) => {
-      workflows.push({
+      const arn = findOutputValue(outputs, `${name}StateMachine`);
+      workflowUploads.push(uploader(bucket, `${stack}/workflows/${name}.json`, JSON.stringify({
         name,
-        template: `s3://${bucket}/${key}`,
+        arn,
         definition: config.stepFunctions[name]
-      });
+      })));
     });
-    await uploader(bucket, `${stack}/workflows/list.json`, JSON.stringify(workflows));
+    await Promise.all(workflowUploads);
 
     // upload the buckets config
     await uploader(bucket, `${stack}/workflows/buckets.json`, JSON.stringify(config.buckets));
