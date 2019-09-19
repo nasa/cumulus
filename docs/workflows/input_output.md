@@ -61,9 +61,9 @@ and include the reference in the Lambda configuration:
         - '{{cma_layer}}'
 ```
 
-***Please note***: Updating/removing a layer does not change a deployed Lambda, so to update the CMA you should deploy a new version of the CMA layer, update the associated Lambda configuration to reference the new CMA version, and re-deploy your Lambdas.
+***Please Note***: Updating/removing a layer does not change a deployed Lambda, so to update the CMA you should deploy a new version of the CMA layer, update the associated Lambda configuration to reference the new CMA version, and re-deploy your Lambdas.
 
-**Please Note**: Updating the CMA without updating the lambda code will fail if operating with the Workflow Lambda Versions feature enabled.  If you are utilizing this option, we recommend continuing use of kes injection/manual addition for now.
+***Please Note***: Updating the CMA without updating the lambda code will fail if operating with the Workflow Lambda Versions feature enabled.  If you are utilizing this option, we recommend continuing use of kes injection/manual addition for now.
 
 This method will be supported more fully once migration to Terraform Deployments has been completed.
 
@@ -512,7 +512,7 @@ The Cumulus Message Adapter would output the following Cumulus Message:
 
 If the `ReplaceConfig` configuration parameter is defined, the CMA will evaluate the configuration options provided, and if required write a portion of the Cumulus Message to S3, and add a `replace` key to the message for future steps to utilize.
 
-**Please note** the non user-modifiable field `cumulus-meta` will always be retained, regardless of the configuration.
+***Please Note***: the non user-modifiable field `cumulus-meta` will always be retained, regardless of the configuration.
 
 
 For example, if the output message (post output configuration) from a cumulus message looks like:
