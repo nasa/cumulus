@@ -46,7 +46,7 @@ SyncGranule:
             - source: '{$}'
               destination: '{$.payload}'
             - source: '{$.process}'
-              destination: '{$.cumulus_meta.process}'
+              destination: '{$.meta.process}'    
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -108,7 +108,8 @@ IngestAndPublishGranule:
         cma:
           event.$: '$'
           ReplaceConfig:
-            FullMessage: true
+            Path: '$.payload'
+            TargetPath: '$.payload'
       CumulusConfig:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
@@ -124,7 +125,7 @@ IngestAndPublishGranule:
             - source: '{$}'
               destination: '{$.payload}'
             - source: '{$.process}'
-              destination: '{$.cumulus_meta.process}'
+              destination: '{$.meta.process}'
       Retry:
           - ErrorEquals:
               - States.ALL
@@ -139,7 +140,7 @@ IngestAndPublishGranule:
     ChooseProcess:
       Type: Choice
       Choices:
-        - Variable: $.cumulus_meta.process
+        - Variable: $.meta.process
           StringEquals: modis
           Next: ProcessingStep
       Default: StopStatus
@@ -225,7 +226,7 @@ IngestAndPublishGranule:
         stack: '{$.meta.stack}'
         cmr: '{$.meta.cmr}'
         launchpad: '{$.meta.launchpad}'
-        process: '{$.cumulus_meta.process}'
+        process: '{$.meta.process}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -285,7 +286,8 @@ IngestGranule:
         cma:
           event.$: '$'
           ReplaceConfig:
-            FullMessage: true
+            Path: '$.payload'
+            TargetPath: '$.payload'
       CumulusConfig:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
@@ -301,7 +303,7 @@ IngestGranule:
             - source: '{$}'
               destination: '{$.payload}'
             - source: '{$.process}'
-              destination: '{$.cumulus_meta.process}'
+              destination: '{$.meta.process}'
       Type: Task
       Resource: ${SyncGranuleLambdaFunction.Arn}
       Retry:
@@ -318,7 +320,7 @@ IngestGranule:
     ChooseProcess:
       Type: Choice
       Choices:
-        - Variable: $.cumulus_meta.process
+        - Variable: $.meta.process
           StringEquals: modis
           Next: ProcessingStep
       Default: StopStatus
@@ -545,14 +547,15 @@ ParsePdr:
         cma:
           event.$: '$'
           ReplaceConfig:
-            FullMessage: true
+            Path: '$.payload'
+            TargetPath: '$.payload'
       CumulusConfig:
         cumulus_message:
           outputs:
             - source: '{$}'
               destination: '{$.payload}'
             - source: '{$.isFinished}'
-              destination: '{$.cumulus_meta.isPdrFinished}'
+              destination: '{$.meta.isPdrFinished}'
       Retry:
         - <<: *LambdaServiceExceptionRetry
       Catch:
@@ -564,10 +567,10 @@ ParsePdr:
     CheckAgainChoice:
       Type: Choice
       Choices:
-        - Variable: $.cumulus_meta.isPdrFinished
+        - Variable: $.meta.isPdrFinished
           BooleanEquals: false
           Next: PdrStatusReport
-        - Variable: $.cumulus_meta.isPdrFinished
+        - Variable: $.meta.isPdrFinished
           BooleanEquals: true
           Next: StopStatus
       Default: StopStatus

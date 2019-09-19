@@ -19,6 +19,14 @@ IngestGranuleCatchDuplicateErrorTest:
           BackoffRate: 2
       Next: SyncGranule
     SyncGranule:
+      Type: Task
+      Resource: ${SyncGranuleLambdaFunction.Arn}
+      Parameters:
+        cma:
+          event.$: '$'
+          ReplaceConfig:
+            Path: '$.payload'
+            TargetPath: '$.payload'
       CumulusConfig:
         buckets: '{$.meta.buckets}'
         provider: '{$.meta.provider}'
@@ -34,9 +42,7 @@ IngestGranuleCatchDuplicateErrorTest:
             - source: '{$}'
               destination: '{$.payload}'
             - source: '{$.process}'
-              destination: '{$.cumulus_meta.process}'
-      Type: Task
-      Resource: ${SyncGranuleLambdaFunction.Arn}
+              destination: '{$.meta.process}'
       Retry:
           - ErrorEquals:
               - States.ALL
@@ -55,7 +61,7 @@ IngestGranuleCatchDuplicateErrorTest:
     ChooseProcess:
       Type: Choice
       Choices:
-        - Variable: $.cumulus_meta.process
+        - Variable: $.meta.process
           StringEquals: modis
           Next: ProcessingStep
       Default: StopStatus
