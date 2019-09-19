@@ -86,7 +86,7 @@ CNMExampleWorkflow:
       Paremeters:
         cma:
           event.$: '$'
-          CumulusConfig:
+          workflow_config:
             StartStatus:
               cumulus_message:
                 input: '{$}'
@@ -102,7 +102,7 @@ CNMExampleWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          CumulusConfig:
+          workflow_config:
             TranslateMessage:
               cumulus_message:
                 outputs:
@@ -120,7 +120,7 @@ CNMExampleWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          CumulusConfig:
+          workflow_config:
             SyncGranule:
               provider: '{$.meta.provider}'
               buckets: '{$.meta.buckets}'
@@ -150,7 +150,7 @@ CNMExampleWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          CumulusConfig:
+          workflow_config:
             CnmResponse:
               OriginalCNM: '{$.meta.cnm}'
               CNMResponseStream: 'ADD YOUR RESPONSE STREAM HERE'
@@ -179,7 +179,7 @@ CNMExampleWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          CumulusConfig:
+          workflow_config:
             StopStatus:
               sfnEnd: true
               stack: '{$.meta.stack}'
@@ -228,7 +228,7 @@ CNMToCMA:
 
 `CNMToCMA` is meant for the beginning of a workflow: it maps CNM granule information to a payload for downstream tasks. This workflow will not utilize the payload. For other workflows, you would need to ensure that downstream tasks in your workflow either understand the CNM message *or* include a translation task like this one.
 
-You can also manipulate the data sent to downstream tasks using `CumulusConfig` for various states in `workflows.yml`. Read more about how to configure data on the [Workflow Input & Output](https://nasa.github.io/cumulus/docs/workflows/input_output) page.
+You can also manipulate the data sent to downstream tasks using `workflow_config` for various states in `workflows.yml`. Read more about how to configure data on the [Workflow Input & Output](https://nasa.github.io/cumulus/docs/workflows/input_output) page.
 
 ###### CnmResponse
 

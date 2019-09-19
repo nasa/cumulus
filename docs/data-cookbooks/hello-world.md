@@ -23,7 +23,7 @@ HelloWorldWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          CumulusConfig:
+          workflow_config:
             StartStatus:
               cumulus_message:
                 input: '{$}'
@@ -34,7 +34,7 @@ HelloWorldWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          CumulusConfig:
+          workflow_config:
             HelloWorld:
               buckets: '{$.meta.buckets}'
               provider: '{$.meta.provider}'
@@ -48,7 +48,7 @@ HelloWorldWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          CumulusConfig:
+          workflow_config:
             StopStatus:
               sfnEnd: true
               stack: '{$.meta.stack}'

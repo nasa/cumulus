@@ -11,7 +11,7 @@ To report the PDR's progress as it's being processed, add the following step aft
       Parameters:
         cma:
           event.$: '$'
-          CumulusConfig:
+          workflow_config:
             PdrStatusReport:
               cumulus_message:
                 input: '{$}'
@@ -27,7 +27,7 @@ To report the start status of the step function:
       Parameters:
         cma:
           event.$: '$'
-          CumulusConfig:
+          workflow_config:
             StatusReport:
               cumulus_message:
                 input: '{$}'
@@ -43,7 +43,7 @@ To report the final status of the step function:
       Parameters:
         cma:
           event.$: '$'
-          CumulusConfig:
+          workflow_config:
             StopStatus:
               sfnEnd: true
               stack: '{$.meta.stack}'

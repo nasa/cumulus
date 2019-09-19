@@ -29,7 +29,7 @@ HelloWorldWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          CumulusConfig:
+          workflow_config:
             StartStatus:
               cumulus_message:
               input: '{$}' # Configuration to send the payload to the SNS Topic
@@ -38,7 +38,7 @@ HelloWorldWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          CumulusConfig:
+          workflow_config:
             HelloWorld:
               buckets: '{$.meta.buckets}'
               provider: '{$.meta.provider}'
@@ -52,7 +52,7 @@ HelloWorldWorkflow:
       Parameters:
         cma:
           event.$: '$'
-          CumulusConfig:
+          workflow_config:
             StopStatus:
               sfnEnd: true # Indicates the end of the workflow
               stack: '{$.meta.stack}'
@@ -80,7 +80,7 @@ DiscoverPdrs:
   Parameters:
     cma:
       event.$: '$'
-      CumulusConfig:
+      workflow_config:
         stack: '{$.meta.stack}'
         provider: '{$.meta.provider}'
         bucket: '{$.meta.buckets.internal.name}'
@@ -104,7 +104,7 @@ PdrStatusReport:
   Parameters:
     cma:
       event.$: '$'
-      CumulusConfig:
+      workflow_config:
         PdrStatusReport:
           cumulus_message:
             input: '{$}'

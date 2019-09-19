@@ -50,7 +50,7 @@ DiscoverGranules:
   Parameters:
     cma:
       event.$: '$'
-      CumulusConfig:
+      workflow_config:
         DiscoverGranules:
           Provider: '{$.meta.provider}'
           collection: '{$.meta.collection}'
@@ -62,7 +62,7 @@ MoveGranules:
   Parameters:
     cma:
       event.$: '$'
-      CumulusConfig:
+      workflow_config:
         MoveGranules:
           bucket: '{$.meta.buckets.internal.name}'
           buckets: '{$.meta.buckets}'
@@ -77,7 +77,7 @@ DiscoverGranules:
   Parameters:
     cma:
       event.$: '$'
-      CumulusConfig:
+      workflow_config:
         DiscoverGranules:
           provider: '{$.meta.provider}'
           collection: '{$.meta.collection}'
@@ -92,7 +92,7 @@ DiscoverGranules:
   Parameters:
     cma:
       event.$: '$'
-      CumulusConfig:
+      workflow_config:
         DiscoverGranules:
           provider: '{$.meta.provider}'
           collection: '{$.meta.collection}'
@@ -110,7 +110,7 @@ DiscoverGranules:
   Parameters:
     cma:
       event.$: '$'
-      CumulusConfig:
+      workflow_config:
         DiscoverGranules:
           provider: '{$.meta.provider}'
           collection: '{$.meta.collection}'

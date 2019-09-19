@@ -27,6 +27,9 @@ Some best practices for error handling in Cumulus Workflows are:
 
 Note: In the example below, YAML syntax (i.e. `&ErrorEqualDefaults` and `<<: *ErrorEqualDefaults`) is used to create references to reusable blocks which makes the definition less repetitive. Read more here: [YAML - Anchors, References, Extend](https://blog.daemonl.com/2016/02/yaml.html).
 
+
+## TODO: Is this a legit workflow example?
+
 ```yaml
 CNMExampleWorkflow:
   Comment: 'Tests Workflow from Kinesis Stream'

@@ -50,7 +50,7 @@ This task expects an incoming input that contains name and path information abou
 
 ### Configuration
 
-This task does expect values to be set in the CumulusConfig for the workflows.  A schema exists that defines the requirements for the task.
+This task does expect values to be set in the `workflow_config` cma parameters for the workflows.  A schema exists that defines the requirements for the task.
 
 For the most recent config.json schema, please see the [Cumulus Tasks page](../tasks) entry for the schema.
 

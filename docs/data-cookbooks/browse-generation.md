@@ -89,7 +89,7 @@ A few things to note about tasks in the workflow being added:
     Parameters:
       cma:
         event: '$'
-        CumulusConfig:
+        workflow_config:
           CmrStep:
             bucket: '{$.meta.buckets.internal.name}'
             stack: '{$.meta.stack}'
@@ -116,7 +116,7 @@ Note that in the task, the event.config.cmr will contain the values you configur
     Parameters:
       cma:
         event.$: '$'
-        CumulusConfig:
+        workflow_config:
           ProcessingStep:
             bucket: '{$.meta.buckets.internal.name}'
             collection: '{$.meta.collection}'
