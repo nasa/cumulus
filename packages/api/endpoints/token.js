@@ -108,9 +108,9 @@ async function token(event, oAuth2Provider, response) {
 async function buildLaunchpadToken(samlResponse) {
   const accessTokenModel = new AccessToken();
 
-  const username = samlResponse.user.name_id;
+  const username = samlResponse.extract.attributes.UserId;
   const expirationTime = Date.now() + 3600;
-  const accessToken = samlResponse.user.session_index;
+  const accessToken = samlResponse.extract.response.inResponseTo;
 
   await accessTokenModel.create({
     accessToken,

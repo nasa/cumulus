@@ -46,60 +46,6 @@ const launchpadAuth = require('./launchpadAuth');
 // }
 // const metadata = getMetadata();
 
-/*
-// the saml2-js stuff set up SP and IdP
-const sp_options = {
-  entity_id: 'https://cumulus-sandbox.earthdata.nasa.gov/jl-test-integration', //'https://cumulus-sandbox.earthdata.nasa.gov/kk-test-integration', //process.env.ENTITY_ID,
-  // private_key: fs.readFileSync('/Users/kakelly2/Documents/Projects/serverkey.pem').toString(),// fs.readFileSync(process.env.PRIV_KEY).toString(),
-  // certificate: fs.readFileSync('/Users/kakelly2/Documents/Projects/crt-file.crt').toString(),// fs.readFileSync(process.env.CERT).toString(),
-  assert_endpoint: 'https://5hlnofihz8.execute-api.us-east-1.amazonaws.com:8000/dev/saml/auth', // 'https://cumulus-sandbox.earthdata.nasa.gov/saml/sso', //process.env.ASSERT_ENDPOINT, // change to just /assert
-  force_authn: false,
-  // auth_context: { comparison: "exact", class_refs: ["urn:oasis:names:tc:SAML:1.0:am:password"] },
-  // nameid_format: "urn:oasis:names:tc:SAML:2.0:nameid-format:transient",
-  sign_get_request: false,
-  allow_unencrypted_assertion: true
-}
-// Call service provider constructor with options
-const sp = new saml2.ServiceProvider(sp_options);
-const idp_options = {
-  sso_login_url: 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso',//process.env.IDP_LOGIN, // 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso'
-  sso_logout_url: null, // should probably figure this out?? Does launchpad have this?
-  certificates: [launchpadCert]// [fs.readFileSync(process.env.LAUNCHPAD_CERT).toString()]
-  // certificates: [fs.readFileSync('/Users/kakelly2/Documents/Projects/launchpad-sbx.pem').toString()]// [fs.readFileSync(process.env.LAUNCHPAD_CERT).toString()]
-// {bucket}/{prefix}/crypto/launchpad-saml.pem
-};
-const idp = new saml2.IdentityProvider(idp_options);
-*/
-
-// router.use(passport.initialize());
-
-// passport-saml stuff
-// passport.use(new passportSaml.Strategy(
-//   {
-//     path: 'https://cumulus-sandbox.earthdata.nasa.gov/saml/sso', //'https://5hlnofihz8.execute-api.us-east-1.amazonaws.com:8000/dev/saml/auth', // assert?
-//     callbackUrl: 'https://cumulus-sandbox.earthdata.nasa.gov/saml/sso',
-//     entryPoint: 'https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso', //'https://auth.launchpad-sbx.nasa.gov', // IDP url
-//     issuer: 'https://cumulus-sandbox.earthdata.nasa.gov/', // entity ID
-//     cert: fs.readFileSync('/Users/kakelly2/Documents/Projects/launchpad-sbx.pem').toString(), // IDP public key
-//     identifierFormat: 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified'
-//     // authnContext: 'urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken'
-//   },
-//   (profile, done) => { // Verify fxn
-//     console.log('Profile : ', profile);
-//     // const state = get(profile, 'query.state');
-//     // const username = profile.nameID;
-//     // const jwtToken = token.buildLaunchpadToken({user: { name_id: username, session_index: '9887654'}});
-//     // return done
-//     //   .status(307)
-//     //   .set({ Location: `${decodeURIComponent(state)}?token=${jwtToken}` })
-//     //   .send('Redirecting');
-//     return done(null,
-//       {
-//         username: profile.nameID
-//       });
-//   }
-// ));
-
 //samlify set up providers
 const idp = saml.IdentityProvider({
   metadata: fs.readFileSync('/Users/savoie/projects/cumulus/launchpad/launchpad-sbx-metadata.xml')
@@ -139,29 +85,8 @@ router.get("/samlLogin", (req, res) => {
   // samlify stuff
   const { id, context } = sp.createLoginRequest(idp, 'redirect');
   console.log('about to redirect');
-  console.log(context);
+  console.log('context:', context);
   return res.redirect(context);
-
-  /*
-  // passport-saml stuff
-  passport.authenticate('saml',  (err, profile) => {
-    console.log('in login');
-    // console.log('Profile: ', profile);
-  }),
-  // { successRedirect: '/', failureRedirect: '/' })
-  function(req, res) {
-    res.redirect('/');
-  }
-  */
-
-  /*
-  // saml2-js stuff
-  // // sp.create_login_request_url(idp, {}, function(err, login_url, request_id) {
-  //   if (err != null)
-  //     return res.send(500);
-  //   res.redirect(login_url);
-  // });
-  */
 });
 
 // Assert endpoint for when login completes
@@ -169,62 +94,17 @@ router.post("/saml/sso", (req, res) => {
   // samlify stuff
   console.log('got returned!');
   console.log(req.body);
-  // let form = new multiparty.Form();
-
-  //  form.parse(req, function(err, fields, files) {
-  //     Object.keys(fields).forEach(function(name) {
-  //          console.log('got field named ' + name);
-  //      });
-  //  });
   sp.parseLoginResponse(idp, 'post', req)
   .then(parseResult => {
     // Use the parseResult can do customized action
     console.log('parse results');
     console.log(parseResult);
-    // const userID = parseResults.user;
-    // const sessionID = parseResults.sessionID;
-    const jwtToken = token.buildLaunchpadToken({ sessionID, userID });
-    res.send('Hello');
+    console.log('MY EXTRACT:', JSON.stringify(parseResult.extract, null, 2));
+    const jwtToken = token.buildLaunchpadToken(parseResult);
+    res.send(jwtToken);
   })
   .catch(console.error);
 
-  /*
-  // Passort-saml stuff
-  passport.authenticate('saml', { failureRedirect: '/', failureFlash: true }, (err, resp) => {
-    if (err != null) console.log('merp', err);
-    console.log('in the post');
-    console.log(resp);
-    resp.status(307)
-      .set({Location: 'somethin83995'})
-      .send('Redirecting');
-  })
-  */
-
-  /*
-  //saml2-js stuff
-// function(req, res) { // /assert
-  // const state = get(event, 'query.state');
-  // const options = {request_body: req.body};
-  // sp.post_assert(idp, options, function(err, saml_response) {
-  //   if (err != null) {
-  //     console.log('assert error');
-  //     return res.send(500);
-  //   }
-  //   console.log(saml_response);
-  //   // use the SAML response to build a jwtToken to return to dashboard
-  //   const jwtToken = token.buildLaunchpadToken(saml_response);
-
-  //   if (state) {
-      // return res
-      //   .status(307)
-      //   .set({ Location: `${decodeURIComponent(state)}?token=${jwtToken}` })
-      //   .send('Redirecting');
-  //   }
-  //   const username = saml_response.user.name_id;
-  //   res.send('Hello', username);
-  // });
-  */
-// }
 });
 
 // collections endpoints
