@@ -4,8 +4,6 @@ title: Workflows Input & Output
 hide_title: true
 ---
 
-##TODO: Update this doc with CMA descriptions
-
 # Ingest Inputs and Return Values
 
 ## General Structure
