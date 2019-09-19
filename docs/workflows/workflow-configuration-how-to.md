@@ -49,19 +49,23 @@ To use the buckets specified in your config, you can do the following:
 DiscoverGranules:
   Parameters:
     cma:
+      event.$: '$'
       CumulusConfig:
-        Provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
-        buckets: '{$.meta.buckets}'
+        DiscoverGranules:
+          Provider: '{$.meta.provider}'
+          collection: '{$.meta.collection}'
+          buckets: '{$.meta.buckets}'
 ```
 
 ```yaml
 MoveGranules:
   Parameters:
     cma:
+      event.$: '$'
       CumulusConfig:
-        bucket: '{$.meta.buckets.internal.name}'
-        buckets: '{$.meta.buckets}'
+        MoveGranules:
+          bucket: '{$.meta.buckets.internal.name}'
+          buckets: '{$.meta.buckets}'
 ```
 
 ### Hardcode a bucket
@@ -72,12 +76,14 @@ Bucket names can be hardcoded in your workflow configuration, for example:
 DiscoverGranules:
   Parameters:
     cma:
+      event.$: '$'
       CumulusConfig:
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
-        buckets:
-          internal: 'sample-internal-bucket'
-          protected: 'sample-protected-bucket-2'
+        DiscoverGranules:
+          provider: '{$.meta.provider}'
+          collection: '{$.meta.collection}'
+          buckets:
+            internal: 'sample-internal-bucket'
+            protected: 'sample-protected-bucket-2'
 ```
 Or you can do a combination of meta buckets and hardcoded:
 
@@ -85,12 +91,14 @@ Or you can do a combination of meta buckets and hardcoded:
 DiscoverGranules:
   Parameters:
     cma:
+      event.$: '$'
       CumulusConfig:
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
-        buckets:
-          internal: 'sample-internal-bucket'
-          private: '{$.meta.buckets.private.name}'
+        DiscoverGranules:
+          provider: '{$.meta.provider}'
+          collection: '{$.meta.collection}'
+          buckets:
+            internal: 'sample-internal-bucket'
+            private: '{$.meta.buckets.private.name}'
 ```
 
 ### Using meta and hardcoding
@@ -101,11 +109,13 @@ Bucket names can be configured using a mixture of hardcoded values and values fr
 DiscoverGranules:
   Parameters:
     cma:
+      event.$: '$'
       CumulusConfig:
-        provider: '{$.meta.provider}'
-        collection: '{$.meta.collection}'
-        buckets:
-          internal: '{$.meta.collection.name}-bucket'
+        DiscoverGranules:
+          provider: '{$.meta.provider}'
+          collection: '{$.meta.collection}'
+          buckets:
+            internal: '{$.meta.collection.name}-bucket'
 ```
 ## How to specify a file location in a bucket
 

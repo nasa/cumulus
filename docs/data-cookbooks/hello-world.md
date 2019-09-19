@@ -22,19 +22,23 @@ HelloWorldWorkflow:
     StartStatus:
       Parameters:
         cma:
+          event.$: '$'
           CumulusConfig:
-            cumulus_message:
-              input: '{$}'
+            StartStatus:
+              cumulus_message:
+                input: '{$}'
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Next: HelloWorld
     HelloWorld:
       Parameters:
         cma:
+          event.$: '$'
           CumulusConfig:
-            buckets: '{$.meta.buckets}'
-            provider: '{$.meta.provider}'
-            collection: '{$.meta.collection}'
+            HelloWorld:
+              buckets: '{$.meta.buckets}'
+              provider: '{$.meta.provider}'
+              collection: '{$.meta.collection}'
       Type: Task
       Resource: ${HelloWorldLambdaFunction.Arn}
       Next: StopStatus
@@ -43,14 +47,16 @@ HelloWorldWorkflow:
       Resource: ${SfSnsReportLambdaFunction.Arn}
       Parameters:
         cma:
+          event.$: '$'
           CumulusConfig:
-            sfnEnd: true
-            stack: '{$.meta.stack}'
-            bucket: '{$.meta.buckets.internal.name}'
-            stateMachine: '{$.cumulus_meta.state_machine}'
-            executionName: '{$.cumulus_meta.execution_name}'
-            cumulus_message:
-              input: '{$}'
+            StopStatus:
+              sfnEnd: true
+              stack: '{$.meta.stack}'
+              bucket: '{$.meta.buckets.internal.name}'
+              stateMachine: '{$.cumulus_meta.state_machine}'
+              executionName: '{$.cumulus_meta.execution_name}'
+              cumulus_message:
+                input: '{$}'
       Catch:
         - ErrorEquals:
           - States.ALL

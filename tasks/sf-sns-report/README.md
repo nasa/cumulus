@@ -10,9 +10,11 @@ To report the PDR's progress as it's being processed, add the following step aft
     PdrStatusReport:
       Parameters:
         cma:
+          event.$: '$'
           CumulusConfig:
-            cumulus_message:
-              input: '{$}'
+            PdrStatusReport:
+              cumulus_message:
+                input: '{$}'
       ResultPath: null
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}
@@ -24,9 +26,11 @@ To report the start status of the step function:
     StatusReport:
       Parameters:
         cma:
+          event.$: '$'
           CumulusConfig:
-            cumulus_message:
-              input: '{$}'
+            StatusReport:
+              cumulus_message:
+                input: '{$}'
      ResultPath: null
      Type: Task
      Resource: ${SfSnsReportLambdaFunction.Arn}
@@ -38,14 +42,16 @@ To report the final status of the step function:
     StopStatus:
       Parameters:
         cma:
+          event.$: '$'
           CumulusConfig:
-            sfnEnd: true
-            stack: '{$.meta.stack}'
-            bucket: '{$.meta.buckets.internal.name}'
-            stateMachine: '{$.cumulus_meta.state_machine}'
-            executionName: '{$.cumulus_meta.execution_name}'
-            cumulus_message:
-              input: '{$}'
+            StopStatus:
+              sfnEnd: true
+              stack: '{$.meta.stack}'
+              bucket: '{$.meta.buckets.internal.name}'
+              stateMachine: '{$.cumulus_meta.state_machine}'
+              executionName: '{$.cumulus_meta.execution_name}'
+              cumulus_message:
+                input: '{$}'
       ResultPath: null
       Type: Task
       Resource: ${SfSnsReportLambdaFunction.Arn}

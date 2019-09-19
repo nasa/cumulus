@@ -87,13 +87,15 @@ In the workflow configuration, each task has its own configuration, and it can u
 
 ```yaml
     Discovery:
-    Parameters:
-      cma:
-        CumulusConfig:
-          provider: '{$.meta.provider}'
-            inlinestr: 'prefix{meta.foo}suffix'
-            array: '[$.meta.foo]'
-            object: '{$.meta}'
+      Parameters:
+        cma:
+          event.$: '$'
+          CumulusConfig:
+            Discovery:
+              provider: '{$.meta.provider}'
+                inlinestr: 'prefix{meta.foo}suffix'
+                array: '[$.meta.foo]'
+                object: '{$.meta}'
 ```
 
 The corresponding Cumulus Message would contain:
@@ -154,9 +156,11 @@ By default, the incoming payload is the payload from the previous task.  The tas
     ExampleTask:
       Parameters:
         cma:
+          event.$: '$'
           CumulusConfig:
-            cumulus_message:
-                input: '{$.payload.foo}'
+            ExampleTask:
+              cumulus_message:
+                  input: '{$.payload.foo}'
 ```
 
 The task configuration in the message would be:
@@ -197,13 +201,15 @@ By default, the task's return value is the next payload.  However, the workflow 
     ExampleTask:
       Parameters:
         cma:
+          event.$: '$'
           CumulusConfig:
-            cumulus_message:
-                outputs:
-                  - source: '{$}'
-                    destination: '{$.payload}'
-                  - source: '{$.output.anykey}'
-                    destination: '{$.meta.baz}'
+            ExampleTask:
+              cumulus_message:
+                  outputs:
+                    - source: '{$}'
+                      destination: '{$.payload}'
+                    - source: '{$.output.anykey}'
+                      destination: '{$.meta.baz}'
 ```
 
 The corresponding Cumulus Message would be:
