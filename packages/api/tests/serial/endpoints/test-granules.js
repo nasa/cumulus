@@ -349,8 +349,12 @@ test.serial('reingest a granule', async (t) => {
 
   // fake workflow
   const message = JSON.parse(fakeDescribeExecutionResult.input);
-  const key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
-  await putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' });
+  const w_key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
+  const t_key = `${process.env.stackName}/workflow_template.json`;
+  await Promise.all([
+    putObject({ Bucket: process.env.system_bucket, Key: t_key, Body: '{}' }),
+    putObject({ Bucket: process.env.system_bucket, Key: w_key, Body: '{}' }),
+  ]);
   const stub = sinon.stub(sfn(), 'describeExecution').returns({
     promise: () => Promise.resolve(fakeDescribeExecutionResult)
   });
@@ -387,8 +391,12 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
 
   //fake in-place workflow
   const message = JSON.parse(fakeSFResponse.execution.input);
-  const key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
-  await putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'fake in-place workflow' });
+  const w_key = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
+  const t_key = `${process.env.stackName}/workflow_template.json`;
+  await Promise.all([
+    putObject({ Bucket: process.env.system_bucket, Key: t_key, Body: '{}' }),
+    putObject({ Bucket: process.env.system_bucket, Key: w_key, Body: '{}' }),
+  ]);
 
   const fakeDescribeExecutionResult = {
     output: JSON.stringify({

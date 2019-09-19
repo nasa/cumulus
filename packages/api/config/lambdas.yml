@@ -216,6 +216,9 @@ ScheduleSF:
   tables:
     - CollectionsTable
     - ProvidersTable
+  envs:
+    system_bucket: '{{system_bucket}}'
+    stackName: '{{stackName}}'
   namedLambdaDeadLetterQueue: true
 
 BulkDelete:

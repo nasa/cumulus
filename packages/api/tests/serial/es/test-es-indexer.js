@@ -10,6 +10,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 const { noop } = require('@cumulus/common/util');
 const StepFunctions = require('@cumulus/common/StepFunctions');
+const workflows = require('@cumulus/common/workflows');
 
 const indexer = require('../../../es/indexer');
 const { Search } = require('../../../es/search');
@@ -35,7 +36,11 @@ let collectionModel;
 let executionModel;
 let granuleModel;
 let pdrsModel;
+let cmrStub;
 let stepFunctionsStub;
+let existsStub;
+let workflowStub;
+let templateStub;
 
 const input = JSON.stringify(granuleSuccess);
 const payload = JSON.parse(input);
@@ -75,13 +80,17 @@ test.before(async () => {
     productionDateTime: '2018-04-25T21:45:45.524Z'
   };
 
-  sinon.stub(cmrjs, 'getGranuleTemporalInfo').callsFake(() => fakeMetadata);
+  cmrStub = sinon.stub(cmrjs, 'getGranuleTemporalInfo').callsFake(() => fakeMetadata);
 
   stepFunctionsStub = sinon.stub(StepFunctions, 'describeExecution').returns({
     input,
     startDate: new Date(Date.UTC(2019, 6, 28)),
     stopDate: new Date(Date.UTC(2019, 6, 28, 1))
   });
+
+  existsStub = sinon.stub(aws, 'fileExists').returns(true);
+  templateStub = sinon.stub(workflows, 'getWorkflowTemplate').returns({});
+  workflowStub = sinon.stub(workflows, 'getWorkflowFile').returns({});
 });
 
 test.after.always(async () => {
@@ -93,8 +102,11 @@ test.after.always(async () => {
   await esClient.indices.delete({ index: esIndex });
   await aws.recursivelyDeleteS3Bucket(process.env.system_bucket);
 
-  cmrjs.getGranuleTemporalInfo.restore();
+  cmrStub.restore();
   stepFunctionsStub.restore();
+  existsStub.restore();
+  templateStub.restore();
+  workflowStub.restore();
 });
 
 test.serial('indexing a deletedgranule record', async (t) => {
@@ -389,9 +401,6 @@ test.serial('delete a provider record', async (t) => {
 
 // This needs to be serial because it is stubbing aws.sfn's responses
 test.serial('reingest a granule', async (t) => {
-  const key = `${process.env.stackName}/workflows/${payload.meta.workflow_name}.json`;
-  await aws.s3().putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' }).promise();
-
   payload.payload.granules[0].granuleId = randomString();
   const records = await granuleModel.createGranulesFromSns(payload);
   const record = records[0];

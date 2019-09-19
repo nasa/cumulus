@@ -140,11 +140,18 @@ test('Attempting to delete a collection with an associated rule returns a 409 re
   });
 
   // The workflow message template must exist in S3 before the rule can be created
-  await s3().putObject({
-    Bucket: process.env.system_bucket,
-    Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
-    Body: JSON.stringify({})
-  }).promise();
+  await Promise.all([
+    s3().putObject({
+      Bucket: process.env.system_bucket,
+      Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
+      Body: JSON.stringify({})
+    }).promise(),
+    s3().putObject({
+      Bucket: process.env.system_bucket,
+      Key: `${process.env.stackName}/workflow_template.json`,
+      Body: JSON.stringify({})
+    }).promise()
+  ]);
 
   await ruleModel.create(rule);
 
@@ -173,11 +180,18 @@ test('Attempting to delete a collection with an associated rule does not delete 
   });
 
   // The workflow message template must exist in S3 before the rule can be created
-  await s3().putObject({
-    Bucket: process.env.system_bucket,
-    Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
-    Body: JSON.stringify({})
-  }).promise();
+  await Promise.all([
+    s3().putObject({
+      Bucket: process.env.system_bucket,
+      Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
+      Body: JSON.stringify({})
+    }).promise(),
+    s3().putObject({
+      Bucket: process.env.system_bucket,
+      Key: `${process.env.stackName}/workflow_template.json`,
+      Body: JSON.stringify({})
+    }).promise()
+  ]);
 
   await ruleModel.create(rule);
 
