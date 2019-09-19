@@ -93,25 +93,20 @@ async function post(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function put(req, res) {
-  const id = req.params.id;
+async function put({ params: { id }, body }, res) {
+  if (id !== body.id) {
+    return res.boom.badRequest(
+      `Expected provider ID to be '${id}', but found '${body.id}' in payload`
+    );
+  }
 
-  const data = req.body;
   const providerModel = new models.Provider();
 
-  // get the record first
-  try {
-    await providerModel.get({ id });
-    const record = await providerModel.update({ id }, data);
-
-    if (inTestMode()) {
-      await addToES(record);
-    }
-    return res.send(record);
-  } catch (err) {
-    if (err instanceof RecordDoesNotExist) return res.boom.notFound('Record does not exist');
-    throw err;
-  }
+  return (!(await providerModel.exists(id)))
+    ? res.boom.notFound(`Provider with ID '${id}' not found`)
+    : providerModel.create(body)
+      .then((record) => (inTestMode() ? addToES(record).then(record) : record))
+      .then((record) => res.send(record));
 }
 
 /**
