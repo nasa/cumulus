@@ -25,6 +25,8 @@ KinesisTriggerTest:
           Next: CnmResponseFail
       Next: TranslateMessage
     TranslateMessage:
+      envs:
+        - CUMULUS_MESSAGE_ADAPTER_DIR: 'cumulus-message-adapter'
       Type: Task
       Resource: ${CNMToCMALambdaFunction.Arn}
       CumulusConfig:
