@@ -19,7 +19,6 @@ const { inTestMode } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/common');
 
 const { Search, defaultIndexAlias } = require('./search');
-const { deconstructCollectionId } = require('../lib/utils');
 const { Granule, Pdr, Execution } = require('../models');
 const { IndexExistsError } = require('../lib/errors');
 const mappings = require('../models/mappings.json');
@@ -139,17 +138,6 @@ function indexExecution(esClient, payload, index = defaultIndexAlias, type = 'ex
 }
 
 /**
- * Extracts PDR info from a StepFunction message and save it to DynamoDB
- *
- * @param  {Object} payload  - Cumulus Step Function message
- * @returns {Promise<Object>} Elasticsearch response
- */
-function pdr(payload) {
-  const p = new Pdr();
-  return p.createPdrFromSns(payload);
-}
-
-/**
  * Indexes the collection on ElasticSearch
  *
  * @param  {Object} esClient - ElasticSearch Connection object
@@ -241,17 +229,6 @@ async function indexPdr(esClient, payload, index = defaultIndexAlias, type = 'pd
 }
 
 /**
- * Extracts granule info from a stepFunction message and save it to DynamoDB
- *
- * @param  {Object} payload  - Cumulus Step Function message
- * @returns {Promise<Array>} list of created records
- */
-function granule(payload) {
-  const g = new Granule();
-  return g.createGranulesFromSns(payload);
-}
-
-/**
  * delete a record from ElasticSearch
  *
  * @param  {Object} params
@@ -306,6 +283,28 @@ async function deleteRecord({
 }
 
 /**
+ * Extracts granule info from a stepFunction message and save it to DynamoDB
+ *
+ * @param  {Object} payload  - Cumulus Step Function message
+ * @returns {Promise<Array>} list of created records
+ */
+function granule(payload) {
+  const g = new Granule();
+  return g.createGranulesFromSns(payload);
+}
+
+/**
+ * Extracts PDR info from a StepFunction message and save it to DynamoDB
+ *
+ * @param  {Object} payload  - Cumulus Step Function message
+ * @returns {Promise<Object>} Elasticsearch response
+ */
+function pdr(payload) {
+  const p = new Pdr();
+  return p.createPdrFromSns(payload);
+}
+
+/**
  * start the re-ingest of a given granule object
  *
  * @param  {Object} g - the granule object
@@ -350,31 +349,6 @@ async function handlePayload(event) {
 }
 
 /**
- * processes the incoming log events coming from AWS
- * CloudWatch
- *
- * @param  {Object} event - incoming message from CloudWatch
- * @param  {Object} context - aws lambda context object
- * @param  {function} cb - aws lambda callback function
- */
-function logHandler(event, context, cb) {
-  log.debug(event);
-  const payload = Buffer.from(event.awslogs.data, 'base64');
-  zlib.gunzip(payload, (e, r) => {
-    try {
-      const logs = JSON.parse(r.toString());
-      log.debug(logs);
-      return indexLog(undefined, logs.logEvents)
-        .then((s) => cb(null, s))
-        .catch(cb);
-    } catch (err) {
-      log.error(e);
-      return cb(null);
-    }
-  });
-}
-
-/**
  * Lambda function handler for sns2elasticsearch
  *
  * @param  {Object} event - incoming message sns
@@ -403,10 +377,33 @@ function handler(event, context, cb) {
     .catch(cb);
 }
 
+/**
+ * processes the incoming log events coming from AWS
+ * CloudWatch
+ *
+ * @param  {Object} event - incoming message from CloudWatch
+ * @param  {Object} context - aws lambda context object
+ * @param  {function} cb - aws lambda callback function
+ */
+function logHandler(event, context, cb) {
+  log.debug(event);
+  const payload = Buffer.from(event.awslogs.data, 'base64');
+  zlib.gunzip(payload, (e, r) => {
+    try {
+      const logs = JSON.parse(r.toString());
+      log.debug(logs);
+      return indexLog(undefined, logs.logEvents)
+        .then((s) => cb(null, s))
+        .catch(cb);
+    } catch (err) {
+      log.error(e);
+      return cb(null);
+    }
+  });
+}
+
 module.exports = {
-  constructCollectionId,
   createIndex,
-  deconstructCollectionId,
   handler,
   logHandler,
   indexCollection,
@@ -416,9 +413,6 @@ module.exports = {
   indexGranule,
   indexPdr,
   indexExecution,
-  handlePayload,
   deleteRecord,
-  reingest,
-  granule,
-  pdr
+  reingest
 };
