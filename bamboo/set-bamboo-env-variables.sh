@@ -131,6 +131,9 @@ if [[ -z $DEPLOYMENT ]]; then
   if [[ $COMMIT_MESSAGE =~ deploy-terraform || $BRANCH =~ terraform ]]; then
     echo "Detected terraform deployment branch or commit"
     echo deployment "$DEPLOYMENT-tf"
+    echo "Using NGAPShNonProd credentials"
+    export AWS_ACCESS_KEY_ID=$bamboo_SECRET_NONPROD_AWS_ACCESS_KEY_ID
+    export AWS_SECRET_ACCESS_KEY=$bamboo_SECRET_NONPROD_AWS_SECRET_ACCESS_KEY
     DEPLOYMENT="$DEPLOYMENT-tf"
   fi
   echo export DEPLOYMENT=$DEPLOYMENT >> .bamboo_env_vars
