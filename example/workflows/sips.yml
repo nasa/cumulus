@@ -550,7 +550,6 @@ ParsePdr:
               provider: '{$.meta.provider}'
               internalBucket: '{$.meta.buckets.internal.name}'
               stackName: '{$.meta.stack}'
-              granuleIngestMessageTemplateUri: '{$.meta.template}'
               granuleIngestWorkflow: 'IngestGranule'
               queueUrl: '{$.meta.queues.startSF}'
       Type: Task
@@ -701,7 +700,6 @@ DiscoverGranules:
               provider: '{$.meta.provider}'
               internalBucket: '{$.meta.buckets.internal.name}'
               stackName: '{$.meta.stack}'
-              granuleIngestMessageTemplateUri: '{$.meta.template}'
               granuleIngestWorkflow: 'IngestGranule'
               queueUrl: '{$.meta.queues.startSF}'
       Type: Task
@@ -790,7 +788,8 @@ DiscoverAndQueuePdrs:
           workflow_config:
             QueuePdrs:
               queueUrl: '{$.meta.queues.startSF}'
-              parsePdrMessageTemplateUri: '{$.meta.template}'
+              internalBucket: '{$.meta.buckets.internal.name}'
+              stackName: '{$.meta.stack}'
               parsePdrWorkflow: 'ParsePdr'
               provider: '{$.meta.provider}'
               collection: '{$.meta.collection}'
