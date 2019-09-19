@@ -92,6 +92,12 @@ test('PUT replaces an existing collection', async (t) => {
     provider_path: 'test_path'
   };
 
+  // Make sure testCollection contains values for the properties we omitted from
+  // expectedCollection to confirm that after we replace (PUT) the collection
+  // those properties are dropped from the stored collection.
+  t.truthy(testCollection.dataType);
+  t.truthy(testCollection.duplicateHandling);
+
   await request(app)
     .put(`/collections/${name}/${version}`)
     .set('Accept', 'application/json')
@@ -113,3 +119,50 @@ test('PUT replaces an existing collection', async (t) => {
     updatedAt: actualCollection.updatedAt
   });
 });
+
+test('PUT returns 404 for non-existent collection', async (t) => {
+  const name = randomString();
+  const version = randomString();
+  const response = await request(app)
+    .put(`/collections/${name}/${version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ name, version })
+    .expect(404);
+  const { message, record } = response.body;
+
+  t.truthy(message);
+  t.falsy(record);
+});
+
+test('PUT returns 400 for name mismatch between params and payload',
+  async (t) => {
+    const name = randomString();
+    const version = randomString();
+    const response = await request(app)
+      .put(`/collections/${name}/${version}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send({ name: randomString(), version })
+      .expect(400);
+    const { message, record } = response.body;
+
+    t.truthy(message);
+    t.falsy(record);
+  });
+
+test('PUT returns 400 for version mismatch between params and payload',
+  async (t) => {
+    const name = randomString();
+    const version = randomString();
+    const response = await request(app)
+      .put(`/collections/${name}/${version}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send({ name, version: randomString() })
+      .expect(400);
+    const { message, record } = response.body;
+
+    t.truthy(message);
+    t.falsy(record);
+  });
