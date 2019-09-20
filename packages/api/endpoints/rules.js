@@ -93,36 +93,32 @@ async function post(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function put(req, res) {
-  const name = req.params.name;
-
-  const data = req.body;
-  const action = data.action;
-
+async function put({ params: { name }, body }, res) {
   const model = new models.Rule();
 
-  // get the record first
-  let originalData;
+  if (name !== body.name) {
+    return res.boom.badRequest(`Expected rule name to be '${name}', but found`
+      + ` '${body.name}' in payload`);
+  }
+
   try {
-    originalData = await model.get({ name });
+    const rule = await model.get({ name });
+
+    // if rule type is onetime no change is allowed unless it is a rerun
+    if (body.action === 'rerun') {
+      return models.Rule.invoke(rule).then(() => res.send(rule));
+    }
   } catch (e) {
-    if (e instanceof RecordDoesNotExist) return res.boom.notFound('Record does not exist');
+    if (e instanceof RecordDoesNotExist) {
+      return res.boom.notFound(`Rule '${name}' not found`);
+    }
+
     throw e;
   }
 
-  // if rule type is onetime no change is allowed unless it is a rerun
-  if (action === 'rerun') {
-    await models.Rule.invoke(originalData);
-    return res.send(originalData);
-  }
-
-  const d = await model.update(originalData, data);
-
-  if (inTestMode()) {
-    await addToES(d);
-  }
-
-  return res.send(d);
+  return model.create(body)
+    .then((rule) => (inTestMode() ? addToES(rule).then(rule) : rule))
+    .then((rule) => res.send(rule));
 }
 
 /**
