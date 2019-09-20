@@ -61,8 +61,8 @@ default:
   # test configuration ends
 
   cmaDir: '/opt/'
-  sandbox_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:4
-  sit_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:1
+  sandbox_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:6
+  sit_cma_layer: arn:aws:lambda:us-east-1:{{AWS_ACCOUNT_ID}}:layer:Cumulus_Message_Adapter:2
   cma_layer: '{{sandbox_cma_layer}}'
   prefix: 'test-cumulus-integration'
   prefixNoDash: TestCumulusIntegration
@@ -230,7 +230,7 @@ default:
   logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
 
   sns:
-    sftracker:
+    reportExecutions:
       subscriptions:
         2ndlambda:
           endpoint:
@@ -783,28 +783,17 @@ mhs2:
   cma_layer: '{{sit_cma_layer}}'
 
 jk:
+  useWorkflowLambdaVersions: false
   prefix: jk
   prefixNoDash: jk
   ecs:
     ssh: true
     keyPairName: jk
-  cmr:
-    oauthProvider: launchpad
-    username: CmrUserNotUsed
-    password: CmrPasswordNotUsed
-  launchpad:
-    api: 'https://api.launchpad.nasa.gov/icam/api/sm/v1'
-    passphrase: '{{LAUNCHPAD_PASSPHRASE}}'
-  oauth:
-    provider: launchpad
-    userGroup: GSFC-Cumulus-Dev
 
 jk2:
+  useWorkflowLambdaVersions: false
   prefix: jk2
   prefixNoDash: jk2
-  ecs:
-    ssh: true
-    keyPairName: jk
 
 jk3:
   stackName: jk3
@@ -812,11 +801,15 @@ jk3:
   ecs:
     ssh: true
     keyPairName: jk
-
+  prefix: jk3
+  prefixNoDash: jk3
 
 mboyd-test:
   prefix: mboyd-test
   prefixNoDash: mboydTest
+
+  es:
+    volumeSize: 10
 
   ecs:
     ssh: true
