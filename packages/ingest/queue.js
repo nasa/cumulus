@@ -108,7 +108,7 @@ async function enqueueGranuleIngestMessage({
   const workflow = {
     name: granuleIngestWorkflow,
     arn: ingestGranuleArn
-  }
+  };
 
   const message = buildQueueMessageFromTemplate({
     collection,

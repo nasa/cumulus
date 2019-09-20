@@ -1,8 +1,8 @@
 'use strict';
 
-const { getS3Object } = require('./aws');
+const { getS3Object, listS3ObjectsV2 } = require('./aws');
 
-const templateKey = (stack) => `${stack}/workflow_template.json`
+const templateKey = (stack) => `${stack}/workflow_template.json`;
 
 const workflowTemplateUri = (bucket, stack) => `s3://${bucket}/${templateKey(stack)}`;
 
@@ -25,7 +25,7 @@ function getWorkflowTemplate(stackName, bucketName) {
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} workflowName - workflow name
- * @returns {Promise.<Object>} template as a JSON object
+ * @returns {Promise.<Object>} definition file as a JSON object
  */
 function getWorkflowFile(stackName, bucketName, workflowName) {
   const key = `${stackName}/workflows/${workflowName}.json`;
@@ -40,16 +40,39 @@ function getWorkflowFile(stackName, bucketName, workflowName) {
  * @param {string} stackName - Cloud formation stack name
  * @param {string} bucketName - S3 internal bucket name
  * @param {string} workflowName - workflow name
- * @returns {Promise.<string>} - workflow arn
+ * @returns {Promise.<string>} workflow arn
  */
 function getWorkflowArn(stackName, bucketName, workflowName) {
   return getWorkflowFile(stackName, bucketName, workflowName)
     .then((workflow) => workflow.arn);
 }
 
+/**
+ * Get S3 object
+ *
+ * @param {string} stackName - Cloud formation stack name
+ * @param {string} bucketName - S3 internal bucket name
+ *
+ * @returns {Promise.<Array>} list of workflows
+ */
+async function getWorkflowList(stackName, bucketName) {
+  const workflowsListKey = `${stackName}/workflows/`;
+  try {
+    const workflows = await listS3ObjectsV2({
+      Bucket: bucketName,
+      Prefix: workflowsListKey
+    });
+    return Promise.all(workflows.map((obj) => getS3Object(bucketName, obj.Key)
+      .then((r) => JSON.parse(r.Body.toString()))));
+  } catch (err) {
+    throw err;
+  }
+}
+
 module.exports = {
   getWorkflowArn,
   getWorkflowFile,
+  getWorkflowList,
   getWorkflowTemplate,
   templateKey,
   workflowTemplateUri

@@ -139,7 +139,7 @@ test.beforeEach(async (t) => {
   const workflowDefinition = {
     name: t.context.workflow,
     arn: t.context.stateMachineArn
-  }
+  };
 
   await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
   await s3().putObject({

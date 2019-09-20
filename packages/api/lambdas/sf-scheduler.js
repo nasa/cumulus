@@ -46,7 +46,7 @@ async function handleScheduleEvent(event) {
   const workflow = {
     name: workflowDefinition.name,
     arn: workflowDefinition.arn
-  }
+  };
 
   const message = buildQueueMessageFromTemplate({
     messageTemplate,

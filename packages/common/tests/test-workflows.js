@@ -62,7 +62,7 @@ test.afterEach(async (t) => {
 test('workflowTemplateUri returns the expected s3 URI', (t) => {
   const expectedUri = `s3://${t.context.system_bucket}/${templateKey(t.context.stackName)}`;
   t.is(expectedUri, workflowTemplateUri(t.context.system_bucket, t.context.stackName));
-})
+});
 
 test('getWorkflowTemplate returns the workflow template', async (t) => {
   const expectedTemplate = t.context.workflowTemplate;
@@ -77,8 +77,8 @@ test('getWorkflowFile returns the workflow file', async (t) => {
   t.deepEqual(expectedFile, await getWorkflowFile(
     t.context.stackName,
     t.context.system_bucket,
-    t.context.workflow)
-  );
+    t.context.workflow
+  ));
 });
 
 test('getWorkflowArn returns the arn of the correct workflow', async (t) => {
