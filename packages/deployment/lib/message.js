@@ -170,7 +170,7 @@ async function generateTemplates(config, outputs, uploader) {
     // generate list of workflows and upload it to S3
     // this is used by the /workflows endpoint of the API to return list
     // of existing workflows
-    const workflowUploads = config.stepFunctions.map((name) => {
+    const workflowUploads = Object.keys(config.stepFunctions).map((name) => {
       const arn = findOutputValue(outputs, `${name}StateMachine`);
       return uploader(bucket, `${stack}/workflows/${name}.json`, JSON.stringify({
         name,
