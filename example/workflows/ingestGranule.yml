@@ -63,7 +63,7 @@ IngestGranuleCatchDuplicateErrorTest:
     ChooseProcess:
       Type: Choice
       Choices:
-        - Variable: $.cumulus_meta.process
+        - Variable: $.meta.process
           StringEquals: modis
           Next: ProcessingStep
       Default: StopStatus

@@ -144,7 +144,7 @@ IngestAndPublishGranule:
     ChooseProcess:
       Type: Choice
       Choices:
-        - Variable: $.cumulus_meta.process
+        - Variable: $.meta.process
           StringEquals: modis
           Next: ProcessingStep
       Default: StopStatus
@@ -330,7 +330,7 @@ IngestGranule:
     ChooseProcess:
       Type: Choice
       Choices:
-        - Variable: $.cumulus_meta.process
+        - Variable: $.meta.process
           StringEquals: modis
           Next: ProcessingStep
       Default: StopStatus
@@ -589,10 +589,10 @@ ParsePdr:
     CheckAgainChoice:
       Type: Choice
       Choices:
-        - Variable: $.cumulus_meta.isPdrFinished
+        - Variable: $.meta.isPdrFinished
           BooleanEquals: false
           Next: PdrStatusReport
-        - Variable: $.cumulus_meta.isPdrFinished
+        - Variable: $.meta.isPdrFinished
           BooleanEquals: true
           Next: StopStatus
       Default: StopStatus
