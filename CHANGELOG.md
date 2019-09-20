@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
   As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0.
 
-- **CUMULUS-1449** - Workflow Configurations for the `QueueGranules` and `QueuePdrs` tasks need to be updated.
+- **CUMULUS-1449** - Workflow configurations for the `QueueGranules` and `QueuePdrs` tasks need to be updated.
 
 ### PLEASE NOTE
 
@@ -53,8 +53,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - `parsePdrMessageTemplateUri` replaced with `parsePdrWorkflow`, which is the workflow name (i.e. top-level name in `config.yml`).
     - `internalBucket` and `stackName` configs now required to look up configuration from the deployment. Brings the task config in line with that of `queue-granules`.
   - `queue-granules` config change: `ingestGranuleMessageTemplateUri` replaced with `ingestGranuleWorkflow`, which is the workflow name.
-  - Cumulus now uses a universal workflow template when starting workflow that contains general information specific to the deployment, but not specific to the workflow. Workflow Task configs must be defined using AWS step function parameters. See following entry.
-  - Changed the way workflow configs are defined. Task configs must now be defined under the cma.workflow_config.taskName key in the Parameters section of a step function definition. See `example/workflows/sips.yml` in the core repository for examples of how to set the Parameters.
+  - Cumulus now uses a universal workflow template when starting workflow that contains general information specific to the deployment, but not specific to the workflow. Workflow task configs must be defined using AWS step function parameters. See following entry.
+  - Changed the way workflow configs are defined. Task configs must now be defined under the `cma.workflow_config.taskName` key in the Parameters section of a step function definition. See `example/workflows/sips.yml` in the core repository for examples of how to set the Parameters.
 
 ### Removed
 
