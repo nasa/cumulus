@@ -13,9 +13,10 @@ fi
 PRIVATE_KEY="${STACK}/crypto/private.pem"
 PUBLIC_KEY="${STACK}/crypto/public.pub"
 
-echo "Uploading private key for ${STACK}"
+echo "Checking for ${STACK} private key"
 # Create private key if it doesn't exist
 if ! aws s3api head-object --bucket "$BUCKET" --key "$PRIVATE_KEY" >/dev/null 2>&1; then
+  echo "Uploading private key for ${STACK}"
   openssl genrsa -out /dev/stdout 2048 2>/dev/null | aws s3 cp - "s3://${BUCKET}/${PRIVATE_KEY}" >/dev/null 2>&1
 fi
 
