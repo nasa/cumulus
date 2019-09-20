@@ -74,7 +74,7 @@ KinesisTriggerTest:
       Catch:
         - <<: *ErrorEqualDefaults
       Next: CnmResponse
-    CnmResponse:
+    CnmResponse: &CnmResponseDefaults
       Parameters:
         cma:
           event.$: '$'
