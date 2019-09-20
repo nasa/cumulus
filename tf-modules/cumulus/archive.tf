@@ -1,19 +1,11 @@
-# TODO This should end up coming from the ingest module at some point
-data "aws_lambda_function" "schedule_sf" {
-  function_name = "${var.prefix}-ScheduleSF"
-}
-
-# TODO This should end up coming from the ingest module at some point
-data "aws_lambda_function" "message_consumer" {
-  function_name = "${var.prefix}-messageConsumer"
-}
-
 module "archive" {
   source = "../archive"
 
   prefix = var.prefix
 
   permissions_boundary_arn = var.permissions_boundary_arn
+
+  lambda_processing_role_arn = aws_iam_role.lambda_processing.arn
 
   ecs_cluster_name = aws_ecs_cluster.default.name
 
@@ -51,10 +43,9 @@ module "archive" {
 
   api_port = var.archive_api_port
 
-  schedule_sf_function_arn      = data.aws_lambda_function.schedule_sf.arn
-  message_consumer_function_arn = data.aws_lambda_function.message_consumer.arn
-  # TODO This should eventually come from the ingest module
-  kinesis_inbound_event_logger = var.kinesis_inbound_event_logger
+  schedule_sf_function_arn                         = module.ingest.schedule_sf_lambda_function_arn
+  message_consumer_function_arn                    = module.ingest.message_consumer_lambda_function_arn
+  kinesis_inbound_event_logger_lambda_function_arn = module.ingest.kinesis_inbound_event_logger_lambda_function_arn
 
   # TODO We need to figure out how to make this dynamic
   background_queue_name = "backgroundProcessing"

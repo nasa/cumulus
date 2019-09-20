@@ -4,7 +4,7 @@ const test = require('ava');
 const drop = require('lodash.drop');
 const aws = require('@cumulus/common/aws');
 const { randomString } = require('@cumulus/common/test-utils');
-const { constructCollectionId } = require('@cumulus/common');
+const { constructCollectionId } = require('@cumulus/common/collection-config-store');
 
 const models = require('../../../models');
 const { Search } = require('../../../es/search');
