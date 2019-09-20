@@ -1,11 +1,11 @@
 # Required
 
 variable "prefix" {
-  type    = string
+  type = string
 }
 
 variable "executions_table" {
-  type    = string
+  type = string
 }
 
 # Optional
