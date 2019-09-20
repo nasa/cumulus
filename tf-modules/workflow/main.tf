@@ -28,3 +28,18 @@ resource "aws_lambda_permission" "semaphore_down" {
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.state_machine_execution_finished.arn
 }
+
+locals {
+  workflow_info = jsonencode({
+    name       = var.name
+    arn        = aws_sfn_state_machine.default.id
+    definition = var.state_machine_definition
+  })
+}
+
+resource "aws_s3_bucket_object" "workflow_info" {
+  bucket  = var.system_bucket
+  key     = "${var.prefix}/workflows/${var.name}.json"
+  content = local.workflow_info
+  etag    = md5(local.workflow_info)
+}
