@@ -18,6 +18,15 @@ test('isSnsEvent returns false for non-SNS events', (t) => {
   }));
 
   t.false(isSnsEvent({
+    Records: [{
+      EventSource: 'aws:states',
+      Sns: {
+        Message: 'message'
+      }
+    }]
+  }));
+
+  t.false(isSnsEvent({
     EventSource: 'aws:states',
     States: {
       Message: JSON.stringify({

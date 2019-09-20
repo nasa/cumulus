@@ -7,15 +7,58 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **CUMULUS-1447** -
+  The newest release of the Cumulus Message Adapter (v1.1.0) requires that parameterized configuration be used for remote message functionality. Once released, Kes will automatically bring in CMA v1.1.0 without additional configuration.
+
+  As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0.
+
+### PLEASE NOTE
+
+- **CUMULUS-1394** - Ingest notifications are now provided via 3 separate SNS topics for executions, granules, and PDRs, instead of a single `sftracker` SNS topic. Whereas the `sftracker` SNS topic received a full Cumulus execution message, the new topics all receive generated records for the given object. The new topics are only published to if the given object exists for the current execution. For a given execution/granule/PDR, two messages will be received by each topic: one message indicating that ingest is running and another message indicating that ingest has completed or failed. The new SNS topics are:
+
+  - `reportExecutions` - Receives 1 message per execution
+  - `reportGranules` - Receives 1 message per granule in an execution
+  - `reportPdrs` - Receives 1 message per PDR
+
+### Added
+
+- **CUMULUS-1394**
+  - Added `Granule.generateGranuleRecord()` method to granules model to generate a granule database record from a Cumulus execution message
+  - Added `Pdr.generatePdrRecord()` method to PDRs model to generate a granule database record from a Cumulus execution message
+  - Added helpers to `@cumulus/common/message`:
+    - `getMessageExecutionName()` - Get the execution name from a Cumulus execution message
+    - `getMessageStateMachineArn()` - Get the state machine ARN from a Cumulus execution message
+    - `getMessageExecutionArn()` - Get the execution ARN for a Cumulus execution message
+    - `getMessageGranules()` - Get the granules from a Cumulus execution message, if any.
+  - Added `@cumulus/common/cloudwatch-event/isFailedSfStatus()` to determine if a Step Function status from a Cloudwatch event is a failed status
+
 ### Changed
 
+- **CUMULUS-1394**
+  - Renamed `Execution.generateDocFromPayload()` to `Execution.generateRecord()` on executions model. The method generates an execution database record from a Cumulus execution message.
 - **CUMULUS-1432**
   - `logs` endpoint takes the level parameter as a string and not a number
   - Elasticsearch term query generation no longer converts numbers to boolean
+- **CUMULUS-1447**
+  - Consolidated all remote message handling code into @common/aws
+  - Update remote message code to handle updated CMA remote message flags
+  - Update example SIPS workflows to utilize Parameterized CMA configuration
+- **CUMULUS-1448** Refactor workflows that are mutating cumulus_meta to utilize meta field
 
 ### Fixed
 
 - **CUMULUS-1432** `logs` endpoint filter correctly filters logs by level
+- **CUMULUS-1484**  `useMessageAdapter` now does not set CUMULUS_MESSAGE_ADAPTER_DIR when `true`
+
+### Removed
+
+- **CUMULUS-1394**
+  - Removed `sfTracker` SNS topic. Replaced by three new SNS topics for granule, execution, and PDR ingest notifications.
+  - Removed unused functions from `@cumulus/common/aws`:
+    - `getGranuleS3Params()`
+    - `setGranuleStatus()`
 
 ## [v1.14.1] - 2019-08-29
 
@@ -67,7 +110,7 @@ If you deploy with no distribution app your deployment will succeed but you may 
 
 - **CUMULUS-642**
   - Adds Launchpad as an authentication option for the Cumulus API.
-  - Updated deployment documentation and added [instructions to setup Cumulus API Launchpad authentication] (https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication)
+  - Updated deployment documentation and added [instructions to setup Cumulus API Launchpad authentication](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication)
 - **CUMULUS-1418**
   - Adds usage docs/testing of lambda layers (introduced in PR1125), updates Core example tasks to use the updated `cumulus-ecs-task` and a CMA layer instead of kes CMA injection.
   - Added Terraform module to publish CMA as layer to user account.
