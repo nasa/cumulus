@@ -4,13 +4,16 @@ const get = require('lodash.get');
 const pLimit = require('p-limit');
 
 const { getExecutionArn } = require('@cumulus/common/aws');
-const { getCollectionIdFromMessage } = require('@cumulus/common/message');
+const {
+  getCollectionIdFromMessage,
+  getMessageExecutionName,
+  getMessageStateMachineArn
+} = require('@cumulus/common/message');
 const aws = require('@cumulus/ingest/aws');
 
 const executionSchema = require('./schemas').execution;
 const Manager = require('./base');
 const { parseException } = require('../lib/utils');
-
 
 class Execution extends Manager {
   constructor() {
@@ -21,33 +24,50 @@ class Execution extends Manager {
     });
   }
 
-  generateDocFromPayload(payload) {
-    const name = get(payload, 'cumulus_meta.execution_name');
+  /**
+   * Generate an execution record from a workflow execution message.
+   *
+   * @param {Object} message - A workflow execution message
+   * @returns {Object} An execution record
+   */
+  static async generateRecord(message) {
+    const executionName = getMessageExecutionName(message);
+    const stateMachineArn = getMessageStateMachineArn(message);
     const arn = getExecutionArn(
-      get(payload, 'cumulus_meta.state_machine'),
-      name
+      stateMachineArn,
+      executionName
     );
-    if (!arn) {
-      throw new Error('State Machine Arn is missing. Must be included in the cumulus_meta');
-    }
 
     const execution = aws.getExecutionUrl(arn);
-    const collectionId = getCollectionIdFromMessage(payload);
+    const collectionId = getCollectionIdFromMessage(message);
 
-    const doc = {
-      name,
+    const status = get(message, 'meta.status', 'unknown');
+
+    const record = {
+      name: executionName,
       arn,
-      parentArn: get(payload, 'cumulus_meta.parentExecutionArn'),
+      parentArn: get(message, 'cumulus_meta.parentExecutionArn'),
       execution,
-      tasks: get(payload, 'meta.workflow_tasks'),
-      error: parseException(payload.exception),
-      type: get(payload, 'meta.workflow_name'),
+      tasks: get(message, 'meta.workflow_tasks'),
+      error: parseException(message.exception),
+      type: get(message, 'meta.workflow_name'),
       collectionId,
-      status: get(payload, 'meta.status', 'unknown'),
-      createdAt: get(payload, 'cumulus_meta.workflow_start_time'),
+      status,
+      createdAt: get(message, 'cumulus_meta.workflow_start_time'),
       timestamp: Date.now()
     };
-    return doc;
+
+    const currentPayload = get(message, 'payload');
+    if (['failed', 'completed'].includes(status)) {
+      const existingRecord = await new Execution().get({ arn });
+      record.finalPayload = currentPayload;
+      record.originalPayload = existingRecord.originalPayload;
+    } else {
+      record.originalPayload = currentPayload;
+    }
+
+    record.duration = (record.timestamp - record.createdAt) / 1000;
+    return record;
   }
 
   /**
@@ -98,29 +118,23 @@ class Execution extends Manager {
    * Update an existing execution record, replacing all fields except originalPayload
    * adding the existing payload to the finalPayload database field
    *
-   * @param {Object} payload sns message containing the output of a Cumulus Step Function
+   * @param {Object} message - A workflow execution message
    * @returns {Promise<Object>} An execution record
    */
-  async updateExecutionFromSns(payload) {
-    const doc = this.generateDocFromPayload(payload);
-    const existingRecord = await this.get({ arn: doc.arn });
-    doc.finalPayload = get(payload, 'payload');
-    doc.originalPayload = existingRecord.originalPayload;
-    doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-    return this.create(doc);
+  async updateExecutionFromSns(message) {
+    const record = await Execution.generateRecord(message);
+    return this.create(record);
   }
 
   /**
-   * Create a new execution record from incoming sns messages
+   * Create a new execution record from incoming SNS messages
    *
-   * @param {Object} payload - SNS message containing the output of a Cumulus Step Function
-  * @returns {Promise<Object>} An execution record
+   * @param {Object} message - A workflow execution message
+   * @returns {Promise<Object>} An execution record
    */
-  async createExecutionFromSns(payload) {
-    const doc = this.generateDocFromPayload(payload);
-    doc.originalPayload = get(payload, 'payload');
-    doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-    return this.create(doc);
+  async createExecutionFromSns(message) {
+    const record = await Execution.generateRecord(message);
+    return this.create(record);
   }
 
   /**

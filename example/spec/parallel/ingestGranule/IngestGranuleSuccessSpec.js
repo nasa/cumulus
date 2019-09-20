@@ -32,6 +32,7 @@ const {
   api: apiTestUtils,
   executionsApi: executionsApiTestUtils,
   buildAndExecuteWorkflow,
+  buildAndStartWorkflow,
   LambdaStep,
   conceptExists,
   getOnlineResources,
@@ -113,7 +114,7 @@ describe('The S3 Ingest Granules workflow', () => {
   const provider = { id: `s3_provider${testSuffix}` };
   const collectionDupeHandling = 'error';
 
-  let workflowExecution = null;
+  let workflowExecutionArn;
   let failingWorkflowExecution;
   let failedExecutionArn;
   let failedExecutionName;
@@ -169,7 +170,7 @@ describe('The S3 Ingest Granules workflow', () => {
     setDistributionApiEnvVars();
 
     console.log('Start SuccessExecution');
-    workflowExecution = await buildAndExecuteWorkflow(
+    workflowExecutionArn = await buildAndStartWorkflow(
       config.stackName,
       config.bucket,
       workflowName,
@@ -188,7 +189,7 @@ describe('The S3 Ingest Granules workflow', () => {
       deleteFolder(config.bucket, testDataFolder),
       collectionModel.delete(collection),
       providerModel.delete(provider),
-      executionModel.delete({ arn: workflowExecution.executionArn }),
+      executionModel.delete({ arn: workflowExecutionArn }),
       granulesApiTestUtils.removePublishedGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId
@@ -196,8 +197,35 @@ describe('The S3 Ingest Granules workflow', () => {
     ]);
   });
 
-  it('completes execution with success status', () => {
-    expect(workflowExecution.status).toEqual('SUCCEEDED');
+  it('triggers a running execution record being added to DynamoDB', async () => {
+    const record = await waitForModelStatus(
+      executionModel,
+      { arn: workflowExecutionArn },
+      'running'
+    );
+    expect(record.status).toEqual('running');
+  });
+
+  it('makes the granule available through the Cumulus API', async () => {
+    await waitForModelStatus(
+      granuleModel,
+      { granuleId: inputPayload.granules[0].granuleId },
+      'running'
+    );
+
+    const granuleResponse = await granulesApiTestUtils.getGranule({
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId
+    });
+    const granule = JSON.parse(granuleResponse.body);
+
+    expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
+    expect(granule.status).toEqual('running');
+  });
+
+  it('completes execution with success status', async () => {
+    const workflowExecutionStatus = await waitForCompletedExecution(workflowExecutionArn);
+    expect(workflowExecutionStatus).toEqual('SUCCEEDED');
   });
 
   it('can retrieve the specific provider that was created', async () => {
@@ -222,23 +250,13 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(collectionResult).not.toBeNull();
   });
 
-  it('makes the granule available through the Cumulus API', async () => {
-    const granuleResponse = await granulesApiTestUtils.getGranule({
-      prefix: config.stackName,
-      granuleId: inputPayload.granules[0].granuleId
-    });
-    const granule = JSON.parse(granuleResponse.body);
-
-    expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
-  });
-
   describe('the SyncGranules task', () => {
     let lambdaInput;
     let lambdaOutput;
 
     beforeAll(async () => {
-      lambdaInput = await lambdaStep.getStepInput(workflowExecution.executionArn, 'SyncGranule');
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'SyncGranule');
+      lambdaInput = await lambdaStep.getStepInput(workflowExecutionArn, 'SyncGranule');
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'SyncGranule');
     });
 
     it('receives the correct collection and provider configuration', () => {
@@ -275,7 +293,7 @@ describe('The S3 Ingest Granules workflow', () => {
     let existCheck = [];
 
     beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'MoveGranules');
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'MoveGranules');
       files = lambdaOutput.payload.granules[0].files;
       movedTaggings = await Promise.all(lambdaOutput.payload.granules[0].files.map((file) => {
         const { Bucket, Key } = parseS3Uri(file.filename);
@@ -324,10 +342,10 @@ describe('The S3 Ingest Granules workflow', () => {
 
     beforeAll(async () => {
       process.env.CMR_ENVIRONMENT = 'UAT';
-      postToCmrOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
+      postToCmrOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'PostToCmr');
 
       if (postToCmrOutput === null) {
-        beforeAllError = new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
+        beforeAllError = new Error(`Failed to get the PostToCmr step's output for ${workflowExecutionArn}`);
         return;
       }
 
@@ -506,13 +524,13 @@ describe('The S3 Ingest Granules workflow', () => {
         { granuleId: inputPayload.granules[0].granuleId },
         'completed'
       );
-      expect(record.execution).toEqual(getExecutionUrl(workflowExecution.executionArn));
+      expect(record.execution).toEqual(getExecutionUrl(workflowExecutionArn));
     });
 
     it('triggers the execution record being added to DynamoDB', async () => {
       const record = await waitForModelStatus(
         executionModel,
-        { arn: workflowExecution.executionArn },
+        { arn: workflowExecutionArn },
         'completed'
       );
       expect(record.status).toEqual('completed');
@@ -781,7 +799,7 @@ describe('The S3 Ingest Granules workflow', () => {
         executions = JSON.parse(executionsApiResponse.body);
         const executionApiResponse = await executionsApiTestUtils.getExecution({
           prefix: config.stackName,
-          arn: workflowExecution.executionArn
+          arn: workflowExecutionArn
         });
         executionResponse = JSON.parse(executionApiResponse.body);
       });
@@ -813,10 +831,9 @@ describe('The S3 Ingest Granules workflow', () => {
       let allStates;
 
       beforeAll(async () => {
-        const executionArn = workflowExecution.executionArn;
         const executionStatusResponse = await executionsApiTestUtils.getExecutionStatus({
           prefix: config.stackName,
-          arn: executionArn
+          arn: workflowExecutionArn
         });
 
         executionStatus = JSON.parse(executionStatusResponse.body);
@@ -826,7 +843,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
       it('returns the inputs and outputs for the entire workflow', async () => {
         expect(executionStatus.execution).toBeTruthy();
-        expect(executionStatus.execution.executionArn).toEqual(workflowExecution.executionArn);
+        expect(executionStatus.execution.executionArn).toEqual(workflowExecutionArn);
         const input = JSON.parse(executionStatus.execution.input);
         const output = JSON.parse(executionStatus.execution.output);
         expect(input.payload).toEqual(inputPayload);
@@ -881,7 +898,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
     describe('logs endpoint', () => {
       it('returns logs with a specific execution name', async () => {
-        const executionARNTokens = workflowExecution.executionArn.split(':');
+        const executionARNTokens = workflowExecutionArn.split(':');
         const logsExecutionName = executionARNTokens[executionARNTokens.length - 1];
         const logsResponse = await apiTestUtils.getExecutionLogs({ prefix: config.stackName, executionName: logsExecutionName });
         const logs = JSON.parse(logsResponse.body);
