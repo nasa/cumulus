@@ -2,6 +2,7 @@ resource "aws_sqs_queue" "clean_executions_dead_letter_queue" {
   name                       = "${var.prefix}-cleanExecutionsDeadLetterQueue"
   receive_wait_time_seconds  = 20
   visibility_timeout_seconds = 60
+  tags                       = local.default_tags
 }
 
 resource "aws_lambda_function" "clean_executions" {
@@ -9,7 +10,7 @@ resource "aws_lambda_function" "clean_executions" {
   filename         = "${path.module}/../../packages/api/dist/cleanExecutions/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/cleanExecutions/lambda.zip")
   handler          = "index.handler"
-  role             = aws_iam_role.lambda_processing.arn
+  role             = var.lambda_processing_role_arn
   runtime          = "nodejs8.10"
   timeout          = 900
   memory_size      = 192
@@ -19,7 +20,7 @@ resource "aws_lambda_function" "clean_executions" {
   environment {
     variables = {
       CMR_ENVIRONMENT = var.cmr_environment
-      ExecutionsTable = var.dynamo_tables.Executions
+      ExecutionsTable = var.dynamo_tables.executions.name
       stackName       = var.prefix
 
       completeExecutionPayloadTimeoutDisable = var.complete_execution_payload_timeout_disable
@@ -29,9 +30,7 @@ resource "aws_lambda_function" "clean_executions" {
       nonCompleteExecutionPayloadTimeout        = var.non_complete_execution_payload_timeout
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids         = var.lambda_subnet_ids
     security_group_ids = [aws_security_group.no_ingress_all_egress.id]
@@ -40,6 +39,7 @@ resource "aws_lambda_function" "clean_executions" {
 
 resource "aws_cloudwatch_event_rule" "daily_execution_payload_cleanup" {
   schedule_expression = var.daily_execution_payload_cleanup_schedule_expression
+  tags                = local.default_tags
 }
 
 resource "aws_cloudwatch_event_target" "daily_execution_payload_cleanup" {

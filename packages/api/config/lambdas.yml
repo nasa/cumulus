@@ -253,3 +253,30 @@ IndexFromDatabase:
   source: 'node_modules/@cumulus/api/dist/indexFromDatabase/'
   launchInVpc: true
   useElasticSearch: '{{es.name}}'
+
+reportExecutions:
+  handler: index.handler
+  timeout: 30
+  memory: 128
+  source: 'node_modules/@cumulus/api/dist/reportExecutions/'
+  launchInVpc: true
+  tables:
+    - ExecutionsTable
+
+reportGranules:
+  handler: index.handler
+  timeout: 30
+  memory: 256
+  source: 'node_modules/@cumulus/api/dist/reportGranules/'
+  launchInVpc: true
+  tables:
+    - GranulesTable
+
+reportPdrs:
+  handler: index.handler
+  timeout: 30
+  memory: 128
+  source: 'node_modules/@cumulus/api/dist/reportPdrs/'
+  launchInVpc: true
+  tables:
+    - PdrsTable
