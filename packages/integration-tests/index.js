@@ -661,7 +661,7 @@ async function buildWorkflow(
 ) {
   setProcessEnvironment(stackName, bucketName);
 
-  const template = await getWorkflowTemplate(stackName, bucketName, workflowName);
+  const template = await getWorkflowTemplate(stackName, bucketName);
   const { name, version } = collection || {};
   const collectionInfo = collection
     ? await new Collection().get({ name, version })
@@ -672,6 +672,7 @@ async function buildWorkflow(
 
   template.meta.collection = collectionInfo;
   template.meta.provider = providerInfo;
+  template.meta.workflow_name = workflowName;
   template.meta = merge(template.meta, meta);
   template.payload = payload || {};
 
