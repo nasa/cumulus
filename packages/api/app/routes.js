@@ -25,6 +25,7 @@ const dashboard = require('../endpoints/dashboard');
 const elasticsearch = require('../endpoints/elasticsearch');
 const ems = require('../endpoints/ems');
 const launchpadAuth = require('./launchpadAuth');
+const launchpadSaml = require('./launchpadSaml');
 
 let token = require('../endpoints/token');
 let { ensureAuthorized } = require('./auth');
@@ -91,6 +92,10 @@ router.delete('/token/:token', token.deleteTokenEndpoint);
 router.delete('/tokenDelete/:token', token.deleteTokenEndpoint);
 router.get('/token', token.tokenEndpoint);
 router.post('/refresh', token.refreshEndpoint);
+
+// SAML SSO
+router.get('/samlLogin', launchpadSaml.login);
+router.post('/saml/sso', launchpadSaml.sso);
 
 router.use('/dashboard', dashboard);
 
