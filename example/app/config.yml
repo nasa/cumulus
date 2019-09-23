@@ -230,7 +230,7 @@ default:
   logToSharedDestination: '{{SHARED_LOG_DESTINATION_ARN}}'
 
   sns:
-    sftracker:
+    reportExecutions:
       subscriptions:
         2ndlambda:
           endpoint:
@@ -807,6 +807,9 @@ jk3:
 mboyd-test:
   prefix: mboyd-test
   prefixNoDash: mboydTest
+
+  es:
+    volumeSize: 10
 
   ecs:
     ssh: true

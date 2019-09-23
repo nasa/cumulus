@@ -99,9 +99,6 @@ function generateWorkflowTemplate(name, workflow, config, outputs) {
   const launchpad = Object.assign({}, config.launchpad, { passphrase: launchpadPassphrase });
   const bucket = get(config, 'system_bucket');
 
-  // add the sns topic arn used for monitoring workflows
-  const topicArn = findOutputValue(outputs, 'sftrackerSnsArn');
-
   // add the current workflows' state machine arn
   const stateMachineArn = findOutputValue(outputs, `${name}StateMachine`);
 
@@ -154,7 +151,6 @@ function generateWorkflowTemplate(name, workflow, config, outputs) {
       cmr,
       launchpad,
       distribution_endpoint: config.distribution_endpoint,
-      topic_arn: topicArn,
       collection: {},
       provider: {},
       templates: templatesUris,

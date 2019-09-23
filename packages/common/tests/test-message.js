@@ -4,17 +4,23 @@ const test = require('ava');
 const rewire = require('rewire');
 const message = rewire('../message');
 
+const { getExecutionArn } = require('../aws');
 const { constructCollectionId } = require('../collection-config-store');
 const { randomId, randomString } = require('../test-utils');
 
 const buildCumulusMeta = message.__get__('buildCumulusMeta');
 const buildQueueMessageFromTemplate = message.__get__('buildQueueMessageFromTemplate');
+const getMessageExecutionName = message.__get__('getMessageExecutionName');
+const getMessageStateMachineArn = message.__get__('getMessageStateMachineArn');
+const getMessageExecutionArn = message.__get__('getMessageExecutionArn');
 const getQueueNameByUrl = message.__get__('getQueueNameByUrl');
 const getMessageFromTemplate = message.__get__('getMessageFromTemplate');
+const getMaximumExecutions = message.__get__('getMaximumExecutions');
 const getCollectionIdFromMessage = message.__get__('getCollectionIdFromMessage');
+const getMessageGranules = message.__get__('getMessageGranules');
 
-const executionName = randomString();
-message.__set__('createExecutionName', () => executionName);
+const fakeExecutionName = randomString();
+message.__set__('createExecutionName', () => fakeExecutionName);
 
 test('buildCumulusMeta returns expected object', (t) => {
   const queueName = randomId('queue');
@@ -25,7 +31,7 @@ test('buildCumulusMeta returns expected object', (t) => {
 
   t.deepEqual(cumulusMeta, {
     queueName,
-    execution_name: executionName
+    execution_name: fakeExecutionName
   });
 
   const parentExecutionArn = randomId('parentArn');
@@ -37,8 +43,39 @@ test('buildCumulusMeta returns expected object', (t) => {
   t.deepEqual(cumulusMeta, {
     queueName,
     parentExecutionArn,
-    execution_name: executionName
+    execution_name: fakeExecutionName
   });
+});
+
+test('getMessageExecutionName throws error if cumulus_meta.execution_name is missing', (t) => {
+  t.throws(
+    () => getMessageExecutionName(),
+    { message: 'cumulus_meta.execution_name not set in message' }
+  );
+});
+
+test('getMessageStateMachineArn throws error if cumulus_meta.state_machine is missing', (t) => {
+  t.throws(
+    () => getMessageStateMachineArn(),
+    { message: 'cumulus_meta.state_machine not set in message' }
+  );
+});
+
+test('getMessageExecutionArn returns correct execution ARN for valid message', (t) => {
+  const stateMachineArn = randomString();
+  const executionName = randomString();
+  const executionArn = getMessageExecutionArn({
+    cumulus_meta: {
+      state_machine: stateMachineArn,
+      execution_name: executionName
+    }
+  });
+  t.is(executionArn, getExecutionArn(stateMachineArn, executionName));
+});
+
+test('getMessageExecutionArn returns null for invalid message', (t) => {
+  const executionArn = getMessageExecutionArn();
+  t.is(executionArn, null);
 });
 
 test('getCollectionIdFromMessage returns the correct collection ID', (t) => {
@@ -79,6 +116,62 @@ test('getQueueNameByUrl returns correct value', (t) => {
 
   queueNameResult = getQueueNameByUrl({}, 'queueUrl');
   t.is(queueNameResult, undefined);
+});
+
+test('getMaximumExecutions returns correct value', (t) => {
+  const queueName = randomId('queueName');
+  const testMessage = {
+    meta: {
+      queueExecutionLimits: {
+        [queueName]: 5
+      }
+    }
+  };
+  const maxExecutions = getMaximumExecutions(testMessage, queueName);
+  t.is(maxExecutions, 5);
+});
+
+test('getMaximumExecutions throw error when queue cannot be found', (t) => {
+  const testMessage = {
+    meta: {
+      queueExecutionLimits: {}
+    }
+  };
+  t.throws(
+    () => getMaximumExecutions(testMessage, 'testQueueName')
+  );
+});
+
+test('getMessageGranules returns granules from payload.granules', (t) => {
+  const granules = [{
+    granuleId: randomId('granule')
+  }];
+  const testMessage = {
+    payload: {
+      granules
+    }
+  };
+  const result = getMessageGranules(testMessage);
+  t.deepEqual(result, granules);
+});
+
+test('getMessageGranules returns granules from meta.input_granules', (t) => {
+  const granules = [{
+    granuleId: randomId('granule')
+  }];
+  const testMessage = {
+    meta: {
+      input_granules: granules
+    }
+  };
+  const result = getMessageGranules(testMessage);
+  t.deepEqual(result, granules);
+});
+
+test('getMessageGranules returns nothing when granules are absent from message', (t) => {
+  const testMessage = {};
+  const result = getMessageGranules(testMessage);
+  t.is(result, undefined);
 });
 
 test('getMessageTemplate throws error if invalid S3 URI is provided', async (t) => {
@@ -125,7 +218,7 @@ test('buildQueueMessageFromTemplate does not overwrite contents from message tem
     },
     cumulus_meta: {
       message_source: 'sfn',
-      execution_name: executionName,
+      execution_name: fakeExecutionName,
       queueName
     },
     payload
@@ -162,7 +255,7 @@ test('buildQueueMessageFromTemplate returns message with correct payload', (t) =
       collection
     },
     cumulus_meta: {
-      execution_name: executionName,
+      execution_name: fakeExecutionName,
       queueName
     },
     payload: {
@@ -205,7 +298,7 @@ test('buildQueueMessageFromTemplate returns expected message with undefined coll
       collection
     },
     cumulus_meta: {
-      execution_name: executionName,
+      execution_name: fakeExecutionName,
       queueName
     },
     payload
@@ -240,7 +333,7 @@ test('buildQueueMessageFromTemplate returns expected message with defined collec
       collection
     },
     cumulus_meta: {
-      execution_name: executionName,
+      execution_name: fakeExecutionName,
       queueName
     },
     payload
@@ -292,7 +385,7 @@ test('buildQueueMessageFromTemplate returns expected message with custom cumulus
       }
     },
     cumulus_meta: {
-      execution_name: executionName,
+      execution_name: fakeExecutionName,
       queueName,
       foo: 'bar',
       object: {

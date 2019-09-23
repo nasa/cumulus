@@ -204,21 +204,6 @@
             ]
         }
     },
-    "sns": {
-        "sftracker": {
-            "subscriptions": {
-                "lambda": {
-                    "endpoint": {
-                        "function": "Fn::GetAtt",
-                        "array": [
-                            "sns2elasticsearchLambdaFunction",
-                            "Arn"
-                        ]
-                    }
-                }
-            }
-        }
-    },
     "apis": [
         {
             "name": "distribution"
@@ -645,27 +630,6 @@
             "name": "sqs2sf",
             "envs": {},
             "fullName": "lpdaac-cumulus-sqs2sf",
-            "hash": "7f0f6d58b5bfb46ec0d42fa41345ae8ec75dc133",
-            "bucket": "cumulus-devseed-internal",
-            "local": "app/build/cloudformation/7f0f6d58b5bfb46ec0d42fa41345ae8ec75dc133-ApiDistribution.zip",
-            "remote": "lpdaac-cumulus/lambdas/7f0f6d58b5bfb46ec0d42fa41345ae8ec75dc133-ApiDistribution.zip"
-        },
-        "sns2elasticsearch": {
-            "handler": "index.indexer",
-            "timeout": 100,
-            "envs": {
-                "ES_HOST": {
-                    "function": "Fn::GetAtt",
-                    "array": [
-                        "es5Domain",
-                        "DomainEndpoint"
-                    ]
-                }
-            },
-            "memory": 256,
-            "source": "node_modules/@cumulus/api/dist/",
-            "name": "sns2elasticsearch",
-            "fullName": "lpdaac-cumulus-sns2elasticsearch",
             "hash": "7f0f6d58b5bfb46ec0d42fa41345ae8ec75dc133",
             "bucket": "cumulus-devseed-internal",
             "local": "app/build/cloudformation/7f0f6d58b5bfb46ec0d42fa41345ae8ec75dc133-ApiDistribution.zip",
