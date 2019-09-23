@@ -1,9 +1,17 @@
+resource "null_resource" "rsa_keys" {
+  triggers = { x = uuid() }
+  provisioner "local-exec" {
+    command = "${path.module}/fetch_or_create_rsa_keys.sh ${var.system_bucket} ${var.prefix}"
+  }
+}
+
 resource "aws_lambda_function" "custom_bootstrap" {
+  depends_on       = [null_resource.rsa_keys]
   function_name    = "${var.prefix}-CustomBootstrap"
   filename         = "${path.module}/../../packages/api/dist/bootstrap/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/bootstrap/lambda.zip")
   handler          = "index.handler"
-  role             = aws_iam_role.lambda_processing.arn
+  role             = var.lambda_processing_role_arn
   runtime          = "nodejs8.10"
   timeout          = 300
   memory_size      = 320
@@ -14,9 +22,7 @@ resource "aws_lambda_function" "custom_bootstrap" {
       system_bucket   = var.system_bucket
     }
   }
-  tags = {
-    Project = var.prefix
-  }
+  tags = merge(local.default_tags, { Project = var.prefix })
   vpc_config {
     subnet_ids = var.lambda_subnet_ids
     security_group_ids = [
@@ -27,8 +33,7 @@ resource "aws_lambda_function" "custom_bootstrap" {
 }
 
 data "aws_lambda_invocation" "custom_bootstrap" {
-  depends_on = [aws_lambda_function.custom_bootstrap]
-
+  depends_on    = [aws_lambda_function.custom_bootstrap]
   function_name = aws_lambda_function.custom_bootstrap.function_name
 
   input = <<JSON
@@ -41,7 +46,7 @@ data "aws_lambda_invocation" "custom_bootstrap" {
       "Password": "${var.cmr_password}"
     },
     "Users": {
-      "table": "${var.dynamo_tables.Users}",
+      "table": "${var.dynamo_tables.users.name}",
       "records": ${jsonencode([for x in var.users : { username : x, password : "OAuth" }])}
     }
   }

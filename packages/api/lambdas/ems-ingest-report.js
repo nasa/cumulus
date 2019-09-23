@@ -16,7 +16,7 @@ const {
   reportToFileType,
   submitReports
 } = require('../lib/ems');
-const { deconstructCollectionId } = require('../es/indexer');
+const { deconstructCollectionId } = require('../lib/utils');
 const { Search, defaultIndexAlias } = require('../es/search');
 
 /**

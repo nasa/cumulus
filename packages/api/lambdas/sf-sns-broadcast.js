@@ -1,11 +1,10 @@
 'use strict';
 
-const AWS = require('aws-sdk');
 const get = require('lodash.get');
 const isObject = require('lodash.isobject');
 const { pullStepFunctionEvent } = require('@cumulus/common/aws');
-const { setGranuleStatus } = require('@cumulus/common/aws');
 const errors = require('@cumulus/common/errors');
+const { publishReportSnsMessages } = require('./publish-reports');
 
 /**
  * Determines if there was a valid exception in the input message
@@ -64,38 +63,9 @@ function makeLambdaFunctionFail(event) {
 async function publish(message, finished = false) {
   const event = await pullStepFunctionEvent(message);
 
-  const topicArn = get(event, 'meta.topic_arn', null);
   const failed = eventFailed(event);
 
-  if (topicArn) {
-    // if this is the sns call at the end of the execution
-    if (finished) {
-      if (failed) {
-        event.meta.status = 'failed';
-      } else {
-        event.meta.status = 'completed';
-      }
-      const granuleId = get(event, 'meta.granuleId', null);
-      if (granuleId) {
-        await setGranuleStatus(
-          granuleId,
-          event.meta.stack,
-          event.cumulus_meta.system_bucket,
-          event.cumulus_meta.state_machine,
-          event.cumulus_meta.execution_name,
-          event.meta.status
-        );
-      }
-    } else {
-      event.meta.status = 'running';
-    }
-
-    const sns = new AWS.SNS();
-    await sns.publish({
-      TopicArn: topicArn,
-      Message: JSON.stringify(event)
-    }).promise();
-  }
+  await publishReportSnsMessages(event, finished, failed);
 
   if (failed) {
     makeLambdaFunctionFail(event);

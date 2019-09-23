@@ -2,7 +2,6 @@
 
 const cloneDeep = require('lodash.clonedeep');
 const get = require('lodash.get');
-const isString = require('lodash.isstring');
 const partial = require('lodash.partial');
 const path = require('path');
 
@@ -12,7 +11,7 @@ const cmrjs = require('@cumulus/cmrjs');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const launchpad = require('@cumulus/common/launchpad');
 const log = require('@cumulus/common/log');
-const { getCollectionIdFromMessage } = require('@cumulus/common/message');
+const { getCollectionIdFromMessage, getMessageExecutionArn } = require('@cumulus/common/message');
 const StepFunctions = require('@cumulus/common/StepFunctions');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const {
@@ -300,6 +299,71 @@ class Granule extends Manager {
   }
 
   /**
+   * Build a granule record.
+   *
+   * @param {Object} granule - A granule object
+   * @param {Object} message - A workflow execution message
+   * @param {string} executionUrl - A Step Function execution URL
+   * @param {Object} [executionDescription={}] - Defaults to empty object
+   * @param {Date} executionDescription.startDate - Start date of the workflow execution
+   * @param {Date} executionDescription.stopDate - Stop date of the workflow execution
+   * @returns {Object} - A granule record
+   */
+  static async generateGranuleRecord(
+    granule,
+    message,
+    executionUrl,
+    executionDescription = {}
+  ) {
+    const collectionId = getCollectionIdFromMessage(message);
+
+    const granuleFiles = await buildDatabaseFiles({
+      providerURL: buildURL({
+        protocol: message.meta.provider.protocol,
+        host: message.meta.provider.host,
+        port: message.meta.provider.port
+      }),
+      files: granule.files
+    });
+
+    const temporalInfo = await cmrjs.getGranuleTemporalInfo(granule);
+
+    const { startDate, stopDate } = executionDescription;
+    const processingTimeInfo = {};
+    if (startDate) {
+      processingTimeInfo.processingStartDateTime = startDate.toISOString();
+      processingTimeInfo.processingEndDateTime = stopDate
+        ? stopDate.toISOString()
+        : new Date().toISOString();
+    }
+
+    const record = {
+      granuleId: granule.granuleId,
+      pdrName: get(message, 'meta.pdr.name'),
+      collectionId,
+      status: get(message, 'meta.status', get(granule, 'status')),
+      provider: get(message, 'meta.provider.id'),
+      execution: executionUrl,
+      cmrLink: granule.cmrLink,
+      files: granuleFiles,
+      error: parseException(message.exception),
+      createdAt: get(message, 'cumulus_meta.workflow_start_time'),
+      timestamp: Date.now(),
+      productVolume: getGranuleProductVolume(granuleFiles),
+      timeToPreprocess: get(granule, 'sync_granule_duration', 0) / 1000,
+      timeToArchive: get(granule, 'post_to_cmr_duration', 0) / 1000,
+      ...processingTimeInfo,
+      ...temporalInfo
+    };
+
+    record.published = get(granule, 'published', false);
+    // Duration is also used as timeToXfer for the EMS report
+    record.duration = (record.timestamp - record.createdAt) / 1000;
+
+    return removeNilProperties(record);
+  }
+
+  /**
    * Create new granule records from incoming sns messages
    *
    * @param {Object} cumulusMessage - a Cumulus Message
@@ -311,59 +375,23 @@ class Granule extends Manager {
 
     if (!granules) return null;
 
-    const executionName = get(cumulusMessage, 'cumulus_meta.execution_name');
-    if (!isString(executionName)) return null;
-
-    const stateMachine = get(cumulusMessage, 'cumulus_meta.state_machine');
-    if (!isString(stateMachine)) return null;
-
-    const executionArn = commonAws.getExecutionArn(stateMachine, executionName);
+    const executionArn = getMessageExecutionArn(cumulusMessage);
+    if (!executionArn) return null;
     const executionUrl = aws.getExecutionUrl(executionArn);
     const executionDescription = await StepFunctions.describeExecution({ executionArn });
-
-    const collectionId = getCollectionIdFromMessage(cumulusMessage);
 
     return Promise.all(
       granules
         .filter((g) => g.granuleId)
         .map(async (granule) => {
-          const granuleFiles = await buildDatabaseFiles({
-            providerURL: buildURL({
-              protocol: cumulusMessage.meta.provider.protocol,
-              host: cumulusMessage.meta.provider.host,
-              port: cumulusMessage.meta.provider.port
-            }),
-            files: granule.files
-          });
+          const granuleRecord = await Granule.generateGranuleRecord(
+            granule,
+            cumulusMessage,
+            executionUrl,
+            executionDescription
+          );
 
-          const temporalInfo = await cmrjs.getGranuleTemporalInfo(granule);
-
-          const doc = {
-            granuleId: granule.granuleId,
-            pdrName: get(cumulusMessage, 'meta.pdr.name'),
-            collectionId,
-            status: get(cumulusMessage, 'meta.status', get(granule, 'status')),
-            provider: get(cumulusMessage, 'meta.provider.id'),
-            execution: executionUrl,
-            cmrLink: granule.cmrLink,
-            files: granuleFiles,
-            error: parseException(cumulusMessage.exception),
-            createdAt: get(cumulusMessage, 'cumulus_meta.workflow_start_time'),
-            timestamp: Date.now(),
-            productVolume: getGranuleProductVolume(granuleFiles),
-            timeToPreprocess: get(granule, 'sync_granule_duration', 0) / 1000,
-            timeToArchive: get(granule, 'post_to_cmr_duration', 0) / 1000,
-            processingStartDateTime: executionDescription.startDate.toISOString(),
-            processingEndDateTime: executionDescription.stopDate
-              ? executionDescription.stopDate.toISOString() : new Date().toISOString(),
-            ...temporalInfo
-          };
-
-          doc.published = get(granule, 'published', false);
-          // Duration is also used as timeToXfer for the EMS report
-          doc.duration = (doc.timestamp - doc.createdAt) / 1000;
-
-          return this.create(removeNilProperties(doc));
+          return this.create(granuleRecord);
         })
     );
   }

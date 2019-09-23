@@ -2,8 +2,10 @@
 
 const AWS = require('aws-sdk');
 const fs = require('fs');
+const { JSONPath } = require('jsonpath-plus');
 const isObject = require('lodash.isobject');
 const isString = require('lodash.isstring');
+const cloneDeep = require('lodash.clonedeep');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
 const pump = require('pump');
@@ -836,6 +838,34 @@ async function createQueue(queueName) {
 exports.createQueue = createQueue;
 
 /**
+ * Publish a message to an SNS topic.
+ *
+ * Catch any thrown errors and log them.
+ *
+ * @param {string} snsTopicArn - SNS topic ARN
+ * @param {Object} message - Message object
+ * @returns {Promise}
+ */
+exports.publishSnsMessage = async (
+  snsTopicArn,
+  message
+) => {
+  try {
+    if (!snsTopicArn) {
+      throw new Error('Missing SNS topic ARN');
+    }
+
+    await exports.sns().publish({
+      TopicArn: snsTopicArn,
+      Message: JSON.stringify(message)
+    }).promise();
+  } catch (err) {
+    log.error(`Failed to post message to SNS topic: ${snsTopicArn}`, err);
+    log.info('Undelivered message', message);
+  }
+};
+
+/**
 * Send a message to AWS SQS
 *
 * @param {string} queueUrl - url of the SQS queue
@@ -925,42 +955,6 @@ exports.getStateMachineArn = (executionArn) => {
 };
 
 /**
-* Parse event metadata to get location of granule on S3
-*
-* @param {string} granuleId - the granule id
-* @param {string} stack - the deployment stackname
-* @returns {string} - s3 path
-**/
-exports.getGranuleS3Params = (granuleId, stack) => `${stack}/granules_ingested/${granuleId}`;
-
-/**
-* Set the status of a granule
-*
-* @name setGranuleStatus
-* @param {string} granuleId - granule id
-* @param {string} stack - the deployment stackname
-* @param {string} bucket - the deployment bucket name
-* @param {string} stateMachineArn - statemachine arn
-* @param {string} executionName - execution name
-* @param {string} status - granule status
-* @returns {Promise} returns the response from `S3.put` as a promise
-**/
-exports.setGranuleStatus = async (
-  granuleId,
-  stack,
-  bucket,
-  stateMachineArn,
-  executionName,
-  status
-) => {
-  const key = exports.getGranuleS3Params(granuleId, stack, bucket);
-  const executionArn = exports.getExecutionArn(stateMachineArn, executionName);
-  const params = { Bucket: bucket, Key: key };
-  params.Metadata = { executionArn, status };
-  await exports.s3().putObject(params).promise();
-};
-
-/**
  * Test to see if a given exception is an AWS Throttling Exception
  *
  * @param {Error} err
@@ -972,16 +966,34 @@ exports.isThrottlingException = (err) => err.code === 'ThrottlingException';
  * Given a Cumulus step function event, if the message is on S3, pull the full message
  * from S3 and return, otherwise return the event.
  *
- * @param {Object} event - the Cumulus event
+ * @param {Object} incomingEvent - the Cumulus event
  * @returns {Object} - the full Cumulus message
  */
-exports.pullStepFunctionEvent = async (event) => {
-  if (event.replace) {
-    const file = await exports.getS3Object(event.replace.Bucket, event.replace.Key);
-
-    return JSON.parse(file.Body.toString());
+exports.pullStepFunctionEvent = async (incomingEvent) => {
+  if (!incomingEvent.replace) {
+    return incomingEvent;
   }
-  return event;
+  const event = cloneDeep(incomingEvent);
+  const remoteMsgS3Object = await exports.getS3Object(event.replace.Bucket, event.replace.Key);
+  const remoteMsg = JSON.parse(remoteMsgS3Object.Body.toString());
+
+  let returnEvent = remoteMsg;
+  if (event.replace.TargetPath) {
+    const replaceNodeSearch = JSONPath({
+      path: event.replace.TargetPath,
+      json: event,
+      resultType: 'all'
+    });
+    if (replaceNodeSearch.length !== 1) {
+      throw new Error(`Replacement TargetPath ${event.replace.TargetPath} invalid`);
+    }
+    if (replaceNodeSearch[0].parent) {
+      replaceNodeSearch[0].parent[replaceNodeSearch[0].parentProperty] = remoteMsg;
+      returnEvent = event;
+      delete returnEvent.replace;
+    }
+  }
+  return returnEvent;
 };
 
 const retryIfThrottlingException = (err) => {
