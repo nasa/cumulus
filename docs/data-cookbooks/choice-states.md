@@ -14,7 +14,7 @@ If the comparison evaluates to `true`, the `Next` state is followed.
 
 ## Example
 
-In [examples/workflows/sips.yml](https://github.com/nasa/cumulus/blob/master/example/workflows/sips.yml) the `ParsePdr` workflow uses a `Choice` state, `CheckAgainChoice`, to terminate the workflow once `cumulus_meta.isPdrFinished: true` is returned by the `CheckStatus` state.
+In [examples/workflows/sips.yml](https://github.com/nasa/cumulus/blob/master/example/workflows/sips.yml) the `ParsePdr` workflow uses a `Choice` state, `CheckAgainChoice`, to terminate the workflow once `meta.isPdrFinished: true` is returned by the `CheckStatus` state.
 
 The `CheckAgainChoice` state definition requires an input object of the following structure:
 
@@ -32,10 +32,10 @@ Given the above input to the `CheckAgainChoice` state, the workflow would transi
     CheckAgainChoice:
       Type: Choice
       Choices:
-        - Variable: $.cumulus_meta.isPdrFinished
+        - Variable: $.meta.isPdrFinished
           BooleanEquals: false
           Next: PdrStatusReport
-        - Variable: $.cumulus_meta.isPdrFinished
+        - Variable: $.meta.isPdrFinished
           BooleanEquals: true
           Next: StopStatus
 ```
@@ -44,7 +44,7 @@ Given the above input to the `CheckAgainChoice` state, the workflow would transi
 
 Understanding the complete `ParsePdr` workflow is not necessary to understanding how `Choice` states work, but `ParsePdr` provides an example of how `Choice` states can be used to create a loop in a Cumulus workflow.
 
-In the complete `ParsePdr` workflow definition, the state `QueueGranules` is followed by `CheckStatus`. From `CheckStatus` a loop starts: Given `CheckStatus` returns `cumulus_meta.isPdrFinished: false`, `CheckStatus` is followed by `CheckAgainChoice` is followed by `PdrStatusReport` is followed by `WaitForSomeTime`, which returns to `CheckStatus`. Once `CheckStatus` returns `cumulus_meta.isPdrFinished: true`, `CheckAgainChoice` proceeds to `StopStatus`.
+In the complete `ParsePdr` workflow definition, the state `QueueGranules` is followed by `CheckStatus`. From `CheckStatus` a loop starts: Given `CheckStatus` returns `meta.isPdrFinished: false`, `CheckStatus` is followed by `CheckAgainChoice` is followed by `PdrStatusReport` is followed by `WaitForSomeTime`, which returns to `CheckStatus`. Once `CheckStatus` returns `meta.isPdrFinished: true`, `CheckAgainChoice` proceeds to `StopStatus`.
 
 ![Execution graph of SIPS ParsePdr workflow in AWS Step Functions console](assets/sips-parse-pdr.png)
 

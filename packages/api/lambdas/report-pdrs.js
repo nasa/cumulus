@@ -6,17 +6,19 @@ const {
   isSnsEvent,
   getSnsEventMessageObject
 } = require('@cumulus/common/sns-event');
-const Pdr = require('@cumulus/api/models/pdrs');
+// Temporarily change require while this module resides in the API package
+// const Pdr = require('@cumulus/api/models/pdrs');
+const Pdr = require('../models/pdrs');
 
 /**
- * Process Cumulus message object and create PDR database records.
+ * Create a PDR database record.
  *
- * @param {Object} message - SNS Cumulus message object
- * @returns {Promise<Array>} PDR records
+ * @param {Object} pdrRecord - A PDR record
+ * @returns {Promise}
  */
-async function handlePdrMessage(message) {
+async function createPdrRecord(pdrRecord) {
   const pdrModel = new Pdr();
-  return pdrModel.createPdrFromSns(message);
+  return pdrModel.create(pdrRecord);
 }
 
 /**
@@ -41,7 +43,7 @@ function getReportPdrMessages(event) {
 async function handler(event) {
   const messages = getReportPdrMessages(event);
   return Promise.all(
-    messages.map(handlePdrMessage)
+    messages.map(createPdrRecord)
   );
 }
 

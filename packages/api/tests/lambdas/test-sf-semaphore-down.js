@@ -199,13 +199,15 @@ test('sfSemaphoreDown lambda throws error when attempting to decrement empty sem
 });
 
 test('sfSemaphoreDown lambda returns not a valid event for invalid event message', async (t) => {
-  t.is(await handleSemaphoreDecrementTask({
+  const output = await handleSemaphoreDecrementTask({
     source: sfEventSource,
     detail: {
       status: 'SUCCEEDED',
       output: 'invalid message'
     }
-  }), 'Not a valid decrement event, no operation performed');
+  });
+
+  assertInvalidDecrementEvent(t, output);
 });
 
 test('sfSemaphoreDown lambda decrements semaphore for s3-stored event message', async (t) => {
