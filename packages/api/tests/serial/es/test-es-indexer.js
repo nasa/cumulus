@@ -505,7 +505,7 @@ test.serial('indexing a granule record', async (t) => {
     type: 'granule',
     id: granule.granuleId,
     parent: collectionId
-  });
+  }).then((response) => response.body);
   t.is(record._id, granule.granuleId);
 });
 
@@ -528,7 +528,7 @@ test.serial('indexing a PDR record', async (t) => {
     index: esIndex,
     type: 'pdr',
     id: pdr.pdrName
-  });
+  }).then((response) => response.body);
   t.is(record._id, pdr.pdrName);
   t.falsy(record._source.error);
 });
