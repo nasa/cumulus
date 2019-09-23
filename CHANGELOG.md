@@ -48,7 +48,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **CUMULUS-1448** Refactor workflows that are mutating cumulus_meta to utilize meta field
 
 - **CUMULUS-1375**
-  - Migrate Cumulus from deprecated Elasticsearch JS client to new, supported on in `@cumulus/api`
+  - Migrate Cumulus from deprecated Elasticsearch JS client to new, supported one in `@cumulus/api`
 
 ### Fixed
 
