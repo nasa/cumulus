@@ -36,7 +36,7 @@ const getCredentials = () =>
 const getLocalEsHost = () => {
   if (process.env.LOCAL_ES_HOST) return `http://${process.env.LOCAL_ES_HOST}:9200`;
   if (process.env.LOCALSTACK_HOST) return `http://${process.env.LOCALSTACK_HOST}:4571`;
-  return 'localhost:9200';
+  return 'http://localhost:9200';
 };
 
 const esTestConfig = () => ({
@@ -50,9 +50,9 @@ const esProdConfig = async (host) => {
   let node = 'http://localhost:9200';
 
   if (process.env.ES_HOST) {
-    node = `http://${process.env.ES_HOST}`;
+    node = `https://${process.env.ES_HOST}`;
   } else if (host) {
-    node = `http://${host}`;
+    node = `https://${host}`;
   }
 
   return {
