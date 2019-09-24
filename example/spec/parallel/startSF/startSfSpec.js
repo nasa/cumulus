@@ -256,7 +256,7 @@ describe('the sf-starter lambda function', () => {
 
   /**
    * Failing intermittently
-   * Filed CUMULUS-1542 to address
+   * Filed CUMULUS-1367 to address
    */
   xdescribe('when provided a queue with a maximum number of executions', () => {
     let maxQueueUrl;
