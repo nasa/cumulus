@@ -156,7 +156,6 @@ SnsS3Test:
   source: lambdas/snsS3Test/
   launchInVpc: true
   envs:
-    stackName: '{{stackName}}'
     system_bucket: '{{system_bucket}}'
 WaitForDeployment:
   handler: index.waitForDeploymentHandler
