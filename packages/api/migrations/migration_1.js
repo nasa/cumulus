@@ -29,7 +29,7 @@ async function copyEsToDynamoDB(Cls, index = 'cumulus', type, concurrency = 1, p
 
   // catch possible duplicate granule records
   const hash = {};
-  res.hits.hits.forEach((s) => {
+  res.body.hits.hits.forEach((s) => {
     hash[s._id] = s._source;
   });
 
