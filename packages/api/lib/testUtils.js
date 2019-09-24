@@ -35,8 +35,8 @@ function testEndpoint(endpoint, event, testCallback) {
  */
 async function deleteAliases() {
   const client = await Search.es();
-  const aliases = await client.cat.aliases({ format: 'json' });
-
+  const aliasResponse = await client.cat.aliases({ format: 'json' });
+  const aliases = aliasResponse.body;
 
   // delete all aliases
   return Promise.all(aliases.map((alias) => client.indices.deleteAlias({
