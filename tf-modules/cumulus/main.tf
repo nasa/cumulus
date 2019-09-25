@@ -6,3 +6,10 @@ locals {
 
   default_tags = { Deployment = var.prefix }
 }
+
+resource "aws_s3_bucket_object" "buckets_json" {
+  bucket  = var.system_bucket
+  key     = "${var.prefix}/workflows/buckets.json"
+  content = jsonencode(var.buckets)
+  etag    = md5(jsonencode(var.buckets))
+}

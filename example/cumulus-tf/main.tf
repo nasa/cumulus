@@ -106,4 +106,3 @@ resource "aws_lambda_permission" "sns_s3_test" {
   principal     = "sns.amazonaws.com"
   source_arn    = module.cumulus.sftracker_sns_topic_arn
 }
-
