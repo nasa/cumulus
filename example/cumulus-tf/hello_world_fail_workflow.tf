@@ -7,6 +7,7 @@ module "hello_world_fail_workflow" {
   state_machine_role_arn                = module.cumulus.step_role_arn
   sf_semaphore_down_lambda_function_arn = module.cumulus.sf_semaphore_down_lambda_function_arn
   sftracker_sns_topic_arn               = module.cumulus.sftracker_sns_topic_arn
+  system_bucket                         = var.system_bucket
   tags                                  = local.default_tags
 
   workflow_config = <<JSON
