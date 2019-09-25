@@ -24,7 +24,8 @@ const { IndexExistsError } = require('../lib/errors');
 const mappings = require('../models/mappings.json');
 
 async function createIndex(esClient, indexName) {
-  const indexExists = await esClient.indices.exists({ index: indexName });
+  const indexExists = await esClient.indices.exists({ index: indexName })
+    .then((response) => response.body);
 
   if (indexExists) {
     throw new IndexExistsError(`Index ${indexName} exists and cannot be created.`);
@@ -88,7 +89,8 @@ async function indexLog(esClient, payloads, index = defaultIndexAlias, type = 'l
   });
 
   const actualEsClient = esClient || (await Search.es());
-  return actualEsClient.bulk({ body: body });
+  const bulkResponse = await actualEsClient.bulk({ body: body });
+  return bulkResponse.body;
 }
 
 /**
@@ -120,7 +122,8 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
 
   // adding or replacing record to ES
   const actualEsClient = esClient || (await Search.es());
-  return actualEsClient.index(params);
+  const indexResponse = await actualEsClient.index(params);
+  return indexResponse.body;
 }
 
 /**
@@ -194,10 +197,9 @@ async function indexGranule(esClient, payload, index = defaultIndexAlias, type =
     type: 'deletedgranule',
     id: payload.granuleId,
     parent: payload.collectionId,
-    refresh: inTestMode(),
-    ignore: [404]
+    refresh: inTestMode()
   };
-  await esClient.delete(delGranParams);
+  await esClient.delete(delGranParams, { ignore: [404] });
 
   return genericRecordUpdate(
     esClient,
@@ -255,16 +257,18 @@ async function deleteRecord({
     refresh: inTestMode()
   };
 
+  let options = {};
+
   if (parent) params.parent = parent;
-  if (ignore) params.ignore = ignore;
+  if (ignore) options = { ignore };
 
   const actualEsClient = esClient || (await Search.es());
 
-  const getResponse = await actualEsClient.get(params);
-  const deleteResponse = await actualEsClient.delete(params);
+  const getResponse = await actualEsClient.get(params, options);
+  const deleteResponse = await actualEsClient.delete(params, options);
 
-  if (type === 'granule' && getResponse.found) {
-    const doc = getResponse._source;
+  if (type === 'granule' && getResponse.body.found) {
+    const doc = getResponse.body._source;
     doc.timestamp = Date.now();
     doc.deletedAt = Date.now();
 
@@ -279,7 +283,7 @@ async function deleteRecord({
       parent
     );
   }
-  return deleteResponse;
+  return deleteResponse.body;
 }
 
 /**
