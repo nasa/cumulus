@@ -7,9 +7,8 @@
     "node": ">=8.10.0"
   },
   "scripts": {
-    "test": "ava",
-    "build": "rm -rf dist && mkdir dist && webpack",
-    "watch": "rm -rf dist && mkdir dist && webpack --progress -w",
+    "build": "rm -rf dist && mkdir dist",
+    "watch": "rm -rf dist && mkdir dist",
     "prepare": "npm run build"
   },
   "repository": {

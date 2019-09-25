@@ -58,7 +58,7 @@ async function reindex(req, res) {
 
   const alias = await esClient.indices.getAlias({
     name: aliasName
-  });
+  }).then((response) => response.body);
 
   // alias keys = index name
   const indices = Object.keys(alias);
@@ -71,7 +71,8 @@ async function reindex(req, res) {
 
     sourceIndex = indices[0];
   } else {
-    const sourceExists = await esClient.indices.exists({ index: sourceIndex });
+    const sourceExists = await esClient.indices.exists({ index: sourceIndex })
+      .then((response) => response.body);
 
     if (!sourceExists) {
       return res.boom.badRequest(`Source index ${sourceIndex} does not exist.`);
@@ -114,13 +115,14 @@ async function reindex(req, res) {
 async function reindexStatus(req, res) {
   const esClient = await Search.es();
 
-  const reindexTaskStatus = await esClient.tasks.list({ actions: ['*reindex'] });
+  const reindexTaskStatus = await esClient.tasks.list({ actions: ['*reindex'] })
+    .then((response) => response.body);
 
   await esClient.indices.refresh();
 
   const indexStatus = await esClient.indices.stats({
     metric: 'docs'
-  });
+  }).then((response) => response.body);
 
   const status = {
     reindexStatus: reindexTaskStatus,
@@ -146,13 +148,15 @@ async function changeIndex(req, res) {
     return res.boom.badRequest('The current index cannot be the same as the new index.');
   }
 
-  const currentExists = await esClient.indices.exists({ index: currentIndex });
+  const currentExists = await esClient.indices.exists({ index: currentIndex })
+    .then((response) => response.body);
 
   if (!currentExists) {
     return res.boom.badRequest(`Current index ${currentIndex} does not exist.`);
   }
 
-  const destExists = await esClient.indices.exists({ index: newIndex });
+  const destExists = await esClient.indices.exists({ index: newIndex })
+    .then((response) => response.body);
 
   if (!destExists) {
     return res.boom.badRequest(`New index ${newIndex} does not exist.`);
@@ -235,7 +239,8 @@ async function getCurrentIndex(req, res) {
   const esClient = await Search.es();
   const alias = req.params.alias || defaultIndexAlias;
 
-  const aliasIndices = await esClient.indices.getAlias({ name: alias });
+  const aliasIndices = await esClient.indices.getAlias({ name: alias })
+    .then((response) => response.body);
 
   return res.send(Object.keys(aliasIndices));
 }
